@@ -12,6 +12,7 @@ import { defer, type AppEnv, type Deps, type OrgRow } from './context';
 import { deliverWebhooks } from './lib/webhooks';
 import { flushHealth } from './lib/health';
 import { timelineRoutes } from './routes/timeline';
+import { inboundRoutes, ticketRoutes } from './routes/tickets';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
 import { HttpError, fail } from './lib/errors';
@@ -115,7 +116,9 @@ export function createApp(deps: Deps) {
     // write blocks request forgery (the session cookie is also SameSite=Lax).
     // Calls with an API key or app token carry no cookie, so they cannot be forged that way.
     const bearer = /^Bearer\s/i.test(c.req.header('authorization') ?? '');
-    if (c.req.path.startsWith('/api/') && !bearer && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.header('x-tendwell-device')) fail('forbidden');
+    // Inbound webhooks carry their own secret in the address and come from servers, not browsers.
+    const inbound = c.req.path.startsWith('/api/inbound/');
+    if (c.req.path.startsWith('/api/') && !bearer && !inbound && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.header('x-tendwell-device')) fail('forbidden');
     await next();
   };
   app.use('/api/*', companyFromHost);
@@ -128,6 +131,7 @@ export function createApp(deps: Deps) {
 
   // Public, per company: login page data and the sign-in steps.
   app.route('/api', authRoutes);
+  app.route('/api', inboundRoutes);
 
   // ---------------------------------------------------------------- person
   app.use('/api/*', async (c, next) => {
@@ -231,6 +235,7 @@ export function createApp(deps: Deps) {
   app.route('/api', pageRoutes);
   app.route('/api', searchRoutes);
   app.route('/api', timelineRoutes);
+  app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);

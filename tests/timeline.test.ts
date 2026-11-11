@@ -120,7 +120,7 @@ describe('health score', () => {
     const r = (await lena.get(`/api/accounts/${acc['Cedarmoor Health']}/health`)).json;
     expect(r.health.score).toBeGreaterThanOrEqual(0);
     const keys = r.health.parts.map((p: any) => p.key);
-    expect(keys).toEqual(['touch', 'tasks', 'champion', 'decision', 'blockers', 'judgement']);
+    expect(keys).toEqual(['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement']);
     const champion = r.health.parts.find((p: any) => p.key === 'champion');
     expect(champion).toMatchObject({ points: 100, detail: { names: ['Nora Lind'] } });
     const touch = r.health.parts.find((p: any) => p.key === 'touch');

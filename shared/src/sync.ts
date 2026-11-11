@@ -4,7 +4,32 @@
 // sync engine will do.
 
 export const CRM_PROVIDERS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel'] as const;
-export type CrmProvider = (typeof CRM_PROVIDERS)[number] | 'demo';
+/** Support tools: read only, connected with the tool's own address and an API key (no app registration). */
+export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm'] as const;
+export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
+export type CrmProvider = (typeof CRM_PROVIDERS)[number] | SupportProvider | 'demo';
+
+/** What an administrator types to connect a support tool. */
+export const KEY_FIELDS: Record<SupportProvider, { key: string; secret?: boolean; placeholder: string }[]> = {
+  zendesk: [
+    { key: 'subdomain', placeholder: 'yourcompany' },
+    { key: 'email', placeholder: 'agent@yourcompany.com' },
+    { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+  freshdesk: [
+    { key: 'domain', placeholder: 'yourcompany' },
+    { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+  intercom: [
+    { key: 'region', placeholder: 'us' },
+    { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+  jsm: [
+    { key: 'site', placeholder: 'yourcompany' },
+    { key: 'email', placeholder: 'agent@yourcompany.com' },
+    { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+};
 
 /** Spreadsheets: rows are found by a key column instead of a CRM id. */
 export const TABULAR: CrmProvider[] = ['gsheets', 'excel'];
@@ -45,7 +70,7 @@ export interface RemoteField {
   extra?: Record<string, unknown>;
 }
 
-export type ObjectHint = 'account' | 'contact' | 'opportunity' | 'task' | null;
+export type ObjectHint = 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | null;
 
 export interface RemoteObject {
   name: string;
@@ -88,6 +113,12 @@ export interface ObjectMap {
   enabled: boolean;
   /** Also create items made in Tendwell on the other side. */
   create: boolean;
+  /**
+   * Only connect to what Tendwell already has: an organisation in a support
+   * tool that matches no customer (by name or web address) is left out, and
+   * so is a ticket whose customer cannot be found.
+   */
+  linkOnly?: boolean;
   fields: FieldMap[];
   /** Spreadsheets: the column that identifies a row. */
   key?: string;

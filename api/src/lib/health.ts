@@ -43,6 +43,18 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
       contacts.set(c.account_id, arr);
     }
   }
+  const [ticketType] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null limit 1`, [orgId]);
+  const tickets = new Map<string, { open: number; urgent: number }>();
+  if (ticketType) {
+    const list = await q.query(
+      `select r.account_id, count(*)::int as open, count(*) filter (where r.fields->>'priority' = 'urgent')::int as urgent
+         from records r where r.org_id = $1 and r.type_id = $2 and r.archived_at is null and r.account_id is not null
+          and r.fields->>'status' in ('open', 'pending') and ($3::uuid[] is null or r.account_id = any ($3::uuid[]))
+        group by r.account_id`,
+      [orgId, ticketType.id, ids],
+    );
+    for (const t of list) tickets.set(t.account_id, { open: t.open, urgent: t.urgent });
+  }
   const out = new Map<string, HealthInput>();
   for (const r of rows) {
     // A touch is contact with the customer: a logged call, meeting, email or
@@ -57,6 +69,7 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
       lastTouchAt: last ? last.toISOString() : null,
       lastTouchKind: last ? ((useAct ? r.act_kind : 'task') as TouchKind) : null,
       overdue: r.overdue,
+      tickets: ticketType ? (tickets.get(r.id) ?? { open: 0, urgent: 0 }) : null,
       contacts: types.n ? (contacts.get(r.id) ?? []) : null,
       fields: r.fields ?? {},
     });

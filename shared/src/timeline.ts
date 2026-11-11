@@ -22,7 +22,8 @@ export type TimelineItem =
   | { type: 'task_created' | 'task_done'; at: string; taskId: string; title: string; boardId: string; byId: string | null }
   | { type: 'comment'; at: string; id: string; taskId: string; title: string; boardId: string; byId: string | null; body: string }
   | { type: 'contact'; at: string; recordId: string; name: string; byId: string | null }
-  | { type: 'score'; at: string; from: number; to: number };
+  | { type: 'score'; at: string; from: number; to: number }
+  | { type: 'ticket_opened' | 'ticket_solved'; at: string; recordId: string; title: string; priority: string | null; url: string | null };
 
 export interface Timeline {
   items: TimelineItem[];

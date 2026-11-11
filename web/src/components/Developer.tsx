@@ -371,8 +371,85 @@ export function DeveloperTab() {
         </section>
       )}
 
+      {can('connections.manage') && <InboundTickets />}
       {can('users.manage') && <KeyList all />}
     </div>
+  );
+}
+
+/** Any support tool that can send a web request: an address to post tickets to. */
+function InboundTickets() {
+  const { t } = useI18n();
+  const fail = useFail();
+  const [info, setInfo] = useState<{ enabled: boolean; prefix: string | null; createdAt: string | null; lastAt: string | null } | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [off, setOff] = useState(false);
+  const load = useCallback(() => get<NonNullable<typeof info>>('/dev/inbound').then(setInfo), []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const make = async () => {
+    try {
+      const r = await post<{ url: string }>('/dev/inbound');
+      setUrl(r.url);
+      await load();
+    } catch (e) {
+      fail(e);
+    }
+  };
+  return (
+    <section className="sheet">
+      <h2 className="sheet__title">{t('inbound.title')}</h2>
+      <p className="sheet__hint">{t('inbound.hint')}</p>
+      {url && <ShowOnce value={url} note={t('inbound.copyNow')} />}
+      {info && !url && (
+        <p className="field__hint">
+          {info.enabled ? t('inbound.on', { prefix: info.prefix ?? '', when: info.lastAt ? relativeTime(info.lastAt, t) : t('dev.keys.unused') }) : t('inbound.off')}
+        </p>
+      )}
+      <pre className="example">{`POST …/api/inbound/tickets/<token>
+{
+  "source": "my-helpdesk",
+  "externalId": "4711",
+  "subject": "Export fails",
+  "status": "open",
+  "priority": "high",
+  "requester": "selin@quillfield.example",
+  "url": "https://help.example.com/t/4711"
+}`}</pre>
+      <div className="toolbar" style={{ marginTop: 10 }}>
+        <button className="btn" onClick={make}>
+          {info?.enabled ? t('inbound.rotate') : t('inbound.create')}
+        </button>
+        {info?.enabled && (
+          <button className="btn btn--quiet" onClick={() => setOff(true)}>
+            {t('inbound.disable')}
+          </button>
+        )}
+        <a className="btn btn--quiet" href="/docs/" target="_blank" rel="noreferrer">
+          {t('dev.docs')}
+        </a>
+      </div>
+      {off && (
+        <Confirm
+          title={t('inbound.disableTitle')}
+          body={t('inbound.disableBody')}
+          confirmLabel={t('inbound.disable')}
+          danger
+          onClose={() => setOff(false)}
+          onConfirm={async () => {
+            try {
+              await del('/dev/inbound');
+              setUrl(null);
+              await load();
+            } catch (e) {
+              fail(e);
+            }
+            setOff(false);
+          }}
+        />
+      )}
+    </section>
   );
 }
 

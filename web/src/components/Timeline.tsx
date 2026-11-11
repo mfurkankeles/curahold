@@ -47,6 +47,8 @@ function partText(t: (k: MessageKey, v?: Record<string, string | number>) => str
       return d.kind ? t('health.why.touch', { days: d.days ?? 0, kind: t(`health.touchKind.${d.kind}` as MessageKey) }) : t('health.why.touchNever', { days: d.days ?? 0 });
     case 'tasks':
       return d.count ? t('health.why.tasks', { n: d.count }) : t('health.why.tasksNone');
+    case 'support':
+      return p.points === null ? t('health.why.noTickets') : d.count ? t('health.why.support', { n: d.count, urgent: d.urgent ?? 0 }) : t('health.why.supportNone');
     case 'champion':
       return p.points === null ? t('health.why.noContacts') : d.names?.length ? t('health.why.champion', { names: names(d.names) }) : t('health.why.championNone');
     case 'decision':
@@ -138,7 +140,7 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
 
 // ------------------------------------------------------------- the timeline
 
-const KIND_ICON: Record<string, string> = { note: '✎', call: '☏', meeting: '◷', email: '✉', task_created: '+', task_done: '✓', comment: '❝', contact: '◉', score: '↕' };
+const KIND_ICON: Record<string, string> = { note: '✎', call: '☏', meeting: '◷', email: '✉', task_created: '+', task_done: '✓', comment: '❝', contact: '◉', score: '↕', ticket_opened: '!', ticket_solved: '✓' };
 
 function dayLabel(iso: string, locale: string) {
   const d = new Date(iso);
@@ -310,6 +312,25 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
             <div className="tl__body">{t('timeline.contact', { name: nameOf(it.byId), contact: it.name })}</div>
           </li>
         );
+      case 'ticket_opened':
+      case 'ticket_solved':
+        return (
+          <li key={`${it.type}-${it.recordId}`} className="tl__item tl__item--quiet" data-kind={it.type} data-urgent={it.type === 'ticket_opened' && it.priority === 'urgent' ? 'true' : undefined}>
+            <span className="tl__icon" aria-hidden="true">
+              {KIND_ICON[it.type]}
+            </span>
+            <div className="tl__body">
+              {t(it.type === 'ticket_opened' ? (it.priority === 'urgent' ? 'timeline.ticketUrgent' : 'timeline.ticketOpened') : 'timeline.ticketSolved')}{' '}
+              {it.url ? (
+                <a href={it.url} target="_blank" rel="noreferrer">
+                  {it.title}
+                </a>
+              ) : (
+                <span>{it.title}</span>
+              )}
+            </div>
+          </li>
+        );
       case 'score':
         return (
           <li key={`s-${it.at}-${i}`} className="tl__item tl__item--quiet" data-kind="score" data-dir={it.to < it.from ? 'down' : 'up'}>
@@ -457,7 +478,7 @@ function EditActivity({ activity, onClose, onSaved }: { activity: Activity; onCl
 
 // ------------------------------------------------------- the score settings
 
-const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'champion', 'decision', 'blockers', 'judgement'];
+const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement'];
 
 export function HealthSettings() {
   const { t, locale } = useI18n();
@@ -554,6 +575,14 @@ export function HealthSettings() {
                   </label>
                 </div>
               )}
+              {s.key === 'support' && (
+                <div className="signal__params">
+                  <label className="field">
+                    <span className="field__label">{t('health.settings.supportBad')}</span>
+                    <input className="input" type="number" min={1} max={100} value={s.bad ?? 5} onChange={(e) => set(s.id, { bad: Number(e.target.value) })} />
+                  </label>
+                </div>
+              )}
               {s.key === 'judgement' && (
                 <div className="signal__params">
                   <label className="field">
@@ -604,7 +633,7 @@ export function HealthSettings() {
               const key = e.target.value as HealthSignalKey;
               if (!key) return;
               const id = key === 'number' ? `number_${Date.now().toString(36)}` : key;
-              setCfg({ ...cfg, signals: [...cfg.signals, { id, key, weight: 10, ...(key === 'touch' ? { good: 14, bad: 45 } : key === 'tasks' ? { bad: 3 } : {}) }] });
+              setCfg({ ...cfg, signals: [...cfg.signals, { id, key, weight: 10, ...(key === 'touch' ? { good: 14, bad: 45 } : key === 'tasks' ? { bad: 3 } : key === 'support' ? { bad: 5 } : {}) }] });
             }}
           >
             <option value="">{t('health.settings.add')}</option>

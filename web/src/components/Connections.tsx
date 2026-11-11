@@ -25,6 +25,10 @@ export const PROVIDER_NAMES: Record<string, string> = {
   gsheets: 'Google Sheets',
   excel: 'Excel',
   demo: 'Demo CRM',
+  zendesk: 'Zendesk',
+  freshdesk: 'Freshdesk',
+  intercom: 'Intercom',
+  jsm: 'Jira Service Management',
 };
 export const FLAVOR_NAMES: Record<string, string> = {
   slack: 'Slack',

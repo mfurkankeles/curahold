@@ -129,6 +129,8 @@ function weeklyReason(t: (k: MessageKey, v?: Record<string, string | number>) =>
       return t('weekly.why.touch', { days: r.days ?? 0 });
     case 'tasks':
       return t('weekly.why.tasks', { n: r.count ?? 0 });
+    case 'support':
+      return t('weekly.why.support', { n: r.count ?? 0 });
     case 'champion':
       return t('weekly.why.champion');
     case 'decision':
@@ -203,6 +205,7 @@ export function render(ctx: RenderCtx): ChatMessage {
         for (const a of data.quiet ?? []) lines.push(`• ${a.name}`);
         more(data.quietCount, data.quiet?.length ?? 0);
       }
+      if (data.tickets) lines.push(t('weekly.tickets', { n: data.tickets, urgent: data.urgentTickets ?? 0 }));
       if (data.done || data.overdue) lines.push(t('weekly.work', { done: data.done ?? 0, overdue: data.overdue ?? 0 }));
       return { title: t('weekly.title', { n: data.accounts ?? 0 }), body: lines.join('\n'), url: `${ctx.base}/home`, openLabel: t('notify.open') };
     }

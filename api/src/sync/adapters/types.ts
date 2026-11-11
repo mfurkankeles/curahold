@@ -60,6 +60,10 @@ export interface OAuthSpec {
 export interface CrmAdapter {
   provider: CrmProvider;
   oauth?: OAuthSpec;
+  /** Connected with what the administrator typed (address, API key) instead of a sign-in page. */
+  keyed?: { connect(fetcher: typeof fetch, values: Record<string, string>, now: Date): Promise<Connected> };
+  /** Only reads: nothing made or changed in Tendwell is written back. */
+  readOnly?: boolean;
   /** Spreadsheets read everything each time; CRMs read changes since the last run. */
   tabular: boolean;
   refresh(ctx: Omit<CrmCtx, 'token' | 'refresh'>, secret: CrmSecret, client: OAuthClient): Promise<CrmSecret>;

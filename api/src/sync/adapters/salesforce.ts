@@ -9,7 +9,7 @@ const SANDBOX = 'https://test.salesforce.com';
 
 /** Standard objects worth offering; custom objects (…__c) are always offered. */
 const STANDARD = ['Account', 'Contact', 'Opportunity', 'Case', 'Task', 'Lead', 'Contract', 'Asset', 'Order', 'Quote', 'Entitlement', 'ServiceContract', 'Campaign'];
-const HINTS: Record<string, ObjectHint> = { Account: 'account', Contact: 'contact', Opportunity: 'opportunity', Task: 'task' };
+const HINTS: Record<string, ObjectHint> = { Account: 'account', Contact: 'contact', Opportunity: 'opportunity', Case: 'ticket', Task: 'task' };
 
 const base = (ctx: CrmCtx) => `${String(ctx.config.instanceUrl).replace(/\/$/, '')}/services/data/${V}`;
 

@@ -4,7 +4,7 @@
 // a signal a person can see and act on.
 import type { AccountField } from './model';
 
-export const HEALTH_SIGNALS = ['touch', 'tasks', 'champion', 'decision', 'blockers', 'judgement', 'number'] as const;
+export const HEALTH_SIGNALS = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement', 'number'] as const;
 export type HealthSignalKey = (typeof HEALTH_SIGNALS)[number];
 
 export interface HealthSignal {
@@ -36,6 +36,7 @@ export const DEFAULT_HEALTH: HealthConfig = {
   signals: [
     { id: 'touch', key: 'touch', weight: 25, good: 14, bad: 45 },
     { id: 'tasks', key: 'tasks', weight: 15, bad: 3 },
+    { id: 'support', key: 'support', weight: 15, bad: 5 },
     { id: 'champion', key: 'champion', weight: 20 },
     { id: 'decision', key: 'decision', weight: 10 },
     { id: 'blockers', key: 'blockers', weight: 10 },
@@ -52,6 +53,8 @@ export interface HealthInput {
   lastTouchAt: string | null;
   lastTouchKind: TouchKind | null;
   overdue: number;
+  /** Open support tickets; null when no support tickets are kept. */
+  tickets: { open: number; urgent: number } | null;
   /** null when the company does not keep contacts at all. */
   contacts: { id: string; name: string; stance: string | null; decision: string | null }[] | null;
   fields: Record<string, unknown>;
@@ -70,6 +73,7 @@ export interface HealthPart {
     days?: number;
     kind?: TouchKind | null;
     count?: number;
+    urgent?: number;
     names?: string[];
     skeptics?: string[];
     field?: string;
@@ -109,6 +113,13 @@ export function computeHealth(cfg: HealthConfig, defs: AccountField[], input: He
       case 'tasks': {
         const bad = Math.max(1, s.bad ?? 3);
         return part(clamp((1 - Math.min(input.overdue, bad) / bad) * 100), { count: input.overdue });
+      }
+      case 'support': {
+        // Open tickets, an urgent one counting twice; `bad` of them take all points.
+        if (!input.tickets) return part(null);
+        const bad = Math.max(1, s.bad ?? 5);
+        const load = input.tickets.open + input.tickets.urgent;
+        return part(clamp((1 - Math.min(load, bad) / bad) * 100), { count: input.tickets.open, urgent: input.tickets.urgent });
       }
       case 'champion': {
         if (!contacts) return part(null);

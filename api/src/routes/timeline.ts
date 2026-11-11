@@ -14,6 +14,7 @@ import { fail } from '../lib/errors';
 import { canSeeField } from '../lib/fieldAccess';
 import { recomputeHealth, scoreAccounts } from '../lib/health';
 import { iso } from '../lib/mappers';
+import { linksFor } from '../lib/links';
 import { body, param, uuid } from '../lib/validate';
 
 export const timelineRoutes = new Hono<AppEnv>();
@@ -74,10 +75,16 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
         where r.account_id = $1 and rt.kind = 'contact' and r.archived_at is null and r.created_at < $2 order by r.created_at desc limit $3`,
       [id, at, limit],
     );
+    const tickets = await q.query(
+      `select r.id, r.name, r.fields, r.created_at from records r join record_types rt on rt.id = r.type_id
+        where r.account_id = $1 and rt.kind = 'ticket' and r.archived_at is null order by r.created_at desc limit 200`,
+      [id],
+    );
+    const ticketLinks = tickets.length ? await linksFor(q, 'record', tickets.map((t) => t.id)) : new Map();
     const history = withScore
       ? await q.query(`select day::text as day, score from health_history where account_id = $1 and day <= $2::date order by day desc limit 120`, [id, at.slice(0, 10)])
       : [];
-    return { acts, pinned, created, done, comments, contacts, history };
+    return { acts, pinned, created, done, comments, contacts, history, tickets, ticketLinks };
   });
   const items: TimelineItem[] = [
     ...data.acts.map((r): TimelineItem => ({ type: 'activity', at: iso(r.happened_at)!, activity: toActivity(r) })),
@@ -86,6 +93,16 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
     ...data.comments.map((r): TimelineItem => ({ type: 'comment', at: iso(r.created_at)!, id: r.id, taskId: r.task_id, title: r.title, boardId: r.board_id, byId: r.author_id, body: r.body })),
     ...data.contacts.map((r): TimelineItem => ({ type: 'contact', at: iso(r.created_at)!, recordId: r.id, name: r.name, byId: r.created_by })),
   ];
+  // Support tickets: when they were opened and when they were solved (dates from the support tool).
+  const noon = (d: unknown) => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T12:00:00.000Z` : null);
+  for (const r of data.tickets) {
+    const f = r.fields ?? {};
+    const url = (typeof f.url === 'string' && f.url) || data.ticketLinks.get(r.id)?.[0]?.url || null;
+    const base = { recordId: r.id, title: r.name, priority: f.priority ?? null, url };
+    items.push({ type: 'ticket_opened', at: noon(f.opened_at) ?? iso(r.created_at)!, ...base });
+    const solved = noon(f.solved_at);
+    if (solved && (f.status === 'solved' || f.status === 'closed')) items.push({ type: 'ticket_solved', at: solved, ...base });
+  }
   // A score that moved by ten points or more from one day to the next.
   const hist = data.history as { day: string; score: number }[];
   for (let i = 0; i < hist.length - 1; i++) {

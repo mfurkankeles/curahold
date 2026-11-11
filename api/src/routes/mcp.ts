@@ -90,8 +90,9 @@ const TOOLS: Tool[] = [
       const [kind, id] = String(a.id).split(':');
       if (kind === 'account') {
         const r = await api('GET', `/api/accounts/${id}`);
-        const [contacts, timeline, health] = await Promise.all([
+        const [contacts, tickets, timeline, health] = await Promise.all([
           api('GET', `/api/records?type=contact&account=${id}`).catch(() => ({ records: [] })),
+          api('GET', `/api/records?type=ticket&account=${id}&limit=30`).catch(() => ({ records: [] })),
           api('GET', `/api/accounts/${id}/timeline?limit=15`).catch(() => ({ items: [], pinned: [] })),
           api('GET', `/api/accounts/${id}/health`).catch(() => null),
         ]);
@@ -101,6 +102,7 @@ const TOOLS: Tool[] = [
           url: `${base}/accounts/${id}`,
           account: r.account,
           contacts: contacts.records,
+          supportTickets: tickets.records,
           tasks: r.tasks,
           health: health?.health ?? null,
           timeline: { pinned: timeline.pinned, recent: timeline.items },

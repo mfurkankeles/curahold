@@ -29,6 +29,7 @@ Ayarlar → Sağlık skoru'ndan açılır. Her müşteri için 0 ile 100 arası 
 | --- | --- | --- |
 | Son temas | Son görüşme, toplantı, e-posta ya da not 14 gün içinde | 45 gün ve daha eski |
 | Geciken işler | Geciken görev yok | 3 ya da daha fazla geciken görev |
+| Destek yükü | Açık destek talebi yok | 5 açık talep (acil olan iki kez sayılır) |
 | Güçlü destekçi | En az bir "Güçlü destekçi" kişi | Hiç yok |
 | Karar verici biliniyor | En az bir "Karar verici" kişi | Hiç yok |
 | Engelleyici yok | Engelleyici ya da şüpheci yok | Bir engelleyici var |

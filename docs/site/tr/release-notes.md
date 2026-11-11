@@ -8,6 +8,13 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Destek talepleri
+
+- **Zendesk, Freshdesk, Intercom ve Jira Service Management** bağlantıları: adres ve API anahtarıyla, yalnızca okuyarak.
+- **Salesforce ve Dynamics vakaları** destek talebi olarak.
+- **Her araç için** API ve gelen webhook adresi.
+- Talepler müşteriye adı, web adresi ya da talep edenin e-posta alan adıyla bağlanır; zaman çizelgesinde, açık talep sayısında ve sağlık skorunda (Destek yükü) görünür.
+
 ### Zaman çizelgesi, sağlık skoru ve haftalık özet
 
 - **Müşteri zaman çizelgesi:** not, görüşme, toplantı ve e-posta kaydı; görevler, yorumlar, yeni kişiler ve skor değişiklikleri tek akışta. Önemli notları sabitleme.

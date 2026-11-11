@@ -23,6 +23,10 @@ Sync customers, contacts and opportunities with Salesforce, HubSpot, Microsoft D
 
 Syncs run by themselves every hour, or whenever you start one. Records that could not sync are listed separately and can be retried.
 
+## Support tools
+
+Zendesk, Freshdesk, Intercom and Jira Service Management connect with an address and an API key; tickets land under the right customer. Salesforce and Dynamics cases can be mapped as support tickets too. Details: [Support tickets](/docs/en/support-tickets/).
+
 ## Your own tools
 
 To connect another system, see [API keys](/docs/en/api-keys/), [webhooks](/docs/en/webhooks/) or [AI assistants](/docs/en/ai-assistants/).

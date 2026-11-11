@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Support tickets
+
+- **Zendesk, Freshdesk, Intercom and Jira Service Management** connections: with an address and an API key, read only.
+- **Salesforce and Dynamics cases** as support tickets.
+- **Any tool** through the API or an inbound webhook address.
+- Tickets are filed under the customer by name, web address or the requester's email domain, and show on the timeline, in open-ticket counts and in the health score (Support load).
+
 ### Timeline, health score and weekly summary
 
 - **Customer timeline:** log notes, calls, meetings and emails; tasks, comments, new contacts and score changes in the same stream. Pin what matters.

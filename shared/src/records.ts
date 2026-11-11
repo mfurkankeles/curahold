@@ -4,7 +4,7 @@
 import type { Locale } from './i18n';
 import type { AccountField, Localized } from './model';
 
-export const RECORD_KINDS = ['contact', 'opportunity', 'custom'] as const;
+export const RECORD_KINDS = ['contact', 'opportunity', 'ticket', 'custom'] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
 
 export interface RecordType {
@@ -63,6 +63,39 @@ export const DECISION_LEVELS = [
   { key: 'user', label: L('User', 'Kullanıcı') },
 ];
 
+/** Where a support ticket stands. Every support tool's own states fold into these four. */
+export const TICKET_STATUSES = [
+  { key: 'open', label: L('Open', 'Açık'), color: 'coral' as const },
+  { key: 'pending', label: L('Waiting', 'Beklemede'), color: 'honey' as const },
+  { key: 'solved', label: L('Solved', 'Çözüldü'), color: 'leaf' as const },
+  { key: 'closed', label: L('Closed', 'Kapandı'), color: 'stone' as const },
+];
+export const TICKET_PRIORITIES = [
+  { key: 'low', label: L('Low', 'Düşük') },
+  { key: 'normal', label: L('Normal', 'Normal') },
+  { key: 'high', label: L('High', 'Yüksek') },
+  { key: 'urgent', label: L('Urgent', 'Acil'), color: 'coral' as const },
+];
+/** Still needing an answer. */
+export const TICKET_OPEN = ['open', 'pending'];
+
+/** Any tool's ticket state in Tendwell's four ("Problem Solved", "Waiting on customer", "Kapandı"…). */
+export function ticketStatusOf(v: unknown): 'open' | 'pending' | 'solved' | 'closed' {
+  const s = String(v ?? '').toLocaleLowerCase('tr');
+  if (/clos|kapan|kapal|cancel|iptal|merged/.test(s)) return 'closed';
+  if (/solv|resolv|done|complete|provided|çözül|tamam/.test(s)) return 'solved';
+  if (/pend|wait|hold|snooz|beklem|awaiting/.test(s)) return 'pending';
+  return 'open';
+}
+
+export function ticketPriorityOf(v: unknown): 'low' | 'normal' | 'high' | 'urgent' {
+  const s = String(v ?? '').toLocaleLowerCase('tr');
+  if (/urgent|critical|highest|blocker|acil|kritik/.test(s)) return 'urgent';
+  if (/high|major|yüksek/.test(s)) return 'high';
+  if (/low|minor|trivial|düşük/.test(s)) return 'low';
+  return 'normal';
+}
+
 /** Contact fields shown first, in this order, wherever there is little room. */
 export const CONTACT_COLUMNS = ['title', 'decision', 'stance', 'email'];
 
@@ -86,6 +119,19 @@ export const BUILTIN_TYPES: Record<Exclude<RecordKind, 'custom'>, { key: string;
       { key: 'linkedin', label: L('LinkedIn', 'LinkedIn'), type: 'url' },
       { key: 'decision', label: L('Decision role', 'Karar düzeyi'), type: 'select', options: DECISION_LEVELS },
       { key: 'stance', label: L('Stance towards us', 'Bize karşı duruşu'), type: 'select', options: STANCES },
+    ],
+  },
+  ticket: {
+    key: 'ticket',
+    name: { one: L('Support ticket', 'Destek talebi'), other: L('Support tickets', 'Destek talepleri') },
+    fields: [
+      { key: 'status', label: L('Status', 'Durum'), type: 'select', options: TICKET_STATUSES },
+      { key: 'priority', label: L('Priority', 'Öncelik'), type: 'select', options: TICKET_PRIORITIES },
+      { key: 'opened_at', label: L('Opened', 'Açıldı'), type: 'date' },
+      { key: 'solved_at', label: L('Solved', 'Çözüldü'), type: 'date' },
+      { key: 'requester', label: L('Requester', 'Talep eden'), type: 'email' },
+      { key: 'channel', label: L('Channel', 'Kanal'), type: 'text' },
+      { key: 'url', label: L('Link', 'Bağlantı'), type: 'url' },
     ],
   },
   opportunity: {
@@ -114,6 +160,8 @@ export const ROLLUP_PRESETS: { kind: RecordKind; field: AccountField }[] = [
     kind: 'opportunity',
     field: { key: 'open_opportunities', label: L('Open opportunities', 'Açık fırsat sayısı'), type: 'number', rollup: { type: 'opportunity', fn: 'count', where: { field: 'status', option: 'open' } } },
   },
+  { kind: 'ticket', field: { key: 'open_tickets', label: L('Open tickets', 'Açık destek talebi'), type: 'number', rollup: { type: 'ticket', fn: 'count', where: { field: 'status', option: 'open' } } } },
+  { kind: 'ticket', field: { key: 'tickets', label: L('Support tickets', 'Destek talebi sayısı'), type: 'number', rollup: { type: 'ticket', fn: 'count' } } },
   { kind: 'contact', field: { key: 'contacts', label: L('Contacts', 'Kişi sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count' } } },
   { kind: 'contact', field: { key: 'champions', label: L('Champions', 'Güçlü destekçi sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'champion' } } } },
   { kind: 'contact', field: { key: 'blockers', label: L('Blockers', 'Engelleyici sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'blocker' } } } },

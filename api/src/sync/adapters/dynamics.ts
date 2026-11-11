@@ -6,7 +6,7 @@ import { call, CrmError, oneShotCtx, refreshGrant, type CrmAdapter, type CrmCtx 
 
 const LOGIN = 'https://login.microsoftonline.com/organizations/oauth2/v2.0';
 const STANDARD = ['account', 'contact', 'opportunity', 'incident', 'task', 'lead', 'contract', 'quote', 'salesorder', 'invoice'];
-const HINTS: Record<string, ObjectHint> = { account: 'account', contact: 'contact', opportunity: 'opportunity', task: 'task' };
+const HINTS: Record<string, ObjectHint> = { account: 'account', contact: 'contact', opportunity: 'opportunity', incident: 'ticket', task: 'task' };
 const SKIP = new Set(['createdon', 'modifiedon', 'versionnumber', 'importsequencenumber', 'overriddencreatedon', 'timezoneruleversionnumber', 'utcconversiontimezonecode']);
 
 export function orgUrlOf(raw: string): string | null {

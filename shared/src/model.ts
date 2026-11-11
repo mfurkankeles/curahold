@@ -253,7 +253,8 @@ export interface ProviderInfo {
   twoWay: boolean;
   /** Ready on this server (credentials configured), or only possible through a webhook. */
   available: boolean;
-  setup: 'oauth' | 'webhook';
+  /** key: the administrator pastes the tool's address and an API key. */
+  setup: 'oauth' | 'webhook' | 'key';
 }
 
 export interface Notification {

@@ -92,7 +92,13 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
               where t.org_id = $1 and $3 = any (t.assignee_ids) and t.due_date < $4::date and ${OPEN}) as overdue`,
     [orgId, ids, userId, today],
   );
-  if (!renewals.length && !drops.length && !quiet.length && !work.done && !work.overdue) return null;
+  const [support] = await q.query(
+    `select count(*)::int as open, count(*) filter (where r.fields->>'priority' = 'urgent')::int as urgent
+       from records r join record_types rt on rt.id = r.type_id
+      where r.org_id = $1 and rt.kind = 'ticket' and r.archived_at is null and r.account_id = any ($2::uuid[]) and r.fields->>'status' in ('open', 'pending')`,
+    [orgId, ids],
+  );
+  if (!renewals.length && !drops.length && !quiet.length && !work.done && !work.overdue && !support.open) return null;
   const total = renewals.reduce((n, r) => n + (r.amount === null ? 0 : Number(r.amount)), 0);
   return {
     accounts: ids.length,
@@ -105,6 +111,8 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
     quietCount: quiet.length,
     done: work.done,
     overdue: work.overdue,
+    tickets: support.open,
+    urgentTickets: support.urgent,
   };
 }
 

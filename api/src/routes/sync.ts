@@ -7,7 +7,7 @@ import { optionKey } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
 import type { RemoteField, SyncConfig, SyncProblem } from '../../../shared/src/sync';
-import { centralUrl, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
+import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { randomToken, seal, sign } from '../lib/crypto';
 import { fail } from '../lib/errors';
@@ -101,6 +101,41 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
   return c.redirect(`${orgUrl(cfg, state.o)}/settings/sources/${id}?connected=${provider}${state.r.startsWith('/setup') ? '&from=setup' : ''}`);
 }
 
+// ------------------------------------------------------------ with a key
+
+/** Support tools: the administrator types the tool's address and an API key; Tendwell checks them right away. */
+syncRoutes.post('/connections/key', async (c) => {
+  requirePerm(c, 'connections.manage');
+  const input = await body(c, z.object({ provider: z.string().max(40), values: z.record(z.string().max(40), z.string().max(500)) }));
+  const adapter = isCrm(input.provider) ? CRM_ADAPTERS[input.provider] : null;
+  if (!adapter?.keyed) fail('not_found');
+  const deps = c.get('deps');
+  let made;
+  try {
+    made = await adapter!.keyed!.connect(fetchOf(deps), input.values, nowOf(deps));
+  } catch (e) {
+    crmFail(e);
+  }
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const sealed = await seal(made!.secret, secretsKey(deps.config));
+  const id = await deps.db.system(async (q) => {
+    // The same workspace again: new key, same mapping and history.
+    const [same] = await q.query(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, input.provider, made!.instanceId]);
+    if (same) {
+      await q.query(`update connections set secret = $3, status = 'active', config = config || $4::jsonb, updated_at = now() where id = $1 and org_id = $2`, [same.id, org.id, sealed, JSON.stringify(made!.config)]);
+      return same.id as string;
+    }
+    const [row] = await q.query(
+      `insert into connections (org_id, kind, provider, label, config, secret, created_by) values ($1, 'source', $2, $3, $4, $5, $6) returning id`,
+      [org.id, input.provider, made!.label.slice(0, 120), JSON.stringify({ ...made!.config, instanceId: made!.instanceId, sync: { objects: [], owners: {}, conflict: 'latest' } }), sealed, auth.userId],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.created', entity: 'connection', entityId: row.id, meta: { provider: input.provider } });
+    return row.id as string;
+  });
+  return c.json({ id }, 201);
+});
+
 // ------------------------------------------------------------------- demo
 
 /** The pretend CRM, on servers that offer it (development, the live demo). */
@@ -150,7 +185,7 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
     return { types, boards, pending };
   });
   return c.json({
-    connection: { id: conn.id, provider: conn.provider, label: conn.label, status: conn.status, tabular: adapter.tabular },
+    connection: { id: conn.id, provider: conn.provider, label: conn.label, status: conn.status, tabular: adapter.tabular, readOnly: !!adapter.readOnly },
     sync: conn.sync,
     state: { lastRun: conn.state.lastRun ?? null, fullAt: conn.state.fullAt ?? null },
     recordTypes: data.types,
@@ -172,7 +207,7 @@ syncRoutes.get('/connections/:id/objects', async (c) => {
 syncRoutes.get('/connections/:id/objects/:object/fields', async (c) => {
   const conn = await loaded(c);
   const object = c.req.param('object');
-  const kind = (c.req.query('kind') ?? 'custom') as 'account' | 'contact' | 'opportunity' | 'task' | 'custom';
+  const kind = (c.req.query('kind') ?? 'custom') as 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | 'custom';
   const typeKey = c.req.query('typeKey') ?? '';
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
   let fields: RemoteField[];
@@ -187,9 +222,10 @@ syncRoutes.get('/connections/:id/objects/:object/fields', async (c) => {
       const [t] = await q.query('select fields from record_types where key = $1', [typeKey]);
       if (t) return t.fields as AccountField[];
     }
-    return kind === 'contact' || kind === 'opportunity' ? BUILTIN_TYPES[kind].fields : [];
+    return kind === 'contact' || kind === 'opportunity' || kind === 'ticket' ? BUILTIN_TYPES[kind].fields : [];
   });
-  return c.json({ fields: fields!, suggested: suggestFields(kind, fields!, org.account_fields, typeFields) });
+  const suggested = suggestFields(kind, fields!, org.account_fields, typeFields);
+  return c.json({ fields: fields!, suggested: adapter.readOnly ? suggested.map((f) => ({ ...f, dir: 'pull' as const })) : suggested });
 });
 
 /** CRM users and the Tendwell person each one is matched to (by email unless set by hand). */
@@ -263,10 +299,11 @@ const objectMap = z.object({
   label: z.string().trim().min(1).max(120),
   target: z.enum(['account', 'record', 'task']),
   typeKey: z.string().regex(/^([a-z][a-z0-9_]{1,40}|__new)$/).optional(),
-  kind: z.enum(['contact', 'opportunity', 'custom']).optional(),
+  kind: z.enum(['contact', 'opportunity', 'ticket', 'custom']).optional(),
   boardId: z.string().uuid().optional(),
   enabled: z.boolean(),
   create: z.boolean(),
+  linkOnly: z.boolean().optional(),
   fields: z.array(fieldMap).max(300),
   key: z.string().max(200).optional(),
 });
@@ -387,7 +424,8 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
         fields.push({ remote: f.remote, local, dir: f.dir });
       }
       if (typeChanged) await q.query('update record_types set fields = $3 where id = $1 and org_id = $2', [typeRow.id, org.id, JSON.stringify(defs)]);
-      objects.push({ remote: o.remote, label: o.label, target: o.target, typeKey, boardId: o.boardId, enabled: o.enabled, create: o.create, fields, key: o.key });
+      // A read-only source never creates anything on its side.
+      objects.push({ remote: o.remote, label: o.label, target: o.target, typeKey, boardId: o.boardId, enabled: o.enabled, create: adapter.readOnly ? false : o.create, ...(o.linkOnly ? { linkOnly: true } : {}), fields: adapter.readOnly ? fields.map((f) => ({ ...f, dir: 'pull' as const })) : fields, key: o.key });
     }
     if (accountChanged) await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(accountFields)]);
 

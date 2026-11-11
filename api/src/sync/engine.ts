@@ -13,7 +13,7 @@ import { fetchOf, nowOf, secretsKey, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
-import { fullName } from '../../../shared/src/records';
+import { fullName, ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
 import { recomputeRollups } from '../lib/records';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
@@ -137,6 +137,9 @@ function inValue(def: AccountField, rf: RemoteField | undefined, raw: unknown, d
     return 'error' in r ? null : r.value;
   }
   if (def.type === 'select') {
+    // A support ticket's state and priority: every tool's words fold into Tendwell's few.
+    if (def.key === 'status' && def.options?.some((o) => o.key === 'solved')) return ticketStatusOf(rf?.options?.find((o) => o.value === String(v))?.label ?? v);
+    if (def.key === 'priority' && def.options?.some((o) => o.key === 'urgent')) return ticketPriorityOf(rf?.options?.find((o) => o.value === String(v))?.label ?? v);
     if (rf?.type === 'bool' || typeof v === 'boolean') v = v === true || TRUE.test(String(v)) ? 'yes' : 'no';
     const s = String(v);
     const opts = (def.options ??= []);
@@ -223,6 +226,8 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
     const n = fullName(out['f:first_name'], out['f:last_name']);
     if (n) out.name = n.slice(0, 300);
   }
+  // Tickets without a subject still need a name.
+  if (map.target === 'record' && defs.types.get(map.typeKey ?? '')?.kind === 'ticket' && !out.name) out.name = `#${row.id}`.slice(0, 300);
   // Opportunities: open, won or lost, from whatever the CRM says.
   if (map.target === 'record' && defs.types.get(map.typeKey ?? '')?.kind === 'opportunity' && !map.fields.some((f) => f.local === 'f:status')) {
     out['f:status'] = opportunityStatus(row.values, out['f:stage'], defs.types.get(map.typeKey ?? '')?.fields ?? []);
@@ -574,6 +579,27 @@ async function parentOk(q: Q, orgId: string, id: string | null, parentId: string
   return !loop;
 }
 
+/** A customer whose web address field is one of these domains (support tools' organisations, requesters). */
+async function accountByDomain(q: Q, r: RunCtx, raw: unknown, linkedToo = false): Promise<Row | null> {
+  const domains = (Array.isArray(raw) ? raw : []).filter((d): d is string => typeof d === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d));
+  if (!domains.length) return null;
+  // Public email providers say nothing about the company.
+  const usable = domains.filter((d) => !/^(gmail|googlemail|outlook|hotmail|live|yahoo|icloud|me|aol|proton|protonmail|yandex|mail|gmx)\./.test(d));
+  if (!usable.length) return null;
+  const keys = r.defs.accountFields.filter((f) => f.type === 'url').map((f) => f.key);
+  if (!keys.length) return null;
+  const [hit] = await q.query(
+    `select a.* from accounts a
+      where a.org_id = $1 and a.archived_at is null
+        and ($4 or not exists (select 1 from sync_links l where l.connection_id = $2 and l.entity = 'account' and l.entity_id = a.id))
+        and exists (select 1 from jsonb_each_text(a.fields) f where f.key = any ($3::text[])
+                     and lower(regexp_replace(regexp_replace(f.value, '^https?://(www\.)?', '', 'i'), '[/:?#].*$', '')) = any ($5::text[]))
+      order by a.created_at limit 1`,
+    [r.conn.orgId, r.conn.id, keys, linkedToo, usable],
+  );
+  return hit ?? null;
+}
+
 async function applyPage(
   r: RunCtx,
   map: ObjectMap,
@@ -631,11 +657,24 @@ async function applyPage(
         }
         const vals = mapIn(map, row, meta, r.defs, r.look);
         let entity = link?.entity_id ? (cur.get(link.entity_id) ?? null) : null;
-        if (!entity && !link && map.target !== 'task') {
+        const isTicket = map.target === 'record' && r.defs.types.get(map.typeKey ?? '')?.kind === 'ticket';
+        if (!entity && !link && map.target !== 'task' && !isTicket) {
           const names = await matchable();
           const k = `${fold(String(vals.name ?? ''))}|${map.target === 'record' ? ((vals.account as string) ?? '') : ''}`;
           entity = names.get(k) ?? null;
           if (entity) names.delete(k);
+        }
+        // A support tool's organisation: also found by its web address.
+        if (!entity && !link && map.target === 'account') entity = await accountByDomain(q, r, row.values.__domains);
+        // A ticket with no organisation: the customer is found by the requester's email domain.
+        if (map.target === 'record' && !vals.account && row.values.__requesterDomain) {
+          const a = await accountByDomain(q, r, [row.values.__requesterDomain], true);
+          if (a) vals.account = a.id;
+        }
+        // Only what Tendwell already has: no new customers, no tickets without one.
+        if (map.linkOnly && !entity && (map.target === 'account' || (map.target === 'record' && !vals.account))) {
+          await q.query('release savepoint sync_row');
+          continue;
         }
         if ('parentRemote' in vals) {
           const remoteParent = vals.parentRemote as string | null;
@@ -648,6 +687,8 @@ async function applyPage(
         }
         const board = map.target === 'task' ? (r.defs.boards.get(map.boardId ?? '') ?? null) : null;
         let patch = diff(map, entity, vals, board);
+        // Link-only (support tools' organisations): the customer stays as it is here.
+        if (map.linkOnly && map.target === 'account' && entity) patch = {};
         // Same field changed here and there since the last run: the policy decides.
         const pend = entity ? pendingBy.get(entity.id) : null;
         if (pend) {
@@ -819,6 +860,11 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
 /** `freshOnly`: right after an edit, send only new changes; retries wait for a run that reads first. */
 async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
   const orgId = r.conn.orgId;
+  // A read-only source (support tools) never receives anything.
+  if (r.adapter.readOnly) {
+    await r.deps.db.system((q) => q.query('delete from sync_changes where org_id = $1 and connection_id = $2', [orgId, r.conn.id]));
+    return true;
+  }
   const due = await r.deps.db.system((q) =>
     q.query(`select * from sync_changes where org_id = $1 and connection_id = $2 and next_at <= $3 ${freshOnly ? 'and attempts = 0' : ''} order by changed_at limit 200`, [orgId, r.conn.id, r.ctx.now()]),
   );
@@ -1061,11 +1107,12 @@ const SUGGEST: Record<string, Record<string, string>> = {
   account: { name: 'name', account_name: 'name', company: 'name', firma: 'name', owner: 'owner', ownerid: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner', _ownerid_value: 'owner' },
   contact: { firstname: 'f:first_name', first_name: 'f:first_name', lastname: 'f:last_name', last_name: 'f:last_name', reportstoid: 'parent', reports_to: 'parent', linkedin: 'f:linkedin', linkedin_url: 'f:linkedin', hs_linkedin_url: 'f:linkedin', linkedin__c: 'f:linkedin', name: 'name', full_name: 'name', fullname: 'name', accountid: 'account', parentcustomerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', email: 'f:email', emailaddress1: 'f:email', phone: 'f:phone', telephone1: 'f:phone', title: 'f:title', jobtitle: 'f:title', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner' },
   opportunity: { name: 'name', dealname: 'name', deal_name: 'name', title: 'name', accountid: 'account', customerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', amount: 'f:amount', value: 'f:amount', estimatedvalue: 'f:amount', closedate: 'f:close_date', close_date: 'f:close_date', estimatedclosedate: 'f:close_date', expected_close_date: 'f:close_date', closing_date: 'f:close_date', stagename: 'f:stage', dealstage: 'f:stage', stage: 'f:stage', stage_id: 'f:stage', salesstage: 'f:stage', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', user_id: 'owner' },
+  ticket: { subject: 'name', title: 'name', status: 'f:status', statuscode: 'f:status', priority: 'f:priority', prioritycode: 'f:priority', opened: 'f:opened_at', createddate: 'f:opened_at', createdon: 'f:opened_at', solved: 'f:solved_at', closeddate: 'f:solved_at', requester: 'f:requester', suppliedemail: 'f:requester', contactemail: 'f:requester', emailaddress: 'f:requester', channel: 'f:channel', origin: 'f:channel', caseorigincode: 'f:channel', link: 'f:url', organization: 'account', accountid: 'account', customerid: 'account', assignee: 'owner', ownerid: 'owner' },
   task: { subject: 'title', hs_task_subject: 'title', title: 'title', whatid: 'account', what_id: 'account', regardingobjectid: 'account', org_id: 'account', __company: 'account', activitydate: 'due', due_date: 'due', scheduledend: 'due', hs_timestamp: 'due', description: 'description', hs_task_body: 'description', note: 'description', status: 'done', done: 'done', hs_task_status: 'done', statecode: 'done', ownerid: 'assignee', owner: 'assignee', hubspot_owner_id: 'assignee', user_id: 'assignee' },
 };
 
 /** First guess at how a CRM object's fields map onto Tendwell, by name. */
-export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'task' | 'custom', fields: RemoteField[], accountFields: AccountField[], typeFields: AccountField[]): FieldMap[] {
+export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | 'custom', fields: RemoteField[], accountFields: AccountField[], typeFields: AccountField[]): FieldMap[] {
   const table = SUGGEST[kind === 'custom' ? 'contact' : kind] ?? {};
   const out: FieldMap[] = [];
   const used = new Set<string>();
@@ -1089,6 +1136,7 @@ export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'tas
     if (!target && kind === 'account' && f.type === 'id') continue;
     if (!target || used.has(target)) continue;
     if (target === 'f:email' && kind !== 'contact') continue;
+    // Support tools only read: nothing is written back to them.
     used.add(target);
     out.push({ remote: f.name, local: target, dir: f.updatable ? 'both' : 'pull' });
   }

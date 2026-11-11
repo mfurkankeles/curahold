@@ -1,12 +1,12 @@
 // CRMs and spreadsheets: connect, choose what comes over, match fields and
 // people, preview, start — then watch the sync and fix what it reports.
 // Everything an administrator needs, without anyone writing a mapping file.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
-import type { FieldMap, ObjectMap, RemoteField, RemoteObject, SyncConfig, SyncPreview, SyncProblem, SyncRun, SyncStats } from '../../../shared/src/sync';
+import { KEY_FIELDS, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SupportProvider, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -17,6 +17,7 @@ import { Confirm, Dialog, RowMenu } from './ui';
 
 const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
 const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo'];
+const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'jsm'];
 
 function useErr() {
   const { t } = useI18n();
@@ -39,6 +40,7 @@ export function Sources() {
   const { data, reload } = useConnections();
   const onErr = useErr();
   const [asking, setAsking] = useState<ProviderInfo | null>(null);
+  const [keyed, setKeyed] = useState<ProviderInfo | null>(null);
   const { toast } = useStore();
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export function Sources() {
 
   if (!data) return <div className="muted">{t('common.loading')}</div>;
   const providers = data.providers.filter((p) => p.kind === 'source' && SOURCES.includes(p.id));
+  const support = data.providers.filter((p) => p.kind === 'source' && SUPPORT.includes(p.id));
   const mine = data.connections.filter((c) => c.kind === 'source');
 
   const connect = async (p: ProviderInfo) => {
@@ -64,6 +67,7 @@ export function Sources() {
       }
       return;
     }
+    if (p.setup === 'key') return setKeyed(p);
     if (p.id === 'dynamics' || p.id === 'salesforce') return setAsking(p);
     location.href = `/api/connect/${p.id}/start`;
   };
@@ -125,11 +129,111 @@ export function Sources() {
           </div>
         ))}
       </div>
+      <h3 className="section__head" style={{ marginTop: 22 }}>
+        {t('support.add')}
+      </h3>
+      <p className="field__hint">{t('support.addHint')}</p>
+      <div className="tiles">
+        {support.map((p) => (
+          <div className="tile" key={p.id} data-state="ready">
+            <div className="tile__head">
+              <span className="tile__badge" aria-hidden="true">
+                {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
+              </span>
+              <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+            </div>
+            <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
+            <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+              {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+            </button>
+          </div>
+        ))}
+        <div className="tile" data-state="ready">
+          <div className="tile__head">
+            <span className="tile__badge" aria-hidden="true">
+              {'{ }'}
+            </span>
+            <strong>{t('support.custom')}</strong>
+          </div>
+          <p className="field__hint tile__line">{t('support.customHint')}</p>
+          <a
+            className="btn btn--small"
+            href="/settings/developer"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/settings/developer');
+            }}
+          >
+            {t('support.customOpen')}
+          </a>
+        </div>
+      </div>
+      {keyed && <KeyConnect provider={keyed} onClose={() => setKeyed(null)} />}
       {asking && <BeforeSignIn provider={asking} onClose={() => setAsking(null)} />}
       <button className="sr-only" onClick={() => reload()}>
         {t('common.refresh')}
       </button>
     </div>
+  );
+}
+
+/** Support tools: the tool's address and an API key, checked right away. */
+function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: () => void }) {
+  const { t } = useI18n();
+  const onErr = useErr();
+  const spec = KEY_FIELDS[provider.id as SupportProvider] ?? [];
+  const [values, setValues] = useState<Record<string, string>>(provider.id === 'intercom' ? { region: 'us' } : {});
+  const [busy, setBusy] = useState(false);
+  const name = PROVIDER_NAMES[provider.id] ?? provider.id;
+  const ok = spec.every((f) => (values[f.key] ?? '').trim());
+  const go = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const r = await post<{ id: string }>('/connections/key', { provider: provider.id, values });
+      navigate(`/settings/sources/${r.id}`);
+    } catch (err) {
+      onErr(err);
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      title={t('conn.connect', { app: name })}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn btn--quiet" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button className="btn btn--primary" form="keyconnect" disabled={!ok || busy}>
+            {busy ? t('support.checking') : t('support.connect')}
+          </button>
+        </>
+      }
+    >
+      <form id="keyconnect" className="form" onSubmit={go}>
+        <p className="field__hint">{t(`support.how.${provider.id}` as MessageKey)}</p>
+        {spec.map((f) =>
+          f.key === 'region' ? (
+            <label className="field" key={f.key}>
+              <span className="field__label">{t('support.field.region')}</span>
+              <select className="select" value={values.region ?? 'us'} onChange={(e) => setValues({ ...values, region: e.target.value })}>
+                <option value="us">{t('support.region.us')}</option>
+                <option value="eu">{t('support.region.eu')}</option>
+                <option value="au">{t('support.region.au')}</option>
+              </select>
+            </label>
+          ) : (
+            <label className="field" key={f.key}>
+              <span className="field__label">{t(`support.field.${provider.id}.${f.key}` as MessageKey)}</span>
+              <input className="input" type={f.secret ? 'password' : 'text'} autoComplete="off" spellCheck={false} placeholder={f.placeholder} value={values[f.key] ?? ''} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
+            </label>
+          ),
+        )}
+        <p className="field__hint">{t('support.readOnly', { app: name })}</p>
+      </form>
+    </Dialog>
   );
 }
 
@@ -189,7 +293,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; label: string; status: string; tabular: boolean };
+  connection: { id: string; provider: string; label: string; status: string; tabular: boolean; readOnly?: boolean };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -199,7 +303,7 @@ interface Detail {
 
 /** What the administrator is choosing for one CRM object, before it is saved. */
 interface Draft extends ObjectMap {
-  kind?: 'contact' | 'opportunity' | 'custom';
+  kind?: 'contact' | 'opportunity' | 'ticket' | 'custom';
   custom: boolean;
   hint: RemoteObject['hint'];
   /** Loaded on demand for the fields step. */
@@ -450,7 +554,11 @@ function draftsFrom(d: Detail, objects: RemoteObject[]): Draft[] {
     const s = saved.find((x) => x.remote === o.name);
     if (s) return { ...s, custom: o.custom, hint: o.hint, kind: d.recordTypes.find((r) => r.key === s.typeKey)?.kind as Draft['kind'] };
     const base: Draft = { remote: o.name, label: o.labelPlural, target: 'record', enabled: false, create: false, fields: [], custom: o.custom, hint: o.hint };
-    if (o.hint === 'account') return { ...base, target: 'account', enabled: !saved.some((x) => x.target === 'account' && x.enabled) };
+    if (o.hint === 'account') return { ...base, target: 'account', enabled: !saved.some((x) => x.target === 'account' && x.enabled), ...(d.connection.readOnly ? { linkOnly: true } : {}) };
+    if (o.hint === 'ticket') {
+      const key = hasType('ticket');
+      return { ...base, target: 'record', kind: 'ticket', typeKey: key ?? '__new', enabled: true, ...(d.connection.readOnly ? { linkOnly: true } : {}) };
+    }
     if (o.hint === 'contact' || o.hint === 'opportunity') {
       const key = hasType(o.hint);
       return { ...base, target: 'record', kind: o.hint, typeKey: key ?? '__new', enabled: true };
@@ -510,6 +618,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
                     </option>
                     <option value={d.recordTypes.find((r) => r.kind === 'contact') ? `record:${d.recordTypes.find((r) => r.kind === 'contact')!.key}` : 'new:contact'}>{t('records.kind.contact')}</option>
                     <option value={d.recordTypes.find((r) => r.kind === 'opportunity') ? `record:${d.recordTypes.find((r) => r.kind === 'opportunity')!.key}` : 'new:opportunity'}>{t('records.kind.opportunity')}</option>
+                    <option value={d.recordTypes.find((r) => r.kind === 'ticket') ? `record:${d.recordTypes.find((r) => r.kind === 'ticket')!.key}` : 'new:ticket'}>{t('records.kind.ticket')}</option>
                     {customTypes.map((r) => (
                       <option key={r.key} value={`record:${r.key}`}>
                         {typeLabel(r as any, locale)}
@@ -531,10 +640,18 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
                     </select>
                   </label>
                 )}
-                <label className="checkbox object-row__create">
-                  <input type="checkbox" checked={o.create} onChange={(e) => setDrafts(drafts.map((x, j) => (j === i ? { ...x, create: e.target.checked } : x)))} />
-                  <span>{t('sync.objects.create', { crm })}</span>
-                </label>
+                {!d.connection.readOnly && (
+                  <label className="checkbox object-row__create">
+                    <input type="checkbox" checked={o.create} onChange={(e) => setDrafts(drafts.map((x, j) => (j === i ? { ...x, create: e.target.checked } : x)))} />
+                    <span>{t('sync.objects.create', { crm })}</span>
+                  </label>
+                )}
+                {(o.target === 'account' || o.kind === 'ticket') && (
+                  <label className="checkbox object-row__create">
+                    <input type="checkbox" checked={!!o.linkOnly} onChange={(e) => setDrafts(drafts.map((x, j) => (j === i ? { ...x, linkOnly: e.target.checked } : x)))} />
+                    <span>{o.target === 'account' ? t('sync.objects.linkOnly', { accounts: words.other }) : t('sync.objects.linkOnlyTickets', { account: words.one })}</span>
+                  </label>
+                )}
               </div>
             )}
           </li>
@@ -551,7 +668,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
   );
 }
 
-const KIND_OF = (o: Draft): 'account' | 'contact' | 'opportunity' | 'task' | 'custom' => (o.target === 'account' ? 'account' : o.target === 'task' ? 'task' : (o.kind ?? 'custom'));
+const KIND_OF = (o: Draft): 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | 'custom' => (o.target === 'account' ? 'account' : o.target === 'task' ? 'task' : (o.kind ?? 'custom'));
 
 function localChoices(o: Draft, d: Detail, accountFields: AccountField[], t: (k: MessageKey, v?: any) => string, accountWord: string, locale: 'en' | 'tr') {
   const out: { value: string; label: string; types?: RemoteField['type'][] }[] = [];
@@ -565,7 +682,7 @@ function localChoices(o: Draft, d: Detail, accountFields: AccountField[], t: (k:
   const fields =
     o.target === 'account'
       ? accountFields
-      : (d.recordTypes.find((r) => r.key === o.typeKey)?.fields ?? (o.kind === 'contact' || o.kind === 'opportunity' ? BUILTIN_TYPES[o.kind].fields : []));
+      : (d.recordTypes.find((r) => r.key === o.typeKey)?.fields ?? (o.kind === 'contact' || o.kind === 'opportunity' || o.kind === 'ticket' ? BUILTIN_TYPES[o.kind].fields : []));
   for (const f of fields) if (!f.rollup) out.push({ value: `f:${f.key}`, label: labelOf(f.label, locale) });
   out.push({ value: 'new', label: t('sync.local.new') });
   return out;

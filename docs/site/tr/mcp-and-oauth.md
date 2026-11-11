@@ -1,7 +1,7 @@
 ---
 title: AI bağlayıcısı (MCP) ve OAuth
 section: developers
-order: 5
+order: 6
 summary: MCP sunucusu, araçlar, OAuth 2.1 akışı ve kendi uygulaman için bağlantı.
 ---
 # AI bağlayıcısı (MCP) ve OAuth

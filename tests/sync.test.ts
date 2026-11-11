@@ -148,7 +148,9 @@ describe('two-way sync with a CRM', () => {
   let demoId: string;
   it('is offered only where configured, and needs the connections permission', async () => {
     const list = (await ada.get('/api/connections')).json;
-    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo']);
+    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm']);
+    // Support tools need nothing on the server: the administrator brings a key.
+    expect(list.providers.filter((p: any) => p.setup === 'key').every((p: any) => p.available && !p.twoWay)).toBe(true);
     expect(list.providers.find((p: any) => p.id === 'salesforce').available).toBe(false);
     expect(list.providers.find((p: any) => p.id === 'gsheets').available).toBe(true);
     expect((await mert.post('/api/connections/demo')).status).toBe(403);

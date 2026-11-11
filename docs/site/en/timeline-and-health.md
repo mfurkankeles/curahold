@@ -29,6 +29,7 @@ Switch it on in Settings → Health score. It is a number from 0 to 100 for ever
 | --- | --- | --- |
 | Recent touch | Last call, meeting, email or note within 14 days | 45 days or older |
 | Overdue work | No overdue tasks | 3 or more overdue tasks |
+| Support load | No open support tickets | 5 open tickets (an urgent one counts twice) |
 | A champion | At least one "Champion" contact | None |
 | Decision maker known | At least one "Decision maker" contact | None |
 | No blockers | No blockers or skeptics | A blocker |

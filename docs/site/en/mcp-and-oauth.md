@@ -1,7 +1,7 @@
 ---
 title: AI connector (MCP) and OAuth
 section: developers
-order: 5
+order: 6
 summary: The MCP server, its tools, the OAuth 2.1 flow and connecting your own app.
 ---
 # AI connector (MCP) and OAuth

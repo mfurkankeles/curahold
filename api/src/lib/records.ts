@@ -1,6 +1,7 @@
 // Shared plumbing for accounts, records and tasks that may live in a CRM
 // too: queueing local changes for the sync, and keeping rolled-up account
 // fields ("open pipeline", "next close date") in step with the records.
+import { SUPPORT_PROVIDERS } from '../../../shared/src/sync';
 import type { AccountField } from '../../../shared/src/model';
 import type { TargetKind } from '../../../shared/src/sync';
 import { defer, type Deps } from '../context';
@@ -13,6 +14,9 @@ import type { Q } from '../db';
  * Runs inside the caller's transaction, so nothing is queued for a change
  * that does not commit.
  */
+/** Sources that receive changes (support tools only read). */
+const WRITABLE = `c.provider not in (${SUPPORT_PROVIDERS.map((p) => `'${p}'`).join(', ')})`;
+
 export async function queueSync(
   q: Q,
   orgId: string,
@@ -31,7 +35,7 @@ export async function queueSync(
      select $1, l.connection_id, $2, l.entity_id, $4::text[]
        from sync_links l join connections c on c.id = l.connection_id
       where l.org_id = $1 and l.entity = $2 and l.entity_id = any($3::uuid[]) and not l.ignored
-        and c.status = 'active' and c.kind = 'source' and c.config->'sync'->>'startedAt' is not null
+        and c.status = 'active' and c.kind = 'source' and c.config->'sync'->>'startedAt' is not null and ${WRITABLE}
      ${merge} returning id`,
     [orgId, entity, ids, fields],
   );
@@ -41,7 +45,7 @@ export async function queueSync(
       `insert into sync_changes (org_id, connection_id, entity, entity_id, fields)
        select $1, c.id, $2, i.id, null
          from connections c cross join unnest($3::uuid[]) as i(id)
-        where c.org_id = $1 and c.status = 'active' and c.kind = 'source' and c.config->'sync'->>'startedAt' is not null
+        where c.org_id = $1 and c.status = 'active' and c.kind = 'source' and c.config->'sync'->>'startedAt' is not null and ${WRITABLE}
           and exists (select 1 from jsonb_array_elements(coalesce(c.config->'sync'->'objects', '[]'::jsonb)) o
                        where o->>'target' = $2 and (o->>'enabled')::boolean and (o->>'create')::boolean
                          and ($2 <> 'record' or o->>'typeKey' = $4)

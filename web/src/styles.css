@@ -1069,3 +1069,7 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .tl__text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .tl__with { margin: 4px 0 0; font-size: 12.5px; }
 .tl__quote { margin: 2px 0 0; color: var(--ink-3); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tl__item[data-kind='ticket_opened'] .tl__icon { background: #fbefd8; color: #8a5a10; font-weight: 700; }
+.tl__item[data-urgent='true'] .tl__icon { background: #f6e1dc; color: var(--late); }
+.tl__item[data-kind='ticket_solved'] .tl__icon { background: #e3f0dc; color: var(--done); }
+.example { margin: 8px 0 0; padding: 10px 12px; background: #0f3437; color: #e6f2ef; border-radius: var(--r-m); font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
