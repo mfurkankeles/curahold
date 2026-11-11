@@ -1,0 +1,354 @@
+import { Hono } from 'hono';
+import { z } from 'zod';
+import { MAX_FILE_MB, MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
+import { requireWriter, run, type AppEnv } from '../context';
+import type { Q, Row } from '../db';
+import { audit } from '../lib/audit';
+import { fail, HttpError } from '../lib/errors';
+import { toComment, toFile, toTask } from '../lib/mappers';
+import { body, isoDate, param, uuid } from '../lib/validate';
+import { loadBoard } from './boards';
+
+export const taskRoutes = new Hono<AppEnv>();
+
+const COUNTS = `
+  (select count(*) from tasks s where s.parent_id = t.id and s.archived_at is null) as subtask_count,
+  (select count(*) from tasks s join boards b on b.id = s.board_id
+     where s.parent_id = t.id and s.archived_at is null
+       and exists (select 1 from jsonb_array_elements(b.columns) col
+                   where col->>'key' = s.status and (col->>'done')::boolean)) as subtask_done,
+  (select count(*) from comments cm where cm.task_id = t.id) as comment_count`;
+
+async function loadTask(q: Q, id: string): Promise<Row> {
+  const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
+  if (!t) fail('not_found');
+  return t;
+}
+
+async function checkAssignees(q: Q, ids: string[]) {
+  if (!ids.length) return;
+  const rows = await q.query(
+    `select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`,
+    [ids],
+  );
+  if (rows.length !== new Set(ids).size) fail('bad_assignee');
+}
+
+function checkStatus(columns: Column[], status: string) {
+  if (!columns.some((c) => c.key === status)) fail('bad_status');
+}
+
+taskRoutes.get('/boards/:id/tasks', async (c) => {
+  const id = param(c, 'id');
+  const rows = await run(c, async (q) => {
+    await loadBoard(q, id);
+    return q.query(
+      `select t.*, ${COUNTS} from tasks t
+        where t.board_id = $1 and t.parent_id is null and t.archived_at is null
+        order by t.position, t.created_at`,
+      [id],
+    );
+  });
+  return c.json({ tasks: rows.map(toTask) });
+});
+
+// Across every board the person can see: "My tasks" and the calendar.
+taskRoutes.get('/tasks', async (c) => {
+  const auth = c.get('auth');
+  const mine = c.req.query('assignee') === 'me';
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  if ((from && !isoDate.safeParse(from).success) || (to && !isoDate.safeParse(to).success)) {
+    fail('validation', { fields: 'from, to' });
+  }
+  const rows = await run(c, (q) =>
+    q.query(
+      `select t.*, ${COUNTS} from tasks t join boards b on b.id = t.board_id
+        where t.archived_at is null and b.archived_at is null
+          and ($1::uuid is null or $1::uuid = any(t.assignee_ids))
+          and ($2::date is null or t.due_date >= $2::date)
+          and ($3::date is null or t.due_date <= $3::date)
+        order by t.due_date nulls last, t.position
+        limit 2000`,
+      [mine ? auth.userId : null, from ?? null, to ?? null],
+    ),
+  );
+  return c.json({ tasks: rows.map(toTask) });
+});
+
+const fields = {
+  title: z.string().trim().min(1).max(300),
+  description: z.string().max(20000),
+  status: z.string().max(24),
+  assigneeIds: z.array(uuid).max(10),
+  partnerName: z.string().trim().max(200).nullable(),
+  dueDate: isoDate.nullable(),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']),
+  position: z.number().finite(),
+};
+
+taskRoutes.post('/tasks', async (c) => {
+  requireWriter(c);
+  const input = await body(
+    c,
+    z.object({
+      boardId: uuid,
+      parentId: uuid.nullable().optional(),
+      title: fields.title,
+      description: fields.description.optional(),
+      status: fields.status.optional(),
+      assigneeIds: fields.assigneeIds.optional(),
+      partnerName: fields.partnerName.optional(),
+      dueDate: fields.dueDate.optional(),
+      priority: fields.priority.optional(),
+      position: fields.position.optional(),
+    }),
+  );
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const task = await run(c, async (q) => {
+    const board = await loadBoard(q, input.boardId);
+    const columns = board.columns as Column[];
+    const status = input.status ?? columns[0].key;
+    checkStatus(columns, status);
+    if (input.parentId) {
+      const parent = await loadTask(q, input.parentId);
+      if (parent.board_id !== input.boardId || parent.parent_id) fail('validation', { fields: 'parentId' });
+    }
+    await checkAssignees(q, input.assigneeIds ?? []);
+    let position = input.position;
+    if (position === undefined) {
+      const [m] = await q.query(
+        'select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2',
+        [input.boardId, status],
+      );
+      position = Number(m.p);
+    }
+    const [t] = await q.query(
+      `insert into tasks (org_id, board_id, parent_id, title, description, status, assignee_ids,
+                          partner_name, due_date, priority, position, created_by, updated_by)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) returning *`,
+      [
+        org.id,
+        input.boardId,
+        input.parentId ?? null,
+        input.title,
+        input.description ?? '',
+        status,
+        [...new Set(input.assigneeIds ?? [])],
+        input.partnerName || null,
+        input.dueDate ?? null,
+        input.priority ?? 'normal',
+        position,
+        auth.userId,
+      ],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.created', entity: 'task', entityId: t.id });
+    return t;
+  });
+  return c.json({ task: toTask(task) }, 201);
+});
+
+taskRoutes.get('/tasks/:id', async (c) => {
+  const id = param(c, 'id');
+  const detail = await run(c, async (q) => {
+    const t = await loadTask(q, id);
+    const [counted] = await q.query(`select t.*, ${COUNTS} from tasks t where t.id = $1`, [id]);
+    const subtasks = await q.query(
+      'select * from tasks where parent_id = $1 and archived_at is null order by position, created_at',
+      [id],
+    );
+    const comments = await q.query('select * from comments where task_id = $1 order by created_at', [id]);
+    const files = await q.query('select * from files where task_id = $1 order by created_at', [id]);
+    return { t: counted ?? t, subtasks, comments, files };
+  });
+  const out: TaskDetail = {
+    ...toTask(detail.t),
+    subtasks: detail.subtasks.map(toTask),
+    comments: detail.comments.map(toComment),
+    files: detail.files.map(toFile),
+  };
+  return c.json({ task: out });
+});
+
+const patchSchema = z.object({
+  baseVersion: z.number().int().min(1),
+  title: fields.title.optional(),
+  description: fields.description.optional(),
+  status: fields.status.optional(),
+  assigneeIds: fields.assigneeIds.optional(),
+  partnerName: fields.partnerName.optional(),
+  dueDate: fields.dueDate.optional(),
+  priority: fields.priority.optional(),
+  position: fields.position.optional(),
+});
+
+// Optimistic concurrency: the write only lands if nobody saved the task
+// since the version the editor started from. Otherwise 409 with the
+// current task, and the app merges the person's changes on top of it
+// (shared/src/merge.ts) instead of silently overwriting someone else.
+taskRoutes.patch('/tasks/:id', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, patchSchema);
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const result = await run(c, async (q) => {
+    const t = await loadTask(q, id);
+    if (t.version !== input.baseVersion) return { conflict: t };
+    const board = await loadBoard(q, t.board_id);
+    if (input.status !== undefined) checkStatus(board.columns, input.status);
+    if (input.assigneeIds !== undefined) await checkAssignees(q, input.assigneeIds);
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    const set = (col: string, v: unknown) => {
+      vals.push(v);
+      sets.push(`${col} = $${vals.length}`);
+    };
+    if (input.title !== undefined) set('title', input.title);
+    if (input.description !== undefined) set('description', input.description);
+    if (input.status !== undefined) set('status', input.status);
+    if (input.assigneeIds !== undefined) set('assignee_ids', [...new Set(input.assigneeIds)]);
+    if (input.partnerName !== undefined) set('partner_name', input.partnerName || null);
+    if (input.dueDate !== undefined) set('due_date', input.dueDate);
+    if (input.priority !== undefined) set('priority', input.priority);
+    if (input.position !== undefined) set('position', input.position);
+    set('updated_by', auth.userId);
+    vals.push(id, input.baseVersion);
+    const [u] = await q.query(
+      `update tasks set ${sets.join(', ')}, version = version + 1, updated_at = now()
+        where id = $${vals.length - 1} and version = $${vals.length} returning *`,
+      vals,
+    );
+    if (!u) return { conflict: await loadTask(q, id) };
+    const changed = Object.keys(input).filter((k) => k !== 'baseVersion' && k !== 'position');
+    if (changed.length) {
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.updated', entity: 'task', entityId: id, meta: { fields: changed } });
+    }
+    return { task: u };
+  });
+  if ('conflict' in result) throw new HttpError('conflict', {}, { current: toTask(result.conflict!) });
+  return c.json({ task: toTask(result.task) });
+});
+
+taskRoutes.delete('/tasks/:id', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const keys = await run(c, async (q) => {
+    const t = await loadTask(q, id);
+    if (t.created_by !== auth.userId && !auth.perms.includes('tasks.delete_any')) fail('forbidden');
+    const files = await q.query<{ storage_key: string }>(
+      'select storage_key from files where task_id = $1 or task_id in (select id from tasks where parent_id = $1)',
+      [id],
+    );
+    await q.query('delete from tasks where id = $1', [id]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.deleted', entity: 'task', entityId: id, meta: { title: t.title } });
+    return files.map((f) => f.storage_key);
+  });
+  const storage = c.get('deps').storage;
+  for (const k of keys) await storage.delete(k);
+  return c.json({ ok: true });
+});
+
+// ----------------------------------------------------------------- comments
+
+taskRoutes.post('/tasks/:id/comments', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ body: z.string().trim().min(1).max(10000) }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const comment = await run(c, async (q) => {
+    await loadTask(q, id);
+    const mentioned = [...new Set([...input.body.matchAll(MENTION_RE)].map((m) => m[2]))];
+    const valid = mentioned.length
+      ? (await q.query<{ id: string }>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [mentioned])).map(
+          (r) => r.id,
+        )
+      : [];
+    const [cm] = await q.query(
+      `insert into comments (org_id, task_id, author_id, body, mentions) values ($1, $2, $3, $4, $5) returning *`,
+      [org.id, id, auth.userId, input.body, valid],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'comment.created', entity: 'comment', entityId: cm.id });
+    return cm;
+  });
+  return c.json({ comment: toComment(comment) }, 201);
+});
+
+taskRoutes.delete('/comments/:id', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const n = await run(c, async (q) => {
+    const rows = await q.query('delete from comments where id = $1 returning id', [id]);
+    if (rows.length) await audit(q, { orgId: org.id, actorId: auth.userId, action: 'comment.deleted', entity: 'comment', entityId: id });
+    return rows.length;
+  });
+  if (!n) fail('not_found');
+  return c.json({ ok: true });
+});
+
+// -------------------------------------------------------------------- files
+
+taskRoutes.post('/tasks/:id/files', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const deps = c.get('deps');
+  const limit = MAX_FILE_MB * 1024 * 1024;
+  if (Number(c.req.header('content-length') ?? 0) > limit + 64 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });
+  const form = await c.req.parseBody();
+  const file = form.file;
+  if (!(file instanceof File)) fail('validation', { fields: 'file' });
+  const f = file as File;
+  if (f.size > limit) fail('file_too_large', { mb: MAX_FILE_MB });
+  const name = f.name.replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 200) || 'file';
+  const key = `${org.id}/${id}/${crypto.randomUUID()}`;
+  const row = await run(c, async (q) => {
+    await loadTask(q, id);
+    await deps.storage.put(key, await f.arrayBuffer(), f.type || 'application/octet-stream');
+    const [r] = await q.query(
+      `insert into files (org_id, task_id, name, size, mime, storage_key, uploaded_by)
+       values ($1, $2, $3, $4, $5, $6, $7) returning *`,
+      [org.id, id, name, f.size, f.type || 'application/octet-stream', key, auth.userId],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: r.id, meta: { name } });
+    return r;
+  });
+  return c.json({ file: toFile(row) }, 201);
+});
+
+taskRoutes.get('/files/:id', async (c) => {
+  const id = param(c, 'id');
+  const row = await run(c, async (q) => {
+    const [r] = await q.query('select * from files where id = $1', [id]);
+    if (!r) fail('not_found');
+    return r;
+  });
+  const obj = await c.get('deps').storage.get(row.storage_key);
+  if (!obj) fail('not_found');
+  return c.body(obj!.data, 200, {
+    'content-type': row.mime,
+    'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.name)}`,
+    'cache-control': 'private, no-store',
+    'x-content-type-options': 'nosniff',
+  });
+});
+
+taskRoutes.delete('/files/:id', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const key = await run(c, async (q) => {
+    const rows = await q.query<{ storage_key: string }>('delete from files where id = $1 returning storage_key', [id]);
+    if (!rows.length) fail('not_found');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.deleted', entity: 'file', entityId: id });
+    return rows[0].storage_key;
+  });
+  await c.get('deps').storage.delete(key);
+  return c.json({ ok: true });
+});

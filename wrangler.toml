@@ -1,0 +1,36 @@
+# Cloudflare Workers deployment. Values in <> are filled in at first deploy;
+# secrets are set with `wrangler secret put NAME` and never committed.
+name = "tendwell"
+main = "api/src/worker.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Every company lives at <slug>.tendwell.com; app.tendwell.com receives
+# Google / Microsoft sign-in callbacks.
+routes = [
+  { pattern = "*.tendwell.com/*", zone_name = "tendwell.com" },
+]
+
+[assets]
+directory = "dist/web"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[vars]
+BASE_DOMAIN = "tendwell.com"
+CENTRAL_HOST = "app.tendwell.com"
+EMAIL_FROM = "Tendwell <no-reply@tendwell.com>"
+MAX_DEVICES = "2"
+
+# Supabase Postgres (EU region) through Hyperdrive.
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "<hyperdrive-config-id>"
+
+# Task attachments.
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "tendwell-files"
+
+# Secrets: AUTH_SECRET, RESEND_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+# MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET
