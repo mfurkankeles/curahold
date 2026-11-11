@@ -41,8 +41,9 @@ export async function onComment(q: Q, orgId: string, actorId: string, task: Row,
   const excerpt = body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 280);
   const mentioned = new Set(mentions);
   const list: NewNotification[] = [...mentioned].map((u) => ({ orgId, userId: u, kind: 'mentioned', taskId: task.id, actorId, data: { excerpt } }));
+  const [{ muted }] = await q.query<{ muted: string[] }>('select app_task_muted($1) as muted', [task.id]);
   for (const u of (task.assignee_ids ?? []) as string[]) {
-    if (!mentioned.has(u)) list.push({ orgId, userId: u, kind: 'comment', taskId: task.id, actorId, data: { excerpt } });
+    if (!mentioned.has(u) && !(muted ?? []).includes(u)) list.push({ orgId, userId: u, kind: 'comment', taskId: task.id, actorId, data: { excerpt } });
   }
   await enqueue(q, list);
 }

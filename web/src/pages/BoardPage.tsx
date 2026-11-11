@@ -11,7 +11,8 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import type { Board, Column, Task } from '../../../shared/src/model';
+import { PRIORITIES, type Board, type Column, type Repeat, type Task } from '../../../shared/src/model';
+import { ExportMenu } from '../components/Export';
 import { BoardSettings } from '../components/BoardSettings';
 import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
@@ -21,14 +22,23 @@ import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list'; refreshKey: number }) {
-  const { t } = useI18n();
-  const { boards, me, canWrite, toast } = useStore();
+  const { t, words } = useI18n();
+  const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [mine, setMine] = useState(false);
   const [search, setSearch] = useState('');
   const [settings, setSettings] = useState(false);
   const [composing, setComposing] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  useEffect(() => setSelected(new Set()), [boardId, view]);
+  // "New task" from the search box lands here with ?new=1.
+  useEffect(() => {
+    if (board && canWrite && new URLSearchParams(location.search).get('new') === '1') {
+      setComposing(board.columns[0].key);
+      setQuery('new', null);
+    }
+  }, [board, canWrite]);
 
   const load = useCallback(async () => {
     try {
@@ -110,6 +120,24 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
               {t('board.view.list')}
             </button>
           </div>
+          {view === 'list' && (
+            <ExportMenu
+              disabled={!visible.length}
+              make={() => ({
+                name: board.name,
+                headers: [t('task.title'), t('task.status'), words.one, t('task.due'), t('task.assignees'), t('task.priority'), t('task.repeat')],
+                rows: visible.map((x) => [
+                  x.title,
+                  board.columns.find((col) => col.key === x.status)?.name ?? x.status,
+                  x.accountName ?? '',
+                  x.dueDate ?? '',
+                  x.assigneeIds.map((id) => person(id)?.name ?? '').filter(Boolean).join(', '),
+                  t(`task.priority.${x.priority}`),
+                  x.repeat ? repeatText(t, x.repeat) : '',
+                ]),
+              })}
+            />
+          )}
           {board.canManage && (
             <button className="btn" onClick={() => setSettings(true)}>
               {t('board.settings')}
@@ -126,7 +154,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <div className="empty">{t('common.loading')}</div>
       ) : view === 'list' ? (
         <div className="page">
-          <ListView board={board} tasks={visible} isDone={(x) => doneKeys.has(x.status)} />
+          {canWrite && selected.size > 0 && <BulkBar board={board} ids={[...selected]} onDone={() => { setSelected(new Set()); void load(); }} />}
+          <ListView board={board} tasks={visible} isDone={(x) => doneKeys.has(x.status)} selected={canWrite ? selected : undefined} onSelect={setSelected} />
           {composing && <QuickAdd board={board} status={composing} onDone={(tk) => { if (tk) setTasks((l) => [...(l ?? []), tk]); setComposing(null); }} />}
         </div>
       ) : (
@@ -280,7 +309,21 @@ function QuickAdd({ board, status, onDone }: { board: Board; status: string; onD
   );
 }
 
-export function ListView({ board, tasks, isDone, showBoard }: { board?: Board; tasks: Task[]; isDone: (t: Task) => boolean; showBoard?: (t: Task) => string }) {
+export function ListView({
+  board,
+  tasks,
+  isDone,
+  showBoard,
+  selected,
+  onSelect,
+}: {
+  board?: Board;
+  tasks: Task[];
+  isDone: (t: Task) => boolean;
+  showBoard?: (t: Task) => string;
+  selected?: Set<string>;
+  onSelect?: (s: Set<string>) => void;
+}) {
   const { t, words } = useI18n();
   const { person, boards } = useStore();
   const colName = (task: Task) => (board ?? boards.find((b) => b.id === task.boardId))?.columns.find((c) => c.key === task.status)?.name ?? task.status;
@@ -290,6 +333,11 @@ export function ListView({ board, tasks, isDone, showBoard }: { board?: Board; t
       <thead>
         <tr>
           <th className="rail-cell" aria-hidden="true" />
+          {selected && onSelect && (
+            <th className="check-cell">
+              <input type="checkbox" aria-label={t('board.selectAll')} checked={tasks.length > 0 && tasks.every((x) => selected.has(x.id))} onChange={(e) => onSelect(e.target.checked ? new Set(tasks.map((x) => x.id)) : new Set())} />
+            </th>
+          )}
           <th>{t('task.title')}</th>
           {showBoard && <th className="hide-phone">{t('task.board')}</th>}
           <th>{t('task.status')}</th>
@@ -306,10 +354,26 @@ export function ListView({ board, tasks, isDone, showBoard }: { board?: Board; t
               <td className="rail-cell">
                 <span />
               </td>
+              {selected && onSelect && (
+                <td className="check-cell">
+                  <input
+                    type="checkbox"
+                    aria-label={t('board.select', { title: x.title })}
+                    checked={selected.has(x.id)}
+                    onChange={(e) => {
+                      const next = new Set(selected);
+                      if (e.target.checked) next.add(x.id);
+                      else next.delete(x.id);
+                      onSelect(next);
+                    }}
+                  />
+                </td>
+              )}
               <td>
                 <button className="rowlink" onClick={() => setQuery('task', x.id)}>
                   {x.title}
                 </button>
+                {x.repeat && <span className="repeat-mark" title={repeatText(t, x.repeat)} aria-label={repeatText(t, x.repeat)}>↻</span>}
               </td>
               {showBoard && <td className="hide-phone muted">{showBoard(x)}</td>}
               <td>{colName(x)}</td>
@@ -325,5 +389,60 @@ export function ListView({ board, tasks, isDone, showBoard }: { board?: Board; t
         })}
       </tbody>
     </table>
+  );
+}
+
+/** "Every 2 weeks" in words. */
+export function repeatText(t: (k: any, v?: any) => string, r: Repeat) {
+  return t(`repeat.${r.unit}${r.every === 1 ? '1' : 'N'}`, { n: r.every }) + (r.from === 'done' ? ` ${t('repeat.afterDone')}` : '');
+}
+
+/** Change the chosen tasks at once: column, a person, due date, priority, archive — with undo. */
+function BulkBar({ board, ids, onDone }: { board: Board; ids: string[]; onDone: () => void }) {
+  const { t } = useI18n();
+  const { people, toast } = useStore();
+  const [busy, setBusy] = useState(false);
+  const apply = async (change: Record<string, unknown>, msg: string) => {
+    setBusy(true);
+    try {
+      const r = await post<{ updated: number; undoId: string | null }>('/tasks/bulk', { ids, ...change });
+      toast(t(msg as any, { n: r.updated }), 'info', r.undoId ? { label: t('undo.button'), run: async () => { await post(`/undo/${r.undoId}`); toast(t('undo.done')); onDone(); } } : undefined);
+      onDone();
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const active = people.filter((p) => p.status === 'active' && p.seat === 'full');
+  return (
+    <div className="bulkbar" role="region" aria-label={t('board.bulk')}>
+      <strong>{t('board.selected', { n: ids.length })}</strong>
+      <select className="select" disabled={busy} value="" aria-label={t('board.bulk.move')} onChange={(e) => e.target.value && apply({ status: e.target.value }, 'board.bulk.moved')}>
+        <option value="">{t('board.bulk.move')}</option>
+        {board.columns.map((c) => (
+          <option key={c.key} value={c.key}>{c.name}</option>
+        ))}
+      </select>
+      <select className="select" disabled={busy} value="" aria-label={t('board.bulk.assign')} onChange={(e) => e.target.value && apply({ addAssignee: e.target.value }, 'board.bulk.changed')}>
+        <option value="">{t('board.bulk.assign')}</option>
+        {active.map((p) => (
+          <option key={p.id} value={p.id}>{p.name}</option>
+        ))}
+      </select>
+      <label className="bulkbar__date">
+        <span>{t('board.bulk.due')}</span>
+        <input className="input" type="date" disabled={busy} onChange={(e) => e.target.value && apply({ dueDate: e.target.value }, 'board.bulk.changed')} />
+      </label>
+      <select className="select" disabled={busy} value="" aria-label={t('task.priority')} onChange={(e) => e.target.value && apply({ priority: e.target.value }, 'board.bulk.changed')}>
+        <option value="">{t('task.priority')}</option>
+        {PRIORITIES.map((p) => (
+          <option key={p} value={p}>{t(`task.priority.${p}`)}</option>
+        ))}
+      </select>
+      <button className="btn btn--small btn--quiet" disabled={busy} onClick={() => apply({ archived: true }, 'board.bulk.archived')}>
+        {t('board.bulk.archive')}
+      </button>
+    </div>
   );
 }

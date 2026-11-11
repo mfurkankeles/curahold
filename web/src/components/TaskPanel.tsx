@@ -2,7 +2,8 @@
 // is shareable. Edits save field by field and are merged, never overwritten,
 // when someone else saved first.
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { MAX_FILE_MB, MENTION_RE, PRIORITIES, type Comment, type Person, type Task, type TaskDetail } from '../../../shared/src/model';
+import { MAX_FILE_MB, MENTION_RE, PRIORITIES, type Comment, type Person, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
+import { repeatText } from '../pages/BoardPage';
 import { ApiFailure, api, del, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
@@ -115,6 +116,24 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               </select>
               <span className="props__label">{words.one}</span>
               <AccountPicker value={task.accountId} name={task.accountName} disabled={!editable} onChange={(accountId) => save({ accountId })} />
+              {!task.parentId && (
+                <>
+                  <span className="props__label">{t('task.repeat')}</span>
+                  <RepeatPicker value={task.repeat ?? null} disabled={!editable} onChange={(repeat) => save({ repeat })} />
+                </>
+              )}
+            </div>
+            <div className="mute-row">
+              <button
+                className="linkbtn"
+                onClick={async () => {
+                  await post(`/tasks/${task.id}/mute`, { muted: !task.muted });
+                  await load();
+                }}
+              >
+                {task.muted ? t('task.unmute') : t('task.mute')}
+              </button>
+              <span className="field__hint">{task.muted ? t('task.mutedHint') : t('task.muteHint')}</span>
             </div>
 
             <Section title={t('task.description')}>
@@ -412,5 +431,48 @@ function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: stri
         {t('task.send')}
       </button>
     </form>
+  );
+}
+
+const REPEATS: { key: string; value: Repeat | null }[] = [
+  { key: 'none', value: null },
+  { key: 'day1', value: { every: 1, unit: 'day', from: 'due' } },
+  { key: 'week1', value: { every: 1, unit: 'week', from: 'due' } },
+  { key: 'week2', value: { every: 2, unit: 'week', from: 'due' } },
+  { key: 'month1', value: { every: 1, unit: 'month', from: 'due' } },
+  { key: 'month3', value: { every: 3, unit: 'month', from: 'due' } },
+  { key: 'month12', value: { every: 12, unit: 'month', from: 'due' } },
+];
+
+/** Repeat: none, daily, weekly… and whether the next one counts from the due date or from when it was done. */
+function RepeatPicker({ value, disabled, onChange }: { value: Repeat | null; disabled: boolean; onChange: (r: Repeat | null) => void }) {
+  const { t } = useI18n();
+  const current = value ? (REPEATS.find((r) => r.value && r.value.every === value.every && r.value.unit === value.unit)?.key ?? 'custom') : 'none';
+  return (
+    <div className="repeat-picker">
+      <select
+        className="select"
+        value={current}
+        disabled={disabled}
+        aria-label={t('task.repeat')}
+        onChange={(e) => {
+          const pick = REPEATS.find((r) => r.key === e.target.value);
+          if (pick) onChange(pick.value ? { ...pick.value, from: value?.from ?? 'due' } : null);
+        }}
+      >
+        {REPEATS.map((r) => (
+          <option key={r.key} value={r.key}>
+            {t(`repeat.pick.${r.key}` as any)}
+          </option>
+        ))}
+        {current === 'custom' && value && <option value="custom">{repeatText(t, value)}</option>}
+      </select>
+      {value && (
+        <label className="checkbox repeat-picker__from">
+          <input type="checkbox" checked={value.from === 'done'} disabled={disabled} onChange={(e) => onChange({ ...value, from: e.target.checked ? 'done' : 'due' })} />
+          <span>{t('repeat.fromDone')}</span>
+        </label>
+      )}
+    </div>
   );
 }

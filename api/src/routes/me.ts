@@ -76,6 +76,7 @@ meRoutes.patch('/me', async (c) => {
           events: z.partialRecord(z.enum(NOTIFY_EVENTS), z.boolean()).optional(),
           digestHour: z.number().int().min(0).max(23).optional(),
           defaultBoardId: z.string().uuid().nullable().optional(),
+          quiet: z.object({ from: z.number().int().min(0).max(23), to: z.number().int().min(0).max(23) }).nullable().optional(),
         })
         .optional(),
     }),

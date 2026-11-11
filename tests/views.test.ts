@@ -216,3 +216,68 @@ describe('see it as them', () => {
     await setScope('member', 'all');
   });
 });
+
+describe('everyday work', () => {
+  it('finds things by name, within what the person may see', async () => {
+    await setScope('member', 'own');
+    const a = (await ada.get('/api/search?q=vel')).json;
+    expect(a.accounts.map((x: any) => x.name)).toContain('Velto Mobility');
+    expect((await lena.get('/api/search?q=vel')).json.accounts).toEqual([]);
+    expect((await lena.get('/api/search?q=%25%25')).json.accounts).toEqual([]);
+    expect((await ada.get('/api/search?q=lena')).json.people[0].name).toBe('Lena Fischer');
+    await setScope('member', 'all');
+  });
+
+  it('changes many tasks at once and puts them back', async () => {
+    const tasks = (await ada.get('/api/tasks')).json.tasks.filter((t: any) => !t.parentId).slice(0, 3);
+    const ids = tasks.map((t: any) => t.id);
+    const r = await ada.post('/api/tasks/bulk', { ids, priority: 'urgent', addAssignee: env.a.ids.omar });
+    expect(r.json.updated).toBe(3);
+    let now = (await ada.get('/api/tasks')).json.tasks.filter((t: any) => ids.includes(t.id));
+    expect(now.every((t: any) => t.priority === 'urgent' && t.assigneeIds.includes(env.a.ids.omar))).toBe(true);
+    expect((await lena.post(`/api/undo/${r.json.undoId}`)).status).toBe(404); // only the person who made the change
+    expect((await ada.post(`/api/undo/${r.json.undoId}`)).json.restored).toBe(3);
+    now = (await ada.get('/api/tasks')).json.tasks.filter((t: any) => ids.includes(t.id));
+    for (const t of tasks) expect(now.find((x: any) => x.id === t.id).priority).toBe(t.priority);
+    expect((await ada.post(`/api/undo/${r.json.undoId}`)).status).toBe(404); // once
+    const arch = await ada.post('/api/tasks/bulk', { ids: [ids[0]], archived: true });
+    expect((await ada.get('/api/tasks')).json.tasks.some((t: any) => t.id === ids[0])).toBe(false);
+    await ada.post(`/api/undo/${arch.json.undoId}`);
+    expect((await ada.get('/api/tasks')).json.tasks.some((t: any) => t.id === ids[0])).toBe(true);
+  });
+
+  it('a repeating task comes back with the next date when it is done', async () => {
+    const board = (await ada.get('/api/boards')).json.boards[0];
+    const done = board.columns.find((c: any) => c.done).key;
+    const made = (await ada.post('/api/tasks', { boardId: board.id, title: 'Weekly check-in', dueDate: '2030-01-07', repeat: { every: 1, unit: 'week', from: 'due' } })).json.task;
+    await ada.post('/api/tasks', { boardId: board.id, parentId: made.id, title: 'Send notes' });
+    const r = await ada.patch(`/api/tasks/${made.id}`, { baseVersion: made.version, status: done });
+    expect(r.json.task.repeat).toBeNull();
+    expect(r.json.next.dueDate).toBe('2030-01-14');
+    expect(r.json.next.repeat).toEqual({ every: 1, unit: 'week', from: 'due' });
+    const next = (await ada.get(`/api/tasks/${r.json.next.id}`)).json.task;
+    expect(next.subtasks.map((s: any) => s.title)).toEqual(['Send notes']);
+    // Back and forth does not make a second copy.
+    const back = await ada.patch(`/api/tasks/${made.id}`, { baseVersion: r.json.task.version, status: board.columns[0].key });
+    const again = await ada.patch(`/api/tasks/${made.id}`, { baseVersion: back.json.task.version, status: done });
+    expect(again.json.next).toBeUndefined();
+  });
+
+  it('quiet hours hold notices; a muted task stops comment notices', async () => {
+    const board = (await ada.get('/api/boards')).json.boards[0];
+    const task = (await ada.post('/api/tasks', { boardId: board.id, title: 'Quiet test', assigneeIds: [env.a.ids.mert] })).json.task;
+    const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', hour: '2-digit', hourCycle: 'h23' }).format(new Date()));
+    expect((await mert.patch('/api/me', { prefs: { quiet: { from: hour, to: (hour + 2) % 24 } } })).status).toBe(200);
+    await ada.post(`/api/tasks/${task.id}/comments`, { body: 'Ping during quiet hours' });
+    await env.settle();
+    const held = await env.db.system((q) => q.query(`select state, not_before from notifications where task_id = $1 and user_id = $2 and kind = 'comment'`, [task.id, env.a.ids.mert]));
+    expect(held[0].state).toBe('pending');
+    expect(held[0].not_before).not.toBeNull();
+    await mert.patch('/api/me', { prefs: { quiet: null } });
+    expect((await mert.post(`/api/tasks/${task.id}/mute`, { muted: true })).json.muted).toBe(true);
+    expect((await mert.get(`/api/tasks/${task.id}`)).json.task.muted).toBe(true);
+    await ada.post(`/api/tasks/${task.id}/comments`, { body: 'Second comment' });
+    const n = await env.db.system((q) => q.query(`select count(*)::int as n from notifications where task_id = $1 and user_id = $2 and kind = 'comment'`, [task.id, env.a.ids.mert]));
+    expect(n[0].n).toBe(1);
+  });
+});

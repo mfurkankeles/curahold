@@ -7,6 +7,8 @@ import type { Account, AccountField, Task } from '../../../shared/src/model';
 import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
+import { ExportMenu } from '../components/Export';
+import { allPages, cellOf } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, Dialog, DueLabel } from '../components/ui';
@@ -56,7 +58,7 @@ export function AccountsPage() {
   const { me, people, person, can, canWrite, toast } = useStore();
   const fmt = useFieldFormat();
   const [q, setQ] = useState('');
-  const [owner, setOwner] = useState<'all' | 'me' | string>('all');
+  const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
   const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -108,8 +110,21 @@ export function AccountsPage() {
 
   const bulk = async (body: Record<string, unknown>, msg: string) => {
     try {
-      const r = await post<{ updated: number }>('/accounts/bulk', { ids: [...selected], ...body });
-      toast(t(msg as any, { n: r.updated }));
+      const r = await post<{ updated: number; undoId: string | null }>('/accounts/bulk', { ids: [...selected], ...body });
+      toast(
+        t(msg as any, { n: r.updated }),
+        'info',
+        r.undoId
+          ? {
+              label: t('undo.button'),
+              run: async () => {
+                await post(`/undo/${r.undoId}`);
+                toast(t('undo.done'));
+                await load();
+              },
+            }
+          : undefined,
+      );
       setSelected(new Set());
       setBulkOwner('');
       await load();
@@ -125,6 +140,32 @@ export function AccountsPage() {
         <h1 className="topbar__title">{words.other}</h1>
         {data && <span className="topbar__sub num">{t('accounts.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
+        <ExportMenu
+          disabled={!data?.total}
+          make={async () => {
+            const base = new URLSearchParams({ limit: '500' });
+            if (q.trim()) base.set('q', q.trim());
+            if (owner !== 'all') base.set('owner', owner);
+            if (archived) base.set('archived', '1');
+            const list = await allPages(async (offset) => {
+              base.set('offset', String(offset));
+              const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${base}`);
+              return { items: r.accounts, total: r.total };
+            });
+            const defs = me.org.accountFields;
+            return {
+              name: words.other,
+              headers: [t('accounts.name'), t('accounts.owner'), ...defs.map((f) => labelOf(f.label, locale)), t('accounts.openTasks'), t('accounts.lastActivity')],
+              rows: list.map((a) => [
+                a.name,
+                person(a.ownerId)?.name ?? '',
+                ...defs.map((f) => cellOf(f, a.fields[f.key], locale)),
+                a.openTasks ?? 0,
+                a.lastActivityAt ? a.lastActivityAt.slice(0, 10) : '',
+              ]),
+            };
+          }}
+        />
         {manage && can('accounts.view_all') && canWrite && (
           <button className="btn" onClick={() => setImporting(true)}>
             {t('accounts.import')}

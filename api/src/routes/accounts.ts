@@ -14,6 +14,7 @@ import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/recor
 import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
+import { saveUndo } from '../lib/undo';
 import { changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
 
 export const accountRoutes = new Hono<AppEnv>();
@@ -217,8 +218,9 @@ accountRoutes.post('/accounts/bulk', async (c) => {
   const auth = c.get('auth');
   const n = await run(c, async (q) => {
     if (input.ownerId) await checkOwner(q, input.ownerId);
-    const rows = await q.query('select id from accounts where id = any($1::uuid[])', [input.ids]);
+    const rows = await q.query('select id, owner_id, team_id, archived_at from accounts where id = any($1::uuid[])', [input.ids]);
     const ids = rows.map((r) => r.id);
+    const undoId = await saveUndo(q, org.id, auth.userId, 'accounts', rows);
     if (input.archived !== undefined) {
       await q.query(
         `update accounts set archived_at = case when $2 then coalesce(archived_at, now()) else null end, updated_at = now() where id = any($1::uuid[])`,
@@ -228,10 +230,10 @@ accountRoutes.post('/accounts/bulk', async (c) => {
     if (input.ownerId !== undefined || input.teamId !== undefined) await reassign(q, ids, input.ownerId, input.teamId);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.bulk_updated', entity: 'account', meta: { count: rows.length, fields: Object.keys(input).filter((k) => k !== 'ids') } });
     if (input.ownerId !== undefined) await queueSync(q, org.id, 'account', rows.map((r) => r.id), ['owner']);
-    return rows.length;
+    return { n: rows.length, undoId };
   });
   if (input.ownerId !== undefined) kickSync(c.get('deps'), org.id);
-  return c.json({ updated: n });
+  return c.json({ updated: n.n, undoId: n.undoId });
 });
 
 // ------------------------------------------------------------------ fields

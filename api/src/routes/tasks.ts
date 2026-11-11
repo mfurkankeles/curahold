@@ -2,14 +2,16 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { MAX_FILE_MB, MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
 import { nowOf, requireWriter, run, type AppEnv } from '../context';
-import { runTaskMoved } from '../lib/automations';
+import { localDate, runTaskMoved } from '../lib/automations';
+import { spawnNext } from '../lib/recurring';
+import { saveUndo, UNDO_MINUTES } from '../lib/undo';
 import { kick } from '../lib/notify';
-import { onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
+import { isDone, onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
 import { kickSync, queueSync, taskKeys } from '../lib/records';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail, HttpError } from '../lib/errors';
-import { toComment, toFile, toTask } from '../lib/mappers';
+import { day, toComment, toFile, toTask } from '../lib/mappers';
 import { body, isoDate, param, uuid } from '../lib/validate';
 import { loadBoard } from './boards';
 
@@ -96,7 +98,11 @@ const fields = {
   dueDate: isoDate.nullable(),
   priority: z.enum(['low', 'normal', 'high', 'urgent']),
   position: z.number().finite(),
+  repeat: z.object({ every: z.number().int().min(1).max(365), unit: z.enum(['day', 'week', 'month']), from: z.enum(['due', 'done']) }).nullable(),
 };
+
+/** "Today" where the company is — repeating tasks count from it. */
+const todayOf = (c: { get: (k: any) => any }) => localDate(nowOf(c.get('deps')), c.get('org').timezone || 'UTC');
 
 taskRoutes.post('/tasks', async (c) => {
   requireWriter(c);
@@ -113,6 +119,7 @@ taskRoutes.post('/tasks', async (c) => {
       dueDate: fields.dueDate.optional(),
       priority: fields.priority.optional(),
       position: fields.position.optional(),
+      repeat: fields.repeat.optional(),
     }),
   );
   const auth = c.get('auth');
@@ -138,8 +145,8 @@ taskRoutes.post('/tasks', async (c) => {
     }
     const [t] = await q.query(
       `insert into tasks (org_id, board_id, parent_id, title, description, status, assignee_ids,
-                          account_id, due_date, priority, position, created_by, updated_by)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
+                          account_id, due_date, priority, position, created_by, updated_by, repeat)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $13)
        returning *, (select name from accounts a where a.id = account_id) as account_name`,
       [
         org.id,
@@ -154,6 +161,7 @@ taskRoutes.post('/tasks', async (c) => {
         input.priority ?? 'normal',
         position,
         auth.userId,
+        input.repeat && !input.parentId ? JSON.stringify(input.repeat) : null,
       ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.created', entity: 'task', entityId: t.id });
@@ -177,13 +185,15 @@ taskRoutes.get('/tasks/:id', async (c) => {
     );
     const comments = await q.query('select * from comments where task_id = $1 order by created_at', [id]);
     const files = await q.query('select * from files where task_id = $1 order by created_at', [id]);
-    return { t: counted ?? t, subtasks, comments, files };
+    const [mute] = await q.query('select 1 from task_mutes where task_id = $1', [id]);
+    return { t: counted ?? t, subtasks, comments, files, muted: !!mute };
   });
   const out: TaskDetail = {
     ...toTask(detail.t),
     subtasks: detail.subtasks.map(toTask),
     comments: detail.comments.map(toComment),
     files: detail.files.map(toFile),
+    muted: detail.muted,
   };
   return c.json({ task: out });
 });
@@ -198,6 +208,7 @@ const patchSchema = z.object({
   dueDate: fields.dueDate.optional(),
   priority: fields.priority.optional(),
   position: fields.position.optional(),
+  repeat: fields.repeat.optional(),
 });
 
 // Optimistic concurrency: the write only lands if nobody saved the task
@@ -231,6 +242,7 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     if (input.dueDate !== undefined) set('due_date', input.dueDate);
     if (input.priority !== undefined) set('priority', input.priority);
     if (input.position !== undefined) set('position', input.position);
+    if (input.repeat !== undefined) set('repeat', input.repeat && !t.parent_id ? JSON.stringify(input.repeat) : null);
     set('updated_by', auth.userId);
     vals.push(id, input.baseVersion);
     const [u] = await q.query(
@@ -241,20 +253,132 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     );
     if (!u) return { conflict: await loadTask(q, id) };
     await onTaskUpdated(q, org.id, auth.userId, t, u, board);
+    let next: Row | null = null;
+    if (u.repeat && isDone(board.columns, u.status) && !isDone(board.columns, t.status)) {
+      next = await spawnNext(q, org.id, auth.userId, u, board, todayOf(c));
+      if (next) u.repeat = null;
+    }
     const synced = taskKeys(t, u, board.columns);
     if (synced.length) await queueSync(q, org.id, 'task', [id], synced);
     const changed = Object.keys(input).filter((k) => k !== 'baseVersion' && k !== 'position');
     if (changed.length) {
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.updated', entity: 'task', entityId: id, meta: { fields: changed } });
     }
-    return { task: u };
+    return { task: u, next };
   });
   if ('conflict' in result) throw new HttpError('conflict', {}, { current: toTask(result.conflict!) });
   const deps = c.get('deps');
   if (input.status !== undefined) await runTaskMoved(deps, org.id, id, input.status, nowOf(deps)).catch(() => 0);
   kick(deps);
   kickSync(deps, org.id);
-  return c.json({ task: toTask(result.task) });
+  return c.json({ task: toTask(result.task), ...(result.next ? { next: toTask(result.next) } : {}) });
+});
+
+/** Change many tasks at once; the answer carries an undo id. */
+taskRoutes.post('/tasks/bulk', async (c) => {
+  requireWriter(c);
+  const input = await body(
+    c,
+    z.object({
+      ids: z.array(uuid).min(1).max(500),
+      status: fields.status.optional(),
+      addAssignee: uuid.optional(),
+      removeAssignee: uuid.optional(),
+      dueDate: fields.dueDate.optional(),
+      priority: fields.priority.optional(),
+      archived: z.boolean().optional(),
+    }),
+  );
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const deps = c.get('deps');
+  const out = await run(c, async (q) => {
+    const tasks = await q.query('select * from tasks where id = any($1::uuid[]) and parent_id is null and (archived_at is null or $2)', [input.ids, input.archived === false]);
+    if (input.addAssignee) await checkAssignees(q, [input.addAssignee]);
+    const boards = new Map<string, Row>();
+    const before: Row[] = [];
+    const moved: { id: string; status: string }[] = [];
+    let n = 0;
+    for (const t of tasks) {
+      const board = boards.get(t.board_id) ?? (await loadBoard(q, t.board_id));
+      boards.set(t.board_id, board);
+      // A status that this board does not have is left alone for that task.
+      const status = input.status && (board.columns as Column[]).some((col) => col.key === input.status) ? input.status : t.status;
+      let assignees: string[] = t.assignee_ids ?? [];
+      if (input.addAssignee && !assignees.includes(input.addAssignee)) assignees = [...assignees, input.addAssignee].slice(0, 10);
+      if (input.removeAssignee) assignees = assignees.filter((a) => a !== input.removeAssignee);
+      const [u] = await q.query(
+        `update tasks set status = $2, assignee_ids = $3, due_date = $4, priority = $5,
+                archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end,
+                version = version + 1, updated_by = $7, updated_at = now()
+          where id = $1 returning *`,
+        [t.id, status, assignees, input.dueDate !== undefined ? input.dueDate : t.due_date, input.priority ?? t.priority, input.archived ?? null, auth.userId],
+      );
+      if (!u) continue;
+      n++;
+      before.push({ id: t.id, status: t.status, assignee_ids: t.assignee_ids, due_date: day(t.due_date), priority: t.priority, archived_at: t.archived_at, repeat: t.repeat });
+      await onTaskUpdated(q, org.id, auth.userId, t, u, board);
+      if (u.repeat && isDone(board.columns, u.status) && !isDone(board.columns, t.status)) await spawnNext(q, org.id, auth.userId, u, board, todayOf(c));
+      if (status !== t.status) moved.push({ id: t.id, status });
+      const synced = taskKeys(t, u, board.columns);
+      if (synced.length) await queueSync(q, org.id, 'task', [t.id], synced);
+    }
+    const undoId = await saveUndo(q, org.id, auth.userId, 'tasks', before);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.bulk_updated', entity: 'task', meta: { count: n, fields: Object.keys(input).filter((k) => k !== 'ids') } });
+    return { n, undoId, moved };
+  });
+  for (const m of out.moved) await runTaskMoved(deps, org.id, m.id, m.status, nowOf(deps)).catch(() => 0);
+  kick(deps);
+  kickSync(deps, org.id);
+  return c.json({ updated: out.n, undoId: out.undoId });
+});
+
+/** Put back what a change to many things replaced (tasks or accounts). */
+taskRoutes.post('/undo/:id', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const n = await run(c, async (q) => {
+    const [u] = await q.query(`select * from undo_log where id = $1 and used_at is null and created_at > now() - make_interval(mins => $2)`, [id, UNDO_MINUTES]);
+    if (!u) fail('not_found');
+    let restored = 0;
+    for (const p of u.payload as Row[]) {
+      if (u.kind === 'tasks') {
+        const r = await q.query(
+          `update tasks set status = $2, assignee_ids = $3, due_date = $4, priority = $5, archived_at = $6, repeat = $7,
+                  version = version + 1, updated_by = $8, updated_at = now() where id = $1 returning id`,
+          [p.id, p.status, p.assignee_ids ?? [], p.due_date, p.priority, p.archived_at, p.repeat ? JSON.stringify(p.repeat) : null, auth.userId],
+        );
+        restored += r.length;
+      } else {
+        await q.query('update accounts set archived_at = $2, updated_at = now() where id = $1', [p.id, p.archived_at]);
+        await q.query('select app_reassign_accounts($1::uuid[], true, $2::uuid, true, $3::uuid)', [[p.id], p.owner_id, p.team_id]);
+        restored++;
+      }
+    }
+    await q.query('update undo_log set used_at = now() where id = $1', [id]);
+    if (u.kind === 'tasks') await queueSync(q, org.id, 'task', (u.payload as Row[]).map((p) => p.id), null);
+    else await queueSync(q, org.id, 'account', (u.payload as Row[]).map((p) => p.id), ['owner']);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'undo.used', entity: u.kind === 'tasks' ? 'task' : 'account', meta: { count: restored } });
+    return restored;
+  });
+  kickSync(c.get('deps'), org.id);
+  return c.json({ restored: n });
+});
+
+/** Stop (or restart) comment notices for one task. */
+taskRoutes.post('/tasks/:id/mute', async (c) => {
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ muted: z.boolean() }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  await run(c, async (q) => {
+    await loadTask(q, id);
+    if (input.muted) await q.query('insert into task_mutes (org_id, task_id, user_id) values ($1, $2, $3) on conflict do nothing', [org.id, id, auth.userId]);
+    else await q.query('delete from task_mutes where task_id = $1', [id]);
+  });
+  return c.json({ muted: input.muted });
 });
 
 taskRoutes.delete('/tasks/:id', async (c) => {

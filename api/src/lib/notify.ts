@@ -6,7 +6,7 @@ import { translate, normalizeLocale, type Locale, type MessageKey, type Terms } 
 import type { NotifyPrefs } from '../../../shared/src/model';
 import { ADAPTERS, loadConnection, markConnection, upsertIdentity } from '../connectors/messaging';
 import { FatalChatError, type ChatMessage } from '../connectors/messaging/types';
-import { defer, orgUrl, type Deps } from '../context';
+import { defer, nowOf, orgUrl, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { day } from './mappers';
 
@@ -57,7 +57,41 @@ export function prefsOf(raw: unknown): NotifyPrefs {
     events: { ...DEFAULT_PREFS.events, ...(p.events ?? {}) },
     digestHour: Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : 8,
     defaultBoardId: p.defaultBoardId ?? null,
+    quiet: validQuiet(p.quiet),
   };
+}
+
+const validQuiet = (q: unknown): NotifyPrefs['quiet'] => {
+  const v = q as { from?: unknown; to?: unknown } | null;
+  if (!v || !Number.isInteger(v.from) || !Number.isInteger(v.to)) return null;
+  const from = Number(v.from);
+  const to = Number(v.to);
+  return from >= 0 && from <= 23 && to >= 0 && to <= 23 && from !== to ? { from, to } : null;
+};
+
+function hourIn(at: Date, timeZone: string): number {
+  try {
+    return Number(new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(at));
+  } catch {
+    return at.getUTCHours();
+  }
+}
+
+/** Inside quiet hours ("20 → 8" spans midnight)? */
+export function isQuiet(quiet: NotifyPrefs['quiet'], hour: number): boolean {
+  if (!quiet) return false;
+  return quiet.from < quiet.to ? hour >= quiet.from && hour < quiet.to : hour >= quiet.from || hour < quiet.to;
+}
+
+/** The first whole hour, in the company's time zone, when quiet hours are over. */
+export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, timeZone: string): Date {
+  const t = new Date(now);
+  t.setUTCMinutes(0, 0, 0);
+  for (let i = 1; i <= 26; i++) {
+    const at = new Date(t.getTime() + i * 3600_000);
+    if (!isQuiet(quiet, hourIn(at, timeZone))) return at;
+  }
+  return new Date(now.getTime() + 12 * 3600_000);
 }
 
 // Kinds that may go by email when no chat app is linked. Comments are
@@ -153,7 +187,7 @@ const TASK_SQL = `
 
 /** Everything needed to show a notification, read with owner access and filtered by company. */
 export async function loadRenderCtx(q: Q, deps: Deps, n: Row, locale?: Locale): Promise<RenderCtx & { org: Row; user: Row | null }> {
-  const [org] = await q.query('select id, slug, name, locale, terms from orgs where id = $1', [n.org_id]);
+  const [org] = await q.query('select id, slug, name, locale, terms, timezone from orgs where id = $1', [n.org_id]);
   const [user] = n.user_id ? await q.query('select id, email, name, locale, prefs, status from users where id = $1 and org_id = $2', [n.user_id, n.org_id]) : [null];
   const [task] = n.task_id ? await q.query(TASK_SQL, [n.task_id, n.org_id]) : [null];
   const [actor] = n.actor_id ? await q.query('select name from users where id = $1 and org_id = $2', [n.actor_id, n.org_id]) : [null];
@@ -170,7 +204,7 @@ export async function loadRenderCtx(q: Q, deps: Deps, n: Row, locale?: Locale): 
   };
 }
 
-type Outcome = { via: string; state: 'sent' | 'skipped' };
+type Outcome = { via: string; state: 'sent' | 'skipped' | 'held'; notBefore?: Date };
 
 async function sendToPerson(deps: Deps, ctx: Awaited<ReturnType<typeof loadRenderCtx>>): Promise<Outcome> {
   const { n, user } = ctx;
@@ -179,6 +213,12 @@ async function sendToPerson(deps: Deps, ctx: Awaited<ReturnType<typeof loadRende
   const prefKey = PREF_OF_KIND[n.kind];
   if (prefKey && prefs.events[prefKey] === false) return { via: 'inapp', state: 'skipped' };
   if (prefs.channel === 'none') return { via: 'inapp', state: 'skipped' };
+  // Quiet hours: the notice waits (the morning digest is the person's own choice of hour).
+  if (prefs.quiet && n.kind !== 'digest') {
+    const now = nowOf(deps);
+    const tz = ctx.org?.timezone || 'UTC';
+    if (isQuiet(prefs.quiet, hourIn(now, tz))) return { via: 'inapp', state: 'held', notBefore: quietUntil(prefs.quiet, now, tz) };
+  }
   const msg = render(ctx);
 
   if (prefs.channel !== 'email') {
@@ -253,6 +293,7 @@ export async function deliverPending(deps: Deps, limit = 50): Promise<number> {
     q.query(
       `update notifications set attempts = attempts + 1
         where id in (select id from notifications where state = 'pending' and attempts < $2
+                        and (not_before is null or not_before <= now())
                       order by created_at limit $1 for update skip locked)
         returning *`,
       [limit, MAX_ATTEMPTS],
@@ -262,6 +303,10 @@ export async function deliverPending(deps: Deps, limit = 50): Promise<number> {
     try {
       const ctx = await deps.db.system((q) => loadRenderCtx(q, deps, n));
       const out = n.connection_id && !n.user_id ? await postToChannel(deps, ctx) : await sendToPerson(deps, ctx);
+      if (out.state === 'held') {
+        await deps.db.system((q) => q.query('update notifications set attempts = attempts - 1, not_before = $2 where id = $1', [n.id, out.notBefore]));
+        continue;
+      }
       await deps.db.system((q) =>
         q.query(`update notifications set state = $2, via = $3, sent_at = now(), error = null where id = $1`, [n.id, out.state, out.via]),
       );

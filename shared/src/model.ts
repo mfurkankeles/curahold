@@ -270,6 +270,8 @@ export interface NotifyPrefs {
   events: Partial<Record<NotifyEvent, boolean>>;
   digestHour: number;
   defaultBoardId?: string | null;
+  /** Hold notices between these hours (company time zone), e.g. 20 → 8. */
+  quiet?: { from: number; to: number } | null;
 }
 
 export interface DeliveryOption {
@@ -366,6 +368,15 @@ export interface Task {
   subtaskCount?: number;
   subtaskDone?: number;
   commentCount?: number;
+  repeat?: Repeat | null;
+}
+
+/** A task that comes back: when it is done, the next copy is made with a new due date. */
+export interface Repeat {
+  every: number;
+  unit: 'day' | 'week' | 'month';
+  /** Count from the due date (a fixed rhythm) or from the day it was done. */
+  from: 'due' | 'done';
 }
 
 export interface Comment {
@@ -391,6 +402,8 @@ export interface TaskDetail extends Task {
   subtasks: Task[];
   comments: Comment[];
   files: FileMeta[];
+  /** The person asking has stopped comment notices for this task. */
+  muted?: boolean;
 }
 
 export interface SessionInfo {

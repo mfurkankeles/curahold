@@ -26,6 +26,7 @@ import { boardRoutes } from './routes/boards';
 import { meRoutes } from './routes/me';
 import { taskRoutes } from './routes/tasks';
 import { pageRoutes } from './routes/pages';
+import { searchRoutes } from './routes/search';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
 
@@ -183,6 +184,7 @@ export function createApp(deps: Deps) {
   app.route('/api', accountRoutes);
   app.route('/api', recordRoutes);
   app.route('/api', pageRoutes);
+  app.route('/api', searchRoutes);
   app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);

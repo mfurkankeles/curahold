@@ -8,6 +8,8 @@ export interface Toast {
   id: number;
   text: string;
   tone: 'info' | 'error';
+  /** e.g. "Undo" — the toast stays a little longer when it has one. */
+  action?: { label: string; run: () => void | Promise<void> };
 }
 
 interface Store {
@@ -21,7 +23,8 @@ interface Store {
   reloadBoards: () => Promise<void>;
   reloadPeople: () => Promise<void>;
   reloadMe: () => Promise<void>;
-  toast: (text: string, tone?: Toast['tone']) => void;
+  toast: (text: string, tone?: Toast['tone'], action?: Toast['action']) => void;
+  dismiss: (id: number) => void;
   toasts: Toast[];
 }
 
@@ -52,10 +55,11 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
     void reloadPeople();
   }, [reloadBoards, reloadPeople]);
 
-  const toast = useCallback((text: string, tone: Toast['tone'] = 'info') => {
+  const dismiss = useCallback((id: number) => setToasts((list) => list.filter((x) => x.id !== id)), []);
+  const toast = useCallback((text: string, tone: Toast['tone'] = 'info', action?: Toast['action']) => {
     const id = ++toastSeq;
-    setToasts((list) => [...list, { id, text, tone }]);
-    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), tone === 'error' ? 6000 : 3500);
+    setToasts((list) => [...list, { id, text, tone, action }]);
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), action ? 10000 : tone === 'error' ? 6000 : 3500);
   }, []);
 
   const value = useMemo<Store>(() => {
@@ -73,9 +77,10 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
       reloadPeople,
       reloadMe,
       toast,
+      dismiss,
       toasts,
     };
-  }, [me, people, teams, boards, reloadBoards, reloadPeople, reloadMe, toast, toasts]);
+  }, [me, people, teams, boards, reloadBoards, reloadPeople, reloadMe, toast, dismiss, toasts]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

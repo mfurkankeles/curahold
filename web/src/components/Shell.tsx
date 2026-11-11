@@ -6,15 +6,18 @@ import { navigate, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { Bell } from './Bell';
+import { SearchPalette, useSearchKey } from './Search';
 import { BoardSettings } from './BoardSettings';
 import { Avatar, Mark } from './ui';
 
 export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale, words } = useI18n();
-  const { me, boards, canWrite, person, toasts, can } = useStore();
+  const { me, boards, canWrite, person, toasts, can, dismiss } = useStore();
   const { path } = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const [newBoard, setNewBoard] = useState(false);
+  const [searching, setSearching] = useState(false);
+  useSearchKey(() => setSearching(true));
   const isAdmin = me.user.perms.some((p) => ADMIN_PERMS.includes(p));
   const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
 
@@ -73,6 +76,10 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             <span className="sr-only">{t('nav.setupLeft', { n: setupLeft })}</span>
           </a>
         )}
+        <button className="sidebar__search" onClick={() => setSearching(true)}>
+          <span>{t('search.open')}</span>
+          <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</kbd>
+        </button>
         <div className="sidebar__nav">
           {link('/home', t('nav.home'), path === '/home' || path.startsWith('/pages/'))}
           {link('/my', t('nav.myTasks'), path === '/my')}
@@ -131,10 +138,22 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         {children}
       </div>
       {newBoard && <BoardSettings onClose={() => setNewBoard(false)} />}
+      {searching && <SearchPalette onClose={() => setSearching(false)} onNewBoard={() => setNewBoard(true)} />}
       <div className="toasts" role="status" aria-live="polite">
         {toasts.map((x) => (
           <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
-            {x.text}
+            <span>{x.text}</span>
+            {x.action && (
+              <button
+                className="toast__action"
+                onClick={async () => {
+                  dismiss(x.id);
+                  await x.action!.run();
+                }}
+              >
+                {x.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>

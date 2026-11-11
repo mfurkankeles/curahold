@@ -7,6 +7,8 @@ import type { Account } from '../../../shared/src/model';
 import { CONTACT_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
 import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
+import { ExportMenu } from './Export';
+import { allPages, cellOf } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -105,6 +107,26 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         <h1 className="topbar__title">{type ? typeLabel(type, locale) : ''}</h1>
         {data && <span className="topbar__sub num">{t('records.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
+        {type && (
+          <ExportMenu
+            disabled={!data?.total}
+            make={async () => {
+              const base = new URLSearchParams({ type: typeKey, limit: '500' });
+              if (q.trim()) base.set('q', q.trim());
+              if (owner) base.set('owner', owner);
+              const list = await allPages(async (offset) => {
+                base.set('offset', String(offset));
+                const r = await get<{ records: AppRecord[]; total: number }>(`/records?${base}`);
+                return { items: r.records, total: r.total };
+              });
+              return {
+                name: typeLabel(type, locale),
+                headers: [t('records.name'), t('records.account'), t('records.owner'), ...type.fields.map((f) => labelOf(f.label, locale))],
+                rows: list.map((r) => [r.name, r.accountName ?? '', person(r.ownerId)?.name ?? '', ...type.fields.map((f) => cellOf(f, r.fields[f.key], locale))]),
+              };
+            }}
+          />
+        )}
         {canWrite && type && (
           <button className="btn btn--primary" onClick={() => setEditing('new')}>
             {t('records.new', { type: typeLabel(type, locale, false) })}

@@ -119,6 +119,23 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
 - **Demo CRM** (development and the live demo only) with made-up companies,
   contacts, opportunities, risk records and tasks.
 
+### Everyday work
+
+- **Search everything** with Ctrl/⌘ K: customers, tasks, contacts and other
+  records, boards and people (only what the person may see), plus places
+  and actions.
+- **Change many tasks at once** from the list view: column, a person, due
+  date, priority, archive — and **Undo** from the confirmation (also for
+  bulk changes to customers).
+- **Repeating tasks**: daily, weekly, every 2 weeks, monthly, quarterly,
+  yearly; from the due date or from the day it was done. The next copy (with
+  its checklist unticked) appears when one is done.
+- **Export** customers, records and board lists to Excel or CSV, made in the
+  browser.
+- **Quiet hours** and **stop comment notices for a task**; assignments and
+  @mentions still come.
+- Running-cost rules: [docs/design/costs.md](docs/design/costs.md).
+
 ### Who sees what (roles and pages)
 
 See [docs/design/roles-and-views.md](docs/design/roles-and-views.md) for the
@@ -162,7 +179,7 @@ accounts are invented.
 
 | Command | What it checks | Time |
 | --- | --- | --- |
-| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
+| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", search, bulk changes and undo, repeating tasks, quiet hours, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
 | `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
 

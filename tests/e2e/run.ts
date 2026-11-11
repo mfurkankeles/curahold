@@ -500,6 +500,7 @@ await step('field access: hide a field from members, then look as one of them', 
     return row?.querySelector('.access-pill');
   });
   await (pill as any).click();
+  await ada.page.waitForSelector('.faccess .seg button', { timeout: 15_000 });
   await (await byText(ada.page, '.faccess .seg button', 'Seçili roller')).click();
   await shot(ada.page, 'p4-03-field-access');
   await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
@@ -531,6 +532,32 @@ await step('field access: hide a field from members, then look as one of them', 
   expect(log.n > 0, 'preview not in the activity log');
   expect(ada.errors.length === 0, ada.errors.join(' | '));
   await ada.page.browserContext().close();
+});
+
+await step('search with Ctrl+K, change tasks together, then undo', async () => {
+  await mert.page.goto(`${s.origin}/b/${csBoard}?view=list`, { waitUntil: 'networkidle0' });
+  await mert.page.keyboard.down('Control');
+  await mert.page.keyboard.press('k');
+  await mert.page.keyboard.up('Control');
+  await mert.page.waitForSelector('.palette-input');
+  await mert.page.type('.palette-input', 'Quill');
+  await mert.page.waitForFunction(() => [...document.querySelectorAll('.palette-item__title')].some((e) => e.textContent?.startsWith('Quillfield')));
+  await mert.page.keyboard.press('Escape');
+  const before = await sql('select id, priority from tasks where board_id = $1 and parent_id is null', [csBoard]);
+  const boxes = await mert.page.$$('tbody .check-cell input');
+  await boxes[0].click();
+  await boxes[1].click();
+  const selects = await mert.page.$$('.bulkbar select');
+  await selects[2].select('urgent');
+  await mert.page.waitForSelector('.toast__action');
+  const after = await sql('select id, priority from tasks where board_id = $1 and parent_id is null', [csBoard]);
+  const changed = after.filter((r: any) => before.find((b: any) => b.id === r.id)?.priority !== r.priority);
+  expect(changed.length >= 1 && changed.every((r: any) => r.priority === 'urgent'), `bulk change not saved: ${JSON.stringify(changed)}`);
+  await shot(mert.page, 'p4-06-bulk-undo');
+  await mert.page.click('.toast__action');
+  await pause(600);
+  const back = await sql('select id, priority from tasks where board_id = $1 and parent_id is null', [csBoard]);
+  expect(back.every((r: any) => before.find((b: any) => b.id === r.id)?.priority === r.priority), 'undo did not put the tasks back');
 });
 
 await step('no script errors in the browser', async () => {

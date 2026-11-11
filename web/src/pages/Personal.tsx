@@ -144,6 +144,28 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                 </select>
               </label>
             )}
+            <fieldset className="field plain-fieldset quiet-hours">
+              <label className="checkbox">
+                <input type="checkbox" checked={!!prefs.quiet} onChange={(e) => setPrefs({ ...prefs, quiet: e.target.checked ? { from: 20, to: 8 } : null })} />
+                <span>{t('me.quiet')}</span>
+              </label>
+              {prefs.quiet && (
+                <div className="quiet-hours__range">
+                  <select className="select" value={prefs.quiet.from} aria-label={t('me.quietFrom')} onChange={(e) => setPrefs({ ...prefs, quiet: { ...prefs.quiet!, from: Number(e.target.value) } })}>
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+                    ))}
+                  </select>
+                  <span aria-hidden="true">–</span>
+                  <select className="select" value={prefs.quiet.to} aria-label={t('me.quietTo')} onChange={(e) => setPrefs({ ...prefs, quiet: { ...prefs.quiet!, to: Number(e.target.value) } })}>
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <span className="field__hint">{t('me.quietHint')}</span>
+            </fieldset>
             <label className="field" style={{ marginTop: 12, maxWidth: 360 }}>
               <span className="field__label">{t('me.defaultBoard')}</span>
               <select className="select" value={prefs.defaultBoardId ?? ''} onChange={(e) => setPrefs({ ...prefs, defaultBoardId: e.target.value || null })}>

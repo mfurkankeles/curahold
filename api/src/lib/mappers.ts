@@ -30,6 +30,7 @@ export const toTask = (r: Row): Task => ({
   updatedAt: iso(r.updated_at)!,
   ...(r.subtask_count != null ? { subtaskCount: Number(r.subtask_count), subtaskDone: Number(r.subtask_done ?? 0) } : {}),
   ...(r.comment_count != null ? { commentCount: Number(r.comment_count) } : {}),
+  repeat: r.repeat ?? null,
 });
 
 export const toBoard = (r: Row, canManage: boolean): Board => ({
