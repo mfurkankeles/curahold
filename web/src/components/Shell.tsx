@@ -208,7 +208,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           },
         },
         ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setHelp('new') }] : []),
-        ...(!me.previewBy ? ['sep' as const, { key: 'out', label: t('auth.signOut'), icon: 'logout' as const, onSelect: signOut }] : []),
+        // The try-it demo has "Start over" in its own bar instead.
+        ...(!me.previewBy && !import.meta.env.TW_DEMO ? ['sep' as const, { key: 'out', label: t('auth.signOut'), icon: 'logout' as const, onSelect: signOut }] : []),
       ]}
     />
   );

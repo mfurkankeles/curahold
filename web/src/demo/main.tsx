@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { storedLocale } from '../lib/i18n';
 import { startTheme } from '../lib/theme';
 import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
-import { ORIGIN, onFullNavigation, setCurrent } from './memory';
+import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
 
 startTheme();
 
@@ -170,7 +170,23 @@ async function main() {
     generation += 1;
     render();
   };
+  // The demo has no inbox: whenever the app would show its sign-in page (after
+  // "Sign out", or a session that ended), the person in the bar is signed in again.
+  let recovering = 0;
+  const signedOutPage = (to: string) => /^\/(login|auth\/verify)(?:[/?#]|$)/.test(to);
+  async function signBackIn() {
+    if (current === 'customer' || Date.now() - recovering < 3000) return false;
+    recovering = Date.now();
+    sessions[current] = await signIn(server, `${current}@demo.example`);
+    server.jar.set('tw_session', sessions[current]!);
+    reload('/home');
+    return true;
+  }
+  window.addEventListener('tw:navigate', () => {
+    if (signedOutPage(currentPath())) void signBackIn().catch((e) => console.warn('[demo] sign in again', e));
+  });
   onFullNavigation(async (to) => {
+    if (signedOutPage(to) && (await signBackIn().catch(() => false))) return;
     if (!to.startsWith('/api/')) return reload(to);
     // Server routes that answer with a redirect (connecting the demo CRM, say).
     const res = await server.request(to, { headers: { 'x-tendwell-device': DEMO_DEVICE } });
@@ -202,7 +218,8 @@ async function main() {
       reload('/');
       return;
     }
-    sessions[k] ??= await signIn(server, `${k}@demo.example`);
+    // A fresh sign-in each time: a session ended by "Sign out" is never reused.
+    sessions[k] = await signIn(server, `${k}@demo.example`);
     server.jar.set('tw_session', sessions[k]!);
     try {
       sessionStorage.removeItem('tw-preview-as');
