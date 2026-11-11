@@ -30,6 +30,10 @@ export interface Config {
   /** Seals connector credentials at rest; falls back to authSecret. */
   secretsKey?: string;
   connectors: ConnectorConfig;
+  /** Where requests for help go (Tendwell's own support desk). */
+  support?: { email?: string; webhookUrl?: string };
+  /** Tendwell support's own key for opening an entry link into a company that granted access. */
+  staffKey?: string;
 }
 
 /** Tendwell's own app registrations with the messaging services. */
@@ -93,6 +97,8 @@ export type AppEnv = {
     auth: AuthCtx;
     /** An administrator looking at Tendwell as someone else (read only). */
     previewBy?: { id: string; name: string };
+    /** Tendwell support, inside with a person's consent (see lib/support.ts). */
+    supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
     tokenKind?: 'key' | 'oauth';
     /** This app, for calling its own routes (the AI connector uses the same API as the app). */

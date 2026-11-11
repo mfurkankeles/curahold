@@ -18,6 +18,10 @@ Sessions are bound to the device; a copied cookie does not work on another machi
 
 Sign-ins, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log.
 
+## Tendwell support's access
+
+Tendwell support only comes into a company with a person's consent: they tick the box on a help request and choose for how long (24 hours to 7 days). Support sees what that person sees and, by default, can only look; only administrators can allow changes. Access can be closed at any moment. Every visit, and every change made with permission, is written to the activity log with the support person's name. Administrators can limit this to administrators or turn it off in **Settings → Security → Support access**. Details: [Getting help](/docs/en/getting-help/).
+
 ## Personal data
 
 In Settings → People, a person's menu offers:

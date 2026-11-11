@@ -35,6 +35,8 @@ import { developerRoutes } from './routes/developer';
 import { mcpRoutes } from './routes/mcp';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
+import { helpRoutes, supportEntry } from './routes/help';
+import { signInSupport } from './lib/support';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
 
@@ -118,7 +120,9 @@ export function createApp(deps: Deps) {
     const bearer = /^Bearer\s/i.test(c.req.header('authorization') ?? '');
     // Inbound webhooks carry their own secret in the address and come from servers, not browsers.
     const inbound = c.req.path.startsWith('/api/inbound/');
-    if (c.req.path.startsWith('/api/') && !bearer && !inbound && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.header('x-tendwell-device')) fail('forbidden');
+    // Tendwell support's own tooling carries its key in a header, which a form cannot set either.
+    const custom = c.req.header('x-tendwell-device') || c.req.header('x-tendwell-staff-key');
+    if (c.req.path.startsWith('/api/') && !bearer && !inbound && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !custom) fail('forbidden');
     await next();
   };
   app.use('/api/*', companyFromHost);
@@ -132,6 +136,8 @@ export function createApp(deps: Deps) {
   // Public, per company: login page data and the sign-in steps.
   app.route('/api', authRoutes);
   app.route('/api', inboundRoutes);
+  // Tendwell support: the entry link, its session, the desk's file links.
+  app.route('/api', supportEntry);
 
   // ---------------------------------------------------------------- person
   app.use('/api/*', async (c, next) => {
@@ -156,6 +162,11 @@ export function createApp(deps: Deps) {
       });
       c.set('tokenKind', t!.kind);
       if (u.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(u.locale));
+      await next();
+      return;
+    }
+    // Tendwell support, inside with someone's consent: acts as them (lib/support.ts).
+    if (!token && (await signInSupport(c))) {
       await next();
       return;
     }
@@ -237,6 +248,7 @@ export function createApp(deps: Deps) {
   app.route('/api', timelineRoutes);
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
+  app.route('/api', helpRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);

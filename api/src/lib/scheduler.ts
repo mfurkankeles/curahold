@@ -69,6 +69,7 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from sync_runs where started_at < now() - interval '90 days'`);
     await q.query(`delete from oauth_codes where expires_at < now()`);
     await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
+    await q.query(`delete from support_sessions where expires_at < now() - interval '30 days'`);
     await q.query(`delete from api_tokens where (revoked_at is not null or coalesce(refresh_expires_at, expires_at) < now()) and coalesce(revoked_at, refresh_expires_at, expires_at) < now() - interval '30 days'`);
   });
 }

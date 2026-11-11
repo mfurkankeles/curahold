@@ -8,6 +8,14 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Yardım ve destek erişimi
+
+- **Yardım formu:** konu, etki, başlık, açıklama ve tekrar adımları; yazarken ilgili belge önerileri.
+- **Ekran görüntüleri:** sekmeyi çekme, yapıştırma, sürükleme; vurgulama ve gizli kalması gerekeni kapatma.
+- **Teknik bilgiler:** tarayıcı, son sayfalar, hatalar ve başarısız istekler; gönderilmeden önce gösterilir, istenen çıkarılır.
+- **Onaylı destek erişimi:** kutu işaretlenirse süreli (24 saat – 7 gün), varsayılan olarak yalnızca okuma, istendiği an kapatılır, her giriş kayıtta.
+- **Şirket ayarı:** desteğe kim erişim verebilir (herkes, yalnızca yöneticiler, hiç kimse).
+
 ### Destek talepleri
 
 - **Zendesk, Freshdesk, Intercom ve Jira Service Management** bağlantıları: adres ve API anahtarıyla, yalnızca okuyarak.

@@ -23,7 +23,19 @@ meRoutes.get('/me', async (c) => {
     const [o] = await q.query('select plan from orgs where id = $1', [org.id]);
     const [u] = await q.query('select onboarded_at, prefs from users where id = $1', [auth.userId]);
     const teams = await q.query<{ team_id: string }>('select team_id from team_members where user_id = $1', [auth.userId]);
-    return { plan: o?.plan ?? 'trial', teamIds: teams.map((t) => t.team_id), onboardedAt: iso(u?.onboarded_at), prefs: prefsOf(u?.prefs) };
+    // Support access this person has open, so the app can say so (and offer to close it).
+    const [g] = await q.query(
+      `select max(expires_at) as until, bool_or(level = 'edit') as edit, count(*)::int as n
+         from support_grants where user_id = $1 and revoked_at is null and expires_at > now()`,
+      [auth.userId],
+    );
+    return {
+      plan: o?.plan ?? 'trial',
+      teamIds: teams.map((t) => t.team_id),
+      onboardedAt: iso(u?.onboarded_at),
+      prefs: prefsOf(u?.prefs),
+      supportOpen: g?.n ? { until: new Date(g.until).toISOString(), level: (g.edit ? 'edit' : 'view') as 'edit' | 'view', count: g.n as number } : null,
+    };
   });
   const me: Me = {
     user: {
@@ -61,6 +73,8 @@ meRoutes.get('/me', async (c) => {
     teamIds: data.teamIds,
     sessionId: auth.sessionId,
     ...(c.get('previewBy') ? { previewBy: c.get('previewBy') } : {}),
+    ...(c.get('supportBy') ? { supportBy: c.get('supportBy') } : {}),
+    ...(data.supportOpen && !c.get('supportBy') ? { supportOpen: data.supportOpen } : {}),
   };
   return c.json(me);
 });

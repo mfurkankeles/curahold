@@ -15,8 +15,10 @@ const CHROME_CANDIDATES = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean) as string[];
 
+export const STAFF_KEY = 'e2e-staff-key-e2e-staff-key-0001';
+
 export async function startStack(port = 8899) {
-  const local = await startLocal({ port, publicPort: port, serveStatic: true, quiet: true });
+  const local = await startLocal({ port, publicPort: port, serveStatic: true, quiet: true, staffKey: STAFF_KEY });
   const executablePath = CHROME_CANDIDATES.find((p) => existsSync(p));
   if (!executablePath) throw new Error('Chrome not found; set CHROME_PATH');
   const browser = await puppeteer.launch({

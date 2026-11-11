@@ -8,6 +8,14 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Help and support access
+
+- **Help form:** topic, impact, title, description and steps to repeat; matching docs suggested while you type.
+- **Screenshots:** capture the tab, paste or drop; highlight, and cover what should stay private.
+- **Technical details:** browser, last pages, errors and failed requests; shown before sending, any of it removable.
+- **Support access with consent:** only when the box is ticked, time-limited (24 hours to 7 days), read only by default, closed at any moment, every visit logged.
+- **Company setting:** who may let support in (anyone, administrators only, nobody).
+
 ### Support tickets
 
 - **Zendesk, Freshdesk, Intercom and Jira Service Management** connections: with an address and an API key, read only.

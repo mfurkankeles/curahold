@@ -36,6 +36,15 @@ export type ErrorCode =
   | 'preview_read_only'
   | 'read_only_token'
   | 'bad_webhook_url'
+  | 'support_ended'
+  | 'support_blocked'
+  | 'support_read_only'
+  | 'support_not_allowed'
+  | 'support_edit_admins'
+  | 'support_too_many'
+  | 'support_link_used'
+  | 'help_too_many_files'
+  | 'help_file_type'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -66,6 +75,15 @@ const STATUS: Record<ErrorCode, number> = {
   preview_read_only: 403,
   read_only_token: 403,
   bad_webhook_url: 400,
+  support_ended: 401,
+  support_blocked: 403,
+  support_read_only: 403,
+  support_not_allowed: 403,
+  support_edit_admins: 403,
+  support_too_many: 409,
+  support_link_used: 400,
+  help_too_many_files: 400,
+  help_file_type: 400,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

@@ -314,6 +314,10 @@ export interface Me {
   sessionId: string;
   /** Set while an administrator looks at Tendwell as this person (read only). */
   previewBy?: { id: string; name: string };
+  /** Set while Tendwell support is inside with this person's consent. */
+  supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
+  /** Support access this person has given and not yet closed. */
+  supportOpen?: { until: string; level: 'view' | 'edit'; count: number };
 }
 
 export interface Role {
@@ -430,6 +434,8 @@ export interface AuditEntry {
   entity: string;
   entityId: string | null;
   at: string;
+  /** Tendwell support's staff member, on support entries. */
+  staff?: string;
 }
 
 export interface ApiError {

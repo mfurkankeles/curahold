@@ -3,7 +3,11 @@ import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { Shell } from './components/Shell';
 import { TaskPanel } from './components/TaskPanel';
-import { ApiFailure, endPreview, get, onAuthLost, patch, previewAs, setApiLocale } from './lib/api';
+import { ApiFailure, endPreview, get, onAuthLost, patch, post, previewAs, setApiLocale } from './lib/api';
+import { installDiagnostics } from './lib/diagnostics';
+
+// Errors, failed requests and recent pages, kept in memory for a help request.
+installDiagnostics();
 import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
@@ -58,6 +62,19 @@ export function App() {
       const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]') ?? document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
       icon.href = org.logoUrl;
     }
+    // Tendwell support's one-time entry link: trade it for a support session, keep it out of the history.
+    if (location.pathname === '/support/enter') {
+      const token = new URLSearchParams(location.hash.slice(1)).get('token');
+      history.replaceState(null, '', '/home');
+      try {
+        if (!token) throw new Error('no token');
+        await post('/support/enter', { token });
+      } catch {
+        setBoot({ kind: 'signed-out', org, notice: 'support' });
+        navigate('/login', true);
+        return;
+      }
+    }
     if (location.pathname === '/auth/verify' || location.pathname === '/join') {
       setBoot({ kind: 'signed-out', org, notice });
       return;
@@ -85,7 +102,8 @@ export function App() {
       }
       if (location.pathname === '/connect-ai') rememberReturn(location.pathname + location.search);
       const evicted = e instanceof ApiFailure && e.code === 'session_evicted';
-      setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : notice });
+      const supportEnded = e instanceof ApiFailure && e.code === 'support_ended';
+      setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : supportEnded ? 'support' : notice });
       if (location.pathname !== '/login') navigate('/login', true);
     }
   }, []);
@@ -101,7 +119,7 @@ export function App() {
       onAuthLost((code) => {
         setBoot((b) => (b.kind === 'signed-in' ? { kind: 'loading' } : b));
         navigate('/login', true);
-        void start(code === 'session_evicted' ? 'evicted' : 'expired');
+        void start(code === 'session_evicted' ? 'evicted' : code === 'support_ended' ? 'support' : 'expired');
       }),
     [start],
   );
@@ -157,7 +175,7 @@ export function App() {
 
 function SignedOut({ org, notice, onLocale }: { org: OrgPublic; notice?: string | null; onLocale: (l: Locale) => void }) {
   const { t } = useI18n();
-  const text = notice === 'evicted' ? t('auth.evicted', { max: org.maxDevices }) : notice === 'expired' ? t('auth.expired') : null;
+  const text = notice === 'evicted' ? t('auth.evicted', { max: org.maxDevices }) : notice === 'expired' ? t('auth.expired') : notice === 'support' ? t('support.ended') : null;
   return <LoginPage org={org} onLocale={onLocale} notice={text} />;
 }
 

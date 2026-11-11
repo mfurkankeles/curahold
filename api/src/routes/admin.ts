@@ -593,7 +593,7 @@ adminRoutes.get('/audit', async (c) => {
   const before = c.req.query('before');
   const rows = await run(c, (q) =>
     q.query(
-      `select id, actor_id, action, entity, entity_id, at from audit_log
+      `select id, actor_id, action, entity, entity_id, at, case when action like 'support.%' then meta->>'staff' end as staff from audit_log
         where ($1::timestamptz is null or at < $1::timestamptz)
         order by at desc limit 200`,
       [before && !Number.isNaN(Date.parse(before)) ? before : null],
@@ -606,6 +606,7 @@ adminRoutes.get('/audit', async (c) => {
     entity: r.entity,
     entityId: r.entity_id,
     at: iso(r.at)!,
+    ...(r.staff ? { staff: r.staff as string } : {}),
   }));
   return c.json({ entries });
 });

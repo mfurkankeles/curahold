@@ -9,6 +9,7 @@ import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
+import { SupportAccessSettings } from '../components/Help';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -18,7 +19,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'audit';
+type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'support' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -53,7 +54,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
       ],
     },
-    { label: t('settings.group.security'), items: [['audit', t('settings.tab.audit'), can('audit.view')]] },
+    { label: t('settings.group.security'), items: [['support', t('settings.tab.support'), can('org.manage')], ['audit', t('settings.tab.audit'), can('audit.view')]] },
   ];
   const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
   const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
@@ -102,6 +103,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'fields' && <AccountFieldsEditor />}
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
+          {current === 'support' && <SupportAccessSettings />}
           {current === 'people' && <PeopleTab />}
           {current === 'joining' && <JoiningTab />}
           {current === 'teams' && <TeamsTab />}
@@ -587,7 +589,10 @@ function AuditTab() {
             <tr key={e.id}>
               <td className="num muted">{fmtDate(e.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
               <td>{person(e.actorId)?.name ?? t('common.unknownUser')}</td>
-              <td>{label === key ? e.action : label}</td>
+              <td>
+                {label === key ? e.action : label}
+                {e.staff && <span className="muted"> · {t('support.byStaff', { staff: e.staff })}</span>}
+              </td>
             </tr>
           );
         })}

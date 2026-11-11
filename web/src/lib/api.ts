@@ -2,6 +2,7 @@
 // and request-forgery check rely on it) and the chosen language.
 import type { ApiError } from '../../../shared/src/model';
 import { getDeviceId } from './device';
+import { noteFailedRequest } from './diagnostics';
 
 export class ApiFailure extends Error {
   constructor(
@@ -71,11 +72,13 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
   try {
     res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
   } catch {
+    noteFailedRequest(method, path, 0);
     throw new ApiFailure(0, { error: 'network', message: '' });
   }
   const text = await res.text();
   const data = text ? safeJson(text) : null;
   if (!res.ok) {
+    if (!(res.status === 401 && path === '/me')) noteFailedRequest(method, path, res.status);
     const err = new ApiFailure(res.status, (data as ApiError) ?? { error: 'server', message: res.statusText });
     if (res.status === 401 && path !== '/me') authListeners.forEach((fn) => fn(err.code));
     throw err;

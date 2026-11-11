@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 
 // The try-it-now demo: the whole product (API, Postgres with its row-level
@@ -42,7 +43,7 @@ export default defineConfig({
   root: 'web/demo',
   base: './',
   plugins: [memoryLocation(), react(), renameFsBundle()],
-  define: { 'import.meta.env.TW_DEMO': 'true' },
+  define: { 'import.meta.env.TW_DEMO': 'true', __TW_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
   build: {
     outDir: '../../dist/demo',
     emptyOutDir: true,

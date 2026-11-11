@@ -45,6 +45,11 @@ export interface Env {
   ZOHO_CLIENT_SECRET?: string;
   /** Live demo only: offer the pretend CRM. */
   DEMO_CRM?: string;
+  /** Help requests go to Tendwell's support desk: an address, and/or a signed webhook. */
+  SUPPORT_EMAIL?: string;
+  SUPPORT_WEBHOOK_URL?: string;
+  /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
+  STAFF_KEY?: string;
 }
 
 const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO'] as const;
@@ -73,6 +78,8 @@ export function configFromEnv(env: Env): Config {
     sessionDays: 30,
     signupEnabled: env.SIGNUP_ENABLED !== '0' && !env.SINGLE_TENANT_SLUG,
     secretsKey: env.SECRETS_KEY || undefined,
+    support: { email: env.SUPPORT_EMAIL || undefined, webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined },
+    staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
     connectors: {
       ...(env.SLACK_CLIENT_ID && env.SLACK_CLIENT_SECRET && env.SLACK_SIGNING_SECRET
         ? { slack: { clientId: env.SLACK_CLIENT_ID, clientSecret: env.SLACK_CLIENT_SECRET, signingSecret: env.SLACK_SIGNING_SECRET } }

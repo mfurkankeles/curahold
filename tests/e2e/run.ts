@@ -3,7 +3,8 @@
 // tests/e2e/screens/ for a visual check.
 import { createHash } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
-import { byText, newPage, shot, signIn, startStack } from './browser';
+import { writeFileSync } from 'node:fs';
+import { STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
 
 const s = await startStack(8899);
 const results: { name: string; ok: boolean; error?: string }[] = [];
@@ -375,6 +376,8 @@ await step('CRM: connect, choose, map, preview and start — then records everyw
   await ada.page.waitForSelector('.object-list');
   await ada.page.waitForFunction(() => document.querySelectorAll('.object-row').length === 5);
   const risk = await ada.page.evaluateHandle(() => [...document.querySelectorAll('.object-row')].find((r) => r.textContent?.includes('Risks')));
+  // The sticky step bar can sit over a row near the bottom: bring it to the middle first.
+  await (risk as any).evaluate((el: Element) => el.scrollIntoView({ block: 'center' }));
   await (await (risk as any).$('input[type=checkbox]')).click();
   await shot(ada.page, 'p3-04-objects');
   await (await byText(ada.page, '.stepbar .btn--primary', 'Devam')).click();
@@ -632,6 +635,69 @@ await step('timeline: log a call on a customer; switch the health score on and s
   await shot(mert.page, 'p6-01-timeline-health');
   const lines = await mert.page.$$eval('.healthwhy li', (els) => els.length);
   expect(lines >= 4, `only ${lines} reasons`);
+});
+
+await step('help: a request with a screenshot and consent; support visits read only; closing ends it', async () => {
+  const p = mert.page;
+  await p.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await (await byText(p, '.sidebar .navlink', 'Yardım')).click();
+  await p.waitForSelector('.help__cats');
+  await (await byText(p, '.help__cat strong', 'Bir şey çalışmıyor')).click();
+  await (await byText(p, '.help .seg button', 'İşimi durduruyor')).click();
+  await p.type('.help input.input', 'Yenileme panosu açılmıyor');
+  const areas = await p.$$('.help textarea');
+  await areas[0].type('Panoyu açınca sayfa boş kalıyor, bu sabahtan beri böyle.');
+  await areas[1].type('1. Yenilemeler panosunu aç\n2. Bekle');
+  // A picture, as if pasted from the clipboard (a tiny PNG written for the test).
+  const pic = `${import.meta.dirname}/screens/help-shot.png`;
+  writeFileSync(pic, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'));
+  await ((await p.$('.help__drop input[type=file]')) as any).uploadFile(pic);
+  await p.waitForSelector('.help__shots img');
+  await p.click('.help__details summary');
+  await p.waitForSelector('.help__ctx pre');
+  await (await byText(p, '.help__consent strong', 'Tendwell desteğinin hesabıma bakmasına izin ver')).click();
+  await p.waitForSelector('.help__grant select');
+  await p.select('.help__grant select', '72');
+  await shot(p, 'p7-01-help-form');
+  await (await byText(p, '.help .btn--primary', 'Talebi gönder')).click();
+  await p.waitForSelector('.help__sent');
+  const sentText = await text(p, '.help__sent');
+  expect(/TW-\d{6}/.test(sentText), `no reference: ${sentText}`);
+  await shot(p, 'p7-02-help-sent');
+  const [req] = await sql(`select h.ref, h.context, h.page_url, (select count(*)::int from help_files f where f.request_id = h.id) as files, g.level, extract(epoch from g.expires_at - now()) / 3600 as hours
+                             from help_requests h join support_grants g on g.id = h.grant_id order by h.created_at desc limit 1`);
+  expect(req?.files === 1 && req.level === 'view' && req.hours > 71 && req.hours <= 72, `stored: ${JSON.stringify(req)}`);
+  expect(String(req.page_url).endsWith('/accounts') && req.context.browser, 'page or context missing');
+  await (await byText(p, '.help__sent .btn--primary', 'Kapat')).click();
+  await p.waitForSelector('.openbar');
+
+  // Support's side: an entry link from its own tooling, opened in a separate browser.
+  const [grant] = await sql(`select id from support_grants order by created_at desc limit 1`);
+  const res = await fetch(`http://localhost:8899/api/support/enter-link`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-tendwell-org': 'demo', 'x-tendwell-staff-key': STAFF_KEY },
+    body: JSON.stringify({ grantId: grant.id, staff: 'Deniz · Tendwell' }),
+  });
+  const link = await res.json();
+  expect(res.status === 201 && link.url, `no entry link: ${JSON.stringify(link)}`);
+  const staff = await newPage(s.browser);
+  await staff.page.goto(link.url.replace(/^http:\/\/[^/]+/, s.origin), { waitUntil: 'networkidle0' });
+  await staff.page.waitForSelector('.supportbar');
+  const bar = await text(staff.page, '.supportbar');
+  expect(bar.includes('Mert Aksoy') && bar.includes('yalnızca okuma'), `bar: ${bar}`);
+  expect(!staff.page.url().includes('token'), 'the entry token stayed in the address bar');
+  await shot(staff.page, 'p7-03-support-visit');
+
+  // Mert closes it; support's next step ends the visit.
+  await p.click('.openbar button');
+  await p.waitForSelector('.help__grants li');
+  await shot(p, 'p7-04-my-requests');
+  await (await byText(p, '.help__grants button', 'Erişimi kapat')).click();
+  await p.waitForFunction(() => !document.querySelector('.help__grants li'), { timeout: 5000 });
+  await staff.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await staff.page.waitForSelector('.notice');
+  expect((await text(staff.page, '.notice')).includes('destek oturumu sona erdi'), 'support visit did not end');
+  await staff.page.browserContext().close();
 });
 
 await step('no script errors in the browser', async () => {

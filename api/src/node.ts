@@ -18,7 +18,7 @@ import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 
-export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean }) {
+export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string }) {
   const db = pgliteDb(await createMemoryPg());
   await migrate(db, loadMigrations());
   const demo = await seedDemo(db);
@@ -41,6 +41,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     oauth: {},
     signupEnabled: true,
     connectors: { demoCrm: true },
+    support: { email: 'support@tendwell.localhost' },
+    staffKey: opts.staffKey,
   };
   const api = createApp({ db, email, storage: new MemoryStorage(), config });
   const root = new Hono();

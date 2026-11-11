@@ -210,6 +210,37 @@ row-level security, customer reach and field access as the app.
   there is nothing to say.
 - The AI connector reads the timeline and the score and can log a note.
 
+### Help and support access with consent
+
+- **Help form** (left menu → Help): topic, impact, title, description and
+  steps to repeat, with docs pages suggested while the title is typed (the
+  docs' own static search index; no AI call). Screenshots by capturing the
+  tab (the help window steps aside), pasting or dropping; a mark-up tool
+  highlights, and covers what should not be sent (removed from the picture
+  itself). Up to 6 files of 10 MB, of an allowed type.
+- **Technical details** collected in the tab's memory only — browser,
+  screen, app version, last pages (paths, no query values), errors on the
+  page and failed requests (emails and key-like text masked) — shown in the
+  form before sending, each group removable. Secrets in the page address
+  are dropped on both sides.
+- The desk gets one message (email and/or a signed webhook) with everything,
+  plus file links signed per file for 14 days; the person gets a receipt
+  with a `TW-000123` reference and sees status under Help → My requests.
+- **Support access only with consent**: an unticked box on the form (or
+  "Let support look" later). 24 hours, 3 or 7 days; read only unless an
+  administrator allows changes; revocable at once, open sessions included.
+  Support asks for a one-time entry link (10 minutes) with its staff key and
+  then acts as the person who granted it — same role, same customers, same
+  database checks — in a separate httpOnly, SameSite=Strict session of at
+  most 8 hours. Never within reach: devices, sign-in, API keys, apps and
+  webhooks, people and roles, company settings, export and erasure, and
+  support access itself. Every visit and every change is in the activity
+  log with the staff member's name; a strip shows the person that access is
+  open, and shows support whose eyes it is looking through.
+- **Company policy** (Settings → Security → Support access): anyone /
+  administrators only / nobody; narrowing it ends the access it no longer
+  allows.
+
 ### Try-it-now demo
 
 `npm run build:demo` builds the whole product — API, Postgres (PGlite, with
@@ -275,7 +306,9 @@ tests/            Vitest suites; tests/e2e drives Chrome
 3. R2 bucket `tendwell-files`.
 4. Secrets: `wrangler secret put AUTH_SECRET` (32+ random characters),
    `RESEND_API_KEY`, and the Google / Microsoft client id and secret if those
-   sign-ins are offered.
+   sign-ins are offered. `STAFF_KEY` (24+ characters) lets Tendwell support
+   open entry links where a customer granted access; help requests go to
+   `SUPPORT_EMAIL` and/or `SUPPORT_WEBHOOK_URL`.
 5. DNS: `*.tendwell.com` and `app.tendwell.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
 
