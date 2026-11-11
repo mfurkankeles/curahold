@@ -32,6 +32,8 @@ export interface Config {
   connectors: ConnectorConfig;
   /** Where requests for help go (Tendwell's own support desk). */
   support?: { email?: string; webhookUrl?: string };
+  /** The customer portal's own registrable domain, e.g. "tendwell-portal.com" (companies at <slug>.<portalDomain>). */
+  portalDomain?: string;
   /** Tendwell support's own key for opening an entry link into a company that granted access. */
   staffKey?: string;
 }
@@ -141,6 +143,14 @@ export const secretsKey = (cfg: Config) => cfg.secretsKey || cfg.authSecret;
 export function defer(deps: Deps, p: Promise<unknown>) {
   const guarded = p.catch((err) => console.error('[tendwell] background task failed', err));
   if (deps.defer) deps.defer(guarded);
+}
+
+/** A company's customer portal, on its own domain; null when this installation has none. */
+export function portalUrl(cfg: Config, slug: string): string | null {
+  if (!cfg.portalDomain) return null;
+  const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
+  if (cfg.singleTenantSlug) return `${cfg.scheme}://${cfg.portalDomain}${port}`;
+  return `${cfg.scheme}://${slug}.${cfg.portalDomain}${port}`;
 }
 
 export function centralUrl(cfg: Config): string {

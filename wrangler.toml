@@ -25,6 +25,8 @@ EMAIL_FROM = "Tendwell <no-reply@tendwell.com>"
 MAX_DEVICES = "2"
 # Where help requests go. STAFF_KEY (support's entry-link key) is a secret.
 SUPPORT_EMAIL = "support@tendwell.com"
+# Customers' portal (a second Worker, wrangler.portal.toml).
+PORTAL_DOMAIN = "tendwell-portal.com"
 
 # Supabase Postgres (EU region) through Hyperdrive.
 [[hyperdrive]]

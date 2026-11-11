@@ -45,6 +45,12 @@ export type ErrorCode =
   | 'support_link_used'
   | 'help_too_many_files'
   | 'help_file_type'
+  | 'portal_off'
+  | 'portal_invite_owner'
+  | 'portal_internal_email'
+  | 'portal_email_taken'
+  | 'portal_private_board'
+  | 'portal_not_shared'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -84,6 +90,12 @@ const STATUS: Record<ErrorCode, number> = {
   support_link_used: 400,
   help_too_many_files: 400,
   help_file_type: 400,
+  portal_off: 400,
+  portal_invite_owner: 403,
+  portal_internal_email: 400,
+  portal_email_taken: 409,
+  portal_private_board: 400,
+  portal_not_shared: 400,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

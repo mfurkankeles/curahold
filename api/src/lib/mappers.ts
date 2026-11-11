@@ -31,6 +31,9 @@ export const toTask = (r: Row): Task => ({
   ...(r.subtask_count != null ? { subtaskCount: Number(r.subtask_count), subtaskDone: Number(r.subtask_done ?? 0) } : {}),
   ...(r.comment_count != null ? { commentCount: Number(r.comment_count) } : {}),
   repeat: r.repeat ?? null,
+  portalShared: !!r.portal_shared,
+  portalAuthorId: r.portal_author_id ?? null,
+  ...(r.portal_author_name !== undefined ? { portalAuthorName: r.portal_author_name ?? null } : {}),
 });
 
 export const toBoard = (r: Row, canManage: boolean): Board => ({
@@ -43,6 +46,7 @@ export const toBoard = (r: Row, canManage: boolean): Board => ({
   createdBy: r.created_by ?? null,
   canManage,
   notify: r.notify ?? [],
+  portal: r.portal ?? null,
 });
 
 export const toComment = (r: Row): Comment => ({
@@ -52,6 +56,8 @@ export const toComment = (r: Row): Comment => ({
   body: r.body,
   mentions: r.mentions ?? [],
   createdAt: iso(r.created_at)!,
+  visibility: r.visibility ?? 'internal',
+  ...(r.portal_author_id ? { portalAuthorName: r.portal_author_name ?? null } : {}),
 });
 
 export const toFile = (r: Row): FileMeta => ({

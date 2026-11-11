@@ -8,6 +8,13 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Müşteri portalı
+
+- **Panoları müşterilere açma:** yeni taleplerin düşeceği sütun, müşterinin gördüğü sütun adları ve ayrıntılar pano bazında seçilir.
+- **Müşteri tarafı:** kendi alan adında, şifresiz bağlantıyla giriş; kendi şirketinin paylaşılan talepleri, yeni talep ve yanıt.
+- **Ekip tarafı:** görevi müşteriyle paylaşma, **İç not / Müşteriye yanıt** seçimi, müşterinin yazdıkları için bildirim.
+- **Güvenlik:** ayrı alan adı ve oturum, tablo yetkisi olmayan veritabanı rolü, müşteri bazında ayrım, şirket şalteri.
+
 ### Yardım ve destek erişimi
 
 - **Yardım formu:** konu, etki, başlık, açıklama ve tekrar adımları; yazarken ilgili belge önerileri.

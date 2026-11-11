@@ -18,6 +18,10 @@ Oturumlar cihaza bağlıdır; kopyalanan bir çerez başka bir makinede çalış
 
 Girişler, kişi ve rol değişiklikleri, bağlantılar, API anahtarları, webhook'lar ve kişisel veri işlemleri aktivite kaydına yazılır. Ayarlar → Aktivite kaydı'ndan görülür.
 
+## Müşteri portalı
+
+Müşteri portalı ayrı bir alan adında, ayrı oturum ve çerezle çalışır. Portal isteklerini çalıştıran veritabanı rolünün hiçbir tabloda yetkisi yoktur; yalnızca giriş yapan kişinin kendi şirketine ait, paylaşılmış verileri döndüren fonksiyonları çağırabilir. Ayrıntılar: [Müşteri portalı](/docs/tr/customer-portal/).
+
 ## Tendwell desteğinin erişimi
 
 Tendwell desteği bir şirkete yalnızca bir kişinin izniyle girer: yardım talebindeki kutu işaretlenir, süre seçilir (24 saat – 7 gün). Destek o kişinin gördüğünü görür, varsayılan olarak yalnızca bakar; değişiklik iznini yalnızca yöneticiler verir. Erişim istendiği an kapatılır. Her giriş ve izinle yapılan her değişiklik, destek çalışanının adıyla aktivite kaydına yazılır. Yöneticiler **Ayarlar → Güvenlik → Destek erişimi**'nden bunu yalnızca yöneticilere açabilir ya da tamamen kapatabilir. Ayrıntılar: [Destek almak](/docs/tr/getting-help/).

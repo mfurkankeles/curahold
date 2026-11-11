@@ -1,7 +1,8 @@
 // Create a board, or change its name, who sees it and its columns.
 import { useEffect, useState } from 'react';
 import type { Board, BoardNotify, Column, Connection, Visibility } from '../../../shared/src/model';
-import { ApiFailure, del, get, patch, post } from '../lib/api';
+import { ApiFailure, del, get, patch, post, put } from '../lib/api';
+import { PORTAL_FIELDS, type BoardPortal, type PortalField, type PortalSettings } from '../../../shared/src/portal';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -133,6 +134,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         </div>
       )}
       {board && <ChannelPosts value={notify} onChange={setNotify} />}
+      {board && can('org.manage') && <BoardPortalSettings board={board} />}
       {archive && board && (
         <Confirm
           title={t('board.archive')}
@@ -229,3 +231,98 @@ function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v:
 }
 
 
+
+/** Open this board to customers: where their requests land, what they read for each column, which details they see. */
+function BoardPortalSettings({ board }: { board: Board }) {
+  const { t } = useI18n();
+  const { reloadBoards, toast } = useStore();
+  const [org, setOrg] = useState<PortalSettings | null>(null);
+  const [cfg, setCfg] = useState<BoardPortal>(board.portal ?? { enabled: false, intake: board.columns[0]?.key ?? '', labels: {}, fields: ['due'] });
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    void get<PortalSettings>('/portal').then(setOrg, () => setOrg(null));
+  }, []);
+  if (!org?.available) return null;
+  const save = async () => {
+    setBusy(true);
+    try {
+      await put(`/boards/${board.id}/portal`, cfg);
+      await reloadBoards();
+      toast(t('common.saved'));
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <fieldset className="field portal-board">
+      <legend className="field__label">{t('portal.board.title')}</legend>
+      {!org.enabled ? (
+        <span className="field__hint">{t('portal.board.orgOff')}</span>
+      ) : board.visibility === 'private' ? (
+        <span className="field__hint">{t('portal.board.private')}</span>
+      ) : (
+        <>
+          <label className="checkbox">
+            <input type="checkbox" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
+            <span>{t('portal.board.open')}</span>
+          </label>
+          <span className="field__hint">{t('portal.board.explain')}</span>
+          {cfg.enabled && (
+            <>
+              <label className="field">
+                <span className="field__label">{t('portal.board.intake')}</span>
+                <select className="select" value={cfg.intake} onChange={(e) => setCfg({ ...cfg, intake: e.target.value })}>
+                  {board.columns.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="field__hint">{t('portal.board.intakeHint')}</span>
+              </label>
+              <div className="field">
+                <span className="field__label">{t('portal.board.labels')}</span>
+                <div className="portal-board__labels">
+                  {board.columns.map((c) => (
+                    <label key={c.key}>
+                      <span className="muted">{c.name}</span>
+                      <input
+                        className="input"
+                        maxLength={60}
+                        placeholder={c.name}
+                        value={cfg.labels[c.key] ?? ''}
+                        onChange={(e) => setCfg({ ...cfg, labels: { ...cfg.labels, [c.key]: e.target.value } })}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <span className="field__hint">{t('portal.board.labelsHint')}</span>
+              </div>
+              <div className="field">
+                <span className="field__label">{t('portal.board.fields')}</span>
+                <div className="chips-row">
+                  {PORTAL_FIELDS.map((f) => (
+                    <label key={f} className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={cfg.fields.includes(f)}
+                        onChange={(e) => setCfg({ ...cfg, fields: e.target.checked ? [...cfg.fields, f] : cfg.fields.filter((x: PortalField) => x !== f) })}
+                      />
+                      <span>{t(`portal.field.${f}` as const)}</span>
+                    </label>
+                  ))}
+                </div>
+                <span className="field__hint">{t('portal.board.fieldsHint')}</span>
+              </div>
+            </>
+          )}
+          <button className="btn btn--small" style={{ justifySelf: 'start' }} disabled={busy} onClick={save}>
+            {t('portal.board.save')}
+          </button>
+        </>
+      )}
+    </fieldset>
+  );
+}

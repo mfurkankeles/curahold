@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { MAX_FILE_MB, MENTION_RE, PRIORITIES, type Comment, type Person, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
 import { repeatText } from '../pages/BoardPage';
-import { ApiFailure, api, del, get, post } from '../lib/api';
+import { ApiFailure, api, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -146,12 +146,47 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               <Files task={task} editable={editable} reload={load} />
             </Section>
 
+            {board?.portal?.enabled && task.accountId && (
+              <div className="portal-share" data-on={task.portalShared || undefined}>
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!task.portalShared}
+                    disabled={!editable}
+                    onChange={async (e) => {
+                      try {
+                        await put(`/tasks/${task.id}/portal`, { shared: e.target.checked });
+                        await load();
+                        onChanged();
+                      } catch (err) {
+                        toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+                      }
+                    }}
+                  />
+                  <strong>{t('portal.share.label')}</strong>
+                </label>
+                <span className="field__hint">
+                  {task.portalAuthorName ? t('portal.share.openedBy', { name: task.portalAuthorName }) : task.portalShared ? t('portal.share.on') : t('portal.share.off')}
+                </span>
+              </div>
+            )}
+
             <Section title={t('task.comments')}>
               {task.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('task.noComments')}</p>}
               {task.comments.map((c) => (
-                <CommentView key={c.id} comment={c} author={person(c.authorId)} canDelete={c.authorId === me.user.id || can('privacy.manage')} onDeleted={load} />
+                <CommentView key={c.id} comment={c} author={person(c.authorId)} canDelete={(!!c.authorId && c.authorId === me.user.id) || can('privacy.manage')} onDeleted={load} />
               ))}
-              {editable && <Composer people={people.filter((p) => p.status !== 'deleted')} taskId={task.id} onPosted={() => { void load(); onChanged(); }} />}
+              {editable && (
+                <Composer
+                  people={people.filter((p) => p.status !== 'deleted')}
+                  taskId={task.id}
+                  customer={!!task.portalShared && !!board?.portal?.enabled}
+                  onPosted={() => {
+                    void load();
+                    onChanged();
+                  }}
+                />
+              )}
             </Section>
 
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
@@ -335,11 +370,16 @@ function renderBody(body: string) {
 function CommentView({ comment, author, canDelete, onDeleted }: { comment: Comment; author?: Person; canDelete: boolean; onDeleted: () => void }) {
   const { t } = useI18n();
   return (
-    <div className="comment">
-      <Avatar person={author} large />
+    <div className="comment" data-visibility={comment.visibility} data-customer={comment.portalAuthorName ? true : undefined}>
+      <Avatar person={author ?? (comment.portalAuthorName ? ({ id: comment.id, name: comment.portalAuthorName } as Person) : undefined)} large />
       <div>
         <div className="comment__head">
-          <span className="comment__author">{author?.name ?? t('common.unknownUser')}</span>
+          <span className="comment__author">{comment.portalAuthorName ?? author?.name ?? t('common.unknownUser')}</span>
+          {comment.portalAuthorName ? (
+            <span className="badge badge--customer">{t('portal.comment.fromCustomer')}</span>
+          ) : comment.visibility === 'customer' ? (
+            <span className="badge badge--customer">{t('portal.comment.toCustomer')}</span>
+          ) : null}
           <span className="comment__time">{relativeTime(comment.createdAt, t)}</span>
           {canDelete && (
             <button className="btn btn--quiet btn--small" style={{ marginLeft: 'auto' }} onClick={async () => { await del(`/comments/${comment.id}`); onDeleted(); }}>
@@ -355,10 +395,12 @@ function CommentView({ comment, author, canDelete, onDeleted }: { comment: Comme
 
 // Typing @ opens a list of people; picking one inserts "@Name" and remembers
 // who it was, so the saved comment carries a real mention.
-function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: string; onPosted: () => void }) {
+function Composer({ people, taskId, customer, onPosted }: { people: Person[]; taskId: string; customer: boolean; onPosted: () => void }) {
   const { t } = useI18n();
   const { toast } = useStore();
   const [text, setText] = useState('');
+  // On a task shared with the customer: an internal note unless a reply for them is chosen.
+  const [toCustomer, setToCustomer] = useState(false);
   const [query, setQueryText] = useState<string | null>(null);
   const [sel, setSel] = useState(0);
   const [chosen, setChosen] = useState<Person[]>([]);
@@ -391,7 +433,7 @@ function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: stri
     if (!body) return;
     for (const p of chosen) body = body.split(`@${p.name}`).join(`@[${p.name}](${p.id})`);
     try {
-      await post(`/tasks/${taskId}/comments`, { body });
+      await post(`/tasks/${taskId}/comments`, { body, visibility: customer && toCustomer ? 'customer' : 'internal' });
       setText('');
       setChosen([]);
       onPosted();
@@ -400,7 +442,17 @@ function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: stri
     }
   }
   return (
-    <form className="composer" onSubmit={submit}>
+    <form className="composer" data-customer={customer && toCustomer ? true : undefined} onSubmit={submit}>
+      {customer && (
+        <div className="seg composer__to" role="group" aria-label={t('portal.comment.to')}>
+          <button type="button" aria-pressed={!toCustomer} onClick={() => setToCustomer(false)}>
+            {t('portal.comment.internal')}
+          </button>
+          <button type="button" aria-pressed={toCustomer} onClick={() => setToCustomer(true)}>
+            {t('portal.comment.reply')}
+          </button>
+        </div>
+      )}
       {matches.length > 0 && (
         <div className="suggest" role="listbox">
           {matches.map((p, i) => (
@@ -414,7 +466,7 @@ function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: stri
         ref={ref}
         className="textarea"
         style={{ minHeight: 72 }}
-        placeholder={t('task.commentPlaceholder')}
+        placeholder={customer && toCustomer ? t('portal.comment.replyPlaceholder') : t('task.commentPlaceholder')}
         aria-label={t('task.comments')}
         value={text}
         onChange={(e) => onChange(e.target.value)}
@@ -428,7 +480,7 @@ function Composer({ people, taskId, onPosted }: { people: Person[]; taskId: stri
         }}
       />
       <button className="btn btn--primary" style={{ justifySelf: 'end' }} disabled={!text.trim()}>
-        {t('task.send')}
+        {customer && toCustomer ? t('portal.comment.sendReply') : t('task.send')}
       </button>
     </form>
   );

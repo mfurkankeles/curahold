@@ -102,6 +102,18 @@ if (ok && !process.env.QUICK) {
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: join(SCREENS, 'demo-zeynep.png') });
+  // The customer: the portal, inside the same tab, with only what was shared.
+  await frame!.select('.demobar select', 'customer');
+  await frame!.waitForSelector('.p-item', { timeout: 10000 });
+  const items = await frame!.$$eval('.p-item__title', (els) => els.map((e) => e.textContent));
+  if (items.length !== 2) errors.push(`portal shows ${items.length} requests: ${items.join(', ')}`);
+  await page.screenshot({ path: join(SCREENS, 'demo-portal.png') });
+  await (await frame!.$('.p-item'))!.click();
+  await frame!.waitForSelector('.p-task', { timeout: 10000 });
+  await page.screenshot({ path: join(SCREENS, 'demo-portal-task.png') });
+  if ((await frame!.$eval('.p-task', (e) => e.textContent ?? '')).includes('iç not')) errors.push('an internal note reached the portal');
+  await frame!.select('.demobar select', 'ada');
+  await frame!.waitForSelector('.shell', { timeout: 10000 });
 }
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'no errors');
 await browser.close();

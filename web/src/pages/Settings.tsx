@@ -10,6 +10,7 @@ import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
 import { SupportAccessSettings } from '../components/Help';
+import { PortalSettingsTab } from '../components/PortalAdmin';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -19,7 +20,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'support' | 'audit';
+type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -52,6 +53,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['sources', t('settings.tab.sources'), can('connections.manage')],
         ['automations', t('settings.tab.automations'), can('automations.manage')],
         ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
+        ['portal', t('settings.tab.portal'), can('org.manage')],
       ],
     },
     { label: t('settings.group.security'), items: [['support', t('settings.tab.support'), can('org.manage')], ['audit', t('settings.tab.audit'), can('audit.view')]] },
@@ -104,6 +106,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
           {current === 'support' && <SupportAccessSettings />}
+          {current === 'portal' && <PortalSettingsTab />}
           {current === 'people' && <PeopleTab />}
           {current === 'joining' && <JoiningTab />}
           {current === 'teams' && <TeamsTab />}

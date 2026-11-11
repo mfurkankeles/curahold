@@ -700,6 +700,77 @@ await step('help: a request with a screenshot and consent; support visits read o
   await staff.page.browserContext().close();
 });
 
+await step('customer portal: switch on, invite, the customer opens a request, the team replies, the customer reads it', async () => {
+  // Ada has signed in many times in this run; the sign-in rate limit is not what is tested here.
+  await sql('delete from login_tokens');
+  const admin = await newPage(s.browser);
+  await signIn(admin.page, s.origin, 'ada@demo.example');
+  await admin.page.goto(`${s.origin}/settings/portal`, { waitUntil: 'networkidle0' });
+  await (await byText(admin.page, '.sheet .checkbox strong', 'Müşteri portalı açık')).click();
+  await admin.page.waitForSelector('.portal-admin__address');
+  // Open the CS board to customers (same as its settings dialog does).
+  const [b] = await sql(`select columns from boards where id = $1`, [csBoard]);
+  await sql(`update boards set portal = $2 where id = $1`, [csBoard, JSON.stringify({ enabled: true, intake: b.columns[0].key, labels: {}, fields: ['due', 'assignee'] })]);
+  await admin.page.click('.portal-people__invite .picker__button');
+  await admin.page.type('.picker__pop input', 'Quill');
+  await admin.page.waitForFunction(() => [...document.querySelectorAll('.picker__opt')].some((o) => o.textContent?.includes('Quillfield')));
+  await (await byText(admin.page, '.picker__opt span', 'Quillfield Retail')).click();
+  const inputs = await admin.page.$$('.portal-people__invite input.input');
+  await inputs[0].type('Selin Kaya');
+  await inputs[1].type('selin@quillfield.example');
+  await (await byText(admin.page, '.portal-people__invite .btn--primary', 'Davet et')).click();
+  await admin.page.waitForFunction(() => document.querySelector('.portal-people table')?.textContent?.includes('selin@quillfield.example'), { timeout: 5000 });
+  await shot(admin.page, 'p8-01-portal-settings');
+  await admin.page.browserContext().close();
+
+  await pause(300);
+  const invite = s.email.sent.filter((m) => m.to === 'selin@quillfield.example').at(-1);
+  const link = /(http:\/\/\S+\/auth#token=\S+)/.exec(invite?.text ?? '')?.[1];
+  expect(link && link.startsWith('http://demo.portal.localhost:8899/'), `invite link: ${link}`);
+  const customer = await newPage(s.browser, 1280, 860);
+  await customer.page.goto(link!, { waitUntil: 'networkidle0' });
+  await customer.page.waitForSelector('.p-head');
+  expect(!customer.page.url().includes('token'), 'token stayed in the address bar');
+  await (await byText(customer.page, '.p-head .p-btn--primary', 'Yeni talep')).click();
+  await customer.page.waitForSelector('.p-form input');
+  await customer.page.type('.p-form input', 'Rapora iki kullanıcı ekleyelim');
+  await customer.page.type('.p-form textarea', 'Ayşe ve Can rapora erişemiyor; pazartesiye kadar açılabilir mi?');
+  await shot(customer.page, 'p8-02-portal-new');
+  await (await byText(customer.page, '.p-form .p-btn--primary', 'Talebi gönder')).click();
+  await customer.page.waitForSelector('.p-task');
+  const taskId = /\/t\/([0-9a-f-]{36})/.exec(customer.page.url())?.[1];
+  const [row] = await sql(`select t.status, t.assignee_ids, a.owner_id from tasks t join accounts a on a.id = t.account_id where t.id = $1`, [taskId]);
+  expect(row && row.assignee_ids[0] === row.owner_id, `not assigned to the owner: ${JSON.stringify(row)}`);
+
+  // Inside: the owner sees who opened it and answers the customer.
+  const zeynep = await newPage(s.browser);
+  await signIn(zeynep.page, s.origin, 'zeynep@demo.example');
+  await zeynep.page.goto(`${s.origin}/b/${csBoard}?task=${taskId}`, { waitUntil: 'networkidle0' });
+  await zeynep.page.waitForSelector('.portal-share[data-on]');
+  await (await byText(zeynep.page, '.composer__to button', 'Müşteriye yanıt')).click();
+  await zeynep.page.type('.composer textarea', 'Merhaba Selin, ikisini de bugün ekliyoruz.');
+  await (await byText(zeynep.page, '.composer .btn--primary', 'Müşteriye gönder')).click();
+  await zeynep.page.waitForFunction(() => [...document.querySelectorAll('.comment .badge--customer')].length > 0, { timeout: 5000 });
+  await shot(zeynep.page, 'p8-03-task-panel-reply');
+  await zeynep.page.browserContext().close();
+
+  await customer.page.reload({ waitUntil: 'networkidle0' });
+  await customer.page.waitForSelector('.p-msg');
+  expect((await text(customer.page, '.p-thread')).includes('bugün ekliyoruz'), 'reply not shown to the customer');
+  await shot(customer.page, 'p8-04-portal-task');
+  await customer.page.goto('http://demo.portal.localhost:8899/', { waitUntil: 'networkidle0' });
+  await customer.page.waitForSelector('.p-item');
+  await shot(customer.page, 'p8-05-portal-list');
+  const phone = await newPage(s.browser, 390, 844);
+  await phone.page.setCookie(...(await customer.page.cookies()));
+  await phone.page.goto(`http://demo.portal.localhost:8899/t/${taskId}`, { waitUntil: 'networkidle0' });
+  await phone.page.waitForSelector('.p-msg');
+  await shot(phone.page, 'p8-06-portal-phone');
+  expect(customer.errors.length === 0, customer.errors.join(' | '));
+  await customer.page.browserContext().close();
+  await phone.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

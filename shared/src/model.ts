@@ -126,6 +126,8 @@ export interface Org {
   health?: { enabled: boolean; bands: { watch: number; good: number } };
   setup: SetupState;
   logoUrl: string | null;
+  /** The customer portal is on (and this installation has an address for it). */
+  portal?: boolean;
 }
 
 export interface SetupState {
@@ -352,6 +354,8 @@ export interface Board {
   createdBy: string | null;
   canManage: boolean;
   notify: BoardNotify[];
+  /** Open to customers (the customer portal), or null. */
+  portal: import('./portal').BoardPortal | null;
 }
 
 export interface BoardNotify {
@@ -381,6 +385,11 @@ export interface Task {
   subtaskDone?: number;
   commentCount?: number;
   repeat?: Repeat | null;
+  /** Shared with the customer in the portal. */
+  portalShared?: boolean;
+  /** Opened by someone at the customer, in the portal. */
+  portalAuthorId?: string | null;
+  portalAuthorName?: string | null;
 }
 
 /** A task that comes back: when it is done, the next copy is made with a new due date. */
@@ -398,6 +407,10 @@ export interface Comment {
   body: string;
   mentions: string[];
   createdAt: string;
+  /** "customer": written for the customer (or by them) and shown in the portal. */
+  visibility: 'internal' | 'customer';
+  /** Written by someone at the customer, in the portal. */
+  portalAuthorName?: string | null;
 }
 
 export interface FileMeta {

@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { MAX_FILE_MB, MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
-import { nowOf, requireWriter, run, type AppEnv } from '../context';
+import { defer, nowOf, requireWriter, run, type AppEnv } from '../context';
+import { portalOn, tellCustomer } from '../lib/portal';
 import { localDate, runTaskMoved } from '../lib/automations';
 import { spawnNext } from '../lib/recurring';
 import { saveUndo, UNDO_MINUTES } from '../lib/undo';
@@ -178,12 +179,18 @@ taskRoutes.get('/tasks/:id', async (c) => {
   const id = param(c, 'id');
   const detail = await run(c, async (q) => {
     const t = await loadTask(q, id);
-    const [counted] = await q.query(`select t.*, ${COUNTS} from tasks t where t.id = $1`, [id]);
+    const [counted] = await q.query(
+      `select t.*, ${COUNTS}, (select pu.name from portal_users pu where pu.id = t.portal_author_id) as portal_author_name from tasks t where t.id = $1`,
+      [id],
+    );
     const subtasks = await q.query(
       'select * from tasks where parent_id = $1 and archived_at is null order by position, created_at',
       [id],
     );
-    const comments = await q.query('select * from comments where task_id = $1 order by created_at', [id]);
+    const comments = await q.query(
+      'select c.*, pu.name as portal_author_name from comments c left join portal_users pu on pu.id = c.portal_author_id where c.task_id = $1 order by c.created_at',
+      [id],
+    );
     const files = await q.query('select * from files where task_id = $1 order by created_at', [id]);
     const [mute] = await q.query('select 1 from task_mutes where task_id = $1', [id]);
     return { t: counted ?? t, subtasks, comments, files, muted: !!mute };
@@ -407,11 +414,16 @@ taskRoutes.delete('/tasks/:id', async (c) => {
 taskRoutes.post('/tasks/:id/comments', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
-  const input = await body(c, z.object({ body: z.string().trim().min(1).max(10000) }));
+  const input = await body(c, z.object({ body: z.string().trim().min(1).max(10000), visibility: z.enum(['internal', 'customer']).default('internal') }));
   const auth = c.get('auth');
   const org = c.get('org');
   const comment = await run(c, async (q) => {
     const task = await loadTask(q, id);
+    // A reply for the customer only where the customer can read it.
+    if (input.visibility === 'customer') {
+      const [b] = await q.query(`select coalesce((portal->>'enabled')::boolean, false) as open from boards where id = $1`, [task.board_id]);
+      if (!task.portal_shared || !b?.open || !portalOn(org)) fail('portal_not_shared');
+    }
     const mentioned = [...new Set([...input.body.matchAll(MENTION_RE)].map((m) => m[2]))];
     const valid = mentioned.length
       ? (await q.query<{ id: string }>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [mentioned])).map(
@@ -419,14 +431,15 @@ taskRoutes.post('/tasks/:id/comments', async (c) => {
         )
       : [];
     const [cm] = await q.query(
-      `insert into comments (org_id, task_id, author_id, body, mentions) values ($1, $2, $3, $4, $5) returning *`,
-      [org.id, id, auth.userId, input.body, valid],
+      `insert into comments (org_id, task_id, author_id, body, mentions, visibility) values ($1, $2, $3, $4, $5, $6) returning *`,
+      [org.id, id, auth.userId, input.body, valid, input.visibility],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'comment.created', entity: 'comment', entityId: cm.id });
     await onComment(q, org.id, auth.userId, task, input.body, valid);
     return cm;
   });
   kick(c.get('deps'));
+  if (comment.visibility === 'customer') defer(c.get('deps'), tellCustomer(c.get('deps'), org, id, auth.name, input.body));
   return c.json({ comment: toComment(comment) }, 201);
 });
 

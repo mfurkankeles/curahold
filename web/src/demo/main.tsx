@@ -13,6 +13,8 @@ const PEOPLE = [
   { key: 'mert', name: 'Mert Aksoy', role: { tr: 'Ekip lideri', en: 'Team lead' } },
   { key: 'zeynep', name: 'Zeynep Tunç', role: { tr: 'Müşteri yöneticisi', en: 'Customer manager' } },
   { key: 'sofia', name: 'Sofia Rossi', role: { tr: 'İzleyici', en: 'Viewer' } },
+  // Not someone in the company: a customer's person, in the customer portal.
+  { key: 'customer', name: 'Selin Kaya', role: { tr: 'Müşteri · Quillfield portalı', en: 'Customer · Quillfield portal' } },
 ] as const;
 type Key = (typeof PEOPLE)[number]['key'];
 
@@ -41,6 +43,8 @@ const TEXT = {
       'Ayarlar → Roller’de “Onun gözünden bak” ile bir üyenin ekranını gör.',
       'Yukarıdan Zeynep’e ya da Sofia’ya geç: aynı ekranlarda neyin değiştiğine bak.',
       'Ayarların’da API anahtarı oluştur ve Claude/ChatGPT bağlayıcı adresine bak; Ayarlar → Geliştirici’de webhook ekle.',
+      'Yukarıdan Selin Kaya’ya (müşteri) geç: Quillfield’ın portalında yalnızca kendisiyle paylaşılanları görür; yeni talep açıp yanıt yaz. Sonra Zeynep olarak CS — Genel panosunda o görevi aç ve “Müşteriye yanıt” ver.',
+      'Sol menüdeki Yardım ile destek talebi formunu dene; “Tendwell desteğinin hesabıma bakmasına izin ver” kutusunu işaretleyince üstte bir şerit belirir.',
     ],
   },
   en: {
@@ -67,6 +71,8 @@ const TEXT = {
       'In Settings → Roles, use “See it as them” to view a member’s screens.',
       'Switch to Zeynep or Sofia above and see what changes on the same screens.',
       'In Your settings, make an API key and find the Claude/ChatGPT connector address; add a webhook in Settings → Developers.',
+      'Switch to Selin Kaya (a customer) above: in Quillfield’s portal she sees only what was shared with her; open a request and reply. Then, as Zeynep, open that task on CS — General and “Reply to customer”.',
+      'Try Help in the left menu: the help request form; ticking “Let Tendwell support look at my account” shows a strip on top.',
     ],
   },
 };
@@ -135,17 +141,18 @@ async function main() {
   sessions.ada = await signIn(server, 'ada@demo.example');
   const { seedShowcase } = await import('../../../scripts/seed-showcase');
   await seedShowcase(server.call, server.db);
+  const { seedPortal } = await import('./portal-seed');
+  await seedPortal(server).catch((e) => console.warn('[demo] portal seed', e));
   step(92, 'app');
 
-  const [{ App }, { navigate }] = await Promise.all([import('../App'), import('../lib/router')]);
+  const [{ App }, { navigate }, { PortalApp }] = await Promise.all([import('../App'), import('../lib/router'), import('../../portal/Portal')]);
+  await import('../../portal/portal.css');
   const root = createRoot(document.getElementById('root')!);
   let generation = 0;
+  let current: Key = 'ada';
+  // The customer sees the portal (its own small app); everyone else, Tendwell.
   const render = () =>
-    root.render(
-      <StrictMode>
-        <App key={generation} />
-      </StrictMode>,
-    );
+    root.render(<StrictMode>{current === 'customer' ? <PortalApp key={generation} /> : <App key={generation} />}</StrictMode>);
   // A "page load": start the app afresh on the same in-tab database.
   const reload = (to: string) => {
     setCurrent(to);
@@ -174,10 +181,16 @@ async function main() {
   });
   const memoryNav = (href: string) => (globalThis as any).twLocation.assign(href);
 
-  let current: Key = 'ada';
   const bar = createRoot(document.getElementById('demobar')!);
   const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} />);
   async function switchTo(k: Key) {
+    if (k === 'customer') {
+      await server.portalSignIn('selin@quillfield.example').catch(() => undefined);
+      current = k;
+      drawBar();
+      reload('/');
+      return;
+    }
     sessions[k] ??= await signIn(server, `${k}@demo.example`);
     server.jar.set('tw_session', sessions[k]!);
     try {

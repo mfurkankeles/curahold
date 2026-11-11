@@ -1,0 +1,31 @@
+# The customer portal: a second Worker on its own registrable domain, so
+# nothing of the app (cookies, storage, code, API) is shared with it.
+# Secrets are the same as the app's (wrangler secret put NAME --config wrangler.portal.toml).
+name = "tendwell-portal"
+main = "api/src/portal-worker.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "*.tendwell-portal.com/*", zone_name = "tendwell-portal.com" },
+]
+
+[assets]
+directory = "dist/portal"
+not_found_handling = "single-page-application"
+run_worker_first = ["/papi/*"]
+
+[vars]
+BASE_DOMAIN = "tendwell.com"
+CENTRAL_HOST = "app.tendwell.com"
+PORTAL_DOMAIN = "tendwell-portal.com"
+EMAIL_FROM = "Tendwell <no-reply@tendwell.com>"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "<hyperdrive-config-id>"
+
+# Only for the company's logo.
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "tendwell-files"

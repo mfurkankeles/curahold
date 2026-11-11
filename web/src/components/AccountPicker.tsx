@@ -5,7 +5,7 @@ import { get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 
-export function AccountPicker({ value, name, onChange, disabled }: { value: string | null; name: string | null; onChange: (id: string | null) => void; disabled?: boolean }) {
+export function AccountPicker({ value, name, onChange, disabled }: { value: string | null; name: string | null; onChange: (id: string | null, name?: string | null) => void; disabled?: boolean }) {
   const { t, words } = useI18n();
   const { canWrite, toast } = useStore();
   const [open, setOpen] = useState(false);
@@ -32,15 +32,15 @@ export function AccountPicker({ value, name, onChange, disabled }: { value: stri
     };
   }, [open]);
 
-  const choose = (id: string | null) => {
+  const choose = (id: string | null, picked?: string) => {
     setOpen(false);
     setQ('');
-    if (id !== value) onChange(id);
+    if (id !== value) onChange(id, picked ?? list.find((a) => a.id === id)?.name ?? null);
   };
   const create = async () => {
     try {
       const r = await post<{ account: Account }>('/accounts', { name: q.trim() });
-      choose(r.account.id);
+      choose(r.account.id, r.account.name);
     } catch {
       toast(t('errors.server'), 'error');
     }

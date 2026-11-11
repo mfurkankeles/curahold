@@ -17,6 +17,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { AccountTimeline, HealthBadge, ScoreChip } from '../components/Timeline';
+import { PortalPeople } from '../components/PortalAdmin';
 import { relativeTime } from '../lib/time';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
@@ -574,6 +575,12 @@ export function AccountPage({ id }: { id: string }) {
           </section>
           <AccountTimeline accountId={a.id} hasContacts={!!types?.some((x) => x.kind === 'contact')} />
           {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
+          {me.org.portal && (can('org.manage') || a.ownerId === me.user.id) && (
+            <section className="sheet">
+              <h3 className="section__head">{t('portal.people.forAccount')}</h3>
+              <PortalPeople accountId={a.id} accountName={a.name} />
+            </section>
+          )}
         </div>
         <aside className="sheet account-page__side">
           <OpenIn links={data.account.links} />

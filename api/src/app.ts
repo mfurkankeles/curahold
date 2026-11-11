@@ -36,6 +36,7 @@ import { mcpRoutes } from './routes/mcp';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
 import { helpRoutes, supportEntry } from './routes/help';
+import { portalRoutes } from './routes/portal';
 import { signInSupport } from './lib/support';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
@@ -249,6 +250,7 @@ export function createApp(deps: Deps) {
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', helpRoutes);
+  app.route('/api', portalRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);

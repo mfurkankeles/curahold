@@ -241,6 +241,31 @@ row-level security, customer reach and field access as the app.
   administrators only / nobody; narrowing it ends the access it no longer
   allows.
 
+### Customer portal
+
+- A company opens chosen boards (team or company boards, never private
+  ones) to its customers' people, per board: the intake column (new
+  requests are assigned to the customer's owner), the names customers read
+  for columns, and which details they see (due date, priority, who works on
+  it). A company-wide switch closes it for everyone at once.
+- People at a customer are invited by an administrator or the customer's
+  owner and sign in with one-time email links (invitation 7 days, sign-in
+  30 minutes; no passwords; the sign-in form never reveals who has access).
+- They see only their own customer's tasks that are shared with them, and
+  only the comments written for them; they open requests and reply. Inside,
+  a task is shared with a tick; comments are **Internal note** by default or
+  **Reply to customer** (emailed to them). Changing a task's customer
+  switches sharing off, so a conversation never moves to another customer.
+- **Walls**: the portal is a separate Worker on a separate registrable
+  domain (`*.tendwell-portal.com`, `wrangler.portal.toml`) with its own
+  small bundle (`dist/portal`), cookie (host-only, httpOnly,
+  SameSite=Strict), sessions and CSP headers; the app's API, cookies and
+  code are not served there and vice versa. Portal requests run as the
+  `tendwell_portal` database role, which has no table privileges at all and
+  can only call the `portal_*` security-definer functions; those take the
+  company and customer from the signed-in person, never from the request.
+  Rate limits per person (30 requests, 200 replies a day; 5 links an hour).
+
 ### Try-it-now demo
 
 `npm run build:demo` builds the whole product — API, Postgres (PGlite, with
@@ -311,6 +336,10 @@ tests/            Vitest suites; tests/e2e drives Chrome
    `SUPPORT_EMAIL` and/or `SUPPORT_WEBHOOK_URL`.
 5. DNS: `*.tendwell.com` and `app.tendwell.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
+7. Customer portal (optional): a second domain (e.g. `tendwell-portal.com`)
+   on Cloudflare, `PORTAL_DOMAIN` set for both Workers, the same secrets put
+   with `--config wrangler.portal.toml`, then
+   `npx wrangler deploy --config wrangler.portal.toml`.
 
 ### Chat apps (each optional)
 
@@ -344,10 +373,13 @@ only become `tendwell_app`:
 ```sql
 create role tendwell_api login password '...' noinherit;
 grant tendwell_app to tendwell_api;
+grant tendwell_portal to tendwell_api;
 ```
 
 Every request runs `set local role tendwell_app` inside its transaction, so
-row-level security always applies.
+row-level security always applies. Customer-portal requests run as
+`tendwell_portal`, which has no table privileges at all and can only call
+the `portal_*` functions.
 
 ## Sub-processors (for the DPA)
 

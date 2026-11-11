@@ -74,15 +74,24 @@ export interface DemoServer {
   request: (path: string, init?: RequestInit) => Promise<Response>;
   call: <T = any>(method: string, path: string, body?: unknown) => Promise<T>;
   jar: Jar;
+  /** The customer portal, on its own (pretend) domain with its own cookies. */
+  portalCall: <T = any>(method: string, path: string, body?: unknown) => Promise<T>;
+  emails: { to: string; subject: string; text: string }[];
+  /** Signs someone at a customer into the portal through the real email-link flow. */
+  portalSignIn: (email: string) => Promise<void>;
 }
+
+/** The customer portal's address in the demo: another site than the app's, as in production. */
+export const PORTAL_ORIGIN = 'https://demo.tendwell-portal.com';
 
 // The app sends this browser's device id with every call; sign-ins use the same one.
 const DEVICE = getDeviceId();
 
 export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void): Promise<DemoServer> {
   step(8, 'db');
-  const [{ createApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
+  const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
     import('../../../api/src/app'),
+    import('../../../api/src/portal'),
     import('../../../api/src/db/migrate'),
     import('../../../api/src/db/pglite'),
     import('../../../api/src/lib/services'),
@@ -116,10 +125,33 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     oauth: {},
     signupEnabled: false,
     connectors: { demoCrm: true },
+    portalDomain: 'tendwell-portal.com',
   };
-  const deps: Deps = { db, email: new services.MemoryEmail(), storage: new services.MemoryStorage(), config, defer: (p) => void p };
+  const email = new services.MemoryEmail();
+  const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };
   const app = createApp(deps);
+  const portal = createPortalApp(deps);
   const jar = new Jar();
+  const portalJar = new Jar();
+
+  const portalRequest = async (path: string, init: RequestInit = {}) => {
+    const headers = new Headers(init.headers);
+    const cookie = portalJar.header();
+    if (cookie) headers.set('cookie', cookie);
+    const res = await portal.fetch(new KeptHeadersRequest(new URL(path, PORTAL_ORIGIN).href, { method: init.method ?? 'GET', body: init.body, redirect: 'manual' }, headers));
+    portalJar.take(res);
+    return res;
+  };
+  const portalCall = async (method: string, path: string, body?: unknown) => {
+    const res = await portalRequest(path, {
+      method,
+      headers: { 'x-tendwell-portal': '1', 'content-type': 'application/json', 'x-tendwell-locale': 'tr' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(`${method} ${path}: ${res.status} ${JSON.stringify(data)}`);
+    return data;
+  };
 
   const request = async (path: string, init: RequestInit = {}) => {
     const url = new URL(path, ORIGIN);
@@ -150,10 +182,23 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const url = new URL(raw, ORIGIN);
+    if (url.origin === ORIGIN && url.pathname.startsWith('/papi/')) return portalRequest(url.pathname + url.search, init);
     if (url.origin !== ORIGIN || !(url.pathname.startsWith('/api/') || url.pathname === '/mcp')) return nativeFetch(input, init);
     return request(url.pathname + url.search, init);
   };
-  return { db, request, call, jar };
+  const portalSignIn = async (address: string) => {
+    if (portalJar.get('tw_portal')) return;
+    await portalCall('POST', '/papi/auth/start', { email: address });
+    // The link is emailed after the answer; wait for it (in memory, a moment).
+    let mail: { text: string } | undefined;
+    for (let i = 0; i < 40 && !mail; i++) {
+      await new Promise((r) => setTimeout(r, 50));
+      mail = email.sent.filter((m) => m.to === address && m.text.includes('#token=')).at(-1);
+    }
+    const token = /#token=([A-Za-z0-9_-]+)/.exec(mail?.text ?? '')?.[1];
+    if (token) await portalCall('POST', '/papi/auth/verify', { token });
+  };
+  return { db, request, call, jar, portalCall, emails: email.sent, portalSignIn };
 }
 
 /** Signs `email` in through the real email-link flow and returns the session cookie. */

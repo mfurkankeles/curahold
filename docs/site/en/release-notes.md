@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Customer portal
+
+- **Opening boards to customers:** the column new requests land in, the column names and details customers see, per board.
+- **The customer's side:** their own domain, passwordless sign-in links; their company's shared requests, new requests and replies.
+- **The team's side:** share a task with its customer, choose **Internal note / Reply to customer**, notifications for what customers write.
+- **Security:** a separate domain and session, a database role with no table privileges, isolation per customer, a company-wide switch.
+
 ### Help and support access
 
 - **Help form:** topic, impact, title, description and steps to repeat; matching docs suggested while you type.

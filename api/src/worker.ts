@@ -50,6 +50,8 @@ export interface Env {
   SUPPORT_WEBHOOK_URL?: string;
   /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
   STAFF_KEY?: string;
+  /** The customer portal's own domain, e.g. tendwell-portal.com (unset: no portal). */
+  PORTAL_DOMAIN?: string;
 }
 
 const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO'] as const;
@@ -65,6 +67,7 @@ function crmClients(env: Env) {
 }
 
 export function configFromEnv(env: Env): Config {
+  const portalDomain = env.PORTAL_DOMAIN || undefined;
   if (!env.AUTH_SECRET || env.AUTH_SECRET.length < 32) throw new Error('AUTH_SECRET must be at least 32 characters');
   return {
     baseDomain: env.BASE_DOMAIN,
@@ -78,6 +81,7 @@ export function configFromEnv(env: Env): Config {
     sessionDays: 30,
     signupEnabled: env.SIGNUP_ENABLED !== '0' && !env.SINGLE_TENANT_SLUG,
     secretsKey: env.SECRETS_KEY || undefined,
+    portalDomain,
     support: { email: env.SUPPORT_EMAIL || undefined, webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined },
     staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
     connectors: {
@@ -104,9 +108,9 @@ export function configFromEnv(env: Env): Config {
   };
 }
 
-type Ctx = { waitUntil(p: Promise<unknown>): void };
+export type Ctx = { waitUntil(p: Promise<unknown>): void };
 
-function depsFor(env: Env, ctx: Ctx) {
+export function depsFor(env: Env, ctx: Ctx) {
   // Hyperdrive pools connections; a client per request is the recommended use.
   const db = postgresDb(env.HYPERDRIVE.connectionString, { max: 1 });
   const pending: Promise<unknown>[] = [];

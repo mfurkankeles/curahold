@@ -148,7 +148,8 @@ export function render(ctx: RenderCtx): ChatMessage {
   const { locale, terms, n, task } = ctx;
   const t = (k: MessageKey, v: Record<string, string | number> = {}) => translate(locale, k, v, terms);
   const data = (n.data ?? {}) as Record<string, any>;
-  const actor = ctx.actorName ?? (data.rule ? `“${data.rule}”` : t('notify.someone'));
+  // Someone at the customer (the portal) is named in the notification itself.
+  const actor = ctx.actorName ?? (data.by ? String(data.by) : data.rule ? `“${data.rule}”` : t('notify.someone'));
   const taskUrl = task ? `${ctx.base}/b/${task.board_id}?task=${task.id}` : undefined;
   const fields: { label: string; value: string }[] = [];
   if (task) {

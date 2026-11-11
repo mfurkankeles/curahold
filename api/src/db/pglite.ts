@@ -1,7 +1,7 @@
 // Embedded Postgres (PGlite) — the same SQL and RLS as production, used by
 // the tests, local development and the single-machine demo.
 import { PGlite } from '@electric-sql/pglite';
-import { TENANT_SETUP_SQL, type Db, type Q } from './index';
+import { PORTAL_SETUP_SQL, TENANT_SETUP_SQL, type Db, type Q } from './index';
 
 type Tx = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>; exec: (sql: string) => Promise<unknown> };
 
@@ -20,6 +20,13 @@ export function pgliteDb(pg: PGlite): Db {
       return pg.transaction(async (tx) => {
         await tx.query(TENANT_SETUP_SQL, [ctx.orgId ?? '', ctx.userId ?? '']);
         await tx.exec('set local role tendwell_app');
+        return fn(wrap(tx as unknown as Tx));
+      });
+    },
+    portal(ctx, fn) {
+      return pg.transaction(async (tx) => {
+        await tx.query(PORTAL_SETUP_SQL, [ctx.orgId, ctx.portalUserId ?? '']);
+        await tx.exec('set local role tendwell_portal');
         return fn(wrap(tx as unknown as Tx));
       });
     },

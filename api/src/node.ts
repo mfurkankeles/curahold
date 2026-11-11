@@ -6,10 +6,11 @@
 // *.localhost to this machine, so company subdomains work locally too.
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Hono } from 'hono';
 import { createApp } from './app';
+import { createPortalApp } from './portal';
 import type { Config } from './context';
 import { migrate } from './db/migrate';
 import { loadMigrations } from './db/migrations-fs';
@@ -42,11 +43,16 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     signupEnabled: true,
     connectors: { demoCrm: true },
     support: { email: 'support@tendwell.localhost' },
+    // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
+    portalDomain: 'portal.localhost',
     staffKey: opts.staffKey,
   };
-  const api = createApp({ db, email, storage: new MemoryStorage(), config });
+  const storage = new MemoryStorage();
+  const api = createApp({ db, email, storage, config });
   const root = new Hono();
   root.route('/', api);
+  const portal = new Hono();
+  portal.route('/', createPortalApp({ db, email, storage, config }));
   if (opts.serveStatic) {
     const dist = join(import.meta.dirname, '..', '..', 'dist', 'web');
     const index = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -56,10 +62,18 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     root.use('/docs/*', serveStatic({ root: dist }));
     root.use('/llms.txt', serveStatic({ root: dist }));
     root.get('*', (c) => c.html(index));
+    const portalDist = join(import.meta.dirname, '..', '..', 'dist', 'portal');
+    if (existsSync(join(portalDist, 'index.html'))) {
+      const portalIndex = readFileSync(join(portalDist, 'index.html'), 'utf8');
+      portal.use('/assets/*', serveStatic({ root: portalDist }));
+      portal.get('*', (c) => c.html(portalIndex));
+    }
   }
-  const server = serve({ fetch: root.fetch, port: opts.port });
+  // The portal's own domain gets the portal, and nothing else.
+  const isPortal = (req: Request) => (req.headers.get('host') ?? new URL(req.url).host).split(':')[0].endsWith(`.${config.portalDomain}`);
+  const server = serve({ fetch: (req: Request) => (isPortal(req) ? portal.fetch(req) : root.fetch(req)), port: opts.port });
   // Hourly jobs (digests, automations); on Workers this is the cron trigger.
-  const timer = setInterval(() => runScheduled({ db, email, storage: new MemoryStorage(), config }).catch(() => undefined), 3600_000);
+  const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
   timer.unref();
   if (!opts.quiet) {
     console.log(`Tendwell API on http://localhost:${opts.port}`);

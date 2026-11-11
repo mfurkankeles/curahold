@@ -13,6 +13,7 @@ import { iso } from '../lib/mappers';
 import { defsFor } from '../lib/fieldAccess';
 import { body, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
+import { portalOn } from '../lib/portal';
 
 export const meRoutes = new Hono<AppEnv>();
 
@@ -69,6 +70,7 @@ meRoutes.get('/me', async (c) => {
       health: (({ enabled, bands }) => ({ enabled, bands }))(healthConfig(org.settings?.health)),
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
+      portal: portalOn(org, c.get('deps')),
     },
     teamIds: data.teamIds,
     sessionId: auth.sessionId,

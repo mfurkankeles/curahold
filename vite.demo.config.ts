@@ -16,7 +16,7 @@ const memoryLocation = (): Plugin => ({
   name: 'tendwell-memory-location',
   enforce: 'pre',
   transform(code, id) {
-    if (!/\/web\/src\//.test(id) || /\/web\/src\/demo\//.test(id) || !/\.[jt]sx?$/.test(id)) return null;
+    if (!/\/web\/(src|portal)\//.test(id) || /\/web\/src\/demo\//.test(id) || !/\.[jt]sx?$/.test(id)) return null;
     const out = code
       .replace(/(?<![.\w$])location\./g, 'twLocation.')
       .replace(/(?<![.\w$])history\.(pushState|replaceState)\b/g, 'twHistory.$1');

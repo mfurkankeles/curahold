@@ -1114,3 +1114,21 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
   .help__cats { grid-template-columns: 1fr 1fr; }
   .openbar, .previewbar { padding-left: 14px; padding-right: 14px; flex-wrap: wrap; }
 }
+
+/* Customer portal, inside the app */
+.portal-share { display: grid; gap: 4px; padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: var(--r-m); }
+.portal-share[data-on] { border-style: solid; border-color: var(--tend); background: var(--tend-wash); }
+.badge--customer { background: #fdf0dc; color: #7c5210; }
+.comment[data-visibility='customer'] .comment__body { border-left: 3px solid var(--soon); padding-left: 10px; }
+.composer__to { justify-self: start; }
+.composer[data-customer] .textarea { border-color: var(--soon); }
+.portal-board { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px; margin: 0; }
+.portal-board legend { padding: 0 4px; }
+.portal-board__labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.portal-board__labels label { display: grid; gap: 4px; font-size: 12.5px; }
+.portal-admin__address { margin: 10px 0 0; }
+.portal-admin__address code { background: var(--sunk); padding: 2px 6px; border-radius: 4px; }
+.portal-people { display: grid; gap: 12px; }
+.portal-people__invite { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.portal-people__invite:not(:has(.picker)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+@media (max-width: 760px) { .portal-people__invite, .portal-people__invite:not(:has(.picker)) { grid-template-columns: 1fr; } }
