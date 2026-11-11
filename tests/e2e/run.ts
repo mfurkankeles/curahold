@@ -430,6 +430,9 @@ await step('stakeholders: org chart with drag and drop, and a stakeholder card',
   await ada.page.waitForSelector('.org-card');
   await shot(ada.page, 'p3-11-org-chart');
   const drag = async (fromName: string, to: () => Promise<any>) => {
+    // The chart sits below the timeline: bring it into view before dragging.
+    await ada.page.evaluate(() => document.querySelector('.org__root')?.scrollIntoView({ block: 'start' }));
+    await pause(100);
     const card = await ada.page.evaluateHandle((n) => [...document.querySelectorAll('.org-card')].find((c) => c.querySelector('strong')?.textContent === n), fromName);
     const a = (await (card as any).boundingBox())!;
     const target = await to();
@@ -604,6 +607,31 @@ await step('an API key is shown once and works; an AI assistant asks and the per
   expect(tools.result?.tools?.some((t: any) => t.name === 'create_task'), `assistant has no tools: ${JSON.stringify(tools).slice(0, 200)}`);
   // The page left for the assistant's address; come back for the remaining checks.
   await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+});
+
+await step('timeline: log a call on a customer; switch the health score on and see why', async () => {
+  const quill = s.demo.accounts['Quillfield Retail'];
+  await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
+  await mert.page.waitForSelector('.tl__compose');
+  await mert.page.evaluate(() => ([...document.querySelectorAll('.tl__compose .seg button')].find((b) => /Görüşme|Call/.test(b.textContent ?? '')) as HTMLElement)?.click());
+  await mert.page.type('.tl__compose textarea', 'Renewal call: they want a two-year option.');
+  await mert.page.click('.tl__compose .btn--primary');
+  await mert.page.waitForFunction(() => [...document.querySelectorAll('.tl__text')].some((e) => e.textContent?.includes('two-year option')), { timeout: 5000 });
+  const [row] = await sql(`select kind from activities where account_id = $1 order by created_at desc limit 1`, [quill]);
+  expect(row?.kind === 'call', `activity not saved as a call: ${JSON.stringify(row)}`);
+  await mert.page.goto(`${s.origin}/settings/health`, { waitUntil: 'networkidle0' });
+  await mert.page.waitForSelector('.signal');
+  await mert.page.click('.sheet .checkbox input');
+  await mert.page.waitForSelector('.healthpreview');
+  await mert.page.evaluate(() => ([...document.querySelectorAll('.btn--primary')].find((b) => /Kaydet|Save/.test(b.textContent ?? '')) as HTMLElement)?.click());
+  await mert.page.waitForFunction(() => [...document.querySelectorAll('.btn--primary')].some((b) => /Kaydet|Save/.test(b.textContent ?? '') && (b as HTMLButtonElement).disabled), { timeout: 5000 });
+  await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
+  await mert.page.waitForSelector('.healthline .score');
+  await mert.page.click('.healthline button');
+  await mert.page.waitForSelector('.healthwhy li');
+  await shot(mert.page, 'p6-01-timeline-health');
+  const lines = await mert.page.$$eval('.healthwhy li', (els) => els.length);
+  expect(lines >= 4, `only ${lines} reasons`);
 });
 
 await step('no script errors in the browser', async () => {

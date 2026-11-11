@@ -122,6 +122,8 @@ export interface Org {
   joinRequests: boolean;
   autoJoin: boolean;
   accountFields: AccountField[];
+  /** Whether the health score is on, and where its bands start. */
+  health?: { enabled: boolean; bands: { watch: number; good: number } };
   setup: SetupState;
   logoUrl: string | null;
 }
@@ -181,10 +183,15 @@ export interface AccountField {
   options?: FieldOption[];
   /** Filled in by Tendwell from records; read-only for people. */
   rollup?: Rollup;
+  /** The health score: worked out by Tendwell (see health.ts); read-only for people. */
+  health?: true;
   access?: FieldAccess;
   /** Set by the server for the person asking: they can see it but not change it. */
   locked?: boolean;
 }
+
+/** Worked out by Tendwell rather than typed in: rollups and the health score. */
+export const calculated = (f: Pick<AccountField, 'rollup' | 'health'> | undefined | null) => !!(f?.rollup || f?.health);
 
 export interface Account {
   id: string;
@@ -261,7 +268,7 @@ export interface Notification {
   createdAt: string;
 }
 
-export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'digest', 'automation'] as const;
+export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'digest', 'weekly', 'automation'] as const;
 export type NotifyEvent = (typeof NOTIFY_EVENTS)[number];
 
 export interface NotifyPrefs {

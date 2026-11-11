@@ -67,6 +67,18 @@ Task fields: `title`, `description`, `status` (a column key), `assigneeIds` (up 
 
 Send the `version` of the task you read as `baseVersion` in `PATCH /tasks/{id}`. If the task changed meanwhile you get `409` with the current task; apply your change to it and send again.
 
+## Timeline and health score
+
+| Endpoint | Does |
+| --- | --- |
+| `GET /accounts/{id}/timeline` | The customer's timeline, newest first. `before` (the `next` of the previous answer) and `limit` |
+| `POST /accounts/{id}/activities` | Log an entry: `kind` (`note`, `call`, `meeting`, `email`), `body`, optional `happenedAt`, `contactIds`, `pinned` |
+| `PATCH /activities/{id}` | Change it (its writer, or someone who manages customers) |
+| `DELETE /activities/{id}` | Delete it |
+| `GET /accounts/{id}/health` | The score, its band, the points of each signal, and the last 90 days of scores |
+
+The score itself is in the customer's `health_score` field.
+
 ## Home-page data
 
 | Endpoint | Does |

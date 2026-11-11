@@ -67,6 +67,18 @@ Görev alanları: `title`, `description`, `status` (sütun anahtarı), `assignee
 
 `PATCH /tasks/{id}` isteğinde okuduğun görevin `version` değerini `baseVersion` olarak gönder. Görev bu arada değiştiyse `409` ve görevin güncel hâli döner; değişikliğini onun üzerine uygulayıp yeniden gönder.
 
+## Zaman çizelgesi ve sağlık skoru
+
+| Uç | Ne yapar |
+| --- | --- |
+| `GET /accounts/{id}/timeline` | Müşterinin zaman çizelgesi, yeniden eskiye. `before` (bir önceki yanıtın `next` değeri) ve `limit` |
+| `POST /accounts/{id}/activities` | Kayıt ekle: `kind` (`note`, `call`, `meeting`, `email`), `body`, isteğe bağlı `happenedAt`, `contactIds`, `pinned` |
+| `PATCH /activities/{id}` | Değiştir (yazan kişi ya da müşterileri yöneten) |
+| `DELETE /activities/{id}` | Sil |
+| `GET /accounts/{id}/health` | Skor, bandı, her sinyalin puanı ve son 90 günün skorları |
+
+Skorun kendisi müşterinin `health_score` alanındadır.
+
 ## Ana sayfa verileri
 
 | Uç | Ne yapar |

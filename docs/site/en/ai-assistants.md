@@ -1,7 +1,7 @@
 ---
 title: Connecting Claude and ChatGPT
 section: help
-order: 8
+order: 9
 summary: Ask your AI assistant about your customers, have it make a presentation, open tasks.
 ---
 # Connecting Claude and ChatGPT

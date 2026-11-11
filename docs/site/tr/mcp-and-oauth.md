@@ -27,11 +27,12 @@ WWW-Authenticate: Bearer resource_metadata="https://sirketin.tendwell.com/.well-
 | Araç | Ne yapar | Yazar mı |
 | --- | --- | --- |
 | `search` | Müşteri, görev, kayıt ve kişi arar; `fetch` için kimlik döndürür | Hayır |
-| `fetch` | `account:…`, `task:…` ya da `record:…` kimliğinin tüm ayrıntısı | Hayır |
+| `fetch` | `account:…`, `task:…` ya da `record:…` kimliğinin tüm ayrıntısı; müşteride zaman çizelgesi ve nedenleriyle sağlık skoru da gelir | Hayır |
 | `list_accounts` | Müşteriler ve alanları; ada ya da "benimkiler"e göre | Hayır |
 | `list_tasks` | Görevler; varsayılan olarak kişinin kendi işleri, tarih aralığıyla | Hayır |
 | `portfolio_summary` | Kişinin ana sayfasındaki kartların verisi; özet ve sunum için | Hayır |
 | `create_task` | Görev açar. Pano ve müşteri adla verilebilir, sorumlular e-posta ya da adla | Evet |
+| `add_note` | Müşterinin zaman çizelgesine not, görüşme, toplantı ya da e-posta ekler | Evet |
 | `update_task` | Sütun değiştirir ya da tamamlar, tarih ve öncelik değiştirir, yorum ekler | Evet |
 
 Yazan araçlar yalnızca kişi izin ekranında **Değişiklik yapmasına da izin ver** dediyse ve tam koltuktaysa listelenir. Her araç çağrısı uygulamanın kullandığı API'den geçer; rol, müşteri erişimi ve alan kuralları aynen uygulanır.

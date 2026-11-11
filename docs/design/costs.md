@@ -32,3 +32,7 @@ close to nothing to serve. Rules each change follows:
 10. **Docs and the demo are static files.** The help centre, developer docs
     and the try-it-now demo (the whole product running in the visitor's
     browser) need no server time at all.
+11. **Scores only for what changed.** Triggers mark a customer only when
+    one of its inputs changes, and only in companies that switched the
+    score on; a once-a-day pass handles the passing of time. Summaries go
+    out once a week, to chat first.

@@ -84,6 +84,20 @@ if (ok && !process.env.QUICK) {
   await click('.navlink', 'Müşteriler');
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: join(SCREENS, 'demo-accounts.png') });
+  // A customer: the timeline and the score's reasons.
+  await click('a', 'Velto Mobility');
+  await frame!.waitForSelector('.tl__item', { timeout: 10000 });
+  await click('.healthline button');
+  await frame!.waitForSelector('.healthwhy li', { timeout: 10000 });
+  await page.screenshot({ path: join(SCREENS, 'demo-account.png') });
+  const reasons = await frame!.$$eval('.healthwhy li', (els) => els.length);
+  if (reasons < 4) errors.push(`only ${reasons} reasons shown`);
+  await click('.navlink', 'Ayarlar');
+  await new Promise((r) => setTimeout(r, 500));
+  await click('.admin__link', 'Sağlık skoru');
+  await frame!.waitForSelector('.signal', { timeout: 10000 });
+  await frame!.waitForSelector('.healthpreview', { timeout: 10000 });
+  await page.screenshot({ path: join(SCREENS, 'demo-health-settings.png') });
   await frame!.select('.demobar select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));

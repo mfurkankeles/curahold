@@ -8,6 +8,13 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Zaman çizelgesi, sağlık skoru ve haftalık özet
+
+- **Müşteri zaman çizelgesi:** not, görüşme, toplantı ve e-posta kaydı; görevler, yorumlar, yeni kişiler ve skor değişiklikleri tek akışta. Önemli notları sabitleme.
+- **Nedenini gösteren sağlık skoru:** her müşteri için 0–100; ağırlıkları şirket seçer, her puanın nedeni bir tık uzakta, son haftaların eğilimi grafikte. CRM'e de yazılabilir.
+- **Pazartesi haftalık özeti:** yenilemeler, skoru düşenler ve en büyük nedeni, sessiz kalanlar.
+- **AI bağlayıcısı:** asistan artık zaman çizelgesini ve skoru okuyor, görüşme notu ekleyebiliyor.
+
 ### Geliştirici platformu ve AI bağlayıcısı
 
 - **Claude ve ChatGPT bağlayıcısı (MCP):** asistanınla müşterilerini sorgula, özet ve sunum hazırlat, görev açtır. Asistan senin adına ve senin yetkilerinle çalışır.

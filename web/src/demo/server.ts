@@ -3,6 +3,7 @@
 // with row-level security switched on. The app's fetch('/api/…') calls are
 // answered here instead of over the network.
 import type { Config, Deps } from '../../../api/src/context';
+import type { Db } from '../../../api/src/db';
 import { getDeviceId } from '../lib/device';
 import { ORIGIN } from './memory';
 
@@ -69,6 +70,7 @@ class Jar {
 }
 
 export interface DemoServer {
+  db: Db;
   request: (path: string, init?: RequestInit) => Promise<Response>;
   call: <T = any>(method: string, path: string, body?: unknown) => Promise<T>;
   jar: Jar;
@@ -151,7 +153,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     if (url.origin !== ORIGIN || !(url.pathname.startsWith('/api/') || url.pathname === '/mcp')) return nativeFetch(input, init);
     return request(url.pathname + url.search, init);
   };
-  return { request, call, jar };
+  return { db, request, call, jar };
 }
 
 /** Signs `email` in through the real email-link flow and returns the session cookie. */

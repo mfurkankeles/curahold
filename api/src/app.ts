@@ -10,6 +10,8 @@ import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { Perm } from '../../shared/src/model';
 import { defer, type AppEnv, type Deps, type OrgRow } from './context';
 import { deliverWebhooks } from './lib/webhooks';
+import { flushHealth } from './lib/health';
+import { timelineRoutes } from './routes/timeline';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
 import { HttpError, fail } from './lib/errors';
@@ -60,7 +62,8 @@ export function createApp(deps: Deps) {
     await next();
     // Webhooks: deliver what this change produced right after answering.
     if (deps.defer && c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.path.startsWith('/api/') && c.res.status < 400) {
-      defer(deps, deliverWebhooks(deps, 20));
+      // Scores of the customers this change touched, then the webhooks (a new score is a change too).
+      defer(deps, flushHealth(deps, 200).then(() => deliverWebhooks(deps, 20)));
     }
   });
 
@@ -227,6 +230,7 @@ export function createApp(deps: Deps) {
   app.route('/api', recordRoutes);
   app.route('/api', pageRoutes);
   app.route('/api', searchRoutes);
+  app.route('/api', timelineRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);

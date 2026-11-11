@@ -84,14 +84,27 @@ const TOOLS: Tool[] = [
   {
     name: 'fetch',
     title: 'Open one item',
-    description: 'Full details of an item found with search: account:<id> (with its fields, contacts and tasks), task:<id> (with comments) or record:<id>.',
+    description: 'Full details of an item found with search: account:<id> (with its fields, contacts, tasks, recent timeline and health score with reasons), task:<id> (with comments) or record:<id>.',
     inputSchema: obj({ id: str('An id from search, e.g. account:5f0…') }, ['id']),
     run: async (api, a, { base }) => {
       const [kind, id] = String(a.id).split(':');
       if (kind === 'account') {
         const r = await api('GET', `/api/accounts/${id}`);
-        const contacts = await api('GET', `/api/records?type=contact&account=${id}`).catch(() => ({ records: [] }));
-        return { id: a.id, title: r.account.name, url: `${base}/accounts/${id}`, account: r.account, contacts: contacts.records, tasks: r.tasks };
+        const [contacts, timeline, health] = await Promise.all([
+          api('GET', `/api/records?type=contact&account=${id}`).catch(() => ({ records: [] })),
+          api('GET', `/api/accounts/${id}/timeline?limit=15`).catch(() => ({ items: [], pinned: [] })),
+          api('GET', `/api/accounts/${id}/health`).catch(() => null),
+        ]);
+        return {
+          id: a.id,
+          title: r.account.name,
+          url: `${base}/accounts/${id}`,
+          account: r.account,
+          contacts: contacts.records,
+          tasks: r.tasks,
+          health: health?.health ?? null,
+          timeline: { pinned: timeline.pinned, recent: timeline.items },
+        };
       }
       if (kind === 'task') {
         const r = await api('GET', `/api/tasks/${id}`);
@@ -173,6 +186,27 @@ const TOOLS: Tool[] = [
         priority: a.priority,
       });
       return { created: true, task: r.task, url: `${base}/b/${board.id}?task=${r.task.id}` };
+    },
+  },
+  {
+    name: 'add_note',
+    title: 'Log a note, call, meeting or email',
+    description: "Adds an entry to a customer's timeline, e.g. a summary of a call. It counts as a touch for the health score.",
+    write: true,
+    inputSchema: obj(
+      {
+        account: str('Customer name or id'),
+        text: str('What happened, in a few sentences'),
+        kind: { type: 'string', enum: ['note', 'call', 'meeting', 'email'], description: 'Default: note' },
+        happened_at: str('When it happened (ISO 8601, e.g. 2026-11-10T14:00:00Z); default now'),
+      },
+      ['account', 'text'],
+    ),
+    run: async (api, a, { base }) => {
+      const id = await accountFor(api, a.account);
+      if (!id) throw new ToolError('Say which customer.');
+      const r = await api('POST', `/api/accounts/${id}/activities`, { kind: a.kind ?? 'note', body: a.text, happenedAt: a.happened_at });
+      return { added: true, activity: r.activity, url: `${base}/accounts/${id}` };
     },
   },
   {

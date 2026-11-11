@@ -369,7 +369,9 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
     }
 
     case 'quiet': {
-      const last = `(select max(greatest(t.updated_at, t.created_at)) from tasks t where t.account_id = a.id)`;
+      // Last touch: a logged call, meeting, email or note, or work on one of its tasks.
+      const last = `(select max(x) from (select max(greatest(t.updated_at, t.created_at)) as x from tasks t where t.account_id = a.id
+                      union all select max(v.happened_at) from activities v where v.account_id = a.id) l)`;
       const where = `${base(card.scope)} and coalesce(${last}, a.created_at) < now() - make_interval(days => $2::int)`;
       const rows = await q.query(
         `select a.id, a.name, a.owner_id, ${last} as last_at,

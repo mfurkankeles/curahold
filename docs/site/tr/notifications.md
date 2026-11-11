@@ -1,7 +1,7 @@
 ---
 title: Bildirimler
 section: help
-order: 6
+order: 7
 summary: Bildirimlerin nereye gittiği, sabah özeti, sessiz saatler ve takvim beslemesi.
 ---
 # Bildirimler
@@ -15,6 +15,7 @@ Tendwell önce sohbet uygulamanıza yazar, e-postayı yedek olarak kullanır. B�
 - Üzerinde çalıştığın bir göreve yorum yazıldığında
 - Bir otomasyon senin için iş açtığında
 - Sabah özetinde: bugün ve gecikmiş işlerin
+- Pazartesi haftalık özette: yenilemeler, skoru düşen ve sessiz kalan müşterilerin
 
 Her birini Ayarların sayfasından açıp kapatırsın.
 

@@ -1,7 +1,7 @@
 // Who sees and who changes each field. One set of rules, used by every
 // place that returns or accepts field values (lists, one customer, records,
 // imports, pages), so a hidden field never leaks through a side door.
-import type { AccountField, Perm } from '../../../shared/src/model';
+import { calculated, type AccountField, type Perm } from '../../../shared/src/model';
 import type { AuthCtx } from '../context';
 import { fail } from './errors';
 
@@ -18,7 +18,7 @@ export function canSeeField(f: AccountField, v: Viewer) {
 
 export function canEditField(f: AccountField, v: Viewer) {
   if (!canSeeField(f, v)) return false;
-  if (f.rollup) return false;
+  if (calculated(f)) return false;
   if (seesEverything(v)) return true;
   const edit = f.access?.edit;
   return !edit?.length || edit.includes(v.roleKey);
@@ -32,7 +32,7 @@ export function defsFor(defs: AccountField[], v: Viewer): AccountField[] {
     .map((f) => {
       const { access, locked: _l, ...rest } = f;
       const out: AccountField = all ? { ...rest, ...(access ? { access } : {}) } : rest;
-      if (!canEditField(f, v) && !f.rollup) out.locked = true;
+      if (!canEditField(f, v) && !calculated(f)) out.locked = true;
       return out;
     });
 }
@@ -57,7 +57,7 @@ export function changedFieldKeys(before: Record<string, unknown> | null | undefi
 export function checkEditable(defs: AccountField[], keys: string[], v: Viewer) {
   for (const k of keys) {
     const f = (defs ?? []).find((d) => d.key === k);
-    if (f && !f.rollup && !canEditField(f, v)) fail(canSeeField(f, v) ? 'field_locked' : 'validation', { field: k }, { fields: [`fields.${k}`] });
+    if (f && !calculated(f) && !canEditField(f, v)) fail(canSeeField(f, v) ? 'field_locked' : 'validation', { field: k }, { fields: [`fields.${k}`] });
   }
 }
 

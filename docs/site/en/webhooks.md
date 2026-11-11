@@ -29,6 +29,7 @@ Settings → Developers → **New webhook**. You need permission to manage conne
 | `record.created` | A record (contact, opportunity…) was added |
 | `record.updated` | A record changed |
 | `comment.created` | A comment was written on a task |
+| `activity.created` | A note, call, meeting or email was logged on a customer's timeline |
 
 If something changes several times within a minute, one message goes out, carrying how it looks when the message is sent.
 

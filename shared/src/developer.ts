@@ -1,5 +1,5 @@
 // What the developer platform offers, shared by the API, the app and the docs.
-export const WEBHOOK_EVENTS = ['task.created', 'task.updated', 'account.created', 'account.updated', 'record.created', 'record.updated', 'comment.created'] as const;
+export const WEBHOOK_EVENTS = ['task.created', 'task.updated', 'account.created', 'account.updated', 'record.created', 'record.updated', 'comment.created', 'activity.created'] as const;
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 
 export interface ApiKeyInfo {

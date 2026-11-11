@@ -2,7 +2,7 @@
 // the values people send for them.
 import { z } from 'zod';
 import { normalizeValue } from '../../../shared/src/fields';
-import { FIELD_TYPES, OPTION_COLORS, type AccountField } from '../../../shared/src/model';
+import { calculated, FIELD_TYPES, OPTION_COLORS, type AccountField } from '../../../shared/src/model';
 import { fail } from './errors';
 
 /** Checks and cleans field values; rolled-up fields are worked out by Tendwell and cannot be typed in. */
@@ -11,7 +11,7 @@ export function cleanFields(defs: AccountField[], input: Record<string, unknown>
   const bad: string[] = [];
   for (const [k, v] of Object.entries(input)) {
     const def = defs.find((d) => d.key === k);
-    if (!def || def.rollup) {
+    if (!def || calculated(def)) {
       bad.push(k);
       continue;
     }
@@ -42,6 +42,7 @@ export const fieldSchema = z.object({
       where: z.object({ field: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/), option: z.string().regex(/^[a-z0-9_]{1,40}$/) }).optional(),
     })
     .optional(),
+  health: z.literal(true).optional(),
   access: z
     .object({ view: z.array(roleKey).max(50).optional(), edit: z.array(roleKey).max(50).optional() })
     .optional(),

@@ -27,11 +27,12 @@ WWW-Authenticate: Bearer resource_metadata="https://yourcompany.tendwell.com/.we
 | Tool | Does | Writes |
 | --- | --- | --- |
 | `search` | Finds customers, tasks, records and people; returns ids for `fetch` | No |
-| `fetch` | Everything about an `account:…`, `task:…` or `record:…` id | No |
+| `fetch` | Everything about an `account:…`, `task:…` or `record:…` id; for a customer, its timeline and health score with reasons too | No |
 | `list_accounts` | Customers and their fields; by name or "mine" | No |
 | `list_tasks` | Tasks; the person's own by default, with a date range | No |
 | `portfolio_summary` | The data behind the person's home-page cards; for summaries and presentations | No |
 | `create_task` | Opens a task. Board and customer by name; people by email or name | Yes |
+| `add_note` | Logs a note, call, meeting or email on a customer's timeline | Yes |
 | `update_task` | Moves a task to a column or finishes it, changes date and priority, adds a comment | Yes |
 
 Writing tools are listed only if the person ticked **Also allow changes** on the consent screen and has a full seat. Every tool call goes through the API the app uses; role, customer access and field rules apply unchanged.

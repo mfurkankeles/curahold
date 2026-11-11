@@ -1,7 +1,7 @@
 ---
 title: Home pages and cards
 section: help
-order: 4
+order: 5
 summary: Home pages per role, the kinds of card and editing a page.
 ---
 # Home pages and cards

@@ -7,7 +7,7 @@
 // Works with owner access, so every statement filters by company explicitly.
 import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
-import type { AccountField, FieldOption } from '../../../shared/src/model';
+import { calculated, type AccountField, type FieldOption } from '../../../shared/src/model';
 import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
 import { fetchOf, nowOf, secretsKey, type Deps } from '../context';
 import type { Q, Row } from '../db';
@@ -214,7 +214,7 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
       default:
         if (fm.local.startsWith('f:')) {
           const def = list.find((d) => d.key === fm.local.slice(2));
-          if (def && !def.rollup) out[fm.local] = inValue(def, rf, raw, defs, dirtyKey);
+          if (def && !calculated(def)) out[fm.local] = inValue(def, rf, raw, defs, dirtyKey);
         }
     }
   }

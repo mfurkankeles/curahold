@@ -1,7 +1,7 @@
 ---
 title: Ana sayfa ve kartlar
 section: help
-order: 4
+order: 5
 summary: Role göre ana sayfalar, kart türleri ve sayfa düzenleme.
 ---
 # Ana sayfa ve kartlar

@@ -81,8 +81,9 @@ describe('morning digest', () => {
     expect(mails('zeynep@demo.example').length).toBe(before);
     await runScheduled(env.deps, morning);
     await runScheduled(env.deps, morning);
-    // (The other test company has a Zeynep at the same address; only Acme's counts here.)
-    const got = mails('zeynep@demo.example').slice(before).filter((m) => m.text.includes('acme.tendwell.test'));
+    // (The other test company has a Zeynep at the same address; only Acme's counts here.
+    // 4 March 2030 is a Monday, so the weekly summary comes too, as its own message.)
+    const got = mails('zeynep@demo.example').slice(before).filter((m) => m.text.includes('acme.tendwell.test') && !m.subject.startsWith('Your week'));
     expect(got.length).toBe(1);
     expect(got[0].subject).toBe('Your tasks for today');
     expect(got[0].text).toMatch(/Overdue \(\d+\)[\s\S]*Late follow-up/);

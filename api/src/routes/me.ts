@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { healthConfig } from '../../../shared/src/health';
 import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
@@ -53,6 +54,7 @@ meRoutes.get('/me', async (c) => {
       joinRequests: org.join_requests,
       autoJoin: org.auto_join,
       accountFields: defsFor(org.account_fields, auth),
+      health: (({ enabled, bands }) => ({ enabled, bands }))(healthConfig(org.settings?.health)),
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
     },

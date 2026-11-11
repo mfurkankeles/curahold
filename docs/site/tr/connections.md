@@ -1,7 +1,7 @@
 ---
 title: Bağlantılar ve CRM
 section: help
-order: 7
+order: 8
 summary: Slack, Teams, Google Chat; Salesforce, HubSpot ve tablolarla eşitleme.
 ---
 # Bağlantılar ve CRM

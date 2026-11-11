@@ -1,7 +1,7 @@
 ---
 title: Security and privacy
 section: help
-order: 9
+order: 10
 summary: Company separation, sessions, the activity log, exporting and erasing personal data.
 ---
 # Security and privacy

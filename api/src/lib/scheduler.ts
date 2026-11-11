@@ -7,6 +7,8 @@ import { day } from './mappers';
 import { deliverPending, enqueue, prefsOf } from './notify';
 import { runScheduledSyncs } from '../sync/engine';
 import { deliverWebhooks } from './webhooks';
+import { dailyHealth, flushHealth } from './health';
+import { sendWeekly } from './weekly';
 
 const DIGEST_ITEMS = 8;
 
@@ -74,12 +76,19 @@ export async function cleanUp(deps: Deps) {
 export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Date()))()) {
   const digests = await sendDigests(deps, now);
   const fired = await runScheduledAutomations(deps, now);
+  const weekly = await sendWeekly(deps, now).catch((e) => {
+    console.error('[tendwell] weekly summary failed', e);
+    return 0;
+  });
   let delivered = 0;
   for (let i = 0; i < 20; i++) {
     const n = await deliverPending(deps, 100);
     delivered += n;
     if (n < 100) break;
   }
+  // Health scores: anything marked and not yet picked up; once a day, everyone (time passes) and the trend point.
+  await flushHealth(deps, 5000).catch((e) => console.error('[tendwell] health failed', e));
+  if (now.getUTCHours() === 3) await dailyHealth(deps, now).catch((e) => console.error('[tendwell] daily health failed', e));
   // Webhook retries (new events go out right after the change that made them).
   const hooks = await deliverWebhooks(deps, 200).catch((e) => {
     console.error('[tendwell] webhook delivery failed', e);
@@ -90,5 +99,5 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     return 0;
   });
   if (now.getUTCHours() === 3) await cleanUp(deps);
-  return { digests, fired, delivered, synced, hooks };
+  return { digests, weekly, fired, delivered, synced, hooks };
 }

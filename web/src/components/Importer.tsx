@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { guessFieldType, HEADER_HINTS, labelOf, normalizeValue, optionKey } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
-import { FIELD_TYPES, type AccountField, type FieldType, type ImportResult } from '../../../shared/src/model';
+import { calculated, FIELD_TYPES, type AccountField, type FieldType, type ImportResult } from '../../../shared/src/model';
 import { ApiFailure, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { readSheet, type Sheet } from '../lib/sheet';
@@ -34,7 +34,7 @@ const decode = (s: string): Target => (s.startsWith('field:') ? { kind: 'field',
 export function Importer({ onImported, compact }: { onImported?: (r: ImportResult) => void; compact?: boolean }) {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();
-  const fields = me.org.accountFields.filter((f) => !f.rollup);
+  const fields = me.org.accountFields.filter((f) => !calculated(f));
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [fileName, setFileName] = useState('');
   const [map, setMap] = useState<Record<string, string>>({});

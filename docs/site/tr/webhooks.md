@@ -29,6 +29,7 @@ Ayarlar → Geliştirici → **Yeni webhook**. Bağlantıları yönetme izni ger
 | `record.created` | Kayıt (kişi, fırsat…) eklendi |
 | `record.updated` | Kayıt değişti |
 | `comment.created` | Göreve yorum yazıldı |
+| `activity.created` | Müşterinin zaman çizelgesine not, görüşme, toplantı ya da e-posta eklendi |
 
 Bir nesne bir dakika içinde birkaç kez değişirse tek bir mesaj gider ve mesaj nesnenin gönderildiği andaki hâlini taşır.
 

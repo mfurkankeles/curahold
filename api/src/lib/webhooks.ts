@@ -63,6 +63,10 @@ async function payloadOf(q: Q, orgId: string, event: string, id: string): Promis
     if (!r) return null;
     return { id: r.id, type: r.type, name: r.name, accountId: r.account_id, parentId: r.parent_id, ownerId: r.owner_id, fields: r.fields, archived: !!r.archived_at, updatedAt: r.updated_at };
   }
+  if (kind === 'activity') {
+    const [x] = await q.query('select * from activities where id = $1 and org_id = $2', [id, orgId]);
+    return x ? { id: x.id, accountId: x.account_id, authorId: x.author_id, kind: x.kind, body: x.body, happenedAt: x.happened_at, contactIds: x.contact_ids } : null;
+  }
   const [cm] = await q.query('select id, task_id, author_id, body, created_at from comments where id = $1 and org_id = $2', [id, orgId]);
   return cm ? { id: cm.id, taskId: cm.task_id, authorId: cm.author_id, body: cm.body, createdAt: cm.created_at } : null;
 }

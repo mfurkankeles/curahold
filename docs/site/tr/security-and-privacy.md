@@ -1,7 +1,7 @@
 ---
 title: Güvenlik ve KVKK
 section: help
-order: 9
+order: 10
 summary: Veri ayrımı, oturumlar, aktivite kaydı, kişisel verilerin dışa aktarılması ve silinmesi.
 ---
 # Güvenlik ve KVKK

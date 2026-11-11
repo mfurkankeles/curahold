@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { normalizeValue, optionKey } from '../../../shared/src/fields';
-import { type Account, type AccountField, type ImportResult } from '../../../shared/src/model';
+import { calculated, type Account, type AccountField, type ImportResult } from '../../../shared/src/model';
 import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
@@ -300,7 +300,7 @@ accountRoutes.post('/accounts/import', async (c) => {
     }
     for (const [key, col] of Object.entries(fieldColumns)) {
       const def = defs.find((d) => d.key === key);
-      if (!def || def.rollup) fail('validation', { fields: `mapping.fields.${key}` }, { fields: [`mapping.fields.${key}`] });
+      if (!def || calculated(def)) fail('validation', { fields: `mapping.fields.${key}` }, { fields: [`mapping.fields.${key}`] });
       if (def!.type !== 'select') continue;
       def!.options = def!.options ?? [];
       for (const row of input.rows) {

@@ -44,7 +44,7 @@ export function kick(deps: Deps) {
 
 export const DEFAULT_PREFS: NotifyPrefs = {
   channel: 'auto',
-  events: { assigned: true, mentioned: true, comment: true, digest: true, automation: true },
+  events: { assigned: true, mentioned: true, comment: true, digest: true, weekly: true, automation: true },
   digestHour: 8,
   defaultBoardId: null,
 };
@@ -96,12 +96,13 @@ export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, 
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'automation', 'join_request']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'automation', 'join_request']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
   comment: 'comment',
   digest: 'digest',
+  weekly: 'weekly',
   automation: 'automation',
 };
 
@@ -120,6 +121,26 @@ const fmtDate = (iso: string | null, locale: Locale) => {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 };
+
+/** "last touch 32 days ago" — the signal that cost a falling score the most. */
+function weeklyReason(t: (k: MessageKey, v?: Record<string, string | number>) => string, r: Record<string, any>): string {
+  switch (r.key) {
+    case 'touch':
+      return t('weekly.why.touch', { days: r.days ?? 0 });
+    case 'tasks':
+      return t('weekly.why.tasks', { n: r.count ?? 0 });
+    case 'champion':
+      return t('weekly.why.champion');
+    case 'decision':
+      return t('weekly.why.decision');
+    case 'blockers':
+      return t('weekly.why.blockers');
+    case 'judgement':
+      return t('weekly.why.judgement');
+    default:
+      return t('weekly.why.number');
+  }
+}
 
 export function render(ctx: RenderCtx): ChatMessage {
   const { locale, terms, n, task } = ctx;
@@ -160,6 +181,30 @@ export function render(ctx: RenderCtx): ChatMessage {
       list(data.overdue ?? [], data.overdueCount ?? 0, 'notify.digestOverdue');
       list(data.today ?? [], data.todayCount ?? 0, 'notify.digestToday');
       return { title: t('notify.digestTitle'), body: lines.join('\n'), url: `${ctx.base}/my`, openLabel: t('notify.open') };
+    }
+    case 'weekly': {
+      const lines: string[] = [];
+      const more = (total: number, shown: number) => total > shown && lines.push(t('notify.digestMore', { n: total - shown }));
+      if (data.renewalCount) {
+        lines.push(data.renewalTotal ? t('weekly.renewalsTotal', { n: data.renewalCount, total: data.renewalTotal }) : t('weekly.renewals', { n: data.renewalCount }));
+        for (const r of data.renewals ?? []) lines.push(`• ${r.name} — ${fmtDate(r.due, locale)}${r.amount ? ` · ${r.amount}` : ''}`);
+        more(data.renewalCount, data.renewals?.length ?? 0);
+      }
+      if (data.dropCount) {
+        lines.push(t('weekly.drops', { n: data.dropCount }));
+        for (const d of data.drops ?? []) {
+          const why = d.reason ? weeklyReason(t, d.reason) : '';
+          lines.push(`• ${d.name}: ${d.from} → ${d.to}${why ? ` (${why})` : ''}`);
+        }
+        more(data.dropCount, data.drops?.length ?? 0);
+      }
+      if (data.quietCount) {
+        lines.push(t('weekly.quiet', { n: data.quietCount }));
+        for (const a of data.quiet ?? []) lines.push(`• ${a.name}`);
+        more(data.quietCount, data.quiet?.length ?? 0);
+      }
+      if (data.done || data.overdue) lines.push(t('weekly.work', { done: data.done ?? 0, overdue: data.overdue ?? 0 }));
+      return { title: t('weekly.title', { n: data.accounts ?? 0 }), body: lines.join('\n'), url: `${ctx.base}/home`, openLabel: t('notify.open') };
     }
     case 'join_request':
       return {
@@ -214,7 +259,7 @@ async function sendToPerson(deps: Deps, ctx: Awaited<ReturnType<typeof loadRende
   if (prefKey && prefs.events[prefKey] === false) return { via: 'inapp', state: 'skipped' };
   if (prefs.channel === 'none') return { via: 'inapp', state: 'skipped' };
   // Quiet hours: the notice waits (the morning digest is the person's own choice of hour).
-  if (prefs.quiet && n.kind !== 'digest') {
+  if (prefs.quiet && n.kind !== 'digest' && n.kind !== 'weekly') {
     const now = nowOf(deps);
     const tz = ctx.org?.timezone || 'UTC';
     if (isQuiet(prefs.quiet, hourIn(now, tz))) return { via: 'inapp', state: 'held', notBefore: quietUntil(prefs.quiet, now, tz) };

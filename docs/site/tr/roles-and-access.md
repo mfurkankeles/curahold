@@ -1,7 +1,7 @@
 ---
 title: Roller ve erişim
 section: help
-order: 5
+order: 6
 summary: Koltuklar, roller, müşteri erişimi, alan bazında erişim ve “Onun gözünden bak”.
 ---
 # Roller ve erişim

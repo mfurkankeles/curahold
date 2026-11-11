@@ -3,7 +3,7 @@
 // account with its tasks.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
-import type { Account, AccountField, Task } from '../../../shared/src/model';
+import { calculated, type Account, type AccountField, type Task } from '../../../shared/src/model';
 import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
@@ -16,10 +16,12 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
+import { AccountTimeline, HealthBadge, ScoreChip } from '../components/Timeline';
 import { relativeTime } from '../lib/time';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
+  if (field.health) return <ScoreChip value={value} />;
   const color = field.type === 'select' ? field.options?.find((o) => o.key === value)?.color : undefined;
   if (!color || !text) return <>{text}</>;
   return (
@@ -570,6 +572,7 @@ export function AccountPage({ id }: { id: string }) {
               </details>
             )}
           </section>
+          <AccountTimeline accountId={a.id} hasContacts={!!types?.some((x) => x.kind === 'contact')} />
           {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
         </div>
         <aside className="sheet account-page__side">
@@ -588,7 +591,9 @@ export function AccountPage({ id }: { id: string }) {
             </select>
           </label>
           {me.org.accountFields.map((f) =>
-            f.rollup ? (
+            f.health ? (
+              <HealthBadge key={f.key} accountId={a.id} field={f} value={a.fields[f.key]} />
+            ) : calculated(f) ? (
               <div className="field" key={f.key}>
                 <span className="field__label">{labelOf(f.label, locale)}</span>
                 <span className="calc-value">{fmt(f, a.fields[f.key]) || '—'}</span>

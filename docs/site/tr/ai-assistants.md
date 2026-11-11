@@ -1,7 +1,7 @@
 ---
 title: Claude ve ChatGPT'yi bağlama
 section: help
-order: 8
+order: 9
 summary: Yapay zekâ asistanınla müşterilerini sorgula, sunum hazırlat, görev açtır.
 ---
 # Claude ve ChatGPT'yi bağlama

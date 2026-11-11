@@ -1,7 +1,7 @@
 ---
 title: Notifications
 section: help
-order: 6
+order: 7
 summary: Where notifications go, the morning summary, quiet hours and the calendar feed.
 ---
 # Notifications
@@ -15,6 +15,7 @@ Tendwell writes to your chat app first and uses email as the fallback, so notifi
 - Someone comments on a task you work on
 - An automation opens work for you
 - The morning summary: today's work and anything late
+- The Monday weekly summary: renewals, and customers whose score fell or who went quiet
 
 Switch each one on or off in your settings.
 

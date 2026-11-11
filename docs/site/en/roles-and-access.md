@@ -1,7 +1,7 @@
 ---
 title: Roles and access
 section: help
-order: 5
+order: 6
 summary: Seats, roles, customer access, per-field access and “See it as them”.
 ---
 # Roles and access

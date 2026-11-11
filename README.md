@@ -187,6 +187,29 @@ row-level security, customer reach and field access as the app.
   developer docs in Turkish and English, static pages with search, every
   page also served as Markdown, plus `/llms.txt` and `/docs/llms-full.txt`.
 
+### Timeline, health score and weekly summary
+
+- **Customer timeline**: notes, calls, meetings and emails people log
+  (dated, with the contacts involved, pinnable), merged with tasks opened
+  and finished, comments, contacts added and score jumps — all read under
+  the viewer's own rights. Tasks now keep when they were finished
+  (`done_at`, set by the database however the task was finished).
+- **Explainable health score** (Settings → Health score): 0–100 per
+  customer from recent touch, overdue work, champion, decision maker,
+  blockers, the owner's judgement and any number field (usage, NPS…), with
+  weights, days and bands chosen by the company and a live preview. Every
+  point is explained on the customer page ("Why?"), with a 90-day trend.
+  The score is a calculated customer field (`health_score`), so lists,
+  filters, cards, exports, the API, webhooks and CRM syncs all see it.
+  Triggers mark only customers whose inputs changed; they are worked out
+  right after the request, and everyone once a day (one snapshot per
+  customer per day, kept 400 days).
+- **Weekly summary** on Monday at the person's morning hour: renewals in
+  30 days, scores that fell with the main reason, customers quiet for 30+
+  days, the week's work. Chat first, email as the fallback, skipped when
+  there is nothing to say.
+- The AI connector reads the timeline and the score and can log a note.
+
 ### Try-it-now demo
 
 `npm run build:demo` builds the whole product — API, Postgres (PGlite, with

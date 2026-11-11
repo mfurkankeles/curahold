@@ -31,6 +31,9 @@ const TEXT = {
     tries: 'Neler denenir?',
     reset: 'Baştan başla',
     ideas: [
+      'Bir müşteriyi aç (örneğin Velto Mobility): zaman çizelgesine görüşme notu ekle, sağlık skorunun yanındaki “Neden?”e bak.',
+      'Ayarlar → Sağlık skoru’nda ağırlıkları değiştir; önizleme hangi müşterinin kaç puan alacağını hemen gösterir.',
+      'Zildeki “Haftan” bildirimi: Pazartesi gelen haftalık özetin örneği.',
       'Ctrl K (Mac’te ⌘ K) ile müşteri, görev ya da kişi ara.',
       'Ana sayfada “Sayfayı düzenle” ile kart ekle; görünümü role göre ayarla.',
       'Bir panoda birden çok görev seç, toplu değiştir, sonra geri al.',
@@ -54,6 +57,9 @@ const TEXT = {
     tries: 'What to try',
     reset: 'Start over',
     ideas: [
+      'Open a customer (Velto Mobility, say): log a call on the timeline and check “Why?” next to the health score.',
+      'In Settings → Health score, change the weights; the preview shows each customer’s score straight away.',
+      'The “Your week” notice in the bell: an example of the Monday summary.',
       'Press Ctrl K (⌘ K on a Mac) to find a customer, task or person.',
       'On Home, use “Edit page” to add cards and set what each role sees.',
       'Select several tasks on a board, change them together, then undo.',
@@ -128,7 +134,7 @@ async function main() {
   const sessions: Partial<Record<Key, string>> = {};
   sessions.ada = await signIn(server, 'ada@demo.example');
   const { seedShowcase } = await import('../../../scripts/seed-showcase');
-  await seedShowcase(server.call);
+  await seedShowcase(server.call, server.db);
   step(92, 'app');
 
   const [{ App }, { navigate }] = await Promise.all([import('../App'), import('../lib/router')]);

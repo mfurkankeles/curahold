@@ -8,6 +8,7 @@ import { SourceDetail, Sources } from '../components/Sources';
 import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
+import { HealthSettings } from '../components/Timeline';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -17,7 +18,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'audit';
+type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -31,6 +32,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['company', t('settings.tab.company'), can('org.manage')],
         ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
         ['records', t('settings.tab.records'), can('accounts.manage')],
+        ['health', t('settings.tab.health'), can('accounts.manage')],
       ],
     },
     {
@@ -99,6 +101,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'company' && <CompanyTab />}
           {current === 'fields' && <AccountFieldsEditor />}
           {current === 'records' && <RecordTypesEditor />}
+          {current === 'health' && <HealthSettings />}
           {current === 'people' && <PeopleTab />}
           {current === 'joining' && <JoiningTab />}
           {current === 'teams' && <TeamsTab />}

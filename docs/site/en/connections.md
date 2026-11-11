@@ -1,7 +1,7 @@
 ---
 title: Connections and CRM
 section: help
-order: 7
+order: 8
 summary: Slack, Teams and Google Chat; syncing with Salesforce, HubSpot and spreadsheets.
 ---
 # Connections and CRM

@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Timeline, health score and weekly summary
+
+- **Customer timeline:** log notes, calls, meetings and emails; tasks, comments, new contacts and score changes in the same stream. Pin what matters.
+- **A health score that shows its reasons:** 0–100 for every customer, weights chosen by the company, the reason for every point one click away, a chart of recent weeks. Can be written to your CRM.
+- **Monday weekly summary:** renewals, falling scores with the main reason, customers gone quiet.
+- **AI connector:** assistants now read the timeline and the score, and can log a call note.
+
 ### Developer platform and AI connector
 
 - **Claude and ChatGPT connector (MCP):** ask your assistant about your customers, have it prepare summaries and presentations, and open tasks. It works as you, within your rights.

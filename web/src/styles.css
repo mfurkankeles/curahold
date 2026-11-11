@@ -1017,3 +1017,55 @@ a { color: var(--tend-ink); }
 .consent__title { font-size: 20px; margin: 0 0 8px; }
 .consent__list { margin: 12px 0; padding-left: 18px; display: grid; gap: 6px; }
 fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+
+/* Health score: one number, coloured by band, always one click from its reasons. */
+.score { display: inline-block; min-width: 2.2em; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; padding: 1px 7px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); }
+.score[data-band='good'] { background: #e3f0dc; color: var(--done); }
+.score[data-band='watch'] { background: #fbefd8; color: #8a5a10; }
+.score[data-band='risk'] { background: #f6e1dc; color: var(--late); }
+.healthline { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.healthline .score { font-size: 15px; padding: 2px 10px; }
+.healthwhy { margin-top: 6px; border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; background: #fafbfb; }
+.healthwhy ul { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.healthwhy li { display: flex; justify-content: space-between; gap: 10px; padding-left: 10px; border-left: 3px solid var(--line-strong); font-size: 13px; line-height: 1.35; }
+.healthwhy li[data-state='good'] { border-left-color: var(--done); }
+.healthwhy li[data-state='watch'] { border-left-color: var(--soon); }
+.healthwhy li[data-state='risk'] { border-left-color: var(--late); }
+.healthwhy li[data-state='none'] { color: var(--ink-3); }
+.healthwhy__pts { color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.healthwhy__trend { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; color: var(--tend); font-size: 12.5px; }
+.spark { display: block; max-width: 100%; }
+.signals { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.signal { border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; }
+.signal__top { display: flex; align-items: baseline; gap: 10px; }
+.signal__top .linkbtn { margin-left: auto; }
+.signal__weight { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+.signal__weight input { flex: 1; max-width: 280px; accent-color: var(--tend); }
+.signal__params { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.signal__params .field { min-width: 160px; }
+.healthpreview { margin-top: 12px; display: grid; gap: 8px; }
+.healthpreview__counts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.healthpreview__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-width: 420px; }
+.healthpreview__list li { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--line); }
+
+/* Timeline: logged touches read as content; what Tendwell saw happen stays one quiet line. */
+.tl__compose { display: grid; gap: 8px; margin-bottom: 14px; }
+.tl__compose textarea { resize: vertical; min-height: 64px; }
+.tl__extra { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+.tl__chips { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.tl__day + .tl__day { margin-top: 10px; }
+.tl__date { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin: 6px 0 4px; }
+.tl__list { list-style: none; margin: 0; padding: 0; }
+.tl__pinned { background: var(--tend-wash); border-radius: var(--r-m); padding: 4px 10px; margin-bottom: 10px; }
+.tl__item { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.tl__list .tl__item:first-child { border-top: 0; }
+.tl__icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--sunk); color: var(--ink-2); }
+.tl__item[data-kind='call'] .tl__icon, .tl__item[data-kind='meeting'] .tl__icon, .tl__item[data-kind='email'] .tl__icon { background: var(--tend-wash); color: var(--tend-ink); }
+.tl__item[data-kind='score'][data-dir='down'] .tl__icon { background: #f6e1dc; color: var(--late); }
+.tl__item--quiet { color: var(--ink-2); font-size: 13px; align-items: center; }
+.tl__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tl__head .muted { font-size: 12.5px; }
+.tl__tools { margin-left: auto; display: inline-flex; gap: 10px; }
+.tl__text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tl__with { margin: 4px 0 0; font-size: 12.5px; }
+.tl__quote { margin: 2px 0 0; color: var(--ink-3); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
