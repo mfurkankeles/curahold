@@ -91,6 +91,8 @@ export type AppEnv = {
     org: OrgRow;
     locale: Locale;
     auth: AuthCtx;
+    /** An administrator looking at Tendwell as someone else (read only). */
+    previewBy?: { id: string; name: string };
   };
 };
 

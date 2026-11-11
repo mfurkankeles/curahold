@@ -43,9 +43,9 @@ const health: AccountField = {
   label: L('Health', 'Sağlık'),
   type: 'select',
   options: [
-    { key: 'good', label: L('Healthy', 'İyi') },
-    { key: 'watch', label: L('Watch', 'İzlenmeli') },
-    { key: 'risk', label: L('At risk', 'Riskli') },
+    { key: 'good', label: L('Healthy', 'İyi'), color: 'leaf' },
+    { key: 'watch', label: L('Watch', 'İzlenmeli'), color: 'honey' },
+    { key: 'risk', label: L('At risk', 'Riskli'), color: 'coral' },
   ],
 };
 const tier: AccountField = {

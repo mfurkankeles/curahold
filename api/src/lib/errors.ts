@@ -32,6 +32,8 @@ export type ErrorCode =
   | 'org_loop'
   | 'sync_running'
   | 'crm_error'
+  | 'field_locked'
+  | 'preview_read_only'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -58,6 +60,8 @@ const STATUS: Record<ErrorCode, number> = {
   slug_taken: 409,
   domain_public: 400,
   join_closed: 403,
+  field_locked: 403,
+  preview_read_only: 403,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

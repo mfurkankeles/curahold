@@ -11,6 +11,8 @@ export const PERMS = [
   'privacy.manage',
   'audit.view',
   'accounts.manage',
+  'accounts.view_all',
+  'accounts.view_team',
   'automations.manage',
   'connections.manage',
 ] as const;
@@ -30,12 +32,29 @@ export const ADMIN_PERMS: Perm[] = ['org.manage', 'users.manage', 'teams.manage'
 
 /** Starting points offered when an administrator adds a role. */
 export const ROLE_PRESETS: { key: string; perms: Perm[] }[] = [
-  { key: 'blank', perms: [] },
-  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'automations.manage'] },
-  { key: 'ops', perms: ['accounts.manage', 'automations.manage', 'connections.manage'] },
-  { key: 'people', perms: ['users.manage', 'teams.manage'] },
-  { key: 'observer', perms: ['boards.view_all', 'audit.view'] },
+  { key: 'blank', perms: ['accounts.view_all'] },
+  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage'] },
+  { key: 'ops', perms: ['accounts.manage', 'accounts.view_all', 'automations.manage', 'connections.manage'] },
+  { key: 'people', perms: ['users.manage', 'teams.manage', 'accounts.view_all'] },
+  { key: 'observer', perms: ['boards.view_all', 'audit.view', 'accounts.view_all'] },
 ];
+
+/**
+ * Which customers a role sees. Kept as two permissions so the database can
+ * check them, but shown and chosen as one setting.
+ */
+export const ACCOUNT_SCOPES = ['all', 'team', 'own'] as const;
+export type AccountScope = (typeof ACCOUNT_SCOPES)[number];
+export const SCOPE_PERMS: Perm[] = ['accounts.view_all', 'accounts.view_team'];
+/** The permissions shown as yes/no switches (reach is shown on its own). */
+export const GRANT_PERMS: Perm[] = PERMS.filter((p) => !SCOPE_PERMS.includes(p));
+export function scopeOf(perms: readonly string[]): AccountScope {
+  return perms.includes('accounts.view_all') ? 'all' : perms.includes('accounts.view_team') ? 'team' : 'own';
+}
+export function withScope(perms: Perm[], scope: AccountScope): Perm[] {
+  const rest = perms.filter((p) => !SCOPE_PERMS.includes(p));
+  return scope === 'all' ? [...rest, 'accounts.view_all'] : scope === 'team' ? [...rest, 'accounts.view_team'] : rest;
+}
 
 export type BoardAccessLevel = 'view' | 'edit' | 'manage';
 
@@ -122,11 +141,26 @@ export type Localized = Partial<Record<Locale, string>>;
 export const FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email'] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
+/** Tendwell's own option colours, named for what they look like. */
+export const OPTION_COLORS = ['sea', 'leaf', 'honey', 'coral', 'sky', 'plum', 'stone', 'rose'] as const;
+export type OptionColor = (typeof OPTION_COLORS)[number];
+
 export interface FieldOption {
   key: string;
   label: Localized;
   /** The value a connected CRM or spreadsheet uses for this option. */
   value?: string;
+  color?: OptionColor;
+}
+
+/**
+ * Who sees and who changes one field, as role keys. Empty or missing means
+ * everyone (changing still needs a full seat). People who run the company
+ * settings always see and change every field.
+ */
+export interface FieldAccess {
+  view?: string[];
+  edit?: string[];
 }
 
 /** A value worked out from the records under an account, e.g. "open pipeline". */
@@ -147,6 +181,9 @@ export interface AccountField {
   options?: FieldOption[];
   /** Filled in by Tendwell from records; read-only for people. */
   rollup?: Rollup;
+  access?: FieldAccess;
+  /** Set by the server for the person asking: they can see it but not change it. */
+  locked?: boolean;
 }
 
 export interface Account {
@@ -265,6 +302,8 @@ export interface Me {
   org: Org;
   teamIds: string[];
   sessionId: string;
+  /** Set while an administrator looks at Tendwell as this person (read only). */
+  previewBy?: { id: string; name: string };
 }
 
 export interface Role {

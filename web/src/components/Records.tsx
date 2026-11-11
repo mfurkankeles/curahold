@@ -475,7 +475,7 @@ export function RecordDialog({
           {type.fields.filter((f) => !(isContact && (f.key === 'first_name' || f.key === 'last_name'))).map((f) => (
             <label className="field" key={f.key}>
               <span className="field__label">{labelOf(f.label, locale)}</span>
-              <FieldInput field={f} value={values[f.key]} disabled={!canWrite} onSave={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
+              <FieldInput field={f} value={values[f.key]} disabled={!canWrite || f.locked} onSave={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
             </label>
           ))}
         </div>

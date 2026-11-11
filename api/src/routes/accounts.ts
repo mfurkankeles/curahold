@@ -14,6 +14,7 @@ import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/recor
 import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
+import { changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
 
 export const accountRoutes = new Hono<AppEnv>();
 
@@ -39,6 +40,20 @@ const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.boar
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
       and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as open_tasks,
   (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity`;
+
+/** An account as this person may see it (fields closed to their role left out). */
+function viewOf(c: Parameters<typeof requireWriter>[0]) {
+  const hidden = hiddenKeys(c.get('org').account_fields, c.get('auth'));
+  return (r: Row): Account => {
+    const a = toAccount(r);
+    return hidden.size ? { ...a, fields: stripFields(a.fields, hidden) } : a;
+  };
+}
+
+/** New owner and/or team, allowed to move customers out of the giver's own reach. */
+async function reassign(q: Q, ids: string[], ownerId: string | null | undefined, teamId: string | null | undefined) {
+  await q.query('select app_reassign_accounts($1::uuid[], $2, $3::uuid, $4, $5::uuid)', [ids, ownerId !== undefined, ownerId ?? null, teamId !== undefined, teamId ?? null]);
+}
 
 async function checkOwner(q: Q, ownerId: string | null | undefined) {
   if (!ownerId) return;
@@ -70,7 +85,7 @@ accountRoutes.get('/accounts', async (c) => {
     );
     return { list, total: n };
   });
-  return c.json({ accounts: rows.list.map(toAccount), total: rows.total });
+  return c.json({ accounts: rows.list.map(viewOf(c)), total: rows.total });
 });
 
 const accountInput = {
@@ -88,6 +103,7 @@ accountRoutes.post('/accounts', async (c) => {
   );
   const org = c.get('org');
   const auth = c.get('auth');
+  checkEditable(org.account_fields, changedFieldKeys({}, input.fields ?? {}), auth);
   const row = await run(c, async (q) => {
     await checkOwner(q, input.ownerId);
     const fields = cleanFields(org.account_fields, input.fields ?? {}, org.locale);
@@ -99,11 +115,12 @@ accountRoutes.post('/accounts', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.created', entity: 'account', entityId: id });
     await queueSync(q, org.id, 'account', [id], null, { created: true });
     const [r] = await q.query('select * from accounts where id = $1', [id]);
-    return r;
+    // Given to someone outside this person's reach: it is saved, they just no longer see it.
+    return r ?? { id, name: input.name, owner_id: input.ownerId ?? null, team_id: input.teamId ?? null, fields, source: 'manual', created_at: new Date(), updated_at: new Date() };
   });
   kickSync(c.get('deps'), org.id);
   await runAccountCreated(c.get('deps'), org.id, [row.id], nowOf(c.get('deps'))).catch(() => 0);
-  return c.json({ account: toAccount(row) }, 201);
+  return c.json({ account: viewOf(c)(row) }, 201);
 });
 
 accountRoutes.get('/accounts/:id', async (c) => {
@@ -121,7 +138,7 @@ accountRoutes.get('/accounts/:id', async (c) => {
     const links = await linksFor(q, 'account', [id]);
     return { a, tasks, links };
   });
-  return c.json({ account: { ...toAccount(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })) });
+  return c.json({ account: { ...viewOf(c)(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })) });
 });
 
 accountRoutes.patch('/accounts/:id', async (c) => {
@@ -144,27 +161,36 @@ accountRoutes.patch('/accounts/:id', async (c) => {
     const [a] = await q.query('select * from accounts where id = $1', [id]);
     if (!a) fail('not_found');
     if (input.ownerId !== undefined) await checkOwner(q, input.ownerId);
-    const fields = input.fields ? { ...(a.fields ?? {}), ...cleanFields(org.account_fields, input.fields, org.locale) } : a.fields;
-    const [u] = await q.query(
-      `update accounts set name = $2, owner_id = $3, team_id = $4, fields = $5, updated_at = now(),
-              archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end
-        where id = $1 returning *`,
-      [
-        id,
-        input.name ?? a.name,
-        input.ownerId !== undefined ? input.ownerId : a.owner_id,
-        input.teamId !== undefined ? input.teamId : a.team_id,
-        JSON.stringify(fields),
-        input.archived ?? null,
-      ],
+    const cleaned = input.fields ? cleanFields(org.account_fields, input.fields, org.locale) : {};
+    // Sending a read-only field back unchanged is fine; changing it is not.
+    checkEditable(org.account_fields, changedFieldKeys(a.fields, cleaned), auth);
+    const fields = input.fields ? { ...(a.fields ?? {}), ...cleaned } : a.fields;
+    await q.query(
+      `update accounts set name = $2, fields = $3, updated_at = now(),
+              archived_at = case when $4::boolean is null then archived_at when $4 then coalesce(archived_at, now()) else null end
+        where id = $1`,
+      [id, input.name ?? a.name, JSON.stringify(fields), input.archived ?? null],
     );
+    // A new owner or team may take the customer out of this person's reach.
+    if ((input.ownerId !== undefined && input.ownerId !== a.owner_id) || (input.teamId !== undefined && input.teamId !== a.team_id)) {
+      await reassign(q, [id], input.ownerId, input.teamId);
+    }
+    const [seen] = await q.query('select * from accounts where id = $1', [id]);
+    const u = seen ?? {
+      ...a,
+      name: input.name ?? a.name,
+      owner_id: input.ownerId !== undefined ? input.ownerId : a.owner_id,
+      team_id: input.teamId !== undefined ? input.teamId : a.team_id,
+      fields,
+      updated_at: new Date(),
+    };
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.updated', entity: 'account', entityId: id, meta: { fields: Object.keys(input) } });
     const keys = changedKeys(a, u);
     if (keys.length) await queueSync(q, org.id, 'account', [id], keys);
     return u;
   });
   kickSync(c.get('deps'), org.id);
-  return c.json({ account: toAccount(row) });
+  return c.json({ account: viewOf(c)(row) });
 });
 
 accountRoutes.delete('/accounts/:id', async (c) => {
@@ -191,15 +217,15 @@ accountRoutes.post('/accounts/bulk', async (c) => {
   const auth = c.get('auth');
   const n = await run(c, async (q) => {
     if (input.ownerId) await checkOwner(q, input.ownerId);
-    const rows = await q.query(
-      `update accounts set
-          owner_id = case when $2 then $3::uuid else owner_id end,
-          team_id = case when $4 then $5::uuid else team_id end,
-          archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end,
-          updated_at = now()
-        where id = any($1::uuid[]) returning id`,
-      [input.ids, input.ownerId !== undefined, input.ownerId ?? null, input.teamId !== undefined, input.teamId ?? null, input.archived ?? null],
-    );
+    const rows = await q.query('select id from accounts where id = any($1::uuid[])', [input.ids]);
+    const ids = rows.map((r) => r.id);
+    if (input.archived !== undefined) {
+      await q.query(
+        `update accounts set archived_at = case when $2 then coalesce(archived_at, now()) else null end, updated_at = now() where id = any($1::uuid[])`,
+        [ids, input.archived],
+      );
+    }
+    if (input.ownerId !== undefined || input.teamId !== undefined) await reassign(q, ids, input.ownerId, input.teamId);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.bulk_updated', entity: 'account', meta: { count: rows.length, fields: Object.keys(input).filter((k) => k !== 'ids') } });
     if (input.ownerId !== undefined) await queueSync(q, org.id, 'account', rows.map((r) => r.id), ['owner']);
     return rows.length;
@@ -217,10 +243,15 @@ accountRoutes.put('/account-fields', async (c) => {
   if (new Set(keys).size !== keys.length) fail('validation', { fields: 'key' }, { fields: ['key'] });
   const org = c.get('org');
   const auth = c.get('auth');
+  const defs = mergeDefs(org.account_fields, input.fields as AccountField[], auth);
   await run(c, async (q) => {
-    await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(input.fields)]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.account_fields', entity: 'org', entityId: org.id, meta: { count: input.fields.length } });
-    await recomputeRollups(q, org.id, input.fields as AccountField[], null);
+    await q.query('select app_set_account_fields($1::jsonb)', [JSON.stringify(defs)]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.account_fields', entity: 'org', entityId: org.id, meta: { count: defs.length } });
+    const access = (list: AccountField[]) => JSON.stringify(list.map((f) => [f.key, f.access ?? null]));
+    if (access(org.account_fields) !== access(defs)) {
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.field_access', entity: 'org', entityId: org.id, meta: { fields: defs.filter((f) => f.access?.view?.length || f.access?.edit?.length).map((f) => f.key) } });
+    }
+    await recomputeRollups(q, org.id, defs, null);
   });
   return c.json({ ok: true });
 });
@@ -249,11 +280,14 @@ const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').repla
 
 accountRoutes.post('/accounts/import', async (c) => {
   requirePerm(c, 'accounts.manage');
+  // Matching rows to existing customers needs to see all of them.
+  requirePerm(c, 'accounts.view_all');
   if (Number(c.req.header('content-length') ?? 0) > 12 * 1024 * 1024) fail('import_too_large', { max: MAX_IMPORT_ROWS });
   const input = await body(c, importSchema);
   const org = c.get('org');
   const auth = c.get('auth');
   const locale = input.locale ?? org.locale;
+  checkEditable(org.account_fields, Object.keys(input.mapping.fields ?? {}), auth);
   const result = await run(c, async (q) => {
     // Field definitions: existing + new ones, with select options grown from the file.
     const defs: AccountField[] = JSON.parse(JSON.stringify(org.account_fields ?? []));
@@ -279,7 +313,7 @@ accountRoutes.post('/accounts/import', async (c) => {
       }
     }
     const fieldsChanged = JSON.stringify(defs) !== JSON.stringify(org.account_fields ?? []);
-    if (fieldsChanged) await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(defs)]);
+    if (fieldsChanged) await q.query('select app_set_account_fields($1::jsonb)', [JSON.stringify(defs)]);
 
     const users = await q.query(`select id, email, name from users where status in ('active', 'invited')`);
     const byEmail = new Map(users.map((u) => [u.email.toLowerCase(), u.id]));
@@ -424,7 +458,7 @@ accountRoutes.post('/imports/:id/undo', async (c) => {
       );
       restored += r.length;
     }
-    if (b.summary?.fieldsBefore) await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(b.summary.fieldsBefore)]);
+    if (b.summary?.fieldsBefore) await q.query('select app_set_account_fields($1::jsonb)', [JSON.stringify(b.summary.fieldsBefore)]);
     await q.query(`update import_batches set undone_at = now(), previous = '[]'::jsonb where id = $1`, [id]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, restored } });
     return { removed: removed.length, restored };

@@ -67,7 +67,8 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
       boards,
       person: (id) => (id ? byId.get(id) : undefined),
       can: (perm) => me.user.perms.includes(perm as any),
-      canWrite: me.user.seat === 'full',
+      // Looking as someone else is always read only.
+      canWrite: me.user.seat === 'full' && !me.previewBy,
       reloadBoards,
       reloadPeople,
       reloadMe,

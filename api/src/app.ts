@@ -10,6 +10,7 @@ import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { Perm } from '../../shared/src/model';
 import { type AppEnv, type Deps, type OrgRow } from './context';
 import { sha256Hex } from './lib/crypto';
+import { audit } from './lib/audit';
 import { HttpError, fail } from './lib/errors';
 import { accountRoutes } from './routes/accounts';
 import { recordRoutes } from './routes/records';
@@ -24,6 +25,7 @@ import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
 import { boardRoutes } from './routes/boards';
 import { meRoutes } from './routes/me';
 import { taskRoutes } from './routes/tasks';
+import { pageRoutes } from './routes/pages';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
 
@@ -147,6 +149,31 @@ export function createApp(deps: Deps) {
         await q.query('update users set last_active_at = now() where id = $1', [s.user_id]);
       });
     }
+    // "See it as them": an administrator reads Tendwell with someone else's
+    // role, seat and customers. The database checks run as that person, so
+    // what shows is exactly what they get. Nothing can be changed this way.
+    const previewAs = c.req.header('x-tendwell-preview-as');
+    if (previewAs && previewAs !== s.user_id) {
+      if (!((s.perms ?? []) as string[]).includes('org.manage')) fail('forbidden');
+      if (c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('preview_read_only');
+      if (!/^[0-9a-f-]{36}$/i.test(previewAs) || c.req.path.startsWith('/api/me/sessions')) fail('forbidden');
+      const [t] = await deps.db.tenant({ orgId: org.id, userId: s.user_id }, (q) =>
+        q.query(
+          `select u.id, u.name, u.email, u.seat, u.status, r.id as role_id, r.key as role_key, r.perms
+             from users u join roles r on r.id = u.role_id where u.id = $1`,
+          [previewAs],
+        ),
+      );
+      if (!t || t.status !== 'active') fail('not_found');
+      const real = c.get('auth');
+      c.set('previewBy', { id: real.userId, name: real.name });
+      c.set('auth', { ...real, userId: t.id, name: t.name, email: t.email, roleId: t.role_id, roleKey: t.role_key, perms: (t.perms ?? []) as Perm[], seat: t.seat });
+      if (c.req.path === '/api/me') {
+        await deps.db.tenant({ orgId: org.id, userId: real.userId }, (q) =>
+          audit(q, { orgId: org.id, actorId: real.userId, action: 'user.previewed', entity: 'user', entityId: t.id }),
+        );
+      }
+    }
     await next();
   });
 
@@ -155,6 +182,7 @@ export function createApp(deps: Deps) {
   app.route('/api', taskRoutes);
   app.route('/api', accountRoutes);
   app.route('/api', recordRoutes);
+  app.route('/api', pageRoutes);
   app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);

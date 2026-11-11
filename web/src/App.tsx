@@ -3,7 +3,7 @@ import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { Shell } from './components/Shell';
 import { TaskPanel } from './components/TaskPanel';
-import { ApiFailure, get, onAuthLost, patch, setApiLocale } from './lib/api';
+import { ApiFailure, endPreview, get, onAuthLost, patch, previewAs, setApiLocale } from './lib/api';
 import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
@@ -18,6 +18,7 @@ import { DevicesPage } from './pages/Devices';
 import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
+import { HomePage } from './pages/Home';
 
 // app.<domain> is the central address: company sign-up lives there.
 const isCentral = () => location.hostname.split('.')[0] === 'app';
@@ -67,10 +68,17 @@ export function App() {
       // First things first: an unfinished company setup for its admin,
       // otherwise a new person's own one-minute setup.
       const home = location.pathname === '/' || location.pathname === '/login';
-      if (notice === 'signup' || (home && me.user.perms.includes('org.manage') && !me.org.setup.finishedAt)) navigate('/setup', true);
+      if (me.previewBy) {
+        if (home) navigate('/home', true);
+      } else if (notice === 'signup' || (home && me.user.perms.includes('org.manage') && !me.org.setup.finishedAt)) navigate('/setup', true);
       else if (!me.user.onboardedAt && !location.pathname.startsWith('/setup')) navigate('/welcome', true);
-      else if (home) navigate('/my', true);
+      else if (home) navigate('/home', true);
     } catch (e) {
+      // A preview that can no longer be shown (the person left, the right was taken away) ends quietly.
+      if (previewAs()) {
+        endPreview(location.pathname);
+        return;
+      }
       const evicted = e instanceof ApiFailure && e.code === 'session_evicted';
       setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : notice });
       if (location.pathname !== '/login') navigate('/login', true);
@@ -115,7 +123,7 @@ export function App() {
             org={boot.org}
             onLocale={changeLocale}
             onSignedIn={(how) => {
-              navigate('/my', true);
+              navigate('/home', true);
               void start(how ?? null);
             }}
           />
@@ -176,6 +184,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const rec = match('/records/:type', path);
   const a = match('/accounts/:id', path);
   const setupStep = match('/setup/:step', path);
+  const pg = match('/pages/:id', path);
   if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
   else if (path === '/welcome') page = <PersonalPage mode="welcome" onLocale={onLocale} />;
   else if (path === '/profile') page = <PersonalPage mode="profile" onLocale={onLocale} />;
@@ -187,6 +196,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;
   else if (rec) page = <RecordsPage typeKey={rec.type} key={rec.type} />;
+  else if (path === '/home' || pg) page = <HomePage pageId={pg?.id ?? null} key={pg?.id ?? 'home'} />;
   else page = <MyTasks refreshKey={refreshKey} />;
 
   return (

@@ -25,7 +25,7 @@ describe('roles: who can do what', () => {
     expect(r.roles.find((x: any) => x.key === 'admin').perms).toContain('connections.manage');
     const lenaAccess = (await ada.get(`/api/admin/users/${env.a.ids.lena}/access`)).json;
     expect(lenaAccess.access.roleKey).toBe('member');
-    expect(lenaAccess.access.perms).toEqual([]);
+    expect(lenaAccess.access.perms).toEqual(['accounts.view_all']);
     expect(lenaAccess.access.boards.length).toBeGreaterThan(0);
     expect(lenaAccess.access.boards.every((b: any) => ['view', 'edit', 'manage'].includes(b.level))).toBe(true);
     const sofiaAccess = (await ada.get(`/api/admin/users/${env.a.ids.sofia}/access`)).json;

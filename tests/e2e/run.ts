@@ -29,8 +29,12 @@ async function text(page: Page, sel: string) {
 const mert = await newPage(s.browser);
 const csBoard = s.demo.boards.csBoard;
 
-await step('sign in with an email link and land on My tasks', async () => {
+await step("sign in with an email link and land on the role's home page", async () => {
   await signIn(mert.page, s.origin, 'mert@demo.example');
+  await mert.page.waitForSelector('.pane');
+  expect(mert.page.url().endsWith('/home'), `landed on ${mert.page.url()}`);
+  expect((await text(mert.page, '.topbar__title')).includes('Ekip görünümü'), 'team home missing');
+  await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
   expect((await text(mert.page, '.topbar__title')).includes('Görevlerim'), 'My tasks title missing');
   await shot(mert.page, 'e2e-01-my-tasks');
 });
@@ -410,8 +414,11 @@ await step('CRM: connect, choose, map, preview and start — then records everyw
 });
 
 
+// Sign-in links are rate-limited per person, so the last admin session is kept for the steps after it.
+let adaKeep: Awaited<ReturnType<typeof newPage>> | null = null;
 await step('stakeholders: org chart with drag and drop, and a stakeholder card', async () => {
   const ada = await newPage(s.browser);
+  adaKeep = ada;
   await signIn(ada.page, s.origin, 'ada@demo.example');
   const [blue] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Bluebay Travel'`);
   const people = await sql(`select id, name, parent_id from records where account_id = $1 order by name`, [blue.id]);
@@ -461,6 +468,68 @@ await step('stakeholders: org chart with drag and drop, and a stakeholder card',
   overflow = await ada.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'account page scrolls sideways on a phone');
   await shot(ada.page, 'p3-13-phone-org');
+});
+
+await step('home pages: an admin adds a card and everyone with the page sees it', async () => {
+  const ada = adaKeep!;
+  await ada.page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await ada.page.goto(`${s.origin}/`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.pane');
+  expect((await text(ada.page, '.topbar__title')).includes('Ekip görünümü'), 'admin home is not the team view');
+  await shot(ada.page, 'p4-01-home-team');
+  await (await byText(ada.page, '.btn', 'Sayfayı düzenle')).click();
+  await ada.page.waitForSelector('.pane__tools');
+  await ada.page.click('.pane--add');
+  await (await byText(ada.page, '.library__name', 'Not')).click();
+  await ada.page.waitForSelector('.dialog textarea');
+  await ada.page.type('.dialog textarea', 'Bu çeyrek önce yenilemeler.');
+  await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
+  await (await byText(ada.page, '.topbar .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.pane[data-type="note"]')].some((e) => e.textContent?.includes('önce yenilemeler')));
+  const [page] = await sql(`select p.cards from pages p join orgs o on o.id = p.org_id where o.slug = 'demo' and 'manager' = any (p.home_for)`);
+  expect(page.cards.some((c: any) => c.type === 'note' && c.text.includes('yenilemeler')), 'note card not saved');
+  await shot(ada.page, 'p4-02-home-note');
+});
+
+await step('field access: hide a field from members, then look as one of them', async () => {
+  const ada = adaKeep!;
+  await ada.page.goto(`${s.origin}/settings/fields`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.access-pill');
+  const pill = await ada.page.evaluateHandle(() => {
+    const row = [...document.querySelectorAll('.field-row')].find((r) => [...r.querySelectorAll('input')].some((i) => (i as HTMLInputElement).value === 'Yıllık tutar'));
+    return row?.querySelector('.access-pill');
+  });
+  await (pill as any).click();
+  await (await byText(ada.page, '.faccess .seg button', 'Seçili roller')).click();
+  await shot(ada.page, 'p4-03-field-access');
+  await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
+  await ada.page.click('.savebar .btn--primary');
+  await pause(500);
+  const [org] = await sql(`select account_fields from orgs where slug = 'demo'`);
+  const arr = org.account_fields.find((f: any) => f.key === 'arr');
+  expect(arr.access?.view?.includes('manager') && !arr.access.view.includes('member'), `access not saved: ${JSON.stringify(arr.access)}`);
+
+  await ada.page.goto(`${s.origin}/settings/roles`, { waitUntil: 'networkidle0' });
+  await (await byText(ada.page, '.seg button', 'Kişiye göre')).click();
+  const row = await ada.page.evaluateHandle(() => [...document.querySelectorAll('tbody tr')].find((r) => r.textContent?.includes('Lena Fischer'))?.querySelector('.btn'));
+  await (row as any).click();
+  await ada.page.waitForSelector('.access__preview');
+  await (await byText(ada.page, '.access__preview .btn', 'Onun görünümünü aç')).click();
+  await ada.page.waitForSelector('.previewbar', { timeout: 15_000 });
+  await ada.page.waitForSelector('.pane');
+  expect((await text(ada.page, '.topbar__title')).includes('Benim günüm'), 'member home not shown in preview');
+  await shot(ada.page, 'p4-04-preview-home');
+  await ada.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.accounts-table');
+  const heads = await ada.page.$$eval('.accounts-table th', (ths) => ths.map((t) => t.textContent ?? ''));
+  expect(!heads.some((h) => h.includes('Yıllık tutar')), `hidden field shown: ${heads.join(', ')}`);
+  expect(!(await ada.page.$('.topbar .btn--primary')), 'write button shown while previewing');
+  await shot(ada.page, 'p4-05-preview-accounts');
+  await (await byText(ada.page, '.previewbar .btn', 'Kendi görünümüme dön')).click();
+  await ada.page.waitForFunction(() => !document.querySelector('.previewbar') && location.pathname.startsWith('/settings'));
+  const [log] = await sql(`select count(*)::int as n from audit_log where action = 'user.previewed'`);
+  expect(log.n > 0, 'preview not in the activity log');
+  expect(ada.errors.length === 0, ada.errors.join(' | '));
   await ada.page.browserContext().close();
 });
 

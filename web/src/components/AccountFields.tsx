@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { labelOf, optionKey } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
-import { FIELD_TYPES, type AccountField, type FieldType, type Rollup } from '../../../shared/src/model';
+import { FIELD_TYPES, OPTION_COLORS, type AccountField, type FieldAccess, type FieldType, type OptionColor, type Role, type Rollup } from '../../../shared/src/model';
 import { ROLLUP_PRESETS, typeLabel, type RecordType } from '../../../shared/src/records';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -51,6 +51,11 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState<{ label: string; type: FieldType } | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [palette, setPalette] = useState<string | null>(null);
+  const [accessOf, setAccessOf] = useState<number | null>(null);
+  const { can } = useStore();
+  const admin = can('org.manage');
+  const accessText = useAccessText();
   const rollupText = useRollupText(types ?? null);
   useEffect(() => setList(JSON.parse(JSON.stringify(initial))), [initial]);
   const dirty = JSON.stringify(list) !== JSON.stringify(initial);
@@ -96,10 +101,41 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
             <div className="field-row__meta">
               <span className="badge">{t(`fields.type.${f.type}` as MessageKey)}</span>
               {f.rollup && <span className="badge badge--calc">{t('fields.calculated')}: {rollupText(f.rollup)}</span>}
+              {admin ? (
+                <button className="access-pill" data-open={!f.access?.view?.length && !f.access?.edit?.length ? 'true' : undefined} onClick={() => setAccessOf(i)}>
+                  {accessText(f.access, !!f.rollup)}
+                </button>
+              ) : (
+                f.locked && <span className="badge">{t('fields.access.readOnlyForYou')}</span>
+              )}
               {f.type === 'select' && !f.rollup && (
                 <div className="options">
                   {(f.options ?? []).slice(0, 40).map((o, k) => (
-                    <span className="option-chip" key={o.key}>
+                    <span className="option-chip" key={o.key} data-color={o.color}>
+                      <button
+                        className="option-chip__swatch"
+                        aria-label={t('fields.color', { option: labelOf(o.label, locale) })}
+                        aria-expanded={palette === `${i}:${k}`}
+                        onClick={() => setPalette(palette === `${i}:${k}` ? null : `${i}:${k}`)}
+                      />
+                      {palette === `${i}:${k}` && (
+                        <span className="palette" role="group" aria-label={t('fields.colors')}>
+                          {[undefined, ...OPTION_COLORS].map((c) => (
+                            <button
+                              key={c ?? 'none'}
+                              className="palette__swatch"
+                              data-color={c}
+                              aria-pressed={o.color === c}
+                              aria-label={t(`fields.colorName.${c ?? 'none'}` as MessageKey)}
+                              title={t(`fields.colorName.${c ?? 'none'}` as MessageKey)}
+                              onClick={() => {
+                                upd(i, { options: (f.options ?? []).map((x, m) => (m === k ? withColor(x, c) : x)) });
+                                setPalette(null);
+                              }}
+                            />
+                          ))}
+                        </span>
+                      )}
                       <input
                         className="option-chip__input"
                         value={o.label[locale] ?? labelOf(o.label, other)}
@@ -184,8 +220,136 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
           {t('common.save')}
         </button>
       </div>
+      {accessOf !== null && list[accessOf] && (
+        <FieldAccessDialog
+          field={list[accessOf]}
+          onClose={() => setAccessOf(null)}
+          onSave={(access) => {
+            upd(accessOf, { access: access.view?.length || access.edit?.length ? access : undefined });
+            setAccessOf(null);
+          }}
+        />
+      )}
       {rolling && types && <RollupDialog types={types} taken={new Set(list.map((x) => x.key))} onClose={() => setRolling(false)} onAdd={(f) => setList([...list, f])} />}
     </div>
+  );
+}
+
+const withColor = <T extends { color?: OptionColor }>(o: T, c: OptionColor | undefined): T => {
+  const { color: _c, ...rest } = o;
+  return (c ? { ...rest, color: c } : rest) as T;
+};
+
+function useRoleList() {
+  const [roles, setRoles] = useState<Role[] | null>(null);
+  useEffect(() => {
+    void get<{ roles: Role[] }>('/admin/roles').then((r) => {
+      const order = ['admin', 'manager', 'member', 'viewer'];
+      setRoles([...r.roles].sort((a, b) => (order.indexOf(a.key) + 1 || 99) - (order.indexOf(b.key) + 1 || 99) || a.name.localeCompare(b.name)));
+    });
+  }, []);
+  return roles;
+}
+
+/** "Everyone sees and changes it" / "Seen by 2 roles, changed by 1" — on the field's button. */
+function useAccessText() {
+  const { t } = useI18n();
+  return (a: FieldAccess | undefined, calculated: boolean) => {
+    const view = a?.view?.length ?? 0;
+    const edit = a?.edit?.length ?? 0;
+    if (!view && (!edit || calculated)) return t('fields.access.open');
+    if (view && !edit) return t('fields.access.seenBy', { n: view });
+    if (!view) return t('fields.access.changedBy', { n: edit });
+    return t('fields.access.both', { view, edit });
+  };
+}
+
+/** Who sees a field and who changes it — two separate choices, by role. */
+function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; onSave: (a: FieldAccess) => void; onClose: () => void }) {
+  const { t, locale } = useI18n();
+  const roles = useRoleList();
+  const [view, setView] = useState<string[]>(field.access?.view ?? []);
+  const [edit, setEdit] = useState<string[]>(field.access?.edit ?? []);
+  const always = (r: Role) => r.perms.includes('org.manage');
+  const toggle = (list: string[], key: string) => (list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
+  const seeing = (r: Role) => !view.length || view.includes(r.key) || always(r);
+  const name = labelOf(field.label, locale);
+
+  const summary = () => {
+    if (!roles) return '';
+    const names = (keys: string[]) => roles.filter((r) => keys.includes(r.key) || always(r)).map((r) => r.name).join(', ');
+    const v = view.length ? t('fields.access.sum.view', { roles: names(view) }) : t('fields.access.sum.viewAll');
+    const e = field.rollup ? t('fields.access.sum.calc') : edit.length ? t('fields.access.sum.edit', { roles: names(edit) }) : t('fields.access.sum.editAll');
+    return `${v} ${e}`;
+  };
+
+  return (
+    <Dialog
+      title={t('fields.access.title', { field: name })}
+      onClose={onClose}
+      wide
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button className="btn btn--primary" onClick={() => onSave({ ...(view.length ? { view } : {}), ...(edit.length && !field.rollup ? { edit } : {}) })}>
+            {t('common.save')}
+          </button>
+        </>
+      }
+    >
+      {!roles ? (
+        <div className="empty">{t('common.loading')}</div>
+      ) : (
+        <div className="faccess">
+          <section className="faccess__part">
+            <h3 className="faccess__h">{t('fields.access.view')}</h3>
+            <div className="seg" role="group" aria-label={t('fields.access.view')}>
+              <button aria-pressed={!view.length} onClick={() => setView([])}>
+                {t('fields.access.everyone')}
+              </button>
+              <button aria-pressed={view.length > 0} onClick={() => setView(view.length ? view : roles.filter((r) => r.key !== 'viewer' && r.key !== 'member').map((r) => r.key))}>
+                {t('fields.access.chosen')}
+              </button>
+            </div>
+            {view.length > 0 && (
+              <div className="chips-row">
+                {roles.map((r) => (
+                  <button key={r.id} className="rolechip" aria-pressed={view.includes(r.key) || always(r)} disabled={always(r)} onClick={() => setView(toggle(view, r.key))}>
+                    {r.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+          {!field.rollup && (
+            <section className="faccess__part">
+              <h3 className="faccess__h">{t('fields.access.edit')}</h3>
+              <div className="seg" role="group" aria-label={t('fields.access.edit')}>
+                <button aria-pressed={!edit.length} onClick={() => setEdit([])}>
+                  {t('fields.access.everyoneWho')}
+                </button>
+                <button aria-pressed={edit.length > 0} onClick={() => setEdit(edit.length ? edit : roles.filter((r) => always(r) || r.key === 'manager').map((r) => r.key))}>
+                  {t('fields.access.chosen')}
+                </button>
+              </div>
+              {edit.length > 0 && (
+                <div className="chips-row">
+                  {roles.map((r) => (
+                    <button key={r.id} className="rolechip" aria-pressed={(edit.includes(r.key) && seeing(r)) || always(r)} disabled={always(r) || !seeing(r)} onClick={() => setEdit(toggle(edit, r.key))}>
+                      {r.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+          <p className="faccess__summary">{summary()}</p>
+          <p className="field__hint">{t('fields.access.note')}</p>
+        </div>
+      )}
+    </Dialog>
   );
 }
 

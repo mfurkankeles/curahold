@@ -4,14 +4,16 @@
 import type { AutomationPreset } from '../../../shared/src/automation';
 import { translate, type Locale } from '../../../shared/src/i18n';
 import { PERMS, type Perm } from '../../../shared/src/model';
+import { DEFAULT_PAGES } from '../../../shared/src/pages';
 import { pick, TEMPLATES, type TemplateKey } from '../../../shared/src/templates';
 import type { Db, Q } from '../db';
 
 export const DEFAULT_ROLES: { key: string; perms: Perm[] }[] = [
   { key: 'admin', perms: [...PERMS] },
-  { key: 'manager', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'automations.manage'] },
-  { key: 'member', perms: [] },
-  { key: 'viewer', perms: [] },
+  { key: 'manager', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage'] },
+  // Everyone sees every customer until an administrator narrows a role.
+  { key: 'member', perms: ['accounts.view_all'] },
+  { key: 'viewer', perms: ['accounts.view_all'] },
 ];
 
 export function defaultColumns(locale: Locale) {
@@ -68,6 +70,16 @@ export async function createOrg(db: Db, input: NewOrg) {
        values ($1, $2, $3, $4, 'full', 'active', now()) returning id`,
       [org.id, input.admin.email.toLowerCase(), input.admin.name, roleIds.admin],
     );
+    for (const [i, p] of DEFAULT_PAGES.entries()) {
+      await q.query('insert into pages (org_id, name, cards, home_for, position, created_by) values ($1, $2, $3, $4, $5, $6)', [
+        org.id,
+        pick(p.name, input.locale),
+        JSON.stringify(p.cards),
+        p.homeFor,
+        i,
+        admin.id,
+      ]);
+    }
     const boards: Record<string, string> = { ...(input.boardMap ?? {}) };
     if (!input.boardMap) {
       for (const b of template.boards) {

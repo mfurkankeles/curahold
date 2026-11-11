@@ -13,6 +13,7 @@ import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/recor
 import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
+import { changedFieldKeys, checkEditable, defsFor, hiddenKeys, mergeDefs, stripFields, type Viewer } from '../lib/fieldAccess';
 
 export const recordRoutes = new Hono<AppEnv>();
 
@@ -45,6 +46,18 @@ export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
   links,
 });
 
+/** Fields each kind of record keeps from this person, by type id. */
+async function hiddenByType(q: Q, v: Viewer) {
+  const types = await q.query<{ id: string; fields: any }>('select id, fields from record_types');
+  return new Map(types.map((t) => [t.id, hiddenKeys(t.fields ?? [], v)]));
+}
+
+function viewRecord(r: Row, hidden: Map<string, Set<string>>, links: LinkInfo[] = []): AppRecord {
+  const rec = toRecord(r, links);
+  const h = hidden.get(r.type_id);
+  return h?.size ? { ...rec, fields: stripFields(rec.fields, h) } : rec;
+}
+
 // ------------------------------------------------------------ record types
 
 recordRoutes.get('/record-types', async (c) => {
@@ -54,7 +67,8 @@ recordRoutes.get('/record-types', async (c) => {
          from record_types rt where rt.archived_at is null order by rt.position, rt.created_at`,
     ),
   );
-  return c.json({ types: rows.map(toRecordType) });
+  const auth = c.get('auth');
+  return c.json({ types: rows.map(toRecordType).map((t) => ({ ...t, fields: defsFor(t.fields, auth) })) });
 });
 
 const typeFields = z.array(fieldSchema).max(150);
@@ -148,13 +162,14 @@ recordRoutes.patch('/record-types/:id', async (c) => {
       `update record_types set name = coalesce($2, name), fields = coalesce($3, fields), position = coalesce($4, position),
               archived_at = case when $5::boolean is null then archived_at when $5 then coalesce(archived_at, now()) else null end
         where id = $1 returning *`,
-      [id, input.name ? JSON.stringify(input.name) : null, input.fields ? JSON.stringify(input.fields) : null, input.position ?? null, input.archived ?? null],
+      [id, input.name ? JSON.stringify(input.name) : null, input.fields ? JSON.stringify(mergeDefs(t.fields ?? [], input.fields as any, auth)) : null, input.position ?? null, input.archived ?? null],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record_type.updated', entity: 'record_type', entityId: id, meta: { fields: Object.keys(input) } });
     if (input.fields) await recomputeRollups(q, org.id, org.account_fields, null);
     return u;
   });
-  return c.json({ type: toRecordType(row) });
+  const type = toRecordType(row);
+  return c.json({ type: { ...type, fields: defsFor(type.fields, auth) } });
 });
 
 recordRoutes.delete('/record-types/:id', async (c) => {
@@ -204,9 +219,9 @@ recordRoutes.get('/records', async (c) => {
     const rows = await q.query(`${SELECT} where ${where} order by lower(r.name) limit ${limit} offset ${offset}`, args);
     const [{ n }] = await q.query<{ n: number }>(`select count(*)::int as n from records r left join accounts a on a.id = r.account_id where ${where}`, args);
     const links = await linksFor(q, 'record', rows.map((r) => r.id));
-    return { rows, n, links };
+    return { rows, n, links, hidden: await hiddenByType(q, c.get('auth')) };
   });
-  return c.json({ records: data.rows.map((r) => toRecord(r, data.links.get(r.id))), total: data.n });
+  return c.json({ records: data.rows.map((r) => viewRecord(r, data.hidden, data.links.get(r.id))), total: data.n });
 });
 
 recordRoutes.get('/records/:id', async (c) => {
@@ -215,9 +230,9 @@ recordRoutes.get('/records/:id', async (c) => {
     const [r] = await q.query(`${SELECT} where r.id = $1`, [id]);
     if (!r) fail('not_found');
     const links = await linksFor(q, 'record', [id]);
-    return { r, links };
+    return { r, links, hidden: await hiddenByType(q, c.get('auth')) };
   });
-  return c.json({ record: toRecord(data.r, data.links.get(id)) });
+  return c.json({ record: viewRecord(data.r, data.hidden, data.links.get(id)) });
 });
 
 const recordValues = z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.null()]));
@@ -282,6 +297,7 @@ recordRoutes.post('/records', async (c) => {
   const deps = c.get('deps');
   const row = await run(c, async (q) => {
     const type = await typeOf(q, input.typeId);
+    checkEditable(type.fields ?? [], changedFieldKeys({}, input.fields ?? {}), auth);
     await checkRefs(q, input.accountId, input.ownerId);
     const fields = cleanFields(type.fields, input.fields ?? {}, org.locale);
     const name = contactName(type.kind, input.name, fields, null);
@@ -295,10 +311,10 @@ recordRoutes.post('/records', async (c) => {
     await recomputeRollups(q, org.id, org.account_fields, [input.accountId ?? null]);
     await queueSync(q, org.id, 'record', [r.id], null, { created: true, typeKey: type.key });
     const [full] = await q.query(`${SELECT} where r.id = $1`, [r.id]);
-    return full;
+    return { full, hidden: await hiddenByType(q, auth) };
   });
   kickSync(deps, org.id);
-  return c.json({ record: toRecord(row) }, 201);
+  return c.json({ record: viewRecord(row.full, row.hidden) }, 201);
 });
 
 recordRoutes.patch('/records/:id', async (c) => {
@@ -323,7 +339,9 @@ recordRoutes.patch('/records/:id', async (c) => {
     if (!r) fail('not_found');
     const [type] = await q.query('select * from record_types where id = $1', [r.type_id]);
     await checkRefs(q, input.accountId, input.ownerId);
-    const fields = input.fields ? { ...(r.fields ?? {}), ...cleanFields(type.fields, input.fields, org.locale) } : r.fields;
+    const cleaned = input.fields ? cleanFields(type.fields, input.fields, org.locale) : {};
+    checkEditable(type.fields ?? [], changedFieldKeys(r.fields, cleaned), auth);
+    const fields = input.fields ? { ...(r.fields ?? {}), ...cleaned } : r.fields;
     const namesChanged = !!input.fields && ('first_name' in input.fields || 'last_name' in input.fields);
     const accountId = input.accountId !== undefined ? input.accountId : r.account_id;
     const accountMoved = (accountId ?? null) !== (r.account_id ?? null);
@@ -350,10 +368,10 @@ recordRoutes.patch('/records/:id', async (c) => {
     if (keys.length) await queueSync(q, org.id, 'record', [id], keys);
     const [full] = await q.query(`${SELECT} where r.id = $1`, [id]);
     const links = await linksFor(q, 'record', [id]);
-    return { full, links };
+    return { full, links, hidden: await hiddenByType(q, auth) };
   });
   kickSync(deps, org.id);
-  return c.json({ record: toRecord(row.full, row.links.get(id)) });
+  return c.json({ record: viewRecord(row.full, row.hidden, row.links.get(id)) });
 });
 
 recordRoutes.delete('/records/:id', async (c) => {

@@ -1,7 +1,8 @@
 // Roles and permissions: a grid of what each role may do, starting points
 // for new roles, and "who can do what" — by permission or by person.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { PERM_GROUPS, PERMS, ROLE_PRESETS, type Perm, type PersonAccess, type Role, type Seat, type UserStatus } from '../../../shared/src/model';
+import { ACCOUNT_SCOPES, GRANT_PERMS, PERM_GROUPS, ROLE_PRESETS, scopeOf, withScope, type AccountScope, type Perm, type PersonAccess, type Role, type Seat, type UserStatus } from '../../../shared/src/model';
+import { startPreview } from '../lib/api';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
@@ -76,9 +77,15 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
   const holders = (perm: Perm) => people.filter((p) => counts(p) && roles.find((r) => r.id === p.roleId)?.perms.includes(perm));
 
   async function toggle(r: Role, perm: Perm, on: boolean) {
-    setBusy(`${r.id}:${perm}`);
+    await savePerms(r, on ? [...r.perms, perm] : r.perms.filter((x) => x !== perm), `${r.id}:${perm}`);
+  }
+  async function setScope(r: Role, scope: AccountScope) {
+    await savePerms(r, withScope(r.perms, scope), `${r.id}:scope`);
+  }
+  async function savePerms(r: Role, perms: Perm[], key: string) {
+    setBusy(key);
     try {
-      await patch(`/admin/roles/${r.id}`, { perms: on ? [...r.perms, perm] : r.perms.filter((x) => x !== perm) });
+      await patch(`/admin/roles/${r.id}`, { perms });
       await reload();
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
@@ -122,6 +129,32 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
           <tbody>
             {PERM_GROUPS.map((g) => (
               <Group key={g.key} label={t(`settings.roles.group.${g.key}` as any)} span={roles.length + 2}>
+                {g.key === 'accounts' && (
+                  <tr>
+                    <th scope="row" className="matrix__perm">
+                      <div className="matrix__label">{t('settings.roles.scope')}</div>
+                      <div className="matrix__hint">{t('settings.roles.scope.hint')}</div>
+                    </th>
+                    {roles.map((r) => (
+                      <td key={r.id} className="matrix__cell">
+                        <select
+                          className="select matrix__scope"
+                          value={scopeOf(r.perms)}
+                          disabled={r.key === 'admin' || !editable || busy === `${r.id}:scope`}
+                          aria-label={`${r.name}: ${t('settings.roles.scope')}`}
+                          onChange={(e) => setScope(r, e.target.value as AccountScope)}
+                        >
+                          {ACCOUNT_SCOPES.map((sc) => (
+                            <option key={sc} value={sc}>
+                              {t(`settings.roles.scope.${sc}` as any)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    ))}
+                    <td className="matrix__who" />
+                  </tr>
+                )}
                 {g.perms.map((perm) => {
                   const h = holders(perm);
                   return (
@@ -252,7 +285,7 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
           )}
           {shown.map((p) => {
             const r = roles.find((x) => x.id === p.roleId);
-            const n = r?.perms.length ?? 0;
+            const n = r?.perms.filter((x) => GRANT_PERMS.includes(x)).length ?? 0;
             return (
               <tr key={p.id}>
                 <td>
@@ -272,7 +305,7 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
                   {p.status !== 'active' && <span className={`badge badge--${p.status}`} style={{ marginLeft: 6 }}>{t(`settings.people.status.${p.status}` as any)}</span>}
                 </td>
                 <td className="hide-phone muted">
-                  {n === PERMS.length ? t('settings.roles.everything') : n === 0 ? t('settings.roles.dailyOnly') : t('settings.roles.permCount', { n, total: PERMS.length })}
+                  {n === GRANT_PERMS.length ? t('settings.roles.everything') : n === 0 ? t('settings.roles.dailyOnly') : t('settings.roles.permCount', { n, total: GRANT_PERMS.length })}
                 </td>
                 <td style={{ textAlign: 'right' }}>
                   <button className="btn btn--small" onClick={() => setOpen(p.id)}>
@@ -300,7 +333,7 @@ export function AccessDialog({ userId, roles, onChanged, onClose }: { userId: st
     void load();
     if (!roles) get<{ roles: Role[] }>('/admin/roles').then((r) => setRoleList(r.roles));
   }, [load, roles]);
-  const granted = useMemo(() => new Set(data?.access.perms ?? []), [data]);
+  const granted = useMemo(() => new Set((data?.access.perms ?? []).filter((p) => GRANT_PERMS.includes(p))), [data]);
 
   async function changeRole(roleId: string) {
     try {
@@ -342,6 +375,23 @@ export function AccessDialog({ userId, roles, onChanged, onClose }: { userId: st
           <p className="access__daily">{a.seat === 'viewer' ? t('settings.roles.viewerSeat') : t('settings.roles.fullSeat')}</p>
 
           <section>
+            <h3 className="access__h">{t('settings.roles.reach')}</h3>
+            <p className="access__reach">{t(`settings.roles.reach.${scopeOf(a.perms)}` as any)}</p>
+          </section>
+
+          {can('org.manage') && a.userId !== me.user.id && a.status === 'active' && (
+            <div className="access__preview">
+              <div>
+                <div className="access__previewtitle">{t('preview.button', { name: a.name })}</div>
+                <div className="field__hint">{t('preview.explain')}</div>
+              </div>
+              <button className="btn" onClick={() => startPreview(a.userId, a.name)}>
+                {t('preview.start')}
+              </button>
+            </div>
+          )}
+
+          <section>
             <h3 className="access__h">{t('settings.roles.inCompany')}</h3>
             {granted.size === 0 ? (
               <p className="muted">{t('settings.roles.noExtra')}</p>
@@ -357,9 +407,9 @@ export function AccessDialog({ userId, roles, onChanged, onClose }: { userId: st
                   ))}
               </ul>
             )}
-            {granted.size < PERMS.length && (
+            {granted.size < GRANT_PERMS.length && (
               <details className="access__not">
-                <summary>{t('settings.roles.cannot', { n: PERMS.length - granted.size })}</summary>
+                <summary>{t('settings.roles.cannot', { n: GRANT_PERMS.length - granted.size })}</summary>
                 <ul className="access__perms">
                   {PERM_GROUPS.flatMap((g) => g.perms)
                     .filter((p) => !granted.has(p))

@@ -16,6 +16,17 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
+/** A choice shown in its colour when it has one; anything else as plain text. */
+export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
+  const color = field.type === 'select' ? field.options?.find((o) => o.key === value)?.color : undefined;
+  if (!color || !text) return <>{text}</>;
+  return (
+    <span className="optchip" data-color={color}>
+      {text}
+    </span>
+  );
+}
+
 export function useFieldFormat() {
   const { locale } = useI18n();
   const { me } = useStore();
@@ -114,7 +125,7 @@ export function AccountsPage() {
         <h1 className="topbar__title">{words.other}</h1>
         {data && <span className="topbar__sub num">{t('accounts.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
-        {manage && (
+        {manage && can('accounts.view_all') && canWrite && (
           <button className="btn" onClick={() => setImporting(true)}>
             {t('accounts.import')}
           </button>
@@ -183,7 +194,7 @@ export function AccountsPage() {
         ) : rows.length === 0 ? (
           <div className="empty sheet">
             <p>{q || owner !== 'all' || archived ? t('accounts.noMatch') : t('accounts.empty')}</p>
-            {!q && owner === 'all' && !archived && manage && (
+            {!q && owner === 'all' && !archived && manage && can('accounts.view_all') && canWrite && (
               <div className="inline-actions" style={{ justifyContent: 'center' }}>
                 <button className="btn btn--primary" onClick={() => setImporting(true)}>
                   {t('accounts.import')}
@@ -259,7 +270,7 @@ export function AccountsPage() {
                     </td>
                     {fields.map((f) => (
                       <td key={f.key} className={`hide-phone${f.type === 'money' || f.type === 'number' ? ' num' : ''}`} data-type={f.type} data-value={f.type === 'select' ? String(a.fields[f.key] ?? '') : undefined}>
-                        {fmt(f, a.fields[f.key])}
+                        <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key])} />
                       </td>
                     ))}
                     <td className="num">{a.openTasks ?? 0}</td>
@@ -544,7 +555,8 @@ export function AccountPage({ id }: { id: string }) {
             ) : (
               <label className="field" key={f.key}>
                 <span className="field__label">{labelOf(f.label, locale)}</span>
-                <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite} onSave={(v) => save({ fields: { [f.key]: v } })} />
+                <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite || f.locked} onSave={(v) => save({ fields: { [f.key]: v } })} />
+                {f.locked && <span className="field__hint">{t('fields.access.readOnlyForYou')}</span>}
               </label>
             ),
           )}

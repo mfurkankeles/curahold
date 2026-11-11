@@ -119,6 +119,29 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
 - **Demo CRM** (development and the live demo only) with made-up companies,
   contacts, opportunities, risk records and tasks.
 
+### Who sees what (roles and pages)
+
+See [docs/design/roles-and-views.md](docs/design/roles-and-views.md) for the
+research and reasoning.
+
+- **Which customers a role sees**: all, their team's, or only their own —
+  one setting per role on the roles screen, enforced by the database for
+  every list, page and API call. Contacts and other records follow their
+  customer.
+- **Field access**: for each field, *who sees it* and *who changes it* are
+  separate choices (by role). Hidden fields are left out of every answer;
+  read-only ones are shown locked and refused on change.
+- **Home pages**: every role lands on its own page of cards (my tasks,
+  coming renewals, needs attention, gone quiet, stakeholder risks, numbers,
+  breakdowns, team load, connections, notes). One page serves a whole role:
+  each person sees it filled with their own part. Administrators edit pages
+  in place, choose whose home a page is and who can open it.
+- **See it as them**: from the roles screen an administrator opens Tendwell
+  exactly as a chosen person sees it — read only, logged.
+- **Choice colours** from Tendwell's own palette, shown in lists and pages.
+- Fixed on the way: people who manage customers but not company settings
+  could not save account-field changes (the save was silently dropped).
+
 ## Run it locally
 
 ```bash
@@ -139,8 +162,8 @@ accounts are invented.
 
 | Command | What it checks | Time |
 | --- | --- | --- |
-| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
-| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, phone layouts; saves screenshots | ~80 s |
+| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
+| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id

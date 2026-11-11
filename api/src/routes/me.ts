@@ -9,6 +9,7 @@ import { loadRenderCtx, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
+import { defsFor } from '../lib/fieldAccess';
 import { body, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
 
@@ -51,12 +52,13 @@ meRoutes.get('/me', async (c) => {
       domains: org.domains,
       joinRequests: org.join_requests,
       autoJoin: org.auto_join,
-      accountFields: org.account_fields,
+      accountFields: defsFor(org.account_fields, auth),
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
     },
     teamIds: data.teamIds,
     sessionId: auth.sessionId,
+    ...(c.get('previewBy') ? { previewBy: c.get('previewBy') } : {}),
   };
   return c.json(me);
 });

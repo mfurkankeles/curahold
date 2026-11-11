@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { Locale } from '../../../shared/src/i18n';
-import { post } from '../lib/api';
+import { endPreview, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -74,6 +74,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           </a>
         )}
         <div className="sidebar__nav">
+          {link('/home', t('nav.home'), path === '/home' || path.startsWith('/pages/'))}
           {link('/my', t('nav.myTasks'), path === '/my')}
           {link('/calendar', t('nav.calendar'), path === '/calendar')}
           {link('/accounts', words.other, path.startsWith('/accounts'))}
@@ -103,6 +104,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             </div>
             <button
               className="sidebar__add"
+              hidden={!!me.previewBy}
               onClick={async () => {
                 await post('/auth/logout').catch(() => undefined);
                 location.href = '/login';
@@ -114,6 +116,15 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         </div>
       </nav>
       <div className="main">
+        {me.previewBy && (
+          <div className="previewbar" role="status">
+            <span className="previewbar__eye" aria-hidden="true" />
+            <span className="previewbar__text">{t('preview.bar', { name: me.user.name })}</span>
+            <button className="btn btn--small previewbar__exit" onClick={() => endPreview()}>
+              {t('preview.exit')}
+            </button>
+          </div>
+        )}
         <button className="btn btn--quiet menu-toggle" style={{ margin: '10px 0 0 10px', width: 'max-content' }} aria-label={t('nav.boards')} onClick={() => setNavOpen(true)}>
           ☰
         </button>
