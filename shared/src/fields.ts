@@ -89,7 +89,7 @@ export function normalizeValue(field: AccountField, raw: unknown, locale: Locale
     }
     case 'select': {
       const f = fold(s);
-      const opt = (field.options ?? []).find((o) => o.key === s || fold(o.key) === f || Object.values(o.label).some((l) => l && fold(l) === f));
+      const opt = (field.options ?? []).find((o) => o.key === s || o.value === s || fold(o.key) === f || Object.values(o.label).some((l) => l && fold(l) === f));
       return opt ? { value: opt.key } : { error: 'option' };
     }
     case 'url': {

@@ -28,6 +28,9 @@ export type ErrorCode =
   | 'not_configured'
   | 'connection_failed'
   | 'import_too_large'
+  | 'type_not_empty'
+  | 'sync_running'
+  | 'crm_error'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -58,6 +61,9 @@ const STATUS: Record<ErrorCode, number> = {
   not_configured: 400,
   connection_failed: 400,
   import_too_large: 413,
+  type_not_empty: 409,
+  sync_running: 409,
+  crm_error: 502,
   server: 500,
 };
 

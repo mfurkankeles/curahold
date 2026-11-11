@@ -6,6 +6,7 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import type { Connection, ProviderInfo } from '../../../shared/src/model';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Confirm } from './ui';
@@ -16,6 +17,14 @@ export const PROVIDER_NAMES: Record<string, string> = {
   teams: 'Microsoft Teams',
   gchat: 'Google Chat',
   webhook: 'Webhook',
+  salesforce: 'Salesforce',
+  hubspot: 'HubSpot',
+  dynamics: 'Dynamics 365',
+  pipedrive: 'Pipedrive',
+  zoho: 'Zoho CRM',
+  gsheets: 'Google Sheets',
+  excel: 'Excel',
+  demo: 'Demo CRM',
 };
 export const FLAVOR_NAMES: Record<string, string> = {
   slack: 'Slack',
@@ -84,8 +93,9 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
   };
 
   if (!data) return <div className="muted">{t('common.loading')}</div>;
-  const twoWay = data.providers.filter((p) => p.twoWay);
+  const twoWay = data.providers.filter((p) => p.kind === 'messaging' && p.twoWay);
   const hooks = data.connections.filter((c) => c.provider === 'webhook');
+  const sources = data.connections.filter((c) => c.kind === 'source');
 
   const controls = (c: Connection) => (
     <div className="inline-actions">
@@ -192,6 +202,14 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
             ))}
           </tbody>
         </table>
+      )}
+      {back === 'settings' && (
+        <p className="field__hint" style={{ marginTop: 22 }}>
+          {t('conn.sourcesPointer', { n: sources.length })}{' '}
+          <a href="/settings/sources" onClick={(e) => { e.preventDefault(); navigate('/settings/sources'); }}>
+            {t('settings.tab.sources')}
+          </a>
+        </p>
       )}
       {removing && (
         <Confirm

@@ -2,10 +2,12 @@
 // KVKK/GDPR tools), teams, roles and the activity log.
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Locale } from '../../../shared/src/i18n';
-import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
-import { AccountFieldsEditor } from '../components/AccountFields';
+import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
+import { AccountFieldsEditor, RecordTypesEditor } from '../components/AccountFields';
+import { SourceDetail, Sources } from '../components/Sources';
 import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
+import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
@@ -14,11 +16,11 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'automations' | 'audit';
+type Tab = 'company' | 'fields' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
-export function SettingsPage({ tab }: { tab: Tab }) {
+export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
   const { t, words } = useI18n();
   const { can } = useStore();
   const groups: { label: string; items: [Tab, string, boolean][] }[] = [
@@ -27,6 +29,7 @@ export function SettingsPage({ tab }: { tab: Tab }) {
       items: [
         ['company', t('settings.tab.company'), can('org.manage')],
         ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
+        ['records', t('settings.tab.records'), can('accounts.manage')],
       ],
     },
     {
@@ -35,13 +38,14 @@ export function SettingsPage({ tab }: { tab: Tab }) {
         ['people', t('settings.tab.people'), can('users.manage')],
         ['joining', t('settings.tab.joining'), can('users.manage')],
         ['teams', t('settings.tab.teams'), can('teams.manage')],
-        ['roles', t('settings.tab.roles'), can('org.manage')],
+        ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage')],
       ],
     },
     {
       label: t('settings.group.work'),
       items: [
-        ['connections', t('settings.tab.connections'), can('org.manage')],
+        ['connections', t('settings.tab.connections'), can('connections.manage')],
+        ['sources', t('settings.tab.sources'), can('connections.manage')],
         ['automations', t('settings.tab.automations'), can('automations.manage')],
       ],
     },
@@ -92,11 +96,13 @@ export function SettingsPage({ tab }: { tab: Tab }) {
         <div className="admin__content">
           {current === 'company' && <CompanyTab />}
           {current === 'fields' && <AccountFieldsEditor />}
+          {current === 'records' && <RecordTypesEditor />}
           {current === 'people' && <PeopleTab />}
           {current === 'joining' && <JoiningTab />}
           {current === 'teams' && <TeamsTab />}
           {current === 'roles' && <RolesTab />}
           {current === 'connections' && <Connections />}
+          {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
           {current === 'automations' && <AutomationList />}
           {current === 'audit' && <AuditTab />}
         </div>
@@ -229,6 +235,7 @@ function PeopleTab() {
   const [devicesOf, setDevicesOf] = useState<AdminUser | null>(null);
   const [erase, setErase] = useState<AdminUser | null>(null);
   const [handover, setHandover] = useState<AdminUser | null>(null);
+  const [accessOf, setAccessOf] = useState<AdminUser | null>(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'all' | 'active' | 'invited' | 'disabled'>('all');
 
@@ -348,6 +355,7 @@ function PeopleTab() {
                     <RowMenu
                       label={t('settings.people.actions', { name: u.name })}
                       items={[
+                        { label: t('settings.roles.whatCan'), onClick: () => setAccessOf(u) },
                         { label: t('settings.people.devices'), onClick: () => setDevicesOf(u) },
                         { label: t('settings.people.handover'), onClick: () => setHandover(u) },
                         ...(u.id !== me.user.id
@@ -366,6 +374,7 @@ function PeopleTab() {
       </table>
       {invite && <InviteDialog roles={roles} teams={teams} onClose={() => setInvite(false)} onDone={async () => { await load(); await reloadPeople(); }} />}
       {devicesOf && <UserDevices user={devicesOf} onClose={() => setDevicesOf(null)} />}
+      {accessOf && <AccessDialog userId={accessOf.id} roles={roles} onChanged={load} onClose={() => setAccessOf(null)} />}
       {handover && <HandoverDialog user={handover} users={data.users} onClose={() => setHandover(null)} />}
       {erase && (
         <Confirm
@@ -543,91 +552,6 @@ function TeamsTab() {
         </div>
       ))}
     </div>
-  );
-}
-
-function RolesTab() {
-  const { t } = useI18n();
-  const save = useSaver();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [creating, setCreating] = useState(false);
-  const load = useCallback(() => get('/admin/roles').then((r) => setRoles(r.roles)), []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-  return (
-    <div style={{ maxWidth: 760 }}>
-      <button className="btn btn--primary" style={{ marginBottom: 14 }} onClick={() => setCreating(true)}>
-        {t('settings.roles.new')}
-      </button>
-      {roles.map((r) => (
-        <div className="sheet" key={r.id}>
-          <div className="toolbar" style={{ marginBottom: 10 }}>
-            <input className="input" style={{ maxWidth: 280, fontWeight: 600 }} defaultValue={r.name} aria-label={t('settings.people.name')} onBlur={(e) => e.target.value.trim() && e.target.value !== r.name && save(() => patch(`/admin/roles/${r.id}`, { name: e.target.value.trim() })).then(load)} />
-            {r.system && <span className="badge">{t('settings.roles.system')}</span>}
-            <div className="topbar__spacer" />
-            {!r.system && (
-              <button className="btn btn--small btn--danger" onClick={() => save(() => del(`/admin/roles/${r.id}`)).then(load)}>
-                {t('common.delete')}
-              </button>
-            )}
-          </div>
-          <div className="perms">
-            {PERMS.map((p) => (
-              <label key={p} className="checkbox">
-                <input
-                  type="checkbox"
-                  checked={r.perms.includes(p)}
-                  disabled={r.key === 'admin'}
-                  onChange={(e) => save(() => patch(`/admin/roles/${r.id}`, { perms: e.target.checked ? [...r.perms, p] : r.perms.filter((x) => x !== p) }), false).then(load)}
-                />
-                <span>{t(`perm.${p}`)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      ))}
-      {creating && <NewRole onClose={() => setCreating(false)} onDone={load} />}
-    </div>
-  );
-}
-
-function NewRole({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const { t } = useI18n();
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const key = name.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'role';
-  return (
-    <Dialog
-      title={t('settings.roles.new')}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn btn--quiet" onClick={onClose}>{t('common.cancel')}</button>
-          <button
-            className="btn btn--primary"
-            disabled={!name.trim()}
-            onClick={async () => {
-              try {
-                await post('/admin/roles', { key: /^[a-z]/.test(key) ? key : `r-${key}`, name: name.trim(), perms: [] });
-                onDone();
-                onClose();
-              } catch (e) {
-                setError(e instanceof ApiFailure ? e.body.message : t('errors.server'));
-              }
-            }}
-          >
-            {t('common.create')}
-          </button>
-        </>
-      }
-    >
-      {error && <div className="notice notice--error">{error}</div>}
-      <label className="field">
-        <span className="field__label">{t('settings.people.name')}</span>
-        <input className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
-      </label>
-    </Dialog>
   );
 }
 

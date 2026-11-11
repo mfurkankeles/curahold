@@ -12,6 +12,8 @@ import { type AppEnv, type Deps, type OrgRow } from './context';
 import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { accountRoutes } from './routes/accounts';
+import { recordRoutes } from './routes/records';
+import { syncRoutes } from './routes/sync';
 import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { connectCallback_, connectionRoutes } from './routes/connections';
@@ -152,6 +154,8 @@ export function createApp(deps: Deps) {
   app.route('/api', boardRoutes);
   app.route('/api', taskRoutes);
   app.route('/api', accountRoutes);
+  app.route('/api', recordRoutes);
+  app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);
   app.route('/api/setup', setupRoutes);

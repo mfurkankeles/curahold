@@ -4,7 +4,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Account, AccountField, Task } from '../../../shared/src/model';
+import type { LinkInfo } from '../../../shared/src/records';
+import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
+import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
+import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, Dialog, DueLabel } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -51,6 +55,7 @@ export function AccountsPage() {
   const [bulkOwner, setBulkOwner] = useState('');
   const manage = can('accounts.manage');
   const fields = me.org.accountFields.slice(0, 5);
+  const { types } = useRecordTypes();
 
   const load = useCallback(async () => {
     const p = new URLSearchParams({ limit: '500' });
@@ -121,6 +126,7 @@ export function AccountsPage() {
         )}
       </header>
       <div className="page">
+        <RecordTabs current="accounts" types={types} />
         <div className="toolbar" style={{ marginBottom: 12 }}>
           <input className="input search" type="search" value={q} placeholder={t('accounts.search')} aria-label={t('accounts.search')} onChange={(e) => setQ(e.target.value)} />
           <div className="seg">
@@ -324,7 +330,7 @@ function ImportHistory() {
   );
 }
 
-function FieldInput({ field, value, onSave, disabled }: { field: AccountField; value: unknown; onSave: (v: string | number | null) => void; disabled?: boolean }) {
+export function FieldInput({ field, value, onSave, disabled }: { field: AccountField; value: unknown; onSave: (v: string | number | null) => void; disabled?: boolean }) {
   const { locale } = useI18n();
   const [v, setV] = useState(value === null || value === undefined ? '' : String(value));
   useEffect(() => setV(value === null || value === undefined ? '' : String(value)), [value]);
@@ -405,8 +411,10 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
   const { me, people, boards, canWrite, can, toast } = useStore();
-  const [data, setData] = useState<{ account: Account; tasks: (Task & { boardName: string })[] } | null>(null);
+  const [data, setData] = useState<{ account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] } | null>(null);
   const [missing, setMissing] = useState(false);
+  const { types } = useRecordTypes();
+  const fmt = useFieldFormat();
   const [removing, setRemoving] = useState(false);
   const [title, setTitle] = useState('');
   const [boardId, setBoardId] = useState(boards[0]?.id ?? '');
@@ -510,8 +518,10 @@ export function AccountPage({ id }: { id: string }) {
               </details>
             )}
           </section>
+          {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
         </div>
         <aside className="sheet account-page__side">
+          <OpenIn links={data.account.links} />
           <label className="field">
             <span className="field__label">{t('accounts.owner')}</span>
             <select className="select" value={a.ownerId ?? ''} disabled={!canWrite} onChange={(e) => save({ ownerId: e.target.value || null })}>
@@ -525,12 +535,19 @@ export function AccountPage({ id }: { id: string }) {
                 ))}
             </select>
           </label>
-          {me.org.accountFields.map((f) => (
-            <label className="field" key={f.key}>
-              <span className="field__label">{labelOf(f.label, locale)}</span>
-              <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite} onSave={(v) => save({ fields: { [f.key]: v } })} />
-            </label>
-          ))}
+          {me.org.accountFields.map((f) =>
+            f.rollup ? (
+              <div className="field" key={f.key}>
+                <span className="field__label">{labelOf(f.label, locale)}</span>
+                <span className="calc-value">{fmt(f, a.fields[f.key]) || '—'}</span>
+              </div>
+            ) : (
+              <label className="field" key={f.key}>
+                <span className="field__label">{labelOf(f.label, locale)}</span>
+                <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite} onSave={(v) => save({ fields: { [f.key]: v } })} />
+              </label>
+            ),
+          )}
           {me.org.accountFields.length === 0 && can('accounts.manage') && (
             <p className="field__hint">
               <a href="/settings/fields" onClick={(e) => { e.preventDefault(); navigate('/settings/fields'); }}>
@@ -538,7 +555,7 @@ export function AccountPage({ id }: { id: string }) {
               </a>
             </p>
           )}
-          <p className="field__hint">{t(a.source === 'import' ? 'accounts.fromImport' : 'accounts.addedHere')}</p>
+          <p className="field__hint">{a.links?.length ? t('accounts.fromCrm', { crm: PROVIDER_NAMES[a.links[0].provider] ?? a.links[0].provider }) : t(a.source === 'import' ? 'accounts.fromImport' : 'accounts.addedHere')}</p>
         </aside>
       </div>
       {removing && (

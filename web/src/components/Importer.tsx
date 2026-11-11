@@ -34,7 +34,7 @@ const decode = (s: string): Target => (s.startsWith('field:') ? { kind: 'field',
 export function Importer({ onImported, compact }: { onImported?: (r: ImportResult) => void; compact?: boolean }) {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();
-  const fields = me.org.accountFields;
+  const fields = me.org.accountFields.filter((f) => !f.rollup);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [fileName, setFileName] = useState('');
   const [map, setMap] = useState<Record<string, string>>({});

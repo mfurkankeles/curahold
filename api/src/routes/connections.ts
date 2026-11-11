@@ -21,6 +21,8 @@ import { iso } from '../lib/mappers';
 import { loadRenderCtx, render } from '../lib/notify';
 import { pngIcon } from '../lib/png';
 import { body, param } from '../lib/validate';
+import { crmProviders, isCrm } from '../sync/adapters';
+import { crmCallback, crmStart, type CrmConnectState } from './sync';
 
 export const connectionRoutes = new Hono<AppEnv>();
 
@@ -36,22 +38,37 @@ const toConnection = (r: any, linked: number): Connection => ({
   twoWay: ADAPTERS[r.provider]?.twoWay ?? false,
   channels: r.provider === 'webhook' ? [{ id: '', name: r.config?.host ?? r.label }] : (r.config?.channels ?? []).map((x: any) => ({ id: x.id, name: x.name })),
   linkedPeople: linked,
+  ...(r.kind === 'source'
+    ? {
+        sync: {
+          startedAt: r.config?.sync?.startedAt ?? null,
+          objects: (r.config?.sync?.objects ?? []).filter((o: any) => o.enabled).length,
+          lastRun: r.state?.lastRun ? { id: r.state.lastRun.id, status: r.state.lastRun.status, at: r.state.lastRun.at } : null,
+          pending: Number(r.pending ?? 0),
+          failing: Number(r.failing ?? 0),
+          file: r.config?.sync?.file ? { name: r.config.sync.file.name, url: r.config.sync.file.url } : null,
+        },
+      }
+    : {}),
 });
 
-const COLUMNS = 'id, org_id, kind, provider, label, external_id, config, status, last_error, last_ok_at, created_by, created_at, updated_at';
+const COLUMNS = 'id, org_id, kind, provider, label, external_id, config, state, status, last_error, last_ok_at, created_by, created_at, updated_at';
 
 connectionRoutes.get('/connections', async (c) => {
   const rows = await run(c, (q) =>
     q.query(
-      `select ${COLUMNS}, (select count(*)::int from chat_identities i where i.connection_id = c.id) as linked
+      `select ${COLUMNS}, (select count(*)::int from chat_identities i where i.connection_id = c.id) as linked,
+              (select count(*)::int from sync_changes s where s.connection_id = c.id) as pending,
+              (select count(*)::int from sync_changes s where s.connection_id = c.id and s.attempts > 0) as failing
          from connections c order by created_at`,
     ),
   );
-  return c.json({ providers: messagingProviders(c.get('deps').config), connections: rows.map((r) => toConnection(r, r.linked ?? 0)) });
+  const cfg = c.get('deps').config;
+  return c.json({ providers: [...messagingProviders(cfg), ...crmProviders(cfg)], connections: rows.map((r) => toConnection(r, r.linked ?? 0)) });
 });
 
 connectionRoutes.post('/connections/webhook', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const input = await body(
     c,
     z.object({
@@ -81,7 +98,7 @@ connectionRoutes.post('/connections/webhook', async (c) => {
 });
 
 connectionRoutes.patch('/connections/:id', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const input = await body(c, z.object({ label: z.string().trim().min(1).max(120).optional(), paused: z.boolean().optional() }));
   const org = c.get('org');
@@ -101,7 +118,7 @@ connectionRoutes.patch('/connections/:id', async (c) => {
 });
 
 connectionRoutes.delete('/connections/:id', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
@@ -122,7 +139,7 @@ connectionRoutes.delete('/connections/:id', async (c) => {
 
 /** Sends a test message: to the admin on a two-way app, or into the webhook's channel. */
 connectionRoutes.post('/connections/:id/test', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const deps = c.get('deps');
   const org = c.get('org');
@@ -194,6 +211,7 @@ connectionRoutes.get('/connections/:id/directory', async (c) => {
 interface ConnectState {
   o: string; // company slug
   p: 'slack' | 'teams' | 'gchat';
+  q?: Record<string, string>;
   u: string; // admin's user id
   r: string; // where to return in the app
   n: string;
@@ -203,12 +221,13 @@ interface ConnectState {
 const connectCallback = (cfg: Deps['config']) => `${centralUrl(cfg)}/api/connect/callback`;
 
 connectionRoutes.get('/connect/:provider/start', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const deps = c.get('deps');
   const cfg = deps.config;
   const org = c.get('org');
   const provider = c.req.param('provider');
-  const back = c.req.query('back') === 'setup' ? '/setup/messaging' : '/settings/connections';
+  const back = c.req.query('back') === 'setup' ? (isCrm(provider) ? '/setup/accounts' : '/setup/messaging') : '/settings/connections';
+  if (isCrm(provider)) return crmStart(c, provider, back);
   const home = `${orgUrl(cfg, org.slug)}${back}`;
   const info = messagingProviders(cfg).find((p) => p.id === provider && p.setup === 'oauth');
   if (!info || !info.available) return c.redirect(`${home}?error=not_configured&provider=${provider}`);
@@ -257,14 +276,15 @@ export async function connectCallback_(c: C) {
   if (!code) return c.redirect(`${home}?error=connection_failed&provider=${state.p}`);
   const [org] = await deps.db.tenant({ orgId: null, userId: null }, (q) => q.query<OrgRow>('select * from resolve_org($1)', [state.o]));
   if (!org) return c.text('Unknown workspace', 404);
-  // The person who started must still be an administrator.
+  // The person who started must still be allowed to connect tools.
   const [admin] = await deps.db.system((q) =>
     q.query(
-      `select u.id from users u join roles r on r.id = u.role_id where u.id = $1 and u.org_id = $2 and u.status = 'active' and 'org.manage' = any(r.perms)`,
+      `select u.id from users u join roles r on r.id = u.role_id where u.id = $1 and u.org_id = $2 and u.status = 'active' and 'connections.manage' = any(r.perms)`,
       [state.u, org.id],
     ),
   );
   if (!admin) return c.redirect(`${home}?error=forbidden`);
+  if (isCrm(state.p)) return crmCallback(c, state as unknown as CrmConnectState, code, org);
 
   let made: { externalId: string; label: string; config: Record<string, unknown>; secret: Record<string, unknown> } | null = null;
   if (state.p === 'slack') {
@@ -339,7 +359,7 @@ export async function connectCallback_(c: C) {
 
 /** The app package an admin uploads in the Teams admin center (until the Store listing is live). */
 connectionRoutes.get('/connections/teams/package', async (c) => {
-  requirePerm(c, 'org.manage');
+  requirePerm(c, 'connections.manage');
   const deps = c.get('deps');
   const t = deps.config.connectors.teams;
   if (!t) fail('not_configured');

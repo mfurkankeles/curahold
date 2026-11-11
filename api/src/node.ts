@@ -40,7 +40,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     sessionDays: 30,
     oauth: {},
     signupEnabled: true,
-    connectors: {},
+    connectors: { demoCrm: true },
   };
   const api = createApp({ db, email, storage: new MemoryStorage(), config });
   const root = new Hono();

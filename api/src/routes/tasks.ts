@@ -5,6 +5,7 @@ import { nowOf, requireWriter, run, type AppEnv } from '../context';
 import { runTaskMoved } from '../lib/automations';
 import { kick } from '../lib/notify';
 import { onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
+import { kickSync, queueSync, taskKeys } from '../lib/records';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail, HttpError } from '../lib/errors';
@@ -157,9 +158,11 @@ taskRoutes.post('/tasks', async (c) => {
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.created', entity: 'task', entityId: t.id });
     await onTaskCreated(q, org.id, auth.userId, t, board);
+    if (!t.parent_id) await queueSync(q, org.id, 'task', [t.id], null, { created: true, boardId: t.board_id });
     return t;
   });
   kick(c.get('deps'));
+  kickSync(c.get('deps'), org.id);
   return c.json({ task: toTask(task) }, 201);
 });
 
@@ -238,6 +241,8 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     );
     if (!u) return { conflict: await loadTask(q, id) };
     await onTaskUpdated(q, org.id, auth.userId, t, u, board);
+    const synced = taskKeys(t, u, board.columns);
+    if (synced.length) await queueSync(q, org.id, 'task', [id], synced);
     const changed = Object.keys(input).filter((k) => k !== 'baseVersion' && k !== 'position');
     if (changed.length) {
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.updated', entity: 'task', entityId: id, meta: { fields: changed } });
@@ -248,6 +253,7 @@ taskRoutes.patch('/tasks/:id', async (c) => {
   const deps = c.get('deps');
   if (input.status !== undefined) await runTaskMoved(deps, org.id, id, input.status, nowOf(deps)).catch(() => 0);
   kick(deps);
+  kickSync(deps, org.id);
   return c.json({ task: toTask(result.task) });
 });
 

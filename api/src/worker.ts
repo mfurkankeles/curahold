@@ -33,6 +33,30 @@ export interface Env {
   GOOGLE_CLIENT_SECRET?: string;
   MICROSOFT_CLIENT_ID?: string;
   MICROSOFT_CLIENT_SECRET?: string;
+  SALESFORCE_CLIENT_ID?: string;
+  SALESFORCE_CLIENT_SECRET?: string;
+  HUBSPOT_CLIENT_ID?: string;
+  HUBSPOT_CLIENT_SECRET?: string;
+  DYNAMICS_CLIENT_ID?: string;
+  DYNAMICS_CLIENT_SECRET?: string;
+  PIPEDRIVE_CLIENT_ID?: string;
+  PIPEDRIVE_CLIENT_SECRET?: string;
+  ZOHO_CLIENT_ID?: string;
+  ZOHO_CLIENT_SECRET?: string;
+  /** Live demo only: offer the pretend CRM. */
+  DEMO_CRM?: string;
+}
+
+const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO'] as const;
+
+function crmClients(env: Env) {
+  const out: NonNullable<Config['connectors']['crm']> = {};
+  for (const name of CRM_ENV) {
+    const id = env[`${name}_CLIENT_ID`];
+    const secret = env[`${name}_CLIENT_SECRET`];
+    if (id && secret) out[name.toLowerCase() as keyof typeof out] = { clientId: id, clientSecret: secret };
+  }
+  return out;
 }
 
 export function configFromEnv(env: Env): Config {
@@ -59,6 +83,8 @@ export function configFromEnv(env: Env): Config {
       ...(env.GCHAT_PROJECT_NUMBER && env.GCHAT_SA_EMAIL && env.GCHAT_SA_KEY
         ? { gchat: { projectNumber: env.GCHAT_PROJECT_NUMBER, serviceAccountEmail: env.GCHAT_SA_EMAIL, privateKey: env.GCHAT_SA_KEY.replace(/\\n/g, '\n') } }
         : {}),
+      crm: crmClients(env),
+      demoCrm: env.DEMO_CRM === '1',
     },
     oauth: {
       ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET

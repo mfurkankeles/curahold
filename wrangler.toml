@@ -33,7 +33,7 @@ binding = "FILES"
 bucket_name = "tendwell-files"
 
 # Hourly: morning summaries (in each company's time zone), scheduled
-# automations, delivery retries; clean-up once a day.
+# automations, delivery retries, CRM syncs; clean-up once a day.
 [triggers]
 crons = ["0 * * * *"]
 
@@ -41,5 +41,9 @@ crons = ["0 * * * *"]
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET,
 # SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_SIGNING_SECRET,
 # TEAMS_BOT_APP_ID, TEAMS_BOT_APP_PASSWORD, TEAMS_BOT_TENANT_ID,
-# GCHAT_PROJECT_NUMBER, GCHAT_SA_EMAIL, GCHAT_SA_KEY
-# (a chat service without its secrets is simply not offered; webhooks always work)
+# GCHAT_PROJECT_NUMBER, GCHAT_SA_EMAIL, GCHAT_SA_KEY,
+# SALESFORCE_CLIENT_ID, SALESFORCE_CLIENT_SECRET, HUBSPOT_CLIENT_ID, HUBSPOT_CLIENT_SECRET,
+# DYNAMICS_CLIENT_ID, DYNAMICS_CLIENT_SECRET, PIPEDRIVE_CLIENT_ID, PIPEDRIVE_CLIENT_SECRET,
+# ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET
+# (a service without its secrets is simply not offered; webhooks always work)
+# DEMO_CRM = "1" only on the public demo.

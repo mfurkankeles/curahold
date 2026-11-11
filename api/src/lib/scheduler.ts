@@ -5,6 +5,7 @@ import type { Deps } from '../context';
 import { localDate, localHour, runScheduledAutomations } from './automations';
 import { day } from './mappers';
 import { deliverPending, enqueue, prefsOf } from './notify';
+import { runScheduledSyncs } from '../sync/engine';
 
 const DIGEST_ITEMS = 8;
 
@@ -62,6 +63,7 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from sessions where (revoked_at is not null or expires_at < now()) and coalesce(revoked_at, expires_at) < now() - interval '90 days'`);
     // An import can be undone for 30 days; after that the snapshot goes.
     await q.query(`update import_batches set previous = '[]'::jsonb where created_at < now() - interval '30 days' and previous <> '[]'::jsonb`);
+    await q.query(`delete from sync_runs where started_at < now() - interval '90 days'`);
   });
 }
 
@@ -74,6 +76,10 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     delivered += n;
     if (n < 100) break;
   }
+  const synced = await runScheduledSyncs(deps, now).catch((e) => {
+    console.error('[tendwell] scheduled sync failed', e);
+    return 0;
+  });
   if (now.getUTCHours() === 3) await cleanUp(deps);
-  return { digests, fired, delivered };
+  return { digests, fired, delivered, synced };
 }

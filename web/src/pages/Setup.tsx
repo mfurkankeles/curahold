@@ -99,7 +99,7 @@ function MessagingStep({ onNext }: { onNext: () => void }) {
   const [count, setCount] = useState(0);
   return (
     <>
-      <Connections back="setup" onChange={(l) => setCount(l.length)} />
+      <Connections back="setup" onChange={(l) => setCount(l.filter((c) => c.kind === 'messaging').length)} />
       <StepNav onNext={onNext} skip={count ? undefined : t('setup.messaging.skip')} />
     </>
   );
@@ -112,7 +112,21 @@ function AccountsStep({ onNext }: { onNext: () => void }) {
     <>
       <Importer compact onImported={() => setImported(true)} />
       <p className="field__hint" style={{ marginTop: 12 }}>
-        {t('setup.accounts.crmLater')}
+        {t('setup.accounts.crm')}{' '}
+        <a
+          href="/settings/sources"
+          onClick={(e) => {
+            e.preventDefault();
+            try {
+              sessionStorage.setItem('tw-from-setup', '1');
+            } catch {
+              // a convenience only
+            }
+            navigate('/settings/sources');
+          }}
+        >
+          {t('setup.accounts.crmLink')}
+        </a>
       </p>
       <StepNav onNext={onNext} skip={imported ? undefined : t('setup.accounts.skip')} />
     </>

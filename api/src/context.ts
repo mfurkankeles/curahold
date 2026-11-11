@@ -39,6 +39,10 @@ export interface ConnectorConfig {
   teams?: { appId: string; appPassword: string; tenantId: string };
   /** Google Chat app: the Cloud project number (token audience) and its service account. */
   gchat?: { projectNumber: string; serviceAccountEmail: string; privateKey: string };
+  /** CRM app registrations (Salesforce connected app, HubSpot public app…). */
+  crm?: Partial<Record<'salesforce' | 'hubspot' | 'dynamics' | 'pipedrive' | 'zoho' | 'gsheets' | 'excel', { clientId: string; clientSecret: string }>>;
+  /** Development and the live demo: a pretend CRM held in memory. */
+  demoCrm?: boolean;
 }
 
 export interface Deps {

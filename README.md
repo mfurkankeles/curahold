@@ -76,6 +76,39 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
 - **Company logo** in the menu, on the sign-in page, as the tab icon and in
   invitation and sign-in emails.
 
+### Phase 3
+
+- **Roles and permissions**: a grid of what each role may do, grouped and
+  explained in plain words; starting points for new roles (team lead,
+  operations, people admin, observer) or a copy of an existing one; "who
+  has this permission"; "what can this person do" (company rights, teams,
+  every board they can open and why); deleting a role moves its people to
+  another. Connecting tools is a permission of its own.
+- **Records under accounts**: contacts, opportunities and the company's own
+  kinds (risks, renewals, cases…), each with its own fields; a list per kind
+  and a section per kind on the account page. **Calculated account fields**
+  (open pipeline, next close date, number of contacts…) are kept up to date
+  from the records.
+- **Two-way sync** (`api/src/sync`) with Salesforce, HubSpot, Dynamics 365,
+  Pipedrive, Zoho CRM, Google Sheets and Excel in OneDrive / SharePoint:
+  - set up without help: sign in → choose what comes over (any standard or
+    custom object becomes accounts, contacts, opportunities, a new kind of
+    record, or tasks on a board) → fields matched by name, change anything,
+    "new field" creates it here, "bring all" brings every field → CRM users
+    matched to people by email → preview with counts → start;
+  - edits here are queued in the same transaction and sent right away;
+    changes there are read every hour (by last-modified time), everything is
+    read in full once a day; "sync now" any time;
+  - items already in Tendwell are linked by name, not duplicated; new choice
+    values become new options; our own writes are not mistaken for changes;
+  - the same field changed on both sides: the newer change wins (or the CRM,
+    or Tendwell — a setting); a CRM that suddenly returns far fewer rows
+    archives nothing; deleting here never deletes there;
+  - status, history, "not sent yet" list with retry, links to open each
+    item in the CRM; long first syncs continue in slices.
+- **Demo CRM** (development and the live demo only) with made-up companies,
+  contacts, opportunities, risk records and tasks.
+
 ## Run it locally
 
 ```bash
@@ -96,8 +129,8 @@ accounts are invented.
 
 | Command | What it checks | Time |
 | --- | --- | --- |
-| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, dictionaries, leak check | ~40 s |
-| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 journeys plus sign-up → wizard → import → people → rules → first board, accounts, rule editor, join request → approval → personal setup, phone layouts; saves screenshots | ~70 s |
+| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
+| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, phone layouts; saves screenshots | ~80 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id
@@ -108,7 +141,9 @@ repository. The forbidden words are stored only as hashes.
 
 ```
 api/src/          Hono API — runs on Cloudflare Workers (worker.ts) and Node (node.ts)
-  routes/         auth, me, boards, tasks (+comments, files), admin (+privacy)
+  routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync
+  connectors/     messaging (Slack, Teams, Google Chat, webhooks)
+  sync/           CRM and spreadsheet adapters and the two-way sync engine
   db/             Postgres drivers (postgres.js for production, PGlite for tests)
 shared/src/       types, EN/TR dictionaries, edit-merge logic — used by API and web
 web/src/          React app (Vite)
@@ -137,6 +172,22 @@ tests/            Vitest suites; tests/e2e drives Chrome
 | Microsoft Teams | Azure Bot (single-tenant registration in Tendwell's tenant), published through the Teams Store; until then companies upload the package from Settings → Connections | Messaging endpoint `https://app.tendwell.com/api/hooks/teams`; Microsoft sign-in redirect `/api/connect/callback` |
 | Google Chat | A Chat app (HTTP endpoint, "project number" audience) published on the Google Workspace Marketplace, with a service account | `https://app.tendwell.com/api/hooks/gchat`; Google sign-in redirect `/api/connect/callback` |
 
+### CRMs and spreadsheets (each optional)
+
+Each needs Tendwell's own app with the service; the redirect is always
+`https://app.tendwell.com/api/connect/callback`. A service without its keys
+is simply not offered.
+
+| Service | Register | Secrets |
+| --- | --- | --- |
+| Salesforce | External Client App (or Connected App) with OAuth scopes `api refresh_token`; listed on AppExchange after the security review | `SALESFORCE_CLIENT_ID`, `SALESFORCE_CLIENT_SECRET` |
+| HubSpot | Public app; required scopes `oauth crm.objects.companies.read/write crm.objects.owners.read`, the rest optional (contacts, deals, tickets, tasks, custom objects) | `HUBSPOT_CLIENT_ID`, `HUBSPOT_CLIENT_SECRET` |
+| Dynamics 365 | Multi-tenant Entra ID app with the Dynamics CRM `user_impersonation` permission (the Microsoft sign-in app can be reused) | `DYNAMICS_CLIENT_ID`, `DYNAMICS_CLIENT_SECRET` (else the Microsoft ones) |
+| Pipedrive | Marketplace app with read/write access to organizations, people, deals and activities | `PIPEDRIVE_CLIENT_ID`, `PIPEDRIVE_CLIENT_SECRET` |
+| Zoho CRM | Server-based client in the Zoho API console, multi-DC enabled | `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET` |
+| Google Sheets | The Google sign-in client with the `spreadsheets` scope (needs Google's verification) | the Google ones |
+| Excel | The Microsoft sign-in app with `Files.ReadWrite.All` | the Microsoft ones |
+
 ### Database roles
 
 The API must not connect as the table owner. Create a login role that can
@@ -153,5 +204,7 @@ row-level security always applies.
 ## Sub-processors (for the DPA)
 
 Cloudflare (hosting, files), Supabase (database, EU region), Resend (email),
-Google and Microsoft (only when a company enables their sign-in). Paddle
-(billing) joins in phase 5.
+Google and Microsoft (only when a company enables their sign-in or connects
+Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
+Pipedrive, Zoho) is its processor, not ours: Tendwell reads and writes it on
+the company's instruction. Paddle (billing) joins in phase 5.

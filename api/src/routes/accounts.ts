@@ -3,14 +3,17 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { normalizeValue, optionKey } from '../../../shared/src/fields';
-import { FIELD_TYPES, type Account, type AccountField, type ImportResult } from '../../../shared/src/model';
+import { type Account, type AccountField, type ImportResult } from '../../../shared/src/model';
 import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { runAccountCreated } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { iso, toTask } from '../lib/mappers';
+import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/records';
 import { body, param, uuid } from '../lib/validate';
+import { cleanFields, fieldSchema } from '../lib/fieldDefs';
+import { linksFor } from '../lib/links';
 
 export const accountRoutes = new Hono<AppEnv>();
 
@@ -36,23 +39,6 @@ const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.boar
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
       and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as open_tasks,
   (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity`;
-
-function cleanFields(defs: AccountField[], input: Record<string, unknown>, locale: 'en' | 'tr') {
-  const out: Record<string, unknown> = {};
-  const bad: string[] = [];
-  for (const [k, v] of Object.entries(input)) {
-    const def = defs.find((d) => d.key === k);
-    if (!def) {
-      bad.push(k);
-      continue;
-    }
-    const r = normalizeValue(def, v, locale);
-    if ('error' in r) bad.push(k);
-    else out[k] = r.value;
-  }
-  if (bad.length) fail('validation', { fields: bad.join(', ') }, { fields: bad.map((b) => `fields.${b}`) });
-  return out;
-}
 
 async function checkOwner(q: Q, ownerId: string | null | undefined) {
   if (!ownerId) return;
@@ -111,9 +97,11 @@ accountRoutes.post('/accounts', async (c) => {
       [id, org.id, input.name, input.ownerId ?? null, input.teamId ?? null, JSON.stringify(fields), auth.userId],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.created', entity: 'account', entityId: id });
+    await queueSync(q, org.id, 'account', [id], null, { created: true });
     const [r] = await q.query('select * from accounts where id = $1', [id]);
     return r;
   });
+  kickSync(c.get('deps'), org.id);
   await runAccountCreated(c.get('deps'), org.id, [row.id], nowOf(c.get('deps'))).catch(() => 0);
   return c.json({ account: toAccount(row) }, 201);
 });
@@ -130,9 +118,10 @@ accountRoutes.get('/accounts/:id', async (c) => {
         order by t.due_date nulls last, t.updated_at desc limit 500`,
       [id],
     );
-    return { a, tasks };
+    const links = await linksFor(q, 'account', [id]);
+    return { a, tasks, links };
   });
-  return c.json({ account: toAccount(data.a), tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })) });
+  return c.json({ account: { ...toAccount(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })) });
 });
 
 accountRoutes.patch('/accounts/:id', async (c) => {
@@ -170,8 +159,11 @@ accountRoutes.patch('/accounts/:id', async (c) => {
       ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.updated', entity: 'account', entityId: id, meta: { fields: Object.keys(input) } });
+    const keys = changedKeys(a, u);
+    if (keys.length) await queueSync(q, org.id, 'account', [id], keys);
     return u;
   });
+  kickSync(c.get('deps'), org.id);
   return c.json({ account: toAccount(row) });
 });
 
@@ -209,26 +201,18 @@ accountRoutes.post('/accounts/bulk', async (c) => {
       [input.ids, input.ownerId !== undefined, input.ownerId ?? null, input.teamId !== undefined, input.teamId ?? null, input.archived ?? null],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.bulk_updated', entity: 'account', meta: { count: rows.length, fields: Object.keys(input).filter((k) => k !== 'ids') } });
+    if (input.ownerId !== undefined) await queueSync(q, org.id, 'account', rows.map((r) => r.id), ['owner']);
     return rows.length;
   });
+  if (input.ownerId !== undefined) kickSync(c.get('deps'), org.id);
   return c.json({ updated: n });
 });
 
 // ------------------------------------------------------------------ fields
 
-const fieldSchema = z.object({
-  key: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
-  label: z.object({ en: z.string().trim().max(60).optional(), tr: z.string().trim().max(60).optional() }).refine((l) => !!(l.en || l.tr)),
-  type: z.enum(FIELD_TYPES),
-  options: z
-    .array(z.object({ key: z.string().regex(/^[a-z0-9_]{1,40}$/), label: z.object({ en: z.string().trim().max(60).optional(), tr: z.string().trim().max(60).optional() }) }))
-    .max(50)
-    .optional(),
-});
-
 accountRoutes.put('/account-fields', async (c) => {
   requirePerm(c, 'accounts.manage');
-  const input = await body(c, z.object({ fields: z.array(fieldSchema).max(60) }));
+  const input = await body(c, z.object({ fields: z.array(fieldSchema).max(150) }));
   const keys = input.fields.map((f) => f.key);
   if (new Set(keys).size !== keys.length) fail('validation', { fields: 'key' }, { fields: ['key'] });
   const org = c.get('org');
@@ -236,6 +220,7 @@ accountRoutes.put('/account-fields', async (c) => {
   await run(c, async (q) => {
     await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(input.fields)]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.account_fields', entity: 'org', entityId: org.id, meta: { count: input.fields.length } });
+    await recomputeRollups(q, org.id, input.fields as AccountField[], null);
   });
   return c.json({ ok: true });
 });
@@ -279,7 +264,7 @@ accountRoutes.post('/accounts/import', async (c) => {
     }
     for (const [key, col] of Object.entries(fieldColumns)) {
       const def = defs.find((d) => d.key === key);
-      if (!def) fail('validation', { fields: `mapping.fields.${key}` }, { fields: [`mapping.fields.${key}`] });
+      if (!def || def.rollup) fail('validation', { fields: `mapping.fields.${key}` }, { fields: [`mapping.fields.${key}`] });
       if (def!.type !== 'select') continue;
       def!.options = def!.options ?? [];
       for (const row of input.rows) {
@@ -380,6 +365,8 @@ accountRoutes.post('/accounts/import', async (c) => {
       }
     }
     out.unmatchedOwners = [...hints.values()].sort((a, b) => b.count - a.count).slice(0, 200);
+    if (touched.size) await queueSync(q, org.id, 'account', [...touched], null);
+    if (createdIds.length) await queueSync(q, org.id, 'account', createdIds, null, { created: true });
     const batchId = crypto.randomUUID();
     await q.query(
       `insert into import_batches (id, org_id, file_name, created_ids, previous, summary, created_by) values ($1, $2, $3, $4, $5, $6, $7)`,
@@ -392,6 +379,7 @@ accountRoutes.post('/accounts/import', async (c) => {
     out.batch = batchId;
     return { out, createdIds };
   });
+  kickSync(c.get('deps'), org.id);
   if (input.runAutomations && result.createdIds.length) {
     await runAccountCreated(c.get('deps'), org.id, result.createdIds, nowOf(c.get('deps'))).catch(() => 0);
   }

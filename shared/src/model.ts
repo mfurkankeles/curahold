@@ -12,8 +12,47 @@ export const PERMS = [
   'audit.view',
   'accounts.manage',
   'automations.manage',
+  'connections.manage',
 ] as const;
 export type Perm = (typeof PERMS)[number];
+
+/** How permissions are grouped on the roles screen, in reading order. */
+export const PERM_GROUPS: { key: string; perms: Perm[] }[] = [
+  { key: 'company', perms: ['org.manage', 'audit.view', 'privacy.manage'] },
+  { key: 'people', perms: ['users.manage', 'teams.manage'] },
+  { key: 'work', perms: ['boards.view_all', 'boards.manage_all', 'tasks.delete_any'] },
+  { key: 'accounts', perms: ['accounts.manage'] },
+  { key: 'connect', perms: ['automations.manage', 'connections.manage'] },
+];
+
+/** Permissions that open the admin area (the rest change what people see in their daily work). */
+export const ADMIN_PERMS: Perm[] = ['org.manage', 'users.manage', 'teams.manage', 'audit.view', 'privacy.manage', 'accounts.manage', 'automations.manage', 'connections.manage'];
+
+/** Starting points offered when an administrator adds a role. */
+export const ROLE_PRESETS: { key: string; perms: Perm[] }[] = [
+  { key: 'blank', perms: [] },
+  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'automations.manage'] },
+  { key: 'ops', perms: ['accounts.manage', 'automations.manage', 'connections.manage'] },
+  { key: 'people', perms: ['users.manage', 'teams.manage'] },
+  { key: 'observer', perms: ['boards.view_all', 'audit.view'] },
+];
+
+export type BoardAccessLevel = 'view' | 'edit' | 'manage';
+
+/** What one person can do, as the roles screen explains it. */
+export interface PersonAccess {
+  userId: string;
+  name: string;
+  email: string;
+  status: UserStatus;
+  seat: Seat;
+  roleId: string;
+  roleName: string;
+  roleKey: string;
+  perms: Perm[];
+  teams: { id: string; name: string; lead: boolean }[];
+  boards: { id: string; name: string; level: BoardAccessLevel; via: 'all' | 'company' | 'team' | 'member' | 'creator' }[];
+}
 
 export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
 export type Priority = (typeof PRIORITIES)[number];
@@ -83,11 +122,31 @@ export type Localized = Partial<Record<Locale, string>>;
 export const FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email'] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
+export interface FieldOption {
+  key: string;
+  label: Localized;
+  /** The value a connected CRM or spreadsheet uses for this option. */
+  value?: string;
+}
+
+/** A value worked out from the records under an account, e.g. "open pipeline". */
+export interface Rollup {
+  /** Record type key, e.g. "opportunity". */
+  type: string;
+  fn: 'count' | 'sum' | 'min' | 'max';
+  /** Record field to add up or compare (not needed for count). */
+  field?: string;
+  /** Only records whose select field has this option. */
+  where?: { field: string; option: string };
+}
+
 export interface AccountField {
   key: string;
   label: Localized;
   type: FieldType;
-  options?: { key: string; label: Localized }[];
+  options?: FieldOption[];
+  /** Filled in by Tendwell from records; read-only for people. */
+  rollup?: Rollup;
 }
 
 export interface Account {
@@ -131,6 +190,17 @@ export interface Connection {
   /** Channels the app can post to (two-way providers) — webhooks are a channel themselves. */
   channels: { id: string; name: string }[];
   linkedPeople: number;
+  /** CRMs and spreadsheets: where the sync stands. */
+  sync?: {
+    startedAt: string | null;
+    objects: number;
+    lastRun: { id: string; status: 'running' | 'ok' | 'partial' | 'error'; at: string } | null;
+    /** Changes made here still waiting to reach the other side. */
+    pending: number;
+    /** Of those, how many failed at least once. */
+    failing: number;
+    file: { name: string; url: string } | null;
+  };
 }
 
 export interface ProviderInfo {

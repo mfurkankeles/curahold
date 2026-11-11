@@ -335,6 +335,92 @@ await step('phone: wizard and accounts fit a phone screen', async () => {
   await phone.page.browserContext().close();
 });
 
+
+await step('roles: the grid of who can do what, and one person explained', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  await ada.page.goto(`${s.origin}/settings/roles`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.matrix');
+  await shot(ada.page, 'p3-01-roles');
+  const [manager] = await sql(`select r.id, r.perms from roles r join orgs o on o.id = r.org_id where o.slug = 'demo' and r.key = 'manager'`);
+  expect(!manager.perms.includes('boards.manage_all'), 'manager already has the permission');
+  await ada.page.click('input[aria-label="Ekip lideri: Her panoyu düzenleme ve arşivleme"]');
+  await ada.page.waitForFunction(() => (document.querySelector('input[aria-label="Ekip lideri: Her panoyu düzenleme ve arşivleme"]') as HTMLInputElement)?.checked);
+  await pause(300);
+  const [after] = await sql('select perms from roles where id = $1', [manager.id]);
+  expect(after.perms.includes('boards.manage_all'), 'permission not saved');
+  await (await byText(ada.page, '.seg button', 'Kişiye göre')).click();
+  await ada.page.waitForSelector('.table tbody tr');
+  const row = await ada.page.evaluateHandle(() => [...document.querySelectorAll('.table tbody tr')].find((tr) => tr.textContent?.includes('Lena Fischer')));
+  await (await (row as any).$('button')).click();
+  await ada.page.waitForSelector('.access__perms');
+  await shot(ada.page, 'p3-02-access');
+  expect(ada.errors.length === 0, ada.errors.join(' | '));
+  await ada.page.browserContext().close();
+});
+
+await step('CRM: connect, choose, map, preview and start — then records everywhere', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  await ada.page.goto(`${s.origin}/settings/sources`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.tiles');
+  await shot(ada.page, 'p3-03-sources');
+  const demoTile = await ada.page.evaluateHandle(() => [...document.querySelectorAll('.tile')].find((t) => t.textContent?.includes('Demo CRM')));
+  await (await (demoTile as any).$('button')).click();
+  await ada.page.waitForSelector('.object-list');
+  await ada.page.waitForFunction(() => document.querySelectorAll('.object-row').length === 5);
+  const risk = await ada.page.evaluateHandle(() => [...document.querySelectorAll('.object-row')].find((r) => r.textContent?.includes('Risks')));
+  await (await (risk as any).$('input[type=checkbox]')).click();
+  await shot(ada.page, 'p3-04-objects');
+  await (await byText(ada.page, '.stepbar .btn--primary', 'Devam')).click();
+  await ada.page.waitForSelector('.map-table');
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.map-object .badge')].every((b) => !b.textContent?.includes('Yükleniyor')));
+  await shot(ada.page, 'p3-05-fields');
+  await (await byText(ada.page, '.stepbar .btn--primary', 'Devam')).click();
+  await ada.page.waitForSelector('.preview-list li', { timeout: 15_000 });
+  await ada.page.waitForSelector('.owners-table');
+  await shot(ada.page, 'p3-06-start');
+  await (await byText(ada.page, '.stepbar .btn--primary', 'Eşitlemeyi başlat')).click();
+  await ada.page.waitForSelector('.source__tabs', { timeout: 30_000 });
+  await ada.page.waitForFunction(() => !!document.querySelector('.run--ok, .run--partial'), { timeout: 30_000 });
+  await shot(ada.page, 'p3-07-status');
+  const [n] = await sql(`select count(*)::int as n from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.source = 'demo'`);
+  expect(n.n === 12, `expected 12 accounts from the CRM, got ${n.n}`);
+  const [r] = await sql(`select count(*)::int as n from records r join record_types t on t.id = r.type_id join orgs o on o.id = r.org_id where o.slug = 'demo' and t.kind = 'custom'`);
+  expect(r.n > 0, 'no risk records came over');
+
+  await ada.page.goto(`${s.origin}/records/contact`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.record-tabs');
+  await ada.page.waitForSelector('.table tbody tr');
+  await shot(ada.page, 'p3-08-contacts');
+  const [atlas] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Atlas Logistics'`);
+  await ada.page.goto(`${s.origin}/accounts/${atlas.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.record-lines');
+  await shot(ada.page, 'p3-09-account-records');
+  // An edit here goes to the CRM.
+  await ada.page.$eval('.title-input', (el) => ((el as HTMLInputElement).value = ''));
+  await ada.page.type('.title-input', 'Atlas Logistics Group');
+  await ada.page.keyboard.press('Tab');
+  await ada.page.waitForFunction(async () => true);
+  await pause(1500);
+  const [left] = await sql(`select count(*)::int as n from sync_changes s join orgs o on o.id = s.org_id where o.slug = 'demo'`);
+  expect(left.n === 0, `change still waiting to be sent (${left.n})`);
+  expect(ada.errors.length === 0, ada.errors.join(' | '));
+  await ada.page.browserContext().close();
+});
+
+await step('phone: the CRM screens fit a phone', async () => {
+  const phone = await newPage(s.browser, 390, 844);
+  await signIn(phone.page, s.origin, 'ada@demo.example');
+  const [c] = await sql(`select c.id from connections c join orgs o on o.id = c.org_id where o.slug = 'demo' and c.kind = 'source' limit 1`);
+  await phone.page.goto(`${s.origin}/settings/sources/${c.id}`, { waitUntil: 'networkidle0' });
+  await phone.page.waitForSelector('.source__tabs');
+  const overflow = await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(!overflow, 'sync page scrolls sideways on a phone');
+  await shot(phone.page, 'p3-10-phone-sync');
+  await phone.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

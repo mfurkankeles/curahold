@@ -4,7 +4,7 @@ import { post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
-import { SETUP_STEPS } from '../../../shared/src/model';
+import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { Bell } from './Bell';
 import { BoardSettings } from './BoardSettings';
 import { Avatar, Mark } from './ui';
@@ -15,7 +15,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const { path } = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const [newBoard, setNewBoard] = useState(false);
-  const isAdmin = me.user.perms.some((p) => ['org.manage', 'users.manage', 'teams.manage', 'audit.view', 'privacy.manage', 'accounts.manage', 'automations.manage'].includes(p));
+  const isAdmin = me.user.perms.some((p) => ADMIN_PERMS.includes(p));
   const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
 
   const go = (to: string) => {

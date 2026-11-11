@@ -3,13 +3,14 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
-import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type Role } from '../../../shared/src/model';
-import { requirePerm, run, type AppEnv } from '../context';
+import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type PersonAccess, type Role } from '../../../shared/src/model';
+import { requirePerm, run, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
 import { randomDigits, randomToken, sha256Hex } from '../lib/crypto';
 import { emailDomain, isPublicDomain } from '../lib/domains';
 import { createInviteToken, sendInvite } from '../lib/people';
+import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
 import { iso, toComment, toTask } from '../lib/mappers';
 import { body, email, param, uuid } from '../lib/validate';
@@ -76,8 +77,14 @@ adminRoutes.patch('/org', async (c) => {
 const toRole = (r: any): Role => ({ id: r.id, key: r.key, name: r.name, perms: r.perms, system: r.system });
 const permsSchema = z.array(z.enum(PERMS)).max(PERMS.length);
 
+/** The roles screen is for whoever manages roles or people. */
+function requireAccessViewer(c: C) {
+  const perms = c.get('auth').perms;
+  if (!perms.includes('org.manage') && !perms.includes('users.manage')) fail('forbidden');
+}
+
 adminRoutes.get('/roles', async (c) => {
-  requirePerm(c, 'users.manage');
+  requireAccessViewer(c);
   const rows = await run(c, (q) => q.query('select * from roles order by system desc, name'));
   return c.json({ roles: rows.map(toRole) });
 });
@@ -130,18 +137,118 @@ adminRoutes.patch('/roles/:id', async (c) => {
 adminRoutes.delete('/roles/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
+  // People still holding the role can be moved to another one in the same step.
+  const moveTo = c.req.query('moveTo') || null;
+  if (moveTo && !uuid.safeParse(moveTo).success) fail('validation', { fields: 'moveTo' }, { fields: ['moveTo'] });
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
     const [r] = await q.query('select * from roles where id = $1', [id]);
     if (!r) fail('not_found');
     if (r.system) fail('forbidden');
-    const used = await q.query(`select 1 from users where role_id = $1 and status <> 'deleted' limit 1`, [id]);
-    if (used.length) fail('role_in_use');
+    if (moveTo) {
+      if (moveTo === id) fail('validation', { fields: 'moveTo' }, { fields: ['moveTo'] });
+      const [target] = await q.query('select id from roles where id = $1', [moveTo]);
+      if (!target) fail('validation', { fields: 'moveTo' }, { fields: ['moveTo'] });
+      const moved = await q.query<{ id: string }>('update users set role_id = $2 where role_id = $1 returning id', [id, moveTo]);
+      for (const m of moved)
+        await audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.updated', entity: 'user', entityId: m.id, meta: { fields: ['roleId'] } });
+    } else {
+      const used = await q.query(`select 1 from users where role_id = $1 and status <> 'deleted' limit 1`, [id]);
+      if (used.length) fail('role_in_use');
+      // Deleted people keep no role of their own; park them on the member role.
+      await q.query(`update users set role_id = (select id from roles where key = 'member' and system) where role_id = $1`, [id]);
+    }
     await q.query('delete from roles where id = $1', [id]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'role.deleted', entity: 'role', entityId: id });
   });
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------- who can do what
+
+adminRoutes.get('/access', async (c) => {
+  requireAccessViewer(c);
+  const [roles, people] = await run(c, async (q) => [
+    await q.query('select * from roles order by system desc, name'),
+    await q.query(
+      `select u.id, u.name, u.email, u.seat, u.status, u.role_id,
+              coalesce((select array_agg(team_id) from team_members m where m.user_id = u.id), '{}') as team_ids
+         from users u where u.status <> 'deleted' order by lower(u.name)`,
+    ),
+  ]);
+  return c.json({
+    roles: roles.map(toRole),
+    people: people.map((u) => ({ id: u.id, name: u.name, email: u.email, seat: u.seat, status: u.status, roleId: u.role_id, teamIds: u.team_ids })),
+  });
+});
+
+adminRoutes.get('/users/:id/access', async (c) => {
+  requireAccessViewer(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const { u, teams, visible } = await run(c, async (q) => {
+    const [u] = await q.query(
+      `select u.*, r.name as role_name, r.key as role_key, r.perms from users u join roles r on r.id = u.role_id where u.id = $1 and u.status <> 'deleted'`,
+      [id],
+    );
+    if (!u) fail('not_found');
+    const teams = await q.query(
+      `select t.id, t.name, coalesce(t.lead_id = $1, false) as lead from teams t
+        where t.lead_id = $1 or exists (select 1 from team_members m where m.team_id = t.id and m.user_id = $1)
+        order by lower(t.name)`,
+      [id],
+    );
+    // The boards the person asking can see; others are counted, not named.
+    const visible = await q.query<{ id: string }>('select id from boards where archived_at is null');
+    return { u, teams, visible: new Set(visible.map((b) => b.id)) };
+  });
+  // Board access is worked out for the other person, so it reads with owner
+  // access, always filtered to this company.
+  const rows = await c.get('deps').db.system((q) =>
+    q.query(
+      `select b.id, b.name, b.visibility, coalesce(b.created_by = $2, false) as creator,
+              exists (select 1 from board_members m where m.board_id = b.id and m.user_id = $2) as member,
+              (b.visibility = 'team' and exists (select 1 from team_members tm where tm.team_id = b.team_id and tm.user_id = $2)) as in_team,
+              coalesce(t.lead_id = $2, false) as lead
+         from boards b left join teams t on t.id = b.team_id
+        where b.org_id = $1 and b.archived_at is null
+        order by lower(b.name)`,
+      [org.id, id],
+    ),
+  );
+  const perms: string[] = u.perms;
+  const viewAll = perms.includes('boards.view_all');
+  const manageAll = perms.includes('boards.manage_all');
+  const writer = u.seat === 'full';
+  let hiddenBoards = 0;
+  const boards: PersonAccess['boards'] = [];
+  for (const b of rows) {
+    const sees = viewAll || b.visibility === 'org' || b.creator || b.member || b.in_team || b.lead;
+    if (!sees) continue;
+    if (!visible.has(b.id) && !auth.perms.includes('boards.view_all')) {
+      hiddenBoards++;
+      continue;
+    }
+    const via = b.creator ? 'creator' : b.lead || b.in_team ? 'team' : b.member ? 'member' : b.visibility === 'org' ? 'company' : 'all';
+    const level = !writer ? 'view' : manageAll || b.creator || b.lead ? 'manage' : 'edit';
+    boards.push({ id: b.id, name: b.name, level, via });
+  }
+  const access: PersonAccess = {
+    userId: u.id,
+    name: u.name,
+    email: u.email,
+    status: u.status,
+    seat: u.seat,
+    roleId: u.role_id,
+    roleName: u.role_name,
+    roleKey: u.role_key,
+    perms: perms.filter((p): p is (typeof PERMS)[number] => (PERMS as readonly string[]).includes(p)),
+    teams: teams.map((t) => ({ id: t.id, name: t.name, lead: t.lead })),
+    boards,
+  };
+  return c.json({ access, hiddenBoards });
 });
 
 // -------------------------------------------------------------------- teams
@@ -644,6 +751,7 @@ adminRoutes.post('/users/:id/handover', async (c) => {
     const [to] = await q.query(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.toUserId]);
     if (!to) fail('bad_assignee');
     const accounts = await q.query('update accounts set owner_id = $2, updated_at = now() where owner_id = $1 returning id', [id, input.toUserId]);
+    await queueSync(q, org.id, 'account', accounts.map((a) => a.id), ['owner']);
     // Every open task on every board — the owner role reaches boards this admin cannot open.
     return { accounts: accounts.length };
   });
@@ -657,7 +765,11 @@ adminRoutes.post('/users/:id/handover', async (c) => {
       [org.id, id, input.toUserId],
     ),
   );
-  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.handover', entity: 'user', entityId: id, meta: { to: input.toUserId, accounts: out.accounts, tasks: tasks.length } }));
+  await run(c, async (q) => {
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.handover', entity: 'user', entityId: id, meta: { to: input.toUserId, accounts: out.accounts, tasks: tasks.length } });
+    await queueSync(q, org.id, 'task', tasks.map((t) => t.id), ['assignee']);
+  });
+  kickSync(c.get('deps'), org.id);
   return c.json({ accounts: out.accounts, tasks: tasks.length });
 });
 

@@ -17,6 +17,7 @@ import { CalendarPage } from './pages/Calendar';
 import { DevicesPage } from './pages/Devices';
 import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
+import { RecordsPage } from './components/Records';
 
 // app.<domain> is the central address: company sign-up lives there.
 const isCentral = () => location.hostname.split('.')[0] === 'app';
@@ -171,6 +172,8 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   let page: React.ReactNode = null;
   const b = match('/b/:id', path);
   const s = match('/settings/:tab', path);
+  const ss = match('/settings/:tab/:sub', path);
+  const rec = match('/records/:type', path);
   const a = match('/accounts/:id', path);
   const setupStep = match('/setup/:step', path);
   if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
@@ -181,7 +184,9 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={refreshKey} />;
   else if (path === '/devices') page = <DevicesPage />;
+  else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;
+  else if (rec) page = <RecordsPage typeKey={rec.type} key={rec.type} />;
   else page = <MyTasks refreshKey={refreshKey} />;
 
   return (
