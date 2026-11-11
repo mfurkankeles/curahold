@@ -2,13 +2,13 @@
 // board, inviting customers' people, sharing a task with them.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { PORTAL_FIELDS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { PORTAL_FIELDS, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
 import { defer, portalUrl, requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
-import { emailPortalLink, portalOn } from '../lib/portal';
+import { emailPortalLink, portalAuth, portalOn } from '../lib/portal';
 import { body, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
 
@@ -35,23 +35,52 @@ portalRoutes.get('/portal', async (c) => {
     enabled: portalOn(org),
     address: portalUrl(deps.config, org.slug),
     boards: boards.map((b) => ({ id: b.id, name: b.name })),
+    auth: portalAuth(org),
+    providers: { google: !!deps.config.oauth.google, microsoft: !!deps.config.oauth.microsoft },
   };
   return c.json(out);
 });
 
-/** The company's switch. Off: the portal answers "not found" to everyone, at once. */
+const authSchema = z.object({
+  email: z.boolean(),
+  google: z.boolean(),
+  microsoft: z.boolean(),
+  passkey: z.boolean(),
+  password: z.boolean(),
+  sessionDays: z.union(PORTAL_SESSION_DAYS.map((d) => z.literal(d)) as any),
+  notify: z.boolean(),
+});
+
+/**
+ * The company's switch (off: the portal answers "not found" to everyone, at
+ * once) and its ways of signing in. Narrowing them ends the sessions they no
+ * longer allow, on their next request.
+ */
 portalRoutes.put('/portal/settings', async (c) => {
   requirePerm(c, 'org.manage');
   if (c.get('previewBy') || c.get('supportBy')) fail('forbidden');
-  const { enabled } = await body(c, z.object({ enabled: z.boolean() }));
-  if (enabled && !c.get('deps').config.portalDomain) fail('not_configured');
+  const input = await body(c, z.object({ enabled: z.boolean().optional(), auth: authSchema.optional() }));
+  const deps = c.get('deps');
+  if (input.enabled && !deps.config.portalDomain) fail('not_configured');
   const org = c.get('org');
   const auth = c.get('auth');
+  if (input.auth) {
+    // Someone must be able to sign in: a passkey is only added after a first sign-in another way.
+    const a = input.auth;
+    const usable = a.email || a.password || (a.google && !!deps.config.oauth.google) || (a.microsoft && !!deps.config.oauth.microsoft);
+    if (!usable) fail('portal_no_method');
+  }
   await run(c, async (q) => {
-    await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('enabled', $2::boolean)) where id = $1`, [org.id, enabled]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: enabled ? 'portal.enabled' : 'portal.disabled', entity: 'org', entityId: org.id });
+    if (input.enabled !== undefined) {
+      await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('enabled', $2::boolean)) where id = $1`, [org.id, input.enabled]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: input.enabled ? 'portal.enabled' : 'portal.disabled', entity: 'org', entityId: org.id });
+    }
+    if (input.auth) {
+      await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('auth', $2::jsonb)) where id = $1`, [org.id, JSON.stringify(input.auth)]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.signin_changed', entity: 'org', entityId: org.id, meta: input.auth });
+    }
   });
-  return c.json({ enabled });
+  return c.json({ ok: true });
 });
 
 // --------------------------------------------------------------- people

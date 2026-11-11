@@ -720,6 +720,10 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await inputs[1].type('selin@quillfield.example');
   await (await byText(admin.page, '.portal-people__invite .btn--primary', 'Davet et')).click();
   await admin.page.waitForFunction(() => document.querySelector('.portal-people table')?.textContent?.includes('selin@quillfield.example'), { timeout: 5000 });
+  // Passwords too, for this company.
+  await (await byText(admin.page, '.portal-methods strong', 'Şifre')).click();
+  await (await byText(admin.page, '.sheet .btn--primary', 'Kaydet')).click();
+  await admin.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')), { timeout: 5000 });
   await shot(admin.page, 'p8-01-portal-settings');
   await admin.page.browserContext().close();
 
@@ -766,6 +770,35 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await phone.page.goto(`http://demo.portal.localhost:8899/t/${taskId}`, { waitUntil: 'networkidle0' });
   await phone.page.waitForSelector('.p-msg');
   await shot(phone.page, 'p8-06-portal-phone');
+  // Her own account: a passkey on this device (Chrome's virtual authenticator), then in with it.
+  const cdp = await customer.page.createCDPSession();
+  await cdp.send('WebAuthn.enable');
+  await cdp.send('WebAuthn.addVirtualAuthenticator', {
+    options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
+  });
+  await customer.page.click('.p-top__me a');
+  await customer.page.waitForSelector('.p-account');
+  await (await byText(customer.page, '.p-account .p-btn', 'Bu cihaza passkey ekle')).click();
+  await customer.page.waitForSelector('.p-rows li', { timeout: 10000 });
+  await shot(customer.page, 'p8-07-portal-account');
+  await (await byText(customer.page, '.p-account .p-btn', 'Her yerden çıkış yap')).click();
+  await customer.page.waitForSelector('.p-signin');
+  await shot(customer.page, 'p8-08-portal-signin');
+  await (await byText(customer.page, '.p-ways .p-btn', 'Passkey ile giriş yap')).click();
+  await customer.page.waitForSelector('.p-head', { timeout: 10000 });
+  const [via] = await sql(`select method from portal_sessions where revoked_at is null order by created_at desc limit 1`);
+  expect(via?.method === 'passkey', `signed in by ${via?.method}`);
+  // And with the emailed code, the way most people will.
+  await customer.page.click('.p-top__me button.p-link:last-child');
+  await customer.page.waitForSelector('.p-signin input[type=email]');
+  await customer.page.type('.p-signin input[type=email]', 'selin@quillfield.example');
+  await (await byText(customer.page, '.p-signin .p-btn--primary', 'Kod gönder')).click();
+  await customer.page.waitForSelector('.p-code');
+  await pause(300);
+  const code = /\b(\d{6})\b/.exec(s.email.sent.filter((m) => m.to === 'selin@quillfield.example').at(-1)?.subject ?? '')?.[1] ?? '';
+  await customer.page.type('.p-code', code);
+  await (await byText(customer.page, '.p-signin .p-btn--primary', 'Giriş yap')).click();
+  await customer.page.waitForSelector('.p-head', { timeout: 10000 });
   expect(customer.errors.length === 0, customer.errors.join(' | '));
   await customer.page.browserContext().close();
   await phone.page.browserContext().close();

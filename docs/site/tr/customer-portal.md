@@ -35,9 +35,27 @@ Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve A
 
 **Ayarlar → Müşteri portalı → Giriş yapabilen kişiler** ya da müşteri sayfasındaki **Müşteri portalı** bölümünden: ad ve e-posta yaz, **Davet et**. Müşterinin sorumlusu ve yöneticiler davet gönderebilir.
 
-- Şifre yoktur: kişi e-postasına gelen bağlantıyla girer. Davet bağlantısı 7 gün, giriş bağlantısı 30 dakika geçerlidir ve bir kez kullanılır.
+- Davet bağlantısı 7 gün geçerlidir ve bir kez kullanılır. Sonraki girişler, şirketin açtığı yollardan biriyle olur (aşağıda).
 - Şirketindeki birinin adresi davet edilemez; portal müşteriler içindir.
 - **Kapat** ile erişim ve açık oturumları hemen biter.
+
+## Giriş yolları
+
+**Ayarlar → Müşteri portalı → Müşteriler nasıl giriş yapar** bölümünden müşterilerine uyan yolları seçersin:
+
+| Yol | Nasıl çalışır |
+|---|---|
+| **E-posta kodu ve bağlantısı** | Tek e-postada 6 haneli kod ve bağlantı gelir; ikisi de bir kez ve 30 dakika çalışır. Kod, e-postayı telefonda okuyup bilgisayardan girmeyi sağlar. |
+| **Google** | Kişi şirket Google hesabıyla girer. Şirketi hesabını kapatırsa portala da giremez. |
+| **Microsoft** | Microsoft 365 hesabıyla girer. İlk Microsoft girişi bir kez e-postaya gelen kodla onaylanır; sonra hesabın kendisi tanınır. |
+| **Passkey** | Parmak izi, yüz tanıma ya da cihaz PIN'i. En güvenli yol; kişi ilk girişten sonra **Hesabın** sayfasından ekler. Passkey yalnızca o portalın adresinde çalışır, sahte bir sitede işe yaramaz. |
+| **Şifre** | İsteyen müşteriler için (varsayılan kapalı). En az 10 karakter; 5 yanlış denemede 15 dakika kilitlenir; "Şifremi unuttum" e-postayla yenilenir. |
+
+- **Açık kalma süresi:** 1, 7, 30 (varsayılan) ya da 90 gün.
+- **Giriş bildirimi:** Google, Microsoft, passkey ya da şifreyle giriş yapılınca kişiye "yeni giriş" e-postası gider (kapatılabilir).
+- Bir yolu kapatınca o yolla açılmış oturumlar da kapanır; süreyi kısaltınca eski oturumlar biter. En az bir giriş yolu (e-posta, Google, Microsoft ya da şifre) açık kalmalıdır.
+- Giriş formu, bir adresin erişimi olup olmadığını belli etmez. Bir adrese saatte en fazla 5 e-posta gider.
+- Müşterinin çalışanı **Hesabın** sayfasından passkey ekler, şifresini belirler, bağlı Google/Microsoft hesabını kaldırır ya da her yerden çıkış yapar.
 
 ## Görevleri paylaşmak ve yanıt yazmak
 
@@ -49,4 +67,4 @@ Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve A
 
 ## Sınırlar
 
-Bir kişi günde en fazla 30 talep ve 200 yanıt yazabilir. Giriş bağlantısı saatte en fazla 5 kez istenebilir; giriş formu, bir adresin erişimi olup olmadığını belli etmez.
+Bir kişi günde en fazla 30 talep ve 200 yanıt yazabilir.

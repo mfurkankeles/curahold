@@ -51,6 +51,13 @@ export type ErrorCode =
   | 'portal_email_taken'
   | 'portal_private_board'
   | 'portal_not_shared'
+  | 'portal_method_off'
+  | 'portal_bad_code'
+  | 'portal_bad_password'
+  | 'portal_locked'
+  | 'portal_weak_password'
+  | 'portal_passkey_failed'
+  | 'portal_no_method'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -96,6 +103,13 @@ const STATUS: Record<ErrorCode, number> = {
   portal_email_taken: 409,
   portal_private_board: 400,
   portal_not_shared: 400,
+  portal_method_off: 400,
+  portal_bad_code: 400,
+  portal_bad_password: 400,
+  portal_locked: 429,
+  portal_weak_password: 400,
+  portal_passkey_failed: 400,
+  portal_no_method: 400,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

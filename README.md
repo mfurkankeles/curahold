@@ -249,8 +249,15 @@ row-level security, customer reach and field access as the app.
   for columns, and which details they see (due date, priority, who works on
   it). A company-wide switch closes it for everyone at once.
 - People at a customer are invited by an administrator or the customer's
-  owner and sign in with one-time email links (invitation 7 days, sign-in
-  30 minutes; no passwords; the sign-in form never reveals who has access).
+  owner. How they sign in afterwards is the company's choice: an email with
+  a six-digit code and a link; Google; Microsoft (the first sign-in
+  confirmed once by email, then matched on the account's `sub`); passkeys
+  (WebAuthn via `@simplewebauthn`, bound to the portal's own host); and
+  passwords (PBKDF2-SHA256, 100k rounds, lock after five wrong tries).
+  Google/Microsoft reuse the app's single registered callback, and only the
+  browser that started a sign-in can finish it. Session length (1–90 days)
+  and a new sign-in email are settings; switching a way off ends its
+  sessions. The sign-in form never reveals who has access.
 - They see only their own customer's tasks that are shared with them, and
   only the comments written for them; they open requests and reply. Inside,
   a task is shared with a tick; comments are **Internal note** by default or

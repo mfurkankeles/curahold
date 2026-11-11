@@ -3,7 +3,8 @@
 // open a new one, and nothing else. It talks only to /papi on its own domain.
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n';
-import type { PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
+import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
+import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 // ------------------------------------------------------------------ api
 
@@ -82,7 +83,14 @@ interface Ctx {
 
 // ------------------------------------------------------------------- app
 
-type Boot = { kind: 'loading' } | { kind: 'missing' } | { kind: 'error' } | { kind: 'out'; org: PortalOrg; note?: string } | { kind: 'in'; org: PortalOrg; me: PortalMe };
+type Boot =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'error' }
+  | { kind: 'out'; org: PortalOrg; note?: string }
+  | { kind: 'confirm'; org: PortalOrg; token: string }
+  | { kind: 'reset'; org: PortalOrg; token: string }
+  | { kind: 'in'; org: PortalOrg; me: PortalMe };
 
 export function PortalApp() {
   return (
@@ -116,10 +124,20 @@ function Portal() {
     }
     if (!storedLocale()) setLocale(org.locale);
     document.title = org.name;
+    // Back from Google/Microsoft with a problem: say what it was.
+    const error = new URLSearchParams(location.search).get('error');
+    if (error) {
+      history.replaceState(null, '', '/');
+      note ??= error;
+    }
     // The one-time link from the email: trade it for a session, and keep it out of the address bar.
     if (location.pathname === '/auth') {
-      const token = new URLSearchParams(location.hash.slice(1)).get('token');
+      const hash = new URLSearchParams(location.hash.slice(1));
+      const token = hash.get('token');
       history.replaceState(null, '', '/');
+      // A first Microsoft sign-in is confirmed with a code; a reset link asks for a new password.
+      if (hash.get('confirm')) return setBoot({ kind: 'confirm', org, token: hash.get('confirm')! });
+      if (hash.get('reset')) return setBoot({ kind: 'reset', org, token: hash.get('reset')! });
       try {
         if (!token) throw new Error('no token');
         const r = await call<{ locale: Locale | null }>('POST', '/auth/verify', { token });
@@ -164,7 +182,9 @@ function Portal() {
     </button>
   );
 
-  if (boot.kind === 'out') return <SignIn ctx={ctx} org={boot.org} note={boot.note} lang={lang} />;
+  if (boot.kind === 'out') return <SignIn ctx={ctx} org={boot.org} note={boot.note} lang={lang} onIn={() => void start()} />;
+  if (boot.kind === 'confirm' || boot.kind === 'reset')
+    return <OneStep ctx={ctx} org={boot.org} kind={boot.kind} token={boot.token} lang={lang} onIn={() => void start()} onBack={(n) => setBoot({ kind: 'out', org: boot.org, note: n })} />;
 
   const { org, me } = boot;
   return (
@@ -178,7 +198,9 @@ function Portal() {
           </span>
         </a>
         <div className="p-top__me">
-          <span className="p-muted">{me.user.name}</span>
+          <a className="p-link" {...link('/account')}>
+            {me.user.name}
+          </a>
           {lang}
           <button
             className="p-link"
@@ -206,16 +228,232 @@ function Route({ ctx, me, path, onSignedOut }: { ctx: Ctx; me: PortalMe; path: s
   const board = me.boards.find((b) => b.id === boardId) ?? me.boards[0];
   if (!board) return <Empty>{ctx.t('portal.noBoards')}</Empty>;
   if (task) return <TaskPage key={task} ctx={ctx} id={task} onSignedOut={onSignedOut} />;
+  if (url.pathname === '/account') return <AccountPage ctx={ctx} onSignedOut={onSignedOut} />;
   if (url.pathname === '/new') return <NewRequest ctx={ctx} me={me} board={board} onSignedOut={onSignedOut} />;
   return <List ctx={ctx} me={me} board={board} onSignedOut={onSignedOut} />;
 }
 
 // --------------------------------------------------------------- sign in
 
-function SignIn({ ctx, org, note, lang }: { ctx: Ctx; org: PortalOrg; note?: string; lang: ReactNode }) {
+function Brand({ org }: { org: PortalOrg }) {
+  return org.logoUrl ? (
+    <img className="p-signin__logo" src={org.logoUrl} alt={org.name} />
+  ) : (
+    <div className="p-brand__mark p-brand__mark--big" aria-hidden="true">
+      {org.name.slice(0, 1)}
+    </div>
+  );
+}
+
+const DEMO = import.meta.env.TW_DEMO === true;
+const passkeysHere = () => !DEMO && browserSupportsWebAuthn();
+const failure = (e: unknown, t: Ctx['t']) => (e instanceof Failure ? e.message : t('errors.server'));
+
+/** The ways in this company allows: Google, Microsoft, a passkey, an email code, a password. */
+function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note?: string; lang: ReactNode; onIn: () => void }) {
   const { t } = ctx;
+  const m = org.signIn;
+  const [tab, setTab] = useState<'email' | 'password'>(m.email ? 'email' : 'password');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'ask' | 'code' | 'forgot'>('ask');
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await fn();
+    } catch (err) {
+      setProblem(failure(err, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const notices: Record<string, MessageKey> = { link: 'portal.linkUsed', expired: 'portal.expired', no_access: 'portal.noAccess', oauth_failed: 'portal.providerFailed', method_off: 'portal.methodOff' };
+  const notice = note && notices[note] ? t(notices[note]) : null;
+  const passkey = m.passkey && passkeysHere();
+  const providers = (['google', 'microsoft'] as const).filter((p) => m[p]);
+
+  return (
+    <div className="p-center">
+      <div className="p-card p-signin">
+        <Brand org={org} />
+        <h1>{t('portal.signInTitle', { company: org.name })}</h1>
+        {notice && <p className="p-note">{notice}</p>}
+        {(providers.length > 0 || passkey) && step === 'ask' && (
+          <div className="p-ways">
+            {providers.map((p) => (
+              <a key={p} className="p-btn p-btn--way" href={`/papi/auth/oauth/${p}/start`}>
+                {t(p === 'google' ? 'portal.withGoogle' : 'portal.withMicrosoft')}
+              </a>
+            ))}
+            {passkey && (
+              <button
+                className="p-btn p-btn--way"
+                disabled={busy}
+                onClick={() =>
+                  run(async () => {
+                    const o = await call<{ challengeId: string; options: any }>('POST', '/auth/passkey/options', {});
+                    const response = await startAuthentication({ optionsJSON: o.options }).catch(() => null);
+                    if (!response) throw new Failure(400, 'cancelled', t('portal.passkeyCancelled'));
+                    await call('POST', '/auth/passkey', { challengeId: o.challengeId, response });
+                    onIn();
+                  })
+                }
+              >
+                {t('portal.withPasskey')}
+              </button>
+            )}
+          </div>
+        )}
+        {(m.email || m.password) && (providers.length > 0 || passkey) && step === 'ask' && <div className="p-or">{t('portal.or')}</div>}
+        {m.email && m.password && step === 'ask' && (
+          <div className="p-seg p-seg--full" role="group">
+            <button aria-pressed={tab === 'email'} onClick={() => setTab('email')}>
+              {t('portal.byEmail')}
+            </button>
+            <button aria-pressed={tab === 'password'} onClick={() => setTab('password')}>
+              {t('portal.byPassword')}
+            </button>
+          </div>
+        )}
+
+        {step === 'ask' && tab === 'email' && m.email && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run(async () => {
+                await call('POST', '/auth/start', { email });
+                setStep('code');
+              });
+            }}
+          >
+            <p className="p-muted">{t('portal.signInLead', { company: org.name })}</p>
+            <label className="p-field">
+              <span>{t('portal.email')}</span>
+              <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            {problem && <Problem text={problem} />}
+            <button className="p-btn p-btn--primary" disabled={busy || !email}>
+              {t('portal.sendCode')}
+            </button>
+          </form>
+        )}
+
+        {step === 'code' && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run(async () => {
+                await call('POST', '/auth/code', { email, code });
+                onIn();
+              });
+            }}
+          >
+            <p role="status">{t('portal.checkInbox', { email })}</p>
+            <label className="p-field">
+              <span>{t('portal.code')}</span>
+              <input className="p-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="\d{6}" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+            </label>
+            {problem && <Problem text={problem} />}
+            <button className="p-btn p-btn--primary" disabled={busy || code.length !== 6}>
+              {t('portal.signIn')}
+            </button>
+            <button type="button" className="p-link" onClick={() => (setStep('ask'), setCode(''), setProblem(null))}>
+              {t('portal.otherAddress')}
+            </button>
+          </form>
+        )}
+
+        {step === 'ask' && tab === 'password' && m.password && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run(async () => {
+                await call('POST', '/auth/password', { email, password });
+                onIn();
+              });
+            }}
+          >
+            <label className="p-field">
+              <span>{t('portal.email')}</span>
+              <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <label className="p-field">
+              <span>{t('portal.password')}</span>
+              <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </label>
+            {problem && <Problem text={problem} />}
+            <button className="p-btn p-btn--primary" disabled={busy || !email || !password}>
+              {t('portal.signIn')}
+            </button>
+            <button type="button" className="p-link" onClick={() => (setStep('forgot'), setProblem(null))}>
+              {t('portal.forgot')}
+            </button>
+          </form>
+        )}
+
+        {step === 'forgot' && (
+          <ForgotPassword ctx={ctx} email={email} setEmail={setEmail} onBack={() => setStep('ask')} />
+        )}
+        <div className="p-signin__foot">{lang}</div>
+      </div>
+    </div>
+  );
+}
+
+function Problem({ text }: { text: string }) {
+  return (
+    <p className="p-note p-note--error" role="alert">
+      {text}
+    </p>
+  );
+}
+
+function ForgotPassword({ ctx, email, setEmail, onBack }: { ctx: Ctx; email: string; setEmail: (v: string) => void; onBack: () => void }) {
+  const { t } = ctx;
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (sent)
+    return (
+      <div className="p-form-plain">
+        <p role="status">{t('portal.resetSent', { email })}</p>
+        <button type="button" className="p-link" onClick={onBack}>
+          {t('portal.backToSignIn')}
+        </button>
+      </div>
+    );
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        await call('POST', '/auth/forgot', { email }).catch(() => undefined);
+        setBusy(false);
+        setSent(true);
+      }}
+    >
+      <p className="p-muted">{t('portal.forgotLead')}</p>
+      <label className="p-field">
+        <span>{t('portal.email')}</span>
+        <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </label>
+      <button className="p-btn p-btn--primary" disabled={busy || !email}>
+        {t('portal.sendReset')}
+      </button>
+      <button type="button" className="p-link" onClick={onBack}>
+        {t('portal.backToSignIn')}
+      </button>
+    </form>
+  );
+}
+
+/** One step from an email: the code that confirms a first Microsoft sign-in, or a new password. */
+function OneStep({ ctx, org, kind, token, lang, onIn, onBack }: { ctx: Ctx; org: PortalOrg; kind: 'confirm' | 'reset'; token: string; lang: ReactNode; onIn: () => void; onBack: (note?: string) => void }) {
+  const { t } = ctx;
+  const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const submit = async (e: FormEvent) => {
@@ -223,42 +461,192 @@ function SignIn({ ctx, org, note, lang }: { ctx: Ctx; org: PortalOrg; note?: str
     setBusy(true);
     setProblem(null);
     try {
-      await call('POST', '/auth/start', { email });
-      setSent(true);
+      if (kind === 'confirm') await call('POST', '/auth/verify', { token, code: value });
+      else await call('POST', '/auth/reset', { token, password: value });
+      onIn();
     } catch (err) {
-      setProblem(err instanceof Failure ? err.message : t('errors.server'));
+      if (err instanceof Failure && err.code === 'invalid_token') return onBack('link');
+      setProblem(failure(err, t));
     } finally {
       setBusy(false);
     }
   };
-  const notice = note === 'link' ? t('portal.linkUsed') : note === 'expired' ? t('portal.expired') : null;
   return (
     <div className="p-center">
-      <div className="p-card p-signin">
-        {org.logoUrl ? <img className="p-signin__logo" src={org.logoUrl} alt={org.name} /> : <div className="p-brand__mark p-brand__mark--big" aria-hidden="true">{org.name.slice(0, 1)}</div>}
-        <h1>{t('portal.signInTitle', { company: org.name })}</h1>
-        {sent ? (
-          <p role="status">{t('portal.checkInbox', { email })}</p>
-        ) : (
-          <form onSubmit={submit}>
-            <p className="p-muted">{t('portal.signInLead', { company: org.name })}</p>
-            {notice && <p className="p-note">{notice}</p>}
+      <form className="p-card p-signin" onSubmit={submit}>
+        <Brand org={org} />
+        <h1>{t(kind === 'confirm' ? 'portal.confirmTitle' : 'portal.resetTitle')}</h1>
+        <p className="p-muted">{t(kind === 'confirm' ? 'portal.confirmLead' : 'portal.resetLead')}</p>
+        <div className="p-form-plain">
+          {kind === 'confirm' ? (
             <label className="p-field">
-              <span>{t('portal.email')}</span>
-              <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <span>{t('portal.code')}</span>
+              <input className="p-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={value} onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))} />
             </label>
-            {problem && (
-              <p className="p-note p-note--error" role="alert">
-                {problem}
-              </p>
+          ) : (
+            <label className="p-field">
+              <span>{t('portal.newPassword')}</span>
+              <input type="password" autoComplete="new-password" minLength={10} value={value} onChange={(e) => setValue(e.target.value)} />
+              <small className="p-muted">{t('portal.passwordRule')}</small>
+            </label>
+          )}
+          {problem && <Problem text={problem} />}
+          <button className="p-btn p-btn--primary" disabled={busy || (kind === 'confirm' ? value.length !== 6 : value.length < 10)}>
+            {t(kind === 'confirm' ? 'portal.confirm' : 'portal.savePassword')}
+          </button>
+        </div>
+        <div className="p-signin__foot">{lang}</div>
+      </form>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------- account
+
+/** The person's own ways in: passkeys, a password, linked accounts, and signing out everywhere. */
+function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string) => void }) {
+  const { t, when } = ctx;
+  const { data, failed, reload } = useLoad(() => call<PortalAccount>('GET', '/account'), [], onSignedOut);
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const act = async (fn: () => Promise<unknown>, ok: string) => {
+    setBusy(true);
+    setProblem(null);
+    setDone(null);
+    try {
+      await fn();
+      setDone(ok);
+      reload();
+    } catch (err) {
+      setProblem(failure(err, t));
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (failed) return <Problem text={failed} />;
+  if (!data) return <p className="p-muted">{t('common.loading')}</p>;
+  const m = data.methods;
+  return (
+    <div className="p-card p-account">
+      <a className="p-back" {...link('/')}>
+        {t('portal.back')}
+      </a>
+      <h1>{t('portal.account')}</h1>
+      <p className="p-muted">{data.email}</p>
+      {done && (
+        <p className="p-note p-note--ok" role="status">
+          {done}
+        </p>
+      )}
+      {problem && <Problem text={problem} />}
+
+      {m.passkey && (
+        <section>
+          <h2>{t('portal.passkeys')}</h2>
+          <p className="p-muted">{t('portal.passkeysLead')}</p>
+          <ul className="p-rows">
+            {data.passkeys.map((k) => (
+              <li key={k.id}>
+                <span>
+                  <strong>{k.name}</strong>
+                  <small className="p-muted"> · {t('portal.added', { when: when(k.createdAt) })}</small>
+                </span>
+                <button className="p-link" disabled={busy} onClick={() => act(() => call('DELETE', `/account/passkeys/${k.id}`), t('portal.passkeyRemoved'))}>
+                  {t('portal.remove')}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {passkeysHere() ? (
+            <button
+              className="p-btn"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  const o = await call<{ challengeId: string; options: any }>('POST', '/account/passkeys/options', {});
+                  const response = await startRegistration({ optionsJSON: o.options }).catch(() => null);
+                  if (!response) throw new Failure(400, 'cancelled', t('portal.passkeyCancelled'));
+                  await call('POST', '/account/passkeys', { challengeId: o.challengeId, response });
+                }, t('portal.passkeyAdded'))
+              }
+            >
+              {t('portal.addPasskey')}
+            </button>
+          ) : (
+            <p className="p-muted">{t('portal.passkeyUnsupported')}</p>
+          )}
+        </section>
+      )}
+
+      {m.password && (
+        <section>
+          <h2>{t('portal.password')}</h2>
+          <p className="p-muted">{data.password.set ? t('portal.passwordSetAt', { when: when(data.password.setAt!) }) : t('portal.passwordNone')}</p>
+          <form
+            className="p-form-plain"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void act(() => call('PUT', '/account/password', { current: current || undefined, password: next }), t('portal.passwordSaved')).then(() => {
+                setCurrent('');
+                setNext('');
+              });
+            }}
+          >
+            {data.password.set && (
+              <label className="p-field">
+                <span>{t('portal.currentPassword')}</span>
+                <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+              </label>
             )}
-            <button className="p-btn p-btn--primary" disabled={busy || !email}>
-              {t('portal.sendLink')}
+            <label className="p-field">
+              <span>{t('portal.newPassword')}</span>
+              <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+              <small className="p-muted">{t('portal.passwordRule')}</small>
+            </label>
+            <button className="p-btn" disabled={busy || next.length < 10}>
+              {t('portal.savePassword')}
             </button>
           </form>
-        )}
-        <div className="p-signin__foot">{lang}</div>
-      </div>
+        </section>
+      )}
+
+      {data.identities.length > 0 && (
+        <section>
+          <h2>{t('portal.linked')}</h2>
+          <ul className="p-rows">
+            {data.identities.map((i) => (
+              <li key={i.provider}>
+                <span>
+                  <strong>{t(`portal.method.${i.provider}` as MessageKey)}</strong>
+                  <small className="p-muted"> · {i.email}</small>
+                </span>
+                <button className="p-link" disabled={busy} onClick={() => act(() => call('DELETE', `/account/identities/${i.provider}`), t('portal.unlinked'))}>
+                  {t('portal.unlink')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section>
+        <h2>{t('portal.devices')}</h2>
+        <p className="p-muted">{t('portal.devicesLead')}</p>
+        <button
+          className="p-btn"
+          disabled={busy}
+          onClick={async () => {
+            await call('POST', '/account/signout-all', {}).catch(() => undefined);
+            go('/', true);
+            onSignedOut('out');
+          }}
+        >
+          {t('portal.signOutAll')}
+        </button>
+      </section>
     </div>
   );
 }

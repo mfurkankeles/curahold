@@ -123,3 +123,22 @@ html, body { margin: 0; }
   .p-task__head { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { .p-root * { scroll-behavior: auto !important; } }
+
+/* Signing in */
+.p-ways { display: grid; gap: 8px; margin: 18px 0 4px; }
+.p-btn--way { width: 100%; }
+.p-or { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 13px; margin: 14px 0; }
+.p-or::before, .p-or::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
+.p-seg--full { display: flex; width: 100%; margin: 4px 0 6px; }
+.p-seg--full button { flex: 1; }
+.p-code { font-size: 22px !important; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
+.p-form-plain { display: grid; gap: 14px; text-align: left; margin-top: 8px; }
+.p-signin .p-link { justify-self: center; }
+.p-note--ok { background: var(--accent-wash); color: var(--accent-ink); }
+
+/* The person's own account */
+.p-account { display: grid; gap: 18px; }
+.p-account section { border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 10px; justify-items: start; }
+.p-account section p { margin: 0; }
+.p-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
+.p-rows li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; background: var(--paper); border-radius: 8px; }

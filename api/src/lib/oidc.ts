@@ -60,6 +60,8 @@ export function authorizeUrl(provider: ProviderId, cfg: ProviderConfig, redirect
 export interface VerifiedIdentity {
   email: string;
   name: string | null;
+  /** The provider's own, stable id for this account (`sub`). */
+  subject: string | null;
 }
 
 export async function exchangeCode(
@@ -98,7 +100,8 @@ export async function exchangeCode(
   // Microsoft has no such claim — every new device still has to prove the
   // address with an emailed code, so a wrong claim cannot open an account.
   if (provider === 'google' && claims.email_verified !== true) return null;
-  return { email, name: typeof claims.name === 'string' ? claims.name : null };
+  const subject = typeof claims.sub === 'string' && claims.sub ? claims.sub.slice(0, 255) : null;
+  return { email, name: typeof claims.name === 'string' ? claims.name : null, subject };
 }
 
 function decodeJwtPayload(jwt: string): Record<string, any> | null {

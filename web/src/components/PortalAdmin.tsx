@@ -1,7 +1,8 @@
 // The customer portal, from inside: the company's switch, the boards it
 // opened, and the customers' people who can sign in.
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import type { PortalPerson, PortalSettings } from '../../../shared/src/portal';
+import { PORTAL_SESSION_DAYS, type PortalAuth, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -59,6 +60,7 @@ export function PortalSettingsTab() {
           </div>
         )}
       </section>
+      {s.enabled && <SignInMethods settings={s} onSaved={load} />}
       {s.enabled && (
         <section className="sheet">
           <h3 className="section__head">{t('portal.people.title')}</h3>
@@ -173,5 +175,67 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
       )}
       <p className="field__hint">{t('portal.people.hint')}</p>
     </div>
+  );
+}
+
+/** The company's choice of ways into the portal, and how long a sign-in lasts. */
+function SignInMethods({ settings, onSaved }: { settings: PortalSettings; onSaved: () => void }) {
+  const { t } = useI18n();
+  const { toast } = useStore();
+  const [a, setA] = useState<PortalAuth>(settings.auth);
+  const [busy, setBusy] = useState(false);
+  const methods = ['email', 'google', 'microsoft', 'passkey', 'password'] as const;
+  const missing = (m: (typeof methods)[number]) => (m === 'google' || m === 'microsoft') && !settings.providers[m];
+  const changed = JSON.stringify(a) !== JSON.stringify(settings.auth);
+  const save = async () => {
+    setBusy(true);
+    try {
+      await put('/portal/settings', { auth: a });
+      toast(t('common.saved'));
+      onSaved();
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="sheet">
+      <h3 className="section__head">{t('portal.admin.signIn')}</h3>
+      <p className="field__hint">{t('portal.admin.signInLead')}</p>
+      <ul className="portal-methods">
+        {methods.map((m) => (
+          <li key={m}>
+            <label className="checkbox">
+              <input type="checkbox" checked={a[m] && !missing(m)} disabled={missing(m)} onChange={(e) => setA({ ...a, [m]: e.target.checked })} />
+              <strong>{t(`portal.admin.m.${m}` as MessageKey)}</strong>
+            </label>
+            <span className="field__hint">
+              {t(`portal.admin.m.${m}Hint` as MessageKey)}
+              {missing(m) && <> · {t('portal.admin.notConfigured')}</>}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="portal-methods__more">
+        <label className="field">
+          <span className="field__label">{t('portal.admin.sessionDays')}</span>
+          <select className="select" value={a.sessionDays} onChange={(e) => setA({ ...a, sessionDays: Number(e.target.value) as PortalAuth['sessionDays'] })}>
+            {PORTAL_SESSION_DAYS.map((d) => (
+              <option key={d} value={d}>
+                {d === 1 ? t('portal.admin.day1') : t('portal.admin.days', { n: d })}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={a.notify} onChange={(e) => setA({ ...a, notify: e.target.checked })} />
+          <span>{t('portal.admin.notify')}</span>
+        </label>
+      </div>
+      <button className="btn btn--primary" disabled={busy || !changed} onClick={save}>
+        {t('portal.admin.saveSignIn')}
+      </button>
+    </section>
   );
 }

@@ -35,9 +35,27 @@ Private boards cannot be opened. Turning the switch off closes the portal for ev
 
 From **Settings → Customer portal → People who can sign in**, or the **Customer portal** section on a customer's page: a name and an email, then **Invite**. The customer's owner and administrators can invite.
 
-- There are no passwords: people sign in with a link sent to their email. An invitation works for 7 days, a sign-in link for 30 minutes, each once.
+- An invitation works once, for 7 days. After that, people sign in whichever ways the company allows (below).
 - An address that belongs to someone in your company cannot be invited; the portal is for customers.
 - **Switch off** ends their access and open sessions at once.
+
+## Ways to sign in
+
+In **Settings → Customer portal → How customers sign in**, choose the ways that suit your customers:
+
+| Way | How it works |
+|---|---|
+| **Email code and link** | One email with a six-digit code and a link, each working once for 30 minutes. The code lets someone read the email on their phone and sign in on their computer. |
+| **Google** | Their company Google account. If their company closes the account, the portal is closed to them too. |
+| **Microsoft** | Their Microsoft 365 account. The first Microsoft sign-in is confirmed once with an emailed code; after that the account itself is recognised. |
+| **Passkey** | Fingerprint, face or device PIN. The safest way; people add one on **Your account** after a first sign-in. A passkey works only on that portal's address, never on a look-alike site. |
+| **Password** | For customers who ask for one (off by default). At least 10 characters; five wrong tries lock it for 15 minutes; "Forgot your password?" resets it by email. |
+
+- **Stay signed in for:** 1, 7, 30 (the default) or 90 days.
+- **Sign-in notice:** after a sign-in with Google, Microsoft, a passkey or a password, the person gets a "new sign-in" email (can be switched off).
+- Switching a way off ends the sessions opened with it; a shorter stay ends older sessions. At least one way in (email, Google, Microsoft or password) must stay on.
+- The sign-in form never tells whether an address has access, and an address gets at most 5 emails an hour.
+- On **Your account**, people add passkeys, set their password, unlink Google/Microsoft or sign out everywhere.
 
 ## Sharing tasks and replying
 
@@ -49,4 +67,4 @@ From **Settings → Customer portal → People who can sign in**, or the **Custo
 
 ## Limits
 
-Each person can open up to 30 requests and write 200 replies a day. A sign-in link can be asked for up to 5 times an hour, and the sign-in form never tells whether an address has access.
+Each person can open up to 30 requests and write 200 replies a day.

@@ -14,6 +14,7 @@ summary: What is new and what changed.
 - **The customer's side:** their own domain, passwordless sign-in links; their company's shared requests, new requests and replies.
 - **The team's side:** share a task with its customer, choose **Internal note / Reply to customer**, notifications for what customers write.
 - **Security:** a separate domain and session, a database role with no table privileges, isolation per customer, a company-wide switch.
+- **Ways to sign in, the company's choice:** email code and link, Google, Microsoft, passkeys and passwords; how long a sign-in lasts, and a new sign-in notice.
 
 ### Help and support access
 

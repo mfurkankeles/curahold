@@ -21,6 +21,7 @@ import { emailHtml } from '../lib/emailHtml';
 import { logoUrl, userManagers } from '../lib/people';
 import { authorizeUrl, exchangeCode, isProvider, PROVIDERS, type ProviderId } from '../lib/oidc';
 import { knownDevice, openSession } from '../lib/sessions';
+import { portalOAuthCallback, type PortalOAuthState } from '../lib/portalOAuth';
 import { body, deviceId, deviceLabel, email } from '../lib/validate';
 
 export const SESSION_COOKIE = 'tw_session';
@@ -366,8 +367,10 @@ export async function oauthCallback(c: C) {
   const deps = c.get('deps');
   const cfg = deps.config;
   const now = (deps.now ?? (() => new Date()))();
-  const state = await verify<OAuthState>(c.req.query('state') ?? '', cfg.authSecret);
+  const state = await verify<OAuthState & { k?: string }>(c.req.query('state') ?? '', cfg.authSecret);
   if (!state || state.x < now.getTime() || !isProvider(state.p)) return c.text('Invalid sign-in state', 400);
+  // A customer portal's sign-in comes back here too (one registered address); it goes on to the portal.
+  if (state.k === 'portal') return portalOAuthCallback(c, state as unknown as PortalOAuthState);
   const back = `${orgUrl(cfg, state.o)}/login`;
   const providerCfg = cfg.oauth[state.p];
   const code = c.req.query('code');
@@ -394,6 +397,8 @@ export async function oauthCallback(c: C) {
   if (!found) return c.redirect(`${back}?error=no_account&email=${encodeURIComponent(identity.email)}`);
   return c.redirect(`${orgUrl(cfg, org.slug)}/auth/verify#token=${token}&m=oauth`);
 }
+
+export { callbackUrl };
 
 export function setSessionCookie(c: C, token: string) {
   const cfg = c.get('deps').config;

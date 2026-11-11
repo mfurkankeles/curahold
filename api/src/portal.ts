@@ -3,28 +3,21 @@
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
 import { Hono } from 'hono';
-import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
+import { getCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { PortalOrg } from '../../shared/src/portal';
 import { slugFromHost } from './app';
 import { defer, type Deps, type OrgRow } from './context';
 import type { Q } from './db';
-import { randomToken, sha256Hex } from './lib/crypto';
+import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
 import { enqueue, kick } from './lib/notify';
-import { PORTAL_COOKIE, PORTAL_SESSION_DAYS, emailPortalLink, portalOn } from './lib/portal';
+import { PORTAL_COOKIE, methodAllowed, portalAuth, portalOn, signInOptions, type PortalEnv } from './lib/portal';
+import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
-
-type PortalEnv = {
-  Variables: {
-    org: OrgRow;
-    locale: Locale;
-    person: { id: string; name: string; accountId: string; sessionId: string };
-  };
-};
 
 /** Errors raised inside the portal_* functions, by name. */
 const DB_ERRORS: Record<string, 'unauthenticated' | 'not_found' | 'too_many_requests'> = {
@@ -84,7 +77,12 @@ export function createPortalApp(deps: Deps) {
 
   app.get('/papi/org', (c) => {
     const org = c.get('org');
-    const out: PortalOrg = { name: org.name, locale: org.locale, logoUrl: (org.settings as any)?.logo?.key ? `/papi/logo?v=${encodeURIComponent(String((org.settings as any).logo.v ?? 1))}` : null };
+    const out: PortalOrg = {
+      name: org.name,
+      locale: org.locale,
+      logoUrl: (org.settings as any)?.logo?.key ? `/papi/logo?v=${encodeURIComponent(String((org.settings as any).logo.v ?? 1))}` : null,
+      signIn: signInOptions(org, deps),
+    };
     return c.json(out);
   });
 
@@ -96,64 +94,7 @@ export function createPortalApp(deps: Deps) {
   });
 
   // ------------------------------------------------------------ sign-in
-  /** Always the same answer, so the form cannot be used to find out who has access. */
-  app.post('/papi/auth/start', async (c) => {
-    const org = c.get('org');
-    const parsed = z.object({ email: z.string().trim().toLowerCase().email().max(254) }).safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) fail('validation', { fields: 'email' }, { fields: ['email'] });
-    const [p] = await deps.db.system((q) =>
-      q.query(
-        `select pu.id, pu.email, pu.name, pu.locale,
-                (select count(*)::int from portal_tokens t where t.portal_user_id = pu.id and t.created_at > now() - interval '1 hour') as recent
-           from portal_users pu join accounts a on a.id = pu.account_id and a.archived_at is null
-          where pu.org_id = $1 and pu.email = $2 and pu.status in ('invited', 'active')`,
-        [org.id, parsed.data!.email],
-      ),
-    );
-    if (p && p.recent < 5) defer(deps, emailPortalLink(deps, org, p as { id: string; email: string; name: string; locale: string | null }, 'signin'));
-    return c.json({ ok: true });
-  });
-
-  app.post('/papi/auth/verify', async (c) => {
-    const org = c.get('org');
-    const parsed = z.object({ token: z.string().min(20).max(200) }).safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) fail('invalid_token');
-    const session = randomToken(32);
-    const person = await deps.db.system(async (q) => {
-      const [t] = await q.query(
-        `update portal_tokens set used_at = now()
-          where token_hash = $1 and org_id = $2 and used_at is null and expires_at > now()
-          returning portal_user_id`,
-        [await sha256Hex(parsed.data!.token), org.id],
-      );
-      if (!t) return null;
-      const [p] = await q.query(
-        `update portal_users set status = 'active', last_seen_at = now()
-          where id = $1 and org_id = $2 and status in ('invited', 'active') returning id, name, locale`,
-        [t.portal_user_id, org.id],
-      );
-      if (!p) return null;
-      await q.query(
-        `insert into portal_sessions (org_id, portal_user_id, token_hash, expires_at) values ($1, $2, $3, now() + make_interval(days => $4))`,
-        [org.id, p.id, await sha256Hex(session), PORTAL_SESSION_DAYS],
-      );
-      return p;
-    });
-    if (!person) fail('invalid_token');
-    // Host-only, on the portal's own domain: never sent to the company's app.
-    setCookie(c, PORTAL_COOKIE, session, { httpOnly: true, secure: cfg.scheme === 'https', sameSite: 'Strict', path: '/', maxAge: PORTAL_SESSION_DAYS * 86400 });
-    return c.json({ ok: true, locale: person!.locale ?? null });
-  });
-
-  app.post('/papi/auth/logout', async (c) => {
-    const token = getCookie(c, PORTAL_COOKIE);
-    if (token) {
-      const hash = await sha256Hex(token);
-      await deps.db.system((q) => q.query('update portal_sessions set revoked_at = now() where token_hash = $1 and org_id = $2', [hash, c.get('org').id]));
-    }
-    deleteCookie(c, PORTAL_COOKIE, { path: '/' });
-    return c.json({ ok: true });
-  });
+  const signIn = mountSignIn(app, deps);
 
   // ------------------------------------------------------------ person
   app.use('/papi/*', async (c, next) => {
@@ -163,13 +104,15 @@ export function createPortalApp(deps: Deps) {
     const hash = await sha256Hex(token!);
     const [s] = await deps.db.system((q) =>
       q.query(
-        `select s.id, s.last_seen_at < now() - interval '5 minutes' as stale, pu.id as person_id, pu.name, pu.account_id, pu.locale
+        `select s.id, s.method, s.last_seen_at < now() - interval '5 minutes' as stale, pu.id as person_id, pu.name, pu.account_id, pu.locale
            from portal_sessions s join portal_users pu on pu.id = s.portal_user_id and pu.org_id = s.org_id
-          where s.token_hash = $1 and s.org_id = $2 and s.revoked_at is null and s.expires_at > now() and pu.status = 'active'`,
-        [hash, org.id],
+          where s.token_hash = $1 and s.org_id = $2 and s.revoked_at is null and s.expires_at > now() and pu.status = 'active'
+            and s.created_at > now() - make_interval(days => $3)`,
+        [hash, org.id, portalAuth(org).sessionDays],
       ),
     );
-    if (!s) fail('unauthenticated');
+    // A shorter session length, or a way of signing in switched off, ends these sessions too.
+    if (!s || !methodAllowed(signInOptions(org, deps), s.method)) fail('unauthenticated');
     c.set('person', { id: s.person_id, name: s.name, accountId: s.account_id, sessionId: s.id });
     if (s.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(s.locale));
     if (s.stale) {
@@ -190,6 +133,8 @@ export function createPortalApp(deps: Deps) {
     if (!uuid.safeParse(v).success) fail('not_found');
     return v as string;
   };
+
+  mountAccount(app, deps, signIn);
 
   app.get('/papi/me', async (c) => {
     const me = await one(c, 'select portal_me() as me', []);

@@ -14,6 +14,7 @@ summary: Neler yeni, neler değişti.
 - **Müşteri tarafı:** kendi alan adında, şifresiz bağlantıyla giriş; kendi şirketinin paylaşılan talepleri, yeni talep ve yanıt.
 - **Ekip tarafı:** görevi müşteriyle paylaşma, **İç not / Müşteriye yanıt** seçimi, müşterinin yazdıkları için bildirim.
 - **Güvenlik:** ayrı alan adı ve oturum, tablo yetkisi olmayan veritabanı rolü, müşteri bazında ayrım, şirket şalteri.
+- **Giriş yolları şirketin seçimi:** e-posta kodu ve bağlantısı, Google, Microsoft, passkey ve şifre; açık kalma süresi ve yeni giriş bildirimi.
 
 ### Yardım ve destek erişimi
 
