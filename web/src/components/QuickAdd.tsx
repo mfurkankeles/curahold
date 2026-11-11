@@ -138,6 +138,25 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   const many = lines.length > 1;
   const ready = parsed.length > 0 && parsed.every((p) => p.title) && !!board;
 
+  // An open task that looks like this one: said before adding, never in the way.
+  const [similar, setSimilar] = useState<{ id: string; title: string; boardName: string }[]>([]);
+  const firstTitle = !many ? (parsed[0]?.title ?? '') : '';
+  const firstAccount = parsed[0]?.account?.id ?? fixedAccount?.id ?? '';
+  useEffect(() => {
+    if (firstTitle.trim().split(/\s+/).length < 2) return setSimilar([]);
+    let live = true;
+    const id = setTimeout(() => {
+      const p = new URLSearchParams({ title: firstTitle });
+      if (boardId) p.set('boardId', boardId);
+      if (firstAccount) p.set('accountId', firstAccount);
+      void get<{ tasks: { id: string; title: string; boardName: string }[] }>(`/tasks/similar?${p}`).then((r) => live && setSimilar(r.tasks), () => undefined);
+    }, 450);
+    return () => {
+      live = false;
+      clearTimeout(id);
+    };
+  }, [firstTitle, boardId, firstAccount]);
+
   const accept = (item: Pickable) => {
     if (!at) return;
     const insert = `${at.kind}${item.id === meP.id && at.kind === '@' ? (locale === 'tr' ? 'ben' : 'me') : item.name} `;
@@ -373,6 +392,30 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
               </span>
             ))}
             {single.tokens.length === 0 && !single.unknown.length && !fixedAccount && !fixedDue && !fixedPeople.length && <span className="qa__nochips">{t('quick.nothingRead', { account: words.one.toLocaleLowerCase(locale) })}</span>}
+          </div>
+        )}
+
+        {similar.length > 0 && (
+          <div className="qa__similar" role="status">
+            <Icon name="alert" size={15} />
+            <span>
+              {t('quick.similar')}{' '}
+              {similar.map((x, i) => (
+                <span key={x.id}>
+                  {i > 0 && ', '}
+                  <button
+                    type="button"
+                    className="linkbtn"
+                    onClick={() => {
+                      onClose();
+                      setQuery('task', x.id);
+                    }}
+                  >
+                    {x.title}
+                  </button>
+                </span>
+              ))}
+            </span>
           </div>
         )}
 

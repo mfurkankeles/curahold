@@ -33,7 +33,8 @@ async function go(page: Page, path: string) {
   await page.goto(`${s.origin}${path}`, { waitUntil: 'networkidle0' });
   await pause(250);
 }
-const want = (name: string) => !only || name.includes(only);
+const wanted = only.split(',').filter(Boolean);
+const want = (name: string) => !wanted.length || wanted.some((w) => name.includes(w));
 
 for (const mode of ['light', 'dark'] as const) {
   const { page, errors } = await newPage(s.browser, 1440, 900);
@@ -58,11 +59,15 @@ for (const mode of ['light', 'dark'] as const) {
     await page.keyboard.press('Escape');
   }
   if (want('panel')) {
-    await go(page, '/my');
-    await page.click('.tasklist__row');
-    await page.waitForSelector('.panel');
-    await pause(300);
+    const href = await page.$eval('.navlink--board', (a) => a.getAttribute('href'));
+    await go(page, href!);
+    await page.click('.card .card__chips .schip, .card');
+    await page.waitForSelector('.panel .props');
+    await pause(400);
     await shot(page, `look-${mode}-panel`);
+    await page.evaluate(() => document.querySelector('.panel__body')?.scrollTo(0, 99999));
+    await pause(200);
+    await shot(page, `look-${mode}-panel2`);
   }
   if (want('accounts')) {
     await go(page, '/accounts');
@@ -87,6 +92,28 @@ for (const mode of ['light', 'dark'] as const) {
     await pause(200);
     await shot(page, `look-${mode}-create`);
     await page.keyboard.press('Escape');
+  }
+  if (want('pipeline')) {
+    await go(page, '/records/opportunity');
+    await pause(400);
+    await shot(page, `look-${mode}-pipeline`);
+  }
+  if (want('inbox')) {
+    await go(page, '/inbox');
+    await shot(page, `look-${mode}-inbox`);
+  }
+  if (want('reports')) {
+    await go(page, '/reports');
+    await pause(500);
+    await shot(page, `look-${mode}-reports`);
+    await go(page, '/team');
+    await shot(page, `look-${mode}-team`);
+    await page.click('.teamtable .rowlink');
+    await pause(500);
+    await shot(page, `look-${mode}-oneone`);
+    await go(page, '/timeline');
+    await pause(300);
+    await shot(page, `look-${mode}-timeline`);
   }
   if (want('calendar')) {
     await go(page, '/calendar');
@@ -127,6 +154,21 @@ if (want('phone')) {
   await page.type('.qa__input', 'Teklifi gönder yarın @ben');
   await pause(200);
   await shot(page, 'look-phone-quick');
+  await page.keyboard.press('Escape');
+  for (const [name, path] of [['pipeline', '/records/opportunity'], ['inbox', '/inbox'], ['reports', '/reports'], ['team', '/team'], ['timeline', '/timeline']] as const) {
+    await go(page, path);
+    await pause(400);
+    await shot(page, `look-phone-${name}`);
+  }
+  const href = await page.$eval('.navlink--board', (a) => a.getAttribute('href')).catch(() => null);
+  if (href) {
+    await go(page, href);
+    await shot(page, 'look-phone-board');
+    await page.click('.card');
+    await page.waitForSelector('.panel .props').catch(() => undefined);
+    await pause(300);
+    await shot(page, 'look-phone-panel');
+  }
 }
 
 await s.browser.close();

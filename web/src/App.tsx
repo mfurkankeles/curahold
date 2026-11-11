@@ -24,6 +24,10 @@ import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
+import { InboxPage } from './pages/Inbox';
+import { ReportsPage } from './pages/Reports';
+import { TeamPage } from './pages/Team';
+import { TimelinePage } from './pages/Timeline';
 import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
 
 // app.<domain> is the central address: company sign-up lives there.
@@ -221,6 +225,10 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (a) page = <AccountPage id={a.id} key={`${a.id}:${refreshKey}`} />;
   else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={refreshKey} />;
+  else if (path === '/inbox') page = <InboxPage />;
+  else if (path === '/reports') page = <ReportsPage key={refreshKey} />;
+  else if (path === '/team') page = <TeamPage refreshKey={refreshKey} />;
+  else if (path === '/timeline') page = <TimelinePage refreshKey={refreshKey} />;
   else if (path === '/devices') page = <DevicesPage />;
   else if (path === '/connect-ai') page = <ConnectAiPage />;
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;

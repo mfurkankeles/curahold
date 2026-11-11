@@ -1,10 +1,11 @@
 /* Tendwell docs. Same family and colours as the product: the deep "well"
    teal for the frame, paper for the navigation, white for reading. The one
    accent is the rail: the page you are on is marked the way a task is. */
-@font-face { font-family: 'Schibsted Grotesk'; font-weight: 400; font-display: swap; src: url(schibsted-grotesk-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'Schibsted Grotesk'; font-weight: 400; font-display: swap; src: url(schibsted-grotesk-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: 'Schibsted Grotesk'; font-weight: 600; font-display: swap; src: url(schibsted-grotesk-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'Schibsted Grotesk'; font-weight: 600; font-display: swap; src: url(schibsted-grotesk-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
 :root {
   --paper: #f3f5f4; --surface: #fff; --sunk: #e9eeec; --ink: #18282b; --ink-2: #4b5c5f; --ink-3: #6b7e81;
@@ -13,7 +14,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 76px; }
-body { margin: 0; font: 16px/1.65 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: var(--surface); -webkit-font-smoothing: antialiased; }
+body { margin: 0; font: 16px/1.65 'Figtree', ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: var(--surface); -webkit-font-smoothing: antialiased; }
 a { color: var(--tend-ink); text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .skip { position: absolute; left: -999px; }
@@ -104,3 +105,5 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
   .doc h1, .home h1 { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) { .nav { transition: none; } }
+
+h1, h2, h3 { font-family: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif; }

@@ -44,7 +44,7 @@ export function kick(deps: Deps) {
 
 export const DEFAULT_PREFS: NotifyPrefs = {
   channel: 'auto',
-  events: { assigned: true, mentioned: true, comment: true, digest: true, weekly: true, automation: true },
+  events: { assigned: true, mentioned: true, comment: true, following: true, digest: true, weekly: true, automation: true },
   digestHour: 8,
   defaultBoardId: null,
 };
@@ -102,6 +102,8 @@ const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
   comment: 'comment',
+  followed: 'following',
+  unblocked: 'assigned',
   digest: 'digest',
   weekly: 'weekly',
   automation: 'automation',
@@ -174,6 +176,12 @@ export function render(ctx: RenderCtx): ChatMessage {
       return { ...base, title: t('notify.comment', { actor }), body: `${task?.title ?? ''}\n“${data.excerpt ?? ''}”` };
     case 'automation':
       return { ...base, title: t('notify.automation', { rule: data.rule ?? '' }), body: [data.message, task?.title ?? data.account].filter(Boolean).join('\n') };
+    case 'followed':
+      return data.what === 'comment'
+        ? { ...base, title: t('notify.followedComment', { actor }), body: `${task?.title ?? ''}\n“${data.excerpt ?? ''}”` }
+        : { ...base, title: t('notify.followedStatus', { actor, column: data.column ?? '' }), body: task?.title };
+    case 'unblocked':
+      return { ...base, title: t('notify.unblocked', { blocker: data.blocker ?? '' }), body: task?.title };
     case 'digest': {
       const lines: string[] = [];
       const list = (items: any[], total: number, key: MessageKey) => {

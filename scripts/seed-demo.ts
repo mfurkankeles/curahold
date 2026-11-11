@@ -68,10 +68,12 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     await team('Account Management', 'omar', ['ada']);
 
     const cols = defaultColumns(locale);
+    let made = 0;
     const board = async (name: string, visibility: string, teamId: string | null, by: string) => {
       const [b] = await q.query<{ id: string }>(
-        `insert into boards (org_id, team_id, name, visibility, columns, created_by) values ($1, $2, $3, $4, $5, $6) returning id`,
-        [orgId, teamId, name, visibility, JSON.stringify(cols), ids[by]],
+        // A millisecond apart: lists are ordered by when a board was made.
+        `insert into boards (org_id, team_id, name, visibility, columns, created_by, created_at) values ($1, $2, $3, $4, $5, $6, now() + ($7::int * interval '1 millisecond')) returning id`,
+        [orgId, teamId, name, visibility, JSON.stringify(cols), ids[by], made++],
       );
       return b.id;
     };

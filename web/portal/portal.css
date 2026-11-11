@@ -2,9 +2,7 @@
    quiet page of requests and replies, readable on a phone, with one strong
    colour for the one thing to do next. */
 
-@import '@fontsource/schibsted-grotesk/400.css';
-@import '@fontsource/schibsted-grotesk/500.css';
-@import '@fontsource/schibsted-grotesk/600.css';
+@import '../src/fonts.css';
 
 /* Everything hangs off .p-root, so the portal can also sit inside the
    in-browser demo next to the app without either restyling the other. */
@@ -24,7 +22,7 @@
   --r: 10px;
   color-scheme: light;
   min-height: 100vh;
-  font: 15px/1.5 'Schibsted Grotesk', system-ui, sans-serif;
+  font: 15px/1.5 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;

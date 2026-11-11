@@ -8,6 +8,7 @@ import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
 import { defaultColumns } from '../lib/orgs';
 import { body, param, uuid } from '../lib/validate';
+import { taskFieldsSchema } from '../lib/taskFields';
 
 export const boardRoutes = new Hono<AppEnv>();
 
@@ -80,6 +81,17 @@ const createSchema = z.object({
     .array(z.object({ connectionId: uuid, channel: z.string().max(200).nullable(), events: z.array(z.enum(['created', 'done'])).min(1).max(2) }))
     .max(5)
     .optional(),
+  taskFields: taskFieldsSchema.optional(),
+  form: z
+    .object({
+      on: z.boolean(),
+      title: z.string().trim().max(120).optional(),
+      intro: z.string().trim().max(1000).optional(),
+      fields: z.array(z.string().regex(/^(description|account|due|f:[a-z][a-z0-9_]{0,39})$/)).max(24),
+      column: z.string().max(24).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 async function checkNotify(q: Q, list: { connectionId: string }[] | undefined) {
@@ -105,9 +117,9 @@ boardRoutes.post('/boards', async (c) => {
     // see a row inserted by the same statement, so the id is made here.
     const b = { id: crypto.randomUUID() };
     await q.query(
-      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by, notify)
-       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? [])],
+      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by, notify, task_fields, form)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? []), JSON.stringify(input.taskFields ?? []), input.form ? JSON.stringify(input.form) : null],
     );
     for (const m of members) {
       await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [org.id, b.id, m]);
@@ -144,9 +156,10 @@ boardRoutes.patch('/boards/:id', async (c) => {
     }
     await q.query(
       `update boards set name = coalesce($2, name), visibility = $3, team_id = $4,
-              columns = coalesce($5::jsonb, columns), notify = coalesce($6::jsonb, notify)
+              columns = coalesce($5::jsonb, columns), notify = coalesce($6::jsonb, notify),
+              task_fields = coalesce($7::jsonb, task_fields), form = case when $8 then $9::jsonb else form end
         where id = $1`,
-      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null, input.notify ? JSON.stringify(input.notify) : null],
+      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null, input.notify ? JSON.stringify(input.notify) : null, input.taskFields ? JSON.stringify(input.taskFields) : null, input.form !== undefined, input.form ? JSON.stringify(input.form) : null],
     );
     if (input.memberIds) {
       const members = [...new Set(input.memberIds)];

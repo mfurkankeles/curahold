@@ -11,7 +11,10 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { PRIORITIES, type Board, type Column, type Repeat, type Task } from '../../../shared/src/model';
+import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewFilters } from '../../../shared/src/model';
+import { labelOf } from '../../../shared/src/fields';
+import { FilterBar, matchFilters } from '../components/BoardFilters';
+import { RequestForm } from '../components/RequestForm';
 import { ExportMenu } from '../components/Export';
 import { BoardSettings } from '../components/BoardSettings';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
@@ -32,8 +35,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
   const [tasks, setTasks] = useState<Task[] | null>(null);
-  const [mine, setMine] = useState(false);
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ViewFilters>({});
+  const [asking, setAsking] = useState(false);
+  useEffect(() => setFilters({}), [boardId]);
   const [settings, setSettings] = useState(false);
   const [composing, setComposing] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -69,14 +73,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   }, [load, refreshKey]);
 
   const doneKeys = useMemo(() => new Set(board?.columns.filter((c) => c.done).map((c) => c.key)), [board]);
-  const visible = useMemo(() => {
-    const q = search.trim().toLocaleLowerCase();
-    return (tasks ?? []).filter(
-      (x) =>
-        (!mine || x.assigneeIds.includes(me.user.id)) &&
-        (!q || x.title.toLocaleLowerCase().includes(q) || (x.accountName ?? '').toLocaleLowerCase().includes(q)),
-    );
-  }, [tasks, mine, search, me.user.id]);
+  const visible = useMemo(() => (tasks ?? []).filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))), [tasks, filters, me.user.id, doneKeys]);
 
   const move = useCallback(
     async (task: Task, status: string, beforeId: string | null) => {
@@ -111,15 +108,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         </div>
         <div className="topbar__spacer" />
         <div className="toolbar">
-          <input className="input search" type="search" placeholder={t('board.searchPlaceholder')} aria-label={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="seg" role="group">
-            <button aria-pressed={!mine} onClick={() => setMine(false)}>
-              {t('board.filter.everyone')}
-            </button>
-            <button aria-pressed={mine} onClick={() => setMine(true)}>
-              {t('board.filter.mine')}
-            </button>
-          </div>
+          <FilterBar board={board} filters={filters} onChange={setFilters} />
           <div className="seg" role="group">
             <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
               {t('board.view.board')}
@@ -146,10 +135,15 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
               })}
             />
           )}
+          {board.form?.on && canWrite && (
+            <button className="btn" onClick={() => setAsking(true)}>
+              <Icon name="form" size={16} />
+              <span className="hide-phone">{t('boardForm.open')}</span>
+            </button>
+          )}
           {board.canManage && (
-            <button className="btn" onClick={() => setSettings(true)}>
+            <button className="btn btn--icon" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
               <Icon name="sliders" size={16} />
-              {t('board.settings')}
             </button>
           )}
           {canWrite && (
@@ -188,10 +182,22 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       ) : (
         <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} composing={composing} setComposing={setComposing} onAdded={(tk) => setTasks((l) => [...(l ?? []), tk])} />
       )}
+      {tasks !== null && tasks.length > 0 && visible.length === 0 && (
+        <div className="boardhint">
+          <Icon name="filter" size={16} />
+          <span>{t('filters.noneMatch', { n: tasks.length })}</span>
+          <button className="btn btn--small" onClick={() => setFilters({})}>
+            {t('filters.clear')}
+          </button>
+        </div>
+      )}
       {settings && <BoardSettings board={board} onClose={() => setSettings(false)} />}
+      {asking && <RequestForm board={board} onClose={() => setAsking(false)} onSent={() => void load()} />}
     </>
   );
 }
+
+const DONE_SHOWN = 6;
 
 function KanbanView({ board, tasks, doneKeys, onMove, canWrite, composing, setComposing, onAdded }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; composing: string | null; setComposing: (k: string | null) => void; onAdded: (t: Task) => void }) {
   const [active, setActive] = useState<Task | null>(null);
@@ -232,6 +238,11 @@ function KanbanView({ board, tasks, doneKeys, onMove, canWrite, composing, setCo
 function KanbanColumn({ col, tasks, doneKeys, canWrite, composing, onCompose, onComposed, board }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; composing: boolean; onCompose: () => void; onComposed: (t: Task | null) => void; board: Board }) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `col:${col.key}` });
+  // A finished column grows for ever: newest first, the older ones one click away.
+  const finished = doneKeys.has(col.key);
+  const [all, setAll] = useState(false);
+  const ordered = useMemo(() => (finished ? [...tasks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) : tasks), [finished, tasks]);
+  const shown = finished && !all && ordered.length > DONE_SHOWN + 2 ? ordered.slice(0, DONE_SHOWN) : ordered;
   return (
     <section className="column" ref={setNodeRef} data-over={isOver} aria-label={col.name}>
       <div className="column__head">
@@ -240,9 +251,14 @@ function KanbanColumn({ col, tasks, doneKeys, canWrite, composing, onCompose, on
       </div>
       <div className="column__list">
         {tasks.length === 0 && !composing && <div className="column__empty">{t('board.emptyColumn')}</div>}
-        {tasks.map((x) => (
+        {shown.map((x) => (
           <DraggableCard key={x.id} task={x} done={doneKeys.has(x.status)} />
         ))}
+        {finished && ordered.length > DONE_SHOWN + 2 && (
+          <button className="btn btn--quiet btn--small column__more" onClick={() => setAll((v) => !v)}>
+            {all ? t('board.doneLess') : t('board.doneMore', { n: ordered.length - DONE_SHOWN })}
+          </button>
+        )}
         {composing && <ColumnAdd board={board} status={col.key} onDone={onComposed} />}
       </div>
       {canWrite && !composing && (
@@ -287,6 +303,7 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
         <div className="card__title">{task.title}</div>
       </div>
       {task.accountName && <div className="card__account">{task.accountName}</div>}
+      <CardChips task={task} />
       <div className="card__meta">
         <DueLabel due={task.dueDate} done={done} />
         {(task.priority === 'urgent' || task.priority === 'high') && <span className={`prio prio--${task.priority}`}>{t(`task.priority.${task.priority}`)}</span>}
@@ -303,6 +320,33 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
         <Avatars people={task.assigneeIds.map((id) => person(id))} />
       </div>
     </article>
+  );
+}
+
+/** On a card: "waiting" when another task holds it up, and the board's choice fields as coloured chips. */
+function CardChips({ task }: { task: Task }) {
+  const { t, locale } = useI18n();
+  const { boards } = useStore();
+  const defs = boards.find((b) => b.id === task.boardId)?.taskFields ?? [];
+  const chips = defs
+    .filter((f) => f.type === 'select' && task.fields?.[f.key])
+    .slice(0, 2)
+    .map((f) => ({ f, o: f.options?.find((o) => o.key === task.fields![f.key]) }))
+    .filter((x) => x.o);
+  if (!chips.length && !task.blockedBy) return null;
+  return (
+    <div className="card__chips">
+      {!!task.blockedBy && (
+        <span className="schip" data-tone="amber" title={t('task.waitingShort', { n: task.blockedBy })}>
+          <Icon name="hourglass" size={12} /> {t('task.waitingShort', { n: task.blockedBy })}
+        </span>
+      )}
+      {chips.map(({ f, o }) => (
+        <span key={f.key} className="optchip" data-color={o!.color ?? 'stone'}>
+          {labelOf(o!.label, locale)}
+        </span>
+      ))}
+    </div>
   );
 }
 

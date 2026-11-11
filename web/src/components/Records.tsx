@@ -17,6 +17,9 @@ import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
 import { OrgChart, StanceBadge } from './OrgChart';
 import { Avatar, Confirm, Dialog } from './ui';
+import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
+import { Icon } from './icons';
+import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 
 /** The fields worth a column: for contacts the stakeholder ones, otherwise the first few. */
 export function shownFields(type: RecordType, n: number): AccountField[] {
@@ -89,6 +92,26 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   const [owner, setOwner] = useState('');
   const [data, setData] = useState<{ records: AppRecord[]; total: number } | null>(null);
   const [editing, setEditing] = useState<AppRecord | 'new' | null>(null);
+  // Board or table, and which field makes the columns: remembered per kind of record, on this device.
+  const choices = type ? groupChoices(type) : [];
+  const stored = (k: string) => {
+    try {
+      return localStorage.getItem(`tw_records_${k}_${typeKey}`);
+    } catch {
+      return null;
+    }
+  };
+  const [viewPick, setViewPick] = useState<'board' | 'table' | null>(() => stored('view') as 'board' | 'table' | null);
+  const [groupPick, setGroupPick] = useState<string | null>(() => stored('group'));
+  const keep = (k: string, v: string) => {
+    try {
+      localStorage.setItem(`tw_records_${k}_${typeKey}`, v);
+    } catch {
+      /* per-device convenience */
+    }
+  };
+  const view = !choices.length ? 'table' : (viewPick ?? (type?.kind === 'opportunity' ? 'board' : 'table'));
+  const groupKey = choices.some((f) => f.key === groupPick) ? groupPick! : (choices.find((f) => f.key === 'stage') ?? choices[0])?.key ?? '';
   const load = useCallback(async () => {
     const p = new URLSearchParams({ type: typeKey, limit: '500' });
     if (q.trim()) p.set('q', q.trim());
@@ -99,7 +122,12 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     const id = setTimeout(() => void load(), 200);
     return () => clearTimeout(id);
   }, [load]);
-  if (types && !type) return <div className="empty">{t('errors.not_found')}</div>;
+  if (types && !type)
+    return (
+      <div className="page">
+        <EmptyState icon="layout" title={t('errors.not_found')} />
+      </div>
+    );
   const cols = type ? shownFields(type, 4) : [];
   return (
     <>
@@ -129,13 +157,27 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         )}
         {canWrite && type && (
           <button className="btn btn--primary" onClick={() => setEditing('new')}>
+            <Icon name="plus" size={16} />
             {t('records.new', { type: typeLabel(type, locale, false) })}
           </button>
         )}
       </header>
-      <div className="page">
+      <div className={view === 'board' ? 'page page--board' : 'page'}>
         <RecordTabs current={typeKey} types={types} />
         <div className="toolbar" style={{ marginBottom: 12 }}>
+          {choices.length > 0 && (
+            <div className="seg seg--views" role="tablist">
+              <button role="tab" aria-selected={view === 'board'} aria-pressed={view === 'board'} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
+                <Icon name="board" size={15} />
+                {t('board.view.board')}
+              </button>
+              <button role="tab" aria-selected={view === 'table'} aria-pressed={view === 'table'} onClick={() => (setViewPick('table'), keep('view', 'table'))}>
+                <Icon name="list" size={15} />
+                {t('acards.view.table')}
+              </button>
+            </div>
+          )}
+          {view === 'board' && <GroupBy fields={choices} value={groupKey} onChange={(k) => (setGroupPick(k), keep('group', k))} />}
           <input className="input search" type="search" value={q} placeholder={t('records.search')} aria-label={t('records.search')} onChange={(e) => setQ(e.target.value)} />
           <select className="select" value={owner} aria-label={t('accounts.owner')} onChange={(e) => setOwner(e.target.value)}>
             <option value="">{t('accounts.anyOwner')}</option>
@@ -150,9 +192,26 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           </select>
         </div>
         {!data ? (
-          <div className="empty">{t('common.loading')}</div>
+          view === 'board' ? <SkeletonCards columns count={4} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
         ) : data.records.length === 0 ? (
-          <div className="empty">{q || owner ? t('records.noMatch') : t('records.empty')}</div>
+          <div className="sheet">
+            <EmptyState icon={q || owner ? 'search' : type?.kind === 'opportunity' ? 'funnel' : type?.kind === 'contact' ? 'idcard' : 'layout'} title={q || owner ? t('records.noMatch') : t('records.empty')}>
+              {!q && !owner && canWrite && type && (
+                <button className="btn btn--primary" onClick={() => setEditing('new')}>
+                  <Icon name="plus" size={16} />
+                  {t('records.new', { type: typeLabel(type, locale, false) })}
+                </button>
+              )}
+            </EmptyState>
+          </div>
+        ) : view === 'board' && type ? (
+          <RecordBoard
+            type={type}
+            records={data.records}
+            groupKey={groupKey}
+            onOpen={setEditing}
+            onChanged={(r) => setData((d) => (d ? { ...d, records: d.records.map((x) => (x.id === r.id ? r : x)) } : d))}
+          />
         ) : (
           <div className="table-wrap">
             <table className="table">

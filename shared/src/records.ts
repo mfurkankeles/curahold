@@ -2,7 +2,7 @@
 // else a company tracks (risks, renewals, cases…). Built-in kinds come with
 // fields Tendwell knows how to use; anything else is the company's own.
 import type { Locale } from './i18n';
-import type { AccountField, Localized } from './model';
+import type { AccountField, FieldOption, Localized } from './model';
 
 export const RECORD_KINDS = ['contact', 'opportunity', 'ticket', 'custom'] as const;
 export type RecordKind = (typeof RECORD_KINDS)[number];
@@ -106,6 +106,20 @@ export const OPPORTUNITY_STATUS = [
   { key: 'lost', label: L('Lost', 'Kaybedildi') },
 ];
 
+/** Stages a deal moves through until it is won or lost; a company renames or replaces them, a CRM brings its own. */
+export const OPPORTUNITY_STAGES: FieldOption[] = [
+  { key: 'discovery', label: L('Discovery', 'Keşif'), color: 'sky' },
+  { key: 'proposal', label: L('Proposal', 'Teklif'), color: 'honey' },
+  { key: 'negotiation', label: L('Negotiation', 'Pazarlık'), color: 'plum' },
+  { key: 'commit', label: L('Commit', 'Söz alındı'), color: 'sea' },
+];
+/** What the deal is: a new customer, more from an existing one, or a renewal. */
+export const OPPORTUNITY_KINDS: FieldOption[] = [
+  { key: 'new', label: L('New business', 'Yeni iş'), color: 'sky' },
+  { key: 'expansion', label: L('Expansion', 'Genişleme'), color: 'leaf' },
+  { key: 'renewal', label: L('Renewal', 'Yenileme'), color: 'stone' },
+];
+
 export const BUILTIN_TYPES: Record<Exclude<RecordKind, 'custom'>, { key: string; name: RecordType['name']; fields: AccountField[] }> = {
   contact: {
     key: 'contact',
@@ -140,8 +154,9 @@ export const BUILTIN_TYPES: Record<Exclude<RecordKind, 'custom'>, { key: string;
     fields: [
       { key: 'amount', label: L('Amount', 'Tutar'), type: 'money' },
       { key: 'close_date', label: L('Close date', 'Kapanış tarihi'), type: 'date' },
-      { key: 'stage', label: L('Stage', 'Aşama'), type: 'select', options: [] },
+      { key: 'stage', label: L('Stage', 'Aşama'), type: 'select', options: OPPORTUNITY_STAGES },
       { key: 'status', label: L('Status', 'Durum'), type: 'select', options: OPPORTUNITY_STATUS },
+      { key: 'kind', label: L('Type', 'Tür'), type: 'select', options: OPPORTUNITY_KINDS },
     ],
   },
 };

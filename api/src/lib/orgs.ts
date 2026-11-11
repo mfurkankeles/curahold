@@ -82,12 +82,13 @@ export async function createOrg(db: Db, input: NewOrg) {
     }
     const boards: Record<string, string> = { ...(input.boardMap ?? {}) };
     if (!input.boardMap) {
-      for (const b of template.boards) {
+      for (const [i, b] of template.boards.entries()) {
         const id = crypto.randomUUID();
         const columns = b.columns.map((c) => ({ key: c.key, name: pick(c.name, input.locale), done: c.done }));
         await q.query(
-          `insert into boards (id, org_id, name, visibility, columns, created_by) values ($1, $2, $3, 'org', $4, $5)`,
-          [id, org.id, pick(b.name, input.locale), JSON.stringify(columns), admin.id],
+          // A millisecond apart, so lists (ordered by when a board was made) keep the template's order.
+          `insert into boards (id, org_id, name, visibility, columns, created_by, created_at) values ($1, $2, $3, 'org', $4, $5, now() + ($6::int * interval '1 millisecond'))`,
+          [id, org.id, pick(b.name, input.locale), JSON.stringify(columns), admin.id, i],
         );
         boards[b.key] = id;
       }

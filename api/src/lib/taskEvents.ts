@@ -25,14 +25,41 @@ export async function onTaskCreated(q: Q, orgId: string, actorId: string | null,
   await enqueue(q, list);
 }
 
+/** People who follow a task (read inside the company, whatever the reader's own rows). */
+async function watchersOf(q: Q, taskId: string): Promise<string[]> {
+  const [{ ids }] = await q.query<{ ids: string[] }>('select app_task_watchers($1) as ids', [taskId]);
+  return ids ?? [];
+}
+
 export async function onTaskUpdated(q: Q, orgId: string, actorId: string, before: Row, after: Row, board: Row) {
   const had = new Set<string>(before.assignee_ids ?? []);
   const list: NewNotification[] = (after.assignee_ids ?? [])
     .filter((u: string) => !had.has(u))
     .map((u: string) => ({ orgId, userId: u, kind: 'assigned', taskId: after.id, actorId }));
   const cols = board.columns as Column[];
-  if (!after.parent_id && before.status !== after.status && isDone(cols, after.status) && !isDone(cols, before.status)) {
-    list.push(...boardPosts(orgId, board, 'done', after.id, actorId));
+  const finished = before.status !== after.status && isDone(cols, after.status) && !isDone(cols, before.status);
+  if (!after.parent_id && finished) list.push(...boardPosts(orgId, board, 'done', after.id, actorId));
+  if (before.status !== after.status) {
+    // Followers hear where it went (assignees moved it themselves, or were given it above).
+    const column = cols.find((c) => c.key === after.status)?.name ?? after.status;
+    const told = new Set<string>([actorId, ...list.map((n) => n.userId).filter(Boolean)] as string[]);
+    for (const u of await watchersOf(q, after.id)) {
+      if (!told.has(u)) list.push({ orgId, userId: u, kind: 'followed', taskId: after.id, actorId, data: { what: 'status', column } });
+    }
+  }
+  if (finished) {
+    // What was waiting for this task can start now: its people are told.
+    const waiting = await q.query(
+      `select t.id, t.assignee_ids from task_links l join tasks t on t.id = l.to_id join boards b on b.id = t.board_id
+        where l.from_id = $1 and l.kind = 'blocks' and t.archived_at is null
+          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`,
+      [after.id],
+    );
+    for (const w of waiting) {
+      for (const u of (w.assignee_ids ?? []) as string[]) {
+        if (u !== actorId) list.push({ orgId, userId: u, kind: 'unblocked', taskId: w.id, actorId, data: { blocker: after.title } });
+      }
+    }
   }
   await enqueue(q, list);
 }
@@ -42,8 +69,12 @@ export async function onComment(q: Q, orgId: string, actorId: string, task: Row,
   const mentioned = new Set(mentions);
   const list: NewNotification[] = [...mentioned].map((u) => ({ orgId, userId: u, kind: 'mentioned', taskId: task.id, actorId, data: { excerpt } }));
   const [{ muted }] = await q.query<{ muted: string[] }>('select app_task_muted($1) as muted', [task.id]);
-  for (const u of (task.assignee_ids ?? []) as string[]) {
+  const assignees = new Set<string>((task.assignee_ids ?? []) as string[]);
+  for (const u of assignees) {
     if (!mentioned.has(u) && !(muted ?? []).includes(u)) list.push({ orgId, userId: u, kind: 'comment', taskId: task.id, actorId, data: { excerpt } });
+  }
+  for (const u of await watchersOf(q, task.id)) {
+    if (u !== actorId && !mentioned.has(u) && !assignees.has(u) && !(muted ?? []).includes(u)) list.push({ orgId, userId: u, kind: 'followed', taskId: task.id, actorId, data: { what: 'comment', excerpt } });
   }
   await enqueue(q, list);
 }

@@ -8,6 +8,8 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, PeoplePicker } from './ui';
+import { BoardFormEditor, TaskFieldsEditor } from './BoardFields';
+import type { BoardForm, TaskField } from '../../../shared/src/model';
 
 const slug = (s: string, taken: Set<string>) => {
   let base = s.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20) || 'col';
@@ -30,12 +32,15 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
   const [busy, setBusy] = useState(false);
   const [archive, setArchive] = useState(false);
   const [notify, setNotify] = useState<BoardNotify[]>(board?.notify ?? []);
+  const [taskFields, setTaskFields] = useState<TaskField[]>(board?.taskFields ?? []);
+  const [form, setForm] = useState<BoardForm | null>(board?.form ?? null);
 
   async function save() {
     setBusy(true);
     setError(null);
     try {
-      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), ...(board ? { notify } : {}) };
+      const cleanFields = taskFields.filter((f) => (f.label.en ?? f.label.tr ?? '').trim()).map((f) => (f.type === 'select' ? f : { ...f, options: undefined }));
+      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), ...(board ? { notify, taskFields: cleanFields, form: form ? { ...form, fields: form.fields.filter((k) => !k.startsWith('f:') || cleanFields.some((f) => `f:${f.key}` === k)) } : null } : {}) };
       if (board) {
         await patch(`/boards/${board.id}`, payload);
         await reloadBoards();
@@ -134,6 +139,13 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         </div>
       )}
       {board && <ChannelPosts value={notify} onChange={setNotify} />}
+      {board && (
+        <details className="bmore" open={taskFields.length > 0 || !!form?.on}>
+          <summary>{t('boardFields.more')}</summary>
+          <TaskFieldsEditor value={taskFields} onChange={setTaskFields} />
+          <BoardFormEditor value={form} fields={taskFields} columns={columns ?? board.columns} onChange={setForm} />
+        </details>
+      )}
       {board && can('org.manage') && <BoardPortalSettings board={board} />}
       {archive && board && (
         <Confirm

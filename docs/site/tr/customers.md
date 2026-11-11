@@ -46,3 +46,7 @@ Müşteri ve kayıt listelerini o an gördüğün filtreyle Excel ya da CSV olar
 ## Toplu değişiklik
 
 Listede birden çok müşteri seç: sahibini, ekibini ya da bir alanı birlikte değiştir. Değişiklik 30 dakika boyunca geri alınabilir.
+
+## Planlar
+
+Bir **plan**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: onboarding, yenileme hazırlığı, QBR. Yönetici planı bir kez yazar (görev başlığı, başlangıçtan kaç gün sonra, kime); müşteri sayfasındaki **Plan uygula** ile başlangıç gününü seçip uygularsın. Başlıkta `{account_name}` yazan yere müşterinin adı gelir.

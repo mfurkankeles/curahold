@@ -78,10 +78,25 @@ if (ok && !process.env.QUICK) {
     }
     throw new Error(`no ${sel} ${text ?? ''}`);
   };
-  await click('.navlink', 'Yenilemeler');
+  await click('.navlink--board', 'Yenilemeler');
   await frame!.waitForFunction(() => document.querySelectorAll('.card, .task, [data-task]').length > 0, { timeout: 10000 }).catch(() => undefined);
   await page.screenshot({ path: join(SCREENS, 'demo-board.png') });
-  await click('.navlink', 'Müşteriler');
+  // The newer pages: the pipeline, the inbox, reports, the team and the timeline.
+  await click('.navlink', 'Fırsatlar');
+  await frame!.waitForSelector('.dealcard', { timeout: 10000 }).catch(() => errors.push('the pipeline shows no deals'));
+  await page.screenshot({ path: join(SCREENS, 'demo-pipeline.png') });
+  await click('.navlink', 'Raporlar');
+  await frame!.waitForSelector('.chart__col', { timeout: 10000 }).catch(() => errors.push('reports show no chart'));
+  await new Promise((r) => setTimeout(r, 400));
+  await page.screenshot({ path: join(SCREENS, 'demo-reports.png') });
+  await click('.navlink', 'Ekip');
+  await frame!.waitForSelector('.teamtable .rowlink', { timeout: 10000 }).catch(() => errors.push('the team page lists nobody'));
+  await click('.navlink', 'Zaman çizelgesi');
+  await frame!.waitForSelector('.gantt__bar', { timeout: 10000 }).catch(() => errors.push('the timeline is empty'));
+  await page.screenshot({ path: join(SCREENS, 'demo-timeline.png') });
+  await click('.navlink', 'Gelen kutusu');
+  await frame!.waitForSelector('.inbox__item, .emptystate', { timeout: 10000 }).catch(() => errors.push('the inbox did not open'));
+  await click('.navlink', 'Tüm müşteriler');
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: join(SCREENS, 'demo-accounts.png') });
   // A customer: the timeline and the score's reasons.

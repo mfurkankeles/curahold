@@ -34,6 +34,9 @@ export const toTask = (r: Row): Task => ({
   portalShared: !!r.portal_shared,
   portalAuthorId: r.portal_author_id ?? null,
   ...(r.portal_author_name !== undefined ? { portalAuthorName: r.portal_author_name ?? null } : {}),
+  fields: r.fields ?? {},
+  startDate: day(r.start_date),
+  ...(r.blocked_by != null ? { blockedBy: Number(r.blocked_by) } : {}),
 });
 
 export const toBoard = (r: Row, canManage: boolean): Board => ({
@@ -47,6 +50,8 @@ export const toBoard = (r: Row, canManage: boolean): Board => ({
   canManage,
   notify: r.notify ?? [],
   portal: r.portal ?? null,
+  taskFields: r.task_fields ?? [],
+  form: r.form ?? null,
 });
 
 export const toComment = (r: Row): Comment => ({

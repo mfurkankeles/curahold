@@ -46,3 +46,7 @@ Download customer and record lists, with the filter you have on, as Excel or CSV
 ## Changing many at once
 
 Select several customers in the list and change their owner, team or a field together. The change can be undone for 30 minutes.
+
+## Plans
+
+A **plan** is a set of dated tasks put on a customer in one click: onboarding, renewal prep, a QBR. An admin writes it once (task title, how many days after the start, for whom); on a customer's page **Apply a plan** lets you pick the start day and add them all. `{account_name}` in a title becomes the customer's name.

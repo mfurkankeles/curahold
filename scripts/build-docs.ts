@@ -204,10 +204,15 @@ function build() {
   );
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.css'), join(OUT, 'assets', 'docs.css'));
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.js'), join(OUT, 'assets', 'docs.js'));
-  const fonts = join(ROOT, 'node_modules', '@fontsource', 'schibsted-grotesk', 'files');
-  for (const f of ['latin-400', 'latin-600', 'latin-ext-400', 'latin-ext-600']) {
-    const name = `schibsted-grotesk-${f}-normal.woff2`;
-    if (existsSync(join(fonts, name))) copyFileSync(join(fonts, name), join(OUT, 'assets', name));
+  // The same open fonts as the app (SIL OFL), served from here.
+  for (const [pkg, files] of [
+    ['figtree', ['figtree-latin-wght-normal.woff2', 'figtree-latin-ext-wght-normal.woff2']],
+    ['bricolage-grotesque', ['bricolage-grotesque-latin-wght-normal.woff2', 'bricolage-grotesque-latin-ext-wght-normal.woff2']],
+  ] as const) {
+    for (const name of files) {
+      const from = join(ROOT, 'node_modules', '@fontsource-variable', pkg, 'files', name);
+      if (existsSync(from)) copyFileSync(from, join(OUT, 'assets', name));
+    }
   }
 
   // For AI assistants: a map of the docs, and everything in one file.

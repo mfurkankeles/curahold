@@ -8,6 +8,18 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### CRM, reports and more on tasks
+
+- **Pipeline:** deals in columns by stage; drag and drop, Won/Lost, a weighted forecast. Deal types: new business, expansion, renewal.
+- **Reports:** open, overdue and finished work, the share on time, the weekly flow, load by person and board, health, renewals, pipeline by stage.
+- **Team and 1:1s:** load per person and a one-person view to prepare from.
+- **Timeline (Gantt):** bars from start to due date, by board, person or customer.
+- **Inbox:** every notice on one page, with filters.
+- **Tasks:** a board's own fields and must-fill fields, following, "waits for" links, start dates, time spent, saved checklists, task history, a look-alike warning.
+- **Boards:** filters, saved and shared views, a request form.
+- **Customers:** plans applied in one click (onboarding, renewal prep), total time per customer.
+- **Menu and type:** a grouped menu on the left; new typefaces (Figtree and Bricolage Grotesque, open licence).
+
 ### Easier every day
 
 - **Quick add:** write a task the way you would say it; "friday", "next week", "nov 15", @person, #customer, !priority and "every monday" are read. Several lines make several tasks. Press N, use + New, or the + at the bottom on a phone.

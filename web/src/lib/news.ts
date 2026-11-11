@@ -12,6 +12,25 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-crm',
+    date: '2026-11-12',
+    title: { tr: 'Satış hattı, raporlar, ekip ve zaman çizelgesi', en: 'Pipeline, reports, team and a timeline' },
+    body: {
+      tr: 'Fırsatları aşamalar arasında sürükle; Raporlar’da işlerin ve müşterilerin durumunu, Ekip’te 1:1 hazırlığını, Zaman çizelgesi’nde haftaları gör. Sol menü artık bölümlere ayrılı.',
+      en: 'Drag deals between stages; see where work and customers stand in Reports, prepare a 1:1 in Team, and see the weeks ahead in Timeline. The menu on the left now has sections.',
+    },
+    action: { kind: 'go', to: '/reports', label: { tr: 'Raporlara git', en: 'Go to reports' } },
+  },
+  {
+    id: '2026-11-tasks-plus',
+    date: '2026-11-12',
+    title: { tr: 'Görevlerde daha fazlası', en: 'More on every task' },
+    body: {
+      tr: 'Panoya özel alanlar, takip etme, “şunu bekliyor” bağlantıları, süre kaydı, kontrol listeleri, görev geçmişi; panolarda filtreler ve kayıtlı görünümler; müşteriye tek tıkla plan.',
+      en: 'A board’s own fields, following, “waits for” links, time spent, checklists and task history; filters and saved views on boards; a plan put on a customer in one click.',
+    },
+  },
+  {
     id: '2026-11-quick-add',
     date: '2026-11-11',
     title: { tr: 'Görevi konuşur gibi yaz', en: 'Write a task the way you would say it' },

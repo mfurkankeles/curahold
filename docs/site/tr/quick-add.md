@@ -1,7 +1,7 @@
 ---
 title: Hızlı ekleme ve kısayollar
 section: help
-order: 3
+order: 3.5
 summary: Görevi konuşur gibi yaz; tarih, kişi, müşteri, öncelik ve tekrar kendiliğinden dolsun. Klavye kısayolları ve telefon.
 ---
 # Hızlı ekleme ve kısayollar

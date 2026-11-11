@@ -12,8 +12,10 @@ import { kickSync, queueSync, taskKeys } from '../lib/records';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail, HttpError } from '../lib/errors';
-import { day, toComment, toFile, toTask } from '../lib/mappers';
+import { day, iso, toComment, toFile, toTask } from '../lib/mappers';
 import { body, isoDate, param, uuid } from '../lib/validate';
+import { addEvent, recordChanges } from '../lib/history';
+import { cleanTaskFields, missingForDone } from '../lib/taskFields';
 import { loadBoard } from './boards';
 
 export const taskRoutes = new Hono<AppEnv>();
@@ -25,7 +27,10 @@ const COUNTS = `
        and exists (select 1 from jsonb_array_elements(b.columns) col
                    where col->>'key' = s.status and (col->>'done')::boolean)) as subtask_done,
   (select count(*) from comments cm where cm.task_id = t.id) as comment_count,
-  (select ac.name from accounts ac where ac.id = t.account_id) as account_name`;
+  (select ac.name from accounts ac where ac.id = t.account_id) as account_name,
+  (select count(*) from task_links l join tasks bt on bt.id = l.from_id join boards bb on bb.id = bt.board_id
+     where l.to_id = t.id and l.kind = 'blocks' and bt.archived_at is null
+       and not exists (select 1 from jsonb_array_elements(bb.columns) col where col->>'key' = bt.status and (col->>'done')::boolean)) as blocked_by`;
 
 async function loadTask(q: Q, id: string): Promise<Row> {
   const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
@@ -66,12 +71,16 @@ taskRoutes.get('/boards/:id/tasks', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
-// Across every board the person can see: "My tasks" and the calendar.
+// Across every board the person can see: "My tasks", the calendar, the timeline, a colleague's work.
 taskRoutes.get('/tasks', async (c) => {
   const auth = c.get('auth');
-  const mine = c.req.query('assignee') === 'me';
+  const who = c.req.query('assignee');
+  const assignee = who === 'me' ? auth.userId : who && uuid.safeParse(who).success ? who : null;
   const from = c.req.query('from');
   const to = c.req.query('to');
+  // span=1: everything whose bar (start → due) touches the window, not only what is due inside it.
+  const span = c.req.query('span') === '1';
+  const board = c.req.query('board');
   if ((from && !isoDate.safeParse(from).success) || (to && !isoDate.safeParse(to).success)) {
     fail('validation', { fields: 'from, to' });
   }
@@ -81,10 +90,12 @@ taskRoutes.get('/tasks', async (c) => {
         where t.archived_at is null and b.archived_at is null
           and ($1::uuid is null or $1::uuid = any(t.assignee_ids))
           and ($2::date is null or t.due_date >= $2::date)
-          and ($3::date is null or t.due_date <= $3::date)
+          and ($3::date is null or (case when $4 then coalesce(t.start_date, t.due_date) else t.due_date end) <= $3::date)
+          and ($5::uuid is null or t.board_id = $5::uuid)
+          and (not $4 or t.parent_id is null)
         order by t.due_date nulls last, t.position
         limit 2000`,
-      [mine ? auth.userId : null, from ?? null, to ?? null],
+      [assignee, from ?? null, to ?? null, span, board && uuid.safeParse(board).success ? board : null],
     ),
   );
   return c.json({ tasks: rows.map(toTask) });
@@ -116,7 +127,25 @@ const fields = {
   priority: z.enum(['low', 'normal', 'high', 'urgent']),
   position: z.number().finite(),
   repeat: z.object({ every: z.number().int().min(1).max(365), unit: z.enum(['day', 'week', 'month']), from: z.enum(['due', 'done']) }).nullable(),
+  fields: z.record(z.string().max(40), z.unknown()),
+  startDate: isoDate.nullable(),
 };
+
+/** A start after the due date is a typo, not a plan. */
+function checkDates(start: string | null | undefined, due: string | null | undefined) {
+  if (start && due && start > due) fail('validation', { fields: 'startDate' }, { fields: ['startDate'] });
+}
+
+/** The fields that block finishing, said in a way the person can act on. */
+function requireForDone(board: Row, values: Record<string, unknown> | null | undefined, locale: string) {
+  const missing = missingForDone(board.task_fields ?? [], values);
+  if (!missing.length) return;
+  const names = missing.map((k) => {
+    const def = (board.task_fields ?? []).find((f: { key: string }) => f.key === k);
+    return def?.label?.[locale] ?? def?.label?.en ?? def?.label?.tr ?? k;
+  });
+  fail('required_fields', { fields: names.join(', ') }, { fields: missing.map((k) => `fields.${k}`) });
+}
 
 /** "Today" where the company is — repeating tasks count from it. */
 const todayOf = (c: { get: (k: any) => any }) => localDate(nowOf(c.get('deps')), c.get('org').timezone || 'UTC');
@@ -137,15 +166,20 @@ taskRoutes.post('/tasks', async (c) => {
       priority: fields.priority.optional(),
       position: fields.position.optional(),
       repeat: fields.repeat.optional(),
+      fields: fields.fields.optional(),
+      startDate: fields.startDate.optional(),
     }),
   );
   const auth = c.get('auth');
   const org = c.get('org');
+  checkDates(input.startDate, input.dueDate);
   const task = await run(c, async (q) => {
     const board = await loadBoard(q, input.boardId);
     const columns = board.columns as Column[];
     const status = input.status ?? columns[0].key;
     checkStatus(columns, status);
+    const values = input.fields ? await cleanTaskFields(q, board.task_fields ?? [], input.fields, org.locale) : {};
+    if (isDone(columns, status) && !input.parentId) requireForDone(board, values, auth.locale ?? org.locale);
     if (input.parentId) {
       const parent = await loadTask(q, input.parentId);
       if (parent.board_id !== input.boardId || parent.parent_id) fail('validation', { fields: 'parentId' });
@@ -162,8 +196,8 @@ taskRoutes.post('/tasks', async (c) => {
     }
     const [t] = await q.query(
       `insert into tasks (org_id, board_id, parent_id, title, description, status, assignee_ids,
-                          account_id, due_date, priority, position, created_by, updated_by, repeat)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $13)
+                          account_id, due_date, priority, position, created_by, updated_by, repeat, fields, start_date)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $13, $14, $15)
        returning *, (select name from accounts a where a.id = account_id) as account_name`,
       [
         org.id,
@@ -179,9 +213,12 @@ taskRoutes.post('/tasks', async (c) => {
         position,
         auth.userId,
         input.repeat && !input.parentId ? JSON.stringify(input.repeat) : null,
+        JSON.stringify(values),
+        input.startDate ?? null,
       ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.created', entity: 'task', entityId: t.id });
+    if (!t.parent_id) await addEvent(q, org.id, t.id, auth.userId, 'created');
     await onTaskCreated(q, org.id, auth.userId, t, board);
     if (!t.parent_id) await queueSync(q, org.id, 'task', [t.id], null, { created: true, boardId: t.board_id });
     return t;
@@ -189,6 +226,50 @@ taskRoutes.post('/tasks', async (c) => {
   kick(c.get('deps'));
   kickSync(c.get('deps'), org.id);
   return c.json({ task: toTask(task) }, 201);
+});
+
+// ----------------------------------------------------------- look-alikes
+
+const words = (s: string) =>
+  s
+    .toLocaleLowerCase('tr')
+    .replace(/ı/g, 'i')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3);
+
+/** Open tasks that look like the one about to be added (same words, same customer or board). */
+taskRoutes.get('/tasks/similar', async (c) => {
+  const title = (c.req.query('title') ?? '').slice(0, 300);
+  const boardId = c.req.query('boardId');
+  const accountId = c.req.query('accountId');
+  const mine = words(title);
+  if (mine.length < 2) return c.json({ tasks: [] });
+  const rows = await run(c, (q) =>
+    q.query(
+      `select t.id, t.title, t.board_id, t.due_date, t.assignee_ids, b.name as board_name from tasks t join boards b on b.id = t.board_id
+        where t.archived_at is null and t.parent_id is null and b.archived_at is null
+          and ($1::uuid is null or t.board_id = $1::uuid or t.account_id = $2::uuid)
+          and ($2::uuid is null or t.account_id = $2::uuid or t.board_id = $1::uuid)
+          and t.created_at > now() - interval '180 days'
+          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+          and lower(t.title) like any($3::text[])
+        order by t.created_at desc limit 50`,
+      [uuid.safeParse(boardId).success ? boardId : null, uuid.safeParse(accountId).success ? accountId : null, mine.map((w) => `%${w}%`)],
+    ),
+  );
+  const a = new Set(mine);
+  const scored = rows
+    .map((r) => {
+      const b = new Set(words(r.title));
+      const both = [...a].filter((w) => b.has(w)).length;
+      return { r, score: both / new Set([...a, ...b]).size };
+    })
+    .filter((x) => x.score >= 0.5)
+    .sort((x, y) => y.score - x.score)
+    .slice(0, 3);
+  return c.json({ tasks: scored.map(({ r }) => ({ id: r.id, title: r.title, boardId: r.board_id, boardName: r.board_name, dueDate: day(r.due_date), assigneeIds: r.assignee_ids ?? [] })) });
 });
 
 taskRoutes.get('/tasks/:id', async (c) => {
@@ -209,7 +290,21 @@ taskRoutes.get('/tasks/:id', async (c) => {
     );
     const files = await q.query('select * from files where task_id = $1 order by created_at', [id]);
     const [mute] = await q.query('select 1 from task_mutes where task_id = $1', [id]);
-    return { t: counted ?? t, subtasks, comments, files, muted: !!mute };
+    const events = await q.query('select * from task_events where task_id = $1 order by created_at desc limit 200', [id]);
+    const watchers = await q.query('select user_id from task_watchers where task_id = $1 order by created_at', [id]);
+    // Both directions of every link, seen from this task; tasks on boards the person cannot open are left out.
+    const links = await q.query(
+      `select o.id, o.title, o.board_id, b.name as board_name, l.kind, (l.from_id = $1) as outgoing,
+              exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = o.status and (col->>'done')::boolean) as done
+         from task_links l
+         join tasks o on o.id = case when l.from_id = $1 then l.to_id else l.from_id end
+         join boards b on b.id = o.board_id
+        where (l.from_id = $1 or l.to_id = $1) and o.archived_at is null
+        order by l.created_at`,
+      [id],
+    );
+    const time = await q.query('select * from time_entries where task_id = $1 order by day desc, created_at desc limit 200', [id]);
+    return { t: counted ?? t, subtasks, comments, files, muted: !!mute, events, watchers, links, time };
   });
   const out: TaskDetail = {
     ...toTask(detail.t),
@@ -217,6 +312,20 @@ taskRoutes.get('/tasks/:id', async (c) => {
     comments: detail.comments.map(toComment),
     files: detail.files.map(toFile),
     muted: detail.muted,
+    events: detail.events.map((e) => ({ id: e.id, actorId: e.actor_id ?? null, kind: e.kind, data: e.data ?? {}, createdAt: iso(e.created_at)! })),
+    watchers: detail.watchers.map((w) => w.user_id),
+    links: detail.links.map((l) => ({
+      taskId: l.id,
+      title: l.title,
+      boardId: l.board_id,
+      boardName: l.board_name,
+      kind: l.kind === 'relates' ? 'relates' : l.outgoing ? 'blocks' : 'blocked_by',
+      done: !!l.done,
+    })),
+    time: {
+      total: detail.time.reduce((n, e) => n + Number(e.minutes), 0),
+      entries: detail.time.map((e) => ({ id: e.id, userId: e.user_id, minutes: Number(e.minutes), day: day(e.day)!, note: e.note ?? '', createdAt: iso(e.created_at)! })),
+    },
   };
   return c.json({ task: out });
 });
@@ -232,6 +341,8 @@ const patchSchema = z.object({
   priority: fields.priority.optional(),
   position: fields.position.optional(),
   repeat: fields.repeat.optional(),
+  fields: fields.fields.optional(),
+  startDate: fields.startDate.optional(),
 });
 
 // Optimistic concurrency: the write only lands if nobody saved the task
@@ -251,6 +362,10 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     if (input.status !== undefined) checkStatus(board.columns, input.status);
     if (input.assigneeIds !== undefined) await checkAssignees(q, input.assigneeIds);
     if (input.accountId !== undefined) await checkAccount(q, input.accountId);
+    checkDates(input.startDate !== undefined ? input.startDate : day(t.start_date), input.dueDate !== undefined ? input.dueDate : day(t.due_date));
+    const values = input.fields ? { ...(t.fields ?? {}), ...(await cleanTaskFields(q, board.task_fields ?? [], input.fields, org.locale)) } : (t.fields ?? {});
+    const nextStatus = input.status ?? t.status;
+    if (!t.parent_id && isDone(board.columns, nextStatus) && (!isDone(board.columns, t.status) || input.fields)) requireForDone(board, values, auth.locale ?? org.locale);
     const sets: string[] = [];
     const vals: unknown[] = [];
     const set = (col: string, v: unknown) => {
@@ -266,6 +381,8 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     if (input.priority !== undefined) set('priority', input.priority);
     if (input.position !== undefined) set('position', input.position);
     if (input.repeat !== undefined) set('repeat', input.repeat && !t.parent_id ? JSON.stringify(input.repeat) : null);
+    if (input.fields) set('fields', JSON.stringify(values));
+    if (input.startDate !== undefined) set('start_date', input.startDate);
     set('updated_by', auth.userId);
     vals.push(id, input.baseVersion);
     const [u] = await q.query(
@@ -275,6 +392,7 @@ taskRoutes.patch('/tasks/:id', async (c) => {
       vals,
     );
     if (!u) return { conflict: await loadTask(q, id) };
+    if (!u.parent_id) await recordChanges(q, org.id, auth.userId, t, u);
     await onTaskUpdated(q, org.id, auth.userId, t, u, board);
     let next: Row | null = null;
     if (u.repeat && isDone(board.columns, u.status) && !isDone(board.columns, t.status)) {
@@ -295,6 +413,153 @@ taskRoutes.patch('/tasks/:id', async (c) => {
   kick(deps);
   kickSync(deps, org.id);
   return c.json({ task: toTask(result.task), ...(result.next ? { next: toTask(result.next) } : {}) });
+});
+
+// ------------------------------------------------------------------ follow
+
+taskRoutes.put('/tasks/:id/watch', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  await run(c, async (q) => {
+    await loadTask(q, id);
+    await q.query('insert into task_watchers (org_id, task_id, user_id) values ($1, $2, $3) on conflict do nothing', [org.id, id, auth.userId]);
+  });
+  return c.json({ watching: true });
+});
+
+taskRoutes.delete('/tasks/:id/watch', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  await run(c, (q) => q.query('delete from task_watchers where task_id = $1 and user_id = $2', [id, auth.userId]));
+  return c.json({ watching: false });
+});
+
+// ------------------------------------------------------------------- links
+
+const linkInput = z.object({ otherId: uuid, kind: z.enum(['blocks', 'blocked_by', 'relates']) });
+
+/** "This task waits for that one" is stored as "that one blocks this one". */
+const orient = (id: string, other: string, kind: 'blocks' | 'blocked_by' | 'relates') =>
+  kind === 'blocked_by' ? { from: other, to: id, kind: 'blocks' } : kind === 'relates' ? { from: id < other ? id : other, to: id < other ? other : id, kind: 'relates' } : { from: id, to: other, kind: 'blocks' };
+
+taskRoutes.post('/tasks/:id/links', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, linkInput);
+  const auth = c.get('auth');
+  const org = c.get('org');
+  if (input.otherId === id) fail('link_loop');
+  await run(c, async (q) => {
+    const t = await loadTask(q, id);
+    const o = await loadTask(q, input.otherId);
+    const l = orient(id, input.otherId, input.kind);
+    if (l.kind === 'blocks') {
+      // Waiting in a circle would mean nothing can start.
+      const [loop] = await q.query(
+        `with recursive chain(id) as (select to_id from task_links where from_id = $1 and kind = 'blocks'
+           union select l.to_id from task_links l join chain on l.from_id = chain.id where l.kind = 'blocks')
+         select 1 from chain where id = $2 limit 1`,
+        [l.to, l.from],
+      );
+      if (loop) fail('link_loop');
+    }
+    await q.query('insert into task_links (org_id, from_id, to_id, kind, created_by) values ($1, $2, $3, $4, $5) on conflict do nothing', [org.id, l.from, l.to, l.kind, auth.userId]);
+    await addEvent(q, org.id, t.id, auth.userId, 'linked', { kind: input.kind, taskId: o.id, title: o.title });
+    const back = input.kind === 'blocks' ? 'blocked_by' : input.kind === 'blocked_by' ? 'blocks' : 'relates';
+    await addEvent(q, org.id, o.id, auth.userId, 'linked', { kind: back, taskId: t.id, title: t.title });
+  });
+  return c.json({ ok: true }, 201);
+});
+
+taskRoutes.delete('/tasks/:id/links/:other', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const other = param(c, 'other');
+  const kind = z.enum(['blocks', 'blocked_by', 'relates']).safeParse(c.req.query('kind'));
+  if (!kind.success) fail('validation', { fields: 'kind' }, { fields: ['kind'] });
+  const auth = c.get('auth');
+  const org = c.get('org');
+  await run(c, async (q) => {
+    const l = orient(id, other, kind.data!);
+    const gone = await q.query('delete from task_links where from_id = $1 and to_id = $2 and kind = $3 returning from_id', [l.from, l.to, l.kind]);
+    if (gone.length) {
+      const [o] = await q.query('select title from tasks where id = $1', [other]);
+      await addEvent(q, org.id, id, auth.userId, 'unlinked', { kind: kind.data, taskId: other, title: o?.title ?? '' });
+    }
+  });
+  return c.json({ ok: true });
+});
+
+// -------------------------------------------------------------------- time
+
+taskRoutes.post('/tasks/:id/time', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ minutes: z.number().int().min(1).max(1440), day: isoDate.optional(), note: z.string().trim().max(500).optional() }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const entry = await run(c, async (q) => {
+    await loadTask(q, id);
+    const [e] = await q.query('insert into time_entries (org_id, task_id, user_id, minutes, day, note) values ($1, $2, $3, $4, $5, $6) returning *', [
+      org.id,
+      id,
+      auth.userId,
+      input.minutes,
+      input.day ?? todayOf(c),
+      input.note ?? '',
+    ]);
+    await addEvent(q, org.id, id, auth.userId, 'time', { minutes: input.minutes });
+    return e;
+  });
+  return c.json({ entry: { id: entry.id, userId: entry.user_id, minutes: entry.minutes, day: day(entry.day), note: entry.note, createdAt: iso(entry.created_at) } }, 201);
+});
+
+taskRoutes.delete('/time/:id', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const gone = await run(c, (q) => q.query('delete from time_entries where id = $1 returning id', [id]));
+  if (!gone.length) fail('not_found');
+  return c.json({ ok: true });
+});
+
+// -------------------------------------------------------------- checklists
+
+/** Steps become subtasks, in order, after the ones already there. */
+taskRoutes.post('/tasks/:id/checklist', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ templateId: uuid.optional(), items: z.array(z.string().trim().min(1).max(300)).max(50).optional() }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const n = await run(c, async (q) => {
+    const t = await loadTask(q, id);
+    if (t.parent_id) fail('validation', { fields: 'parentId' });
+    let items = input.items ?? [];
+    let name = '';
+    if (input.templateId) {
+      const [tpl] = await q.query('select name, items from checklist_templates where id = $1', [input.templateId]);
+      if (!tpl) fail('not_found');
+      items = (tpl.items as string[]).filter((x) => typeof x === 'string' && x.trim()).slice(0, 50);
+      name = tpl.name;
+    }
+    if (!items.length) fail('validation', { fields: 'items' });
+    const board = await loadBoard(q, t.board_id);
+    const first = (board.columns as Column[])[0].key;
+    const [{ p }] = await q.query('select coalesce(max(position), 0) as p from tasks where parent_id = $1', [id]);
+    let pos = Number(p);
+    for (const title of items) {
+      pos += 1024;
+      await q.query(
+        `insert into tasks (org_id, board_id, parent_id, title, status, assignee_ids, account_id, position, created_by, updated_by)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+        [org.id, t.board_id, id, title, first, t.assignee_ids ?? [], t.account_id, pos, auth.userId],
+      );
+    }
+    await addEvent(q, org.id, id, auth.userId, 'checklist', { name, n: items.length });
+    return items.length;
+  });
+  return c.json({ added: n }, 201);
 });
 
 /** Change many tasks at once; the answer carries an undo id. */
@@ -322,11 +587,18 @@ taskRoutes.post('/tasks/bulk', async (c) => {
     const before: Row[] = [];
     const moved: { id: string; status: string }[] = [];
     let n = 0;
+    let skipped = 0;
     for (const t of tasks) {
       const board = boards.get(t.board_id) ?? (await loadBoard(q, t.board_id));
       boards.set(t.board_id, board);
-      // A status that this board does not have is left alone for that task.
-      const status = input.status && (board.columns as Column[]).some((col) => col.key === input.status) ? input.status : t.status;
+      // A status that this board does not have is left alone for that task, and so is
+      // finishing one whose must-fill fields are empty (it is counted as skipped).
+      let status = input.status && (board.columns as Column[]).some((col) => col.key === input.status) ? input.status : t.status;
+      if (status !== t.status && isDone(board.columns, status) && !isDone(board.columns, t.status) && missingForDone(board.task_fields ?? [], t.fields).length) {
+        status = t.status;
+        skipped++;
+        if (input.addAssignee === undefined && input.removeAssignee === undefined && input.dueDate === undefined && input.priority === undefined && input.archived === undefined) continue;
+      }
       let assignees: string[] = t.assignee_ids ?? [];
       if (input.addAssignee && !assignees.includes(input.addAssignee)) assignees = [...assignees, input.addAssignee].slice(0, 10);
       if (input.removeAssignee) assignees = assignees.filter((a) => a !== input.removeAssignee);
@@ -340,6 +612,7 @@ taskRoutes.post('/tasks/bulk', async (c) => {
       if (!u) continue;
       n++;
       before.push({ id: t.id, status: t.status, assignee_ids: t.assignee_ids, due_date: day(t.due_date), priority: t.priority, archived_at: t.archived_at, repeat: t.repeat });
+      await recordChanges(q, org.id, auth.userId, t, u);
       await onTaskUpdated(q, org.id, auth.userId, t, u, board);
       if (u.repeat && isDone(board.columns, u.status) && !isDone(board.columns, t.status)) await spawnNext(q, org.id, auth.userId, u, board, todayOf(c));
       if (status !== t.status) moved.push({ id: t.id, status });
@@ -348,12 +621,12 @@ taskRoutes.post('/tasks/bulk', async (c) => {
     }
     const undoId = await saveUndo(q, org.id, auth.userId, 'tasks', before);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.bulk_updated', entity: 'task', meta: { count: n, fields: Object.keys(input).filter((k) => k !== 'ids') } });
-    return { n, undoId, moved };
+    return { n, undoId, moved, skipped };
   });
   for (const m of out.moved) await runTaskMoved(deps, org.id, m.id, m.status, nowOf(deps)).catch(() => 0);
   kick(deps);
   kickSync(deps, org.id);
-  return c.json({ updated: out.n, undoId: out.undoId });
+  return c.json({ updated: out.n, undoId: out.undoId, skipped: out.skipped });
 });
 
 /** Put back what a change to many things replaced (tasks or accounts). */

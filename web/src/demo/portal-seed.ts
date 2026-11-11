@@ -8,7 +8,7 @@ export async function seedPortal(server: DemoServer) {
   const [ids] = await db.system((q) =>
     q.query(
       `select b.id as board, b.columns, a.id as account,
-              (select t.id from tasks t where t.board_id = b.id and t.account_id = a.id and t.parent_id is null and t.archived_at is null order by t.created_at limit 1) as task
+              (select t.id from tasks t where t.board_id = b.id and t.account_id = a.id and t.parent_id is null and t.archived_at is null and t.done_at is null order by t.created_at limit 1) as task
          from boards b, accounts a
         where b.org_id = a.org_id and b.visibility = 'team' and a.name = 'Quillfield Retail'
         order by b.created_at limit 1`,

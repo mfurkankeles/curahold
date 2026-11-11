@@ -8,6 +8,18 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### CRM, raporlar ve görevlerin fazlası
+
+- **Satış hattı:** fırsatlar aşama aşama sütunlarda; sürükle-bırak, Kazanıldı/Kaybedildi, ağırlıklı tahmin. Fırsat türleri: yeni iş, genişleme, yenileme.
+- **Raporlar:** açık/geciken/biten işler, zamanında bitirme, hafta hafta akış, kişi ve pano bazında yük, sağlık dağılımı, yenilemeler, aşama bazında fırsatlar.
+- **Ekip ve 1:1:** kişi başına yük ve tek kişilik hazırlık görünümü.
+- **Zaman çizelgesi (Gantt):** başlangıç ve son tarihe göre çubuklar; pano, kişi ya da müşteri bazında.
+- **Gelen kutusu:** tüm bildirimler tek sayfada, filtrelerle.
+- **Görevler:** panoya özel alanlar ve bitirmek için zorunlu alanlar, takip etme, “şunu bekliyor” bağlantıları, başlangıç tarihi, süre kaydı, kayıtlı kontrol listeleri, görev geçmişi, benzer görev uyarısı.
+- **Panolar:** filtreler, kayıtlı ve paylaşılan görünümler, talep formu.
+- **Müşteriler:** tek tıkla plan uygulama (onboarding, yenileme hazırlığı), müşteri başına toplam süre.
+- **Menü ve yazı tipi:** gruplanmış sol menü; yeni yazı tipleri (Figtree ve Bricolage Grotesque, açık lisanslı).
+
 ### Kolay kullanım
 
 - **Hızlı ekleme:** görevi konuşur gibi yaz; “cuma”, “haftaya”, “15 kasım”, @kişi, #müşteri, !öncelik ve “her pazartesi” okunur. Birden çok satır, birden çok görev olur. N tuşu, + Yeni ya da telefonda alttaki +.

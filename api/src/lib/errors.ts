@@ -58,6 +58,9 @@ export type ErrorCode =
   | 'portal_weak_password'
   | 'portal_passkey_failed'
   | 'portal_no_method'
+  | 'required_fields'
+  | 'link_loop'
+  | 'form_off'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -110,6 +113,9 @@ const STATUS: Record<ErrorCode, number> = {
   portal_weak_password: 400,
   portal_passkey_failed: 400,
   portal_no_method: 400,
+  required_fields: 400,
+  link_loop: 400,
+  form_off: 404,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

@@ -24,6 +24,8 @@ import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
 import { tasksChanged, usePageDefaults } from '../lib/shell';
+import { PlanMenu } from '../components/Plans';
+import { hoursText } from './Reports';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -84,6 +86,7 @@ export function AccountsPage() {
   const manage = can('accounts.manage');
   const fields = me.org.accountFields.slice(0, 5);
   const { types } = useRecordTypes();
+  const { search: qs0 } = useLocation();
   // How the list is shown, remembered on this device: cards say what needs attention.
   const remembered = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
     try {
@@ -94,9 +97,16 @@ export function AccountsPage() {
     }
   };
   const VIEWS = ['cards', 'table', 'renewals', 'products'] as const;
-  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => remembered('tw_accounts_view', VIEWS, 'cards'));
+  // The menu's "Renewals" opens this page on that view (?view=renewals).
+  const asked = new URLSearchParams(qs0).get('view') as (typeof VIEWS)[number] | null;
+  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => (asked && VIEWS.includes(asked) ? asked : remembered('tw_accounts_view', VIEWS, 'cards')));
+  useEffect(() => {
+    if (asked && VIEWS.includes(asked)) setViewState(asked);
+    else if (!asked) setViewState(remembered('tw_accounts_view', VIEWS, 'cards'));
+  }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
   const setView = (v: (typeof VIEWS)[number]) => {
     setViewState(v);
+    if (asked) navigate('/accounts', true);
     try {
       localStorage.setItem('tw_accounts_view', v);
     } catch {
@@ -650,6 +660,10 @@ export function AccountPage({ id }: { id: string }) {
   const [removing, setRemoving] = useState(false);
   const [title, setTitle] = useState('');
   const [boardId, setBoardId] = useState(boards[0]?.id ?? '');
+  const [hours, setHours] = useState<{ total: number; recent: number } | null>(null);
+  useEffect(() => {
+    void get<{ total: number; recent: number }>(`/accounts/${id}/time`).then(setHours, () => undefined);
+  }, [id]);
   // "Tasks" on a customer card opens the page at its tasks.
   const ready = !!data;
   usePageDefaults(data ? { accountId: data.account.id, accountName: data.account.name } : null);
@@ -755,7 +769,11 @@ export function AccountPage({ id }: { id: string }) {
         <div className="account-page__main">
           <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
           <section className="sheet" id="tasks">
-            <h3 className="section__head">{t('accounts.openTasksN', { n: open.length })}</h3>
+            <h3 className="section__head">
+              <span>{t('accounts.openTasksN', { n: open.length })}</span>
+              <PlanMenu accountId={a.id} accountName={a.name} onApplied={() => void load()} />
+            </h3>
+            {hours && hours.total > 0 && <p className="field__hint" style={{ margin: '-2px 0 10px' }}>{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
             {canWrite && boards.length > 0 && (
               <div className="toolbar" style={{ marginBottom: 10 }}>
                 <input className="input" style={{ flex: 1, minWidth: 200 }} value={title} placeholder={t('accounts.addTaskFor', { name: a.name })} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} />

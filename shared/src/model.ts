@@ -275,7 +275,7 @@ export interface Notification {
   createdAt: string;
 }
 
-export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'digest', 'weekly', 'automation'] as const;
+export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'following', 'digest', 'weekly', 'automation'] as const;
 export type NotifyEvent = (typeof NOTIFY_EVENTS)[number];
 
 export interface NotifyPrefs {
@@ -366,6 +366,98 @@ export interface Board {
   notify: BoardNotify[];
   /** Open to customers (the customer portal), or null. */
   portal: import('./portal').BoardPortal | null;
+  /** The board's own task fields (type, outcome, link…). */
+  taskFields: TaskField[];
+  /** An intake form colleagues fill in to put a request on this board; null when off. */
+  form: BoardForm | null;
+}
+
+export const TASK_FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email', 'person', 'checkbox'] as const;
+export type TaskFieldType = (typeof TASK_FIELD_TYPES)[number];
+export type TaskFieldValue = string | number | boolean | null;
+
+export interface TaskField {
+  key: string;
+  label: Localized;
+  type: TaskFieldType;
+  options?: FieldOption[];
+  /** "done": the task cannot be finished while this is empty. */
+  required?: 'done' | null;
+}
+
+export interface BoardForm {
+  on: boolean;
+  title?: string;
+  intro?: string;
+  /** What it asks besides the title: "description", "account", "due" and the board's fields as "f:<key>". */
+  fields: string[];
+  /** The column requests land in (the first one when empty). */
+  column?: string | null;
+}
+
+export interface TaskEvent {
+  id: string;
+  actorId: string | null;
+  kind: string;
+  data: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface TaskLink {
+  taskId: string;
+  title: string;
+  boardId: string;
+  boardName: string;
+  /** Seen from this task: it blocks the other, it waits for the other (blocked_by), or they relate. */
+  kind: 'blocks' | 'blocked_by' | 'relates';
+  done: boolean;
+}
+
+export interface TimeEntry {
+  id: string;
+  userId: string;
+  minutes: number;
+  day: string;
+  note: string;
+  createdAt: string;
+}
+
+/** What a saved view keeps: who, how urgent, which customer, which values. */
+export interface ViewFilters {
+  q?: string;
+  /** People ids; "me" means whoever looks. */
+  assignees?: string[];
+  priority?: Priority[];
+  due?: ('late' | 'today' | 'week' | 'later' | 'none')[];
+  accounts?: string[];
+  /** Board's own select fields: field key → option keys. */
+  fields?: Record<string, string[]>;
+  view?: 'board' | 'list' | 'timeline';
+}
+
+export interface SavedView {
+  id: string;
+  boardId: string | null;
+  name: string;
+  filters: ViewFilters;
+  shared: boolean;
+  /** Made by the person asking (they may change or remove it). */
+  mine: boolean;
+}
+
+export interface ChecklistTemplate {
+  id: string;
+  name: string;
+  items: string[];
+  mine: boolean;
+}
+
+export interface PlanTemplate {
+  id: string;
+  name: string;
+  boardId: string;
+  column: string | null;
+  tasks: import('./automation').TaskBlueprint[];
 }
 
 export interface BoardNotify {
@@ -400,6 +492,11 @@ export interface Task {
   /** Opened by someone at the customer, in the portal. */
   portalAuthorId?: string | null;
   portalAuthorName?: string | null;
+  /** The board's own fields, by key. */
+  fields?: Record<string, TaskFieldValue>;
+  startDate?: string | null;
+  /** How many unfinished tasks this one waits for. */
+  blockedBy?: number;
 }
 
 /** A task that comes back: when it is done, the next copy is made with a new due date. */
@@ -439,6 +536,11 @@ export interface TaskDetail extends Task {
   files: FileMeta[];
   /** The person asking has stopped comment notices for this task. */
   muted?: boolean;
+  events?: TaskEvent[];
+  /** People following the task. */
+  watchers?: string[];
+  links?: TaskLink[];
+  time?: { total: number; entries: TimeEntry[] };
 }
 
 export interface SessionInfo {

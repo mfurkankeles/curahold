@@ -81,11 +81,47 @@ const CONTACTS: [string, string, string, string, string, string][] = [
 ];
 
 // [account, name, amount, close in N days]
-const OPPORTUNITIES: [string, string, number, number][] = [
-  ['Lindenhall Sigorta', 'Mobil uygulama modülü', 38000, 25],
-  ['Brightmoor Enerji', 'İkinci marka için genişleme', 64000, 70],
-  ['Quillfield Retail', 'Ek kullanıcı paketi', 12000, 18],
-  ['Cedarmoor Health', 'Raporlama eklentisi', 8000, 45],
+// [customer, name, amount, closes in N days, stage, kind, status]
+const OPPORTUNITIES: [string, string, number, number, string, string, string][] = [
+  ['Lindenhall Sigorta', 'Mobil uygulama modülü', 38000, 25, 'proposal', 'expansion', 'open'],
+  ['Brightmoor Enerji', 'İkinci marka için genişleme', 64000, 70, 'discovery', 'expansion', 'open'],
+  ['Quillfield Retail', 'Ek kullanıcı paketi', 12000, 18, 'commit', 'expansion', 'open'],
+  ['Cedarmoor Health', 'Raporlama eklentisi', 8000, 45, 'discovery', 'expansion', 'open'],
+  ['Ambergate Lojistik', 'Yıllık yenileme', 46000, 20, 'negotiation', 'renewal', 'open'],
+  ['Harborline Bank', 'Çok yıllı yenileme', 96000, 45, 'proposal', 'renewal', 'open'],
+  ['Saltmarsh Turizm', 'Sadakat programı pilotu', 22000, 60, 'discovery', 'expansion', 'open'],
+  ['Kilnworth Yapı', 'Bayi portalı', 54000, 38, 'negotiation', 'expansion', 'open'],
+  ['Wrenfield Eğitim', 'Kampüs lisansı', 31000, 12, 'commit', 'new', 'open'],
+  ['Duskvale Oyun', 'Başlangıç paketi', 18000, -9, 'commit', 'new', 'won'],
+  ['Orchardly Foods', 'Analitik eklentisi', 9000, -20, 'commit', 'expansion', 'won'],
+  ['Corvina Medya', 'Reklam modülü', 15000, -14, 'proposal', 'expansion', 'lost'],
+];
+
+const HISTORY = [
+  'Çeyrek değerlendirme sunumu',
+  'Kullanım raporunu paylaş',
+  'Eğitim oturumu: yeni ekip üyeleri',
+  'Fatura düzeltmesini takip et',
+  'Entegrasyon hatasını kapat',
+  'Yenileme takvimini onayla',
+  'Başarı planını güncelle',
+  'Yönetici özeti gönder',
+  'Açılış toplantısı notlarını paylaş',
+  'Memnuniyet anketi sonuçlarını incele',
+  'Yeni modül tanıtımı',
+  'Veri aktarımını doğrula',
+  'Sözleşme eklerini imzaya gönder',
+  'Destek önceliklerini netleştir',
+  'Kullanıcı yetkilerini düzenle',
+  'Referans görüşmesi ayarla',
+  'Kampanya sonuçlarını raporla',
+  'Hedef göstergelerini birlikte belirle',
+  'Yol haritası paylaşımı',
+  'Pilot sonuçlarını sun',
+  'Fiyat teklifini güncelle',
+  'Teknik inceleme toplantısı',
+  'Eksik erişim anahtarlarını iste',
+  'Geri bildirimleri ürün ekibine ilet',
 ];
 
 export async function seedShowcase(call: Call, db?: Db) {
@@ -94,7 +130,11 @@ export async function seedShowcase(call: Call, db?: Db) {
   const cs = teams.find((t) => t.name === 'Customer Success')?.id ?? null;
 
   const accounts: Record<string, string> = {};
-  for (const a of (await call<{ accounts: { id: string; name: string }[] }>('GET', '/api/accounts?limit=100')).accounts) accounts[a.name] = a.id;
+  const ownerOf: Record<string, string | null> = {};
+  for (const a of (await call<{ accounts: { id: string; name: string; ownerId: string | null }[] }>('GET', '/api/accounts?limit=100')).accounts) {
+    accounts[a.name] = a.id;
+    ownerOf[a.name] = a.ownerId;
+  }
   for (const [name, owner, renewIn, value, health, tier, site] of ACCOUNTS) {
     const { account } = await call('POST', '/api/accounts', {
       name,
@@ -103,6 +143,7 @@ export async function seedShowcase(call: Call, db?: Db) {
       fields: { renewal_date: day(renewIn), arr: value, health, tier, website: `https://${site}/` },
     });
     accounts[name] = account.id;
+    ownerOf[name] = who(owner);
   }
 
   const { type: contact } = await call('POST', '/api/record-types', { kind: 'contact' });
@@ -116,8 +157,9 @@ export async function seedShowcase(call: Call, db?: Db) {
     });
   }
   const { type: opportunity } = await call('POST', '/api/record-types', { kind: 'opportunity' });
-  for (const [acc, name, amount, closeIn] of OPPORTUNITIES) {
-    await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, fields: { amount, close_date: day(closeIn), status: 'open' } });
+  for (const [acc, name, amount, closeIn, stage, kind, status] of OPPORTUNITIES) {
+    if (!accounts[acc]) continue;
+    await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, ownerId: ownerOf[acc] ?? null, fields: { amount, close_date: day(closeIn), stage, kind, status } });
   }
 
   const { boards } = await call<{ boards: { id: string; name: string }[] }>('GET', '/api/boards');
@@ -147,6 +189,8 @@ export async function seedShowcase(call: Call, db?: Db) {
       status,
       assigneeIds: assignees.map(who),
       dueDate: due === null ? null : day(due),
+      // Longer pieces of work start a while before they are due (the timeline shows them as bars).
+      ...(due !== null && due > 2 && ids.length % 2 === 0 ? { startDate: day(due - 3 - (ids.length % 5) * 2) } : {}),
       priority,
       accountId: acc ? accounts[acc] : null,
     });
@@ -168,6 +212,75 @@ export async function seedShowcase(call: Call, db?: Db) {
   void pin;
   await call('PUT', '/api/health/config', { config: { ...DEFAULT_HEALTH, enabled: true } });
 
+  // The main board keeps a type and an outcome on its tasks; a few tasks wait for others,
+  // some time is logged, and there is a plan and a checklist ready to use.
+  await call('PATCH', `/api/boards/${main}`, {
+    taskFields: [
+      {
+        key: 'kind',
+        label: { tr: 'Tür', en: 'Type' },
+        type: 'select',
+        options: [
+          { key: 'meeting', label: { tr: 'Toplantı', en: 'Meeting' }, color: 'sky' },
+          { key: 'analysis', label: { tr: 'Analiz', en: 'Analysis' }, color: 'plum' },
+          { key: 'followup', label: { tr: 'Takip', en: 'Follow-up' }, color: 'honey' },
+          { key: 'training', label: { tr: 'Eğitim', en: 'Training' }, color: 'leaf' },
+        ],
+      },
+      { key: 'outcome', label: { tr: 'Sonuç', en: 'Outcome' }, type: 'text' },
+      { key: 'doc', label: { tr: 'Belge bağlantısı', en: 'Document link' }, type: 'url' },
+    ],
+    form: { on: true, title: 'CS ekibinden talep', intro: 'Ne lazım olduğunu yaz; ekip sıraya alır, ilerledikçe haber veririz.', fields: ['description', 'account', 'due', 'f:kind'], column: null },
+  }).catch(() => undefined);
+  const kinds = ['meeting', 'analysis', 'followup', 'training'];
+  const onMain = TASKS.map((t, i) => ({ t, id: ids[i] })).filter((x) => x.t[0] === main);
+  for (const [i, x] of onMain.entries()) {
+    const { task } = await call('GET', `/api/tasks/${x.id}`);
+    await call('PATCH', `/api/tasks/${x.id}`, { baseVersion: task.version, fields: { kind: kinds[i % kinds.length] } }).catch(() => undefined);
+  }
+  if (onMain.length > 4) {
+    await call('POST', `/api/tasks/${onMain[1].id}/links`, { otherId: onMain[0].id, kind: 'blocked_by' }).catch(() => undefined);
+    await call('POST', `/api/tasks/${onMain[3].id}/links`, { otherId: onMain[2].id, kind: 'relates' }).catch(() => undefined);
+    await call('POST', `/api/tasks/${onMain[0].id}/time`, { minutes: 90, note: 'Hazırlık' }).catch(() => undefined);
+    await call('POST', `/api/tasks/${onMain[2].id}/time`, { minutes: 45 }).catch(() => undefined);
+    await call('PUT', `/api/tasks/${onMain[1].id}/watch`, {}).catch(() => undefined);
+  }
+  await call('POST', '/api/checklists', { name: 'QBR hazırlığı', items: ['Kullanım verisini çek', 'Değer özetini yaz', 'Sunumu hazırla', 'Prova yap', 'Davetleri gönder'] }).catch(() => undefined);
+  await call('POST', '/api/plans', {
+    name: 'Onboarding (ilk 30 gün)',
+    boardId: main,
+    tasks: [
+      { title: 'Açılış toplantısı: {account_name}', dueInDays: 2, assignee: 'account_owner', subtasks: ['Gündemi gönder', 'Katılımcıları doğrula'] },
+      { title: 'Kurulum ve veri aktarımı', dueInDays: 7, assignee: 'account_owner' },
+      { title: 'Ekip eğitimi', dueInDays: 14, assignee: 'account_owner' },
+      { title: '30. gün değerlendirmesi: {account_name}', dueInDays: 30, assignee: 'account_owner' },
+    ],
+  }).catch(() => undefined);
+  await call('POST', '/api/views', { boardId: main, name: 'Bu hafta ve geciken', filters: { due: ['late', 'today', 'week'] }, shared: true }).catch(() => undefined);
+
+  // Ten weeks of finished work, so the reports have a past to show. Only with the
+  // database at hand: the dates are set afterwards, and without that it would all be "today".
+  const past: { id: string; made: number; done: number; due: number; by: string }[] = [];
+  if (db) {
+    const names = Object.keys(accounts);
+    const crew = ['zeynep', 'lena', 'omar', 'mert', 'ada'];
+    const doneAgo = [2, 3, 5, 6, 8, 9, 11, 12, 13, 16, 17, 19, 22, 24, 26, 29, 31, 33, 36, 40, 44, 47, 52, 58];
+    const took = [2, 4, 1, 6, 3, 9, 5, 2, 7, 3];
+    for (const [i, title] of HISTORY.entries()) {
+      const by = crew[i % crew.length];
+      const { task } = await call('POST', '/api/tasks', {
+        boardId: i % 3 === 2 ? renewals : main,
+        title,
+        status: 'done',
+        assigneeIds: [who(by)],
+        priority: i % 6 === 0 ? 'high' : 'normal',
+        accountId: accounts[names[(i * 5) % names.length]] ?? null,
+      });
+      // Three in four were on time; the rest ran a couple of days over.
+      past.push({ id: task.id, made: doneAgo[i] + took[i % took.length], done: doneAgo[i], due: i % 4 === 3 ? doneAgo[i] + 2 : doneAgo[i] - (i % 3), by: who(by) });
+    }
+  }
+
   if (db) {
     // Seven weeks of score history, ending at today's score, so trends and drops show.
     await db.system(async (q) => {
@@ -184,6 +297,35 @@ export async function seedShowcase(call: Call, db?: Db) {
           const v = Math.max(0, Math.min(100, Math.round(step + (d > 1 ? noise() : 0))));
           await q.query('insert into health_history (org_id, account_id, day, score) values ($1, $2, current_date - $3::int, $4) on conflict do nothing', [r.org_id, r.id, d, v]);
         }
+      }
+      // The past: finished work spread over ten weeks, open work opened over the last three.
+      for (const h of past) {
+        await q.query(
+          `update tasks set created_at = now() - make_interval(days => $2::int), done_at = now() - make_interval(days => $3::int),
+                  updated_at = now() - make_interval(days => $3::int), due_date = current_date - $4::int where id = $1`,
+          [h.id, h.made, h.done, h.due],
+        );
+        await q.query(`update task_events set created_at = now() - make_interval(days => $2::int) where task_id = $1`, [h.id, h.made]);
+        if (h.done < 30 && h.made % 2 === 0) {
+          await q.query(`insert into time_entries (org_id, task_id, user_id, minutes, day, note) select org_id, id, $2, $3, current_date - $4::int, '' from tasks where id = $1`, [h.id, h.by, 30 + (h.made % 4) * 30, h.done]);
+        }
+      }
+      // Nobody needs a notice today about work that was finished weeks ago.
+      if (past.length) await q.query(`delete from notifications where task_id = any($1::uuid[])`, [past.map((h) => h.id)]);
+      for (const [i, id] of ids.entries()) {
+        const made = 1 + ((i * 3) % 19);
+        await q.query(`update tasks set created_at = now() - make_interval(days => $2::int) where id = $1`, [id, made]);
+        await q.query(`update task_events set created_at = now() - make_interval(days => $2::int) where task_id = $1 and kind = 'created'`, [id, made]);
+        // What was already finished was finished a day or three ago, not this minute.
+        await q.query(
+          `update tasks set created_at = least(created_at, now() - interval '6 days'), done_at = now() - make_interval(days => $2::int), updated_at = now() - make_interval(days => $2::int)
+            where id = $1 and done_at is not null`,
+          [id, 1 + (i % 3)],
+        );
+      }
+      // Two tasks nobody has touched for a while (a 1:1 brings them up).
+      for (const id of [ids[9], ids[14]].filter(Boolean)) {
+        await q.query(`update tasks set created_at = now() - interval '24 days', updated_at = now() - interval '17 days' where id = $1 and done_at is null`, [id]);
       }
       // A weekly summary waiting in everyone's bell, as on a Monday morning.
       const users = await q.query(`select u.id, u.org_id, coalesce(u.locale, o.locale) as locale from users u join orgs o on o.id = u.org_id where u.status = 'active'`);

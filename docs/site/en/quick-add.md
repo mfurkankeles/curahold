@@ -1,7 +1,7 @@
 ---
 title: Quick add and shortcuts
 section: help
-order: 3
+order: 3.5
 summary: Write a task the way you would say it; the date, person, customer, priority and rhythm fill themselves in. Keyboard shortcuts and the phone.
 ---
 # Quick add and shortcuts

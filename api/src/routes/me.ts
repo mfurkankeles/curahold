@@ -227,29 +227,58 @@ meRoutes.get('/me/delivery', async (c) => {
   return c.json({ options });
 });
 
+/** The number on the bell: cheap enough to ask every minute. */
+meRoutes.get('/notifications/count', async (c) => {
+  const auth = c.get('auth');
+  const [r] = await run(c, (q) => q.query('select count(*)::int as n from notifications where user_id = $1 and read_at is null', [auth.userId]));
+  return c.json({ unread: r?.n ?? 0 });
+});
+
+const NOTICE_FILTERS: Record<string, string[] | null> = {
+  all: null,
+  mentions: ['mentioned'],
+  assigned: ['assigned', 'unblocked'],
+  comments: ['comment', 'followed'],
+  system: ['automation', 'digest', 'weekly', 'join_request'],
+};
+
 meRoutes.get('/notifications', async (c) => {
   const auth = c.get('auth');
   const deps = c.get('deps');
-  const rows = await run(c, (q) =>
-    q.query(`select * from notifications where user_id = $1 order by created_at desc limit 50`, [auth.userId]),
-  );
-  const unread = rows.filter((r) => !r.read_at).length;
+  const kinds = NOTICE_FILTERS[c.req.query('filter') ?? 'all'] ?? null;
+  const unreadOnly = c.req.query('unread') === '1';
+  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 50, 1), 100);
+  const before = c.req.query('before');
+  const { rows, unread } = await run(c, async (q) => {
+    const rows = await q.query(
+      `select * from notifications where user_id = $1
+          and ($2::text[] is null or kind = any($2::text[]))
+          and (not $3 or read_at is null)
+          and ($4::timestamptz is null or created_at < $4::timestamptz)
+        order by created_at desc limit $5`,
+      [auth.userId, kinds, unreadOnly, before && !Number.isNaN(Date.parse(before)) ? before : null, limit],
+    );
+    const [u] = await q.query('select count(*)::int as n from notifications where user_id = $1 and read_at is null', [auth.userId]);
+    return { rows, unread: u?.n ?? 0 };
+  });
   const list: Notification[] = [];
   for (const n of rows) {
     const ctx = await deps.db.system((q) => loadRenderCtx(q, deps, n, c.get('locale')));
     const m = render(ctx);
     list.push({ id: n.id, kind: n.kind, taskId: n.task_id, actorId: n.actor_id, title: m.title, body: m.body ?? '', url: m.url ?? null, readAt: iso(n.read_at), createdAt: iso(n.created_at)! });
   }
-  return c.json({ notifications: list, unread });
+  return c.json({ notifications: list, unread, more: rows.length === limit });
 });
 
 meRoutes.post('/notifications/read', async (c) => {
-  const input = await body(c, z.object({ ids: z.array(z.string().uuid()).max(100).optional(), all: z.boolean().optional() }));
+  const input = await body(c, z.object({ ids: z.array(z.string().uuid()).max(100).optional(), all: z.boolean().optional(), unread: z.boolean().optional() }));
   const auth = c.get('auth');
   await run(c, (q) =>
     input.all
       ? q.query('update notifications set read_at = now() where user_id = $1 and read_at is null', [auth.userId])
-      : q.query('update notifications set read_at = now() where user_id = $1 and id = any($2::uuid[]) and read_at is null', [auth.userId, input.ids ?? []]),
+      : input.unread
+        ? q.query('update notifications set read_at = null where user_id = $1 and id = any($2::uuid[])', [auth.userId, input.ids ?? []])
+        : q.query('update notifications set read_at = now() where user_id = $1 and id = any($2::uuid[]) and read_at is null', [auth.userId, input.ids ?? []]),
   );
   return c.json({ ok: true });
 });

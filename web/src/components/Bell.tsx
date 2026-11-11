@@ -14,18 +14,32 @@ export function Bell() {
   const [data, setData] = useState<{ notifications: Notification[]; unread: number }>({ notifications: [], unread: 0 });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const load = useCallback(() => get<{ notifications: Notification[]; unread: number }>('/notifications').then(setData).catch(() => undefined), []);
+  // The number is asked for every minute (one cheap count); the list only when the bell is opened.
+  const load = useCallback(
+    () =>
+      get<{ notifications: Notification[]; unread: number }>('/notifications?limit=20')
+        .then((r) => {
+          setData(r);
+          window.dispatchEvent(new Event('tw:inbox-changed'));
+        })
+        .catch(() => undefined),
+    [],
+  );
+  const count = useCallback(() => get<{ unread: number }>('/notifications/count').then((r) => setData((d) => ({ ...d, unread: r.unread }))).catch(() => undefined), []);
 
   useEffect(() => {
-    void load();
-    const id = setInterval(load, 60_000);
-    const onFocus = () => void load();
+    void count();
+    const id = setInterval(count, 60_000);
+    const onFocus = () => void count();
     window.addEventListener('focus', onFocus);
     return () => {
       clearInterval(id);
       window.removeEventListener('focus', onFocus);
     };
-  }, [load]);
+  }, [count]);
+  useEffect(() => {
+    if (open) void load();
+  }, [open, load]);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
@@ -68,7 +82,7 @@ export function Bell() {
             <EmptyState compact icon="inbox" tone="done" title={t('bell.empty')} />
           ) : (
             <ul className="bell__list">
-              {data.notifications.map((n) => (
+              {data.notifications.slice(0, 12).map((n) => (
                 <li key={n.id}>
                   <button className="bell__item" data-unread={n.readAt ? undefined : 'true'} onClick={() => openItem(n)}>
                     <strong>{n.title}</strong>
@@ -79,6 +93,17 @@ export function Bell() {
               ))}
             </ul>
           )}
+          <a
+            className="bell__all"
+            href="/inbox"
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+              navigate('/inbox');
+            }}
+          >
+            {t('inbox.openAll')}
+          </a>
         </div>
       )}
     </div>

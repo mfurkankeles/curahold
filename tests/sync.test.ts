@@ -52,7 +52,7 @@ describe('records under accounts', () => {
     const r = await mert.post('/api/record-types', { kind: 'opportunity' });
     expect(r.status).toBe(201);
     oppType = r.json.type;
-    expect(oppType.fields.map((f: any) => f.key)).toEqual(['amount', 'close_date', 'stage', 'status']);
+    expect(oppType.fields.map((f: any) => f.key)).toEqual(['amount', 'close_date', 'stage', 'status', 'kind']);
     expect((await mert.post('/api/record-types', { kind: 'opportunity' })).json.type.id).toBe(oppType.id);
     expect((await lena.post('/api/record-types', { kind: 'contact' })).status).toBe(403);
   });

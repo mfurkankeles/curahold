@@ -21,6 +21,26 @@ import { SearchPalette, useSearchKey } from './Search';
 import { LogTouch, WhatsNew } from './ShellDialogs';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
 import { Avatar, Mark } from './ui';
+import { useRecordTypes } from './AccountFields';
+import { typeLabel } from '../../../shared/src/records';
+
+/** Unread notifications, for the number beside "Inbox". */
+function useUnread() {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const load = () => void get<{ unread: number }>('/notifications/count').then((r) => setN(r.unread), () => undefined);
+    load();
+    const id = setInterval(load, 60_000);
+    window.addEventListener('focus', load);
+    window.addEventListener('tw:inbox-changed', load);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', load);
+      window.removeEventListener('tw:inbox-changed', load);
+    };
+  }, []);
+  return n;
+}
 
 /** Late and due-today tasks of mine, for the number beside "My tasks". */
 function useMyCounts() {
@@ -43,7 +63,7 @@ function useMyCounts() {
 export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale, words } = useI18n();
   const { me, boards, canWrite, person, toasts, can, dismiss } = useStore();
-  const { path } = useLocation();
+  const { path, search } = useLocation();
   const narrow = useNarrow();
   const [navOpen, setNavOpen] = useState(false);
   const [newBoard, setNewBoard] = useState(false);
@@ -57,10 +77,33 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const [touch, setTouch] = useState<{ accountId?: string | null; accountName?: string | null } | null>(null);
   const [theme, setTheme] = useTheme();
   const counts = useMyCounts();
+  const { types: recordTypes, load: reloadTypes } = useRecordTypes();
+  const unread = useUnread();
+  // Sections of the menu fold away; which ones is remembered on this device.
+  const [folded, setFolded] = useState<string[]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('tw_nav_folded') ?? '[]');
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  });
+  const fold = (key: string) => {
+    const next = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
+    setFolded(next);
+    try {
+      localStorage.setItem('tw_nav_folded', JSON.stringify(next));
+    } catch {
+      /* per-device convenience */
+    }
+  };
   useEffect(() => {
     if (location.hash === '#help') history.replaceState(null, '', location.pathname + location.search);
   }, []);
   useEffect(() => setNavOpen(false), [path]);
+  useEffect(() => {
+    if (path.startsWith('/records') || path.startsWith('/accounts')) void reloadTypes();
+  }, [path, reloadTypes]);
   // Little <details> menus close on a click elsewhere or on Escape, like the other menus.
   useEffect(() => {
     const shut = (keep?: Node) => document.querySelectorAll('details.fieldsmenu[open]').forEach((d) => (!keep || !d.contains(keep)) && d.removeAttribute('open'));
@@ -101,12 +144,29 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   };
   const runNews = (a: NewsAction) => (a.kind === 'quickAdd' ? actions.quickAdd() : a.kind === 'shortcuts' ? actions.shortcuts() : navigate(a.to));
 
+  const renewalsOn = path === '/accounts' && new URLSearchParams(search).get('view') === 'renewals';
   const here = {
     home: path === '/home' || path.startsWith('/pages/'),
     my: path === '/my',
+    inbox: path === '/inbox',
     calendar: path === '/calendar',
-    accounts: path.startsWith('/accounts') || path.startsWith('/records'),
+    accounts: path.startsWith('/accounts') && !renewalsOn,
+    crm: path.startsWith('/accounts') || path.startsWith('/records'),
   };
+  const KIND_ICON: Record<string, IconName> = { contact: 'idcard', opportunity: 'funnel', ticket: 'lifebuoy', custom: 'layout' };
+  const section = (key: string, label: string, body: ReactNode, action?: ReactNode) => (
+    <div className="navsec" data-folded={folded.includes(key) || undefined}>
+      <div className="sidebar__heading">
+        <button className="navsec__toggle" aria-expanded={!folded.includes(key)} onClick={() => fold(key)}>
+          <Icon name="chevronDown" size={14} />
+          <span>{label}</span>
+        </button>
+        {action}
+      </div>
+      {!folded.includes(key) && <div className="sidebar__nav">{body}</div>}
+    </div>
+  );
+  const count = (n: number | undefined) => (n ? <span className="navlink__n num">{n > 999 ? '999+' : n}</span> : undefined);
   const link = (to: string, label: string, current: boolean, icon?: IconName, extra?: ReactNode, cls = 'navlink') => (
     <a
       key={to}
@@ -299,29 +359,50 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               <span className="sr-only">{t('nav.setupLeft', { n: setupLeft })}</span>
             </a>
           )}
-          <div className="sidebar__nav">
-            {link('/home', t('nav.home'), here.home, 'home')}
-            {link('/my', t('nav.myTasks'), here.my, 'checkCircle', dueBadge)}
-            {link('/calendar', t('nav.calendar'), here.calendar, 'calendar')}
-            {link('/accounts', words.other, here.accounts, 'building')}
-          </div>
-          <div className="sidebar__heading">
-            <span>{t('nav.boards')}</span>
-            {canWrite && (
-              <button className="sidebar__add" onClick={() => setNewBoard(true)} aria-label={t('nav.newBoard')} title={t('nav.newBoard')}>
-                <Icon name="plus" size={16} />
-              </button>
+          <div className="sidebar__scroll">
+            <div className="sidebar__nav">
+              {link('/home', t('nav.home'), here.home, 'home')}
+              {link('/my', t('nav.myTasks'), here.my, 'checkCircle', dueBadge)}
+              {link('/inbox', t('nav.inbox'), here.inbox, 'inbox', unread > 0 ? <span className="navlink__count" data-tone="today">{unread > 99 ? '99+' : unread}</span> : undefined)}
+              {link('/calendar', t('nav.calendar'), here.calendar, 'calendar')}
+            </div>
+            {section(
+              'crm',
+              words.other,
+              <>
+                {link('/accounts', t('nav.allAccounts', { accounts: words.other }), here.accounts, 'building')}
+                {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
+                {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
+              </>,
             )}
-          </div>
-          <div className="sidebar__boards">
-            {boards.length === 0 && canWrite && (
-              <button className="sidebar__firstboard" onClick={() => setNewBoard(true)}>
-                <Icon name="plus" size={16} />
-                {t('nav.firstBoard')}
-              </button>
+            {section(
+              'work',
+              t('nav.work'),
+              <>
+                {boards.length === 0 && canWrite && (
+                  <button className="sidebar__firstboard" onClick={() => setNewBoard(true)}>
+                    <Icon name="plus" size={16} />
+                    {t('nav.firstBoard')}
+                  </button>
+                )}
+                {boards.map((b) =>
+                  link(`/b/${b.id}`, b.name, path === `/b/${b.id}`, undefined, b.portal ? <Icon name="globe" size={14} className="navlink__portal" label={t('nav.boardShared')} /> : undefined, 'navlink navlink--board'),
+                )}
+                {link('/timeline', t('nav.timeline'), path === '/timeline', 'timeline')}
+              </>,
+              canWrite ? (
+                <button className="sidebar__add" onClick={() => setNewBoard(true)} aria-label={t('nav.newBoard')} title={t('nav.newBoard')}>
+                  <Icon name="plus" size={16} />
+                </button>
+              ) : undefined,
             )}
-            {boards.map((b) =>
-              link(`/b/${b.id}`, b.name, path === `/b/${b.id}`, undefined, b.portal ? <Icon name="globe" size={14} className="navlink__portal" label={t('nav.boardShared')} /> : undefined, 'navlink navlink--board'),
+            {section(
+              'insight',
+              t('nav.insight'),
+              <>
+                {link('/reports', t('nav.reports'), path === '/reports', 'chart')}
+                {link('/team', t('nav.team'), path === '/team', 'people')}
+              </>,
             )}
           </div>
           <div className="sidebar__foot">
@@ -378,7 +459,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             ) : (
               <span className="tabbar__gap" />
             )}
-            {link('/accounts', words.other, here.accounts, 'building', undefined, 'tabbar__item')}
+            {link('/accounts', words.other, here.crm, 'building', undefined, 'tabbar__item')}
             {link('/calendar', t('nav.calendar'), here.calendar, 'calendar', undefined, 'tabbar__item')}
           </nav>
         )}

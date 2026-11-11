@@ -36,3 +36,25 @@ Type `@` in a comment to mention someone; they are told. If you no longer want t
 ## Quick search
 
 Press Ctrl K (⌘ K on a Mac) anywhere to find a customer, task, person, board or page. Move with the arrow keys, open with Enter.
+
+## More on a task
+
+- **Follow:** with the button at the top of a task, hear about comments and column moves on a task that is not yours.
+- **Linked tasks:** say that a task **waits for** another, **holds up** another, or is **related to** it. A waiting task says "Waiting for 1" on its card; when the task it waits for is done, its people get a "You can start" notice. Tasks cannot be made to wait for each other in a circle.
+- **Start date:** **+ start** beside the due date records when the work begins; the timeline draws it as a bar.
+- **Time spent:** the +15 m, +30 m, +1 h buttons, or by hand ("1.5", "45m", "1:30"). A customer's page shows the total logged for that customer.
+- **Checklist:** save the steps you use often once (add subtasks → **Checklist → save as a checklist**), then add them to any task in one click.
+- **History:** who changed what and when, line by line, at the bottom of the task.
+- **Look-alike warning:** if the task you are about to add looks like one that is already open, quick add says so.
+
+## A board's own fields
+
+Board settings → **Fields and request form**: add extra fields to every task on that board (text, number, money, date, choice, link, email, person, yes/no). A field marked **Must fill to finish** has to be filled before a task can move to a "done" column; a bulk change skips such tasks and says how many. Choice fields show as coloured labels on cards and can be filtered.
+
+## Filters and saved views
+
+**Filter** at the top of a board narrows it by person, due date (overdue, today, 7 days…), priority and the board's choice fields. Name the filters you have on with **Views → Save**, and show the view to everyone on the board if you like.
+
+## Request form
+
+In board settings switch on **Take requests through a form** and choose what the form asks. Colleagues use the **Request form** button on the board; the request lands in the column you chose as a task, and whoever asked follows it automatically.
