@@ -63,11 +63,15 @@ export function kickSync(deps: Deps, orgId: string) {
 }
 
 /** Which local keys differ between two versions of an account or record. */
-export function changedKeys(before: { name?: string; owner_id?: string | null; account_id?: string | null; fields?: Record<string, unknown> }, after: typeof before): string[] {
+export function changedKeys(
+  before: { name?: string; owner_id?: string | null; account_id?: string | null; parent_id?: string | null; fields?: Record<string, unknown> },
+  after: typeof before,
+): string[] {
   const out: string[] = [];
   if (before.name !== after.name) out.push('name');
   if ((before.owner_id ?? null) !== (after.owner_id ?? null)) out.push('owner');
   if ('account_id' in after && (before.account_id ?? null) !== (after.account_id ?? null)) out.push('account');
+  if ('parent_id' in after && (before.parent_id ?? null) !== (after.parent_id ?? null)) out.push('parent');
   const a = before.fields ?? {};
   const b = after.fields ?? {};
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {

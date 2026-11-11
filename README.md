@@ -106,6 +106,16 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
     archives nothing; deleting here never deletes there;
   - status, history, "not sent yet" list with retry, links to open each
     item in the CRM; long first syncs continue in slices.
+- **Stakeholders**: contacts carry first and last name, job title, email,
+  phone, LinkedIn, decision role (decision maker, approver, influencer,
+  evaluator, user) and stance towards us (champion, supporter, neutral,
+  skeptic, blocker) — labels in English and Turkish, renamable. Each
+  account has an **org chart**: drag a card onto someone to set who they
+  report to (mouse, touch handle, or the card menu from the keyboard);
+  loops and people from other accounts are refused. Stance counts and the
+  decision makers' stance sit above the chart; "blockers" and "champions"
+  can be calculated account fields. "Reports to" syncs both ways with the
+  CRM (e.g. Salesforce `ReportsToId`).
 - **Demo CRM** (development and the live demo only) with made-up companies,
   contacts, opportunities, risk records and tasks.
 

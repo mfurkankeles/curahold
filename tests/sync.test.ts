@@ -90,6 +90,59 @@ describe('records under accounts', () => {
   });
 });
 
+
+describe('stakeholders and the org chart', () => {
+  let contactType: any;
+  let quill: any;
+  let boss: any;
+  it('a contact keeps first and last name, LinkedIn, decision role and stance', async () => {
+    contactType = (await mert.post('/api/record-types', { kind: 'contact' })).json.type;
+    expect(contactType.fields.map((f: any) => f.key)).toEqual(['first_name', 'last_name', 'title', 'email', 'phone', 'linkedin', 'decision', 'stance']);
+    quill = (await lena.get('/api/accounts?q=Quillfield')).json.accounts[0];
+    const r = await lena.post('/api/records', {
+      typeId: contactType.id,
+      accountId: quill.id,
+      fields: { first_name: 'Derya', last_name: 'Kılıç', title: 'CMO', email: 'Derya@Quill.example', linkedin: 'linkedin.com/in/derya-example', decision: 'Karar verici', stance: 'champion' },
+    });
+    expect(r.status).toBe(201);
+    boss = r.json.record;
+    expect(boss.name).toBe('Derya Kılıç');
+    expect(boss.fields).toMatchObject({ email: 'derya@quill.example', linkedin: 'https://linkedin.com/in/derya-example', decision: 'decision_maker', stance: 'champion' });
+    expect((await lena.post('/api/records', { typeId: contactType.id, accountId: quill.id, fields: { stance: 'friendly' } })).status).toBe(400);
+    const renamed = (await lena.patch(`/api/records/${boss.id}`, { fields: { last_name: 'Kılıç Aydın' } })).json.record;
+    expect(renamed.name).toBe('Derya Kılıç Aydın');
+  });
+
+  it('reports-to builds the org chart; loops and other accounts are refused', async () => {
+    const a = (await lena.post('/api/records', { typeId: contactType.id, accountId: quill.id, parentId: boss.id, fields: { first_name: 'Can', last_name: 'Er', stance: 'blocker' } })).json.record;
+    const b = (await lena.post('/api/records', { typeId: contactType.id, accountId: quill.id, parentId: a.id, fields: { first_name: 'Ece', last_name: 'Su' } })).json.record;
+    expect(a.parentId).toBe(boss.id);
+    expect((await lena.patch(`/api/records/${boss.id}`, { parentId: b.id })).json.error).toBe('org_loop');
+    expect((await lena.patch(`/api/records/${boss.id}`, { parentId: boss.id })).status).toBe(400);
+    const other = (await lena.get('/api/accounts?q=Harborline')).json.accounts[0];
+    const stranger = (await lena.post('/api/records', { typeId: contactType.id, accountId: other.id, fields: { first_name: 'Ali', last_name: 'Kaya' } })).json.record;
+    expect((await lena.patch(`/api/records/${b.id}`, { parentId: stranger.id })).status).toBe(400);
+    // Moving someone to another account takes them out of the old chart.
+    const moved = (await lena.patch(`/api/records/${a.id}`, { accountId: other.id })).json.record;
+    expect(moved.parentId).toBeNull();
+    expect((await lena.get(`/api/records/${b.id}`)).json.record.parentId).toBeNull();
+    const list = (await lena.get(`/api/records?type=contact&account=${quill.id}`)).json.records;
+    expect(list.map((x: any) => x.name).sort()).toEqual(['Derya Kılıç Aydın', 'Ece Su']);
+  });
+
+  it('counts blockers and champions per account', async () => {
+    const fields = (await ada.get('/api/me')).json.org.accountFields;
+    const next = [
+      ...fields,
+      { key: 'blockers', label: { en: 'Blockers' }, type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'blocker' } } },
+      { key: 'champions', label: { en: 'Champions' }, type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'champion' } } },
+    ];
+    expect((await ada.req('PUT', '/api/account-fields', { fields: next })).status).toBe(200);
+    const q = (await lena.get(`/api/accounts/${quill.id}`)).json.account;
+    expect(q.fields).toMatchObject({ champions: 1, blockers: 0 });
+  });
+});
+
 describe('two-way sync with a CRM', () => {
   let connId: string;
   let demoId: string;
@@ -256,6 +309,29 @@ describe('two-way sync with a CRM', () => {
     expect(bad.stats.Account?.archived ?? 0).toBe(0);
     expect(bad.errors.some((e: any) => /nothing was archived/.test(e.message))).toBe(true);
     for (const [k, v] of saved) store.objects.Account.set(k, v);
+  });
+
+
+  it('stakeholders come over with who reports to whom, stance and decision role; changes go back', async () => {
+    const blue = (await ada.get('/api/accounts?q=Bluebay')).json.accounts[0];
+    const people = (await ada.get(`/api/records?type=contact&account=${blue.id}`)).json.records;
+    const jordan = people.find((p: any) => p.name === 'Jordan Blake');
+    const second = people.find((p: any) => p.name !== 'Jordan Blake');
+    expect(second.parentId).toBe(jordan.id);
+    expect(jordan.fields).toMatchObject({ first_name: 'Jordan', last_name: 'Blake', decision: 'influencer', stance: 'supporter' });
+    expect(jordan.fields.linkedin).toMatch(/^https:\/\/www\.linkedin\.com\/in\/jordan-blake/);
+    // Moved to the top of the chart here → no manager in the CRM either.
+    const ver = await lena.patch(`/api/records/${second.id}`, { parentId: null, fields: { stance: 'blocker' } });
+    expect(ver.status).toBe(200);
+    await env.settle();
+    const remote = demoStore(demoId).objects.Contact.get('003E0001')!.values;
+    expect(remote.ReportsToId).toBeNull();
+    expect(remote.Stance__c).toBe('Blocker');
+    // And back: a new manager set in the CRM comes here.
+    env.clock.now = new Date(Date.now() + 200_000);
+    demoTouch(demoId, 'Contact', '003E0001', { ReportsToId: '003D0002' }, env.clock.now);
+    await ada.post(`/api/connections/${connId}/sync/run`, {});
+    expect((await lena.get(`/api/records/${second.id}`)).json.record.parentId).toBe(jordan.id);
   });
 
   it('runs hourly on its own, and keeps companies apart', async () => {

@@ -46,11 +46,17 @@ const FIELDS: Record<string, RemoteField[]> = {
   ],
   Contact: [
     f('Id', 'Contact ID', 'id', { updatable: false, createable: false }),
-    f('Name', 'Full Name', 'text', { required: true }),
+    f('Name', 'Full Name', 'text', { updatable: false, createable: false }),
+    f('FirstName', 'First Name', 'text'),
+    f('LastName', 'Last Name', 'text', { required: true }),
     f('AccountId', 'Account', 'ref', { refTo: ['Account'] }),
+    f('ReportsToId', 'Reports To', 'ref', { refTo: ['Contact'] }),
     f('Email', 'Email', 'email'),
     f('Phone', 'Phone', 'phone'),
     f('Title', 'Title', 'text'),
+    f('LinkedIn__c', 'LinkedIn', 'url'),
+    f('Buying_Role__c', 'Buying role', 'select', { options: opts('Decision maker', 'Influencer', 'Evaluator', 'User') }),
+    f('Stance__c', 'Stance', 'select', { options: opts('Champion', 'Supporter', 'Neutral', 'Skeptic', 'Blocker') }),
     f('OwnerId', 'Contact Owner', 'user'),
   ],
   Opportunity: [
@@ -130,10 +136,48 @@ function seed(id: string, users: RemoteUser[]): DemoStore {
     });
     const con = `003D${String(i + 1).padStart(4, '0')}`;
     const [first, last] = PEOPLE[i].split(' ');
+    const domain = `${ascii(name)}.example`;
     s.objects.Contact.set(con, {
       modifiedAt: at(i),
-      values: { Id: con, Name: PEOPLE[i], AccountId: acc, Email: `${ascii(first)}.${ascii(last)}@${ascii(name)}.example`, Phone: null, Title: ['Head of CRM', 'Marketing Director', 'E-commerce Lead'][i % 3], OwnerId: owner(i) },
+      values: {
+        Id: con,
+        Name: PEOPLE[i],
+        FirstName: first,
+        LastName: last,
+        AccountId: acc,
+        ReportsToId: null,
+        Email: `${ascii(first)}.${ascii(last)}@${domain}`,
+        Phone: null,
+        Title: ['Head of CRM', 'Marketing Director', 'E-commerce Lead'][i % 3],
+        LinkedIn__c: `https://www.linkedin.com/in/${ascii(first)}-${ascii(last)}-example`,
+        Buying_Role__c: ['Decision maker', 'Influencer', 'Evaluator'][i % 3],
+        Stance__c: ['Champion', 'Supporter', 'Neutral', 'Skeptic'][i % 4],
+        OwnerId: owner(i),
+      },
     });
+    // A few companies have a second stakeholder who reports to the first.
+    if (i >= 1 && i <= 4) {
+      const [f2, l2] = PEOPLE[(i + 6) % PEOPLE.length].split(' ');
+      const id2 = `003E${String(i).padStart(4, '0')}`;
+      s.objects.Contact.set(id2, {
+        modifiedAt: at(i),
+        values: {
+          Id: id2,
+          Name: `${f2} ${l2}`,
+          FirstName: f2,
+          LastName: l2,
+          AccountId: acc,
+          ReportsToId: con,
+          Email: `${ascii(f2)}.${ascii(l2)}@${domain}`,
+          Phone: null,
+          Title: 'CRM Specialist',
+          LinkedIn__c: null,
+          Buying_Role__c: 'User',
+          Stance__c: i === 2 ? 'Blocker' : 'Neutral',
+          OwnerId: owner(i),
+        },
+      });
+    }
     for (let k = 0; k < (i % 3) + 1; k++) {
       const opp = `006D${String(i * 3 + k + 1).padStart(4, '0')}`;
       const stage = ['Proposal', 'Negotiation', 'Closed Won', 'Prospecting', 'Closed Lost'][(i + k) % 5];
@@ -217,6 +261,7 @@ export const demo: CrmAdapter = {
     const item = s.objects[object]?.get(id);
     if (!item) throw new CrmError('Not found', 404);
     item.values = { ...item.values, ...values };
+    if (object === 'Contact' && ('FirstName' in values || 'LastName' in values)) item.values.Name = [item.values.FirstName, item.values.LastName].filter(Boolean).join(' ');
     if (object === 'Opportunity' && 'StageName' in values) {
       item.values.IsClosed = String(values.StageName).startsWith('Closed');
       item.values.IsWon = values.StageName === 'Closed Won';
@@ -227,7 +272,9 @@ export const demo: CrmAdapter = {
     const s = store(ctx.config);
     const id = `${object.slice(0, 3).toUpperCase()}N${++s.seq}`;
     s.calls.push(`create:${object}:${id}`);
-    s.objects[object].set(id, { values: { ...values, Id: id }, modifiedAt: ctx.now().toISOString() });
+    const v: Record<string, unknown> = { ...values, Id: id };
+    if (object === 'Contact') v.Name = [v.FirstName, v.LastName].filter(Boolean).join(' ');
+    s.objects[object].set(id, { values: v, modifiedAt: ctx.now().toISOString() });
     return id;
   },
   url() {

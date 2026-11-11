@@ -4,7 +4,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Account } from '../../../shared/src/model';
-import { typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
+import { CONTACT_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
+import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -12,7 +13,32 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
+import { OrgChart, StanceBadge } from './OrgChart';
 import { Avatar, Confirm, Dialog } from './ui';
+
+/** The fields worth a column: for contacts the stakeholder ones, otherwise the first few. */
+export function shownFields(type: RecordType, n: number): AccountField[] {
+  if (type.kind === 'contact') {
+    const picked = CONTACT_COLUMNS.map((k) => type.fields.find((f) => f.key === k)).filter((f): f is AccountField => !!f);
+    const rest = type.fields.filter((f) => !CONTACT_COLUMNS.includes(f.key) && f.key !== 'first_name' && f.key !== 'last_name');
+    return [...picked, ...rest].slice(0, n);
+  }
+  return type.fields.slice(0, n);
+}
+
+/** A field value in a table cell; stance as its coloured label. */
+function Cell({ field, value }: { field: AccountField; value: unknown }) {
+  const fmt = useFieldFormat();
+  if (field.key === 'stance') return <StanceBadge field={field} value={value} />;
+  if (field.type === 'url' && value) {
+    return (
+      <a href={String(value)} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}>
+        {fmt(field, value)}
+      </a>
+    );
+  }
+  return <>{fmt(field, value)}</>;
+}
 
 /** Accounts | Contacts | Opportunities | Risks … — shown above both lists. */
 export function RecordTabs({ current, types }: { current: string; types: RecordType[] | null }) {
@@ -55,7 +81,6 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
 export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale } = useI18n();
   const { people, person, canWrite } = useStore();
-  const fmt = useFieldFormat();
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
   const [q, setQ] = useState('');
@@ -73,7 +98,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     return () => clearTimeout(id);
   }, [load]);
   if (types && !type) return <div className="empty">{t('errors.not_found')}</div>;
-  const cols = (type?.fields ?? []).slice(0, 4);
+  const cols = type ? shownFields(type, 4) : [];
   return (
     <>
       <header className="topbar">
@@ -140,7 +165,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
                     </td>
                     {cols.map((f) => (
                       <td key={f.key} className="hide-phone">
-                        {fmt(f, r.fields[f.key])}
+                        <Cell field={f} value={r.fields[f.key]} />
                       </td>
                     ))}
                     <td className="hide-phone">{r.ownerId && <Avatar person={person(r.ownerId)} />}</td>
@@ -166,15 +191,30 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   );
 }
 
-/** The account page's section for one kind of record. */
+/** The account page's section for one kind of record; contacts can be shown as an org chart. */
 export function AccountRecords({ account, types, onChange }: { account: Account; types: RecordType[]; onChange: () => void }) {
   const { t, locale } = useI18n();
   const { canWrite } = useStore();
   const fmt = useFieldFormat();
   const [lists, setLists] = useState<Record<string, AppRecord[]>>({});
-  const [editing, setEditing] = useState<{ type: RecordType; record: AppRecord | null } | null>(null);
+  const [editing, setEditing] = useState<{ type: RecordType; record: AppRecord | null; parentId?: string | null } | null>(null);
+  const [view, setView] = useState<'chart' | 'list'>(() => {
+    try {
+      return localStorage.getItem('tw-contacts-view') === 'list' ? 'list' : 'chart';
+    } catch {
+      return 'chart';
+    }
+  });
+  const pickView = (v: 'chart' | 'list') => {
+    setView(v);
+    try {
+      localStorage.setItem('tw-contacts-view', v);
+    } catch {
+      // only a convenience
+    }
+  };
   const load = useCallback(async () => {
-    const all = await Promise.all(types.map((ty) => get<{ records: AppRecord[] }>(`/records?type=${ty.id}&account=${account.id}&limit=100`).then((r) => [ty.id, r.records] as const)));
+    const all = await Promise.all(types.map((ty) => get<{ records: AppRecord[] }>(`/records?type=${ty.id}&account=${account.id}&limit=500`).then((r) => [ty.id, r.records] as const)));
     setLists(Object.fromEntries(all));
   }, [types, account.id]);
   useEffect(() => {
@@ -184,23 +224,45 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
     <>
       {types.map((ty) => {
         const list = lists[ty.id] ?? [];
-        const cols = ty.fields.slice(0, 3);
+        const isContact = ty.kind === 'contact';
+        const cols = shownFields(ty, 3);
         return (
           <section className="sheet" key={ty.id}>
             <div className="section__row">
               <h3 className="section__head">
                 <span>
-                  {typeLabel(ty, locale)}
+                  {isContact ? t('org.stakeholders') : typeLabel(ty, locale)}
                   <span className="muted num">{list.length}</span>
                 </span>
               </h3>
-              {canWrite && (
+              {isContact && (
+                <div className="seg" role="group" aria-label={t('org.view')}>
+                  <button aria-pressed={view === 'chart'} onClick={() => pickView('chart')}>
+                    {t('org.chart')}
+                  </button>
+                  <button aria-pressed={view === 'list'} onClick={() => pickView('list')}>
+                    {t('org.list')}
+                  </button>
+                </div>
+              )}
+              {canWrite && !(isContact && view === 'chart') && (
                 <button className="btn btn--small" onClick={() => setEditing({ type: ty, record: null })}>
                   {t('common.add')}
                 </button>
               )}
             </div>
-            {list.length === 0 ? (
+            {isContact && view === 'chart' ? (
+              <OrgChart
+                type={ty}
+                records={list}
+                onChanged={() => {
+                  void load();
+                  onChange();
+                }}
+                onOpen={(r) => setEditing({ type: ty, record: r })}
+                onAdd={(parentId) => setEditing({ type: ty, record: null, parentId })}
+              />
+            ) : list.length === 0 ? (
               <p className="muted">{t('records.noneHere', { type: typeLabel(ty, locale).toLocaleLowerCase(locale === 'tr' ? 'tr-TR' : 'en-US') })}</p>
             ) : (
               <ul className="plainlist record-lines">
@@ -209,6 +271,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
                     <button className="record-line" onClick={() => setEditing({ type: ty, record: r })}>
                       <span className="record-line__name">{r.name}</span>
                       {cols.map((f) => {
+                        if (f.key === 'stance') return r.fields.stance ? <StanceBadge key={f.key} field={f} value={r.fields.stance} /> : null;
                         const v = fmt(f, r.fields[f.key]);
                         return v ? (
                           <span key={f.key} className="record-line__val">
@@ -229,6 +292,8 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
           type={editing.type}
           record={editing.record}
           accountId={account.id}
+          parentId={editing.parentId}
+          siblings={lists[editing.type.id] ?? []}
           onClose={() => setEditing(null)}
           onDone={async () => {
             await load();
@@ -240,13 +305,47 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
   );
 }
 
-export function RecordDialog({ type, record, accountId, onClose, onDone }: { type: RecordType; record: AppRecord | null; accountId?: string; onClose: () => void; onDone: () => unknown }) {
+export function RecordDialog({
+  type,
+  record,
+  accountId,
+  parentId,
+  siblings,
+  onClose,
+  onDone,
+}: {
+  type: RecordType;
+  record: AppRecord | null;
+  accountId?: string;
+  parentId?: string | null;
+  /** Others of the same kind at the account, for "reports to". */
+  siblings?: AppRecord[];
+  onClose: () => void;
+  onDone: () => unknown;
+}) {
   const { t, locale, words } = useI18n();
   const { me, people, canWrite, can, toast } = useStore();
+  const isContact = type.kind === 'contact';
   const [name, setName] = useState(record?.name ?? '');
+  const initialSplit = record && isContact && !record.fields.first_name && !record.fields.last_name ? splitName(record.name) : null;
+  const [parent, setParent] = useState<string>(record?.parentId ?? parentId ?? '');
   const [ownerId, setOwnerId] = useState(record?.ownerId ?? (record ? '' : me.user.id));
   const [account, setAccount] = useState<string>(record?.accountId ?? accountId ?? '');
-  const [values, setValues] = useState<Record<string, string | number | null>>(record?.fields ?? {});
+  const [values, setValues] = useState<Record<string, string | number | null>>(
+    initialSplit ? { ...(record?.fields ?? {}), first_name: initialSplit.first, last_name: initialSplit.last } : (record?.fields ?? {}),
+  );
+  const contactName = fullName(values.first_name, values.last_name);
+  const effectiveName = isContact ? contactName || name : name;
+  // Who can be the manager: anyone at the account who is not this person or below them.
+  const managers = useMemo(() => {
+    if (!siblings || !isContact) return [];
+    const below = new Set<string>();
+    if (record) {
+      const walk = (id: string) => siblings.filter((x) => x.parentId === id).forEach((x) => !below.has(x.id) && (below.add(x.id), walk(x.id)));
+      walk(record.id);
+    }
+    return siblings.filter((x) => x.id !== record?.id && !below.has(x.id));
+  }, [siblings, record, isContact]);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [removing, setRemoving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -264,13 +363,21 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
     try {
       if (record) {
         await patch(`/records/${record.id}`, {
-          ...(name.trim() !== record.name ? { name: name.trim() } : {}),
+          ...(!isContact && name.trim() !== record.name ? { name: name.trim() } : {}),
           ...(ownerId !== (record.ownerId ?? '') ? { ownerId: ownerId || null } : {}),
           ...(account !== (record.accountId ?? '') ? { accountId: account || null } : {}),
+          ...(isContact && siblings && parent !== (record.parentId ?? '') ? { parentId: parent || null } : {}),
           ...(Object.keys(changed).length ? { fields: changed } : {}),
         });
       } else {
-        await post('/records', { typeId: type.id, name: name.trim(), ownerId: ownerId || null, accountId: account || null, fields: values });
+        await post('/records', {
+          typeId: type.id,
+          ...(isContact ? {} : { name: name.trim() }),
+          ownerId: ownerId || null,
+          accountId: account || null,
+          ...(isContact && parent ? { parentId: parent } : {}),
+          fields: values,
+        });
       }
       await onDone();
       onClose();
@@ -283,7 +390,7 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
   const one = typeLabel(type, locale, false);
   return (
     <Dialog
-      title={record ? record.name : t('records.new', { type: one })}
+      title={record ? effectiveName || record.name : t('records.new', { type: one })}
       onClose={onClose}
       wide
       footer={
@@ -297,7 +404,7 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
             {t('common.cancel')}
           </button>
           {canWrite && (
-            <button className="btn btn--primary" disabled={!name.trim() || busy} onClick={save}>
+            <button className="btn btn--primary" disabled={!effectiveName.trim() || busy} onClick={save}>
               {record ? t('common.save') : t('common.create')}
             </button>
           )}
@@ -305,11 +412,37 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
       }
     >
       {record && <OpenIn links={record.links} />}
+      {isContact && record && <ContactLinks fields={values} name={effectiveName} />}
       <div className="form">
-        <label className="field">
-          <span className="field__label">{t('records.name')}</span>
-          <input className="input" autoFocus={!record} value={name} maxLength={300} disabled={!canWrite} onChange={(e) => setName(e.target.value)} />
-        </label>
+        {isContact ? (
+          <div className="form__row">
+            {(['first_name', 'last_name'] as const).map((k) => (
+              <label className="field" key={k}>
+                <span className="field__label">{labelOf(type.fields.find((f) => f.key === k)?.label, locale) || t(k === 'first_name' ? 'org.firstName' : 'org.lastName')}</span>
+                <input className="input" autoFocus={!record && k === 'first_name'} value={String(values[k] ?? '')} maxLength={150} disabled={!canWrite} onChange={(e) => setValues((x) => ({ ...x, [k]: e.target.value }))} />
+              </label>
+            ))}
+          </div>
+        ) : (
+          <label className="field">
+            <span className="field__label">{t('records.name')}</span>
+            <input className="input" autoFocus={!record} value={name} maxLength={300} disabled={!canWrite} onChange={(e) => setName(e.target.value)} />
+          </label>
+        )}
+        {isContact && siblings && (
+          <label className="field">
+            <span className="field__label">{t('org.reportsTo')}</span>
+            <select className="select" value={parent} disabled={!canWrite} onChange={(e) => setParent(e.target.value)}>
+              <option value="">{t('org.nobodyTop')}</option>
+              {managers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                  {m.fields.title ? ` — ${m.fields.title}` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="form__row">
           {!accountId && (
             <label className="field">
@@ -339,7 +472,7 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
           </label>
         </div>
         <div className="record-fields">
-          {type.fields.map((f) => (
+          {type.fields.filter((f) => !(isContact && (f.key === 'first_name' || f.key === 'last_name'))).map((f) => (
             <label className="field" key={f.key}>
               <span className="field__label">{labelOf(f.label, locale)}</span>
               <FieldInput field={f} value={values[f.key]} disabled={!canWrite} onSave={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
@@ -362,5 +495,25 @@ export function RecordDialog({ type, record, accountId, onClose, onDone }: { typ
         />
       )}
     </Dialog>
+  );
+}
+
+/** Email, call and LinkedIn in one tap. */
+function ContactLinks({ fields, name }: { fields: Record<string, unknown>; name: string }) {
+  const { t } = useI18n();
+  const links = [
+    fields.email ? { href: `mailto:${fields.email}`, label: t('org.email', { name }), text: String(fields.email) } : null,
+    fields.phone ? { href: `tel:${String(fields.phone).replace(/\s+/g, '')}`, label: t('org.phone', { name }), text: String(fields.phone) } : null,
+    fields.linkedin ? { href: String(fields.linkedin), label: t('org.linkedin', { name }), text: 'LinkedIn' } : null,
+  ].filter((x): x is { href: string; label: string; text: string } => !!x);
+  if (!links.length) return null;
+  return (
+    <div className="contact-links">
+      {links.map((l) => (
+        <a key={l.href} href={l.href} aria-label={l.label} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer noopener">
+          {l.text}
+        </a>
+      ))}
+    </div>
   );
 }

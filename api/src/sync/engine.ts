@@ -13,6 +13,7 @@ import { fetchOf, nowOf, secretsKey, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
+import { fullName } from '../../../shared/src/records';
 import { recomputeRollups } from '../lib/records';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
@@ -197,6 +198,11 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
       case 'account':
         out.account = look.accountFor(plain(raw));
         break;
+      case 'parent': {
+        const v = plain(raw);
+        out.parentRemote = v === null || v === '' ? null : String(v);
+        break;
+      }
       case 'due':
         out.due = toDate(plain(raw), defs.locale);
         break;
@@ -211,6 +217,11 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
           if (def && !def.rollup) out[fm.local] = inValue(def, rf, raw, defs, dirtyKey);
         }
     }
+  }
+  // Contacts: the name follows first and last name when the name itself is not synced.
+  if (map.target === 'record' && defs.types.get(map.typeKey ?? '')?.kind === 'contact' && !('name' in out)) {
+    const n = fullName(out['f:first_name'], out['f:last_name']);
+    if (n) out.name = n.slice(0, 300);
   }
   // Opportunities: open, won or lost, from whatever the CRM says.
   if (map.target === 'record' && defs.types.get(map.typeKey ?? '')?.kind === 'opportunity' && !map.fields.some((f) => f.local === 'f:status')) {
@@ -267,6 +278,11 @@ export function mapOut(map: ObjectMap, item: Row, changed: string[] | null, meta
       case 'account':
         v = look.remoteAccountFor(item.account_id ?? null);
         if (v === null && item.account_id) continue;
+        break;
+      case 'parent':
+        // Filled in by the caller: the parent's id on the other side, if it is there.
+        v = item.__parent_remote ?? null;
+        if (v === null && item.parent_id) continue;
         break;
       case 'due': {
         const d = item.due_date ? iso(item.due_date)?.slice(0, 10) ?? String(item.due_date).slice(0, 10) : null;
@@ -456,6 +472,9 @@ function diff(map: ObjectMap, cur: Row | null, vals: Record<string, unknown>, bo
       case 'account':
         if ((v ?? null) !== (cur?.account_id ?? null)) p.account = v ?? null;
         break;
+      case 'parent':
+        if ((v ?? null) !== (cur?.parent_id ?? null)) p.parent = v ?? null;
+        break;
       case 'due': {
         const was = cur?.due_date ? (iso(cur.due_date)?.slice(0, 10) ?? String(cur.due_date).slice(0, 10)) : null;
         if ((v ?? null) !== was) p.due = v ?? null;
@@ -504,9 +523,10 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
     if (map.target === 'record') {
       await q.query(
         `update records set name = coalesce($3, name), owner_id = case when $4 then $5::uuid else owner_id end,
-                account_id = case when $7 then $8::uuid else account_id end, fields = fields || $6::jsonb, updated_at = now()
+                account_id = case when $7 then $8::uuid else account_id end, parent_id = case when $9 then $10::uuid else parent_id end,
+                fields = fields || $6::jsonb, updated_at = now()
           where id = $1 and org_id = $2`,
-        [cur.id, orgId, patch.name ?? null, 'owner' in patch, patch.owner ?? null, JSON.stringify(fields), 'account' in patch, patch.account ?? null],
+        [cur.id, orgId, patch.name ?? null, 'owner' in patch, patch.owner ?? null, JSON.stringify(fields), 'account' in patch, patch.account ?? null, 'parent' in patch, patch.parent ?? null],
       );
     } else {
       await q.query(
@@ -524,10 +544,11 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
   }
   const type = r.defs.types.get(map.typeKey ?? '');
   if (!type) throw new CrmError('The record type for this object no longer exists');
-  const [x] = await q.query(`insert into records (org_id, type_id, account_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5, $6, $7) returning id`, [
+  const [x] = await q.query(`insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, source) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`, [
     orgId,
     type.id,
     patch.account ?? null,
+    patch.parent ?? null,
     name,
     patch.owner ?? null,
     JSON.stringify(fields),
@@ -537,7 +558,30 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
 }
 
 /** Applies one page of remote rows. Returns the local ids touched (for rollups). */
-async function applyPage(r: RunCtx, map: ObjectMap, rows: RemoteRow[], seen: Set<string> | null, touchedAccounts: Set<string>) {
+/** "Reports to" from the other side: same kind, same account, and no loops; otherwise left as it is. */
+async function parentOk(q: Q, orgId: string, id: string | null, parentId: string, accountId: string | null): Promise<boolean> {
+  const [p] = await q.query('select account_id from records where id = $1 and org_id = $2', [parentId, orgId]);
+  if (!p || (p.account_id ?? null) !== (accountId ?? null)) return false;
+  if (!id) return true;
+  const [loop] = await q.query(
+    `with recursive up(id, parent_id, depth) as (
+       select id, parent_id, 0 from records where id = $1 and org_id = $3
+       union all
+       select x.id, x.parent_id, up.depth + 1 from records x join up on x.id = up.parent_id where up.depth < 100
+     ) select 1 from up where id = $2 limit 1`,
+    [parentId, id, orgId],
+  );
+  return !loop;
+}
+
+async function applyPage(
+  r: RunCtx,
+  map: ObjectMap,
+  rows: RemoteRow[],
+  seen: Set<string> | null,
+  touchedAccounts: Set<string>,
+  parents?: { links: Map<string, string>; pending: { id: string; remote: string }[] },
+) {
   const meta = await metaFor(r, map.remote);
   const orgId = r.conn.orgId;
   const st = statsOf(r, map.remote);
@@ -579,6 +623,7 @@ async function applyPage(r: RunCtx, map: ObjectMap, rows: RemoteRow[], seen: Set
       await q.query('savepoint sync_row');
       try {
         const link = byRemote.get(row.id);
+        let pendingParent: string | null = null;
         const remoteHash = await hashRow(map, row);
         if (link?.ignored || (link?.entity_id && link.remote_hash === remoteHash && cur.has(link.entity_id))) {
           await q.query('release savepoint sync_row');
@@ -591,6 +636,15 @@ async function applyPage(r: RunCtx, map: ObjectMap, rows: RemoteRow[], seen: Set
           const k = `${fold(String(vals.name ?? ''))}|${map.target === 'record' ? ((vals.account as string) ?? '') : ''}`;
           entity = names.get(k) ?? null;
           if (entity) names.delete(k);
+        }
+        if ('parentRemote' in vals) {
+          const remoteParent = vals.parentRemote as string | null;
+          delete vals.parentRemote;
+          const local = remoteParent ? parents?.links.get(remoteParent) : null;
+          const accountId = (vals.account as string | null | undefined) ?? entity?.account_id ?? null;
+          if (!remoteParent) vals.parent = null;
+          else if (local && (await parentOk(q, orgId, entity?.id ?? null, local, accountId))) vals.parent = local;
+          else if (!local) pendingParent = remoteParent;
         }
         const board = map.target === 'task' ? (r.defs.boards.get(map.boardId ?? '') ?? null) : null;
         let patch = diff(map, entity, vals, board);
@@ -636,6 +690,10 @@ async function applyPage(r: RunCtx, map: ObjectMap, rows: RemoteRow[], seen: Set
           r.accountLinks.set(row.id, id!);
           r.accountRemote.set(id!, row.id);
         }
+        if (parents && id) {
+          parents.links.set(row.id, id);
+          if (pendingParent) parents.pending.push({ id, remote: pendingParent });
+        }
         await q.query('release savepoint sync_row');
       } catch (e) {
         await q.query('rollback to savepoint sync_row');
@@ -671,6 +729,26 @@ async function archiveMissing(r: RunCtx, map: ObjectMap, remoteIds: string[] | n
 
 const ORDER: Record<TargetKind, number> = { account: 0, record: 1, task: 2 };
 
+async function recordLinks(r: RunCtx, object: string): Promise<Map<string, string>> {
+  const rows = await r.deps.db.system((q) =>
+    q.query(`select remote_id, entity_id from sync_links where org_id = $1 and connection_id = $2 and object = $3 and entity_id is not null and not ignored`, [r.conn.orgId, r.conn.id, object]),
+  );
+  return new Map(rows.map((x) => [x.remote_id, x.entity_id]));
+}
+
+async function settleParents(r: RunCtx, parents: { links: Map<string, string>; pending: { id: string; remote: string }[] }) {
+  await r.deps.db.system(async (q) => {
+    for (const p of parents.pending.splice(0)) {
+      const local = parents.links.get(p.remote);
+      if (!local) continue;
+      const [me] = await q.query('select account_id from records where id = $1 and org_id = $2', [p.id, r.conn.orgId]);
+      if (me && (await parentOk(q, r.conn.orgId, p.id, local, me.account_id))) {
+        await q.query('update records set parent_id = $3 where id = $1 and org_id = $2', [p.id, r.conn.orgId, local]);
+      }
+    }
+  });
+}
+
 async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
   const cursors: Record<string, string> = { ...(r.conn.state.cursors ?? {}) };
   const pages: Record<string, any> = { ...(r.conn.state.pages ?? {}) };
@@ -697,10 +775,12 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
       // Archiving needs every row seen in one go, so a resumed full read skips it once.
       const seen = readAll && !saved ? new Set<string>() : null;
       let cursor: string | null = saved?.cursor ?? null;
+      // Org charts: who reports to whom, resolved once every row of the object is here.
+      const parents = map.target === 'record' && map.fields.some((f) => f.local === 'parent') ? { links: await recordLinks(r, map.remote), pending: [] as { id: string; remote: string }[] } : undefined;
       let done = false;
       while (!done) {
         const page = await r.adapter.list(r.ctx, map.remote, { since, cursor, fields: wanted, key: map.key });
-        await applyPage(r, map, page.rows, seen, touchedAccounts);
+        await applyPage(r, map, page.rows, seen, touchedAccounts, parents);
         for (const row of page.rows) if (row.modifiedAt && (!maxSeen || row.modifiedAt > maxSeen)) maxSeen = row.modifiedAt;
         cursor = page.next;
         done = !cursor;
@@ -710,6 +790,7 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
           break;
         }
       }
+      if (parents?.pending.length) await settleParents(r, parents);
       if (!done) break;
       delete pages[map.remote];
       // Next time: changes from the newest one seen (or from when this read began).
@@ -758,6 +839,12 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
       }
       const meta = await metaFor(r, map.remote);
       const fields = [...meta.values()];
+      if (target === 'record' && item.parent_id && map.fields.some((f) => f.local === 'parent')) {
+        const [pl] = await r.deps.db.system((q) =>
+          q.query(`select remote_id from sync_links where connection_id = $1 and object = $2 and entity = 'record' and entity_id = $3 and not ignored`, [r.conn.id, map.remote, item.parent_id]),
+        );
+        if (pl) item.__parent_remote = pl.remote_id;
+      }
       if (link) {
         const values = mapOut(map, item, ch.fields, meta, r.defs, r.look, false);
         if (Object.keys(values).length) await r.adapter.update(r.ctx, map.remote, link.remote_id, values, fields, map.key);
@@ -972,7 +1059,7 @@ export async function previewSync(deps: Deps, conn: LoadedCrm, sync: SyncConfig)
 
 const SUGGEST: Record<string, Record<string, string>> = {
   account: { name: 'name', account_name: 'name', company: 'name', firma: 'name', owner: 'owner', ownerid: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner', _ownerid_value: 'owner' },
-  contact: { name: 'name', full_name: 'name', fullname: 'name', accountid: 'account', parentcustomerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', email: 'f:email', emailaddress1: 'f:email', phone: 'f:phone', telephone1: 'f:phone', title: 'f:title', jobtitle: 'f:title', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner' },
+  contact: { firstname: 'f:first_name', first_name: 'f:first_name', lastname: 'f:last_name', last_name: 'f:last_name', reportstoid: 'parent', reports_to: 'parent', linkedin: 'f:linkedin', linkedin_url: 'f:linkedin', hs_linkedin_url: 'f:linkedin', linkedin__c: 'f:linkedin', name: 'name', full_name: 'name', fullname: 'name', accountid: 'account', parentcustomerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', email: 'f:email', emailaddress1: 'f:email', phone: 'f:phone', telephone1: 'f:phone', title: 'f:title', jobtitle: 'f:title', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner' },
   opportunity: { name: 'name', dealname: 'name', deal_name: 'name', title: 'name', accountid: 'account', customerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', amount: 'f:amount', value: 'f:amount', estimatedvalue: 'f:amount', closedate: 'f:close_date', close_date: 'f:close_date', estimatedclosedate: 'f:close_date', expected_close_date: 'f:close_date', closing_date: 'f:close_date', stagename: 'f:stage', dealstage: 'f:stage', stage: 'f:stage', stage_id: 'f:stage', salesstage: 'f:stage', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', user_id: 'owner' },
   task: { subject: 'title', hs_task_subject: 'title', title: 'title', whatid: 'account', what_id: 'account', regardingobjectid: 'account', org_id: 'account', __company: 'account', activitydate: 'due', due_date: 'due', scheduledend: 'due', hs_timestamp: 'due', description: 'description', hs_task_body: 'description', note: 'description', status: 'done', done: 'done', hs_task_status: 'done', statecode: 'done', ownerid: 'assignee', owner: 'assignee', hubspot_owner_id: 'assignee', user_id: 'assignee' },
 };
@@ -986,6 +1073,10 @@ export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'tas
   for (const f of fields) {
     const k = f.name.toLowerCase();
     let target = table[k];
+    if (!target && kind === 'contact') {
+      if (/stance|sentiment|duruş|tutum/i.test(`${f.name} ${f.label}`)) target = 'f:stance';
+      else if (/buying.?role|decision|karar/i.test(`${f.name} ${f.label}`)) target = 'f:decision';
+    }
     if (!target && kind === 'custom') {
       if (f.type === 'ref' && (f.refTo ?? []).some((t) => /^(account|accounts|companies|organizations)$/i.test(t))) target = 'account';
       else if (f.type === 'user' && /owner/i.test(f.name)) target = 'owner';

@@ -409,16 +409,59 @@ await step('CRM: connect, choose, map, preview and start — then records everyw
   await ada.page.browserContext().close();
 });
 
-await step('phone: the CRM screens fit a phone', async () => {
-  const phone = await newPage(s.browser, 390, 844);
-  await signIn(phone.page, s.origin, 'ada@demo.example');
+
+await step('stakeholders: org chart with drag and drop, and a stakeholder card', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  const [blue] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Bluebay Travel'`);
+  const people = await sql(`select id, name, parent_id from records where account_id = $1 order by name`, [blue.id]);
+  const jordan = people.find((p: any) => p.name === 'Jordan Blake')!;
+  const other = people.find((p: any) => p.name !== 'Jordan Blake' && p.name && !/Renewal|Upsell|module|review|dropped|changed/i.test(p.name))!;
+  expect(jordan && other && other.parent_id === jordan.id, `reports-to did not come over: ${JSON.stringify(people)}`);
+  await ada.page.goto(`${s.origin}/accounts/${blue.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.org-card');
+  await shot(ada.page, 'p3-11-org-chart');
+  const drag = async (fromName: string, to: () => Promise<any>) => {
+    const card = await ada.page.evaluateHandle((n) => [...document.querySelectorAll('.org-card')].find((c) => c.querySelector('strong')?.textContent === n), fromName);
+    const a = (await (card as any).boundingBox())!;
+    const target = await to();
+    const b = (await target.boundingBox())!;
+    await ada.page.mouse.move(a.x + 60, a.y + 20);
+    await ada.page.mouse.down();
+    for (let i = 1; i <= 10; i++) {
+      await ada.page.mouse.move(a.x + 60 + ((b.x + b.width / 2 - a.x - 60) * i) / 10, a.y + 20 + ((b.y + b.height / 2 - a.y - 20) * i) / 10);
+      await pause(16);
+    }
+    await pause(60);
+    await ada.page.mouse.up();
+    await pause(700);
+  };
+  await drag(other.name, () => ada.page.$('.org__root'));
+  let [row] = await sql('select parent_id from records where id = $1', [other.id]);
+  expect(row.parent_id === null, 'drop on the top strip did not clear the manager');
+  await drag(other.name, async () => ada.page.evaluateHandle(() => [...document.querySelectorAll('.org-card')].find((c) => c.querySelector('strong')?.textContent === 'Jordan Blake')));
+  [row] = await sql('select parent_id from records where id = $1', [other.id]);
+  expect(row.parent_id === jordan.id, 'drop on a person did not set the manager');
+  await (await byText(ada.page, '.org-card__main strong', 'Jordan Blake')).click();
+  await ada.page.waitForSelector('.contact-links');
+  await shot(ada.page, 'p3-12-stakeholder');
+  expect(ada.errors.length === 0, ada.errors.join(' | '));
+
+  // The same screens on a phone (same session: sign-in links are rate-limited).
+  await ada.page.keyboard.press('Escape');
+  await ada.page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
   const [c] = await sql(`select c.id from connections c join orgs o on o.id = c.org_id where o.slug = 'demo' and c.kind = 'source' limit 1`);
-  await phone.page.goto(`${s.origin}/settings/sources/${c.id}`, { waitUntil: 'networkidle0' });
-  await phone.page.waitForSelector('.source__tabs');
-  const overflow = await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  await ada.page.goto(`${s.origin}/settings/sources/${c.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.source__tabs');
+  let overflow = await ada.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'sync page scrolls sideways on a phone');
-  await shot(phone.page, 'p3-10-phone-sync');
-  await phone.page.browserContext().close();
+  await shot(ada.page, 'p3-10-phone-sync');
+  await ada.page.goto(`${s.origin}/accounts/${blue.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.org-card');
+  overflow = await ada.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(!overflow, 'account page scrolls sideways on a phone');
+  await shot(ada.page, 'p3-13-phone-org');
+  await ada.page.browserContext().close();
 });
 
 await step('no script errors in the browser', async () => {

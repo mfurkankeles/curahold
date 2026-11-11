@@ -29,6 +29,7 @@ export type ErrorCode =
   | 'connection_failed'
   | 'import_too_large'
   | 'type_not_empty'
+  | 'org_loop'
   | 'sync_running'
   | 'crm_error'
   | 'server';
@@ -62,6 +63,7 @@ const STATUS: Record<ErrorCode, number> = {
   connection_failed: 400,
   import_too_large: 413,
   type_not_empty: 409,
+  org_loop: 400,
   sync_running: 409,
   crm_error: 502,
   server: 500,

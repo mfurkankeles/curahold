@@ -3,7 +3,7 @@
 // connected, edits here are queued for it.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { BUILTIN_TYPES, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
+import { BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
 import { requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
@@ -33,6 +33,7 @@ export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
   id: r.id,
   typeId: r.type_id,
   accountId: r.account_id ?? null,
+  parentId: r.parent_id ?? null,
   ...(r.account_name !== undefined ? { accountName: r.account_name ?? null } : {}),
   name: r.name,
   ownerId: r.owner_id ?? null,
@@ -232,11 +233,49 @@ async function checkRefs(q: Q, accountId: string | null | undefined, ownerId: st
   }
 }
 
+/**
+ * "Reports to" must be another record of the same kind under the same
+ * account, and must not make a loop (nobody can report to their own report).
+ */
+export async function checkParent(q: Q, self: { id: string | null; type_id: string; account_id: string | null }, parentId: string | null | undefined) {
+  if (!parentId) return;
+  if (parentId === self.id) fail('validation', { fields: 'parentId' }, { fields: ['parentId'] });
+  const [p] = await q.query('select id, type_id, account_id from records where id = $1', [parentId]);
+  if (!p || p.type_id !== self.type_id || (p.account_id ?? null) !== (self.account_id ?? null)) fail('validation', { fields: 'parentId' }, { fields: ['parentId'] });
+  if (!self.id) return;
+  const [loop] = await q.query(
+    `with recursive up(id, parent_id, depth) as (
+       select id, parent_id, 0 from records where id = $1
+       union all
+       select r.id, r.parent_id, up.depth + 1 from records r join up on r.id = up.parent_id where up.depth < 100
+     ) select 1 from up where id = $2 limit 1`,
+    [parentId, self.id],
+  );
+  if (loop) fail('org_loop');
+}
+
+/** Contacts: the name follows first and last name unless it was given. */
+function contactName(kind: string, given: string | undefined, fields: Record<string, unknown>, fallback: string | null): string | null {
+  if (given) return given;
+  if (kind === 'contact') {
+    const n = fullName(fields.first_name, fields.last_name);
+    if (n) return n.slice(0, 300);
+  }
+  return fallback;
+}
+
 recordRoutes.post('/records', async (c) => {
   requireWriter(c);
   const input = await body(
     c,
-    z.object({ typeId: uuid, accountId: uuid.nullable().optional(), name: z.string().trim().min(1).max(300), ownerId: uuid.nullable().optional(), fields: recordValues.optional() }),
+    z.object({
+      typeId: uuid,
+      accountId: uuid.nullable().optional(),
+      parentId: uuid.nullable().optional(),
+      name: z.string().trim().min(1).max(300).optional(),
+      ownerId: uuid.nullable().optional(),
+      fields: recordValues.optional(),
+    }),
   );
   const org = c.get('org');
   const auth = c.get('auth');
@@ -245,9 +284,12 @@ recordRoutes.post('/records', async (c) => {
     const type = await typeOf(q, input.typeId);
     await checkRefs(q, input.accountId, input.ownerId);
     const fields = cleanFields(type.fields, input.fields ?? {}, org.locale);
+    const name = contactName(type.kind, input.name, fields, null);
+    if (!name) fail('validation', { fields: 'name' }, { fields: ['name'] });
+    await checkParent(q, { id: null, type_id: type.id, account_id: input.accountId ?? null }, input.parentId);
     const [r] = await q.query(
-      `insert into records (org_id, type_id, account_id, name, owner_id, fields, created_by) values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-      [org.id, type.id, input.accountId ?? null, input.name, input.ownerId ?? null, JSON.stringify(fields), auth.userId],
+      `insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+      [org.id, type.id, input.accountId ?? null, input.parentId ?? null, name, input.ownerId ?? null, JSON.stringify(fields), auth.userId],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.created', entity: 'record', entityId: r.id, meta: { type: type.key } });
     await recomputeRollups(q, org.id, org.account_fields, [input.accountId ?? null]);
@@ -267,6 +309,7 @@ recordRoutes.patch('/records/:id', async (c) => {
     z.object({
       name: z.string().trim().min(1).max(300).optional(),
       accountId: uuid.nullable().optional(),
+      parentId: uuid.nullable().optional(),
       ownerId: uuid.nullable().optional(),
       fields: recordValues.optional(),
       archived: z.boolean().optional(),
@@ -281,18 +324,26 @@ recordRoutes.patch('/records/:id', async (c) => {
     const [type] = await q.query('select * from record_types where id = $1', [r.type_id]);
     await checkRefs(q, input.accountId, input.ownerId);
     const fields = input.fields ? { ...(r.fields ?? {}), ...cleanFields(type.fields, input.fields, org.locale) } : r.fields;
+    const namesChanged = !!input.fields && ('first_name' in input.fields || 'last_name' in input.fields);
+    const accountId = input.accountId !== undefined ? input.accountId : r.account_id;
+    const accountMoved = (accountId ?? null) !== (r.account_id ?? null);
+    // Moving to another account leaves the old org chart behind.
+    const parentId = input.parentId !== undefined ? input.parentId : accountMoved ? null : r.parent_id;
+    await checkParent(q, { id, type_id: r.type_id, account_id: accountId }, parentId);
     const next = {
-      name: input.name ?? r.name,
+      name: contactName(type.kind, input.name, namesChanged ? fields : {}, r.name)!,
       owner_id: input.ownerId !== undefined ? input.ownerId : r.owner_id,
-      account_id: input.accountId !== undefined ? input.accountId : r.account_id,
+      account_id: accountId,
+      parent_id: parentId ?? null,
       fields,
     };
     await q.query(
-      `update records set name = $2, owner_id = $3, account_id = $4, fields = $5, updated_at = now(),
+      `update records set name = $2, owner_id = $3, account_id = $4, fields = $5, parent_id = $7, updated_at = now(),
               archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end
         where id = $1`,
-      [id, next.name, next.owner_id, next.account_id, JSON.stringify(fields), input.archived ?? null],
+      [id, next.name, next.owner_id, next.account_id, JSON.stringify(fields), input.archived ?? null, next.parent_id],
     );
+    if (accountMoved) await q.query('update records set parent_id = null where parent_id = $1', [id]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.updated', entity: 'record', entityId: id, meta: { fields: Object.keys(input) } });
     await recomputeRollups(q, org.id, org.account_fields, [r.account_id, next.account_id]);
     const keys = changedKeys(r, next);

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
-import { typeLabel } from '../../../shared/src/records';
+import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
 import type { FieldMap, ObjectMap, RemoteField, RemoteObject, SyncConfig, SyncPreview, SyncProblem, SyncRun, SyncStats } from '../../../shared/src/sync';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -560,8 +560,12 @@ function localChoices(o: Draft, d: Detail, accountFields: AccountField[], t: (k:
     return out;
   }
   out.push({ value: 'name', label: t('sync.local.name') }, { value: 'owner', label: t('sync.local.owner'), types: ['user', 'person'] });
-  if (o.target === 'record') out.push({ value: 'account', label: accountWord, types: ['ref', 'text'] });
-  const fields = o.target === 'account' ? accountFields : (d.recordTypes.find((r) => r.key === o.typeKey)?.fields ?? []);
+  if (o.target === 'record') out.push({ value: 'account', label: accountWord, types: ['ref', 'text'] }, { value: 'parent', label: t('sync.local.parent'), types: ['ref', 'text'] });
+  // A built-in kind that is about to be created already has its fields.
+  const fields =
+    o.target === 'account'
+      ? accountFields
+      : (d.recordTypes.find((r) => r.key === o.typeKey)?.fields ?? (o.kind === 'contact' || o.kind === 'opportunity' ? BUILTIN_TYPES[o.kind].fields : []));
   for (const f of fields) if (!f.rollup) out.push({ value: `f:${f.key}`, label: labelOf(f.label, locale) });
   out.push({ value: 'new', label: t('sync.local.new') });
   return out;

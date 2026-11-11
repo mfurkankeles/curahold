@@ -257,7 +257,7 @@ syncRoutes.post('/connections/:id/file', async (c) => {
 
 // --------------------------------------------------------------- mapping
 
-const fieldMap = z.object({ remote: z.string().min(1).max(200), local: z.string().regex(/^(name|owner|account|title|description|due|assignee|done|new|f:[a-z][a-z0-9_]{0,39})$/), dir: z.enum(['both', 'pull']) });
+const fieldMap = z.object({ remote: z.string().min(1).max(200), local: z.string().regex(/^(name|owner|account|parent|title|description|due|assignee|done|new|f:[a-z][a-z0-9_]{0,39})$/), dir: z.enum(['both', 'pull']) });
 const objectMap = z.object({
   remote: z.string().min(1).max(120),
   label: z.string().trim().min(1).max(120),
