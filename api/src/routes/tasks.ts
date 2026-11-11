@@ -90,6 +90,22 @@ taskRoutes.get('/tasks', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+// The little number next to "My tasks": open tasks of mine that are late or due today (where the company is).
+taskRoutes.get('/tasks/counts', async (c) => {
+  const auth = c.get('auth');
+  const today = localDate(nowOf(c.get('deps')), c.get('org').timezone || 'UTC');
+  const [r] = await run(c, (q) =>
+    q.query(
+      `select count(*) filter (where t.due_date < $2::date) as late, count(*) filter (where t.due_date = $2::date) as today
+         from tasks t join boards b on b.id = t.board_id
+        where t.archived_at is null and b.archived_at is null and $1::uuid = any(t.assignee_ids)
+          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`,
+      [auth.userId, today],
+    ),
+  );
+  return c.json({ late: Number(r?.late ?? 0), today: Number(r?.today ?? 0) });
+});
+
 const fields = {
   title: z.string().trim().min(1).max(300),
   description: z.string().max(20000),

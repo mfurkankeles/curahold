@@ -34,3 +34,12 @@ export function positionBetween(before?: number, after?: number): number {
   if (after === undefined) return before + 1024;
   return (before + after) / 2;
 }
+
+/** The column a task goes to when it is done, and back to when it is opened again. */
+export function doneTarget(board: { columns: { key: string; done: boolean }[] } | undefined, task: Task) {
+  if (!board) return null;
+  const doneCol = board.columns.find((c) => c.done);
+  const isDone = !!board.columns.find((c) => c.key === task.status)?.done;
+  if (!doneCol) return null;
+  return isDone ? { status: board.columns.find((c) => !c.done)?.key ?? board.columns[0].key, done: false } : { status: doneCol.key, done: true };
+}

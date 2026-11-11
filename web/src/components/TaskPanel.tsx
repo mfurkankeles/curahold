@@ -12,6 +12,9 @@ import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
 import { relativeTime } from '../lib/time';
 import { Avatar, Confirm, PeoplePicker } from './ui';
+import { Icon } from './icons';
+import { doneTarget } from '../lib/tasks';
+import { useToggleDone } from './Tick';
 
 export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: () => void }) {
   const { t, words, fmtDate } = useI18n();
@@ -68,6 +71,9 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
     }
   }
 
+  const toggleDone = useToggleDone();
+  const target = task ? doneTarget(board, task) : null;
+  const [cheer, setCheer] = useState(false);
   const assignable = people.filter((p) => p.seat === 'full' && (p.status === 'active' || p.status === 'invited'));
   const mayDelete = task && editable && (task.createdBy === me.user.id || can('tasks.delete_any'));
 
@@ -76,14 +82,49 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
       <div className="scrim" onClick={close} />
       <aside className="panel" role="dialog" aria-modal="true" aria-label={task?.title ?? t('common.loading')} tabIndex={-1} ref={panel}>
         <div className="panel__head">
-          <span className="panel__crumb">{board?.name}</span>
-          {mayDelete && (
-            <button className="btn btn--quiet btn--small" onClick={() => setConfirmDelete(true)}>
-              {t('task.delete')}
+          {task && target && editable && (
+            <button
+              className={`btn btn--small panel__done${target.done ? '' : ' panel__done--reopen'}`}
+              data-cheer={cheer || undefined}
+              onAnimationEnd={() => setCheer(false)}
+              onClick={() => {
+                if (target.done) setCheer(true);
+                void toggleDone(task, (next) => {
+                  setTask((cur) => (cur ? { ...cur, ...next } : cur));
+                  onChanged();
+                });
+              }}
+            >
+              <Icon name="check" size={15} />
+              {target.done ? t('task.complete') : t('task.reopen')}
             </button>
           )}
-          <button className="btn btn--quiet btn--icon" onClick={close} aria-label={t('common.close')}>
-            ×
+          <span className="panel__crumb">{board?.name}</span>
+          {task && (
+            <button
+              className="btn btn--quiet btn--icon btn--small"
+              title={t('task.copyLink')}
+              aria-label={t('task.copyLink')}
+              onClick={async () => {
+                const url = `${location.origin}${location.pathname}?task=${task.id}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  toast(t('task.linkCopied'));
+                } catch {
+                  toast(url);
+                }
+              }}
+            >
+              <Icon name="link" size={16} />
+            </button>
+          )}
+          {mayDelete && (
+            <button className="btn btn--quiet btn--icon btn--small" title={t('task.delete')} aria-label={t('task.delete')} onClick={() => setConfirmDelete(true)}>
+              <Icon name="trash" size={16} />
+            </button>
+          )}
+          <button className="btn btn--quiet btn--icon btn--small" onClick={close} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
+            <Icon name="close" size={16} />
           </button>
         </div>
         {error && <div className="panel__body"><div className="notice notice--error">{error}</div></div>}

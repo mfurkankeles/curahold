@@ -14,11 +14,16 @@ import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, Dialog, DueLabel } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { navigate, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
 import { AccountTimeline, HealthBadge, ScoreChip } from '../components/Timeline';
 import { PortalPeople } from '../components/PortalAdmin';
+import { AccountCards, RenewalsView, SIGNAL_FILTERS, WhitespaceView, keyFields, matchesSignal, signalsOf, type SignalFilter } from '../components/AccountViews';
 import { relativeTime } from '../lib/time';
+import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
+import { Icon } from '../components/icons';
+import { parseQuick } from '../lib/quickparse';
+import { tasksChanged, usePageDefaults } from '../lib/shell';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -68,13 +73,62 @@ export function AccountsPage() {
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 });
   const [importing, setImporting] = useState(false);
   const [creating, setCreating] = useState(false);
+  // "+ New → Customer" from anywhere opens the form here.
+  const { search: qs } = useLocation();
+  useEffect(() => {
+    if (new URLSearchParams(qs).get('new') !== '1') return;
+    setCreating(true);
+    navigate('/accounts', true);
+  }, [qs]);
   const [bulkOwner, setBulkOwner] = useState('');
   const manage = can('accounts.manage');
   const fields = me.org.accountFields.slice(0, 5);
   const { types } = useRecordTypes();
+  // How the list is shown, remembered on this device: cards say what needs attention.
+  const remembered = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
+    try {
+      const v = localStorage.getItem(key) as T | null;
+      return v && allowed.includes(v) ? v : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const VIEWS = ['cards', 'table', 'renewals', 'products'] as const;
+  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => remembered('tw_accounts_view', VIEWS, 'cards'));
+  const setView = (v: (typeof VIEWS)[number]) => {
+    setViewState(v);
+    try {
+      localStorage.setItem('tw_accounts_view', v);
+    } catch {
+      /* per-viewer convenience */
+    }
+  };
+  const CARD_SORTS = ['attention', 'name', 'health', 'value', 'renewal', 'open'] as const;
+  const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('tw_accounts_sort', CARD_SORTS, 'attention'));
+  const [signal, setSignal] = useState<SignalFilter>('');
+  const { renewal: renewalField, value: valueField } = keyFields(me.org.accountFields);
+  const defaultShown = [valueField, renewalField].filter(Boolean).map((f) => f!.key);
+  const [shownKeys, setShownKeys] = useState<string[]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('tw_accounts_card_fields') ?? 'null');
+      return Array.isArray(v) ? v : defaultShown;
+    } catch {
+      return defaultShown;
+    }
+  });
+  const shown = me.org.accountFields.filter((f) => shownKeys.includes(f.key) && f.key !== 'health_score');
+  const toggleShown = (key: string) => {
+    const next = shownKeys.includes(key) ? shownKeys.filter((k) => k !== key) : [...shownKeys, key].slice(-6);
+    setShownKeys(next);
+    try {
+      localStorage.setItem('tw_accounts_card_fields', JSON.stringify(next));
+    } catch {
+      /* per-viewer convenience */
+    }
+  };
 
   const load = useCallback(async () => {
-    const p = new URLSearchParams({ limit: '500' });
+    const p = new URLSearchParams({ limit: '500', signals: '1' });
     if (q.trim()) p.set('q', q.trim());
     if (owner !== 'all') p.set('owner', owner);
     if (archived) p.set('archived', '1');
@@ -101,6 +155,26 @@ export function AccountsPage() {
       return (x < y ? -1 : x > y ? 1 : 0) * sort.dir;
     });
   }, [data, sort, person, locale]);
+
+  const signalRows = useMemo(() => {
+    const list = (data?.accounts ?? []).map((a) => ({ a, ...signalsOf(a, me.org.accountFields, me.org.health, t) }));
+    const num = (v: unknown) => (typeof v === 'number' ? v : v === null || v === undefined || v === '' ? null : Number(v));
+    const by: Record<string, (x: (typeof list)[number], y: (typeof list)[number]) => number> = {
+      attention: (x, y) => y.attention - x.attention,
+      name: () => 0,
+      health: (x, y) => (num(x.a.fields.health_score) ?? 999) - (num(y.a.fields.health_score) ?? 999),
+      value: (x, y) => (valueField ? (num(y.a.fields[valueField.key]) ?? -1) - (num(x.a.fields[valueField.key]) ?? -1) : 0),
+      renewal: (x, y) => (renewalField ? String(x.a.fields[renewalField.key] ?? '9999').localeCompare(String(y.a.fields[renewalField.key] ?? '9999')) : 0),
+      open: (x, y) => (y.a.openTasks ?? 0) - (x.a.openTasks ?? 0),
+    };
+    return list
+      .filter((r) => matchesSignal(signal, r.chips, r.attention))
+      .sort((x, y) => by[cardSort](x, y) || x.a.name.localeCompare(y.a.name, locale));
+  }, [data, me.org.accountFields, me.org.health, t, signal, cardSort, valueField, renewalField, locale]);
+  const needing = signalRows.filter((r) => r.attention > 0).length;
+  const atStake = valueField
+    ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + (Number(r.a.fields[valueField.key]) || 0), 0)
+    : 0;
 
   const head = (key: string, label: string) => (
     <th aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}>
@@ -176,12 +250,37 @@ export function AccountsPage() {
         )}
         {canWrite && (
           <button className="btn btn--primary" onClick={() => setCreating(true)}>
+            <Icon name="plus" size={16} />
             {t('accounts.new')}
           </button>
         )}
       </header>
       <div className="page">
         <RecordTabs current="accounts" types={types} />
+        <div className="viewbar">
+          <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')}>
+            {VIEWS.map((v) => (
+              <button key={v} role="tab" aria-selected={view === v} aria-pressed={view === v} onClick={() => setView(v)}>
+                <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', products: 'target' } as const)[v]} size={15} />
+                {t(`acards.view.${v}` as any)}
+              </button>
+            ))}
+          </div>
+          {data && (view === 'cards' || view === 'table') && (
+            <p className="viewbar__lead">
+              {t('acards.lead', { n: signalRows.length })}
+              {needing > 0 && (
+                <>
+                  {' '}
+                  <button className="linkbtn" onClick={() => setSignal(signal === 'attention' ? '' : 'attention')}>
+                    {t('acards.needing', { n: needing })}
+                  </button>
+                </>
+              )}
+              {atStake > 0 && valueField && <> {t('acards.stakeLead', { value: fmt(valueField, atStake) })}</>}
+            </p>
+          )}
+        </div>
         <div className="toolbar" style={{ marginBottom: 12 }}>
           <input className="input search" type="search" value={q} placeholder={t('accounts.search')} aria-label={t('accounts.search')} onChange={(e) => setQ(e.target.value)} />
           <div className="seg">
@@ -202,10 +301,65 @@ export function AccountsPage() {
                 </option>
               ))}
           </select>
-          <label className="checkbox">
-            <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
-            <span>{t('accounts.showArchived')}</span>
-          </label>
+          {(view === 'cards' || view === 'renewals') && (
+            <select className="select" value={signal} aria-label={t('acards.signalFilter')} onChange={(e) => setSignal(e.target.value as SignalFilter)}>
+              <option value="">{t('acards.signal.any')}</option>
+              {SIGNAL_FILTERS.map((s) => (
+                <option key={s} value={s}>
+                  {t(`acards.signal.${s}` as any)}
+                </option>
+              ))}
+            </select>
+          )}
+          {view === 'cards' && (
+            <>
+              <select
+                className="select"
+                value={cardSort}
+                aria-label={t('acards.sortLabel')}
+                onChange={(e) => {
+                  const v = e.target.value as (typeof CARD_SORTS)[number];
+                  setCardSort(v);
+                  try {
+                    localStorage.setItem('tw_accounts_sort', v);
+                  } catch {
+                    /* per-viewer convenience */
+                  }
+                }}
+              >
+                {CARD_SORTS.filter((s) => (s !== 'value' || valueField) && (s !== 'renewal' || renewalField) && (s !== 'health' || me.org.health?.enabled)).map((s) => (
+                  <option key={s} value={s}>
+                    {t(`acards.sort.${s}` as any)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <details className="fieldsmenu">
+            <summary className="btn" aria-label={t('acards.viewOptions')}>
+              <Icon name="sliders" size={16} />
+              <span className="hide-phone">{t('acards.viewOptions')}</span>
+            </summary>
+            <div className="fieldsmenu__pop" role="group" aria-label={t('acards.viewOptions')}>
+              <label className="checkbox">
+                <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
+                <span>{t('accounts.showArchived')}</span>
+              </label>
+              {view === 'cards' && (
+                <>
+                  <p className="fieldsmenu__h">{t('acards.fields')}</p>
+                  {me.org.accountFields
+                    .filter((f) => f.key !== 'health_score')
+                    .map((f) => (
+                      <label key={f.key} className="checkbox">
+                        <input type="checkbox" checked={shownKeys.includes(f.key)} onChange={() => toggleShown(f.key)} />
+                        <span>{labelOf(f.label, locale)}</span>
+                      </label>
+                    ))}
+                </>
+              )}
+            </div>
+          </details>
         </div>
 
         {manage && selected.size > 0 && (
@@ -234,21 +388,44 @@ export function AccountsPage() {
         )}
 
         {!data ? (
-          <p className="muted">{t('common.loading')}</p>
+          view === 'cards' ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
         ) : rows.length === 0 ? (
-          <div className="empty sheet">
-            <p>{q || owner !== 'all' || archived ? t('accounts.noMatch') : t('accounts.empty')}</p>
-            {!q && owner === 'all' && !archived && manage && can('accounts.view_all') && canWrite && (
-              <div className="inline-actions" style={{ justifyContent: 'center' }}>
-                <button className="btn btn--primary" onClick={() => setImporting(true)}>
-                  {t('accounts.import')}
-                </button>
-                <button className="btn" onClick={() => setCreating(true)}>
-                  {t('accounts.new')}
-                </button>
-              </div>
+          <div className="sheet">
+            {q || owner !== 'all' || archived ? (
+              <EmptyState icon="search" title={t('accounts.noMatch')} />
+            ) : (
+              <EmptyState icon="building" title={t('accounts.emptyTitle')} body={t('accounts.empty')}>
+                {manage && can('accounts.view_all') && canWrite && (
+                  <button className="btn btn--primary" onClick={() => setImporting(true)}>
+                    <Icon name="upload" size={16} />
+                    {t('accounts.import')}
+                  </button>
+                )}
+                {canWrite && (
+                  <button className="btn" onClick={() => setCreating(true)}>
+                    <Icon name="plus" size={16} />
+                    {t('accounts.new')}
+                  </button>
+                )}
+              </EmptyState>
             )}
           </div>
+        ) : view === 'cards' ? (
+          signalRows.length ? (
+            <AccountCards rows={signalRows} shown={shown} fmt={fmt} OptionValue={OptionValue} />
+          ) : (
+            <div className="sheet">
+              <EmptyState compact icon="filter" title={t('acards.noSignalMatch')}>
+                <button className="btn" onClick={() => setSignal('')}>
+                  {t('acards.clearFilter')}
+                </button>
+              </EmptyState>
+            </div>
+          )
+        ) : view === 'renewals' ? (
+          <RenewalsView rows={signalRows} fmt={fmt} />
+        ) : view === 'products' ? (
+          <WhitespaceView types={types} />
         ) : (
           <div className="table-wrap">
             <table className="table accounts-table">
@@ -473,6 +650,12 @@ export function AccountPage({ id }: { id: string }) {
   const [removing, setRemoving] = useState(false);
   const [title, setTitle] = useState('');
   const [boardId, setBoardId] = useState(boards[0]?.id ?? '');
+  // "Tasks" on a customer card opens the page at its tasks.
+  const ready = !!data;
+  usePageDefaults(data ? { accountId: data.account.id, accountName: data.account.name } : null);
+  useEffect(() => {
+    if (ready && location.hash === '#tasks') requestAnimationFrame(() => document.getElementById('tasks')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  }, [ready]);
   const load = useCallback(async () => {
     try {
       setData(await get(`/accounts/${id}`));
@@ -497,8 +680,22 @@ export function AccountPage({ id }: { id: string }) {
     }
   };
 
-  if (missing) return <div className="empty">{t('errors.not_found')}</div>;
-  if (!data) return <div className="center-note muted">{t('common.loading')}</div>;
+  if (missing)
+    return (
+      <div className="page">
+        <EmptyState icon="building" title={t('errors.not_found')}>
+          <button className="btn" onClick={() => navigate('/accounts')}>
+            {words.other}
+          </button>
+        </EmptyState>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="page" style={{ paddingTop: 24 }}>
+        <SkeletonRows rows={5} label={t('common.loading')} />
+      </div>
+    );
   const a = data.account;
   const done = (task: Task) => !!boards.find((b) => b.id === task.boardId)?.columns.find((c) => c.key === task.status)?.done;
   const open = data.tasks.filter((x) => !done(x));
@@ -506,9 +703,22 @@ export function AccountPage({ id }: { id: string }) {
 
   const addTask = async () => {
     if (!title.trim() || !boardId) return;
+    // Read the same way as quick add: "QBR deck nov 15 @Ayşe !high". Without a name it goes to the owner.
+    const pick = people.filter((x) => x.seat === 'full' && (x.status === 'active' || x.status === 'invited')).map((x) => ({ id: x.id, name: x.name }));
+    const q = parseQuick(title, pick, [], { id: me.user.id, name: me.user.name });
+    if (!q.title) return;
     try {
-      await post('/tasks', { boardId, title: title.trim(), accountId: id, assigneeIds: a.ownerId ? [a.ownerId] : [] });
+      await post('/tasks', {
+        boardId,
+        title: q.title,
+        accountId: id,
+        assigneeIds: q.assignees.length ? q.assignees.map((x) => x.id) : a.ownerId ? [a.ownerId] : [],
+        dueDate: q.dueDate,
+        ...(q.priority ? { priority: q.priority } : {}),
+        ...(q.repeat ? { repeat: q.repeat } : {}),
+      });
       setTitle('');
+      tasksChanged();
       await load();
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
@@ -526,7 +736,8 @@ export function AccountPage({ id }: { id: string }) {
             navigate('/accounts');
           }}
         >
-          ← {words.other}
+          <Icon name="chevronLeft" size={16} />
+          {words.other}
         </a>
         <div className="topbar__spacer" />
         {can('accounts.manage') && (
@@ -543,7 +754,7 @@ export function AccountPage({ id }: { id: string }) {
       <div className="page account-page">
         <div className="account-page__main">
           <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
-          <section className="sheet">
+          <section className="sheet" id="tasks">
             <h3 className="section__head">{t('accounts.openTasksN', { n: open.length })}</h3>
             {canWrite && boards.length > 0 && (
               <div className="toolbar" style={{ marginBottom: 10 }}>
@@ -560,7 +771,7 @@ export function AccountPage({ id }: { id: string }) {
                 </button>
               </div>
             )}
-            {open.length === 0 && <p className="muted">{t('accounts.noOpenTasks')}</p>}
+            {open.length === 0 && <EmptyState compact icon="checkCircle" tone="done" title={t('accounts.noOpenTasks')} />}
             {open.map((task) => (
               <TaskLine key={task.id} task={task} />
             ))}

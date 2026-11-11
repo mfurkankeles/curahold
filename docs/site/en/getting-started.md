@@ -24,6 +24,12 @@ Whoever creates the company picks a template: customer success, account manageme
 
 Then invite your team. If you add your company's email domain (`@yourcompany.com`), people from that domain can ask to join, or join straight away.
 
+## Your first day
+
+The **Getting started** card on your Home shows a few first steps: adding your first task, giving a task a date and a person, noting a call, bringing someone in with @, seeing your tasks in your calendar and choosing where notices reach you. Each step ticks itself off as you do it; **Hide** puts the card away.
+
+The **+ New** button on the left adds anything from one place: a task, a customer, a call note or a board. When you write a task you can put the date, the person and the customer on the same line; see [Quick add and shortcuts](/docs/en/quick-add/). Your menu (your name at the bottom left) has light or dark mode, the language and the shortcuts; **What's new** shows the latest additions.
+
 ## Device limit
 
 A person can stay signed in on two devices at once; an admin can set this between 1 and 5. Signing in on one more device signs the oldest one out. That keeps a seat from being shared by several people.
@@ -35,3 +41,4 @@ A person can stay signed in on two devices at once; an admin can set this betwee
 - [Customers, fields and records](/docs/en/customers/)
 - [Tasks and boards](/docs/en/tasks/)
 - [Roles and access](/docs/en/roles-and-access/)
+- [Quick add and shortcuts](/docs/en/quick-add/)

@@ -58,6 +58,7 @@ export function prefsOf(raw: unknown): NotifyPrefs {
     digestHour: Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : 8,
     defaultBoardId: p.defaultBoardId ?? null,
     quiet: validQuiet(p.quiet),
+    ...(p.startHidden ? { startHidden: true } : {}),
   };
 }
 

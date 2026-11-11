@@ -24,6 +24,10 @@ function expect(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
 }
 const sql = (text: string, params: unknown[] = []) => s.db.system((q) => q.query(text, params));
+/** Toasts sit over the foot of the sidebar for a few seconds; close them before reaching for it. */
+async function clearToasts(page: Page) {
+  await page.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
+}
 async function text(page: Page, sel: string) {
   return page.$eval(sel, (el) => el.textContent ?? '');
 }
@@ -45,8 +49,8 @@ let newTaskId = '';
 await step('create a task from the board', async () => {
   await mert.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
   await (await byText(mert.page, '.toolbar .btn--primary', 'Yeni görev')).click();
-  await mert.page.waitForSelector('.column input.input');
-  await mert.page.type('.column input.input', 'Yenileme riskini konuş');
+  await mert.page.waitForSelector('.qa__input');
+  await mert.page.type('.qa__input', 'Yenileme riskini konuş');
   await mert.page.keyboard.press('Enter');
   await mert.page.waitForFunction(() => [...document.querySelectorAll('.card__title')].some((e) => e.textContent === 'Yenileme riskini konuş'));
   const [row] = await sql(`select id, status from tasks where title = 'Yenileme riskini konuş'`);
@@ -110,13 +114,45 @@ await step('two people edit at once: the change is merged, nothing lost', async 
   await mert.page.keyboard.press('Escape');
 });
 
-await step('switch the interface to English', async () => {
-  await (await byText(mert.page, '.navlink', 'Dil:')).click();
-  await mert.page.waitForFunction(() => document.body.innerText.includes('Language: English'));
-  expect(await mert.page.evaluate(() => document.body.innerText.includes('My tasks')), 'English navigation missing');
+await step('switch the interface to English from the personal menu', async () => {
+  await clearToasts(mert.page);
+  await mert.page.click('.sidebar__me');
+  await (await byText(mert.page, '.popmenu__seg button', 'English')).click();
+  await mert.page.waitForFunction(() => document.body.innerText.includes('My tasks'));
   const [u] = await sql(`select locale from users where email = 'mert@demo.example'`);
   expect(u.locale === 'en', 'language not saved to the profile');
-  await (await byText(mert.page, '.navlink', 'Language:')).click();
+  await (await byText(mert.page, '.popmenu__seg button', 'Türkçe')).click();
+  await mert.page.waitForFunction(() => document.body.innerText.includes('Görevlerim'));
+  await mert.page.keyboard.press('Escape');
+});
+
+await step('quick add reads a date, a person and a priority from one line', async () => {
+  await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  await mert.page.keyboard.press('n');
+  await mert.page.waitForSelector('.qa__input');
+  await mert.page.type('.qa__input', 'QBR sunumunu hazırla yarın @zeynep !yüksek');
+  await mert.page.waitForSelector('.qchip[data-kind="person"]');
+  await shot(mert.page, 'e2e-06-quick-add');
+  await mert.page.keyboard.press('Enter');
+  await mert.page.waitForFunction(() => !document.querySelector('.qa'));
+  const [row] = await sql(`select title, due_date::text as due, priority, assignee_ids from tasks where title = 'QBR sunumunu hazırla'`);
+  expect(row, 'task not created');
+  expect(row.priority === 'high', `priority ${row.priority}`);
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  expect(Math.abs(Date.parse(row.due) - Date.parse(tomorrow)) <= 86_400_000, `due ${row.due}`);
+  const [z] = await sql(`select id from users where email = 'zeynep@demo.example'`);
+  const [m] = await sql(`select id from users where email = 'mert@demo.example'`);
+  expect(row.assignee_ids.includes(z.id) && row.assignee_ids.includes(m.id), 'Zeynep and Mert (My tasks default) should both be on it');
+});
+
+await step('one click on the tick finishes a task, and undo brings it back', async () => {
+  await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  const before = await mert.page.$$eval('.tasklist__row', (r) => r.length);
+  await mert.page.click('.tasklist__row .tick');
+  await mert.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Tamamlandı')), { timeout: 5000 });
+  await mert.page.waitForFunction((n) => document.querySelectorAll('.tasklist__row').length === n - 1, { timeout: 5000 }, before);
+  await mert.page.evaluate(() => ([...document.querySelectorAll('.toast')].find((x) => x.textContent?.includes('Tamamlandı'))?.querySelector('.toast__action') as HTMLElement)?.click());
+  await mert.page.waitForFunction((n) => document.querySelectorAll('.tasklist__row').length === n, { timeout: 5000 }, before);
 });
 
 await step('a viewer seat sees everything but cannot write', async () => {
@@ -175,7 +211,8 @@ await step('phone layout: columns and the menu work', async () => {
   await phone.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
   await phone.page.waitForSelector('.column');
   await shot(phone.page, 'e2e-09-phone-board');
-  await phone.page.click('.menu-toggle');
+  expect(await phone.page.$('.tabbar__add'), 'no add button in the bottom bar');
+  await phone.page.click('.mbar__btn');
   await pause(250);
   const open = await phone.page.$eval('.shell', (el) => el.getAttribute('data-nav'));
   expect(open === 'open', 'menu did not open');
@@ -247,7 +284,8 @@ await step('wizard: people from the file, rules, invitations', async () => {
   expect(names.includes('selin@yeni-sirket.example'), `suggested: ${names.join(',')}`);
   await p.type('.wizard__panel textarea', 'okan@yeni-sirket.example, Okan Demir');
   await (await byText(p, '.wizard__nav .btn--primary', '2 kişiyi ekle')).click();
-  await p.waitForSelector('.rules');
+  await p.waitForSelector('.rules .rule');
+  await pause(300);
   await shot(p, 'p2-08-wizard-rules');
   await (await byText(p, '.wizard__nav .btn--primary', 'Devam et')).click();
   await p.waitForSelector('.checklist');
@@ -262,6 +300,7 @@ await step('wizard: people from the file, rules, invitations', async () => {
 
 await step('accounts list with fields, detail page, and the rule editor preview', async () => {
   const p = founder.page;
+  await p.evaluate(() => localStorage.setItem('tw_accounts_view', 'table'));
   await p.goto(`http://yeni-sirket.localhost:${port}/accounts`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('.accounts-table');
   await shot(p, 'p2-10-accounts');
@@ -334,6 +373,11 @@ await step('phone: wizard and accounts fit a phone screen', async () => {
   const phone = await newPage(s.browser, 390, 844);
   await signIn(phone.page, s.origin, 'lena@demo.example');
   await phone.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  // Cards first (the default), then the table: neither may scroll sideways.
+  await phone.page.waitForSelector('.acards');
+  expect(!(await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)), 'customer cards scroll sideways on a phone');
+  await shot(phone.page, 'p2-19-phone-cards');
+  await (await byText(phone.page, '.seg--views button', 'Tablo')).click();
   await phone.page.waitForSelector('.accounts-table');
   const overflow = await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'accounts page scrolls sideways on a phone');
@@ -527,6 +571,7 @@ await step('field access: hide a field from members, then look as one of them', 
   await ada.page.waitForSelector('.pane');
   expect((await text(ada.page, '.topbar__title')).includes('Benim günüm'), 'member home not shown in preview');
   await shot(ada.page, 'p4-04-preview-home');
+  await ada.page.evaluate(() => localStorage.setItem('tw_accounts_view', 'table'));
   await ada.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.accounts-table');
   const heads = await ada.page.$$eval('.accounts-table th', (ths) => ths.map((t) => t.textContent ?? ''));
@@ -640,7 +685,9 @@ await step('timeline: log a call on a customer; switch the health score on and s
 await step('help: a request with a screenshot and consent; support visits read only; closing ends it', async () => {
   const p = mert.page;
   await p.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
-  await (await byText(p, '.sidebar .navlink', 'Yardım')).click();
+  await clearToasts(p);
+  await p.click('.sidebar__me');
+  await (await byText(p, '.popmenu__item', 'Yardım')).click();
   await p.waitForSelector('.help__cats');
   await (await byText(p, '.help__cat strong', 'Bir şey çalışmıyor')).click();
   await (await byText(p, '.help .seg button', 'İşimi durduruyor')).click();

@@ -4,13 +4,16 @@ import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { useShell } from '../lib/shell';
+import { Icon } from '../components/icons';
 import { dueState, todayIso } from '../lib/time';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   const { t, locale, fmtDate } = useI18n();
-  const { boards } = useStore();
+  const { boards, canWrite } = useStore();
+  const { quickAdd } = useShell();
   const [month, setMonth] = useState(() => {
     const n = new Date();
     return new Date(Date.UTC(n.getFullYear(), n.getMonth(), 1));
@@ -69,14 +72,14 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
               {t('board.filter.mine')}
             </button>
           </div>
-          <button className="btn" onClick={() => shift(-1)} aria-label={t('calendar.prev')}>
-            ‹
+          <button className="btn btn--icon" onClick={() => shift(-1)} aria-label={t('calendar.prev')}>
+            <Icon name="chevronLeft" size={16} />
           </button>
           <button className="btn" onClick={() => { const n = new Date(); setMonth(new Date(Date.UTC(n.getFullYear(), n.getMonth(), 1))); }}>
             {t('calendar.today')}
           </button>
-          <button className="btn" onClick={() => shift(1)} aria-label={t('calendar.next')}>
-            ›
+          <button className="btn btn--icon" onClick={() => shift(1)} aria-label={t('calendar.next')}>
+            <Icon name="chevronRight" size={16} />
           </button>
         </div>
       </header>
@@ -94,7 +97,14 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
             const shown = open ? list : list.slice(0, 3);
             return (
               <div className="cal__day" key={key} role="gridcell" data-out={d.getUTCMonth() !== month.getUTCMonth()} data-today={key === today} aria-label={fmtDate(key, { day: 'numeric', month: 'long' })}>
-                <span className="cal__date">{d.getUTCDate()}</span>
+                <span className="cal__top">
+                  <span className="cal__date">{d.getUTCDate()}</span>
+                  {canWrite && (
+                    <button className="cal__add" aria-label={t('calendar.addOn', { date: fmtDate(key, { day: 'numeric', month: 'long' }) })} title={t('calendar.addOn', { date: fmtDate(key, { day: 'numeric', month: 'long' }) })} onClick={() => quickAdd({ dueDate: key })}>
+                      <Icon name="plus" size={14} />
+                    </button>
+                  )}
+                </span>
                 {shown.map((x) => (
                   <button key={x.id} className="chip" data-due={dueState(x.dueDate, doneKeys.has(`${x.boardId}:${x.status}`), today)} onClick={() => setQuery('task', x.id)} title={x.title}>
                     {x.title}

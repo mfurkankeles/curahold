@@ -5,8 +5,11 @@ import './demo.css';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { storedLocale } from '../lib/i18n';
+import { startTheme } from '../lib/theme';
 import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, onFullNavigation, setCurrent } from './memory';
+
+startTheme();
 
 const PEOPLE = [
   { key: 'ada', name: 'Ada Demir', role: { tr: 'Yönetici', en: 'Admin' } },
@@ -33,6 +36,10 @@ const TEXT = {
     tries: 'Neler denenir?',
     reset: 'Baştan başla',
     ideas: [
+      'N tuşuna bas ve yaz: “Acme ile yenileme görüşmesi cuma @Zeynep #Velto !yüksek”. Tarih, kişi, müşteri ve öncelik kendiliğinden dolar; birkaç satır yapıştırırsan her biri ayrı görev olur.',
+      'Görevlerim’de bir görevin önündeki yuvarlağa tıkla: tamamlanır; alttaki bildirimden geri al.',
+      'Müşteriler → Kartlar: hangi müşterinin neden ilgi beklediğini gör; Yenilemeler ve Ürünler görünümlerine de bak.',
+      'Sol alttaki adına tıkla: koyu temayı, dili ve ? ile klavye kısayollarını dene.',
       'Bir müşteriyi aç (örneğin Velto Mobility): zaman çizelgesine görüşme notu ekle, sağlık skorunun yanındaki “Neden?”e bak.',
       'Ayarlar → Sağlık skoru’nda ağırlıkları değiştir; önizleme hangi müşterinin kaç puan alacağını hemen gösterir.',
       'Zildeki “Haftan” bildirimi: Pazartesi gelen haftalık özetin örneği.',
@@ -44,7 +51,7 @@ const TEXT = {
       'Yukarıdan Zeynep’e ya da Sofia’ya geç: aynı ekranlarda neyin değiştiğine bak.',
       'Ayarların’da API anahtarı oluştur ve Claude/ChatGPT bağlayıcı adresine bak; Ayarlar → Geliştirici’de webhook ekle.',
       'Yukarıdan Selin Kaya’ya (müşteri) geç: Quillfield’ın portalında yalnızca kendisiyle paylaşılanları görür; yeni talep açıp yanıt yaz. Sonra Zeynep olarak CS — Genel panosunda o görevi aç ve “Müşteriye yanıt” ver.',
-      'Sol menüdeki Yardım ile destek talebi formunu dene; “Tendwell desteğinin hesabıma bakmasına izin ver” kutusunu işaretleyince üstte bir şerit belirir.',
+      'Sol alttaki menünden Yardım ve destek ile talep formunu dene; “Tendwell desteğinin hesabıma bakmasına izin ver” kutusunu işaretleyince üstte bir şerit belirir.',
     ],
   },
   en: {
@@ -61,6 +68,10 @@ const TEXT = {
     tries: 'What to try',
     reset: 'Start over',
     ideas: [
+      'Press N and write: “Renewal call with Acme friday @Zeynep #Velto !high”. The date, person, customer and priority fill themselves in; paste several lines and each becomes a task.',
+      'In My tasks, click the circle in front of a task: it is done; undo from the notice at the bottom.',
+      'Customers → Cards: see which customer needs attention and why; try the Renewals and Products views too.',
+      'Click your name at the bottom left: try dark mode, the language, and the keyboard shortcuts with ?.',
       'Open a customer (Velto Mobility, say): log a call on the timeline and check “Why?” next to the health score.',
       'In Settings → Health score, change the weights; the preview shows each customer’s score straight away.',
       'The “Your week” notice in the bell: an example of the Monday summary.',
@@ -72,7 +83,7 @@ const TEXT = {
       'Switch to Zeynep or Sofia above and see what changes on the same screens.',
       'In Your settings, make an API key and find the Claude/ChatGPT connector address; add a webhook in Settings → Developers.',
       'Switch to Selin Kaya (a customer) above: in Quillfield’s portal she sees only what was shared with her; open a request and reply. Then, as Zeynep, open that task on CS — General and “Reply to customer”.',
-      'Try Help in the left menu: the help request form; ticking “Let Tendwell support look at my account” shows a strip on top.',
+      'Try Help and support in your menu at the bottom left: the help request form; ticking “Let Tendwell support look at my account” shows a strip on top.',
     ],
   },
 };

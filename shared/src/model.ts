@@ -208,6 +208,10 @@ export interface Account {
   archivedAt: string | null;
   openTasks?: number;
   lastActivityAt?: string | null;
+  /** With ?signals=1: open work past its date, open work untouched for 14 days, the last touch. */
+  overdueTasks?: number;
+  stuckTasks?: number;
+  lastTouchAt?: string | null;
 }
 
 export interface ImportResult {
@@ -282,7 +286,13 @@ export interface NotifyPrefs {
   defaultBoardId?: string | null;
   /** Hold notices between these hours (company time zone), e.g. 20 → 8. */
   quiet?: { from: number; to: number } | null;
+  /** The person put away the "getting started" card on Home. */
+  startHidden?: boolean;
 }
+
+/** First steps on Home, ticked off by what the person has done. */
+export const START_STEPS = ['task', 'planned', 'touch', 'mention', 'calendar', 'notify'] as const;
+export type StartStep = (typeof START_STEPS)[number];
 
 export interface DeliveryOption {
   id: string; // 'email' | 'none' | connection id

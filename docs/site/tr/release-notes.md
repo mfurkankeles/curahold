@@ -8,6 +8,22 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Kolay kullanım
+
+- **Hızlı ekleme:** görevi konuşur gibi yaz; “cuma”, “haftaya”, “15 kasım”, @kişi, #müşteri, !öncelik ve “her pazartesi” okunur. Birden çok satır, birden çok görev olur. N tuşu, + Yeni ya da telefonda alttaki +.
+- **Tek tıkla bitir:** listelerde ve kartlarda yuvarlak işaret; geri alınabilir. Görev penceresinde **Tamamla**.
+- **Yeni yerleşim:** simgeli menü, tek **+ Yeni** düğmesi, Görevlerim’in yanında geciken ve bugünkü görev sayısı; telefonda alt çubuk.
+- **Koyu tema** ve **klavye kısayolları** (? tuşu hepsini gösterir).
+- **Başlarken** kartı ve **Yenilikler** penceresi.
+- **Takvim:** bir günün üzerindeki + o güne görev ekler.
+- Boş ekranlar ne yapılacağını söyler; yüklenirken sayfanın şekli görünür.
+
+### Müşteriler
+
+- **Kart görünümü:** her müşteride geciken görevler, sağlık, yenileme, duran görevler ve temassızlık işaretleri; önce ilgi bekleyenler.
+- **Yenilemeler görünümü:** 12 ay, ay ay; risk altındaki tutar.
+- **Ürün haritası:** kimde hangi ürün var, boşluktan tek tıkla çapraz satış görevi.
+
 ### Müşteri portalı
 
 - **Panoları müşterilere açma:** yeni taleplerin düşeceği sütun, müşterinin gördüğü sütun adları ve ayrıntılar pano bazında seçilir.

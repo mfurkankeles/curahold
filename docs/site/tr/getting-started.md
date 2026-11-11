@@ -24,6 +24,12 @@ Her şirketin kendi adresi vardır: `sirketin.tendwell.com`. Ekibindeki herkes b
 
 Ardından ekibini davet edersin. Şirket alan adını (`@sirketin.com`) eklersen, o alan adından gelen kişiler katılma isteği gönderebilir ya da doğrudan katılabilir.
 
+## İlk günün
+
+Ana sayfanda **Başlarken** kartı birkaç ilk adımı gösterir: ilk görevini eklemek, bir göreve tarih ve kişi vermek, bir görüşmeyi not etmek, @ ile birini dahil etmek, görevlerini takvimine bağlamak ve bildirimlerin nereye geleceğini seçmek. Her adım sen onu yaptıkça kendiliğinden işaretlenir; kart istersen **Gizle** ile kaybolur.
+
+Soldaki **+ Yeni** düğmesi her şeyi tek yerden ekler: görev, müşteri, görüşme notu ya da pano. Görev yazarken tarihi, kişiyi ve müşteriyi aynı satıra yazabilirsin; ayrıntılar [Hızlı ekleme ve kısayollar](/docs/tr/quick-add/) sayfasında. Menünden (sol altta adın) açık ya da koyu görünümü, dili ve kısayolları bulursun; **Yenilikler** son eklenenleri gösterir.
+
 ## Cihaz sınırı
 
 Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile 5 arasında değiştirebilir. Üçüncü cihazdan girildiğinde en eski oturum kapanır. Böylece bir koltuk birkaç kişi arasında paylaşılamaz.
@@ -35,3 +41,4 @@ Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile
 - [Müşteriler, alanlar ve kayıtlar](/docs/tr/customers/)
 - [Görevler ve panolar](/docs/tr/tasks/)
 - [Roller ve erişim](/docs/tr/roles-and-access/)
+- [Hızlı ekleme ve kısayollar](/docs/tr/quick-add/)

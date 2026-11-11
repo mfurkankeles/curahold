@@ -19,6 +19,8 @@ import {
   type Page,
 } from '../../../shared/src/pages';
 import { PROVIDER_NAMES } from '../components/Connections';
+import { EmptyState, SkeletonCards } from '../components/Empty';
+import { GettingStarted } from '../components/GettingStarted';
 import { Confirm, Dialog } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -66,7 +68,12 @@ export function HomePage({ pageId }: { pageId: string | null }) {
     void loadData();
   }, [loadData]);
 
-  if (!pages) return <div className="empty">{t('common.loading')}</div>;
+  if (!pages)
+    return (
+      <div className="page" style={{ paddingTop: 24 }}>
+        <SkeletonCards count={4} label={t('common.loading')} />
+      </div>
+    );
 
   if (draft) {
     return (
@@ -96,8 +103,8 @@ export function HomePage({ pageId }: { pageId: string | null }) {
           <h1 className="topbar__title">{t('nav.home')}</h1>
         </header>
         <div className="page">
-          <div className="empty">
-            <p>{pages.length ? t('home.notFound') : t('home.none')}</p>
+          <GettingStarted />
+          <EmptyState icon="layout" title={pages.length ? t('home.notFound') : t('home.none')}>
             {admin ? (
               <button className="btn btn--primary" onClick={() => setDraft(blank())}>
                 {t('home.newPage')}
@@ -107,7 +114,7 @@ export function HomePage({ pageId }: { pageId: string | null }) {
                 {t('nav.myTasks')}
               </button>
             )}
-          </div>
+          </EmptyState>
         </div>
       </>
     );
@@ -152,10 +159,9 @@ export function HomePage({ pageId }: { pageId: string | null }) {
         </nav>
       )}
       <div className="page">
+        {current.id === homeId && <GettingStarted />}
         {current.cards.length === 0 ? (
-          <div className="empty">
-            <p>{t('home.emptyPage')}</p>
-          </div>
+          <EmptyState icon="layout" title={t('home.emptyPage')} />
         ) : (
           <div className="panes">
             {shown.map((card) => (

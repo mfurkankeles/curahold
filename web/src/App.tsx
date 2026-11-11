@@ -11,6 +11,7 @@ installDiagnostics();
 import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
+import { TASKS_CHANGED } from './lib/shell';
 import { AccountPage, AccountsPage } from './pages/Accounts';
 import { JoinPage, LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
 import { PersonalPage } from './pages/Personal';
@@ -199,6 +200,11 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const params = new URLSearchParams(search);
   const taskId = params.get('task');
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
+  // Tasks added from quick add (or anywhere outside the page): the page shows them.
+  useEffect(() => {
+    window.addEventListener(TASKS_CHANGED, bump);
+    return () => window.removeEventListener(TASKS_CHANGED, bump);
+  }, [bump]);
 
   let page: React.ReactNode = null;
   const b = match('/b/:id', path);

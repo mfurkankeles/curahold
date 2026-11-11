@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
+import { Icon } from './icons';
 
 const AVATAR_TONES = ['#2f6f73', '#8a5a2b', '#5b6aa0', '#7a4f7c', '#3f7a4c', '#9a4a3a', '#46667a', '#6b6b2f'];
 
@@ -64,6 +65,7 @@ export function railState(due: string | null, done: boolean): DueState {
 }
 
 export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
+  const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   // The latest onClose, without re-running the focus effect on every render
   // (that would pull focus away from whatever the person is typing in).
@@ -71,7 +73,11 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
   close.current = onClose;
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
-    const first = box.current?.querySelector<HTMLElement>('input, select, textarea, button');
+    // The first thing to type in; otherwise the first button of the dialog's own content.
+    const first =
+      box.current?.querySelector<HTMLElement>('.dialog__body input:not([type="hidden"]), .dialog__body select, .dialog__body textarea') ??
+      box.current?.querySelector<HTMLElement>('.dialog__body button, .dialog__foot button') ??
+      box.current?.querySelector<HTMLElement>('button');
     first?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close.current();
@@ -85,9 +91,14 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
   return (
     <div className="dialog" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`dialog__box${wide ? ' dialog__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>
-        <h2 className="dialog__head" id="dlg-title">
-          {title}
-        </h2>
+        <div className="dialog__top">
+          <h2 className="dialog__head" id="dlg-title">
+            {title}
+          </h2>
+          <button type="button" className="btn btn--quiet btn--icon btn--small dialog__x" onClick={onClose} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
         <div className="dialog__body">{children}</div>
         {footer && <div className="dialog__foot">{footer}</div>}
       </div>

@@ -24,6 +24,17 @@ Keep records under customers:
 
 Records can feed customer fields: "Open pipeline", "Champions", "Blockers". The field updates by itself when a record changes.
 
+## Views: cards, table, renewals, products
+
+Switch between four views with the buttons at the top of the Customers page; your choice is remembered on that device.
+
+- **Cards:** one card per customer, saying what needs a look: late tasks, health at risk or to watch, a renewal coming up or past, tasks untouched for 14 days, no contact for 30 days. The most serious first; "All clear" when there is nothing. Cards come "needing attention first" by default and can be sorted by name, health, value, renewal or open tasks. Choose which fields show on a card from the **View** menu.
+- **Table:** a sortable list where you can change many customers at once.
+- **Renewals:** the next 12 months of renewals, month by month, with each month's total and how much of it is at risk or worth watching.
+- **Products:** who has which product, by a choice field of a record type (for example "Subscription → Product"). The **+** in an empty cell opens a cross-sell task for that customer.
+
+The sentence at the top says how many customers need attention and how much value is at risk; the "need attention" link narrows the list to them.
+
 ## Importing
 
 Drop in an Excel or CSV file, match columns to fields, check the preview, import. An import that went wrong can be undone in one click for 30 days.

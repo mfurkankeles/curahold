@@ -6,6 +6,8 @@ import { get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { relativeTime } from '../lib/time';
+import { EmptyState } from './Empty';
+import { Icon } from './icons';
 
 export function Bell() {
   const { t } = useI18n();
@@ -49,9 +51,7 @@ export function Bell() {
   return (
     <div className="bell" ref={ref}>
       <button className="bell__btn" aria-haspopup="dialog" aria-expanded={open} aria-label={t('bell.label', { n: data.unread })} title={t('bell.label', { n: data.unread })} onClick={() => setOpen((o) => !o)}>
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 15.4A1 1 0 0 0 5.2 17h13.6a1 1 0 0 0 .9-1.6L18 12.6V9a6 6 0 0 0-6-6Zm0 19a2.5 2.5 0 0 0 2.4-2h-4.8A2.5 2.5 0 0 0 12 22Z" fill="currentColor" />
-        </svg>
+        <Icon name="bell" size={19} />
         {data.unread > 0 && <span className="bell__count num">{data.unread > 99 ? '99+' : data.unread}</span>}
       </button>
       {open && (
@@ -65,7 +65,7 @@ export function Bell() {
             )}
           </div>
           {data.notifications.length === 0 ? (
-            <p className="muted bell__empty">{t('bell.empty')}</p>
+            <EmptyState compact icon="inbox" tone="done" title={t('bell.empty')} />
           ) : (
             <ul className="bell__list">
               {data.notifications.map((n) => (

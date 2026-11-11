@@ -24,6 +24,17 @@ Müşterilerin altında kayıt tutarsın:
 
 Kayıtlardan müşteri alanı türetebilirsin: "Açık fırsat tutarı", "Güçlü destekçi sayısı", "Engelleyici sayısı" gibi. Kayıt değişince alan kendiliğinden güncellenir.
 
+## Görünümler: kartlar, tablo, yenilemeler, ürünler
+
+Müşteriler sayfasının üstündeki düğmelerle dört görünüm arasında geçiş yapılır; seçimin o cihazda hatırlanır.
+
+- **Kartlar:** her müşteri bir kart. Kartın üstünde neye bakılması gerektiği yazar: geciken görevler, riskli ya da izlenmeli sağlık, yaklaşan ya da geçmiş yenileme, 14 gündür kımıldamayan görevler, 30 gündür temas olmaması. En ciddisi en başta; hiçbir şey yoksa “Her şey yolunda”. Kartlar varsayılan olarak “önce ilgi bekleyenler” sırasıyla gelir; ada, sağlığa, tutara, yenilemeye ya da açık görev sayısına göre de sıralanır. **Görünüm** menüsünden kartta hangi alanların görüneceğini seçersin.
+- **Tablo:** sütunlara göre sıralanan, toplu değişiklik yapılabilen liste.
+- **Yenilemeler:** önümüzdeki 12 ayın yenilemeleri ay ay; her ayın toplamı ve riskli ya da izlenmeli olanların tuttuğu tutar.
+- **Ürünler:** bir kayıt türündeki seçim alanına göre (örneğin “Abonelik → Ürün”) hangi müşteride hangi ürünün olduğu. Boş hücredeki **+** o müşteri için bir çapraz satış görevi açar.
+
+Sayfanın üstündeki cümle kaç müşterinin ilgi beklediğini ve ne kadar tutarın risk altında olduğunu söyler; “ilgi bekliyor” bağlantısı listeyi onlara daraltır.
+
 ## İçe aktarma
 
 Excel ya da CSV dosyasını sürükle; sütunları alanlarla eşleştir, önizlemeye bak, aktar. Yanlış giden bir aktarmayı 30 gün içinde tek tıkla geri alabilirsin.

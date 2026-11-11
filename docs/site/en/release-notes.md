@@ -8,6 +8,22 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Easier every day
+
+- **Quick add:** write a task the way you would say it; "friday", "next week", "nov 15", @person, #customer, !priority and "every monday" are read. Several lines make several tasks. Press N, use + New, or the + at the bottom on a phone.
+- **Done in one click:** a round tick on lists and cards, with undo. **Mark done** in a task's window.
+- **A new frame:** a menu with icons, one **+ New** button, late and due-today counts beside My tasks, a bottom bar on phones.
+- **Dark mode** and **keyboard shortcuts** (press ? to see them all).
+- A **Getting started** card and a **What's new** window.
+- **Calendar:** the + on a day adds a task on that day.
+- Empty screens say what to do next; while a page loads, its shape shows.
+
+### Customers
+
+- **Card view:** late tasks, health, renewal, stalled tasks and silence on every customer; the ones needing attention first.
+- **Renewals view:** 12 months, month by month, with the value at risk.
+- **Product map:** who has which product, and a cross-sell task from any gap in one click.
+
 ### Customer portal
 
 - **Opening boards to customers:** the column new requests land in, the column names and details customers see, per board.

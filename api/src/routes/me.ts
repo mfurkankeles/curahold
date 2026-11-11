@@ -3,7 +3,7 @@ import { healthConfig } from '../../../shared/src/health';
 import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
-import { NOTIFY_EVENTS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
+import { NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
 import { logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { loadRenderCtx, prefsOf, render } from '../lib/notify';
@@ -95,6 +95,7 @@ meRoutes.patch('/me', async (c) => {
           digestHour: z.number().int().min(0).max(23).optional(),
           defaultBoardId: z.string().uuid().nullable().optional(),
           quiet: z.object({ from: z.number().int().min(0).max(23), to: z.number().int().min(0).max(23) }).nullable().optional(),
+          startHidden: z.boolean().optional(),
         })
         .optional(),
     }),
@@ -117,6 +118,26 @@ meRoutes.patch('/me', async (c) => {
     }
   });
   return c.json({ ok: true, locale: input.locale === undefined ? auth.locale : normalizeLocale(input.locale) });
+});
+
+// Getting started on Home: a few first steps, ticked off by what the person has actually done.
+meRoutes.get('/me/start', async (c) => {
+  const auth = c.get('auth');
+  const row = await run(c, async (q) => {
+    const [r] = await q.query(
+      `select exists (select 1 from tasks where created_by = $1) as task,
+              exists (select 1 from tasks where created_by = $1 and due_date is not null and cardinality(assignee_ids) > 0) as planned,
+              exists (select 1 from activities where author_id = $1) as touch,
+              exists (select 1 from comments where author_id = $1 and cardinality(mentions) > 0) as mention,
+              (select calendar_token_hash is not null from users where id = $1) as calendar,
+              (select prefs ? 'channel' from users where id = $1) as notify,
+              (select coalesce((prefs->>'startHidden')::boolean, false) from users where id = $1) as hidden`,
+      [auth.userId],
+    );
+    return r;
+  });
+  const steps = Object.fromEntries(START_STEPS.map((k) => [k, !!row?.[k]]));
+  return c.json({ steps, hidden: !!row?.hidden });
 });
 
 meRoutes.get('/me/sessions', async (c) => {

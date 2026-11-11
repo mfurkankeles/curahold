@@ -35,12 +35,28 @@ export const toAccount = (r: Row): Account => ({
   archivedAt: iso(r.archived_at),
   ...(r.open_tasks != null ? { openTasks: Number(r.open_tasks) } : {}),
   ...(r.last_activity !== undefined ? { lastActivityAt: iso(r.last_activity) } : {}),
+  ...(r.overdue_tasks != null ? { overdueTasks: Number(r.overdue_tasks), stuckTasks: Number(r.stuck_tasks), lastTouchAt: iso(r.last_touch) } : {}),
 });
 
 const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
       and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as open_tasks,
   (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity`;
+
+/**
+ * What needs attention on a customer, for the cards: overdue and stuck work
+ * (open, untouched for 14 days) and the last time anyone was in touch (a
+ * logged note, call, meeting or email, or a finished task). Worked out on
+ * read, under the reader's own rights; nothing is stored.
+ */
+const SIGNALS = `(select count(*) from tasks t join boards b on b.id = t.board_id
+    where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.due_date < current_date
+      and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as overdue_tasks,
+  (select count(*) from tasks t join boards b on b.id = t.board_id
+    where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.updated_at < now() - interval '14 days'
+      and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as stuck_tasks,
+  greatest((select max(x.happened_at) from activities x where x.account_id = a.id),
+           (select max(t.done_at) from tasks t where t.account_id = a.id)) as last_touch`;
 
 /** An account as this person may see it (fields closed to their role left out). */
 function viewOf(c: Parameters<typeof requireWriter>[0]) {
@@ -69,9 +85,10 @@ accountRoutes.get('/accounts', async (c) => {
   const limit = Math.min(500, Math.max(1, Number(c.req.query('limit') ?? 200)));
   const offset = Math.max(0, Number(c.req.query('offset') ?? 0));
   const ownerId = owner === 'me' ? c.get('auth').userId : owner && uuid.safeParse(owner).success ? owner : null;
+  const signals = c.req.query('signals') === '1';
   const rows = await run(c, async (q) => {
     const list = await q.query(
-      `select a.*, ${OPEN_TASKS} from accounts a
+      `select a.*, ${OPEN_TASKS}${signals ? `, ${SIGNALS}` : ''} from accounts a
         where ($1 = '' or a.name ilike '%' || $1 || '%')
           and ($2::uuid is null or a.owner_id = $2::uuid)
           and (case when $3 then a.archived_at is not null else a.archived_at is null end)
@@ -95,6 +112,37 @@ const accountInput = {
   teamId: uuid.nullable(),
   fields: z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.null()])),
 };
+
+/**
+ * Which customers have which products (and which do not): records of one
+ * type counted per customer and per option of one of its choice fields —
+ * subscriptions by product, say. An empty cell is a cross-sell to talk about.
+ */
+accountRoutes.get('/accounts/whitespace', async (c) => {
+  const typeId = c.req.query('type') ?? '';
+  const field = c.req.query('field') ?? '';
+  if (!uuid.safeParse(typeId).success || !/^[a-z][a-z0-9_]{0,40}$/.test(field)) fail('validation', { fields: 'type, field' }, { fields: ['type', 'field'] });
+  const out = await run(c, async (q) => {
+    const [type] = await q.query('select id, fields from record_types where id = $1 and archived_at is null', [typeId]);
+    if (!type) fail('not_found');
+    const def = (type.fields as AccountField[]).find((f) => f.key === field && f.type === 'select');
+    if (!def) fail('validation', { fields: 'field' }, { fields: ['field'] });
+    const cells = await q.query<{ account_id: string; v: string; n: number }>(
+      `select r.account_id, r.fields->>$2 as v, count(*)::int as n from records r
+        where r.type_id = $1 and r.archived_at is null and r.account_id is not null and r.fields->>$2 is not null
+        group by 1, 2`,
+      [typeId, field],
+    );
+    const accounts = await q.query(`select a.id, a.name, a.owner_id from accounts a where a.archived_at is null order by lower(a.name) limit 1000`);
+    const have = new Map<string, Record<string, number>>();
+    for (const r of cells) have.set(r.account_id, { ...(have.get(r.account_id) ?? {}), [r.v]: r.n });
+    return {
+      options: def!.options ?? [],
+      rows: accounts.map((a) => ({ accountId: a.id, name: a.name, ownerId: a.owner_id ?? null, have: have.get(a.id) ?? {} })),
+    };
+  });
+  return c.json(out);
+});
 
 accountRoutes.post('/accounts', async (c) => {
   requireWriter(c);
