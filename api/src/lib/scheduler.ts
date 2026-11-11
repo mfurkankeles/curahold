@@ -6,6 +6,7 @@ import { localDate, localHour, runScheduledAutomations } from './automations';
 import { day } from './mappers';
 import { deliverPending, enqueue, prefsOf } from './notify';
 import { runScheduledSyncs } from '../sync/engine';
+import { deliverWebhooks } from './webhooks';
 
 const DIGEST_ITEMS = 8;
 
@@ -64,6 +65,9 @@ export async function cleanUp(deps: Deps) {
     // An import can be undone for 30 days; after that the snapshot goes.
     await q.query(`update import_batches set previous = '[]'::jsonb where created_at < now() - interval '30 days' and previous <> '[]'::jsonb`);
     await q.query(`delete from sync_runs where started_at < now() - interval '90 days'`);
+    await q.query(`delete from oauth_codes where expires_at < now()`);
+    await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
+    await q.query(`delete from api_tokens where (revoked_at is not null or coalesce(refresh_expires_at, expires_at) < now()) and coalesce(revoked_at, refresh_expires_at, expires_at) < now() - interval '30 days'`);
   });
 }
 
@@ -76,10 +80,15 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     delivered += n;
     if (n < 100) break;
   }
+  // Webhook retries (new events go out right after the change that made them).
+  const hooks = await deliverWebhooks(deps, 200).catch((e) => {
+    console.error('[tendwell] webhook delivery failed', e);
+    return 0;
+  });
   const synced = await runScheduledSyncs(deps, now).catch((e) => {
     console.error('[tendwell] scheduled sync failed', e);
     return 0;
   });
   if (now.getUTCHours() === 3) await cleanUp(deps);
-  return { digests, fired, delivered, synced };
+  return { digests, fired, delivered, synced, hooks };
 }

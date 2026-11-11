@@ -93,6 +93,10 @@ export type AppEnv = {
     auth: AuthCtx;
     /** An administrator looking at Tendwell as someone else (read only). */
     previewBy?: { id: string; name: string };
+    /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
+    tokenKind?: 'key' | 'oauth';
+    /** This app, for calling its own routes (the AI connector uses the same API as the app). */
+    self: { request: (input: string, init?: RequestInit) => Response | Promise<Response> };
   };
 };
 

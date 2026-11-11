@@ -122,7 +122,8 @@ function depsFor(env: Env, ctx: Ctx) {
 export default {
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
+    const toWorker = url.pathname.startsWith('/api/') || url.pathname === '/mcp' || url.pathname.startsWith('/oauth/') || url.pathname.startsWith('/.well-known/');
+    if (!toWorker) return env.ASSETS.fetch(req);
     const { db, deps, pending } = depsFor(env, ctx);
     const app = createApp(deps);
     try {

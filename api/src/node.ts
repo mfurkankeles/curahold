@@ -49,6 +49,10 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     const dist = join(import.meta.dirname, '..', '..', 'dist', 'web');
     const index = readFileSync(join(dist, 'index.html'), 'utf8');
     root.use('/assets/*', serveStatic({ root: dist }));
+    // The docs are plain files; /docs/tr/api-keys/ is that folder's index.html.
+    root.get('/docs', (c) => c.redirect('/docs/'));
+    root.use('/docs/*', serveStatic({ root: dist }));
+    root.use('/llms.txt', serveStatic({ root: dist }));
     root.get('*', (c) => c.html(index));
   }
   const server = serve({ fetch: root.fetch, port: opts.port });

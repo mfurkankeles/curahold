@@ -19,6 +19,7 @@ import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
+import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
 
 // app.<domain> is the central address: company sign-up lives there.
 const isCentral = () => location.hostname.split('.')[0] === 'app';
@@ -68,7 +69,10 @@ export function App() {
       // First things first: an unfinished company setup for its admin,
       // otherwise a new person's own one-minute setup.
       const home = location.pathname === '/' || location.pathname === '/login';
-      if (me.previewBy) {
+      // Signed in on the way to an app's consent screen: back to it.
+      const back = me.previewBy ? null : takeReturn();
+      if (back) navigate(back, true);
+      else if (me.previewBy) {
         if (home) navigate('/home', true);
       } else if (notice === 'signup' || (home && me.user.perms.includes('org.manage') && !me.org.setup.finishedAt)) navigate('/setup', true);
       else if (!me.user.onboardedAt && !location.pathname.startsWith('/setup')) navigate('/welcome', true);
@@ -79,6 +83,7 @@ export function App() {
         endPreview(location.pathname);
         return;
       }
+      if (location.pathname === '/connect-ai') rememberReturn(location.pathname + location.search);
       const evicted = e instanceof ApiFailure && e.code === 'session_evicted';
       setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : notice });
       if (location.pathname !== '/login') navigate('/login', true);
@@ -193,6 +198,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={refreshKey} />;
   else if (path === '/devices') page = <DevicesPage />;
+  else if (path === '/connect-ai') page = <ConnectAiPage />;
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;
   else if (rec) page = <RecordsPage typeKey={rec.type} key={rec.type} />;

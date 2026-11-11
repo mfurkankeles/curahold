@@ -34,6 +34,8 @@ export type ErrorCode =
   | 'crm_error'
   | 'field_locked'
   | 'preview_read_only'
+  | 'read_only_token'
+  | 'bad_webhook_url'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -62,6 +64,8 @@ const STATUS: Record<ErrorCode, number> = {
   join_closed: 403,
   field_locked: 403,
   preview_read_only: 403,
+  read_only_token: 403,
+  bad_webhook_url: 400,
   already_member: 409,
   not_configured: 400,
   connection_failed: 400,

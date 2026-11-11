@@ -1,6 +1,7 @@
 // End-to-end acceptance in a real Chrome: the built app, the real API and
 // embedded Postgres. `npm run test:e2e` (builds first). Screenshots land in
 // tests/e2e/screens/ for a visual check.
+import { createHash } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { byText, newPage, shot, signIn, startStack } from './browser';
 
@@ -558,6 +559,51 @@ await step('search with Ctrl+K, change tasks together, then undo', async () => {
   await pause(600);
   const back = await sql('select id, priority from tasks where board_id = $1 and parent_id is null', [csBoard]);
   expect(back.every((r: any) => before.find((b: any) => b.id === r.id)?.priority === r.priority), 'undo did not put the tasks back');
+});
+
+await step('an API key is shown once and works; an AI assistant asks and the person allows', async () => {
+  const local = `http://localhost:${new URL(s.origin).port}`;
+  const asCompany = { 'x-tendwell-org': 'demo' };
+  await mert.page.goto(`${s.origin}/profile`, { waitUntil: 'networkidle0' });
+  const mcp = await mert.page.$$eval('.sheet input[readonly]', (els) => els.map((e) => (e as HTMLInputElement).value).find((v) => v.endsWith('/mcp')));
+  expect(mcp === `${s.origin}/mcp`, `connector address not shown: ${mcp}`);
+  await mert.page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /New API key|Yeni API anahtarı/.test(b.textContent ?? ''))?.click());
+  await mert.page.waitForSelector('#newkey input');
+  await mert.page.type('#newkey input', 'Weekly report');
+  await mert.page.click('button[form="newkey"]');
+  await mert.page.waitForSelector('.once__value');
+  const token = await mert.page.$eval('.once__value', (e) => (e as HTMLInputElement).value);
+  const me = await fetch(`${local}/api/me`, { headers: { authorization: `Bearer ${token}`, ...asCompany } }).then((r) => r.json());
+  expect(me.user?.email === 'mert@demo.example', 'the new key does not work');
+  await shot(mert.page, 'p5-01-api-key');
+  await mert.page.keyboard.press('Escape');
+
+  // An assistant registers, sends Mert to Tendwell's consent screen, he allows.
+  const redirect = 'https://assistant.example.com/callback';
+  const verifier = 'e2e-verifier-0123456789-0123456789-0123456789';
+  const challenge = createHash('sha256').update(verifier).digest('base64url');
+  const reg = await fetch(`${local}/oauth/register`, { method: 'POST', headers: { 'content-type': 'application/json', ...asCompany }, body: JSON.stringify({ client_name: 'Assistant', redirect_uris: [redirect] }) }).then((r) => r.json());
+  const q = new URLSearchParams({ client_id: reg.client_id, redirect_uri: redirect, response_type: 'code', code_challenge: challenge, code_challenge_method: 'S256', state: 's1' });
+  const auth = await fetch(`${local}/oauth/authorize?${q}`, { headers: asCompany, redirect: 'manual' });
+  await mert.page.goto(`${s.origin}${auth.headers.get('location')}`, { waitUntil: 'networkidle0' });
+  await mert.page.waitForSelector('.consent__title');
+  await shot(mert.page, 'p5-02-consent');
+  const back = mert.page.waitForRequest((r) => r.url().startsWith(redirect), { timeout: 10000 });
+  await mert.page.click('.consent .btn--primary');
+  const code = new URL((await back).url()).searchParams.get('code')!;
+  const tok = await fetch(`${local}/oauth/token`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', ...asCompany },
+    body: new URLSearchParams({ grant_type: 'authorization_code', code, client_id: reg.client_id, redirect_uri: redirect, code_verifier: verifier }).toString(),
+  }).then((r) => r.json());
+  const tools = await fetch(`${local}/mcp`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${tok.access_token}`, 'content-type': 'application/json', ...asCompany },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+  }).then((r) => r.json());
+  expect(tools.result?.tools?.some((t: any) => t.name === 'create_task'), `assistant has no tools: ${JSON.stringify(tools).slice(0, 200)}`);
+  // The page left for the assistant's address; come back for the remaining checks.
+  await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
 });
 
 await step('no script errors in the browser', async () => {

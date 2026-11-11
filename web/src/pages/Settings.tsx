@@ -7,6 +7,7 @@ import { AccountFieldsEditor, RecordTypesEditor } from '../components/AccountFie
 import { SourceDetail, Sources } from '../components/Sources';
 import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
+import { DeveloperTab } from '../components/Developer';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -16,7 +17,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'audit';
+type Tab = 'company' | 'fields' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -47,6 +48,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['connections', t('settings.tab.connections'), can('connections.manage')],
         ['sources', t('settings.tab.sources'), can('connections.manage')],
         ['automations', t('settings.tab.automations'), can('automations.manage')],
+        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
       ],
     },
     { label: t('settings.group.security'), items: [['audit', t('settings.tab.audit'), can('audit.view')]] },
@@ -104,6 +106,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'connections' && <Connections />}
           {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
           {current === 'automations' && <AutomationList />}
+          {current === 'developer' && <DeveloperTab />}
           {current === 'audit' && <AuditTab />}
         </div>
       </div>

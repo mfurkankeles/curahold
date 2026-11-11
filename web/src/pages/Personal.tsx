@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Locale, MessageKey } from '../../../shared/src/i18n';
 import { NOTIFY_EVENTS, type DeliveryOption, type NotifyPrefs } from '../../../shared/src/model';
 import { PROVIDER_NAMES } from '../components/Connections';
+import { AiConnect, KeyList } from '../components/Developer';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -212,6 +213,9 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               </div>
             )}
           </section>
+
+          {mode === 'profile' && <AiConnect />}
+          {mode === 'profile' && <KeyList />}
 
           {mode === 'profile' && (
             <section className="sheet">

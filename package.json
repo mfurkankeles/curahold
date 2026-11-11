@@ -4,12 +4,14 @@
   "description": "Tendwell — work management for customer success and account teams, with the chat apps and CRMs they already use",
   "scripts": {
     "dev": "tsx scripts/dev.ts",
-    "build": "vite build",
+    "build": "vite build && tsx scripts/build-docs.ts",
     "start:local": "SERVE_STATIC=1 tsx api/src/node.ts",
     "test": "vitest run",
-    "test:e2e": "vite build && tsx tests/e2e/run.ts",
+    "test:e2e": "npm run build && tsx tests/e2e/run.ts && tsx tests/e2e/docs.ts",
     "typecheck": "tsc --noEmit",
-    "migrate": "tsx scripts/migrate.ts"
+    "migrate": "tsx scripts/migrate.ts",
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -30,6 +32,7 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.3.0",
+    "marked": "^18.2.0",
     "puppeteer-core": "^25.17.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

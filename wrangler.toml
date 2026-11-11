@@ -14,7 +14,9 @@ routes = [
 [assets]
 directory = "dist/web"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*"]
+# The API, the AI connector and app sign-in run in the worker; everything else
+# (the app, /docs/, llms.txt) is a static file.
+run_worker_first = ["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]
 
 [vars]
 BASE_DOMAIN = "tendwell.com"

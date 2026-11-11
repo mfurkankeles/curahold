@@ -21,3 +21,14 @@ close to nothing to serve. Rules each change follows:
    kept 90 days, undo records 30 minutes of usefulness.
 7. **AI (later) is opt-in, cached and capped** per company, on the smallest
    model that does the job.
+8. **AI runs on the customer's own assistant.** The MCP connector hands
+   Claude or ChatGPT the data; the person's own plan pays for the model.
+   Questions, summaries and presentations cost us one API call each, no
+   tokens.
+9. **Webhooks only when wanted.** Changes are captured by a trigger only if
+   some webhook of that company wants the event, collapsed per minute, sent
+   right after the request that caused them; retries ride the hourly run.
+   Delivery records are kept 7 days.
+10. **Docs and the demo are static files.** The help centre, developer docs
+    and the try-it-now demo (the whole product running in the visitor's
+    browser) need no server time at all.

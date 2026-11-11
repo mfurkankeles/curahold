@@ -8,7 +8,8 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { Perm } from '../../shared/src/model';
-import { type AppEnv, type Deps, type OrgRow } from './context';
+import { defer, type AppEnv, type Deps, type OrgRow } from './context';
+import { deliverWebhooks } from './lib/webhooks';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
 import { HttpError, fail } from './lib/errors';
@@ -27,6 +28,10 @@ import { meRoutes } from './routes/me';
 import { taskRoutes } from './routes/tasks';
 import { pageRoutes } from './routes/pages';
 import { searchRoutes } from './routes/search';
+import { developerRoutes } from './routes/developer';
+import { mcpRoutes } from './routes/mcp';
+import { oauthApi, oauthRoutes } from './routes/oauth';
+import { resolveToken } from './lib/tokens';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
 
@@ -51,7 +56,12 @@ export function createApp(deps: Deps) {
 
   app.use('*', async (c, next) => {
     c.set('deps', deps);
+    c.set('self', app);
     await next();
+    // Webhooks: deliver what this change produced right after answering.
+    if (deps.defer && c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.path.startsWith('/api/') && c.res.status < 400) {
+      defer(deps, deliverWebhooks(deps, 20));
+    }
   });
 
   app.onError((err, c) => {
@@ -77,7 +87,7 @@ export function createApp(deps: Deps) {
   app.route('/api/signup', signupRoutes);
 
   // ---------------------------------------------------------------- company
-  app.use('/api/*', async (c, next) => {
+  const companyFromHost = async (c: any, next: () => Promise<void>) => {
     const host = c.req.header('host') ?? new URL(c.req.url).host;
     let slug = cfg.singleTenantSlug ?? slugFromHost(host, cfg.baseDomain);
     if (!slug && cfg.devOrgHeader) slug = c.req.header('x-tendwell-org') ?? null;
@@ -100,9 +110,18 @@ export function createApp(deps: Deps) {
 
     // Cross-site forms cannot set custom headers, so requiring one on every
     // write blocks request forgery (the session cookie is also SameSite=Lax).
-    if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.header('x-tendwell-device')) fail('forbidden');
+    // Calls with an API key or app token carry no cookie, so they cannot be forged that way.
+    const bearer = /^Bearer\s/i.test(c.req.header('authorization') ?? '');
+    if (c.req.path.startsWith('/api/') && !bearer && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.header('x-tendwell-device')) fail('forbidden');
     await next();
-  });
+  };
+  app.use('/api/*', companyFromHost);
+  // Apps and AI assistants (OAuth, MCP) reach the company at its own address.
+  app.use('/mcp', companyFromHost);
+  app.use('/oauth/*', companyFromHost);
+  app.use('/.well-known/*', companyFromHost);
+  app.route('/', oauthRoutes);
+  app.route('/', mcpRoutes);
 
   // Public, per company: login page data and the sign-in steps.
   app.route('/api', authRoutes);
@@ -110,6 +129,29 @@ export function createApp(deps: Deps) {
   // ---------------------------------------------------------------- person
   app.use('/api/*', async (c, next) => {
     const token = getCookie(c, SESSION_COOKIE);
+    const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1];
+    if (!token && bearer) {
+      // An API key or an app's token: it acts as its owner, read only unless allowed to write.
+      const t = await resolveToken(deps.db, c.get('org').id, bearer);
+      if (!t) fail('unauthenticated');
+      if (!t!.canWrite && c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('read_only_token');
+      const u = t!.user;
+      c.set('auth', {
+        userId: u.user_id,
+        sessionId: t!.tokenId,
+        name: u.name,
+        email: u.email,
+        roleId: u.role_id,
+        roleKey: u.role_key,
+        perms: (u.perms ?? []) as Perm[],
+        seat: t!.canWrite ? u.seat : 'viewer',
+        locale: u.locale ? normalizeLocale(u.locale) : null,
+      });
+      c.set('tokenKind', t!.kind);
+      if (u.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(u.locale));
+      await next();
+      return;
+    }
     if (!token) fail('unauthenticated');
     const org = c.get('org');
     const hash = await sha256Hex(token!);
@@ -185,6 +227,8 @@ export function createApp(deps: Deps) {
   app.route('/api', recordRoutes);
   app.route('/api', pageRoutes);
   app.route('/api', searchRoutes);
+  app.route('/api', developerRoutes);
+  app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);

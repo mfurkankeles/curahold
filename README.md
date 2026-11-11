@@ -159,6 +159,44 @@ research and reasoning.
 - Fixed on the way: people who manage customers but not company settings
   could not save account-field changes (the save was silently dropped).
 
+### Developer platform, AI connector and docs
+
+Everything here acts as one person and stays inside their rights: the same
+row-level security, customer reach and field access as the app.
+
+- **Personal API keys** (`twk_…`): read only or read and write, 30/90/365
+  days or no end date, revoked in one click. Only a SHA-256 digest is
+  stored. A key cannot make keys, approve apps or preview someone else.
+  People admins see and revoke every key in the company.
+- **Webhooks**: `task.*`, `account.*`, `record.*`, `comment.created`.
+  Changes are captured by database triggers (only for events some webhook
+  wants, collapsed per minute), sent right after the request that caused
+  them, signed `Tendwell-Signature: t=…,v1=HMAC-SHA256(secret, t.body)`,
+  retried after 1, 5, 30, 120 and 360 minutes, paused after 50 failures in a
+  row. Public https addresses only.
+- **AI connector (MCP)** at `https://<company>.tendwell.com/mcp`: Claude,
+  ChatGPT or any MCP client. OAuth 2.1 with discovery (RFC 8414 / 9728),
+  dynamic client registration (RFC 7591), PKCE S256, one-hour access tokens
+  and rotating refresh tokens. The person approves on Tendwell's own consent
+  screen and can leave changes off. Tools: search, fetch, list_accounts,
+  list_tasks, portfolio_summary, create_task, update_task — each one calls
+  the app's own API, so nothing is reachable that the app would not show.
+  The model runs on the person's own Claude or ChatGPT plan: no AI cost on
+  our side.
+- **Docs** (`docs/site/<lang>/*.md` → `dist/web/docs`): help centre and
+  developer docs in Turkish and English, static pages with search, every
+  page also served as Markdown, plus `/llms.txt` and `/docs/llms-full.txt`.
+
+### Try-it-now demo
+
+`npm run build:demo` builds the whole product — API, Postgres (PGlite, with
+the same migrations and row-level security) and the app — into one static
+folder, `dist/demo`, that runs entirely in the visitor's browser with an
+invented portfolio. No server, nothing sent anywhere, so it costs nothing to
+host. A strip on top switches between an admin, a team lead, a member and a
+viewer. `npm run test:demo` checks it under a strict content security
+policy inside a sandboxed frame.
+
 ## Run it locally
 
 ```bash
@@ -180,7 +218,8 @@ accounts are invented.
 | Command | What it checks | Time |
 | --- | --- | --- |
 | `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, roles, customer reach per role, field access, pages and card data, "see it as them", search, bulk changes and undo, repeating tasks, quiet hours, records and calculated fields, two-way sync against the demo CRM (first run, both directions, conflicts, deletions, schedule), each CRM adapter against a stub of its API, dictionaries, leak check | ~45 s |
-| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
+| `npm run test:e2e` | Builds the app and the docs and drives them in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
+| `npm run test:demo` | Builds the in-browser demo and opens it under a strict content security policy in a sandboxed frame; switches person | ~20 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id
@@ -191,14 +230,17 @@ repository. The forbidden words are stored only as hashes.
 
 ```
 api/src/          Hono API — runs on Cloudflare Workers (worker.ts) and Node (node.ts)
-  routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync
+  routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync,
+                  developer (keys, webhooks), oauth, mcp
   connectors/     messaging (Slack, Teams, Google Chat, webhooks)
   sync/           CRM and spreadsheet adapters and the two-way sync engine
   db/             Postgres drivers (postgres.js for production, PGlite for tests)
 shared/src/       types, EN/TR dictionaries, edit-merge logic — used by API and web
 web/src/          React app (Vite)
 db/migrations/    SQL schema and row-level security policies
-scripts/          dev server, migrations, demo data
+scripts/          dev server, migrations, demo data, docs build
+docs/site/        public docs (Markdown, TR/EN) and their stylesheet
+web/demo/         the in-browser demo's page (vite.demo.config.ts)
 tests/            Vitest suites; tests/e2e drives Chrome
 ```
 
