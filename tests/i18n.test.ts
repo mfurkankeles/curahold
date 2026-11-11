@@ -96,7 +96,7 @@ describe('the interface has no hard-coded text', () => {
 describe('company vocabulary', () => {
   it('replaces the default word for customers', () => {
     const terms = { account: { tr: { one: 'Partner', other: 'Partnerler' } } };
-    expect(translate('tr', 'board.searchPlaceholder', {}, terms)).toBe('Task veya partner ara');
+    expect(translate('tr', 'board.searchPlaceholder', {}, terms)).toBe('Görev veya partner ara');
     expect(accountWords('en', terms).one).toBe('Account');
     expect(translate('en', 'board.searchPlaceholder')).toBe('Search tasks or accounts');
   });

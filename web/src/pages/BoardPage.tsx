@@ -56,7 +56,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     return (tasks ?? []).filter(
       (x) =>
         (!mine || x.assigneeIds.includes(me.user.id)) &&
-        (!q || x.title.toLocaleLowerCase().includes(q) || (x.partnerName ?? '').toLocaleLowerCase().includes(q)),
+        (!q || x.title.toLocaleLowerCase().includes(q) || (x.accountName ?? '').toLocaleLowerCase().includes(q)),
     );
   }, [tasks, mine, search, me.user.id]);
 
@@ -226,7 +226,7 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
       aria-label={`${t('task.open')}: ${task.title}`}
     >
       <div className="card__title">{task.title}</div>
-      {task.partnerName && <div className="card__account">{task.partnerName}</div>}
+      {task.accountName && <div className="card__account">{task.accountName}</div>}
       <div className="card__meta">
         <DueLabel due={task.dueDate} done={done} />
         {(task.priority === 'urgent' || task.priority === 'high') && <span className={`prio prio--${task.priority}`}>{t(`task.priority.${task.priority}`)}</span>}
@@ -313,7 +313,7 @@ export function ListView({ board, tasks, isDone, showBoard }: { board?: Board; t
               </td>
               {showBoard && <td className="hide-phone muted">{showBoard(x)}</td>}
               <td>{colName(x)}</td>
-              <td className="hide-phone">{x.partnerName ?? ''}</td>
+              <td className="hide-phone">{x.accountName ?? ''}</td>
               <td>
                 <DueLabel due={x.dueDate} done={done} />
               </td>

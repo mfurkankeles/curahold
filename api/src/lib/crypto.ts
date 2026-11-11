@@ -57,3 +57,57 @@ export async function verify<T>(token: string, secret: string): Promise<T | null
     return null;
   }
 }
+
+export async function hmacHex(secret: string, message: string): Promise<string> {
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await hmacKey(secret), enc.encode(message)));
+  return Array.from(sig, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Constant-time comparison for signatures and codes. */
+export function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Connector credentials at rest: AES-256-GCM with a key derived from the
+// server's secrets key. Output: "v1.<iv>.<ciphertext>" (base64url).
+const sealKeys = new Map<string, Promise<CryptoKey>>();
+function sealKey(secret: string) {
+  let k = sealKeys.get(secret);
+  if (!k) {
+    k = (async () => {
+      const base = await crypto.subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'HKDF', hash: 'SHA-256', salt: enc.encode('tendwell'), info: enc.encode('connection-secrets') },
+        base,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt'],
+      );
+    })();
+    sealKeys.set(secret, k);
+  }
+  return k;
+}
+
+export async function seal(value: unknown, secret: string): Promise<string> {
+  const iv = new Uint8Array(12);
+  crypto.getRandomValues(iv);
+  const data = enc.encode(JSON.stringify(value));
+  const out = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await sealKey(secret), data));
+  return `v1.${base64url(iv)}.${base64url(out)}`;
+}
+
+export async function unseal<T = Record<string, unknown>>(blob: string | null, secret: string): Promise<T | null> {
+  if (!blob) return null;
+  const [v, iv, data] = blob.split('.');
+  if (v !== 'v1' || !iv || !data) return null;
+  try {
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64url(iv) }, await sealKey(secret), fromBase64url(data));
+    return JSON.parse(new TextDecoder().decode(plain)) as T;
+  } catch {
+    return null;
+  }
+}

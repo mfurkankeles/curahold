@@ -21,6 +21,13 @@ export type ErrorCode =
   | 'oauth_failed'
   | 'oauth_not_configured'
   | 'no_account'
+  | 'slug_taken'
+  | 'domain_public'
+  | 'join_closed'
+  | 'already_member'
+  | 'not_configured'
+  | 'connection_failed'
+  | 'import_too_large'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -44,6 +51,13 @@ const STATUS: Record<ErrorCode, number> = {
   oauth_failed: 400,
   oauth_not_configured: 400,
   no_account: 404,
+  slug_taken: 409,
+  domain_public: 400,
+  join_closed: 403,
+  already_member: 409,
+  not_configured: 400,
+  connection_failed: 400,
+  import_too_large: 413,
   server: 500,
 };
 

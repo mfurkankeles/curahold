@@ -7,15 +7,23 @@ import { ApiFailure, get, onAuthLost, patch, setApiLocale } from './lib/api';
 import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
-import { LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
+import { AccountPage, AccountsPage } from './pages/Accounts';
+import { JoinPage, LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
+import { PersonalPage } from './pages/Personal';
+import { SetupPage } from './pages/Setup';
+import { SignupApp } from './pages/Signup';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/Calendar';
 import { DevicesPage } from './pages/Devices';
 import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
 
+// app.<domain> is the central address: company sign-up lives there.
+const isCentral = () => location.hostname.split('.')[0] === 'app';
+
 type Boot =
   | { kind: 'loading' }
+  | { kind: 'central' }
   | { kind: 'no-org' }
   | { kind: 'error' }
   | { kind: 'signed-out'; org: OrgPublic; notice?: string | null }
@@ -29,6 +37,11 @@ export function App() {
   useEffect(() => setApiLocale(locale), [locale]);
 
   const start = useCallback(async (notice?: string | null) => {
+    if (isCentral()) {
+      setBoot({ kind: 'central' });
+      if (!location.pathname.startsWith('/signup')) navigate('/signup', true);
+      return;
+    }
     let org: OrgPublic;
     try {
       org = await get<OrgPublic>('/org');
@@ -37,7 +50,12 @@ export function App() {
       return;
     }
     if (!storedLocale()) setLocale(org.locale);
-    if (location.pathname === '/auth/verify') {
+    // The company's logo as the tab icon, when it has one.
+    if (org.logoUrl) {
+      const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]') ?? document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
+      icon.href = org.logoUrl;
+    }
+    if (location.pathname === '/auth/verify' || location.pathname === '/join') {
       setBoot({ kind: 'signed-out', org, notice });
       return;
     }
@@ -45,7 +63,12 @@ export function App() {
       const me = await get<Me>('/me');
       if (me.user.locale) setLocale(me.user.locale);
       setBoot({ kind: 'signed-in', org, me });
-      if (location.pathname === '/' || location.pathname === '/login') navigate('/my', true);
+      // First things first: an unfinished company setup for its admin,
+      // otherwise a new person's own one-minute setup.
+      const home = location.pathname === '/' || location.pathname === '/login';
+      if (notice === 'signup' || (home && me.user.perms.includes('org.manage') && !me.org.setup.finishedAt)) navigate('/setup', true);
+      else if (!me.user.onboardedAt && !location.pathname.startsWith('/setup')) navigate('/welcome', true);
+      else if (home) navigate('/my', true);
     } catch (e) {
       const evicted = e instanceof ApiFailure && e.code === 'session_evicted';
       setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : notice });
@@ -82,6 +105,7 @@ export function App() {
   return (
     <I18nProvider locale={locale} terms={terms}>
       {boot.kind === 'loading' && <div className="center-note muted" />}
+      {boot.kind === 'central' && <SignupApp onLocale={changeLocale} />}
       {boot.kind === 'no-org' && <OrgNotFound />}
       {boot.kind === 'error' && <ErrorNote onRetry={() => start()} />}
       {boot.kind === 'signed-out' &&
@@ -89,8 +113,17 @@ export function App() {
           <VerifyPage
             org={boot.org}
             onLocale={changeLocale}
-            onSignedIn={() => {
+            onSignedIn={(how) => {
               navigate('/my', true);
+              void start(how ?? null);
+            }}
+          />
+        ) : loc.path === '/join' ? (
+          <JoinPage
+            org={boot.org}
+            onLocale={changeLocale}
+            onJoined={() => {
+              navigate('/welcome', true);
               void start();
             }}
           />
@@ -100,7 +133,7 @@ export function App() {
       {boot.kind === 'signed-in' && (
         <StoreProvider initialMe={boot.me}>
           <Shell onLocale={changeLocale}>
-            <Routes />
+            <Routes onLocale={changeLocale} />
           </Shell>
         </StoreProvider>
       )}
@@ -128,7 +161,7 @@ function ErrorNote({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function Routes() {
+function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const { path, search } = useLocation();
   const [refreshKey, setRefreshKey] = useState(0);
   const params = new URLSearchParams(search);
@@ -138,7 +171,14 @@ function Routes() {
   let page: React.ReactNode = null;
   const b = match('/b/:id', path);
   const s = match('/settings/:tab', path);
-  if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
+  const a = match('/accounts/:id', path);
+  const setupStep = match('/setup/:step', path);
+  if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
+  else if (path === '/welcome') page = <PersonalPage mode="welcome" onLocale={onLocale} />;
+  else if (path === '/profile') page = <PersonalPage mode="profile" onLocale={onLocale} />;
+  else if (path === '/accounts') page = <AccountsPage key={refreshKey} />;
+  else if (a) page = <AccountPage id={a.id} key={`${a.id}:${refreshKey}`} />;
+  else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={refreshKey} />;
   else if (path === '/devices') page = <DevicesPage />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;

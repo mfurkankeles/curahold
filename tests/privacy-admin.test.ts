@@ -28,7 +28,7 @@ describe('permissions', () => {
     const roles = (await ada.get('/api/admin/roles')).json.roles;
     const admin = roles.find((r: any) => r.key === 'admin');
     const r = await ada.patch(`/api/admin/roles/${admin.id}`, { perms: [] });
-    expect(r.json.role.perms.length).toBe(8);
+    expect(r.json.role.perms.length).toBe((await import('../shared/src/model')).PERMS.length);
   });
 
   it('custom roles: create, use, refuse delete while in use', async () => {
@@ -88,14 +88,15 @@ describe('personal data (KVKK / GDPR)', () => {
     expect(task.createdBy).toBeNull();
     expect(task.comments[0]).toMatchObject({ body: 'written by Lena', authorId: null });
 
+    // The address no longer signs anyone in (at most it can ask to join again, which an admin must approve).
     const before = env.email.sent.length;
     await new (await import('./helpers')).Client(env, 'acme').post('/api/auth/start', { email: 'lena@demo.example' });
-    expect(env.email.sent.length).toBe(before);
+    expect(env.email.sent.slice(before).some((m) => m.text.includes('/auth/verify'))).toBe(false);
 
     // No trace of the address in sessions or one-time tokens.
     const left = await env.db.system((q) =>
       q.query(`select (select count(*) from sessions where user_id = $1)::int as s,
-                      (select count(*) from login_tokens where email = 'lena@demo.example' and org_id = $2)::int as t`, [env.a.ids.lena, env.a.orgId]),
+                      (select count(*) from login_tokens where email = 'lena@demo.example' and org_id = $2 and kind <> 'join')::int as t`, [env.a.ids.lena, env.a.orgId]),
     );
     expect(left[0]).toEqual({ s: 0, t: 0 });
   });

@@ -51,6 +51,11 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
               <i style={{ width: `${width}%` }} />
             </div>
           ))}
+          {org.logoUrl && (
+            <span className="orglogo orglogo--large">
+              <img src={org.logoUrl} alt="" />
+            </span>
+          )}
           <strong className="auth__org">{org.name}</strong>
         </div>
         <small style={{ color: '#9cc3bb' }}>{location.host}</small>
@@ -58,6 +63,11 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
       <main className="auth__main">
         <div className="auth__card">
           <LangSwitch onLocale={onLocale} />
+          {org.logoUrl && (
+            <span className="orglogo orglogo--card">
+              <img src={org.logoUrl} alt={org.name} />
+            </span>
+          )}
           {children}
         </div>
       </main>
@@ -69,7 +79,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
   const { t } = useI18n();
   const params = new URLSearchParams(location.search);
   const [email, setEmail] = useState(params.get('email') ?? '');
-  const [sent, setSent] = useState<{ email: string; devToken?: string } | null>(null);
+  const [sent, setSent] = useState<{ email: string; devToken?: string; devJoinToken?: string } | null>(null);
   const [error, setError] = useState<string | null>(() => {
     const code = params.get('error');
     if (!code) return null;
@@ -84,8 +94,8 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
     setBusy(true);
     setError(null);
     try {
-      const r = await post<{ ok: true; devToken?: string }>('/auth/start', { email });
-      setSent({ email, devToken: r.devToken });
+      const r = await post<{ ok: true; devToken?: string; devJoinToken?: string }>('/auth/start', { email });
+      setSent({ email, devToken: r.devToken, devJoinToken: r.devJoinToken });
     } catch (err) {
       setError(errorText(err, t));
     } finally {
@@ -102,8 +112,14 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
       <AuthFrame org={org} onLocale={onLocale}>
         <h1 className="auth__title">{t('auth.checkInbox')}</h1>
         <p className="auth__sub">{t('auth.linkSent', { email: sent.email, org: org.name })}</p>
+        {org.joinRequests && <p className="field__hint">{t('auth.linkSentJoin')}</p>}
         {sent.devToken && (
           <a className="btn" href={`/auth/verify#token=${sent.devToken}`}>
+            {t('auth.devLink')}
+          </a>
+        )}
+        {sent.devJoinToken && (
+          <a className="btn" href={`/join#token=${sent.devJoinToken}`}>
             {t('auth.devLink')}
           </a>
         )}
@@ -142,6 +158,67 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
           {t('auth.microsoft')}
         </button>
       )}
+      <p className="field__hint">{org.joinRequests ? t('auth.noAccountJoin') : t('auth.noAccountInvite')}</p>
+    </AuthFrame>
+  );
+}
+
+/** The link from "ask to join": name (and a note), then either a request for an admin or straight in. */
+export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale: (l: Locale) => void; onJoined: () => void }) {
+  const { t } = useI18n();
+  const [token] = useState(() => {
+    const tok = new URLSearchParams(location.hash.slice(1)).get('token') ?? '';
+    history.replaceState(null, '', '/join');
+    return tok;
+  });
+  const [name, setName] = useState('');
+  const [note, setNote] = useState('');
+  const [state, setState] = useState<'form' | 'pending'>('form');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const r = await post<{ status: 'ok' | 'pending' }>('/join', { token, name: name.trim(), note: note.trim() || undefined, deviceId: getDeviceId(), deviceLabel: deviceLabel() });
+      if (r.status === 'ok') onJoined();
+      else setState('pending');
+    } catch (err) {
+      setError(errorText(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (state === 'pending') {
+    return (
+      <AuthFrame org={org} onLocale={onLocale}>
+        <h1 className="auth__title">{t('join.sentTitle')}</h1>
+        <p className="auth__sub">{t('join.sentBody', { org: org.name })}</p>
+      </AuthFrame>
+    );
+  }
+  return (
+    <AuthFrame org={org} onLocale={onLocale}>
+      <h1 className="auth__title">{t('join.title', { org: org.name })}</h1>
+      <p className="auth__sub">{t('join.sub')}</p>
+      {!token && <div className="notice notice--error">{t('errors.invalid_token')}</div>}
+      {error && <div className="notice notice--error" role="alert">{error}</div>}
+      <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+        <label className="field">
+          <span className="field__label">{t('join.name')}</span>
+          <input className="input" required autoComplete="name" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label className="field">
+          <span className="field__label">
+            {t('join.note')} <span className="muted">({t('common.optional')})</span>
+          </span>
+          <textarea className="textarea" rows={2} maxLength={500} value={note} placeholder={t('join.notePlaceholder')} onChange={(e) => setNote(e.target.value)} />
+        </label>
+        <button className="btn btn--primary" disabled={busy || !token || !name.trim()}>
+          {t('join.send')}
+        </button>
+      </form>
     </AuthFrame>
   );
 }
@@ -174,7 +251,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
         if (r.status === 'device_code') {
           setChallenge({ challenge: r.challenge!, email: r.email!, devCode: r.devCode });
           setState('code');
-        } else onSignedIn();
+        } else onSignedIn(hash.get('m') === 'signup' ? 'signup' : undefined);
       })
       .catch((e) => {
         setState('error');

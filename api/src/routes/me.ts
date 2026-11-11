@@ -2,8 +2,10 @@ import { Hono } from 'hono';
 import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
-import type { Me, Person, SessionInfo, Team } from '../../../shared/src/model';
-import { maxDevices, run, type AppEnv } from '../context';
+import { NOTIFY_EVENTS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
+import { logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
+import { randomToken, sha256Hex } from '../lib/crypto';
+import { loadRenderCtx, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
@@ -17,8 +19,9 @@ meRoutes.get('/me', async (c) => {
   const org = c.get('org');
   const data = await run(c, async (q) => {
     const [o] = await q.query('select plan from orgs where id = $1', [org.id]);
+    const [u] = await q.query('select onboarded_at, prefs from users where id = $1', [auth.userId]);
     const teams = await q.query<{ team_id: string }>('select team_id from team_members where user_id = $1', [auth.userId]);
-    return { plan: o?.plan ?? 'trial', teamIds: teams.map((t) => t.team_id) };
+    return { plan: o?.plan ?? 'trial', teamIds: teams.map((t) => t.team_id), onboardedAt: iso(u?.onboarded_at), prefs: prefsOf(u?.prefs) };
   });
   const me: Me = {
     user: {
@@ -31,6 +34,8 @@ meRoutes.get('/me', async (c) => {
       roleId: auth.roleId,
       roleKey: auth.roleKey,
       perms: auth.perms,
+      onboardedAt: data.onboardedAt,
+      prefs: data.prefs,
     },
     org: {
       id: org.id,
@@ -41,6 +46,14 @@ meRoutes.get('/me', async (c) => {
       terms: org.terms,
       plan: data.plan,
       maxDevices: maxDevices(c),
+      currency: org.currency,
+      template: org.template,
+      domains: org.domains,
+      joinRequests: org.join_requests,
+      autoJoin: org.auto_join,
+      accountFields: org.account_fields,
+      setup: org.setup ?? {},
+      logoUrl: logoPath(org),
     },
     teamIds: data.teamIds,
     sessionId: auth.sessionId,
@@ -51,12 +64,36 @@ meRoutes.get('/me', async (c) => {
 meRoutes.patch('/me', async (c) => {
   const input = await body(
     c,
-    z.object({ name: z.string().trim().min(1).max(120).optional(), locale: z.enum(['en', 'tr']).nullable().optional() }),
+    z.object({
+      name: z.string().trim().min(1).max(120).optional(),
+      locale: z.enum(['en', 'tr']).nullable().optional(),
+      onboarded: z.boolean().optional(),
+      prefs: z
+        .object({
+          channel: z.string().max(40).optional(),
+          events: z.partialRecord(z.enum(NOTIFY_EVENTS), z.boolean()).optional(),
+          digestHour: z.number().int().min(0).max(23).optional(),
+          defaultBoardId: z.string().uuid().nullable().optional(),
+        })
+        .optional(),
+    }),
   );
   const auth = c.get('auth');
   await run(c, async (q) => {
     if (input.name !== undefined) await q.query('update users set name = $1 where id = $2', [input.name, auth.userId]);
     if (input.locale !== undefined) await q.query('update users set locale = $1 where id = $2', [input.locale, auth.userId]);
+    if (input.onboarded) await q.query('update users set onboarded_at = coalesce(onboarded_at, now()) where id = $1', [auth.userId]);
+    if (input.prefs) {
+      const ch = input.prefs.channel;
+      if (ch && !['auto', 'email', 'none'].includes(ch)) {
+        const ok = await q.query(`select 1 from connections where id::text = $1 and kind = 'messaging' and provider <> 'webhook'`, [ch]);
+        if (!ok.length) fail('validation', { fields: 'prefs.channel' }, { fields: ['prefs.channel'] });
+      }
+      const [u] = await q.query('select prefs from users where id = $1', [auth.userId]);
+      const cur = prefsOf(u?.prefs);
+      const next = { ...cur, ...input.prefs, events: { ...cur.events, ...(input.prefs.events ?? {}) } };
+      await q.query('update users set prefs = $2 where id = $1', [auth.userId, JSON.stringify(next)]);
+    }
   });
   return c.json({ ok: true, locale: input.locale === undefined ? auth.locale : normalizeLocale(input.locale) });
 });
@@ -127,4 +164,74 @@ meRoutes.get('/people', async (c) => {
   const people: Person[] = data.people.map((p) => ({ id: p.id, name: p.name, email: p.email, seat: p.seat, status: p.status }));
   const teams: Team[] = data.teams.map((t) => ({ id: t.id, name: t.name, leadId: t.lead_id, memberIds: t.member_ids }));
   return c.json({ people, teams });
+});
+
+// ------------------------------------------------------------ notifications
+
+/** Where this person can get notifications: email, or a chat app the company connected. */
+meRoutes.get('/me/delivery', async (c) => {
+  const auth = c.get('auth');
+  const rows = await run(c, (q) =>
+    q.query(
+      `select c.id, c.provider, c.label, exists (select 1 from chat_identities i where i.connection_id = c.id and i.user_id = $1) as linked
+         from connections c where c.kind = 'messaging' and c.status = 'active' and c.provider <> 'webhook' order by c.created_at`,
+      [auth.userId],
+    ),
+  );
+  const options: DeliveryOption[] = [
+    ...rows.map((r) => ({ id: r.id, provider: r.provider, label: r.label, linked: r.linked })),
+    { id: 'email', provider: 'email', label: auth.email, linked: true },
+  ];
+  return c.json({ options });
+});
+
+meRoutes.get('/notifications', async (c) => {
+  const auth = c.get('auth');
+  const deps = c.get('deps');
+  const rows = await run(c, (q) =>
+    q.query(`select * from notifications where user_id = $1 order by created_at desc limit 50`, [auth.userId]),
+  );
+  const unread = rows.filter((r) => !r.read_at).length;
+  const list: Notification[] = [];
+  for (const n of rows) {
+    const ctx = await deps.db.system((q) => loadRenderCtx(q, deps, n, c.get('locale')));
+    const m = render(ctx);
+    list.push({ id: n.id, kind: n.kind, taskId: n.task_id, actorId: n.actor_id, title: m.title, body: m.body ?? '', url: m.url ?? null, readAt: iso(n.read_at), createdAt: iso(n.created_at)! });
+  }
+  return c.json({ notifications: list, unread });
+});
+
+meRoutes.post('/notifications/read', async (c) => {
+  const input = await body(c, z.object({ ids: z.array(z.string().uuid()).max(100).optional(), all: z.boolean().optional() }));
+  const auth = c.get('auth');
+  await run(c, (q) =>
+    input.all
+      ? q.query('update notifications set read_at = now() where user_id = $1 and read_at is null', [auth.userId])
+      : q.query('update notifications set read_at = now() where user_id = $1 and id = any($2::uuid[]) and read_at is null', [auth.userId, input.ids ?? []]),
+  );
+  return c.json({ ok: true });
+});
+
+// --------------------------------------------------------------- calendar
+
+/** A secret calendar address for this person's tasks; asking again replaces it. */
+meRoutes.post('/me/calendar', async (c) => {
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const token = randomToken(24);
+  const hash = await sha256Hex(token);
+  await run(c, (q) => q.query('update users set calendar_token_hash = $2 where id = $1', [auth.userId, hash]));
+  return c.json({ url: `${orgUrl(c.get('deps').config, org.slug)}/api/calendar/${token}.ics` });
+});
+
+meRoutes.delete('/me/calendar', async (c) => {
+  const auth = c.get('auth');
+  await run(c, (q) => q.query('update users set calendar_token_hash = null where id = $1', [auth.userId]));
+  return c.json({ ok: true });
+});
+
+meRoutes.get('/me/calendar', async (c) => {
+  const auth = c.get('auth');
+  const [u] = await run(c, (q) => q.query('select calendar_token_hash is not null as on from users where id = $1', [auth.userId]));
+  return c.json({ enabled: !!u?.on });
 });

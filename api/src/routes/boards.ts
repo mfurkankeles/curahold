@@ -75,7 +75,19 @@ const createSchema = z.object({
   teamId: uuid.nullable().optional(),
   memberIds: z.array(uuid).max(200).optional(),
   columns: columnsSchema.optional(),
+  /** Post new / finished tasks to a chat channel. */
+  notify: z
+    .array(z.object({ connectionId: uuid, channel: z.string().max(200).nullable(), events: z.array(z.enum(['created', 'done'])).min(1).max(2) }))
+    .max(5)
+    .optional(),
 });
+
+async function checkNotify(q: Q, list: { connectionId: string }[] | undefined) {
+  if (!list?.length) return;
+  const ids = [...new Set(list.map((n) => n.connectionId))];
+  const rows = await q.query(`select id from connections where id = any($1::uuid[]) and kind = 'messaging'`, [ids]);
+  if (rows.length !== ids.length) fail('validation', { fields: 'notify' }, { fields: ['notify'] });
+}
 
 boardRoutes.post('/boards', async (c) => {
   requireWriter(c);
@@ -87,14 +99,15 @@ boardRoutes.post('/boards', async (c) => {
     await checkVisibility(c, q, input.visibility, teamId);
     const members = [...new Set([...(input.memberIds ?? []), ...(input.visibility === 'private' ? [auth.userId] : [])])];
     await checkPeople(q, members);
+    await checkNotify(q, input.notify);
     const columns: Column[] = input.columns ?? defaultColumns(org.locale);
     // No RETURNING: the visibility check behind boards' SELECT policy cannot
     // see a row inserted by the same statement, so the id is made here.
     const b = { id: crypto.randomUUID() };
     await q.query(
-      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by)
-       values ($1, $2, $3, $4, $5, $6, $7)`,
-      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId],
+      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by, notify)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? [])],
     );
     for (const m of members) {
       await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [org.id, b.id, m]);
@@ -119,6 +132,7 @@ boardRoutes.patch('/boards/:id', async (c) => {
     const visibility = input.visibility ?? b.visibility;
     const teamId = visibility === 'team' ? (input.teamId !== undefined ? input.teamId : b.team_id) : null;
     if (input.visibility !== undefined || input.teamId !== undefined) await checkVisibility(c, q, visibility, teamId);
+    if (input.notify) await checkNotify(q, input.notify);
     if (input.columns) {
       const keys = new Set(input.columns.map((col) => col.key));
       // Tasks in a column that was removed move to the first column.
@@ -130,9 +144,9 @@ boardRoutes.patch('/boards/:id', async (c) => {
     }
     await q.query(
       `update boards set name = coalesce($2, name), visibility = $3, team_id = $4,
-              columns = coalesce($5::jsonb, columns)
+              columns = coalesce($5::jsonb, columns), notify = coalesce($6::jsonb, notify)
         where id = $1`,
-      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null],
+      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null, input.notify ? JSON.stringify(input.notify) : null],
     );
     if (input.memberIds) {
       const members = [...new Set(input.memberIds)];

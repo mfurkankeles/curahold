@@ -5,6 +5,7 @@ export interface EmailMessage {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }
 
 export interface EmailSender {
@@ -34,7 +35,7 @@ export class ResendEmail implements EmailSender {
     const res = await this.fetchFn('https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${this.apiKey}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text }),
+      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}) }),
     });
     if (!res.ok) throw new Error(`email provider answered ${res.status}`);
   }

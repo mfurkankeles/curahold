@@ -3,12 +3,14 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
-import { PERMS, type AdminUser, type AuditEntry, type Role } from '../../../shared/src/model';
-import { orgUrl, requirePerm, run, type AppEnv } from '../context';
+import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type Role } from '../../../shared/src/model';
+import { requirePerm, run, type AppEnv } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
-import { randomToken, sha256Hex } from '../lib/crypto';
-import { fail } from '../lib/errors';
+import { randomDigits, randomToken, sha256Hex } from '../lib/crypto';
+import { emailDomain, isPublicDomain } from '../lib/domains';
+import { createInviteToken, sendInvite } from '../lib/people';
+import { fail, HttpError } from '../lib/errors';
 import { iso, toComment, toTask } from '../lib/mappers';
 import { body, email, param, uuid } from '../lib/validate';
 
@@ -40,6 +42,9 @@ adminRoutes.patch('/org', async (c) => {
         })
         .optional(),
       terms: z.object({ account: z.object({ en: termWords.optional(), tr: termWords.optional() }).optional() }).optional(),
+      currency: z.string().regex(/^[A-Z]{3}$/).optional(),
+      joinRequests: z.boolean().optional(),
+      autoJoin: z.boolean().optional(),
     }),
   );
   const auth = c.get('auth');
@@ -47,9 +52,19 @@ adminRoutes.patch('/org', async (c) => {
   await run(c, async (q) => {
     await q.query(
       `update orgs set name = coalesce($2, name), locale = coalesce($3, locale),
-              timezone = coalesce($4, timezone), terms = coalesce($5::jsonb, terms)
+              timezone = coalesce($4, timezone), terms = coalesce($5::jsonb, terms),
+              currency = coalesce($6, currency), join_requests = coalesce($7, join_requests), auto_join = coalesce($8, auto_join)
         where id = $1`,
-      [org.id, input.name ?? null, input.locale ?? null, input.timezone ?? null, input.terms ? JSON.stringify(input.terms) : null],
+      [
+        org.id,
+        input.name ?? null,
+        input.locale ?? null,
+        input.timezone ?? null,
+        input.terms ? JSON.stringify(input.terms) : null,
+        input.currency ?? null,
+        input.joinRequests ?? null,
+        input.autoJoin ?? null,
+      ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.updated', entity: 'org', entityId: org.id, meta: { fields: Object.keys(input) } });
   });
@@ -271,12 +286,7 @@ adminRoutes.post('/users', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.invited', entity: 'user', entityId: u.id });
     return { id: u.id as string, token };
   });
-  const link = `${orgUrl(deps.config, org.slug)}/auth/verify#token=${created.token}`;
-  await deps.email.send({
-    to: input.email,
-    subject: translate(org.locale, 'email.invite.subject', { inviter: auth.name, org: org.name }),
-    text: translate(org.locale, 'email.invite.body', { inviter: auth.name, org: org.name, name: input.name, link }),
-  });
+  await sendInvite(deps, org, { email: input.email, name: input.name }, created.token, auth.name);
   return c.json({ id: created.id, ...(deps.config.devExposeTokens ? { devToken: created.token } : {}) }, 201);
 });
 
@@ -491,4 +501,211 @@ adminRoutes.get('/audit', async (c) => {
     at: iso(r.at)!,
   }));
   return c.json({ entries });
+});
+
+// ------------------------------------------------------------ join requests
+
+adminRoutes.get('/join-requests', async (c) => {
+  requirePerm(c, 'users.manage');
+  const rows = await run(c, (q) => q.query(`select * from join_requests where status = 'pending' order by created_at`));
+  const list: JoinRequest[] = rows.map((r) => ({ id: r.id, email: r.email, name: r.name, note: r.note ?? null, createdAt: iso(r.created_at)! }));
+  return c.json({ requests: list });
+});
+
+adminRoutes.post('/join-requests/:id/approve', async (c) => {
+  requirePerm(c, 'users.manage');
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ roleId: uuid.optional(), seat: z.enum(['full', 'viewer']).optional(), teamIds: z.array(uuid).max(50).optional() }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const deps = c.get('deps');
+  const made = await run(c, async (q) => {
+    const [r] = await q.query(`select * from join_requests where id = $1 and status = 'pending' for update`, [id]);
+    if (!r) fail('not_found');
+    const exists = await q.query('select 1 from users where email = $1', [r.email]);
+    if (exists.length) fail('email_taken');
+    const [role] = input.roleId
+      ? await q.query<{ id: string }>('select id from roles where id = $1', [input.roleId])
+      : await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
+    if (!role) fail('validation', { fields: 'roleId' }, { fields: ['roleId'] });
+    const [u] = await q.query<{ id: string }>(
+      `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
+      [org.id, r.email, r.name, role.id, input.seat ?? 'full'],
+    );
+    for (const t of new Set(input.teamIds ?? [])) await q.query('insert into team_members (org_id, team_id, user_id) values ($1, $2, $3)', [org.id, t, u.id]);
+    await q.query(`update join_requests set status = 'approved', decided_by = $2, decided_at = now() where id = $1`, [id, auth.userId]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'join.approved', entity: 'user', entityId: u.id, meta: { email: r.email } });
+    return { id: u.id, email: r.email as string, name: r.name as string, token: await createInviteToken(q, org.id, r.email) };
+  });
+  await sendInvite(deps, org, { email: made.email, name: made.name }, made.token, auth.name, 'approved');
+  return c.json({ id: made.id, ...(deps.config.devExposeTokens ? { devToken: made.token } : {}) });
+});
+
+adminRoutes.post('/join-requests/:id/reject', async (c) => {
+  requirePerm(c, 'users.manage');
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const deps = c.get('deps');
+  const r = await run(c, async (q) => {
+    const [row] = await q.query(
+      `update join_requests set status = 'rejected', decided_by = $2, decided_at = now() where id = $1 and status = 'pending' returning email, name`,
+      [id, auth.userId],
+    );
+    if (!row) fail('not_found');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'join.rejected', entity: 'join_request', entityId: id, meta: { email: row.email } });
+    return row;
+  });
+  await deps.email.send({
+    to: r.email,
+    subject: translate(org.locale, 'email.rejected.subject', { org: org.name }),
+    text: translate(org.locale, 'email.rejected.body', { org: org.name, name: r.name }),
+  });
+  return c.json({ ok: true });
+});
+
+// ----------------------------------------------------------------- domains
+
+const DOMAIN_CODE_MINUTES = 30;
+
+/** Prove the company owns another email domain: a code goes to an address there. */
+adminRoutes.post('/domains', async (c) => {
+  requirePerm(c, 'org.manage');
+  const input = await body(c, z.object({ email }));
+  const org = c.get('org');
+  const deps = c.get('deps');
+  const domain = emailDomain(input.email);
+  if (isPublicDomain(domain)) fail('domain_public', { domain });
+  if (org.domains.includes(domain)) return c.json({ ok: true, verified: true });
+  const code = randomDigits(6);
+  const codeHash = await sha256Hex(code);
+  const tokenHash = await sha256Hex(randomToken(24));
+  await run(c, (q) =>
+    q.query(
+      `insert into login_tokens (org_id, email, token_hash, kind, code_hash, expires_at)
+       values ($1, $2, $3, 'domain', $4, now() + make_interval(mins => $5::int))`,
+      [org.id, input.email, tokenHash, codeHash, DOMAIN_CODE_MINUTES],
+    ),
+  );
+  await deps.email.send({
+    to: input.email,
+    subject: translate(org.locale, 'email.domain.subject', { org: org.name, code }),
+    text: translate(org.locale, 'email.domain.body', { org: org.name, code, domain }),
+  });
+  return c.json({ ok: true, verified: false, ...(deps.config.devExposeTokens ? { devCode: code } : {}) });
+});
+
+adminRoutes.post('/domains/verify', async (c) => {
+  requirePerm(c, 'org.manage');
+  const input = await body(c, z.object({ email, code: z.string().regex(/^\d{6}$/) }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const domain = emailDomain(input.email);
+  const outcome = await run(c, async (q) => {
+    const [tok] = await q.query(
+      `update login_tokens set attempts = attempts + 1
+        where id = (select id from login_tokens where email = $1 and kind = 'domain' and used_at is null and expires_at > now() order by created_at desc limit 1)
+        returning id, code_hash, attempts`,
+      [input.email],
+    );
+    if (!tok || tok.attempts > 5 || tok.code_hash !== (await sha256Hex(input.code))) return 'invalid_token' as const;
+    await q.query('update login_tokens set used_at = now() where id = $1', [tok.id]);
+    await q.query(`update orgs set domains = array(select distinct unnest(domains || array[$2::text])) where id = $1`, [org.id, domain]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.domain_added', entity: 'org', entityId: org.id, meta: { domain } });
+    return 'ok' as const;
+  });
+  if (outcome !== 'ok') throw new HttpError(outcome);
+  return c.json({ ok: true, domain });
+});
+
+adminRoutes.delete('/domains/:domain', async (c) => {
+  requirePerm(c, 'org.manage');
+  const domain = c.req.param('domain').toLowerCase();
+  const org = c.get('org');
+  const auth = c.get('auth');
+  await run(c, async (q) => {
+    await q.query('update orgs set domains = array_remove(domains, $2) where id = $1', [org.id, domain]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.domain_removed', entity: 'org', entityId: org.id, meta: { domain } });
+  });
+  return c.json({ ok: true });
+});
+
+// --------------------------------------------------------------- handover
+
+/** Someone leaves or changes role: their accounts and open tasks move to someone else in one step. */
+adminRoutes.post('/users/:id/handover', async (c) => {
+  requirePerm(c, 'users.manage');
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ toUserId: uuid }));
+  if (input.toUserId === id) fail('validation', { fields: 'toUserId' }, { fields: ['toUserId'] });
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const out = await run(c, async (q) => {
+    const [to] = await q.query(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.toUserId]);
+    if (!to) fail('bad_assignee');
+    const accounts = await q.query('update accounts set owner_id = $2, updated_at = now() where owner_id = $1 returning id', [id, input.toUserId]);
+    // Every open task on every board — the owner role reaches boards this admin cannot open.
+    return { accounts: accounts.length };
+  });
+  const tasks = await c.get('deps').db.system((q) =>
+    q.query(
+      `update tasks t set assignee_ids = array(select distinct unnest(array_replace(t.assignee_ids, $2::uuid, $3::uuid))), version = version + 1, updated_at = now()
+        from boards b
+       where t.org_id = $1 and b.id = t.board_id and $2 = any(t.assignee_ids) and t.archived_at is null
+         and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+       returning t.id`,
+      [org.id, id, input.toUserId],
+    ),
+  );
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.handover', entity: 'user', entityId: id, meta: { to: input.toUserId, accounts: out.accounts, tasks: tasks.length } }));
+  return c.json({ accounts: out.accounts, tasks: tasks.length });
+});
+
+// ------------------------------------------------------------------- logo
+
+const looksLike = (bytes: Uint8Array, mime: string) => {
+  const head = Array.from(bytes.slice(0, 12));
+  if (mime === 'image/png') return head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+  if (mime === 'image/jpeg') return head[0] === 0xff && head[1] === 0xd8;
+  if (mime === 'image/webp') return String.fromCharCode(...head.slice(0, 4)) === 'RIFF' && String.fromCharCode(...head.slice(8, 12)) === 'WEBP';
+  if (mime === 'image/svg+xml') return /<svg[\s>]/i.test(new TextDecoder().decode(bytes.slice(0, 2048)));
+  return false;
+};
+
+adminRoutes.post('/logo', async (c) => {
+  requirePerm(c, 'org.manage');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const deps = c.get('deps');
+  if (Number(c.req.header('content-length') ?? 0) > MAX_LOGO_KB * 1024 + 64 * 1024) fail('file_too_large', { mb: 1 });
+  const form = await c.req.parseBody();
+  const file = form.file;
+  if (!(file instanceof File)) fail('validation', { fields: 'file' }, { fields: ['file'] });
+  const f = file as File;
+  if (f.size > MAX_LOGO_KB * 1024) fail('file_too_large', { mb: 1 });
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  const mime = (LOGO_TYPES as readonly string[]).includes(f.type) ? f.type : '';
+  if (!mime || !looksLike(bytes, mime)) fail('validation', { fields: 'file' }, { fields: ['file'], reason: 'type' });
+  const key = `${org.id}/logo/${crypto.randomUUID()}`;
+  await deps.storage.put(key, bytes.buffer as ArrayBuffer, mime);
+  const old = (org.settings as any)?.logo?.key as string | undefined;
+  await run(c, async (q) => {
+    await q.query(`update orgs set settings = jsonb_set(settings, '{logo}', $2::jsonb) where id = $1`, [org.id, JSON.stringify({ key, mime, v: Date.now() })]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.logo_changed', entity: 'org', entityId: org.id });
+  });
+  if (old) await deps.storage.delete(old);
+  return c.json({ logoUrl: `/api/logo?v=${Date.now()}` });
+});
+
+adminRoutes.delete('/logo', async (c) => {
+  requirePerm(c, 'org.manage');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const old = (org.settings as any)?.logo?.key as string | undefined;
+  await run(c, async (q) => {
+    await q.query(`update orgs set settings = settings - 'logo' where id = $1`, [org.id]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.logo_removed', entity: 'org', entityId: org.id });
+  });
+  if (old) await c.get('deps').storage.delete(old);
+  return c.json({ ok: true });
 });

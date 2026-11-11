@@ -4,16 +4,19 @@ import { post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
+import { SETUP_STEPS } from '../../../shared/src/model';
+import { Bell } from './Bell';
 import { BoardSettings } from './BoardSettings';
 import { Avatar, Mark } from './ui';
 
 export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (l: Locale) => void }) {
-  const { t, locale } = useI18n();
-  const { me, boards, canWrite, person, toasts } = useStore();
+  const { t, locale, words } = useI18n();
+  const { me, boards, canWrite, person, toasts, can } = useStore();
   const { path } = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const [newBoard, setNewBoard] = useState(false);
-  const isAdmin = me.user.perms.some((p) => ['org.manage', 'users.manage', 'teams.manage', 'audit.view', 'privacy.manage'].includes(p));
+  const isAdmin = me.user.perms.some((p) => ['org.manage', 'users.manage', 'teams.manage', 'audit.view', 'privacy.manage', 'accounts.manage', 'automations.manage'].includes(p));
+  const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
 
   const go = (to: string) => {
     navigate(to);
@@ -38,15 +41,42 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
     <div className="shell" data-nav={navOpen ? 'open' : 'closed'} onClick={(e) => navOpen && e.target === e.currentTarget && setNavOpen(false)}>
       <nav className="sidebar" aria-label="Tendwell">
         <div className="sidebar__org">
-          <Mark />
+          {me.org.logoUrl ? (
+            <span className="orglogo">
+              <img src={me.org.logoUrl} alt="" />
+            </span>
+          ) : (
+            <Mark />
+          )}
           <div style={{ minWidth: 0 }}>
             <div className="sidebar__orgname">{me.org.name}</div>
             <div className="sidebar__orgaddr">{location.host}</div>
           </div>
+          <Bell />
         </div>
+        {can('org.manage') && !me.org.setup.finishedAt && (
+          <a
+            className="setup-chip"
+            href="/setup"
+            aria-current={path.startsWith('/setup') ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              go('/setup');
+            }}
+          >
+            <span>{t('nav.finishSetup')}</span>
+            <span className="setup-chip__meter" aria-hidden="true">
+              {SETUP_STEPS.map((s) => (
+                <i key={s} data-done={(me.org.setup.done ?? []).includes(s) ? 'true' : undefined} />
+              ))}
+            </span>
+            <span className="sr-only">{t('nav.setupLeft', { n: setupLeft })}</span>
+          </a>
+        )}
         <div className="sidebar__nav">
           {link('/my', t('nav.myTasks'), path === '/my')}
           {link('/calendar', t('nav.calendar'), path === '/calendar')}
+          {link('/accounts', words.other, path.startsWith('/accounts'))}
         </div>
         <div className="sidebar__heading">
           <span>{t('nav.boards')}</span>
@@ -61,7 +91,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         </div>
         <div className="sidebar__foot">
           {isAdmin && link('/settings', t('nav.settings'), path.startsWith('/settings'))}
-          {link('/devices', t('nav.devices'), path === '/devices')}
+          {link('/profile', t('nav.profile'), path === '/profile' || path === '/devices')}
           <button className="navlink" onClick={() => onLocale(locale === 'tr' ? 'en' : 'tr')}>
             <span>{t('nav.language')}: {locale === 'tr' ? 'Türkçe' : 'English'}</span>
           </button>

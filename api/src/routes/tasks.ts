@@ -1,7 +1,10 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { MAX_FILE_MB, MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
-import { requireWriter, run, type AppEnv } from '../context';
+import { nowOf, requireWriter, run, type AppEnv } from '../context';
+import { runTaskMoved } from '../lib/automations';
+import { kick } from '../lib/notify';
+import { onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail, HttpError } from '../lib/errors';
@@ -17,7 +20,8 @@ const COUNTS = `
      where s.parent_id = t.id and s.archived_at is null
        and exists (select 1 from jsonb_array_elements(b.columns) col
                    where col->>'key' = s.status and (col->>'done')::boolean)) as subtask_done,
-  (select count(*) from comments cm where cm.task_id = t.id) as comment_count`;
+  (select count(*) from comments cm where cm.task_id = t.id) as comment_count,
+  (select ac.name from accounts ac where ac.id = t.account_id) as account_name`;
 
 async function loadTask(q: Q, id: string): Promise<Row> {
   const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
@@ -32,6 +36,12 @@ async function checkAssignees(q: Q, ids: string[]) {
     [ids],
   );
   if (rows.length !== new Set(ids).size) fail('bad_assignee');
+}
+
+async function checkAccount(q: Q, id: string | null | undefined) {
+  if (!id) return;
+  const rows = await q.query('select 1 from accounts where id = $1', [id]);
+  if (!rows.length) fail('validation', { fields: 'accountId' }, { fields: ['accountId'] });
 }
 
 function checkStatus(columns: Column[], status: string) {
@@ -81,7 +91,7 @@ const fields = {
   description: z.string().max(20000),
   status: z.string().max(24),
   assigneeIds: z.array(uuid).max(10),
-  partnerName: z.string().trim().max(200).nullable(),
+  accountId: uuid.nullable(),
   dueDate: isoDate.nullable(),
   priority: z.enum(['low', 'normal', 'high', 'urgent']),
   position: z.number().finite(),
@@ -98,7 +108,7 @@ taskRoutes.post('/tasks', async (c) => {
       description: fields.description.optional(),
       status: fields.status.optional(),
       assigneeIds: fields.assigneeIds.optional(),
-      partnerName: fields.partnerName.optional(),
+      accountId: fields.accountId.optional(),
       dueDate: fields.dueDate.optional(),
       priority: fields.priority.optional(),
       position: fields.position.optional(),
@@ -116,6 +126,7 @@ taskRoutes.post('/tasks', async (c) => {
       if (parent.board_id !== input.boardId || parent.parent_id) fail('validation', { fields: 'parentId' });
     }
     await checkAssignees(q, input.assigneeIds ?? []);
+    await checkAccount(q, input.accountId);
     let position = input.position;
     if (position === undefined) {
       const [m] = await q.query(
@@ -126,8 +137,9 @@ taskRoutes.post('/tasks', async (c) => {
     }
     const [t] = await q.query(
       `insert into tasks (org_id, board_id, parent_id, title, description, status, assignee_ids,
-                          partner_name, due_date, priority, position, created_by, updated_by)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) returning *`,
+                          account_id, due_date, priority, position, created_by, updated_by)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
+       returning *, (select name from accounts a where a.id = account_id) as account_name`,
       [
         org.id,
         input.boardId,
@@ -136,7 +148,7 @@ taskRoutes.post('/tasks', async (c) => {
         input.description ?? '',
         status,
         [...new Set(input.assigneeIds ?? [])],
-        input.partnerName || null,
+        input.accountId ?? null,
         input.dueDate ?? null,
         input.priority ?? 'normal',
         position,
@@ -144,8 +156,10 @@ taskRoutes.post('/tasks', async (c) => {
       ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.created', entity: 'task', entityId: t.id });
+    await onTaskCreated(q, org.id, auth.userId, t, board);
     return t;
   });
+  kick(c.get('deps'));
   return c.json({ task: toTask(task) }, 201);
 });
 
@@ -177,7 +191,7 @@ const patchSchema = z.object({
   description: fields.description.optional(),
   status: fields.status.optional(),
   assigneeIds: fields.assigneeIds.optional(),
-  partnerName: fields.partnerName.optional(),
+  accountId: fields.accountId.optional(),
   dueDate: fields.dueDate.optional(),
   priority: fields.priority.optional(),
   position: fields.position.optional(),
@@ -199,6 +213,7 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     const board = await loadBoard(q, t.board_id);
     if (input.status !== undefined) checkStatus(board.columns, input.status);
     if (input.assigneeIds !== undefined) await checkAssignees(q, input.assigneeIds);
+    if (input.accountId !== undefined) await checkAccount(q, input.accountId);
     const sets: string[] = [];
     const vals: unknown[] = [];
     const set = (col: string, v: unknown) => {
@@ -209,7 +224,7 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     if (input.description !== undefined) set('description', input.description);
     if (input.status !== undefined) set('status', input.status);
     if (input.assigneeIds !== undefined) set('assignee_ids', [...new Set(input.assigneeIds)]);
-    if (input.partnerName !== undefined) set('partner_name', input.partnerName || null);
+    if (input.accountId !== undefined) set('account_id', input.accountId);
     if (input.dueDate !== undefined) set('due_date', input.dueDate);
     if (input.priority !== undefined) set('priority', input.priority);
     if (input.position !== undefined) set('position', input.position);
@@ -217,10 +232,12 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     vals.push(id, input.baseVersion);
     const [u] = await q.query(
       `update tasks set ${sets.join(', ')}, version = version + 1, updated_at = now()
-        where id = $${vals.length - 1} and version = $${vals.length} returning *`,
+        where id = $${vals.length - 1} and version = $${vals.length}
+        returning *, (select name from accounts a where a.id = account_id) as account_name`,
       vals,
     );
     if (!u) return { conflict: await loadTask(q, id) };
+    await onTaskUpdated(q, org.id, auth.userId, t, u, board);
     const changed = Object.keys(input).filter((k) => k !== 'baseVersion' && k !== 'position');
     if (changed.length) {
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.updated', entity: 'task', entityId: id, meta: { fields: changed } });
@@ -228,6 +245,9 @@ taskRoutes.patch('/tasks/:id', async (c) => {
     return { task: u };
   });
   if ('conflict' in result) throw new HttpError('conflict', {}, { current: toTask(result.conflict!) });
+  const deps = c.get('deps');
+  if (input.status !== undefined) await runTaskMoved(deps, org.id, id, input.status, nowOf(deps)).catch(() => 0);
+  kick(deps);
   return c.json({ task: toTask(result.task) });
 });
 
@@ -261,7 +281,7 @@ taskRoutes.post('/tasks/:id/comments', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const comment = await run(c, async (q) => {
-    await loadTask(q, id);
+    const task = await loadTask(q, id);
     const mentioned = [...new Set([...input.body.matchAll(MENTION_RE)].map((m) => m[2]))];
     const valid = mentioned.length
       ? (await q.query<{ id: string }>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [mentioned])).map(
@@ -273,8 +293,10 @@ taskRoutes.post('/tasks/:id/comments', async (c) => {
       [org.id, id, auth.userId, input.body, valid],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'comment.created', entity: 'comment', entityId: cm.id });
+    await onComment(q, org.id, auth.userId, task, input.body, valid);
     return cm;
   });
+  kick(c.get('deps'));
   return c.json({ comment: toComment(comment) }, 201);
 });
 

@@ -10,12 +10,29 @@ beforeAll(async () => {
 
 describe('database row-level security', () => {
   it('a raw query in company A context only returns company A rows', async () => {
-    for (const table of ['users', 'roles', 'teams', 'boards', 'tasks', 'comments', 'audit_log', 'sessions']) {
+    // Something in every phase 2 table for both companies first.
+    await env.db.system(async (q) => {
+      for (const org of [env.a, env.b]) {
+        await q.query(`insert into notifications (org_id, user_id, kind) values ($1, $2, 'assigned')`, [org.orgId, org.ids.ada]);
+        await q.query(`insert into join_requests (org_id, email, name) values ($1, 'x@demo.example', 'X')`, [org.orgId]);
+        const [c] = await q.query(`insert into connections (org_id, kind, provider, label) values ($1, 'messaging', 'webhook', 'W') returning id`, [org.orgId]);
+        await q.query(`insert into chat_identities (org_id, connection_id, user_id, external_id) values ($1, $2, $3, 'U1')`, [org.orgId, c.id, org.ids.ada]);
+        await q.query(`insert into import_batches (org_id) values ($1)`, [org.orgId]);
+      }
+    });
+    for (const table of ['users', 'roles', 'teams', 'boards', 'tasks', 'comments', 'audit_log', 'sessions', 'accounts', 'automations',
+      'notifications', 'join_requests', 'connections', 'chat_identities', 'import_batches', 'automation_runs']) {
       const rows = await env.db.tenant({ orgId: env.a.orgId, userId: env.a.ids.ada }, (q) =>
         q.query(`select org_id from ${table}`),
       );
       expect(rows.every((r) => r.org_id === env.a.orgId), table).toBe(true);
     }
+    for (const table of ['accounts', 'automations', 'notifications', 'join_requests', 'connections', 'chat_identities', 'import_batches']) {
+      const rows = await env.db.tenant({ orgId: env.a.orgId, userId: env.a.ids.ada }, (q) => q.query(`select org_id from ${table}`));
+      expect(rows.length, table).toBeGreaterThan(0);
+    }
+    // Sign-ups in progress belong to no company: the request role cannot read them at all.
+    await expect(env.db.tenant({ orgId: env.a.orgId, userId: env.a.ids.ada }, (q) => q.query('select * from signups'))).rejects.toThrow(/permission denied/);
     const tasks = await env.db.tenant({ orgId: env.a.orgId, userId: env.a.ids.ada }, (q) => q.query('select id from tasks'));
     expect(tasks.length).toBeGreaterThan(5);
   });

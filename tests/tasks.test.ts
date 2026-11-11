@@ -14,9 +14,9 @@ beforeAll(async () => {
 
 describe('tasks', () => {
   it('creates a task in the first column by default', async () => {
-    const r = await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Call the champion', assigneeIds: [env.a.ids.lena], dueDate: '2026-12-01', partnerName: 'Quillfield Retail' });
+    const r = await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Call the champion', assigneeIds: [env.a.ids.lena], dueDate: '2026-12-01', accountId: env.a.accounts['Quillfield Retail'] });
     expect(r.status).toBe(201);
-    expect(r.json.task).toMatchObject({ status: 'todo', version: 1, dueDate: '2026-12-01', partnerName: 'Quillfield Retail', assigneeIds: [env.a.ids.lena] });
+    expect(r.json.task).toMatchObject({ status: 'todo', version: 1, dueDate: '2026-12-01', accountId: env.a.accounts['Quillfield Retail'], accountName: 'Quillfield Retail', assigneeIds: [env.a.ids.lena] });
   });
 
   it('refuses a column that is not on the board', async () => {

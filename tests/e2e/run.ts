@@ -14,6 +14,8 @@ async function step(name: string, fn: () => Promise<void>) {
     results.push({ name, ok: true });
   } catch (e) {
     results.push({ name, ok: false, error: e instanceof Error ? e.message : String(e) });
+    // A picture of every open page at the moment of failure.
+    for (const [i, pg] of (await s.browser.pages()).entries()) await shot(pg, `fail-${results.length}-${i}`).catch(() => undefined);
   }
 }
 function expect(cond: unknown, msg: string) {
@@ -29,14 +31,14 @@ const csBoard = s.demo.boards.csBoard;
 
 await step('sign in with an email link and land on My tasks', async () => {
   await signIn(mert.page, s.origin, 'mert@demo.example');
-  expect((await text(mert.page, '.topbar__title')).includes("Task'larım"), 'My tasks title missing');
+  expect((await text(mert.page, '.topbar__title')).includes('Görevlerim'), 'My tasks title missing');
   await shot(mert.page, 'e2e-01-my-tasks');
 });
 
 let newTaskId = '';
 await step('create a task from the board', async () => {
   await mert.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
-  await (await byText(mert.page, '.toolbar .btn--primary', 'Yeni task')).click();
+  await (await byText(mert.page, '.toolbar .btn--primary', 'Yeni görev')).click();
   await mert.page.waitForSelector('.column input.input');
   await mert.page.type('.column input.input', 'Yenileme riskini konuş');
   await mert.page.keyboard.press('Enter');
@@ -141,14 +143,20 @@ await step("the company's own vocabulary appears in the interface", async () => 
   const ada = await newPage(s.browser);
   await signIn(ada.page, s.origin, 'ada@demo.example');
   await ada.page.goto(`${s.origin}/settings/company`, { waitUntil: 'networkidle0' });
-  const inputs = await ada.page.$$('.sheet:nth-of-type(2) input.input');
-  await inputs[2].type('Partner');
-  await inputs[3].type('Partnerler');
+  const inputs = await ada.page.$$('.sheet:nth-of-type(3) input.input');
+  // The template already filled in a word; replace it.
+  for (const [i, word] of [[2, 'Partner'], [3, 'Partnerler']] as const) {
+    await inputs[i].click();
+    await ada.page.keyboard.down('Control');
+    await ada.page.keyboard.press('a');
+    await ada.page.keyboard.up('Control');
+    await inputs[i].type(word);
+  }
   await (await byText(ada.page, 'form .btn--primary', 'Kaydet')).click();
   await pause(500);
   await ada.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
   const ph = await ada.page.$eval('input.search', (el) => (el as HTMLInputElement).placeholder);
-  expect(ph === 'Task veya partner ara', `placeholder: ${ph}`);
+  expect(ph === 'Görev veya partner ara', `placeholder: ${ph}`);
   await ada.page.goto(`${s.origin}/settings/people`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.table');
   await shot(ada.page, 'e2e-08-settings-people');
@@ -166,6 +174,164 @@ await step('phone layout: columns and the menu work', async () => {
   const open = await phone.page.$eval('.shell', (el) => el.getAttribute('data-nav'));
   expect(open === 'open', 'menu did not open');
   await shot(phone.page, 'e2e-10-phone-menu');
+  await phone.page.browserContext().close();
+});
+
+
+// ------------------------------------------------------------- phase 2
+
+const port = 8899;
+const central = `http://app.localhost:${port}`;
+const csv = 'Firma;Sorumlu;Yenileme;Yıllık tutar;Segment\nAkasya Mobilya;selin@yeni-sirket.example;31.03.2027;120.000;Kurumsal\nBeyaz Liman Lojistik;selin@yeni-sirket.example;15.05.2027;48.500;KOBİ\nÇınar Eczaneleri;Okan Demir;01.09.2027;64.000;Orta ölçek\n';
+const csvPath = `${import.meta.dirname}/screens/musteriler.csv`;
+(await import('node:fs')).writeFileSync(csvPath, csv);
+
+const founder = await newPage(s.browser);
+await step('a new company signs up alone and lands in the setup wizard, signed in', async () => {
+  const p = founder.page;
+  await p.goto(`${central}/`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('input[type=email]');
+  await (await byText(p, '.seg button', 'Türkçe')).click();
+  await shot(p, 'p2-01-signup');
+  await p.type('input[type=email]', 'deniz@yeni-sirket.example');
+  await p.click('form button.btn--primary');
+  const link = await p.waitForSelector('a.btn[href^="/signup/verify"]');
+  await link!.click();
+  await p.waitForSelector('.signup-form');
+  const company = await p.$eval('.signup-form input', (el) => (el as HTMLInputElement).value);
+  expect(company === 'Yeni Sirket', `suggested name: ${company}`);
+  await p.$eval('.signup-form input', (el) => ((el as HTMLInputElement).value = ''));
+  await p.type('.signup-form input', 'Yeni Şirket');
+  await p.waitForFunction(() => document.querySelector('#slug-msg')?.textContent === 'Uygun.');
+  const inputs = await p.$$('.signup-form input.input');
+  await inputs[2].type('Deniz Kaya');
+  await shot(p, 'p2-02-signup-details');
+  await p.click('.signup-form button.btn--primary');
+  await p.waitForSelector('.wizard', { timeout: 15_000 });
+  expect(p.url().startsWith(`http://yeni-sirket.localhost:${port}/setup`), `landed on ${p.url()}`);
+  await shot(p, 'p2-03-wizard-company');
+});
+
+await step('wizard: company, chat (skipped), customers from a spreadsheet', async () => {
+  const p = founder.page;
+  await (await byText(p, '.wizard__panel button.btn--primary', 'Kaydet ve devam et')).click();
+  await p.waitForSelector('.tiles');
+  await shot(p, 'p2-04-wizard-messaging');
+  await (await byText(p, '.wizard__nav .btn--primary', 'Devam et')).click();
+  await p.waitForSelector('.dropzone');
+  const input = await p.$('.dropzone input[type=file]');
+  await (input as any).uploadFile(csvPath);
+  await p.waitForSelector('.map-table');
+  const targets = await p.$$eval('.map-table select', (els) => els.map((e) => (e as HTMLSelectElement).value));
+  expect(targets[0] === 'name' && targets[1] === 'owner' && targets[2] === 'field:renewal_date', `guessed: ${targets.join(',')}`);
+  await shot(p, 'p2-05-wizard-import-mapping');
+  await (await byText(p, '.importer .btn--primary', '3 satırı içe aktar')).click();
+  await p.waitForSelector('.import-result');
+  const [row] = await sql(`select fields from accounts a join orgs o on o.id = a.org_id where o.slug = 'yeni-sirket' and a.name = 'Akasya Mobilya'`);
+  expect(row.fields.arr === 120000 && row.fields.renewal_date === '2027-03-31' && row.fields.tier === 'enterprise', JSON.stringify(row.fields));
+  await shot(p, 'p2-06-wizard-import-result');
+  await (await byText(p, '.wizard__nav .btn--primary', 'Devam et')).click();
+});
+
+await step('wizard: people from the file, rules, invitations', async () => {
+  const p = founder.page;
+  await p.waitForSelector('.people-picks');
+  await shot(p, 'p2-07-wizard-people');
+  const names = await p.$$eval('.people-picks tbody td .muted', (els) => els.map((e) => e.textContent));
+  expect(names.includes('selin@yeni-sirket.example'), `suggested: ${names.join(',')}`);
+  await p.type('.wizard__panel textarea', 'okan@yeni-sirket.example, Okan Demir');
+  await (await byText(p, '.wizard__nav .btn--primary', '2 kişiyi ekle')).click();
+  await p.waitForSelector('.rules');
+  await shot(p, 'p2-08-wizard-rules');
+  await (await byText(p, '.wizard__nav .btn--primary', 'Devam et')).click();
+  await p.waitForSelector('.checklist');
+  await (await byText(p, '.wizard__nav .btn--primary', 'Bitir ve çalışmaya başla')).click();
+  await p.waitForSelector('.board', { timeout: 15_000 });
+  const owners = await sql(`select a.name, u.email from accounts a join users u on u.id = a.owner_id join orgs o on o.id = a.org_id where o.slug = 'yeni-sirket' order by a.name`);
+  expect(owners.length === 3, `owners linked: ${JSON.stringify(owners)}`);
+  const invited = s.email.sent.filter((m) => m.to === 'selin@yeni-sirket.example' || m.to === 'okan@yeni-sirket.example');
+  expect(invited.length === 2, `invites sent: ${invited.length}`);
+  await shot(p, 'p2-09-first-board');
+});
+
+await step('accounts list with fields, detail page, and the rule editor preview', async () => {
+  const p = founder.page;
+  await p.goto(`http://yeni-sirket.localhost:${port}/accounts`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.accounts-table');
+  await shot(p, 'p2-10-accounts');
+  await (await byText(p, '.accounts-table a.rowlink', 'Akasya Mobilya')).click();
+  await p.waitForSelector('.account-page');
+  await shot(p, 'p2-11-account-page');
+  await p.goto(`http://yeni-sirket.localhost:${port}/settings/automations`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.rule');
+  await (await byText(p, '.rules .section__head .btn', 'Yeni kural')).click();
+  await (await byText(p, '.preset', 'Yenilemeden 90 gün önce plan aç')).click();
+  await p.waitForSelector('.rule-preview');
+  await p.waitForFunction(() => /kayıt için çalışırdı|hiçbir şey için çalışmazdı/.test(document.querySelector('.rule-preview')?.textContent ?? ''), { timeout: 5000 });
+  await shot(p, 'p2-12-rule-editor');
+  await p.keyboard.press('Escape');
+});
+
+await step('someone at the domain asks to join; an admin approves; they set themselves up', async () => {
+  const guest = await newPage(s.browser);
+  const g = guest.page;
+  await g.goto(`${s.origin}/login`, { waitUntil: 'networkidle0' });
+  await g.type('input[type=email]', 'yeni.gelen@demo.example');
+  await g.click('form button.btn--primary');
+  const link = await g.waitForSelector('a.btn[href^="/join"]');
+  await link!.click();
+  await g.waitForSelector('textarea');
+  await g.type('input.input', 'Yeni Gelen');
+  await g.type('textarea', 'CS ekibine katıldım');
+  await shot(g, 'p2-13-join');
+  await g.click('form button.btn--primary');
+  await g.waitForFunction(() => document.querySelector('.auth__title')?.textContent === 'İstek gönderildi');
+
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  await ada.page.waitForFunction(() => Number(document.querySelector('.bell__count')?.textContent ?? 0) > 0, { timeout: 8000 });
+  await ada.page.goto(`${s.origin}/settings/joining`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.join-note');
+  await shot(ada.page, 'p2-14-join-requests');
+  await (await byText(ada.page, '.btn--primary', 'Onayla')).click();
+  await ada.page.waitForFunction(() => !document.querySelector('.join-note'));
+
+  const mail = s.email.sent.filter((m) => m.to === 'yeni.gelen@demo.example').pop()!;
+  const token = /#token=([\w-]+)/.exec(mail.text)![1];
+  await g.goto(`${s.origin}/auth/verify#token=${token}`, { waitUntil: 'networkidle0' });
+  await g.waitForSelector('.choice-list', { timeout: 15_000 });
+  expect(g.url().endsWith('/welcome'), `new person landed on ${g.url()}`);
+  await shot(g, 'p2-15-welcome');
+  await (await byText(g, '.choice strong', 'E-posta')).click();
+  await (await byText(g, '.wizard__nav .btn--primary', 'Başla')).click();
+  await g.waitForFunction(() => location.pathname === '/my');
+  const [u] = await sql(`select onboarded_at, prefs from users where email = 'yeni.gelen@demo.example'`);
+  expect(u.onboarded_at && u.prefs.channel === 'email', JSON.stringify(u));
+  await ada.page.goto(`${s.origin}/settings/people`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.seat-summary');
+  await shot(ada.page, 'p2-16-people-admin');
+  await ada.page.goto(`${s.origin}/settings/connections`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.tiles');
+  await shot(ada.page, 'p2-17-connections');
+  await ada.page.goto(`${s.origin}/settings/fields`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.field-row');
+  await shot(ada.page, 'p2-18-fields');
+  await ada.page.click('.bell__btn');
+  await ada.page.waitForSelector('.bell__pop');
+  await shot(ada.page, 'p2-19-bell');
+  expect(founder.errors.length === 0 && ada.errors.length === 0 && guest.errors.length === 0, [...founder.errors, ...ada.errors, ...guest.errors].join(' | '));
+  await guest.page.browserContext().close();
+  await ada.page.browserContext().close();
+});
+
+await step('phone: wizard and accounts fit a phone screen', async () => {
+  const phone = await newPage(s.browser, 390, 844);
+  await signIn(phone.page, s.origin, 'lena@demo.example');
+  await phone.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await phone.page.waitForSelector('.accounts-table');
+  const overflow = await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(!overflow, 'accounts page scrolls sideways on a phone');
+  await shot(phone.page, 'p2-20-phone-accounts');
   await phone.page.browserContext().close();
 });
 

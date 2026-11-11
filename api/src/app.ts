@@ -11,7 +11,13 @@ import type { Perm } from '../../shared/src/model';
 import { type AppEnv, type Deps, type OrgRow } from './context';
 import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
+import { accountRoutes } from './routes/accounts';
 import { adminRoutes } from './routes/admin';
+import { automationRoutes } from './routes/automations';
+import { connectCallback_, connectionRoutes } from './routes/connections';
+import { hookRoutes } from './routes/hooks';
+import { setupRoutes } from './routes/setup';
+import { signupRoutes } from './routes/signup';
 import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
 import { boardRoutes } from './routes/boards';
 import { meRoutes } from './routes/me';
@@ -58,8 +64,12 @@ export function createApp(deps: Deps) {
 
   app.get('/api/health', (c) => c.json({ ok: true }));
 
-  // OAuth providers return to one central address, before any company is known.
+  // The central address (app.tendwell.com): OAuth returns, chat services'
+  // inbound calls and company sign-up — all before any company is known.
   app.get('/api/oauth/callback', oauthCallback);
+  app.get('/api/connect/callback', connectCallback_);
+  app.route('/api/hooks', hookRoutes);
+  app.route('/api/signup', signupRoutes);
 
   // ---------------------------------------------------------------- company
   app.use('/api/*', async (c, next) => {
@@ -71,7 +81,15 @@ export function createApp(deps: Deps) {
       q.query<OrgRow>('select * from resolve_org($1)', [slug]),
     );
     if (!rows[0]) fail('org_not_found');
-    const org = { ...rows[0], locale: normalizeLocale(rows[0].locale), terms: rows[0].terms ?? {}, settings: rows[0].settings ?? {} };
+    const org: OrgRow = {
+      ...rows[0],
+      locale: normalizeLocale(rows[0].locale),
+      terms: rows[0].terms ?? {},
+      settings: rows[0].settings ?? {},
+      domains: rows[0].domains ?? [],
+      account_fields: rows[0].account_fields ?? [],
+      setup: rows[0].setup ?? {},
+    };
     c.set('org', org);
     c.set('locale', requestLocale(c.req.header('x-tendwell-locale'), c.req.header('accept-language'), org.locale));
 
@@ -133,6 +151,10 @@ export function createApp(deps: Deps) {
   app.route('/api', meRoutes);
   app.route('/api', boardRoutes);
   app.route('/api', taskRoutes);
+  app.route('/api', accountRoutes);
+  app.route('/api', connectionRoutes);
+  app.route('/api', automationRoutes);
+  app.route('/api/setup', setupRoutes);
   app.route('/api/admin', adminRoutes);
 
   app.all('/api/*', () => fail('not_found'));

@@ -9,15 +9,23 @@ import { setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { translate, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
-import { maxDevices, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
+import { logoPath, maxDevices, nowOf, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
+import { buildIcs } from '../lib/ics';
+import { day } from '../lib/mappers';
 import { randomDigits, randomToken, sha256Hex, sign, verify } from '../lib/crypto';
+import { audit } from '../lib/audit';
+import { emailDomain } from '../lib/domains';
 import { fail, HttpError } from '../lib/errors';
+import { enqueue, kick } from '../lib/notify';
+import { emailHtml } from '../lib/emailHtml';
+import { logoUrl, userManagers } from '../lib/people';
 import { authorizeUrl, exchangeCode, isProvider, PROVIDERS, type ProviderId } from '../lib/oidc';
 import { knownDevice, openSession } from '../lib/sessions';
 import { body, deviceId, deviceLabel, email } from '../lib/validate';
 
 export const SESSION_COOKIE = 'tw_session';
 const MAGIC_MINUTES = 15;
+const JOIN_MINUTES = 60;
 const OAUTH_MINUTES = 2;
 const DEVICE_MINUTES = 10;
 const MAX_LINKS_PER_15_MIN = 5;
@@ -34,45 +42,150 @@ authRoutes.get('/org', (c) => {
     locale: org.locale,
     loginMethods: { email: true, google: !!oauth.google, microsoft: !!oauth.microsoft },
     maxDevices: maxDevices(c),
+    joinRequests: (org.join_requests || org.auto_join) && org.domains.length > 0,
+    logoUrl: logoPath(org),
   };
   return c.json(out);
+});
+
+// The company logo is shown on the sign-in page, so it needs no session.
+authRoutes.get('/logo', async (c) => {
+  const logo = (c.get('org').settings as any)?.logo;
+  if (!logo?.key) return c.text('Not found', 404);
+  const obj = await c.get('deps').storage.get(logo.key);
+  if (!obj) return c.text('Not found', 404);
+  return c.body(obj.data, 200, {
+    'content-type': logo.mime,
+    'cache-control': 'public, max-age=86400',
+    'x-content-type-options': 'nosniff',
+    // An SVG opened directly must not run anything.
+    'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  });
 });
 
 authRoutes.post('/auth/start', async (c) => {
   const input = await body(c, z.object({ email }));
   const deps = c.get('deps');
   const org = c.get('org');
+  // Someone without an account, at one of the company's own domains, gets a
+  // link to ask to join (or to join straight away, if the company allows it).
+  const mayJoin = (org.join_requests || org.auto_join) && org.domains.includes(emailDomain(input.email));
   const result = await run(c, async (q) => {
     const [recent] = await q.query<{ n: number }>(
       `select count(*)::int as n from login_tokens
-        where email = $1 and kind = 'magic' and created_at > now() - interval '15 minutes'`,
+        where email = $1 and kind in ('magic', 'join') and created_at > now() - interval '15 minutes'`,
       [input.email],
     );
     if (recent.n >= MAX_LINKS_PER_15_MIN) fail('too_many_requests');
-    const [user] = await q.query<{ id: string; name: string; locale: Locale | null }>(
-      `select id, name, locale from users where email = $1 and status in ('active', 'invited')`,
+    const [user] = await q.query<{ id: string; name: string; locale: Locale | null; status: string }>(
+      `select id, name, locale, status from users where email = $1`,
       [input.email],
     );
-    if (!user) return { token: null as string | null, user: null };
+    if (user && !['active', 'invited'].includes(user.status)) return { kind: 'none' as const };
+    if (!user && !mayJoin) return { kind: 'none' as const };
     const token = randomToken(32);
     await q.query(
       `insert into login_tokens (org_id, email, token_hash, kind, expires_at)
-       values ($1, $2, $3, 'magic', now() + make_interval(mins => $4::int))`,
-      [org.id, input.email, await sha256Hex(token), MAGIC_MINUTES],
+       values ($1, $2, $3, $4, now() + make_interval(mins => $5::int))`,
+      [org.id, input.email, await sha256Hex(token), user ? 'magic' : 'join', user ? MAGIC_MINUTES : JOIN_MINUTES],
     );
-    return { token, user };
+    return user ? { kind: 'magic' as const, token, user } : { kind: 'join' as const, token };
   });
-  if (result.token && result.user) {
+  const base = orgUrl(deps.config, org.slug);
+  if (result.kind === 'magic') {
     const locale = result.user.locale ?? org.locale;
-    const link = `${orgUrl(deps.config, org.slug)}/auth/verify#token=${result.token}`;
+    const link = `${base}/auth/verify#token=${result.token}`;
+    const text = translate(locale, 'email.magic.body', { org: org.name, name: result.user.name, link });
     await deps.email.send({
       to: input.email,
       subject: translate(locale, 'email.magic.subject', { org: org.name }),
-      text: translate(locale, 'email.magic.body', { org: org.name, name: result.user.name, link }),
+      text,
+      html: emailHtml({ org: org.name, logo: logoUrl(deps, org), text, link, cta: translate(locale, 'email.cta.signIn') }),
+    });
+  } else if (result.kind === 'join') {
+    const locale = c.get('locale');
+    const link = `${base}/join#token=${result.token}`;
+    await deps.email.send({
+      to: input.email,
+      subject: translate(locale, org.auto_join ? 'email.joinAuto.subject' : 'email.join.subject', { org: org.name }),
+      text: translate(locale, org.auto_join ? 'email.joinAuto.body' : 'email.join.body', { org: org.name, link }),
     });
   }
   // Same answer whether or not the address has an account.
-  return c.json({ ok: true, ...(deps.config.devExposeTokens && result.token ? { devToken: result.token } : {}) });
+  const dev = deps.config.devExposeTokens && result.kind !== 'none';
+  return c.json({ ok: true, ...(dev ? (result.kind === 'join' ? { devJoinToken: result.token } : { devToken: result.token }) : {}) });
+});
+
+// Step two of joining: the link proved the address; now the name, and
+// either a request for an administrator or (auto-join) a session right away.
+authRoutes.post('/join', async (c) => {
+  const input = await body(
+    c,
+    z.object({
+      token: z.string().min(20).max(200),
+      name: z.string().trim().min(1).max(120),
+      note: z.string().trim().max(500).optional(),
+      deviceId,
+      deviceLabel,
+    }),
+  );
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const outcome = await run(c, async (q) => {
+    const [tok] = await q.query(
+      `update login_tokens set used_at = now()
+        where token_hash = $1 and kind = 'join' and used_at is null and expires_at > now() returning email`,
+      [await sha256Hex(input.token)],
+    );
+    if (!tok) fail('invalid_token');
+    const email = tok.email as string;
+    if (!org.domains.includes(emailDomain(email))) fail('join_closed');
+    const [existing] = await q.query('select id, status from users where email = $1', [email]);
+    if (existing) fail('already_member');
+    if (org.auto_join) {
+      const [role] = await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
+      const [u] = await q.query<{ id: string }>(
+        `insert into users (org_id, email, name, role_id, seat, status, locale) values ($1, $2, $3, $4, 'full', 'active', $5) returning id`,
+        [org.id, email, input.name, role.id, c.get('locale')],
+      );
+      await audit(q, { orgId: org.id, actorId: u.id, action: 'user.joined', entity: 'user', entityId: u.id });
+      const s = await openSession(q, {
+        orgId: org.id,
+        userId: u.id,
+        deviceId: input.deviceId,
+        deviceLabel: input.deviceLabel ?? null,
+        method: 'magic',
+        ip: c.req.header('cf-connecting-ip') ?? null,
+        geo: c.req.header('cf-ipcountry') ?? null,
+        maxDevices: maxDevices(c),
+        days: deps.config.sessionDays,
+      });
+      return { kind: 'joined' as const, token: s.token };
+    }
+    if (!org.join_requests) fail('join_closed');
+    return { kind: 'pending' as const, email };
+  });
+  if (outcome.kind === 'pending') {
+    // Filed with owner access: the person asking cannot read requests (nor
+    // should they), and the duplicate check needs to.
+    await deps.db.system(async (q) => {
+      const inserted = await q.query(
+        `insert into join_requests (org_id, email, name, note) values ($1, $2, $3, $4)
+         on conflict (org_id, email) where status = 'pending' do nothing returning id`,
+        [org.id, outcome.email, input.name, input.note || null],
+      );
+      if (!inserted.length) return;
+      const managers = await userManagers(q, org.id);
+      await enqueue(q, managers.map((m) => ({ orgId: org.id, userId: m, kind: 'join_request', data: { name: input.name, email: outcome.email } })));
+      await audit(q, { orgId: org.id, actorId: null, action: 'join.requested', entity: 'join_request', entityId: inserted[0].id, meta: { email: outcome.email } });
+    });
+  }
+  if (outcome.kind === 'joined') {
+    setSessionCookie(c, outcome.token);
+    return c.json({ status: 'ok' });
+  }
+  kick(deps);
+  return c.json({ status: 'pending' });
 });
 
 const verifyInput = z.object({ token: z.string().min(20).max(200), deviceId, deviceLabel });
@@ -186,6 +299,39 @@ authRoutes.post('/auth/device', async (c) => {
   if ('error' in outcome) throw new HttpError(outcome.error!);
   setSessionCookie(c, outcome.token);
   return c.json({ status: 'ok', evictedDevices: outcome.evicted });
+});
+
+// A person's task calendar, fetched by their calendar app (no cookie): the
+// secret in the address is the only credential, and tasks are read as that
+// person so they only ever see their own boards.
+authRoutes.get('/calendar/:file', async (c) => {
+  const m = /^([A-Za-z0-9_-]{20,64})\.ics$/.exec(c.req.param('file'));
+  if (!m) return c.text('Not found', 404);
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const hash = await sha256Hex(m[1]);
+  const [u] = await deps.db.tenant({ orgId: org.id, userId: null }, (q) =>
+    q.query(`select id, name, locale from users where calendar_token_hash = $1 and status = 'active'`, [hash]),
+  );
+  if (!u) return c.text('Not found', 404);
+  const rows = await deps.db.tenant({ orgId: org.id, userId: u.id }, (q) =>
+    q.query(
+      `select t.id, t.title, t.due_date, t.board_id, t.updated_at, a.name as account_name
+         from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
+        where $1 = any(t.assignee_ids) and t.archived_at is null and b.archived_at is null and t.due_date is not null
+          and t.due_date >= current_date - 60 and t.due_date <= current_date + 400
+          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+        order by t.due_date limit 1000`,
+      [u.id],
+    ),
+  );
+  const base = orgUrl(deps.config, org.slug);
+  const ics = buildIcs(
+    `${org.name} — Tendwell`,
+    rows.map((t) => ({ id: t.id, title: t.title, due: day(t.due_date)!, url: `${base}/b/${t.board_id}?task=${t.id}`, account: t.account_name, updatedAt: new Date(t.updated_at) })),
+    nowOf(deps),
+  );
+  return c.body(ics, 200, { 'content-type': 'text/calendar; charset=utf-8', 'cache-control': 'private, max-age=300' });
 });
 
 interface OAuthState {

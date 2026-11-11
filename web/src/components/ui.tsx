@@ -63,24 +63,28 @@ export function railState(due: string | null, done: boolean): DueState {
   return dueState(due, done);
 }
 
-export function Dialog({ title, children, onClose, footer }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode }) {
+export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
+  // The latest onClose, without re-running the focus effect on every render
+  // (that would pull focus away from whatever the person is typing in).
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     const first = box.current?.querySelector<HTMLElement>('input, select, textarea, button');
     first?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') close.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       prev?.focus?.();
     };
-  }, [onClose]);
+  }, []);
   return (
     <div className="dialog" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog__box" role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>
+      <div className={`dialog__box${wide ? ' dialog__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>
         <h2 className="dialog__head" id="dlg-title">
           {title}
         </h2>
@@ -197,5 +201,48 @@ export function IconComment() {
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+/** A "⋯" button with a short list of actions for one row. */
+export function RowMenu({ label, items }: { label: string; items: { label: string; onClick: () => void; danger?: boolean }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return (
+    <div className="rowmenu" ref={ref}>
+      <button type="button" className="btn btn--quiet btn--icon" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label} onClick={() => setOpen((o) => !o)}>
+        ⋯
+      </button>
+      {open && (
+        <div className="rowmenu__pop" role="menu">
+          {items.map((it) => (
+            <button
+              key={it.label}
+              role="menuitem"
+              className={it.danger ? 'rowmenu__item rowmenu__item--danger' : 'rowmenu__item'}
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

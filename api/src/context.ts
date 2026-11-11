@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 import type { Locale, Terms } from '../../shared/src/i18n';
-import type { Perm, Seat } from '../../shared/src/model';
+import type { AccountField, Perm, Seat, SetupState } from '../../shared/src/model';
 import type { Db, Q } from './db';
 import type { ProviderConfig, ProviderId } from './lib/oidc';
 import type { EmailSender, Storage } from './lib/services';
@@ -25,6 +25,20 @@ export interface Config {
   maxDevices: number;
   sessionDays: number;
   oauth: Partial<Record<ProviderId, ProviderConfig>>;
+  /** Company sign-up on the central address. Off for a self-hosted install. */
+  signupEnabled: boolean;
+  /** Seals connector credentials at rest; falls back to authSecret. */
+  secretsKey?: string;
+  connectors: ConnectorConfig;
+}
+
+/** Tendwell's own app registrations with the messaging services. */
+export interface ConnectorConfig {
+  slack?: { clientId: string; clientSecret: string; signingSecret: string };
+  /** Microsoft Teams bot (Azure Bot, single-tenant registration in Tendwell's tenant). */
+  teams?: { appId: string; appPassword: string; tenantId: string };
+  /** Google Chat app: the Cloud project number (token audience) and its service account. */
+  gchat?: { projectNumber: string; serviceAccountEmail: string; privateKey: string };
 }
 
 export interface Deps {
@@ -34,6 +48,8 @@ export interface Deps {
   config: Config;
   fetch?: typeof fetch;
   now?: () => Date;
+  /** Runs work after the response (Workers: waitUntil). Defaults to fire-and-forget. */
+  defer?: (p: Promise<unknown>) => void;
 }
 
 export interface OrgRow {
@@ -44,6 +60,13 @@ export interface OrgRow {
   timezone: string;
   terms: Terms;
   settings: Record<string, unknown>;
+  domains: string[];
+  join_requests: boolean;
+  auto_join: boolean;
+  currency: string;
+  template: string;
+  account_fields: AccountField[];
+  setup: SetupState;
 }
 
 export interface AuthCtx {
@@ -93,4 +116,24 @@ export function orgUrl(cfg: Config, slug: string): string {
 export function maxDevices(c: C): number {
   const custom = Number(c.get('org').settings?.maxDevices);
   return Number.isInteger(custom) && custom >= 1 && custom <= 5 ? custom : c.get('deps').config.maxDevices;
+}
+
+export const nowOf = (deps: Deps) => (deps.now ?? (() => new Date()))();
+export const fetchOf = (deps: Deps) => deps.fetch ?? fetch;
+export const secretsKey = (cfg: Config) => cfg.secretsKey || cfg.authSecret;
+
+export function defer(deps: Deps, p: Promise<unknown>) {
+  const guarded = p.catch((err) => console.error('[tendwell] background task failed', err));
+  if (deps.defer) deps.defer(guarded);
+}
+
+export function centralUrl(cfg: Config): string {
+  const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
+  return `${cfg.scheme}://${cfg.centralHost}${port}`;
+}
+
+/** The logo's address on the company host, versioned so browsers refresh it after a change. */
+export function logoPath(org: Pick<OrgRow, 'settings'>): string | null {
+  const logo = (org.settings as any)?.logo;
+  return logo?.key ? `/api/logo?v=${encodeURIComponent(String(logo.v ?? 1))}` : null;
 }

@@ -10,7 +10,7 @@
 // person can re-enter it — nothing is overwritten silently.
 import type { Task } from './model';
 
-export type EditableField = 'title' | 'description' | 'status' | 'assigneeIds' | 'partnerName' | 'dueDate' | 'priority' | 'position';
+export type EditableField = 'title' | 'description' | 'status' | 'assigneeIds' | 'accountId' | 'dueDate' | 'priority' | 'position';
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 

@@ -1,7 +1,8 @@
 // Demo company with invented people and accounts — nothing here is real.
 // Used by the local server, the browser tests and (later) the live demo.
 import type { Db } from '../api/src/db';
-import { createOrg, defaultColumns } from '../api/src/lib/orgs';
+import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
+import { TEMPLATES } from '../shared/src/templates';
 
 const PEOPLE = [
   { key: 'ada', name: 'Ada Demir', role: 'admin', seat: 'full' },
@@ -12,7 +13,15 @@ const PEOPLE = [
   { key: 'sofia', name: 'Sofia Rossi', role: 'viewer', seat: 'viewer' },
 ] as const;
 
-const ACCOUNTS = ['Quillfield Retail', 'Harborline Bank', 'Cedarmoor Health', 'Velto Mobility', 'Orchardly Foods', 'Fjordnet Telecom'];
+// [name, owner, renewal in N days, annual value, health, tier, website]
+const ACCOUNTS: [string, string, number, number, string, string, string][] = [
+  ['Quillfield Retail', 'zeynep', 160, 84000, 'good', 'enterprise', 'quillfield.example'],
+  ['Harborline Bank', 'omar', 45, 126000, 'watch', 'enterprise', 'harborline.example'],
+  ['Cedarmoor Health', 'lena', 210, 38000, 'good', 'mid', 'cedarmoor.example'],
+  ['Velto Mobility', 'zeynep', 75, 52000, 'risk', 'mid', 'velto.example'],
+  ['Orchardly Foods', 'lena', 300, 21000, 'good', 'smb', 'orchardly.example'],
+  ['Fjordnet Telecom', 'omar', 120, 98000, 'watch', 'enterprise', 'fjordnet.example'],
+];
 
 function day(offset: number) {
   const d = new Date();
@@ -28,7 +37,11 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     name: 'Demo Company',
     locale,
     timezone: 'Europe/Istanbul',
+    currency: locale === 'tr' ? 'TRY' : 'USD',
+    template: 'customer_success',
+    domains: ['demo.example'],
     admin: { email: 'ada@demo.example', name: 'Ada Demir' },
+    boardMap: {},
   });
   return db.system(async (q) => {
     const ids: Record<string, string> = { ada: adminId };
@@ -67,6 +80,20 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     const privateBoard = await board(locale === 'tr' ? 'Ada — notlar' : 'Ada — notes', 'private', null, 'ada');
     await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [orgId, privateBoard, ids.ada]);
 
+    const accounts: Record<string, string> = {};
+    for (const [name, owner, renewIn, value, health, tier, site] of ACCOUNTS) {
+      const [a] = await q.query<{ id: string }>(
+        `insert into accounts (org_id, name, owner_id, team_id, fields, created_at) values ($1, $2, $3, $4, $5, now() - interval '200 days') returning id`,
+        [orgId, name, ids[owner], owner === 'omar' ? null : cs, JSON.stringify({ renewal_date: day(renewIn), arr: value, health, tier, website: `https://${site}/` })],
+      );
+      accounts[name] = a.id;
+    }
+    // The template's rules, pointed at these boards — off in the demo until someone switches them on.
+    for (const preset of TEMPLATES.customer_success.automations) {
+      const id = await insertPreset(q, orgId, adminId, preset, { main: csBoard, onboarding: csBoard, renewals }, locale);
+      if (id) await q.query('update automations set enabled = false where id = $1', [id]);
+    }
+
     let pos = 0;
     const task = async (
       boardId: string,
@@ -80,21 +107,21 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     ) => {
       pos += 1024;
       const [t] = await q.query<{ id: string }>(
-        `insert into tasks (org_id, board_id, title, status, assignee_ids, due_date, priority, partner_name, position, created_by, updated_by)
+        `insert into tasks (org_id, board_id, title, status, assignee_ids, due_date, priority, account_id, position, created_by, updated_by)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10) returning id`,
-        [orgId, boardId, title, status, assignees.map((a) => ids[a]), due === null ? null : day(due), priority, account, pos, ids[by]],
+        [orgId, boardId, title, status, assignees.map((a) => ids[a]), due === null ? null : day(due), priority, account ? accounts[account] : null, pos, ids[by]],
       );
       return t.id;
     };
     const tr = locale === 'tr';
-    const qbr = await task(csBoard, tr ? 'Çeyrek iş değerlendirmesi hazırlığı' : 'Prepare the quarterly business review', 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0]);
-    await task(csBoard, tr ? 'Onboarding başlangıç toplantısı' : 'Onboarding kickoff call', 'todo', ['lena'], 1, 'normal', ACCOUNTS[2]);
-    await task(csBoard, tr ? 'Kullanım düşüşünü araştır' : 'Look into the usage drop', 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3]);
-    await task(csBoard, tr ? 'Yeni ürün eğitimi planla' : 'Plan training on the new module', 'todo', ['lena'], 9, 'low', ACCOUNTS[4]);
+    const qbr = await task(csBoard, tr ? 'Çeyrek iş değerlendirmesi hazırlığı' : 'Prepare the quarterly business review', 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0][0]);
+    await task(csBoard, tr ? 'Onboarding başlangıç toplantısı' : 'Onboarding kickoff call', 'todo', ['lena'], 1, 'normal', ACCOUNTS[2][0]);
+    await task(csBoard, tr ? 'Kullanım düşüşünü araştır' : 'Look into the usage drop', 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3][0]);
+    await task(csBoard, tr ? 'Yeni ürün eğitimi planla' : 'Plan training on the new module', 'todo', ['lena'], 9, 'low', ACCOUNTS[4][0]);
     await task(csBoard, tr ? 'Memnuniyet anketi sonuçlarını paylaş' : 'Share the satisfaction survey results', 'done', ['mert'], -5, 'normal', null);
-    await task(renewals, tr ? 'Yenileme teklifini gönder' : 'Send the renewal proposal', 'doing', ['omar'], 6, 'high', ACCOUNTS[1], 'ada');
-    await task(renewals, tr ? 'Fiyat artışı onayını al' : 'Get the price increase approved', 'todo', ['ada'], 14, 'normal', ACCOUNTS[5], 'ada');
-    await task(renewals, tr ? 'Sözleşme imzası' : 'Contract signature', 'done', ['omar'], -1, 'normal', ACCOUNTS[0], 'ada');
+    await task(renewals, tr ? 'Yenileme teklifini gönder' : 'Send the renewal proposal', 'doing', ['omar'], 6, 'high', ACCOUNTS[1][0], 'ada');
+    await task(renewals, tr ? 'Fiyat artışı onayını al' : 'Get the price increase approved', 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
+    await task(renewals, tr ? 'Sözleşme imzası' : 'Contract signature', 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
     await task(privateBoard, tr ? 'Bütçe taslağını gözden geçir' : 'Review the budget draft', 'todo', ['ada'], 4, 'normal', null, 'ada');
 
     for (const [i, title] of (tr ? ['Gündemi yaz', 'Kullanım rakamlarını çek', 'Sunumu gönder'] : ['Write the agenda', 'Pull usage numbers', 'Send the deck']).entries()) {
@@ -117,6 +144,8 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
         [ids.zeynep],
       ],
     );
-    return { orgId, slug, ids, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };
+    await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
+    await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);
+    return { orgId, slug, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };
   });
 }

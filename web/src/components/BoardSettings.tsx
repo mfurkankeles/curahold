@@ -1,10 +1,11 @@
 // Create a board, or change its name, who sees it and its columns.
-import { useState } from 'react';
-import type { Board, Column, Visibility } from '../../../shared/src/model';
-import { ApiFailure, del, patch, post } from '../lib/api';
+import { useEffect, useState } from 'react';
+import type { Board, BoardNotify, Column, Connection, Visibility } from '../../../shared/src/model';
+import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
+import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, PeoplePicker } from './ui';
 
 const slug = (s: string, taken: Set<string>) => {
@@ -27,12 +28,13 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [archive, setArchive] = useState(false);
+  const [notify, setNotify] = useState<BoardNotify[]>(board?.notify ?? []);
 
   async function save() {
     setBusy(true);
     setError(null);
     try {
-      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}) };
+      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), ...(board ? { notify } : {}) };
       if (board) {
         await patch(`/boards/${board.id}`, payload);
         await reloadBoards();
@@ -130,6 +132,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
           </button>
         </div>
       )}
+      {board && <ChannelPosts value={notify} onChange={setNotify} />}
       {archive && board && (
         <Confirm
           title={t('board.archive')}
@@ -148,3 +151,81 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
     </Dialog>
   );
 }
+
+/** "Post new / finished tasks to a chat channel" for one board. */
+function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v: BoardNotify[]) => void }) {
+  const { t } = useI18n();
+  const [conns, setConns] = useState<Connection[] | null>(null);
+  const [channels, setChannels] = useState<Record<string, { id: string; name: string }[]>>({});
+  useEffect(() => {
+    void get<{ connections: Connection[] }>('/connections')
+      .then((r) => setConns(r.connections.filter((c) => c.status !== 'disabled')))
+      .catch(() => setConns([]));
+  }, []);
+  const loadChannels = (id: string) => {
+    const c = conns?.find((x) => x.id === id);
+    if (!c || !c.twoWay || channels[id]) return;
+    void get<{ channels: { id: string; name: string }[] }>(`/connections/${id}/channels`)
+      .then((r) => setChannels((m) => ({ ...m, [id]: r.channels })))
+      .catch(() => setChannels((m) => ({ ...m, [id]: c.channels })));
+  };
+  useEffect(() => {
+    value.forEach((v) => loadChannels(v.connectionId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conns]);
+  if (!conns) return null;
+  const label = (c: Connection) => (c.provider === 'webhook' ? `${c.label}` : `${PROVIDER_NAMES[c.provider] ?? c.provider} · ${c.label}`);
+  const upd = (i: number, x: Partial<BoardNotify>) => onChange(value.map((v, j) => (j === i ? { ...v, ...x } : v)));
+  return (
+    <div className="field">
+      <span className="field__label">{t('board.posts')}</span>
+      {conns.length === 0 ? (
+        <span className="field__hint">{t('board.postsNone')}</span>
+      ) : (
+        <>
+          {value.map((v, i) => {
+            const c = conns.find((x) => x.id === v.connectionId);
+            return (
+              <div key={i} className="post-row">
+                <select className="select" value={v.connectionId} aria-label={t('board.postsWhere')} onChange={(e) => { upd(i, { connectionId: e.target.value, channel: null }); loadChannels(e.target.value); }}>
+                  {conns.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {label(x)}
+                    </option>
+                  ))}
+                </select>
+                {c?.twoWay && (
+                  <select className="select" value={v.channel ?? ''} aria-label={t('board.postsChannel')} onChange={(e) => upd(i, { channel: e.target.value || null })}>
+                    <option value="">{t('board.postsPick')}</option>
+                    {(channels[v.connectionId] ?? c.channels).map((ch) => (
+                      <option key={ch.id} value={ch.id}>
+                        {ch.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {(['created', 'done'] as const).map((ev) => (
+                  <label key={ev} className="checkbox">
+                    <input type="checkbox" checked={v.events.includes(ev)} onChange={(e) => upd(i, { events: e.target.checked ? [...v.events, ev] : v.events.filter((x) => x !== ev) })} />
+                    <span>{t(`board.postsEvent.${ev}`)}</span>
+                  </label>
+                ))}
+                <button className="btn btn--quiet btn--icon" aria-label={t('common.remove')} onClick={() => onChange(value.filter((_, j) => j !== i))}>
+                  ×
+                </button>
+              </div>
+            );
+          })}
+          {value.length < 5 && (
+            <button className="btn btn--small" style={{ justifySelf: 'start' }} onClick={() => onChange([...value, { connectionId: conns[0].id, channel: null, events: ['created', 'done'] }])}>
+              {t('board.postsAdd')}
+            </button>
+          )}
+          <span className="field__hint">{t('board.postsHint')}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+

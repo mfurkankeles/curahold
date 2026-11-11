@@ -14,6 +14,7 @@ import type { Config } from './context';
 import { migrate } from './db/migrate';
 import { loadMigrations } from './db/migrations-fs';
 import { createMemoryPg, pgliteDb } from './db/pglite';
+import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 
@@ -38,6 +39,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     maxDevices: 2,
     sessionDays: 30,
     oauth: {},
+    signupEnabled: true,
+    connectors: {},
   };
   const api = createApp({ db, email, storage: new MemoryStorage(), config });
   const root = new Hono();
@@ -49,6 +52,9 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     root.get('*', (c) => c.html(index));
   }
   const server = serve({ fetch: root.fetch, port: opts.port });
+  // Hourly jobs (digests, automations); on Workers this is the cron trigger.
+  const timer = setInterval(() => runScheduled({ db, email, storage: new MemoryStorage(), config }).catch(() => undefined), 3600_000);
+  timer.unref();
   if (!opts.quiet) {
     console.log(`Tendwell API on http://localhost:${opts.port}`);
     console.log(`Demo company: http://demo.localhost:${opts.publicPort}  (sign in as ${demo.adminEmail})`);

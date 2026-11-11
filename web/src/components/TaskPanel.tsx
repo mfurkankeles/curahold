@@ -7,6 +7,7 @@ import { ApiFailure, api, del, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
 import { relativeTime } from '../lib/time';
 import { Avatar, Confirm, PeoplePicker } from './ui';
@@ -113,7 +114,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                 ))}
               </select>
               <span className="props__label">{words.one}</span>
-              <BlurInput key={`acc:${task.version}`} value={task.partnerName ?? ''} placeholder={t('task.accountPlaceholder')} disabled={!editable} onSave={(v) => v !== (task.partnerName ?? '') && save({ partnerName: v || null })} />
+              <AccountPicker value={task.accountId} name={task.accountName} disabled={!editable} onChange={(accountId) => save({ accountId })} />
             </div>
 
             <Section title={t('task.description')}>

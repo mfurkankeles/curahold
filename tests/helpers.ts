@@ -19,6 +19,8 @@ export function testConfig(over: Partial<Config> = {}): Config {
     maxDevices: 2,
     sessionDays: 30,
     oauth: { google: { clientId: 'google-client', clientSecret: 'google-secret' } },
+    signupEnabled: true,
+    connectors: {},
     ...over,
   };
 }
@@ -32,10 +34,25 @@ export async function setup(over: Partial<Config> = {}) {
   const storage = new MemoryStorage();
   const fetchHolder: { impl: FetchStub } = { impl: async () => new Response('no stub', { status: 500 }) };
   const config = testConfig(over);
-  const app = createApp({ db, email, storage, config, fetch: ((u: any, i: any) => fetchHolder.impl(String(u), i)) as typeof fetch });
+  // Background work (deliveries) is collected so a test can wait for it.
+  const background: Promise<unknown>[] = [];
+  const clock = { now: null as Date | null };
+  const deps = {
+    db,
+    email,
+    storage,
+    config,
+    fetch: ((u: any, i: any) => fetchHolder.impl(String(u), i)) as typeof fetch,
+    defer: (p: Promise<unknown>) => void background.push(p),
+    now: () => clock.now ?? new Date(),
+  };
+  const app = createApp(deps);
+  const settle = async () => {
+    while (background.length) await Promise.allSettled(background.splice(0));
+  };
   const a = await seedDemo(db, { slug: 'acme', locale: 'en' });
   const b = await seedDemo(db, { slug: 'beta', locale: 'tr' });
-  return { db, app, email, storage, config, a, b, fetchHolder };
+  return { db, app, email, storage, config, a, b, fetchHolder, deps, settle, clock };
 }
 
 export type Env = Awaited<ReturnType<typeof setup>>;

@@ -32,5 +32,14 @@ id = "<hyperdrive-config-id>"
 binding = "FILES"
 bucket_name = "tendwell-files"
 
-# Secrets: AUTH_SECRET, RESEND_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-# MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET
+# Hourly: morning summaries (in each company's time zone), scheduled
+# automations, delivery retries; clean-up once a day.
+[triggers]
+crons = ["0 * * * *"]
+
+# Secrets: AUTH_SECRET, SECRETS_KEY, RESEND_API_KEY,
+# GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET,
+# SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_SIGNING_SECRET,
+# TEAMS_BOT_APP_ID, TEAMS_BOT_APP_PASSWORD, TEAMS_BOT_TENANT_ID,
+# GCHAT_PROJECT_NUMBER, GCHAT_SA_EMAIL, GCHAT_SA_KEY
+# (a chat service without its secrets is simply not offered; webhooks always work)

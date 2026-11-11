@@ -1,12 +1,15 @@
 # Tendwell
 
 Work management for customer success and account teams: boards, tasks,
-renewals and follow-through, built to live next to Slack and the CRM.
-Every company gets its own address, like `acme.tendwell.com`.
+renewals and follow-through, next to whatever chat app and CRM a company
+already uses — or none. Every company gets its own address, like
+`acme.tendwell.com`, and sets itself up alone in about 15 minutes.
 
-This repository is **phase 1 of 6**: the multi-tenant foundation. Slack
-(phase 2), CRM connectors (3), add-ons and support (4), billing and
-compliance tooling (5) and the sales site (6) build on it.
+Phases: 1 foundation ✓ · 2 self-serve setup, messaging, accounts,
+automations ✓ · 3 CRM connectors (Salesforce, HubSpot, Dynamics 365,
+Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
+5 billing, seat-sharing detection, legal documents, self-hosted package ·
+6 sales site.
 
 ## What works today
 
@@ -34,6 +37,45 @@ compliance tooling (5) and the sales site (6) build on it.
 - Personal data tools for KVKK / GDPR requests: download everything held
   about a person, erase a person, activity log.
 
+### Phase 2
+
+- **Self-serve sign-up** at `app.tendwell.com`: confirm a work email, name the
+  company, pick its address (checked live) and a template (customer success,
+  account management, sales, support, empty). The founder lands in the new
+  company signed in. A company's email domain is recorded only from a
+  verified address, never for public mail services.
+- **Setup wizard** (resumable): company → chat app → customers from a
+  spreadsheet → people and teams suggested from the chat directory and the
+  file's owners → template rules → invitations. Nobody is emailed until the
+  last step.
+- **Joining**: invitation, a request from someone at the company's domain
+  that an administrator approves, or (optional) joining straight away.
+  More domains are added with a code sent to an address there.
+- **Personal first run**: name, language, where notifications go, morning
+  summary hour, a private calendar feed (.ics) for Google / Outlook / Apple.
+- **Messaging layer** (`api/src/connectors/messaging`): Slack, Microsoft
+  Teams and Google Chat with buttons (done / tomorrow / open) and "create a
+  task from a message"; Discord, Mattermost, Rocket.Chat, Webex, Zoom Team
+  Chat, Teams Workflows, Google Chat spaces and signed JSON (Zapier, Make,
+  n8n) through webhooks; email always. Inbound requests are verified (Slack
+  signature, Bot Framework and Google tokens); credentials are sealed with
+  AES-GCM and the request role cannot read them.
+- **Notifications**: outbox written in the same transaction, delivered after
+  it; in-app bell; per-person channel and per-kind switches; chat failure
+  falls back to email; boards can post new / finished tasks to a channel.
+- **Accounts**: list with the company's own fields, sorting, bulk owner
+  change and archive, a page per account with its tasks; CSV / Excel import
+  with column guessing, Turkish and English number/date formats, new fields
+  from new columns, owners linked when they join, and one-click undo.
+- **Automations** built as sentences: when (date approaching, every N days,
+  quiet for N days, new account, task overdue, task moved) · only for
+  (conditions) · then (open tasks with checklists, or remind people). Live
+  preview, on/off switch, run now, history; each occasion fires once.
+- **Admin area**: grouped sections, seat summary, row menus, hand-over of a
+  person's accounts and open tasks, join requests, domains, logo.
+- **Company logo** in the menu, on the sign-in page, as the tab icon and in
+  invitation and sign-in emails.
+
 ## Run it locally
 
 ```bash
@@ -54,8 +96,8 @@ accounts are invented.
 
 | Command | What it checks | Time |
 | --- | --- | --- |
-| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, dictionaries, leak check | ~15 s |
-| `npm run test:e2e` | Builds the app and drives it in Chrome: sign-in, create, drag, mention, merge, language, viewer seat, device limit, vocabulary, phone layout; saves screenshots | ~40 s |
+| `npm test` | API, database security, sign-in and device limit, tasks and concurrency, KVKK/GDPR tools, sign-up, joining, Slack / Teams / Google Chat / webhooks against stand-ins, notifications and digest, calendar feed, accounts and import, automations, setup, logo, dictionaries, leak check | ~40 s |
+| `npm run test:e2e` | Builds the app and drives it in Chrome: phase 1 journeys plus sign-up → wizard → import → people → rules → first board, accounts, rule editor, join request → approval → personal setup, phone layouts; saves screenshots | ~70 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id
@@ -86,6 +128,14 @@ tests/            Vitest suites; tests/e2e drives Chrome
    sign-ins are offered.
 5. DNS: `*.tendwell.com` and `app.tendwell.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
+
+### Chat apps (each optional)
+
+| Service | Register | Tendwell endpoints |
+| --- | --- | --- |
+| Slack | One Slack app with OAuth scopes `chat:write im:write users:read users:read.email usergroups:read channels:read groups:read commands`, a message shortcut `tw_create_task` and slash command `/tendwell` | Redirect `https://app.tendwell.com/api/connect/callback`; events, interactivity and commands `https://app.tendwell.com/api/hooks/slack` |
+| Microsoft Teams | Azure Bot (single-tenant registration in Tendwell's tenant), published through the Teams Store; until then companies upload the package from Settings → Connections | Messaging endpoint `https://app.tendwell.com/api/hooks/teams`; Microsoft sign-in redirect `/api/connect/callback` |
+| Google Chat | A Chat app (HTTP endpoint, "project number" audience) published on the Google Workspace Marketplace, with a service account | `https://app.tendwell.com/api/hooks/gchat`; Google sign-in redirect `/api/connect/callback` |
 
 ### Database roles
 

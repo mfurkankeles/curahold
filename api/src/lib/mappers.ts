@@ -19,7 +19,8 @@ export const toTask = (r: Row): Task => ({
   description: r.description ?? '',
   status: r.status,
   assigneeIds: r.assignee_ids ?? [],
-  partnerName: r.partner_name ?? null,
+  accountId: r.account_id ?? null,
+  accountName: r.account_name ?? null,
   dueDate: day(r.due_date),
   priority: r.priority,
   position: Number(r.position),
@@ -40,6 +41,7 @@ export const toBoard = (r: Row, canManage: boolean): Board => ({
   memberIds: r.member_ids ?? [],
   createdBy: r.created_by ?? null,
   canManage,
+  notify: r.notify ?? [],
 });
 
 export const toComment = (r: Row): Comment => ({
