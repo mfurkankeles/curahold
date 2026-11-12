@@ -1,0 +1,175 @@
+/* Records opened on their own, threads with files, playbooks, the rhythm and
+   currency settings. Colours, radii and shadows come from the tokens at the
+   top of styles.css; motion respects "reduce motion" through the rule there. */
+
+/* ------------------------------------------------------------ the record panel
+   RecordPanel.tsx: a record (an opportunity, an agreement…) over any screen. */
+
+.recpanel { --panel: min(560px, 100vw); }
+.recpanel__type { font-size: 12.5px; font-weight: 600; color: var(--tend-ink); background: var(--tend-wash); border-radius: 999px; padding: 2px 10px; }
+.recpanel__name { margin: 0; font-size: 21px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.recpanel__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: var(--ink-2); font-size: 13.5px; margin-top: -12px; }
+.recpanel__meta a { display: inline-flex; align-items: center; gap: 5px; color: var(--tend-ink); font-weight: 550; text-decoration: none; }
+.recpanel__meta a:hover { text-decoration: underline; }
+.recpanel__fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 18px; margin: 0; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-m); }
+.recpanel__fields dt { color: var(--ink-3); font-size: 12px; font-weight: 550; margin-bottom: 2px; }
+.recpanel__fields dd { margin: 0; font-weight: 550; overflow-wrap: anywhere; }
+.recpanel__conv { font-weight: 400; font-size: 12.5px; }
+.recpanel__section { display: grid; gap: 8px; }
+.recpanel__tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.recpanel__task { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-s); padding: 8px 10px; cursor: pointer; transition: border-color .12s ease, background-color .12s ease; }
+.recpanel__task:hover { border-color: var(--line-strong); background: var(--tend-soft); }
+.recpanel__tasks li[data-done] .recpanel__tasktitle { text-decoration: line-through; color: var(--ink-3); }
+.recpanel__tasktitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
+.recpanel__taskmeta { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; flex: none; }
+.recpanel__plan { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.recpanel__plan .select { flex: 1; min-width: 0; }
+
+/* A task's own record, in the task panel. */
+.props__record { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+
+/* ------------------------------------------------------------------ threads
+   Thread.tsx: comments with links shown as small cards, pictures and files. */
+
+.smartlink { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 1px 8px; border-radius: 6px; background: var(--info-wash); color: var(--info-ink); text-decoration: none; font-weight: 550; vertical-align: baseline; }
+.smartlink:hover { text-decoration: underline; }
+.smartlink__name { white-space: nowrap; }
+.smartlink__detail { font-weight: 400; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.comment__files, .composer__files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.fileitem { position: relative; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+.fileitem__x { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: grid; place-items: center; cursor: pointer; font-size: 12px; line-height: 1; box-shadow: var(--shadow-1); }
+.fileitem__x:hover { color: var(--late); border-color: var(--late-line); }
+.filechip { display: inline-flex; align-items: center; gap: 8px; max-width: 260px; min-height: 34px; padding: 4px 10px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; }
+.filechip:hover { border-color: var(--line-strong); background: var(--tend-soft); }
+.filechip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-weight: 550; }
+
+/* A picture shows itself; a press opens it big. */
+.thumb { display: block; width: 92px; height: 72px; padding: 0; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--sunk); overflow: hidden; cursor: zoom-in; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s var(--ease, ease); }
+.thumb:hover img { transform: scale(1.04); }
+.thumb__wait { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, var(--sunk), var(--surface-2), var(--sunk)); background-size: 200% 100%; animation: wait-shine 1.2s linear infinite; }
+@keyframes wait-shine { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.thumb__big { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto 12px; border-radius: var(--r-s); }
+
+.composer__bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.composer__hint { flex: 1; min-width: 120px; color: var(--ink-3); font-size: 12px; }
+.composer[data-dragging] .textarea { border-color: var(--tend); background: var(--tend-soft); }
+
+/* ------------------------------------------------------------- record lists
+   Records.tsx: choosing the columns, and a close date range. */
+
+.colpick { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+.colpick li { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); }
+.colpick__name { flex: 1; font-weight: 550; }
+.toolbar__field { display: inline-flex; }
+.toolbar__field .select { width: auto; }
+.toolbar__range { display: inline-flex; align-items: center; gap: 6px; }
+.toolbar__range .input { width: auto; }
+
+/* ---------------------------------------------------------------- playbooks
+   Plans.tsx: the apply menu, the editor, Settings → Playbooks. */
+
+.planpop { min-width: 300px; max-width: min(380px, 92vw); }
+.planpop__item { align-items: flex-start; }
+.planpop__text { display: grid; gap: 1px; min-width: 0; text-align: left; }
+.planpop__meta { color: var(--ink-3); font-size: 12px; font-weight: 400; }
+.planrow__preview { margin: 8px 0 0; }
+
+.pblist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pblist__row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.pblist__icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--tend-wash); color: var(--tend-ink); flex: none; }
+.pblist__icon[data-anchor='renewal'] { background: var(--done-wash); color: var(--done); }
+.pblist__icon[data-anchor='close'] { background: var(--soon-wash); color: var(--soon-ink); }
+.pblist__body { display: grid; gap: 3px; min-width: 0; }
+.pblist__body strong { font-size: 15px; }
+.pblist__body .schip { justify-self: start; gap: 4px; margin-top: 4px; }
+.pblist__desc { margin: 0; color: var(--ink-2); }
+.pblist__meta { margin: 0; color: var(--ink-3); font-size: 12.5px; }
+.pblist__tip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; color: var(--ink-2); font-size: 13px; }
+
+.pbexamples { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.pbexample { display: grid; gap: 6px; align-content: start; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-m); background: var(--surface-2); transition: border-color .15s ease, transform .15s ease; }
+.pbexample:hover { border-color: var(--tend); transform: translateY(-1px); }
+.pbexample h3 { margin: 4px 0 0; font-size: 15px; }
+.pbexample p { margin: 0; color: var(--ink-2); font-size: 13px; }
+.pbexample .btn { justify-self: start; margin-top: 6px; }
+
+/* A segmented choice used as radio buttons (role="radio" + aria-checked): icon and words on one line. */
+.seg button[aria-checked='true'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(25, 21, 65, .14), 0 0 0 1px var(--line); }
+.seg[role='radiogroup'] button { display: inline-flex; align-items: center; gap: 6px; }
+.seg[role='radiogroup'] button .icon { flex: none; color: var(--ink-3); }
+.seg[role='radiogroup'] button[aria-checked='true'] .icon { color: var(--tend-ink); }
+.seg { flex-wrap: wrap; }
+
+/* ------------------------------------------------------- targets and rhythm
+   Rhythm.tsx → RhythmSettings. */
+
+.rhythm__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.rhythm__head .switch { margin-top: 2px; }
+.rhythm__kinds { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; max-width: 560px; }
+.rhythm__kinds li { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(160px, 220px); align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); transition: border-color .15s ease, background-color .15s ease; }
+.rhythm__kinds li[data-on] { border-color: var(--tend); background: var(--tend-soft); }
+.rhythm__kind { font-weight: 600; }
+.rhythm__sum { margin: 10px 0 0; font-weight: 600; color: var(--tend-ink); }
+.rhythm__renewal { display: grid; gap: 4px; margin-top: 6px; }
+/* Save stays in reach while scrolling the long settings page. */
+.rhythm__save { position: sticky; bottom: 0; z-index: 2; margin-top: 16px; padding: 12px 0 14px; background: var(--paper); border-top: 1px solid var(--line); }
+
+/* An amount with its currency beside it. */
+.moneyin { display: flex; align-items: center; gap: 6px; }
+.moneyin .input { flex: 1; min-width: 0; text-align: right; }
+.moneyin__cur { color: var(--ink-3); font-size: 12.5px; font-weight: 600; min-width: 2.6em; }
+
+/* A checkbox with its words (and a hint under them). */
+.check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin-top: 8px; }
+.check input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--tend); flex: none; }
+.check > span { display: grid; gap: 2px; }
+
+.field__hint--warn { color: var(--soon-ink); }
+
+/* --------------------------------------------------------------- currencies
+   Currencies.tsx → Settings → Currencies. */
+
+.currencies__base { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; font-size: 15px; font-weight: 550; }
+.curchip { display: inline-grid; place-items: center; min-width: 46px; height: 26px; padding: 0 8px; border-radius: 7px; background: var(--well); color: var(--well-hi); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.fxlist { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.fxrow { display: grid; grid-template-columns: auto minmax(110px, 1fr) minmax(220px, auto) minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); }
+.fxrow[data-bad] { border-color: var(--soon-line); background: var(--soon-wash); }
+.fxrow__name { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fxrow__rate { display: flex; align-items: center; gap: 8px; }
+.fxrow__rate .input { width: 130px; text-align: right; }
+.fxrow__back { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fxadd { display: flex; gap: 8px; align-items: center; max-width: 480px; }
+.fxadd .select { flex: 1; min-width: 0; }
+
+@media (max-width: 720px) {
+  .fxrow { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fxrow__rate { grid-column: 1 / -1; }
+  .fxrow__back { grid-column: 1 / -1; }
+  .rhythm__kinds li { grid-template-columns: auto minmax(0, 1fr); }
+  .rhythm__kinds li .moneyin, .rhythm__kinds li > .muted { grid-column: 1 / -1; }
+  .recpanel__fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* ---------------------------------------------------------------- renewals
+   AccountViews.tsx → RenewalsView: the renewal deal and agreements per row. */
+
+.renewals__links { min-width: 180px; }
+.renewals__chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.rchip { display: inline-flex; align-items: center; gap: 6px; max-width: 260px; min-height: 26px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; font-size: 12.5px; text-decoration: none; cursor: pointer; transition: border-color .12s ease, background-color .12s ease; }
+.rchip:hover { border-color: var(--tend); background: var(--tend-soft); }
+.rchip .icon { color: var(--ink-3); flex: none; }
+.rchip--deal { border-color: var(--tend-wash); background: var(--tend-wash); color: var(--tend-ink); font-weight: 600; }
+.rchip--deal .icon { color: var(--tend-ink); }
+.rchip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rchip__meta { color: var(--ink-3); font-weight: 500; white-space: nowrap; }
+.rchip--deal .rchip__meta { color: var(--tend-ink); opacity: .8; }
+
+/* --------------------------------------------------------------- favorites
+   Favorites.tsx: the star beside a page's title; filled when it is on. */
+
+.favstar .icon { transition: transform .18s var(--ease), color .12s ease; }
+.favstar[aria-pressed='true'] { color: var(--soon); }
+.favstar[aria-pressed='true'] .icon { fill: currentColor; transform: scale(1.08); }
+.favstar:active .icon { transform: scale(.88); }

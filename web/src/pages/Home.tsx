@@ -32,14 +32,20 @@ import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Data = Record<string, CardData>;
-interface Draft {
+export type Data = Record<string, CardData>;
+/** A page being written: a home (tabs on Home) or a dashboard (Dashboards.tsx). */
+export interface Draft {
   id: string | null;
+  kind: Page['kind'];
   name: string;
   cards: Card[];
   homeFor: string[];
   sharedWith: string[];
+  /** A dashboard's filter bar: narrow every card to one person or one team. */
+  filters: { person?: boolean; team?: boolean };
 }
+/** The editable part of a page, as a draft. */
+export const draftOf = (p: Page): Draft => ({ id: p.id, kind: p.kind, name: p.name, cards: p.cards, homeFor: p.homeFor, sharedWith: p.sharedWith, filters: p.filters ?? {} });
 
 const SIZES: CardSize[] = ['third', 'half', 'full'];
 
@@ -72,12 +78,11 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
     void loadData();
   }, [loadData]);
 
-  // "New dashboard" from the gallery opens the editor on an empty page.
+  // A new home page: the editor on an empty page (dashboards have their own, see Dashboards.tsx).
+  const newHome = useCallback(() => setDraft({ id: null, kind: 'home', name: t('home.newName'), cards: [], homeFor: [], sharedWith: [], filters: {} }), [t]);
   useEffect(() => {
-    if (create && admin) setDraft({ id: null, name: t('home.newName'), cards: [], homeFor: [], sharedWith: [] });
-  }, [create, admin]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Ready-made dashboards and an empty one live in the same place.
-  const gallery = () => navigate('/reports/dashboards');
+    if (create && admin) newHome();
+  }, [create, admin, newHome]);
 
   if (!pages)
     return (
@@ -92,7 +97,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         draft={draft}
         onCancel={() => {
           setDraft(null);
-          if (create) navigate('/reports/dashboards');
+          if (create) navigate('/home');
         }}
         onSaved={async (id) => {
           setDraft(null);
@@ -119,7 +124,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
           <GettingStarted />
           <EmptyState icon="layout" title={pages.length ? t('home.notFound') : t('home.none')}>
             {admin ? (
-              <button className="btn btn--primary" onClick={gallery}>
+              <button className="btn btn--primary" onClick={newHome}>
                 {t('home.newPage')}
               </button>
             ) : (
@@ -144,10 +149,10 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         <span className="topbar__spacer" />
         {admin && (
           <div className="toolbar">
-            <button className="btn" onClick={() => setDraft({ id: current.id, name: current.name, cards: current.cards, homeFor: current.homeFor, sharedWith: current.sharedWith })}>
+            <button className="btn" onClick={() => setDraft(draftOf(current))}>
               {t('home.edit')}
             </button>
-            <button className="btn btn--quiet" onClick={gallery}>
+            <button className="btn btn--quiet" onClick={newHome}>
               {t('home.newPage')}
             </button>
           </div>
@@ -234,7 +239,7 @@ export function useCardTitle() {
   );
 }
 
-function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefined; tools?: ReactNode; dim?: boolean }) {
+export function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefined; tools?: ReactNode; dim?: boolean }) {
   const { t } = useI18n();
   const money = useMoney();
   const named = useCardTitle()(card);
@@ -302,7 +307,7 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
       </p>
     );
   }
-  if (data.kind === 'report') return <ReportChart result={data.result} chart={data.chart} compact={card.size !== 'full'} />;
+  if (data.kind === 'report') return <ReportChart result={data.result} chart={data.chart} goal={data.goal} compact={card.size !== 'full'} />;
   if (data.kind === 'note') return <div className="pane__text">{data.text ? linkify(data.text) : <span className="muted">{t('home.note.empty')}</span>}</div>;
 
   if (data.kind === 'number') {
@@ -474,7 +479,7 @@ function newCard(type: CardType, taken: Card[]): Card {
   return base;
 }
 
-function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Draft; onCancel: () => void; onSaved: (id: string) => void; onDeleted: () => void }) {
+export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Draft; onCancel: () => void; onSaved: (id: string) => void; onDeleted: () => void }) {
   const { t, locale } = useI18n();
   const { toast } = useStore();
   const roles = useRoles();
@@ -516,8 +521,9 @@ function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Dra
     if (!d.name.trim()) return;
     setBusy(true);
     try {
-      const body = { name: d.name.trim(), cards: d.cards, homeFor: d.homeFor, sharedWith: d.sharedWith };
-      const r = d.id ? await patch<{ page: Page }>(`/pages/${d.id}`, body) : await post<{ page: Page }>('/pages', body);
+      const body = { name: d.name.trim(), cards: d.cards, homeFor: d.kind === 'dashboard' ? [] : d.homeFor, sharedWith: d.sharedWith, filters: d.filters };
+      // What a page is (a home or a dashboard) is set when it is made.
+      const r = d.id ? await patch<{ page: Page }>(`/pages/${d.id}`, body) : await post<{ page: Page }>('/pages', { ...body, kind: d.kind });
       toast(t('common.saved'));
       onSaved(r.page.id);
     } catch (e) {
@@ -556,6 +562,21 @@ function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Dra
       </header>
       <div className="page">
         <section className="page-who">
+          {d.kind === 'dashboard' && (
+            <div className="page-who__group">
+              <div className="field__label">{t('dash.filterBar')}</div>
+              <div className="field__hint">{t('dash.filterBarHint')}</div>
+              <div className="chips-row">
+                <button className="rolechip" aria-pressed={!!d.filters.person} onClick={() => setD({ ...d, filters: { ...d.filters, person: !d.filters.person } })}>
+                  {t('dash.filter.person')}
+                </button>
+                <button className="rolechip" aria-pressed={!!d.filters.team} onClick={() => setD({ ...d, filters: { ...d.filters, team: !d.filters.team } })}>
+                  {t('dash.filter.team')}
+                </button>
+              </div>
+            </div>
+          )}
+          {d.kind === 'home' && (
           <div className="page-who__group">
             <div className="field__label">{t('home.homeFor')}</div>
             <div className="field__hint">{t('home.homeFor.hint')}</div>
@@ -567,6 +588,7 @@ function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Dra
               ))}
             </div>
           </div>
+          )}
           <div className="page-who__group">
             <div className="field__label">{t('home.sharedWith')}</div>
             <div className="seg" role="group" aria-label={t('home.sharedWith')}>
@@ -764,6 +786,13 @@ function CardSettings({ card, onSave, onClose }: { card: Card; onSave: (c: Card)
               ))}
             </select>
           </label>
+          {/* A gauge needs to know what it fills up to (the report's own goal otherwise). */}
+          {c.chart === 'gauge' && (
+            <label className="field">
+              <span className="field__label">{t('rb.goal')}</span>
+              <input className="input num" type="number" min={1} value={c.goal ?? ''} placeholder={t('rb.goalHint')} onChange={(e) => set({ goal: e.target.value === '' ? undefined : Math.max(1, Number(e.target.value)) })} />
+            </label>
+          )}
         </>
       )}
       {opts.metric && (

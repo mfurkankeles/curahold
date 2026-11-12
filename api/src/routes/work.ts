@@ -2,7 +2,6 @@
 // and a board's intake form.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { TaskBlueprint } from '../../../shared/src/automation';
 import type { Column } from '../../../shared/src/model';
 import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportResult } from '../../../shared/src/taskImport';
 import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
@@ -12,6 +11,7 @@ import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { addEvent } from '../lib/history';
 import { kick } from '../lib/notify';
+import { anchorDay, applyPlan } from '../lib/playbooks';
 import { cleanTaskFields } from '../lib/taskFields';
 import { onTaskCreated } from '../lib/taskEvents';
 import { iso, toTask } from '../lib/mappers';
@@ -131,8 +131,16 @@ const blueprint = z.object({
   assignee: z.string().regex(/^(account_owner|none|user:[0-9a-f-]{36})$/),
   subtasks: z.array(z.string().trim().min(1).max(300)).max(30).optional(),
 });
-const planInput = z.object({ name: z.string().trim().min(1).max(120), boardId: uuid, column: z.string().max(24).nullable().optional(), tasks: z.array(blueprint).min(1).max(40) });
-const toPlan = (r: Row) => ({ id: r.id, name: r.name, boardId: r.board_id, column: r.column_key ?? null, tasks: r.tasks ?? [] });
+const planInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional(),
+  boardId: uuid,
+  column: z.string().max(24).nullable().optional(),
+  /** What the days count from: the day it is put on, the renewal date, or a deal's close date. */
+  anchor: z.enum(['start', 'renewal', 'close']).optional(),
+  tasks: z.array(blueprint).min(1).max(40),
+});
+const toPlan = (r: Row) => ({ id: r.id, name: r.name, description: r.description ?? '', boardId: r.board_id, column: r.column_key ?? null, anchor: r.anchor ?? 'start', tasks: r.tasks ?? [] });
 
 workRoutes.get('/plans', async (c) => {
   const rows = await run(c, (q) => q.query('select p.* from plan_templates p join boards b on b.id = p.board_id where b.archived_at is null order by lower(p.name)'));
@@ -148,14 +156,10 @@ workRoutes.post('/plans', async (c) => {
     await loadBoard(q, input.boardId);
     const [taken] = await q.query('select 1 from plan_templates where lower(name) = lower($1)', [input.name]);
     if (taken) fail('validation', { fields: 'name' }, { fields: ['name'] });
-    const [r] = await q.query('insert into plan_templates (org_id, name, board_id, column_key, tasks, created_by) values ($1, $2, $3, $4, $5, $6) returning *', [
-      org.id,
-      input.name,
-      input.boardId,
-      input.column ?? null,
-      JSON.stringify(input.tasks),
-      auth.userId,
-    ]);
+    const [r] = await q.query(
+      'insert into plan_templates (org_id, name, board_id, column_key, tasks, created_by, anchor, description) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *',
+      [org.id, input.name, input.boardId, input.column ?? null, JSON.stringify(input.tasks), auth.userId, input.anchor ?? 'start', input.description ?? ''],
+    );
     return r;
   });
   return c.json({ plan: toPlan(row) }, 201);
@@ -167,13 +171,11 @@ workRoutes.patch('/plans/:id', async (c) => {
   const input = await body(c, planInput);
   const row = await run(c, async (q) => {
     await loadBoard(q, input.boardId);
-    const [r] = await q.query('update plan_templates set name = $2, board_id = $3, column_key = $4, tasks = $5, updated_at = now() where id = $1 returning *', [
-      id,
-      input.name,
-      input.boardId,
-      input.column ?? null,
-      JSON.stringify(input.tasks),
-    ]);
+    const [r] = await q.query(
+      `update plan_templates set name = $2, board_id = $3, column_key = $4, tasks = $5, anchor = coalesce($6, anchor), description = coalesce($7, description), updated_at = now()
+        where id = $1 returning *`,
+      [id, input.name, input.boardId, input.column ?? null, JSON.stringify(input.tasks), input.anchor ?? null, input.description ?? null],
+    );
     return r;
   });
   if (!row) fail('not_found');
@@ -188,13 +190,7 @@ workRoutes.delete('/plans/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-const addDays = (iso: string, n: number) => {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-};
-
-/** Puts a plan on a customer: every task of the plan, dated from the start day. */
+/** Puts a playbook on a customer: every step, dated from the start day (or before the renewal date). */
 workRoutes.post('/accounts/:id/plans', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -202,52 +198,38 @@ workRoutes.post('/accounts/:id/plans', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const deps = c.get('deps');
-  const start = input.start ?? localDate(nowOf(deps), org.timezone || 'UTC');
+  const today = localDate(nowOf(deps), org.timezone || 'UTC');
   const made = await run(c, async (q) => {
-    const [account] = await q.query('select id, name, owner_id from accounts where id = $1', [id]);
+    const [account] = await q.query('select id, name, owner_id, fields from accounts where id = $1', [id]);
     if (!account) fail('not_found');
     const [plan] = await q.query('select * from plan_templates where id = $1', [input.planId]);
     if (!plan) fail('not_found');
-    const board = await loadBoard(q, plan.board_id);
-    const columns = board.columns as Column[];
-    const status = plan.column_key && columns.some((col) => col.key === plan.column_key) ? plan.column_key : columns[0].key;
-    const fill = (s: string) => s.replace(/\{account_name\}/g, account.name);
-    const out: Row[] = [];
-    for (const bp of plan.tasks as TaskBlueprint[]) {
-      let assignees: string[] = [];
-      if (bp.assignee === 'account_owner' && account.owner_id) assignees = [account.owner_id];
-      else if (bp.assignee.startsWith('user:')) assignees = [bp.assignee.slice(5)];
-      if (assignees.length) {
-        const ok = await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`, [assignees]);
-        assignees = ok.map((u) => u.id);
-      }
-      const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
-      const [t] = await q.query(
-        `insert into tasks (org_id, board_id, title, status, assignee_ids, account_id, due_date, position, created_by, updated_by)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9) returning *, $10::text as account_name`,
-        [org.id, board.id, fill(bp.title), status, assignees, account.id, addDays(start, bp.dueInDays), Number(p), auth.userId, account.name],
-      );
-      let pos = 0;
-      for (const sub of bp.subtasks ?? []) {
-        pos += 1024;
-        await q.query(`insert into tasks (org_id, board_id, parent_id, title, status, assignee_ids, account_id, position, created_by, updated_by) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`, [
-          org.id,
-          board.id,
-          t.id,
-          fill(sub),
-          columns[0].key,
-          assignees,
-          account.id,
-          pos,
-          auth.userId,
-        ]);
-      }
-      await addEvent(q, org.id, t.id, auth.userId, 'created', { plan: plan.name });
-      await onTaskCreated(q, org.id, auth.userId, t, board);
-      out.push(t);
-    }
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'plan.applied', entity: 'account', entityId: account.id, meta: { plan: plan.name, tasks: out.length } });
-    return out;
+    const from = anchorDay(plan, input.start ?? today, account, null, org.account_fields ?? []);
+    return applyPlan(q, { orgId: org.id, actorId: auth.userId, plan, account, from, today });
+  });
+  kick(deps);
+  return c.json({ tasks: made.map(toTask) }, 201);
+});
+
+/** Puts a playbook on a deal (or any record): its tasks belong to the record and its customer. */
+workRoutes.post('/records/:id/plans', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ planId: uuid, start: isoDate.optional() }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const deps = c.get('deps');
+  const today = localDate(nowOf(deps), org.timezone || 'UTC');
+  const made = await run(c, async (q) => {
+    const [record] = await q.query('select id, name, owner_id, fields, account_id from records where id = $1', [id]);
+    if (!record) fail('not_found');
+    if (!record.account_id) fail('validation', { fields: 'accountId' }, { fields: ['accountId'] });
+    const [account] = await q.query('select id, name, owner_id, fields from accounts where id = $1', [record.account_id]);
+    if (!account) fail('not_found');
+    const [plan] = await q.query('select * from plan_templates where id = $1', [input.planId]);
+    if (!plan) fail('not_found');
+    const from = anchorDay(plan, input.start ?? today, account, record, org.account_fields ?? []);
+    return applyPlan(q, { orgId: org.id, actorId: auth.userId, plan, account, record, from, today });
   });
   kick(deps);
   return c.json({ tasks: made.map(toTask) }, 201);

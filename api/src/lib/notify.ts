@@ -3,7 +3,7 @@
 // (a linked chat app, email, or only the in-app list) and which kinds they
 // want; a chat failure falls back to email so nothing is lost silently.
 import { translate, normalizeLocale, type Locale, type MessageKey, type Terms } from '../../../shared/src/i18n';
-import type { NotifyPrefs } from '../../../shared/src/model';
+import { MAX_FAVORITES, type NotifyPrefs } from '../../../shared/src/model';
 import { ADAPTERS, loadConnection, markConnection, upsertIdentity } from '../connectors/messaging';
 import { FatalChatError, type ChatMessage } from '../connectors/messaging/types';
 import { defer, nowOf, orgUrl, type Deps } from '../context';
@@ -59,6 +59,7 @@ export function prefsOf(raw: unknown): NotifyPrefs {
     defaultBoardId: p.defaultBoardId ?? null,
     quiet: validQuiet(p.quiet),
     ...(p.startHidden ? { startHidden: true } : {}),
+    ...(Array.isArray(p.favorites) && p.favorites.length ? { favorites: p.favorites.slice(0, MAX_FAVORITES) } : {}),
   };
 }
 
@@ -155,7 +156,12 @@ export function render(ctx: RenderCtx): ChatMessage {
   const data = (n.data ?? {}) as Record<string, any>;
   // Someone at the customer (the portal) is named in the notification itself.
   const actor = ctx.actorName ?? (data.by ? String(data.by) : data.rule ? `“${data.rule}”` : t('notify.someone'));
-  const taskUrl = task ? `${ctx.base}/b/${task.board_id}?task=${task.id}` : undefined;
+  // A thread under a record (an opportunity) opens the record itself.
+  const taskUrl = task
+    ? `${ctx.base}/b/${task.board_id}?task=${task.id}`
+    : data.recordId && data.typeKey
+      ? `${ctx.base}/records/${encodeURIComponent(String(data.typeKey))}?record=${encodeURIComponent(String(data.recordId))}`
+      : undefined;
   const fields: { label: string; value: string }[] = [];
   if (task) {
     if (task.due_date) fields.push({ label: t('notify.field.due'), value: fmtDate(day(task.due_date), locale) });
@@ -173,9 +179,9 @@ export function render(ctx: RenderCtx): ChatMessage {
     case 'assigned':
       return { ...base, title: data.rule ? t('notify.assignedAuto', { rule: data.rule }) : t('notify.assigned', { actor }), body: task?.title };
     case 'mentioned':
-      return { ...base, title: t('notify.mentioned', { actor }), body: `${task?.title ?? ''}\n“${data.excerpt ?? ''}”` };
+      return { ...base, title: t('notify.mentioned', { actor }), body: `${task?.title ?? data.recordName ?? ''}\n“${data.excerpt ?? ''}”` };
     case 'comment':
-      return { ...base, title: t('notify.comment', { actor }), body: `${task?.title ?? ''}\n“${data.excerpt ?? ''}”` };
+      return { ...base, title: t('notify.comment', { actor }), body: `${task?.title ?? data.recordName ?? ''}\n“${data.excerpt ?? ''}”` };
     case 'automation':
       return { ...base, title: t('notify.automation', { rule: data.rule ?? '' }), body: [data.message, task?.title ?? data.account].filter(Boolean).join('\n') };
     case 'followed':

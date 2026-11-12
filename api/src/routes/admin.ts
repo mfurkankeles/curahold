@@ -1,10 +1,11 @@
 // Company administration: settings, roles, teams, people, devices, the
 // activity log and the personal-data tools (KVKK/GDPR export and erasure).
+import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type PersonAccess, type Role } from '../../../shared/src/model';
-import { requirePerm, run, type AppEnv, type C } from '../context';
+import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
 import { randomDigits, randomToken, sha256Hex } from '../lib/crypto';
@@ -54,7 +55,8 @@ adminRoutes.patch('/org', async (c) => {
     await q.query(
       `update orgs set name = coalesce($2, name), locale = coalesce($3, locale),
               timezone = coalesce($4, timezone), terms = coalesce($5::jsonb, terms),
-              currency = coalesce($6, currency), join_requests = coalesce($7, join_requests), auto_join = coalesce($8, auto_join)
+              currency = coalesce($6, currency), join_requests = coalesce($7, join_requests), auto_join = coalesce($8, auto_join),
+              settings = case when $6::text is not null and $6 <> currency then coalesce(settings, '{}'::jsonb) - 'fx' else settings end
         where id = $1`,
       [
         org.id,
@@ -70,6 +72,26 @@ adminRoutes.patch('/org', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.updated', entity: 'org', entityId: org.id, meta: { fields: Object.keys(input) } });
   });
   return c.json({ ok: true });
+});
+
+// --------------------------------------------------------------- currencies
+
+/**
+ * The other currencies the company works in and what one of each is worth in
+ * its own. Changing the company's currency clears them: they were worth that
+ * much in the old one.
+ */
+adminRoutes.put('/fx', async (c) => {
+  requirePerm(c, 'org.manage');
+  const input = await body(c, z.object({ rates: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().positive().max(1e9)) }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const fx = { rates: cleanRates(org.currency, input.rates), updatedAt: new Date(nowOf(c.get('deps'))).toISOString() };
+  await run(c, async (q) => {
+    await q.query(`update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('fx', $2::jsonb) where id = $1`, [org.id, JSON.stringify(fx)]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.fx_updated', entity: 'org', entityId: org.id, meta: { currencies: Object.keys(fx.rates) } });
+  });
+  return c.json({ fx });
 });
 
 // -------------------------------------------------------------------- roles

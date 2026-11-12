@@ -1,15 +1,20 @@
 // Customers at a glance: cards that say what needs attention, the renewals
 // coming up month by month, and which customers have which products.
+import { useMoney } from '../lib/money';
 import { reviewDue } from '../../../shared/src/rhythm';
 import { useEffect, useMemo, useState } from 'react';
 import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { Account, AccountField } from '../../../shared/src/model';
-import type { RecordType } from '../../../shared/src/records';
-import { ApiFailure, get, post } from '../lib/api';
+import { AGREEMENT_RE, type RecordType, type RenewalLinks } from '../../../shared/src/records';
+import { labelOf } from '../../../shared/src/fields';
+import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { navigate, setQuery } from '../lib/router';
+import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
+import { useRecordTypes } from './AccountFields';
+import { Icon } from './icons';
 import { Avatar } from './ui';
 
 export const QUIET_DAYS = 30;
@@ -84,9 +89,9 @@ export function signalsOf(a: Account, defs: AccountField[], health: Parameters<t
     });
     attention += 2;
   }
-  // A business review that is late (only where there is a rhythm).
-  const review = reviewDue(a, reviewDays, new Date().toISOString().slice(0, 10));
-  if (review.state === 'overdue') {
+  // A business review that is late — only when the company holds reviews at all.
+  const review = reviewDays > 0 ? reviewDue(a, reviewDays, new Date().toISOString().slice(0, 10)) : null;
+  if (review?.state === 'overdue') {
     chips.push({ key: 'review', tone: 'amber', text: t('acards.reviewLate', { n: -review.days! }), title: t('acards.reviewTitle', { n: review.every }) });
     attention += 1;
   }
@@ -133,7 +138,7 @@ export function AccountCards({
 }: {
   rows: { a: Account; chips: Chip[]; attention: number; band: Band }[];
   shown: AccountField[];
-  fmt: (f: AccountField, v: unknown) => string;
+  fmt: (f: AccountField, v: unknown, currency?: string | null) => string;
   OptionValue: (p: { field: AccountField; value: unknown; text: string }) => JSX.Element;
 }) {
   const { t, words, locale } = useI18n();
@@ -180,7 +185,7 @@ export function AccountCards({
               {shown.map((f) => (
                 <div key={f.key}>
                   <dt>{typeof f.label === 'string' ? f.label : (f.label[locale] ?? f.label.en)}</dt>
-                  <dd>{a.fields[f.key] === null || a.fields[f.key] === undefined || a.fields[f.key] === '' ? <span className="muted">—</span> : <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key])} />}</dd>
+                  <dd>{a.fields[f.key] === null || a.fields[f.key] === undefined || a.fields[f.key] === '' ? <span className="muted">—</span> : <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency)} />}</dd>
                 </div>
               ))}
             </dl>
@@ -200,10 +205,31 @@ export function AccountCards({
 }
 
 /** Renewals month by month: what is at stake, and how each one looks. */
-export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[]; band: Band }[]; fmt: (f: AccountField, v: unknown) => string }) {
+/** A link kept in a customer's own fields that is its agreement (a "Contract" URL field). */
+function agreementFields(defs: AccountField[]) {
+  return defs.filter((f) => f.type === 'url' && AGREEMENT_RE.test(`${f.key} ${JSON.stringify(f.label)}`));
+}
+
+export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[]; band: Band }[]; fmt: (f: AccountField, v: unknown, currency?: string | null) => string }) {
+  const cur = useMoney();
   const { t, fmtDate, locale } = useI18n();
   const { me, person } = useStore();
   const { renewal, value } = keyFields(me.org.accountFields);
+  const { types } = useRecordTypes();
+  // Each customer's renewal opportunity and agreement records, asked for once for the customers on screen.
+  const [links, setLinks] = useState<Record<string, RenewalLinks>>({});
+  const ids = rows.filter((r) => renewal && typeof r.a.fields[renewal.key] === 'string').map((r) => r.a.id);
+  const idKey = ids.join(',');
+  useEffect(() => {
+    if (!idKey) return;
+    void get<{ links: Record<string, RenewalLinks> }>(`/renewals/links?accounts=${idKey.split(',').slice(0, 500).join(',')}`).then((r) => setLinks(r.links), () => setLinks({}));
+  }, [idKey]);
+  const ownLinks = agreementFields(me.org.accountFields);
+  const stageLabel = (typeKey: string, stage: string | null) => {
+    if (!stage) return null;
+    const f = types?.find((x) => x.key === typeKey)?.fields.find((x) => x.key === 'stage');
+    return labelOf(f?.options?.find((o) => o.key === stage)?.label, locale) || stage;
+  };
   if (!renewal) return <div className="empty sheet">{t('acards.noRenewalField')}</div>;
   const groups = new Map<string, { a: Account; chips: Chip[]; band: Band; date: string; days: number }[]>();
   for (const r of rows) {
@@ -216,7 +242,7 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
   }
   const keys = [...groups.keys()].sort((x, y) => (x === 'past' ? -1 : y === 'past' ? 1 : x.localeCompare(y)));
   if (!keys.length) return <div className="empty sheet">{t('acards.noRenewals')}</div>;
-  const sum = (list: { a: Account }[]) => (value ? list.reduce((n, r) => n + (Number(r.a.fields[value.key]) || 0), 0) : 0);
+  const sum = (list: { a: Account }[]) => (value ? list.reduce((n, r) => n + cur.toBase(Number(r.a.fields[value.key]) || 0, r.a.currency), 0) : 0);
   const money = (n: number) => (value ? fmt(value, n) : '');
   return (
     <div className="renewals">
@@ -253,7 +279,15 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
                     <td className="hide-phone">{person(r.a.ownerId)?.name ?? <span className="muted">{t('accounts.noOwner')}</span>}</td>
                     <td className="num">{fmtDate(r.date, { day: 'numeric', month: 'short' })}</td>
                     <td className="num muted">{r.days < 0 ? t('acards.daysAgo', { n: -r.days }) : t('acards.inDays', { n: r.days })}</td>
-                    {value && <td className="num">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key])}</td>}
+                    {value && <td className="num">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key], r.a.currency)}</td>}
+                    <td className="renewals__links">
+                      <RenewalCell
+                        links={links[r.a.id]}
+                        own={ownLinks.map((f) => ({ label: labelOf(f.label, locale), url: r.a.fields[f.key] })).filter((x): x is { label: string; url: string } => typeof x.url === 'string' && /^https?:\/\//i.test(x.url))}
+                        stageLabel={stageLabel}
+                        money={(n, c) => cur.format(n, c)}
+                      />
+                    </td>
                     <td className="hide-phone">
                       <div className="acard__chips">
                         {r.chips
@@ -277,6 +311,60 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
   );
 }
 
+/**
+ * Beside a renewal: the renewal opportunity (opens over the page) and the
+ * agreement — a link from the customer's own fields, or an agreement record.
+ * Presses here don't open the customer (the row does that).
+ */
+function RenewalCell({ links, own, stageLabel, money }: { links?: RenewalLinks; own: { label: string; url: string }[]; stageLabel: (typeKey: string, stage: string | null) => string | null; money: (n: number, currency?: string | null) => string }) {
+  const { t } = useI18n();
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const deal = links?.deal;
+  const docs = [...own.map((o) => ({ key: o.url, name: o.label, url: o.url, recordId: null as string | null })), ...(links?.agreements ?? []).map((a) => ({ key: a.recordId, name: a.name, url: a.url, recordId: a.recordId }))].slice(0, 3);
+  if (!deal && !docs.length) return <span className="muted small">{links ? t('renewals.noDeal') : ''}</span>;
+  return (
+    <div className="renewals__chips">
+      {deal && (
+        <button
+          className="rchip rchip--deal"
+          title={t('renewals.openDeal')}
+          onClick={(e) => {
+            stop(e);
+            setQuery('record', deal.id);
+          }}
+        >
+          <Icon name="funnel" size={13} />
+          <span className="rchip__name">{deal.name}</span>
+          {stageLabel(deal.typeKey, deal.stage) && <span className="rchip__meta">{stageLabel(deal.typeKey, deal.stage)}</span>}
+          {deal.amount !== null && <span className="rchip__meta num">{money(deal.amount, deal.currency)}</span>}
+        </button>
+      )}
+      {docs.map((d) =>
+        d.url ? (
+          <a key={d.key} className="rchip" href={d.url} target="_blank" rel="noreferrer noopener" title={t('renewals.openAgreement')} onClick={stop}>
+            <Icon name="paperclip" size={13} />
+            <span className="rchip__name">{d.name}</span>
+            <Icon name="external" size={12} />
+          </a>
+        ) : (
+          <button
+            key={d.key}
+            className="rchip"
+            title={t('renewals.openAgreement')}
+            onClick={(e) => {
+              stop(e);
+              setQuery('record', d.recordId!);
+            }}
+          >
+            <Icon name="paperclip" size={13} />
+            <span className="rchip__name">{d.name}</span>
+          </button>
+        ),
+      )}
+    </div>
+  );
+}
+
 interface Whitespace {
   options: { key: string; label: string | Record<string, string> }[];
   rows: { accountId: string; name: string; ownerId: string | null; have: Record<string, number> }[];
@@ -286,10 +374,14 @@ interface Whitespace {
 export function WhitespaceView({ types }: { types: RecordType[] | null }) {
   const { t, locale, words } = useI18n();
   const { boards, canWrite, toast, person } = useStore();
-  const choices = useMemo(
-    () => (types ?? []).flatMap((ty) => ty.fields.filter((f) => f.type === 'select' && (f.options?.length ?? 0) > 1).map((f) => ({ type: ty, field: f }))),
-    [types],
-  );
+  const shell = useShell();
+  // Every choice field on any kind of record can be the columns; ones that look
+  // like products (a "Product", "Module" or "Plan" field) come first.
+  const choices = useMemo(() => {
+    const all = (types ?? []).flatMap((ty) => ty.fields.filter((f) => f.type === 'select' && (f.options?.length ?? 0) > 1).map((f) => ({ type: ty, field: f })));
+    const producty = (c: (typeof all)[number]) => /product|ürün|module|modül|plan|package|paket|edition|license|lisans/i.test(`${c.field.key} ${JSON.stringify(c.field.label)} ${JSON.stringify(c.type.name)}`);
+    return [...all.filter(producty), ...all.filter((c) => !producty(c))];
+  }, [types]);
   const stored = (() => {
     try {
       return localStorage.getItem('tw_whitespace') ?? '';
@@ -315,15 +407,19 @@ export function WhitespaceView({ types }: { types: RecordType[] | null }) {
   if (!choices.length) return <div className="empty sheet">{t('whitespace.none')}</div>;
   const opts = data?.options ?? [];
   const rows = (data?.rows ?? []).filter((r) => only === 'all' || opts.some((o) => !r.have[o.key]));
-  const openTask = async (accountId: string, name: string, product: string) => {
+  // "+" opens the quick-add box already filled in (board, customer, its owner,
+  // a title), so the person sees and can change the task before it is made;
+  // the message that follows offers to open it.
+  const openTask = (accountId: string, name: string, ownerId: string | null, product: string) => {
     if (!board) return toast(t('whitespace.pickBoard'), 'error');
-    try {
-      const b = boards.find((x) => x.id === board)!;
-      await post('/tasks', { boardId: board, title: t('whitespace.taskTitle', { product, account: name }), accountId, status: b.columns[0].key });
-      toast(t('whitespace.taskMade', { product, account: name }));
-    } catch (e) {
-      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-    }
+    shell.quickAdd({
+      boardId: board,
+      accountId,
+      accountName: name,
+      assigneeIds: ownerId ? [ownerId] : [],
+      text: t('whitespace.taskTitle', { product, account: name }),
+      doneText: t('whitespace.taskMade', { product, account: name }),
+    });
   };
   return (
     <div className="whitespace">
@@ -398,7 +494,7 @@ export function WhitespaceView({ types }: { types: RecordType[] | null }) {
                           ✓
                         </span>
                       ) : canWrite ? (
-                        <button className="wcell" title={t('whitespace.openTask')} aria-label={t('whitespace.openTaskFor', { product: label(o.label as any), account: r.name })} onClick={() => openTask(r.accountId, r.name, label(o.label as any))}>
+                        <button className="wcell" title={t('whitespace.openTask')} aria-label={t('whitespace.openTaskFor', { product: label(o.label as any), account: r.name })} onClick={() => openTask(r.accountId, r.name, r.ownerId, label(o.label as any))}>
                           +
                         </button>
                       ) : (

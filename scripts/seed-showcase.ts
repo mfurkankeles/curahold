@@ -7,6 +7,11 @@ import type { Db } from '../api/src/db';
 import { enqueue } from '../api/src/lib/notify';
 import { buildWeekly } from '../api/src/lib/weekly';
 import { DEFAULT_HEALTH } from '../shared/src/health';
+import { labelOf } from '../shared/src/fields';
+import { PLAYBOOK_EXAMPLES } from '../shared/src/playbooks';
+import { RECORD_PRESETS } from '../shared/src/records';
+import { startRenewalsIn } from '../api/src/lib/playbooks';
+import { ACCOUNTS as BASE_ACCOUNTS } from './seed-demo';
 
 type Call = <T = any>(method: string, path: string, body?: unknown) => Promise<T>;
 
@@ -186,8 +191,32 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
     await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, ownerId: ownerOf[acc] ?? null, fields: { amount, close_date: day(closeIn), stage, kind, status } });
   }
 
-  // What the team aims for this quarter, a review with every customer each 90 days, and both nudges on.
-  await call('PUT', '/api/rhythm', { targets: { period: 'quarter', new: 40000, expansion: 120000, renewal: 80000 }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
+  // What the team aims for this quarter (a target for each type of deal), a review with every customer each 90 days, and both nudges on.
+  await call('PUT', '/api/rhythm', { targets: { period: 'quarter', amounts: { new: 40000, expansion: 120000, renewal: 80000 }, total: null }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
+
+  // A few customers pay in other currencies, at the company's own rates (invented, like everything here).
+  await call('PUT', '/api/admin/fx', { rates: locale === 'en' ? { EUR: 1.08, GBP: 1.27, TRY: 0.029 } : { USD: 34.2, EUR: 37.1, GBP: 43.6 } }).catch(() => undefined);
+  const abroad: Record<string, string> = locale === 'en' ? { 'Fjordnet Telecom': 'EUR', 'Brightmoor Enerji': 'EUR', 'Lindenhall Sigorta': 'TRY' } : { 'Fjordnet Telecom': 'EUR', 'Brightmoor Enerji': 'EUR', 'Harborline Bank': 'USD' };
+  for (const [name, currency] of Object.entries(abroad)) {
+    if (accounts[name]) await call('PATCH', `/api/accounts/${accounts[name]}`, { currency }).catch(() => undefined);
+  }
+
+  // Agreements kept as records, each with a link to the signed document (the Renewals view shows them).
+  const agreementKind = RECORD_PRESETS.find((x) => x.key === 'agreement')!;
+  const { type: agreement } = await call('POST', '/api/record-types', { kind: 'custom', key: agreementKind.key, name: agreementKind.name, fields: agreementKind.fields }).catch(() => ({ type: null }));
+  if (agreement) {
+    for (const [acc, , renewIn, value] of [...ACCOUNTS, ...BASE_ACCOUNTS]) {
+      if (!accounts[acc] || renewIn > 200) continue;
+      const slug = acc.split(' ')[0].toLowerCase();
+      await call('POST', '/api/records', {
+        typeId: agreement.id,
+        accountId: accounts[acc],
+        name: `${tx(acc)} — ${locale === 'en' ? 'Master agreement' : 'Ana sözleşme'}`,
+        ownerId: ownerOf[acc] ?? null,
+        fields: { link: `https://docs.example/agreements/${slug}.pdf`, start_date: day(renewIn - 365), end_date: day(renewIn), value, status: 'signed' },
+      }).catch(() => undefined);
+    }
+  }
 
   // Reports people built, and two dashboards made from the ready-made ones.
   const keep = (name: string, def: unknown, shared = true) => call('POST', '/api/reports/saved', { name, def, shared }).catch(() => undefined);
@@ -282,8 +311,19 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
     await call('PUT', `/api/tasks/${onMain[1].id}/watch`, {}).catch(() => undefined);
   }
   await call('POST', '/api/checklists', { name: 'QBR hazırlığı', items: ['Kullanım verisini çek', 'Değer özetini yaz', 'Sunumu hazırla', 'Prova yap', 'Davetleri gönder'] }).catch(() => undefined);
+  // The renewal playbook, and renewals that start by themselves six months ahead, with an opportunity each.
+  const ex = PLAYBOOK_EXAMPLES.find((x) => x.key === 'renewal')!;
+  const renewalPlan = await call<{ plan: { id: string } }>('POST', '/api/plans', {
+    name: labelOf(ex.name, locale),
+    description: labelOf(ex.description, locale),
+    boardId: renewals,
+    anchor: 'renewal',
+    tasks: ex.steps.map((st) => ({ title: labelOf(st.title, locale), dueInDays: st.days, assignee: 'account_owner' })),
+  }).catch(() => null);
+  await call('PUT', '/api/rhythm', { renewal: { days: 180, planId: renewalPlan?.plan.id ?? null, opportunity: true } }).catch(() => undefined);
   await call('POST', '/api/plans', {
     name: 'Onboarding (ilk 30 gün)',
+    description: 'Yeni bir müşterinin ilk ayı.',
     boardId: main,
     tasks: [
       { title: 'Açılış toplantısı: {account_name}', dueInDays: 2, assignee: 'account_owner', subtasks: ['Gündemi gönder', 'Katılımcıları doğrula'] },
@@ -323,6 +363,10 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
   }
 
   if (db) {
+    // This morning's renewal round has already run: renewals within six months are under way.
+    // It opens its own transactions, so it runs here and never inside db.system below: the
+    // in-browser database has a single connection and a nested transaction would wait forever.
+    await startRenewalsIn(db, new Date()).catch((e) => console.warn('[seed] renewals', e));
     // Seven weeks of score history, ending at today's score, so trends and drops show.
     await db.system(async (q) => {
       const rows = await q.query(`select id, name, (fields->>'health_score')::int as score, org_id from accounts where jsonb_typeof(fields->'health_score') = 'number'`);

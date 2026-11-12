@@ -2,7 +2,7 @@
 // is shareable. Edits save field by field and are merged, never overwritten,
 // when someone else saved first.
 import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { MAX_FILE_MB, MENTION_RE, PRIORITIES, type Comment, type Person, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
+import { MAX_FILE_MB, PRIORITIES, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
 import { repeatText } from '../pages/BoardPage';
 import { ApiFailure, api, del, get, post, put } from '../lib/api';
 import { useLive } from '../lib/live';
@@ -11,13 +11,13 @@ import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
-import { relativeTime } from '../lib/time';
-import { Avatar, Confirm, PeoplePicker } from './ui';
+import { Confirm, PeoplePicker } from './ui';
 import { Icon } from './icons';
 import { doneTarget } from '../lib/tasks';
 import { useToggleDone } from './Tick';
 import { labelOf } from '../../../shared/src/fields';
 import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInput, TimeSection } from './TaskExtras';
+import { CommentView, Composer, FileItem } from './Thread';
 
 export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: () => void }) {
   const { t, words, fmtDate, locale } = useI18n();
@@ -187,6 +187,21 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               </select>
               <span className="props__label">{words.one}</span>
               <AccountPicker value={task.accountId} name={task.accountName} disabled={!editable} onChange={(accountId) => save({ accountId })} />
+              {task.recordId && (
+                <>
+                  <span className="props__label">{t('task.record')}</span>
+                  <span className="props__record">
+                    <button className="linkbtn linkbtn--plain" onClick={() => setQuery('record', task.recordId!)}>
+                      <Icon name="funnel" size={14} /> {task.recordName ?? t('task.recordGone')}
+                    </button>
+                    {editable && (
+                      <button className="btn btn--quiet btn--icon btn--small" title={t('task.recordUnlink')} aria-label={t('task.recordUnlink')} onClick={() => save({ recordId: null })}>
+                        <Icon name="close" size={13} />
+                      </button>
+                    )}
+                  </span>
+                </>
+              )}
               {!task.parentId && (
                 <>
                   <span className="props__label">{t('task.repeat')}</span>
@@ -261,12 +276,18 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             <Section title={t('task.comments')}>
               {task.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('task.noComments')}</p>}
               {task.comments.map((c) => (
-                <CommentView key={c.id} comment={c} author={person(c.authorId)} canDelete={(!!c.authorId && c.authorId === me.user.id) || can('privacy.manage')} onDeleted={load} />
+                <CommentView
+                  key={c.id}
+                  comment={c}
+                  author={person(c.authorId)}
+                  canDelete={(!!c.authorId && c.authorId === me.user.id) || can('privacy.manage')}
+                  deleteUrl={`/comments/${c.id}`}
+                  onDeleted={() => void load()}
+                />
               ))}
               {editable && (
-                <Composer
-                  people={people.filter((p) => p.status !== 'deleted')}
-                  taskId={task.id}
+                <TaskComposer
+                  task={task}
                   customer={!!task.portalShared && !!board?.portal?.enabled}
                   onPosted={() => {
                     void load();
@@ -414,20 +435,26 @@ function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
   }
-  const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
   return (
     <>
-      {task.files.map((f) => (
-        <div className="filerow" key={f.id}>
-          <a href={`/api/files/${f.id}`}>{f.name}</a>
-          <span className="muted num">{kb(f.size)}</span>
-          {editable && (
-            <button className="btn btn--quiet btn--small" onClick={async () => { await del(`/files/${f.id}`); await reload(); }}>
-              {t('common.delete')}
-            </button>
-          )}
+      {task.files.length > 0 && (
+        <div className="comment__files">
+          {task.files.map((f) => (
+            <FileItem
+              key={f.id}
+              file={f}
+              onDelete={
+                editable
+                  ? async () => {
+                      await del(`/files/${f.id}`);
+                      await reload();
+                    }
+                  : undefined
+              }
+            />
+          ))}
         </div>
-      ))}
+      )}
       {editable && (
         <>
           <input ref={input} type="file" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
@@ -440,138 +467,37 @@ function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean
   );
 }
 
-function renderBody(body: string) {
-  const out: ReactNode[] = [];
-  let last = 0;
-  for (const m of body.matchAll(MENTION_RE)) {
-    out.push(body.slice(last, m.index));
-    out.push(
-      <span className="mention" key={m.index}>
-        @{m[1]}
-      </span>,
-    );
-    last = (m.index ?? 0) + m[0].length;
-  }
-  out.push(body.slice(last));
-  return out;
-}
-
-function CommentView({ comment, author, canDelete, onDeleted }: { comment: Comment; author?: Person; canDelete: boolean; onDeleted: () => void }) {
+/** The task's comment box: the shared one, with the portal's choice of an internal note or a reply for the customer. */
+function TaskComposer({ task, customer, onPosted }: { task: TaskDetail; customer: boolean; onPosted: () => void }) {
   const { t } = useI18n();
-  return (
-    <div className="comment" data-visibility={comment.visibility} data-customer={comment.portalAuthorName ? true : undefined}>
-      <Avatar person={author ?? (comment.portalAuthorName ? ({ id: comment.id, name: comment.portalAuthorName } as Person) : undefined)} large />
-      <div>
-        <div className="comment__head">
-          <span className="comment__author">{comment.portalAuthorName ?? author?.name ?? t('common.unknownUser')}</span>
-          {comment.portalAuthorName ? (
-            <span className="badge badge--customer">{t('portal.comment.fromCustomer')}</span>
-          ) : comment.visibility === 'customer' ? (
-            <span className="badge badge--customer">{t('portal.comment.toCustomer')}</span>
-          ) : null}
-          <span className="comment__time">{relativeTime(comment.createdAt, t)}</span>
-          {canDelete && (
-            <button className="btn btn--quiet btn--small" style={{ marginLeft: 'auto' }} onClick={async () => { await del(`/comments/${comment.id}`); onDeleted(); }}>
-              {t('common.delete')}
-            </button>
-          )}
-        </div>
-        <div className="comment__body">{renderBody(comment.body)}</div>
-      </div>
-    </div>
-  );
-}
-
-// Typing @ opens a list of people; picking one inserts "@Name" and remembers
-// who it was, so the saved comment carries a real mention.
-function Composer({ people, taskId, customer, onPosted }: { people: Person[]; taskId: string; customer: boolean; onPosted: () => void }) {
-  const { t } = useI18n();
-  const { toast } = useStore();
-  const [text, setText] = useState('');
+  const { people } = useStore();
   // On a task shared with the customer: an internal note unless a reply for them is chosen.
   const [toCustomer, setToCustomer] = useState(false);
-  const [query, setQueryText] = useState<string | null>(null);
-  const [sel, setSel] = useState(0);
-  const [chosen, setChosen] = useState<Person[]>([]);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const matches = query === null ? [] : people.filter((p) => p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).slice(0, 6);
-
-  function onChange(v: string) {
-    setText(v);
-    const caret = ref.current?.selectionStart ?? v.length;
-    const m = /(^|\s)@([^\s@]{0,30})$/.exec(v.slice(0, caret));
-    setQueryText(m ? m[2] : null);
-    setSel(0);
-  }
-  function pick(p: Person) {
-    const el = ref.current!;
-    const caret = el.selectionStart ?? text.length;
-    const before = text.slice(0, caret).replace(/@([^\s@]{0,30})$/, `@${p.name} `);
-    const next = before + text.slice(caret);
-    setText(next);
-    setChosen((c) => (c.some((x) => x.id === p.id) ? c : [...c, p]));
-    setQueryText(null);
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(before.length, before.length);
-    });
-  }
-  async function submit(e?: FormEvent) {
-    e?.preventDefault();
-    let body = text.trim();
-    if (!body) return;
-    for (const p of chosen) body = body.split(`@${p.name}`).join(`@[${p.name}](${p.id})`);
-    try {
-      await post(`/tasks/${taskId}/comments`, { body, visibility: customer && toCustomer ? 'customer' : 'internal' });
-      setText('');
-      setChosen([]);
-      onPosted();
-    } catch (err) {
-      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
-    }
-  }
+  const reply = customer && toCustomer;
   return (
-    <form className="composer" data-customer={customer && toCustomer ? true : undefined} onSubmit={submit}>
-      {customer && (
-        <div className="seg composer__to" role="group" aria-label={t('portal.comment.to')}>
-          <button type="button" aria-pressed={!toCustomer} onClick={() => setToCustomer(false)}>
-            {t('portal.comment.internal')}
-          </button>
-          <button type="button" aria-pressed={toCustomer} onClick={() => setToCustomer(true)}>
-            {t('portal.comment.reply')}
-          </button>
-        </div>
-      )}
-      {matches.length > 0 && (
-        <div className="suggest" role="listbox">
-          {matches.map((p, i) => (
-            <button type="button" key={p.id} role="option" aria-selected={i === sel} onMouseDown={(e) => { e.preventDefault(); pick(p); }}>
-              <Avatar person={p} /> {p.name}
+    <Composer
+      people={people.filter((p) => p.status !== 'deleted')}
+      uploadUrl={`/tasks/${task.id}/files`}
+      placeholder={reply ? t('portal.comment.replyPlaceholder') : t('task.commentPlaceholder')}
+      sendLabel={reply ? t('portal.comment.sendReply') : t('task.send')}
+      tone={reply ? 'customer' : undefined}
+      above={
+        customer ? (
+          <div className="seg composer__to" role="group" aria-label={t('portal.comment.to')}>
+            <button type="button" aria-pressed={!toCustomer} onClick={() => setToCustomer(false)}>
+              {t('portal.comment.internal')}
             </button>
-          ))}
-        </div>
-      )}
-      <textarea
-        ref={ref}
-        className="textarea"
-        style={{ minHeight: 72 }}
-        placeholder={customer && toCustomer ? t('portal.comment.replyPlaceholder') : t('task.commentPlaceholder')}
-        aria-label={t('task.comments')}
-        value={text}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (matches.length) {
-            if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => (s + 1) % matches.length); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => (s - 1 + matches.length) % matches.length); }
-            else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(matches[sel]); }
-            else if (e.key === 'Escape') { e.stopPropagation(); setQueryText(null); }
-          } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void submit();
-        }}
-      />
-      <button className="btn btn--primary" style={{ justifySelf: 'end' }} disabled={!text.trim()}>
-        {customer && toCustomer ? t('portal.comment.sendReply') : t('task.send')}
-      </button>
-    </form>
+            <button type="button" aria-pressed={toCustomer} onClick={() => setToCustomer(true)}>
+              {t('portal.comment.reply')}
+            </button>
+          </div>
+        ) : undefined
+      }
+      onSend={async (body, fileIds) => {
+        await post(`/tasks/${task.id}/comments`, { body, fileIds, visibility: reply ? 'customer' : 'internal' });
+        onPosted();
+      }}
+    />
   );
 }
 

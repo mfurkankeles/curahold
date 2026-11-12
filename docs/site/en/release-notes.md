@@ -8,6 +8,20 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
+
+- **Playbooks:** write your team's way of doing a thing as steps with dates — counted from the day it is put on, or back from the customer's renewal date or a deal's close date. Start from four ready-made ones (renewal, onboarding, business review, closing a deal) under Settings → Playbooks.
+- **Renewals that start by themselves:** choose how far ahead (180 days, say) and which playbook; each morning the renewal work opens for the customer's owner, with a renewal opportunity if you like. Steps whose dates have already passed become one "catch-up" task instead of a pile due today.
+- **Currencies:** a customer or a deal can be in its own currency; totals, targets and reports are in the company's, at the rates you keep under Settings → Currencies.
+- **An opportunity on its own:** opens over any page with its fields, its tasks (add one, or a whole playbook) and its own thread — @mentions, links shown as small cards, files and pasted screenshots.
+- **Renewals view:** beside each renewal, its renewal opportunity (opens on a click) and its agreement.
+- **Targets your way:** no targets, one for all deals, or one per type of deal with each type on or off. Business reviews can be switched off for companies that don't hold them.
+- **Reports and dashboards apart:** a report is the data — a list, grouped rows with subtotals, or a grid — with a chart if you want one; a dashboard puts several reports' charts side by side and can show them for one person or one team. Gauges against a goal.
+- **Favorites:** star a customer, a record, a board, a report or a dashboard; it stays at the top of your menu.
+- **Ready-made kinds of record:** agreements, risks, product requests and quotes in one click.
+- **Smaller things:** the Done button in Reviews no longer slips off the edge; "+" on the products view asks before opening a task and offers to open it; contacts show who added them, and you choose the columns of every list; opportunities can be narrowed to a week, a month, a quarter or any dates.
+
+
 ### Your own reports, ready-made dashboards, and a new look
 
 - **Report builder:** pick what to look at, narrow it, group it, sum it up and choose the chart; save it, share it, take it as CSV. 26 ready-made reports to start from.

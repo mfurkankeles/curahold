@@ -3,12 +3,16 @@
 // connected, edits here are queued for it.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
+import { MENTION_RE, type Task } from '../../../shared/src/model';
+import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordComment, type RecordDetail, type RecordType, type RenewalLinks } from '../../../shared/src/records';
 import { requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
-import { iso } from '../lib/mappers';
+import { iso, toFile, toTask } from '../lib/mappers';
+import { allowedCurrency } from '../lib/fx';
+import { enqueue, kick, type NewNotification } from '../lib/notify';
+import { readUpload } from '../lib/upload';
 import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/records';
 import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
@@ -28,6 +32,7 @@ export const toRecordType = (r: Row): RecordType => ({
   position: r.position,
   archivedAt: iso(r.archived_at),
   ...(r.n != null ? { count: Number(r.n) } : {}),
+  columns: r.columns ?? null,
 });
 
 export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
@@ -44,6 +49,8 @@ export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
   updatedAt: iso(r.updated_at)!,
   archivedAt: iso(r.archived_at),
   links,
+  currency: r.currency ?? null,
+  createdBy: r.created_by ?? null,
 });
 
 /** Fields each kind of record keeps from this person, by type id. */
@@ -147,6 +154,8 @@ recordRoutes.patch('/record-types/:id', async (c) => {
       fields: typeFields.optional(),
       position: z.number().int().min(0).max(1000).optional(),
       archived: z.boolean().optional(),
+      /** The columns of its table; null goes back to Tendwell's choice. */
+      columns: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,39}$/)).max(20).nullable().optional(),
     }),
   );
   if (input.fields) {
@@ -160,9 +169,18 @@ recordRoutes.patch('/record-types/:id', async (c) => {
     if (!t) fail('not_found');
     const [u] = await q.query(
       `update record_types set name = coalesce($2, name), fields = coalesce($3, fields), position = coalesce($4, position),
-              archived_at = case when $5::boolean is null then archived_at when $5 then coalesce(archived_at, now()) else null end
+              archived_at = case when $5::boolean is null then archived_at when $5 then coalesce(archived_at, now()) else null end,
+              columns = case when $6 then $7::text[] else columns end
         where id = $1 returning *`,
-      [id, input.name ? JSON.stringify(input.name) : null, input.fields ? JSON.stringify(mergeDefs(t.fields ?? [], input.fields as any, auth)) : null, input.position ?? null, input.archived ?? null],
+      [
+        id,
+        input.name ? JSON.stringify(input.name) : null,
+        input.fields ? JSON.stringify(mergeDefs(t.fields ?? [], input.fields as any, auth)) : null,
+        input.position ?? null,
+        input.archived ?? null,
+        input.columns !== undefined,
+        input.columns ? [...new Set(input.columns)] : null,
+      ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record_type.updated', entity: 'record_type', entityId: id, meta: { fields: Object.keys(input) } });
     if (input.fields) await recomputeRollups(q, org.id, org.account_fields, null);
@@ -224,15 +242,185 @@ recordRoutes.get('/records', async (c) => {
   return c.json({ records: data.rows.map((r) => viewRecord(r, data.hidden, data.links.get(r.id))), total: data.n });
 });
 
+// ------------------------------------------------------------- renewals
+
+/**
+ * For the Renewals view: each asked-for customer's open renewal opportunity
+ * and its agreements kept as records. Worked out on read from what is there
+ * (no table of its own). A renewal opportunity is an open opportunity whose
+ * Type is "renewal", or — where opportunities have no Type — whose name says
+ * renewal. Fields this person may not see stay out.
+ */
+recordRoutes.get('/renewals/links', async (c) => {
+  const ids = (c.req.query('accounts') ?? '').split(',').filter(Boolean);
+  if (ids.length > 500 || ids.some((x) => !uuid.safeParse(x).success)) fail('validation', { fields: 'accounts' }, { fields: ['accounts'] });
+  const auth = c.get('auth');
+  const out = await run(c, async (q) => {
+    const links: Record<string, RenewalLinks> = Object.fromEntries(ids.map((id) => [id, { deal: null, agreements: [] }]));
+    if (!ids.length) return links;
+    const types = await q.query<Row>('select id, key, kind, name, fields from record_types where archived_at is null order by position, created_at');
+
+    // The renewal opportunity: one per customer, the newest.
+    const deals = types.find((t) => t.kind === 'opportunity');
+    if (deals) {
+      const defs = (deals.fields ?? []) as RecordType['fields'];
+      const hidden = hiddenKeys(defs, auth);
+      const hasKind = defs.some((f) => f.key === 'kind' && f.options?.some((o) => o.key === 'renewal'));
+      const rows = await q.query<Row>(
+        `select distinct on (r.account_id) r.account_id, r.id, r.name, r.currency, r.fields->>'stage' as stage, r.fields->'amount' as amount
+           from records r
+          where r.type_id = $1 and r.account_id = any($2::uuid[]) and r.archived_at is null
+            and coalesce(r.fields->>'status', 'open') not in ('won', 'lost')
+            and (case when $3::boolean then r.fields->>'kind' = 'renewal' else r.name ~* '(renew|yenile)' end)
+          order by r.account_id, r.created_at desc`,
+        [deals.id, ids, hasKind],
+      );
+      for (const r of rows) {
+        const amount = hidden.has('amount') || r.amount === null ? null : Number(r.amount);
+        links[r.account_id].deal = { id: r.id, name: r.name, stage: hidden.has('stage') ? null : (r.stage ?? null), amount: Number.isFinite(amount) ? amount : null, currency: r.currency ?? null, typeKey: deals.key };
+      }
+    }
+
+    // Agreements kept as records: the kinds of record named like one, newest first, three per customer.
+    for (const t of types.filter((x) => x.kind !== 'opportunity' && x.kind !== 'contact' && AGREEMENT_RE.test(`${x.key} ${JSON.stringify(x.name)}`))) {
+      const defs = (t.fields ?? []) as RecordType['fields'];
+      const hidden = hiddenKeys(defs, auth);
+      const urlKey = defs.find((f) => f.type === 'url' && !hidden.has(f.key))?.key ?? null;
+      const rows = await q.query<Row>(
+        `select * from (
+           select r.account_id, r.id, r.name, ${urlKey ? 'r.fields->>$3' : 'null::text'} as url,
+                  row_number() over (partition by r.account_id order by r.created_at desc) as n
+             from records r
+            where r.type_id = $1 and r.account_id = any($2::uuid[]) and r.archived_at is null
+         ) x where x.n <= 3`,
+        urlKey ? [t.id, ids, urlKey] : [t.id, ids],
+      );
+      for (const r of rows) links[r.account_id].agreements.push({ recordId: r.id, name: r.name, url: r.url && /^https?:\/\//i.test(r.url) ? r.url : null, typeKey: t.key });
+    }
+    return links;
+  });
+  return c.json({ links: out });
+});
+
 recordRoutes.get('/records/:id', async (c) => {
   const id = param(c, 'id');
+  const full = c.req.query('full') === '1';
   const data = await run(c, async (q) => {
     const [r] = await q.query(`${SELECT} where r.id = $1`, [id]);
     if (!r) fail('not_found');
     const links = await linksFor(q, 'record', [id]);
-    return { r, links, hidden: await hiddenByType(q, c.get('auth')) };
+    if (!full) return { r, links, hidden: await hiddenByType(q, c.get('auth')) };
+    const comments = await q.query('select * from record_comments where record_id = $1 order by created_at', [id]);
+    const files = await q.query('select * from files where record_id = $1 order by created_at', [id]);
+    // Its tasks: what is open, and what was finished in the last ninety days.
+    const tasks = await q.query(
+      `select t.*, a.name as account_name, b.name as board_name from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
+        where t.record_id = $1 and t.parent_id is null and b.archived_at is null
+          and (t.done_at is null and t.archived_at is null or t.done_at > now() - interval '90 days')
+        order by (t.done_at is not null), t.due_date nulls last, t.created_at limit 100`,
+      [id],
+    );
+    return { r, links, hidden: await hiddenByType(q, c.get('auth')), comments, files, tasks };
   });
-  return c.json({ record: viewRecord(data.r, data.hidden, data.links.get(id)) });
+  const record = viewRecord(data.r, data.hidden, data.links.get(id));
+  if (!full) return c.json({ record });
+  const files = (data.files ?? []).map(toFile);
+  const detail: RecordDetail = {
+    ...record,
+    comments: (data.comments ?? []).map((cm) => ({
+      id: cm.id,
+      recordId: cm.record_id,
+      authorId: cm.author_id ?? null,
+      body: cm.body,
+      mentions: cm.mentions ?? [],
+      createdAt: iso(cm.created_at)!,
+      files: files.filter((f) => f.commentId === cm.id),
+    })),
+    files,
+    tasks: (data.tasks ?? []).map((t) => ({ ...toTask(t), boardName: t.board_name, done: t.done_at != null }) as Task),
+  };
+  return c.json({ record: detail });
+});
+
+// ------------------------------------------------------------ the thread
+
+recordRoutes.post('/records/:id/comments', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ body: z.string().trim().max(10000), fileIds: z.array(uuid).max(10).optional() }));
+  if (!input.body && !input.fileIds?.length) fail('validation', { fields: 'body' }, { fields: ['body'] });
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const row = await run(c, async (q) => {
+    const [r] = await q.query('select r.id, r.name, r.owner_id, t.key as type_key from records r join record_types t on t.id = r.type_id where r.id = $1', [id]);
+    if (!r) fail('not_found');
+    const mentioned = [...new Set([...input.body.matchAll(MENTION_RE)].map((m) => m[2]))];
+    const valid = mentioned.length ? (await q.query<{ id: string }>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [mentioned])).map((u) => u.id) : [];
+    const [cm] = await q.query('insert into record_comments (org_id, record_id, author_id, body, mentions) values ($1, $2, $3, $4, $5) returning *', [org.id, id, auth.userId, input.body, valid]);
+    // Files uploaded for this comment, by its author, onto this record.
+    const files = input.fileIds?.length
+      ? await q.query('update files set record_comment_id = $1 where id = any($2::uuid[]) and record_id = $3 and uploaded_by = $4 and record_comment_id is null returning *', [cm.id, input.fileIds, id, auth.userId])
+      : [];
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record_comment.created', entity: 'record', entityId: id });
+    const excerpt = input.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 280) || (files[0]?.name ?? '');
+    const data = { excerpt, recordId: id, recordName: r.name, typeKey: r.type_key };
+    const told = new Set(valid);
+    const list: NewNotification[] = valid.map((u) => ({ orgId: org.id, userId: u, kind: 'mentioned', actorId: auth.userId, data }));
+    // Whoever owns the record hears about a new comment, unless they wrote it or were named in it.
+    if (r.owner_id && !told.has(r.owner_id)) list.push({ orgId: org.id, userId: r.owner_id, kind: 'comment', actorId: auth.userId, data });
+    await enqueue(q, list);
+    return { cm, files };
+  });
+  kick(c.get('deps'));
+  const comment: RecordComment = {
+    id: row.cm.id,
+    recordId: id,
+    authorId: row.cm.author_id,
+    body: row.cm.body,
+    mentions: row.cm.mentions ?? [],
+    createdAt: iso(row.cm.created_at)!,
+    files: row.files.map(toFile),
+  };
+  return c.json({ comment }, 201);
+});
+
+recordRoutes.delete('/record-comments/:id', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const keys = await run(c, async (q) => {
+    const files = await q.query<{ id: string; storage_key: string }>('select id, storage_key from files where record_comment_id = $1', [id]);
+    const rows = await q.query('delete from record_comments where id = $1 returning record_id', [id]);
+    if (!rows.length) fail('not_found');
+    // Its pictures and files go with it.
+    if (files.length) await q.query('delete from files where id = any($1::uuid[])', [files.map((f) => f.id)]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record_comment.deleted', entity: 'record', entityId: rows[0].record_id });
+    return files.map((f) => f.storage_key);
+  });
+  for (const k of keys) await c.get('deps').storage.delete(k);
+  return c.json({ ok: true });
+});
+
+recordRoutes.post('/records/:id/files', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const deps = c.get('deps');
+  const f = await readUpload(c);
+  const key = `${org.id}/r/${id}/${crypto.randomUUID()}`;
+  const row = await run(c, async (q) => {
+    const [r] = await q.query('select id from records where id = $1', [id]);
+    if (!r) fail('not_found');
+    await deps.storage.put(key, f.data, f.mime);
+    const [x] = await q.query(
+      `insert into files (org_id, record_id, name, size, mime, storage_key, uploaded_by) values ($1, $2, $3, $4, $5, $6, $7) returning *`,
+      [org.id, id, f.name, f.size, f.mime, key, auth.userId],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: x.id, meta: { name: f.name } });
+    return x;
+  });
+  return c.json({ file: toFile(row) }, 201);
 });
 
 const recordValues = z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.null()]));
@@ -290,11 +478,13 @@ recordRoutes.post('/records', async (c) => {
       name: z.string().trim().min(1).max(300).optional(),
       ownerId: uuid.nullable().optional(),
       fields: recordValues.optional(),
+      currency: z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
     }),
   );
   const org = c.get('org');
   const auth = c.get('auth');
   const deps = c.get('deps');
+  if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     const type = await typeOf(q, input.typeId);
     checkEditable(type.fields ?? [], changedFieldKeys({}, input.fields ?? {}), auth);
@@ -304,8 +494,11 @@ recordRoutes.post('/records', async (c) => {
     if (!name) fail('validation', { fields: 'name' }, { fields: ['name'] });
     await checkParent(q, { id: null, type_id: type.id, account_id: input.accountId ?? null }, input.parentId);
     const [r] = await q.query(
-      `insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
-      [org.id, type.id, input.accountId ?? null, input.parentId ?? null, name, input.ownerId ?? null, JSON.stringify(fields), auth.userId],
+      `insert into records (org_id, type_id, account_id, parent_id, name, owner_id, fields, created_by, currency)
+       values ($1, $2, $3, $4, $5, $6, $7, $8,
+               -- Without a currency of its own it is in its customer's, else in the company's.
+               coalesce($9, (select a.currency from accounts a where a.id = $3))) returning id`,
+      [org.id, type.id, input.accountId ?? null, input.parentId ?? null, name, input.ownerId ?? null, JSON.stringify(fields), auth.userId, input.currency && input.currency !== org.currency ? input.currency : null],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.created', entity: 'record', entityId: r.id, meta: { type: type.key } });
     await recomputeRollups(q, org.id, org.account_fields, [input.accountId ?? null]);
@@ -329,11 +522,13 @@ recordRoutes.patch('/records/:id', async (c) => {
       ownerId: uuid.nullable().optional(),
       fields: recordValues.optional(),
       archived: z.boolean().optional(),
+      currency: z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
     }),
   );
   const org = c.get('org');
   const auth = c.get('auth');
   const deps = c.get('deps');
+  if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     const [r] = await q.query('select * from records where id = $1', [id]);
     if (!r) fail('not_found');
@@ -357,9 +552,10 @@ recordRoutes.patch('/records/:id', async (c) => {
     };
     await q.query(
       `update records set name = $2, owner_id = $3, account_id = $4, fields = $5, parent_id = $7, updated_at = now(),
-              archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end
+              archived_at = case when $6::boolean is null then archived_at when $6 then coalesce(archived_at, now()) else null end,
+              currency = case when $8 then $9::text else currency end
         where id = $1`,
-      [id, next.name, next.owner_id, next.account_id, JSON.stringify(fields), input.archived ?? null, next.parent_id],
+      [id, next.name, next.owner_id, next.account_id, JSON.stringify(fields), input.archived ?? null, next.parent_id, input.currency !== undefined, input.currency && input.currency !== org.currency ? input.currency : null],
     );
     if (accountMoved) await q.query('update records set parent_id = null where parent_id = $1', [id]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.updated', entity: 'record', entityId: id, meta: { fields: Object.keys(input) } });

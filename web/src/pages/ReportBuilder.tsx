@@ -1,12 +1,13 @@
-// Reports people build: the list of kept and ready-made reports, the ready
-// dashboards, and the builder itself (what to look at → narrow → group →
-// figure → chart), with the result drawn as you go.
+// Reports people build: the list of kept and ready-made reports, and the
+// builder itself (what to look at → narrow → lay out and group → figure →
+// chart), with the result drawn as you go. Dashboards (pages of charts made
+// from these reports) are in Dashboards.tsx.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Page } from '../../../shared/src/pages';
 import {
   BUCKETS,
-  DASHBOARD_TEMPLATES,
+  FORMATS,
   MEASURE_FNS,
   PERIODS,
   REPORT_LIBRARY,
@@ -20,14 +21,17 @@ import {
   type ReportDef,
   type ReportField,
   type ReportFilter,
+  type ReportFormat,
   type ReportResult,
   type ReportSource,
   type ReportSourceInfo,
   type SavedReport,
 } from '../../../shared/src/reports';
 import { AccountPicker } from '../components/AccountPicker';
-import { ChartGlyph, ReportChart, useReportFormat } from '../components/Charts';
+import { ChartGlyph, useReportFormat } from '../components/Charts';
+import { formatOf, ReportView } from '../components/ReportView';
 import { EmptyState } from '../components/Empty';
+import { FavoriteButton } from '../components/Favorites';
 import { Icon } from '../components/icons';
 import { Confirm, Dialog, PeoplePicker } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -67,7 +71,7 @@ export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashb
     <nav className="tabs report-tabs" aria-label={t('nav.reports')}>
       {tab('overview', '/reports', t('rb.tab.overview'))}
       {tab('reports', '/reports/all', t('rb.tab.reports'))}
-      {tab('dashboards', '/reports/dashboards', t('rb.tab.dashboards'))}
+      {tab('dashboards', '/dashboards', t('rb.tab.dashboards'))}
     </nav>
   );
 }
@@ -174,102 +178,10 @@ export function ReportsListPage() {
   );
 }
 
-// ------------------------------------------------------------- dashboards
-
-export function DashboardsPage() {
-  const { t, locale } = useI18n();
-  const { can, me, toast } = useStore();
-  const admin = can('org.manage') && !me.previewBy;
-  const [pages, setPages] = useState<Page[] | null>(null);
-  const [adding, setAdding] = useState<string | null>(null);
-  useEffect(() => {
-    void get<{ pages: Page[] }>('/pages').then((r) => setPages(r.pages));
-  }, []);
-  const add = async (key: string) => {
-    setAdding(key);
-    try {
-      const r = await post<{ page: Page }>('/pages/from-template', { template: key });
-      navigate(`/pages/${r.page.id}`);
-    } catch (e) {
-      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-      setAdding(null);
-    }
-  };
-  return (
-    <>
-      <header className="topbar">
-        <div className="topbar__titles">
-          <h1 className="topbar__title">{t('nav.reports')}</h1>
-          <p className="topbar__sub">{t('rb.dashLead')}</p>
-        </div>
-        <div className="topbar__spacer" />
-        {admin && (
-          <button className="btn btn--primary" onClick={() => navigate('/pages/new')}>
-            <Icon name="plus" size={16} /> {t('rb.dashNew')}
-          </button>
-        )}
-      </header>
-      <ReportTabs active="dashboards" />
-      <div className="page reports">
-        {pages && pages.length > 0 && (
-          <>
-            <h2 className="reports__h reports__h--first">{t('rb.dashYours')}</h2>
-            <div className="gallery gallery--reports">
-              {pages.map((p) => (
-                <a
-                  key={p.id}
-                  className="rcard"
-                  href={`/pages/${p.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(`/pages/${p.id}`);
-                  }}
-                >
-                  <span className="rcard__icon">
-                    <Icon name="layout" size={18} />
-                  </span>
-                  <span className="rcard__text">
-                    <span className="rcard__name">{p.name}</span>
-                    <span className="rcard__sub">{t('rb.dashCards', { n: p.cards.length })}</span>
-                  </span>
-                </a>
-              ))}
-            </div>
-          </>
-        )}
-        <h2 className="reports__h">{t('rb.dashReady')}</h2>
-        <p className="reports__lead">{admin ? t('rb.dashReadyLead') : t('rb.dashReadyLeadMember')}</p>
-        <div className="gallery gallery--dash">
-          {DASHBOARD_TEMPLATES.map((d) => (
-            <article key={d.key} className="gallery__item dashcard">
-              <div className="dashcard__look" aria-hidden="true">
-                {d.look.map((k, i) => (
-                  <span key={i}>
-                    <ChartGlyph kind={k} size={34} />
-                  </span>
-                ))}
-              </div>
-              <h3 className="dashcard__name">{labelOf(d.name, locale)}</h3>
-              <p className="dashcard__help">{labelOf(d.help, locale)}</p>
-              <div className="dashcard__foot">
-                <span className="muted">{t('rb.dashCards', { n: d.cards.length })}</span>
-                {admin && (
-                  <button className="btn btn--small btn--primary" disabled={adding !== null} onClick={() => void add(d.key)}>
-                    {adding === d.key ? t('common.loading') : t('rb.dashAdd')}
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
 // ----------------------------------------------------------------- builder
 
-const CHART_CHOICES: Record<0 | 1 | 2, ChartKind[]> = { 0: ['table', 'number'], 1: ['bar', 'column', 'line', 'donut', 'table'], 2: ['stacked', 'column', 'line', 'bar', 'table'] };
+/** The charts that fit a report's shape: a list or one figure; one grouping; two. */
+const CHART_CHOICES: Record<0 | 1 | 2, ChartKind[]> = { 0: ['table', 'number', 'gauge'], 1: ['bar', 'column', 'line', 'donut'], 2: ['stacked', 'column', 'line', 'bar'] };
 const csvCell = (v: unknown) => {
   const s = v == null ? '' : String(v);
   return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -395,7 +307,21 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     if (!key) groups.splice(at, 2 - at);
     else groups[at] = { field: key, ...(fieldOf(key)?.type === 'date' ? { bucket: groups[at]?.bucket ?? 'month' } : {}) };
     const next = { ...def, groups: groups.filter(Boolean) };
-    change({ groups: next.groups, chart: fitChart({ ...next, chart: next.groups.length === 1 && def.groups.length === 0 ? 'bar' : def.chart }) });
+    // No grouping left: a list. One left in a grid: a summary.
+    const fm: ReportFormat = next.groups.length === 0 ? 'tabular' : next.groups.length === 1 && format === 'matrix' ? 'summary' : format === 'tabular' ? 'summary' : format;
+    change({ groups: next.groups, format: fm, chart: fitChart({ ...next, chart: next.groups.length === 1 && def.groups.length === 0 ? 'bar' : def.chart }) });
+  };
+  // The layout decides the grouping: a list has none, a summary one or two, a grid two.
+  const groupOf = (key: string) => ({ field: key, ...(fieldOf(key)?.type === 'date' ? { bucket: 'month' as const } : {}) });
+  const format = formatOf(def);
+  const setFormat = (fm: ReportFormat) => {
+    const g0 = def.groups[0] ?? (groupable[0] ? groupOf(groupable[0].key) : undefined);
+    if (fm === 'tabular') return change({ format: fm, groups: [], chart: def.chart === 'number' || def.chart === 'gauge' ? def.chart : 'table', showChart: false });
+    if (!g0) return;
+    if (fm === 'summary') return change({ format: fm, groups: def.groups.length ? def.groups : [g0], chart: CHART_CHOICES[1].includes(def.chart) ? def.chart : 'bar', showChart: def.showChart ?? true });
+    const other = groupable.find((o) => o.key !== g0.field);
+    const g1 = def.groups[1] ?? (other ? groupOf(other.key) : undefined);
+    change({ format: fm, groups: g1 ? [g0, g1] : [g0], chart: CHART_CHOICES[2].includes(def.chart) ? def.chart : 'stacked', showChart: def.showChart ?? true });
   };
   const setFilter = (at: number, x: ReportFilter | null) => {
     const filters = [...def.filters];
@@ -435,8 +361,16 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     if (!result || result.kind !== 'ok') return;
     const lines: string[] = [];
     if (result.table) {
-      lines.push(result.table.columns.map((c) => csvCell(c.label)).join(';'));
-      for (const row of result.table.rows) lines.push(row.map(csvCell).join(';'));
+      // In a summary each row also says which group (and inner group) it is in.
+      const groupNames = result.table.keys ? def.groups.map((g) => L(fieldOf(g.field) ?? { label: { en: g.field } })) : [];
+      const groupLabel = (k: string) => result.groups.find((g) => g.key === k)?.label ?? k;
+      const seriesLabel = (k: string) => result.series.find((x) => x.key === k)?.label ?? k;
+      lines.push([...groupNames, ...result.table.columns.map((c) => c.label)].map(csvCell).join(';'));
+      result.table.rows.forEach((row, i) => {
+        const keys = result.table!.keys?.[i] ?? [];
+        const named = keys.map((k, at) => (at === 0 ? (result.bucket ? f.bucket(k, result.bucket) : groupLabel(k)) : seriesLabel(k)));
+        lines.push([...named, ...row].map(csvCell).join(';'));
+      });
     } else {
       lines.push(['', ...result.series.map((s) => s.label), result.series.length ? t('rb.total') : t(`rb.fn.${def.measure.fn}` as any)].map(csvCell).join(';'));
       for (const g of result.groups) lines.push([result.bucket ? g.key : g.label, ...(g.cells ?? []), g.value].map(csvCell).join(';'));
@@ -542,6 +476,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             setDirty(true);
           }}
         />
+        {saved && <FavoriteButton kind="report" id={saved.id} name={saved.name} to={`/reports/r/${saved.id}`} />}
         <div className="topbar__spacer" />
         <div className="toolbar">
           {result?.kind === 'ok' && (
@@ -636,15 +571,25 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
 
           <section className="sheet rb-step">
             <h2 className="rb-step__title">
-              <span className="rb-step__n">3</span> {t('rb.step.group')}
+              <span className="rb-step__n">3</span> {t('rb.step.layout')}
             </h2>
-            {([0, 1] as const).map((at) =>
+            <div className="field">
+              <div className="seg rb-format" role="radiogroup" aria-label={t('rb.step.layout')}>
+                {FORMATS.map((fm) => (
+                  <button key={fm} type="button" role="radio" aria-checked={format === fm} disabled={fm !== 'tabular' && !groupable.length} onClick={() => setFormat(fm)}>
+                    {t(`rb.format.${fm}` as const)}
+                  </button>
+                ))}
+              </div>
+              <span className="field__hint">{t(`rb.formatHint.${format}` as const)}</span>
+            </div>
+            {format !== 'tabular' && ([0, 1] as const).map((at) =>
               at === 1 && !def.groups[0] ? null : (
                 <div className="rb-row" key={at}>
                   <label className="field">
-                    <span className="field__label">{at === 0 ? t('rb.groupBy') : t('rb.thenBy')}</span>
+                    <span className="field__label">{format === 'matrix' ? (at === 0 ? t('rb.rowsBy') : t('rb.columnsBy')) : at === 0 ? t('rb.groupBy') : t('rb.thenBy')}</span>
                     <select className="select" value={def.groups[at]?.field ?? ''} onChange={(e) => setGroup(at, e.target.value)}>
-                      <option value="">{at === 0 ? t('rb.noGroup') : t('rb.noSplit')}</option>
+                      {!(format === 'matrix' && at === 1) && <option value="">{at === 0 ? t('rb.noGroup') : t('rb.noSplit')}</option>}
                       {groupable
                         .filter((o) => at === 0 || o.key !== def.groups[0]?.field)
                         .map((o) => (
@@ -733,19 +678,36 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             <h2 className="rb-step__title">
               <span className="rb-step__n">5</span> {t('rb.step.chart')}
             </h2>
-            <div className="rb-charts" role="group" aria-label={t('rb.step.chart')}>
-              {CHART_CHOICES[shape].map((k) => (
-                <button key={k} type="button" className="rb-chart" aria-pressed={chart === k} onClick={() => change({ chart: k })}>
-                  <ChartGlyph kind={k} />
-                  <span>{t(`rb.chart.${k}` as any)}</span>
-                </button>
-              ))}
-            </div>
-            {shape === 0 && chart === 'table' && (
+            {format !== 'tabular' && (
+              <label className="rb-share" style={{ marginTop: 0, marginBottom: 10 }}>
+                <input type="checkbox" checked={def.showChart !== false} onChange={(e) => change({ showChart: e.target.checked })} />
+                <span>
+                  <b>{t('rb.showChart')}</b>
+                  <span className="field__hint">{t('rb.showChartHint')}</span>
+                </span>
+              </label>
+            )}
+            {(format === 'tabular' || def.showChart !== false) && (
+              <div className="rb-charts" role="group" aria-label={t('rb.step.chart')}>
+                {CHART_CHOICES[shape].map((k) => (
+                  <button key={k} type="button" className="rb-chart" aria-pressed={chart === k} onClick={() => change({ chart: k })}>
+                    <ChartGlyph kind={k} />
+                    <span>{t(`rb.chart.${k}` as any)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {shape === 0 && chart === 'gauge' && (
+              <label className="field" style={{ marginTop: 12, maxWidth: 260 }}>
+                <span className="field__label">{t('rb.goal')}</span>
+                <input className="input num" type="number" min={1} value={def.goal ?? ''} placeholder={t('rb.goalHint')} onChange={(e) => change({ goal: e.target.value === '' ? undefined : Math.max(1, Number(e.target.value)) })} />
+              </label>
+            )}
+            {((shape === 0 && chart === 'table') || format === 'summary') && (
               <div className="field" style={{ marginTop: 12 }}>
-                <span className="field__label">{t('rb.columns')}</span>
+                <span className="field__label">{format === 'summary' ? t('rb.rowColumns') : t('rb.columns')}</span>
                 <div className="rb-chips">
-                  {source.fields.map((o) => {
+                  {source.fields.filter((o) => !def.groups.some((g) => g.field === o.key)).map((o) => {
                     const on = columns.includes(o.key);
                     return (
                       <button key={o.key} type="button" className="rb-chip" aria-pressed={on} disabled={!on && columns.length >= 8} onClick={() => change({ columns: on ? columns.filter((k) => k !== o.key) : [...columns, o.key] })}>
@@ -784,7 +746,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             {running && <span className="rb__running">{t('rb.running')}</span>}
           </header>
           <div className="rb__chart" data-chart={chart}>
-            {result ? <ReportChart result={result} chart={chart} /> : <div className="pane__wait" style={{ height: 260, borderRadius: 12 }} />}
+            {result ? <ReportView result={result} def={def} chart={chart} /> : <div className="pane__wait" style={{ height: 260, borderRadius: 12 }} />}
           </div>
         </section>
         </div>
@@ -815,7 +777,7 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
   const [pages, setPages] = useState<Page[] | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    void get<{ pages: Page[] }>('/pages').then((r) => setPages(r.pages));
+    void get<{ pages: Page[] }>('/pages?kind=dashboard').then((r) => setPages(r.pages));
   }, []);
   const place = async (p: Page) => {
     if (p.cards.length >= 24) return toast(t('rb.dashFull'), 'error');
@@ -825,7 +787,7 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
       await patch(`/pages/${p.id}`, { cards: [...p.cards, { id: cardId, type: 'report', size: report.def.groups.length ? 'half' : fitChart(report.def) === 'number' ? 'third' : 'full', reportId: report.id }] });
       // A card on a shared page is for everyone who opens the page.
       if (!report.shared) await patch(`/reports/saved/${report.id}`, { shared: true }).catch(() => undefined);
-      toast(t('rb.placed', { page: p.name }), 'info', { label: t('rb.open'), run: async () => navigate(`/pages/${p.id}`) });
+      toast(t('rb.placed', { page: p.name }), 'info', { label: t('rb.open'), run: async () => navigate(`/dashboards/${p.id}`) });
       onClose();
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
@@ -839,7 +801,7 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
         <div className="pane__wait" style={{ height: 80 }} />
       ) : pages.length === 0 ? (
         <EmptyState compact icon="layout" title={t('rb.dashNone')}>
-          <button className="btn btn--primary" onClick={() => navigate('/reports/dashboards')}>
+          <button className="btn btn--primary" onClick={() => navigate('/dashboards')}>
             {t('rb.tab.dashboards')}
           </button>
         </EmptyState>

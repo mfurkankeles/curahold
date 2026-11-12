@@ -3,6 +3,7 @@
 // customers whose health score fell (and the main reason), customers gone
 // quiet, and the week's work. It goes to the chat app the company already
 // uses, email only as the fallback, and is skipped when there is nothing to say.
+import { fxRate } from './fx';
 import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
 import type { Deps } from '../context';
@@ -52,7 +53,7 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
   const renewals = renewal
     ? await q.query(
         `select id, name, fields->>$3 as due,
-                (case when $4::text is not null and jsonb_typeof(fields->$4) = 'number' then (fields->>$4)::numeric end) as amount
+                (case when $4::text is not null and jsonb_typeof(fields->$4) = 'number' then round((fields->>$4)::numeric * ${fxRate('accounts', '$1')}, 2) end) as amount
            from accounts where org_id = $1 and id = any ($2::uuid[]) and fields->>$3 ~ '^\\d{4}-\\d{2}-\\d{2}$'
             and (fields->>$3)::date between $5::date and $5::date + 30
           order by (fields->>$3)::date`,

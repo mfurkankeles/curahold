@@ -1,6 +1,7 @@
 // Accounts: the customers the team looks after. A sortable list with the
 // company's own fields, bulk changes, import with undo, and a page per
 // account with its tasks.
+import { useMoney } from '../lib/money';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import { calculated, type Account, type AccountField, type Task } from '../../../shared/src/model';
@@ -25,6 +26,7 @@ import { Icon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
 import { tasksChanged, usePageDefaults } from '../lib/shell';
 import { PlanMenu } from '../components/Plans';
+import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { hoursText } from './Reports';
 
@@ -45,11 +47,12 @@ export function useFieldFormat() {
   const { me } = useStore();
   const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
   return useCallback(
-    (f: AccountField, v: unknown): string => {
+    /** `currency`: the customer's or record's own; none is the company's. */
+    (f: AccountField, v: unknown, currency?: string | null): string => {
       if (v === null || v === undefined || v === '') return '';
       if (f.type === 'money') {
         try {
-          return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: me.org.currency, maximumFractionDigits: 0 }).format(Number(v));
+          return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: currency || me.org.currency, maximumFractionDigits: 0 }).format(Number(v));
         } catch {
           return String(v);
         }
@@ -68,6 +71,7 @@ export function AccountsPage() {
   const { t, words, locale } = useI18n();
   const { me, people, person, can, canWrite, toast } = useStore();
   const fmt = useFieldFormat();
+  const money = useMoney();
   const [q, setQ] = useState('');
   const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
@@ -114,6 +118,11 @@ export function AccountsPage() {
       /* per-viewer convenience */
     }
   };
+  // A company that holds no business reviews has no Reviews view; a link or a remembered choice falls back to the cards.
+  const reviewsOn = (me.org.rhythm?.reviewDays ?? 0) > 0;
+  useEffect(() => {
+    if (view === 'reviews' && !reviewsOn) setViewState('cards');
+  }, [view, reviewsOn]);
   const CARD_SORTS = ['attention', 'name', 'health', 'value', 'renewal', 'open'] as const;
   const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('tw_accounts_sort', CARD_SORTS, 'attention'));
   const [signal, setSignal] = useState<SignalFilter>('');
@@ -184,7 +193,7 @@ export function AccountsPage() {
   }, [data, me.org.accountFields, me.org.health, me.org.rhythm?.reviewDays, t, signal, cardSort, valueField, renewalField, locale]);
   const needing = signalRows.filter((r) => r.attention > 0).length;
   const atStake = valueField
-    ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + (Number(r.a.fields[valueField.key]) || 0), 0)
+    ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + money.toBase(Number(r.a.fields[valueField.key]) || 0, r.a.currency), 0)
     : 0;
 
   const head = (key: string, label: string) => (
@@ -270,7 +279,7 @@ export function AccountsPage() {
         <RecordTabs current="accounts" types={types} />
         <div className="viewbar">
           <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')}>
-            {VIEWS.map((v) => (
+            {VIEWS.filter((v) => v !== 'reviews' || reviewsOn).map((v) => (
               <button key={v} role="tab" aria-selected={view === v} aria-pressed={view === v} onClick={() => setView(v)}>
                 <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', reviews: 'handshake', products: 'target' } as const)[v]} size={15} />
                 {t(`acards.view.${v}` as any)}
@@ -315,7 +324,7 @@ export function AccountsPage() {
           {(view === 'cards' || view === 'renewals' || view === 'reviews') && (
             <select className="select" value={signal} aria-label={t('acards.signalFilter')} onChange={(e) => setSignal(e.target.value as SignalFilter)}>
               <option value="">{t('acards.signal.any')}</option>
-              {SIGNAL_FILTERS.map((s) => (
+              {SIGNAL_FILTERS.filter((s) => s !== 'review' || reviewsOn).map((s) => (
                 <option key={s} value={s}>
                   {t(`acards.signal.${s}` as any)}
                 </option>
@@ -504,7 +513,7 @@ export function AccountsPage() {
                     </td>
                     {fields.map((f) => (
                       <td key={f.key} className={`hide-phone${f.type === 'money' || f.type === 'number' ? ' num' : ''}`} data-type={f.type} data-value={f.type === 'select' ? String(a.fields[f.key] ?? '') : undefined}>
-                        <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key])} />
+                        <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency)} />
                       </td>
                     ))}
                     <td className="num">{a.openTasks ?? 0}</td>
@@ -572,6 +581,32 @@ function ImportHistory() {
         ))}
       </ul>
     </details>
+  );
+}
+
+/**
+ * The currency this customer's amounts are in, when the company works in more
+ * than one. Its deals follow it unless they have their own.
+ */
+function CurrencyField({ account, onSave }: { account: Account; onSave: (body: { currency: string | null }) => void }) {
+  const { t } = useI18n();
+  const { canWrite } = useStore();
+  const money = useMoney();
+  if (!money.multi && !account.currency) return null;
+  return (
+    <label className="field">
+      <span className="field__label">{t('money.currency')}</span>
+      <select className="select" value={account.currency ?? ''} disabled={!canWrite} onChange={(e) => onSave({ currency: e.target.value || null })}>
+        <option value="">{t('money.company', { code: money.base })}</option>
+        {money.usable
+          .filter((c) => c !== money.base)
+          .map((c) => (
+            <option key={c} value={c}>
+              {c} · {money.nameOf(c)}
+            </option>
+          ))}
+      </select>
+    </label>
   );
 }
 
@@ -760,6 +795,7 @@ export function AccountPage({ id }: { id: string }) {
           <Icon name="chevronLeft" size={16} />
           {words.other}
         </a>
+        <FavoriteButton kind="account" id={a.id} name={a.name} to={`/accounts/${a.id}`} />
         <div className="topbar__spacer" />
         {can('accounts.manage') && (
           <>
@@ -834,13 +870,14 @@ export function AccountPage({ id }: { id: string }) {
             </select>
           </label>
           <ReviewField account={a} onSave={save} />
+          <CurrencyField account={a} onSave={save} />
           {me.org.accountFields.map((f) =>
             f.health ? (
               <HealthBadge key={f.key} accountId={a.id} field={f} value={a.fields[f.key]} />
             ) : calculated(f) ? (
               <div className="field" key={f.key}>
                 <span className="field__label">{labelOf(f.label, locale)}</span>
-                <span className="calc-value">{fmt(f, a.fields[f.key]) || '—'}</span>
+                <span className="calc-value">{fmt(f, a.fields[f.key], a.currency) || '—'}</span>
               </div>
             ) : (
               <label className="field" key={f.key}>

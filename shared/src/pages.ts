@@ -67,11 +67,17 @@ export interface Card {
   reportId?: string;
   report?: string;
   chart?: ChartKind;
+  /** What a gauge counts up to. */
+  goal?: number;
 }
 
 export interface Page {
   id: string;
   name: string;
+  /** A home (tabs on Home) or a dashboard (Reports → Dashboards). */
+  kind: 'home' | 'dashboard';
+  /** A dashboard's filter bar. */
+  filters?: { person?: boolean; team?: boolean };
   cards: Card[];
   /** Role keys whose home this page is. */
   homeFor: string[];
@@ -111,7 +117,7 @@ export type CardData =
     }
   | { kind: 'sync'; rows: { id: string; provider: string; name: string; status: string; lastRunAt: string | null; problems: number; ok: boolean }[] }
   | { kind: 'note'; text: string }
-  | { kind: 'report'; name: string; chart: ChartKind; source: ReportSource; reportId: string | null; library: string | null; result: ReportResult };
+  | { kind: 'report'; name: string; chart: ChartKind; source: ReportSource; reportId: string | null; library: string | null; result: ReportResult; goal?: number };
 
 const L = (en: string, tr: string): Localized => ({ en, tr });
 

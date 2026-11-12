@@ -4,25 +4,44 @@
 
 export const TARGET_PERIODS = ['month', 'quarter', 'year'] as const;
 export type TargetPeriod = (typeof TARGET_PERIODS)[number];
+/** The deal types every company starts with. A company's own types (its opportunities' "Type" choices) work the same way. */
 export const TARGET_KINDS = ['new', 'expansion', 'renewal'] as const;
-export type TargetKind = (typeof TARGET_KINDS)[number];
+export type TargetKind = string;
+
+export interface Targets {
+  period: TargetPeriod;
+  /** Money to win per period for each type of deal that has a target (the type's key). */
+  amounts: Record<string, number>;
+  /** One target for all deals together, whatever their type. Null: the sum of the types' targets. */
+  total: number | null;
+}
+
+export interface RenewalRhythm {
+  /** Renewal work starts this many days before a customer's renewal date. 0: Tendwell does not start it. */
+  days: number;
+  /** The playbook whose tasks are opened then; none: one task for the customer's owner. */
+  planId: string | null;
+  /** Also open a renewal opportunity (when the company keeps opportunities). */
+  opportunity: boolean;
+}
 
 export interface Rhythm {
-  /** Money to win per period, by kind of deal. Null: no target. */
-  targets: { period: TargetPeriod } & Record<TargetKind, number | null>;
-  /** Days between business reviews for every customer. 0: no rhythm. */
+  targets: Targets;
+  /** Days between business reviews for every customer. 0: the company does not hold them. */
   reviewDays: number;
   /** Open work nobody has touched for this many days is brought up once a week. 0: off. */
   staleDays: number;
   /** Work this many days past its date is passed to the team lead. 0: off. */
   escalateDays: number;
+  renewal: RenewalRhythm;
 }
 
 export const DEFAULT_RHYTHM: Rhythm = {
-  targets: { period: 'quarter', new: null, expansion: null, renewal: null },
+  targets: { period: 'quarter', amounts: {}, total: null },
   reviewDays: 0,
   staleDays: 14,
   escalateDays: 0,
+  renewal: { days: 0, planId: null, opportunity: false },
 };
 
 const whole = (v: unknown, min: number, max: number, fallback: number) => {
@@ -33,23 +52,40 @@ const amount = (v: unknown) => {
   const n = Number(v);
   return v !== null && v !== undefined && v !== '' && Number.isFinite(n) && n > 0 && n < 1e13 ? Math.round(n) : null;
 };
+const KIND_KEY = /^[a-z0-9_]{1,40}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Whatever was stored, as a rhythm that can be relied on. */
+/** Whatever was stored (in this shape or the first one, with new/expansion/renewal side by side), as a rhythm that can be relied on. */
 export function rhythmOf(raw: unknown): Rhythm {
-  const r = (raw ?? {}) as { targets?: Record<string, unknown>; reviewDays?: unknown; staleDays?: unknown; escalateDays?: unknown };
+  const r = (raw ?? {}) as { targets?: Record<string, unknown>; reviewDays?: unknown; staleDays?: unknown; escalateDays?: unknown; renewal?: Record<string, unknown> };
   const t = r.targets ?? {};
+  const amounts: Record<string, number> = {};
+  const given = t.amounts && typeof t.amounts === 'object' ? (t.amounts as Record<string, unknown>) : {};
+  for (const k of TARGET_KINDS) if (t[k] !== undefined && given[k] === undefined) given[k] = t[k];
+  for (const [k, v] of Object.entries(given)) {
+    const n = amount(v);
+    if (KIND_KEY.test(k) && n) amounts[k] = n;
+  }
+  const rn = r.renewal ?? {};
   return {
     targets: {
       period: (TARGET_PERIODS as readonly string[]).includes(String(t.period)) ? (t.period as TargetPeriod) : 'quarter',
-      new: amount(t.new),
-      expansion: amount(t.expansion),
-      renewal: amount(t.renewal),
+      amounts,
+      total: amount(t.total),
     },
     reviewDays: whole(r.reviewDays, 0, 730, DEFAULT_RHYTHM.reviewDays),
     staleDays: whole(r.staleDays, 0, 365, DEFAULT_RHYTHM.staleDays),
     escalateDays: whole(r.escalateDays, 0, 90, DEFAULT_RHYTHM.escalateDays),
+    renewal: {
+      days: whole(rn.days, 0, 730, 0),
+      planId: typeof rn.planId === 'string' && UUID.test(rn.planId) ? rn.planId : null,
+      opportunity: rn.opportunity === true,
+    },
   };
 }
+
+/** The whole period's target: its own, or the types' added up. */
+export const totalTarget = (t: Targets) => t.total ?? Object.values(t.amounts).reduce((n, v) => n + v, 0);
 
 const DAY = 86_400_000;
 const utc = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
@@ -131,9 +167,10 @@ export interface TargetRow extends Pace {
 }
 
 /**
- * Targets against deals for the period today falls in: one row per kind
- * that has a target, and one for everything when there is more than one
- * (or when deals carry no kind). Also who won how much.
+ * Targets against deals for the period today falls in: one row per type that
+ * has a target, and one for everything when there is more than one (or when
+ * the company counts all deals together, or deals carry no type). Also who
+ * won how much.
  */
 export function targetReport(rhythm: Rhythm, deals: DealLike[], today: string, hasKinds = true) {
   const period = periodOf(today, rhythm.targets.period);
@@ -142,15 +179,15 @@ export function targetReport(rhythm: Rhythm, deals: DealLike[], today: string, h
   const open = deals.filter((d) => d.status !== 'won' && d.status !== 'lost' && inPeriod(d));
   const sum = (list: DealLike[], w = false) => list.reduce((n, d) => n + d.amount * (w ? d.weight : 1), 0);
   const rows: TargetRow[] = [];
-  const set = TARGET_KINDS.filter((k) => rhythm.targets[k]);
+  const set = Object.entries(rhythm.targets.amounts);
   if (hasKinds) {
-    for (const k of set) {
+    for (const [k, target] of set) {
       const mine = (d: DealLike) => d.kind === k;
-      rows.push({ kind: k, deals: won.filter(mine).length, ...paceOf(rhythm.targets[k]!, sum(won.filter(mine)), sum(open.filter(mine), true), period) });
+      rows.push({ kind: k, deals: won.filter(mine).length, ...paceOf(target, sum(won.filter(mine)), sum(open.filter(mine), true), period) });
     }
   }
-  const total = set.reduce((n, k) => n + rhythm.targets[k]!, 0);
-  if (total && (!hasKinds || rows.length > 1)) rows.push({ kind: 'all', deals: won.length, ...paceOf(total, sum(won), sum(open, true), period) });
+  const total = totalTarget(rhythm.targets);
+  if (total && (!hasKinds || rows.length !== 1 || rhythm.targets.total !== null)) rows.push({ kind: 'all', deals: won.length, ...paceOf(total, sum(won), sum(open, true), period) });
   const owners = new Map<string, { ownerId: string; won: number; deals: number }>();
   for (const d of won) {
     if (!d.ownerId) continue;

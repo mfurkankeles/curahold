@@ -12,6 +12,16 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-deals-playbooks',
+    date: '2026-11-12',
+    title: { tr: 'Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri', en: 'Playbooks, renewals that start by themselves, currencies' },
+    body: {
+      tr: 'Yenileme playbook’unu yaz; her müşterinin yenilemesinden (örneğin) 180 gün önce görevleri ve yenileme fırsatı kendiliğinden açılır. Tutarlar kendi para biriminde, toplamlar şirketin kurlarıyla. Fırsatların kendi yorum akışı var: dosya ekle, ekran görüntüsü yapıştır. Raporlar ve paneller ayrıldı; ilgilendiklerini yıldızla.',
+      en: 'Write a renewal playbook and its tasks, with a renewal opportunity, open by themselves (say) 180 days before each renewal. Amounts keep their own currency; totals use the company’s rates. Opportunities have their own thread: attach files, paste screenshots. Reports and dashboards are now apart; star what you follow.',
+    },
+    action: { kind: 'go', to: '/settings/playbooks', label: { tr: 'Playbook’lara git', en: 'Go to playbooks' } },
+  },
+  {
     id: '2026-11-report-builder',
     date: '2026-11-12',
     title: { tr: 'Kendi raporunu kur; hazır paneller', en: 'Build your own reports; ready-made dashboards' },

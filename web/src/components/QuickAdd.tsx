@@ -45,6 +45,8 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   const [fixedAccount, setFixedAccount] = useState<Pickable | null>(defaults.accountId ? { id: defaults.accountId, name: defaults.accountName ?? '' } : null);
   const [fixedPeople, setFixedPeople] = useState<string[]>(defaults.assigneeIds ?? []);
   const [fixedDue, setFixedDue] = useState<string | null>(defaults.dueDate ?? null);
+  // The record the task belongs to, kept unless taken off.
+  const [fixedRecord, setFixedRecord] = useState<Pickable | null>(defaults.recordId ? { id: defaults.recordId, name: defaults.recordName ?? '' } : null);
   const [found, setFound] = useState<Map<string, Pickable>>(new Map());
   const [caret, setCaret] = useState(0);
   const [suggest, setSuggest] = useState<{ items: Pickable[]; active: number } | null>(null);
@@ -187,6 +189,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
           dueDate: p.dueDate ?? fixedDue,
           assigneeIds: assignees,
           accountId: p.account?.id ?? fixedAccount?.id ?? null,
+          ...(fixedRecord ? { recordId: fixedRecord.id } : {}),
           ...(p.priority ? { priority: p.priority } : {}),
           ...(p.repeat ? { repeat: p.repeat } : {}),
         });
@@ -196,7 +199,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
       tasksChanged();
       if (made.length === 1) {
         const task = made[0];
-        toast(t('quick.added', { title: task.title }), 'info', { label: t('quick.open'), run: () => setQuery('task', task.id) });
+        toast(defaults.doneText ?? t('quick.added', { title: task.title }), 'info', { label: t('quick.open'), run: () => setQuery('task', task.id) });
       } else toast(t('quick.addedMany', { n: made.length, board: board.name }));
       if (keep) {
         setText('');
@@ -348,6 +351,15 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
                 </button>
               </span>
             )}
+            {fixedRecord && (
+              <span className="qchip" data-kind="record">
+                <Icon name="funnel" size={14} />
+                {fixedRecord.name}
+                <button type="button" aria-label={t('quick.removeChip', { what: fixedRecord.name })} onClick={() => setFixedRecord(null)}>
+                  <Icon name="close" size={12} />
+                </button>
+              </span>
+            )}
             {fixedAccount && !single.account && (
               <span className="qchip" data-kind="account">
                 <Icon name="building" size={14} />
@@ -391,7 +403,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
                 {t('quick.unknown', { what: u })}
               </span>
             ))}
-            {single.tokens.length === 0 && !single.unknown.length && !fixedAccount && !fixedDue && !fixedPeople.length && <span className="qa__nochips">{t('quick.nothingRead', { account: words.one.toLocaleLowerCase(locale) })}</span>}
+            {single.tokens.length === 0 && !single.unknown.length && !fixedAccount && !fixedRecord && !fixedDue && !fixedPeople.length && <span className="qa__nochips">{t('quick.nothingRead', { account: words.one.toLocaleLowerCase(locale) })}</span>}
           </div>
         )}
 

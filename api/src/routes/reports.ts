@@ -154,10 +154,23 @@ reportRoutes.get('/reports/person/:id', async (c) => {
 
 const money = z.number().min(0).max(1e13).nullable();
 const rhythmInput = z.object({
-  targets: z.object({ period: z.enum(TARGET_PERIODS), new: money, expansion: money, renewal: money }).partial().optional(),
+  targets: z
+    .object({
+      period: z.enum(TARGET_PERIODS),
+      // Every type that has a target; a type left out has none.
+      amounts: z.record(z.string().regex(/^[a-z0-9_]{1,40}$/), money),
+      total: money,
+      // The first shape, one amount per built-in type.
+      new: money,
+      expansion: money,
+      renewal: money,
+    })
+    .partial()
+    .optional(),
   reviewDays: z.number().int().min(0).max(730).optional(),
   staleDays: z.number().int().min(0).max(365).optional(),
   escalateDays: z.number().int().min(0).max(90).optional(),
+  renewal: z.object({ days: z.number().int().min(0).max(730), planId: uuid.nullable(), opportunity: z.boolean() }).partial().optional(),
 });
 
 /**
@@ -171,7 +184,20 @@ reportRoutes.put('/rhythm', async (c) => {
   const input = await body(c, rhythmInput);
   const org = c.get('org');
   const now = rhythmOf((org.settings as any)?.rhythm);
-  const next = rhythmOf({ ...now, ...input, targets: { ...now.targets, ...(input.targets ?? {}) } });
+  const t = input.targets ?? {};
+  // Amounts sent whole replace the old ones; the first shape's keys change only themselves.
+  const amounts: Record<string, unknown> = t.amounts ? { ...t.amounts } : { ...now.targets.amounts };
+  for (const k of ['new', 'expansion', 'renewal'] as const) if (t[k] !== undefined) amounts[k] = t[k];
+  const next = rhythmOf({
+    ...now,
+    ...input,
+    targets: { period: t.period ?? now.targets.period, amounts, total: t.total !== undefined ? t.total : now.targets.total },
+    renewal: { ...now.renewal, ...(input.renewal ?? {}) },
+  });
+  if (input.renewal?.planId) {
+    const [plan] = await run(c, (q) => q.query('select 1 from plan_templates where id = $1', [input.renewal!.planId]));
+    if (!plan) fail('validation', { fields: 'renewal.planId' }, { fields: ['renewal.planId'] });
+  }
   await run(c, async (q) => {
     await q.query('select app_set_rhythm($1::jsonb)', [JSON.stringify(next)]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'rhythm.updated', entity: 'org', entityId: org.id, meta: { changed: Object.keys(input) } });

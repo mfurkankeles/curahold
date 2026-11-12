@@ -6,6 +6,7 @@ import { startTheme } from './lib/theme';
 import './styles.css';
 import './reports.css';
 import './motion.css';
+import './work.css';
 
 startTheme();
 startPwa();

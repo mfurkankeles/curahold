@@ -1,6 +1,7 @@
 // The frame around every screen: where you are, where you can go, and the
 // one button that adds anything. On a phone the same things sit in a bar at
 // the bottom, within reach of a thumb.
+import { FAVORITE_ICON } from './Favorites';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
@@ -148,6 +149,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   };
   const runNews = (a: NewsAction) => (a.kind === 'quickAdd' ? actions.quickAdd() : a.kind === 'shortcuts' ? actions.shortcuts() : navigate(a.to));
 
+  const favorites = me.user.prefs.favorites ?? [];
   const accountsView = path === '/accounts' ? new URLSearchParams(search).get('view') : null;
   const renewalsOn = accountsView === 'renewals';
   const reviewsOn = accountsView === 'reviews';
@@ -380,6 +382,12 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               {link('/inbox', t('nav.inbox'), here.inbox, 'inbox', unread > 0 ? <span className="navlink__count" data-tone="today">{unread > 99 ? '99+' : unread}</span> : undefined)}
               {link('/calendar', t('nav.calendar'), here.calendar, 'calendar')}
             </div>
+            {favorites.length > 0 &&
+              section(
+                'favorites',
+                t('nav.favorites'),
+                <>{favorites.map((f) => link(f.to, f.name, `${path}${search}` === f.to || path === f.to, FAVORITE_ICON[f.kind]))}</>,
+              )}
             {section(
               'crm',
               words.other,
@@ -387,7 +395,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/accounts', t('nav.allAccounts', { accounts: words.other }), here.accounts, 'building')}
                 {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
                 {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
-                {link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
+                {(me.org.rhythm?.reviewDays ?? 0) > 0 && link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
               </>,
             )}
             {section(
@@ -415,7 +423,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               'insight',
               t('nav.insight'),
               <>
-                {link('/reports', t('nav.reports'), path === '/reports' || path.startsWith('/reports/'), 'chart')}
+                {link('/reports', t('nav.reports'), path === '/reports' || (path.startsWith('/reports/') && path !== '/reports/dashboards'), 'chart')}
+                {link('/dashboards', t('nav.dashboards'), path.startsWith('/dashboards') || path === '/reports/dashboards', 'layout')}
                 {link('/team', t('nav.team'), path === '/team', 'people')}
               </>,
             )}

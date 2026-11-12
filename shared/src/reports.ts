@@ -30,7 +30,7 @@ export interface ReportSourceInfo {
   fields: ReportField[];
 }
 
-export const CHARTS = ['bar', 'column', 'stacked', 'line', 'donut', 'number', 'table'] as const;
+export const CHARTS = ['bar', 'column', 'stacked', 'line', 'donut', 'number', 'gauge', 'table'] as const;
 export type ChartKind = (typeof CHARTS)[number];
 
 export const BUCKETS = ['day', 'week', 'month', 'quarter', 'year'] as const;
@@ -71,8 +71,16 @@ export interface ReportGroup {
   bucket?: Bucket;
 }
 
+/** How a report lays its rows out: a list, groups with their rows and subtotals, or a grid of two groupings. */
+export const FORMATS = ['tabular', 'summary', 'matrix'] as const;
+export type ReportFormat = (typeof FORMATS)[number];
+
 export interface ReportDef {
   source: ReportSource;
+  /** Without one: tabular when nothing is grouped, otherwise summary. */
+  format?: ReportFormat;
+  /** Draw a chart above the table (always, on a dashboard). */
+  showChart?: boolean;
   filters: ReportFilter[];
   /** None: a list of rows (or one figure). One: bars. Two: the second splits each bar. */
   groups: ReportGroup[];
@@ -83,6 +91,8 @@ export interface ReportDef {
   /** How many groups to draw; the rest become "Other". */
   top?: number;
   sort?: 'value' | 'label';
+  /** What a gauge fills up to (a figure with no grouping). */
+  goal?: number;
 }
 
 export interface SavedReport {
@@ -104,8 +114,11 @@ export interface ReportGroupRow {
   label: string;
   color?: OptionColor | null;
   value: number;
+  /** How many rows are in it. */
+  count?: number;
   /** One per series, when the report has a second grouping. */
   cells?: number[];
+  counts?: number[];
 }
 
 export type ReportResult =
@@ -123,8 +136,30 @@ export type ReportResult =
       series: { key: string; label: string; color?: OptionColor | null }[];
       /** The first grouping is time: the keys are the first day of each bucket. */
       bucket: Bucket | null;
-      table: { columns: { key: string; label: string; type: ReportFieldType }[]; rows: (string | number | null)[][]; more: boolean } | null;
+      format?: ReportFormat;
+      /** The rows; in a summary, `keys` says which group (and inner group) each row is in. */
+      table: { columns: { key: string; label: string; type: ReportFieldType }[]; rows: (string | number | null)[][]; keys?: string[][]; more: boolean } | null;
     };
+
+/**
+ * A chart has room for a dozen bars, not two hundred: past `top`, the rest
+ * are added up into one "Other" — only for figures that add up (counts and
+ * sums), and never for time, where every bucket keeps its place.
+ */
+export function foldTop(r: Extract<ReportResult, { kind: 'ok' }>, top: number, other: string): Extract<ReportResult, { kind: 'ok' }> {
+  if (r.bucket || r.groups.length <= top || (r.unit !== 'count' && r.unit !== 'money' && r.unit !== 'hours' && r.unit !== 'number')) return r;
+  const rest = r.groups.slice(top);
+  const sum = (pick: (g: ReportGroupRow) => number) => rest.reduce((n, g) => n + pick(g), 0);
+  const folded: ReportGroupRow = {
+    key: '~other',
+    label: other,
+    color: 'stone',
+    value: sum((g) => g.value),
+    count: sum((g) => g.count ?? 0),
+    ...(r.series.length ? { cells: r.series.map((_, i) => sum((g) => g.cells?.[i] ?? 0)) } : {}),
+  };
+  return { ...r, groups: [...r.groups.slice(0, top), folded] };
+}
 
 /** Tells a half-made report from one that can be run. */
 export function defProblem(def: ReportDef, source: ReportSourceInfo | undefined): string | null {
@@ -141,7 +176,7 @@ export const blankDef = (source: ReportSource = 'tasks'): ReportDef => ({ source
 /** The chart that suits a shape, when the person has not chosen one that does. */
 export function fitChart(def: ReportDef): ChartKind {
   const n = def.groups.length;
-  if (n === 0) return def.chart === 'number' ? 'number' : 'table';
+  if (n === 0) return def.chart === 'number' || def.chart === 'gauge' ? def.chart : 'table';
   if (def.chart === 'table') return 'table';
   if (n === 2) return def.chart === 'column' || def.chart === 'line' || def.chart === 'stacked' ? def.chart : 'stacked';
   return def.chart === 'number' || def.chart === 'stacked' ? 'bar' : def.chart;

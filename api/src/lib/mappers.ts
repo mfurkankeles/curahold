@@ -37,6 +37,8 @@ export const toTask = (r: Row): Task => ({
   fields: r.fields ?? {},
   startDate: day(r.start_date),
   ...(r.blocked_by != null ? { blockedBy: Number(r.blocked_by) } : {}),
+  recordId: r.record_id ?? null,
+  ...(r.record_name !== undefined ? { recordName: r.record_name ?? null, recordType: r.record_type ?? null } : {}),
 });
 
 export const toBoard = (r: Row, canManage: boolean): Board => ({
@@ -68,7 +70,9 @@ export const toComment = (r: Row): Comment => ({
 
 export const toFile = (r: Row): FileMeta => ({
   id: r.id,
-  taskId: r.task_id,
+  taskId: r.task_id ?? null,
+  recordId: r.record_id ?? null,
+  commentId: r.comment_id ?? r.record_comment_id ?? null,
   name: r.name,
   size: Number(r.size),
   mime: r.mime,

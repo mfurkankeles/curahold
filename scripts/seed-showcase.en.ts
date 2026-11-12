@@ -129,6 +129,7 @@ export const EN: Record<string, string> = {
   'Sunumu hazırla': 'Prepare the deck',
   'Davetleri gönder': 'Send the invitations',
   'Onboarding (ilk 30 gün)': 'Onboarding (first 30 days)',
+  'Yeni bir müşterinin ilk ayı.': 'A new customer’s first month.',
   'Açılış toplantısı: {account_name}': 'Kickoff: {account_name}',
   'Gündemi gönder': 'Send the agenda',
   'Katılımcıları doğrula': 'Confirm who is coming',

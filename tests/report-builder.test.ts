@@ -2,7 +2,7 @@
 // reports, and the ready-made dashboards.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { periodBounds } from '../api/src/lib/reportEngine';
-import { DASHBOARD_TEMPLATES, REPORT_LIBRARY, blankDef, fitChart, libraryReport, type ReportDef, type ReportResult } from '../shared/src/reports';
+import { DASHBOARD_TEMPLATES, REPORT_LIBRARY, blankDef, fitChart, foldTop, libraryReport, type ReportDef, type ReportResult } from '../shared/src/reports';
 import { Client, login, setup, type Env } from './helpers';
 
 let env: Env;
@@ -122,9 +122,14 @@ describe('running a report', () => {
       const before = await run(ada, { ...blankDef('accounts'), filters: [{ field: 'renewal_date', op: 'last', period }], groups: [{ field: 'renewal_date', bucket: 'month' }], chart: 'column' });
       expect(now.matched + before.matched).toBeLessThanOrEqual(all.matched);
     }
+    // A report's own table shows every group; a chart folds all but the top few into "Other".
     const byName = await run(ada, { ...blankDef('accounts'), groups: [{ field: 'name' }], measure: { fn: 'sum', field: 'arr' }, chart: 'bar', top: 5 });
-    expect(byName.groups.length).toBeLessThanOrEqual(6);
-    expect(byName.groups.at(-1)!.key).toBe('~other');
+    expect(byName.groups.length).toBe(all.matched);
+    expect(byName.groups.some((g) => g.key === '~other')).toBe(false);
+    const drawn = foldTop(byName, 5, 'Other');
+    expect(drawn.groups.length).toBe(6);
+    expect(drawn.groups.at(-1)!.key).toBe('~other');
+    expect(drawn.groups.reduce((n, g) => n + g.value, 0)).toBe(byName.total);
   });
 
   it('lists rows with readable cells when nothing is grouped', async () => {

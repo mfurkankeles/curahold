@@ -10,6 +10,7 @@ import { deliverWebhooks } from './webhooks';
 import { dailyHealth, flushHealth } from './health';
 import { sendWeekly } from './weekly';
 import { sendNudges } from './nudges';
+import { startRenewals } from './playbooks';
 
 const DIGEST_ITEMS = 8;
 
@@ -133,5 +134,7 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     await cleanUp(deps);
     await archiveFinished(deps, now).catch((e) => console.error('[tendwell] archiving finished work failed', e));
   }
+  // Renewals coming close enough start by themselves, early in the working day.
+  if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[tendwell] starting renewals failed', e));
   return { digests, weekly, nudges, fired, delivered, synced, hooks };
 }

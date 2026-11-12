@@ -1,8 +1,9 @@
 // Rhythm on screen: targets against the pipeline, when the next business
 // review is due, and the settings for both (and for the nudges).
+import { useMoney } from '../lib/money';
 import { useMemo, useState } from 'react';
 import type { Account, AccountField } from '../../../shared/src/model';
-import type { AppRecord, RecordType } from '../../../shared/src/records';
+import { typeLabel, type AppRecord, type RecordType } from '../../../shared/src/records';
 import { DEFAULT_RHYTHM, TARGET_KINDS, TARGET_PERIODS, reviewDue, targetReport, type DealLike, type Period, type ReviewDue, type Rhythm, type TargetKind, type TargetRow } from '../../../shared/src/rhythm';
 import { labelOf } from '../../../shared/src/fields';
 import { ApiFailure, put } from '../lib/api';
@@ -12,14 +13,18 @@ import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { todayIso } from '../lib/time';
 import { useFieldFormat } from '../pages/Accounts';
+import { useRecordTypes } from './AccountFields';
+import { keyFields } from './AccountViews';
+import { Switch } from './Automations';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
+import { usePlaybooks } from './Plans';
 import { Avatar } from './ui';
 
 export const useRhythm = (): Rhythm => useStore().me.org.rhythm ?? DEFAULT_RHYTHM;
 
 /** Deals as the target sums need them: an open deal counts by how far along its stage is. */
-export function dealsOf(type: RecordType, records: AppRecord[]): { deals: DealLike[]; hasKinds: boolean; money: AccountField | undefined } {
+export function dealsOf(type: RecordType, records: AppRecord[], toBase: (amount: number, currency?: string | null) => number = (a) => a): { deals: DealLike[]; hasKinds: boolean; money: AccountField | undefined } {
   const money = type.fields.find((f) => f.key === 'amount' && f.type === 'money') ?? type.fields.find((f) => f.type === 'money');
   const date = type.fields.find((f) => f.key === 'close_date') ?? type.fields.find((f) => f.type === 'date');
   const stage = type.fields.find((f) => f.key === 'stage' && f.type === 'select');
@@ -33,7 +38,7 @@ export function dealsOf(type: RecordType, records: AppRecord[]): { deals: DealLi
       const planned = date ? r.fields[date.key] : null;
       return {
         ownerId: r.ownerId,
-        amount: money ? Number(r.fields[money.key]) || 0 : 0,
+        amount: money ? toBase(Number(r.fields[money.key]) || 0, r.currency) : 0,
         status,
         kind: r.fields.kind == null ? null : String(r.fields.kind),
         // A won deal with no date closed when it was last changed.
@@ -97,7 +102,8 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
   const fmt = useFieldFormat();
   const rhythm = useRhythm();
   const periodLabel = usePeriodLabel();
-  const { deals, hasKinds, money } = useMemo(() => dealsOf(type, records), [type, records]);
+  const cur = useMoney();
+  const { deals, hasKinds, money } = useMemo(() => dealsOf(type, records, cur.toBase), [type, records, cur]);
   const report = useMemo(() => targetReport(rhythm, deals, todayIso(), hasKinds), [rhythm, deals, hasKinds]);
   const cash = (n: number) => (money ? fmt(money, n) || '0' : String(n));
   const kindLabel = (k: TargetKind | 'all') => {
@@ -232,6 +238,8 @@ export function ReviewField({ account, onSave }: { account: Account; onSave: (bo
   const text = useReviewText();
   const due = reviewDue(account, rhythm.reviewDays, todayIso());
   const choices = [...new Set([...REVIEW_CHOICES, ...(due.own && due.every ? [due.every] : [])])].sort((a, b) => a - b);
+  // The company holds no business reviews (Settings → Targets and rhythm).
+  if (!rhythm.reviewDays) return null;
   return (
     <div className="field review">
       <span className="field__label">{t('reviews.label')}</span>
@@ -323,9 +331,10 @@ export function ReviewsView({ rows }: { rows: { a: Account }[] }) {
                         {text(due)}
                       </span>
                     </td>
-                    <td className="muted hide-phone">{due.last ? t('reviews.last', { date: fmtDate(due.last, { day: 'numeric', month: 'short', year: 'numeric' }) }) : t('reviews.neverDone')}</td>
-                    <td className="muted num hide-phone">{t('reviews.everyShort', { n: due.every })}</td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="muted hide-phone review__history">
+                      {due.last ? t('reviews.last', { date: fmtDate(due.last, { day: 'numeric', month: 'short', year: 'numeric' }) }) : t('reviews.neverDone')} · {t('reviews.everyShort', { n: due.every })}
+                    </td>
+                    <td className="table__action">
                       {canWrite && (
                         <button
                           className="btn btn--small"
@@ -351,17 +360,65 @@ export function ReviewsView({ rows }: { rows: { a: Account }[] }) {
 
 // ------------------------------------------------------------- settings
 
+/** How far ahead a renewal can start; six months (180 days) is the usual. */
+const RENEWAL_CHOICES = [30, 60, 90, 120, 180, 270, 365];
+
+/** Does the company hold business reviews at all? Off hides them everywhere. */
+export const useReviewsOn = () => useRhythm().reviewDays > 0;
+
+type TargetMode = 'none' | 'total' | 'kinds';
+const modeOf = (r: Rhythm): TargetMode => (Object.keys(r.targets.amounts).length ? 'kinds' : r.targets.total ? 'total' : 'none');
+
+/**
+ * Settings → Targets and rhythm. Each part is the company's own choice:
+ *  - targets: none, one for all deals, or one per type of deal (each type on or off);
+ *  - business reviews: held or not, and how often;
+ *  - renewals: started by Tendwell or not, how far ahead, with which playbook;
+ *  - nudges: when Tendwell speaks up about work that has gone still.
+ * Saved together with one PUT /rhythm (api/src/routes/reports.ts).
+ */
 export function RhythmSettings() {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();
+  const { types } = useRecordTypes();
+  const { plans } = usePlaybooks();
   const [r, setR] = useState<Rhythm>(me.org.rhythm ?? DEFAULT_RHYTHM);
-  const grouped = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-GB');
+  const [mode, setMode] = useState<TargetMode>(() => modeOf(me.org.rhythm ?? DEFAULT_RHYTHM));
+  // Types switched on but not given an amount yet still show their box.
+  const [kindsOn, setKindsOn] = useState<string[]>(() => Object.keys((me.org.rhythm ?? DEFAULT_RHYTHM).targets.amounts));
   const [busy, setBusy] = useState(false);
+  const grouped = new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-GB');
   const num = (v: string) => (v.trim() === '' ? null : Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) || null);
+  const show = (n: number | null | undefined) => (n == null ? '' : grouped.format(n));
+
+  // The kinds of deal come from the opportunities' own "Type" choices; the usual three otherwise.
+  const deals = types?.find((x) => x.kind === 'opportunity') ?? null;
+  const kindField = deals?.fields.find((f) => f.key === 'kind' && f.type === 'select');
+  const kinds: { key: string; label: string }[] = kindField?.options?.length
+    ? kindField.options.map((o) => ({ key: o.key, label: labelOf(o.label, locale) }))
+    : TARGET_KINDS.map((k) => ({ key: k, label: t(`targets.kind.${k}` as const) }));
+  const sum = kindsOn.reduce((n, k) => n + (r.targets.amounts[k] ?? 0), 0);
+  const { renewal: renewalField } = keyFields(me.org.accountFields);
+  const renewalPlans = [...(plans ?? [])].sort((a, b) => Number(b.anchor === 'renewal') - Number(a.anchor === 'renewal'));
+
+  const setAmount = (k: string, v: number | null) => {
+    const amounts = { ...r.targets.amounts };
+    if (v) amounts[k] = v;
+    else delete amounts[k];
+    setR({ ...r, targets: { ...r.targets, amounts } });
+  };
+  const toggleKind = (k: string, on: boolean) => {
+    setKindsOn(on ? [...kindsOn, k] : kindsOn.filter((x) => x !== k));
+    if (!on) setAmount(k, null);
+  };
+
   const save = async () => {
+    // Only what the chosen way of setting targets uses is kept.
+    const amounts = mode === 'kinds' ? Object.fromEntries(Object.entries(r.targets.amounts).filter(([k, v]) => kindsOn.includes(k) && v > 0)) : {};
+    const total = mode === 'total' ? r.targets.total : null;
     setBusy(true);
     try {
-      await put('/rhythm', r);
+      await put('/rhythm', { ...r, targets: { period: r.targets.period, amounts, total } });
       await reloadMe();
       toast(t('common.saved'));
     } catch (e) {
@@ -370,67 +427,156 @@ export function RhythmSettings() {
       setBusy(false);
     }
   };
-  const days = (label: string, value: number, choices: number[], onChange: (n: number) => void, unit: 'rhythm.days' | 'rhythm.daysLate' = 'rhythm.days', hint?: string) => (
+
+  const days = (label: string, value: number, choices: number[], onChange: (n: number) => void, opts: { unit?: 'rhythm.days' | 'rhythm.daysLate' | 'rhythm.daysAhead'; hint?: string; off?: boolean } = {}) => (
     <label className="field rhythm__pick">
       <span className="field__label">{label}</span>
       <select className="select" value={value} onChange={(e) => onChange(Number(e.target.value))}>
-        <option value={0}>{t('rhythm.off')}</option>
+        {opts.off !== false && <option value={0}>{t('rhythm.off')}</option>}
         {[...new Set([...choices, ...(value ? [value] : [])])]
           .sort((a, b) => a - b)
           .map((n) => (
             <option key={n} value={n}>
-              {t(unit, { n })}
+              {t(opts.unit ?? 'rhythm.days', { n })}
             </option>
           ))}
       </select>
-      {hint && <span className="field__hint">{hint}</span>}
+      {opts.hint && <span className="field__hint">{opts.hint}</span>}
     </label>
   );
+  const settingsLink = (to: string, label: string) => (
+    <a
+      href={to}
+      onClick={(e) => {
+        e.preventDefault();
+        navigate(to);
+      }}
+    >
+      {label}
+    </a>
+  );
+
   return (
     <div className="rhythm">
       <section className="sheet">
         <h2 className="sheet__title">{t('rhythm.targets')}</h2>
-        <p className="sheet__hint">{t('rhythm.targetsHint', { currency: me.org.currency })}</p>
-        <label className="field rhythm__pick">
-          <span className="field__label">{t('rhythm.period')}</span>
-          <select className="select" value={r.targets.period} onChange={(e) => setR({ ...r, targets: { ...r.targets, period: e.target.value as Rhythm['targets']['period'] } })}>
-            {TARGET_PERIODS.map((p) => (
-              <option key={p} value={p}>
-                {t(`rhythm.period.${p}` as any)}
-              </option>
+        <p className="sheet__hint">{t('rhythm.targetsHint2', { currency: me.org.currency })}</p>
+        <div className="field">
+          <span className="field__label" id="target-mode">
+            {t('rhythm.targetMode')}
+          </span>
+          <div className="seg" role="radiogroup" aria-labelledby="target-mode">
+            {(['none', 'total', 'kinds'] as const).map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}>
+                {t(`rhythm.mode.${m}` as const)}
+              </button>
             ))}
-          </select>
-        </label>
-        <div className="rhythm__amounts">
-          {TARGET_KINDS.map((k) => (
-            <label className="field" key={k}>
-              <span className="field__label">{t(`targets.kind.${k}` as any)}</span>
-              <input
-                className="input num"
-                inputMode="numeric"
-                placeholder={t('rhythm.noTarget')}
-                value={r.targets[k] == null ? '' : grouped.format(r.targets[k]!)}
-                onChange={(e) => setR({ ...r, targets: { ...r.targets, [k]: num(e.target.value) } })}
-              />
-            </label>
-          ))}
+          </div>
         </div>
+        {mode !== 'none' && (
+          <label className="field rhythm__pick">
+            <span className="field__label">{t('rhythm.period')}</span>
+            <select className="select" value={r.targets.period} onChange={(e) => setR({ ...r, targets: { ...r.targets, period: e.target.value as Rhythm['targets']['period'] } })}>
+              {TARGET_PERIODS.map((p) => (
+                <option key={p} value={p}>
+                  {t(`rhythm.period.${p}` as const)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {mode === 'total' && (
+          <label className="field rhythm__pick">
+            <span className="field__label">{t('rhythm.totalTarget')}</span>
+            <span className="moneyin">
+              <input className="input num" inputMode="numeric" placeholder={t('rhythm.noTarget')} value={show(r.targets.total)} onChange={(e) => setR({ ...r, targets: { ...r.targets, total: num(e.target.value) } })} />
+              <span className="moneyin__cur">{me.org.currency}</span>
+            </span>
+          </label>
+        )}
+        {mode === 'kinds' && (
+          <>
+            {!kindField && <p className="field__hint">{deals ? t('rhythm.kindsDefault') : t('rhythm.noDeals')}</p>}
+            <ul className="rhythm__kinds">
+              {kinds.map((k) => {
+                const on = kindsOn.includes(k.key);
+                return (
+                  <li key={k.key} data-on={on || undefined}>
+                    <Switch on={on} label={t('rhythm.kindOn', { kind: k.label })} onChange={(v) => toggleKind(k.key, v)} />
+                    <span className="rhythm__kind">{k.label}</span>
+                    {on ? (
+                      <span className="moneyin">
+                        <input className="input num" inputMode="numeric" autoFocus={!r.targets.amounts[k.key]} aria-label={t('rhythm.kindAmount', { kind: k.label })} placeholder="0" value={show(r.targets.amounts[k.key])} onChange={(e) => setAmount(k.key, num(e.target.value))} />
+                        <span className="moneyin__cur">{me.org.currency}</span>
+                      </span>
+                    ) : (
+                      <span className="muted small">{t('rhythm.noTarget')}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {kindsOn.length > 1 && sum > 0 && <p className="rhythm__sum">{t('rhythm.kindsSum', { value: `${grouped.format(sum)} ${me.org.currency}` })}</p>}
+          </>
+        )}
       </section>
 
       <section className="sheet">
-        <h2 className="sheet__title">{t('rhythm.reviews')}</h2>
-        <p className="sheet__hint">{t('rhythm.reviewsHint')}</p>
-        {days(t('rhythm.reviewEvery'), r.reviewDays, REVIEW_CHOICES, (n) => setR({ ...r, reviewDays: n }))}
+        <div className="rhythm__head">
+          <div>
+            <h2 className="sheet__title">{t('rhythm.reviews')}</h2>
+            <p className="sheet__hint">{r.reviewDays ? t('rhythm.reviewsHint') : t('rhythm.reviewsOffHint')}</p>
+          </div>
+          <Switch on={r.reviewDays > 0} label={t('rhythm.reviewsOn')} onChange={(v) => setR({ ...r, reviewDays: v ? 90 : 0 })} />
+        </div>
+        {r.reviewDays > 0 && days(t('rhythm.reviewEvery'), r.reviewDays, REVIEW_CHOICES, (n) => setR({ ...r, reviewDays: n }), { off: false })}
+      </section>
+
+      <section className="sheet">
+        <div className="rhythm__head">
+          <div>
+            <h2 className="sheet__title">{t('rhythm.renewals')}</h2>
+            <p className="sheet__hint">{renewalField ? t('rhythm.renewalsHint') : t('rhythm.renewalsNoField')}</p>
+          </div>
+          <Switch on={r.renewal.days > 0} disabled={!renewalField} label={t('rhythm.renewalsOn')} onChange={(v) => setR({ ...r, renewal: { ...r.renewal, days: v ? 180 : 0 } })} />
+        </div>
+        {!renewalField && <p className="field__hint">{settingsLink('/settings/fields', t('rhythm.addRenewalField'))}</p>}
+        {r.renewal.days > 0 && (
+          <div className="rhythm__renewal">
+            {days(t('rhythm.renewalStart'), r.renewal.days, RENEWAL_CHOICES, (n) => setR({ ...r, renewal: { ...r.renewal, days: n } }), { unit: 'rhythm.daysAhead', off: false })}
+            <label className="field rhythm__pick">
+              <span className="field__label">{t('rhythm.renewalPlaybook')}</span>
+              <select className="select" value={r.renewal.planId ?? ''} onChange={(e) => setR({ ...r, renewal: { ...r.renewal, planId: e.target.value || null } })}>
+                <option value="">{t('rhythm.renewalOneTask')}</option>
+                {renewalPlans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · {t('plans.tasksN', { n: p.tasks.length })}
+                  </option>
+                ))}
+              </select>
+              <span className="field__hint">{settingsLink('/settings/playbooks', plans?.some((p) => p.anchor === 'renewal') ? t('rhythm.editPlaybooks') : t('rhythm.writeRenewalPlaybook'))}</span>
+            </label>
+            {deals && (
+              <label className="check">
+                <input type="checkbox" checked={r.renewal.opportunity} onChange={(e) => setR({ ...r, renewal: { ...r.renewal, opportunity: e.target.checked } })} />
+                <span>
+                  {t('rhythm.renewalDeal', { type: typeLabel(deals, locale, false).toLocaleLowerCase(locale === 'tr' ? 'tr-TR' : 'en-GB') })}
+                  <span className="field__hint">{t('rhythm.renewalDealHint')}</span>
+                </span>
+              </label>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="sheet">
         <h2 className="sheet__title">{t('rhythm.nudges')}</h2>
         <p className="sheet__hint">{t('rhythm.nudgesHint')}</p>
-        {days(t('rhythm.stale'), r.staleDays, [7, 14, 21, 30], (n) => setR({ ...r, staleDays: n }), 'rhythm.days', t('rhythm.staleHint'))}
-        {days(t('rhythm.escalate'), r.escalateDays, [2, 3, 5, 7], (n) => setR({ ...r, escalateDays: n }), 'rhythm.daysLate', t('rhythm.escalateHint'))}
+        {days(t('rhythm.stale'), r.staleDays, [7, 14, 21, 30], (n) => setR({ ...r, staleDays: n }), { hint: t('rhythm.staleHint') })}
+        {days(t('rhythm.escalate'), r.escalateDays, [2, 3, 5, 7], (n) => setR({ ...r, escalateDays: n }), { unit: 'rhythm.daysLate', hint: t('rhythm.escalateHint') })}
       </section>
 
-      <div className="toolbar">
+      <div className="toolbar rhythm__save">
         <button className="btn btn--primary" disabled={busy} onClick={save}>
           {busy ? t('common.saving') : t('common.save')}
         </button>

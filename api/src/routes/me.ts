@@ -1,10 +1,11 @@
+import { fxOf } from '../lib/fx';
 import { rhythmOf } from '../../../shared/src/rhythm';
 import { Hono } from 'hono';
 import { healthConfig } from '../../../shared/src/health';
 import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
-import { NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
+import { FAVORITE_PATH, MAX_FAVORITES, NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
 import { logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
@@ -70,6 +71,7 @@ meRoutes.get('/me', async (c) => {
       accountFields: defsFor(org.account_fields, auth),
       health: (({ enabled, bands }) => ({ enabled, bands }))(healthConfig(org.settings?.health)),
       rhythm: rhythmOf((org.settings as any)?.rhythm),
+      fx: fxOf(org.settings),
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
       portal: portalOn(org, c.get('deps')),
@@ -98,6 +100,11 @@ meRoutes.patch('/me', async (c) => {
           defaultBoardId: z.string().uuid().nullable().optional(),
           quiet: z.object({ from: z.number().int().min(0).max(23), to: z.number().int().min(0).max(23) }).nullable().optional(),
           startHidden: z.boolean().optional(),
+          // Starred things, sent whole (the person's own list; nothing here is shared).
+          favorites: z
+            .array(z.object({ kind: z.enum(['account', 'record', 'board', 'report', 'dashboard']), id: z.string().uuid(), name: z.string().trim().min(1).max(120), to: z.string().regex(FAVORITE_PATH) }))
+            .max(MAX_FAVORITES)
+            .optional(),
         })
         .optional(),
     }),

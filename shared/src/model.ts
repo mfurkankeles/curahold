@@ -131,6 +131,14 @@ export interface Org {
   portal?: boolean;
   /** Targets, the review rhythm and when to nudge. */
   rhythm?: Rhythm;
+  /** Other currencies in use and what one of each is worth in `currency`. */
+  fx?: FxRates;
+}
+
+/** {"USD": 34.2}: one US dollar is 34.2 of the company's currency. */
+export interface FxRates {
+  rates: Record<string, number>;
+  updatedAt: string | null;
 }
 
 export interface SetupState {
@@ -218,6 +226,8 @@ export interface Account {
   /** Days between business reviews for this customer; null follows the company's rhythm, 0 is none. */
   reviewDays?: number | null;
   lastReviewAt?: string | null;
+  /** The currency of this customer's amounts; null is the company's. */
+  currency?: string | null;
 }
 
 export interface ImportResult {
@@ -294,7 +304,21 @@ export interface NotifyPrefs {
   quiet?: { from: number; to: number } | null;
   /** The person put away the "getting started" card on Home. */
   startHidden?: boolean;
+  /** What the person starred, shown at the top of their menu (newest first). */
+  favorites?: Favorite[];
 }
+
+/** A starred customer, record, board, report or dashboard: where it is, and its name when starred. */
+export interface Favorite {
+  kind: 'account' | 'record' | 'board' | 'report' | 'dashboard';
+  id: string;
+  name: string;
+  /** The address it opens (a path inside the app). */
+  to: string;
+}
+export const MAX_FAVORITES = 20;
+/** A path inside the app, never a link elsewhere. */
+export const FAVORITE_PATH = /^\/[A-Za-z0-9/_\-?=&.%]{0,200}$/;
 
 /** First steps on Home, ticked off by what the person has done. */
 export const START_STEPS = ['task', 'planned', 'touch', 'mention', 'calendar', 'notify'] as const;
@@ -460,11 +484,22 @@ export interface ChecklistTemplate {
   mine: boolean;
 }
 
+/**
+ * What a playbook's days count from: the day someone puts it on ('start'),
+ * or — counting back — the customer's renewal date or the deal's close date.
+ */
+export type PlanAnchor = 'start' | 'renewal' | 'close';
+export const PLAN_ANCHORS: readonly PlanAnchor[] = ['start', 'renewal', 'close'];
+
+/** A playbook: a company's way of doing something, as tasks with dates. */
 export interface PlanTemplate {
   id: string;
   name: string;
+  /** A line or two on when to use it. */
+  description: string;
   boardId: string;
   column: string | null;
+  anchor: PlanAnchor;
   tasks: import('./automation').TaskBlueprint[];
 }
 
@@ -505,6 +540,12 @@ export interface Task {
   startDate?: string | null;
   /** How many unfinished tasks this one waits for. */
   blockedBy?: number;
+  /** Finished (given where a list mixes open and finished work, such as a record's tasks). */
+  done?: boolean;
+  /** The record it belongs to (an opportunity, a ticket…). */
+  recordId?: string | null;
+  recordName?: string | null;
+  recordType?: string | null;
 }
 
 /** A task that comes back: when it is done, the next copy is made with a new due date. */
@@ -526,11 +567,16 @@ export interface Comment {
   visibility: 'internal' | 'customer';
   /** Written by someone at the customer, in the portal. */
   portalAuthorName?: string | null;
+  /** Files and pictures that came with it. */
+  files?: FileMeta[];
 }
 
 export interface FileMeta {
   id: string;
-  taskId: string;
+  taskId: string | null;
+  recordId?: string | null;
+  /** The comment it came with. */
+  commentId?: string | null;
   name: string;
   size: number;
   mime: string;

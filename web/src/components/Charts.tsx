@@ -62,12 +62,15 @@ function axis(max: number): number[] {
 const pct = (v: number, of: number) => `${of > 0 ? Math.max(0, Math.min(100, (v / of) * 100)) : 0}%`;
 const i = (n: number) => ({ '--i': n }) as CSSProperties;
 
-export function ReportChart({ result, chart, compact }: { result: ReportResult; chart: ChartKind; compact?: boolean }) {
+export function ReportChart({ result, chart, compact, goal }: { result: ReportResult; chart: ChartKind; compact?: boolean; goal?: number }) {
   const { t } = useI18n();
   const f = useReportFormat();
   if (result.kind === 'missing') return <p className="pane__note">{t('rb.missing', { what: result.what.replace(/^\$/, '') })}</p>;
   const r = result;
   const label = (g: ReportGroupRow) => (r.bucket ? f.bucket(g.key, r.bucket) : g.label);
+
+  // A gauge: the one figure against what it should reach (a figure without a goal stays a figure).
+  if (chart === 'gauge' && goal && goal > 0) return <Gauge value={r.total} goal={goal} unit={r.unit} compact={compact} />;
 
   if (chart === 'number' || (!r.groups.length && !r.table)) {
     return (
@@ -239,7 +242,34 @@ export function ReportChart({ result, chart, compact }: { result: ReportResult; 
   );
 }
 
-function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => string }) {
+/**
+ * A half ring that fills from the left as the figure nears its goal: green
+ * once it is reached. The needle-free version: the filled arc is the reading.
+ */
+function Gauge({ value, goal, unit, compact }: { value: number; goal: number; unit: ReportUnit; compact?: boolean }) {
+  const { t } = useI18n();
+  const f = useReportFormat();
+  const share = Math.max(0, Math.min(1, value / goal));
+  const R = 50;
+  const half = Math.PI * R;
+  const reached = value >= goal;
+  return (
+    <div className="gauge" data-compact={compact || undefined} data-reached={reached || undefined}>
+      <svg viewBox="0 0 120 68" role="img" aria-label={t('rb.gaugeLabel', { value: f.value(value, unit), goal: f.value(goal, unit) })}>
+        <path d="M10 60 A50 50 0 0 1 110 60" className="gauge__track" />
+        <path d="M10 60 A50 50 0 0 1 110 60" className="gauge__fill" style={{ strokeDasharray: `${share * half} ${half}` }} />
+      </svg>
+      <div className="gauge__mid">
+        <strong className="num">
+          <CountUp value={value} format={(v) => f.value(v, unit, true)} />
+        </strong>
+        <span className="gauge__goal">{t('rb.gaugeOf', { goal: f.value(goal, unit, true), pct: Math.round((value / goal) * 100) })}</span>
+      </div>
+    </div>
+  );
+}
+
+export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => string }) {
   const { t } = useI18n();
   const f = useReportFormat();
   return (
@@ -271,12 +301,28 @@ function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => string 
             </tr>
           ))}
         </tbody>
+        {/* Column totals add up only for counts and sums; an average of averages would mislead. */}
+        {r.series.length > 0 && (r.unit === 'count' || r.unit === 'money' || r.unit === 'hours' || r.unit === 'number') && (
+          <tfoot>
+            <tr className="rtable__total">
+              <th>{t('rb.total')}</th>
+              {r.series.map((s, si) => (
+                <td key={s.key} className="num">
+                  {f.value(r.groups.reduce((n, g) => n + (g.cells?.[si] ?? 0), 0), r.unit)}
+                </td>
+              ))}
+              <td className="num">
+                <b>{f.value(r.total, r.unit)}</b>
+              </td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );
 }
 
-function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
+export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
   const { t, fmtDate } = useI18n();
   const f = useReportFormat();
   const table = r.table!;

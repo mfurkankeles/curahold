@@ -316,6 +316,10 @@ repository. The forbidden words are stored only as hashes.
 
 ## Layout
 
+New to the code? Start with **[docs/DEVELOPER.md](docs/DEVELOPER.md)**: how a
+request travels, the rules that keep companies apart, how to add a table,
+an endpoint, a screen or a word, and a map from each feature to its files.
+
 ```
 api/src/          Hono API — runs on Cloudflare Workers (worker.ts) and Node (node.ts)
   routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync,

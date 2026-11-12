@@ -1,6 +1,7 @@
 // Shared plumbing for accounts, records and tasks that may live in a CRM
 // too: queueing local changes for the sync, and keeping rolled-up account
 // fields ("open pipeline", "next close date") in step with the records.
+import { fxRate } from './fx';
 import { SUPPORT_PROVIDERS } from '../../../shared/src/sync';
 import type { AccountField } from '../../../shared/src/model';
 import type { TargetKind } from '../../../shared/src/sync';
@@ -131,7 +132,9 @@ export async function recomputeRollups(q: Q, orgId: string, accountFields: Accou
     else {
       const raw = `r.fields->>${p(r.field)}`;
       const numeric = source?.type === 'number' || source?.type === 'money';
-      const val = numeric ? `(case when jsonb_typeof(r.fields->${p(r.field)}) = 'number' then (${raw})::numeric end)` : raw;
+      // Money is added up in the customer's own currency, each record at the company's rates.
+      const rate = source?.type === 'money' ? ` * ${fxRate('r', '$1')} / ${fxRate('a', '$1')}` : '';
+      const val = numeric ? `(case when jsonb_typeof(r.fields->${p(r.field)}) = 'number' then round((${raw})::numeric${rate}, 2) end)` : raw;
       expr = `${r.fn}(${val})`;
     }
     parts.push(`${p(f.key)}::text, (select ${expr} from records r where ${where.join(' and ')})`);

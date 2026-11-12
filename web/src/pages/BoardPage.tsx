@@ -1,3 +1,4 @@
+import { FavoriteButton } from '../components/Favorites';
 import {
   DndContext,
   DragOverlay,
@@ -105,6 +106,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <div style={{ minWidth: 0 }}>
           <h1 className="topbar__title">{board.name}</h1>
         </div>
+        <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
         <div className="topbar__spacer" />
         <div className="toolbar">
           {view !== 'archive' && <FilterBar board={board} filters={filters} onChange={setFilters} />}

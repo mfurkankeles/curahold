@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AccountField } from '../../../shared/src/model';
-import { BUCKETS, CHARTS, MEASURE_FNS, PERIODS, type ReportDef, type SavedReport } from '../../../shared/src/reports';
+import { BUCKETS, CHARTS, FORMATS, MEASURE_FNS, PERIODS, type ReportDef, type SavedReport } from '../../../shared/src/reports';
 import { nowOf, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
@@ -20,6 +20,8 @@ const fieldKey = z.string().regex(/^\$?[a-z][a-z0-9_]{0,39}$/);
 const OPS = ['contains', 'empty', 'not_empty', 'gte', 'lte', 'eq', 'last_days', 'next_days', 'this', 'last', 'before', 'after', 'in', 'not_in', 'yes', 'no'] as const;
 export const reportDefSchema = z.object({
   source: z.string().regex(/^(tasks|accounts|deals|activities|time|record:[a-z][a-z0-9_]{1,40})$/),
+  format: z.enum(FORMATS).optional(),
+  showChart: z.boolean().optional(),
   filters: z
     .array(
       z.object({
@@ -35,9 +37,10 @@ export const reportDefSchema = z.object({
   groups: z.array(z.object({ field: fieldKey, bucket: z.enum(BUCKETS).optional() })).max(2),
   measure: z.object({ fn: z.enum(MEASURE_FNS), field: fieldKey.optional() }),
   chart: z.enum(CHARTS),
-  columns: z.array(fieldKey).max(8).optional(),
+  columns: z.array(fieldKey).max(10).optional(),
   top: z.number().int().min(1).max(50).optional(),
   sort: z.enum(['value', 'label']).optional(),
+  goal: z.number().positive().max(1e13).optional(),
 });
 
 export function engineCtx(c: C, q: Q): EngineCtx {

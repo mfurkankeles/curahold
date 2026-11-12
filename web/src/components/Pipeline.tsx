@@ -1,6 +1,7 @@
 // Records as a board: deals by stage (drag one to move it, drop it on Won
 // or Lost to close it), or any kind of record by one of its choice fields.
 // The strip on top adds the money up: open, weighted by stage, closing soon.
+import { useMoney } from '../lib/money';
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
@@ -38,7 +39,9 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
   const closedKeys = status ? ['won', 'lost'].filter((k) => status.options?.some((o) => o.key === k)) : [];
   const isClosed = (r: AppRecord) => !!status && closedKeys.includes(String(r.fields[status.key] ?? ''));
   const today = todayIso();
-  const num = (r: AppRecord) => (money ? Number(r.fields[money.key]) || 0 : 0);
+  const cur = useMoney();
+  // Each deal in the company's currency, so a column of dollars and liras adds up.
+  const num = (r: AppRecord) => (money ? cur.toBase(Number(r.fields[money.key]) || 0, r.currency) : 0);
   const sum = (list: AppRecord[]) => list.reduce((n, r) => n + num(r), 0);
   const cash = (n: number) => (money ? fmt(money, n) : String(n));
 
@@ -102,7 +105,7 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
         <div className="card__title">{r.name}</div>
         {r.accountName && <div className="card__account">{r.accountName}</div>}
         <div className="card__meta">
-          {money && r.fields[money.key] != null && <strong className="dealcard__amount num">{fmt(money, r.fields[money.key])}</strong>}
+          {money && r.fields[money.key] != null && <strong className="dealcard__amount num">{fmt(money, r.fields[money.key], r.currency)}</strong>}
           {d && <span className={`due due--${dueState(d, isClosed(r), today)}`}>{fmtDate(d)}</span>}
           {k && (
             <span className="optchip" data-color={k.color}>

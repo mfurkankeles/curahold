@@ -58,6 +58,7 @@ export type ErrorCode =
   | 'portal_weak_password'
   | 'portal_passkey_failed'
   | 'portal_no_method'
+  | 'plan_no_date'
   | 'required_fields'
   | 'link_loop'
   | 'form_off'
@@ -125,6 +126,7 @@ const STATUS: Record<ErrorCode, number> = {
   sync_running: 409,
   crm_error: 502,
   server: 500,
+  plan_no_date: 400,
 };
 
 export class HttpError extends Error {

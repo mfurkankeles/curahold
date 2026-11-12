@@ -887,21 +887,98 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   await ada.page.waitForSelector('.rb-source');
   await (await byText(ada.page, '.rb-source', 'Müşteriler')).click();
   await ada.page.waitForFunction(() => document.querySelector('.rb-source[aria-pressed="true"]')?.textContent?.includes('Müşteriler'));
+  // Grouped rows (a summary), by owner: a chart above, the rows under their groups below.
+  await (await byText(ada.page, '.rb-format button', 'Gruplu')).click();
+  await ada.page.waitForSelector('.rb__rail > section:nth-child(3) select');
   await ada.page.select('.rb__rail > section:nth-child(3) select', 'owner');
   await ada.page.waitForSelector('.rb__chart .hbar');
   expect((await ada.page.$$('.rb__chart .hbar')).length > 0, 'no bars drawn for customers by owner');
+  await ada.page.waitForSelector('.rb__chart .rsum__group');
+  expect((await ada.page.$$('.rb__chart .rsum__row')).length > 0, 'the summary shows no rows under its groups');
   await ada.page.type('.rb-name', 'Sorumluya göre müşteriler');
   await shot(ada.page, 'p9-01-report-builder');
   await (await byText(ada.page, '.topbar .btn--primary', 'Raporu kaydet')).click();
   await ada.page.waitForFunction(() => location.pathname.startsWith('/reports/r/'));
   const [kept] = await sql(`select r.def, r.shared from reports r join orgs o on o.id = r.org_id where o.slug = 'demo' and r.name = 'Sorumluya göre müşteriler'`);
   expect(kept?.def?.source === 'accounts' && kept.def.groups[0].field === 'owner' && kept.shared === false, 'the report was not kept as built');
-  await ada.page.goto(`${s.origin}/reports/dashboards`, { waitUntil: 'networkidle0' });
+  await ada.page.goto(`${s.origin}/dashboards`, { waitUntil: 'networkidle0' });
   await (await byText(ada.page, '.dashcard .btn--primary', 'Ekle')).click();
-  await ada.page.waitForFunction(() => location.pathname.startsWith('/pages/'));
+  await ada.page.waitForFunction(() => location.pathname.startsWith('/dashboards/'));
   await ada.page.waitForSelector('.pane[data-type="report"] :is(.vchart, .donut, .kpi, .hbars, .emptystate, .pane__note)');
   expect((await ada.page.$$('.pane[data-type="report"]')).length >= 4, 'the dashboard has no report cards');
   await shot(ada.page, 'p9-02-dashboard');
+  // A dashboard narrows every card to one person at once.
+  await ada.page.select('.dash-viewas select', 'me');
+  await ada.page.waitForFunction(() => document.querySelector('.page')?.getAttribute('aria-busy') === 'false');
+  // It is a dashboard, not a home page: Home's tabs don't list it.
+  const [kind] = await sql(`select p.kind from pages p join orgs o on o.id = p.org_id where o.slug = 'demo' order by p.created_at desc limit 1`);
+  expect(kind?.kind === 'dashboard', `made a ${kind?.kind}`);
+  expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
+  await ada.page.close();
+});
+
+await step('settings: a currency and its rate, a playbook from an example, renewals that start by themselves', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  await ada.page.goto(`${s.origin}/settings/currencies`, { waitUntil: 'networkidle0' });
+  await ada.page.select('.fxadd select', 'EUR');
+  await (await byText(ada.page, '.fxadd .btn', 'Para birimi ekle')).click();
+  await ada.page.waitForSelector('.fxrow input');
+  await ada.page.type('.fxrow input', '37,1');
+  await (await byText(ada.page, '.currencies .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')));
+  const [fx] = await sql(`select settings->'fx'->'rates' as rates from orgs where slug = 'demo'`);
+  expect(Number(fx?.rates?.EUR) === 37.1, `rates kept: ${JSON.stringify(fx?.rates)}`);
+  await shot(ada.page, 'p10-01-currencies');
+
+  await ada.page.goto(`${s.origin}/settings/playbooks`, { waitUntil: 'networkidle0' });
+  await (await byText(ada.page, '.pbexample .btn', 'Bunu kullan')).click();
+  await ada.page.waitForSelector('.dialog .planrow');
+  await shot(ada.page, 'p10-02-playbook');
+  await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForSelector('.pblist__row');
+  const [pb] = await sql(`select p.id, p.anchor, jsonb_array_length(p.tasks) as n from plan_templates p join orgs o on o.id = p.org_id where o.slug = 'demo' and p.name = 'Yenileme'`);
+  expect(pb?.anchor === 'renewal' && Number(pb.n) === 7, `playbook kept: ${JSON.stringify(pb)}`);
+
+  await ada.page.goto(`${s.origin}/settings/rhythm`, { waitUntil: 'networkidle0' });
+  // Business reviews on; renewals on (six months ahead), with the playbook.
+  const switches = await ada.page.$$('.rhythm__head .switch');
+  await switches[0].click();
+  await switches[1].click();
+  await ada.page.waitForSelector('.rhythm__renewal select');
+  const [days, playbook] = await ada.page.$$('.rhythm__renewal select');
+  expect((await days.evaluate((el) => (el as HTMLSelectElement).value)) === '180', 'renewals do not start six months ahead');
+  await playbook.select(pb.id);
+  await shot(ada.page, 'p10-03-rhythm');
+  await (await byText(ada.page, '.rhythm__save .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')));
+  const [rh] = await sql(`select settings->'rhythm' as r from orgs where slug = 'demo'`);
+  expect(rh?.r?.reviewDays === 90 && rh.r.renewal?.days === 180 && rh.r.renewal?.planId === pb.id, `rhythm kept: ${JSON.stringify(rh?.r)}`);
+  // With reviews on, customers have a Reviews view.
+  await ada.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await byText(ada.page, '[role="tab"]', 'Değerlendirmeler');
+  expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
+  await ada.page.close();
+});
+
+await step('an opportunity opens on its own: fields, tasks and its thread', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  // An opportunity on a customer, put straight in (the CRM check made the kind already, or this does).
+  const [org] = await sql(`select id from orgs where slug = 'demo'`);
+  let [type] = await sql(`select id, key from record_types where org_id = $1 and kind = 'opportunity'`, [org.id]);
+  if (!type) [type] = await sql(`insert into record_types (org_id, key, name, kind, fields) values ($1, 'opportunity', '{"one":{"en":"Opportunity","tr":"Fırsat"},"other":{"en":"Opportunities","tr":"Fırsatlar"}}', 'opportunity', '[{"key":"amount","label":{"en":"Amount","tr":"Tutar"},"type":"money"}]') returning id, key`, [org.id]);
+  const [acc] = await sql(`select id from accounts where org_id = $1 order by name limit 1`, [org.id]);
+  const [rec] = await sql(`insert into records (org_id, type_id, account_id, name, fields) values ($1, $2, $3, 'Panel denemesi', '{"amount": 12000}') returning id`, [org.id, type.id, acc.id]);
+  await ada.page.goto(`${s.origin}/records/${type.key}?record=${rec.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForSelector('.recpanel .recpanel__name');
+  expect((await text(ada.page, '.recpanel__name')) === 'Panel denemesi', 'the record panel shows something else');
+  await ada.page.type('.recpanel .composer textarea', 'Teklif hazır, link: https://docs.example/teklif');
+  await (await byText(ada.page, '.recpanel .composer .btn--primary', 'Gönder')).click();
+  await ada.page.waitForSelector('.recpanel .comment .smartlink');
+  const [c] = await sql(`select body from record_comments where record_id = $1`, [rec.id]);
+  expect(c?.body?.includes('docs.example'), 'the comment was not kept');
+  await shot(ada.page, 'p10-04-record-panel');
   expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
   await ada.page.close();
 });

@@ -3,6 +3,7 @@ import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { Shell } from './components/Shell';
 import { TaskPanel } from './components/TaskPanel';
+import { RecordPanel } from './components/RecordPanel';
 import { ApiFailure, endPreview, get, onAuthLost, patch, post, previewAs, setApiLocale } from './lib/api';
 import { installDiagnostics } from './lib/diagnostics';
 
@@ -27,7 +28,8 @@ import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
 import { InboxPage } from './pages/Inbox';
 import { ReportsPage } from './pages/Reports';
-import { DashboardsPage, ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
+import { ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
+import { DashboardPage, DashboardsPage } from './pages/Dashboards';
 import { TeamPage } from './pages/Team';
 import { TimelinePage } from './pages/Timeline';
 import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
@@ -205,6 +207,8 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const params = new URLSearchParams(search);
   const taskId = params.get('task');
+  // A record (an opportunity…) opened over the page; a task opened from it goes on top.
+  const recordId = params.get('record');
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
   // Tasks added from quick add (or anywhere outside the page): the page shows them.
   useEffect(() => {
@@ -225,6 +229,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const setupStep = match('/setup/:step', path);
   const pg = path === '/pages/new' ? null : match('/pages/:id', path);
   const rep = match('/reports/r/:id', path);
+  const dash = path === '/dashboards/new' ? null : match('/dashboards/:id', path);
   if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
   else if (path === '/welcome') page = <PersonalPage mode="welcome" onLocale={onLocale} />;
   else if (path === '/profile') page = <PersonalPage mode="profile" onLocale={onLocale} />;
@@ -235,7 +240,9 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/inbox') page = <InboxPage />;
   else if (path === '/reports') page = <ReportsPage key={refreshKey} />;
   else if (path === '/reports/all') page = <ReportsListPage />;
-  else if (path === '/reports/dashboards') page = <DashboardsPage />;
+  else if (path === '/reports/dashboards' || path === '/dashboards') page = <DashboardsPage />;
+  else if (path === '/dashboards/new') page = <DashboardPage id={null} create key="new" />;
+  else if (dash) page = <DashboardPage id={dash.id} key={`${dash.id}:${refreshKey}`} />;
   else if (path === '/reports/new') page = <ReportBuilderPage id={null} from={params.get('from')} key={`new:${params.get('from') ?? ''}`} />;
   else if (rep) page = <ReportBuilderPage id={rep.id} from={null} key={rep.id} />;
   else if (path === '/pages/new') page = <HomePage pageId={null} create />;
@@ -252,6 +259,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   return (
     <>
       {page}
+      {recordId && !taskId && <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />}
       {taskId && <TaskPanel key={taskId} taskId={taskId} onChanged={bump} />}
     </>
   );

@@ -13,6 +13,11 @@ export interface QuickDefaults {
   dueDate?: string;
   /** Start the line with this text (e.g. "@me" from My tasks). */
   text?: string;
+  /** The record the task belongs to (an opportunity's "New task"). */
+  recordId?: string | null;
+  recordName?: string | null;
+  /** Said once the task is made, instead of "Added …". */
+  doneText?: string;
 }
 
 export interface ShellActions {

@@ -8,6 +8,20 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri; raporlar ile paneller ayrı
+
+- **Playbook’lar:** ekibinin işi yapma şeklini tarihli adımlar olarak yaz; adımlar uygulandığı tarihten itibaren ya da müşterinin yenileme tarihinden veya fırsatın kapanış tarihinden geriye doğru sayılır. Ayarlar → Playbook’lar’da dört hazır örnekten (yenileme, onboarding, iş değerlendirmesi, fırsatı kapatma) başla.
+- **Kendiliğinden başlayan yenilemeler:** ne kadar önceden (örneğin 180 gün) ve hangi playbook’la başlayacağını seç; her sabah yenileme işi müşterinin sorumlusu için açılır, istersen bir yenileme fırsatıyla birlikte. Tarihi geçmiş adımlar bugüne yığılan görevler yerine tek bir "geride kalanlar" görevinde toplanır.
+- **Para birimleri:** bir müşteri ya da fırsat kendi para biriminde olabilir; toplamlar, hedefler ve raporlar Ayarlar → Para birimleri’nde tuttuğun kurlarla şirketin para biriminde gösterilir.
+- **Kendi başına açılan fırsat:** her sayfanın üstünde alanları, görevleri (tek görev ya da bütün bir playbook ekle) ve kendi yorum akışıyla açılır: @anma, küçük kart olarak görünen linkler, dosyalar ve yapıştırılan ekran görüntüleri.
+- **Yenilemeler görünümü:** her yenilemenin yanında yenileme fırsatı (tıklayınca açılır) ve sözleşmesi.
+- **Hedefler sana göre:** hedef yok, tüm fırsatlar için tek hedef ya da fırsat türüne göre hedef; her tür açılıp kapatılabilir. İş değerlendirmesi yapmayan şirketler bu bölümü kapatabilir.
+- **Raporlar ve paneller ayrı:** rapor verinin kendisidir: liste, ara toplamlı gruplu satırlar ya da tablo (matris); istersen üstünde grafik. Panel birkaç raporun grafiğini yan yana koyar ve hepsini tek bir kişi ya da ekip için gösterebilir. Hedefe göre gösterge grafiği.
+- **Favoriler:** bir müşteriyi, kaydı, panoyu, raporu ya da paneli yıldızla; menünün en üstünde durur.
+- **Hazır kayıt türleri:** sözleşmeler, riskler, ürün talepleri ve teklifler tek tıkla.
+- **Küçük düzeltmeler:** Değerlendirmeler’deki Tamam düğmesi artık kenardan taşmıyor; ürünler görünümündeki "+" görev açmadan önce soruyor ve görevi açmayı öneriyor; kişilerde onları kimin eklediği görünüyor ve her listenin sütunlarını sen seçiyorsun; fırsatlar hafta, ay, çeyrek ya da istediğin tarihlere göre daraltılabiliyor.
+
+
 ### Kendi raporun, hazır paneller ve yeni görünüm
 
 - **Rapor oluşturucu:** neye bakacağını seç, daralt, grupla, özetle, grafiğini seç; kaydet, paylaş, CSV olarak al. 26 hazır rapor başlangıç için duruyor.

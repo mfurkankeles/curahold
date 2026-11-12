@@ -14,7 +14,7 @@ const PEOPLE = [
 ] as const;
 
 // [name, owner, renewal in N days, annual value, health, tier, website]
-const ACCOUNTS: [string, string, number, number, string, string, string][] = [
+export const ACCOUNTS: [string, string, number, number, string, string, string][] = [
   ['Quillfield Retail', 'zeynep', 160, 84000, 'good', 'enterprise', 'quillfield.example'],
   ['Harborline Bank', 'omar', 45, 126000, 'watch', 'enterprise', 'harborline.example'],
   ['Cedarmoor Health', 'lena', 210, 38000, 'good', 'mid', 'cedarmoor.example'],

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { labelOf, optionKey } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { FIELD_TYPES, OPTION_COLORS, type AccountField, type FieldAccess, type FieldType, type OptionColor, type Role, type Rollup } from '../../../shared/src/model';
-import { ROLLUP_PRESETS, typeLabel, type RecordType } from '../../../shared/src/records';
+import { RECORD_PRESETS, ROLLUP_PRESETS, typeLabel, type RecordType } from '../../../shared/src/records';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
@@ -529,6 +529,17 @@ export function RecordTypesEditor() {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
   };
+  // A preset is an ordinary kind of record with its fields filled in; it can be changed like any other.
+  const addPreset = async (p: (typeof RECORD_PRESETS)[number]) => {
+    try {
+      await post('/record-types', { kind: 'custom', key: p.key, name: p.name, fields: p.fields });
+      await load();
+      await reloadMe();
+      toast(t('records.presetAdded', { name: labelOf(p.name.other, locale) }));
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    }
+  };
   return (
     <div className="record-types">
       <p className="sheet__hint">{t('records.types.hint')}</p>
@@ -559,6 +570,25 @@ export function RecordTypesEditor() {
           )}
         </section>
       ))}
+      {/* Ready-made kinds, offered until the company has one with that key. */}
+      {RECORD_PRESETS.some((p) => !types.some((x) => x.key === p.key)) && (
+        <section className="sheet record-presets">
+          <h2 className="sheet__title">{t('records.presets')}</h2>
+          <p className="sheet__hint">{t('records.presetsHint')}</p>
+          <div className="pbexamples">
+            {RECORD_PRESETS.filter((p) => !types.some((x) => x.key === p.key)).map((p) => (
+              <article key={p.key} className="pbexample">
+                <h3>{labelOf(p.name.other, locale)}</h3>
+                <p>{labelOf(p.hint, locale)}</p>
+                <p className="pblist__meta">{p.fields.map((f) => labelOf(f.label, locale)).join(' · ')}</p>
+                <button className="btn btn--small" onClick={() => void addPreset(p)}>
+                  {t('records.presetAdd')}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="toolbar" style={{ marginTop: 12 }}>
         {!has('contact') && (
           <button className="btn btn--small" onClick={() => addBuiltin('contact')}>

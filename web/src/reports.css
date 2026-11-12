@@ -195,3 +195,52 @@
   .gallery, .gallery--dash { grid-template-columns: minmax(0, 1fr); }
   .hbar { grid-template-columns: minmax(70px, 38%) minmax(0, 1fr) auto; gap: 8px; }
 }
+
+/* ---------------------------------------------------- report layouts
+   ReportView.tsx: a chart above a summary (rows under their groups) or a grid. */
+
+.rview { display: grid; gap: 16px; }
+.rview__chart .vchart__plot, .rview__chart .linechart__plot { height: 240px; }
+
+/* A summary: each group's head carries its name, its row count and its subtotal. */
+.rsum .rsum__group th, .rsum .rsum__sub th, .rsum .rsum__total th { text-align: left; font-weight: 600; position: static; }
+.rsum__group th { background: var(--tend-soft); border-top: 1px solid var(--line); padding: 0; }
+.rsum__toggle { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 8px 12px; font: inherit; font-weight: 650; color: var(--ink); cursor: pointer; text-align: left; }
+.rsum__toggle:hover { background: var(--tend-wash); }
+.rsum__toggle .icon { color: var(--tend-ink); flex: none; }
+.rsum__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rsum__count { color: var(--ink-3); font-weight: 500; font-size: 12.5px; white-space: nowrap; }
+.rsum__value { min-width: 7ch; text-align: right; color: var(--tend-ink); }
+.rsum__sub th { display: table-cell; background: var(--surface-2); padding: 6px 12px 6px 36px; font-size: 13px; }
+.rsum__sub th, .rsum__total th { white-space: nowrap; }
+.rsum__sub th > *, .rsum__total th > * { display: inline-block; vertical-align: middle; }
+.rsum__sub .rsum__label, .rsum__total .rsum__label { width: calc(100% - 22ch); }
+.rsum__sub .rsum__count, .rsum__total .rsum__count { width: 11ch; }
+.rsum__sub .rsum__value, .rsum__total .rsum__value { width: 10ch; }
+.rsum__row td:first-child { padding-left: 24px; }
+.rsum__total th { background: var(--sunk); padding: 9px 12px; border-top: 2px solid var(--line-strong); }
+.rtable__total th, .rtable__total td { background: var(--sunk); border-top: 2px solid var(--line-strong); font-weight: 650; position: static; }
+
+/* A gauge: the figure against its goal on a half ring. */
+.gauge { display: grid; justify-items: center; gap: 2px; padding: 4px 0; }
+.gauge svg { width: min(240px, 100%); height: auto; overflow: visible; }
+.gauge[data-compact] svg { width: min(190px, 100%); }
+.gauge__track, .gauge__fill { fill: none; stroke-width: 12; stroke-linecap: round; }
+.gauge__track { stroke: var(--sunk); }
+.gauge__fill { stroke: var(--tend); transition: stroke-dasharray .9s var(--ease); animation: gauge-in .9s var(--ease) backwards; }
+.gauge[data-reached] .gauge__fill { stroke: var(--done); }
+@keyframes gauge-in { from { stroke-dasharray: 0 999; } }
+.gauge__mid { display: grid; justify-items: center; margin-top: -34px; }
+.gauge__mid strong { font-family: var(--font-display); font-size: 30px; font-weight: 650; letter-spacing: -.02em; }
+.gauge[data-compact] .gauge__mid strong { font-size: 24px; }
+.gauge__goal { color: var(--ink-3); font-size: 12.5px; }
+
+.rb-format { margin-bottom: 4px; }
+
+/* ------------------------------------------------------------ a dashboard
+   Dashboards.tsx: the filter bar ("show for"), refresh and the cards. */
+
+.dash-top .topbar__titles { min-width: 0; }
+.dash-viewas { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); }
+.dash-viewas .select { width: auto; min-width: 200px; }
+.page[aria-busy='true'] .dash__grid { opacity: .6; transition: opacity .15s ease; }

@@ -61,14 +61,32 @@ describe('periods and pace', () => {
     expect(targetReport(DEFAULT_RHYTHM, deals, '2026-11-12').rows).toEqual([]);
   });
 
-  it('cleans up whatever was stored', () => {
+  it('cleans up whatever was stored, in either shape', () => {
     expect(rhythmOf(null)).toEqual(DEFAULT_RHYTHM);
+    // The first shape (one amount per built-in type side by side) still reads.
     expect(rhythmOf({ targets: { period: 'week', new: -5, expansion: '1200', renewal: 0 }, reviewDays: 9999, staleDays: 'x', escalateDays: 3 })).toEqual({
-      targets: { period: 'quarter', new: null, expansion: 1200, renewal: null },
+      targets: { period: 'quarter', amounts: { expansion: 1200 }, total: null },
       reviewDays: 0,
       staleDays: 14,
       escalateDays: 3,
+      renewal: { days: 0, planId: null, opportunity: false },
     });
+    // A company's own types of deal, one target for everything, and renewals that start by themselves.
+    expect(
+      rhythmOf({ targets: { period: 'month', amounts: { upsell: 900, 'Bad Key': 5, pilot: -1 }, total: 2500 }, renewal: { days: 180, planId: 'not-a-uuid', opportunity: true } }),
+    ).toMatchObject({ targets: { period: 'month', amounts: { upsell: 900 }, total: 2500 }, renewal: { days: 180, planId: null, opportunity: true } });
+  });
+
+  it('counts a company’s own types of deal, or one target for all of them', () => {
+    const deal = (over: Partial<DealLike>): DealLike => ({ ownerId: 'u1', amount: 10, status: 'won', kind: 'upsell', closeDate: '2026-11-03', weight: 1, ...over });
+    const deals = [deal({ amount: 300 }), deal({ kind: 'pilot', amount: 50 }), deal({ kind: null, amount: 20 })];
+    const own = targetReport(rhythmOf({ targets: { period: 'quarter', amounts: { upsell: 1000 } } }), deals, '2026-11-12');
+    // One type with a target: just that row (no "everything" row repeating it).
+    expect(own.rows).toHaveLength(1);
+    expect(own.rows[0]).toMatchObject({ kind: 'upsell', won: 300, target: 1000 });
+    const total = targetReport(rhythmOf({ targets: { period: 'quarter', total: 400 } }), deals, '2026-11-12');
+    expect(total.rows).toHaveLength(1);
+    expect(total.rows[0]).toMatchObject({ kind: 'all', won: 370, target: 400, state: 'ahead' });
   });
 });
 
@@ -108,10 +126,18 @@ describe('the rhythm settings', () => {
     expect((await lena.put('/api/rhythm', { reviewDays: 90 })).status).toBe(403);
     const r = await ada.put('/api/rhythm', { targets: { expansion: 120000 }, reviewDays: 90 });
     expect(r.status).toBe(200);
-    expect(r.json.rhythm).toEqual({ targets: { period: 'quarter', new: null, expansion: 120000, renewal: null }, reviewDays: 90, staleDays: 14, escalateDays: 0 });
+    const off = { days: 0, planId: null, opportunity: false };
+    expect(r.json.rhythm).toEqual({ targets: { period: 'quarter', amounts: { expansion: 120000 }, total: null }, reviewDays: 90, staleDays: 14, escalateDays: 0, renewal: off });
+    // The first shape changes only the type it names.
     await ada.put('/api/rhythm', { targets: { period: 'year', new: 50000 }, escalateDays: 3 });
     const seen = (await lena.get('/api/me')).json.org.rhythm;
-    expect(seen).toEqual({ targets: { period: 'year', new: 50000, expansion: 120000, renewal: null }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
+    expect(seen).toEqual({ targets: { period: 'year', amounts: { new: 50000, expansion: 120000 }, total: null }, reviewDays: 90, staleDays: 14, escalateDays: 3, renewal: off });
+    // Amounts sent whole replace the old ones; a type left out has no target any more.
+    const whole = await ada.put('/api/rhythm', { targets: { amounts: { renewal: 80000 }, total: 200000 } });
+    expect(whole.json.rhythm.targets).toEqual({ period: 'year', amounts: { renewal: 80000 }, total: 200000 });
+    // Renewals: a playbook that is not this company's is refused.
+    expect((await ada.put('/api/rhythm', { renewal: { days: 180, planId: crypto.randomUUID() } })).status).toBe(400);
+    expect((await ada.put('/api/rhythm', { renewal: { days: 180, opportunity: true } })).json.rhythm.renewal).toEqual({ days: 180, planId: null, opportunity: true });
     expect((await ada.put('/api/rhythm', { staleDays: -1 })).status).toBe(400);
     // The other company is untouched.
     const other = await login(env, 'beta', 'ada@demo.example');

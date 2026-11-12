@@ -1,5 +1,6 @@
 // Reports: how the work and the customers are doing, on one page. Numbers
 // are worked out when the page opens, inside what the person may see.
+import { useMoney } from '../lib/money';
 import { useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Account } from '../../../shared/src/model';
@@ -123,6 +124,7 @@ export function ReportsPage() {
   }, [opp?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { renewal, value } = keyFields(me.org.accountFields);
+  const cur = useMoney();
   const cash = (n: number) => (value ? fmt(value, n) : String(n));
   const customers = useMemo(() => {
     const list = accounts ?? [];
@@ -131,7 +133,7 @@ export function ReportsPage() {
     for (const a of list) {
       const b = bandOf(a, me.org.health);
       bands[b ?? 'none'] += 1;
-      if (b === 'risk' && value) atRisk += Number(a.fields[value.key]) || 0;
+      if (b === 'risk' && value) atRisk += cur.toBase(Number(a.fields[value.key]) || 0, a.currency);
     }
     const months: { key: string; n: number; total: number }[] = [];
     const now = new Date();
@@ -144,13 +146,13 @@ export function ReportsPage() {
         const m = months.find((x) => x.key === String(a.fields[renewal.key] ?? '').slice(0, 7));
         if (m) {
           m.n += 1;
-          m.total += value ? Number(a.fields[value.key]) || 0 : 0;
+          m.total += value ? cur.toBase(Number(a.fields[value.key]) || 0, a.currency) : 0;
         }
       }
     }
     const quiet = list.filter((a) => !a.lastTouchAt || Date.now() - Date.parse(a.lastTouchAt) > 30 * 86_400_000).length;
     return { bands, months, atRisk, quiet, total: list.length };
-  }, [accounts, me.org.health, renewal, value]);
+  }, [accounts, me.org.health, renewal, value, cur]);
 
   const stage = opp?.fields.find((f) => f.key === 'stage');
   const amount = opp?.fields.find((f) => f.key === 'amount');
@@ -159,14 +161,14 @@ export function ReportsPage() {
     const open = deals.filter((d) => (d.fields.status ?? 'open') === 'open');
     const rows = (stage.options ?? []).map((o) => {
       const list = open.filter((d) => d.fields.stage === o.key);
-      return { key: o.key, label: labelOf(o.label, locale), color: o.color, value: list.reduce((n, d) => n + (Number(d.fields.amount) || 0), 0), count: list.length };
+      return { key: o.key, label: labelOf(o.label, locale), color: o.color, value: list.reduce((n, d) => n + cur.toBase(Number(d.fields.amount) || 0, d.currency), 0), count: list.length };
     });
     const won = deals.filter((d) => d.fields.status === 'won');
     const lost = deals.filter((d) => d.fields.status === 'lost');
-    const sum = (l: AppRecord[]) => l.reduce((n, d) => n + (Number(d.fields.amount) || 0), 0);
+    const sum = (l: AppRecord[]) => l.reduce((n, d) => n + cur.toBase(Number(d.fields.amount) || 0, d.currency), 0);
     const closed = won.length + lost.length;
     return { rows, open: sum(open), won: sum(won), winRate: closed ? Math.round((won.length / closed) * 100) : null, expansion: sum(won.filter((d) => d.fields.kind === 'expansion')) };
-  }, [deals, stage, amount, locale]);
+  }, [deals, stage, amount, locale, cur]);
 
   const monthName = (k: string) => new Date(`${k}-01T00:00:00Z`).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { month: 'short', timeZone: 'UTC' });
   const cols = board ? boards.find((b) => b.id === board)?.columns ?? [] : [];

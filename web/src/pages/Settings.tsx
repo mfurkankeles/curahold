@@ -10,18 +10,21 @@ import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
+import { CurrencySettings } from '../components/Currencies';
+import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
 import { PortalSettingsTab } from '../components/PortalAdmin';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
+import { allCurrencies, useMoney } from '../lib/money';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'health' | 'rhythm' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
+type Tab = 'company' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -33,6 +36,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
       label: t('settings.group.company'),
       items: [
         ['company', t('settings.tab.company'), can('org.manage')],
+        ['currencies', t('settings.tab.currencies'), can('org.manage')],
         ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
         ['records', t('settings.tab.records'), can('accounts.manage')],
         ['health', t('settings.tab.health'), can('accounts.manage')],
@@ -54,6 +58,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['connections', t('settings.tab.connections'), can('connections.manage')],
         ['sources', t('settings.tab.sources'), can('connections.manage')],
         ['automations', t('settings.tab.automations'), can('automations.manage')],
+        ['playbooks', t('settings.tab.playbooks'), can('org.manage') || can('accounts.manage')],
         ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
         ['portal', t('settings.tab.portal'), can('org.manage')],
       ],
@@ -108,6 +113,8 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
           {current === 'rhythm' && <RhythmSettings />}
+          {current === 'currencies' && <CurrencySettings />}
+          {current === 'playbooks' && <PlaybooksSettings />}
           {current === 'support' && <SupportAccessSettings />}
           {current === 'portal' && <PortalSettingsTab />}
           {current === 'people' && <PeopleTab />}
@@ -159,6 +166,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
   const [locale, setLocale] = useState<Locale>(me.org.locale);
   const [tz, setTz] = useState(me.org.timezone);
   const [currency, setCurrency] = useState(me.org.currency);
+  const money = useMoney();
   const [terms, setTerms] = useState({
     en: { one: me.org.terms.account?.en?.one ?? '', other: me.org.terms.account?.en?.other ?? '' },
     tr: { one: me.org.terms.account?.tr?.one ?? '', other: me.org.terms.account?.tr?.other ?? '' },
@@ -210,15 +218,25 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
               </select>
             </label>
           </div>
-          <label className="field" style={{ maxWidth: 300 }}>
+          <label className="field" style={{ maxWidth: 360 }}>
             <span className="field__label">{t('settings.company.currency')}</span>
             <select className="select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
               {(CURRENCIES.includes(currency) ? CURRENCIES : [currency, ...CURRENCIES]).map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {c} · {money.nameOf(c)}
                 </option>
               ))}
+              <option disabled>──────</option>
+              {allCurrencies()
+                .filter((c) => !CURRENCIES.includes(c) && c !== currency)
+                .map((c) => (
+                  <option key={c} value={c}>
+                    {c} · {money.nameOf(c)}
+                  </option>
+                ))}
             </select>
+            {/* The rates say what other currencies are worth in this one, so a new one starts them over. */}
+            {currency !== me.org.currency && Object.keys(me.org.fx?.rates ?? {}).length > 0 && <span className="field__hint field__hint--warn">{t('fx.baseClears')}</span>}
           </label>
         </div>
       </div>

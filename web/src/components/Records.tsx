@@ -1,10 +1,12 @@
 // Records under accounts — contacts, opportunities, risks and whatever else
 // the company keeps: a list per kind, a section per kind on the account
 // page, and one dialog to add or edit a record.
+import { useMoney } from '../lib/money';
+import { todayIso } from '../lib/time';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Account } from '../../../shared/src/model';
-import { CONTACT_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
+import { CONTACT_COLUMNS, RECORD_BUILTIN_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
 import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
 import { ExportMenu } from './Export';
@@ -12,7 +14,7 @@ import { allPages, cellOf } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
@@ -21,6 +23,130 @@ import { Avatar, Confirm, Dialog } from './ui';
 import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
 import { Icon } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
+
+/**
+ * A table column: one of the record's own fields, or something every record
+ * has (its customer, owner, who added it and when).
+ */
+export type Column = { key: string; builtin: (typeof RECORD_BUILTIN_COLUMNS)[number] } | { key: string; field: AccountField };
+
+/** The columns a record table shows: the company's choice, or Tendwell's (customer, a few fields, owner). */
+export function tableColumns(type: RecordType): Column[] {
+  const byKey = (k: string): Column | null =>
+    (RECORD_BUILTIN_COLUMNS as readonly string[]).includes(k) ? { key: k, builtin: k as (typeof RECORD_BUILTIN_COLUMNS)[number] } : ((f) => (f ? { key: k, field: f } : null))(type.fields.find((f) => f.key === k));
+  const keys = type.columns?.length ? type.columns : ['account', ...shownFields(type, 4).map((f) => f.key), 'owner'];
+  return keys.map(byKey).filter((c): c is Column => !!c);
+}
+
+// ------------------------------------------------- deals: which close dates
+
+/** The spans a deal list can show, by close date. The quarter first: targets are counted by it. */
+const PERIODS = ['quarter', 'next_quarter', 'last_quarter', 'month', 'next_month', 'week', 'year', 'range', 'any'] as const;
+type PeriodPick = (typeof PERIODS)[number];
+
+/** The first and last day of a span (inclusive), or null for "any time". */
+export function periodSpan(p: PeriodPick, range: { from: string; to: string }, today = todayIso()): { from: string; to: string } | null {
+  const y = Number(today.slice(0, 4));
+  const m = Number(today.slice(5, 7)) - 1;
+  const day = (yy: number, mm: number, dd: number) => new Date(Date.UTC(yy, mm, dd)).toISOString().slice(0, 10);
+  const q0 = m - (m % 3);
+  if (p === 'quarter') return { from: day(y, q0, 1), to: day(y, q0 + 3, 0) };
+  if (p === 'next_quarter') return { from: day(y, q0 + 3, 1), to: day(y, q0 + 6, 0) };
+  if (p === 'last_quarter') return { from: day(y, q0 - 3, 1), to: day(y, q0, 0) };
+  if (p === 'month') return { from: day(y, m, 1), to: day(y, m + 1, 0) };
+  if (p === 'next_month') return { from: day(y, m + 1, 1), to: day(y, m + 2, 0) };
+  if (p === 'year') return { from: day(y, 0, 1), to: day(y, 12, 0) };
+  if (p === 'week') {
+    const d = new Date(`${today}T00:00:00Z`);
+    const monday = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86_400_000).toISOString().slice(0, 10);
+    return { from: monday, to: new Date(Date.parse(`${monday}T00:00:00Z`) + 6 * 86_400_000).toISOString().slice(0, 10) };
+  }
+  if (p === 'range') return range.from || range.to ? { from: range.from || '0000-01-01', to: range.to || '9999-12-31' } : null;
+  return null;
+}
+
+// ------------------------------------------------------------ the columns
+
+/**
+ * Which columns a record table shows, for everyone in the company: the
+ * built-ins (customer, owner, who added it, when) and any of its fields,
+ * in the order picked. Up to twelve.
+ */
+function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: () => void; onSaved: () => void }) {
+  const { t, locale, words } = useI18n();
+  const { toast } = useStore();
+  const [keys, setKeys] = useState<string[]>(() => tableColumns(type).map((c) => c.key));
+  const all: { key: string; label: string }[] = [
+    ...RECORD_BUILTIN_COLUMNS.map((k) => ({ key: k, label: t(`records.col.${k}` as any, { account: words.one }) })),
+    ...type.fields.filter((f) => !(type.kind === 'contact' && (f.key === 'first_name' || f.key === 'last_name'))).map((f) => ({ key: f.key, label: labelOf(f.label, locale) })),
+  ];
+  const label = (k: string) => all.find((x) => x.key === k)?.label ?? k;
+  const move = (k: string, by: number) =>
+    setKeys((list) => {
+      const i = list.indexOf(k);
+      const j = i + by;
+      if (i < 0 || j < 0 || j >= list.length) return list;
+      const next = [...list];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  const save = async (value: string[] | null) => {
+    try {
+      await patch(`/record-types/${type.id}`, { columns: value });
+      onSaved();
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    }
+  };
+  return (
+    <Dialog
+      title={t('records.columnsTitle', { type: typeLabel(type, locale) })}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn btn--quiet" style={{ marginRight: 'auto' }} onClick={() => void save(null)}>
+            {t('records.columnsReset')}
+          </button>
+          <button className="btn btn--quiet" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button className="btn btn--primary" onClick={() => void save(keys)}>
+            {t('common.save')}
+          </button>
+        </>
+      }
+    >
+      <p className="field__hint" style={{ marginTop: 0 }}>
+        {t('records.columnsLead')}
+      </p>
+      <ol className="colpick">
+        {keys.map((k, i) => (
+          <li key={k}>
+            <span className="colpick__name">{label(k)}</span>
+            <button className="btn btn--quiet btn--icon btn--small" disabled={i === 0} aria-label={t('records.columnUp', { name: label(k) })} onClick={() => move(k, -1)}>
+              ↑
+            </button>
+            <button className="btn btn--quiet btn--icon btn--small" disabled={i === keys.length - 1} aria-label={t('records.columnDown', { name: label(k) })} onClick={() => move(k, 1)}>
+              ↓
+            </button>
+            <button className="btn btn--quiet btn--icon btn--small" aria-label={t('records.columnRemove', { name: label(k) })} onClick={() => setKeys((list) => list.filter((x) => x !== k))}>
+              <Icon name="close" size={13} />
+            </button>
+          </li>
+        ))}
+      </ol>
+      <div className="rb-chips">
+        {all
+          .filter((x) => !keys.includes(x.key))
+          .map((x) => (
+            <button key={x.key} type="button" className="rb-chip" disabled={keys.length >= 12} onClick={() => setKeys((list) => [...list, x.key])}>
+              + {x.label}
+            </button>
+          ))}
+      </div>
+    </Dialog>
+  );
+}
 
 /** The fields worth a column: for contacts the stakeholder ones, otherwise the first few. */
 export function shownFields(type: RecordType, n: number): AccountField[] {
@@ -33,9 +159,24 @@ export function shownFields(type: RecordType, n: number): AccountField[] {
 }
 
 /** A field value in a table cell; stance as its coloured label. */
-function Cell({ field, value }: { field: AccountField; value: unknown }) {
+function Cell({ field, value, currency }: { field: AccountField; value: unknown; currency?: string | null }) {
   const fmt = useFieldFormat();
   if (field.key === 'stance') return <StanceBadge field={field} value={value} />;
+  if (field.key === 'phone' && value) {
+    return (
+      <a href={`tel:${String(value).replace(/\s+/g, '')}`} onClick={(e) => e.stopPropagation()}>
+        {String(value)}
+      </a>
+    );
+  }
+  if (field.type === 'email' && value) {
+    return (
+      <a href={`mailto:${value}`} onClick={(e) => e.stopPropagation()}>
+        {String(value)}
+      </a>
+    );
+  }
+  if (field.type === 'money') return <>{fmt(field, value, currency)}</>;
   if (field.type === 'url' && value) {
     return (
       <a href={String(value)} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}>
@@ -85,14 +226,19 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
 }
 
 export function RecordsPage({ typeKey }: { typeKey: string }) {
-  const { t, locale } = useI18n();
-  const { people, person, canWrite } = useStore();
+  const { t, locale, fmtDate, words } = useI18n();
+  const { people, person, canWrite, can } = useStore();
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
   const [q, setQ] = useState('');
   const [owner, setOwner] = useState('');
   const [data, setData] = useState<{ records: AppRecord[]; total: number } | null>(null);
-  const [editing, setEditing] = useState<AppRecord | 'new' | null>(null);
+  // New records open the dialog; an existing one opens its panel (with its thread and tasks).
+  const [editing, setEditing] = useState<'new' | null>(null);
+  const openRecord = (r: AppRecord) => setQuery('record', r.id);
+  const [choosing, setChoosing] = useState(false);
+  // Deals: which close dates are shown. The target period first; any other span on request.
+
   // Board or table, and which field makes the columns: remembered per kind of record, on this device.
   const choices = type ? groupChoices(type) : [];
   const stored = (k: string) => {
@@ -103,6 +249,8 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     }
   };
   const [viewPick, setViewPick] = useState<'board' | 'table' | null>(() => stored('view') as 'board' | 'table' | null);
+  const [period, setPeriod] = useState<PeriodPick>(() => (stored('period') as PeriodPick | null) ?? 'quarter');
+  const [range, setRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [groupPick, setGroupPick] = useState<string | null>(() => stored('group'));
   const keep = (k: string, v: string) => {
     try {
@@ -130,7 +278,38 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         <EmptyState icon="layout" title={t('errors.not_found')} />
       </div>
     );
-  const cols = type ? shownFields(type, 4) : [];
+  const cols = type ? tableColumns(type) : [];
+  const isDeal = type?.kind === 'opportunity';
+  const closeField = isDeal ? (type!.fields.find((f) => f.key === 'close_date' && f.type === 'date') ?? type!.fields.find((f) => f.type === 'date')) : undefined;
+  const span = closeField ? periodSpan(period, range) : null;
+  // Deals outside the chosen span are left out; one with no close date shows only under "Any time".
+  const rows = (data?.records ?? []).filter((r) => {
+    if (!span || !closeField) return true;
+    const d = String(r.fields[closeField.key] ?? '').slice(0, 10);
+    return !!d && d >= span.from && d <= span.to;
+  });
+  const builtinCell = (c: Extract<Column, { builtin: string }>, r: AppRecord) => {
+    if (c.builtin === 'account')
+      return r.accountId ? (
+        <a
+          href={`/accounts/${r.accountId}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(`/accounts/${r.accountId}`);
+          }}
+        >
+          {r.accountName}
+        </a>
+      ) : (
+        <span className="muted">—</span>
+      );
+    if (c.builtin === 'owner') return r.ownerId ? <span className="owner"><Avatar person={person(r.ownerId)} /> {person(r.ownerId)?.name}</span> : <span className="muted">—</span>;
+    if (c.builtin === 'created_by') return r.createdBy ? <span className="owner"><Avatar person={person(r.createdBy)} /> {person(r.createdBy)?.name}</span> : <span className="muted">{t('records.byImport')}</span>;
+    if (c.builtin === 'created_at') return fmtDate(r.createdAt, { day: 'numeric', month: 'short', year: 'numeric' });
+    return fmtDate(r.updatedAt, { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+  const colLabel = (c: Column) => ('field' in c ? labelOf(c.field.label, locale) : t(`records.col.${c.builtin}` as any, { account: words.one }));
   return (
     <>
       <header className="topbar">
@@ -180,6 +359,25 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
             </div>
           )}
           {view === 'board' && <GroupBy fields={choices} value={groupKey} onChange={(k) => (setGroupPick(k), keep('group', k))} />}
+          {closeField && (
+            <label className="toolbar__field">
+              <span className="sr-only">{labelOf(closeField.label, locale)}</span>
+              <select className="select" value={period} title={labelOf(closeField.label, locale)} onChange={(e) => (setPeriod(e.target.value as PeriodPick), keep('period', e.target.value))}>
+                {PERIODS.map((p) => (
+                  <option key={p} value={p}>
+                    {t(`records.period.${p}` as any, { field: labelOf(closeField.label, locale) })}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {closeField && period === 'range' && (
+            <span className="toolbar__range">
+              <input className="input" type="date" value={range.from} aria-label={t('records.period.from')} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} />
+              <span aria-hidden="true">–</span>
+              <input className="input" type="date" value={range.to} aria-label={t('records.period.to')} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} />
+            </span>
+          )}
           <input className="input search" type="search" value={q} placeholder={t('records.search')} aria-label={t('records.search')} onChange={(e) => setQ(e.target.value)} />
           <select className="select" value={owner} aria-label={t('accounts.owner')} onChange={(e) => setOwner(e.target.value)}>
             <option value="">{t('accounts.anyOwner')}</option>
@@ -192,13 +390,26 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
                 </option>
               ))}
           </select>
+          {view === 'table' && type && can('accounts.manage') && (
+            <button className="btn" onClick={() => setChoosing(true)} title={t('records.columnsHint')}>
+              <Icon name="columns" size={15} /> {t('records.columns')}
+            </button>
+          )}
         </div>
         {!data ? (
           view === 'board' ? <SkeletonCards columns count={4} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
-        ) : data.records.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="sheet">
-            <EmptyState icon={q || owner ? 'search' : type?.kind === 'opportunity' ? 'funnel' : type?.kind === 'contact' ? 'idcard' : 'layout'} title={q || owner ? t('records.noMatch') : t('records.empty')}>
-              {!q && !owner && canWrite && type && (
+            <EmptyState
+              icon={q || owner || span ? 'search' : type?.kind === 'opportunity' ? 'funnel' : type?.kind === 'contact' ? 'idcard' : 'layout'}
+              title={q || owner ? t('records.noMatch') : span && data.records.length ? t('records.noneInPeriod') : t('records.empty')}
+            >
+              {span && data.records.length > 0 && (
+                <button className="btn" onClick={() => (setPeriod('any'), keep('period', 'any'))}>
+                  {t('records.period.showAll')}
+                </button>
+              )}
+              {!q && !owner && !(span && data.records.length) && canWrite && type && (
                 <button className="btn btn--primary" onClick={() => setEditing('new')}>
                   <Icon name="plus" size={16} />
                   {t('records.new', { type: typeLabel(type, locale, false) })}
@@ -209,9 +420,9 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         ) : view === 'board' && type ? (
           <RecordBoard
             type={type}
-            records={data.records}
+            records={rows}
             groupKey={groupKey}
-            onOpen={setEditing}
+            onOpen={openRecord}
             onChanged={(r) => setData((d) => (d ? { ...d, records: d.records.map((x) => (x.id === r.id ? r : x)) } : d))}
           />
         ) : (
@@ -220,38 +431,32 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
               <thead>
                 <tr>
                   <th>{t('records.name')}</th>
-                  <th>{t('records.account')}</th>
-                  {cols.map((f) => (
-                    <th key={f.key} className="hide-phone">
-                      {labelOf(f.label, locale)}
+                  {cols.map((c, i) => (
+                    <th key={c.key} className={i > 0 ? 'hide-phone' : undefined}>
+                      {colLabel(c)}
                     </th>
                   ))}
-                  <th className="hide-phone">{t('accounts.owner')}</th>
                 </tr>
               </thead>
               <tbody>
-                {data.records.map((r) => (
-                  <tr key={r.id} className="row-link" onClick={() => setEditing(r)}>
+                {rows.map((r) => (
+                  <tr key={r.id} className="row-link" onClick={() => openRecord(r)}>
                     <td>
-                      <button className="linkbtn linkbtn--plain" onClick={(e) => { e.stopPropagation(); setEditing(r); }}>
+                      <button
+                        className="linkbtn linkbtn--plain"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRecord(r);
+                        }}
+                      >
                         {r.name}
                       </button>
                     </td>
-                    <td>
-                      {r.accountId ? (
-                        <a href={`/accounts/${r.accountId}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/accounts/${r.accountId}`); }}>
-                          {r.accountName}
-                        </a>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                    {cols.map((f) => (
-                      <td key={f.key} className="hide-phone">
-                        <Cell field={f} value={r.fields[f.key]} />
+                    {cols.map((c, i) => (
+                      <td key={c.key} className={i > 0 ? 'hide-phone' : undefined}>
+                        {'field' in c ? <Cell field={c.field} value={r.fields[c.key]} currency={r.currency} /> : builtinCell(c, r)}
                       </td>
                     ))}
-                    <td className="hide-phone">{r.ownerId && <Avatar person={person(r.ownerId)} />}</td>
                   </tr>
                 ))}
               </tbody>
@@ -259,10 +464,20 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           </div>
         )}
       </div>
+      {choosing && type && (
+        <ColumnChooser
+          type={type}
+          onClose={() => setChoosing(false)}
+          onSaved={async () => {
+            setChoosing(false);
+            await loadTypes();
+          }}
+        />
+      )}
       {editing && type && (
         <RecordDialog
           type={type}
-          record={editing === 'new' ? null : editing}
+          record={null}
           onClose={() => setEditing(null)}
           onDone={async () => {
             await load();
@@ -351,7 +566,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
               <ul className="plainlist record-lines">
                 {list.map((r) => (
                   <li key={r.id}>
-                    <button className="record-line" onClick={() => setEditing({ type: ty, record: r })}>
+                    <button className="record-line" onClick={() => (ty.kind === 'contact' ? setEditing({ type: ty, record: r }) : setQuery('record', r.id))}>
                       <span className="record-line__name">{r.name}</span>
                       {cols.map((f) => {
                         if (f.key === 'stance') return r.fields.stance ? <StanceBadge key={f.key} field={f} value={r.fields.stance} /> : null;
@@ -429,12 +644,16 @@ export function RecordDialog({
     }
     return siblings.filter((x) => x.id !== record?.id && !below.has(x.id));
   }, [siblings, record, isContact]);
-  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: string; name: string; currency?: string | null }[]>([]);
   const [removing, setRemoving] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The currency of this record's amounts: its own, else its customer's, else the company's.
+  const money = useMoney();
+  const hasMoney = type.fields.some((f) => f.type === 'money');
+  const [currency, setCurrency] = useState<string>(record?.currency ?? '');
   useEffect(() => {
     if (accountId) return;
-    get<{ accounts: Account[] }>('/accounts?limit=500').then((r) => setAccounts(r.accounts.map((a) => ({ id: a.id, name: a.name }))));
+    get<{ accounts: Account[] }>('/accounts?limit=500').then((r) => setAccounts(r.accounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency ?? null }))));
   }, [accountId]);
   const changed = useMemo(() => {
     const out: Record<string, string | number | null> = {};
@@ -451,6 +670,7 @@ export function RecordDialog({
           ...(account !== (record.accountId ?? '') ? { accountId: account || null } : {}),
           ...(isContact && siblings && parent !== (record.parentId ?? '') ? { parentId: parent || null } : {}),
           ...(Object.keys(changed).length ? { fields: changed } : {}),
+          ...(currency !== (record.currency ?? '') ? { currency: currency || null } : {}),
         });
       } else {
         await post('/records', {
@@ -460,6 +680,7 @@ export function RecordDialog({
           accountId: account || null,
           ...(isContact && parent ? { parentId: parent } : {}),
           fields: values,
+          ...(currency ? { currency } : {}),
         });
       }
       await onDone();
@@ -557,10 +778,26 @@ export function RecordDialog({
         <div className="record-fields">
           {type.fields.filter((f) => !(isContact && (f.key === 'first_name' || f.key === 'last_name'))).map((f) => (
             <label className="field" key={f.key}>
-              <span className="field__label">{labelOf(f.label, locale)}</span>
+              <span className="field__label">
+                {labelOf(f.label, locale)}
+                {f.type === 'money' && <span className="muted"> · {currency || accounts.find((a) => a.id === account)?.currency || money.base}</span>}
+              </span>
               <FieldInput field={f} value={values[f.key]} disabled={!canWrite || f.locked} onSave={(v) => setValues((x) => ({ ...x, [f.key]: v }))} />
             </label>
           ))}
+          {hasMoney && money.multi && (
+            <label className="field">
+              <span className="field__label">{t('money.currency')}</span>
+              <select className="select" value={currency} disabled={!canWrite} onChange={(e) => setCurrency(e.target.value)}>
+                <option value="">{t('money.followCustomer', { code: accounts.find((a) => a.id === account)?.currency || money.base })}</option>
+                {money.usable.map((c) => (
+                  <option key={c} value={c}>
+                    {c} · {money.nameOf(c)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </div>
       {removing && record && (

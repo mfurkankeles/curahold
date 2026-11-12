@@ -2052,18 +2052,11 @@ a.targetline:hover { border-color: var(--line-strong); }
 .rhythm__amounts { margin-top: 14px; }
 .rhythm .sheet .field + .field { margin-top: 14px; }
 .rhythm__amounts .field + .field { margin-top: 0; }
-.table--reviews { table-layout: fixed; }
-.table--reviews td:nth-child(1) { width: 24%; }
-.table--reviews td:nth-child(2) { width: 15%; }
-.table--reviews td:nth-child(3) { width: 25%; }
-.table--reviews td:nth-child(4) { width: 18%; }
-.table--reviews td:nth-child(5) { width: 10%; white-space: nowrap; }
-.table--reviews td:last-child { width: 8%; min-width: 92px; }
-@media (max-width: 640px) {
-  .table--reviews td:nth-child(1) { width: 38%; }
-  .table--reviews td:nth-child(3) { width: 38%; }
-  .table--reviews td:last-child { width: 24%; }
-}
+/* Reviews: the columns size to their words; the button column takes only what the button needs, so it is never cut off. */
+.table--reviews td { vertical-align: middle; }
+.table--reviews td:first-child { width: 30%; }
+.table--reviews .table__action { width: 1%; white-space: nowrap; text-align: right; padding-left: 4px; }
+.table--reviews .review__history { font-size: 12.5px; }
 
 /* A fuller menu on a short screen: tighter rows, so the last section is not below the fold. */
 @media (min-width: 861px) and (max-height: 940px) {

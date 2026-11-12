@@ -1,5 +1,6 @@
 // Accounts (customers) and their fields; importing from a file with undo;
 // bulk changes. Works the same whether or not a CRM is connected.
+import { allowedCurrency } from '../lib/fx';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { normalizeValue, optionKey } from '../../../shared/src/fields';
@@ -38,7 +39,10 @@ export const toAccount = (r: Row): Account => ({
   ...(r.overdue_tasks != null ? { overdueTasks: Number(r.overdue_tasks), stuckTasks: Number(r.stuck_tasks), lastTouchAt: iso(r.last_touch) } : {}),
   reviewDays: r.review_days ?? null,
   ...(r.last_review !== undefined ? { lastReviewAt: iso(r.last_review) } : {}),
+  currency: r.currency ?? null,
 });
+
+const currencyInput = z.string().regex(/^[A-Z]{3}$/).nullable();
 
 const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
@@ -151,18 +155,19 @@ accountRoutes.post('/accounts', async (c) => {
   requireWriter(c);
   const input = await body(
     c,
-    z.object({ name: accountInput.name, ownerId: accountInput.ownerId.optional(), teamId: accountInput.teamId.optional(), fields: accountInput.fields.optional() }),
+    z.object({ name: accountInput.name, ownerId: accountInput.ownerId.optional(), teamId: accountInput.teamId.optional(), fields: accountInput.fields.optional(), currency: currencyInput.optional() }),
   );
   const org = c.get('org');
   const auth = c.get('auth');
   checkEditable(org.account_fields, changedFieldKeys({}, input.fields ?? {}), auth);
+  if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     await checkOwner(q, input.ownerId);
     const fields = cleanFields(org.account_fields, input.fields ?? {}, org.locale);
     const id = crypto.randomUUID();
     await q.query(
-      `insert into accounts (id, org_id, name, owner_id, team_id, fields, source, created_by) values ($1, $2, $3, $4, $5, $6, 'manual', $7)`,
-      [id, org.id, input.name, input.ownerId ?? null, input.teamId ?? null, JSON.stringify(fields), auth.userId],
+      `insert into accounts (id, org_id, name, owner_id, team_id, fields, source, created_by, currency) values ($1, $2, $3, $4, $5, $6, 'manual', $7, $8)`,
+      [id, org.id, input.name, input.ownerId ?? null, input.teamId ?? null, JSON.stringify(fields), auth.userId, input.currency && input.currency !== org.currency ? input.currency : null],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.created', entity: 'account', entityId: id });
     await queueSync(q, org.id, 'account', [id], null, { created: true });
@@ -206,11 +211,13 @@ accountRoutes.patch('/accounts/:id', async (c) => {
       archived: z.boolean().optional(),
       /** Days between business reviews; null follows the company's rhythm, 0 is none. */
       reviewDays: z.number().int().min(0).max(730).nullable().optional(),
+      currency: currencyInput.optional(),
     }),
   );
   const org = c.get('org');
   const auth = c.get('auth');
   if (input.archived !== undefined) requirePerm(c, 'accounts.manage');
+  if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
     const [a] = await q.query('select * from accounts where id = $1', [id]);
     if (!a) fail('not_found');
@@ -222,9 +229,10 @@ accountRoutes.patch('/accounts/:id', async (c) => {
     await q.query(
       `update accounts set name = $2, fields = $3, updated_at = now(),
               archived_at = case when $4::boolean is null then archived_at when $4 then coalesce(archived_at, now()) else null end,
-              review_days = case when $5 then $6::int else review_days end
+              review_days = case when $5 then $6::int else review_days end,
+              currency = case when $7 then $8::text else currency end
         where id = $1`,
-      [id, input.name ?? a.name, JSON.stringify(fields), input.archived ?? null, input.reviewDays !== undefined, input.reviewDays ?? null],
+      [id, input.name ?? a.name, JSON.stringify(fields), input.archived ?? null, input.reviewDays !== undefined, input.reviewDays ?? null, input.currency !== undefined, input.currency && input.currency !== org.currency ? input.currency : null],
     );
     // A new owner or team may take the customer out of this person's reach.
     if ((input.ownerId !== undefined && input.ownerId !== a.owner_id) || (input.teamId !== undefined && input.teamId !== a.team_id)) {

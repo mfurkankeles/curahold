@@ -26,6 +26,7 @@ import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { canSeeField, defsFor, type Viewer } from '../lib/fieldAccess';
 import { iso } from '../lib/mappers';
+import { fxRate } from '../lib/fx';
 import { loadCatalog, runReport, type Catalog } from '../lib/reportEngine';
 import { engineCtx } from './builder';
 import { body, param, uuid } from '../lib/validate';
@@ -48,6 +49,7 @@ const cardSchema = z.object({
   reportId: uuid.optional(),
   report: z.string().regex(/^[a-z0-9_]{1,40}$/).optional(),
   chart: z.enum(CHARTS).optional(),
+  goal: z.number().positive().max(1e13).optional(),
 });
 const cardsSchema = z
   .array(cardSchema)
@@ -58,19 +60,24 @@ const roleKeys = z.array(z.string().regex(/^[a-z0-9][a-z0-9_-]{0,40}$/)).max(50)
 const toPage = (r: Row): Page => ({
   id: r.id,
   name: r.name,
+  kind: r.kind ?? 'home',
   cards: r.cards ?? [],
   homeFor: r.home_for ?? [],
   sharedWith: r.shared_with ?? [],
   position: r.position,
   updatedAt: iso(r.updated_at)!,
+  filters: r.filters ?? {},
 });
 
+/** Home pages (the tabs on Home), or with ?kind=dashboard the dashboards. */
 pageRoutes.get('/pages', async (c) => {
   const auth = c.get('auth');
-  const rows = await run(c, (q) => q.query('select * from pages order by position, created_at'));
+  const kind = c.req.query('kind') === 'dashboard' ? 'dashboard' : c.req.query('kind') === 'all' ? null : 'home';
+  const rows = await run(c, (q) => q.query('select * from pages where ($1::text is null or kind = $1) order by position, created_at', [kind]));
   const pages = rows.map(toPage);
   // Without a home of its own a role starts on the first page it can open.
-  const home = pages.find((p) => p.homeFor.includes(auth.roleKey)) ?? pages[0] ?? null;
+  const homes = pages.filter((p) => p.kind === 'home');
+  const home = homes.find((p) => p.homeFor.includes(auth.roleKey)) ?? homes[0] ?? null;
   return c.json({ pages, homeId: home?.id ?? null });
 });
 
@@ -81,14 +88,28 @@ pageRoutes.get('/pages/:id', async (c) => {
   return c.json({ page: toPage(row) });
 });
 
+/**
+ * What the page's cards show, for the person looking. A dashboard can be
+ * narrowed to one person (?person=me or an id) or one team (?team=id): every
+ * chart then counts only what belongs to them.
+ */
 pageRoutes.get('/pages/:id/data', async (c) => {
   const id = param(c, 'id');
+  const person = c.req.query('person');
+  const team = c.req.query('team');
   const data = await run(c, async (q) => {
     const [row] = await q.query('select cards from pages where id = $1', [id]);
     if (!row) fail('not_found');
-    return cardsData(c, q, row.cards ?? []);
+    let people: string[] | null = null;
+    if (person === 'me') people = [c.get('auth').userId];
+    else if (person && uuid.safeParse(person).success) people = [person];
+    else if (team && uuid.safeParse(team).success) {
+      people = (await q.query<{ user_id: string }>('select user_id from team_members where team_id = $1', [team])).map((r) => r.user_id);
+      if (!people.length) people = ['00000000-0000-0000-0000-000000000000'];
+    }
+    return cardsData(c, q, row.cards ?? [], people);
   });
-  return c.json({ data });
+  return c.json({ data, at: new Date(nowOf(c.get('deps'))).toISOString() });
 });
 
 /** What cards would show, before the page is saved (for the editor). */
@@ -101,9 +122,12 @@ pageRoutes.post('/pages/preview', async (c) => {
 
 const pageInput = z.object({
   name: z.string().trim().min(1).max(80),
+  kind: z.enum(['home', 'dashboard']).optional(),
   cards: cardsSchema.optional(),
   homeFor: roleKeys.optional(),
   sharedWith: roleKeys.optional(),
+  /** A dashboard's filter bar: which filters it offers. */
+  filters: z.object({ person: z.boolean().optional(), team: z.boolean().optional() }).optional(),
 });
 
 /** A role has one home: giving it a new one takes it off the old. */
@@ -126,8 +150,19 @@ pageRoutes.post('/pages', async (c) => {
     const id = crypto.randomUUID();
     await moveHomes(q, id, input.homeFor);
     const [r] = await q.query(
-      `insert into pages (id, org_id, name, cards, home_for, shared_with, position, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
-      [id, org.id, input.name, JSON.stringify(input.cards ?? []), input.homeFor ?? [], input.sharedWith ?? [], n, auth.userId],
+      `insert into pages (id, org_id, name, cards, home_for, shared_with, position, created_by, kind, filters) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *`,
+      [
+        id,
+        org.id,
+        input.name,
+        JSON.stringify(input.cards ?? []),
+        input.kind === 'dashboard' ? [] : (input.homeFor ?? []),
+        input.sharedWith ?? [],
+        n,
+        auth.userId,
+        input.kind ?? 'home',
+        JSON.stringify(input.filters ?? (input.kind === 'dashboard' ? { person: true, team: true } : {})),
+      ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.created', entity: 'page', entityId: id, meta: { name: input.name } });
     return r;
@@ -147,7 +182,14 @@ pageRoutes.post('/pages/from-template', async (c) => {
   const name = input.name ?? pick(tpl.name, c.get('locale'));
   const row = await run(c, async (q) => {
     const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages');
-    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by) values ($1, $2, $3, $4, $5) returning *`, [org.id, name, JSON.stringify(cards), n, auth.userId]);
+    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by, kind, filters) values ($1, $2, $3, $4, $5, 'dashboard', $6) returning *`, [
+      org.id,
+      name,
+      JSON.stringify(cards),
+      n,
+      auth.userId,
+      JSON.stringify({ person: true, team: true }),
+    ]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.created', entity: 'page', entityId: r.id, meta: { name, template: tpl.key } });
     return r;
   });
@@ -165,13 +207,14 @@ pageRoutes.patch('/pages/:id', async (c) => {
     if (!p) fail('not_found');
     await moveHomes(q, id, input.homeFor);
     const [r] = await q.query(
-      `update pages set name = $2, cards = $3, home_for = $4, shared_with = $5, updated_at = now() where id = $1 returning *`,
+      `update pages set name = $2, cards = $3, home_for = $4, shared_with = $5, filters = $6, updated_at = now() where id = $1 returning *`,
       [
         id,
         input.name ?? p.name,
         JSON.stringify(input.cards ?? p.cards),
-        input.homeFor ?? p.home_for,
+        p.kind === 'dashboard' ? [] : (input.homeFor ?? p.home_for),
         input.sharedWith ?? p.shared_with,
+        JSON.stringify(input.filters ?? p.filters ?? {}),
       ],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.updated', entity: 'page', entityId: id, meta: { fields: Object.keys(input) } });
@@ -217,7 +260,8 @@ const base = (scope: CardScope | undefined) => `a.archived_at is null and ${SCOP
 const OPEN = `t.archived_at is null and t.parent_id is null
   and t.done_at is null`;
 const dateOf = (p: string) => `(case when a.fields->>${p} ~ '^\\d{4}-\\d{2}-\\d{2}' then substr(a.fields->>${p}, 1, 10)::date end)`;
-const moneyOf = (p: string) => `(case when jsonb_typeof(a.fields->${p}) = 'number' then (a.fields->>${p})::numeric end)`;
+// In the company's currency: a customer kept in another one is counted at the company's rate.
+const moneyOf = (p: string) => `(case when jsonb_typeof(a.fields->${p}) = 'number' then round((a.fields->>${p})::numeric * ${fxRate('a')}, 2) end)`;
 const taskScope: Record<CardScope, string> = {
   mine: `$1 = any (t.assignee_ids)`,
   team: `t.assignee_ids && array(select m.user_id from team_members m where m.team_id in ${MY_TEAMS})`,
@@ -237,6 +281,8 @@ interface Ctx {
   c: C;
   /** What reports can be made from, loaded once for the page. */
   cat?: Catalog;
+  /** A dashboard narrowed to these people. */
+  people: string[] | null;
 }
 
 /** The field a card reads: the one chosen, or a sensible guess among those this person can see. */
@@ -268,7 +314,7 @@ const optionOf = (ctx: Ctx, f: AccountField | null, key: unknown) => {
 
 const num = (v: unknown) => (v == null ? null : Number(v));
 
-async function cardsData(c: C, q: Q, cards: Card[]): Promise<Record<string, CardData>> {
+async function cardsData(c: C, q: Q, cards: Card[], people: string[] | null = null): Promise<Record<string, CardData>> {
   const org = c.get('org');
   const auth = c.get('auth');
   const all = (org.account_fields ?? []) as AccountField[];
@@ -281,6 +327,7 @@ async function cardsData(c: C, q: Q, cards: Card[]): Promise<Record<string, Card
     all,
     seen: defsFor(all, auth),
     c,
+    people,
   };
   const out: Record<string, CardData> = {};
   for (const card of cards) {
@@ -323,8 +370,9 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
       }
       const ectx = engineCtx(ctx.c, q);
       ctx.cat ??= await loadCatalog(ectx);
-      const result = await runReport(ectx, ctx.cat, def);
-      return { kind: 'report', name, chart: card.chart ?? def.chart, source: def.source, reportId: card.reportId ?? null, library: card.reportId ? null : (card.report ?? null), result };
+      const chart = card.chart ?? (def.chart === 'table' && def.groups.length ? 'bar' : def.chart);
+      const result = await runReport(ectx, ctx.cat, def, { chart: chart !== 'table' || def.groups.length > 0, people: ctx.people });
+      return { kind: 'report', name, chart, source: def.source, reportId: card.reportId ?? null, library: card.reportId ? null : (card.report ?? null), result, ...((card.goal ?? def.goal) ? { goal: card.goal ?? def.goal } : {}) };
     }
 
     case 'my_tasks': {
