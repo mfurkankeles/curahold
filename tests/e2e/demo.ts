@@ -181,6 +181,17 @@ if (ok && !process.env.QUICK) {
     if (failed.length) errors.push(`the docs inside the demo could not load: ${failed.slice(0, 3).join(', ')}`);
     await docs.close();
   }
+  // Ask answers inside the demo too: the docs' sections are read from the folder beside the page.
+  await click('.navlink--ask');
+  await frame!.waitForSelector('.ask__form input', { timeout: 10000 });
+  await frame!.type('.ask__form input', 'Müşterileri nasıl içe aktarırım?');
+  await page.keyboard.press('Enter');
+  await frame!.waitForSelector('.ask__answer, .ask__chips .ask__chip', { timeout: 10000 }).catch(() => errors.push('Ask did not answer inside the demo'));
+  const from = await frame!.$eval('.ask__from a', (a) => a.getAttribute('href') ?? '').catch(() => '');
+  if (!/^docs\/tr\/[a-z-]+\/index\.html/.test(from)) errors.push(`Ask's source link does not point into the demo's docs: ${from}`);
+  await page.screenshot({ path: join(SCREENS, 'demo-ask.png') });
+  await page.keyboard.press('Escape');
+  await frame!.waitForFunction(() => !document.querySelector('.dialog'), { timeout: 5000 });
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));

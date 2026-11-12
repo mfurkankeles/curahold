@@ -2,6 +2,7 @@
 // time (what happened, where, how to repeat it, screenshots, and the
 // technical details the app saw), and consent for support to look inside —
 // off unless ticked, time-limited, revocable.
+import { Ask } from './Ask';
 import { docsFile, docsHref, docsLink } from '../lib/docs';
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import {
@@ -294,12 +295,13 @@ function Annotate({ shot, onDone, onClose }: { shot: Shot; onDone: (f: File) => 
   );
 }
 
-function NewRequest({ access, onSent, hide }: { access: Access | null; onSent: (ref: string) => void; hide: (on: boolean) => void }) {
+function NewRequest({ access, onSent, hide, about = '' }: { access: Access | null; onSent: (ref: string) => void; hide: (on: boolean) => void; about?: string }) {
   const { t, locale } = useI18n();
   const { me } = useStore();
   const [category, setCategory] = useState<HelpCategory | null>(null);
   const [impact, setImpact] = useState<HelpImpact | null>(null);
-  const [subject, setSubject] = useState('');
+  // Coming from Ask, the question is the subject already.
+  const [subject, setSubject] = useState(about.slice(0, 160));
   const [description, setDescription] = useState('');
   const [steps, setSteps] = useState('');
   const [page, setPage] = useState(pageAddress);
@@ -745,10 +747,12 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
   );
 }
 
-export function HelpDialog({ onClose, start = 'new' }: { onClose: () => void; start?: 'new' | 'mine' }) {
+export function HelpDialog({ onClose, start = 'ask' }: { onClose: () => void; start?: 'ask' | 'new' | 'mine' }) {
   const { t } = useI18n();
   const { reloadMe } = useStore();
-  const [tab, setTab] = useState<'new' | 'mine'>(start);
+  const [tab, setTab] = useState<'ask' | 'new' | 'mine'>(start);
+  // The question Ask could not settle, carried into the request form.
+  const [about, setAbout] = useState('');
   const [access, setAccess] = useState<Access | null>(null);
   const [sentRef, setSentRef] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -766,6 +770,9 @@ export function HelpDialog({ onClose, start = 'new' }: { onClose: () => void; st
     <div className="help__host" data-hidden={hidden || undefined}>
       <Dialog title={t('help.title')} wide onClose={onClose}>
         <div className="tabs" role="tablist">
+          <button className="tab" role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
+            {t('ask.tab')}
+          </button>
           <button className="tab" role="tab" aria-selected={tab === 'new'} onClick={() => (setTab('new'), setSentRef(null))}>
             {t('help.tab.new')}
           </button>
@@ -787,8 +794,19 @@ export function HelpDialog({ onClose, start = 'new' }: { onClose: () => void; st
             </div>
           </div>
         )}
+        {tab === 'ask' && (
+          <Ask
+            onWrite={(question) => {
+              setAbout(question);
+              setSentRef(null);
+              setTab('new');
+            }}
+          />
+        )}
         {tab === 'new' && !sentRef && (
           <NewRequest
+            key={about}
+            about={about}
             access={access}
             hide={setHidden}
             onSent={(ref) => {

@@ -76,7 +76,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const [newBoard, setNewBoard] = useState(false);
   const [searching, setSearching] = useState(false);
   // "#help" (the link in a help request's receipt) opens the person's requests.
-  const [help, setHelp] = useState<null | 'new' | 'mine'>(() => (location.hash === '#help' ? 'mine' : null));
+  const [help, setHelp] = useState<null | 'ask' | 'new' | 'mine'>(() => (location.hash === '#help' ? 'mine' : null));
   const [quick, setQuick] = useState<QuickDefaults | null>(null);
   const [keys, setKeys] = useState(false);
   const [news, setNews] = useState(false);
@@ -129,7 +129,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
       quickAdd: (d) => setQuick(d ?? { ...currentPageDefaults() }),
       search: () => setSearching(true),
       shortcuts: () => setKeys(true),
-      help: () => setHelp('new'),
+      help: () => setHelp('ask'),
       newBoard: () => setNewBoard(true),
       logTouch: (accountId, accountName, kind) => setTouch({ accountId, accountName, kind }),
     }),
@@ -283,7 +283,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             setFresh(false);
           },
         },
-        ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setHelp('new') }] : []),
+        ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setHelp('ask') }] : []),
         ...(app.canPrompt ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => void app.install() }] : []),
         ...(app.byHand ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => setInstallHelp(true) }] : []),
         // The try-it demo has "Start over" in its own bar instead.
@@ -432,6 +432,13 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             )}
           </div>
           <div className="sidebar__foot">
+            {/* A question in your own words, answered from the docs; support is one step further in. */}
+            {helpOk && (
+              <button type="button" className="navlink navlink--ask" onClick={() => setHelp('ask')}>
+                <Icon name="help" size={18} />
+                <span className="navlink__label">{t('ask.nav')}</span>
+              </button>
+            )}
             {isAdmin && link('/settings', t('nav.settings'), path.startsWith('/settings'), 'sliders')}
             {meMenu}
           </div>

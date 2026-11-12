@@ -703,7 +703,22 @@ await step('help: a request with a screenshot and consent; support visits read o
   await clearToasts(p);
   await p.click('.sidebar__me');
   await (await byText(p, '.popmenu__item', 'Yardım')).click();
+  // Help opens on Ask: a question in plain words is answered from the docs, with where it came from.
+  await p.waitForSelector('.ask__form input');
+  await p.type('.ask__form input', 'Webhook imzasını nasıl doğrularım?');
+  await p.keyboard.press('Enter');
+  await p.waitForSelector('.ask__answer');
+  expect((await text(p, '.ask__answer h4')).includes('İmza'), 'Ask did not answer from the webhooks page');
+  expect(((await p.$eval('.ask__from a', (a) => a.getAttribute('href'))) ?? '').startsWith('/docs/tr/webhooks/#'), 'the answer does not say where it came from');
+  await shot(p, 'p7-00-help-ask');
+  // It did not help: the next closest places, and support with the question already written.
+  await (await byText(p, '.ask__helped button', 'Hayır')).click();
+  await (await byText(p, '.ask__write', 'Desteğe yaz')).click();
   await p.waitForSelector('.help__cats');
+  expect((await p.$eval('.help input.input', (i) => (i as HTMLInputElement).value)) === 'Webhook imzasını nasıl doğrularım?', 'the question was not carried into the request');
+  // Select the carried question so the next typing replaces it.
+  await p.click('.help input.input', { count: 3 });
+  await p.keyboard.press('Backspace');
   await (await byText(p, '.help__cat strong', 'Bir şey çalışmıyor')).click();
   await (await byText(p, '.help .seg button', 'İşimi durduruyor')).click();
   await p.type('.help input.input', 'Yenileme panosu açılmıyor');
