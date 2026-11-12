@@ -324,6 +324,8 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | Yenilemeler'den Ürünler'e geçince | menüde "Tüm müşteriler" yanıyor, adres /accounts oluyor; cihaz seçimi saklayamıyorsa (demo) kart listesine düşüyordu | Ürünler'in kendi adresi ve menüde kendi satırı var; menü, başlık ve içerik aynı yeri gösteriyor (testli) |
 | Yardım | menüdeki "Curahold'a sor" üç sekmeli bir pencere açıyordu | her ekranın sağ altında sabit "CuraAI" düğmesi ve sohbeti; kapatınca konuşma kalır; cevap yetmezse "Desteğe yaz" soruyla birlikte açılır. Motor aynı (karar A): cevap belgelerden, cihazda, soru başına $0 |
 | "Desteğin bakmasına izin ver" | tek satır ve bir düğme; ne anlama geldiği yazmıyordu | ne olduğu iki cümleyle, üç güvence (yalnızca senin gördüğünü görür ve değiştiremez; kendiliğinden kapanır; her giriş kayda yazılır), açık/kapalı durumu, "Yalnızca okuma erişimi ver" |
+| Ana sayfadaki "Ekip yükü" | 6 sütunlu düz tablo: 5 kişi için 25 rakam, sıfırlar dahil | kişi satırları: avatar, müşteri sayısı ve tutar, açık iş çubuğu (geciken kısmı kırmızı), yalnızca gerektiğinde "geciken" ve "riskli" etiketi, sorun yoksa "Yolunda"; satır o kişinin sayfasını açar |
+| Rapor tabloları | gölgeli başlık bandı, her hücre aynı ağırlıkta | bant yok, ilk sütun satırın adı olarak kalın, toplam sütununda büyüklüğü gösteren çubuk |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

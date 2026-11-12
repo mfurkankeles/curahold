@@ -272,6 +272,8 @@ function Gauge({ value, goal, unit, compact }: { value: number; goal: number; un
 export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => string }) {
   const { t } = useI18n();
   const f = useReportFormat();
+  // The total of each row also draws its size, so the big ones stand out without reading every number.
+  const most = Math.max(1, ...r.groups.map((g) => Math.abs(g.value)));
   return (
     <div className="tablewrap rtable">
       <table className="table">
@@ -295,7 +297,8 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
                   {g.cells?.[si] ? f.value(g.cells[si], r.unit) : '—'}
                 </td>
               ))}
-              <td className="num">
+              <td className="num rtable__sum">
+                <span className="rtable__bar" style={{ width: `${(Math.abs(g.value) / most) * 100}%` }} aria-hidden="true" />
                 <b>{f.value(g.value, r.unit)}</b>
               </td>
             </tr>

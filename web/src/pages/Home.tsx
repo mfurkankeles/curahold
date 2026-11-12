@@ -22,7 +22,7 @@ import { PROVIDER_NAMES } from '../components/Connections';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted } from '../components/GettingStarted';
-import { Confirm, Dialog } from '../components/ui';
+import { Avatar, Confirm, Dialog } from '../components/ui';
 import { CountUp } from '../components/CountUp';
 import { ReportChart } from '../components/Charts';
 import { CHARTS, REPORT_LIBRARY, type SavedReport } from '../../../shared/src/reports';
@@ -372,33 +372,52 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
 
   if (data.kind === 'people') {
     if (!data.rows.length) return <p className="pane__note">{t('home.nothing')}</p>;
+    // Who carries what, read at a glance: the person, a bar for the open work (the late part in red),
+    // and words only where something needs a look. Each row opens that person's page.
+    const max = Math.max(1, ...data.rows.map((r) => r.open));
     return (
-      <div className="table-wrap">
-        <table className="table load">
-          <thead>
-            <tr>
-              <th>{t('home.load.person')}</th>
-              <th className="num">{t('home.load.accounts')}</th>
-              {data.unit === 'money' && <th className="num hide-phone">{t('home.load.money')}</th>}
-              <th className="num">{t('home.load.open')}</th>
-              <th className="num">{t('home.load.overdue')}</th>
-              <th className="num hide-phone">{t('home.load.attention')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((r) => (
-              <tr key={r.userId}>
-                <td>{r.name}</td>
-                <td className="num">{r.accounts}</td>
-                {data.unit === 'money' && <td className="num hide-phone">{money(r.money ?? 0, true)}</td>}
-                <td className="num">{r.open}</td>
-                <td className="num" data-hot={r.overdue > 0 || undefined}>{r.overdue}</td>
-                <td className="num hide-phone" data-hot={r.attention > 0 || undefined}>{r.attention}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className="loadlist">
+        {data.rows.map((r) => {
+          const calm = r.overdue === 0 && r.attention === 0;
+          return (
+            <li key={r.userId}>
+              <a
+                className="loadrow"
+                href={`/team?person=${r.userId}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/team?person=${r.userId}`);
+                }}
+              >
+                <Avatar person={person(r.userId)} large />
+                <span className="loadrow__who">
+                  <strong>{r.name}</strong>
+                  <span className="loadrow__sub">
+                    {t('home.load.accountsN', { n: r.accounts })}
+                    {data.unit === 'money' && (r.money ?? 0) > 0 && <> · {money(r.money ?? 0, true)}</>}
+                  </span>
+                </span>
+                <span className="loadrow__work" title={t('home.load.openN', { n: r.open })}>
+                  <span className="loadbar" aria-hidden="true">
+                    <span style={{ width: `${(r.open / max) * 100}%` }}>{r.overdue > 0 && <i style={{ width: `${(r.overdue / Math.max(1, r.open)) * 100}%` }} />}</span>
+                  </span>
+                  <span className="loadrow__n num">{t('home.load.openN', { n: r.open })}</span>
+                </span>
+                <span className="loadrow__flags">
+                  {r.overdue > 0 && <span className="flag flag--late">{t('home.load.overdueN', { n: r.overdue })}</span>}
+                  {r.attention > 0 && <span className="flag flag--soon">{t('home.load.attentionN', { n: r.attention })}</span>}
+                  {calm && (
+                    <span className="flag flag--ok">
+                      <Icon name="check" size={13} />
+                      {t('home.load.calm')}
+                    </span>
+                  )}
+                </span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
     );
   }
 
