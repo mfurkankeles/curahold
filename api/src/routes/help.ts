@@ -660,7 +660,7 @@ supportEntry.get('/help-files/:id', async (c) => {
 supportEntry.put('/support/requests/:ref', async (c) => {
   if (!staffKeyOk(c)) fail('forbidden');
   const ref = c.req.param('ref');
-  if (!/^TW-\d{6,}$/.test(ref)) fail('not_found');
+  if (!/^CH-\d{6,}$/.test(ref)) fail('not_found');
   const { status } = await body(c, z.object({ status: z.enum(['received', 'answered', 'solved']) }));
   const org = c.get('org');
   const rows = await c.get('deps').db.system((q) =>

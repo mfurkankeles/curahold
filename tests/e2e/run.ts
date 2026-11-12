@@ -5,13 +5,16 @@ import { createHash } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCREENS, STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
+import { DESK_STAFF, SCREENS, STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
 
 const s = await startStack(8899);
 const results: { name: string; ok: boolean; error?: string }[] = [];
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** While working on one scenario: ONLY='sign in with an email|support desk' runs the ones it needs and itself. */
+const only = process.env.ONLY ? new RegExp(process.env.ONLY) : null;
 async function step(name: string, fn: () => Promise<void>) {
+  if (only && !only.test(name)) return;
   try {
     await fn();
     results.push({ name, ok: true });
@@ -739,7 +742,7 @@ await step('help: a request with a screenshot and consent; support visits read o
   await (await byText(p, '.help .btn--primary', 'Talebi gönder')).click();
   await p.waitForSelector('.help__sent');
   const sentText = await text(p, '.help__sent');
-  expect(/TW-\d{6}/.test(sentText), `no reference: ${sentText}`);
+  expect(/CH-\d{6}/.test(sentText), `no reference: ${sentText}`);
   await shot(p, 'p7-02-help-sent');
   const [req] = await sql(`select h.ref, h.context, h.page_url, (select count(*)::int from help_files f where f.request_id = h.id) as files, g.level, extract(epoch from g.expires_at - now()) / 3600 as hours
                              from help_requests h join support_grants g on g.id = h.grant_id order by h.created_at desc limit 1`);
@@ -806,6 +809,124 @@ await step('help: a request with a screenshot and consent; support visits read o
   await p.click('.help__back');
   await p.waitForSelector('.help__req');
   expect((await p.$('.help__req[data-unread]')) === null, 'the answered request still shows as unread');
+});
+
+await step('the support desk: staff sign in with a code, then note, answer, take and solve a request from the queue', async () => {
+  // Mert writes to support again, with consent to look, so something is waiting in the queue.
+  const sent = await mert.page.evaluate(async () => {
+    const r = await fetch('/api/help', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' },
+      credentials: 'include',
+      body: JSON.stringify({ category: 'bug', impact: 'blocking', subject: 'Toplu görev aktarımı yarıda kaldı', description: 'Dosyayı yükledim, 40 satırdan yalnızca 12 tanesi geldi.', steps: '1. Görevler > İçe aktar\n2. Dosyayı seç', grant: { hours: 24, level: 'view' } }),
+    });
+    return { status: r.status, json: await r.json() };
+  });
+  expect(sent.status === 201, `Mert could not write to support: ${JSON.stringify(sent.json)}`);
+  const ref = sent.json.request.ref as string;
+
+  const desk = await newPage(s.browser);
+  const d = desk.page;
+  /** Waits for something on the desk; if it never comes, says what the page itself complained about. */
+  const appears = (sel: string) =>
+    d.waitForSelector(sel).catch((e) => {
+      throw new Error(`${e.message}; the page said: ${desk.errors.join(' | ') || 'nothing'}`);
+    });
+  // The desk lives at the central address only; a company's own address has no such page.
+  await d.goto(`${central}/desk`, { waitUntil: 'networkidle0' });
+  await d.waitForSelector('.desk-signin__card input[type=email]');
+  // English first; this team works in Turkish.
+  await (await byText(d, '.desk__langs button', 'Türkçe')).click();
+  await d.waitForFunction(() => document.querySelector('.desk-signin__card h1')?.textContent === 'Destek masası');
+  await shot(d, 'p7-07-desk-signin');
+  // Someone who is not on the staff list is told the same thing, and gets no code.
+  await d.type('.desk-signin__card input[type=email]', 'mert@demo.example');
+  await d.click('.desk-signin__card .btn--primary');
+  await d.waitForSelector('.desk-signin__code');
+  expect((await d.$('.desk-signin__dev')) === null, 'a code was made for someone who is not staff');
+  await (await byText(d, '.desk-signin__card .btn--quiet', 'Başka adres kullan')).click();
+  await d.click('.desk-signin__card input[type=email]', { count: 3 });
+  await d.keyboard.press('Backspace');
+  await d.type('.desk-signin__card input[type=email]', DESK_STAFF);
+  await d.click('.desk-signin__card .btn--primary');
+  await d.waitForSelector('.desk-signin__dev');
+  await d.click('.desk-signin__dev');
+  await d.click('.desk-signin__card .btn--primary');
+  await appears('.desk__rail');
+
+  // The queue: what is waiting on support, the blocking one marked.
+  await appears('.desk__row');
+  const rows = await d.$$eval('.desk__row', (els) => els.map((e) => e.textContent ?? ''));
+  expect(rows.some((r) => r.includes('Toplu görev aktarımı yarıda kaldı') && r.includes('İşlerini durduruyor')), `queue: ${rows.join(' | ')}`);
+  expect(!rows.some((r) => r.includes('Yenileme panosu açılmıyor')), 'a solved request is still in the waiting queue');
+  await (await byText(d, '.desk__row strong', 'Toplu görev aktarımı yarıda kaldı')).click();
+  await appears('.deskreq');
+  expect(d.url().endsWith(`/desk?r=${ref}`), `the open request is not in the address: ${d.url()}`);
+  expect((await text(d, '.deskmsg[data-by="user"]')).includes('40 satırdan yalnızca 12'), 'what was asked is not on the request');
+  const side = await text(d, '.deskreq__side');
+  expect(side.includes('Mert Aksoy') && side.includes('mert@demo.example'), `who asked is missing: ${side}`);
+  expect((await d.$('.deskreq__access[data-on]')) !== null, 'the consent to look is not shown');
+
+  // A note for the team: stays with the team.
+  await d.click('.deskreply .seg button:nth-child(2)');
+  await d.waitForSelector('.deskreply[data-mode="internal"]');
+  await d.type('.deskreply__text', 'İçe aktarma 12. satırda tarih biçimine takılmış olabilir.');
+  await d.click('.deskreply .btn--primary');
+  await appears('.deskmsg[data-by="note"]');
+  expect((await d.$('.desk__status[data-status="received"]')) !== null, 'a note changed whose turn it is');
+  // An answer: goes to the person, the turn passes to them, and the request becomes the answerer's.
+  await d.click('.deskreply .seg button:nth-child(1)');
+  await d.waitForSelector('.deskreply[data-mode="public"]');
+  await d.type('.deskreply__text', 'Merhaba, 13. satırdaki tarih gün/ay/yıl yerine ay/gün/yıl yazılmış. Düzeltip yeniden yükler misin?');
+  await d.click('.deskreply .btn--primary');
+  await appears('.deskmsg[data-by="support"]');
+  await appears('.desk__status[data-status="answered"]');
+  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sende'));
+  await pause(200);
+  await shot(d, 'p7-08-desk');
+  const [stored] = await sql(
+    `select h.status, c.staff_email,
+            (select count(*)::int from help_messages m where m.request_id = h.id and m.internal) as notes,
+            (select count(*)::int from help_messages m where m.request_id = h.id and not m.internal and m.author = 'support') as answers
+       from help_requests h left join desk_claims c on c.request_id = h.id where h.ref = $1`,
+    [ref],
+  );
+  expect(stored.status === 'answered' && stored.staff_email === DESK_STAFF && stored.notes === 1 && stored.answers === 1, `stored: ${JSON.stringify(stored)}`);
+  // The person reads the answer and never the note.
+  const seen = await mert.page.evaluate(async (id) => {
+    const r = await fetch(`/api/help/${id}`, { headers: { 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, credentials: 'include' });
+    return JSON.stringify(await r.json());
+  }, sent.json.request.id as string);
+  expect(seen.includes('13. satırdaki tarih') && !seen.includes('takılmış olabilir'), 'the person sees the wrong part of the conversation');
+
+  // Give it back, take it again, then solve it; it leaves the waiting queues.
+  await (await byText(d, '.deskreq__tools .btn', 'Bırak')).click();
+  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('henüz kimse almadı'));
+  await (await byText(d, '.deskreq__tools .btn', 'Üstüme al')).click();
+  await d.waitForFunction(() => document.querySelector('.deskreq__owner')?.textContent?.includes('Bu sende'));
+  await (await byText(d, '.deskreq__tools .btn', 'Çözüldü işaretle')).click();
+  await appears('.desk__status[data-status="solved"]');
+  await d.waitForFunction(() => !document.querySelector('.desk__row'));
+  // Everything the desk did is on its own log, by name.
+  const log = (await sql(`select action from desk_log where staff_email = $1 and ref = $2 order by id`, [DESK_STAFF, ref])).map((r: any) => r.action);
+  for (const a of ['opened', 'noted', 'answered', 'released', 'took', 'status:solved']) expect(log.includes(a), `the log has no "${a}": ${log.join(', ')}`);
+
+  // A phone: one column at a time, and a way back from the request.
+  await d.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });
+  await pause(150);
+  expect(await d.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'the desk is wider than a phone');
+  await shot(d, 'p7-09-desk-phone');
+  await d.click('.deskreq__back');
+  await d.waitForFunction(() => getComputedStyle(document.querySelector('.desk__list')!).display !== 'none');
+  await d.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+
+  // Signing out ends it for this browser.
+  await d.click('.desk__who .btn');
+  await d.waitForSelector('.desk-signin__card');
+  const after = await d.evaluate(async () => (await fetch('/api/desk/me')).status);
+  expect(after === 401, `the desk still answers after signing out: ${after}`);
+  expect(desk.errors.length === 0, desk.errors.join(' | '));
+  await d.browserContext().close();
 });
 
 await step('customer portal: switch on, invite, the customer opens a request, the team replies, the customer reads it', async () => {

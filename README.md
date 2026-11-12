@@ -234,7 +234,7 @@ row-level security, customer reach and field access as the app.
   are dropped on both sides.
 - The desk gets one message (email and/or a signed webhook) with everything,
   plus file links signed per file for 14 days; the person gets a receipt
-  with a `TW-000123` reference and sees status under Help → My requests.
+  with a `CH-000123` reference and sees status under Help → My requests.
 - **Support access only with consent**: an unticked box on the form (or
   "Let support look" later). 24 hours, 3 or 7 days; read only unless an
   administrator allows changes; revocable at once, open sessions included.
@@ -249,6 +249,17 @@ row-level security, customer reach and field access as the app.
 - **Company policy** (Settings → Security → Support access): anyone /
   administrators only / nobody; narrowing it ends the access it no longer
   allows.
+- **The support desk** (`/desk` at the central address, for Curahold's own
+  team): queues by whose turn it is (waiting on us, nobody's yet, mine,
+  waiting on the customer, solved), the conversation with the company and
+  the person beside it, an answer or a note for the team only, taking and
+  releasing a request, and "see it as they do" where the person has let
+  support in. Sign-in is a six-digit code sent to an address on the staff
+  list (`SUPPORT_STAFF`): five tries per code, five codes an hour, a session
+  of 8 hours in a cookie only the desk's own address gets. What each staff
+  member opened, answered, took or solved is kept in the desk's own log.
+  Locally: `http://app.localhost:5173/desk`, `desk@curahold.localhost`; the
+  code is shown on the screen.
 
 ### Customer portal
 
@@ -353,9 +364,10 @@ tests/            Vitest suites; tests/e2e drives Chrome
 3. R2 bucket `curahold-files`.
 4. Secrets: `wrangler secret put AUTH_SECRET` (32+ random characters),
    `RESEND_API_KEY`, and the Google / Microsoft client id and secret if those
-   sign-ins are offered. `STAFF_KEY` (24+ characters) lets Curahold support
-   open entry links where a customer granted access; help requests go to
-   `SUPPORT_EMAIL` and/or `SUPPORT_WEBHOOK_URL`.
+   sign-ins are offered. `STAFF_KEY` (24+ characters) lets Curahold support's
+   tooling read the queue and answer; help requests go to `SUPPORT_EMAIL`
+   and/or `SUPPORT_WEBHOOK_URL`; `SUPPORT_STAFF` (addresses, comma-separated)
+   names who may sign in to the support desk at `/desk`.
 5. DNS: `*.curahold.com` and `app.curahold.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
 7. Customer portal (optional): a second domain (e.g. `curahold-portal.com`)

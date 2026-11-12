@@ -19,7 +19,7 @@ import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 
-export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; locale?: 'en' | 'tr' }) {
+export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr' }) {
   const db = pgliteDb(await createMemoryPg());
   await migrate(db, loadMigrations());
   // English unless asked (DEMO_LOCALE=tr for a Turkish sample company).
@@ -43,7 +43,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     oauth: {},
     signupEnabled: true,
     connectors: { demoCrm: true },
-    support: { email: 'support@curahold.localhost' },
+    // Who may sign in to the support desk (app.localhost/desk); the code is shown on the screen here.
+    support: { email: 'support@curahold.localhost', staff: opts.supportStaff ?? ['desk@curahold.localhost'] },
     // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
     portalDomain: 'portal.localhost',
     staffKey: opts.staffKey,

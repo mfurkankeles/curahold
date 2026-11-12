@@ -26,7 +26,7 @@ Use **Write to support** at the foot of CuraAI. The form asks for what support n
 
 6. **Keep in the loop** and **Needed by** (both optional): colleagues who should read the request and hear the answer, and the day you need it by.
 
-You get a **reference** (e.g. TW-000123) and a copy by email.
+You get a **reference** (e.g. CH-000123) and a copy by email.
 
 ## The conversation: answers, replies, and whose turn it is
 

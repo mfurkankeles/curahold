@@ -26,7 +26,7 @@ CuraAI'nın altındaki **Desteğe yaz**'ı kullan. Form, desteğin sana yeniden 
 
 6. **Haberdar edilecekler** ve **Ne zamana lazım** (ikisi de isteğe bağlı): talebi okuyup cevabı duyması gereken iş arkadaşların ve cevabın gerektiği gün.
 
-Gönderince bir **referans numarası** (örn. TW-000123) alırsın; bir kopyası e-postana gelir.
+Gönderince bir **referans numarası** (örn. CH-000123) alırsın; bir kopyası e-postana gelir.
 
 ## Konuşma: cevaplar, yanıtlar ve sıranın kimde olduğu
 

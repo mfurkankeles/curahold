@@ -25,6 +25,8 @@ EMAIL_FROM = "Curahold <no-reply@curahold.com>"
 MAX_DEVICES = "2"
 # Where help requests go. STAFF_KEY (support's entry-link key) is a secret.
 SUPPORT_EMAIL = "support@curahold.com"
+# Who may sign in to the support desk (app.<domain>/desk): the team's addresses, comma-separated.
+# SUPPORT_STAFF = ""
 # Customers' portal (a second Worker, wrangler.portal.toml).
 PORTAL_DOMAIN = "curahold-portal.com"
 

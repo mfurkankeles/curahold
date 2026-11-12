@@ -30,18 +30,20 @@ Bu belgedeki ve koddaki her ad ve metin Curahold için yazıldı.
 | Sorunun olduğu ekranın bağlantısı, ekran görüntüsü, teknik ayrıntı | vardı (form zaten topluyordu) |
 | Yazarken belgelerden cevap önerisi | vardı |
 | Hazır cevaplar (sık verilen cevabı tek tıkla eklemek) | sırada |
-| Kuyruk görünümleri: bana ait, atanmamış, süresi dolmak üzere, N gündür güncellenmeyen | sırada (kuyruk API'de var, ekranı yok) |
+| Kuyruk görünümleri: bana ait, atanmamış | **yapıldı** (destek masası ekranı, 13 Kasım) |
+| Kuyruk görünümleri: süresi dolmak üzere, uzun süredir güncellenmeyen | sırada (süre hedefiyle birlikte) |
 | Cevap süresi hedefi (ilk cevap, çözüm) ve aşım uyarısı | sırada |
-| Talebin yanında müşteri bilgisi, ilgili eski talepler | sırada |
+| Talebin yanında müşteri bilgisi, ilgili eski talepler | **yapıldı** (destek masası ekranı) |
+| Talebi üstüne almak ve bırakmak | **yapıldı** (destek masası ekranı) |
 
 ### CRM'den alınan kalıplar
 
 | Kalıp | Curahold'da |
 | --- | --- |
 | Takvim: gün, hafta, ay görünümü; başkasının takvimini açmak | **yapıldı** (takvim paketi: gün, hafta, ay, yıl; ekip takvimi yetkisi) |
-| Toplantı önceden planlanır; durumu olur (planlandı, yapıldı, ertelendi, iptal + neden) | **yok**: bugün yalnızca yapılmış toplantı kaydediliyor. Öneri: sıradaki paket |
-| Toplantı türü şirketin kendi listesinden seçilir; türe göre not başlıkları | yok. Öneri: planlı toplantıyla birlikte |
-| Tekrarlayan toplantı | yok. Öneri: planlı toplantıyla birlikte |
+| Toplantı önceden planlanır; durumu olur (planlandı, yapıldı, ertelendi, iptal + neden) | karar verildi (13 Kasım): yapılıyor, bkz. QUALITY.md |
+| Toplantı türü şirketin kendi listesinden seçilir; türe göre not başlıkları | karar verildi: planlı toplantıyla birlikte |
+| Tekrarlayan toplantı | karar verildi: planlı toplantıyla birlikte |
 | Liste solda, kayıt sağda (bölünmüş görünüm) | yok. Öneri: Sadelik paketi |
 | Kayıtlı görünümler, yanında canlı sayaç | kısmen (görev filtreleri kaydediliyor; sayaç yok) |
 | Her alanın yanında yerinde düzenleme | var (müşteri sayfası, görev paneli) |
@@ -62,6 +64,32 @@ Bu belgedeki ve koddaki her ad ve metin Curahold için yazıldı.
 | Test | 13 (talep gönderme ve erişim izni) | +18 (`tests/help-thread.test.ts`): konuşma, haberdar edilenler, notların sızmaması (API ve doğrudan SQL), anahtarlar, e-postanın bulunması, alıntının ayıklanması, sahte gönderen |
 | Başka şirketin talebi | — | 4 yeni adres uç başına izolasyon taramasında: hepsi 404 |
 | Maliyet | — | $0/koltuk/ay: gelen e-posta Cloudflare'in e-posta yönlendirmesiyle doğrudan uygulamaya gelir (sınırsız ve ücretsiz); giden e-posta zaten kullanılan sağlayıcıdan |
+
+## Destek masası ekranı (13 Kasım)
+
+Ürün sahibinin kararı: **B, ekran yapılsın.** Curahold ekibinin kendi ekranı; merkez
+adreste `/desk`. Müşteri şirketlerin adreslerinde böyle bir sayfa yok.
+
+| Ölçüm | Önce | Sonra |
+| --- | --- | --- |
+| Ekibin çalıştığı yer | e-posta kutusu ve API | ekran: solda kuyruklar, ortada o kuyruğun talepleri, sağda açık talep |
+| Kuyruklar | tek liste (API) | Bizi bekleyenler · Kimsenin almadıkları · Benimkiler · Müşteriyi bekleyenler · Çözülenler · Bütün talepler; yanlarında sayı; 30 saniyede bir ve sekmeye dönünce yenilenir |
+| Talebin yanında | yalnızca konuşma | şirket (plan, kişi sayısı, ne zamandan beri, deneme bitişi), soran kişi ve rolü, işi durdurup durdurmadığı, ne zamana lazım olduğu, dosyalar, şirketin diğer talepleri |
+| Cevap ve ekip notu | API'de `internal: true` | aynı kutuda iki seçenek; not sarı ve kesik çizgili, "yalnızca Curahold ekibi görür" yazısıyla; "Gönder ve çözüldü işaretle" tek tık |
+| Talebi üstüne almak | yoktu | Üstüme al / Bırak; ilk cevabı yazan kendiliğinden üstüne alır |
+| Müşterinin gözünden bakmak | ortak anahtarla, adı elle yazarak | kişi izin verdiyse tek düğme; ziyaret şirketin etkinlik kaydına ekip üyesinin adı ve adresiyle yazılır. Ortak anahtar artık kimseyi adlandıramadığı için içeri giremez |
+| Giriş | ortak anahtar (kimin yaptığı belli değil) | kişiye özel: ekip listesindeki adrese 6 haneli kod (10 dakika, tek kullanım, kod başına 5 deneme, saatte 5 kod); listede olmayana aynı cevap verilir, kod gitmez |
+| Oturum | — | 8 saat; çerez yalnızca masanın adresine gider (HttpOnly, SameSite=Strict), ayrı bir gizli anahtarla imzalı; her değişiklik bir formun gönderemeyeceği başlığı taşımak zorunda; ekip listesinden çıkarılanın oturumu o an biter |
+| Kim ne yaptı | kayıt yoktu | masanın kendi kaydı: kim hangi talebi açtı, cevapladı, not düştü, üstüne aldı, bıraktı, çözdü, içeri bağlantısı aldı |
+| Şirketlerin bu tablolara erişimi | — | yok: masanın üç tablosunda satır güvenliği açık ve hiçbir kural, hiçbir yetki tanımlı değil; uygulamanın veritabanı rolü okuyamaz (testli) |
+| Talep referansı | eski çalışma adının ön ekiyle | `CH-000123` |
+| Test | 31 (talep ve konuşma) | +11 (`tests/desk.test.ts`) ve tarayıcıda 1 senaryo: kodla giriş, listede olmayan adres, kuyruk, not, cevap, üstüne alma, çözme, telefonda tek sütun, çıkış |
+| Tarayıcı testinin bulduğu hatalar | — | 2: merkez adres denetimi adresteki kapı numarasında takılıyordu (yerelde masa hiç açılmıyordu); yeni Chrome'da kaydırma çağrısı söz (promise) döndürdüğü için ekran ilk mesajda boşalıyordu. İkisi de düzeltildi, ilki testte |
+| İndirilen kod | — | masa ayrı bir parça: 4,4 KB (gzip) + 2,0 KB stil; yalnızca `/desk` açılınca iner, müşterilerin uygulaması büyümedi |
+| Maliyet | — | $0/koltuk/ay: yeni servis yok; kod e-postası zaten kullanılan sağlayıcıdan gider |
+
+Bu pakette yapılmayanlar (sırada): hazır cevaplar, cevap süresi hedefi ve aşım uyarısı,
+masadan dosya eklemek, talebi başka bir ekip üyesine atamak (bugün herkes kendi üstüne alır).
 
 ## Nasıl çalışır
 
@@ -85,22 +113,21 @@ Hepsi ücretsiz; hiçbiri yeni bir servis değil.
 2. Worker ayarlarına ekle: `SUPPORT_REPLY_DOMAIN` (o alt alan adı), `SUPPORT_STAFF`
    (destek ekibinin e-posta adresleri, virgülle), `SUPPORT_EMAIL` (ekibin ortak kutusu),
    `STAFF_KEY` (zaten var).
+   `SUPPORT_STAFF` aynı zamanda destek masasına kimin girebileceğini belirler: listedeki
+   adresler `app.<alan adın>/desk` adresinde e-postalarına gelen kodla giriş yapar.
+   Birini listeden çıkarmak oturumunu o an bitirir.
 3. Kendi sunucusunda çalıştıran müşteri için: posta sunucusu gelen iletiyi
    `POST /api/desk/mail` adresine `SUPPORT_MAIL_KEY` ile iletir.
 
 `SUPPORT_REPLY_DOMAIN` ayarlanmadıysa e-postalar yanıt adresi taşımaz ve "cevap için
 Curahold'u aç" der; konuşma üründe aynı şekilde çalışır.
 
-## Karar bekleyenler
+## Kararlar (13 Kasım)
 
-1. **Destek ekibi için ekran.** Bugün ekip e-postayla ve API'yle cevaplıyor.
-   A. Şimdilik böyle kalsın; ilk 20–30 müşteriye kadar e-posta yeter. **(öneri)**
-   B. Ürünün içinde ayrı bir "destek masası" ekranı: kuyruk, talep, hazır cevaplar,
-   süre hedefleri. Yaklaşık bir paketlik iş; maliyeti yok.
-2. **Planlı toplantılar.** Toplantıyı önceden takvime koymak, türünü seçmek, sonra
-   notunu ve sonucunu yazmak.
-   A. Sıradaki pakete al. **(öneri: takvim artık hazır, en çok eksikliği hissedilecek yer)**
-   B. Kişiselleştirme paketiyle birlikte.
+1. **Destek ekibi için ekran: B.** Yapıldı (yukarıdaki bölüm).
+2. **Planlı toplantılar: hem A hem B.** Sıradaki paket olarak yapılıyor; şirkete göre
+   ayarlanan kısmı (toplantı türleri, türe göre not başlıkları) aynı pakette.
+3. **Menüdeki "Ürünler" girişi kalıyor.**
 
 ## Kaynaklar
 

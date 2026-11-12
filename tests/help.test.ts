@@ -71,7 +71,7 @@ describe('a help request', () => {
   it('arrives with its files, a cleaned page address and the context the person kept', async () => {
     const res = await zeynep.post('/api/help', helpForm(base, [png()]));
     expect(res.status).toBe(201);
-    expect(res.json.request.ref).toMatch(/^TW-\d{6}$/);
+    expect(res.json.request.ref).toMatch(/^CH-\d{6}$/);
     expect(res.json.grant).toBeNull();
     await env.settle();
 

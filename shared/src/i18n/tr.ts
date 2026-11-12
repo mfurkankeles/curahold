@@ -3182,4 +3182,5 @@ export const tr: Record<MessageKey, string> = {
   'ask.ai.created': 'Oluşturuldu. Görevlerinde duruyor.',
   'ask.ai.readonly': 'Koltuğun görev ekleyemiyor.',
   'cura.sub.ai': 'Claude cevaplar: belgelerden ve verinden',
+  'desk.plan.trial': 'Deneme',
 };

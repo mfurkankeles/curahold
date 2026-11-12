@@ -3197,6 +3197,7 @@ export const en = {
   'ask.ai.created': 'Created. It is in your tasks.',
   'ask.ai.readonly': 'Your seat cannot add tasks.',
   'cura.sub.ai': 'Claude answers, from the docs and your data',
+  'desk.plan.trial': 'Trial',
 } as const;
 
 export type MessageKey = keyof typeof en;

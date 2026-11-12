@@ -1,5 +1,5 @@
 import { setCompanyZone } from './lib/time';
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { Shell } from './components/Shell';
@@ -36,6 +36,9 @@ import { TeamPage } from './pages/Team';
 import { TimelinePage } from './pages/Timeline';
 import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
 
+// Curahold's own support desk: loaded only at the central address, only when asked for.
+const DeskApp = lazy(() => import('./pages/Desk'));
+
 // app.<domain> is the central address: company sign-up lives there.
 const isCentral = () => location.hostname.split('.')[0] === 'app';
 
@@ -57,7 +60,8 @@ export function App() {
   const start = useCallback(async (notice?: string | null) => {
     if (isCentral()) {
       setBoot({ kind: 'central' });
-      if (!location.pathname.startsWith('/signup')) navigate('/signup', true);
+      // Besides sign-up, the central address has Curahold's own support desk.
+      if (!location.pathname.startsWith('/signup') && !location.pathname.startsWith('/desk')) navigate('/signup', true);
       return;
     }
     let org: OrgPublic;
@@ -149,7 +153,14 @@ export function App() {
   return (
     <I18nProvider locale={locale} terms={terms}>
       {boot.kind === 'loading' && <div className="center-note muted" />}
-      {boot.kind === 'central' && <SignupApp onLocale={changeLocale} />}
+      {boot.kind === 'central' &&
+        (loc.path.startsWith('/desk') ? (
+          <Suspense fallback={<div className="center-note muted" />}>
+            <DeskApp onLocale={changeLocale} />
+          </Suspense>
+        ) : (
+          <SignupApp onLocale={changeLocale} />
+        ))}
       {boot.kind === 'no-org' && <OrgNotFound />}
       {boot.kind === 'error' && <ErrorNote onRetry={() => start()} />}
       {boot.kind === 'signed-out' &&

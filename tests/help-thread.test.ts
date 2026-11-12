@@ -188,7 +188,7 @@ describe('a raw email', () => {
     const raw = [
       'From: =?UTF-8?B?WmV5bmVwIFR1bsOn?= <zeynep@demo.example>',
       'To: Curahold <reply+AAAAAAAAAAAAAAAAAAAAAAAA@reply.curahold.test>',
-      'Subject: Re: [TW-000001] Import',
+      'Subject: Re: [CH-000001] Import',
       'Message-ID: <m1@mail.demo.example>',
       'In-Reply-To: <help-11111111-1111-4111-8111-111111111111@curahold.test>',
       'Authentication-Results: mx.example; dkim=pass; dmarc=pass header.from=demo.example',
@@ -242,7 +242,7 @@ describe('the desk', () => {
     expect(statuses.lastIndexOf('received')).toBeLessThan(statuses.includes('solved') ? statuses.indexOf('solved') : Infinity);
     expect(((await central('GET', '/api/desk/requests?status=solved')).json.requests as any[]).every((x) => x.status === 'solved')).toBe(true);
     expect(((await central('GET', `/api/desk/requests?q=${b.ref}`)).json.requests as any[]).map((x) => x.ref)).toEqual([b.ref]);
-    expect((await central('GET', '/api/desk/requests/TW-999999')).status).toBe(404);
+    expect((await central('GET', '/api/desk/requests/CH-999999')).status).toBe(404);
   });
 });
 
