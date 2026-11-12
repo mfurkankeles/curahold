@@ -2921,6 +2921,10 @@ export const en = {
   'timeline.bundle.done': 'Finished: {n}',
   'timeline.bundle.comments': 'Comments: {n}',
   'timeline.bundle.contacts': 'Contacts added: {n}',
+  'signup.agree': 'By signing up you agree to the',
+  'legal.terms': 'Terms of service',
+  'legal.privacy': 'Privacy policy',
+  'legal.and': 'and the',
 } as const;
 
 export type MessageKey = keyof typeof en;

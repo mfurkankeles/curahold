@@ -123,6 +123,18 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
           </form>
           <p className="field__hint">{t('signup.noCard')}</p>
           <p className="field__hint">{t('signup.privacy')}</p>
+          {/* The terms and privacy policy, in the help pages' Legal section. */}
+          <p className="field__hint">
+            {t('signup.agree')}{' '}
+            <a href={`/docs/${locale}/legal-terms/`} target="_blank" rel="noreferrer">
+              {t('legal.terms')}
+            </a>{' '}
+            {t('legal.and')}{' '}
+            <a href={`/docs/${locale}/legal-privacy/`} target="_blank" rel="noreferrer">
+              {t('legal.privacy')}
+            </a>
+            .
+          </p>
         </>
       )}
     </Frame>

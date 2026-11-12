@@ -14,7 +14,7 @@ const SRC = join(ROOT, 'docs', 'site');
 const OUT = process.argv[2] ?? join(ROOT, 'dist', 'web', 'docs');
 const LANGS = ['tr', 'en'] as const;
 type Lang = (typeof LANGS)[number];
-const SECTIONS = ['help', 'developers', 'releases'] as const;
+const SECTIONS = ['help', 'developers', 'releases', 'legal'] as const;
 type Section = (typeof SECTIONS)[number];
 
 const UI = {
@@ -30,9 +30,9 @@ const UI = {
     copy: 'Kopyala',
     copied: 'Kopyalandı',
     menu: 'Menü',
-    sections: { help: 'Yardım merkezi', developers: 'Geliştiriciler', releases: 'Sürüm notları' },
+    sections: { help: 'Yardım merkezi', developers: 'Geliştiriciler', releases: 'Sürüm notları', legal: 'Yasal' },
     lead: 'Curahold’u kullanmak, ekibine göre ayarlamak ve kendi araçlarına bağlamak için ihtiyacın olan her şey.',
-    start: { help: 'Ekibinle Curahold’u kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar ve Claude ile ChatGPT için bağlayıcı.', releases: 'Neler yeni, neler değişti.' },
+    start: { help: 'Ekibinle Curahold’u kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar ve Claude ile ChatGPT için bağlayıcı.', releases: 'Neler yeni, neler değişti.', legal: 'Kullanım koşulları, gizlilik, KVKK, veri işleme sözleşmesi ve alt işleyenler.' },
     edited: 'Son güncelleme',
   },
   en: {
@@ -47,9 +47,9 @@ const UI = {
     copy: 'Copy',
     copied: 'Copied',
     menu: 'Menu',
-    sections: { help: 'Help center', developers: 'Developers', releases: 'Release notes' },
+    sections: { help: 'Help center', developers: 'Developers', releases: 'Release notes', legal: 'Legal' },
     lead: 'Everything you need to use Curahold, set it up for your team and connect it to your own tools.',
-    start: { help: 'Get your team going: customers, tasks, roles, home pages and connections.', developers: 'API keys, webhooks and the connector for Claude and ChatGPT.', releases: 'What is new and what changed.' },
+    start: { help: 'Get your team going: customers, tasks, roles, home pages and connections.', developers: 'API keys, webhooks and the connector for Claude and ChatGPT.', releases: 'What is new and what changed.', legal: 'Terms of service, privacy, the KVKK notice, the data processing agreement and sub-processors.' },
     edited: 'Last updated',
   },
 } as const;

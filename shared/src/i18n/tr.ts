@@ -2906,4 +2906,8 @@ export const tr: Record<MessageKey, string> = {
   'timeline.bundle.done': '{n} tamamlandı',
   'timeline.bundle.comments': '{n} yorum',
   'timeline.bundle.contacts': '{n} kişi eklendi',
+  'signup.agree': 'Kaydolarak şunları kabul etmiş olursun:',
+  'legal.terms': 'Kullanım koşulları',
+  'legal.privacy': 'Gizlilik politikası',
+  'legal.and': 've',
 };
