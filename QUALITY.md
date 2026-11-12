@@ -253,7 +253,22 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·
 çöp kutusu · müşteri ve kayıtlarda sürüm · şirket saatine göre "bugün" ✓ · güvenlik başlıkları ve istek
 sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı tespiti · çevrimdışı
-kuyruk · yedek ve geri yükleme provası.
+kuyruk · yedek ve geri yükleme provası · OAuth girişlerine PKCE ve anahtar yenileme kilidi (INTEGRATIONS.md).
+
+Araya giren işler (ürün sahibinin 12 Kasım isteği):
+
+| İş | Önce | Sonra |
+| --- | --- | --- |
+| Demoda "Salesforce bağla" | bilgilendirme penceresi | gerçek akış: izin, neyin geleceği, alan eşleme, ilk eşitleme (uydurma verili CRM ile) |
+| CRM'lerle canlıya çıkış araştırması | yok | INTEGRATIONS.md: sağlayıcı başına hesap, onay, ücret, sınır; 5 karar maddesi |
+| Geliştirici rehberi: belgelenen adres | elle yazılmış yaklaşık 35 | koddan üretilen 138 (açık adreslerin tamamı), her biri alanlarıyla |
+| Geliştirici rehberi: sayfa | 7 | 19 (hızlı başlangıç, kendi aracını bağla, 7 başvuru sayfası, nesneler, hatalar) |
+| Belgelerin koddan geri kalması | mümkündü | test engelliyor (yeni adres açıklamasız kalamaz) |
+| Demoda "Geliştirici rehberi" bağlantısı | boşa gidiyordu | demo ile birlikte gelen belgeleri açıyor |
+
+Test süreleri (12 Kasım, 2 çekirdek): birim 124 sn (394 test) · tarayıcı 175 sn (36 senaryo + belgeler) ·
+demo 43 sn. Toplam 5 dakikanın biraz üstünde; birim testlerde her dosyanın veritabanını baştan kurması
+yerine hazır bir kopyadan başlaması bunu indirecek (Güvenilirlik paketi bitmeden yapılacak).
 
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
 
