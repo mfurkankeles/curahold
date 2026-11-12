@@ -1,6 +1,7 @@
 // Self-serve sign-up on the central address (app.curahold.com): confirm a
 // work email, name the company, pick its address and a starting template —
 // then straight into the company, signed in, with the setup wizard open.
+import { docsHref, docsLink } from '../lib/docs';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Locale, MessageKey } from '../../../shared/src/i18n';
 import { pick, TEMPLATES, TEMPLATE_KEYS, type TemplateKey } from '../../../shared/src/templates';
@@ -126,11 +127,11 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
           {/* The terms and privacy policy, in the help pages' Legal section. */}
           <p className="field__hint">
             {t('signup.agree')}{' '}
-            <a href={`/docs/${locale}/legal-terms/`} target="_blank" rel="noreferrer">
+            <a href={docsHref(`${locale}/legal-terms`)} {...docsLink}>
               {t('legal.terms')}
             </a>{' '}
             {t('legal.and')}{' '}
-            <a href={`/docs/${locale}/legal-privacy/`} target="_blank" rel="noreferrer">
+            <a href={docsHref(`${locale}/legal-privacy`)} {...docsLink}>
               {t('legal.privacy')}
             </a>
             .

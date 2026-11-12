@@ -13,7 +13,7 @@
     "strings": "tsx scripts/add-strings.ts",
     "migrate": "tsx scripts/migrate.ts",
     "docs:reference": "tsx scripts/docs/api-reference.ts",
-    "build:demo": "vite build --config vite.demo.config.ts",
+    "build:demo": "vite build --config vite.demo.config.ts && tsx scripts/build-docs.ts dist/demo/docs --relative",
     "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts",
     "build:site": "tsx scripts/build-site.ts",
     "build:server": "tsx scripts/build-server.ts",

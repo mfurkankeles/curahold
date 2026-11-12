@@ -2,6 +2,7 @@
 // time (what happened, where, how to repeat it, screenshots, and the
 // technical details the app saw), and consent for support to look inside —
 // off unless ticked, time-limited, revocable.
+import { docsFile, docsHref, docsLink } from '../lib/docs';
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import {
   GRANT_HOURS,
@@ -83,7 +84,7 @@ type DocHit = {
 };
 const docIndex: Partial<Record<string, Promise<DocHit[]>>> = {};
 function loadDocs(locale: string) {
-  docIndex[locale] ??= fetch(`/docs/${locale}/search.json`)
+  docIndex[locale] ??= fetch(docsFile(`${locale}/search.json`))
     .then((r) => (r.ok ? r.json() : []))
     .catch(() => []);
   return docIndex[locale]!;
@@ -484,7 +485,7 @@ function NewRequest({ access, onSent, hide }: { access: Access | null; onSent: (
             <ul>
               {hits.map((h) => (
                 <li key={h.d.u}>
-                  <a href={`${h.d.u}${h.anchor ? `#${h.anchor}` : ''}`} target="_blank" rel="noopener">
+                  <a href={`${docsHref(h.d.u)}${h.anchor ? `#${h.anchor}` : ''}`} {...docsLink}>
                     {h.d.t}
                   </a>
                   <span className="muted">{h.d.s}</span>

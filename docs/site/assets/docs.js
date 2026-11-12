@@ -12,7 +12,7 @@
   };
   function load() {
     if (index) return Promise.resolve(index);
-    return fetch('/docs/' + cfg.lang + '/search.json').then(function (r) { return r.json(); }).then(function (d) {
+    return fetch((cfg.base || '/docs/') + cfg.lang + '/search.json').then(function (r) { return r.json(); }).then(function (d) {
       index = d.map(function (p) { return { p: p, t: fold(p.t), x: fold(p.x), h: p.h.map(function (h) { return [h[0], h[1], fold(h[1])]; }) }; });
       return index;
     });
@@ -35,7 +35,7 @@
       if (!all) return;
       var at = e.x.indexOf(words[0]);
       var snip = at >= 0 ? e.p.x.slice(Math.max(0, at - 50), at + 110) : '';
-      out.push({ score: score, url: e.p.u + (hit ? '#' + hit[0] : ''), title: e.p.t + (hit ? ' › ' + hit[1] : ''), sub: (at > 50 ? '…' : '') + snip + '…' });
+      out.push({ score: score, url: (cfg.base ? cfg.base + e.p.u.replace(/^\/docs\//, '') + (cfg.index || '') : e.p.u) + (hit ? '#' + hit[0] : ''), title: e.p.t + (hit ? ' › ' + hit[1] : ''), sub: (at > 50 ? '…' : '') + snip + '…' });
     });
     return out.sort(function (a, b) { return b.score - a.score; }).slice(0, 8);
   }

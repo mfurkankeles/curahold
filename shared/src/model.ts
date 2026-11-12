@@ -251,6 +251,8 @@ export interface Connection {
   id: string;
   kind: ConnectionKind;
   provider: string;
+  /** The try-it demo only: the CRM this pretend connection stands in for, so the screens say its name. */
+  standsFor?: string | null;
   label: string;
   status: 'active' | 'error' | 'disabled';
   lastError: string | null;

@@ -81,5 +81,5 @@ export const memoryHistory = {
 };
 
 const g = globalThis as unknown as Record<string, unknown>;
-g.twLocation = memoryLocation;
-g.twHistory = memoryHistory;
+g.appLocation = memoryLocation;
+g.appHistory = memoryHistory;

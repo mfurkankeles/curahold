@@ -64,7 +64,7 @@ describe('no leftovers from the internal tool', () => {
   it('contains nothing of the old working name', () => {
     const name = new RegExp('tend' + 'well', 'i');
     const short = 't' + 'w';
-    const prefixes = new RegExp(`\\b${short}[kar]?[_:-]|\\b${short}\\b|(?<![A-Za-z])${short.toUpperCase()}_[A-Z]`);
+    const prefixes = new RegExp(`\\b${short}[kar]?[_:-]|\\b${short}\\b|(?<![A-Za-z])${short.toUpperCase()}_[A-Z]|\\b${short}[A-Z][a-z]`);
     const hits = all.filter((f) => {
       const text = readFileSync(f, 'utf8');
       return name.test(text) || prefixes.test(text);

@@ -258,7 +258,7 @@ async function main() {
     if (href.startsWith('/api/')) memoryNav(href);
     else navigate(href);
   });
-  const memoryNav = (href: string) => (globalThis as any).twLocation.assign(href);
+  const memoryNav = (href: string) => (globalThis as any).appLocation.assign(href);
 
   const bar = createRoot(document.getElementById('demobar')!);
   const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} problem={problem} />);

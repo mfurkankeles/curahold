@@ -1,4 +1,5 @@
 // Dialogs the frame opens from anywhere: what is new, and a note on a customer.
+import { docsHref, docsLink } from '../lib/docs';
 import { useEffect } from 'react';
 import { useI18n } from '../lib/i18n';
 import { NEWS, markNewsSeen, type NewsAction } from '../lib/news';
@@ -15,7 +16,7 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
       wide
       footer={
         <>
-          <a className="btn btn--quiet" href={`/docs/${locale}/release-notes`} target="_blank" rel="noreferrer">
+          <a className="btn btn--quiet" href={docsHref(`${locale}/release-notes`)} {...docsLink}>
             {t('news.all')}
             <Icon name="external" size={14} />
           </a>

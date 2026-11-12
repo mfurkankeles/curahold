@@ -147,8 +147,29 @@ if (ok && !process.env.QUICK) {
   }
   await page.screenshot({ path: join(SCREENS, 'demo-dialog-from-card.png') });
   if (seen.size !== 1 || !seen.has('window')) errors.push(`a dialog opened from a card does not stay over the whole window: ${[...seen].join(', ')}`);
-  await page.keyboard.press('Escape');
-  await frame!.waitForFunction(() => !document.querySelector('.dialog'), { timeout: 5000 });
+  // A CRM's own button walks the real steps against the pretend CRM: allow, then the
+  // connection's page asks what should come over.
+  await click('.dialog .btn--primary');
+  await frame!.waitForFunction(() => !document.querySelector('.dialog') && /Salesforce \(demo\)/.test(document.body.textContent ?? ''), { timeout: 15000 }).catch(() => errors.push('connecting a CRM in the demo did not open its connection page'));
+  await new Promise((r) => setTimeout(r, 600));
+  await page.screenshot({ path: join(SCREENS, 'demo-connect.png') });
+  // The documentation travels with the demo: a folder beside the page, every link relative.
+  {
+    const docs = await browser.newPage();
+    const failed: string[] = [];
+    docs.on('requestfailed', (r) => failed.push(r.url()));
+    docs.on('response', (r) => void (r.status() >= 400 && failed.push(`${r.status()} ${r.url()}`)));
+    await docs.goto(`http://127.0.0.1:${PORT}/a/demo/docs/tr/quickstart/index.html`);
+    const links = await docs.$$eval('.nav a', (els) => els.length);
+    if (links < 30) errors.push(`the docs inside the demo list only ${links} pages`);
+    // Follow a link to another page, then "Go to the app" (hidden on a narrow window, so clicked in script).
+    await Promise.all([docs.waitForNavigation({ timeout: 10000 }), docs.$eval('.pager a', (a) => (a as HTMLAnchorElement).click())]);
+    if (!(await docs.$('h1'))) errors.push('a link between docs pages inside the demo leads nowhere');
+    await Promise.all([docs.waitForNavigation({ timeout: 10000 }), docs.$eval('.top__app', (a) => (a as HTMLAnchorElement).click())]);
+    await docs.waitForSelector('#demobar, #boot', { timeout: 15000 }).catch(() => errors.push('"Go to the app" in the demo docs does not lead back to the demo'));
+    if (failed.length) errors.push(`the docs inside the demo could not load: ${failed.slice(0, 3).join(', ')}`);
+    await docs.close();
+  }
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));

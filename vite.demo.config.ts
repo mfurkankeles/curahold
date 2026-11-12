@@ -18,8 +18,8 @@ const memoryLocation = (): Plugin => ({
   transform(code, id) {
     if (!/\/web\/(src|portal)\//.test(id) || /\/web\/src\/demo\//.test(id) || !/\.[jt]sx?$/.test(id)) return null;
     const out = code
-      .replace(/(?<![.\w$])location\./g, 'twLocation.')
-      .replace(/(?<![.\w$])history\.(pushState|replaceState)\b/g, 'twHistory.$1');
+      .replace(/(?<![.\w$])location\./g, 'appLocation.')
+      .replace(/(?<![.\w$])history\.(pushState|replaceState)\b/g, 'appHistory.$1');
     return out === code ? null : { code: out, map: null };
   },
 });

@@ -30,6 +30,7 @@ const toConnection = (r: any, linked: number): Connection => ({
   id: r.id,
   kind: r.kind,
   provider: r.provider,
+  standsFor: r.config?.as ?? null,
   label: r.label,
   status: r.status,
   lastError: r.last_error ?? null,

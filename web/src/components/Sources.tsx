@@ -16,6 +16,9 @@ import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES, useConnections } from './Connections';
 import { Confirm, Dialog, RowMenu } from './ui';
 
+/** What the screens call the app on the other side; in the try-it demo, the CRM the pretend one stands in for. */
+const appName = (c: { provider: string; standsFor?: string | null }) => PROVIDER_NAMES[c.standsFor ?? c.provider] ?? c.provider;
+
 const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
 const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo'];
 const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'jsm'];
@@ -93,12 +96,12 @@ export function Sources() {
                 }}
               >
                 <span className="tile__badge" aria-hidden="true">
-                  {(PROVIDER_NAMES[c.provider] ?? c.provider)[0]}
+                  {appName(c)[0]}
                 </span>
                 <span className="source-row__main">
                   <strong>{c.label}</strong>
                   <span className="muted">
-                    {PROVIDER_NAMES[c.provider] ?? c.provider}
+                    {appName(c)}
                     {c.sync?.lastRun ? ` · ${t('sync.lastSync', { when: relativeTime(c.sync.lastRun.at, t) })}` : ''}
                     {c.sync?.pending ? ` · ${t('sync.waiting', { n: c.sync.pending })}` : ''}
                   </span>
@@ -300,7 +303,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; label: string; status: string; tabular: boolean; readOnly?: boolean };
+  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; tabular: boolean; readOnly?: boolean };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -376,7 +379,7 @@ export function SourceDetail({ id }: { id: string }) {
 
   if (missing) return <div className="empty">{t('errors.not_found')}</div>;
   if (!d) return <div className="center-note muted">{t('common.loading')}</div>;
-  const name = PROVIDER_NAMES[d.connection.provider] ?? d.connection.provider;
+  const name = appName(d.connection);
   const started = !!d.sync.startedAt;
   let fromSetup = new URLSearchParams(location.search).get('from') === 'setup';
   try {
@@ -404,7 +407,7 @@ export function SourceDetail({ id }: { id: string }) {
           </span>
           <span>
             <strong>{d.connection.label}</strong>
-            {d.connection.label !== name && <span className="muted"> · {name}</span>}
+            {!d.connection.label.startsWith(name) && <span className="muted"> · {name}</span>}
           </span>
         </div>
         {started && (
@@ -578,7 +581,7 @@ function draftsFrom(d: Detail, objects: RemoteObject[]): Draft[] {
 function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draft[] | null; setDrafts: (x: Draft[]) => void; onNext: () => void }) {
   const { t, words, locale } = useI18n();
   const onErr = useErr();
-  const crm = PROVIDER_NAMES[d.connection.provider] ?? d.connection.provider;
+  const crm = appName(d.connection);
   useEffect(() => {
     if (drafts) return;
     get<{ objects: RemoteObject[] }>(`/connections/${d.connection.id}/objects`)
@@ -756,7 +759,7 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
   return (
     <section className="sheet">
       <h3 className="section__head">{t('sync.fields.title')}</h3>
-      <p className="field__hint">{t('sync.fields.hint', { crm: PROVIDER_NAMES[d.connection.provider] ?? '' })}</p>
+      <p className="field__hint">{t('sync.fields.hint', { crm: appName(d.connection) })}</p>
       {enabled.map((o) => {
         const idx = drafts.indexOf(o);
         const isOpen = open === o.remote;
@@ -850,7 +853,7 @@ function FieldTable({ d, o, accountFields, onChange }: { d: Detail; o: Draft; ac
           {m && (
             <select className="select" value={m.dir} disabled={!rf.updatable} aria-label={t('sync.fields.direction')} onChange={(e) => setDir(rf, e.target.value as 'both' | 'pull')}>
               <option value="both">{t('sync.dir.both')}</option>
-              <option value="pull">{t('sync.dir.pull', { crm: PROVIDER_NAMES[d.connection.provider] ?? '' })}</option>
+              <option value="pull">{t('sync.dir.pull', { crm: appName(d.connection) })}</option>
             </select>
           )}
         </td>
@@ -877,7 +880,7 @@ function FieldTable({ d, o, accountFields, onChange }: { d: Detail; o: Draft; ac
         <table className="table">
           <thead>
             <tr>
-              <th>{t('sync.fields.remote', { crm: PROVIDER_NAMES[d.connection.provider] ?? '' })}</th>
+              <th>{t('sync.fields.remote', { crm: appName(d.connection) })}</th>
               <th>{t('sync.fields.local')}</th>
               <th>{t('sync.fields.direction')}</th>
             </tr>
@@ -917,7 +920,7 @@ function StartStep({ d, onBack, onStart, running }: { d: Detail; onBack: () => v
   const [preview, setPreview] = useState<SyncPreview | null>(null);
   const [conflict, setConflict] = useState(d.sync.conflict ?? 'latest');
   const [owners, setOwners] = useState<Record<string, string | null> | null>(null);
-  const crm = PROVIDER_NAMES[d.connection.provider] ?? '';
+  const crm = appName(d.connection);
   useEffect(() => {
     post<SyncPreview>(`/connections/${d.connection.id}/preview`, {}).then(setPreview).catch(onErr);
   }, [d.connection.id, onErr]);
@@ -1229,7 +1232,7 @@ function SettingsTab({ id, d, reload }: { id: string; d: Detail; reload: () => P
   const { t } = useI18n();
   const { toast } = useStore();
   const onErr = useErr();
-  const crm = PROVIDER_NAMES[d.connection.provider] ?? '';
+  const crm = appName(d.connection);
   return (
     <section className="sheet">
       <fieldset className="field">

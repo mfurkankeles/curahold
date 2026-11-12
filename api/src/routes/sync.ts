@@ -191,7 +191,7 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
     return { types, boards, pending };
   });
   return c.json({
-    connection: { id: conn.id, provider: conn.provider, label: conn.label, status: conn.status, tabular: adapter.tabular, readOnly: !!adapter.readOnly },
+    connection: { id: conn.id, provider: conn.provider, standsFor: (conn.config?.as as string | undefined) ?? null, label: conn.label, status: conn.status, tabular: adapter.tabular, readOnly: !!adapter.readOnly },
     sync: conn.sync,
     state: { lastRun: conn.state.lastRun ?? null, fullAt: conn.state.fullAt ?? null },
     recordTypes: data.types,

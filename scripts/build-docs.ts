@@ -4,14 +4,21 @@
 // read the docs, and a small search index per language. No server, no
 // third-party script, nothing to run: it costs nothing to host.
 //
-//   npx tsx scripts/build-docs.ts [outDir]
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+//   npx tsx scripts/build-docs.ts [outDir] [--relative]
+//
+// With --relative every link is written relative to the page, so the
+// folder works wherever it is put (inside the try-it demo, in a preview).
+// DOCS_APP_HREF says where "Go to the app" leads from the docs folder then.
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { Marked, type Tokens } from 'marked';
 
 const ROOT = join(import.meta.dirname, '..');
 const SRC = join(ROOT, 'docs', 'site');
-const OUT = process.argv[2] ?? join(ROOT, 'dist', 'web', 'docs');
+const ARGS = process.argv.slice(2);
+const OUT = ARGS.find((a) => !a.startsWith('--')) ?? join(ROOT, 'dist', 'web', 'docs');
+const RELATIVE = ARGS.includes('--relative') || process.env.DOCS_RELATIVE === '1';
+const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
 const LANGS = ['tr', 'en'] as const;
 type Lang = (typeof LANGS)[number];
 const SECTIONS = ['help', 'developers', 'releases', 'legal'] as const;
@@ -151,7 +158,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy })}</script>
+<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '' })}</script>
 <script src="/docs/assets/docs.js" defer></script>
 </body>
 </html>
@@ -215,6 +222,19 @@ function build() {
     }
   }
 
+  if (RELATIVE) {
+    // A preview may only use fonts kept inside its stylesheet, so they move in there.
+    const cssFile = join(OUT, 'assets', 'docs.css');
+    const css = readFileSync(cssFile, 'utf8').replace(/url\(([\w-]+\.woff2)\)/g, (m, name: string) => {
+      const font = join(OUT, 'assets', name);
+      if (!existsSync(font)) return m;
+      const data = readFileSync(font).toString('base64');
+      rmSync(font);
+      return `url(data:font/woff2;base64,${data})`;
+    });
+    writeFileSync(cssFile, css);
+  }
+
   // For AI assistants: a map of the docs, and everything in one file.
   const en = all.en;
   const llms = [
@@ -233,9 +253,36 @@ function build() {
     ...all.tr.map((p) => `- [${p.title}](/docs/tr/${p.slug}.md): ${p.summary}`),
     '',
   ].join('\n');
-  writeFileSync(join(OUT, '..', 'llms.txt'), llms);
+  if (!RELATIVE) writeFileSync(join(OUT, '..', 'llms.txt'), llms);
   writeFileSync(join(OUT, 'llms-full.txt'), en.map((p) => `# ${p.title}\n\nSource: /docs/en/${p.slug}/\n\n${p.md.trim()}\n`).join('\n\n'));
+  if (RELATIVE) makeRelative(OUT);
   console.log(`docs: ${all.tr.length} pages × ${LANGS.length} languages → ${OUT}`);
+}
+
+/**
+ * Rewrites every page so its links are relative to itself: the folder can then
+ * be opened from any address, with no server deciding what `/docs/` means.
+ */
+function makeRelative(dir: string, root = dir) {
+  for (const name of readdirSync(dir)) {
+    const file = join(dir, name);
+    if (statSync(file).isDirectory()) {
+      makeRelative(file, root);
+      continue;
+    }
+    if (!name.endsWith('.html')) continue;
+    const depth = relative(root, dir).split(/[\\/]/).filter(Boolean).length;
+    const up = depth ? '../'.repeat(depth) : './';
+    const html = readFileSync(file, 'utf8')
+      .replace(/(href|src)="\/docs\/assets\//g, `$1="${up}assets/`)
+      .replace(/href="\/docs\/(en|tr)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang, slug, hash) => `href="${up}${lang}/${slug}index.html${hash ?? ''}"`)
+      .replace('class="top__link top__app" href="/"', `class="top__link top__app" href="${up}${APP_HREF}"`)
+      .replace('"base":"/docs/","index":""', `"base":"${up}","index":"index.html"`)
+      // The language chooser at the top of the folder.
+      .replace('content="0; url=/docs/en/"', 'content="0; url=en/index.html"')
+      .replace("?'/docs/tr/':'/docs/en/'", "?'tr/index.html':'en/index.html'");
+    writeFileSync(file, html);
+  }
 }
 
 build();

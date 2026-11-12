@@ -2,6 +2,7 @@
 // connected to a person, webhooks for the company, and the consent screen an
 // app sends someone to. Everything here acts as a person and inside their
 // rights; nothing opens a way around them.
+import { docsHref, docsLink } from '../lib/docs';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { WEBHOOK_EVENTS, type ApiKeyInfo, type WebhookInfo } from '../../../shared/src/developer';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -135,7 +136,7 @@ export function KeyList({ all = false }: { all?: boolean }) {
           <button className="btn" onClick={() => setMaking(true)}>
             {t('dev.keys.new')}
           </button>
-          <a className="btn btn--quiet" href="/docs/" target="_blank" rel="noreferrer">
+          <a className="btn btn--quiet" href={docsHref()} {...docsLink}>
             {t('dev.docs')}
           </a>
         </div>
@@ -273,7 +274,7 @@ export function DeveloperTab() {
           </dd>
         </dl>
         <div className="toolbar">
-          <a className="btn" href="/docs/" target="_blank" rel="noreferrer">
+          <a className="btn" href={docsHref()} {...docsLink}>
             {t('dev.docs')}
           </a>
           <a
@@ -426,7 +427,7 @@ function InboundTickets() {
             {t('inbound.disable')}
           </button>
         )}
-        <a className="btn btn--quiet" href="/docs/" target="_blank" rel="noreferrer">
+        <a className="btn btn--quiet" href={docsHref()} {...docsLink}>
           {t('dev.docs')}
         </a>
       </div>
