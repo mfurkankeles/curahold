@@ -1,0 +1,14 @@
+{
+  "name": "curahold-zapier",
+  "version": "1.0.0",
+  "description": "Curahold on Zapier: start Zaps from tasks, customers and timeline entries, and add or change them.",
+  "main": "index.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "zapier-platform-core": "^17.0.0"
+  }
+}
