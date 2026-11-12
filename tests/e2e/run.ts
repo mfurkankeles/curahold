@@ -4,7 +4,8 @@
 import { createHash } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { writeFileSync } from 'node:fs';
-import { STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
+import { join } from 'node:path';
+import { SCREENS, STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
 
 const s = await startStack(8899);
 const results: { name: string; ok: boolean; error?: string }[] = [];
@@ -849,6 +850,33 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   expect(customer.errors.length === 0, customer.errors.join(' | '));
   await customer.page.browserContext().close();
   await phone.page.browserContext().close();
+});
+
+await step('tasks from a file: columns are recognised, cards appear, the import can be undone', async () => {
+  const csv = join(SCREENS, 'e2e-import.csv');
+  writeFileSync(csv, 'Task Name;Section;Assignee;Due Date\nDosyadan gelen bir\u0131;In progress;Mert;15.01.2027\nDosyadan gelen iki;;;\n');
+  await mert.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
+  await mert.page.click('button[aria-label="Dosyadan görev aktar"]');
+  const input = await mert.page.waitForSelector('.dropzone input[type=file]');
+  await (input as any).uploadFile(csv);
+  await mert.page.waitForSelector('.map-table');
+  const picked = await mert.page.$$eval('.map-table select', (els) => els.map((e) => (e as HTMLSelectElement).value));
+  expect(picked.join(',') === 'title,status,assignee,dueDate', `columns guessed as ${picked.join(',')}`);
+  await mert.page.click('.importer .btn--primary');
+  await mert.page.waitForSelector('.import-result');
+  expect((await text(mert.page, '.import-result__stat strong')) === '2', 'two tasks were not created');
+  await (await byText(mert.page, '.importer .btn', 'Panoya bak')).click();
+  await mert.page.waitForFunction(() => [...document.querySelectorAll('.card__title')].filter((e) => e.textContent?.startsWith('Dosyadan gelen')).length === 2, { timeout: 8000 });
+  const [doing] = await sql(`select status, due_date::text as due, cardinality(assignee_ids) as n from tasks where title = 'Dosyadan gelen birı'`);
+  expect(doing?.status === 'doing' && doing?.due === '2027-01-15' && Number(doing?.n) === 1, `imported as ${JSON.stringify(doing)}`);
+  // Undo from the list of earlier imports.
+  await mert.page.click('button[aria-label="Dosyadan görev aktar"]');
+  await mert.page.waitForSelector('.importer__past .linkbtn', { timeout: 8000 });
+  await (await byText(mert.page, '.importer__past .linkbtn', 'Geri al')).click();
+  await mert.page.waitForSelector('.importer .notice');
+  const [{ n }] = await sql(`select count(*)::int as n from tasks where title like 'Dosyadan gelen%'`);
+  expect(n === 0, `${n} imported tasks survived the undo`);
+  await mert.page.keyboard.press('Escape');
 });
 
 await step('live: a card someone else adds shows up without reloading; the bell follows', async () => {

@@ -190,7 +190,7 @@ const SCOPE: Record<CardScope, string> = {
 };
 const base = (scope: CardScope | undefined) => `a.archived_at is null and ${SCOPE[scope ?? 'all']}`;
 const OPEN = `t.archived_at is null and t.parent_id is null
-  and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`;
+  and t.done_at is null`;
 const dateOf = (p: string) => `(case when a.fields->>${p} ~ '^\\d{4}-\\d{2}-\\d{2}' then substr(a.fields->>${p}, 1, 10)::date end)`;
 const moneyOf = (p: string) => `(case when jsonb_typeof(a.fields->${p}) = 'number' then (a.fields->>${p})::numeric end)`;
 const taskScope: Record<CardScope, string> = {

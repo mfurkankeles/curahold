@@ -15,7 +15,9 @@ import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewF
 import { labelOf } from '../../../shared/src/fields';
 import { FilterBar, matchFilters } from '../components/BoardFilters';
 import { RequestForm } from '../components/RequestForm';
+import { BoardArchive } from '../components/BoardArchive';
 import { ExportMenu } from '../components/Export';
+import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon } from '../components/icons';
@@ -31,7 +33,7 @@ import { useStore } from '../lib/store';
 import { dueState } from '../lib/time';
 import { positionBetween, saveTask } from '../lib/tasks';
 
-export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list'; refreshKey: number }) {
+export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive'; refreshKey: number }) {
   const { t, words } = useI18n();
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
@@ -39,6 +41,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   const [filters, setFilters] = useState<ViewFilters>({});
   const [asking, setAsking] = useState(false);
   useEffect(() => setFilters({}), [boardId]);
+  const [importing, setImporting] = useState(false);
   const [settings, setSettings] = useState(false);
   const [composing, setComposing] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -104,13 +107,16 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         </div>
         <div className="topbar__spacer" />
         <div className="toolbar">
-          <FilterBar board={board} filters={filters} onChange={setFilters} />
+          {view !== 'archive' && <FilterBar board={board} filters={filters} onChange={setFilters} />}
           <div className="seg" role="group">
             <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
               {t('board.view.board')}
             </button>
             <button aria-pressed={view === 'list'} onClick={() => setQuery('view', 'list')}>
               {t('board.view.list')}
+            </button>
+            <button aria-pressed={view === 'archive'} onClick={() => setQuery('view', 'archive')}>
+              {t('board.view.archive')}
             </button>
           </div>
           {view === 'list' && (
@@ -131,10 +137,15 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
               })}
             />
           )}
-          {board.form?.on && canWrite && (
+          {view !== 'archive' && board.form?.on && canWrite && (
             <button className="btn" onClick={() => setAsking(true)}>
               <Icon name="form" size={16} />
               <span className="hide-phone">{t('boardForm.open')}</span>
+            </button>
+          )}
+          {view !== 'archive' && canWrite && (
+            <button className="btn btn--icon hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
+              <Icon name="upload" size={16} />
             </button>
           )}
           {board.canManage && (
@@ -142,7 +153,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
               <Icon name="sliders" size={16} />
             </button>
           )}
-          {canWrite && (
+          {view !== 'archive' && canWrite && (
             <button className="btn btn--primary" onClick={() => quickAdd({ boardId: board.id, status: board.columns[0].key })}>
               <Icon name="plus" size={16} />
               {t('board.newTask')}
@@ -150,16 +161,21 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           )}
         </div>
       </header>
-      {tasks !== null && tasks.length === 0 && canWrite && (
+      {view !== 'archive' && tasks !== null && tasks.length === 0 && canWrite && (
         <div className="boardhint">
           <Icon name="zap" size={16} />
           <span>{t('board.firstHint')}</span>
           <button className="btn btn--small" onClick={() => quickAdd({ boardId: board.id, status: board.columns[0].key })}>
             {t('board.newTask')}
           </button>
+          <button className="btn btn--small btn--quiet" onClick={() => setImporting(true)}>
+            <Icon name="upload" size={14} /> {t('timport.fromFile')}
+          </button>
         </div>
       )}
-      {tasks === null ? (
+      {view === 'archive' ? (
+        <BoardArchive board={board} onRestored={() => void load()} />
+      ) : tasks === null ? (
         view === 'list' ? (
           <div className="page">
             <SkeletonRows label={t('common.loading')} />
@@ -178,7 +194,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       ) : (
         <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} composing={composing} setComposing={setComposing} onAdded={(tk) => setTasks((l) => [...(l ?? []), tk])} />
       )}
-      {tasks !== null && tasks.length > 0 && visible.length === 0 && (
+      {view !== 'archive' && tasks !== null && tasks.length > 0 && visible.length === 0 && (
         <div className="boardhint">
           <Icon name="filter" size={16} />
           <span>{t('filters.noneMatch', { n: tasks.length })}</span>
@@ -188,6 +204,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         </div>
       )}
       {settings && <BoardSettings board={board} onClose={() => setSettings(false)} />}
+      {importing && <TaskImporter board={board} onClose={() => setImporting(false)} onDone={() => void load()} />}
       {asking && <RequestForm board={board} onClose={() => setAsking(false)} onSent={() => void load()} />}
     </>
   );

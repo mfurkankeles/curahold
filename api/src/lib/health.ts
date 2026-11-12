@@ -10,7 +10,7 @@ import { localDate } from './automations';
 import { queueSync } from './records';
 
 const OPEN = `t.archived_at is null and b.archived_at is null
-  and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`;
+  and t.done_at is null`;
 
 /** Inputs for the given customers (all of the company's when `ids` is null). Works under RLS or with owner access. */
 export async function healthInputs(q: Q, orgId: string, ids: string[] | null, today: string): Promise<Map<string, HealthInput>> {

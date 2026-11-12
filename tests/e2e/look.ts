@@ -1,8 +1,10 @@
 // A visual pass, not a test: the main screens in light, dark and on a phone,
 // written to tests/e2e/screens/look-*.png for a designer's eye.
 //   npx vite build && npx tsx tests/e2e/look.ts [filter]
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Page } from 'puppeteer-core';
-import { newPage, shot, signIn, startStack } from './browser';
+import { SCREENS, newPage, shot, signIn, startStack } from './browser';
 
 const only = process.argv[2] ?? '';
 const s = await startStack(8898);
@@ -128,6 +130,29 @@ for (const mode of ['light', 'dark'] as const) {
     await page.waitForSelector('.review').catch(() => undefined);
     await pause(300);
     await shot(page, `look-${mode}-account`);
+  }
+  if (want('import')) {
+    const href = await page.$eval('.navlink--board', (a) => a.getAttribute('href')).catch(() => null);
+    if (href) {
+      await go(page, href);
+      await page.click('button[aria-label="Dosyadan görev aktar"]');
+      await page.waitForSelector('.dropzone');
+      await shot(page, `look-${mode}-import1`);
+      const csv = join(SCREENS, 'look-import.csv');
+      writeFileSync(csv, 'Task Name;Notes;Section;Assignee;Due Date;Priority;Customer\nYeni sözleşme taslağı;Hukuk onayı gerekli;In progress;Mert;15.01.2027;High;Quillfield Retail\nEğitim videosu çek;;Backlog;lena@demo.example, Bilinmeyen Kişi;22/01/2027;;\nEski iş;;Done;Ada;01.10.2026;;\n');
+      const input = await page.$('.dropzone input[type=file]');
+      await (input as any).uploadFile(csv);
+      await page.waitForSelector('.map-table');
+      await pause(200);
+      await shot(page, `look-${mode}-import2`);
+      await page.click('.importer .btn--primary');
+      await page.waitForSelector('.import-result');
+      await shot(page, `look-${mode}-import3`);
+      await page.keyboard.press('Escape');
+      await go(page, `${href}?view=archive`);
+      await pause(400);
+      await shot(page, `look-${mode}-archive`);
+    }
   }
   if (want('calendar')) {
     await go(page, '/calendar');

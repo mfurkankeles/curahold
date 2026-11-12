@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { TaskBlueprint } from '../../../shared/src/automation';
 import type { Column } from '../../../shared/src/model';
+import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportResult } from '../../../shared/src/taskImport';
 import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
@@ -13,7 +14,8 @@ import { addEvent } from '../lib/history';
 import { kick } from '../lib/notify';
 import { cleanTaskFields } from '../lib/taskFields';
 import { onTaskCreated } from '../lib/taskEvents';
-import { toTask } from '../lib/mappers';
+import { iso, toTask } from '../lib/mappers';
+import { kickSync, queueSync } from '../lib/records';
 import { body, isoDate, param, uuid } from '../lib/validate';
 import { loadBoard } from './boards';
 
@@ -316,4 +318,193 @@ workRoutes.get('/accounts/:id/time', async (c) => {
     recent: rows.reduce((n, r) => n + Number(r.recent), 0),
     people: rows.map((r) => ({ userId: r.user_id, minutes: Number(r.minutes) })),
   });
+});
+
+// ------------------------------------------------------- tasks from a file
+
+const MAX_TASK_ROWS = 5000;
+const col = z.string().min(1).max(200);
+const taskImportSchema = z.object({
+  fileName: z.string().max(200).optional(),
+  rows: z.array(z.record(z.string().max(200), z.union([z.string().max(20000), z.number(), z.null()]))).min(1).max(MAX_TASK_ROWS),
+  mapping: z.object({
+    title: col,
+    description: col.optional(),
+    status: col.optional(),
+    assignee: col.optional(),
+    dueDate: col.optional(),
+    startDate: col.optional(),
+    priority: col.optional(),
+    account: col.optional(),
+    doneAt: col.optional(),
+  }),
+  /** How the file writes dates that could be read two ways (05/03/2027). */
+  locale: z.enum(['en', 'tr']).optional(),
+  /** Bring finished tasks too (they land in the board's first "done" column). */
+  includeDone: z.boolean().optional(),
+});
+
+/**
+ * Tasks from a CSV or Excel export, onto one board. Nobody is notified and no
+ * rules run: this is moving house, not new work. Whoever ran it can undo it
+ * for 30 days.
+ */
+workRoutes.post('/boards/:id/import', async (c) => {
+  requireWriter(c);
+  if (Number(c.req.header('content-length') ?? 0) > 12 * 1024 * 1024) fail('import_too_large', { max: MAX_TASK_ROWS });
+  const boardId = param(c, 'id');
+  const input = await body(c, taskImportSchema);
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const locale = input.locale ?? org.locale;
+  const m = input.mapping;
+  const out = await run(c, async (q) => {
+    const board = await loadBoard(q, boardId);
+    const columns = board.columns as Column[];
+    const first = columns[0].key;
+    const doneKeys = new Set(columns.filter((x) => x.done).map((x) => x.key));
+    const people = await q.query<{ id: string; name: string; email: string }>(`select id, name, email from users where status in ('active', 'invited')`);
+    const accounts = m.account ? await q.query<{ id: string; name: string }>(`select id, name from accounts where archived_at is null`) : [];
+    const accountByName = new Map(accounts.map((a) => [fold(a.name), a.id]));
+    const tops = await q.query<{ status: string; p: number }>(`select status, max(position) as p from tasks where board_id = $1 group by status`, [boardId]);
+    const top = new Map(tops.map((r) => [r.status, Number(r.p) || 0]));
+    const miss = { people: new Map<string, number>(), accounts: new Map<string, number>(), statuses: new Map<string, number>() };
+    const note = (map: Map<string, number>, name: string) => map.set(name, (map.get(name) ?? 0) + 1);
+    const result: TaskImportResult = { batch: crypto.randomUUID(), created: 0, skipped: 0, finished: 0, errors: [], unmatched: { people: [], accounts: [], statuses: [] } };
+    const text = (row: Record<string, unknown>, column: string | undefined) => (column && row[column] !== null && row[column] !== undefined ? String(row[column]).trim() : '');
+    const ready: Record<string, unknown>[] = [];
+    for (const [i, row] of input.rows.entries()) {
+      const n = i + 2; // the file's own row number: the header is row 1
+      const title = text(row, m.title).slice(0, 300);
+      if (!title) {
+        result.skipped++;
+        if (Object.values(row).some((v) => v !== null && String(v).trim() !== '')) result.errors.push({ row: n, reason: 'title' });
+        continue;
+      }
+      const rawStatus = text(row, m.status);
+      let status = first;
+      if (rawStatus) {
+        const hit = columnFor(rawStatus, columns);
+        if (hit) status = hit;
+        else note(miss.statuses, rawStatus.slice(0, 60));
+      }
+      // A "completed on" date means finished, whatever the status column says.
+      const doneOn = m.doneAt ? parseDay(text(row, m.doneAt), locale) : null;
+      if (doneOn && !doneKeys.has(status) && doneKeys.size) status = [...doneKeys][0];
+      const finished = doneKeys.has(status);
+      if (finished && !input.includeDone) {
+        result.finished++;
+        continue;
+      }
+      const dueRaw = text(row, m.dueDate);
+      const startRaw = text(row, m.startDate);
+      const due = dueRaw ? parseDay(dueRaw, locale) : null;
+      let start = startRaw ? parseDay(startRaw, locale) : null;
+      if ((dueRaw && !due) || (startRaw && !start)) result.errors.push({ row: n, reason: 'date' });
+      if (start && due && start > due) {
+        start = null;
+        result.errors.push({ row: n, reason: 'dates' });
+      }
+      const assignees: string[] = [];
+      for (const name of splitPeople(text(row, m.assignee))) {
+        const id = matchPerson(name, people);
+        if (id) assignees.push(id);
+        else note(miss.people, name.slice(0, 80));
+      }
+      const accountName = text(row, m.account);
+      const accountId = accountName ? accountByName.get(fold(accountName)) ?? null : null;
+      if (accountName && !accountId) note(miss.accounts, accountName.slice(0, 80));
+      const position = (top.get(status) ?? 0) + 1024;
+      top.set(status, position);
+      // When it was finished: the file's date, else its due date if that has passed, else today.
+      const today = new Date().toISOString().slice(0, 10);
+      const doneAt = finished ? `${doneOn ?? (due && due < today ? due : today)}T12:00:00Z` : null;
+      ready.push({
+        id: crypto.randomUUID(),
+        title,
+        description: text(row, m.description).slice(0, 20000),
+        status,
+        assignees: [...new Set(assignees)].slice(0, 10),
+        account_id: accountId,
+        due_date: due,
+        start_date: start,
+        priority: m.priority ? priorityFor(text(row, m.priority)) : 'normal',
+        position,
+        done_at: doneAt,
+      });
+    }
+    const ids = ready.map((r) => r.id as string);
+    for (let i = 0; i < ready.length; i += 400) {
+      await q.query(
+        `insert into tasks (id, org_id, board_id, title, description, status, assignee_ids, account_id, due_date, start_date, priority, position, created_by, updated_by, done_at)
+         select x.id, $1, $2, x.title, x.description, x.status,
+                coalesce((select array_agg(v::uuid) from jsonb_array_elements_text(x.assignees) v), '{}'),
+                x.account_id, x.due_date, x.start_date, x.priority, x.position, $3, $3, x.done_at
+           from jsonb_to_recordset($4::jsonb) as x(id uuid, title text, description text, status text, assignees jsonb, account_id uuid,
+                                                    due_date date, start_date date, priority text, position float8, done_at timestamptz)`,
+        [org.id, boardId, auth.userId, JSON.stringify(ready.slice(i, i + 400))],
+      );
+    }
+    if (ids.length) {
+      await q.query(`insert into task_events (org_id, task_id, actor_id, kind, data) select $1, id, $2, 'created', '{"import": true}'::jsonb from unnest($3::uuid[]) as id`, [org.id, auth.userId, ids]);
+      await queueSync(q, org.id, 'task', ids, null, { created: true, boardId });
+    }
+    result.created = ids.length;
+    const top5 = (map: Map<string, number>) => [...map].sort((a, b) => b[1] - a[1]).slice(0, 20).map(([name, count]) => ({ name, count }));
+    result.unmatched = { people: top5(miss.people), accounts: top5(miss.accounts), statuses: top5(miss.statuses) };
+    result.errors = result.errors.slice(0, 200);
+    await q.query(
+      `insert into import_batches (id, org_id, kind, board_id, file_name, created_ids, summary, created_by) values ($1, $2, 'tasks', $3, $4, $5, $6, $7)`,
+      [result.batch, org.id, boardId, input.fileName ?? null, ids, JSON.stringify({ created: result.created, skipped: result.skipped, finished: result.finished }), auth.userId],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.imported', entity: 'board', entityId: boardId, meta: { created: result.created, file: input.fileName ?? null } });
+    return result;
+  });
+  kickSync(c.get('deps'), org.id);
+  return c.json(out, 201);
+});
+
+/** This person's recent imports onto a board, newest first. */
+workRoutes.get('/boards/:id/imports', async (c) => {
+  const boardId = param(c, 'id');
+  const rows = await run(c, (q) =>
+    q.query(`select id, file_name, summary, created_at, undone_at from import_batches where kind = 'tasks' and board_id = $1 order by created_at desc limit 5`, [boardId]),
+  );
+  return c.json({
+    imports: rows.map((r) => ({
+      id: r.id,
+      fileName: r.file_name,
+      created: Number(r.summary?.created ?? 0),
+      createdAt: iso(r.created_at),
+      undoneAt: iso(r.undone_at),
+      undoable: !r.undone_at && Date.now() - new Date(r.created_at).getTime() < 30 * 86400_000,
+    })),
+  });
+});
+
+/**
+ * Undo an import of tasks: what nobody has touched since is removed; a task
+ * someone has since changed or written on is kept, in the board's archive.
+ */
+workRoutes.post('/task-imports/:id/undo', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const out = await run(c, async (q) => {
+    const [b] = await q.query(`select * from import_batches where id = $1 and kind = 'tasks' for update`, [id]);
+    if (!b || b.undone_at || Date.now() - new Date(b.created_at).getTime() > 30 * 86400_000) fail('not_found');
+    const ids = (b.created_ids ?? []) as string[];
+    const kept = await q.query(
+      `update tasks t set archived_at = coalesce(archived_at, now())
+        where t.id = any($1::uuid[]) and (t.version > 1 or exists (select 1 from comments cm where cm.task_id = t.id)) returning t.id`,
+      [ids],
+    );
+    const keep = kept.map((r) => r.id as string);
+    const removed = await q.query(`delete from tasks where id = any($1::uuid[]) and not (id = any($2::uuid[])) returning id`, [ids, keep]);
+    await q.query(`update import_batches set undone_at = now() where id = $1`, [id]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, archived: keep.length } });
+    return { removed: removed.length, archived: keep.length };
+  });
+  return c.json(out);
 });

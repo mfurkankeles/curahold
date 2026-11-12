@@ -34,13 +34,14 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
   const [notify, setNotify] = useState<BoardNotify[]>(board?.notify ?? []);
   const [taskFields, setTaskFields] = useState<TaskField[]>(board?.taskFields ?? []);
   const [form, setForm] = useState<BoardForm | null>(board?.form ?? null);
+  const [keepDays, setKeepDays] = useState<number | null>(board ? board.archiveDays : 90);
 
   async function save() {
     setBusy(true);
     setError(null);
     try {
       const cleanFields = taskFields.filter((f) => (f.label.en ?? f.label.tr ?? '').trim()).map((f) => (f.type === 'select' ? f : { ...f, options: undefined }));
-      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), ...(board ? { notify, taskFields: cleanFields, form: form ? { ...form, fields: form.fields.filter((k) => !k.startsWith('f:') || cleanFields.some((f) => `f:${f.key}` === k)) } : null } : {}) };
+      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), archiveDays: keepDays, ...(board ? { notify, taskFields: cleanFields, form: form ? { ...form, fields: form.fields.filter((k) => !k.startsWith('f:') || cleanFields.some((f) => `f:${f.key}` === k)) } : null } : {}) };
       if (board) {
         await patch(`/boards/${board.id}`, payload);
         await reloadBoards();
@@ -138,6 +139,20 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
           </button>
         </div>
       )}
+      <label className="field">
+        <span className="field__label">{t('board.keepDone')}</span>
+        <select className="select" value={keepDays ?? 0} onChange={(e) => setKeepDays(Number(e.target.value) || null)}>
+          {[...new Set([30, 60, 90, 180, 365, ...(keepDays ? [keepDays] : [])])]
+            .sort((a, b) => a - b)
+            .map((n) => (
+              <option key={n} value={n}>
+                {t('board.keepDays', { n })}
+              </option>
+            ))}
+          <option value={0}>{t('board.keepAlways')}</option>
+        </select>
+        <span className="field__hint">{t('board.keepHint')}</span>
+      </label>
       {board && <ChannelPosts value={notify} onChange={setNotify} />}
       {board && (
         <details className="bmore" open={taskFields.length > 0 || !!form?.on}>

@@ -52,7 +52,7 @@ export async function onTaskUpdated(q: Q, orgId: string, actorId: string, before
     const waiting = await q.query(
       `select t.id, t.assignee_ids from task_links l join tasks t on t.id = l.to_id join boards b on b.id = t.board_id
         where l.from_id = $1 and l.kind = 'blocks' and t.archived_at is null
-          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`,
+          and t.done_at is null`,
       [after.id],
     );
     for (const w of waiting) {

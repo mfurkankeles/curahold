@@ -2,7 +2,10 @@ import { createApp } from '../api/src/app';
 import type { Config } from '../api/src/context';
 import { migrate } from '../api/src/db/migrate';
 import { loadMigrations } from '../api/src/db/migrations-fs';
+import postgres from 'postgres';
+import type { Db } from '../api/src/db';
 import { createMemoryPg, pgliteDb } from '../api/src/db/pglite';
+import { postgresDb } from '../api/src/db/postgres';
 import { MemoryEmail, MemoryStorage } from '../api/src/lib/services';
 import { seedDemo } from '../scripts/seed-demo';
 
@@ -27,8 +30,25 @@ export function testConfig(over: Partial<Config> = {}): Config {
 
 export type FetchStub = (url: string, init?: RequestInit) => Promise<Response>;
 
+/**
+ * The database the tests run on: in memory by default; with TEST_DATABASE_URL
+ * (a throwaway Postgres whose user may create databases), a fresh database
+ * there for every setup — the same driver and the same server as production.
+ */
+async function testDb(): Promise<Db> {
+  const url = process.env.TEST_DATABASE_URL;
+  if (!url) return pgliteDb(await createMemoryPg());
+  const name = `tw_test_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const admin = postgres(url, { max: 1, onnotice: () => undefined });
+  await admin.unsafe(`create database ${name}`);
+  await admin.end({ timeout: 2 });
+  const target = new URL(url);
+  target.pathname = `/${name}`;
+  return postgresDb(target.toString(), { max: 4, idleTimeout: 2 });
+}
+
 export async function setup(over: Partial<Config> = {}) {
-  const db = pgliteDb(await createMemoryPg());
+  const db = await testDb();
   await migrate(db, loadMigrations());
   const email = new MemoryEmail();
   const storage = new MemoryStorage();

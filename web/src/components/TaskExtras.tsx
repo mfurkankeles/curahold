@@ -421,6 +421,10 @@ export function HistorySection({ task, board }: { task: TaskDetail; board: Board
         return t('task.history.time', { time: hoursText(Number(d.minutes) || 0, locale) });
       case 'checklist':
         return t('task.history.checklist', { n: d.n });
+      case 'archived':
+        return d.auto ? t('task.history.archivedAuto') : t('task.history.archived');
+      case 'restored':
+        return t('task.history.restored');
       default:
         return e.kind;
     }

@@ -58,3 +58,19 @@ Board settings → **Fields and request form**: add extra fields to every task o
 ## Request form
 
 In board settings switch on **Take requests through a form** and choose what the form asks. Colleagues use the **Request form** button on the board; the request lands in the column you chose as a task, and whoever asked follows it automatically.
+
+## Moving from another tool: importing tasks from a file
+
+The up-arrow button at the top of a board (**Import tasks from a file**) takes the CSV or Excel file you exported from your old tool. The file is read in the browser; nothing is sent until you have seen which column goes where.
+
+- Columns are recognised by themselves (Title, Description, Status, Assignee, Due date, Start date, Priority, Customer, Completed on; their Turkish names too). Change any of them; the "Becomes" column shows how the first rows will come in.
+- **Status** goes to the board column with the same name. Common names such as "To do", "In progress" and "Done" are understood as well; anything else lands in the first column and is listed in the result.
+- **Assignee** is matched by name or email; people who are not found are left out, and you are told who. A customer's name is matched the same way.
+- Finished tasks are left out unless you tick "Bring finished tasks too".
+- Nobody is notified and no rules run. You can **undo** the whole import for 30 days: tasks nobody touched are removed, the ones someone has worked on move to the archive.
+
+Up to 5,000 rows at a time.
+
+## Archive
+
+Finished tasks move to the board's **Archive** by themselves once the board has kept them long enough (90 days by default; 30–365 days or "Always" in the board's settings). A board that has been in use for years still opens at once. Archived tasks keep counting in reports; search them in the **Archive** view beside Board / List and put one back with **Bring back**. A task you bring back stays on the board for the same number of days again. Tasks you archive by hand from the list view are here too.

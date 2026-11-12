@@ -351,7 +351,7 @@ authRoutes.get('/calendar/:file', async (c) => {
          from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
         where $1 = any(t.assignee_ids) and t.archived_at is null and b.archived_at is null and t.due_date is not null
           and t.due_date >= current_date - 60 and t.due_date <= current_date + 400
-          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+          and t.done_at is null
         order by t.due_date limit 1000`,
       [u.id],
     ),

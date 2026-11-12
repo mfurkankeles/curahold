@@ -15,7 +15,7 @@ const ITEMS = 5;
 const DROP = 10;
 
 const OPEN = `t.archived_at is null and b.archived_at is null
-  and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`;
+  and t.done_at is null`;
 
 function money(n: number | null, currency: string, locale: string) {
   if (n === null) return null;

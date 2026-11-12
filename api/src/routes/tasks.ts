@@ -22,15 +22,13 @@ export const taskRoutes = new Hono<AppEnv>();
 
 const COUNTS = `
   (select count(*) from tasks s where s.parent_id = t.id and s.archived_at is null) as subtask_count,
-  (select count(*) from tasks s join boards b on b.id = s.board_id
-     where s.parent_id = t.id and s.archived_at is null
-       and exists (select 1 from jsonb_array_elements(b.columns) col
-                   where col->>'key' = s.status and (col->>'done')::boolean)) as subtask_done,
+  (select count(*) from tasks s where s.parent_id = t.id and s.archived_at is null and s.done_at is not null) as subtask_done,
   (select count(*) from comments cm where cm.task_id = t.id) as comment_count,
   (select ac.name from accounts ac where ac.id = t.account_id) as account_name,
-  (select count(*) from task_links l join tasks bt on bt.id = l.from_id join boards bb on bb.id = bt.board_id
-     where l.to_id = t.id and l.kind = 'blocks' and bt.archived_at is null
-       and not exists (select 1 from jsonb_array_elements(bb.columns) col where col->>'key' = bt.status and (col->>'done')::boolean)) as blocked_by`;
+  (select count(*) from task_links l
+     where l.to_id = t.id and l.kind = 'blocks'
+       -- Asked link by link, so the database starts from this task's few links and never from every task.
+       and (select bt.archived_at is null and bt.done_at is null from tasks bt where bt.id = l.from_id)) as blocked_by`;
 
 async function loadTask(q: Q, id: string): Promise<Row> {
   const [t] = await q.query('select * from tasks where id = $1 and archived_at is null', [id]);
@@ -59,6 +57,23 @@ function checkStatus(columns: Column[], status: string) {
 
 taskRoutes.get('/boards/:id/tasks', async (c) => {
   const id = param(c, 'id');
+  // The archive: what was put away by hand, and finished work that aged out. Newest first, a page at a time.
+  if (c.req.query('archived') === '1') {
+    const search = (c.req.query('q') ?? '').trim().slice(0, 100).replace(/[%_]/g, '');
+    const offset = Math.max(0, Number(c.req.query('offset') ?? 0) || 0);
+    const out = await run(c, async (q) => {
+      await loadBoard(q, id);
+      const rows = await q.query(
+        `select t.*, ${COUNTS}, a.name as account_name from tasks t left join accounts a on a.id = t.account_id
+          where t.board_id = $1 and t.parent_id is null and t.archived_at is not null and ($2 = '' or t.title ilike '%' || $2 || '%')
+          order by t.archived_at desc limit 101 offset $3`,
+        [id, search, offset],
+      );
+      const [{ n }] = await q.query(`select count(*)::int as n from tasks t where t.board_id = $1 and t.parent_id is null and t.archived_at is not null`, [id]);
+      return { rows, total: n as number };
+    });
+    return c.json({ tasks: out.rows.slice(0, 100).map((r) => ({ ...toTask(r), archivedAt: iso(r.archived_at), accountName: r.account_name ?? null })), total: out.total, more: out.rows.length > 100 });
+  }
   const rows = await run(c, async (q) => {
     await loadBoard(q, id);
     return q.query(
@@ -88,7 +103,7 @@ taskRoutes.get('/tasks', async (c) => {
     q.query(
       `select t.*, ${COUNTS} from tasks t join boards b on b.id = t.board_id
         where t.archived_at is null and b.archived_at is null
-          and ($1::uuid is null or $1::uuid = any(t.assignee_ids))
+          and ($1::uuid is null or t.id = any(array(select app_tasks_of($1::uuid))))
           and ($2::date is null or t.due_date >= $2::date)
           and ($3::date is null or (case when $4 then coalesce(t.start_date, t.due_date) else t.due_date end) <= $3::date)
           and ($5::uuid is null or t.board_id = $5::uuid)
@@ -109,8 +124,8 @@ taskRoutes.get('/tasks/counts', async (c) => {
     q.query(
       `select count(*) filter (where t.due_date < $2::date) as late, count(*) filter (where t.due_date = $2::date) as today
          from tasks t join boards b on b.id = t.board_id
-        where t.archived_at is null and b.archived_at is null and $1::uuid = any(t.assignee_ids)
-          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`,
+        where t.archived_at is null and b.archived_at is null and t.id = any(array(select app_tasks_of($1::uuid)))
+          and t.done_at is null`,
       [auth.userId, today],
     ),
   );
@@ -253,7 +268,7 @@ taskRoutes.get('/tasks/similar', async (c) => {
           and ($1::uuid is null or t.board_id = $1::uuid or t.account_id = $2::uuid)
           and ($2::uuid is null or t.account_id = $2::uuid or t.board_id = $1::uuid)
           and t.created_at > now() - interval '180 days'
-          and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+          and t.done_at is null
           and lower(t.title) like any($3::text[])
         order by t.created_at desc limit 50`,
       [uuid.safeParse(boardId).success ? boardId : null, uuid.safeParse(accountId).success ? accountId : null, mine.map((w) => `%${w}%`)],
@@ -295,7 +310,7 @@ taskRoutes.get('/tasks/:id', async (c) => {
     // Both directions of every link, seen from this task; tasks on boards the person cannot open are left out.
     const links = await q.query(
       `select o.id, o.title, o.board_id, b.name as board_name, l.kind, (l.from_id = $1) as outgoing,
-              exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = o.status and (col->>'done')::boolean) as done
+              o.done_at is not null as done
          from task_links l
          join tasks o on o.id = case when l.from_id = $1 then l.to_id else l.from_id end
          join boards b on b.id = o.board_id
@@ -613,6 +628,7 @@ taskRoutes.post('/tasks/bulk', async (c) => {
       n++;
       before.push({ id: t.id, status: t.status, assignee_ids: t.assignee_ids, due_date: day(t.due_date), priority: t.priority, archived_at: t.archived_at, repeat: t.repeat });
       await recordChanges(q, org.id, auth.userId, t, u);
+      if (input.archived !== undefined && !!t.archived_at !== input.archived) await addEvent(q, org.id, t.id, auth.userId, input.archived ? 'archived' : 'restored');
       await onTaskUpdated(q, org.id, auth.userId, t, u, board);
       if (u.repeat && isDone(board.columns, u.status) && !isDone(board.columns, t.status)) await spawnNext(q, org.id, auth.userId, u, board, todayOf(c));
       if (status !== t.status) moved.push({ id: t.id, status });

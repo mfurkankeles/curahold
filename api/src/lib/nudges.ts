@@ -15,7 +15,7 @@ export const STALE_WEEKDAY = 4;
 export const ESCALATE_HOUR = 9;
 
 const OPEN = `t.archived_at is null and b.archived_at is null
-  and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)`;
+  and t.done_at is null`;
 
 const weekdayOf = (iso: string) => new Date(`${iso}T12:00:00Z`).getUTCDay();
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
@@ -34,41 +34,45 @@ export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number
     // Still for too long: each person's own list, at the hour of their morning summary.
     if (rhythm.staleDays > 0 && weekday === STALE_WEEKDAY) {
       const users = await deps.db.system((q) => q.query(`select id, prefs from users where org_id = $1 and status = 'active' and seat = 'full'`, [org.id]));
-      for (const u of users) {
+      const due = users.filter((u) => {
         const prefs = prefsOf(u.prefs);
-        if (prefs.events.nudges === false || prefs.digestHour !== hour) continue;
-        // Not what is planned for later (a start date ahead, or due more than a week away), not what
-        // someone commented on in that time, and not what the person muted.
-        const tasks = await deps.db.system((q) =>
+        return prefs.events.nudges !== false && prefs.digestHour === hour;
+      });
+      if (due.length) {
+        // Everyone's still tasks in one pass. Not what is planned for later (a start date ahead, or due
+        // more than a week away), not what someone commented on in that time, and not what the person muted.
+        const rows = await deps.db.system((q) =>
           q.query(
-            `select t.id, t.title, t.updated_at from tasks t join boards b on b.id = t.board_id
-              where t.org_id = $1 and $2 = any(t.assignee_ids) and ${OPEN}
-                and t.updated_at < $3::timestamptz - make_interval(days => $4::int)
-                and (t.start_date is null or t.start_date <= $5::date)
-                and (t.due_date is null or t.due_date <= $5::date + 7)
-                and not exists (select 1 from comments cm where cm.task_id = t.id and cm.created_at >= $3::timestamptz - make_interval(days => $4::int))
-                and not exists (select 1 from task_mutes m where m.task_id = t.id and m.user_id = $2)
-              order by t.updated_at limit 200`,
-            [org.id, u.id, now.toISOString(), rhythm.staleDays, today],
+            `select * from (
+               select a.uid as user_id, t.id, t.title, t.updated_at,
+                      row_number() over (partition by a.uid order by t.updated_at) as rn, count(*) over (partition by a.uid) as n
+                 from tasks t join boards b on b.id = t.board_id
+                cross join lateral unnest(t.assignee_ids) as a(uid)
+                where t.org_id = $1 and a.uid = any($2::uuid[]) and ${OPEN}
+                  and t.updated_at < $3::timestamptz - make_interval(days => $4::int)
+                  and (t.start_date is null or t.start_date <= $5::date)
+                  and (t.due_date is null or t.due_date <= $5::date + 7)
+                  and not exists (select 1 from comments cm where cm.task_id = t.id and cm.created_at >= $3::timestamptz - make_interval(days => $4::int))
+                  and not exists (select 1 from task_mutes m where m.task_id = t.id and m.user_id = a.uid)) x
+              where x.rn <= ${ITEMS} order by x.user_id, x.rn`,
+            [org.id, due.map((u) => u.id), now.toISOString(), rhythm.staleDays, today],
           ),
         );
-        if (!tasks.length) continue;
-        await deps.db.system((q) =>
-          enqueue(q, [
-            {
-              orgId: org.id,
-              userId: u.id,
-              kind: 'stale',
-              dedupeKey: `stale:${u.id}:${today}`,
-              data: {
-                days: rhythm.staleDays,
-                count: tasks.length,
-                items: tasks.slice(0, ITEMS).map((t) => ({ id: t.id, title: t.title, days: Math.floor((now.getTime() - new Date(t.updated_at).getTime()) / 86_400_000) })),
-              },
-            },
-          ]),
-        );
-        stale++;
+        const mine = new Map<string, typeof rows>();
+        for (const r of rows) mine.set(r.user_id, [...(mine.get(r.user_id) ?? []), r]);
+        const notes = [...mine].map(([userId, tasks]) => ({
+          orgId: org.id as string,
+          userId,
+          kind: 'stale',
+          dedupeKey: `stale:${userId}:${today}`,
+          data: {
+            days: rhythm.staleDays,
+            count: Number(tasks[0].n),
+            items: tasks.map((t) => ({ id: t.id, title: t.title, days: Math.floor((now.getTime() - new Date(t.updated_at).getTime()) / 86_400_000) })),
+          },
+        }));
+        if (notes.length) await deps.db.system((q) => enqueue(q, notes));
+        stale += notes.length;
       }
     }
 

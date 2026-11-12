@@ -135,6 +135,13 @@ const HISTORY = [
   'Teknik inceleme toplantısı',
   'Eksik erişim anahtarlarını iste',
   'Geri bildirimleri ürün ekibine ilet',
+  // Finished long enough ago to be in the archive.
+  'İlk kurulum toplantısı',
+  'Veri eşlemesini tamamla',
+  'Yönetici panosunu kur',
+  'Kullanıcı eğitimi: birinci oturum',
+  'Canlıya geçiş kontrol listesi',
+  'İlk ay değerlendirmesi',
 ];
 
 export async function seedShowcase(call: Call, db?: Db) {
@@ -274,28 +281,31 @@ export async function seedShowcase(call: Call, db?: Db) {
   }).catch(() => undefined);
   await call('POST', '/api/views', { boardId: main, name: 'Bu hafta ve geciken', filters: { due: ['late', 'today', 'week'] }, shared: true }).catch(() => undefined);
 
-  // Ten weeks of finished work, so the reports have a past to show. Only with the
-  // database at hand: the dates are set afterwards, and without that it would all be "today".
-  const past: { id: string; made: number; done: number; due: number; by: string }[] = [];
+  // Ten weeks of finished work (and a few older ones, already in the archive), so the reports
+  // have a past to show. Only with the database at hand: written in one go, with their own dates.
+  const past: { id: string; title: string; board: string; by: string; account: string | null; priority: string; made: number; done: number; due: number; minutes: number | null }[] = [];
   if (db) {
     // Not on the customers that have gone quiet: a finished task counts as contact, and their story is the silence.
     const QUIET = ['Velto Mobility', 'Orchardly Foods', 'Corvina Medya', 'Saltmarsh Turizm', 'Kilnworth Yapı'];
     const names = Object.keys(accounts).filter((n) => !QUIET.includes(n));
     const crew = ['zeynep', 'lena', 'omar', 'mert', 'ada'];
-    const doneAgo = [2, 3, 5, 6, 8, 9, 11, 12, 13, 16, 17, 19, 22, 24, 26, 29, 31, 33, 36, 40, 44, 47, 52, 58];
+    const doneAgo = [2, 3, 5, 6, 8, 9, 11, 12, 13, 16, 17, 19, 22, 24, 26, 29, 31, 33, 36, 40, 44, 47, 52, 58, 96, 104, 113, 121, 138, 152];
     const took = [2, 4, 1, 6, 3, 9, 5, 2, 7, 3];
     for (const [i, title] of HISTORY.entries()) {
-      const by = crew[i % crew.length];
-      const { task } = await call('POST', '/api/tasks', {
-        boardId: i % 3 === 2 ? renewals : main,
+      const made = doneAgo[i] + took[i % took.length];
+      past.push({
+        id: crypto.randomUUID(),
         title,
-        status: 'done',
-        assigneeIds: [who(by)],
+        board: i % 3 === 2 ? renewals : main,
+        by: who(crew[i % crew.length]),
+        account: accounts[names[(i * 5) % names.length]] ?? null,
         priority: i % 6 === 0 ? 'high' : 'normal',
-        accountId: accounts[names[(i * 5) % names.length]] ?? null,
+        made,
+        done: doneAgo[i],
+        // Three in four were on time; the rest ran a couple of days over.
+        due: i % 4 === 3 ? doneAgo[i] + 2 : doneAgo[i] - (i % 3),
+        minutes: doneAgo[i] < 30 && made % 2 === 0 ? 30 + (made % 4) * 30 : null,
       });
-      // Three in four were on time; the rest ran a couple of days over.
-      past.push({ id: task.id, made: doneAgo[i] + took[i % took.length], done: doneAgo[i], due: i % 4 === 3 ? doneAgo[i] + 2 : doneAgo[i] - (i % 3), by: who(by) });
     }
   }
 
@@ -307,40 +317,57 @@ export async function seedShowcase(call: Call, db?: Db) {
       const rising = new Set(['Brightmoor Enerji', 'Lindenhall Sigorta']);
       let seed = 7;
       const noise = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 4;
+      const points: { org: string; account: string; d: number; score: number }[] = [];
       for (const r of rows) {
         const start = falling.has(r.name) ? Math.min(92, r.score + 28) : rising.has(r.name) ? Math.max(20, r.score - 18) : r.score;
         for (let d = 49; d >= 1; d--) {
           // A step down (or up) a few days ago, otherwise a slow drift.
           const step = d > 5 ? start : r.score + (start - r.score) * (d / 5) * 0.3;
-          const v = Math.max(0, Math.min(100, Math.round(step + (d > 1 ? noise() : 0))));
-          await q.query('insert into health_history (org_id, account_id, day, score) values ($1, $2, current_date - $3::int, $4) on conflict do nothing', [r.org_id, r.id, d, v]);
+          points.push({ org: r.org_id, account: r.id, d, score: Math.max(0, Math.min(100, Math.round(step + (d > 1 ? noise() : 0)))) });
         }
       }
-      // The past: finished work spread over ten weeks, open work opened over the last three.
-      for (const h of past) {
+      await q.query(
+        `insert into health_history (org_id, account_id, day, score)
+         select x.org, x.account, current_date - x.d, x.score from jsonb_to_recordset($1::jsonb) as x(org uuid, account uuid, d int, score int) on conflict do nothing`,
+        [JSON.stringify(points)],
+      );
+      // The past: finished work spread over ten weeks (what is older than ninety days is already in
+      // the archive, as the nightly sweep would have left it); open work opened over the last three.
+      if (past.length) {
         await q.query(
-          `update tasks set created_at = now() - make_interval(days => $2::int), done_at = now() - make_interval(days => $3::int),
-                  updated_at = now() - make_interval(days => $3::int), due_date = current_date - $4::int where id = $1`,
-          [h.id, h.made, h.done, h.due],
+          `with x as (select * from jsonb_to_recordset($1::jsonb) as r(id uuid, title text, board uuid, by uuid, account uuid, priority text, made int, done int, due int)),
+           ins as (
+             insert into tasks (id, org_id, board_id, title, status, assignee_ids, account_id, priority, position, created_by, updated_by,
+                                created_at, updated_at, done_at, due_date, archived_at)
+             select x.id, b.org_id, x.board, x.title, 'done', array[x.by], x.account, x.priority, 9000000 + x.made * 1024, x.by, x.by,
+                    now() - make_interval(days => x.made), now() - make_interval(days => x.done), now() - make_interval(days => x.done), current_date - x.due,
+                    case when x.done > 90 then now() - make_interval(days => x.done - 90) end
+               from x join boards b on b.id = x.board
+             returning id, org_id, created_by, created_at)
+           insert into task_events (org_id, task_id, actor_id, kind, created_at) select org_id, id, created_by, 'created', created_at from ins`,
+          [JSON.stringify(past)],
         );
-        await q.query(`update task_events set created_at = now() - make_interval(days => $2::int) where task_id = $1`, [h.id, h.made]);
-        if (h.done < 30 && h.made % 2 === 0) {
-          await q.query(`insert into time_entries (org_id, task_id, user_id, minutes, day, note) select org_id, id, $2, $3, current_date - $4::int, '' from tasks where id = $1`, [h.id, h.by, 30 + (h.made % 4) * 30, h.done]);
-        }
-      }
-      // Nobody needs a notice today about work that was finished weeks ago.
-      if (past.length) await q.query(`delete from notifications where task_id = any($1::uuid[])`, [past.map((h) => h.id)]);
-      for (const [i, id] of ids.entries()) {
-        const made = 1 + ((i * 3) % 19);
-        await q.query(`update tasks set created_at = now() - make_interval(days => $2::int) where id = $1`, [id, made]);
-        await q.query(`update task_events set created_at = now() - make_interval(days => $2::int) where task_id = $1 and kind = 'created'`, [id, made]);
-        // What was already finished was finished a day or three ago, not this minute.
         await q.query(
-          `update tasks set created_at = least(created_at, now() - interval '6 days'), done_at = now() - make_interval(days => $2::int), updated_at = now() - make_interval(days => $2::int)
-            where id = $1 and done_at is not null`,
-          [id, 1 + (i % 3)],
+          `insert into time_entries (org_id, task_id, user_id, minutes, day, note)
+           select t.org_id, t.id, x.by, x.minutes, current_date - x.done, '' from jsonb_to_recordset($1::jsonb) as x(id uuid, by uuid, minutes int, done int)
+             join tasks t on t.id = x.id where x.minutes is not null`,
+          [JSON.stringify(past)],
         );
       }
+      const opened = ids.map((id, i) => ({ id, made: 1 + ((i * 3) % 19), done: 1 + (i % 3) }));
+      await q.query(
+        `update tasks t set created_at = case when t.done_at is not null then least(now() - make_interval(days => x.made), now() - interval '6 days') else now() - make_interval(days => x.made) end,
+                -- What was already finished was finished a day or three ago, not this minute.
+                done_at = case when t.done_at is not null then now() - make_interval(days => x.done) end,
+                updated_at = case when t.done_at is not null then now() - make_interval(days => x.done) else t.updated_at end
+           from jsonb_to_recordset($1::jsonb) as x(id uuid, made int, done int) where t.id = x.id`,
+        [JSON.stringify(opened)],
+      );
+      await q.query(
+        `update task_events e set created_at = now() - make_interval(days => x.made)
+           from jsonb_to_recordset($1::jsonb) as x(id uuid, made int) where e.task_id = x.id and e.kind = 'created'`,
+        [JSON.stringify(opened)],
+      );
       // Two tasks nobody has touched for a while (a 1:1 brings them up).
       for (const id of [ids[9], ids[14]].filter(Boolean)) {
         await q.query(`update tasks set created_at = now() - interval '24 days', updated_at = now() - interval '17 days' where id = $1 and done_at is null`, [id]);

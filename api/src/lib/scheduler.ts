@@ -28,7 +28,7 @@ export async function sendDigests(deps: Deps, now: Date) {
           `select t.id, t.title, t.due_date from tasks t join boards b on b.id = t.board_id
             where t.org_id = $1 and $2 = any(t.assignee_ids) and t.archived_at is null and b.archived_at is null
               and t.due_date is not null and t.due_date <= $3::date
-              and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+              and t.done_at is null
             order by t.due_date, t.position`,
           [org.id, u.id, today],
         ),
@@ -75,6 +75,31 @@ export async function cleanUp(deps: Deps) {
   });
 }
 
+/**
+ * Finished work steps aside: tasks done longer ago than their board keeps
+ * them (90 days unless the board says otherwise) move to its archive. One
+ * statement a night. A task someone brought back, or touched since, stays
+ * for the same number of days again.
+ */
+export async function archiveFinished(deps: Deps, now: Date): Promise<number> {
+  const rows = await deps.db.system((q) =>
+    q.query(
+      `with gone as (
+         update tasks t set archived_at = $1::timestamptz
+           from boards b
+          where b.id = t.board_id and b.archive_days is not null and b.archived_at is null
+            and t.archived_at is null and t.parent_id is null and t.done_at is not null
+            and t.done_at < $1::timestamptz - make_interval(days => b.archive_days)
+            and t.updated_at < $1::timestamptz - make_interval(days => b.archive_days)
+         returning t.org_id, t.id)
+       insert into task_events (org_id, task_id, actor_id, kind, data)
+       select org_id, id, null, 'archived', '{"auto": true}'::jsonb from gone returning task_id`,
+      [now.toISOString()],
+    ),
+  );
+  return rows.length;
+}
+
 export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Date()))()) {
   const digests = await sendDigests(deps, now);
   const fired = await runScheduledAutomations(deps, now);
@@ -104,6 +129,9 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     console.error('[tendwell] scheduled sync failed', e);
     return 0;
   });
-  if (now.getUTCHours() === 3) await cleanUp(deps);
+  if (now.getUTCHours() === 3) {
+    await cleanUp(deps);
+    await archiveFinished(deps, now).catch((e) => console.error('[tendwell] archiving finished work failed', e));
+  }
   return { digests, weekly, nudges, fired, delivered, synced, hooks };
 }

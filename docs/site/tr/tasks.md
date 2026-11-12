@@ -58,3 +58,19 @@ Panonun üstündeki **Filtre** ile kişiye, son tarihe (gecikmiş, bugün, 7 gü
 ## Talep formu
 
 Pano ayarlarında **Formla talep al**’ı aç, formun neleri soracağını seç. Panoda beliren **Talep formu** düğmesiyle iş arkadaşların talebini yazar; talep seçtiğin sütuna görev olarak düşer ve talep eden kişi görevi kendiliğinden takip eder.
+
+## Başka bir araçtan geçiş: dosyadan görev aktarma
+
+Panonun üstündeki yukarı ok düğmesi (**Dosyadan görev aktar**) eski aracından dışa aktardığın CSV ya da Excel dosyasını alır. Dosya tarayıcıda okunur; hangi sütunun nereye gideceğini görmeden hiçbir şey gönderilmez.
+
+- Sütunlar kendiliğinden tanınır (Başlık, Açıklama, Durum, Atanan, Son tarih, Başlangıç, Öncelik, Müşteri, Tamamlanma tarihi; İngilizce adları da). İstediğini değiştirirsin; “Böyle gelir” sütunu ilk satırların nasıl aktarılacağını gösterir.
+- **Durum** panodaki aynı adlı sütuna gider. “To do”, “In progress”, “Done” gibi yaygın adlar da tanınır; tanınmayanlar ilk sütuna konur ve sonuçta listelenir.
+- **Atanan** ad ya da e-postayla eşleşir; bulunamayanlar atanmadan kalır ve kimler olduğu söylenir. Müşteri adı da aynı şekilde eşleşir.
+- Tamamlanmış görevler varsayılan olarak alınmaz; istersen “Tamamlanmış görevleri de al”ı işaretle.
+- Kimseye bildirim gitmez, kurallar çalışmaz. Aktarımın tamamını 30 gün içinde **geri alabilirsin**: kimsenin dokunmadığı görevler silinir, üzerinde çalışılanlar arşive taşınır.
+
+Bir seferde 5.000 satıra kadar aktarılır.
+
+## Arşiv
+
+Tamamlanan görevler, panonun tuttuğu süre dolunca (varsayılan 90 gün; pano ayarlarından 30–365 gün ya da “Her zaman”) kendiliğinden panonun **Arşiv**’ine taşınır. Böylece yıllardır kullanılan bir pano da hemen açılır. Arşivdeki görevler raporlarda sayılmaya devam eder; Pano / Liste’nin yanındaki **Arşiv** görünümünden aranır ve **Geri getir** ile panoya döner. Geri getirilen görev aynı süre boyunca panoda kalır. Liste görünümünden elle arşivlediklerin de buradadır.

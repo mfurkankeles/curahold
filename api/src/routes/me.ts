@@ -7,7 +7,7 @@ import { normalizeLocale } from '../../../shared/src/i18n';
 import { NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
 import { logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { randomToken, sha256Hex } from '../lib/crypto';
-import { loadRenderCtx, prefsOf, render } from '../lib/notify';
+import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
@@ -286,9 +286,9 @@ meRoutes.get('/notifications', async (c) => {
     return { rows, unread: u?.n ?? 0 };
   });
   const list: Notification[] = [];
-  for (const n of rows) {
-    const ctx = await deps.db.system((q) => loadRenderCtx(q, deps, n, c.get('locale')));
-    const m = render(ctx);
+  const ctxs = await deps.db.system((q) => loadRenderCtxMany(q, deps, rows, c.get('locale')));
+  for (const [i, n] of rows.entries()) {
+    const m = render(ctxs[i]);
     list.push({ id: n.id, kind: n.kind, taskId: n.task_id, actorId: n.actor_id, title: m.title, body: m.body ?? '', url: m.url ?? null, readAt: iso(n.read_at), createdAt: iso(n.created_at)! });
   }
   return c.json({ notifications: list, unread, more: rows.length === limit });

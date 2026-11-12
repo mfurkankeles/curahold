@@ -8,6 +8,12 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Dosyadan görev aktarma, arşiv ve hız
+
+- **Dosyadan görev aktar:** başka araçtan CSV/Excel ile geçiş; sütunlar kendiliğinden tanınır, bildirim gitmez, 30 gün içinde geri alınır.
+- **Arşiv:** tamamlanan görevler 90 gün sonra (pano ayarından değişir) panonun arşivine taşınır; raporlarda sayılır, tek tıkla geri gelir.
+- **Hız:** büyük şirketlerde sayfalar belirgin biçimde hızlandı. 300 kişi, 6.000 müşteri ve 120.000 görevle ölçüldü: pano, görevlerim, müşteriler, arama ve gelen kutusu için sunucu saniyenin onda biri civarında ya da daha kısa sürede yanıt veriyor.
+
 ### Uygulama olarak kur, çevrimdışı oku, canlı yenileme
 
 - **Kur:** Tendwell telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adına tıkla → Tendwell’i kur; iPhone: Paylaş → Ana Ekrana Ekle).

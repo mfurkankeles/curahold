@@ -8,6 +8,12 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Importing tasks, an archive, and speed
+
+- **Import tasks from a file:** move in from another tool with a CSV or Excel export; columns are recognised by themselves, nobody is notified, and the import can be undone for 30 days.
+- **Archive:** finished tasks move to the board's archive after 90 days (change it in the board's settings); they still count in reports and come back in one click.
+- **Speed:** pages are markedly faster in large companies. Measured with 300 people, 6,000 customers and 120,000 tasks: for a board, my tasks, customers, search and the inbox the server answers in about a tenth of a second or less.
+
 ### Install it, read offline, live refresh
 
 - **Install:** Tendwell installs as an app on phones and computers (Android/Chrome/Edge: click your name → Install Tendwell; iPhone: Share → Add to Home Screen).

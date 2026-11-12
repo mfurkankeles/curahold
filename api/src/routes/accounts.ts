@@ -42,7 +42,7 @@ export const toAccount = (r: Row): Account => ({
 
 const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
-      and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as open_tasks,
+      and t.done_at is null) as open_tasks,
   (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity,
   (select max(x.happened_at) from activities x where x.account_id = a.id and x.kind = 'review') as last_review`;
 
@@ -54,10 +54,10 @@ const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.boar
  */
 const SIGNALS = `(select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.due_date < current_date
-      and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as overdue_tasks,
+      and t.done_at is null) as overdue_tasks,
   (select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.updated_at < now() - interval '14 days'
-      and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as stuck_tasks,
+      and t.done_at is null) as stuck_tasks,
   greatest((select max(x.happened_at) from activities x where x.account_id = a.id),
            (select max(t.done_at) from tasks t where t.account_id = a.id)) as last_touch`;
 
@@ -481,7 +481,7 @@ accountRoutes.get('/imports', async (c) => {
   requirePerm(c, 'accounts.manage');
   const rows = await run(c, (q) =>
     q.query(`select b.id, b.file_name, b.summary, b.created_at, b.undone_at, b.created_by, b.previous <> '[]'::jsonb or cardinality(b.created_ids) > 0 as undoable
-               from import_batches b order by b.created_at desc limit 20`),
+               from import_batches b where b.kind = 'accounts' order by b.created_at desc limit 20`),
   );
   return c.json({
     imports: rows.map((r) => ({
@@ -503,7 +503,7 @@ accountRoutes.post('/imports/:id/undo', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [b] = await q.query('select * from import_batches where id = $1 for update', [id]);
+    const [b] = await q.query(`select * from import_batches where id = $1 and kind = 'accounts' for update`, [id]);
     if (!b || b.undone_at) fail('not_found');
     if (Date.now() - new Date(b.created_at).getTime() > 30 * 86400_000) fail('not_found');
     const removed = await q.query('delete from accounts where id = any($1::uuid[]) returning id', [b.created_ids]);

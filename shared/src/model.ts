@@ -376,6 +376,8 @@ export interface Board {
   taskFields: TaskField[];
   /** An intake form colleagues fill in to put a request on this board; null when off. */
   form: BoardForm | null;
+  /** Finished tasks move to the board's archive after this many days; null keeps them on the board. */
+  archiveDays: number | null;
 }
 
 export const TASK_FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email', 'person', 'checkbox'] as const;

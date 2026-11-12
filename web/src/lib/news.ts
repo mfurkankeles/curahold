@@ -12,6 +12,15 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-import-archive',
+    date: '2026-11-12',
+    title: { tr: 'Dosyadan görev aktar; arşiv', en: 'Import tasks from a file; an archive' },
+    body: {
+      tr: 'Başka araçtaki görevlerini CSV ya da Excel ile panoya aktar (panonun üstündeki yukarı ok). Tamamlanan görevler 90 gün sonra panonun Arşiv’ine taşınır; oradan aranır ve geri getirilir.',
+      en: 'Bring your tasks from another tool with a CSV or Excel file (the up arrow at the top of a board). Finished tasks move to the board’s Archive after 90 days; search them there and bring them back.',
+    },
+  },
+  {
     id: '2026-11-app',
     date: '2026-11-12',
     title: { tr: 'Uygulama olarak kur; canlı yenileme', en: 'Install it as an app; live refresh' },

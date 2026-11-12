@@ -256,7 +256,7 @@ export function render(ctx: RenderCtx): ChatMessage {
 
 const TASK_SQL = `
   select t.id, t.title, t.due_date, t.board_id, t.status, t.assignee_ids, b.name as board_name, a.name as account_name,
-         exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean) as is_done
+         t.done_at is not null as is_done
     from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
    where t.id = $1 and t.org_id = $2`;
 
@@ -277,6 +277,34 @@ export async function loadRenderCtx(q: Q, deps: Deps, n: Row, locale?: Locale): 
     task: task ?? null,
     actorName: actor?.name ?? null,
   };
+}
+
+/**
+ * The same for a whole list of one person's notifications (the inbox, the bell):
+ * the company and the person are read once, the tasks and the people who acted in one query each.
+ */
+export async function loadRenderCtxMany(q: Q, deps: Deps, rows: Row[], locale?: Locale): Promise<RenderCtx[]> {
+  if (!rows.length) return [];
+  const orgId = rows[0].org_id;
+  const [org] = await q.query('select id, slug, name, locale, terms, timezone from orgs where id = $1', [orgId]);
+  const userIds = [...new Set(rows.map((n) => n.user_id).filter(Boolean))];
+  const users = userIds.length ? await q.query('select id, locale from users where id = any($1::uuid[]) and org_id = $2', [userIds, orgId]) : [];
+  const taskIds = [...new Set(rows.map((n) => n.task_id).filter(Boolean))];
+  const tasks = taskIds.length ? await q.query(TASK_SQL.replace('where t.id = $1 and t.org_id = $2', 'where t.id = any($1::uuid[]) and t.org_id = $2'), [taskIds, orgId]) : [];
+  const actorIds = [...new Set(rows.map((n) => n.actor_id).filter(Boolean))];
+  const actors = actorIds.length ? await q.query('select id, name from users where id = any($1::uuid[]) and org_id = $2', [actorIds, orgId]) : [];
+  const taskOf = new Map(tasks.map((t) => [t.id, t]));
+  const actorOf = new Map(actors.map((a) => [a.id, a.name as string]));
+  const localeOf = new Map(users.map((u) => [u.id, u.locale]));
+  return rows.map((n) => ({
+    locale: locale ?? normalizeLocale(localeOf.get(n.user_id) ?? org.locale),
+    terms: org.terms ?? {},
+    orgName: org.name,
+    base: orgUrl(deps.config, org.slug),
+    n,
+    task: (n.task_id && taskOf.get(n.task_id)) || null,
+    actorName: (n.actor_id && actorOf.get(n.actor_id)) || null,
+  }));
 }
 
 type Outcome = { via: string; state: 'sent' | 'skipped' | 'held'; notBefore?: Date };

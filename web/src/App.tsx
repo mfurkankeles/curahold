@@ -228,7 +228,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/profile') page = <PersonalPage mode="profile" onLocale={onLocale} />;
   else if (path === '/accounts') page = <AccountsPage key={refreshKey} />;
   else if (a) page = <AccountPage id={a.id} key={`${a.id}:${refreshKey}`} />;
-  else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
+  else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : params.get('view') === 'archive' ? 'archive' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={quiet} />;
   else if (path === '/inbox') page = <InboxPage />;
   else if (path === '/reports') page = <ReportsPage key={refreshKey} />;

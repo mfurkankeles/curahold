@@ -307,6 +307,8 @@ accounts are invented.
 | `npm run test:e2e` | Builds the app and the docs and drives them in Chrome: phase 1 and 2 journeys plus the roles grid, connecting the demo CRM → choosing objects → fields → preview → first sync → records on lists and account pages → an edit sent back, home pages and adding a card, hiding a field and checking it as a member, phone layouts; saves screenshots | ~80 s |
 | `npm run test:demo` | Builds the in-browser demo and opens it under a strict content security policy in a sandboxed frame; switches person | ~20 s |
 | `npm run typecheck` | TypeScript across API, web and tests | ~5 s |
+| `TEST_DATABASE_URL=postgres://… npm test` | The same suite on a real Postgres, through the production driver (a fresh database per test file; the user must be able to create databases). Run it before a release: the in-memory database forgives things a real server does not | ~45 s |
+| `PERF_DATABASE_URL=postgres://… npx tsx scripts/perf.ts` | The speed test: builds a large company (300 people, 6,000 customers, 120,000 tasks, 300,000 comments) on a throwaway Postgres and times the requests behind every page as a member, a team lead and an admin, plus the jobs that run by themselves. Exits non-zero if any request is over 400 ms | ~1 min |
 
 `tests/leak.test.ts` fails if any name, customer, channel or record id
 from the internal tool this product was rebuilt from appears anywhere in the

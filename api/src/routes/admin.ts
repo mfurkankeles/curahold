@@ -761,7 +761,7 @@ adminRoutes.post('/users/:id/handover', async (c) => {
       `update tasks t set assignee_ids = array(select distinct unnest(array_replace(t.assignee_ids, $2::uuid, $3::uuid))), version = version + 1, updated_at = now()
         from boards b
        where t.org_id = $1 and b.id = t.board_id and $2 = any(t.assignee_ids) and t.archived_at is null
-         and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+         and t.done_at is null
        returning t.id`,
       [org.id, id, input.toUserId],
     ),

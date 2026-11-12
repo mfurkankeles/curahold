@@ -92,6 +92,8 @@ const createSchema = z.object({
     })
     .nullable()
     .optional(),
+  /** Days after which finished tasks move to the archive; null keeps them on the board. */
+  archiveDays: z.number().int().min(7).max(3650).nullable().optional(),
 });
 
 async function checkNotify(q: Q, list: { connectionId: string }[] | undefined) {
@@ -121,6 +123,7 @@ boardRoutes.post('/boards', async (c) => {
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? []), JSON.stringify(input.taskFields ?? []), input.form ? JSON.stringify(input.form) : null],
     );
+    if (input.archiveDays !== undefined) await q.query('update boards set archive_days = $2 where id = $1', [b.id, input.archiveDays]);
     for (const m of members) {
       await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [org.id, b.id, m]);
     }
@@ -157,10 +160,18 @@ boardRoutes.patch('/boards/:id', async (c) => {
     await q.query(
       `update boards set name = coalesce($2, name), visibility = $3, team_id = $4,
               columns = coalesce($5::jsonb, columns), notify = coalesce($6::jsonb, notify),
-              task_fields = coalesce($7::jsonb, task_fields), form = case when $8 then $9::jsonb else form end
+              task_fields = coalesce($7::jsonb, task_fields), form = case when $8 then $9::jsonb else form end,
+              archive_days = case when $10 then $11::int else archive_days end
         where id = $1`,
-      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null, input.notify ? JSON.stringify(input.notify) : null, input.taskFields ? JSON.stringify(input.taskFields) : null, input.form !== undefined, input.form ? JSON.stringify(input.form) : null],
+      [id, input.name ?? null, visibility, teamId, input.columns ? JSON.stringify(input.columns) : null, input.notify ? JSON.stringify(input.notify) : null, input.taskFields ? JSON.stringify(input.taskFields) : null, input.form !== undefined, input.form ? JSON.stringify(input.form) : null, input.archiveDays !== undefined, input.archiveDays ?? null],
     );
+    if (input.columns) {
+      // "Finished" is kept on the task (done_at) so that lists and reports need not look the
+      // column up for every row. When a column starts or stops meaning finished, its tasks follow.
+      const done = input.columns.filter((col) => col.done).map((col) => col.key);
+      await q.query(`update tasks set done_at = now() where board_id = $1 and done_at is null and status = any($2::text[])`, [id, done]);
+      await q.query(`update tasks set done_at = null where board_id = $1 and done_at is not null and not (status = any($2::text[]))`, [id, done]);
+    }
     if (input.memberIds) {
       const members = [...new Set(input.memberIds)];
       await checkPeople(q, members);

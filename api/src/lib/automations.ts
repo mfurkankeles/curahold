@@ -119,7 +119,7 @@ export async function candidates(q: Q, orgId: string, trigger: Trigger, today: s
            left join accounts a on a.id = t.account_id
           where t.org_id = $1 and t.archived_at is null and b.archived_at is null and t.due_date is not null
             and t.due_date <= $2::date - $3::int
-            and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)
+            and t.done_at is null
           order by t.due_date limit 2000`,
         [orgId, today, Math.max(0, trigger.days)],
       );

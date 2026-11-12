@@ -52,6 +52,7 @@ export const toBoard = (r: Row, canManage: boolean): Board => ({
   portal: r.portal ?? null,
   taskFields: r.task_fields ?? [],
   form: r.form ?? null,
+  archiveDays: r.archive_days ?? null,
 });
 
 export const toComment = (r: Row): Comment => ({

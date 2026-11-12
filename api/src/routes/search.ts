@@ -16,23 +16,26 @@ searchRoutes.get('/search', async (c) => {
   const like = `%${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
   const prefix = `${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
   const out = await run(c, async (q) => {
+    // Found by their text first (see app_find_* in the migrations), then read like anything else.
     const accounts = await q.query(
-      `select id, name, owner_id from accounts where archived_at is null and name ilike $1
-        order by (name ilike $2) desc, lower(name) limit ${PER_KIND}`,
+      `select id, name, owner_id from accounts where id = any(array(select app_find_accounts($1, $2, ${PER_KIND})))
+        order by (name ilike $2) desc, lower(name)`,
       [like, prefix],
     );
+    // A task by its own title, or by its customer's name.
     const tasks = await q.query(
       `select t.id, t.title, t.due_date::text as due, t.board_id, b.name as board_name, a.name as account_name
          from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
-        where t.archived_at is null and b.archived_at is null and (t.title ilike $1 or a.name ilike $1)
+        where t.archived_at is null and b.archived_at is null
+          and (t.id = any(array(select app_find_tasks($1, $2, ${PER_KIND * 4}))) or t.account_id = any(array(select app_find_accounts($1, $2, ${PER_KIND}))))
         order by (t.title ilike $2) desc, t.updated_at desc limit ${PER_KIND}`,
       [like, prefix],
     );
     const records = await q.query(
       `select r.id, r.name, r.account_id, a.name as account_name, rt.key as type_key, rt.name as type_name
          from records r join record_types rt on rt.id = r.type_id left join accounts a on a.id = r.account_id
-        where r.archived_at is null and r.name ilike $1
-        order by (r.name ilike $2) desc, lower(r.name) limit ${PER_KIND}`,
+        where r.id = any(array(select app_find_records($1, $2, ${PER_KIND})))
+        order by (r.name ilike $2) desc, lower(r.name)`,
       [like, prefix],
     );
     const boards = await q.query(`select id, name from boards where archived_at is null and name ilike $1 order by lower(name) limit ${PER_KIND}`, [like]);
