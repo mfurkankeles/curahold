@@ -45,10 +45,9 @@ const browser = await puppeteer.launch({
   // react to the pointer the way it does for a visitor (cards lifting under it, for one).
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=tr-TR', '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'],
 });
-// The demo writes its sample data in the visitor's language: these checks read Turkish.
-const TURKISH = `Object.defineProperty(navigator, 'language', { get: function () { return 'tr-TR'; } }); Object.defineProperty(navigator, 'languages', { get: function () { return ['tr-TR', 'tr']; } });`;
+// The demo opens in English whatever the browser's language is (this one says Turkish);
+// Turkish is chosen with the switch in the bar, and the checks below read Turkish.
 const page = await browser.newPage();
-await page.evaluateOnNewDocument(TURKISH);
 await page.setViewport({ width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900) });
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 const errors: string[] = [];
@@ -66,6 +65,14 @@ try {
   ok = false;
 }
 console.log(`ready: ${ok} in ${Date.now() - t0} ms`);
+/** Chooses Turkish in the bar; the demo starts over with its sample data written in Turkish. */
+async function chooseTurkish(f: NonNullable<typeof frame>, who: string) {
+  const first = await f.evaluate(() => ({ pressed: document.querySelector('.demobar__lang button[aria-pressed="true"]')?.textContent, nav: document.querySelector('.sidebar')?.textContent ?? '' }));
+  if (first.pressed !== 'EN' || !first.nav.includes('Renewals') || first.nav.includes('Yenilemeler')) errors.push(`${who}: the demo does not open in English (${first.pressed})`);
+  await f.evaluate(() => (document.querySelector('.demobar__lang button[lang="tr"]') as HTMLButtonElement).click());
+  await f.waitForFunction(() => !document.getElementById('boot') && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push(`${who}: choosing Turkish did not give a Turkish demo`));
+}
+if (ok) await chooseTurkish(frame!, 'desktop');
 console.log('money:', await frame!.$$eval('.pane', (els) => els.slice(1, 2).map((e) => e.textContent?.slice(0, 40))).catch(() => '?'));
 const step = await frame!.$eval('#boot-step', (e) => e.textContent).catch(() => null);
 if (step) console.log('boot text:', step);
@@ -193,7 +200,6 @@ if (ok) {
   const phone = await browser.newPage();
   await phone.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
   await phone.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true });
-  await phone.evaluateOnNewDocument(TURKISH);
   await phone.evaluateOnNewDocument(`(function () {
     var fake = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {}, clear: function () {}, key: function () { return null; }, length: 0 };
     Object.defineProperty(window, 'localStorage', { get: function () { return fake; } });
@@ -205,6 +211,8 @@ if (ok) {
   await new Promise((r) => setTimeout(r, 2500));
   const seen = await pf!.evaluate(() => ({ shell: !!document.querySelector('.shell'), h1: document.querySelector('h1')?.textContent ?? '', problem: !!document.querySelector('.demobar__problem') }));
   if (!seen.shell || seen.problem) errors.push(`phone, storage that forgets: not signed in (${seen.h1})`);
+  // The language choice survives too: it travels in the address, not only in storage.
+  if (seen.shell) await chooseTurkish(pf!, 'phone, storage that forgets');
   await phone.screenshot({ path: join(SCREENS, 'demo-phone.png') });
   await phone.close();
 }

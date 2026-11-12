@@ -23,7 +23,7 @@ const call = async <T,>(method: string, path: string, body?: unknown): Promise<T
     path,
     body,
   ) as Promise<T>;
-await seedShowcase(call as any, s.db).catch((e) => console.warn('seed', e));
+await seedShowcase(call as any, s.db, 'tr').catch((e) => console.warn('seed', e));
 
 async function theme(page: Page, mode: 'light' | 'dark') {
   await page.evaluate((m) => {

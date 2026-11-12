@@ -24,6 +24,11 @@
 }
 .demobar button:hover, .demobar select:hover { border-color: rgba(217, 235, 231, .6); }
 .demobar :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.demobar__lang { display: flex; flex: none; }
+.demobar__lang button { padding: 3px 8px; border-radius: 0; }
+.demobar__lang button:first-child { border-radius: var(--r-s) 0 0 var(--r-s); }
+.demobar__lang button:last-child { border-radius: 0 var(--r-s) var(--r-s) 0; margin-left: -1px; }
+.demobar__lang button[aria-pressed='true'] { background: rgba(255, 255, 255, .16); border-color: rgba(217, 235, 231, .6); }
 .demobar__more { position: relative; }
 .demobar__short { display: none; }
 .demobar__ideas {

@@ -86,3 +86,36 @@ describe('the company day on the server', () => {
     expect(found).toEqual([]);
   });
 });
+
+// English first: the language of an answer is what the person chose, else the
+// company's own language. The browser's language decides nothing.
+describe('the language of an answer', () => {
+  let env: Env;
+  const missing = '/api/tasks/00000000-0000-4000-8000-000000000000';
+  beforeAll(async () => {
+    env = await setup();
+    // Nobody has chosen a language of their own yet.
+    await env.db.system((q) => q.query(`update users set locale = null`));
+  });
+
+  it('is the company language, whatever the browser says', async () => {
+    const english = await login(env, 'acme', 'ada@demo.example');
+    const turkish = await login(env, 'beta', 'ada@demo.example');
+    expect((await english.req('GET', missing, undefined, { 'accept-language': 'tr-TR,tr;q=0.9' })).json.message).toBe('Not found.');
+    expect((await turkish.req('GET', missing, undefined, { 'accept-language': 'en-US,en;q=0.9' })).json.message).toBe('Bulunamadı.');
+  });
+
+  it('follows the choice a person made', async () => {
+    const english = await login(env, 'acme', 'ada@demo.example');
+    expect((await english.req('GET', missing, undefined, { 'x-curahold-locale': 'tr' })).json.message).toBe('Bulunamadı.');
+    const turkish = await login(env, 'beta', 'ada@demo.example');
+    expect((await turkish.req('GET', missing, undefined, { 'x-curahold-locale': 'en' })).json.message).toBe('Not found.');
+  });
+
+  it('starts new sample companies in English unless asked', async () => {
+    const { seedDemo } = await import('../scripts/seed-demo');
+    const made = await seedDemo(env.db, { slug: 'gamma' });
+    const [org] = await env.db.system((q) => q.query(`select locale from orgs where id = $1`, [made.orgId]));
+    expect(org.locale).toBe('en');
+  });
+});

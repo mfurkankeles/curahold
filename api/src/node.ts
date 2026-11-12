@@ -19,10 +19,11 @@ import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 
-export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string }) {
+export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; locale?: 'en' | 'tr' }) {
   const db = pgliteDb(await createMemoryPg());
   await migrate(db, loadMigrations());
-  const demo = await seedDemo(db);
+  // English unless asked (DEMO_LOCALE=tr for a Turkish sample company).
+  const demo = await seedDemo(db, { locale: opts.locale ?? (process.env.DEMO_LOCALE === 'tr' ? 'tr' : 'en') });
   const email = new MemoryEmail();
   const origSend = email.send.bind(email);
   email.send = async (m) => {

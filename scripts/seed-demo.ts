@@ -31,7 +31,7 @@ function day(offset: number) {
 
 export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 'tr' } = {}) {
   const slug = opts.slug ?? 'demo';
-  const locale = opts.locale ?? 'tr';
+  const locale = opts.locale ?? 'en';
   const { orgId, adminId, roleIds } = await createOrg(db, {
     slug,
     name: 'Demo Company',

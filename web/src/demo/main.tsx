@@ -4,7 +4,7 @@ import '../stylesheets';
 import './demo.css';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { browserLocale, storedLocale } from '../lib/i18n';
+import { setStartLocale, storeLocale, storedLocale } from '../lib/i18n';
 import { startTheme } from '../lib/theme';
 import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
@@ -34,6 +34,7 @@ const TEXT = {
     stuck: 'Demo oturumu açılamadı.',
     note: 'Uydurma verilerle, tamamen bu sekmede çalışıyor. Yenileyince sıfırlanır.',
     as: 'Kim olarak',
+    language: 'Dil',
     tries: 'Neler denenir?',
     reset: 'Baştan başla',
     ideas: [
@@ -74,6 +75,7 @@ const TEXT = {
     stuck: 'The demo could not sign you in.',
     note: 'Invented data, running entirely in this tab. Reloading starts over.',
     as: 'Viewing as',
+    language: 'Language',
     tries: 'What to try',
     reset: 'Start over',
     ideas: [
@@ -104,8 +106,22 @@ const TEXT = {
   },
 };
 // One language for the whole demo: the sample data is written in the language the visitor reads.
-const demoLocale: 'tr' | 'en' = (storedLocale() ?? browserLocale()) === 'en' ? 'en' : 'tr';
+// English first; Turkish by choice (the switch in the bar). The choice also travels in the
+// address (#tr), because some places that show the demo give it storage that forgets, and so
+// a link can be sent that opens in Turkish.
+const fromAddress = /^#(tr|en)$/.exec(window.location.hash)?.[1] as 'tr' | 'en' | undefined;
+const demoLocale: 'tr' | 'en' = fromAddress ?? (storedLocale() === 'tr' ? 'tr' : 'en');
+if (fromAddress) storeLocale(fromAddress);
+setStartLocale(demoLocale);
 const lang = () => (storedLocale() ?? demoLocale) as 'tr' | 'en';
+
+/** The other language: the sample data is written again in it, so the demo starts over. */
+function switchLanguage(to: 'tr' | 'en') {
+  if (to === demoLocale) return;
+  storeLocale(to);
+  window.location.hash = to;
+  window.location.reload();
+}
 
 
 const bootEl = document.getElementById('boot')!;
@@ -143,6 +159,13 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
           ))}
         </select>
       </label>
+      <div className="demobar__lang" role="group" aria-label={t.language}>
+        {(['en', 'tr'] as const).map((x) => (
+          <button key={x} type="button" lang={x} aria-pressed={demoLocale === x} title={x === 'en' ? 'English' : 'Türkçe'} onClick={() => switchLanguage(x)}>
+            {x.toUpperCase()}
+          </button>
+        ))}
+      </div>
       <div className="demobar__more">
         <button type="button" aria-expanded={open} aria-label={t.tries} onClick={() => setOpen((o) => !o)}>
           <span className="demobar__long">{t.tries}</span>

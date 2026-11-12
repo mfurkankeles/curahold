@@ -30,6 +30,15 @@ Ana sayfanda **Başlarken** kartı birkaç ilk adımı gösterir: ilk görevini 
 
 Soldaki **+ Yeni** düğmesi her şeyi tek yerden ekler: görev, müşteri, görüşme notu ya da pano. Görev yazarken tarihi, kişiyi ve müşteriyi aynı satıra yazabilirsin; ayrıntılar [Hızlı ekleme ve kısayollar](/docs/tr/quick-add/) sayfasında. Menünden (sol altta adın) açık ya da koyu görünümü, dili ve kısayolları bulursun; **Yenilikler** son eklenenleri gösterir.
 
+## Dil
+
+Curahold İngilizce açılır. Türkçe bir seçimdir ve iki yerden yapılır:
+
+- **Kendin için:** Ayarların → Dil. Seçimin her cihazda seninle gelir.
+- **Şirket için:** bir yönetici Ayarlar → Şirket sayfasından belirler. Yeni gelenler o dilde başlar, şirketin tamamına giden e-postalar o dilde yazılır.
+
+Tarayıcından hiçbir şey tahmin edilmez; aynı bağlantıyı açan herkes aynı şeyi görür. Tarihler, sayılar ve tutarlar seçtiğin dile uyar.
+
 ## Cihaz sınırı
 
 Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile 5 arasında değiştirebilir. Üçüncü cihazdan girildiğinde en eski oturum kapanır. Böylece bir koltuk birkaç kişi arasında paylaşılamaz.

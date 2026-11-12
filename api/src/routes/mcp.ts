@@ -274,7 +274,8 @@ mcpRoutes.post('/mcp', async (c) => {
   const self = c.get('self');
   // Calls go through the same API the app uses, with the same rules.
   const api: Api = async (method, path, body) => {
-    const headers: Record<string, string> = { authorization: `Bearer ${bearer}`, 'x-curahold-locale': c.req.header('accept-language')?.startsWith('tr') ? 'tr' : 'en' };
+    // No language header: the answer comes in the person's own language, else the company's.
+    const headers: Record<string, string> = { authorization: `Bearer ${bearer}` };
     const devOrg = c.req.header('x-curahold-org');
     if (devOrg) headers['x-curahold-org'] = devOrg;
     if (body !== undefined) headers['content-type'] = 'application/json';

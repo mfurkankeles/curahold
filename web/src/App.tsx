@@ -10,7 +10,7 @@ import { installDiagnostics } from './lib/diagnostics';
 
 // Errors, failed requests and recent pages, kept in memory for a help request.
 installDiagnostics();
-import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
+import { I18nProvider, startLocale, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
 import { useLive } from './lib/live';
@@ -48,7 +48,7 @@ type Boot =
 
 export function App() {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
-  const [locale, setLocale] = useState<Locale>(() => storedLocale() ?? browserLocale());
+  const [locale, setLocale] = useState<Locale>(() => storedLocale() ?? startLocale());
   const loc = useLocation();
 
   useEffect(() => setApiLocale(locale), [locale]);

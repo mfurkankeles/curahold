@@ -178,7 +178,7 @@ const HISTORY = [
   'İlk ay değerlendirmesi',
 ];
 
-export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'tr') {
+export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'en') {
   // Written in Turkish; an English demo gets every text in English on its way in.
   const tx = (text: string) => (locale === 'en' ? toEnglish(text) : text);
   const call: Call = locale === 'en' ? (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deepEnglish(body))) as Call) : send;

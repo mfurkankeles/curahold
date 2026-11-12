@@ -204,10 +204,10 @@ function build() {
       JSON.stringify(pages.map((p) => ({ u: `/docs/${lang}/${p.slug}/`, t: p.title, s: ui.sections[p.section], h: p.toc.map((h) => [h.id, h.text]), x: p.text.slice(0, 6000) }))),
     );
   }
-  // /docs/ picks the reader's language.
+  // /docs/ opens in English; the Turkish docs are one click away on every page.
   writeFileSync(
     join(OUT, 'index.html'),
-    `<!doctype html><meta charset="utf-8"><title>Curahold Docs</title><meta http-equiv="refresh" content="0; url=/docs/en/"><script>location.replace(/^tr\\b/i.test(navigator.language||'')?'/docs/tr/':'/docs/en/')</script><a href="/docs/en/">Curahold Docs</a> · <a href="/docs/tr/">Curahold Belgeleri</a>`,
+    `<!DOCTYPE html><html lang="en"><meta charset="utf-8"><title>Curahold Docs</title><meta http-equiv="refresh" content="0; url=/docs/en/"><script>location.replace('/docs/en/')</script><a href="/docs/en/">Curahold Docs</a> · <a href="/docs/tr/">Curahold Belgeleri</a></html>`,
   );
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.css'), join(OUT, 'assets', 'docs.css'));
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.js'), join(OUT, 'assets', 'docs.js'));
@@ -280,7 +280,7 @@ function makeRelative(dir: string, root = dir) {
       .replace('"base":"/docs/","index":""', `"base":"${up}","index":"index.html"`)
       // The language chooser at the top of the folder.
       .replace('content="0; url=/docs/en/"', 'content="0; url=en/index.html"')
-      .replace("?'/docs/tr/':'/docs/en/'", "?'tr/index.html':'en/index.html'");
+      .replace("location.replace('/docs/en/')", "location.replace('en/index.html')");
     writeFileSync(file, html);
   }
 }

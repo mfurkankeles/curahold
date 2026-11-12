@@ -48,6 +48,13 @@ export function storeLocale(l: Locale) {
     /* private mode */
   }
 }
-export function browserLocale(): Locale {
-  return navigator.language?.toLowerCase().startsWith('tr') ? 'tr' : 'en';
+// English first. Turkish (and any later language) is a choice: a person picks it
+// in their settings or on the sign-in page, or an administrator makes it the
+// company's language. Nothing is guessed from the browser, so everyone who
+// opens the same link starts on the same screen.
+let start: Locale = 'en';
+export const startLocale = (): Locale => start;
+/** The try-it demo opens in the language its sample data was written in. */
+export function setStartLocale(l: Locale) {
+  start = l;
 }

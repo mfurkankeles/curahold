@@ -30,6 +30,15 @@ The **Getting started** card on your Home shows a few first steps: adding your f
 
 The **+ New** button on the left adds anything from one place: a task, a customer, a call note or a board. When you write a task you can put the date, the person and the customer on the same line; see [Quick add and shortcuts](/docs/en/quick-add/). Your menu (your name at the bottom left) has light or dark mode, the language and the shortcuts; **What's new** shows the latest additions.
 
+## Language
+
+Curahold starts in English. Turkish is a choice, made in one of two places:
+
+- **For yourself:** Your settings → Language. It follows you to every device.
+- **For the company:** an administrator sets it in Settings → Company. New people then start in that language, and emails to the whole company use it.
+
+Nothing is guessed from your browser, so everyone who opens the same link sees the same thing. Dates, numbers and amounts follow the language you chose.
+
 ## Device limit
 
 A person can stay signed in on two devices at once; an admin can set this between 1 and 5. Signing in on one more device signs the oldest one out. That keeps a seat from being shared by several people.

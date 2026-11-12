@@ -56,10 +56,13 @@ export function slugFromHost(host: string, baseDomain: string): string | null {
   return sub;
 }
 
-function requestLocale(header: string | undefined, accept: string | undefined, fallback: Locale): Locale {
-  if (header === 'tr' || header === 'en') return header;
-  if (accept && /^tr\b/i.test(accept.trim())) return 'tr';
-  return fallback;
+/**
+ * The language of an answer: what the person chose (the app sends it), else the
+ * company's own language. The browser's language is not consulted: English is
+ * where everyone starts, and another language is a choice somebody made.
+ */
+function requestLocale(header: string | undefined, fallback: Locale): Locale {
+  return header === 'tr' || header === 'en' ? header : fallback;
 }
 
 export function createApp(deps: Deps) {
@@ -129,7 +132,7 @@ export function createApp(deps: Deps) {
       trial_ends_at: rows[0].trial_ends_at ?? null,
     };
     c.set('org', org);
-    c.set('locale', requestLocale(c.req.header('x-curahold-locale'), c.req.header('accept-language'), org.locale));
+    c.set('locale', requestLocale(c.req.header('x-curahold-locale'), org.locale));
 
     // Cross-site forms cannot set custom headers, so requiring one on every
     // write blocks request forgery (the session cookie is also SameSite=Lax).
