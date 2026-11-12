@@ -266,8 +266,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               value={locale}
               onChange={onLocale}
               options={[
-                { value: 'tr', label: 'Türkçe' },
                 { value: 'en', label: 'English' },
+                { value: 'tr', label: 'Türkçe' },
               ]}
             />
           ),
