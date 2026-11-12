@@ -16,7 +16,7 @@ Her kartın solundaki ince şerit görevin zamana göre nerede olduğunu göster
 
 ## İki kişi aynı anda değiştirirse
 
-Tendwell kimsenin değişikliğini sessizce ezmez. Sen düzenlerken başkası kaydettiyse, onun değişikliği alınır ve seninkiler üzerine eklenir. Gerçekten çakışan bir alan varsa sana sorulur.
+Curahold kimsenin değişikliğini sessizce ezmez. Sen düzenlerken başkası kaydettiyse, onun değişikliği alınır ve seninkiler üzerine eklenir. Gerçekten çakışan bir alan varsa sana sorulur.
 
 ## Toplu değişiklik ve geri alma
 

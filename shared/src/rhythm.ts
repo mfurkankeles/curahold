@@ -1,5 +1,5 @@
 // Rhythm: what a team aims for in a period, how often it sits down with each
-// customer, and when Tendwell should speak up about work that has gone still.
+// customer, and when Curahold should speak up about work that has gone still.
 // Everything here is worked out from what is already stored, when someone looks.
 
 export const TARGET_PERIODS = ['month', 'quarter', 'year'] as const;
@@ -17,7 +17,7 @@ export interface Targets {
 }
 
 export interface RenewalRhythm {
-  /** Renewal work starts this many days before a customer's renewal date. 0: Tendwell does not start it. */
+  /** Renewal work starts this many days before a customer's renewal date. 0: Curahold does not start it. */
   days: number;
   /** The playbook whose tasks are opened then; none: one task for the customer's owner. */
   planId: string | null;

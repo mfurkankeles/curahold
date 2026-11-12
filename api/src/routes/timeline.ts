@@ -1,4 +1,4 @@
-// A customer's timeline (activities people log, and what Tendwell saw
+// A customer's timeline (activities people log, and what Curahold saw
 // happen), and the health score with its reasons. Everything is read under
 // the viewer's own rights: a task on a board they cannot open, or a field
 // hidden from their role, does not show up here either.

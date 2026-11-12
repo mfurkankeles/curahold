@@ -1,6 +1,6 @@
 // Bringing tasks in from a file (a CSV or Excel export of whatever the team
 // used before): which column is what, and how the values other tools write
-// become Tendwell's — a date, a column on the board, people, a priority.
+// become Curahold's — a date, a column on the board, people, a priority.
 import { parseDate } from './fields';
 import type { Locale } from './i18n';
 import { ticketPriorityOf } from './records';

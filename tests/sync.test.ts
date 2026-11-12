@@ -73,7 +73,7 @@ describe('records under accounts', () => {
     const after = (await lena.get(`/api/accounts/${account.id}`)).json.account;
     expect(after.fields.open_pipeline).toBe(50000);
     expect(after.fields.next_close).toBe('2026-12-15');
-    // Rolled-up values are Tendwell's to work out.
+    // Rolled-up values are Curahold's to work out.
     expect((await lena.patch(`/api/accounts/${account.id}`, { fields: { open_pipeline: 1 } })).status).toBe(400);
     await lena.patch(`/api/records/${a.json.record.id}`, { fields: { status: 'lost' } });
     expect((await lena.get(`/api/accounts/${account.id}`)).json.account.fields.open_pipeline).toBe(10000);
@@ -283,7 +283,7 @@ describe('two-way sync with a CRM', () => {
     expect((await lena.get(`/api/accounts/${pera.id}`)).json.account.name).toBe('Pera Software (there)');
   });
 
-  it('tasks move both ways; done in Tendwell completes the CRM task', async () => {
+  it('tasks move both ways; done in Curahold completes the CRM task', async () => {
     const board = (await ada.get('/api/boards')).json.boards[0];
     const atlas = (await lena.get('/api/accounts?q=Atlas')).json.accounts[0];
     const t = await lena.post('/api/tasks', { boardId: board.id, title: 'Quarterly review call', accountId: atlas.id, assigneeIds: [env.a.ids.lena], dueDate: '2026-12-01' });

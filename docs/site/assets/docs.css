@@ -1,4 +1,4 @@
-/* Tendwell docs. Same family and colours as the product: the deep "well"
+/* Curahold docs. Same family and colours as the product: the deep "well"
    teal for the frame, paper for the navigation, white for reading. The one
    accent is the rail: the page you are on is marked the way a task is. */
 
@@ -9,13 +9,13 @@
 
 :root {
   --paper: #f3f5f4; --surface: #fff; --sunk: #e9eeec; --ink: #18282b; --ink-2: #4b5c5f; --ink-3: #6b7e81;
-  --line: #d8dfdd; --well: #191541; --well-2: #29225f; --well-ink: #e3e0fb; --tend: #5b4de8; --tend-ink: #4234c8;
-  --tend-wash: #eceafe; --soon: #b7791f; --focus: #1f8fff; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --line: #d8dfdd; --well: #191541; --well-2: #29225f; --well-ink: #e3e0fb; --brand: #5b4de8; --brand-ink: #4234c8;
+  --brand-wash: #eceafe; --soon: #b7791f; --focus: #1f8fff; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 76px; }
 body { margin: 0; font: 16px/1.65 'Figtree', ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: var(--surface); -webkit-font-smoothing: antialiased; }
-a { color: var(--tend-ink); text-underline-offset: 3px; }
+a { color: var(--brand-ink); text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .skip { position: absolute; left: -999px; }
 .skip:focus { left: 12px; top: 12px; z-index: 50; background: #fff; padding: 6px 10px; }
@@ -32,7 +32,7 @@ a { color: var(--tend-ink); text-underline-offset: 3px; }
 .search input::placeholder { color: #a8a3d8; }
 .results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #fff; color: var(--ink); border-radius: 10px; box-shadow: 0 18px 44px rgba(13, 68, 72, .22); max-height: 70vh; overflow: auto; padding: 6px; }
 .results a { display: block; padding: 8px 10px; border-radius: 6px; text-decoration: none; color: var(--ink); }
-.results a:hover, .results a[aria-selected='true'] { background: var(--tend-wash); }
+.results a:hover, .results a[aria-selected='true'] { background: var(--brand-wash); }
 .results small { display: block; color: var(--ink-3); font-size: 12.5px; line-height: 1.4; }
 .results p { margin: 8px 10px; color: var(--ink-3); font-size: 14px; }
 
@@ -42,7 +42,7 @@ a { color: var(--tend-ink); text-underline-offset: 3px; }
 .nav__label { font-size: 13px; font-weight: 600; color: var(--ink-3); padding: 0 10px 6px; }
 .nav a { display: block; padding: 5px 10px; border-left: 3px solid transparent; color: var(--ink-2); text-decoration: none; font-size: 15px; line-height: 1.4; border-radius: 0 6px 6px 0; }
 .nav a:hover { color: var(--ink); background: var(--sunk); }
-.nav a[aria-current='page'] { border-left-color: var(--tend); color: var(--ink); background: var(--surface); font-weight: 600; }
+.nav a[aria-current='page'] { border-left-color: var(--brand); color: var(--ink); background: var(--surface); font-weight: 600; }
 
 .main { padding: 36px 48px 80px; min-width: 0; }
 .crumb { font-size: 14px; color: var(--ink-3); margin-bottom: 6px; }
@@ -56,7 +56,7 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
 .doc ul, .doc ol { padding-left: 22px; }
 .doc li + li { margin-top: 4px; }
 .doc code { font-family: var(--mono); font-size: .86em; background: var(--sunk); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
-.doc blockquote { margin: 18px 0; padding: 10px 16px; border-left: 3px solid var(--tend); background: var(--tend-wash); border-radius: 0 8px 8px 0; color: var(--ink); }
+.doc blockquote { margin: 18px 0; padding: 10px 16px; border-left: 3px solid var(--brand); background: var(--brand-wash); border-radius: 0 8px 8px 0; color: var(--ink); }
 .doc blockquote p { margin: 4px 0; }
 .code { margin: 16px 0; border-radius: 10px; overflow: hidden; background: #16123a; }
 .code__bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px 6px 14px; font: 12.5px var(--mono); color: #a8a3d8; border-bottom: 1px solid rgba(217, 235, 231, .12); }
@@ -77,12 +77,12 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
 .toc { position: sticky; top: 60px; align-self: start; padding: 36px 16px; font-size: 14px; }
 .toc__label { color: var(--ink-3); font-weight: 600; margin-bottom: 8px; }
 .toc a { display: block; color: var(--ink-2); text-decoration: none; padding: 3px 0; line-height: 1.35; }
-.toc a:hover { color: var(--tend-ink); }
+.toc a:hover { color: var(--brand-ink); }
 
 .home { max-width: 980px; }
 .home h1 { font-size: 40px; letter-spacing: -.02em; line-height: 1.1; margin: 0 0 10px; font-weight: 600; }
 .home__lead { font-size: 19px; color: var(--ink-2); max-width: 60ch; margin: 0 0 36px; }
-.home__card { padding: 18px 0 8px; border-top: 3px solid var(--tend); margin-bottom: 28px; }
+.home__card { padding: 18px 0 8px; border-top: 3px solid var(--brand); margin-bottom: 28px; }
 .home__card[data-section='developers'] { border-top-color: var(--well); }
 .home__card[data-section='releases'] { border-top-color: var(--soon); }
 .home__card h2 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
@@ -90,7 +90,7 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
 .home__card ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px 28px; }
 .home__card li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .home__card li a { font-weight: 600; text-decoration: none; color: var(--ink); }
-.home__card li a:hover { color: var(--tend-ink); text-decoration: underline; }
+.home__card li a:hover { color: var(--brand-ink); text-decoration: underline; }
 .home__card li span { display: block; color: var(--ink-3); font-size: 14px; line-height: 1.45; }
 
 @media (max-width: 1180px) { .frame { grid-template-columns: 250px minmax(0, 1fr); } .toc { display: none; } }

@@ -1,5 +1,5 @@
 // The sync engine. One run for one connection:
-//   1. send changes made in Tendwell since the last run (queued in sync_changes),
+//   1. send changes made in Curahold since the last run (queued in sync_changes),
 //   2. read what changed on the other side, object by object (accounts first,
 //      so records and tasks can find their account), and apply it,
 //   3. on a full run, archive what disappeared there,
@@ -137,7 +137,7 @@ function inValue(def: AccountField, rf: RemoteField | undefined, raw: unknown, d
     return 'error' in r ? null : r.value;
   }
   if (def.type === 'select') {
-    // A support ticket's state and priority: every tool's words fold into Tendwell's few.
+    // A support ticket's state and priority: every tool's words fold into Curahold's few.
     if (def.key === 'status' && def.options?.some((o) => o.key === 'solved')) return ticketStatusOf(rf?.options?.find((o) => o.value === String(v))?.label ?? v);
     if (def.key === 'priority' && def.options?.some((o) => o.key === 'urgent')) return ticketPriorityOf(rf?.options?.find((o) => o.value === String(v))?.label ?? v);
     if (rf?.type === 'bool' || typeof v === 'boolean') v = v === true || TRUE.test(String(v)) ? 'yes' : 'no';
@@ -671,7 +671,7 @@ async function applyPage(
           const a = await accountByDomain(q, r, [row.values.__requesterDomain], true);
           if (a) vals.account = a.id;
         }
-        // Only what Tendwell already has: no new customers, no tickets without one.
+        // Only what Curahold already has: no new customers, no tickets without one.
         if (map.linkOnly && !entity && (map.target === 'account' || (map.target === 'record' && !vals.account))) {
           await q.query('release savepoint sync_row');
           continue;
@@ -694,7 +694,7 @@ async function applyPage(
         if (pend) {
           const localKeys: string[] | null = pend.fields;
           const remoteNewer = row.modifiedAt ? new Date(row.modifiedAt).getTime() > new Date(pend.changed_at).getTime() : false;
-          const keepLocal = r.conn.sync.conflict === 'tendwell' || (r.conn.sync.conflict === 'latest' && !remoteNewer);
+          const keepLocal = r.conn.sync.conflict === 'curahold' || (r.conn.sync.conflict === 'latest' && !remoteNewer);
           if (keepLocal) {
             const keys = new Set(localKeys ?? Object.keys(patch));
             patch = Object.fromEntries(Object.entries(patch).filter(([k]) => !keys.has(k)));
@@ -1111,7 +1111,7 @@ const SUGGEST: Record<string, Record<string, string>> = {
   task: { subject: 'title', hs_task_subject: 'title', title: 'title', whatid: 'account', what_id: 'account', regardingobjectid: 'account', org_id: 'account', __company: 'account', activitydate: 'due', due_date: 'due', scheduledend: 'due', hs_timestamp: 'due', description: 'description', hs_task_body: 'description', note: 'description', status: 'done', done: 'done', hs_task_status: 'done', statecode: 'done', ownerid: 'assignee', owner: 'assignee', hubspot_owner_id: 'assignee', user_id: 'assignee' },
 };
 
-/** First guess at how a CRM object's fields map onto Tendwell, by name. */
+/** First guess at how a CRM object's fields map onto Curahold, by name. */
 export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | 'custom', fields: RemoteField[], accountFields: AccountField[], typeFields: AccountField[]): FieldMap[] {
   const table = SUGGEST[kind === 'custom' ? 'contact' : kind] ?? {};
   const out: FieldMap[] = [];

@@ -18,7 +18,7 @@ describe('email link sign-in', () => {
     expect(start.status).toBe(200);
     const mail = env.email.last('lena@demo.example');
     expect(mail.subject).toContain('Demo Company');
-    expect(mail.text).toContain(`https://acme.tendwell.test/auth/verify#token=${start.json.devToken}`);
+    expect(mail.text).toContain(`https://acme.curahold.test/auth/verify#token=${start.json.devToken}`);
     const v = await c.post('/api/auth/verify', { token: start.json.devToken, deviceId: c.device, deviceLabel: 'Chrome on Mac' });
     expect(v.json.status).toBe('ok');
     const me = await c.get('/api/me');
@@ -61,7 +61,7 @@ describe('email link sign-in', () => {
 
   it('refuses writes without the app header (request forgery)', async () => {
     const c = await login(env, 'acme', 'mert@demo.example');
-    const res = await env.app.request('https://acme.tendwell.test/api/tasks', {
+    const res = await env.app.request('https://acme.curahold.test/api/tasks', {
       method: 'POST',
       headers: { cookie: c.cookie, 'content-type': 'application/json' },
       body: JSON.stringify({ boardId: env.a.boards.csBoard, title: 'x' }),
@@ -158,15 +158,15 @@ describe('Google sign-in', () => {
   }
 
   async function startAndCallback(c: Client, claims: (nonce: string) => object) {
-    const start = await env.app.request(`https://acme.tendwell.test/api/auth/oauth/google/start?device=${c.device}`);
+    const start = await env.app.request(`https://acme.curahold.test/api/auth/oauth/google/start?device=${c.device}`);
     expect(start.status).toBe(302);
     const loc = new URL(start.headers.get('location')!);
     expect(loc.origin).toBe('https://accounts.google.com');
-    expect(loc.searchParams.get('redirect_uri')).toBe('https://app.tendwell.test/api/oauth/callback');
+    expect(loc.searchParams.get('redirect_uri')).toBe('https://app.curahold.test/api/oauth/callback');
     const nonce = loc.searchParams.get('nonce')!;
     stubGoogle(claims(nonce));
     const cb = await env.app.request(
-      `https://app.tendwell.test/api/oauth/callback?code=abc&state=${encodeURIComponent(loc.searchParams.get('state')!)}`,
+      `https://app.curahold.test/api/oauth/callback?code=abc&state=${encodeURIComponent(loc.searchParams.get('state')!)}`,
     );
     expect(cb.status).toBe(302);
     return new URL(cb.headers.get('location')!);
@@ -184,7 +184,7 @@ describe('Google sign-in', () => {
   it('a new device must enter the emailed code, a known device does not', async () => {
     const c = new Client(env, 'acme');
     const back = await startAndCallback(c, good('lena@demo.example'));
-    expect(back.origin).toBe('https://acme.tendwell.test');
+    expect(back.origin).toBe('https://acme.curahold.test');
     const token = new URLSearchParams(back.hash.slice(1)).get('token')!;
     const v = await c.post('/api/auth/verify', { token, deviceId: c.device, deviceLabel: 'Firefox' });
     expect(v.json.status).toBe('device_code');
@@ -234,7 +234,7 @@ describe('Google sign-in', () => {
   });
 
   it('rejects a tampered state', async () => {
-    const r = await env.app.request('https://app.tendwell.test/api/oauth/callback?code=x&state=eyJvIjoiYWNtZSJ9.forged');
+    const r = await env.app.request('https://app.curahold.test/api/oauth/callback?code=x&state=eyJvIjoiYWNtZSJ9.forged');
     expect(r.status).toBe(400);
   });
 });

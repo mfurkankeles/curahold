@@ -1,7 +1,7 @@
 {
-  "name": "tendwell",
+  "name": "curahold",
   "version": "0.1.0",
-  "description": "Tendwell — work management for customer success and account teams, with the chat apps and CRMs they already use",
+  "description": "Curahold — work management for customer success and account teams, with the chat apps and CRMs they already use",
   "scripts": {
     "dev": "tsx scripts/dev.ts",
     "build": "vite build && vite build --config vite.portal.config.ts && tsx scripts/build-docs.ts",

@@ -6,7 +6,7 @@ summary: Home pages per role, the kinds of card and editing a page.
 ---
 # Home pages and cards
 
-Home is there so people see their work the moment they open Tendwell. Each page is made of cards, and each role starts on its own home page.
+Home is there so people see their work the moment they open Curahold. Each page is made of cards, and each role starts on its own home page.
 
 ## Cards
 

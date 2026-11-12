@@ -83,7 +83,7 @@ describe('morning digest', () => {
     await runScheduled(env.deps, morning);
     // (The other test company has a Zeynep at the same address; only Acme's counts here.
     // 4 March 2030 is a Monday, so the weekly summary comes too, as its own message.)
-    const got = mails('zeynep@demo.example').slice(before).filter((m) => m.text.includes('acme.tendwell.test') && !m.subject.startsWith('Your week'));
+    const got = mails('zeynep@demo.example').slice(before).filter((m) => m.text.includes('acme.curahold.test') && !m.subject.startsWith('Your week'));
     expect(got.length).toBe(1);
     expect(got[0].subject).toBe('Your tasks for today');
     expect(got[0].text).toMatch(/Overdue \(\d+\)[\s\S]*Late follow-up/);
@@ -95,7 +95,7 @@ describe('calendar feed', () => {
   it('a secret address serves the person’s open tasks as all-day events', async () => {
     await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Renewal call, Quillfield', assigneeIds: [env.a.ids.lena], dueDate: new Date(Date.now() + 5 * 86400_000).toISOString().slice(0, 10) });
     const { url } = (await lena.post('/api/me/calendar', {})).json;
-    expect(url).toMatch(/^https:\/\/acme\.tendwell\.test\/api\/calendar\/[\w-]+\.ics$/);
+    expect(url).toMatch(/^https:\/\/acme\.curahold\.test\/api\/calendar\/[\w-]+\.ics$/);
     const res = await env.app.request(url);
     expect(res.headers.get('content-type')).toContain('text/calendar');
     const ics = await res.text();

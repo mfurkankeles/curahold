@@ -1,4 +1,4 @@
--- Tendwell — phase 3: records attached to accounts (contacts, opportunities
+-- Curahold — phase 3: records attached to accounts (contacts, opportunities
 -- and anything else a CRM holds), two-way sync with CRMs and spreadsheets,
 -- and a permission of its own for connected tools. Same rules as before:
 -- every business row carries org_id and row-level security keeps companies
@@ -29,7 +29,7 @@ alter table connections add column state jsonb not null default '{}'::jsonb;
 -- ----------------------------------------------------------------- records
 
 -- Kinds of records kept under an account: contacts, opportunities, risks,
--- renewals, cases… Built-in kinds have known fields Tendwell can reason about
+-- renewals, cases… Built-in kinds have known fields Curahold can reason about
 -- (an opportunity's amount and whether it is still open); custom kinds are
 -- whatever the company or its CRM defines.
 create table record_types (
@@ -183,6 +183,6 @@ create policy sync_changes_all on sync_changes for all
 create policy sync_runs_select on sync_runs for select
   using (org_id = app_org() and app_has_perm('connections.manage'));
 
-grant select, insert, update, delete on record_types, records, sync_links, sync_changes to tendwell_app;
-grant select on sync_runs to tendwell_app;
-grant select (state) on connections to tendwell_app;
+grant select, insert, update, delete on record_types, records, sync_links, sync_changes to curahold_app;
+grant select on sync_runs to curahold_app;
+grant select (state) on connections to curahold_app;

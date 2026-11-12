@@ -1,4 +1,4 @@
-// The open edges of Tendwell: personal API keys, apps and AI assistants
+// The open edges of Curahold: personal API keys, apps and AI assistants
 // connected to a person, webhooks for the company, and the consent screen an
 // app sends someone to. Everything here acts as a person and inside their
 // rights; nothing opens a way around them.

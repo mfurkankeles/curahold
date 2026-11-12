@@ -6,11 +6,11 @@ summary: Şirket adresin, giriş, ilk kurulum ve cihaz sınırı.
 ---
 # Başlarken
 
-Tendwell, müşteri başarısı ve hesap yönetimi ekiplerinin müşterilerini, paydaşlarını ve günlük işlerini tek yerde yürüttüğü bir çalışma alanıdır. Bu sayfa ilk on beş dakikanı anlatır.
+Curahold, müşteri başarısı ve hesap yönetimi ekiplerinin müşterilerini, paydaşlarını ve günlük işlerini tek yerde yürüttüğü bir çalışma alanıdır. Bu sayfa ilk on beş dakikanı anlatır.
 
 ## Şirket adresin
 
-Her şirketin kendi adresi vardır: `sirketin.tendwell.com`. Ekibindeki herkes bu adresten girer. Başka bir şirketin verisi bu adreste hiçbir zaman görünmez; ayrım veritabanının kendisinde yapılır.
+Her şirketin kendi adresi vardır: `sirketin.curahold.com`. Ekibindeki herkes bu adresten girer. Başka bir şirketin verisi bu adreste hiçbir zaman görünmez; ayrım veritabanının kendisinde yapılır.
 
 ## Giriş
 
@@ -38,9 +38,9 @@ Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile
 
 ## Telefona ya da bilgisayara kur
 
-Tendwell bir uygulama gibi kurulabilir; mağaza gerekmez.
+Curahold bir uygulama gibi kurulabilir; mağaza gerekmez.
 
-- **Android ve bilgisayar (Chrome, Edge):** sol alttaki adına tıkla → **Tendwell’i kur**. Tarayıcının adres çubuğundaki kur simgesi de aynı işi görür.
+- **Android ve bilgisayar (Chrome, Edge):** sol alttaki adına tıkla → **Curahold’u kur**. Tarayıcının adres çubuğundaki kur simgesi de aynı işi görür.
 - **iPhone ve iPad (Safari):** Paylaş düğmesi → **Ana Ekrana Ekle** → Ekle.
 
 Kurulan uygulama kendi penceresinde açılır; simgeye uzun basınca Görevlerim, Gelen kutusu ve Müşteriler kısayolları çıkar.

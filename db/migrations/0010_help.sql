@@ -1,4 +1,4 @@
--- Tendwell — asking Tendwell for help, and letting Tendwell's support team
+-- Curahold — asking Curahold for help, and letting Curahold's support team
 -- in, only with consent.
 --
 -- A help request carries what support needs to act without a back-and-forth:
@@ -43,8 +43,8 @@ create policy help_requests_insert on help_requests for insert
 create policy help_requests_update on help_requests for update
   using (org_id = app_org() and user_id = app_user())
   with check (org_id = app_org() and user_id = app_user());
-grant select, insert on help_requests to tendwell_app;
-grant update (grant_id, updated_at) on help_requests to tendwell_app;
+grant select, insert on help_requests to curahold_app;
+grant update (grant_id, updated_at) on help_requests to curahold_app;
 
 create table help_files (
   id           uuid primary key default gen_random_uuid(),
@@ -62,7 +62,7 @@ create policy help_files_select on help_files for select
   using (org_id = app_org() and exists (select 1 from help_requests h where h.id = help_files.request_id));
 create policy help_files_insert on help_files for insert
   with check (org_id = app_org() and exists (select 1 from help_requests h where h.id = help_files.request_id and h.user_id = app_user()));
-grant select, insert on help_files to tendwell_app;
+grant select, insert on help_files to curahold_app;
 
 create table support_grants (
   id           uuid primary key default gen_random_uuid(),
@@ -88,7 +88,7 @@ create policy support_grants_insert on support_grants for insert
 create policy support_grants_update on support_grants for update
   using (org_id = app_org() and (user_id = app_user() or app_has_perm('org.manage')))
   with check (org_id = app_org());
-grant select, insert, update on support_grants to tendwell_app;
+grant select, insert, update on support_grants to curahold_app;
 
 -- Support's own sessions, apart from people's sessions: they never count
 -- towards a device limit and never show among a person's devices. Opened only
@@ -109,4 +109,4 @@ create table support_sessions (
 );
 alter table support_sessions enable row level security;
 
-grant usage on sequence help_request_number to tendwell_app;
+grant usage on sequence help_request_number to curahold_app;

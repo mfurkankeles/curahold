@@ -32,7 +32,7 @@ create policy task_events_select on task_events for select
   using (org_id = app_org() and exists (select 1 from tasks t where t.id = task_id));
 create policy task_events_insert on task_events for insert
   with check (org_id = app_org() and exists (select 1 from tasks t where t.id = task_id));
-grant select, insert on task_events to tendwell_app;
+grant select, insert on task_events to curahold_app;
 
 -- People who follow a task: told about comments and changes like its assignees.
 create table task_watchers (
@@ -52,7 +52,7 @@ create policy task_watchers_insert on task_watchers for insert
   with check (org_id = app_org() and user_id = app_user() and exists (select 1 from tasks t where t.id = task_id));
 create policy task_watchers_delete on task_watchers for delete
   using (org_id = app_org() and user_id = app_user());
-grant select, insert, delete on task_watchers to tendwell_app;
+grant select, insert, delete on task_watchers to curahold_app;
 
 -- "A blocks B" (B waits for A) or "A relates to B".
 create table task_links (
@@ -76,7 +76,7 @@ create policy task_links_insert on task_links for insert
   with check (org_id = app_org() and app_can_write() and exists (select 1 from tasks t where t.id = from_id) and exists (select 1 from tasks t where t.id = to_id));
 create policy task_links_delete on task_links for delete
   using (org_id = app_org() and app_can_write() and exists (select 1 from tasks t where t.id = from_id) and exists (select 1 from tasks t where t.id = to_id));
-grant select, insert, delete on task_links to tendwell_app;
+grant select, insert, delete on task_links to curahold_app;
 
 -- Time spent on a task, by whom and on which day.
 create table time_entries (
@@ -100,7 +100,7 @@ create policy time_entries_insert on time_entries for insert
   with check (org_id = app_org() and app_can_write() and user_id = app_user() and exists (select 1 from tasks t where t.id = task_id));
 create policy time_entries_delete on time_entries for delete
   using (org_id = app_org() and (user_id = app_user() or app_has_perm('org.manage')));
-grant select, insert, delete on time_entries to tendwell_app;
+grant select, insert, delete on time_entries to curahold_app;
 
 -- --------------------------------------------------- reusable pieces
 
@@ -121,7 +121,7 @@ create policy checklist_templates_update on checklist_templates for update
   using (org_id = app_org() and (created_by = app_user() or app_has_perm('org.manage'))) with check (org_id = app_org());
 create policy checklist_templates_delete on checklist_templates for delete
   using (org_id = app_org() and (created_by = app_user() or app_has_perm('org.manage')));
-grant select, insert, update, delete on checklist_templates to tendwell_app;
+grant select, insert, update, delete on checklist_templates to curahold_app;
 
 -- Saved views: a name for a set of filters, for oneself or for everyone who sees the board.
 create table saved_views (
@@ -143,7 +143,7 @@ create policy saved_views_select on saved_views for select
 create policy saved_views_write on saved_views for all
   using (org_id = app_org() and user_id = app_user())
   with check (org_id = app_org() and user_id = app_user() and (board_id is null or app_can_see_board(board_id)));
-grant select, insert, update, delete on saved_views to tendwell_app;
+grant select, insert, update, delete on saved_views to curahold_app;
 
 -- Plans: a set of tasks with days from today, put on a customer in one click
 -- ("Onboarding: kickoff today, training in a week, check-in after 30 days").
@@ -166,11 +166,11 @@ create policy plan_templates_select on plan_templates for select using (org_id =
 create policy plan_templates_write on plan_templates for all
   using (org_id = app_org() and app_has_perm('org.manage'))
   with check (org_id = app_org() and app_has_perm('org.manage'));
-grant select, insert, update, delete on plan_templates to tendwell_app;
+grant select, insert, update, delete on plan_templates to curahold_app;
 
 -- Who follows a task, read inside the company whatever the reader's own rows.
 create function app_task_watchers(p_task uuid) returns uuid[]
 language sql stable security definer set search_path = public as $$
   select coalesce(array_agg(user_id), '{}') from task_watchers where task_id = p_task and org_id = app_org()
 $$;
-grant execute on function app_task_watchers(uuid) to tendwell_app;
+grant execute on function app_task_watchers(uuid) to curahold_app;

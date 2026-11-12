@@ -6,7 +6,7 @@ summary: Müşteri alanları, paydaşlar, fırsatlar, içe ve dışa aktarma.
 ---
 # Müşteriler, alanlar ve kayıtlar
 
-Müşteriler Tendwell'in merkezidir. Her müşterinin bir sahibi, isteğe bağlı bir ekibi ve şirketine özel alanları olur.
+Müşteriler Curahold'un merkezidir. Her müşterinin bir sahibi, isteğe bağlı bir ekibi ve şirketine özel alanları olur.
 
 ## Alanlar
 

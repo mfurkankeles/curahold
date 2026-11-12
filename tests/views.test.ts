@@ -11,7 +11,7 @@ let sofia: Client; // viewer
 let roles: Record<string, any>;
 
 const names = (list: any[]) => list.map((a) => a.name).sort();
-const as = (who: string) => ({ 'x-tendwell-preview-as': who });
+const as = (who: string) => ({ 'x-curahold-preview-as': who });
 
 beforeAll(async () => {
   env = await setup();
@@ -194,7 +194,7 @@ describe('pages and homes', () => {
 });
 
 describe('see it as them', () => {
-  it('shows Tendwell with their role, read only, and leaves a trace', async () => {
+  it('shows Curahold with their role, read only, and leaves a trace', async () => {
     await setScope('member', 'own');
     const me = (await ada.req('GET', '/api/me', undefined, as(env.a.ids.lena))).json;
     expect(me.user.id).toBe(env.a.ids.lena);

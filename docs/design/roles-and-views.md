@@ -1,6 +1,6 @@
 # Who sees what, and how
 
-Design note for Tendwell's role-based visibility: customer reach per role,
+Design note for Curahold's role-based visibility: customer reach per role,
 per-field access, pages of cards (each role's home) and "see it as them".
 
 ## What others do (November 2026)
@@ -24,7 +24,7 @@ Sources:
 [ClickUp private custom fields](https://help.clickup.com/hc/en-us/articles/26025804975895-Custom-Field-permissions),
 [ClickUp guest exceptions request](https://feedback.clickup.com/feature-requests/p/private-custom-field-exceptions-cannot-include-guests-need-field-visibility-per).
 
-## What Tendwell does
+## What Curahold does
 
 **One role, three answers.** A role answers: what may this person *do*
 (permissions), which *customers* do they see (reach), and which *page* do
@@ -46,11 +46,11 @@ they land on (home). An administrator sets all three on one screen.
    may see, so "Team view" shows a manager their team and an executive the
    company. A card that needs a hidden field disappears for that role. Each
    role has one home page; a page can be open to everyone or chosen roles.
-4. **See it as them**: an administrator opens Tendwell as a chosen person.
+4. **See it as them**: an administrator opens Curahold as a chosen person.
    The server answers as that person (their role, seat, reach, fields), so
    it is the real view, not a simulation. Read only, sessions excluded, and
    written to the activity log.
-5. **Option colours** from Tendwell's own palette, shown as chips in lists,
+5. **Option colours** from Curahold's own palette, shown as chips in lists,
    pages and bars.
 
 ### Cards
@@ -75,13 +75,13 @@ add instead of showing nothing.
 ## Own names, own look
 
 Ideas and features are not protected; names, trade dress and copy are. So
-Tendwell uses plain descriptive words of its own and none of the
+Curahold uses plain descriptive words of its own and none of the
 competitors' product names or terms: *Home* / *Ana sayfa*, *Pages* /
 *Sayfalar*, *Card* / *Kart*, *Which customers they see* / *Hangi müşterileri
 görür*, *Who sees it / Who changes it* / *Kimler görür / Kimler değiştirir*,
 *See it as them* / *Onun gözünden bak*. Colours are named for what they look
 like (sea, leaf, honey, coral, sky, plum, stone, rose). The visual language
-is Tendwell's: the time rail on rows (calm, soon, today, late), hairline
+is Curahold's: the time rail on rows (calm, soon, today, late), hairline
 cards, the deep-teal sidebar. No layout, icon or text was copied.
 
 ## Not in this round

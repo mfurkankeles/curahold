@@ -505,7 +505,7 @@ adminRoutes.delete('/sessions/:id', async (c) => {
 
 // ----------------------------------------------- personal data (KVKK / GDPR)
 
-// Everything Tendwell holds about one person, as a JSON download — the
+// Everything Curahold holds about one person, as a JSON download — the
 // answer to a data-subject access request (KVKK m.11, GDPR Art. 15/20).
 adminRoutes.get('/users/:id/export', async (c) => {
   requirePerm(c, 'privacy.manage');
@@ -562,7 +562,7 @@ adminRoutes.get('/users/:id/export', async (c) => {
     })),
     activity: out.activity.map((a) => ({ action: a.action, entity: a.entity, entityId: a.entity_id, at: iso(a.at) })),
   };
-  c.header('content-disposition', `attachment; filename="tendwell-personal-data-${id}.json"`);
+  c.header('content-disposition', `attachment; filename="curahold-personal-data-${id}.json"`);
   return c.json(data);
 });
 
@@ -601,7 +601,7 @@ adminRoutes.post('/users/:id/erase', async (c) => {
     await sq.query(
       `update users set name = '—', email = $3, status = 'deleted', locale = null, last_active_at = null
         where org_id = $1 and id = $2`,
-      [o, id, `erased+${id}@invalid.tendwell`],
+      [o, id, `erased+${id}@invalid.curahold`],
     );
     await audit(sq, { orgId: o, actorId: auth.userId, action: 'user.erased', entity: 'user', entityId: id });
   });

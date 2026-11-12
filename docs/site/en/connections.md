@@ -6,7 +6,7 @@ summary: Slack, Teams and Google Chat; syncing with Salesforce, HubSpot and spre
 ---
 # Connections and CRM
 
-Tendwell works alongside the tools your team already uses. Manage connections in Settings → Connections and Settings → Data sources.
+Curahold works alongside the tools your team already uses. Manage connections in Settings → Connections and Settings → Data sources.
 
 ## Chat apps
 

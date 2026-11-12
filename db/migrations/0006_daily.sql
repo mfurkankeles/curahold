@@ -1,4 +1,4 @@
--- Tendwell — everyday work: repeating tasks, quiet hours, muting a task,
+-- Curahold — everyday work: repeating tasks, quiet hours, muting a task,
 -- and undo for changes made to many things at once.
 -- Everything here is event-driven (no extra scheduled jobs): a repeating
 -- task makes its next copy when it is done; held notifications go out with
@@ -25,7 +25,7 @@ alter table task_mutes enable row level security;
 create policy task_mutes_own on task_mutes for all
   using (org_id = app_org() and user_id = app_user())
   with check (org_id = app_org() and user_id = app_user());
-grant select, insert, delete on task_mutes to tendwell_app;
+grant select, insert, delete on task_mutes to curahold_app;
 
 -- Who muted a task (each person sees only their own row; the comment writer
 -- needs to know whom to skip).
@@ -33,7 +33,7 @@ create function app_task_muted(p_task uuid) returns uuid[]
 language sql stable security definer set search_path = public as $$
   select coalesce(array_agg(user_id), '{}') from task_mutes where task_id = p_task and org_id = app_org()
 $$;
-grant execute on function app_task_muted(uuid) to tendwell_app;
+grant execute on function app_task_muted(uuid) to curahold_app;
 
 -- What a change to many things replaced, kept a short while so it can be put back.
 create table undo_log (
@@ -51,4 +51,4 @@ alter table undo_log enable row level security;
 create policy undo_log_own on undo_log for all
   using (org_id = app_org() and user_id = app_user())
   with check (org_id = app_org() and user_id = app_user());
-grant select, insert, update on undo_log to tendwell_app;
+grant select, insert, update on undo_log to curahold_app;

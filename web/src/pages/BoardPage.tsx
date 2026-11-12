@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewFilters } from '../../../shared/src/model';
 import { labelOf } from '../../../shared/src/fields';
 import { FilterBar, matchFilters } from '../components/BoardFilters';
@@ -27,11 +27,9 @@ import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../compone
 import { ApiFailure, get, post } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
-import { parseQuick, type Pickable } from '../lib/quickparse';
 import { setQuery } from '../lib/router';
-import { tasksChanged, usePageDefaults, useShell } from '../lib/shell';
+import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
-import { dueState } from '../lib/time';
 import { positionBetween, saveTask } from '../lib/tasks';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive'; refreshKey: number }) {
@@ -44,7 +42,6 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   useEffect(() => setFilters({}), [boardId]);
   const [importing, setImporting] = useState(false);
   const [settings, setSettings] = useState(false);
-  const [composing, setComposing] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { quickAdd } = useShell();
   usePageDefaults(board ? { boardId: board.id, status: board.columns[0].key } : null);
@@ -191,10 +188,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <div className="page">
           {canWrite && selected.size > 0 && <BulkBar board={board} ids={[...selected]} onDone={() => { setSelected(new Set()); void load(); }} />}
           <ListView board={board} tasks={visible} isDone={(x) => doneKeys.has(x.status)} selected={canWrite ? selected : undefined} onSelect={setSelected} />
-          {composing && <ColumnAdd board={board} status={composing} onDone={(tk) => { if (tk) setTasks((l) => [...(l ?? []), tk]); setComposing(null); }} />}
         </div>
       ) : (
-        <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} composing={composing} setComposing={setComposing} onAdded={(tk) => setTasks((l) => [...(l ?? []), tk])} />
+        <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} onAdd={(status) => quickAdd({ boardId: board.id, status })} />
       )}
       {view !== 'archive' && tasks !== null && tasks.length > 0 && visible.length === 0 && (
         <div className="boardhint">
@@ -214,7 +210,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
 
 const DONE_SHOWN = 6;
 
-function KanbanView({ board, tasks, doneKeys, onMove, canWrite, composing, setComposing, onAdded }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; composing: string | null; setComposing: (k: string | null) => void; onAdded: (t: Task) => void }) {
+function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; onAdd: (status: string) => void }) {
   const [active, setActive] = useState<Task | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const byCol = useMemo(() => {
@@ -242,7 +238,7 @@ function KanbanView({ board, tasks, doneKeys, onMove, canWrite, composing, setCo
     <DndContext sensors={canWrite ? sensors : []} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
       <div className="board">
         {board.columns.map((col) => (
-          <KanbanColumn key={col.key} col={col} tasks={byCol.get(col.key) ?? []} doneKeys={doneKeys} canWrite={canWrite} composing={composing === col.key} onCompose={() => setComposing(col.key)} onComposed={(tk) => { if (tk) onAdded(tk); setComposing(null); }} board={board} />
+          <KanbanColumn key={col.key} col={col} tasks={byCol.get(col.key) ?? []} doneKeys={doneKeys} canWrite={canWrite} onAdd={() => onAdd(col.key)} />
         ))}
       </div>
       <DragOverlay>{active ? <CardBody task={active} done={doneKeys.has(active.status)} overlay /> : null}</DragOverlay>
@@ -250,7 +246,7 @@ function KanbanView({ board, tasks, doneKeys, onMove, canWrite, composing, setCo
   );
 }
 
-function KanbanColumn({ col, tasks, doneKeys, canWrite, composing, onCompose, onComposed, board }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; composing: boolean; onCompose: () => void; onComposed: (t: Task | null) => void; board: Board }) {
+function KanbanColumn({ col, tasks, doneKeys, canWrite, onAdd }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; onAdd: () => void }) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `col:${col.key}` });
   // A finished column grows for ever: newest first, the older ones one click away.
@@ -265,7 +261,7 @@ function KanbanColumn({ col, tasks, doneKeys, canWrite, composing, onCompose, on
         <span className="column__count num">{tasks.length}</span>
       </div>
       <div className="column__list">
-        {tasks.length === 0 && !composing && <div className="column__empty">{t('board.emptyColumn')}</div>}
+        {tasks.length === 0 && <div className="column__empty">{t('board.emptyColumn')}</div>}
         {shown.map((x) => (
           <DraggableCard key={x.id} task={x} done={doneKeys.has(x.status)} />
         ))}
@@ -274,10 +270,10 @@ function KanbanColumn({ col, tasks, doneKeys, canWrite, composing, onCompose, on
             {all ? t('board.doneLess') : t('board.doneMore', { n: ordered.length - DONE_SHOWN })}
           </button>
         )}
-        {composing && <ColumnAdd board={board} status={col.key} onDone={onComposed} />}
       </div>
-      {canWrite && !composing && (
-        <button className="btn btn--quiet btn--small column__add" onClick={onCompose}>
+      {canWrite && (
+        // Opens the New task dialog on this column, asking for the details.
+        <button className="btn btn--quiet btn--small column__add" onClick={onAdd}>
           <Icon name="plus" size={15} />
           {t('board.addTask')}
         </button>
@@ -294,7 +290,7 @@ function DraggableCard({ task, done }: { task: Task; done: boolean }) {
     drop.setNodeRef(el);
   };
   return (
-    <div ref={ref} {...drag.attributes} {...drag.listeners} data-dragging={drag.isDragging} style={{ outline: drop.isOver && !drag.isDragging ? '2px solid var(--tend)' : undefined, borderRadius: 6 }}>
+    <div ref={ref} {...drag.attributes} {...drag.listeners} data-dragging={drag.isDragging} style={{ outline: drop.isOver && !drag.isDragging ? '2px solid var(--brand)' : undefined, borderRadius: 6 }}>
       <CardBody task={task} done={done} />
     </div>
   );
@@ -366,73 +362,6 @@ function CardChips({ task }: { task: Task }) {
 }
 
 /** Adding at the bottom of a column: one line, read the same way as quick add (date, @person, #customer, !priority). */
-function ColumnAdd({ board, status, onDone }: { board: Board; status: string; onDone: (t: Task | null) => void }) {
-  const { t, fmtDate } = useI18n();
-  const { toast, people, me } = useStore();
-  const [title, setTitle] = useState('');
-  const [found, setFound] = useState<Pickable[]>([]);
-  const busy = useRef(false);
-  const pickable = useMemo(() => people.filter((p) => p.seat === 'full' && (p.status === 'active' || p.status === 'invited')).map((p) => ({ id: p.id, name: p.name })), [people]);
-  const meP = { id: me.user.id, name: me.user.name };
-  const parsed = parseQuick(title, pickable, found, meP);
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!title.trim() || busy.current) return;
-    busy.current = true;
-    try {
-      let p = parsed;
-      // "#name" not looked up yet: look it up once, then read the line again.
-      const tag = /(?:^|\s)#([^\s#@!]{2,})/.exec(title)?.[1];
-      if (tag && !p.account) {
-        const r = await get<{ accounts: { id: string; name: string }[] }>(`/accounts?limit=5&q=${encodeURIComponent(tag)}`).catch(() => ({ accounts: [] }));
-        const more = r.accounts.map((a) => ({ id: a.id, name: a.name }));
-        setFound(more);
-        p = parseQuick(title, pickable, more, meP);
-      }
-      if (!p.title) return;
-      const r = await post<{ task: Task }>('/tasks', {
-        boardId: board.id,
-        title: p.title,
-        status,
-        dueDate: p.dueDate,
-        assigneeIds: p.assignees.map((a) => a.id),
-        accountId: p.account?.id ?? null,
-        ...(p.priority ? { priority: p.priority } : {}),
-        ...(p.repeat ? { repeat: p.repeat } : {}),
-      });
-      setTitle('');
-      onDone(r.task);
-      tasksChanged();
-    } catch (err) {
-      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
-    } finally {
-      busy.current = false;
-    }
-  }
-  return (
-    <form onSubmit={submit} className="coladd">
-      <input className="input" autoFocus placeholder={t('board.taskTitlePlaceholder')} value={title} maxLength={600} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && onDone(null)} aria-label={t('task.title')} />
-      {parsed.tokens.length > 0 && (
-        <div className="coladd__chips" aria-live="polite">
-          {parsed.tokens.map((tok, i) => (
-            <span key={i} className="qchip qchip--small" data-kind={tok.kind} data-due={tok.kind === 'due' ? dueState(tok.value, false) : undefined}>
-              {tok.kind === 'due' ? fmtDate(tok.value, { weekday: 'short', day: 'numeric', month: 'short' }) : tok.kind === 'person' ? (tok.value === me.user.id ? t('quick.me') : (people.find((x) => x.id === tok.value)?.name ?? tok.text)) : tok.kind === 'priority' ? t(`task.priority.${tok.value}` as any) : tok.kind === 'account' ? (parsed.account?.name ?? tok.text) : tok.text}
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="coladd__row">
-        <button className="btn btn--primary btn--small" disabled={!parsed.title}>
-          {t('common.add')}
-        </button>
-        <button type="button" className="btn btn--quiet btn--small" onClick={() => onDone(null)}>
-          {t('common.cancel')}
-        </button>
-      </div>
-    </form>
-  );
-}
-
 export function ListView({
   board,
   tasks,

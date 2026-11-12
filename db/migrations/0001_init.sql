@@ -1,8 +1,8 @@
--- Tendwell — initial schema.
+-- Curahold — initial schema.
 --
 -- Every business table carries org_id. The API never connects as the table
 -- owner: each request runs in a transaction that sets app.org_id /
--- app.user_id and switches to the tendwell_app role, so row-level security
+-- app.user_id and switches to the curahold_app role, so row-level security
 -- decides what a query can see or change. A bug in a route can therefore
 -- not leak another company's rows — the database refuses.
 --
@@ -11,8 +11,8 @@
 -- filters on app_org() itself.
 
 do $$ begin
-  if not exists (select 1 from pg_roles where rolname = 'tendwell_app') then
-    create role tendwell_app nologin;
+  if not exists (select 1 from pg_roles where rolname = 'curahold_app') then
+    create role curahold_app nologin;
   end if;
 end $$;
 
@@ -346,11 +346,11 @@ create policy audit_insert on audit_log for insert with check (org_id = app_org(
 create policy audit_select on audit_log for select
   using (org_id = app_org() and (app_has_perm('org.manage') or app_has_perm('privacy.manage')));
 
-grant usage on schema public to tendwell_app;
-grant select, insert, update, delete on all tables in schema public to tendwell_app;
-grant execute on all functions in schema public to tendwell_app;
+grant usage on schema public to curahold_app;
+grant select, insert, update, delete on all tables in schema public to curahold_app;
+grant execute on all functions in schema public to curahold_app;
 
--- The role that runs migrations may switch to tendwell_app (on Supabase the
+-- The role that runs migrations may switch to curahold_app (on Supabase the
 -- "postgres" role is not a superuser and needs the membership). The API's own
 -- login role should be a separate, minimal role — see README, "Database roles".
-grant tendwell_app to current_user;
+grant curahold_app to current_user;

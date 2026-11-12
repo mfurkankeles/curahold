@@ -10,7 +10,7 @@ API anahtarı, bir kişinin adına çalışan bir paroladır. Herkes kendi anaht
 
 ## Oluşturma
 
-1. Tendwell'de **Ayarların** sayfasını aç.
+1. Curahold'da **Ayarların** sayfasını aç.
 2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıkla.
 3. Bir ad ver, gerekiyorsa **Değişiklik yapabilsin** kutusunu işaretle ve geçerlilik süresini seç (30, 90, 365 gün ya da süresiz).
 4. Anahtar `twk_` ile başlar ve **yalnızca bir kez** gösterilir. Bir parola yöneticisine kaydet.
@@ -20,7 +20,7 @@ API anahtarı, bir kişinin adına çalışan bir paroladır. Herkes kendi anaht
 Her istekte `Authorization` başlığıyla gönder:
 
 ```bash
-curl https://sirketin.tendwell.com/api/me \
+curl https://sirketin.curahold.com/api/me \
   -H "Authorization: Bearer twk_..."
 ```
 
@@ -40,4 +40,4 @@ Bir anahtar asla şu işleri yapamaz: yeni anahtar oluşturmak, bir uygulamaya O
 - Her anahtarın son kullanıldığı zaman görünür. Oluşturma ve iptal aktivite kaydına yazılır.
 - Bir kişi şirketten ayrılıp devre dışı bırakıldığında anahtarları da çalışmaz.
 
-> **Güvenlik:** Anahtarı koda gömme, ortam değişkeninde tut. Sızdığından şüphelenirsen iptal et ve yenisini oluştur. Tendwell anahtarın kendisini saklamaz, yalnızca özetini tutar.
+> **Güvenlik:** Anahtarı koda gömme, ortam değişkeninde tut. Sızdığından şüphelenirsen iptal et ve yenisini oluştur. Curahold anahtarın kendisini saklamaz, yalnızca özetini tutar.

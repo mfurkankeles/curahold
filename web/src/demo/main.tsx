@@ -61,7 +61,7 @@ const TEXT = {
       'Yukarıdan Zeynep’e ya da Sofia’ya geç: aynı ekranlarda neyin değiştiğine bak.',
       'Ayarların’da API anahtarı oluştur ve Claude/ChatGPT bağlayıcı adresine bak; Ayarlar → Geliştirici’de webhook ekle.',
       'Yukarıdan Selin Kaya’ya (müşteri) geç: Quillfield’ın portalında yalnızca kendisiyle paylaşılanları görür; yeni talep açıp yanıt yaz. Sonra Zeynep olarak CS — Genel panosunda o görevi aç ve “Müşteriye yanıt” ver.',
-      'Sol alttaki menünden Yardım ve destek ile talep formunu dene; “Tendwell desteğinin hesabıma bakmasına izin ver” kutusunu işaretleyince üstte bir şerit belirir.',
+      'Sol alttaki menünden Yardım ve destek ile talep formunu dene; “Curahold desteğinin hesabıma bakmasına izin ver” kutusunu işaretleyince üstte bir şerit belirir.',
     ],
   },
   en: {
@@ -101,7 +101,7 @@ const TEXT = {
       'Switch to Zeynep or Sofia above and see what changes on the same screens.',
       'In Your settings, make an API key and find the Claude/ChatGPT connector address; add a webhook in Settings → Developers.',
       'Switch to Selin Kaya (a customer) above: in Quillfield’s portal she sees only what was shared with her; open a request and reply. Then, as Zeynep, open that task on CS — General and “Reply to customer”.',
-      'Try Help and support in your menu at the bottom left: the help request form; ticking “Let Tendwell support look at my account” shows a strip on top.',
+      'Try Help and support in your menu at the bottom left: the help request form; ticking “Let Curahold support look at my account” shows a strip on top.',
     ],
   },
 };
@@ -192,7 +192,7 @@ async function main() {
   const root = createRoot(document.getElementById('root')!);
   let generation = 0;
   let current: Key = 'ada';
-  // The customer sees the portal (its own small app); everyone else, Tendwell.
+  // The customer sees the portal (its own small app); everyone else, Curahold.
   const render = () =>
     root.render(<StrictMode>{current === 'customer' ? <PortalApp key={generation} /> : <App key={generation} />}</StrictMode>);
   // A "page load": start the app afresh on the same in-tab database.
@@ -243,7 +243,7 @@ async function main() {
     if (signedOutPage(to) && (await signBackIn())) return;
     if (!to.startsWith('/api/')) return reload(to);
     // Server routes that answer with a redirect (connecting the demo CRM, say).
-    const res = await server.request(to, { headers: { 'x-tendwell-device': DEMO_DEVICE } });
+    const res = await server.request(to, { headers: { 'x-curahold-device': DEMO_DEVICE } });
     const next = res.headers.get('location');
     if (res.status >= 300 && res.status < 400 && next) {
       const u = new URL(next, ORIGIN);
@@ -295,7 +295,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('[tendwell demo]', err);
+  console.error('[curahold demo]', err);
   bootEl.classList.add('failed');
   const t = TEXT[demoLocale];
   document.getElementById('boot-step')!.textContent = `${t.failed} (${err instanceof Error ? err.message.slice(0, 160) : 'error'})`;

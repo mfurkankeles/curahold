@@ -16,7 +16,7 @@ The thin rail on the left of every card shows where the task stands against time
 
 ## When two people change the same task
 
-Tendwell never silently overwrites anyone. If someone saved while you were editing, their change is kept and yours is applied on top. You are only asked when the same field really clashes.
+Curahold never silently overwrites anyone. If someone saved while you were editing, their change is kept and yours is applied on top. You are only asked when the same field really clashes.
 
 ## Changing many at once, and undo
 

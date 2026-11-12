@@ -20,5 +20,5 @@ export function emailHtml(o: { org: string; logo: string | null; text: string; l
 <tr><td style="padding:24px 26px 8px;font-size:15px">${paragraphs}
 <p style="margin:8px 0 22px"><a href="${esc(o.link)}" style="display:inline-block;background:#5b4de8;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:6px;font-weight:600">${esc(o.cta)}</a></p>
 <p style="margin:0 0 18px;font-size:12px;color:#74878a;word-break:break-all">${esc(o.link)}</p></td></tr>
-</table><p style="font-size:12px;color:#74878a;margin:14px 0 0">Tendwell</p></td></tr></table></body></html>`;
+</table><p style="font-size:12px;color:#74878a;margin:14px 0 0">Curahold</p></td></tr></table></body></html>`;
 }

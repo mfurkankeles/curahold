@@ -6,11 +6,13 @@ summary: Write a task the way you would say it; the date, person, customer, prio
 ---
 # Quick add and shortcuts
 
-Adding a task is as easy as writing one line. Press **N** (or **+ New → Task** on the left, the **+** at the bottom on a phone), write the task as it comes to mind, press **Enter**.
+Press **N** (or **+ New → Task** on the left, **Add task** under a column, the **+** at the bottom on a phone) and the **New task** dialog opens. Under the title it asks for the details: a description, the customer, the record it belongs to (an opportunity, an agreement…), assignees, due date, priority, repeat, board and column, and the board's own fields. Opened from a column, the column is already chosen; from a customer's page, the customer.
+
+You don't have to fill the fields one by one; writing the title as it comes to mind is enough:
 
 > Renewal call with Acme friday @Ayşe #Acme !high
 
-That line becomes a task for Ayşe, on the customer Acme, due Friday, high priority. As you type, what was understood shows up under the line as small labels; the date label wears the colour of how soon it is.
+That line fills the fields: Ayşe as assignee, Acme as customer, due Friday, high priority. A field filled from the title says **from the title**. Change a field by hand and its words leave the title; the field keeps what you chose. **Enter** adds the task; from any other field, **Ctrl Enter** (⌘ Enter on a Mac).
 
 ## What you can write
 

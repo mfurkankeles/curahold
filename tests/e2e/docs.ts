@@ -39,7 +39,7 @@ await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefine
 const hits = await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')));
 check(hits.some((h) => h?.startsWith('/docs/en/webhooks/')), 'search finds the webhook signature section');
 const llms = await (await fetch(`${base}/llms.txt`)).text();
-check(llms.startsWith('# Tendwell') && llms.includes('/docs/en/api-keys.md'), 'llms.txt lists the docs');
+check(llms.startsWith('# Curahold') && llms.includes('/docs/en/api-keys.md'), 'llms.txt lists the docs');
 check((await fetch(`${base}/docs/en/api-keys.md`)).ok, 'pages are also served as markdown');
 
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'docs ok');

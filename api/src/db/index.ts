@@ -1,5 +1,5 @@
 // The database seam. Routes only ever see `Q` inside db.tenant(), so every
-// query runs with app.org_id / app.user_id set and as the tendwell_app role —
+// query runs with app.org_id / app.user_id set and as the curahold_app role —
 // row-level security in db/migrations decides what is visible.
 export type Row = Record<string, any>;
 
@@ -16,7 +16,7 @@ export interface Db {
   /** A transaction scoped to one company (and optionally one person). */
   tenant<T>(ctx: TenantCtx, fn: (q: Q) => Promise<T>): Promise<T>;
   /**
-   * The customer portal: runs as tendwell_portal, which can do nothing but
+   * The customer portal: runs as curahold_portal, which can do nothing but
    * call the portal_* functions, for this signed-in portal person.
    */
   portal<T>(ctx: PortalCtx, fn: (q: Q) => Promise<T>): Promise<T>;

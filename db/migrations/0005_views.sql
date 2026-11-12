@@ -1,4 +1,4 @@
--- Tendwell — who sees what, and how.
+-- Curahold — who sees what, and how.
 --   * Account reach per role: every account, the team's, or only one's own.
 --     Records under an account follow the account.
 --   * Field access (who sees / who changes each field) lives on the field
@@ -120,11 +120,11 @@ create policy pages_select on pages for select using (
 create policy pages_write on pages for all
   using (org_id = app_org() and app_has_perm('org.manage'))
   with check (org_id = app_org() and app_has_perm('org.manage'));
-grant select, insert, update, delete on pages to tendwell_app;
-grant execute on function app_role_key() to tendwell_app;
-grant execute on function app_sees_account(uuid, uuid) to tendwell_app;
-grant execute on function app_set_account_fields(jsonb) to tendwell_app;
-grant execute on function app_reassign_accounts(uuid[], boolean, uuid, boolean, uuid) to tendwell_app;
+grant select, insert, update, delete on pages to curahold_app;
+grant execute on function app_role_key() to curahold_app;
+grant execute on function app_sees_account(uuid, uuid) to curahold_app;
+grant execute on function app_set_account_fields(jsonb) to curahold_app;
+grant execute on function app_reassign_accounts(uuid[], boolean, uuid, boolean, uuid) to curahold_app;
 
 -- Three starting pages for every existing company (new ones get them at sign-up).
 insert into pages (org_id, name, cards, home_for, position)

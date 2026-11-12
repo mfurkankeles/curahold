@@ -6,12 +6,12 @@ summary: The MCP server, its tools, the OAuth 2.1 flow and connecting your own a
 ---
 # AI connector (MCP) and OAuth
 
-Tendwell runs a server that any assistant speaking the Model Context Protocol (MCP) can connect to: Claude, ChatGPT and others. For the user side, see [Connecting Claude and ChatGPT](/docs/en/ai-assistants/).
+Curahold runs a server that any assistant speaking the Model Context Protocol (MCP) can connect to: Claude, ChatGPT and others. For the user side, see [Connecting Claude and ChatGPT](/docs/en/ai-assistants/).
 
 ## The server
 
 ```text
-Address     https://yourcompany.tendwell.com/mcp
+Address     https://yourcompany.curahold.com/mcp
 Transport   Streamable HTTP (JSON-RPC 2.0, POST)
 Auth        OAuth 2.1, Bearer access token
 ```
@@ -19,7 +19,7 @@ Auth        OAuth 2.1, Bearer access token
 A request without a token gets `401` with this header; MCP clients start the consent flow from it by themselves:
 
 ```http
-WWW-Authenticate: Bearer resource_metadata="https://yourcompany.tendwell.com/.well-known/oauth-protected-resource"
+WWW-Authenticate: Bearer resource_metadata="https://yourcompany.curahold.com/.well-known/oauth-protected-resource"
 ```
 
 ## Tools
@@ -44,12 +44,12 @@ Most MCP clients do this by themselves. If you are writing your own:
 1. **Discovery:** `GET /.well-known/oauth-protected-resource`, then `GET /.well-known/oauth-authorization-server`.
 2. **Registration (RFC 7591):** `POST /oauth/register` with `client_name` and `redirect_uris`. Redirect addresses must be `https`, or loopback (`http://127.0.0.1`, `http://localhost`). The answer carries a `client_id`; there is no client secret.
 3. **Authorisation:** send the person to `GET /oauth/authorize` with `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state` and, optionally, `scope=read write`.
-4. The person sees Tendwell's consent screen, signs in and approves. The browser returns to `redirect_uri?code=…&state=…`.
+4. The person sees Curahold's consent screen, signs in and approves. The browser returns to `redirect_uri?code=…&state=…`.
 5. **Token:** `POST /oauth/token` with `grant_type=authorization_code`, `code`, `client_id`, `redirect_uri`, `code_verifier`.
 6. **Refresh:** access tokens last 1 hour. Refresh with `grant_type=refresh_token`; each refresh returns a new refresh token and retires the old one. A refresh token unused for 90 days lapses.
 
 ```bash
-curl -X POST https://yourcompany.tendwell.com/oauth/token \
+curl -X POST https://yourcompany.curahold.com/oauth/token \
   -d grant_type=authorization_code -d code=… -d client_id=twc_… \
   -d redirect_uri=https://yourapp.example/callback -d code_verifier=…
 ```
@@ -60,4 +60,4 @@ Use the same flow for an app other people will use. Your app calls the REST API 
 
 ## Cost
 
-The assistant runs on the person's own Claude or ChatGPT plan. Tendwell only provides the data and charges nothing extra for AI.
+The assistant runs on the person's own Claude or ChatGPT plan. Curahold only provides the data and charges nothing extra for AI.

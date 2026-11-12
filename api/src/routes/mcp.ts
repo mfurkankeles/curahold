@@ -1,4 +1,4 @@
-// The Tendwell connector for AI assistants (Claude, ChatGPT and any MCP
+// The Curahold connector for AI assistants (Claude, ChatGPT and any MCP
 // client): a small set of tools over the same API the app uses. Each tool
 // call is made as the person who connected the assistant, so it sees and
 // changes exactly what they could in the app — and the thinking runs in
@@ -66,7 +66,7 @@ async function peopleFor(api: Api, refs?: string[]): Promise<string[] | undefine
 const TOOLS: Tool[] = [
   {
     name: 'search',
-    title: 'Search Tendwell',
+    title: 'Search Curahold',
     description: 'Find customers (accounts), tasks, contacts and other records, and people by name. Returns ids to use with fetch.',
     inputSchema: obj({ query: str('Words to look for, e.g. a customer or task name') }, ['query']),
     run: async (api, a, { base }) => {
@@ -255,7 +255,7 @@ const textResult = (value: unknown, isError = false) => ({
 
 function unauthorized(c: C) {
   const base = orgUrl(c.get('deps').config, c.get('org').slug);
-  return c.json({ jsonrpc: '2.0', error: { code: -32001, message: 'Sign in to Tendwell to connect.' }, id: null }, 401, {
+  return c.json({ jsonrpc: '2.0', error: { code: -32001, message: 'Sign in to Curahold to connect.' }, id: null }, 401, {
     ...open,
     'www-authenticate': `Bearer resource_metadata="${base}/.well-known/oauth-protected-resource"`,
   });
@@ -274,9 +274,9 @@ mcpRoutes.post('/mcp', async (c) => {
   const self = c.get('self');
   // Calls go through the same API the app uses, with the same rules.
   const api: Api = async (method, path, body) => {
-    const headers: Record<string, string> = { authorization: `Bearer ${bearer}`, 'x-tendwell-locale': c.req.header('accept-language')?.startsWith('tr') ? 'tr' : 'en' };
-    const devOrg = c.req.header('x-tendwell-org');
-    if (devOrg) headers['x-tendwell-org'] = devOrg;
+    const headers: Record<string, string> = { authorization: `Bearer ${bearer}`, 'x-curahold-locale': c.req.header('accept-language')?.startsWith('tr') ? 'tr' : 'en' };
+    const devOrg = c.req.header('x-curahold-org');
+    if (devOrg) headers['x-curahold-org'] = devOrg;
     if (body !== undefined) headers['content-type'] = 'application/json';
     const res = await self.request(`${origin}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
     const data = await res.json().catch(() => ({}));
@@ -299,9 +299,9 @@ mcpRoutes.post('/mcp', async (c) => {
         return ok({
           protocolVersion: typeof m.params?.protocolVersion === 'string' ? m.params.protocolVersion : PROTOCOL,
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: 'tendwell', title: 'Tendwell', version: '1.0.0' },
+          serverInfo: { name: 'curahold', title: 'Curahold', version: '1.0.0' },
           instructions:
-            "Tendwell holds this company's customers (accounts), their contacts and stakeholders, and the team's tasks. Use search/fetch to find things, list_accounts and portfolio_summary for overviews and presentations, create_task and update_task to act. Everything is limited to what the connected person may see and do.",
+            "Curahold holds this company's customers (accounts), their contacts and stakeholders, and the team's tasks. Use search/fetch to find things, list_accounts and portfolio_summary for overviews and presentations, create_task and update_task to act. Everything is limited to what the connected person may see and do.",
         });
       case 'ping':
         return ok({});

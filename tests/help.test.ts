@@ -28,7 +28,7 @@ const base = {
   subject: 'Renewal board does not load',
   description: 'I expected the board to open; it spins forever since this morning.',
   steps: '1. Open Renewals\n2. Wait',
-  pageUrl: 'https://acme.tendwell.test/boards/123?view=list&token=abc#secret',
+  pageUrl: 'https://acme.curahold.test/boards/123?view=list&token=abc#secret',
   context: {
     browser: 'Chrome 131 on macOS',
     viewport: '1440×900',
@@ -40,10 +40,10 @@ const base = {
 };
 
 /** Support's own tooling: an entry link for a grant, then the browser that opens it. */
-async function enter(grantId: string, staff = 'Deniz (Tendwell support)') {
+async function enter(grantId: string, staff = 'Deniz (Curahold support)') {
   const link = await env.app.request(`https://acme.${BASE}/api/support/enter-link`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-tendwell-staff-key': STAFF_KEY },
+    headers: { 'content-type': 'application/json', 'x-curahold-staff-key': STAFF_KEY },
     body: JSON.stringify({ grantId, staff }),
   });
   const made = await link.json();
@@ -52,7 +52,7 @@ async function enter(grantId: string, staff = 'Deniz (Tendwell support)') {
   const browser = new Client(env, 'acme');
   const res = await env.app.request(`https://acme.${BASE}/api/support/enter`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-tendwell-device': browser.device },
+    headers: { 'content-type': 'application/json', 'x-curahold-device': browser.device },
     body: JSON.stringify({ token }),
   });
   const cookie = /tw_support=([^;]*)/.exec(res.headers.get('set-cookie') ?? '')?.[1];
@@ -61,7 +61,7 @@ async function enter(grantId: string, staff = 'Deniz (Tendwell support)') {
 }
 
 beforeAll(async () => {
-  env = await setup({ staffKey: STAFF_KEY, support: { email: 'desk@tendwell.test' } });
+  env = await setup({ staffKey: STAFF_KEY, support: { email: 'desk@curahold.test' } });
   ada = await login(env, 'acme', 'ada@demo.example');
   zeynep = await login(env, 'acme', 'zeynep@demo.example');
   sofia = await login(env, 'acme', 'sofia@demo.example');
@@ -75,7 +75,7 @@ describe('a help request', () => {
     expect(res.json.grant).toBeNull();
     await env.settle();
 
-    const desk = env.email.last('desk@tendwell.test');
+    const desk = env.email.last('desk@curahold.test');
     expect(desk.subject).toContain(res.json.request.ref);
     expect(desk.subject).toContain('BLOCKING');
     expect(desk.text).toContain('Zeynep');
@@ -137,7 +137,7 @@ describe('support access, only with consent', () => {
     expect(hours).toBeGreaterThan(23.9);
     expect(hours).toBeLessThanOrEqual(24);
     await env.settle();
-    expect(env.email.last('desk@tendwell.test').text).toContain(`Grant ${grantId}`);
+    expect(env.email.last('desk@curahold.test').text).toContain(`Grant ${grantId}`);
     const me = await zeynep.get('/api/me');
     expect(me.json.supportOpen).toMatchObject({ level: 'view', count: 1 });
   });
@@ -150,7 +150,7 @@ describe('support access, only with consent', () => {
   it('support needs its staff key, and an entry link works once', async () => {
     const noKey = await env.app.request(`https://acme.${BASE}/api/support/enter-link`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-tendwell-staff-key': 'wrong-wrong-wrong-wrong-wrong' },
+      headers: { 'content-type': 'application/json', 'x-curahold-staff-key': 'wrong-wrong-wrong-wrong-wrong' },
       body: JSON.stringify({ grantId, staff: 'Someone' }),
     });
     expect(noKey.status).toBe(403);
@@ -162,7 +162,7 @@ describe('support access, only with consent', () => {
     expect(s.setCookie).toMatch(/Secure/i);
     const again = await env.app.request(`https://acme.${BASE}/api/support/enter`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-tendwell-device': 'x'.repeat(20) },
+      headers: { 'content-type': 'application/json', 'x-curahold-device': 'x'.repeat(20) },
       body: JSON.stringify({ token: s.token }),
     });
     expect(again.status).toBe(400);
@@ -170,7 +170,7 @@ describe('support access, only with consent', () => {
     // Inside: support sees what Zeynep sees, as Zeynep, read only.
     const me = await s.browser.get('/api/me');
     expect(me.json.user.email).toBe('zeynep@demo.example');
-    expect(me.json.supportBy).toMatchObject({ staff: 'Deniz (Tendwell support)', level: 'view' });
+    expect(me.json.supportBy).toMatchObject({ staff: 'Deniz (Curahold support)', level: 'view' });
     expect(me.json.user.seat).toBe('viewer');
     const zAccounts = (await zeynep.get('/api/accounts')).json.accounts.map((a: any) => a.id).sort();
     const sAccounts = (await s.browser.get('/api/accounts')).json.accounts.map((a: any) => a.id).sort();
@@ -253,7 +253,7 @@ describe('support access, only with consent', () => {
     const [r] = (await zeynep.get('/api/help')).json.requests;
     const res = await env.app.request(`https://acme.${BASE}/api/support/requests/${r.ref}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json', 'x-tendwell-staff-key': STAFF_KEY },
+      headers: { 'content-type': 'application/json', 'x-curahold-staff-key': STAFF_KEY },
       body: JSON.stringify({ status: 'answered' }),
     });
     expect(res.status).toBe(200);

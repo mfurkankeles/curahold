@@ -1,7 +1,7 @@
-// The Tendwell API. One Hono app runs on Cloudflare Workers (worker.ts) and
+// The Curahold API. One Hono app runs on Cloudflare Workers (worker.ts) and
 // on Node for development and tests (node.ts).
 //
-// Request flow: the subdomain picks the company (acme.tendwell.com → "acme"),
+// Request flow: the subdomain picks the company (acme.curahold.com → "acme"),
 // the session cookie picks the person, and every query then runs inside
 // db.tenant(...) so row-level security keeps companies apart.
 import { Hono } from 'hono';
@@ -83,13 +83,13 @@ export function createApp(deps: Deps) {
         err.status as any,
       );
     }
-    console.error('[tendwell] unhandled', err);
+    console.error('[curahold] unhandled', err);
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 
   app.get('/api/health', (c) => c.json({ ok: true }));
 
-  // The central address (app.tendwell.com): OAuth returns, chat services'
+  // The central address (app.curahold.com): OAuth returns, chat services'
   // inbound calls and company sign-up — all before any company is known.
   app.get('/api/oauth/callback', oauthCallback);
   app.get('/api/connect/callback', connectCallback_);
@@ -100,7 +100,7 @@ export function createApp(deps: Deps) {
   const companyFromHost = async (c: any, next: () => Promise<void>) => {
     const host = c.req.header('host') ?? new URL(c.req.url).host;
     let slug = cfg.singleTenantSlug ?? slugFromHost(host, cfg.baseDomain);
-    if (!slug && cfg.devOrgHeader) slug = c.req.header('x-tendwell-org') ?? null;
+    if (!slug && cfg.devOrgHeader) slug = c.req.header('x-curahold-org') ?? null;
     if (!slug) fail('org_not_found');
     const rows = await deps.db.tenant({ orgId: null, userId: null }, (q) =>
       q.query<OrgRow>('select * from resolve_org($1)', [slug]),
@@ -116,7 +116,7 @@ export function createApp(deps: Deps) {
       setup: rows[0].setup ?? {},
     };
     c.set('org', org);
-    c.set('locale', requestLocale(c.req.header('x-tendwell-locale'), c.req.header('accept-language'), org.locale));
+    c.set('locale', requestLocale(c.req.header('x-curahold-locale'), c.req.header('accept-language'), org.locale));
 
     // Cross-site forms cannot set custom headers, so requiring one on every
     // write blocks request forgery (the session cookie is also SameSite=Lax).
@@ -124,8 +124,8 @@ export function createApp(deps: Deps) {
     const bearer = /^Bearer\s/i.test(c.req.header('authorization') ?? '');
     // Inbound webhooks carry their own secret in the address and come from servers, not browsers.
     const inbound = c.req.path.startsWith('/api/inbound/');
-    // Tendwell support's own tooling carries its key in a header, which a form cannot set either.
-    const custom = c.req.header('x-tendwell-device') || c.req.header('x-tendwell-staff-key');
+    // Curahold support's own tooling carries its key in a header, which a form cannot set either.
+    const custom = c.req.header('x-curahold-device') || c.req.header('x-curahold-staff-key');
     if (c.req.path.startsWith('/api/') && !bearer && !inbound && c.req.method !== 'GET' && c.req.method !== 'HEAD' && !custom) fail('forbidden');
     await next();
   };
@@ -140,7 +140,7 @@ export function createApp(deps: Deps) {
   // Public, per company: login page data and the sign-in steps.
   app.route('/api', authRoutes);
   app.route('/api', inboundRoutes);
-  // Tendwell support: the entry link, its session, the desk's file links.
+  // Curahold support: the entry link, its session, the desk's file links.
   app.route('/api', supportEntry);
 
   // ---------------------------------------------------------------- person
@@ -165,11 +165,11 @@ export function createApp(deps: Deps) {
         locale: u.locale ? normalizeLocale(u.locale) : null,
       });
       c.set('tokenKind', t!.kind);
-      if (u.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(u.locale));
+      if (u.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(u.locale));
       await next();
       return;
     }
-    // Tendwell support, inside with someone's consent: acts as them (lib/support.ts).
+    // Curahold support, inside with someone's consent: acts as them (lib/support.ts).
     if (!token && (await signInSupport(c))) {
       await next();
       return;
@@ -195,7 +195,7 @@ export function createApp(deps: Deps) {
     if (!s) fail('unauthenticated');
     if (s.revoked_at) fail(s.revoke_reason === 'device_limit' ? 'session_evicted' : 'unauthenticated');
     if (s.expired || s.status !== 'active') fail('unauthenticated');
-    if (c.req.header('x-tendwell-device') && c.req.header('x-tendwell-device') !== s.device_id) fail('device_mismatch');
+    if (c.req.header('x-curahold-device') && c.req.header('x-curahold-device') !== s.device_id) fail('device_mismatch');
     c.set('auth', {
       userId: s.user_id,
       sessionId: s.session_id,
@@ -207,17 +207,17 @@ export function createApp(deps: Deps) {
       seat: s.seat,
       locale: s.locale ? normalizeLocale(s.locale) : null,
     });
-    if (s.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(s.locale));
+    if (s.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(s.locale));
     if (s.stale) {
       await deps.db.tenant({ orgId: org.id, userId: s.user_id }, async (q) => {
         await q.query('update sessions set last_seen_at = now() where id = $1', [s.session_id]);
         await q.query('update users set last_active_at = now() where id = $1', [s.user_id]);
       });
     }
-    // "See it as them": an administrator reads Tendwell with someone else's
+    // "See it as them": an administrator reads Curahold with someone else's
     // role, seat and customers. The database checks run as that person, so
     // what shows is exactly what they get. Nothing can be changed this way.
-    const previewAs = c.req.header('x-tendwell-preview-as');
+    const previewAs = c.req.header('x-curahold-preview-as');
     if (previewAs && previewAs !== s.user_id) {
       if (!((s.perms ?? []) as string[]).includes('org.manage')) fail('forbidden');
       if (c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('preview_read_only');

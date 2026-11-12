@@ -6,11 +6,11 @@ summary: Your company address, signing in, first setup and the device limit.
 ---
 # Getting started
 
-Tendwell is where customer success and account teams run their customers, stakeholders and day-to-day work in one place. This page covers your first fifteen minutes.
+Curahold is where customer success and account teams run their customers, stakeholders and day-to-day work in one place. This page covers your first fifteen minutes.
 
 ## Your company address
 
-Every company has its own address: `yourcompany.tendwell.com`. Everyone on your team signs in there. No other company's data ever appears at that address; the separation is enforced inside the database itself.
+Every company has its own address: `yourcompany.curahold.com`. Everyone on your team signs in there. No other company's data ever appears at that address; the separation is enforced inside the database itself.
 
 ## Signing in
 
@@ -38,9 +38,9 @@ A person can stay signed in on two devices at once; an admin can set this betwee
 
 ## Install it on a phone or a computer
 
-Tendwell installs like an app, with no store involved.
+Curahold installs like an app, with no store involved.
 
-- **Android and computers (Chrome, Edge):** click your name at the bottom left → **Install Tendwell**. The install icon in the browser's address bar does the same.
+- **Android and computers (Chrome, Edge):** click your name at the bottom left → **Install Curahold**. The install icon in the browser's address bar does the same.
 - **iPhone and iPad (Safari):** the Share button → **Add to Home Screen** → Add.
 
 The installed app opens in its own window; a long press on its icon offers My tasks, Inbox and Customers.

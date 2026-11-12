@@ -6,7 +6,7 @@ summary: Connecting support tools, Salesforce and Dynamics cases, and sending ti
 ---
 # Support tickets
 
-Support tickets in Tendwell are records of the **Support ticket** kind, each under a customer. They show on the customer page and timeline, feed customer fields such as open tickets, and count in the health score as the **Support load** signal.
+Support tickets in Curahold are records of the **Support ticket** kind, each under a customer. They show on the customer page and timeline, feed customer fields such as open tickets, and count in the health score as the **Support load** signal.
 
 There are three ways to bring them in:
 
@@ -18,7 +18,7 @@ There are three ways to bring them in:
 
 ## Ready connections
 
-Settings → CRMs and spreadsheets → **Support tools**. Paste the tool's address and an API key you create in the tool. Tendwell tries the key straight away and stores it encrypted. No app registration, no approval.
+Settings → CRMs and spreadsheets → **Support tools**. Paste the tool's address and an API key you create in the tool. Curahold tries the key straight away and stores it encrypted. No app registration, no approval.
 
 | Tool | You need | Comes over |
 | --- | --- | --- |
@@ -27,19 +27,19 @@ Settings → CRMs and spreadsheets → **Support tools**. Paste the tool's addre
 | Intercom | Region, access token | Conversations, companies |
 | Jira Service Management | Atlassian address, agent email, API token | Service desk requests, organizations |
 
-These connections **only read**. Nothing changed in Tendwell is written to the support tool.
+These connections **only read**. Nothing changed in Curahold is written to the support tool.
 
 ### How the customer is found
 
 1. The ticket's organization (or company), once it has been matched to a customer.
-2. An organization matches a customer in Tendwell with the same **name** or **web address**.
+2. An organization matches a customer in Curahold with the same **name** or **web address**.
 3. A ticket with no organization goes to the customer whose web address is the requester's **email domain**. Public email providers such as Gmail or Outlook are not used.
 
-By default only **existing customers** are linked: an organization that matches nobody is not added as a new customer, and a ticket whose customer cannot be found is left out. A matched organization's name never renames the customer in Tendwell.
+By default only **existing customers** are linked: an organization that matches nobody is not added as a new customer, and a ticket whose customer cannot be found is left out. A matched organization's name never renames the customer in Curahold.
 
-States and priorities fold into Tendwell's own:
+States and priorities fold into Curahold's own:
 
-| Tendwell | Examples |
+| Curahold | Examples |
 | --- | --- |
 | Open | new, open, Working, Escalated |
 | Waiting | pending, hold, snoozed, Waiting for customer |
@@ -57,8 +57,8 @@ In a connected Salesforce or Dynamics 365 sync, switch on the **Case** object an
 With an [API key](/docs/en/api-keys/) that can make changes, send the same ticket as often as you like. The first time creates it; after that it updates:
 
 ```bash
-curl -X PUT https://yourcompany.tendwell.com/api/tickets/my-helpdesk/4711 \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X PUT https://yourcompany.curahold.com/api/tickets/my-helpdesk/4711 \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{
     "subject": "Report export fails",
     "status": "open",
@@ -90,7 +90,7 @@ The customer is found by, in order: `account.id`, `account.domain`, the requeste
 For tools that cannot add authentication of their own: Settings → Developers → **Support tickets from other tools** → **Create an address**. The address is shown once and works as a password. Add `source` and `externalId` to the body and send the same fields:
 
 ```bash
-curl -X POST "https://yourcompany.tendwell.com/api/inbound/tickets/<token>" \
+curl -X POST "https://yourcompany.curahold.com/api/inbound/tickets/<token>" \
   -H "Content-Type: application/json" \
   -d '{ "source": "forms", "externalId": "77", "subject": "Feature request", "account": { "name": "Velto Mobility" } }'
 ```

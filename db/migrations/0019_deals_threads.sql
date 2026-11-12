@@ -13,7 +13,7 @@ alter table records add column currency text check (currency ~ '^[A-Z]{3}$');
 
 -- ------------------------------------------------ the columns of a table
 -- Which fields a record table shows (built-ins such as created_by too), as the
--- company chose them. Empty: Tendwell's own choice.
+-- company chose them. Empty: Curahold's own choice.
 alter table record_types add column columns text[] check (columns is null or cardinality(columns) <= 20);
 
 -- --------------------------------------------- tasks that belong to a record
@@ -45,7 +45,7 @@ create policy record_comments_insert on record_comments for insert
               and (select true from records r where r.id = record_comments.record_id));
 create policy record_comments_delete on record_comments for delete
   using (org_id = app_org() and (author_id = app_user() or app_has_perm('privacy.manage')));
-grant select, insert, delete on record_comments to tendwell_app;
+grant select, insert, delete on record_comments to curahold_app;
 
 -- --------------------------------------- files on comments and on records
 -- A comment can be only a pasted screenshot.
@@ -77,7 +77,7 @@ create policy files_update on files for update
 alter table plan_templates add column anchor text not null default 'start' check (anchor in ('start', 'renewal', 'close'));
 alter table plan_templates add column description text not null default '' check (length(description) <= 500);
 
--- Renewals Tendwell started by itself: each customer's renewal is started once.
+-- Renewals Curahold started by itself: each customer's renewal is started once.
 create table playbook_runs (
   org_id      uuid not null references orgs(id) on delete cascade,
   account_id  uuid not null,
@@ -91,7 +91,7 @@ create table playbook_runs (
 );
 alter table playbook_runs enable row level security;
 create policy playbook_runs_select on playbook_runs for select using (org_id = app_org());
-grant select on playbook_runs to tendwell_app;
+grant select on playbook_runs to curahold_app;
 
 -- ------------------------------------------------------------ dashboards
 -- A page is a home (its tabs on Home) or a dashboard (charts from reports, with

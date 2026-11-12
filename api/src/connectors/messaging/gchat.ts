@@ -1,4 +1,4 @@
-// Google Chat: one Tendwell Chat app (HTTP endpoint) published on the
+// Google Chat: one Curahold Chat app (HTTP endpoint) published on the
 // Google Workspace Marketplace. A company connects by signing in with a
 // Workspace account, which gives us its domain; Chat events are matched to
 // the company by the sender's email domain. The app posts with its service
@@ -49,7 +49,7 @@ export function chatCard(msg: ChatMessage, withActions = true) {
   if (buttons.length) widgets.push({ buttonList: { buttons } });
   return {
     text: msg.title,
-    cardsV2: [{ cardId: 'tendwell', card: { header: { title: msg.title.slice(0, 200) }, sections: widgets.length ? [{ widgets }] : [] } }],
+    cardsV2: [{ cardId: 'curahold', card: { header: { title: msg.title.slice(0, 200) }, sections: widgets.length ? [{ widgets }] : [] } }],
   };
 }
 

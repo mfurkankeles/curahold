@@ -47,7 +47,7 @@ const okRedirect = (u: string) => {
 
 for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
   oauthRoutes.get(path, (c) =>
-    c.json({ resource: `${base(c)}/mcp`, authorization_servers: [base(c)], scopes_supported: ['read', 'write'], bearer_methods_supported: ['header'], resource_name: `Tendwell — ${c.get('org').name}` }, 200, open),
+    c.json({ resource: `${base(c)}/mcp`, authorization_servers: [base(c)], scopes_supported: ['read', 'write'], bearer_methods_supported: ['header'], resource_name: `Curahold — ${c.get('org').name}` }, 200, open),
   );
 }
 
@@ -91,7 +91,7 @@ oauthRoutes.post('/oauth/register', async (c) => {
   );
 });
 
-/** The app sends the person here; Tendwell asks them (signed in, in the app) whether to allow it. */
+/** The app sends the person here; Curahold asks them (signed in, in the app) whether to allow it. */
 oauthRoutes.get('/oauth/authorize', async (c) => {
   const p = (k: string) => c.req.query(k) ?? '';
   const [client] = await c.get('deps').db.system((q) => q.query('select * from oauth_clients where id = $1', [p('client_id')]));

@@ -71,7 +71,7 @@ export async function snoozeTask(deps: Deps, orgId: string, userId: string, task
   });
 }
 
-/** "Create a task from this message" / "/tendwell <title>": lands on the person's default board, assigned to them. */
+/** "Create a task from this message" / "/curahold <title>": lands on the person's default board, assigned to them. */
 export async function createFromChat(
   deps: Deps,
   orgId: string,
@@ -103,7 +103,7 @@ export async function createFromChat(
   return res;
 }
 
-/** Which Tendwell person is this chat user? Matched once by email, then remembered. */
+/** Which Curahold person is this chat user? Matched once by email, then remembered. */
 export async function userByEmail(deps: Deps, orgId: string, email: string) {
   const rows = await deps.db.system((q) =>
     q.query(`select id, name, locale from users where org_id = $1 and email = $2 and status = 'active'`, [orgId, email.toLowerCase()]),

@@ -45,7 +45,7 @@ export function stepDay(anchor: Anchor, from: string, days: number, today: strin
 
 export interface ApplyInput {
   orgId: string;
-  /** Who put it on; null when Tendwell did (a renewal it started). */
+  /** Who put it on; null when Curahold did (a renewal it started). */
   actorId: string | null;
   plan: Row;
   /** The customer (id, name, owner_id). */
@@ -56,7 +56,7 @@ export interface ApplyInput {
   from: string;
   today: string;
   /**
-   * Started by Tendwell after some steps' dates had already passed (renewals
+   * Started by Curahold after some steps' dates had already passed (renewals
    * switched on mid-way): those steps become one "catch up" task for today,
    * each of them a subtask, instead of a pile of tasks all due today.
    */
@@ -84,7 +84,7 @@ export async function applyPlan(q: Q, input: ApplyInput): Promise<Row[]> {
   const owner = record?.owner_id ?? account.owner_id;
 
   // What to make, step by step. Steps whose day has passed are due today —
-  // or, for a renewal Tendwell starts late, gathered into one catch-up task.
+  // or, for a renewal Curahold starts late, gathered into one catch-up task.
   const blueprints = plan.tasks as TaskBlueprint[];
   const late = input.catchUp ? blueprints.filter((bp) => rawDay(anchor, input.from, bp.dueInDays) < input.today) : [];
   const steps: Step[] = [];
@@ -177,7 +177,7 @@ export async function startRenewalsIn(db: Db, now: Date): Promise<number> {
       started += await db.system((q) => startFor(q, org, now));
     } catch (e) {
       // One company's problem never stops the others.
-      console.error('[tendwell] starting renewals failed', org.id, e);
+      console.error('[curahold] starting renewals failed', org.id, e);
     }
   }
   return started;

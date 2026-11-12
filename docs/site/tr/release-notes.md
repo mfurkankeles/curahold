@@ -18,6 +18,7 @@ summary: Neler yeni, neler değişti.
 - **Hedefler sana göre:** hedef yok, tüm fırsatlar için tek hedef ya da fırsat türüne göre hedef; her tür açılıp kapatılabilir. İş değerlendirmesi yapmayan şirketler bu bölümü kapatabilir.
 - **Raporlar ve paneller ayrı:** rapor verinin kendisidir: liste, ara toplamlı gruplu satırlar ya da tablo (matris); istersen üstünde grafik. Panel birkaç raporun grafiğini yan yana koyar ve hepsini tek bir kişi ya da ekip için gösterebilir. Hedefe göre gösterge grafiği.
 - **Favoriler:** bir müşteriyi, kaydı, panoyu, raporu ya da paneli yıldızla; menünün en üstünde durur.
+- **Yeni görev ayrıntıları soruyor:** bir sütunun altındaki "Görev ekle" ve "Yeni görev" aynı pencereyi açar: açıklama, müşteri, bağlı olduğu kayıt, atananlar, son tarih, öncelik, tekrar, pano, sütun ve panonun kendi alanları. Başlığa "cuma @Ayşe #Acme !yüksek" yazmak alanları yine kendiliğinden doldurur.
 - **Hazır kayıt türleri:** sözleşmeler, riskler, ürün talepleri ve teklifler tek tıkla.
 - **Küçük düzeltmeler:** Değerlendirmeler’deki Tamam düğmesi artık kenardan taşmıyor; ürünler görünümündeki "+" görev açmadan önce soruyor ve görevi açmayı öneriyor; kişilerde onları kimin eklediği görünüyor ve her listenin sütunlarını sen seçiyorsun; fırsatlar hafta, ay, çeyrek ya da istediğin tarihlere göre daraltılabiliyor.
 
@@ -37,7 +38,7 @@ summary: Neler yeni, neler değişti.
 
 ### Uygulama olarak kur, çevrimdışı oku, canlı yenileme
 
-- **Kur:** Tendwell telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adına tıkla → Tendwell’i kur; iPhone: Paylaş → Ana Ekrana Ekle).
+- **Kur:** Curahold telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adına tıkla → Curahold’u kur; iPhone: Paylaş → Ana Ekrana Ekle).
 - **Çevrimdışı okuma:** bağlantı yokken uygulama açılır ve son gördüklerini gösterir; çıkış yapınca cihazdaki kopya silinir.
 - **Canlı yenileme:** başkasının eklediği kart, taşıdığı görev, yazdığı yorum ve yeni bildirimler yarım dakika içinde kendiliğinden görünür.
 - Bağlantı koptuğunda hata mesajları artık ne olduğunu söylüyor.

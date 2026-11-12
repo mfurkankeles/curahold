@@ -2,10 +2,10 @@
 //
 // Identity providers do not accept wildcard redirect addresses, so every
 // company's sign-in comes back to one central address
-// (https://app.tendwell.com/api/oauth/callback). The signed `state` carries
+// (https://app.curahold.com/api/oauth/callback). The signed `state` carries
 // the company's subdomain; the callback turns the verified email into a
 // two-minute one-time token and sends the browser back to
-// https://<company>.tendwell.com, where the normal token check (and the
+// https://<company>.curahold.com, where the normal token check (and the
 // new-device code) takes over.
 //
 // The ID token is taken straight from the provider's token endpoint over

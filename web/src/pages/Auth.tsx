@@ -42,7 +42,7 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
     <div className="auth">
       <aside className="auth__side" aria-hidden="true">
         <div className="auth__brand">
-          <Mark /> Tendwell
+          <Mark /> Curahold
         </div>
         <div className="auth__lines">
           {rails.map(([color, width]) => (

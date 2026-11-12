@@ -1,5 +1,5 @@
 // Cloudflare Workers entry for the customer portal, a separate Worker on its
-// own domain (*.tendwell-portal.com; wrangler.portal.toml). Static files are
+// own domain (*.curahold-portal.com; wrangler.portal.toml). Static files are
 // the portal's own small app (dist/portal); only /papi/* runs here. The app's
 // API, sessions and cookies are not reachable from this domain at all.
 import { createPortalApp } from './portal';

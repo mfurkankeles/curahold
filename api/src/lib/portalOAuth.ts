@@ -1,7 +1,7 @@
 // Google and Microsoft sign-in for the customer portal.
 //
 // Providers accept only registered return addresses, so the portal uses the
-// app's one central callback (app.tendwell.com/api/oauth/callback); a signed
+// app's one central callback (app.curahold.com/api/oauth/callback); a signed
 // state marked "portal" sends the browser on to the company's portal with a
 // two-minute one-time token. Two guards:
 //   * the browser that started the sign-in must finish it (a cookie set on

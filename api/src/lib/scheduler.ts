@@ -105,11 +105,11 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   const digests = await sendDigests(deps, now);
   const fired = await runScheduledAutomations(deps, now);
   const weekly = await sendWeekly(deps, now).catch((e) => {
-    console.error('[tendwell] weekly summary failed', e);
+    console.error('[curahold] weekly summary failed', e);
     return 0;
   });
   const nudges = await sendNudges(deps, now).catch((e) => {
-    console.error('[tendwell] nudges failed', e);
+    console.error('[curahold] nudges failed', e);
     return { stale: 0, escalated: 0 };
   });
   let delivered = 0;
@@ -119,22 +119,22 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     if (n < 100) break;
   }
   // Health scores: anything marked and not yet picked up; once a day, everyone (time passes) and the trend point.
-  await flushHealth(deps, 5000).catch((e) => console.error('[tendwell] health failed', e));
-  if (now.getUTCHours() === 3) await dailyHealth(deps, now).catch((e) => console.error('[tendwell] daily health failed', e));
+  await flushHealth(deps, 5000).catch((e) => console.error('[curahold] health failed', e));
+  if (now.getUTCHours() === 3) await dailyHealth(deps, now).catch((e) => console.error('[curahold] daily health failed', e));
   // Webhook retries (new events go out right after the change that made them).
   const hooks = await deliverWebhooks(deps, 200).catch((e) => {
-    console.error('[tendwell] webhook delivery failed', e);
+    console.error('[curahold] webhook delivery failed', e);
     return 0;
   });
   const synced = await runScheduledSyncs(deps, now).catch((e) => {
-    console.error('[tendwell] scheduled sync failed', e);
+    console.error('[curahold] scheduled sync failed', e);
     return 0;
   });
   if (now.getUTCHours() === 3) {
     await cleanUp(deps);
-    await archiveFinished(deps, now).catch((e) => console.error('[tendwell] archiving finished work failed', e));
+    await archiveFinished(deps, now).catch((e) => console.error('[curahold] archiving finished work failed', e));
   }
   // Renewals coming close enough start by themselves, early in the working day.
-  if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[tendwell] starting renewals failed', e));
+  if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[curahold] starting renewals failed', e));
   return { digests, weekly, nudges, fired, delivered, synced, hooks };
 }

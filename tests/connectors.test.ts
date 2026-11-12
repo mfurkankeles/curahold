@@ -115,8 +115,8 @@ beforeAll(async () => {
     oauth: { google: { clientId: 'google-client', clientSecret: 'google-secret' }, microsoft: { clientId: 'ms-client', clientSecret: 'ms-secret' } },
     connectors: {
       slack: { clientId: 'slack-client', clientSecret: 'slack-secret', signingSecret: 'slack-signing-secret' },
-      teams: { appId: 'bot-app-id', appPassword: 'bot-pass', tenantId: 'tendwell-tenant' },
-      gchat: { projectNumber: '123456789', serviceAccountEmail: 'tendwell@project.iam.gserviceaccount.com', privateKey: saKey.pem },
+      teams: { appId: 'bot-app-id', appPassword: 'bot-pass', tenantId: 'curahold-tenant' },
+      gchat: { projectNumber: '123456789', serviceAccountEmail: 'curahold@project.iam.gserviceaccount.com', privateKey: saKey.pem },
     },
   });
   env.fetchHolder.impl = router;
@@ -135,7 +135,7 @@ async function connect(provider: string, who = ada) {
 async function slackPost(body: string, contentType = 'application/x-www-form-urlencoded', secret = 'slack-signing-secret') {
   const ts = String(Math.floor(Date.now() / 1000));
   const sig = `v0=${await hmacHex(secret, `v0:${ts}:${body}`)}`;
-  return env.app.request(`https://app.tendwell.test/api/hooks/slack`, {
+  return env.app.request(`https://app.curahold.test/api/hooks/slack`, {
     method: 'POST',
     headers: { 'content-type': contentType, 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
     body,
@@ -152,7 +152,7 @@ async function newTask(title: string, assignee: string, boardId = env.a.boards.c
 describe('Slack', () => {
   it('connects with OAuth; the token is sealed and never returned', async () => {
     const back = await connect('slack');
-    expect(back).toBe('https://acme.tendwell.test/settings/connections?connected=slack');
+    expect(back).toBe('https://acme.curahold.test/settings/connections?connected=slack');
     const list = await ada.get('/api/connections');
     const slack = list.json.connections.find((c: any) => c.provider === 'slack');
     expect(slack).toMatchObject({ label: 'Demo Slack', status: 'active', twoWay: true });
@@ -215,8 +215,8 @@ describe('Slack', () => {
     expect(res.status).toBe(401);
   });
 
-  it('/tendwell creates a task; an unknown chat user is matched by email the first time', async () => {
-    const body = new URLSearchParams({ team_id: 'T001', user_id: 'U_ZEYNEP', command: '/tendwell', text: 'Prepare the price comparison' }).toString();
+  it('/curahold creates a task; an unknown chat user is matched by email the first time', async () => {
+    const body = new URLSearchParams({ team_id: 'T001', user_id: 'U_ZEYNEP', command: '/curahold', text: 'Prepare the price comparison' }).toString();
     const res = await slackPost(body);
     const out = (await res.json()) as any;
     expect(out.response_type).toBe('ephemeral');
@@ -263,7 +263,7 @@ describe('Microsoft Teams', () => {
   const botJwt = (aud = 'bot-app-id', serviceurl = SERVICE) =>
     signRs256({ iss: 'https://api.botframework.com', aud, exp: Math.floor(Date.now() / 1000) + 600, serviceurl }, teamsKey.pem, teamsKey.kid);
   const teamsPost = async (body: unknown, token?: string) =>
-    env.app.request('https://app.tendwell.test/api/hooks/teams', {
+    env.app.request('https://app.curahold.test/api/hooks/teams', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...(token !== '' ? { authorization: `Bearer ${token ?? (await botJwt())}` } : {}) },
       body: JSON.stringify(body),
@@ -322,13 +322,13 @@ describe('Microsoft Teams', () => {
   it('a tenant nobody connected gets a pointer, not data', async () => {
     calls.length = 0;
     await teamsPost(activity({ type: 'message', text: 'new X', channelData: { tenant: { id: 'unknown-tenant' } } }));
-    expect(calls.find((c) => c.url.endsWith('/activities'))!.body.text).toContain('not connected to Tendwell yet');
+    expect(calls.find((c) => c.url.endsWith('/activities'))!.body.text).toContain('not connected to Curahold yet');
   });
 
   it('builds the app package for the Teams admin center', async () => {
     const res = await ada.req('GET', '/api/connections/teams/package');
     expect(res.headers.get('content-type')).toBe('application/zip');
-    const files = unzipSync(new Uint8Array(await (await env.app.request('https://acme.tendwell.test/api/connections/teams/package', { headers: { cookie: ada.cookie } })).arrayBuffer()));
+    const files = unzipSync(new Uint8Array(await (await env.app.request('https://acme.curahold.test/api/connections/teams/package', { headers: { cookie: ada.cookie } })).arrayBuffer()));
     const manifest = JSON.parse(strFromU8(files['manifest.json']));
     expect(manifest.bots[0].botId).toBe('bot-app-id');
     expect(files['color.png'].slice(1, 4)).toEqual(new Uint8Array([80, 78, 71]));
@@ -339,7 +339,7 @@ describe('Google Chat', () => {
   const chatJwt = (aud = '123456789') =>
     signRs256({ iss: 'chat@system.gserviceaccount.com', aud, exp: Math.floor(Date.now() / 1000) + 600 }, chatKey.pem, chatKey.kid);
   const chatPost = async (body: unknown, token?: string) => {
-    const res = await env.app.request('https://app.tendwell.test/api/hooks/gchat', {
+    const res = await env.app.request('https://app.curahold.test/api/hooks/gchat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token ?? (await chatJwt())}` },
       body: JSON.stringify(body),
@@ -426,7 +426,7 @@ describe('webhooks (one-way) and board posts', () => {
     await env.settle();
     const hook = calls.find((c) => c.url === 'https://automation.example/hook')!;
     const raw = JSON.stringify(hook.body);
-    expect(hook.headers['x-tendwell-signature']).toBe(`sha256=${await hmacHex('shh', raw)}`);
+    expect(hook.headers['x-curahold-signature']).toBe(`sha256=${await hmacHex('shh', raw)}`);
     expect(hook.body.title).toBe('Finished on CS — General');
     expect(calls.some((c) => c.url.startsWith('https://discord.com'))).toBe(false); // only "created" there
     await mert.patch(`/api/boards/${env.a.boards.csBoard}`, { notify: [] });
@@ -439,7 +439,7 @@ describe('webhooks (one-way) and board posts', () => {
     const z = calls.find((c) => c.url.startsWith('https://integrations.zoom.us'))!;
     expect(z.url).toContain('format=full');
     expect(z.headers.authorization).toBe('zoom-token');
-    expect(z.body.content.head.text).toBe('Test message from Tendwell');
+    expect(z.body.content.head.text).toBe('Test message from Curahold');
   });
 
   it('a dead webhook is marked so the admin sees it', async () => {

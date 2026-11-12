@@ -1,14 +1,14 @@
 # Cloudflare Workers deployment. Values in <> are filled in at first deploy;
 # secrets are set with `wrangler secret put NAME` and never committed.
-name = "tendwell"
+name = "curahold"
 main = "api/src/worker.ts"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Every company lives at <slug>.tendwell.com; app.tendwell.com receives
+# Every company lives at <slug>.curahold.com; app.curahold.com receives
 # Google / Microsoft sign-in callbacks.
 routes = [
-  { pattern = "*.tendwell.com/*", zone_name = "tendwell.com" },
+  { pattern = "*.curahold.com/*", zone_name = "curahold.com" },
 ]
 
 [assets]
@@ -19,14 +19,14 @@ not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]
 
 [vars]
-BASE_DOMAIN = "tendwell.com"
-CENTRAL_HOST = "app.tendwell.com"
-EMAIL_FROM = "Tendwell <no-reply@tendwell.com>"
+BASE_DOMAIN = "curahold.com"
+CENTRAL_HOST = "app.curahold.com"
+EMAIL_FROM = "Curahold <no-reply@curahold.com>"
 MAX_DEVICES = "2"
 # Where help requests go. STAFF_KEY (support's entry-link key) is a secret.
-SUPPORT_EMAIL = "support@tendwell.com"
+SUPPORT_EMAIL = "support@curahold.com"
 # Customers' portal (a second Worker, wrangler.portal.toml).
-PORTAL_DOMAIN = "tendwell-portal.com"
+PORTAL_DOMAIN = "curahold-portal.com"
 
 # Supabase Postgres (EU region) through Hyperdrive.
 [[hyperdrive]]
@@ -36,7 +36,7 @@ id = "<hyperdrive-config-id>"
 # Task attachments.
 [[r2_buckets]]
 binding = "FILES"
-bucket_name = "tendwell-files"
+bucket_name = "curahold-files"
 
 # Hourly: morning summaries (in each company's time zone), scheduled
 # automations, delivery retries, CRM syncs; clean-up once a day.

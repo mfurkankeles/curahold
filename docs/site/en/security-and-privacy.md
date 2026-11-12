@@ -26,9 +26,9 @@ Sign-ins, changes to people and roles, connections, API keys, webhooks and perso
 
 The customer portal runs on a separate domain with its own sessions and cookie. The database role behind portal requests has no privileges on any table; it can only call functions that return the shared data of the signed-in person's own company. Details: [Customer portal](/docs/en/customer-portal/).
 
-## Tendwell support's access
+## Curahold support's access
 
-Tendwell support only comes into a company with a person's consent: they tick the box on a help request and choose for how long (24 hours to 7 days). Support sees what that person sees and, by default, can only look; only administrators can allow changes. Access can be closed at any moment. Every visit, and every change made with permission, is written to the activity log with the support person's name. Administrators can limit this to administrators or turn it off in **Settings → Security → Support access**. Details: [Getting help](/docs/en/getting-help/).
+Curahold support only comes into a company with a person's consent: they tick the box on a help request and choose for how long (24 hours to 7 days). Support sees what that person sees and, by default, can only look; only administrators can allow changes. Access can be closed at any moment. Every visit, and every change made with permission, is written to the activity log with the support person's name. Administrators can limit this to administrators or turn it off in **Settings → Security → Support access**. Details: [Getting help](/docs/en/getting-help/).
 
 ## Personal data
 

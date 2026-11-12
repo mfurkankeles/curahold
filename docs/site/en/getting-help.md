@@ -2,11 +2,11 @@
 title: Getting help
 section: help
 order: 11
-summary: Sending a help request, adding screenshots, and letting Tendwell support look at your account.
+summary: Sending a help request, adding screenshots, and letting Curahold support look at your account.
 ---
 # Getting help
 
-Use **Help** in the left menu to write to Tendwell support. The form asks for what support needs to find the problem without coming back to you with questions. Nothing is sent that you haven't seen; you choose what goes.
+Use **Help** in the left menu to write to Curahold support. The form asks for what support needs to find the problem without coming back to you with questions. Nothing is sent that you haven't seen; you choose what goes.
 
 ## Sending a request
 
@@ -20,7 +20,7 @@ You get a **reference** (e.g. TW-000123) and a copy by email; the answer comes t
 
 ## Screenshots and files
 
-- **Take a screenshot**: the browser asks which tab to share; pick the Tendwell tab. The help window steps aside, so only the page is captured.
+- **Take a screenshot**: the browser asks which tab to share; pick the Curahold tab. The help window steps aside, so only the page is captured.
 - **Paste or drop**: paste a copied picture into the form, or drop files on it.
 - **Mark up**: highlight what matters with a red frame. **Hide** covers anything support shouldn't see (a customer's name, an amount); it is removed from the picture that is sent.
 
@@ -43,7 +43,7 @@ Untick anything you'd rather not send. Nothing you typed and no data on the page
 
 ## Letting support look at your account
 
-Some problems are hard to fix without seeing them. The **Let Tendwell support look at my account** box at the end of the form is for that. It is never ticked for you.
+Some problems are hard to fix without seeing them. The **Let Curahold support look at my account** box at the end of the form is for that. It is never ticked for you.
 
 - **What support sees**: exactly what you see — the same customers, boards and fields. Nothing more.
 - **For how long**: 24 hours, 3 days or 7 days. Access ends on its own. Each support visit lasts at most 8 hours.

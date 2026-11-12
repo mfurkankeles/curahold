@@ -63,15 +63,15 @@ describe('the pulse', () => {
 
 describe('installing', () => {
   it('the manifest carries the company’s name and language, with no session', async () => {
-    const res = await env.app.request('https://acme.tendwell.test/api/manifest.webmanifest');
+    const res = await env.app.request('https://acme.curahold.test/api/manifest.webmanifest');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/manifest+json');
     const m = (await res.json()) as any;
-    expect(m).toMatchObject({ short_name: 'Tendwell', display: 'standalone', start_url: '/home', lang: 'en' });
-    expect(m.name).toBe('Demo Company · Tendwell');
+    expect(m).toMatchObject({ short_name: 'Curahold', display: 'standalone', start_url: '/home', lang: 'en' });
+    expect(m.name).toBe('Demo Company · Curahold');
     expect(m.icons.map((i: any) => i.sizes)).toEqual(['192x192', '512x512', '512x512']);
-    const tr = (await (await env.app.request('https://beta.tendwell.test/api/manifest.webmanifest')).json()) as any;
+    const tr = (await (await env.app.request('https://beta.curahold.test/api/manifest.webmanifest')).json()) as any;
     expect(tr.shortcuts[0].name).toBe('Görevlerim');
-    expect((await env.app.request('https://nobody.tendwell.test/api/manifest.webmanifest')).status).toBe(404);
+    expect((await env.app.request('https://nobody.curahold.test/api/manifest.webmanifest')).status).toBe(404);
   });
 });

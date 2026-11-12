@@ -40,7 +40,7 @@ language sql stable security definer set search_path = public as $$
    where t.lead_id = app_user() and t.org_id = app_org()
 $$;
 
-grant execute on function app_visible_boards(), app_my_teams(), app_my_people() to tendwell_app;
+grant execute on function app_visible_boards(), app_my_teams(), app_my_people() to curahold_app;
 
 alter policy boards_select on boards using (org_id = app_org() and id in (select app_visible_boards()));
 alter policy boards_update on boards using (org_id = app_org() and id in (select app_visible_boards()));
@@ -140,7 +140,7 @@ language sql stable security definer set search_path = public as $$
    order by (r.name ilike p_prefix) desc, lower(r.name) limit p_limit
 $$;
 
-grant execute on function app_find_accounts(text, text, int), app_find_tasks(text, text, int), app_find_records(text, text, int) to tendwell_app;
+grant execute on function app_find_accounts(text, text, int), app_find_tasks(text, text, int), app_find_records(text, text, int) to curahold_app;
 
 -- Where the server has trigram indexes (Supabase and any stock Postgres do), "contains"
 -- searches read an index instead of the table. Where it does not, search still works.
@@ -162,7 +162,7 @@ create function app_tasks_of(p_user uuid) returns setof uuid
 language sql stable security definer set search_path = public as $$
   select t.id from tasks t where t.org_id = app_org() and t.archived_at is null and t.assignee_ids @> array[p_user]
 $$;
-grant execute on function app_tasks_of(uuid) to tendwell_app;
+grant execute on function app_tasks_of(uuid) to curahold_app;
 
 -- Open work, for the counts in reports.
 create index tasks_open_idx on tasks (org_id, board_id) where done_at is null and archived_at is null and parent_id is null;

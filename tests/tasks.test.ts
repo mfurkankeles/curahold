@@ -120,11 +120,11 @@ describe('subtasks, comments, files, deleting', () => {
   it('uploads, downloads and protects files', async () => {
     const t = (await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'With file' })).json.task;
     const form = new FormData();
-    form.append('file', new File(['hello tendwell'], 'notes ü.txt', { type: 'text/plain' }));
+    form.append('file', new File(['hello curahold'], 'notes ü.txt', { type: 'text/plain' }));
     const up = await mert.req('POST', `/api/tasks/${t.id}/files`, form);
     expect(up.status).toBe(201);
     const down = await zeynep.get(`/api/files/${up.json.file.id}`);
-    expect(down.json).toBe('hello tendwell');
+    expect(down.json).toBe('hello curahold');
     expect(down.headers.get('content-disposition')).toContain("filename*=UTF-8''notes%20%C3%BC.txt");
     const omar = await login(env, 'acme', 'omar@demo.example'); // not on the CS board
     expect((await omar.get(`/api/files/${up.json.file.id}`)).status).toBe(404);

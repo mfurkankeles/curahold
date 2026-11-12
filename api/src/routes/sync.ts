@@ -74,7 +74,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
     const extras = { ...state.q, 'accounts-server': c.req.query('accounts-server') ?? '' };
     made = await adapter.oauth.exchange(deps.fetch ?? fetch, client, code, connectCallbackUrl(c), extras, nowOf(deps));
   } catch (e) {
-    console.error('[tendwell] crm connect failed', provider, (e as Error).message);
+    console.error('[curahold] crm connect failed', provider, (e as Error).message);
     return c.redirect(`${home}?error=connection_failed&provider=${provider}`);
   }
   const sealed = await seal(made.secret, secretsKey(cfg));
@@ -103,7 +103,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
 
 // ------------------------------------------------------------ with a key
 
-/** Support tools: the administrator types the tool's address and an API key; Tendwell checks them right away. */
+/** Support tools: the administrator types the tool's address and an API key; Curahold checks them right away. */
 syncRoutes.post('/connections/key', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(c, z.object({ provider: z.string().max(40), values: z.record(z.string().max(40), z.string().max(500)) }));
@@ -228,7 +228,7 @@ syncRoutes.get('/connections/:id/objects/:object/fields', async (c) => {
   return c.json({ fields: fields!, suggested: adapter.readOnly ? suggested.map((f) => ({ ...f, dir: 'pull' as const })) : suggested });
 });
 
-/** CRM users and the Tendwell person each one is matched to (by email unless set by hand). */
+/** CRM users and the Curahold person each one is matched to (by email unless set by hand). */
 syncRoutes.get('/connections/:id/owners', async (c) => {
   const conn = await loaded(c);
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
@@ -269,7 +269,7 @@ syncRoutes.put('/connections/:id/owners', async (c) => {
 
 syncRoutes.patch('/connections/:id/sync', async (c) => {
   const conn = await loaded(c);
-  const input = await body(c, z.object({ conflict: z.enum(['latest', 'crm', 'tendwell']) }));
+  const input = await body(c, z.object({ conflict: z.enum(['latest', 'crm', 'curahold']) }));
   await run(c, (q) => q.query(`update connections set config = jsonb_set(config, '{sync,conflict}', to_jsonb($2::text), true), updated_at = now() where id = $1`, [conn.id, input.conflict]));
   return c.json({ ok: true });
 });
@@ -310,10 +310,10 @@ const objectMap = z.object({
 const syncSchema = z.object({
   objects: z.array(objectMap).max(30),
   owners: z.record(z.string().max(100), z.string().uuid().nullable()).optional(),
-  conflict: z.enum(['latest', 'crm', 'tendwell']).optional(),
+  conflict: z.enum(['latest', 'crm', 'curahold']).optional(),
 });
 
-/** A Tendwell field for a CRM field the administrator chose to bring over. */
+/** A Curahold field for a CRM field the administrator chose to bring over. */
 export function localFieldFrom(rf: RemoteField, taken: Set<string>): AccountField {
   let base = optionKey(rf.label || rf.name).replace(/^[^a-z]+/, '');
   if (!/^[a-z]/.test(base)) base = `f_${base}`;
@@ -418,7 +418,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
           if (o.target === 'account') accountChanged = true;
           else typeChanged = true;
         } else if (local.startsWith('f:') && !defs.some((d) => d.key === local.slice(2) && !d.rollup)) continue;
-        // One CRM field per Tendwell field: two would fight over the value.
+        // One CRM field per Curahold field: two would fight over the value.
         if (usedLocal.has(local)) continue;
         usedLocal.add(local);
         fields.push({ remote: f.remote, local, dir: f.dir });

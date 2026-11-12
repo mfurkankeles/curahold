@@ -156,7 +156,7 @@ developerRoutes.post('/dev/webhooks/:id/test', async (c) => {
   // The secret is read with owner access, for this company's webhook only.
   const [hook] = await deps.db.system((q) => q.query('select * from webhooks where id = $1 and org_id = $2', [id, org.id]));
   if (!hook) fail('not_found');
-  const body = JSON.stringify({ id: crypto.randomUUID(), event: 'ping', occurredAt: new Date().toISOString(), company: org.slug, data: { hello: 'Tendwell' } });
+  const body = JSON.stringify({ id: crypto.randomUUID(), event: 'ping', occurredAt: new Date().toISOString(), company: org.slug, data: { hello: 'Curahold' } });
   const status = await postWebhook(deps, hook, body, 'ping');
   return c.json({ status, ok: status >= 200 && status < 300 });
 });

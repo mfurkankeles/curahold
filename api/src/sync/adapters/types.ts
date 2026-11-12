@@ -62,7 +62,7 @@ export interface CrmAdapter {
   oauth?: OAuthSpec;
   /** Connected with what the administrator typed (address, API key) instead of a sign-in page. */
   keyed?: { connect(fetcher: typeof fetch, values: Record<string, string>, now: Date): Promise<Connected> };
-  /** Only reads: nothing made or changed in Tendwell is written back. */
+  /** Only reads: nothing made or changed in Curahold is written back. */
   readOnly?: boolean;
   /** Spreadsheets read everything each time; CRMs read changes since the last run. */
   tabular: boolean;

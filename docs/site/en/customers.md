@@ -6,7 +6,7 @@ summary: Customer fields, stakeholders, opportunities, importing and exporting.
 ---
 # Customers, fields and records
 
-Customers are at the centre of Tendwell. Each has an owner, an optional team and fields of your own.
+Customers are at the centre of Curahold. Each has an owner, an optional team and fields of your own.
 
 ## Fields
 

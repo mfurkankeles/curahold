@@ -41,8 +41,9 @@ export function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg className="sidebar__mark" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
       <rect width="32" height="32" rx="8" style={{ fill: 'var(--mark-bg, #eceafe)' }} />
-      <path d="M9 11h14M16 11v12" style={{ stroke: 'var(--mark-ink, #191541)' }} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="16" cy="24.5" r="2.6" style={{ fill: 'var(--mark-dot, #5b4de8)' }} />
+      {/* A "C" (cura: care) whose open arc holds a dot (hold) — the name's story. */}
+      <path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" style={{ stroke: 'var(--mark-ink, #191541)' }} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="16.5" cy="16" r="2.6" style={{ fill: 'var(--mark-dot, #5b4de8)' }} />
     </svg>
   );
 }

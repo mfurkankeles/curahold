@@ -1,5 +1,5 @@
 // A tiny PNG writer for app icons (Teams app package): a ring with a dot,
-// the Tendwell mark, drawn at any size. No image libraries needed.
+// the Curahold mark, drawn at any size. No image libraries needed.
 import { zlibSync } from 'fflate';
 
 const CRC_TABLE = (() => {

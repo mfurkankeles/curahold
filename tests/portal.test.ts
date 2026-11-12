@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createPortalApp } from '../api/src/portal';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
-const PORTAL = 'tendwell-portal.test';
+const PORTAL = 'curahold-portal.test';
 let env: Env;
 let portal: ReturnType<typeof createPortalApp>;
 let ada: Client; // admin
@@ -20,7 +20,7 @@ class PortalClient {
   cookie = '';
   constructor(public slug = 'acme') {}
   async req(method: string, path: string, body?: unknown, headers: Record<string, string> = {}) {
-    const h: Record<string, string> = { 'x-tendwell-portal': '1', ...headers };
+    const h: Record<string, string> = { 'x-curahold-portal': '1', ...headers };
     if (this.cookie) h.cookie = this.cookie;
     if (body !== undefined) h['content-type'] = 'application/json';
     const res = await portal.request(`https://${this.slug}.${PORTAL}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });

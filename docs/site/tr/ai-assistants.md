@@ -6,7 +6,7 @@ summary: Yapay zekâ asistanınla müşterilerini sorgula, sunum hazırlat, gör
 ---
 # Claude ve ChatGPT'yi bağlama
 
-Tendwell'i Claude, ChatGPT ya da MCP destekleyen başka bir asistana bağladığında, asistan senin adına Tendwell'e bakabilir ve iş açabilir.
+Curahold'u Claude, ChatGPT ya da MCP destekleyen başka bir asistana bağladığında, asistan senin adına Curahold'a bakabilir ve iş açabilir.
 
 ## Neler yapabilirsin
 
@@ -18,14 +18,14 @@ Tendwell'i Claude, ChatGPT ya da MCP destekleyen başka bir asistana bağladığ
 
 ## Nasıl bağlanır
 
-1. Tendwell'de **Ayarların** sayfasını aç ve **Bağlayıcı adresi**ni kopyala. Adres `https://sirketin.tendwell.com/mcp` biçimindedir.
+1. Curahold'da **Ayarların** sayfasını aç ve **Bağlayıcı adresi**ni kopyala. Adres `https://sirketin.curahold.com/mcp` biçimindedir.
 2. **Claude:** Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle. Adresi yapıştır ve bağlan.
    **ChatGPT:** bağlayıcı ayarlarından bu adresle özel (MCP) bir bağlayıcı ekle. Bazı planlarda önce geliştirici modunu açmak gerekir.
-3. Tendwell'in izin ekranı açılır. Giriş yap, asistanın ne yapabileceğine bak ve **İzin ver** de.
+3. Curahold'un izin ekranı açılır. Giriş yap, asistanın ne yapabileceğine bak ve **İzin ver** de.
 
 ## Güvenlik
 
 - Asistan **senin adına** çalışır. Yalnızca senin görebildiğini görür, değiştirebildiğini değiştirir. Rol ve alan kuralların aynen geçerlidir.
 - İzin verirken "Değişiklik yapmasına da izin ver" kutusunu kapatırsan asistan yalnızca okur. İzleyici koltuğundaysan asistan zaten yalnızca okur.
 - Bağlantıyı istediğin zaman Ayarların → API anahtarları ve bağlı uygulamalar'dan kesersin.
-- Asistan kendi Claude ya da ChatGPT planınla çalışır; Tendwell'e ek bir yapay zekâ ücreti yoktur.
+- Asistan kendi Claude ya da ChatGPT planınla çalışır; Curahold'a ek bir yapay zekâ ücreti yoktur.

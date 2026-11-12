@@ -310,7 +310,7 @@ function PeopleTab() {
   };
 
   async function exportData(u: AdminUser) {
-    const res = await fetch(`/api/admin/users/${u.id}/export`, { headers: { 'x-tendwell-device': getDeviceId() } });
+    const res = await fetch(`/api/admin/users/${u.id}/export`, { headers: { 'x-curahold-device': getDeviceId() } });
     if (!res.ok) {
       toast(t('errors.server'), 'error');
       return;
@@ -318,7 +318,7 @@ function PeopleTab() {
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `tendwell-personal-data-${u.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+    a.download = `curahold-personal-data-${u.name.replace(/\s+/g, '-').toLowerCase()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
   }

@@ -1,9 +1,9 @@
-// Self-serve company sign-up on the central address (app.tendwell.com):
+// Self-serve company sign-up on the central address (app.curahold.com):
 //   1. POST /signup/start     — email address → link mailed (proves it)
 //   2. POST /signup/verify    — token from the link → signed ticket + suggestions
 //   3. GET  /signup/slug      — is this address free?
 //   4. POST /signup/complete  — company, address, language, template → the new
-//      company exists; the browser goes to <slug>.tendwell.com already signed in.
+//      company exists; the browser goes to <slug>.curahold.com already signed in.
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
@@ -33,7 +33,7 @@ interface Ticket {
 signupRoutes.use('*', async (c, next) => {
   const cfg = c.get('deps').config;
   if (!cfg.signupEnabled || cfg.singleTenantSlug) fail('not_found');
-  if (c.req.method !== 'GET' && !c.req.header('x-tendwell-device')) fail('forbidden');
+  if (c.req.method !== 'GET' && !c.req.header('x-curahold-device')) fail('forbidden');
   await next();
 });
 

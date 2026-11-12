@@ -42,7 +42,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     oauth: {},
     signupEnabled: true,
     connectors: { demoCrm: true },
-    support: { email: 'support@tendwell.localhost' },
+    support: { email: 'support@curahold.localhost' },
     // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
     portalDomain: 'portal.localhost',
     staffKey: opts.staffKey,
@@ -78,7 +78,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
   timer.unref();
   if (!opts.quiet) {
-    console.log(`Tendwell API on http://localhost:${opts.port}`);
+    console.log(`Curahold API on http://localhost:${opts.port}`);
     console.log(`Demo company: http://demo.localhost:${opts.publicPort}  (sign in as ${demo.adminEmail})`);
   }
   return { server, db, email, demo, config };

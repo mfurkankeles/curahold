@@ -2,7 +2,7 @@
 // the app's `location.` and `history.pushState/replaceState` to these (see
 // vite.demo.config.ts), so the app moves between screens exactly as it does
 // on its real address, without touching the page that embeds it.
-export const HOST = 'demo.tendwell.com';
+export const HOST = 'demo.curahold.com';
 export const ORIGIN = `https://${HOST}`;
 
 let path = '/';

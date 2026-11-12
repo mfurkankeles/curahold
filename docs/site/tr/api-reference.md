@@ -6,7 +6,7 @@ summary: Müşteriler, kayıtlar, görevler, yorumlar, arama ve ana sayfa uçlar
 ---
 # API referansı
 
-Tüm uçlar `https://sirketin.tendwell.com/api` altındadır, JSON alır ve JSON döndürür. Kimlik için [API anahtarı](/docs/tr/api-keys/) kullan.
+Tüm uçlar `https://sirketin.curahold.com/api` altındadır, JSON alır ve JSON döndürür. Kimlik için [API anahtarı](/docs/tr/api-keys/) kullan.
 
 ## Sen ve şirketin
 
@@ -26,8 +26,8 @@ Tüm uçlar `https://sirketin.tendwell.com/api` altındadır, JSON alır ve JSON
 | `PATCH /accounts/{id}` | Değiştir: yalnızca gönderdiğin alanlar değişir |
 
 ```bash
-curl -X POST https://sirketin.tendwell.com/api/accounts \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X POST https://sirketin.curahold.com/api/accounts \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"name":"Harborline Bank","fields":{"renewal_date":"2027-03-01","arr":126000,"health":"watch"}}'
 ```
 
@@ -56,8 +56,8 @@ Alan anahtarlarını (`renewal_date`, `arr` …) `GET /me` yanıtındaki `org.ac
 | `POST /tasks/{id}/comments` | Yorum: `body` |
 
 ```bash
-curl -X POST https://sirketin.tendwell.com/api/tasks \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X POST https://sirketin.curahold.com/api/tasks \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"boardId":"…","title":"Yenileme teklifini gönder","dueDate":"2027-01-15","priority":"high","accountId":"…"}'
 ```
 

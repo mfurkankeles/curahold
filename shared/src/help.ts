@@ -1,4 +1,4 @@
-// Asking Tendwell for help, and letting Tendwell's support team in with consent.
+// Asking Curahold for help, and letting Curahold's support team in with consent.
 export const HELP_CATEGORIES = ['bug', 'question', 'idea', 'data', 'billing'] as const;
 export type HelpCategory = (typeof HELP_CATEGORIES)[number];
 export const HELP_IMPACTS = ['blocking', 'workaround', 'minor'] as const;

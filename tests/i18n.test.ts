@@ -66,7 +66,7 @@ describe('dictionaries', () => {
 
 describe('the interface has no hard-coded text', () => {
   it('no plain words in JSX text or in user-facing attributes', () => {
-    const ALLOWED = /^(Tendwell|English|Türkçe|dev:)$/; // brand, language names, dev-only hint
+    const ALLOWED = /^(Curahold|English|Türkçe|dev:)$/; // brand, language names, dev-only hint
     const ATTRS = new Set(['placeholder', 'title', 'aria-label', 'alt']);
     const offenders: string[] = [];
     for (const f of sources(join(ROOT, 'web', 'src')).filter((x) => x.endsWith('.tsx'))) {

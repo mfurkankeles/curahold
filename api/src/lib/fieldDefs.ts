@@ -5,7 +5,7 @@ import { normalizeValue } from '../../../shared/src/fields';
 import { calculated, FIELD_TYPES, OPTION_COLORS, type AccountField } from '../../../shared/src/model';
 import { fail } from './errors';
 
-/** Checks and cleans field values; rolled-up fields are worked out by Tendwell and cannot be typed in. */
+/** Checks and cleans field values; rolled-up fields are worked out by Curahold and cannot be typed in. */
 export function cleanFields(defs: AccountField[], input: Record<string, unknown>, locale: 'en' | 'tr') {
   const out: Record<string, unknown> = {};
   const bad: string[] = [];

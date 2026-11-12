@@ -10,7 +10,7 @@ An API key is a password that works as one person. Everyone makes their own; an 
 
 ## Making a key
 
-1. In Tendwell, open **Your settings**.
+1. In Curahold, open **Your settings**.
 2. Under **API keys and connected apps**, choose **New API key**.
 3. Name it, tick **Can make changes** if it needs to, and choose how long it is valid (30, 90 or 365 days, or no end date).
 4. The key starts with `twk_` and is shown **only once**. Keep it in a password manager.
@@ -20,7 +20,7 @@ An API key is a password that works as one person. Everyone makes their own; an 
 Send it in the `Authorization` header of every request:
 
 ```bash
-curl https://yourcompany.tendwell.com/api/me \
+curl https://yourcompany.curahold.com/api/me \
   -H "Authorization: Bearer twk_..."
 ```
 
@@ -40,4 +40,4 @@ A key can never: make another key, give an app OAuth consent, or use "See it as 
 - Each key shows when it was last used. Making and revoking keys is written to the activity log.
 - When someone leaves and is deactivated, their keys stop working too.
 
-> **Security:** Keep keys out of code; use an environment variable. If one may have leaked, revoke it and make a new one. Tendwell does not keep the key itself, only a digest of it.
+> **Security:** Keep keys out of code; use an environment variable. If one may have leaked, revoke it and make a new one. Curahold does not keep the key itself, only a digest of it.

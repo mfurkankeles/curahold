@@ -1,4 +1,4 @@
-// Tendwell's own icons: drawn for this product on a 20 × 20 grid with one
+// Curahold's own icons: drawn for this product on a 20 × 20 grid with one
 // stroke weight, so they sit together and carry no one else's licence.
 const P = (d: string) => <path d={d} />;
 const C = (cx: number, cy: number, r: number, fill = false) => <circle cx={cx} cy={cy} r={r} fill={fill ? 'currentColor' : 'none'} stroke={fill ? 'none' : undefined} />;

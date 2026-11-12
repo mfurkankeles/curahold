@@ -32,4 +32,4 @@ create policy reports_update on reports for update
   with check (org_id = app_org() and (created_by = app_user() or (shared and (select app_has_perm('org.manage')))));
 create policy reports_delete on reports for delete
   using (org_id = app_org() and (created_by = app_user() or (shared and (select app_has_perm('org.manage')))));
-grant select, insert, update, delete on reports to tendwell_app;
+grant select, insert, update, delete on reports to curahold_app;

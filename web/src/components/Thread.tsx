@@ -136,7 +136,7 @@ export const sizeText = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).t
  * also works in the try-it demo, where the "server" lives in the tab.
  */
 async function fileBlob(id: string, inline: boolean): Promise<Blob> {
-  const res = await fetch(`/api/files/${id}${inline ? '?inline=1' : ''}`, { headers: { 'x-tendwell-device': getDeviceId() }, credentials: 'same-origin' });
+  const res = await fetch(`/api/files/${id}${inline ? '?inline=1' : ''}`, { headers: { 'x-curahold-device': getDeviceId() }, credentials: 'same-origin' });
   if (!res.ok) throw new Error(String(res.status));
   return res.blob();
 }

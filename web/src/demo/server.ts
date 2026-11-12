@@ -1,4 +1,4 @@
-// The Tendwell API running inside the browser tab: the same Hono app and
+// The Curahold API running inside the browser tab: the same Hono app and
 // SQL migrations as production, on PGlite (Postgres compiled to WebAssembly),
 // with row-level security switched on. The app's fetch('/api/…') calls are
 // answered here instead of over the network.
@@ -42,7 +42,7 @@ class KeptHeadersRequest extends Request {
   }
 }
 
-/** One browser's cookies for demo.tendwell.com. */
+/** One browser's cookies for demo.curahold.com. */
 class Jar {
   private items = new Map<string, string>();
   header() {
@@ -83,7 +83,7 @@ export interface DemoServer {
 }
 
 /** The customer portal's address in the demo: another site than the app's, as in production. */
-export const PORTAL_ORIGIN = 'https://demo.tendwell-portal.com';
+export const PORTAL_ORIGIN = 'https://demo.curahold-portal.com';
 
 // One device for the life of the page, kept in memory. Every call carries it (see `request`),
 // so the demo does not depend on the embedding page letting it keep anything in storage.
@@ -120,9 +120,9 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
   const config: Config = {
-    baseDomain: 'tendwell.com',
+    baseDomain: 'curahold.com',
     scheme: 'https',
-    centralHost: 'app.tendwell.com',
+    centralHost: 'app.curahold.com',
     authSecret: btoa(String.fromCharCode(...secret)),
     devExposeTokens: true,
     devOrgHeader: false,
@@ -131,7 +131,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     oauth: {},
     signupEnabled: false,
     connectors: { demoCrm: true },
-    portalDomain: 'tendwell-portal.com',
+    portalDomain: 'curahold-portal.com',
   };
   const email = new services.MemoryEmail();
   const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };
@@ -152,7 +152,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const portalCall = async (method: string, path: string, body?: unknown) => {
     const res = await portalRequest(path, {
       method,
-      headers: { 'x-tendwell-portal': '1', 'content-type': 'application/json', 'x-tendwell-locale': locale },
+      headers: { 'x-curahold-portal': '1', 'content-type': 'application/json', 'x-curahold-locale': locale },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
@@ -165,7 +165,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     const headers = new Headers(init.headers);
     const cookie = jar.header();
     if (cookie) headers.set('cookie', cookie);
-    headers.set('x-tendwell-device', DEVICE);
+    headers.set('x-curahold-device', DEVICE);
     const res = await app.fetch(new KeptHeadersRequest(url.href, { method: init.method ?? 'GET', body: init.body, redirect: 'manual' }, headers));
     jar.take(res);
     if (res.status === 401)
@@ -179,7 +179,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const call = async (method: string, path: string, body?: unknown) => {
     const res = await request(path, {
       method,
-      headers: { 'x-tendwell-device': DEVICE, 'content-type': 'application/json', 'x-tendwell-locale': locale },
+      headers: { 'x-curahold-device': DEVICE, 'content-type': 'application/json', 'x-curahold-locale': locale },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);

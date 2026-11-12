@@ -2,11 +2,11 @@
 title: Geliştiriciler için genel bakış
 section: developers
 order: 1
-summary: Tendwell'e neyle bağlanılır, kimlik doğrulama ve temel kurallar.
+summary: Curahold'a neyle bağlanılır, kimlik doğrulama ve temel kurallar.
 ---
 # Geliştiriciler için genel bakış
 
-Tendwell'i kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uyar: **bir istek her zaman bir kişi adına yapılır** ve o kişinin rolü, müşteri erişimi ve alan kuralları aynen geçerlidir.
+Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uyar: **bir istek her zaman bir kişi adına yapılır** ve o kişinin rolü, müşteri erişimi ve alan kuralları aynen geçerlidir.
 
 | Yol | Ne için | Kimlik |
 | --- | --- | --- |
@@ -20,10 +20,10 @@ Tendwell'i kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 Her şirketin kendi adresi vardır. Aşağıdaki örneklerde `sirketin` yerine kendi şirket adresini yaz.
 
 ```text
-API        https://sirketin.tendwell.com/api
-MCP        https://sirketin.tendwell.com/mcp
-OAuth      https://sirketin.tendwell.com/.well-known/oauth-authorization-server
-Belgeler   https://sirketin.tendwell.com/docs/
+API        https://sirketin.curahold.com/api
+MCP        https://sirketin.curahold.com/mcp
+OAuth      https://sirketin.curahold.com/.well-known/oauth-authorization-server
+Belgeler   https://sirketin.curahold.com/docs/
 ```
 
 ## Neler açık, neler kapalı
@@ -48,7 +48,7 @@ Hatalar her zaman aynı biçimde gelir:
 | 404 | Yok ya da bu kişi göremiyor |
 | 409 | Görev sen okuduktan sonra değişmiş; güncel sürümle yeniden dene |
 
-`message` alanı isteğin diline göre gelir: `x-tendwell-locale: tr` ya da `en` başlığını gönder.
+`message` alanı isteğin diline göre gelir: `x-curahold-locale: tr` ya da `en` başlığını gönder.
 
 ## Sınırlar
 

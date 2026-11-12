@@ -44,8 +44,8 @@ export const NEWS: News[] = [
     date: '2026-11-12',
     title: { tr: 'Uygulama olarak kur; canlı yenileme', en: 'Install it as an app; live refresh' },
     body: {
-      tr: 'Tendwell telefona ve bilgisayara kurulur (adına tıkla → Tendwell’i kur; iPhone’da Paylaş → Ana Ekrana Ekle) ve bağlantı yokken son gördüklerini gösterir. Başkasının yaptığı değişiklikler artık sayfayı yenilemeden görünür.',
-      en: 'Tendwell installs on phones and computers (click your name → Install Tendwell; on iPhone, Share → Add to Home Screen) and shows what you last saw when there is no connection. Other people’s changes now appear without reloading.',
+      tr: 'Curahold telefona ve bilgisayara kurulur (adına tıkla → Curahold’u kur; iPhone’da Paylaş → Ana Ekrana Ekle) ve bağlantı yokken son gördüklerini gösterir. Başkasının yaptığı değişiklikler artık sayfayı yenilemeden görünür.',
+      en: 'Curahold installs on phones and computers (click your name → Install Curahold; on iPhone, Share → Add to Home Screen) and shows what you last saw when there is no connection. Other people’s changes now appear without reloading.',
     },
   },
   {

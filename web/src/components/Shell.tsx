@@ -314,7 +314,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             <Bell />
           </header>
         )}
-        <nav className="sidebar" aria-label="Tendwell">
+        <nav className="sidebar" aria-label="Curahold">
           <div className="sidebar__org">
             {me.org.logoUrl ? (
               <span className="orglogo">

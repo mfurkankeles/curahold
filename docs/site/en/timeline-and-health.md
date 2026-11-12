@@ -23,7 +23,7 @@ These appear on the timeline by themselves:
 
 ## Health score
 
-Switch it on in Settings → Health score. It is a number from 0 to 100 for every customer, worked out from what is already in Tendwell:
+Switch it on in Settings → Health score. It is a number from 0 to 100 for every customer, worked out from what is already in Curahold:
 
 | Signal | Full points | No points |
 | --- | --- | --- |

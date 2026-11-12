@@ -1,6 +1,6 @@
 // Records kept under an account — contacts, opportunities, and whatever
 // else a company tracks (risks, renewals, cases…). Built-in kinds come with
-// fields Tendwell knows how to use; anything else is the company's own.
+// fields Curahold knows how to use; anything else is the company's own.
 import type { Locale } from './i18n';
 import type { AccountField, FieldOption, Localized } from './model';
 
@@ -17,7 +17,7 @@ export interface RecordType {
   archivedAt: string | null;
   /** Records of this type that are not archived. */
   count?: number;
-  /** The columns its table shows, as the company chose them; null is Tendwell's choice. */
+  /** The columns its table shows, as the company chose them; null is Curahold's choice. */
   columns?: string[] | null;
 }
 
@@ -105,7 +105,7 @@ export const TICKET_PRIORITIES = [
 /** Still needing an answer. */
 export const TICKET_OPEN = ['open', 'pending'];
 
-/** Any tool's ticket state in Tendwell's four ("Problem Solved", "Waiting on customer", "Kapandı"…). */
+/** Any tool's ticket state in Curahold's four ("Problem Solved", "Waiting on customer", "Kapandı"…). */
 export function ticketStatusOf(v: unknown): 'open' | 'pending' | 'solved' | 'closed' {
   const s = String(v ?? '').toLocaleLowerCase('tr');
   if (/clos|kapan|kapal|cancel|iptal|merged/.test(s)) return 'closed';

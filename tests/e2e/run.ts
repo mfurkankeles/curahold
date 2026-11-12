@@ -59,6 +59,17 @@ await step('create a task from the board', async () => {
   newTaskId = row.id;
 });
 
+await step('a column’s "Add task" asks for the details in the New task dialog', async () => {
+  const col = await mert.page.evaluateHandle(() => [...document.querySelectorAll('.column')].find((c) => c.querySelector('.column__name')?.textContent === 'Devam ediyor')!);
+  await (await (col as any).$('.column__add')).click();
+  await mert.page.waitForSelector('.qa .qa__grid');
+  // The dialog opens on the column it was asked from, with the fields to fill.
+  const status = await mert.page.$$eval('.qa__grid select', (els) => els.map((e) => (e as HTMLSelectElement).value));
+  expect(status.includes('doing'), `column not preset: ${status.join(',')}`);
+  await mert.page.keyboard.press('Escape');
+  await mert.page.waitForFunction(() => !document.querySelector('.qa'));
+});
+
 await step('drag the card to another column and the move is saved', async () => {
   const card = await byText(mert.page, '.card__title', 'Yenileme riskini konuş');
   const from = (await card.boundingBox())!;
@@ -127,12 +138,13 @@ await step('switch the interface to English from the personal menu', async () =>
   await mert.page.keyboard.press('Escape');
 });
 
-await step('quick add reads a date, a person and a priority from one line', async () => {
+await step('the New task dialog fills its fields from one line', async () => {
   await mert.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
   await mert.page.keyboard.press('n');
   await mert.page.waitForSelector('.qa__input');
   await mert.page.type('.qa__input', 'QBR sunumunu hazırla yarın @zeynep !yüksek');
-  await mert.page.waitForSelector('.qchip[data-kind="person"]');
+  // People, date and priority read from the title show in their fields, marked "from the title".
+  await mert.page.waitForFunction(() => document.querySelectorAll('.qa__from').length >= 3);
   await shot(mert.page, 'e2e-06-quick-add');
   await mert.page.keyboard.press('Enter');
   await mert.page.waitForFunction(() => !document.querySelector('.qa'));
@@ -615,7 +627,7 @@ await step('search with Ctrl+K, change tasks together, then undo', async () => {
 
 await step('an API key is shown once and works; an AI assistant asks and the person allows', async () => {
   const local = `http://localhost:${new URL(s.origin).port}`;
-  const asCompany = { 'x-tendwell-org': 'demo' };
+  const asCompany = { 'x-curahold-org': 'demo' };
   await mert.page.goto(`${s.origin}/profile`, { waitUntil: 'networkidle0' });
   const mcp = await mert.page.$$eval('.sheet input[readonly]', (els) => els.map((e) => (e as HTMLInputElement).value).find((v) => v.endsWith('/mcp')));
   expect(mcp === `${s.origin}/mcp`, `connector address not shown: ${mcp}`);
@@ -630,7 +642,7 @@ await step('an API key is shown once and works; an AI assistant asks and the per
   await shot(mert.page, 'p5-01-api-key');
   await mert.page.keyboard.press('Escape');
 
-  // An assistant registers, sends Mert to Tendwell's consent screen, he allows.
+  // An assistant registers, sends Mert to Curahold's consent screen, he allows.
   const redirect = 'https://assistant.example.com/callback';
   const verifier = 'e2e-verifier-0123456789-0123456789-0123456789';
   const challenge = createHash('sha256').update(verifier).digest('base64url');
@@ -703,7 +715,7 @@ await step('help: a request with a screenshot and consent; support visits read o
   await p.waitForSelector('.help__shots img');
   await p.click('.help__details summary');
   await p.waitForSelector('.help__ctx pre');
-  await (await byText(p, '.help__consent strong', 'Tendwell desteğinin hesabıma bakmasına izin ver')).click();
+  await (await byText(p, '.help__consent strong', 'Curahold desteğinin hesabıma bakmasına izin ver')).click();
   await p.waitForSelector('.help__grant select');
   await p.select('.help__grant select', '72');
   await shot(p, 'p7-01-help-form');
@@ -723,8 +735,8 @@ await step('help: a request with a screenshot and consent; support visits read o
   const [grant] = await sql(`select id from support_grants order by created_at desc limit 1`);
   const res = await fetch(`http://localhost:8899/api/support/enter-link`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-tendwell-org': 'demo', 'x-tendwell-staff-key': STAFF_KEY },
-    body: JSON.stringify({ grantId: grant.id, staff: 'Deniz · Tendwell' }),
+    headers: { 'content-type': 'application/json', 'x-curahold-org': 'demo', 'x-curahold-staff-key': STAFF_KEY },
+    body: JSON.stringify({ grantId: grant.id, staff: 'Deniz · Curahold' }),
   });
   const link = await res.json();
   expect(res.status === 201 && link.url, `no entry link: ${JSON.stringify(link)}`);
@@ -996,7 +1008,7 @@ await step('live: a card someone else adds shows up without reloading; the bell 
     async (board, lenaId) => {
       const r = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-tendwell-device': localStorage.getItem('tw_device') ?? '' },
+        headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('tw_device') ?? '' },
         body: JSON.stringify({ boardId: board, title: 'Canlı gelen görev', assigneeIds: [lenaId] }),
       });
       return r.status;
@@ -1019,7 +1031,7 @@ await step('installable, and readable without a connection', async () => {
     return { status: r.status, body: await r.json() };
   });
   expect(manifest.status === 200 && manifest.body.display === 'standalone' && manifest.body.icons.length === 3, 'no install manifest');
-  expect(String(manifest.body.name).includes('Tendwell'), 'the manifest has no name');
+  expect(String(manifest.body.name).includes('Curahold'), 'the manifest has no name');
   for (const icon of manifest.body.icons) {
     const status = await omar.page.evaluate(async (src) => (await fetch(src)).status, icon.src);
     expect(status === 200, `icon missing: ${icon.src}`);

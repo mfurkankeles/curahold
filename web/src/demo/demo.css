@@ -32,7 +32,7 @@
   box-shadow: 0 20px 50px rgba(13, 68, 72, .25); z-index: 70;
 }
 .demobar__ideas ul { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 8px; line-height: 1.4; }
-.demobar__ideas .demobar__reset { color: var(--tend-ink); border-color: var(--line-strong); }
+.demobar__ideas .demobar__reset { color: var(--brand-ink); border-color: var(--line-strong); }
 
 @media (max-width: 760px) {
   .demobar { gap: 6px; padding: 0 8px; }

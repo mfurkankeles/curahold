@@ -72,13 +72,13 @@ describe('webhooks', () => {
   });
 
   it('a change is delivered once, signed with the secret', async () => {
-    const made = await ada.post('/api/dev/webhooks', { url: 'https://hooks.example.com/tendwell', events: ['task.created', 'comment.created'] });
+    const made = await ada.post('/api/dev/webhooks', { url: 'https://hooks.example.com/curahold', events: ['task.created', 'comment.created'] });
     expect(made.status).toBe(201);
     const secret: string = made.json.secret;
     expect(secret).toMatch(/^whsec_/);
     const got: { headers: Headers; body: string }[] = [];
     env.fetchHolder.impl = async (url, init) => {
-      if (url === 'https://hooks.example.com/tendwell') got.push({ headers: new Headers(init?.headers), body: String(init?.body) });
+      if (url === 'https://hooks.example.com/curahold') got.push({ headers: new Headers(init?.headers), body: String(init?.body) });
       return new Response('ok');
     };
     const boards = (await ada.get('/api/boards')).json.boards;
@@ -88,8 +88,8 @@ describe('webhooks', () => {
     const mine = got.filter((g) => JSON.parse(g.body).data?.id === task.id);
     expect(mine).toHaveLength(1);
     const { headers, body } = mine[0];
-    expect(headers.get('tendwell-event')).toBe('task.created');
-    const [, t, v1] = /^t=(\d+),v1=([0-9a-f]+)$/.exec(headers.get('tendwell-signature')!)!;
+    expect(headers.get('curahold-event')).toBe('task.created');
+    const [, t, v1] = /^t=(\d+),v1=([0-9a-f]+)$/.exec(headers.get('curahold-signature')!)!;
     expect(v1).toBe(createHmac('sha256', secret).update(`${t}.${body}`).digest('hex'));
     expect(JSON.parse(body).data.title).toBe('Webhook me');
     // Already sent: nothing goes out twice.
@@ -183,7 +183,7 @@ describe('apps and AI assistants (OAuth + MCP)', () => {
 
   it('the assistant sees the tools and works as the person', async () => {
     const init = await (await rpc(access, { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } })).json();
-    expect(init.result.serverInfo.name).toBe('tendwell');
+    expect(init.result.serverInfo.name).toBe('curahold');
     const tools = (await (await rpc(access, { jsonrpc: '2.0', id: 2, method: 'tools/list' })).json()).result.tools.map((t: any) => t.name);
     expect(tools).toEqual(expect.arrayContaining(['search', 'fetch', 'list_accounts', 'list_tasks', 'portfolio_summary', 'create_task', 'update_task']));
 

@@ -1,10 +1,10 @@
--- Tendwell — the customer timeline and an explainable health score.
+-- Curahold — the customer timeline and an explainable health score.
 --
 -- Activities are what happened with a customer: notes, calls, meetings,
 -- emails. Together with task changes, comments and score changes they make
 -- the customer's timeline, and they are what "last touch" counts from.
 --
--- The health score is worked out from Tendwell's own data with weights each
+-- The health score is worked out from Curahold's own data with weights each
 -- company chooses, and is kept as an ordinary (calculated) customer field so
 -- lists, filters, cards, exports, the API and CRM syncs all see it. It is
 -- recomputed only when something about that customer changes (marked here
@@ -47,7 +47,7 @@ create policy activities_update on activities for update
 create policy activities_delete on activities for delete
   using (org_id = app_org() and app_can_write() and (author_id = app_user() or app_has_perm('accounts.manage'))
          and exists (select 1 from accounts a where a.id = activities.account_id));
-grant select, insert, update, delete on activities to tendwell_app;
+grant select, insert, update, delete on activities to curahold_app;
 
 create trigger activities_webhook after insert on activities for each row execute function webhook_capture('activity');
 
@@ -115,7 +115,7 @@ create table health_history (
 alter table health_history enable row level security;
 create policy health_history_select on health_history for select
   using (org_id = app_org() and exists (select 1 from accounts a where a.id = health_history.account_id));
-grant select on health_history to tendwell_app;
+grant select on health_history to curahold_app;
 
 -- The score's settings live with the company. People who manage customers
 -- tune them without needing the rest of the company settings.
@@ -129,7 +129,7 @@ begin
                   account_fields = coalesce(p_fields, account_fields)
    where id = app_org();
 end $$;
-grant execute on function app_set_health(jsonb, jsonb) to tendwell_app;
+grant execute on function app_set_health(jsonb, jsonb) to curahold_app;
 
 -- ------------------------------------------------------------ task finished
 

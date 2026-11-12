@@ -7,20 +7,20 @@ import type { EmailSender, Storage } from './lib/services';
 import { fail } from './lib/errors';
 
 export interface Config {
-  /** e.g. "tendwell.com" — companies live at <slug>.tendwell.com */
+  /** e.g. "curahold.com" — companies live at <slug>.curahold.com */
   baseDomain: string;
   /** "https" in production, "http" for local development */
   scheme: 'https' | 'http';
   /** Port to append to company URLs in local development, e.g. 5173 */
   publicPort?: number;
-  /** Central host that receives OAuth callbacks, e.g. "app.tendwell.com" */
+  /** Central host that receives OAuth callbacks, e.g. "app.curahold.com" */
   centralHost: string;
   /** Self-hosted single-company mode: every request belongs to this slug. */
   singleTenantSlug?: string;
   authSecret: string;
   /** Development only: return sign-in tokens in API responses. */
   devExposeTokens: boolean;
-  /** Development only: accept the company from the x-tendwell-org header. */
+  /** Development only: accept the company from the x-curahold-org header. */
   devOrgHeader: boolean;
   maxDevices: number;
   sessionDays: number;
@@ -30,18 +30,18 @@ export interface Config {
   /** Seals connector credentials at rest; falls back to authSecret. */
   secretsKey?: string;
   connectors: ConnectorConfig;
-  /** Where requests for help go (Tendwell's own support desk). */
+  /** Where requests for help go (Curahold's own support desk). */
   support?: { email?: string; webhookUrl?: string };
-  /** The customer portal's own registrable domain, e.g. "tendwell-portal.com" (companies at <slug>.<portalDomain>). */
+  /** The customer portal's own registrable domain, e.g. "curahold-portal.com" (companies at <slug>.<portalDomain>). */
   portalDomain?: string;
-  /** Tendwell support's own key for opening an entry link into a company that granted access. */
+  /** Curahold support's own key for opening an entry link into a company that granted access. */
   staffKey?: string;
 }
 
-/** Tendwell's own app registrations with the messaging services. */
+/** Curahold's own app registrations with the messaging services. */
 export interface ConnectorConfig {
   slack?: { clientId: string; clientSecret: string; signingSecret: string };
-  /** Microsoft Teams bot (Azure Bot, single-tenant registration in Tendwell's tenant). */
+  /** Microsoft Teams bot (Azure Bot, single-tenant registration in Curahold's tenant). */
   teams?: { appId: string; appPassword: string; tenantId: string };
   /** Google Chat app: the Cloud project number (token audience) and its service account. */
   gchat?: { projectNumber: string; serviceAccountEmail: string; privateKey: string };
@@ -97,9 +97,9 @@ export type AppEnv = {
     org: OrgRow;
     locale: Locale;
     auth: AuthCtx;
-    /** An administrator looking at Tendwell as someone else (read only). */
+    /** An administrator looking at Curahold as someone else (read only). */
     previewBy?: { id: string; name: string };
-    /** Tendwell support, inside with a person's consent (see lib/support.ts). */
+    /** Curahold support, inside with a person's consent (see lib/support.ts). */
     supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
     tokenKind?: 'key' | 'oauth';
@@ -141,7 +141,7 @@ export const fetchOf = (deps: Deps) => deps.fetch ?? fetch;
 export const secretsKey = (cfg: Config) => cfg.secretsKey || cfg.authSecret;
 
 export function defer(deps: Deps, p: Promise<unknown>) {
-  const guarded = p.catch((err) => console.error('[tendwell] background task failed', err));
+  const guarded = p.catch((err) => console.error('[curahold] background task failed', err));
   if (deps.defer) deps.defer(guarded);
 }
 

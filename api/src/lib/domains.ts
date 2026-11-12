@@ -13,10 +13,10 @@ const PUBLIC_DOMAINS = new Set([
 export const emailDomain = (email: string) => email.slice(email.lastIndexOf('@') + 1).toLowerCase();
 export const isPublicDomain = (domain: string) => PUBLIC_DOMAINS.has(domain.toLowerCase());
 
-// Subdomains that belong to Tendwell itself.
+// Subdomains that belong to Curahold itself.
 export const RESERVED_SLUGS = new Set([
   'www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'support', 'billing', 'blog', 'demo',
-  'login', 'signup', 'static', 'assets', 'cdn', 'dev', 'test', 'staging', 'tendwell', 'console', 'servis', 'service',
+  'login', 'signup', 'static', 'assets', 'cdn', 'dev', 'test', 'staging', 'curahold', 'console', 'servis', 'service',
   'webhooks', 'hooks', 'oauth', 'id', 'account', 'accounts', 'security', 'legal', 'privacy', 'about', 'pricing',
 ]);
 

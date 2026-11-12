@@ -9,7 +9,7 @@ import { postgresDb } from '../api/src/db/postgres';
 import { MemoryEmail, MemoryStorage } from '../api/src/lib/services';
 import { seedDemo } from '../scripts/seed-demo';
 
-export const BASE = 'tendwell.test';
+export const BASE = 'curahold.test';
 
 export function testConfig(over: Partial<Config> = {}): Config {
   return {
@@ -89,7 +89,7 @@ export class Client {
   ) {}
 
   async req(method: string, path: string, body?: unknown, extra: Record<string, string> = {}) {
-    const headers: Record<string, string> = { 'x-tendwell-device': this.device, ...extra };
+    const headers: Record<string, string> = { 'x-curahold-device': this.device, ...extra };
     if (this.cookie) headers.cookie = this.cookie;
     let payload: BodyInit | undefined;
     if (body instanceof FormData) payload = body;

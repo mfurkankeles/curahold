@@ -23,7 +23,7 @@ Her müşteri sayfasında bir **zaman çizelgesi** ve, açtıysanız, bir **sağ
 
 ## Sağlık skoru
 
-Ayarlar → Sağlık skoru'ndan açılır. Her müşteri için 0 ile 100 arası bir sayıdır ve Tendwell'de zaten olan bilgilerden hesaplanır:
+Ayarlar → Sağlık skoru'ndan açılır. Her müşteri için 0 ile 100 arası bir sayıdır ve Curahold'da zaten olan bilgilerden hesaplanır:
 
 | Sinyal | Tam puan | Sıfır puan |
 | --- | --- | --- |

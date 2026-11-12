@@ -1,4 +1,4 @@
--- Tendwell — stakeholders: who reports to whom (the org chart), and the
+-- Curahold — stakeholders: who reports to whom (the org chart), and the
 -- stakeholder fields on contacts (first and last name, LinkedIn, decision
 -- role, stance towards us).
 

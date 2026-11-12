@@ -1,5 +1,5 @@
 // What happened with a customer, newest first: notes, calls, meetings,
-// emails and business reviews people logged, plus what Tendwell saw happen
+// emails and business reviews people logged, plus what Curahold saw happen
 // around them.
 export const ACTIVITY_KINDS = ['note', 'call', 'meeting', 'email', 'review'] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];

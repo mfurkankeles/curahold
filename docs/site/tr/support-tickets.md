@@ -6,9 +6,9 @@ summary: Destek araçlarını bağlamak, Salesforce ve Dynamics vakaları, API i
 ---
 # Destek talepleri
 
-Destek talepleri Tendwell'de **Destek talebi** türündeki kayıtlardır ve her biri bir müşteriye bağlıdır. Müşteri sayfasında ve zaman çizelgesinde görünürler. Açık talep sayısı gibi müşteri alanlarını beslerler. Sağlık skorunda **Destek yükü** sinyali olarak sayılırlar.
+Destek talepleri Curahold'da **Destek talebi** türündeki kayıtlardır ve her biri bir müşteriye bağlıdır. Müşteri sayfasında ve zaman çizelgesinde görünürler. Açık talep sayısı gibi müşteri alanlarını beslerler. Sağlık skorunda **Destek yükü** sinyali olarak sayılırlar.
 
-Talepleri Tendwell'e getirmenin üç yolu var:
+Talepleri Curahold'a getirmenin üç yolu var:
 
 | Yol | Ne için |
 | --- | --- |
@@ -18,7 +18,7 @@ Talepleri Tendwell'e getirmenin üç yolu var:
 
 ## Hazır bağlantılar
 
-Ayarlar → CRM ve tablolar → **Destek araçları**. Aracın adresini ve aracın içinde oluşturduğun API anahtarını yapıştır. Tendwell anahtarı hemen dener ve şifreli saklar. Uygulama kaydı ya da onay süreci gerekmez.
+Ayarlar → CRM ve tablolar → **Destek araçları**. Aracın adresini ve aracın içinde oluşturduğun API anahtarını yapıştır. Curahold anahtarı hemen dener ve şifreli saklar. Uygulama kaydı ya da onay süreci gerekmez.
 
 | Araç | Gerekenler | Gelenler |
 | --- | --- | --- |
@@ -27,19 +27,19 @@ Ayarlar → CRM ve tablolar → **Destek araçları**. Aracın adresini ve arac�
 | Intercom | Bölge, erişim token'ı | Konuşmalar, şirketler |
 | Jira Service Management | Atlassian adresi, temsilci e-postası, API token'ı | Hizmet masası talepleri, organizasyonlar |
 
-Bu bağlantılar **yalnızca okur**. Tendwell'de yapılan değişiklik destek aracına yazılmaz.
+Bu bağlantılar **yalnızca okur**. Curahold'da yapılan değişiklik destek aracına yazılmaz.
 
 ### Müşteri nasıl bulunur
 
 1. Talebin organizasyonu (ya da şirketi) daha önce bir müşteriyle eşleştiyse o müşteri.
-2. Organizasyon, Tendwell'deki bir müşteriyle **adı** ya da **web adresi** aynı olduğu için eşleşir.
+2. Organizasyon, Curahold'daki bir müşteriyle **adı** ya da **web adresi** aynı olduğu için eşleşir.
 3. Organizasyonu olmayan talep, talep edenin **e-posta alan adı** müşterinin web adresiyle aynıysa ona bağlanır. Gmail ya da Outlook gibi genel e-posta adresleri kullanılmaz.
 
-Varsayılan olarak **yalnızca var olan müşterilere** bağlanılır: eşleşmeyen organizasyon yeni müşteri olarak eklenmez, müşterisi bulunamayan talep alınmaz. Eşleşen bir organizasyonun adı, Tendwell'deki müşterinin adını değiştirmez.
+Varsayılan olarak **yalnızca var olan müşterilere** bağlanılır: eşleşmeyen organizasyon yeni müşteri olarak eklenmez, müşterisi bulunamayan talep alınmaz. Eşleşen bir organizasyonun adı, Curahold'daki müşterinin adını değiştirmez.
 
-Durumlar ve öncelikler Tendwell'in kendi değerlerine çevrilir:
+Durumlar ve öncelikler Curahold'un kendi değerlerine çevrilir:
 
-| Tendwell | Örnekler |
+| Curahold | Örnekler |
 | --- | --- |
 | Açık | new, open, Working, Escalated |
 | Beklemede | pending, hold, snoozed, Waiting for customer |
@@ -57,8 +57,8 @@ Bağlı bir Salesforce ya da Dynamics 365 eşitlemesinde **Case** nesnesini aç 
 Yazma yetkili bir [API anahtarıyla](/docs/tr/api-keys/) aynı talebi istediğin kadar gönder. İlk gönderim oluşturur, sonrakiler günceller:
 
 ```bash
-curl -X PUT https://sirketin.tendwell.com/api/tickets/my-helpdesk/4711 \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X PUT https://sirketin.curahold.com/api/tickets/my-helpdesk/4711 \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{
     "subject": "Rapor dışa aktarılamıyor",
     "status": "open",
@@ -90,7 +90,7 @@ Müşteri sırasıyla şunlarla bulunur: `account.id`, `account.domain`, talep e
 Kendi kimlik doğrulamasını ekleyemeyen araçlar için: Ayarlar → Geliştirici → **Diğer araçlardan destek talepleri** → **Adres oluştur**. Adres yalnızca bir kez gösterilir ve bir parola gibi çalışır. Gövdeye `source` ve `externalId` alanlarını ekleyip aynı biçimde gönder:
 
 ```bash
-curl -X POST "https://sirketin.tendwell.com/api/inbound/tickets/<token>" \
+curl -X POST "https://sirketin.curahold.com/api/inbound/tickets/<token>" \
   -H "Content-Type: application/json" \
   -d '{ "source": "forms", "externalId": "77", "subject": "Yeni özellik isteği", "account": { "name": "Velto Mobility" } }'
 ```

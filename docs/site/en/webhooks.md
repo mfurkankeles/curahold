@@ -6,7 +6,7 @@ summary: Events, the message format, verifying signatures and retries.
 ---
 # Webhooks
 
-With a webhook, Tendwell sends a message to your address within seconds of a change. No need to keep asking what changed.
+With a webhook, Curahold sends a message to your address within seconds of a change. No need to keep asking what changed.
 
 ## Adding one
 
@@ -38,15 +38,15 @@ If something changes several times within a minute, one message goes out, carryi
 ```http
 POST /your-endpoint HTTP/1.1
 Content-Type: application/json
-Tendwell-Event: task.updated
-Tendwell-Signature: t=1794394831,v1=5f2b…
+Curahold-Event: task.updated
+Curahold-Signature: t=1794394831,v1=5f2b…
 
 {
   "id": "9b0c…",
   "event": "task.updated",
   "occurredAt": "2026-11-11T10:20:31.000Z",
   "company": "yourcompany",
-  "url": "https://yourcompany.tendwell.com",
+  "url": "https://yourcompany.curahold.com",
   "data": { "id": "…", "title": "Send the renewal proposal", "status": "done", "done": true, "dueDate": "2027-01-15" }
 }
 ```
@@ -55,7 +55,7 @@ The same message can arrive more than once; use `id` to drop repeats.
 
 ## Verifying the signature
 
-`v1` in the `Tendwell-Signature` header is the HMAC-SHA256 of `t + "." + body` with your secret. Use the body exactly as received, before parsing it. Reject `t` values older than five minutes.
+`v1` in the `Curahold-Signature` header is the HMAC-SHA256 of `t + "." + body` with your secret. Use the body exactly as received, before parsing it. Reject `t` values older than five minutes.
 
 ```js
 // Node.js
@@ -85,6 +85,6 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 ## Answering, and retries
 
 - Answer `2xx` within 10 seconds. Do the work afterwards.
-- With no answer, or anything but `2xx`, Tendwell tries again after 1, 5, 30, 120 and 360 minutes: 6 tries in all.
+- With no answer, or anything but `2xx`, Curahold tries again after 1, 5, 30, 120 and 360 minutes: 6 tries in all.
 - A webhook that fails 50 times in a row is paused. Turn it back on with **Resume** in Settings → Developers.
 - Redirects are not followed; give the final address.

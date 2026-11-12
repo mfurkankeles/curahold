@@ -20,7 +20,7 @@ class Failure extends Error {
 
 let apiLocale: Locale = 'en';
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { 'x-tendwell-portal': '1', 'x-tendwell-locale': apiLocale };
+  const headers: Record<string, string> = { 'x-curahold-portal': '1', 'x-curahold-locale': apiLocale };
   if (body !== undefined) headers['content-type'] = 'application/json';
   let res: Response;
   try {

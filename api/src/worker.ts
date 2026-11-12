@@ -45,12 +45,12 @@ export interface Env {
   ZOHO_CLIENT_SECRET?: string;
   /** Live demo only: offer the pretend CRM. */
   DEMO_CRM?: string;
-  /** Help requests go to Tendwell's support desk: an address, and/or a signed webhook. */
+  /** Help requests go to Curahold's support desk: an address, and/or a signed webhook. */
   SUPPORT_EMAIL?: string;
   SUPPORT_WEBHOOK_URL?: string;
   /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
   STAFF_KEY?: string;
-  /** The customer portal's own domain, e.g. tendwell-portal.com (unset: no portal). */
+  /** The customer portal's own domain, e.g. curahold-portal.com (unset: no portal). */
   PORTAL_DOMAIN?: string;
 }
 

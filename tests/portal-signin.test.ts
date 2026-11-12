@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createPortalApp } from '../api/src/portal';
 import { BASE, login, setup, type Client, type Env } from './helpers';
 
-const PORTAL = 'tendwell-portal.test';
+const PORTAL = 'curahold-portal.test';
 const HOST = `acme.${PORTAL}`;
 const ORIGIN = `https://${HOST}`;
 let env: Env;
@@ -17,7 +17,7 @@ const SELIN = 'selin@quillfield.example';
 class PortalClient {
   jar = new Map<string, string>();
   async req(method: string, path: string, body?: unknown) {
-    const h: Record<string, string> = { 'x-tendwell-portal': '1', 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/131.0' };
+    const h: Record<string, string> = { 'x-curahold-portal': '1', 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/131.0' };
     if (this.jar.size) h.cookie = [...this.jar].map(([k, v]) => `${k}=${v}`).join('; ');
     if (body !== undefined) h['content-type'] = 'application/json';
     const res = await portal.request(path.startsWith('http') ? path : `${ORIGIN}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });

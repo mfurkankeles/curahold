@@ -6,11 +6,13 @@ summary: Görevi konuşur gibi yaz; tarih, kişi, müşteri, öncelik ve tekrar 
 ---
 # Hızlı ekleme ve kısayollar
 
-Görev eklemek tek satır yazmak kadar kolay. **N** tuşuna bas (ya da soldaki **+ Yeni → Görev**, telefonda alttaki **+**), görevi aklına geldiği gibi yaz, **Enter**.
+**N** tuşuna bas (ya da soldaki **+ Yeni → Görev**, bir sütunun altındaki **Görev ekle**, telefonda alttaki **+**): **Yeni görev** penceresi açılır. Başlığın altında görevin ayrıntıları sorulur: açıklama, müşteri, bağlı olduğu kayıt (fırsat, sözleşme…), atananlar, son tarih, öncelik, tekrar, pano ve sütun, ayrıca panonun kendi alanları. Sütundan açtıysan sütun, müşteri sayfasından açtıysan müşteri hazır gelir.
+
+Alanları tek tek doldurmak zorunda değilsin; başlığı aklına geldiği gibi yazman yeter:
 
 > Acme ile yenileme görüşmesi cuma @Ayşe #Acme !yüksek
 
-Bu satır; Ayşe’ye verilmiş, Acme müşterisine bağlı, cuma günü teslim, yüksek öncelikli bir görev olur. Yazdıkça neyin anlaşıldığı satırın altında küçük etiketler olarak görünür; tarih etiketi, görevin zamanının rengini taşır.
+Bu satırla alanlar kendiliğinden dolar: atanan Ayşe, müşteri Acme, son tarih cuma, öncelik yüksek. Başlıktan dolan alanların yanında **başlıktan** yazar. Bir alanı elle değiştirirsen başlıktaki karşılığı çıkar, alan senin seçtiğin değerle kalır. **Enter** ekler; başka bir alandayken **Ctrl Enter** (Mac’te ⌘ Enter).
 
 ## Ne yazılır?
 

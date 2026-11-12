@@ -1,5 +1,5 @@
 // The CRM and spreadsheet adapters, and which of them this server can offer
-// (each needs Tendwell's own app registration with the service).
+// (each needs Curahold's own app registration with the service).
 import type { ProviderInfo } from '../../../../shared/src/model';
 import type { CrmProvider } from '../../../../shared/src/sync';
 import type { Config } from '../../context';
@@ -18,7 +18,7 @@ export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubsp
 
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
-/** Tendwell's own registration with the service; spreadsheets reuse the sign-in apps. */
+/** Curahold's own registration with the service; spreadsheets reuse the sign-in apps. */
 export function oauthClient(cfg: Config, provider: CrmProvider): OAuthClient | null {
   if (CRM_ADAPTERS[provider]?.keyed) return null;
   const own = cfg.connectors.crm?.[provider as keyof NonNullable<typeof cfg.connectors.crm>];

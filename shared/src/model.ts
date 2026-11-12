@@ -156,7 +156,7 @@ export type Localized = Partial<Record<Locale, string>>;
 export const FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email'] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
-/** Tendwell's own option colours, named for what they look like. */
+/** Curahold's own option colours, named for what they look like. */
 export const OPTION_COLORS = ['sea', 'leaf', 'honey', 'coral', 'sky', 'plum', 'stone', 'rose'] as const;
 export type OptionColor = (typeof OPTION_COLORS)[number];
 
@@ -194,16 +194,16 @@ export interface AccountField {
   label: Localized;
   type: FieldType;
   options?: FieldOption[];
-  /** Filled in by Tendwell from records; read-only for people. */
+  /** Filled in by Curahold from records; read-only for people. */
   rollup?: Rollup;
-  /** The health score: worked out by Tendwell (see health.ts); read-only for people. */
+  /** The health score: worked out by Curahold (see health.ts); read-only for people. */
   health?: true;
   access?: FieldAccess;
   /** Set by the server for the person asking: they can see it but not change it. */
   locked?: boolean;
 }
 
-/** Worked out by Tendwell rather than typed in: rollups and the health score. */
+/** Worked out by Curahold rather than typed in: rollups and the health score. */
 export const calculated = (f: Pick<AccountField, 'rollup' | 'health'> | undefined | null) => !!(f?.rollup || f?.health);
 
 export interface Account {
@@ -354,9 +354,9 @@ export interface Me {
   org: Org;
   teamIds: string[];
   sessionId: string;
-  /** Set while an administrator looks at Tendwell as this person (read only). */
+  /** Set while an administrator looks at Curahold as this person (read only). */
   previewBy?: { id: string; name: string };
-  /** Set while Tendwell support is inside with this person's consent. */
+  /** Set while Curahold support is inside with this person's consent. */
   supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
   /** Support access this person has given and not yet closed. */
   supportOpen?: { until: string; level: 'view' | 'edit'; count: number };
@@ -613,7 +613,7 @@ export interface AuditEntry {
   entity: string;
   entityId: string | null;
   at: string;
-  /** Tendwell support's staff member, on support entries. */
+  /** Curahold support's staff member, on support entries. */
   staff?: string;
 }
 

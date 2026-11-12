@@ -40,4 +40,4 @@ Bir alanı belirli rollerden gizleyebilir ya da yalnızca görülebilir yapabili
 
 ## Onun gözünden bak
 
-Ayarlar → Roller'de bir kişinin yanında **Onun gözünden bak** düğmesi vardır. Tendwell'i o kişinin gördüğü gibi açar. Bu sırada hiçbir şey değiştirilemez ve en üstteki şeritten kendi görünümüne dönersin.
+Ayarlar → Roller'de bir kişinin yanında **Onun gözünden bak** düğmesi vardır. Curahold'u o kişinin gördüğü gibi açar. Bu sırada hiçbir şey değiştirilemez ve en üstteki şeritten kendi görünümüne dönersin.

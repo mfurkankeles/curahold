@@ -68,7 +68,7 @@ describe('setup wizard, start to finish', () => {
     expect(env.email.last('max@harbor-co.example')).toBeUndefined();
     const fin = await admin.post('/api/setup/finish', { sendInvites: true });
     expect(fin.json.invited).toBe(3);
-    expect(env.email.last('max@harbor-co.example').subject).toBe('Dana Reyes invited you to Harbor Co on Tendwell');
+    expect(env.email.last('max@harbor-co.example').subject).toBe('Dana Reyes invited you to Harbor Co on Curahold');
     const after = (await admin.get('/api/me')).json.org.setup;
     expect(after.finishedAt).toBeTruthy();
     expect(after.ownerHints).toBeUndefined();

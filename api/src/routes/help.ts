@@ -1,4 +1,4 @@
-// Asking Tendwell for help, and Tendwell support's way in (only with consent).
+// Asking Curahold for help, and Curahold support's way in (only with consent).
 //
 //   helpRoutes     — signed-in people: send a request, see their requests,
 //                    grant / revoke support access, set the company policy.
@@ -158,7 +158,7 @@ const LABEL: Record<string, string> = {
   minor: 'minor',
 };
 
-/** Tendwell's support desk gets everything in one message, so nobody has to ask twice. */
+/** Curahold's support desk gets everything in one message, so nobody has to ask twice. */
 async function tellSupport(deps: Deps, org: OrgRow, who: { name: string; email: string; role: string }, req: Row, files: Row[], grant: Row | null) {
   const dest = deps.config.support;
   if (!dest?.email && !dest?.webhookUrl) return;
@@ -210,7 +210,7 @@ async function tellSupport(deps: Deps, org: OrgRow, who: { name: string; email: 
     send.push(
       fetchOf(deps)(dest.webhookUrl, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'tendwell-signature': `t=${t},v1=${sig}` },
+        headers: { 'content-type': 'application/json', 'curahold-signature': `t=${t},v1=${sig}` },
         body: payload,
       }),
     );

@@ -1,6 +1,6 @@
 # Running cost per customer (gross margin)
 
-Tendwell is priced per seat; every feature is built so that a seat costs
+Curahold is priced per seat; every feature is built so that a seat costs
 close to nothing to serve. Rules each change follows:
 
 1. **No extra paid services.** Search runs in the Postgres the product

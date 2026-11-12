@@ -1,4 +1,4 @@
-// Tendwell as an installed app: the service worker (offline reading), the
+// Curahold as an installed app: the service worker (offline reading), the
 // browser's install prompt, and knowing whether there is a connection.
 import { useEffect, useState } from 'react';
 

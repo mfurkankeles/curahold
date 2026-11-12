@@ -334,7 +334,7 @@ async function cardsData(c: C, q: Q, cards: Card[], people: string[] | null = nu
     try {
       out[card.id] = await cardData(ctx, card);
     } catch (e) {
-      console.error('[tendwell] card', card.type, e);
+      console.error('[curahold] card', card.type, e);
       out[card.id] = { kind: 'list', rows: [], total: 0 };
     }
   }

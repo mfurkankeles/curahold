@@ -1,8 +1,17 @@
-// Quick add: write the task the way you would say it. "Acme ile yenileme
-// görüşmesi cuma @Ayşe #Acme !yüksek" becomes a task due Friday, for Ayşe,
-// on Acme, high priority. Paste several lines and each one becomes a task.
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Account, Priority, Task } from '../../../shared/src/model';
+// New task: the one dialog behind every "add task" button — a column's, the
+// board's, the "+ New" menu, My tasks, the calendar, a customer's page and an
+// opportunity's panel.
+//
+// It asks for the details as plain fields (customer, related record, people,
+// due date, priority, repeat, board and column, the board's own fields and a
+// description). The title can still be written the way you would say it —
+// "Renewal call friday @Ayşe #Acme !high" — and the fields fill themselves
+// from it; a field changed by hand takes over from the title. Several lines in
+// the title make several tasks at once, each with the fields below.
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { labelOf } from '../../../shared/src/fields';
+import { PRIORITIES, type Account, type Priority, type Repeat, type Task, type TaskFieldValue } from '../../../shared/src/model';
+import type { AppRecord, RecordType } from '../../../shared/src/records';
 import { ApiFailure, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { fold, parseQuick, pickAt, removeToken, type Parsed, type Pickable, type TokenKind } from '../lib/quickparse';
@@ -10,10 +19,15 @@ import { setQuery } from '../lib/router';
 import { tasksChanged, type QuickDefaults } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState } from '../lib/time';
+import { AccountPicker } from './AccountPicker';
 import { Icon, type IconName } from './icons';
-import { Avatar } from './ui';
+import { TaskFieldInput } from './TaskExtras';
+import { RepeatPicker } from './TaskPanel';
+import { Avatar, PeoplePicker } from './ui';
 
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
+
+// Small per-device conveniences: the board used last, and "keep adding".
 const LAST_BOARD = 'tw_quick_board';
 const KEEP = 'tw_quick_keep';
 const read = (k: string) => {
@@ -31,22 +45,46 @@ const write = (k: string, v: string | null) => {
     /* per-device convenience */
   }
 };
+const uniq = (ids: string[]) => [...new Set(ids)];
+
+/** A record a task can belong to: an opportunity, an agreement, a risk… (not a contact). */
+interface RecordOption {
+  id: string;
+  name: string;
+  kind: string;
+}
 
 export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClose: () => void }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { me, boards, people, toast } = useStore();
+
+  // ------------------------------------------------------------- what is written
   const [text, setText] = useState(defaults.text ?? '');
+  const [description, setDescription] = useState('');
+
+  // ------------------------------------------------------------ where it goes
   const [boardId, setBoardId] = useState(() => {
     const want = defaults.boardId ?? read(LAST_BOARD);
     return boards.find((b) => b.id === want)?.id ?? boards[0]?.id ?? '';
   });
   const board = boards.find((b) => b.id === boardId);
   const [status, setStatus] = useState(defaults.status ?? '');
+
+  // ------------------------------------------------------------- the fields
+  // As set by hand, or handed in by the page that opened the dialog. While the
+  // title names one of them ("friday", "@Ayşe", "#Acme", "!high"), the title wins.
   const [fixedAccount, setFixedAccount] = useState<Pickable | null>(defaults.accountId ? { id: defaults.accountId, name: defaults.accountName ?? '' } : null);
   const [fixedPeople, setFixedPeople] = useState<string[]>(defaults.assigneeIds ?? []);
   const [fixedDue, setFixedDue] = useState<string | null>(defaults.dueDate ?? null);
-  // The record the task belongs to, kept unless taken off.
+  // A rhythm in the title ("every monday") also gives a first date; a date set by hand beats it.
+  const [dueByHand, setDueByHand] = useState(false);
+  const [fixedPriority, setFixedPriority] = useState<Priority>('normal');
+  const [fixedRepeat, setFixedRepeat] = useState<Repeat | null>(null);
   const [fixedRecord, setFixedRecord] = useState<Pickable | null>(defaults.recordId ? { id: defaults.recordId, name: defaults.recordName ?? '' } : null);
+  // The board's own fields ("Type", "Product"…), by key.
+  const [fieldValues, setFieldValues] = useState<Record<string, TaskFieldValue>>({});
+
+  // ------------------------------------------------------------ the dialog
   const [found, setFound] = useState<Map<string, Pickable>>(new Map());
   const [caret, setCaret] = useState(0);
   const [suggest, setSuggest] = useState<{ items: Pickable[]; active: number } | null>(null);
@@ -55,16 +93,18 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   const [keep, setKeep] = useState(() => read(KEEP) === '1');
   const [howOpen, setHowOpen] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
-  const dialog = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
 
+  // A column that is not on the chosen board falls back to the board's first one.
   useEffect(() => {
     if (!board) return;
     if (!board.columns.some((c) => c.key === status)) setStatus(board.columns[0]?.key ?? '');
   }, [board, status]);
+  // Another board has other fields.
+  useEffect(() => setFieldValues({}), [boardId]);
 
-  // Focus in, Escape out, focus back where it was.
+  // Focus in, focus back where it was on the way out.
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     const el = box.current;
@@ -75,10 +115,12 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     return () => prev?.focus?.();
   }, []);
 
-  const pickable = useMemo(() => people.filter((p) => p.seat === 'full' && (p.status === 'active' || p.status === 'invited')).map((p) => ({ id: p.id, name: p.name })), [people]);
+  const assignable = useMemo(() => people.filter((p) => p.seat === 'full' && (p.status === 'active' || p.status === 'invited')), [people]);
+  const pickable = useMemo(() => assignable.map((p) => ({ id: p.id, name: p.name })), [assignable]);
   const meP = useMemo(() => ({ id: me.user.id, name: me.user.name }), [me.user.id, me.user.name]);
   const accountsKnown = useMemo(() => [...found.values()], [found]);
 
+  // ------------------------------------------------- reading the title as it is typed
   // Customers are looked up as they are typed after "#".
   const at = pickAt(text, caret);
   const query = at?.kind === '#' ? at.query : null;
@@ -140,7 +182,59 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   const many = lines.length > 1;
   const ready = parsed.length > 0 && parsed.every((p) => p.title) && !!board;
 
-  // An open task that looks like this one: said before adding, never in the way.
+  // --------------------------------------------------- what the fields show
+  // One task: the title's words first, then the fields. Several: the fields are
+  // what every line gets unless the line says otherwise (see submit).
+  const single = !many ? parsed[0] : undefined;
+  const has = (kind: TokenKind) => !!single?.tokens.some((x) => x.kind === kind);
+  const dueFromTitle = has('due') || (!dueByHand && !!single?.dueDate);
+  const due = dueFromTitle ? (single?.dueDate ?? null) : fixedDue;
+  const account = single?.account ?? fixedAccount;
+  const assignees = uniq([...fixedPeople, ...(single?.assignees.map((a) => a.id) ?? [])]);
+  const priority = single?.priority ?? fixedPriority;
+  const repeat = single?.repeat ?? fixedRepeat;
+  const dueToken = single?.tokens.find((x) => x.kind === 'due' || (x.kind === 'repeat' && dueFromTitle));
+
+  /**
+   * A field set by hand: what the title said about it gives way. A date or a
+   * rhythm cleared by hand stays in the title as words ("friday" was not a date
+   * after all); one changed by hand leaves the title, as do names and priorities.
+   */
+  const takeOver = (kinds: TokenKind | TokenKind[], cleared = false) => {
+    if (!single) return;
+    const list = Array.isArray(kinds) ? kinds : [kinds];
+    let next = text;
+    for (const tok of single.tokens.filter((x) => list.includes(x.kind))) next = removeToken(next, tok, cleared && (tok.kind === 'due' || tok.kind === 'repeat'));
+    if (next !== text) setText(next);
+  };
+
+  // --------------------------------------------- the records a task can belong to
+  // Once a customer is chosen: its opportunities, agreements, risks… to pick from.
+  const accountId = many ? (fixedAccount?.id ?? null) : (account?.id ?? null);
+  const [recordOptions, setRecordOptions] = useState<RecordOption[]>([]);
+  const kinds = useRef<RecordType[] | null>(null);
+  useEffect(() => {
+    if (!accountId) return setRecordOptions([]);
+    let live = true;
+    const id = setTimeout(async () => {
+      try {
+        if (!kinds.current) kinds.current = (await get<{ types: RecordType[] }>('/record-types')).types;
+        const r = await get<{ records: AppRecord[] }>(`/records?account=${encodeURIComponent(accountId)}&limit=100`);
+        if (!live) return;
+        const label = new Map(kinds.current.filter((k) => k.kind !== 'contact' && !k.archivedAt).map((k) => [k.id, labelOf(k.name.one, locale)]));
+        setRecordOptions(r.records.filter((x) => label.has(x.typeId) && !x.archivedAt).map((x) => ({ id: x.id, name: x.name, kind: label.get(x.typeId) ?? '' })));
+      } catch {
+        if (live) setRecordOptions([]);
+      }
+    }, 150);
+    return () => {
+      live = false;
+      clearTimeout(id);
+    };
+  }, [accountId, locale]);
+
+  // ------------------------------------------- an open task that looks like this one
+  // Said before adding, never in the way.
   const [similar, setSimilar] = useState<{ id: string; title: string; boardName: string }[]>([]);
   const firstTitle = !many ? (parsed[0]?.title ?? '') : '';
   const firstAccount = parsed[0]?.account?.id ?? fixedAccount?.id ?? '';
@@ -159,6 +253,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     };
   }, [firstTitle, boardId, firstAccount]);
 
+  /** A name picked from the @ / # list goes into the title. */
   const accept = (item: Pickable) => {
     if (!at) return;
     const insert = `${at.kind}${item.id === meP.id && at.kind === '@' ? (locale === 'tr' ? 'ben' : 'me') : item.name} `;
@@ -174,25 +269,32 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     });
   };
 
+  // ------------------------------------------------------------------ adding
   const submit = async () => {
     if (!ready || busy || !board) return;
     setBusy(true);
     setError('');
     const made: Task[] = [];
+    const extra = Object.fromEntries(Object.entries(fieldValues).filter(([, v]) => v !== null && v !== ''));
+    // A record belongs to one customer: it goes with the task only while that customer is the task's.
+    const recordOk = !!fixedRecord && (recordOptions.some((r) => r.id === fixedRecord.id) || (fixedRecord.id === defaults.recordId && accountId === (defaults.accountId ?? null)));
     try {
       for (const p of parsed) {
-        const assignees = [...new Set([...fixedPeople, ...p.assignees.map((a) => a.id)])];
-        const r = await post<{ task: Task }>('/tasks', {
+        // One task: what the fields show. Several: the line's own words, then the fields.
+        const body = {
           boardId: board.id,
           status: status || board.columns[0].key,
           title: p.title,
-          dueDate: p.dueDate ?? fixedDue,
-          assigneeIds: assignees,
-          accountId: p.account?.id ?? fixedAccount?.id ?? null,
-          ...(fixedRecord ? { recordId: fixedRecord.id } : {}),
-          ...(p.priority ? { priority: p.priority } : {}),
-          ...(p.repeat ? { repeat: p.repeat } : {}),
-        });
+          description: description.trim() || undefined,
+          dueDate: many ? (p.dueDate ?? fixedDue) : due,
+          assigneeIds: many ? uniq([...fixedPeople, ...p.assignees.map((a) => a.id)]) : assignees,
+          accountId: many ? (p.account?.id ?? fixedAccount?.id ?? null) : (account?.id ?? null),
+          priority: many ? (p.priority ?? fixedPriority) : priority,
+          ...((many ? (p.repeat ?? fixedRepeat) : repeat) ? { repeat: many ? (p.repeat ?? fixedRepeat) : repeat } : {}),
+          ...(recordOk && fixedRecord ? { recordId: fixedRecord.id } : {}),
+          ...(Object.keys(extra).length ? { fields: extra } : {}),
+        };
+        const r = await post<{ task: Task }>('/tasks', body);
         made.push(r.task);
       }
       write(LAST_BOARD, board.id);
@@ -202,7 +304,10 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
         toast(defaults.doneText ?? t('quick.added', { title: task.title }), 'info', { label: t('quick.open'), run: () => setQuery('task', task.id) });
       } else toast(t('quick.addedMany', { n: made.length, board: board.name }));
       if (keep) {
+        // The next task usually shares the customer, people and board: those stay.
         setText('');
+        setDescription('');
+        setFieldValues({});
         box.current?.focus();
       } else onClose();
     } catch (e) {
@@ -214,7 +319,9 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     }
   };
 
-  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  // --------------------------------------------------------------- keyboard
+  /** In the title: the @ / # list, Enter to add one task, Escape to leave. */
+  const onTitleKey = (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
     if (suggest && suggest.items.length && at) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -234,11 +341,6 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
         return;
       }
     }
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close.current();
-      return;
-    }
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       // One line: Enter adds. Several: Ctrl/⌘ Enter adds them all, Enter starts a new line.
       if (!many || e.metaKey || e.ctrlKey) {
@@ -247,8 +349,19 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
       }
     }
   };
+  /** Anywhere in the dialog: Ctrl/⌘ Enter adds, Escape leaves (unless a picker is open). */
+  const onDialogKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.defaultPrevented) return;
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      void submit();
+    } else if (e.key === 'Escape' && !(e.target as HTMLElement).closest('.picker__pop')) {
+      e.preventDefault();
+      close.current();
+    }
+  };
 
-  // The box grows with what is written.
+  // The title box grows with what is written.
   useEffect(() => {
     const el = box.current;
     if (!el) return;
@@ -265,6 +378,9 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     return Number(every) === 1 ? t(`quick.every1.${unit}` as any) : t(`quick.everyN.${unit}` as any, { n: Number(every) });
   };
   const dueOf = (iso: string) => dueState(iso, false);
+  const accountWord = words.one.toLocaleLowerCase(locale);
+  /** The small "from the title" mark beside a field the title filled. */
+  const fromTitle = (on: boolean) => (on ? <span className="qa__from">{t('quick.fromTitle')}</span> : null);
 
   const examples = locale === 'tr'
     ? ['Yenileme görüşmesi cuma @ben #', 'QBR sunumu hazırla 15 kasım !yüksek', 'Haftalık rapor her pazartesi', 'Fatura kontrolü ay sonu']
@@ -273,7 +389,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   if (!boards.length) {
     return (
       <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-        <div className="qa" role="dialog" aria-modal="true" aria-label={t('quick.title')} ref={dialog}>
+        <div className="qa" role="dialog" aria-modal="true" aria-label={t('quick.title')} onKeyDown={onDialogKey}>
           <div className="qa__empty">
             <Icon name="board" size={22} />
             <p>{t('quick.noBoards')}</p>
@@ -286,10 +402,9 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
     );
   }
 
-  const single = parsed[0];
   return (
     <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="qa" role="dialog" aria-modal="true" aria-labelledby="qa-title" ref={dialog}>
+      <div className="qa" role="dialog" aria-modal="true" aria-labelledby="qa-title" onKeyDown={onDialogKey}>
         <div className="qa__head">
           <h2 className="qa__title" id="qa-title">
             <Icon name="plus" size={16} /> {many ? t('quick.titleMany', { n: lines.length }) : t('quick.title')}
@@ -298,6 +413,8 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             <Icon name="close" size={16} />
           </button>
         </div>
+
+        {/* ------------------------------------------------------------ title */}
         <div className="qa__field">
           <textarea
             ref={box}
@@ -306,7 +423,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             value={text}
             placeholder={t('quick.placeholder')}
             aria-label={t('quick.label')}
-            aria-describedby="qa-hint"
+            aria-describedby="qa-tip"
             aria-autocomplete="list"
             aria-expanded={!!(suggest && at && suggest.items.length)}
             aria-controls="qa-suggest"
@@ -316,7 +433,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
               setError('');
             }}
             onSelect={(e) => setCaret((e.target as HTMLTextAreaElement).selectionStart)}
-            onKeyDown={onKey}
+            onKeyDown={onTitleKey}
             maxLength={20000}
           />
           {suggest && at && suggest.items.length > 0 && (
@@ -339,145 +456,22 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             </ul>
           )}
         </div>
-
-        {!many && single && (
-          <div className="qa__chips" aria-live="polite">
-            {fixedDue && !single.dueDate && (
-              <span className="qchip" data-kind="due" data-due={dueOf(fixedDue)}>
-                <Icon name="calendar" size={14} />
-                {fmtDate(fixedDue, { weekday: 'long', day: 'numeric', month: 'long' })}
-                <button type="button" aria-label={t('quick.removeChip', { what: fmtDate(fixedDue, { day: 'numeric', month: 'long' }) })} onClick={() => setFixedDue(null)}>
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            )}
-            {fixedRecord && (
-              <span className="qchip" data-kind="record">
-                <Icon name="funnel" size={14} />
-                {fixedRecord.name}
-                <button type="button" aria-label={t('quick.removeChip', { what: fixedRecord.name })} onClick={() => setFixedRecord(null)}>
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            )}
-            {fixedAccount && !single.account && (
-              <span className="qchip" data-kind="account">
-                <Icon name="building" size={14} />
-                {fixedAccount.name}
-                <button type="button" aria-label={t('quick.removeChip', { what: fixedAccount.name })} onClick={() => setFixedAccount(null)}>
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            )}
-            {fixedPeople
-              .filter((id) => !single.assignees.some((a) => a.id === id))
-              .map((id) => (
-                <span key={id} className="qchip" data-kind="person">
-                  <Icon name="user" size={14} />
-                  {id === meP.id ? t('quick.me') : (people.find((x) => x.id === id)?.name ?? '')}
-                  <button type="button" aria-label={t('quick.removeChip', { what: id === meP.id ? t('quick.me') : (people.find((x) => x.id === id)?.name ?? '') })} onClick={() => setFixedPeople(fixedPeople.filter((x) => x !== id))}>
-                    <Icon name="close" size={12} />
-                  </button>
-                </span>
-              ))}
-            {single.tokens.map((tok, i) => (
-              <span key={`${tok.kind}:${i}`} className="qchip" data-kind={tok.kind} data-due={tok.kind === 'due' ? dueOf(tok.value) : undefined} title={tok.text}>
-                <Icon name={KIND_ICON[tok.kind]} size={14} />
-                {chipLabel(single, tok)}
-                <button
-                  type="button"
-                  aria-label={tok.kind === 'due' || tok.kind === 'repeat' ? t('quick.keepAsText', { what: tok.text }) : t('quick.removeChip', { what: chipLabel(single, tok) })}
-                  title={tok.kind === 'due' || tok.kind === 'repeat' ? t('quick.keepAsText', { what: tok.text }) : undefined}
-                  onClick={() => {
-                    setText(removeToken(text, tok));
-                    box.current?.focus();
-                  }}
-                >
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            ))}
+        <p className="qa__tip" id="qa-tip">
+          <span>{t('quick.tip', { account: accountWord })}</span>{' '}
+          <button type="button" className="linkbtn" aria-expanded={howOpen} onClick={() => setHowOpen((o) => !o)}>
+            {t('quick.how')}
+          </button>
+        </p>
+        {single && single.unknown.length > 0 && (
+          <p className="qa__unknown" role="status">
             {single.unknown.map((u) => (
               <span key={u} className="qchip qchip--unknown" title={t('quick.unknownTitle', { what: u })}>
                 <Icon name="alert" size={14} />
                 {t('quick.unknown', { what: u })}
               </span>
             ))}
-            {single.tokens.length === 0 && !single.unknown.length && !fixedAccount && !fixedRecord && !fixedDue && !fixedPeople.length && <span className="qa__nochips">{t('quick.nothingRead', { account: words.one.toLocaleLowerCase(locale) })}</span>}
-          </div>
+          </p>
         )}
-
-        {similar.length > 0 && (
-          <div className="qa__similar" role="status">
-            <Icon name="alert" size={15} />
-            <span>
-              {t('quick.similar')}{' '}
-              {similar.map((x, i) => (
-                <span key={x.id}>
-                  {i > 0 && ', '}
-                  <button
-                    type="button"
-                    className="linkbtn"
-                    onClick={() => {
-                      onClose();
-                      setQuery('task', x.id);
-                    }}
-                  >
-                    {x.title}
-                  </button>
-                </span>
-              ))}
-            </span>
-          </div>
-        )}
-
-        {many && (
-          <ol className="qa__many" aria-live="polite">
-            {parsed.map((p, i) => (
-              <li key={i} data-empty={!p.title || undefined}>
-                <span className="qa__manytitle">{p.title || t('quick.noTitle')}</span>
-                <span className="qa__manychips">
-                  {p.tokens.map((tok, j) => (
-                    <span key={j} className="qchip qchip--small" data-kind={tok.kind} data-due={tok.kind === 'due' ? dueOf(tok.value) : undefined}>
-                      <Icon name={KIND_ICON[tok.kind]} size={12} />
-                      {chipLabel(p, tok)}
-                    </span>
-                  ))}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-
-        <div className="qa__where">
-          <label className="qa__select">
-            <Icon name="board" size={15} />
-            <span className="sr-only">{t('task.board')}</span>
-            <select className="select" value={boardId} onChange={(e) => setBoardId(e.target.value)}>
-              {boards.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          {board && board.columns.length > 1 && (
-            <label className="qa__select">
-              <Icon name="columns" size={15} />
-              <span className="sr-only">{t('task.status')}</span>
-              <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                {board.columns.map((c) => (
-                  <option key={c.key} value={c.key}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <button type="button" className="linkbtn qa__how" aria-expanded={howOpen} onClick={() => setHowOpen((o) => !o)}>
-            {t('quick.how')}
-          </button>
-        </div>
 
         {howOpen && (
           <div className="qa__help">
@@ -523,12 +517,226 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
           </div>
         )}
 
+        {similar.length > 0 && (
+          <div className="qa__similar" role="status">
+            <Icon name="alert" size={15} />
+            <span>
+              {t('quick.similar')}{' '}
+              {similar.map((x, i) => (
+                <span key={x.id}>
+                  {i > 0 && ', '}
+                  <button
+                    type="button"
+                    className="linkbtn"
+                    onClick={() => {
+                      onClose();
+                      setQuery('task', x.id);
+                    }}
+                  >
+                    {x.title}
+                  </button>
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
+
+        {/* Several lines: each one a task, with what it said read out. */}
+        {many && (
+          <>
+            <ol className="qa__many" aria-live="polite">
+              {parsed.map((p, i) => (
+                <li key={i} data-empty={!p.title || undefined}>
+                  <span className="qa__manytitle">{p.title || t('quick.noTitle')}</span>
+                  <span className="qa__manychips">
+                    {p.tokens.map((tok, j) => (
+                      <span key={j} className="qchip qchip--small" data-kind={tok.kind} data-due={tok.kind === 'due' ? dueOf(tok.value) : undefined}>
+                        <Icon name={KIND_ICON[tok.kind]} size={12} />
+                        {chipLabel(p, tok)}
+                      </span>
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="qa__forall">{t('quick.forAll', { n: lines.length })}</p>
+          </>
+        )}
+
+        {/* ------------------------------------------------------ description */}
+        <div className="qa__desc">
+          <textarea className="input" rows={2} value={description} maxLength={20000} placeholder={t('task.descriptionPlaceholder')} aria-label={t('task.description')} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+
+        {/* ----------------------------------------------------------- fields */}
+        <div className="qa__grid">
+          <div className="qa__item">
+            <span className="qa__label">
+              {words.one} {fromTitle(!!single?.account)}
+            </span>
+            <AccountPicker
+              value={many ? (fixedAccount?.id ?? null) : (account?.id ?? null)}
+              name={many ? (fixedAccount?.name ?? null) : (account?.name ?? null)}
+              onChange={(id, name) => {
+                takeOver('account');
+                setFixedAccount(id ? { id, name: name ?? '' } : null);
+                // A record belongs to its own customer: another customer, no record.
+                setFixedRecord(null);
+              }}
+            />
+          </div>
+
+          <div className="qa__item">
+            <span className="qa__label">{t('task.record')}</span>
+            {fixedRecord && !recordOptions.some((r) => r.id === fixedRecord.id) ? (
+              // Handed in by an opportunity's panel (its customer's list may still be loading).
+              <span className="qchip" data-kind="record">
+                <Icon name="funnel" size={14} />
+                {fixedRecord.name}
+                <button type="button" aria-label={t('quick.removeChip', { what: fixedRecord.name })} onClick={() => setFixedRecord(null)}>
+                  <Icon name="close" size={12} />
+                </button>
+              </span>
+            ) : (
+              <select
+                className="select"
+                value={fixedRecord?.id ?? ''}
+                disabled={!accountId || !recordOptions.length}
+                aria-label={t('task.record')}
+                onChange={(e) => {
+                  const pick = recordOptions.find((r) => r.id === e.target.value);
+                  setFixedRecord(pick ? { id: pick.id, name: pick.name } : null);
+                }}
+              >
+                <option value="">{accountId ? (recordOptions.length ? t('common.none') : t('quick.recordNone', { account: accountWord })) : t('quick.recordFirst', { account: accountWord })}</option>
+                {recordOptions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.kind} · {r.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="qa__item">
+            <span className="qa__label">
+              {t('task.assignees')} {fromTitle(!!single?.assignees.length)}
+            </span>
+            <PeoplePicker
+              label={t('task.assignees')}
+              people={assignable}
+              value={many ? fixedPeople : assignees}
+              onChange={(ids) => {
+                takeOver('person');
+                setFixedPeople(ids);
+              }}
+            />
+          </div>
+
+          <label className="qa__item">
+            <span className="qa__label">
+              {t('task.due')} {fromTitle(!many && dueFromTitle && !!due)}
+            </span>
+            <span className="qa__due">
+              <input
+                className="input num"
+                type="date"
+                value={(many ? fixedDue : due) ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value || null;
+                  takeOver('due', !v);
+                  setFixedDue(v);
+                  setDueByHand(true);
+                }}
+              />
+              {(many ? fixedDue : due) && (
+                <button
+                  type="button"
+                  className="btn btn--quiet btn--icon btn--small"
+                  aria-label={dueToken && !many ? t('quick.keepAsText', { what: dueToken.text }) : t('quick.clearDate')}
+                  title={dueToken && !many ? t('quick.keepAsText', { what: dueToken.text }) : t('quick.clearDate')}
+                  onClick={() => {
+                    // A date read from "every monday" goes with its rhythm: both stay as words.
+                    takeOver(dueToken?.kind === 'repeat' ? ['due', 'repeat'] : 'due', true);
+                    setFixedDue(null);
+                    setDueByHand(true);
+                  }}
+                >
+                  <Icon name="close" size={13} />
+                </button>
+              )}
+            </span>
+          </label>
+
+          <label className="qa__item">
+            <span className="qa__label">
+              {t('task.priority')} {fromTitle(!!single?.priority)}
+            </span>
+            <select
+              className="select"
+              value={many ? fixedPriority : priority}
+              onChange={(e) => {
+                takeOver('priority');
+                setFixedPriority(e.target.value as Priority);
+              }}
+            >
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {t(`task.priority.${p}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="qa__item">
+            <span className="qa__label">
+              {t('task.repeat')} {fromTitle(!!single?.repeat)}
+            </span>
+            <RepeatPicker
+              value={many ? fixedRepeat : repeat}
+              disabled={false}
+              onChange={(r) => {
+                takeOver('repeat', !r);
+                setFixedRepeat(r);
+              }}
+            />
+          </div>
+
+          <label className="qa__item">
+            <span className="qa__label">{t('task.board')}</span>
+            <select className="select" value={boardId} onChange={(e) => setBoardId(e.target.value)}>
+              {boards.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="qa__item">
+            <span className="qa__label">{t('task.status')}</span>
+            <select className="select" value={status} disabled={!board || board.columns.length < 2} onChange={(e) => setStatus(e.target.value)}>
+              {board?.columns.map((c) => (
+                <option key={c.key} value={c.key}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {/* The board's own fields, as the board asks for them. */}
+          {(board?.taskFields ?? []).map((f) => (
+            <div className="qa__item" key={`${boardId}:${f.key}`}>
+              <span className="qa__label">{labelOf(f.label, locale)}</span>
+              <TaskFieldInput field={f} value={fieldValues[f.key]} disabled={false} people={assignable} onSave={(v) => setFieldValues((cur) => ({ ...cur, [f.key]: v }))} />
+            </div>
+          ))}
+        </div>
+
         {error && <p className="error-text qa__error">{error}</p>}
 
         <div className="qa__foot">
-          <p className="qa__hint" id="qa-hint">
-            {many ? t('quick.hintMany') : t('quick.hint')}
-          </p>
+          <p className="qa__hint">{many ? t('quick.hintMany') : t('quick.hint')}</p>
           <label className="checkbox qa__keep">
             <input
               type="checkbox"

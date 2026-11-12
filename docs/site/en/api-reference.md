@@ -6,7 +6,7 @@ summary: Customers, records, tasks, comments, search and home-page endpoints, wi
 ---
 # API reference
 
-Every endpoint lives under `https://yourcompany.tendwell.com/api`, takes JSON and returns JSON. Authenticate with an [API key](/docs/en/api-keys/).
+Every endpoint lives under `https://yourcompany.curahold.com/api`, takes JSON and returns JSON. Authenticate with an [API key](/docs/en/api-keys/).
 
 ## You and your company
 
@@ -26,8 +26,8 @@ Every endpoint lives under `https://yourcompany.tendwell.com/api`, takes JSON an
 | `PATCH /accounts/{id}` | Change it: only the fields you send change |
 
 ```bash
-curl -X POST https://yourcompany.tendwell.com/api/accounts \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X POST https://yourcompany.curahold.com/api/accounts \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"name":"Harborline Bank","fields":{"renewal_date":"2027-03-01","arr":126000,"health":"watch"}}'
 ```
 
@@ -56,8 +56,8 @@ Field keys (`renewal_date`, `arr` …) are listed in `org.accountFields` in the 
 | `POST /tasks/{id}/comments` | Comment: `body` |
 
 ```bash
-curl -X POST https://yourcompany.tendwell.com/api/tasks \
-  -H "Authorization: Bearer $TENDWELL_KEY" -H "Content-Type: application/json" \
+curl -X POST https://yourcompany.curahold.com/api/tasks \
+  -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"boardId":"…","title":"Send the renewal proposal","dueDate":"2027-01-15","priority":"high","accountId":"…"}'
 ```
 

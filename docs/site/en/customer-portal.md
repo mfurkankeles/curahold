@@ -6,7 +6,7 @@ summary: Opening boards to your customers; how they open requests and reply, and
 ---
 # Customer portal
 
-The customer portal opens chosen boards to your customers' people. They sign in at their own address (e.g. `acme.tendwell-portal.com`), see what is open for their company and where it stands, open new requests and reply.
+The customer portal opens chosen boards to your customers' people. They sign in at their own address (e.g. `acme.curahold-portal.com`), see what is open for their company and where it stands, open new requests and reply.
 
 ## What a customer sees, and never sees
 
@@ -16,7 +16,7 @@ The customer portal opens chosen boards to your customers' people. They sign in 
 | Title, description, status (with the name you chose for the column) | Internal notes and internal comments |
 | Comments written as **Reply to customer** | Your team, roles, other people |
 | The details you allow on the board (due date, priority, who is working on it) | Customer fields, deals, health score, records |
-| | Other boards, other companies, Tendwell itself |
+| | Other boards, other companies, Curahold itself |
 
 The portal runs on a separate domain: the app's sessions, cookies and API cannot be reached from it at all. The database role behind portal requests can read no table; it can only call the portal functions, which return data for the signed-in person's own company.
 

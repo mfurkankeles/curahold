@@ -6,12 +6,12 @@ summary: MCP sunucusu, araçlar, OAuth 2.1 akışı ve kendi uygulaman için ba�
 ---
 # AI bağlayıcısı (MCP) ve OAuth
 
-Tendwell, Model Context Protocol (MCP) destekleyen her asistanın bağlanabildiği bir sunucu sunar: Claude, ChatGPT ve diğerleri. Kullanıcı tarafı için [Claude ve ChatGPT'yi bağlama](/docs/tr/ai-assistants/) sayfasına bak.
+Curahold, Model Context Protocol (MCP) destekleyen her asistanın bağlanabildiği bir sunucu sunar: Claude, ChatGPT ve diğerleri. Kullanıcı tarafı için [Claude ve ChatGPT'yi bağlama](/docs/tr/ai-assistants/) sayfasına bak.
 
 ## Sunucu
 
 ```text
-Adres     https://sirketin.tendwell.com/mcp
+Adres     https://sirketin.curahold.com/mcp
 Taşıma    Streamable HTTP (JSON-RPC 2.0, POST)
 Kimlik    OAuth 2.1, Bearer erişim anahtarı
 ```
@@ -19,7 +19,7 @@ Kimlik    OAuth 2.1, Bearer erişim anahtarı
 Kimliksiz bir istek `401` ve şu başlıkla döner; MCP istemcileri buradan izin akışını kendiliğinden başlatır:
 
 ```http
-WWW-Authenticate: Bearer resource_metadata="https://sirketin.tendwell.com/.well-known/oauth-protected-resource"
+WWW-Authenticate: Bearer resource_metadata="https://sirketin.curahold.com/.well-known/oauth-protected-resource"
 ```
 
 ## Araçlar
@@ -44,12 +44,12 @@ MCP istemcilerinin çoğu bunu kendiliğinden yapar. Kendi istemcini yazıyorsan
 1. **Keşif:** `GET /.well-known/oauth-protected-resource`, ardından `GET /.well-known/oauth-authorization-server`.
 2. **Kayıt (RFC 7591):** `POST /oauth/register` ile `client_name` ve `redirect_uris` gönder. Yönlendirme adresleri `https` ya da yerel (`http://127.0.0.1`, `http://localhost`) olmalı. Yanıtta `client_id` gelir; istemci gizli anahtarı yoktur.
 3. **Yetki:** kişiyi `GET /oauth/authorize` adresine gönder: `response_type=code`, `client_id`, `redirect_uri`, `code_challenge` (S256), `code_challenge_method=S256`, `state`, isteğe bağlı `scope=read write`.
-4. Kişi Tendwell'de izin ekranını görür, giriş yapar ve onaylar. Tarayıcı `redirect_uri?code=…&state=…` adresine döner.
+4. Kişi Curahold'da izin ekranını görür, giriş yapar ve onaylar. Tarayıcı `redirect_uri?code=…&state=…` adresine döner.
 5. **Anahtar:** `POST /oauth/token` ile `grant_type=authorization_code`, `code`, `client_id`, `redirect_uri`, `code_verifier`.
 6. **Yenileme:** erişim anahtarı 1 saat geçerlidir. `grant_type=refresh_token` ile yenile; her yenilemede yeni bir yenileme anahtarı gelir ve eskisi geçersiz olur. Yenileme anahtarı 90 gün kullanılmazsa düşer.
 
 ```bash
-curl -X POST https://sirketin.tendwell.com/oauth/token \
+curl -X POST https://sirketin.curahold.com/oauth/token \
   -d grant_type=authorization_code -d code=… -d client_id=twc_… \
   -d redirect_uri=https://uygulaman.example/callback -d code_verifier=…
 ```
@@ -60,4 +60,4 @@ Aynı akışı başkalarının kullanacağı bir uygulama için de kullanabilirs
 
 ## Maliyet
 
-Asistan kişinin kendi Claude ya da ChatGPT planıyla çalışır. Tendwell yalnızca veriyi verir; yapay zekâ için ek ücret almaz.
+Asistan kişinin kendi Claude ya da ChatGPT planıyla çalışır. Curahold yalnızca veriyi verir; yapay zekâ için ek ücret almaz.

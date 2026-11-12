@@ -80,7 +80,7 @@ function sealKey(secret: string) {
     k = (async () => {
       const base = await crypto.subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
       return crypto.subtle.deriveKey(
-        { name: 'HKDF', hash: 'SHA-256', salt: enc.encode('tendwell'), info: enc.encode('connection-secrets') },
+        { name: 'HKDF', hash: 'SHA-256', salt: enc.encode('curahold'), info: enc.encode('connection-secrets') },
         base,
         { name: 'AES-GCM', length: 256 },
         false,

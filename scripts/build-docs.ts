@@ -1,5 +1,5 @@
 // Builds the public documentation (docs/site/<lang>/*.md) into static pages
-// under dist/web/docs, served at <company>.tendwell.com/docs/ and on the
+// under dist/web/docs, served at <company>.curahold.com/docs/ and on the
 // sales site. Also writes llms.txt and llms-full.txt, so AI assistants can
 // read the docs, and a small search index per language. No server, no
 // third-party script, nothing to run: it costs nothing to host.
@@ -19,7 +19,7 @@ type Section = (typeof SECTIONS)[number];
 
 const UI = {
   tr: {
-    site: 'Tendwell Belgeleri',
+    site: 'Curahold Belgeleri',
     search: 'Belgelerde ara',
     none: 'Sonuç yok.',
     app: 'Uygulamaya git',
@@ -31,12 +31,12 @@ const UI = {
     copied: 'Kopyalandı',
     menu: 'Menü',
     sections: { help: 'Yardım merkezi', developers: 'Geliştiriciler', releases: 'Sürüm notları' },
-    lead: 'Tendwell’i kullanmak, ekibine göre ayarlamak ve kendi araçlarına bağlamak için ihtiyacın olan her şey.',
-    start: { help: 'Ekibinle Tendwell’i kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar ve Claude ile ChatGPT için bağlayıcı.', releases: 'Neler yeni, neler değişti.' },
+    lead: 'Curahold’u kullanmak, ekibine göre ayarlamak ve kendi araçlarına bağlamak için ihtiyacın olan her şey.',
+    start: { help: 'Ekibinle Curahold’u kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar ve Claude ile ChatGPT için bağlayıcı.', releases: 'Neler yeni, neler değişti.' },
     edited: 'Son güncelleme',
   },
   en: {
-    site: 'Tendwell Docs',
+    site: 'Curahold Docs',
     search: 'Search the docs',
     none: 'No results.',
     app: 'Open the app',
@@ -48,7 +48,7 @@ const UI = {
     copied: 'Copied',
     menu: 'Menu',
     sections: { help: 'Help center', developers: 'Developers', releases: 'Release notes' },
-    lead: 'Everything you need to use Tendwell, set it up for your team and connect it to your own tools.',
+    lead: 'Everything you need to use Curahold, set it up for your team and connect it to your own tools.',
     start: { help: 'Get your team going: customers, tasks, roles, home pages and connections.', developers: 'API keys, webhooks and the connector for Claude and ChatGPT.', releases: 'What is new and what changed.' },
     edited: 'Last updated',
   },
@@ -111,7 +111,7 @@ function parse(lang: Lang, file: string): Page {
   return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], html, toc, text };
 }
 
-const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe"/><path d="M9 11h14M16 11v12" stroke="#191541" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="24" r="2.5" fill="#2f8f78"/></svg>`;
+const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe"/><path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" stroke="#191541" stroke-width="3" stroke-linecap="round"/><circle cx="16.5" cy="16" r="2.6" fill="#2f8f78"/></svg>`;
 
 function layout(lang: Lang, pages: Page[], page: Page | null, body: string, otherHref: string) {
   const ui = UI[lang];
@@ -131,7 +131,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(page?.summary ?? ui.lead)}">
 <link rel="alternate" hreflang="${lang === 'tr' ? 'en' : 'tr'}" href="${otherHref}">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M9 11h14M16 11v12' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2.5' fill='%2367c2a8'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%2367c2a8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/docs/assets/docs.css">
 </head>
 <body data-lang="${lang}">
@@ -200,7 +200,7 @@ function build() {
   // /docs/ picks the reader's language.
   writeFileSync(
     join(OUT, 'index.html'),
-    `<!doctype html><meta charset="utf-8"><title>Tendwell Docs</title><meta http-equiv="refresh" content="0; url=/docs/en/"><script>location.replace(/^tr\\b/i.test(navigator.language||'')?'/docs/tr/':'/docs/en/')</script><a href="/docs/en/">Tendwell Docs</a> · <a href="/docs/tr/">Tendwell Belgeleri</a>`,
+    `<!doctype html><meta charset="utf-8"><title>Curahold Docs</title><meta http-equiv="refresh" content="0; url=/docs/en/"><script>location.replace(/^tr\\b/i.test(navigator.language||'')?'/docs/tr/':'/docs/en/')</script><a href="/docs/en/">Curahold Docs</a> · <a href="/docs/tr/">Curahold Belgeleri</a>`,
   );
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.css'), join(OUT, 'assets', 'docs.css'));
   copyFileSync(join(ROOT, 'docs', 'site', 'assets', 'docs.js'), join(OUT, 'assets', 'docs.js'));
@@ -218,11 +218,11 @@ function build() {
   // For AI assistants: a map of the docs, and everything in one file.
   const en = all.en;
   const llms = [
-    '# Tendwell',
+    '# Curahold',
     '',
-    '> Work management for customer success and account teams: customers and their stakeholders, tasks and boards, renewals, and the chat apps and CRMs a team already uses. Every company has its own address, <company>.tendwell.com.',
+    '> Work management for customer success and account teams: customers and their stakeholders, tasks and boards, renewals, and the chat apps and CRMs a team already uses. Every company has its own address, <company>.curahold.com.',
     '',
-    'An MCP server for AI assistants runs at https://<company>.tendwell.com/mcp (OAuth 2.1 with dynamic client registration). The REST API is at https://<company>.tendwell.com/api with personal API keys (Bearer twk_…).',
+    'An MCP server for AI assistants runs at https://<company>.curahold.com/mcp (OAuth 2.1 with dynamic client registration). The REST API is at https://<company>.curahold.com/api with personal API keys (Bearer twk_…).',
     '',
     ...SECTIONS.flatMap((s) => {
       const items = en.filter((p) => p.section === s);

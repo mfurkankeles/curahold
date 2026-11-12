@@ -1,4 +1,4 @@
--- Tendwell — the developer platform: personal API keys, apps connected
+-- Curahold — the developer platform: personal API keys, apps connected
 -- with OAuth (Claude, ChatGPT and other AI assistants), and webhooks.
 -- A key or an app always acts as the person who made it, with that
 -- person's role, reach and field access, and never more.
@@ -34,7 +34,7 @@ create policy api_tokens_insert on api_tokens for insert
 create policy api_tokens_update on api_tokens for update
   using (org_id = app_org() and (user_id = app_user() or app_has_perm('users.manage')))
   with check (org_id = app_org());
-grant select, insert, update on api_tokens to tendwell_app;
+grant select, insert, update on api_tokens to curahold_app;
 
 -- Apps that registered themselves (OAuth dynamic client registration).
 create table oauth_clients (
@@ -58,7 +58,7 @@ create table oauth_codes (
 alter table oauth_clients enable row level security;
 alter table oauth_codes enable row level security;
 
--- Webhooks: Tendwell tells another system when something changes.
+-- Webhooks: Curahold tells another system when something changes.
 create table webhooks (
   id             uuid primary key default gen_random_uuid(),
   org_id         uuid not null references orgs(id) on delete cascade,
@@ -80,8 +80,8 @@ create policy webhooks_all on webhooks for all
   using (org_id = app_org() and app_has_perm('connections.manage'))
   with check (org_id = app_org() and app_has_perm('connections.manage'));
 -- The secret can be written but never read back by the app role.
-grant select (id, org_id, url, events, active, failures, last_status, last_at, created_by, created_at) on webhooks to tendwell_app;
-grant insert, update, delete on webhooks to tendwell_app;
+grant select (id, org_id, url, events, active, failures, last_status, last_at, created_by, created_at) on webhooks to curahold_app;
+grant insert, update, delete on webhooks to curahold_app;
 
 -- What happened, waiting to be sent. Written by triggers, so every path
 -- (screen, API, CRM sync, automations) is covered the same way.

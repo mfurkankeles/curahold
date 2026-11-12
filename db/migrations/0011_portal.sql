@@ -1,7 +1,7 @@
--- Tendwell — the customer portal.
+-- Curahold — the customer portal.
 --
 -- A company can open chosen boards to its customers' people. They sign in on
--- a separate address (acme.tendwell-portal.com: another registrable domain,
+-- a separate address (acme.curahold-portal.com: another registrable domain,
 -- so no cookie or storage of the app is ever shared), and can only:
 --   * see the tasks of their own customer that were shared with them,
 --   * open a task (it lands in the board's intake column, assigned to the
@@ -9,26 +9,26 @@
 --   * comment, and read the replies meant for them.
 -- They never see another customer, internal notes, people, fields or boards.
 --
--- The portal runs as its own database role, tendwell_portal, which holds no
+-- The portal runs as its own database role, curahold_portal, which holds no
 -- table privileges at all: everything goes through the portal_* functions
 -- below, which work out the company and the customer from the signed-in
 -- portal person (never from what the request says).
 
 do $$
 begin
-  if not exists (select 1 from pg_roles where rolname = 'tendwell_portal') then
-    create role tendwell_portal nologin;
+  if not exists (select 1 from pg_roles where rolname = 'curahold_portal') then
+    create role curahold_portal nologin;
   end if;
 end $$;
-grant tendwell_portal to current_user;
-grant usage on schema public to tendwell_portal;
+grant curahold_portal to current_user;
+grant usage on schema public to curahold_portal;
 
 -- Functions are callable by everyone unless said otherwise; from here on only
 -- the app's role (and, below, the portal role for its own functions) may call them.
 revoke execute on all functions in schema public from public;
-grant execute on all functions in schema public to tendwell_app;
+grant execute on all functions in schema public to curahold_app;
 alter default privileges in schema public revoke execute on functions from public;
-alter default privileges in schema public grant execute on functions to tendwell_app;
+alter default privileges in schema public grant execute on functions to curahold_app;
 
 create function app_portal_user() returns uuid language sql stable as $$
   select nullif(current_setting('app.portal_user', true), '')::uuid
@@ -65,7 +65,7 @@ create policy portal_users_update on portal_users for update
   using (org_id = app_org() and (app_has_perm('org.manage')
     or exists (select 1 from accounts a where a.id = portal_users.account_id and a.owner_id = app_user())))
   with check (org_id = app_org());
-grant select, insert, update on portal_users to tendwell_app;
+grant select, insert, update on portal_users to curahold_app;
 
 -- Sign-in links and sessions: reached only with owner access, by the portal's own routes.
 create table portal_tokens (
@@ -260,6 +260,6 @@ begin
 end $$;
 
 revoke execute on function portal_whoami(), portal_board_json(boards), portal_me(), portal_task_json(tasks, boards),
-  portal_tasks(uuid), portal_task(uuid), portal_create_task(uuid, text, text), portal_comment(uuid, text) from tendwell_app;
+  portal_tasks(uuid), portal_task(uuid), portal_create_task(uuid, text, text), portal_comment(uuid, text) from curahold_app;
 grant execute on function app_org(), app_portal_user(), portal_whoami(), portal_board_json(boards), portal_me(), portal_task_json(tasks, boards),
-  portal_tasks(uuid), portal_task(uuid), portal_create_task(uuid, text, text), portal_comment(uuid, text) to tendwell_portal;
+  portal_tasks(uuid), portal_task(uuid), portal_create_task(uuid, text, text), portal_comment(uuid, text) to curahold_portal;

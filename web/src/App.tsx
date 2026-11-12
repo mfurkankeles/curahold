@@ -71,7 +71,7 @@ export function App() {
       const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]') ?? document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
       icon.href = org.logoUrl;
     }
-    // Tendwell support's one-time entry link: trade it for a support session, keep it out of the history.
+    // Curahold support's one-time entry link: trade it for a support session, keep it out of the history.
     if (location.pathname === '/support/enter') {
       const token = new URLSearchParams(location.hash.slice(1)).get('token');
       history.replaceState(null, '', '/home');

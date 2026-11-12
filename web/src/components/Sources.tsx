@@ -542,7 +542,7 @@ function FileStep({ d, onDone }: { d: Detail; onDone: () => Promise<void> }) {
   );
 }
 
-/** Which Tendwell thing a CRM object becomes. Encoded as "account", "task", "record:<key>", "new:<kind>". */
+/** Which Curahold thing a CRM object becomes. Encoded as "account", "task", "record:<key>", "new:<kind>". */
 function targetValue(o: Draft): string {
   if (o.target === 'account') return 'account';
   if (o.target === 'task') return 'task';
@@ -807,7 +807,7 @@ function FieldTable({ d, o, accountFields, onChange }: { d: Detail; o: Draft; ac
   const setField = (rf: RemoteField, local: string) => {
     const others = o.fields.filter((f) => f.remote !== rf.name);
     if (!local) return onChange({ fields: others });
-    // One CRM field per Tendwell field.
+    // One CRM field per Curahold field.
     const cleaned = local === 'new' ? others : others.filter((f) => f.local !== local);
     onChange({ fields: [...cleaned, { remote: rf.name, local, dir: rf.updatable && local !== 'new' ? (byRemote.get(rf.name)?.dir ?? 'both') : rf.updatable ? 'both' : 'pull' }] });
   };
@@ -969,7 +969,7 @@ function ConflictChoice({ value, onChange, crm }: { value: SyncConfig['conflict'
   const { t } = useI18n();
   return (
     <div className="choice-list">
-      {(['latest', 'crm', 'tendwell'] as const).map((k) => (
+      {(['latest', 'crm', 'curahold'] as const).map((k) => (
         <label key={k} className="choice" data-on={value === k || undefined}>
           <input type="radio" checked={value === k} onChange={() => onChange(k)} />
           <span>

@@ -49,15 +49,15 @@ authRoutes.get('/org', (c) => {
   return c.json(out);
 });
 
-// Installing Tendwell on a phone or a desktop: the browser reads this before
+// Installing Curahold on a phone or a desktop: the browser reads this before
 // anyone signs in, so it carries only what the sign-in page already shows.
 authRoutes.get('/manifest.webmanifest', (c) => {
   const org = c.get('org');
   const tr = org.locale === 'tr';
   const manifest = {
     id: '/',
-    name: `${org.name} · Tendwell`,
-    short_name: 'Tendwell',
+    name: `${org.name} · Curahold`,
+    short_name: 'Curahold',
     description: tr ? 'Müşteriler, görevler ve satış hattı tek yerde.' : 'Customers, tasks and the pipeline in one place.',
     lang: org.locale,
     start_url: '/home',
@@ -358,7 +358,7 @@ authRoutes.get('/calendar/:file', async (c) => {
   );
   const base = orgUrl(deps.config, org.slug);
   const ics = buildIcs(
-    `${org.name} — Tendwell`,
+    `${org.name} — Curahold`,
     rows.map((t) => ({ id: t.id, title: t.title, due: day(t.due_date)!, url: `${base}/b/${t.board_id}?task=${t.id}`, account: t.account_name, updatedAt: new Date(t.updated_at) })),
     nowOf(deps),
   );
@@ -432,7 +432,7 @@ export { callbackUrl };
 
 export function setSessionCookie(c: C, token: string) {
   const cfg = c.get('deps').config;
-  // Host-only cookie: a session for acme.tendwell.com is never sent to any
+  // Host-only cookie: a session for acme.curahold.com is never sent to any
   // other company's address.
   setCookie(c, SESSION_COOKIE, token, {
     httpOnly: true,

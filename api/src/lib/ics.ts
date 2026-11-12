@@ -41,11 +41,11 @@ const nextDay = (iso: string) => {
 };
 
 export function buildIcs(calName: string, tasks: IcsTask[], now: Date): string {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Tendwell//Tasks//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${escape(calName)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Curahold//Tasks//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${escape(calName)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H'];
   for (const t of tasks) {
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${t.id}@tendwell`,
+      `UID:${t.id}@curahold`,
       `DTSTAMP:${stamp(now)}`,
       `LAST-MODIFIED:${stamp(t.updatedAt)}`,
       `DTSTART;VALUE=DATE:${compact(t.due)}`,

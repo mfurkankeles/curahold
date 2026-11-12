@@ -1,4 +1,4 @@
-// Tendwell's own support team, inside a company only with a person's consent.
+// Curahold's own support team, inside a company only with a person's consent.
 //
 // A person grants access (lib: grants), support asks for a one-time entry link
 // with its staff key, and the link opens a support session in the browser.
@@ -38,7 +38,7 @@ export function mayGrant(org: Pick<OrgRow, 'settings'>, perms: readonly string[]
 
 export function staffKeyOk(c: C): boolean {
   const key = c.get('deps').config.staffKey;
-  const given = c.req.header('x-tendwell-staff-key') ?? '';
+  const given = c.req.header('x-curahold-staff-key') ?? '';
   return !!key && key.length >= 24 && safeEqual(given, key);
 }
 

@@ -1,4 +1,4 @@
--- Tendwell — phase 2: self-serve signup, joining, connectors, notifications,
+-- Curahold — phase 2: self-serve signup, joining, connectors, notifications,
 -- accounts and automations. Same rules as 0001: every business row carries
 -- org_id and row-level security decides what a request can touch.
 
@@ -35,7 +35,7 @@ update roles set perms = array(select distinct unnest(perms || array['accounts.m
 
 -- ------------------------------------------------------------------ signup
 
--- Company sign-ups in progress on the central address (app.tendwell.com),
+-- Company sign-ups in progress on the central address (app.curahold.com),
 -- before any company exists. Only the owner role reads it.
 create table signups (
   id           uuid primary key default gen_random_uuid(),
@@ -108,7 +108,7 @@ create table connections (
   unique (org_id, id),
   foreign key (org_id, created_by) references users (org_id, id) on delete set null (created_by)
 );
--- A workspace can belong to one Tendwell company only.
+-- A workspace can belong to one Curahold company only.
 create unique index connections_external_idx on connections (provider, external_id) where external_id is not null;
 
 -- Who is who on a connected messaging service.
@@ -163,7 +163,7 @@ create index notifications_user_idx on notifications (org_id, user_id, created_a
 
 -- ---------------------------------------------------------------- accounts
 
--- The customers a team looks after. Kept in Tendwell whether or not a CRM
+-- The customers a team looks after. Kept in Curahold whether or not a CRM
 -- is connected; `source` + `external_id` link a row to where it came from.
 create table accounts (
   id           uuid primary key default gen_random_uuid(),
@@ -298,10 +298,10 @@ create policy automation_runs_select on automation_runs for select
   using (org_id = app_org() and app_has_perm('automations.manage'));
 
 grant select, insert, update, delete on join_requests, chat_identities, notifications, accounts, automations,
-  import_batches to tendwell_app;
-grant select on automation_runs to tendwell_app;
+  import_batches to curahold_app;
+grant select on automation_runs to curahold_app;
 -- Credentials stay out of reach of the request role: every column but `secret`.
 grant select (id, org_id, kind, provider, label, external_id, config, status, last_error, last_ok_at,
-              created_by, created_at, updated_at) on connections to tendwell_app;
-grant insert, update, delete on connections to tendwell_app;
-grant execute on function resolve_org(text) to tendwell_app;
+              created_by, created_at, updated_at) on connections to curahold_app;
+grant insert, update, delete on connections to curahold_app;
+grant execute on function resolve_org(text) to curahold_app;

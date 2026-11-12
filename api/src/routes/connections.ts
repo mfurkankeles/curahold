@@ -370,8 +370,8 @@ connectionRoutes.get('/connections/teams/package', async (c) => {
     manifestVersion: '1.17',
     version: '1.0.0',
     id: t!.appId,
-    developer: { name: 'Tendwell', websiteUrl: `https://${deps.config.baseDomain}`, privacyUrl: `https://${deps.config.baseDomain}/privacy`, termsOfUseUrl: `https://${deps.config.baseDomain}/terms` },
-    name: { short: 'Tendwell', full: 'Tendwell' },
+    developer: { name: 'Curahold', websiteUrl: `https://${deps.config.baseDomain}`, privacyUrl: `https://${deps.config.baseDomain}/privacy`, termsOfUseUrl: `https://${deps.config.baseDomain}/terms` },
+    name: { short: 'Curahold', full: 'Curahold' },
     description: { short: L('teams.package.short'), full: L('teams.package.full') },
     icons: { color: 'color.png', outline: 'outline.png' },
     accentColor: '#12786B',
@@ -400,6 +400,6 @@ connectionRoutes.get('/connections/teams/package', async (c) => {
   });
   return c.body(zip as unknown as ArrayBuffer, 200, {
     'content-type': 'application/zip',
-    'content-disposition': 'attachment; filename="tendwell-teams.zip"',
+    'content-disposition': 'attachment; filename="curahold-teams.zip"',
   });
 });

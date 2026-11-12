@@ -154,7 +154,7 @@ recordRoutes.patch('/record-types/:id', async (c) => {
       fields: typeFields.optional(),
       position: z.number().int().min(0).max(1000).optional(),
       archived: z.boolean().optional(),
-      /** The columns of its table; null goes back to Tendwell's choice. */
+      /** The columns of its table; null goes back to Curahold's choice. */
       columns: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,39}$/)).max(20).nullable().optional(),
     }),
   );

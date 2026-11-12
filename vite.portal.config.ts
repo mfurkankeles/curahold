@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 
 // The customer portal: its own small bundle, served on its own domain
-// (acme.tendwell-portal.com) — none of the app's code ships with it.
+// (acme.curahold-portal.com) — none of the app's code ships with it.
 //
 //   npx vite build --config vite.portal.config.ts   →   dist/portal/
 export default defineConfig({

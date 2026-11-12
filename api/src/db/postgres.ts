@@ -1,7 +1,7 @@
 // Production driver: Supabase Postgres (EU region) reached from Cloudflare
 // Workers through Hyperdrive, or any Postgres 15+ for a self-hosted install.
-// The login role must be allowed to `set role tendwell_app` and
-// `set role tendwell_portal` (see README).
+// The login role must be allowed to `set role curahold_app` and
+// `set role curahold_portal` (see README).
 import postgres from 'postgres';
 import { PORTAL_SETUP_SQL, TENANT_SETUP_SQL, type Db, type Q } from './index';
 
@@ -36,14 +36,14 @@ export function postgresDb(url: string, opts: { max?: number; idleTimeout?: numb
     async tenant(ctx, fn) {
       return (await sql.begin(async (tx) => {
         await tx.unsafe(TENANT_SETUP_SQL + NO_JIT, [ctx.orgId ?? '', ctx.userId ?? '']);
-        await tx.unsafe('set local role tendwell_app');
+        await tx.unsafe('set local role curahold_app');
         return fn(wrap(tx));
       })) as any;
     },
     async portal(ctx, fn) {
       return (await sql.begin(async (tx) => {
         await tx.unsafe(PORTAL_SETUP_SQL + NO_JIT, [ctx.orgId, ctx.portalUserId ?? '']);
-        await tx.unsafe('set local role tendwell_portal');
+        await tx.unsafe('set local role curahold_portal');
         return fn(wrap(tx));
       })) as any;
     },

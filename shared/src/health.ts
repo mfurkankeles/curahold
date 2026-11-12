@@ -1,5 +1,5 @@
 // The health score: a number from 0 to 100 for each customer, worked out
-// from what Tendwell already knows, with weights each company chooses, and
+// from what Curahold already knows, with weights each company chooses, and
 // always shown with its reasons. No black box: every point can be traced to
 // a signal a person can see and act on.
 import type { AccountField } from './model';

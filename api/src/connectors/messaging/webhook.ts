@@ -1,5 +1,5 @@
 // One-way posts to a channel through the service's own incoming webhook.
-// Covers chat tools that have no Tendwell app (yet) and anything a company
+// Covers chat tools that have no Curahold app (yet) and anything a company
 // wires up through Zapier, Make or n8n (the "json" flavour).
 import { fetchOf, nowOf, type Deps } from '../../context';
 import { hmacHex } from '../../lib/crypto';
@@ -112,7 +112,7 @@ export const webhookAdapter: MessagingAdapter = {
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (flavor === 'zoom' && conn.secret?.token) headers.authorization = String(conn.secret.token);
     if (flavor === 'json' && conn.secret?.signingSecret) {
-      headers['x-tendwell-signature'] = `sha256=${await hmacHex(String(conn.secret.signingSecret), body)}`;
+      headers['x-curahold-signature'] = `sha256=${await hmacHex(String(conn.secret.signingSecret), body)}`;
     }
     let target = url;
     if (flavor === 'zoom') {

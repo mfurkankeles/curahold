@@ -1,5 +1,5 @@
 // Two-way sync with a CRM or spreadsheet: what the other side offers
-// (objects and fields), how an administrator maps them onto Tendwell, and
+// (objects and fields), how an administrator maps them onto Curahold, and
 // what each run did. Shared so the mapping screen shows exactly what the
 // sync engine will do.
 
@@ -98,7 +98,7 @@ export type TargetKind = 'account' | 'record' | 'task';
 export interface FieldMap {
   remote: string;
   local: string;
-  /** "both" writes Tendwell changes back; "pull" only reads. */
+  /** "both" writes Curahold changes back; "pull" only reads. */
   dir: 'both' | 'pull';
 }
 
@@ -111,10 +111,10 @@ export interface ObjectMap {
   /** Board for tasks coming in, when target is "task". */
   boardId?: string;
   enabled: boolean;
-  /** Also create items made in Tendwell on the other side. */
+  /** Also create items made in Curahold on the other side. */
   create: boolean;
   /**
-   * Only connect to what Tendwell already has: an organisation in a support
+   * Only connect to what Curahold already has: an organisation in a support
    * tool that matches no customer (by name or web address) is left out, and
    * so is a ticket whose customer cannot be found.
    */
@@ -126,10 +126,10 @@ export interface ObjectMap {
 
 export interface SyncConfig {
   objects: ObjectMap[];
-  /** Remote user id → Tendwell person id (null: leave unassigned). Matches by email otherwise. */
+  /** Remote user id → Curahold person id (null: leave unassigned). Matches by email otherwise. */
   owners: Record<string, string | null>;
   /** Who wins when the same field changed on both sides since the last run. */
-  conflict: 'latest' | 'crm' | 'tendwell';
+  conflict: 'latest' | 'crm' | 'curahold';
   /** Spreadsheets: the file being synced. */
   file?: { id: string; name: string; url: string; driveId?: string };
   /** Set once the administrator finished the mapping and started the first sync. */
@@ -164,7 +164,7 @@ export interface SyncPreviewObject {
   label: string;
   /** Items found on the other side (null when the service can't count cheaply). */
   total: number | null;
-  /** Of those, how many already exist in Tendwell and will be linked, not duplicated. */
+  /** Of those, how many already exist in Curahold and will be linked, not duplicated. */
   matched: number;
   sample: string[];
 }

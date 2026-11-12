@@ -6,7 +6,7 @@ summary: Where notifications go, the morning summary, quiet hours and the calend
 ---
 # Notifications
 
-Tendwell writes to your chat app first and uses email as the fallback, so notifications land where the team already looks.
+Curahold writes to your chat app first and uses email as the fallback, so notifications land where the team already looks.
 
 ## When you hear from us
 

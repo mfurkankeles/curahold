@@ -13,7 +13,7 @@ import { defineConfig, type Plugin } from 'vite';
 // someone else's page cannot, so here `location` and `history` are swapped
 // for an in-memory stand-in (web/src/demo/memory.ts) at build time.
 const memoryLocation = (): Plugin => ({
-  name: 'tendwell-memory-location',
+  name: 'curahold-memory-location',
   enforce: 'pre',
   transform(code, id) {
     if (!/\/web\/(src|portal)\//.test(id) || /\/web\/src\/demo\//.test(id) || !/\.[jt]sx?$/.test(id)) return null;
@@ -28,7 +28,7 @@ const memoryLocation = (): Plugin => ({
 // under a name every host accepts and are handed to PGlite directly.
 const FS_BUNDLE = 'assets/pglite-fs.wasm';
 const renameFsBundle = (): Plugin => ({
-  name: 'tendwell-fs-bundle',
+  name: 'curahold-fs-bundle',
   apply: 'build',
   generateBundle(_options, bundle) {
     for (const [name, file] of Object.entries(bundle)) {

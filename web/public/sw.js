@@ -1,4 +1,4 @@
-// Tendwell's service worker: the app opens without a connection and shows
+// Curahold's service worker: the app opens without a connection and shows
 // what was last seen. It never answers from a copy while the network is
 // there — pages and data come fresh first, the copy is only the fallback —
 // and nothing is ever written from here: offline is for reading.
@@ -115,7 +115,7 @@ self.addEventListener('fetch', (event) => {
   if (path.startsWith('/docs') || path.startsWith('/mcp') || path.startsWith('/oauth') || path.startsWith('/.well-known') || path === '/llms.txt') return;
   if (path.startsWith('/api/')) {
     // "See it as them" answers are someone else's view: never kept, never served from a copy.
-    if (request.headers.get('x-tendwell-preview-as')) return;
+    if (request.headers.get('x-curahold-preview-as')) return;
     if (OFFLINE.some((re) => re.test(path))) event.respondWith(freshThenKept(request));
     return;
   }

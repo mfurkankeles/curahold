@@ -38,7 +38,7 @@ describe('self-serve sign-up', () => {
   it('creates the company from a template and signs the founder straight in', async () => {
     const { done } = await signUp('nora@northwind.example');
     expect(done.status).toBe(201);
-    expect(done.json.url).toMatch(/^https:\/\/northwind\.tendwell\.test\/auth\/verify#token=.+&m=signup$/);
+    expect(done.json.url).toMatch(/^https:\/\/northwind\.curahold\.test\/auth\/verify#token=.+&m=signup$/);
 
     const token = /token=([^&]+)/.exec(done.json.url)![1];
     const me = new Client(env, 'northwind');
@@ -88,7 +88,7 @@ describe('self-serve sign-up', () => {
     const c = new Client(env, 'app');
     const s = await c.post('/api/signup/start', { email: 'kim@northwind.example' });
     const v = await c.post('/api/signup/verify', { token: s.json.devToken });
-    expect(v.json.existing).toEqual([{ name: 'Northwind Traders', url: 'https://northwind.tendwell.test', joinRequests: true }]);
+    expect(v.json.existing).toEqual([{ name: 'Northwind Traders', url: 'https://northwind.curahold.test', joinRequests: true }]);
   });
 
   it('limits sign-up emails per address', async () => {

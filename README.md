@@ -1,9 +1,9 @@
-# Tendwell
+# Curahold
 
 Work management for customer success and account teams: boards, tasks,
 renewals and follow-through, next to whatever chat app and CRM a company
 already uses — or none. Every company gets its own address, like
-`acme.tendwell.com`, and sets itself up alone in about 15 minutes.
+`acme.curahold.com`, and sets itself up alone in about 15 minutes.
 
 Phases: 1 foundation ✓ · 2 self-serve setup, messaging, accounts,
 automations ✓ · 3 CRM connectors (Salesforce, HubSpot, Dynamics 365,
@@ -16,7 +16,7 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
 - One codebase, many companies. Every row carries `org_id`, and Postgres
   row-level security decides visibility — a bug in a route still cannot
   return another company's data (`tests/isolation.test.ts`).
-- Company addresses: `<slug>.tendwell.com`; reserved names (`app`, `www`, …)
+- Company addresses: `<slug>.curahold.com`; reserved names (`app`, `www`, …)
   are refused. A self-hosted install runs as a single company
   (`SINGLE_TENANT_SLUG`).
 - Passwordless sign-in: email link, Google, Microsoft. A provider sign-in
@@ -39,7 +39,7 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
 
 ### Phase 2
 
-- **Self-serve sign-up** at `app.tendwell.com`: confirm a work email, name the
+- **Self-serve sign-up** at `app.curahold.com`: confirm a work email, name the
   company, pick its address (checked live) and a template (customer success,
   account management, sales, support, empty). The founder lands in the new
   company signed in. A company's email domain is recorded only from a
@@ -99,10 +99,10 @@ Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
   - edits here are queued in the same transaction and sent right away;
     changes there are read every hour (by last-modified time), everything is
     read in full once a day; "sync now" any time;
-  - items already in Tendwell are linked by name, not duplicated; new choice
+  - items already in Curahold are linked by name, not duplicated; new choice
     values become new options; our own writes are not mistaken for changes;
   - the same field changed on both sides: the newer change wins (or the CRM,
-    or Tendwell — a setting); a CRM that suddenly returns far fewer rows
+    or Curahold — a setting); a CRM that suddenly returns far fewer rows
     archives nothing; deleting here never deletes there;
   - status, history, "not sent yet" list with retry, links to open each
     item in the CRM; long first syncs continue in slices.
@@ -153,9 +153,9 @@ research and reasoning.
   breakdowns, team load, connections, notes). One page serves a whole role:
   each person sees it filled with their own part. Administrators edit pages
   in place, choose whose home a page is and who can open it.
-- **See it as them**: from the roles screen an administrator opens Tendwell
+- **See it as them**: from the roles screen an administrator opens Curahold
   exactly as a chosen person sees it — read only, logged.
-- **Choice colours** from Tendwell's own palette, shown in lists and pages.
+- **Choice colours** from Curahold's own palette, shown in lists and pages.
 - Fixed on the way: people who manage customers but not company settings
   could not save account-field changes (the save was silently dropped).
 
@@ -171,13 +171,13 @@ row-level security, customer reach and field access as the app.
 - **Webhooks**: `task.*`, `account.*`, `record.*`, `comment.created`.
   Changes are captured by database triggers (only for events some webhook
   wants, collapsed per minute), sent right after the request that caused
-  them, signed `Tendwell-Signature: t=…,v1=HMAC-SHA256(secret, t.body)`,
+  them, signed `Curahold-Signature: t=…,v1=HMAC-SHA256(secret, t.body)`,
   retried after 1, 5, 30, 120 and 360 minutes, paused after 50 failures in a
   row. Public https addresses only.
-- **AI connector (MCP)** at `https://<company>.tendwell.com/mcp`: Claude,
+- **AI connector (MCP)** at `https://<company>.curahold.com/mcp`: Claude,
   ChatGPT or any MCP client. OAuth 2.1 with discovery (RFC 8414 / 9728),
   dynamic client registration (RFC 7591), PKCE S256, one-hour access tokens
-  and rotating refresh tokens. The person approves on Tendwell's own consent
+  and rotating refresh tokens. The person approves on Curahold's own consent
   screen and can leave changes off. Tools: search, fetch, list_accounts,
   list_tasks, portfolio_summary, create_task, update_task — each one calls
   the app's own API, so nothing is reachable that the app would not show.
@@ -264,11 +264,11 @@ row-level security, customer reach and field access as the app.
   **Reply to customer** (emailed to them). Changing a task's customer
   switches sharing off, so a conversation never moves to another customer.
 - **Walls**: the portal is a separate Worker on a separate registrable
-  domain (`*.tendwell-portal.com`, `wrangler.portal.toml`) with its own
+  domain (`*.curahold-portal.com`, `wrangler.portal.toml`) with its own
   small bundle (`dist/portal`), cookie (host-only, httpOnly,
   SameSite=Strict), sessions and CSP headers; the app's API, cookies and
   code are not served there and vice versa. Portal requests run as the
-  `tendwell_portal` database role, which has no table privileges at all and
+  `curahold_portal` database role, which has no table privileges at all and
   can only call the `portal_*` security-definer functions; those take the
   company and customer from the signed-in person, never from the request.
   Rate limits per person (30 requests, 200 replies a day; 5 links an hour).
@@ -341,31 +341,31 @@ tests/            Vitest suites; tests/e2e drives Chrome
 1. Supabase project in an EU region. Run `DATABASE_URL=... npm run migrate`.
 2. Create a minimal login role for the API (below) and a Hyperdrive config
    pointing at it; put its id in `wrangler.toml`.
-3. R2 bucket `tendwell-files`.
+3. R2 bucket `curahold-files`.
 4. Secrets: `wrangler secret put AUTH_SECRET` (32+ random characters),
    `RESEND_API_KEY`, and the Google / Microsoft client id and secret if those
-   sign-ins are offered. `STAFF_KEY` (24+ characters) lets Tendwell support
+   sign-ins are offered. `STAFF_KEY` (24+ characters) lets Curahold support
    open entry links where a customer granted access; help requests go to
    `SUPPORT_EMAIL` and/or `SUPPORT_WEBHOOK_URL`.
-5. DNS: `*.tendwell.com` and `app.tendwell.com` on Cloudflare.
+5. DNS: `*.curahold.com` and `app.curahold.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
-7. Customer portal (optional): a second domain (e.g. `tendwell-portal.com`)
+7. Customer portal (optional): a second domain (e.g. `curahold-portal.com`)
    on Cloudflare, `PORTAL_DOMAIN` set for both Workers, the same secrets put
    with `--config wrangler.portal.toml`, then
    `npx wrangler deploy --config wrangler.portal.toml`.
 
 ### Chat apps (each optional)
 
-| Service | Register | Tendwell endpoints |
+| Service | Register | Curahold endpoints |
 | --- | --- | --- |
-| Slack | One Slack app with OAuth scopes `chat:write im:write users:read users:read.email usergroups:read channels:read groups:read commands`, a message shortcut `tw_create_task` and slash command `/tendwell` | Redirect `https://app.tendwell.com/api/connect/callback`; events, interactivity and commands `https://app.tendwell.com/api/hooks/slack` |
-| Microsoft Teams | Azure Bot (single-tenant registration in Tendwell's tenant), published through the Teams Store; until then companies upload the package from Settings → Connections | Messaging endpoint `https://app.tendwell.com/api/hooks/teams`; Microsoft sign-in redirect `/api/connect/callback` |
-| Google Chat | A Chat app (HTTP endpoint, "project number" audience) published on the Google Workspace Marketplace, with a service account | `https://app.tendwell.com/api/hooks/gchat`; Google sign-in redirect `/api/connect/callback` |
+| Slack | One Slack app with OAuth scopes `chat:write im:write users:read users:read.email usergroups:read channels:read groups:read commands`, a message shortcut `tw_create_task` and slash command `/curahold` | Redirect `https://app.curahold.com/api/connect/callback`; events, interactivity and commands `https://app.curahold.com/api/hooks/slack` |
+| Microsoft Teams | Azure Bot (single-tenant registration in Curahold's tenant), published through the Teams Store; until then companies upload the package from Settings → Connections | Messaging endpoint `https://app.curahold.com/api/hooks/teams`; Microsoft sign-in redirect `/api/connect/callback` |
+| Google Chat | A Chat app (HTTP endpoint, "project number" audience) published on the Google Workspace Marketplace, with a service account | `https://app.curahold.com/api/hooks/gchat`; Google sign-in redirect `/api/connect/callback` |
 
 ### CRMs and spreadsheets (each optional)
 
-Each needs Tendwell's own app with the service; the redirect is always
-`https://app.tendwell.com/api/connect/callback`. A service without its keys
+Each needs Curahold's own app with the service; the redirect is always
+`https://app.curahold.com/api/connect/callback`. A service without its keys
 is simply not offered.
 
 | Service | Register | Secrets |
@@ -381,17 +381,17 @@ is simply not offered.
 ### Database roles
 
 The API must not connect as the table owner. Create a login role that can
-only become `tendwell_app`:
+only become `curahold_app`:
 
 ```sql
-create role tendwell_api login password '...' noinherit;
-grant tendwell_app to tendwell_api;
-grant tendwell_portal to tendwell_api;
+create role curahold_api login password '...' noinherit;
+grant curahold_app to curahold_api;
+grant curahold_portal to curahold_api;
 ```
 
-Every request runs `set local role tendwell_app` inside its transaction, so
+Every request runs `set local role curahold_app` inside its transaction, so
 row-level security always applies. Customer-portal requests run as
-`tendwell_portal`, which has no table privileges at all and can only call
+`curahold_portal`, which has no table privileges at all and can only call
 the `portal_*` functions.
 
 ## Sub-processors (for the DPA)
@@ -399,5 +399,5 @@ the `portal_*` functions.
 Cloudflare (hosting, files), Supabase (database, EU region), Resend (email),
 Google and Microsoft (only when a company enables their sign-in or connects
 Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
-Pipedrive, Zoho) is its processor, not ours: Tendwell reads and writes it on
+Pipedrive, Zoho) is its processor, not ours: Curahold reads and writes it on
 the company's instruction. Paddle (billing) joins in phase 5.

@@ -6,7 +6,7 @@ summary: Bildirimlerin nereye gittiği, sabah özeti, sessiz saatler ve takvim b
 ---
 # Bildirimler
 
-Tendwell önce sohbet uygulamanıza yazar, e-postayı yedek olarak kullanır. Böylece bildirimler ekibin zaten baktığı yerde görünür.
+Curahold önce sohbet uygulamanıza yazar, e-postayı yedek olarak kullanır. Böylece bildirimler ekibin zaten baktığı yerde görünür.
 
 ## Ne zaman haber gelir
 

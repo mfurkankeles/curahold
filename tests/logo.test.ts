@@ -24,16 +24,16 @@ describe('company logo', () => {
     expect(org.logoUrl).toMatch(/^\/api\/logo\?v=\d+$/);
     expect((await ada.get('/api/me')).json.org.logoUrl).toBe(org.logoUrl);
     // Public (the sign-in page shows it), safe to serve.
-    const res = await env.app.request(`https://acme.tendwell.test${org.logoUrl}`);
+    const res = await env.app.request(`https://acme.curahold.test${org.logoUrl}`);
     expect(res.headers.get('content-type')).toBe('image/png');
     expect(res.headers.get('content-security-policy')).toContain('sandbox');
     // Another company has none.
-    expect((await env.app.request('https://beta.tendwell.test/api/logo')).status).toBe(404);
+    expect((await env.app.request('https://beta.curahold.test/api/logo')).status).toBe(404);
     // Invitation emails carry it.
     const roles = (await ada.get('/api/admin/roles')).json.roles;
     await ada.post('/api/admin/users', { email: 'newhire@demo.example', name: 'New Hire', roleId: roles.find((x: any) => x.key === 'member').id, seat: 'full' });
     const mail = env.email.last('newhire@demo.example');
-    expect(mail.html).toContain(`https://acme.tendwell.test${org.logoUrl}`);
+    expect(mail.html).toContain(`https://acme.curahold.test${org.logoUrl}`);
     expect(mail.html).toContain('Sign in');
   });
 
@@ -48,6 +48,6 @@ describe('company logo', () => {
   it('can be removed', async () => {
     expect((await ada.del('/api/admin/logo')).status).toBe(200);
     expect((await new Client(env, 'acme').get('/api/org')).json.logoUrl).toBeNull();
-    expect((await env.app.request('https://acme.tendwell.test/api/logo')).status).toBe(404);
+    expect((await env.app.request('https://acme.curahold.test/api/logo')).status).toBe(404);
   });
 });

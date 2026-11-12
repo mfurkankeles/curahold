@@ -1,5 +1,5 @@
-// Microsoft Teams: one Tendwell bot (Azure Bot Service, single-tenant
-// registration in Tendwell's own tenant, distributed through the Teams
+// Microsoft Teams: one Curahold bot (Azure Bot Service, single-tenant
+// registration in Curahold's own tenant, distributed through the Teams
 // Store). A company connects by signing in as a Microsoft 365 admin, which
 // tells us its tenant id; activities from that tenant then map to it.
 //

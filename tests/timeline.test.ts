@@ -215,7 +215,7 @@ describe('weekly summary', () => {
 describe('assistant', () => {
   it('can log a note on a customer by name', async () => {
     const { token } = (await zeynep.post('/api/dev/keys', { name: 'AI', canWrite: true })).json;
-    const res = await env.app.request('https://acme.tendwell.test/mcp', {
+    const res = await env.app.request('https://acme.curahold.test/mcp', {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'add_note', arguments: { account: 'Quillfield Retail', kind: 'call', text: 'Renewal call: they want a multi-year option.' } } }),
@@ -224,7 +224,7 @@ describe('assistant', () => {
     expect(r.isError).toBe(false);
     const tl = (await zeynep.get(`/api/accounts/${acc['Quillfield Retail']}/timeline`)).json;
     expect(tl.items[0]).toMatchObject({ type: 'activity', activity: { kind: 'call', body: 'Renewal call: they want a multi-year option.' } });
-    const fetched = await env.app.request('https://acme.tendwell.test/mcp', {
+    const fetched = await env.app.request('https://acme.curahold.test/mcp', {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'fetch', arguments: { id: `account:${acc['Quillfield Retail']}` } } }),

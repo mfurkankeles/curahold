@@ -2,11 +2,11 @@
 title: Developer overview
 section: developers
 order: 1
-summary: Ways to connect to Tendwell, authentication and the ground rules.
+summary: Ways to connect to Curahold, authentication and the ground rules.
 ---
 # Developer overview
 
-There are four ways to connect your own tools to Tendwell. All follow one rule: **a request is always made as a person**, and that person's role, customer access and field rules apply unchanged.
+There are four ways to connect your own tools to Curahold. All follow one rule: **a request is always made as a person**, and that person's role, customer access and field rules apply unchanged.
 
 | Way | For | Identity |
 | --- | --- | --- |
@@ -20,10 +20,10 @@ There are four ways to connect your own tools to Tendwell. All follow one rule: 
 Every company has its own address. Replace `yourcompany` in the examples with yours.
 
 ```text
-API     https://yourcompany.tendwell.com/api
-MCP     https://yourcompany.tendwell.com/mcp
-OAuth   https://yourcompany.tendwell.com/.well-known/oauth-authorization-server
-Docs    https://yourcompany.tendwell.com/docs/
+API     https://yourcompany.curahold.com/api
+MCP     https://yourcompany.curahold.com/mcp
+OAuth   https://yourcompany.curahold.com/.well-known/oauth-authorization-server
+Docs    https://yourcompany.curahold.com/docs/
 ```
 
 ## What is open and what is not
@@ -48,7 +48,7 @@ Errors always look the same:
 | 404 | Not there, or this person cannot see it |
 | 409 | The task changed since you read it; try again on the current version |
 
-`message` follows the request language: send `x-tendwell-locale: en` or `tr`.
+`message` follows the request language: send `x-curahold-locale: en` or `tr`.
 
 ## Limits
 

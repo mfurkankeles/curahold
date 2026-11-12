@@ -6,7 +6,7 @@ summary: Slack, Teams, Google Chat; Salesforce, HubSpot ve tablolarla eşitleme.
 ---
 # Bağlantılar ve CRM
 
-Tendwell ekibin zaten kullandığı araçlarla birlikte çalışır. Bağlantıları Ayarlar → Bağlantılar ve Ayarlar → Veri kaynakları'ndan yönetirsin.
+Curahold ekibin zaten kullandığı araçlarla birlikte çalışır. Bağlantıları Ayarlar → Bağlantılar ve Ayarlar → Veri kaynakları'ndan yönetirsin.
 
 ## Sohbet uygulamaları
 

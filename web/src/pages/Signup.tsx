@@ -1,4 +1,4 @@
-// Self-serve sign-up on the central address (app.tendwell.com): confirm a
+// Self-serve sign-up on the central address (app.curahold.com): confirm a
 // work email, name the company, pick its address and a starting template —
 // then straight into the company, signed in, with the setup wizard open.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -34,7 +34,7 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
     <div className="auth">
       <aside className="auth__side">
         <div className="auth__brand">
-          <Mark /> Tendwell
+          <Mark /> Curahold
         </div>
         <div className="auth__lines signup__rail">
           <strong className="auth__org">{t('signup.sideTitle')}</strong>

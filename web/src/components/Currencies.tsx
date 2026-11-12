@@ -2,7 +2,7 @@
 // targets and reports are in it) and may work in others: a customer or a
 // deal can be in US dollars while the company counts in lira. For each other
 // currency an administrator says what one unit is worth in the company's
-// currency. Tendwell doesn't fetch rates from anywhere: they are the
+// currency. Curahold doesn't fetch rates from anywhere: they are the
 // company's own, kept the way its finance team keeps them.
 //
 // How the rates are used: shared/src/money.ts (toBase/fromBase), the web's

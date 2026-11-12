@@ -1,4 +1,4 @@
-// Slack: one Tendwell app, installed per workspace with OAuth v2. The bot
+// Slack: one Curahold app, installed per workspace with OAuth v2. The bot
 // token is sealed in the connection; people are matched by email.
 import { fetchOf, nowOf, type Config, type Deps } from '../../context';
 import { hmacHex, safeEqual } from '../../lib/crypto';

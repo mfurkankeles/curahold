@@ -47,8 +47,8 @@
 /* A hand on the page. */
 .btn { transition: background-color .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease, filter .12s ease; }
 .btn:active:not(:disabled) { transform: scale(.97); }
-.btn--primary { background: var(--grad, var(--tend)); background-origin: border-box; }
-.btn--primary:hover { background: var(--grad, var(--tend-ink)); filter: brightness(1.08); }
+.btn--primary { background: var(--grad, var(--brand)); background-origin: border-box; }
+.btn--primary:hover { background: var(--grad, var(--brand-ink)); filter: brightness(1.08); }
 .sidebar__new { transition: transform .08s ease, filter .12s ease, box-shadow .12s ease; }
 .sidebar__new:active { transform: scale(.98); }
 .navlink .icon { transition: transform .16s var(--ease); }
@@ -68,8 +68,8 @@
   pointer-events: none; animation: sparks .6s ease-out forwards;
 }
 @keyframes sparks {
-  0% { opacity: 1; box-shadow: 0 0 0 0 var(--done), 0 0 0 0 var(--tend), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--tend), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--tend); }
-  100% { opacity: 0; box-shadow: 0 -20px 0 0 var(--done), 15px -14px 0 0 var(--tend), 21px 0 0 0 var(--soon), 15px 14px 0 0 var(--done), 0 20px 0 0 var(--tend), -15px 14px 0 0 var(--soon), -21px 0 0 0 var(--done), -15px -14px 0 0 var(--tend); }
+  0% { opacity: 1; box-shadow: 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand); }
+  100% { opacity: 0; box-shadow: 0 -20px 0 0 var(--done), 15px -14px 0 0 var(--brand), 21px 0 0 0 var(--soon), 15px 14px 0 0 var(--done), 0 20px 0 0 var(--brand), -15px 14px 0 0 var(--soon), -21px 0 0 0 var(--done), -15px -14px 0 0 var(--brand); }
 }
 
 /* Rows that are links: the arrow of attention, not a jump. */

@@ -6,7 +6,7 @@ summary: Panoları müşterilerine açmak; müşterinin talep açması, yanıt y
 ---
 # Müşteri portalı
 
-Müşteri portalı, seçtiğin panoları müşterilerinin çalışanlarına açar. Müşteri kendi adresinden giriş yapar (örn. `acme.tendwell-portal.com`), kendi şirketi için açık talepleri ve durumlarını görür, yeni talep açar ve yanıt yazar.
+Müşteri portalı, seçtiğin panoları müşterilerinin çalışanlarına açar. Müşteri kendi adresinden giriş yapar (örn. `acme.curahold-portal.com`), kendi şirketi için açık talepleri ve durumlarını görür, yeni talep açar ve yanıt yazar.
 
 ## Müşteri neyi görür, neyi asla görmez
 
@@ -16,7 +16,7 @@ Müşteri portalı, seçtiğin panoları müşterilerinin çalışanlarına aça
 | Başlık, açıklama, durum (sütun için seçtiğin adla) | İç notlar ve iç yorumlar |
 | **Müşteriye yanıt** olarak yazılan yorumlar | Ekibin, rolleri, diğer kişiler |
 | Panoda izin verdiğin ayrıntılar (bitiş tarihi, öncelik, kim ilgileniyor) | Müşteri alanları, fırsatlar, sağlık skoru, kayıtlar |
-| | Diğer panolar, diğer şirketler, Tendwell'in kendisi |
+| | Diğer panolar, diğer şirketler, Curahold'un kendisi |
 
 Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve API'si oradan hiçbir şekilde erişilebilir değildir. Portal isteklerini çalıştıran veritabanı rolü hiçbir tabloyu okuyamaz; yalnızca giriş yapan kişinin kendi şirketine ait verileri döndüren portal fonksiyonlarını çağırabilir.
 

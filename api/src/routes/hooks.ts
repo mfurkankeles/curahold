@@ -79,7 +79,7 @@ hookRoutes.post('/slack', async (c) => {
   if (!person) return c.json({ response_type: 'ephemeral', text: say(locale, 'chat.notLinked') });
 
   if (!payload) {
-    // Slash command: /tendwell <title>
+    // Slash command: /curahold <title>
     const text = (form.get('text') ?? '').trim();
     if (!text) return c.json({ response_type: 'ephemeral', text: say(locale, 'chat.helpSlack') });
     const r = await createFromChat(deps, conn.orgId, person.id, { title: text });

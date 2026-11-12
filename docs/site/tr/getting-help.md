@@ -2,11 +2,11 @@
 title: Destek almak
 section: help
 order: 11
-summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Tendwell desteğinin hesabına bakmasına izin vermek.
+summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Curahold desteğinin hesabına bakmasına izin vermek.
 ---
 # Destek almak
 
-Sol menüdeki **Yardım** ile Tendwell desteğine yazarsın. Form, desteğin seni tekrar tekrar aramadan sorunu bulabilmesi için gereken bilgileri ister. Gördüğün şeyi değiştirmez ya da göndermez; ne gideceğini sen seçersin.
+Sol menüdeki **Yardım** ile Curahold desteğine yazarsın. Form, desteğin seni tekrar tekrar aramadan sorunu bulabilmesi için gereken bilgileri ister. Gördüğün şeyi değiştirmez ya da göndermez; ne gideceğini sen seçersin.
 
 ## Talep göndermek
 
@@ -20,7 +20,7 @@ Gönderince bir **referans numarası** (örn. TW-000123) alırsın. Bir kopyası
 
 ## Ekran görüntüleri ve dosyalar
 
-- **Ekran görüntüsü al**: Tarayıcı hangi sekmeyi paylaşacağını sorar; Tendwell sekmesini seç. Yardım penceresi o an gizlenir, yalnızca sayfa çekilir.
+- **Ekran görüntüsü al**: Tarayıcı hangi sekmeyi paylaşacağını sorar; Curahold sekmesini seç. Yardım penceresi o an gizlenir, yalnızca sayfa çekilir.
 - **Yapıştır ya da sürükle**: Kopyaladığın bir görüntüyü forma yapıştırabilir, dosyaları sürükleyebilirsin.
 - **İşaretle**: Önemli yeri kırmızı çerçeveyle vurgula. **Gizle** ile desteğin görmemesi gereken her şeyi (bir müşteri adı, bir tutar) kapat; kapattığın yer gönderilen görüntüden silinir.
 
@@ -43,7 +43,7 @@ Göndermek istemediğinin işaretini kaldırman yeter. Yazdığın hiçbir şey 
 
 ## Desteğin hesabına bakmasına izin vermek
 
-Bazı sorunları görmeden çözmek zordur. Formun sonundaki **Tendwell desteğinin hesabıma bakmasına izin ver** kutusu bunun içindir. Kutu kendiliğinden işaretli gelmez.
+Bazı sorunları görmeden çözmek zordur. Formun sonundaki **Curahold desteğinin hesabıma bakmasına izin ver** kutusu bunun içindir. Kutu kendiliğinden işaretli gelmez.
 
 - **Ne görür**: Destek, tam olarak senin gördüğünü görür: aynı müşteriler, aynı panolar, aynı alanlar. Fazlasını değil.
 - **Ne kadar**: 24 saat, 3 gün ya da 7 gün. Süre dolunca erişim kendiliğinden kapanır. Destek bir girişte en fazla 8 saat kalır.

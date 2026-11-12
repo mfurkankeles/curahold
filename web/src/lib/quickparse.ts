@@ -276,10 +276,10 @@ export function parseQuick(line: string, people: Pickable[], accounts: Pickable[
  * The × on a chip. A person, customer or priority is taken out of the line;
  * words read as a date or a rhythm stay, in quotes, as part of the title.
  */
-export function removeToken(line: string, token: { kind: TokenKind; text: string }): string {
+export function removeToken(line: string, token: { kind: TokenKind; text: string }, keepWords = token.kind === 'due' || token.kind === 'repeat'): string {
   const i = line.indexOf(token.text);
   if (i < 0) return line;
-  const keepWords = token.kind === 'due' || token.kind === 'repeat';
+  // keepWords: the words stay in the title, quoted so they are not read again.
   const mid = keepWords ? `"${token.text}"` : '';
   return `${line.slice(0, i)}${mid}${line.slice(i + token.text.length)}`.replace(/[ \t]{2,}/g, ' ').trim();
 }

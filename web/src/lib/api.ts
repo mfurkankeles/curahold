@@ -59,10 +59,10 @@ export function onAuthLost(fn: Listener) {
 }
 
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { 'x-tendwell-device': getDeviceId() };
-  if (currentLocale) headers['x-tendwell-locale'] = currentLocale;
+  const headers: Record<string, string> = { 'x-curahold-device': getDeviceId() };
+  if (currentLocale) headers['x-curahold-locale'] = currentLocale;
   const as = previewAs();
-  if (as) headers['x-tendwell-preview-as'] = as;
+  if (as) headers['x-curahold-preview-as'] = as;
   let payload: BodyInit | undefined;
   if (body instanceof FormData) payload = body;
   else if (body !== undefined) {

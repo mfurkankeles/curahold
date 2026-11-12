@@ -1,4 +1,4 @@
-# Tendwell — developer guide
+# Curahold — developer guide
 
 This guide is for someone joining the project: how the code is laid out,
 how a request travels, the rules that keep companies apart, and how to add
@@ -6,12 +6,14 @@ the usual things (a table, an endpoint, a screen, a setting, a string, a
 test). Read it once from top to bottom; afterwards the **feature map**
 near the end is the quickest way to the right file.
 
-> The product name "Tendwell" appears in code, strings and docs. If the
-> product is renamed, change the strings in `shared/src/i18n/*.ts`, the
-> docs in `docs/site/`, `README.md`, the demo page (`web/demo/index.html`),
-> email templates (`api/src/lib/emailHtml.ts`) and `package.json`. Internal
-> names such as cookie and header names (`tw_session`, `x-tendwell-device`)
-> can stay as they are.
+> The product name "Curahold" (Latin *cura*, care + *hold*: the customers you
+> keep by taking care of them) appears in strings (`shared/src/i18n/*.ts`),
+> the docs (`docs/site/`), `README.md`, the demo page (`web/demo/index.html`),
+> email templates (`api/src/lib/emailHtml.ts`), `package.json` and internal
+> names (cookies, headers, database roles). The mark — a "C" holding a dot —
+> is `Mark` in `web/src/components/ui.tsx`, with copies as the tab icon in
+> `web/index.html`, `web/demo/index.html` and `scripts/build-docs.ts`.
+> Brand colours are the `--brand*` tokens in `web/src/styles.css`.
 
 ---
 
@@ -92,10 +94,10 @@ Routes by file (all under `/api`):
 ## 3. How a request travels
 
 1. **Browser** — `web/src/lib/api.ts` (`get`, `post`, `patch`, `put`, `del`)
-   adds the device id (`x-tendwell-device`) and the language to every call.
+   adds the device id (`x-curahold-device`) and the language to every call.
    Failures come back as `ApiFailure` with a translated message.
 2. **Which company** — `companyFromHost` in `api/src/app.ts` reads the
-   company from the address (`acme.tendwell.com` → `acme`) and puts its row
+   company from the address (`acme.curahold.com` → `acme`) and puts its row
    in `c.get('org')`.
 3. **Who** — the session middleware checks the cookie (or an API key) and
    the device, and sets `c.get('auth')`: user id, role, permissions, seat.
@@ -105,7 +107,7 @@ Routes by file (all under `/api`):
    `run(c, async (q) => …)`.
 5. **`run()` opens a transaction as the company's member**: it sets the
    company and the person for the database (`app_org()`, `app_user()`) and
-   switches to the `tendwell_app` role, so **row-level security applies to
+   switches to the `curahold_app` role, so **row-level security applies to
    every query**. A route cannot see another company's rows even if it
    forgets a `where org_id = …`.
 6. **The answer** is mapped from rows to the shared types (`lib/mappers.ts`,
@@ -180,7 +182,7 @@ alter table widgets enable row level security;
 -- Who may read and change it, in words first, then in SQL.
 create policy widgets_select on widgets for select using (org_id = app_org());
 create policy widgets_insert on widgets for insert with check (org_id = app_org() and app_can_write());
-grant select, insert on widgets to tendwell_app;
+grant select, insert on widgets to curahold_app;
 ```
 
 Foreign keys pair `org_id` with the id so a row can never point into
@@ -217,7 +219,7 @@ test in `tests/` (see section 6).
    `match('/widgets/:id', path)`).
 3. A menu link in `web/src/components/Shell.tsx` if it needs one.
 4. Styles in the CSS file of its area, using the tokens at the top of
-   `styles.css` (`--tend`, `--ink-2`, `--line`, `--r-m`…). Respect
+   `styles.css` (`--brand`, `--ink-2`, `--line`, `--r-m`…). Respect
    "reduce motion": motion goes in `motion.css` or uses `var(--ease)`.
 
 ### a settings section

@@ -69,7 +69,7 @@ describe('joining a company', () => {
   it('auto-join: the person is in right away as a member', async () => {
     await ada.patch('/api/admin/org', { autoJoin: true });
     const a = await ask('auto@demo.example');
-    expect(env.email.last('auto@demo.example').subject).toBe('Join Demo Company on Tendwell');
+    expect(env.email.last('auto@demo.example').subject).toBe('Join Demo Company on Curahold');
     const j = await a.c.post('/api/join', { token: a.token, name: 'Auto Person', deviceId: a.c.device });
     expect(j.json).toEqual({ status: 'ok' });
     expect((await a.c.get('/api/me')).json.user).toMatchObject({ name: 'Auto Person', roleKey: 'member', seat: 'full' });

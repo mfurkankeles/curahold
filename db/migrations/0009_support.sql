@@ -1,4 +1,4 @@
--- Tendwell — support tickets from Zendesk, Freshdesk, Intercom, Jira Service
+-- Curahold — support tickets from Zendesk, Freshdesk, Intercom, Jira Service
 -- Management, Salesforce and Dynamics cases, or any tool through the API or
 -- an inbound webhook. Tickets are records of the built-in "ticket" kind, so
 -- they follow their customer's access rules, appear on its page and

@@ -1,4 +1,4 @@
-// Asking Tendwell for help: a form that collects what support needs the first
+// Asking Curahold for help: a form that collects what support needs the first
 // time (what happened, where, how to repeat it, screenshots, and the
 // technical details the app saw), and consent for support to look inside —
 // off unless ticked, time-limited, revocable.

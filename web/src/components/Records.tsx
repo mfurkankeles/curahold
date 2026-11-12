@@ -30,7 +30,7 @@ import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
  */
 export type Column = { key: string; builtin: (typeof RECORD_BUILTIN_COLUMNS)[number] } | { key: string; field: AccountField };
 
-/** The columns a record table shows: the company's choice, or Tendwell's (customer, a few fields, owner). */
+/** The columns a record table shows: the company's choice, or Curahold's (customer, a few fields, owner). */
 export function tableColumns(type: RecordType): Column[] {
   const byKey = (k: string): Column | null =>
     (RECORD_BUILTIN_COLUMNS as readonly string[]).includes(k) ? { key: k, builtin: k as (typeof RECORD_BUILTIN_COLUMNS)[number] } : ((f) => (f ? { key: k, field: f } : null))(type.fields.find((f) => f.key === k));

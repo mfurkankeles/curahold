@@ -1,4 +1,4 @@
--- Tendwell — ways for customers' people to sign in to the portal, chosen
+-- Curahold — ways for customers' people to sign in to the portal, chosen
 -- by each company: an email link with a code, Google, Microsoft, passkeys
 -- and (if wanted) a password. Everything here is reached only with owner
 -- access by the portal's own sign-in routes: row-level security is on and

@@ -23,4 +23,4 @@ begin
   end if;
   update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('rhythm', p_rhythm) where id = app_org();
 end $$;
-grant execute on function app_set_rhythm(jsonb) to tendwell_app;
+grant execute on function app_set_rhythm(jsonb) to curahold_app;

@@ -6,7 +6,7 @@ summary: Olaylar, mesaj biçimi, imza doğrulama ve yeniden deneme.
 ---
 # Webhook'lar
 
-Webhook ile Tendwell'de bir şey değişince senin adresine saniyeler içinde bir mesaj gelir. Değişiklikleri sorgulayıp durmana gerek kalmaz.
+Webhook ile Curahold'da bir şey değişince senin adresine saniyeler içinde bir mesaj gelir. Değişiklikleri sorgulayıp durmana gerek kalmaz.
 
 ## Ekleme
 
@@ -38,15 +38,15 @@ Bir nesne bir dakika içinde birkaç kez değişirse tek bir mesaj gider ve mesa
 ```http
 POST /senin-adresin HTTP/1.1
 Content-Type: application/json
-Tendwell-Event: task.updated
-Tendwell-Signature: t=1794394831,v1=5f2b…
+Curahold-Event: task.updated
+Curahold-Signature: t=1794394831,v1=5f2b…
 
 {
   "id": "9b0c…",
   "event": "task.updated",
   "occurredAt": "2026-11-11T10:20:31.000Z",
   "company": "sirketin",
-  "url": "https://sirketin.tendwell.com",
+  "url": "https://sirketin.curahold.com",
   "data": { "id": "…", "title": "Yenileme teklifini gönder", "status": "done", "done": true, "dueDate": "2027-01-15" }
 }
 ```
@@ -55,7 +55,7 @@ Aynı mesaj birden fazla gelebilir; tekrarları `id` ile ayıkla.
 
 ## İmzayı doğrulama
 
-`Tendwell-Signature` başlığındaki `v1`, gizli anahtarla `t + "." + gövde` metninin HMAC-SHA256 özetidir. Gövdeyi ayrıştırmadan, geldiği gibi kullan. Beş dakikadan eski `t` değerlerini reddet.
+`Curahold-Signature` başlığındaki `v1`, gizli anahtarla `t + "." + gövde` metninin HMAC-SHA256 özetidir. Gövdeyi ayrıştırmadan, geldiği gibi kullan. Beş dakikadan eski `t` değerlerini reddet.
 
 ```js
 // Node.js
@@ -85,6 +85,6 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 ## Yanıt ve yeniden deneme
 
 - 10 saniye içinde `2xx` ile yanıt ver. İşi sonra yap.
-- Yanıt gelmezse ya da `2xx` dışı gelirse Tendwell 1, 5, 30, 120 ve 360 dakika sonra yeniden dener; toplam 6 deneme.
+- Yanıt gelmezse ya da `2xx` dışı gelirse Curahold 1, 5, 30, 120 ve 360 dakika sonra yeniden dener; toplam 6 deneme.
 - Üst üste 50 kez ulaşamayan webhook duraklatılır. Ayarlar → Geliştirici'den **Sürdür** ile açarsın.
 - Yönlendirmeler izlenmez; son adresi doğrudan yaz.

@@ -15,7 +15,7 @@ export const ADAPTERS: Record<string, MessagingAdapter> = {
   webhook: webhookAdapter,
 };
 
-/** What this server can offer: two-way apps need Tendwell's own registration with the service. */
+/** What this server can offer: two-way apps need Curahold's own registration with the service. */
 export function messagingProviders(cfg: Config): ProviderInfo[] {
   return [
     { id: 'slack', kind: 'messaging', twoWay: true, available: !!cfg.connectors.slack, setup: 'oauth' },

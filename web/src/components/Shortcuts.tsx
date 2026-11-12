@@ -1,4 +1,4 @@
-// Keys for people who live in Tendwell all day — and a sheet ("?") that lists
+// Keys for people who live in Curahold all day — and a sheet ("?") that lists
 // them, so nobody has to remember them first.
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../lib/i18n';

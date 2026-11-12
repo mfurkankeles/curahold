@@ -512,7 +512,8 @@ const REPEATS: { key: string; value: Repeat | null }[] = [
 ];
 
 /** Repeat: none, daily, weekly… and whether the next one counts from the due date or from when it was done. */
-function RepeatPicker({ value, disabled, onChange }: { value: Repeat | null; disabled: boolean; onChange: (r: Repeat | null) => void }) {
+/** How often a task comes back (also used by the New task dialog). */
+export function RepeatPicker({ value, disabled, onChange }: { value: Repeat | null; disabled: boolean; onChange: (r: Repeat | null) => void }) {
   const { t } = useI18n();
   const current = value ? (REPEATS.find((r) => r.value && r.value.every === value.every && r.value.unit === value.unit)?.key ?? 'custom') : 'none';
   return (

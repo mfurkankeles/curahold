@@ -1,5 +1,5 @@
 // The customer portal's API (/papi), served only on the portal's own domain
-// (acme.tendwell-portal.com). It shares nothing with the app's API: its own
+// (acme.curahold-portal.com). It shares nothing with the app's API: its own
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
 import { Hono } from 'hono';
@@ -50,7 +50,7 @@ export function createPortalApp(deps: Deps) {
       if (hit) e = new HttpError(DB_ERRORS[hit]);
     }
     if (e) return c.json({ error: e.code, message: translate(locale, e.key, e.vars, org?.terms) }, e.status as any);
-    console.error('[tendwell] portal', err);
+    console.error('[curahold] portal', err);
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 
@@ -68,10 +68,10 @@ export function createPortalApp(deps: Deps) {
     if (!row || !portalOn(row as OrgRow)) fail('org_not_found');
     const org = { ...row, locale: normalizeLocale(row.locale), terms: row.terms ?? {}, settings: row.settings ?? {} } as OrgRow;
     c.set('org', org);
-    const want = c.req.header('x-tendwell-locale');
+    const want = c.req.header('x-curahold-locale');
     c.set('locale', want === 'tr' || want === 'en' ? want : org.locale);
     // A form on another site cannot set this header, so it cannot act for someone here.
-    if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.header('x-tendwell-portal') !== '1') fail('forbidden');
+    if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.header('x-curahold-portal') !== '1') fail('forbidden');
     await next();
   });
 
@@ -114,7 +114,7 @@ export function createPortalApp(deps: Deps) {
     // A shorter session length, or a way of signing in switched off, ends these sessions too.
     if (!s || !methodAllowed(signInOptions(org, deps), s.method)) fail('unauthenticated');
     c.set('person', { id: s.person_id, name: s.name, accountId: s.account_id, sessionId: s.id });
-    if (s.locale && !c.req.header('x-tendwell-locale')) c.set('locale', normalizeLocale(s.locale));
+    if (s.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(s.locale));
     if (s.stale) {
       await deps.db.system(async (q) => {
         await q.query('update portal_sessions set last_seen_at = now() where id = $1', [s.id]);

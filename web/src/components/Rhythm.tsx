@@ -373,8 +373,8 @@ const modeOf = (r: Rhythm): TargetMode => (Object.keys(r.targets.amounts).length
  * Settings → Targets and rhythm. Each part is the company's own choice:
  *  - targets: none, one for all deals, or one per type of deal (each type on or off);
  *  - business reviews: held or not, and how often;
- *  - renewals: started by Tendwell or not, how far ahead, with which playbook;
- *  - nudges: when Tendwell speaks up about work that has gone still.
+ *  - renewals: started by Curahold or not, how far ahead, with which playbook;
+ *  - nudges: when Curahold speaks up about work that has gone still.
  * Saved together with one PUT /rhythm (api/src/routes/reports.ts).
  */
 export function RhythmSettings() {

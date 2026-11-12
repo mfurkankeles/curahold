@@ -84,7 +84,7 @@ export async function postWebhook(deps: Deps, hook: Row, body: string, event: st
   try {
     const res = await fetchOf(deps)(hook.url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'user-agent': 'Tendwell-Webhooks/1', 'tendwell-event': event, 'tendwell-signature': await signBody(secret?.secret ?? '', body, at) },
+      headers: { 'content-type': 'application/json', 'user-agent': 'Curahold-Webhooks/1', 'curahold-event': event, 'curahold-signature': await signBody(secret?.secret ?? '', body, at) },
       body,
       signal: ctl.signal,
       redirect: 'manual',

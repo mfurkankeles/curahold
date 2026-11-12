@@ -40,4 +40,4 @@ Hide a field from some roles, or let them see it without changing it. For exampl
 
 ## See it as them
 
-In Settings → Roles, **See it as them** next to a person opens Tendwell the way they see it. Nothing can be changed meanwhile, and the strip at the top takes you back to your own view.
+In Settings → Roles, **See it as them** next to a person opens Curahold the way they see it. Nothing can be changed meanwhile, and the strip at the top takes you back to your own view.

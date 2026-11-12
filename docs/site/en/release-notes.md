@@ -10,6 +10,7 @@ summary: What is new and what changed.
 
 ### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
 
+- **New task asks for the details:** "Add task" under a column and "New task" open the same dialog: description, customer, the record it belongs to, assignees, due date, priority, repeat, board, column and the board's own fields. Writing "friday @Ayşe #Acme !high" in the title still fills the fields for you.
 - **Playbooks:** write your team's way of doing a thing as steps with dates — counted from the day it is put on, or back from the customer's renewal date or a deal's close date. Start from four ready-made ones (renewal, onboarding, business review, closing a deal) under Settings → Playbooks.
 - **Renewals that start by themselves:** choose how far ahead (180 days, say) and which playbook; each morning the renewal work opens for the customer's owner, with a renewal opportunity if you like. Steps whose dates have already passed become one "catch-up" task instead of a pile due today.
 - **Currencies:** a customer or a deal can be in its own currency; totals, targets and reports are in the company's, at the rates you keep under Settings → Currencies.
@@ -37,7 +38,7 @@ summary: What is new and what changed.
 
 ### Install it, read offline, live refresh
 
-- **Install:** Tendwell installs as an app on phones and computers (Android/Chrome/Edge: click your name → Install Tendwell; iPhone: Share → Add to Home Screen).
+- **Install:** Curahold installs as an app on phones and computers (Android/Chrome/Edge: click your name → Install Curahold; iPhone: Share → Add to Home Screen).
 - **Offline reading:** without a connection the app opens and shows what you last saw; signing out removes the copy on the device.
 - **Live refresh:** a card someone else adds, a task they move, a comment they write and new notices show up by themselves within half a minute.
 - When the connection drops, error messages now say so.
