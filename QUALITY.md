@@ -207,3 +207,128 @@ Daha önce istediğim ama yarım kalan bir şey varsa listele; bu tura alıp alm
 # Ölçümler
 
 Ölçümler `scripts/quality/` altındaki betiklerle alınır ve her paketin sonunda burada güncellenir.
+
+| Betik | Ne ölçer | Süre |
+| --- | --- | --- |
+| `npx tsx scripts/quality/static.mts` | İndirilen dosya boyutları, sözlükler, eski ad izleri, stil düzeni, bağımlılık açıkları | ~5 sn |
+| `npx tsx scripts/quality/server.mts` | Türkçe arama ve sıralama, aynı anda düzenleme, tekrar eden istek, silme, güvenlik başlıkları, izolasyon | ~10 sn |
+| `npx tsx scripts/quality/browser.mts [load tap live big axe fit]` | Telefonda ilk açılış, dokunma gecikmesi, canlı yenileme, büyük pano, erişilebilirlik, sığmayan metin | bölüm başına 1–5 dk |
+| `npx tsx scripts/quality/lighthouse.mts` | Satış sitesi ve yardım sayfaları (Lighthouse, mobil) | ~2 dk |
+| `PERF_DATABASE_URL=… npx tsx scripts/perf.ts` | Gerçek Postgres'te büyük şirketle API süreleri | ~1 dk |
+| `npx tsx scripts/quality/cost.mts [koltuk]` | Koltuk başı aylık maliyet ve brüt marj | anında |
+
+Tanımlar: "orta seviye telefon, 4G" = 9 Mbit/sn iniş, 1,5 Mbit/sn çıkış, istek başına 165 ms gecikme ve
+4 kat yavaşlatılmış işlemci (Chrome'un "Fast 4G" profili). "Yavaş 4G" Lighthouse'un mobil puanında
+kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel makinede, ağ gecikmesi olmadan
+ölçüldü; AB'den ölçüm canlı ortam kurulunca yapılacak.
+
+## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
+
+Puanlar: Kişiselleştirme 5 · Güvenilirlik 4 · Hız 5 · Gerçek zamanlılık 2 · Sadelik 6 · İşlevsellik 6 ·
+Tasarım 4 · Brüt marj 8 (yük testiyle doğrulanınca kesinleşir).
+
+### Kişiselleştirme: 5/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| Hizmet firmaları ve teknoloji satanlar için şablon | 5 şablon: müşteri başarısı, hesap yönetimi, satış, destek, boş | İkisi de yok |
+| Şablon terimleri, alanları, kayıt türlerini, panoları, aşamaları, otomasyonları, modülleri getirir | Terim, müşteri alanları, ekipler, panolar, otomasyonlar | Kayıt türleri, aşamalar ve modüller şablonda yok |
+| Her şey ayar | Var: alanlar, kayıt türleri, aşamalar, sütunlar, roller, ekipler, ana sayfalar, otomasyonlar, sağlık skoru, bildirim kanalları, sessiz saatler, dil, para birimi, saat dilimi, logo | Yok: çalışma günleri ve tatil takvimi, marka rengi, modül açıp kapama |
+| Şirketin terimi her yerde görünür | Yalnızca "müşteri" sözcüğü değişebiliyor. 106 metin şirketin sözcüğünü kullanıyor; 102 İngilizce ve 107 Türkçe metinde sözcük sabit yazılı | 100'den fazla metin; fırsat, kişi, yenileme, pano sözcükleri hiç değişmiyor |
+| Ayar değişikliği önizlenir, geçmişe yazılır, geri alınır | İşlem günlüğü var; önizleme otomasyon, sağlık skoru ve içe aktarmada var | Ayarlar için geri alma yok |
+| Kurulum dışa aktarılır ve kopyalanır | Yok | Yok |
+| 50 özel alan ve 10 kayıt türüyle hız hedefleri tutar | Ölçülmedi | Yük testinde ölçülecek |
+| Üç farklı uydurma şirketle senaryolar | Tek demo şirketi | Yok |
+| Yeni dil = bir çeviri dosyası | 2.894 metin iki dilde de tam. Kodda 58 "Türkçe mi?" kontrolü, sözlük dışında 340 çift dilli metin | Üçüncü dil bugün kod değişikliği ister |
+
+### Güvenilirlik: 4/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| Aynı anda düzenlemede kayıp yok | Görevlerde sürüm numarası var: farklı alanlar birleşiyor, aynı alan reddedilip kullanıcıya söyleniyor | Müşteri ve kayıtlarda sürüm yok: aynı alanı iki kişi değiştirirse ikincisi sessizce eziyor |
+| Tekrar eden istek kopya oluşturmaz | Aynı istek iki kez gidince 2 görev oluşuyor | Idempotency yok |
+| Yan etkiler outbox'ta | Bildirimler ve webhook'lar işlemle birlikte yazılıyor, yeniden deneniyor | CRM'e yazma ve sohbet mesajları ayrıca incelenecek; canlı sinyal yok |
+| Çevrimdışı değişiklik kaybolmaz | Çevrimdışıyken okunuyor; yazma hata veriyor | Kuyruk yok |
+| Arka plan işlerinin son başarılı çalışması görünür, iki hatada haber gider | Senkron çalışmaları görünüyor | Diğer işler görünmüyor, hata bildirimi yok |
+| Her API ucu için izolasyon testi | 58 tablonun 58'inde satır düzeyi güvenlik açık. 238 API adresinin 114'ü kayda kimlikle erişiyor; 12 izolasyon testi ve 17 dosyada dağınık kontroller var | Uç başına sistematik test yok |
+| Due date saat diliminde kaymaz | Tarihler saat içermiyor (kaymaz), ama sunucu "bugün"ü 12 yerde UTC'ye göre hesaplıyor | İstanbul'da 00:00–03:00 arası geciken sayıları bir gün geriden gelir |
+| Türkçe arama ve sıralama hatasız | Arama 5/12 (isik, seker, cagri, ozturk, unal bulamıyor), müşteri listesi 5/12, sıralamada 12 addan 9'u yanlış yerde | Bozuk |
+| Silinen 30 gün çöp kutusunda | Görev ve müşteri kalıcı siliniyor | Yok |
+| Yedek ve geri yükleme provası | Canlı ortam yok; kendi sunucusu belgesinde pg_dump tarifi var | Yok |
+| Çökmede uygulama açılır ve söyler | Çevrimdışı okuma var | Entegrasyon çökmesi senaryoları test edilmedi |
+| Güvenlik | Bağımlılıklarda açık 0. Giriş, kayıt ve destek uçlarında sınır var | API yanıtlarında güvenlik başlığı ve CSP yok; genel istek sınırı yok (1,6 sn'de 400 istek, hiçbiri reddedilmedi); OWASP gözden geçirmesi yapılmadı |
+| Cihaz sınırı ve koltuk paylaşımı tespiti | Cihaz sınırı var ve testli | Paylaşım tespiti yok |
+| KVKK ve GDPR | Dışa aktarma ve silme ürün içinde ve testli | Saklama süreleri uygulanmıyor; okuma erişimleri kayda geçmiyor |
+| Hatalar kayda girer | Sunucu hataları yalnızca konsola; tarayıcı hataları yalnızca destek talebine ekleniyor | Kayıt yok |
+
+### Hız: 5/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| İlk açılış LCP ≤ 1,5 sn (telefon, 4G) | 1,40 sn (yavaş 4G'de 4,26 sn); ağ 3,3 sn sonra sakinleşiyor | Sınırda tutuyor |
+| Tekrar açılış ≤ 0,5 sn | 0,67 sn | 0,17 sn fazla |
+| Sayfa kayması (CLS) ≤ 0,05 | 0,53 | 10 kat fazla |
+| İlk ekran JavaScript ≤ 170 KB | 332 KB, tek dosya; stil 31 KB | 162 KB fazla, bölünmemiş |
+| Her dokunuş ≤ 100 ms, INP ≤ 200 ms | 9 etkileşimde %75'lik dilim 112 ms, en yavaş 192 ms (takvimi açmak) | INP sınırda; 100 ms hedefi bazı ekranlarda aşılıyor |
+| API okuma p95 ≤ 150 ms, yazma ≤ 250 ms | Yerelde, 306 kişilik ve 210 bin görevli şirkette 63 okuma: ortanca 28 ms, p95 139 ms, en yavaş 345 ms (iş raporu). Görev ekleme 55 ms, taşıma 33 ms | p95 tutuyor; en yavaş istek hedefin üstünde; AB'den ölçülmedi |
+| 20 bin görevli pano ≤ 300 ms | 90 sn'de açılmadı; 15 bin kart ve 170 bin öğe çiziliyor | Sanal liste yok |
+| 2 bin müşterili liste ≤ 300 ms | 500 satır çiziliyor (11 bin öğe) | Sanal liste yok; gerçek veritabanında süre ölçülecek |
+| Ctrl K ≤ 100 ms | 240–260 ms | 2,5 kat |
+| Satış sitesi ve yardım Lighthouse ≥ 95 | Site: performans 100, erişilebilirlik 95, en iyi uygulamalar 100, SEO 90. Yardım: 95–100, 92, 100, 90 | SEO (hreflang) ve yardım sayfalarında erişilebilirlik |
+
+### Gerçek zamanlılık: 2/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| Başkasının değişikliği ≤ 1 sn | 14,0 / 21,0 / 24,7 sn (30 sn'de bir soruyor) | 14–25 kat |
+| Hiçbir değişiklik kaçmaz (artan numara) | Görev, kayıt ve okunmamış sayaçları karşılaştırılıyor | Şirket başına değişiklik numarası yok |
+| Kanal yalnızca sinyal taşır | Bugünkü yoklama da yalnızca sayaç taşıyor | Kanal yok |
+| Görev panelinde kim bakıyor | Yok | Yok |
+| CRM anlık bildirimi | Saatlik senkron | Yok |
+| Boşta maliyet ~0 | Açık her sekme 30 sn'de bir istek atıyor (1.000 koltukta ayda ~11 milyon istek) | Karar bekliyor |
+
+### Sadelik: 6/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| İlk görev 60 sn, kurulum 15 dk | İnsanla ölçülmedi; kurulum sihirbazı ve otomatik senaryosu var | Ölçülecek |
+| Görevde yalnızca başlık zorunlu | Öyle | Tutuyor |
+| Her ekranda tek ana eylem | 43 ekranın 2'sinde birden fazla ana düğme | 2 ekran |
+| Kapalı modül menüde yer kaplamaz | Modül kavramı yok; menü herkese aynı | Yok |
+| Sadeleştirme listesi | Hazırlanmadı | Sadelik paketinde sunulacak |
+
+### İşlevsellik: 6/10
+
+364 otomatik test ve 36 tarayıcı senaryosu geçiyor. On çekirdek işin uçtan uca tarayıcı senaryosu:
+3'ü tam (kurulum, müşteri sayfası, portal), 6'sı kısmi (CRM: yalnızca demo CRM; görev: sohbet
+uygulamaları ve e-posta yolu tarayıcıda denenmiyor; hatırlatma ve otomasyonlar: yalnızca kural
+önizlemesi; raporlar: ekip görünümü ve 1:1 yok; dışa aktarma, API, webhook: yalnızca API anahtarı ve
+yapay zekâ bağlantısı; destek: Servis Konsolu henüz yapılmadı), 1'i yok (abonelik ve Docker kurulumu).
+Kısmi olanların eksik yolları sunucu testleriyle kapsanıyor.
+
+### Tasarım: 4/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| Tek tasarım sistemi, tek seferlik stil yok | Token'lar var; ama ekranlarda 196 tek seferlik stil, kurallarda 103 doğrudan yazılmış renk, 32 farklı köşe yarıçapı, 30 farklı yazı boyu, boşlukların %53'ü 4 px ızgarasının dışında | Dağınık |
+| Animasyonlar 150–200 ms | 127 sürenin 99'u aralık dışında (80 ms – 1,4 sn) | Çoğu dışında |
+| axe ile 0 ihlal | Açık temada 443, koyu temada 412 bulgu (43 ekranın hepsinde; çoğu ortak çerçeveden tekrar ediyor: ad uyuşmazlığı, küçük dokunma hedefi, iç içe düğme, renk kontrastı) | 0 değil |
+| Taşma ve kesilme yok | Yana kayan ekran yok. Kesilen etiket: 375 px'te 68, 768 px'te 66, 1440 px'te 57 (bir kısmı bilerek kısaltılan veri) | Ayıklanıp düzeltilecek |
+| Her ekranın boş, yükleniyor, hata, çevrimdışı, yetkisiz hali | Envanter çıkarılmadı | Tasarım paketinde |
+| 375 / 768 / 1440, TR + EN, açık + koyu kontrol | Bu ölçümde 3 birleşim tarandı | Tam tarama tasarım paketinde |
+
+### Brüt marj: 8/10
+
+| Hedef | Şu an | Fark |
+| --- | --- | --- |
+| 1.000 koltukta ≤ $0,25 / koltuk / ay | Model: $0,067 (canlı kanalla $0,061; dakikalık geri dönüşle birlikte $0,161) | Tutuyor; kullanım rakamlarının çoğu henüz varsayım |
+| En ucuz planda brüt marj ≥ %90 | 1.000 koltukta %94,4 (yıllık %94,5); Paddle koltuk başına $0,75–1,00 alıyor | Tutuyor. 200 koltuğun altında dakikalık geri dönüş açılırsa %90'ın altına iner |
+| Maliyet modeli betiği | `scripts/quality/cost.mts`, fiyatlar 12 Kasım 2026'da sağlayıcıların sayfalarından okundu | Var |
+
+### Kurallara göre durum
+
+- Eski çalışma adı: dosyalarda 0. Kısa önekleri: 35 dosyada 73, 12 dosyada 22 ve 7 dosyada 8 kez geçiyor.
+- Ürünün adı 172 dosyada 845 kez açık yazılı; tek yerden değişmiyor.
+- Tam test paketi: 364 sunucu testi 116 sn sürüyor. Tarayıcı senaryolarının süresi bir sonraki tam
+  çalıştırmada ölçülecek; toplamın 5 dakikayı geçmemesi gerekiyor.
+- Sızıntı taraması temiz.
