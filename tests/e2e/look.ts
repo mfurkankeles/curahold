@@ -99,6 +99,39 @@ for (const mode of ['light', 'dark'] as const) {
     await pause(400);
     await shot(page, `look-${mode}-sub2`);
   }
+  if (want('nav')) {
+    // The customers menu: renewals from the menu, products from the switch, then a customer and back.
+    await go(page, '/home');
+    await page.click('a.navlink[href="/accounts?view=renewals"]');
+    await pause(500);
+    await shot(page, `look-${mode}-nav1-renewals`);
+    await page.click('.seg--views button:last-child');
+    await pause(500);
+    await shot(page, `look-${mode}-nav2-products`);
+    await page.click('a.navlink[href="/accounts?view=renewals"]');
+    await pause(500);
+    await page.click('.renewals .rowlink');
+    await pause(700);
+    await shot(page, `look-${mode}-nav3-customer`);
+  }
+  if (want('cura')) {
+    await go(page, '/my');
+    await shot(page, `look-${mode}-cura0-button`);
+    await page.click('.cura__fab');
+    await page.waitForSelector('.cura .ask__form input');
+    await pause(400);
+    await shot(page, `look-${mode}-cura1-open`);
+    await page.type('.cura .ask__form input', 'Müşterileri nasıl içe aktarırım?');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.cura .ask__answer, .cura .ask__chips .ask__chip').catch(() => undefined);
+    await pause(700);
+    await shot(page, `look-${mode}-cura2-answer`);
+    await page.click('.cura__tool');
+    await page.waitForSelector('.grantbox').catch(() => undefined);
+    await pause(300);
+    await shot(page, `look-${mode}-cura3-requests`);
+    await page.keyboard.press('Escape');
+  }
   if (want('accounts')) {
     await go(page, '/accounts');
     await page.waitForSelector('.acards, .accounts-table', { timeout: 10_000 }).catch(() => undefined);

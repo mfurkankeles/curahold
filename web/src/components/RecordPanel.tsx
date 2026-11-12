@@ -12,7 +12,8 @@ import { ApiFailure, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useLive } from '../lib/live';
 import { useMoney } from '../lib/money';
-import { navigate, setQuery } from '../lib/router';
+import { nameIt, navigate, setQuery } from '../lib/router';
+import { PanelBack } from './BackBar';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState } from '../lib/time';
@@ -59,6 +60,8 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
   useLive('tasks', () => void load());
 
   const close = useCallback(() => setQuery('record', null), []);
+  const recName = rec?.name;
+  useEffect(() => nameIt(`record:${recordId}`, recName), [recordId, recName]);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     panel.current?.focus();
@@ -106,6 +109,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
       <div className="scrim" onClick={close} />
       <aside className="panel recpanel" role="dialog" aria-modal="true" aria-label={rec?.name ?? t('common.loading')} tabIndex={-1} ref={panel}>
         <header className="panel__head">
+          <PanelBack />
           {type && <span className="recpanel__type">{typeLabel(type, locale, false)}</span>}
           <span className="topbar__spacer" />
           {rec && canWrite && type && (

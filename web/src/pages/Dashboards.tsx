@@ -20,7 +20,7 @@ import { FavoriteButton } from '../components/Favorites';
 import { Icon, PageIcon } from '../components/icons';
 import { ApiFailure, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { nameIt, navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { draftOf, PageEditor, Tile, type Data, type Draft } from './Home';
 import { ReportTabs } from './ReportBuilder';
@@ -154,6 +154,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
   }, [create, admin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = pages?.find((p) => p.id === id) ?? null;
+  useEffect(() => nameIt(`/dashboards/${id}`, current?.name), [id, current?.name]);
   const load = useCallback(async () => {
     if (!current) return;
     setBusy(true);
@@ -211,9 +212,6 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
   return (
     <>
       <header className="topbar dash-top">
-        <button className="btn btn--quiet btn--icon" aria-label={t('nav.dashboards')} title={t('nav.dashboards')} onClick={() => navigate('/dashboards')}>
-          <Icon name="chevronLeft" size={18} />
-        </button>
         <div className="topbar__titles">
           <h1 className="topbar__title">{current.name}</h1>
           {time && <p className="topbar__sub">{t('dash.asOf', { time })}</p>}

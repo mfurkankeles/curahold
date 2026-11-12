@@ -1098,6 +1098,43 @@ await step('installable, and readable without a connection', async () => {
   await omar.page.browserContext().close();
 });
 
+await step('renewals and products are places of their own, and a customer opened from one leads back to it', async () => {
+  const zey = await newPage(s.browser);
+  await signIn(zey.page, s.origin, 'zeynep@demo.example');
+  await zey.page.goto(`${s.origin}/home`, { waitUntil: 'networkidle0' });
+  // From the menu: its own title, its own entry lit, and nothing to go back to.
+  await zey.page.click('a.navlink[href="/accounts?view=renewals"]');
+  await zey.page.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Sözleşme yenilemeleri');
+  expect((await zey.page.$('.backbar')) === null, 'a place chosen from the menu offers a way back');
+  expect((await text(zey.page, '.navlink[aria-current="page"]')).includes('Yenilemeler'), 'the menu does not show Renewals as the place');
+  // The switch on the page moves to Products, and the menu follows; it does not fall back to the list.
+  await (await byText(zey.page, '.seg--views button', 'Ürünler')).click();
+  await zey.page.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Ürünler');
+  expect(zey.page.url().endsWith('/accounts?view=products'), `products has no address of its own: ${zey.page.url()}`);
+  expect((await text(zey.page, '.navlink[aria-current="page"]')).includes('Ürünler'), 'the menu does not show Products as the place');
+  // A customer opened from Renewals: the way back names Renewals and returns there.
+  await zey.page.click('a.navlink[href="/accounts?view=renewals"]');
+  await zey.page.waitForSelector('.renewals .rowlink');
+  await zey.page.click('.renewals .rowlink');
+  await zey.page.waitForSelector('.backbar__back');
+  expect(/\/accounts\/[0-9a-f-]{36}/.test(zey.page.url()), `the customer did not open: ${zey.page.url()}`);
+  expect((await text(zey.page, '.backbar__back')).trim() === 'Yenilemeler', `the way back says: ${await text(zey.page, '.backbar__back')}`);
+  await shot(zey.page, 'p7-03-way-back');
+  const customer = zey.page.url();
+  await zey.page.click('.backbar__back');
+  await zey.page.waitForFunction(() => location.search === '?view=renewals' && !document.querySelector('.backbar'));
+  // Opened by its own address there is no "before": the way back is the list it belongs to.
+  await zey.page.goto(customer, { waitUntil: 'networkidle0' });
+  await zey.page.waitForSelector('.backbar__back');
+  // (An earlier step may have renamed "customers" for this company: the way back uses the company's own word.)
+  const word = await zey.page.$eval('a.navlink[href="/accounts"]', (a) => a.closest('.navsec')?.querySelector('.navsec__toggle span')?.textContent ?? '');
+  expect(word.length > 0 && (await text(zey.page, '.backbar__back')).trim() === word, `a customer opened by its link has no way up: ${await text(zey.page, '.backbar__back')} / ${word}`);
+  await zey.page.click('.backbar__back');
+  await zey.page.waitForFunction(() => location.pathname === '/accounts' && !location.search);
+  expect(zey.errors.length === 0, zey.errors.join(' | '));
+  await zey.page.browserContext().close();
+});
+
 await step('a subtask opened from its task has a way back to it', async () => {
   const lena = await newPage(s.browser);
   await signIn(lena.page, s.origin, 'lena@demo.example');

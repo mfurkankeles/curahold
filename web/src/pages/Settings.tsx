@@ -22,7 +22,7 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
 import { allCurrencies, useMoney } from '../lib/money';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { nameIt, navigateFresh } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
@@ -71,6 +71,10 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
   const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
   const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
   const currentLabel = allowed.find((x) => x[0] === current)?.[1] ?? '';
+  // The way back to here says which settings, not just "Settings".
+  useEffect(() => {
+    if (current) nameIt(`/settings/${current}`, currentLabel);
+  }, [current, currentLabel]);
   return (
     <>
       <header className="topbar">
@@ -82,7 +86,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
       </header>
       <div className="page admin">
         <nav className="admin__nav" aria-label={t('settings.title')}>
-          <select className="select admin__navselect" value={current} aria-label={t('settings.title')} onChange={(e) => navigate(`/settings/${e.target.value}`)}>
+          <select className="select admin__navselect" value={current} aria-label={t('settings.title')} onChange={(e) => navigateFresh(`/settings/${e.target.value}`)}>
             {allowed.map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
@@ -103,7 +107,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
                     aria-current={key === current ? 'page' : undefined}
                     onClick={(e) => {
                       e.preventDefault();
-                      navigate(`/settings/${key}`);
+                      navigateFresh(`/settings/${key}`);
                     }}
                   >
                     <Icon name={icon} size={16} className="icon--lead" />

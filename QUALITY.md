@@ -315,6 +315,13 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | İkonlu ana düğme | "Sayfayı düzenle" ve "Yeni sayfa" dahil çoğu yalnızca yazı | 30 düğme ikonlu (ekle, davet et, kaydet, bağla, içe aktar, gönder) |
 | Ürünün kendi ikon takımı | 78 ikon | 90 ikon (hepsi aynı ızgara ve çizgi kalınlığı; dışarıdan ikon ya da yazı tipi yok, ek ücret $0) |
 | Görevlerim'de görevin içinden alt göreve geçince geri dönüş | yoktu; paneli kapatıp görevi yeniden bulmak gerekiyordu | panelin başında "← ana görevin adı"; tek tıkla ana göreve döner, sayfa değişmez (testli) |
+| Geldiğin yere dönen "geri" | yoktu: 4 alt ekranda sabit bir "üst listeye git" bağlantısı vardı (müşteri, bire bir, panel, rapor); Yenilemeler'den açılan müşteri "Tüm müşteriler"e dönüyordu | başka bir ekrandan açılan her ekranın üstünde "← geldiğin yerin adı"; doğrudan bağlantıyla açılan 13 tür alt ekranda üst ekranına götürür (testli) |
+| Tarayıcının geri tuşu olmayan yerde (gömülü demo, kurulu uygulama) geri dönmek | mümkün değildi: demoda gezinme geçmişi tutulmuyordu | uygulama kendi izini tutuyor; demo da aynı izle çalışıyor |
+| Yol çubuğu | yoktu | üst ekranı olan sayfalarda "Müşteriler / müşteri adı"; geri düğmesinin söylediğinden fazlasını söylediğinde görünür |
+| Görev ve kayıt panelinde bir öncekine dönüş | yoktu (yalnızca alt görev → ana görev) | görevden kayda, kayıttan göreve, bağlı göreve geçişte "← önceki" |
+| Görevin içindeki kayıt bağlantısı | tıklayınca görünür bir şey olmuyordu (kayıt görevin altında açılıyordu) | kaydı açıyor; geri düğmesi göreve döndürüyor |
+| Yenilemeler, İş değerlendirmeleri, Ürünler başlığı | üçünde de "Müşteriler" | kendi başlığı, ikonu ve açıklaması ("Sözleşme yenilemeleri: hangi müşteri ne zaman yenileniyor…") |
+| Yenilemeler'den Ürünler'e geçince | menüde "Tüm müşteriler" yanıyor, adres /accounts oluyor; cihaz seçimi saklayamıyorsa (demo) kart listesine düşüyordu | Ürünler'in kendi adresi ve menüde kendi satırı var; menü, başlık ve içerik aynı yeri gösteriyor (testli) |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

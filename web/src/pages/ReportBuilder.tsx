@@ -36,7 +36,7 @@ import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Confirm, Dialog, PeoplePicker } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate } from '../lib/router';
+import { nameIt, navigate, navigateFresh } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useTrashToast } from '../lib/trash';
 
@@ -62,7 +62,7 @@ export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashb
       aria-selected={active === key}
       onClick={(e) => {
         e.preventDefault();
-        navigate(to);
+        navigateFresh(to);
       }}
     >
       <Icon name={icon} size={16} className="icon--lead" />
@@ -216,6 +216,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   const [removing, setRemoving] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [accountNames, setAccountNames] = useState<Record<string, string>>({});
+  useEffect(() => nameIt(id ? `/reports/r/${id}` : '/reports/new', name), [id, name]);
 
   // Start: a kept report, one from the library (made this company's own first), or a blank one.
   useEffect(() => {
@@ -472,9 +473,6 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   return (
     <>
       <header className="topbar rb-top">
-        <button className="btn btn--quiet btn--icon" aria-label={t('rb.back')} title={t('rb.back')} onClick={() => navigate('/reports/all')}>
-          <Icon name="chevronLeft" size={18} />
-        </button>
         <input
           className="rb-name"
           value={name}

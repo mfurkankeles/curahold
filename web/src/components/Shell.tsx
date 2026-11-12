@@ -8,7 +8,8 @@ import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { endPreview, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { newsUnseen, type NewsAction } from '../lib/news';
-import { navigate, useLocation } from '../lib/router';
+import { navigate, navigateFresh, useLocation } from '../lib/router';
+import { BackBar } from './BackBar';
 import { ShellCtx, TASKS_CHANGED, currentPageDefaults, useNarrow, type QuickDefaults, type ShellActions } from '../lib/shell';
 import { LIVE, startLive, useLive } from '../lib/live';
 import { forgetOffline, useInstall, useOnline } from '../lib/pwa';
@@ -145,8 +146,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const due = counts.late + counts.today;
   const dueTitle = counts.late ? t('nav.dueTitle', { late: counts.late, today: counts.today }) : counts.today ? t('nav.todayTitle', { n: counts.today }) : undefined;
 
+  // From the menu a visit starts fresh: the screen it opens offers no way back.
   const go = (to: string) => {
-    navigate(to);
+    navigateFresh(to);
     setNavOpen(false);
   };
   const runNews = (a: NewsAction) => (a.kind === 'quickAdd' ? actions.quickAdd() : a.kind === 'shortcuts' ? actions.shortcuts() : navigate(a.to));
@@ -155,12 +157,13 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const accountsView = path === '/accounts' ? new URLSearchParams(search).get('view') : null;
   const renewalsOn = accountsView === 'renewals';
   const reviewsOn = accountsView === 'reviews';
+  const productsOn = accountsView === 'products';
   const here = {
     home: path === '/home' || path.startsWith('/pages/'),
     my: path === '/my',
     inbox: path === '/inbox',
     calendar: path === '/calendar',
-    accounts: path.startsWith('/accounts') && !renewalsOn && !reviewsOn,
+    accounts: path.startsWith('/accounts') && !renewalsOn && !reviewsOn && !productsOn,
     crm: path.startsWith('/accounts') || path.startsWith('/records'),
   };
   const section = (key: string, label: string, body: ReactNode, action?: ReactNode) => (
@@ -398,6 +401,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, RECORD_KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
                 {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
                 {(me.org.rhythm?.reviewDays ?? 0) > 0 && link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
+                {link('/accounts?view=products', t('nav.products'), productsOn, 'target')}
               </>,
             )}
             {section(
@@ -486,6 +490,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               </button>
             </div>
           )}
+          <BackBar types={recordTypes} />
           {children}
         </div>
         {narrow && (

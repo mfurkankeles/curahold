@@ -7,7 +7,8 @@ import { repeatText } from '../pages/BoardPage';
 import { ApiFailure, api, del, get, post, put } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
-import { setQuery } from '../lib/router';
+import { nameIt, navigate, setQuery } from '../lib/router';
+import { PanelBack } from './BackBar';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
@@ -55,6 +56,17 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   });
 
   const close = useCallback(() => setQuery('task', null), []);
+  // What the way back from another task or record calls this one.
+  const taskTitle = task?.title;
+  useEffect(() => nameIt(`task:${taskId}`, taskTitle), [taskId, taskTitle]);
+  // One panel shows at a time: opening a record from here takes this task's place, and its way back leads here again.
+  const openOver = (kind: 'task' | 'record', id: string, replace = false) => {
+    const p = new URLSearchParams(location.search);
+    p.delete('task');
+    p.delete('record');
+    p.set(kind, id);
+    navigate(`${location.pathname}?${p}`, replace);
+  };
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     panel.current?.focus();
@@ -97,17 +109,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
       <div className="scrim" onClick={close} />
       <aside className="panel" role="dialog" aria-modal="true" aria-label={task?.title ?? t('common.loading')} tabIndex={-1} ref={panel}>
         <div className="panel__head">
-          {task?.parent && (
-            <button
-              className="btn btn--quiet btn--small panel__back"
-              title={t('task.backToParent', { title: task.parent.title })}
-              aria-label={t('task.backToParent', { title: task.parent.title })}
-              onClick={() => setQuery('task', task.parent!.id)}
-            >
-              <Icon name="arrowLeft" size={16} />
-              <span className="panel__backname">{task.parent.title}</span>
-            </button>
-          )}
+          <PanelBack up={task?.parent ? { title: task.parent.title, go: () => openOver('task', task.parent!.id, true) } : null} />
           {task && target && editable && (
             <button
               className={`btn btn--small panel__done${target.done ? '' : ' panel__done--reopen'}`}
@@ -225,7 +227,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                 {t('task.record')}
               </span>
                   <span className="props__record">
-                    <button className="linkbtn linkbtn--plain" onClick={() => setQuery('record', task.recordId!)}>
+                    <button className="linkbtn linkbtn--plain" onClick={() => openOver('record', task.recordId!)}>
                       <Icon name="funnel" size={14} /> {task.recordName ?? t('task.recordGone')}
                     </button>
                     {editable && (

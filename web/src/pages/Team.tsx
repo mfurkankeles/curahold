@@ -173,17 +173,6 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
   return (
     <>
       <header className="topbar">
-        <a
-          href="/team"
-          className="btn btn--quiet btn--small"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/team');
-          }}
-        >
-          <Icon name="chevronLeft" size={16} />
-          {t('nav.team')}
-        </a>
         <div className="topbar__spacer" />
         {canWrite && p && (
           <button className="btn btn--primary" onClick={() => quickAdd({ assigneeIds: [id] })}>

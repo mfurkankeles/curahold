@@ -15,7 +15,7 @@ import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, Dialog, DueLabel } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate, useLocation } from '../lib/router';
+import { nameIt, navigate, navigateFresh, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
 import { AccountTimeline, HealthBadge, ScoreChip } from '../components/Timeline';
 import { PortalPeople } from '../components/PortalAdmin';
@@ -104,27 +104,28 @@ export function AccountsPage() {
     }
   };
   const VIEWS = ['cards', 'table', 'renewals', 'reviews', 'products'] as const;
-  // The menu's "Renewals" opens this page on that view (?view=renewals).
-  const asked = new URLSearchParams(qs0).get('view') as (typeof VIEWS)[number] | null;
-  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => (asked && VIEWS.includes(asked) ? asked : remembered('app_accounts_view', VIEWS, 'cards')));
-  useEffect(() => {
-    if (asked && VIEWS.includes(asked)) setViewState(asked);
-    else if (!asked) setViewState(remembered('app_accounts_view', VIEWS, 'cards'));
-  }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
-  const setView = (v: (typeof VIEWS)[number]) => {
-    setViewState(v);
-    if (asked) navigate('/accounts', true);
-    try {
-      localStorage.setItem('app_accounts_view', v);
-    } catch {
-      /* per-viewer convenience */
-    }
-  };
-  // A company that holds no business reviews has no Reviews view; a link or a remembered choice falls back to the cards.
+  // Renewals, business reviews and products are places of their own: each has its
+  // address (?view=…), its entry in the menu and its title. Cards and table are two
+  // ways to lay out the list of all customers, remembered on this device.
+  const LAYOUTS = ['cards', 'table'] as const;
+  const PLACES = ['renewals', 'reviews', 'products'] as const;
   const reviewsOn = (me.org.rhythm?.reviewDays ?? 0) > 0;
-  useEffect(() => {
-    if (view === 'reviews' && !reviewsOn) setViewState('cards');
-  }, [view, reviewsOn]);
+  const asked = new URLSearchParams(qs0).get('view') as (typeof PLACES)[number] | null;
+  // A company that holds no business reviews has no Reviews view; a link to it shows the list.
+  const place = asked && PLACES.includes(asked) && (asked !== 'reviews' || reviewsOn) ? asked : null;
+  const [layout, setLayout] = useState<(typeof LAYOUTS)[number]>(() => remembered('app_accounts_view', LAYOUTS, 'cards'));
+  const view: (typeof VIEWS)[number] = place ?? layout;
+  const setView = (v: (typeof VIEWS)[number]) => {
+    if (v === 'cards' || v === 'table') {
+      setLayout(v);
+      try {
+        localStorage.setItem('app_accounts_view', v);
+      } catch {
+        /* per-viewer convenience */
+      }
+      if (place) navigateFresh('/accounts');
+    } else navigateFresh(`/accounts?view=${v}`);
+  };
   const CARD_SORTS = ['attention', 'name', 'health', 'value', 'renewal', 'open'] as const;
   const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('app_accounts_sort', CARD_SORTS, 'attention'));
   const [signal, setSignal] = useState<SignalFilter>('');
@@ -242,11 +243,21 @@ export function AccountsPage() {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title topbar__title--icon">
-          <PageIcon name="building" />
-          <span>{words.other}</span>
-        </h1>
-        {data && <span className="topbar__sub num">{t('accounts.total', { n: data.total })}</span>}
+        {place ? (
+          <div className="topbar__titles topbar__titles--icon">
+            <PageIcon name={({ renewals: 'refresh', reviews: 'handshake', products: 'target' } as const)[place]} />
+            <h1 className="topbar__title">{t(`accounts.place.${place}` as any)}</h1>
+            <p className="topbar__sub">{t(`accounts.place.${place}.lead` as any, { accounts: words.other })}</p>
+          </div>
+        ) : (
+          <>
+            <h1 className="topbar__title topbar__title--icon">
+              <PageIcon name="building" />
+              <span>{words.other}</span>
+            </h1>
+            {data && <span className="topbar__sub num">{t('accounts.total', { n: data.total })}</span>}
+          </>
+        )}
         <div className="topbar__spacer" />
         <ExportMenu
           disabled={!data?.total}
@@ -716,6 +727,8 @@ export function AccountPage({ id }: { id: string }) {
   }, [id]);
   // "Tasks" on a customer card opens the page at its tasks.
   const ready = !!data;
+  const accountName = data?.account.name;
+  useEffect(() => nameIt(`/accounts/${id}`, accountName), [id, accountName]);
   usePageDefaults(data ? { accountId: data.account.id, accountName: data.account.name } : null);
   useEffect(() => {
     if (ready && location.hash === '#tasks') requestAnimationFrame(() => document.getElementById('tasks')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
@@ -795,18 +808,9 @@ export function AccountPage({ id }: { id: string }) {
 
   return (
     <>
-      <header className="topbar">
-        <a
-          href="/accounts"
-          className="btn btn--quiet btn--small"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/accounts');
-          }}
-        >
-          <Icon name="chevronLeft" size={16} />
-          {words.other}
-        </a>
+      <header className="topbar account-top">
+        <PageIcon name="building" />
+        <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
         <FavoriteButton kind="account" id={a.id} name={a.name} to={`/accounts/${a.id}`} />
         <div className="topbar__spacer" />
         {can('accounts.manage') && (
@@ -822,7 +826,6 @@ export function AccountPage({ id }: { id: string }) {
       </header>
       <div className="page account-page">
         <div className="account-page__main">
-          <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
           <section className="sheet" id="tasks">
             <h3 className="section__head">
               <span>

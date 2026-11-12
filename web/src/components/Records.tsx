@@ -14,7 +14,7 @@ import { allPages, cellOf } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
-import { navigate, setQuery } from '../lib/router';
+import { navigate, navigateFresh, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
@@ -194,7 +194,7 @@ export function RecordTabs({ current, types }: { current: string; types: RecordT
   if (!types?.length) return null;
   const go = (path: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(path);
+    navigateFresh(path);
   };
   return (
     <nav className="record-tabs" aria-label={words.other}>

@@ -28,7 +28,7 @@ import { ReportChart } from '../components/Charts';
 import { CHARTS, REPORT_LIBRARY, type SavedReport } from '../../../shared/src/reports';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { navigate, setQuery } from '../lib/router';
+import { navigate, navigateFresh, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { useTrashToast } from '../lib/trash';
@@ -195,7 +195,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
               aria-selected={p.id === current.id}
               onClick={(e) => {
                 e.preventDefault();
-                navigate(p.id === homeId ? '/home' : `/pages/${p.id}`);
+                navigateFresh(p.id === homeId ? '/home' : `/pages/${p.id}`);
               }}
             >
               <Icon name={pageIcon(p, homeId)} size={16} className="icon--lead" />

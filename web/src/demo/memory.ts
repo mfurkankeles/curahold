@@ -19,6 +19,11 @@ export function current() {
   return path + search + hash;
 }
 
+// The steps taken, like a browser tab keeps them: "back" has somewhere to go
+// even though the page that embeds the demo never changes its address.
+const stack: { url: string; state: unknown }[] = [{ url: '/', state: null }];
+let pos = 0;
+
 /** Moves to `to` without telling anyone; the router announces it. */
 export function setCurrent(to: string) {
   const u = new URL(to, ORIGIN + path + search);
@@ -26,6 +31,7 @@ export function setCurrent(to: string) {
   path = u.pathname;
   search = u.search;
   hash = u.hash;
+  stack[pos].url = path + search + hash;
 }
 
 function go(to: string) {
@@ -72,11 +78,36 @@ export const memoryLocation = {
 };
 
 export const memoryHistory = {
-  pushState(_state: unknown, _title: string, url?: string | URL | null) {
+  get state() {
+    return stack[pos].state;
+  },
+  get length() {
+    return stack.length;
+  },
+  pushState(state: unknown, _title: string, url?: string | URL | null) {
+    pos += 1;
+    stack.length = pos;
+    stack[pos] = { url: path + search + hash, state };
     if (url != null) setCurrent(String(url));
   },
-  replaceState(_state: unknown, _title: string, url?: string | URL | null) {
+  replaceState(state: unknown, _title: string, url?: string | URL | null) {
+    stack[pos].state = state;
     if (url != null) setCurrent(String(url));
+  },
+  go(n = 0) {
+    const to = pos + n;
+    if (!n || to < 0 || to >= stack.length) return;
+    pos = to;
+    setCurrent(stack[pos].url);
+    const state = stack[pos].state;
+    // Like a browser: the move is announced after the caller has returned.
+    setTimeout(() => window.dispatchEvent(new PopStateEvent('popstate', { state })), 0);
+  },
+  back() {
+    memoryHistory.go(-1);
+  },
+  forward() {
+    memoryHistory.go(1);
   },
 };
 
