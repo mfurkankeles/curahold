@@ -24,6 +24,7 @@ type Key = (typeof PEOPLE)[number]['key'];
 const TEXT = {
   tr: {
     tag: 'Demo',
+    opening: 'Curahold demosu açılıyor',
     steps: {
       db: 'Postgres bu sekmede başlatılıyor. Hiçbir veri bir yere gönderilmiyor.',
       schema: 'Tablolar ve erişim kuralları kuruluyor.',
@@ -65,6 +66,7 @@ const TEXT = {
   },
   en: {
     tag: 'Demo',
+    opening: 'Opening the Curahold demo',
     steps: {
       db: 'Starting Postgres in this tab. No data leaves your browser.',
       schema: 'Creating the tables and access rules.',
@@ -125,6 +127,10 @@ function switchLanguage(to: 'tr' | 'en') {
 
 
 const bootEl = document.getElementById('boot')!;
+// The page itself is written in English; a visitor who chose Turkish gets the opening screen in Turkish too.
+document.documentElement.lang = demoLocale;
+document.getElementById('boot-title')!.textContent = TEXT[demoLocale].opening;
+document.getElementById('boot-step')!.textContent = TEXT[demoLocale].steps.db;
 function step(pct: number, key: keyof typeof TEXT.tr.steps) {
   const t = TEXT[demoLocale];
   document.getElementById('boot-step')!.textContent = t.steps[key];
