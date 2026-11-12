@@ -176,6 +176,10 @@ export function prepare(sections: DocSection[]): AnswerIndex {
 const WEIGHT: Record<string, number> = { help: 1, developers: 0.95, reference: 0.5, releases: 0.4, legal: 0.6 };
 const TECHNICAL = /\b(get|post|patch|put|delete)\s+\/|\/[a-z]+(\/|\b)|\b(api|endpoint|address|adres|field|alan|json|curl|http|status code|payload|request body)\b/i;
 
+// A glossary says what a word means; it is the answer to "what is…", and rarely to "how do I…".
+const MEANING = /\b(what is|what are|what does|meaning of|define|nedir|ne demek|anlami)\b/;
+const GLOSSARY = /\/glossary\b/;
+
 const HELLO = /^(hi|hello|hey|merhaba|selam|iyi gunler|gunaydin|good (morning|afternoon|evening))\b/;
 const THANKS = /^(thanks|thank you|thx|tesekkur|tesekkurler|sagol|sag ol|eyvallah)\b/;
 
@@ -226,6 +230,7 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
 
   const phrase = terms.join(' ');
   const technical = TECHNICAL.test(question);
+  const meaning = MEANING.test(folded);
   const found: (Found & { at: number })[] = [];
   for (let i = 0; i < n; i++) {
     let score = 0;
@@ -239,6 +244,7 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
     const cover = matched / terms.length;
     score *= 0.35 + 0.65 * cover;
     score *= technical && (s.s === 'reference' || s.s === 'developers') ? 1.15 : (WEIGHT[s.s] ?? 1);
+    if (GLOSSARY.test(s.u) && !meaning) score *= 0.6;
     if (terms.length > 1 && index.heads[i].includes(phrase)) score *= 1.4;
     // A heading that is about nothing but what was asked ("Salesforce") beats one that only mentions it.
     const head = index.heads[i] ? index.heads[i].split(' ') : [];
