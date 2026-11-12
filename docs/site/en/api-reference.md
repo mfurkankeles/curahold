@@ -67,6 +67,20 @@ Task fields: `title`, `description`, `status` (a column key), `assigneeIds` (up 
 
 Send the `version` of the task you read as `baseVersion` in `PATCH /tasks/{id}`. If the task changed meanwhile you get `409` with the current task; apply your change to it and send again.
 
+### Sending a change only once
+
+A connection can drop after your request arrived but before you saw the answer. To retry without doing the work twice, send an `Idempotency-Key` header with every `POST`, `PATCH`, `PUT` or `DELETE`: any text of your own, 8 to 200 characters (a UUID is fine), different for each change.
+
+```bash
+curl -X POST https://acme.curahold.com/api/tasks \
+  -H "Authorization: Bearer chk_..." \
+  -H "Idempotency-Key: 3f1c9a52-7a0e-4f0b-9a57-6f2d1c0b8e11" \
+  -H "Content-Type: application/json" \
+  -d '{"boardId":"…","title":"Send the renewal quote"}'
+```
+
+Send the same request with the same key again and you get the first answer back, with the header `Idempotent-Replayed: true`; nothing is done a second time. The same key on a different request is refused with `422` (`repeat_mismatch`). Keys are yours alone and are kept for two days.
+
 ## Timeline and health score
 
 | Endpoint | Does |

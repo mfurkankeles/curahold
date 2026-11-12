@@ -2911,4 +2911,5 @@ export const tr: Record<MessageKey, string> = {
   'legal.privacy': 'Gizlilik politikası',
   'legal.and': 've',
   'pipeline.deal1': '1 fırsat',
+  'errors.repeat_mismatch': 'Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi.',
 };

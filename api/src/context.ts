@@ -1,3 +1,4 @@
+import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
 import { accessOf, allows, planFor, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
 import type { Locale, Terms } from '../../shared/src/i18n';
@@ -124,6 +125,8 @@ export type AppEnv = {
     supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
     tokenKind?: 'key' | 'oauth';
+    /** The key of a change that must happen once (lib/repeats.ts); claimed by the request's first transaction. */
+    repeat?: RepeatKey;
     /** This app, for calling its own routes (the AI connector uses the same API as the app). */
     self: { request: (input: string, init?: RequestInit) => Response | Promise<Response> };
   };
@@ -135,8 +138,14 @@ export type C = Context<AppEnv>;
 export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
   const org = c.get('org');
   const auth = c.get('auth') as AuthCtx | undefined;
+  const repeat = c.get('repeat');
   // The reader's language goes along: names are ordered the way its dictionary orders them.
-  return c.get('deps').db.tenant({ orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale }, fn);
+  return c.get('deps').db.tenant({ orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale }, async (q) => {
+    // A change that carries a key: the key is written in the same transaction as the change, so
+    // the two are saved together or not at all. A key seen before stops here (see lib/repeats.ts).
+    if (repeat && !repeat.claimed && auth?.userId) await claimRepeat(q, repeat);
+    return fn(q);
+  });
 }
 
 export function requirePerm(c: C, perm: Perm) {

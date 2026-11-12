@@ -2926,6 +2926,7 @@ export const en = {
   'legal.privacy': 'Privacy policy',
   'legal.and': 'and the',
   'pipeline.deal1': '1 deal',
+  'errors.repeat_mismatch': 'This request was sent with a key that already belongs to a different change. Nothing was changed.',
 } as const;
 
 export type MessageKey = keyof typeof en;

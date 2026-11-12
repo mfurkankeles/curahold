@@ -67,6 +67,20 @@ Görev alanları: `title`, `description`, `status` (sütun anahtarı), `assignee
 
 `PATCH /tasks/{id}` isteğinde okuduğun görevin `version` değerini `baseVersion` olarak gönder. Görev bu arada değiştiyse `409` ve görevin güncel hâli döner; değişikliğini onun üzerine uygulayıp yeniden gönder.
 
+### Bir değişikliği yalnızca bir kez göndermek
+
+Bağlantı, isteğin ulaştıktan sonra ama yanıtı görmeden önce kopabilir. İşi iki kez yaptırmadan yeniden denemek için her `POST`, `PATCH`, `PUT` ve `DELETE` isteğine bir `Idempotency-Key` başlığı ekle: kendi belirlediğin, 8–200 karakterlik bir metin (UUID olabilir), her değişiklik için farklı.
+
+```bash
+curl -X POST https://acme.curahold.com/api/tasks \
+  -H "Authorization: Bearer chk_..." \
+  -H "Idempotency-Key: 3f1c9a52-7a0e-4f0b-9a57-6f2d1c0b8e11" \
+  -H "Content-Type: application/json" \
+  -d '{"boardId":"…","title":"Yenileme teklifini gönder"}'
+```
+
+Aynı isteği aynı anahtarla yeniden gönderirsen ilk yanıt `Idempotent-Replayed: true` başlığıyla geri gelir; hiçbir şey ikinci kez yapılmaz. Aynı anahtar farklı bir istekte `422` (`repeat_mismatch`) ile reddedilir. Anahtarlar yalnızca sana aittir ve iki gün saklanır.
+
 ## Zaman çizelgesi ve sağlık skoru
 
 | Uç | Ne yapar |

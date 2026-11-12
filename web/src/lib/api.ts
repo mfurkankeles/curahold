@@ -58,9 +58,31 @@ export function onAuthLost(fn: Listener) {
   };
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+/** A key of its own for every change: sent again with a retry, so the server does the work once. */
+const newKey = (): string =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+
+/** Changes on their way, by what they are: a second identical one (a double click) joins the first. */
+const onTheWay = new Map<string, Promise<unknown>>();
+
+export function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  const change = method !== 'GET' && method !== 'HEAD';
+  const same = change && !(body instanceof FormData) ? `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}` : null;
+  const first = same ? onTheWay.get(same) : undefined;
+  if (first) return first as Promise<T>;
+  const sent = send<T>(method, path, body, change ? newKey() : null);
+  if (same) {
+    onTheWay.set(same, sent);
+    const forget = () => void onTheWay.delete(same);
+    sent.then(forget, forget);
+  }
+  return sent;
+}
+
+async function send<T>(method: string, path: string, body: unknown, key: string | null): Promise<T> {
   const headers: Record<string, string> = { 'x-curahold-device': getDeviceId() };
   if (currentLocale) headers['x-curahold-locale'] = currentLocale;
+  if (key) headers['idempotency-key'] = key;
   const as = previewAs();
   if (as) headers['x-curahold-preview-as'] = as;
   let payload: BodyInit | undefined;
@@ -72,11 +94,19 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
   let res: Response;
   try {
     res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
-  } catch {
-    noteFailedRequest(method, path, 0);
-    // Said in words, so whatever shows the failure has something to show.
-    const locale = (currentLocale === 'tr' || currentLocale === 'en' ? currentLocale : document.documentElement.lang === 'tr' ? 'tr' : 'en') as Locale;
-    throw new ApiFailure(0, { error: 'network', message: translate(locale, navigator.onLine === false ? 'errors.offline' : 'errors.network') });
+  } catch (first) {
+    // The request, or its answer, was lost on the way. A change carries its key, so sending it once
+    // more is safe: if the first copy did arrive, the server answers with what it did then.
+    try {
+      if (!key || navigator.onLine === false) throw first;
+      await new Promise((r) => setTimeout(r, 700));
+      res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
+    } catch {
+      noteFailedRequest(method, path, 0);
+      // Said in words, so whatever shows the failure has something to show.
+      const locale = (currentLocale === 'tr' || currentLocale === 'en' ? currentLocale : document.documentElement.lang === 'tr' ? 'tr' : 'en') as Locale;
+      throw new ApiFailure(0, { error: 'network', message: translate(locale, navigator.onLine === false ? 'errors.offline' : 'errors.network') });
+    }
   }
   const text = await res.text();
   const data = text ? safeJson(text) : null;

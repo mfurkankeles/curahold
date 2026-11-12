@@ -10,6 +10,7 @@ import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { Perm } from '../../shared/src/model';
 import { defer, type AppEnv, type Deps, type OrgRow } from './context';
 import { deliverWebhooks } from './lib/webhooks';
+import { Repeated, rememberAnswer, repeatKeyOf, repeatedAnswer, storedAnswer } from './lib/repeats';
 import { flushHealth } from './lib/health';
 import { timelineRoutes } from './routes/timeline';
 import { meetingRoutes } from './routes/meetings';
@@ -79,6 +80,12 @@ export function createApp(deps: Deps) {
   app.onError((err, c) => {
     const org = c.get('org') as OrgRow | undefined;
     const locale = (c.get('locale') as Locale | undefined) ?? org?.locale ?? 'en';
+    // The same change sent again: the first answer, not the work a second time (lib/repeats.ts).
+    if (err instanceof Repeated) {
+      const key = c.get('repeat')?.key;
+      const auth = c.get('auth');
+      return repeatedAnswer(c, err.first, key && org && auth ? () => c.get('deps').db.tenant({ orgId: org.id, userId: auth.userId }, (q) => storedAnswer(q, key)) : undefined);
+    }
     if (err instanceof HttpError) {
       return c.json(
         { error: err.code, message: translate(locale, err.key, err.vars, org?.terms), ...err.extra },
@@ -248,6 +255,22 @@ export function createApp(deps: Deps) {
     await next();
   });
 
+  // A change that carries a key happens once: the key is claimed by the request's first
+  // transaction, and the answer is kept for whoever sends the key again (lib/repeats.ts).
+  app.use('/api/*', async (c, next) => {
+    const repeat = c.get('auth') ? await repeatKeyOf(c) : null;
+    if (!repeat) return next();
+    c.set('repeat', repeat);
+    await next();
+    if (repeat.claimed && !(c.error instanceof Repeated)) {
+      const res = c.res;
+      const auth = c.get('auth');
+      await c
+        .get('deps')
+        .db.tenant({ orgId: c.get('org').id, userId: auth.userId }, (q) => rememberAnswer(q, repeat, res))
+        .catch((e) => console.error('[curahold] could not keep the answer of a repeatable request', e));
+    }
+  });
   app.route('/api', meRoutes);
   app.route('/api', boardRoutes);
   app.route('/api', taskRoutes);

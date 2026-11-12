@@ -250,7 +250,7 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 | 8. 4. aşamadan kalanlar | Bekliyor |
 | 9. Yük testi ve marj doğrulama | Bekliyor |
 
-Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler · tekrar eden istek (idempotency) ·
+Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·
 çöp kutusu · müşteri ve kayıtlarda sürüm · şirket saatine göre "bugün" · güvenlik başlıkları ve istek
 sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı tespiti · çevrimdışı
 kuyruk · yedek ve geri yükleme provası.
