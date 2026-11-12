@@ -251,10 +251,22 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 | 9. Yük testi ve marj doğrulama | Bekliyor |
 
 Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·
-çöp kutusu ✓ · şirket saatine göre "bugün" ✓ · tam test koşusu 5 dakikanın altında ✓ · müşteri ve kayıtlarda sürüm ·
-güvenlik başlıkları ve istek sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı
-tespiti · çevrimdışı kuyruk · yedek ve geri yükleme provası · OAuth girişlerine PKCE ve anahtar yenileme kilidi
-(INTEGRATIONS.md). Güvenilirlik puanı: başlangıçta 4 → şimdi 6 (15 hedefin 4'ü tamam, 4'ü kısmen).
+çöp kutusu ✓ · şirket saatine göre "bugün" ✓ · tam test koşusu 5 dakikanın altında ✓ · uç başına izolasyon testi ✓
+(ana API; portal ve kendi sunucusu modu için aynı tarama sırada) · müşteri ve kayıtlarda sürüm · güvenlik başlıkları
+ve istek sınırı · hata kaydı ve iş durumu · koltuk paylaşımı tespiti · çevrimdışı kuyruk · yedek ve geri yükleme
+provası · OAuth girişlerine PKCE ve anahtar yenileme kilidi (INTEGRATIONS.md).
+Güvenilirlik puanı: başlangıçta 4 → şimdi 6,5 (15 hedefin 5'i tamam, 4'ü kısmen).
+
+Uç başına izolasyon testi (12 Kasım, `tests/isolation-routes.test.ts`):
+
+| Ölçüm | Önce | Sonra |
+| --- | --- | --- |
+| Kimlikle bir şeye erişen adres | 116; 12 elle yazılmış izolasyon testi ve dağınık kontroller | 116'nın 109'u otomatik deneniyor; kalan 7'sinin parametresi kimlik değil (alan adı, sağlayıcı adı, gizli adres) ve nedeni testte yazılı |
+| Deneme | — | öbür şirketin yöneticisi, bu şirketin gerçek bir kimliği ve kendi çalışanından kabul edilecek bir gövdeyle çağırıyor |
+| Sonuç | — | 109 / 109 "bulunamadı" (404); başarı 0, sunucu hatası 0 |
+| Çağrılardan sonra bu şirketin verisi | ölçülmüyordu | 51 tablonun her satırı öncekiyle aynı; çağıranın kendi şirketi de aynı |
+| Başka şirketin kimliğine "boş ama başarılı" cevap veren adres | 9 (veri sızmıyordu: boş liste, sıfır sayaç ya da hiçbir şey yapmayan işlem) | 0: dokuzu da artık 404 veriyor |
+| Yeni adres eklenince | elle test yazılmazsa denenmiyordu | adresler koddan okunuyor: yeni adres kendiliğinden deneniyor; hangi tabloya ait olduğu söylenmemişse test düşüyor |
 
 Çöp kutusu (12 Kasım):
 
@@ -294,15 +306,15 @@ Araya giren işler (ürün sahibinin 12 Kasım isteği):
 | Belge sayfası | 41 | 42 (geliştirici sözlüğü); her sayfada güncelleme tarihi ve okuma süresi |
 | Bağlantılar sayfası | 205 kelime | her CRM için ayrı bölüm (ne gelir, yöneticinin onayı ne zaman gerekir) |
 
-Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 89 sn (404 → 419 test, 40 dosya) · tarayıcı 189 sn →
-192 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,7 dk (demo testiyle
-5,4 dk). Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun
+Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
+189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle
+5,3 dk). Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun
 kopyasından başlıyor. Ölçüm: boş bir veritabanını açmak 2,6 sn, şemayı ve örnekleri kurmak 0,8 sn, hazır
 kopyayı yüklemek 0,5 sn; dosya başına yaklaşık 2,9 sn. Çöp kutusundan önce aynı 404 test 77 sn sürüyordu;
-aradaki 12 sn yeni testlerin süresi. Gerçek Postgres'e karşı koşuda (TEST_DATABASE_URL) eskisi gibi her
+aradaki 11 sn yeni testlerin süresi. Gerçek Postgres'e karşı koşuda (TEST_DATABASE_URL) eskisi gibi her
 kurulum kendi veritabanını açıyor.
 Açık not: hazır kopyaya geçilen ilk tam koşuda bir test düştü ve hangisi olduğu kayda geçmedi. Sonraki
-sekiz tam koşuda tekrarlamadı (biri bilinen bir nedenle düştü: başvuru sayfaları yeniden üretilmemişti;
+dokuz tam koşuda tekrarlamadı (biri bilinen bir nedenle düştü: başvuru sayfaları yeniden üretilmemişti;
 düzeltildi). Artık her tam koşunun çıktısı dosyaya yazılıyor; tekrarlarsa adıyla düzeltilecek.
 
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)

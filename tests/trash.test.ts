@@ -9,7 +9,9 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cleanUp } from '../api/src/lib/scheduler';
 import { blankDef } from '../shared/src/reports';
-import { Client, login, setup, type Env } from './helpers';
+import { Client, login, picture as pictureOf, setup, type Env } from './helpers';
+
+const picture = (orgId = env.a.orgId) => pictureOf(env, orgId);
 
 let env: Env;
 let ada: Client; // administrator
@@ -19,38 +21,6 @@ let lena: Client; // member
 let sofia: Client; // viewer
 let velto: string;
 let board: string;
-
-/** Not part of "as it was": these only ever move forward, or are left out of the copy on purpose. */
-const NOT_COMPARED = new Set([
-  'audit_log', // who did what: the delete and the restore are both written down
-  'trash', // the trash itself
-  'trash_links',
-  'sessions', // last seen
-  'idempotency_keys',
-  'health_dirty', // "work this score out again"
-  'notifications', // notices already sent are not kept in the copy
-  'portal_sessions', // a customer's people sign in again
-  'portal_tokens',
-]);
-
-/** Every row of the company, table by table, as the database holds it. */
-async function picture(orgId = env.a.orgId): Promise<Record<string, unknown[]>> {
-  return env.db.system(async (q) => {
-    const tables = await q.query<{ t: string }>(
-      `select c.relname::text as t from pg_class c
-        where c.relkind = 'r' and c.relnamespace = 'public'::regnamespace
-          and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'org_id' and not a.attisdropped)
-        order by 1`,
-    );
-    const out: Record<string, unknown[]> = {};
-    for (const { t } of tables) {
-      if (NOT_COMPARED.has(t)) continue;
-      const rows = await q.query<{ r: unknown }>(`select to_jsonb(x) as r from ${t} x where x.org_id = $1 order by to_jsonb(x)::text`, [orgId]);
-      out[t] = rows.map((r) => r.r);
-    }
-    return out;
-  });
-}
 
 const count = (p: Record<string, unknown[]>) => Object.values(p).reduce((n, rows) => n + rows.length, 0);
 const upload = (who: Client, path: string, name: string, text: string) => {

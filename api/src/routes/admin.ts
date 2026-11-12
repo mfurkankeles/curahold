@@ -468,13 +468,16 @@ adminRoutes.patch('/users/:id', async (c) => {
 adminRoutes.get('/users/:id/sessions', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
-  const rows = await run(c, (q) =>
-    q.query(
+  const rows = await run(c, async (q) => {
+    // Someone who is not in this company is "not found", not "has no sessions".
+    const [who] = await q.query('select 1 from users where id = $1', [id]);
+    if (!who) fail('not_found');
+    return q.query(
       `select id, device_label, method, created_at, last_seen_at from sessions
         where user_id = $1 and revoked_at is null and expires_at > now() order by last_seen_at desc`,
       [id],
-    ),
-  );
+    );
+  });
   return c.json({
     sessions: rows.map((r) => ({
       id: r.id,
@@ -771,6 +774,8 @@ adminRoutes.post('/users/:id/handover', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
+    const [from] = await q.query('select 1 from users where id = $1', [id]);
+    if (!from) fail('not_found');
     const [to] = await q.query(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.toUserId]);
     if (!to) fail('bad_assignee');
     const accounts = await q.query('update accounts set owner_id = $2, updated_at = now() where owner_id = $1 returning id', [id, input.toUserId]);

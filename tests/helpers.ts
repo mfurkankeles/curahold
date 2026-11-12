@@ -136,3 +136,38 @@ export async function login(env: Env, slug: string, email: string, device?: stri
   if (v.status !== 200) throw new Error(`verify failed: ${JSON.stringify(v.json)}`);
   return c;
 }
+
+/**
+ * Tables left out of a before-and-after comparison of a company: they only ever move forward
+ * (who did what, last seen), or are never kept in a copy on purpose.
+ */
+export const NOT_COMPARED = new Set([
+  'audit_log', // who did what: the delete and the restore are both written down
+  'trash', // the trash itself
+  'trash_links',
+  'sessions', // last seen
+  'idempotency_keys',
+  'health_dirty', // "work this score out again"
+  'notifications', // notices already sent are not kept in the copy
+  'portal_sessions', // a customer's people sign in again
+  'portal_tokens',
+]);
+
+/** Every row of the company, table by table, as the database holds it. */
+export async function picture(env: Pick<Env, 'db'>, orgId: string): Promise<Record<string, unknown[]>> {
+  return env.db.system(async (q) => {
+    const tables = await q.query<{ t: string }>(
+      `select c.relname::text as t from pg_class c
+        where c.relkind = 'r' and c.relnamespace = 'public'::regnamespace
+          and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'org_id' and not a.attisdropped)
+        order by 1`,
+    );
+    const out: Record<string, unknown[]> = {};
+    for (const { t } of tables) {
+      if (NOT_COMPARED.has(t)) continue;
+      const rows = await q.query<{ r: unknown }>(`select to_jsonb(x) as r from ${t} x where x.org_id = $1 order by to_jsonb(x)::text`, [orgId]);
+      out[t] = rows.map((r) => r.r);
+    }
+    return out;
+  });
+}

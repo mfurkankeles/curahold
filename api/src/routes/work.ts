@@ -293,13 +293,16 @@ workRoutes.post('/boards/:id/requests', async (c) => {
 /** Time logged on a customer's tasks: in all, in the last 30 days, and by person. */
 workRoutes.get('/accounts/:id/time', async (c) => {
   const id = param(c, 'id');
-  const rows = await run(c, (q) =>
-    q.query(
+  const rows = await run(c, async (q) => {
+    // A customer the person cannot see is "not found", not "no time spent".
+    const [acc] = await q.query('select 1 from accounts where id = $1', [id]);
+    if (!acc) fail('not_found');
+    return q.query(
       `select e.user_id, sum(e.minutes)::int as minutes, coalesce(sum(e.minutes) filter (where e.day > app_today() - 30), 0)::int as recent
          from time_entries e join tasks t on t.id = e.task_id where t.account_id = $1 group by e.user_id order by 2 desc`,
       [id],
-    ),
-  );
+    );
+  });
   return c.json({
     total: rows.reduce((n, r) => n + Number(r.minutes), 0),
     recent: rows.reduce((n, r) => n + Number(r.recent), 0),
@@ -454,9 +457,11 @@ workRoutes.post('/boards/:id/import', async (c) => {
 /** This person's recent imports onto a board, newest first. */
 workRoutes.get('/boards/:id/imports', async (c) => {
   const boardId = param(c, 'id');
-  const rows = await run(c, (q) =>
-    q.query(`select id, file_name, summary, created_at, undone_at from import_batches where kind = 'tasks' and board_id = $1 order by created_at desc limit 5`, [boardId]),
-  );
+  const rows = await run(c, async (q) => {
+    const [board] = await q.query('select 1 from boards where id = $1', [boardId]);
+    if (!board) fail('not_found');
+    return q.query(`select id, file_name, summary, created_at, undone_at from import_batches where kind = 'tasks' and board_id = $1 order by created_at desc limit 5`, [boardId]);
+  });
   return c.json({
     imports: rows.map((r) => ({
       id: r.id,

@@ -114,6 +114,9 @@ reportRoutes.get('/reports/person/:id', async (c) => {
   const id = c.req.param('id');
   if (!uuid.safeParse(id).success) return c.json({ error: 'not_found' }, 404);
   const out = await run(c, async (q) => {
+    // Someone who is not in this company is "not found", not "has no work".
+    const [who] = await q.query('select 1 from users where id = $1', [id]);
+    if (!who) fail('not_found');
     const tasks = await q.query(
       `select t.id, t.title, t.board_id, t.status, t.due_date, t.priority, t.done_at, t.updated_at, t.account_id,
               (select name from accounts a where a.id = t.account_id) as account_name, ${DONE} as done

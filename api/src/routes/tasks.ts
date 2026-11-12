@@ -463,7 +463,11 @@ taskRoutes.put('/tasks/:id/watch', async (c) => {
 taskRoutes.delete('/tasks/:id/watch', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
-  await run(c, (q) => q.query('delete from task_watchers where task_id = $1 and user_id = $2', [id, auth.userId]));
+  await run(c, async (q) => {
+    const gone = await q.query('delete from task_watchers where task_id = $1 and user_id = $2 returning 1', [id, auth.userId]);
+    // Not following it: then it must at least be a task this person can see (else "not found").
+    if (!gone.length) await loadTask(q, id);
+  });
   return c.json({ watching: false });
 });
 
@@ -513,6 +517,7 @@ taskRoutes.delete('/tasks/:id/links/:other', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
+    await loadTask(q, id);
     const l = orient(id, other, kind.data!);
     const gone = await q.query('delete from task_links where from_id = $1 and to_id = $2 and kind = $3 returning from_id', [l.from, l.to, l.kind]);
     if (gone.length) {

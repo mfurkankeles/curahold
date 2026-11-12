@@ -187,7 +187,11 @@ automationRoutes.delete('/automations/:id', async (c) => {
 automationRoutes.get('/automations/:id/runs', async (c) => {
   requirePerm(c, 'automations.manage');
   const id = param(c, 'id');
-  const rows = await run(c, (q) => q.query('select run_key, at, result from automation_runs where automation_id = $1 order by at desc limit 50', [id]));
+  const rows = await run(c, async (q) => {
+    const [rule] = await q.query('select 1 from automations where id = $1', [id]);
+    if (!rule) fail('not_found');
+    return q.query('select run_key, at, result from automation_runs where automation_id = $1 order by at desc limit 50', [id]);
+  });
   const runs: AutomationRun[] = rows.map((r) => ({ key: r.run_key, at: iso(r.at)!, result: r.result ?? {} }));
   return c.json({ runs });
 });
@@ -208,6 +212,8 @@ automationRoutes.post('/automations/:id/run', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const deps = c.get('deps');
+  const [rule] = await run(c, (q) => q.query('select 1 from automations where id = $1', [id]));
+  if (!rule) fail('not_found');
   const fired = await runScheduledAutomations(deps, nowOf(deps), org.id, id);
   return c.json({ fired });
 });
