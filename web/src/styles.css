@@ -153,6 +153,10 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* A phone zooms the whole page in when the text of a field is under 16px, and leaves it zoomed, cut off at the side. */
+@media (pointer: coarse), (max-width: 860px) {
+  input, select, textarea { font-size: max(16px, 1em); }
+}
 a { color: var(--brand-ink); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .num { font-variant-numeric: tabular-nums; }
@@ -1401,6 +1405,19 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .ask__form { display: flex; gap: 8px; }
 .ask__form .input { flex: 1; min-width: 0; }
 .ask__private { margin: 0; }
+/* An answer the model is writing, and what it prepared or read for it. */
+.ask__ai[data-live] .ask__body > :last-child::after { content: '▍'; margin-left: 2px; color: var(--brand); animation: ask-caret 1s steps(2) infinite; }
+@keyframes ask-caret { 50% { opacity: 0; } }
+.ask__ai .ask__body > :last-child { margin-bottom: 0; }
+.ask__proposal { display: grid; gap: 4px; justify-items: start; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.ask__proposal .ask__label { margin: 0 !important; }
+.ask__proposal .btn { margin-top: 4px; }
+.ask__done { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13.5px; font-weight: 600; color: var(--done); }
+.ask__mode { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; margin: 0 14px; padding: 6px 2px 0; font-size: 12.5px; color: var(--ink-3); cursor: pointer; }
+.ask__mode input { width: 15px; height: 15px; accent-color: var(--brand); }
+.cura .ask__mode { background: var(--surface); align-self: stretch; margin: 0; padding: 8px 16px 0; border-top: 1px solid var(--line); }
+.cura .ask__mode + .ask__form { border-top: 0; padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .ask__ai[data-live] .ask__body > :last-child::after { animation: none; } }
 
 .help { display: grid; gap: 16px; }
 .help fieldset { border: 0; padding: 0; margin: 0; }
@@ -1552,6 +1569,7 @@ kbd { font-family: inherit; }
 .qa__forall { margin: 0; padding: 0 18px 10px; font-size: 12.5px; color: var(--ink-3); }
 .qa__desc { padding: 0 18px 12px; }
 .qa__desc .input { width: 100%; resize: vertical; min-height: 58px; font-size: 14px; line-height: 1.5; }
+@media (pointer: coarse), (max-width: 860px) { .qa__desc .input { font-size: 16px; } }
 .qa__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; padding: 14px 18px 16px; border-top: 1px solid var(--line); background: var(--surface-2); }
 .qa__item { display: grid; gap: 5px; align-content: start; min-width: 0; }
 .qa__label { display: flex; align-items: center; gap: 6px; min-height: 18px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
@@ -2323,8 +2341,16 @@ a.targetline:hover { border-color: var(--line-strong); }
   .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom)); }
   .cura__fabname { display: none; }
   .cura__mark { width: 40px; height: 40px; }
-  .cura { right: 0; bottom: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; z-index: 39; }
+  /* The whole screen, measured from its edges: a width in vw can be wider than what a phone shows. */
+  .cura { inset: 0; width: auto; height: auto; max-width: 100%; border: 0; border-radius: 0; z-index: 39; animation: none; }
+  .cura .ask__msg--bot { max-width: 100%; }
+  .cura .ask__form { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
 }
+/* Nothing in the chat may push it wider than its box: long words, addresses and chips wrap. */
+.cura .ask__log { overflow-x: hidden; overscroll-behavior: contain; }
+.cura .ask__msg { min-width: 0; overflow-wrap: anywhere; }
+.cura .ask__chip { max-width: 100%; overflow-wrap: anywhere; }
+.cura .ask__body pre, .cura .ask__body .table { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .cura, .cura__fab .icon { animation: none; }
   .cura__fab { transition: none; }

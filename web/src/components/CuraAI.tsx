@@ -30,6 +30,8 @@ export function CuraAI({
   const { t } = useI18n();
   // The chat is built the first time it is opened and then kept, so its messages survive closing it.
   const [made, setMade] = useState(open);
+  // Whether a model writes the answers here (the demo) or the docs do.
+  const [model, setModel] = useState(false);
   const box = useRef<HTMLElement>(null);
   const fab = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(open);
@@ -38,14 +40,44 @@ export function CuraAI({
   }, [open]);
   useEffect(() => {
     if (open) {
-      const id = requestAnimationFrame(() => box.current?.querySelector<HTMLInputElement>('.ask__form input')?.focus());
       wasOpen.current = true;
+      // On a phone, focusing the field brings the keyboard up over half the chat before anything is read.
+      if (window.matchMedia?.('(pointer: coarse)').matches) return;
+      const id = requestAnimationFrame(() => box.current?.querySelector<HTMLInputElement>('.ask__form input')?.focus());
       return () => cancelAnimationFrame(id);
     }
     // Closed with the keyboard: focus returns to the button that opens it.
     if (wasOpen.current) fab.current?.focus({ preventScroll: true });
     wasOpen.current = false;
   }, [open]);
+  // On a phone the keyboard covers the bottom of the screen. Keep the chat in exactly what is still
+  // visible, so its title stays on top and the field stays above the keys instead of sliding away.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = box.current;
+    if (!open || !made || !vv || !el) return;
+    const fit = () => {
+      if (window.innerWidth > 860) {
+        el.style.removeProperty('top');
+        el.style.removeProperty('bottom');
+        el.style.removeProperty('height');
+        return;
+      }
+      el.style.top = `${Math.max(0, vv.offsetTop)}px`;
+      el.style.bottom = 'auto';
+      el.style.height = `${vv.height}px`;
+    };
+    fit();
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    return () => {
+      vv.removeEventListener('resize', fit);
+      vv.removeEventListener('scroll', fit);
+      el.style.removeProperty('top');
+      el.style.removeProperty('bottom');
+      el.style.removeProperty('height');
+    };
+  }, [open, made]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -78,7 +110,7 @@ export function CuraAI({
             </span>
             <div className="cura__who">
               <strong>{t('cura.name')}</strong>
-              <span>{t('cura.sub')}</span>
+              <span>{t(model ? 'cura.sub.ai' : 'cura.sub')}</span>
             </div>
             <button type="button" className="cura__tool" aria-label={t('help.tab.mine')} title={t('help.tab.mine')} onClick={onMine}>
               <Icon name="inbox" size={18} />
@@ -88,7 +120,7 @@ export function CuraAI({
               <Icon name="chevronDown" size={18} />
             </button>
           </header>
-          <Ask onWrite={onWrite} />
+          <Ask onWrite={onWrite} onEngine={setModel} />
           <footer className="cura__foot">
             <span>{t('cura.person')}</span>
             <button type="button" className="cura__write" onClick={() => onWrite('')}>

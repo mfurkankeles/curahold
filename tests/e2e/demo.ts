@@ -272,10 +272,31 @@ if (ok) {
   const phone = await browser.newPage();
   await phone.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
   await phone.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true });
+  phone.on('pageerror', (e) => errors.push(`phone: ${String(e)}`));
+  phone.on('console', (m) => m.type() === 'error' && !/status of 404/.test(m.text()) && errors.push(`phone console: ${m.text()}`));
   await phone.evaluateOnNewDocument(`(function () {
     var fake = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {}, clear: function () {}, key: function () { return null; }, length: 0 };
     Object.defineProperty(window, 'localStorage', { get: function () { return fake; } });
     Object.defineProperty(window, 'sessionStorage', { get: function () { return fake; } });
+  })()`);
+  // Inside a Claude viewer the page can ask Claude. Here a stand-in answers the way a model with
+  // tools would: it reads through the tools the page offers, writes in two steps, and resolves.
+  await phone.evaluateOnNewDocument(`(function () {
+    var sample = function (input, opts) {
+      var q = input[input.length - 1].content;
+      var call = function (name, args) { return Promise.resolve(opts.tools.find(function (t) { return t.name === name; }).execute(args)); };
+      return call('list_customers', { sort: 'value', limit: 3 }).then(function (list) {
+        var first = list.customers[0].name;
+        var more = /görev|task/i.test(q) ? call('propose_task', { title: 'Yenileme teklifini gönder', customer: first, due_date: '2027-01-15' }) : call('search_docs', { query: 'renewals' });
+        return more.then(function () {
+          var text = /görev|task/i.test(q) ? 'Görevi hazırladım: **' + first + '** için. Oluşturmak için düğmeye bas.' : 'En büyük müşteriler:\\n- **' + first + '**\\n- ' + list.customers[1].name + '\\n<img src=x onerror=alert(1)> https://cok-uzun-bir-adres.example/' + 'a'.repeat(90);
+          if (opts.onText) { opts.onText({ text: text.slice(0, 12), delta: text.slice(0, 12) }); opts.onText({ text: text, delta: text.slice(12) }); }
+          return { text: text, truncated: false, modelTierApplied: 'quick' };
+        });
+      });
+    };
+    sample.limits = function () { return Promise.resolve({ maxPromptBytes: 262144, tools: { maxCount: 16 } }); };
+    window.claude = { use: function (name) { return Promise.resolve(name === 'sample' ? sample : null); } };
   })()`);
   await phone.goto(`http://localhost:${PORT}/`);
   const pf = await (await phone.waitForSelector('iframe'))!.contentFrame();
@@ -286,6 +307,44 @@ if (ok) {
   // The language choice survives too: it travels in the address, not only in storage.
   if (seen.shell) await chooseTurkish(pf!, 'phone, storage that forgets');
   await phone.screenshot({ path: join(SCREENS, 'demo-phone.png') });
+  // CuraAI on a phone: the chat is exactly the screen (nothing wider, nothing cut off), its field
+  // does not make the phone zoom in, and — with Claude there — it answers from the workspace.
+  if (seen.shell) {
+    const fits = () =>
+      pf!.evaluate(() => {
+        const box = document.querySelector<HTMLElement>('.cura')!;
+        const r = box.getBoundingClientRect();
+        const wide = [...box.querySelectorAll<HTMLElement>('*')].filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1).map((el) => el.className || el.tagName);
+        return { left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height), vw: window.innerWidth, vh: window.innerHeight, wide: wide.slice(0, 4), logWide: (document.querySelector('.cura .ask__log')?.scrollWidth ?? 0) > (document.querySelector('.cura .ask__log')?.clientWidth ?? 0) + 1, font: parseFloat(getComputedStyle(document.querySelector('.cura .ask__form input')!).fontSize), sub: document.querySelector('.cura__who span')?.textContent ?? '' };
+      });
+    await pf!.waitForSelector('.cura__fab');
+    await pf!.$eval('.cura__fab', (el) => (el as HTMLElement).click());
+    await pf!.waitForSelector('.cura .ask__form input', { timeout: 8000 }).catch(async () => errors.push(`phone: the chat did not open (${await pf!.evaluate(() => document.body.innerText.slice(0, 200))})`));
+    await pf!.waitForFunction(() => /Claude/.test(document.querySelector('.cura__who span')?.textContent ?? ''), { timeout: 15000 }).catch(() => undefined);
+    if (!(await pf!.$('.cura .ask__form input'))) throw new Error(errors.join('\n'));
+    let f = await fits();
+    if (f.left !== 0 || f.top !== 0 || f.width !== f.vw || f.height !== f.vh) errors.push(`phone: the chat is not the screen (${JSON.stringify(f)})`);
+    if (f.font < 16) errors.push(`phone: the chat's field would make the phone zoom in (${f.font}px)`);
+    if (!/Claude/.test(f.sub)) errors.push(`phone: the chat does not say Claude answers ("${f.sub}")`);
+    await pf!.$eval('.cura .ask__chip', (el) => (el as HTMLElement).click());
+    await pf!.waitForSelector('.ask__ai:not([data-live]) .ask__helped', { timeout: 20000 }).catch(() => errors.push('phone: the model’s answer never finished'));
+    const answer = await pf!.evaluate(() => ({ text: document.querySelector('.ask__ai .ask__body')?.textContent ?? '', bold: document.querySelectorAll('.ask__ai .ask__body strong').length, items: document.querySelectorAll('.ask__ai .ask__body li').length, img: document.querySelectorAll('.ask__ai img').length, sources: [...document.querySelectorAll('.ask__ai .ask__from')].map((e) => e.textContent ?? '') }));
+    if (!answer.text.includes('En büyük müşteriler') || answer.bold !== 1 || answer.items !== 2) errors.push(`phone: the answer is not drawn as written (${JSON.stringify(answer)})`);
+    // What the model writes is text, whatever it looks like.
+    if (answer.img !== 0 || !answer.text.includes('<img')) errors.push('phone: markup in an answer was treated as markup');
+    if (!answer.sources.some((x) => x.startsWith('Belgelerden')) || !answer.sources.some((x) => x.startsWith('Bu çalışma alanından'))) errors.push(`phone: the answer does not say where it came from (${answer.sources.join(' | ')})`);
+    f = await fits();
+    if (f.wide.length || f.logWide) errors.push(`phone: something in the chat is wider than the screen (${f.wide.join(', ')})`);
+    await pf!.type('.cura .ask__form input', 'Bunun için bir görev aç');
+    await pf!.$eval('.cura .ask__form', (el) => (el as HTMLFormElement).requestSubmit());
+    await pf!.waitForSelector('.ask__proposal .btn', { timeout: 20000 }).catch(() => errors.push('phone: the prepared task is not shown'));
+    const before = await pf!.evaluate(() => document.querySelectorAll('.ask__done').length);
+    await pf!.$eval('.ask__proposal .btn', (el) => (el as HTMLElement).click());
+    await pf!.waitForSelector('.ask__done', { timeout: 10000 }).catch(() => errors.push('phone: pressing "create" did not create the task'));
+    if (before !== 0) errors.push('phone: a task was created before anyone pressed the button');
+    await new Promise((r) => setTimeout(r, 400));
+    await phone.screenshot({ path: join(SCREENS, 'demo-phone-cura.png') });
+  }
   await phone.close();
 }
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'no errors');
