@@ -62,8 +62,10 @@ Without a grouping the report is a list of rows, and you pick its columns. **Exp
 
 A dashboard is a page made of charts and lists (the tabs on your home). Under **Reports → Dashboards**:
 
-- **Ready-made dashboards:** Sales pipeline, Renewals and risk, Customer health, Team performance, Customer contact, Work flow, Executive summary. **Add** makes it a page of your own, filled with your data; then **Edit page** changes its cards.
-- **Empty dashboard:** you pick the cards. The “Report” card draws a report you kept or a ready-made one, and can draw it differently on that card.
+- **Ready-made dashboards arrive filled:** Sales pipeline, Renewals and risk, Customer health, Team performance, Customer contact, Work flow and Executive summary are there the first time anyone opens Dashboards, drawn from your own data. Nothing has to be added first.
+- **Dashboards opens on a dashboard:** the one you looked at last. The names along the top move from one to another in one click.
+- **Change or delete any of them:** **Edit dashboard** changes its cards; **Delete** sends it to the trash, where it can be taken back for 30 days. A ready-made one you deleted does not come back by itself: **Add a dashboard** lists the ones you no longer have.
+- **Empty dashboard:** under **Add a dashboard**; you pick the cards. The “Report” card draws a report you kept or a ready-made one, and can draw it differently on that card.
 - With a report open, **Add to a dashboard** puts it straight onto one (the report is shared with the company, so everyone who opens the dashboard sees the card).
 
 People who run the company settings add and edit dashboards; anyone who can write can build a report.

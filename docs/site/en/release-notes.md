@@ -10,6 +10,9 @@ summary: What is new and what changed.
 
 ### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
 
+- **Dashboards arrive filled:** the seven ready-made dashboards are there the first time you open Dashboards, drawn from your own data; the names along the top switch between them, and any of them can be deleted (and taken back from the trash).
+- **A way back everywhere:** a screen you reached from another one shows where you came from above its title; one click returns there. Renewals, business reviews and products have their own titles and entries in the menu.
+- **CuraAI in the corner:** the helper that answers from the docs now sits at the bottom right of every screen and keeps its conversation.
 - **The trash:** what you delete (a customer, a record, a task, a timeline entry, a page, a saved report, an automation) stays for 30 days and can be put back as it was, with everything that went with it. Right after a delete the notice offers Undo; later it is under your menu → Trash. See *The trash*.
 - **Plans and billing:** a 14-day free trial, then Team or Business, paid through Paddle. Seats follow the people who joined. Without a plan everything can still be read and exported, only not changed. A self-hosted install has no billing.
 - **Your own server:** Curahold can run inside a company's own walls — one company, its own Postgres, attachments on its own disk, mail through its own mail server — with Docker in a few minutes. See *Running Curahold on your own server*.

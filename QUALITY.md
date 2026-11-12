@@ -326,6 +326,9 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | "Desteğin bakmasına izin ver" | tek satır ve bir düğme; ne anlama geldiği yazmıyordu | ne olduğu iki cümleyle, üç güvence (yalnızca senin gördüğünü görür ve değiştiremez; kendiliğinden kapanır; her giriş kayda yazılır), açık/kapalı durumu, "Yalnızca okuma erişimi ver" |
 | Ana sayfadaki "Ekip yükü" | 6 sütunlu düz tablo: 5 kişi için 25 rakam, sıfırlar dahil | kişi satırları: avatar, müşteri sayısı ve tutar, açık iş çubuğu (geciken kısmı kırmızı), yalnızca gerektiğinde "geciken" ve "riskli" etiketi, sorun yoksa "Yolunda"; satır o kişinin sayfasını açar |
 | Rapor tabloları | gölgeli başlık bandı, her hücre aynı ağırlıkta | bant yok, ilk sütun satırın adı olarak kalın, toplam sütununda büyüklüğü gösteren çubuk |
+| Paneller'e girince ilk grafiği görmek | panel listesi ve "Ekle" denecek 7 hazır şablon: bir yöneticinin eklemesi + 2 tık | 0 tık: 7 hazır panel şirketle birlikte, kendi verisiyle dolu gelir; Paneller en son bakılan paneli açar (testli; ilk açan yönetici olmasa da gelir) |
+| Panelden panele geçmek | listeye dön, seç (2 tık) | üstteki adlardan tek tık |
+| Panel silmek | yalnızca "Paneli düzenle"nin içinde | araç çubuğunda "Sil": çöp kutusuna gider, bildirimden ya da 30 gün içinde geri alınır; silinen hazır panel kendiliğinden geri gelmez, "Panel ekle" artık olmayanları listeler (testli) |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

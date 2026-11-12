@@ -248,6 +248,24 @@ describe('ready-made reports and dashboards', () => {
     expect(theirs.result.total).toBeLessThanOrEqual(first.result.total);
   });
 
+  it('the ready-made dashboards arrive once, filled, for whoever opens Dashboards first', async () => {
+    // A member opens it first: no administrator had to add anything.
+    const list = (await zeynep.get('/api/pages?kind=dashboard')).json.pages as { id: string; name: string; template: string | null; cards: { id: string }[] }[];
+    for (const t of DASHBOARD_TEMPLATES) expect(list.filter((p) => p.template === t.key), t.key).toHaveLength(1);
+    const sales = list.find((p) => p.template === 'sales')!;
+    const data = (await zeynep.get(`/api/pages/${sales.id}/data`)).json.data;
+    expect(Object.keys(data)).toHaveLength(sales.cards.length);
+    // Opening it again adds nothing.
+    expect((await ada.get('/api/pages?kind=dashboard')).json.pages).toHaveLength(list.length);
+    // One the company deletes stays deleted (it is in the trash, not put back behind their back).
+    expect((await ada.del(`/api/pages/${sales.id}`)).status).toBe(200);
+    const after = (await ada.get('/api/pages?kind=dashboard')).json.pages as { template: string | null }[];
+    expect(after).toHaveLength(list.length - 1);
+    expect(after.some((p) => p.template === 'sales')).toBe(false);
+    // Home's tabs do not list dashboards.
+    expect(((await ada.get('/api/pages')).json.pages as { kind: string }[]).every((p) => p.kind === 'home')).toBe(true);
+  });
+
   it('a card can draw a kept report, and says so when it is gone', async () => {
     const kept = await ada.post('/api/reports/saved', { name: 'Önceliğe göre', def: { ...blankDef('tasks'), groups: [{ field: 'priority' }], chart: 'donut' }, shared: true });
     const page = (await ada.post('/api/pages', { name: 'Deneme', cards: [{ id: 'c1', type: 'report', size: 'half', reportId: kept.json.report.id }] })).json.page;

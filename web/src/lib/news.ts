@@ -12,6 +12,16 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-way-back',
+    date: '2026-11-12',
+    title: { tr: 'Her yerde geri dönüş, dolu gelen paneller, köşede CuraAI', en: 'A way back everywhere, dashboards that arrive filled, CuraAI in the corner' },
+    body: {
+      tr: 'Başka bir ekrandan açtığın her ekran, başlığının üstünde nereden geldiğini gösterir: tek tıkla oraya dönersin. Paneller artık hazır ve kendi verinle dolu açılır; üstteki adlarla birinden ötekine geçersin. Yardımcı CuraAI her ekranın sağ altında durur.',
+      en: 'Every screen you reach from another one shows where you came from above its title: one click returns there. Dashboards now open ready and filled with your own data; the names along the top switch between them. The helper, CuraAI, sits at the bottom right of every screen.',
+    },
+    action: { kind: 'go', to: '/dashboards', label: { tr: 'Panelleri aç', en: 'Open dashboards' } },
+  },
+  {
     id: '2026-11-trash',
     date: '2026-11-12',
     title: { tr: 'Çöp kutusu: silinen 30 gün geri alınabilir', en: 'The trash: what you delete can be put back for 30 days' },

@@ -135,6 +135,8 @@ interface Task {
 
 ```ts
 interface TaskDetail extends Task {
+  /** For a subtask: the task it is a step of, so the way back is one click. */
+  parent?: { id: string; title: string } | null;
   subtasks: Task[];
   comments: Comment[];
   files: FileMeta[];

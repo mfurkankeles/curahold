@@ -114,6 +114,17 @@ for (const mode of ['light', 'dark'] as const) {
     await pause(700);
     await shot(page, `look-${mode}-nav3-customer`);
   }
+  if (want('teamhome')) {
+    // The team view of the home page (the people rows), as someone who has it.
+    await go(page, '/home');
+    const tab = await page.$$('.home-tabs .tab');
+    if (tab[1]) await tab[1].click();
+    await pause(900);
+    await shot(page, `look-${mode}-teamhome`);
+    await page.evaluate(() => document.querySelector('.loadlist')?.scrollIntoView({ block: 'center' }));
+    await pause(300);
+    await shot(page, `look-${mode}-teamhome2`);
+  }
   if (want('cura')) {
     await go(page, '/my');
     await shot(page, `look-${mode}-cura0-button`);
@@ -227,6 +238,18 @@ for (const mode of ['light', 'dark'] as const) {
     await page.keyboard.press('Escape');
   }
   if (errors.length) console.log(mode, 'page errors:', errors.slice(0, 5));
+}
+
+if (want('dash')) {
+  // Dashboards as an administrator: opens filled, the switcher along the top, the menu of ones to add.
+  await theme(ada.page, 'light');
+  await go(ada.page, '/dashboards');
+  await pause(1500);
+  await shot(ada.page, 'look-light-dash1');
+  await ada.page.click('.dashpick__more summary').catch(() => undefined);
+  await pause(300);
+  await shot(ada.page, 'look-light-dash2-add');
+  await ada.page.keyboard.press('Escape');
 }
 
 if (want('settings')) {

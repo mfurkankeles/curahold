@@ -85,6 +85,8 @@ export interface Page {
   sharedWith: string[];
   position: number;
   updatedAt: string;
+  /** The ready-made dashboard this page started as, if it did. */
+  template?: string | null;
 }
 
 export interface CardRow {

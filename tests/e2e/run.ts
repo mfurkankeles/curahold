@@ -930,12 +930,29 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   await ada.page.waitForFunction(() => location.pathname.startsWith('/reports/r/'));
   const [kept] = await sql(`select r.def, r.shared from reports r join orgs o on o.id = r.org_id where o.slug = 'demo' and r.name = 'Sorumluya göre müşteriler'`);
   expect(kept?.def?.source === 'accounts' && kept.def.groups[0].field === 'owner' && kept.shared === false, 'the report was not kept as built');
+  // Dashboards opens on a ready-made dashboard, already filled: nothing to add first.
   await ada.page.goto(`${s.origin}/dashboards`, { waitUntil: 'networkidle0' });
-  await (await byText(ada.page, '.dashcard .btn--primary', 'Ekle')).click();
   await ada.page.waitForFunction(() => location.pathname.startsWith('/dashboards/'));
   await ada.page.waitForSelector('.pane[data-type="report"] :is(.vchart, .donut, .kpi, .hbars, .emptystate, .pane__note)');
   expect((await ada.page.$$('.pane[data-type="report"]')).length >= 4, 'the dashboard has no report cards');
+  const ready = (await ada.page.$$('.dashpick__item')).length;
+  expect(ready >= 4, `the ready-made dashboards did not arrive: ${ready}`);
   await shot(ada.page, 'p9-02-dashboard');
+  // The names along the top move from one to another.
+  const first = ada.page.url();
+  const firstName = await text(ada.page, '.topbar__title');
+  await ada.page.click('.dashpick__item:not([aria-current])');
+  await ada.page.waitForFunction((u) => location.href !== u && document.querySelector('.dashpick__item[aria-current="page"]')?.textContent === document.querySelector('.topbar__title')?.textContent, {}, first);
+  expect((await text(ada.page, '.topbar__title')) !== firstName, 'the switch did not change the dashboard');
+  // Any of them can be deleted, and taken back from the toast.
+  const doomed = await text(ada.page, '.topbar__title');
+  await ada.page.click('.dash-top__delete');
+  await (await byText(ada.page, '.dialog .btn--danger', 'Bu paneli sil')).click();
+  await ada.page.waitForFunction((n) => document.querySelectorAll('.dashpick__item').length === n - 1, {}, ready);
+  expect(!(await ada.page.$$eval('.dashpick__item', (xs) => xs.map((x) => x.textContent))).includes(doomed), 'the deleted dashboard is still listed');
+  await (await byText(ada.page, '.toast button', 'Geri al')).click();
+  await ada.page.waitForFunction((n) => document.querySelectorAll('.dashpick__item').length === n, {}, ready);
+  expect((await text(ada.page, '.topbar__title')) === doomed, 'taking the dashboard back did not return to it');
   // A dashboard narrows every card to one person at once.
   await ada.page.select('.dash-viewas select', 'me');
   await ada.page.waitForFunction(() => document.querySelector('.page')?.getAttribute('aria-busy') === 'false');

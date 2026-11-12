@@ -68,12 +68,55 @@ const toPage = (r: Row): Page => ({
   position: r.position,
   updatedAt: iso(r.updated_at)!,
   filters: r.filters ?? {},
+  template: r.template ?? null,
 });
+
+/** A ready-made dashboard's cards as a page keeps them. */
+const cardsOf = (tpl: (typeof DASHBOARD_TEMPLATES)[number]) =>
+  tpl.cards.map((k, i) => ('report' in k ? { id: `c${i + 1}`, type: 'report', size: k.size, report: k.report, ...(k.chart ? { chart: k.chart } : {}) } : { id: `c${i + 1}`, ...k }));
+
+/**
+ * The ready-made dashboards, given to a company once: the first time anyone
+ * opens Dashboards they are there, filled. Done as the system because whoever
+ * opens the page first may not be an administrator; claiming the flag first
+ * means two people arriving together still get one set. Ones the company
+ * deletes later stay deleted.
+ */
+async function giveReadyDashboards(c: C) {
+  const org = c.get('org');
+  if (org.settings?.dashboardsReady) return;
+  const locale = org.locale;
+  await c.get('deps').db.system(async (q) => {
+    const claimed = await q.query(
+      `update orgs set settings = coalesce(settings, '{}'::jsonb) || '{"dashboardsReady": true}'::jsonb
+        where id = $1 and not coalesce((settings->>'dashboardsReady')::boolean, false) returning id`,
+      [org.id],
+    );
+    if (!claimed.length) return;
+    const have = await q.query<{ template: string | null; name: string }>(`select template, name from pages where org_id = $1 and kind = 'dashboard'`, [org.id]);
+    const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages where org_id = $1', [org.id]);
+    let position = n;
+    for (const tpl of DASHBOARD_TEMPLATES) {
+      const name = pick(tpl.name, locale);
+      if (have.some((h) => h.template === tpl.key || h.name === name)) continue;
+      await q.query(`insert into pages (org_id, name, cards, position, kind, filters, template) values ($1, $2, $3, $4, 'dashboard', $5, $6)`, [
+        org.id,
+        name,
+        JSON.stringify(cardsOf(tpl)),
+        position++,
+        JSON.stringify({ person: true, team: true }),
+        tpl.key,
+      ]);
+    }
+  });
+  org.settings = { ...(org.settings ?? {}), dashboardsReady: true };
+}
 
 /** Home pages (the tabs on Home), or with ?kind=dashboard the dashboards. */
 pageRoutes.get('/pages', async (c) => {
   const auth = c.get('auth');
   const kind = c.req.query('kind') === 'dashboard' ? 'dashboard' : c.req.query('kind') === 'all' ? null : 'home';
+  if (kind === 'dashboard') await giveReadyDashboards(c);
   const rows = await run(c, (q) => q.query('select * from pages where ($1::text is null or kind = $1) order by position, created_at', [kind]));
   const pages = rows.map(toPage);
   // Without a home of its own a role starts on the first page it can open.
@@ -179,17 +222,18 @@ pageRoutes.post('/pages/from-template', async (c) => {
   if (!tpl) return fail('not_found');
   const org = c.get('org');
   const auth = c.get('auth');
-  const cards = tpl.cards.map((k, i) => ('report' in k ? { id: `c${i + 1}`, type: 'report', size: k.size, report: k.report, ...(k.chart ? { chart: k.chart } : {}) } : { id: `c${i + 1}`, ...k }));
+  const cards = cardsOf(tpl);
   const name = input.name ?? pick(tpl.name, c.get('locale'));
   const row = await run(c, async (q) => {
     const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages');
-    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by, kind, filters) values ($1, $2, $3, $4, $5, 'dashboard', $6) returning *`, [
+    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by, kind, filters, template) values ($1, $2, $3, $4, $5, 'dashboard', $6, $7) returning *`, [
       org.id,
       name,
       JSON.stringify(cards),
       n,
       auth.userId,
       JSON.stringify({ person: true, team: true }),
+      tpl.key,
     ]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.created', entity: 'page', entityId: r.id, meta: { name, template: tpl.key } });
     return r;

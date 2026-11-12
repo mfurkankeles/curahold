@@ -3,9 +3,10 @@
 // totals — ReportBuilder.tsx); a dashboard puts several of them side by side
 // and can narrow all of them at once to one person or one team.
 //
-//   /dashboards        the list: the built-in overview, the company's
-//                      dashboards and ready-made ones to add
-//   /dashboards/:id    one dashboard, with its filter bar and refresh
+//   /dashboards        opens the dashboard looked at last (or the first); a
+//                      company with none sees the ready-made ones to add
+//   /dashboards/:id    one dashboard, filled: the switcher to the others,
+//                      its filter bar, refresh, edit and delete
 //   /dashboards/new    a new, empty one (administrators)
 //
 // A dashboard is stored as a page of kind 'dashboard' (api/src/routes/pages.ts);
@@ -18,9 +19,12 @@ import { ChartGlyph } from '../components/Charts';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
 import { Icon, PageIcon } from '../components/icons';
-import { ApiFailure, get, post } from '../lib/api';
+import { ApiFailure, del, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { nameIt, navigate } from '../lib/router';
+import { nameIt, navigate, navigateFresh } from '../lib/router';
+import { useTrashToast } from '../lib/trash';
+import { Confirm } from '../components/ui';
+import { TRASH_DAYS } from '../../../shared/src/model';
 import { useStore } from '../lib/store';
 import { draftOf, PageEditor, Tile, type Data, type Draft } from './Home';
 import { ReportTabs } from './ReportBuilder';
@@ -41,6 +45,13 @@ export function DashboardsPage() {
   useEffect(() => {
     void get<{ pages: Page[] }>('/pages?kind=dashboard').then((r) => setPages(r.pages), () => setPages([]));
   }, []);
+  // Dashboards opens on a dashboard, filled: the one looked at last on this device, or the first.
+  // This page itself (the ready-made ones to add) only shows when the company has none left.
+  useEffect(() => {
+    if (!pages?.length) return;
+    const open = pages.find((p) => p.id === lastDashboard()) ?? pages[0];
+    navigate(`/dashboards/${open.id}`, true);
+  }, [pages]);
   const add = async (key: string) => {
     setAdding(key);
     try {
@@ -51,6 +62,12 @@ export function DashboardsPage() {
       setAdding(null);
     }
   };
+  if (!pages || pages.length > 0)
+    return (
+      <div className="page" style={{ paddingTop: 24 }}>
+        <SkeletonCards count={4} label={t('common.loading')} />
+      </div>
+    );
   return (
     <>
       <header className="topbar">
@@ -68,33 +85,11 @@ export function DashboardsPage() {
       </header>
       <ReportTabs active="dashboards" />
       <div className="page reports">
-        <h2 className="reports__h reports__h--first">
-          <Icon name="layout" size={18} /> {t('rb.dashYours')}
-        </h2>
-        <div className="gallery gallery--reports">
-          {/* Always there: the overview of work, customers, deals and targets. */}
-          <a className="rcard" href="/reports" onClick={link('/reports')}>
-            <span className="rcard__icon">
-              <Icon name="gauge" size={18} />
-            </span>
-            <span className="rcard__text">
-              <span className="rcard__name">{t('dash.overview')}</span>
-              <span className="rcard__sub">{t('dash.overviewSub')}</span>
-            </span>
-            <span className="badge">{t('dash.builtIn')}</span>
+        <EmptyState compact icon="layout" title={t('rb.dashNone')}>
+          <a className="btn" href="/reports" onClick={link('/reports')}>
+            <Icon name="gauge" size={16} /> {t('dash.overview')}
           </a>
-          {pages?.map((p) => (
-            <a key={p.id} className="rcard" href={`/dashboards/${p.id}`} onClick={link(`/dashboards/${p.id}`)}>
-              <span className="rcard__icon">
-                <Icon name="layout" size={18} />
-              </span>
-              <span className="rcard__text">
-                <span className="rcard__name">{p.name}</span>
-                <span className="rcard__sub">{t('rb.dashCards', { n: p.cards.length })}</span>
-              </span>
-            </a>
-          ))}
-        </div>
+        </EmptyState>
         <h2 className="reports__h">
           <Icon name="bookmark" size={18} /> {t('rb.dashReady')}
         </h2>
@@ -130,6 +125,82 @@ export function DashboardsPage() {
 
 // ------------------------------------------------------------- one dashboard
 
+const LAST = 'app_dash_last';
+function lastDashboard(): string | null {
+  try {
+    return localStorage.getItem(LAST);
+  } catch {
+    return null;
+  }
+}
+
+/** From one dashboard to another, and (for an administrator) a new one: blank, or a ready-made one not added yet. */
+function DashPicker({ pages, current, admin, onAdded }: { pages: Page[]; current: string; admin: boolean; onAdded: () => Promise<unknown> }) {
+  const { t, locale } = useI18n();
+  const { toast } = useStore();
+  const [adding, setAdding] = useState(false);
+  const missing = DASHBOARD_TEMPLATES.filter((d) => !pages.some((p) => p.template === d.key));
+  const add = async (key: string) => {
+    setAdding(true);
+    try {
+      const r = await post<{ page: Page }>('/pages/from-template', { template: key });
+      await onAdded();
+      navigateFresh(`/dashboards/${r.page.id}`);
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setAdding(false);
+    }
+  };
+  return (
+    <nav className="dashpick" aria-label={t('nav.dashboards')}>
+      <div className="dashpick__list">
+        {pages.map((p) => (
+          <a
+            key={p.id}
+            className="dashpick__item"
+            href={`/dashboards/${p.id}`}
+            aria-current={p.id === current ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              navigateFresh(`/dashboards/${p.id}`);
+            }}
+          >
+            {p.name}
+          </a>
+        ))}
+      </div>
+      {admin && (
+        <details className="fieldsmenu dashpick__more">
+          <summary className="btn btn--quiet btn--small" aria-label={t('dash.add')} title={t('dash.add')}>
+            <Icon name="plus" size={16} />
+            <span className="hide-phone">{t('dash.add')}</span>
+          </summary>
+          <div className="fieldsmenu__pop" role="group" aria-label={t('dash.add')}>
+            <button className="dashpick__add" onClick={() => navigate('/dashboards/new')}>
+              <Icon name="plus" size={16} />
+              <span>
+                <strong>{t('rb.dashNew')}</strong>
+                <small>{t('dash.addBlankHint')}</small>
+              </span>
+            </button>
+            {missing.length > 0 && <p className="fieldsmenu__h">{t('rb.dashReady')}</p>}
+            {missing.map((d) => (
+              <button key={d.key} className="dashpick__add" disabled={adding} onClick={() => void add(d.key)}>
+                <Icon name="layout" size={16} />
+                <span>
+                  <strong>{labelOf(d.name, locale)}</strong>
+                  <small>{labelOf(d.help, locale)}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </details>
+      )}
+    </nav>
+  );
+}
+
 /** "" everything this person may see · "me" · "p:<id>" one person · "t:<id>" one team. */
 type ViewAs = string;
 const queryOf = (v: ViewAs) => (v === 'me' ? '?person=me' : v.startsWith('p:') ? `?person=${v.slice(2)}` : v.startsWith('t:') ? `?team=${v.slice(2)}` : '');
@@ -155,6 +226,17 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
 
   const current = pages?.find((p) => p.id === id) ?? null;
   useEffect(() => nameIt(`/dashboards/${id}`, current?.name), [id, current?.name]);
+  // Next time, Dashboards opens on this one.
+  useEffect(() => {
+    if (!current) return;
+    try {
+      localStorage.setItem(LAST, current.id);
+    } catch {
+      /* per-device convenience */
+    }
+  }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [removing, setRemoving] = useState(false);
+  const trashed = useTrashToast();
   const load = useCallback(async () => {
     if (!current) return;
     setBusy(true);
@@ -212,7 +294,8 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
   return (
     <>
       <header className="topbar dash-top">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="layout" />
           <h1 className="topbar__title">{current.name}</h1>
           {time && <p className="topbar__sub">{t('dash.asOf', { time })}</p>}
         </div>
@@ -254,12 +337,39 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
           </button>
           {admin && (
             <button className="btn" onClick={() => setDraft(draftOf(current))}>
+              <Icon name="edit" size={15} />
               {t('dash.edit')}
+            </button>
+          )}
+          {admin && (
+            <button className="btn btn--quiet dash-top__delete" aria-label={t('dash.delete')} title={t('dash.delete')} onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={16} />
+              <span className="hide-phone">{t('common.delete')}</span>
             </button>
           )}
         </div>
       </header>
       <ReportTabs active="dashboards" />
+      <DashPicker pages={pages} current={current.id} admin={admin} onAdded={loadPages} />
+      {removing && (
+        <Confirm
+          title={t('dash.deleteTitle', { name: current.name })}
+          body={t('dash.deleteBody', { days: TRASH_DAYS })}
+          confirmLabel={t('dash.delete')}
+          danger
+          onClose={() => setRemoving(false)}
+          onConfirm={async () => {
+            const gone = current.id;
+            trashed(await del(`/pages/${gone}`), () => {
+              void loadPages();
+              navigate(`/dashboards/${gone}`);
+            });
+            setRemoving(false);
+            await loadPages();
+            navigate('/dashboards', true);
+          }}
+        />
+      )}
       <div className="page" aria-busy={busy}>
         {current.cards.length === 0 ? (
           <EmptyState icon="layout" title={t('home.emptyPage')}>

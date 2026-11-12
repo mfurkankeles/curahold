@@ -17,7 +17,8 @@ export function parentOf(url: string): string | null {
   if (path === '/team' && p.get('person')) return '/team';
   if (path.startsWith('/b/') && p.get('view') === 'archive') return path;
   if (match('/reports/r/:id', path) || path === '/reports/new') return '/reports/all';
-  if (match('/dashboards/:id', path) || path === '/dashboards/new') return '/dashboards';
+  // Dashboards are side by side (the switcher moves between them); only a new one being made has somewhere to go back to.
+  if (path === '/dashboards/new') return '/dashboards';
   if (path === '/pages/new') return '/home';
   const sub = match('/settings/:tab/:sub', path);
   if (sub) return `/settings/${sub.tab}`;

@@ -62,8 +62,10 @@ Gruplamazsan rapor satır satır bir listedir; hangi sütunların görüneceğin
 
 Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **Raporlar → Paneller** altında:
 
-- **Hazır paneller:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı, Yönetici özeti. **Ekle** deyince kendi sayfan olarak eklenir ve kendi verinle dolar; sonra **Sayfayı düzenle** ile kartlarını değiştirirsin.
-- **Boş panel:** kartları kendin seçersin. “Rapor” kartı, kaydettiğin ya da hazır bir raporu çizer; gösterimini karta özel değiştirebilirsin.
+- **Hazır paneller dolu gelir:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı ve Yönetici özeti, Paneller ilk açıldığında kendi verinle çizilmiş olarak oradadır. Önce bir şey eklemek gerekmez.
+- **Paneller bir panelle açılır:** en son baktığınla. Üstteki adlar tek tıkla birinden ötekine geçirir.
+- **Hepsi değiştirilebilir ve silinebilir:** **Paneli düzenle** kartlarını değiştirir; **Sil** çöp kutusuna gönderir, 30 gün içinde geri alınır. Sildiğin hazır panel kendiliğinden geri gelmez: **Panel ekle**, artık sende olmayanları listeler.
+- **Boş panel:** **Panel ekle** altında; kartları kendin seçersin. “Rapor” kartı, kaydettiğin ya da hazır bir raporu çizer; gösterimini karta özel değiştirebilirsin.
 - Bir raporu açıkken **Panele ekle** ile doğrudan bir panele koyabilirsin (rapor şirketle paylaşılır ki paneli açan herkes kartı görsün).
 
 Panelleri şirket ayarlarını yönetenler ekler ve düzenler; raporu, yazma yetkisi olan herkes kurar.

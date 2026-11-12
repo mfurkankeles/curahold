@@ -10,6 +10,9 @@ summary: Neler yeni, neler değişti.
 
 ### Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri; raporlar ile paneller ayrı
 
+- **Paneller dolu gelir:** yedi hazır panel, Paneller'i ilk açtığında kendi verinle çizilmiş olarak oradadır; üstteki adlar birinden ötekine geçirir, hepsi silinebilir (ve çöp kutusundan geri alınabilir).
+- **Her yerde geri dönüş:** başka bir ekrandan açtığın ekran, başlığının üstünde nereden geldiğini gösterir; tek tıkla oraya dönersin. Yenilemeler, iş değerlendirmeleri ve ürünlerin kendi başlığı ve menüde kendi satırı var.
+- **CuraAI köşede:** belgelerden cevap veren yardımcı artık her ekranın sağ altında durur ve konuşmayı saklar.
 - **Çöp kutusu:** sildiğin şey (müşteri, kayıt, görev, zaman çizelgesi girişi, sayfa, kayıtlı rapor, otomasyon) 30 gün durur ve onunla birlikte gidenlerle beraber eskisi gibi geri alınabilir. Silmenin hemen ardından bildirimde Geri al çıkar; sonrası için menün → Çöp kutusu. Ayrıntı: *Çöp kutusu*.
 - **Playbook’lar:** ekibinin işi yapma şeklini tarihli adımlar olarak yaz; adımlar uygulandığı tarihten itibaren ya da müşterinin yenileme tarihinden veya fırsatın kapanış tarihinden geriye doğru sayılır. Ayarlar → Playbook’lar’da dört hazır örnekten (yenileme, onboarding, iş değerlendirmesi, fırsatı kapatma) başla.
 - **Kendiliğinden başlayan yenilemeler:** ne kadar önceden (örneğin 180 gün) ve hangi playbook’la başlayacağını seç; her sabah yenileme işi müşterinin sorumlusu için açılır, istersen bir yenileme fırsatıyla birlikte. Tarihi geçmiş adımlar bugüne yığılan görevler yerine tek bir "geride kalanlar" görevinde toplanır.
