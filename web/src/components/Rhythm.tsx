@@ -7,7 +7,7 @@ import { typeLabel, type AppRecord, type RecordType } from '../../../shared/src/
 import { DEFAULT_RHYTHM, TARGET_KINDS, TARGET_PERIODS, reviewDue, targetReport, type DealLike, type Period, type ReviewDue, type Rhythm, type TargetKind, type TargetRow } from '../../../shared/src/rhythm';
 import { labelOf } from '../../../shared/src/fields';
 import { ApiFailure, put } from '../lib/api';
-import { useI18n } from '../lib/i18n';
+import { useI18n, type I18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
@@ -20,6 +20,9 @@ import { EmptyState } from './Empty';
 import { Icon } from './icons';
 import { usePlaybooks } from './Plans';
 import { Avatar } from './ui';
+
+/** "1 deal", "4 deals" (Turkish says "1 fırsat", "4 fırsat"). */
+export const dealsN = (t: I18n['t'], n: number) => (n === 1 ? t('pipeline.deal1') : t('pipeline.deals', { n }));
 
 export const useRhythm = (): Rhythm => useStore().me.org.rhythm ?? DEFAULT_RHYTHM;
 
@@ -200,7 +203,7 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
                     <Avatar person={person(o.ownerId)} /> {person(o.ownerId)?.name ?? '—'}
                   </span>
                   <span className="num">
-                    <b>{cash(o.won)}</b> <span className="muted">· {t('pipeline.deals', { n: o.deals })}</span>
+                    <b>{cash(o.won)}</b> <span className="muted">· {dealsN(t, o.deals)}</span>
                   </span>
                 </li>
               ))}

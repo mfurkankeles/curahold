@@ -2925,6 +2925,7 @@ export const en = {
   'legal.terms': 'Terms of service',
   'legal.privacy': 'Privacy policy',
   'legal.and': 'and the',
+  'pipeline.deal1': '1 deal',
 } as const;
 
 export type MessageKey = keyof typeof en;

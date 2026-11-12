@@ -411,6 +411,24 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
         minutes: doneAgo[i] < 30 && made % 2 === 0 ? 30 + (made % 4) * 30 : null,
       });
     }
+    // The same kinds of work again, for other customers on other days: a team finishes a handful
+    // every week, and the weekly chart on Reports should look like it.
+    const doneAgo2 = [1, 4, 7, 10, 14, 15, 18, 20, 21, 23, 27, 28, 30, 34, 35, 38, 41, 43, 46, 49, 53, 56, 61, 66];
+    for (const [i, title] of HISTORY.slice(0, doneAgo2.length).entries()) {
+      const made = doneAgo2[i] + took[(i + 3) % took.length];
+      past.push({
+        id: crypto.randomUUID(),
+        title: tx(title),
+        board: i % 3 === 0 ? renewals : main,
+        by: who(crew[(i + 2) % crew.length]),
+        account: accounts[names[(i * 7 + 3) % names.length]] ?? null,
+        priority: i % 5 === 0 ? 'high' : 'normal',
+        made,
+        done: doneAgo2[i],
+        due: i % 4 === 1 ? doneAgo2[i] + 1 : doneAgo2[i] - (i % 2),
+        minutes: doneAgo2[i] < 30 && made % 3 === 0 ? 30 + (made % 3) * 30 : null,
+      });
+    }
   }
 
   if (db) {
@@ -488,6 +506,22 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
       for (const id of [ids[9], ids[14]].filter(Boolean)) {
         await q.query(`update tasks set created_at = now() - interval '24 days', updated_at = now() - interval '17 days' where id = $1 and done_at is null`, [id]);
       }
+      // Everything else the seed opened came in this very minute: the base demo's tasks, this
+      // morning's renewal round, the plans. Spread it over the last eight weeks, one in six kept for
+      // these last days, so the weekly chart on Reports shows a steady flow and not one spike today.
+      await q.query(
+        `with fresh as (
+           select t.id, (row_number() over (order by t.created_at, t.id))::int as k
+             from tasks t
+            where t.created_at > now() - interval '2 hours' and t.activity_id is null
+              and t.id not in (select (jsonb_array_elements_text($1::jsonb))::uuid)
+         )
+         update tasks t set created_at = now() - make_interval(days => case when f.k % 6 = 0 then (f.k / 6) % 3 else 4 + (f.k * 11) % 52 end, mins => (f.k * 47) % 600)
+           from fresh f where t.id = f.id`,
+        [JSON.stringify(ids)],
+      );
+      // Each task's history starts when the task does.
+      await q.query(`update task_events e set created_at = t.created_at from tasks t where e.task_id = t.id and e.kind = 'created' and e.created_at <> t.created_at`);
       // A weekly summary waiting in everyone's bell, as on a Monday morning.
       const users = await q.query(`select u.id, u.org_id, coalesce(u.locale, o.locale) as locale from users u join orgs o on o.id = u.org_id where u.status = 'active'`);
       for (const u of users) {

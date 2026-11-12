@@ -13,7 +13,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { dueState, todayIso } from '../lib/time';
 import { EmptyState } from './Empty';
-import { TargetsPanel } from './Rhythm';
+import { TargetsPanel, dealsN } from './Rhythm';
 import { Icon } from './icons';
 import { CountUp } from './CountUp';
 import { Avatar } from './ui';
@@ -127,10 +127,10 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
       {type.kind === 'opportunity' && <TargetsPanel type={type} records={records} compact />}
       {money && (
         <div className="statstrip">
-          <Stat label={t('pipeline.open')} value={cash(sum(open))} sub={t('pipeline.deals', { n: open.length })} />
+          <Stat label={t('pipeline.open')} value={cash(sum(open))} sub={dealsN(t, open.length)} />
           {status && <Stat label={t('pipeline.weighted')} value={cash(Math.round(weighted))} sub={t('pipeline.weightedHint')} />}
-          {date && <Stat label={t('pipeline.closing')} value={cash(sum(closing))} sub={t('pipeline.deals', { n: closing.length })} tone={late.length ? 'late' : undefined} note={late.length ? t('pipeline.lateN', { n: late.length }) : undefined} />}
-          {status && <Stat label={t('pipeline.wonTotal')} value={cash(sum(won))} sub={t('pipeline.deals', { n: won.length })} tone="done" />}
+          {date && <Stat label={t('pipeline.closing')} value={cash(sum(closing))} sub={dealsN(t, closing.length)} tone={late.length ? 'late' : undefined} note={late.length ? t('pipeline.lateN', { n: late.length }) : undefined} />}
+          {status && <Stat label={t('pipeline.wonTotal')} value={cash(sum(won))} sub={dealsN(t, won.length)} tone="done" />}
         </div>
       )}
       <DndContext sensors={canWrite ? sensors : []} onDragStart={(e) => setActive(records.find((x) => x.id === e.active.id) ?? null)} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>

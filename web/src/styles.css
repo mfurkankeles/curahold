@@ -1832,7 +1832,11 @@ strong, b { font-weight: 700; }
 .inbox__more { display: flex; margin: 0 auto; }
 
 /* --------------------------------------------------- stats and pipeline */
-.statstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+/* Four across, or two by two when there is less room: never three and one left over. The strip
+   measures its own width (a container), since the room depends on the sidebar, not the window. */
+.statstrip { --gap: 12px; container-type: inline-size; display: flex; flex-wrap: wrap; gap: var(--gap); margin-bottom: 16px; }
+.statstrip > * { flex: 1 1 calc((100% - 3 * var(--gap)) / 4 - 0.1px); }
+@container (max-width: 700px) { .statstrip > * { flex-basis: calc((100% - var(--gap)) / 2 - 0.1px); } }
 .stat { --tone: var(--brand); display: grid; gap: 2px; padding: 14px 16px 12px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; position: relative; min-width: 0; }
 .stat::before { content: ''; position: absolute; left: -1px; top: 14px; bottom: 14px; width: 4px; border-radius: 0 4px 4px 0; background: var(--tone); }
 .stat[data-tone='late'] { --tone: var(--late); }
@@ -1860,10 +1864,15 @@ strong, b { font-weight: 700; }
 @media (min-width: 861px) { .record-tabs { display: none; } }
 
 /* ---------------------------------------------------------------- reports */
-.reports__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+/* What spans the page (a chart, the targets) stacks in .reports__stack; the cards under it go
+   two by two in .reports__grid, each pair the same height, and one left over takes the whole row,
+   so no card ever stands next to a hole. */
+.reports__stack { display: grid; gap: 14px; }
+.reports__stack > .sheet + .sheet { margin-top: 0; }
+.reports__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.reports__grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 .reports__grid .sheet + .sheet { margin-top: 0; }
 .reports__wide { grid-column: 1 / -1; }
-@media (min-width: 1180px) { .reports__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .reports__h { display: flex; align-items: center; gap: 8px; margin: 28px 0 12px; font-family: var(--font-display); font-size: 18px; font-weight: 650; }
 .chart { margin: 0; }
 .chart__plot { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; height: 190px; align-items: end; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--line) calc(25% - 1px), var(--line) 25%); background-size: 100% calc(100% - 22px); background-repeat: no-repeat; }
@@ -1873,20 +1882,33 @@ strong, b { font-weight: 700; }
 .chart__bar b { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--ink-2); }
 .chart__bar--in { background: var(--calm); }
 .chart__bar--out { background: var(--brand); }
-.chart__tick { font-size: 11px; color: var(--ink-3); text-align: center; white-space: nowrap; overflow: hidden; padding-top: 4px; }
+.chart__tick { display: flex; justify-content: center; font-size: 11px; color: var(--ink-3); white-space: nowrap; padding-top: 4px; }
 .chart__legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 6px; }
 .chart__key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 .chart__key--in { background: var(--calm); }
 .chart__key--out { background: var(--brand); }
-.barrows { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.barrows__row { display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 6px 6px; border: 0; background: none; border-radius: 8px; text-align: left; color: var(--ink); font-size: 13.5px; }
+.barrows { list-style: none; margin: 0; padding: 0; display: grid; row-gap: 2px; }
+.barrows__row { display: grid; gap: 12px; align-items: center; width: 100%; padding: 6px 6px; border: 0; background: none; border-radius: 8px; text-align: left; color: var(--ink); font-size: 13.5px; }
+/* One set of columns for the whole list (label, bar, count, number): the rows are subgrids of it,
+   so every bar starts and ends at the same place and the numbers line up on the right. */
+@supports (grid-template-columns: subgrid) {
+  .barrows { grid-template-columns: fit-content(40%) minmax(0, 1fr) max-content; column-gap: 12px; }
+  .barrows[data-counted] { grid-template-columns: fit-content(40%) minmax(0, 1fr) max-content max-content; }
+  .barrows > li, .barrows__row { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+}
+/* Older browsers: each row lays itself out. */
+@supports not (grid-template-columns: subgrid) {
+  .barrows__row { grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto; }
+  .barrows[data-counted] .barrows__row { grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto auto; }
+}
 button.barrows__row { cursor: pointer; }
 button.barrows__row:hover { background: var(--surface-2); }
-.barrows__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barrows__label { min-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barrows__count { justify-self: end; color: var(--ink-3); font-size: 12.5px; }
 .barrows__track { height: 12px; border-radius: 999px; background: var(--sunk); overflow: hidden; }
 .barrows__fill { display: block; height: 100%; border-radius: 999px; background: var(--oc, var(--brand)); position: relative; overflow: hidden; min-width: 0; }
 .barrows__part { position: absolute; right: 0; top: 0; bottom: 0; background: var(--late); }
-.barrows__value { font-weight: 600; white-space: nowrap; color: var(--ink-2); font-size: 13px; }
+.barrows__value { justify-self: end; font-weight: 600; white-space: nowrap; color: var(--ink-2); font-size: 13px; }
 .healthbar { display: flex; height: 16px; border-radius: 999px; overflow: hidden; gap: 2px; }
 .healthbar span, .healthkey i { background: var(--line-strong); }
 .healthbar [data-band='good'], .healthkey [data-band='good'] { background: var(--done); }
@@ -2027,7 +2049,7 @@ a.btn { text-decoration: none; }
 
 /* Phone: the four numbers sit two by two, so the page's real content is one thumb away. */
 @media (max-width: 640px) {
-  .statstrip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .statstrip { --gap: 8px; margin-bottom: 12px; }
   .stat { padding: 10px 10px 9px 14px; }
   .stat::before { top: 10px; bottom: 10px; }
   .stat__value { font-size: 20px; }

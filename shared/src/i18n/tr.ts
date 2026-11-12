@@ -2910,4 +2910,5 @@ export const tr: Record<MessageKey, string> = {
   'legal.terms': 'Kullanım koşulları',
   'legal.privacy': 'Gizlilik politikası',
   'legal.and': 've',
+  'pipeline.deal1': '1 fırsat',
 };
