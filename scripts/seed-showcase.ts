@@ -23,6 +23,34 @@ const ago = (days: number, hour = 11) => {
 };
 
 // [account, kind, days ago, text] — written as the owner would.
+// The meetings, reviews and calls below are logged as meetings: a title, how long,
+// who else from our side came, and the next steps agreed — [what, who, due in N days, done].
+// Who came from the customer's side is read from the notes (the first names in them).
+const MEETING_MORE: Record<string, { title: string; minutes: number; also?: string; steps?: [string, string, number | null, boolean][] }> = {
+  'Quillfield Retail|review|2': { title: '3. çeyrek iş değerlendirmesi', minutes: 60, also: 'ada', steps: [['Ek kullanıcı paketi teklifini gönder', 'zeynep', 3, false], ['Mobil kanal için örnek akış hazırla', 'lena', 10, false]] },
+  'Harborline Bank|call|4': { title: 'Yenileme ön görüşmesi', minutes: 30, steps: [['Köprü sözleşme taslağını hazırla', 'omar', 5, false]] },
+  'Cedarmoor Health|meeting|6': { title: 'Onboarding başlangıç toplantısı', minutes: 60, also: 'lena', steps: [['İlk eğitim oturumunu planla', 'lena', 4, true], ['İkinci eğitim için katılımcı listesini iste', 'lena', 9, false]] },
+  'Velto Mobility|call|41': { title: 'Kullanım düşüşü görüşmesi', minutes: 25 },
+  'Fjordnet Telecom|meeting|26': { title: 'Analitik ekibi eğitimi', minutes: 90 },
+  'Lindenhall Sigorta|meeting|1': { title: 'Yenileme ve mobil modül görüşmesi', minutes: 45, also: 'ada', steps: [['Mobil modül için kapsam notunu paylaş', 'omar', 4, false]] },
+  'Lindenhall Sigorta|call|8': { title: 'Veri saklama soruları', minutes: 20 },
+  'Corvina Medya|call|47': { title: 'İndirim talebi araması', minutes: 20 },
+  'Brightmoor Enerji|meeting|3': { title: 'İkinci marka için genişleme demosu', minutes: 60, also: 'zeynep', steps: [['Genişleme teklifini hazırla', 'omar', 6, false], ['Entegrasyon notlarını teknik ekibe gönder', 'zeynep', 2, true]] },
+  'Saltmarsh Turizm|call|33': { title: 'Sezon öncesi kontrol', minutes: 20 },
+  'Duskvale Oyun|meeting|5': { title: 'Aylık görüşme', minutes: 30, steps: [['Başarı hikayesi taslağını paylaş', 'lena', 12, false]] },
+  'Harborline Bank|review|80': { title: '2. çeyrek iş değerlendirmesi', minutes: 60, also: 'ada', steps: [['Raporlama isteklerini ürün ekibine ilet', 'omar', null, true]] },
+  'Ambergate Lojistik|review|104': { title: 'Yıllık iş değerlendirmesi', minutes: 75, steps: [['Yeni sponsorla tanışma toplantısı iste', 'zeynep', null, true]] },
+  'Lindenhall Sigorta|review|62': { title: 'Çeyrek iş değerlendirmesi', minutes: 60 },
+  'Brightmoor Enerji|review|38': { title: 'Çeyrek iş değerlendirmesi', minutes: 60, steps: [['Genişleme demosunu planla', 'omar', null, true]] },
+  'Fjordnet Telecom|review|71': { title: 'Çeyrek iş değerlendirmesi', minutes: 45 },
+  'Velto Mobility|review|118': { title: 'İş değerlendirmesi ve aksiyon planı', minutes: 60, steps: [['Kullanım aksiyon planını yazılı paylaş', 'mert', null, true], ['Ürün ekibiyle ayrı bir oturum öner', 'mert', null, false]] },
+  'Cedarmoor Health|review|21': { title: 'Onboarding sonu değerlendirmesi', minutes: 60 },
+  'Saltmarsh Turizm|review|96': { title: 'Sezon öncesi değerlendirme', minutes: 45 },
+  'Duskvale Oyun|review|47': { title: 'İlk ay değerlendirmesi', minutes: 45 },
+  'Wrenfield Eğitim|review|84': { title: 'Dönem başı değerlendirmesi', minutes: 60 },
+  'Orchardly Foods|review|58': { title: 'Kısa çeyrek değerlendirmesi', minutes: 30 },
+};
+
 const ACTIVITIES: [string, 'note' | 'call' | 'meeting' | 'email' | 'review', number, string][] = [
   ['Quillfield Retail', 'review', 2, 'Çeyrek değerlendirmesi. Selin yeni kampanya takvimini paylaştı; mobil kanalı genişletmek istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.'],
   ['Quillfield Retail', 'email', 9, 'Kullanım raporunu gönderdim. Tomas fiyatlandırma detaylarını sordu.'],
@@ -264,8 +292,31 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
   await call('POST', `/api/tasks/${ids[0]}/comments`, { body: `@[Omar Haddad](${who('omar')}) finans ekibi çeyrek sonuna kadar beklemek istiyor. Bu hafta bir ara çözüm önerelim mi?` });
   await call('POST', `/api/tasks/${ids[3]}/comments`, { body: `@[Lena Fischer](${who('lena')}) geçen yıl %10 vermiştik, bu sefer kullanım artışını gösterip daha az indirimle kapatmayı deneyelim.` });
 
+  // The customer's people, to say who was in each meeting.
+  const { records: contactRows } = await call<{ records: { id: string; accountId: string; fields: Record<string, unknown> }[] }>('GET', '/api/records?type=contact&limit=500');
+  const met = (acc: string, notes: string) =>
+    contactRows.filter((r) => r.accountId === accounts[acc] && typeof r.fields.first_name === 'string' && notes.includes(r.fields.first_name as string)).map((r) => r.id);
   for (const [acc, kind, days, body] of ACTIVITIES) {
-    await call('POST', `/api/accounts/${accounts[acc]}/activities`, { kind, body, happenedAt: ago(days) });
+    const more = MEETING_MORE[`${acc}|${kind}|${days}`];
+    if (!more) {
+      await call('POST', `/api/accounts/${accounts[acc]}/activities`, { kind, body, happenedAt: ago(days) });
+      continue;
+    }
+    const ours = [...new Set([ownerOf[acc], more.also ? who(more.also) : null].filter((x): x is string => !!x))];
+    const { meeting } = await call<{ meeting: { nextSteps: { id: string }[] } }>('POST', `/api/accounts/${accounts[acc]}/meetings`, {
+      kind,
+      title: more.title,
+      body,
+      happenedAt: ago(days),
+      minutes: more.minutes,
+      contactIds: met(acc, body),
+      userIds: ours,
+      ...(more.steps?.length ? { boardId: main, nextSteps: more.steps.map(([title, by, due]) => ({ title, assigneeIds: [who(by)], dueDate: due === null ? null : day(due) })) } : {}),
+    });
+    // Some of what was agreed is already done.
+    for (const [i, step] of (more.steps ?? []).entries()) {
+      if (step[3]) await call('PATCH', `/api/tasks/${meeting.nextSteps[i].id}`, { baseVersion: 1, status: 'done' }).catch(() => undefined);
+    }
   }
   // The pinned note everyone should see first on this customer.
   const pin = await call('POST', `/api/accounts/${accounts['Harborline Bank']}/activities`, {
@@ -425,6 +476,14 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
            from jsonb_to_recordset($1::jsonb) as x(id uuid, made int) where e.task_id = x.id and e.kind = 'created'`,
         [JSON.stringify(opened)],
       );
+      // A meeting's next steps were opened at the meeting, and the finished ones done a few days after.
+      await q.query(
+        `update tasks t set created_at = a.happened_at + interval '1 hour',
+                done_at = case when t.done_at is not null then least(now(), a.happened_at + interval '4 days') end,
+                updated_at = case when t.done_at is not null then least(now(), a.happened_at + interval '4 days') else a.happened_at + interval '1 hour' end
+           from activities a where t.activity_id = a.id`,
+      );
+      await q.query(`update task_events e set created_at = t.created_at from tasks t where e.task_id = t.id and t.activity_id is not null and e.kind = 'created'`);
       // Two tasks nobody has touched for a while (a 1:1 brings them up).
       for (const id of [ids[9], ids[14]].filter(Boolean)) {
         await q.query(`update tasks set created_at = now() - interval '24 days', updated_at = now() - interval '17 days' where id = $1 and done_at is null`, [id]);

@@ -252,8 +252,16 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           </span>
         )}
       </div>
-      <p className="tl__text">{a.body}</p>
-      {a.contactIds.length > 0 && <p className="tl__with muted">{t('timeline.with', { names: a.contactIds.map(contactName).filter(Boolean).join(', ') })}</p>}
+      {a.title && (
+        <p className="tl__title">
+          {a.title}
+          {a.minutes ? <span className="muted"> · {t('meetings.minutes', { n: a.minutes })}</span> : null}
+        </p>
+      )}
+      {a.body && <p className="tl__text">{a.body}</p>}
+      {(a.contactIds.length > 0 || a.userIds.length > 0) && (
+        <p className="tl__with muted">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
+      )}
     </div>
   );
 

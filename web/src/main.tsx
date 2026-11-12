@@ -3,10 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { startPwa } from './lib/pwa';
 import { startTheme } from './lib/theme';
-import './styles.css';
-import './reports.css';
-import './motion.css';
-import './work.css';
+import './stylesheets';
 
 startTheme();
 startPwa();

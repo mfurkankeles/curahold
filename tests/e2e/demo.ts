@@ -89,9 +89,13 @@ if (ok && !process.env.QUICK) {
   await click('.navlink', 'Fırsatlar');
   await frame!.waitForSelector('.dealcard', { timeout: 10000 }).catch(() => errors.push('the pipeline shows no deals'));
   await page.screenshot({ path: join(SCREENS, 'demo-pipeline.png') });
-  await click('.navlink', 'Değerlendirmeler');
+  await click('.navlink', 'İş değerlendirmeleri');
   await frame!.waitForSelector('.table--reviews .review__when', { timeout: 10000 }).catch(() => errors.push('no reviews are due'));
   await page.screenshot({ path: join(SCREENS, 'demo-reviews.png') });
+  // A customer's page lists its meetings, with who was there and the next steps.
+  await click('.table--reviews a');
+  await frame!.waitForSelector('.meetings .meeting', { timeout: 10000 }).catch(() => errors.push('a customer shows no meetings'));
+  await page.screenshot({ path: join(SCREENS, 'demo-meetings.png') });
   await click('.navlink', 'Raporlar');
   await frame!.waitForSelector('.chart__col', { timeout: 10000 }).catch(() => errors.push('reports show no chart'));
   await frame!.waitForSelector('.target__track', { timeout: 10000 }).catch(() => errors.push('reports show no target'));

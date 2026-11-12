@@ -966,9 +966,29 @@ await step('settings: a currency and its rate, a playbook from an example, renew
   await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')));
   const [rh] = await sql(`select settings->'rhythm' as r from orgs where slug = 'demo'`);
   expect(rh?.r?.reviewDays === 90 && rh.r.renewal?.days === 180 && rh.r.renewal?.planId === pb.id, `rhythm kept: ${JSON.stringify(rh?.r)}`);
-  // With reviews on, customers have a Reviews view.
+  // With reviews on, customers have a Business reviews view.
   await ada.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
-  await byText(ada.page, '[role="tab"]', 'Değerlendirmeler');
+  await (await byText(ada.page, '[role="tab"]', 'İş değerlendirmeleri')).click();
+  await ada.page.waitForSelector('.reviews__intro');
+  // "Done" logs the review as a meeting: title, people, notes and a next step that becomes a task.
+  await ada.page.click('.table--reviews .table__action .btn');
+  await ada.page.waitForSelector('.logform input.input');
+  await ada.page.type('.logform input.input', 'Çeyrek iş değerlendirmesi');
+  await ada.page.type('.logform textarea', 'Kullanım hedefte; ikinci ekip için teklif istediler.');
+  await (await byText(ada.page, '.logform .btn', 'Adım ekle')).click();
+  await ada.page.type('.logform__step .input', 'İkinci ekip teklifini gönder');
+  await shot(ada.page, 'p11-01-review-meeting');
+  await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => !document.querySelector('.logform'));
+  const [mt] = await sql(`select a.id, a.account_id, a.title from activities a where a.kind = 'review' and a.title = 'Çeyrek iş değerlendirmesi'`);
+  expect(mt, 'the review was not logged as a meeting');
+  const [step] = await sql(`select title, account_id from tasks where activity_id = $1`, [mt.id]);
+  expect(step?.title === 'İkinci ekip teklifini gönder' && step.account_id === mt.account_id, 'the next step did not become a task on the customer');
+  // The customer page lists it under Meetings, with its next step.
+  await ada.page.goto(`${s.origin}/accounts/${mt.account_id}`, { waitUntil: 'networkidle0' });
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.meeting__title')].some((e) => e.textContent === 'Çeyrek iş değerlendirmesi'));
+  await ada.page.waitForSelector('.meeting__step');
+  await shot(ada.page, 'p11-02-customer-meetings');
   expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
   await ada.page.close();
 });

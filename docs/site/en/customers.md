@@ -55,4 +55,18 @@ A **plan** is a set of dated tasks put on a customer in one click: onboarding, r
 
 Decide once how often you sit down with every customer: Settings → **Targets and rhythm** → *Business reviews* (every 90 days, say). One customer can have its own rhythm in the **Business review** field on its page; "No reviews" keeps that customer out of the rhythm.
 
-**Customers → Reviews** lists the ones that are due: late, in the next 30 days, and later. When you have held the review, log it with **Done** on the row (or from the customer's page) and a short note; it lands on the timeline as a "Business review" and the next date moves by itself. For a customer never reviewed, the count starts on the day it was added. A late review also shows as a mark on the customer's card.
+A business review is a meeting you hold with each customer every so often (a QBR) to go over results and plans. **Customers → Business reviews** lists the ones that are due: late, in the next 30 days, and later. When you have held the review, **Done** on the row (or the customer's page) opens the meeting form; once saved it lands in the customer's **Meetings** and timeline as a "Business review", and the next date moves by itself. For a customer never reviewed, the count starts on the day it was added. A late review also shows as a mark on the customer's card.
+
+## Meetings
+
+**Meetings** on a customer's page lists every meeting, business review and call with that customer, newest first: the date, kind, title, length, who logged it, who was there (their side and ours), the notes and the next steps. The buttons above it show one kind only; the next business review's date sits beside the heading.
+
+**Log a meeting** (on the customer's page, or **+ New → Log a meeting, call or note**) asks for:
+
+- the kind (meeting, business review, call), a title, the date and length,
+- their people who were there (the customer's contacts) and ours,
+- notes: what was discussed and what was decided,
+- next steps: each one, with who has it and by when, becomes a task on the board you choose, on this customer.
+
+The next steps show under the meeting with how they are doing (finished ones struck through); click one to open the task. A meeting can be edited later, given more next steps, or deleted; a deleted meeting's tasks stay.
+

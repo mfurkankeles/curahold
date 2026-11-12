@@ -55,4 +55,18 @@ Bir **plan**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: on
 
 Her müşteriyle ne sıklıkla oturup değerlendirme yapacağına bir kez karar ver: Ayarlar → **Hedefler ve ritim** → *İş değerlendirmeleri* (örneğin 90 günde bir). Tek bir müşteri için ayrı ritim, o müşterinin sayfasındaki **İş değerlendirmesi** alanından verilir; “Değerlendirme yok” o müşteriyi ritmin dışında tutar.
 
-**Müşteriler → Değerlendirmeler** zamanı gelenleri sıralar: gecikenler, önümüzdeki 30 gün ve daha sonrası. Değerlendirmeyi yaptığında satırdaki **Yapıldı** ile (ya da müşteri sayfasından) kısa bir notla kaydet; kayıt zaman çizelgesine “İş değerlendirmesi” olarak düşer ve sıradaki tarih kendiliğinden ilerler. Hiç değerlendirilmemiş bir müşteride süre, müşterinin eklendiği gün başlar. Geciken değerlendirme müşteri kartında da işaret olarak görünür.
+İş değerlendirmesi, her müşteriyle belli aralıklarla yaptığın, sonuçları ve planları konuştuğun toplantıdır (QBR). **Müşteriler → İş değerlendirmeleri** zamanı gelenleri sıralar: gecikenler, önümüzdeki 30 gün ve daha sonrası. Değerlendirmeyi yaptığında satırdaki **Yapıldı** (ya da müşteri sayfası) toplantı formunu açar; kaydettiğinde müşterinin **Toplantılar** listesine ve zaman çizelgesine “İş değerlendirmesi” olarak düşer, sıradaki tarih kendiliğinden ilerler. Hiç değerlendirilmemiş bir müşteride süre, müşterinin eklendiği gün başlar. Geciken değerlendirme müşteri kartında da işaret olarak görünür.
+
+## Toplantılar
+
+Müşteri sayfasındaki **Toplantılar**, o müşteriyle yapılan bütün toplantıları, iş değerlendirmelerini ve aramaları en yenisi üstte gösterir: tarih, tür, başlık, süre, kimin kaydettiği, kimlerin katıldığı (onlardan ve bizden), notlar ve sonraki adımlar. Üstteki düğmelerle yalnızca bir türü süzebilirsin; sıradaki iş değerlendirmesinin ne zaman olduğu da başlığın yanında yazar.
+
+**Toplantı kaydet** (müşteri sayfasında ya da **+ Yeni → Toplantı, arama ya da not kaydet**) şunları sorar:
+
+- tür (toplantı, iş değerlendirmesi, arama), başlık, tarih ve süre,
+- müşteriden katılanlar (müşterinin kişileri) ve bizden katılanlar,
+- notlar: neler konuşuldu, ne kararlaştırıldı,
+- sonraki adımlar: her biri; kime verildiği ve son tarihiyle, seçtiğin panoda bu müşteriye bağlı bir görev olur.
+
+Sonraki adımlar toplantının altında durumlarıyla görünür (tamamlananların üstü çizili); birine tıklayınca görev açılır. Bir toplantıyı sonradan düzenleyebilir, yeni adım ekleyebilir ya da silebilirsin; silinen toplantının görevleri yerinde kalır.
+

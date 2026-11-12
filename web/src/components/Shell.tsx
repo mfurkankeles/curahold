@@ -21,7 +21,8 @@ import { Icon, type IconName } from './icons';
 import { MenuButton, MenuChoices } from './Menus';
 import { QuickAdd } from './QuickAdd';
 import { SearchPalette, useSearchKey } from './Search';
-import { LogTouch, WhatsNew } from './ShellDialogs';
+import { WhatsNew } from './ShellDialogs';
+import { LogDialog } from './Meetings';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
 import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from './AccountFields';
@@ -508,7 +509,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             </ol>
           </Dialog>
         )}
-        {touch && <LogTouch accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />}
+        {touch && <LogDialog accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />}
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
             <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>

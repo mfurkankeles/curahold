@@ -12,6 +12,7 @@ import { defer, type AppEnv, type Deps, type OrgRow } from './context';
 import { deliverWebhooks } from './lib/webhooks';
 import { flushHealth } from './lib/health';
 import { timelineRoutes } from './routes/timeline';
+import { meetingRoutes } from './routes/meetings';
 import { inboundRoutes, ticketRoutes } from './routes/tickets';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
@@ -253,6 +254,7 @@ export function createApp(deps: Deps) {
   app.route('/api', pageRoutes);
   app.route('/api', searchRoutes);
   app.route('/api', timelineRoutes);
+  app.route('/api', meetingRoutes);
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', helpRoutes);

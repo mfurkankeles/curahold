@@ -28,6 +28,7 @@ import { tasksChanged, usePageDefaults } from '../lib/shell';
 import { PlanMenu } from '../components/Plans';
 import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
+import { AccountMeetings, TIMELINE_CHANGED } from '../components/Meetings';
 import { hoursText } from './Reports';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
@@ -156,7 +157,13 @@ export function AccountsPage() {
   }, [q, owner, archived]);
   useEffect(() => {
     const id = setTimeout(() => void load(), 200);
-    return () => clearTimeout(id);
+    // A review or meeting logged from here (the Reviews view's "Done") moves its customer.
+    const again = () => void load();
+    window.addEventListener(TIMELINE_CHANGED, again);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener(TIMELINE_CHANGED, again);
+    };
   }, [load]);
 
   const rows = useMemo(() => {
@@ -845,6 +852,7 @@ export function AccountPage({ id }: { id: string }) {
               </details>
             )}
           </section>
+          <AccountMeetings account={a} />
           <AccountTimeline accountId={a.id} hasContacts={!!types?.some((x) => x.kind === 'contact')} />
           {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
           {me.org.portal && (can('org.manage') || a.ownerId === me.user.id) && (

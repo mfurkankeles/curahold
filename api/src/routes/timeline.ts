@@ -6,7 +6,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { DEFAULT_HEALTH, HEALTH_FIELD, HEALTH_SIGNALS, healthConfig, type HealthConfig } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
-import { ACTIVITY_KINDS, type Activity, type Timeline, type TimelineItem } from '../../../shared/src/timeline';
+import { ACTIVITY_KINDS, isMeetingKind, type Activity, type Timeline, type TimelineItem } from '../../../shared/src/timeline';
 import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
@@ -31,6 +31,9 @@ export const toActivity = (r: Row): Activity => ({
   source: r.source,
   createdAt: iso(r.created_at)!,
   editedAt: iso(r.edited_at),
+  title: r.title ?? '',
+  minutes: r.minutes ?? null,
+  userIds: r.user_ids ?? [],
 });
 
 const viewer = (c: C) => c.get('auth');
@@ -156,7 +159,7 @@ timelineRoutes.post('/accounts/:id/activities', async (c) => {
 });
 
 /** Only contacts of this customer can be named on its activities. */
-async function checkContacts(q: { query: (s: string, p?: unknown[]) => Promise<Row[]> }, accountId: string, ids: string[]) {
+export async function checkContacts(q: { query: (s: string, p?: unknown[]) => Promise<Row[]> }, accountId: string, ids: string[]) {
   if (!ids.length) return [];
   const found = await q.query(`select r.id from records r join record_types rt on rt.id = r.type_id where r.account_id = $1 and rt.kind = 'contact' and r.id = any ($2::uuid[])`, [accountId, ids]);
   if (found.length !== new Set(ids).size) fail('validation', { fields: 'contactIds' }, { fields: ['contactIds'] });
@@ -170,22 +173,38 @@ timelineRoutes.patch('/activities/:id', async (c) => {
     c,
     z.object({
       kind: activityInput.kind.optional(),
-      body: activityInput.body.optional(),
+      // A meeting's notes may be emptied; a note's may not (checked below).
+      body: z.string().trim().max(20000).optional(),
       happenedAt: activityInput.happenedAt.optional(),
       contactIds: activityInput.contactIds.optional(),
       pinned: activityInput.pinned.optional(),
+      // Meetings, reviews and calls.
+      title: z.string().trim().max(300).optional(),
+      minutes: z.number().int().min(1).max(1440).nullable().optional(),
+      userIds: z.array(uuid).max(30).optional(),
     }),
   );
+  if (input.happenedAt && new Date(input.happenedAt).getTime() > nowOf(c.get('deps')).getTime() + 86_400_000) fail('validation', { fields: 'happenedAt' }, { fields: ['happenedAt'] });
   const row = await run(c, async (q) => {
     const [cur] = await q.query('select * from activities where id = $1', [id]);
     if (!cur) fail('not_found');
+    const kind = input.kind ?? cur.kind;
+    const text = input.body ?? cur.body;
+    if (!text && !isMeetingKind(kind)) fail('validation', { fields: 'body' }, { fields: ['body'] });
     const contacts = input.contactIds ? await checkContacts(q, cur.account_id, input.contactIds) : cur.contact_ids;
-    const textChanged = (input.body !== undefined && input.body !== cur.body) || (input.kind !== undefined && input.kind !== cur.kind);
+    let users: string[] = cur.user_ids ?? [];
+    if (input.userIds) {
+      users = [...new Set(input.userIds)];
+      const found = users.length ? await q.query('select id from users where id = any($1::uuid[])', [users]) : [];
+      if (found.length !== users.length) fail('validation', { fields: 'userIds' }, { fields: ['userIds'] });
+    }
+    const textChanged = (input.body !== undefined && input.body !== cur.body) || (input.kind !== undefined && input.kind !== cur.kind) || (input.title !== undefined && input.title !== cur.title);
     const [r] = await q.query(
       `update activities set kind = $2, body = $3, happened_at = $4, contact_ids = $5, pinned = $6,
+              title = $8, minutes = $9, user_ids = $10,
               edited_at = case when $7 then now() else edited_at end
         where id = $1 returning *`,
-      [id, input.kind ?? cur.kind, input.body ?? cur.body, input.happenedAt ?? cur.happened_at, contacts, input.pinned ?? cur.pinned, textChanged],
+      [id, kind, text, input.happenedAt ?? cur.happened_at, contacts, input.pinned ?? cur.pinned, textChanged, input.title ?? cur.title ?? '', input.minutes !== undefined ? input.minutes : cur.minutes, users],
     );
     // Only its writer, or someone who manages customers, may change it.
     if (!r) fail('forbidden');

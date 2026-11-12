@@ -1,8 +1,6 @@
 // Entry point of the try-it-now demo (see vite.demo.config.ts).
 import './memory';
-import '../styles.css';
-import '../reports.css';
-import '../motion.css';
+import '../stylesheets';
 import './demo.css';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';

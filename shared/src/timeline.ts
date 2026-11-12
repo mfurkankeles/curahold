@@ -16,6 +16,42 @@ export interface Activity {
   source: string;
   createdAt: string;
   editedAt: string | null;
+  /** Meetings, reviews and calls: a title ("Quarterly review"), empty otherwise. */
+  title: string;
+  /** How long it took, in minutes (meetings and calls). */
+  minutes: number | null;
+  /** Our people who were there (the customer's people are contactIds). */
+  userIds: string[];
+}
+
+/** The kinds of activity that are a conversation with the customer: they make up its meetings. */
+export const MEETING_KINDS = ['meeting', 'review', 'call'] as const;
+export type MeetingKind = (typeof MEETING_KINDS)[number];
+export const isMeetingKind = (k: string): k is MeetingKind => (MEETING_KINDS as readonly string[]).includes(k);
+
+/** A next step agreed in a meeting: a task that remembers the meeting. */
+export interface NextStep {
+  id: string;
+  title: string;
+  boardId: string;
+  assigneeIds: string[];
+  dueDate: string | null;
+  done: boolean;
+}
+
+/** A meeting as the customer page shows it: the activity and its next steps. */
+export interface Meeting extends Activity {
+  kind: MeetingKind;
+  nextSteps: NextStep[];
+}
+
+/** A page of a customer's meetings, newest first. */
+export interface MeetingsPage {
+  meetings: Meeting[];
+  /** Pass as `before` to get older ones; null when there are none. */
+  next: string | null;
+  /** How many there are of each kind, for the filter. */
+  counts: Record<MeetingKind, number>;
 }
 
 export type TimelineItem =

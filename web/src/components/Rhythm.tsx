@@ -218,7 +218,8 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
 
 const REVIEW_CHOICES = [30, 60, 90, 180, 365];
 
-function useReviewText() {
+/** "Due in 6 days (18 Nov)", "3 days late"… for a review due. */
+export function useReviewText() {
   const { t, fmtDate } = useI18n();
   return (r: ReviewDue) => {
     if (r.state === 'none' || !r.due || r.days === null) return t('reviews.none');
@@ -301,6 +302,11 @@ export function ReviewsView({ rows }: { rows: { a: Account }[] }) {
   ];
   return (
     <div className="renewals">
+      {/* What this list is: a meeting with each customer every so often (a QBR). */}
+      <p className="reviews__intro">
+        <Icon name="handshake" size={16} />
+        <span>{t('reviews.intro')}</span>
+      </p>
       {groups
         .filter((g) => g.list.length)
         .map((g) => (

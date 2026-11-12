@@ -173,3 +173,92 @@
 .favstar[aria-pressed='true'] { color: var(--soon); }
 .favstar[aria-pressed='true'] .icon { fill: currentColor; transform: scale(1.08); }
 .favstar:active .icon { transform: scale(.88); }
+
+/* ------------------------------------------------------------- meetings */
+/* The customer page lists every meeting, review and call: a date block on the
+   left, coloured by kind, and what happened on the right. */
+
+.meetings__head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.meetings__head .section__head { margin: 0; display: flex; align-items: baseline; gap: 6px; }
+.meetings__head > .btn { margin-left: auto; }
+.meetings__next { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.meetings__filter { margin: 10px 0 2px; }
+.meetings__list { list-style: none; margin: 0; padding: 0; display: grid; }
+.meetings__older { margin-top: 6px; }
+
+.meeting { --kind: var(--line-strong); display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+.meeting:first-child { border-top: 0; }
+.meeting[data-kind='review'] { --kind: var(--brand); }
+.meeting[data-kind='meeting'] { --kind: var(--info-ink); }
+.meeting[data-kind='call'] { --kind: var(--soon); }
+.meeting__date {
+  display: grid; justify-items: center; align-content: start; gap: 1px; padding: 8px 4px; text-align: center;
+  border-radius: 10px; background: var(--surface-2); box-shadow: inset 3px 0 0 var(--kind);
+}
+.meeting__day { font-size: 22px; font-weight: 700; line-height: 1.05; color: var(--ink); }
+.meeting__month { font-size: 12px; color: var(--ink-2); }
+.meeting__weekday { font-size: 11.5px; }
+.meeting__main { min-width: 0; display: grid; gap: 6px; align-content: start; }
+.meeting__head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+.meeting__kind {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; background: var(--sunk); color: var(--ink-2);
+}
+.meeting__kind[data-kind='review'] { background: var(--brand-wash); color: var(--brand-ink); }
+.meeting__kind[data-kind='meeting'] { background: var(--info-wash); color: var(--info-ink); }
+.meeting__kind[data-kind='call'] { background: var(--soon-wash); color: var(--soon-ink); }
+.meeting__title { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.meeting__meta { font-size: 12.5px; }
+.meeting__tools { margin-left: auto; }
+.meeting__who { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13px; color: var(--ink-2); }
+.meeting__notes { display: grid; gap: 2px; justify-items: start; }
+.meeting__notes p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; }
+.meeting__notes:not([data-open]) p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.meeting__stepsbox { display: grid; gap: 4px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.meeting__stepshead { font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: flex; gap: 6px; align-items: baseline; }
+.meeting__steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.meeting__step { display: flex; align-items: center; gap: 8px; font-size: 13.5px; min-height: 26px; }
+.meeting__step > .icon { flex: none; color: var(--ink-3); }
+.meeting__step[data-done] > .icon { color: var(--done); }
+.meeting__step[data-done] .linkbtn { color: var(--ink-3); text-decoration: line-through; }
+.meeting__step .linkbtn { text-align: left; overflow-wrap: anywhere; }
+
+/* The Reviews list says what a business review is. */
+.reviews__intro {
+  display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px;
+  background: var(--brand-soft); color: var(--ink-2); font-size: 13.5px; line-height: 1.5;
+}
+.reviews__intro .icon { flex: none; margin-top: 2px; color: var(--brand); }
+
+/* A meeting's title in the timeline. */
+.tl__title { margin: 0 0 2px; font-weight: 600; font-size: 14px; color: var(--ink); }
+
+/* ------------------------------------------------------ the log dialog */
+
+.logform { display: grid; gap: 12px; }
+.logform .field { margin: 0; }
+.logform__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.logform__contacts { display: flex; flex-wrap: wrap; gap: 6px; }
+.chiptoggle {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px;
+  border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink-2);
+  font-size: 13px; cursor: pointer; user-select: none;
+}
+.chiptoggle input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.chiptoggle:hover { border-color: var(--brand); color: var(--ink); }
+.chiptoggle[data-on] { background: var(--brand-wash); border-color: var(--brand); color: var(--brand-ink); font-weight: 600; }
+.chiptoggle:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; }
+.logform__steps { display: grid; gap: 6px; }
+.logform__step { display: grid; grid-template-columns: minmax(0, 1fr) 150px 148px auto; gap: 6px; align-items: center; }
+.logform__steprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.logform__board { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.logform__board .select { width: auto; min-height: 32px; }
+@media (max-width: 640px) {
+  .meeting { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+  .meeting__day { font-size: 19px; }
+  .logform__step { grid-template-columns: 1fr 1fr auto; }
+  .logform__step > .input:first-child { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chiptoggle { transition: background .12s ease, border-color .12s ease, color .12s ease; }
+}

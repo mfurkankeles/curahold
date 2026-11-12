@@ -12,6 +12,16 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-meetings',
+    date: '2026-11-12',
+    title: { tr: 'Toplantılar ve ayrıntılı yeni görev', en: 'Meetings, and a New task that asks for the details' },
+    body: {
+      tr: 'Müşteri sayfasında o müşteriyle yapılan bütün toplantılar, iş değerlendirmeleri ve aramalar: kimler vardı, ne konuşuldu, sonraki adımlar. Her sonraki adım müşteriye bağlı bir görev olur. Yeni görev de artık müşteri, kişi, tarih ve öncelik gibi ayrıntıları ayrı alanlarda soruyor.',
+      en: 'A customer’s page lists every meeting, business review and call with them: who was there, what was said, the next steps. Each next step becomes a task on the customer. New task now asks for the customer, people, date and priority in their own fields too.',
+    },
+    action: { kind: 'go', to: '/accounts', label: { tr: 'Müşterilere git', en: 'Go to customers' } },
+  },
+  {
     id: '2026-11-deals-playbooks',
     date: '2026-11-12',
     title: { tr: 'Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri', en: 'Playbooks, renewals that start by themselves, currencies' },
