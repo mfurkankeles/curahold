@@ -20,7 +20,7 @@ import { audit } from './audit';
 import { safeEqual, sha256Hex } from './crypto';
 import { fail } from './errors';
 
-export const SUPPORT_COOKIE = 'tw_support';
+export const SUPPORT_COOKIE = 'app_support';
 /** A support session lasts at most this long, and never past the grant. */
 export const SUPPORT_SESSION_HOURS = 8;
 export const ENTRY_LINK_MINUTES = 10;

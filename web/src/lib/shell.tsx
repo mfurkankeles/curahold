@@ -34,7 +34,7 @@ export const ShellCtx = createContext<ShellActions>({ quickAdd: noop, search: no
 export const useShell = () => useContext(ShellCtx);
 
 /** Tasks were made or changed somewhere else on the screen: lists reload. */
-export const TASKS_CHANGED = 'tw:tasks-changed';
+export const TASKS_CHANGED = 'app:tasks-changed';
 export const tasksChanged = () => window.dispatchEvent(new Event(TASKS_CHANGED));
 
 /** True while the person is typing somewhere (a single key is then just a letter). */

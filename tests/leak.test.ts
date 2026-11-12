@@ -59,6 +59,19 @@ describe('no leftovers from the internal tool', () => {
     expect(hits).toEqual([]);
   });
 
+  // The product had a working name before it was called what it is called now. Neither that name nor
+  // the short prefixes made from it may come back (written here in pieces, so this file passes too).
+  it('contains nothing of the old working name', () => {
+    const name = new RegExp('tend' + 'well', 'i');
+    const short = 't' + 'w';
+    const prefixes = new RegExp(`\\b${short}[kar]?[_:-]|\\b${short}\\b|(?<![A-Za-z])${short.toUpperCase()}_[A-Z]`);
+    const hits = all.filter((f) => {
+      const text = readFileSync(f, 'utf8');
+      return name.test(text) || prefixes.test(text);
+    });
+    expect(hits.map((f) => relative(ROOT, f))).toEqual([]);
+  });
+
   it('contains no Slack or Salesforce record ids', () => {
     const slack = /\b[CUGW]0[A-Z0-9]{8,10}\b/;
     const salesforce = /\b(001|003|006|00Q|500|a0[0-9A-Za-z])[0-9A-Za-z]{12}([0-9A-Za-z]{3})?\b/;

@@ -180,7 +180,7 @@ describe('Slack', () => {
     expect(post.body.channel).toBe('U_LENA');
     expect(post.headers.authorization).toBe('Bearer xoxb-secret-token');
     const actions = post.body.blocks.find((b: any) => b.type === 'actions').elements;
-    expect(actions.map((a: any) => a.action_id)).toEqual(['tw_done', 'tw_snooze', 'tw_open']);
+    expect(actions.map((a: any) => a.action_id)).toEqual(['app_done', 'app_snooze', 'app_open']);
     expect(actions[0].value).toBe(t.id);
     expect(env.email.sent.filter((m) => m.to === 'lena@demo.example').length).toBe(before);
     const [n] = await env.db.system((q) => q.query(`select via, state from notifications where task_id = $1`, [t.id]));
@@ -194,7 +194,7 @@ describe('Slack', () => {
       type: 'block_actions',
       team: { id: 'T001' },
       user: { id: 'U_LENA' },
-      actions: [{ action_id: 'tw_done', value: t.id }],
+      actions: [{ action_id: 'app_done', value: t.id }],
       response_url: 'https://hooks.slack.com/actions/T001/1/abc',
       message: { blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'x' } }, { type: 'actions', elements: [] }] },
     };
@@ -230,7 +230,7 @@ describe('Slack', () => {
   it('a button cannot reach another company’s task', async () => {
     const beta = await login(env, 'beta', 'mert@demo.example');
     const other = (await beta.post('/api/tasks', { boardId: env.b.boards.csBoard, title: 'Beta only' })).json.task;
-    const payload = { type: 'block_actions', team: { id: 'T001' }, user: { id: 'U_LENA' }, actions: [{ action_id: 'tw_done', value: other.id }], response_url: 'https://hooks.slack.com/actions/x' };
+    const payload = { type: 'block_actions', team: { id: 'T001' }, user: { id: 'U_LENA' }, actions: [{ action_id: 'app_done', value: other.id }], response_url: 'https://hooks.slack.com/actions/x' };
     calls.length = 0;
     await slackPost(`payload=${encodeURIComponent(JSON.stringify(payload))}`);
     expect((await beta.get(`/api/tasks/${other.id}`)).json.task.status).toBe('todo');
@@ -303,10 +303,10 @@ describe('Microsoft Teams', () => {
     const sent = calls.find((c) => c.url === `${SERVICE}/v3/conversations/a%3Apersonal-conv/activities`)!;
     const card = sent.body.attachments[0];
     expect(card.contentType).toBe('application/vnd.microsoft.card.adaptive');
-    expect(card.content.actions[0]).toMatchObject({ type: 'Action.Submit', data: { tw: 'done', taskId: t.id } });
+    expect(card.content.actions[0]).toMatchObject({ type: 'Action.Submit', data: { act: 'done', taskId: t.id } });
 
     calls.length = 0;
-    await teamsPost(activity({ type: 'message', value: { tw: 'done', taskId: t.id }, replyToId: 'card-1' }));
+    await teamsPost(activity({ type: 'message', value: { act: 'done', taskId: t.id }, replyToId: 'card-1' }));
     expect((await mert.get(`/api/tasks/${t.id}`)).json.task.status).toBe('done');
     expect(calls.find((c) => c.method === 'PUT' && c.url.endsWith('/activities/card-1'))).toBeTruthy();
     await lena.patch('/api/me', { prefs: { channel: 'auto' } });
@@ -371,12 +371,12 @@ describe('Google Chat', () => {
     const sent = calls.find((c) => c.url === 'https://chat.googleapis.com/v1/spaces/DM1/messages')!;
     expect(sent.headers.authorization).toBe('Bearer chat-token');
     const buttons = sent.body.cardsV2[0].card.sections[0].widgets.find((w: any) => w.buttonList).buttonList.buttons;
-    expect(buttons[0].onClick.action).toEqual({ function: 'tw_done', parameters: [{ key: 'taskId', value: t.id }] });
+    expect(buttons[0].onClick.action).toEqual({ function: 'app_done', parameters: [{ key: 'taskId', value: t.id }] });
     // The service account signed its own token request.
     const tokenCall = calls.find((c) => c.url === 'https://oauth2.googleapis.com/token')!;
     expect(tokenCall.body.grant_type).toBe('urn:ietf:params:oauth:grant-type:jwt-bearer');
 
-    const click = await chatPost({ type: 'CARD_CLICKED', user, space: { name: 'spaces/DM1', type: 'DM' }, action: { actionMethodName: 'tw_done', parameters: [{ key: 'taskId', value: t.id }] } });
+    const click = await chatPost({ type: 'CARD_CLICKED', user, space: { name: 'spaces/DM1', type: 'DM' }, action: { actionMethodName: 'app_done', parameters: [{ key: 'taskId', value: t.id }] } });
     expect(click.json.actionResponse).toEqual({ type: 'UPDATE_MESSAGE' });
     expect((await mert.get(`/api/tasks/${t.id}`)).json.task.status).toBe('done');
   });

@@ -65,7 +65,7 @@ const origin = `http://demo.localhost:${PORT + 1}`;
 const api = (page: Page) => <T = any,>(method: string, path: string, body?: unknown): Promise<T> =>
   page.evaluate(
     async (m, p, b) => {
-      const r = await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('tw_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
+      const r = await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
       return r.status === 204 ? null : r.json();
     },
     method,
@@ -210,7 +210,7 @@ if (on('axe') || on('fit')) {
 const look = async (page: Page, theme: 'light' | 'dark', locale: 'tr' | 'en') => {
   await api(page)('PATCH', '/api/me', { locale });
   await page.evaluate((m) => {
-    localStorage.setItem('tw_theme', m);
+    localStorage.setItem('app_theme', m);
     document.documentElement.dataset.theme = m;
   }, theme);
 };

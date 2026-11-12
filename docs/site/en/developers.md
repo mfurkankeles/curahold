@@ -10,7 +10,7 @@ There are four ways to connect your own tools to Curahold. All follow one rule: 
 
 | Way | For | Identity |
 | --- | --- | --- |
-| [REST API](/docs/en/api-reference/) | Your scripts, Zapier, Make, reports | Personal API key (`twk_…`) |
+| [REST API](/docs/en/api-reference/) | Your scripts, Zapier, Make, reports | Personal API key (`chk_…`) |
 | [Webhooks](/docs/en/webhooks/) | Hear about changes in your own system | Signed messages (HMAC-SHA256) |
 | [AI connector (MCP)](/docs/en/mcp-and-oauth/) | Claude, ChatGPT and other assistants | OAuth 2.1 |
 | [OAuth apps](/docs/en/mcp-and-oauth/#oauth-for-your-own-app) | Apps other people will use | OAuth 2.1 + PKCE |

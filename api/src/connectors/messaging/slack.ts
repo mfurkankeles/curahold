@@ -93,14 +93,14 @@ export function slackBlocks(msg: ChatMessage, withActions = true) {
     for (const a of msg.actions ?? []) {
       elements.push({
         type: 'button',
-        action_id: `tw_${a.kind}`,
+        action_id: `app_${a.kind}`,
         value: a.taskId,
         text: { type: 'plain_text', text: a.label },
         ...(a.kind === 'done' ? { style: 'primary' } : {}),
       });
     }
   }
-  if (msg.url) elements.push({ type: 'button', action_id: 'tw_open', url: msg.url, text: { type: 'plain_text', text: msg.openLabel } });
+  if (msg.url) elements.push({ type: 'button', action_id: 'app_open', url: msg.url, text: { type: 'plain_text', text: msg.openLabel } });
   if (elements.length) blocks.push({ type: 'actions', elements });
   return blocks;
 }

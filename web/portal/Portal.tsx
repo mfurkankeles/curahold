@@ -38,7 +38,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 function go(to: string, replace = false) {
   if (replace) history.replaceState(null, '', to);
   else history.pushState(null, '', to);
-  window.dispatchEvent(new Event('tw:portal-nav'));
+  window.dispatchEvent(new Event('app:portal-nav'));
   window.scrollTo(0, 0);
 }
 function usePath() {
@@ -46,10 +46,10 @@ function usePath() {
   useEffect(() => {
     const on = () => setPath(location.pathname + location.search);
     window.addEventListener('popstate', on);
-    window.addEventListener('tw:portal-nav', on);
+    window.addEventListener('app:portal-nav', on);
     return () => {
       window.removeEventListener('popstate', on);
-      window.removeEventListener('tw:portal-nav', on);
+      window.removeEventListener('app:portal-nav', on);
     };
   }, []);
   return path;
@@ -65,7 +65,7 @@ const link = (to: string) => ({
 
 // ------------------------------------------------------------------ i18n
 
-const STORE = 'tw_portal_locale';
+const STORE = 'app_portal_locale';
 function storedLocale(): Locale | null {
   try {
     const v = localStorage.getItem(STORE);
@@ -245,7 +245,7 @@ function Brand({ org }: { org: PortalOrg }) {
   );
 }
 
-const DEMO = import.meta.env.TW_DEMO === true;
+const DEMO = import.meta.env.APP_DEMO === true;
 const passkeysHere = () => !DEMO && browserSupportsWebAuthn();
 const failure = (e: unknown, t: Ctx['t']) => (e instanceof Failure ? e.message : t('errors.server'));
 

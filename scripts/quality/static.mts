@@ -76,7 +76,8 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
   };
   // Written in pieces, so this file does not count itself.
   const old = 'tend' + 'well';
-  say('old names', `the old working name: ${count(new RegExp(old, 'gi'))}; its short prefixes: "${'tw'}_" ${count(new RegExp(`\\b${'tw'}_`, 'g'))}, "${'tw'}:" ${count(new RegExp(`['"\`]${'tw'}:`, 'g'))}, "${'TW'}_" ${count(new RegExp(`\\b${'TW'}_`, 'g'))}`);
+  const short = 't' + 'w';
+  say('old names', `the old working name: ${count(new RegExp(old, 'gi'))}; its short prefixes in any form: ${count(new RegExp(`\\b${short}[kar]?[_:-]|\\b${short}\\b|(?<![A-Za-z])${short.toUpperCase()}_[A-Z]`, 'g'))}`);
   const brand = tracked.filter((f) => /\.(ts|tsx|css|html|md|toml|yml|json)$/.test(f));
   let named = 0;
   const inFiles = new Set<string>();

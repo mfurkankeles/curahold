@@ -28,8 +28,8 @@ import { Avatar, PeoplePicker } from './ui';
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
 
 // Small per-device conveniences: the board used last, and "keep adding".
-const LAST_BOARD = 'tw_quick_board';
-const KEEP = 'tw_quick_keep';
+const LAST_BOARD = 'app_quick_board';
+const KEEP = 'app_quick_keep';
 const read = (k: string) => {
   try {
     return localStorage.getItem(k);

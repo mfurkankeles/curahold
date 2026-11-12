@@ -10,7 +10,7 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 
 | Yol | Ne için | Kimlik |
 | --- | --- | --- |
-| [REST API](/docs/tr/api-reference/) | Kendi betiklerin, Zapier, Make, raporlar | Kişisel API anahtarı (`twk_…`) |
+| [REST API](/docs/tr/api-reference/) | Kendi betiklerin, Zapier, Make, raporlar | Kişisel API anahtarı (`chk_…`) |
 | [Webhook'lar](/docs/tr/webhooks/) | Bir şey değişince senin sistemine haber | İmzalı mesaj (HMAC-SHA256) |
 | [AI bağlayıcısı (MCP)](/docs/tr/mcp-and-oauth/) | Claude, ChatGPT ve diğer asistanlar | OAuth 2.1 |
 | [OAuth uygulamaları](/docs/tr/mcp-and-oauth/#kendi-uygulaman-icin-oauth) | Başkalarının kullanacağı uygulamalar | OAuth 2.1 + PKCE |

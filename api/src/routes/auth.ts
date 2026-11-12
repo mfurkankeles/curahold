@@ -24,7 +24,7 @@ import { knownDevice, openSession } from '../lib/sessions';
 import { portalOAuthCallback, type PortalOAuthState } from '../lib/portalOAuth';
 import { body, deviceId, deviceLabel, email } from '../lib/validate';
 
-export const SESSION_COOKIE = 'tw_session';
+export const SESSION_COOKIE = 'app_session';
 const MAGIC_MINUTES = 15;
 const JOIN_MINUTES = 60;
 const OAUTH_MINUTES = 2;

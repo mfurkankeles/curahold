@@ -146,7 +146,7 @@ export const NEWS: News[] = [
   },
 ];
 
-const SEEN = 'tw_news_seen';
+const SEEN = 'app_news_seen';
 export function newsUnseen(): boolean {
   try {
     return localStorage.getItem(SEEN) !== NEWS[0].id;

@@ -35,7 +35,7 @@ Kişisel verileri satmayız ve reklam için kullanmayız.
 
 ## Çerezler ve tarayıcı depolaması
 
-Curahold yalnızca çalışması için gereken çerezleri kullanır: oturumunuzu açık tutan bir oturum çerezi (`tw_session`) ve seçtiğiniz dil. Tarayıcı depolaması, cihazınızda son kullanılan pano ya da bir süzgeç gibi küçük kolaylıkları tutar. Reklam ya da izleme çerezi yoktur.
+Curahold yalnızca çalışması için gereken çerezleri kullanır: oturumunuzu açık tutan bir oturum çerezi (`app_session`) ve seçtiğiniz dil. Tarayıcı depolaması, cihazınızda son kullanılan pano ya da bir süzgeç gibi küçük kolaylıkları tutar. Reklam ya da izleme çerezi yoktur.
 
 ## Kimlere aktarılır
 

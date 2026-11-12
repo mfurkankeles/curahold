@@ -164,7 +164,7 @@ research and reasoning.
 Everything here acts as one person and stays inside their rights: the same
 row-level security, customer reach and field access as the app.
 
-- **Personal API keys** (`twk_…`): read only or read and write, 30/90/365
+- **Personal API keys** (`chk_…`): read only or read and write, 30/90/365
   days or no end date, revoked in one click. Only a SHA-256 digest is
   stored. A key cannot make keys, approve apps or preview someone else.
   People admins see and revoke every key in the company.
@@ -379,7 +379,7 @@ live keys.
 
 | Service | Register | Curahold endpoints |
 | --- | --- | --- |
-| Slack | One Slack app with OAuth scopes `chat:write im:write users:read users:read.email usergroups:read channels:read groups:read commands`, a message shortcut `tw_create_task` and slash command `/curahold` | Redirect `https://app.curahold.com/api/connect/callback`; events, interactivity and commands `https://app.curahold.com/api/hooks/slack` |
+| Slack | One Slack app with OAuth scopes `chat:write im:write users:read users:read.email usergroups:read channels:read groups:read commands`, a message shortcut `app_create_task` and slash command `/curahold` | Redirect `https://app.curahold.com/api/connect/callback`; events, interactivity and commands `https://app.curahold.com/api/hooks/slack` |
 | Microsoft Teams | Azure Bot (single-tenant registration in Curahold's tenant), published through the Teams Store; until then companies upload the package from Settings → Connections | Messaging endpoint `https://app.curahold.com/api/hooks/teams`; Microsoft sign-in redirect `/api/connect/callback` |
 | Google Chat | A Chat app (HTTP endpoint, "project number" audience) published on the Google Workspace Marketplace, with a service account | `https://app.curahold.com/api/hooks/gchat`; Google sign-in redirect `/api/connect/callback` |
 

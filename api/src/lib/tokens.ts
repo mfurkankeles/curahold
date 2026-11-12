@@ -4,9 +4,9 @@
 import type { Db } from '../db';
 import { randomToken, sha256Hex } from './crypto';
 
-export const KEY_PREFIX = 'twk_';
-export const ACCESS_PREFIX = 'twa_';
-export const REFRESH_PREFIX = 'twr_';
+export const KEY_PREFIX = 'chk_';
+export const ACCESS_PREFIX = 'cha_';
+export const REFRESH_PREFIX = 'chr_';
 export const ACCESS_TTL_S = 3600;
 export const REFRESH_TTL_DAYS = 90;
 

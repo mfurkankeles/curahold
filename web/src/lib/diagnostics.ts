@@ -5,8 +5,8 @@
 // before sending.
 import type { HelpContext } from '../../../shared/src/help';
 
-declare const __TW_VERSION__: string;
-const VERSION = typeof __TW_VERSION__ === 'string' ? __TW_VERSION__ : 'dev';
+declare const __APP_VERSION__: string;
+const VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 const KEEP = 10;
 
 const errors: { at: string; message: string }[] = [];
@@ -21,7 +21,7 @@ const push = <T,>(list: T[], v: T) => {
 function scrub(s: string): string {
   return s
     .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[email]')
-    .replace(/\b(tw[kar]_|Bearer\s+)[\w.-]+/g, '$1…')
+    .replace(/\b(ch[kar]_|Bearer\s+)[\w.-]+/g, '$1…')
     .replace(/\b[A-Za-z0-9_-]{32,}\b/g, '…')
     .slice(0, 300);
 }
@@ -47,7 +47,7 @@ export function installDiagnostics() {
     original(...args);
   };
   const page = () => notePage(location.pathname + location.search);
-  window.addEventListener('tw:navigate', page);
+  window.addEventListener('app:navigate', page);
   window.addEventListener('popstate', page);
   page();
 }

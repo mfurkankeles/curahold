@@ -38,7 +38,7 @@ export type FetchStub = (url: string, init?: RequestInit) => Promise<Response>;
 async function testDb(): Promise<Db> {
   const url = process.env.TEST_DATABASE_URL;
   if (!url) return pgliteDb(await createMemoryPg());
-  const name = `tw_test_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const name = `app_test_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const admin = postgres(url, { max: 1, onnotice: () => undefined });
   await admin.unsafe(`create database ${name}`);
   await admin.end({ timeout: 2 });
@@ -100,8 +100,8 @@ export class Client {
     const res = await this.env.app.request(`https://${this.slug}.${BASE}${path}`, { method, headers, body: payload });
     const setCookie = res.headers.get('set-cookie');
     if (setCookie) {
-      const m = /tw_session=([^;]*)/.exec(setCookie);
-      if (m) this.cookie = m[1] ? `tw_session=${m[1]}` : '';
+      const m = /app_session=([^;]*)/.exec(setCookie);
+      if (m) this.cookie = m[1] ? `app_session=${m[1]}` : '';
     }
     const text = await res.text();
     let json: any = null;

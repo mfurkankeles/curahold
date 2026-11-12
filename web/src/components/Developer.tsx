@@ -589,7 +589,7 @@ export function ConnectAiPage() {
 
 // Signing in on the way to the consent screen comes back to it, even from
 // the email link opened in another tab.
-const RETURN = 'tw-after-login';
+const RETURN = 'app-after-login';
 export function rememberReturn(to: string) {
   try {
     localStorage.setItem(RETURN, JSON.stringify({ to, exp: Date.now() + 20 * 60_000 }));

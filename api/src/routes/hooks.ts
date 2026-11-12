@@ -101,7 +101,7 @@ hookRoutes.post('/slack', async (c) => {
 
   if (payload.type === 'block_actions') {
     const a = (payload.actions ?? [])[0];
-    const kind = a?.action_id === 'tw_done' ? 'done' : a?.action_id === 'tw_snooze' ? 'snooze' : null;
+    const kind = a?.action_id === 'app_done' ? 'done' : a?.action_id === 'app_snooze' ? 'snooze' : null;
     if (!kind) return c.body(null, 200); // the "open" button is a plain link
     const r = await act(deps, conn, person.id, kind, String(a.value ?? ''));
     const note = outcomeText(locale, kind, r);
@@ -211,9 +211,9 @@ hookRoutes.post('/teams', async (c) => {
       return c.json({});
     }
     const v = activity.value;
-    if (v && (v.tw === 'done' || v.tw === 'snooze')) {
-      const r = await act(deps, conn, person.id, v.tw, String(v.taskId ?? ''));
-      const note = outcomeText(locale, v.tw, r);
+    if (v && (v.act === 'done' || v.act === 'snooze')) {
+      const r = await act(deps, conn, person.id, v.act, String(v.taskId ?? ''));
+      const note = outcomeText(locale, v.act, r);
       if (r.ok && activity.replyToId) {
         await botCall(deps, activity.serviceUrl, `/v3/conversations/${encodeURIComponent(activity.conversation.id)}/activities/${encodeURIComponent(activity.replyToId)}`, 'PUT', {
           type: 'message',
@@ -290,7 +290,7 @@ hookRoutes.post('/gchat', async (c) => {
     const fn = String(ev.common?.invokedFunction ?? ev.action?.actionMethodName ?? '');
     const params: any[] = ev.action?.parameters ?? [];
     const taskId = String(ev.common?.parameters?.taskId ?? params.find((p) => p.key === 'taskId')?.value ?? '');
-    const kind = fn === 'tw_done' ? 'done' : fn === 'tw_snooze' ? 'snooze' : null;
+    const kind = fn === 'app_done' ? 'done' : fn === 'app_snooze' ? 'snooze' : null;
     if (!kind) return c.json({});
     const r = await act(deps, conn, person.id, kind, taskId);
     const note = outcomeText(locale, kind, r);

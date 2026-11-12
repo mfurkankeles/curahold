@@ -16,7 +16,7 @@ await signIn(ada.page, s.origin, 'ada@demo.example');
 const call = async <T,>(method: string, path: string, body?: unknown): Promise<T> =>
   ada.page.evaluate(
     async (m, p, b) => {
-      const r = await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('tw_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
+      const r = await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
       return r.status === 204 ? null : r.json();
     },
     method,
@@ -27,7 +27,7 @@ await seedShowcase(call as any, s.db).catch((e) => console.warn('seed', e));
 
 async function theme(page: Page, mode: 'light' | 'dark') {
   await page.evaluate((m) => {
-    localStorage.setItem('tw_theme', m);
+    localStorage.setItem('app_theme', m);
     document.documentElement.dataset.theme = m;
   }, mode);
 }

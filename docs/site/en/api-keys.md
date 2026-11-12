@@ -13,7 +13,7 @@ An API key is a password that works as one person. Everyone makes their own; an 
 1. In Curahold, open **Your settings**.
 2. Under **API keys and connected apps**, choose **New API key**.
 3. Name it, tick **Can make changes** if it needs to, and choose how long it is valid (30, 90 or 365 days, or no end date).
-4. The key starts with `twk_` and is shown **only once**. Keep it in a password manager.
+4. The key starts with `chk_` and is shown **only once**. Keep it in a password manager.
 
 ## Using it
 
@@ -21,7 +21,7 @@ Send it in the `Authorization` header of every request:
 
 ```bash
 curl https://yourcompany.curahold.com/api/me \
-  -H "Authorization: Bearer twk_..."
+  -H "Authorization: Bearer chk_..."
 ```
 
 Requests with a key are handled as requests by the key's owner: the same customers are visible, the same fields are closed.

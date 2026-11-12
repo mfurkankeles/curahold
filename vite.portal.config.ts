@@ -8,7 +8,7 @@ import { defineConfig } from 'vite';
 //   npx vite build --config vite.portal.config.ts   →   dist/portal/
 export default defineConfig({
   root: 'web/portal',
-  define: { __TW_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
   plugins: [react()],
   build: { outDir: '../../dist/portal', emptyOutDir: true, sourcemap: false },
   server: {

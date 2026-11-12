@@ -30,7 +30,7 @@ describe('API keys', () => {
   it('a read-only key reads as its owner and cannot write', async () => {
     const made = await lena.post('/api/dev/keys', { name: 'Reports', canWrite: false });
     expect(made.status).toBe(201);
-    expect(made.json.token).toMatch(/^twk_/);
+    expect(made.json.token).toMatch(/^chk_/);
     const me = await bearer(made.json.token);
     expect(me.status).toBe(200);
     expect((await me.json()).user.email).toBe('lena@demo.example');
@@ -59,7 +59,7 @@ describe('API keys', () => {
   });
 
   it('an unknown token is turned away', async () => {
-    expect((await bearer('twk_not-a-real-token-at-all')).status).toBe(401);
+    expect((await bearer('chk_not-a-real-token-at-all')).status).toBe(401);
   });
 });
 
@@ -167,8 +167,8 @@ describe('apps and AI assistants (OAuth + MCP)', () => {
     const tok = await form('/oauth/token', { grant_type: 'authorization_code', code: code2, client_id: clientId, redirect_uri: redirect, code_verifier: verifier });
     expect(tok.status).toBe(200);
     const t = await tok.json();
-    expect(t.access_token).toMatch(/^twa_/);
-    expect(t.refresh_token).toMatch(/^twr_/);
+    expect(t.access_token).toMatch(/^cha_/);
+    expect(t.refresh_token).toMatch(/^chr_/);
     access = t.access_token;
     refresh = t.refresh_token;
     expect((await form('/oauth/token', { grant_type: 'authorization_code', code: code2, client_id: clientId, redirect_uri: redirect, code_verifier: verifier })).status).toBe(400);

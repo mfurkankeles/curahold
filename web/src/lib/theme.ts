@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 export type ThemePref = 'light' | 'dark' | 'system';
 export const THEMES: ThemePref[] = ['light', 'dark', 'system'];
-const KEY = 'tw_theme';
+const KEY = 'app_theme';
 const dark = () => typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
 
 export function storedTheme(): ThemePref {

@@ -13,7 +13,7 @@ API anahtarı, bir kişinin adına çalışan bir paroladır. Herkes kendi anaht
 1. Curahold'da **Ayarların** sayfasını aç.
 2. **API anahtarları ve bağlı uygulamalar** bölümünde **Yeni API anahtarı**na tıkla.
 3. Bir ad ver, gerekiyorsa **Değişiklik yapabilsin** kutusunu işaretle ve geçerlilik süresini seç (30, 90, 365 gün ya da süresiz).
-4. Anahtar `twk_` ile başlar ve **yalnızca bir kez** gösterilir. Bir parola yöneticisine kaydet.
+4. Anahtar `chk_` ile başlar ve **yalnızca bir kez** gösterilir. Bir parola yöneticisine kaydet.
 
 ## Kullanma
 
@@ -21,7 +21,7 @@ Her istekte `Authorization` başlığıyla gönder:
 
 ```bash
 curl https://sirketin.curahold.com/api/me \
-  -H "Authorization: Bearer twk_..."
+  -H "Authorization: Bearer chk_..."
 ```
 
 Anahtarla yapılan istekler, anahtarın sahibinin yaptığı istekler gibi işlenir: aynı müşterileri görür, aynı alanlar ona kapalıdır.

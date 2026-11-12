@@ -42,7 +42,7 @@ export function chatCard(msg: ChatMessage, withActions = true) {
   const buttons: any[] = [];
   if (withActions) {
     for (const a of msg.actions ?? []) {
-      buttons.push({ text: a.label, onClick: { action: { function: `tw_${a.kind}`, parameters: [{ key: 'taskId', value: a.taskId }] } } });
+      buttons.push({ text: a.label, onClick: { action: { function: `app_${a.kind}`, parameters: [{ key: 'taskId', value: a.taskId }] } } });
     }
   }
   if (msg.url) buttons.push({ text: msg.openLabel, onClick: { openLink: { url: msg.url } } });

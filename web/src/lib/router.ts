@@ -6,7 +6,7 @@ export function navigate(to: string, replace = false) {
   if (to === location.pathname + location.search) return;
   if (replace) history.replaceState(null, '', to);
   else history.pushState(null, '', to);
-  window.dispatchEvent(new Event('tw:navigate'));
+  window.dispatchEvent(new Event('app:navigate'));
 }
 
 export function useLocation() {
@@ -14,10 +14,10 @@ export function useLocation() {
   useEffect(() => {
     const on = () => setLoc({ path: location.pathname, search: location.search, hash: location.hash });
     window.addEventListener('popstate', on);
-    window.addEventListener('tw:navigate', on);
+    window.addEventListener('app:navigate', on);
     return () => {
       window.removeEventListener('popstate', on);
-      window.removeEventListener('tw:navigate', on);
+      window.removeEventListener('app:navigate', on);
     };
   }, []);
   return loc;

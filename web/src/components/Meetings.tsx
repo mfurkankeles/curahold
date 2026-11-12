@@ -27,13 +27,13 @@ import { Avatars, Confirm, Dialog, DueLabel, PeoplePicker, RowMenu } from './ui'
 export const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail', review: 'handshake' };
 
 /** Told when something is logged, so the customer page, its timeline and the reviews list follow. */
-export const TIMELINE_CHANGED = 'tw:timeline-changed';
+export const TIMELINE_CHANGED = 'app:timeline-changed';
 const changed = () => window.dispatchEvent(new Event(TIMELINE_CHANGED));
 
 /** The board the last task went to (New task remembers it on this device). */
 const lastBoard = () => {
   try {
-    return localStorage.getItem('tw_quick_board');
+    return localStorage.getItem('app_quick_board');
   } catch {
     return null;
   }
@@ -144,7 +144,7 @@ export function LogDialog({
       }
       if (nextSteps.length) {
         try {
-          localStorage.setItem('tw_quick_board', boardId);
+          localStorage.setItem('app_quick_board', boardId);
         } catch {
           /* per-device convenience */
         }

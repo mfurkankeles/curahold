@@ -165,7 +165,7 @@ const KIND_ICON: Record<string, IconName> = {
 /** Task traffic: shown quietly, and gathered when there is more than one on a day. */
 const QUIET = new Set(['task_created', 'task_done', 'comment', 'contact']);
 type Filter = 'important' | 'all';
-const FILTER_KEY = 'tw_tl_filter';
+const FILTER_KEY = 'app_tl_filter';
 
 function dayLabel(iso: string, locale: string, t: (k: MessageKey) => string) {
   const d = new Date(iso);
@@ -221,8 +221,8 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
     void load().catch(() => setData({ items: [], pinned: [], next: null }));
     // A meeting or note logged elsewhere (the Meetings section, + New) shows here too.
     const again = () => void load().catch(() => undefined);
-    window.addEventListener('tw:timeline-changed', again);
-    return () => window.removeEventListener('tw:timeline-changed', again);
+    window.addEventListener('app:timeline-changed', again);
+    return () => window.removeEventListener('app:timeline-changed', again);
   }, [load]);
 
   const choose = (f: Filter) => {

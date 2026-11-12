@@ -55,8 +55,8 @@ async function enter(grantId: string, staff = 'Deniz (Curahold support)') {
     headers: { 'content-type': 'application/json', 'x-curahold-device': browser.device },
     body: JSON.stringify({ token }),
   });
-  const cookie = /tw_support=([^;]*)/.exec(res.headers.get('set-cookie') ?? '')?.[1];
-  browser.cookie = cookie ? `tw_support=${cookie}` : '';
+  const cookie = /app_support=([^;]*)/.exec(res.headers.get('set-cookie') ?? '')?.[1];
+  browser.cookie = cookie ? `app_support=${cookie}` : '';
   return { status: res.status, json: await res.json(), browser, token, setCookie: res.headers.get('set-cookie') ?? '' };
 }
 

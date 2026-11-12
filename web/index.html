@@ -14,7 +14,7 @@
     <script>
       // Light or dark before the first paint, so the page never flashes the wrong one.
       try {
-        var t = localStorage.getItem('tw_theme');
+        var t = localStorage.getItem('app_theme');
         var d = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = d ? 'dark' : 'light';
       } catch (e) {}

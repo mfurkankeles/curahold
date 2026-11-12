@@ -105,16 +105,16 @@ export function AccountsPage() {
   const VIEWS = ['cards', 'table', 'renewals', 'reviews', 'products'] as const;
   // The menu's "Renewals" opens this page on that view (?view=renewals).
   const asked = new URLSearchParams(qs0).get('view') as (typeof VIEWS)[number] | null;
-  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => (asked && VIEWS.includes(asked) ? asked : remembered('tw_accounts_view', VIEWS, 'cards')));
+  const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => (asked && VIEWS.includes(asked) ? asked : remembered('app_accounts_view', VIEWS, 'cards')));
   useEffect(() => {
     if (asked && VIEWS.includes(asked)) setViewState(asked);
-    else if (!asked) setViewState(remembered('tw_accounts_view', VIEWS, 'cards'));
+    else if (!asked) setViewState(remembered('app_accounts_view', VIEWS, 'cards'));
   }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
   const setView = (v: (typeof VIEWS)[number]) => {
     setViewState(v);
     if (asked) navigate('/accounts', true);
     try {
-      localStorage.setItem('tw_accounts_view', v);
+      localStorage.setItem('app_accounts_view', v);
     } catch {
       /* per-viewer convenience */
     }
@@ -125,13 +125,13 @@ export function AccountsPage() {
     if (view === 'reviews' && !reviewsOn) setViewState('cards');
   }, [view, reviewsOn]);
   const CARD_SORTS = ['attention', 'name', 'health', 'value', 'renewal', 'open'] as const;
-  const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('tw_accounts_sort', CARD_SORTS, 'attention'));
+  const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('app_accounts_sort', CARD_SORTS, 'attention'));
   const [signal, setSignal] = useState<SignalFilter>('');
   const { renewal: renewalField, value: valueField } = keyFields(me.org.accountFields);
   const defaultShown = [valueField, renewalField].filter(Boolean).map((f) => f!.key);
   const [shownKeys, setShownKeys] = useState<string[]>(() => {
     try {
-      const v = JSON.parse(localStorage.getItem('tw_accounts_card_fields') ?? 'null');
+      const v = JSON.parse(localStorage.getItem('app_accounts_card_fields') ?? 'null');
       return Array.isArray(v) ? v : defaultShown;
     } catch {
       return defaultShown;
@@ -142,7 +142,7 @@ export function AccountsPage() {
     const next = shownKeys.includes(key) ? shownKeys.filter((k) => k !== key) : [...shownKeys, key].slice(-6);
     setShownKeys(next);
     try {
-      localStorage.setItem('tw_accounts_card_fields', JSON.stringify(next));
+      localStorage.setItem('app_accounts_card_fields', JSON.stringify(next));
     } catch {
       /* per-viewer convenience */
     }
@@ -348,7 +348,7 @@ export function AccountsPage() {
                   const v = e.target.value as (typeof CARD_SORTS)[number];
                   setCardSort(v);
                   try {
-                    localStorage.setItem('tw_accounts_sort', v);
+                    localStorage.setItem('app_accounts_sort', v);
                   } catch {
                     /* per-viewer convenience */
                   }
@@ -726,8 +726,8 @@ export function AccountPage({ id }: { id: string }) {
     void load();
     // A review logged from anywhere moves the next one.
     const again = () => void load();
-    window.addEventListener('tw:timeline-changed', again);
-    return () => window.removeEventListener('tw:timeline-changed', again);
+    window.addEventListener('app:timeline-changed', again);
+    return () => window.removeEventListener('app:timeline-changed', again);
   }, [load]);
   useEffect(() => {
     if (!boardId && boards[0]) setBoardId(boards[0].id);

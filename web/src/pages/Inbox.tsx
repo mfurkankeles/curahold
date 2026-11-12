@@ -29,7 +29,7 @@ export function InboxPage() {
       if (before) p.set('before', before);
       const r = await get<{ notifications: Notification[]; unread: number; more: boolean }>(`/notifications?${p}`);
       setData((d) => (before && d ? { ...r, notifications: [...d.notifications, ...r.notifications] } : r));
-      window.dispatchEvent(new Event('tw:inbox-changed'));
+      window.dispatchEvent(new Event('app:inbox-changed'));
     },
     [filter, unreadOnly],
   );
@@ -45,7 +45,7 @@ export function InboxPage() {
   const mark = async (n: Notification, unread: boolean) => {
     setData((d) => (d ? { ...d, unread: Math.max(0, d.unread + (unread ? 1 : -1)), notifications: d.notifications.map((x) => (x.id === n.id ? { ...x, readAt: unread ? null : new Date().toISOString() } : x)) } : d));
     await post('/notifications/read', { ids: [n.id], unread }).catch(() => undefined);
-    window.dispatchEvent(new Event('tw:inbox-changed'));
+    window.dispatchEvent(new Event('app:inbox-changed'));
   };
   const open = async (n: Notification) => {
     if (!n.readAt) void mark(n, false);

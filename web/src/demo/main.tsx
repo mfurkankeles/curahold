@@ -120,10 +120,10 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const on = () => setTick((n) => n + 1);
-    window.addEventListener('tw:navigate', on);
+    window.addEventListener('app:navigate', on);
     window.addEventListener('storage', on);
     return () => {
-      window.removeEventListener('tw:navigate', on);
+      window.removeEventListener('app:navigate', on);
       window.removeEventListener('storage', on);
     };
   }, []);
@@ -220,7 +220,7 @@ async function main() {
     tries.push(now);
     inFlight = (async () => {
       sessions[current] = await signIn(server, `${current}@demo.example`);
-      server.jar.set('tw_session', sessions[current]!);
+      server.jar.set('app_session', sessions[current]!);
       reload('/home');
       return true;
     })()
@@ -234,7 +234,7 @@ async function main() {
       });
     return inFlight;
   }
-  window.addEventListener('tw:navigate', () => {
+  window.addEventListener('app:navigate', () => {
     if (signedOutPage(currentPath())) void signBackIn();
   });
   onFullNavigation(async (to) => {
@@ -272,9 +272,9 @@ async function main() {
     }
     // A fresh sign-in each time: a session ended by "Sign out" is never reused.
     sessions[k] = await signIn(server, `${k}@demo.example`);
-    server.jar.set('tw_session', sessions[k]!);
+    server.jar.set('app_session', sessions[k]!);
     try {
-      sessionStorage.removeItem('tw-preview-as');
+      sessionStorage.removeItem('app-preview-as');
     } catch {
       /* no storage */
     }

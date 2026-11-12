@@ -13,7 +13,7 @@ export interface Pulse {
 }
 export type LiveKind = 'tasks' | 'records' | 'unread';
 
-export const LIVE = 'tw:live';
+export const LIVE = 'app:live';
 const ACTIVE_MS = 30_000;
 const IDLE_MS = 90_000;
 const IDLE_AFTER = 180_000;
@@ -24,10 +24,10 @@ let lastAsk = 0;
 let lastInput = Date.now();
 let running = false;
 
-/** A test (or support) can make it quicker: localStorage tw_live_ms. */
+/** A test (or support) can make it quicker: localStorage app_live_ms. */
 function everyMs() {
   try {
-    const v = Number(localStorage.getItem('tw_live_ms'));
+    const v = Number(localStorage.getItem('app_live_ms'));
     if (v >= 500) return v;
   } catch {
     /* default */

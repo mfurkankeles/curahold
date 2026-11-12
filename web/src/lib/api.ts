@@ -21,7 +21,7 @@ let currentLocale = '';
 
 // "See it as them": while an administrator previews someone, every request
 // carries that person's id and the server answers as them, read only.
-const PREVIEW = 'tw-preview-as';
+const PREVIEW = 'app-preview-as';
 export function previewAs(): string | null {
   try {
     return sessionStorage.getItem(PREVIEW);

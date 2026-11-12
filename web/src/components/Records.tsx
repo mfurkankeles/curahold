@@ -243,7 +243,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   const choices = type ? groupChoices(type) : [];
   const stored = (k: string) => {
     try {
-      return localStorage.getItem(`tw_records_${k}_${typeKey}`);
+      return localStorage.getItem(`app_records_${k}_${typeKey}`);
     } catch {
       return null;
     }
@@ -254,7 +254,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   const [groupPick, setGroupPick] = useState<string | null>(() => stored('group'));
   const keep = (k: string, v: string) => {
     try {
-      localStorage.setItem(`tw_records_${k}_${typeKey}`, v);
+      localStorage.setItem(`app_records_${k}_${typeKey}`, v);
     } catch {
       /* per-device convenience */
     }
@@ -498,7 +498,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
   const [editing, setEditing] = useState<{ type: RecordType; record: AppRecord | null; parentId?: string | null } | null>(null);
   const [view, setView] = useState<'chart' | 'list'>(() => {
     try {
-      return localStorage.getItem('tw-contacts-view') === 'list' ? 'list' : 'chart';
+      return localStorage.getItem('app-contacts-view') === 'list' ? 'list' : 'chart';
     } catch {
       return 'chart';
     }
@@ -506,7 +506,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
   const pickView = (v: 'chart' | 'list') => {
     setView(v);
     try {
-      localStorage.setItem('tw-contacts-view', v);
+      localStorage.setItem('app-contacts-view', v);
     } catch {
       // only a convenience
     }

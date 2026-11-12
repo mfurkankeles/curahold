@@ -1,6 +1,6 @@
 // Search, copy buttons and the phone menu for the docs. No libraries.
 (function () {
-  var cfg = window.TW_DOCS || { lang: 'en', none: 'No results.', copied: 'Copied', copy: 'Copy' };
+  var cfg = window.APP_DOCS || { lang: 'en', none: 'No results.', copied: 'Copied', copy: 'Copy' };
   var q = document.getElementById('q');
   var box = document.getElementById('results');
   var index = null;

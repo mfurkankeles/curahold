@@ -50,7 +50,7 @@ export function adaptiveCard(msg: ChatMessage, withActions = true) {
         ...(msg.note ? [{ type: 'TextBlock', text: msg.note, isSubtle: true, wrap: true }] : []),
       ],
       actions: [
-        ...(withActions ? (msg.actions ?? []).map((a) => ({ type: 'Action.Submit', title: a.label, data: { tw: a.kind, taskId: a.taskId } })) : []),
+        ...(withActions ? (msg.actions ?? []).map((a) => ({ type: 'Action.Submit', title: a.label, data: { act: a.kind, taskId: a.taskId } })) : []),
         ...(msg.url ? [{ type: 'Action.OpenUrl', title: msg.openLabel, url: msg.url }] : []),
       ],
     },

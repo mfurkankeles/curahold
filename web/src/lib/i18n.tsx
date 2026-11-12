@@ -32,7 +32,7 @@ export function useI18n(): I18n {
   return v;
 }
 
-const STORE = 'tw_locale';
+const STORE = 'app_locale';
 export function storedLocale(): Locale | null {
   try {
     const v = localStorage.getItem(STORE);

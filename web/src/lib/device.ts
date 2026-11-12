@@ -1,6 +1,6 @@
 // A random id per browser, kept in localStorage. Sessions are bound to it,
 // so a copied cookie does not work on another machine.
-const KEY = 'tw_device';
+const KEY = 'app_device';
 const NO_STORAGE = 'no-storage-device-0000';
 // Set once storage turns out to be unusable, so every call in this page gives the same answer.
 let pinned: string | null = null;

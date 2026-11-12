@@ -118,7 +118,7 @@ function AccountsStep({ onNext }: { onNext: () => void }) {
           onClick={(e) => {
             e.preventDefault();
             try {
-              sessionStorage.setItem('tw-from-setup', '1');
+              sessionStorage.setItem('app-from-setup', '1');
             } catch {
               // a convenience only
             }

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { Dialog } from './ui';
 
-export const IN_DEMO = !!import.meta.env.TW_DEMO;
+export const IN_DEMO = !!import.meta.env.APP_DEMO;
 
 export function DemoConnect({ app }: { app: string }) {
   const { t } = useI18n();

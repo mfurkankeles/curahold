@@ -384,7 +384,7 @@ export function WhitespaceView({ types }: { types: RecordType[] | null }) {
   }, [types]);
   const stored = (() => {
     try {
-      return localStorage.getItem('tw_whitespace') ?? '';
+      return localStorage.getItem('app_whitespace') ?? '';
     } catch {
       return '';
     }
@@ -397,7 +397,7 @@ export function WhitespaceView({ types }: { types: RecordType[] | null }) {
     if (!pick) return;
     const [type, field] = pick.split(':');
     try {
-      localStorage.setItem('tw_whitespace', pick);
+      localStorage.setItem('app_whitespace', pick);
     } catch {
       /* per-viewer convenience */
     }

@@ -17,7 +17,7 @@ export const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (nav
 
 /** Called once at start. The try-it demo runs inside another page and keeps nothing. */
 export function startPwa() {
-  if (import.meta.env.TW_DEMO || !('serviceWorker' in navigator)) return;
+  if (import.meta.env.APP_DEMO || !('serviceWorker' in navigator)) return;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferred = e as InstallEvent;
@@ -56,7 +56,7 @@ export function useInstall() {
     /** The browser offers a one-click install. */
     canPrompt: !!deferred && !standalone,
     /** No prompt on this device, but it can be added by hand. */
-    byHand: !deferred && !standalone && isIos() && !import.meta.env.TW_DEMO,
+    byHand: !deferred && !standalone && isIos() && !import.meta.env.APP_DEMO,
     install: async () => {
       if (!deferred) return false;
       await deferred.prompt();

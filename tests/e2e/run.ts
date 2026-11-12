@@ -313,7 +313,7 @@ await step('wizard: people from the file, rules, invitations', async () => {
 
 await step('accounts list with fields, detail page, and the rule editor preview', async () => {
   const p = founder.page;
-  await p.evaluate(() => localStorage.setItem('tw_accounts_view', 'table'));
+  await p.evaluate(() => localStorage.setItem('app_accounts_view', 'table'));
   await p.goto(`http://yeni-sirket.localhost:${port}/accounts`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('.accounts-table');
   await shot(p, 'p2-10-accounts');
@@ -584,7 +584,7 @@ await step('field access: hide a field from members, then look as one of them', 
   await ada.page.waitForSelector('.pane');
   expect((await text(ada.page, '.topbar__title')).includes('Benim günüm'), 'member home not shown in preview');
   await shot(ada.page, 'p4-04-preview-home');
-  await ada.page.evaluate(() => localStorage.setItem('tw_accounts_view', 'table'));
+  await ada.page.evaluate(() => localStorage.setItem('app_accounts_view', 'table'));
   await ada.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.accounts-table');
   const heads = await ada.page.$$eval('.accounts-table th', (ths) => ths.map((t) => t.textContent ?? ''));
@@ -1021,7 +1021,7 @@ await step('live: a card someone else adds shows up without reloading; the bell 
   const lena = await newPage(s.browser);
   await signIn(lena.page, s.origin, 'lena@demo.example');
   // Ask every second instead of every half minute.
-  await lena.page.evaluate(() => localStorage.setItem('tw_live_ms', '1000'));
+  await lena.page.evaluate(() => localStorage.setItem('app_live_ms', '1000'));
   await lena.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
   await lena.page.waitForSelector('.card');
   const [u] = await sql(`select id, org_id from users where email = 'lena@demo.example' order by created_at limit 1`);
@@ -1030,7 +1030,7 @@ await step('live: a card someone else adds shows up without reloading; the bell 
     async (board, lenaId) => {
       const r = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('tw_device') ?? '' },
+        headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' },
         body: JSON.stringify({ boardId: board, title: 'Canlı gelen görev', assigneeIds: [lenaId] }),
       });
       return r.status;

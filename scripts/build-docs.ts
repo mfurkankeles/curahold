@@ -151,7 +151,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script>window.TW_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy })}</script>
+<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy })}</script>
 <script src="/docs/assets/docs.js" defer></script>
 </body>
 </html>
@@ -222,7 +222,7 @@ function build() {
     '',
     '> Work management for customer success and account teams: customers and their stakeholders, tasks and boards, renewals, and the chat apps and CRMs a team already uses. Every company has its own address, <company>.curahold.com.',
     '',
-    'An MCP server for AI assistants runs at https://<company>.curahold.com/mcp (OAuth 2.1 with dynamic client registration). The REST API is at https://<company>.curahold.com/api with personal API keys (Bearer twk_…).',
+    'An MCP server for AI assistants runs at https://<company>.curahold.com/mcp (OAuth 2.1 with dynamic client registration). The REST API is at https://<company>.curahold.com/api with personal API keys (Bearer chk_…).',
     '',
     ...SECTIONS.flatMap((s) => {
       const items = en.filter((p) => p.section === s);

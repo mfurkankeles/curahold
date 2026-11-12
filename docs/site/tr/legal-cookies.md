@@ -12,7 +12,7 @@ Curahold yalnızca kesinlikle gerekli çerezleri kullanır, bu yüzden izin iste
 
 | Ad | Ne işe yarar | Ne kadar süre |
 | --- | --- | --- |
-| `tw_session` | Bu cihazda oturumunuzu açık tutar | Çıkış yapana kadar ya da [30] gün |
+| `app_session` | Bu cihazda oturumunuzu açık tutar | Çıkış yapana kadar ya da [30] gün |
 | Dil | Seçtiğiniz dili hatırlar | [1 yıl] |
 
 Tarayıcı depolaması (çerez değildir) cihazınızda küçük kolaylıkları tutar: son kullanılan pano, seçilen bir süzgeç, kapatılan bir ipucu. Tarayıcınızın verilerini temizlediğinizde silinirler.

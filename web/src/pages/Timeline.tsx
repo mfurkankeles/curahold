@@ -28,7 +28,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   const [start, setStart] = useState(() => mondayOf(addDays(today, -7)));
   const [group, setGroup] = useState<Group>(() => {
     try {
-      const v = localStorage.getItem('tw_timeline_group') as Group | null;
+      const v = localStorage.getItem('app_timeline_group') as Group | null;
       return v && GROUPS.includes(v) ? v : 'board';
     } catch {
       return 'board';
@@ -71,7 +71,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   const pick = (g: Group) => {
     setGroup(g);
     try {
-      localStorage.setItem('tw_timeline_group', g);
+      localStorage.setItem('app_timeline_group', g);
     } catch {
       /* per-device convenience */
     }

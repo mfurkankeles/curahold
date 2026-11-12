@@ -35,8 +35,8 @@ function useUnread() {
   useEffect(() => {
     const load = () => void get<{ unread: number }>('/notifications/count').then((r) => setN(r.unread), () => undefined);
     load();
-    window.addEventListener('tw:inbox-changed', load);
-    return () => window.removeEventListener('tw:inbox-changed', load);
+    window.addEventListener('app:inbox-changed', load);
+    return () => window.removeEventListener('app:inbox-changed', load);
   }, []);
   // Someone else's doing: the number arrives with the pulse.
   useLive('unread', (p) => setN(p.unread));
@@ -89,7 +89,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   // Sections of the menu fold away; which ones is remembered on this device.
   const [folded, setFolded] = useState<string[]>(() => {
     try {
-      const v = JSON.parse(localStorage.getItem('tw_nav_folded') ?? '[]');
+      const v = JSON.parse(localStorage.getItem('app_nav_folded') ?? '[]');
       return Array.isArray(v) ? v : [];
     } catch {
       return [];
@@ -99,7 +99,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
     const next = folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key];
     setFolded(next);
     try {
-      localStorage.setItem('tw_nav_folded', JSON.stringify(next));
+      localStorage.setItem('app_nav_folded', JSON.stringify(next));
     } catch {
       /* per-device convenience */
     }
@@ -287,7 +287,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         ...(app.canPrompt ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => void app.install() }] : []),
         ...(app.byHand ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => setInstallHelp(true) }] : []),
         // The try-it demo has "Start over" in its own bar instead.
-        ...(!me.previewBy && !import.meta.env.TW_DEMO ? ['sep' as const, { key: 'out', label: t('auth.signOut'), icon: 'logout' as const, onSelect: signOut }] : []),
+        ...(!me.previewBy && !import.meta.env.APP_DEMO ? ['sep' as const, { key: 'out', label: t('auth.signOut'), icon: 'logout' as const, onSelect: signOut }] : []),
       ]}
     />
   );

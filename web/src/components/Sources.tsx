@@ -376,7 +376,7 @@ export function SourceDetail({ id }: { id: string }) {
   const started = !!d.sync.startedAt;
   let fromSetup = new URLSearchParams(location.search).get('from') === 'setup';
   try {
-    fromSetup ||= sessionStorage.getItem('tw-from-setup') === '1';
+    fromSetup ||= sessionStorage.getItem('app-from-setup') === '1';
   } catch {
     // ignore
   }
@@ -439,7 +439,7 @@ export function SourceDetail({ id }: { id: string }) {
                 onClick={(e) => {
                   e.preventDefault();
                   try {
-                    sessionStorage.removeItem('tw-from-setup');
+                    sessionStorage.removeItem('app-from-setup');
                   } catch {
                     // ignore
                   }

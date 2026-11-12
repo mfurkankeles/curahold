@@ -35,7 +35,7 @@ We do not sell personal data and do not use it for advertising.
 
 ## Cookies and browser storage
 
-Curahold sets only the cookies it needs to work: a session cookie (`tw_session`) that keeps you signed in, and the language you chose. Browser storage keeps small conveniences on your device, such as the last board used or a filter. There are no advertising or tracking cookies.
+Curahold sets only the cookies it needs to work: a session cookie (`app_session`) that keeps you signed in, and the language you chose. Browser storage keeps small conveniences on your device, such as the last board used or a filter. There are no advertising or tracking cookies.
 
 ## Who receives it
 

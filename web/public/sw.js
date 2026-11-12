@@ -7,7 +7,7 @@
 // read-only questions (my tasks, a board, a customer…). Signing out, or the
 // server saying the session is over, throws the data away.
 
-const VERSION = 'tw-1';
+const VERSION = 'app-1';
 const SHELL = `${VERSION}-shell`;
 const DATA = `${VERSION}-data`;
 const MAX_DATA = 160;

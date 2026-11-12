@@ -24,8 +24,8 @@ class PortalClient {
     if (this.cookie) h.cookie = this.cookie;
     if (body !== undefined) h['content-type'] = 'application/json';
     const res = await portal.request(`https://${this.slug}.${PORTAL}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
-    const m = /tw_portal=([^;]*)/.exec(res.headers.get('set-cookie') ?? '');
-    if (m) this.cookie = m[1] ? `tw_portal=${m[1]}` : '';
+    const m = /app_portal=([^;]*)/.exec(res.headers.get('set-cookie') ?? '');
+    if (m) this.cookie = m[1] ? `app_portal=${m[1]}` : '';
     const text = await res.text();
     let json: any = null;
     try {
@@ -219,7 +219,7 @@ describe('walls', () => {
   it('a portal cookie means nothing to the app, and an app cookie nothing to the portal', async () => {
     const app = await env.app.request(`https://acme.${BASE}/api/me`, { headers: { cookie: selin.cookie } });
     expect(app.status).toBe(401);
-    const p = await portal.request(`https://acme.${PORTAL}/papi/me`, { headers: { cookie: ada.cookie.replace('tw_session', 'tw_portal') } });
+    const p = await portal.request(`https://acme.${PORTAL}/papi/me`, { headers: { cookie: ada.cookie.replace('app_session', 'app_portal') } });
     expect(p.status).toBe(401);
     // The app is not served on the portal's domain, nor the portal on the app's.
     expect((await env.app.request(`https://acme.${PORTAL}/api/me`, { headers: { cookie: ada.cookie } })).status).toBe(404);

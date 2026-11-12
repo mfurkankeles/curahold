@@ -15,9 +15,9 @@ export type PortalEnv = {
   };
 };
 
-export const PORTAL_COOKIE = 'tw_portal';
+export const PORTAL_COOKIE = 'app_portal';
 /** Set by the portal when a Google/Microsoft sign-in starts; only that browser can finish it. */
-export const FLOW_COOKIE = 'tw_portal_flow';
+export const FLOW_COOKIE = 'app_portal_flow';
 /** Invitation: a week. Sign-in email (link and code) and password reset: half an hour. */
 export const LINK_MINUTES = { invite: 7 * 24 * 60, link: 30, reset: 30, oauth: 2, oauth_confirm: 15 } as const;
 

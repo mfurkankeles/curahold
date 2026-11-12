@@ -21,7 +21,7 @@ export function Bell() {
       get<{ notifications: Notification[]; unread: number }>('/notifications?limit=20')
         .then((r) => {
           setData(r);
-          window.dispatchEvent(new Event('tw:inbox-changed'));
+          window.dispatchEvent(new Event('app:inbox-changed'));
         })
         .catch(() => undefined),
     [],

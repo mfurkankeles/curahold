@@ -5,7 +5,7 @@
 //   PERF_DATABASE_URL=postgres://postgres@127.0.0.1:5432/postgres npx tsx scripts/perf.ts
 //
 // The URL must be a throwaway server whose user may create databases; the
-// script makes its own database (tw_perf_…) and leaves it there to look at.
+// script makes its own database (app_perf_…) and leaves it there to look at.
 // PERF_SCALE=0.2 makes a smaller company; PERF_KEEP=<database> times an
 // existing one again without building it.
 //
@@ -31,7 +31,7 @@ if (!base) {
 const SCALE = Math.max(0.01, Number(process.env.PERF_SCALE) || 1);
 const N = (n: number) => Math.max(1, Math.round(n * SCALE));
 const keep = process.env.PERF_KEEP;
-const name = keep ?? `tw_perf_${Date.now().toString(36)}`;
+const name = keep ?? `app_perf_${Date.now().toString(36)}`;
 const url = new URL(base);
 if (!keep) {
   const admin = postgres(base, { max: 1, onnotice: () => undefined });

@@ -201,7 +201,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     return request(url.pathname + url.search, init);
   };
   const portalSignIn = async (address: string) => {
-    if (portalJar.get('tw_portal')) return;
+    if (portalJar.get('app_portal')) return;
     await portalCall('POST', '/papi/auth/start', { email: address });
     // The link is emailed after the answer; wait for it (in memory, a moment).
     let mail: { text: string } | undefined;
@@ -217,10 +217,10 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
 
 /** Signs `email` in through the real email-link flow and returns the session cookie. */
 export async function signIn(server: DemoServer, email: string): Promise<string> {
-  server.jar.set('tw_session', null);
+  server.jar.set('app_session', null);
   const start = await server.call<{ devToken: string }>('POST', '/api/auth/start', { email });
   await server.call('POST', '/api/auth/verify', { token: start.devToken, deviceId: DEVICE, deviceLabel: 'Demo' });
-  const token = server.jar.get('tw_session');
+  const token = server.jar.get('app_session');
   if (!token) throw new Error('no session');
   return token;
 }
