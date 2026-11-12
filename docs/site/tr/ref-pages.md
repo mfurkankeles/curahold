@@ -22,7 +22,7 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `POST /pages/from-template` | Hazır bir gösterge panosunu kendi sayfan olarak ekler. |
 | `PATCH /pages/:id` | Sayfayı değiştirir. |
 | `PUT /pages/order` | Sayfaların sırasını belirler. |
-| `DELETE /pages/:id` | Sayfayı siler. |
+| `DELETE /pages/:id` | Sayfayı çöp kutusuna taşır; orada 30 gün kalır. |
 | `GET /reports/work` | İşe genel bakış: açık, gecikmiş, bu hafta biten ve atanmamış; panoya ve kişiye göre. |
 | `GET /reports/person/:id` | Tek kişiye genel bakış: ne bitirdi, ne gecikti, ne geliyor, kimlere bakıyor. |
 | `GET /reports/catalog` | Bir raporun nelerden kurulabileceği: kaynaklar, alanları ve hazır raporlar. |
@@ -31,7 +31,7 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `GET /reports/saved/:id` | Tanımıyla birlikte tek bir kayıtlı rapor. |
 | `POST /reports/saved` | Rapor kaydeder. |
 | `PATCH /reports/saved/:id` | Kayıtlı raporu değiştirir. |
-| `DELETE /reports/saved/:id` | Kayıtlı raporu siler. |
+| `DELETE /reports/saved/:id` | Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. |
 
 ## Ayrıntılar
 
@@ -114,7 +114,7 @@ Sayfaların sırasını belirler.
 
 ### `DELETE /pages/:id`
 
-Sayfayı siler.
+Sayfayı çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yetki `org.manage`
 
@@ -177,6 +177,6 @@ Kayıtlı raporu değiştirir.
 
 ### `DELETE /reports/saved/:id`
 
-Kayıtlı raporu siler.
+Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yazabilen bir koltuk

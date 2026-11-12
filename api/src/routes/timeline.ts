@@ -11,6 +11,7 @@ import { ACTIVITY_KINDS, isMeetingKind, type Activity, type Timeline, type Timel
 import { nowOf, requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
+import { toTrash } from '../lib/trash';
 import { fail } from '../lib/errors';
 import { canSeeField } from '../lib/fieldAccess';
 import { recomputeHealth, scoreAccounts } from '../lib/health';
@@ -219,14 +220,21 @@ timelineRoutes.delete('/activities/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
-    const [cur] = await q.query('select id, account_id, kind from activities where id = $1', [id]);
+  const trashId = await run(c, async (q) => {
+    const [cur] = await q.query(
+      'select v.id, v.account_id, v.kind, v.title, v.body, (select a.name from accounts a where a.id = v.account_id) as account from activities v where v.id = $1',
+      [id],
+    );
     if (!cur) fail('not_found');
+    // It stays in the trash for 30 days. Shown there by its title, or by how its text begins.
+    const label = (cur.title || cur.body || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    const trashId = await toTrash(q, 'activity', [id], label, { entry: cur.kind, accountId: cur.account_id, account: cur.account ?? undefined });
     const gone = await q.query('delete from activities where id = $1 returning id', [id]);
     if (!gone.length) fail('forbidden');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'activity.deleted', entity: 'account', entityId: cur.account_id, meta: { kind: cur.kind } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'activity.deleted', entity: 'account', entityId: cur.account_id, meta: { kind: cur.kind, trashId } });
+    return trashId;
   });
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });
 
 // ------------------------------------------------------------------- health

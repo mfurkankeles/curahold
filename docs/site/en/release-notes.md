@@ -10,6 +10,7 @@ summary: What is new and what changed.
 
 ### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
 
+- **The trash:** what you delete (a customer, a record, a task, a timeline entry, a page, a saved report, an automation) stays for 30 days and can be put back as it was, with everything that went with it. Right after a delete the notice offers Undo; later it is under your menu → Trash. See *The trash*.
 - **Plans and billing:** a 14-day free trial, then Team or Business, paid through Paddle. Seats follow the people who joined. Without a plan everything can still be read and exported, only not changed. A self-hosted install has no billing.
 - **Your own server:** Curahold can run inside a company's own walls — one company, its own Postgres, attachments on its own disk, mail through its own mail server — with Docker in a few minutes. See *Running Curahold on your own server*.
 - **A tidier Reports page:** bars in a list start and end at the same place and their numbers line up; cards sit two by two at the same height, with no holes beside them.

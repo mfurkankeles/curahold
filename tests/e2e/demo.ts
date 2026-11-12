@@ -192,6 +192,37 @@ if (ok && !process.env.QUICK) {
   await page.screenshot({ path: join(SCREENS, 'demo-ask.png') });
   await page.keyboard.press('Escape');
   await frame!.waitForFunction(() => !document.querySelector('.dialog'), { timeout: 5000 });
+  // The trash works inside the demo as well: a task is deleted from its panel, taken back from the
+  // notice, deleted again and put back from the Trash page — the same database functions, in the browser.
+  {
+    await click('.navlink--board', 'Yenilemeler');
+    await frame!.waitForSelector('.card', { timeout: 10000 });
+    const cardsBefore = await frame!.$$eval('.card', (els) => els.length);
+    const open = async () => {
+      await (await frame!.$('.card'))!.click();
+      await frame!.waitForSelector('button[aria-label="Görevi sil"]', { timeout: 10000 });
+      await frame!.click('button[aria-label="Görevi sil"]');
+      await click('.dialog .btn--danger', 'Sil');
+      await frame!.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Çöp kutusuna taşındı')), { timeout: 10000 });
+    };
+    try {
+      await open();
+      await frame!.click('.toast__action');
+      await frame!.waitForFunction((n) => document.querySelectorAll('.card').length === n, { timeout: 10000 }, cardsBefore);
+      await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
+      await open();
+      await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
+      await frame!.click('.sidebar__me');
+      await click('.popmenu__item', 'Çöp kutusu');
+      await frame!.waitForSelector('.trashrow', { timeout: 10000 });
+      await page.screenshot({ path: join(SCREENS, 'demo-trash.png') });
+      await frame!.click('.trashrow__actions .btn');
+      await frame!.waitForFunction(() => !document.querySelector('.trashrow') && [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('geri geldi')), { timeout: 10000 });
+      await frame!.evaluate(() => document.querySelectorAll<HTMLElement>('.toast__close').forEach((b) => b.click()));
+    } catch (e) {
+      errors.push(`the trash inside the demo: ${e instanceof Error ? e.message : e}`);
+    }
+  }
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));

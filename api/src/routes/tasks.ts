@@ -7,6 +7,7 @@ import { portalOn, tellCustomer } from '../lib/portal';
 import { runTaskMoved } from '../lib/automations';
 import { spawnNext } from '../lib/recurring';
 import { saveUndo, UNDO_MINUTES } from '../lib/undo';
+import { toTrash } from '../lib/trash';
 import { kick } from '../lib/notify';
 import { isDone, onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
 import { kickSync, queueSync, taskKeys } from '../lib/records';
@@ -714,20 +715,22 @@ taskRoutes.delete('/tasks/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');
-  const keys = await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
     const t = await loadTask(q, id);
     if (t.created_by !== auth.userId && !auth.perms.includes('tasks.delete_any')) fail('forbidden');
-    const files = await q.query<{ storage_key: string }>(
-      'select storage_key from files where task_id = $1 or task_id in (select id from tasks where parent_id = $1)',
-      [id],
+    const [w] = await q.query<{ board: string; account: string | null }>(
+      'select b.name as board, (select a.name from accounts a where a.id = $2) as account from boards b where b.id = $1',
+      [t.board_id, t.account_id],
     );
-    await q.query('delete from tasks where id = $1', [id]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.deleted', entity: 'task', entityId: id, meta: { title: t.title } });
-    return files.map((f) => f.storage_key);
+    // It stays in the trash for 30 days with its subtasks, comments, time and files; the files leave
+    // storage only when the trash lets go of them.
+    const trashId = await toTrash(q, 'task', [id], t.title, { boardId: t.board_id, board: w?.board, ...(t.account_id && w?.account ? { accountId: t.account_id, account: w.account } : {}) });
+    const gone = await q.query('delete from tasks where id = $1 returning id', [id]);
+    if (!gone.length) fail('forbidden');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.deleted', entity: 'task', entityId: id, meta: { title: t.title, trashId } });
+    return trashId;
   });
-  const storage = c.get('deps').storage;
-  for (const k of keys) await storage.delete(k);
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });
 
 // ----------------------------------------------------------------- comments

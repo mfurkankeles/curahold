@@ -118,6 +118,16 @@ Metin araması harfleri insanların beklediği gibi eşler: `istanbul`, `İstanb
 
 Bitiş tarihi gibi tarihler düz günlerdir (`YYYY-AA-GG`). Bir görevin gecikip gecikmediğine **şirketin** saat dilimi karar verir (`GET /me` cevabındaki `org.timezone`); sunucununki ya da isteği yapanınki değil.
 
+## Silme ve çöp kutusu
+
+Bir müşteride, kayıtta, görevde, zaman çizelgesi girişinde, sayfada, kayıtlı raporda ya da kuralda `DELETE` onu hemen yok etmez: 30 günlüğüne çöp kutusuna taşır ve cevapta bir `trashId` gelir.
+
+```json
+{ "ok": true, "trashId": "0d6f6f0e-8a43-4e0e-9d0b-5c1b2f7a9e11" }
+```
+
+`POST /trash/<trashId>/restore` onu aynı kimlikle, onunla birlikte giden her şeyle geri getirir. Listeler, aramalar ve raporlar çöp kutusundakileri hiç içermez; ayıklanacak bir şey yoktur. Adresler [çöp kutusu başvurusunda](/docs/tr/ref-trash/); insanların gördüğü taraf [çöp kutusu](/docs/tr/trash/) sayfasında.
+
 ## Hatalar
 
 Hata her zaman `{ "error": "<kod>", "message": "<bir cümle>" }` biçimindedir. Kararı koda göre ver, cümleyi göster. Tam liste [hatalar](/docs/tr/ref-errors/) sayfasında.
@@ -125,4 +135,4 @@ Hata her zaman `{ "error": "<kod>", "message": "<bir cümle>" }` biçimindedir. 
 ## Bütün adresler
 
 Bu sayfa fikirleri anlatır. Başvuru, ürünün kendi kodundan üretilir ve her adresi alanlarıyla listeler:
-[müşteriler](/docs/tr/ref-customers/) · [kayıtlar](/docs/tr/ref-records/) · [görevler ve panolar](/docs/tr/ref-tasks/) · [kişiler, arama ve bildirimler](/docs/tr/ref-people/) · [sayfalar ve raporlar](/docs/tr/ref-pages/) · [otomasyonlar ve planlar](/docs/tr/ref-automation/) · [anahtarlar ve webhook'lar](/docs/tr/ref-developer-settings/) · [nesneler](/docs/tr/ref-objects/) · [hatalar](/docs/tr/ref-errors/) · [API'de olmayanlar](/docs/tr/ref-internal/)
+[müşteriler](/docs/tr/ref-customers/) · [kayıtlar](/docs/tr/ref-records/) · [görevler ve panolar](/docs/tr/ref-tasks/) · [kişiler, arama ve bildirimler](/docs/tr/ref-people/) · [sayfalar ve raporlar](/docs/tr/ref-pages/) · [otomasyonlar ve planlar](/docs/tr/ref-automation/) · [anahtarlar ve webhook'lar](/docs/tr/ref-developer-settings/) · [çöp kutusu](/docs/tr/ref-trash/) · [nesneler](/docs/tr/ref-objects/) · [hatalar](/docs/tr/ref-errors/) · [API'de olmayanlar](/docs/tr/ref-internal/)

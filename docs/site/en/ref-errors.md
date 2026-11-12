@@ -68,6 +68,9 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `slug_taken` | 409 | That address is taken. Try another one. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |
+| `trash_conflict` | 409 | Something else has taken its place since (the same CRM id or email). Change or remove that first. |
+| `trash_parent_first` | 409 | “…” is in the trash too. Put that back first. |
+| `trash_parent_gone` | 409 | What this belonged to no longer exists, so it cannot be put back. |
 | `type_not_empty` | 409 | There are still … records of this kind. Archive or delete them first. |
 | `file_too_large` | 413 | Files can be up to … MB. |
 | `import_too_large` | 413 | Import up to … rows at a time. |

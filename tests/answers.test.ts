@@ -37,6 +37,8 @@ const QUESTIONS: Record<'en' | 'tr', [question: string, pages: string][]> = {
     ['device limit', 'getting-started'],
     ['where is my data stored', 'security-and-privacy|legal-privacy'],
     ['keep my own system in sync', 'connect-your-own-tool'],
+    ['I deleted a customer by mistake', 'customers|trash'],
+    ['how do I get a deleted task back', 'tasks|trash'],
   ],
   tr: [
     ['Müşterileri bir tablodan nasıl içe aktarırım?', 'customers'],
@@ -59,6 +61,8 @@ const QUESTIONS: Record<'en' | 'tr', [question: string, pages: string][]> = {
     ['cihaz sınırı', 'getting-started'],
     ['verilerim nerede saklanıyor', 'security-and-privacy|legal-privacy'],
     ['kendi sistemimi eşit tut', 'connect-your-own-tool'],
+    ['silinen görevi nasıl geri alırım', 'tasks|trash'],
+    ['kalıcı olarak silmek', 'trash'],
   ],
 };
 
@@ -95,13 +99,13 @@ describe('answers from the docs', () => {
         }
       }
     }
-    // Measured on 12 November 2026: 43 of 44 first, 44 of 44 in the top three, sure of 36 and right on all 36.
-    expect(first, misses.join('; ')).toBeGreaterThanOrEqual(40);
-    expect(topThree).toBeGreaterThanOrEqual(43);
-    expect(sure).toBeGreaterThanOrEqual(30);
+    // Measured on 12 November 2026: 47 of 48 first, 48 of 48 in the top three, sure of 41 and right on all 41.
+    expect(first, misses.join('; ')).toBeGreaterThanOrEqual(44);
+    expect(topThree).toBeGreaterThanOrEqual(47);
+    expect(sure).toBeGreaterThanOrEqual(35);
     // When it says it is sure, it is right: at most one slip in the whole set.
     expect(sure - sureAndRight).toBeLessThanOrEqual(1);
-    expect(total).toBe(44);
+    expect(total).toBe(48);
   });
 
   it('says so when the docs do not cover something, instead of guessing', () => {

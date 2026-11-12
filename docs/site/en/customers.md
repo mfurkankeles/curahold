@@ -47,6 +47,10 @@ Download customer and record lists, with the filter you have on, as Excel or CSV
 
 Select several customers in the list and change their owner, team or a field together. The change can be undone for 30 minutes.
 
+## Deleting a customer, and getting a deleted customer back
+
+A deleted customer goes to the [trash](/docs/en/trash/) with its records, timeline, meetings and portal people, and can be put back for 30 days: choose **Undo** in the notice right after deleting, or open your menu, choose **Trash** and then **Put back**. Its tasks stay on their boards without a customer, and point at it again when it comes back. To keep a customer out of the way without deleting it, archive it.
+
 ## Plans
 
 A **plan** is a set of dated tasks put on a customer in one click: onboarding, renewal prep, a QBR. An admin writes it once (task title, how many days after the start, for whom); on a customer's page **Apply a plan** lets you pick the start day and add them all. `{account_name}` in a title becomes the customer's name.
@@ -68,5 +72,5 @@ A business review is a meeting you hold with each customer every so often (a QBR
 - notes: what was discussed and what was decided,
 - next steps: each one, with who has it and by when, becomes a task on the board you choose, on this customer.
 
-The next steps show under the meeting with how they are doing (finished ones struck through); click one to open the task. A meeting can be edited later, given more next steps, or deleted; a deleted meeting's tasks stay.
+The next steps show under the meeting with how they are doing (finished ones struck through); click one to open the task. A meeting can be edited later, given more next steps, or deleted; a deleted meeting's tasks stay, and the meeting itself can be put back from the [trash](/docs/en/trash/) for 30 days.
 

@@ -12,6 +12,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
 import { Confirm, Dialog, RowMenu } from './ui';
+import { useTrashToast } from '../lib/trash';
 
 function useFail() {
   const { t } = useI18n();
@@ -185,6 +186,7 @@ const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 6
 export function AccountTimeline({ accountId, hasContacts }: { accountId: string; hasContacts: boolean }) {
   const { t, locale } = useI18n();
   const { me, people, canWrite, can } = useStore();
+  const trashed = useTrashToast();
   const fail = useFail();
   const [data, setData] = useState<Timeline | null>(null);
   const [older, setOlder] = useState<TimelineItem[]>([]);
@@ -549,7 +551,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           onClose={() => setRemoving(null)}
           onConfirm={async () => {
             try {
-              await del(`/activities/${removing.id}`);
+              trashed(await del(`/activities/${removing.id}`), load);
               await load();
             } catch (e) {
               fail(e);

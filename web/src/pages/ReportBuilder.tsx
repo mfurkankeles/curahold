@@ -38,6 +38,7 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
+import { useTrashToast } from '../lib/trash';
 
 interface CatalogData {
   sources: ReportSourceInfo[];
@@ -190,6 +191,7 @@ const csvCell = (v: unknown) => {
 export function ReportBuilderPage({ id, from }: { id: string | null; from: string | null }) {
   const { t, locale } = useI18n();
   const { canWrite, can, me, toast, people, boards, teams } = useStore();
+  const trashed = useTrashToast();
   const f = useReportFormat();
   const cat = useCatalog();
   const admin = can('org.manage') && !me.previewBy;
@@ -760,7 +762,8 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
           danger
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
-            await del(`/reports/saved/${saved.id}`);
+            const reportId = saved.id;
+            trashed(await del(`/reports/saved/${reportId}`), () => navigate(`/reports/r/${reportId}`));
             navigate('/reports/all');
           }}
         />

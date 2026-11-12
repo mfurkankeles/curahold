@@ -22,7 +22,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /boards/:id/requests` | Sends a request through the board's form: it lands in the form's column, unassigned. |
 | `POST /boards/:id/import` | Brings tasks in from rows of a file onto one board. |
 | `GET /boards/:id/imports` | Your recent task imports onto a board, newest first. |
-| `POST /task-imports/:id/undo` | Undoes an import of tasks: what nobody touched since is removed. |
+| `POST /task-imports/:id/undo` | Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`). |
 | `PUT /boards/:id/portal` | Opens a board to customers in the portal, or closes it (an administrator's decision). |
 | `GET /tasks` | Tasks across boards. |
 | `GET /tasks/counts` | How many of the person's open tasks are overdue and how many are due today (by the company's clock). |
@@ -30,7 +30,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /tasks` | Adds a task. |
 | `GET /tasks/:id` | One task with its comments, files, subtasks, links, time and history. |
 | `PATCH /tasks/:id` | Changes a task. |
-| `DELETE /tasks/:id` | Deletes a task with its subtasks, comments and files. |
+| `DELETE /tasks/:id` | Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. |
 | `POST /tasks/bulk` | Changes many tasks at once: column, assignee, due date, priority, archive. |
 | `POST /undo/:id` | Puts back what a change to many tasks or customers replaced. |
 | `POST /tasks/:id/comments` | Comments on a task. |
@@ -143,7 +143,7 @@ Your recent task imports onto a board, newest first.
 
 ### `POST /task-imports/:id/undo`
 
-Undoes an import of tasks: what nobody touched since is removed.
+Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`).
 
 **Needs:** a seat that can write
 
@@ -227,7 +227,7 @@ Changes a task. Send `baseVersion`; if someone changed other fields meanwhile bo
 
 ### `DELETE /tasks/:id`
 
-Deletes a task with its subtasks, comments and files. Only its creator, or someone allowed to delete any task.
+Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. Only its creator, or someone allowed to delete any task. The answer carries `trashId`.
 
 **Needs:** a seat that can write
 

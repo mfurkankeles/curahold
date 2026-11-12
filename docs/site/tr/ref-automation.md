@@ -17,7 +17,7 @@ Otomasyon bir kuraldır: bir şey olduğunda (bir tarih yaklaşır, bir görev t
 | `GET /automations` | Şirketin kuralları; her birinin en son ne zaman çalıştığıyla. |
 | `POST /automations` | Kural ekler. |
 | `PATCH /automations/:id` | Kuralı değiştirir ya da açıp kapatır. |
-| `DELETE /automations/:id` | Kuralı siler. |
+| `DELETE /automations/:id` | Kuralı çöp kutusuna taşır; orada 30 gün kalır. |
 | `GET /automations/:id/runs` | Bir kuralın yaptıkları; en yenisi başta. |
 | `POST /automations/preview` | Bir kuralın bugün nelere uygulanacağı. |
 | `POST /automations/:id/run` | Zamanlanmış bir kuralı sıradaki saati beklemeden şimdi çalıştırır; yine de durum başına bir kez çalışır. |
@@ -63,7 +63,7 @@ Kuralı değiştirir ya da açıp kapatır.
 
 ### `DELETE /automations/:id`
 
-Kuralı siler.
+Kuralı çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yetki `automations.manage`
 

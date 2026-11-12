@@ -21,7 +21,7 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 | --- | --- |
 | Beş dakikada ilk isteği göndermek | [Hızlı başlangıç](/docs/tr/quickstart/) |
 | API'nin nasıl düşündüğünü örneklerle anlamak | [API rehberi](/docs/tr/api-reference/) |
-| Bir adrese alan alan bakmak | Başvuru: [müşteriler](/docs/tr/ref-customers/), [kayıtlar](/docs/tr/ref-records/), [görevler ve panolar](/docs/tr/ref-tasks/), [kişiler ve arama](/docs/tr/ref-people/), [sayfalar ve raporlar](/docs/tr/ref-pages/), [otomasyonlar](/docs/tr/ref-automation/), [nesneler](/docs/tr/ref-objects/), [hatalar](/docs/tr/ref-errors/) |
+| Bir adrese alan alan bakmak | Başvuru: [müşteriler](/docs/tr/ref-customers/), [kayıtlar](/docs/tr/ref-records/), [görevler ve panolar](/docs/tr/ref-tasks/), [kişiler ve arama](/docs/tr/ref-people/), [sayfalar ve raporlar](/docs/tr/ref-pages/), [otomasyonlar](/docs/tr/ref-automation/), [çöp kutusu](/docs/tr/ref-trash/), [nesneler](/docs/tr/ref-objects/), [hatalar](/docs/tr/ref-errors/) |
 | Kendi sistemini eşit tutmak | [Kendi aracını bağla](/docs/tr/connect-your-own-tool/) |
 | Bir şey değişince haber almak | [Webhook'lar](/docs/tr/webhooks/) |
 | Bir kelimenin ne demek olduğuna bakmak | [Geliştiriciler için sözlük](/docs/tr/glossary/) |

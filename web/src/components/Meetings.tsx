@@ -23,6 +23,7 @@ import { EmptyState } from './Empty';
 import { Icon, type IconName } from './icons';
 import { useReviewText, useRhythm } from './Rhythm';
 import { Avatars, Confirm, Dialog, DueLabel, PeoplePicker, RowMenu } from './ui';
+import { useTrashToast } from '../lib/trash';
 
 export const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail', review: 'handshake' };
 
@@ -337,6 +338,7 @@ function StepLine({ step }: { step: NextStep }) {
 export function AccountMeetings({ account }: { account: Account }) {
   const { t, fmtDate, locale } = useI18n();
   const { canWrite, person, me, can } = useStore();
+  const trashed = useTrashToast();
   const rhythm = useRhythm();
   const reviewText = useReviewText();
   const [kind, setKind] = useState<MeetingKind | ''>('');
@@ -451,7 +453,7 @@ export function AccountMeetings({ account }: { account: Account }) {
           danger
           onClose={() => setRemoving(null)}
           onConfirm={async () => {
-            await del(`/activities/${removing.id}`);
+            trashed(await del(`/activities/${removing.id}`), changed);
             setRemoving(null);
             changed();
           }}

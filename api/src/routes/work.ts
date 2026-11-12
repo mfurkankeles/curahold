@@ -7,6 +7,7 @@ import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type 
 import { nowOf, requirePerm, requirePlan, requireWriter, run, todayOf, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
+import { toTrash } from '../lib/trash';
 import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { addEvent } from '../lib/history';
@@ -487,10 +488,15 @@ workRoutes.post('/task-imports/:id/undo', async (c) => {
       [ids],
     );
     const keep = kept.map((r) => r.id as string);
-    const removed = await q.query(`delete from tasks where id = any($1::uuid[]) and not (id = any($2::uuid[])) returning id`, [ids, keep]);
+    // What nobody touched goes to the trash as one item, for the 30 days anything deleted stays there.
+    const there = await q.query<{ id: string; title: string }>(`select id, title from tasks where id = any($1::uuid[]) and not (id = any($2::uuid[])) order by created_at`, [ids, keep]);
+    const [bd] = await q.query<{ name: string }>('select name from boards where id = $1', [b.board_id]);
+    const trashId = await toTrash(q, 'task', there.map((r) => r.id), there[0]?.title ?? '', { boardId: b.board_id, board: bd?.name, via: 'import' });
+    const removed = await q.query(`delete from tasks where id = any($1::uuid[]) returning id`, [there.map((r) => r.id)]);
+    if (removed.length !== there.length) fail('forbidden');
     await q.query(`update import_batches set undone_at = now() where id = $1`, [id]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, archived: keep.length } });
-    return { removed: removed.length, archived: keep.length };
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, archived: keep.length, trashId } });
+    return { removed: removed.length, archived: keep.length, trashId };
   });
   return c.json(out);
 });

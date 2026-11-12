@@ -23,6 +23,7 @@ import { Avatar, Confirm, Dialog } from './ui';
 import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
 import { Icon } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
+import { useTrashToast } from '../lib/trash';
 
 /**
  * A table column: one of the record's own fields, or something every record
@@ -623,6 +624,7 @@ export function RecordDialog({
 }) {
   const { t, locale, words } = useI18n();
   const { me, people, canWrite, can, toast } = useStore();
+  const trashed = useTrashToast();
   const isContact = type.kind === 'contact';
   const [name, setName] = useState(record?.name ?? '');
   const initialSplit = record && isContact && !record.fields.first_name && !record.fields.last_name ? splitName(record.name) : null;
@@ -808,7 +810,7 @@ export function RecordDialog({
           danger
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
-            await del(`/records/${record.id}`);
+            trashed(await del(`/records/${record.id}`), onDone);
             await onDone();
             onClose();
           }}

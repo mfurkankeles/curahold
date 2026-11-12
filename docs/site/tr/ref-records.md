@@ -22,7 +22,7 @@ Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek ka
 | `GET /records/:id` | Tek bir kayıt. |
 | `POST /records` | Bir müşterinin altına, bir türden kayıt ekler. |
 | `PATCH /records/:id` | Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir. |
-| `DELETE /records/:id` | Bir kaydı yorumları ve dosyalarıyla siler. |
+| `DELETE /records/:id` | Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /records/:id/comments` | Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider. |
 | `DELETE /record-comments/:id` | Bir kayıttaki kendi yorumunu siler. |
 | `POST /records/:id/files` | Bir kayda dosya ekler (multipart yükleme, istek başına bir dosya). |
@@ -115,7 +115,7 @@ Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir.
 
 ### `DELETE /records/:id`
 
-Bir kaydı yorumları ve dosyalarıyla siler.
+Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yetki `accounts.manage`
 

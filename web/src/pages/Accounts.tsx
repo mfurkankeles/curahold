@@ -30,6 +30,7 @@ import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { AccountMeetings, TIMELINE_CHANGED } from '../components/Meetings';
 import { hoursText } from './Reports';
+import { useTrashToast } from '../lib/trash';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -698,6 +699,7 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
   const { me, people, boards, canWrite, can, toast } = useStore();
+  const trashed = useTrashToast();
   const [data, setData] = useState<{ account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] } | null>(null);
   const [missing, setMissing] = useState(false);
   const { types } = useRecordTypes();
@@ -913,7 +915,7 @@ export function AccountPage({ id }: { id: string }) {
           danger
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
-            await del(`/accounts/${id}`);
+            trashed(await del(`/accounts/${id}`), () => navigate(`/accounts/${id}`));
             navigate('/accounts');
           }}
         />

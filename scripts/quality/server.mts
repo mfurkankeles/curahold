@@ -70,18 +70,23 @@ const mert = await login(env, 'beta', 'mert@demo.example');
 }
 
 // ---------------------------------------------------------------- deleting
+// What is deleted goes to the trash and comes back from it, with what hung under it.
 {
   const board = env.b.boards.csBoard;
   const { task } = (await ada.post('/api/tasks', { boardId: board, title: 'Silinecek görev' })).json;
+  await ada.post(`/api/tasks/${task.id}/comments`, { body: 'Bir yorum' });
   const gone = await ada.del(`/api/tasks/${task.id}`);
-  const [{ n }] = await env.db.system((q) => q.query(`select count(*)::int as n from tasks where id = $1`, [task.id]));
-  say('deleting', `a deleted task: ${gone.status}; still in the database: ${n === 1 ? 'yes (can be brought back)' : 'no, gone for good'}`);
+  const list = (await ada.get('/api/trash')).json;
+  const kept = (list.items ?? []).some((i: any) => i.id === gone.json?.trashId);
+  const back = gone.json?.trashId ? await ada.post(`/api/trash/${gone.json.trashId}/restore`) : { status: 0 };
+  const [{ n }] = await env.db.system((q) => q.query(`select (select count(*) from tasks where id = $1)::int + (select count(*) from comments where task_id = $1)::int as n`, [task.id]));
+  say('deleting', `a deleted task: ${gone.status}; in the trash${kept ? ` for ${list.days} days` : ': no'}; put back: ${back.status}; back with its comment: ${n === 2 ? 'yes' : 'no'}`);
   const acc = (await ada.post('/api/accounts', { name: 'Silinecek Müşteri' })).json.account;
+  await ada.post(`/api/accounts/${acc.id}/activities`, { kind: 'note', body: 'Bir not' });
   const gone2 = await ada.del(`/api/accounts/${acc.id}`);
-  const [{ n: n2 }] = await env.db.system((q) => q.query(`select count(*)::int as n from accounts where id = $1`, [acc.id]));
-  say('deleting', `a deleted customer: ${gone2.status}; still in the database: ${n2 === 1 ? 'yes (can be brought back)' : 'no, gone for good'}`);
-  const cols = await env.db.system((q) => q.query(`select table_name from information_schema.columns where table_schema = 'public' and column_name in ('deleted_at', 'trashed_at') order by 1`));
-  say('deleting', `tables that keep deleted rows for a while: ${cols.map((r: any) => r.table_name).join(', ') || 'none'}`);
+  const back2 = gone2.json?.trashId ? await ada.post(`/api/trash/${gone2.json.trashId}/restore`) : { status: 0 };
+  const [{ n: n2 }] = await env.db.system((q) => q.query(`select (select count(*) from accounts where id = $1)::int + (select count(*) from activities where account_id = $1)::int as n`, [acc.id]));
+  say('deleting', `a deleted customer: ${gone2.status}; put back: ${back2.status}; back with its timeline: ${n2 === 2 ? 'yes' : 'no'}`);
 }
 
 // ---------------------------------------------------------------- headers, limits

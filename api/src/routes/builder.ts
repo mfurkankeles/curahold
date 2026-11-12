@@ -7,6 +7,7 @@ import { BUCKETS, CHARTS, FORMATS, MEASURE_FNS, PERIODS, type ReportDef, type Sa
 import { nowOf, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
+import { toTrash } from '../lib/trash';
 import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
@@ -145,13 +146,14 @@ builderRoutes.delete('/reports/saved/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
+    const [seen] = await q.query<{ name: string }>('select name from reports where id = $1', [id]);
+    if (!seen) fail('not_found');
+    const trashId = await toTrash(q, 'report', [id], seen.name);
     const [r] = await q.query<{ name: string }>('delete from reports where id = $1 returning name', [id]);
-    if (!r) {
-      const [seen] = await q.query('select 1 from reports where id = $1', [id]);
-      fail(seen ? 'forbidden' : 'not_found');
-    }
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'report.deleted', entity: 'report', entityId: id, meta: { name: r.name } });
+    if (!r) fail('forbidden');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'report.deleted', entity: 'report', entityId: id, meta: { name: r.name, trashId } });
+    return trashId;
   });
-  return c.body(null, 204);
+  return c.json({ ok: true, trashId });
 });

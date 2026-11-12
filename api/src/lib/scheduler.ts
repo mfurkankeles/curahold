@@ -12,6 +12,7 @@ import { sendWeekly } from './weekly';
 import { sendNudges } from './nudges';
 import { startRenewals } from './playbooks';
 import { syncSeats } from './billing';
+import { emptyTrash } from './trash';
 
 const DIGEST_ITEMS = 8;
 
@@ -62,6 +63,8 @@ export async function sendDigests(deps: Deps, now: Date) {
 }
 
 export async function cleanUp(deps: Deps) {
+  // What has been in the trash for its 30 days goes for good, files included.
+  await emptyTrash(deps).catch((e) => console.error('[curahold] emptying the trash failed', e));
   await deps.db.system(async (q) => {
     await q.query(`delete from login_tokens where expires_at < now() - interval '1 day'`);
     await q.query(`delete from signups where org_id is null and expires_at < now() - interval '7 days'`);

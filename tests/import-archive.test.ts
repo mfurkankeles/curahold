@@ -145,7 +145,7 @@ describe('importing tasks onto a board', () => {
     // It is the importer's to undo, not anyone's.
     expect((await mert.post(`/api/task-imports/${r.json.batch}/undo`)).status).toBe(404);
     const undo = await lena.post(`/api/task-imports/${r.json.batch}/undo`);
-    expect(undo.json).toEqual({ removed: 1, archived: 1 });
+    expect(undo.json).toMatchObject({ removed: 1, archived: 1 });
     const after = (await lena.get(`/api/boards/${board}/tasks`)).json.tasks;
     expect(after.some((t: any) => t.id === offer.id || t.id === report.id)).toBe(false);
     const archive = (await lena.get(`/api/boards/${board}/tasks?archived=1`)).json;
@@ -191,7 +191,7 @@ describe('importing tasks onto a board', () => {
     expect(tasks.length).toBe(1200);
     expect(tasks[0].title).toBe('Bulk 0000');
     expect(tasks[1199].title).toBe('Bulk 1199');
-    expect((await ada.post(`/api/task-imports/${r.json.batch}/undo`)).json).toEqual({ removed: 1200, archived: 0 });
+    expect((await ada.post(`/api/task-imports/${r.json.batch}/undo`)).json).toMatchObject({ removed: 1200, archived: 0 });
   });
 });
 

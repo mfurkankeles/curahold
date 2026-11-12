@@ -47,6 +47,10 @@ Müşteri ve kayıt listelerini o an gördüğün filtreyle Excel ya da CSV olar
 
 Listede birden çok müşteri seç: sahibini, ekibini ya da bir alanı birlikte değiştir. Değişiklik 30 dakika boyunca geri alınabilir.
 
+## Müşteri silmek ve silinen müşteriyi geri almak
+
+Silinen müşteri kayıtları, zaman çizelgesi, toplantıları ve portal kişileriyle [çöp kutusuna](/docs/tr/trash/) gider ve 30 gün boyunca geri alınabilir: silmenin hemen ardından bildirimdeki **Geri al**'a bas ya da menünü açıp **Çöp kutusu**'nu seç ve **Geri al** de. Görevleri panolarında müşterisiz kalır; müşteri geri gelince yine onu gösterir. Bir müşteriyi silmeden gözden kaldırmak için arşivle.
+
 ## Planlar
 
 Bir **plan**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: onboarding, yenileme hazırlığı, QBR. Yönetici planı bir kez yazar (görev başlığı, başlangıçtan kaç gün sonra, kime); müşteri sayfasındaki **Plan uygula** ile başlangıç gününü seçip uygularsın. Başlıkta `{account_name}` yazan yere müşterinin adı gelir.
@@ -68,5 +72,5 @@ Müşteri sayfasındaki **Toplantılar**, o müşteriyle yapılan bütün toplan
 - notlar: neler konuşuldu, ne kararlaştırıldı,
 - sonraki adımlar: her biri; kime verildiği ve son tarihiyle, seçtiğin panoda bu müşteriye bağlı bir görev olur.
 
-Sonraki adımlar toplantının altında durumlarıyla görünür (tamamlananların üstü çizili); birine tıklayınca görev açılır. Bir toplantıyı sonradan düzenleyebilir, yeni adım ekleyebilir ya da silebilirsin; silinen toplantının görevleri yerinde kalır.
+Sonraki adımlar toplantının altında durumlarıyla görünür (tamamlananların üstü çizili); birine tıklayınca görev açılır. Bir toplantıyı sonradan düzenleyebilir, yeni adım ekleyebilir ya da silebilirsin; silinen toplantının görevleri yerinde kalır, toplantının kendisi de 30 gün boyunca [çöp kutusundan](/docs/tr/trash/) geri alınabilir.
 

@@ -127,6 +127,14 @@ Pipedrive, Zoho, Google Sheets) ✓ · 4 support tools, add-ons, Servis Konsolu 
 - **Change many tasks at once** from the list view: column, a person, due
   date, priority, archive — and **Undo** from the confirmation (also for
   bulk changes to customers).
+- **The trash**: a deleted customer, record, task, timeline entry, page,
+  saved report or automation stays for 30 days and comes back as it was,
+  with everything that went with it (comments, files, time, the records
+  under a customer) and with the links other things held to it. **Undo**
+  right after a delete, or the Trash page in the personal menu. People see
+  their own deletions; administrators see all and can delete for good. The
+  copy is made by the database from its own foreign keys
+  (`db/migrations/0025_trash.sql`), so a table added later is covered too.
 - **Repeating tasks**: daily, weekly, every 2 weeks, monthly, quarterly,
   yearly; from the due date or from the day it was done. The next copy (with
   its checklist unticked) appears when one is done.

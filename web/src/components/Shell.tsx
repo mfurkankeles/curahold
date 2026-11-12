@@ -241,6 +241,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
       items={[
         { key: 'profile', label: t('menu.profile'), icon: 'user', onSelect: () => go('/profile') },
         { key: 'devices', label: t('nav.devices'), icon: 'monitor', onSelect: () => go('/devices') },
+        ...(canWrite ? [{ key: 'trash', label: t('trash.title'), icon: 'trash' as const, onSelect: () => go('/trash') }] : []),
         'sep',
         {
           key: 'theme',

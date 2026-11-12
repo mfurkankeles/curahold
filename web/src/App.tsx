@@ -23,6 +23,7 @@ import { SignupApp } from './pages/Signup';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/Calendar';
 import { DevicesPage } from './pages/Devices';
+import { TrashPage } from './pages/Trash';
 import { MyTasks } from './pages/MyTasks';
 import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
@@ -251,6 +252,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/team') page = <TeamPage refreshKey={refreshKey} />;
   else if (path === '/timeline') page = <TimelinePage refreshKey={quiet} />;
   else if (path === '/devices') page = <DevicesPage />;
+  else if (path === '/trash') page = <TrashPage />;
   else if (path === '/connect-ai') page = <ConnectAiPage />;
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;

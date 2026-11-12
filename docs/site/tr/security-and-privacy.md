@@ -44,6 +44,7 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 | Bildirimler | 90 gün |
 | Kapanmış oturumlar | 90 gün |
 | Eşitleme geçmişi | 90 gün |
+| [Çöp kutusundaki](/docs/tr/trash/) silinmiş müşteriler, kayıtlar, görevler ve diğerleri | 30 gün; sonra dosyalarıyla birlikte silinir; yönetici daha erken silebilir |
 | İçe aktarmayı geri alma bilgisi | 30 gün |
 | Webhook teslim kayıtları | 7 gün |
 | İptal edilmiş API anahtarları | 30 gün |

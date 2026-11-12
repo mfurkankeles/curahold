@@ -67,6 +67,9 @@ export type ErrorCode =
   | 'plan_required'
   | 'billing_off'
   | 'billing_error'
+  | 'trash_parent_first'
+  | 'trash_parent_gone'
+  | 'trash_conflict'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -138,6 +141,10 @@ const STATUS: Record<ErrorCode, number> = {
   plan_required: 402,
   billing_off: 400,
   billing_error: 502,
+  // Putting something back from the trash: what it belonged to is not there, or something else holds its place.
+  trash_parent_first: 409,
+  trash_parent_gone: 409,
+  trash_conflict: 409,
 };
 
 export class HttpError extends Error {

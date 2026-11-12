@@ -1098,6 +1098,59 @@ await step('installable, and readable without a connection', async () => {
   await omar.page.browserContext().close();
 });
 
+await step('trash: a deleted task can be taken back at once, or later from the trash, whole', async () => {
+  const lena = await newPage(s.browser);
+  await signIn(lena.page, s.origin, 'lena@demo.example');
+  const call = (method: string, path: string, body?: unknown): Promise<any> =>
+    lena.page.evaluate(
+      async (m, p, b) => {
+        const r = await fetch(`/api${p}`, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
+        return r.json();
+      },
+      method,
+      path,
+      body,
+    );
+  const task = (await call('POST', '/tasks', { boardId: csBoard, title: 'Sözleşme taslağını gözden geçir' })).task;
+  await call('POST', '/tasks', { boardId: csBoard, title: 'Hukuktan görüş al', parentId: task.id });
+  await call('POST', `/tasks/${task.id}/comments`, { body: 'Taslak ekte.' });
+  const rowsOf = async () => Number((await sql('select (select count(*) from tasks where id = $1 or parent_id = $1) + (select count(*) from comments where task_id = $1) as n', [task.id]))[0].n);
+  expect((await rowsOf()) === 3, 'the task, its subtask and its comment were not made');
+
+  // Delete from the task's panel: the notice offers to take it back.
+  await lena.page.goto(`${s.origin}/b/${csBoard}?task=${task.id}`, { waitUntil: 'networkidle0' });
+  await lena.page.waitForSelector('button[aria-label="Görevi sil"]');
+  await lena.page.click('button[aria-label="Görevi sil"]');
+  await (await byText(lena.page, '.dialog .btn--danger', 'Sil')).click();
+  await lena.page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Çöp kutusuna taşındı')));
+  expect((await rowsOf()) === 0, 'the task was not removed');
+  await lena.page.click('.toast__action');
+  await lena.page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Geri alındı')));
+  expect((await rowsOf()) === 3, 'undo did not bring the task back whole');
+  await clearToasts(lena.page);
+
+  // Delete again, and this time find it in the trash from the personal menu.
+  await call('DELETE', `/tasks/${task.id}`);
+  await lena.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  await lena.page.click('.sidebar__me');
+  await (await byText(lena.page, '.popmenu__item', 'Çöp kutusu')).click();
+  await lena.page.waitForSelector('.trashrow');
+  const row = await text(lena.page, '.trashrow');
+  expect(row.includes('Sözleşme taslağını gözden geçir') && row.includes('1 alt görev ve 1 yorum') && row.includes('30 gün kaldı'), `trash row: ${row}`);
+  expect((await lena.page.$('.trashrow__forever')) === null, 'a member was offered "delete for good"');
+  await shot(lena.page, 'p7-01-trash');
+  await lena.page.click('.trashrow__actions .btn');
+  await lena.page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('geri geldi')));
+  expect((await rowsOf()) === 3, 'putting back from the trash lost something');
+  expect((await lena.page.$('.trashrow')) === null, 'the item stayed in the list after it was put back');
+  // "Open" in the notice goes to the task.
+  await lena.page.click('.toast__action');
+  await lena.page.waitForSelector('.panel, .taskpanel, aside[role="dialog"], aside');
+  expect(lena.page.url().includes(`task=${task.id}`), `"Open" went to ${lena.page.url()}`);
+  expect(lena.errors.length === 0, lena.errors.join(' | '));
+  await lena.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

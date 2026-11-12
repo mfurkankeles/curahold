@@ -22,7 +22,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /boards/:id/requests` | Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. |
 | `POST /boards/:id/import` | Bir dosyanın satırlarından tek bir panoya görev alır. |
 | `GET /boards/:id/imports` | Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
-| `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır. |
+| `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`). |
 | `PUT /boards/:id/portal` | Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı). |
 | `GET /tasks` | Panolar genelinde görevler. |
 | `GET /tasks/counts` | Kişinin açık görevlerinden kaçı gecikmiş, kaçı bugün bitiyor (şirketin saatine göre). |
@@ -30,7 +30,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /tasks` | Görev ekler. |
 | `GET /tasks/:id` | Tek bir görev; yorumları, dosyaları, alt görevleri, bağlantıları, süresi ve geçmişiyle. |
 | `PATCH /tasks/:id` | Görevi değiştirir. |
-| `DELETE /tasks/:id` | Görevi alt görevleri, yorumları ve dosyalarıyla siler. |
+| `DELETE /tasks/:id` | Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /tasks/bulk` | Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. |
 | `POST /undo/:id` | Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir. |
 | `POST /tasks/:id/comments` | Göreve yorum yazar. |
@@ -143,7 +143,7 @@ Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta.
 
 ### `POST /task-imports/:id/undo`
 
-Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır.
+Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`).
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -227,7 +227,7 @@ Görevi değiştirir. `baseVersion` gönder; bu arada başkası başka alanları
 
 ### `DELETE /tasks/:id`
 
-Görevi alt görevleri, yorumları ve dosyalarıyla siler. Yalnızca açan kişi ya da her görevi silebilen biri yapabilir.
+Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. Yalnızca açan kişi ya da her görevi silebilen biri yapabilir. Cevapta `trashId` gelir.
 
 **Gerekenler:** yazabilen bir koltuk
 

@@ -12,6 +12,16 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-trash',
+    date: '2026-11-12',
+    title: { tr: 'Çöp kutusu: silinen 30 gün geri alınabilir', en: 'The trash: what you delete can be put back for 30 days' },
+    body: {
+      tr: 'Müşteriyi, kaydı, görevi ya da sayfayı silmek artık hemen kesinleşmiyor. Silinen şey 30 gün çöp kutusunda durur; yorumları, dosyaları ve altındaki her şeyle eskisi gibi geri gelir. Silmenin ardından Geri al çıkar; sonrası için menün → Çöp kutusu.',
+      en: 'Deleting a customer, a record, a task or a page is no longer final at once. It stays in the trash for 30 days and comes back as it was, with its comments, files and everything under it. Undo is offered right after a delete; later, open your menu → Trash.',
+    },
+    action: { kind: 'go', to: '/trash', label: { tr: 'Çöp kutusunu aç', en: 'Open the trash' } },
+  },
+  {
     id: '2026-11-meetings',
     date: '2026-11-12',
     title: { tr: 'Toplantılar ve ayrıntılı yeni görev', en: 'Meetings, and a New task that asks for the details' },

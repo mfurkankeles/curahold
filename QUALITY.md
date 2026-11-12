@@ -251,9 +251,30 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 | 9. Yük testi ve marj doğrulama | Bekliyor |
 
 Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·
-çöp kutusu · müşteri ve kayıtlarda sürüm · şirket saatine göre "bugün" ✓ · güvenlik başlıkları ve istek
-sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı tespiti · çevrimdışı
-kuyruk · yedek ve geri yükleme provası · OAuth girişlerine PKCE ve anahtar yenileme kilidi (INTEGRATIONS.md).
+çöp kutusu ✓ · şirket saatine göre "bugün" ✓ · tam test koşusu 5 dakikanın altında ✓ · müşteri ve kayıtlarda sürüm ·
+güvenlik başlıkları ve istek sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı
+tespiti · çevrimdışı kuyruk · yedek ve geri yükleme provası · OAuth girişlerine PKCE ve anahtar yenileme kilidi
+(INTEGRATIONS.md). Güvenilirlik puanı: başlangıçta 4 → şimdi 6 (15 hedefin 4'ü tamam, 4'ü kısmen).
+
+Çöp kutusu (12 Kasım):
+
+| Ölçüm | Önce | Sonra |
+| --- | --- | --- |
+| Silinen müşteri, kayıt, görev, zaman çizelgesi girişi, sayfa, rapor, otomasyon | o anda kalıcı siliniyordu | 30 gün çöp kutusunda; aynı kimlikle, altındakilerle ve başka şeylerin ona tuttuğu bağlarla geri geliyor |
+| "Eskisi gibi" ne kadar eskisi gibi | ölçülemezdi | silmeden önce ve geri aldıktan sonra şirketin 51 tablosu satır satır aynı (7 türün her biri için testli) |
+| Kopya almadan silen yol | 9 / 9 | 0 / 9 (7 tür + 2 içe aktarma geri alma); yenisi eklenirse test düşüyor |
+| Silmenin ulaştığı tablo | 22, hiçbiri saklanmıyordu | 22'si de kopyalanıyor; gönderilmiş bildirimler ile portal oturumları ve tek kullanımlık bağlantıları bilerek dışarıda |
+| Silinen müşterinin ya da kaydın dosyaları | satır gidiyor, dosya depoda süresiz kalıyordu | çöp kutusuyla birlikte siliniyor (30 gün dolunca ya da yönetici "kalıcı olarak sil" deyince) |
+| CRM'e bağlı müşteri | silinince eşitleme onu bırakıyordu, geri dönüş yoktu | çöpteyken eşitleme onu geri getirmiyor; geri alınınca yeniden izliyor (testli) |
+| Geri almanın ürettiği webhook ve bildirim | — | 0 (kimseye "yeni" diye haber gitmiyor; testli) |
+| Kim görür, kim geri alır | — | herkes kendi sildiğini; şirket ayarı ya da gizlilik yetkisi olan hepsini. Kopyalar uygulamanın veritabanı rolüyle okunamıyor; başka şirket ve görüntüleyici koltuğu doğrudan SQL ile de reddediliyor (testli) |
+| Geri gelemeyen durum | — | nedeniyle reddediliyor ve hiçbir şey değişmiyor: bağlı olduğu şey de çöpte (önce o), artık yok, ya da yerini başkası almış (aynı CRM kimliği) |
+| Büyük şirkette süre (6.012 müşteri, 210 bin görev, 300 bin yorum; Postgres 16, `scripts/quality/trash.mts`) | müşteri silme 10 ms · görev silme 4 ms | kopyayla 45 ms · 24 ms; geri alma 18 ms · 11 ms |
+| Test | 0 | 14 test (`tests/trash.test.ts`) + eşitleme testi + tarayıcı senaryosu + demoda kontrol; 77 ilgili test gerçek Postgres 16'da da geçiyor |
+| "Sor": silmeyle ilgili sorular | cevap yoktu | "silinen görevi nasıl geri alırım" ve benzeri 4 soru doğru bölümü buluyor; toplam 48 soruda ilk cevap 47, ilk üç 48/48, emin olduğu 41'in 41'i doğru |
+
+Sonraki paketlere not: silme ve geri alma başka açık sayfalara anında yansımıyor ve webhook olarak gitmiyor
+(silme önceden de gitmiyordu). Canlı kanal kurulurken (Gerçek zamanlılık) ikisi de olay olarak eklenecek.
 
 Araya giren işler (ürün sahibinin 12 Kasım isteği):
 
@@ -273,14 +294,16 @@ Araya giren işler (ürün sahibinin 12 Kasım isteği):
 | Belge sayfası | 41 | 42 (geliştirici sözlüğü); her sayfada güncelleme tarihi ve okuma süresi |
 | Bağlantılar sayfası | 205 kelime | her CRM için ayrı bölüm (ne gelir, yöneticinin onayı ne zaman gerekir) |
 
-Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 77 sn (404 test; altı koşunun ortası, 73–81 sn) ·
-tarayıcı 189 sn (36 senaryo + belgeler) · demo 45 sn. Toplam 5,5 dk → 4,4 dk (demo testiyle 5,2 dk).
-Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun
-kopyasından başlıyor. Ölçüm: boş bir veritabanını açmak 2,6 sn, şemayı ve örnekleri kurmak 0,8 sn,
-hazır kopyayı yüklemek 0,5 sn; 39 dosyada dosya başına yaklaşık 2,9 sn. Gerçek Postgres'e karşı
-koşuda (TEST_DATABASE_URL) eskisi gibi her kurulum kendi veritabanını açıyor.
-Açık not: yedi tam koşunun ilkinde bir test düştü, sonraki altısında düşmedi; hangisi olduğu o koşuda
-kayda geçmedi. Bundan sonra her tam koşunun çıktısı dosyaya yazılıyor; tekrarlarsa adıyla düzeltilecek.
+Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 89 sn (404 → 419 test, 40 dosya) · tarayıcı 189 sn →
+192 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,7 dk (demo testiyle
+5,4 dk). Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun
+kopyasından başlıyor. Ölçüm: boş bir veritabanını açmak 2,6 sn, şemayı ve örnekleri kurmak 0,8 sn, hazır
+kopyayı yüklemek 0,5 sn; dosya başına yaklaşık 2,9 sn. Çöp kutusundan önce aynı 404 test 77 sn sürüyordu;
+aradaki 12 sn yeni testlerin süresi. Gerçek Postgres'e karşı koşuda (TEST_DATABASE_URL) eskisi gibi her
+kurulum kendi veritabanını açıyor.
+Açık not: hazır kopyaya geçilen ilk tam koşuda bir test düştü ve hangisi olduğu kayda geçmedi. Sonraki
+sekiz tam koşuda tekrarlamadı (biri bilinen bir nedenle düştü: başvuru sayfaları yeniden üretilmemişti;
+düzeltildi). Artık her tam koşunun çıktısı dosyaya yazılıyor; tekrarlarsa adıyla düzeltilecek.
 
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
 

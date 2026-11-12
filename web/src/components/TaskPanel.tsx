@@ -18,10 +18,12 @@ import { useToggleDone } from './Tick';
 import { labelOf } from '../../../shared/src/fields';
 import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInput, TimeSection } from './TaskExtras';
 import { CommentView, Composer, FileItem } from './Thread';
+import { useTrashToast } from '../lib/trash';
 
 export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: () => void }) {
   const { t, words, fmtDate, locale } = useI18n();
   const { boards, people, person, me, canWrite, can, toast } = useStore();
+  const trashed = useTrashToast();
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -313,7 +315,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
           danger
           onClose={() => setConfirmDelete(false)}
           onConfirm={async () => {
-            await del(`/tasks/${task.id}`);
+            trashed(await del(`/tasks/${task.id}`), onChanged);
             onChanged();
             close();
           }}

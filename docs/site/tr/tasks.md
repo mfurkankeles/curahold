@@ -74,3 +74,7 @@ Bir seferde 5.000 satıra kadar aktarılır.
 ## Arşiv
 
 Tamamlanan görevler, panonun tuttuğu süre dolunca (varsayılan 90 gün; pano ayarlarından 30–365 gün ya da “Her zaman”) kendiliğinden panonun **Arşiv**’ine taşınır. Böylece yıllardır kullanılan bir pano da hemen açılır. Arşivdeki görevler raporlarda sayılmaya devam eder; Pano / Liste’nin yanındaki **Arşiv** görünümünden aranır ve **Geri getir** ile panoya döner. Geri getirilen görev aynı süre boyunca panoda kalır. Liste görünümünden elle arşivlediklerin de buradadır.
+
+## Görev silmek ve silinen görevi geri almak
+
+Silinen görev alt görevleri, yorumları, süre kayıtları ve dosyalarıyla [çöp kutusuna](/docs/tr/trash/) gider ve 30 gün boyunca geri alınabilir: silmenin hemen ardından bildirimdeki **Geri al**'a bas ya da menünü açıp **Çöp kutusu**'nu seç ve **Geri al** de. Bir görevi yalnızca açan kişi ya da rolü her görevi silmeye izin veren biri silebilir. Biten bir görevi silmeden gözden kaldırmak için arşivle.

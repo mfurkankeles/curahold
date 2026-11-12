@@ -2186,3 +2186,25 @@ a.targetline:hover { border-color: var(--line-strong); }
 
 /* Numbered steps in a dialog. */
 .steps-list { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; line-height: 1.45; }
+
+/* ------------------------------------------------------------------ trash */
+
+.trashpage { max-width: 880px; }
+.trashpage__tools { margin-bottom: 14px; }
+.trashpage__more { display: flex; justify-content: center; margin-top: 14px; }
+.trashlist { list-style: none; margin: 0; padding: 4px 18px; }
+.trashrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 14px 0; }
+.trashrow + .trashrow { border-top: 1px solid var(--line); }
+.trashrow__icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--sunk); color: var(--ink-2); }
+.trashrow__name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.trashrow__label { font-weight: 600; overflow-wrap: anywhere; }
+.trashrow__where { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+.trashrow__with, .trashrow__meta { color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+.trashrow__meta { display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.trashrow__left[data-soon] { color: var(--soon-ink); font-weight: 500; }
+.trashrow__actions { display: flex; gap: 6px; align-items: center; }
+.trashrow__forever { color: var(--late-ink); }
+@media (max-width: 640px) {
+  .trashrow { grid-template-columns: 34px minmax(0, 1fr); }
+  .trashrow__actions { grid-column: 2; margin-top: 6px; flex-wrap: wrap; }
+}

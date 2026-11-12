@@ -118,6 +118,16 @@ Text search folds letters the way people expect: `istanbul`, `İstanbul` and `IS
 
 Dates such as a due date are plain days (`YYYY-MM-DD`). Whether a task is overdue is decided by the **company's** time zone (in `org.timezone` of `GET /me`), not the server's and not the caller's.
 
+## Deleting and the trash
+
+A `DELETE` on a customer, a record, a task, a timeline entry, a page, a saved report or a rule does not erase it at once: it moves to the trash for 30 days and the answer carries a `trashId`.
+
+```json
+{ "ok": true, "trashId": "0d6f6f0e-8a43-4e0e-9d0b-5c1b2f7a9e11" }
+```
+
+`POST /trash/<trashId>/restore` puts it back under the same id, with everything that went with it. Lists, searches and reports never include what is in the trash, so there is nothing to filter out. The addresses are in the [trash reference](/docs/en/ref-trash/); what people see is on the [trash](/docs/en/trash/) page.
+
 ## Errors
 
 An error is always `{ "error": "<code>", "message": "<a sentence>" }`. Decide by the code, show the sentence. The full list is on the [errors](/docs/en/ref-errors/) page.
@@ -125,4 +135,4 @@ An error is always `{ "error": "<code>", "message": "<a sentence>" }`. Decide by
 ## Every address
 
 This page explains the ideas. The reference lists every address with its fields, built from the product's own code:
-[customers](/docs/en/ref-customers/) · [records](/docs/en/ref-records/) · [tasks and boards](/docs/en/ref-tasks/) · [people, search and notifications](/docs/en/ref-people/) · [pages and reports](/docs/en/ref-pages/) · [automations and playbooks](/docs/en/ref-automation/) · [keys and webhooks](/docs/en/ref-developer-settings/) · [objects](/docs/en/ref-objects/) · [errors](/docs/en/ref-errors/) · [what is not in the API](/docs/en/ref-internal/)
+[customers](/docs/en/ref-customers/) · [records](/docs/en/ref-records/) · [tasks and boards](/docs/en/ref-tasks/) · [people, search and notifications](/docs/en/ref-people/) · [pages and reports](/docs/en/ref-pages/) · [automations and playbooks](/docs/en/ref-automation/) · [keys and webhooks](/docs/en/ref-developer-settings/) · [trash](/docs/en/ref-trash/) · [objects](/docs/en/ref-objects/) · [errors](/docs/en/ref-errors/) · [what is not in the API](/docs/en/ref-internal/)

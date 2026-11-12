@@ -7,6 +7,7 @@ import type { Automation, AutomationRun } from '../../../shared/src/automation';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
+import { toTrash } from '../lib/trash';
 import { localDate, preview, runScheduledAutomations, splitTrigger } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
@@ -171,12 +172,16 @@ automationRoutes.delete('/automations/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
+    const [a] = await q.query<{ name: string }>('select name from automations where id = $1', [id]);
+    if (!a) fail('not_found');
+    const trashId = await toTrash(q, 'automation', [id], a.name);
     const rows = await q.query('delete from automations where id = $1 returning name', [id]);
     if (!rows.length) fail('not_found');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'automation.deleted', entity: 'automation', entityId: id, meta: { name: rows[0].name } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'automation.deleted', entity: 'automation', entityId: id, meta: { name: rows[0].name, trashId } });
+    return trashId;
   });
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });
 
 automationRoutes.get('/automations/:id/runs', async (c) => {

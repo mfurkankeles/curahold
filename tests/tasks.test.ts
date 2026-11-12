@@ -140,16 +140,21 @@ describe('subtasks, comments, files, deleting', () => {
     expect(r.status).toBe(413);
   });
 
-  it("only the creator or a permitted role deletes a task, and its files go too", async () => {
+  it("only the creator or a permitted role deletes a task; its files leave storage when the trash lets go of it", async () => {
     const t = (await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'To delete' })).json.task;
     const form = new FormData();
     form.append('file', new File(['x'], 'x.txt'));
     const up = await mert.req('POST', `/api/tasks/${t.id}/files`, form);
     const key = (await env.db.system((q) => q.query('select storage_key from files where id = $1', [up.json.file.id])))[0].storage_key;
     expect((await zeynep.del(`/api/tasks/${t.id}`)).status).toBe(403);
-    expect((await mert.del(`/api/tasks/${t.id}`)).status).toBe(200);
-    expect(env.storage.has(key)).toBe(false);
+    const gone = await mert.del(`/api/tasks/${t.id}`);
+    expect(gone.status).toBe(200);
     expect((await mert.get(`/api/tasks/${t.id}`)).status).toBe(404);
+    // In the trash for 30 days: the file is kept so the task can come back whole (tests/trash.test.ts).
+    expect(env.storage.has(key)).toBe(true);
+    const ada = await login(env, 'acme', 'ada@demo.example');
+    expect((await ada.del(`/api/trash/${gone.json.trashId}`)).status).toBe(200);
+    expect(env.storage.has(key)).toBe(false);
   });
 });
 

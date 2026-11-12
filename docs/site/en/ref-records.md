@@ -22,7 +22,7 @@ A record is anything kept under a customer: a contact, an opportunity, a support
 | `GET /records/:id` | One record. |
 | `POST /records` | Adds a record of a kind, under a customer. |
 | `PATCH /records/:id` | Changes a record; only the fields you send change. |
-| `DELETE /records/:id` | Deletes a record with its comments and files. |
+| `DELETE /records/:id` | Moves a record to the trash with its comments and files, where it stays for 30 days. |
 | `POST /records/:id/comments` | Comments on a record; `@name` mentions notify. |
 | `DELETE /record-comments/:id` | Deletes your own comment on a record. |
 | `POST /records/:id/files` | Attaches a file to a record (multipart upload, one file per request). |
@@ -115,7 +115,7 @@ Changes a record; only the fields you send change.
 
 ### `DELETE /records/:id`
 
-Deletes a record with its comments and files.
+Moves a record to the trash with its comments and files, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** permission `accounts.manage`
 

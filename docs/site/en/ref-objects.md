@@ -209,6 +209,46 @@ interface Person {
 }
 ```
 
+## TrashItem
+
+```ts
+interface TrashItem {
+  id: string;
+  kind: TrashKind;
+  /** Its name or title when it was deleted. */
+  label: string;
+  /** How many things it holds: one as a rule; undoing an import puts many in at once. */
+  count: number;
+  /** The ids they had, and get again when put back (in a list, the first 100 when there are more). */
+  ids: string[];
+  /** Where it was: a task's board, the customer of a record or a timeline entry, a record's kind. */
+  where: { boardId?: string; board?: string; accountId?: string; account?: string; type?: Localized; entry?: string; via?: 'import' };
+  /** What went with it and comes back with it. */
+  contents: { subtasks?: number; comments?: number; files?: number; records?: number; entries?: number; portalPeople?: number; timeEntries?: number; tasksLinked?: number };
+  deletedBy: string | null;
+  deletedAt: string;
+  /** From this moment on it is gone for good. */
+  purgeAt: string;
+}
+```
+
+## TrashRestored
+
+```ts
+interface TrashRestored {
+  kind: TrashKind;
+  ids: string[];
+  label: string;
+  where: TrashItem['where'];
+  /** It was already there (put back another way); nothing was changed. */
+  already: boolean;
+  /** Rows left out because what they belonged to has gone for good since, by table. */
+  dropped: Record<string, number>;
+  /** Links cleared because what they pointed at has gone since. */
+  unlinked: { table: string; col: string; parent: string; n: number }[];
+}
+```
+
 ## ApiError
 
 ```ts

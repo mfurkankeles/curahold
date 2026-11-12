@@ -22,6 +22,7 @@ import { pick } from '../../../shared/src/templates';
 import { nowOf, requirePerm, run, type AppEnv, type AuthCtx, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
+import { toTrash } from '../lib/trash';
 import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { canSeeField, defsFor, type Viewer } from '../lib/fieldAccess';
@@ -237,12 +238,16 @@ pageRoutes.delete('/pages/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
+    const [p] = await q.query<{ name: string }>('select name from pages where id = $1', [id]);
+    if (!p) fail('not_found');
+    const trashId = await toTrash(q, 'page', [id], p.name);
     const rows = await q.query('delete from pages where id = $1 returning name', [id]);
     if (!rows.length) fail('not_found');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.deleted', entity: 'page', entityId: id, meta: { name: rows[0].name } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.deleted', entity: 'page', entityId: id, meta: { name: rows[0].name, trashId } });
+    return trashId;
   });
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });
 
 // ------------------------------------------------------------- card data

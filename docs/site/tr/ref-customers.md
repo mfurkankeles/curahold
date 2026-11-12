@@ -18,7 +18,7 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `POST /accounts` | Müşteri ekler. |
 | `GET /accounts/:id` | Tek bir müşteri; kişinin görebildiği bütün alanlarıyla. |
 | `PATCH /accounts/:id` | Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arşivler ya da geri alır. |
-| `DELETE /accounts/:id` | Müşteriyi kayıtları ve zaman çizelgesiyle birlikte siler. |
+| `DELETE /accounts/:id` | Müşteriyi kayıtları, zaman çizelgesi ve portal kişileriyle birlikte çöp kutusuna taşır; 30 gün boyunca geri alınabilir. |
 | `POST /accounts/bulk` | Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivle ya da geri al. |
 | `POST /accounts/import` | Bir dosyanın satırlarından müşteri alır (CSV ya da Excel senin tarafında okunur); sütundan alana eşlemeyle. |
 | `GET /imports` | Son müşteri içe aktarmaları; en yenisi başta. |
@@ -28,7 +28,7 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `GET /accounts/:id/timeline` | Bir müşteriyle olan her şey, en yenisi başta: notlar, aramalar, toplantılar, e-postalar, biten görevler, değişiklikler. |
 | `POST /accounts/:id/activities` | Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder. |
 | `PATCH /activities/:id` | Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler. |
-| `DELETE /activities/:id` | Kaydedilmiş bir etkinliği siler. |
+| `DELETE /activities/:id` | Kaydedilmiş bir etkinliği çöp kutusuna taşır; orada 30 gün kalır. |
 | `GET /accounts/:id/meetings` | Bir müşterinin toplantıları, değerlendirmeleri ve aramaları; sonraki adımlarıyla. |
 | `POST /accounts/:id/meetings` | Bir toplantıyı kimlerin katıldığı, ne konuşulduğu ve sonraki adımlarla kaydeder; her adım seçilen panoda bir görev olur. |
 | `POST /activities/:id/next-steps` | Kaydedilmiş bir toplantıya yeni sonraki adımlar ekler. |
@@ -86,7 +86,7 @@ Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arş
 
 ### `DELETE /accounts/:id`
 
-Müşteriyi kayıtları ve zaman çizelgesiyle birlikte siler. Görevleri kalır, müşterisiz olur.
+Müşteriyi kayıtları, zaman çizelgesi ve portal kişileriyle birlikte çöp kutusuna taşır; 30 gün boyunca geri alınabilir. Görevleri kalır, müşterisiz olur. Cevapta `trashId` gelir.
 
 **Gerekenler:** yetki `accounts.manage`
 
@@ -126,7 +126,7 @@ Son müşteri içe aktarmaları; en yenisi başta.
 
 ### `POST /imports/:id/undo`
 
-Bir içe aktarmayı 30 gün içinde geri alır: eklediklerini kaldırır, değiştirdiklerini eski haline getirir.
+Bir içe aktarmayı 30 gün içinde geri alır: eklediklerini kaldırır, değiştirdiklerini eski haline getirir. Eklediği müşteriler çöp kutusuna tek bir öğe olarak gider (`trashId`).
 
 **Gerekenler:** yetki `accounts.manage`
 
@@ -185,7 +185,7 @@ Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler.
 
 ### `DELETE /activities/:id`
 
-Kaydedilmiş bir etkinliği siler.
+Kaydedilmiş bir etkinliği çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yazabilen bir koltuk
 

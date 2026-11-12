@@ -17,7 +17,7 @@ An automation is a rule: when something happens (a date comes near, a task moves
 | `GET /automations` | The company's rules with when each last ran. |
 | `POST /automations` | Adds a rule. |
 | `PATCH /automations/:id` | Changes a rule, or switches it on and off. |
-| `DELETE /automations/:id` | Deletes a rule. |
+| `DELETE /automations/:id` | Moves a rule to the trash, where it stays for 30 days. |
 | `GET /automations/:id/runs` | What a rule did, newest first. |
 | `POST /automations/preview` | What a rule would act on today. |
 | `POST /automations/:id/run` | Runs a scheduled rule now instead of waiting for the next hour; it still fires once per occasion. |
@@ -63,7 +63,7 @@ Changes a rule, or switches it on and off.
 
 ### `DELETE /automations/:id`
 
-Deletes a rule.
+Moves a rule to the trash, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** permission `automations.manage`
 

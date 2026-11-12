@@ -31,6 +31,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
+import { useTrashToast } from '../lib/trash';
 
 export type Data = Record<string, CardData>;
 /** A page being written: a home (tabs on Home) or a dashboard (Dashboards.tsx). */
@@ -482,6 +483,7 @@ function newCard(type: CardType, taken: Card[]): Card {
 export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Draft; onCancel: () => void; onSaved: (id: string) => void; onDeleted: () => void }) {
   const { t, locale } = useI18n();
   const { toast } = useStore();
+  const trashed = useTrashToast();
   const roles = useRoles();
   const title = useCardTitle();
   const [d, setD] = useState<Draft>(start);
@@ -682,7 +684,10 @@ export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { dra
           danger
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
-            await del(`/pages/${d.id}`);
+            const pageId = d.id;
+            trashed(await del(`/pages/${pageId}`), () => {
+              location.assign(`/pages/${pageId}`);
+            });
             onDeleted();
           }}
         />

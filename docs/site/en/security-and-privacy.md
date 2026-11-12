@@ -44,6 +44,7 @@ In Settings → People, a person's menu offers:
 | Notifications | 90 days |
 | Ended sessions | 90 days |
 | Sync history | 90 days |
+| Deleted customers, records, tasks and the rest, in the [trash](/docs/en/trash/) | 30 days, then erased with their files; an administrator can erase sooner |
 | Undo data for imports | 30 days |
 | Webhook delivery records | 7 days |
 | Revoked API keys | 30 days |

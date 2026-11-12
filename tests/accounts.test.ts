@@ -130,7 +130,7 @@ describe('import with undo', () => {
     const imports = (await ada.get('/api/imports')).json.imports;
     expect(imports[0]).toMatchObject({ id: batch, fileName: 'musteriler.xlsx', undoable: true });
     const u = await ada.post(`/api/imports/${batch}/undo`, {});
-    expect(u.json).toEqual({ removed: 2, restored: 1 });
+    expect(u.json).toMatchObject({ removed: 2, restored: 1 });
     const list = (await ada.get('/api/accounts')).json.accounts;
     expect(list.map((a: any) => a.name)).not.toContain('Pinecrest Logistics');
     expect(list.find((a: any) => a.name === 'Quillfield Retail')).toMatchObject({ ownerId: env.a.ids.zeynep, fields: { arr: 84000 } });

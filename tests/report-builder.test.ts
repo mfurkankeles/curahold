@@ -190,7 +190,7 @@ describe('reports people keep', () => {
     // A reader of the company cannot keep reports; an administrator can tidy a shared one.
     expect((await sofia.post('/api/reports/saved', { name: 'x', def })).status).toBe(403);
     expect((await ada.patch(`/api/reports/saved/${id}`, { name: 'Panolar (ekip)' })).status).toBe(200);
-    expect((await ada.del(`/api/reports/saved/${id}`)).status).toBe(204);
+    expect((await ada.del(`/api/reports/saved/${id}`)).status).toBe(200);
     expect((await zeynep.get(`/api/reports/saved/${id}`)).status).toBe(404);
   });
 

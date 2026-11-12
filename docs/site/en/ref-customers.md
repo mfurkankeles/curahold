@@ -18,7 +18,7 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `POST /accounts` | Adds a customer. |
 | `GET /accounts/:id` | One customer, with every field the person may see. |
 | `PATCH /accounts/:id` | Changes a customer: name, owner, team, fields, review rhythm, or archives and restores it. |
-| `DELETE /accounts/:id` | Deletes a customer together with its records and timeline. |
+| `DELETE /accounts/:id` | Moves a customer to the trash together with its records, timeline and portal people; it can be put back for 30 days. |
 | `POST /accounts/bulk` | Changes many customers at once: new owner, new team, archive or restore. |
 | `POST /accounts/import` | Brings in customers from rows of a file (CSV or Excel read on your side), with a mapping from column to field. |
 | `GET /imports` | Recent customer imports, newest first. |
@@ -28,7 +28,7 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `GET /accounts/:id/timeline` | Everything that happened with a customer, newest first: notes, calls, meetings, emails, finished tasks, changes. |
 | `POST /accounts/:id/activities` | Logs a note, call, meeting or email on the timeline. |
 | `PATCH /activities/:id` | Changes a logged activity, or pins it to the top. |
-| `DELETE /activities/:id` | Deletes a logged activity. |
+| `DELETE /activities/:id` | Moves a logged activity to the trash, where it stays for 30 days. |
 | `GET /accounts/:id/meetings` | A customer's meetings, reviews and calls with their next steps. |
 | `POST /accounts/:id/meetings` | Logs a meeting with who was there, what was said and the next steps; each next step becomes a task on the chosen board. |
 | `POST /activities/:id/next-steps` | Adds more next steps to a meeting already logged. |
@@ -86,7 +86,7 @@ Changes a customer: name, owner, team, fields, review rhythm, or archives and re
 
 ### `DELETE /accounts/:id`
 
-Deletes a customer together with its records and timeline. Its tasks stay, without a customer.
+Moves a customer to the trash together with its records, timeline and portal people; it can be put back for 30 days. Its tasks stay, without a customer. The answer carries `trashId`.
 
 **Needs:** permission `accounts.manage`
 
@@ -126,7 +126,7 @@ Recent customer imports, newest first.
 
 ### `POST /imports/:id/undo`
 
-Undoes an import within 30 days: removes what it added and puts back what it changed.
+Undoes an import within 30 days: removes what it added and puts back what it changed. The customers it added go to the trash as one item (`trashId`).
 
 **Needs:** permission `accounts.manage`
 
@@ -185,7 +185,7 @@ Changes a logged activity, or pins it to the top.
 
 ### `DELETE /activities/:id`
 
-Deletes a logged activity.
+Moves a logged activity to the trash, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** a seat that can write
 

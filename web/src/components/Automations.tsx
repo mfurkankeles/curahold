@@ -11,6 +11,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Confirm, Dialog } from './ui';
+import { useTrashToast } from '../lib/trash';
 
 type Draft = { name: string; enabled: boolean; trigger: Trigger; conditions: Condition[]; action: Action; preset?: string | null };
 
@@ -82,6 +83,7 @@ export function useDescribe() {
 export function AutomationList() {
   const { t } = useI18n();
   const { can, toast } = useStore();
+  const trashed = useTrashToast();
   const describe = useDescribe();
   const [list, setList] = useState<Automation[] | null>(null);
   const [editing, setEditing] = useState<Automation | 'new' | null>(null);
@@ -187,7 +189,7 @@ export function AutomationList() {
           danger
           onClose={() => setRemoving(null)}
           onConfirm={async () => {
-            await del(`/automations/${removing.id}`);
+            trashed(await del(`/automations/${removing.id}`), load);
             setRemoving(null);
             await load();
           }}

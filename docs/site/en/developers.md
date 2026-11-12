@@ -21,7 +21,7 @@ There are four ways to connect your own tools to Curahold. All follow one rule: 
 | --- | --- |
 | Make a first request in five minutes | [Quickstart](/docs/en/quickstart/) |
 | Understand how the API thinks, with examples | [API guide](/docs/en/api-reference/) |
-| Look up an address, field by field | Reference: [customers](/docs/en/ref-customers/), [records](/docs/en/ref-records/), [tasks and boards](/docs/en/ref-tasks/), [people and search](/docs/en/ref-people/), [pages and reports](/docs/en/ref-pages/), [automations](/docs/en/ref-automation/), [objects](/docs/en/ref-objects/), [errors](/docs/en/ref-errors/) |
+| Look up an address, field by field | Reference: [customers](/docs/en/ref-customers/), [records](/docs/en/ref-records/), [tasks and boards](/docs/en/ref-tasks/), [people and search](/docs/en/ref-people/), [pages and reports](/docs/en/ref-pages/), [automations](/docs/en/ref-automation/), [trash](/docs/en/ref-trash/), [objects](/docs/en/ref-objects/), [errors](/docs/en/ref-errors/) |
 | Keep a system of your own in step | [Connect your own tool](/docs/en/connect-your-own-tool/) |
 | Be told when something changes | [Webhooks](/docs/en/webhooks/) |
 | Check what a word means | [Glossary for developers](/docs/en/glossary/) |

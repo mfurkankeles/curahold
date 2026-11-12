@@ -74,3 +74,7 @@ Up to 5,000 rows at a time.
 ## Archive
 
 Finished tasks move to the board's **Archive** by themselves once the board has kept them long enough (90 days by default; 30–365 days or "Always" in the board's settings). A board that has been in use for years still opens at once. Archived tasks keep counting in reports; search them in the **Archive** view beside Board / List and put one back with **Bring back**. A task you bring back stays on the board for the same number of days again. Tasks you archive by hand from the list view are here too.
+
+## Deleting a task, and getting a deleted task back
+
+A deleted task goes to the [trash](/docs/en/trash/) with its subtasks, comments, time and files, and can be put back for 30 days: choose **Undo** in the notice right after deleting, or open your menu, choose **Trash** and then **Put back**. Only the person who created a task can delete it, or someone whose role may delete any task. To keep a finished task out of the way without deleting it, archive it.

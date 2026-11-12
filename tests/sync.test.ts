@@ -359,4 +359,29 @@ describe('two-way sync with a CRM', () => {
     expect(lenaLinks[0].n).toBe(0);
     env.clock.now = null;
   });
+
+  it('a customer deleted here is left alone by the sync, and followed again once it is back from the trash', async () => {
+    const link = async () =>
+      (await env.db.system((q) => q.query(`select entity_id, ignored from sync_links where org_id = $1 and entity = 'account' and remote_id = '001D0007'`, [env.a.orgId])))[0];
+    const id = (await link()).entity_id as string;
+    const name = (await ada.get(`/api/accounts/${id}`)).json.account.name as string;
+    const total = (await ada.get('/api/accounts')).json.total;
+    const gone = await ada.del(`/api/accounts/${id}`);
+    expect(gone.status).toBe(200);
+    expect(await link()).toMatchObject({ entity_id: null, ignored: true });
+    // The CRM row changes while the customer is in the trash: nothing is brought back by that.
+    env.clock.now = new Date(Date.now() + 5 * 3_600_000);
+    demoTouch(demoId, 'Account', '001D0007', { Name: `${name} (renamed there)` }, env.clock.now);
+    const quiet = (await ada.post(`/api/connections/${connId}/sync/run`, {})).json.run;
+    expect(quiet.stats.Account?.created ?? 0).toBe(0);
+    expect((await ada.get('/api/accounts')).json.total).toBe(total - 1);
+
+    expect((await ada.post(`/api/trash/${gone.json.trashId}/restore`)).status).toBe(200);
+    expect(await link()).toMatchObject({ entity_id: id, ignored: false });
+    env.clock.now = new Date(Date.now() + 6 * 3_600_000);
+    demoTouch(demoId, 'Account', '001D0007', { Name: `${name} Group` }, env.clock.now);
+    await ada.post(`/api/connections/${connId}/sync/run`, {});
+    expect((await ada.get(`/api/accounts/${id}`)).json.account.name).toBe(`${name} Group`);
+    env.clock.now = null;
+  });
 });

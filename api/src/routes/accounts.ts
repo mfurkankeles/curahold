@@ -17,6 +17,7 @@ import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
 import { saveUndo } from '../lib/undo';
+import { toTrash } from '../lib/trash';
 import { changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
 
 export const accountRoutes = new Hono<AppEnv>();
@@ -263,12 +264,17 @@ accountRoutes.delete('/accounts/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
+    const [a] = await q.query<{ name: string }>('select name from accounts where id = $1', [id]);
+    if (!a) fail('not_found');
+    // It stays in the trash for 30 days, with its records, timeline and portal people.
+    const trashId = await toTrash(q, 'account', [id], a.name);
     const rows = await q.query('delete from accounts where id = $1 returning name', [id]);
     if (!rows.length) fail('not_found');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.deleted', entity: 'account', entityId: id, meta: { name: rows[0].name } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.deleted', entity: 'account', entityId: id, meta: { name: rows[0].name, trashId } });
+    return trashId;
   });
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });
 
 /** Change many at once: new owner, new team, archive or restore. */
@@ -515,7 +521,11 @@ accountRoutes.post('/imports/:id/undo', async (c) => {
     const [b] = await q.query(`select * from import_batches where id = $1 and kind = 'accounts' for update`, [id]);
     if (!b || b.undone_at) fail('not_found');
     if (Date.now() - new Date(b.created_at).getTime() > 30 * 86400_000) fail('not_found');
-    const removed = await q.query('delete from accounts where id = any($1::uuid[]) returning id', [b.created_ids]);
+    // What the import added goes to the trash as one item: people may have worked on those customers since.
+    const there = await q.query<{ id: string; name: string }>('select id, name from accounts where id = any($1::uuid[]) order by name', [b.created_ids]);
+    const trashId = await toTrash(q, 'account', there.map((r) => r.id), there[0]?.name ?? '', { via: 'import' });
+    const removed = await q.query('delete from accounts where id = any($1::uuid[]) returning id', [there.map((r) => r.id)]);
+    if (removed.length !== there.length) fail('forbidden');
     let restored = 0;
     for (const p of (b.previous ?? []) as Row[]) {
       const r = await q.query(
@@ -526,8 +536,8 @@ accountRoutes.post('/imports/:id/undo', async (c) => {
     }
     if (b.summary?.fieldsBefore) await q.query('select app_set_account_fields($1::jsonb)', [JSON.stringify(b.summary.fieldsBefore)]);
     await q.query(`update import_batches set undone_at = now(), previous = '[]'::jsonb where id = $1`, [id]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, restored } });
-    return { removed: removed.length, restored };
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'account.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, restored, trashId } });
+    return { removed: removed.length, restored, trashId };
   });
   return c.json(out);
 });

@@ -22,7 +22,7 @@ Home pages and dashboards are made of cards; `GET /pages/:id/data` gives what ea
 | `POST /pages/from-template` | Adds a ready-made dashboard as a page of your own. |
 | `PATCH /pages/:id` | Changes a page. |
 | `PUT /pages/order` | Sets the order of the pages. |
-| `DELETE /pages/:id` | Deletes a page. |
+| `DELETE /pages/:id` | Moves a page to the trash, where it stays for 30 days. |
 | `GET /reports/work` | Work at a glance: open, overdue, due this week and unassigned, by board and by person. |
 | `GET /reports/person/:id` | One person at a glance: what they finished, what is late, what is coming, who they look after. |
 | `GET /reports/catalog` | What a report can be built from: the sources, their fields and the ready-made reports. |
@@ -31,7 +31,7 @@ Home pages and dashboards are made of cards; `GET /pages/:id/data` gives what ea
 | `GET /reports/saved/:id` | One saved report with its definition. |
 | `POST /reports/saved` | Saves a report. |
 | `PATCH /reports/saved/:id` | Changes a saved report. |
-| `DELETE /reports/saved/:id` | Deletes a saved report. |
+| `DELETE /reports/saved/:id` | Moves a saved report to the trash, where it stays for 30 days. |
 
 ## Details
 
@@ -114,7 +114,7 @@ Sets the order of the pages.
 
 ### `DELETE /pages/:id`
 
-Deletes a page.
+Moves a page to the trash, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** permission `org.manage`
 
@@ -177,6 +177,6 @@ Changes a saved report.
 
 ### `DELETE /reports/saved/:id`
 
-Deletes a saved report.
+Moves a saved report to the trash, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** a seat that can write

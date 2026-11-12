@@ -17,6 +17,7 @@ import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/recor
 import { body, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
+import { toTrash } from '../lib/trash';
 import { changedFieldKeys, checkEditable, defsFor, hiddenKeys, mergeDefs, stripFields, type Viewer } from '../lib/fieldAccess';
 
 export const recordRoutes = new Hono<AppEnv>();
@@ -575,11 +576,20 @@ recordRoutes.delete('/records/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
-  await run(c, async (q) => {
+  const trashId = await run(c, async (q) => {
+    const [r] = await q.query<{ name: string; account_id: string | null; type: { one?: Record<string, string> } | null; account: string | null }>(
+      `select r.name, r.account_id, t.name as type, (select a.name from accounts a where a.id = r.account_id) as account
+         from records r join record_types t on t.id = r.type_id where r.id = $1`,
+      [id],
+    );
+    if (!r) fail('not_found');
+    // It stays in the trash for 30 days, with its comments and files.
+    const trashId = await toTrash(q, 'record', [id], r.name, { type: r.type?.one ?? {}, ...(r.account_id && r.account ? { accountId: r.account_id, account: r.account } : {}) });
     const rows = await q.query('delete from records where id = $1 returning name, account_id', [id]);
     if (!rows.length) fail('not_found');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.deleted', entity: 'record', entityId: id, meta: { name: rows[0].name } });
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.deleted', entity: 'record', entityId: id, meta: { name: rows[0].name, trashId } });
     await recomputeRollups(q, org.id, org.account_fields, [rows[0].account_id]);
+    return trashId;
   });
-  return c.json({ ok: true });
+  return c.json({ ok: true, trashId });
 });

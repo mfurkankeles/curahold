@@ -68,6 +68,9 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `slug_taken` | 409 | Bu adres alınmış. Başka bir tane dene. |
 | `support_too_many` | 409 | Zaten açık beş destek erişimin var. Önce birini kapat. |
 | `sync_running` | 409 | Bu bağlantı için şu anda bir eşitleme çalışıyor. Bir dakika sonra tekrar deneyin. |
+| `trash_conflict` | 409 | O zamandan beri yerini başka bir şey almış (aynı CRM kimliği ya da e-posta). Önce onu değiştir ya da kaldır. |
+| `trash_parent_first` | 409 | “…” de çöp kutusunda. Önce onu geri al. |
+| `trash_parent_gone` | 409 | Bunun bağlı olduğu şey artık yok; bu yüzden geri alınamıyor. |
 | `type_not_empty` | 409 | Bu türde hâlâ … kayıt var. Önce onları arşivleyin veya silin. |
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
