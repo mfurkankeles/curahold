@@ -7,5 +7,7 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 60_000,
     pool: 'forks',
+    // Builds the database every test file starts from (tests/global-setup.ts).
+    globalSetup: ['tests/global-setup.ts'],
   },
 });

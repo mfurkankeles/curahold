@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createApp } from '../api/src/app';
 import type { Config } from '../api/src/context';
 import { migrate } from '../api/src/db/migrate';
@@ -47,9 +49,14 @@ async function testDb(): Promise<Db> {
   return postgresDb(target.toString(), { max: 4, idleTimeout: 2 });
 }
 
+/** The database built once for the run (tests/global-setup.ts), when there is one. */
+const template = () => (process.env.TEST_DATABASE_URL ? null : (process.env.APP_TEST_TEMPLATE ?? null));
+
 export async function setup(over: Partial<Config> = {}) {
-  const db = await testDb();
-  await migrate(db, loadMigrations());
+  const from = template();
+  // A copy of the run's database (migrated, both sample companies in it), or a fresh one built here.
+  const db = from ? pgliteDb(await createMemoryPg(new Blob([readFileSync(join(from, 'template.tar'))]))) : await testDb();
+  if (!from) await migrate(db, loadMigrations());
   const email = new MemoryEmail();
   const storage = new MemoryStorage();
   const fetchHolder: { impl: FetchStub } = { impl: async () => new Response('no stub', { status: 500 }) };
@@ -70,8 +77,10 @@ export async function setup(over: Partial<Config> = {}) {
   const settle = async () => {
     while (background.length) await Promise.allSettled(background.splice(0));
   };
-  const a = await seedDemo(db, { slug: 'acme', locale: 'en' });
-  const b = await seedDemo(db, { slug: 'beta', locale: 'tr' });
+  type Seeded = Awaited<ReturnType<typeof seedDemo>>;
+  const kept = from ? (JSON.parse(readFileSync(join(from, 'seed.json'), 'utf8')) as { a: Seeded; b: Seeded }) : null;
+  const a = kept?.a ?? (await seedDemo(db, { slug: 'acme', locale: 'en' }));
+  const b = kept?.b ?? (await seedDemo(db, { slug: 'beta', locale: 'tr' }));
   return { db, app, email, storage, config, a, b, fetchHolder, deps, settle, clock };
 }
 

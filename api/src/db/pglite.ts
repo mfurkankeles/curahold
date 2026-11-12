@@ -39,8 +39,9 @@ export function pgliteDb(pg: PGlite): Db {
   };
 }
 
-export async function createMemoryPg(): Promise<PGlite> {
-  const pg = new PGlite();
+/** An in-memory Postgres: empty, or started from a copy made with dumpDataDir (much quicker than initialising one). */
+export async function createMemoryPg(from?: Blob): Promise<PGlite> {
+  const pg = from ? new PGlite({ loadDataDir: from }) : new PGlite();
   await pg.waitReady;
   return pg;
 }

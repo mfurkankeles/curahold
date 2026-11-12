@@ -273,9 +273,14 @@ Araya giren işler (ürün sahibinin 12 Kasım isteği):
 | Belge sayfası | 41 | 42 (geliştirici sözlüğü); her sayfada güncelleme tarihi ve okuma süresi |
 | Bağlantılar sayfası | 205 kelime | her CRM için ayrı bölüm (ne gelir, yöneticinin onayı ne zaman gerekir) |
 
-Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn (404 test) · tarayıcı 189 sn (36 senaryo + belgeler) ·
-demo 45 sn. Toplam 5 dakikanın biraz üstünde; birim testlerde her dosyanın veritabanını baştan kurması
-yerine hazır bir kopyadan başlaması bunu indirecek (Güvenilirlik paketi bitmeden yapılacak).
+Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 77 sn (404 test; altı koşunun ortası, 73–81 sn) ·
+tarayıcı 189 sn (36 senaryo + belgeler) · demo 45 sn. Toplam 5,5 dk → 4,4 dk (demo testiyle 5,2 dk).
+Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun
+kopyasından başlıyor. Ölçüm: boş bir veritabanını açmak 2,6 sn, şemayı ve örnekleri kurmak 0,8 sn,
+hazır kopyayı yüklemek 0,5 sn; 39 dosyada dosya başına yaklaşık 2,9 sn. Gerçek Postgres'e karşı
+koşuda (TEST_DATABASE_URL) eskisi gibi her kurulum kendi veritabanını açıyor.
+Açık not: yedi tam koşunun ilkinde bir test düştü, sonraki altısında düşmedi; hangisi olduğu o koşuda
+kayda geçmedi. Bundan sonra her tam koşunun çıktısı dosyaya yazılıyor; tekrarlarsa adıyla düzeltilecek.
 
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
 
