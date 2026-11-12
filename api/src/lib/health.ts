@@ -34,7 +34,7 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
          from records r join record_types rt on rt.id = r.type_id
         where r.org_id = $1 and rt.kind = 'contact' and r.archived_at is null and r.account_id is not null
           and ($2::uuid[] is null or r.account_id = any ($2::uuid[]))
-        order by lower(r.name)`,
+        order by sort_key(r.name_fold, r.name_tr)`,
       [orgId, ids],
     );
     for (const c of list) {

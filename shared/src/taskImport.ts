@@ -1,6 +1,7 @@
 // Bringing tasks in from a file (a CSV or Excel export of whatever the team
 // used before): which column is what, and how the values other tools write
 // become Curahold's — a date, a column on the board, people, a priority.
+import { foldText } from './text';
 import { parseDate } from './fields';
 import type { Locale } from './i18n';
 import { ticketPriorityOf } from './records';
@@ -9,14 +10,8 @@ export const TASK_IMPORT_FIELDS = ['title', 'description', 'status', 'assignee',
 export type TaskImportField = (typeof TASK_IMPORT_FIELDS)[number];
 export type TaskImportMapping = Partial<Record<TaskImportField, string>>;
 
-export const fold = (s: string) =>
-  s
-    .toLocaleLowerCase('tr-TR')
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/ı/g, 'i')
-    .replace(/\s+/g, ' ')
-    .trim();
+/** A column heading or a name as it is compared: folded (see text.ts), spaces tidied. */
+export const fold = (s: string) => foldText(s).replace(/\s+/g, ' ').trim();
 
 // What other tools (and people's own sheets) call these columns, in English and Turkish.
 const HEADERS: Record<TaskImportField, string[]> = {

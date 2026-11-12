@@ -1,5 +1,6 @@
 // Accounts (customers) and their fields; importing from a file with undo;
 // bulk changes. Works the same whether or not a CRM is connected.
+import { foldText } from '../../../shared/src/text';
 import { allowedCurrency } from '../lib/fx';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -96,15 +97,15 @@ accountRoutes.get('/accounts', async (c) => {
   const rows = await run(c, async (q) => {
     const list = await q.query(
       `select a.*, ${OPEN_TASKS}${signals ? `, ${SIGNALS}` : ''} from accounts a
-        where ($1 = '' or a.name ilike '%' || $1 || '%')
+        where ($1 = '' or a.name_fold like '%' || fold_text($1) || '%')
           and ($2::uuid is null or a.owner_id = $2::uuid)
           and (case when $3 then a.archived_at is not null else a.archived_at is null end)
-        order by lower(a.name) limit $4 offset $5`,
+        order by sort_key(a.name_fold, a.name_tr) limit $4 offset $5`,
       [search.replace(/[%_]/g, ''), ownerId, archived, limit, offset],
     );
     const [{ n }] = await q.query(
       `select count(*)::int as n from accounts a
-        where ($1 = '' or a.name ilike '%' || $1 || '%') and ($2::uuid is null or a.owner_id = $2::uuid)
+        where ($1 = '' or a.name_fold like '%' || fold_text($1) || '%') and ($2::uuid is null or a.owner_id = $2::uuid)
           and (case when $3 then a.archived_at is not null else a.archived_at is null end)`,
       [search.replace(/[%_]/g, ''), ownerId, archived],
     );
@@ -140,7 +141,7 @@ accountRoutes.get('/accounts/whitespace', async (c) => {
         group by 1, 2`,
       [typeId, field],
     );
-    const accounts = await q.query(`select a.id, a.name, a.owner_id from accounts a where a.archived_at is null order by lower(a.name) limit 1000`);
+    const accounts = await q.query(`select a.id, a.name, a.owner_id from accounts a where a.archived_at is null order by sort_key(a.name_fold, a.name_tr) limit 1000`);
     const have = new Map<string, Record<string, number>>();
     for (const r of cells) have.set(r.account_id, { ...(have.get(r.account_id) ?? {}), [r.v]: r.n });
     return {
@@ -341,7 +342,7 @@ const importSchema = z.object({
   locale: z.enum(['en', 'tr']).optional(),
 });
 
-const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').trim();
+const fold = (s: string) => foldText(s).trim();
 
 accountRoutes.post('/accounts/import', async (c) => {
   requirePerm(c, 'accounts.manage');
@@ -538,13 +539,13 @@ export async function linkPendingOwners(q: Q, orgId: string) {
        from users u
       where a.org_id = $1 and u.org_id = $1 and a.owner_id is null and a.fields ? '_owner'
         and u.status in ('active', 'invited')
-        and (lower(a.fields->>'_owner') = u.email or lower(a.fields->>'_owner') = lower(u.name))`,
+        and (lower(a.fields->>'_owner') = u.email or fold_text(a.fields->>'_owner') = fold_text(u.name))`,
     [orgId],
   );
   await q.query(
     `update accounts a set team_id = t.id, fields = a.fields - '_team'
        from teams t
-      where a.org_id = $1 and t.org_id = $1 and a.team_id is null and a.fields ? '_team' and lower(a.fields->>'_team') = lower(t.name)`,
+      where a.org_id = $1 and t.org_id = $1 and a.team_id is null and a.fields ? '_team' and fold_text(a.fields->>'_team') = fold_text(t.name)`,
     [orgId],
   );
 }

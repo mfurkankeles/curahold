@@ -205,13 +205,13 @@ meRoutes.post('/auth/logout', async (c) => {
 meRoutes.get('/people', async (c) => {
   const data = await run(c, async (q) => {
     const people = await q.query(
-      `select id, name, email, seat, status from users where status <> 'deleted' order by lower(name)`,
+      `select id, name, email, seat, status from users where status <> 'deleted' order by sort_text(name)`,
     );
     const teams = await q.query(
       `select t.id, t.name, t.lead_id,
               coalesce(array_agg(tm.user_id) filter (where tm.user_id is not null), '{}') as member_ids
          from teams t left join team_members tm on tm.team_id = t.id
-        group by t.id order by lower(t.name)`,
+        group by t.id order by sort_text(t.name)`,
     );
     return { people, teams };
   });

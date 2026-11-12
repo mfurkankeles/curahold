@@ -230,11 +230,11 @@ recordRoutes.get('/records', async (c) => {
   const data = await run(c, async (q) => {
     const type = typeRef ? await typeOf(q, typeRef) : null;
     const where = `($1::uuid is null or r.type_id = $1) and ($2::uuid is null or r.account_id = $2)
-      and ($3 = '' or r.name ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
+      and ($3 = '' or r.name_fold like '%' || fold_text($3) || '%' or a.name_fold like '%' || fold_text($3) || '%')
       and ($4::uuid is null or r.owner_id = $4)
       and (case when $5 then r.archived_at is not null else r.archived_at is null end)`;
     const args = [type?.id ?? null, accountId, search, ownerId, archived];
-    const rows = await q.query(`${SELECT} where ${where} order by lower(r.name) limit ${limit} offset ${offset}`, args);
+    const rows = await q.query(`${SELECT} where ${where} order by sort_key(r.name_fold, r.name_tr) limit ${limit} offset ${offset}`, args);
     const [{ n }] = await q.query<{ n: number }>(`select count(*)::int as n from records r left join accounts a on a.id = r.account_id where ${where}`, args);
     const links = await linksFor(q, 'record', rows.map((r) => r.id));
     return { rows, n, links, hidden: await hiddenByType(q, c.get('auth')) };

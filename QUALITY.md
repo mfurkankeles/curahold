@@ -222,6 +222,39 @@ Tanımlar: "orta seviye telefon, 4G" = 9 Mbit/sn iniş, 1,5 Mbit/sn çıkış, i
 kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel makinede, ağ gecikmesi olmadan
 ölçüldü; AB'den ölçüm canlı ortam kurulunca yapılacak.
 
+## Kararlar (ürün sahibi, 12 Kasım 2026)
+
+1. Canlı kanal: şirket başına Cloudflare Durable Object + WebSocket Hibernation. Kendi sunucusu modunda
+   aynı arayüzle Node WebSocket + Postgres LISTEN/NOTIFY. WebSocket'in engellendiği ağlarda bugünkü
+   yoklamaya düşer.
+2. Yeni şablonlar (5): hizmet firmaları (ajans, danışmanlık, profesyonel hizmet), yazılım ve teknoloji
+   satanlar, BT ve yönetilen hizmet sağlayıcıları, toptan ve üretim (bayi, kilit müşteri), lojistik ve operasyon
+   hizmetleri. Finans/sigorta aracılığı ve işe alım firmaları talep gelince.
+3. Dakikalık geri dönüş (PITR) ilk ödeyen müşteriyle açılır (ayda ~$105 sabit).
+4. Bu tura alınanlar: koltuk paylaşımı tespiti ve yöneticiye uyarı (Güvenilirlik paketi); GitHub'da
+   Docker imajı derleme kontrolü (deploy değil); fiyatlar onaylandı (Team $19 / $15, Business $35 / $29).
+5. Yedek: kod GitHub'da özel `curahold` reposunda; her paketin sonunda push edilir. Otomatik deploy yok.
+
+## Durum (her commit'te güncellenir)
+
+| Paket | Durum |
+| --- | --- |
+| 0. Yedek | Tamam: tüm commit'ler GitHub'da |
+| 1. Ölçüm | Tamam (aşağıda) |
+| 2. Güvenilirlik | Sürüyor (alt paketler aşağıda) |
+| 3. Kişiselleştirme | Bekliyor |
+| 4. Gerçek zamanlılık | Bekliyor |
+| 5. Hız | Bekliyor |
+| 6. Sadelik | Bekliyor |
+| 7. Tasarım | Bekliyor |
+| 8. 4. aşamadan kalanlar | Bekliyor |
+| 9. Yük testi ve marj doğrulama | Bekliyor |
+
+Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler · tekrar eden istek (idempotency) ·
+çöp kutusu · müşteri ve kayıtlarda sürüm · şirket saatine göre "bugün" · güvenlik başlıkları ve istek
+sınırı · uç başına izolasyon testi · hata kaydı ve iş durumu · koltuk paylaşımı tespiti · çevrimdışı
+kuyruk · yedek ve geri yükleme provası.
+
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
 
 Puanlar: Kişiselleştirme 5 · Güvenilirlik 4 · Hız 5 · Gerçek zamanlılık 2 · Sadelik 6 · İşlevsellik 6 ·

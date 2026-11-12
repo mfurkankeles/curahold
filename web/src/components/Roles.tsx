@@ -2,6 +2,7 @@
 // for new roles, and "who can do what" — by permission or by person.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_SCOPES, GRANT_PERMS, PERM_GROUPS, ROLE_PRESETS, scopeOf, withScope, type AccountScope, type Perm, type PersonAccess, type Role, type Seat, type UserStatus } from '../../../shared/src/model';
+import { compareText } from '../../../shared/src/text';
 import { startPreview } from '../lib/api';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -25,7 +26,7 @@ const byRank = (a: Role, b: Role) => {
   const y = SYSTEM_ORDER.indexOf(b.key);
   if (a.system && b.system) return x - y;
   if (a.system !== b.system) return a.system ? -1 : 1;
-  return a.name.localeCompare(b.name);
+  return compareText(a.name, b.name, document.documentElement.lang || 'en');
 };
 
 function useAccess() {

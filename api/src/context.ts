@@ -135,7 +135,8 @@ export type C = Context<AppEnv>;
 export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
   const org = c.get('org');
   const auth = c.get('auth') as AuthCtx | undefined;
-  return c.get('deps').db.tenant({ orgId: org.id, userId: auth?.userId ?? null }, fn);
+  // The reader's language goes along: names are ordered the way its dictionary orders them.
+  return c.get('deps').db.tenant({ orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale }, fn);
 }
 
 export function requirePerm(c: C, perm: Perm) {

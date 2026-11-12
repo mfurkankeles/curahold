@@ -418,7 +418,7 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
       const rows = await q.query(
         `select a.id, a.name, a.owner_id, ${d}::text as due, (${d} - $3::date) as left_days,
                 ${moneyOf('$5')} as amount, a.fields->>$6 as opt
-           from accounts a where ${where} order by ${d}, lower(a.name) limit 8`,
+           from accounts a where ${where} order by ${d}, sort_key(a.name_fold, a.name_tr) limit 8`,
         [...args, money?.key ?? '', healthField?.key ?? ''],
       );
       const [n] = await q.query(
@@ -451,7 +451,7 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
       const where = `${base(card.scope)} and a.fields->>$2 = any ($3::text[])`;
       const rows = await q.query(
         `select a.id, a.name, a.owner_id, a.fields->>$2 as opt, ${moneyOf('$4')} as amount
-           from accounts a where ${where} order by amount desc nulls last, lower(a.name) limit 8`,
+           from accounts a where ${where} order by amount desc nulls last, sort_key(a.name_fold, a.name_tr) limit 8`,
         [me, p.field.key, opts, money?.key ?? ''],
       );
       const [n] = await q.query(
@@ -474,7 +474,7 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
       const rows = await q.query(
         `select a.id, a.name, a.owner_id, ${last} as last_at,
                 floor(extract(epoch from now() - coalesce(${last}, a.created_at)) / 86400)::int as quiet_days
-           from accounts a where ${where} order by ${last} nulls first, lower(a.name) limit 8`,
+           from accounts a where ${where} order by ${last} nulls first, sort_key(a.name_fold, a.name_tr) limit 8`,
         [me, days],
       );
       const [n] = await q.query(`select count(*)::int as total from accounts a where ${where}`, [me, days]);
@@ -495,7 +495,7 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
       const rows = await q.query(
         `select r.id, r.name, r.fields->>'stance' as opt, a.id as account_id, a.name as account_name, a.owner_id
            from records r join accounts a on a.id = r.account_id where ${where}
-          order by (r.fields->>'stance') = 'blocker' desc, lower(a.name), lower(r.name) limit 8`,
+          order by (r.fields->>'stance') = 'blocker' desc, sort_key(a.name_fold, a.name_tr), sort_key(r.name_fold, r.name_tr) limit 8`,
         [me, type.id],
       );
       const [n] = await q.query(`select count(*)::int as total from records r join accounts a on a.id = r.account_id where ${where}`, [me, type.id]);
@@ -593,7 +593,7 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
         `select u.id, u.name from users u
           where u.status = 'active' and u.seat = 'full'
             and ($2 or u.id = $1 or u.id in (select m.user_id from team_members m where m.team_id in ${MY_TEAMS}))
-          order by lower(u.name) limit 60`,
+          order by sort_text(u.name) limit 60`,
         [me, everyone],
       );
       const ids = people.map((p) => p.id);

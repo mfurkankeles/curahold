@@ -2,6 +2,7 @@
 // happen), and the health score with its reasons. Everything is read under
 // the viewer's own rights: a task on a board they cannot open, or a field
 // hidden from their role, does not show up here either.
+import { compareText } from '../../../shared/src/text';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { DEFAULT_HEALTH, HEALTH_FIELD, HEALTH_SIGNALS, healthConfig, type HealthConfig } from '../../../shared/src/health';
@@ -281,7 +282,7 @@ timelineRoutes.post('/health/preview', async (c) => {
     const cur = a.fields?.[HEALTH_FIELD];
     list.push({ id, name: a.name, score: r.score, band: r.band, current: typeof cur === 'number' ? cur : null });
   }
-  list.sort((x, y) => (x.score ?? 101) - (y.score ?? 101) || x.name.localeCompare(y.name));
+  list.sort((x, y) => (x.score ?? 101) - (y.score ?? 101) || compareText(x.name, y.name, (c.get('locale') as string | undefined) ?? c.get('org').locale));
   return c.json({ counts, lowest: list.slice(0, 8) });
 });
 

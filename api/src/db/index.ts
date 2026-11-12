@@ -10,6 +10,8 @@ export interface Q {
 export interface TenantCtx {
   orgId: string | null;
   userId: string | null;
+  /** The reader's language: lists come back in its dictionary order (sort_text in the migrations). */
+  locale?: string | null;
 }
 
 export interface Db {
@@ -34,4 +36,4 @@ export const PORTAL_SETUP_SQL =
   "select set_config('app.org_id', $1, true), set_config('app.user_id', '', true), set_config('app.portal_user', $2, true)";
 
 export const TENANT_SETUP_SQL =
-  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true)";
+  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true), set_config('app.locale', $3, true)";

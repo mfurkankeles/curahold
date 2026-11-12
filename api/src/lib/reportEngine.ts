@@ -347,7 +347,7 @@ function filterSql(f: F, x: ReportFilter, p: Params, env: Env, me: string): stri
   }
   if (t === 'text') {
     const s = String(x.value ?? '').trim().slice(0, 100);
-    return x.op === 'contains' && s ? `${e} ilike ${p.add(`%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`)}` : null;
+    return x.op === 'contains' && s ? `fold_text(${e}) like fold_text(${p.add(`%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`)})` : null;
   }
   if (t === 'date') {
     const today = () => `${p.once(env.today)}::date`;

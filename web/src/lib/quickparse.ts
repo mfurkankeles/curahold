@@ -2,6 +2,7 @@
 // @, customers with #, priority with !, and the due date (and repetition) is
 // read from everyday words in Turkish or English — "yarın", "cumaya kadar",
 // "15 kas", "haftaya", "her pazartesi", "tomorrow", "next week", "in 3 days".
+import { foldText } from '../../../shared/src/text';
 import type { Priority, Repeat } from '../../../shared/src/model';
 
 export interface Pickable {
@@ -24,14 +25,8 @@ export interface Parsed {
   unknown: string[];
 }
 
-/** Lower case, Turkish-aware, accents and dotted/dotless i folded: "Çağrı İş" → "cagri is". */
-export function fold(s: string): string {
-  return s
-    .toLocaleLowerCase('tr')
-    .replace(/ı/g, 'i')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
-}
+/** No capitals, no marks, one kind of i: "Çağrı İş" → "cagri is" (shared/src/text.ts). */
+export const fold = foldText;
 
 export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);

@@ -10,6 +10,7 @@ import { saveUndo, UNDO_MINUTES } from '../lib/undo';
 import { kick } from '../lib/notify';
 import { isDone, onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
 import { kickSync, queueSync, taskKeys } from '../lib/records';
+import { foldText } from '../../../shared/src/text';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail, HttpError } from '../lib/errors';
@@ -66,7 +67,7 @@ taskRoutes.get('/boards/:id/tasks', async (c) => {
       await loadBoard(q, id);
       const rows = await q.query(
         `select t.*, ${COUNTS}, a.name as account_name from tasks t left join accounts a on a.id = t.account_id
-          where t.board_id = $1 and t.parent_id is null and t.archived_at is not null and ($2 = '' or t.title ilike '%' || $2 || '%')
+          where t.board_id = $1 and t.parent_id is null and t.archived_at is not null and ($2 = '' or t.title_fold like '%' || fold_text($2) || '%')
           order by t.archived_at desc limit 101 offset $3`,
         [id, search, offset],
       );
@@ -260,11 +261,7 @@ taskRoutes.post('/tasks', async (c) => {
 // ----------------------------------------------------------- look-alikes
 
 const words = (s: string) =>
-  s
-    .toLocaleLowerCase('tr')
-    .replace(/ı/g, 'i')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  foldText(s)
     .split(/[^a-z0-9]+/)
     .filter((w) => w.length >= 3);
 
@@ -283,7 +280,7 @@ taskRoutes.get('/tasks/similar', async (c) => {
           and ($2::uuid is null or t.account_id = $2::uuid or t.board_id = $1::uuid)
           and t.created_at > now() - interval '180 days'
           and t.done_at is null
-          and lower(t.title) like any($3::text[])
+          and t.title_fold like any($3::text[])
         order by t.created_at desc limit 50`,
       [uuid.safeParse(boardId).success ? boardId : null, uuid.safeParse(accountId).success ? accountId : null, mine.map((w) => `%${w}%`)],
     ),

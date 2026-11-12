@@ -196,7 +196,7 @@ adminRoutes.get('/access', async (c) => {
     await q.query(
       `select u.id, u.name, u.email, u.seat, u.status, u.role_id,
               coalesce((select array_agg(team_id) from team_members m where m.user_id = u.id), '{}') as team_ids
-         from users u where u.status <> 'deleted' order by lower(u.name)`,
+         from users u where u.status <> 'deleted' order by sort_text(u.name)`,
     ),
   ]);
   return c.json({
@@ -219,7 +219,7 @@ adminRoutes.get('/users/:id/access', async (c) => {
     const teams = await q.query(
       `select t.id, t.name, coalesce(t.lead_id = $1, false) as lead from teams t
         where t.lead_id = $1 or exists (select 1 from team_members m where m.team_id = t.id and m.user_id = $1)
-        order by lower(t.name)`,
+        order by sort_text(t.name)`,
       [id],
     );
     // The boards the person asking can see; others are counted, not named.
@@ -236,7 +236,7 @@ adminRoutes.get('/users/:id/access', async (c) => {
               coalesce(t.lead_id = $2, false) as lead
          from boards b left join teams t on t.id = b.team_id
         where b.org_id = $1 and b.archived_at is null
-        order by lower(b.name)`,
+        order by sort_text(b.name)`,
       [org.id, id],
     ),
   );
@@ -297,7 +297,7 @@ adminRoutes.post('/teams', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const id = await run(c, async (q) => {
-    const dup = await q.query('select 1 from teams where lower(name) = lower($1)', [input.name]);
+    const dup = await q.query('select 1 from teams where fold_text(name) = fold_text($1)', [input.name]);
     if (dup.length) fail('validation', { fields: 'name' }, { fields: ['name'] });
     const [t] = await q.query('insert into teams (org_id, name, lead_id) values ($1, $2, $3) returning id', [
       org.id,
@@ -352,7 +352,7 @@ adminRoutes.get('/users', async (c) => {
   const rows = await run(c, (q) =>
     q.query(
       `select u.*, coalesce((select array_agg(team_id) from team_members m where m.user_id = u.id), '{}') as team_ids
-         from users u order by u.status = 'deleted', lower(u.name)`,
+         from users u order by u.status = 'deleted', sort_text(u.name)`,
     ),
   );
   const users: AdminUser[] = rows.map((u) => ({

@@ -74,7 +74,7 @@ async function customerFor(q: Q, orgId: string, input: TicketInput): Promise<str
     if (hit) return hit.id;
   }
   if (a.name) {
-    const [hit] = await q.query('select id from accounts where org_id = $1 and archived_at is null and lower(name) = lower($2) order by created_at limit 1', [orgId, a.name]);
+    const [hit] = await q.query('select id from accounts where org_id = $1 and archived_at is null and name_fold = fold_text($2) order by created_at limit 1', [orgId, a.name]);
     if (hit) return hit.id;
   }
   return null;

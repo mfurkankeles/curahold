@@ -85,7 +85,7 @@ builderRoutes.post('/reports/run', async (c) => {
 
 builderRoutes.get('/reports/saved', async (c) => {
   const me = c.get('auth').userId;
-  const rows = await run(c, (q) => q.query('select * from reports order by lower(name)'));
+  const rows = await run(c, (q) => q.query('select * from reports order by sort_text(name)'));
   return c.json({ reports: rows.map((r) => toReport(r, me)) });
 });
 

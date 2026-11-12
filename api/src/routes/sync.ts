@@ -180,7 +180,7 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
   const data = await run(c, async (q) => {
     const types = await q.query('select id, key, name, kind, fields from record_types where archived_at is null order by position, created_at');
-    const boards = await q.query('select id, name from boards where archived_at is null order by lower(name)');
+    const boards = await q.query('select id, name from boards where archived_at is null order by sort_text(name)');
     const [pending] = await q.query<{ n: number; failing: number }>(`select count(*)::int as n, count(*) filter (where attempts > 0)::int as failing from sync_changes where connection_id = $1`, [conn.id]);
     return { types, boards, pending };
   });

@@ -18,7 +18,7 @@ export function pgliteDb(pg: PGlite): Db {
   return {
     tenant(ctx, fn) {
       return pg.transaction(async (tx) => {
-        await tx.query(TENANT_SETUP_SQL, [ctx.orgId ?? '', ctx.userId ?? '']);
+        await tx.query(TENANT_SETUP_SQL, [ctx.orgId ?? '', ctx.userId ?? '', ctx.locale ?? '']);
         await tx.exec('set local role curahold_app');
         return fn(wrap(tx as unknown as Tx));
       });

@@ -41,7 +41,7 @@ workRoutes.get('/views', async (c) => {
   const board = c.req.query('board');
   const auth = c.get('auth');
   const rows = await run(c, (q) =>
-    q.query('select * from saved_views where ($1::uuid is null and board_id is null) or board_id = $1::uuid order by shared desc, lower(name)', [uuid.safeParse(board).success ? board : null]),
+    q.query('select * from saved_views where ($1::uuid is null and board_id is null) or board_id = $1::uuid order by shared desc, sort_text(name)', [uuid.safeParse(board).success ? board : null]),
   );
   return c.json({ views: rows.map((r) => toView(r, auth.userId)) });
 });
@@ -97,7 +97,7 @@ const toChecklist = (r: Row, me: string) => ({ id: r.id, name: r.name, items: r.
 
 workRoutes.get('/checklists', async (c) => {
   const auth = c.get('auth');
-  const rows = await run(c, (q) => q.query('select * from checklist_templates order by lower(name)'));
+  const rows = await run(c, (q) => q.query('select * from checklist_templates order by sort_text(name)'));
   return c.json({ checklists: rows.map((r) => toChecklist(r, auth.userId)) });
 });
 
@@ -107,7 +107,7 @@ workRoutes.post('/checklists', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const row = await run(c, async (q) => {
-    const [taken] = await q.query('select 1 from checklist_templates where lower(name) = lower($1)', [input.name]);
+    const [taken] = await q.query('select 1 from checklist_templates where fold_text(name) = fold_text($1)', [input.name]);
     if (taken) fail('validation', { fields: 'name' }, { fields: ['name'] });
     const [r] = await q.query('insert into checklist_templates (org_id, name, items, created_by) values ($1, $2, $3, $4) returning *', [org.id, input.name, JSON.stringify(input.items), auth.userId]);
     return r;
@@ -143,7 +143,7 @@ const planInput = z.object({
 const toPlan = (r: Row) => ({ id: r.id, name: r.name, description: r.description ?? '', boardId: r.board_id, column: r.column_key ?? null, anchor: r.anchor ?? 'start', tasks: r.tasks ?? [] });
 
 workRoutes.get('/plans', async (c) => {
-  const rows = await run(c, (q) => q.query('select p.* from plan_templates p join boards b on b.id = p.board_id where b.archived_at is null order by lower(p.name)'));
+  const rows = await run(c, (q) => q.query('select p.* from plan_templates p join boards b on b.id = p.board_id where b.archived_at is null order by sort_text(p.name)'));
   return c.json({ plans: rows.map(toPlan) });
 });
 
@@ -156,7 +156,7 @@ workRoutes.post('/plans', async (c) => {
   const org = c.get('org');
   const row = await run(c, async (q) => {
     await loadBoard(q, input.boardId);
-    const [taken] = await q.query('select 1 from plan_templates where lower(name) = lower($1)', [input.name]);
+    const [taken] = await q.query('select 1 from plan_templates where fold_text(name) = fold_text($1)', [input.name]);
     if (taken) fail('validation', { fields: 'name' }, { fields: ['name'] });
     const [r] = await q.query(
       'insert into plan_templates (org_id, name, board_id, column_key, tasks, created_by, anchor, description) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *',

@@ -84,7 +84,7 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
       where a.org_id = $1 and a.id = any ($2::uuid[])
         and coalesce((select max(x) from (select max(greatest(t.updated_at, t.created_at)) as x from tasks t where t.account_id = a.id
                       union all select max(v.happened_at) from activities v where v.account_id = a.id) l), a.created_at) < now() - interval '30 days'
-      order by lower(a.name)`,
+      order by sort_key(a.name_fold, a.name_tr)`,
     [orgId, ids],
   );
   const [work] = await q.query(
