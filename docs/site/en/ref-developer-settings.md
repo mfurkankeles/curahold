@@ -1,6 +1,6 @@
 ---
 title: Reference: keys, webhooks and the inbound address
-section: developers
+section: reference
 order: 26
 summary: What Settings → Developers does, for completeness.
 ---

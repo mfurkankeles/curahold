@@ -1,6 +1,6 @@
 ---
 title: Başvuru: nesneler
-section: developers
+section: reference
 order: 40
 summary: API'nin cevapladığı haliyle müşterinin, görevin, kaydın ve diğerlerinin biçimi.
 ---

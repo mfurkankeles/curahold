@@ -1,6 +1,6 @@
 ---
 title: Reference: automations and playbooks
-section: developers
+section: reference
 order: 25
 summary: Rules that act on their own, and reusable plans of tasks.
 ---

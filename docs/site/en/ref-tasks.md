@@ -1,6 +1,6 @@
 ---
 title: Reference: tasks and boards
-section: developers
+section: reference
 order: 22
 summary: Tasks, subtasks, comments, files, time, boards and saved views.
 ---

@@ -13,7 +13,7 @@ Roles decide who can see and change what. The rules are enforced in the database
 - **Full seat:** sees and changes.
 - **Viewer seat:** sees only. Good for managers and leadership.
 
-## Built-in roles
+## Built-in roles: what each role can see and do
 
 | Role | In short |
 | --- | --- |

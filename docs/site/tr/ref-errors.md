@@ -1,6 +1,6 @@
 ---
 title: Başvuru: hatalar
-section: developers
+section: reference
 order: 39
 summary: Her hata kodu, HTTP durumu ve ne anlama geldiği.
 ---

@@ -1,6 +1,6 @@
 ---
 title: Başvuru: görevler ve panolar
-section: developers
+section: reference
 order: 22
 summary: Görevler, alt görevler, yorumlar, dosyalar, süre, panolar ve kayıtlı görünümler.
 ---

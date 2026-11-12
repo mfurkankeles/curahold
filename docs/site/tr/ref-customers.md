@@ -1,6 +1,6 @@
 ---
 title: Başvuru: müşteriler
-section: developers
+section: reference
 order: 20
 summary: Müşteriler, alanları, zaman çizelgesi, toplantılar ve sağlık skoru.
 ---

@@ -1,6 +1,6 @@
 ---
 title: Başvuru: ana sayfalar, panolar ve raporlar
-section: developers
+section: reference
 order: 24
 summary: Ana sayfaların ve gösterge panolarının arkasındaki veri; rapor oluşturucu.
 ---

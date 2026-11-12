@@ -1,6 +1,6 @@
 ---
 title: Başvuru: kayıtlar
-section: developers
+section: reference
 order: 21
 summary: Kişiler, fırsatlar, destek kayıtları ve kendi tanımladığın türler.
 ---

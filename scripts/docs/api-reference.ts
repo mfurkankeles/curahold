@@ -111,7 +111,7 @@ export function pages(all = readRoutes()): { file: string; lang: Lang; content: 
       const content = [
         '---',
         `title: ${pick(g.title, lang)}`,
-        'section: developers',
+        'section: reference',
         `order: ${20 + i}`,
         `summary: ${pick(g.summary, lang)}`,
         '---',
@@ -161,7 +161,7 @@ function objectsPage(lang: Lang): string {
       parts.push(`## ${name}`, '', '```ts', m[0].replace(/^export /, ''), '```', '');
     }
   }
-  return ['---', `title: ${pick(title, lang)}`, 'section: developers', 'order: 40', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', pick(intro, lang), '', ...parts].join('\n');
+  return ['---', `title: ${pick(title, lang)}`, 'section: reference', 'order: 40', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', pick(intro, lang), '', ...parts].join('\n');
 }
 
 /** Every error code with its HTTP status and the sentence a person sees, from the server's own list. */
@@ -178,7 +178,7 @@ function errorsPage(lang: Lang): string {
   ];
   const head = lang === 'en' ? '| Code | Status | What the person is told |' : '| Kod | Durum | Kişiye söylenen |';
   const rows = codes.sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([code, status]) => `| \`${code}\` | ${status} | ${cell(translate(lang, `errors.${code}` as MessageKey).replace(/\{\w+\}/g, '…'))} |`);
-  return ['---', `title: ${pick(title, lang)}`, 'section: developers', 'order: 39', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', pick(intro, lang), '', head, '| --- | --- | --- |', ...rows, ''].join('\n');
+  return ['---', `title: ${pick(title, lang)}`, 'section: reference', 'order: 39', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', pick(intro, lang), '', head, '| --- | --- | --- |', ...rows, ''].join('\n');
 }
 
 function internalPage(routes: RouteDoc[], lang: Lang): string {
@@ -189,7 +189,7 @@ function internalPage(routes: RouteDoc[], lang: Lang): string {
     .sort()
     .map((seg) => `| \`/${seg}/…\` | ${routes.filter((r) => segment(r) === seg).length} | ${cell(pick(INTERNAL[seg], lang))} |`);
   const head = lang === 'en' ? '| Addresses | How many | Why |' : '| Adresler | Kaç tane | Neden |';
-  return ['---', `title: ${pick(title, lang)}`, 'section: developers', 'order: 41', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', w.internalIntro, '', head, '| --- | --- | --- |', ...rows, ''].join('\n');
+  return ['---', `title: ${pick(title, lang)}`, 'section: reference', 'order: 41', `summary: ${pick(summary, lang)}`, '---', `# ${pick(title, lang)}`, '', w.internalIntro, '', head, '| --- | --- | --- |', ...rows, ''].join('\n');
 }
 
 if (process.argv[1]?.endsWith('api-reference.ts')) {

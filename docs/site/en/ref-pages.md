@@ -1,6 +1,6 @@
 ---
 title: Reference: home pages, dashboards and reports
-section: developers
+section: reference
 order: 24
 summary: The data behind home pages and dashboards, and the report builder.
 ---

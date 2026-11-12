@@ -1,6 +1,6 @@
 ---
 title: Reference: objects
-section: developers
+section: reference
 order: 40
 summary: The shape of a customer, a task, a record and the rest, as the API answers.
 ---

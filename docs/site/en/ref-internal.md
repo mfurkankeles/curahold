@@ -1,6 +1,6 @@
 ---
 title: Reference: what is not in the API
-section: developers
+section: reference
 order: 41
 summary: Addresses that belong to the browser, listed so nothing is hidden.
 ---

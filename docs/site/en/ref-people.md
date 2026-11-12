@@ -1,6 +1,6 @@
 ---
 title: Reference: people, search and notifications
-section: developers
+section: reference
 order: 23
 summary: Who you are, your colleagues, search, notifications and the calendar feed.
 ---

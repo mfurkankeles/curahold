@@ -1,6 +1,6 @@
 ---
 title: Başvuru: otomasyonlar ve planlar
-section: developers
+section: reference
 order: 25
 summary: Kendi kendine çalışan kurallar ve yeniden kullanılabilen görev planları.
 ---

@@ -1,6 +1,6 @@
 ---
 title: Reference: customers
-section: developers
+section: reference
 order: 20
 summary: Customers, their fields, timeline, meetings and health score.
 ---

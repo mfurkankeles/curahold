@@ -1,6 +1,6 @@
 ---
 title: Başvuru: anahtarlar, webhook'lar ve gelen adres
-section: developers
+section: reference
 order: 26
 summary: Ayarlar → Geliştiriciler sayfasının yaptıkları; eksiksiz olsun diye.
 ---

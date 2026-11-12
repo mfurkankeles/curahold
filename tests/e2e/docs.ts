@@ -42,6 +42,26 @@ const llms = await (await fetch(`${base}/llms.txt`)).text();
 check(llms.startsWith('# Curahold') && llms.includes('/docs/en/api-keys.md'), 'llms.txt lists the docs');
 check((await fetch(`${base}/docs/en/api-keys.md`)).ok, 'pages are also served as markdown');
 
+// The start page: one question box, four ways in; and "Ask" answers from the docs.
+await page.goto(`${base}/docs/en/`, { waitUntil: 'networkidle0' });
+check((await page.$$('.entry')).length === 4, 'the start page offers four ways in');
+check((await page.$$('.asked button')).length >= 5 && (await page.$$('.recent li')).length === 5, 'the start page lists what is asked most and what changed');
+await page.type('.hero__ask input', 'How do I verify a webhook signature?');
+await page.keyboard.press('Enter');
+await page.waitForSelector('.ask__answer', { timeout: 8000 }).catch(() => undefined);
+const answer = await page.$eval('.ask__answer', (e) => ({ heading: e.querySelector('h4')?.textContent ?? '', from: e.querySelector('.ask__from a')?.getAttribute('href') ?? '' })).catch(() => ({ heading: '', from: '' }));
+check(answer.heading === 'Verifying the signature' && answer.from.startsWith('/docs/en/webhooks/#'), 'Ask answers a question from the docs and says where from');
+await page.screenshot({ path: join(SCREENS, 'docs-ask.png') });
+await page.click('.ask__helped button:last-child');
+check((await page.$$('.ask__support a')).length === 1, 'Ask offers support when the answer did not help');
+await page.setViewport({ width: 390, height: 844 });
+await page.goto(`${base}/docs/tr/`, { waitUntil: 'networkidle0' });
+await page.click('.asked button');
+await page.waitForSelector('.ask__answer, .ask__chips', { timeout: 8000 }).catch(() => undefined);
+check((await page.$$('.ask__msg--you')).length === 1 && (await page.$$('.ask__msg--bot')).length >= 2, 'a question from the start page opens Ask on a phone, in Turkish');
+const wide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+check(!wide, 'the start page does not scroll sideways on a phone');
+
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'docs ok');
 await browser.close();
 local.server.close();

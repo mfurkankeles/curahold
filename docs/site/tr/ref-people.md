@@ -1,6 +1,6 @@
 ---
 title: Başvuru: kişiler, arama ve bildirimler
-section: developers
+section: reference
 order: 23
 summary: Kim olduğun, iş arkadaşların, arama, bildirimler ve takvim akışı.
 ---

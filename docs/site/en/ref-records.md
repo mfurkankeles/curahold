@@ -1,6 +1,6 @@
 ---
 title: Reference: records
-section: developers
+section: reference
 order: 21
 summary: Contacts, opportunities, tickets and the kinds you define yourself.
 ---

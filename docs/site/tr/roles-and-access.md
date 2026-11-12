@@ -13,7 +13,7 @@ Kimin neyi görüp değiştirebileceğini roller belirler. Kurallar arayüzde de
 - **Tam koltuk:** görür ve değiştirir.
 - **İzleyici koltuğu:** yalnızca görür. Yöneticiler ve yönetim ekibi için uygundur.
 
-## Hazır roller
+## Hazır roller: hangi rol neyi görür, ne yapar
 
 | Rol | Kısaca |
 | --- | --- |

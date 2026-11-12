@@ -1,6 +1,6 @@
 ---
 title: Başvuru: API'de olmayanlar
-section: developers
+section: reference
 order: 41
 summary: Tarayıcıya ait adresler; hiçbir şey gizli kalmasın diye listelenir.
 ---

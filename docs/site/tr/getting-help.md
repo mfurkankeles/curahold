@@ -6,9 +6,17 @@ summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Curahold dest
 ---
 # Destek almak
 
-Sol menüdeki **Yardım** ile Curahold desteğine yazarsın. Form, desteğin seni tekrar tekrar aramadan sorunu bulabilmesi için gereken bilgileri ister. Gördüğün şeyi değiştirmez ya da göndermez; ne gideceğini sen seçersin.
+İki adım, bu sırayla: önce **sor**, yetmediyse **desteğe yaz**.
 
-## Talep göndermek
+## Önce sor
+
+Sol menüden **Yardım**'ı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Türkçe ve İngilizce çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
+
+Cevap işini görmediyse söyle: en yakın diğer yerleri ve sorun hazır yazılmış halde desteğe yazma düğmesini görürsün.
+
+## Desteğe ulaşmak: talep göndermek
+
+**Yardım → Desteğe yaz**'ı kullan. Form, desteğin sana yeniden soru sormadan sorunu bulabilmesi için gerekenleri ister. Görmediğin hiçbir şey gönderilmez; neyin gideceğini sen seçersin.
 
 1. **Konu**: Bir şey çalışmıyor, Nasıl yapılır, Veri ya da bağlantı, Öneri ya da Fatura ve plan.
 2. **Etki**: Hata ve veri sorunlarında işini durdurup durdurmadığını seç. Desteğin sırası buna göre belirlenir.

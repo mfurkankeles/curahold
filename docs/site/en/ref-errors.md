@@ -1,6 +1,6 @@
 ---
 title: Reference: errors
-section: developers
+section: reference
 order: 39
 summary: Every error code, its HTTP status and what it means.
 ---
