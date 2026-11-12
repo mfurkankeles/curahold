@@ -48,6 +48,7 @@ const TEXT = {
       'Müşteriler → Değerlendirmeler: iş değerlendirmesi geciken ve yaklaşan müşteriler. “Yapıldı” ile kaydet; sıradaki tarih ilerler. Ritim ve hedefler Ayarlar → Hedefler ve ritim’de.',
       'CS — Genel panosunda bir görev aç: Takip et, Görev bağla (“şunu bekliyor”), süre ekle, Kontrol listesi ve en altta Geçmiş. Panoda Filtre ve Görünümler’i dene.',
       'Bir müşteri sayfasında “Plan uygula” ile onboarding görevlerini tek tıkla ekle.',
+      'Ayarlar → CRM ve tablolar: Salesforce’u (ya da başka bir CRM’i) bağla. Uydurma verili bir CRM gerçek adımları yürütür: izin ver, neyin geleceğini seç, alanları eşle, ilk eşitlemeyi başlat.',
       'CS — Genel panosunda Arşiv’e bak: 90 günü geçen tamamlanmış görevler orada, “Geri getir” ile döner. Yukarı ok düğmesi başka araçtan CSV/Excel ile görev aktarır.',
       'Sol alttaki adına tıkla: koyu temayı, dili ve ? ile klavye kısayollarını dene.',
       'Bir müşteriyi aç (örneğin Velto Mobility): zaman çizelgesine görüşme notu ekle, sağlık skorunun yanındaki “Neden?”e bak.',
@@ -90,6 +91,7 @@ const TEXT = {
       'Customers → Reviews: customers whose business review is late or coming up. Log one with “Done” and the next date moves. The rhythm and the targets are in Settings → Targets and rhythm.',
       'Open a task on CS — General: Follow, Link a task (“waits for”), add time, Checklist, and History at the bottom. Try Filter and Views on the board.',
       'On a customer’s page, “Apply a plan” adds the onboarding tasks in one click.',
+      'Settings → CRMs and sheets: connect Salesforce (or another CRM). A pretend CRM with made-up data walks the real steps: allow, pick what comes over, match the fields, start the first sync.',
       'Look at Archive on CS — General: finished tasks older than 90 days are there, and “Bring back” returns one. The up-arrow button imports tasks from another tool’s CSV or Excel file.',
       'Click your name at the bottom left: try dark mode, the language, and the keyboard shortcuts with ?.',
       'Open a customer (Velto Mobility, say): log a call on the timeline and check “Why?” next to the health score.',
@@ -321,7 +323,12 @@ async function main() {
   setTimeout(() => bootEl.remove(), 250);
 }
 
-main().catch((err) => {
+// A link that ends in #docs (or #docs-tr) opens the documentation that travels with the demo,
+// so the developer guide can be sent to someone on its own.
+const docsAt = /^#docs(?:-(tr|en))?$/.exec(window.location.hash);
+if (docsAt) window.location.replace(docsAt[1] ? `docs/${docsAt[1]}/index.html` : 'docs/index.html');
+
+(docsAt ? Promise.resolve() : main()).catch((err) => {
   console.error('[curahold demo]', err);
   bootEl.classList.add('failed');
   const t = TEXT[demoLocale];

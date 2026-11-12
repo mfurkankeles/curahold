@@ -255,7 +255,11 @@ function build() {
   ].join('\n');
   if (!RELATIVE) writeFileSync(join(OUT, '..', 'llms.txt'), llms);
   writeFileSync(join(OUT, 'llms-full.txt'), en.map((p) => `# ${p.title}\n\nSource: /docs/en/${p.slug}/\n\n${p.md.trim()}\n`).join('\n\n'));
-  if (RELATIVE) makeRelative(OUT);
+  if (RELATIVE) {
+    makeRelative(OUT);
+    // No server to send the reader on from the folder's own address: it opens on the English start page itself.
+    writeFileSync(join(OUT, 'index.html'), readFileSync(join(OUT, 'en', 'index.html'), 'utf8').replaceAll('"../', '"./'));
+  }
   console.log(`docs: ${all.tr.length} pages × ${LANGS.length} languages → ${OUT}`);
 }
 

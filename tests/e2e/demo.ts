@@ -174,6 +174,10 @@ if (ok && !process.env.QUICK) {
     if (!(await docs.$('h1'))) errors.push('a link between docs pages inside the demo leads nowhere');
     await Promise.all([docs.waitForNavigation({ timeout: 10000 }), docs.$eval('.top__app', (a) => (a as HTMLAnchorElement).click())]);
     await docs.waitForSelector('#demobar, #boot', { timeout: 15000 }).catch(() => errors.push('"Go to the app" in the demo docs does not lead back to the demo'));
+    // The demo's own address with #docs opens the documentation directly.
+    await docs.goto('about:blank');
+    await docs.goto(`http://127.0.0.1:${PORT}/a/demo/index.html#docs`);
+    await docs.waitForSelector('.nav a', { timeout: 15000 }).catch(() => errors.push('the demo address with #docs does not open the docs'));
     if (failed.length) errors.push(`the docs inside the demo could not load: ${failed.slice(0, 3).join(', ')}`);
     await docs.close();
   }

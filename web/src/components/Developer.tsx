@@ -106,7 +106,7 @@ function KeyRow({ k, owner, onRevoke }: { k: ApiKeyInfo; owner?: string; onRevok
 
 /** Profile: this person's keys and connected apps. With `all`, the company's (for people admins). */
 export function KeyList({ all = false }: { all?: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { me, people, toast } = useStore();
   const fail = useFail();
   const [keys, setKeys] = useState<ApiKeyInfo[] | null>(null);
@@ -136,7 +136,7 @@ export function KeyList({ all = false }: { all?: boolean }) {
           <button className="btn" onClick={() => setMaking(true)}>
             {t('dev.keys.new')}
           </button>
-          <a className="btn btn--quiet" href={docsHref()} {...docsLink}>
+          <a className="btn btn--quiet" href={docsHref(`${locale}/api-keys`)} {...docsLink}>
             {t('dev.docs')}
           </a>
         </div>
@@ -246,7 +246,7 @@ function NewKey({ readOnlySeat, onClose, onMade }: { readOnlySeat: boolean; onCl
 
 /** Settings → Developers: webhooks, the company's keys and where the docs are. */
 export function DeveloperTab() {
-  const { t, words } = useI18n();
+  const { t, words, locale } = useI18n();
   const { can, toast } = useStore();
   const fail = useFail();
   const [hooks, setHooks] = useState<WebhookInfo[] | null>(null);
@@ -274,7 +274,7 @@ export function DeveloperTab() {
           </dd>
         </dl>
         <div className="toolbar">
-          <a className="btn" href={docsHref()} {...docsLink}>
+          <a className="btn" href={docsHref(`${locale}/developers`)} {...docsLink}>
             {t('dev.docs')}
           </a>
           <a
@@ -380,7 +380,7 @@ export function DeveloperTab() {
 
 /** Any support tool that can send a web request: an address to post tickets to. */
 function InboundTickets() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const fail = useFail();
   const [info, setInfo] = useState<{ enabled: boolean; prefix: string | null; createdAt: string | null; lastAt: string | null } | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -427,7 +427,7 @@ function InboundTickets() {
             {t('inbound.disable')}
           </button>
         )}
-        <a className="btn btn--quiet" href={docsHref()} {...docsLink}>
+        <a className="btn btn--quiet" href={docsHref(`${locale}/connect-your-own-tool`)} {...docsLink}>
           {t('dev.docs')}
         </a>
       </div>
