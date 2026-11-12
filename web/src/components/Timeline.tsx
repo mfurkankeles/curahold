@@ -458,7 +458,12 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
   return (
     <section className="sheet tl">
       <div className="tl__top">
-        <h3 className="section__head">{t('timeline.title')}</h3>
+        <h3 className="section__head">
+          <span>
+            <Icon name="timeline" size={16} className="icon--lead" />
+            {t('timeline.title')}
+          </span>
+        </h3>
         <div className="seg tl__filter" role="group" aria-label={t('timeline.filterLabel')}>
           <button type="button" aria-pressed={filter === 'important'} onClick={() => choose('important')}>
             {t('timeline.filter.important')}
@@ -514,6 +519,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
             )}
             <div className="toolbar">
               <button className="btn btn--primary btn--small" disabled={busy || !text.trim()}>
+                <Icon name="plus" size={16} />
                 {t('timeline.add')}
               </button>
               <button type="button" className="btn btn--quiet btn--small" onClick={() => (setComposing(false), setText(''))}>
@@ -659,7 +665,10 @@ export function HealthSettings() {
   return (
     <div className="form" style={{ maxWidth: 820 }}>
       <section className="sheet">
-        <h2 className="sheet__title">{t('health.settings.title')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="heart" size={18} className="icon--lead" />
+            {t('health.settings.title')}
+          </h2>
         <p className="sheet__hint">{t('health.settings.hint')}</p>
         <label className="checkbox">
           <input type="checkbox" checked={cfg.enabled} onChange={(e) => setCfg({ ...cfg, enabled: e.target.checked })} />
@@ -668,7 +677,10 @@ export function HealthSettings() {
       </section>
 
       <section className="sheet">
-        <h2 className="sheet__title">{t('health.settings.signals')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="gauge" size={18} className="icon--lead" />
+            {t('health.settings.signals')}
+          </h2>
         <p className="sheet__hint">{t('health.settings.signalsHint')}</p>
         <ul className="signals">
           {cfg.signals.map((s) => (
@@ -780,7 +792,10 @@ export function HealthSettings() {
       </section>
 
       <section className="sheet">
-        <h2 className="sheet__title">{t('health.settings.bands')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="sliders" size={18} className="icon--lead" />
+            {t('health.settings.bands')}
+          </h2>
         <div className="signal__params">
           <label className="field">
             <span className="field__label">{t('health.settings.goodFrom')}</span>

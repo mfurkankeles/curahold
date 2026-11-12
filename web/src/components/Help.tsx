@@ -2,6 +2,7 @@
 // time (what happened, where, how to repeat it, screenshots, and the
 // technical details the app saw), and consent for support to look inside —
 // off unless ticked, time-limited, revocable.
+import { Icon } from './icons';
 import { Ask } from './Ask';
 import { docsFile, docsHref, docsLink } from '../lib/docs';
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
@@ -638,6 +639,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
         )}
         <div className="toolbar">
           <button className="btn btn--primary" disabled={busy}>
+            <Icon name="send" size={16} />
             {busy ? t('help.sending') : t('help.send')}
           </button>
           <span className="field__hint">{t('help.reply', { email: me.user.email })}</span>
@@ -771,12 +773,15 @@ export function HelpDialog({ onClose, start = 'ask' }: { onClose: () => void; st
       <Dialog title={t('help.title')} wide onClose={onClose}>
         <div className="tabs" role="tablist">
           <button className="tab" role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
+            <Icon name="search" size={16} className="icon--lead" />
             {t('ask.tab')}
           </button>
           <button className="tab" role="tab" aria-selected={tab === 'new'} onClick={() => (setTab('new'), setSentRef(null))}>
+            <Icon name="send" size={16} className="icon--lead" />
             {t('help.tab.new')}
           </button>
           <button className="tab" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
+            <Icon name="inbox" size={16} className="icon--lead" />
             {t('help.tab.mine')}
           </button>
         </div>

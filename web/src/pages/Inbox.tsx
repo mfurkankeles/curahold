@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Notification } from '../../../shared/src/model';
 import { EmptyState, SkeletonRows } from '../components/Empty';
-import { Icon, type IconName } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Avatar } from '../components/ui';
 import { get, post } from '../lib/api';
 import { useLive } from '../lib/live';
@@ -75,7 +75,8 @@ export function InboxPage() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="inbox" />
           <h1 className="topbar__title">{t('nav.inbox')}</h1>
           {data && <p className="topbar__sub">{data.unread ? t('inbox.unreadN', { n: data.unread }) : t('inbox.allRead')}</p>}
         </div>

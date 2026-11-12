@@ -48,6 +48,7 @@ export function GettingStarted() {
       <header className="start__head">
         <div>
           <h2 className="start__title" id="start-title">
+            <Icon name="flag" size={18} className="icon--lead" />
             {t('start.title')}
           </h2>
           <p className="start__lead">{t('start.lead')}</p>

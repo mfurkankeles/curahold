@@ -493,6 +493,7 @@ export function Composer({
         </button>
         <span className="composer__hint">{t('thread.pasteHint')}</span>
         <button className="btn btn--primary" disabled={(!text.trim() && !files.length) || busy}>
+          <Icon name="send" size={16} />
           {busy ? t('common.saving') : sendLabel}
         </button>
       </div>

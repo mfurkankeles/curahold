@@ -21,7 +21,7 @@ import { ExportMenu } from '../components/Export';
 import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { Tick } from '../components/Tick';
 import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
@@ -101,7 +101,10 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     <>
       <header className="topbar">
         <div style={{ minWidth: 0 }}>
-          <h1 className="topbar__title">{board.name}</h1>
+          <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="board" />
+          <span>{board.name}</span>
+        </h1>
         </div>
         <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
         <div className="topbar__spacer" />

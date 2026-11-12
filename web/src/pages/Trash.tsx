@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRASH_KINDS, type TrashItem, type TrashKind, type TrashRestored } from '../../../shared/src/model';
 import { EmptyState } from '../components/Empty';
-import { Icon, type IconName } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Confirm } from '../components/ui';
 import { ApiFailure, del, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -101,7 +101,8 @@ export function TrashPage() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="trash" />
           <h1 className="topbar__title">{t('trash.title')}</h1>
           <p className="topbar__sub">{t(data?.manage ? 'trash.leadAll' : 'trash.leadMine', { days })}</p>
         </div>
@@ -160,7 +161,7 @@ export function TrashPage() {
                     </button>
                     {data.manage && (
                       <button className="btn btn--small btn--quiet trashrow__forever" disabled={busy === i.id} onClick={() => setForever(i)}>
-                        {t('trash.forever')}
+                        <Icon name="trash" size={15} /> {t('trash.forever')}
                       </button>
                     )}
                   </div>

@@ -199,7 +199,10 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
 
             <section className="recpanel__section">
               <h3 className="section__head">
-                <span>{t('recordPanel.tasks', { n: openCount })}</span>
+                <span>
+                  <Icon name="checkCircle" size={16} className="icon--lead" />
+                  {t('recordPanel.tasks', { n: openCount })}
+                </span>
                 {canWrite && (
                   <button className="btn btn--small" onClick={newTask}>
                     <Icon name="plus" size={14} /> {t('recordPanel.newTask')}
@@ -247,7 +250,10 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
             {ownFiles.length > 0 && (
               <section className="recpanel__section">
                 <h3 className="section__head">
-                  <span>{t('task.files')}</span>
+                  <span>
+                    <Icon name="paperclip" size={16} className="icon--lead" />
+                    {t('task.files')}
+                  </span>
                 </h3>
                 <div className="comment__files">
                   {ownFiles.map((f) => (
@@ -259,7 +265,10 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
 
             <section className="recpanel__section">
               <h3 className="section__head">
-                <span>{t('task.comments')}</span>
+                <span>
+                  <Icon name="comment" size={16} className="icon--lead" />
+                  {t('task.comments')}
+                </span>
               </h3>
               {rec.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('recordPanel.noComments')}</p>}
               {rec.comments.map((c) => (

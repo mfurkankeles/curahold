@@ -304,7 +304,7 @@ taskRoutes.get('/tasks/:id', async (c) => {
     const t = await loadTask(q, id);
     const [counted] = await q.query(
       `select t.*, ${COUNTS}, (select pu.name from portal_users pu where pu.id = t.portal_author_id) as portal_author_name,
-              r.name as record_name, rt.key as record_type
+              r.name as record_name, rt.key as record_type, (select p.title from tasks p where p.id = t.parent_id) as parent_title
          from tasks t left join records r on r.id = t.record_id left join record_types rt on rt.id = r.type_id where t.id = $1`,
       [id],
     );
@@ -337,6 +337,7 @@ taskRoutes.get('/tasks/:id', async (c) => {
   const files = detail.files.map(toFile);
   const out: TaskDetail = {
     ...toTask(detail.t),
+    parent: detail.t.parent_id && detail.t.parent_title != null ? { id: detail.t.parent_id, title: detail.t.parent_title } : null,
     subtasks: detail.subtasks.map(toTask),
     comments: detail.comments.map((cm) => ({ ...toComment(cm), files: files.filter((f) => f.commentId === cm.id) })),
     files,

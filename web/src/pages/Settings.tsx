@@ -1,5 +1,6 @@
 // Company settings: the company itself, people (with devices and the
 // KVKK/GDPR tools), teams, roles and the activity log.
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Locale } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
@@ -32,40 +33,40 @@ type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm'
 export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
   const { t, words } = useI18n();
   const { can, me } = useStore();
-  const groups: { label: string; items: [Tab, string, boolean][] }[] = [
+  const groups: { label: string; items: [Tab, string, boolean, IconName][] }[] = [
     {
       label: t('settings.group.company'),
       items: [
-        ['company', t('settings.tab.company'), can('org.manage')],
-        ['billing', t('settings.tab.billing'), can('org.manage') && !!me.org.billingOn],
-        ['currencies', t('settings.tab.currencies'), can('org.manage')],
-        ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
-        ['records', t('settings.tab.records'), can('accounts.manage')],
-        ['health', t('settings.tab.health'), can('accounts.manage')],
-        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || can('org.manage')],
+        ['company', t('settings.tab.company'), can('org.manage'), 'building'],
+        ['billing', t('settings.tab.billing'), can('org.manage') && !!me.org.billingOn, 'card'],
+        ['currencies', t('settings.tab.currencies'), can('org.manage'), 'coins'],
+        ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage'), 'form'],
+        ['records', t('settings.tab.records'), can('accounts.manage'), 'tag'],
+        ['health', t('settings.tab.health'), can('accounts.manage'), 'heart'],
+        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || can('org.manage'), 'target'],
       ],
     },
     {
       label: t('settings.group.team'),
       items: [
-        ['people', t('settings.tab.people'), can('users.manage')],
-        ['joining', t('settings.tab.joining'), can('users.manage')],
-        ['teams', t('settings.tab.teams'), can('teams.manage')],
-        ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage')],
+        ['people', t('settings.tab.people'), can('users.manage'), 'user'],
+        ['joining', t('settings.tab.joining'), can('users.manage'), 'userPlus'],
+        ['teams', t('settings.tab.teams'), can('teams.manage'), 'people'],
+        ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage'), 'shield'],
       ],
     },
     {
       label: t('settings.group.work'),
       items: [
-        ['connections', t('settings.tab.connections'), can('connections.manage')],
-        ['sources', t('settings.tab.sources'), can('connections.manage')],
-        ['automations', t('settings.tab.automations'), can('automations.manage')],
-        ['playbooks', t('settings.tab.playbooks'), can('org.manage') || can('accounts.manage')],
-        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
-        ['portal', t('settings.tab.portal'), can('org.manage')],
+        ['connections', t('settings.tab.connections'), can('connections.manage'), 'plug'],
+        ['sources', t('settings.tab.sources'), can('connections.manage'), 'refresh'],
+        ['automations', t('settings.tab.automations'), can('automations.manage'), 'zap'],
+        ['playbooks', t('settings.tab.playbooks'), can('org.manage') || can('accounts.manage'), 'book'],
+        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage'), 'code'],
+        ['portal', t('settings.tab.portal'), can('org.manage'), 'globe'],
       ],
     },
-    { label: t('settings.group.security'), items: [['support', t('settings.tab.support'), can('org.manage')], ['audit', t('settings.tab.audit'), can('audit.view')]] },
+    { label: t('settings.group.security'), items: [['support', t('settings.tab.support'), can('org.manage'), 'lifebuoy'], ['audit', t('settings.tab.audit'), can('audit.view'), 'history']] },
   ];
   const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
   const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
@@ -73,7 +74,10 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{t('settings.title')}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="sliders" />
+          <span>{t('settings.title')}</span>
+        </h1>
         <span className="topbar__sub">{currentLabel}</span>
       </header>
       <div className="page admin">
@@ -91,7 +95,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
             return (
               <div className="admin__group" key={g.label}>
                 <div className="admin__grouplabel">{g.label}</div>
-                {items.map(([key, label]) => (
+                {items.map(([key, label, , icon]) => (
                   <a
                     key={key}
                     href={`/settings/${key}`}
@@ -102,6 +106,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
                       navigate(`/settings/${key}`);
                     }}
                   >
+                    <Icon name={icon} size={16} className="icon--lead" />
                     {label}
                   </a>
                 ))}
@@ -244,7 +249,10 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
         </div>
       </div>
       <div className="sheet">
-        <h2 className="sheet__title">{t('settings.company.vocabulary')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="edit" size={18} className="icon--lead" />
+            {t('settings.company.vocabulary')}
+          </h2>
         <p className="sheet__hint">{t('settings.company.vocabularyHint')}</p>
         <div className="field" style={{ marginBottom: 14 }}>
           <span className="field__label">{t('settings.company.vocabularyPick')}</span>
@@ -355,6 +363,7 @@ function PeopleTab() {
         </select>
         <div className="topbar__spacer" />
         <button className="btn btn--primary" onClick={() => setInvite(true)}>
+          <Icon name="userPlus" size={16} />
           {t('settings.people.invite')}
         </button>
       </div>
@@ -482,6 +491,7 @@ function InviteDialog({ roles, teams, onClose, onDone }: { roles: Role[]; teams:
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!email || !name} onClick={submit}>
+            <Icon name="userPlus" size={16} />
             {t('settings.people.invite')}
           </button>
         </>
@@ -576,6 +586,7 @@ function TeamsTab() {
       >
         <input className="input" style={{ maxWidth: 320 }} placeholder={t('settings.teams.new')} aria-label={t('settings.teams.new')} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
         <button className="btn btn--primary" disabled={!name.trim()}>
+          <Icon name="plus" size={16} />
           {t('common.create')}
         </button>
       </form>
@@ -583,7 +594,10 @@ function TeamsTab() {
       {teams.map((tm) => (
         <div className="sheet" key={tm.id}>
           <div className="toolbar" style={{ marginBottom: 12 }}>
-            <h2 className="sheet__title" style={{ margin: 0 }}>{tm.name}</h2>
+            <h2 className="sheet__title" style={{ margin: 0 }}>
+              <Icon name="people" size={18} className="icon--lead" />
+              {tm.name}
+            </h2>
             <div className="topbar__spacer" />
             <button className="btn btn--small btn--danger" onClick={async () => { if (await save(() => del(`/admin/teams/${tm.id}`))) await reloadPeople(); }}>
               {t('common.delete')}
@@ -769,6 +783,7 @@ function JoiningTab() {
                   <td>
                     <div className="inline-actions">
                       <button className="btn btn--small btn--primary" onClick={() => decide(r, true)}>
+                        <Icon name="check" size={16} />
                         {t('join.approve')}
                       </button>
                       <button className="btn btn--small btn--quiet" onClick={() => decide(r, false)}>

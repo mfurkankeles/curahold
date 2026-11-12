@@ -106,6 +106,9 @@ describe('subtasks, comments, files, deleting', () => {
     const parent = (await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Parent' })).json.task;
     const sub = await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, parentId: parent.id, title: 'Child' });
     expect(sub.status).toBe(201);
+    // A subtask says which task it is a step of (the panel's way back); a task on its own has none.
+    expect((await mert.get(`/api/tasks/${sub.json.task.id}`)).json.task.parent).toEqual({ id: parent.id, title: 'Parent' });
+    expect((await mert.get(`/api/tasks/${parent.id}`)).json.task.parent).toBeNull();
     const wrong = await mert.post('/api/tasks', { boardId: env.a.boards.renewals, parentId: parent.id, title: 'Child' });
     expect(wrong.json.error).toBe('validation');
   });

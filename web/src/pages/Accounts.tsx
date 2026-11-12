@@ -22,7 +22,7 @@ import { PortalPeople } from '../components/PortalAdmin';
 import { AccountCards, RenewalsView, SIGNAL_FILTERS, WhitespaceView, keyFields, matchesSignal, signalsOf, type SignalFilter } from '../components/AccountViews';
 import { relativeTime } from '../lib/time';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
 import { tasksChanged, usePageDefaults } from '../lib/shell';
 import { PlanMenu } from '../components/Plans';
@@ -242,7 +242,10 @@ export function AccountsPage() {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{words.other}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="building" />
+          <span>{words.other}</span>
+        </h1>
         {data && <span className="topbar__sub num">{t('accounts.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
         <ExportMenu
@@ -822,7 +825,10 @@ export function AccountPage({ id }: { id: string }) {
           <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
           <section className="sheet" id="tasks">
             <h3 className="section__head">
-              <span>{t('accounts.openTasksN', { n: open.length })}</span>
+              <span>
+                <Icon name="checkCircle" size={16} className="icon--lead" />
+                {t('accounts.openTasksN', { n: open.length })}
+              </span>
               <PlanMenu accountId={a.id} accountName={a.name} onApplied={() => void load()} />
             </h3>
             {hours && hours.total > 0 && <p className="field__hint" style={{ margin: '-2px 0 10px' }}>{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
@@ -859,7 +865,12 @@ export function AccountPage({ id }: { id: string }) {
           {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
           {me.org.portal && (can('org.manage') || a.ownerId === me.user.id) && (
             <section className="sheet">
-              <h3 className="section__head">{t('portal.people.forAccount')}</h3>
+              <h3 className="section__head">
+                <span>
+                  <Icon name="globe" size={16} className="icon--lead" />
+                  {t('portal.people.forAccount')}
+                </span>
+              </h3>
               <PortalPeople accountId={a.id} accountName={a.name} />
             </section>
           )}

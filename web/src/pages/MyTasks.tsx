@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Task } from '../../../shared/src/model';
 import { EmptyState, SkeletonRows } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { usePageDefaults, useShell } from '../lib/shell';
@@ -31,6 +31,9 @@ export function AddBar({ label, onOpen }: { label: string; onOpen: (text?: strin
     </button>
   );
 }
+
+/** When a group of tasks is due, as a picture. */
+const GROUP_ICON: Record<string, IconName> = { late: 'alert', today: 'calendar', soon: 'clock', later: 'hourglass', none: 'dot' };
 
 export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const { t } = useI18n();
@@ -71,7 +74,8 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="checkCircle" />
           <h1 className="topbar__title">{t('myTasks.title')}</h1>
           {tasks && open > 0 && (
             <p className="topbar__sub">
@@ -107,6 +111,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
         {groups.map((g) => (
           <section className="group" data-due={g.key} key={g.key}>
             <h2 className="group__head">
+              <Icon name={GROUP_ICON[g.key] ?? 'dot'} size={17} className="icon--lead" />
               {g.label} <small className="num">{g.list.length}</small>
             </h2>
             <ListView tasks={g.list} isDone={isDone} showBoard={boardName} />

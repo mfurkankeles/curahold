@@ -5,6 +5,7 @@
 // matched on this device. No language model, no server, no cost per question,
 // and nothing typed here leaves the browser. When the answer does not help,
 // support is one click away with the question already written.
+import { Icon } from './icons';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -205,6 +206,7 @@ export function Ask({ onWrite }: { onWrite: (question: string) => void }) {
       <form className="ask__form" onSubmit={submit}>
         <input ref={input} className="input" value={text} onChange={(e) => setText(e.target.value)} maxLength={300} placeholder={t('ask.placeholder')} aria-label={t('ask.tab')} autoFocus />
         <button className="btn btn--primary" type="submit" disabled={busy || !text.trim()}>
+          <Icon name="send" size={16} />
           {t('ask.send')}
         </button>
       </form>

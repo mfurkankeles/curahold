@@ -2994,4 +2994,5 @@ export const tr: Record<MessageKey, string> = {
   'trash.foreverBody': 'Dosyalarıyla birlikte şimdi silinir; kimse geri alamaz.',
   'trash.forevered': 'Kalıcı olarak silindi.',
   'trash.more': 'Daha fazla göster',
+  'task.backToParent': '“{title}” görevine dön',
 };

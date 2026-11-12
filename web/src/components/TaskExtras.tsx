@@ -141,7 +141,10 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
   return (
     <section>
       <h3 className="section__head">
-        <span>{t('task.links')}</span>
+        <span>
+          <Icon name="link" size={16} className="icon--lead" />
+          {t('task.links')}
+        </span>
         {editable && !adding && (
           <button className="linkbtn" onClick={() => setAdding(true)}>
             {t('task.links.add')}
@@ -244,6 +247,7 @@ export function TimeSection({ task, editable, reload }: { task: TaskDetail; edit
     <section>
       <h3 className="section__head">
         <span>
+          <Icon name="clock" size={16} className="icon--lead" />
           {t('task.time')} {time.total > 0 && <span className="muted num">{hoursText(time.total, locale)}</span>}
         </span>
         {time.entries.length > 0 && (
@@ -433,7 +437,10 @@ export function HistorySection({ task, board }: { task: TaskDetail; board: Board
   return (
     <section>
       <h3 className="section__head">
-        <span>{t('task.history')}</span>
+        <span>
+          <Icon name="history" size={16} className="icon--lead" />
+          {t('task.history')}
+        </span>
         {events.length > 3 && (
           <button className="linkbtn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? t('task.history.less') : t('task.history.all', { n: events.length })}

@@ -1,6 +1,7 @@
 // CRMs and spreadsheets: connect, choose what comes over, match fields and
 // people, preview, start — then watch the sync and fix what it reports.
 // Everything an administrator needs, without anyone writing a mapping file.
+import { Icon } from './icons';
 import { DemoConnect, DemoCrmConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
@@ -127,6 +128,7 @@ export function Sources() {
             <p className="field__hint tile__line">{t(`sync.what.${p.id}` as MessageKey)}</p>
             {p.available ? (
               <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                <Icon name="plug" size={16} />
                 {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
               </button>
             ) : IN_DEMO && DEMO_CRMS.includes(p.id) ? (
@@ -154,6 +156,7 @@ export function Sources() {
             </div>
             <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
             <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+              <Icon name="plug" size={16} />
               {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
             </button>
           </div>
@@ -413,6 +416,7 @@ export function SourceDetail({ id }: { id: string }) {
         {started && (
           <>
             <button className="btn btn--primary btn--small" disabled={!!running || d.connection.status === 'disabled'} onClick={() => syncNow()}>
+              <Icon name="refresh" size={16} />
               {running ?? t('sync.now')}
             </button>
             <RowMenu

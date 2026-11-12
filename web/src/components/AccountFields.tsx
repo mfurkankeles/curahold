@@ -2,6 +2,7 @@
 // value, health…) and about the records under it (contacts, opportunities,
 // risks…). Add, rename, reorder, change choices — no code. Account fields
 // can also be worked out from records ("open pipeline").
+import { Icon } from './icons';
 import { useCallback, useEffect, useState } from 'react';
 import { labelOf, optionKey } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -573,7 +574,10 @@ export function RecordTypesEditor() {
       {/* Ready-made kinds, offered until the company has one with that key. */}
       {RECORD_PRESETS.some((p) => !types.some((x) => x.key === p.key)) && (
         <section className="sheet record-presets">
-          <h2 className="sheet__title">{t('records.presets')}</h2>
+          <h2 className="sheet__title">
+            <Icon name="tag" size={18} className="icon--lead" />
+            {t('records.presets')}
+          </h2>
           <p className="sheet__hint">{t('records.presetsHint')}</p>
           <div className="pbexamples">
             {RECORD_PRESETS.filter((p) => !types.some((x) => x.key === p.key)).map((p) => (

@@ -5,7 +5,7 @@ import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useShell } from '../lib/shell';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { dueState, todayIso } from '../lib/time';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -61,7 +61,10 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{title}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="calendar" />
+          <span>{title}</span>
+        </h1>
         <div className="topbar__spacer" />
         <div className="toolbar">
           <div className="seg" role="group">

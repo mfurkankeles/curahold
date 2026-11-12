@@ -1,6 +1,7 @@
 // Where the team talks: chat apps with buttons (Slack, Teams, Google Chat)
 // and one-way channel posts for everything else. Used by the setup wizard
 // and by Settings → Connections.
+import { Icon } from './icons';
 import { DemoConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -316,6 +317,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
       {error && <p className="error-text">{error}</p>}
       <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
         <button className="btn btn--primary" disabled={busy || !url.trim()}>
+          <Icon name="plug" size={16} />
           {busy ? t('common.saving') : t('conn.addAndTest')}
         </button>
         <button type="button" className="btn btn--quiet" onClick={onCancel}>

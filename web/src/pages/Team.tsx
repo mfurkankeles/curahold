@@ -2,7 +2,7 @@
 // what they finished, what is late, what is coming and who they look after.
 import { useEffect, useMemo, useState } from 'react';
 import { EmptyState, SkeletonRows } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { Avatar, DueLabel } from '../components/ui';
 import { get } from '../lib/api';
@@ -47,7 +47,8 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="people" />
           <h1 className="topbar__title">{t('nav.team')}</h1>
           <p className="topbar__sub">{t('team.lead')}</p>
         </div>
@@ -138,9 +139,10 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
   const stuck = open.filter((x) => Date.now() - Date.parse(x.updatedAt) > 14 * 86_400_000 && !late.includes(x));
   const done = (data?.tasks ?? []).filter((x) => x.done).sort((a, b) => String(b.doneAt).localeCompare(String(a.doneAt)));
   const boardName = (b: string) => boards.find((x) => x.id === b)?.name ?? '';
-  const list = (title: string, items: PersonReport['tasks'], tone: string | undefined, empty: string) => (
+  const list = (title: string, icon: IconName, items: PersonReport['tasks'], tone: string | undefined, empty: string) => (
     <section className="sheet oneone__list" data-tone={tone}>
       <h2 className="sheet__title">
+        <Icon name={icon} size={18} className="icon--lead" />
         {title} <small className="num muted">{items.length}</small>
       </h2>
       {items.length === 0 ? (
@@ -209,10 +211,10 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
               <Stat label={t('team.customers')} value={String(data.accounts)} sub={data.lastTouchAt ? t('team.touches', { n: data.touches30, when: relativeTime(data.lastTouchAt, t) }) : t('team.noTouches')} tone={data.accounts > 0 && !data.touches30 ? 'soon' : undefined} />
             </div>
             <div className="reports__grid">
-              {list(t('team.late'), late, 'late', t('team.lateNone'))}
-              {list(t('team.thisWeek'), week, undefined, t('team.weekNone'))}
-              {list(t('team.stuck'), stuck, 'soon', t('team.stuckNone'))}
-              {list(t('team.done14'), done, 'done', t('team.doneNone'))}
+              {list(t('team.late'), 'alert', late, 'late', t('team.lateNone'))}
+              {list(t('team.thisWeek'), 'calendar', week, undefined, t('team.weekNone'))}
+              {list(t('team.stuck'), 'hourglass', stuck, 'soon', t('team.stuckNone'))}
+              {list(t('team.done14'), 'checkCircle', done, 'done', t('team.doneNone'))}
             </div>
           </>
         )}

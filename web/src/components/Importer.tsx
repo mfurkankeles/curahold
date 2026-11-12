@@ -1,5 +1,6 @@
 // Bringing accounts in from a spreadsheet: choose the file, check how its
 // columns map (guessed for you), import, and undo if it was the wrong file.
+import { Icon } from './icons';
 import { useMemo, useRef, useState } from 'react';
 import { guessFieldType, HEADER_HINTS, labelOf, normalizeValue, optionKey } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
@@ -309,6 +310,7 @@ export function Importer({ onImported, compact }: { onImported?: (r: ImportResul
       {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
       <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
         <button className="btn btn--primary" disabled={!nameColumn || duplicate || busy} onClick={run}>
+          <Icon name="upload" size={16} />
           {busy ? t('common.saving') : t('import.go', { n: sheet.rows.length })}
         </button>
         <span className="field__hint">{t('import.safe')}</span>

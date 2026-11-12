@@ -1,6 +1,7 @@
 // In the try-it demo nothing can sign in to a real Slack or CRM: the page runs
 // in the visitor's tab. The button is still there, and says what it does in the
 // real product, so the demo shows how connecting goes.
+import { Icon } from './icons';
 import { useState } from 'react';
 import { post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -15,6 +16,7 @@ export function DemoConnect({ app }: { app: string }) {
   return (
     <>
       <button className="btn btn--primary btn--small" onClick={() => setOpen(true)}>
+        <Icon name="plug" size={16} />
         {t('conn.connect', { app })}
       </button>
       {open && (
@@ -63,6 +65,7 @@ export function DemoCrmConnect({ id, app, onError }: { id: string; app: string; 
   return (
     <>
       <button className="btn btn--primary btn--small" onClick={() => setOpen(true)}>
+        <Icon name="plug" size={16} />
         {t('conn.connect', { app })}
       </button>
       {open && (

@@ -32,7 +32,7 @@ import { ChartGlyph, useReportFormat } from '../components/Charts';
 import { formatOf, ReportView } from '../components/ReportView';
 import { EmptyState } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Confirm, Dialog, PeoplePicker } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -55,7 +55,7 @@ function useCatalog() {
 
 export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashboards' }) {
   const { t } = useI18n();
-  const tab = (key: typeof active, to: string, label: string) => (
+  const tab = (key: typeof active, to: string, label: string, icon: IconName) => (
     <a
       className="tab"
       href={to}
@@ -65,14 +65,15 @@ export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashb
         navigate(to);
       }}
     >
+      <Icon name={icon} size={16} className="icon--lead" />
       {label}
     </a>
   );
   return (
     <nav className="tabs report-tabs" aria-label={t('nav.reports')}>
-      {tab('overview', '/reports', t('rb.tab.overview'))}
-      {tab('reports', '/reports/all', t('rb.tab.reports'))}
-      {tab('dashboards', '/dashboards', t('rb.tab.dashboards'))}
+      {tab('overview', '/reports', t('rb.tab.overview'), 'gauge')}
+      {tab('reports', '/reports/all', t('rb.tab.reports'), 'chart')}
+      {tab('dashboards', '/dashboards', t('rb.tab.dashboards'), 'layout')}
     </nav>
   );
 }
@@ -117,7 +118,8 @@ export function ReportsListPage() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="chart" />
           <h1 className="topbar__title">{t('nav.reports')}</h1>
           <p className="topbar__sub">{t('rb.listLead')}</p>
         </div>
@@ -135,6 +137,7 @@ export function ReportsListPage() {
             <EmptyState compact icon="chart" title={t('rb.noneTitle')} body={t('rb.noneBody')}>
               {canWrite && (
                 <button className="btn btn--primary" onClick={() => navigate('/reports/new')}>
+                  <Icon name="plus" size={16} />
                   {t('rb.new')}
                 </button>
               )}
@@ -143,17 +146,23 @@ export function ReportsListPage() {
         )}
         {mine.length > 0 && (
           <>
-            <h2 className="reports__h reports__h--first">{t('rb.mine')}</h2>
+            <h2 className="reports__h reports__h--first">
+          <Icon name="user" size={18} /> {t('rb.mine')}
+        </h2>
             <div className="gallery gallery--reports">{mine.map(card)}</div>
           </>
         )}
         {shared.length > 0 && (
           <>
-            <h2 className="reports__h">{t('rb.sharedWithYou')}</h2>
+            <h2 className="reports__h">
+          <Icon name="people" size={18} /> {t('rb.sharedWithYou')}
+        </h2>
             <div className="gallery gallery--reports">{shared.map(card)}</div>
           </>
         )}
-        <h2 className="reports__h">{t('rb.library')}</h2>
+        <h2 className="reports__h">
+          <Icon name="bookmark" size={18} /> {t('rb.library')}
+        </h2>
         <p className="reports__lead">{t('rb.libraryLead')}</p>
         <div className="gallery gallery--reports">
           {REPORT_LIBRARY.map((r) => (
@@ -742,7 +751,10 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         <section className="sheet rb__view" aria-busy={running} aria-live="polite">
           <header className="rb__viewhead">
             <div>
-              <h2 className="sheet__title">{name.trim() || t('rb.untitled')}</h2>
+              <h2 className="sheet__title">
+            <Icon name="chart" size={18} className="icon--lead" />
+            {name.trim() || t('rb.untitled')}
+          </h2>
               <p className="sheet__hint">{summary || (problem && problem !== 'loading' ? t('rb.problem') : ' ')}</p>
             </div>
             {running && <span className="rb__running">{t('rb.running')}</span>}

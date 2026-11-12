@@ -1,3 +1,4 @@
+import { PageIcon } from '../components/icons';
 import { useEffect, useState } from 'react';
 import type { SessionInfo } from '../../../shared/src/model';
 import { del, get } from '../lib/api';
@@ -14,7 +15,10 @@ export function DevicesPage() {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{t('devices.title')}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="monitor" />
+          <span>{t('devices.title')}</span>
+        </h1>
       </header>
       <div className="page">
         <div className="sheet" style={{ maxWidth: 640 }}>

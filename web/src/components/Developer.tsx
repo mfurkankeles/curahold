@@ -2,6 +2,7 @@
 // connected to a person, webhooks for the company, and the consent screen an
 // app sends someone to. Everything here acts as a person and inside their
 // rights; nothing opens a way around them.
+import { Icon } from './icons';
 import { docsHref, docsLink } from '../lib/docs';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { WEBHOOK_EVENTS, type ApiKeyInfo, type WebhookInfo } from '../../../shared/src/developer';
@@ -60,7 +61,10 @@ export function AiConnect() {
   const url = `${location.origin}/mcp`;
   return (
     <section className="sheet">
-      <h2 className="sheet__title">{t('dev.ai.title')}</h2>
+      <h2 className="sheet__title">
+            <Icon name="zap" size={18} className="icon--lead" />
+            {t('dev.ai.title')}
+          </h2>
       <p className="sheet__hint">{t('dev.ai.hint')}</p>
       <label className="field">
         <span className="field__label">{t('dev.ai.url')}</span>
@@ -121,7 +125,10 @@ export function KeyList({ all = false }: { all?: boolean }) {
 
   return (
     <section className="sheet">
-      <h2 className="sheet__title">{all ? t('dev.keys.all') : t('dev.keys.title')}</h2>
+      <h2 className="sheet__title">
+            <Icon name="key" size={18} className="icon--lead" />
+            {all ? t('dev.keys.all') : t('dev.keys.title')}
+          </h2>
       <p className="sheet__hint">{all ? t('dev.keys.allHint') : t('dev.keys.hint')}</p>
       {keys && keys.length > 0 && (
         <ul className="keylist">
@@ -211,6 +218,7 @@ function NewKey({ readOnlySeat, onClose, onMade }: { readOnlySeat: boolean; onCl
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="newkey" disabled={busy}>
+            <Icon name="plus" size={16} />
             {t('dev.keys.create')}
           </button>
         </>
@@ -261,7 +269,10 @@ export function DeveloperTab() {
   return (
     <div className="form" style={{ maxWidth: 760 }}>
       <section className="sheet">
-        <h2 className="sheet__title">{t('dev.api.title')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="code" size={18} className="icon--lead" />
+            {t('dev.api.title')}
+          </h2>
         <p className="sheet__hint">{t('dev.api.hint')}</p>
         <dl className="kv">
           <dt>{t('dev.api.base')}</dt>
@@ -292,7 +303,10 @@ export function DeveloperTab() {
 
       {can('connections.manage') && (
         <section className="sheet">
-          <h2 className="sheet__title">{t('dev.hooks.title')}</h2>
+          <h2 className="sheet__title">
+            <Icon name="send" size={18} className="icon--lead" />
+            {t('dev.hooks.title')}
+          </h2>
           <p className="sheet__hint">{t('dev.hooks.hint')}</p>
           {hooks && hooks.length > 0 && (
             <ul className="keylist">
@@ -400,7 +414,10 @@ function InboundTickets() {
   };
   return (
     <section className="sheet">
-      <h2 className="sheet__title">{t('inbound.title')}</h2>
+      <h2 className="sheet__title">
+            <Icon name="inbox" size={18} className="icon--lead" />
+            {t('inbound.title')}
+          </h2>
       <p className="sheet__hint">{t('inbound.hint')}</p>
       {url && <ShowOnce value={url} note={t('inbound.copyNow')} />}
       {info && !url && (
@@ -499,6 +516,7 @@ function NewHook({ eventLabel, onClose, onMade }: { eventLabel: (e: string) => s
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="newhook" disabled={busy || !events.length}>
+            <Icon name="plus" size={16} />
             {t('dev.hooks.create')}
           </button>
         </>

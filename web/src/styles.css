@@ -478,6 +478,11 @@ a { color: var(--brand-ink); }
 @keyframes panel-in { from { transform: translateX(24px); opacity: .4; } }
 .panel__head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .panel__crumb { color: var(--ink-3); font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A subtask's way back to the task it belongs to. Its name gives way first when the panel is narrow. */
+.panel__back { flex: 0 1 auto; min-width: 0; max-width: 46%; padding: 0 8px 0 6px; gap: 4px; color: var(--ink-2); }
+.panel__backname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.panel__crumb[data-sub] { flex: 1 1 0; }
+@media (max-width: 520px) { .panel__crumb[data-sub] { display: none; } .panel__back { max-width: none; flex: 1 1 auto; justify-content: flex-start; } }
 .panel__body { overflow-y: auto; padding: 18px 22px 40px; display: grid; gap: 22px; align-content: start; }
 .panel__title { font-size: 21px; font-weight: 600; line-height: 1.3; border: 1px solid transparent; border-radius: var(--r-s); padding: 4px 6px; margin: -4px -6px; width: calc(100% + 12px); background: transparent; resize: none; overflow: hidden; }
 .panel__title:hover { border-color: var(--line); }
@@ -2208,3 +2213,30 @@ a.targetline:hover { border-color: var(--line-strong); }
   .trashrow { grid-template-columns: 34px minmax(0, 1fr); }
   .trashrow__actions { grid-column: 2; margin-top: 6px; flex-wrap: wrap; }
 }
+
+/* ------------------------------------------------------ icons with headings */
+
+/* A page's title carries the icon its place in the menu has, on a soft tile. With a line under
+   the title, the tile stands beside both. */
+.topbar__icon { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--brand-wash); color: var(--brand-ink); }
+.topbar__title--icon { display: flex; align-items: center; gap: 12px; }
+.topbar__titles--icon { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; }
+.topbar__titles--icon > .topbar__icon { grid-row: 1 / span 2; align-self: center; }
+.topbar__titles--icon > :not(.topbar__icon) { grid-column: 2; }
+/* With no line under it yet, the title alone stands level with the tile. */
+.topbar__titles--icon > .topbar__title:last-child { grid-row: 1 / span 2; }
+@media (max-width: 860px) {
+  .topbar__icon { width: 32px; height: 32px; border-radius: 10px; }
+  .topbar__title--icon, .topbar__titles--icon { gap: 10px; column-gap: 10px; }
+}
+
+/* An icon in front of a heading, a tab or a label: what the thing is about, before the words are read. */
+.icon--lead { display: inline-block; flex: none; vertical-align: -0.2em; margin-right: .5em; color: var(--brand-ink); }
+.tab .icon--lead, .admin__link .icon--lead, .props__label .icon--lead { color: currentColor; opacity: .7; margin-right: .45em; }
+.tab[aria-selected='true'] .icon--lead, .admin__link[aria-current='page'] .icon--lead { color: var(--brand-ink); opacity: 1; }
+.group__head .icon--lead, .section__head .icon--lead { margin-right: 0; }
+/* A group that is late or due today already speaks in its own colour; its icon says the same. */
+.group[data-due='late'] .group__head .icon--lead, .group[data-due='today'] .group__head .icon--lead { color: currentColor; }
+.section__head > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.btn .icon--lead { margin-right: 0; color: currentColor; }
+.reports__h > .icon { color: var(--brand-ink); flex: none; }

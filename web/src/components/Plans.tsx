@@ -347,7 +347,10 @@ export function PlaybooksSettings() {
       <section className="sheet">
         <div className="section__head">
           <div>
-            <h2 className="sheet__title">{t('plans.title')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="book" size={18} className="icon--lead" />
+            {t('plans.title')}
+          </h2>
             <p className="sheet__hint">{t('plans.settingsHint')}</p>
           </div>
           {manage && (
@@ -407,7 +410,10 @@ export function PlaybooksSettings() {
 
       {manage && examples.length > 0 && (
         <section className="sheet">
-          <h2 className="sheet__title">{t('plans.examples')}</h2>
+          <h2 className="sheet__title">
+            <Icon name="copy" size={18} className="icon--lead" />
+            {t('plans.examples')}
+          </h2>
           <p className="sheet__hint">{t('plans.examplesHint')}</p>
           <div className="pbexamples">
             {examples.map((ex) => (

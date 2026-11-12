@@ -306,6 +306,16 @@ Araya giren işler (ürün sahibinin 12 Kasım isteği):
 | Belge sayfası | 41 | 42 (geliştirici sözlüğü); her sayfada güncelleme tarihi ve okuma süresi |
 | Bağlantılar sayfası | 205 kelime | her CRM için ayrı bölüm (ne gelir, yöneticinin onayı ne zaman gerekir) |
 
+Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
+
+| İş | Önce | Sonra |
+| --- | --- | --- |
+| Sayfa başlığının yanında ikon | 0 sayfa | 18 sayfa: menüdeki ikonunun aynısı, yumuşak bir karede |
+| Bölüm başlığı, sekme, alan etiketi ve ayar menüsü satırında ikon | 0 yer | 63 yer (ana sayfa kartları ve sayfa sekmeleri, görev ve kayıt paneli, ayarlar, raporlar, müşteri sayfası) |
+| İkonlu ana düğme | "Sayfayı düzenle" ve "Yeni sayfa" dahil çoğu yalnızca yazı | 30 düğme ikonlu (ekle, davet et, kaydet, bağla, içe aktar, gönder) |
+| Ürünün kendi ikon takımı | 78 ikon | 90 ikon (hepsi aynı ızgara ve çizgi kalınlığı; dışarıdan ikon ya da yazı tipi yok, ek ücret $0) |
+| Görevlerim'de görevin içinden alt göreve geçince geri dönüş | yoktu; paneli kapatıp görevi yeniden bulmak gerekiyordu | panelin başında "← ana görevin adı"; tek tıkla ana göreve döner, sayfa değişmez (testli) |
+
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle
 5,3 dk). Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun

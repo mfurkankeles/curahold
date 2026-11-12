@@ -59,6 +59,7 @@ const ICONS = {
   repeat: <>{P('M4 8.4V7.6a2 2 0 0 1 2-2h9.2M12.8 3.2l2.4 2.4-2.4 2.4M16 11.6v.8a2 2 0 0 1-2 2H4.8M7.2 16.8l-2.4-2.4 2.4-2.4')}</>,
   play: <>{P('M6.6 4.6v10.8L15 10z')}</>,
   arrowRight: <>{P('M4 10h12M11.6 5.6 16 10l-4.4 4.4')}</>,
+  arrowLeft: <>{P('M16 10H4M8.4 5.6 4 10l4.4 4.4')}</>,
   dot: <>{C(10, 10, 3, true)}</>,
   pin: <>{P('M10 17s5.4-4.9 5.4-9a5.4 5.4 0 1 0-10.8 0c0 4.1 5.4 9 5.4 9z')}{C(10, 8, 1.9)}</>,
   copy: <>{P('M7 7h8.4a.8.8 0 0 1 .8.8v8.4a.8.8 0 0 1-.8.8H7a.8.8 0 0 1-.8-.8V7.8A.8.8 0 0 1 7 7zM13.4 7V4.6a.8.8 0 0 0-.8-.8H4.6a.8.8 0 0 0-.8.8v8a.8.8 0 0 0 .8.8H7')}</>,
@@ -82,9 +83,23 @@ const ICONS = {
   paperclip: <>{P('M14.6 9.4 9.4 14.6a3.3 3.3 0 0 1-4.7-4.7l5.6-5.6a2.2 2.2 0 0 1 3.1 3.1l-5.4 5.4a1.1 1.1 0 0 1-1.6-1.6l4.8-4.8')}</>,
   form: <>{P('M4.6 3.6h10.8a.8.8 0 0 1 .8.8v11.2a.8.8 0 0 1-.8.8H4.6a.8.8 0 0 1-.8-.8V4.4a.8.8 0 0 1 .8-.8zM6.6 7.2h6.8M6.6 10h6.8M6.6 12.8h3.6')}</>,
   bookmark: <>{P('M5.6 3.6h8.8v13L10 13.4l-4.4 3.2z')}</>,
+  subtasks: <>{P('M5 3.8v9.4a1.6 1.6 0 0 0 1.6 1.6H9M5 8.4h4M12 8.4h4.2M12 14.8h4.2')}</>,
+  text: <>{P('M4 5.4h12M4 8.9h12M4 12.4h12M4 15.9h7')}</>,
+  shield: <>{P('M10 3.2 15.6 5v4.6c0 3.4-2.2 6-5.6 7.2-3.4-1.2-5.6-3.8-5.6-7.2V5zM7.6 10l1.8 1.8 3.2-3.4')}</>,
+  coins: <>{P('M10 8.2c3 0 5.4-1 5.4-2.3S13 3.6 10 3.6 4.6 4.6 4.6 5.9 7 8.2 10 8.2zM4.6 5.9v4.1c0 1.3 2.4 2.3 5.4 2.3s5.4-1 5.4-2.3V5.9M4.6 10v4.1c0 1.3 2.4 2.3 5.4 2.3s5.4-1 5.4-2.3V10')}</>,
+  plug: <>{P('M7.4 3.4v3.4M12.6 3.4v3.4M5.4 6.8h9.2v2.4a4.6 4.6 0 0 1-9.2 0zM10 13.8v2.8')}</>,
+  code: <>{P('M7.2 6.2 3.4 10l3.8 3.8M12.8 6.2l3.8 3.8-3.8 3.8M11.3 4.6 8.7 15.4')}</>,
+  key: <>{C(13, 7, 3.4)}{P('M10.6 9.4 4 16M6.2 13.8l1.9 1.9M8.5 11.5l1.5 1.5')}</>,
+  book: <>{P('M4.4 4.2h4.3a1.8 1.8 0 0 1 1.3.6 1.8 1.8 0 0 1 1.3-.6h4.3v10.9h-4.5a1.5 1.5 0 0 0-1.1.5 1.5 1.5 0 0 0-1.1-.5H4.4zM10 4.9v10.6')}</>,
+  tag: <>{P('M3.8 10.4V4.6a.8.8 0 0 1 .8-.8h5.8l6 6a.8.8 0 0 1 0 1.2l-5.2 5.2a.8.8 0 0 1-1.2 0z')}{C(7.3, 7.3, 1)}</>,
+  card: <>{P('M3.4 5.2h13.2a.8.8 0 0 1 .8.8v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V6a.8.8 0 0 1 .8-.8zM2.6 8.6h14.8M5.4 12.2h2.8')}</>,
+  userPlus: <>{P('M8.2 9.4a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.8 16.6c.6-2.8 2.6-4.4 5.4-4.4 1.2 0 2.3.3 3.2.9M14.8 11.6v5M12.3 14.1h5')}</>,
 } as const;
 
 export type IconName = keyof typeof ICONS;
+
+/** The icon a kind of record carries wherever it is named: the menu, its list, its panel. */
+export const RECORD_KIND_ICON: Record<string, IconName> = { contact: 'idcard', opportunity: 'funnel', ticket: 'lifebuoy', custom: 'layout' };
 
 export function Icon({ name, size = 18, className, label }: { name: IconName; size?: number; className?: string; label?: string }) {
   return (
@@ -105,5 +120,14 @@ export function Icon({ name, size = 18, className, label }: { name: IconName; si
     >
       {ICONS[name]}
     </svg>
+  );
+}
+
+/** The tile in front of a page's title: the icon its place in the menu carries. */
+export function PageIcon({ name }: { name: IconName }) {
+  return (
+    <span className="topbar__icon" aria-hidden="true">
+      <Icon name={name} size={19} />
+    </span>
   );
 }

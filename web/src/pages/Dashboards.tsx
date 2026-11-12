@@ -17,7 +17,7 @@ import { DASHBOARD_TEMPLATES } from '../../../shared/src/reports';
 import { ChartGlyph } from '../components/Charts';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { ApiFailure, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -54,7 +54,8 @@ export function DashboardsPage() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="layout" />
           <h1 className="topbar__title">{t('nav.dashboards')}</h1>
           <p className="topbar__sub">{t('rb.dashLead')}</p>
         </div>
@@ -67,7 +68,9 @@ export function DashboardsPage() {
       </header>
       <ReportTabs active="dashboards" />
       <div className="page reports">
-        <h2 className="reports__h reports__h--first">{t('rb.dashYours')}</h2>
+        <h2 className="reports__h reports__h--first">
+          <Icon name="layout" size={18} /> {t('rb.dashYours')}
+        </h2>
         <div className="gallery gallery--reports">
           {/* Always there: the overview of work, customers, deals and targets. */}
           <a className="rcard" href="/reports" onClick={link('/reports')}>
@@ -92,7 +95,9 @@ export function DashboardsPage() {
             </a>
           ))}
         </div>
-        <h2 className="reports__h">{t('rb.dashReady')}</h2>
+        <h2 className="reports__h">
+          <Icon name="bookmark" size={18} /> {t('rb.dashReady')}
+        </h2>
         <p className="reports__lead">{admin ? t('rb.dashReadyLead') : t('rb.dashReadyLeadMember')}</p>
         <div className="gallery gallery--dash">
           {DASHBOARD_TEMPLATES.map((d) => (
@@ -110,6 +115,7 @@ export function DashboardsPage() {
                 <span className="muted">{t('rb.dashCards', { n: d.cards.length })}</span>
                 {admin && (
                   <button className="btn btn--small btn--primary" disabled={adding !== null} onClick={() => void add(d.key)}>
+                    <Icon name="plus" size={16} />
                     {adding === d.key ? t('common.loading') : t('rb.dashAdd')}
                   </button>
                 )}
@@ -261,6 +267,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
           <EmptyState icon="layout" title={t('home.emptyPage')}>
             {admin && (
               <button className="btn btn--primary" onClick={() => setDraft(draftOf(current))}>
+                <Icon name="plus" size={16} />
                 {t('home.addCard')}
               </button>
             )}

@@ -1,5 +1,6 @@
 // Roles and permissions: a grid of what each role may do, starting points
 // for new roles, and "who can do what" — by permission or by person.
+import { Icon } from './icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_SCOPES, GRANT_PERMS, PERM_GROUPS, ROLE_PRESETS, scopeOf, withScope, type AccountScope, type Perm, type PersonAccess, type Role, type Seat, type UserStatus } from '../../../shared/src/model';
 import { compareText } from '../../../shared/src/text';
@@ -195,6 +196,7 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
       <p className="field__hint" style={{ marginTop: 10 }}>{t('settings.roles.baseline')}</p>
       {editable && (
         <button className="btn btn--primary" style={{ marginTop: 6 }} onClick={() => setAdding(true)}>
+          <Icon name="plus" size={16} />
           {t('settings.roles.new')}
         </button>
       )}

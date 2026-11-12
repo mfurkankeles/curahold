@@ -12,13 +12,16 @@ import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
 import { Confirm, PeoplePicker } from './ui';
-import { Icon } from './icons';
+import { Icon, type IconName } from './icons';
 import { doneTarget } from '../lib/tasks';
 import { useToggleDone } from './Tick';
 import { labelOf } from '../../../shared/src/fields';
 import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInput, TimeSection } from './TaskExtras';
 import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
+
+/** A board's own field, by what it holds. */
+const FIELD_ICON: Record<string, IconName> = { text: 'text', number: 'hash', money: 'coins', date: 'calendar', select: 'list', url: 'link', email: 'mail', person: 'user', checkbox: 'check' };
 
 export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: () => void }) {
   const { t, words, fmtDate, locale } = useI18n();
@@ -94,6 +97,17 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
       <div className="scrim" onClick={close} />
       <aside className="panel" role="dialog" aria-modal="true" aria-label={task?.title ?? t('common.loading')} tabIndex={-1} ref={panel}>
         <div className="panel__head">
+          {task?.parent && (
+            <button
+              className="btn btn--quiet btn--small panel__back"
+              title={t('task.backToParent', { title: task.parent.title })}
+              aria-label={t('task.backToParent', { title: task.parent.title })}
+              onClick={() => setQuery('task', task.parent!.id)}
+            >
+              <Icon name="arrowLeft" size={16} />
+              <span className="panel__backname">{task.parent.title}</span>
+            </button>
+          )}
           {task && target && editable && (
             <button
               className={`btn btn--small panel__done${target.done ? '' : ' panel__done--reopen'}`}
@@ -111,7 +125,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               {target.done ? t('task.complete') : t('task.reopen')}
             </button>
           )}
-          <span className="panel__crumb">{board?.name}</span>
+          <span className="panel__crumb" data-sub={task?.parent ? true : undefined}>{board?.name}</span>
           {task && !task.parentId && <FollowButton task={task} reload={load} />}
           {task && (
             <button
@@ -154,7 +168,10 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             )}
 
             <div className="props">
-              <span className="props__label">{t('task.status')}</span>
+              <span className="props__label">
+                <Icon name="columns" size={15} className="icon--lead" />
+                {t('task.status')}
+              </span>
               <select className="select" value={task.status} disabled={!editable} onChange={(e) => save({ status: e.target.value })}>
                 {board?.columns.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -162,9 +179,15 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                   </option>
                 ))}
               </select>
-              <span className="props__label">{t('task.assignees')}</span>
+              <span className="props__label">
+                <Icon name="people" size={15} className="icon--lead" />
+                {t('task.assignees')}
+              </span>
               <PeoplePicker label={t('task.assignees')} people={assignable} value={task.assigneeIds} disabled={!editable} onChange={(assigneeIds) => save({ assigneeIds })} />
-              <span className="props__label">{t('task.due')}</span>
+              <span className="props__label">
+                <Icon name="calendar" size={15} className="icon--lead" />
+                {t('task.due')}
+              </span>
               <span className="daterange">
                 {(task.startDate || showStart) && (
                   <>
@@ -179,7 +202,10 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                   </button>
                 )}
               </span>
-              <span className="props__label">{t('task.priority')}</span>
+              <span className="props__label">
+                <Icon name="flag" size={15} className="icon--lead" />
+                {t('task.priority')}
+              </span>
               <select className="select" value={task.priority} disabled={!editable} onChange={(e) => save({ priority: e.target.value as Task['priority'] })}>
                 {PRIORITIES.map((p) => (
                   <option key={p} value={p}>
@@ -187,11 +213,17 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                   </option>
                 ))}
               </select>
-              <span className="props__label">{words.one}</span>
+              <span className="props__label">
+                <Icon name="building" size={15} className="icon--lead" />
+                {words.one}
+              </span>
               <AccountPicker value={task.accountId} name={task.accountName} disabled={!editable} onChange={(accountId) => save({ accountId })} />
               {task.recordId && (
                 <>
-                  <span className="props__label">{t('task.record')}</span>
+                  <span className="props__label">
+                <Icon name="layout" size={15} className="icon--lead" />
+                {t('task.record')}
+              </span>
                   <span className="props__record">
                     <button className="linkbtn linkbtn--plain" onClick={() => setQuery('record', task.recordId!)}>
                       <Icon name="funnel" size={14} /> {task.recordName ?? t('task.recordGone')}
@@ -206,7 +238,10 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               )}
               {!task.parentId && (
                 <>
-                  <span className="props__label">{t('task.repeat')}</span>
+                  <span className="props__label">
+                <Icon name="repeat" size={15} className="icon--lead" />
+                {t('task.repeat')}
+              </span>
                   <RepeatPicker value={task.repeat ?? null} disabled={!editable} onChange={(repeat) => save({ repeat })} />
                 </>
               )}
@@ -214,6 +249,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                 (board?.taskFields ?? []).map((f) => (
                   <Fragment key={f.key}>
                     <span className="props__label">
+                      <Icon name={FIELD_ICON[f.type] ?? 'tag'} size={15} className="icon--lead" />
                       {labelOf(f.label, locale)}
                       {f.required === 'done' && (
                         <abbr className="props__req" title={t('task.fieldRequired')}>
@@ -238,7 +274,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               <span className="field__hint">{task.muted ? t('task.mutedHint') : t('task.muteHint')}</span>
             </div>
 
-            <Section title={t('task.description')}>
+            <Section title={t('task.description')} icon="text">
               <BlurInput key={`desc:${task.version}`} multiline value={task.description} placeholder={t('task.descriptionPlaceholder')} disabled={!editable} onSave={(v) => v !== task.description && save({ description: v })} />
             </Section>
 
@@ -246,7 +282,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             {!task.parentId && <LinksSection task={task} editable={editable} reload={() => (void load(), onChanged())} />}
             {!task.parentId && <TimeSection task={task} editable={editable} reload={load} />}
 
-            <Section title={t('task.files')}>
+            <Section title={t('task.files')} icon="paperclip">
               <Files task={task} editable={editable} reload={load} />
             </Section>
 
@@ -275,7 +311,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               </div>
             )}
 
-            <Section title={t('task.comments')}>
+            <Section title={t('task.comments')} icon="comment">
               {task.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('task.noComments')}</p>}
               {task.comments.map((c) => (
                 <CommentView
@@ -325,11 +361,14 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   );
 }
 
-function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
+function Section({ title, icon, children, action }: { title: string; icon: IconName; children: ReactNode; action?: ReactNode }) {
   return (
     <section>
       <h3 className="section__head">
-        <span>{title}</span>
+        <span>
+          <Icon name={icon} size={16} className="icon--lead" />
+          {title}
+        </span>
         {action}
       </h3>
       <div style={{ display: 'grid', gap: 4 }}>{children}</div>
@@ -398,7 +437,7 @@ function Subtasks({ task, doneKeys, firstKey, doneKey, editable, reload, onChang
     }
   }
   return (
-    <Section title={t('task.subtasks')} action={editable && !task.parentId ? <ChecklistMenu task={task} reload={reload} /> : undefined}>
+    <Section title={t('task.subtasks')} icon="subtasks" action={editable && !task.parentId ? <ChecklistMenu task={task} reload={reload} /> : undefined}>
       {task.subtasks.map((s) => (
         <div className="subtask" key={s.id} data-done={doneKeys.has(s.status)}>
           <input type="checkbox" className="checkbox" checked={doneKeys.has(s.status)} disabled={!editable || !doneKey} onChange={() => toggle(s)} aria-label={s.title} />

@@ -1,6 +1,7 @@
 // A person's own setup: on first sign-in (Welcome) and later (Profile) —
 // name, language, where notifications go, the morning summary and a
 // calendar feed. One minute, no administrator needed.
+import { Icon, PageIcon } from '../components/icons';
 import { useEffect, useState } from 'react';
 import type { Locale, MessageKey } from '../../../shared/src/i18n';
 import { NOTIFY_EVENTS, type DeliveryOption, type NotifyPrefs } from '../../../shared/src/model';
@@ -59,13 +60,19 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{mode === 'welcome' ? t('me.welcome', { name: me.user.name.split(' ')[0] }) : t('me.title')}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="user" />
+          <span>{mode === 'welcome' ? t('me.welcome', { name: me.user.name.split(' ')[0] }) : t('me.title')}</span>
+        </h1>
         {mode === 'welcome' && <span className="topbar__sub">{t('me.welcomeSub', { org: me.org.name })}</span>}
       </header>
       <div className="page">
         <div className="form" style={{ maxWidth: 680 }}>
           <section className="sheet">
-            <h2 className="sheet__title">{t('me.you')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="user" size={18} className="icon--lead" />
+            {t('me.you')}
+          </h2>
             <div className="form__row">
               <label className="field">
                 <span className="field__label">{t('me.name')}</span>
@@ -85,7 +92,10 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
           </section>
 
           <section className="sheet">
-            <h2 className="sheet__title">{t('me.where')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="bell" size={18} className="icon--lead" />
+            {t('me.where')}
+          </h2>
             <p className="sheet__hint">{t('me.whereHint')}</p>
             <div className="choice-list" role="radiogroup" aria-label={t('me.where')}>
               <label className="choice" data-on={auto ? 'true' : undefined}>
@@ -182,7 +192,10 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
           </section>
 
           <section className="sheet">
-            <h2 className="sheet__title">{t('me.calendar')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="calendar" size={18} className="icon--lead" />
+            {t('me.calendar')}
+          </h2>
             <p className="sheet__hint">{t('me.calendarHint')}</p>
             {calendar.url ? (
               <>
@@ -219,7 +232,10 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
 
           {mode === 'profile' && (
             <section className="sheet">
-              <h2 className="sheet__title">{t('devices.title')}</h2>
+              <h2 className="sheet__title">
+            <Icon name="monitor" size={18} className="icon--lead" />
+            {t('devices.title')}
+          </h2>
               <p className="sheet__hint">{t('devices.hint', { max: me.org.maxDevices })}</p>
               <a
                 className="btn"

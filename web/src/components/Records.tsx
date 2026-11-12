@@ -21,7 +21,7 @@ import { PROVIDER_NAMES } from './Connections';
 import { OrgChart, StanceBadge } from './OrgChart';
 import { Avatar, Confirm, Dialog } from './ui';
 import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
-import { Icon } from './icons';
+import { Icon, PageIcon, RECORD_KIND_ICON } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 import { useTrashToast } from '../lib/trash';
 
@@ -314,7 +314,10 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{type ? typeLabel(type, locale) : ''}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name={RECORD_KIND_ICON[type?.kind ?? ''] ?? 'layout'} />
+          <span>{type ? typeLabel(type, locale) : ''}</span>
+        </h1>
         {data && <span className="topbar__sub num">{t('records.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
         {type && (
@@ -530,6 +533,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
             <div className="section__row">
               <h3 className="section__head">
                 <span>
+                  <Icon name={RECORD_KIND_ICON[ty.kind] ?? 'layout'} size={16} className="icon--lead" />
                   {isContact ? t('org.stakeholders') : typeLabel(ty, locale)}
                   <span className="muted num">{list.length}</span>
                 </span>

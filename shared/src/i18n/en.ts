@@ -3009,6 +3009,7 @@ export const en = {
   'trash.foreverBody': 'It is erased now, with its files, and nobody can put it back.',
   'trash.forevered': 'Deleted for good.',
   'trash.more': 'Show more',
+  'task.backToParent': 'Back to “{title}”',
 } as const;
 
 export type MessageKey = keyof typeof en;

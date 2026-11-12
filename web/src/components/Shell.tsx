@@ -17,7 +17,7 @@ import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
 import { BoardSettings } from './BoardSettings';
 import { HelpDialog } from './Help';
-import { Icon, type IconName } from './icons';
+import { Icon, RECORD_KIND_ICON, type IconName } from './icons';
 import { MenuButton, MenuChoices } from './Menus';
 import { QuickAdd } from './QuickAdd';
 import { SearchPalette, useSearchKey } from './Search';
@@ -163,7 +163,6 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
     accounts: path.startsWith('/accounts') && !renewalsOn && !reviewsOn,
     crm: path.startsWith('/accounts') || path.startsWith('/records'),
   };
-  const KIND_ICON: Record<string, IconName> = { contact: 'idcard', opportunity: 'funnel', ticket: 'lifebuoy', custom: 'layout' };
   const section = (key: string, label: string, body: ReactNode, action?: ReactNode) => (
     <div className="navsec" data-folded={folded.includes(key) || undefined}>
       <div className="sidebar__heading">
@@ -396,7 +395,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               words.other,
               <>
                 {link('/accounts', t('nav.allAccounts', { accounts: words.other }), here.accounts, 'building')}
-                {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
+                {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, RECORD_KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
                 {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
                 {(me.org.rhythm?.reviewDays ?? 0) > 0 && link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
               </>,

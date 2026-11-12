@@ -20,7 +20,7 @@ import {
 } from '../../../shared/src/pages';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { EmptyState, SkeletonCards } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted } from '../components/GettingStarted';
 import { Confirm, Dialog } from '../components/ui';
 import { CountUp } from '../components/CountUp';
@@ -34,6 +34,25 @@ import { relativeTime } from '../lib/time';
 import { useTrashToast } from '../lib/trash';
 
 export type Data = Record<string, CardData>;
+
+/** The icon a card carries beside its title: what it is about, before the words are read. */
+const CARD_ICON: Record<CardType, IconName> = {
+  my_tasks: 'checkCircle',
+  renewals: 'refresh',
+  attention: 'alert',
+  quiet: 'hourglass',
+  stakeholders: 'idcard',
+  metric: 'gauge',
+  breakdown: 'chart',
+  team_load: 'people',
+  sync_health: 'link',
+  note: 'note',
+  report: 'chart',
+};
+const METRIC_ICON: Record<string, IconName> = { accounts: 'building', money: 'coins', attention: 'alert', renewals: 'refresh', open_tasks: 'checkCircle', overdue: 'clock' };
+export const cardIcon = (card: Pick<Card, 'type' | 'metric'>): IconName => (card.type === 'metric' && card.metric ? (METRIC_ICON[card.metric] ?? 'gauge') : CARD_ICON[card.type]);
+/** A page of cards: the person's own home carries the house; any other, what its first card is about. */
+const pageIcon = (page: Pick<Page, 'id' | 'cards'>, homeId: string | null | undefined): IconName => (page.id === homeId ? 'home' : page.cards[0] ? cardIcon(page.cards[0]) : 'layout');
 /** A page being written: a home (tabs on Home) or a dashboard (Dashboards.tsx). */
 export interface Draft {
   id: string | null;
@@ -119,13 +138,17 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
     return (
       <>
         <header className="topbar">
-          <h1 className="topbar__title">{t('nav.home')}</h1>
+          <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="home" />
+          <span>{t('nav.home')}</span>
+        </h1>
         </header>
         <div className="page">
           <GettingStarted />
           <EmptyState icon="layout" title={pages.length ? t('home.notFound') : t('home.none')}>
             {admin ? (
               <button className="btn btn--primary" onClick={newHome}>
+                <Icon name="plus" size={16} />
                 {t('home.newPage')}
               </button>
             ) : (
@@ -143,7 +166,8 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   return (
     <>
       <header className="topbar home-top">
-        <div className="home-top__title">
+        <div className="home-top__title topbar__titles--icon">
+          <PageIcon name={pageIcon(current, homeId)} />
           <h1 className="topbar__title">{current.name}</h1>
           {current.id === homeId && <span className="topbar__sub">{t('home.yourHome')}</span>}
         </div>
@@ -151,9 +175,11 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         {admin && (
           <div className="toolbar">
             <button className="btn" onClick={() => setDraft(draftOf(current))}>
+              <Icon name="edit" size={16} />
               {t('home.edit')}
             </button>
             <button className="btn btn--quiet" onClick={newHome}>
+              <Icon name="plus" size={16} />
               {t('home.newPage')}
             </button>
           </div>
@@ -172,6 +198,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
                 navigate(p.id === homeId ? '/home' : `/pages/${p.id}`);
               }}
             >
+              <Icon name={pageIcon(p, homeId)} size={16} className="icon--lead" />
               {p.name}
             </a>
           ))}
@@ -266,7 +293,10 @@ export function Tile({ card, data, tools, dim }: { card: Card; data: CardData | 
       {tools}
       <header className="pane__head">
         <div className="pane__titles">
-          <h2 className="pane__title">{title}</h2>
+          <h2 className="pane__title">
+            <Icon name={cardIcon(card)} size={16} className="icon--lead" />
+            {title}
+          </h2>
           {caption && <div className="pane__caption">{caption}</div>}
         </div>
         {count !== null && <span className="pane__count num">{count}</span>}

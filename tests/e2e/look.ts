@@ -71,6 +71,34 @@ for (const mode of ['light', 'dark'] as const) {
     await pause(200);
     await shot(page, `look-${mode}-panel2`);
   }
+  if (want('sub')) {
+    // A task of one's own with two subtasks: opened from My tasks, then one subtask from inside it.
+    await go(page, '/my');
+    const as = async (method: string, path: string, body?: unknown): Promise<any> =>
+      page.evaluate(
+        async (m, p, b) => {
+          const r = await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b), credentials: 'include' });
+          return r.status === 204 ? null : r.json();
+        },
+        method,
+        path,
+        body,
+      );
+    const me = await as('GET', '/api/me');
+    const board = (await as('GET', '/api/boards')).boards[0];
+    const parent = (await as('POST', '/api/tasks', { boardId: board.id, title: 'Yenileme teklifini hazırla', assigneeIds: [me.user.id], dueDate: new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10) })).task;
+    const sub = (await as('POST', '/api/tasks', { boardId: board.id, parentId: parent.id, title: 'Fiyat tablosunu güncelle', assigneeIds: [me.user.id] })).task;
+    await as('POST', '/api/tasks', { boardId: board.id, parentId: parent.id, title: 'Hukuk onayını al' });
+    const made = { parent: parent.id as string, sub: sub.id as string };
+    await go(page, `/my?task=${made.parent}`);
+    await page.waitForSelector('.subtask__title');
+    await pause(300);
+    await shot(page, `look-${mode}-sub1`);
+    await page.click('.subtask__title');
+    await page.waitForSelector('.panel__back');
+    await pause(400);
+    await shot(page, `look-${mode}-sub2`);
+  }
   if (want('accounts')) {
     await go(page, '/accounts');
     await page.waitForSelector('.acards, .accounts-table', { timeout: 10_000 }).catch(() => undefined);
@@ -182,6 +210,9 @@ if (want('phone')) {
   const { page } = await newPage(s.browser, 390, 844);
   await signIn(page, s.origin, 'zeynep@demo.example');
   await theme(page, 'light');
+  await go(page, '/home');
+  await pause(400);
+  await shot(page, 'look-phone-home');
   await go(page, '/my');
   await shot(page, 'look-phone-my');
   await go(page, '/accounts');

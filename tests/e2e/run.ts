@@ -1098,6 +1098,32 @@ await step('installable, and readable without a connection', async () => {
   await omar.page.browserContext().close();
 });
 
+await step('a subtask opened from its task has a way back to it', async () => {
+  const lena = await newPage(s.browser);
+  await signIn(lena.page, s.origin, 'lena@demo.example');
+  const add = (body: unknown) =>
+    lena.page.evaluate(
+      async (b) => (await (await fetch('/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: JSON.stringify(b), credentials: 'include' })).json()).task.id as string,
+      body,
+    );
+  const parentId = await add({ boardId: csBoard, title: 'Kurulum planını hazırla' });
+  const made = { parent: parentId, sub: await add({ boardId: csBoard, title: 'Toplantı tarihini netleştir', parentId }) };
+  // From My tasks: the task, then its subtask.
+  await lena.page.goto(`${s.origin}/my?task=${made.parent}`, { waitUntil: 'networkidle0' });
+  await lena.page.waitForSelector('.subtask__title');
+  expect((await lena.page.$('.panel__back')) === null, 'a task that is nobody’s subtask shows a way back');
+  await lena.page.click('.subtask__title');
+  await lena.page.waitForSelector('.panel__back');
+  expect(lena.page.url().includes(`task=${made.sub}`), `the subtask did not open: ${lena.page.url()}`);
+  expect((await text(lena.page, '.panel__back')).includes('Kurulum planını hazırla'), 'the way back does not name the task it goes to');
+  await shot(lena.page, 'p7-02-subtask-back');
+  await lena.page.click('.panel__back');
+  await lena.page.waitForFunction((id) => location.search.includes(`task=${id}`) && !!document.querySelector('.subtask__title') && !document.querySelector('.panel__back'), {}, made.parent);
+  expect(lena.page.url().startsWith(`${s.origin}/my`), `going back left My tasks: ${lena.page.url()}`);
+  expect(lena.errors.length === 0, lena.errors.join(' | '));
+  await lena.page.browserContext().close();
+});
+
 await step('trash: a deleted task can be taken back at once, or later from the trash, whole', async () => {
   const lena = await newPage(s.browser);
   await signIn(lena.page, s.origin, 'lena@demo.example');

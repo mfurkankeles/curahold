@@ -1,6 +1,7 @@
 // Tasks from a file: the export of whatever the team used before (a CSV or
 // an Excel sheet) onto this board. The file is read in the browser; nothing
 // is sent until the person has seen which column goes where.
+import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Locale } from '../../../shared/src/i18n';
 import type { Board } from '../../../shared/src/model';
@@ -315,6 +316,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
         {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
         <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn--primary" disabled={!titleColumn || duplicate || busy} onClick={run}>
+            <Icon name="upload" size={16} />
             {busy ? t('common.saving') : t('import.go', { n: sheet.rows.length })}
           </button>
           <span className="field__hint">{t('timport.safe')}</span>

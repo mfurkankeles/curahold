@@ -1,5 +1,6 @@
 // The customer portal, from inside: the company's switch, the boards it
 // opened, and the customers' people who can sign in.
+import { Icon } from './icons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PORTAL_SESSION_DAYS, type PortalAuth, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -169,6 +170,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
             <input className="input" type="email" value={email} maxLength={254} required onChange={(e) => setEmail(e.target.value)} />
           </label>
           <button className="btn btn--primary" disabled={busy || !name.trim() || !email.trim()}>
+            <Icon name="userPlus" size={16} />
             {t('portal.people.invite')}
           </button>
         </form>

@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Task } from '../../../shared/src/model';
 import { EmptyState, SkeletonRows } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
@@ -91,7 +91,8 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="timeline" />
           <h1 className="topbar__title">{t('nav.timeline')}</h1>
           <p className="topbar__sub">
             {fmtDate(start, { day: 'numeric', month: 'long' })} – {fmtDate(end, { day: 'numeric', month: 'long', year: 'numeric' })}

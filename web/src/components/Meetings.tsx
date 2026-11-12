@@ -386,7 +386,10 @@ export function AccountMeetings({ account }: { account: Account }) {
     <section className="sheet meetings" id="meetings" aria-labelledby="meetings-title">
       <div className="meetings__head">
         <h3 className="section__head" id="meetings-title">
-          {t('meetings.title')} {total > 0 && <span className="muted num">{total}</span>}
+          <span>
+            <Icon name="people" size={16} className="icon--lead" />
+            {t('meetings.title')} {total > 0 && <span className="muted num">{total}</span>}
+          </span>
         </h3>
         {due && due.state !== 'none' && (
           <span className="review__when meetings__next" data-state={due.state}>
@@ -417,6 +420,7 @@ export function AccountMeetings({ account }: { account: Account }) {
         <EmptyState compact icon="people" title={t('meetings.emptyTitle')} body={t('meetings.emptyBody')}>
           {canWrite && (
             <button className="btn btn--primary btn--small" onClick={() => setLogging(true)}>
+              <Icon name="plus" size={16} />
               {t('meetings.log')}
             </button>
           )}

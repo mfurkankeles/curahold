@@ -8,7 +8,7 @@ import type { AppRecord } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { bandOf, keyFields } from '../components/AccountViews';
 import { EmptyState, SkeletonCards } from '../components/Empty';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { TargetsPanel, dealsN } from '../components/Rhythm';
 import { ReportTabs } from './ReportBuilder';
@@ -203,7 +203,8 @@ export function ReportsPage() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__titles">
+        <div className="topbar__titles topbar__titles--icon">
+          <PageIcon name="chart" />
           <h1 className="topbar__title">{t('nav.reports')}</h1>
           <p className="topbar__sub">{t('reports.lead')}</p>
         </div>
@@ -232,13 +233,19 @@ export function ReportsPage() {
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}
             <div className="reports__stack">
               <section className="sheet">
-                <h2 className="sheet__title">{t('reports.flowTitle')}</h2>
+                <h2 className="sheet__title">
+            <Icon name="chart" size={18} className="icon--lead" />
+            {t('reports.flowTitle')}
+          </h2>
                 <p className="sheet__hint">{t('reports.flowHint')}</p>
                 {work.weeks.some((w) => w.created || w.done) ? <WeekChart weeks={work.weeks} /> : <EmptyState compact icon="chart" title={t('reports.noData')} />}
               </section>
               <div className="reports__grid">
               <section className="sheet">
-                <h2 className="sheet__title">{t('reports.byPerson')}</h2>
+                <h2 className="sheet__title">
+            <Icon name="people" size={18} className="icon--lead" />
+            {t('reports.byPerson')}
+          </h2>
                 <p className="sheet__hint">{t('reports.byPersonHint')}</p>
                 {work.people.length ? (
                   <BarRows
@@ -262,20 +269,29 @@ export function ReportsPage() {
               {/* Beside who carries what: the same people's logged time. */}
               {work.hours.length > 0 && (
                 <section className="sheet">
-                  <h2 className="sheet__title">{t('reports.hours')}</h2>
+                  <h2 className="sheet__title">
+            <Icon name="clock" size={18} className="icon--lead" />
+            {t('reports.hours')}
+          </h2>
                   <p className="sheet__hint">{t('reports.hoursHint')}</p>
                   <BarRows rows={work.hours.slice(0, 10).map((h) => ({ key: h.userId, label: person(h.userId)?.name ?? '—', value: h.minutes, text: hoursText(h.minutes, locale), color: 'sky' }))} />
                 </section>
               )}
               {board ? (
                 <section className="sheet">
-                  <h2 className="sheet__title">{t('reports.byStatus')}</h2>
+                  <h2 className="sheet__title">
+            <Icon name="columns" size={18} className="icon--lead" />
+            {t('reports.byStatus')}
+          </h2>
                   <p className="sheet__hint">{t('reports.byStatusHint')}</p>
                   <BarRows rows={cols.map((col) => ({ key: col.key, label: col.name, value: work.statuses.find((s) => s.status === col.key)?.n ?? 0, color: col.done ? 'leaf' : undefined }))} />
                 </section>
               ) : (
                 <section className="sheet">
-                  <h2 className="sheet__title">{t('reports.byBoard')}</h2>
+                  <h2 className="sheet__title">
+            <Icon name="board" size={18} className="icon--lead" />
+            {t('reports.byBoard')}
+          </h2>
                   <p className="sheet__hint">{t('reports.byBoardHint')}</p>
                   {work.boards.length ? (
                     <BarRows
@@ -312,7 +328,10 @@ export function ReportsPage() {
           <div className="reports__stack">
             {opp && deals && <TargetsPanel type={opp} records={deals} />}
             <section className="sheet">
-              <h2 className="sheet__title">{t('reports.health')}</h2>
+              <h2 className="sheet__title">
+            <Icon name="heart" size={18} className="icon--lead" />
+            {t('reports.health')}
+          </h2>
               <p className="sheet__hint">{customers.atRisk > 0 ? t('reports.healthRisk', { value: cash(customers.atRisk) }) : t('reports.healthHint')}</p>
               <div className="healthbar" role="img" aria-label={t('reports.health')}>
                 {(['good', 'watch', 'risk', 'none'] as const).map((b) => (customers.bands[b] ? <span key={b} data-band={b} style={{ flexGrow: customers.bands[b] }} title={`${t(`reports.band.${b}` as any)}: ${customers.bands[b]}`} /> : null))}
@@ -335,7 +354,10 @@ export function ReportsPage() {
               <div className="reports__grid">
                 {renewal && (
                   <section className="sheet">
-                    <h2 className="sheet__title">{t('nav.renewals')}</h2>
+                    <h2 className="sheet__title">
+            <Icon name="refresh" size={18} className="icon--lead" />
+            {t('nav.renewals')}
+          </h2>
                     <p className="sheet__hint">{t('reports.renewalsHint')}</p>
                     <BarRows
                       rows={customers.months.map((m) => ({
@@ -354,7 +376,10 @@ export function ReportsPage() {
                 )}
                 {pipeline && (
                   <section className="sheet">
-                    <h2 className="sheet__title">{t('reports.pipeline')}</h2>
+                    <h2 className="sheet__title">
+            <Icon name="funnel" size={18} className="icon--lead" />
+            {t('reports.pipeline')}
+          </h2>
                     <p className="sheet__hint">
                       {t('reports.pipelineHint', { open: amount ? fmt(amount, pipeline.open) : pipeline.open, won: amount ? fmt(amount, pipeline.won) : pipeline.won })}
                       {pipeline.winRate != null && <> {t('reports.winRate', { n: pipeline.winRate })}</>}

@@ -1,6 +1,7 @@
 // The first-run setup an administrator does alone, in about 15 minutes:
 // company → where you talk → customers → people → rules → invite. Every
 // step can be skipped and picked up later; progress is saved as you go.
+import { PageIcon } from '../components/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { SETUP_STEPS, type SetupStep } from '../../../shared/src/model';
@@ -39,7 +40,10 @@ export function SetupPage({ step }: { step: string | null }) {
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title">{t('setup.title')}</h1>
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="sliders" />
+          <span>{t('setup.title')}</span>
+        </h1>
         <span className="topbar__sub">{left > 0 ? t('setup.minutesLeft', { n: left }) : t('setup.almost')}</span>
         <div className="topbar__spacer" />
         <button className="btn btn--quiet btn--small" onClick={() => navigate('/my')}>

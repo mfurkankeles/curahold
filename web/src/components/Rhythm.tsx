@@ -124,6 +124,7 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
       <section className="sheet reports__wide">
         <EmptyState compact icon="target" title={t('targets.emptyTitle')} body={t('targets.emptyBody')}>
           <button className="btn btn--primary" onClick={settings}>
+            <Icon name="target" size={16} />
             {t('targets.set')}
           </button>
         </EmptyState>
@@ -167,7 +168,10 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
     <section className="sheet reports__wide targets">
       <div className="targets__top">
         <div>
-          <h2 className="sheet__title">{t('targets.title', { period: periodLabel(report.period) })}</h2>
+          <h2 className="sheet__title">
+            <Icon name="target" size={18} className="icon--lead" />
+            {t('targets.title', { period: periodLabel(report.period) })}
+          </h2>
           <p className="sheet__hint">{t('targets.hint', { pct: Math.round(report.period.elapsed * 100), days: report.period.daysLeft })}</p>
         </div>
         {manage && (
@@ -468,7 +472,10 @@ export function RhythmSettings() {
   return (
     <div className="rhythm">
       <section className="sheet">
-        <h2 className="sheet__title">{t('rhythm.targets')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="target" size={18} className="icon--lead" />
+            {t('rhythm.targets')}
+          </h2>
         <p className="sheet__hint">{t('rhythm.targetsHint2', { currency: me.org.currency })}</p>
         <div className="field">
           <span className="field__label" id="target-mode">
@@ -533,7 +540,10 @@ export function RhythmSettings() {
       <section className="sheet">
         <div className="rhythm__head">
           <div>
-            <h2 className="sheet__title">{t('rhythm.reviews')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="handshake" size={18} className="icon--lead" />
+            {t('rhythm.reviews')}
+          </h2>
             <p className="sheet__hint">{r.reviewDays ? t('rhythm.reviewsHint') : t('rhythm.reviewsOffHint')}</p>
           </div>
           <Switch on={r.reviewDays > 0} label={t('rhythm.reviewsOn')} onChange={(v) => setR({ ...r, reviewDays: v ? 90 : 0 })} />
@@ -544,7 +554,10 @@ export function RhythmSettings() {
       <section className="sheet">
         <div className="rhythm__head">
           <div>
-            <h2 className="sheet__title">{t('rhythm.renewals')}</h2>
+            <h2 className="sheet__title">
+            <Icon name="refresh" size={18} className="icon--lead" />
+            {t('rhythm.renewals')}
+          </h2>
             <p className="sheet__hint">{renewalField ? t('rhythm.renewalsHint') : t('rhythm.renewalsNoField')}</p>
           </div>
           <Switch on={r.renewal.days > 0} disabled={!renewalField} label={t('rhythm.renewalsOn')} onChange={(v) => setR({ ...r, renewal: { ...r.renewal, days: v ? 180 : 0 } })} />
@@ -579,7 +592,10 @@ export function RhythmSettings() {
       </section>
 
       <section className="sheet">
-        <h2 className="sheet__title">{t('rhythm.nudges')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="bell" size={18} className="icon--lead" />
+            {t('rhythm.nudges')}
+          </h2>
         <p className="sheet__hint">{t('rhythm.nudgesHint')}</p>
         {days(t('rhythm.stale'), r.staleDays, [7, 14, 21, 30], (n) => setR({ ...r, staleDays: n }), { hint: t('rhythm.staleHint') })}
         {days(t('rhythm.escalate'), r.escalateDays, [2, 3, 5, 7], (n) => setR({ ...r, escalateDays: n }), { unit: 'rhythm.daysLate', hint: t('rhythm.escalateHint') })}

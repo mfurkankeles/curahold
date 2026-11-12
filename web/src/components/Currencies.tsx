@@ -78,7 +78,10 @@ export function CurrencySettings() {
   return (
     <div className="currencies">
       <section className="sheet">
-        <h2 className="sheet__title">{t('fx.base')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="coins" size={18} className="icon--lead" />
+            {t('fx.base')}
+          </h2>
         <p className="currencies__base">
           <span className="curchip">{base}</span>
           <span>{money.nameOf(base)}</span>
@@ -98,7 +101,10 @@ export function CurrencySettings() {
       </section>
 
       <section className="sheet">
-        <h2 className="sheet__title">{t('fx.others')}</h2>
+        <h2 className="sheet__title">
+            <Icon name="globe" size={18} className="icon--lead" />
+            {t('fx.others')}
+          </h2>
         <p className="sheet__hint">{t('fx.othersHint', { base })}</p>
         {rows.length === 0 ? (
           <EmptyState compact icon="globe" title={t('fx.emptyTitle')} body={t('fx.emptyBody', { base })} />

@@ -1,5 +1,6 @@
 // Automations, built as sentences: "When … (only for …), then …".
 // Every rule can be switched off in one click, run now, and shows what it did.
+import { Icon } from './icons';
 import { useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_TRIGGERS, TRIGGER_TYPES, type Action, type Automation, type AutomationRun, type Condition, type Trigger, type TriggerType } from '../../../shared/src/automation';
 import { labelOf } from '../../../shared/src/fields';
@@ -118,6 +119,7 @@ export function AutomationList() {
         <span>{t('auto.count', { n: list.filter((a) => a.enabled).length, total: list.length })}</span>
         {manage && (
           <button className="btn btn--primary btn--small" onClick={() => setEditing('new')}>
+            <Icon name="plus" size={16} />
             {t('auto.new')}
           </button>
         )}
@@ -127,6 +129,7 @@ export function AutomationList() {
           <p>{t('auto.empty')}</p>
           {manage && (
             <button className="btn btn--primary" onClick={() => setEditing('new')}>
+              <Icon name="plus" size={16} />
               {t('auto.new')}
             </button>
           )}
