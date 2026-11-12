@@ -1,0 +1,29 @@
+---
+title: Reference: what is not in the API
+section: developers
+order: 41
+summary: Addresses that belong to the browser, listed so nothing is hidden.
+---
+# Reference: what is not in the API
+
+These addresses exist but belong to the browser or to other machines. They are listed so nothing is hidden.
+
+| Addresses | How many | Why |
+| --- | --- | --- |
+| `/admin/…` | 28 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/auth/…` | 5 | Signing in and out happens in the browser. |
+| `/billing/…` | 3 | Plan and payment, with the payment provider. |
+| `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
+| `/connections/…` | 23 | Managing connections and their field matching: an administrator in the browser. |
+| `/help/…` | 3 | The in-product help assistant. |
+| `/help-files/…` | 1 | Files sent to support. |
+| `/hooks/…` | 3 | Chat apps and calendars calling back. |
+| `/join/…` | 1 | Joining a company by invitation happens in the browser. |
+| `/logo/…` | 1 | The company logo. |
+| `/manifest.webmanifest/…` | 1 | The installable-app manifest. |
+| `/oauth/…` | 0 | The consent screen for apps and AI assistants; see "AI connector and OAuth". |
+| `/org/…` | 1 | The company's public sign-in details. |
+| `/portal/…` | 6 | Managing who can sign in to the customer portal. |
+| `/setup/…` | 5 | The first-time setup of a company. |
+| `/signup/…` | 4 | Opening a new company happens on the website. |
+| `/support/…` | 8 | Curahold support's own desk. |

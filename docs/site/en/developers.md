@@ -15,6 +15,19 @@ There are four ways to connect your own tools to Curahold. All follow one rule: 
 | [AI connector (MCP)](/docs/en/mcp-and-oauth/) | Claude, ChatGPT and other assistants | OAuth 2.1 |
 | [OAuth apps](/docs/en/mcp-and-oauth/#oauth-for-your-own-app) | Apps other people will use | OAuth 2.1 + PKCE |
 
+## Where to start
+
+| If you want to | Read |
+| --- | --- |
+| Make a first request in five minutes | [Quickstart](/docs/en/quickstart/) |
+| Understand how the API thinks, with examples | [API guide](/docs/en/api-reference/) |
+| Look up an address, field by field | Reference: [customers](/docs/en/ref-customers/), [records](/docs/en/ref-records/), [tasks and boards](/docs/en/ref-tasks/), [people and search](/docs/en/ref-people/), [pages and reports](/docs/en/ref-pages/), [automations](/docs/en/ref-automation/), [objects](/docs/en/ref-objects/), [errors](/docs/en/ref-errors/) |
+| Keep a system of your own in step | [Connect your own tool](/docs/en/connect-your-own-tool/) |
+| Be told when something changes | [Webhooks](/docs/en/webhooks/) |
+| Let an AI assistant or your own app act for a person | [AI connector and OAuth](/docs/en/mcp-and-oauth/) |
+
+The reference pages are built from the product's own code on every release, so they always match what the API accepts.
+
 ## Addresses
 
 Every company has its own address. Replace `yourcompany` in the examples with yours.

@@ -342,3 +342,19 @@ saves a screenshot. Run them after any change to a screen.
 | page | a home page or a dashboard, made of cards |
 | fx | exchange rates (`orgs.settings.fx`) |
 | tenant / system / portal | the three ways to reach the database: as a company member, as the system, as a portal customer |
+
+## The developer reference is built from the code
+
+The pages `docs/site/<lang>/ref-*.md` are not written by hand. `npm run docs:reference` reads every
+route in `api/src/routes` (its address, what it needs, the fields of its body, its query
+parameters), adds the sentence for it from `scripts/docs/catalogue.ts` (English and Turkish) and
+writes the pages; the object shapes come from the shared types and the error list from
+`api/src/lib/errors.ts`.
+
+When you add or change an address:
+
+1. Add or change its sentence in `scripts/docs/catalogue.ts`, in both languages. An address that
+   belongs to the browser only goes under `INTERNAL` instead.
+2. Run `npm run docs:reference` and commit the pages with your change.
+
+`tests/docs-reference.test.ts` fails until both are done, so the reference cannot fall behind.

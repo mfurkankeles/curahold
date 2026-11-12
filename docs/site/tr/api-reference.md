@@ -1,10 +1,10 @@
 ---
-title: API referansı
+title: API rehberi
 section: developers
 order: 3
 summary: Müşteriler, kayıtlar, görevler, yorumlar, arama ve ana sayfa uçları, örneklerle.
 ---
-# API referansı
+# API rehberi
 
 Tüm uçlar `https://sirketin.curahold.com/api` altındadır, JSON alır ve JSON döndürür. Kimlik için [API anahtarı](/docs/tr/api-keys/) kullan.
 
@@ -107,3 +107,22 @@ Raporlar ve sunumlar için en kısa yol budur: kartlar zaten kişinin görme yet
 ## Tarihler ve tutarlar
 
 Tarihler `YYYY-MM-DD`, zamanlar ISO 8601 (UTC) biçimindedir. Tutarlar şirketin para biriminde sayı olarak gelir.
+
+## Listeler ve sayfalar
+
+Listeler `limit` ve `offset` alır (müşteriler ve kayıtlar) ya da `before` olarak geri gönderilecek bir `next` değeri verir (zaman çizelgesi, bildirimler, toplantılar). Kullanabileceğin kadarını iste: varsayılan sayfa bilerek küçüktür ve arama (`q`), her şeyi okuyup kendin süzmekten hızlıdır.
+
+Metin araması harfleri insanların beklediği gibi eşler: `istanbul`, `İstanbul` ve `ISTANBUL` birbirini bulur; `i`, `ı`, `ş`/`s` ve Türk alfabesinin geri kalanı da öyle.
+
+## "Bugün" ne demek
+
+Bitiş tarihi gibi tarihler düz günlerdir (`YYYY-AA-GG`). Bir görevin gecikip gecikmediğine **şirketin** saat dilimi karar verir (`GET /me` cevabındaki `org.timezone`); sunucununki ya da isteği yapanınki değil.
+
+## Hatalar
+
+Hata her zaman `{ "error": "<kod>", "message": "<bir cümle>" }` biçimindedir. Kararı koda göre ver, cümleyi göster. Tam liste [hatalar](/docs/tr/ref-errors/) sayfasında.
+
+## Bütün adresler
+
+Bu sayfa fikirleri anlatır. Başvuru, ürünün kendi kodundan üretilir ve her adresi alanlarıyla listeler:
+[müşteriler](/docs/tr/ref-customers/) · [kayıtlar](/docs/tr/ref-records/) · [görevler ve panolar](/docs/tr/ref-tasks/) · [kişiler, arama ve bildirimler](/docs/tr/ref-people/) · [sayfalar ve raporlar](/docs/tr/ref-pages/) · [otomasyonlar ve planlar](/docs/tr/ref-automation/) · [anahtarlar ve webhook'lar](/docs/tr/ref-developer-settings/) · [nesneler](/docs/tr/ref-objects/) · [hatalar](/docs/tr/ref-errors/) · [API'de olmayanlar](/docs/tr/ref-internal/)

@@ -1,10 +1,10 @@
 ---
-title: API reference
+title: API guide
 section: developers
 order: 3
 summary: Customers, records, tasks, comments, search and home-page endpoints, with examples.
 ---
-# API reference
+# API guide
 
 Every endpoint lives under `https://yourcompany.curahold.com/api`, takes JSON and returns JSON. Authenticate with an [API key](/docs/en/api-keys/).
 
@@ -107,3 +107,22 @@ This is the shortest way to reports and presentations: cards are already worked 
 ## Dates and money
 
 Dates are `YYYY-MM-DD`, times ISO 8601 (UTC). Money comes as a number in the company's currency.
+
+## Lists and pages
+
+Lists take `limit` and `offset` (customers and records) or hand back a `next` value to send as `before` (timeline, notifications, meetings). Ask for what you can use: the default page is small on purpose, and a search (`q`) is quicker than reading everything and filtering yourself.
+
+Text search folds letters the way people expect: `istanbul`, `İstanbul` and `ISTANBUL` find each other, and so do `i`, `ı`, `ş`/`s` and the rest of the Turkish alphabet.
+
+## What "today" means
+
+Dates such as a due date are plain days (`YYYY-MM-DD`). Whether a task is overdue is decided by the **company's** time zone (in `org.timezone` of `GET /me`), not the server's and not the caller's.
+
+## Errors
+
+An error is always `{ "error": "<code>", "message": "<a sentence>" }`. Decide by the code, show the sentence. The full list is on the [errors](/docs/en/ref-errors/) page.
+
+## Every address
+
+This page explains the ideas. The reference lists every address with its fields, built from the product's own code:
+[customers](/docs/en/ref-customers/) · [records](/docs/en/ref-records/) · [tasks and boards](/docs/en/ref-tasks/) · [people, search and notifications](/docs/en/ref-people/) · [pages and reports](/docs/en/ref-pages/) · [automations and playbooks](/docs/en/ref-automation/) · [keys and webhooks](/docs/en/ref-developer-settings/) · [objects](/docs/en/ref-objects/) · [errors](/docs/en/ref-errors/) · [what is not in the API](/docs/en/ref-internal/)

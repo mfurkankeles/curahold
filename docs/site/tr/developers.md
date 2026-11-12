@@ -15,6 +15,19 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 | [AI bağlayıcısı (MCP)](/docs/tr/mcp-and-oauth/) | Claude, ChatGPT ve diğer asistanlar | OAuth 2.1 |
 | [OAuth uygulamaları](/docs/tr/mcp-and-oauth/#kendi-uygulaman-icin-oauth) | Başkalarının kullanacağı uygulamalar | OAuth 2.1 + PKCE |
 
+## Nereden başlamalı
+
+| İstediğin | Oku |
+| --- | --- |
+| Beş dakikada ilk isteği göndermek | [Hızlı başlangıç](/docs/tr/quickstart/) |
+| API'nin nasıl düşündüğünü örneklerle anlamak | [API rehberi](/docs/tr/api-reference/) |
+| Bir adrese alan alan bakmak | Başvuru: [müşteriler](/docs/tr/ref-customers/), [kayıtlar](/docs/tr/ref-records/), [görevler ve panolar](/docs/tr/ref-tasks/), [kişiler ve arama](/docs/tr/ref-people/), [sayfalar ve raporlar](/docs/tr/ref-pages/), [otomasyonlar](/docs/tr/ref-automation/), [nesneler](/docs/tr/ref-objects/), [hatalar](/docs/tr/ref-errors/) |
+| Kendi sistemini eşit tutmak | [Kendi aracını bağla](/docs/tr/connect-your-own-tool/) |
+| Bir şey değişince haber almak | [Webhook'lar](/docs/tr/webhooks/) |
+| Bir yapay zekâ asistanının ya da kendi uygulamanın bir kişi adına çalışması | [Yapay zekâ bağlayıcısı ve OAuth](/docs/tr/mcp-and-oauth/) |
+
+Başvuru sayfaları her sürümde ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır.
+
 ## Adresler
 
 Her şirketin kendi adresi vardır. Aşağıdaki örneklerde `sirketin` yerine kendi şirket adresini yaz.
