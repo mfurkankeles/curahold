@@ -223,6 +223,32 @@ if (ok && !process.env.QUICK) {
       errors.push(`the trash inside the demo: ${e instanceof Error ? e.message : e}`);
     }
   }
+  // The demo has no address bar and no browser history of its own: the way back is the app's.
+  // Renewals from the menu, a customer from there, back to Renewals; then dashboards open filled.
+  try {
+    await click('a.navlink', 'Yenilemeler');
+    await frame!.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Sözleşme yenilemeleri', { timeout: 10000 });
+    await frame!.waitForSelector('.renewals .rowlink', { timeout: 10000 });
+    await frame!.click('.renewals .rowlink');
+    await frame!.waitForSelector('.backbar__back', { timeout: 10000 });
+    const says = await frame!.$eval('.backbar__back', (e) => e.textContent?.trim());
+    if (says !== 'Yenilemeler') errors.push(`the way back inside the demo says "${says}"`);
+    await page.screenshot({ path: join(SCREENS, 'demo-way-back.png') });
+    await frame!.click('.backbar__back');
+    await frame!.waitForFunction(() => document.querySelector('.topbar__title')?.textContent === 'Sözleşme yenilemeleri' && !document.querySelector('.backbar'), { timeout: 10000 });
+    await click('a.navlink', 'Paneller');
+    await frame!.waitForSelector('.dashpick__item[aria-current="page"]', { timeout: 15000 });
+    await frame!.waitForSelector('.pane[data-type="report"] :is(.vchart, .donut, .kpi, .hbars, .emptystate, .pane__note)', { timeout: 15000 });
+    if ((await frame!.$$('.dashpick__item')).length < 7) errors.push('the ready-made dashboards did not arrive inside the demo');
+    await page.screenshot({ path: join(SCREENS, 'demo-dashboards.png') });
+    await click('a.navlink', 'Takvim');
+    await frame!.waitForSelector('.cal .cal__day', { timeout: 10000 });
+    await click('.seg--views button', 'Hafta');
+    await frame!.waitForSelector('.calweek__day', { timeout: 10000 });
+    await page.screenshot({ path: join(SCREENS, 'demo-calendar-week.png') });
+  } catch (e) {
+    errors.push(`getting around inside the demo: ${e instanceof Error ? e.message : e}`);
+  }
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));
