@@ -322,6 +322,8 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | Görevin içindeki kayıt bağlantısı | tıklayınca görünür bir şey olmuyordu (kayıt görevin altında açılıyordu) | kaydı açıyor; geri düğmesi göreve döndürüyor |
 | Yenilemeler, İş değerlendirmeleri, Ürünler başlığı | üçünde de "Müşteriler" | kendi başlığı, ikonu ve açıklaması ("Sözleşme yenilemeleri: hangi müşteri ne zaman yenileniyor…") |
 | Yenilemeler'den Ürünler'e geçince | menüde "Tüm müşteriler" yanıyor, adres /accounts oluyor; cihaz seçimi saklayamıyorsa (demo) kart listesine düşüyordu | Ürünler'in kendi adresi ve menüde kendi satırı var; menü, başlık ve içerik aynı yeri gösteriyor (testli) |
+| Yardım | menüdeki "Curahold'a sor" üç sekmeli bir pencere açıyordu | her ekranın sağ altında sabit "CuraAI" düğmesi ve sohbeti; kapatınca konuşma kalır; cevap yetmezse "Desteğe yaz" soruyla birlikte açılır. Motor aynı (karar A): cevap belgelerden, cihazda, soru başına $0 |
+| "Desteğin bakmasına izin ver" | tek satır ve bir düğme; ne anlama geldiği yazmıyordu | ne olduğu iki cümleyle, üç güvence (yalnızca senin gördüğünü görür ve değiştiremez; kendiliğinden kapanır; her giriş kayda yazılır), açık/kapalı durumu, "Yalnızca okuma erişimi ver" |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

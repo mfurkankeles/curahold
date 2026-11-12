@@ -3,7 +3,6 @@
 // technical details the app saw), and consent for support to look inside —
 // off unless ticked, time-limited, revocable.
 import { Icon } from './icons';
-import { Ask } from './Ask';
 import { docsFile, docsHref, docsLink } from '../lib/docs';
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import {
@@ -693,15 +692,40 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
     });
   return (
     <div className="help">
-      <section>
-        <h3 className="section__head">{t('help.grant.title')}</h3>
-        {active.length === 0 && <p className="muted">{t('help.grant.none')}</p>}
+      <section className="grantbox" data-on={active.length > 0 || undefined}>
+        <div className="grantbox__head">
+          <span className="grantbox__icon">
+            <Icon name="shield" size={20} />
+          </span>
+          <div>
+            <h3 className="grantbox__title">{t('help.grant.title')}</h3>
+            <p className="grantbox__what">{t('help.grant.what')}</p>
+          </div>
+        </div>
+        <ul className="grantbox__points">
+          {(['see', 'ends', 'log'] as const).map((k) => (
+            <li key={k}>
+              <Icon name="check" size={15} />
+              {t(`help.grant.point.${k}` as MessageKey)}
+            </li>
+          ))}
+        </ul>
+        {active.length === 0 && (
+          <p className="grantbox__state">
+            <span className="grantbox__dot" />
+            {t('help.grant.none')}
+          </p>
+        )}
         <ul className="help__grants">
           {active.map((g) => (
             <li key={g.id}>
               <span>
-                <strong>{t(g.level === 'edit' ? 'help.grant.edit' : 'help.grant.view')}</strong>
-                <span className="muted"> {t('help.grant.until', { when: when(g.expiresAt) })}</span>
+                <span className="grantbox__dot" data-on />
+                <strong>{t('help.grant.on')}</strong>
+                <span className="muted">
+                  {' '}
+                  · {t(g.level === 'edit' ? 'help.grant.edit' : 'help.grant.view')} · {t('help.grant.until', { when: when(g.expiresAt) })}
+                </span>
                 {g.lastUsedAt && <span className="muted"> · {t('help.grant.used', { when: when(g.lastUsedAt) })}</span>}
                 {g.requestRef && <span className="muted"> · {g.requestRef}</span>}
               </span>
@@ -711,20 +735,25 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
             </li>
           ))}
         </ul>
-        {access?.canGrant && !me.supportBy && (
-          <div className="toolbar">
-            <select className="select" aria-label={t('help.grant.for')} value={hours} onChange={(e) => setHours(Number(e.target.value) as (typeof GRANT_HOURS)[number])}>
-              {GRANT_HOURS.map((h) => (
-                <option key={h} value={h}>
-                  {t(`help.grant.hours.${h}` as MessageKey)}
-                </option>
-              ))}
-            </select>
-            <button className="btn btn--small" onClick={open}>
+        {access?.canGrant && !me.supportBy && active.length === 0 && (
+          <div className="grantbox__give">
+            <label className="grantbox__for">
+              <span>{t('help.grant.for')}</span>
+              <select className="select" value={hours} onChange={(e) => setHours(Number(e.target.value) as (typeof GRANT_HOURS)[number])}>
+                {GRANT_HOURS.map((h) => (
+                  <option key={h} value={h}>
+                    {t(`help.grant.hours.${h}` as MessageKey)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="btn btn--primary" onClick={open}>
+              <Icon name="key" size={16} />
               {t('help.grant.openView')}
             </button>
           </div>
         )}
+        {access && !access.canGrant && <p className="field__hint">{t(access.policy === 'off' ? 'help.grant.off' : 'help.grant.adminsOnly')}</p>}
       </section>
       <section>
         <h3 className="section__head">{t('help.mine.title')}</h3>
@@ -749,12 +778,10 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
   );
 }
 
-export function HelpDialog({ onClose, start = 'ask' }: { onClose: () => void; start?: 'ask' | 'new' | 'mine' }) {
+export function HelpDialog({ onClose, start = 'new', about = '' }: { onClose: () => void; start?: 'new' | 'mine'; about?: string }) {
   const { t } = useI18n();
   const { reloadMe } = useStore();
-  const [tab, setTab] = useState<'ask' | 'new' | 'mine'>(start);
-  // The question Ask could not settle, carried into the request form.
-  const [about, setAbout] = useState('');
+  const [tab, setTab] = useState<'new' | 'mine'>(start);
   const [access, setAccess] = useState<Access | null>(null);
   const [sentRef, setSentRef] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -772,10 +799,6 @@ export function HelpDialog({ onClose, start = 'ask' }: { onClose: () => void; st
     <div className="help__host" data-hidden={hidden || undefined}>
       <Dialog title={t('help.title')} wide onClose={onClose}>
         <div className="tabs" role="tablist">
-          <button className="tab" role="tab" aria-selected={tab === 'ask'} onClick={() => setTab('ask')}>
-            <Icon name="search" size={16} className="icon--lead" />
-            {t('ask.tab')}
-          </button>
           <button className="tab" role="tab" aria-selected={tab === 'new'} onClick={() => (setTab('new'), setSentRef(null))}>
             <Icon name="send" size={16} className="icon--lead" />
             {t('help.tab.new')}
@@ -798,15 +821,6 @@ export function HelpDialog({ onClose, start = 'ask' }: { onClose: () => void; st
               </button>
             </div>
           </div>
-        )}
-        {tab === 'ask' && (
-          <Ask
-            onWrite={(question) => {
-              setAbout(question);
-              setSentRef(null);
-              setTab('new');
-            }}
-          />
         )}
         {tab === 'new' && !sentRef && (
           <NewRequest

@@ -18,6 +18,7 @@ import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
 import { BoardSettings } from './BoardSettings';
 import { HelpDialog } from './Help';
+import { CuraAI } from './CuraAI';
 import { Icon, RECORD_KIND_ICON, type IconName } from './icons';
 import { MenuButton, MenuChoices } from './Menus';
 import { QuickAdd } from './QuickAdd';
@@ -77,7 +78,10 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const [newBoard, setNewBoard] = useState(false);
   const [searching, setSearching] = useState(false);
   // "#help" (the link in a help request's receipt) opens the person's requests.
-  const [help, setHelp] = useState<null | 'ask' | 'new' | 'mine'>(() => (location.hash === '#help' ? 'mine' : null));
+  const [help, setHelp] = useState<null | 'new' | 'mine'>(() => (location.hash === '#help' ? 'mine' : null));
+  // CuraAI, the helper in the corner; a question it could not settle goes with the person into the request form.
+  const [chat, setChat] = useState(false);
+  const [helpAbout, setHelpAbout] = useState('');
   const [quick, setQuick] = useState<QuickDefaults | null>(null);
   const [keys, setKeys] = useState(false);
   const [news, setNews] = useState(false);
@@ -130,7 +134,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
       quickAdd: (d) => setQuick(d ?? { ...currentPageDefaults() }),
       search: () => setSearching(true),
       shortcuts: () => setKeys(true),
-      help: () => setHelp('ask'),
+      help: () => setChat(true),
       newBoard: () => setNewBoard(true),
       logTouch: (accountId, accountName, kind) => setTouch({ accountId, accountName, kind }),
     }),
@@ -286,7 +290,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             setFresh(false);
           },
         },
-        ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setHelp('ask') }] : []),
+        ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setChat(true) }] : []),
         ...(app.canPrompt ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => void app.install() }] : []),
         ...(app.byHand ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => setInstallHelp(true) }] : []),
         // The try-it demo has "Start over" in its own bar instead.
@@ -438,8 +442,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           <div className="sidebar__foot">
             {/* A question in your own words, answered from the docs; support is one step further in. */}
             {helpOk && (
-              <button type="button" className="navlink navlink--ask" onClick={() => setHelp('ask')}>
-                <Icon name="help" size={18} />
+              <button type="button" className="navlink navlink--ask" onClick={() => (setChat(true), setNavOpen(false))}>
+                <Icon name="spark" size={18} />
                 <span className="navlink__label">{t('ask.nav')}</span>
               </button>
             )}
@@ -509,7 +513,21 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           </nav>
         )}
         {newBoard && <BoardSettings onClose={() => setNewBoard(false)} />}
-        {help && <HelpDialog start={help} onClose={() => setHelp(null)} />}
+        {help && <HelpDialog start={help} about={helpAbout} onClose={() => setHelp(null)} />}
+        {helpOk && (
+          <CuraAI
+            open={chat}
+            lifted={narrow}
+            onOpen={() => setChat(true)}
+            onClose={() => setChat(false)}
+            onMine={() => (setChat(false), setHelp('mine'))}
+            onWrite={(question) => {
+              setHelpAbout(question);
+              setChat(false);
+              setHelp('new');
+            }}
+          />
+        )}
         {searching && <SearchPalette onClose={() => setSearching(false)} onNewBoard={() => setNewBoard(true)} />}
         {quick && <QuickAdd defaults={quick} onClose={() => setQuick(null)} />}
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
