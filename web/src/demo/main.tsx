@@ -31,6 +31,7 @@ const TEXT = {
       app: 'Uygulama açılıyor.',
     },
     failed: 'Demo açılamadı. Sayfayı yenileyip tekrar deneyin.',
+    stuck: 'Demo oturumu açılamadı.',
     note: 'Uydurma verilerle, tamamen bu sekmede çalışıyor. Yenileyince sıfırlanır.',
     as: 'Kim olarak',
     tries: 'Neler denenir?',
@@ -69,6 +70,7 @@ const TEXT = {
       app: 'Opening the app.',
     },
     failed: 'The demo could not start. Reload the page to try again.',
+    stuck: 'The demo could not sign you in.',
     note: 'Invented data, running entirely in this tab. Reloading starts over.',
     as: 'Viewing as',
     tries: 'What to try',
@@ -108,7 +110,7 @@ function step(pct: number, key: keyof typeof TEXT.tr.steps) {
   (document.getElementById('boot-bar') as HTMLElement).style.width = `${pct}%`;
 }
 
-function DemoBar({ current, onSwitch }: { current: Key; onSwitch: (k: Key) => void }) {
+function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: Key) => void; problem: string | null }) {
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -154,6 +156,16 @@ function DemoBar({ current, onSwitch }: { current: Key; onSwitch: (k: Key) => vo
           </div>
         )}
       </div>
+      {problem && (
+        <div className="demobar__problem" role="alert">
+          <span>
+            {t.stuck} <small>({problem})</small>
+          </span>
+          <button type="button" onClick={() => window.location.reload()}>
+            {t.reset}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -184,21 +196,44 @@ async function main() {
   };
   // The demo has no inbox: whenever the app would show its sign-in page (after
   // "Sign out", or a session that ended), the person in the bar is signed in again.
-  let recovering = 0;
+  // If that does not help three times in a row, a notice with "Start over" says so,
+  // with the reason: a sign-in page nobody can use is never the last word here.
+  let tries: number[] = [];
+  let inFlight: Promise<boolean> | null = null;
+  let problem: string | null = null;
   const signedOutPage = (to: string) => /^\/(login|auth\/verify)(?:[/?#]|$)/.test(to);
-  async function signBackIn() {
-    if (current === 'customer' || Date.now() - recovering < 3000) return false;
-    recovering = Date.now();
-    sessions[current] = await signIn(server, `${current}@demo.example`);
-    server.jar.set('tw_session', sessions[current]!);
-    reload('/home');
-    return true;
+  function signBackIn(): Promise<boolean> {
+    if (current === 'customer') return Promise.resolve(false);
+    if (inFlight) return inFlight;
+    const now = Date.now();
+    tries = tries.filter((t) => now - t < 20000);
+    if (tries.length >= 3) {
+      problem = server.denied.last ?? 'sign-in';
+      drawBar();
+      return Promise.resolve(false);
+    }
+    tries.push(now);
+    inFlight = (async () => {
+      sessions[current] = await signIn(server, `${current}@demo.example`);
+      server.jar.set('tw_session', sessions[current]!);
+      reload('/home');
+      return true;
+    })()
+      .catch((e) => {
+        problem = e instanceof Error ? e.message.slice(0, 80) : 'sign-in';
+        drawBar();
+        return false;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+    return inFlight;
   }
   window.addEventListener('tw:navigate', () => {
-    if (signedOutPage(currentPath())) void signBackIn().catch((e) => console.warn('[demo] sign in again', e));
+    if (signedOutPage(currentPath())) void signBackIn();
   });
   onFullNavigation(async (to) => {
-    if (signedOutPage(to) && (await signBackIn().catch(() => false))) return;
+    if (signedOutPage(to) && (await signBackIn())) return;
     if (!to.startsWith('/api/')) return reload(to);
     // Server routes that answer with a redirect (connecting the demo CRM, say).
     const res = await server.request(to, { headers: { 'x-tendwell-device': DEMO_DEVICE } });
@@ -221,7 +256,7 @@ async function main() {
   const memoryNav = (href: string) => (globalThis as any).twLocation.assign(href);
 
   const bar = createRoot(document.getElementById('demobar')!);
-  const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} />);
+  const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} problem={problem} />);
   async function switchTo(k: Key) {
     if (k === 'customer') {
       await server.portalSignIn('selin@quillfield.example').catch(() => undefined);
@@ -239,6 +274,8 @@ async function main() {
       /* no storage */
     }
     current = k;
+    problem = null;
+    tries = [];
     drawBar();
     reload('/home');
   }

@@ -4,7 +4,6 @@
 // answered here instead of over the network.
 import type { Config, Deps } from '../../../api/src/context';
 import type { Db } from '../../../api/src/db';
-import { getDeviceId } from '../lib/device';
 import { ORIGIN } from './memory';
 
 // --- Browsers drop Cookie / Set-Cookie on script-made requests and responses.
@@ -79,13 +78,20 @@ export interface DemoServer {
   emails: { to: string; subject: string; text: string }[];
   /** Signs someone at a customer into the portal through the real email-link flow. */
   portalSignIn: (email: string) => Promise<void>;
+  /** The last call the API refused as signed out, for the notice when signing in again does not help. */
+  denied: { last: string | null };
 }
 
 /** The customer portal's address in the demo: another site than the app's, as in production. */
 export const PORTAL_ORIGIN = 'https://demo.tendwell-portal.com';
 
-// The app sends this browser's device id with every call; sign-ins use the same one.
-const DEVICE = getDeviceId();
+// One device for the life of the page, kept in memory. Every call carries it (see `request`),
+// so the demo does not depend on the embedding page letting it keep anything in storage.
+const DEVICE = (() => {
+  const buf = new Uint8Array(18);
+  crypto.getRandomValues(buf);
+  return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+})();
 
 export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void): Promise<DemoServer> {
   step(8, 'db');
@@ -133,6 +139,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const portal = createPortalApp(deps);
   const jar = new Jar();
   const portalJar = new Jar();
+  const denied: { last: string | null } = { last: null };
 
   const portalRequest = async (path: string, init: RequestInit = {}) => {
     const headers = new Headers(init.headers);
@@ -158,8 +165,15 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     const headers = new Headers(init.headers);
     const cookie = jar.header();
     if (cookie) headers.set('cookie', cookie);
+    headers.set('x-tendwell-device', DEVICE);
     const res = await app.fetch(new KeptHeadersRequest(url.href, { method: init.method ?? 'GET', body: init.body, redirect: 'manual' }, headers));
     jar.take(res);
+    if (res.status === 401)
+      void res
+        .clone()
+        .json()
+        .then((b: any) => (denied.last = `${url.pathname.replace(/^\/api/, '')}: ${b?.error ?? 401}`))
+        .catch(() => (denied.last = `${url.pathname}: 401`));
     return res;
   };
   const call = async (method: string, path: string, body?: unknown) => {
@@ -198,7 +212,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     const token = /#token=([A-Za-z0-9_-]+)/.exec(mail?.text ?? '')?.[1];
     if (token) await portalCall('POST', '/papi/auth/verify', { token });
   };
-  return { db, request, call, jar, portalCall, emails: email.sent, portalSignIn };
+  return { db, request, call, jar, portalCall, emails: email.sent, portalSignIn, denied };
 }
 
 /** Signs `email` in through the real email-link flow and returns the session cookie. */

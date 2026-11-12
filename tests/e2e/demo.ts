@@ -22,7 +22,7 @@ const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   if (url.pathname === '/') {
     res.writeHead(200, { 'content-type': 'text/html' });
-    res.end(`<!doctype html><body style="margin:0"><iframe src="http://127.0.0.1:${PORT}/a/demo/index.html" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="border:0;width:100vw;height:100vh"></iframe></body>`);
+    res.end(`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><body style="margin:0"><iframe src="http://127.0.0.1:${PORT}/a/demo/index.html" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="border:0;width:100vw;height:100vh"></iframe></body>`);
     return;
   }
   const rel = normalize(url.pathname.replace(/^\/a\/demo\//, '')).replace(/^(\.\.[/\\])+/, '');
@@ -133,6 +133,26 @@ if (ok && !process.env.QUICK) {
   if ((await frame!.$eval('.p-task', (e) => e.textContent ?? '')).includes('iç not')) errors.push('an internal note reached the portal');
   await frame!.select('.demobar select', 'ada');
   await frame!.waitForSelector('.shell', { timeout: 10000 });
+}
+// On a phone, inside an app that gives the page storage that forgets (or wipes it):
+// the demo still opens signed in, and stays that way.
+if (ok) {
+  const phone = await browser.newPage();
+  await phone.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
+  await phone.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true });
+  await phone.evaluateOnNewDocument(`(function () {
+    var fake = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {}, clear: function () {}, key: function () { return null; }, length: 0 };
+    Object.defineProperty(window, 'localStorage', { get: function () { return fake; } });
+    Object.defineProperty(window, 'sessionStorage', { get: function () { return fake; } });
+  })()`);
+  await phone.goto(`http://localhost:${PORT}/`);
+  const pf = await (await phone.waitForSelector('iframe'))!.contentFrame();
+  await pf!.waitForFunction(() => !document.getElementById('boot'), { timeout: 60000 }).catch(() => undefined);
+  await new Promise((r) => setTimeout(r, 2500));
+  const seen = await pf!.evaluate(() => ({ shell: !!document.querySelector('.shell'), h1: document.querySelector('h1')?.textContent ?? '', problem: !!document.querySelector('.demobar__problem') }));
+  if (!seen.shell || seen.problem) errors.push(`phone, storage that forgets: not signed in (${seen.h1})`);
+  await phone.screenshot({ path: join(SCREENS, 'demo-phone.png') });
+  await phone.close();
 }
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'no errors');
 await browser.close();

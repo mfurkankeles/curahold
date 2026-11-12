@@ -42,3 +42,12 @@
   .demobar__long { display: none; }
   .demobar__short { display: inline; font-weight: 600; }
 }
+
+/* Signing in again did not help: said under the bar, with a way out. */
+.demobar__problem {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; background: #fff4e5; color: #5c3b00; border-bottom: 1px solid #f0c98a; font-size: 14px;
+}
+.demobar__problem small { opacity: .75; }
+.demobar__problem button { color: #5c3b00; border-color: #c99a4a; background: #fff; white-space: nowrap; }
