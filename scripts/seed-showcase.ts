@@ -299,7 +299,7 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
   for (const [acc, kind, days, body] of ACTIVITIES) {
     const more = MEETING_MORE[`${acc}|${kind}|${days}`];
     if (!more) {
-      await call('POST', `/api/accounts/${accounts[acc]}/activities`, { kind, body, happenedAt: ago(days) });
+      await call('POST', `/api/accounts/${accounts[acc]}/activities`, { kind, body, happenedAt: ago(days, 6 + (days % 8)) });
       continue;
     }
     const ours = [...new Set([ownerOf[acc], more.also ? who(more.also) : null].filter((x): x is string => !!x))];
@@ -307,7 +307,7 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
       kind,
       title: more.title,
       body,
-      happenedAt: ago(days),
+      happenedAt: ago(days, 6 + (days % 8)),
       minutes: more.minutes,
       contactIds: met(acc, body),
       userIds: ours,
@@ -448,7 +448,7 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
              insert into tasks (id, org_id, board_id, title, status, assignee_ids, account_id, priority, position, created_by, updated_by,
                                 created_at, updated_at, done_at, due_date, archived_at)
              select x.id, b.org_id, x.board, x.title, 'done', array[x.by], x.account, x.priority, 9000000 + x.made * 1024, x.by, x.by,
-                    now() - make_interval(days => x.made), now() - make_interval(days => x.done), now() - make_interval(days => x.done), current_date - x.due,
+                    now() - make_interval(days => x.made, mins => (x.made * 53) % 420), now() - make_interval(days => x.done, mins => (x.done * 37) % 400), now() - make_interval(days => x.done, mins => (x.done * 37) % 400), current_date - x.due,
                     case when x.done > 90 then now() - make_interval(days => x.done - 90) end
                from x join boards b on b.id = x.board
              returning id, org_id, created_by, created_at)
@@ -464,15 +464,15 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 't
       }
       const opened = ids.map((id, i) => ({ id, made: 1 + ((i * 3) % 19), done: 1 + (i % 3) }));
       await q.query(
-        `update tasks t set created_at = case when t.done_at is not null then least(now() - make_interval(days => x.made), now() - interval '6 days') else now() - make_interval(days => x.made) end,
+        `update tasks t set created_at = case when t.done_at is not null then least(now() - make_interval(days => x.made, mins => (x.made * 53) % 420), now() - interval '6 days') else now() - make_interval(days => x.made, mins => (x.made * 53) % 420) end,
                 -- What was already finished was finished a day or three ago, not this minute.
-                done_at = case when t.done_at is not null then now() - make_interval(days => x.done) end,
-                updated_at = case when t.done_at is not null then now() - make_interval(days => x.done) else t.updated_at end
+                done_at = case when t.done_at is not null then now() - make_interval(days => x.done, mins => (x.done * 37) % 400) end,
+                updated_at = case when t.done_at is not null then now() - make_interval(days => x.done, mins => (x.done * 37) % 400) else t.updated_at end
            from jsonb_to_recordset($1::jsonb) as x(id uuid, made int, done int) where t.id = x.id`,
         [JSON.stringify(opened)],
       );
       await q.query(
-        `update task_events e set created_at = now() - make_interval(days => x.made)
+        `update task_events e set created_at = now() - make_interval(days => x.made, mins => (x.made * 53) % 420)
            from jsonb_to_recordset($1::jsonb) as x(id uuid, made int) where e.task_id = x.id and e.kind = 'created'`,
         [JSON.stringify(opened)],
       );

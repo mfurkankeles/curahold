@@ -6,7 +6,7 @@ import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { FAVORITE_PATH, MAX_FAVORITES, NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
-import { logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
+import { accessFor, logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
@@ -75,6 +75,9 @@ meRoutes.get('/me', async (c) => {
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
       portal: portalOn(org, c.get('deps')),
+      // Where the company stands with its plan (always open while billing is off).
+      billing: accessFor(c),
+      billingOn: !!c.get('deps').config.billing,
     },
     teamIds: data.teamIds,
     sessionId: auth.sessionId,

@@ -307,6 +307,10 @@ saves a screenshot. Run them after any change to a screen.
 | Notifications (bell, chat, email) | `lib/notify.ts`, `connectors/messaging/` | `components/Bell.tsx` | `model.ts` | `notifications.test.ts` |
 | CRM sync | `sync/`, `routes/sync.ts` | `components/Sources.tsx` | `sync.ts` | `sync.test.ts`, `adapters.test.ts` |
 | Customer portal | `portal.ts`, `routes/portal.ts` | `web/portal/` | `portal.ts` | `portal*.test.ts` |
+| Meetings (meetings, reviews, calls; next steps as tasks) | `routes/meetings.ts`, `routes/timeline.ts` (`PATCH /activities`) | `components/Meetings.tsx` (LogDialog, AccountMeetings) | `timeline.ts` (Meeting, NextStep) | `meetings.test.ts` |
+| Timeline (cards, quiet task traffic, filter) | `routes/timeline.ts` | `components/Timeline.tsx` | `timeline.ts` | `timeline.test.ts` |
+| New task dialog (every "add task") | `routes/tasks.ts` | `components/QuickAdd.tsx`, `lib/quickparse.ts` | `model.ts` | e2e |
+| Plans and billing (Paddle; off unless configured) | `routes/billing.ts`, `lib/billing.ts`, `lib/paddle.ts`, `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` (plans, prices, `accessOf`) | `billing.test.ts` |
 | The demo | `web/src/demo/` | same app | — | `npm run test:demo` |
 
 ---

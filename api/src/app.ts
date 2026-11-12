@@ -13,6 +13,7 @@ import { deliverWebhooks } from './lib/webhooks';
 import { flushHealth } from './lib/health';
 import { timelineRoutes } from './routes/timeline';
 import { meetingRoutes } from './routes/meetings';
+import { billingRoutes, billingWebhook } from './routes/billing';
 import { inboundRoutes, ticketRoutes } from './routes/tickets';
 import { sha256Hex } from './lib/crypto';
 import { audit } from './lib/audit';
@@ -96,6 +97,8 @@ export function createApp(deps: Deps) {
   app.get('/api/connect/callback', connectCallback_);
   app.route('/api/hooks', hookRoutes);
   app.route('/api/signup', signupRoutes);
+  // Paddle's notifications about subscriptions (checked against its secret).
+  app.post('/api/billing/webhook', billingWebhook);
 
   // ---------------------------------------------------------------- company
   const companyFromHost = async (c: any, next: () => Promise<void>) => {
@@ -115,6 +118,8 @@ export function createApp(deps: Deps) {
       domains: rows[0].domains ?? [],
       account_fields: rows[0].account_fields ?? [],
       setup: rows[0].setup ?? {},
+      billing: rows[0].billing ?? {},
+      trial_ends_at: rows[0].trial_ends_at ?? null,
     };
     c.set('org', org);
     c.set('locale', requestLocale(c.req.header('x-curahold-locale'), c.req.header('accept-language'), org.locale));
@@ -255,6 +260,7 @@ export function createApp(deps: Deps) {
   app.route('/api', searchRoutes);
   app.route('/api', timelineRoutes);
   app.route('/api', meetingRoutes);
+  app.route('/api', billingRoutes);
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', helpRoutes);

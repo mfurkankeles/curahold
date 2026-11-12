@@ -673,6 +673,8 @@ await step('an API key is shown once and works; an AI assistant asks and the per
 await step('timeline: log a call on a customer; switch the health score on and see why', async () => {
   const quill = s.demo.accounts['Quillfield Retail'];
   await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
+  // The note box opens from its one-line prompt.
+  await mert.page.click('.tl__start');
   await mert.page.waitForSelector('.tl__compose');
   await mert.page.evaluate(() => ([...document.querySelectorAll('.tl__compose .seg button')].find((b) => /Görüşme|Call/.test(b.textContent ?? '')) as HTMLElement)?.click());
   await mert.page.type('.tl__compose textarea', 'Renewal call: they want a two-year option.');

@@ -129,6 +129,10 @@ export interface Org {
   logoUrl: string | null;
   /** The customer portal is on (and this installation has an address for it). */
   portal?: boolean;
+  /** Where the company stands with its plan (see billing.ts); always open while billing is off. */
+  billing?: import('./billing').Access;
+  /** Billing is set up on this installation (Paddle). */
+  billingOn?: boolean;
   /** Targets, the review rhythm and when to nudge. */
   rhythm?: Rhythm;
   /** Other currencies in use and what one of each is worth in `currency`. */

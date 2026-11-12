@@ -11,6 +11,7 @@ import { dailyHealth, flushHealth } from './health';
 import { sendWeekly } from './weekly';
 import { sendNudges } from './nudges';
 import { startRenewals } from './playbooks';
+import { syncSeats } from './billing';
 
 const DIGEST_ITEMS = 8;
 
@@ -136,5 +137,10 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   }
   // Renewals coming close enough start by themselves, early in the working day.
   if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[curahold] starting renewals failed', e));
-  return { digests, weekly, nudges, fired, delivered, synced, hooks };
+  // Subscriptions follow the full seats in use (billing on only).
+  const seats = await syncSeats(deps).catch((e) => {
+    console.error('[curahold] seat sync failed', e);
+    return 0;
+  });
+  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats };
 }

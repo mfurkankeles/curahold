@@ -23,6 +23,7 @@ import { QuickAdd } from './QuickAdd';
 import { SearchPalette, useSearchKey } from './Search';
 import { WhatsNew } from './ShellDialogs';
 import { LogDialog } from './Meetings';
+import { BillingBar } from './Billing';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
 import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from './AccountFields';
@@ -469,6 +470,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               </button>
             </div>
           )}
+          <BillingBar />
           {me.supportOpen && !me.previewBy && (
             <div className="openbar" role="status">
               <span>{t(me.supportOpen.level === 'edit' ? 'support.open.barEdit' : 'support.open.bar', { until: until(me.supportOpen.until) })}</span>

@@ -4,7 +4,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { TARGET_PERIODS, rhythmOf } from '../../../shared/src/rhythm';
-import { requireWriter, run, type AppEnv } from '../context';
+import { requirePlan, requireWriter, run, type AppEnv } from '../context';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { body, uuid } from '../lib/validate';
@@ -195,6 +195,8 @@ reportRoutes.put('/rhythm', async (c) => {
     renewal: { ...now.renewal, ...(input.renewal ?? {}) },
   });
   if (input.renewal?.planId) {
+    // A playbook on every renewal is part of the Business plan.
+    requirePlan(c, 'playbooks');
     const [plan] = await run(c, (q) => q.query('select 1 from plan_templates where id = $1', [input.renewal!.planId]));
     if (!plan) fail('validation', { fields: 'renewal.planId' }, { fields: ['renewal.planId'] });
   }

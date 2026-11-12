@@ -1299,25 +1299,64 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .tl__compose textarea { resize: vertical; min-height: 64px; }
 .tl__extra { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
 .tl__chips { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.tl__day + .tl__day { margin-top: 10px; }
-.tl__date { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin: 6px 0 4px; }
-.tl__list { list-style: none; margin: 0; padding: 0; }
-.tl__pinned { background: var(--brand-wash); border-radius: var(--r-m); padding: 4px 10px; margin-bottom: 10px; }
-.tl__item { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
-.tl__list .tl__item:first-child { border-top: 0; }
-.tl__icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--sunk); color: var(--ink-2); }
-.tl__item[data-kind='call'] .tl__icon, .tl__item[data-kind='meeting'] .tl__icon, .tl__item[data-kind='email'] .tl__icon { background: var(--brand-wash); color: var(--brand-ink); }
-.tl__item[data-kind='score'][data-dir='down'] .tl__icon { background: var(--late-wash); color: var(--late); }
-.tl__item--quiet { color: var(--ink-2); font-size: 13px; align-items: center; }
-.tl__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.tl__head .muted { font-size: 12.5px; }
-.tl__tools { margin-left: auto; display: inline-flex; gap: 10px; }
-.tl__text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.tl__with { margin: 4px 0 0; font-size: 12.5px; }
-.tl__quote { margin: 2px 0 0; color: var(--ink-3); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.tl__item[data-kind='ticket_opened'] .tl__icon { background: var(--soon-wash); color: var(--soon-ink); font-weight: 700; }
-.tl__item[data-urgent='true'] .tl__icon { background: var(--late-wash); color: var(--late); }
-.tl__item[data-kind='ticket_solved'] .tl__icon { background: var(--done-wash); color: var(--done); }
+/* The timeline reads top-down by day. What people said and did with the customer
+   is a card; tickets and score moves a short line that still stands out; task
+   traffic a quiet line, gathered per day under one line that opens. */
+.tl__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tl__top .section__head { margin: 0; }
+.tl__start {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 0 14px; margin-bottom: 14px;
+  border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink-3);
+  font: inherit; font-size: 14px; text-align: left; cursor: text;
+}
+.tl__start:hover { border-color: var(--brand); color: var(--ink-2); }
+.tl__day + .tl__day { margin-top: 16px; }
+.tl__date { margin: 0 0 6px; padding-bottom: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+.tl__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tl__pinned { background: var(--brand-soft); border-radius: var(--r-m); padding: 8px; margin-bottom: 12px; }
+.tl__item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
+.tl__icon { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--sunk); color: var(--ink-2); }
+/* A conversation: a card, its kind on the left rail. */
+.tl__card { --rail: var(--line-strong); padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: inset 3px 0 0 var(--rail); }
+.tl__card[data-kind='call'] { --rail: var(--soon); }
+.tl__card[data-kind='meeting'] { --rail: var(--info-ink); }
+.tl__card[data-kind='email'] { --rail: var(--ink-3); }
+.tl__card[data-kind='review'] { --rail: var(--brand); }
+.tl__card[data-kind='call'] .tl__icon { background: var(--soon-wash); color: var(--soon-ink); }
+.tl__card[data-kind='meeting'] .tl__icon { background: var(--info-wash); color: var(--info-ink); }
+.tl__card[data-kind='review'] .tl__icon { background: var(--brand-wash); color: var(--brand-ink); }
+.tl__head { display: flex; align-items: baseline; gap: 4px 8px; flex-wrap: wrap; min-height: 26px; }
+.tl__kind { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.tl__title { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.tl__meta { font-size: 12.5px; color: var(--ink-3); }
+.tl__tools { margin-left: auto; align-self: center; }
+.tl__text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; line-height: 1.6; color: var(--ink); }
+.tl__with { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-3); }
+/* Task traffic: one quiet line, the time at the end. */
+.tl__item--quiet, .tl__signal { grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; font-size: 13px; color: var(--ink-2); padding: 0 2px; }
+.tl__item--quiet .tl__icon { width: 22px; height: 22px; margin-left: 2px; background: transparent; color: var(--ink-3); }
+.tl__line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl__link { color: var(--ink); font-weight: 500; text-decoration: none; }
+.tl__link:hover, .tl__link:focus-visible { text-decoration: underline; }
+.tl__quote { margin-left: 6px; color: var(--ink-3); }
+.tl__time { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tl__signal .tl__line { white-space: normal; }
+.tl__signal[data-kind='ticket_opened'] .tl__icon { background: var(--soon-wash); color: var(--soon-ink); }
+.tl__signal[data-urgent='true'] .tl__icon { background: var(--late-wash); color: var(--late); }
+.tl__signal[data-kind='ticket_solved'] .tl__icon { background: var(--done-wash); color: var(--done); }
+.tl__signal[data-kind='score'][data-dir='down'] .tl__icon { background: var(--late-wash); color: var(--late); }
+.tl__signal[data-kind='score'][data-dir='up'] .tl__icon { background: var(--done-wash); color: var(--done); }
+/* A day's task traffic, gathered. */
+.tl__bundlebtn {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 0 8px 0 6px;
+  border: 0; border-radius: 8px; background: none; color: var(--ink-3); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.tl__bundlebtn:hover { background: var(--surface-2); color: var(--ink-2); }
+.tl__bundlebtn > .icon:first-child { width: 22px; flex: none; }
+.tl__bundlebtn > span { flex: 1; min-width: 0; }
+.tl__sub { margin: 2px 0 4px; padding-left: 6px; border-left: 2px solid var(--line); }
+.tl__showall { margin-top: 12px; font-size: 13px; }
+.tl__older { margin-top: 10px; }
 .example { margin: 8px 0 0; padding: 10px 12px; background: var(--code-bg); color: var(--code-ink); border-radius: var(--r-m); font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
 
 /* Help and support access */

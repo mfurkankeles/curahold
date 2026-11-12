@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { accessOf, allows, planFor, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
 import type { Locale, Terms } from '../../shared/src/i18n';
 import type { AccountField, Perm, Seat, SetupState } from '../../shared/src/model';
 import type { Db, Q } from './db';
@@ -36,6 +37,23 @@ export interface Config {
   portalDomain?: string;
   /** Curahold support's own key for opening an entry link into a company that granted access. */
   staffKey?: string;
+  /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
+  billing?: BillingConfig;
+}
+
+/** Curahold's Paddle account (https://developer.paddle.com). */
+export interface BillingConfig {
+  provider: 'paddle';
+  /** Paddle's test environment, or real payments. */
+  env: 'sandbox' | 'live';
+  /** Server-side API key (secret). */
+  apiKey: string;
+  /** The notification destination's secret key, to check webhooks (secret). */
+  webhookSecret: string;
+  /** Client-side token for Paddle.js checkout (safe to show to browsers). */
+  clientToken: string;
+  /** Paddle price ids, by plan and how often it is paid. */
+  prices: Record<PlanKey, Record<Interval, string>>;
 }
 
 /** Curahold's own app registrations with the messaging services. */
@@ -77,6 +95,9 @@ export interface OrgRow {
   template: string;
   account_fields: AccountField[];
   setup: SetupState;
+  /** What the billing provider last said (see shared/src/billing.ts). */
+  billing: OrgBilling;
+  trial_ends_at: string | Date | null;
 }
 
 export interface AuthCtx {
@@ -123,6 +144,22 @@ export function requirePerm(c: C, perm: Perm) {
 
 export function requireWriter(c: C) {
   if (c.get('auth').seat !== 'full') fail('read_only_seat');
+  // No plan (the trial is over, or a cancelled one ran out): read and export, but no changes.
+  if (accessFor(c).readOnly) fail('billing_locked');
+}
+
+/** Where this company stands with billing (always open when billing is off). */
+export function accessFor(c: C): Access {
+  const org = c.get('org');
+  const deps = c.get('deps');
+  const trial = org.trial_ends_at ? new Date(org.trial_ends_at).toISOString() : null;
+  return accessOf(!!deps.config.billing, org.billing, trial, nowOf(deps));
+}
+
+/** Only on a plan that includes this (Business): CRM sync, the customer portal, playbooks. */
+export function requirePlan(c: C, feature: Feature) {
+  const plan = planFor(feature);
+  if (!allows(accessFor(c), feature)) fail('plan_required', { plan: plan === 'business' ? 'Business' : 'Team' }, { plan });
 }
 
 export function orgUrl(cfg: Config, slug: string): string {

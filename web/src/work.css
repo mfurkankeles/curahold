@@ -230,8 +230,6 @@
 }
 .reviews__intro .icon { flex: none; margin-top: 2px; color: var(--brand); }
 
-/* A meeting's title in the timeline. */
-.tl__title { margin: 0 0 2px; font-weight: 600; font-size: 14px; color: var(--ink); }
 
 /* ------------------------------------------------------ the log dialog */
 
@@ -261,4 +259,41 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .chiptoggle { transition: background .12s ease, border-color .12s ease, color .12s ease; }
+}
+
+/* -------------------------------------------------------------- billing */
+/* Settings → Billing: where the company stands, then the two plans side by side. */
+
+.billing { display: grid; gap: 14px; }
+.billing__status { display: flex; align-items: flex-start; gap: 12px; }
+.billing__status > .icon { flex: none; margin-top: 3px; color: var(--brand); }
+.billing__status[data-state='locked'] > .icon,
+.billing__status[data-state='past_due'] > .icon { color: var(--late); }
+.billing__status > div { flex: 1; min-width: 0; }
+.billing__status p { margin: 4px 0 0; color: var(--ink-2); line-height: 1.5; }
+.billing__title { margin: 0; font-size: 16px; }
+.billing__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.billing__save { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--done); }
+.billing__plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.billing__plan { display: grid; gap: 8px; align-content: start; }
+.billing__plan[data-plan='business'] { box-shadow: inset 0 3px 0 var(--brand), var(--shadow-1); }
+.billing__plan[data-current] { background: var(--brand-soft); }
+.billing__planname { margin: 0; font-size: 15px; }
+.billing__price { margin: 0; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.billing__amount { font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+.billing__total { margin: 0; font-size: 13px; }
+.billing__points { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.billing__points li { display: flex; gap: 8px; align-items: flex-start; }
+.billing__points .icon { flex: none; margin-top: 3px; color: var(--done); }
+.billing__everything { font-weight: 600; color: var(--ink-2); }
+.billing__current { font-weight: 600; color: var(--brand-ink); }
+.billing__fine { font-size: 12.5px; line-height: 1.5; margin: 0; max-width: 72ch; }
+
+/* The line across the top of the app: trial ending, a failed payment, no plan. */
+.billingbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 13.5px; background: var(--soon-wash); color: var(--soon-ink); border-bottom: 1px solid var(--soon-line); }
+.billingbar[data-state='locked'],
+.billingbar[data-state='past_due'] { background: var(--late-wash); color: var(--late-ink); border-bottom-color: var(--late-line); }
+.billingbar .btn { margin-left: auto; }
+@media (max-width: 760px) {
+  .billing__plans { grid-template-columns: 1fr; }
 }

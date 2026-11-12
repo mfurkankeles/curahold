@@ -1,6 +1,6 @@
 // A customer's timeline (log a call in two clicks, see everything that
 // happened), the health score with its reasons, and the score's settings.
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { DEFAULT_HEALTH, HEALTH_SIGNALS, type HealthBand, type HealthConfig, type HealthPart, type HealthResult, type HealthSignal, type HealthSignalKey } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
@@ -10,7 +10,8 @@ import { labelOf } from '../../../shared/src/fields';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
-import { Confirm, Dialog } from './ui';
+import { Icon, type IconName } from './icons';
+import { Confirm, Dialog, RowMenu } from './ui';
 
 function useFail() {
   const { t } = useI18n();
@@ -139,12 +140,42 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
 }
 
 // ------------------------------------------------------------- the timeline
+//
+// Easy to read first: what people said and did with the customer (notes,
+// calls, meetings, emails, reviews), support tickets and score moves are
+// "what matters" and show as cards; task traffic (opened, finished, comments,
+// new contacts) is quiet one-line rows, gathered per day under one line that
+// opens. "Everything" shows both; the choice is kept on this device.
 
-const KIND_ICON: Record<string, string> = { note: '✎', call: '☏', meeting: '◷', email: '✉', review: '◎', task_created: '+', task_done: '✓', comment: '❝', contact: '◉', score: '↕', ticket_opened: '!', ticket_solved: '✓' };
+const KIND_ICON: Record<string, IconName> = {
+  note: 'note',
+  call: 'phone',
+  meeting: 'people',
+  email: 'mail',
+  review: 'handshake',
+  task_created: 'plus',
+  task_done: 'check',
+  comment: 'comment',
+  contact: 'user',
+  score: 'heart',
+  ticket_opened: 'lifebuoy',
+  ticket_solved: 'check',
+};
 
-function dayLabel(iso: string, locale: string) {
+/** Task traffic: shown quietly, and gathered when there is more than one on a day. */
+const QUIET = new Set(['task_created', 'task_done', 'comment', 'contact']);
+type Filter = 'important' | 'all';
+const FILTER_KEY = 'tw_tl_filter';
+
+function dayLabel(iso: string, locale: string, t: (k: MessageKey) => string) {
   const d = new Date(iso);
-  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }).format(d);
+  const now = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const yesterday = new Date(now.getTime() - 86_400_000);
+  const date = new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' }).format(d);
+  if (same(d, now)) return `${t('timeline.today')} · ${date}`;
+  if (same(d, yesterday)) return `${t('timeline.yesterday')} · ${date}`;
+  return date;
 }
 function timeLabel(iso: string, locale: string) {
   return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -163,8 +194,17 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
   const [when, setWhen] = useState('');
   const [who, setWho] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [composing, setComposing] = useState(false);
   const [editing, setEditing] = useState<Activity | null>(null);
   const [removing, setRemoving] = useState<Activity | null>(null);
+  const [filter, setFilter] = useState<Filter>(() => {
+    try {
+      return localStorage.getItem(FILTER_KEY) === 'all' ? 'all' : 'important';
+    } catch {
+      return 'important';
+    }
+  });
+  const [openDays, setOpenDays] = useState<Set<string>>(new Set());
   const area = useRef<HTMLTextAreaElement>(null);
   const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
@@ -179,9 +219,23 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
   }, [accountId]);
   useEffect(() => {
     void load().catch(() => setData({ items: [], pinned: [], next: null }));
+    // A meeting or note logged elsewhere (the Meetings section, + New) shows here too.
+    const again = () => void load().catch(() => undefined);
+    window.addEventListener('tw:timeline-changed', again);
+    return () => window.removeEventListener('tw:timeline-changed', again);
   }, [load]);
 
-  const nameOf = (id: string | null) => (id ? (people.find((p) => p.id === id)?.name ?? t('timeline.someone')) : t('timeline.someone'));
+  const choose = (f: Filter) => {
+    setFilter(f);
+    try {
+      localStorage.setItem(FILTER_KEY, f);
+    } catch {
+      /* per-device convenience */
+    }
+  };
+
+  /** Who did it: a person, or an automation (no person: a rule, a playbook, the renewal round). */
+  const nameOf = (id: string | null) => (id ? (people.find((p) => p.id === id)?.name ?? t('timeline.someone')) : t('timeline.automatic'));
   const contactName = (id: string) => contacts.find((c) => c.id === id)?.name;
 
   const submit = async (e: FormEvent) => {
@@ -193,6 +247,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
       setText('');
       setWhen('');
       setWho([]);
+      setComposing(false);
       await load();
     } catch (err) {
       fail(err);
@@ -217,204 +272,270 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
   const mayChange = (a: Activity) => canWrite && (a.authorId === me.user.id || can('accounts.manage'));
 
   const items = useMemo(() => [...(data?.items ?? []), ...older], [data, older]);
+  const shown = useMemo(() => (filter === 'all' ? items : items.filter((it) => !QUIET.has(it.type))), [items, filter]);
+  const hiddenCount = items.length - shown.length;
   const groups = useMemo(() => {
     const out: { day: string; items: TimelineItem[] }[] = [];
-    for (const it of items) {
+    for (const it of shown) {
       const key = new Date(it.at).toDateString();
       if (out[out.length - 1]?.day !== key) out.push({ day: key, items: [] });
       out[out.length - 1].items.push(it);
     }
     return out;
-  }, [items]);
+  }, [shown]);
 
   const openTask = (boardId: string, taskId: string) => navigate(`/b/${boardId}?task=${taskId}`);
 
-  const activityBody = (a: Activity, pinnedRow = false) => (
-    <div className="tl__body">
-      <div className="tl__head">
-        <strong>{t(`timeline.kind.${a.kind}` as MessageKey)}</strong>
-        <span className="muted">
-          {nameOf(a.authorId)} · {pinnedRow ? dayLabel(a.happenedAt, locale) : timeLabel(a.happenedAt, locale)}
-          {a.editedAt ? ` · ${t('timeline.edited')}` : ''}
-        </span>
-        {a.pinned && !pinnedRow && <span className="badge">{t('timeline.pinned')}</span>}
-        {mayChange(a) && (
-          <span className="tl__tools">
-            <button type="button" className="linkbtn" onClick={() => togglePin(a)}>
-              {a.pinned ? t('timeline.unpin') : t('timeline.pin')}
-            </button>
-            <button type="button" className="linkbtn" onClick={() => setEditing(a)}>
-              {t('common.edit')}
-            </button>
-            <button type="button" className="linkbtn" onClick={() => setRemoving(a)}>
-              {t('common.delete')}
-            </button>
+  /** A note, call, meeting, email or review: a card with what was said. */
+  const card = (a: Activity, pinnedRow = false) => (
+    <li key={`${pinnedRow ? 'p' : 'a'}-${a.id}`} className="tl__item tl__card" data-kind={a.kind}>
+      <span className="tl__icon" aria-hidden="true">
+        <Icon name={KIND_ICON[a.kind]} size={14} />
+      </span>
+      <div className="tl__body">
+        <div className="tl__head">
+          <span className="tl__kind">{t(`timeline.kind.${a.kind}` as MessageKey)}</span>
+          {a.title && <strong className="tl__title">{a.title}</strong>}
+          {a.pinned && !pinnedRow && <span className="badge">{t('timeline.pinned')}</span>}
+          <span className="tl__meta">
+            {nameOf(a.authorId)} · {pinnedRow ? dayLabel(a.happenedAt, locale, t) : timeLabel(a.happenedAt, locale)}
+            {a.minutes ? ` · ${t('meetings.minutes', { n: a.minutes })}` : ''}
+            {a.editedAt ? ` · ${t('timeline.edited')}` : ''}
           </span>
+          {mayChange(a) && (
+            <span className="tl__tools">
+              <RowMenu
+                label={t('timeline.actions')}
+                items={[
+                  { label: a.pinned ? t('timeline.unpin') : t('timeline.pin'), onClick: () => void togglePin(a) },
+                  { label: t('common.edit'), onClick: () => setEditing(a) },
+                  { label: t('common.delete'), onClick: () => setRemoving(a), danger: true },
+                ]}
+              />
+            </span>
+          )}
+        </div>
+        {a.body && <p className="tl__text">{a.body}</p>}
+        {(a.contactIds.length > 0 || a.userIds.length > 0) && (
+          <p className="tl__with">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
         )}
       </div>
-      {a.title && (
-        <p className="tl__title">
-          {a.title}
-          {a.minutes ? <span className="muted"> · {t('meetings.minutes', { n: a.minutes })}</span> : null}
-        </p>
-      )}
-      {a.body && <p className="tl__text">{a.body}</p>}
-      {(a.contactIds.length > 0 || a.userIds.length > 0) && (
-        <p className="tl__with muted">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
-      )}
-    </div>
+    </li>
   );
 
-  const row = (it: TimelineItem, i: number) => {
-    switch (it.type) {
-      case 'activity':
-        return (
-          <li key={it.activity.id} className="tl__item" data-kind={it.activity.kind}>
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON[it.activity.kind]}
-            </span>
-            {activityBody(it.activity)}
-          </li>
-        );
-      case 'task_created':
-      case 'task_done':
-        return (
-          <li key={`${it.type}-${it.taskId}`} className="tl__item tl__item--quiet" data-kind={it.type}>
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON[it.type]}
-            </span>
-            <div className="tl__body">
-              <span>
-                {t(it.type === 'task_done' ? 'timeline.taskDone' : 'timeline.taskCreated', { name: nameOf(it.byId) })}{' '}
-                <a href={`/b/${it.boardId}?task=${it.taskId}`} onClick={(e) => (e.preventDefault(), openTask(it.boardId, it.taskId))}>
-                  {it.title}
-                </a>
-              </span>
-              <span className="muted"> · {timeLabel(it.at, locale)}</span>
-            </div>
-          </li>
-        );
-      case 'comment':
-        return (
-          <li key={`c-${it.id}`} className="tl__item tl__item--quiet" data-kind="comment">
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON.comment}
-            </span>
-            <div className="tl__body">
-              <span>
-                {t('timeline.comment', { name: nameOf(it.byId) })}{' '}
-                <a href={`/b/${it.boardId}?task=${it.taskId}`} onClick={(e) => (e.preventDefault(), openTask(it.boardId, it.taskId))}>
-                  {it.title}
-                </a>
-              </span>
-              <p className="tl__quote">{it.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 280)}</p>
-            </div>
-          </li>
-        );
-      case 'contact':
-        return (
-          <li key={`r-${it.recordId}`} className="tl__item tl__item--quiet" data-kind="contact">
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON.contact}
-            </span>
-            <div className="tl__body">{t('timeline.contact', { name: nameOf(it.byId), contact: it.name })}</div>
-          </li>
-        );
-      case 'ticket_opened':
-      case 'ticket_solved':
-        return (
-          <li key={`${it.type}-${it.recordId}`} className="tl__item tl__item--quiet" data-kind={it.type} data-urgent={it.type === 'ticket_opened' && it.priority === 'urgent' ? 'true' : undefined}>
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON[it.type]}
-            </span>
-            <div className="tl__body">
-              {t(it.type === 'ticket_opened' ? (it.priority === 'urgent' ? 'timeline.ticketUrgent' : 'timeline.ticketOpened') : 'timeline.ticketSolved')}{' '}
-              {it.url ? (
-                <a href={it.url} target="_blank" rel="noreferrer">
-                  {it.title}
-                </a>
-              ) : (
-                <span>{it.title}</span>
-              )}
-            </div>
-          </li>
-        );
-      case 'score':
-        return (
-          <li key={`s-${it.at}-${i}`} className="tl__item tl__item--quiet" data-kind="score" data-dir={it.to < it.from ? 'down' : 'up'}>
-            <span className="tl__icon" aria-hidden="true">
-              {KIND_ICON.score}
-            </span>
-            <div className="tl__body">{t(it.to < it.from ? 'timeline.scoreDown' : 'timeline.scoreUp', { from: it.from, to: it.to })}</div>
-          </li>
-        );
+  /** A task, comment or contact: one quiet line. */
+  const quiet = (it: TimelineItem) => {
+    const link = (boardId: string, taskId: string, title: string) => (
+      <a className="tl__link" href={`/b/${boardId}?task=${taskId}`} onClick={(e) => (e.preventDefault(), openTask(boardId, taskId))}>
+        {title}
+      </a>
+    );
+    let line: ReactNode = null;
+    let key = '';
+    if (it.type === 'task_created' || it.type === 'task_done') {
+      key = `${it.type}-${it.taskId}`;
+      line = (
+        <>
+          {t(it.type === 'task_done' ? 'timeline.taskDone' : 'timeline.taskCreated', { name: nameOf(it.byId) })} {link(it.boardId, it.taskId, it.title)}
+        </>
+      );
+    } else if (it.type === 'comment') {
+      key = `c-${it.id}`;
+      line = (
+        <>
+          {t('timeline.comment', { name: nameOf(it.byId) })} {link(it.boardId, it.taskId, it.title)}
+          <span className="tl__quote">{it.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 200)}</span>
+        </>
+      );
+    } else if (it.type === 'contact') {
+      key = `r-${it.recordId}`;
+      line = t('timeline.contact', { name: nameOf(it.byId), contact: it.name });
+    } else return null;
+    return (
+      <li key={key} className="tl__item tl__item--quiet" data-kind={it.type}>
+        <span className="tl__icon" aria-hidden="true">
+          <Icon name={KIND_ICON[it.type]} size={12} />
+        </span>
+        <div className="tl__line">{line}</div>
+        <time className="tl__time" dateTime={it.at}>
+          {timeLabel(it.at, locale)}
+        </time>
+      </li>
+    );
+  };
+
+  /** Tickets and score moves: a short line that still stands out. */
+  const signal = (it: TimelineItem, i: number) => {
+    if (it.type === 'ticket_opened' || it.type === 'ticket_solved') {
+      return (
+        <li key={`${it.type}-${it.recordId}`} className="tl__item tl__signal" data-kind={it.type} data-urgent={it.type === 'ticket_opened' && it.priority === 'urgent' ? 'true' : undefined}>
+          <span className="tl__icon" aria-hidden="true">
+            <Icon name={KIND_ICON[it.type]} size={13} />
+          </span>
+          <div className="tl__line">
+            {t(it.type === 'ticket_opened' ? (it.priority === 'urgent' ? 'timeline.ticketUrgent' : 'timeline.ticketOpened') : 'timeline.ticketSolved')}{' '}
+            {it.url ? (
+              <a className="tl__link" href={it.url} target="_blank" rel="noreferrer">
+                {it.title}
+              </a>
+            ) : (
+              <strong>{it.title}</strong>
+            )}
+          </div>
+          <time className="tl__time" dateTime={it.at}>
+            {timeLabel(it.at, locale)}
+          </time>
+        </li>
+      );
     }
+    if (it.type === 'score') {
+      return (
+        <li key={`s-${it.at}-${i}`} className="tl__item tl__signal" data-kind="score" data-dir={it.to < it.from ? 'down' : 'up'}>
+          <span className="tl__icon" aria-hidden="true">
+            <Icon name={KIND_ICON.score} size={13} />
+          </span>
+          <div className="tl__line">{t(it.to < it.from ? 'timeline.scoreDown' : 'timeline.scoreUp', { from: it.from, to: it.to })}</div>
+        </li>
+      );
+    }
+    return null;
+  };
+
+  /** A day: cards and signals as they come, the task traffic gathered under one line when there is more than one. */
+  const day = (g: { day: string; items: TimelineItem[] }) => {
+    const out: ReactNode[] = [];
+    const traffic = g.items.filter((it) => QUIET.has(it.type));
+    const gathered = traffic.length > 1;
+    let placed = false;
+    g.items.forEach((it, i) => {
+      if (it.type === 'activity') out.push(card(it.activity));
+      else if (!QUIET.has(it.type)) out.push(signal(it, i));
+      else if (!gathered) out.push(quiet(it));
+      else if (!placed) {
+        placed = true;
+        const open = openDays.has(g.day);
+        const n = (k: string) => traffic.filter((x) => x.type === k).length;
+        const parts = [
+          n('task_created') && t('timeline.bundle.created', { n: n('task_created') }),
+          n('task_done') && t('timeline.bundle.done', { n: n('task_done') }),
+          n('comment') && t('timeline.bundle.comments', { n: n('comment') }),
+          n('contact') && t('timeline.bundle.contacts', { n: n('contact') }),
+        ].filter(Boolean);
+        out.push(
+          <li key={`b-${g.day}`} className="tl__bundle">
+            <button
+              type="button"
+              className="tl__bundlebtn"
+              aria-expanded={open}
+              onClick={() =>
+                setOpenDays((s) => {
+                  const nextSet = new Set(s);
+                  if (nextSet.has(g.day)) nextSet.delete(g.day);
+                  else nextSet.add(g.day);
+                  return nextSet;
+                })
+              }
+            >
+              <Icon name="list" size={13} />
+              <span>{parts.join(' · ')}</span>
+              <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} />
+            </button>
+            {open && <ul className="tl__list tl__sub">{traffic.map(quiet)}</ul>}
+          </li>,
+        );
+      }
+    });
+    return (
+      <div key={g.day} className="tl__day">
+        <h4 className="tl__date">{dayLabel(g.items[0].at, locale, t)}</h4>
+        <ul className="tl__list">{out}</ul>
+      </div>
+    );
   };
 
   return (
     <section className="sheet tl">
-      <h3 className="section__head">{t('timeline.title')}</h3>
-      {canWrite && (
-        <form className="tl__compose" onSubmit={submit}>
-          <div className="seg" role="group" aria-label={t('timeline.kindLabel')}>
-            {ACTIVITY_KINDS.map((k) => (
-              <button key={k} type="button" aria-pressed={kind === k} onClick={() => (setKind(k), area.current?.focus())}>
-                {t(`timeline.kind.${k}` as MessageKey)}
-              </button>
-            ))}
-          </div>
-          <textarea ref={area} className="input" rows={3} value={text} maxLength={20000} placeholder={t(`timeline.placeholder.${kind}` as MessageKey)} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit(e as unknown as FormEvent)} />
-          {text.trim() && (
-            <div className="tl__extra">
-              <label className="field">
-                <span className="field__label">{t('timeline.when')}</span>
-                <input className="input" type="datetime-local" value={when} max={localInput(new Date())} onChange={(e) => setWhen(e.target.value)} />
-              </label>
-              {contacts.length > 0 && (
-                <fieldset className="field tl__who">
-                  <legend className="field__label">{t('timeline.withLabel')}</legend>
-                  <div className="tl__chips">
-                    {contacts.slice(0, 12).map((c) => (
-                      <label key={c.id} className="checkbox">
-                        <input type="checkbox" checked={who.includes(c.id)} onChange={(e) => setWho(e.target.checked ? [...who, c.id] : who.filter((x) => x !== c.id))} />
-                        <span>{c.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              )}
+      <div className="tl__top">
+        <h3 className="section__head">{t('timeline.title')}</h3>
+        <div className="seg tl__filter" role="group" aria-label={t('timeline.filterLabel')}>
+          <button type="button" aria-pressed={filter === 'important'} onClick={() => choose('important')}>
+            {t('timeline.filter.important')}
+          </button>
+          <button type="button" aria-pressed={filter === 'all'} onClick={() => choose('all')}>
+            {t('timeline.filter.all')}
+          </button>
+        </div>
+      </div>
+      {canWrite &&
+        (!composing && !text ? (
+          <button
+            type="button"
+            className="tl__start"
+            onClick={() => {
+              setComposing(true);
+              requestAnimationFrame(() => area.current?.focus());
+            }}
+          >
+            <Icon name="edit" size={15} />
+            {t('timeline.start')}
+          </button>
+        ) : (
+          <form className="tl__compose" onSubmit={submit}>
+            <div className="seg" role="group" aria-label={t('timeline.kindLabel')}>
+              {ACTIVITY_KINDS.map((k) => (
+                <button key={k} type="button" aria-pressed={kind === k} onClick={() => (setKind(k), area.current?.focus())}>
+                  {t(`timeline.kind.${k}` as MessageKey)}
+                </button>
+              ))}
             </div>
-          )}
-          <div className="toolbar">
-            <button className="btn btn--primary btn--small" disabled={busy || !text.trim()}>
-              {t('timeline.add')}
-            </button>
-            <span className="field__hint">{t('timeline.addHint')}</span>
-          </div>
-        </form>
-      )}
+            <textarea ref={area} className="input" rows={3} value={text} maxLength={20000} placeholder={t(`timeline.placeholder.${kind}` as MessageKey)} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit(e as unknown as FormEvent)} />
+            {text.trim() && (
+              <div className="tl__extra">
+                <label className="field">
+                  <span className="field__label">{t('timeline.when')}</span>
+                  <input className="input" type="datetime-local" value={when} max={localInput(new Date())} onChange={(e) => setWhen(e.target.value)} />
+                </label>
+                {contacts.length > 0 && (
+                  <fieldset className="field tl__who">
+                    <legend className="field__label">{t('timeline.withLabel')}</legend>
+                    <div className="tl__chips">
+                      {contacts.slice(0, 12).map((c) => (
+                        <label key={c.id} className="checkbox">
+                          <input type="checkbox" checked={who.includes(c.id)} onChange={(e) => setWho(e.target.checked ? [...who, c.id] : who.filter((x) => x !== c.id))} />
+                          <span>{c.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
+              </div>
+            )}
+            <div className="toolbar">
+              <button className="btn btn--primary btn--small" disabled={busy || !text.trim()}>
+                {t('timeline.add')}
+              </button>
+              <button type="button" className="btn btn--quiet btn--small" onClick={() => (setComposing(false), setText(''))}>
+                {t('common.cancel')}
+              </button>
+              <span className="field__hint">{t('timeline.addHint')}</span>
+            </div>
+          </form>
+        ))}
       {data && data.pinned.length > 0 && (
         <ul className="tl__list tl__pinned" aria-label={t('timeline.pinned')}>
-          {data.pinned.map((a) => (
-            <li key={a.id} className="tl__item" data-kind={a.kind}>
-              <span className="tl__icon" aria-hidden="true">
-                {KIND_ICON[a.kind]}
-              </span>
-              {activityBody(a, true)}
-            </li>
-          ))}
+          {data.pinned.map((a) => card(a, true))}
         </ul>
       )}
       {!data && <p className="muted">{t('common.loading')}</p>}
       {data && !items.length && <p className="muted">{t('timeline.empty')}</p>}
-      {groups.map((g) => (
-        <div key={g.day} className="tl__day">
-          <div className="tl__date">{dayLabel(g.items[0].at, locale)}</div>
-          <ul className="tl__list">{g.items.map(row)}</ul>
-        </div>
-      ))}
+      {groups.map(day)}
+      {data && filter === 'important' && hiddenCount > 0 && (
+        <button type="button" className="linkbtn tl__showall" onClick={() => choose('all')}>
+          {t('timeline.showTraffic', { n: hiddenCount })}
+        </button>
+      )}
       {next && (
-        <button type="button" className="btn btn--quiet btn--small" onClick={more}>
+        <button type="button" className="btn btn--quiet btn--small tl__older" onClick={more}>
           {t('timeline.older')}
         </button>
       )}

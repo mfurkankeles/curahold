@@ -353,6 +353,27 @@ tests/            Vitest suites; tests/e2e drives Chrome
    on Cloudflare, `PORTAL_DOMAIN` set for both Workers, the same secrets put
    with `--config wrangler.portal.toml`, then
    `npx wrangler deploy --config wrangler.portal.toml`.
+8. Billing (optional; without it everything is open): see *Billing with Paddle* below.
+
+### Billing with Paddle
+
+Paddle sells Curahold as the merchant of record (it charges, handles sales
+tax and VAT, and sends invoices). Start in Paddle's sandbox, then repeat with
+live keys.
+
+1. In Paddle, make two products, **Team** and **Business**, each with a
+   monthly and a yearly price **per seat** (quantity-based). The amounts are
+   in `shared/src/billing.ts` (`PLANS`); keep the two in step.
+2. Approve the website domain (`curahold.com`); checkout opens on company
+   addresses such as `acme.curahold.com`.
+3. A notification destination for `https://app.curahold.com/api/billing/webhook`
+   with the `subscription.*` events; its secret key is `PADDLE_WEBHOOK_SECRET`.
+4. An API key with read and write access to subscriptions and customer portal
+   sessions (`PADDLE_API_KEY`), and a client-side token (`PADDLE_CLIENT_TOKEN`).
+5. `PADDLE_ENV` (`sandbox` or `live`) and `PADDLE_PRICES`, for example
+   `{"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}}`.
+6. Put the secrets with `wrangler secret put` and deploy. New companies get a
+   14-day trial; seats follow the people who joined (checked every hour).
 
 ### Chat apps (each optional)
 
@@ -400,4 +421,5 @@ Cloudflare (hosting, files), Supabase (database, EU region), Resend (email),
 Google and Microsoft (only when a company enables their sign-in or connects
 Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
 Pipedrive, Zoho) is its processor, not ours: Curahold reads and writes it on
-the company's instruction. Paddle (billing) joins in phase 5.
+the company's instruction. Paddle sells subscriptions as the merchant of record
+(billing details of the paying company only).

@@ -10,6 +10,7 @@ import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
+import { BillingSettings } from '../components/Billing';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
@@ -24,18 +25,19 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
+type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
 export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
   const { t, words } = useI18n();
-  const { can } = useStore();
+  const { can, me } = useStore();
   const groups: { label: string; items: [Tab, string, boolean][] }[] = [
     {
       label: t('settings.group.company'),
       items: [
         ['company', t('settings.tab.company'), can('org.manage')],
+        ['billing', t('settings.tab.billing'), can('org.manage') && !!me.org.billingOn],
         ['currencies', t('settings.tab.currencies'), can('org.manage')],
         ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
         ['records', t('settings.tab.records'), can('accounts.manage')],
@@ -113,6 +115,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
           {current === 'rhythm' && <RhythmSettings />}
+          {current === 'billing' && <BillingSettings />}
           {current === 'currencies' && <CurrencySettings />}
           {current === 'playbooks' && <PlaybooksSettings />}
           {current === 'support' && <SupportAccessSettings />}

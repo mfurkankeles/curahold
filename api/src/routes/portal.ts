@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { PORTAL_FIELDS, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
-import { defer, portalUrl, requirePerm, requireWriter, run, type AppEnv } from '../context';
+import { defer, portalUrl, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
@@ -61,6 +61,8 @@ portalRoutes.put('/portal/settings', async (c) => {
   if (c.get('previewBy') || c.get('supportBy')) fail('forbidden');
   const input = await body(c, z.object({ enabled: z.boolean().optional(), auth: authSchema.optional() }));
   const deps = c.get('deps');
+  // The customer portal is part of the Business plan.
+  if (input.enabled) requirePlan(c, 'portal');
   if (input.enabled && !deps.config.portalDomain) fail('not_configured');
   const org = c.get('org');
   const auth = c.get('auth');

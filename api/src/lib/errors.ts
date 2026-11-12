@@ -62,6 +62,10 @@ export type ErrorCode =
   | 'required_fields'
   | 'link_loop'
   | 'form_off'
+  | 'billing_locked'
+  | 'plan_required'
+  | 'billing_off'
+  | 'billing_error'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -127,6 +131,11 @@ const STATUS: Record<ErrorCode, number> = {
   crm_error: 502,
   server: 500,
   plan_no_date: 400,
+  // 402 Payment Required: a plan is needed for this.
+  billing_locked: 402,
+  plan_required: 402,
+  billing_off: 400,
+  billing_error: 502,
 };
 
 export class HttpError extends Error {

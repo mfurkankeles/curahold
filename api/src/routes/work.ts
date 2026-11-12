@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Column } from '../../../shared/src/model';
 import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportResult } from '../../../shared/src/taskImport';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
+import { nowOf, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { localDate } from '../lib/automations';
@@ -149,6 +149,8 @@ workRoutes.get('/plans', async (c) => {
 
 workRoutes.post('/plans', async (c) => {
   requirePerm(c, 'org.manage');
+  // Playbooks are part of the Business plan.
+  requirePlan(c, 'playbooks');
   const input = await body(c, planInput);
   const auth = c.get('auth');
   const org = c.get('org');
@@ -193,6 +195,7 @@ workRoutes.delete('/plans/:id', async (c) => {
 /** Puts a playbook on a customer: every step, dated from the start day (or before the renewal date). */
 workRoutes.post('/accounts/:id/plans', async (c) => {
   requireWriter(c);
+  requirePlan(c, 'playbooks');
   const id = param(c, 'id');
   const input = await body(c, z.object({ planId: uuid, start: isoDate.optional() }));
   const auth = c.get('auth');
@@ -214,6 +217,7 @@ workRoutes.post('/accounts/:id/plans', async (c) => {
 /** Puts a playbook on a deal (or any record): its tasks belong to the record and its customer. */
 workRoutes.post('/records/:id/plans', async (c) => {
   requireWriter(c);
+  requirePlan(c, 'playbooks');
   const id = param(c, 'id');
   const input = await body(c, z.object({ planId: uuid, start: isoDate.optional() }));
   const auth = c.get('auth');

@@ -7,7 +7,7 @@ import { optionKey } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
 import type { RemoteField, SyncConfig, SyncProblem } from '../../../shared/src/sync';
-import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
+import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { randomToken, seal, sign } from '../lib/crypto';
 import { fail } from '../lib/errors';
@@ -353,6 +353,8 @@ export function localFieldFrom(rf: RemoteField, taken: Set<string>): AccountFiel
 }
 
 syncRoutes.put('/connections/:id/sync', async (c) => {
+  // Keeping a CRM or a spreadsheet in sync is part of the Business plan.
+  requirePlan(c, 'crm_sync');
   const conn = await loaded(c);
   const input = await body(c, syncSchema);
   const deps = c.get('deps');

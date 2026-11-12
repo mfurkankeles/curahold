@@ -2,7 +2,7 @@
 // Workers assets binding; /api/* runs the Hono app. The database is Supabase
 // Postgres (EU) reached through Hyperdrive; files go to an R2 bucket.
 import { createApp } from './app';
-import type { Config } from './context';
+import type { BillingConfig, Config } from './context';
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
 import { R2Storage, ResendEmail, type R2Like } from './lib/services';
@@ -52,6 +52,23 @@ export interface Env {
   STAFF_KEY?: string;
   /** The customer portal's own domain, e.g. curahold-portal.com (unset: no portal). */
   PORTAL_DOMAIN?: string;
+  /** Billing through Paddle (all four set, or billing stays off). "sandbox" or "live". */
+  PADDLE_ENV?: string;
+  PADDLE_API_KEY?: string;
+  PADDLE_WEBHOOK_SECRET?: string;
+  PADDLE_CLIENT_TOKEN?: string;
+  /** Price ids: {"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}} */
+  PADDLE_PRICES?: string;
+}
+
+/** Paddle settings, when all of them are there; otherwise billing is off. */
+export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 'PADDLE_WEBHOOK_SECRET' | 'PADDLE_CLIENT_TOKEN' | 'PADDLE_PRICES'>): BillingConfig | undefined {
+  if (!env.PADDLE_API_KEY || !env.PADDLE_WEBHOOK_SECRET || !env.PADDLE_CLIENT_TOKEN || !env.PADDLE_PRICES) return undefined;
+  const prices = JSON.parse(env.PADDLE_PRICES) as BillingConfig['prices'];
+  for (const plan of ['team', 'business'] as const) {
+    if (!prices[plan]?.month || !prices[plan]?.year) throw new Error(`PADDLE_PRICES needs ${plan}.month and ${plan}.year`);
+  }
+  return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices };
 }
 
 const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO'] as const;
@@ -82,6 +99,7 @@ export function configFromEnv(env: Env): Config {
     signupEnabled: env.SIGNUP_ENABLED !== '0' && !env.SINGLE_TENANT_SLUG,
     secretsKey: env.SECRETS_KEY || undefined,
     portalDomain,
+    billing: billingFromEnv(env),
     support: { email: env.SUPPORT_EMAIL || undefined, webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined },
     staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
     connectors: {
