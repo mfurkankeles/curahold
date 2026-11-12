@@ -24,6 +24,7 @@ There are four ways to connect your own tools to Curahold. All follow one rule: 
 | Look up an address, field by field | Reference: [customers](/docs/en/ref-customers/), [records](/docs/en/ref-records/), [tasks and boards](/docs/en/ref-tasks/), [people and search](/docs/en/ref-people/), [pages and reports](/docs/en/ref-pages/), [automations](/docs/en/ref-automation/), [objects](/docs/en/ref-objects/), [errors](/docs/en/ref-errors/) |
 | Keep a system of your own in step | [Connect your own tool](/docs/en/connect-your-own-tool/) |
 | Be told when something changes | [Webhooks](/docs/en/webhooks/) |
+| Check what a word means | [Glossary for developers](/docs/en/glossary/) |
 | Let an AI assistant or your own app act for a person | [AI connector and OAuth](/docs/en/mcp-and-oauth/) |
 
 The reference pages are built from the product's own code on every release, so they always match what the API accepts.

@@ -24,6 +24,7 @@ Curahold'u kendi araçlarına bağlamanın dört yolu var. Hepsi aynı kurala uy
 | Bir adrese alan alan bakmak | Başvuru: [müşteriler](/docs/tr/ref-customers/), [kayıtlar](/docs/tr/ref-records/), [görevler ve panolar](/docs/tr/ref-tasks/), [kişiler ve arama](/docs/tr/ref-people/), [sayfalar ve raporlar](/docs/tr/ref-pages/), [otomasyonlar](/docs/tr/ref-automation/), [nesneler](/docs/tr/ref-objects/), [hatalar](/docs/tr/ref-errors/) |
 | Kendi sistemini eşit tutmak | [Kendi aracını bağla](/docs/tr/connect-your-own-tool/) |
 | Bir şey değişince haber almak | [Webhook'lar](/docs/tr/webhooks/) |
+| Bir kelimenin ne demek olduğuna bakmak | [Geliştiriciler için sözlük](/docs/tr/glossary/) |
 | Bir yapay zekâ asistanının ya da kendi uygulamanın bir kişi adına çalışması | [Yapay zekâ bağlayıcısı ve OAuth](/docs/tr/mcp-and-oauth/) |
 
 Başvuru sayfaları her sürümde ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır.
