@@ -34,7 +34,19 @@ export interface Config {
   secretsKey?: string;
   connectors: ConnectorConfig;
   /** Where requests for help go (Curahold's own support desk). */
-  support?: { email?: string; webhookUrl?: string };
+  support?: {
+    email?: string;
+    webhookUrl?: string;
+    /**
+     * The domain that takes answers by email (reply+<token>@<replyDomain>). Without it the
+     * emails about a request carry no reply address and answers are written in the product.
+     */
+    replyDomain?: string;
+    /** What whoever hands over incoming mail must present (POST /api/desk/mail). */
+    mailKey?: string;
+    /** Curahold's own people: mail from these addresses is support answering. */
+    staff?: string[];
+  };
   /** The customer portal's own registrable domain, e.g. "curahold-portal.com" (companies at <slug>.<portalDomain>). */
   portalDomain?: string;
   /** Curahold support's own key for opening an entry link into a company that granted access. */

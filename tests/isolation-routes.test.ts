@@ -37,6 +37,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/dev\/keys\/:id/, 'api_tokens'],
   [/^\/dev\/webhooks\/:id/, 'webhooks'],
   [/^\/(help\/files|help-files)\/:id/, 'help_files'],
+  [/^\/help\/:id/, 'help_requests'],
   [/^\/support\/grants\/:id/, 'support_grants'],
   [/^\/activities\/:id/, 'activities'],
   [/^\/pages\/:id/, 'pages'],
@@ -62,6 +63,8 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /auth/oauth/:provider/start': 'the name of a sign-in provider',
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
+  'GET /desk/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help-thread.test.ts)',
+  'POST /desk/requests/:ref/messages': 'Curahold’s own support desk, behind its staff key (tests/help-thread.test.ts)',
   'PUT /tickets/:source/:externalId': 'the ticket’s id in the caller’s own help desk (tests/timeline.test.ts)',
   'POST /inbound/tickets/:token': 'opened with a secret address, not a session (tests/timeline.test.ts)',
 };

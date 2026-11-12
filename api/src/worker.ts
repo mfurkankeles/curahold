@@ -2,6 +2,7 @@
 // Workers assets binding; /api/* runs the Hono app. The database is Supabase
 // Postgres (EU) reached through Hyperdrive; files go to an R2 bucket.
 import { createApp } from './app';
+import { readRawMail, takeMail } from './lib/helpThread';
 import type { BillingConfig, Config } from './context';
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
@@ -48,6 +49,11 @@ export interface Env {
   /** Help requests go to Curahold's support desk: an address, and/or a signed webhook. */
   SUPPORT_EMAIL?: string;
   SUPPORT_WEBHOOK_URL?: string;
+  /** Answers by email: the domain whose mail is routed to this worker (reply+<token>@…), and Curahold's own people's addresses, comma-separated. */
+  SUPPORT_REPLY_DOMAIN?: string;
+  SUPPORT_STAFF?: string;
+  /** What a mail server's webhook must present to hand mail over (self-hosted mail; the worker's own email handler needs none). */
+  SUPPORT_MAIL_KEY?: string;
   /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
   STAFF_KEY?: string;
   /** The customer portal's own domain, e.g. curahold-portal.com (unset: no portal). */
@@ -100,7 +106,13 @@ export function configFromEnv(env: Env): Config {
     secretsKey: env.SECRETS_KEY || undefined,
     portalDomain,
     billing: billingFromEnv(env),
-    support: { email: env.SUPPORT_EMAIL || undefined, webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined },
+    support: {
+      email: env.SUPPORT_EMAIL || undefined,
+      webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,
+      replyDomain: env.SUPPORT_REPLY_DOMAIN || undefined,
+      mailKey: env.SUPPORT_MAIL_KEY || undefined,
+      staff: (env.SUPPORT_STAFF || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean),
+    },
     staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
     connectors: {
       ...(env.SLACK_CLIENT_ID && env.SLACK_CLIENT_SECRET && env.SLACK_SIGNING_SECRET
@@ -149,6 +161,23 @@ export function depsFor(env: Env, ctx: Ctx) {
 }
 
 export default {
+  /**
+   * Mail sent to the reply domain (Cloudflare Email Routing → this worker):
+   * an answer to a help request, from the person who asked or from Curahold's
+   * own team. Anything else is dropped without an answer.
+   */
+  async email(message: { from: string; to: string; raw: ReadableStream<Uint8Array> }, env: Env, ctx: Ctx): Promise<void> {
+    const { db, deps, pending } = depsFor(env, ctx);
+    try {
+      const raw = await new Response(message.raw).arrayBuffer();
+      const outcome = await takeMail(deps, await readRawMail(raw, { from: message.from, to: message.to }));
+      if (!outcome.taken) console.log('[curahold] mail not taken:', outcome.reason);
+    } catch (e) {
+      console.error('[curahold] mail failed', e);
+    } finally {
+      ctx.waitUntil(Promise.allSettled(pending).then(() => db.close()));
+    }
+  },
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
     const toWorker = url.pathname.startsWith('/api/') || url.pathname === '/mcp' || url.pathname.startsWith('/oauth/') || url.pathname.startsWith('/.well-known/');

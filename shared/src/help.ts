@@ -47,8 +47,46 @@ export interface HelpRequestInfo {
   category: HelpCategory;
   impact: HelpImpact | null;
   subject: string;
-  status: 'received' | 'answered' | 'solved';
+  status: HelpStatus;
   createdAt: string;
   files: { id: string; name: string; size: number }[];
   grant: SupportGrant | null;
+  /** When the last message on it was written (the request itself counts). */
+  lastMessageAt?: string;
+  /** Support has answered and the person has not opened it since. */
+  unread?: boolean;
+  /** Colleagues kept in the loop: they read the request and can answer on it. */
+  followers?: string[];
+  neededBy?: string | null;
+}
+
+/**
+ * Whose turn it is. `received`: with Curahold support. `answered`: support
+ * has replied and waits for the person. `solved`: done (a new message opens it again).
+ */
+export const HELP_STATUSES = ['received', 'answered', 'solved'] as const;
+export type HelpStatus = (typeof HELP_STATUSES)[number];
+
+/** One message on a help request, as the company sees it (support's own notes never appear). */
+export interface HelpMessage {
+  id: string;
+  author: 'user' | 'support';
+  /** The colleague who wrote it, for `user`. */
+  userId: string | null;
+  /** Who at Curahold wrote it, for `support`. */
+  staff: string | null;
+  body: string;
+  /** Written in the product, or sent in by answering an email. */
+  via: 'app' | 'email' | 'desk';
+  createdAt: string;
+}
+
+/** A help request with its conversation. */
+export interface HelpRequestDetail extends HelpRequestInfo {
+  description: string;
+  steps: string | null;
+  pageUrl: string | null;
+  messages: HelpMessage[];
+  /** Whether the person looking may answer on it (the one who asked, or someone kept in the loop). */
+  canReply: boolean;
 }

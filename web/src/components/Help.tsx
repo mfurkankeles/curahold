@@ -13,15 +13,16 @@ import {
   HELP_MAX_FILES,
   type HelpCategory,
   type HelpImpact,
+  type HelpRequestDetail,
   type HelpRequestInfo,
   type SupportGrant,
 } from '../../../shared/src/help';
 import type { MessageKey } from '../../../shared/src/i18n';
-import { ApiFailure, api, del, get, post } from '../lib/api';
+import { ApiFailure, api, del, get, post, put } from '../lib/api';
 import { collectContext } from '../lib/diagnostics';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
-import { Dialog } from './ui';
+import { Avatar, Dialog } from './ui';
 
 const TYPES = [
   'image/png',
@@ -297,7 +298,10 @@ function Annotate({ shot, onDone, onClose }: { shot: Shot; onDone: (f: File) => 
 
 function NewRequest({ access, onSent, hide, about = '' }: { access: Access | null; onSent: (ref: string) => void; hide: (on: boolean) => void; about?: string }) {
   const { t, locale } = useI18n();
-  const { me } = useStore();
+  const { me, people, person } = useStore();
+  // Colleagues who should hear the answer too, and the day it is needed by.
+  const [followers, setFollowers] = useState<string[]>([]);
+  const [neededBy, setNeededBy] = useState('');
   const [category, setCategory] = useState<HelpCategory | null>(null);
   const [impact, setImpact] = useState<HelpImpact | null>(null);
   // Coming from Ask, the question is the subject already.
@@ -412,6 +416,8 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
         pageUrl: withPage && /^https?:\/\//.test(page) ? page : null,
         context: sent(),
         grant: grant ? { hours, level } : null,
+        followers,
+        neededBy: neededBy || null,
       }),
     );
     for (const s of shots) form.append('files', s.file);
@@ -574,6 +580,38 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
           </div>
         </div>
 
+        <div className="help__loop">
+          <div className="field">
+            <span className="field__label">{t('help.followers.label')}</span>
+            <div className="thread__people">
+              {followers.map((uid) => (
+                <span key={uid} className="thread__person">
+                  <Avatar person={person(uid)} />
+                  {person(uid)?.name}
+                  <button type="button" aria-label={t('help.followers.remove', { name: person(uid)?.name ?? '' })} onClick={() => setFollowers(followers.filter((x) => x !== uid))}>
+                    <Icon name="close" size={13} />
+                  </button>
+                </span>
+              ))}
+              {followers.length < 10 && (
+                <select className="select thread__add" value="" aria-label={t('help.followers.add')} onChange={(e) => e.target.value && setFollowers([...followers, e.target.value])}>
+                  <option value="">{t('help.followers.add')}</option>
+                  {people
+                    .filter((p) => p.status === 'active' && p.id !== me.user.id && !followers.includes(p.id))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </div>
+          </div>
+          <label className="field">
+            <span className="field__label">{t('help.neededByLabel')}</span>
+            <input className="input" type="date" value={neededBy} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setNeededBy(e.target.value)} />
+          </label>
+        </div>
         <div className="field">
           <label className="checkbox">
             <input type="checkbox" checked={withPage} onChange={(e) => setWithPage(e.target.checked)} />
@@ -664,12 +702,14 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
   const { toast, reloadMe, me } = useStore();
   const [list, setList] = useState<HelpRequestInfo[] | null>(null);
   const [hours, setHours] = useState<(typeof GRANT_HOURS)[number]>(24);
-  useEffect(() => {
+  // The request whose conversation is open; the list is behind it.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const loadList = () =>
     void get<{ requests: HelpRequestInfo[] }>('/help').then(
       (r) => setList(r.requests),
       () => setList([]),
     );
-  }, [access]);
+  useEffect(loadList, [access]);
   const revoke = async (id: string) => {
     await del(`/support/grants/${id}`);
     toast(t('help.grant.closed'));
@@ -690,6 +730,17 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
       hour: '2-digit',
       minute: '2-digit',
     });
+  if (openId)
+    return (
+      <RequestThread
+        id={openId}
+        onBack={() => {
+          setOpenId(null);
+          loadList();
+          void reloadMe();
+        }}
+      />
+    );
   return (
     <div className="help">
       <section className="grantbox" data-on={active.length > 0 || undefined}>
@@ -761,18 +812,202 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
         {list && list.length === 0 && <p className="muted">{t('help.mine.empty')}</p>}
         <ul className="help__list">
           {list?.map((r) => (
-            <li key={r.id}>
-              <div>
-                <strong>{r.subject}</strong>
-                <div className="muted">
-                  {r.ref} · {t(`help.category.${r.category}` as MessageKey)} · {when(r.createdAt)}
-                  {r.files.length > 0 && <> · {t('help.mine.files', { n: r.files.length })}</>}
-                </div>
-              </div>
-              <span className={`badge${r.status === 'solved' ? ' badge--active' : ''}`}>{t(`help.status.${r.status}` as MessageKey)}</span>
+            <li key={r.id} className="help__req" data-unread={r.unread || undefined}>
+              <button className="help__reqopen" onClick={() => setOpenId(r.id)}>
+                <span>
+                  <strong>{r.subject}</strong>
+                  <span className="muted">
+                    {r.ref} · {t(`help.category.${r.category}` as MessageKey)} · {when(r.lastMessageAt ?? r.createdAt)}
+                    {r.files.length > 0 && <> · {t('help.mine.files', { n: r.files.length })}</>}
+                  </span>
+                </span>
+                <span className="help__turn" data-status={r.status}>
+                  {r.unread && <span className="help__dot" aria-hidden="true" />}
+                  {t(`help.status.${r.status}` as MessageKey)}
+                </span>
+                <Icon name="chevronRight" size={16} />
+              </button>
             </li>
           ))}
         </ul>
+      </section>
+    </div>
+  );
+}
+
+/** One request as a conversation: what was asked, the answers both ways, and a box to answer in. */
+function RequestThread({ id, onBack }: { id: string; onBack: () => void }) {
+  const { t, fmtDate } = useI18n();
+  const { me, people, person, toast } = useStore();
+  const [req, setReq] = useState<(HelpRequestDetail & { userName?: string | null }) | null>(null);
+  const [gone, setGone] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const end = useRef<HTMLDivElement>(null);
+  const load = () =>
+    get<{ request: HelpRequestDetail }>(`/help/${id}`).then(
+      (r) => setReq(r.request),
+      () => setGone(true),
+    );
+  useEffect(() => void load(), [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const count = req?.messages.length ?? 0;
+  useEffect(() => {
+    if (count) end.current?.scrollIntoView({ block: 'nearest' });
+  }, [count]);
+  const when = (iso: string) => fmtDate(iso, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const fail = (e: unknown) => toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+  const send = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    try {
+      await post(`/help/${id}/messages`, { body: text.trim() });
+      setText('');
+      await load();
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const solve = async () => {
+    try {
+      await post(`/help/${id}/solve`);
+      await load();
+    } catch (err) {
+      fail(err);
+    }
+  };
+  const follow = async (userIds: string[]) => {
+    try {
+      await put(`/help/${id}/followers`, { userIds });
+      await load();
+    } catch (err) {
+      fail(err);
+    }
+  };
+  const back = (
+    <button className="btn btn--quiet btn--small help__back" onClick={onBack}>
+      <Icon name="arrowLeft" size={16} />
+      {t('help.tab.mine')}
+    </button>
+  );
+  if (gone)
+    return (
+      <div className="help">
+        {back}
+        <p className="muted">{t('errors.not_found')}</p>
+      </div>
+    );
+  if (!req)
+    return (
+      <div className="help">
+        {back}
+        <p className="muted">{t('common.loading')}</p>
+      </div>
+    );
+  const mine = req.userId === me.user.id;
+  const followers = req.followers ?? [];
+  const canAdd = people.filter((p) => p.status === 'active' && p.id !== req.userId && !followers.includes(p.id));
+  return (
+    <div className="help thread">
+      <div className="thread__top">
+        {back}
+        <span className="help__turn" data-status={req.status}>
+          {t(`help.status.${req.status}` as MessageKey)}
+        </span>
+      </div>
+      <h3 className="thread__subject">{req.subject}</h3>
+      <p className="muted thread__meta">
+        {req.ref} · {t(`help.category.${req.category}` as MessageKey)} · {when(req.createdAt)}
+        {req.neededBy && <> · {t('help.neededBy', { date: fmtDate(req.neededBy, { day: 'numeric', month: 'long' }) })}</>}
+      </p>
+      <p className="thread__turn" data-status={req.status}>
+        <Icon name={req.status === 'solved' ? 'checkCircle' : req.status === 'answered' ? 'comment' : 'hourglass'} size={16} />
+        {t(`help.turn.${req.status}` as MessageKey)}
+      </p>
+
+      <div className="thread__log" role="log">
+        <article className="thread__msg" data-by="user">
+          <header>
+            <Avatar person={person(req.userId ?? '')} />
+            <strong>{person(req.userId ?? '')?.name ?? req.userName ?? t('common.unknownUser')}</strong>
+            <span className="muted">{when(req.createdAt)}</span>
+          </header>
+          <p>{req.description}</p>
+          {req.steps && <p className="thread__steps">{req.steps}</p>}
+          {req.files.length > 0 && <p className="muted">{t('help.mine.files', { n: req.files.length })}</p>}
+        </article>
+        {req.messages.map((m) => (
+          <article key={m.id} className="thread__msg" data-by={m.author}>
+            <header>
+              {m.author === 'support' ? (
+                <span className="thread__staff">
+                  <Icon name="lifebuoy" size={15} />
+                </span>
+              ) : (
+                <Avatar person={person(m.userId ?? '')} />
+              )}
+              <strong>{m.author === 'support' ? t('help.thread.staff', { name: m.staff ?? 'Curahold' }) : (person(m.userId ?? '')?.name ?? t('common.unknownUser'))}</strong>
+              <span className="muted">
+                {when(m.createdAt)}
+                {m.via === 'email' && <> · {t('help.thread.byEmail')}</>}
+              </span>
+            </header>
+            <p>{m.body}</p>
+          </article>
+        ))}
+        <div ref={end} />
+      </div>
+
+      {req.canReply ? (
+        <form className="thread__reply" onSubmit={send}>
+          <textarea className="input" rows={3} value={text} maxLength={20000} placeholder={t(req.status === 'solved' ? 'help.thread.reopenPlaceholder' : 'help.thread.placeholder')} aria-label={t('help.thread.reply')} onChange={(e) => setText(e.target.value)} />
+          <div className="toolbar">
+            <button className="btn btn--primary" type="submit" disabled={busy || !text.trim()}>
+              <Icon name="send" size={16} />
+              {t('help.thread.reply')}
+            </button>
+            {req.status !== 'solved' && (
+              <button className="btn" type="button" onClick={solve}>
+                <Icon name="check" size={16} />
+                {t('help.thread.solve')}
+              </button>
+            )}
+            <span className="field__hint">{t('help.thread.hint')}</span>
+          </div>
+        </form>
+      ) : (
+        <p className="field__hint">{t('help.thread.readOnly')}</p>
+      )}
+
+      <section className="thread__loop">
+        <h4>{t('help.followers.title')}</h4>
+        <p className="field__hint">{t('help.followers.hint')}</p>
+        <div className="thread__people">
+          {followers.map((uid) => (
+            <span key={uid} className="thread__person">
+              <Avatar person={person(uid)} />
+              {person(uid)?.name ?? t('common.unknownUser')}
+              {mine && (
+                <button aria-label={t('help.followers.remove', { name: person(uid)?.name ?? '' })} title={t('help.followers.remove', { name: person(uid)?.name ?? '' })} onClick={() => void follow(followers.filter((x) => x !== uid))}>
+                  <Icon name="close" size={13} />
+                </button>
+              )}
+            </span>
+          ))}
+          {followers.length === 0 && !mine && <span className="muted">{t('help.followers.none')}</span>}
+          {mine && followers.length < 10 && canAdd.length > 0 && (
+            <select className="select thread__add" value="" aria-label={t('help.followers.add')} onChange={(e) => e.target.value && void follow([...followers, e.target.value])}>
+              <option value="">{t('help.followers.add')}</option>
+              {canAdd.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </section>
     </div>
   );

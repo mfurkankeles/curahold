@@ -14,12 +14,13 @@ import {
   HELP_MAX_FILE_MB,
   HELP_MAX_FILES,
   SUPPORT_POLICIES,
+  type HelpRequestDetail,
   type HelpRequestInfo,
   type SupportGrant,
 } from '../../../shared/src/help';
 import { translate } from '../../../shared/src/i18n';
 import { defer, fetchOf, logoPath, orgUrl, requirePerm, run, type AppEnv, type C, type Deps, type OrgRow } from '../context';
-import type { Row } from '../db';
+import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { hmacHex, randomToken, safeEqual, sha256Hex } from '../lib/crypto';
 import { emailHtml } from '../lib/emailHtml';
@@ -33,7 +34,8 @@ import {
   staffKeyOk,
   supportPolicy,
 } from '../lib/support';
-import { body, param, uuid } from '../lib/validate';
+import { body, isoDate, param, uuid } from '../lib/validate';
+import { addHelpMessage, toHelpMessage } from '../lib/helpThread';
 
 export const helpRoutes = new Hono<AppEnv>();
 export const supportEntry = new Hono<AppEnv>();
@@ -82,7 +84,19 @@ const helpInput = z.object({
   pageUrl: z.string().trim().max(2000).regex(/^https?:\/\//).nullish(),
   context: contextSchema.default({}),
   grant: z.object({ hours: z.union(GRANT_HOURS.map((h) => z.literal(h)) as any), level: z.enum(['view', 'edit']) }).nullish(),
+  /** Colleagues to keep in the loop: they read the request and can answer on it. */
+  followers: z.array(uuid).max(10).optional(),
+  /** The day an answer is needed by, if there is one. */
+  neededBy: isoDate.nullish(),
 });
+
+/** The colleagues among these ids who can be kept in the loop: active people of this company, not the asker. */
+async function followersOf(q: Q, ids: string[] | undefined, me: string): Promise<string[]> {
+  const wanted = [...new Set(ids ?? [])].filter((id) => id !== me);
+  if (!wanted.length) return [];
+  const rows = await q.query<{ id: string }>(`select id from users where id = any ($1) and status = 'active'`, [wanted]);
+  return rows.map((r) => r.id);
+}
 
 const grantInput = z.object({
   hours: z.union(GRANT_HOURS.map((h) => z.literal(h)) as any),
@@ -265,9 +279,22 @@ helpRoutes.post('/help', async (c) => {
       ctx.refs = a ? { ...ctx.refs, accountName: a.name } : (({ accountId: _, ...rest }) => rest)(ctx.refs);
     }
     const [req] = await q.query(
-      `insert into help_requests (org_id, user_id, category, impact, subject, description, steps, page_url, context)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *`,
-      [org.id, auth.userId, input.category, input.impact ?? null, input.subject, input.description, input.steps || null, cleanPageUrl(input.pageUrl), JSON.stringify(ctx)],
+      `insert into help_requests (org_id, user_id, category, impact, subject, description, steps, page_url, context, followers, needed_by, reply_token, last_message_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now()) returning *`,
+      [
+        org.id,
+        auth.userId,
+        input.category,
+        input.impact ?? null,
+        input.subject,
+        input.description,
+        input.steps || null,
+        cleanPageUrl(input.pageUrl),
+        JSON.stringify(ctx),
+        await followersOf(q, input.followers, auth.userId),
+        input.neededBy ?? null,
+        randomToken(18),
+      ],
     );
     const saved: Row[] = [];
     for (const f of files) {
@@ -309,13 +336,21 @@ helpRoutes.post('/help', async (c) => {
   return c.json({ request: { id: req.id, ref: req.ref }, grant: grant ? toGrant(grant) : null }, 201);
 });
 
+/** Where a request stands as a conversation: when it last moved, and whether an answer waits unread. */
+const threadInfo = (r: Row) => ({
+  lastMessageAt: new Date(r.last_message_at ?? r.created_at).toISOString(),
+  unread: r.status === 'answered' && !!r.last_message_at && (!r.seen_at || new Date(r.seen_at) < new Date(r.last_message_at)),
+  followers: (r.followers ?? []) as string[],
+  neededBy: r.needed_by ? new Date(r.needed_by).toISOString().slice(0, 10) : null,
+});
+
 helpRoutes.get('/help', async (c) => {
   const auth = c.get('auth');
   const all = c.req.query('all') === '1' && auth.perms.includes('org.manage');
   const rows = await run(c, async (q) => {
     const reqs = await q.query(
       `select h.*, u.name as user_name from help_requests h left join users u on u.id = h.user_id
-        where ($1 or h.user_id = $2) order by h.created_at desc limit 100`,
+        where ($1 or h.user_id = $2 or $2 = any (h.followers)) order by coalesce(h.last_message_at, h.created_at) desc limit 100`,
       [all, auth.userId],
     );
     const ids = reqs.map((r) => r.id);
@@ -337,10 +372,99 @@ helpRoutes.get('/help', async (c) => {
           const g = grants.find((x) => x.id === r.grant_id);
           return g ? toGrant(g) : null;
         })(),
+        ...threadInfo(r),
       }),
     );
   });
   return c.json({ requests: rows });
+});
+
+/** One request with its conversation. Opening it as the person who asked marks support's answer as read. */
+helpRoutes.get('/help/:id', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const out = await run(c, async (q) => {
+    const [r] = await q.query('select h.*, u.name as user_name from help_requests h left join users u on u.id = h.user_id where h.id = $1', [id]);
+    if (!r) fail('not_found');
+    const canReply = r.user_id === auth.userId || (r.followers ?? []).includes(auth.userId);
+    if (canReply && r.status === 'answered') await q.query('update help_requests set seen_at = now() where id = $1', [id]);
+    const messages = await q.query('select * from help_messages where request_id = $1 order by created_at, id', [id]);
+    const files = await q.query('select id, name, size from help_files where request_id = $1 order by created_at', [id]);
+    const [g] = r.grant_id ? await q.query('select * from support_grants where id = $1', [r.grant_id]) : [];
+    return { r, messages, files, g, canReply };
+  });
+  const { r } = out;
+  const detail: HelpRequestDetail & { userName: string | null } = {
+    id: r.id,
+    ref: r.ref,
+    userId: r.user_id,
+    userName: r.user_name ?? null,
+    category: r.category,
+    impact: r.impact,
+    subject: r.subject,
+    status: r.status,
+    createdAt: new Date(r.created_at).toISOString(),
+    files: out.files.map((f) => ({ id: f.id, name: f.name, size: f.size })),
+    grant: out.g ? toGrant(out.g) : null,
+    ...threadInfo(r),
+    unread: false,
+    description: r.description,
+    steps: r.steps ?? null,
+    pageUrl: r.page_url ?? null,
+    messages: out.messages.map(toHelpMessage),
+    canReply: out.canReply,
+  };
+  return c.json({ request: detail });
+});
+
+/** Answering on a request: the person who asked, or a colleague kept in the loop. It goes back to support. */
+helpRoutes.post('/help/:id/messages', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
+  const input = await body(c, z.object({ body: z.string().trim().min(1).max(20000) }));
+  await run(c, async (q) => {
+    const [r] = await q.query('select user_id, followers from help_requests where id = $1', [id]);
+    if (!r) fail('not_found');
+    if (r.user_id !== auth.userId && !(r.followers ?? []).includes(auth.userId)) fail('forbidden');
+    const [{ n }] = await q.query(`select count(*)::int as n from help_messages where user_id = $1 and created_at > now() - interval '1 hour'`, [auth.userId]);
+    if (n >= 60) fail('too_many_requests');
+  });
+  const msg = await addHelpMessage(c.get('deps'), org.id, id, { author: 'user', userId: auth.userId, body: input.body, via: 'app' });
+  if (!msg) fail('not_found');
+  return c.json({ message: toHelpMessage(msg!) }, 201);
+});
+
+/** "This is settled": the person who asked, or a colleague kept in the loop. A later message opens it again. */
+helpRoutes.post('/help/:id/solve', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const org = c.get('org');
+  if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
+  await run(c, async (q) => {
+    const rows = await q.query(`update help_requests set status = 'solved' where id = $1 and (user_id = $2 or $2 = any (followers)) returning ref`, [id, auth.userId]);
+    if (!rows.length) fail('not_found');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'help.solved', entity: 'help_request', entityId: id, meta: { ref: rows[0].ref } });
+  });
+  return c.json({ ok: true });
+});
+
+/** Who is kept in the loop on a request: set by the person who asked. */
+helpRoutes.put('/help/:id/followers', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  if (c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
+  const input = await body(c, z.object({ userIds: z.array(uuid).max(10) }));
+  const followers = await run(c, async (q) => {
+    const [r] = await q.query('select user_id from help_requests where id = $1', [id]);
+    if (!r) fail('not_found');
+    if (r.user_id !== auth.userId) fail('forbidden');
+    const list = await followersOf(q, input.userIds, auth.userId);
+    await q.query('update help_requests set followers = $2 where id = $1', [id, list]);
+    return list;
+  });
+  return c.json({ followers });
 });
 
 helpRoutes.get('/help/files/:id', async (c) => {

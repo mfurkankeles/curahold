@@ -10,13 +10,13 @@ summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Curahold dest
 
 ## Önce sor
 
-Sol menüden **Yardım**'ı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Türkçe ve İngilizce çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
+Her ekranın sağ altındaki **CuraAI**'yı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Türkçe ve İngilizce çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
 
 Cevap işini görmediyse söyle: en yakın diğer yerleri ve sorun hazır yazılmış halde desteğe yazma düğmesini görürsün.
 
 ## Desteğe ulaşmak: talep göndermek
 
-**Yardım → Desteğe yaz**'ı kullan. Form, desteğin sana yeniden soru sormadan sorunu bulabilmesi için gerekenleri ister. Görmediğin hiçbir şey gönderilmez; neyin gideceğini sen seçersin.
+CuraAI'nın altındaki **Desteğe yaz**'ı kullan. Form, desteğin sana yeniden soru sormadan sorunu bulabilmesi için gerekenleri ister. Görmediğin hiçbir şey gönderilmez; neyin gideceğini sen seçersin.
 
 1. **Konu**: Bir şey çalışmıyor, Nasıl yapılır, Veri ya da bağlantı, Öneri ya da Fatura ve plan.
 2. **Etki**: Hata ve veri sorunlarında işini durdurup durdurmadığını seç. Desteğin sırası buna göre belirlenir.
@@ -24,7 +24,19 @@ Cevap işini görmediyse söyle: en yakın diğer yerleri ve sorun hazır yazıl
 4. **Ne oldu**: Ne yapmaya çalıştığını, ne beklediğini ve ne olduğunu yaz. Hata mesajı çıktıysa aynen kopyala.
 5. **Nasıl tekrar edebiliriz**: Hatalarda adım adım (isteğe bağlı ama çok işe yarar).
 
-Gönderince bir **referans numarası** (örn. TW-000123) alırsın. Bir kopyası e-postana gelir, yanıt da aynı adrese gelir. Gönderdiklerini **Yardım → Taleplerim** bölümünde durumlarıyla görürsün.
+6. **Haberdar edilecekler** ve **Ne zamana lazım** (ikisi de isteğe bağlı): talebi okuyup cevabı duyması gereken iş arkadaşların ve cevabın gerektiği gün.
+
+Gönderince bir **referans numarası** (örn. TW-000123) alırsın; bir kopyası e-postana gelir.
+
+## Konuşma: cevaplar, yanıtlar ve sıranın kimde olduğu
+
+Talep bir konuşmadır. **Taleplerim** altında açarsın (CuraAI'nın üstündeki gelen kutusu düğmesi):
+
+- **Desteğin cevabı** e-postayla ve talebin üzerine gelir. CuraAI düğmesindeki işaret, bekleyen bir cevap olduğunu söyler.
+- Üründe **cevap yaz** ya da yalnızca **e-postayı yanıtla**: alıntının üstüne yazdığın, talebe düşer.
+- Talep **sıranın kimde olduğunu** söyler: *Destekte*, *Cevabın bekleniyor* ya da *Çözüldü*. **Çözüldü olarak işaretle** kapatır; yeniden yazarsan açılır.
+- **Haberdar edilen iş arkadaşları** talebi okur, desteğin cevaplarını e-postayla alır ve cevap yazabilir. Onları yalnızca talebi açan kişi ekler ya da çıkarır. Yönetici şirketin her talebini okuyabilir ama yalnızca kendi talebinde cevap yazar.
+- Curahold ekibi talep üzerinde **kendi notlarını** tutabilir. Bunlar şirketine hiçbir zaman gösterilmez ve gönderilmez.
 
 ## Ekran görüntüleri ve dosyalar
 

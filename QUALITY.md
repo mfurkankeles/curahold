@@ -234,6 +234,12 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 4. Bu tura alınanlar: koltuk paylaşımı tespiti ve yöneticiye uyarı (Güvenilirlik paketi); GitHub'da
    Docker imajı derleme kontrolü (deploy değil); fiyatlar onaylandı (Team $19 / $15, Business $35 / $29).
 5. Yedek: kod GitHub'da özel `curahold` reposunda; her paketin sonunda push edilir. Otomatik deploy yok.
+6. Yardımcının (CuraAI) motoru: cevaplar belgelerden, cihazda, soru başına $0 (seçenek A). Cevabı bir dil
+   modelinin yazması (seçenek B, soru başına yaklaşık $0,0006 ve yeni bir alt işleyen) şimdi yok; ileride
+   üst pakete ek özellik olarak eklenebilir.
+7. INTEGRATIONS.md'deki beş madde önerildiği gibi onaylandı (Salesforce liste dışı paket, sabit IP için
+   küçük aktarıcı, HubSpot listelemesi üç kurulumdan sonra, sıradaki bağlayıcılar Bitrix24 + Freshsales +
+   Zendesk Sell, Zapier ve Make uygulaması).
 
 ## Durum (her commit'te güncellenir)
 
@@ -333,6 +339,9 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | Takvimde görünen | yalnızca son tarihli görevler | 6 tür: görev, yapılan toplantı, arama ve değerlendirme, yenileme, zamanı gelen iş değerlendirmesi; her biri kendi rengi ve ikonuyla, tek tıkla açılıp kapanır |
 | Başkasının takvimi | yoktu ("Herkes" ya da "Benimkiler") | yeni yetki "ekip arkadaşlarının takvimini görme": yönetici ve ekip lideri rollerine verildi, diğer rollere Roller ekranından verilebilir; sahibi tek kişiyi ya da bütün ekibi seçer (ekip lideri kendi ekiplerini, yönetici herkesi) |
 | Yetkinin açtığı yeni veri | — | 0: yalnızca soranın zaten görebildiğini daraltır. Yetkisiz istek 403, erişim dışındaki kişi ya da ekip 404, başka şirketin kişisi 404, özel pano görevi görünmez (10 test, `tests/calendar.test.ts`) |
+| Yardım talebine cevap | talep bir kez gidiyor, cevap üründe görünmüyordu | talep bir konuşma: destek cevaplar, kişi üründe ya da e-postayı yanıtlayarak yazar; durum sıranın kimde olduğunu söyler (ayrıntı ve ölçümler: SUPPORT.md) |
+| Destek ekibinin kendi notu | yoktu | talebin üzerinde durur; şirkete gösterilmez, gönderilmez, uygulamanın veritabanı rolü okuyamaz (testli) |
+| Talepte iş arkadaşı ve "ne zamana lazım" | yoktu | talebi açan 10 kişiye kadar haberdar eder; isteğe bağlı tarih |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

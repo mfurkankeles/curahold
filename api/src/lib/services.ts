@@ -6,6 +6,10 @@ export interface EmailMessage {
   subject: string;
   text: string;
   html?: string;
+  /** Where an answer to this message should go, when not back to the sender. */
+  replyTo?: string;
+  /** Extra headers: Message-ID, In-Reply-To and References keep a conversation in one thread. */
+  headers?: Record<string, string>;
 }
 
 export interface EmailSender {
@@ -35,7 +39,7 @@ export class ResendEmail implements EmailSender {
     const res = await this.fetchFn('https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${this.apiKey}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}) }),
+      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}), ...(msg.replyTo ? { reply_to: msg.replyTo } : {}), ...(msg.headers ? { headers: msg.headers } : {}) }),
     });
     if (!res.ok) throw new Error(`email provider answered ${res.status}`);
   }

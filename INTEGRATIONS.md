@@ -123,26 +123,20 @@ eder. "Yeni ücretli servis yok" ve "en yüksek brüt marj" kurallarına aykır�
 | Salesforce paketi (External Client App + 2GP) | canlıya çıkış öncesi |
 | Yeni bağlayıcılar (karara göre) | 4. aşamadan kalanlar |
 
-## Karar bekleyenler
+## Kararlar (ürün sahibi, 12 Kasım 2026)
 
-1. **Salesforce dağıtımı.**
-   A. External Client App + listesiz paket; müşteri yöneticisi kurulum linkiyle
-   kurar. Güvenlik incelemesine ilk ücretli Salesforce müşterisinden önce
-   başvurulur. **(öneri: hızlı, ücret yalnızca gerektiğinde)**
-   B. Baştan AppExchange'te listelenmek: görünürlük sağlar, 4–9 hafta ve
-   başvuru ücreti.
-2. **Sabit çıkış IP adresi** (Salesforce'un dördüncü kontrolü için).
-   A. Yalnızca Salesforce anahtar yenileme isteklerini geçiren küçük, sabit
-   adresli bir aktarıcı: ayda yaklaşık $4–6 sabit, koltuk başına değil.
-   **(öneri; partner hesabı açılıp kontrolün bizim akışta zorunlu olduğu
-   doğrulandıktan sonra)**
-   B. Cloudflare'in kurumsal sabit adres eklentisi: pahalı, şimdilik gereksiz.
-3. **HubSpot listelemesi.** İlk üç müşteri kurulumundan sonra başvur (ücretsiz,
-   25 kurulum sınırını kaldırır). **(öneri: evet)**
-4. **Sıradaki bağlayıcılar.** Bitrix24, Freshsales, Zendesk Sell; sonrası talebe
-   göre. **(öneri)**
-5. **Zapier ve Make uygulaması.** **(öneri: evet; maliyeti yok, uzun kuyruğu
-   kapatır)**
+Beş madde de önerildiği gibi onaylandı.
+
+1. **Salesforce dağıtımı:** External Client App + listesiz paket; müşteri yöneticisi
+   kurulum linkiyle kurar. Güvenlik incelemesine ilk ücretli Salesforce müşterisinden
+   önce başvurulur.
+2. **Sabit çıkış IP adresi:** yalnızca Salesforce anahtar yenileme isteklerini geçiren
+   küçük, sabit adresli bir aktarıcı (ayda yaklaşık $4–6 sabit, koltuk başına değil).
+   Sunucusu, partner hesabı açılıp kontrolün bizim akışta zorunlu olduğu doğrulandıktan
+   sonra ürün sahibinin hesabıyla alınır; kod tarafı hazırlanır.
+3. **HubSpot listelemesi:** ilk üç müşteri kurulumundan sonra başvurulur.
+4. **Sıradaki bağlayıcılar:** Bitrix24, Freshsales, Zendesk Sell; sonrası talebe göre.
+5. **Zapier ve Make uygulaması:** yapılacak.
 
 ## Ürün sahibinin açacağı hesaplar (hepsi ücretsiz)
 

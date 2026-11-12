@@ -367,6 +367,8 @@ export interface Me {
   supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
   /** Support access this person has given and not yet closed. */
   supportOpen?: { until: string; level: 'view' | 'edit'; count: number };
+  /** Help requests where Curahold support has answered and the person has not opened the answer yet. */
+  helpUnread?: number;
 }
 
 export interface Role {

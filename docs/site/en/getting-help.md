@@ -10,13 +10,13 @@ Two steps, in this order: **ask**, and if that did not settle it, **write to sup
 
 ## Ask first
 
-Open **Help** in the left menu (or the **Ask** button on any page of these docs) and write your question in your own words: "how do I import customers", "who can see this field". The answer comes from these docs, with the place it came from, in a moment. It works in English and Turkish, and nothing you type is sent anywhere: the docs are searched in your own browser.
+Open **CuraAI** at the bottom right of any screen (or the **Ask** button on any page of these docs) and write your question in your own words: "how do I import customers", "who can see this field". The answer comes from these docs, with the place it came from, in a moment. It works in English and Turkish, and nothing you type is sent anywhere: the docs are searched in your own browser.
 
 If the answer is not what you needed, say so: you get the next closest places, and a button to write to support with your question already filled in.
 
 ## Contacting support: sending a request
 
-Use **Help → Write to support**. The form asks for what support needs to find the problem without coming back to you with questions. Nothing is sent that you haven't seen; you choose what goes.
+Use **Write to support** at the foot of CuraAI. The form asks for what support needs to find the problem without coming back to you with questions. Nothing is sent that you haven't seen; you choose what goes.
 
 1. **Topic**: Something isn't working, How do I…, Data or a connection, An idea, or Billing and plan.
 2. **Impact**: for errors and data problems, say whether it stops your work. Support's order follows it.
@@ -24,7 +24,19 @@ Use **Help → Write to support**. The form asks for what support needs to find 
 4. **What happened**: what you were trying to do, what you expected and what happened instead. If there was an error message, copy it word for word.
 5. **How can we see it happen**: for errors, step by step (optional, but it helps a lot).
 
-You get a **reference** (e.g. TW-000123) and a copy by email; the answer comes to the same address. Your requests and their status are under **Help → My requests**.
+6. **Keep in the loop** and **Needed by** (both optional): colleagues who should read the request and hear the answer, and the day you need it by.
+
+You get a **reference** (e.g. TW-000123) and a copy by email.
+
+## The conversation: answers, replies, and whose turn it is
+
+A request is a conversation. Open it under **My requests** (the inbox button at the top of CuraAI):
+
+- **Support's answer** arrives by email and on the request. A mark on the CuraAI button says an answer is waiting.
+- **Reply** in the product, or simply **answer the email**: what you write above the quoted part lands on the request.
+- The request says **whose turn it is**: *With support*, *Waiting for your reply*, or *Solved*. **Mark as solved** closes it; writing again opens it.
+- **Colleagues kept in the loop** read the request, get support's answers by email and can reply. Only the person who asked adds or removes them. An administrator can read any request of the company but answers only on their own.
+- Curahold's team may keep **notes of its own** on a request. They are never shown or sent to your company.
 
 ## Screenshots and files
 

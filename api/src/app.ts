@@ -26,6 +26,7 @@ import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
 import { calendarRoutes } from './routes/calendar';
+import { deskRoutes } from './routes/desk';
 import { connectCallback_, connectionRoutes } from './routes/connections';
 import { hookRoutes } from './routes/hooks';
 import { setupRoutes } from './routes/setup';
@@ -109,6 +110,8 @@ export function createApp(deps: Deps) {
   app.get('/api/connect/callback', connectCallback_);
   app.route('/api/hooks', hookRoutes);
   app.route('/api/signup', signupRoutes);
+  // Curahold's own support desk and the door for incoming mail (staff key / mail key).
+  app.route('/api/desk', deskRoutes);
   // Paddle's notifications about subscriptions (checked against its secret).
   app.post('/api/billing/webhook', billingWebhook);
 

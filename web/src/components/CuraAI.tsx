@@ -11,6 +11,7 @@ import { Icon } from './icons';
 export function CuraAI({
   open,
   lifted,
+  unread = 0,
   onOpen,
   onClose,
   onWrite,
@@ -19,6 +20,8 @@ export function CuraAI({
   open: boolean;
   /** On a phone the main menu sits at the bottom: the button stands above it. */
   lifted: boolean;
+  /** Answers from support the person has not opened yet. */
+  unread?: number;
   onOpen: () => void;
   onClose: () => void;
   onWrite: (question: string) => void;
@@ -60,6 +63,11 @@ export function CuraAI({
             <Icon name="spark" size={20} />
           </span>
           <span className="cura__fabname">{t('cura.name')}</span>
+          {unread > 0 && (
+            <span className="cura__badge" aria-label={t('cura.unread', { n: unread })} title={t('cura.unread', { n: unread })}>
+              {unread}
+            </span>
+          )}
         </button>
       )}
       {made && (
@@ -74,6 +82,7 @@ export function CuraAI({
             </div>
             <button type="button" className="cura__tool" aria-label={t('help.tab.mine')} title={t('help.tab.mine')} onClick={onMine}>
               <Icon name="inbox" size={18} />
+              {unread > 0 && <span className="cura__badge cura__badge--tool">{unread}</span>}
             </button>
             <button type="button" className="cura__tool" aria-label={t('cura.minimize')} title={t('cura.minimize')} onClick={onClose}>
               <Icon name="chevronDown" size={18} />

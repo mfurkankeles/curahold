@@ -48,7 +48,7 @@ export class SmtpEmail implements EmailSender {
     this.transport = createTransport(url);
   }
   async send(m: EmailMessage) {
-    await this.transport.sendMail({ from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html });
+    await this.transport.sendMail({ from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html, replyTo: m.replyTo, headers: m.headers });
   }
 }
 

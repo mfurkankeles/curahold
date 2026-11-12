@@ -301,7 +301,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
 
   return (
     <ShellCtx.Provider value={actions}>
-      <div className="shell" data-nav={navOpen ? 'open' : 'closed'}>
+      <div className="shell" data-nav={navOpen ? 'open' : 'closed'} data-helper={helpOk || undefined}>
         {narrow && (
           <header className="mbar">
             <button className="mbar__btn" aria-label={t('nav.menu')} aria-expanded={navOpen} onClick={() => setNavOpen(true)}>
@@ -518,6 +518,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           <CuraAI
             open={chat}
             lifted={narrow}
+            unread={me.helpUnread ?? 0}
             onOpen={() => setChat(true)}
             onClose={() => setChat(false)}
             onMine={() => (setChat(false), setHelp('mine'))}

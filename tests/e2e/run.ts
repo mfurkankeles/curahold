@@ -775,6 +775,35 @@ await step('help: a request with a screenshot and consent; support visits read o
   await staff.page.waitForSelector('.notice');
   expect((await text(staff.page, '.notice')).includes('destek oturumu sona erdi'), 'support visit did not end');
   await staff.page.browserContext().close();
+
+  // The request is a conversation: support answers from its desk, the person sees it waiting and replies.
+  const answered = await fetch(`http://localhost:8899/api/desk/requests/${req.ref}/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-curahold-staff-key': STAFF_KEY },
+    body: JSON.stringify({ body: 'Listeyi yenileyince düzeliyor mu? Bizde tekrar edemedik.', staff: 'Deniz' }),
+  });
+  expect(answered.status === 201, `the desk could not answer: ${answered.status}`);
+  await (await byText(p, '.dialog button', 'Kapat').catch(() => null))?.click().catch(() => undefined);
+  await p.keyboard.press('Escape');
+  await p.reload({ waitUntil: 'networkidle0' });
+  await p.waitForSelector('.cura__fab .cura__badge');
+  await p.click('.cura__fab');
+  await p.click('.cura__tool');
+  await p.waitForSelector('.help__req[data-unread]');
+  expect((await text(p, '.help__req[data-unread] .help__turn')).includes('Cevabın bekleniyor'), 'the list does not say it is her turn');
+  await p.click('.help__req[data-unread] .help__reqopen');
+  await p.waitForSelector('.thread__msg[data-by="support"]');
+  expect((await text(p, '.thread__msg[data-by="support"]')).includes('Listeyi yenileyince'), 'support’s answer is not on the request');
+  await p.type('.thread__reply textarea', 'Evet, yenileyince düzeldi. Teşekkürler.');
+  await (await byText(p, '.thread__reply .btn--primary', 'Cevabı gönder')).click();
+  await p.waitForFunction(() => document.querySelectorAll('.thread__msg').length === 3 && document.querySelector('.thread__top .help__turn')?.textContent?.includes('Destekte'));
+  await shot(p, 'p7-06-help-thread');
+  await (await byText(p, '.thread__reply .btn', 'Çözüldü olarak işaretle')).click();
+  await p.waitForFunction(() => document.querySelector('.thread__top .help__turn')?.textContent?.includes('Çözüldü'));
+  // The way back from the conversation is the list, with nothing left unread.
+  await p.click('.help__back');
+  await p.waitForSelector('.help__req');
+  expect((await p.$('.help__req[data-unread]')) === null, 'the answered request still shows as unread');
 });
 
 await step('customer portal: switch on, invite, the customer opens a request, the team replies, the customer reads it', async () => {
@@ -942,8 +971,15 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   const first = ada.page.url();
   const firstName = await text(ada.page, '.topbar__title');
   await ada.page.click('.dashpick__item:not([aria-current])');
-  await ada.page.waitForFunction((u) => location.href !== u && document.querySelector('.dashpick__item[aria-current="page"]')?.textContent === document.querySelector('.topbar__title')?.textContent, {}, first);
-  expect((await text(ada.page, '.topbar__title')) !== firstName, 'the switch did not change the dashboard');
+  await ada.page.waitForFunction(
+    (u, was) => {
+      const title = document.querySelector('.topbar__title')?.textContent;
+      return location.href !== u && !!title && title !== was && document.querySelector('.dashpick__item[aria-current="page"]')?.textContent === title;
+    },
+    {},
+    first,
+    firstName,
+  );
   // Any of them can be deleted, and taken back from the toast.
   const doomed = await text(ada.page, '.topbar__title');
   await ada.page.click('.dash-top__delete');
@@ -951,8 +987,7 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   await ada.page.waitForFunction((n) => document.querySelectorAll('.dashpick__item').length === n - 1, {}, ready);
   expect(!(await ada.page.$$eval('.dashpick__item', (xs) => xs.map((x) => x.textContent))).includes(doomed), 'the deleted dashboard is still listed');
   await (await byText(ada.page, '.toast button', 'Geri al')).click();
-  await ada.page.waitForFunction((n) => document.querySelectorAll('.dashpick__item').length === n, {}, ready);
-  expect((await text(ada.page, '.topbar__title')) === doomed, 'taking the dashboard back did not return to it');
+  await ada.page.waitForFunction((n, name) => document.querySelectorAll('.dashpick__item').length === n && document.querySelector('.topbar__title')?.textContent === name, {}, ready, doomed);
   // A dashboard narrows every card to one person at once.
   await ada.page.select('.dash-viewas select', 'me');
   await ada.page.waitForFunction(() => document.querySelector('.page')?.getAttribute('aria-busy') === 'false');

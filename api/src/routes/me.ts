@@ -37,6 +37,8 @@ meRoutes.get('/me', async (c) => {
       teamIds: teams.map((t) => t.team_id),
       onboardedAt: iso(u?.onboarded_at),
       prefs: prefsOf(u?.prefs),
+      // Help requests where support has answered and this person has not looked yet.
+      helpUnread: (await q.query<{ n: number }>(`select count(*)::int as n from help_requests where (user_id = $1 or $1 = any (followers)) and status = 'answered' and (seen_at is null or seen_at < last_message_at)`, [auth.userId]))[0].n,
       supportOpen: g?.n ? { until: new Date(g.until).toISOString(), level: (g.edit ? 'edit' : 'view') as 'edit' | 'view', count: g.n as number } : null,
     };
   });
@@ -84,6 +86,7 @@ meRoutes.get('/me', async (c) => {
     ...(c.get('previewBy') ? { previewBy: c.get('previewBy') } : {}),
     ...(c.get('supportBy') ? { supportBy: c.get('supportBy') } : {}),
     ...(data.supportOpen && !c.get('supportBy') ? { supportOpen: data.supportOpen } : {}),
+    ...(data.helpUnread ? { helpUnread: data.helpUnread } : {}),
   };
   return c.json(me);
 });
