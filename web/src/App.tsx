@@ -1,3 +1,4 @@
+import { setCompanyZone } from './lib/time';
 import { useCallback, useEffect, useState } from 'react';
 import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
@@ -91,6 +92,7 @@ export function App() {
     try {
       const me = await get<Me>('/me');
       if (me.user.locale) setLocale(me.user.locale);
+      setCompanyZone(me.org.timezone);
       setBoot({ kind: 'signed-in', org, me });
       // First things first: an unfinished company setup for its admin,
       // otherwise a new person's own one-minute setup.

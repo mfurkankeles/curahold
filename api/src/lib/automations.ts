@@ -5,6 +5,7 @@
 //
 // It runs with owner access (rules act for the company, not for whoever
 // happens to be signed in), so every query here filters on org_id itself.
+import { addDays, localDate, localHour } from '../../../shared/src/days';
 import { fillTitle, type Action, type Condition, type Trigger } from '../../../shared/src/automation';
 import type { Column } from '../../../shared/src/model';
 import type { Deps } from '../context';
@@ -16,27 +17,8 @@ import { onTaskCreated } from './taskEvents';
 
 export const MAX_FIRES_PER_RUN = 200;
 
-export function localDate(now: Date, timeZone: string): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
-}
-
-export function localHour(now: Date, timeZone: string): number {
-  try {
-    return Number(new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(now));
-  } catch {
-    return now.getUTCHours();
-  }
-}
-
-export const addDays = (iso: string, n: number) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d + n));
-  return dt.toISOString().slice(0, 10);
-};
+// The company's day and hour live in shared/src/days.ts; re-exported for the callers that grew up here.
+export { localDate, localHour, addDays };
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400_000);
 

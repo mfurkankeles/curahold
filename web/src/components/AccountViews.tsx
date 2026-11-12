@@ -15,11 +15,12 @@ import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { useRecordTypes } from './AccountFields';
 import { Icon } from './icons';
+import { todayIso } from '../lib/time';
 import { Avatar } from './ui';
 
 export const QUIET_DAYS = 30;
 const DAY = 86_400_000;
-const daysUntil = (iso: string) => Math.round((Date.parse(iso.slice(0, 10)) - Date.parse(new Date().toISOString().slice(0, 10))) / DAY);
+const daysUntil = (iso: string) => Math.round((Date.parse(iso.slice(0, 10)) - Date.parse(todayIso())) / DAY);
 
 /** The date field that is the renewal, and the money field that is the customer's value. */
 export function keyFields(defs: AccountField[]) {
@@ -90,7 +91,7 @@ export function signalsOf(a: Account, defs: AccountField[], health: Parameters<t
     attention += 2;
   }
   // A business review that is late — only when the company holds reviews at all.
-  const review = reviewDays > 0 ? reviewDue(a, reviewDays, new Date().toISOString().slice(0, 10)) : null;
+  const review = reviewDays > 0 ? reviewDue(a, reviewDays, todayIso()) : null;
   if (review?.state === 'overdue') {
     chips.push({ key: 'review', tone: 'amber', text: t('acards.reviewLate', { n: -review.days! }), title: t('acards.reviewTitle', { n: review.every }) });
     attention += 1;

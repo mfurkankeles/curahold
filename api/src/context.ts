@@ -1,3 +1,4 @@
+import { localDate } from '../../shared/src/days';
 import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
 import { accessOf, allows, planFor, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
@@ -140,7 +141,8 @@ export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
   const auth = c.get('auth') as AuthCtx | undefined;
   const repeat = c.get('repeat');
   // The reader's language goes along: names are ordered the way its dictionary orders them.
-  return c.get('deps').db.tenant({ orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale }, async (q) => {
+  const ctx = { orgId: org.id, userId: auth?.userId ?? null, locale: (c.get('locale') as string | undefined) ?? org.locale, today: todayOf(c) };
+  return c.get('deps').db.tenant(ctx, async (q) => {
     // A change that carries a key: the key is written in the same transaction as the change, so
     // the two are saved together or not at all. A key seen before stops here (see lib/repeats.ts).
     if (repeat && !repeat.claimed && auth?.userId) await claimRepeat(q, repeat);
@@ -184,6 +186,12 @@ export function maxDevices(c: C): number {
 }
 
 export const nowOf = (deps: Deps) => (deps.now ?? (() => new Date()))();
+
+/**
+ * The company's day (YYYY-MM-DD) for this request: its own time zone, and the
+ * server's injectable clock. The database answers the same through app_today().
+ */
+export const todayOf = (c: { get: (k: any) => any }): string => localDate(nowOf(c.get('deps')), c.get('org')?.timezone);
 export const fetchOf = (deps: Deps) => deps.fetch ?? fetch;
 export const secretsKey = (cfg: Config) => cfg.secretsKey || cfg.authSecret;
 

@@ -1,5 +1,6 @@
 // App-wide state for a signed-in person: who they are, the people and teams
 // of the company, the boards they can see, and a small toast channel.
+import { setCompanyZone } from './time';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Board, Me, Person, Team } from '../../../shared/src/model';
 import { get } from './api';
@@ -47,7 +48,9 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
     setTeams(r.teams);
   }, []);
   const reloadMe = useCallback(async () => {
-    setMe(await get<Me>('/me'));
+    const next = await get<Me>('/me');
+    setCompanyZone(next.org.timezone);
+    setMe(next);
   }, []);
 
   useEffect(() => {

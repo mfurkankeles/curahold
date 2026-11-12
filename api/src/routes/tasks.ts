@@ -2,9 +2,9 @@ import { INLINE_TYPES, readUpload } from '../lib/upload';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
-import { defer, nowOf, requireWriter, run, type AppEnv } from '../context';
+import { defer, nowOf, requireWriter, run, todayOf, type AppEnv } from '../context';
 import { portalOn, tellCustomer } from '../lib/portal';
-import { localDate, runTaskMoved } from '../lib/automations';
+import { runTaskMoved } from '../lib/automations';
 import { spawnNext } from '../lib/recurring';
 import { saveUndo, UNDO_MINUTES } from '../lib/undo';
 import { kick } from '../lib/notify';
@@ -121,7 +121,7 @@ taskRoutes.get('/tasks', async (c) => {
 // The little number next to "My tasks": open tasks of mine that are late or due today (where the company is).
 taskRoutes.get('/tasks/counts', async (c) => {
   const auth = c.get('auth');
-  const today = localDate(nowOf(c.get('deps')), c.get('org').timezone || 'UTC');
+  const today = todayOf(c);
   const [r] = await run(c, (q) =>
     q.query(
       `select count(*) filter (where t.due_date < $2::date) as late, count(*) filter (where t.due_date = $2::date) as today
@@ -174,7 +174,6 @@ function requireForDone(board: Row, values: Record<string, unknown> | null | und
 }
 
 /** "Today" where the company is — repeating tasks count from it. */
-const todayOf = (c: { get: (k: any) => any }) => localDate(nowOf(c.get('deps')), c.get('org').timezone || 'UTC');
 
 taskRoutes.post('/tasks', async (c) => {
   requireWriter(c);

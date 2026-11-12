@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { DEFAULT_HEALTH, HEALTH_FIELD, HEALTH_SIGNALS, healthConfig, type HealthConfig } from '../../../shared/src/health';
 import type { AccountField } from '../../../shared/src/model';
 import { ACTIVITY_KINDS, isMeetingKind, type Activity, type Timeline, type TimelineItem } from '../../../shared/src/timeline';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { nowOf, requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
@@ -238,7 +238,7 @@ timelineRoutes.get('/accounts/:id/health', async (c) => {
   const now = nowOf(c.get('deps'));
   const { result, history } = await run(c, async (q) => ({
     result: (await scoreAccounts(q, c.get('org').id, [id], now)).get(id) ?? null,
-    history: await q.query(`select day::text as day, score from health_history where account_id = $1 and day > current_date - 91 order by day`, [id]),
+    history: await q.query(`select day::text as day, score from health_history where account_id = $1 and day > app_today() - 91 order by day`, [id]),
   }));
   const cfg = healthConfig(c.get('org').settings?.health ?? DEFAULT_HEALTH);
   return c.json({ health: result, bands: cfg.bands, history });
@@ -316,7 +316,7 @@ timelineRoutes.put('/health/config', async (c) => {
          select a.org_id, a.id, $2::date, (a.fields->>'${HEALTH_FIELD}')::int from accounts a
           where a.org_id = $1 and a.archived_at is null and jsonb_typeof(a.fields->'${HEALTH_FIELD}') = 'number'
          on conflict (org_id, account_id, day) do update set score = excluded.score`,
-        [org.id, now.toISOString().slice(0, 10)],
+        [org.id, todayOf(c)],
       );
     });
   } else {

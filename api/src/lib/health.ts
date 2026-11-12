@@ -132,7 +132,7 @@ export async function flushHealth(deps: Deps, limit = 500): Promise<number> {
 
 /** Once a day: time has passed for everyone, and today's score is kept for the trend. */
 export async function dailyHealth(deps: Deps, now: Date): Promise<number> {
-  const orgs = await deps.db.system((q) => q.query<{ id: string }>(`select id from orgs where coalesce((settings->'health'->>'enabled')::boolean, false)`));
+  const orgs = await deps.db.system((q) => q.query<{ id: string; timezone: string }>(`select id, timezone from orgs where coalesce((settings->'health'->>'enabled')::boolean, false)`));
   let n = 0;
   for (const o of orgs) {
     n += await deps.db.system(async (q) => {
@@ -143,9 +143,9 @@ export async function dailyHealth(deps: Deps, now: Date): Promise<number> {
           where a.org_id = $1 and a.archived_at is null and jsonb_typeof(a.fields->'${HEALTH_FIELD}') = 'number'
          on conflict (org_id, account_id, day) do update set score = excluded.score
          returning account_id`,
-        [o.id, now.toISOString().slice(0, 10)],
+        [o.id, localDate(now, o.timezone)],
       );
-      await q.query(`delete from health_history where org_id = $1 and day < $2::date - 400`, [o.id, now.toISOString().slice(0, 10)]);
+      await q.query(`delete from health_history where org_id = $1 and day < $2::date - 400`, [o.id, localDate(now, o.timezone)]);
       return rows.length;
     });
   }

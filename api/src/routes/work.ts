@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Column } from '../../../shared/src/model';
 import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportResult } from '../../../shared/src/taskImport';
-import { nowOf, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
+import { nowOf, requirePerm, requirePlan, requireWriter, run, todayOf, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { localDate } from '../lib/automations';
@@ -294,7 +294,7 @@ workRoutes.get('/accounts/:id/time', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, (q) =>
     q.query(
-      `select e.user_id, sum(e.minutes)::int as minutes, coalesce(sum(e.minutes) filter (where e.day > current_date - 30), 0)::int as recent
+      `select e.user_id, sum(e.minutes)::int as minutes, coalesce(sum(e.minutes) filter (where e.day > app_today() - 30), 0)::int as recent
          from time_entries e join tasks t on t.id = e.task_id where t.account_id = $1 group by e.user_id order by 2 desc`,
       [id],
     ),
@@ -403,7 +403,7 @@ workRoutes.post('/boards/:id/import', async (c) => {
       const position = (top.get(status) ?? 0) + 1024;
       top.set(status, position);
       // When it was finished: the file's date, else its due date if that has passed, else today.
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayOf(c);
       const doneAt = finished ? `${doneOn ?? (due && due < today ? due : today)}T12:00:00Z` : null;
       ready.push({
         id: crypto.randomUUID(),

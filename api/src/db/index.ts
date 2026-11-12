@@ -12,6 +12,8 @@ export interface TenantCtx {
   userId: string | null;
   /** The reader's language: lists come back in its dictionary order (sort_text in the migrations). */
   locale?: string | null;
+  /** The company's day (YYYY-MM-DD), by its own time zone: what app_today() answers in this transaction. */
+  today?: string | null;
 }
 
 export interface Db {
@@ -36,4 +38,4 @@ export const PORTAL_SETUP_SQL =
   "select set_config('app.org_id', $1, true), set_config('app.user_id', '', true), set_config('app.portal_user', $2, true)";
 
 export const TENANT_SETUP_SQL =
-  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true), set_config('app.locale', $3, true)";
+  "select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true), set_config('app.locale', $3, true), set_config('app.today', $4, true)";

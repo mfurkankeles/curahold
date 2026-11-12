@@ -10,7 +10,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate, setQuery, useLocation } from '../lib/router';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
-import { dueState, relativeTime, todayIso } from '../lib/time';
+import { addDays, dueState, relativeTime, todayIso } from '../lib/time';
 import { hoursText, type WorkReport } from './Reports';
 
 interface PersonReport {
@@ -134,7 +134,7 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
   const today = todayIso();
   const open = (data?.tasks ?? []).filter((x) => !x.done);
   const late = open.filter((x) => x.dueDate && x.dueDate < today);
-  const week = open.filter((x) => x.dueDate && x.dueDate >= today && x.dueDate <= new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10));
+  const week = open.filter((x) => x.dueDate && x.dueDate >= today && x.dueDate <= addDays(today, 7));
   const stuck = open.filter((x) => Date.now() - Date.parse(x.updatedAt) > 14 * 86_400_000 && !late.includes(x));
   const done = (data?.tasks ?? []).filter((x) => x.done).sort((a, b) => String(b.doneAt).localeCompare(String(a.doneAt)));
   const boardName = (b: string) => boards.find((x) => x.id === b)?.name ?? '';

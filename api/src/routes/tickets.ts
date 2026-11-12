@@ -9,7 +9,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
 import type { AccountField } from '../../../shared/src/model';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { randomToken, sha256Hex } from '../lib/crypto';
@@ -83,7 +83,7 @@ async function customerFor(q: Q, orgId: string, input: TicketInput): Promise<str
 const day = (v: string | null | undefined) => (v ? new Date(v.length === 10 ? `${v}T12:00:00Z` : v).toISOString().slice(0, 10) : null);
 
 /** Creates or updates one ticket. `q` is either the sender's own (RLS) or owner access for the webhook. */
-export async function upsertTicket(q: Q, orgId: string, actorId: string | null, source: string, externalId: string, input: TicketInput, now: Date) {
+export async function upsertTicket(q: Q, orgId: string, actorId: string | null, source: string, externalId: string, input: TicketInput, today: string) {
   const accountId = await customerFor(q, orgId, input);
   if (!accountId) fail('validation', { fields: 'account' }, { fields: ['account'], reason: 'no_customer' });
   const [type] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null order by created_at limit 1`, [orgId]);
@@ -92,7 +92,6 @@ export async function upsertTicket(q: Q, orgId: string, actorId: string | null, 
   const [had] = await q.query('select id, account_id, fields from records where org_id = $1 and type_id = $2 and source = $3 and external_id = $4', [orgId, typeId, src, externalId]);
   // Sent again: only what was sent changes.
   const status = input.status !== undefined ? ticketStatusOf(input.status) : ((had?.fields?.status as string | undefined) ?? 'open');
-  const today = now.toISOString().slice(0, 10);
   const done = status === 'solved' || status === 'closed';
   const fields: Record<string, unknown> = {
     status,
@@ -140,7 +139,7 @@ ticketRoutes.put('/tickets/:source/:externalId', async (c) => {
   await ensureTicketType(c);
   const org = c.get('org');
   const auth = c.get('auth');
-  const out = await run(c, (q) => upsertTicket(q, org.id, auth.userId, source.data!, externalId.data!, parsed.data!, nowOf(c.get('deps'))));
+  const out = await run(c, (q) => upsertTicket(q, org.id, auth.userId, source.data!, externalId.data!, parsed.data!, todayOf(c)));
   return c.json({ ticket: out }, out.created ? 201 : 200);
 });
 
@@ -158,7 +157,7 @@ inboundRoutes.post('/inbound/tickets/:token', async (c) => {
   if (!parsed.success) return c.json({ error: 'validation', fields: parsed.error.issues.map((i) => i.path.join('.')) }, 400);
   await ensureTicketType(c);
   try {
-    const out = await deps.db.system((q) => upsertTicket(q, org.id, null, parsed.data.source, parsed.data.externalId, parsed.data, nowOf(deps)));
+    const out = await deps.db.system((q) => upsertTicket(q, org.id, null, parsed.data.source, parsed.data.externalId, parsed.data, todayOf(c)));
     await deps.db.system((q) => q.query(`update orgs set settings = jsonb_set(settings, '{${INBOUND},lastAt}', to_jsonb(now()::text), true) where id = $1`, [org.id]));
     return c.json({ ticket: out }, out.created ? 201 : 200);
   } catch (e: any) {

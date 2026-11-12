@@ -350,7 +350,7 @@ authRoutes.get('/calendar/:file', async (c) => {
       `select t.id, t.title, t.due_date, t.board_id, t.updated_at, a.name as account_name
          from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
         where $1 = any(t.assignee_ids) and t.archived_at is null and b.archived_at is null and t.due_date is not null
-          and t.due_date >= current_date - 60 and t.due_date <= current_date + 400
+          and t.due_date >= app_today() - 60 and t.due_date <= app_today() + 400
           and t.done_at is null
         order by t.due_date limit 1000`,
       [u.id],

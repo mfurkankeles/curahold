@@ -27,8 +27,8 @@ reportRoutes.get('/reports/work', async (c) => {
   const out = await run(c, async (q) => {
     const [totals] = await q.query(
       `select count(*) filter (where ${OPEN})::int as open,
-              count(*) filter (where ${OPEN} and t.due_date < current_date)::int as overdue,
-              count(*) filter (where ${OPEN} and t.due_date between current_date and current_date + 7)::int as due_week,
+              count(*) filter (where ${OPEN} and t.due_date < app_today())::int as overdue,
+              count(*) filter (where ${OPEN} and t.due_date between app_today() and app_today() + 7)::int as due_week,
               count(*) filter (where ${OPEN} and cardinality(t.assignee_ids) = 0)::int as unassigned,
               count(*) filter (where t.done_at > now() - interval '30 days')::int as done_30,
               count(*) filter (where t.created_at > now() - interval '30 days')::int as created_30,
@@ -60,8 +60,8 @@ reportRoutes.get('/reports/work', async (c) => {
     const people = await q.query(
       `select a.uid as user_id,
               count(*) filter (where ${OPEN})::int as open,
-              count(*) filter (where ${OPEN} and t.due_date < current_date)::int as overdue,
-              count(*) filter (where ${OPEN} and t.due_date between current_date and current_date + 7)::int as due_week,
+              count(*) filter (where ${OPEN} and t.due_date < app_today())::int as overdue,
+              count(*) filter (where ${OPEN} and t.due_date between app_today() and app_today() + 7)::int as due_week,
               count(*) filter (where t.done_at > now() - interval '30 days')::int as done_30
          from tasks t join boards b on b.id = t.board_id cross join lateral unnest(t.assignee_ids) as a(uid)
         where b.archived_at is null and t.parent_id is null and ($1::uuid is null or t.board_id = $1::uuid)
@@ -71,7 +71,7 @@ reportRoutes.get('/reports/work', async (c) => {
       [board],
     );
     const boards = await q.query(
-      `select b.id as board_id, count(*)::int as open, count(*) filter (where t.due_date < current_date)::int as overdue
+      `select b.id as board_id, count(*)::int as open, count(*) filter (where t.due_date < app_today())::int as overdue
          ${BASE} and ${OPEN} group by b.id order by 2 desc`,
       [board],
     );
@@ -82,11 +82,11 @@ reportRoutes.get('/reports/work', async (c) => {
     const hours = board
       ? await q.query(
           `select e.user_id, sum(e.minutes)::int as minutes from time_entries e
-            where e.day > current_date - 30 and e.task_id in (select t.id from tasks t where t.board_id = $1::uuid)
+            where e.day > app_today() - 30 and e.task_id in (select t.id from tasks t where t.board_id = $1::uuid)
             group by e.user_id order by 2 desc limit 100`,
           [board],
         )
-      : await q.query(`select e.user_id, sum(e.minutes)::int as minutes from time_entries e where e.day > current_date - 30 group by e.user_id order by 2 desc limit 100`);
+      : await q.query(`select e.user_id, sum(e.minutes)::int as minutes from time_entries e where e.day > app_today() - 30 group by e.user_id order by 2 desc limit 100`);
     return { totals, weeks, people, boards, statuses, hours };
   });
   const n = (v: unknown) => (v == null ? null : Number(v));
@@ -125,7 +125,7 @@ reportRoutes.get('/reports/person/:id', async (c) => {
     );
     const [touch] = await q.query(`select count(*)::int as n, max(happened_at) as last from activities where author_id = $1 and happened_at > now() - interval '30 days'`, [id]);
     const [owned] = await q.query(`select count(*)::int as n from accounts where owner_id = $1 and archived_at is null`, [id]);
-    const [hours] = await q.query(`select coalesce(sum(minutes), 0)::int as m from time_entries where user_id = $1 and day > current_date - 30`, [id]);
+    const [hours] = await q.query(`select coalesce(sum(minutes), 0)::int as m from time_entries where user_id = $1 and day > app_today() - 30`, [id]);
     return { tasks, touch, owned, hours };
   });
   const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));

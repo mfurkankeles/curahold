@@ -58,7 +58,7 @@ const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.boar
  * read, under the reader's own rights; nothing is stored.
  */
 const SIGNALS = `(select count(*) from tasks t join boards b on b.id = t.board_id
-    where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.due_date < current_date
+    where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.due_date < app_today()
       and t.done_at is null) as overdue_tasks,
   (select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null and t.updated_at < now() - interval '14 days'
