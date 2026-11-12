@@ -343,6 +343,34 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | Destek ekibinin kendi notu | yoktu | talebin üzerinde durur; şirkete gösterilmez, gönderilmez, uygulamanın veritabanı rolü okuyamaz (testli) |
 | Talepte iş arkadaşı ve "ne zamana lazım" | yoktu | talebi açan 10 kişiye kadar haberdar eder; isteğe bağlı tarih |
 
+Entegrasyonlar (INTEGRATIONS.md'deki beş karar, 12 Kasım gecesi):
+
+| İş | Önce | Sonra |
+| --- | --- | --- |
+| İki yönlü CRM bağlayıcısı | 5 (hepsi sunucuda uygulama kaydı ister) | 8: Bitrix24, Freshsales ve Zendesk Sell eklendi; üçü de CRM'in içinde üretilen anahtarla bağlanır, sunucuda kayıt ya da onay gerekmez (22 test, `tests/keyed-crm.test.ts`) |
+| Hiçbir şey ayarlanmamış bir sunucuda bağlanabilen CRM | 0 | 3 |
+| Okuma sırası (yeni bağlayıcılar) | — | en yeni değişiklik önce: okuma sırasında değişen satır en kötü ihtimalle iki kez okunur, iki sayfanın arasına düşüp kaybolmaz |
+| Anahtarın gidebileceği adres | — | Bitrix24: yalnızca açık https adresi (yerel ve özel ağ adresleri reddedilir); Freshsales ve Zendesk Sell: yalnızca servisin kendi alan adı |
+| Salesforce girişinde tek kullanımlık kanıt (PKCE) | yok; yeni External Client App'te varsayılan olarak zorunlu olduğu için giriş reddedilirdi | var; kanıt tarayıcıdan geçen adreste okunamaz (mühürlü) |
+| Aynı bağlantının anahtarını aynı anda yenileyen iki süreç | ikisi de yeniler; her kullanımda değişen anahtarda ikincisi reddedilir ve bağlantı "yeniden bağlan" durumuna düşer | 1 yenileme; ikincisi yenisini kullanır (testli) |
+| Salesforce anahtar isteklerinin çıkış adresi | değişken (Workers) | ayar girilince sabit adresli aktarıcıdan; ayar yokken doğrudan. Aktarıcı tek dosya, 0 bağımlılık; Salesforce anahtar adresi dışındaki 8 adres türünü, yanlış anahtarı, yanlış yöntemi ve büyük gövdeyi reddeder (testli) |
+| Salesforce paketi | yok | proje + adım adım kılavuz (`integrations/salesforce`); paketi üretmek Partner hesabını bekliyor |
+| Zapier ve Make | yok | 9 tetikleyici, 6 işlem, 1 arama; ikisi tek tanımdan; hepsi gerçek API'ye karşı koşuyor (8 test); Zapier'ın kendi şema denetiminde 0 hata |
+| Dışarıdan gelen tetikleyici mesajında imza kontrolü (Zapier) | — | değiştirilmiş, eski (5 dakikadan) ya da başka sırla imzalanmış mesaj atılır (testli) |
+| Yeni ücretli servis | — | 0. Aktarıcı açılırsa ayda yaklaşık $4–6 sabit (koltuk başına değil); açılana kadar $0 |
+
+Güvenilirlik paketine eklenen iki not (bu işte görüldü, bu işte değiştirilmedi):
+
+- Pipedrive'ın tam okuması eskiden yeniye sıralı ve sayfa numarasıyla ilerliyor: okuma sürerken
+  değişen bir satır sona kayar ve arkasındaki bir satır iki sayfanın arasına düşebilir. Yeni
+  bağlayıcılardaki gibi "en yeni önce" sıraya çevrilecek.
+- Eşitleme, bir sonraki koşunun başlangıcını "görülen en yeni değişiklik" olarak alıyor. Okuma
+  sürerken değişen ve çoktan geçilmiş bir satır, daha sonra okunan daha yeni bir satır yüzünden
+  atlanabilir. Başlangıç, "okumanın başladığı an" ile "görülen en yeni"nin erken olanı olmalı.
+
+Test süreleri (12 Kasım gece, 2 çekirdek): birim 490 test, 46 dosya, 122 sn (tarayıcı testi aynı anda koşarken) ·
+tarayıcı 40 senaryo + belgeler, hepsi geçti · demo 41 sn. Birim + tarayıcı birlikte 5 dakikanın altında.
+
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle
 5,3 dk). Kazanç: veritabanı koşu başında bir kez kuruluyor (şema + iki örnek şirket), her test dosyası onun

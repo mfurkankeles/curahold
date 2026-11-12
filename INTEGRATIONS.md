@@ -24,9 +24,11 @@ açacağı geliştirici hesabı ve bazılarında onay süreci**.
 | Dynamics 365 | OAuth (Microsoft) | her tablo | evet | kurum adresi sorulur |
 | Pipedrive | OAuth | kurum, kişi, anlaşma | evet | |
 | Zoho CRM | OAuth | her modül | evet | veri merkezi kendiliğinden bulunur |
+| Bitrix24, Freshsales, Zendesk Sell | anahtar (CRM'in içinde üretilir) | şirket, kişi, anlaşma | evet | 12 Kasım'da eklendi; sunucuda kayıt ya da onay gerekmez; gerçek hesapla doğrulanacak (aşağıda) |
 | Google Sheets, Excel | OAuth | seçilen tablo | evet | satır anahtarı seçilir |
 | Zendesk, Freshdesk, Intercom, Jira Service Management | anahtar | destek kayıtları | hayır | |
 | Açık API ve webhook'lar | API anahtarı | | | listede olmayan her araç için |
+| Zapier ve Make uygulaması | API anahtarı | 9 tetikleyici | 6 işlem, 1 arama | kod hazır ve test edildi; yayın için ürün sahibinin geliştirici hesabı gerekiyor |
 
 Eşitleme bugün saatte bir çeker, Curahold'da yapılan değişikliği hemen yazar.
 CRM'den anlık bildirim (webhook) henüz yok; "Gerçek zamanlılık" paketinde.
@@ -90,9 +92,9 @@ bozmaz. Sıradaki adaylar, hedef kitleye göre:
 
 | Aday | Neden | Giriş |
 | --- | --- | --- |
-| Bitrix24 | Türkiye ve çevre pazarlarda yaygın | OAuth |
-| Freshsales | küçük ve orta ekiplerde yaygın | API anahtarı ya da OAuth |
-| Zendesk Sell | destek tarafını zaten bağlıyoruz | OAuth |
+| Bitrix24 (yapıldı) | Türkiye ve çevre pazarlarda yaygın | gelen webhook adresi |
+| Freshsales (yapıldı) | küçük ve orta ekiplerde yaygın | API anahtarı |
+| Zendesk Sell (yapıldı) | destek tarafını zaten bağlıyoruz | erişim anahtarı |
 | monday CRM, Attio, Close, Copper | yeni nesil ekipler | OAuth / anahtar |
 | Odoo | üretim ve toptan şablonumuzun kitlesi | anahtar |
 | SAP Sales Cloud, Oracle | yalnızca kurumsal müşteri isterse | |
@@ -113,15 +115,20 @@ eder. "Yeni ücretli servis yok" ve "en yüksek brüt marj" kurallarına aykır�
 
 ## Kodda yapılacaklar
 
-| İş | Paket |
+| İş | Durum |
 | --- | --- |
 | Demoda "Bağlan" gerçek akışı çalıştırsın | yapıldı |
-| OAuth girişlerine PKCE | Güvenilirlik |
-| Anahtar yenilemede bağlantı başına kilit (iki istek aynı anda yenilemesin) | Güvenilirlik |
-| Bağlantı ekranında "yöneticin önce şunu kurmalı" adımı (Salesforce, Dynamics) | Kişiselleştirme / Sadelik |
+| Salesforce girişinde PKCE | yapıldı (yeni External Client App'te varsayılan olarak zorunlu) |
+| Anahtar yenilemede bağlantı başına kilit (iki istek aynı anda yenilemesin) | yapıldı, bütün CRM'ler için |
+| Sabit adresli aktarıcı (yalnızca Salesforce anahtar istekleri) | kod ve kurulum adımları hazır (`tools/relay`); ayar girilene kadar kapalı ve ücretsiz |
+| Salesforce paketi (External Client App + 2GP) | proje ve adım adım kılavuz hazır (`integrations/salesforce`); paketi üretmek için Partner hesabı gerekiyor |
+| Bağlantı ekranında "yöneticin önce şunu kursun" adımı (Salesforce) | yapıldı; kurulum linki sunucuya yazılınca görünür |
+| Yeni bağlayıcılar: Bitrix24, Freshsales, Zendesk Sell | yapıldı |
+| Zapier ve Make uygulaması | yapıldı (`integrations/zapier`, `integrations/make`); yayın bekliyor |
+| Diğer OAuth girişlerine PKCE (Microsoft, Google) | Güvenilirlik |
+| Bağlantı ekranında aynı adım Dynamics için | Kişiselleştirme / Sadelik |
 | CRM'den anlık bildirim: HubSpot ve Pipedrive webhook, Zoho bildirim, Dynamics değişiklik takibi, Salesforce değişiklik olayları | Gerçek zamanlılık |
-| Salesforce paketi (External Client App + 2GP) | canlıya çıkış öncesi |
-| Yeni bağlayıcılar (karara göre) | 4. aşamadan kalanlar |
+| Make uygulamasında imza kontrolü | Zapier/Make yayınından önce |
 
 ## Kararlar (ürün sahibi, 12 Kasım 2026)
 
@@ -130,20 +137,46 @@ Beş madde de önerildiği gibi onaylandı.
 1. **Salesforce dağıtımı:** External Client App + listesiz paket; müşteri yöneticisi
    kurulum linkiyle kurar. Güvenlik incelemesine ilk ücretli Salesforce müşterisinden
    önce başvurulur.
+   *Durum:* paketin projesi ve adımları `integrations/salesforce` içinde. Paketin iki
+   dosyasını Salesforce üretiyor (Dev Hub'da uygulama açılır, dosyalar oradan çekilir),
+   bu yüzden paket ancak Partner hesabı açıldıktan sonra üretilebilir.
 2. **Sabit çıkış IP adresi:** yalnızca Salesforce anahtar yenileme isteklerini geçiren
    küçük, sabit adresli bir aktarıcı (ayda yaklaşık $4–6 sabit, koltuk başına değil).
    Sunucusu, partner hesabı açılıp kontrolün bizim akışta zorunlu olduğu doğrulandıktan
    sonra ürün sahibinin hesabıyla alınır; kod tarafı hazırlanır.
+   *Durum:* kod hazır ve kapalı. Aktarıcı tek dosya, bağımlılığı yok; Salesforce'un anahtar
+   adresi dışındaki her isteği reddediyor, hiçbir şey saklamıyor (`tools/relay`).
 3. **HubSpot listelemesi:** ilk üç müşteri kurulumundan sonra başvurulur.
+   *Durum:* kodda yapılacak bir şey yok; üçüncü kurulumda hatırlatılacak.
 4. **Sıradaki bağlayıcılar:** Bitrix24, Freshsales, Zendesk Sell; sonrası talebe göre.
+   *Durum:* üçü de üründe; iki yönlü, anahtarla bağlanıyor, 22 testle sınandı.
 5. **Zapier ve Make uygulaması:** yapılacak.
+   *Durum:* ikisi de tek bir tanımdan üretiliyor; her tetikleyici, işlem ve arama gerçek
+   API'ye karşı test ediliyor; Zapier tanımı Zapier'ın kendi şema denetiminden hatasız geçti.
+   Yayınlamak için ürün sahibinin Zapier ve Make geliştirici hesabı gerekiyor.
+
+## Doğrulanacaklar (gerçek hesapla, müşteriye sunmadan önce)
+
+Yeni bağlayıcılar ve uygulamalar, servislerin açık belgelerine göre yazıldı ve o
+belgelerdeki cevap biçimleriyle test edildi. Gerçek bir hesaba karşı henüz
+çalıştırılmadılar; her biri için ücretsiz bir deneme hesabı yeterli.
+
+| Ne | Bakılacak nokta |
+| --- | --- |
+| Bitrix24 | bağlanma, ilk eşitleme, iki yönde bir değişiklik. Kullandığımız liste yöntemleri belgede "geliştirmesi durduruldu" diye işaretli ama çalışıyor; yeni sürüme (REST 3.0) geçiş ileride ayrı bir iş |
+| Freshsales | kişi listesinde kişinin hesabının gelip gelmediği; "All …" görünümlerinin adı İngilizce olmayan hesaplarda |
+| Zendesk Sell | kayıt sayfası linkleri; anlaşmanın şirketi kişi üzerinden bağlıyken doğru şirkete düşmesi |
+| Make | boş bırakılan alanların gönderilmemesi; "Update task"; "Task completed" |
+| Zapier | `zapier push` sonrası bir Zap ile uçtan uca deneme |
+| Salesforce | uygulama ayarlarının güncel adları; adres kuralının kaç kurumdan sonra zorunlu olduğu |
 
 ## Ürün sahibinin açacağı hesaplar (hepsi ücretsiz)
 
 Salesforce Partner Community · HubSpot geliştirici hesabı · Pipedrive geliştirici
 sandbox hesabı · Zoho API Console · Microsoft Entra uygulaması ve Microsoft
 partner hesabı (yayıncı doğrulaması için alan adı e-postası gerekir) · Google
-Cloud projesi. Her birinde üretilen "client id" ve "client secret" sunucunun
+Cloud projesi · Zapier geliştirici hesabı · Make hesabı · doğrulama için Bitrix24,
+Freshsales ve Zendesk Sell deneme hesapları. Her birinde üretilen "client id" ve "client secret" sunucunun
 gizli ayarlarına yazılır; şifreler ve ödeme adımları ürün sahibinde kalır.
 
 ## Kaynaklar
@@ -154,5 +187,6 @@ gizli ayarlarına yazılır; şifreler ve ödeme adımları ürün sahibinde kal
 - Microsoft: [Yayıncı doğrulaması](https://learn.microsoft.com/en-au/entra/identity-platform/publisher-verification-overview) · [Neden gerekli](https://developer.nylas.com/docs/provider-guides/microsoft/verification-guide.md)
 - Zoho: [İstek kredileri](https://help.zoho.com/portal/en/community/topic/kaizen-203-answering-your-questions-handling-api-limits-and-error-responses?page=2) · [API'ye genel bakış](https://pipeline.zoominfo.com/sales/zoho-crm-api)
 - Diğer CRM'ler: [Hangi CRM ne istiyor](https://www.apideck.com/blog/crm-partnership-guide.md) · [Bitrix24 OAuth](https://apidocs.bitrix24.com/settings/oauth/index.html) · [Freshsales OAuth](https://developers.freshworks.com/docs/app-sdk/v3.0/deal/oauth-implementation-in-apps/)
+- Yeni bağlayıcılar ve paket (12 Kasım): [Bitrix24 liste yöntemi](https://apidocs.bitrix24.com/api-reference/crm/companies/crm-company-list.html) · [Bitrix24 REST 3.0](https://apidocs.bitrix24.com/api-reference/rest-v3/index.html) · [Freshsales API](https://developers.freshworks.com/crm/api/) · [Zendesk Sell kişiler](https://developer.zendesk.com/api-reference/sales-crm/resources/contacts/) · [Zendesk Sell anlaşmalar](https://developer.zendesk.com/api-reference/sales-crm/resources/deals/) · [External Client App OAuth ayarları](https://help.salesforce.com/s/articleView?id=xcloud.meta_configure_external_client_app_global_oauth_settings.htm&language=en_US&type=5) · [External Client App'i paketlemek](https://sliick.com/articles/salesforce-external-client-app-2gp-packaging-guide/)
 - Pazar payı: [IDC özeti](https://crmswitch.com/crm-industry/crm-market-share/) · [Uzun kuyruk](https://addtocrm.com/blog/crm-long-tail-beyond-salesforce-hubspot)
 - Birleşik API fiyatları: [Karşılaştırma](https://truto.one/blog/which-unified-api-platform-has-the-most-developer-friendly-pricing/) · [Merge fiyatı](https://getknit.dev/blog/understanding-merge-dev-pricing-finding-the-right-unified-api-for-your-integration-needs/) · [Unified.to](https://unified.to/blog/best_unified_api_for_crm_in_2026)
