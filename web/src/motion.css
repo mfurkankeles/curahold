@@ -54,12 +54,18 @@
 .navlink .icon { transition: transform .16s var(--ease); }
 .navlink:hover .icon { transform: translateX(1px) scale(1.06); }
 
-/* Things you can open lift a little under the pointer. */
+/* Things you can open lift a little under the pointer… */
 :is(.acard, .dealcard, .card, .tile, .gallery__item, .rcard) { transition: transform .16s var(--ease), box-shadow .16s var(--ease), border-color .16s ease; }
 @media (hover: hover) {
-  :is(.acard, .dealcard, .tile, .gallery__item, .rcard):hover { transform: translateY(-2px); box-shadow: var(--shadow-1); }
+  :is(.acard, .dealcard, .tile, .gallery__item, .rcard):hover:not(:has(.dialog)) { transform: translateY(-2px); box-shadow: var(--shadow-1); }
   .board .card:hover { box-shadow: var(--shadow-1); }
 }
+/* …but never while a dialog opened from one of them is on screen. A lifted card is a moved
+   (transformed) element, and the browser measures a dialog against its nearest moved ancestor
+   instead of the window: the dialog shrank into the card, sprang back when the pointer left it,
+   shrank again, and so on. A card that holds an open dialog stays put, and settles at once.
+   Anything new that moves under the pointer and can hold a dialog belongs in both lists. */
+:is(.acard, .dealcard, .card, .tile, .gallery__item, .rcard):has(.dialog) { transition: none; }
 
 /* A task finished: the tick pops and throws a few sparks. */
 .tick { position: relative; }

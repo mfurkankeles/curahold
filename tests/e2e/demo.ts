@@ -41,7 +41,9 @@ await new Promise<void>((r) => server.listen(PORT, r));
 const browser = await puppeteer.launch({
   executablePath: ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'].find((p) => existsSync(p)),
   headless: true,
-  args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=tr-TR'],
+  // A browser with a mouse, as on a desk: headless Chrome reports none, and then nothing here would
+  // react to the pointer the way it does for a visitor (cards lifting under it, for one).
+  args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=tr-TR', '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'],
 });
 // The demo writes its sample data in the visitor's language: these checks read Turkish.
 const TURKISH = `Object.defineProperty(navigator, 'language', { get: function () { return 'tr-TR'; } }); Object.defineProperty(navigator, 'languages', { get: function () { return ['tr-TR', 'tr']; } });`;
@@ -125,6 +127,28 @@ if (ok && !process.env.QUICK) {
   await frame!.waitForSelector('.signal', { timeout: 10000 });
   await frame!.waitForSelector('.healthpreview', { timeout: 10000 });
   await page.screenshot({ path: join(SCREENS, 'demo-health-settings.png') });
+  // A dialog opened from a card covers the whole window and stays there, wherever the pointer is.
+  // (The card lifts under the pointer; a lifted card used to pull its dialog into itself, and the
+  // dialog jumped between the card and the window for as long as the pointer moved.)
+  await click('.admin__link', 'CRM ve tablolar');
+  await frame!.waitForSelector('.tile .btn', { timeout: 10000 });
+  await new Promise((r) => setTimeout(r, 300));
+  await click('.tile .btn');
+  await frame!.waitForSelector('.dialog', { timeout: 10000 });
+  const view = page.viewport()!;
+  const seen = new Set<string>();
+  // Where the click left the pointer (on the card), then over the dialog, beside it and back:
+  // the dialog's frame is the window every time.
+  for (const at of [null, [0.5, 0.5], [0.52, 0.5], [0.97, 0.5], [0.5, 0.5], [0.6, 0.3], [0.5, 0.55]]) {
+    if (at) await page.mouse.move(view.width * at[0], view.height * at[1], { steps: 4 });
+    await new Promise((r) => setTimeout(r, 120));
+    const box = await frame!.$eval('.dialog', (d) => ({ w: Math.round(d.getBoundingClientRect().width), h: Math.round(d.getBoundingClientRect().height), fullW: innerWidth, fullH: innerHeight }));
+    seen.add(box.w === box.fullW && box.h === box.fullH ? 'window' : `${box.w}x${box.h}`);
+  }
+  await page.screenshot({ path: join(SCREENS, 'demo-dialog-from-card.png') });
+  if (seen.size !== 1 || !seen.has('window')) errors.push(`a dialog opened from a card does not stay over the whole window: ${[...seen].join(', ')}`);
+  await page.keyboard.press('Escape');
+  await frame!.waitForFunction(() => !document.querySelector('.dialog'), { timeout: 5000 });
   await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));

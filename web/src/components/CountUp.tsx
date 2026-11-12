@@ -17,7 +17,9 @@ export function CountUp({ value, format, ms = 700 }: { value: number; format: (n
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / ms);
+      // A frame's own clock can read a little earlier than `start` (the frame began before this effect
+      // ran): without the floor, the first frame showed a small negative number.
+      const p = Math.min(1, Math.max(0, (now - start) / ms));
       const eased = 1 - Math.pow(1 - p, 3);
       setShown(p === 1 ? value : a + (value - a) * eased);
       if (p < 1) raf = requestAnimationFrame(tick);
