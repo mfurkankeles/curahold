@@ -1,5 +1,6 @@
 // Customers at a glance: cards that say what needs attention, the renewals
 // coming up month by month, and which customers have which products.
+import { reviewDue } from '../../../shared/src/rhythm';
 import { useEffect, useMemo, useState } from 'react';
 import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -42,7 +43,7 @@ export function bandOf(a: Account, health: { enabled: boolean; bands: { watch: n
 }
 
 /** What needs attention on a customer, most serious first, and how much in all. */
-export function signalsOf(a: Account, defs: AccountField[], health: Parameters<typeof bandOf>[1], t: (k: MessageKey, v?: Record<string, string | number>) => string) {
+export function signalsOf(a: Account, defs: AccountField[], health: Parameters<typeof bandOf>[1], t: (k: MessageKey, v?: Record<string, string | number>) => string, reviewDays = 0) {
   const chips: Chip[] = [];
   let attention = 0;
   const band = bandOf(a, health);
@@ -83,12 +84,18 @@ export function signalsOf(a: Account, defs: AccountField[], health: Parameters<t
     });
     attention += 2;
   }
+  // A business review that is late (only where there is a rhythm).
+  const review = reviewDue(a, reviewDays, new Date().toISOString().slice(0, 10));
+  if (review.state === 'overdue') {
+    chips.push({ key: 'review', tone: 'amber', text: t('acards.reviewLate', { n: -review.days! }), title: t('acards.reviewTitle', { n: review.every }) });
+    attention += 1;
+  }
   if (!attention) chips.push({ key: 'clear', tone: 'green', text: t('acards.clear'), title: t('acards.clearTitle') });
   chips.sort((x, y) => RANK[x.tone] - RANK[y.tone]);
   return { chips, attention, band, quietDays: quiet };
 }
 
-export const SIGNAL_FILTERS = ['attention', 'overdue', 'stuck', 'quiet', 'renewal', 'risk', 'clear'] as const;
+export const SIGNAL_FILTERS = ['attention', 'overdue', 'stuck', 'quiet', 'renewal', 'review', 'risk', 'clear'] as const;
 export type SignalFilter = (typeof SIGNAL_FILTERS)[number] | '';
 
 export function matchesSignal(filter: SignalFilter, chips: Chip[], attention: number) {

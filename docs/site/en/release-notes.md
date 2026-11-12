@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Targets, a review rhythm and nudges
+
+- **Targets:** a target per period (month, quarter, year) and kind of deal; in Reports and above the pipeline, what is won, the weighted forecast and an even pace share one bar. "Ahead / On track / Behind", and what each remaining week has to bring.
+- **Business reviews:** a rhythm for the whole company or one customer (every 90 days, say); Customers → Reviews lists the ones that are due, and logging one moves the next date.
+- **Nudges:** on Thursdays, the list of your tasks that have gone still; if you want, work several days late is passed once to the team lead.
+- **Boards:** a finished column shows its newest cards; the older ones are one click away.
+
 ### CRM, reports and more on tasks
 
 - **Pipeline:** deals in columns by stage; drag and drop, Won/Lost, a weighted forecast. Deal types: new business, expansion, renewal.

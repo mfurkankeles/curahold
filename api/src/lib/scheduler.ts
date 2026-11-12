@@ -9,6 +9,7 @@ import { runScheduledSyncs } from '../sync/engine';
 import { deliverWebhooks } from './webhooks';
 import { dailyHealth, flushHealth } from './health';
 import { sendWeekly } from './weekly';
+import { sendNudges } from './nudges';
 
 const DIGEST_ITEMS = 8;
 
@@ -81,6 +82,10 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     console.error('[tendwell] weekly summary failed', e);
     return 0;
   });
+  const nudges = await sendNudges(deps, now).catch((e) => {
+    console.error('[tendwell] nudges failed', e);
+    return { stale: 0, escalated: 0 };
+  });
   let delivered = 0;
   for (let i = 0; i < 20; i++) {
     const n = await deliverPending(deps, 100);
@@ -100,5 +105,5 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     return 0;
   });
   if (now.getUTCHours() === 3) await cleanUp(deps);
-  return { digests, weekly, fired, delivered, synced, hooks };
+  return { digests, weekly, nudges, fired, delivered, synced, hooks };
 }

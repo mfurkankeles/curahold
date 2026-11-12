@@ -74,7 +74,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const [keys, setKeys] = useState(false);
   const [news, setNews] = useState(false);
   const [fresh, setFresh] = useState(newsUnseen);
-  const [touch, setTouch] = useState<{ accountId?: string | null; accountName?: string | null } | null>(null);
+  const [touch, setTouch] = useState<{ accountId?: string | null; accountName?: string | null; kind?: 'note' | 'call' | 'meeting' | 'email' | 'review' } | null>(null);
   const [theme, setTheme] = useTheme();
   const counts = useMyCounts();
   const { types: recordTypes, load: reloadTypes } = useRecordTypes();
@@ -124,7 +124,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
       shortcuts: () => setKeys(true),
       help: () => setHelp('new'),
       newBoard: () => setNewBoard(true),
-      logTouch: (accountId, accountName) => setTouch({ accountId, accountName }),
+      logTouch: (accountId, accountName, kind) => setTouch({ accountId, accountName, kind }),
     }),
     [],
   );
@@ -144,13 +144,15 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   };
   const runNews = (a: NewsAction) => (a.kind === 'quickAdd' ? actions.quickAdd() : a.kind === 'shortcuts' ? actions.shortcuts() : navigate(a.to));
 
-  const renewalsOn = path === '/accounts' && new URLSearchParams(search).get('view') === 'renewals';
+  const accountsView = path === '/accounts' ? new URLSearchParams(search).get('view') : null;
+  const renewalsOn = accountsView === 'renewals';
+  const reviewsOn = accountsView === 'reviews';
   const here = {
     home: path === '/home' || path.startsWith('/pages/'),
     my: path === '/my',
     inbox: path === '/inbox',
     calendar: path === '/calendar',
-    accounts: path.startsWith('/accounts') && !renewalsOn,
+    accounts: path.startsWith('/accounts') && !renewalsOn && !reviewsOn,
     crm: path.startsWith('/accounts') || path.startsWith('/records'),
   };
   const KIND_ICON: Record<string, IconName> = { contact: 'idcard', opportunity: 'funnel', ticket: 'lifebuoy', custom: 'layout' };
@@ -373,6 +375,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/accounts', t('nav.allAccounts', { accounts: words.other }), here.accounts, 'building')}
                 {(recordTypes ?? []).map((ty) => link(`/records/${ty.key}`, typeLabel(ty, locale), path === `/records/${ty.key}`, KIND_ICON[ty.kind] ?? 'layout', count(ty.count)))}
                 {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
+                {link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
               </>,
             )}
             {section(
@@ -469,7 +472,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         {quick && <QuickAdd defaults={quick} onClose={() => setQuick(null)} />}
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
         {news && <WhatsNew onClose={() => setNews(false)} onAction={runNews} />}
-        {touch && <LogTouch accountId={touch.accountId} accountName={touch.accountName} onClose={() => setTouch(null)} />}
+        {touch && <LogTouch accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />}
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
             <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>

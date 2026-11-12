@@ -58,14 +58,14 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
   );
 }
 
-const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail' };
+const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail', review: 'handshake' };
 
 /** A call, meeting, email or note on a customer, from anywhere. */
-export function LogTouch({ accountId, accountName, onClose }: { accountId?: string | null; accountName?: string | null; onClose: () => void }) {
+export function LogTouch({ accountId, accountName, kind: asked, onClose }: { accountId?: string | null; accountName?: string | null; kind?: ActivityKind; onClose: () => void }) {
   const { t, words } = useI18n();
   const { toast } = useStore();
   const [account, setAccount] = useState<{ id: string | null; name: string | null }>({ id: accountId ?? null, name: accountName ?? null });
-  const [kind, setKind] = useState<ActivityKind>('call');
+  const [kind, setKind] = useState<ActivityKind>(asked ?? 'call');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

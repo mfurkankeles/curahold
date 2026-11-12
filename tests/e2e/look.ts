@@ -115,6 +115,20 @@ for (const mode of ['light', 'dark'] as const) {
     await pause(300);
     await shot(page, `look-${mode}-timeline`);
   }
+  if (want('rhythm')) {
+    await go(page, '/reports');
+    await page.waitForSelector('.targets').catch(() => undefined);
+    await page.evaluate(() => document.querySelector('.targets')?.scrollIntoView({ block: 'start' }));
+    await pause(300);
+    await shot(page, `look-${mode}-targets`);
+    await go(page, '/accounts?view=reviews');
+    await pause(400);
+    await shot(page, `look-${mode}-reviews`);
+    await page.click('.renewals .rowlink');
+    await page.waitForSelector('.review').catch(() => undefined);
+    await pause(300);
+    await shot(page, `look-${mode}-account`);
+  }
   if (want('calendar')) {
     await go(page, '/calendar');
     await shot(page, `look-${mode}-calendar`);
@@ -134,6 +148,8 @@ if (want('settings')) {
     await theme(ada.page, mode);
     await go(ada.page, '/settings/people');
     await shot(ada.page, `look-${mode}-settings`);
+    await go(ada.page, '/settings/rhythm');
+    await shot(ada.page, `look-${mode}-settings-rhythm`);
   }
 }
 
@@ -155,7 +171,7 @@ if (want('phone')) {
   await pause(200);
   await shot(page, 'look-phone-quick');
   await page.keyboard.press('Escape');
-  for (const [name, path] of [['pipeline', '/records/opportunity'], ['inbox', '/inbox'], ['reports', '/reports'], ['team', '/team'], ['timeline', '/timeline']] as const) {
+  for (const [name, path] of [['pipeline', '/records/opportunity'], ['inbox', '/inbox'], ['reports', '/reports'], ['team', '/team'], ['timeline', '/timeline'], ['reviews', '/accounts?view=reviews']] as const) {
     await go(page, path);
     await pause(400);
     await shot(page, `look-phone-${name}`);

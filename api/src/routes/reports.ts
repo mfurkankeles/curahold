@@ -2,8 +2,12 @@
 // stored or pre-computed). Everything is counted inside what the person can
 // see — the same boards and customers as everywhere else.
 import { Hono } from 'hono';
-import { run, type AppEnv } from '../context';
-import { uuid } from '../lib/validate';
+import { z } from 'zod';
+import { TARGET_PERIODS, rhythmOf } from '../../../shared/src/rhythm';
+import { requireWriter, run, type AppEnv } from '../context';
+import { audit } from '../lib/audit';
+import { fail } from '../lib/errors';
+import { body, uuid } from '../lib/validate';
 
 export const reportRoutes = new Hono<AppEnv>();
 
@@ -121,4 +125,33 @@ reportRoutes.get('/reports/person/:id', async (c) => {
     accounts: Number(out.owned?.n ?? 0),
     minutes30: Number(out.hours?.m ?? 0),
   });
+});
+
+// ------------------------------------------------------------------ rhythm
+
+const money = z.number().min(0).max(1e13).nullable();
+const rhythmInput = z.object({
+  targets: z.object({ period: z.enum(TARGET_PERIODS), new: money, expansion: money, renewal: money }).partial().optional(),
+  reviewDays: z.number().int().min(0).max(730).optional(),
+  staleDays: z.number().int().min(0).max(365).optional(),
+  escalateDays: z.number().int().min(0).max(90).optional(),
+});
+
+/**
+ * Targets, the review rhythm and the nudge thresholds: one small company
+ * setting, changed by whoever manages customers. Only what is sent changes.
+ */
+reportRoutes.put('/rhythm', async (c) => {
+  requireWriter(c);
+  const auth = c.get('auth');
+  if (!auth.perms.includes('accounts.manage') && !auth.perms.includes('org.manage')) fail('forbidden');
+  const input = await body(c, rhythmInput);
+  const org = c.get('org');
+  const now = rhythmOf((org.settings as any)?.rhythm);
+  const next = rhythmOf({ ...now, ...input, targets: { ...now.targets, ...(input.targets ?? {}) } });
+  await run(c, async (q) => {
+    await q.query('select app_set_rhythm($1::jsonb)', [JSON.stringify(next)]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'rhythm.updated', entity: 'org', entityId: org.id, meta: { changed: Object.keys(input) } });
+  });
+  return c.json({ rhythm: next });
 });

@@ -9,6 +9,7 @@ import { bandOf, keyFields } from '../components/AccountViews';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { Icon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
+import { TargetsPanel } from '../components/Rhythm';
 import { Avatar } from '../components/ui';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -272,6 +273,7 @@ export function ReportsPage() {
           </div>
         ) : (
           <div className="reports__grid">
+            {opp && deals && <TargetsPanel type={opp} records={deals} />}
             <section className="sheet">
               <h2 className="sheet__title">{t('reports.health')}</h2>
               <p className="sheet__hint">{customers.atRisk > 0 ? t('reports.healthRisk', { value: cash(customers.atRisk) }) : t('reports.healthHint')}</p>
@@ -286,7 +288,7 @@ export function ReportsPage() {
                 ))}
               </ul>
               <p className="sheet__hint" style={{ margin: '10px 0 0' }}>
-                {t('reports.quietN', { n: customers.quiet })}
+                {customers.quiet ? t('reports.quietN', { n: customers.quiet }) : t('reports.quietNone')}
               </p>
             </section>
             {renewal && (

@@ -13,7 +13,7 @@ import { relativeTime } from '../lib/time';
 
 const FILTERS = ['all', 'mentions', 'assigned', 'comments', 'system'] as const;
 type Filter = (typeof FILTERS)[number];
-const KIND_ICON: Record<string, IconName> = { assigned: 'checkCircle', mentioned: 'at', comment: 'comment', followed: 'eye', unblocked: 'play', automation: 'zap', digest: 'sun', weekly: 'chart', join_request: 'user' };
+const KIND_ICON: Record<string, IconName> = { stale: 'hourglass', escalated: 'alert', assigned: 'checkCircle', mentioned: 'at', comment: 'comment', followed: 'eye', unblocked: 'play', automation: 'zap', digest: 'sun', weekly: 'chart', join_request: 'user' };
 
 export function InboxPage() {
   const { t } = useI18n();

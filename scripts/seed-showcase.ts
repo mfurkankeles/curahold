@@ -17,8 +17,8 @@ const ago = (days: number, hour = 11) => {
 };
 
 // [account, kind, days ago, text] — written as the owner would.
-const ACTIVITIES: [string, 'note' | 'call' | 'meeting' | 'email', number, string][] = [
-  ['Quillfield Retail', 'meeting', 2, 'Çeyrek değerlendirmesi. Selin yeni kampanya takvimini paylaştı; mobil kanalı genişletmek istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.'],
+const ACTIVITIES: [string, 'note' | 'call' | 'meeting' | 'email' | 'review', number, string][] = [
+  ['Quillfield Retail', 'review', 2, 'Çeyrek değerlendirmesi. Selin yeni kampanya takvimini paylaştı; mobil kanalı genişletmek istiyorlar. Ek kullanıcı paketi için teklif bekliyorlar.'],
   ['Quillfield Retail', 'email', 9, 'Kullanım raporunu gönderdim. Tomas fiyatlandırma detaylarını sordu.'],
   ['Harborline Bank', 'call', 4, 'Defne ile yenileme ön görüşmesi. Finans tarafı (Hakan) bütçeyi çeyrek sonuna kadar dondurmak istiyor. Ara çözüm: 3 aylık köprü sözleşme.'],
   ['Harborline Bank', 'note', 15, 'Hakan Ersoy rakip teklifi masaya koymuş olabilir. Yenileme görüşmesinde değer hikayesini rakamlarla anlatalım.'],
@@ -36,6 +36,18 @@ const ACTIVITIES: [string, 'note' | 'call' | 'meeting' | 'email', number, string
   ['Saltmarsh Turizm', 'call', 33, 'Onur sezon öncesi yoğun; Pelin satın alma tarafında maliyet itirazında.'],
   ['Kilnworth Yapı', 'email', 58, 'Serkan yeni yönetimle önceliklerin değiştiğini yazdı. Görüşme ayarlanamadı.'],
   ['Duskvale Oyun', 'meeting', 5, 'Mila ile aylık görüşme. Başarı hikayesi için olumlu baktı.'],
+  // Business reviews, each older than the customer's latest contact: some on rhythm, some coming up, some late.
+  ['Harborline Bank', 'review', 80, 'Çeyrek değerlendirmesi: kullanım hedefin üstünde, raporlama tarafında iki istek var. Yenileme öncesi tekrar oturacağız.'],
+  ['Ambergate Lojistik', 'review', 104, 'İş değerlendirmesi. Operasyon ekibi memnun; yönetim tarafında sponsor değişti, yeni isimle tanışmamız gerek.'],
+  ['Lindenhall Sigorta', 'review', 62, 'Çeyrek değerlendirmesi: mobil modül ihtiyacı ilk kez burada konuşuldu. Güvenlik ekibi sürece dahil edilecek.'],
+  ['Brightmoor Enerji', 'review', 38, 'İş değerlendirmesi. İkinci marka planı paylaşıldı; genişleme için demo istendi.'],
+  ['Fjordnet Telecom', 'review', 71, 'Çeyrek değerlendirmesi: analitik ekibi yeni eğitim istedi, kullanım istikrarlı.'],
+  ['Velto Mobility', 'review', 118, 'İş değerlendirmesi. Ürün ekibindeki değişiklik sonrası kullanım geriliyor; aksiyon planı çıkarıldı.'],
+  ['Cedarmoor Health', 'review', 21, 'Onboarding sonu değerlendirmesi: ilk hedefler üzerinden geçildi, sonraki çeyreğin planı yazıldı.'],
+  ['Saltmarsh Turizm', 'review', 96, 'Sezon öncesi değerlendirme. Maliyet konusu açık kaldı; sezon sonunda tekrar görüşülecek.'],
+  ['Duskvale Oyun', 'review', 47, 'İş değerlendirmesi: ilk ay hedefleri tuttu. Başarı hikayesi fikri burada doğdu.'],
+  ['Wrenfield Eğitim', 'review', 84, 'Dönem başı değerlendirmesi. Kampüs lisansı ihtiyacı konuşuldu.'],
+  ['Orchardly Foods', 'review', 58, 'Kısa değerlendirme: ekip küçük ama düzenli kullanıyor, analitik eklentisine ilgi var.'],
 ];
 
 function day(offset: number) {
@@ -94,6 +106,7 @@ const OPPORTUNITIES: [string, string, number, number, string, string, string][] 
   ['Wrenfield Eğitim', 'Kampüs lisansı', 31000, 12, 'commit', 'new', 'open'],
   ['Duskvale Oyun', 'Başlangıç paketi', 18000, -9, 'commit', 'new', 'won'],
   ['Orchardly Foods', 'Analitik eklentisi', 9000, -20, 'commit', 'expansion', 'won'],
+  ['Fjordnet Telecom', 'Yıllık yenileme', 42000, -6, 'commit', 'renewal', 'won'],
   ['Corvina Medya', 'Reklam modülü', 15000, -14, 'proposal', 'expansion', 'lost'],
 ];
 
@@ -161,6 +174,9 @@ export async function seedShowcase(call: Call, db?: Db) {
     if (!accounts[acc]) continue;
     await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, ownerId: ownerOf[acc] ?? null, fields: { amount, close_date: day(closeIn), stage, kind, status } });
   }
+
+  // What the team aims for this quarter, a review with every customer each 90 days, and both nudges on.
+  await call('PUT', '/api/rhythm', { targets: { period: 'quarter', new: 40000, expansion: 120000, renewal: 80000 }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
 
   const { boards } = await call<{ boards: { id: string; name: string }[] }>('GET', '/api/boards');
   const board = (prefix: string) => boards.find((b) => b.name.startsWith(prefix))!.id;
@@ -262,7 +278,9 @@ export async function seedShowcase(call: Call, db?: Db) {
   // database at hand: the dates are set afterwards, and without that it would all be "today".
   const past: { id: string; made: number; done: number; due: number; by: string }[] = [];
   if (db) {
-    const names = Object.keys(accounts);
+    // Not on the customers that have gone quiet: a finished task counts as contact, and their story is the silence.
+    const QUIET = ['Velto Mobility', 'Orchardly Foods', 'Corvina Medya', 'Saltmarsh Turizm', 'Kilnworth Yapı'];
+    const names = Object.keys(accounts).filter((n) => !QUIET.includes(n));
     const crew = ['zeynep', 'lena', 'omar', 'mert', 'ada'];
     const doneAgo = [2, 3, 5, 6, 8, 9, 11, 12, 13, 16, 17, 19, 22, 24, 26, 29, 31, 33, 36, 40, 44, 47, 52, 58];
     const took = [2, 4, 1, 6, 3, 9, 5, 2, 7, 3];

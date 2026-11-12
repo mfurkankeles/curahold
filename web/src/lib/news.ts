@@ -12,6 +12,16 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-rhythm',
+    date: '2026-11-12',
+    title: { tr: 'Hedefler, değerlendirme ritmi ve dürtmeler', en: 'Targets, a review rhythm and nudges' },
+    body: {
+      tr: 'Dönem hedefini koy: Raporlar gidişatı ve kalan her hafta ne kazanmak gerektiğini söyler. Müşterilerle değerlendirme ritmi belirle; zamanı gelenler Değerlendirmeler’de. Yerinde sayan görevlerin perşembe günü hatırlatılır.',
+      en: 'Set a target for the period: Reports says how it is going and what each remaining week has to bring. Give customers a review rhythm; the ones that are due are under Reviews. Tasks that have gone still are brought up on Thursdays.',
+    },
+    action: { kind: 'go', to: '/accounts?view=reviews', label: { tr: 'Değerlendirmelere git', en: 'Go to reviews' } },
+  },
+  {
     id: '2026-11-crm',
     date: '2026-11-12',
     title: { tr: 'Satış hattı, raporlar, ekip ve zaman çizelgesi', en: 'Pipeline, reports, team and a timeline' },

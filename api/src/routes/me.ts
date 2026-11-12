@@ -1,3 +1,4 @@
+import { rhythmOf } from '../../../shared/src/rhythm';
 import { Hono } from 'hono';
 import { healthConfig } from '../../../shared/src/health';
 import { deleteCookie } from 'hono/cookie';
@@ -68,6 +69,7 @@ meRoutes.get('/me', async (c) => {
       autoJoin: org.auto_join,
       accountFields: defsFor(org.account_fields, auth),
       health: (({ enabled, bands }) => ({ enabled, bands }))(healthConfig(org.settings?.health)),
+      rhythm: rhythmOf((org.settings as any)?.rhythm),
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
       portal: portalOn(org, c.get('deps')),
@@ -239,7 +241,7 @@ const NOTICE_FILTERS: Record<string, string[] | null> = {
   mentions: ['mentioned'],
   assigned: ['assigned', 'unblocked'],
   comments: ['comment', 'followed'],
-  system: ['automation', 'digest', 'weekly', 'join_request'],
+  system: ['automation', 'digest', 'weekly', 'stale', 'escalated', 'join_request'],
 };
 
 meRoutes.get('/notifications', async (c) => {

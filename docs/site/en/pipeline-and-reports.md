@@ -14,6 +14,18 @@ The menu on the left has four parts: everyday work at the top (Home, My tasks, I
 
 Every deal has a **type**: new business, expansion or renewal. Change the stages and types in Settings → Record types; with a CRM connected the stages come from there. **Table** shows the same deals as a list. Any kind of record with a choice field can be shown as a board the same way.
 
+## Targets and pace
+
+In Settings → **Targets and rhythm**, choose the period (month, quarter or year) and what you aim to win for each kind of deal: new business, expansion, renewal. Leave a kind empty to have no target for it.
+
+The **Target** section at the top of Reports shows three things on one bar for each kind: what is won (solid), the weighted total of open deals due to close in the period (hatched), and where an even pace would be today (the vertical mark). The label beside it says how it is going:
+
+- **Ahead:** more is won than an even pace needs by today.
+- **On track:** less is won than that, but open deals cover the rest.
+- **Behind:** neither. Underneath: how much is missing and what has to be won each week that is left.
+
+On the right, who won how much in the period. The same bar sits as one line above the Opportunities board. Nothing is stored; the numbers are worked out from the deals when the page opens.
+
 ## Inbox
 
 Everything sent to you in one list: tasks given to you, mentions, comments, moves on tasks you follow, reminders from rules. Unread ones are marked on the left; mark one read or unread, or clear them all in one click.

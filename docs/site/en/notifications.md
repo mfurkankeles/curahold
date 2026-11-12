@@ -16,8 +16,19 @@ Tendwell writes to your chat app first and uses email as the fallback, so notifi
 - An automation opens work for you
 - The morning summary: today's work and anything late
 - The Monday weekly summary: renewals, and customers whose score fell or who went quiet
+- The Thursday nudge: your open tasks that nobody has touched for a long time
+- For team leads: tasks in the team that are several days past their date
 
 Switch each one on or off in your settings.
+
+## Nudges
+
+There are two; both are switched and tuned in Settings → **Targets and rhythm**.
+
+- **Work that has gone still** (default: 14 days, on). Every Thursday, at the hour of your morning summary, you get the list of your open tasks nobody has touched for that long. Work planned for later (a start date still ahead, or a due date more than a week away) and tasks you muted are left out.
+- **Late work goes to the team lead** (default: off). When a task passes its date by the number of days you set, the person's team lead is told once, on that working day; for work nobody holds, or a team without a lead, whoever made the board is told. What crosses the line at the weekend is said on Monday. Switching it on never sends an old backlog; the Team page has the whole picture.
+
+You can switch both off for yourself with the "Nudges" box in your settings.
 
 ## Where they go
 

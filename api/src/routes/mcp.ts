@@ -199,7 +199,7 @@ const TOOLS: Tool[] = [
       {
         account: str('Customer name or id'),
         text: str('What happened, in a few sentences'),
-        kind: { type: 'string', enum: ['note', 'call', 'meeting', 'email'], description: 'Default: note' },
+        kind: { type: 'string', enum: ['note', 'call', 'meeting', 'email', 'review'], description: 'Default: note. "review" is a business review (QBR) and resets the customer\'s review rhythm' },
         happened_at: str('When it happened (ISO 8601, e.g. 2026-11-10T14:00:00Z); default now'),
       },
       ['account', 'text'],

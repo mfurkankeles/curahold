@@ -45,7 +45,7 @@ export const DEFAULT_HEALTH: HealthConfig = {
 };
 
 export type HealthBand = 'good' | 'watch' | 'risk';
-export type TouchKind = 'note' | 'call' | 'meeting' | 'email' | 'task';
+export type TouchKind = 'note' | 'call' | 'meeting' | 'email' | 'review' | 'task';
 
 /** What the score is worked out from, for one customer. */
 export interface HealthInput {

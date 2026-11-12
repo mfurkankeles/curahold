@@ -50,3 +50,9 @@ Select several customers in the list and change their owner, team or a field tog
 ## Plans
 
 A **plan** is a set of dated tasks put on a customer in one click: onboarding, renewal prep, a QBR. An admin writes it once (task title, how many days after the start, for whom); on a customer's page **Apply a plan** lets you pick the start day and add them all. `{account_name}` in a title becomes the customer's name.
+
+## Business reviews
+
+Decide once how often you sit down with every customer: Settings → **Targets and rhythm** → *Business reviews* (every 90 days, say). One customer can have its own rhythm in the **Business review** field on its page; "No reviews" keeps that customer out of the rhythm.
+
+**Customers → Reviews** lists the ones that are due: late, in the next 30 days, and later. When you have held the review, log it with **Done** on the row (or from the customer's page) and a short note; it lands on the timeline as a "Business review" and the next date moves by itself. For a customer never reviewed, the count starts on the day it was added. A late review also shows as a mark on the customer's card.

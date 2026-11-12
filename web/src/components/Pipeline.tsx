@@ -12,6 +12,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { dueState, todayIso } from '../lib/time';
 import { EmptyState } from './Empty';
+import { TargetsPanel } from './Rhythm';
 import { Icon } from './icons';
 import { Avatar } from './ui';
 
@@ -119,6 +120,7 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
 
   return (
     <>
+      {type.kind === 'opportunity' && <TargetsPanel type={type} records={records} compact />}
       {money && (
         <div className="statstrip">
           <Stat label={t('pipeline.open')} value={cash(sum(open))} sub={t('pipeline.deals', { n: open.length })} />

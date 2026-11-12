@@ -36,12 +36,15 @@ export const toAccount = (r: Row): Account => ({
   ...(r.open_tasks != null ? { openTasks: Number(r.open_tasks) } : {}),
   ...(r.last_activity !== undefined ? { lastActivityAt: iso(r.last_activity) } : {}),
   ...(r.overdue_tasks != null ? { overdueTasks: Number(r.overdue_tasks), stuckTasks: Number(r.stuck_tasks), lastTouchAt: iso(r.last_touch) } : {}),
+  reviewDays: r.review_days ?? null,
+  ...(r.last_review !== undefined ? { lastReviewAt: iso(r.last_review) } : {}),
 });
 
 const OPEN_TASKS = `(select count(*) from tasks t join boards b on b.id = t.board_id
     where t.account_id = a.id and t.archived_at is null and t.parent_id is null
       and not exists (select 1 from jsonb_array_elements(b.columns) col where col->>'key' = t.status and (col->>'done')::boolean)) as open_tasks,
-  (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity`;
+  (select max(t.updated_at) from tasks t where t.account_id = a.id) as last_activity,
+  (select max(x.happened_at) from activities x where x.account_id = a.id and x.kind = 'review') as last_review`;
 
 /**
  * What needs attention on a customer, for the cards: overdue and stuck work
@@ -201,6 +204,8 @@ accountRoutes.patch('/accounts/:id', async (c) => {
       teamId: accountInput.teamId.optional(),
       fields: accountInput.fields.optional(),
       archived: z.boolean().optional(),
+      /** Days between business reviews; null follows the company's rhythm, 0 is none. */
+      reviewDays: z.number().int().min(0).max(730).nullable().optional(),
     }),
   );
   const org = c.get('org');
@@ -216,17 +221,19 @@ accountRoutes.patch('/accounts/:id', async (c) => {
     const fields = input.fields ? { ...(a.fields ?? {}), ...cleaned } : a.fields;
     await q.query(
       `update accounts set name = $2, fields = $3, updated_at = now(),
-              archived_at = case when $4::boolean is null then archived_at when $4 then coalesce(archived_at, now()) else null end
+              archived_at = case when $4::boolean is null then archived_at when $4 then coalesce(archived_at, now()) else null end,
+              review_days = case when $5 then $6::int else review_days end
         where id = $1`,
-      [id, input.name ?? a.name, JSON.stringify(fields), input.archived ?? null],
+      [id, input.name ?? a.name, JSON.stringify(fields), input.archived ?? null, input.reviewDays !== undefined, input.reviewDays ?? null],
     );
     // A new owner or team may take the customer out of this person's reach.
     if ((input.ownerId !== undefined && input.ownerId !== a.owner_id) || (input.teamId !== undefined && input.teamId !== a.team_id)) {
       await reassign(q, [id], input.ownerId, input.teamId);
     }
-    const [seen] = await q.query('select * from accounts where id = $1', [id]);
+    const [seen] = await q.query(`select a.*, (select max(x.happened_at) from activities x where x.account_id = a.id and x.kind = 'review') as last_review from accounts a where a.id = $1`, [id]);
     const u = seen ?? {
       ...a,
+      review_days: input.reviewDays !== undefined ? input.reviewDays : a.review_days,
       name: input.name ?? a.name,
       owner_id: input.ownerId !== undefined ? input.ownerId : a.owner_id,
       team_id: input.teamId !== undefined ? input.teamId : a.team_id,

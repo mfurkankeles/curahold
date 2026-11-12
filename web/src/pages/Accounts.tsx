@@ -25,6 +25,7 @@ import { Icon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
 import { tasksChanged, usePageDefaults } from '../lib/shell';
 import { PlanMenu } from '../components/Plans';
+import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { hoursText } from './Reports';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
@@ -96,7 +97,7 @@ export function AccountsPage() {
       return fallback;
     }
   };
-  const VIEWS = ['cards', 'table', 'renewals', 'products'] as const;
+  const VIEWS = ['cards', 'table', 'renewals', 'reviews', 'products'] as const;
   // The menu's "Renewals" opens this page on that view (?view=renewals).
   const asked = new URLSearchParams(qs0).get('view') as (typeof VIEWS)[number] | null;
   const [view, setViewState] = useState<(typeof VIEWS)[number]>(() => (asked && VIEWS.includes(asked) ? asked : remembered('tw_accounts_view', VIEWS, 'cards')));
@@ -167,7 +168,7 @@ export function AccountsPage() {
   }, [data, sort, person, locale]);
 
   const signalRows = useMemo(() => {
-    const list = (data?.accounts ?? []).map((a) => ({ a, ...signalsOf(a, me.org.accountFields, me.org.health, t) }));
+    const list = (data?.accounts ?? []).map((a) => ({ a, ...signalsOf(a, me.org.accountFields, me.org.health, t, me.org.rhythm?.reviewDays ?? 0) }));
     const num = (v: unknown) => (typeof v === 'number' ? v : v === null || v === undefined || v === '' ? null : Number(v));
     const by: Record<string, (x: (typeof list)[number], y: (typeof list)[number]) => number> = {
       attention: (x, y) => y.attention - x.attention,
@@ -180,7 +181,7 @@ export function AccountsPage() {
     return list
       .filter((r) => matchesSignal(signal, r.chips, r.attention))
       .sort((x, y) => by[cardSort](x, y) || x.a.name.localeCompare(y.a.name, locale));
-  }, [data, me.org.accountFields, me.org.health, t, signal, cardSort, valueField, renewalField, locale]);
+  }, [data, me.org.accountFields, me.org.health, me.org.rhythm?.reviewDays, t, signal, cardSort, valueField, renewalField, locale]);
   const needing = signalRows.filter((r) => r.attention > 0).length;
   const atStake = valueField
     ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + (Number(r.a.fields[valueField.key]) || 0), 0)
@@ -271,7 +272,7 @@ export function AccountsPage() {
           <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')}>
             {VIEWS.map((v) => (
               <button key={v} role="tab" aria-selected={view === v} aria-pressed={view === v} onClick={() => setView(v)}>
-                <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', products: 'target' } as const)[v]} size={15} />
+                <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', reviews: 'handshake', products: 'target' } as const)[v]} size={15} />
                 {t(`acards.view.${v}` as any)}
               </button>
             ))}
@@ -311,7 +312,7 @@ export function AccountsPage() {
                 </option>
               ))}
           </select>
-          {(view === 'cards' || view === 'renewals') && (
+          {(view === 'cards' || view === 'renewals' || view === 'reviews') && (
             <select className="select" value={signal} aria-label={t('acards.signalFilter')} onChange={(e) => setSignal(e.target.value as SignalFilter)}>
               <option value="">{t('acards.signal.any')}</option>
               {SIGNAL_FILTERS.map((s) => (
@@ -434,6 +435,8 @@ export function AccountsPage() {
           )
         ) : view === 'renewals' ? (
           <RenewalsView rows={signalRows} fmt={fmt} />
+        ) : view === 'reviews' ? (
+          <ReviewsView rows={signalRows} />
         ) : view === 'products' ? (
           <WhitespaceView types={types} />
         ) : (
@@ -679,6 +682,10 @@ export function AccountPage({ id }: { id: string }) {
   }, [id]);
   useEffect(() => {
     void load();
+    // A review logged from anywhere moves the next one.
+    const again = () => void load();
+    window.addEventListener('tw:timeline-changed', again);
+    return () => window.removeEventListener('tw:timeline-changed', again);
   }, [load]);
   useEffect(() => {
     if (!boardId && boards[0]) setBoardId(boards[0].id);
@@ -826,6 +833,7 @@ export function AccountPage({ id }: { id: string }) {
                 ))}
             </select>
           </label>
+          <ReviewField account={a} onSave={save} />
           {me.org.accountFields.map((f) =>
             f.health ? (
               <HealthBadge key={f.key} accountId={a.id} field={f} value={a.fields[f.key]} />

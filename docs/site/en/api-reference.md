@@ -72,12 +72,14 @@ Send the `version` of the task you read as `baseVersion` in `PATCH /tasks/{id}`.
 | Endpoint | Does |
 | --- | --- |
 | `GET /accounts/{id}/timeline` | The customer's timeline, newest first. `before` (the `next` of the previous answer) and `limit` |
-| `POST /accounts/{id}/activities` | Log an entry: `kind` (`note`, `call`, `meeting`, `email`), `body`, optional `happenedAt`, `contactIds`, `pinned` |
+| `POST /accounts/{id}/activities` | Log an entry: `kind` (`note`, `call`, `meeting`, `email`, `review` for a business review), `body`, optional `happenedAt`, `contactIds`, `pinned` |
 | `PATCH /activities/{id}` | Change it (its writer, or someone who manages customers) |
 | `DELETE /activities/{id}` | Delete it |
 | `GET /accounts/{id}/health` | The score, its band, the points of each signal, and the last 90 days of scores |
 
 The score itself is in the customer's `health_score` field.
+
+A customer also carries `reviewDays` (days between business reviews; `null` follows the company's rhythm, `0` is none; set it with `PATCH /accounts/{id}`) and `lastReviewAt` (the latest activity of kind `review`). The company's rhythm and targets are in `GET /me` under `org.rhythm`.
 
 ## Home-page data
 

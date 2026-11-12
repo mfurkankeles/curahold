@@ -44,7 +44,7 @@ export function kick(deps: Deps) {
 
 export const DEFAULT_PREFS: NotifyPrefs = {
   channel: 'auto',
-  events: { assigned: true, mentioned: true, comment: true, following: true, digest: true, weekly: true, automation: true },
+  events: { assigned: true, mentioned: true, comment: true, following: true, digest: true, weekly: true, nudges: true, automation: true },
   digestHour: 8,
   defaultBoardId: null,
 };
@@ -97,7 +97,7 @@ export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, 
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'automation', 'join_request']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
@@ -106,6 +106,8 @@ const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   unblocked: 'assigned',
   digest: 'digest',
   weekly: 'weekly',
+  stale: 'nudges',
+  escalated: 'nudges',
   automation: 'automation',
 };
 
@@ -218,6 +220,21 @@ export function render(ctx: RenderCtx): ChatMessage {
       if (data.tickets) lines.push(t('weekly.tickets', { n: data.tickets, urgent: data.urgentTickets ?? 0 }));
       if (data.done || data.overdue) lines.push(t('weekly.work', { done: data.done ?? 0, overdue: data.overdue ?? 0 }));
       return { title: t('weekly.title', { n: data.accounts ?? 0 }), body: lines.join('\n'), url: `${ctx.base}/home`, openLabel: t('notify.open') };
+    }
+    case 'stale': {
+      const lines: string[] = (data.items ?? []).map((it: any) => `• ${it.title} (${t('nudge.days', { n: it.days ?? 0 })})`);
+      if ((data.count ?? 0) > lines.length) lines.push(t('notify.digestMore', { n: data.count - lines.length }));
+      return { title: t(data.count === 1 ? 'nudge.staleOne' : 'nudge.staleTitle', { n: data.count ?? 0, days: data.days ?? 0 }), body: [...lines, t('nudge.staleHint')].join('\n'), url: `${ctx.base}/my`, openLabel: t('notify.open') };
+    }
+    case 'escalated': {
+      const items = (data.items ?? []) as any[];
+      if (data.count === 1 && items[0]) {
+        const who = items[0].who || t('nudge.nobody');
+        return { ...base, actions: undefined, title: t('nudge.escalatedOne', { who, n: items[0].days ?? 0 }), body: task?.title ?? items[0].title };
+      }
+      const lines = items.map((it) => `• ${it.title} — ${it.who || t('nudge.nobody')} (${t('nudge.late', { n: it.days ?? 0 })})`);
+      if ((data.count ?? 0) > lines.length) lines.push(t('notify.digestMore', { n: data.count - lines.length }));
+      return { title: t('nudge.escalatedMany', { n: data.count ?? 0, days: data.days ?? 0 }), body: lines.join('\n'), url: `${ctx.base}/team`, openLabel: t('notify.open') };
     }
     case 'join_request':
       return {

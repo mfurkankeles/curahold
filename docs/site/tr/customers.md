@@ -50,3 +50,9 @@ Listede birden çok müşteri seç: sahibini, ekibini ya da bir alanı birlikte 
 ## Planlar
 
 Bir **plan**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: onboarding, yenileme hazırlığı, QBR. Yönetici planı bir kez yazar (görev başlığı, başlangıçtan kaç gün sonra, kime); müşteri sayfasındaki **Plan uygula** ile başlangıç gününü seçip uygularsın. Başlıkta `{account_name}` yazan yere müşterinin adı gelir.
+
+## İş değerlendirmeleri
+
+Her müşteriyle ne sıklıkla oturup değerlendirme yapacağına bir kez karar ver: Ayarlar → **Hedefler ve ritim** → *İş değerlendirmeleri* (örneğin 90 günde bir). Tek bir müşteri için ayrı ritim, o müşterinin sayfasındaki **İş değerlendirmesi** alanından verilir; “Değerlendirme yok” o müşteriyi ritmin dışında tutar.
+
+**Müşteriler → Değerlendirmeler** zamanı gelenleri sıralar: gecikenler, önümüzdeki 30 gün ve daha sonrası. Değerlendirmeyi yaptığında satırdaki **Yapıldı** ile (ya da müşteri sayfasından) kısa bir notla kaydet; kayıt zaman çizelgesine “İş değerlendirmesi” olarak düşer ve sıradaki tarih kendiliğinden ilerler. Hiç değerlendirilmemiş bir müşteride süre, müşterinin eklendiği gün başlar. Geciken değerlendirme müşteri kartında da işaret olarak görünür.

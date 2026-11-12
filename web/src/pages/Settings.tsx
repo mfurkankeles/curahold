@@ -9,6 +9,7 @@ import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
+import { RhythmSettings } from '../components/Rhythm';
 import { SupportAccessSettings } from '../components/Help';
 import { PortalSettingsTab } from '../components/PortalAdmin';
 import { AccessDialog, RolesTab } from '../components/Roles';
@@ -20,7 +21,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'fields' | 'health' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
+type Tab = 'company' | 'fields' | 'health' | 'rhythm' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -35,6 +36,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
         ['records', t('settings.tab.records'), can('accounts.manage')],
         ['health', t('settings.tab.health'), can('accounts.manage')],
+        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || can('org.manage')],
       ],
     },
     {
@@ -105,6 +107,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'fields' && <AccountFieldsEditor />}
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
+          {current === 'rhythm' && <RhythmSettings />}
           {current === 'support' && <SupportAccessSettings />}
           {current === 'portal' && <PortalSettingsTab />}
           {current === 'people' && <PeopleTab />}

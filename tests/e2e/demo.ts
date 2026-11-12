@@ -85,8 +85,12 @@ if (ok && !process.env.QUICK) {
   await click('.navlink', 'Fırsatlar');
   await frame!.waitForSelector('.dealcard', { timeout: 10000 }).catch(() => errors.push('the pipeline shows no deals'));
   await page.screenshot({ path: join(SCREENS, 'demo-pipeline.png') });
+  await click('.navlink', 'Değerlendirmeler');
+  await frame!.waitForSelector('.table--reviews .review__when', { timeout: 10000 }).catch(() => errors.push('no reviews are due'));
+  await page.screenshot({ path: join(SCREENS, 'demo-reviews.png') });
   await click('.navlink', 'Raporlar');
   await frame!.waitForSelector('.chart__col', { timeout: 10000 }).catch(() => errors.push('reports show no chart'));
+  await frame!.waitForSelector('.target__track', { timeout: 10000 }).catch(() => errors.push('reports show no target'));
   await new Promise((r) => setTimeout(r, 400));
   await page.screenshot({ path: join(SCREENS, 'demo-reports.png') });
   await click('.navlink', 'Ekip');

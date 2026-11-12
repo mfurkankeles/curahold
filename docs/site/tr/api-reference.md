@@ -72,12 +72,14 @@ Görev alanları: `title`, `description`, `status` (sütun anahtarı), `assignee
 | Uç | Ne yapar |
 | --- | --- |
 | `GET /accounts/{id}/timeline` | Müşterinin zaman çizelgesi, yeniden eskiye. `before` (bir önceki yanıtın `next` değeri) ve `limit` |
-| `POST /accounts/{id}/activities` | Kayıt ekle: `kind` (`note`, `call`, `meeting`, `email`), `body`, isteğe bağlı `happenedAt`, `contactIds`, `pinned` |
+| `POST /accounts/{id}/activities` | Kayıt ekle: `kind` (`note`, `call`, `meeting`, `email`, iş değerlendirmesi için `review`), `body`, isteğe bağlı `happenedAt`, `contactIds`, `pinned` |
 | `PATCH /activities/{id}` | Değiştir (yazan kişi ya da müşterileri yöneten) |
 | `DELETE /activities/{id}` | Sil |
 | `GET /accounts/{id}/health` | Skor, bandı, her sinyalin puanı ve son 90 günün skorları |
 
 Skorun kendisi müşterinin `health_score` alanındadır.
+
+Müşteride ayrıca `reviewDays` (iş değerlendirmeleri arasındaki gün; `null` şirket ritmini izler, `0` yok demektir; `PATCH /accounts/{id}` ile verilir) ve `lastReviewAt` (türü `review` olan son kayıt) bulunur. Şirketin ritmi ve hedefleri `GET /me` yanıtında `org.rhythm` altındadır.
 
 ## Ana sayfa verileri
 

@@ -1,4 +1,5 @@
 // Types shared by the API and the web app.
+import type { Rhythm } from './rhythm';
 import type { Locale, Terms } from './i18n';
 
 export const PERMS = [
@@ -128,6 +129,8 @@ export interface Org {
   logoUrl: string | null;
   /** The customer portal is on (and this installation has an address for it). */
   portal?: boolean;
+  /** Targets, the review rhythm and when to nudge. */
+  rhythm?: Rhythm;
 }
 
 export interface SetupState {
@@ -212,6 +215,9 @@ export interface Account {
   overdueTasks?: number;
   stuckTasks?: number;
   lastTouchAt?: string | null;
+  /** Days between business reviews for this customer; null follows the company's rhythm, 0 is none. */
+  reviewDays?: number | null;
+  lastReviewAt?: string | null;
 }
 
 export interface ImportResult {
@@ -275,7 +281,7 @@ export interface Notification {
   createdAt: string;
 }
 
-export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'following', 'digest', 'weekly', 'automation'] as const;
+export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'following', 'digest', 'weekly', 'nudges', 'automation'] as const;
 export type NotifyEvent = (typeof NOTIFY_EVENTS)[number];
 
 export interface NotifyPrefs {

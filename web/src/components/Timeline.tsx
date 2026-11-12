@@ -140,7 +140,7 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
 
 // ------------------------------------------------------------- the timeline
 
-const KIND_ICON: Record<string, string> = { note: '✎', call: '☏', meeting: '◷', email: '✉', task_created: '+', task_done: '✓', comment: '❝', contact: '◉', score: '↕', ticket_opened: '!', ticket_solved: '✓' };
+const KIND_ICON: Record<string, string> = { note: '✎', call: '☏', meeting: '◷', email: '✉', review: '◎', task_created: '+', task_done: '✓', comment: '❝', contact: '◉', score: '↕', ticket_opened: '!', ticket_solved: '✓' };
 
 function dayLabel(iso: string, locale: string) {
   const d = new Date(iso);

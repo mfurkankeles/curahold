@@ -14,6 +14,18 @@ Sol menü dört bölümdür: üstte günlük işler (Ana sayfa, Görevlerim, Gel
 
 Her fırsatın bir **türü** vardır: yeni iş, genişleme ya da yenileme. Aşamaları ve türleri Ayarlar → Kayıt türleri’nden kendine göre değiştirirsin; bir CRM bağlıysa aşamalar oradan gelir. **Tablo** düğmesi aynı fırsatları liste olarak gösterir. Seçim alanı olan her kayıt türü aynı şekilde pano olarak görüntülenebilir.
 
+## Hedefler ve gidişat
+
+Ayarlar → **Hedefler ve ritim**’de dönemi (ay, çeyrek ya da yıl) ve her fırsat türü için kazanmayı hedeflediğin tutarı yaz: yeni iş, genişleme, yenileme. Hedefi olmayan türü boş bırak.
+
+Raporlar’ın başındaki **Hedef** bölümü her tür için üç şeyi aynı çubukta gösterir: kazanılan (dolu), dönem içinde kapanacak açık fırsatların ağırlıklı toplamı (taralı) ve eşit tempoda bugün olunması gereken yer (dikey çizgi). Yanındaki etiket durumu söyler:
+
+- **Önde:** kazanılan, eşit temponun bugün gerektirdiğinden fazla.
+- **Yolunda:** kazanılan temponun gerisinde, ama açık fırsatlar kalanı karşılıyor.
+- **Geride:** ikisi de değil. Altında açığın ne kadar olduğu ve kalan her hafta ne kadar kazanmak gerektiği yazar.
+
+Sağda dönem içinde kimin ne kadar kazandığı durur. Aynı çubuğun tek satırlık hâli Fırsatlar panosunun üstündedir. Hiçbir şey saklanmaz; sayılar sayfa açıldığında fırsatlardan hesaplanır.
+
 ## Gelen kutusu
 
 Sana gelen her şey tek listede: verilen görevler, senden bahsedilenler, yorumlar, takip ettiğin görevlerdeki hareketler, kuralların hatırlatmaları. Okunmamışlar solda işaretlidir; bir satırı okundu ya da okunmadı yapabilir, hepsini tek tıkla temizleyebilirsin.

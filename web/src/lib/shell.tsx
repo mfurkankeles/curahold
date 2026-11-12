@@ -21,7 +21,7 @@ export interface ShellActions {
   shortcuts: () => void;
   help: () => void;
   newBoard: () => void;
-  logTouch: (accountId?: string | null, accountName?: string | null) => void;
+  logTouch: (accountId?: string | null, accountName?: string | null, kind?: 'note' | 'call' | 'meeting' | 'email' | 'review') => void;
 }
 
 const noop = () => undefined;
