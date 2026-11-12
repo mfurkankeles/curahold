@@ -29,7 +29,7 @@ Connecting needs the permission to manage connections. People are matched by ema
 
 Comes over: accounts, contacts, opportunities, tasks and your custom objects. Tick **Sandbox** before connecting to use a test org.
 
-If Salesforce answers that the app is not allowed, your Salesforce administrator has to allow Curahold first: Salesforce blocks apps an administrator has not installed or approved. Ask them to approve it, then connect again. The user who connects needs API access in Salesforce (included in Enterprise and above, an add-on in Professional).
+**The first time, a Salesforce administrator installs Curahold.** Salesforce blocks apps that are not installed in your org, so before the first sign-in an administrator opens the install page (the link is shown when you choose Connect) and approves it. The package adds no code, no fields and no objects: it only lets people in your org approve Curahold. It can be removed at any time from Setup → Installed Packages, and Curahold loses access at once. If Salesforce answers that the app is not allowed, this step has not been done yet. The user who connects needs API access in Salesforce (included in Enterprise and above, an add-on in Professional).
 
 ## HubSpot
 

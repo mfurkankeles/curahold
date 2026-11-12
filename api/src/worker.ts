@@ -36,6 +36,11 @@ export interface Env {
   MICROSOFT_CLIENT_SECRET?: string;
   SALESFORCE_CLIENT_ID?: string;
   SALESFORCE_CLIENT_SECRET?: string;
+  /** https address of the fixed-address relay for Salesforce token requests, and the key it expects (24+ characters). */
+  SALESFORCE_RELAY_URL?: string;
+  SALESFORCE_RELAY_KEY?: string;
+  /** https://login.salesforce.com/packaging/installPackage.apexp?p0=04t… */
+  SALESFORCE_INSTALL_URL?: string;
   HUBSPOT_CLIENT_ID?: string;
   HUBSPOT_CLIENT_SECRET?: string;
   DYNAMICS_CLIENT_ID?: string;
@@ -125,6 +130,12 @@ export function configFromEnv(env: Env): Config {
         ? { gchat: { projectNumber: env.GCHAT_PROJECT_NUMBER, serviceAccountEmail: env.GCHAT_SA_EMAIL, privateKey: env.GCHAT_SA_KEY.replace(/\\n/g, '\n') } }
         : {}),
       crm: crmClients(env),
+      ...(env.SALESFORCE_RELAY_URL && /^https:\/\//.test(env.SALESFORCE_RELAY_URL) && (env.SALESFORCE_RELAY_KEY ?? '').length >= 24
+        ? { salesforceRelay: { url: env.SALESFORCE_RELAY_URL, key: env.SALESFORCE_RELAY_KEY! } }
+        : {}),
+      ...(env.SALESFORCE_INSTALL_URL && /^https:\/\/login\.salesforce\.com\/packaging\/installPackage\.apexp\?p0=04t[0-9A-Za-z]{12,15}$/.test(env.SALESFORCE_INSTALL_URL)
+        ? { salesforceInstallUrl: env.SALESFORCE_INSTALL_URL }
+        : {}),
       demoCrm: env.DEMO_CRM === '1',
     },
     oauth: {

@@ -400,7 +400,7 @@ is simply not offered.
 
 | Service | Register | Secrets |
 | --- | --- | --- |
-| Salesforce | External Client App (or Connected App) with OAuth scopes `api refresh_token`; listed on AppExchange after the security review | `SALESFORCE_CLIENT_ID`, `SALESFORCE_CLIENT_SECRET` |
+| Salesforce | External Client App with OAuth scopes `api refresh_token`, shipped to customers as the package in `integrations/salesforce`; sign-in uses PKCE. Optional: token requests through the fixed-address relay in `tools/relay` | `SALESFORCE_CLIENT_ID`, `SALESFORCE_CLIENT_SECRET`; optional `SALESFORCE_RELAY_URL`, `SALESFORCE_RELAY_KEY` |
 | HubSpot | Public app; required scopes `oauth crm.objects.companies.read/write crm.objects.owners.read`, the rest optional (contacts, deals, tickets, tasks, custom objects) | `HUBSPOT_CLIENT_ID`, `HUBSPOT_CLIENT_SECRET` |
 | Dynamics 365 | Multi-tenant Entra ID app with the Dynamics CRM `user_impersonation` permission (the Microsoft sign-in app can be reused) | `DYNAMICS_CLIENT_ID`, `DYNAMICS_CLIENT_SECRET` (else the Microsoft ones) |
 | Pipedrive | Marketplace app with read/write access to organizations, people, deals and activities | `PIPEDRIVE_CLIENT_ID`, `PIPEDRIVE_CLIENT_SECRET` |

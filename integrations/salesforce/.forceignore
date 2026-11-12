@@ -1,0 +1,8 @@
+# The app's key and secret live in the Dev Hub only and reach customers' orgs
+# by Salesforce's own replication; policies belong to each customer's
+# administrator. Neither may be in the package: leaving them in fails the build.
+**/extlClntAppGlobalOauthSets/**
+**/extlClntAppOauthPolicies/**
+
+package.xml
+**/.gitkeep

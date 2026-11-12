@@ -305,6 +305,14 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
               <span className="muted">{t('sync.sfSandboxHint')}</span>
             </span>
           </label>
+          {provider.installUrl && (
+            <p className="field__hint sf-install">
+              {t('sync.sfInstall')}{' '}
+              <a href={sandbox ? provider.installUrl.replace('//login.', '//test.') : provider.installUrl} target="_blank" rel="noreferrer">
+                {t('sync.sfInstallOpen')}
+              </a>
+            </p>
+          )}
         </div>
       )}
     </Dialog>

@@ -34,7 +34,14 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
   const crms: CrmProvider[] = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho'];
   const sheets: CrmProvider[] = ['gsheets', 'excel'];
   if (cfg.connectors.demoCrm) sheets.push('demo');
-  const signIn = (id: CrmProvider): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: !!oauthClient(cfg, id), setup: 'oauth' });
+  const signIn = (id: CrmProvider): ProviderInfo => ({
+    id,
+    kind: 'source',
+    twoWay: true,
+    available: !!oauthClient(cfg, id),
+    setup: 'oauth',
+    ...(id === 'salesforce' && cfg.connectors.salesforceInstallUrl ? { installUrl: cfg.connectors.salesforceInstallUrl } : {}),
+  });
   return [
     ...crms.map(signIn),
     // These CRMs need nothing on this server: the administrator brings a key or a webhook address from the CRM.

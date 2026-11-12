@@ -52,6 +52,11 @@ export interface Connected {
 }
 
 export interface OAuthSpec {
+  /**
+   * Sign in with a one-time proof (PKCE): `opts.code_challenge` is sent with the sign-in request and
+   * `opts.code_verifier` with the exchange, so a code that leaks on its way back is useless to anyone else.
+   */
+  pkce?: boolean;
   /** `opts`: what the administrator typed first (Dynamics address, Salesforce sandbox) plus callback extras. */
   authorizeUrl(client: OAuthClient, redirectUri: string, state: string, opts: Record<string, string>): string;
   exchange(fetcher: typeof fetch, client: OAuthClient, code: string, redirectUri: string, opts: Record<string, string>, now: Date): Promise<Connected>;
@@ -199,8 +204,9 @@ export async function codeGrant(
   redirectUri: string,
   now: Date,
   basicAuth = false,
+  extra: Record<string, string> = {},
 ): Promise<any> {
-  const form = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri });
+  const form = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri, ...extra });
   const headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
   if (basicAuth) headers.authorization = `Basic ${btoa(`${client.clientId}:${client.clientSecret}`)}`;
   else {

@@ -3105,6 +3105,8 @@ export const en = {
   'sync.keyed.note': 'The key is stored encrypted and can be removed any time. On the next screen you choose what comes from {app} and which fields Curahold may write back.',
   'sync.beta': 'New',
   'sync.betaHint': 'A new connector. If something does not come over as you expect, tell us from Help.',
+  'sync.sfInstall': 'First time for your company? A Salesforce administrator installs Curahold once. It adds no code and no fields, and can be removed at any time.',
+  'sync.sfInstallOpen': 'Open the install page',
 } as const;
 
 export type MessageKey = keyof typeof en;

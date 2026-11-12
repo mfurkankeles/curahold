@@ -68,6 +68,7 @@ export const salesforce: CrmAdapter = {
   provider: 'salesforce',
   tabular: false,
   oauth: {
+    pkce: true,
     authorizeUrl(client, redirectUri, state, opts) {
       const u = new URL(`${opts.sandbox === '1' ? SANDBOX : LOGIN}/services/oauth2/authorize`);
       u.searchParams.set('response_type', 'code');
@@ -76,11 +77,15 @@ export const salesforce: CrmAdapter = {
       u.searchParams.set('scope', 'api refresh_token');
       u.searchParams.set('prompt', 'consent');
       u.searchParams.set('state', state);
+      if (opts.code_challenge) {
+        u.searchParams.set('code_challenge', opts.code_challenge);
+        u.searchParams.set('code_challenge_method', 'S256');
+      }
       return u.toString();
     },
     async exchange(fetcher, client, code, redirectUri, opts, now) {
       const loginUrl = opts.sandbox === '1' ? SANDBOX : LOGIN;
-      const j = await codeGrant(fetcher, `${loginUrl}/services/oauth2/token`, client, code, redirectUri, now);
+      const j = await codeGrant(fetcher, `${loginUrl}/services/oauth2/token`, client, code, redirectUri, now, false, opts.code_verifier ? { code_verifier: opts.code_verifier } : {});
       const orgId = String(j.id ?? '').split('/').slice(-2, -1)[0] || 'salesforce';
       const config = { instanceUrl: j.instance_url, loginUrl, orgId };
       let label = 'Salesforce';

@@ -29,7 +29,7 @@ Bağlamak için bağlantıları yönetme yetkisi gerekir. Kişiler e-postayla e�
 
 Gelenler: hesaplar, kişiler, fırsatlar, görevler ve kendi özel nesnelerin. Test ortamı kullanacaksan bağlamadan önce **Sandbox** kutusunu işaretle.
 
-Salesforce uygulamaya izin verilmediğini söylerse, önce Salesforce yöneticinin Curahold'a izin vermesi gerekir: Salesforce, bir yöneticinin kurmadığı ya da onaylamadığı uygulamaları engeller. Ondan onay iste, sonra yeniden bağlan. Bağlayan kullanıcının Salesforce'ta API erişimi olmalı (Enterprise ve üstünde dahil, Professional'da ek paket).
+**İlk seferde bir Salesforce yöneticisi Curahold'u kurar.** Salesforce, kurumuna kurulmamış uygulamaları engeller; bu yüzden ilk girişten önce bir yönetici kurulum sayfasını açar (bağlantı, Bağla'yı seçtiğinde gösterilir) ve onaylar. Paket kod, alan ya da nesne eklemez: yalnızca kurumundaki kişilerin Curahold'a izin verebilmesini sağlar. İstenildiği an Setup → Installed Packages üzerinden kaldırılabilir; Curahold erişimini o anda kaybeder. Salesforce uygulamaya izin verilmediğini söylerse bu adım henüz yapılmamıştır. Bağlayan kullanıcının Salesforce'ta API erişimi olmalı (Enterprise ve üstünde dahil, Professional'da ek paket).
 
 ## HubSpot
 

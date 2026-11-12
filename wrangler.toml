@@ -53,3 +53,6 @@ crons = ["0 * * * *"]
 # ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET
 # (a service without its secrets is simply not offered; webhooks always work)
 # DEMO_CRM = "1" only on the public demo.
+
+# Salesforce extras (all optional): SALESFORCE_INSTALL_URL (the package's install link, shown before the
+# first sign-in), SALESFORCE_RELAY_URL and SALESFORCE_RELAY_KEY (token renewals through tools/relay).

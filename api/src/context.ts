@@ -79,6 +79,10 @@ export interface ConnectorConfig {
   gchat?: { projectNumber: string; serviceAccountEmail: string; privateKey: string };
   /** CRM app registrations (Salesforce connected app, HubSpot public app…). */
   crm?: Partial<Record<'salesforce' | 'hubspot' | 'dynamics' | 'pipedrive' | 'zoho' | 'gsheets' | 'excel', { clientId: string; clientSecret: string }>>;
+  /** A relay with a fixed address for Salesforce's token requests (tools/relay); without it they go direct. */
+  salesforceRelay?: { url: string; key: string };
+  /** The install link of Curahold's Salesforce package (integrations/salesforce), shown before the first sign-in. */
+  salesforceInstallUrl?: string;
   /** Development and the live demo: a pretend CRM held in memory. */
   demoCrm?: boolean;
 }

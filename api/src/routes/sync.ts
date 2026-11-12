@@ -9,7 +9,7 @@ import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
 import type { RemoteField, SyncConfig, SyncProblem } from '../../../shared/src/sync';
 import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
-import { randomToken, seal, sign } from '../lib/crypto';
+import { base64url, randomToken, seal, sign, unseal } from '../lib/crypto';
 import { fail } from '../lib/errors';
 import { recomputeRollups } from '../lib/records';
 import { body, param } from '../lib/validate';
@@ -19,6 +19,7 @@ import { orgUrlOf } from '../sync/adapters/dynamics';
 import { resolveExcelFile, resolveGoogleFile } from '../sync/adapters/sheets';
 import { CrmError } from '../sync/adapters/types';
 import { crmCtx, loadCrm, previewSync, suggestFields, syncConnection, toRun } from '../sync/engine';
+import { crmFetch } from '../sync/relay';
 import { createRecordType, keyFrom } from './records';
 
 export const syncRoutes = new Hono<AppEnv>();
@@ -34,6 +35,8 @@ export interface CrmConnectState {
   x: number;
   /** What the administrator typed before signing in. */
   q: Record<string, string>;
+  /** The sign-in's one-time proof (PKCE), sealed: it travels through the browser and must not be readable there. */
+  k?: string;
 }
 
 export const connectCallbackUrl = (c: C) => `${centralUrl(c.get('deps').config)}/api/connect/callback`;
@@ -56,8 +59,14 @@ export async function crmStart(c: C, provider: string, back: string) {
     q.orgUrl = orgUrlRaw;
   }
   const state: CrmConnectState = { o: org.slug, p: provider, u: c.get('auth').userId, r: back, n: randomToken(12), x: nowOf(deps).getTime() + 15 * 60_000, q };
+  const opts = { ...q };
+  if (adapter.oauth.pkce) {
+    const verifier = randomToken(48);
+    opts.code_challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+    state.k = await seal({ v: verifier }, secretsKey(cfg));
+  }
   const signed = await sign(state, cfg.authSecret);
-  return c.redirect(adapter.oauth.authorizeUrl(client, connectCallbackUrl(c), signed, q));
+  return c.redirect(adapter.oauth.authorizeUrl(client, connectCallbackUrl(c), signed, opts));
 }
 
 /** Step two (central address): the service sends the administrator back with a code. */
@@ -71,8 +80,13 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
   if (!adapter?.oauth || !client) return c.redirect(`${home}?error=not_configured&provider=${provider}`);
   let made;
   try {
-    const extras = { ...state.q, 'accounts-server': c.req.query('accounts-server') ?? '' };
-    made = await adapter.oauth.exchange(deps.fetch ?? fetch, client, code, connectCallbackUrl(c), extras, nowOf(deps));
+    const extras: Record<string, string> = { ...state.q, 'accounts-server': c.req.query('accounts-server') ?? '' };
+    if (adapter.oauth.pkce) {
+      const proof = state.k ? await unseal<{ v: string }>(state.k, secretsKey(cfg)) : null;
+      if (!proof?.v) return c.redirect(`${home}?error=connection_failed&provider=${provider}`);
+      extras.code_verifier = proof.v;
+    }
+    made = await adapter.oauth.exchange(crmFetch(deps, provider), client, code, connectCallbackUrl(c), extras, nowOf(deps));
   } catch (e) {
     console.error('[curahold] crm connect failed', provider, (e as Error).message);
     return c.redirect(`${home}?error=connection_failed&provider=${provider}`);

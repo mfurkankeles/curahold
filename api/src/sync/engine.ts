@@ -9,13 +9,14 @@ import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields
 import type { Locale } from '../../../shared/src/i18n';
 import { calculated, type AccountField, type FieldOption } from '../../../shared/src/model';
 import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
-import { fetchOf, nowOf, secretsKey, type Deps } from '../context';
+import { nowOf, secretsKey, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
 import { fullName, ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
 import { recomputeRollups } from '../lib/records';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
+import { crmFetch } from './relay';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
 
 const MAX_ERRORS = 50;
@@ -59,32 +60,43 @@ export function normalizeSync(raw: any): SyncConfig {
 export function crmCtx(deps: Deps, conn: LoadedCrm): CrmCtx {
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
   const client = oauthClient(deps.config, adapter.provider);
-  const fetcher = fetchOf(deps);
+  const fetcher = crmFetch(deps, adapter.provider);
   const now = () => nowOf(deps);
   const config: Record<string, any> = { ...conn.config, ...(conn.sync.file ? { file: conn.sync.file } : {}) };
+  const stale = (s: CrmSecret) => !s.accessToken || (!!s.expiresAt && s.expiresAt - 60_000 < now().getTime());
+  // A token request that hangs must not hold the connection's row for long.
+  const timed = ((u: RequestInfo | URL, i?: RequestInit) => fetcher(u, { ...i, signal: AbortSignal.timeout(20_000) })) as typeof fetch;
   let refreshing: Promise<string> | null = null;
   const refresh = () =>
     (refreshing ??= (async () => {
       if (!client) throw new CrmError('This server is not set up for the service', 0, undefined, true);
-      const next = await adapter.refresh({ fetch: fetcher, now, config }, conn.secret, client);
-      conn.secret = { ...conn.secret, ...next };
-      const extra: Record<string, unknown> = {};
-      if (next.instanceUrl) extra.instanceUrl = config.instanceUrl = next.instanceUrl;
-      if (next.apiDomain) extra.apiDomain = config.apiDomain = next.apiDomain;
-      const sealed = await seal(conn.secret, secretsKey(deps.config));
-      await deps.db.system((q) =>
-        q.query('update connections set secret = $3, config = config || $4::jsonb, updated_at = now() where id = $1 and org_id = $2', [conn.id, conn.orgId, sealed, JSON.stringify(extra)]),
-      );
-      return conn.secret.accessToken!;
+      const key = secretsKey(deps.config);
+      return deps.db.system(async (q) => {
+        // One renewal at a time per connection, whichever server process asks. Services that hand out a new
+        // refresh token on every use refuse the old one: a second renewal with it would look like a break-in.
+        const [row] = await q.query('select secret from connections where id = $1 and org_id = $2 for update', [conn.id, conn.orgId]);
+        const stored = row ? await unseal<CrmSecret>(row.secret ?? null, key) : null;
+        if (stored?.accessToken && stored.accessToken !== conn.secret.accessToken && !stale(stored)) {
+          // Another process renewed it while this one waited: use that.
+          conn.secret = stored;
+          return stored.accessToken;
+        }
+        const from = stored?.refreshToken ? { ...conn.secret, ...stored } : conn.secret;
+        const next = await adapter.refresh({ fetch: timed, now, config }, from, client);
+        conn.secret = { ...from, ...next };
+        const extra: Record<string, unknown> = {};
+        if (next.instanceUrl) extra.instanceUrl = config.instanceUrl = next.instanceUrl;
+        if (next.apiDomain) extra.apiDomain = config.apiDomain = next.apiDomain;
+        await q.query('update connections set secret = $3, config = config || $4::jsonb, updated_at = now() where id = $1 and org_id = $2', [conn.id, conn.orgId, await seal(conn.secret, key), JSON.stringify(extra)]);
+        return conn.secret.accessToken!;
+      });
     })().finally(() => (refreshing = null)));
   return {
     fetch: fetcher,
     now,
     config,
     async token() {
-      const s = conn.secret;
-      if (!s.accessToken || (s.expiresAt && s.expiresAt - 60_000 < now().getTime())) return refresh();
-      return s.accessToken;
+      return stale(conn.secret) ? refresh() : conn.secret.accessToken!;
     },
     refresh,
   };
@@ -234,6 +246,9 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
   }
   return out;
 }
+
+/** A person's last-name field in each service, and the first-name field that goes with it. */
+const SPLIT_NAME: Record<string, string> = { LastName: 'FirstName', last_name: 'first_name', LAST_NAME: 'NAME' };
 
 /** Fields read only to work out an opportunity's status. */
 export const STATUS_FIELDS = ['IsClosed', 'IsWon', 'hs_is_closed', 'hs_is_closed_won', 'statecode', 'status', 'Stage'];
@@ -902,11 +917,14 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
         }
         const values = mapOut(map, item, null, meta, r.defs, r.look, true);
         // Contacts: services that want first and last name separately get them split from the full name.
-        if (meta.get('LastName')?.createable && !('LastName' in values) && item.name) {
+        const lastKey = Object.keys(SPLIT_NAME).find((n) => meta.get(n)?.createable);
+        if (lastKey && !(lastKey in values) && item.name) {
+          const firstKey = SPLIT_NAME[lastKey];
           const parts = String(item.name).trim().split(/\s+/);
-          values.LastName = parts.pop();
-          if (parts.length && meta.get('FirstName')?.createable && !('FirstName' in values)) values.FirstName = parts.join(' ');
-          delete values.Name;
+          values[lastKey] = parts.pop();
+          if (parts.length && meta.get(firstKey)?.createable && !(firstKey in values)) values[firstKey] = parts.join(' ');
+          // Salesforce works the full name out itself and refuses one that is sent.
+          if (lastKey === 'LastName') delete values.Name;
         }
         const missing = fields.filter((f) => f.required && !(f.name in values) && f.type !== 'id' && f.type !== 'user');
         if (missing.length) throw new CrmError(`Needs ${missing.map((f) => f.label).join(', ')} to be created there`);

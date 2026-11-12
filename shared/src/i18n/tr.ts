@@ -3090,4 +3090,6 @@ export const tr: Record<MessageKey, string> = {
   'sync.keyed.note': 'Anahtar şifreli saklanır ve istediğin an kaldırılabilir. Sonraki ekranda {app} üzerinden neyin geleceğini ve Curahold\'un hangi alanlara geri yazabileceğini sen seçersin.',
   'sync.beta': 'Yeni',
   'sync.betaHint': 'Yeni bir bağlayıcı. Beklediğin gibi gelmeyen bir şey olursa Yardım\'dan bize yaz.',
+  'sync.sfInstall': 'Şirketin için ilk kez mi? Bir Salesforce yöneticisi Curahold\'u bir kez kurar. Kod ya da alan eklemez, istenildiği an kaldırılabilir.',
+  'sync.sfInstallOpen': 'Kurulum sayfasını aç',
 };

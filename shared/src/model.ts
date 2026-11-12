@@ -284,6 +284,8 @@ export interface ProviderInfo {
   available: boolean;
   /** key: the administrator pastes the tool's address and an API key. */
   setup: 'oauth' | 'webhook' | 'key';
+  /** Where the other side's administrator installs Curahold first, for services that ask for that (Salesforce). */
+  installUrl?: string;
 }
 
 export interface Notification {
