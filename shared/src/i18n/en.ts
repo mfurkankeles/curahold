@@ -2927,6 +2927,14 @@ export const en = {
   'legal.and': 'and the',
   'pipeline.deal1': '1 deal',
   'errors.repeat_mismatch': 'This request was sent with a key that already belongs to a different change. Nothing was changed.',
+  'conn.demo.crm.title': 'Connect {app} (demo)',
+  'conn.demo.crm.lede': 'In the real product this step is {app}’s own sign-in page. Here a pretend {app} with made-up data stands in, so you can walk the whole way: pick what comes over, match the fields, run the first sync.',
+  'conn.demo.crm.asks': 'Curahold asks for permission to:',
+  'conn.demo.crm.ask1': 'Read and update your accounts, contacts and deals',
+  'conn.demo.crm.ask2': 'See who owns what, to match people on both sides',
+  'conn.demo.crm.ask3': 'Stay connected until you remove the connection',
+  'conn.demo.crm.note': 'No password is ever typed into Curahold, in the demo or in the real product.',
+  'conn.demo.crm.allow': 'Allow and continue',
 } as const;
 
 export type MessageKey = keyof typeof en;

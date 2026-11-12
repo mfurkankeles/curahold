@@ -138,11 +138,17 @@ syncRoutes.post('/connections/key', async (c) => {
 
 // ------------------------------------------------------------------- demo
 
+const STAND_INS: Record<string, string> = { salesforce: 'Salesforce', hubspot: 'HubSpot', dynamics: 'Dynamics 365', pipedrive: 'Pipedrive', zoho: 'Zoho CRM' };
+
 /** The pretend CRM, on servers that offer it (development, the live demo). */
 syncRoutes.post('/connections/demo', async (c) => {
   requirePerm(c, 'connections.manage');
   const deps = c.get('deps');
   if (!deps.config.connectors.demoCrm) fail('not_configured');
+  // The try-it demo offers the pretend CRM under each real CRM's button, so a
+  // visitor walks the real steps; the connection says "(demo)" in its name.
+  const input = await body(c, z.object({ as: z.enum(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho']).optional() }));
+  const label = input.as ? `${STAND_INS[input.as]} (demo)` : 'Demo CRM';
   const org = c.get('org');
   const auth = c.get('auth');
   const id = await run(c, async (q) => {
@@ -151,8 +157,8 @@ syncRoutes.post('/connections/demo', async (c) => {
     const users = people.map((p, i) => ({ id: `U${i + 1}`, name: p.name, email: p.email }));
     demoStore(demoId, users);
     const [row] = await q.query(
-      `insert into connections (org_id, kind, provider, label, config, created_by) values ($1, 'source', 'demo', 'Demo CRM', $2, $3) returning id`,
-      [org.id, JSON.stringify({ demoId, users, instanceId: demoId, sync: { objects: [], owners: {}, conflict: 'latest' } }), auth.userId],
+      `insert into connections (org_id, kind, provider, label, config, created_by) values ($1, 'source', 'demo', $4, $2, $3) returning id`,
+      [org.id, JSON.stringify({ demoId, users, instanceId: demoId, as: input.as ?? null, sync: { objects: [], owners: {}, conflict: 'latest' } }), auth.userId, label],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.created', entity: 'connection', entityId: row.id, meta: { provider: 'demo' } });
     return row.id as string;

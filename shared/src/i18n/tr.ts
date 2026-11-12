@@ -2912,4 +2912,12 @@ export const tr: Record<MessageKey, string> = {
   'legal.and': 've',
   'pipeline.deal1': '1 fırsat',
   'errors.repeat_mismatch': 'Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi.',
+  'conn.demo.crm.title': '{app} bağlantısı (demo)',
+  'conn.demo.crm.lede': 'Gerçek üründe bu adım {app} uygulamasının kendi giriş sayfasıdır. Burada onun yerine uydurma verili bir {app} duruyor; böylece yolun tamamını yürüyebilirsin: neyin geleceğini seç, alanları eşle, ilk eşitlemeyi çalıştır.',
+  'conn.demo.crm.asks': 'Curahold şunlar için izin ister:',
+  'conn.demo.crm.ask1': 'Hesaplarını, kişilerini ve anlaşmalarını okumak ve güncellemek',
+  'conn.demo.crm.ask2': 'Kimin neyin sahibi olduğunu görmek; iki taraftaki kişileri eşlemek için',
+  'conn.demo.crm.ask3': 'Bağlantıyı sen kaldırana kadar bağlı kalmak',
+  'conn.demo.crm.note': 'Curahold’a hiçbir zaman şifre yazılmaz; ne demoda ne gerçek üründe.',
+  'conn.demo.crm.allow': 'İzin ver ve devam et',
 };

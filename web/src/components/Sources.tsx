@@ -1,7 +1,7 @@
 // CRMs and spreadsheets: connect, choose what comes over, match fields and
 // people, preview, start — then watch the sync and fix what it reports.
 // Everything an administrator needs, without anyone writing a mapping file.
-import { DemoConnect, IN_DEMO } from './DemoConnect';
+import { DemoConnect, DemoCrmConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -19,6 +19,8 @@ import { Confirm, Dialog, RowMenu } from './ui';
 const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
 const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo'];
 const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'jsm'];
+/** In the try-it demo these buttons run the real steps against the pretend CRM. */
+const DEMO_CRMS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho'];
 
 function useErr() {
   const { t } = useI18n();
@@ -124,6 +126,8 @@ export function Sources() {
               <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
                 {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
               </button>
+            ) : IN_DEMO && DEMO_CRMS.includes(p.id) ? (
+              <DemoCrmConnect id={p.id} app={PROVIDER_NAMES[p.id] ?? p.id} onError={onErr} />
             ) : IN_DEMO ? (
               <DemoConnect app={PROVIDER_NAMES[p.id] ?? p.id} />
             ) : (

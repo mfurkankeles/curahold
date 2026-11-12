@@ -156,6 +156,17 @@ describe('two-way sync with a CRM', () => {
     expect((await mert.post('/api/connections/demo')).status).toBe(403);
   });
 
+  it('stands in for a named CRM in the try-it demo, and says so in its name', async () => {
+    const r = await ada.post('/api/connections/demo', { as: 'salesforce' });
+    expect(r.status).toBe(201);
+    const [row] = await env.db.system((q) => q.query('select label, provider, config from connections where id = $1', [r.json.id]));
+    expect(row.label).toBe('Salesforce (demo)');
+    expect(row.provider).toBe('demo');
+    expect(row.config.as).toBe('salesforce');
+    expect((await ada.post('/api/connections/demo', { as: 'not-a-crm' })).status).toBe(400);
+    await ada.req('DELETE', `/api/connections/${r.json.id}`);
+  });
+
   it('connects, suggests a mapping and previews without changing anything', async () => {
     const r = await ada.post('/api/connections/demo');
     expect(r.status).toBe(201);
