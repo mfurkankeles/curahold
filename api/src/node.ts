@@ -61,6 +61,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     root.get('/docs', (c) => c.redirect('/docs/'));
     root.use('/docs/*', serveStatic({ root: dist }));
     root.use('/llms.txt', serveStatic({ root: dist }));
+    root.use('/icons/*', serveStatic({ root: dist }));
+    root.use('/sw.js', serveStatic({ root: dist }));
     root.get('*', (c) => c.html(index));
     const portalDist = join(import.meta.dirname, '..', '..', 'dist', 'portal');
     if (existsSync(join(portalDist, 'index.html'))) {

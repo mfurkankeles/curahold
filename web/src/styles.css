@@ -2046,3 +2046,8 @@ a.targetline:hover { border-color: var(--line-strong); }
   .sidebar__actions { padding-bottom: 8px; }
   .sidebar__org { padding-bottom: 9px; }
 }
+
+/* Offline: said once, at the top, for as long as it lasts. */
+.offlinebar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--soon-wash); color: var(--soon-ink); border-bottom: 1px solid var(--soon-line); font-size: 13.5px; font-weight: 500; }
+.offlinebar .icon { flex: none; }
+.installsteps { margin: 0; padding-left: 20px; display: grid; gap: 8px; }

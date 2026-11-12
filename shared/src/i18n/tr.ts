@@ -2421,4 +2421,10 @@ export const tr: Record<MessageKey, string> = {
   'reports.quietNone': 'Son 30 günde her {account_l} ile temas var.',
   'targets.open': 'Hedefleri Raporlar’da gör',
   'reviews.logShort': 'Yapıldı',
+  'errors.offline': 'Çevrimdışısın. Bağlantı gelince yeniden dene.',
+  'pwa.install': 'Tendwell’i kur',
+  'pwa.offline': 'Çevrimdışısın. Son gördüklerin gösteriliyor; bağlantı gelene kadar değişiklik kaydedilmez.',
+  'pwa.ios1': 'Safari araç çubuğundaki Paylaş düğmesine dokun.',
+  'pwa.ios2': '“Ana Ekrana Ekle”yi seç.',
+  'pwa.ios3': '“Ekle”ye dokun. Tendwell artık kendi simgesinden açılır.',
 };

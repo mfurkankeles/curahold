@@ -10,6 +10,7 @@ import { FieldInput, useFieldFormat } from '../pages/Accounts';
 import { ExportMenu } from './Export';
 import { allPages, cellOf } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
+import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -122,6 +123,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     const id = setTimeout(() => void load(), 200);
     return () => clearTimeout(id);
   }, [load]);
+  useLive('records', () => void load());
   if (types && !type)
     return (
       <div className="page">

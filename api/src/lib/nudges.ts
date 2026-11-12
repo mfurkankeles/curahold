@@ -37,7 +37,8 @@ export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number
       for (const u of users) {
         const prefs = prefsOf(u.prefs);
         if (prefs.events.nudges === false || prefs.digestHour !== hour) continue;
-        // Not what is planned for later (a start date ahead, or due more than a week away), and not what the person muted.
+        // Not what is planned for later (a start date ahead, or due more than a week away), not what
+        // someone commented on in that time, and not what the person muted.
         const tasks = await deps.db.system((q) =>
           q.query(
             `select t.id, t.title, t.updated_at from tasks t join boards b on b.id = t.board_id
@@ -45,6 +46,7 @@ export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number
                 and t.updated_at < $3::timestamptz - make_interval(days => $4::int)
                 and (t.start_date is null or t.start_date <= $5::date)
                 and (t.due_date is null or t.due_date <= $5::date + 7)
+                and not exists (select 1 from comments cm where cm.task_id = t.id and cm.created_at >= $3::timestamptz - make_interval(days => $4::int))
                 and not exists (select 1 from task_mutes m where m.task_id = t.id and m.user_id = $2)
               order by t.updated_at limit 200`,
             [org.id, u.id, now.toISOString(), rhythm.staleDays, today],

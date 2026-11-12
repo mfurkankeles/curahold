@@ -2436,6 +2436,12 @@ export const en = {
   'reports.quietNone': 'Every {account_l} has been in touch in the last 30 days.',
   'targets.open': 'See the targets in Reports',
   'reviews.logShort': 'Done',
+  'errors.offline': 'You are offline. This will work again once you are connected.',
+  'pwa.install': 'Install Tendwell',
+  'pwa.offline': 'You are offline. This is what you last saw; changes cannot be saved until you are connected.',
+  'pwa.ios1': 'Tap the Share button in Safari’s toolbar.',
+  'pwa.ios2': 'Choose “Add to Home Screen”.',
+  'pwa.ios3': 'Tap “Add”. Tendwell opens from its own icon from now on.',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -14,6 +14,10 @@ Her sorgu, veritabanında satır düzeyinde güvenlik kurallarıyla çalışır.
 
 Oturumlar cihaza bağlıdır; kopyalanan bir çerez başka bir makinede çalışmaz. Cihaz sınırı aşılırsa en eski oturum kapanır. Ayarların → Cihazlar'dan açık oturumlarını görüp kapatırsın.
 
+## Cihazda tutulanlar
+
+Bağlantı yokken okuyabilmen için uygulama, son gördüğün listelerin bir kopyasını tarayıcının kendi deposunda tutar (görevlerin, panolar, müşteriler, gelen kutusu; dosya ekleri ve ayarlar tutulmaz). Bu kopya yalnızca o cihazda ve o tarayıcıdadır, hiçbir yere gönderilmez. Çıkış yaptığında ya da oturumun sunucuda sonlandırıldığı ilk bağlantıda silinir. Ortak kullanılan bir bilgisayarda işin bitince çıkış yap.
+
 ## Aktivite kaydı
 
 Girişler, kişi ve rol değişiklikleri, bağlantılar, API anahtarları, webhook'lar ve kişisel veri işlemleri aktivite kaydına yazılır. Ayarlar → Aktivite kaydı'ndan görülür.

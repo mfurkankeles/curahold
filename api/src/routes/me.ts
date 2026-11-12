@@ -230,6 +230,28 @@ meRoutes.get('/me/delivery', async (c) => {
 });
 
 /** The number on the bell: cheap enough to ask every minute. */
+/**
+ * "Has anything I can see changed?" — asked by an open page every half
+ * minute. The newest change to a task (or a comment on one) and to a record,
+ * as numbers that only mean something compared with the last answer, and the
+ * unread count for the bell. Read under the person's own rights, so work on
+ * a board they cannot see never moves their number.
+ */
+meRoutes.get('/pulse', async (c) => {
+  const auth = c.get('auth');
+  const [r] = await run(c, (q) =>
+    q.query(
+      `select (select extract(epoch from updated_at) from tasks where org_id = app_org() order by updated_at desc limit 1) as t,
+              (select extract(epoch from created_at) from comments where org_id = app_org() order by created_at desc limit 1) as c,
+              (select extract(epoch from updated_at) from records where org_id = app_org() order by updated_at desc limit 1) as r,
+              (select count(*)::int from notifications where user_id = $1 and read_at is null) as unread`,
+      [auth.userId],
+    ),
+  );
+  c.header('cache-control', 'no-store');
+  return c.json({ tasks: Math.max(Number(r?.t ?? 0), Number(r?.c ?? 0)), records: Number(r?.r ?? 0), unread: r?.unread ?? 0 });
+});
+
 meRoutes.get('/notifications/count', async (c) => {
   const auth = c.get('auth');
   const [r] = await run(c, (q) => q.query('select count(*)::int as n from notifications where user_id = $1 and read_at is null', [auth.userId]));

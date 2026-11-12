@@ -5,6 +5,7 @@ import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, typ
 import { MAX_FILE_MB, MENTION_RE, PRIORITIES, type Comment, type Person, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
 import { repeatText } from '../pages/BoardPage';
 import { ApiFailure, api, del, get, post, put } from '../lib/api';
+import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -41,6 +42,12 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
     setNotice(null);
     void load();
   }, [load]);
+  // Someone else commented or changed it: show that, unless this person is in the middle of typing here.
+  useLive('tasks', () => {
+    const at = document.activeElement;
+    const typing = !!at && at !== panel.current && !!panel.current?.contains(at) && /^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName);
+    if (!typing && !document.querySelector('.dialog')) void load();
+  });
 
   const close = useCallback(() => setQuery('task', null), []);
   useEffect(() => {

@@ -851,6 +851,72 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await phone.page.browserContext().close();
 });
 
+await step('live: a card someone else adds shows up without reloading; the bell follows', async () => {
+  const lena = await newPage(s.browser);
+  await signIn(lena.page, s.origin, 'lena@demo.example');
+  // Ask every second instead of every half minute.
+  await lena.page.evaluate(() => localStorage.setItem('tw_live_ms', '1000'));
+  await lena.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
+  await lena.page.waitForSelector('.card');
+  const [u] = await sql(`select id, org_id from users where email = 'lena@demo.example' order by created_at limit 1`);
+  const before = await lena.page.$eval('.bell', (e) => e.textContent ?? '').catch(() => '');
+  const res = await mert.page.evaluate(
+    async (board, lenaId) => {
+      const r = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-tendwell-device': localStorage.getItem('tw_device') ?? '' },
+        body: JSON.stringify({ boardId: board, title: 'Canlı gelen görev', assigneeIds: [lenaId] }),
+      });
+      return r.status;
+    },
+    csBoard,
+    u.id,
+  );
+  expect(res === 201, `the other person could not add the task (${res})`);
+  await lena.page.waitForFunction(() => [...document.querySelectorAll('.card__title')].some((e) => e.textContent === 'Canlı gelen görev'), { timeout: 8000 });
+  await lena.page.waitForFunction((was) => (document.querySelector('.bell')?.textContent ?? '') !== was, { timeout: 8000 }, before);
+  await lena.page.browserContext().close();
+});
+
+await step('installable, and readable without a connection', async () => {
+  const omar = await newPage(s.browser);
+  await signIn(omar.page, s.origin, 'omar@demo.example');
+  const manifest = await omar.page.evaluate(async () => {
+    const href = document.querySelector<HTMLLinkElement>('link[rel=manifest]')?.href ?? '';
+    const r = await fetch(href);
+    return { status: r.status, body: await r.json() };
+  });
+  expect(manifest.status === 200 && manifest.body.display === 'standalone' && manifest.body.icons.length === 3, 'no install manifest');
+  expect(String(manifest.body.name).includes('Tendwell'), 'the manifest has no name');
+  for (const icon of manifest.body.icons) {
+    const status = await omar.page.evaluate(async (src) => (await fetch(src)).status, icon.src);
+    expect(status === 200, `icon missing: ${icon.src}`);
+  }
+  // The service worker takes the page over; a visit to My tasks leaves a copy behind.
+  await omar.page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  await omar.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  await omar.page.waitForFunction(() => !!navigator.serviceWorker.controller, { timeout: 10000 });
+  await omar.page.reload({ waitUntil: 'networkidle0' });
+  await omar.page.waitForSelector('.tasklist__row, .emptystate');
+  const rows = await omar.page.$$eval('.tasklist__row', (r) => r.length);
+  await omar.page.setOfflineMode(true);
+  await omar.page.reload({ waitUntil: 'domcontentloaded' });
+  await omar.page.waitForSelector('.sidebar', { timeout: 15000 });
+  await omar.page.waitForSelector('.offlinebar', { timeout: 5000 });
+  await omar.page.waitForFunction((n) => document.querySelectorAll('.tasklist__row').length === n, { timeout: 8000 }, rows);
+  await shot(omar.page, 'e2e-offline');
+  // Signing out throws the kept data away.
+  await omar.page.setOfflineMode(false);
+  const kept = await omar.page.evaluate(async () => (await caches.keys()).filter((k) => k.endsWith('-data')).length);
+  expect(kept === 1, 'nothing was kept for offline reading');
+  await omar.page.evaluate(async () => {
+    navigator.serviceWorker.controller?.postMessage('signed-out');
+    for (const k of await caches.keys()) if (k.endsWith('-data')) await caches.delete(k);
+  });
+  expect((await omar.page.evaluate(async () => (await caches.keys()).filter((k) => k.endsWith('-data')).length)) === 0, 'offline data survived signing out');
+  await omar.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

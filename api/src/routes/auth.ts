@@ -49,6 +49,36 @@ authRoutes.get('/org', (c) => {
   return c.json(out);
 });
 
+// Installing Tendwell on a phone or a desktop: the browser reads this before
+// anyone signs in, so it carries only what the sign-in page already shows.
+authRoutes.get('/manifest.webmanifest', (c) => {
+  const org = c.get('org');
+  const tr = org.locale === 'tr';
+  const manifest = {
+    id: '/',
+    name: `${org.name} · Tendwell`,
+    short_name: 'Tendwell',
+    description: tr ? 'Müşteriler, görevler ve satış hattı tek yerde.' : 'Customers, tasks and the pipeline in one place.',
+    lang: org.locale,
+    start_url: '/home',
+    scope: '/',
+    display: 'standalone',
+    background_color: '#0d4448',
+    theme_color: '#0d4448',
+    icons: [
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+    shortcuts: [
+      { name: tr ? 'Görevlerim' : 'My tasks', url: '/my' },
+      { name: tr ? 'Gelen kutusu' : 'Inbox', url: '/inbox' },
+      { name: tr ? 'Müşteriler' : 'Customers', url: '/accounts' },
+    ],
+  };
+  return c.body(JSON.stringify(manifest), 200, { 'content-type': 'application/manifest+json; charset=utf-8', 'cache-control': 'public, max-age=3600' });
+});
+
 // The company logo is shown on the sign-in page, so it needs no session.
 authRoutes.get('/logo', async (c) => {
   const logo = (c.get('org').settings as any)?.logo;

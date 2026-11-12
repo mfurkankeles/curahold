@@ -1,0 +1,77 @@
+// Live refresh and installing: the pulse moves only for what a person can
+// see, and the install manifest needs no session.
+import { beforeAll, describe, expect, it } from 'vitest';
+import { Client, login, setup, type Env } from './helpers';
+
+let env: Env;
+let ada: Client;
+let mert: Client;
+let lena: Client;
+const pulse = async (who: Client) => (await who.get('/api/pulse')).json as { tasks: number; records: number; unread: number };
+const tick = () => new Promise((r) => setTimeout(r, 15));
+
+beforeAll(async () => {
+  env = await setup();
+  ada = await login(env, 'acme', 'ada@demo.example');
+  mert = await login(env, 'acme', 'mert@demo.example');
+  lena = await login(env, 'acme', 'lena@demo.example');
+});
+
+describe('the pulse', () => {
+  it('moves when something a person can see changes, and only then', async () => {
+    const start = await pulse(lena);
+    expect(start.tasks).toBeGreaterThan(0);
+    expect(await pulse(lena)).toEqual(start);
+    await tick();
+    // A task on a board Lena can see.
+    const t = (await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Seen by the team' })).json.task;
+    const afterTask = await pulse(lena);
+    expect(afterTask.tasks).toBeGreaterThan(start.tasks);
+    expect(afterTask.unread).toBe(start.unread);
+    await tick();
+    // A comment is a change too, though the task itself did not move.
+    await mert.post(`/api/tasks/${t.id}/comments`, { body: 'A first note' });
+    const afterComment = await pulse(lena);
+    expect(afterComment.tasks).toBeGreaterThan(afterTask.tasks);
+    await tick();
+    // Ada's private board: Lena's number stays where it was; Ada's own moves.
+    const adaBefore = await pulse(ada);
+    await ada.post('/api/tasks', { boardId: env.a.boards.privateBoard, title: 'Only Ada sees this' });
+    expect((await pulse(lena)).tasks).toBe(afterComment.tasks);
+    expect((await pulse(ada)).tasks).toBeGreaterThan(adaBefore.tasks);
+    // Given a task: the bell's number comes with the same answer.
+    await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'For Lena', assigneeIds: [env.a.ids.lena] });
+    expect((await pulse(lena)).unread).toBe(start.unread + 1);
+    // The other company never moves it.
+    const other = await login(env, 'beta', 'mert@demo.example');
+    const otherBefore = await pulse(other);
+    await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Acme only' });
+    expect(await pulse(other)).toEqual(otherBefore);
+    expect((await new Client(env, 'acme').get('/api/pulse')).status).toBe(401);
+  });
+
+  it('follows records too (a deal someone moved)', async () => {
+    const { type } = (await ada.post('/api/record-types', { kind: 'opportunity' })).json;
+    const before = await pulse(lena);
+    await tick();
+    await ada.post('/api/records', { typeId: type.id, accountId: env.a.accounts['Quillfield Retail'], name: 'Add-on seats', fields: { amount: 12000, stage: 'proposal', status: 'open' } });
+    const after = await pulse(lena);
+    expect(after.records).toBeGreaterThan(before.records);
+    expect(after.tasks).toBe(before.tasks);
+  });
+});
+
+describe('installing', () => {
+  it('the manifest carries the company’s name and language, with no session', async () => {
+    const res = await env.app.request('https://acme.tendwell.test/api/manifest.webmanifest');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('application/manifest+json');
+    const m = (await res.json()) as any;
+    expect(m).toMatchObject({ short_name: 'Tendwell', display: 'standalone', start_url: '/home', lang: 'en' });
+    expect(m.name).toBe('Demo Company · Tendwell');
+    expect(m.icons.map((i: any) => i.sizes)).toEqual(['192x192', '512x512', '512x512']);
+    const tr = (await (await env.app.request('https://beta.tendwell.test/api/manifest.webmanifest')).json()) as any;
+    expect(tr.shortcuts[0].name).toBe('Görevlerim');
+    expect((await env.app.request('https://nobody.tendwell.test/api/manifest.webmanifest')).status).toBe(404);
+  });
+});

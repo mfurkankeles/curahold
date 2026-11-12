@@ -36,6 +36,19 @@ Bir kişi aynı anda en fazla iki cihazda açık kalabilir; yönetici bunu 1 ile
 
 > **İpucu:** Ayarların → Cihazlar sayfasından açık oturumlarını görebilir, istemediğini kapatabilirsin.
 
+## Telefona ya da bilgisayara kur
+
+Tendwell bir uygulama gibi kurulabilir; mağaza gerekmez.
+
+- **Android ve bilgisayar (Chrome, Edge):** sol alttaki adına tıkla → **Tendwell’i kur**. Tarayıcının adres çubuğundaki kur simgesi de aynı işi görür.
+- **iPhone ve iPad (Safari):** Paylaş düğmesi → **Ana Ekrana Ekle** → Ekle.
+
+Kurulan uygulama kendi penceresinde açılır; simgeye uzun basınca Görevlerim, Gelen kutusu ve Müşteriler kısayolları çıkar.
+
+**Bağlantı yokken** uygulama yine açılır ve son gördüklerini gösterir: görevlerin, panolar, müşteriler, gelen kutusu. Üstte bir şerit çevrimdışı olduğunu söyler; değişiklikler bağlantı gelene kadar kaydedilmez. Çıkış yaptığında cihazda tutulan bu kopya silinir.
+
+**Canlı yenileme:** sayfa açıkken başkasının yaptığı değişiklik (yeni kart, taşınan görev, yorum, yeni bildirim) yarım dakika içinde kendiliğinden görünür; sayfayı yenilemen gerekmez. Bir şey yazarken ya da kart sürüklerken ekran elinin altından oynamaz.
+
 ## Sonraki adımlar
 
 - [Müşteriler, alanlar ve kayıtlar](/docs/tr/customers/)

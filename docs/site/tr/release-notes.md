@@ -8,6 +8,13 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Uygulama olarak kur, çevrimdışı oku, canlı yenileme
+
+- **Kur:** Tendwell telefona ve bilgisayara uygulama olarak kurulur (Android/Chrome/Edge: adına tıkla → Tendwell’i kur; iPhone: Paylaş → Ana Ekrana Ekle).
+- **Çevrimdışı okuma:** bağlantı yokken uygulama açılır ve son gördüklerini gösterir; çıkış yapınca cihazdaki kopya silinir.
+- **Canlı yenileme:** başkasının eklediği kart, taşıdığı görev, yazdığı yorum ve yeni bildirimler yarım dakika içinde kendiliğinden görünür.
+- Bağlantı koptuğunda hata mesajları artık ne olduğunu söylüyor.
+
 ### Hedefler, değerlendirme ritmi ve dürtmeler
 
 - **Hedefler:** dönem (ay, çeyrek, yıl) ve fırsat türü başına hedef; Raporlar’da ve satış hattının üstünde kazanılan, ağırlıklı tahmin ve eşit tempo aynı çubukta. “Önde / Yolunda / Geride” ve kalan her hafta ne kazanmak gerektiği.

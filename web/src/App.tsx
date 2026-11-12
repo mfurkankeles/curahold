@@ -11,6 +11,7 @@ installDiagnostics();
 import { browserLocale, I18nProvider, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
+import { useLive } from './lib/live';
 import { TASKS_CHANGED } from './lib/shell';
 import { AccountPage, AccountsPage } from './pages/Accounts';
 import { JoinPage, LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
@@ -209,6 +210,10 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
     window.addEventListener(TASKS_CHANGED, bump);
     return () => window.removeEventListener(TASKS_CHANGED, bump);
   }, [bump]);
+  // Someone else's change: only the pages that reload in place follow it (nothing is remounted under a person's hands).
+  const [liveKey, setLiveKey] = useState(0);
+  useLive('tasks', () => setLiveKey((k) => k + 1));
+  const quiet = refreshKey + liveKey;
 
   let page: React.ReactNode = null;
   const b = match('/b/:id', path);
@@ -224,18 +229,18 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/accounts') page = <AccountsPage key={refreshKey} />;
   else if (a) page = <AccountPage id={a.id} key={`${a.id}:${refreshKey}`} />;
   else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : 'board'} refreshKey={refreshKey} />;
-  else if (path === '/calendar') page = <CalendarPage refreshKey={refreshKey} />;
+  else if (path === '/calendar') page = <CalendarPage refreshKey={quiet} />;
   else if (path === '/inbox') page = <InboxPage />;
   else if (path === '/reports') page = <ReportsPage key={refreshKey} />;
   else if (path === '/team') page = <TeamPage refreshKey={refreshKey} />;
-  else if (path === '/timeline') page = <TimelinePage refreshKey={refreshKey} />;
+  else if (path === '/timeline') page = <TimelinePage refreshKey={quiet} />;
   else if (path === '/devices') page = <DevicesPage />;
   else if (path === '/connect-ai') page = <ConnectAiPage />;
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
   else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;
   else if (rec) page = <RecordsPage typeKey={rec.type} key={rec.type} />;
   else if (path === '/home' || pg) page = <HomePage pageId={pg?.id ?? null} key={pg?.id ?? 'home'} />;
-  else page = <MyTasks refreshKey={refreshKey} />;
+  else page = <MyTasks refreshKey={quiet} />;
 
   return (
     <>

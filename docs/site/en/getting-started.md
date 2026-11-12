@@ -36,6 +36,19 @@ A person can stay signed in on two devices at once; an admin can set this betwee
 
 > **Tip:** Your settings → Devices lists where you are signed in, and lets you sign out of any of them.
 
+## Install it on a phone or a computer
+
+Tendwell installs like an app, with no store involved.
+
+- **Android and computers (Chrome, Edge):** click your name at the bottom left → **Install Tendwell**. The install icon in the browser's address bar does the same.
+- **iPhone and iPad (Safari):** the Share button → **Add to Home Screen** → Add.
+
+The installed app opens in its own window; a long press on its icon offers My tasks, Inbox and Customers.
+
+**Without a connection** the app still opens and shows what you last saw: your tasks, boards, customers, the inbox. A strip at the top says you are offline; changes cannot be saved until you are connected. Signing out removes the copy kept on the device.
+
+**Live refresh:** while a page is open, someone else's change (a new card, a moved task, a comment, a new notice) shows up by itself within half a minute; there is no need to reload. Nothing moves under your hands while you are typing or dragging a card.
+
 ## Next
 
 - [Customers, fields and records](/docs/en/customers/)

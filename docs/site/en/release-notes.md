@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Install it, read offline, live refresh
+
+- **Install:** Tendwell installs as an app on phones and computers (Android/Chrome/Edge: click your name → Install Tendwell; iPhone: Share → Add to Home Screen).
+- **Offline reading:** without a connection the app opens and shows what you last saw; signing out removes the copy on the device.
+- **Live refresh:** a card someone else adds, a task they move, a comment they write and new notices show up by themselves within half a minute.
+- When the connection drops, error messages now say so.
+
 ### Targets, a review rhythm and nudges
 
 - **Targets:** a target per period (month, quarter, year) and kind of deal; in Reports and above the pipeline, what is won, the weighted forecast and an even pace share one bar. "Ahead / On track / Behind", and what each remaining week has to bring.

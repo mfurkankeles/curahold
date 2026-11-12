@@ -22,6 +22,7 @@ import { Icon } from '../components/icons';
 import { Tick } from '../components/Tick';
 import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
+import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { parseQuick, type Pickable } from '../lib/quickparse';
 import { setQuery } from '../lib/router';
@@ -63,14 +64,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   useEffect(() => {
     setTasks(null);
     void load();
-    const timer = setInterval(load, 30_000);
-    const onFocus = () => void load();
-    window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('focus', onFocus);
-    };
   }, [load, refreshKey]);
+  // Someone else moved or added a card: the board follows, quietly.
+  useLive('tasks', () => void load());
 
   const doneKeys = useMemo(() => new Set(board?.columns.filter((c) => c.done).map((c) => c.key)), [board]);
   const visible = useMemo(() => (tasks ?? []).filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))), [tasks, filters, me.user.id, doneKeys]);

@@ -6,6 +6,7 @@ import { EmptyState, SkeletonRows } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
 import { Avatar } from '../components/ui';
 import { get, post } from '../lib/api';
+import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -36,6 +37,10 @@ export function InboxPage() {
     setData(null);
     void load();
   }, [load]);
+  const paged = (data?.notifications.length ?? 0) > 40;
+  useLive('unread', (p) => {
+    if (!paged && p.unread !== data?.unread) void load();
+  });
 
   const mark = async (n: Notification, unread: boolean) => {
     setData((d) => (d ? { ...d, unread: Math.max(0, d.unread + (unread ? 1 : -1)), notifications: d.notifications.map((x) => (x.id === n.id ? { ...x, readAt: unread ? null : new Date().toISOString() } : x)) } : d));

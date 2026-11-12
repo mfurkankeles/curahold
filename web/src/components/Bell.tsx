@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Notification } from '../../../shared/src/model';
 import { get, post } from '../lib/api';
+import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { relativeTime } from '../lib/time';
@@ -14,7 +15,7 @@ export function Bell() {
   const [data, setData] = useState<{ notifications: Notification[]; unread: number }>({ notifications: [], unread: 0 });
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  // The number is asked for every minute (one cheap count); the list only when the bell is opened.
+  // The number arrives with the live pulse; the list is asked for only when the bell is opened.
   const load = useCallback(
     () =>
       get<{ notifications: Notification[]; unread: number }>('/notifications?limit=20')
@@ -29,14 +30,12 @@ export function Bell() {
 
   useEffect(() => {
     void count();
-    const id = setInterval(count, 60_000);
-    const onFocus = () => void count();
-    window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('focus', onFocus);
-    };
   }, [count]);
+  // The number comes with the pulse; an open list follows it.
+  useLive('unread', (p) => {
+    setData((d) => ({ ...d, unread: p.unread }));
+    if (open) void load();
+  });
   useEffect(() => {
     if (open) void load();
   }, [open, load]);

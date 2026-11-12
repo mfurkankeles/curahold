@@ -14,6 +14,10 @@ Every query runs under row-level security rules in the database. One company's d
 
 Sessions are bound to the device; a copied cookie does not work on another machine. Going over the device limit signs the oldest session out. See and end your sessions in Your settings → Devices.
 
+## What is kept on the device
+
+So that you can read without a connection, the app keeps a copy of the lists you last saw in the browser's own storage (your tasks, boards, customers, the inbox; not attachments, not settings). The copy stays on that device and in that browser and is sent nowhere. It is removed when you sign out, or at the first connection after your session was ended on the server. On a shared computer, sign out when you are done.
+
 ## Activity log
 
 Sign-ins, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log.

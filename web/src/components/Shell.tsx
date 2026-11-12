@@ -9,6 +9,8 @@ import { useI18n } from '../lib/i18n';
 import { newsUnseen, type NewsAction } from '../lib/news';
 import { navigate, useLocation } from '../lib/router';
 import { ShellCtx, TASKS_CHANGED, currentPageDefaults, useNarrow, type QuickDefaults, type ShellActions } from '../lib/shell';
+import { LIVE, startLive, useLive } from '../lib/live';
+import { forgetOffline, useInstall, useOnline } from '../lib/pwa';
 import { useStore } from '../lib/store';
 import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
@@ -20,7 +22,7 @@ import { QuickAdd } from './QuickAdd';
 import { SearchPalette, useSearchKey } from './Search';
 import { LogTouch, WhatsNew } from './ShellDialogs';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
-import { Avatar, Mark } from './ui';
+import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from './AccountFields';
 import { typeLabel } from '../../../shared/src/records';
 
@@ -30,15 +32,11 @@ function useUnread() {
   useEffect(() => {
     const load = () => void get<{ unread: number }>('/notifications/count').then((r) => setN(r.unread), () => undefined);
     load();
-    const id = setInterval(load, 60_000);
-    window.addEventListener('focus', load);
     window.addEventListener('tw:inbox-changed', load);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('focus', load);
-      window.removeEventListener('tw:inbox-changed', load);
-    };
+    return () => window.removeEventListener('tw:inbox-changed', load);
   }, []);
+  // Someone else's doing: the number arrives with the pulse.
+  useLive('unread', (p) => setN(p.unread));
   return n;
 }
 
@@ -48,11 +46,17 @@ function useMyCounts() {
   useEffect(() => {
     const load = () => void get<{ late: number; today: number }>('/tasks/counts').then(setN, () => undefined);
     load();
-    const id = setInterval(load, 120_000);
+    // Midnight moves "today" without anything changing on the server.
+    const id = setInterval(load, 3_600_000);
     window.addEventListener(TASKS_CHANGED, load);
+    const live = (e: Event) => {
+      if ((e as CustomEvent<{ kinds: string[] }>).detail.kinds.includes('tasks')) load();
+    };
+    window.addEventListener(LIVE, live);
     window.addEventListener('focus', load);
     return () => {
       clearInterval(id);
+      window.removeEventListener(LIVE, live);
       window.removeEventListener(TASKS_CHANGED, load);
       window.removeEventListener('focus', load);
     };
@@ -199,8 +203,14 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   ];
   const signOut = async () => {
     await post('/auth/logout').catch(() => undefined);
+    await forgetOffline();
     location.href = '/login';
   };
+  // Live refresh runs while the frame is on screen.
+  useEffect(() => startLive(), []);
+  const online = useOnline();
+  const app = useInstall();
+  const [installHelp, setInstallHelp] = useState(false);
   const meMenu = (
     <MenuButton
       label={t('menu.me')}
@@ -270,6 +280,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           },
         },
         ...(helpOk ? [{ key: 'help', label: t('menu.help'), icon: 'help' as const, onSelect: () => setHelp('new') }] : []),
+        ...(app.canPrompt ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => void app.install() }] : []),
+        ...(app.byHand ? [{ key: 'install', label: t('pwa.install'), icon: 'download' as const, onSelect: () => setInstallHelp(true) }] : []),
         // The try-it demo has "Start over" in its own bar instead.
         ...(!me.previewBy && !import.meta.env.TW_DEMO ? ['sep' as const, { key: 'out', label: t('auth.signOut'), icon: 'logout' as const, onSelect: signOut }] : []),
       ]}
@@ -415,6 +427,12 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         </nav>
         {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
         <div className="main">
+          {!online && (
+            <div className="offlinebar" role="status">
+              <Icon name="alert" size={16} />
+              <span>{t('pwa.offline')}</span>
+            </div>
+          )}
           {me.previewBy && (
             <div className="previewbar" role="status">
               <span className="previewbar__eye" aria-hidden="true" />
@@ -472,6 +490,15 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         {quick && <QuickAdd defaults={quick} onClose={() => setQuick(null)} />}
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
         {news && <WhatsNew onClose={() => setNews(false)} onAction={runNews} />}
+        {installHelp && (
+          <Dialog title={t('pwa.install')} onClose={() => setInstallHelp(false)} footer={<button className="btn btn--primary" onClick={() => setInstallHelp(false)}>{t('common.close')}</button>}>
+            <ol className="installsteps">
+              <li>{t('pwa.ios1')}</li>
+              <li>{t('pwa.ios2')}</li>
+              <li>{t('pwa.ios3')}</li>
+            </ol>
+          </Dialog>
+        )}
         {touch && <LogTouch accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />}
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
