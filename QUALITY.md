@@ -329,6 +329,10 @@ Görünüm ve gezinme (ürün sahibinin 12 Kasım akşamı isteği):
 | Paneller'e girince ilk grafiği görmek | panel listesi ve "Ekle" denecek 7 hazır şablon: bir yöneticinin eklemesi + 2 tık | 0 tık: 7 hazır panel şirketle birlikte, kendi verisiyle dolu gelir; Paneller en son bakılan paneli açar (testli; ilk açan yönetici olmasa da gelir) |
 | Panelden panele geçmek | listeye dön, seç (2 tık) | üstteki adlardan tek tık |
 | Panel silmek | yalnızca "Paneli düzenle"nin içinde | araç çubuğunda "Sil": çöp kutusuna gider, bildirimden ya da 30 gün içinde geri alınır; silinen hazır panel kendiliğinden geri gelmez, "Panel ekle" artık olmayanları listeler (testli) |
+| Takvim görünümü | yalnızca ay | gün, hafta, ay, yıl; görünüm, gün ve kimin takvimi adreste |
+| Takvimde görünen | yalnızca son tarihli görevler | 6 tür: görev, yapılan toplantı, arama ve değerlendirme, yenileme, zamanı gelen iş değerlendirmesi; her biri kendi rengi ve ikonuyla, tek tıkla açılıp kapanır |
+| Başkasının takvimi | yoktu ("Herkes" ya da "Benimkiler") | yeni yetki "ekip arkadaşlarının takvimini görme": yönetici ve ekip lideri rollerine verildi, diğer rollere Roller ekranından verilebilir; sahibi tek kişiyi ya da bütün ekibi seçer (ekip lideri kendi ekiplerini, yönetici herkesi) |
+| Yetkinin açtığı yeni veri | — | 0: yalnızca soranın zaten görebildiğini daraltır. Yetkisiz istek 403, erişim dışındaki kişi ya da ekip 404, başka şirketin kişisi 404, özel pano görevi görünmez (10 test, `tests/calendar.test.ts`) |
 
 Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn → 88 sn (404 → 420 test, 41 dosya) · tarayıcı 189 sn →
 189 sn (36 → 37 senaryo + belgeler) · demo 45 sn → 43 sn. Birim + tarayıcı 5,5 dk → 4,6 dk (demo testiyle

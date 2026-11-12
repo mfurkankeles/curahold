@@ -10,7 +10,7 @@ import type { Db, Q } from '../db';
 
 export const DEFAULT_ROLES: { key: string; perms: Perm[] }[] = [
   { key: 'admin', perms: [...PERMS] },
-  { key: 'manager', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage'] },
+  { key: 'manager', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage', 'calendar.view_team'] },
   // Everyone sees every customer until an administrator narrows a role.
   { key: 'member', perms: ['accounts.view_all'] },
   { key: 'viewer', perms: ['accounts.view_all'] },

@@ -10,6 +10,7 @@ summary: What is new and what changed.
 
 ### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
 
+- **A calendar by day, week, month and year, and for a team:** it now also shows meetings, calls, renewals and business reviews, and a role that may see teammates' calendars (administrators and team leads) can open one person's or a whole team's.
 - **Dashboards arrive filled:** the seven ready-made dashboards are there the first time you open Dashboards, drawn from your own data; the names along the top switch between them, and any of them can be deleted (and taken back from the trash).
 - **A way back everywhere:** a screen you reached from another one shows where you came from above its title; one click returns there. Renewals, business reviews and products have their own titles and entries in the menu.
 - **CuraAI in the corner:** the helper that answers from the docs now sits at the bottom right of every screen and keeps its conversation.

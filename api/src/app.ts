@@ -25,6 +25,7 @@ import { syncRoutes } from './routes/sync';
 import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
+import { calendarRoutes } from './routes/calendar';
 import { connectCallback_, connectionRoutes } from './routes/connections';
 import { hookRoutes } from './routes/hooks';
 import { setupRoutes } from './routes/setup';
@@ -297,6 +298,7 @@ export function createApp(deps: Deps) {
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);
   app.route('/api', trashRoutes);
+  app.route('/api', calendarRoutes);
   app.route('/api/setup', setupRoutes);
   app.route('/api/admin', adminRoutes);
 

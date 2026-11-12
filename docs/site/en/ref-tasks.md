@@ -25,6 +25,8 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /task-imports/:id/undo` | Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`). |
 | `PUT /boards/:id/portal` | Opens a board to customers in the portal, or closes it (an administrator's decision). |
 | `GET /tasks` | Tasks across boards. |
+| `GET /calendar` | What falls on which day between `from` and `to` (at most 430 days): tasks by due date, meetings, calls and reviews that were held, renewals, and business reviews falling due. |
+| `GET /calendars` | Whose calendars you may open besides your own: the teams and people that can be passed as `who`. |
 | `GET /tasks/counts` | How many of the person's open tasks are overdue and how many are due today (by the company's clock). |
 | `GET /tasks/similar` | Open tasks that look like one about to be added (same words, same customer or board), to avoid doubles. |
 | `POST /tasks` | Adds a task. |
@@ -165,6 +167,16 @@ Opens a board to customers in the portal, or closes it (an administrator's decis
 Tasks across boards. `assignee` takes a person id or `me`; `from` and `to` bound the due date; `board` narrows to one board.
 
 **Query:** `assignee`, `from`, `to`, `span`, `board`
+
+### `GET /calendar`
+
+What falls on which day between `from` and `to` (at most 430 days): tasks by due date, meetings, calls and reviews that were held, renewals, and business reviews falling due. `who` is `me` (the default), `all` (everything you can see), `p:<person id>` or `t:<team id>`; the last two need the permission to see teammates' calendars and show only what you may already see.
+
+**Query:** `from`, `to`, `who`
+
+### `GET /calendars`
+
+Whose calendars you may open besides your own: the teams and people that can be passed as `who`. Empty without the permission.
 
 ### `GET /tasks/counts`
 

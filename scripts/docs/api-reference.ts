@@ -142,7 +142,7 @@ export function pages(all = readRoutes()): { file: string; lang: Lang; content: 
 /** The shapes the API answers with, lifted from the shared types the server itself uses. */
 function objectsPage(lang: Lang): string {
   const sources: [file: string, names: string[]][] = [
-    ['shared/src/model.ts', ['Account', 'AccountField', 'Board', 'Column', 'Task', 'TaskDetail', 'Comment', 'FileMeta', 'TimeEntry', 'Person', 'TrashItem', 'TrashRestored', 'ApiError']],
+    ['shared/src/model.ts', ['Account', 'AccountField', 'Board', 'Column', 'Task', 'TaskDetail', 'Comment', 'FileMeta', 'TimeEntry', 'Person', 'TrashItem', 'TrashRestored', 'CalendarItem', 'CalendarReach', 'ApiError']],
     ['shared/src/records.ts', ['RecordType', 'AppRecord', 'RecordDetail']],
     ['shared/src/timeline.ts', ['Activity', 'Meeting']],
   ];

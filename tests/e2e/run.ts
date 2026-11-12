@@ -1152,6 +1152,40 @@ await step('renewals and products are places of their own, and a customer opened
   await zey.page.browserContext().close();
 });
 
+await step('the calendar: day, week, month and year, and a teammate’s days for a team lead', async () => {
+  const lead = await newPage(s.browser);
+  await signIn(lead.page, s.origin, 'mert@demo.example');
+  await lead.page.goto(`${s.origin}/calendar`, { waitUntil: 'networkidle0' });
+  await lead.page.waitForSelector('.cal .cal__day');
+  expect((await lead.page.$$('.cal .cal__day')).length === 42, 'the month does not show six weeks');
+  await (await byText(lead.page, '.seg--views button', 'Hafta')).click();
+  await lead.page.waitForSelector('.calweek__day');
+  expect((await lead.page.$$('.calweek__day')).length === 7 && lead.page.url().includes('view=week'), 'the week view is not seven days with its own address');
+  // A team lead may open a teammate's days; the line under the title says whose they are.
+  const options = await lead.page.$$eval('.cal-who select option', (xs) => xs.map((x) => ({ value: (x as HTMLOptionElement).value, label: x.textContent ?? '' })));
+  const zeynep = options.find((o) => o.label === 'Zeynep Tunç');
+  expect(!!zeynep && options.some((o) => o.value.startsWith('t:')), `no teammate or team to pick: ${JSON.stringify(options)}`);
+  await lead.page.select('.cal-who select', zeynep!.value);
+  await lead.page.waitForFunction(() => document.querySelector('.cal-top .topbar__sub')?.textContent === 'Zeynep Tunç');
+  await shot(lead.page, 'p7-05-calendar-week');
+  await (await byText(lead.page, '.seg--views button', 'Yıl')).click();
+  await lead.page.waitForSelector('.calyear__month');
+  expect((await lead.page.$$('.calyear__month')).length === 12, 'the year does not show twelve months');
+  // A day in the year opens that day.
+  await lead.page.click('.calyear__month[data-now] .calyear__day[data-today]');
+  await lead.page.waitForSelector('.calday');
+  expect(lead.page.url().includes('view=day'), 'a day in the year did not open the day');
+  expect(lead.errors.length === 0, lead.errors.join(' | '));
+  await lead.page.browserContext().close();
+  // A member without the permission has only "mine" and "everyone".
+  const member = await newPage(s.browser);
+  await signIn(member.page, s.origin, 'lena@demo.example');
+  await member.page.goto(`${s.origin}/calendar`, { waitUntil: 'networkidle0' });
+  await member.page.waitForSelector('.cal .cal__day');
+  expect((await member.page.$('.cal-who')) === null, 'someone without the permission can pick a person');
+  await member.page.browserContext().close();
+});
+
 await step('a subtask opened from its task has a way back to it', async () => {
   const lena = await newPage(s.browser);
   await signIn(lena.page, s.origin, 'lena@demo.example');

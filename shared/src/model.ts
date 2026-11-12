@@ -16,6 +16,7 @@ export const PERMS = [
   'accounts.view_team',
   'automations.manage',
   'connections.manage',
+  'calendar.view_team',
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -23,7 +24,7 @@ export type Perm = (typeof PERMS)[number];
 export const PERM_GROUPS: { key: string; perms: Perm[] }[] = [
   { key: 'company', perms: ['org.manage', 'audit.view', 'privacy.manage'] },
   { key: 'people', perms: ['users.manage', 'teams.manage'] },
-  { key: 'work', perms: ['boards.view_all', 'boards.manage_all', 'tasks.delete_any'] },
+  { key: 'work', perms: ['boards.view_all', 'boards.manage_all', 'tasks.delete_any', 'calendar.view_team'] },
   { key: 'accounts', perms: ['accounts.manage'] },
   { key: 'connect', perms: ['automations.manage', 'connections.manage'] },
 ];
@@ -34,7 +35,7 @@ export const ADMIN_PERMS: Perm[] = ['org.manage', 'users.manage', 'teams.manage'
 /** Starting points offered when an administrator adds a role. */
 export const ROLE_PRESETS: { key: string; perms: Perm[] }[] = [
   { key: 'blank', perms: ['accounts.view_all'] },
-  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage'] },
+  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage', 'calendar.view_team'] },
   { key: 'ops', perms: ['accounts.manage', 'accounts.view_all', 'automations.manage', 'connections.manage'] },
   { key: 'people', perms: ['users.manage', 'teams.manage', 'accounts.view_all'] },
   { key: 'observer', perms: ['boards.view_all', 'audit.view', 'accounts.view_all'] },
@@ -675,3 +676,41 @@ export interface ApiError {
 
 // Mentions are stored in comment text as @[Name](uuid).
 export const MENTION_RE = /@\[([^\]]{1,80})\]\(([0-9a-f-]{36})\)/g;
+
+// ------------------------------------------------------------------ calendar
+
+/** What can sit on a day: a task due, something held with a customer, a renewal, a business review falling due. */
+export const CALENDAR_KINDS = ['task', 'meeting', 'call', 'review', 'renewal', 'reviewDue'] as const;
+export type CalendarKind = (typeof CALENDAR_KINDS)[number];
+
+export interface CalendarItem {
+  /** Unique within an answer: the kind and the thing it is about. */
+  id: string;
+  kind: CalendarKind;
+  /** The day, where the company is (YYYY-MM-DD). */
+  date: string;
+  /** The clock time for something that was held (HH:MM), else null. */
+  time: string | null;
+  title: string;
+  /** Whose it is: assignees, the people who were there, the customer's owner. */
+  personIds: string[];
+  accountId?: string | null;
+  accountName?: string | null;
+  /** For a task: what opening it needs, and whether it is finished. */
+  taskId?: string;
+  boardId?: string;
+  status?: string;
+  done?: boolean;
+  priority?: string | null;
+  /** For something held: how long it took. */
+  minutes?: number | null;
+}
+
+/** Whose calendars someone may open besides their own. */
+export interface CalendarReach {
+  can: boolean;
+  /** Everyone in the company (an administrator), not only teammates. */
+  everyone: boolean;
+  teams: { id: string; name: string; memberIds: string[] }[];
+  personIds: string[];
+}

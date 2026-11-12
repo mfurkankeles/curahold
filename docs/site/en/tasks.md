@@ -71,6 +71,14 @@ The up-arrow button at the top of a board (**Import tasks from a file**) takes t
 
 Up to 5,000 rows at a time.
 
+## The calendar
+
+**Calendar** shows what falls on which day: tasks by their due date, meetings, calls and reviews that were held, renewals, and business reviews falling due. The chips above it turn each kind on or off.
+
+- **Day, Week, Month, Year:** the switch at the top. A day lists everything on it with the customer and who it belongs to; the year shows twelve small months, darker where more falls. Clicking a day number opens that day.
+- **Whose calendar:** yours, or everyone you can see. Someone whose role may *see teammates' calendars* (administrators and team leads to begin with) also picks one person or a whole team. That narrows what they can already see; it shows nothing new, so a private board stays private.
+- The view, the day and whose calendar it is are in the address, so a link opens the same thing.
+
 ## Archive
 
 Finished tasks move to the board's **Archive** by themselves once the board has kept them long enough (90 days by default; 30–365 days or "Always" in the board's settings). A board that has been in use for years still opens at once. Archived tasks keep counting in reports; search them in the **Archive** view beside Board / List and put one back with **Bring back**. A task you bring back stays on the board for the same number of days again. Tasks you archive by hand from the list view are here too.

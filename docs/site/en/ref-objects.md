@@ -251,6 +251,45 @@ interface TrashRestored {
 }
 ```
 
+## CalendarItem
+
+```ts
+interface CalendarItem {
+  /** Unique within an answer: the kind and the thing it is about. */
+  id: string;
+  kind: CalendarKind;
+  /** The day, where the company is (YYYY-MM-DD). */
+  date: string;
+  /** The clock time for something that was held (HH:MM), else null. */
+  time: string | null;
+  title: string;
+  /** Whose it is: assignees, the people who were there, the customer's owner. */
+  personIds: string[];
+  accountId?: string | null;
+  accountName?: string | null;
+  /** For a task: what opening it needs, and whether it is finished. */
+  taskId?: string;
+  boardId?: string;
+  status?: string;
+  done?: boolean;
+  priority?: string | null;
+  /** For something held: how long it took. */
+  minutes?: number | null;
+}
+```
+
+## CalendarReach
+
+```ts
+interface CalendarReach {
+  can: boolean;
+  /** Everyone in the company (an administrator), not only teammates. */
+  everyone: boolean;
+  teams: { id: string; name: string; memberIds: string[] }[];
+  personIds: string[];
+}
+```
+
 ## ApiError
 
 ```ts

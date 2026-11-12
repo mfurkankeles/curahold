@@ -25,6 +25,8 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`). |
 | `PUT /boards/:id/portal` | Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı). |
 | `GET /tasks` | Panolar genelinde görevler. |
+| `GET /calendar` | `from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. |
+| `GET /calendars` | Kendininkinden başka kimin takvimini açabileceğin: `who` olarak verilebilecek ekipler ve kişiler. |
 | `GET /tasks/counts` | Kişinin açık görevlerinden kaçı gecikmiş, kaçı bugün bitiyor (şirketin saatine göre). |
 | `GET /tasks/similar` | Eklenmek üzere olana benzeyen açık görevler (aynı kelimeler, aynı müşteri ya da pano); çift kaydı önlemek için. |
 | `POST /tasks` | Görev ekler. |
@@ -165,6 +167,16 @@ Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı).
 Panolar genelinde görevler. `assignee` bir kişi kimliği ya da `me` alır; `from` ve `to` bitiş tarihini sınırlar; `board` tek panoya daraltır.
 
 **Sorgu:** `assignee`, `from`, `to`, `span`, `board`
+
+### `GET /calendar`
+
+`from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. `who`: `me` (varsayılan), `all` (görebildiğin her şey), `p:<kişi kimliği>` ya da `t:<ekip kimliği>`; son ikisi ekip arkadaşlarının takvimini görme yetkisi ister ve yalnızca zaten görebildiğini gösterir.
+
+**Sorgu:** `from`, `to`, `who`
+
+### `GET /calendars`
+
+Kendininkinden başka kimin takvimini açabileceğin: `who` olarak verilebilecek ekipler ve kişiler. Yetki yoksa boştur.
 
 ### `GET /tasks/counts`
 

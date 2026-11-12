@@ -252,6 +252,29 @@ if (want('dash')) {
   await ada.page.keyboard.press('Escape');
 }
 
+if (want('cal')) {
+  // The calendar as an administrator: month, a team's week, a day, the year.
+  await theme(ada.page, 'light');
+  await go(ada.page, '/calendar?view=month&who=all');
+  await pause(700);
+  await shot(ada.page, 'look-light-cal1-month');
+  const team = await ada.page.$eval('.cal-who select optgroup option', (o) => (o as HTMLOptionElement).value).catch(() => 'all');
+  await go(ada.page, `/calendar?view=week&who=${team}`);
+  await pause(700);
+  await shot(ada.page, 'look-light-cal2-week');
+  await go(ada.page, '/calendar?view=day&who=all');
+  await pause(700);
+  await shot(ada.page, 'look-light-cal3-day');
+  await go(ada.page, '/calendar?view=year&who=all');
+  await pause(900);
+  await shot(ada.page, 'look-light-cal4-year');
+  await theme(ada.page, 'dark');
+  await go(ada.page, `/calendar?view=week&who=${team}`);
+  await pause(700);
+  await shot(ada.page, 'look-dark-cal2-week');
+  await theme(ada.page, 'light');
+}
+
 if (want('settings')) {
   for (const mode of ['light', 'dark'] as const) {
     await theme(ada.page, mode);

@@ -10,6 +10,7 @@ summary: Neler yeni, neler değişti.
 
 ### Playbook’lar, kendiliğinden başlayan yenilemeler, para birimleri; raporlar ile paneller ayrı
 
+- **Gün, hafta, ay ve yıl takvimi; ekip takvimi:** takvim artık toplantıları, aramaları, yenilemeleri ve iş değerlendirmelerini de gösterir; ekip arkadaşlarının takvimini görme yetkisi olan rol (yöneticiler ve ekip liderleri) tek bir kişinin ya da bütün bir ekibin takvimini açar.
 - **Paneller dolu gelir:** yedi hazır panel, Paneller'i ilk açtığında kendi verinle çizilmiş olarak oradadır; üstteki adlar birinden ötekine geçirir, hepsi silinebilir (ve çöp kutusundan geri alınabilir).
 - **Her yerde geri dönüş:** başka bir ekrandan açtığın ekran, başlığının üstünde nereden geldiğini gösterir; tek tıkla oraya dönersin. Yenilemeler, iş değerlendirmeleri ve ürünlerin kendi başlığı ve menüde kendi satırı var.
 - **CuraAI köşede:** belgelerden cevap veren yardımcı artık her ekranın sağ altında durur ve konuşmayı saklar.

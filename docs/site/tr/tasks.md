@@ -71,6 +71,14 @@ Panonun üstündeki yukarı ok düğmesi (**Dosyadan görev aktar**) eski aracı
 
 Bir seferde 5.000 satıra kadar aktarılır.
 
+## Takvim
+
+**Takvim** hangi güne ne düştüğünü gösterir: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler ve zamanı gelen iş değerlendirmeleri. Üstündeki etiketler her türü açıp kapatır.
+
+- **Gün, Hafta, Ay, Yıl:** üstteki seçici. Gün, o güne düşen her şeyi müşterisi ve kime ait olduğuyla listeler; yıl on iki küçük ay gösterir, yoğun günler daha koyudur. Gün numarasına tıklamak o günü açar.
+- **Kimin takvimi:** seninki ya da görebildiğin herkesinki. Rolü *ekip arkadaşlarının takvimini görmeye* izin veren kişi (başlangıçta yöneticiler ve ekip liderleri) tek bir kişiyi ya da bütün bir ekibi de seçer. Bu, zaten görebildiğini daraltır; yeni bir şey göstermez, özel pano özel kalır.
+- Görünüm, gün ve kimin takvimi olduğu adrestedir; bağlantı aynı şeyi açar.
+
 ## Arşiv
 
 Tamamlanan görevler, panonun tuttuğu süre dolunca (varsayılan 90 gün; pano ayarlarından 30–365 gün ya da “Her zaman”) kendiliğinden panonun **Arşiv**’ine taşınır. Böylece yıllardır kullanılan bir pano da hemen açılır. Arşivdeki görevler raporlarda sayılmaya devam eder; Pano / Liste’nin yanındaki **Arşiv** görünümünden aranır ve **Geri getir** ile panoya döner. Geri getirilen görev aynı süre boyunca panoda kalır. Liste görünümünden elle arşivlediklerin de buradadır.
