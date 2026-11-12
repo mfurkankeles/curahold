@@ -17,6 +17,7 @@ import {
   type CardScope,
   type Page,
 } from '../../../shared/src/pages';
+import { CHARTS, DASHBOARD_TEMPLATES, libraryReport, type ReportDef } from '../../../shared/src/reports';
 import { pick } from '../../../shared/src/templates';
 import { nowOf, requirePerm, run, type AppEnv, type AuthCtx, type C } from '../context';
 import type { Q, Row } from '../db';
@@ -25,6 +26,8 @@ import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { canSeeField, defsFor, type Viewer } from '../lib/fieldAccess';
 import { iso } from '../lib/mappers';
+import { loadCatalog, runReport, type Catalog } from '../lib/reportEngine';
+import { engineCtx } from './builder';
 import { body, param, uuid } from '../lib/validate';
 
 export const pageRoutes = new Hono<AppEnv>();
@@ -42,6 +45,9 @@ const cardSchema = z.object({
   field: fieldKey.optional(),
   options: z.array(z.string().regex(/^[a-z0-9_]{1,40}$/)).max(20).optional(),
   text: z.string().max(2000).optional(),
+  reportId: uuid.optional(),
+  report: z.string().regex(/^[a-z0-9_]{1,40}$/).optional(),
+  chart: z.enum(CHARTS).optional(),
 });
 const cardsSchema = z
   .array(cardSchema)
@@ -129,6 +135,25 @@ pageRoutes.post('/pages', async (c) => {
   return c.json({ page: toPage(row) }, 201);
 });
 
+/** A ready-made dashboard, added as a page of the company's own (to change as they like). */
+pageRoutes.post('/pages/from-template', async (c) => {
+  requirePerm(c, 'org.manage');
+  const input = await body(c, z.object({ template: z.string().max(40), name: z.string().trim().min(1).max(80).optional() }));
+  const tpl = DASHBOARD_TEMPLATES.find((t) => t.key === input.template);
+  if (!tpl) return fail('not_found');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const cards = tpl.cards.map((k, i) => ('report' in k ? { id: `c${i + 1}`, type: 'report', size: k.size, report: k.report, ...(k.chart ? { chart: k.chart } : {}) } : { id: `c${i + 1}`, ...k }));
+  const name = input.name ?? pick(tpl.name, c.get('locale'));
+  const row = await run(c, async (q) => {
+    const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages');
+    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by) values ($1, $2, $3, $4, $5) returning *`, [org.id, name, JSON.stringify(cards), n, auth.userId]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'page.created', entity: 'page', entityId: r.id, meta: { name, template: tpl.key } });
+    return r;
+  });
+  return c.json({ page: toPage(row) }, 201);
+});
+
 pageRoutes.patch('/pages/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
@@ -209,6 +234,9 @@ interface Ctx {
   today: string;
   all: AccountField[];
   seen: AccountField[];
+  c: C;
+  /** What reports can be made from, loaded once for the page. */
+  cat?: Catalog;
 }
 
 /** The field a card reads: the one chosen, or a sensible guess among those this person can see. */
@@ -252,6 +280,7 @@ async function cardsData(c: C, q: Q, cards: Card[]): Promise<Record<string, Card
     today: localDate(nowOf(c.get('deps')), org.timezone || 'UTC'),
     all,
     seen: defsFor(all, auth),
+    c,
   };
   const out: Record<string, CardData> = {};
   for (const card of cards) {
@@ -276,6 +305,27 @@ async function cardData(ctx: Ctx, card: Card): Promise<CardData> {
   switch (card.type) {
     case 'note':
       return { kind: 'note', text: card.text ?? '' };
+
+    case 'report': {
+      let def: ReportDef;
+      let name: string;
+      if (card.reportId) {
+        // A report its maker kept to themselves (or deleted) is not there for this person.
+        const [r] = await q.query<{ name: string; def: ReportDef }>('select name, def from reports where id = $1', [card.reportId]);
+        if (!r) return { kind: 'missing', need: 'report' };
+        def = r.def;
+        name = r.name;
+      } else {
+        const lib = libraryReport(card.report ?? '');
+        if (!lib) return { kind: 'missing', need: 'report' };
+        def = lib.def;
+        name = pick(lib.name, ctx.locale);
+      }
+      const ectx = engineCtx(ctx.c, q);
+      ctx.cat ??= await loadCatalog(ectx);
+      const result = await runReport(ectx, ctx.cat, def);
+      return { kind: 'report', name, chart: card.chart ?? def.chart, source: def.source, reportId: card.reportId ?? null, library: card.reportId ? null : (card.report ?? null), result };
+    }
 
     case 'my_tasks': {
       const rows = await q.query(

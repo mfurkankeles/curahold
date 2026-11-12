@@ -1,6 +1,7 @@
 // Where the team talks: chat apps with buttons (Slack, Teams, Google Chat)
 // and one-way channel posts for everything else. Used by the setup wizard
 // and by Settings → Connections.
+import { DemoConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { Connection, ProviderInfo } from '../../../shared/src/model';
@@ -159,6 +160,11 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                   <a className="btn btn--primary btn--small" href={`/api/connect/${p.id}/start${back === 'setup' ? '?back=setup' : ''}`}>
                     {t('conn.connect', { app: PROVIDER_NAMES[p.id] })}
                   </a>
+                </>
+              ) : IN_DEMO ? (
+                <>
+                  <p className="field__hint tile__line">{t(`conn.what.${p.id}` as MessageKey)}</p>
+                  <DemoConnect app={PROVIDER_NAMES[p.id]} />
                 </>
               ) : (
                 <p className="field__hint tile__line">{t('conn.notOnServer')}</p>

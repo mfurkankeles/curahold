@@ -1,0 +1,80 @@
+/* Motion. Three things move, and nothing else:
+   a page arriving, figures and charts filling in as their data lands,
+   and whatever answers a hand (a press, a tick, a card picked up).
+   Everything here is switched off by "reduce motion" (see styles.css). */
+
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes grow-w { from { width: 0; } }
+@keyframes grow-h { from { height: 0; } }
+@keyframes grow-flex { from { flex-grow: 0; } }
+@keyframes num-in { from { opacity: 0; transform: translateY(35%); filter: blur(3px); } }
+@keyframes wipe { from { clip-path: inset(-10% 100% -10% 0); } to { clip-path: inset(-10% -2% -10% 0); } }
+@keyframes sweep { from { stroke-dasharray: 0 999; } }
+@keyframes pop-dot { from { opacity: 0; scale: .2; } }
+
+/* A page arriving: the heading first, the body a beat later. */
+.main > .topbar { animation: fade-in .28s ease backwards; }
+.main > .page, .main > .tabs { animation: page-in .36s var(--ease) backwards; }
+
+/* Tiles and cards land one after another, left to right. */
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > * { animation: rise-in .44s var(--ease) backwards; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(2) { animation-delay: .04s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(3) { animation-delay: .08s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(4) { animation-delay: .12s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(5) { animation-delay: .16s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(6) { animation-delay: .2s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(n + 7) { animation-delay: .24s; }
+.panes--edit > * { animation: none; }
+
+/* Figures: the big number settles into place. */
+.stat__value, .pane__big, .kpi__value { animation: num-in .5s var(--ease) backwards; animation-delay: .1s; }
+
+/* Charts fill in: bars grow from their baseline, lines draw, rings sweep. */
+.barrows__fill, .target__won, .target__open, .hbar__fill { animation: grow-w .8s var(--ease) backwards; animation-delay: .15s; }
+.barrows li:nth-child(2) .barrows__fill, .hbar:nth-child(2) .hbar__fill { animation-delay: .2s; }
+.barrows li:nth-child(3) .barrows__fill, .hbar:nth-child(3) .hbar__fill { animation-delay: .25s; }
+.barrows li:nth-child(4) .barrows__fill, .hbar:nth-child(4) .hbar__fill { animation-delay: .3s; }
+.barrows li:nth-child(5) .barrows__fill, .hbar:nth-child(5) .hbar__fill { animation-delay: .35s; }
+.barrows li:nth-child(n + 6) .barrows__fill, .hbar:nth-child(n + 6) .hbar__fill { animation-delay: .4s; }
+.chart__bar, .vbar__fill { animation: grow-h .7s var(--ease) backwards; animation-delay: calc(.1s + var(--i, 0) * 28ms); }
+.chart__bar b, .vbar__n { animation: fade-in .3s ease backwards; animation-delay: calc(.6s + var(--i, 0) * 28ms); }
+.healthbar span { animation: grow-flex .8s var(--ease) backwards; animation-delay: .15s; }
+/* A line is drawn left to right (a wipe, so the stroke stays crisp at any width). */
+.linechart__plot svg { animation: wipe 1s var(--ease) backwards; animation-delay: .15s; }
+.linechart__dot { animation: pop-dot .3s var(--ease) backwards; animation-delay: calc(.35s + var(--i, 0) * 35ms); }
+.donut__arc { animation: sweep 1s var(--ease) backwards; animation-delay: calc(.1s + var(--i, 0) * 90ms); }
+
+/* A hand on the page. */
+.btn { transition: background-color .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease, filter .12s ease; }
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn--primary { background: var(--grad, var(--tend)); background-origin: border-box; }
+.btn--primary:hover { background: var(--grad, var(--tend-ink)); filter: brightness(1.08); }
+.sidebar__new { transition: transform .08s ease, filter .12s ease, box-shadow .12s ease; }
+.sidebar__new:active { transform: scale(.98); }
+.navlink .icon { transition: transform .16s var(--ease); }
+.navlink:hover .icon { transform: translateX(1px) scale(1.06); }
+
+/* Things you can open lift a little under the pointer. */
+:is(.acard, .dealcard, .card, .tile, .gallery__item, .rcard) { transition: transform .16s var(--ease), box-shadow .16s var(--ease), border-color .16s ease; }
+@media (hover: hover) {
+  :is(.acard, .dealcard, .tile, .gallery__item, .rcard):hover { transform: translateY(-2px); box-shadow: var(--shadow-1); }
+  .board .card:hover { box-shadow: var(--shadow-1); }
+}
+
+/* A task finished: the tick pops and throws a few sparks. */
+.tick { position: relative; }
+.tick[data-pop]::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
+  pointer-events: none; animation: sparks .6s ease-out forwards;
+}
+@keyframes sparks {
+  0% { opacity: 1; box-shadow: 0 0 0 0 var(--done), 0 0 0 0 var(--tend), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--tend), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--tend); }
+  100% { opacity: 0; box-shadow: 0 -20px 0 0 var(--done), 15px -14px 0 0 var(--tend), 21px 0 0 0 var(--soon), 15px 14px 0 0 var(--done), 0 20px 0 0 var(--tend), -15px 14px 0 0 var(--soon), -21px 0 0 0 var(--done), -15px -14px 0 0 var(--tend); }
+}
+
+/* Rows that are links: the arrow of attention, not a jump. */
+.rowlink, .table tbody tr { transition: background-color .12s ease; }
+
+/* The active page in the sidebar slides its marker in. */
+.navlink[aria-current='page'] { animation: nav-on .22s var(--ease); }
+@keyframes nav-on { from { transform: scale(.97); opacity: .6; } }

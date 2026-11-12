@@ -225,6 +225,17 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
       <div className="sheet">
         <h2 className="sheet__title">{t('settings.company.vocabulary')}</h2>
         <p className="sheet__hint">{t('settings.company.vocabularyHint')}</p>
+        <div className="field" style={{ marginBottom: 14 }}>
+          <span className="field__label">{t('settings.company.vocabularyPick')}</span>
+          <div className="rb-chips">
+            {VOCAB.map((v) => (
+              <button key={v.en.one} type="button" className="rb-chip" aria-pressed={terms.en.one === v.en.one && terms.tr.one === v.tr.one} onClick={() => setTerms({ en: { ...v.en }, tr: { ...v.tr } })}>
+                {v[locale].one}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="field__hint" style={{ margin: '0 0 8px' }}>{t('settings.company.vocabularyOwn')}</p>
         <div className="form__row">
           {word('en', 'one', `English, ${t('settings.company.singular').toLocaleLowerCase()}`)}
           {word('en', 'other', `English, ${t('settings.company.plural').toLocaleLowerCase()}`)}
@@ -238,6 +249,17 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
     </form>
   );
 }
+
+/** What companies most often call the organisations they look after: one click fills all four words. */
+const VOCAB: { en: { one: string; other: string }; tr: { one: string; other: string } }[] = [
+  { en: { one: 'Customer', other: 'Customers' }, tr: { one: 'Müşteri', other: 'Müşteriler' } },
+  { en: { one: 'Partner', other: 'Partners' }, tr: { one: 'Partner', other: 'Partnerler' } },
+  { en: { one: 'Account', other: 'Accounts' }, tr: { one: 'Hesap', other: 'Hesaplar' } },
+  { en: { one: 'Dealer', other: 'Dealers' }, tr: { one: 'Bayi', other: 'Bayiler' } },
+  { en: { one: 'Brand', other: 'Brands' }, tr: { one: 'Marka', other: 'Markalar' } },
+  { en: { one: 'Member', other: 'Members' }, tr: { one: 'Üye', other: 'Üyeler' } },
+  { en: { one: 'Company', other: 'Companies' }, tr: { one: 'Firma', other: 'Firmalar' } },
+];
 
 function PeopleTab() {
   const { t } = useI18n();

@@ -20,7 +20,7 @@ const OPEN = `t.archived_at is null and b.archived_at is null
 function money(n: number | null, currency: string, locale: string) {
   if (n === null) return null;
   try {
-    return new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { style: 'currency', currencyDisplay: 'narrowSymbol', currency, maximumFractionDigits: 0 }).format(n);
   } catch {
     return String(n);
   }

@@ -1,10 +1,12 @@
 // Entry point of the try-it-now demo (see vite.demo.config.ts).
 import './memory';
 import '../styles.css';
+import '../reports.css';
+import '../motion.css';
 import './demo.css';
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { storedLocale } from '../lib/i18n';
+import { browserLocale, storedLocale } from '../lib/i18n';
 import { startTheme } from '../lib/theme';
 import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
@@ -41,6 +43,7 @@ const TEXT = {
       'Görevlerim’de bir görevin önündeki yuvarlağa tıkla: tamamlanır; alttaki bildirimden geri al.',
       'Müşteriler → Kartlar: hangi müşterinin neden ilgi beklediğini gör; Yenilemeler ve Ürünler görünümlerine de bak.',
       'Müşteriler → Fırsatlar: bir fırsatı başka aşamaya sürükle ya da Kazanıldı’ya bırak; üstteki tahmin hemen değişir.',
+      'Raporlar → Raporlar: “Yeni rapor” ile kendi raporunu kur (ör. Fırsatlar → Durum: Açık → Aşamaya göre grupla → Tutar toplamı → Sütun), ya da hazır bir raporu açıp değiştir. Raporlar → Paneller: hazır bir paneli “Ekle” ile sayfana al; ana sayfadaki Satış hunisi ve Ekip performansı sekmeleri böyle eklendi.',
       'İçgörü → Raporlar ve Ekip: çeyrek hedefinin gidişatı, işlerin durumu, kimin ne taşıdığı ve bir kişi için 1:1 hazırlığı. İş → Zaman çizelgesi haftaları gösterir.',
       'Müşteriler → Değerlendirmeler: iş değerlendirmesi geciken ve yaklaşan müşteriler. “Yapıldı” ile kaydet; sıradaki tarih ilerler. Ritim ve hedefler Ayarlar → Hedefler ve ritim’de.',
       'CS — Genel panosunda bir görev aç: Takip et, Görev bağla (“şunu bekliyor”), süre ekle, Kontrol listesi ve en altta Geçmiş. Panoda Filtre ve Görünümler’i dene.',
@@ -80,6 +83,7 @@ const TEXT = {
       'In My tasks, click the circle in front of a task: it is done; undo from the notice at the bottom.',
       'Customers → Cards: see which customer needs attention and why; try the Renewals and Products views too.',
       'Customers → Opportunities: drag a deal to another stage or drop it on Won; the forecast on top changes straight away.',
+      'Reports → Reports: build your own with “New report” (say Opportunities → Status: Open → group by Stage → sum of Amount → Columns), or open a ready-made one and change it. Reports → Dashboards: “Add” puts a ready-made dashboard on your home; the Sales pipeline and Team performance tabs were added that way.',
       'Insight → Reports and Team: how the quarter’s target is going, where the work stands, who is carrying what, and a 1:1 view for one person. Work → Timeline shows the weeks ahead.',
       'Customers → Reviews: customers whose business review is late or coming up. Log one with “Done” and the next date moves. The rhythm and the targets are in Settings → Targets and rhythm.',
       'Open a task on CS — General: Follow, Link a task (“waits for”), add time, Checklist, and History at the bottom. Try Filter and Views on the board.',
@@ -101,11 +105,14 @@ const TEXT = {
     ],
   },
 };
-const lang = () => (storedLocale() ?? 'tr') as 'tr' | 'en';
+// One language for the whole demo: the sample data is written in the language the visitor reads.
+const demoLocale: 'tr' | 'en' = (storedLocale() ?? browserLocale()) === 'en' ? 'en' : 'tr';
+const lang = () => (storedLocale() ?? demoLocale) as 'tr' | 'en';
+
 
 const bootEl = document.getElementById('boot')!;
 function step(pct: number, key: keyof typeof TEXT.tr.steps) {
-  const t = TEXT[navigator.language?.startsWith('en') ? 'en' : 'tr'];
+  const t = TEXT[demoLocale];
   document.getElementById('boot-step')!.textContent = t.steps[key];
   (document.getElementById('boot-bar') as HTMLElement).style.width = `${pct}%`;
 }
@@ -128,7 +135,7 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
     <div className="demobar">
       <span className="demobar__tag">{t.tag}</span>
       <span className="demobar__note">{t.note}</span>
-      <label className="demobar__as">
+      <label className="demobar__as demobar__who">
         <span>{t.as}</span>
         <select value={current} onChange={(e) => onSwitch(e.target.value as Key)}>
           {PEOPLE.map((p) => (
@@ -171,13 +178,13 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
 }
 
 async function main() {
-  const server: DemoServer = await startServer(step);
+  const server: DemoServer = await startServer(step, demoLocale);
   const sessions: Partial<Record<Key, string>> = {};
   sessions.ada = await signIn(server, 'ada@demo.example');
   const { seedShowcase } = await import('../../../scripts/seed-showcase');
-  await seedShowcase(server.call, server.db);
+  await seedShowcase(server.call, server.db, demoLocale);
   const { seedPortal } = await import('./portal-seed');
-  await seedPortal(server).catch((e) => console.warn('[demo] portal seed', e));
+  await seedPortal(server, demoLocale).catch((e) => console.warn('[demo] portal seed', e));
   step(92, 'app');
 
   const [{ App }, { navigate }, { PortalApp }] = await Promise.all([import('../App'), import('../lib/router'), import('../../portal/Portal')]);
@@ -290,6 +297,6 @@ async function main() {
 main().catch((err) => {
   console.error('[tendwell demo]', err);
   bootEl.classList.add('failed');
-  const t = TEXT[navigator.language?.startsWith('en') ? 'en' : 'tr'];
+  const t = TEXT[demoLocale];
   document.getElementById('boot-step')!.textContent = `${t.failed} (${err instanceof Error ? err.message.slice(0, 160) : 'error'})`;
 });

@@ -2,6 +2,7 @@
 // A page says what to show; each viewer sees it filled with what they are
 // allowed to see (their customers, the fields open to their role).
 import type { Localized, OptionColor } from './model';
+import type { ChartKind, ReportResult, ReportSource } from './reports';
 
 export const CARD_TYPES = [
   'my_tasks',
@@ -14,6 +15,7 @@ export const CARD_TYPES = [
   'team_load',
   'sync_health',
   'note',
+  'report',
 ] as const;
 export type CardType = (typeof CARD_TYPES)[number];
 
@@ -31,7 +33,7 @@ export const BREAKDOWNS = ['field', 'owner', 'team'] as const;
 export type Breakdown = (typeof BREAKDOWNS)[number];
 
 /** Which settings each card type takes (the editor shows only these). */
-export const CARD_SETTINGS: Record<CardType, { scope?: true; days?: true; metric?: true; by?: true; field?: 'date' | 'select' | 'money'; options?: true; text?: true }> = {
+export const CARD_SETTINGS: Record<CardType, { scope?: true; days?: true; metric?: true; by?: true; field?: 'date' | 'select' | 'money'; options?: true; text?: true; report?: true }> = {
   my_tasks: {},
   renewals: { scope: true, days: true, field: 'date' },
   attention: { scope: true, field: 'select', options: true },
@@ -42,6 +44,7 @@ export const CARD_SETTINGS: Record<CardType, { scope?: true; days?: true; metric
   team_load: {},
   sync_health: {},
   note: { text: true },
+  report: { report: true },
 };
 
 export interface Card {
@@ -60,6 +63,10 @@ export interface Card {
   /** Choices of that field that mean "needs attention". */
   options?: string[];
   text?: string;
+  /** A report card draws a kept report (`reportId`) or one from the library (`report`). */
+  reportId?: string;
+  report?: string;
+  chart?: ChartKind;
 }
 
 export interface Page {
@@ -93,7 +100,7 @@ export interface CardRow {
 export type CardData =
   | { kind: 'hidden' }
   /** The card needs a field the company does not have (or the viewer cannot see). */
-  | { kind: 'missing'; need: 'date' | 'select' | 'money' | 'contacts' }
+  | { kind: 'missing'; need: 'date' | 'select' | 'money' | 'contacts' | 'report' | 'field' }
   | { kind: 'list'; rows: CardRow[]; total: number; extra?: number }
   | { kind: 'number'; value: number; unit: 'count' | 'money'; sub?: { value: number; unit: 'count' | 'money' } | null }
   | { kind: 'bars'; bars: { key: string; label: string; value: number; color?: OptionColor | null }[]; unit: 'count' | 'money' }
@@ -103,7 +110,8 @@ export type CardData =
       unit: 'money' | null;
     }
   | { kind: 'sync'; rows: { id: string; provider: string; name: string; status: string; lastRunAt: string | null; problems: number; ok: boolean }[] }
-  | { kind: 'note'; text: string };
+  | { kind: 'note'; text: string }
+  | { kind: 'report'; name: string; chart: ChartKind; source: ReportSource; reportId: string | null; library: string | null; result: ReportResult };
 
 const L = (en: string, tr: string): Localized => ({ en, tr });
 
@@ -119,6 +127,7 @@ export const CARD_INFO: Record<CardType, { name: Localized; help: Localized }> =
   team_load: { name: L('Team load', 'Ekip yükü'), help: L('Per person: customers, open and overdue tasks, customers at risk.', 'Kişi başına: müşteri, açık ve geciken görev, riskli müşteri.') },
   sync_health: { name: L('Connections', 'Bağlantılar'), help: L('Whether connected tools are syncing. Only people who manage connections see it.', 'Bağlı araçlar eşitleniyor mu. Yalnızca bağlantıları yönetenler görür.') },
   note: { name: L('Note', 'Not'), help: L('Your own words: a welcome, a weekly focus, useful links.', 'Kendi sözlerin: karşılama, haftanın odağı, işe yarar bağlantılar.') },
+  report: { name: L('Report', 'Rapor'), help: L('A chart from a report you built, or from the ready-made ones.', 'Kendi kurduğun ya da hazır raporlardan bir grafik.') },
 };
 
 /** The pages every new company starts with. */

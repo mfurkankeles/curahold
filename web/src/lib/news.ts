@@ -12,6 +12,15 @@ export interface News {
 
 export const NEWS: News[] = [
   {
+    id: '2026-11-report-builder',
+    date: '2026-11-12',
+    title: { tr: 'Kendi raporunu kur; hazır paneller', en: 'Build your own reports; ready-made dashboards' },
+    body: {
+      tr: 'Raporlar → Raporlar’da kendi raporunu kur: neye bakacağını seç, daralt, grupla, grafiğini seç ve kaydet. Raporlar → Paneller’de yedi hazır panel tek tıkla eklenir. Görünüm de yenilendi.',
+      en: 'Build your own under Reports → Reports: pick what to look at, narrow it, group it, choose the chart and save. Under Reports → Dashboards, seven ready-made dashboards are one click away. The look is new, too.',
+    },
+  },
+  {
     id: '2026-11-import-archive',
     date: '2026-11-12',
     title: { tr: 'Dosyadan görev aktar; arşiv', en: 'Import tasks from a file; an archive' },

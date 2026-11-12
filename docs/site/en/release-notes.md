@@ -8,6 +8,13 @@ summary: What is new and what changed.
 
 ## November 2026
 
+### Your own reports, ready-made dashboards, and a new look
+
+- **Report builder:** pick what to look at, narrow it, group it, sum it up and choose the chart; save it, share it, take it as CSV. 26 ready-made reports to start from.
+- **Dashboards:** seven ready-made ones (sales pipeline, renewals and risk, customer health, team performance…) are added in one click; put your own reports on them as cards.
+- **New colours and motion:** indigo and violet-blue; pages, figures and charts now arrive with motion (it stays still if your device asks for reduced motion).
+- Amounts are shown with their currency symbol.
+
 ### Importing tasks, an archive, and speed
 
 - **Import tasks from a file:** move in from another tool with a CSV or Excel export; columns are recognised by themselves, nobody is notified, and the import can be undone for 30 days.

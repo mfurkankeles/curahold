@@ -7,16 +7,16 @@
 /* Everything hangs off .p-root, so the portal can also sit inside the
    in-browser demo next to the app without either restyling the other. */
 .p-root {
-  --paper: #f5f6f4;
+  --paper: #f5f5fb;
   --surface: #ffffff;
-  --sunk: #edf0ee;
-  --ink: #18282b;
-  --ink-2: #4b5c5f;
-  --ink-3: #6f8285;
-  --line: #d9dfdc;
-  --accent: #12786b;
-  --accent-ink: #0b5a50;
-  --accent-wash: #e2f1ed;
+  --sunk: #ececf6;
+  --ink: #17152f;
+  --ink-2: #474563;
+  --ink-3: #65637f;
+  --line: #e2e1ee;
+  --accent: #5b4de8;
+  --accent-ink: #4234c8;
+  --accent-wash: #eceafe;
   --warn: #b7791f;
   --error: #a8361f;
   --r: 10px;

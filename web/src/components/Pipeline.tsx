@@ -14,6 +14,7 @@ import { dueState, todayIso } from '../lib/time';
 import { EmptyState } from './Empty';
 import { TargetsPanel } from './Rhythm';
 import { Icon } from './icons';
+import { CountUp } from './CountUp';
 import { Avatar } from './ui';
 
 const NONE = '__none__';
@@ -148,11 +149,12 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
   );
 }
 
-export function Stat({ label, value, sub, tone, note }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string }) {
+/** A figure with its label. Give `n` (and `fmt`) and it counts up to the value. */
+export function Stat({ label, value, sub, tone, note, n, fmt }: { label: string; value: string; sub?: string; tone?: 'late' | 'done' | 'soon'; note?: string; n?: number | null; fmt?: (n: number) => string }) {
   return (
     <div className="stat" data-tone={tone}>
       <span className="stat__label">{label}</span>
-      <strong className="stat__value num">{value}</strong>
+      <strong className="stat__value num">{n == null ? value : <CountUp value={n} format={fmt ?? String} />}</strong>
       {(sub || note) && (
         <span className="stat__sub">
           {sub}

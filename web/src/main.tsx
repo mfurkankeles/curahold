@@ -4,6 +4,8 @@ import { App } from './App';
 import { startPwa } from './lib/pwa';
 import { startTheme } from './lib/theme';
 import './styles.css';
+import './reports.css';
+import './motion.css';
 
 startTheme();
 startPwa();

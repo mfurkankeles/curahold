@@ -43,8 +43,12 @@ const browser = await puppeteer.launch({
   headless: true,
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=tr-TR'],
 });
+// The demo writes its sample data in the visitor's language: these checks read Turkish.
+const TURKISH = `Object.defineProperty(navigator, 'language', { get: function () { return 'tr-TR'; } }); Object.defineProperty(navigator, 'languages', { get: function () { return ['tr-TR', 'tr']; } });`;
 const page = await browser.newPage();
+await page.evaluateOnNewDocument(TURKISH);
 await page.setViewport({ width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900) });
+await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 page.on('console', (m) => ['error', 'warning'].includes(m.type()) && !/status of 404/.test(m.text()) && errors.push(`${m.type()}: ${m.text()}`));
@@ -117,12 +121,12 @@ if (ok && !process.env.QUICK) {
   await frame!.waitForSelector('.signal', { timeout: 10000 });
   await frame!.waitForSelector('.healthpreview', { timeout: 10000 });
   await page.screenshot({ path: join(SCREENS, 'demo-health-settings.png') });
-  await frame!.select('.demobar select', 'zeynep');
+  await frame!.select('.demobar__who select', 'zeynep');
   await frame!.waitForFunction(() => document.querySelector('.sidebar')?.textContent?.includes('Zeynep'), { timeout: 10000 }).catch(() => console.log('switch: sidebar does not show Zeynep'));
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: join(SCREENS, 'demo-zeynep.png') });
   // The customer: the portal, inside the same tab, with only what was shared.
-  await frame!.select('.demobar select', 'customer');
+  await frame!.select('.demobar__who select', 'customer');
   await frame!.waitForSelector('.p-item', { timeout: 10000 });
   const items = await frame!.$$eval('.p-item__title', (els) => els.map((e) => e.textContent));
   if (items.length !== 2) errors.push(`portal shows ${items.length} requests: ${items.join(', ')}`);
@@ -131,7 +135,7 @@ if (ok && !process.env.QUICK) {
   await frame!.waitForSelector('.p-task', { timeout: 10000 });
   await page.screenshot({ path: join(SCREENS, 'demo-portal-task.png') });
   if ((await frame!.$eval('.p-task', (e) => e.textContent ?? '')).includes('iç not')) errors.push('an internal note reached the portal');
-  await frame!.select('.demobar select', 'ada');
+  await frame!.select('.demobar__who select', 'ada');
   await frame!.waitForSelector('.shell', { timeout: 10000 });
 }
 // On a phone, inside an app that gives the page storage that forgets (or wipes it):
@@ -140,6 +144,7 @@ if (ok) {
   const phone = await browser.newPage();
   await phone.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
   await phone.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true });
+  await phone.evaluateOnNewDocument(TURKISH);
   await phone.evaluateOnNewDocument(`(function () {
     var fake = { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {}, clear: function () {}, key: function () { return null; }, length: 0 };
     Object.defineProperty(window, 'localStorage', { get: function () { return fake; } });

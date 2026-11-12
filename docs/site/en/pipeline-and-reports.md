@@ -41,3 +41,29 @@ Everything sent to you in one list: tasks given to you, mentions, comments, move
 ## Team and 1:1s
 
 **Insight → Team** shows open, overdue, upcoming and finished work per person; the bar of someone carrying clearly more than average turns amber. Click a person for a 1:1 view: what is overdue, what is coming up, what has not been touched for two weeks, what was finished in the last 14 days, how many customers they look after and their latest contact.
+
+## Build your own report
+
+**Reports → Reports → New report.** Five steps, and the result on the right is redrawn as you change them:
+
+1. **What are you looking at?** Tasks, customers, opportunities (and the company's other record types), customer contact, or time logged.
+2. **Narrow it down.** Add conditions: “Status is one of: Open”, “Close date in this quarter”, “Annual value is at least 50,000”, “Assignee: Me”. Dates offer “in the last 30 days”, “in the next 90 days”, and “this / the last full week, month, quarter, year”.
+3. **Group it.** Group by a field (a date by day, week, month, quarter or year); split each group by a second field if you like.
+4. **What to show for each.** The number of rows, or the sum, average, smallest or largest of a number field. Choose how many groups to draw and their order here; the rest become “Other”.
+5. **How to draw it.** Bars, columns, stacked, a line, a ring, one figure, or a table.
+
+Without a grouping the report is a list of rows, and you pick its columns. **Export** downloads the result as CSV.
+
+**Save report** keeps it as yours. Tick **Share with the company** and everyone can open it. In a shared report each person sees only the tasks and customers they can see anyway; a field their role may not see does not show up in a report either.
+
+**Ready-made reports** are further down the same page: open one, see it with your own data, change it and keep it as your own.
+
+## Dashboards
+
+A dashboard is a page made of charts and lists (the tabs on your home). Under **Reports → Dashboards**:
+
+- **Ready-made dashboards:** Sales pipeline, Renewals and risk, Customer health, Team performance, Customer contact, Work flow, Executive summary. **Add** makes it a page of your own, filled with your data; then **Edit page** changes its cards.
+- **Empty dashboard:** you pick the cards. The “Report” card draws a report you kept or a ready-made one, and can draw it differently on that card.
+- With a report open, **Add to a dashboard** puts it straight onto one (the report is shared with the company, so everyone who opens the dashboard sees the card).
+
+People who run the company settings add and edit dashboards; anyone who can write can build a report.

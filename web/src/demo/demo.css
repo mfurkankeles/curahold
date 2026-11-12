@@ -11,9 +11,9 @@
   font-size: 13px; position: relative; z-index: 29;
 }
 .demobar__tag { font-weight: 600; color: #fff; padding: 2px 8px; border-radius: 999px; background: var(--well-2); }
-.demobar__note { color: #9cc3bb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.demobar__note { color: var(--well-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
 .demobar__as { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.demobar__as span { color: #9cc3bb; }
+.demobar__as span { color: var(--well-mute); }
 .demobar select {
   font: inherit; color: #fff; background: var(--well-2); border: 1px solid rgba(217, 235, 231, .25);
   border-radius: var(--r-s); padding: 3px 6px; max-width: 220px;
@@ -35,6 +35,10 @@
 .demobar__ideas .demobar__reset { color: var(--tend-ink); border-color: var(--line-strong); }
 
 @media (max-width: 760px) {
+  .demobar { gap: 6px; padding: 0 8px; }
+  .demobar__as { min-width: 0; flex: 1 1 0; }
+  .demobar select { max-width: none; width: 100%; min-width: 0; }
+  .demobar__tag, .demobar__more { flex: none; }
   .demobar__note { display: none; }
   .demobar__as span { display: none; }
   .demobar { justify-content: space-between; }

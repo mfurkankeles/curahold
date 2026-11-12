@@ -10,6 +10,7 @@ import { EmptyState, SkeletonCards } from '../components/Empty';
 import { Icon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { TargetsPanel } from '../components/Rhythm';
+import { ReportTabs } from './ReportBuilder';
 import { Avatar } from '../components/ui';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -42,7 +43,7 @@ function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
     <figure className="chart">
       <div className="chart__plot" role="img" aria-label={t('reports.flowTitle')}>
         {weeks.map((w, i) => (
-          <div key={w.week} className="chart__col" title={`${fmtDate(w.week)}: ${t('reports.created')} ${w.created}, ${t('reports.done')} ${w.done}`}>
+          <div key={w.week} className="chart__col" style={{ '--i': i } as React.CSSProperties} title={`${fmtDate(w.week)}: ${t('reports.created')} ${w.created}, ${t('reports.done')} ${w.done}`}>
             <div className="chart__bars">
               <span className="chart__bar chart__bar--in" style={{ height: `${(w.created / max) * 100}%` }}>
                 {w.created > 0 && <b className="num">{w.created}</b>}
@@ -186,16 +187,17 @@ export function ReportsPage() {
           ))}
         </select>
       </header>
+      <ReportTabs active="overview" />
       <div className="page reports">
         {!work ? (
           <SkeletonCards count={4} label={t('common.loading')} />
         ) : (
           <>
             <div className="statstrip">
-              <Stat label={t('reports.open')} value={String(work.totals.open)} sub={t('reports.unassignedN', { n: work.totals.unassigned })} />
-              <Stat label={t('reports.overdue')} value={String(work.totals.overdue)} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: work.totals.dueWeek })} />
-              <Stat label={t('reports.done30')} value={String(work.totals.done30)} tone="done" sub={t('reports.created30N', { n: work.totals.created30 })} />
-              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : locale === 'tr' ? `%${work.totals.onTime}` : `${work.totals.onTime}%`} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: work.totals.cycleDays })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
+              <Stat label={t('reports.open')} value={String(work.totals.open)} n={work.totals.open} sub={t('reports.unassignedN', { n: work.totals.unassigned })} />
+              <Stat label={t('reports.overdue')} value={String(work.totals.overdue)} n={work.totals.overdue} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: work.totals.dueWeek })} />
+              <Stat label={t('reports.done30')} value={String(work.totals.done30)} n={work.totals.done30} tone="done" sub={t('reports.created30N', { n: work.totals.created30 })} />
+              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : locale === 'tr' ? `%${work.totals.onTime}` : `${work.totals.onTime}%`} n={work.totals.onTime} fmt={(v) => (locale === 'tr' ? `%${v}` : `${v}%`)} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: work.totals.cycleDays })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             <div className="reports__grid">
               <section className="sheet reports__wide">
@@ -272,7 +274,7 @@ export function ReportsPage() {
             <EmptyState compact icon="building" title={t('accounts.emptyTitle')} />
           </div>
         ) : (
-          <div className="reports__grid">
+          <div className="reports__grid reports__grid--3">
             {opp && deals && <TargetsPanel type={opp} records={deals} />}
             <section className="sheet">
               <h2 className="sheet__title">{t('reports.health')}</h2>

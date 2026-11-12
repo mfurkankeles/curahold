@@ -40,9 +40,9 @@ export function Avatars({ people, max = 3 }: { people: (Person | undefined)[]; m
 export function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg className="sidebar__mark" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#e8f3f0" />
-      <path d="M9 11h14M16 11v12" stroke="#0d4448" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="16" cy="24.5" r="2.6" fill="#12786b" />
+      <rect width="32" height="32" rx="8" style={{ fill: 'var(--mark-bg, #eceafe)' }} />
+      <path d="M9 11h14M16 11v12" style={{ stroke: 'var(--mark-ink, #191541)' }} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="16" cy="24.5" r="2.6" style={{ fill: 'var(--mark-dot, #5b4de8)' }} />
     </svg>
   );
 }

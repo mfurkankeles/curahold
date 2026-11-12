@@ -34,6 +34,8 @@ export async function newPage(browser: Browser, width = 1440, height = 900) {
   const ctx = await browser.createBrowserContext();
   const page = await ctx.newPage();
   await page.setViewport({ width, height, deviceScaleFactor: 1 });
+  // The checks read what is on the page as soon as it is there: no counting up, no growing bars.
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => m.type() === 'error' && !/401|404|409/.test(m.text()) && errors.push(m.text()));

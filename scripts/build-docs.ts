@@ -111,7 +111,7 @@ function parse(lang: Lang, file: string): Page {
   return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], html, toc, text };
 }
 
-const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#e8f3f0"/><path d="M9 11h14M16 11v12" stroke="#0d4448" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="24" r="2.5" fill="#2f8f78"/></svg>`;
+const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe"/><path d="M9 11h14M16 11v12" stroke="#191541" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="24" r="2.5" fill="#2f8f78"/></svg>`;
 
 function layout(lang: Lang, pages: Page[], page: Page | null, body: string, otherHref: string) {
   const ui = UI[lang];
@@ -131,7 +131,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(page?.summary ?? ui.lead)}">
 <link rel="alternate" hreflang="${lang === 'tr' ? 'en' : 'tr'}" href="${otherHref}">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d4448'/%3E%3Cpath d='M9 11h14M16 11v12' stroke='%23e8f3f0' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2.5' fill='%2367c2a8'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M9 11h14M16 11v12' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2.5' fill='%2367c2a8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/docs/assets/docs.css">
 </head>
 <body data-lang="${lang}">

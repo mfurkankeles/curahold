@@ -20,8 +20,12 @@ import {
 } from '../../../shared/src/pages';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { EmptyState, SkeletonCards } from '../components/Empty';
+import { Icon } from '../components/icons';
 import { GettingStarted } from '../components/GettingStarted';
 import { Confirm, Dialog } from '../components/ui';
+import { CountUp } from '../components/CountUp';
+import { ReportChart } from '../components/Charts';
+import { CHARTS, REPORT_LIBRARY, type SavedReport } from '../../../shared/src/reports';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
@@ -39,7 +43,7 @@ interface Draft {
 
 const SIZES: CardSize[] = ['third', 'half', 'full'];
 
-export function HomePage({ pageId }: { pageId: string | null }) {
+export function HomePage({ pageId, create }: { pageId: string | null; create?: boolean }) {
   const { t } = useI18n();
   const { can, me } = useStore();
   const [pages, setPages] = useState<Page[] | null>(null);
@@ -68,6 +72,13 @@ export function HomePage({ pageId }: { pageId: string | null }) {
     void loadData();
   }, [loadData]);
 
+  // "New dashboard" from the gallery opens the editor on an empty page.
+  useEffect(() => {
+    if (create && admin) setDraft({ id: null, name: t('home.newName'), cards: [], homeFor: [], sharedWith: [] });
+  }, [create, admin]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Ready-made dashboards and an empty one live in the same place.
+  const gallery = () => navigate('/reports/dashboards');
+
   if (!pages)
     return (
       <div className="page" style={{ paddingTop: 24 }}>
@@ -79,7 +90,10 @@ export function HomePage({ pageId }: { pageId: string | null }) {
     return (
       <PageEditor
         draft={draft}
-        onCancel={() => setDraft(null)}
+        onCancel={() => {
+          setDraft(null);
+          if (create) navigate('/reports/dashboards');
+        }}
         onSaved={async (id) => {
           setDraft(null);
           await loadPages();
@@ -94,7 +108,6 @@ export function HomePage({ pageId }: { pageId: string | null }) {
     );
   }
 
-  const blank = (): Draft => ({ id: null, name: t('home.newName'), cards: [], homeFor: [], sharedWith: [] });
 
   if (!current) {
     return (
@@ -106,7 +119,7 @@ export function HomePage({ pageId }: { pageId: string | null }) {
           <GettingStarted />
           <EmptyState icon="layout" title={pages.length ? t('home.notFound') : t('home.none')}>
             {admin ? (
-              <button className="btn btn--primary" onClick={() => setDraft(blank())}>
+              <button className="btn btn--primary" onClick={gallery}>
                 {t('home.newPage')}
               </button>
             ) : (
@@ -134,7 +147,7 @@ export function HomePage({ pageId }: { pageId: string | null }) {
             <button className="btn" onClick={() => setDraft({ id: current.id, name: current.name, cards: current.cards, homeFor: current.homeFor, sharedWith: current.sharedWith })}>
               {t('home.edit')}
             </button>
-            <button className="btn btn--quiet" onClick={() => setDraft(blank())}>
+            <button className="btn btn--quiet" onClick={gallery}>
               {t('home.newPage')}
             </button>
           </div>
@@ -183,7 +196,7 @@ function useMoney() {
   return useCallback(
     (v: number, compact = false) => {
       try {
-        return new Intl.NumberFormat(tag, { style: 'currency', currency: me.org.currency, maximumFractionDigits: compact && Math.abs(v) >= 10000 ? 1 : 0, notation: compact && Math.abs(v) >= 10000 ? 'compact' : 'standard' }).format(v);
+        return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: me.org.currency, maximumFractionDigits: compact && Math.abs(v) >= 10000 ? 1 : 0, notation: compact && Math.abs(v) >= 10000 ? 'compact' : 'standard' }).format(v);
       } catch {
         return String(v);
       }
@@ -224,7 +237,9 @@ export function useCardTitle() {
 function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefined; tools?: ReactNode; dim?: boolean }) {
   const { t } = useI18n();
   const money = useMoney();
-  const title = useCardTitle()(card);
+  const named = useCardTitle()(card);
+  const title = card.type === 'report' && !card.title && data?.kind === 'report' ? data.name : named;
+  const open = data?.kind === 'report' ? (data.reportId ? `/reports/r/${data.reportId}` : data.library ? `/reports/new?from=${data.library}` : null) : null;
   const caption = [
     card.scope === 'mine' ? t('home.scope.mine') : card.scope === 'team' ? t('home.scope.team') : null,
     card.type === 'renewals' || (card.type === 'metric' && card.metric === 'renewals') ? t('home.within', { n: card.days ?? 90 }) : null,
@@ -249,6 +264,11 @@ function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefin
           {caption && <div className="pane__caption">{caption}</div>}
         </div>
         {count !== null && <span className="pane__count num">{count}</span>}
+        {open && !tools && (
+          <button className="pane__open" aria-label={t('rb.openReport')} title={t('rb.openReport')} onClick={() => navigate(open)}>
+            <Icon name="external" size={15} />
+          </button>
+        )}
       </header>
       {extra && <div className="pane__extra">{extra}</div>}
       <div className="pane__body">{data ? <TileBody card={card} data={data} /> : <div className="pane__wait" />}</div>
@@ -282,10 +302,11 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
       </p>
     );
   }
+  if (data.kind === 'report') return <ReportChart result={data.result} chart={data.chart} compact={card.size !== 'full'} />;
   if (data.kind === 'note') return <div className="pane__text">{data.text ? linkify(data.text) : <span className="muted">{t('home.note.empty')}</span>}</div>;
 
   if (data.kind === 'number') {
-    const value = data.unit === 'money' ? money(data.value, true) : new Intl.NumberFormat(tag).format(data.value);
+    const value = <CountUp value={data.value} format={(n) => (data.unit === 'money' ? money(n, true) : new Intl.NumberFormat(tag).format(n))} />;
     const sub = data.sub ? (data.sub.unit === 'money' ? money(data.sub.value) : t('home.accountsN', { n: data.sub.value })) : null;
     return (
       <div className="pane__number">
@@ -449,6 +470,7 @@ function newCard(type: CardType, taken: Card[]): Card {
   if (type === 'quiet') base.days = 30;
   if (type === 'metric') base.metric = 'accounts';
   if (type === 'breakdown') base.by = 'field';
+  if (type === 'report') base.report = REPORT_LIBRARY[0].key;
   return base;
 }
 
@@ -616,7 +638,7 @@ function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Dra
             const c = newCard(type, d.cards);
             setCards((cs) => [...cs, c]);
             setAdding(false);
-            if (type === 'note') setEditing(c);
+            if (type === 'note' || type === 'report') setEditing(c);
           }}
         />
       )}
@@ -676,6 +698,10 @@ function CardSettings({ card, onSave, onClose }: { card: Card; onSave: (c: Card)
   const wantsOptions = fieldType === 'select' && (c.type === 'attention' || c.metric === 'attention');
   const wantsDays = opts.days && (c.type !== 'metric' || c.metric === 'renewals');
   const set = (patch: Partial<Card>) => setC((x) => ({ ...x, ...patch }));
+  const [kept, setKept] = useState<SavedReport[]>([]);
+  useEffect(() => {
+    if (card.type === 'report') void get<{ reports: SavedReport[] }>('/reports/saved').then((r) => setKept(r.reports));
+  }, [card.type]);
   return (
     <Dialog
       title={t('home.cardSettingsOf', { card: labelOf(CARD_INFO[c.type].name, locale) })}
@@ -695,6 +721,51 @@ function CardSettings({ card, onSave, onClose }: { card: Card; onSave: (c: Card)
         <span className="field__label">{t('home.cardTitle')}</span>
         <input className="input" value={c.title ?? ''} maxLength={80} placeholder={t('home.cardTitle.auto')} onChange={(e) => set({ title: e.target.value || undefined })} />
       </label>
+      {opts.report && (
+        <>
+          <label className="field">
+            <span className="field__label">{t('rb.card.which')}</span>
+            <select
+              className="select"
+              value={c.reportId ? `id:${c.reportId}` : `lib:${c.report ?? ''}`}
+              onChange={(e) => {
+                const [kind, key] = [e.target.value.slice(0, e.target.value.indexOf(':')), e.target.value.slice(e.target.value.indexOf(':') + 1)];
+                set(kind === 'id' ? { reportId: key, report: undefined } : { report: key, reportId: undefined });
+              }}
+            >
+              {kept.length > 0 && (
+                <optgroup label={t('rb.card.kept')}>
+                  {kept.map((r) => (
+                    <option key={r.id} value={`id:${r.id}`}>
+                      {r.name}
+                      {r.shared ? '' : ` (${t('rb.card.private')})`}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label={t('rb.library')}>
+                {REPORT_LIBRARY.map((r) => (
+                  <option key={r.key} value={`lib:${r.key}`}>
+                    {labelOf(r.name, locale)}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            {c.reportId && kept.find((r) => r.id === c.reportId && !r.shared) && <span className="field__hint">{t('rb.card.privateHint')}</span>}
+          </label>
+          <label className="field">
+            <span className="field__label">{t('rb.card.chart')}</span>
+            <select className="select" value={c.chart ?? ''} onChange={(e) => set({ chart: (e.target.value || undefined) as Card['chart'] })}>
+              <option value="">{t('rb.card.chartOwn')}</option>
+              {CHARTS.map((k) => (
+                <option key={k} value={k}>
+                  {t(`rb.chart.${k}` as any)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
       {opts.metric && (
         <label className="field">
           <span className="field__label">{t('home.metric')}</span>

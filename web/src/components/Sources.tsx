@@ -1,6 +1,7 @@
 // CRMs and spreadsheets: connect, choose what comes over, match fields and
 // people, preview, start — then watch the sync and fix what it reports.
 // Everything an administrator needs, without anyone writing a mapping file.
+import { DemoConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -123,6 +124,8 @@ export function Sources() {
               <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
                 {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
               </button>
+            ) : IN_DEMO ? (
+              <DemoConnect app={PROVIDER_NAMES[p.id] ?? p.id} />
             ) : (
               <p className="field__hint tile__line">{t('conn.notOnServer')}</p>
             )}

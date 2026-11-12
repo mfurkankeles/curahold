@@ -41,3 +41,29 @@ Sana gelen her şey tek listede: verilen görevler, senden bahsedilenler, yoruml
 ## Ekip ve 1:1
 
 **İçgörü → Ekip** kişi başına açık, geciken, yaklaşan ve biten işleri gösterir; ortalamanın belirgin üstünde yük taşıyanın çubuğu sarıya döner. Bir kişiye tıklayınca 1:1 hazırlığı açılır: gecikenler, sıradakiler, iki haftadır dokunulmayanlar, son 14 günde bitenler, baktığı müşteri sayısı ve son temasları.
+
+## Kendi raporunu kur
+
+**Raporlar → Raporlar → Yeni rapor.** Beş adım, sağda sonuç sen değiştirdikçe çizilir:
+
+1. **Neye bakıyorsun?** Görevler, müşteriler, fırsatlar (ve şirketin diğer kayıt türleri), müşteri teması ya da girilen süre.
+2. **Daralt.** Koşul ekle: “Durum şunlardan biri: Açık”, “Kapanış tarihi bu çeyrek”, “Yıllık tutar en az 50.000”, “Sorumlu: Ben”. Tarihlerde “son 30 gün”, “önümüzdeki 90 gün”, “bu / geçen hafta, ay, çeyrek, yıl” seçenekleri vardır.
+3. **Grupla.** Bir alana göre grupla (tarihse gün, hafta, ay, çeyrek ya da yıl olarak); istersen her grubu ikinci bir alana göre böl.
+4. **Her biri için ne gösterilsin.** Kayıt sayısı, ya da bir sayı alanının toplamı, ortalaması, en küçüğü, en büyüğü. Kaç grup gösterileceğini ve sırayı da burada seçersin; kalanı “Diğer” olur.
+5. **Nasıl görünsün.** Çubuk, sütun, yığılmış, çizgi, halka, tek rakam ya da tablo.
+
+Gruplamazsan rapor satır satır bir listedir; hangi sütunların görüneceğini seçersin. **Dışa aktar** sonucu CSV olarak indirir.
+
+**Raporu kaydet** ile rapor senin olur. **Şirketle paylaş** kutusunu işaretlersen herkes açabilir. Paylaşılan raporda herkes yalnızca kendi görebildiği görev ve müşterileri görür; rolünün göremediği bir alan raporda da görünmez.
+
+**Hazır raporlar** aynı sayfanın altındadır: birini aç, kendi verinle gör, değiştir ve kendi raporun olarak kaydet.
+
+## Paneller
+
+Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **Raporlar → Paneller** altında:
+
+- **Hazır paneller:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı, Yönetici özeti. **Ekle** deyince kendi sayfan olarak eklenir ve kendi verinle dolar; sonra **Sayfayı düzenle** ile kartlarını değiştirirsin.
+- **Boş panel:** kartları kendin seçersin. “Rapor” kartı, kaydettiğin ya da hazır bir raporu çizer; gösterimini karta özel değiştirebilirsin.
+- Bir raporu açıkken **Panele ekle** ile doğrudan bir panele koyabilirsin (rapor şirketle paylaşılır ki paneli açan herkes kartı görsün).
+
+Panelleri şirket ayarlarını yönetenler ekler ve düzenler; raporu, yazma yetkisi olan herkes kurar.

@@ -49,7 +49,7 @@ export function useFieldFormat() {
       if (v === null || v === undefined || v === '') return '';
       if (f.type === 'money') {
         try {
-          return new Intl.NumberFormat(tag, { style: 'currency', currency: me.org.currency, maximumFractionDigits: 0 }).format(Number(v));
+          return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: me.org.currency, maximumFractionDigits: 0 }).format(Number(v));
         } catch {
           return String(v);
         }

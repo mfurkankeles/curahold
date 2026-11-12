@@ -1,9 +1,13 @@
 // The demo's customer portal: Quillfield Retail's Selin, with a task the team
 // shared, a reply each way, and a request she opened herself.
+import { deepEnglish } from '../../../scripts/seed-showcase.en';
 import type { DemoServer } from './server';
 
-export async function seedPortal(server: DemoServer) {
-  const { call, portalCall, db } = server;
+export async function seedPortal(server: DemoServer, locale: 'tr' | 'en' = 'tr') {
+  const { db } = server;
+  const en = <T,>(body: T): T => (locale === 'en' ? deepEnglish(body) : body);
+  const call = (method: string, path: string, body?: unknown) => server.call(method, path, body === undefined ? body : en(body));
+  const portalCall = (method: string, path: string, body?: unknown) => server.portalCall(method, path, body === undefined ? body : en(body));
   await call('PUT', '/api/portal/settings', { enabled: true });
   const [ids] = await db.system((q) =>
     q.query(

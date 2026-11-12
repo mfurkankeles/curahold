@@ -8,6 +8,13 @@ summary: Neler yeni, neler değişti.
 
 ## Kasım 2026
 
+### Kendi raporun, hazır paneller ve yeni görünüm
+
+- **Rapor oluşturucu:** neye bakacağını seç, daralt, grupla, özetle, grafiğini seç; kaydet, paylaş, CSV olarak al. 26 hazır rapor başlangıç için duruyor.
+- **Paneller:** yedi hazır panel (satış hunisi, yenileme ve risk, müşteri sağlığı, ekip performansı…) tek tıkla eklenir; raporlarını kart olarak koyarsın.
+- **Yeni renkler ve hareket:** çivit ve mor-mavi; sayfalar, sayılar ve grafikler artık hareketle geliyor (cihazında “hareketi azalt” açıksa durur).
+- Tutarlar para birimi simgesiyle gösteriliyor.
+
 ### Dosyadan görev aktarma, arşiv ve hız
 
 - **Dosyadan görev aktar:** başka araçtan CSV/Excel ile geçiş; sütunlar kendiliğinden tanınır, bildirim gitmez, 30 gün içinde geri alınır.

@@ -19,8 +19,14 @@ export function storedTheme(): ThemePref {
 export function applyTheme(pref: ThemePref = storedTheme()) {
   const mode = pref === 'system' ? (dark() ? 'dark' : 'light') : pref;
   document.documentElement.dataset.theme = mode;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#0a1c1f' : '#0d4448');
+  paintChrome();
   return mode;
+}
+
+/** The browser's own bar takes the colour of the well. */
+function paintChrome() {
+  const well = getComputedStyle(document.documentElement).getPropertyValue('--well').trim();
+  if (well) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', well);
 }
 
 let listening = false;

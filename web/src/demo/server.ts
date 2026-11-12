@@ -93,7 +93,7 @@ const DEVICE = (() => {
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 })();
 
-export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void): Promise<DemoServer> {
+export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: 'tr' | 'en' = 'tr'): Promise<DemoServer> {
   step(8, 'db');
   const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
     import('../../../api/src/app'),
@@ -152,7 +152,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const portalCall = async (method: string, path: string, body?: unknown) => {
     const res = await portalRequest(path, {
       method,
-      headers: { 'x-tendwell-portal': '1', 'content-type': 'application/json', 'x-tendwell-locale': 'tr' },
+      headers: { 'x-tendwell-portal': '1', 'content-type': 'application/json', 'x-tendwell-locale': locale },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
@@ -179,7 +179,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   const call = async (method: string, path: string, body?: unknown) => {
     const res = await request(path, {
       method,
-      headers: { 'x-tendwell-device': DEVICE, 'content-type': 'application/json', 'x-tendwell-locale': 'tr' },
+      headers: { 'x-tendwell-device': DEVICE, 'content-type': 'application/json', 'x-tendwell-locale': locale },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
@@ -188,7 +188,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   };
 
   const { seedDemo } = await import('../../../scripts/seed-demo');
-  await seedDemo(db, { locale: 'tr' });
+  await seedDemo(db, { locale });
   step(82, 'data');
 
   // Every call the app makes to its own address is answered here.

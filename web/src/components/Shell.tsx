@@ -415,7 +415,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               'insight',
               t('nav.insight'),
               <>
-                {link('/reports', t('nav.reports'), path === '/reports', 'chart')}
+                {link('/reports', t('nav.reports'), path === '/reports' || path.startsWith('/reports/'), 'chart')}
                 {link('/team', t('nav.team'), path === '/team', 'people')}
               </>,
             )}

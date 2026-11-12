@@ -879,6 +879,33 @@ await step('tasks from a file: columns are recognised, cards appear, the import 
   await mert.page.keyboard.press('Escape');
 });
 
+await step('reports: build one and keep it; a ready-made dashboard lands on the home with its charts drawn', async () => {
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  await ada.page.goto(`${s.origin}/reports/all`, { waitUntil: 'networkidle0' });
+  await (await byText(ada.page, '.topbar .btn--primary', 'Yeni rapor')).click();
+  await ada.page.waitForSelector('.rb-source');
+  await (await byText(ada.page, '.rb-source', 'Müşteriler')).click();
+  await ada.page.waitForFunction(() => document.querySelector('.rb-source[aria-pressed="true"]')?.textContent?.includes('Müşteriler'));
+  await ada.page.select('.rb__rail > section:nth-child(3) select', 'owner');
+  await ada.page.waitForSelector('.rb__chart .hbar');
+  expect((await ada.page.$$('.rb__chart .hbar')).length > 0, 'no bars drawn for customers by owner');
+  await ada.page.type('.rb-name', 'Sorumluya göre müşteriler');
+  await shot(ada.page, 'p9-01-report-builder');
+  await (await byText(ada.page, '.topbar .btn--primary', 'Raporu kaydet')).click();
+  await ada.page.waitForFunction(() => location.pathname.startsWith('/reports/r/'));
+  const [kept] = await sql(`select r.def, r.shared from reports r join orgs o on o.id = r.org_id where o.slug = 'demo' and r.name = 'Sorumluya göre müşteriler'`);
+  expect(kept?.def?.source === 'accounts' && kept.def.groups[0].field === 'owner' && kept.shared === false, 'the report was not kept as built');
+  await ada.page.goto(`${s.origin}/reports/dashboards`, { waitUntil: 'networkidle0' });
+  await (await byText(ada.page, '.dashcard .btn--primary', 'Ekle')).click();
+  await ada.page.waitForFunction(() => location.pathname.startsWith('/pages/'));
+  await ada.page.waitForSelector('.pane[data-type="report"] :is(.vchart, .donut, .kpi, .hbars, .emptystate, .pane__note)');
+  expect((await ada.page.$$('.pane[data-type="report"]')).length >= 4, 'the dashboard has no report cards');
+  await shot(ada.page, 'p9-02-dashboard');
+  expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
+  await ada.page.close();
+});
+
 await step('live: a card someone else adds shows up without reloading; the bell follows', async () => {
   const lena = await newPage(s.browser);
   await signIn(lena.page, s.origin, 'lena@demo.example');

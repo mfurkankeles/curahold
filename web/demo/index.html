@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0d4448" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d4448'/%3E%3Cpath d='M9 11h14M16 11v12' stroke='%23e8f3f0' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2.5' fill='%2367c2a8'/%3E%3C/svg%3E" />
+    <meta name="theme-color" content="#191541" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M9 11h14M16 11v12' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='24' r='2.5' fill='%2367c2a8'/%3E%3C/svg%3E" />
     <title>Tendwell — demo</title>
     <style>
-      #boot { position: fixed; inset: 0; display: grid; place-items: center; background: #0d4448; color: #e8f3f0; font: 15px/1.5 system-ui, sans-serif; z-index: 100; }
+      #boot { position: fixed; inset: 0; display: grid; place-items: center; background: #191541; color: #eceafe; font: 15px/1.5 system-ui, sans-serif; z-index: 100; }
       #boot .box { width: min(360px, 86vw); }
       #boot svg { width: 44px; height: 44px; display: block; margin-bottom: 18px; }
       #boot h1 { font-size: 21px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
-      #boot p { margin: 0; color: #9cc3bb; min-height: 3em; }
+      #boot p { margin: 0; color: #a8a3d8; min-height: 3em; }
       #boot .bar { height: 3px; background: rgba(232, 243, 240, .14); border-radius: 2px; margin-top: 18px; overflow: hidden; }
       #boot .bar i { display: block; height: 100%; width: 6%; background: #67c2a8; border-radius: 2px; transition: width .4s ease; }
       #boot.failed .bar i { background: #e98d7a; }
@@ -21,7 +21,7 @@
   <body>
     <div id="boot" role="status" aria-live="polite">
       <div class="box">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#e8f3f0" /><path d="M9 11h14M16 11v12" stroke="#0d4448" stroke-width="3" stroke-linecap="round" /><circle cx="16" cy="24" r="2.5" fill="#2f8f78" /></svg>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe" /><path d="M9 11h14M16 11v12" stroke="#191541" stroke-width="3" stroke-linecap="round" /><circle cx="16" cy="24" r="2.5" fill="#2f8f78" /></svg>
         <h1 id="boot-title">Tendwell demosu açılıyor</h1>
         <p id="boot-step">Veritabanı bu sekmede kuruluyor. Hiçbir veri bir yere gönderilmiyor.</p>
         <div class="bar"><i id="boot-bar"></i></div>

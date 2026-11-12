@@ -2,6 +2,7 @@
 // more customers, their stakeholders, upsell opportunities and a working
 // week of tasks. Everything goes through the public API as the admin, so the
 // same rules apply as for any other client. No name here is real.
+import { deepEnglish, toEnglish } from './seed-showcase.en';
 import type { Db } from '../api/src/db';
 import { enqueue } from '../api/src/lib/notify';
 import { buildWeekly } from '../api/src/lib/weekly';
@@ -144,7 +145,10 @@ const HISTORY = [
   'İlk ay değerlendirmesi',
 ];
 
-export async function seedShowcase(call: Call, db?: Db) {
+export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'tr') {
+  // Written in Turkish; an English demo gets every text in English on its way in.
+  const tx = (text: string) => (locale === 'en' ? toEnglish(text) : text);
+  const call: Call = locale === 'en' ? (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deepEnglish(body))) as Call) : send;
   const { people, teams } = await call<{ people: { id: string; email: string }[]; teams: { id: string; name: string }[] }>('GET', '/api/people');
   const who = (key: string) => people.find((p) => p.email === `${key}@demo.example`)!.id;
   const cs = teams.find((t) => t.name === 'Customer Success')?.id ?? null;
@@ -185,10 +189,19 @@ export async function seedShowcase(call: Call, db?: Db) {
   // What the team aims for this quarter, a review with every customer each 90 days, and both nudges on.
   await call('PUT', '/api/rhythm', { targets: { period: 'quarter', new: 40000, expansion: 120000, renewal: 80000 }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
 
+  // Reports people built, and two dashboards made from the ready-made ones.
+  const keep = (name: string, def: unknown, shared = true) => call('POST', '/api/reports/saved', { name, def, shared }).catch(() => undefined);
+  await keep('Müşteri bazında yıllık tutar', { source: 'accounts', filters: [], groups: [{ field: 'name' }], measure: { fn: 'sum', field: 'arr' }, chart: 'bar', top: 10 }).catch(() => undefined);
+  await keep('Bu çeyrek kapanacak fırsatlar', { source: 'deals', filters: [{ field: 'status', op: 'in', values: ['open'] }, { field: 'close_date', op: 'this', period: 'quarter' }], groups: [], measure: { fn: 'count' }, chart: 'table', columns: ['name', 'account', 'owner', 'stage', 'amount', 'close_date'] });
+  await keep('Geciken işlerim', { source: 'tasks', filters: [{ field: 'overdue', op: 'yes' }, { field: 'assignee', op: 'in', values: ['me'] }], groups: [], measure: { fn: 'count' }, chart: 'table', columns: ['title', 'account', 'due', 'priority'] }, false);
+  await call('POST', '/api/pages/from-template', { template: 'sales' }).catch(() => undefined);
+  await call('POST', '/api/pages/from-template', { template: 'team' }).catch(() => undefined);
+
   const { boards } = await call<{ boards: { id: string; name: string }[] }>('GET', '/api/boards');
-  const board = (prefix: string) => boards.find((b) => b.name.startsWith(prefix))!.id;
+  // The starting boards are named in the company's language.
+  const board = (...prefixes: string[]) => boards.find((b) => prefixes.some((x) => b.name.startsWith(x)))!.id;
   const main = board('CS');
-  const renewals = board('Yenile');
+  const renewals = board('Yenile', 'Renew');
   // [board, title, column, assignees, due in N days, priority, account]
   const TASKS: [string, string, string, string[], number | null, string, string | null][] = [
     [renewals, 'Yenileme görüşmesi: bütçe onayı', 'doing', ['omar'], 2, 'urgent', 'Lindenhall Sigorta'],
@@ -295,7 +308,7 @@ export async function seedShowcase(call: Call, db?: Db) {
       const made = doneAgo[i] + took[i % took.length];
       past.push({
         id: crypto.randomUUID(),
-        title,
+        title: tx(title),
         board: i % 3 === 2 ? renewals : main,
         by: who(crew[i % crew.length]),
         account: accounts[names[(i * 5) % names.length]] ?? null,

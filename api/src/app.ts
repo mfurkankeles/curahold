@@ -31,6 +31,7 @@ import { meRoutes } from './routes/me';
 import { taskRoutes } from './routes/tasks';
 import { workRoutes } from './routes/work';
 import { reportRoutes } from './routes/reports';
+import { builderRoutes } from './routes/builder';
 import { pageRoutes } from './routes/pages';
 import { searchRoutes } from './routes/search';
 import { developerRoutes } from './routes/developer';
@@ -246,6 +247,7 @@ export function createApp(deps: Deps) {
   app.route('/api', taskRoutes);
   app.route('/api', workRoutes);
   app.route('/api', reportRoutes);
+  app.route('/api', builderRoutes);
   app.route('/api', accountRoutes);
   app.route('/api', recordRoutes);
   app.route('/api', pageRoutes);
