@@ -13,7 +13,8 @@
     "strings": "tsx scripts/add-strings.ts",
     "migrate": "tsx scripts/migrate.ts",
     "build:demo": "vite build --config vite.demo.config.ts",
-    "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts"
+    "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts",
+    "build:site": "tsx scripts/build-site.ts"
   },
   "license": "UNLICENSED",
   "dependencies": {
