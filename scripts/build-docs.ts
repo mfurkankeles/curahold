@@ -32,7 +32,7 @@ const UI = {
     menu: 'Menü',
     sections: { help: 'Yardım merkezi', developers: 'Geliştiriciler', releases: 'Sürüm notları', legal: 'Yasal' },
     lead: 'Curahold’u kullanmak, ekibine göre ayarlamak ve kendi araçlarına bağlamak için ihtiyacın olan her şey.',
-    start: { help: 'Ekibinle Curahold’u kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar ve Claude ile ChatGPT için bağlayıcı.', releases: 'Neler yeni, neler değişti.', legal: 'Kullanım koşulları, gizlilik, KVKK, veri işleme sözleşmesi ve alt işleyenler.' },
+    start: { help: 'Ekibinle Curahold’u kullanmaya başla: müşteriler, görevler, roller, ana sayfa ve bağlantılar.', developers: 'API anahtarları, webhook’lar, Claude ile ChatGPT için bağlayıcı ve Curahold’u kendi sunucunda çalıştırmak.', releases: 'Neler yeni, neler değişti.', legal: 'Kullanım koşulları, gizlilik, KVKK, veri işleme sözleşmesi ve alt işleyenler.' },
     edited: 'Son güncelleme',
   },
   en: {
@@ -49,7 +49,7 @@ const UI = {
     menu: 'Menu',
     sections: { help: 'Help center', developers: 'Developers', releases: 'Release notes', legal: 'Legal' },
     lead: 'Everything you need to use Curahold, set it up for your team and connect it to your own tools.',
-    start: { help: 'Get your team going: customers, tasks, roles, home pages and connections.', developers: 'API keys, webhooks and the connector for Claude and ChatGPT.', releases: 'What is new and what changed.', legal: 'Terms of service, privacy, the KVKK notice, the data processing agreement and sub-processors.' },
+    start: { help: 'Get your team going: customers, tasks, roles, home pages and connections.', developers: 'API keys, webhooks, the connector for Claude and ChatGPT, and running Curahold on your own server.', releases: 'What is new and what changed.', legal: 'Terms of service, privacy, the KVKK notice, the data processing agreement and sub-processors.' },
     edited: 'Last updated',
   },
 } as const;

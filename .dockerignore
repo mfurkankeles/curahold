@@ -1,0 +1,9 @@
+# Not needed to build the image (and never secrets).
+.git
+node_modules
+dist
+tests/e2e/screens
+*.log
+.env
+.env.*
+selfhost.env

@@ -14,7 +14,9 @@
     "migrate": "tsx scripts/migrate.ts",
     "build:demo": "vite build --config vite.demo.config.ts",
     "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts",
-    "build:site": "tsx scripts/build-site.ts"
+    "build:site": "tsx scripts/build-site.ts",
+    "build:server": "tsx scripts/build-server.ts",
+    "start:selfhost": "node dist/server/selfhost.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -27,6 +29,7 @@
     "@simplewebauthn/server": "^13.3.3",
     "fflate": "^0.8.3",
     "hono": "^4.13.17",
+    "nodemailer": "^10.5.0",
     "postgres": "^4.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -35,9 +38,11 @@
   "devDependencies": {
     "@babel/parser": "^8.1.0",
     "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.3.0",
+    "esbuild": "^0.28.2",
     "marked": "^18.2.0",
     "puppeteer-core": "^25.17.0",
     "tsx": "^4.23.15",

@@ -6,3 +6,4 @@ dist/
 .env.*
 .dev.vars
 tests/e2e/screens/
+/data/

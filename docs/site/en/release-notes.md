@@ -11,6 +11,8 @@ summary: What is new and what changed.
 ### Playbooks, renewals that start by themselves, currencies, and reports apart from dashboards
 
 - **Plans and billing:** a 14-day free trial, then Team or Business, paid through Paddle. Seats follow the people who joined. Without a plan everything can still be read and exported, only not changed. A self-hosted install has no billing.
+- **Your own server:** Curahold can run inside a company's own walls — one company, its own Postgres, attachments on its own disk, mail through its own mail server — with Docker in a few minutes. See *Running Curahold on your own server*.
+- **A tidier Reports page:** bars in a list start and end at the same place and their numbers line up; cards sit two by two at the same height, with no holes beside them.
 - **Meetings:** a customer's page lists every meeting, business review and call with them — who was there, the notes and the next steps. Each next step you write becomes a task on the customer. "Done" on a business review now opens the meeting form.
 - **New task asks for the details:** "Add task" under a column and "New task" open the same dialog: description, customer, the record it belongs to, assignees, due date, priority, repeat, board, column and the board's own fields. Writing "friday @Ayşe #Acme !high" in the title still fills the fields for you.
 - **Playbooks:** write your team's way of doing a thing as steps with dates — counted from the day it is put on, or back from the customer's renewal date or a deal's close date. Start from four ready-made ones (renewal, onboarding, business review, closing a deal) under Settings → Playbooks.

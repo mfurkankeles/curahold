@@ -7,9 +7,9 @@ already uses — or none. Every company gets its own address, like
 
 Phases: 1 foundation ✓ · 2 self-serve setup, messaging, accounts,
 automations ✓ · 3 CRM connectors (Salesforce, HubSpot, Dynamics 365,
-Pipedrive, Zoho, Google Sheets) · 4 support tools, add-ons, Servis Konsolu ·
-5 billing, seat-sharing detection, legal documents, self-hosted package ·
-6 sales site.
+Pipedrive, Zoho, Google Sheets) ✓ · 4 support tools, add-ons, Servis Konsolu ·
+5 billing, seat-sharing detection, legal documents, self-hosted package ✓ ·
+6 sales site ✓.
 
 ## What works today
 
@@ -321,7 +321,7 @@ request travels, the rules that keep companies apart, how to add a table,
 an endpoint, a screen or a word, and a map from each feature to its files.
 
 ```
-api/src/          Hono API — runs on Cloudflare Workers (worker.ts) and Node (node.ts)
+api/src/          Hono API — runs on Cloudflare Workers (worker.ts), Node (node.ts) and your own server (selfhost.ts)
   routes/         auth, me, boards, tasks (+comments, files), admin (+privacy), accounts, records, sync,
                   developer (keys, webhooks), oauth, mcp
   connectors/     messaging (Slack, Teams, Google Chat, webhooks)
@@ -401,19 +401,42 @@ is simply not offered.
 
 ### Database roles
 
-The API must not connect as the table owner. Create a login role that can
-only become `curahold_app`:
+The migrations create two roles without a login, `curahold_app` and
+`curahold_portal`, and give both to the user that ran them. The API connects
+as that same user. Every request a person makes runs
+`set local role curahold_app` inside its transaction, so row-level security
+always applies; customer-portal requests run as `curahold_portal`, which has
+no table privileges at all and can only call the `portal_*` functions. Work
+that belongs to no single company — a sign-in link before anyone is signed
+in, an incoming webhook, the hourly jobs — runs as the connecting user on
+purpose (`db.system` in the code); it is the only code that sees more than
+one company. So a login that can do nothing but become `curahold_app` (no
+table rights of its own) is not enough: that work would be refused.
 
-```sql
-create role curahold_api login password '...' noinherit;
-grant curahold_app to curahold_api;
-grant curahold_portal to curahold_api;
+## Running it on your own server
+
+For a company that wants Curahold inside its own walls: one company, its own
+Postgres, files on its own disk, mail through its own SMTP server, and no
+subscription (everything is open). The server is `api/src/selfhost.ts`,
+built into one file (libraries inside) by `npm run build:server`;
+`Dockerfile` and `docker-compose.yml` package it with Postgres 16.
+
+```bash
+cp selfhost.env.example .env    # PUBLIC_URL, AUTH_SECRET, DB_PASSWORD, ADMIN_EMAIL, SMTP_URL…
+docker compose up -d
 ```
 
-Every request runs `set local role curahold_app` inside its transaction, so
-row-level security always applies. Customer-portal requests run as
-`curahold_portal`, which has no table privileges at all and can only call
-the `portal_*` functions.
+On every start the server brings the database up to date; on the first one
+it creates the company and its first administrator (`ADMIN_EMAIL`), who signs
+in with an emailed link (without `SMTP_URL` the link is in
+`docker compose logs app`). A web server with HTTPS in front sends
+`PUBLIC_URL` to `127.0.0.1:8080`. Attachments are in the `files` volume and
+the database in `db`: back up both. Without Docker: Node 22,
+`npm ci && npm run build && npm run build:server`, then
+`node dist/server/selfhost.mjs` from the repository folder with the same
+settings in the environment and `DATABASE_URL` pointing at Postgres 16 or
+newer (its user must be allowed to create roles on the first start). The
+help page *Running Curahold on your own server* says the same for customers.
 
 ## Sub-processors (for the DPA)
 

@@ -1,0 +1,41 @@
+# Curahold and its database on one machine.
+#   cp selfhost.env.example .env    # then fill it in
+#   docker compose up -d
+# Put a web server with HTTPS in front (Caddy, nginx, Traefik…) that sends the
+# PUBLIC_URL address to 127.0.0.1:8080. Updating: pull the new code, then
+# `docker compose up -d --build`; the database is brought up to date on start.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: curahold
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?put DB_PASSWORD in .env}
+      POSTGRES_DB: curahold
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U curahold -d curahold"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    image: curahold:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://curahold:${DB_PASSWORD}@db:5432/curahold
+    depends_on:
+      db:
+        condition: service_healthy
+    # Only this machine (your HTTPS web server) reaches the app directly.
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - files:/data
+
+volumes:
+  db:
+  files:

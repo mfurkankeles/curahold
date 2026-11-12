@@ -45,7 +45,8 @@ CRMs.
 ## 2. Where things are
 
 ```
-api/src/                 the server (Hono). Runs on Cloudflare Workers (worker.ts) and Node (node.ts)
+api/src/                 the server (Hono). Runs on Cloudflare Workers (worker.ts), Node for local work (node.ts)
+                         and a company's own server (selfhost.ts: one company, Postgres, files on disk, SMTP)
   app.ts                 builds the app: middleware order and which routes are mounted where
   context.ts             what every request carries (org, auth, deps) and run(), requirePerm(), requireWriter()
   routes/                one file per area; each exports a Hono router (see the list below)
@@ -69,7 +70,7 @@ web/src/                 the React app (Vite)
   lib/                   api client, store (who is signed in, people, boards), i18n, router, money
   *.css                  styles.css (tokens and base), reports.css, motion.css, work.css —
                          all loaded by stylesheets.ts (app and demo); a new one goes there
-db/migrations/           the schema, in order (0001 … 0019). Each file runs once.
+db/migrations/           the schema, in order (0001, 0002, …). Each file runs once.
 scripts/                 dev server, migrations, demo data (seed-demo.ts, seed-showcase.ts), docs build
 tests/                   Vitest suites (*.test.ts) and tests/e2e (Chrome)
 docs/site/               the user documentation (Markdown, TR and EN)
@@ -312,6 +313,7 @@ saves a screenshot. Run them after any change to a screen.
 | New task dialog (every "add task") | `routes/tasks.ts` | `components/QuickAdd.tsx`, `lib/quickparse.ts` | `model.ts` | e2e |
 | Plans and billing (Paddle; off unless configured) | `routes/billing.ts`, `lib/billing.ts`, `lib/paddle.ts`, `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` (plans, prices, `accessOf`) | `billing.test.ts` |
 | The demo | `web/src/demo/` | same app | — | `npm run test:demo` |
+| Your own server (one company, Postgres, files on disk, SMTP) | `selfhost.ts`, `scripts/build-server.ts`, `Dockerfile`, `docker-compose.yml`, `selfhost.env.example` | same app | — | `selfhost.test.ts` |
 
 ---
 
