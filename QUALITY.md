@@ -265,9 +265,16 @@ Araya giren işler (ürün sahibinin 12 Kasım isteği):
 | Geliştirici rehberi: sayfa | 7 | 19 (hızlı başlangıç, kendi aracını bağla, 7 başvuru sayfası, nesneler, hatalar) |
 | Belgelerin koddan geri kalması | mümkündü | test engelliyor (yeni adres açıklamasız kalamaz) |
 | Demoda "Geliştirici rehberi" bağlantısı | boşa gidiyordu | demo ile birlikte gelen belgeleri açıyor |
+| Açılış dili | tarayıcının diline göre | İngilizce; Türkçe seçenek (demoda EN \| TR, üründe kişi ve şirket ayarı) |
+| "Sor" (ürün ve belgeler): ilk cevabın doğruluğu | yoktu | 44 gündelik soruda 43 (%98); doğru sayfa ilk üçte 44/44 |
+| "Sor": emin olduğunda doğruluk | yoktu | emin olduğu 36 cevabın 36'sı doğru; emin değilse en yakın yerleri listeler |
+| "Sor": cevap süresi ve maliyeti | yoktu | yaklaşık 2 ms, cihazda; soru başına $0; yazılan hiçbir şey cihazdan çıkmaz |
+| Belgelerin ana sayfası | bölüm listesi | tek soru kutusu, dört giriş, ilk üç adım, en çok sorulanlar, son güncellenenler |
+| Belge sayfası | 41 | 42 (geliştirici sözlüğü); her sayfada güncelleme tarihi ve okuma süresi |
+| Bağlantılar sayfası | 205 kelime | her CRM için ayrı bölüm (ne gelir, yöneticinin onayı ne zaman gerekir) |
 
-Test süreleri (12 Kasım, 2 çekirdek): birim 124 sn (394 test) · tarayıcı 175 sn (36 senaryo + belgeler) ·
-demo 43 sn. Toplam 5 dakikanın biraz üstünde; birim testlerde her dosyanın veritabanını baştan kurması
+Test süreleri (12 Kasım, 2 çekirdek): birim 140 sn (404 test) · tarayıcı 189 sn (36 senaryo + belgeler) ·
+demo 45 sn. Toplam 5 dakikanın biraz üstünde; birim testlerde her dosyanın veritabanını baştan kurması
 yerine hazır bir kopyadan başlaması bunu indirecek (Güvenilirlik paketi bitmeden yapılacak).
 
 ## Başlangıç ölçümü (12 Kasım 2026, kod değişmeden)
