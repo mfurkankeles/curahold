@@ -103,7 +103,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
 
 // ------------------------------------------------------------ with a key
 
-/** Support tools: the administrator types the tool's address and an API key; Curahold checks them right away. */
+/** Support tools and key-based CRMs: the administrator types the tool's address and a key; Curahold checks them right away. */
 syncRoutes.post('/connections/key', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(c, z.object({ provider: z.string().max(40), values: z.record(z.string().max(40), z.string().max(500)) }));
@@ -138,7 +138,8 @@ syncRoutes.post('/connections/key', async (c) => {
 
 // ------------------------------------------------------------------- demo
 
-const STAND_INS: Record<string, string> = { salesforce: 'Salesforce', hubspot: 'HubSpot', dynamics: 'Dynamics 365', pipedrive: 'Pipedrive', zoho: 'Zoho CRM' };
+const STAND_INS = { salesforce: 'Salesforce', hubspot: 'HubSpot', dynamics: 'Dynamics 365', pipedrive: 'Pipedrive', zoho: 'Zoho CRM', bitrix24: 'Bitrix24', freshsales: 'Freshsales', zendesksell: 'Zendesk Sell' } as const;
+const STAND_IN_IDS = Object.keys(STAND_INS) as [keyof typeof STAND_INS, ...(keyof typeof STAND_INS)[]];
 
 /** The pretend CRM, on servers that offer it (development, the live demo). */
 syncRoutes.post('/connections/demo', async (c) => {
@@ -147,7 +148,7 @@ syncRoutes.post('/connections/demo', async (c) => {
   if (!deps.config.connectors.demoCrm) fail('not_configured');
   // The try-it demo offers the pretend CRM under each real CRM's button, so a
   // visitor walks the real steps; the connection says "(demo)" in its name.
-  const input = await body(c, z.object({ as: z.enum(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho']).optional() }));
+  const input = await body(c, z.object({ as: z.enum(STAND_IN_IDS).optional() }));
   const label = input.as ? `${STAND_INS[input.as]} (demo)` : 'Demo CRM';
   const org = c.get('org');
   const auth = c.get('auth');

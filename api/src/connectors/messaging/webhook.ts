@@ -19,12 +19,13 @@ const HOSTS: Partial<Record<WebhookFlavor, RegExp>> = {
   zoom: /^(integrations\.zoom\.us|inbots\.zoom\.us)$/,
 };
 
-function privateHost(host: string): boolean {
+/** This machine or a private network: never a place to send a company's data or a key. */
+export function privateHost(host: string): boolean {
   const h = host.toLowerCase().replace(/^\[|\]$/g, '');
   if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal')) return true;
   if (/^[0-9.]+$/.test(h)) {
     const [a, b] = h.split('.').map(Number);
-    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a >= 224;
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
   }
   if (h.includes(':')) return true; // IPv6 literals: not needed by any service
   return false;

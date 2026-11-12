@@ -19,4 +19,4 @@ Son güncelleme: [tarih]. Yeni alt işleyenler, başlamadan en az [30] gün önc
 | Google LLC | Yalnızca şirket "Google ile giriş"i açtığında ya da Google Sheets bağladığında | [ ] |
 | Microsoft Corporation | Yalnızca şirket "Microsoft ile giriş"i açtığında ya da Excel bağladığında | [ ] |
 
-**Alt işleyenimiz olmayanlar:** bir şirketin kendisinin bağladığı araçlar — CRM’i (Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho), sohbet uygulaması (Slack, Microsoft Teams, Google Chat), destek aracı ya da yapay zekâ asistanı. Veriler bunlara şirketin talimatıyla, şirketin onlarla yaptığı sözleşme çerçevesinde gider.
+**Alt işleyenimiz olmayanlar:** bir şirketin kendisinin bağladığı araçlar — CRM’i (Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), sohbet uygulaması (Slack, Microsoft Teams, Google Chat), destek aracı ya da yapay zekâ asistanı. Veriler bunlara şirketin talimatıyla, şirketin onlarla yaptığı sözleşme çerçevesinde gider.

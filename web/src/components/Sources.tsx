@@ -8,7 +8,7 @@ import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
-import { KEY_FIELDS, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SupportProvider, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
+import { KEY_FIELDS, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -21,10 +21,12 @@ import { Confirm, Dialog, RowMenu } from './ui';
 const appName = (c: { provider: string; standsFor?: string | null }) => PROVIDER_NAMES[c.standsFor ?? c.provider] ?? c.provider;
 
 const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
-const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo'];
+const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo'];
+/** Connected with a key the administrator brings; the newest connectors, marked as such. */
+const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell'];
 const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'jsm'];
 /** In the try-it demo these buttons run the real steps against the pretend CRM. */
-const DEMO_CRMS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho'];
+const DEMO_CRMS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', ...KEYED_CRMS];
 
 function useErr() {
   const { t } = useI18n();
@@ -124,15 +126,21 @@ export function Sources() {
                 {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
               </span>
               <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+              {KEYED_CRMS.includes(p.id) && (
+                <span className="badge" title={t('sync.betaHint')}>
+                  {t('sync.beta')}
+                </span>
+              )}
             </div>
             <p className="field__hint tile__line">{t(`sync.what.${p.id}` as MessageKey)}</p>
-            {p.available ? (
+            {IN_DEMO && DEMO_CRMS.includes(p.id) ? (
+              // The demo runs in the browser and cannot reach a real CRM: every CRM's button opens the pretend one.
+              <DemoCrmConnect id={p.id} app={PROVIDER_NAMES[p.id] ?? p.id} onError={onErr} />
+            ) : p.available ? (
               <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
                 <Icon name="plug" size={16} />
                 {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
               </button>
-            ) : IN_DEMO && DEMO_CRMS.includes(p.id) ? (
-              <DemoCrmConnect id={p.id} app={PROVIDER_NAMES[p.id] ?? p.id} onError={onErr} />
             ) : IN_DEMO ? (
               <DemoConnect app={PROVIDER_NAMES[p.id] ?? p.id} />
             ) : (
@@ -190,11 +198,11 @@ export function Sources() {
   );
 }
 
-/** Support tools: the tool's address and an API key, checked right away. */
+/** Support tools and key-based CRMs: the tool's address and a key, checked right away. */
 function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: () => void }) {
   const { t } = useI18n();
   const onErr = useErr();
-  const spec = KEY_FIELDS[provider.id as SupportProvider] ?? [];
+  const spec = KEY_FIELDS[provider.id as keyof typeof KEY_FIELDS] ?? [];
   const [values, setValues] = useState<Record<string, string>>(provider.id === 'intercom' ? { region: 'us' } : {});
   const [busy, setBusy] = useState(false);
   const name = PROVIDER_NAMES[provider.id] ?? provider.id;
@@ -244,7 +252,7 @@ function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: ()
             </label>
           ),
         )}
-        <p className="field__hint">{t('support.readOnly', { app: name })}</p>
+        <p className="field__hint">{t(provider.twoWay ? 'sync.keyed.note' : 'support.readOnly', { app: name })}</p>
       </form>
     </Dialog>
   );

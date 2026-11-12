@@ -90,7 +90,8 @@ Pipedrive, Zoho, Google Sheets) ✓ · 4 support tools, add-ons, Servis Konsolu 
   (open pipeline, next close date, number of contacts…) are kept up to date
   from the records.
 - **Two-way sync** (`api/src/sync`) with Salesforce, HubSpot, Dynamics 365,
-  Pipedrive, Zoho CRM, Google Sheets and Excel in OneDrive / SharePoint:
+  Pipedrive, Zoho CRM, Bitrix24, Freshsales, Zendesk Sell, Google Sheets and
+  Excel in OneDrive / SharePoint:
   - set up without help: sign in → choose what comes over (any standard or
     custom object becomes accounts, contacts, opportunities, a new kind of
     record, or tasks on a board) → fields matched by name, change anything,
@@ -404,6 +405,7 @@ is simply not offered.
 | Dynamics 365 | Multi-tenant Entra ID app with the Dynamics CRM `user_impersonation` permission (the Microsoft sign-in app can be reused) | `DYNAMICS_CLIENT_ID`, `DYNAMICS_CLIENT_SECRET` (else the Microsoft ones) |
 | Pipedrive | Marketplace app with read/write access to organizations, people, deals and activities | `PIPEDRIVE_CLIENT_ID`, `PIPEDRIVE_CLIENT_SECRET` |
 | Zoho CRM | Server-based client in the Zoho API console, multi-DC enabled | `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET` |
+| Bitrix24, Freshsales, Zendesk Sell | Nothing: the company's administrator pastes a webhook address, API key or access token made in the CRM (`api/src/sync/adapters/keyed.ts`) | none |
 | Google Sheets | The Google sign-in client with the `spreadsheets` scope (needs Google's verification) | the Google ones |
 | Excel | The Microsoft sign-in app with `Files.ReadWrite.All` | the Microsoft ones |
 

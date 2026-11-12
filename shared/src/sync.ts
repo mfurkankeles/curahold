@@ -7,10 +7,23 @@ export const CRM_PROVIDERS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 
 /** Support tools: read only, connected with the tool's own address and an API key (no app registration). */
 export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm'] as const;
 export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
-export type CrmProvider = (typeof CRM_PROVIDERS)[number] | SupportProvider | 'demo';
+/**
+ * CRMs connected with what the administrator brings from the CRM itself (a
+ * webhook address, an API key, an access token): two-way like the others, and
+ * nothing has to be registered on the server.
+ */
+export const KEYED_CRM_PROVIDERS = ['bitrix24', 'freshsales', 'zendesksell'] as const;
+export type KeyedCrmProvider = (typeof KEYED_CRM_PROVIDERS)[number];
+export type CrmProvider = (typeof CRM_PROVIDERS)[number] | KeyedCrmProvider | SupportProvider | 'demo';
 
-/** What an administrator types to connect a support tool. */
-export const KEY_FIELDS: Record<SupportProvider, { key: string; secret?: boolean; placeholder: string }[]> = {
+/** What an administrator types to connect with a key. */
+export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider, { key: string; secret?: boolean; placeholder: string }[]> = {
+  bitrix24: [{ key: 'webhook', secret: true, placeholder: 'https://yourcompany.bitrix24.com/rest/1/••••••••/' }],
+  freshsales: [
+    { key: 'domain', placeholder: 'yourcompany.myfreshworks.com' },
+    { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+  zendesksell: [{ key: 'token', secret: true, placeholder: '••••••••' }],
   zendesk: [
     { key: 'subdomain', placeholder: 'yourcompany' },
     { key: 'email', placeholder: 'agent@yourcompany.com' },

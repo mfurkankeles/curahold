@@ -72,7 +72,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'Connect what you have; keep working where you are.',
       rows: [
         { label: 'Chat', names: 'Slack, Microsoft Teams, Google Chat and email' },
-        { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive and Zoho, in both directions' },
+        { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales and Zendesk Sell, in both directions' },
         { label: 'Spreadsheets', names: 'Google Sheets and Excel' },
         { label: 'AI assistants', names: 'Claude and ChatGPT, through the connector' },
       ],
@@ -156,7 +156,7 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
       lead: 'Elindekini bağla, olduğun yerde çalışmaya devam et.',
       rows: [
         { label: 'Sohbet', names: 'Slack, Microsoft Teams, Google Chat ve e-posta' },
-        { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive ve Zoho, iki yönlü' },
+        { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales ve Zendesk Sell, iki yönlü' },
         { label: 'Tablolar', names: 'Google Sheets ve Excel' },
         { label: 'Yapay zekâ', names: 'Bağlayıcı üzerinden Claude ve ChatGPT' },
       ],

@@ -14,9 +14,9 @@ With Slack, Microsoft Teams or Google Chat connected, notifications reach people
 
 ## CRM and spreadsheets
 
-Sync customers, contacts and opportunities with Salesforce, HubSpot, Microsoft Dynamics, Pipedrive, Zoho, Google Sheets and Excel. Open **Settings → CRMs and spreadsheets** and choose **Connect**.
+Sync customers, contacts and opportunities with Salesforce, HubSpot, Microsoft Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell, Google Sheets and Excel. Open **Settings → CRMs and spreadsheets** and choose **Connect**.
 
-1. **Sign in.** You are taken to the CRM's own sign-in page and approve what Curahold may read and write. No password is ever typed into Curahold.
+1. **Sign in.** You are taken to the CRM's own sign-in page and approve what Curahold may read and write. No password is ever typed into Curahold. (Bitrix24, Freshsales and Zendesk Sell take a key instead; see below.)
 2. **Pick what comes over.** Tick the objects you need and say what each one is in Curahold: customers, contacts, opportunities, a record type of your own, or tasks on a board.
 3. **Match the fields.** Curahold suggests a match for each field; change any of them, and choose per field whether it only comes in or is kept the same on both sides.
 4. **Check and start.** The preview shows how many would be added and updated before anything changes.
@@ -46,6 +46,24 @@ Comes over: organizations, people, deals and activities. Custom fields are match
 ## Zoho CRM
 
 Comes over: accounts, contacts, deals, cases, tasks and custom modules. Curahold finds your Zoho data centre (US, EU, India, Australia…) by itself.
+
+## Bitrix24, Freshsales and Zendesk Sell
+
+These three connect with a key you create in the CRM itself, so there is no sign-in page and nothing for anyone to approve. Curahold checks the key the moment you paste it, stores it encrypted, and never shows it again; remove the connection and the key is gone. Everything after that is the same as for the other CRMs: you pick what comes over, match the fields, and changes go both ways.
+
+| CRM | What to paste | Where to find it | Comes over |
+| --- | --- | --- | --- |
+| Bitrix24 | the inbound webhook address | Developer resources → Other → Inbound webhook; give it the CRM permission, and Users so owners can be matched | companies, contacts, deals |
+| Freshsales | your address and the API key | your profile picture → Settings → API settings | accounts, contacts, deals |
+| Zendesk Sell | an access token | Settings → Integrations → OAuth → Access tokens | companies, people, deals |
+
+Good to know:
+
+- **A key acts as the person who made it.** Curahold sees what that person sees in the CRM. Create the key with an account that can see every customer you want here.
+- **Email, phone and web address in Bitrix24** are lists there. Curahold reads the first one and fills it in when it creates a new contact or company, but never rewrites the list afterwards.
+- **Freshsales is read through its "All accounts", "All contacts" and "All deals" views.** If one of them has been renamed or removed, that list is not read and the run says so, instead of bringing only part of it.
+- **A deal in Zendesk Sell needs a company.** A deal made in Curahold is created there under the customer's company.
+- These connectors are new. If something does not come over the way you expect, write to us from Help in the product.
 
 ## Google Sheets and Excel
 

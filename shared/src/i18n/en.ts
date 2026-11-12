@@ -1093,7 +1093,7 @@ export const en = {
   'settings.roles.noExtra': 'No company-wide rights beyond daily work.',
   'settings.roles.cannot': 'Cannot do ({n})',
   'setup.accounts.crm': 'Keep them in a CRM or a shared spreadsheet? Connect it instead, and they stay in step:',
-  'setup.accounts.crmLink': 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Google Sheets or Excel',
+  'setup.accounts.crmLink': 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell, Google Sheets or Excel',
   'sync.trigger.change': 'after a change here',
   'org.stakeholders': 'Stakeholders',
   'org.view': 'Show stakeholders as',
@@ -3092,6 +3092,19 @@ export const en = {
   'help.followers.label': 'Keep in the loop (optional)',
   'help.neededByLabel': 'Needed by (optional)',
   'cura.unread': '{n} new answers from support',
+  'sync.what.bitrix24': 'Companies, contacts and deals.',
+  'sync.what.freshsales': 'Accounts, contacts and deals.',
+  'sync.what.zendesksell': 'Companies, people and deals.',
+  'support.how.bitrix24': 'In Bitrix24: Developer resources → Other → Inbound webhook. Give it the CRM permission (and Users, so owners can be matched), save, then copy the webhook address it shows.',
+  'support.how.freshsales': 'In Freshsales: your profile picture → Settings → API settings. Copy the API key and the address written next to it.',
+  'support.how.zendesksell': 'In Zendesk Sell: Settings → Integrations → OAuth → Access tokens → Add access token.',
+  'support.field.bitrix24.webhook': 'Inbound webhook address',
+  'support.field.freshsales.domain': 'Freshsales address (yourcompany.myfreshworks.com)',
+  'support.field.freshsales.token': 'API key',
+  'support.field.zendesksell.token': 'Access token',
+  'sync.keyed.note': 'The key is stored encrypted and can be removed any time. On the next screen you choose what comes from {app} and which fields Curahold may write back.',
+  'sync.beta': 'New',
+  'sync.betaHint': 'A new connector. If something does not come over as you expect, tell us from Help.',
 } as const;
 
 export type MessageKey = keyof typeof en;

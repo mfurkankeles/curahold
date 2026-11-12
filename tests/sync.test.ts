@@ -148,9 +148,11 @@ describe('two-way sync with a CRM', () => {
   let demoId: string;
   it('is offered only where configured, and needs the connections permission', async () => {
     const list = (await ada.get('/api/connections')).json;
-    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm']);
-    // Support tools need nothing on the server: the administrator brings a key.
-    expect(list.providers.filter((p: any) => p.setup === 'key').every((p: any) => p.available && !p.twoWay)).toBe(true);
+    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm']);
+    // Connectors that take a key need nothing on the server; of those, the support tools only read.
+    const keyed = list.providers.filter((p: any) => p.setup === 'key');
+    expect(keyed.every((p: any) => p.available)).toBe(true);
+    expect(keyed.filter((p: any) => !p.twoWay).map((p: any) => p.id)).toEqual(['zendesk', 'freshdesk', 'intercom', 'jsm']);
     expect(list.providers.find((p: any) => p.id === 'salesforce').available).toBe(false);
     expect(list.providers.find((p: any) => p.id === 'gsheets').available).toBe(true);
     expect((await mert.post('/api/connections/demo')).status).toBe(403);
@@ -164,6 +166,9 @@ describe('two-way sync with a CRM', () => {
     expect(row.provider).toBe('demo');
     expect(row.config.as).toBe('salesforce');
     expect((await ada.post('/api/connections/demo', { as: 'not-a-crm' })).status).toBe(400);
+    const other = await ada.post('/api/connections/demo', { as: 'bitrix24' });
+    expect((await env.db.system((q) => q.query('select label from connections where id = $1', [other.json.id])))[0].label).toBe('Bitrix24 (demo)');
+    await ada.req('DELETE', `/api/connections/${other.json.id}`);
     await ada.req('DELETE', `/api/connections/${r.json.id}`);
   });
 

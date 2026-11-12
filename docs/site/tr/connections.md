@@ -14,9 +14,9 @@ Slack, Microsoft Teams ve Google Chat bağlandığında bildirimler kişiye öze
 
 ## CRM ve tablolar
 
-Müşterileri, kişileri ve fırsatları Salesforce, HubSpot, Microsoft Dynamics, Pipedrive, Zoho, Google Sheets ve Excel ile eşitle. **Ayarlar → CRM ve tablolar** sayfasını aç ve **Bağla**'ya tıkla.
+Müşterileri, kişileri ve fırsatları Salesforce, HubSpot, Microsoft Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell, Google Sheets ve Excel ile eşitle. **Ayarlar → CRM ve tablolar** sayfasını aç ve **Bağla**'ya tıkla.
 
-1. **Giriş yap.** CRM'in kendi giriş sayfasına gidersin ve Curahold'un neyi okuyup yazabileceğini onaylarsın. Curahold'a hiçbir zaman şifre yazılmaz.
+1. **Giriş yap.** CRM'in kendi giriş sayfasına gidersin ve Curahold'un neyi okuyup yazabileceğini onaylarsın. Curahold'a hiçbir zaman şifre yazılmaz. (Bitrix24, Freshsales ve Zendesk Sell bunun yerine bir anahtarla bağlanır; aşağıya bak.)
 2. **Neyin geleceğini seç.** İhtiyacın olan nesneleri işaretle ve her birinin Curahold'da ne olduğunu söyle: müşteriler, kişiler, fırsatlar, kendi kayıt türün ya da bir panodaki görevler.
 3. **Alanları eşle.** Curahold her alan için bir eşleşme önerir; istediğini değiştir ve alan başına yalnızca gelsin mi, iki tarafta aynı mı kalsın, onu seç.
 4. **Kontrol et ve başlat.** Önizleme, hiçbir şey değişmeden önce kaç kaydın ekleneceğini ve güncelleneceğini gösterir.
@@ -46,6 +46,24 @@ Gelenler: kurumlar, kişiler, anlaşmalar ve aktiviteler. Özel alanlar standart
 ## Zoho CRM
 
 Gelenler: hesaplar, kişiler, anlaşmalar, servis talepleri, görevler ve özel modüller. Curahold, Zoho veri merkezini (ABD, AB, Hindistan, Avustralya…) kendisi bulur.
+
+## Bitrix24, Freshsales ve Zendesk Sell
+
+Bu üçü, CRM'in içinde senin oluşturduğun bir anahtarla bağlanır; giriş sayfası yoktur ve kimsenin bir şeyi onaylaması gerekmez. Curahold anahtarı yapıştırdığın anda dener, şifreli saklar ve bir daha göstermez; bağlantıyı kaldırınca anahtar da silinir. Sonrası diğer CRM'lerle aynıdır: neyin geleceğini seçersin, alanları eşlersin, değişiklikler iki yöne de gider.
+
+| CRM | Ne yapıştırılır | Nerede bulunur | Gelenler |
+| --- | --- | --- | --- |
+| Bitrix24 | gelen webhook adresi | Geliştirici kaynakları → Diğer → Gelen webhook; CRM iznini ver, sahipler eşleşsin diye Kullanıcılar iznini de | şirketler, kişiler, anlaşmalar |
+| Freshsales | adresin ve API anahtarı | profil resmin → Ayarlar → API ayarları | hesaplar, kişiler, anlaşmalar |
+| Zendesk Sell | bir erişim anahtarı | Ayarlar → Entegrasyonlar → OAuth → Erişim anahtarları | şirketler, kişiler, anlaşmalar |
+
+Bilmekte fayda var:
+
+- **Anahtar, onu oluşturan kişi gibi davranır.** Curahold, o kişinin CRM'de gördüğünü görür. Anahtarı, burada olmasını istediğin bütün müşterileri görebilen bir hesapla oluştur.
+- **Bitrix24'te e-posta, telefon ve web adresi** orada birer listedir. Curahold ilkini okur ve yeni bir kişi ya da şirket oluştururken doldurur, ama listeyi sonradan yeniden yazmaz.
+- **Freshsales, "All accounts", "All contacts" ve "All deals" görünümleri üzerinden okunur.** Bunlardan birinin adı değiştirilmiş ya da görünüm silinmişse o liste okunmaz ve çalıştırma bunu söyler; listenin yalnızca bir kısmını getirmez.
+- **Zendesk Sell'de bir anlaşmanın şirketi olmak zorundadır.** Curahold'da açılan anlaşma, orada müşterinin şirketi altında oluşturulur.
+- Bu bağlayıcılar yeni. Beklediğin gibi gelmeyen bir şey olursa ürünün içindeki Yardım'dan bize yaz.
 
 ## Google Sheets ve Excel
 

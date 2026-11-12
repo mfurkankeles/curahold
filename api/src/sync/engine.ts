@@ -1104,9 +1104,9 @@ export async function previewSync(deps: Deps, conn: LoadedCrm, sync: SyncConfig)
 // ------------------------------------------------------- mapping suggestions
 
 const SUGGEST: Record<string, Record<string, string>> = {
-  account: { name: 'name', account_name: 'name', company: 'name', firma: 'name', owner: 'owner', ownerid: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner', _ownerid_value: 'owner' },
-  contact: { firstname: 'f:first_name', first_name: 'f:first_name', lastname: 'f:last_name', last_name: 'f:last_name', reportstoid: 'parent', reports_to: 'parent', linkedin: 'f:linkedin', linkedin_url: 'f:linkedin', hs_linkedin_url: 'f:linkedin', linkedin__c: 'f:linkedin', name: 'name', full_name: 'name', fullname: 'name', accountid: 'account', parentcustomerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', email: 'f:email', emailaddress1: 'f:email', phone: 'f:phone', telephone1: 'f:phone', title: 'f:title', jobtitle: 'f:title', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner' },
-  opportunity: { name: 'name', dealname: 'name', deal_name: 'name', title: 'name', accountid: 'account', customerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', amount: 'f:amount', value: 'f:amount', estimatedvalue: 'f:amount', closedate: 'f:close_date', close_date: 'f:close_date', estimatedclosedate: 'f:close_date', expected_close_date: 'f:close_date', closing_date: 'f:close_date', stagename: 'f:stage', dealstage: 'f:stage', stage: 'f:stage', stage_id: 'f:stage', salesstage: 'f:stage', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', user_id: 'owner' },
+  account: { name: 'name', account_name: 'name', company: 'name', firma: 'name', owner: 'owner', ownerid: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner', _ownerid_value: 'owner', assigned_by_id: 'owner' },
+  contact: { firstname: 'f:first_name', first_name: 'f:first_name', lastname: 'f:last_name', last_name: 'f:last_name', reportstoid: 'parent', reports_to: 'parent', linkedin: 'f:linkedin', linkedin_url: 'f:linkedin', hs_linkedin_url: 'f:linkedin', linkedin__c: 'f:linkedin', name: 'name', full_name: 'name', fullname: 'name', accountid: 'account', parentcustomerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', email: 'f:email', emailaddress1: 'f:email', phone: 'f:phone', telephone1: 'f:phone', title: 'f:title', jobtitle: 'f:title', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', owner_id: 'owner', assigned_by_id: 'owner', company_id: 'account', post: 'f:title', job_title: 'f:title', work_number: 'f:phone', mobile_number: 'f:phone' },
+  opportunity: { name: 'name', dealname: 'name', deal_name: 'name', title: 'name', accountid: 'account', customerid: 'account', account_name: 'account', org_id: 'account', __company: 'account', amount: 'f:amount', value: 'f:amount', estimatedvalue: 'f:amount', closedate: 'f:close_date', close_date: 'f:close_date', estimatedclosedate: 'f:close_date', expected_close_date: 'f:close_date', closing_date: 'f:close_date', stagename: 'f:stage', dealstage: 'f:stage', stage: 'f:stage', stage_id: 'f:stage', salesstage: 'f:stage', ownerid: 'owner', owner: 'owner', hubspot_owner_id: 'owner', user_id: 'owner', owner_id: 'owner', assigned_by_id: 'owner', company_id: 'account', sales_account_id: 'account', opportunity: 'f:amount', expected_close: 'f:close_date', estimated_close_date: 'f:close_date', deal_stage_id: 'f:stage' },
   ticket: { subject: 'name', title: 'name', status: 'f:status', statuscode: 'f:status', priority: 'f:priority', prioritycode: 'f:priority', opened: 'f:opened_at', createddate: 'f:opened_at', createdon: 'f:opened_at', solved: 'f:solved_at', closeddate: 'f:solved_at', requester: 'f:requester', suppliedemail: 'f:requester', contactemail: 'f:requester', emailaddress: 'f:requester', channel: 'f:channel', origin: 'f:channel', caseorigincode: 'f:channel', link: 'f:url', organization: 'account', accountid: 'account', customerid: 'account', assignee: 'owner', ownerid: 'owner' },
   task: { subject: 'title', hs_task_subject: 'title', title: 'title', whatid: 'account', what_id: 'account', regardingobjectid: 'account', org_id: 'account', __company: 'account', activitydate: 'due', due_date: 'due', scheduledend: 'due', hs_timestamp: 'due', description: 'description', hs_task_body: 'description', note: 'description', status: 'done', done: 'done', hs_task_status: 'done', statecode: 'done', ownerid: 'assignee', owner: 'assignee', hubspot_owner_id: 'assignee', user_id: 'assignee' },
 };
@@ -1117,9 +1117,14 @@ export function suggestFields(kind: 'account' | 'contact' | 'opportunity' | 'tic
   const out: FieldMap[] = [];
   const used = new Set<string>();
   const local = kind === 'account' ? accountFields : typeFields;
+  const names = new Set(fields.map((f) => f.name.toLowerCase()));
+  // Some CRMs call a company's name its "title", and a person's first name just "name".
+  const alias: Record<string, string> = {};
+  if (kind === 'account' && names.has('title') && !['name', 'account_name', 'company'].some((n) => names.has(n))) alias.title = 'name';
+  if (kind === 'contact' && names.has('name') && names.has('last_name') && !names.has('first_name')) alias.name = 'f:first_name';
   for (const f of fields) {
     const k = f.name.toLowerCase();
-    let target = table[k];
+    let target = alias[k] ?? table[k];
     if (!target && kind === 'contact') {
       if (/stance|sentiment|duruş|tutum/i.test(`${f.name} ${f.label}`)) target = 'f:stance';
       else if (/buying.?role|decision|karar/i.test(`${f.name} ${f.label}`)) target = 'f:decision';
