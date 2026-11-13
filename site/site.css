@@ -469,3 +469,28 @@ html.js [data-reveal="app"].is-in { opacity: 1; transform: none; }
   .pf__tiles { grid-template-columns: 1fr; }
   .app--wide, .board .app { max-width: 560px; }
 }
+
+/* ===================================== mobile fit for product windows ======
+   On a phone the account/task cards must never push the app window past the
+   screen: cap every grid track at the container, let the card footer wrap, and
+   trim what isn't essential at narrow widths. */
+body { overflow-x: clip; }
+.app, .app__body, .app__main, .app__grid, .kb, .kb__col, .kb__cards, .pf__tiles { min-width: 0; }
+.ac, .kt, .pf__tile, .ac__head, .ac__foot, .ac__owner, .kt__f, .kt__t { min-width: 0; }
+.ac__name, .kt__t { overflow-wrap: anywhere; }
+.ac__foot { flex-wrap: wrap; row-gap: 6px; }
+.kt__f { flex-wrap: wrap; row-gap: 6px; }
+
+@media (max-width: 560px) {
+  .app__grid { grid-template-columns: minmax(0, 1fr); }
+  .app__main { padding: 18px 16px; }
+  .app__main--kb, .app__main--pf { padding: 16px; }
+  .app__bar { padding: 10px 14px; }
+  .ac { padding: 13px 14px; }
+  .ac__owner-l { display: none; }
+  .ac__flag { margin-inline-start: auto; }
+  .pf__n { font-size: 38px; }
+  .showcase__cap { font-size: clamp(20px, 6.2vw, 26px); }
+  .showcase { padding-top: 52px; }
+  .board { padding-top: 44px; }
+}
