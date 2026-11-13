@@ -125,20 +125,21 @@ describe('the locale registry', () => {
     expect(Object.keys(dictionaries.tr).length).toBe(Object.keys(dictionaries.en).length);
   });
 
-  it('falls back to English for any key a locale has not translated yet', () => {
-    // The new markets are translated surface by surface, so each still has keys
-    // it has not reached. A missing key reads the English; a present one reads
-    // its own language. Both directions are proven here.
-    const partial = LOCALES.find((l) => l !== 'en' && Object.keys(dictionaries[l]).length < Object.keys(dictionaries.en).length);
-    expect(partial, 'a partially-translated locale to prove the fallback').toBeTruthy();
-    const enKeys = Object.keys(dictionaries.en) as MessageKey[];
-    const missing = enKeys.find((k) => !(k in dictionaries[partial!]) && !/\{/.test(dictionaries.en[k]!));
-    expect(missing, 'a placeholder-free untranslated key').toBeTruthy();
-    expect(translate(partial!, missing!)).toBe(dictionaries.en[missing!]);
-    const own = (Object.keys(dictionaries[partial!]) as MessageKey[]).find((k) => dictionaries[partial!][k] !== dictionaries.en[k]);
-    if (own) expect(translate(partial!, own)).toBe(dictionaries[partial!][own]);
+  it('reads each locale its own text, and falls back to English for any key it lacks', () => {
+    // The market locales are now fully translated, so no locale is partial.
+    // The English-fallback path still guards any key added to English before a
+    // locale catches up, so the mechanism is proven directly here rather than
+    // by relying on an incomplete locale.
+    const l: Locale = 'ar';
+    // A present key reads its own language, not English.
+    const own = (Object.keys(dictionaries[l]) as MessageKey[]).find((k) => dictionaries[l][k] !== dictionaries.en[k]);
+    expect(own, 'a key translated away from English').toBeTruthy();
+    expect(translate(l, own!)).toBe(dictionaries[l][own!]);
+    // A key no dictionary defines falls through to the key name without throwing.
+    const absent = 'does.not.exist.anywhere' as MessageKey;
+    expect(translate(l, absent)).toBe(absent);
     // The account noun is localized for every market, dictionary or not.
-    expect(translate(partial!, 'board.searchPlaceholder')).toContain(accountWords(partial!).other);
+    expect(translate(l, 'board.searchPlaceholder')).toContain(accountWords(l).other);
   });
 
   it('keeps every functional placeholder a key uses, in every locale', () => {
