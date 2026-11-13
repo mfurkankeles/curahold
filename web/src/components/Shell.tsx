@@ -436,6 +436,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/reports', t('nav.reports'), path === '/reports' || (path.startsWith('/reports/') && path !== '/reports/dashboards'), 'chart')}
                 {link('/dashboards', t('nav.dashboards'), path.startsWith('/dashboards') || path === '/reports/dashboards', 'layout')}
                 {link('/team', t('nav.team'), path === '/team', 'people')}
+                {me.owner ? link('/metrics', t('nav.metrics'), path === '/metrics', 'chart') : null}
               </>,
             )}
           </div>

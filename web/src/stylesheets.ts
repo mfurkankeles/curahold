@@ -5,3 +5,4 @@ import './styles.css';
 import './reports.css';
 import './motion.css';
 import './work.css';
+import './metrics.css';

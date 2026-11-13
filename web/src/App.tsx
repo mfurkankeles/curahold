@@ -29,6 +29,7 @@ import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
 import { InboxPage } from './pages/Inbox';
+import { MetricsPage } from './pages/Metrics';
 import { ReportsPage } from './pages/Reports';
 import { ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
 import { DashboardPage, DashboardsPage } from './pages/Dashboards';
@@ -263,6 +264,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (b) page = <BoardPage boardId={b.id} view={params.get('view') === 'list' ? 'list' : params.get('view') === 'archive' ? 'archive' : 'board'} refreshKey={refreshKey} />;
   else if (path === '/calendar') page = <CalendarPage refreshKey={quiet} />;
   else if (path === '/inbox') page = <InboxPage />;
+  else if (path === '/metrics') page = <MetricsPage />;
   else if (path === '/reports') page = <ReportsPage key={refreshKey} />;
   else if (path === '/reports/all') page = <ReportsListPage />;
   else if (path === '/reports/dashboards' || path === '/dashboards') page = <DashboardsPage />;

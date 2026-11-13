@@ -6,7 +6,7 @@ import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { FAVORITE_PATH, MAX_FAVORITES, NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
-import { accessFor, logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
+import { accessFor, isOwner, logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
@@ -86,6 +86,7 @@ meRoutes.get('/me', async (c) => {
       billingOn: !!c.get('deps').config.billing,
     },
     teamIds: data.teamIds,
+    owner: isOwner(c),
     sessionId: auth.sessionId,
     ...(c.get('previewBy') ? { previewBy: c.get('previewBy') } : {}),
     ...(c.get('supportBy') ? { supportBy: c.get('supportBy') } : {}),

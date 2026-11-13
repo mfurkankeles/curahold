@@ -63,6 +63,8 @@ export interface Env {
   SUPPORT_MAIL_KEY?: string;
   /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
   STAFF_KEY?: string;
+  /** The platform owner's email: who alone may see the whole-business metrics. Defaults to the first SUPPORT_STAFF address. */
+  PLATFORM_OWNER?: string;
   /** The customer portal's own domain, e.g. curahold-portal.com (unset: no portal). */
   PORTAL_DOMAIN?: string;
   /** Billing through Paddle (all four set, or billing stays off). "sandbox" or "live". */
@@ -122,6 +124,10 @@ export function configFromEnv(env: Env): Config {
       staff: (env.SUPPORT_STAFF || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean),
     },
     staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
+    owner:
+      (env.PLATFORM_OWNER || '').trim().toLowerCase() ||
+      (env.SUPPORT_STAFF || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)[0] ||
+      undefined,
     connectors: {
       ...(env.SLACK_CLIENT_ID && env.SLACK_CLIENT_SECRET && env.SLACK_SIGNING_SECRET
         ? { slack: { clientId: env.SLACK_CLIENT_ID, clientSecret: env.SLACK_CLIENT_SECRET, signingSecret: env.SLACK_SIGNING_SECRET } }

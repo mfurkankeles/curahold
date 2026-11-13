@@ -53,6 +53,8 @@ export interface Config {
   portalDomain?: string;
   /** Curahold support's own key for opening an entry link into a company that granted access. */
   staffKey?: string;
+  /** The platform owner's email: who alone may see the whole-business metrics. Defaults to the first support-staff address. */
+  owner?: string;
   /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
   billing?: BillingConfig;
 }
@@ -176,6 +178,25 @@ export function requireWriter(c: C) {
   if (c.get('auth').seat !== 'full') fail('read_only_seat');
   // No plan (the trial is over, or a cancelled one ran out): read and export, but no changes.
   if (accessFor(c).readOnly) fail('billing_locked');
+}
+
+/**
+ * The platform owner: who may see the whole-business metrics across every
+ * company. In production this is one configured address and nobody else. When
+ * billing is off (a self-hosted install, the demo, tests) there is only ever
+ * one company's data to see, so the company's own administrator qualifies.
+ */
+export function isOwner(c: C): boolean {
+  const deps = c.get('deps');
+  const email = c.get('auth')?.email?.toLowerCase();
+  if (!email) return false;
+  if (deps.config.owner) return email === deps.config.owner;
+  if (!deps.config.billing) return c.get('auth').perms.includes('org.manage');
+  return false;
+}
+
+export function requireOwner(c: C) {
+  if (!isOwner(c)) fail('forbidden');
 }
 
 /** Where this company stands with billing (always open when billing is off). */

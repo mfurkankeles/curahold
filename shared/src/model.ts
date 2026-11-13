@@ -364,6 +364,8 @@ export interface Me {
   user: Person & { locale: Locale | null; roleId: string; roleKey: string; perms: Perm[]; onboardedAt: string | null; prefs: NotifyPrefs };
   org: Org;
   teamIds: string[];
+  /** The platform owner sees the whole-business metrics screen. */
+  owner?: boolean;
   sessionId: string;
   /** Set while an administrator looks at Curahold as this person (read only). */
   previewBy?: { id: string; name: string };
