@@ -55,7 +55,12 @@
       else q.delete(g);
     });
     var s = q.toString();
-    history.replaceState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
+    // Some places that show this page (a sandboxed frame) refuse to change its address: the filters still work.
+    try {
+      history.replaceState(null, '', location.pathname + (s ? '?' + s : '') + location.hash);
+    } catch (e) {
+      /* the address stays as it was */
+    }
     if (scroll) document.getElementById('tours').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
 
