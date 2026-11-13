@@ -331,3 +331,7 @@
   .planned__item .rowmenu, .planned__item > :last-child { grid-column: 2; justify-self: end; }
   .typemgr__row { grid-template-columns: 1fr auto; }
 }
+
+/* The stack of a recorded error, shown when its row is expanded. */
+.errdetail { margin: 6px 0 0; padding: 8px 10px; background: var(--wash); border-radius: 8px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; color: var(--ink-2); }
+.errdetail { -webkit-user-select: text; user-select: text; }

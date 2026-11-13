@@ -217,6 +217,17 @@ export const en = {
   'settings.audit.when': 'When',
   'settings.audit.who': 'Who',
   'settings.audit.what': 'What',
+  'settings.tab.errors': 'Errors',
+  'settings.errors.intro': 'Errors from the last 30 days: what broke and where, so a real fault can be seen and fixed. Request contents are never kept.',
+  'settings.errors.filter': 'Filter errors',
+  'settings.errors.all': 'All',
+  'settings.errors.server': 'Server',
+  'settings.errors.browser': 'Browser',
+  'settings.errors.empty': 'No errors recorded. Good.',
+  'settings.errors.when': 'When',
+  'settings.errors.where': 'Where',
+  'settings.errors.what': 'What',
+  'settings.errors.who': 'Who',
 
   // ----------------------------------------------------------- permissions
   'perm.org.manage': 'Change company settings, roles and permissions',

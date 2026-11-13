@@ -26,7 +26,7 @@ import { nameIt, navigateFresh } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit';
+type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -66,7 +66,14 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['portal', t('settings.tab.portal'), can('org.manage'), 'globe'],
       ],
     },
-    { label: t('settings.group.security'), items: [['support', t('settings.tab.support'), can('org.manage'), 'lifebuoy'], ['audit', t('settings.tab.audit'), can('audit.view'), 'history']] },
+    {
+      label: t('settings.group.security'),
+      items: [
+        ['support', t('settings.tab.support'), can('org.manage'), 'lifebuoy'],
+        ['audit', t('settings.tab.audit'), can('audit.view'), 'history'],
+        ['errors', t('settings.tab.errors'), can('org.manage'), 'alert'],
+      ],
+    },
   ];
   const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
   const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
@@ -138,6 +145,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'automations' && <AutomationList />}
           {current === 'developer' && <DeveloperTab />}
           {current === 'audit' && <AuditTab />}
+          {current === 'errors' && <ErrorsTab />}
         </div>
       </div>
     </>
@@ -665,6 +673,87 @@ function AuditTab() {
         })}
       </tbody>
     </table>
+  );
+}
+
+interface ErrRow {
+  id: string;
+  at: string;
+  source: 'server' | 'browser';
+  method: string | null;
+  path: string | null;
+  message: string;
+  detail: string | null;
+  agent: string | null;
+  byId: string | null;
+}
+
+/** Recent errors: what broke and where, so a real fault can be seen and fixed. */
+function ErrorsTab() {
+  const { t, fmtDate } = useI18n();
+  const { person } = useStore();
+  const [source, setSource] = useState<'' | 'server' | 'browser'>('');
+  const [rows, setRows] = useState<ErrRow[] | null>(null);
+  useEffect(() => {
+    setRows(null);
+    get<{ errors: ErrRow[] }>(`/admin/errors?limit=200${source ? `&source=${source}` : ''}`)
+      .then((r) => setRows(r.errors))
+      .catch(() => setRows([]));
+  }, [source]);
+  return (
+    <div style={{ maxWidth: 900 }}>
+      <p className="muted small">{t('settings.errors.intro')}</p>
+      <div className="seg" role="group" aria-label={t('settings.errors.filter')} style={{ marginBottom: 12 }}>
+        {(['', 'server', 'browser'] as const).map((s) => (
+          <button key={s || 'all'} type="button" aria-pressed={source === s} onClick={() => setSource(s)}>
+            {t(`settings.errors.${s || 'all'}` as any)}
+          </button>
+        ))}
+      </div>
+      {!rows ? (
+        <div className="empty">{t('common.loading')}</div>
+      ) : rows.length === 0 ? (
+        <div className="empty">{t('settings.errors.empty')}</div>
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t('settings.errors.when')}</th>
+              <th>{t('settings.errors.where')}</th>
+              <th>{t('settings.errors.what')}</th>
+              <th>{t('settings.errors.who')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((e) => (
+              <tr key={e.id}>
+                <td className="num muted">{fmtDate(e.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                <td className="muted">
+                  {t(`settings.errors.${e.source}` as any)}
+                  {e.path && (
+                    <>
+                      <br />
+                      <span className="small">{`${e.method ? `${e.method} ` : ''}${e.path}`}</span>
+                    </>
+                  )}
+                </td>
+                <td>
+                  {e.detail ? (
+                    <details>
+                      <summary>{e.message}</summary>
+                      <pre className="errdetail">{e.detail}</pre>
+                    </details>
+                  ) : (
+                    e.message
+                  )}
+                </td>
+                <td className="muted">{e.byId ? (person(e.byId)?.name ?? t('common.unknownUser')) : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 
