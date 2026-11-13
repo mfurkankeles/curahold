@@ -6,12 +6,18 @@ import { Client, login, setup, type Env } from './helpers';
 let env: Env;
 let ada: Client;
 let lena: Client;
-const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+// Compute dates in the seeded org's timezone (read in beforeAll), matching how
+// the server buckets due dates, so counts hold at any hour including the
+// UTC/local midnight gap.
+let tz = 'UTC';
+const day = (n: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() + n * 86_400_000));
 
 beforeAll(async () => {
   env = await setup();
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
+  tz = (await ada.get('/api/me')).json.org.timezone;
 });
 
 describe('customer signals', () => {
@@ -68,7 +74,7 @@ describe('product map', () => {
 describe('my tasks number and first steps', () => {
   it('counts my open late and due-today tasks', async () => {
     const before = (await lena.get('/api/tasks/counts')).json;
-    await lena.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Due today', dueDate: new Date().toISOString().slice(0, 10), assigneeIds: [env.a.ids.lena] });
+    await lena.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Due today', dueDate: day(0), assigneeIds: [env.a.ids.lena] });
     await lena.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Was due', dueDate: day(-2), assigneeIds: [env.a.ids.lena] });
     await lena.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Not mine', dueDate: day(-2), assigneeIds: [env.a.ids.ada] });
     const after = (await lena.get('/api/tasks/counts')).json;

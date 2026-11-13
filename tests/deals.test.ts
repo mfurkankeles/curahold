@@ -12,7 +12,11 @@ let lena: Client;
 let zeynep: Client;
 let deals: { id: string; key: string };
 
-const today = () => new Date().toISOString().slice(0, 10);
+// The seeded org keeps its own timezone and the server buckets dates there, so
+// compute "today" in that zone (read from the org in beforeAll) to stay correct
+// at any wall-clock hour, including the UTC/local midnight gap.
+let tz = 'UTC';
+const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 /** A customer's tasks, straight from the database (top-level and subtasks). */
 const tasksOf = (accountId: string) =>
   env.db.system((q) => q.query<{ id: string; title: string; due: string | null; record_id: string | null; parent_id: string | null }>(`select id, title, due_date::text as due, record_id, parent_id from tasks where account_id = $1 order by position`, [accountId]));
@@ -22,6 +26,7 @@ beforeAll(async () => {
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
   zeynep = await login(env, 'acme', 'zeynep@demo.example');
+  tz = (await ada.get('/api/me')).json.org.timezone;
   deals = (await ada.post('/api/record-types', { kind: 'opportunity' })).json.type;
 });
 
