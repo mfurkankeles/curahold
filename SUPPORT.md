@@ -69,6 +69,8 @@ Bu belgedeki ve koddaki her ad ve metin Curahold için yazıldı.
 
 Ürün sahibinin kararı: **B, ekran yapılsın.** Curahold ekibinin kendi ekranı; merkez
 adreste `/desk`. Müşteri şirketlerin adreslerinde böyle bir sayfa yok.
+**13 Kasım güncellemesi:** masa artık kendi alt alan adında: `desk.curahold.com` (kayıt ve satış sitesinden ayrı;
+çerezi yalnızca o adrese gider). Eski `app.curahold.com/desk` bağlantıları oraya yönlenir.
 
 | Ölçüm | Önce | Sonra |
 | --- | --- | --- |
@@ -144,7 +146,8 @@ Hepsi ücretsiz; hiçbiri yeni bir servis değil.
    (destek ekibinin e-posta adresleri, virgülle), `SUPPORT_EMAIL` (ekibin ortak kutusu),
    `STAFF_KEY` (zaten var).
    `SUPPORT_STAFF` aynı zamanda destek masasına kimin girebileceğini belirler: listedeki
-   adresler `app.<alan adın>/desk` adresinde e-postalarına gelen kodla giriş yapar.
+   adresler `desk.<alan adın>` adresinde e-postalarına gelen kodla giriş yapar (DNS'te `desk`
+   kaydı gerekir; Worker'ın `*.curahold.com/*` rotası onu zaten karşılar).
    Birini listeden çıkarmak oturumunu o an bitirir.
 3. Kendi sunucusunda çalıştıran müşteri için: posta sunucusu gelen iletiyi
    `POST /api/desk/mail` adresine `SUPPORT_MAIL_KEY` ile iletir.

@@ -49,7 +49,7 @@ import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
 import { signInSupport } from './lib/support';
 
-const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help']);
+const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
 export function slugFromHost(host: string, baseDomain: string): string | null {
   const h = host.split(':')[0].toLowerCase();

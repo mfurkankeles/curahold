@@ -1,4 +1,4 @@
-// Curahold's own support desk, at the central address (/desk): the queues on
+// Curahold's own support desk, on its own host (desk.<domain>): the queues on
 // the left, the requests of the chosen queue beside them, and the request
 // that is open on the right — the conversation, the company it comes from and
 // the team's own notes. Only people on Curahold's staff list can sign in.
@@ -250,7 +250,7 @@ function Desk({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: (
   }, [load, refreshCounts]);
   const choose = (ref: string | null) => {
     setOpen(ref);
-    history.replaceState(null, '', ref ? `/desk?r=${ref}` : '/desk');
+    history.replaceState(null, '', ref ? `/?r=${ref}` : '/');
   };
   const changed = () => {
     void load();

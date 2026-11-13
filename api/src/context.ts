@@ -18,6 +18,8 @@ export interface Config {
   publicPort?: number;
   /** Central host that receives OAuth callbacks, e.g. "app.curahold.com" */
   centralHost: string;
+  /** Curahold's own support desk, on a host of its own; "desk.<baseDomain>" when not given. */
+  deskHost?: string;
   /** Self-hosted single-company mode: every request belongs to this slug. */
   singleTenantSlug?: string;
   authSecret: string;
@@ -227,6 +229,14 @@ export function portalUrl(cfg: Config, slug: string): string | null {
 export function centralUrl(cfg: Config): string {
   const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
   return `${cfg.scheme}://${cfg.centralHost}${port}`;
+}
+
+/** The support desk's host name (no port): its own subdomain, apart from sign-up and the sales site. */
+export const deskHostOf = (cfg: Config): string => (cfg.deskHost || `desk.${cfg.baseDomain}`).toLowerCase().split(':')[0];
+
+export function deskUrl(cfg: Config): string {
+  const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
+  return `${cfg.scheme}://${deskHostOf(cfg)}${port}`;
 }
 
 /** The logo's address on the company host, versioned so browsers refresh it after a change. */

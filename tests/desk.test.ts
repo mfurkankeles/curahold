@@ -8,6 +8,8 @@ import { BASE, Client, login, setup, type Env } from './helpers';
 const STAFF_KEY = 'staff-key-staff-key-staff-key-1234';
 const DENIZ = 'deniz.aksoy@curahold.test';
 const EMRE = 'emre@curahold.test';
+// The desk lives on a host of its own, apart from sign-up (app.) and the sales site.
+const DESK = `https://desk.${BASE}`;
 const CENTRAL = `https://app.${BASE}`;
 
 let env: Env;
@@ -18,7 +20,7 @@ let lena: Client;
 class Desk {
   cookie = '';
   attrs = '';
-  async req(method: string, path: string, body?: unknown, headers: Record<string, string> = { 'x-curahold-desk': '1' }, host = CENTRAL) {
+  async req(method: string, path: string, body?: unknown, headers: Record<string, string> = { 'x-curahold-desk': '1' }, host = DESK) {
     const r = await env.app.request(`${host}/api/desk${path}`, { method, headers: { ...headers, ...(this.cookie ? { cookie: this.cookie } : {}), ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
     const set = r.headers.get('set-cookie');
     const m = set && /desk_session=([^;]*)/.exec(set);
@@ -98,15 +100,18 @@ describe('signing in to the desk', () => {
     expect((await d.req('POST', '/sign-in/verify', { email: EMRE, code: '12345' })).status).toBe(400);
   });
 
-  it('a session is nothing without the header a form cannot send, off the central address, or after its owner leaves the team', async () => {
+  it('a session is nothing without the header a form cannot send, off the desk’s own host, or after its owner leaves the team', async () => {
     const d = new Desk();
     await d.signIn(DENIZ);
     const r = await ask(lena);
     expect((await d.req('PUT', `/requests/${r.ref}/owner`, { mine: true }, {})).status).toBe(403);
     expect((await d.req('GET', '/requests', undefined, {}, `https://acme.${BASE}`)).status).toBe(403);
     expect((await d.req('POST', '/sign-in', { email: DENIZ }, {}, `https://acme.${BASE}`)).status).toBe(404);
+    // Sign-up's central address is not the desk any more: no signing in there, and the cookie does not count.
+    expect((await d.req('POST', '/sign-in', { email: DENIZ }, {}, CENTRAL)).status).toBe(404);
+    expect((await d.req('GET', '/me', undefined, {}, CENTRAL)).status).toBe(401);
     // A port is not part of the address's name (a local run, a forwarded port).
-    expect((await d.req('GET', '/me', undefined, {}, `${CENTRAL}:8443`)).status).toBe(200);
+    expect((await d.req('GET', '/me', undefined, {}, `${DESK}:8443`)).status).toBe(200);
     // Signed with the server's secret, but not as a desk session: refused.
     const { sign } = await import('../api/src/lib/crypto');
     const forged = new Desk();
@@ -128,7 +133,7 @@ describe('signing in to the desk', () => {
   it('nothing a company has opens the desk: not its session, not an API key', async () => {
     expect((await ada.get('/api/desk/requests')).status).toBe(403);
     const { token } = (await ada.post('/api/dev/keys', { name: 'k', canWrite: true })).json;
-    const r = await env.app.request(`${CENTRAL}/api/desk/requests`, { headers: { authorization: `Bearer ${token}` } });
+    const r = await env.app.request(`${DESK}/api/desk/requests`, { headers: { authorization: `Bearer ${token}` } });
     expect(r.status).toBe(403);
     // The application's database role cannot read the desk's own tables at all.
     for (const table of ['desk_codes', 'desk_claims', 'desk_log']) {
@@ -182,7 +187,7 @@ describe('working a request', () => {
     expect((await deniz.req('GET', `/requests/${r.ref}`)).json.request.owner).toBe(EMRE);
     expect((await emre.req('PUT', `/requests/${r.ref}/owner`, { mine: false })).json).toEqual({ owner: null });
     // Tooling with the key names nobody, so it cannot take a request.
-    const key = await env.app.request(`${CENTRAL}/api/desk/requests/${r.ref}/owner`, { method: 'PUT', headers: { 'x-curahold-staff-key': STAFF_KEY, 'content-type': 'application/json' }, body: '{"mine":true}' });
+    const key = await env.app.request(`${DESK}/api/desk/requests/${r.ref}/owner`, { method: 'PUT', headers: { 'x-curahold-staff-key': STAFF_KEY, 'content-type': 'application/json' }, body: '{"mine":true}' });
     expect(key.status).toBe(403);
   });
 
@@ -211,7 +216,7 @@ describe('working a request', () => {
     const log = await env.db.system((q) => q.query(`select staff_email, action, message_id is not null as has from desk_log where ref = $1 and action in ('answered', 'noted') order by id`, [r.ref]));
     expect(log).toEqual([{ staff_email: DENIZ, action: 'answered', has: true }, { staff_email: EMRE, action: 'noted', has: true }]);
     // The key still works for tooling, and must say who is answering.
-    const noName = await env.app.request(`${CENTRAL}/api/desk/requests/${r.ref}/messages`, { method: 'POST', headers: { 'x-curahold-staff-key': STAFF_KEY, 'content-type': 'application/json' }, body: '{"body":"x"}' });
+    const noName = await env.app.request(`${DESK}/api/desk/requests/${r.ref}/messages`, { method: 'POST', headers: { 'x-curahold-staff-key': STAFF_KEY, 'content-type': 'application/json' }, body: '{"body":"x"}' });
     expect(noName.status).toBe(400);
   });
 
@@ -243,7 +248,7 @@ describe('working a request', () => {
     const [seen] = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'support.entered' order by at desc limit 1`, [env.a.orgId]));
     expect(seen.meta.staff).toBe(`Deniz Aksoy <${DENIZ}>`);
     // With the key alone nobody is named, so there is no way in.
-    const key = await env.app.request(`${CENTRAL}/api/desk/requests/${r.ref}/enter-link`, { method: 'POST', headers: { 'x-curahold-staff-key': STAFF_KEY } });
+    const key = await env.app.request(`${DESK}/api/desk/requests/${r.ref}/enter-link`, { method: 'POST', headers: { 'x-curahold-staff-key': STAFF_KEY } });
     expect(key.status).toBe(403);
   });
 });

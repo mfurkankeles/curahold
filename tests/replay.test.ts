@@ -6,7 +6,7 @@ import { cleanUp } from '../api/src/lib/scheduler';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
 const STAFF_KEY = 'staff-key-staff-key-staff-key-9090';
-const CENTRAL = `https://app.${BASE}`;
+const DESK = `https://desk.${BASE}`;
 
 let env: Env;
 let lena: Client;
@@ -24,7 +24,7 @@ const chunk = (session: string, seq: number, extra: Record<string, unknown> = {}
 };
 const sys = (sql: string, params: unknown[] = []) => env.db.system((q) => q.query(sql, params)) as Promise<any[]>;
 const desk = (method: string, path: string, body?: unknown) =>
-  env.app.request(`${CENTRAL}/api/desk${path}`, {
+  env.app.request(`${DESK}/api/desk${path}`, {
     method,
     headers: { 'x-curahold-staff-key': STAFF_KEY, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
     body: body === undefined ? undefined : JSON.stringify(body),

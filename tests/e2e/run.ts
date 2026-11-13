@@ -241,6 +241,8 @@ await step('phone layout: columns and the menu work', async () => {
 
 const port = 8899;
 const central = `http://app.localhost:${port}`;
+// Curahold's own support desk, on a host of its own.
+const deskHost = `http://desk.localhost:${port}`;
 const csv = 'Firma;Sorumlu;Yenileme;Yıllık tutar;Segment\nAkasya Mobilya;selin@yeni-sirket.example;31.03.2027;120.000;Kurumsal\nBeyaz Liman Lojistik;selin@yeni-sirket.example;15.05.2027;48.500;KOBİ\nÇınar Eczaneleri;Okan Demir;01.09.2027;64.000;Orta ölçek\n';
 const csvPath = `${import.meta.dirname}/screens/musteriler.csv`;
 (await import('node:fs')).writeFileSync(csvPath, csv);
@@ -832,8 +834,9 @@ await step('the support desk: staff sign in with a code, then note, answer, take
     d.waitForSelector(sel).catch((e) => {
       throw new Error(`${e.message}; the page said: ${desk.errors.join(' | ') || 'nothing'}`);
     });
-  // The desk lives at the central address only; a company's own address has no such page.
+  // The desk lives on its own host. An old link to sign-up's address (/desk) is sent on there.
   await d.goto(`${central}/desk`, { waitUntil: 'networkidle0' });
+  await d.waitForFunction((h) => location.origin === h, {}, deskHost);
   await d.waitForSelector('.desk-signin__card input[type=email]');
   // English first; this team works in Turkish.
   await (await byText(d, '.desk__langs button', 'Türkçe')).click();
@@ -861,7 +864,7 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   expect(!rows.some((r) => r.includes('Yenileme panosu açılmıyor')), 'a solved request is still in the waiting queue');
   await (await byText(d, '.desk__row strong', 'Toplu görev aktarımı yarıda kaldı')).click();
   await appears('.deskreq');
-  expect(d.url().endsWith(`/desk?r=${ref}`), `the open request is not in the address: ${d.url()}`);
+  expect(d.url() === `${deskHost}/?r=${ref}`, `the open request is not in the address: ${d.url()}`);
   expect((await text(d, '.deskmsg[data-by="user"]')).includes('40 satırdan yalnızca 12'), 'what was asked is not on the request');
   const side = await text(d, '.deskreq__side');
   expect(side.includes('Mert Aksoy') && side.includes('mert@demo.example'), `who asked is missing: ${side}`);

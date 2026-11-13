@@ -259,7 +259,7 @@ row-level security, customer reach and field access as the app.
   them, through the owner connection, logging each playback. rrweb loads lazily
   after boot, so the app's own bundle is unchanged; a preview or support visit
   is never recorded.
-- **The support desk** (`/desk` at the central address, for Curahold's own
+- **The support desk** (its own host, `desk.<domain>`, for Curahold's own
   team): queues by whose turn it is (waiting on us, nobody's yet, mine,
   waiting on the customer, solved), the conversation with the company and
   the person beside it, an answer or a note for the team only, taking and
@@ -268,7 +268,7 @@ row-level security, customer reach and field access as the app.
   list (`SUPPORT_STAFF`): five tries per code, five codes an hour, a session
   of 8 hours in a cookie only the desk's own address gets. What each staff
   member opened, answered, took or solved is kept in the desk's own log.
-  Locally: `http://app.localhost:5173/desk`, `desk@curahold.localhost`; the
+  Locally: `http://desk.localhost:5173`, `desk@curahold.localhost`; the
   code is shown on the screen.
 
 ### Customer portal
@@ -377,7 +377,8 @@ tests/            Vitest suites; tests/e2e drives Chrome
    sign-ins are offered. `STAFF_KEY` (24+ characters) lets Curahold support's
    tooling read the queue and answer; help requests go to `SUPPORT_EMAIL`
    and/or `SUPPORT_WEBHOOK_URL`; `SUPPORT_STAFF` (addresses, comma-separated)
-   names who may sign in to the support desk at `/desk`.
+   names who may sign in to the support desk at `desk.<domain>` (`DESK_HOST`
+   to use another host name).
 5. DNS: `*.curahold.com` and `app.curahold.com` on Cloudflare.
 6. `npm run build && npx wrangler deploy`.
 7. Customer portal (optional): a second domain (e.g. `curahold-portal.com`)

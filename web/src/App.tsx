@@ -41,10 +41,13 @@ const DeskApp = lazy(() => import('./pages/Desk'));
 
 // app.<domain> is the central address: company sign-up lives there.
 const isCentral = () => location.hostname.split('.')[0] === 'app';
+// desk.<domain> is Curahold's own support desk, on a host of its own.
+const isDesk = () => location.hostname.split('.')[0] === 'desk';
 
 type Boot =
   | { kind: 'loading' }
   | { kind: 'central' }
+  | { kind: 'desk' }
   | { kind: 'no-org' }
   | { kind: 'error' }
   | { kind: 'signed-out'; org: OrgPublic; notice?: string | null }
@@ -58,10 +61,18 @@ export function App() {
   useEffect(() => setApiLocale(locale), [locale]);
 
   const start = useCallback(async (notice?: string | null) => {
+    if (isDesk()) {
+      setBoot({ kind: 'desk' });
+      return;
+    }
     if (isCentral()) {
+      // The desk used to be at app.<domain>/desk: an old link goes on to its own host.
+      if (location.pathname.startsWith('/desk')) {
+        location.replace(`${location.protocol}//desk.${location.host.split('.').slice(1).join('.')}/${location.search}`);
+        return;
+      }
       setBoot({ kind: 'central' });
-      // Besides sign-up, the central address has Curahold's own support desk.
-      if (!location.pathname.startsWith('/signup') && !location.pathname.startsWith('/desk')) navigate('/signup', true);
+      if (!location.pathname.startsWith('/signup')) navigate('/signup', true);
       return;
     }
     let org: OrgPublic;
@@ -155,14 +166,12 @@ export function App() {
   return (
     <I18nProvider locale={locale} terms={terms}>
       {boot.kind === 'loading' && <div className="center-note muted" />}
-      {boot.kind === 'central' &&
-        (loc.path.startsWith('/desk') ? (
-          <Suspense fallback={<div className="center-note muted" />}>
-            <DeskApp onLocale={changeLocale} />
-          </Suspense>
-        ) : (
-          <SignupApp onLocale={changeLocale} />
-        ))}
+      {boot.kind === 'central' && <SignupApp onLocale={changeLocale} />}
+      {boot.kind === 'desk' && (
+        <Suspense fallback={<div className="center-note muted" />}>
+          <DeskApp onLocale={changeLocale} />
+        </Suspense>
+      )}
       {boot.kind === 'no-org' && <OrgNotFound />}
       {boot.kind === 'error' && <ErrorNote onRetry={() => start()} />}
       {boot.kind === 'signed-out' &&

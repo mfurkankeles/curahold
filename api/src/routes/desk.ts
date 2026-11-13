@@ -13,7 +13,7 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { HELP_STATUSES } from '../../../shared/src/help';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
-import { nowOf, orgUrl, type AppEnv, type C } from '../context';
+import { deskHostOf, nowOf, orgUrl, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
 import { hmacHex, randomDigits, randomToken, safeEqual, sha256Hex, sign, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
@@ -39,8 +39,11 @@ interface Staff {
 const staffList = (c: C) => c.get('deps').config.support?.staff ?? [];
 /** A separate secret for desk sessions, so nothing else this server signs can pass for one. */
 const deskSecret = (c: C) => `${c.get('deps').config.authSecret}:desk`;
-/** The desk answers at the central address only (its port, if any, is not part of the name). */
-const onCentral = (c: C) => (c.req.header('host') ?? new URL(c.req.url).host).toLowerCase().split(':')[0] === c.get('deps').config.centralHost.toLowerCase().split(':')[0];
+/**
+ * The desk signs people in and keeps their session only on its own host
+ * (desk.<domain>), apart from sign-up and the sales site; a port is not part of the name.
+ */
+const onDesk = (c: C) => (c.req.header('host') ?? new URL(c.req.url).host).toLowerCase().split(':')[0] === deskHostOf(c.get('deps').config);
 
 /** The staff key (tooling), or the session of someone still on the staff list. */
 async function staffOnly(c: C): Promise<Staff> {
@@ -48,7 +51,7 @@ async function staffOnly(c: C): Promise<Staff> {
   const given = c.req.header('x-curahold-staff-key') ?? '';
   if (key && key.length >= 24 && given && safeEqual(given, key)) return { email: 'key', via: 'key' };
   const token = getCookie(c, DESK_COOKIE);
-  if (token && onCentral(c)) {
+  if (token && onDesk(c)) {
     const t = await verify<{ desk: number; e: string; x: number }>(token, deskSecret(c));
     if (t && t.desk === 1 && typeof t.e === 'string' && t.x > nowOf(c.get('deps')).getTime() && staffList(c).includes(t.e)) {
       // A form on another site cannot set a header: every change made with the cookie must carry this one.
@@ -73,7 +76,7 @@ const nameFrom = (email: string) =>
 
 /** Step one: a code goes to the address if it is on the staff list. The answer is the same either way. */
 deskRoutes.post('/sign-in', async (c) => {
-  if (!onCentral(c)) fail('not_found');
+  if (!onDesk(c)) fail('not_found');
   const { email } = await body(c, z.object({ email: z.string().trim().toLowerCase().email().max(320) }));
   const deps = c.get('deps');
   let devCode: string | undefined;
@@ -96,7 +99,7 @@ deskRoutes.post('/sign-in', async (c) => {
 
 /** Step two: the code. Right once, it opens a session for this browser; five wrong tries spend it. */
 deskRoutes.post('/sign-in/verify', async (c) => {
-  if (!onCentral(c)) fail('not_found');
+  if (!onDesk(c)) fail('not_found');
   const input = await body(c, z.object({ email: z.string().trim().toLowerCase().email().max(320), code: z.string().trim().regex(/^\d{6}$/) }));
   const deps = c.get('deps');
   const want = await sha256Hex(`${input.email}:${input.code}`);

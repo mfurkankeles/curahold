@@ -14,6 +14,8 @@ export interface Env {
   ASSETS: { fetch(req: Request): Promise<Response> };
   BASE_DOMAIN: string;
   CENTRAL_HOST: string;
+  /** Curahold's own support desk; desk.<BASE_DOMAIN> when not set. */
+  DESK_HOST?: string;
   AUTH_SECRET: string;
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
@@ -101,6 +103,7 @@ export function configFromEnv(env: Env): Config {
     baseDomain: env.BASE_DOMAIN,
     scheme: 'https',
     centralHost: env.CENTRAL_HOST,
+    deskHost: env.DESK_HOST || undefined,
     singleTenantSlug: env.SINGLE_TENANT_SLUG || undefined,
     authSecret: env.AUTH_SECRET,
     devExposeTokens: false,

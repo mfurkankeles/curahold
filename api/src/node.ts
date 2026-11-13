@@ -35,6 +35,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     scheme: 'http',
     publicPort: opts.publicPort,
     centralHost: 'app.localhost',
+    // Curahold's own support desk, on a host of its own (desk.localhost, as desk.curahold.com).
+    deskHost: 'desk.localhost',
     authSecret: 'local-development-secret-not-for-production-use',
     devExposeTokens: true,
     devOrgHeader: true,
@@ -43,7 +45,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     oauth: {},
     signupEnabled: true,
     connectors: { demoCrm: true },
-    // Who may sign in to the support desk (app.localhost/desk); the code is shown on the screen here.
+    // Who may sign in to the support desk (desk.localhost); the code is shown on the screen here.
     support: { email: 'support@curahold.localhost', staff: opts.supportStaff ?? ['desk@curahold.localhost'] },
     // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
     portalDomain: 'portal.localhost',
