@@ -17,7 +17,14 @@
     "test:demo": "npm run build:demo && tsx tests/e2e/demo.ts && tsx tests/e2e/tours.ts",
     "build:site": "tsx scripts/build-site.ts",
     "build:server": "tsx scripts/build-server.ts",
-    "start:selfhost": "node dist/server/selfhost.mjs"
+    "start:selfhost": "node dist/server/selfhost.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:isolation": "vitest run tests/isolation.test.ts tests/isolation-routes.test.ts tests/rls.test.ts",
+    "test:leak": "vitest run tests/leak.test.ts",
+    "test:i18n": "vitest run tests/i18n.test.ts"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -40,7 +47,12 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@babel/core": "^8.1.2",
+    "@babel/eslint-parser": "^8.1.2",
     "@babel/parser": "^8.1.0",
+    "@babel/preset-react": "^8.0.1",
+    "@babel/preset-typescript": "^8.0.7",
+    "@eslint/js": "^9.39.5",
     "@types/node": "^26.6.6",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.31",
@@ -48,7 +60,11 @@
     "@vitejs/plugin-react": "^6.3.0",
     "axe-core": "^4.14.0",
     "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
     "marked": "^18.2.0",
+    "prettier": "^3.10.1",
     "puppeteer-core": "^25.17.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
@@ -58,6 +74,6 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

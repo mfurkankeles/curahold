@@ -1,0 +1,276 @@
+# Continuous integration for Curahold.
+#
+# Runs on every pull request and on every push to main. No secrets are used:
+# everything below runs against throwaway data (an in-memory Postgres, or a
+# disposable Postgres service container) with the placeholder values you can
+# see in this file. Nothing here deploys anything; releases are a human
+# decision (see docs/RUNBOOK.md).
+#
+# BRANCH PROTECTION - mark these checks as REQUIRED on `main`:
+#   * "CI gate"                 (aggregates everything below; the one to require)
+#   * "RLS isolation (postgres)"  \
+#   * "Leak scan"                  > also listed on their own, so a failure is
+#   * "i18n completeness"         /  never hidden behind a skipped aggregate
+# Informational (never block): "Format check", "Dependency audit".
+#
+# Node: pinned through .nvmrc (single source of truth; Dockerfile uses the
+# same major). Change the version there, not here.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch/PR cancels the older run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+  # Placeholder for the Postgres service container below. It is NOT a secret:
+  # the container only lives for the duration of the job and listens on localhost.
+  TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: tsc --noEmit
+        run: npx tsc --noEmit
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Existing debt is reported as warnings and never fails the job; only real
+      # errors do. See eslint.config.js and CONTRIBUTING.md ("Lint and existing debt").
+      - name: ESLint
+        run: npm run lint
+
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Informational: most existing files predate Prettier. Do not run `npm run format`
+    # over the whole repo inside a feature PR; do it in one dedicated PR.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prettier (changed files only on PRs, otherwise whole repo)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            files=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}" HEAD -- '*.ts' '*.tsx' '*.mts' '*.js' '*.mjs' '*.json' '*.yml' '*.md' | tr '\n' ' ')
+            [ -z "$files" ] && { echo "No formattable files changed."; exit 0; }
+            npx prettier --check --ignore-unknown $files
+          else
+            npm run format:check
+          fi
+
+  # Unit and API tests on the in-memory Postgres (PGlite): fast, no services.
+  test-pglite:
+    name: Tests (PGlite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TEST_DATABASE_URL: '' # explicitly empty: use the in-memory database
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: vitest (all)
+        run: npx vitest run
+
+  # The same suite on a real Postgres through the production driver. Stricter than PGlite:
+  # a fresh database per test file, so the user must be allowed to create databases
+  # (the `postgres` superuser in the container is).
+  test-postgres:
+    name: Tests (Postgres 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres # throwaway CI container, not a secret
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: vitest (all, real Postgres)
+        run: npx vitest run
+
+  # ------------------------------------------------------------------ REQUIRED guards
+  # These three protect the product's top promises (QUALITY.md priority 1: no data leaks
+  # between companies, no real names in the repo, every string translated). They are separate
+  # jobs on purpose, so a failure is named in the PR checks list.
+
+  rls-isolation:
+    name: RLS isolation (postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres # throwaway CI container, not a secret
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Row-level security (every company table has RLS + policy; tests/rls.test.ts), and the per-endpoint "company A cannot see or change company B" tests,
+      # on the real production database engine.
+      - name: Isolation tests on real Postgres
+        run: npx vitest run tests/isolation.test.ts tests/isolation-routes.test.ts tests/rls.test.ts
+      # And once more on PGlite (what the demo and local development run on).
+      - name: Isolation tests on PGlite
+        env:
+          TEST_DATABASE_URL: ''
+        run: npx vitest run tests/isolation.test.ts tests/isolation-routes.test.ts tests/rls.test.ts
+
+  leak-scan:
+    name: Leak scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TEST_DATABASE_URL: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # No real company, person or customer names may enter the repository (docs included).
+      # Forbidden words are stored only as hashes in the test.
+      - name: tests/leak.test.ts
+        run: npx vitest run tests/leak.test.ts
+
+  i18n:
+    name: i18n completeness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TEST_DATABASE_URL: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # English and Turkish dictionaries have identical keys and placeholders; no UI text bypasses them.
+      - name: tests/i18n.test.ts
+        run: npx vitest run tests/i18n.test.ts
+
+  # ------------------------------------------------------------------ build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Build app, portal and help pages
+        run: npm run build
+      - name: Build the self-host server bundle
+        run: npm run build:server
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      # Build check only (QUALITY.md decision 4): nothing is pushed, nothing is deployed.
+      - name: docker build
+        run: docker build -t curahold:ci .
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Informational for now. Goal (QUALITY.md): zero high/critical advisories in production
+    # dependencies; flip continue-on-error to false once that holds.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --omit=dev --audit-level=high
+
+  # ------------------------------------------------------------------ gate
+  # One check to require in branch protection. `if: always()` so a failed or skipped
+  # dependency fails the gate instead of leaving it "pending".
+  gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [typecheck, lint, test-pglite, test-postgres, rls-isolation, leak-scan, i18n, build, docker]
+    steps:
+      - name: All required jobs passed?
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS"
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "true" ]; then
+            echo "A required job did not succeed."; exit 1
+          fi

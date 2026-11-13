@@ -1,0 +1,12 @@
+dist/
+node_modules/
+.data/
+data/
+package-lock.json
+tests/e2e/screens/
+docs/site/
+integrations/
+web/public/
+*.tsbuildinfo
+# SQL migrations are history: never reformat an applied migration.
+db/migrations/
