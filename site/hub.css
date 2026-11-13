@@ -1,0 +1,157 @@
+/* The demo hub (curahold.com/demo): guided tours of the live product.
+   Built on the sales site's tokens (site.css). The one memorable element is
+   the hero's "peek": a piece of the product with a tour step pointing at it —
+   what every tour on this page looks like, drawn in the page itself. */
+
+.hub-top .top__nav a[aria-current='page'] { color: var(--ink); font-weight: 650; }
+
+/* ----------------------------------------------------------------- hero */
+.hub-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; padding: 48px 0 40px; }
+.hub-hero h1 { font-size: clamp(40px, 5.6vw, 72px); line-height: 1; letter-spacing: -0.03em; font-weight: 750; max-width: 12ch; }
+.hub-hero__lead { margin: 22px 0 0; font-size: 19px; line-height: 1.55; color: var(--ink-2); max-width: 52ch; }
+.hub-hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hub-hero__note { margin: 14px 0 0; font-size: 14px; color: var(--ink-3); }
+
+/* The peek: a customer card from the product, a spotlight on "Why?", and the tour's card beside it. */
+.peek { position: relative; margin: 0; justify-self: end; width: 100%; max-width: 520px; aspect-ratio: 13 / 10; }
+.peek__app {
+  position: absolute; inset: 6% 24% 6% 0; border-radius: 22px; background: var(--paper);
+  border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(23, 19, 58, .12); padding: 22px; display: grid; gap: 14px; align-content: start;
+  /* The spotlight's dimming stays inside the product, as it does in a real tour. */
+  overflow: hidden; isolation: isolate;
+}
+.peek__card { border: 1px solid var(--line); border-radius: 16px; padding: 16px 16px 14px; display: grid; gap: 10px; background: var(--paper); }
+.peek__card--dim { opacity: .55; }
+.peek__name { font: 650 17px/1.2 var(--display); color: var(--ink); }
+.peek__row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+.peek__score { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 8px; font: 700 14px/1 var(--text); color: #fff; background: #c4561d; }
+.peek__score--watch { background: var(--ember); }
+.peek__tag { padding: 3px 9px; border-radius: 999px; background: var(--ember-wash); color: var(--ember-ink); font-size: 12.5px; font-weight: 600; }
+.peek__why { margin-left: auto; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--ink); background: var(--paper); position: relative; }
+.peek__why::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--iris), 0 0 0 9999px rgba(23, 19, 58, .08); pointer-events: none;
+}
+.peek__tip {
+  position: absolute; right: 0; top: 40%; width: 58%; max-width: 290px; border-radius: 18px; background: var(--paper);
+  padding: 16px 18px; box-shadow: 0 26px 60px rgba(23, 19, 58, .25), 0 2px 6px rgba(23, 19, 58, .1); border: 1px solid var(--line);
+}
+/* The tip points up at the button it is about. */
+.peek__tip::before {
+  content: ''; position: absolute; top: -8px; left: 25%; width: 14px; height: 14px; background: var(--paper);
+  border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg);
+}
+.peek__count { font-size: 12.5px; font-weight: 700; color: var(--iris-ink); }
+.peek__bar { height: 3px; border-radius: 3px; background: var(--iris-wash); margin: 8px 0 10px; overflow: hidden; }
+.peek__bar span { display: block; width: 60%; height: 100%; background: var(--iris); border-radius: 3px; }
+.peek__tipTitle { font: 650 17px/1.25 var(--display); color: var(--ink); }
+.peek__tipBody { margin: 6px 0 12px; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.peek__next { display: inline-flex; padding: 6px 14px; border-radius: 10px; background: var(--iris); color: #fff; font-size: 13.5px; font-weight: 650; }
+@media (prefers-reduced-motion: no-preference) {
+  .peek__why::after { animation: peek-ring 2.4s var(--ease) .6s 2 both; }
+  .peek__tip { animation: peek-in .6s var(--ease) .3s both; }
+}
+@keyframes peek-ring { 0%, 100% { box-shadow: 0 0 0 3px var(--iris), 0 0 0 9999px rgba(23, 19, 58, .08); } 50% { box-shadow: 0 0 0 8px rgba(91, 77, 232, .35), 0 0 0 9999px rgba(23, 19, 58, .08); } }
+@keyframes peek-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+/* ------------------------------------------------------------ role strip */
+.hub-roles { padding: 8px 0 44px; }
+.hub-roles h2 { font-size: 22px; letter-spacing: -0.01em; font-weight: 650; margin-bottom: 14px; }
+.hub-roles__list { display: flex; flex-wrap: wrap; gap: 10px; }
+.hub-role {
+  display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 18px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 600 16px/1.2 var(--text);
+}
+.hub-role span { font-weight: 500; font-size: 13.5px; color: var(--ink-3); }
+.hub-role:hover { border-color: var(--iris); }
+.hub-role[aria-pressed='true'] { background: var(--night); border-color: var(--night); color: #fff; }
+.hub-role[aria-pressed='true'] span { color: #c9c5e8; }
+
+/* ---------------------------------------------------------------- catalog */
+.hub-cat { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 40px; align-items: start; padding: 8px 0 88px; scroll-margin-top: 84px; }
+.hub-filters { position: sticky; top: 88px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 18px 18px 8px; }
+.hub-filters__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.hub-filters__head h2 { font-size: 19px; letter-spacing: -0.01em; font-weight: 650; }
+.hub-filters__clear { border: 0; background: none; color: var(--iris-ink); font: 600 14px var(--text); cursor: pointer; padding: 4px; }
+.hub-filters__clear[hidden] { display: none; }
+.hub-filters fieldset { border: 0; margin: 0; padding: 12px 0 14px; border-top: 1px solid var(--line); }
+.hub-filters fieldset:first-of-type { border-top: 0; }
+/* Floated, so a legend reads as a label above its chips instead of sitting on the rule. */
+.hub-filters legend { float: left; width: 100%; padding: 0; margin-bottom: 10px; font-size: 13.5px; font-weight: 650; color: var(--ink-2); }
+.hub-filters legend + .hub-chips { clear: both; }
+.hub-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 500 13.5px/1.2 var(--text);
+}
+.hub-chip:hover { border-color: var(--iris); }
+.hub-chip[aria-pressed='true'] { background: var(--iris-wash); border-color: var(--iris); color: var(--iris-ink); font-weight: 650; }
+.hub-chip span { color: var(--ink-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.hub-filters__toggle { display: none; }
+
+.hub-results__count { margin: 0 0 4px; font-size: 14px; color: var(--ink-3); }
+.hub-area { padding-top: 26px; }
+.hub-area[hidden] { display: none; }
+.hub-area__head { margin-bottom: 16px; }
+.hub-area__head h2 { font-size: clamp(24px, 2.6vw, 30px); }
+.hub-area__head p { margin: 6px 0 0; color: var(--ink-2); max-width: 62ch; }
+.hub-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+.hub-card {
+  display: flex; flex-direction: column; gap: 10px; padding: 22px 22px 18px; border-radius: 20px;
+  background: var(--paper); border: 1px solid var(--line); transition: border-color .15s, transform .15s var(--ease), box-shadow .15s;
+}
+.hub-card[hidden] { display: none; }
+.hub-card:hover { border-color: #c7c0f3; transform: translateY(-2px); box-shadow: 0 16px 40px rgba(23, 19, 58, .08); }
+.hub-card__goals { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-goal { padding: 3px 9px; border-radius: 999px; background: var(--mist); color: var(--ink-2); font-size: 12.5px; font-weight: 600; }
+.hub-card h3 { font-size: 20px; line-height: 1.25; letter-spacing: -0.01em; }
+.hub-card p { margin: 0; color: var(--ink-2); font-size: 15.5px; line-height: 1.5; flex: 1; }
+.hub-card__foot { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.hub-card__meta { font-size: 13.5px; color: var(--ink-3); white-space: nowrap; }
+/* The tour's steps as a trail of dots: how long a walk it is, at a glance. */
+.hub-trail { display: flex; gap: 4px; }
+.hub-trail i { width: 7px; height: 7px; border-radius: 50%; background: #d4cff2; }
+.hub-trail i:first-child { background: var(--iris); }
+.hub-card .btn { margin-left: auto; min-height: 40px; padding: 0 16px; font-size: 14.5px; }
+
+.hub-empty { margin: 36px 0 0; padding: 28px; border: 1px dashed var(--line); border-radius: 20px; text-align: center; color: var(--ink-2); }
+.hub-empty[hidden] { display: none; }
+.hub-empty button { margin-top: 10px; border: 0; background: none; color: var(--iris-ink); font: 650 15px var(--text); cursor: pointer; }
+
+.hub-band .band__in { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); padding: 72px 0; }
+.hub-band__ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; }
+.btn--light { background: #fff; color: var(--night); }
+.btn--light:hover { background: var(--iris-wash); }
+.btn--line { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .35); }
+.btn--line:hover { border-color: #fff; }
+.hub-foot .foot__base { margin-top: 0; border-top: 0; padding-top: 0; }
+
+/* ----------------------------------------------------------------- phone */
+@media (max-width: 960px) {
+  .hub-hero { grid-template-columns: 1fr; gap: 28px; padding-top: 24px; }
+  .peek { justify-self: center; max-width: 480px; }
+  .hub-cat { grid-template-columns: 1fr; gap: 18px; }
+  .hub-filters { position: static; padding: 0; border: 0; background: none; }
+  .hub-filters__toggle {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper); font: 600 15px var(--text); color: var(--ink); cursor: pointer;
+  }
+  .hub-filters__toggle span { color: var(--iris-ink); }
+  .hub-filters__body { margin-top: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px 6px; }
+  .hub-filters:not(.is-open) .hub-filters__body { display: none; }
+  .hub-filters__head { display: none; }
+  .hub-cards { grid-template-columns: 1fr; }
+  .hub-band .band__in { grid-template-columns: 1fr; }
+  .hub-band__ctas { justify-self: start; }
+}
+@media (max-width: 560px) {
+  .peek { aspect-ratio: 11 / 10; }
+  .peek__app { inset: 4% 14% 18% 0; padding: 14px; }
+  .peek__tip { width: 66%; top: auto; bottom: 0; }
+  .peek__tip::before { display: none; }
+  .hub-role { padding: 10px 14px; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-card, .hub-card:hover { transition: none; transform: none; }
+}

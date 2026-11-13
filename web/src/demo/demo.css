@@ -60,3 +60,59 @@
 }
 .demobar__problem small { opacity: .75; }
 .demobar__problem button { color: #5c3b00; border-color: #c99a4a; background: #fff; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- tours
+   A guided tour over the live product (tour.tsx). The spotlight never blocks
+   the page: the visitor can click anything, and the card points at what is
+   worth seeing next. */
+.demobar__tours { color: var(--well-ink); text-decoration: none; border: 1px solid rgba(217, 235, 231, .3); border-radius: var(--r-s); padding: 3px 10px; white-space: nowrap; }
+.demobar__tours:hover { border-color: rgba(217, 235, 231, .6); color: #fff; }
+
+.tour { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; font-family: var(--font); }
+.tour__dim { position: fixed; inset: 0; background: rgba(18, 15, 51, .38); }
+.tour__spot {
+  position: fixed; border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--brand), 0 0 0 9999px rgba(18, 15, 51, .42);
+  transition: left .28s var(--ease), top .28s var(--ease), width .28s var(--ease), height .28s var(--ease);
+}
+.tour__spot[data-click] { animation: tour-pulse 1.6s var(--ease) infinite; }
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--brand), 0 0 0 9999px rgba(18, 15, 51, .42); }
+  50% { box-shadow: 0 0 0 7px rgba(91, 77, 232, .55), 0 0 0 9999px rgba(18, 15, 51, .42); }
+}
+.tour__card {
+  position: fixed; pointer-events: auto; width: min(340px, calc(100vw - 24px));
+  background: var(--surface); color: var(--ink); border-radius: var(--r-l);
+  padding: 14px 16px 14px; box-shadow: 0 24px 60px rgba(18, 15, 51, .32), 0 2px 6px rgba(18, 15, 51, .12);
+  transition: left .28s var(--ease), top .28s var(--ease);
+}
+.tour__card[data-side='center'] { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100vw - 24px)); }
+.tour__card[data-side='dock'] { left: 12px; right: 12px; bottom: 12px; width: auto; }
+.tour__top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6f6c93; }
+.tour__count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--brand-ink); }
+.tour__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tour__x { border: 0; background: none; font-size: 20px; line-height: 1; color: #6f6c93; cursor: pointer; padding: 0 2px; border-radius: 6px; }
+.tour__x:hover { color: var(--ink); background: var(--sunk); }
+.tour__bar { height: 3px; border-radius: 3px; background: var(--sunk); margin: 8px 0 10px; overflow: hidden; }
+.tour__bar span { display: block; height: 100%; background: var(--brand); border-radius: 3px; transition: width .28s var(--ease); }
+.tour__title { font-family: var(--font-display); font-size: 17px; line-height: 1.25; margin: 0 0 6px; letter-spacing: -.01em; }
+.tour__body { margin: 0; font-size: 14px; line-height: 1.5; color: #3a3758; }
+.tour__hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--brand-ink); }
+.tour__nav, .tour__end { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+.tour__end { justify-content: flex-start; flex-wrap: wrap; }
+.tour__end .tour__link { margin-left: auto; }
+.tour__btn {
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  border-radius: 10px; padding: 7px 14px;
+}
+.tour__btn:hover { border-color: var(--brand); }
+.tour__btn--primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.tour__btn--primary:hover { background: var(--brand-ink); border-color: var(--brand-ink); }
+.tour__link { font-size: 13px; color: var(--brand-ink); text-decoration: none; }
+.tour__link:hover { text-decoration: underline; }
+.tour :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .tour__spot, .tour__card, .tour__bar span { transition: none; }
+  .tour__spot[data-click] { animation: none; }
+}

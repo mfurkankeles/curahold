@@ -8,10 +8,11 @@
 //
 // Addresses can be changed for a preview with SITE_APP_URL, SITE_DEMO_URL,
 // SITE_DOCS_URL and SITE_BASE_DOMAIN.
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PLANS, PRICE_CURRENCY, TRIAL_DAYS, type PlanKey } from '../shared/src/billing';
 import { translate, type MessageKey } from '../shared/src/i18n';
+import { FAVICON, MARK } from '../site/brand';
 import { COPY, type SiteLocale } from '../site/content';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -23,9 +24,6 @@ const BASE_DOMAIN = process.env.SITE_BASE_DOMAIN ?? 'curahold.com';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** The mark: a "C" (cura, care) whose open arc holds a dot (hold). */
-const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#17133a"/><path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" stroke="#eceafe" stroke-width="3" stroke-linecap="round"/><circle cx="16.5" cy="16" r="2.6" fill="#3fb596"/></svg>`;
-const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2317133a'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%233fb596'/%3E%3C/svg%3E`;
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DONE = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2f8f78"/><path d="M4.8 8.2l2.1 2.1L11.3 6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#75719a" stroke-width="1.6"/></svg>`;
@@ -39,6 +37,8 @@ function page(locale: SiteLocale): string {
   const rel = locale === 'en' ? '' : '../';
   const other = locale === 'en' ? 'tr/' : '../';
   const signup = `${APP}/signup`;
+  // The demo hub has a page per language: /demo/ and /demo/tr/.
+  const demo = locale === 'tr' ? `${DEMO}tr/` : DEMO;
   const docs = `${DOCS}/${locale}/`;
   const legal = (slug: string) => `${DOCS}/${locale}/legal-${slug}/`;
   const money = (n: number) => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency: PRICE_CURRENCY, maximumFractionDigits: 0 }).format(n);
@@ -86,7 +86,7 @@ function page(locale: SiteLocale): string {
     <nav class="top__nav" aria-label="${esc(c.nav.product)}">
       <a href="#product">${esc(c.nav.product)}</a>
       <a href="#pricing">${esc(c.nav.pricing)}</a>
-      <a href="${DEMO}">${esc(c.nav.demo)}</a>
+      <a href="${demo}">${esc(c.nav.demo)}</a>
       <a href="${docs}">${esc(c.nav.help)}</a>
     </nav>
     <div class="top__end">
@@ -103,7 +103,7 @@ function page(locale: SiteLocale): string {
       <p class="hero__lead">${esc(c.hero.lead)}</p>
       <div class="hero__ctas">
         <a class="btn btn--primary btn--big" href="${signup}">${esc(c.hero.primary)}</a>
-        <a class="btn btn--ghost btn--big" href="${DEMO}">${esc(c.hero.secondary)}</a>
+        <a class="btn btn--ghost btn--big" href="${demo}">${esc(c.hero.secondary)}</a>
       </div>
       <p class="hero__note">${esc(c.hero.note)}</p>
     </div>
@@ -184,7 +184,7 @@ function page(locale: SiteLocale): string {
         <h4>${esc(c.nav.product)}</h4>
         <ul>
           <li><a href="#pricing">${esc(c.nav.pricing)}</a></li>
-          <li><a href="${DEMO}">${esc(c.nav.demo)}</a></li>
+          <li><a href="${demo}">${esc(c.nav.demo)}</a></li>
           <li><a href="${docs}">${esc(c.footer.help)}</a></li>
         </ul>
       </div>
@@ -240,4 +240,7 @@ for (const [pkg, names] of [
     if (existsSync(from)) copyFileSync(from, join(OUT, 'assets', name));
   }
 }
-console.log(`site: 2 languages → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English)`);
+// The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
+const HUB = join(ROOT, 'dist', 'demo-hub');
+if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
+console.log(`site: 2 languages → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English)${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);

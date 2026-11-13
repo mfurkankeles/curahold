@@ -120,7 +120,7 @@ export function Sources() {
       </h3>
       <div className="tiles">
         {providers.map((p) => (
-          <div className="tile" key={p.id} data-state={p.available ? 'ready' : 'off'}>
+          <div className="tile" key={p.id} data-state={p.available ? 'ready' : 'off'} data-tour={`crm-${p.id}`}>
             <div className="tile__head">
               <span className="tile__badge" aria-hidden="true">
                 {(PROVIDER_NAMES[p.id] ?? p.id)[0]}

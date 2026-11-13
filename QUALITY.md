@@ -258,7 +258,9 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 
 Sıra dışı istekler (ürün sahibi, 13 Kasım): **Destek masası ekranı** (SUPPORT.md) ve **destek için
 oturum kaydı** (rrweb tam oturum tekrarı; şeffaf kurgu — SUPPORT.md "Oturum kaydı") yapıldı; ardından
-QUALITY sırasına dönülüyor. Oturum kaydının depolama notu: parçalar şimdilik Postgres'te base64 metin;
+QUALITY sırasına dönülüyor. Aynı gün: **destek masası kendi alt alanına taşındı** (`desk.<alan adı>`) ve **demo bir web sitesi oldu**:
+`curahold.com/demo` — rol/hedef/alana göre süzülen 14 rehberli tur (EN+TR); her tur canlı demonun üstünde gerçek ekrandaki gerçek
+öğeyi gösterir; `tests/e2e/tours.ts` her turun her adımını (51 adım) tarayıcıda yürütür. Oturum kaydının depolama notu: parçalar şimdilik Postgres'te base64 metin;
 hacim büyürse gövdeler R2'ye, indeks Postgres'te kalır. Kayıtlar 7 gün sonra silinir (KVKK).
 
 Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·

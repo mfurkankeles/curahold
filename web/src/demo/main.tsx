@@ -37,6 +37,7 @@ const TEXT = {
     as: 'Kim olarak',
     language: 'Dil',
     tries: 'Neler denenir?',
+    tours: 'Tüm turlar',
     reset: 'Baştan başla',
     ideas: [
       'N tuşuna bas ve yaz: “Acme ile yenileme görüşmesi cuma @Zeynep #Velto !yüksek”. Tarih, kişi, müşteri ve öncelik kendiliğinden dolar; birkaç satır yapıştırırsan her biri ayrı görev olur.',
@@ -82,6 +83,7 @@ const TEXT = {
     as: 'Viewing as',
     language: 'Language',
     tries: 'What to try',
+    tours: 'All tours',
     reset: 'Start over',
     ideas: [
       'Press N and write: “Renewal call with Acme friday @Zeynep #Velto !high”. The date, person, customer and priority fill themselves in; paste several lines and each becomes a task.',
@@ -122,6 +124,8 @@ const demoLocale: 'tr' | 'en' = fromAddress ?? (storedLocale() === 'tr' ? 'tr' :
 if (fromAddress) storeLocale(fromAddress);
 setStartLocale(demoLocale);
 const lang = () => (storedLocale() ?? demoLocale) as 'tr' | 'en';
+/** The demo hub in the demo's language: the page with every guided tour, one level up. */
+const HUB = demoLocale === 'tr' ? '../tr/' : '../';
 
 /** The other language: the sample data is written again in it, so the demo starts over. */
 function switchLanguage(to: 'tr' | 'en') {
@@ -178,6 +182,10 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
           </button>
         ))}
       </div>
+      {/* The demo hub with every guided tour sits one level up (curahold.com/demo/ around /demo/app/). */}
+      <a className="demobar__tours" href={HUB}>
+        {t.tours}
+      </a>
       <div className="demobar__more">
         <button type="button" aria-expanded={open} aria-label={t.tries} onClick={() => setOpen((o) => !o)}>
           <span className="demobar__long">{t.tries}</span>
@@ -325,6 +333,28 @@ async function main() {
   drawBar();
   step(100, 'app');
   setTimeout(() => bootEl.remove(), 250);
+
+  // Moving between screens for a tour: the portal keeps its own little router.
+  const go = (to: string) => {
+    if (current !== 'customer') return navigate(to);
+    (globalThis as any).appHistory.pushState(null, '', to);
+    window.dispatchEvent(new Event('app:portal-nav'));
+  };
+  const { tourById, SIGNUP_URL } = await import('../../../shared/src/tours');
+  const play = async (id: string) => {
+    const tour = tourById(id);
+    if (!tour) return false;
+    const as = tour.as ?? 'ada';
+    if (as !== current) await switchTo(as);
+    const { playTour } = await import('./tour');
+    playTour(tour, { lang: demoLocale, go, startFree: SIGNUP_URL, hub: HUB });
+    return true;
+  };
+  // For the browser checks of every tour (tests/e2e/tours.ts), and nothing else.
+  (globalThis as any).__demo = { play, navigate: go, who: () => current, as: switchTo, reset: () => reload(current === 'customer' ? '/' : '/home') };
+  // curahold.com/demo/app/?tour=renewals — a tour from the demo hub.
+  const asked = new URLSearchParams(window.location.search).get('tour');
+  if (asked) setTimeout(() => void play(asked), 350);
 }
 
 // A link that ends in #docs (or #docs-tr) opens the documentation that travels with the demo,

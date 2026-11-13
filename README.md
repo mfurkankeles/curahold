@@ -313,6 +313,27 @@ host. A strip on top switches between an admin, a team lead, a member and a
 viewer. `npm run test:demo` checks it under a strict content security
 policy inside a sandboxed frame.
 
+**The demo hub** (`curahold.com/demo`, built into `dist/demo-hub` by the same
+`npm run build:demo`, and copied under `/demo/` by `npm run build:site`): a
+page of guided tours — fourteen, in English (`/demo/`) and Turkish
+(`/demo/tr/`), filtered by role, goal and part of the product, with the
+choice kept in the address so a filtered link can be sent. Each tour opens
+the live demo with `?tour=<id>` (`/demo/app/`) and walks a few steps on the
+real product: a spotlight on a real element, a card beside it, the visitor
+free to click anything meanwhile. On a phone the card docks at the bottom.
+
+- The tours are data, in `shared/src/tours.ts`: an area, goals, roles, the
+  person it runs as, and steps — a screen (`path`), the element to point at
+  (`at`, a CSS selector; `data-tour="…"` where a screen has no stable hook),
+  whether the visitor clicks it (`click`) or the tour presses a key (`press`).
+- `tests/e2e/tours.ts` (part of `npm run test:demo`) checks the hub's
+  filters in both languages and plays every step of every tour; a step whose
+  element is no longer on its screen fails, naming the tour and the step.
+- The hub's files are relative and nothing runs inline, so the same folder
+  works under `/demo/`, on a claude.ai page or any static host, under a
+  strict content security policy. No form, no tracking: its call to action is
+  sign-up.
+
 ## Run it locally
 
 ```bash

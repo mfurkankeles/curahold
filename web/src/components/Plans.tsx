@@ -89,7 +89,7 @@ export function PlanMenu({ accountId, accountName, onApplied }: { accountId: str
 
   return (
     <div className="menuwrap" ref={ref}>
-      <button className="btn btn--small" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button className="btn btn--small" data-tour="apply-playbook" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <Icon name="zap" size={15} />
         {t('plans.button')}
       </button>
