@@ -54,6 +54,52 @@ export interface MeetingsPage {
   counts: Record<MeetingKind, number>;
 }
 
+// --------------------------------------------------------- planned meetings
+
+/** Where a planned meeting is in its life. */
+export const PLANNED_STATUS = ['planned', 'held', 'postponed', 'cancelled'] as const;
+export type PlannedStatus = (typeof PLANNED_STATUS)[number];
+
+/** How often a planned meeting comes back. */
+export const MEETING_REPEATS = ['none', 'weekly', 'biweekly', 'monthly', 'quarterly'] as const;
+export type MeetingRepeat = (typeof MEETING_REPEATS)[number];
+
+/** A meeting someone has put on the calendar but not held yet. */
+export interface PlannedMeeting {
+  id: string;
+  accountId: string;
+  /** The meeting kind it will be logged as when held. */
+  kind: MeetingKind;
+  /** The company's own name for it ("Kickoff", "QBR"), or empty. */
+  typeLabel: string;
+  title: string;
+  agenda: string;
+  startsAt: string;
+  minutes: number | null;
+  status: PlannedStatus;
+  /** Why it was postponed or cancelled. */
+  reason: string;
+  /** The customer's people invited. */
+  contactIds: string[];
+  /** Our people invited. */
+  userIds: string[];
+  repeat: MeetingRepeat;
+  createdById: string | null;
+  /** When held, the logged meeting it became. */
+  activityId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A meeting type a company has saved, with an agenda prompt to seed from. */
+export interface MeetingType {
+  id: string;
+  label: string;
+  kind: MeetingKind;
+  minutes: number | null;
+  prompt: string;
+}
+
 export type TimelineItem =
   | { type: 'activity'; at: string; activity: Activity }
   | { type: 'task_created' | 'task_done'; at: string; taskId: string; title: string; boardId: string; byId: string | null }

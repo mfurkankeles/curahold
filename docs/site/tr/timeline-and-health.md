@@ -21,6 +21,18 @@ Her müşteri sayfasında bir **zaman çizelgesi** ve, açtıysanız, bir **sağ
 
 Önemli bir notu **Sabitle** ile en üste taşı. Bir kaydı yazan kişi ya da müşterileri yöneten biri düzenleyebilir ve silebilir. Görmediğin bir panodaki görev ya da senden gizlenen bir alan çizelgede de görünmez.
 
+## Planlı toplantılar
+
+Zaman çizelgesi olan bitendir. **Planlı toplantılar** ise henüz yapılmamış olanlar. Müşteri sayfasında **Yaklaşan toplantılar** altında **Toplantı planla**’yı seç: bir tür seç (toplantı, değerlendirme ya da arama; ya da kayıtlı türlerinden biri), ne zaman başlayacağını ve ne kadar süreceğini belirle, iki taraftan kişileri davet et, gündemi yaz ve tekrarlanıp tekrarlanmayacağını seç. Müşteri sayfasında ve **Takvim**’de görünür, ama henüz çizelgede değildir — yapılana kadar hiçbir şey kaydedilmez.
+
+Her planlı toplantının bir ömrü var:
+
+- Gerçekleştiğinde **Yapıldı** işaretle. Bu, toplantıyı gündem notlarıyla birlikte zaman çizelgesine kaydeder ve ikisini bağlar. Tekrarlıysa bir sonrakini senin için planlar. Aynı anda sonraki adımları kararlaştırabilirsin; her biri bir görev olur.
+- Bir nedenle **Ertele**. Kayıtta kalır; aynı saatte yeni bir güne alabilirsin.
+- Bir nedenle **İptal et**. İptal olarak kayıtta kalır — hiçbir şey silinmez.
+
+**Kayıtlı türler.** Bir yönetici, sık yaptığın toplantıları adlandırabilir — üç aylık iş değerlendirmesi, aylık durum görüşmesi — ve her birine bir gündem şablonu verebilir. Planlarken bir tür seçince gündem dolar, böylece her değerlendirme aynı sorularla başlar.
+
 ## Sağlık skoru
 
 Ayarlar → Sağlık skoru'ndan açılır. Her müşteri için 0 ile 100 arası bir sayıdır ve Curahold'da zaten olan bilgilerden hesaplanır:

@@ -21,6 +21,18 @@ These appear on the timeline by themselves:
 
 **Pin** an important note to keep it at the top. Whoever wrote an entry, or someone who manages customers, can edit or delete it. A task on a board you cannot open, or a field hidden from you, does not show on the timeline either.
 
+## Planned meetings
+
+The timeline is what has happened. **Planned meetings** are what is still to come. On a customer page, under **Upcoming meetings**, choose **Plan a meeting**: pick a type (meeting, review or call, or one of your saved types), set when it starts and how long it runs, invite people from both sides, write the agenda and choose whether it repeats. It shows on the customer page and on your **Calendar**, but it is not on the timeline yet — nothing is logged until it is held.
+
+Each planned meeting has a life:
+
+- **Mark held** when it happens. This logs the meeting on the timeline, with the agenda as its notes, and links the two. If it repeats, the next one is planned for you. You can agree next steps in the same go, and each becomes a task.
+- **Postpone** it, with a reason. It is kept, and you can reschedule it to a new day at the same time.
+- **Cancel** it, with a reason. It stays on the record as cancelled — nothing is deleted.
+
+**Saved types.** An administrator can name the meetings you run often — a quarterly business review, a monthly check-in — and give each an agenda prompt. Picking a type when you plan fills the agenda, so every review starts from the same questions.
+
 ## Health score
 
 Switch it on in Settings → Health score. It is a number from 0 to 100 for every customer, worked out from what is already in Curahold:

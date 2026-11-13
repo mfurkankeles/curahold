@@ -2458,9 +2458,11 @@ a.targetline:hover { border-color: var(--line-strong); }
 [data-kind='review'] { --k: var(--done); --kw: var(--done-wash); --ki: var(--done-ink, var(--done)); }
 [data-kind='renewal'] { --k: var(--soon); --kw: var(--soon-wash); --ki: var(--soon-ink); }
 [data-kind='reviewDue'] { --k: #b45a7a; --kw: #f8e4ec; --ki: #8f3d5c; }
+[data-kind='planned'] { --k: #c07a2c; --kw: #fbeedd; --ki: #915a1c; }
 [data-theme='dark'] [data-kind='meeting'] { --k: #62b8c8; --kw: #12343a; --ki: #9bd6e1; }
 [data-theme='dark'] [data-kind='call'] { --k: #a892e8; --kw: #2a2148; --ki: #cbbdf5; }
 [data-theme='dark'] [data-kind='reviewDue'] { --k: #dd8aa8; --kw: #3d1f2b; --ki: #f0b9cc; }
+[data-theme='dark'] [data-kind='planned'] { --k: #e0a765; --kw: #3a2a14; --ki: #f3ce9e; }
 
 .calitem { display: flex; align-items: center; gap: 5px; width: 100%; min-width: 0; padding: 3px 7px; border: 0; border-left: 3px solid var(--k); border-radius: 5px; background: var(--kw); color: var(--ki); font: inherit; font-size: 12.5px; line-height: 1.35; text-align: left; cursor: pointer; }
 .calitem:hover { filter: brightness(.97); }

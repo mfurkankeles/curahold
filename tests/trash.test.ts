@@ -60,6 +60,7 @@ describe('a deleted customer', () => {
     expect(up.status).toBe(201);
     fileId = up.json.file.id;
     expect((await zeynep.post(`/api/accounts/${velto}/activities`, { kind: 'note', body: 'Kick-off went well; next review in March.' })).status).toBe(201);
+    expect((await zeynep.post(`/api/accounts/${velto}/planned`, { kind: 'review', title: 'Velto quarterly review', startsAt: '2099-03-01T09:00:00.000Z', repeat: 'quarterly' })).status).toBe(201);
     expect((await ada.put('/api/portal/settings', { enabled: true })).status).toBe(200);
     const person = await zeynep.post('/api/portal/users', { accountId: velto, email: 'mila@velto.example', name: 'Mila Novak' });
     expect(person.status).toBe(201);
@@ -89,7 +90,7 @@ describe('a deleted customer', () => {
     expect((await ada.get(`/api/accounts/${velto}`)).status).toBe(404);
     expect((await ada.get(`/api/records/${deal.id}`)).status).toBe(404);
     const during = await picture();
-    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs']) {
+    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs']) {
       expect(during[table].length, table).toBeLessThan(before[table].length);
     }
     expect((during.tasks as any[]).some((k) => k.account_id === velto || k.record_id === deal.id)).toBe(false);
@@ -473,7 +474,7 @@ describe('the schema stays restorable', () => {
     const blocking = await sys(`select child, parent from app_trash_fks() where rule in ('a', 'r') and parent = any ($1::text[])`, [reached.map((r) => r.t)]);
     expect(blocking).toEqual([]);
     // What the tests above put a row in: a table reached by a delete but never filled here would not be proven.
-    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'tasks', 'comments', 'task_events', 'task_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
+    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'tasks', 'comments', 'task_events', 'task_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
     expect(reached.map((r) => r.t).filter((t) => !proven.has(t))).toEqual([]);
   });
 });

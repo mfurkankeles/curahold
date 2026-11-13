@@ -32,6 +32,14 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `GET /accounts/:id/meetings` | A customer's meetings, reviews and calls with their next steps. |
 | `POST /accounts/:id/meetings` | Logs a meeting with who was there, what was said and the next steps; each next step becomes a task on the chosen board. |
 | `POST /activities/:id/next-steps` | Adds more next steps to a meeting already logged. |
+| `GET /accounts/:id/planned` | A customer's meetings still to come (`upcoming`) and a short tail of those recently held, postponed or cancelled (`past`). |
+| `POST /accounts/:id/planned` | Plans a meeting: its type, when it starts, who is invited from both sides, the agenda and whether it repeats. |
+| `PATCH /planned/:id` | Changes a meeting still to come — its time, type, people, agenda or repeat. |
+| `POST /planned/:id/hold` | Marks it held: writes the logged meeting on the timeline and links the two. |
+| `POST /planned/:id/postpone` | Postpones it with a reason (it is kept, not deleted); optionally plans a fresh one for a new day. |
+| `POST /planned/:id/cancel` | Cancels it with a reason — it stays on the record as cancelled; nothing is deleted. |
+| `GET /meeting-types` | The meeting types this company has saved, each with its own name and agenda prompt. |
+| `PUT /meeting-types` | Saves the company's meeting types (an administrator's job). |
 | `GET /accounts/:id/health` | The health score with what moved it and its trend over the last 90 days. |
 | `GET /health/config` | How the health score is worked out for this company. |
 | `POST /health/preview` | What a new health setting would give before saving it: how many customers in each band and the lowest ones. |
@@ -223,6 +231,95 @@ Adds more next steps to a meeting already logged.
 | --- | --- | --- | --- |
 | `steps` | list of object | required | at least 1 items; at most 20 items |
 | `boardId` | id | required |  |
+
+### `GET /accounts/:id/planned`
+
+A customer's meetings still to come (`upcoming`) and a short tail of those recently held, postponed or cancelled (`past`).
+
+### `POST /accounts/:id/planned`
+
+Plans a meeting: its type, when it starts, who is invited from both sides, the agenda and whether it repeats. It is not on the timeline until it is held.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `kind` | one of MEETING_KINDS | optional | default meeting |
+| `typeLabel` | text | optional | at most 80 characters; default  |
+| `title` | text | optional | at most 300 characters; default  |
+| `agenda` | text | optional | at most 20000 characters; default  |
+| `startsAt` | date and time | required |  |
+| `minutes` | whole number | optional | at least 1; at most 1440; may be null |
+| `contactIds` | list of id | optional | at most 30 items |
+| `userIds` | list of id | optional | at most 30 items |
+| `repeat` | one of MEETING_REPEATS | optional | default none |
+
+### `PATCH /planned/:id`
+
+Changes a meeting still to come — its time, type, people, agenda or repeat.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `kind` | one of MEETING_KINDS | optional |  |
+| `typeLabel` | text | optional | at most 80 characters |
+| `title` | text | optional | at most 300 characters |
+| `agenda` | text | optional | at most 20000 characters |
+| `startsAt` | date and time | optional |  |
+| `minutes` | whole number | optional | at least 1; at most 1440; may be null |
+| `contactIds` | list of id | optional | at most 30 items |
+| `userIds` | list of id | optional | at most 30 items |
+| `repeat` | one of MEETING_REPEATS | optional |  |
+
+### `POST /planned/:id/hold`
+
+Marks it held: writes the logged meeting on the timeline and links the two. If it repeats, the next one is planned. Next steps can be agreed in the same go.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `body` | text | optional | at most 20000 characters; default  |
+| `happenedAt` | date and time | optional |  |
+| `minutes` | whole number | optional | at least 1; at most 1440; may be null |
+| `nextSteps` | list of object | optional | at most 20 items |
+| `boardId` | id | optional |  |
+
+### `POST /planned/:id/postpone`
+
+Postpones it with a reason (it is kept, not deleted); optionally plans a fresh one for a new day.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `reason` | text | optional | at most 2000 characters; default  |
+| `startsAt` | date and time | optional |  |
+
+### `POST /planned/:id/cancel`
+
+Cancels it with a reason — it stays on the record as cancelled; nothing is deleted.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `reason` | text | optional | at most 2000 characters; default  |
+
+### `GET /meeting-types`
+
+The meeting types this company has saved, each with its own name and agenda prompt.
+
+### `PUT /meeting-types`
+
+Saves the company's meeting types (an administrator's job).
+
+**Needs:** permission `org.manage`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `types` | list of object | required | at most 40 items |
 
 ### `GET /accounts/:id/health`
 

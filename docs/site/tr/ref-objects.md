@@ -275,6 +275,9 @@ interface CalendarItem {
   priority?: string | null;
   /** For something held: how long it took. */
   minutes?: number | null;
+  /** For a planned meeting: the row to open, and which meeting kind it will be. */
+  plannedId?: string;
+  meetingKind?: string;
 }
 ```
 

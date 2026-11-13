@@ -143,6 +143,34 @@ calendarRoutes.get('/calendar', async (c) => {
       });
     }
 
+    // Meetings still to come: planned ones, on the company's own day and clock.
+    const planned = await q.query(
+      `select p.id, p.kind, p.title, p.type_label, p.minutes, p.account_id, a.name as account_name, p.created_by, p.user_ids,
+              to_char(p.starts_at at time zone $4, 'YYYY-MM-DD') as day, to_char(p.starts_at at time zone $4, 'HH24:MI') as clock
+         from planned_meetings p join accounts a on a.id = p.account_id
+        where p.status = 'planned'
+          and (p.starts_at at time zone $4)::date between $1::date and $2::date
+          and ($3::uuid[] is null or p.created_by = any ($3::uuid[]) or p.user_ids && $3::uuid[])
+        order by p.starts_at
+        limit 2000`,
+      [from, to, ids, org.timezone],
+    );
+    for (const p of planned) {
+      out.push({
+        id: `planned:${p.id}`,
+        kind: 'planned',
+        date: p.day,
+        time: p.clock === '00:00' ? null : p.clock,
+        title: p.title || p.type_label || '',
+        minutes: p.minutes ?? null,
+        plannedId: p.id,
+        meetingKind: p.kind,
+        accountId: p.account_id,
+        accountName: p.account_name,
+        personIds: [...new Set([p.created_by, ...(p.user_ids ?? [])].filter(Boolean))],
+      });
+    }
+
     if (seesRenewal) {
       const rows = await q.query(
         `select a.id, a.name, a.owner_id, left(a.fields->>$4, 10) as day

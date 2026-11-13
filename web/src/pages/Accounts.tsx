@@ -29,6 +29,7 @@ import { PlanMenu } from '../components/Plans';
 import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { AccountMeetings, TIMELINE_CHANGED } from '../components/Meetings';
+import { AccountPlanned } from '../components/PlannedMeetings';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
 
@@ -863,6 +864,7 @@ export function AccountPage({ id }: { id: string }) {
               </details>
             )}
           </section>
+          <AccountPlanned account={a} />
           <AccountMeetings account={a} />
           <AccountTimeline accountId={a.id} hasContacts={!!types?.some((x) => x.kind === 'contact')} />
           {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}

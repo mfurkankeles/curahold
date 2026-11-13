@@ -318,6 +318,32 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
       if (step[3]) await call('PATCH', `/api/tasks/${meeting.nextSteps[i].id}`, { baseVersion: 1, status: 'done' }).catch(() => undefined);
     }
   }
+  // Meetings still to come, on a few customers' calendars.
+  const PLANNED: [string, 'meeting' | 'review' | 'call', string, string, number, number, string[], string][] = [
+    ['Fjordnet Telecom', 'review', 'Çeyrek iş değerlendirmesi', 'Kullanım, hedefler ve yenileme yol haritası.', 9, 60, ['lena'], 'quarterly'],
+    ['Cedarmoor Health', 'meeting', 'İkinci eğitim oturumu', 'Yeni modülü ekibe gösterelim ve soruları alalım.', 3, 45, ['lena'], 'none'],
+    ['Brightmoor Enerji', 'call', 'Aylık durum araması', 'Genişleme teklifi ve açık işler.', 14, 30, [], 'monthly'],
+    ['Lindenhall Sigorta', 'meeting', 'Mobil modül kapsamı', 'Bilgi güvenliği sorularını ve kapsamı netleştirelim.', 5, 45, ['ada'], 'none'],
+  ];
+  for (const [acc, kind, title, agenda, inDays, minutes, also, repeat] of PLANNED) {
+    if (!accounts[acc]) continue;
+    const ours = [...new Set([ownerOf[acc], ...also.map(who)].filter((x): x is string => !!x))];
+    await call('POST', `/api/accounts/${accounts[acc]}/planned`, {
+      kind,
+      title,
+      agenda,
+      startsAt: new Date(Date.now() + inDays * 86_400_000).toISOString().slice(0, 11) + '09:00:00.000Z',
+      minutes,
+      contactIds: met(acc, agenda),
+      userIds: ours,
+      repeat,
+    });
+  }
+  // One saved meeting type, with an agenda prompt to start from.
+  await call('PUT', '/api/meeting-types', {
+    types: [{ id: 'qbr', label: 'İş değerlendirmesi', kind: 'review', minutes: 60, prompt: 'Hedefler · Kullanım · Riskler · Yol haritası' }],
+  });
+
   // The pinned note everyone should see first on this customer.
   const pin = await call('POST', `/api/accounts/${accounts['Harborline Bank']}/activities`, {
     kind: 'note',

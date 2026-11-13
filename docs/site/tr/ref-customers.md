@@ -32,6 +32,14 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `GET /accounts/:id/meetings` | Bir müşterinin toplantıları, değerlendirmeleri ve aramaları; sonraki adımlarıyla. |
 | `POST /accounts/:id/meetings` | Bir toplantıyı kimlerin katıldığı, ne konuşulduğu ve sonraki adımlarla kaydeder; her adım seçilen panoda bir görev olur. |
 | `POST /activities/:id/next-steps` | Kaydedilmiş bir toplantıya yeni sonraki adımlar ekler. |
+| `GET /accounts/:id/planned` | Bir müşterinin henüz yapılmamış toplantıları (`upcoming`) ve son yapılan, ertelenen ya da iptal edilenlerden kısa bir kuyruk (`past`). |
+| `POST /accounts/:id/planned` | Bir toplantı planlar: türü, ne zaman başladığı, iki taraftan kimlerin davet edildiği, gündemi ve tekrarlanıp tekrarlanmadığı. |
+| `PATCH /planned/:id` | Henüz yapılmamış bir toplantıyı değiştirir — zamanı, türü, kişileri, gündemi ya da tekrarı. |
+| `POST /planned/:id/hold` | Yapıldı olarak işaretler: kaydedilmiş toplantıyı zaman çizelgesine yazar ve ikisini bağlar. |
+| `POST /planned/:id/postpone` | Bir nedenle erteler (silinmez, kalır); isteğe bağlı olarak yeni bir gün için yenisini planlar. |
+| `POST /planned/:id/cancel` | Bir nedenle iptal eder — iptal olarak kayıtta kalır; hiçbir şey silinmez. |
+| `GET /meeting-types` | Bu şirketin kaydettiği toplantı türleri; her biri kendi adı ve gündem şablonuyla. |
+| `PUT /meeting-types` | Şirketin toplantı türlerini kaydeder (yönetici işi). |
 | `GET /accounts/:id/health` | Sağlık skoru; onu neyin oynattığı ve son 90 gündeki seyriyle. |
 | `GET /health/config` | Bu şirkette sağlık skorunun nasıl hesaplandığı. |
 | `POST /health/preview` | Yeni bir sağlık ayarının kaydetmeden önce ne vereceği: her bantta kaç müşteri olduğu ve en düşükler. |
@@ -223,6 +231,95 @@ Kaydedilmiş bir toplantıya yeni sonraki adımlar ekler.
 | --- | --- | --- | --- |
 | `steps` | nesne listesi | zorunlu | en az 1 öğe; en çok 20 öğe |
 | `boardId` | kimlik | zorunlu |  |
+
+### `GET /accounts/:id/planned`
+
+Bir müşterinin henüz yapılmamış toplantıları (`upcoming`) ve son yapılan, ertelenen ya da iptal edilenlerden kısa bir kuyruk (`past`).
+
+### `POST /accounts/:id/planned`
+
+Bir toplantı planlar: türü, ne zaman başladığı, iki taraftan kimlerin davet edildiği, gündemi ve tekrarlanıp tekrarlanmadığı. Yapılana kadar zaman çizelgesine düşmez.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `kind` | şunlardan biri: MEETING_KINDS | isteğe bağlı | varsayılan meeting |
+| `typeLabel` | metin | isteğe bağlı | en çok 80 karakter; default  |
+| `title` | metin | isteğe bağlı | en çok 300 karakter; default  |
+| `agenda` | metin | isteğe bağlı | en çok 20000 karakter; default  |
+| `startsAt` | tarih ve saat | zorunlu |  |
+| `minutes` | tam sayı | isteğe bağlı | en az 1; en çok 1440; boş (null) olabilir |
+| `contactIds` | kimlik listesi | isteğe bağlı | en çok 30 öğe |
+| `userIds` | kimlik listesi | isteğe bağlı | en çok 30 öğe |
+| `repeat` | şunlardan biri: MEETING_REPEATS | isteğe bağlı | varsayılan none |
+
+### `PATCH /planned/:id`
+
+Henüz yapılmamış bir toplantıyı değiştirir — zamanı, türü, kişileri, gündemi ya da tekrarı.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `kind` | şunlardan biri: MEETING_KINDS | isteğe bağlı |  |
+| `typeLabel` | metin | isteğe bağlı | en çok 80 karakter |
+| `title` | metin | isteğe bağlı | en çok 300 karakter |
+| `agenda` | metin | isteğe bağlı | en çok 20000 karakter |
+| `startsAt` | tarih ve saat | isteğe bağlı |  |
+| `minutes` | tam sayı | isteğe bağlı | en az 1; en çok 1440; boş (null) olabilir |
+| `contactIds` | kimlik listesi | isteğe bağlı | en çok 30 öğe |
+| `userIds` | kimlik listesi | isteğe bağlı | en çok 30 öğe |
+| `repeat` | şunlardan biri: MEETING_REPEATS | isteğe bağlı |  |
+
+### `POST /planned/:id/hold`
+
+Yapıldı olarak işaretler: kaydedilmiş toplantıyı zaman çizelgesine yazar ve ikisini bağlar. Tekrarlıysa bir sonraki planlanır. Sonraki adımlar aynı anda kararlaştırılabilir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `body` | metin | isteğe bağlı | en çok 20000 karakter; default  |
+| `happenedAt` | tarih ve saat | isteğe bağlı |  |
+| `minutes` | tam sayı | isteğe bağlı | en az 1; en çok 1440; boş (null) olabilir |
+| `nextSteps` | nesne listesi | isteğe bağlı | en çok 20 öğe |
+| `boardId` | kimlik | isteğe bağlı |  |
+
+### `POST /planned/:id/postpone`
+
+Bir nedenle erteler (silinmez, kalır); isteğe bağlı olarak yeni bir gün için yenisini planlar.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `reason` | metin | isteğe bağlı | en çok 2000 karakter; default  |
+| `startsAt` | tarih ve saat | isteğe bağlı |  |
+
+### `POST /planned/:id/cancel`
+
+Bir nedenle iptal eder — iptal olarak kayıtta kalır; hiçbir şey silinmez.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `reason` | metin | isteğe bağlı | en çok 2000 karakter; default  |
+
+### `GET /meeting-types`
+
+Bu şirketin kaydettiği toplantı türleri; her biri kendi adı ve gündem şablonuyla.
+
+### `PUT /meeting-types`
+
+Şirketin toplantı türlerini kaydeder (yönetici işi).
+
+**Gerekenler:** yetki `org.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `types` | nesne listesi | zorunlu | en çok 40 öğe |
 
 ### `GET /accounts/:id/health`
 

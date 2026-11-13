@@ -3,6 +3,7 @@
 import type { Db } from '../api/src/db';
 import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
 import { TEMPLATES } from '../shared/src/templates';
+import type { MeetingKind, MeetingRepeat } from '../shared/src/timeline';
 
 const PEOPLE = [
   { key: 'ada', name: 'Ada Demir', role: 'admin', seat: 'full' },
@@ -145,6 +146,30 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
           : `@[Zeynep Tunç](${ids.zeynep}) can you add last quarter's usage chart too?`,
         [ids.zeynep],
       ],
+    );
+    // A few meetings still to come, on the first account's calendar.
+    const planned: [MeetingKind, string, string, number, number, string[], MeetingRepeat][] = tr
+      ? [
+          ['review', 'Çeyrek iş değerlendirmesi', 'Kullanım, hedefler ve yenileme yol haritası.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
+          ['meeting', 'Yeni modül tanıtımı', 'Ekibe yeni modülü gösterelim ve soruları alalım.', 2, 45, ['lena'], 'none'],
+          ['call', 'Aylık durum araması', 'Kısa durum ve açık işler.', 21, 30, ['mert'], 'monthly'],
+        ]
+      : [
+          ['review', 'Quarterly business review', 'Usage, goals and the renewal roadmap.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
+          ['meeting', 'New module walkthrough', 'Show the team the new module and take questions.', 2, 45, ['lena'], 'none'],
+          ['call', 'Monthly check-in call', 'A short status and the open items.', 21, 30, ['mert'], 'monthly'],
+        ];
+    for (const [kind, title, agenda, inDays, minutes, who, repeat] of planned) {
+      await q.query(
+        `insert into planned_meetings (org_id, account_id, created_by, kind, title, agenda, starts_at, minutes, user_ids, repeat)
+         values ($1, $2, $3, $4, $5, $6, (now() + ($7::int * interval '1 day'))::date + interval '10 hours', $8, $9, $10)`,
+        [orgId, accounts[ACCOUNTS[0][0]], ids.mert, kind, title, agenda, inDays, minutes, who.map((w) => ids[w]), repeat],
+      );
+    }
+    // One saved meeting type, with an agenda prompt to start from.
+    await q.query(
+      `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
+      [orgId, JSON.stringify([{ id: 'qbr', label: tr ? 'İş değerlendirmesi' : 'Business review', kind: 'review', minutes: 60, prompt: tr ? 'Hedefler · Kullanım · Riskler · Yol haritası' : 'Goals · Usage · Risks · Roadmap' }])],
     );
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);

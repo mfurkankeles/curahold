@@ -44,7 +44,7 @@ const shiftMonths = (day: string, n: number) => {
   return want > lastOfMonth(first) ? lastOfMonth(first) : want;
 };
 
-const KIND_ICON: Record<CalendarKind, IconName> = { task: 'checkCircle', meeting: 'people', call: 'phone', review: 'handshake', renewal: 'refresh', reviewDue: 'hourglass' };
+const KIND_ICON: Record<CalendarKind, IconName> = { task: 'checkCircle', meeting: 'people', call: 'phone', review: 'handshake', renewal: 'refresh', reviewDue: 'hourglass', planned: 'calendar' };
 
 function remembered<T extends string>(key: string, fallback: T): T {
   try {

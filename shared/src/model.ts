@@ -686,7 +686,7 @@ export const MENTION_RE = /@\[([^\]]{1,80})\]\(([0-9a-f-]{36})\)/g;
 // ------------------------------------------------------------------ calendar
 
 /** What can sit on a day: a task due, something held with a customer, a renewal, a business review falling due. */
-export const CALENDAR_KINDS = ['task', 'meeting', 'call', 'review', 'renewal', 'reviewDue'] as const;
+export const CALENDAR_KINDS = ['task', 'meeting', 'call', 'review', 'renewal', 'reviewDue', 'planned'] as const;
 export type CalendarKind = (typeof CALENDAR_KINDS)[number];
 
 export interface CalendarItem {
@@ -710,6 +710,9 @@ export interface CalendarItem {
   priority?: string | null;
   /** For something held: how long it took. */
   minutes?: number | null;
+  /** For a planned meeting: the row to open, and which meeting kind it will be. */
+  plannedId?: string;
+  meetingKind?: string;
 }
 
 /** Whose calendars someone may open besides their own. */
