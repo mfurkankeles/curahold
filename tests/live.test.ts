@@ -7,7 +7,9 @@ let env: Env;
 let ada: Client;
 let mert: Client;
 let lena: Client;
-const pulse = async (who: Client) => (await who.get('/api/pulse')).json as { tasks: number; records: number; unread: number };
+type PulseBody = { tasks: number; records: number; unread: number; boards?: Record<string, number>; accounts?: Record<string, number> };
+const pulse = async (who: Client) => (await who.get('/api/pulse')).json as PulseBody;
+const scoped = async (who: Client, q: string) => (await who.get(`/api/pulse${q}`)).json as PulseBody;
 const tick = () => new Promise((r) => setTimeout(r, 15));
 
 beforeAll(async () => {
@@ -48,6 +50,32 @@ describe('the pulse', () => {
     await mert.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Acme only' });
     expect(await pulse(other)).toEqual(otherBefore);
     expect((await new Client(env, 'acme').get('/api/pulse')).status).toBe(401);
+  });
+
+  it('a board follows only its own cards; a company only its own changes', async () => {
+    const cs = env.a.boards.csBoard;
+    const priv = env.a.boards.privateBoard;
+    const base = await scoped(ada, `?boards=${cs},${priv}`);
+    expect(base.boards![cs]).toBeGreaterThan(0);
+    await tick();
+    await mert.post('/api/tasks', { boardId: cs, title: 'A card on CS' });
+    const after = await scoped(ada, `?boards=${cs},${priv}`);
+    expect(after.boards![cs]).toBeGreaterThan(base.boards![cs]);
+    // The other board did not move, and neither did the global record stamp.
+    expect(after.boards![priv]).toBe(base.boards![priv]);
+    // A board you cannot see gives you no stamp.
+    expect((await scoped(lena, `?boards=${priv}`)).boards?.[priv]).toBeUndefined();
+
+    // A company follows anything under it, and only it.
+    const acc = env.a.accounts['Fjordnet Telecom'];
+    const other = env.a.accounts['Quillfield Retail'];
+    const aBase = await scoped(ada, `?accounts=${acc},${other}`);
+    expect(aBase.accounts![acc]).toBeGreaterThan(0);
+    await tick();
+    await mert.post(`/api/accounts/${acc}/activities`, { kind: 'note', body: 'Called their lead' });
+    const aAfter = await scoped(ada, `?accounts=${acc},${other}`);
+    expect(aAfter.accounts![acc]).toBeGreaterThan(aBase.accounts![acc]);
+    expect(aAfter.accounts![other]).toBe(aBase.accounts![other]);
   });
 
   it('follows records too (a deal someone moved)', async () => {

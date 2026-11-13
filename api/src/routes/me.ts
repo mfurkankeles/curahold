@@ -255,17 +255,48 @@ meRoutes.get('/me/delivery', async (c) => {
  */
 meRoutes.get('/pulse', async (c) => {
   const auth = c.get('auth');
-  const [r] = await run(c, (q) =>
-    q.query(
+  // Scopes the client is looking at right now, so a board or a company gets its
+  // own stamp and follows only its own changes — not every change in the company.
+  const ids = (q: string, cap = 20) =>
+    [...new Set((c.req.query(q) ?? '').split(',').map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s)))].slice(0, cap);
+  const boards = ids('boards');
+  const accounts = ids('accounts');
+  const out = await run(c, async (q) => {
+    const [r] = await q.query(
       `select (select extract(epoch from updated_at) from tasks where org_id = app_org() order by updated_at desc limit 1) as t,
               (select extract(epoch from created_at) from comments where org_id = app_org() order by created_at desc limit 1) as c,
               (select extract(epoch from updated_at) from records where org_id = app_org() order by updated_at desc limit 1) as r,
               (select count(*)::int from notifications where user_id = $1 and read_at is null) as unread`,
       [auth.userId],
-    ),
-  );
+    );
+    const stamps = async (sql: string, list: string[]) => {
+      if (!list.length) return undefined;
+      const rows = await q.query<{ id: string; e: string | null }>(sql, [list]);
+      const m: Record<string, number> = {};
+      for (const x of rows) m[x.id] = Number(x.e ?? 0);
+      return m;
+    };
+    return {
+      tasks: Math.max(Number(r?.t ?? 0), Number(r?.c ?? 0)),
+      records: Number(r?.r ?? 0),
+      unread: r?.unread ?? 0,
+      // A board's stamp: the newest change to one of its cards. RLS already hides a board you cannot see.
+      boards: await stamps(`select board_id as id, extract(epoch from max(updated_at)) as e from tasks where board_id = any($1::uuid[]) group by board_id`, boards),
+      // A company's stamp: the newest change to it or to anything under it the page shows.
+      accounts: await stamps(
+        `select a.id, extract(epoch from greatest(
+           a.updated_at,
+           coalesce((select max(updated_at) from tasks t where t.account_id = a.id), to_timestamp(0)),
+           coalesce((select max(happened_at) from activities x where x.account_id = a.id), to_timestamp(0)),
+           coalesce((select max(updated_at) from planned_meetings p where p.account_id = a.id), to_timestamp(0)),
+           coalesce((select max(updated_at) from records d where d.account_id = a.id), to_timestamp(0))
+         )) as e from accounts a where a.id = any($1::uuid[])`,
+        accounts,
+      ),
+    };
+  });
   c.header('cache-control', 'no-store');
-  return c.json({ tasks: Math.max(Number(r?.t ?? 0), Number(r?.c ?? 0)), records: Number(r?.r ?? 0), unread: r?.unread ?? 0 });
+  return c.json(out);
 });
 
 meRoutes.get('/notifications/count', async (c) => {

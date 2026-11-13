@@ -30,6 +30,7 @@ import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { AccountMeetings, TIMELINE_CHANGED } from '../components/Meetings';
 import { AccountPlanned } from '../components/PlannedMeetings';
+import { useLiveScope } from '../lib/live';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
 
@@ -748,6 +749,12 @@ export function AccountPage({ id }: { id: string }) {
     window.addEventListener('app:timeline-changed', again);
     return () => window.removeEventListener('app:timeline-changed', again);
   }, [load]);
+  // Someone else changed this company — its fields, a meeting, a task, a record:
+  // the page follows, and its sections refetch, without polling the whole company.
+  useLiveScope('account', id, () => {
+    void load();
+    window.dispatchEvent(new Event(TIMELINE_CHANGED));
+  });
   useEffect(() => {
     if (!boardId && boards[0]) setBoardId(boards[0].id);
   }, [boards, boardId]);

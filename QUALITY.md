@@ -111,6 +111,17 @@ Brüt marj bu sıranın içinde değil; her kararın uyması gereken bütçe.
   Postgres LISTEN/NOTIFY; WebSocket'i engelleyen ağlarda bugünkü yenilemeye düşer.
   Alternatifleri maliyetleriyle göster, bu kararı bana sor.
 
+Yapıldı (13 Kasım, soket kararını beklemeden atılan adım):
+- Canlı nabız artık **kapsamlı**: bir pano yalnızca kendi kartlarını, bir müşteri yalnızca kendi
+  altındaki değişikliği takip ediyor — şirketteki herhangi bir değişiklikte her aynı-tür sayfa
+  yenilenmiyor. Eskiden tek bir şirket-geneli "en yeni görev" damgası vardı, bu da her pano/kayıt
+  sayfasını her değişiklikte yeniliyordu. (`/pulse?boards=…&accounts=…`, istemcide `useLiveScope`;
+  `tests/live.test.ts` + tarayıcı e2e "live" adımı.)
+- Aktif soru aralığı 30 sn → 10 sn (sayfa önde; kimse dokunmazken 90 sn; gizliyken hiç). Nabız küçük
+  ve kapsamlı olduğundan yük artmıyor — kapsam sayesinde gereksiz tam-liste yenilemeleri de azaldı.
+- Hâlâ açık (senin kararın): kalıcı soketle (Durable Object / WebSocket + LISTEN-NOTIFY) ≤ 1 sn
+  gerçek anlık. Yukarıdaki plan duruyor; bu paket onun öncesindeki ucuz, geri alınabilir adım.
+
 ### Sadelik
 - Yeni bir kullanıcı yardım almadan ilk görevini 60 sn'de açar; teknik olmayan bir ekip
   yöneticisi şirketini 15 dk'da tek başına kurar.

@@ -25,7 +25,7 @@ import { Icon, PageIcon } from '../components/icons';
 import { Tick } from '../components/Tick';
 import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
-import { useLive } from '../lib/live';
+import { useLiveScope } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { usePageDefaults, useShell } from '../lib/shell';
@@ -66,8 +66,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     setTasks(null);
     void load();
   }, [load, refreshKey]);
-  // Someone else moved or added a card: the board follows, quietly.
-  useLive('tasks', () => void load());
+  // Someone else moved or added a card on this board: it follows, quietly.
+  useLiveScope('board', boardId, () => void load());
 
   const doneKeys = useMemo(() => new Set(board?.columns.filter((c) => c.done).map((c) => c.key)), [board]);
   const visible = useMemo(() => (tasks ?? []).filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))), [tasks, filters, me.user.id, doneKeys]);
