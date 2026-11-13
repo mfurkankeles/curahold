@@ -6,7 +6,7 @@ import { parse } from '@babel/parser';
 import { describe, expect, it } from 'vitest';
 import { en } from '../shared/src/i18n/en';
 import { tr } from '../shared/src/i18n/tr';
-import { accountWords, translate, LOCALES, LOCALE_INFO, dictionaries, isRtl, bcp47Of, type Locale } from '../shared/src/i18n';
+import { accountWords, translate, LOCALES, LOCALE_INFO, dictionaries, isRtl, bcp47Of, type Locale, type MessageKey } from '../shared/src/i18n';
 
 const ROOT = join(import.meta.dirname, '..');
 const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
@@ -125,14 +125,20 @@ describe('the locale registry', () => {
     expect(Object.keys(dictionaries.tr).length).toBe(Object.keys(dictionaries.en).length);
   });
 
-  it('falls back to English for a locale whose dictionary is still empty', () => {
-    const empty = LOCALES.find((l) => Object.keys(dictionaries[l]).length === 0);
-    expect(empty, 'a not-yet-translated locale to prove the fallback').toBeTruthy();
-    // A placeholder-free key reads the English text verbatim until a native pass lands.
-    expect(translate(empty!, 'common.close')).toBe(translate('en', 'common.close'));
-    // The account noun, however, is already localized even before the dictionary is filled.
-    expect(translate(empty!, 'board.searchPlaceholder')).toContain(accountWords(empty!).other);
-    expect(translate(empty!, 'board.searchPlaceholder')).not.toBe(translate('en', 'board.searchPlaceholder'));
+  it('falls back to English for any key a locale has not translated yet', () => {
+    // The new markets are translated surface by surface, so each still has keys
+    // it has not reached. A missing key reads the English; a present one reads
+    // its own language. Both directions are proven here.
+    const partial = LOCALES.find((l) => l !== 'en' && Object.keys(dictionaries[l]).length < Object.keys(dictionaries.en).length);
+    expect(partial, 'a partially-translated locale to prove the fallback').toBeTruthy();
+    const enKeys = Object.keys(dictionaries.en) as MessageKey[];
+    const missing = enKeys.find((k) => !(k in dictionaries[partial!]) && !/\{/.test(dictionaries.en[k]!));
+    expect(missing, 'a placeholder-free untranslated key').toBeTruthy();
+    expect(translate(partial!, missing!)).toBe(dictionaries.en[missing!]);
+    const own = (Object.keys(dictionaries[partial!]) as MessageKey[]).find((k) => dictionaries[partial!][k] !== dictionaries.en[k]);
+    if (own) expect(translate(partial!, own)).toBe(dictionaries[partial!][own]);
+    // The account noun is localized for every market, dictionary or not.
+    expect(translate(partial!, 'board.searchPlaceholder')).toContain(accountWords(partial!).other);
   });
 
   it('gives every locale a customer noun, native where set and English otherwise', () => {

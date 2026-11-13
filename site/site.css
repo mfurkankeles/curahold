@@ -24,8 +24,8 @@
   --ink-2: #4a4670;
   --ink-3: #75719a;
   --line: #dedaf0;
-  --display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif;
-  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
   --wrap: 1180px;
   --ease: cubic-bezier(.2, .7, .2, 1);
 }
