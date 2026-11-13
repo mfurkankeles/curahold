@@ -312,17 +312,20 @@ ${customer}
         <h2>${esc(c.meeting.title)}</h2>
         <p>${esc(c.meeting.text)}</p>
       </div>
-      <div class="mcard" data-reveal="card" aria-hidden="true">
-        <div class="mcard__date"><span class="mcard__day">${esc(m.day)}</span><span class="mcard__month">${esc(m.month)}</span></div>
-        <div class="mcard__main">
-          <div class="mcard__head"><span class="mcard__kind">${esc(m.kind)}</span><span class="mcard__name">${esc(m.name)}</span></div>
-          <p class="mcard__who"><span>${esc(m.ours)}</span><span>${esc(m.theirs)}</span></p>
-          <p class="mcard__notes">${esc(m.notes)}</p>
-          <div class="mcard__steps">
-            <strong>${esc(m.steps)}</strong>
-            <div class="mcard__step" data-done>${DONE}<span>${esc(m.done)}</span></div>
-            <div class="mcard__step">${OPEN}<span>${esc(m.open)}</span><em>${esc(m.openWho)}</em></div>
+      <div class="meetflow" aria-hidden="true">
+        <div class="mcard" data-reveal="card">
+          <div class="mcard__date"><span class="mcard__day">${esc(m.day)}</span><span class="mcard__month">${esc(m.month)}</span></div>
+          <div class="mcard__main">
+            <div class="mcard__head"><span class="mcard__kind">${esc(m.kind)}</span><span class="mcard__name">${esc(m.name)}</span></div>
+            <p class="mcard__who"><span>${esc(m.ours)}</span><span>${esc(m.theirs)}</span></p>
+            <p class="mcard__notes">${esc(m.notes)}</p>
           </div>
+        </div>
+        <div class="flowarrow" data-reveal><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="tasks">
+          <span class="tasks__h">${esc(m.steps)}</span>
+          <div class="tcard" data-reveal style="--i:0"><span class="tcard__box" data-done>${DONE}</span><div class="tcard__b"><p class="tcard__t is-done">${esc(m.done)}</p><span class="tcard__f"><span class="tcard__ava">ZT</span>${DUE}</span></div></div>
+          <div class="tcard" data-reveal style="--i:1"><span class="tcard__box">${OPEN}</span><div class="tcard__b"><p class="tcard__t">${esc(m.open)}</p><span class="tcard__f"><span class="tcard__ava">LB</span>${esc(m.openWho)}</span></div></div>
         </div>
       </div>
     </div>

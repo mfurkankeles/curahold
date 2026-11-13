@@ -541,3 +541,29 @@ body { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) { .ring__fill { transition: none; } }
 @media (max-width: 860px) { .app__main--cust { grid-template-columns: 1fr; gap: 22px; } }
 @media (max-width: 560px) { .app__main--cust { padding: 18px 16px; } .ring, .ring svg { width: 148px; height: 148px; } }
+
+/* ===================================== meeting → tasks, on the night band ===
+   The logged meeting, an arrow, and the two next steps arriving as real tasks
+   with an owner and a due date — the promise becoming work you can see. */
+.band__in { align-items: start; }
+.meetflow { display: grid; gap: 14px; }
+.flowarrow { justify-self: center; width: 36px; height: 36px; display: grid; place-items: center; color: var(--iris); }
+.flowarrow svg { width: 24px; height: 24px; }
+@media (prefers-reduced-motion: no-preference) { .flowarrow svg { animation: bob 1.9s ease-in-out infinite; } }
+@keyframes bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(4px); } }
+
+.tasks { display: grid; gap: 10px; }
+.tasks__h { font: 650 13px/1 var(--display); color: #c9c5e8; }
+.tcard { background: var(--paper); color: var(--ink); border-radius: 13px; padding: 13px 15px; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; align-items: start; box-shadow: 0 12px 30px -18px rgba(0, 0, 0, .55); }
+.tcard__box { width: 22px; height: 22px; display: grid; place-items: center; }
+.tcard__box svg { width: 19px; height: 19px; }
+.tcard__b { display: grid; gap: 7px; min-width: 0; }
+.tcard__t { margin: 0; font-size: 14.5px; font-weight: 550; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+.tcard__t.is-done { color: var(--ink-3); text-decoration: line-through; }
+.tcard__f { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-3); flex-wrap: wrap; }
+.tcard__ava { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--iris-wash); color: var(--iris-ink); font-size: 9px; font-weight: 700; flex: none; }
+
+/* the two tasks slide up into place in sequence as the band is reached */
+html.js .tcard[data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: calc(var(--i, 0) * .14s + .2s); }
+html.js .tcard[data-reveal].is-in { opacity: 1; transform: none; }
+@media (max-width: 960px) { .meetflow { max-width: 460px; } }
