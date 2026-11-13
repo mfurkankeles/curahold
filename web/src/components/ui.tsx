@@ -169,7 +169,7 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
   );
 }
 
-export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose }: { title: string; body: string; confirmLabel: string; danger?: boolean; onConfirm: () => void | Promise<void>; onClose: () => void }) {
+export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose, children }: { title: string; body: string; confirmLabel: string; danger?: boolean; onConfirm: () => void | Promise<void>; onClose: () => void; children?: ReactNode }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (
@@ -200,6 +200,7 @@ export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose 
       }
     >
       <p style={{ margin: 0 }}>{body}</p>
+      {children}
     </Dialog>
   );
 }

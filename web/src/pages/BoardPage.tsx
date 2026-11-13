@@ -20,6 +20,8 @@ import { BoardArchive } from '../components/BoardArchive';
 import { ExportMenu } from '../components/Export';
 import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
+import { IssueBadge, isPmBoard, PointsChip } from '../components/Pm';
+import { BacklogView, SprintsView } from '../components/Sprints';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { Tick } from '../components/Tick';
@@ -32,7 +34,7 @@ import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
 
-export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive'; refreshKey: number }) {
+export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
@@ -96,6 +98,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   );
 
   if (!board) return <div className="empty">{t('errors.not_found')}</div>;
+  const pmView = view === 'backlog' || view === 'sprints';
+  const pmTabs = isPmBoard(board) || pmView;
 
   return (
     <>
@@ -109,7 +113,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
         <div className="topbar__spacer" />
         <div className="toolbar">
-          {view !== 'archive' && <FilterBar board={board} filters={filters} onChange={setFilters} />}
+          {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} />}
           <div className="seg" role="group">
             <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
               {t('board.view.board')}
@@ -117,6 +121,16 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
             <button aria-pressed={view === 'list'} onClick={() => setQuery('view', 'list')}>
               {t('board.view.list')}
             </button>
+            {pmTabs && (
+              <>
+                <button aria-pressed={view === 'backlog'} onClick={() => setQuery('view', 'backlog')}>
+                  {t('pm.backlog')}
+                </button>
+                <button aria-pressed={view === 'sprints'} onClick={() => setQuery('view', 'sprints')}>
+                  {t('pm.sprints')}
+                </button>
+              </>
+            )}
             <button aria-pressed={view === 'archive'} onClick={() => setQuery('view', 'archive')}>
               {t('board.view.archive')}
             </button>
@@ -163,7 +177,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           )}
         </div>
       </header>
-      {view !== 'archive' && tasks !== null && tasks.length === 0 && canWrite && (
+      {view !== 'archive' && !pmView && tasks !== null && tasks.length === 0 && canWrite && (
         <div className="boardhint">
           <Icon name="zap" size={16} />
           <span>{t('board.firstHint')}</span>
@@ -177,6 +191,10 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       )}
       {view === 'archive' ? (
         <BoardArchive board={board} onRestored={() => void load()} />
+      ) : view === 'backlog' ? (
+        <BacklogView board={board} refreshKey={refreshKey} />
+      ) : view === 'sprints' ? (
+        <SprintsView board={board} refreshKey={refreshKey} />
       ) : tasks === null ? (
         view === 'list' ? (
           <div className="page">
@@ -195,7 +213,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       ) : (
         <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} onAdd={(status) => quickAdd({ boardId: board.id, status })} />
       )}
-      {view !== 'archive' && tasks !== null && tasks.length > 0 && visible.length === 0 && (
+      {view !== 'archive' && !pmView && tasks !== null && tasks.length > 0 && visible.length === 0 && (
         <div className="boardhint">
           <Icon name="filter" size={16} />
           <span>{t('filters.noneMatch', { n: tasks.length })}</span>
@@ -213,7 +231,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
 
 const DONE_SHOWN = 6;
 
-function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; onAdd: (status: string) => void }) {
+export function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; onAdd?: (status: string) => void }) {
   const [active, setActive] = useState<Task | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const byCol = useMemo(() => {
@@ -241,7 +259,7 @@ function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board
     <DndContext sensors={canWrite ? sensors : []} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
       <div className="board">
         {board.columns.map((col) => (
-          <KanbanColumn key={col.key} col={col} tasks={byCol.get(col.key) ?? []} doneKeys={doneKeys} canWrite={canWrite} onAdd={() => onAdd(col.key)} />
+          <KanbanColumn key={col.key} col={col} tasks={byCol.get(col.key) ?? []} doneKeys={doneKeys} canWrite={canWrite} onAdd={onAdd ? () => onAdd(col.key) : undefined} />
         ))}
       </div>
       <DragOverlay>{active ? <CardBody task={active} done={doneKeys.has(active.status)} overlay /> : null}</DragOverlay>
@@ -249,7 +267,7 @@ function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board
   );
 }
 
-function KanbanColumn({ col, tasks, doneKeys, canWrite, onAdd }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; onAdd: () => void }) {
+function KanbanColumn({ col, tasks, doneKeys, canWrite, onAdd }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; onAdd?: () => void }) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `col:${col.key}` });
   // A finished column grows for ever: newest first, the older ones one click away.
@@ -274,7 +292,7 @@ function KanbanColumn({ col, tasks, doneKeys, canWrite, onAdd }: { col: Column; 
           </button>
         )}
       </div>
-      {canWrite && (
+      {canWrite && onAdd && (
         // Opens the New task dialog on this column, asking for the details.
         <button className="btn btn--quiet btn--small column__add" onClick={onAdd}>
           <Icon name="plus" size={15} />
@@ -347,9 +365,12 @@ function CardChips({ task }: { task: Task }) {
     .slice(0, 2)
     .map((f) => ({ f, o: f.options?.find((o) => o.key === task.fields![f.key]) }))
     .filter((x) => x.o);
-  if (!chips.length && !task.blockedBy) return null;
+  const pm = !!task.issueType && (task.issueType !== 'task' || task.storyPoints != null);
+  if (!chips.length && !task.blockedBy && !pm) return null;
   return (
     <div className="card__chips">
+      {pm && <IssueBadge type={task.issueType!} />}
+      <PointsChip points={task.storyPoints} />
       {!!task.blockedBy && (
         <span className="schip" data-tone="amber" title={t('task.waitingShort', { n: task.blockedBy })}>
           <Icon name="hourglass" size={12} /> {t('task.waitingShort', { n: task.blockedBy })}

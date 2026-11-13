@@ -335,3 +335,26 @@
 /* The stack of a recorded error, shown when its row is expanded. */
 .errdetail { margin: 6px 0 0; padding: 8px 10px; background: var(--wash); border-radius: 8px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; color: var(--ink-2); }
 .errdetail { -webkit-user-select: text; user-select: text; }
+
+/* ---------------------------------------------- product management (sprints, backlog) */
+.pm-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.pm-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.pm-head__title { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.pm-rowactions { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; white-space: nowrap; }
+.pm-flip { transform: rotate(180deg); }
+.pm-bar { display: block; height: 6px; min-width: 80px; flex: 1; border-radius: 999px; background: var(--sunk); overflow: hidden; }
+.pm-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--done); transition: width .3s var(--ease); }
+.pm-brief { display: flex; align-items: center; gap: 12px; }
+.pm-brief .pm-bar { max-width: 320px; }
+.pm-summary { margin-bottom: 16px; }
+.pm-sprints { display: grid; gap: 14px; }
+.pm-sprint { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 14px 16px; }
+.pm-sprint[data-state='active'] { border-color: var(--brand); }
+.pm-sprint[data-state='closed'] { opacity: .8; }
+.pm-items, .pm-timeline, .pm-velocity { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.pm-items li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+.pm-timeline li { display: grid; gap: 4px; padding: 8px 0; border-top: 1px solid var(--line); }
+.pm-velocity li { display: grid; grid-template-columns: minmax(80px, 180px) 1fr 40px; gap: 10px; align-items: center; }
+.pm-velocity__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-roadmap { display: grid; gap: 24px; max-width: 880px; }
+.pm-backlog .tasklist__title { display: flex; align-items: center; gap: 8px; }

@@ -21,6 +21,7 @@ import { labelOf } from '../../../shared/src/fields';
 import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInput, TimeSection } from './TaskExtras';
 import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
+import { isPmBoard, PmRows } from './Pm';
 
 /** A board's own field, by what it holds. */
 const FIELD_ICON: Record<string, IconName> = { text: 'text', number: 'hash', money: 'coins', date: 'calendar', select: 'list', url: 'link', email: 'mail', person: 'user', checkbox: 'check' };
@@ -240,6 +241,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                   </span>
                 </>
               )}
+              {(isPmBoard(board) || (task.issueType && task.issueType !== 'task') || task.storyPoints != null || task.epicId || task.sprintId) && <PmRows task={task} editable={editable} onSaved={(next) => { setTask((cur) => (cur ? { ...cur, ...next } : cur)); onChanged(); }} />}
               {!task.parentId && (
                 <>
                   <span className="props__label">

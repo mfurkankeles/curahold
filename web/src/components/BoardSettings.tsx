@@ -10,6 +10,7 @@ import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, PeoplePicker } from './ui';
 import { BoardFormEditor, TaskFieldsEditor } from './BoardFields';
 import type { BoardForm, TaskField } from '../../../shared/src/model';
+import { pmColumns } from '../../../shared/src/templates';
 
 const slug = (s: string, taken: Set<string>) => {
   let base = s.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20) || 'col';
@@ -20,7 +21,7 @@ const slug = (s: string, taken: Set<string>) => {
 };
 
 export function BoardSettings({ board, onClose }: { board?: Board; onClose: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { me, teams, people, can, reloadBoards, toast } = useStore();
   const myTeams = teams.filter((tm) => tm.memberIds.includes(me.user.id) || tm.leadId === me.user.id || can('teams.manage') || can('boards.manage_all'));
   const [name, setName] = useState(board?.name ?? '');
@@ -111,6 +112,15 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         <span className="field__label">{t('board.members')}</span>
         <PeoplePicker label={t('board.members')} people={people.filter((p) => p.status !== 'deleted')} value={memberIds} max={200} onChange={setMemberIds} />
       </div>
+      {!board && (
+        <label className="checkbox">
+          <input type="checkbox" checked={!!columns} onChange={(e) => setColumns(e.target.checked ? pmColumns(locale) : null)} />
+          <span>
+            <strong>{t('pm.board.preset')}</strong>
+            <span className="field__hint" style={{ display: 'block' }}>{t('pm.board.presetHint')}</span>
+          </span>
+        </label>
+      )}
       {columns && (
         <div className="field">
           <span className="field__label">{t('board.columns')}</span>
