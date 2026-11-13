@@ -141,6 +141,23 @@ describe('the locale registry', () => {
     expect(translate(partial!, 'board.searchPlaceholder')).toContain(accountWords(partial!).other);
   });
 
+  it('keeps every functional placeholder a key uses, in every locale', () => {
+    // {org}, {email}, {n}, {max}… must survive translation intact; the account
+    // noun family ({accounts_l}…) is substituted specially and excluded here.
+    const acct = new Set(['account', 'accounts', 'account_l', 'accounts_l']);
+    const ph = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).filter((p) => !acct.has(p)).sort();
+    const problems: string[] = [];
+    for (const l of LOCALES) {
+      if (l === 'en') continue;
+      for (const key of Object.keys(dictionaries[l]) as MessageKey[]) {
+        const want = ph(dictionaries.en[key] ?? '').join(',');
+        const got = ph(dictionaries[l][key]!).join(',');
+        if (want !== got) problems.push(`${l} ${key}: en[${want}] vs [${got}]`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
   it('gives every locale a customer noun, native where set and English otherwise', () => {
     for (const l of LOCALES) {
       const w = accountWords(l);
