@@ -30,8 +30,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
 };
 
 export const PRICE_CURRENCY = 'USD';
-/** Days a new company can use everything before choosing a plan. */
-export const TRIAL_DAYS = 14;
 
 /** The plan that includes a feature (the cheapest one). */
 export const planFor = (f: Feature): PlanKey => PLAN_KEYS.find((k) => PLANS[k].features.includes(f)) ?? 'business';
@@ -103,3 +101,66 @@ export function accessOf(enabled: boolean, billing: OrgBilling | null | undefine
 
 /** Whether the company's plan includes a feature (always, while billing is off or in the trial). */
 export const allows = (a: Access, f: Feature) => a.state === 'free' || a.state === 'trial' || PLANS[a.plan].features.includes(f);
+
+// ---------------------------------------------------------------------------
+// Canonical subscription records (db/migrations/0037_billing.sql).
+//
+// The types above describe the orgs.billing snapshot every request reads to gate
+// writes; the ones below describe the subscriptions / invoices tables that are
+// the system of record for provisioning, the billing routes and reporting. Both
+// draw their plans and prices from PLANS above — one source of truth.
+// ---------------------------------------------------------------------------
+
+/** A plan definition (key, per-seat price by interval, the features it unlocks). */
+export type Plan = PlanDef;
+
+/**
+ * Every plan and its price. The amounts in PLANS are placeholders the owner sets
+ * for real before launch.
+ * TODO(pricing): confirm the per-seat prices in PLANS and mirror them in Paddle
+ * (the live price ids are configured in the server's PADDLE_PRICES setting).
+ */
+export const PLAN_LIST: readonly PlanDef[] = PLAN_KEYS.map((k) => PLANS[k]);
+
+/** The states a subscription can be in — the CHECK on subscriptions.status. */
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'paused';
+
+/** How long a new company may use everything before a plan is paid for. */
+export const TRIAL_MONTHS = 3;
+
+/**
+ * The monthly exit right: a company may leave at the end of any paid period.
+ * Leaving sets cancel_at_period_end, and everything stays usable until
+ * current_period_end — it is never cut off mid-period.
+ */
+export const MONTHLY_EXIT = true as const;
+
+/** When a trial started now would end (TRIAL_MONTHS from `start`). */
+export function trialEndsAt(start: Date): Date {
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + TRIAL_MONTHS);
+  return end;
+}
+
+/** A company's subscription as the API returns it (a row of the subscriptions table). */
+export interface Subscription {
+  plan: PlanKey;
+  status: SubscriptionStatus;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  providerCustomerId: string | null;
+  providerSubscriptionId: string | null;
+  /** Whole days left of the trial, or of a period a cancelled plan still runs. */
+  daysLeft: number | null;
+}
+
+/** An invoice the provider raised (a row of the invoices table). */
+export interface Invoice {
+  id: string;
+  providerInvoiceId: string | null;
+  amountCents: number;
+  currency: string;
+  status: string;
+  issuedAt: string | null;
+}
