@@ -224,10 +224,10 @@ function page(locale: SiteLocale): string {
     <div class="wrap">
       <h3 class="showcase__cap" data-reveal>${esc(c.product.detail)}</h3>
       <div class="app app--wide" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(c.hero.customer)}</span></div>
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(BOARD[0].name)}</span></div>
         <div class="app__main app__main--cust">
           <div class="cust__panel">
-            <div class="cust__top"><span class="cust__name">${esc(c.hero.customer)}</span><span class="cust__chip">${esc(c.hero.chips.renewal)}</span></div>
+            <div class="cust__top"><span class="cust__name">${esc(BOARD[0].name)}</span><span class="cust__chip">${esc(c.hero.chips.renewal)}</span></div>
             <div class="ring" data-band="risk">
               <svg viewBox="0 0 128 128" aria-hidden="true"><circle class="ring__bg" cx="64" cy="64" r="54"/><circle class="ring__fill" cx="64" cy="64" r="54" style="--circ:${CIRC};--off:${Math.round(CIRC * 0.52)}"/></svg>
               <div class="ring__c"><span class="ring__n" data-count="48">0</span><span class="ring__l" data-band="risk">${esc(t('health.band.risk'))}</span></div>

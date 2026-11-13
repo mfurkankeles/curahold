@@ -40,7 +40,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: 'Try it free for 14 days',
       secondary: 'Open the live demo',
       note: 'No card needed. In English and Turkish.',
-      customer: 'Marevo',
+      customer: 'Your customer',
       chips: { renewal: 'Renewal in 94 days', review: 'Business review 14 days late', step: 'Next step: send the quote, Zeynep', health: 'Health score 66, worth watching' },
     },
     year: {
@@ -133,7 +133,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '14 gün ücretsiz dene',
       secondary: 'Canlı demoyu aç',
       note: 'Kart gerekmez. Türkçe ve İngilizce.',
-      customer: 'Marevo',
+      customer: 'Müşterin',
       chips: { renewal: 'Yenilemeye 94 gün var', review: 'İş değerlendirmesi 14 gün gecikti', step: 'Sonraki adım: teklifi gönder, Zeynep', health: 'Sağlık skoru 66, izlenmeli' },
     },
     year: {
@@ -226,7 +226,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: 'جرّبه مجانًا لمدة 14 يومًا',
       secondary: 'افتح العرض المباشر',
       note: 'لا حاجة إلى بطاقة.',
-      customer: 'Marevo',
+      customer: 'عميلك',
       chips: { renewal: 'التجديد بعد 94 يومًا', review: 'مراجعة الأعمال متأخرة 14 يومًا', step: 'الخطوة التالية: أرسل العرض، زينب', health: 'مؤشر الصحة 66، يستحق المتابعة' },
     },
     year: {
@@ -319,7 +319,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: 'התנסות חינם ל-14 ימים',
       secondary: 'פתח את ההדגמה החיה',
       note: 'לא נדרש כרטיס.',
-      customer: 'Marevo',
+      customer: 'הלקוח שלך',
       chips: { renewal: 'חידוש בעוד 94 ימים', review: 'סקירת העסק באיחור של 14 ימים', step: 'הצעד הבא: שלחי את ההצעה, זיינפ', health: 'ציון בריאות 66, כדאי לעקוב' },
     },
     year: {
@@ -412,7 +412,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '۱۴ روز رایگان امتحان کنید',
       secondary: 'دموی زنده را باز کنید',
       note: 'نیازی به کارت نیست.',
-      customer: 'Marevo',
+      customer: 'مشتری شما',
       chips: { renewal: 'تمدید تا ۹۴ روز دیگر', review: 'بازبینی کسب‌وکار ۱۴ روز عقب افتاده', step: 'گام بعدی: پیشنهاد را بفرست، زینب', health: 'امتیاز سلامت ۶۶، ارزش پیگیری دارد' },
     },
     year: {
@@ -505,7 +505,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '免费试用 14 天',
       secondary: '打开在线演示',
       note: '无需信用卡。',
-      customer: 'Marevo',
+      customer: '你的客户',
       chips: { renewal: '94 天后续约', review: '业务回顾已延迟 14 天', step: '下一步：发送报价，Zeynep', health: '健康评分 66，值得关注' },
     },
     year: {
@@ -598,7 +598,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '免費試用 14 天',
       secondary: '開啟線上展示',
       note: '無需信用卡。',
-      customer: 'Marevo',
+      customer: '你的客戶',
       chips: { renewal: '94 天後續約', review: '業務檢視已延遲 14 天', step: '下一步：傳送報價，Zeynep', health: '健康評分 66，值得留意' },
     },
     year: {
@@ -691,7 +691,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '14日間無料で試す',
       secondary: 'ライブデモを開く',
       note: 'カード不要。',
-      customer: 'Marevo',
+      customer: 'あなたの顧客',
       chips: { renewal: '更新まであと94日', review: 'ビジネスレビューが14日遅延', step: 'ネクストステップ：見積もりを送付、Zeynep', health: 'ヘルススコア66、要注目' },
     },
     year: {
@@ -784,7 +784,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       primary: '14일 무료로 시작',
       secondary: '라이브 데모 열기',
       note: '카드가 필요 없습니다.',
-      customer: 'Marevo',
+      customer: '당신의 고객',
       chips: { renewal: '94일 후 갱신', review: '비즈니스 리뷰 14일 지연', step: '다음 단계: 견적 보내기, Zeynep', health: '헬스 스코어 66, 주목 필요' },
     },
     year: {
