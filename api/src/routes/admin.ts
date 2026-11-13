@@ -140,6 +140,8 @@ adminRoutes.post('/roles', async (c) => {
   );
   const auth = c.get('auth');
   const org = c.get('org');
+  // A role can carry only permissions its maker holds.
+  if (input.perms.some((p) => !auth.perms.includes(p))) fail('forbidden');
   const row = await run(c, async (q) => {
     const exists = await q.query('select 1 from roles where key = $1', [input.key]);
     if (exists.length) fail('validation', { fields: 'key' }, { fields: ['key'] });
@@ -165,6 +167,8 @@ adminRoutes.patch('/roles/:id', async (c) => {
     const [r] = await q.query('select * from roles where id = $1', [id]);
     if (!r) fail('not_found');
     // The administrator role always keeps every permission.
+    // Permissions can be added to a role only if the caller holds them (taking them away is always fine).
+    if (r.key !== 'admin' && input.perms?.some((p) => !r.perms.includes(p) && !auth.perms.includes(p))) fail('forbidden');
     const perms = r.key === 'admin' ? [...PERMS] : input.perms ? [...new Set(input.perms)] : r.perms;
     const [u] = await q.query('update roles set name = coalesce($2, name), perms = $3 where id = $1 returning *', [
       id,
@@ -391,6 +395,18 @@ adminRoutes.get('/users', async (c) => {
   return c.json({ users, seatsUsed });
 });
 
+/**
+ * Nobody hands out more than they hold. A role may be given (or taken away from
+ * someone who has it) only if every permission in it is one the caller has too:
+ * otherwise anyone who may manage users could make themselves, or a friend, an
+ * administrator, or lock the administrators out.
+ */
+async function assertMayAssign(q: Q, callerPerms: readonly string[], roleId: string) {
+  const [r] = await q.query<{ perms: string[] }>('select perms from roles where id = $1', [roleId]);
+  if (!r) fail('validation', { fields: 'roleId' }, { fields: ['roleId'] });
+  if ((r.perms ?? []).some((p) => !callerPerms.includes(p))) fail('forbidden');
+}
+
 async function assertAdminRemains(q: Q, changingUserId: string) {
   const [n] = await q.query<{ n: number }>(
     `select count(*)::int as n from users u join roles r on r.id = u.role_id
@@ -418,8 +434,7 @@ adminRoutes.post('/users', async (c) => {
   const created = await run(c, async (q) => {
     const exists = await q.query('select 1 from users where email = $1', [input.email]);
     if (exists.length) fail('email_taken');
-    const role = await q.query('select 1 from roles where id = $1', [input.roleId]);
-    if (!role.length) fail('validation', { fields: 'roleId' }, { fields: ['roleId'] });
+    await assertMayAssign(q, auth.perms, input.roleId);
     const [u] = await q.query(
       `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
       [org.id, input.email, input.name, input.roleId, input.seat],
@@ -458,10 +473,9 @@ adminRoutes.patch('/users/:id', async (c) => {
   await run(c, async (q) => {
     const [u] = await q.query('select u.*, r.key as role_key from users u join roles r on r.id = u.role_id where u.id = $1', [id]);
     if (!u || u.status === 'deleted') fail('not_found');
-    if (input.roleId) {
-      const [r] = await q.query('select key from roles where id = $1', [input.roleId]);
-      if (!r) fail('validation', { fields: 'roleId' }, { fields: ['roleId'] });
-    }
+    if (input.roleId) await assertMayAssign(q, auth.perms, input.roleId);
+    // Someone with more permissions than the caller (an administrator, say) cannot be changed, disabled or made a viewer by them.
+    if (input.roleId || input.status || input.seat) await assertMayAssign(q, auth.perms, u.role_id);
     const losesAdmin =
       u.role_key === 'admin' &&
       ((input.roleId && input.roleId !== u.role_id) || input.status === 'disabled' || input.seat === 'viewer');

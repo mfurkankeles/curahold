@@ -3,7 +3,7 @@
 // Postgres (EU) reached through Hyperdrive; files go to an R2 bucket.
 import { createApp } from './app';
 import { readRawMail, takeMail } from './lib/helpThread';
-import type { BillingConfig, Config } from './context';
+import { assertOwnerConfigured, type BillingConfig, type Config } from './context';
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
 import { R2Storage, ResendEmail, type R2Like } from './lib/services';
@@ -63,6 +63,8 @@ export interface Env {
   SUPPORT_MAIL_KEY?: string;
   /** Support's key for entry links into a company that granted access (a secret, at least 24 characters). */
   STAFF_KEY?: string;
+  /** Per-person support keys: "ada@x.com:<key>,bob@x.com:<key>" (each key at least 24 characters). */
+  STAFF_KEYS?: string;
   /** The platform owner's email: who alone may see the whole-business metrics. Defaults to the first SUPPORT_STAFF address. */
   PLATFORM_OWNER?: string;
   /** The customer portal's own domain, e.g. curahold-portal.com (unset: no portal). */
@@ -101,7 +103,7 @@ function crmClients(env: Env) {
 export function configFromEnv(env: Env): Config {
   const portalDomain = env.PORTAL_DOMAIN || undefined;
   if (!env.AUTH_SECRET || env.AUTH_SECRET.length < 32) throw new Error('AUTH_SECRET must be at least 32 characters');
-  return {
+  const config: Config = {
     baseDomain: env.BASE_DOMAIN,
     scheme: 'https',
     centralHost: env.CENTRAL_HOST,
@@ -124,6 +126,14 @@ export function configFromEnv(env: Env): Config {
       staff: (env.SUPPORT_STAFF || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean),
     },
     staffKey: env.STAFF_KEY && env.STAFF_KEY.length >= 24 ? env.STAFF_KEY : undefined,
+    staffKeys: Object.fromEntries(
+      (env.STAFF_KEYS || '')
+        .split(',')
+        .map((p: string) => p.trim())
+        .filter(Boolean)
+        .map((p: string) => [p.slice(0, p.indexOf(':')).trim().toLowerCase(), p.slice(p.indexOf(':') + 1).trim()] as const)
+        .filter(([e, k]: readonly [string, string]) => e.includes('@') && k.length >= 24),
+    ),
     owner:
       (env.PLATFORM_OWNER || '').trim().toLowerCase() ||
       (env.SUPPORT_STAFF || '').split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)[0] ||
@@ -156,6 +166,9 @@ export function configFromEnv(env: Env): Config {
         : {}),
     },
   };
+  // No owner configured on a multi-company install: refuse to run (the owner sees every company's numbers).
+  assertOwnerConfigured(config);
+  return config;
 }
 
 export type Ctx = { waitUntil(p: Promise<unknown>): void };

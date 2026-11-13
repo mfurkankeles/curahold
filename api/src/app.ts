@@ -8,7 +8,8 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { Perm } from '../../shared/src/model';
-import { defer, type AppEnv, type Deps, type OrgRow } from './context';
+import { assertOwnerConfigured, defer, type AppEnv, type Deps, type OrgRow } from './context';
+import { securityHeaders } from './lib/headers';
 import { deliverWebhooks } from './lib/webhooks';
 import { Repeated, rememberAnswer, repeatKeyOf, repeatedAnswer, storedAnswer } from './lib/repeats';
 import { flushHealth } from './lib/health';
@@ -74,6 +75,10 @@ function requestLocale(header: string | undefined, fallback: Locale): Locale {
 export function createApp(deps: Deps) {
   const app = new Hono<AppEnv>();
   const cfg = deps.config;
+  assertOwnerConfigured(cfg);
+
+  // Browser-side protections on every answer (CSP, HSTS, framing, sniffing); see lib/headers.ts.
+  app.use('*', securityHeaders(cfg.scheme === 'https'));
 
   app.use('*', async (c, next) => {
     c.set('deps', deps);

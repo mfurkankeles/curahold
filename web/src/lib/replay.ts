@@ -121,6 +121,7 @@ export function startRecording(me: Me) {
         if (buffer.length >= 400) void flush();
       },
       maskAllInputs: true,
+      maskTextSelector: '*',
       maskTextClass: 'rr-mask',
       blockClass: 'rr-block',
       ignoreClass: 'rr-ignore',

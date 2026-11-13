@@ -27,7 +27,8 @@ export const ENTRY_LINK_MINUTES = 10;
 
 export function supportPolicy(org: Pick<OrgRow, 'settings'>): SupportPolicy {
   const p = (org.settings as any)?.supportAccess;
-  return (SUPPORT_POLICIES as readonly string[]).includes(p) ? p : 'anyone';
+  // Nothing chosen: administrators only. "Anyone" is a deliberate choice a company makes, not a default.
+  return (SUPPORT_POLICIES as readonly string[]).includes(p) ? p : 'admins';
 }
 
 /** May this person let support in, under the company's policy? */
@@ -36,15 +37,43 @@ export function mayGrant(org: Pick<OrgRow, 'settings'>, perms: readonly string[]
   return p === 'anyone' || (p === 'admins' && perms.includes('org.manage'));
 }
 
-/** Does this company have session recording on? On by default; the company can switch it off. */
+/** Does this company have session recording on? OFF by default: an administrator switches it on. */
 export function recordsSessions(org: Pick<OrgRow, 'settings'>): boolean {
-  return (org.settings as any)?.recordSessions !== false;
+  return (org.settings as any)?.recordSessions === true;
 }
 
-export function staffKeyOk(c: C): boolean {
-  const key = c.get('deps').config.staffKey;
+/**
+ * Who a staff key belongs to. Each person on the support list has a key of their
+ * own (config.staffKeys), so every entry is attributable and one person leaving
+ * is one key removed. Returns that person's address, or null.
+ */
+export function staffPerson(c: C): string | null {
+  const cfg = c.get('deps').config;
   const given = c.req.header('x-curahold-staff-key') ?? '';
-  return !!key && key.length >= 24 && safeEqual(given, key);
+  if (!given) return null;
+  let who: string | null = null;
+  // Every key is compared (no early exit), so the time taken says nothing about which one is close.
+  for (const [email, key] of Object.entries(cfg.staffKeys ?? {})) {
+    if (key.length >= 24 && (cfg.support?.staff ?? []).includes(email.toLowerCase()) && safeEqual(given, key)) who = email.toLowerCase();
+  }
+  return who;
+}
+
+/** The old single shared key: development, tests and the demo only (it names nobody, so it cannot open a customer's session in production). */
+export function sharedKeyOk(c: C): boolean {
+  const cfg = c.get('deps').config;
+  const given = c.req.header('x-curahold-staff-key') ?? '';
+  return !!cfg.staffKey && cfg.staffKey.length >= 24 && !!given && safeEqual(given, cfg.staffKey);
+}
+
+/**
+ * May this request open a customer's support session? A per-person key (returns
+ * who), or in development the shared one (returns "key"). Null: no.
+ */
+export function staffKeyOk(c: C): string | null {
+  const person = staffPerson(c);
+  if (person) return person;
+  return c.get('deps').config.devExposeTokens && sharedKeyOk(c) ? 'key' : null;
 }
 
 // Paths support never reaches, even with an edit grant. Reading is also closed
@@ -67,7 +96,17 @@ const NO_CHANGES: RegExp[] = [
   /^\/api\/connections\/(key|webhook|demo)$/,
 ];
 
+// The ONLY places support can go at all (an allowlist: a new route is closed to
+// support until someone decides it should be open). Everything a person works
+// with — boards, tasks, customers, deals, reports, search — and nothing about
+// the company's administration, billing, keys, apps, people, imports or portal.
+const ALLOWED: RegExp[] = [
+  /^\/api\/me$/,
+  /^\/api\/(notifications|people|pulse|client-error|boards|tasks|comments|files|time|undo|accounts|checklists|plans|records|views|reports|rhythm|account-fields|record-types|record-comments|renewals|pages|search|activities|health|meeting-types|planned|rollups|connections|automations|trash|help)(\/|$)/,
+];
+
 export function supportBlocked(method: string, path: string): boolean {
+  if (!ALLOWED.some((r) => r.test(path))) return true;
   if (NEVER.some((r) => r.test(path))) return true;
   if (method === 'GET' || method === 'HEAD') return false;
   if (method === 'DELETE' && /^\/api\/connections\/[^/]+$/.test(path)) return true;

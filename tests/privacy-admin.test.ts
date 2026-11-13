@@ -127,3 +127,31 @@ describe('people and teams', () => {
     expect(teams.find((t: any) => t.name === 'Onboarding').memberIds).toEqual([env.a.ids.zeynep]);
   });
 });
+
+describe('nobody hands out more than they hold', () => {
+  it('a user manager cannot make themselves or anyone an administrator, nor disable one', async () => {
+    const roles = (await ada.get('/api/admin/roles')).json.roles as { id: string; key: string; perms: string[] }[];
+    const adminRole = roles.find((r) => r.key === 'admin')!;
+    const memberRole = roles.find((r) => r.key === 'member')!;
+    // A role that may manage people, with what an ordinary member may do — and nothing more.
+    const made = await ada.post('/api/admin/roles', { key: 'people_ops', name: 'People ops', perms: [...new Set([...memberRole.perms, 'users.manage'])] });
+    expect(made.status).toBe(201);
+    expect((await ada.patch(`/api/admin/users/${env.a.ids.mert}`, { roleId: made.json.role.id })).status).toBe(200);
+    const mert = await login(env, 'acme', 'mert@demo.example');
+
+    // Not themselves, not someone else, not on a new invitation.
+    expect((await mert.patch(`/api/admin/users/${env.a.ids.mert}`, { roleId: adminRole.id })).status).toBe(403);
+    expect((await mert.patch(`/api/admin/users/${env.a.ids.sofia}`, { roleId: adminRole.id })).status).toBe(403);
+    expect((await mert.post('/api/admin/users', { email: 'new@demo.example', name: 'New', roleId: adminRole.id, seat: 'full' })).status).toBe(403);
+    // Not a role they would have to build with permissions they lack, nor one widened past their own.
+    expect((await mert.post('/api/admin/roles', { key: 'x_admin', name: 'X', perms: ['users.manage', 'org.manage'] })).status).toBe(403);
+    // An administrator stays out of their reach.
+    expect((await mert.patch(`/api/admin/users/${env.a.ids.ada}`, { status: 'disabled' })).status).toBe(403);
+    expect((await mert.patch(`/api/admin/users/${env.a.ids.ada}`, { roleId: memberRole.id })).status).toBe(403);
+    expect((await ada.get('/api/me')).status).toBe(200);
+
+    // What they may do: give a role that asks for nothing more than they hold.
+    expect((await mert.patch(`/api/admin/users/${env.a.ids.sofia}`, { roleId: memberRole.id })).status).toBe(200);
+    expect((await mert.post('/api/admin/users', { email: 'new@demo.example', name: 'New', roleId: memberRole.id, seat: 'full' })).status).toBe(201);
+  });
+});

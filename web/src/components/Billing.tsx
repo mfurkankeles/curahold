@@ -20,7 +20,7 @@ interface BillingInfo {
   plans: PlanDef[];
   seats: number;
   subscription: { status: string; plan: PlanKey; interval: Interval; seats: number; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null;
-  checkout?: { env: 'sandbox' | 'live'; clientToken: string; prices: Record<PlanKey, Record<Interval, string>>; orgId: string; email: string };
+  checkout?: { env: 'sandbox' | 'live'; clientToken: string; prices: Record<PlanKey, Record<Interval, string>>; orgId: string; customData: Record<string, string>; email: string };
 }
 
 /** What each plan brings, in the order shown. Business has everything in Team, plus these. */
@@ -106,8 +106,8 @@ export function BillingSettings() {
       P.Checkout.open({
         items: [{ priceId: c.prices[plan][interval], quantity: seats }],
         customer: { email: c.email },
-        // How the webhook finds the company.
-        customData: { org_id: c.orgId },
+        // How the webhook finds the company: the server's own signed value, never one made here.
+        customData: c.customData,
         settings: { locale: locale === 'tr' ? 'tr' : 'en' },
       });
     } catch {

@@ -44,7 +44,7 @@ Changes your own name, language, notification choices and screen preferences.
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
 | `name` | text | optional | at least 1 characters; at most 120 characters |
-| `locale` | one of en \| tr | optional | may be null |
+| `locale` | localeField | optional | may be null |
 | `onboarded` | yes/no | optional |  |
 | `prefs` | object | optional |  |
 

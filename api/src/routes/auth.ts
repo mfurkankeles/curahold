@@ -219,13 +219,33 @@ authRoutes.post('/join', async (c) => {
   return c.json({ status: 'pending' });
 });
 
+/**
+ * A failed sign-in step goes in the company's activity log (so an administrator
+ * can see someone guessing). At most one line a minute per kind, so guessing
+ * cannot fill the log; written on its own, because the failing request rolls back.
+ */
+async function loginFailed(c: C, via: 'link' | 'device_code', reason: string) {
+  const org = c.get('org');
+  await c
+    .get('deps')
+    .db.system((q) =>
+      q.query(
+        `insert into audit_log (org_id, actor_id, action, entity, meta)
+         select $1, null, 'login.failed', 'org', $2::jsonb
+          where not exists (select 1 from audit_log where org_id = $1 and action = 'login.failed' and at > now() - interval '1 minute' and meta->>'via' = $3)`,
+        [org.id, JSON.stringify({ via, reason }), via],
+      ),
+    )
+    .catch(() => undefined);
+}
+
 const verifyInput = z.object({ token: z.string().min(20).max(200), deviceId, deviceLabel });
 
 authRoutes.post('/auth/verify', async (c) => {
   const input = await body(c, verifyInput);
   const deps = c.get('deps');
   const org = c.get('org');
-  const outcome = await run(c, async (q) => {
+  const attempt = () => run(c, async (q) => {
     const [tok] = await q.query(
       `update login_tokens set used_at = now()
         where token_hash = $1 and kind in ('magic', 'oauth') and used_at is null and expires_at > now()
@@ -267,6 +287,13 @@ authRoutes.post('/auth/verify', async (c) => {
     });
     return { kind: 'session' as const, token: s.token, evicted: s.evicted.length };
   });
+  let outcome: Awaited<ReturnType<typeof attempt>>;
+  try {
+    outcome = await attempt();
+  } catch (e) {
+    if (e instanceof HttpError && e.code === 'invalid_token') await loginFailed(c, 'link', 'invalid_token');
+    throw e;
+  }
 
   if (outcome.kind === 'device') {
     const locale = outcome.user.locale ?? org.locale;
@@ -327,7 +354,10 @@ authRoutes.post('/auth/device', async (c) => {
   });
   // The attempt counter must be saved even when the code is wrong, so the
   // error is raised after the transaction has committed.
-  if ('error' in outcome) throw new HttpError(outcome.error!);
+  if ('error' in outcome) {
+    if (outcome.error === 'invalid_token') await loginFailed(c, 'device_code', 'wrong_code');
+    throw new HttpError(outcome.error!);
+  }
   setSessionCookie(c, outcome.token);
   return c.json({ status: 'ok', evictedDevices: outcome.evicted });
 });

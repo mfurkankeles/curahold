@@ -591,10 +591,13 @@ helpRoutes.put('/support/policy', async (c) => {
 
 /** Support asks for a one-time entry link, with its staff key, for an active grant. */
 supportEntry.post('/support/enter-link', async (c) => {
-  if (!staffKeyOk(c)) fail('forbidden');
+  const who = staffKeyOk(c);
+  if (!who) return fail('forbidden');
   const org = c.get('org');
   const deps = c.get('deps');
   const input = await body(c, z.object({ grantId: uuid, staff: z.string().trim().min(3).max(200) }));
+  // Whoever holds a person's key is that person: the name comes from the key, whatever the request says.
+  const staffName = who === 'key' ? input.staff : `${who.split('@')[0].split(/[._-]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ') || 'Curahold'} <${who}>`;
   const entry = randomToken(32);
   const ok = await deps.db.system(async (q) => {
     const [g] = await q.query(
@@ -607,7 +610,7 @@ supportEntry.post('/support/enter-link', async (c) => {
     await q.query(
       `insert into support_sessions (org_id, grant_id, staff, entry_hash, expires_at)
        values ($1, $2, $3, $4, least($5::timestamptz, now() + make_interval(hours => $6)))`,
-      [org.id, g.id, input.staff, await sha256Hex(entry), g.expires_at, SUPPORT_SESSION_HOURS],
+      [org.id, g.id, staffName, await sha256Hex(entry), g.expires_at, SUPPORT_SESSION_HOURS],
     );
     return true;
   });

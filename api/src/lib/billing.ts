@@ -5,6 +5,7 @@ import type { OrgBilling } from '../../../shared/src/billing';
 import { fetchOf, type BillingConfig, type Deps } from '../context';
 import type { Db } from '../db';
 import { audit } from './audit';
+import { hmacHex, safeEqual } from './crypto';
 import { planOfPrice, updateItems, type PaddleSubscription } from './paddle';
 
 /** A Paddle notification. */
@@ -17,20 +18,60 @@ export interface PaddleEvent {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** A subscription in one of these states is live: it must never be moved to another company. */
+const LIVE = ['active', 'trialing', 'past_due', 'paused'];
+
+/**
+ * What the server hands the browser to put in checkout's custom_data. The browser
+ * could send anything there, so the company id travels with a signature only this
+ * server can make (keyed with the webhook secret); the webhook trusts nothing else.
+ */
+export async function checkoutCustomData(cfg: BillingConfig, orgId: string): Promise<{ org_id: string; sig: string }> {
+  return { org_id: orgId, sig: await hmacHex(cfg.webhookSecret, `checkout:${orgId}`) };
+}
+
+async function namedOrg(cfg: BillingConfig, custom: unknown): Promise<string | null> {
+  const c = (custom ?? {}) as { org_id?: unknown; sig?: unknown };
+  if (typeof c.org_id !== 'string' || !UUID.test(c.org_id) || typeof c.sig !== 'string') return null;
+  const want = await hmacHex(cfg.webhookSecret, `checkout:${c.org_id.toLowerCase()}`);
+  return safeEqual(c.sig, want) ? c.org_id.toLowerCase() : null;
+}
+
 /**
  * Applies a subscription event to its company: once per event, and never an
  * older event over a newer one (Paddle may retry, or deliver out of order).
- * The company is the one named at checkout (custom_data.org_id), or the one
- * already holding this subscription. Returns the company's id, or null.
+ * The company is the one already holding this subscription, or — for a new
+ * subscription — the one named (and signed for) at checkout. An event that would
+ * move a live subscription or customer to a different company is refused:
+ * nothing changes, and the attempt is written to the company's activity log.
+ * Returns the company's id, or null.
  */
 export async function applyPaddleEvent(db: Db, cfg: BillingConfig, ev: PaddleEvent): Promise<string | null> {
   // Transactions, customers, addresses…: nothing to keep — the subscription events say what matters.
   if (!ev.event_type.startsWith('subscription.')) return null;
   const sub = ev.data as PaddleSubscription;
+  const named = await namedOrg(cfg, sub.custom_data);
   return db.system(async (q) => {
-    const named = typeof sub.custom_data?.org_id === 'string' && UUID.test(sub.custom_data.org_id) ? sub.custom_data.org_id : null;
-    const [org] = await q.query(`select id, billing from orgs where id = $1::uuid or billing->>'subscriptionId' = $2 order by (id = $1::uuid) desc nulls last limit 1`, [named, sub.id]);
-    if (!org) return null;
+    const refuse = async (orgId: string, why: string) => {
+      await audit(q, { orgId, actorId: null, action: 'billing.refused', entity: 'org', entityId: orgId, meta: { why, subscription: sub.id, event: ev.event_id } });
+      return null;
+    };
+    const [holder] = await q.query(`select id, billing from orgs where billing->>'subscriptionId' = $1 limit 1`, [sub.id]);
+    let org = holder;
+    if (holder) {
+      // The subscription already belongs to a company: custom data cannot move it.
+      if (named && named !== holder.id) return refuse(holder.id, 'named_other_org');
+      const hb = (holder.billing ?? {}) as OrgBilling;
+      if (hb.customerId && sub.customer_id && hb.customerId !== sub.customer_id) return refuse(holder.id, 'customer_changed');
+    } else {
+      // A new subscription: it needs a signed company, and that company must not already hold another live one.
+      if (!named) return null;
+      [org] = await q.query(`select id, billing from orgs where id = $1::uuid`, [named]);
+      if (!org) return null;
+      const ob = (org.billing ?? {}) as OrgBilling;
+      if (ob.subscriptionId && ob.subscriptionId !== sub.id && LIVE.includes(ob.status ?? '')) return refuse(org.id, 'already_subscribed');
+      if (ob.customerId && sub.customer_id && ob.customerId !== sub.customer_id && LIVE.includes(ob.status ?? '')) return refuse(org.id, 'customer_changed');
+    }
     const fresh = await q.query(`insert into billing_events (id, org_id, kind) values ($1, $2, $3) on conflict (id) do nothing returning id`, [ev.event_id, org.id, ev.event_type]);
     if (!fresh.length) return org.id;
     const cur = (org.billing ?? {}) as OrgBilling;

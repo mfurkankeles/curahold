@@ -58,7 +58,7 @@ replayRoutes.post('/replay', async (c) => {
   const deps = c.get('deps');
 
   const full = await deps.db.system(async (q) => {
-    const [s] = await q.query<{ user_id: string; events: number; bytes: string }>('select user_id, events, bytes from replay_sessions where id = $1', [input.session]);
+    const [s] = await q.query<{ user_id: string; events: number; bytes: string }>('select user_id, events, bytes from replay_sessions where id = $1 and org_id = $2', [input.session, org.id]);
     if (s) {
       // A recording id belongs to the person who opened it; another person cannot add to it.
       if (s.user_id !== auth.userId) fail('forbidden');
@@ -66,8 +66,8 @@ replayRoutes.post('/replay', async (c) => {
       if (Number(s.bytes) + bytes > REPLAY_MAX_SESSION_BYTES || s.events >= REPLAY_MAX_CHUNKS * 200) return true;
       await q.query(
         `update replay_sessions set last_at = now(), events = events + $2, bytes = bytes + $3,
-                had_error = had_error or $4, page_last = coalesce($5, page_last) where id = $1`,
-        [input.session, input.count, bytes, input.error ?? false, page],
+                had_error = had_error or $4, page_last = coalesce($5, page_last) where id = $1 and org_id = $6`,
+        [input.session, input.count, bytes, input.error ?? false, page, org.id],
       );
     } else {
       if (input.seq !== 0) fail('not_found');

@@ -5,7 +5,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { accessOf } from '../shared/src/billing';
 import { hmacHex } from '../api/src/lib/crypto';
-import { syncSeats } from '../api/src/lib/billing';
+import { checkoutCustomData, syncSeats } from '../api/src/lib/billing';
 import { verifyPaddle } from '../api/src/lib/paddle';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
@@ -16,6 +16,7 @@ let env: Env;
 let ada: Client; // administrator at acme
 let lena: Client; // member at acme
 let orgId: string;
+let signed: Record<string, string>; // custom_data as the server signs it at checkout
 
 /** Paddle calling the webhook on the central address, signed (or not). */
 async function paddleSays(event: Record<string, unknown>, opts: { secret?: string; at?: Date } = {}) {
@@ -32,7 +33,7 @@ const subscription = (over: Record<string, unknown> = {}) => ({
   items: [{ price: { id: 'pri_team_y' }, quantity: 3 }],
   current_billing_period: { starts_at: '2026-11-01T00:00:00Z', ends_at: '2099-01-01T00:00:00Z' },
   scheduled_change: null,
-  custom_data: { org_id: orgId },
+  custom_data: signed,
   ...over,
 });
 
@@ -41,6 +42,7 @@ beforeAll(async () => {
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
   orgId = env.a.orgId;
+  signed = await checkoutCustomData(env.config.billing!, orgId);
 });
 
 describe('who may do what', () => {
@@ -118,6 +120,41 @@ describe('the trial and the subscription', () => {
     expect(me.org.billing).toMatchObject({ state: 'ending', plan: 'team', seats: 3 });
     const seen = await env.db.system((q) => q.query(`select id from billing_events where org_id = $1 order by id`, [orgId]));
     expect(seen.map((r) => r.id)).toEqual(['evt_0', 'evt_1', 'evt_2']);
+  });
+});
+
+describe('checkout cannot be pointed at someone else’s company', () => {
+  it('the server signs the company id it hands the browser', async () => {
+    const b = (await ada.get('/api/billing')).json;
+    expect(b.checkout.customData).toEqual(signed);
+  });
+
+  it('an unsigned or forged company id is ignored', async () => {
+    const other = env.b.orgId;
+    const before = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [other])))[0].billing;
+    for (const [i, custom] of [{ org_id: other }, { org_id: other, sig: signed.sig }].entries()) {
+      const r = await paddleSays({ event_id: `evt_forge_${i}`, event_type: 'subscription.created', occurred_at: '2026-11-13T10:00:00Z', data: subscription({ id: 'sub_forged', customer_id: 'ctm_evil', custom_data: custom }) });
+      expect(r.status).toBe(200);
+    }
+    const after = (await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [other])))[0].billing;
+    expect(after).toEqual(before);
+  });
+
+  it('refuses to move a live subscription to another company, even with a valid signature for it', async () => {
+    const otherSigned = await checkoutCustomData(env.config.billing!, env.b.orgId);
+    await paddleSays({ event_id: 'evt_swap', event_type: 'subscription.updated', occurred_at: '2026-11-13T11:00:00Z', data: subscription({ custom_data: otherSigned }) });
+    const [mine] = await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [orgId]));
+    expect(mine.billing.subscriptionId).toBe('sub_01');
+    const [theirs] = await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [env.b.orgId]));
+    expect(theirs.billing?.subscriptionId).toBeUndefined();
+    const log = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'billing.refused'`, [orgId]));
+    expect(log.length).toBeGreaterThan(0);
+  });
+
+  it('refuses a second live subscription for a company that already has one', async () => {
+    await paddleSays({ event_id: 'evt_second', event_type: 'subscription.created', occurred_at: '2026-11-13T12:00:00Z', data: subscription({ id: 'sub_02', customer_id: 'ctm_02' }) });
+    const [mine] = await env.db.system((q) => q.query(`select billing from orgs where id = $1`, [orgId]));
+    expect(mine.billing.subscriptionId).toBe('sub_01');
   });
 });
 

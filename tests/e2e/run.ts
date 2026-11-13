@@ -36,6 +36,9 @@ async function text(page: Page, sel: string) {
   return page.$eval(sel, (el) => el.textContent ?? '');
 }
 
+// Defaults are cautious: no session recording, and only administrators may let support in. This company has chosen both.
+await sql(`update orgs set settings = coalesce(settings, '{}'::jsonb) || '{"recordSessions":true,"supportAccess":"anyone"}'::jsonb where slug = 'demo'`);
+
 const mert = await newPage(s.browser);
 const csBoard = s.demo.boards.csBoard;
 

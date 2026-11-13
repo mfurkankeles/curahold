@@ -234,6 +234,7 @@ describe('working a request', () => {
 
   it('gets inside only while the person has let support in, as them, and their company sees who came', async () => {
     expect((await deniz.req('POST', `/requests/${r.ref}/enter-link`)).status).toBeGreaterThanOrEqual(400);
+    await (await login(env, 'acme', 'ada@demo.example')).put('/api/support/policy', { policy: 'anyone' });
     const granted = await lena.post('/api/support/grants', { hours: 24 });
     expect(granted.status, JSON.stringify(granted.json)).toBeLessThan(300);
     const one = (await deniz.req('GET', `/requests/${r.ref}`)).json.request;

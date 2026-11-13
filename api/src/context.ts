@@ -53,6 +53,8 @@ export interface Config {
   portalDomain?: string;
   /** Curahold support's own key for opening an entry link into a company that granted access. */
   staffKey?: string;
+  /** Each support person's own key, by address (only addresses in support.staff count). The way into a customer's session in production. */
+  staffKeys?: Record<string, string>;
   /** The platform owner's email: who alone may see the whole-business metrics. Defaults to the first support-staff address. */
   owner?: string;
   /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
@@ -182,17 +184,26 @@ export function requireWriter(c: C) {
 
 /**
  * The platform owner: who may see the whole-business metrics across every
- * company. In production this is one configured address and nobody else. When
- * billing is off (a self-hosted install, the demo, tests) there is only ever
- * one company's data to see, so the company's own administrator qualifies.
+ * company. FAILS CLOSED: nobody is the owner unless one is configured
+ * (PLATFORM_OWNER, or the first SUPPORT_STAFF address), and the hosted service
+ * refuses to start without one (see assertOwnerConfigured). The only
+ * exceptions are installs where a company's own data is all there is to see:
+ * a single-company install (self-hosted), and development / tests / the demo
+ * (devExposeTokens is never on in production) — there the administrator qualifies.
  */
 export function isOwner(c: C): boolean {
-  const deps = c.get('deps');
+  const cfg = c.get('deps').config;
   const email = c.get('auth')?.email?.toLowerCase();
   if (!email) return false;
-  if (deps.config.owner) return email === deps.config.owner;
-  if (!deps.config.billing) return c.get('auth').perms.includes('org.manage');
+  if (cfg.owner) return email === cfg.owner;
+  if (cfg.singleTenantSlug || cfg.devExposeTokens) return c.get('auth').perms.includes('org.manage');
   return false;
+}
+
+/** Startup check: a multi-company install must name its platform owner, or it would have none (or, worse, many). */
+export function assertOwnerConfigured(cfg: Pick<Config, 'owner' | 'singleTenantSlug' | 'devExposeTokens'>): void {
+  if (cfg.owner || cfg.singleTenantSlug || cfg.devExposeTokens) return;
+  throw new Error('PLATFORM_OWNER (or SUPPORT_STAFF) must be set: a multi-company install needs an explicit platform owner');
 }
 
 export function requireOwner(c: C) {

@@ -9,7 +9,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { INTERVALS, PLANS, PLAN_KEYS, type OrgBilling } from '../../../shared/src/billing';
 import { accessFor, fetchOf, nowOf, requirePerm, run, type AppEnv, type C } from '../context';
-import { applyPaddleEvent, SEATS_SQL, type PaddleEvent } from '../lib/billing';
+import { applyPaddleEvent, checkoutCustomData, SEATS_SQL, type PaddleEvent } from '../lib/billing';
 import { fail } from '../lib/errors';
 import { planOfPrice, portalLink, updateItems, verifyPaddle } from '../lib/paddle';
 import { body } from '../lib/validate';
@@ -31,7 +31,7 @@ billingRoutes.get('/billing', async (c) => {
     seats,
     subscription: b.subscriptionId ? { status: b.status, plan: b.plan, interval: b.interval, seats: b.seats, periodEnd: b.periodEnd, cancelAtPeriodEnd: !!b.cancelAtPeriodEnd } : null,
     // What the browser needs to open Paddle's checkout (public values only), for the people who may pay.
-    ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, orgId: org.id, email: c.get('auth').email } } : {}),
+    ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, orgId: org.id, customData: await checkoutCustomData(cfg, org.id), email: c.get('auth').email } } : {}),
   });
 });
 

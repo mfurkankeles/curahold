@@ -18,7 +18,7 @@ import type { Q } from '../db';
 import { hmacHex, randomDigits, randomToken, safeEqual, sha256Hex, sign, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
 import { addHelpMessage, takeMail } from '../lib/helpThread';
-import { ENTRY_LINK_MINUTES, mayGrant, SUPPORT_SESSION_HOURS } from '../lib/support';
+import { ENTRY_LINK_MINUTES, mayGrant, sharedKeyOk, staffPerson, SUPPORT_SESSION_HOURS } from '../lib/support';
 import { body } from '../lib/validate';
 
 export const deskRoutes = new Hono<AppEnv>();
@@ -45,11 +45,14 @@ const deskSecret = (c: C) => `${c.get('deps').config.authSecret}:desk`;
  */
 const onDesk = (c: C) => (c.req.header('host') ?? new URL(c.req.url).host).toLowerCase().split(':')[0] === deskHostOf(c.get('deps').config);
 
-/** The staff key (tooling), or the session of someone still on the staff list. */
+/** A support person's key (tooling), or the session of someone still on the staff list. */
 async function staffOnly(c: C): Promise<Staff> {
-  const key = c.get('deps').config.staffKey;
-  const given = c.req.header('x-curahold-staff-key') ?? '';
-  if (key && key.length >= 24 && given && safeEqual(given, key)) return { email: 'key', via: 'key' };
+  // A person's own key names them in the desk's log. The old shared key names nobody: it is kept for
+  // development, and in production only while no per-person keys exist yet (a transition).
+  const person = staffPerson(c);
+  if (person) return { email: person, via: 'key' };
+  const cfg = c.get('deps').config;
+  if (sharedKeyOk(c) && (cfg.devExposeTokens || !Object.keys(cfg.staffKeys ?? {}).length)) return { email: 'key', via: 'key' };
   const token = getCookie(c, DESK_COOKIE);
   if (token && onDesk(c)) {
     const t = await verify<{ desk: number; e: string; x: number }>(token, deskSecret(c));

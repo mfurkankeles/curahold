@@ -23,6 +23,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/join/…` | 1 | Joining a company by invitation happens in the browser. |
 | `/logo/…` | 1 | The company logo. |
 | `/manifest.webmanifest/…` | 1 | The installable-app manifest. |
+| `/metrics/…` | 1 | The operator-only platform metrics (the owner dashboard); not part of a company's API. |
 | `/oauth/…` | 0 | The consent screen for apps and AI assistants; see "AI connector and OAuth". |
 | `/org/…` | 1 | The company's public sign-in details. |
 | `/portal/…` | 6 | Managing who can sign in to the customer portal. |

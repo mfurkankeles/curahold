@@ -65,6 +65,8 @@ beforeAll(async () => {
   ada = await login(env, 'acme', 'ada@demo.example');
   zeynep = await login(env, 'acme', 'zeynep@demo.example');
   sofia = await login(env, 'acme', 'sofia@demo.example');
+  // The default lets only administrators let support in; these tests are about everyone doing so.
+  await ada.put('/api/support/policy', { policy: 'anyone' });
 });
 
 describe('a help request', () => {

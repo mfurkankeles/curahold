@@ -283,6 +283,7 @@ export const INTERNAL: Record<string, Pair> = {
   replay: ['The browser\'s session recording for support (disclosed, inputs masked, kept a week); the page posts its own events here, and only Curahold\'s desk reads them.', 'Tarayıcının destek için oturum kaydı (bildirilen, girdiler maskeli, bir hafta tutulur); sayfa kendi olaylarını buraya gönderir, yalnızca Curahold\'un masası okur.'],
   portal: ['Managing who can sign in to the customer portal.', 'Müşteri portalına kimlerin girebileceğini yönetme.'],
   logo: ['The company logo.', 'Şirket logosu.'],
+  metrics: ['The operator-only platform metrics (the owner dashboard); not part of a company\'s API.', 'Yalnızca işletmeciye özel platform metrikleri (owner panosu); bir şirketin API\'sinin parçası değil.'],
   'manifest.webmanifest': ['The installable-app manifest.', 'Kurulabilir uygulama bildirimi.'],
   'client-error': ['The browser reporting its own errors, so a fault a person hits is recorded.', 'Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye.'],
 };

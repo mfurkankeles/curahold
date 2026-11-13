@@ -34,6 +34,22 @@ beforeAll(async () => {
   env = await setup({ staffKey: STAFF_KEY, support: { email: 'desk@curahold.test' } });
   lena = await login(env, 'acme', 'lena@demo.example');
   ada = await login(env, 'acme', 'ada@demo.example');
+  // Recording is off until an administrator turns it on (see the first test).
+  await ada.put('/api/support/recording', { on: true });
+});
+
+describe('recording is off until a company turns it on', () => {
+  it('a new company records nothing, and drops what a browser sends anyway', async () => {
+    const fresh = await setup({ staffKey: STAFF_KEY, support: { email: 'desk@curahold.test' } });
+    const lenaFresh = await login(fresh, 'acme', 'lena@demo.example');
+    expect((await lenaFresh.get('/api/me')).json.org.recordSessions).toBe(false);
+    const id = crypto.randomUUID();
+    const r = await lenaFresh.post('/api/replay', chunk(id, 0));
+    expect(r.status).toBe(204);
+    expect(r.headers.get('x-curahold-record')).toBe('off');
+    const rows = await fresh.db.system((q) => q.query(`select count(*)::int as n from replay_sessions where id = $1`, [id]));
+    expect(rows[0].n).toBe(0);
+  });
 });
 
 describe('taking in a recording', () => {

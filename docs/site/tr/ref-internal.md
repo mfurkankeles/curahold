@@ -23,6 +23,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/join/…` | 1 | Davetle şirkete katılma tarayıcıda yapılır. |
 | `/logo/…` | 1 | Şirket logosu. |
 | `/manifest.webmanifest/…` | 1 | Kurulabilir uygulama bildirimi. |
+| `/metrics/…` | 1 | Yalnızca işletmeciye özel platform metrikleri (owner panosu); bir şirketin API'sinin parçası değil. |
 | `/oauth/…` | 0 | Uygulamalar ve yapay zekâ asistanları için onay ekranı; "Yapay zekâ bağlayıcısı ve OAuth" sayfasına bak. |
 | `/org/…` | 1 | Şirketin herkese açık oturum açma bilgileri. |
 | `/portal/…` | 6 | Müşteri portalına kimlerin girebileceğini yönetme. |
