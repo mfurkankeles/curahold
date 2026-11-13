@@ -14,7 +14,7 @@ import { createInviteToken, sendInvite } from '../lib/people';
 import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
 import { iso, toComment, toTask } from '../lib/mappers';
-import { body, email, param, uuid } from '../lib/validate';
+import { body, email, localeField, param, uuid } from '../lib/validate';
 
 export const adminRoutes = new Hono<AppEnv>();
 
@@ -51,7 +51,7 @@ adminRoutes.patch('/org', async (c) => {
     c,
     z.object({
       name: z.string().trim().min(1).max(120).optional(),
-      locale: z.enum(['en', 'tr']).optional(),
+      locale: localeField.optional(),
       timezone: z
         .string()
         .max(64)

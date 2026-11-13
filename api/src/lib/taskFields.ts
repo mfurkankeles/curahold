@@ -2,6 +2,7 @@
 // fields that must be filled before a task can be finished.
 import { z } from 'zod';
 import { normalizeValue } from '../../../shared/src/fields';
+import type { Locale } from '../../../shared/src/i18n';
 import { OPTION_COLORS, TASK_FIELD_TYPES, type AccountField, type TaskField, type TaskFieldValue } from '../../../shared/src/model';
 import type { Q } from '../db';
 import { fail } from './errors';
@@ -28,7 +29,7 @@ export const taskFieldsSchema = z
 export const empty = (v: unknown) => v === null || v === undefined || v === '' || v === false;
 
 /** Checks values against the board's fields; returns the cleaned values. People must be members of the company. */
-export async function cleanTaskFields(q: Q, defs: TaskField[], input: Record<string, unknown>, locale: 'en' | 'tr') {
+export async function cleanTaskFields(q: Q, defs: TaskField[], input: Record<string, unknown>, locale: Locale) {
   const out: Record<string, TaskFieldValue> = {};
   const bad: string[] = [];
   for (const [k, v] of Object.entries(input)) {

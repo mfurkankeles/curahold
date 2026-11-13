@@ -10,6 +10,7 @@
 // is Claude, asked from the page on the viewer's own Claude account; a
 // server-side model for the product would plug in the same way.
 import { ask, type AnswerIndex, type DocSection } from './answers';
+import type { Locale } from './i18n';
 
 export interface Turn {
   role: 'user' | 'assistant';
@@ -54,7 +55,7 @@ export interface AssistantDeps {
   api<T = any>(path: string): Promise<T>;
   docs(): Promise<AnswerIndex>;
   docsUrl(section: DocSection): string;
-  locale: 'en' | 'tr';
+  locale: Locale;
   me: { name: string; role: string; company: string; customer: string; customers: string; currency: string };
   /** Field definitions of a customer, to say "Renewal date" instead of "renewal_date". */
   fields: { key: string; type: string; label: string; options?: { key: string; label: string }[] }[];

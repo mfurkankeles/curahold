@@ -3,7 +3,7 @@
 // the bottom, within reach of a thumb.
 import { FAVORITE_ICON } from './Favorites';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Locale } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { endPreview, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -274,10 +274,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               label={t('nav.language')}
               value={locale}
               onChange={onLocale}
-              options={[
-                { value: 'en', label: 'English' },
-                { value: 'tr', label: 'Türkçe' },
-              ]}
+              options={LOCALES.map((l) => ({ value: l, label: LOCALE_INFO[l].name }))}
             />
           ),
         },

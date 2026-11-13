@@ -4,6 +4,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { labelOf } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
+import type { Locale } from '../../../shared/src/i18n';
 
 export type Cell = string | number | null | undefined;
 export interface Table {
@@ -96,7 +97,7 @@ export function download(t: Table, kind: 'xlsx' | 'csv', locale: string) {
 }
 
 /** A field value as a spreadsheet cell: numbers stay numbers, choices become their label. */
-export function cellOf(f: AccountField, v: unknown, locale: 'en' | 'tr'): Cell {
+export function cellOf(f: AccountField, v: unknown, locale: Locale): Cell {
   if (v === null || v === undefined || v === '') return null;
   if (f.type === 'money' || f.type === 'number') return Number(v);
   if (f.type === 'select') return labelOf(f.options?.find((o) => o.key === v)?.label, locale) || String(v);

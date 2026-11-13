@@ -1,4 +1,6 @@
 // The customer portal: what a company opens to its customers' people.
+import type { Locale } from './i18n';
+
 export const PORTAL_FIELDS = ['due', 'priority', 'assignee'] as const;
 export type PortalField = (typeof PORTAL_FIELDS)[number];
 
@@ -47,7 +49,7 @@ export interface PortalBoard {
   fields: PortalField[];
 }
 export interface PortalMe {
-  user: { id: string; name: string; email: string; locale: 'tr' | 'en' | null };
+  user: { id: string; name: string; email: string; locale: Locale | null };
   account: { id: string; name: string };
   boards: PortalBoard[];
 }
@@ -80,7 +82,7 @@ export interface PortalTaskDetail extends PortalTask {
 }
 export interface PortalOrg {
   name: string;
-  locale: 'tr' | 'en';
+  locale: Locale;
   logoUrl: string | null;
   signIn: PortalSignInOptions;
 }

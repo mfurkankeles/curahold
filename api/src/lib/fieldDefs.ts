@@ -2,11 +2,12 @@
 // the values people send for them.
 import { z } from 'zod';
 import { normalizeValue } from '../../../shared/src/fields';
+import type { Locale } from '../../../shared/src/i18n';
 import { calculated, FIELD_TYPES, OPTION_COLORS, type AccountField } from '../../../shared/src/model';
 import { fail } from './errors';
 
 /** Checks and cleans field values; rolled-up fields are worked out by Curahold and cannot be typed in. */
-export function cleanFields(defs: AccountField[], input: Record<string, unknown>, locale: 'en' | 'tr') {
+export function cleanFields(defs: AccountField[], input: Record<string, unknown>, locale: Locale) {
   const out: Record<string, unknown> = {};
   const bad: string[] = [];
   for (const [k, v] of Object.entries(input)) {

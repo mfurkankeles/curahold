@@ -5,7 +5,7 @@ import { Icon } from './icons';
 import { DemoConnect, DemoCrmConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
-import type { MessageKey } from '../../../shared/src/i18n';
+import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
 import { KEY_FIELDS, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
@@ -700,7 +700,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
 
 const KIND_OF = (o: Draft): 'account' | 'contact' | 'opportunity' | 'ticket' | 'task' | 'custom' => (o.target === 'account' ? 'account' : o.target === 'task' ? 'task' : (o.kind ?? 'custom'));
 
-function localChoices(o: Draft, d: Detail, accountFields: AccountField[], t: (k: MessageKey, v?: any) => string, accountWord: string, locale: 'en' | 'tr') {
+function localChoices(o: Draft, d: Detail, accountFields: AccountField[], t: (k: MessageKey, v?: any) => string, accountWord: string, locale: Locale) {
   const out: { value: string; label: string; types?: RemoteField['type'][] }[] = [];
   if (o.target === 'task') {
     out.push({ value: 'title', label: t('sync.local.title') }, { value: 'description', label: t('sync.local.description') }, { value: 'due', label: t('sync.local.due') }, { value: 'assignee', label: t('sync.local.assignee'), types: ['user', 'person'] }, { value: 'done', label: t('sync.local.done') }, { value: 'account', label: accountWord, types: ['ref', 'text'] });

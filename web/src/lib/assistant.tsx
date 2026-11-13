@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { addressOf, prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistantDeps, Sampler } from '../../../shared/src/assistant';
+import type { Locale } from '../../../shared/src/i18n';
 import type { Me } from '../../../shared/src/model';
 import { get } from './api';
 import { docsFile, docsHref } from './docs';
@@ -34,7 +35,7 @@ const loaded: Partial<Record<string, Promise<AnswerIndex>>> = {};
 const docsBase = docsHref().replace(/index\.html$/, '');
 const docsTail = docsHref().endsWith('index.html') ? 'index.html' : '';
 
-export function depsFor(me: Me, locale: 'en' | 'tr', words: { one: string; other: string }, roleName: string): AssistantDeps {
+export function depsFor(me: Me, locale: Locale, words: { one: string; other: string }, roleName: string): AssistantDeps {
   return {
     api: (path) => get(path),
     docs: () =>

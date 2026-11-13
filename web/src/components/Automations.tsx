@@ -4,7 +4,7 @@ import { Icon } from './icons';
 import { useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_TRIGGERS, TRIGGER_TYPES, type Action, type Automation, type AutomationRun, type Condition, type Trigger, type TriggerType } from '../../../shared/src/automation';
 import { labelOf } from '../../../shared/src/fields';
-import type { MessageKey } from '../../../shared/src/i18n';
+import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { Board } from '../../../shared/src/model';
 import { pick, TEMPLATES, TEMPLATE_KEYS } from '../../../shared/src/templates';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -239,7 +239,7 @@ function RunHistory({ rule, onClose }: { rule: Automation; onClose: () => void }
   );
 }
 
-function presetDrafts(locale: 'en' | 'tr', boards: Board[]): { key: string; template: string; draft: Draft }[] {
+function presetDrafts(locale: Locale, boards: Board[]): { key: string; template: string; draft: Draft }[] {
   const out: { key: string; template: string; draft: Draft }[] = [];
   const firstBoard = boards[0]?.id ?? '';
   for (const tk of TEMPLATE_KEYS) {

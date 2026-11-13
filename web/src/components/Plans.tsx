@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TaskBlueprint } from '../../../shared/src/automation';
 import { labelOf } from '../../../shared/src/fields';
 import { PLAN_ANCHORS, type PlanAnchor, type PlanTemplate } from '../../../shared/src/model';
+import type { Locale } from '../../../shared/src/i18n';
 import { PLAYBOOK_EXAMPLES, type PlaybookExample } from '../../../shared/src/playbooks';
 import { DEFAULT_RHYTHM } from '../../../shared/src/rhythm';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -147,7 +148,7 @@ export function PlanMenu({ accountId, accountName, onApplied }: { accountId: str
 type Draft = Pick<PlanTemplate, 'name' | 'description' | 'anchor' | 'tasks'> & { boardId?: string };
 
 /** An example, in the language of whoever is writing. */
-function draftOf(ex: PlaybookExample, locale: 'en' | 'tr'): Draft {
+function draftOf(ex: PlaybookExample, locale: Locale): Draft {
   return {
     name: labelOf(ex.name, locale),
     description: labelOf(ex.description, locale),

@@ -2,7 +2,7 @@
 // KVKK/GDPR tools), teams, roles and the activity log.
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import type { Locale } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
 import { AccountFieldsEditor, RecordTypesEditor } from '../components/AccountFields';
 import { SourceDetail, Sources } from '../components/Sources';
@@ -200,7 +200,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
       onSaved?.();
     }
   }
-  const word = (l: Locale, k: 'one' | 'other', label: string) => (
+  const word = (l: 'en' | 'tr', k: 'one' | 'other', label: string) => (
     <label className="field">
       <span className="field__label">{label}</span>
       <input className="input" maxLength={40} value={terms[l][k]} placeholder={l === 'tr' ? (k === 'one' ? 'Müşteri' : 'Müşteriler') : k === 'one' ? 'Account' : 'Accounts'} onChange={(e) => setTerms({ ...terms, [l]: { ...terms[l], [k]: e.target.value } })} />
@@ -223,8 +223,11 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
             <label className="field">
               <span className="field__label">{t('settings.company.language')}</span>
               <select className="select" value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
-                <option value="en">English</option>
-                <option value="tr">Türkçe</option>
+                {LOCALES.map((l) => (
+                  <option key={l} value={l}>
+                    {LOCALE_INFO[l].name}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="field">
@@ -271,7 +274,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
           <div className="rb-chips">
             {VOCAB.map((v) => (
               <button key={v.en.one} type="button" className="rb-chip" aria-pressed={terms.en.one === v.en.one && terms.tr.one === v.tr.one} onClick={() => setTerms({ en: { ...v.en }, tr: { ...v.tr } })}>
-                {v[locale].one}
+                {(locale === 'tr' ? v.tr : v.en).one}
               </button>
             ))}
           </div>

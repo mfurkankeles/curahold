@@ -1,6 +1,6 @@
 // Sign-in screens: email link, Google / Microsoft, and the new-device code.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import type { Locale } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { Mark } from '../components/ui';
 import { ApiFailure, post } from '../lib/api';
@@ -16,14 +16,14 @@ function errorText(e: unknown, t: ReturnType<typeof useI18n>['t']) {
 function LangSwitch({ onLocale }: { onLocale: (l: Locale) => void }) {
   const { locale, t } = useI18n();
   return (
-    <div className="auth__langs" role="group" aria-label={t('nav.language')}>
-      <div className="seg">
-        {(['en', 'tr'] as Locale[]).map((l) => (
-          <button key={l} aria-pressed={locale === l} onClick={() => onLocale(l)}>
-            {l === 'en' ? 'English' : 'Türkçe'}
-          </button>
+    <div className="auth__langs">
+      <select className="select" aria-label={t('nav.language')} value={locale} onChange={(e) => onLocale(e.target.value as Locale)}>
+        {LOCALES.map((l) => (
+          <option key={l} value={l}>
+            {LOCALE_INFO[l].name}
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }

@@ -3,8 +3,13 @@ import { docsHref, docsLink } from '../lib/docs';
 import { useEffect } from 'react';
 import { useI18n } from '../lib/i18n';
 import { NEWS, markNewsSeen, type NewsAction } from '../lib/news';
+import type { Locale } from '../../../shared/src/i18n';
 import { Icon } from './icons';
 import { Dialog } from './ui';
+
+// Release notes are written English-first with a Turkish pass; every other
+// locale reads the English until a native pass fills it in.
+const pick = (m: { tr: string; en: string }, l: Locale) => (l === 'tr' ? m.tr : m.en);
 
 export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction: (a: NewsAction) => void }) {
   const { t, locale, fmtDate } = useI18n();
@@ -33,8 +38,8 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
               {fmtDate(n.date, { day: 'numeric', month: 'long' })}
             </time>
             <div className="news__text">
-              <h3 className="news__title">{n.title[locale]}</h3>
-              <p className="news__body">{n.body[locale]}</p>
+              <h3 className="news__title">{pick(n.title, locale)}</h3>
+              <p className="news__body">{pick(n.body, locale)}</p>
               {n.action && (
                 <button
                   className="btn btn--small"
@@ -43,7 +48,7 @@ export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction:
                     onAction(n.action!);
                   }}
                 >
-                  {n.action.label[locale]}
+                  {pick(n.action.label, locale)}
                 </button>
               )}
             </div>

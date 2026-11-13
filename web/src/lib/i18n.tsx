@@ -1,5 +1,5 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { accountWords, normalizeLocale, translate, type Locale, type MessageKey, type Terms, type Vars } from '../../../shared/src/i18n';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { accountWords, bcp47Of, LOCALE_INFO, normalizeLocale, translate, type Locale, type MessageKey, type Terms, type Vars } from '../../../shared/src/i18n';
 
 export interface I18n {
   locale: Locale;
@@ -11,8 +11,18 @@ export interface I18n {
 const Ctx = createContext<I18n | null>(null);
 
 export function I18nProvider({ locale, terms, children }: { locale: Locale; terms?: Terms | null; children: ReactNode }) {
+  // The page reads in the language's own direction: right-to-left for Arabic,
+  // Hebrew and Persian. Set on <html> so the whole layout follows.
+  useEffect(() => {
+    const el = document.documentElement;
+    el.lang = bcp47Of(locale);
+    el.dir = LOCALE_INFO[locale].dir;
+    return () => {
+      el.dir = 'ltr';
+    };
+  }, [locale]);
   const value = useMemo<I18n>(() => {
-    const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+    const tag = bcp47Of(locale);
     return {
       locale,
       t: (key, vars) => translate(locale, key, vars, terms),

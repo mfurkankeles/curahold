@@ -13,7 +13,7 @@ import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
 import { defsFor } from '../lib/fieldAccess';
-import { body, param } from '../lib/validate';
+import { body, localeField, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
 import { portalOn } from '../lib/portal';
 import { recordsSessions } from '../lib/support';
@@ -100,7 +100,7 @@ meRoutes.patch('/me', async (c) => {
     c,
     z.object({
       name: z.string().trim().min(1).max(120).optional(),
-      locale: z.enum(['en', 'tr']).nullable().optional(),
+      locale: localeField.nullable().optional(),
       onboarded: z.boolean().optional(),
       prefs: z
         .object({

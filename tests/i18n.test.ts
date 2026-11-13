@@ -6,7 +6,7 @@ import { parse } from '@babel/parser';
 import { describe, expect, it } from 'vitest';
 import { en } from '../shared/src/i18n/en';
 import { tr } from '../shared/src/i18n/tr';
-import { accountWords, translate } from '../shared/src/i18n';
+import { accountWords, translate, LOCALES, LOCALE_INFO, dictionaries, isRtl, bcp47Of, type Locale } from '../shared/src/i18n';
 
 const ROOT = join(import.meta.dirname, '..');
 const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
@@ -90,6 +90,61 @@ describe('the interface has no hard-coded text', () => {
       walk(ast.program);
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('the locale registry', () => {
+  const EXPECTED: Locale[] = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'];
+
+  it('lists every supported locale once', () => {
+    expect([...LOCALES].sort()).toEqual([...EXPECTED].sort());
+  });
+
+  it('describes each locale with a native name, English name, direction and BCP-47 tag', () => {
+    const tags = new Set<string>();
+    for (const l of LOCALES) {
+      const info = LOCALE_INFO[l];
+      expect(info.name.trim(), `${l} name`).not.toBe('');
+      expect(info.english.trim(), `${l} english`).not.toBe('');
+      expect(['ltr', 'rtl'], `${l} dir`).toContain(info.dir);
+      expect(info.bcp47.trim(), `${l} bcp47`).not.toBe('');
+      expect(tags.has(info.bcp47), `${l} bcp47 unique`).toBe(false);
+      tags.add(info.bcp47);
+      expect(bcp47Of(l)).toBe(info.bcp47);
+      expect(isRtl(l)).toBe(info.dir === 'rtl');
+    }
+  });
+
+  it('marks exactly the MENA scripts as right-to-left', () => {
+    expect(LOCALES.filter(isRtl).sort()).toEqual(['ar', 'fa', 'he']);
+  });
+
+  it('has a dictionary for every locale, English and Turkish complete', () => {
+    for (const l of LOCALES) expect(dictionaries[l], l).toBeTruthy();
+    expect(Object.keys(dictionaries.en).length).toBeGreaterThan(100);
+    expect(Object.keys(dictionaries.tr).length).toBe(Object.keys(dictionaries.en).length);
+  });
+
+  it('falls back to English for a locale whose dictionary is still empty', () => {
+    const empty = LOCALES.find((l) => Object.keys(dictionaries[l]).length === 0);
+    expect(empty, 'a not-yet-translated locale to prove the fallback').toBeTruthy();
+    // A placeholder-free key reads the English text verbatim until a native pass lands.
+    expect(translate(empty!, 'common.close')).toBe(translate('en', 'common.close'));
+    // The account noun, however, is already localized even before the dictionary is filled.
+    expect(translate(empty!, 'board.searchPlaceholder')).toContain(accountWords(empty!).other);
+    expect(translate(empty!, 'board.searchPlaceholder')).not.toBe(translate('en', 'board.searchPlaceholder'));
+  });
+
+  it('gives every locale a customer noun, native where set and English otherwise', () => {
+    for (const l of LOCALES) {
+      const w = accountWords(l);
+      expect(w.one.trim(), `${l} one`).not.toBe('');
+      expect(w.other.trim(), `${l} other`).not.toBe('');
+    }
+    // The new target-market locales carry their own native noun, not the English one.
+    for (const l of ['ar', 'he', 'fa', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as Locale[]) {
+      expect(accountWords(l).one, l).not.toBe(accountWords('en').one);
+    }
   });
 });
 

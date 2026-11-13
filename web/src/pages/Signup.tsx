@@ -3,7 +3,7 @@
 // then straight into the company, signed in, with the setup wizard open.
 import { docsHref, docsLink } from '../lib/docs';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import type { Locale, MessageKey } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { pick, TEMPLATES, TEMPLATE_KEYS, type TemplateKey } from '../../../shared/src/templates';
 import { Mark } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
@@ -52,13 +52,13 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
       <main className="auth__main">
         <div className="auth__card">
           <div className="auth__langs">
-            <div className="seg">
-              {(['en', 'tr'] as Locale[]).map((l) => (
-                <button key={l} aria-pressed={locale === l} onClick={() => onLocale(l)}>
-                  {l === 'en' ? 'English' : 'Türkçe'}
-                </button>
+            <select className="select" aria-label={t('nav.language')} value={locale} onChange={(e) => onLocale(e.target.value as Locale)}>
+              {LOCALES.map((l) => (
+                <option key={l} value={l}>
+                  {LOCALE_INFO[l].name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
           {children}
         </div>

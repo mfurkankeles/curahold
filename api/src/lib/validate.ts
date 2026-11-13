@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import type { C } from '../context';
 import { fail } from './errors';
+import { LOCALES, type Locale } from '../../../shared/src/i18n';
 
 export const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+/** One of the languages Curahold speaks. */
+export const localeField = z.enum(LOCALES as [Locale, ...Locale[]]);
 export const email = z
   .string()
   .trim()

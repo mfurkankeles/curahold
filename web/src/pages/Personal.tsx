@@ -3,7 +3,7 @@
 // calendar feed. One minute, no administrator needed.
 import { Icon, PageIcon } from '../components/icons';
 import { useEffect, useState } from 'react';
-import type { Locale, MessageKey } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { NOTIFY_EVENTS, type DeliveryOption, type NotifyPrefs } from '../../../shared/src/model';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { AiConnect, KeyList } from '../components/Developer';
@@ -80,13 +80,13 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               </label>
               <div className="field">
                 <span className="field__label">{t('me.language')}</span>
-                <div className="seg">
-                  {(['tr', 'en'] as Locale[]).map((l) => (
-                    <button key={l} type="button" aria-pressed={locale === l} onClick={() => onLocale(l)}>
-                      {l === 'tr' ? 'Türkçe' : 'English'}
-                    </button>
+                <select className="select" aria-label={t('me.language')} value={locale} onChange={(e) => onLocale(e.target.value as Locale)}>
+                  {LOCALES.map((l) => (
+                    <option key={l} value={l}>
+                      {LOCALE_INFO[l].name}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
           </section>
