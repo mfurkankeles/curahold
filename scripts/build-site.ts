@@ -54,7 +54,7 @@ const INTEGRATIONS = [
 // dictionaries, so the shot speaks every language. Nothing here is a real
 // customer. `chip` names which hero signal to show; null is a calm, healthy card.
 const BOARD = [
-  { name: 'Ambergate Logistics', band: 'risk', score: 48, chip: 'review', who: 'Zeynep', init: 'ZT' },
+  { name: 'Marevo', band: 'risk', score: 48, chip: 'review', who: 'Zeynep', init: 'ZT' },
   { name: 'Northwind Retail', band: 'watch', score: 66, chip: 'health', who: 'Ada', init: 'AD' },
   { name: 'Keystone Foods', band: 'watch', score: 71, chip: 'step', who: 'Selin', init: 'SA' },
   { name: 'Marisol Mobility', band: 'good', score: 92, chip: null, who: 'Lena', init: 'LB' },
