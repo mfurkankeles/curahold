@@ -132,6 +132,9 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     signupEnabled: false,
     connectors: { demoCrm: true },
     portalDomain: 'curahold-portal.com',
+    // In the demo the primary user is the platform owner, so the business-metrics
+    // screen can be shown. config.billing stays unset, so it carries a "Demo data" badge.
+    owner: 'ada@demo.example',
   };
   const email = new services.MemoryEmail();
   const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };
@@ -189,6 +192,10 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
 
   const { seedDemo } = await import('../../../scripts/seed-demo');
   await seedDemo(db, { locale });
+  // Demo-only: a platform of invented tenants so the owner's metrics screen has
+  // a realistic shape. RLS keeps them out of the demo user's own views.
+  const { seedPlatform } = await import('../../../scripts/seed-demo-platform');
+  await seedPlatform(db, { locale });
   step(82, 'data');
 
   // Every call the app makes to its own address is answered here.
