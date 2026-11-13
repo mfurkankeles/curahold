@@ -304,13 +304,13 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
                 </td>
                 <td>
                   {r?.name}
-                  {p.seat === 'viewer' && <span className="badge" style={{ marginLeft: 6 }}>{t('settings.people.seat.viewer')}</span>}
-                  {p.status !== 'active' && <span className={`badge badge--${p.status}`} style={{ marginLeft: 6 }}>{t(`settings.people.status.${p.status}` as any)}</span>}
+                  {p.seat === 'viewer' && <span className="badge" style={{ marginInlineStart: 6 }}>{t('settings.people.seat.viewer')}</span>}
+                  {p.status !== 'active' && <span className={`badge badge--${p.status}`} style={{ marginInlineStart: 6 }}>{t(`settings.people.status.${p.status}` as any)}</span>}
                 </td>
                 <td className="hide-phone muted">
                   {n === GRANT_PERMS.length ? t('settings.roles.everything') : n === 0 ? t('settings.roles.dailyOnly') : t('settings.roles.permCount', { n, total: GRANT_PERMS.length })}
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td style={{ textAlign: 'end' }}>
                   <button className="btn btn--small" onClick={() => setOpen(p.id)}>
                     {t('settings.roles.whatCan')}
                   </button>

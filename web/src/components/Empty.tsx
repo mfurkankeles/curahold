@@ -1,6 +1,7 @@
 // An empty screen is an invitation: say what goes here and offer the first
 // step. While something loads, its shape shows instead of a word.
 import type { ReactNode } from 'react';
+import { useI18n } from '../lib/i18n';
 import { Icon, type IconName } from './icons';
 
 export function EmptyState({ icon, title, body, children, tone, compact }: { icon: IconName; title: string; body?: ReactNode; children?: ReactNode; tone?: 'calm' | 'done'; compact?: boolean }) {
@@ -49,6 +50,19 @@ export function SkeletonCards({ count = 6, label, columns }: { count?: number; l
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/** A load that failed — said so, with a way to try again, instead of passing for an empty list. */
+export function LoadError({ message, onRetry }: { message?: string | null; onRetry: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="notice notice--error" role="alert" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+      <span style={{ flex: 1, minWidth: 200 }}>{message || t('errors.loadFailed')}</span>
+      <button className="btn btn--small" onClick={onRetry}>
+        {t('common.retry')}
+      </button>
     </div>
   );
 }

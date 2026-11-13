@@ -13,11 +13,11 @@
 .desk-signin__dev { justify-self: start; font-variant-numeric: tabular-nums; }
 
 .desk { height: 100%; display: grid; grid-template-columns: 232px minmax(280px, 380px) minmax(0, 1fr); background: var(--paper); color: var(--ink); }
-.desk__rail { display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; border-right: 1px solid var(--line); background: var(--surface-2); min-height: 0; }
+.desk__rail { display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; border-inline-end: 1px solid var(--line); background: var(--surface-2); min-height: 0; }
 .desk__brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px; }
 .desk__mark { width: 32px; height: 32px; }
 .desk__queues { display: grid; gap: 2px; }
-.desk__queue { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border: 0; border-radius: 9px; background: none; text-align: left; cursor: pointer; color: var(--ink-2); }
+.desk__queue { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border: 0; border-radius: 9px; background: none; text-align: start; cursor: pointer; color: var(--ink-2); }
 .desk__queue:hover { background: var(--sunk); }
 .desk__queue[aria-current] { background: var(--brand-wash); color: var(--brand-ink); font-weight: 600; }
 .desk__queue span:first-of-type { flex: 1; min-width: 0; }
@@ -25,12 +25,12 @@
 .desk__who { margin-top: auto; display: grid; gap: 6px; padding: 0 6px; font-size: 12.5px; overflow-wrap: anywhere; }
 .desk__who .btn { justify-self: start; }
 
-.desk__list { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--surface); }
+.desk__list { display: flex; flex-direction: column; min-height: 0; border-inline-end: 1px solid var(--line); background: var(--surface); }
 .desk__search { display: flex; align-items: center; gap: 8px; margin: 12px; padding: 0 12px; min-height: 38px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--ink-3); }
 .desk__search:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-wash); }
 .desk__search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--ink); }
 .desk__rows { list-style: none; margin: 0; padding: 0 8px 12px; overflow: auto; display: grid; gap: 2px; align-content: start; flex: 1; }
-.desk__row { display: grid; gap: 4px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: left; cursor: pointer; }
+.desk__row { display: grid; gap: 4px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: start; cursor: pointer; }
 .desk__row:hover { background: var(--surface-2); }
 .desk__row[aria-current] { background: var(--brand-wash); }
 .desk__rowtop { display: flex; align-items: baseline; gap: 8px; }
@@ -76,21 +76,21 @@
 .deskreply__text { min-height: 110px; resize: vertical; line-height: 1.5; }
 .deskreply .field__hint { margin: 0; }
 .deskreply__foot { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-end; gap: 8px; }
-.deskreply__name { margin-right: auto; display: grid; gap: 2px; font-size: 12.5px; }
+.deskreply__name { margin-inline-end: auto; display: grid; gap: 2px; font-size: 12.5px; }
 .deskreply__name .input { min-height: 32px; width: 160px; }
-.deskreq__side { overflow: auto; padding: 16px; border-left: 1px solid var(--line); background: var(--surface-2); display: grid; gap: 16px; align-content: start; font-size: 13.5px; }
+.deskreq__side { overflow: auto; padding: 16px; border-inline-start: 1px solid var(--line); background: var(--surface-2); display: grid; gap: 16px; align-content: start; font-size: 13.5px; }
 .deskreq__side section { display: grid; gap: 6px; justify-items: start; }
 .deskreq__side h2 { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
 .deskreq__side p { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; overflow-wrap: anywhere; }
 .deskreq__access { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .deskreq__access[data-on] { border-color: var(--soon-line); background: var(--soon-wash); }
 .deskreq__others { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.deskreq__others .linklike { display: inline-flex; align-items: baseline; gap: 7px; border: 0; background: none; padding: 2px 0; text-align: left; color: var(--brand-ink); cursor: pointer; }
+.deskreq__others .linklike { display: inline-flex; align-items: baseline; gap: 7px; border: 0; background: none; padding: 2px 0; text-align: start; color: var(--brand-ink); cursor: pointer; }
 
 /* Recordings of the asker's recent sessions, newest first. */
 .deskreq__replays { width: 100%; }
 .deskreq__reclist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; width: 100%; }
-.deskrec { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-align: left; cursor: pointer; color: var(--ink); }
+.deskrec { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-align: start; cursor: pointer; color: var(--ink); }
 .deskrec:hover { border-color: var(--brand); background: var(--brand-wash); }
 .deskrec__main { display: grid; gap: 1px; min-width: 0; }
 .deskrec__top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
@@ -106,16 +106,16 @@
 @media (max-width: 1100px) {
   .deskreq__body { grid-template-columns: minmax(0, 1fr); overflow: auto; }
   .deskreq__thread { overflow: visible; }
-  .deskreq__side { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .deskreq__side { border-inline-start: 0; border-top: 1px solid var(--line); overflow: visible; }
 }
 @media (max-width: 860px) {
   .desk { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-  .desk__rail { flex-direction: row; align-items: center; gap: 8px; padding: 8px 10px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .desk__rail { flex-direction: row; align-items: center; gap: 8px; padding: 8px 10px; border-inline-end: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
   .desk__brand strong, .desk__who .muted, .desk__who .desk__langs { display: none; }
   .desk__queues { display: flex; gap: 4px; }
   .desk__queue { white-space: nowrap; width: auto; }
-  .desk__who { margin: 0 0 0 auto; }
-  .desk__list { border-right: 0; }
+  .desk__who { margin-block: 0 0; margin-inline-start: auto; margin-inline-end: 0; }
+  .desk__list { border-inline-end: 0; }
   .desk__detail { display: none; }
   .desk[data-open] .desk__list, .desk[data-open] .desk__rail { display: none; }
   .desk[data-open] { grid-template-rows: minmax(0, 1fr); }

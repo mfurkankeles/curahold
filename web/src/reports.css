@@ -24,11 +24,11 @@
 .hbar__track { height: 14px; border-radius: 999px; background: var(--sunk); overflow: hidden; }
 .hbar__fill { display: flex; height: 100%; min-width: 3px; border-radius: 999px; background: var(--oc, var(--brand)); overflow: hidden; }
 .hbar__fill i { display: block; height: 100%; background: var(--oc, var(--brand)); min-width: 2px; }
-.hbar__fill i + i { margin-left: 2px; }
+.hbar__fill i + i { margin-inline-start: 2px; }
 .hbar__value { font-weight: 650; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 
 .chartkey { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); grid-column: 1 / -1; }
-.chartkey i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--oc, var(--brand)); margin-right: 5px; vertical-align: -1px; }
+.chartkey i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--oc, var(--brand)); margin-inline-end: 5px; vertical-align: -1px; }
 
 /* --------------------------------------------------------------- columns */
 .vchart, .linechart { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
@@ -41,10 +41,10 @@
 }
 .vchart__plot { display: flex; align-items: flex-end; gap: clamp(2px, 1.2%, 12px); padding: 0 4px; }
 .vbar { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
-.vbar__fill { position: relative; flex: 0 1 min(52px, 64%); min-width: 3px; border-radius: 5px 5px 0 0; background: var(--oc, var(--grad, var(--brand))); }
+.vbar__fill { position: relative; flex: 0 1 min(52px, 64%); min-width: 3px; border-start-start-radius: 5px; border-start-end-radius: 5px; border-end-end-radius: 0; border-end-start-radius: 0; background: var(--oc, var(--grad, var(--brand))); }
 .vbar__fill--stack { display: flex; flex-direction: column-reverse; background: none; gap: 2px; }
 .vbar__fill--stack i { display: block; width: 100%; background: var(--oc, var(--brand)); min-height: 2px; border-radius: 2px; }
-.vbar__fill--stack i:last-of-type { border-radius: 5px 5px 2px 2px; }
+.vbar__fill--stack i:last-of-type { border-start-start-radius: 5px; border-start-end-radius: 5px; border-end-end-radius: 2px; border-end-start-radius: 2px; }
 .vbar__n { position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 650; color: var(--ink-2); white-space: nowrap; }
 .vchart__x { grid-column: 2; display: flex; gap: clamp(2px, 1.2%, 12px); padding: 5px 4px 0; }
 .vchart__x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -74,7 +74,7 @@
 .donut__key i { width: 10px; height: 10px; border-radius: 3px; background: var(--oc, var(--brand)); }
 .donut__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .donut__key b { font-weight: 650; }
-.donut__pct { color: var(--ink-3); font-size: 12px; min-width: 32px; text-align: right; }
+.donut__pct { color: var(--ink-3); font-size: 12px; min-width: 32px; text-align: end; }
 
 /* ----------------------------------------------------------------- table */
 .rtable { overflow: auto; max-height: 460px; border-radius: 10px; }
@@ -83,7 +83,7 @@
 .rtable .table th { position: sticky; top: 0; background: var(--surface-2); z-index: 1; white-space: nowrap; }
 .rtable .table td { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rtable__more { margin: 8px 2px 0; font-size: 12.5px; color: var(--ink-3); }
-.table th.num, .table td.num { text-align: right; }
+.table th.num, .table td.num { text-align: end; }
 
 /* --------------------------------------------------------- small pictures */
 .glyph { flex: none; }
@@ -127,7 +127,7 @@
 /* --------------------------------------------------------------- builder */
 .rb-top { gap: 6px 10px; }
 .rb-name {
-  flex: 1 1 240px; min-width: 0; max-width: 560px; border: 1px solid transparent; background: none; border-radius: 8px; padding: 4px 8px; margin-left: -4px;
+  flex: 1 1 240px; min-width: 0; max-width: 560px; border: 1px solid transparent; background: none; border-radius: 8px; padding: 4px 8px; margin-inline-start: -4px;
   font-family: var(--font-display); font-size: 22px; font-weight: 650; letter-spacing: -.02em; color: var(--ink);
 }
 .rb-name:hover:not(:read-only) { border-color: var(--line); }
@@ -203,21 +203,21 @@
 .rview__chart .vchart__plot, .rview__chart .linechart__plot { height: 240px; }
 
 /* A summary: each group's head carries its name, its row count and its subtotal. */
-.rsum .rsum__group th, .rsum .rsum__sub th, .rsum .rsum__total th { text-align: left; font-weight: 600; position: static; }
+.rsum .rsum__group th, .rsum .rsum__sub th, .rsum .rsum__total th { text-align: start; font-weight: 600; position: static; }
 .rsum__group th { background: var(--brand-soft); border-top: 1px solid var(--line); padding: 0; }
-.rsum__toggle { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 8px 12px; font: inherit; font-weight: 650; color: var(--ink); cursor: pointer; text-align: left; }
+.rsum__toggle { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 8px 12px; font: inherit; font-weight: 650; color: var(--ink); cursor: pointer; text-align: start; }
 .rsum__toggle:hover { background: var(--brand-wash); }
 .rsum__toggle .icon { color: var(--brand-ink); flex: none; }
 .rsum__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rsum__count { color: var(--ink-3); font-weight: 500; font-size: 12.5px; white-space: nowrap; }
-.rsum__value { min-width: 7ch; text-align: right; color: var(--brand-ink); }
-.rsum__sub th { display: table-cell; background: var(--surface-2); padding: 6px 12px 6px 36px; font-size: 13px; }
+.rsum__value { min-width: 7ch; text-align: end; color: var(--brand-ink); }
+.rsum__sub th { display: table-cell; background: var(--surface-2); padding-block: 6px 6px; padding-inline-start: 36px; padding-inline-end: 12px; font-size: 13px; }
 .rsum__sub th, .rsum__total th { white-space: nowrap; }
 .rsum__sub th > *, .rsum__total th > * { display: inline-block; vertical-align: middle; }
 .rsum__sub .rsum__label, .rsum__total .rsum__label { width: calc(100% - 22ch); }
 .rsum__sub .rsum__count, .rsum__total .rsum__count { width: 11ch; }
 .rsum__sub .rsum__value, .rsum__total .rsum__value { width: 10ch; }
-.rsum__row td:first-child { padding-left: 24px; }
+.rsum__row td:first-child { padding-inline-start: 24px; }
 .rsum__total th { background: var(--sunk); padding: 9px 12px; border-top: 2px solid var(--line-strong); }
 .rtable__total th, .rtable__total td { background: var(--sunk); border-top: 2px solid var(--line-strong); font-weight: 650; position: static; }
 

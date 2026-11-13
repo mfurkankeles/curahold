@@ -17,7 +17,7 @@
 .recpanel__conv { font-weight: 400; font-size: 12.5px; }
 .recpanel__section { display: grid; gap: 8px; }
 .recpanel__tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.recpanel__task { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-s); padding: 8px 10px; cursor: pointer; transition: border-color .12s ease, background-color .12s ease; }
+.recpanel__task { display: flex; align-items: center; gap: 10px; width: 100%; text-align: start; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-s); padding: 8px 10px; cursor: pointer; transition: border-color .12s ease, background-color .12s ease; }
 .recpanel__task:hover { border-color: var(--line-strong); background: var(--brand-soft); }
 .recpanel__tasks li[data-done] .recpanel__tasktitle { text-decoration: line-through; color: var(--ink-3); }
 .recpanel__tasktitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 550; }
@@ -38,7 +38,7 @@
 
 .comment__files, .composer__files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .fileitem { position: relative; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
-.fileitem__x { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: grid; place-items: center; cursor: pointer; font-size: 12px; line-height: 1; box-shadow: var(--shadow-1); }
+.fileitem__x { position: absolute; top: -6px; inset-inline-end: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); display: grid; place-items: center; cursor: pointer; font-size: 12px; line-height: 1; box-shadow: var(--shadow-1); }
 .fileitem__x:hover { color: var(--late); border-color: var(--late-line); }
 .filechip { display: inline-flex; align-items: center; gap: 8px; max-width: 260px; min-height: 34px; padding: 4px 10px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; }
 .filechip:hover { border-color: var(--line-strong); background: var(--brand-soft); }
@@ -60,7 +60,7 @@
    Records.tsx: choosing the columns, and a close date range. */
 
 .colpick { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
-.colpick li { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); }
+.colpick li { display: flex; align-items: center; gap: 4px; padding-block: 4px 4px; padding-inline-start: 12px; padding-inline-end: 4px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); }
 .colpick__name { flex: 1; font-weight: 550; }
 .toolbar__field { display: inline-flex; }
 .toolbar__field .select { width: auto; }
@@ -72,7 +72,7 @@
 
 .planpop { min-width: 300px; max-width: min(380px, 92vw); }
 .planpop__item { align-items: flex-start; }
-.planpop__text { display: grid; gap: 1px; min-width: 0; text-align: left; }
+.planpop__text { display: grid; gap: 1px; min-width: 0; text-align: start; }
 .planpop__meta { color: var(--ink-3); font-size: 12px; font-weight: 400; }
 .planrow__preview { margin: 8px 0 0; }
 
@@ -118,7 +118,7 @@
 
 /* An amount with its currency beside it. */
 .moneyin { display: flex; align-items: center; gap: 6px; }
-.moneyin .input { flex: 1; min-width: 0; text-align: right; }
+.moneyin .input { flex: 1; min-width: 0; text-align: end; }
 .moneyin__cur { color: var(--ink-3); font-size: 12.5px; font-weight: 600; min-width: 2.6em; }
 
 /* A checkbox with its words (and a hint under them). */
@@ -138,7 +138,7 @@
 .fxrow[data-bad] { border-color: var(--soon-line); background: var(--soon-wash); }
 .fxrow__name { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fxrow__rate { display: flex; align-items: center; gap: 8px; }
-.fxrow__rate .input { width: 130px; text-align: right; }
+.fxrow__rate .input { width: 130px; text-align: end; }
 .fxrow__back { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fxadd { display: flex; gap: 8px; align-items: center; max-width: 480px; }
 .fxadd .select { flex: 1; min-width: 0; }
@@ -180,7 +180,7 @@
 
 .meetings__head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
 .meetings__head .section__head { margin: 0; display: flex; align-items: baseline; gap: 6px; }
-.meetings__head > .btn { margin-left: auto; }
+.meetings__head > .btn { margin-inline-start: auto; }
 .meetings__next { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
 .meetings__filter { margin: 10px 0 2px; }
 .meetings__list { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -209,7 +209,7 @@
 .meeting__kind[data-kind='call'] { background: var(--soon-wash); color: var(--soon-ink); }
 .meeting__title { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
 .meeting__meta { font-size: 12.5px; }
-.meeting__tools { margin-left: auto; }
+.meeting__tools { margin-inline-start: auto; }
 .meeting__who { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13px; color: var(--ink-2); }
 .meeting__notes { display: grid; gap: 2px; justify-items: start; }
 .meeting__notes p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; }
@@ -221,7 +221,7 @@
 .meeting__step > .icon { flex: none; color: var(--ink-3); }
 .meeting__step[data-done] > .icon { color: var(--done); }
 .meeting__step[data-done] .linkbtn { color: var(--ink-3); text-decoration: line-through; }
-.meeting__step .linkbtn { text-align: left; overflow-wrap: anywhere; }
+.meeting__step .linkbtn { text-align: start; overflow-wrap: anywhere; }
 
 /* The Reviews list says what a business review is. */
 .reviews__intro {
@@ -273,7 +273,7 @@
 .billing__status p { margin: 4px 0 0; color: var(--ink-2); line-height: 1.5; }
 .billing__title { margin: 0; font-size: 16px; }
 .billing__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.billing__save { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--done); }
+.billing__save { margin-inline-start: 6px; font-size: 11.5px; font-weight: 600; color: var(--done); }
 .billing__plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .billing__plan { display: grid; gap: 8px; align-content: start; }
 .billing__plan[data-plan='business'] { box-shadow: inset 0 3px 0 var(--brand), var(--shadow-1); }
@@ -293,14 +293,14 @@
 .billingbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 13.5px; background: var(--soon-wash); color: var(--soon-ink); border-bottom: 1px solid var(--soon-line); }
 .billingbar[data-state='locked'],
 .billingbar[data-state='past_due'] { background: var(--late-wash); color: var(--late-ink); border-bottom-color: var(--late-line); }
-.billingbar .btn { margin-left: auto; }
+.billingbar .btn { margin-inline-start: auto; }
 @media (max-width: 760px) {
   .billing__plans { grid-template-columns: 1fr; }
 }
 
 /* Planned meetings — upcoming ones on the customer page. */
 .planned__list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.planned__item { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-left: 3px solid var(--k, var(--brand)); border-radius: 10px; background: var(--surface); }
+.planned__item { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-inline-start: 3px solid var(--k, var(--brand)); border-radius: 10px; background: var(--surface); }
 .planned__when { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; line-height: 1.15; }
 .planned__when strong { font-size: 14px; }
 .planned__when span { font-size: 12px; color: var(--ink-3); }

@@ -1,7 +1,7 @@
 // Team: who is carrying what, and one person at a glance for a 1:1 —
 // what they finished, what is late, what is coming and who they look after.
 import { useEffect, useMemo, useState } from 'react';
-import { EmptyState, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { Avatar, DueLabel } from '../components/ui';
@@ -28,9 +28,17 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
   const picked = new URLSearchParams(search).get('person');
   const [work, setWork] = useState<WorkReport | null>(null);
   const [team, setTeam] = useState('');
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    void get<WorkReport>('/reports/work').then(setWork, () => undefined);
-  }, [refreshKey]);
+    void get<WorkReport>('/reports/work').then(
+      (r) => {
+        setWork(r);
+        setFailed(false);
+      },
+      () => setFailed(true),
+    );
+  }, [refreshKey, attempt]);
   const rows = useMemo(() => {
     const stats = new Map((work?.people ?? []).map((p) => [p.userId, p]));
     const hours = new Map((work?.hours ?? []).map((h) => [h.userId, h.minutes]));
@@ -66,7 +74,11 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
       </header>
       <div className="page">
         {!work ? (
-          <SkeletonRows rows={6} label={t('common.loading')} />
+          failed ? (
+            <LoadError onRetry={() => { setFailed(false); setAttempt((n) => n + 1); }} />
+          ) : (
+            <SkeletonRows rows={6} label={t('common.loading')} />
+          )
         ) : rows.length === 0 ? (
           <EmptyState icon="people" title={t('team.none')} />
         ) : (
@@ -127,10 +139,13 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
   const { person, boards, canWrite } = useStore();
   const { quickAdd } = useShell();
   const [data, setData] = useState<PersonReport | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     setData(null);
-    void get<PersonReport>(`/reports/person/${id}`).then(setData, () => setData({ tasks: [], touches30: 0, lastTouchAt: null, accounts: 0, minutes30: 0 }));
-  }, [id, refreshKey]);
+    setFailed(false);
+    void get<PersonReport>(`/reports/person/${id}`).then(setData, () => setFailed(true));
+  }, [id, refreshKey, attempt]);
   const p = person(id);
   const today = todayIso();
   const open = (data?.tasks ?? []).filter((x) => !x.done);
@@ -190,7 +205,11 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
           </div>
         </div>
         {!data ? (
-          <SkeletonRows rows={5} label={t('common.loading')} />
+          failed ? (
+            <LoadError onRetry={() => setAttempt((n) => n + 1)} />
+          ) : (
+            <SkeletonRows rows={5} label={t('common.loading')} />
+          )
         ) : (
           <>
             <div className="statstrip">

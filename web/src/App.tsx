@@ -2,6 +2,7 @@ import { setCompanyZone } from './lib/time';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Shell } from './components/Shell';
 import { TaskPanel } from './components/TaskPanel';
 import { RecordPanel } from './components/RecordPanel';
@@ -198,11 +199,13 @@ export function App() {
           <SignedOut org={boot.org} notice={boot.notice} onLocale={changeLocale} />
         ))}
       {boot.kind === 'signed-in' && (
-        <StoreProvider initialMe={boot.me}>
-          <Shell onLocale={changeLocale}>
-            <Routes onLocale={changeLocale} />
-          </Shell>
-        </StoreProvider>
+        <ErrorBoundary whole>
+          <StoreProvider initialMe={boot.me}>
+            <Shell onLocale={changeLocale}>
+              <Routes onLocale={changeLocale} />
+            </Shell>
+          </StoreProvider>
+        </ErrorBoundary>
       )}
     </I18nProvider>
   );
@@ -284,11 +287,20 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/home' || pg) page = <HomePage pageId={pg?.id ?? null} key={pg?.id ?? 'home'} />;
   else page = <MyTasks refreshKey={quiet} />;
 
+  // Each route (and each open panel) has its own boundary: one screen failing leaves the shell and the rest usable.
   return (
     <>
-      {page}
-      {recordId && !taskId && <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />}
-      {taskId && <TaskPanel key={taskId} taskId={taskId} onChanged={bump} />}
+      <ErrorBoundary resetKey={path}>{page}</ErrorBoundary>
+      {recordId && !taskId && (
+        <ErrorBoundary resetKey={recordId}>
+          <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />
+        </ErrorBoundary>
+      )}
+      {taskId && (
+        <ErrorBoundary resetKey={taskId}>
+          <TaskPanel key={taskId} taskId={taskId} onChanged={bump} />
+        </ErrorBoundary>
+      )}
     </>
   );
 }

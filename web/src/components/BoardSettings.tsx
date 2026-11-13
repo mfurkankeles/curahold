@@ -69,7 +69,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
       footer={
         <>
           {board && board.canManage && (
-            <button className="btn btn--danger" style={{ marginRight: 'auto' }} onClick={() => setArchive(true)}>
+            <button className="btn btn--danger" style={{ marginInlineEnd: 'auto' }} onClick={() => setArchive(true)}>
               {t('board.archive')}
             </button>
           )}

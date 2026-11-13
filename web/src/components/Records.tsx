@@ -19,7 +19,7 @@ import { useStore } from '../lib/store';
 import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
 import { OrgChart, StanceBadge } from './OrgChart';
-import { Avatar, Confirm, Dialog } from './ui';
+import { Avatar, Confirm, Dialog, onTabKeys } from './ui';
 import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
 import { Icon, PageIcon, RECORD_KIND_ICON } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
@@ -105,7 +105,7 @@ function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: 
       onClose={onClose}
       footer={
         <>
-          <button className="btn btn--quiet" style={{ marginRight: 'auto' }} onClick={() => void save(null)}>
+          <button className="btn btn--quiet" style={{ marginInlineEnd: 'auto' }} onClick={() => void save(null)}>
             {t('records.columnsReset')}
           </button>
           <button className="btn btn--quiet" onClick={onClose}>
@@ -351,12 +351,12 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         <RecordTabs current={typeKey} types={types} />
         <div className="toolbar" style={{ marginBottom: 12 }}>
           {choices.length > 0 && (
-            <div className="seg seg--views" role="tablist">
-              <button role="tab" aria-selected={view === 'board'} aria-pressed={view === 'board'} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
+            <div className="seg seg--views" role="tablist" onKeyDown={onTabKeys}>
+              <button role="tab" aria-selected={view === 'board'} tabIndex={view === 'board' ? 0 : -1} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
                 <Icon name="board" size={15} />
                 {t('board.view.board')}
               </button>
-              <button role="tab" aria-selected={view === 'table'} aria-pressed={view === 'table'} onClick={() => (setViewPick('table'), keep('view', 'table'))}>
+              <button role="tab" aria-selected={view === 'table'} tabIndex={view === 'table' ? 0 : -1} onClick={() => (setViewPick('table'), keep('view', 'table'))}>
                 <Icon name="list" size={15} />
                 {t('acards.view.table')}
               </button>
@@ -706,7 +706,7 @@ export function RecordDialog({
       footer={
         <>
           {record && can('accounts.manage') && (
-            <button className="btn btn--quiet btn--danger" style={{ marginRight: 'auto' }} onClick={() => setRemoving(true)}>
+            <button className="btn btn--quiet btn--danger" style={{ marginInlineEnd: 'auto' }} onClick={() => setRemoving(true)}>
               {t('common.delete')}
             </button>
           )}

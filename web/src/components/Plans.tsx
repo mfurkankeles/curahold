@@ -211,7 +211,7 @@ export function PlanEditor({ plan, draft, onClose, onSaved }: { plan: PlanTempla
       footer={
         <>
           {plan && (
-            <button className="btn btn--danger" style={{ marginRight: 'auto' }} onClick={() => setRemoving(true)}>
+            <button className="btn btn--danger" style={{ marginInlineEnd: 'auto' }} onClick={() => setRemoving(true)}>
               {t('common.delete')}
             </button>
           )}

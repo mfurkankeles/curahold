@@ -88,7 +88,7 @@ function TargetBar({ row, cash, label }: { row: TargetRow; cash: (n: number) => 
       <div className="target__track" role="img" aria-label={`${label}: ${cash(row.won)} / ${cash(row.target)}`}>
         <span className="target__open" style={{ width: pct(row.forecast) }} title={t('targets.forecast', { value: cash(Math.round(row.forecast)) })} />
         <span className="target__won" style={{ width: pct(row.won) }} />
-        {row.state !== 'reached' && <i className="target__pace" style={{ left: pct(row.expected) }} title={t('targets.paceMark', { value: cash(Math.round(row.expected)) })} />}
+        {row.state !== 'reached' && <i className="target__pace" style={{ insetInlineStart: pct(row.expected) }} title={t('targets.paceMark', { value: cash(Math.round(row.expected)) })} />}
       </div>
       <p className="target__note">{note}</p>
     </div>
@@ -152,7 +152,7 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
         <span className="targetline__track" role="img" aria-label={`${cash(row.won)} / ${cash(row.target)}`}>
           <span className="target__open" style={{ width: `${Math.min(100, (row.forecast / row.target) * 100)}%` }} />
           <span className="target__won" style={{ width: `${Math.min(100, (row.won / row.target) * 100)}%` }} />
-          {row.state !== 'reached' && <i className="target__pace" style={{ left: `${Math.min(100, (row.expected / row.target) * 100)}%` }} />}
+          {row.state !== 'reached' && <i className="target__pace" style={{ insetInlineStart: `${Math.min(100, (row.expected / row.target) * 100)}%` }} />}
         </span>
         <span className="num targetline__nums">
           <b>{cash(row.won)}</b> / {cash(row.target)}

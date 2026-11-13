@@ -87,7 +87,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
                     </span>
                   </td>
                   <td className="num muted">{x.archivedAt ? fmtDate(x.archivedAt.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ textAlign: 'end' }}>
                     {canWrite && (
                       <button className="btn btn--small" disabled={busy === x.id} onClick={() => void restore(x)}>
                         <Icon name="undo" size={14} /> {t('archive.restore')}

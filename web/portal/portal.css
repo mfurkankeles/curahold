@@ -59,6 +59,11 @@ html, body { margin: 0; }
 .p-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 500; cursor: pointer; text-decoration: none; }
 .p-btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .p-btn--primary:hover { background: var(--accent-ink); }
+.p-btn--danger { background: var(--error); border-color: var(--error); color: #fff; }
+.p-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(23, 21, 47, .45); }
+.p-modal__box { max-inline-size: 420px; inline-size: 100%; display: grid; gap: 10px; }
+.p-modal__box h2, .p-modal__box p { margin: 0; }
+.p-modal__foot { display: flex; justify-content: flex-end; gap: 8px; margin-block-start: 6px; }
 .p-btn:disabled { opacity: .55; cursor: default; }
 
 .p-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; background: var(--surface); }
@@ -81,7 +86,7 @@ html, body { margin: 0; }
 
 .p-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(18px, 4vw, 32px); }
 .p-signin { width: min(420px, 100%); text-align: center; }
-.p-signin form { display: grid; gap: 14px; text-align: left; margin-top: 8px; }
+.p-signin form { display: grid; gap: 14px; text-align: start; margin-top: 8px; }
 .p-signin__logo { max-height: 52px; max-width: 200px; margin: 0 auto 16px; display: block; }
 .p-signin__foot { margin-top: 22px; font-size: 14px; }
 
@@ -130,7 +135,7 @@ html, body { margin: 0; }
 .p-seg--full { display: flex; width: 100%; margin: 4px 0 6px; }
 .p-seg--full button { flex: 1; }
 .p-code { font-size: 22px !important; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
-.p-form-plain { display: grid; gap: 14px; text-align: left; margin-top: 8px; }
+.p-form-plain { display: grid; gap: 14px; text-align: start; margin-top: 8px; }
 .p-signin .p-link { justify-self: center; }
 .p-note--ok { background: var(--accent-wash); color: var(--accent-ink); }
 

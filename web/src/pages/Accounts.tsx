@@ -12,7 +12,7 @@ import { ExportMenu } from '../components/Export';
 import { allPages, cellOf } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
-import { Avatar, Confirm, Dialog, DueLabel } from '../components/ui';
+import { Avatar, Confirm, Dialog, DueLabel, onTabKeys } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh, useLocation } from '../lib/router';
@@ -302,9 +302,9 @@ export function AccountsPage() {
       <div className="page">
         <RecordTabs current="accounts" types={types} />
         <div className="viewbar">
-          <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')}>
+          <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')} onKeyDown={onTabKeys}>
             {VIEWS.filter((v) => v !== 'reviews' || reviewsOn).map((v) => (
-              <button key={v} role="tab" aria-selected={view === v} aria-pressed={view === v} onClick={() => setView(v)}>
+              <button key={v} role="tab" aria-selected={view === v} tabIndex={view === v ? 0 : -1} onClick={() => setView(v)}>
                 <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', reviews: 'handshake', products: 'target' } as const)[v]} size={15} />
                 {t(`acards.view.${v}` as any)}
               </button>

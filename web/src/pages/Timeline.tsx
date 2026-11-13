@@ -3,7 +3,7 @@
 // person or customer. The bar carries the same time colours as everywhere.
 import { useEffect, useMemo, useState } from 'react';
 import type { Task } from '../../../shared/src/model';
-import { EmptyState, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -37,14 +37,22 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   const [mine, setMine] = useState(false);
   const [board, setBoard] = useState('');
   const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const end = addDays(start, DAYS - 1);
   usePageDefaults(board ? { boardId: board } : null);
   useEffect(() => {
     const p = new URLSearchParams({ span: '1', from: start, to: end });
     if (mine) p.set('assignee', 'me');
     if (board) p.set('board', board);
-    void get<{ tasks: Task[] }>(`/tasks?${p}`).then((r) => setTasks(r.tasks), () => setTasks([]));
-  }, [start, end, mine, board, refreshKey]);
+    void get<{ tasks: Task[] }>(`/tasks?${p}`).then(
+      (r) => {
+        setTasks(r.tasks);
+        setFailed(false);
+      },
+      () => setFailed(true),
+    );
+  }, [start, end, mine, board, refreshKey, attempt]);
 
   const doneKeys = useMemo(() => {
     const s = new Set<string>();
@@ -135,7 +143,9 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
         </div>
       </header>
       <div className="page">
-        {tasks === null ? (
+        {failed ? (
+          <LoadError onRetry={() => { setFailed(false); setTasks(null); setAttempt((n) => n + 1); }} />
+        ) : tasks === null ? (
           <SkeletonRows rows={8} label={t('common.loading')} />
         ) : rows.length === 0 ? (
           <div className="sheet">
@@ -173,7 +183,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
                   <span className="muted num">{r.list.length}</span>
                 </div>
                 <div className="gantt__lanes">
-                  {todayAt >= 0 && todayAt < DAYS && <span className="gantt__today" style={{ left: `calc(${todayAt + 0.5} * 100% / var(--days))` }} aria-hidden="true" />}
+                  {todayAt >= 0 && todayAt < DAYS && <span className="gantt__today" style={{ insetInlineStart: `calc(${todayAt + 0.5} * 100% / var(--days))` }} aria-hidden="true" />}
                   {r.list
                     .sort((a, b) => String(a.startDate ?? a.dueDate).localeCompare(String(b.startDate ?? b.dueDate)))
                     .map((x) => {
@@ -191,7 +201,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
                             data-point={to === from || undefined}
                             data-flip={(to === from && from > DAYS * 0.7) || undefined}
                             data-mine={x.assigneeIds.includes(me.user.id) || undefined}
-                            style={{ marginLeft: `calc(${from} * 100% / var(--days))`, width: `calc(${Math.max(1, to - from + 1)} * 100% / var(--days))` }}
+                            style={{ marginInlineStart: `calc(${from} * 100% / var(--days))`, width: `calc(${Math.max(1, to - from + 1)} * 100% / var(--days))` }}
                             title={`${x.title} · ${x.startDate ? `${fmtDate(x.startDate)} – ` : ''}${fmtDate(x.dueDate!)}`}
                             onClick={() => setQuery('task', x.id)}
                           >

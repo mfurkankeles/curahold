@@ -9,10 +9,11 @@ import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, setQuery } from '../lib/router';
 import { PanelBack } from './BackBar';
+import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { saveTask, type TaskChanges } from '../lib/tasks';
-import { Confirm, PeoplePicker } from './ui';
+import { Confirm, PeoplePicker, useFocusTrap } from './ui';
 import { Icon, type IconName } from './icons';
 import { doneTarget } from '../lib/tasks';
 import { useToggleDone } from './Tick';
@@ -33,6 +34,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
+  useFocusTrap(panel);
 
   const load = useCallback(async () => {
     try {
@@ -463,6 +465,7 @@ function Subtasks({ task, doneKeys, firstKey, doneKey, editable, reload, onChang
 function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean; reload: () => Promise<void> }) {
   const { t } = useI18n();
   const { toast } = useStore();
+  const save = useSaver();
   const input = useRef<HTMLInputElement>(null);
   async function upload(file: File) {
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
@@ -489,8 +492,7 @@ function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean
               onDelete={
                 editable
                   ? async () => {
-                      await del(`/files/${f.id}`);
-                      await reload();
+                      if (await save(() => del(`/files/${f.id}`), false)) await reload();
                     }
                   : undefined
               }

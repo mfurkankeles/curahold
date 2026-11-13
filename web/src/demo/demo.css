@@ -26,17 +26,17 @@
 .demobar :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .demobar__lang { display: flex; flex: none; }
 .demobar__lang button { padding: 3px 8px; border-radius: 0; }
-.demobar__lang button:first-child { border-radius: var(--r-s) 0 0 var(--r-s); }
-.demobar__lang button:last-child { border-radius: 0 var(--r-s) var(--r-s) 0; margin-left: -1px; }
+.demobar__lang button:first-child { border-start-start-radius: var(--r-s); border-start-end-radius: 0; border-end-end-radius: 0; border-end-start-radius: var(--r-s); }
+.demobar__lang button:last-child { border-start-start-radius: 0; border-start-end-radius: var(--r-s); border-end-end-radius: var(--r-s); border-end-start-radius: 0; margin-inline-start: -1px; }
 .demobar__lang button[aria-pressed='true'] { background: rgba(255, 255, 255, .16); border-color: rgba(217, 235, 231, .6); }
 .demobar__more { position: relative; }
 .demobar__short { display: none; }
 .demobar__ideas {
-  position: absolute; right: 0; top: calc(100% + 8px); width: min(360px, calc(100vw - 24px));
+  position: absolute; inset-inline-end: 0; top: calc(100% + 8px); width: min(360px, calc(100vw - 24px));
   background: var(--surface); color: var(--ink); border-radius: var(--r-m); padding: 14px 16px;
   box-shadow: 0 20px 50px rgba(13, 68, 72, .25); z-index: 70;
 }
-.demobar__ideas ul { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 8px; line-height: 1.4; }
+.demobar__ideas ul { margin: 0 0 12px; padding-inline-start: 18px; display: grid; gap: 8px; line-height: 1.4; }
 .demobar__ideas .demobar__reset { color: var(--brand-ink); border-color: var(--line-strong); }
 
 @media (max-width: 760px) {
@@ -54,7 +54,7 @@
 
 /* Signing in again did not help: said under the bar, with a way out. */
 .demobar__problem {
-  position: absolute; left: 0; right: 0; top: 100%; z-index: 60;
+  position: absolute; inset-inline-start: 0; inset-inline-end: 0; top: 100%; z-index: 60;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 10px 14px; background: #fff4e5; color: #5c3b00; border-bottom: 1px solid #f0c98a; font-size: 14px;
 }
@@ -87,7 +87,7 @@
   transition: left .28s var(--ease), top .28s var(--ease);
 }
 .tour__card[data-side='center'] { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100vw - 24px)); }
-.tour__card[data-side='dock'] { left: 12px; right: 12px; bottom: 12px; width: auto; }
+.tour__card[data-side='dock'] { inset-inline-start: 12px; inset-inline-end: 12px; bottom: 12px; width: auto; }
 .tour__top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6f6c93; }
 .tour__count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--brand-ink); }
 .tour__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -100,7 +100,7 @@
 .tour__hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--brand-ink); }
 .tour__nav, .tour__end { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
 .tour__end { justify-content: flex-start; flex-wrap: wrap; }
-.tour__end .tour__link { margin-left: auto; }
+.tour__end .tour__link { margin-inline-start: auto; }
 .tour__btn {
   font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
   border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);

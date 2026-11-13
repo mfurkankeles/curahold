@@ -7,7 +7,7 @@ import type { Account } from '../../../shared/src/model';
 import type { AppRecord } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { bandOf, keyFields } from '../components/AccountViews';
-import { EmptyState, SkeletonCards } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { TargetsPanel, dealsN } from '../components/Rhythm';
@@ -138,18 +138,27 @@ export function ReportsPage() {
   const [work, setWork] = useState<WorkReport | null>(null);
   const [accounts, setAccounts] = useState<Account[] | null>(null);
   const [deals, setDeals] = useState<AppRecord[] | null>(null);
+  // A load that fails says so (with a retry) instead of passing for "no data".
+  const [failed, setFailed] = useState({ work: false, accounts: false, deals: false });
+  const [attempt, setAttempt] = useState({ work: 0, accounts: 0, deals: 0 });
+  const fail = (k: 'work' | 'accounts' | 'deals', on: boolean) => setFailed((f) => ({ ...f, [k]: on }));
+  const retry = (k: 'work' | 'accounts' | 'deals') => {
+    fail(k, false);
+    setAttempt((a) => ({ ...a, [k]: a[k] + 1 }));
+  };
   const { types } = useRecordTypes();
   const opp = types?.find((x) => x.kind === 'opportunity') ?? null;
   useEffect(() => {
     setWork(null);
-    void get<WorkReport>(`/reports/work${board ? `?board=${board}` : ''}`).then(setWork, () => undefined);
-  }, [board]);
+    fail('work', false);
+    void get<WorkReport>(`/reports/work${board ? `?board=${board}` : ''}`).then(setWork, () => fail('work', true));
+  }, [board, attempt.work]);
   useEffect(() => {
-    void get<{ accounts: Account[] }>('/accounts?limit=500&signals=1').then((r) => setAccounts(r.accounts), () => setAccounts([]));
-  }, []);
+    void get<{ accounts: Account[] }>('/accounts?limit=500&signals=1').then((r) => setAccounts(r.accounts), () => fail('accounts', true));
+  }, [attempt.accounts]);
   useEffect(() => {
-    if (opp) void get<{ records: AppRecord[] }>(`/records?type=${opp.key}&limit=500`).then((r) => setDeals(r.records), () => setDeals([]));
-  }, [opp?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (opp) void get<{ records: AppRecord[] }>(`/records?type=${opp.key}&limit=500`).then((r) => setDeals(r.records), () => fail('deals', true));
+  }, [opp?.key, attempt.deals]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { renewal, value } = keyFields(me.org.accountFields);
   const cur = useMoney();
@@ -221,7 +230,11 @@ export function ReportsPage() {
       <ReportTabs active="overview" />
       <div className="page reports">
         {!work ? (
-          <SkeletonCards count={4} label={t('common.loading')} />
+          failed.work ? (
+            <LoadError onRetry={() => retry('work')} />
+          ) : (
+            <SkeletonCards count={4} label={t('common.loading')} />
+          )
         ) : (
           <>
             <div className="statstrip">
@@ -318,7 +331,11 @@ export function ReportsPage() {
           <Icon name="building" size={18} /> {words.other}
         </h2>
         {!accounts ? (
-          <SkeletonCards count={3} label={t('common.loading')} />
+          failed.accounts ? (
+            <LoadError onRetry={() => retry('accounts')} />
+          ) : (
+            <SkeletonCards count={3} label={t('common.loading')} />
+          )
         ) : customers.total === 0 ? (
           <div className="sheet">
             <EmptyState compact icon="building" title={t('accounts.emptyTitle')} />
@@ -326,6 +343,7 @@ export function ReportsPage() {
         ) : (
           // Targets and health across the page; renewals and the pipeline side by side, the same height.
           <div className="reports__stack">
+            {failed.deals && !deals && <LoadError onRetry={() => retry('deals')} />}
             {opp && deals && <TargetsPanel type={opp} records={deals} />}
             <section className="sheet">
               <h2 className="sheet__title">

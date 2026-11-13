@@ -1,7 +1,7 @@
 // The customer portal: what a customer's people see of the work a company
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n';
 import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
@@ -503,6 +503,62 @@ function OneStep({ ctx, org, kind, token, lang, onIn, onBack }: { ctx: Ctx; org:
 
 // --------------------------------------------------------------- account
 
+/** Asks before something that cannot be taken back at once: a small modal that keeps Tab inside and closes on Esc. */
+function Ask({ ctx, title, body, label, onYes, onClose }: { ctx: Ctx; title: string; body: string; label: string; onYes: () => void; onClose: () => void }) {
+  const { t } = ctx;
+  const box = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    box.current?.querySelector<HTMLElement>('button')?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close.current();
+      if (e.key !== 'Tab' || !box.current) return;
+      const items = Array.from(box.current.querySelectorAll<HTMLElement>('button:not([disabled])'));
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      prev?.focus?.();
+    };
+  }, []);
+  return (
+    <div className="p-modal" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="p-card p-modal__box" role="alertdialog" aria-modal="true" aria-labelledby="p-ask-title" aria-describedby="p-ask-body" ref={box}>
+        <h2 id="p-ask-title">{title}</h2>
+        <p id="p-ask-body" className="p-muted">
+          {body}
+        </p>
+        <div className="p-modal__foot">
+          <button className="p-btn" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button
+            className="p-btn p-btn--danger"
+            onClick={() => {
+              onClose();
+              onYes();
+            }}
+          >
+            {label}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** The person's own ways in: passkeys, a password, linked accounts, and signing out everywhere. */
 function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string) => void }) {
   const { t, when } = ctx;
@@ -512,6 +568,7 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [ask, setAsk] = useState<{ title: string; body: string; label: string; run: () => void } | null>(null);
   const act = async (fn: () => Promise<unknown>, ok: string) => {
     setBusy(true);
     setProblem(null);
@@ -529,6 +586,12 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
   if (failed) return <Problem text={failed} />;
   if (!data) return <p className="p-muted">{t('common.loading')}</p>;
   const m = data.methods;
+  // Ways to sign in that would still work if one passkey or linked account went away.
+  const waysLeft = (drop: { passkey?: string; identity?: string }) =>
+    (m.email ? 1 : 0) +
+    (m.password && data.password.set ? 1 : 0) +
+    (m.passkey ? data.passkeys.filter((k) => k.id !== drop.passkey).length : 0) +
+    data.identities.filter((i) => i.provider !== drop.identity && m[i.provider]).length;
   return (
     <div className="p-card p-account">
       <a className="p-back" {...link('/')}>
@@ -554,7 +617,12 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
                   <strong>{k.name}</strong>
                   <small className="p-muted"> · {t('portal.added', { when: when(k.createdAt) })}</small>
                 </span>
-                <button className="p-link" disabled={busy} onClick={() => act(() => call('DELETE', `/account/passkeys/${k.id}`), t('portal.passkeyRemoved'))}>
+                <button className="p-link" disabled={busy} onClick={() =>
+                    waysLeft({ passkey: k.id }) === 0
+                      ? setProblem(t('portal.lastMethod'))
+                      : setAsk({ title: t('portal.removePasskeyTitle', { name: k.name }), body: t('portal.removePasskeyBody'), label: t('portal.remove'), run: () => void act(() => call('DELETE', `/account/passkeys/${k.id}`), t('portal.passkeyRemoved')) })
+                  }
+                >
                   {t('portal.remove')}
                 </button>
               </li>
@@ -623,7 +691,17 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
                   <strong>{t(`portal.method.${i.provider}` as MessageKey)}</strong>
                   <small className="p-muted"> · {i.email}</small>
                 </span>
-                <button className="p-link" disabled={busy} onClick={() => act(() => call('DELETE', `/account/identities/${i.provider}`), t('portal.unlinked'))}>
+                <button className="p-link" disabled={busy} onClick={() =>
+                    waysLeft({ identity: i.provider }) === 0
+                      ? setProblem(t('portal.lastMethod'))
+                      : setAsk({
+                          title: t('portal.unlinkTitle', { method: t(`portal.method.${i.provider}` as MessageKey) }),
+                          body: t('portal.unlinkBody', { email: i.email }),
+                          label: t('portal.unlink'),
+                          run: () => void act(() => call('DELETE', `/account/identities/${i.provider}`), t('portal.unlinked')),
+                        })
+                  }
+                >
                   {t('portal.unlink')}
                 </button>
               </li>
@@ -647,6 +725,7 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
           {t('portal.signOutAll')}
         </button>
       </section>
+      {ask && <Ask ctx={ctx} title={ask.title} body={ask.body} label={ask.label} onYes={ask.run} onClose={() => setAsk(null)} />}
     </div>
   );
 }

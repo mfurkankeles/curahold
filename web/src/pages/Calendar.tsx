@@ -11,9 +11,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CalendarItem, CalendarKind, CalendarReach } from '../../../shared/src/model';
 import { CALENDAR_KINDS } from '../../../shared/src/model';
-import { EmptyState } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
-import { Avatars } from '../components/ui';
+import { Avatars, onTabKeys } from '../components/ui';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, setQuery, useLocation } from '../lib/router';
@@ -103,18 +103,25 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   }, [view, date]);
 
   const [items, setItems] = useState<CalendarItem[] | null>(null);
+  // A load that failed is not an empty calendar: it says so and offers a retry.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let off = false;
     // Until it is known whether this person may ask for someone else's days, an address that names one waits.
     if (asked && /^[pt]:/.test(asked) && !reach) return;
     get<{ items: CalendarItem[] }>(`/calendar?from=${from}&to=${to}&who=${encodeURIComponent(who)}`).then(
-      (r) => !off && setItems(r.items),
-      () => !off && setItems([]),
+      (r) => {
+        if (off) return;
+        setItems(r.items);
+        setFailed(false);
+      },
+      () => !off && setFailed(true),
     );
     return () => {
       off = true;
     };
-  }, [from, to, who, refreshKey, reach, asked]);
+  }, [from, to, who, refreshKey, reach, asked, attempt]);
 
   // ---- which kinds show ---------------------------------------------------
   const [hidden, setHidden] = useState<Set<CalendarKind>>(() => new Set(remembered('app_cal_hidden', '').split(',').filter((k): k is CalendarKind => (CALENDAR_KINDS as readonly string[]).includes(k))));
@@ -195,9 +202,9 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
         </div>
         <div className="topbar__spacer" />
         <div className="toolbar">
-          <div className="seg seg--views" role="tablist" aria-label={t('calendar.viewLabel')}>
+          <div className="seg seg--views" role="tablist" aria-label={t('calendar.viewLabel')} onKeyDown={onTabKeys}>
             {VIEWS.map((v) => (
-              <button key={v} role="tab" aria-selected={view === v} aria-pressed={view === v} onClick={() => go({ view: v })}>
+              <button key={v} role="tab" aria-selected={view === v} tabIndex={view === v ? 0 : -1} onClick={() => go({ view: v })}>
                 {t(`calendar.view.${v}`)}
               </button>
             ))}
@@ -266,7 +273,9 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
           ))}
         </div>
 
-        {view === 'month' && (
+        {failed && <LoadError onRetry={() => { setFailed(false); setItems(null); setAttempt((n) => n + 1); }} />}
+        {!failed && !items && <SkeletonRows rows={view === 'day' ? 4 : 8} label={t('common.loading')} />}
+        {!failed && items && view === 'month' && (
           <div className="cal" role="grid" aria-label={t('calendar.title')}>
             {weekdays.map((w) => (
               <div className="cal__dow" key={w} role="columnheader">
@@ -295,7 +304,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
           </div>
         )}
 
-        {view === 'week' && (
+        {!failed && items && view === 'week' && (
           <div className="calweek">
             {Array.from({ length: 7 }, (_, i) => plus(from, i)).map((day) => {
               const list = byDay.get(day) ?? [];
@@ -318,7 +327,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
           </div>
         )}
 
-        {view === 'day' && (
+        {!failed && items && view === 'day' && (
           <div className="sheet calday">
             {(byDay.get(date) ?? []).length === 0 ? (
               <EmptyState compact icon="calendar" title={t('calendar.emptyDay')}>
@@ -357,7 +366,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
           </div>
         )}
 
-        {view === 'year' && (
+        {!failed && items && view === 'year' && (
           <div className="calyear">
             {Array.from({ length: 12 }, (_, m) => `${date.slice(0, 4)}-${String(m + 1).padStart(2, '0')}-01`).map((first) => {
               const start = mondayOf(first);
@@ -392,7 +401,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
             })}
           </div>
         )}
-        {items && items.length === 0 && view !== 'day' && <p className="cal-none">{t('calendar.emptyRange')}</p>}
+        {!failed && items && items.length === 0 && view !== 'day' && <p className="cal-none">{t('calendar.emptyRange')}</p>}
       </div>
     </>
   );

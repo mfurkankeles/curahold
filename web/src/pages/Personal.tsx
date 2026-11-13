@@ -10,11 +10,13 @@ import { AiConnect, KeyList } from '../components/Developer';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
+import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 
 export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; onLocale: (l: Locale) => void }) {
   const { t, locale } = useI18n();
   const { me, boards, reloadMe, reloadPeople, toast } = useStore();
+  const run = useSaver();
   const [name, setName] = useState(me.user.name);
   const [prefs, setPrefs] = useState<NotifyPrefs>(me.user.prefs);
   const [options, setOptions] = useState<DeliveryOption[]>([]);
@@ -216,8 +218,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                   <button
                     className="btn btn--quiet"
                     onClick={async () => {
-                      await del('/me/calendar');
-                      setCalendar({ enabled: false });
+                      if (await run(() => del('/me/calendar'), false)) setCalendar({ enabled: false });
                     }}
                   >
                     {t('me.calendarOff')}

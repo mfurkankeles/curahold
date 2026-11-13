@@ -3,6 +3,7 @@
 // numbers stay current while the screen is open. The figures are only ever as
 // real as the data behind them — a badge says live or demo.
 import { useEffect, useRef, useState } from 'react';
+import { LoadError, SkeletonRows } from '../components/Empty';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useMoney } from '../lib/money';
@@ -66,14 +67,17 @@ export function MetricsPage() {
   const owner = !!me.owner;
   const [m, setM] = useState<PlatformMetrics | null>(null);
   const loaded = useRef(false);
+  // A first load that fails says so; a later refresh that fails keeps the numbers already shown.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!owner) return;
     let live = true;
     const load = () =>
       get<PlatformMetrics>('/metrics')
-        .then((d) => live && (setM(d), (loaded.current = true)))
-        .catch(() => undefined);
+        .then((d) => live && (setM(d), setFailed(false), (loaded.current = true)))
+        .catch(() => live && !loaded.current && setFailed(true));
     load();
     const id = window.setInterval(() => document.visibilityState === 'visible' && load(), REFRESH_MS);
     const onVis = () => document.visibilityState === 'visible' && load();
@@ -83,7 +87,7 @@ export function MetricsPage() {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [owner]);
+  }, [owner, attempt]);
 
   if (!owner) return <div className="metrics"><p className="metrics__denied">{t('metrics.denied')}</p></div>;
 
@@ -119,6 +123,15 @@ export function MetricsPage() {
         </div>
       </div>
       {m?.mode === 'demo' ? <p className="metrics__note">{t('metrics.demoNote')}</p> : null}
+
+      {!m ? (
+        failed ? (
+          <LoadError onRetry={() => { setFailed(false); setAttempt((n) => n + 1); }} />
+        ) : (
+          <SkeletonRows rows={6} label={t('common.loading')} />
+        )
+      ) : (
+        <>
 
       {/* Revenue */}
       <section className="metrics__sec">
@@ -232,6 +245,8 @@ export function MetricsPage() {
           </div>
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { MAX_FILE_MB, MENTION_RE, type FileMeta, type Person } from '../../../sh
 import { ApiFailure, api, del, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
+import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Icon } from './icons';
@@ -230,6 +231,7 @@ export interface ThreadComment {
 
 export function CommentView({ comment, author, canDelete, deleteUrl, onDeleted }: { comment: ThreadComment; author?: Person; canDelete: boolean; deleteUrl: string; onDeleted: () => void }) {
   const { t } = useI18n();
+  const save = useSaver();
   return (
     <div className="comment" data-visibility={comment.visibility} data-customer={comment.portalAuthorName ? true : undefined}>
       <Avatar person={author ?? (comment.portalAuthorName ? ({ id: comment.id, name: comment.portalAuthorName } as Person) : undefined)} large />
@@ -245,10 +247,9 @@ export function CommentView({ comment, author, canDelete, deleteUrl, onDeleted }
           {canDelete && (
             <button
               className="btn btn--quiet btn--small"
-              style={{ marginLeft: 'auto' }}
+              style={{ marginInlineStart: 'auto' }}
               onClick={async () => {
-                await del(deleteUrl);
-                onDeleted();
+                if (await save(() => del(deleteUrl), false)) onDeleted();
               }}
             >
               {t('common.delete')}

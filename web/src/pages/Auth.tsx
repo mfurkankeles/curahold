@@ -289,7 +289,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
             <span className="field__label">{t('auth.deviceCode')}</span>
             <input className="input code-input" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
           </label>
-          {challenge.devCode && <span className="field__hint">dev: {challenge.devCode}</span>}
+          {import.meta.env.DEV && challenge.devCode && <span className="field__hint">dev: {challenge.devCode}</span>}
           <button className="btn btn--primary">{t('auth.deviceConfirm')}</button>
         </form>
       )}

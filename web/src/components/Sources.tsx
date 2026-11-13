@@ -15,7 +15,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES, useConnections } from './Connections';
-import { Confirm, Dialog, RowMenu } from './ui';
+import { Confirm, Dialog, RowMenu, onTabKeys } from './ui';
 
 /** What the screens call the app on the other side; in the try-it demo, the CRM the pretend one stands in for. */
 const appName = (c: { provider: string; standsFor?: string | null }) => PROVIDER_NAMES[c.standsFor ?? c.provider] ?? c.provider;
@@ -451,9 +451,9 @@ export function SourceDetail({ id }: { id: string }) {
         <SetupFlow d={d} step={step} setStep={setStep} reload={load} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : (
         <>
-          <div className="seg source__tabs" role="tablist">
+          <div className="seg source__tabs" role="tablist" onKeyDown={onTabKeys}>
             {(['status', 'mapping', 'people', 'settings'] as const).map((k) => (
-              <button key={k} role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>
+              <button key={k} role="tab" aria-selected={tab === k} tabIndex={tab === k ? 0 : -1} onClick={() => setTab(k)}>
                 {t(`sync.tab.${k}` as MessageKey)}
               </button>
             ))}
@@ -625,7 +625,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
               <input type="checkbox" checked={o.enabled} disabled={o.target === 'account' && accountTaken(i)} onChange={(e) => set(i, { enabled: e.target.checked })} />
               <span>
                 <strong>{o.label}</strong>
-                {o.custom && <span className="badge" style={{ marginLeft: 6 }}>{t('sync.customObject')}</span>}
+                {o.custom && <span className="badge" style={{ marginInlineStart: 6 }}>{t('sync.customObject')}</span>}
               </span>
             </label>
             {o.enabled && (

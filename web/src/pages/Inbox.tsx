@@ -2,10 +2,10 @@
 // or clear it; filters keep mentions, new tasks and comments apart.
 import { useCallback, useEffect, useState } from 'react';
 import type { Notification } from '../../../shared/src/model';
-import { EmptyState, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
-import { Avatar } from '../components/ui';
-import { get, post } from '../lib/api';
+import { Avatar, onTabKeys } from '../components/ui';
+import { ApiFailure, get, post } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
@@ -18,20 +18,28 @@ const KIND_ICON: Record<string, IconName> = { stale: 'hourglass', escalated: 'al
 
 export function InboxPage() {
   const { t } = useI18n();
-  const { person } = useStore();
+  const { person, toast } = useStore();
   const [filter, setFilter] = useState<Filter>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [data, setData] = useState<{ notifications: Notification[]; unread: number; more: boolean } | null>(null);
+  const [failed, setFailed] = useState(false);
   const load = useCallback(
     async (before?: string) => {
       const p = new URLSearchParams({ filter, limit: '40' });
       if (unreadOnly) p.set('unread', '1');
       if (before) p.set('before', before);
-      const r = await get<{ notifications: Notification[]; unread: number; more: boolean }>(`/notifications?${p}`);
-      setData((d) => (before && d ? { ...r, notifications: [...d.notifications, ...r.notifications] } : r));
-      window.dispatchEvent(new Event('app:inbox-changed'));
+      try {
+        const r = await get<{ notifications: Notification[]; unread: number; more: boolean }>(`/notifications?${p}`);
+        setData((d) => (before && d ? { ...r, notifications: [...d.notifications, ...r.notifications] } : r));
+        setFailed(false);
+        window.dispatchEvent(new Event('app:inbox-changed'));
+      } catch (e) {
+        // A first load that fails says so; a refresh or "more" that fails leaves what is shown and tells the person.
+        setFailed(true);
+        if (before) toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      }
     },
-    [filter, unreadOnly],
+    [filter, unreadOnly, toast, t],
   );
   useEffect(() => {
     setData(null);
@@ -92,9 +100,9 @@ export function InboxPage() {
       </header>
       <div className="page inbox">
         <div className="toolbar inbox__bar">
-          <div className="seg" role="tablist" aria-label={t('inbox.filter')}>
+          <div className="seg" role="tablist" aria-label={t('inbox.filter')} onKeyDown={onTabKeys}>
             {FILTERS.map((f) => (
-              <button key={f} role="tab" aria-selected={filter === f} aria-pressed={filter === f} onClick={() => setFilter(f)}>
+              <button key={f} role="tab" aria-selected={filter === f} tabIndex={filter === f ? 0 : -1} onClick={() => setFilter(f)}>
                 {t(`inbox.filter.${f}` as any)}
               </button>
             ))}
@@ -105,7 +113,11 @@ export function InboxPage() {
           </label>
         </div>
         {!data ? (
-          <SkeletonRows rows={7} label={t('common.loading')} />
+          failed ? (
+            <LoadError onRetry={() => { setFailed(false); void load(); }} />
+          ) : (
+            <SkeletonRows rows={7} label={t('common.loading')} />
+          )
         ) : data.notifications.length === 0 ? (
           <EmptyState icon="inbox" tone="done" title={unreadOnly || filter !== 'all' ? t('inbox.noneHere') : t('inbox.empty')} body={unreadOnly || filter !== 'all' ? undefined : t('inbox.emptyBody')} />
         ) : (

@@ -21,8 +21,9 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, api, del, get, post, put } from '../lib/api';
 import { collectContext } from '../lib/diagnostics';
 import { useI18n } from '../lib/i18n';
+import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
-import { Avatar, Dialog } from './ui';
+import { Avatar, Dialog, onTabKeys } from './ui';
 
 const TYPES = [
   'image/png',
@@ -701,6 +702,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
 function MyRequests({ access, reload }: { access: Access | null; reload: () => void }) {
   const { t, fmtDate } = useI18n();
   const { toast, reloadMe, me } = useStore();
+  const save = useSaver();
   const [list, setList] = useState<HelpRequestInfo[] | null>(null);
   const [hours, setHours] = useState<(typeof GRANT_HOURS)[number]>(24);
   // The request whose conversation is open; the list is behind it.
@@ -712,8 +714,7 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
     );
   useEffect(loadList, [access]);
   const revoke = async (id: string) => {
-    await del(`/support/grants/${id}`);
-    toast(t('help.grant.closed'));
+    if (!(await save(() => del(`/support/grants/${id}`), t('help.grant.closed')))) return;
     reload();
     void reloadMe();
   };
@@ -1034,12 +1035,12 @@ export function HelpDialog({ onClose, start = 'new', about = '' }: { onClose: ()
   return (
     <div className="help__host" data-hidden={hidden || undefined}>
       <Dialog title={t('help.title')} wide onClose={onClose}>
-        <div className="tabs" role="tablist">
-          <button className="tab" role="tab" aria-selected={tab === 'new'} onClick={() => (setTab('new'), setSentRef(null))}>
+        <div className="tabs" role="tablist" onKeyDown={onTabKeys}>
+          <button className="tab" role="tab" aria-selected={tab === 'new'} tabIndex={tab === 'new' ? 0 : -1} onClick={() => (setTab('new'), setSentRef(null))}>
             <Icon name="send" size={16} className="icon--lead" />
             {t('help.tab.new')}
           </button>
-          <button className="tab" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
+          <button className="tab" role="tab" aria-selected={tab === 'mine'} tabIndex={tab === 'mine' ? 0 : -1} onClick={() => setTab('mine')}>
             <Icon name="inbox" size={16} className="icon--lead" />
             {t('help.tab.mine')}
           </button>
@@ -1081,6 +1082,7 @@ export function HelpDialog({ onClose, start = 'new', about = '' }: { onClose: ()
 export function SupportAccessSettings() {
   const { t, fmtDate } = useI18n();
   const { toast } = useStore();
+  const save = useSaver();
   const [access, setAccess] = useState<Access | null>(null);
   const load = () => void get<Access>('/support/grants?all=1').then(setAccess);
   useEffect(load, []);
@@ -1148,9 +1150,7 @@ export function SupportAccessSettings() {
               <button
                 className="btn btn--small"
                 onClick={async () => {
-                  await del(`/support/grants/${g.id}`);
-                  toast(t('help.grant.closed'));
-                  load();
+                  if (await save(() => del(`/support/grants/${g.id}`), t('help.grant.closed'))) load();
                 }}
               >
                 {t('help.grant.close')}

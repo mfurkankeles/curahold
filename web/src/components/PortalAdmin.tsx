@@ -8,6 +8,7 @@ import { ApiFailure, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
+import { Confirm } from './ui';
 import { AccountPicker } from './AccountPicker';
 
 export function PortalSettingsTab() {
@@ -81,6 +82,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const [disabling, setDisabling] = useState<PortalPerson | null>(null);
   const load = useCallback(() => void get<{ people: PortalPerson[] }>(`/portal/users${accountId ? `?accountId=${accountId}` : ''}`).then((r) => setList(r.people)), [accountId]);
   useEffect(load, [load]);
 
@@ -142,7 +144,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                       <button className="btn btn--quiet btn--small" onClick={() => act(() => post(`/portal/users/${p.id}/resend`), t('portal.people.resent'))}>
                         {t('portal.people.resend')}
                       </button>
-                      <button className="btn btn--quiet btn--small" onClick={() => act(() => del(`/portal/users/${p.id}`), t('portal.people.disabled'))}>
+                      <button className="btn btn--quiet btn--small" onClick={() => setDisabling(p)}>
                         {t('portal.people.disable')}
                       </button>
                     </>
@@ -176,6 +178,16 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
         </form>
       )}
       <p className="field__hint">{t('portal.people.hint')}</p>
+      {disabling && (
+        <Confirm
+          title={t('portal.people.disableTitle', { name: disabling.name })}
+          body={t('portal.people.disableBody', { email: disabling.email })}
+          confirmLabel={t('portal.people.disable')}
+          danger
+          onClose={() => setDisabling(null)}
+          onConfirm={() => act(() => del(`/portal/users/${disabling.id}`), t('portal.people.disabled'))}
+        />
+      )}
     </div>
   );
 }

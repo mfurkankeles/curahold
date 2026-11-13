@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
 import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
@@ -65,6 +65,63 @@ export function railState(due: string | null, done: boolean): DueState {
   return dueState(due, done);
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Arrow-key handling for a role="tablist": put it on the list as onKeyDown, and give each
+ * tab tabIndex={selected ? 0 : -1} (roving tabindex). Left/Right (reading direction aware),
+ * Home and End move to a tab and select it.
+ */
+export function onTabKeys(e: ReactKeyboardEvent<HTMLElement>) {
+  const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+  if (!keys.includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
+  const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]:not([disabled])'));
+  const at = tabs.indexOf(document.activeElement as HTMLElement);
+  if (at < 0) return;
+  const rtl = getComputedStyle(e.currentTarget).direction === 'rtl';
+  const step = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+  const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (at + step + tabs.length) % tabs.length;
+  e.preventDefault();
+  tabs[next].focus();
+  tabs[next].click();
+}
+
+/** Keeps Tab (and Shift+Tab) inside `box`: past the last control it comes round to the first. */
+export function trapTab(e: KeyboardEvent, box: HTMLElement | null) {
+  if (e.key !== 'Tab' || !box) return;
+  const items = Array.from(box.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.getClientRects().length > 0);
+  if (!items.length) {
+    e.preventDefault();
+    box.focus();
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  const at = document.activeElement;
+  if (!at || !box.contains(at) || at === box) {
+    e.preventDefault();
+    (e.shiftKey ? last : first).focus();
+  } else if (e.shiftKey && at === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && at === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+/** For a side panel that declares aria-modal: Tab stays in it (a dialog opened over it keeps its own focus). */
+export function useFocusTrap(box: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (document.querySelector('.dialog')) return;
+      trapTab(e, box.current);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [box]);
+}
+
 export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
@@ -82,6 +139,11 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
     first?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close.current();
+      else {
+        // Only the topmost dialog holds the focus.
+        const open = document.querySelectorAll('.dialog__box');
+        if (open[open.length - 1] === box.current) trapTab(e, box.current);
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {

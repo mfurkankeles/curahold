@@ -23,7 +23,7 @@ import { FavoriteButton } from './Favorites';
 import { useAnchorText } from './Plans';
 import { OpenIn, RecordDialog } from './Records';
 import { CommentView, Composer, FileItem, postRecordComment } from './Thread';
-import { Avatar, Avatars } from './ui';
+import { Avatar, Avatars, useFocusTrap } from './ui';
 
 export function RecordPanel({ recordId, onChanged }: { recordId: string; onChanged: () => void }) {
   const { t, locale, fmtDate, words } = useI18n();
@@ -39,6 +39,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
   const anchorText = useAnchorText();
   const [planId, setPlanId] = useState('');
   const panel = useRef<HTMLDivElement>(null);
+  useFocusTrap(panel);
 
   const load = useCallback(async () => {
     try {

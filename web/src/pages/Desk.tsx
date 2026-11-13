@@ -182,7 +182,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
               <span className="field__label">{t('desk.signin.code')}</span>
               <input className="input desk-signin__code" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required autoFocus value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
             </label>
-            {devCode && (
+            {import.meta.env.DEV && devCode && (
               <button type="button" className="btn btn--small desk-signin__dev" onClick={() => setCode(devCode)}>
                 {devCode}
               </button>

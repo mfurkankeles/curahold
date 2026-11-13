@@ -23,6 +23,7 @@ import { getDeviceId } from '../lib/device';
 import { allCurrencies, useMoney } from '../lib/money';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigateFresh } from '../lib/router';
+import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
@@ -149,24 +150,6 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         </div>
       </div>
     </>
-  );
-}
-
-function useSaver() {
-  const { t } = useI18n();
-  const { toast } = useStore();
-  return useCallback(
-    async (fn: () => Promise<unknown>, ok = true) => {
-      try {
-        await fn();
-        if (ok) toast(t('common.saved'));
-        return true;
-      } catch (e) {
-        toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-        return false;
-      }
-    },
-    [toast, t],
   );
 }
 
@@ -557,6 +540,7 @@ function InviteDialog({ roles, teams, onClose, onDone }: { roles: Role[]; teams:
 
 function UserDevices({ user, onClose }: { user: AdminUser; onClose: () => void }) {
   const { t } = useI18n();
+  const save = useSaver();
   const [list, setList] = useState<SessionInfo[] | null>(null);
   const load = useCallback(() => get(`/admin/users/${user.id}/sessions`).then((r) => setList(r.sessions)), [user.id]);
   useEffect(() => {
@@ -571,7 +555,7 @@ function UserDevices({ user, onClose }: { user: AdminUser; onClose: () => void }
             <div>{s.deviceLabel || t('devices.unknown')}</div>
             <div className="muted" style={{ fontSize: 12.5 }}>{t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}</div>
           </div>
-          <button className="btn btn--small" onClick={async () => { await del(`/admin/sessions/${s.id}`); await load(); }}>
+          <button className="btn btn--small" onClick={async () => { if (await save(() => del(`/admin/sessions/${s.id}`), false)) await load(); }}>
             {t('devices.signOut')}
           </button>
         </div>
@@ -585,6 +569,7 @@ function TeamsTab() {
   const { teams, people, reloadPeople } = useStore();
   const save = useSaver();
   const [name, setName] = useState('');
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
   const active = people.filter((p) => p.status !== 'deleted');
   return (
     <div style={{ maxWidth: 760 }}>
@@ -614,7 +599,7 @@ function TeamsTab() {
               {tm.name}
             </h2>
             <div className="topbar__spacer" />
-            <button className="btn btn--small btn--danger" onClick={async () => { if (await save(() => del(`/admin/teams/${tm.id}`))) await reloadPeople(); }}>
+            <button className="btn btn--small btn--danger" onClick={() => setDeleting({ id: tm.id, name: tm.name })}>
               {t('common.delete')}
             </button>
           </div>
@@ -637,6 +622,18 @@ function TeamsTab() {
           </div>
         </div>
       ))}
+      {deleting && (
+        <Confirm
+          title={t('settings.teams.deleteTitle', { name: deleting.name })}
+          body={t('settings.teams.deleteBody', { name: deleting.name })}
+          confirmLabel={t('common.delete')}
+          danger
+          onClose={() => setDeleting(null)}
+          onConfirm={async () => {
+            if (await save(() => del(`/admin/teams/${deleting.id}`))) await reloadPeople();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -820,6 +817,7 @@ function JoiningTab() {
   const [roleFor, setRoleFor] = useState<Record<string, string>>({});
   const [domainEmail, setDomainEmail] = useState('');
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
+  const [removingDomain, setRemovingDomain] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const load = useCallback(async () => {
     const [r, ro] = await Promise.all([get<{ requests: JoinRequest[] }>('/admin/join-requests'), get<{ roles: Role[] }>('/admin/roles')]);
@@ -923,7 +921,7 @@ function JoiningTab() {
           {me.org.domains.map((d) => (
             <span className="option-chip" key={d}>
               <span>@{d}</span>
-              <button aria-label={t('common.remove')} onClick={async () => { if (await save(() => del(`/admin/domains/${d}`))) await reloadMe(); }}>
+              <button aria-label={`${t('common.remove')} @${d}`} onClick={() => setRemovingDomain(d)}>
                 ✕
               </button>
             </span>
@@ -964,7 +962,7 @@ function JoiningTab() {
                   if (r.verified) toast(t('join.alreadyVerified'));
                   else {
                     setPendingDomain(domainEmail.trim());
-                    if (r.devCode) setCode(r.devCode);
+                    if (import.meta.env.DEV && r.devCode) setCode(r.devCode);
                   }
                 } catch (e) {
                   toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
@@ -975,6 +973,18 @@ function JoiningTab() {
             </button>
           </div>
         )}
+        {removingDomain && (
+          <Confirm
+            title={t('join.domainRemoveTitle', { domain: removingDomain })}
+            body={t('join.domainRemoveBody', { domain: removingDomain })}
+            confirmLabel={t('common.remove')}
+            danger
+            onClose={() => setRemovingDomain(null)}
+            onConfirm={async () => {
+              if (await save(() => del(`/admin/domains/${removingDomain}`))) await reloadMe();
+            }}
+          />
+        )}
       </section>
     </div>
   );
@@ -984,6 +994,7 @@ function JoiningTab() {
 function LogoEditor() {
   const { t } = useI18n();
   const { me, reloadMe, toast } = useStore();
+  const save = useSaver();
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const upload = async (file: File | undefined) => {
@@ -1025,8 +1036,7 @@ function LogoEditor() {
               className="btn btn--small btn--quiet"
               disabled={busy}
               onClick={async () => {
-                await del('/admin/logo');
-                await reloadMe();
+                if (await save(() => del('/admin/logo'), false)) await reloadMe();
               }}
             >
               {t('settings.company.logoRemove')}
