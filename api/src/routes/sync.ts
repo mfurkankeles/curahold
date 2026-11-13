@@ -245,9 +245,11 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
       status: conn.status,
       lastError: lastError ?? null,
       /** How to sign in again when the connection says its credentials stopped working. */
-      reconnect: adapter.oauth ? 'oauth' : adapter.keyed ? 'key' : null,
+      reconnect: conn.config?.mode === 'basic' && adapter.keyed ? 'key' : adapter.oauth ? 'oauth' : adapter.keyed ? 'key' : null,
       /** What was typed the first time, minus secrets, to start the new key's form filled in. */
       prefill: adapter.keyed ? prefillOf(conn.provider, conn.config) : {},
+      /** Jira: the sign-in is also offered where this server has the Atlassian app registered. */
+      mode: (conn.config?.mode as string | undefined) ?? null,
       tabular: adapter.tabular,
       readOnly: !!adapter.readOnly,
       canReply: !!adapter.reply && !adapter.readOnly,
@@ -359,14 +361,15 @@ syncRoutes.post('/connections/:id/file', async (c) => {
 
 // --------------------------------------------------------------- mapping
 
-const fieldMap = z.object({ remote: z.string().min(1).max(200), local: z.string().regex(/^(name|owner|account|parent|title|description|due|assignee|done|new|f:[a-z][a-z0-9_]{0,39})$/), dir: z.enum(['both', 'pull']) });
+const fieldMap = z.object({ remote: z.string().min(1).max(200), local: z.string().regex(/^(name|owner|account|parent|title|description|due|assignee|done|stage|issue_type|story_points|epic|sprint|goal|state|starts_on|ends_on|new|f:[a-z][a-z0-9_]{0,39})$/), dir: z.enum(['both', 'pull']) });
 const objectMap = z.object({
   remote: z.string().min(1).max(120),
   label: z.string().trim().min(1).max(120),
-  target: z.enum(['account', 'record', 'task']),
+  target: z.enum(['account', 'record', 'task', 'sprint']),
   typeKey: z.string().regex(/^([a-z][a-z0-9_]{1,40}|__new)$/).optional(),
   kind: z.enum(['contact', 'opportunity', 'ticket', 'custom']).optional(),
   boardId: z.string().uuid().optional(),
+  issueTypes: z.array(z.string().max(20)).max(10).optional(),
   enabled: z.boolean(),
   create: z.boolean(),
   linkOnly: z.boolean().optional(),
@@ -465,7 +468,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
           if (!typeRow) fail('validation', { fields: 'typeKey' }, { fields: ['objects.typeKey'] });
         }
       }
-      if (o.target === 'task') {
+      if (o.target === 'task' || o.target === 'sprint') {
         const [b] = await q.query('select id from boards where org_id = $1 and id = $2 and archived_at is null', [org.id, o.boardId ?? null]);
         if (!b) fail('validation', { fields: 'boardId' }, { fields: ['objects.boardId'] });
       }
@@ -477,7 +480,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
       for (const f of o.fields) {
         let local = f.local;
         if (local === 'new') {
-          if (o.target === 'task') continue;
+          if (o.target === 'task' || o.target === 'sprint') continue;
           const rf = meta.get(o.remote)?.find((x) => x.name === f.remote);
           if (!rf || rf.type === 'user' || rf.type === 'id') continue;
           const def = localFieldFrom(rf, taken);
@@ -493,7 +496,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
       }
       if (typeChanged) await q.query('update record_types set fields = $3 where id = $1 and org_id = $2', [typeRow.id, org.id, JSON.stringify(defs)]);
       // A read-only source never creates anything on its side.
-      objects.push({ remote: o.remote, label: o.label, target: o.target, typeKey, boardId: o.boardId, enabled: o.enabled, create: adapter.readOnly ? false : o.create, ...(o.linkOnly ? { linkOnly: true } : {}), fields: adapter.readOnly ? fields.map((f) => ({ ...f, dir: 'pull' as const })) : fields, key: o.key });
+      objects.push({ remote: o.remote, label: o.label, target: o.target, typeKey, boardId: o.boardId, ...(o.issueTypes ? { issueTypes: o.issueTypes } : {}), enabled: o.enabled, create: adapter.readOnly ? false : o.create, ...(o.linkOnly ? { linkOnly: true } : {}), fields: adapter.readOnly ? fields.map((f) => ({ ...f, dir: 'pull' as const })) : fields, key: o.key });
     }
     if (accountChanged) await q.query('update orgs set account_fields = $2 where id = $1', [org.id, JSON.stringify(accountFields)]);
 
@@ -551,10 +554,11 @@ syncRoutes.get('/connections/:id/problems', async (c) => {
   const conn = await loaded(c);
   const rows = await run(c, (q) =>
     q.query(
-      `select s.*, coalesce(a.name, r.name, t.title) as name from sync_changes s
+      `select s.*, coalesce(a.name, r.name, t.title, sp.name) as name from sync_changes s
          left join accounts a on s.entity = 'account' and a.id = s.entity_id
          left join records r on s.entity = 'record' and r.id = s.entity_id
          left join tasks t on s.entity = 'task' and t.id = s.entity_id
+         left join sprints sp on s.entity = 'sprint' and sp.id = s.entity_id
         where s.connection_id = $1 and s.attempts > 0 order by s.changed_at desc limit 100`,
       [conn.id],
     ),

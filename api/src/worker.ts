@@ -51,6 +51,9 @@ export interface Env {
   PIPEDRIVE_CLIENT_SECRET?: string;
   ZOHO_CLIENT_ID?: string;
   ZOHO_CLIENT_SECRET?: string;
+  /** Atlassian OAuth 2.0 (3LO) app for Jira Cloud; without it Jira connects with an API token only. */
+  JIRA_CLIENT_ID?: string;
+  JIRA_CLIENT_SECRET?: string;
   /** Live demo only: offer the pretend CRM. */
   DEMO_CRM?: string;
   /** Help requests go to Curahold's support desk: an address, and/or a signed webhook. */
@@ -88,7 +91,7 @@ export function billingFromEnv(env: Pick<Env, 'PADDLE_ENV' | 'PADDLE_API_KEY' | 
   return { provider: 'paddle', env: env.PADDLE_ENV === 'live' ? 'live' : 'sandbox', apiKey: env.PADDLE_API_KEY, webhookSecret: env.PADDLE_WEBHOOK_SECRET, clientToken: env.PADDLE_CLIENT_TOKEN, prices };
 }
 
-const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO'] as const;
+const CRM_ENV = ['SALESFORCE', 'HUBSPOT', 'DYNAMICS', 'PIPEDRIVE', 'ZOHO', 'JIRA'] as const;
 
 function crmClients(env: Env) {
   const out: NonNullable<Config['connectors']['crm']> = {};

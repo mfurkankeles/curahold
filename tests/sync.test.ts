@@ -148,7 +148,7 @@ describe('two-way sync with a CRM', () => {
   let demoId: string;
   it('is offered only where configured, and needs the connections permission', async () => {
     const list = (await ada.get('/api/connections')).json;
-    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'bigquery']);
+    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'bigquery', 'jira']);
     // Connectors that take a key need nothing on the server; of those, Jira Service Management and BigQuery only read.
     const keyed = list.providers.filter((p: any) => p.setup === 'key');
     expect(keyed.every((p: any) => p.available)).toBe(true);

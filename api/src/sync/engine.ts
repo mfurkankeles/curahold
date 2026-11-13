@@ -7,7 +7,7 @@
 // Works with owner access, so every statement filters by company explicitly.
 import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
-import { calculated, type AccountField, type FieldOption } from '../../../shared/src/model';
+import { calculated, ISSUE_TYPES, SPRINT_STATES, type AccountField, type Column, type FieldOption } from '../../../shared/src/model';
 import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
 import { nowOf, secretsKey, type Deps } from '../context';
 import type { Q, Row } from '../db';
@@ -113,7 +113,45 @@ type Lookups = {
   remoteUserFor: (localId: string | null, type: RemoteField['type']) => string | null;
   accountFor: (remoteId: unknown) => string | null;
   remoteAccountFor: (localId: string | null) => string | null;
+  /** What a link to another synced object (an epic, a sprint) points at here, and the other way round. */
+  refFor: (object: string, remoteId: unknown) => string | null;
+  remoteRefFor: (object: string, localId: string | null) => string | null;
 };
+
+// ------------------------------------------------------- project work (stages)
+
+type Stage = { name: string; category: string } | null;
+const STARTED = /progress|doing|develop|review|test|qa|started|active|devam|geli[sş]tir|inceleme/i;
+const NOT_STARTED = /backlog|todo|to_do|to do|ready|open|new|selected|planned|yap[ıi]lacak|bekle/i;
+
+/** "Not started", "in progress" or "done": what a board column means, for Jira's three status categories. */
+export function columnCategory(cols: Column[], col: Column | undefined): 'new' | 'indeterminate' | 'done' {
+  if (!col) return 'new';
+  if (col.done) return 'done';
+  const label = `${col.key} ${col.name}`;
+  if (STARTED.test(label)) return 'indeterminate';
+  if (NOT_STARTED.test(label)) return 'new';
+  return cols.findIndex((c) => c.key === col.key) <= 0 ? 'new' : 'indeterminate';
+}
+
+/**
+ * The board column for a status on the other side: the column with that very name, else — when the task already sits in
+ * a column of the same kind — where it is, else the first column of that kind. A task is never pulled back from "in
+ * review" to "in progress" only because Jira calls its status something the board does not.
+ */
+export function stageKey(board: Row | null, current: string | null, stage: Stage): string | null {
+  const cols = board?.columns as Column[] | undefined;
+  if (!cols?.length || !stage?.name) return null;
+  const n = fold(stage.name);
+  const exact = cols.find((c) => fold(c.name) === n || fold(c.key.replace(/_/g, ' ')) === n);
+  if (exact) return exact.key;
+  const cur = cols.find((c) => c.key === current);
+  if (cur && columnCategory(cols, cur) === stage.category) return cur.key;
+  const same = cols.filter((c) => columnCategory(cols, c) === stage.category);
+  if (stage.category === 'done') return (same[0] ?? cols[cols.length - 1]).key;
+  if (stage.category === 'new') return (same[0] ?? cols[0]).key;
+  return (same[0] ?? cols.find((c) => !c.done && c !== cols[0]) ?? cols[0]).key;
+}
 
 interface Defs {
   locale: Locale;
@@ -222,6 +260,44 @@ export function mapIn(map: ObjectMap, row: RemoteRow, meta: Map<string, RemoteFi
       case 'due':
         out.due = toDate(plain(raw), defs.locale);
         break;
+      case 'stage': {
+        const v = plain(raw);
+        out.stage = v === null || v === '' ? null : { name: String(v), category: String(row.values.__statusCategory ?? '') };
+        break;
+      }
+      case 'issue_type': {
+        const v = String(plain(raw) ?? '').toLowerCase();
+        out.issue_type = (ISSUE_TYPES as readonly string[]).includes(v) ? v : 'task';
+        break;
+      }
+      case 'story_points': {
+        const v = plain(raw);
+        out.story_points = v === null || v === '' || Number.isNaN(Number(v)) ? null : Number(v);
+        break;
+      }
+      case 'epic':
+      case 'sprint': {
+        const v = plain(raw);
+        if (v === null || v === '') out[fm.local] = null;
+        else {
+          // A link to something not synced (yet) leaves what is here alone.
+          const local = look.refFor(rf?.refTo?.[0] ?? '', v);
+          if (local) out[fm.local] = local;
+        }
+        break;
+      }
+      case 'goal':
+        out.goal = String(plain(raw) ?? '').slice(0, 2000);
+        break;
+      case 'state': {
+        const v = String(plain(raw) ?? '').toLowerCase();
+        out.state = (SPRINT_STATES as readonly string[]).includes(v) ? v : 'future';
+        break;
+      }
+      case 'starts_on':
+      case 'ends_on':
+        out[fm.local] = toDate(plain(raw), defs.locale);
+        break;
       case 'done': {
         const v = plain(raw);
         out.done = rf?.type === 'bool' ? v === true || TRUE.test(String(v)) : DONE.test(String(rf?.options?.find((o) => o.value === v)?.label ?? v ?? ''));
@@ -310,6 +386,40 @@ export function mapOut(map: ObjectMap, item: Row, changed: string[] | null, meta
         v = d && rf.type === 'datetime' ? `${d}T00:00:00Z` : d;
         break;
       }
+      case 'stage': {
+        const cols = (board?.columns ?? []) as Column[];
+        const col = cols.find((c) => c.key === item.status);
+        if (!col) continue;
+        // A status is reached through a workflow transition: the adapter is told the name and the kind of status.
+        v = rf.extra?.transition ? { name: col.name, category: columnCategory(cols, col) } : col.name;
+        break;
+      }
+      case 'issue_type':
+        v = item.issue_type ?? 'task';
+        break;
+      case 'story_points':
+        v = item.story_points === null || item.story_points === undefined ? null : Number(item.story_points);
+        break;
+      case 'epic':
+      case 'sprint': {
+        const localId = fm.local === 'epic' ? item.epic_id : item.sprint_id;
+        v = localId ? look.remoteRefFor(rf.refTo?.[0] ?? '', localId) : null;
+        if (v === null && localId) continue;
+        break;
+      }
+      case 'goal':
+        v = item.goal ?? '';
+        break;
+      case 'state':
+        v = item.state;
+        break;
+      case 'starts_on':
+      case 'ends_on': {
+        const raw = fm.local === 'starts_on' ? item.starts_on : item.ends_on;
+        const d = raw ? iso(raw)?.slice(0, 10) ?? String(raw).slice(0, 10) : null;
+        v = d && rf.type === 'datetime' ? `${d}T00:00:00Z` : d;
+        break;
+      }
       case 'done': {
         const done = !!(board?.columns as any[])?.find((c) => c.key === item.status)?.done;
         if (rf.type === 'bool') v = done;
@@ -347,6 +457,9 @@ interface RunCtx {
   localUsers: Row[];
   accountLinks: Map<string, string>;
   accountRemote: Map<string, string>;
+  /** Epics and sprints: object → remote id → local id (and the other way). */
+  refLinks: Map<string, Map<string, string>>;
+  refRemote: Map<string, Map<string, string>>;
   meta: Map<string, Map<string, RemoteField>>;
   deadline: number;
   look: Lookups;
@@ -407,6 +520,8 @@ function lookups(r: Omit<RunCtx, 'look'>): Lookups {
     },
     accountFor: (remoteId) => (remoteId === null || remoteId === undefined || remoteId === '' ? null : (r.accountLinks.get(String(remoteId)) ?? null)),
     remoteAccountFor: (localId) => (localId ? (r.accountRemote.get(localId) ?? null) : null),
+    refFor: (object, remoteId) => (remoteId === null || remoteId === undefined || remoteId === '' ? null : (r.refLinks.get(object)?.get(String(remoteId)) ?? null)),
+    remoteRefFor: (object, localId) => (localId ? (r.refRemote.get(object)?.get(localId) ?? null) : null),
   };
 }
 
@@ -419,6 +534,22 @@ async function loadAccountLinks(r: Pick<RunCtx, 'deps' | 'conn' | 'accountLinks'
   for (const l of rows) {
     r.accountLinks.set(l.remote_id, l.entity_id);
     r.accountRemote.set(l.entity_id, l.remote_id);
+  }
+}
+
+/** Epics and sprints already synced, for the links between tasks and them. Only read when a mapping has such a field. */
+async function loadRefLinks(r: Pick<RunCtx, 'deps' | 'conn' | 'refLinks' | 'refRemote'>) {
+  r.refLinks.clear();
+  r.refRemote.clear();
+  if (!r.conn.sync.objects.some((o) => o.enabled && o.fields.some((f) => f.local === 'epic' || f.local === 'sprint'))) return;
+  const rows = await r.deps.db.system((q) =>
+    q.query(`select object, remote_id, entity_id from sync_links where org_id = $1 and connection_id = $2 and entity in ('task', 'sprint') and entity_id is not null and not ignored`, [r.conn.orgId, r.conn.id]),
+  );
+  for (const l of rows) {
+    if (!r.refLinks.has(l.object)) r.refLinks.set(l.object, new Map());
+    if (!r.refRemote.has(l.object)) r.refRemote.set(l.object, new Map());
+    r.refLinks.get(l.object)!.set(l.remote_id, l.entity_id);
+    r.refRemote.get(l.object)!.set(l.entity_id, l.remote_id);
   }
 }
 
@@ -437,8 +568,9 @@ async function prepare(deps: Deps, conn: LoadedCrm, budgetMs: number): Promise<R
   const { defs, localUsers } = await loadDefs(deps, conn.orgId);
   const needsUsers = conn.sync.objects.some((o) => o.enabled && o.fields.some((f) => f.local === 'owner' || f.local === 'assignee'));
   const remoteUsers = needsUsers && !adapter.tabular ? await adapter.users(ctx) : [];
-  const base = { deps, conn, adapter, ctx, defs, stats: {}, errors: [], remoteUsers, localUsers, accountLinks: new Map(), accountRemote: new Map(), meta: new Map(), deadline: Date.now() + budgetMs } as Omit<RunCtx, 'look'>;
+  const base = { deps, conn, adapter, ctx, defs, stats: {}, errors: [], remoteUsers, localUsers, accountLinks: new Map(), accountRemote: new Map(), refLinks: new Map(), refRemote: new Map(), meta: new Map(), deadline: Date.now() + budgetMs } as Omit<RunCtx, 'look'>;
   await loadAccountLinks(base);
+  await loadRefLinks(base);
   return { ...base, look: lookups(base) };
 }
 
@@ -456,7 +588,7 @@ async function saveDefs(r: RunCtx) {
 
 // -------------------------------------------------------------------- pull
 
-const TABLE: Record<TargetKind, string> = { account: 'accounts', record: 'records', task: 'tasks' };
+const TABLE: Record<TargetKind, string> = { account: 'accounts', record: 'records', task: 'tasks', sprint: 'sprints' };
 
 async function existingFor(q: Q, r: RunCtx, map: ObjectMap, ids: string[]): Promise<Map<string, Row>> {
   if (!ids.length) return new Map();
@@ -506,6 +638,38 @@ function diff(map: ObjectMap, cur: Row | null, vals: Record<string, unknown>, bo
         if (!cur || isDone !== !!v) p.done = !!v;
         break;
       }
+      case 'stage': {
+        const key = stageKey(board, cur?.status ?? null, v as Stage);
+        if (key && key !== cur?.status) p.stage = key;
+        break;
+      }
+      case 'issue_type':
+        if (v !== (cur?.issue_type ?? 'task')) p.issue_type = v;
+        break;
+      case 'story_points': {
+        const was = cur?.story_points === null || cur?.story_points === undefined ? null : Number(cur.story_points);
+        if ((v ?? null) !== was) p.story_points = v ?? null;
+        break;
+      }
+      case 'epic':
+        if ((v ?? null) !== (cur?.epic_id ?? null)) p.epic = v ?? null;
+        break;
+      case 'sprint':
+        if ((v ?? null) !== (cur?.sprint_id ?? null)) p.sprint = v ?? null;
+        break;
+      case 'goal':
+        if ((v ?? '') !== (cur?.goal ?? '')) p.goal = v ?? '';
+        break;
+      case 'state':
+        if (v !== cur?.state) p.state = v;
+        break;
+      case 'starts_on':
+      case 'ends_on': {
+        const col = k === 'starts_on' ? cur?.starts_on : cur?.ends_on;
+        const was = col ? (iso(col)?.slice(0, 10) ?? String(col).slice(0, 10)) : null;
+        if ((v ?? null) !== was) p[k] = v ?? null;
+        break;
+      }
     }
   }
   return p;
@@ -515,28 +679,93 @@ async function writeEntity(q: Q, r: RunCtx, map: ObjectMap, cur: Row | null, pat
   const orgId = r.conn.orgId;
   const fields: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(patch)) if (k.startsWith('f:')) fields[k.slice(2)] = v;
+  if (map.target === 'sprint') {
+    const board = r.defs.boards.get(map.boardId ?? '');
+    if (!board) throw new CrmError('The board chosen for sprints no longer exists');
+    // Only one sprint runs on a board at a time here; a second one running over there waits as "future".
+    let state = (patch.state as string | undefined) ?? cur?.state ?? 'future';
+    if (state === 'active') {
+      const [other] = await q.query(`select id from sprints where org_id = $1 and board_id = $2 and state = 'active' and archived_at is null and ($3::uuid is null or id <> $3) limit 1`, [orgId, board.id, cur?.id ?? null]);
+      if (other) state = 'future';
+    }
+    const name = typeof patch.name === 'string' ? patch.name.slice(0, 80) : null;
+    if (cur) {
+      await q.query(
+        `update sprints set name = coalesce($3, name), goal = case when $4 then $5 else goal end, state = $6,
+                starts_on = case when $7 then $8::date else starts_on end, ends_on = case when $9 then $10::date else ends_on end, updated_at = now()
+          where id = $1 and org_id = $2`,
+        [cur.id, orgId, name, 'goal' in patch, patch.goal ?? '', state, 'starts_on' in patch, patch.starts_on ?? null, 'ends_on' in patch, patch.ends_on ?? null],
+      );
+      return cur.id;
+    }
+    const [{ p }] = await q.query(`select coalesce(max(position), 0) + 1024 as p from sprints where org_id = $1 and board_id = $2`, [orgId, board.id]);
+    const [sp] = await q.query(
+      `insert into sprints (org_id, board_id, name, goal, state, starts_on, ends_on, position) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
+      [orgId, board.id, name || '—', patch.goal ?? '', state, patch.starts_on ?? null, patch.ends_on ?? null, Number(p)],
+    );
+    return sp.id;
+  }
   if (map.target === 'task') {
     const board = r.defs.boards.get(map.boardId ?? '');
     if (!board) throw new CrmError('The board chosen for tasks no longer exists');
     const cols = board.columns as { key: string; done: boolean }[];
-    const status = 'done' in patch ? (patch.done ? (cols.find((c) => c.done) ?? cols[cols.length - 1]).key : (cols.find((c) => !c.done) ?? cols[0]).key) : null;
+    // A mapped status (the board column by name) wins over the plain done / not done.
+    const status = 'stage' in patch ? (patch.stage as string) : 'done' in patch ? (patch.done ? (cols.find((c) => c.done) ?? cols[cols.length - 1]).key : (cols.find((c) => !c.done) ?? cols[0]).key) : null;
+    // An epic does not sit in another epic.
+    const isEpic = (patch.issue_type ?? cur?.issue_type) === 'epic';
+    const epicSet = 'epic' in patch || (isEpic && !!cur?.epic_id);
     if (cur) {
       await q.query(
         `update tasks set title = coalesce($3, title), description = coalesce($4, description), due_date = case when $5 then $6::date else due_date end,
                 assignee_ids = case when $7 then (case when $8::uuid is null then '{}'::uuid[] else array[$8::uuid] end) else assignee_ids end,
                 account_id = case when $9 then $10::uuid else account_id end, status = coalesce($11, status),
+                issue_type = coalesce($12, issue_type), story_points = case when $13 then $14::numeric else story_points end,
+                epic_id = case when $15 then $16::uuid else epic_id end, sprint_id = case when $17 then $18::uuid else sprint_id end,
                 version = version + 1, updated_at = now()
           where id = $1 and org_id = $2`,
-        [cur.id, orgId, patch.title ?? null, patch.description ?? null, 'due' in patch, patch.due ?? null, 'assignee' in patch, patch.assignee ?? null, 'account' in patch, patch.account ?? null, status],
+        [
+          cur.id,
+          orgId,
+          patch.title ?? null,
+          patch.description ?? null,
+          'due' in patch,
+          patch.due ?? null,
+          'assignee' in patch,
+          patch.assignee ?? null,
+          'account' in patch,
+          patch.account ?? null,
+          status,
+          patch.issue_type ?? null,
+          'story_points' in patch,
+          patch.story_points ?? null,
+          epicSet,
+          isEpic ? null : (patch.epic ?? null),
+          'sprint' in patch,
+          patch.sprint ?? null,
+        ],
       );
       return cur.id;
     }
     const st = status ?? cols[0].key;
     const [{ p }] = await q.query(`select coalesce(max(position), 0) + 1024 as p from tasks where org_id = $1 and board_id = $2 and status = $3`, [orgId, board.id, st]);
     const [t] = await q.query(
-      `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, priority, position)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) returning id`,
-      [orgId, board.id, (patch.title as string) || '—', patch.description ?? '', st, patch.assignee ? [patch.assignee] : [], patch.account ?? null, patch.due ?? null, Number(p)],
+      `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, priority, position, issue_type, story_points, epic_id, sprint_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9, $10, $11, $12, $13) returning id`,
+      [
+        orgId,
+        board.id,
+        (patch.title as string) || '—',
+        patch.description ?? '',
+        st,
+        patch.assignee ? [patch.assignee] : [],
+        patch.account ?? null,
+        patch.due ?? null,
+        Number(p),
+        patch.issue_type ?? 'task',
+        patch.story_points ?? null,
+        isEpic ? null : (patch.epic ?? null),
+        patch.sprint ?? null,
+      ],
     );
     return t.id;
   }
@@ -645,7 +874,7 @@ async function applyPage(
       const typeId = r.defs.types.get(map.typeKey ?? '')?.id ?? null;
       const typeFilter = map.target === 'record' ? 'and x.type_id = $4::uuid' : 'and $4::uuid is null';
       const rowsHere =
-        map.target === 'task' || (map.target === 'record' && !typeId)
+        map.target === 'task' || map.target === 'sprint' || (map.target === 'record' && !typeId)
           ? []
           : await q.query(
               `select x.* from ${TABLE[map.target]} x where x.org_id = $1 and x.archived_at is null ${typeFilter}
@@ -674,7 +903,7 @@ async function applyPage(
         const vals = mapIn(map, row, meta, r.defs, r.look);
         let entity = link?.entity_id ? (cur.get(link.entity_id) ?? null) : null;
         const isTicket = map.target === 'record' && r.defs.types.get(map.typeKey ?? '')?.kind === 'ticket';
-        if (!entity && !link && map.target !== 'task' && !isTicket) {
+        if (!entity && !link && map.target !== 'task' && map.target !== 'sprint' && !isTicket) {
           const names = await matchable();
           const k = `${fold(String(vals.name ?? ''))}|${map.target === 'record' ? ((vals.account as string) ?? '') : ''}`;
           entity = names.get(k) ?? null;
@@ -747,6 +976,13 @@ async function applyPage(
           r.accountLinks.set(row.id, id!);
           r.accountRemote.set(id!, row.id);
         }
+        // Epics and sprints: the tasks read after them in this run find them.
+        if ((map.target === 'task' || map.target === 'sprint') && id) {
+          if (!r.refLinks.has(map.remote)) r.refLinks.set(map.remote, new Map());
+          if (!r.refRemote.has(map.remote)) r.refRemote.set(map.remote, new Map());
+          r.refLinks.get(map.remote)!.set(row.id, id);
+          r.refRemote.get(map.remote)!.set(id, row.id);
+        }
         if (parents && id) {
           parents.links.set(row.id, id);
           if (pendingParent) parents.pending.push({ id, remote: pendingParent });
@@ -784,7 +1020,9 @@ async function archiveMissing(r: RunCtx, map: ObjectMap, remoteIds: string[] | n
   });
 }
 
-const ORDER: Record<TargetKind, number> = { account: 0, record: 1, task: 2 };
+// Sprints before the tasks that sit in them; within tasks, those that point at an epic after the epics themselves.
+const ORDER: Record<TargetKind, number> = { account: 0, record: 1, sprint: 2, task: 3 };
+const refRank = (o: ObjectMap) => (o.fields.some((f) => f.local === 'epic') ? 1 : 0);
 
 async function recordLinks(r: RunCtx, object: string): Promise<Map<string, string>> {
   const rows = await r.deps.db.system((q) =>
@@ -811,7 +1049,7 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
   const pages: Record<string, any> = { ...(r.conn.state.pages ?? {}) };
   let complete = true;
   const touchedAccounts = new Set<string>();
-  const maps = r.conn.sync.objects.filter((o) => o.enabled).sort((a, b) => ORDER[a.target] - ORDER[b.target]);
+  const maps = r.conn.sync.objects.filter((o) => o.enabled).sort((a, b) => ORDER[a.target] - ORDER[b.target] || refRank(a) - refRank(b));
   for (const map of maps) {
     if (Date.now() > r.deadline) {
       complete = false;
@@ -879,6 +1117,17 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
 
 // -------------------------------------------------------------------- push
 
+/** A new task whose epic or sprint is itself still queued to be created there: it goes after them. */
+async function waitsForRef(r: RunCtx, item: Row): Promise<boolean> {
+  for (const [col, entity] of [['epic_id', 'task'], ['sprint_id', 'sprint']] as const) {
+    const ref = item[col] as string | null | undefined;
+    if (!ref || [...r.refRemote.values()].some((m) => m.has(ref))) continue;
+    const waiting = await r.deps.db.system((q) => q.query(`select 1 from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = $4`, [r.conn.orgId, r.conn.id, entity, ref]));
+    if (waiting.length) return true;
+  }
+  return false;
+}
+
 /** `freshOnly`: right after an edit, send only new changes; retries wait for a run that reads first. */
 async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
   const orgId = r.conn.orgId;
@@ -900,7 +1149,16 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
       const typeKey = target === 'record' && item ? [...r.defs.types.values()].find((t) => t.id === item.type_id)?.key : undefined;
       const map = link
         ? r.conn.sync.objects.find((o) => o.enabled && o.remote === link.object)
-        : r.conn.sync.objects.find((o) => o.enabled && o.create && o.target === target && (target !== 'record' || o.typeKey === typeKey) && (target !== 'task' || o.boardId === item?.board_id));
+        : r.conn.sync.objects.find(
+            (o) =>
+              o.enabled &&
+              o.create &&
+              o.target === target &&
+              (target !== 'record' || o.typeKey === typeKey) &&
+              (target !== 'task' || o.boardId === item?.board_id) &&
+              (target !== 'sprint' || o.boardId === item?.board_id) &&
+              (target !== 'task' || !o.issueTypes || o.issueTypes.includes(item?.issue_type ?? 'task')),
+          );
       if (!item || !map || link?.ignored || (item.archived_at && !link)) {
         await r.deps.db.system((q) => q.query('delete from sync_changes where id = $1 and org_id = $2', [ch.id, orgId]));
         continue;
@@ -922,6 +1180,8 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
           const waiting = await r.deps.db.system((q) => q.query(`select 1 from sync_changes where org_id = $1 and connection_id = $2 and entity = 'account' and entity_id = $3`, [orgId, r.conn.id, item.account_id]));
           if (waiting.length) continue;
         }
+        // A task made before its epic or sprint reached the other side waits for them (as for the account above).
+        if (await waitsForRef(r, item)) continue;
         const values = mapOut(map, item, null, meta, r.defs, r.look, true);
         // Contacts: services that want first and last name separately get them split from the full name.
         const lastKey = Object.keys(SPLIT_NAME).find((n) => meta.get(n)?.createable);
@@ -946,6 +1206,12 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
         if (target === 'account') {
           r.accountLinks.set(remoteId, item.id);
           r.accountRemote.set(item.id, remoteId);
+        }
+        if (target === 'task' || target === 'sprint') {
+          if (!r.refLinks.has(map.remote)) r.refLinks.set(map.remote, new Map());
+          if (!r.refRemote.has(map.remote)) r.refRemote.set(map.remote, new Map());
+          r.refLinks.get(map.remote)!.set(remoteId, item.id);
+          r.refRemote.get(map.remote)!.set(item.id, remoteId);
         }
       }
       // Our own write will come back on the next read; forget the old fingerprint so it is compared, not skipped.
@@ -1111,7 +1377,7 @@ export async function previewSync(deps: Deps, conn: LoadedCrm, sync: SyncConfig)
   const { defs, localUsers } = await loadDefs(deps, conn.orgId);
   const remoteUsers = adapter.tabular ? [] : await adapter.users(ctx).catch(() => []);
   const fake = { ...conn, sync } as LoadedCrm;
-  const base = { deps, conn: fake, adapter, ctx, defs, stats: {}, errors: [], remoteUsers, localUsers, accountLinks: new Map(), accountRemote: new Map(), meta: new Map(), deadline: Date.now() + 20_000 } as Omit<RunCtx, 'look'>;
+  const base = { deps, conn: fake, adapter, ctx, defs, stats: {}, errors: [], remoteUsers, localUsers, accountLinks: new Map(), accountRemote: new Map(), refLinks: new Map(), refRemote: new Map(), meta: new Map(), deadline: Date.now() + 20_000 } as Omit<RunCtx, 'look'>;
   const look = lookups(base);
   const existing = await deps.db.system((q) => q.query('select lower(name) as n from accounts where org_id = $1 and archived_at is null', [conn.orgId]));
   const names = new Set(existing.map((e) => fold(e.n)));

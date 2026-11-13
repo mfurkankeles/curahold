@@ -36,6 +36,9 @@ export const PROVIDER_NAMES: Record<string, string> = {
   jsm: 'Jira Service Management',
   front: 'Front',
   bigquery: 'Google BigQuery',
+  jira: 'Jira',
+  github: 'GitHub',
+  gitlab: 'GitLab',
 };
 export const FLAVOR_NAMES: Record<string, string> = {
   slack: 'Slack',

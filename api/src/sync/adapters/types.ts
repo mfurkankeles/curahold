@@ -229,6 +229,20 @@ export async function codeGrant(
   return j;
 }
 
+/** Authorization-code grant for services that take JSON, not a form (Atlassian). */
+export async function codeGrantJson(fetcher: typeof fetch, tokenUrl: string, client: OAuthClient, code: string, redirectUri: string, now: Date): Promise<any> {
+  const res = await fetcher(tokenUrl, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ grant_type: 'authorization_code', client_id: client.clientId, client_secret: client.clientSecret, code, redirect_uri: redirectUri }),
+  });
+  if (!res.ok) throw new CrmError(await errorText(res), res.status, undefined, true);
+  const j: any = await res.json();
+  if (!j.access_token) throw new CrmError('No access token in the response', res.status, undefined, true);
+  j.expiresAt = j.expires_in ? now.getTime() + Number(j.expires_in) * 1000 : undefined;
+  return j;
+}
+
 /** Bare-bones context for calls made right after sign-in, before a connection exists. */
 export function oneShotCtx(fetcher: typeof fetch, now: Date, token: string, config: Record<string, any>): CrmCtx {
   return { fetch: fetcher, now: () => now, config, token: async () => token, refresh: async () => token };

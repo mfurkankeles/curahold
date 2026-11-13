@@ -7,6 +7,7 @@ import { bigquery } from './bigquery';
 import { demo } from './demo';
 import { dynamics } from './dynamics';
 import { hubspot } from './hubspot';
+import { jira } from './jira';
 import { bitrix24, freshsales, zendesksell } from './keyed';
 import { pipedrive } from './pipedrive';
 import { excel, gsheets } from './sheets';
@@ -14,15 +15,16 @@ import { salesforce } from './salesforce';
 import type { CrmAdapter, OAuthClient } from './types';
 import { zoho } from './zoho';
 import { freshdesk, front, intercom, jsm, zendesk } from './support';
-import { KEYED_CRM_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
+import { DEV_PROVIDERS, KEYED_CRM_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
 
-export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, demo };
+export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, jira, demo };
 
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
 /** Curahold's own registration with the service; spreadsheets reuse the sign-in apps. */
 export function oauthClient(cfg: Config, provider: CrmProvider): OAuthClient | null {
-  if (CRM_ADAPTERS[provider]?.keyed) return null;
+  // Key-only services have no app registration; Jira has both (sign-in where registered, an API token otherwise).
+  if (CRM_ADAPTERS[provider]?.keyed && !CRM_ADAPTERS[provider]?.oauth) return null;
   const own = cfg.connectors.crm?.[provider as keyof NonNullable<typeof cfg.connectors.crm>];
   if (own) return own;
   if (provider === 'gsheets') return cfg.oauth.google ?? null;
@@ -52,6 +54,8 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
     ...SUPPORT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: !READ_ONLY_PROVIDERS.includes(id), available: true, setup: 'key' })),
     // Warehouses: the administrator brings a service-account key and a query; read only.
     ...WAREHOUSE_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
+    // Developer tools (Jira Cloud): always connectable with an API token; "oauth" says the Atlassian sign-in is registered here too.
+    ...DEV_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: true, setup: oauthClient(cfg, id) ? 'oauth' : 'key' })),
   ];
 }
 

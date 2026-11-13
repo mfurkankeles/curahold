@@ -15,7 +15,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/billing/…` | 3 | Plan ve ödeme; ödeme sağlayıcısıyla. |
 | `/client-error/…` | 1 | Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye. |
 | `/connect/…` | 1 | Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar. |
-| `/connections/…` | 25 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
+| `/connections/…` | 27 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
 | `/desk/…` | 12 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |
 | `/help/…` | 7 | Curahold desteğine yardım talepleri ve konuşmaları; ürünün içinden. |
 | `/help-files/…` | 1 | Desteğe gönderilen dosyalar. |

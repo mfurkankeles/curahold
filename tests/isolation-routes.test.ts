@@ -21,6 +21,8 @@ let stranger: Client;
 
 /** The table an address's id belongs to, by how the address starts. First match wins. */
 const KINDS: [RegExp, string, string?][] = [
+  [/^\/dev-links\/:id/, 'dev_links'],
+  [/^\/connections\/:id\/jira/, 'connections', `provider = 'jira'`],
   [/^\/accounts\/:id/, 'accounts'],
   [/^\/imports\/:id/, 'import_batches', `kind = 'accounts'`],
   [/^\/task-imports\/:id/, 'import_batches', `kind = 'tasks'`],
@@ -60,6 +62,9 @@ const KINDS: [RegExp, string, string?][] = [
 
 /** Addresses whose parameter is not the id of something a company owns; each with the reason it is not tried here. */
 const NOT_BY_ID: Record<string, string> = {
+  'POST /inbound/dev/:provider': 'the name of a code host, opened with that company’s own signed webhook (tests/jira.test.ts)',
+  'POST /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
+  'DELETE /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
   'DELETE /admin/domains/:domain': 'a domain name, checked against the caller’s own company',
   'GET /calendar/:file': 'opened with a personal calendar link, not a session (tests/notifications.test.ts)',
   'GET /auth/oauth/:provider/start': 'the name of a sign-in provider',
@@ -112,6 +117,8 @@ beforeAll(async () => {
   await lena.del(`/api/tasks/${gone.id}`);
   // The rest are written straight into their tables: what matters here is that the row is this company's.
   const lenaId = env.a.ids.lena;
+  await sys(`insert into connections (org_id, kind, provider, label, config) values ($1, 'source', 'jira', 'acme-dev.atlassian.net', '{"mode":"basic","projects":[]}')`, [org]);
+  await sys(`insert into dev_links (org_id, task_id, provider, kind, repo, ref, title) values ($1, $2, 'github', 'branch', 'acme/web', 'CURA-12345678-fix', '')`, [org, task.id]);
   await sys(`insert into saved_views (org_id, user_id, board_id, name) values ($1, $2, $3, 'A view')`, [org, lenaId, board]);
   await sys(`insert into checklist_templates (org_id, name, items) values ($1, 'A checklist', '[]')`, [org]);
   await sys(`insert into plan_templates (org_id, name, board_id, tasks) values ($1, 'A plan', $2, '[]')`, [org, board]);

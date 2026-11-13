@@ -474,7 +474,7 @@ describe('the schema stays restorable', () => {
     const blocking = await sys(`select child, parent from app_trash_fks() where rule in ('a', 'r') and parent = any ($1::text[])`, [reached.map((r) => r.t)]);
     expect(blocking).toEqual([]);
     // What the tests above put a row in: a table reached by a delete but never filled here would not be proven.
-    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'tasks', 'comments', 'task_events', 'task_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
+    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
     expect(reached.map((r) => r.t).filter((t) => !proven.has(t))).toEqual([]);
   });
 });

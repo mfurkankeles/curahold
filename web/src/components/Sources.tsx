@@ -8,8 +8,8 @@ import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
-import { KEY_FIELDS, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
-import { ApiFailure, api, del, get, patch, post } from '../lib/api';
+import { DEV_HOSTS, KEY_FIELDS, devKey, type DevHookInfo, type DevHost, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
+import { ApiFailure, api, del, get, patch, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -27,6 +27,8 @@ const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell'];
 const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'front', 'jsm'];
 /** Data warehouses: rows from a query, connected with a service-account key. */
 const WAREHOUSES = ['bigquery'];
+/** Developer tools: Jira syncs; GitHub and GitLab link branches, pull requests and commits to tasks. */
+const DEV_TOOLS = ['jira'];
 /** Fields typed as several lines. */
 const LONG_FIELDS = ['serviceAccount', 'query'];
 /** In the try-it demo these buttons run the real steps against the pretend CRM. */
@@ -54,6 +56,7 @@ export function Sources() {
   const onErr = useErr();
   const [asking, setAsking] = useState<ProviderInfo | null>(null);
   const [keyed, setKeyed] = useState<ProviderInfo | null>(null);
+  const [hooking, setHooking] = useState<DevHost | null>(null);
   const { toast } = useStore();
 
   useEffect(() => {
@@ -69,6 +72,7 @@ export function Sources() {
   const providers = data.providers.filter((p) => p.kind === 'source' && SOURCES.includes(p.id));
   const support = data.providers.filter((p) => p.kind === 'source' && SUPPORT.includes(p.id));
   const warehouses = data.providers.filter((p) => p.kind === 'source' && WAREHOUSES.includes(p.id));
+  const jiraTool = data.providers.find((p) => p.kind === 'source' && DEV_TOOLS.includes(p.id));
   const mine = data.connections.filter((c) => c.kind === 'source');
   const broken = mine.filter((c) => c.status === 'error');
 
@@ -231,7 +235,51 @@ export function Sources() {
           </div>
         </>
       )}
+      <h3 className="section__head" style={{ marginTop: 22 }}>
+        {t('devtools.add')}
+      </h3>
+      <p className="field__hint">{t('devtools.addHint')}</p>
+      <div className="tiles">
+        {jiraTool && (
+          <div className="tile" data-state="ready" data-tour="crm-jira">
+            <div className="tile__head">
+              <span className="tile__badge" aria-hidden="true">
+                J
+              </span>
+              <strong>{PROVIDER_NAMES.jira}</strong>
+            </div>
+            <p className="field__hint tile__line">{t('devtools.what.jira')}</p>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {jiraTool.setup === 'oauth' && (
+                <a className="btn btn--primary btn--small" href="/api/connect/jira/start">
+                  <Icon name="plug" size={16} />
+                  {t('devtools.jira.signIn')}
+                </a>
+              )}
+              <button className={`btn btn--small${jiraTool.setup === 'oauth' ? '' : ' btn--primary'}`} onClick={() => setKeyed({ ...jiraTool, setup: 'key' })}>
+                {jiraTool.setup === 'oauth' ? t('devtools.jira.useToken') : t('conn.connect', { app: PROVIDER_NAMES.jira })}
+              </button>
+            </div>
+          </div>
+        )}
+        {DEV_HOSTS.map((h) => (
+          <div className="tile" key={h} data-state="ready" data-tour={`dev-${h}`}>
+            <div className="tile__head">
+              <span className="tile__badge" aria-hidden="true">
+                {PROVIDER_NAMES[h][0]}
+              </span>
+              <strong>{PROVIDER_NAMES[h]}</strong>
+            </div>
+            <p className="field__hint tile__line">{t('devtools.what.host', { key: devKey('1a2b3c4d') })}</p>
+            <button className="btn btn--primary btn--small" onClick={() => setHooking(h)}>
+              <Icon name="plug" size={16} />
+              {t('devtools.hook.set', { app: PROVIDER_NAMES[h] })}
+            </button>
+          </div>
+        ))}
+      </div>
       {keyed && <KeyConnect provider={keyed} onClose={() => setKeyed(null)} />}
+      {hooking && <DevHookDialog host={hooking} onClose={() => setHooking(null)} />}
       {asking && <BeforeSignIn provider={asking} onClose={() => setAsking(null)} />}
       <button className="sr-only" onClick={() => reload()}>
         {t('common.refresh')}
@@ -530,7 +578,9 @@ export function SourceDetail({ id }: { id: string }) {
           }}
         />
       )}
-      {!started && step ? (
+      {!started && step && d.connection.provider === 'jira' ? (
+        <JiraSetup id={id} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
+      ) : !started && step ? (
         <SetupFlow d={d} step={step} setStep={setStep} reload={load} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : (
         <>
@@ -579,6 +629,150 @@ export function SourceDetail({ id }: { id: string }) {
           }}
         />
       )}
+    </div>
+  );
+}
+
+
+/** GitHub and GitLab: the address and secret to paste into the host's webhook settings, and the key that names a task. */
+function DevHookDialog({ host, onClose }: { host: DevHost; onClose: () => void }) {
+  const { t } = useI18n();
+  const onErr = useErr();
+  const { toast } = useStore();
+  const [hook, setHook] = useState<DevHookInfo | null>(null);
+  const [busy, setBusy] = useState(false);
+  const app = PROVIDER_NAMES[host];
+  useEffect(() => {
+    get<{ hooks: DevHookInfo[] }>('/dev-hooks')
+      .then((r) => setHook(r.hooks.find((h) => h.provider === host) ?? null))
+      .catch(onErr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [host]);
+  const turnOn = async () => {
+    setBusy(true);
+    try {
+      setHook((await post<{ hook: DevHookInfo }>(`/dev-hooks/${host}`, {})).hook);
+    } catch (e) {
+      onErr(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const turnOff = async () => {
+    setBusy(true);
+    try {
+      await del(`/dev-hooks/${host}`);
+      setHook((h) => (h ? { ...h, enabled: false, url: null, secret: null } : h));
+      toast(t('devtools.hook.off', { app }));
+    } catch (e) {
+      onErr(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = (text: string) => void navigator.clipboard?.writeText(text).then(() => toast(t('devtools.copied')));
+  return (
+    <Dialog
+      title={t('devtools.hook.title', { app })}
+      onClose={onClose}
+      footer={
+        <>
+          {hook?.enabled && (
+            <button className="btn btn--quiet" disabled={busy} onClick={turnOff}>
+              {t('devtools.hook.turnOff')}
+            </button>
+          )}
+          <button className="btn btn--primary" onClick={hook?.enabled ? onClose : turnOn} disabled={busy || !hook}>
+            {hook?.enabled ? t('dev.done') : t('devtools.hook.turnOn')}
+          </button>
+        </>
+      }
+    >
+      <div className="form">
+        <p className="field__hint">{t('devtools.hook.how', { key: devKey('1a2b3c4d') })}</p>
+        {hook?.enabled && hook.url && hook.secret && (
+          <>
+            <label className="field">
+              <span className="field__label">{t('devtools.hook.url')}</span>
+              <input className="input" readOnly value={hook.url} onFocus={(e) => e.currentTarget.select()} />
+              <button type="button" className="btn btn--quiet btn--small" onClick={() => copy(hook.url!)}>
+                {t('devtools.copy')}
+              </button>
+            </label>
+            <label className="field">
+              <span className="field__label">{t(host === 'github' ? 'devtools.hook.secretGithub' : 'devtools.hook.secretGitlab')}</span>
+              <input className="input" readOnly value={hook.secret} onFocus={(e) => e.currentTarget.select()} />
+              <button type="button" className="btn btn--quiet btn--small" onClick={() => copy(hook.secret!)}>
+                {t('devtools.copy')}
+              </button>
+            </label>
+            <p className="field__hint">{t(host === 'github' ? 'devtools.hook.eventsGithub' : 'devtools.hook.eventsGitlab')}</p>
+            <p className="field__hint">{t('devtools.hook.linked', { n: hook.links })}</p>
+          </>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+/** Jira, before the first run: which projects to bring over, and which board they land on. */
+function JiraSetup({ id, onStart, running }: { id: string; onStart: () => Promise<void>; running: string | null }) {
+  const { t } = useI18n();
+  const onErr = useErr();
+  const [info, setInfo] = useState<{ projects: { key: string; name: string }[]; selected: string[]; boardId: string | null; boards: { id: string; name: string }[] } | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [boardId, setBoardId] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    get<{ projects: { key: string; name: string }[]; selected: string[]; boardId: string | null; boards: { id: string; name: string }[] }>(`/connections/${id}/jira`)
+      .then((r) => {
+        setInfo(r);
+        setPicked(r.selected);
+        setBoardId(r.boardId ?? r.boards[0]?.id ?? '');
+      })
+      .catch(onErr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+  if (!info) return <div className="muted">{t('common.loading')}</div>;
+  const start = async () => {
+    setBusy(true);
+    try {
+      await put(`/connections/${id}/jira`, { projects: picked, boardId });
+      await onStart();
+    } catch (e) {
+      onErr(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="source-setup">
+      <p className="field__hint">{t('devtools.jira.setupHint')}</p>
+      <fieldset className="field">
+        <legend className="field__label">{t('devtools.jira.projects')}</legend>
+        {info.projects.map((p) => (
+          <label key={p.key} className="check">
+            <input type="checkbox" checked={picked.includes(p.key)} onChange={(e) => setPicked(e.target.checked ? [...picked, p.key] : picked.filter((k) => k !== p.key))} />
+            <span>
+              {p.name} <span className="muted">{p.key}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <label className="field">
+        <span className="field__label">{t('devtools.jira.board')}</span>
+        <select className="select" value={boardId} onChange={(e) => setBoardId(e.target.value)}>
+          {info.boards.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+        <span className="field__hint">{t('devtools.jira.boardHint')}</span>
+      </label>
+      <button className="btn btn--primary" disabled={busy || !!running || !picked.length || !boardId} onClick={start}>
+        {running ?? t('devtools.jira.start')}
+      </button>
     </div>
   );
 }

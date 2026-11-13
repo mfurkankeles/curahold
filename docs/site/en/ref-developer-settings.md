@@ -25,6 +25,13 @@ These are what the Settings → Developers page calls. A key cannot create or de
 | `GET /dev/inbound` | Whether the inbound ticket address is on, and when it was last used. |
 | `POST /dev/inbound` | Turns the inbound address on (or replaces it); the address is shown once. |
 | `DELETE /dev/inbound` | Turns the inbound address off. |
+| `GET /dev-hooks` | Whether the GitHub and GitLab webhooks are on, with their addresses. |
+| `POST /dev-hooks/:provider` | Turns the `github` or `gitlab` webhook on, or replaces its secret. |
+| `DELETE /dev-hooks/:provider` | Turns the webhook off. |
+| `POST /inbound/dev/:provider` | Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. |
+| `GET /tasks/:id/dev` | The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary. |
+| `GET /boards/:id/dev-links` | The development summary of every task on a board that has links. |
+| `DELETE /dev-links/:id` | Removes one link from a task. |
 
 ## Details
 
@@ -105,3 +112,39 @@ Turns the inbound address on (or replaces it); the address is shown once.
 Turns the inbound address off.
 
 **Needs:** permission `connections.manage`
+
+### `GET /dev-hooks`
+
+Whether the GitHub and GitLab webhooks are on, with their addresses. Needs permission to manage connections.
+
+**Needs:** permission `connections.manage`
+
+### `POST /dev-hooks/:provider`
+
+Turns the `github` or `gitlab` webhook on, or replaces its secret. The address and the secret are shown; branches, pull requests and commits that name a task (`CURA-` and the first 8 characters of its id) are linked to it.
+
+**Needs:** permission `connections.manage`
+
+### `DELETE /dev-hooks/:provider`
+
+Turns the webhook off. Links already made stay.
+
+**Needs:** permission `connections.manage`
+
+### `POST /inbound/dev/:provider`
+
+Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. Not for people.
+
+### `GET /tasks/:id/dev`
+
+The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary.
+
+### `GET /boards/:id/dev-links`
+
+The development summary of every task on a board that has links.
+
+### `DELETE /dev-links/:id`
+
+Removes one link from a task.
+
+**Needs:** a seat that can write

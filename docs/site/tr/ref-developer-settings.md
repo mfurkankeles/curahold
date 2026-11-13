@@ -25,6 +25,13 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `GET /dev/inbound` | Gelen destek kaydı adresinin açık olup olmadığı ve en son ne zaman kullanıldığı. |
 | `POST /dev/inbound` | Gelen adresi açar (ya da yenisiyle değiştirir); adres bir kez gösterilir. |
 | `DELETE /dev/inbound` | Gelen adresi kapatır. |
+| `GET /dev-hooks` | GitHub ve GitLab webhook'larının açık olup olmadığı ve adresleri. |
+| `POST /dev-hooks/:provider` | `github` ya da `gitlab` webhook'unu açar ya da gizli değerini yeniler. |
+| `DELETE /dev-hooks/:provider` | Webhook'u kapatır. |
+| `POST /inbound/dev/:provider` | GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. |
+| `GET /tasks/:id/dev` | Bir göreve bağlı dallar, çekme istekleri ve commit'ler; durumları ve kontrolleriyle, bir satırlık özetle. |
+| `GET /boards/:id/dev-links` | Bağlantısı olan, bir panodaki her görevin geliştirme özeti. |
+| `DELETE /dev-links/:id` | Bir görevden tek bir bağlantıyı kaldırır. |
 
 ## Ayrıntılar
 
@@ -105,3 +112,39 @@ Gelen adresi açar (ya da yenisiyle değiştirir); adres bir kez gösterilir.
 Gelen adresi kapatır.
 
 **Gerekenler:** yetki `connections.manage`
+
+### `GET /dev-hooks`
+
+GitHub ve GitLab webhook'larının açık olup olmadığı ve adresleri. Bağlantıları yönetme yetkisi gerekir.
+
+**Gerekenler:** yetki `connections.manage`
+
+### `POST /dev-hooks/:provider`
+
+`github` ya da `gitlab` webhook'unu açar ya da gizli değerini yeniler. Adres ve gizli değer gösterilir; bir görevi (`CURA-` ve kimliğinin ilk 8 karakteri) anan dallar, çekme istekleri ve commit'ler ona bağlanır.
+
+**Gerekenler:** yetki `connections.manage`
+
+### `DELETE /dev-hooks/:provider`
+
+Webhook'u kapatır. Kurulmuş bağlantılar kalır.
+
+**Gerekenler:** yetki `connections.manage`
+
+### `POST /inbound/dev/:provider`
+
+GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. İnsanlar için değil.
+
+### `GET /tasks/:id/dev`
+
+Bir göreve bağlı dallar, çekme istekleri ve commit'ler; durumları ve kontrolleriyle, bir satırlık özetle.
+
+### `GET /boards/:id/dev-links`
+
+Bağlantısı olan, bir panodaki her görevin geliştirme özeti.
+
+### `DELETE /dev-links/:id`
+
+Bir görevden tek bir bağlantıyı kaldırır.
+
+**Gerekenler:** yazabilen bir koltuk

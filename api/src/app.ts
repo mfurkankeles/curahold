@@ -24,6 +24,8 @@ import { HttpError, fail } from './lib/errors';
 import { accountRoutes } from './routes/accounts';
 import { recordRoutes } from './routes/records';
 import { syncRoutes } from './routes/sync';
+import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
+import { jiraRoutes } from './routes/jira';
 import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
@@ -184,6 +186,8 @@ export function createApp(deps: Deps) {
   // Public, per company: login page data and the sign-in steps.
   app.route('/api', authRoutes);
   app.route('/api', inboundRoutes);
+  // GitHub / GitLab webhooks that link branches, pull requests and commits to tasks (signed, like the ticket inbound).
+  app.route('/api', devInboundRoutes);
   // Curahold support: the entry link, its session, the desk's file links.
   app.route('/api', supportEntry);
 
@@ -323,6 +327,8 @@ export function createApp(deps: Deps) {
   app.route('/api', portalRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
+  app.route('/api', jiraRoutes);
+  app.route('/api', devLinkRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);
   app.route('/api', trashRoutes);

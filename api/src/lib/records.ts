@@ -86,7 +86,7 @@ export function changedKeys(
   return out;
 }
 
-/** Task keys the sync cares about: title, description, due date, first assignee, done, account. */
+/** Task keys the sync cares about: title, description, due date, first assignee, done, board column (stage), account. */
 export function taskKeys(before: Record<string, any>, after: Record<string, any>, columns: { key: string; done: boolean }[]): string[] {
   const done = (s: string) => !!columns.find((c) => c.key === s)?.done;
   const out: string[] = [];
@@ -95,6 +95,8 @@ export function taskKeys(before: Record<string, any>, after: Record<string, any>
   if (String(before.due_date ?? '') !== String(after.due_date ?? '')) out.push('due');
   if ((before.assignee_ids?.[0] ?? null) !== (after.assignee_ids?.[0] ?? null)) out.push('assignee');
   if (done(before.status) !== done(after.status)) out.push('done');
+  // Any move between columns (a status on the other side, for project work), not only into or out of done.
+  if (before.status !== after.status) out.push('stage');
   if ((before.account_id ?? null) !== (after.account_id ?? null)) out.push('account');
   return out;
 }

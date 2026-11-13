@@ -254,6 +254,13 @@ export const GROUPS: Group[] = [
       ['GET /dev/inbound', 'Whether the inbound ticket address is on, and when it was last used.', 'Gelen destek kaydı adresinin açık olup olmadığı ve en son ne zaman kullanıldığı.'],
       ['POST /dev/inbound', 'Turns the inbound address on (or replaces it); the address is shown once.', 'Gelen adresi açar (ya da yenisiyle değiştirir); adres bir kez gösterilir.'],
       ['DELETE /dev/inbound', 'Turns the inbound address off.', 'Gelen adresi kapatır.'],
+      ['GET /dev-hooks', 'Whether the GitHub and GitLab webhooks are on, with their addresses. Needs permission to manage connections.', 'GitHub ve GitLab webhook\'larının açık olup olmadığı ve adresleri. Bağlantıları yönetme yetkisi gerekir.'],
+      ['POST /dev-hooks/:provider', 'Turns the `github` or `gitlab` webhook on, or replaces its secret. The address and the secret are shown; branches, pull requests and commits that name a task (`CURA-` and the first 8 characters of its id) are linked to it.', '`github` ya da `gitlab` webhook\'unu açar ya da gizli değerini yeniler. Adres ve gizli değer gösterilir; bir görevi (`CURA-` ve kimliğinin ilk 8 karakteri) anan dallar, çekme istekleri ve commit\'ler ona bağlanır.'],
+      ['DELETE /dev-hooks/:provider', 'Turns the webhook off. Links already made stay.', 'Webhook\'u kapatır. Kurulmuş bağlantılar kalır.'],
+      ['POST /inbound/dev/:provider', 'Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. Not for people.', 'GitHub\'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab\'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. İnsanlar için değil.'],
+      ['GET /tasks/:id/dev', 'The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary.', 'Bir göreve bağlı dallar, çekme istekleri ve commit\'ler; durumları ve kontrolleriyle, bir satırlık özetle.'],
+      ['GET /boards/:id/dev-links', 'The development summary of every task on a board that has links.', 'Bağlantısı olan, bir panodaki her görevin geliştirme özeti.'],
+      ['DELETE /dev-links/:id', 'Removes one link from a task.', 'Bir görevden tek bir bağlantıyı kaldırır.'],
     ],
   },
   {
