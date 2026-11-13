@@ -37,7 +37,7 @@ export const EN: Record<string, string> = {
   'Kısa çeyrek değerlendirmesi': 'Short quarterly review',
   // customers
   'Lindenhall Sigorta': 'Lindenhall Insurance',
-  'Ambergate Lojistik': 'Ambergate Logistics',
+  'Marevo': 'Marevo',
   'Corvina Medya': 'Corvina Media',
   'Brightmoor Enerji': 'Brightmoor Energy',
   'Wrenfield Eğitim': 'Wrenfield Education',
