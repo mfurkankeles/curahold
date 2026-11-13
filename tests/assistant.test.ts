@@ -91,7 +91,10 @@ describe('what the model is told and what it can reach', () => {
     const all = (await tool(tools, 'list_customers').execute({})) as any;
     expect(all.total).toBe(6);
     const one = all.customers.find((c: any) => c.name === 'Cedarmoor Health');
-    expect(one).toMatchObject({ 'Annual value': 38000, 'Renewal date': '2027-06-10', Health: 'Healthy', Tier: 'Mid-market' });
+    // The sample company renews Cedarmoor 210 days from the day it was made (scripts/seed-demo.ts).
+    const renews = new Date();
+    renews.setUTCDate(renews.getUTCDate() + 210);
+    expect(one).toMatchObject({ 'Annual value': 38000, 'Renewal date': renews.toISOString().slice(0, 10), Health: 'Healthy', Tier: 'Mid-market' });
     expect(typeof one.owner).toBe('string');
     expect(Object.keys(one)).not.toContain('arr');
     expect(trace.data).toEqual(['Customers']);
