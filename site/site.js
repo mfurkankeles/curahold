@@ -63,6 +63,41 @@
     reveals.forEach((el) => io.observe(el));
   }
 
+  // Health scores on the product board count up once they are in view.
+  const counters = document.querySelectorAll('[data-count]');
+  const runCount = (el) => {
+    const target = parseInt(el.dataset.count, 10) || 0;
+    if (reduce) {
+      el.textContent = String(target);
+      return;
+    }
+    const dur = 950;
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / dur);
+      el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = String(target);
+    };
+    requestAnimationFrame(tick);
+  };
+  if (reduce || !('IntersectionObserver' in window)) {
+    counters.forEach(runCount);
+  } else {
+    const co = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            runCount(e.target);
+            co.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.6 },
+    );
+    counters.forEach((el) => co.observe(el));
+  }
+
   // The hero figure leans a few pixels toward the pointer — the one reaction to
   // the cursor, and only when motion is welcome and there is a real pointer.
   const hero = document.querySelector('.hero');

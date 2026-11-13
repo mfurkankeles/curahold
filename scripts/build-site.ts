@@ -11,7 +11,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PLANS, PRICE_CURRENCY, TRIAL_DAYS, type PlanKey } from '../shared/src/billing';
-import { translate, LOCALE_INFO, bcp47Of, type MessageKey } from '../shared/src/i18n';
+import { translate, LOCALE_INFO, bcp47Of, accountWords, type MessageKey } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
 import { SITE_LOCALES, siteCopy, type SiteLocale } from '../site/content';
 
@@ -45,8 +45,22 @@ const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" 
 // integrations named in the tools section below — nothing here is a customer.
 const INTEGRATIONS = [
   'Slack', 'Microsoft Teams', 'Google Chat', 'Salesforce', 'HubSpot', 'Dynamics 365',
-  'Pipedrive', 'Zoho', 'Bitrix24', 'Freshsales', 'Zendesk Sell', 'Google Sheets', 'Excel', 'Claude', 'ChatGPT',
+  'Pipedrive', 'Zoho', 'Bitrix24', 'Freshsales', 'Zendesk Sell', 'Google Sheets', 'Excel', 'Google BigQuery', 'Claude', 'ChatGPT',
 ];
+
+// A faithful render of the real Accounts board for the product showcase — the
+// same card, health bands and signal chips the app uses, with invented demo
+// companies and the demo's own people. Labels come from the app's own
+// dictionaries, so the shot speaks every language. Nothing here is a real
+// customer. `chip` names which hero signal to show; null is a calm, healthy card.
+const BOARD = [
+  { name: 'Ambergate Logistics', band: 'risk', score: 48, chip: 'review', who: 'Zeynep', init: 'ZT' },
+  { name: 'Northwind Retail', band: 'watch', score: 66, chip: 'health', who: 'Ada', init: 'AD' },
+  { name: 'Keystone Foods', band: 'watch', score: 71, chip: 'step', who: 'Selin', init: 'SA' },
+  { name: 'Marisol Mobility', band: 'good', score: 92, chip: null, who: 'Lena', init: 'LB' },
+  { name: 'Brightwell Retail', band: 'good', score: 85, chip: null, who: 'Ada', init: 'AD' },
+  { name: 'Oreli Cosmetics', band: 'risk', score: 53, chip: 'renewal', who: 'Zeynep', init: 'ZT' },
+] as const;
 
 /** What each plan brings (the app's own words): Team's list, then what Business adds. */
 const TEAM_POINTS: MessageKey[] = ['billing.point.boards', 'billing.point.customers', 'billing.point.meetings', 'billing.point.reports', 'billing.point.chat'];
@@ -96,6 +110,48 @@ function page(locale: SiteLocale): string {
   const tools = c.tools.rows.map((r, i) => `<div data-reveal style="--i:${i}"><dt>${esc(r.label)}</dt><dd>${esc(r.names)}</dd></div>`).join('');
   const faq = c.faq.items.map((f, i) => `<details data-reveal style="--i:${i}"><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
   const m = c.meeting.card;
+
+  // The product showcase: an app window holding the real Accounts board. Every
+  // label is pulled from the app's own dictionaries so it reads in each language.
+  const accts = accountWords(locale).other;
+  const navItems = [
+    ['home', t('nav.home')],
+    ['boards', t('nav.boards')],
+    ['accounts', accts],
+    ['meetings', t('meetings.title')],
+    ['reports', t('nav.reports')],
+  ]
+    .map(([key, label]) => `<span class="app__nav${key === 'accounts' ? ' is-on' : ''}">${esc(label)}</span>`)
+    .join('');
+  const cards = BOARD.map((b, i) => {
+    const chip = b.chip ? `<div class="ac__chips"><span class="ac__chip" data-band="${b.band}">${esc(c.hero.chips[b.chip])}</span></div>` : '';
+    const bandWord = t(`health.band.${b.band}` as MessageKey);
+    return `<article class="ac" data-band="${b.band}" data-reveal style="--i:${i}">
+            <div class="ac__head"><span class="ac__name">${esc(b.name)}</span><span class="ac__score" data-band="${b.band}" data-count="${b.score}">0</span></div>
+            ${chip}
+            <div class="ac__foot">
+              <span class="ac__owner"><span class="ac__ava">${esc(b.init)}</span>${esc(b.who)}</span>
+              <span class="ac__owner-l">${esc(t('accounts.owner'))}</span>
+              <span class="ac__flag" data-band="${b.band}">${esc(bandWord)}</span>
+            </div>
+          </article>`;
+  }).join('');
+  const showcase = `  <section class="showcase" id="see">
+    <div class="wrap">
+      <h2 data-reveal>${esc(c.product.title)}</h2>
+      <p class="lead" data-reveal>${esc(c.product.lead)}</p>
+      <div class="app" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${accts}</span></div>
+        <div class="app__body">
+          <nav class="app__side"><span class="app__org">${MARK}<b>Curahold</b></span>${navItems}</nav>
+          <div class="app__main">
+            <div class="app__head"><h3>${esc(accts)}</h3><span class="app__count">${BOARD.length}</span></div>
+            <div class="app__grid">${cards}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>`;
   return `<!doctype html>
 <html lang="${c.lang}" dir="${info.dir}">
 <head>
@@ -150,6 +206,8 @@ ${alternates}
     <div class="wrap"><p class="strip__label" data-reveal>${esc(c.tools.marquee)}</p></div>
     <div class="marq" aria-hidden="true"><div class="marq__track">${INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('')}${INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('')}</div></div>
   </section>
+
+${showcase}
 
   <section class="year" id="product">
     <div class="wrap">

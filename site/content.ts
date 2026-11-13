@@ -21,6 +21,7 @@ export interface SiteCopy {
     card: { day: string; month: string; kind: string; name: string; ours: string; theirs: string; notes: string; steps: string; done: string; open: string; openWho: string };
   };
   tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
+  product: { title: string; lead: string };
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -75,11 +76,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'Chat', names: 'Slack, Microsoft Teams, Google Chat and email' },
         { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales and Zendesk Sell, in both directions' },
-        { label: 'Spreadsheets', names: 'Google Sheets and Excel' },
+        { label: 'Spreadsheets & data', names: 'Google Sheets, Excel and Google BigQuery' },
         { label: 'AI assistants', names: 'Claude and ChatGPT, through the connector' },
       ],
       none: 'It also works with none of them.',
       marquee: 'Works with the tools you already have',
+    },
+    product: {
+      title: 'Which customer needs you — at a glance',
+      lead: 'Every account on one board, ordered by who needs attention first. Health score, renewal and the next step, each shown in its own colour.',
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -160,11 +165,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'Sohbet', names: 'Slack, Microsoft Teams, Google Chat ve e-posta' },
         { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales ve Zendesk Sell, iki yönlü' },
-        { label: 'Tablolar', names: 'Google Sheets ve Excel' },
+        { label: 'Tablolar ve veri', names: 'Google Sheets, Excel ve Google BigQuery' },
         { label: 'Yapay zekâ', names: 'Bağlayıcı üzerinden Claude ve ChatGPT' },
       ],
       none: 'Hiçbiri olmadan da çalışır.',
       marquee: 'Zaten kullandığın araçlarla çalışır',
+    },
+    product: {
+      title: 'Hangi müşterinin sana ihtiyacı var — tek bakışta',
+      lead: 'Her müşteri tek bir panoda, önce ilgi bekleyene göre sıralı. Sağlık skoru, yenileme ve sonraki adım; her biri kendi renginde.',
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -245,11 +254,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'المحادثة', names: 'Slack وMicrosoft Teams وGoogle Chat والبريد الإلكتروني' },
         { label: 'إدارة العملاء', names: 'Salesforce وHubSpot وDynamics 365 وPipedrive وZoho وBitrix24 وFreshsales وZendesk Sell، في الاتجاهين' },
-        { label: 'جداول البيانات', names: 'Google Sheets وExcel' },
+        { label: 'جداول البيانات والبيانات', names: 'Google Sheets وExcel وGoogle BigQuery' },
         { label: 'مساعدو الذكاء الاصطناعي', names: 'Claude وChatGPT عبر الموصّل' },
       ],
       none: 'ويعمل أيضًا من دون أي منها.',
       marquee: 'يعمل مع الأدوات التي تستخدمها بالفعل',
+    },
+    product: {
+      title: 'أي عميل يحتاجك — بلمحة واحدة',
+      lead: 'كل الحسابات على لوحة واحدة، مرتّبة حسب الأحوج إلى اهتمامك. الحالة الصحية والتجديد والخطوة التالية، كلٌّ بلونه الخاص.',
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
@@ -330,11 +343,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'צ׳אט', names: 'Slack, Microsoft Teams, Google Chat ודוא״ל' },
         { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales ו-Zendesk Sell, בשני הכיוונים' },
-        { label: 'גיליונות', names: 'Google Sheets ו-Excel' },
+        { label: 'גיליונות ונתונים', names: 'Google Sheets, Excel ו-Google BigQuery' },
         { label: 'עוזרי AI', names: 'Claude ו-ChatGPT דרך המחבר' },
       ],
       none: 'הוא עובד גם בלי אף אחד מהם.',
       marquee: 'עובד עם הכלים שכבר יש לך',
+    },
+    product: {
+      title: 'איזה לקוח צריך אותך — במבט אחד',
+      lead: 'כל הלקוחות בלוח אחד, ממוינים לפי מי שזקוק לתשומת לב קודם. ציון הבריאות, החידוש והצעד הבא — כל אחד בצבעו.',
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
@@ -415,11 +432,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'گفت‌وگو', names: 'Slack، Microsoft Teams، Google Chat و ایمیل' },
         { label: 'CRM', names: 'Salesforce، HubSpot، Dynamics 365، Pipedrive، Zoho، Bitrix24، Freshsales و Zendesk Sell، دوطرفه' },
-        { label: 'صفحه‌گسترده', names: 'Google Sheets و Excel' },
+        { label: 'صفحه‌گسترده و داده', names: 'Google Sheets، Excel و Google BigQuery' },
         { label: 'دستیاران هوش مصنوعی', names: 'Claude و ChatGPT از طریق کانکتور' },
       ],
       none: 'بدون هیچ‌کدام هم کار می‌کند.',
       marquee: 'با ابزارهایی که همین حالا داری کار می‌کند',
+    },
+    product: {
+      title: 'کدام مشتری به تو نیاز دارد — در یک نگاه',
+      lead: 'همه حساب‌ها در یک تابلو، به‌ترتیب آن‌که زودتر به توجه نیاز دارد. امتیاز سلامت، تمدید و گام بعدی، هر کدام با رنگ خودش.',
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
@@ -500,11 +521,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: '聊天', names: 'Slack、Microsoft Teams、Google Chat 和电子邮件' },
         { label: 'CRM', names: 'Salesforce、HubSpot、Dynamics 365、Pipedrive、Zoho、Bitrix24、Freshsales 和 Zendesk Sell，双向同步' },
-        { label: '电子表格', names: 'Google Sheets 和 Excel' },
+        { label: '电子表格与数据', names: 'Google Sheets、Excel 和 Google BigQuery' },
         { label: 'AI 助手', names: '通过连接器使用 Claude 和 ChatGPT' },
       ],
       none: '不接入任何工具也能用。',
       marquee: '与你已在使用的工具协同工作',
+    },
+    product: {
+      title: '哪位客户需要你——一目了然',
+      lead: '所有客户集中在一个看板上，按最需要关注的顺序排列。健康分、续约和下一步，各以其颜色呈现。',
     },
     pricing: {
       title: '简单的按席位定价',
@@ -585,11 +610,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: '聊天', names: 'Slack、Microsoft Teams、Google Chat 與電子郵件' },
         { label: 'CRM', names: 'Salesforce、HubSpot、Dynamics 365、Pipedrive、Zoho、Bitrix24、Freshsales 與 Zendesk Sell，雙向同步' },
-        { label: '試算表', names: 'Google Sheets 與 Excel' },
+        { label: '試算表與資料', names: 'Google Sheets、Excel 與 Google BigQuery' },
         { label: 'AI 助理', names: '透過連接器使用 Claude 與 ChatGPT' },
       ],
       none: '不接上任何工具也能運作。',
       marquee: '與你已在使用的工具協同運作',
+    },
+    product: {
+      title: '哪位客戶需要你——一目了然',
+      lead: '所有客戶集中在一個看板上，依最需要關注的順序排列。健康分、續約與下一步，各以其顏色呈現。',
     },
     pricing: {
       title: '簡單的按席次定價',
@@ -670,11 +699,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: 'チャット', names: 'Slack、Microsoft Teams、Google Chat、メール' },
         { label: 'CRM', names: 'Salesforce、HubSpot、Dynamics 365、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell と双方向で' },
-        { label: 'スプレッドシート', names: 'Google Sheets と Excel' },
+        { label: 'スプレッドシートとデータ', names: 'Google Sheets、Excel、Google BigQuery' },
         { label: 'AI アシスタント', names: 'コネクタ経由で Claude と ChatGPT' },
       ],
       none: 'どれがなくても使えます。',
       marquee: 'すでにお使いのツールと連携します',
+    },
+    product: {
+      title: 'どの顧客があなたを必要としているか——ひと目で',
+      lead: 'すべての顧客を一つのボードに、対応が必要な順に並べて。ヘルススコア、更新、次の一手を、それぞれの色で。',
     },
     pricing: {
       title: 'シンプルな、シート単位の料金',
@@ -755,11 +788,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       rows: [
         { label: '채팅', names: 'Slack, Microsoft Teams, Google Chat, 이메일' },
         { label: 'CRM', names: 'Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell와 양방향' },
-        { label: '스프레드시트', names: 'Google Sheets와 Excel' },
+        { label: '스프레드시트와 데이터', names: 'Google Sheets, Excel, Google BigQuery' },
         { label: 'AI 어시스턴트', names: '커넥터를 통해 Claude와 ChatGPT' },
       ],
       none: '아무것도 연결하지 않아도 작동합니다.',
       marquee: '이미 쓰고 있는 도구와 함께 작동합니다',
+    },
+    product: {
+      title: '어떤 고객이 당신을 필요로 하는지 — 한눈에',
+      lead: '모든 고객을 하나의 보드에, 먼저 챙겨야 할 순서로. 헬스 점수, 갱신, 다음 단계를 각각의 색으로.',
     },
     pricing: {
       title: '간단한 좌석당 가격',
