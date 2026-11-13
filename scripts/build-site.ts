@@ -239,6 +239,30 @@ function page(locale: SiteLocale): string {
       </div>
     </div>
   </section>`;
+
+  // Fifth product window: a reports chart — the one visual the page still lacks.
+  // Month labels come localised from Intl; the bars grow on reveal. Demo shape.
+  const months = Array.from({ length: 8 }, (_, k) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (7 - k));
+    return new Intl.DateTimeFormat(bcp47Of(locale), { month: 'short' }).format(d);
+  });
+  const heights = [34, 42, 38, 50, 54, 50, 66, 76];
+  const repBars = months
+    .map((mn, k) => `<div class="rep__col" data-reveal style="--i:${k}"><span class="rep__bar" style="--h:${heights[k]}%"></span><span class="rep__x">${esc(mn)}</span></div>`)
+    .join('');
+  const reports = `  <section class="board">
+    <div class="wrap">
+      <h3 class="showcase__cap" data-reveal>${esc(c.product.reports)}</h3>
+      <div class="app app--wide" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.reports'))}</span></div>
+        <div class="app__main app__main--rep">
+          <div class="rep__head"><h3>${esc(t('nav.reports'))}</h3><span class="rep__trend">▲ 18%</span></div>
+          <div class="rep__chart">${repBars}</div>
+        </div>
+      </div>
+    </div>
+  </section>`;
   return `<!doctype html>
 <html lang="${c.lang}" dir="${info.dir}">
 <head>
@@ -332,6 +356,8 @@ ${customer}
   </section>
 
 ${kanban}
+
+${reports}
 
   <section class="tools">
     <div class="wrap">

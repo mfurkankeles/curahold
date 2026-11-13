@@ -567,3 +567,20 @@ body { overflow-x: clip; }
 html.js .tcard[data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: calc(var(--i, 0) * .14s + .2s); }
 html.js .tcard[data-reveal].is-in { opacity: 1; transform: none; }
 @media (max-width: 960px) { .meetflow { max-width: 460px; } }
+
+/* ========================================= reports chart (window 5) ========
+   The one chart on the page: eight months of bars that grow up from the
+   baseline, staggered, as the window is reached. */
+.app__main--rep { padding: 24px 28px 28px; background: var(--mist); display: grid; gap: 20px; }
+.rep__head { display: flex; align-items: center; gap: 12px; }
+.rep__head h3 { font: 700 20px/1 var(--display); }
+.rep__trend { font-size: 13px; font-weight: 650; color: var(--fern); background: var(--fern-wash); padding: 3px 10px; border-radius: 999px; }
+.rep__chart { height: 210px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+.rep__col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; }
+.rep__bar { width: min(62%, 40px); height: 0; border-radius: 7px 7px 0 0; background: linear-gradient(180deg, var(--iris), color-mix(in srgb, var(--iris) 72%, var(--fern))); transition: height .95s var(--ease); transition-delay: calc(var(--i, 0) * .06s + .2s); }
+.app.is-in .rep__bar { height: var(--h); }
+.rep__col:last-child .rep__bar { background: linear-gradient(180deg, var(--fern), color-mix(in srgb, var(--fern) 78%, var(--iris))); }
+.rep__x { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) { .rep__bar { transition: none; } }
+@media (max-width: 560px) { .rep__chart { height: 170px; gap: 5px; } .rep__x { font-size: 10px; } .app__main--rep { padding: 18px 14px; } }

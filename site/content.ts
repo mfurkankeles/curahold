@@ -21,7 +21,7 @@ export interface SiteCopy {
     card: { day: string; month: string; kind: string; name: string; ours: string; theirs: string; notes: string; steps: string; done: string; open: string; openWho: string };
   };
   tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
-  product: { title: string; lead: string; work: string; portfolio: string; detail: string };
+  product: { title: string; lead: string; work: string; portfolio: string; detail: string; reports: string };
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -88,6 +88,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'Every promise, on the board as a task',
       portfolio: 'The few who need you, never lost in the many',
       detail: 'Open one, and see exactly why',
+      reports: 'How the quarter is going, in one chart',
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -180,6 +181,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'Her söz, panoda bir görev',
       portfolio: 'İlgi bekleyenler kalabalıkta kaybolmaz',
       detail: 'Birini aç, nedenini tam olarak gör',
+      reports: 'Çeyrek nasıl gidiyor, tek grafikte',
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -272,6 +274,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'كل وعد، على اللوحة كمهمة',
       portfolio: 'القلّة التي تحتاجك لا تضيع بين الكثرة',
       detail: 'افتح واحدًا، وانظر السبب بالضبط',
+      reports: 'كيف يسير الربع، في رسم واحد',
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
@@ -364,6 +367,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'כל הבטחה, על הלוח כמשימה',
       portfolio: 'המעטים שזקוקים לך לא הולכים לאיבוד בין הרבים',
       detail: 'פתח אחד, וראה בדיוק למה',
+      reports: 'איך הרבעון מתקדם, בתרשים אחד',
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
@@ -456,6 +460,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'هر قول، روی تابلو به‌صورت یک وظیفه',
       portfolio: 'معدود کسانی که به تو نیاز دارند میان انبوه گم نمی‌شوند',
       detail: 'یکی را باز کن و دقیقاً دلیلش را ببین',
+      reports: 'فصل چطور پیش می‌رود، در یک نمودار',
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
@@ -548,6 +553,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: '每个承诺，都化为看板上的一个任务',
       portfolio: '需要你的少数客户，不再淹没在多数之中',
       detail: '打开一个客户，看清原因',
+      reports: '本季度进展如何，一张图看懂',
     },
     pricing: {
       title: '简单的按席位定价',
@@ -640,6 +646,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: '每個承諾，都化為看板上的一個任務',
       portfolio: '需要你的少數客戶，不再淹沒在多數之中',
       detail: '打開一個客戶，看清原因',
+      reports: '本季進展如何，一張圖看懂',
     },
     pricing: {
       title: '簡單的按席次定價',
@@ -732,6 +739,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: 'すべての約束を、ボード上のタスクに',
       portfolio: 'あなたを必要とする少数が、多数に埋もれない',
       detail: '一社開けば、理由がそのまま見える',
+      reports: '四半期の動きが、ひと目のグラフで',
     },
     pricing: {
       title: 'シンプルな、シート単位の料金',
@@ -824,6 +832,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       work: '모든 약속이 보드 위의 작업으로',
       portfolio: '당신이 필요한 소수가 다수 속에 묻히지 않도록',
       detail: '하나를 열면, 이유가 그대로 보인다',
+      reports: '이번 분기 흐름을, 차트 한 장으로',
     },
     pricing: {
       title: '간단한 좌석당 가격',
