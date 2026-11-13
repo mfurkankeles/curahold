@@ -194,6 +194,51 @@ function page(locale: SiteLocale): string {
       </div>
     </div>
   </section>`;
+
+  // Fourth product window: one customer's health page — the score ring with its
+  // reasons, and the account's timeline. Reasons and timeline labels come from
+  // the app's own dictionaries (filled with demo values), so it localises too.
+  const CIRC = 339;
+  const reasons = (
+    [
+      ['risk', translate(locale, 'health.why.touch', { days: 38, kind: translate(locale, 'health.touchKind.review') })],
+      ['risk', translate(locale, 'health.why.tasks', { n: 3 })],
+      ['watch', translate(locale, 'health.why.championNone')],
+    ] as const
+  )
+    .map(([st, text], i) => `<li data-state="${st}" data-reveal style="--i:${i}"><span>${esc(text)}</span></li>`)
+    .join('');
+  const tline = (
+    [
+      ['meeting', translate(locale, 'timeline.kind.meeting'), c.meeting.card.name, `10 ${m.month}`, false],
+      ['note', translate(locale, 'timeline.kind.note'), c.meeting.card.notes, `8 ${m.month}`, false],
+      ['done', '', c.meeting.card.done, `5 ${m.month}`, true],
+    ] as const
+  )
+    .map(
+      ([k, kind, text, when, done], i) =>
+        `<li class="tl__ev" data-reveal style="--i:${i}"><span class="tl__dot" data-k="${k}">${done ? DONE : ''}</span><div class="tl__b">${kind ? `<span class="tl__kind">${esc(kind)}</span>` : ''}<p class="tl__txt${done ? ' is-done' : ''}">${esc(text)}</p><span class="tl__when">${esc(when)}</span></div></li>`,
+    )
+    .join('');
+  const customer = `  <section class="board">
+    <div class="wrap">
+      <h3 class="showcase__cap" data-reveal>${esc(c.product.detail)}</h3>
+      <div class="app app--wide" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(c.hero.customer)}</span></div>
+        <div class="app__main app__main--cust">
+          <div class="cust__panel">
+            <div class="cust__top"><span class="cust__name">${esc(c.hero.customer)}</span><span class="cust__chip">${esc(c.hero.chips.renewal)}</span></div>
+            <div class="ring" data-band="risk">
+              <svg viewBox="0 0 128 128" aria-hidden="true"><circle class="ring__bg" cx="64" cy="64" r="54"/><circle class="ring__fill" cx="64" cy="64" r="54" style="--circ:${CIRC};--off:${Math.round(CIRC * 0.52)}"/></svg>
+              <div class="ring__c"><span class="ring__n" data-count="48">0</span><span class="ring__l" data-band="risk">${esc(t('health.band.risk'))}</span></div>
+            </div>
+            <div class="why"><span class="why__h">${esc(t('health.why'))}</span><ul class="why__list">${reasons}</ul></div>
+          </div>
+          <div class="cust__tl"><span class="tl__h">${esc(t('timeline.title'))}</span><ul class="tl">${tline}</ul></div>
+        </div>
+      </div>
+    </div>
+  </section>`;
   return `<!doctype html>
 <html lang="${c.lang}" dir="${info.dir}">
 <head>
@@ -250,6 +295,8 @@ ${alternates}
   </section>
 
 ${showcase}
+
+${customer}
 
   <section class="year" id="product">
     <div class="wrap">

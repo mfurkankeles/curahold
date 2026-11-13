@@ -494,3 +494,50 @@ body { overflow-x: clip; }
   .showcase { padding-top: 52px; }
   .board { padding-top: 44px; }
 }
+
+/* ======================================= customer health page (window 4) ===
+   One account opened: the score ring with its reasons, and the timeline. */
+.app__main--cust { padding: 26px; background: var(--mist); display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 26px; }
+.cust__panel { display: grid; gap: 18px; align-content: start; }
+.cust__top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cust__name { font: 700 19px/1.2 var(--display); color: var(--ink); }
+.cust__chip { font-size: 12.5px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--iris-wash); color: var(--iris-ink); }
+
+/* the score ring */
+.ring { position: relative; width: 168px; height: 168px; margin: 2px auto 0; }
+.ring svg { width: 168px; height: 168px; display: block; }
+.ring__bg { fill: none; stroke: var(--line); stroke-width: 12; }
+.ring__fill { fill: none; stroke: var(--rose); stroke-width: 12; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; stroke-dasharray: var(--circ); stroke-dashoffset: var(--circ); transition: stroke-dashoffset 1.3s var(--ease) .2s; }
+.ring[data-band='risk'] .ring__fill { stroke: var(--rose); } .ring[data-band='watch'] .ring__fill { stroke: var(--ember); } .ring[data-band='good'] .ring__fill { stroke: var(--fern); }
+.app.is-in .ring__fill { stroke-dashoffset: var(--off); }
+.ring__c { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2px; }
+.ring__n { font: 750 46px/1 var(--display); font-variant-numeric: tabular-nums; color: var(--rose); }
+.ring__l { font-size: 13px; font-weight: 600; color: var(--rose); }
+
+/* reasons for the score */
+.why { display: grid; gap: 10px; }
+.why__h { font: 650 13px/1 var(--display); color: var(--ink-2); }
+.why__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.why__list li { padding-left: 12px; border-left: 3px solid var(--line); font-size: 13.5px; color: var(--ink-2); line-height: 1.4; }
+[dir="rtl"] .why__list li { padding-left: 0; padding-right: 12px; border-left: 0; border-right: 3px solid var(--line); }
+.why__list li[data-state='risk'] { border-color: var(--rose); } .why__list li[data-state='watch'] { border-color: var(--ember); } .why__list li[data-state='good'] { border-color: var(--fern); }
+
+/* the account timeline */
+.cust__tl { display: grid; gap: 14px; align-content: start; }
+.tl__h { font: 650 13px/1 var(--display); color: var(--ink-2); }
+.tl { list-style: none; margin: 0; padding: 0; }
+.tl__ev { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 18px; }
+.tl__ev::before { content: ''; position: absolute; inset-inline-start: 12px; top: 26px; bottom: -2px; width: 2px; background: var(--line); }
+.tl__ev:last-child { padding-bottom: 0; } .tl__ev:last-child::before { display: none; }
+.tl__dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--iris-wash); position: relative; z-index: 1; }
+.tl__dot[data-k='note'] { background: var(--line); } .tl__dot[data-k='done'] { background: var(--fern-wash); }
+.tl__dot svg { width: 15px; height: 15px; }
+.tl__b { display: grid; gap: 2px; align-content: start; }
+.tl__kind { font-size: 11.5px; font-weight: 600; color: var(--iris-ink); }
+.tl__txt { margin: 0; font-size: 14px; line-height: 1.4; color: var(--ink); overflow-wrap: anywhere; }
+.tl__txt.is-done { color: var(--ink-3); text-decoration: line-through; }
+.tl__when { font-size: 12px; color: var(--ink-3); }
+
+@media (prefers-reduced-motion: reduce) { .ring__fill { transition: none; } }
+@media (max-width: 860px) { .app__main--cust { grid-template-columns: 1fr; gap: 22px; } }
+@media (max-width: 560px) { .app__main--cust { padding: 18px 16px; } .ring, .ring svg { width: 148px; height: 148px; } }

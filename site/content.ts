@@ -21,7 +21,7 @@ export interface SiteCopy {
     card: { day: string; month: string; kind: string; name: string; ours: string; theirs: string; notes: string; steps: string; done: string; open: string; openWho: string };
   };
   tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
-  product: { title: string; lead: string; work: string; portfolio: string };
+  product: { title: string; lead: string; work: string; portfolio: string; detail: string };
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -87,6 +87,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'Every account on one board, ordered by who needs attention first. Health score, renewal and the next step, each shown in its own colour.',
       work: 'Every promise, on the board as a task',
       portfolio: 'The few who need you, never lost in the many',
+      detail: 'Open one, and see exactly why',
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -178,6 +179,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'Her müşteri tek bir panoda, önce ilgi bekleyene göre sıralı. Sağlık skoru, yenileme ve sonraki adım; her biri kendi renginde.',
       work: 'Her söz, panoda bir görev',
       portfolio: 'İlgi bekleyenler kalabalıkta kaybolmaz',
+      detail: 'Birini aç, nedenini tam olarak gör',
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -269,6 +271,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'كل الحسابات على لوحة واحدة، مرتّبة حسب الأحوج إلى اهتمامك. الحالة الصحية والتجديد والخطوة التالية، كلٌّ بلونه الخاص.',
       work: 'كل وعد، على اللوحة كمهمة',
       portfolio: 'القلّة التي تحتاجك لا تضيع بين الكثرة',
+      detail: 'افتح واحدًا، وانظر السبب بالضبط',
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
@@ -360,6 +363,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'כל הלקוחות בלוח אחד, ממוינים לפי מי שזקוק לתשומת לב קודם. ציון הבריאות, החידוש והצעד הבא — כל אחד בצבעו.',
       work: 'כל הבטחה, על הלוח כמשימה',
       portfolio: 'המעטים שזקוקים לך לא הולכים לאיבוד בין הרבים',
+      detail: 'פתח אחד, וראה בדיוק למה',
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
@@ -451,6 +455,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'همه حساب‌ها در یک تابلو، به‌ترتیب آن‌که زودتر به توجه نیاز دارد. امتیاز سلامت، تمدید و گام بعدی، هر کدام با رنگ خودش.',
       work: 'هر قول، روی تابلو به‌صورت یک وظیفه',
       portfolio: 'معدود کسانی که به تو نیاز دارند میان انبوه گم نمی‌شوند',
+      detail: 'یکی را باز کن و دقیقاً دلیلش را ببین',
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
@@ -542,6 +547,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: '所有客户集中在一个看板上，按最需要关注的顺序排列。健康分、续约和下一步，各以其颜色呈现。',
       work: '每个承诺，都化为看板上的一个任务',
       portfolio: '需要你的少数客户，不再淹没在多数之中',
+      detail: '打开一个客户，看清原因',
     },
     pricing: {
       title: '简单的按席位定价',
@@ -633,6 +639,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: '所有客戶集中在一個看板上，依最需要關注的順序排列。健康分、續約與下一步，各以其顏色呈現。',
       work: '每個承諾，都化為看板上的一個任務',
       portfolio: '需要你的少數客戶，不再淹沒在多數之中',
+      detail: '打開一個客戶，看清原因',
     },
     pricing: {
       title: '簡單的按席次定價',
@@ -724,6 +731,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'すべての顧客を一つのボードに、対応が必要な順に並べて。ヘルススコア、更新、次の一手を、それぞれの色で。',
       work: 'すべての約束を、ボード上のタスクに',
       portfolio: 'あなたを必要とする少数が、多数に埋もれない',
+      detail: '一社開けば、理由がそのまま見える',
     },
     pricing: {
       title: 'シンプルな、シート単位の料金',
@@ -815,6 +823,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: '모든 고객을 하나의 보드에, 먼저 챙겨야 할 순서로. 헬스 점수, 갱신, 다음 단계를 각각의 색으로.',
       work: '모든 약속이 보드 위의 작업으로',
       portfolio: '당신이 필요한 소수가 다수 속에 묻히지 않도록',
+      detail: '하나를 열면, 이유가 그대로 보인다',
     },
     pricing: {
       title: '간단한 좌석당 가격',
