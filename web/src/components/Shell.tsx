@@ -437,6 +437,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/dashboards', t('nav.dashboards'), path.startsWith('/dashboards') || path === '/reports/dashboards', 'layout')}
                 {link('/team', t('nav.team'), path === '/team', 'people')}
                 {me.owner ? link('/metrics', t('nav.metrics'), path === '/metrics', 'chart') : null}
+                {me.owner ? link('/platform', t('nav.platform'), path === '/platform', 'building') : null}
+                {me.owner ? link('/platform/pages', t('nav.founderPages'), path === '/platform/pages', 'list') : null}
               </>,
             )}
           </div>

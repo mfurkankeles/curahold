@@ -12,10 +12,11 @@ These addresses exist but belong to the browser or to other machines. They are l
 | --- | --- | --- |
 | `/admin/…` | 29 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/auth/…` | 5 | Signing in and out happens in the browser. |
-| `/billing/…` | 3 | Plan and payment, with the payment provider. |
+| `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 27 | Managing connections and their field matching: an administrator in the browser. |
+| `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
 | `/desk/…` | 12 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |
@@ -25,7 +26,9 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/manifest.webmanifest/…` | 1 | The installable-app manifest. |
 | `/metrics/…` | 1 | The operator-only platform metrics (the owner dashboard); not part of a company's API. |
 | `/oauth/…` | 0 | The consent screen for apps and AI assistants; see "AI connector and OAuth". |
+| `/onboarding/…` | 2 | A new company's own setup checklist, used in the browser after sign-up. |
 | `/org/…` | 1 | The company's public sign-in details. |
+| `/platform/…` | 4 | The operator-only owner console (customers, plans, billing status, overview); not part of a company's API. |
 | `/portal/…` | 6 | Managing who can sign in to the customer portal. |
 | `/replay/…` | 1 | The browser's session recording for support (disclosed, inputs masked, kept a week); the page posts its own events here, and only Curahold's desk reads them. |
 | `/setup/…` | 5 | The first-time setup of a company. |

@@ -26,6 +26,10 @@ import { recordRoutes } from './routes/records';
 import { syncRoutes } from './routes/sync';
 import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
 import { jiraRoutes } from './routes/jira';
+import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
+import { onboardingRoutes } from './routes/onboarding';
+import { platformRoutes } from './routes/admin-platform';
+import { consentRoutes } from './routes/consent';
 import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
@@ -139,6 +143,8 @@ export function createApp(deps: Deps) {
   app.route('/api/desk', deskRoutes);
   // Paddle's notifications about subscriptions (checked against its secret).
   app.post('/api/billing/webhook', billingWebhook);
+  // Paddle notifications for the table-based subscription system (signature-checked).
+  app.post('/api/inbound/billing/paddle', paddleInboundWebhook);
 
   // ---------------------------------------------------------------- company
   const companyFromHost = async (c: any, next: () => Promise<void>) => {
@@ -321,6 +327,10 @@ export function createApp(deps: Deps) {
   app.route('/api', timelineRoutes);
   app.route('/api', meetingRoutes);
   app.route('/api', billingRoutes);
+  app.route('/api', subscriptionRoutes);
+  app.route('/api', onboardingRoutes);
+  app.route('/api', platformRoutes);
+  app.route('/api', consentRoutes);
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', helpRoutes);

@@ -31,6 +31,9 @@ import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
 import { InboxPage } from './pages/Inbox';
 import { MetricsPage } from './pages/Metrics';
+import { PlatformConsolePage } from './pages/PlatformConsole';
+import { FounderPagesPage } from './pages/FounderPages';
+import { ConsentBanner } from './components/ConsentBanner';
 import { ReportsPage } from './pages/Reports';
 import { ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
 import { DashboardPage, DashboardsPage } from './pages/Dashboards';
@@ -207,6 +210,7 @@ export function App() {
           </StoreProvider>
         </ErrorBoundary>
       )}
+      <ConsentBanner />
     </I18nProvider>
   );
 }
@@ -268,6 +272,8 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/calendar') page = <CalendarPage refreshKey={quiet} />;
   else if (path === '/inbox') page = <InboxPage />;
   else if (path === '/metrics') page = <MetricsPage />;
+  else if (path === '/platform') page = <PlatformConsolePage />;
+  else if (path === '/platform/pages') page = <FounderPagesPage />;
   else if (path === '/reports') page = <ReportsPage key={refreshKey} />;
   else if (path === '/reports/all') page = <ReportsListPage />;
   else if (path === '/reports/dashboards' || path === '/dashboards') page = <DashboardsPage />;

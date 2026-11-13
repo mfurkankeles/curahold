@@ -304,6 +304,9 @@ export const INTERNAL: Record<string, Pair> = {
   portal: ['Managing who can sign in to the customer portal.', 'Müşteri portalına kimlerin girebileceğini yönetme.'],
   logo: ['The company logo.', 'Şirket logosu.'],
   metrics: ['The operator-only platform metrics (the owner dashboard); not part of a company\'s API.', 'Yalnızca işletmeciye özel platform metrikleri (owner panosu); bir şirketin API\'sinin parçası değil.'],
+  platform: ['The operator-only owner console (customers, plans, billing status, overview); not part of a company\'s API.', 'Yalnızca işletmeciye özel owner konsolu (müşteriler, planlar, faturalandırma durumu, genel bakış); bir şirketin API\'sinin parçası değil.'],
+  onboarding: ['A new company\'s own setup checklist, used in the browser after sign-up.', 'Yeni bir şirketin kendi kurulum kontrol listesi; kayıttan sonra tarayıcıda kullanılır.'],
+  consent: ['The person\'s privacy and cookie choices, recorded from the browser.', 'Kişinin gizlilik ve çerez tercihleri; tarayıcıdan kaydedilir.'],
   'manifest.webmanifest': ['The installable-app manifest.', 'Kurulabilir uygulama bildirimi.'],
   'client-error': ['The browser reporting its own errors, so a fault a person hits is recorded.', 'Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye.'],
 };
