@@ -236,3 +236,21 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
   .tools__list div { grid-template-columns: 1fr; gap: 4px; }
   .foot__in { grid-template-columns: 1fr; }
 }
+
+/* Language menu — shown in place of the single toggle once more than one other
+   language has its copy ready. */
+.lang { position: relative; }
+.lang > summary { list-style: none; color: var(--ink-2); font: 500 15px/1 var(--text); cursor: pointer; padding: 8px 4px; }
+.lang > summary::-webkit-details-marker { display: none; }
+.lang > summary:hover { color: var(--ink); }
+.lang__menu { position: absolute; inset-inline-end: 0; margin-top: 8px; min-width: 150px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(23, 19, 58, .12); padding: 6px; display: grid; z-index: 20; }
+.lang__menu a { color: var(--ink-2); text-decoration: none; font-size: 15px; padding: 8px 10px; border-radius: 7px; }
+.lang__menu a:hover { color: var(--ink); background: var(--night-2); background: color-mix(in srgb, var(--line) 50%, transparent); }
+.foot__langs { display: flex; gap: 8px 16px; flex-wrap: wrap; }
+
+/* Right-to-left languages (Arabic, Hebrew, Persian). A starting point set from
+   the single LOCALE_INFO registry; full visual QA happens when the first RTL
+   language's copy goes live. */
+[dir="rtl"] .top__end { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .lead,
+[dir="rtl"] .hero__lead { max-width: none; }

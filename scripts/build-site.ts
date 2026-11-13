@@ -11,9 +11,9 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PLANS, PRICE_CURRENCY, TRIAL_DAYS, type PlanKey } from '../shared/src/billing';
-import { translate, type MessageKey } from '../shared/src/i18n';
+import { translate, LOCALE_INFO, bcp47Of, type MessageKey } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
-import { COPY, type SiteLocale } from '../site/content';
+import { SITE_LOCALES, siteCopy, type SiteLocale } from '../site/content';
 
 const ROOT = join(import.meta.dirname, '..');
 const OUT = process.argv[2] ?? join(ROOT, 'dist', 'site');
@@ -24,6 +24,18 @@ const BASE_DOMAIN = process.env.SITE_BASE_DOMAIN ?? 'curahold.com';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// Which languages the help pages and demo hub are built in. The site falls
+// back to English for any locale they do not cover yet.
+const DOCS_LANGS = new Set<SiteLocale>(['en', 'tr']);
+const DEMO_LANGS = new Set<SiteLocale>(['en', 'tr']);
+
+// English lives at the root, every other language under /<locale>/. This is the
+// relative href from the page in `from` to the page in `to`.
+const localeHref = (from: SiteLocale, to: SiteLocale) => {
+  const up = from === 'en' ? '' : '../';
+  return to === 'en' ? up || './' : `${up}${to}/`;
+};
+
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DONE = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2f8f78"/><path d="M4.8 8.2l2.1 2.1L11.3 6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#75719a" stroke-width="1.6"/></svg>`;
@@ -33,16 +45,27 @@ const TEAM_POINTS: MessageKey[] = ['billing.point.boards', 'billing.point.custom
 const BUSINESS_POINTS: MessageKey[] = ['billing.point.crm', 'billing.point.portal', 'billing.point.playbooks'];
 
 function page(locale: SiteLocale): string {
-  const c = COPY[locale];
+  const c = siteCopy(locale);
+  const info = LOCALE_INFO[locale];
   const rel = locale === 'en' ? '' : '../';
-  const other = locale === 'en' ? 'tr/' : '../';
   const signup = `${APP}/signup`;
-  // The demo hub has a page per language: /demo/ and /demo/tr/.
-  const demo = locale === 'tr' ? `${DEMO}tr/` : DEMO;
-  const docs = `${DOCS}/${locale}/`;
-  const legal = (slug: string) => `${DOCS}/${locale}/legal-${slug}/`;
-  const money = (n: number) => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency: PRICE_CURRENCY, maximumFractionDigits: 0 }).format(n);
+  // The demo hub has a page per language; fall back to English where it has none.
+  const demo = DEMO_LANGS.has(locale) && locale !== 'en' ? `${DEMO}${locale}/` : DEMO;
+  const docsLocale = DOCS_LANGS.has(locale) ? locale : 'en';
+  const docs = `${DOCS}/${docsLocale}/`;
+  const legal = (slug: string) => `${DOCS}/${docsLocale}/legal-${slug}/`;
+  const money = (n: number) => new Intl.NumberFormat(bcp47Of(locale), { style: 'currency', currency: PRICE_CURRENCY, maximumFractionDigits: 0 }).format(n);
   const t = (k: MessageKey) => translate(locale, k);
+  // Every other language, named by its own endonym. One other → a direct link,
+  // as today; more than one → a small menu. hreflang lists them all.
+  const others = SITE_LOCALES.filter((l) => l !== locale);
+  const langLink = (l: SiteLocale, cls = '') => `<a${cls ? ` class="${cls}"` : ''} href="${localeHref(locale, l)}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`;
+  const langNav =
+    others.length === 1
+      ? langLink(others[0], 'top__lang')
+      : `<details class="lang"><summary class="top__lang">${esc(info.name)}</summary><div class="lang__menu">${others.map((l) => langLink(l)).join('')}</div></details>`;
+  const footLang = others.length === 1 ? langLink(others[0]) : others.map((l) => langLink(l)).join(' · ');
+  const alternates = [...SITE_LOCALES.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${localeHref(locale, l)}">`), `<link rel="alternate" hreflang="x-default" href="${localeHref(locale, 'en')}">`].join('\n');
   const plan = (key: PlanKey) => {
     const p = PLANS[key];
     const points = (key === 'team' ? TEAM_POINTS : BUSINESS_POINTS).map((k) => `<li>${CHECK}<span>${esc(t(k))}</span></li>`).join('');
@@ -66,7 +89,7 @@ function page(locale: SiteLocale): string {
   const faq = c.faq.items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
   const m = c.meeting.card;
   return `<!doctype html>
-<html lang="${c.lang}">
+<html lang="${c.lang}" dir="${info.dir}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -74,7 +97,7 @@ function page(locale: SiteLocale): string {
 <meta name="description" content="${esc(c.description)}">
 <meta name="theme-color" content="#17133a">
 <link rel="icon" href="${FAVICON}">
-<link rel="alternate" hreflang="${locale === 'en' ? 'tr' : 'en'}" href="${other}">
+${alternates}
 <link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${rel}assets/site.css">
 </head>
@@ -90,7 +113,7 @@ function page(locale: SiteLocale): string {
       <a href="${docs}">${esc(c.nav.help)}</a>
     </nav>
     <div class="top__end">
-      <a class="top__lang" href="${other}" hreflang="${locale === 'en' ? 'tr' : 'en'}" lang="${locale === 'en' ? 'tr' : 'en'}">${esc(c.nav.other)}</a>
+      ${langNav}
       <a class="top__signin" href="#signin" data-signin>${esc(c.nav.signIn)}</a>
       <a class="btn btn--primary" href="${signup}">${esc(c.nav.tryFree)}</a>
     </div>
@@ -202,7 +225,7 @@ function page(locale: SiteLocale): string {
     </div>
     <div class="foot__base">
       <span>© ${new Date().getFullYear()} ${esc(c.footer.company)}</span>
-      <a href="${other}" hreflang="${locale === 'en' ? 'tr' : 'en'}" lang="${locale === 'en' ? 'tr' : 'en'}">${esc(c.nav.other)}</a>
+      <span class="foot__langs">${footLang}</span>
     </div>
   </div>
 </footer>
@@ -225,9 +248,11 @@ function page(locale: SiteLocale): string {
 }
 
 mkdirSync(join(OUT, 'assets'), { recursive: true });
-mkdirSync(join(OUT, 'tr'), { recursive: true });
-writeFileSync(join(OUT, 'index.html'), page('en'));
-writeFileSync(join(OUT, 'tr', 'index.html'), page('tr'));
+for (const locale of SITE_LOCALES) {
+  const dir = locale === 'en' ? OUT : join(OUT, locale);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'index.html'), page(locale));
+}
 copyFileSync(join(ROOT, 'site', 'site.css'), join(OUT, 'assets', 'site.css'));
 copyFileSync(join(ROOT, 'site', 'site.js'), join(OUT, 'assets', 'site.js'));
 // The same open fonts as the app (SIL OFL), served from the site itself: no third party sees a visit.
@@ -243,4 +268,4 @@ for (const [pkg, names] of [
 // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
 const HUB = join(ROOT, 'dist', 'demo-hub');
 if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
-console.log(`site: 2 languages → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English)${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
+console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English)${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);

@@ -15,6 +15,7 @@ import { execFileSync } from 'node:child_process';
 import { buildSync } from 'esbuild';
 import { Marked, type Tokens } from 'marked';
 import type { DocSection } from '../shared/src/answers';
+import { LOCALE_INFO } from '../shared/src/i18n';
 
 const ROOT = join(import.meta.dirname, '..');
 const SRC = join(ROOT, 'docs', 'site');
@@ -224,7 +225,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
   }).join('');
   const title = page ? `${page.title} · ${ui.site}` : ui.site;
   return `<!doctype html>
-<html lang="${lang}">
+<html lang="${lang}" dir="${LOCALE_INFO[lang].dir}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

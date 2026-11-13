@@ -4,7 +4,9 @@
 //
 // Customer names are invented (the same ones as the demo).
 
-export type SiteLocale = 'en' | 'tr';
+import type { Locale } from '../shared/src/i18n';
+
+export type SiteLocale = Locale;
 
 export interface SiteCopy {
   lang: string;
@@ -25,7 +27,7 @@ export interface SiteCopy {
   footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string }; company: string };
 }
 
-export const COPY: Record<SiteLocale, SiteCopy> = {
+export const COPY: Partial<Record<Locale, SiteCopy>> = {
   en: {
     lang: 'en',
     title: 'Curahold: work management for customer success teams',
@@ -195,3 +197,13 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
     },
   },
 };
+
+// The locales whose marketing copy is authored and ready to publish, English
+// first. Adding a language to the sales site is one step: author its COPY
+// entry above and it appears here on its own. Until a locale has copy, every
+// visitor who asks for it reads the English — the builder never ships a page
+// of machine text dressed as native.
+export const SITE_LOCALES = Object.keys(COPY) as Locale[];
+
+/** The copy for a locale, falling back to English until a native pass lands. */
+export const siteCopy = (locale: Locale): SiteCopy => COPY[locale] ?? COPY.en!;
