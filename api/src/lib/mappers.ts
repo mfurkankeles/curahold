@@ -1,4 +1,4 @@
-import type { Board, Comment, FileMeta, Task } from '../../../shared/src/model';
+import type { Board, Comment, FileMeta, Sprint, Task } from '../../../shared/src/model';
 import type { Row } from '../db';
 
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v == null ? null : String(v));
@@ -38,6 +38,10 @@ export const toTask = (r: Row): Task => ({
   startDate: day(r.start_date),
   ...(r.blocked_by != null ? { blockedBy: Number(r.blocked_by) } : {}),
   recordId: r.record_id ?? null,
+  issueType: r.issue_type ?? 'task',
+  storyPoints: r.story_points == null ? null : Number(r.story_points),
+  epicId: r.epic_id ?? null,
+  sprintId: r.sprint_id ?? null,
   ...(r.record_name !== undefined ? { recordName: r.record_name ?? null, recordType: r.record_type ?? null } : {}),
 });
 
@@ -81,3 +85,17 @@ export const toFile = (r: Row): FileMeta => ({
 });
 
 export { iso, day };
+
+export const toSprint = (r: Row): Sprint => ({
+  id: r.id,
+  boardId: r.board_id,
+  name: r.name,
+  goal: r.goal ?? '',
+  state: r.state,
+  startsOn: day(r.starts_on),
+  endsOn: day(r.ends_on),
+  position: Number(r.position),
+  createdBy: r.created_by ?? null,
+  createdAt: iso(r.created_at)!,
+  updatedAt: iso(r.updated_at)!,
+});

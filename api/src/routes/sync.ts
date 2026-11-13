@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { optionKey } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
-import type { RemoteField, SyncConfig, SyncProblem } from '../../../shared/src/sync';
+import { KEY_FIELDS, type RemoteField, type SyncConfig, type SyncProblem } from '../../../shared/src/sync';
 import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { base64url, randomToken, seal, sign, unseal } from '../lib/crypto';
@@ -37,7 +37,11 @@ export interface CrmConnectState {
   q: Record<string, string>;
   /** The sign-in's one-time proof (PKCE), sealed: it travels through the browser and must not be readable there. */
   k?: string;
+  /** Set when reconnecting: the connection that lost its sign-in; signing in to a different account is refused. */
+  rc?: string;
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const connectCallbackUrl = (c: C) => `${centralUrl(c.get('deps').config)}/api/connect/callback`;
 
@@ -52,13 +56,23 @@ export async function crmStart(c: C, provider: string, back: string) {
   const adapter = CRM_ADAPTERS[provider];
   if (!client || !adapter.oauth) return c.redirect(`${home}?error=not_configured&provider=${provider}`);
   const q: Record<string, string> = {};
-  if (provider === 'salesforce' && c.req.query('sandbox') === '1') q.sandbox = '1';
+  // Reconnecting: the sign-in asks what it asked the first time (sandbox, Dynamics address), taken from the connection.
+  let rc: string | undefined;
+  let again: Record<string, any> = {};
+  const reconnectId = c.req.query('reconnect') ?? '';
+  if (reconnectId) {
+    const [old] = UUID.test(reconnectId) ? await run(c, (x) => x.query(`select id, config from connections where id = $1 and kind = 'source' and provider = $2`, [reconnectId, provider])) : [];
+    if (!old) return c.redirect(`${home}?error=connection_failed&provider=${provider}`);
+    rc = old.id as string;
+    again = old.config ?? {};
+  }
+  if (provider === 'salesforce' && (c.req.query('sandbox') === '1' || (rc && String(again.loginUrl ?? '').includes('test.salesforce.com')))) q.sandbox = '1';
   if (provider === 'dynamics') {
-    const orgUrlRaw = orgUrlOf(c.req.query('orgUrl') ?? '');
+    const orgUrlRaw = orgUrlOf(c.req.query('orgUrl') ?? again.orgUrl ?? '');
     if (!orgUrlRaw) return c.redirect(`${home}?error=dynamics_url&provider=dynamics`);
     q.orgUrl = orgUrlRaw;
   }
-  const state: CrmConnectState = { o: org.slug, p: provider, u: c.get('auth').userId, r: back, n: randomToken(12), x: nowOf(deps).getTime() + 15 * 60_000, q };
+  const state: CrmConnectState = { o: org.slug, p: provider, u: c.get('auth').userId, r: back, n: randomToken(12), x: nowOf(deps).getTime() + 15 * 60_000, q, ...(rc ? { rc } : {}) };
   const opts = { ...q };
   if (adapter.oauth.pkce) {
     const verifier = randomToken(48);
@@ -95,6 +109,8 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
   const id = await deps.db.system(async (q) => {
     // Signing in again to the same CRM refreshes the credentials and keeps the mapping.
     const [same] = await q.query(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, provider, made.instanceId]);
+    // Reconnecting a connection that lost its sign-in: it must be the same account, not a new connection beside it.
+    if (state.rc && same?.id !== state.rc) return 'wrong_account' as const;
     if (same) {
       await q.query(`update connections set secret = $3, config = config || $4::jsonb, label = $5, status = 'active', last_error = null, updated_at = now() where id = $1 and org_id = $2`, [
         same.id,
@@ -112,6 +128,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
     await q.query(`insert into audit_log (org_id, actor_id, action, entity, entity_id, meta) values ($1, $2, 'connection.created', 'connection', $3, $4)`, [org.id, state.u, row.id, JSON.stringify({ provider })]);
     return row.id as string;
   });
+  if (id === 'wrong_account') return c.redirect(`${home}?error=wrong_account&provider=${provider}`);
   return c.redirect(`${orgUrl(cfg, state.o)}/settings/sources/${id}?connected=${provider}${state.r.startsWith('/setup') ? '&from=setup' : ''}`);
 }
 
@@ -120,7 +137,8 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
 /** Support tools and key-based CRMs: the administrator types the tool's address and a key; Curahold checks them right away. */
 syncRoutes.post('/connections/key', async (c) => {
   requirePerm(c, 'connections.manage');
-  const input = await body(c, z.object({ provider: z.string().max(40), values: z.record(z.string().max(40), z.string().max(500)) }));
+  // Values are short (an address, a key), except a service-account key file and a warehouse query.
+  const input = await body(c, z.object({ provider: z.string().max(40), values: z.record(z.string().max(40), z.string().max(10_000)), reconnect: z.string().uuid().optional() }));
   const adapter = isCrm(input.provider) ? CRM_ADAPTERS[input.provider] : null;
   if (!adapter?.keyed) fail('not_found');
   const deps = c.get('deps');
@@ -136,8 +154,11 @@ syncRoutes.post('/connections/key', async (c) => {
   const id = await deps.db.system(async (q) => {
     // The same workspace again: new key, same mapping and history.
     const [same] = await q.query(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, input.provider, made!.instanceId]);
+    // Reconnecting: the new key must open the same workspace, or it would start a second connection beside the broken one.
+    if (input.reconnect && same?.id !== input.reconnect) return null;
     if (same) {
-      await q.query(`update connections set secret = $3, status = 'active', config = config || $4::jsonb, updated_at = now() where id = $1 and org_id = $2`, [same.id, org.id, sealed, JSON.stringify(made!.config)]);
+      await q.query(`update connections set secret = $3, status = 'active', last_error = null, config = config || $4::jsonb, updated_at = now() where id = $1 and org_id = $2`, [same.id, org.id, sealed, JSON.stringify(made!.config)]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.reconnected', entity: 'connection', entityId: same.id, meta: { provider: input.provider } });
       return same.id as string;
     }
     const [row] = await q.query(
@@ -147,6 +168,7 @@ syncRoutes.post('/connections/key', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.created', entity: 'connection', entityId: row.id, meta: { provider: input.provider } });
     return row.id as string;
   });
+  if (!id) fail('validation', { fields: 'reconnect' }, { fields: ['reconnect'], reason: 'other_workspace' });
   return c.json({ id }, 201);
 });
 
@@ -191,6 +213,13 @@ async function loaded(c: C) {
   return conn!;
 }
 
+/** The non-secret things typed when connecting with a key (an address, a region, a query) that the config keeps. */
+function prefillOf(provider: string, config: Record<string, any>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of KEY_FIELDS[provider as keyof typeof KEY_FIELDS] ?? []) if (!f.secret && typeof config?.[f.key] === 'string') out[f.key] = config[f.key];
+  return out;
+}
+
 function crmFail(e: unknown): never {
   if (e instanceof CrmError) fail('crm_error', { message: e.message }, { reason: e.message, auth: e.auth });
   throw e;
@@ -203,10 +232,26 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
     const types = await q.query('select id, key, name, kind, fields from record_types where archived_at is null order by position, created_at');
     const boards = await q.query('select id, name from boards where archived_at is null order by sort_text(name)');
     const [pending] = await q.query<{ n: number; failing: number }>(`select count(*)::int as n, count(*) filter (where attempts > 0)::int as failing from sync_changes where connection_id = $1`, [conn.id]);
-    return { types, boards, pending };
+    const [row] = await q.query<{ last_error: string | null }>('select last_error from connections where id = $1', [conn.id]);
+    return { types, boards, pending, lastError: row?.last_error };
   });
+  const lastError = data.lastError;
   return c.json({
-    connection: { id: conn.id, provider: conn.provider, standsFor: (conn.config?.as as string | undefined) ?? null, label: conn.label, status: conn.status, tabular: adapter.tabular, readOnly: !!adapter.readOnly },
+    connection: {
+      id: conn.id,
+      provider: conn.provider,
+      standsFor: (conn.config?.as as string | undefined) ?? null,
+      label: conn.label,
+      status: conn.status,
+      lastError: lastError ?? null,
+      /** How to sign in again when the connection says its credentials stopped working. */
+      reconnect: adapter.oauth ? 'oauth' : adapter.keyed ? 'key' : null,
+      /** What was typed the first time, minus secrets, to start the new key's form filled in. */
+      prefill: adapter.keyed ? prefillOf(conn.provider, conn.config) : {},
+      tabular: adapter.tabular,
+      readOnly: !!adapter.readOnly,
+      canReply: !!adapter.reply && !adapter.readOnly,
+    },
     sync: conn.sync,
     state: { lastRun: conn.state.lastRun ?? null, fullAt: conn.state.fullAt ?? null },
     recordTypes: data.types,
@@ -523,6 +568,57 @@ syncRoutes.post('/connections/:id/problems/retry', async (c) => {
   await run(c, (q) => q.query('update sync_changes set next_at = now(), attempts = 0 where connection_id = $1 and attempts > 0', [conn.id]));
   const result = await syncConnection(c.get('deps'), c.get('org').id, conn.id, { trigger: 'manual', userId: c.get('auth').userId, pushOnly: true, budgetMs: REQUEST_BUDGET_MS });
   return c.json({ run: result });
+});
+
+// ------------------------------------------------------- support write-back
+
+/** Support tools that take things back: an answer to a ticket, or a new ticket, made from Curahold. */
+function writable(conn: Awaited<ReturnType<typeof loaded>>) {
+  const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
+  if (adapter.readOnly || !adapter.reply) fail('not_found');
+  if (conn.status === 'disabled') fail('forbidden');
+  return adapter;
+}
+
+syncRoutes.post('/connections/:id/tickets', async (c) => {
+  const conn = await loaded(c);
+  const adapter = writable(conn);
+  const input = await body(
+    c,
+    z.object({
+      subject: z.string().trim().min(1).max(300),
+      requester: z.string().trim().email().max(254),
+      description: z.string().trim().max(10_000).optional(),
+      priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+      status: z.enum(['open', 'pending', 'solved', 'closed']).optional(),
+      assignee: z.string().max(100).optional(),
+    }),
+  );
+  const deps = c.get('deps');
+  let remoteId: string;
+  try {
+    remoteId = await adapter.create(crmCtx(deps, conn), 'tickets', input, [], undefined);
+  } catch (e) {
+    crmFail(e);
+  }
+  await run(c, (q) => audit(q, { orgId: c.get('org').id, actorId: c.get('auth').userId, action: 'connection.ticket_created', entity: 'connection', entityId: conn.id, meta: { remoteId: remoteId! } }));
+  // The ticket comes back with the next read, under the right customer, like any other.
+  return c.json({ id: remoteId!, url: adapter.url(conn.config, 'tickets', remoteId!) }, 201);
+});
+
+syncRoutes.post('/connections/:id/tickets/:remoteId/reply', async (c) => {
+  const conn = await loaded(c);
+  const adapter = writable(conn);
+  const input = await body(c, z.object({ body: z.string().trim().min(1).max(20_000), internal: z.boolean().optional() }));
+  const remoteId = c.req.param('remoteId');
+  if (!remoteId || remoteId.length > 100) fail('validation', { fields: 'remoteId' }, { fields: ['remoteId'] });
+  try {
+    await adapter.reply!(crmCtx(c.get('deps'), conn), remoteId, { body: input.body, internal: input.internal });
+  } catch (e) {
+    crmFail(e);
+  }
+  await run(c, (q) => audit(q, { orgId: c.get('org').id, actorId: c.get('auth').userId, action: input.internal ? 'connection.ticket_noted' : 'connection.ticket_replied', entity: 'connection', entityId: conn.id, meta: { remoteId } }));
+  return c.json({ ok: true });
 });
 
 /** Rolled-up fields recomputed on demand (after changing their definition). */

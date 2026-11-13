@@ -2,7 +2,7 @@
 // too: queueing local changes for the sync, and keeping rolled-up account
 // fields ("open pipeline", "next close date") in step with the records.
 import { fxRate } from './fx';
-import { SUPPORT_PROVIDERS } from '../../../shared/src/sync';
+import { READ_ONLY_PROVIDERS } from '../../../shared/src/sync';
 import type { AccountField } from '../../../shared/src/model';
 import type { TargetKind } from '../../../shared/src/sync';
 import { defer, type Deps } from '../context';
@@ -15,8 +15,8 @@ import type { Q } from '../db';
  * Runs inside the caller's transaction, so nothing is queued for a change
  * that does not commit.
  */
-/** Sources that receive changes (support tools only read). */
-const WRITABLE = `c.provider not in (${SUPPORT_PROVIDERS.map((p) => `'${p}'`).join(', ')})`;
+/** Sources that receive changes (Jira Service Management and warehouses only read). */
+const WRITABLE = `c.provider not in (${READ_ONLY_PROVIDERS.map((p) => `'${p}'`).join(', ')})`;
 
 export async function queueSync(
   q: Q,

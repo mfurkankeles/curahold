@@ -1,8 +1,17 @@
-// Support tools: Zendesk, Freshdesk, Intercom and Jira Service Management.
+// Support tools: Zendesk, Freshdesk, Intercom, Front and Jira Service Management.
 // Each is connected with its own address and an API key the administrator
-// creates in the tool (no app registration, nothing to approve), and only
-// read: tickets become "Support ticket" records under the right customer,
+// creates in the tool (no app registration, nothing to approve). Tickets are
+// read: they become "Support ticket" records under the right customer,
 // organisations are matched to customers by name or web address.
+//
+// Zendesk, Freshdesk, Intercom and Front also take things back (write-back):
+// changed status, priority and assignee go through the normal mapping (what the
+// service lets be changed is marked `updatable` on the field), a ticket made in
+// Curahold can be created there (`create`, Zendesk, Freshdesk and Intercom), and
+// `reply` answers a ticket as the connection's agent, to the customer or as an
+// internal note. Jira Service Management stays read only. Values going out use
+// the same words coming in do (open, pending, solved, closed; low … urgent) and
+// are turned into the service's own codes here.
 //
 // Every adapter offers the same two objects with the same field names, so
 // one mapping fits all: tickets (subject, status, priority, opened, solved,
@@ -52,19 +61,29 @@ const cleanSub = (v: string, suffix: RegExp) => v.trim().toLowerCase().replace(/
 
 const TICKET_OBJECT = (label: string, plural: string): RemoteObject => ({ name: 'tickets', label, labelPlural: plural, custom: false, hint: 'ticket' });
 const ORG_OBJECT = (label: string, plural: string): RemoteObject => ({ name: 'organizations', label, labelPlural: plural, custom: false, hint: 'account' });
-const sel = (name: string, label: string, keys: string[]): RemoteField => ({ name, label, type: 'select', options: keys.map((k) => ({ value: k, label: k })), updatable: false });
-const TICKET_FIELDS = (withOrg: boolean): RemoteField[] => [
+/** What a service lets Curahold change on a ticket. */
+interface Caps {
+  subject?: boolean;
+  status?: boolean;
+  priority?: boolean;
+  assignee?: boolean;
+  /** A ticket made in Curahold can be created there. */
+  create?: boolean;
+}
+const sel = (name: string, label: string, keys: string[], can = false, createable = false): RemoteField => ({ name, label, type: 'select', options: keys.map((k) => ({ value: k, label: k })), updatable: can, ...(createable ? { createable } : {}) });
+const TICKET_FIELDS = (withOrg: boolean, caps: Caps = {}): RemoteField[] => [
   { name: 'id', label: 'ID', type: 'id', updatable: false },
-  { name: 'subject', label: 'Subject', type: 'text', updatable: false },
-  sel('status', 'Status', ['open', 'pending', 'solved', 'closed']),
-  sel('priority', 'Priority', ['low', 'normal', 'high', 'urgent']),
+  { name: 'subject', label: 'Subject', type: 'text', updatable: !!caps.subject, ...(caps.create ? { createable: true, required: true } : {}) },
+  sel('status', 'Status', ['open', 'pending', 'solved', 'closed'], !!caps.status, !!caps.create),
+  sel('priority', 'Priority', ['low', 'normal', 'high', 'urgent'], !!caps.priority, !!caps.create),
   { name: 'opened', label: 'Opened', type: 'datetime', updatable: false },
   { name: 'solved', label: 'Solved', type: 'datetime', updatable: false },
-  { name: 'requester', label: 'Requester email', type: 'email', updatable: false },
+  { name: 'requester', label: 'Requester email', type: 'email', updatable: false, ...(caps.create ? { createable: true, required: true } : {}) },
+  ...(caps.create ? [{ name: 'description', label: 'First message', type: 'textarea' as const, updatable: false, createable: true }] : []),
   { name: 'channel', label: 'Channel', type: 'text', updatable: false },
   { name: 'link', label: 'Link', type: 'url', updatable: false },
   ...(withOrg ? [{ name: 'organization', label: 'Organization', type: 'ref' as const, refTo: ['organizations'], updatable: false }] : []),
-  { name: 'assignee', label: 'Assignee', type: 'user', updatable: false },
+  { name: 'assignee', label: 'Assignee', type: 'user', updatable: !!caps.assignee, ...(caps.assignee ? { createable: true } : {}) },
 ];
 const ORG_FIELDS: RemoteField[] = [
   { name: 'id', label: 'ID', type: 'id', updatable: false },
@@ -109,10 +128,19 @@ const since = (s: string | null) => (s ? new Date(s).getTime() : 0);
 
 const zdBase = (ctx: { config: Record<string, any> }) => `https://${ctx.config.subdomain}.zendesk.com/api/v2`;
 
+/** Curahold's words (and a user id) as Zendesk's ticket fields. Zendesk cannot be told a ticket is closed: solved it is. */
+function zdTicket(v: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  if (typeof v.subject === 'string' && v.subject.trim()) out.subject = v.subject.trim();
+  if (v.status) out.status = v.status === 'closed' ? 'solved' : v.status;
+  if (v.priority) out.priority = v.priority;
+  if (v.assignee !== undefined && v.assignee !== '') out.assignee_id = v.assignee === null ? null : Number(v.assignee);
+  return out;
+}
+
 export const zendesk: CrmAdapter = {
   provider: 'zendesk',
   tabular: false,
-  readOnly: true,
   keyed: {
     async connect(fetcher, values, now) {
       const subdomain = cleanSub(values.subdomain ?? '', /\.zendesk\.com.*$/);
@@ -129,7 +157,7 @@ export const zendesk: CrmAdapter = {
     return [TICKET_OBJECT('Ticket', 'Tickets'), ORG_OBJECT('Organization', 'Organizations')];
   },
   async fields(_ctx, object) {
-    return object === 'tickets' ? TICKET_FIELDS(true) : ORG_FIELDS;
+    return object === 'tickets' ? TICKET_FIELDS(true, { subject: true, status: true, priority: true, assignee: true, create: true }) : ORG_FIELDS;
   },
   async users(ctx) {
     const out: RemoteUser[] = [];
@@ -179,8 +207,27 @@ export const zendesk: CrmAdapter = {
     void sinceIso;
     return [];
   },
-  update: readOnly,
-  create: readOnly,
+  async update(ctx, object, id, values) {
+    if (object !== 'tickets') throw new CrmError('Organizations are only read');
+    const ticket = zdTicket(values);
+    if (!Object.keys(ticket).length) return;
+    await send(ctx, `${zdBase(ctx)}/tickets/${encodeURIComponent(id)}.json`, { method: 'PUT', json: { ticket } });
+  },
+  async create(ctx, object, values) {
+    if (object !== 'tickets') throw new CrmError('Organizations are only read');
+    const subject = String(values.subject ?? '').trim();
+    const requester = String(values.requester ?? '').trim();
+    if (!subject || !requester) throw new CrmError('A ticket needs a subject and the requester\'s email');
+    const j = await send(ctx, `${zdBase(ctx)}/tickets.json`, {
+      method: 'POST',
+      json: { ticket: { subject, comment: { body: String(values.description ?? '').trim() || subject }, requester: { email: requester }, ...zdTicket({ status: values.status, priority: values.priority, assignee: values.assignee }) } },
+    });
+    if (!j?.ticket?.id) throw new CrmError('Zendesk did not return the new ticket');
+    return String(j.ticket.id);
+  },
+  async reply(ctx, id, input) {
+    await send(ctx, `${zdBase(ctx)}/tickets/${encodeURIComponent(id)}.json`, { method: 'PUT', json: { ticket: { comment: { body: input.body, public: !input.internal } } } });
+  },
   url(config, object, id) {
     return object === 'tickets' ? `https://${config.subdomain}.zendesk.com/agent/tickets/${id}` : `https://${config.subdomain}.zendesk.com/agent/organizations/${id}`;
   },
@@ -193,10 +240,20 @@ const FD_STATUS: Record<number, string> = { 2: 'open', 3: 'pending', 4: 'solved'
 const FD_PRIORITY: Record<number, string> = { 1: 'low', 2: 'normal', 3: 'high', 4: 'urgent' };
 const FD_SOURCE: Record<number, string> = { 1: 'email', 2: 'portal', 3: 'phone', 7: 'chat', 9: 'feedback widget', 10: 'outbound email' };
 
+const fdCode = (table: Record<number, string>, word: unknown) => Number(Object.keys(table).find((k) => table[Number(k)] === word));
+/** Curahold's words as Freshdesk's numeric codes (the first code for a word is the plain one: 2 open, 3 pending). */
+function fdTicket(v: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  if (typeof v.subject === 'string' && v.subject.trim()) out.subject = v.subject.trim();
+  if (v.status && fdCode(FD_STATUS, v.status)) out.status = fdCode(FD_STATUS, v.status);
+  if (v.priority && fdCode(FD_PRIORITY, v.priority)) out.priority = fdCode(FD_PRIORITY, v.priority);
+  if (v.assignee !== undefined && v.assignee !== '') out.responder_id = v.assignee === null ? null : Number(v.assignee);
+  return out;
+}
+
 export const freshdesk: CrmAdapter = {
   provider: 'freshdesk',
   tabular: false,
-  readOnly: true,
   keyed: {
     async connect(fetcher, values) {
       const domain = cleanSub(values.domain ?? '', /\.freshdesk\.com.*$/);
@@ -212,7 +269,7 @@ export const freshdesk: CrmAdapter = {
     return [TICKET_OBJECT('Ticket', 'Tickets'), ORG_OBJECT('Company', 'Companies')];
   },
   async fields(_ctx, object) {
-    return object === 'tickets' ? TICKET_FIELDS(true) : ORG_FIELDS;
+    return object === 'tickets' ? TICKET_FIELDS(true, { subject: true, status: true, priority: true, assignee: true, create: true }) : ORG_FIELDS;
   },
   async users(ctx) {
     const out: RemoteUser[] = [];
@@ -251,8 +308,26 @@ export const freshdesk: CrmAdapter = {
     // Freshdesk stops at page 300; the next run carries on from the last change it saw.
     return { rows, next: list?.length === PAGE && page < 300 ? String(page + 1) : null };
   },
-  update: readOnly,
-  create: readOnly,
+  async update(ctx, object, id, values) {
+    if (object !== 'tickets') throw new CrmError('Companies are only read');
+    const body = fdTicket(values);
+    if (!Object.keys(body).length) return;
+    await send(ctx, `${fdBase(ctx)}/tickets/${encodeURIComponent(id)}`, { method: 'PUT', json: body });
+  },
+  async create(ctx, object, values) {
+    if (object !== 'tickets') throw new CrmError('Companies are only read');
+    const subject = String(values.subject ?? '').trim();
+    const email = String(values.requester ?? '').trim();
+    if (!subject || !email) throw new CrmError('A ticket needs a subject and the requester\'s email');
+    // Freshdesk insists on a first message, a status and a priority.
+    const j = await send(ctx, `${fdBase(ctx)}/tickets`, { method: 'POST', json: { subject, email, description: String(values.description ?? '').trim() || subject, status: 2, priority: 2, ...fdTicket({ status: values.status, priority: values.priority, assignee: values.assignee }) } });
+    if (!j?.id) throw new CrmError('Freshdesk did not return the new ticket');
+    return String(j.id);
+  },
+  async reply(ctx, id, input) {
+    const path = input.internal ? 'notes' : 'reply';
+    await send(ctx, `${fdBase(ctx)}/tickets/${encodeURIComponent(id)}/${path}`, { method: 'POST', json: input.internal ? { body: input.body, private: true } : { body: input.body } });
+  },
   url(config, object, id) {
     return object === 'tickets' ? `https://${config.domain}.freshdesk.com/a/tickets/${id}` : `https://${config.domain}.freshdesk.com/a/companies/${id}`;
   },
@@ -264,10 +339,20 @@ const IC_HOSTS: Record<string, string> = { us: 'https://api.intercom.io', eu: 'h
 const icBase = (ctx: { config: Record<string, any> }) => IC_HOSTS[ctx.config.region] ?? IC_HOSTS.us;
 const IC_VERSION = { 'intercom-version': '2.11' };
 
+/** The admin the token acts as: saved when connecting, asked for once for connections made before. */
+async function icAdmin(ctx: CrmCtx): Promise<string> {
+  if (ctx.config.adminId) return String(ctx.config.adminId);
+  const me = await send(ctx, `${icBase(ctx)}/me`, {}, IC_VERSION);
+  if (!me?.id) throw new CrmError('Intercom did not say which admin this token acts as');
+  ctx.config.adminId = String(me.id);
+  return ctx.config.adminId;
+}
+const icAssign = async (ctx: CrmCtx, id: string, assignee: string) =>
+  send(ctx, `${icBase(ctx)}/conversations/${encodeURIComponent(id)}/parts`, { method: 'POST', json: { type: 'admin', admin_id: await icAdmin(ctx), message_type: 'assignment', assignee_id: assignee } }, IC_VERSION);
+
 export const intercom: CrmAdapter = {
   provider: 'intercom',
   tabular: false,
-  readOnly: true,
   keyed: {
     async connect(fetcher, values) {
       const region = ['us', 'eu', 'au'].includes((values.region ?? 'us').trim().toLowerCase()) ? (values.region ?? 'us').trim().toLowerCase() : 'us';
@@ -275,7 +360,8 @@ export const intercom: CrmAdapter = {
       const me = await send({ fetch: fetcher, token: async () => auth }, `${IC_HOSTS[region]}/me`, {}, IC_VERSION);
       const appId = me?.app?.id_code;
       if (!appId) throw new CrmError('That access token does not open an Intercom workspace', 401, undefined, true);
-      return { secret: { accessToken: auth }, config: { region, appId }, label: me.app.name ?? 'Intercom', instanceId: appId };
+      // `me` is the admin the token acts as: the one who replies, closes and assigns.
+      return { secret: { accessToken: auth }, config: { region, appId, ...(me.id ? { adminId: String(me.id) } : {}) }, label: me.app.name ?? 'Intercom', instanceId: appId };
     },
   },
   refresh: noRefresh,
@@ -284,7 +370,7 @@ export const intercom: CrmAdapter = {
   },
   async fields(_ctx, object) {
     // Conversations name a person, not a company: the customer is found by the person's email address.
-    return object === 'tickets' ? TICKET_FIELDS(false) : ORG_FIELDS;
+    return object === 'tickets' ? TICKET_FIELDS(false, { status: true, assignee: true, create: true }) : ORG_FIELDS;
   },
   async users(ctx) {
     const j = await send(ctx, `${icBase(ctx)}/admins`, {}, IC_VERSION);
@@ -321,8 +407,34 @@ export const intercom: CrmAdapter = {
     );
     return { rows, next: j?.pages?.next?.starting_after ?? null };
   },
-  update: readOnly,
-  create: readOnly,
+  async update(ctx, object, id, values) {
+    if (object !== 'tickets') throw new CrmError('Companies are only read');
+    const admin = await icAdmin(ctx);
+    const part = (json: Record<string, unknown>) => send(ctx, `${icBase(ctx)}/conversations/${encodeURIComponent(id)}/parts`, { method: 'POST', json: { type: 'admin', admin_id: admin, ...json } }, IC_VERSION);
+    // Intercom changes a conversation by adding a step to it: open, close, assign. It has no "pending" to set, and a title and priority cannot be changed.
+    if (values.status === 'open') await part({ message_type: 'open' });
+    else if (values.status === 'solved' || values.status === 'closed') await part({ message_type: 'close' });
+    if (values.assignee !== undefined && values.assignee !== '') await part({ message_type: 'assignment', assignee_id: values.assignee === null ? '0' : String(values.assignee) });
+  },
+  async create(ctx, object, values) {
+    if (object !== 'tickets') throw new CrmError('Companies are only read');
+    const email = String(values.requester ?? '').trim().toLowerCase();
+    const body = String(values.description ?? '').trim() || String(values.subject ?? '').trim();
+    if (!email || !body) throw new CrmError('A conversation needs the requester\'s email and a first message');
+    // The conversation starts from a person (a contact); one is made when there is none with that address.
+    const found = await send(ctx, `${icBase(ctx)}/contacts/search`, { method: 'POST', json: { query: { field: 'email', operator: '=', value: email } } }, IC_VERSION);
+    let contact = found?.data?.[0]?.id as string | undefined;
+    if (!contact) contact = (await send(ctx, `${icBase(ctx)}/contacts`, { method: 'POST', json: { role: 'lead', email } }, IC_VERSION))?.id;
+    if (!contact) throw new CrmError('Intercom did not return the person to write to');
+    const made = await send(ctx, `${icBase(ctx)}/conversations`, { method: 'POST', json: { from: { type: 'user', id: contact }, body } }, IC_VERSION);
+    const id = made?.conversation_id ?? made?.id;
+    if (!id) throw new CrmError('Intercom did not return the new conversation');
+    if (values.assignee) await icAssign(ctx, String(id), String(values.assignee));
+    return String(id);
+  },
+  async reply(ctx, id, input) {
+    await send(ctx, `${icBase(ctx)}/conversations/${encodeURIComponent(id)}/reply`, { method: 'POST', json: { message_type: input.internal ? 'note' : 'comment', type: 'admin', admin_id: await icAdmin(ctx), body: input.body } }, IC_VERSION);
+  },
   url(config, object, id) {
     return object === 'tickets' ? `https://app.intercom.com/a/inbox/${config.appId}/inbox/conversation/${id}` : `https://app.intercom.com/a/apps/${config.appId}/companies/${id}`;
   },
@@ -414,5 +526,91 @@ export const jsm: CrmAdapter = {
   create: readOnly,
   url(config, object, id) {
     return object === 'tickets' ? `https://${config.site}.atlassian.net/browse/${id}` : null;
+  },
+};
+
+// -------------------------------------------------------------------- Front
+
+const FRONT = 'https://api2.frontapp.com';
+/** Front sends the address of the next page; it is followed only when it is Front's own, so the key never goes elsewhere. */
+const frontNext = (j: any): string | null => (typeof j?._pagination?.next === 'string' && j._pagination.next.startsWith(`${FRONT}/`) ? j._pagination.next : null);
+
+export const front: CrmAdapter = {
+  provider: 'front',
+  tabular: false,
+  keyed: {
+    async connect(fetcher, values) {
+      const auth = `Bearer ${(values.token ?? '').trim()}`;
+      const me = await send({ fetch: fetcher, token: async () => auth }, `${FRONT}/me`);
+      // The token's company: its address ("yourcompany.api.frontapp.com") or, failing that, its name.
+      const host = typeof me?._links?.self === 'string' ? (/^https:\/\/([a-z0-9-]+)\.api\.frontapp\.com\//i.exec(me._links.self)?.[1] ?? null) : null;
+      const name = typeof me?.name === 'string' ? me.name : null;
+      const id = host ?? (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : null);
+      if (!id) throw new CrmError('That API token does not open a Front company', 401, undefined, true);
+      return { secret: { accessToken: auth }, config: {}, label: name ?? `${id} (Front)`, instanceId: id };
+    },
+  },
+  refresh: noRefresh,
+  async objects() {
+    // Front has no companies of its own: customers are found from the person's email address.
+    return [TICKET_OBJECT('Conversation', 'Conversations')];
+  },
+  async fields(_ctx, object) {
+    if (object !== 'tickets') throw new CrmError(`Unknown Front object ${object}`);
+    return TICKET_FIELDS(false, { status: true, assignee: true });
+  },
+  async users(ctx) {
+    const out: RemoteUser[] = [];
+    let url: string | null = `${FRONT}/teammates?limit=100`;
+    while (url && out.length < 2000) {
+      const j: any = await send(ctx, url);
+      for (const u of j?._results ?? []) out.push({ id: String(u.id), name: [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || u.email, email: u.email ?? null });
+      url = frontNext(j);
+    }
+    return out;
+  },
+  async list(ctx, object, opts): Promise<Page> {
+    if (object !== 'tickets') return { rows: [], next: null };
+    // Newest activity first. A conversation archived or reassigned without a new message is caught by the nightly full read.
+    const from = Math.floor(since(opts.since) / 1000);
+    const url = opts.cursor && opts.cursor.startsWith(`${FRONT}/`) ? opts.cursor : from ? `${FRONT}/conversations/search/${encodeURIComponent(`after:${from}`)}?limit=100` : `${FRONT}/conversations?limit=100`;
+    const j = await send(ctx, url);
+    const rows: RemoteRow[] = (j?._results ?? [])
+      .filter((c: any) => c.status !== 'deleted' && c.status !== 'spam' && !c.is_private)
+      .map((c: any) =>
+        ticketRow(String(c.id), iso(c.last_message?.created_at ?? c.waiting_since ?? c.created_at), {
+          subject: c.subject,
+          status: c.status === 'archived' ? 'solved' : c.status === 'snoozed' ? 'pending' : 'open',
+          priority: 'normal',
+          opened: c.created_at,
+          solved: c.status === 'archived' ? (c.last_message?.created_at ?? c.created_at) : null,
+          requester: typeof c.recipient?.handle === 'string' && c.recipient.handle.includes('@') ? c.recipient.handle : null,
+          channel: c.last_message?.type ?? null,
+          link: `https://app.frontapp.com/open/${c.id}`,
+          assignee: c.assignee?.id ?? null,
+        }),
+      );
+    return { rows, next: frontNext(j) };
+  },
+  async update(ctx, object, id, values) {
+    if (object !== 'tickets') throw new CrmError('Only conversations can be changed');
+    const body: Record<string, unknown> = {};
+    // Front archives what is solved and reopens the rest; it has no separate "pending" or "closed" to set.
+    if (values.status === 'open') body.status = 'open';
+    else if (values.status === 'solved' || values.status === 'closed') body.status = 'archived';
+    if (values.assignee !== undefined && values.assignee !== '') body.assignee_id = values.assignee === null ? null : String(values.assignee);
+    if (Object.keys(body).length) await send(ctx, `${FRONT}/conversations/${encodeURIComponent(id)}`, { method: 'PATCH', json: body });
+  },
+  async create() {
+    // A new conversation in Front is a message sent from one of its channels, and Front answers before it has the conversation.
+    throw new CrmError('Front starts conversations from its own inbox: reply to an existing conversation instead');
+  },
+  async reply(ctx, id, input) {
+    const target = `${FRONT}/conversations/${encodeURIComponent(id)}`;
+    if (input.internal) await send(ctx, `${target}/comments`, { method: 'POST', json: { body: input.body } });
+    else await send(ctx, `${target}/messages`, { method: 'POST', json: { body: input.body, options: { archive: false } } });
+  },
+  url(_config, object, id) {
+    return object === 'tickets' ? `https://app.frontapp.com/open/${id}` : null;
   },
 };

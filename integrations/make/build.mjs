@@ -14,6 +14,12 @@ const { SAMPLES, lists, triggers, actions, searches } = require('../zapier/opera
 
 const ERROR = { message: '[{{statusCode}}] {{body.message}}' };
 const SANITIZE = ['request.headers.authorization'];
+/**
+ * A message is Curahold's when its `Curahold-Event-Signature` header is the HMAC-SHA256 (hex) of the event's id,
+ * made with the secret the webhook was given when it was added. (Make sees the message parsed, so the signature
+ * over the raw text that Zapier checks cannot be recomputed here; this one covers only the id.)
+ */
+const SIGNED = 'sha256(body.id; "hex"; webhook.secret) = headers.curahold-event-signature';
 /** "/tasks/{taskId}" in Make's words. */
 const path = (p) => p.replace(/\{(\w+)\}/g, '{{parameters.$1}}');
 const kindOf = (v) => (Array.isArray(v) ? 'array' : typeof v === 'boolean' ? 'boolean' : typeof v === 'number' ? 'number' : 'text');
@@ -74,8 +80,10 @@ export function build() {
       type: 'web',
       connection: 'apikey',
       // One message, one bundle; "task completed" passes only tasks that are done.
-      api: { output: '{{body.data}}', ...(t.onlyIf ? { condition: `{{body.data.${t.onlyIf}}}` } : {}) },
-      attach: { url: '/dev/webhooks', method: 'POST', body: { url: '{{webhook.url}}', events: [t.event] }, response: { data: { externalHookId: '{{body.webhook.id}}' } } },
+      // Only messages Curahold signed pass: see SIGNED.
+      api: { output: '{{body.data}}', condition: t.onlyIf ? `{{${SIGNED} and body.data.${t.onlyIf}}}` : `{{${SIGNED}}}` },
+      // The secret Curahold made for this webhook is kept with it, to check each message against.
+      attach: { url: '/dev/webhooks', method: 'POST', body: { url: '{{webhook.url}}', events: [t.event] }, response: { data: { externalHookId: '{{body.webhook.id}}', secret: '{{body.secret}}' } } },
       detach: { url: '/dev/webhooks/{{webhook.externalHookId}}', method: 'DELETE' },
     };
     app.modules[`watch_${t.key}`] = { label: t.label, description: t.description, type: 'instant_trigger', webhook: t.key, interface: outputOf(t.sample), samples: SAMPLES[t.sample] };

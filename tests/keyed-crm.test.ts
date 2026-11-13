@@ -396,7 +396,7 @@ describe('a key-based CRM end to end (Bitrix24)', () => {
 
   it('is offered on every server, two-way, with nothing to set up', async () => {
     const list = (await ada.get('/api/connections')).json.providers.filter((p: any) => p.kind === 'source');
-    expect(list.map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'zendesk', 'freshdesk', 'intercom', 'jsm']);
+    expect(list.map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'bigquery']);
     for (const id of ['bitrix24', 'freshsales', 'zendesksell']) expect(list.find((p: any) => p.id === id)).toMatchObject({ twoWay: true, available: true, setup: 'key' });
   });
 

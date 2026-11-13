@@ -128,7 +128,7 @@ eder. "Yeni ücretli servis yok" ve "en yüksek brüt marj" kurallarına aykır�
 | Diğer OAuth girişlerine PKCE (Microsoft, Google) | Güvenilirlik |
 | Bağlantı ekranında aynı adım Dynamics için | Kişiselleştirme / Sadelik |
 | CRM'den anlık bildirim: HubSpot ve Pipedrive webhook, Zoho bildirim, Dynamics değişiklik takibi, Salesforce değişiklik olayları | Gerçek zamanlılık |
-| Make uygulamasında imza kontrolü | Zapier/Make yayınından önce |
+| Make uygulamasında imza kontrolü | yapıldı (olay kimliği üzerinden HMAC; Make'in kendi hesabında denenecek) |
 
 ## Kararlar (ürün sahibi, 12 Kasım 2026)
 

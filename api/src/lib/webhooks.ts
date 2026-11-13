@@ -75,16 +75,32 @@ export async function signBody(secret: string, body: string, at: number) {
   return `t=${at},v1=${await hmacHex(secret, `${at}.${body}`)}`;
 }
 
+/**
+ * A second, shorter signature for tools that cannot recompute the first from the raw message (Make sees the
+ * message already parsed): HMAC-SHA256 of the event's id alone, in hex. Anyone without the secret cannot
+ * produce it for an event that never happened, which is what such a tool needs to tell Curahold's messages
+ * from a stranger's post to the same address.
+ */
+export async function eventSignature(secret: string, eventId: string) {
+  return hmacHex(secret, eventId);
+}
+
 /** Send one event (or a test) to one webhook. Returns the HTTP status (0 = no answer). */
 export async function postWebhook(deps: Deps, hook: Row, body: string, event: string): Promise<number> {
   const secret = await unseal<{ secret: string }>(hook.secret, secretsKey(deps.config));
   const at = Math.floor(Date.now() / 1000);
+  let eventId = '';
+  try {
+    eventId = String(JSON.parse(body).id ?? '');
+  } catch {
+    // a test message without an id
+  }
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 10_000);
   try {
     const res = await fetchOf(deps)(hook.url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'user-agent': 'Curahold-Webhooks/1', 'curahold-event': event, 'curahold-signature': await signBody(secret?.secret ?? '', body, at) },
+      headers: { 'content-type': 'application/json', 'user-agent': 'Curahold-Webhooks/1', 'curahold-event': event, 'curahold-signature': await signBody(secret?.secret ?? '', body, at), ...(eventId ? { 'curahold-event-signature': await eventSignature(secret?.secret ?? '', eventId) } : {}) },
       body,
       signal: ctl.signal,
       redirect: 'manual',

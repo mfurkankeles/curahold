@@ -67,7 +67,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -80,7 +81,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -94,7 +96,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -107,7 +110,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -122,7 +126,7 @@
       "connection": "apikey",
       "api": {
         "output": "{{body.data}}",
-        "condition": "{{body.data.done}}"
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature and body.data.done}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -135,7 +139,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -149,7 +154,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -162,7 +168,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -176,7 +183,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -189,7 +197,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -203,7 +212,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -216,7 +226,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -230,7 +241,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -243,7 +255,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -257,7 +270,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -270,7 +284,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },
@@ -284,7 +299,8 @@
       "type": "web",
       "connection": "apikey",
       "api": {
-        "output": "{{body.data}}"
+        "output": "{{body.data}}",
+        "condition": "{{sha256(body.id; \"hex\"; webhook.secret) = headers.curahold-event-signature}}"
       },
       "attach": {
         "url": "/dev/webhooks",
@@ -297,7 +313,8 @@
         },
         "response": {
           "data": {
-            "externalHookId": "{{body.webhook.id}}"
+            "externalHookId": "{{body.webhook.id}}",
+            "secret": "{{body.secret}}"
           }
         }
       },

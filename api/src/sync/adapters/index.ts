@@ -3,6 +3,7 @@
 import type { ProviderInfo } from '../../../../shared/src/model';
 import type { CrmProvider } from '../../../../shared/src/sync';
 import type { Config } from '../../context';
+import { bigquery } from './bigquery';
 import { demo } from './demo';
 import { dynamics } from './dynamics';
 import { hubspot } from './hubspot';
@@ -12,10 +13,10 @@ import { excel, gsheets } from './sheets';
 import { salesforce } from './salesforce';
 import type { CrmAdapter, OAuthClient } from './types';
 import { zoho } from './zoho';
-import { freshdesk, intercom, jsm, zendesk } from './support';
-import { KEYED_CRM_PROVIDERS, SUPPORT_PROVIDERS } from '../../../../shared/src/sync';
+import { freshdesk, front, intercom, jsm, zendesk } from './support';
+import { KEYED_CRM_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
 
-export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, demo };
+export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, demo };
 
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
@@ -47,8 +48,10 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
     // These CRMs need nothing on this server: the administrator brings a key or a webhook address from the CRM.
     ...KEYED_CRM_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: true, setup: 'key' })),
     ...sheets.map(signIn),
-    // Support tools need nothing on this server either: the administrator brings an API key.
-    ...SUPPORT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
+    // Support tools need nothing on this server either: the administrator brings an API key. Most also take changes back.
+    ...SUPPORT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: !READ_ONLY_PROVIDERS.includes(id), available: true, setup: 'key' })),
+    // Warehouses: the administrator brings a service-account key and a query; read only.
+    ...WAREHOUSE_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
   ];
 }
 

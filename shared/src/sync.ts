@@ -4,9 +4,17 @@
 // sync engine will do.
 
 export const CRM_PROVIDERS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'gsheets', 'excel'] as const;
-/** Support tools: read only, connected with the tool's own address and an API key (no app registration). */
-export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm'] as const;
+/**
+ * Support tools, connected with the tool's own address and an API key (no app registration). Tickets are read;
+ * Zendesk, Freshdesk, Intercom and Front also take changes back (status, priority, assignee, a new ticket, a reply).
+ */
+export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm', 'front'] as const;
 export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
+/** Data warehouses: rows from a query the administrator writes, read only, connected with a service-account key. */
+export const WAREHOUSE_PROVIDERS = ['bigquery'] as const;
+export type WarehouseProvider = (typeof WAREHOUSE_PROVIDERS)[number];
+/** Sources that never receive anything from Curahold. */
+export const READ_ONLY_PROVIDERS: readonly string[] = ['jsm', 'bigquery'];
 /**
  * CRMs connected with what the administrator brings from the CRM itself (a
  * webhook address, an API key, an access token): two-way like the others, and
@@ -14,10 +22,10 @@ export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
  */
 export const KEYED_CRM_PROVIDERS = ['bitrix24', 'freshsales', 'zendesksell'] as const;
 export type KeyedCrmProvider = (typeof KEYED_CRM_PROVIDERS)[number];
-export type CrmProvider = (typeof CRM_PROVIDERS)[number] | KeyedCrmProvider | SupportProvider | 'demo';
+export type CrmProvider = (typeof CRM_PROVIDERS)[number] | KeyedCrmProvider | SupportProvider | WarehouseProvider | 'demo';
 
 /** What an administrator types to connect with a key. */
-export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider, { key: string; secret?: boolean; placeholder: string }[]> = {
+export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider | WarehouseProvider, { key: string; secret?: boolean; optional?: boolean; placeholder: string }[]> = {
   bitrix24: [{ key: 'webhook', secret: true, placeholder: 'https://yourcompany.bitrix24.com/rest/1/••••••••/' }],
   freshsales: [
     { key: 'domain', placeholder: 'yourcompany.myfreshworks.com' },
@@ -41,6 +49,15 @@ export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider, { key: strin
     { key: 'site', placeholder: 'yourcompany' },
     { key: 'email', placeholder: 'agent@yourcompany.com' },
     { key: 'token', secret: true, placeholder: '••••••••' },
+  ],
+  front: [{ key: 'token', secret: true, placeholder: '••••••••' }],
+  bigquery: [
+    { key: 'serviceAccount', secret: true, placeholder: '{ "type": "service_account", "project_id": "…", "private_key": "…", "client_email": "…" }' },
+    { key: 'name', placeholder: 'customer-health' },
+    { key: 'query', placeholder: 'SELECT customer_id, name, health_score, updated_at FROM `project.dataset.table`' },
+    { key: 'idColumn', placeholder: 'customer_id' },
+    { key: 'modifiedColumn', optional: true, placeholder: 'updated_at' },
+    { key: 'location', optional: true, placeholder: 'EU' },
   ],
 };
 

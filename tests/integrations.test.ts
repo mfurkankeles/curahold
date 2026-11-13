@@ -145,6 +145,8 @@ describe('the Zapier and Make apps against the real API', () => {
     await deliverWebhooks(env.deps, 50);
     const hit = sent.find((s) => s.url === target)!;
     expect(hit).toBeTruthy();
+    // Make cannot recompute the signature over the raw text, so each message also carries one over the event's id.
+    expect(hit.headers.get('curahold-event-signature')).toBe(createHmac('sha256', sub.secret).update(JSON.parse(hit.body).id).digest('hex'));
     // Zapier hands header names over with a prefix of its own.
     const bundle = (s: typeof hit, secret: string, over: Partial<{ content: string }> = {}) => bundleOf({ subscribeData: { id: 'x', secret }, cleanedRequest: JSON.parse(over.content ?? s.body), rawRequest: { headers: { 'Http-Curahold-Signature': s.headers.get('curahold-signature') }, content: over.content ?? s.body } });
     const out = await created.perform(z, bundle(hit, sub.secret));
@@ -207,6 +209,11 @@ describe('the Zapier and Make apps against the real API', () => {
     const { build } = (await import(join(import.meta.dirname, '..', 'integrations', 'make', 'build.mjs'))) as { build(): any };
     const app = build();
     expect(JSON.parse(readFileSync(join(import.meta.dirname, '..', 'integrations', 'make', 'app.json'), 'utf8'))).toEqual(JSON.parse(JSON.stringify(app)));
+    // Make keeps each webhook's secret and lets a message start the scenario only when its id signature matches.
+    for (const w of Object.values<any>(app.webhooks)) {
+      expect(w.attach.response.data.secret).toBe('{{body.secret}}');
+      expect(w.api.condition).toContain('sha256(body.id; "hex"; webhook.secret) = headers.curahold-event-signature');
+    }
     const routes = env.app.routes.map((r) => ({ method: r.method, re: new RegExp(`^${r.path.replace(/:[A-Za-z]+/g, '[^/]+')}$`) }));
     const exists = (method: string, url: string) => routes.some((r) => (r.method === method || r.method === 'ALL') && r.re.test(`/api${url.split('?')[0].replace(/\{\{[^}]+\}\}/g, 'x')}`));
     const calls: { method: string; url: string }[] = [];

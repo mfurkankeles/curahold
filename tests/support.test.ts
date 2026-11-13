@@ -120,7 +120,7 @@ describe('connecting a support tool and filing its tickets', () => {
     expect(ok.status).toBe(201);
     connId = ok.json.id;
     const d = (await ada.get(`/api/connections/${connId}/sync`)).json;
-    expect(d.connection).toMatchObject({ provider: 'zendesk', label: 'acme.zendesk.com', readOnly: true });
+    expect(d.connection).toMatchObject({ provider: 'zendesk', label: 'acme.zendesk.com', readOnly: false, canReply: true });
     const lena = await login(env, 'acme', 'lena@demo.example');
     expect((await lena.post('/api/connections/key', { provider: 'zendesk', values: {} })).status).toBe(403);
   });
@@ -128,16 +128,16 @@ describe('connecting a support tool and filing its tickets', () => {
   it('files tickets under the right customer and leaves out what it cannot place', async () => {
     const tf = (await ada.get(`/api/connections/${connId}/objects/tickets/fields?kind=ticket`)).json;
     expect(tf.suggested.map((f: any) => `${f.remote}>${f.local}`)).toEqual(expect.arrayContaining(['subject>name', 'status>f:status', 'priority>f:priority', 'organization>account', 'opened>f:opened_at', 'requester>f:requester', 'link>f:url', 'assignee>owner']));
-    expect(tf.suggested.every((f: any) => f.dir === 'pull')).toBe(true);
+    // What Zendesk lets be changed goes both ways; what it keeps to itself (dates, links) is only read.
+    expect(Object.fromEntries(tf.suggested.map((f: any) => [f.remote, f.dir]))).toMatchObject({ subject: 'both', status: 'both', priority: 'both', assignee: 'both', opened: 'pull', link: 'pull' });
     const of = (await ada.get(`/api/connections/${connId}/objects/organizations/fields?kind=account`)).json;
     const saved = await ada.put(`/api/connections/${connId}/sync`, {
       objects: [
-        { remote: 'organizations', label: 'Organizations', target: 'account', enabled: true, create: true, linkOnly: true, fields: of.suggested },
-        { remote: 'tickets', label: 'Tickets', target: 'record', typeKey: '__new', kind: 'ticket', enabled: true, create: true, linkOnly: true, fields: tf.suggested },
+        { remote: 'organizations', label: 'Organizations', target: 'account', enabled: true, create: false, linkOnly: true, fields: of.suggested },
+        { remote: 'tickets', label: 'Tickets', target: 'record', typeKey: '__new', kind: 'ticket', enabled: true, create: false, linkOnly: true, fields: tf.suggested },
       ],
     });
     expect(saved.status).toBe(200);
-    expect(saved.json.sync.objects.every((o: any) => o.create === false)).toBe(true);
     const run = await ada.post(`/api/connections/${connId}/sync/run`, {});
     expect(run.status).toBe(200);
     const accounts = (await ada.get('/api/accounts?limit=100')).json.accounts;
@@ -154,9 +154,19 @@ describe('connecting a support tool and filing its tickets', () => {
     expect(by['Dashboard is blank'].links[0].url).toBe('https://acme.zendesk.com/agent/tickets/11');
   });
 
-  it('nothing goes back to a read-only tool', async () => {
+  it('a change made here goes back to Zendesk in its own words', async () => {
+    const sent: { method: string; url: string; body: any }[] = [];
+    env.fetchHolder.impl = async (url, init) => {
+      if (init?.method === 'PUT') {
+        sent.push({ method: 'PUT', url, body: JSON.parse(String(init.body)) });
+        return json({ ticket: { id: 13 } });
+      }
+      return zendeskApi(url);
+    };
     const t = (await ada.get('/api/records?type=ticket&limit=50')).json.records.find((r: any) => r.name === 'Report export');
     await ada.patch(`/api/records/${t.id}`, { fields: { priority: 'low' } });
+    await ada.post(`/api/connections/${connId}/problems/retry`, {});
+    expect(sent).toEqual([{ method: 'PUT', url: 'https://acme.zendesk.com/api/v2/tickets/13.json', body: { ticket: { priority: 'low' } } }]);
     const [n] = await env.db.system((q) => q.query('select count(*)::int as n from sync_changes where connection_id = $1', [connId]));
     expect(n.n).toBe(0);
   });

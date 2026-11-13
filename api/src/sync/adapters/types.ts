@@ -82,6 +82,14 @@ export interface CrmAdapter {
   create(ctx: CrmCtx, object: string, values: Record<string, unknown>, fields: RemoteField[], key?: string): Promise<string>;
   /** Where to open the item in the service, if it has a page for it. */
   url(config: Record<string, any>, object: string, id: string): string | null;
+  /** Support tools: answer a ticket (to the customer, or as a note only the team sees). */
+  reply?(ctx: CrmCtx, id: string, input: ReplyInput): Promise<void>;
+}
+
+export interface ReplyInput {
+  body: string;
+  /** A private note for the team: not sent to the customer. */
+  internal?: boolean;
 }
 
 export interface OAuthClient {

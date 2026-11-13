@@ -24,7 +24,11 @@ const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
 const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo'];
 /** Connected with a key the administrator brings; the newest connectors, marked as such. */
 const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell'];
-const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'jsm'];
+const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'front', 'jsm'];
+/** Data warehouses: rows from a query, connected with a service-account key. */
+const WAREHOUSES = ['bigquery'];
+/** Fields typed as several lines. */
+const LONG_FIELDS = ['serviceAccount', 'query'];
 /** In the try-it demo these buttons run the real steps against the pretend CRM. */
 const DEMO_CRMS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', ...KEYED_CRMS];
 
@@ -56,7 +60,7 @@ export function Sources() {
     const p = new URLSearchParams(location.search);
     const err = p.get('error');
     if (err) {
-      toast(t(err === 'dynamics_url' ? 'sync.error.dynamicsUrl' : err === 'not_configured' ? 'conn.error.not_configured' : 'conn.error.connection_failed', { app: PROVIDER_NAMES[p.get('provider') ?? ''] ?? '' }), 'error');
+      toast(t(err === 'dynamics_url' ? 'sync.error.dynamicsUrl' : err === 'not_configured' ? 'conn.error.not_configured' : err === 'wrong_account' ? 'conn.error.wrong_account' : 'conn.error.connection_failed', { app: PROVIDER_NAMES[p.get('provider') ?? ''] ?? '' }), 'error');
       history.replaceState(null, '', location.pathname);
     }
   }, [t, toast]);
@@ -64,7 +68,9 @@ export function Sources() {
   if (!data) return <div className="muted">{t('common.loading')}</div>;
   const providers = data.providers.filter((p) => p.kind === 'source' && SOURCES.includes(p.id));
   const support = data.providers.filter((p) => p.kind === 'source' && SUPPORT.includes(p.id));
+  const warehouses = data.providers.filter((p) => p.kind === 'source' && WAREHOUSES.includes(p.id));
   const mine = data.connections.filter((c) => c.kind === 'source');
+  const broken = mine.filter((c) => c.status === 'error');
 
   const connect = async (p: ProviderInfo) => {
     if (p.id === 'demo') {
@@ -84,6 +90,11 @@ export function Sources() {
   return (
     <div className="conns sources">
       <p className="lede">{t('sync.intro')}</p>
+      {broken.length > 0 && (
+        <div className="notice notice--error" role="alert" style={{ marginBottom: 12 }}>
+          <strong>{t('conn.alert', { n: broken.length })}</strong> {t('conn.alertHint')}
+        </div>
+      )}
       {mine.length > 0 && (
         <>
           <h3 className="section__head">{t('sync.connected')}</h3>
@@ -108,6 +119,12 @@ export function Sources() {
                     {c.sync?.lastRun ? ` · ${t('sync.lastSync', { when: relativeTime(c.sync.lastRun.at, t) })}` : ''}
                     {c.sync?.pending ? ` · ${t('sync.waiting', { n: c.sync.pending })}` : ''}
                   </span>
+                  {c.status === 'error' && (
+                    <span className="error-text">
+                      {t('conn.reconnectNeeded')}
+                      {c.lastError ? ` · ${c.lastError}` : ''}
+                    </span>
+                  )}
                 </span>
                 <SyncBadge c={c} />
               </a>
@@ -189,6 +206,31 @@ export function Sources() {
           </a>
         </div>
       </div>
+      {warehouses.length > 0 && (
+        <>
+          <h3 className="section__head" style={{ marginTop: 22 }}>
+            {t('warehouse.add')}
+          </h3>
+          <p className="field__hint">{t('warehouse.addHint')}</p>
+          <div className="tiles">
+            {warehouses.map((p) => (
+              <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
+                <div className="tile__head">
+                  <span className="tile__badge" aria-hidden="true">
+                    {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
+                  </span>
+                  <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+                </div>
+                <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
+                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                  <Icon name="plug" size={16} />
+                  {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
       {keyed && <KeyConnect provider={keyed} onClose={() => setKeyed(null)} />}
       {asking && <BeforeSignIn provider={asking} onClose={() => setAsking(null)} />}
       <button className="sr-only" onClick={() => reload()}>
@@ -198,21 +240,27 @@ export function Sources() {
   );
 }
 
-/** Support tools and key-based CRMs: the tool's address and a key, checked right away. */
-function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: () => void }) {
+/**
+ * Support tools, warehouses and key-based CRMs: the tool's address and a key, checked right away. When
+ * `reconnect` is given, a new key for a connection that stopped working: it keeps its mapping and history.
+ */
+export function KeyConnect({ provider, onClose, reconnect }: { provider: ProviderInfo; onClose: () => void; reconnect?: { id: string; prefill: Record<string, string> } }) {
   const { t } = useI18n();
+  const { toast } = useStore();
   const onErr = useErr();
   const spec = KEY_FIELDS[provider.id as keyof typeof KEY_FIELDS] ?? [];
-  const [values, setValues] = useState<Record<string, string>>(provider.id === 'intercom' ? { region: 'us' } : {});
+  const [values, setValues] = useState<Record<string, string>>({ ...(provider.id === 'intercom' ? { region: 'us' } : {}), ...(reconnect?.prefill ?? {}) });
   const [busy, setBusy] = useState(false);
   const name = PROVIDER_NAMES[provider.id] ?? provider.id;
-  const ok = spec.every((f) => (values[f.key] ?? '').trim());
+  const ok = spec.every((f) => f.optional || (values[f.key] ?? '').trim());
   const go = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const r = await post<{ id: string }>('/connections/key', { provider: provider.id, values });
+      const r = await post<{ id: string }>('/connections/key', { provider: provider.id, values, ...(reconnect ? { reconnect: reconnect.id } : {}) });
+      if (reconnect) toast(t('conn.reconnected', { app: name }));
       navigate(`/settings/sources/${r.id}`);
+      if (reconnect) onClose();
     } catch (err) {
       onErr(err);
       setBusy(false);
@@ -220,7 +268,7 @@ function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: ()
   };
   return (
     <Dialog
-      title={t('conn.connect', { app: name })}
+      title={t(reconnect ? 'conn.reconnectTitle' : 'conn.connect', { app: name })}
       onClose={onClose}
       footer={
         <>
@@ -228,7 +276,7 @@ function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: ()
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="keyconnect" disabled={!ok || busy}>
-            {busy ? t('support.checking') : t('support.connect')}
+            {busy ? t('support.checking') : t(reconnect ? 'conn.reconnect' : 'support.connect')}
           </button>
         </>
       }
@@ -247,8 +295,15 @@ function KeyConnect({ provider, onClose }: { provider: ProviderInfo; onClose: ()
             </label>
           ) : (
             <label className="field" key={f.key}>
-              <span className="field__label">{t(`support.field.${provider.id}.${f.key}` as MessageKey)}</span>
-              <input className="input" type={f.secret ? 'password' : 'text'} autoComplete="off" spellCheck={false} placeholder={f.placeholder} value={values[f.key] ?? ''} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
+              <span className="field__label">
+                {t(`support.field.${provider.id}.${f.key}` as MessageKey)}
+                {f.optional ? ` (${t('common.optional')})` : ''}
+              </span>
+              {LONG_FIELDS.includes(f.key) ? (
+                <textarea className="textarea" rows={f.key === 'query' ? 4 : 5} autoComplete="off" spellCheck={false} placeholder={f.placeholder} value={values[f.key] ?? ''} maxLength={10_000} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
+              ) : (
+                <input className="input" type={f.secret ? 'password' : 'text'} autoComplete="off" spellCheck={false} placeholder={f.placeholder} value={values[f.key] ?? ''} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
+              )}
             </label>
           ),
         )}
@@ -322,7 +377,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; tabular: boolean; readOnly?: boolean };
+  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -351,6 +406,7 @@ export function SourceDetail({ id }: { id: string }) {
   const [step, setStep] = useState<Step | null>(null);
   const [removing, setRemoving] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const load = useCallback(async () => {
     try {
@@ -447,6 +503,33 @@ export function SourceDetail({ id }: { id: string }) {
         )}
       </div>
 
+      {d.connection.status === 'error' && (
+        <div className="notice notice--error" role="alert" style={{ margin: '12px 0', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ flex: 1, minWidth: 200 }}>
+            <strong>{t('conn.reconnectNeeded')}</strong> {t('conn.reconnectBody', { app: name })}
+            {d.connection.lastError && <span className="muted"> · {d.connection.lastError}</span>}
+          </span>
+          {d.connection.reconnect && (
+            <button
+              className="btn btn--primary btn--small"
+              onClick={() => (d.connection.reconnect === 'oauth' ? (location.href = `/api/connect/${d.connection.provider}/start?reconnect=${id}`) : setReconnecting(true))}
+            >
+              <Icon name="plug" size={16} />
+              {t('conn.reconnect')}
+            </button>
+          )}
+        </div>
+      )}
+      {reconnecting && (
+        <KeyConnect
+          provider={{ id: d.connection.provider, kind: 'source', twoWay: !d.connection.readOnly, available: true, setup: 'key' }}
+          reconnect={{ id, prefill: d.connection.prefill ?? {} }}
+          onClose={() => {
+            setReconnecting(false);
+            void load();
+          }}
+        />
+      )}
       {!started && step ? (
         <SetupFlow d={d} step={step} setStep={setStep} reload={load} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : (

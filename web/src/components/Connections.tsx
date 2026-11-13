@@ -34,6 +34,8 @@ export const PROVIDER_NAMES: Record<string, string> = {
   freshdesk: 'Freshdesk',
   intercom: 'Intercom',
   jsm: 'Jira Service Management',
+  front: 'Front',
+  bigquery: 'Google BigQuery',
 };
 export const FLAVOR_NAMES: Record<string, string> = {
   slack: 'Slack',
@@ -105,6 +107,8 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
   const twoWay = data.providers.filter((p) => p.kind === 'messaging' && p.twoWay);
   const hooks = data.connections.filter((c) => c.provider === 'webhook');
   const sources = data.connections.filter((c) => c.kind === 'source');
+  // Anything whose sign-in or key stopped working: the alert at the top, and a Reconnect on its own tile.
+  const broken = data.connections.filter((c) => c.status === 'error');
 
   const controls = (c: Connection) => (
     <div className="inline-actions">
@@ -122,6 +126,16 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
 
   return (
     <div className="conns">
+      {broken.length > 0 && (
+        <div className="notice notice--error" role="alert" style={{ marginBottom: 12 }}>
+          <strong>{t('conn.alert', { n: broken.length })}</strong> {t('conn.alertHint')}{' '}
+          {broken.some((c) => c.kind === 'source') && (
+            <a href="/settings/sources" onClick={(e) => { e.preventDefault(); navigate('/settings/sources'); }}>
+              {t('settings.tab.sources')}
+            </a>
+          )}
+        </div>
+      )}
       <h3 className="section__head">{t('conn.twoWay')}</h3>
       <p className="field__hint" style={{ marginTop: -4 }}>
         {t('conn.twoWayHint')}
@@ -157,6 +171,14 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                     </p>
                   )}
                   {controls(c)}
+                  {c.status === 'error' && (
+                    <p className="tile__line">
+                      <a className="btn btn--primary btn--small" href={`/api/connect/${p.id}/start${back === 'setup' ? '?back=setup' : ''}`}>
+                        <Icon name="plug" size={16} />
+                        {t('conn.reconnect')}
+                      </a>
+                    </p>
+                  )}
                 </>
               ) : p.available ? (
                 <>

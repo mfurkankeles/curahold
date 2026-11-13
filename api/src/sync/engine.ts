@@ -69,7 +69,8 @@ export function crmCtx(deps: Deps, conn: LoadedCrm): CrmCtx {
   let refreshing: Promise<string> | null = null;
   const refresh = () =>
     (refreshing ??= (async () => {
-      if (!client) throw new CrmError('This server is not set up for the service', 0, undefined, true);
+      // Key-based connections have no app registration; those that mint their own tokens (a service account) renew here too.
+      if (!client && !adapter.keyed) throw new CrmError('This server is not set up for the service', 0, undefined, true);
       const key = secretsKey(deps.config);
       return deps.db.system(async (q) => {
         // One renewal at a time per connection, whichever server process asks. Services that hand out a new
@@ -82,7 +83,7 @@ export function crmCtx(deps: Deps, conn: LoadedCrm): CrmCtx {
           return stored.accessToken;
         }
         const from = stored?.refreshToken ? { ...conn.secret, ...stored } : conn.secret;
-        const next = await adapter.refresh({ fetch: timed, now, config }, from, client);
+        const next = await adapter.refresh({ fetch: timed, now, config }, from, client ?? { clientId: '', clientSecret: '' });
         conn.secret = { ...from, ...next };
         const extra: Record<string, unknown> = {};
         if (next.instanceUrl) extra.instanceUrl = config.instanceUrl = next.instanceUrl;
@@ -1009,6 +1010,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   let more = false;
   let r: RunCtx | null = null;
   let fatal: string | null = null;
+  let authFailed = false;
   try {
     r = await prepare(deps, conn, opts.budgetMs ?? 10 * 60_000);
     // Read first: a change made there after ours was queued must be seen
@@ -1023,6 +1025,7 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   } catch (e) {
     status = 'error';
     fatal = e instanceof Error ? e.message : String(e);
+    authFailed = e instanceof CrmError && e.auth;
     if (r) r.errors.unshift({ object: '', message: fatal });
   }
   const errors = r?.errors ?? [{ object: '', message: fatal ?? 'Failed' }];
@@ -1033,7 +1036,8 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
     await deps.db.system((q) => q.query('delete from sync_runs where id = $1 and org_id = $2', [runId, orgId]));
     return null;
   }
-  const authLost = fatal !== null && /reconnect|invalid_grant|expired|revoked|unauthori/i.test(fatal);
+  // The service said the credentials no longer work (a CrmError marked so), or its message says as much: someone has to reconnect.
+  const authLost = authFailed || (fatal !== null && /reconnect|invalid_grant|expired|revoked|unauthori/i.test(fatal));
   const lastRun = { id: runId, status, more, at: nowOf(deps).toISOString(), stats: r?.stats ?? {} };
   await deps.db.system(async (q) => {
     await q.query(`update sync_runs set status = $3, finished_at = $4, stats = $5, errors = $6, more = $7 where id = $1 and org_id = $2`, [
