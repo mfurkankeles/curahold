@@ -36,8 +36,8 @@ body { margin: 0; background: var(--mist); color: var(--ink); font-family: var(-
 img, svg { display: block; }
 a { color: var(--iris-ink); }
 :focus-visible { outline: 3px solid var(--iris); outline-offset: 3px; border-radius: 6px; }
-.skip { position: absolute; left: -9999px; top: 8px; background: var(--paper); padding: 8px 14px; border-radius: 8px; z-index: 10; }
-.skip:focus { left: 8px; }
+.skip { position: absolute; top: 8px; inset-inline-start: 8px; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; background: var(--paper); padding: 8px 14px; border-radius: 8px; z-index: 10; }
+.skip:focus { width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
 .wrap { width: min(var(--wrap), 100% - 40px); margin-inline: auto; }
 
 h1, h2, h3 { font-family: var(--display); color: var(--ink); margin: 0; font-optical-sizing: auto; }
@@ -351,7 +351,7 @@ html.js [data-reveal="card"].is-in { transform: none; }
 
 /* ---- phone: keep the aurora soft and the strip legible ------------------ */
 @media (max-width: 720px) {
-  .hero__aura { inset: -8% -10% auto; filter: saturate(.95); }
+  .hero__aura { inset: -4% 0 auto 0; filter: saturate(.95); }
   .marq__item { font-size: 15px; margin: 0 16px; }
   .strip { padding: 18px 0 4px; }
 }
@@ -474,7 +474,7 @@ html.js [data-reveal="app"].is-in { opacity: 1; transform: none; }
    On a phone the account/task cards must never push the app window past the
    screen: cap every grid track at the container, let the card footer wrap, and
    trim what isn't essential at narrow widths. */
-body { overflow-x: clip; }
+html, body { overflow-x: clip; max-width: 100%; }
 .app, .app__body, .app__main, .app__grid, .kb, .kb__col, .kb__cards, .pf__tiles { min-width: 0; }
 .ac, .kt, .pf__tile, .ac__head, .ac__foot, .ac__owner, .kt__f, .kt__t { min-width: 0; }
 .ac__name, .kt__t { overflow-wrap: anywhere; }
