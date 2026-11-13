@@ -97,6 +97,43 @@ export interface Column {
   done: boolean;
 }
 
+// ---------------------------------------------------------------- product / project management
+
+export const ISSUE_TYPES = ['epic', 'story', 'task', 'bug', 'subtask', 'spike'] as const;
+export type IssueType = (typeof ISSUE_TYPES)[number];
+
+export const SPRINT_STATES = ['future', 'active', 'closed'] as const;
+export type SprintState = (typeof SPRINT_STATES)[number];
+
+/** The Fibonacci scale offered for story points. Any number >= 0 is accepted; this is the picker's preset. */
+export const FIBONACCI = [1, 2, 3, 5, 8, 13, 21] as const;
+
+export interface Sprint {
+  id: string;
+  boardId: string;
+  name: string;
+  goal: string;
+  state: SprintState;
+  startsOn: string | null;
+  endsOn: string | null;
+  position: number;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Current totals of a sprint (the burndown history comes later). */
+export interface SprintSummary {
+  sprintId: string;
+  totalPoints: number;
+  donePoints: number;
+  itemCount: number;
+  doneCount: number;
+  /** Items without story points. */
+  unestimated: number;
+  byType: Record<IssueType, { count: number; done: number; points: number }>;
+}
+
 export interface OrgPublic {
   slug: string;
   name: string;
@@ -561,6 +598,10 @@ export interface Task {
   recordId?: string | null;
   recordName?: string | null;
   recordType?: string | null;
+  issueType?: IssueType;
+  storyPoints?: number | null;
+  epicId?: string | null;
+  sprintId?: string | null;
 }
 
 /** A task that comes back: when it is done, the next copy is made with a new due date. */

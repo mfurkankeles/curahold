@@ -128,6 +128,10 @@ interface Task {
   recordId?: string | null;
   recordName?: string | null;
   recordType?: string | null;
+  issueType?: IssueType;
+  storyPoints?: number | null;
+  epicId?: string | null;
+  sprintId?: string | null;
 }
 ```
 

@@ -2,8 +2,8 @@
 // (vocabulary, account fields, boards, automations) is ordinary settings
 // afterwards — nothing here is special-cased anywhere else.
 import type { AutomationPreset } from './automation';
-import type { Locale, Terms } from './i18n';
-import type { AccountField, Localized } from './model';
+import { translate, type Locale, type Terms } from './i18n';
+import type { AccountField, Column, Localized } from './model';
 
 export const TEMPLATE_KEYS = ['customer_success', 'account_management', 'sales', 'support', 'blank'] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
@@ -294,3 +294,14 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
 };
 
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === 'string' && (TEMPLATE_KEYS as readonly string[]).includes(k);
+
+// ---------------------------------------------------------------- product / project management
+
+/** The stages of a product team's board. They are ordinary board columns: a company can rename, add or remove them. */
+export const PM_STAGE_KEYS = ['backlog', 'ready', 'in_progress', 'code_review', 'qa', 'uat', 'done', 'blocked', 'rejected'] as const;
+export type PmStageKey = (typeof PM_STAGE_KEYS)[number];
+
+/** The PM workflow as board columns, named in the given language. Only "done" counts as finished. */
+export function pmColumns(locale: Locale): Column[] {
+  return PM_STAGE_KEYS.map((key) => ({ key, name: translate(locale, `pm.stage.${key}`), done: key === 'done' }));
+}

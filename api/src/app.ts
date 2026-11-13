@@ -38,6 +38,7 @@ import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
 import { boardRoutes } from './routes/boards';
 import { meRoutes } from './routes/me';
 import { metricsRoutes } from './routes/metrics';
+import { pmRoutes } from './routes/pm';
 import { taskRoutes } from './routes/tasks';
 import { workRoutes } from './routes/work';
 import { reportRoutes } from './routes/reports';
@@ -305,6 +306,7 @@ export function createApp(deps: Deps) {
   app.route('/api', metricsRoutes);
   app.route('/api', boardRoutes);
   app.route('/api', taskRoutes);
+  app.route('/api', pmRoutes);
   app.route('/api', workRoutes);
   app.route('/api', reportRoutes);
   app.route('/api', builderRoutes);

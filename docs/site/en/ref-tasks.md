@@ -32,6 +32,19 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /tasks` | Adds a task. |
 | `GET /tasks/:id` | One task with its comments, files, subtasks, links, time and history. |
 | `PATCH /tasks/:id` | Changes a task. |
+| `PATCH /tasks/:id/pm` | Sets a task's product-management fields: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 or more, or null) and `epicId` (an epic on the same board, or null). |
+| `GET /boards/:id/sprints` | The sprints of a board in order. |
+| `POST /boards/:id/sprints` | Adds a sprint (`name`, optional `goal`, `startsOn`, `endsOn`). |
+| `GET /boards/:id/backlog` | The board's top-level tasks that are in no sprint, in rank order. |
+| `GET /boards/:id/epics` | The board's epics with the number of stories linked to each (`childCount`). |
+| `GET /sprints/:id` | One sprint. |
+| `PATCH /sprints/:id` | Changes a sprint's name, goal or dates. |
+| `PUT /sprints/:id/state` | Moves a sprint to `future`, `active` or `closed`. |
+| `DELETE /sprints/:id` | Archives a sprint; its items return to the backlog. |
+| `GET /sprints/:id/items` | The tasks in a sprint, in rank order. |
+| `PUT /sprints/:id/items` | Puts tasks of the same board into the sprint (`taskIds`). |
+| `DELETE /sprints/:id/items/:taskId` | Takes a task out of the sprint, back to the backlog. |
+| `GET /sprints/:id/summary` | Current totals: points and items, done and in all, with counts by issue type. |
 | `DELETE /tasks/:id` | Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. |
 | `POST /tasks/bulk` | Changes many tasks at once: column, assignee, due date, priority, archive. |
 | `POST /undo/:id` | Puts back what a change to many tasks or customers replaced. |
@@ -236,6 +249,101 @@ Changes a task. Send `baseVersion`; if someone changed other fields meanwhile bo
 | `fields` | object (name → value) | optional |  |
 | `startDate` | date (YYYY-MM-DD) | optional | may be null |
 | `recordId` | id | optional | may be null |
+
+### `PATCH /tasks/:id/pm`
+
+Sets a task's product-management fields: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 or more, or null) and `epicId` (an epic on the same board, or null). Send `baseVersion`; a stale one gets `409` with the latest task.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `baseVersion` | whole number | required | at least 1 |
+| `issueType` | one of ISSUE_TYPES | optional |  |
+| `storyPoints` | number | optional | at least 0; at most 1000; may be null |
+| `epicId` | id | optional | may be null |
+
+### `GET /boards/:id/sprints`
+
+The sprints of a board in order. `state` (future, active, closed) narrows the list.
+
+**Query:** `state`
+
+### `POST /boards/:id/sprints`
+
+Adds a sprint (`name`, optional `goal`, `startsOn`, `endsOn`). It starts as `future`.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `name` | text | required | at least 1 characters; at most 80 characters |
+| `goal` | text | optional | at most 2000 characters |
+| `startsOn` | date (YYYY-MM-DD) | optional | may be null |
+| `endsOn` | date (YYYY-MM-DD) | optional | may be null |
+
+### `GET /boards/:id/backlog`
+
+The board's top-level tasks that are in no sprint, in rank order. `open=1` leaves out finished ones.
+
+**Query:** `open`
+
+### `GET /boards/:id/epics`
+
+The board's epics with the number of stories linked to each (`childCount`).
+
+### `GET /sprints/:id`
+
+One sprint.
+
+### `PATCH /sprints/:id`
+
+Changes a sprint's name, goal or dates.
+
+**Needs:** a seat that can write
+
+Takes a body whose shape depends on what is sent; see the guide for this area.
+
+### `PUT /sprints/:id/state`
+
+Moves a sprint to `future`, `active` or `closed`. Only one sprint per board can be active (`409`, `reason: sprint_active`). When closing, `moveIncompleteTo` sends unfinished items to the backlog (null) or to another sprint.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `state` | one of SPRINT_STATES | required |  |
+| `moveIncompleteTo` | id | optional | may be null |
+
+### `DELETE /sprints/:id`
+
+Archives a sprint; its items return to the backlog.
+
+**Needs:** a seat that can write
+
+### `GET /sprints/:id/items`
+
+The tasks in a sprint, in rank order.
+
+### `PUT /sprints/:id/items`
+
+Puts tasks of the same board into the sprint (`taskIds`). A closed sprint takes none.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `taskIds` | list of id | required | at least 1 items; at most 200 items |
+
+### `DELETE /sprints/:id/items/:taskId`
+
+Takes a task out of the sprint, back to the backlog.
+
+**Needs:** a seat that can write
+
+### `GET /sprints/:id/summary`
+
+Current totals: points and items, done and in all, with counts by issue type. Done means the status is a finished column.
 
 ### `DELETE /tasks/:id`
 

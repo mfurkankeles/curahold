@@ -32,6 +32,19 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /tasks` | Görev ekler. |
 | `GET /tasks/:id` | Tek bir görev; yorumları, dosyaları, alt görevleri, bağlantıları, süresi ve geçmişiyle. |
 | `PATCH /tasks/:id` | Görevi değiştirir. |
+| `PATCH /tasks/:id/pm` | Görevin ürün yönetimi alanlarını ayarlar: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 ya da fazlası, veya null) ve `epicId` (aynı panodaki bir epik, ya da null). |
+| `GET /boards/:id/sprints` | Bir panonun sprintleri, sırayla. |
+| `POST /boards/:id/sprints` | Sprint ekler (`name`, isteğe bağlı `goal`, `startsOn`, `endsOn`). |
+| `GET /boards/:id/backlog` | Panonun hiçbir sprintte olmayan üst düzey görevleri, sıra düzeninde. |
+| `GET /boards/:id/epics` | Panonun epikleri ve her birine bağlı hikaye sayısı (`childCount`). |
+| `GET /sprints/:id` | Tek bir sprint. |
+| `PATCH /sprints/:id` | Sprintin adını, hedefini ya da tarihlerini değiştirir. |
+| `PUT /sprints/:id/state` | Sprinti `future`, `active` ya da `closed` durumuna alır. |
+| `DELETE /sprints/:id` | Sprinti arşivler; kayıtları backlog'a döner. |
+| `GET /sprints/:id/items` | Bir sprintteki görevler, sıra düzeninde. |
+| `PUT /sprints/:id/items` | Aynı panodaki görevleri sprinte koyar (`taskIds`). |
+| `DELETE /sprints/:id/items/:taskId` | Görevi sprintten çıkarıp backlog'a döndürür. |
+| `GET /sprints/:id/summary` | Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. |
 | `DELETE /tasks/:id` | Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /tasks/bulk` | Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. |
 | `POST /undo/:id` | Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir. |
@@ -236,6 +249,101 @@ Görevi değiştirir. `baseVersion` gönder; bu arada başkası başka alanları
 | `fields` | nesne (ad → değer) | isteğe bağlı |  |
 | `startDate` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
 | `recordId` | kimlik | isteğe bağlı | boş (null) olabilir |
+
+### `PATCH /tasks/:id/pm`
+
+Görevin ürün yönetimi alanlarını ayarlar: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 ya da fazlası, veya null) ve `epicId` (aynı panodaki bir epik, ya da null). `baseVersion` gönder; eski sürüm en güncel görevle birlikte `409` alır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `baseVersion` | tam sayı | zorunlu | en az 1 |
+| `issueType` | şunlardan biri: ISSUE_TYPES | isteğe bağlı |  |
+| `storyPoints` | sayı | isteğe bağlı | en az 0; en çok 1000; boş (null) olabilir |
+| `epicId` | kimlik | isteğe bağlı | boş (null) olabilir |
+
+### `GET /boards/:id/sprints`
+
+Bir panonun sprintleri, sırayla. `state` (future, active, closed) listeyi daraltır.
+
+**Sorgu:** `state`
+
+### `POST /boards/:id/sprints`
+
+Sprint ekler (`name`, isteğe bağlı `goal`, `startsOn`, `endsOn`). `future` olarak başlar.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
+| `goal` | metin | isteğe bağlı | en çok 2000 karakter |
+| `startsOn` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
+| `endsOn` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
+
+### `GET /boards/:id/backlog`
+
+Panonun hiçbir sprintte olmayan üst düzey görevleri, sıra düzeninde. `open=1` bitenleri hariç tutar.
+
+**Sorgu:** `open`
+
+### `GET /boards/:id/epics`
+
+Panonun epikleri ve her birine bağlı hikaye sayısı (`childCount`).
+
+### `GET /sprints/:id`
+
+Tek bir sprint.
+
+### `PATCH /sprints/:id`
+
+Sprintin adını, hedefini ya da tarihlerini değiştirir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+
+### `PUT /sprints/:id/state`
+
+Sprinti `future`, `active` ya da `closed` durumuna alır. Panoda aynı anda yalnızca bir sprint aktif olabilir (`409`, `reason: sprint_active`). Kapatırken `moveIncompleteTo` bitmemiş kayıtları backlog'a (null) ya da başka bir sprinte taşır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `state` | şunlardan biri: SPRINT_STATES | zorunlu |  |
+| `moveIncompleteTo` | kimlik | isteğe bağlı | boş (null) olabilir |
+
+### `DELETE /sprints/:id`
+
+Sprinti arşivler; kayıtları backlog'a döner.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `GET /sprints/:id/items`
+
+Bir sprintteki görevler, sıra düzeninde.
+
+### `PUT /sprints/:id/items`
+
+Aynı panodaki görevleri sprinte koyar (`taskIds`). Kapanmış sprint görev almaz.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `taskIds` | kimlik listesi | zorunlu | en az 1 öğe; en çok 200 öğe |
+
+### `DELETE /sprints/:id/items/:taskId`
+
+Görevi sprintten çıkarıp backlog'a döndürür.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `GET /sprints/:id/summary`
+
+Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. Biten, durumu bitmiş sayılan bir sütun olandır.
 
 ### `DELETE /tasks/:id`
 

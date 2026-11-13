@@ -126,6 +126,10 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     await task(renewals, tr ? 'Fiyat artışı onayını al' : 'Get the price increase approved', 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
     await task(renewals, tr ? 'Sözleşme imzası' : 'Contract signature', 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
     await task(privateBoard, tr ? 'Bütçe taslağını gözden geçir' : 'Review the budget draft', 'todo', ['ada'], 4, 'normal', null, 'ada');
+    await q.query(
+      `insert into sprints (org_id, board_id, name, goal, position, created_by) values ($1, $2, $3, $4, 1024, $5)`,
+      [orgId, csBoard, tr ? 'Sprint 1' : 'Sprint 1', tr ? 'İlk sprint' : 'The first sprint', ids.mert],
+    );
 
     for (const [i, title] of (tr ? ['Gündemi yaz', 'Kullanım rakamlarını çek', 'Sunumu gönder'] : ['Write the agenda', 'Pull usage numbers', 'Send the deck']).entries()) {
       pos += 1024;

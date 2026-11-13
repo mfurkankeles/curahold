@@ -31,6 +31,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/(admin|me)\/sessions\/:id/, 'sessions'],
   [/^\/admin\/join-requests\/:id/, 'join_requests'],
   [/^\/automations\/:id/, 'automations'],
+  [/^\/sprints\/:id/, 'sprints'],
   [/^\/boards\/:id/, 'boards'],
   [/^\/reports\/saved\/:id/, 'reports'],
   [/^\/connections\/:id/, 'connections'],
@@ -152,6 +153,8 @@ const OVERRIDES: Record<string, (own: Own) => { body?: unknown; query?: string }
   'POST /activities/:id/next-steps': (o) => ({ body: { steps: [{ title: 'A step' }], boardId: o.board } }),
   'POST /admin/users/:id/handover': (o) => ({ body: { toUserId: o.user } }),
   'POST /boards/:id/import': () => ({ body: { rows: [{ Title: 'A task' }], mapping: { title: 'Title' } } }),
+  'PUT /sprints/:id/items': (o) => ({ body: { taskIds: [o.otherTask] } }),
+  'PUT /sprints/:id/state': () => ({ body: { state: 'active' } }),
   'PUT /boards/:id/portal': () => ({ body: { enabled: true, intake: 'todo' } }),
 };
 
@@ -185,7 +188,7 @@ describe('every address that names a thing by id', () => {
         continue;
       }
       const tasks = await idsOf('tasks', 'parent_id is null');
-      const path = r.path.replace(':id', id).replace(':other', tasks[1] ?? tasks[0]).replace(':object', 'Account');
+      const path = r.path.replace(':id', id).replace(':other', tasks[1] ?? tasks[0]).replace(':object', 'Account').replace(':taskId', tasks[0]).replace(':remoteId', 'rem-1');
       expect(path.includes(':'), `${key}: a parameter was left unfilled`).toBe(false);
       const special = OVERRIDES[key]?.({ board: env.b.boards.csBoard, user: env.b.ids.lena, otherTask: tasks[1] ?? tasks[0] }) ?? {};
       const body = special.body ?? Object.fromEntries(r.body.filter((f) => f.required).map((f) => [f.name, sample(f, id)]));
