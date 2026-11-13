@@ -25,7 +25,62 @@ export interface SiteCopy {
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
-  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string }; company: string };
+  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string }; company: string; blog?: string };
+  // Consent banner words (vanilla site). Optional per locale: English is the
+  // fallback until a native pass lands (see `siteConsent`).
+  consent?: SiteConsentCopy;
+  // Blog index labels. Optional per locale; English is the fallback.
+  blog?: SiteBlogCopy;
+}
+
+/** The consent banner and manage dialog on the marketing site. */
+export interface SiteConsentCopy {
+  title: string;
+  body: string;
+  acceptAll: string;
+  rejectAll: string;
+  manage: string;
+  save: string;
+  close: string;
+  alwaysOn: string;
+  manageTitle: string;
+  necessaryTitle: string;
+  necessaryBody: string;
+  analyticsTitle: string;
+  analyticsBody: string;
+  marketingTitle: string;
+  marketingBody: string;
+  reopen: string;
+  policy: string;
+  ariaBanner: string;
+}
+
+/** Labels shown on the blog index and post pages. */
+export interface SiteBlogCopy {
+  nav: string;
+  title: string;
+  lead: string;
+  metaTitle: string;
+  metaDescription: string;
+  readMore: string;
+  backToBlog: string;
+  minRead: string;
+  updated: string;
+  tags: string;
+}
+
+/** One block of a blog post's body, generated into safe HTML by the builder. */
+export type BlogBlock = { h: string } | { p: string } | { ul: string[] } | { quote: string };
+
+export interface BlogPost {
+  slug: string;
+  title: string;
+  description: string;
+  /** ISO date (YYYY-MM-DD) the post was published. */
+  date: string;
+  readMinutes: number;
+  tags: string[];
+  body: BlogBlock[];
 }
 
 export const COPY: Partial<Record<Locale, SiteCopy>> = {
@@ -37,7 +92,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'Hold every customer with care.',
       lead: 'Curahold is where customer success and account teams keep track. Renewals start on their own, every promise made in a meeting becomes a task, and you see at a glance which customer needs you.',
-      primary: 'Try it free for 14 days',
+      primary: 'Try it free for 3 months',
       secondary: 'Open the live demo',
       note: 'No card needed. In English and Turkish.',
       customer: 'Your customer',
@@ -92,7 +147,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'Simple prices, per seat',
-      lead: 'Every plan starts with a 14-day trial of everything. Viewer seats are free.',
+      lead: 'Every plan starts with a 3-month trial of everything. Viewer seats are free.',
       monthly: 'Monthly',
       yearly: 'Yearly',
       save: 'about 20% less',
@@ -120,6 +175,39 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       legal: 'Legal',
       links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies' },
       company: '[Company legal name]',
+      blog: 'Blog',
+    },
+    consent: {
+      title: 'Your privacy, your choice',
+      body: 'We use only what is needed to run the site. With your consent we also measure how it is used and reach people who might like Curahold. Nothing non-essential loads until you choose.',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject non-essential',
+      manage: 'Manage choices',
+      save: 'Save choices',
+      close: 'Close',
+      alwaysOn: 'Always on',
+      manageTitle: 'Privacy choices',
+      necessaryTitle: 'Necessary',
+      necessaryBody: 'Remembers this choice and keeps the page working. These never track you and cannot be switched off.',
+      analyticsTitle: 'Analytics',
+      analyticsBody: 'Helps us understand how the site is used, so we can improve it. Loads Google Analytics only with your consent.',
+      marketingTitle: 'Marketing',
+      marketingBody: 'Lets us measure and reach people who might find Curahold useful. Loads the Meta and TikTok pixels only with your consent.',
+      reopen: 'Privacy choices',
+      policy: 'Read the cookie policy',
+      ariaBanner: 'Privacy and cookie consent',
+    },
+    blog: {
+      nav: 'Blog',
+      title: 'The Curahold blog',
+      lead: 'Plain, useful writing on task management for customer success and account teams — and the meeting-to-task workflow that sets Curahold apart.',
+      metaTitle: 'Blog: task management for customer teams — Curahold',
+      metaDescription: 'Guides on task management, turning meetings into tasks, and the CRM-task hybrid workflow for customer success and account teams.',
+      readMore: 'Read the post',
+      backToBlog: 'All posts',
+      minRead: 'min read',
+      updated: 'Published',
+      tags: 'Topics',
     },
   },
   tr: {
@@ -130,7 +218,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'Müşterilerini özenle tut.',
       lead: 'Curahold, müşteri başarısı ve müşteri yönetimi ekiplerinin işi takip ettiği yer. Yenilemeler kendiliğinden başlar, toplantıda verilen her söz bir göreve dönüşür ve hangi müşterinin seni beklediğini ilk bakışta görürsün.',
-      primary: '14 gün ücretsiz dene',
+      primary: '3 ay ücretsiz dene',
       secondary: 'Canlı demoyu aç',
       note: 'Kart gerekmez. Türkçe ve İngilizce.',
       customer: 'Müşterin',
@@ -185,7 +273,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
-      lead: 'Her plan, her şeyin açık olduğu 14 günlük denemeyle başlar. Görüntüleyen kullanıcılar ücretsiz.',
+      lead: 'Her plan, her şeyin açık olduğu 3 aylık denemeyle başlar. Görüntüleyen kullanıcılar ücretsiz.',
       monthly: 'Aylık',
       yearly: 'Yıllık',
       save: 'yaklaşık %20 daha az',
@@ -213,6 +301,39 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       legal: 'Yasal',
       links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler' },
       company: '[Şirket unvanı]',
+      blog: 'Blog',
+    },
+    consent: {
+      title: 'Gizliliğin, senin seçimin',
+      body: 'Yalnızca siteyi çalıştırmak için gerekeni kullanırız. İzninle sitenin nasıl kullanıldığını da ölçer ve Curahold’u beğenebilecek kişilere ulaşırız. Sen seçene kadar zorunlu olmayan hiçbir şey yüklenmez.',
+      acceptAll: 'Tümünü kabul et',
+      rejectAll: 'Zorunlu olmayanları reddet',
+      manage: 'Tercihleri yönet',
+      save: 'Tercihleri kaydet',
+      close: 'Kapat',
+      alwaysOn: 'Her zaman açık',
+      manageTitle: 'Gizlilik tercihleri',
+      necessaryTitle: 'Zorunlu',
+      necessaryBody: 'Bu seçimi hatırlar ve sayfanın çalışmasını sağlar. Seni izlemez ve kapatılamaz.',
+      analyticsTitle: 'Analitik',
+      analyticsBody: 'Sitenin nasıl kullanıldığını anlamamıza ve onu iyileştirmemize yardımcı olur. Google Analytics yalnızca izninle yüklenir.',
+      marketingTitle: 'Pazarlama',
+      marketingBody: 'Curahold’u faydalı bulabilecek kişileri ölçmemizi ve onlara ulaşmamızı sağlar. Meta ve TikTok pikselleri yalnızca izninle yüklenir.',
+      reopen: 'Gizlilik tercihleri',
+      policy: 'Çerez politikasını oku',
+      ariaBanner: 'Gizlilik ve çerez onayı',
+    },
+    blog: {
+      nav: 'Blog',
+      title: 'Curahold blog',
+      lead: 'Müşteri başarısı ve müşteri yönetimi ekipleri için görev yönetimi üzerine sade, işe yarar yazılar — ve Curahold’u farklı kılan toplantıdan göreve akışı.',
+      metaTitle: 'Blog: müşteri ekipleri için görev yönetimi — Curahold',
+      metaDescription: 'Görev yönetimi, toplantıları göreve dönüştürme ve müşteri başarısı ekipleri için CRM-görev melez akışı üzerine rehberler.',
+      readMore: 'Yazıyı oku',
+      backToBlog: 'Tüm yazılar',
+      minRead: 'dk okuma',
+      updated: 'Yayımlandı',
+      tags: 'Konular',
     },
   },
   ar: {
@@ -223,7 +344,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'احتضن كل عميل بعناية.',
       lead: 'Curahold هو المكان الذي تتابع فيه فرق نجاح العملاء وإدارة الحسابات عملها. تبدأ التجديدات من تلقاء نفسها، ويتحول كل وعد يُقطع في اجتماع إلى مهمة، وترى في لمحة أي عميل يحتاج إليك.',
-      primary: 'جرّبه مجانًا لمدة 14 يومًا',
+      primary: 'جرّبه مجانًا لمدة 3 أشهر',
       secondary: 'افتح العرض المباشر',
       note: 'لا حاجة إلى بطاقة.',
       customer: 'عميلك',
@@ -278,7 +399,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
-      lead: 'تبدأ كل خطة بتجربة مجانية لكل شيء لمدة 14 يومًا. مقاعد المشاهدة مجانية.',
+      lead: 'تبدأ كل خطة بتجربة مجانية لكل شيء لمدة 3 أشهر. مقاعد المشاهدة مجانية.',
       monthly: 'شهري',
       yearly: 'سنوي',
       save: 'أقل بنحو 20%',
@@ -316,7 +437,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'אחוז בכל לקוח בעדינות.',
       lead: 'Curahold הוא המקום שבו צוותי הצלחת לקוחות וניהול לקוחות עוקבים אחר העבודה. חידושים מתחילים מעצמם, כל הבטחה שניתנה בפגישה הופכת למשימה, ואתה רואה במבט אחד איזה לקוח זקוק לך.',
-      primary: 'התנסות חינם ל-14 ימים',
+      primary: 'התנסות חינם ל-3 חודשים',
       secondary: 'פתח את ההדגמה החיה',
       note: 'לא נדרש כרטיס.',
       customer: 'הלקוח שלך',
@@ -371,7 +492,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
-      lead: 'כל תוכנית מתחילה בהתנסות של 14 ימים בכל התכונות. מושבי צפייה חינם.',
+      lead: 'כל תוכנית מתחילה בהתנסות של 3 חודשים בכל התכונות. מושבי צפייה חינם.',
       monthly: 'חודשי',
       yearly: 'שנתי',
       save: 'בכ-20% פחות',
@@ -409,7 +530,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'هر مشتری را با دقت نگه دار.',
       lead: 'Curahold جایی است که تیم‌های موفقیت مشتری و مدیریت حساب کارشان را دنبال می‌کنند. تمدیدها خودبه‌خود آغاز می‌شوند، هر قولی که در جلسه داده شود به وظیفه تبدیل می‌شود، و در یک نگاه می‌بینی کدام مشتری به تو نیاز دارد.',
-      primary: '۱۴ روز رایگان امتحان کنید',
+      primary: '۳ ماه رایگان امتحان کنید',
       secondary: 'دموی زنده را باز کنید',
       note: 'نیازی به کارت نیست.',
       customer: 'مشتری شما',
@@ -464,7 +585,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
-      lead: 'هر طرح با یک دوره آزمایشی ۱۴ روزه از همه چیز آغاز می‌شود. صندلی‌های فقط-مشاهده رایگان‌اند.',
+      lead: 'هر طرح با یک دوره آزمایشی ۳ ماهه از همه چیز آغاز می‌شود. صندلی‌های فقط-مشاهده رایگان‌اند.',
       monthly: 'ماهانه',
       yearly: 'سالانه',
       save: 'حدود ۲۰٪ کمتر',
@@ -502,7 +623,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: '用心留住每一位客户。',
       lead: 'Curahold 是客户成功与客户管理团队跟进工作的地方。续约自动开始，会议上许下的每个承诺都会变成任务，你一眼就能看出哪位客户需要你。',
-      primary: '免费试用 14 天',
+      primary: '免费试用 3 个月',
       secondary: '打开在线演示',
       note: '无需信用卡。',
       customer: '你的客户',
@@ -557,7 +678,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: '简单的按席位定价',
-      lead: '每个套餐都以 14 天全功能试用开始。只读席位免费。',
+      lead: '每个套餐都以 3 个月全功能试用开始。只读席位免费。',
       monthly: '按月',
       yearly: '按年',
       save: '约便宜 20%',
@@ -595,7 +716,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: '用心留住每一位客戶。',
       lead: 'Curahold 是客戶成功與客戶管理團隊追蹤工作的地方。續約自動開始，會議上許下的每個承諾都會變成任務，你一眼就能看出哪位客戶需要你。',
-      primary: '免費試用 14 天',
+      primary: '免費試用 3 個月',
       secondary: '開啟線上展示',
       note: '無需信用卡。',
       customer: '你的客戶',
@@ -650,7 +771,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: '簡單的按席次定價',
-      lead: '每個方案都以 14 天全功能試用開始。唯讀席次免費。',
+      lead: '每個方案都以 3 個月全功能試用開始。唯讀席次免費。',
       monthly: '按月',
       yearly: '按年',
       save: '約便宜 20%',
@@ -688,7 +809,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: 'すべての顧客を、丁寧に受けとめる。',
       lead: 'Curahold は、カスタマーサクセスと顧客管理のチームが業務を追うための場所です。更新はひとりでに始まり、ミーティングで交わした約束はすべてタスクになり、どの顧客があなたを必要としているかがひと目でわかります。',
-      primary: '14日間無料で試す',
+      primary: '3か月間無料で試す',
       secondary: 'ライブデモを開く',
       note: 'カード不要。',
       customer: 'あなたの顧客',
@@ -743,7 +864,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: 'シンプルな、シート単位の料金',
-      lead: 'どのプランも全機能の14日間トライアルから。閲覧シートは無料。',
+      lead: 'どのプランも全機能の3か月間トライアルから。閲覧シートは無料。',
       monthly: '月額',
       yearly: '年額',
       save: '約20%お得',
@@ -781,7 +902,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     hero: {
       title: '모든 고객을 정성껏 붙잡으세요.',
       lead: 'Curahold는 고객 성공과 고객 관리 팀이 업무를 추적하는 곳입니다. 갱신은 저절로 시작되고, 미팅에서 한 모든 약속은 작업이 되며, 어떤 고객이 당신을 필요로 하는지 한눈에 보입니다.',
-      primary: '14일 무료로 시작',
+      primary: '3개월 무료로 시작',
       secondary: '라이브 데모 열기',
       note: '카드가 필요 없습니다.',
       customer: '당신의 고객',
@@ -836,7 +957,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     pricing: {
       title: '간단한 좌석당 가격',
-      lead: '모든 플랜은 모든 기능의 14일 체험으로 시작합니다. 보기 전용 좌석은 무료입니다.',
+      lead: '모든 플랜은 모든 기능의 3개월 체험으로 시작합니다. 보기 전용 좌석은 무료입니다.',
       monthly: '월간',
       yearly: '연간',
       save: '약 20% 저렴',
@@ -877,3 +998,252 @@ export const SITE_LOCALES = Object.keys(COPY) as Locale[];
 
 /** The copy for a locale, falling back to English until a native pass lands. */
 export const siteCopy = (locale: Locale): SiteCopy => COPY[locale] ?? COPY.en!;
+
+/** The consent words for a locale, English as the fallback. */
+export const siteConsent = (locale: Locale): SiteConsentCopy => siteCopy(locale).consent ?? COPY.en!.consent!;
+
+/** The blog index labels for a locale, English as the fallback. */
+export const siteBlog = (locale: Locale): SiteBlogCopy => siteCopy(locale).blog ?? COPY.en!.blog!;
+
+// Blog posts, authored per language. A locale appears on the blog only when it
+// has native posts here — the builder never dresses English text as another
+// language, so hreflang on a post lists only the languages it truly exists in.
+// Content is invented and genuinely useful; it names no real person or company.
+export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
+  en: [
+    {
+      slug: 'what-is-task-management',
+      title: 'What is task management? A practical guide for customer teams',
+      description:
+        'A plain guide to task management for customer success and account teams: what a task really is, the few fields that matter, and how to keep a shared list honest.',
+      date: '2026-10-06',
+      readMinutes: 6,
+      tags: ['Task management', 'Customer success', 'Workflows'],
+      body: [
+        {
+          p: 'Task management is the practice of capturing the work that needs doing, giving each piece an owner and a date, and keeping the list honest as things change. For a customer success or account team, it is the difference between remembering a renewal in time and finding out a week too late.',
+        },
+        { h: 'A task is a promise with an owner and a date' },
+        {
+          p: 'The smallest useful unit is a single task: one clear outcome, one person responsible, one due date. Everything else — notes, links, the customer it belongs to — is context. When a task has no owner or no date, it is not a task yet; it is a wish, and wishes are what slip.',
+        },
+        { h: 'The few fields that actually matter' },
+        {
+          ul: [
+            'Title: the outcome in plain words, not the activity. “Send the renewal quote”, not “Renewal”.',
+            'Owner: exactly one person, even if others help.',
+            'Due date: a real date, so the list can sort by what is next.',
+            'Status: where it stands — to do, in progress, done — and nothing more elaborate until you need it.',
+            'Context: the customer, the meeting or the thread it came from, one click away.',
+          ],
+        },
+        { h: 'Keep the list honest' },
+        {
+          p: 'A task list is only useful if the team trusts it. That trust is built by two habits: nothing lives in your head or your inbox that is not also a task, and a task is closed the moment it is done — not batched up for a weekly tidy. A list that lags reality quietly stops being read.',
+        },
+        {
+          quote: 'The best task list is the one your team actually opens on a Monday morning — because it has never once lied to them.',
+        },
+        { h: 'Where task management meets the customer' },
+        {
+          p: 'Generic to-do apps treat every task the same. Customer teams do not work that way: a task almost always belongs to an account, a meeting, or a renewal. When the task lives next to that context — and when finishing a business review can create its follow-ups automatically — the list stops being busywork and starts being the plan. That hybrid of tasks and customer context is exactly what Curahold is built around.',
+        },
+      ],
+    },
+    {
+      slug: 'turn-meetings-into-tasks',
+      title: 'Turning meeting notes into tasks: a workflow that actually sticks',
+      description:
+        'Most next steps die in a notebook. Here is a simple meeting-to-task workflow — owners, dates and context — that keeps promises from a call from being lost.',
+      date: '2026-10-20',
+      readMinutes: 5,
+      tags: ['Task management', 'Meetings', 'Customer success'],
+      body: [
+        {
+          p: 'Every account team has lived this: a good meeting, three clear next steps, warm goodbyes — and two weeks later nobody can say who owned what. The notes were written; the tasks were not. Turning meeting notes into tasks is the single highest-leverage habit a customer team can build.',
+        },
+        { h: 'Separate what was said from what will be done' },
+        {
+          p: 'A meeting note has two kinds of lines: a record of what happened, and a commitment about what comes next. Only the second kind becomes a task. As you write, mark the commitments — a simple convention like a leading arrow works — so the next steps are obvious before you even leave the call.',
+        },
+        { h: 'Give every next step the three things' },
+        {
+          ul: [
+            'An owner, named out loud in the meeting so there is no surprise later.',
+            'A due date, agreed in the room rather than invented afterwards.',
+            'The context: which customer, and a link back to the note it came from.',
+          ],
+        },
+        { h: 'Do it before the context is gone' },
+        {
+          p: 'The window for this is minutes, not days. The further you get from the meeting, the more detail you lose and the less likely the tasks are to be created at all. The best workflow captures the tasks as part of closing the meeting — not as a separate chore you promise to do later.',
+        },
+        {
+          quote: 'A promise made in a meeting and written down as a task with an owner and a date is kept. A promise left in the notes is a hope.',
+        },
+        { h: 'Let the system carry the busywork' },
+        {
+          p: 'The reason this habit fails is friction: retyping names, re-finding the account, copying dates. Remove the friction and the habit holds. In Curahold, logging a meeting turns its next steps into tasks on the right board, already attached to the customer — so the record and the plan are the same act.',
+        },
+      ],
+    },
+    {
+      slug: 'task-management-vs-project-management',
+      title: 'Task management vs. project management: which does your account team need?',
+      description:
+        'Task management and project management solve different problems. Here is how to tell them apart, and why customer teams usually need tasks tied to accounts — not a project plan.',
+      date: '2026-11-03',
+      readMinutes: 7,
+      tags: ['Task management', 'Project management', 'Tools'],
+      body: [
+        {
+          p: '“Task management” and “project management” are often used as if they were the same thing. They are not, and choosing the wrong one is how teams end up fighting their tools. The short version: task management keeps ongoing work moving; project management steers a defined piece of work to a finish line.',
+        },
+        { h: 'What project management is good at' },
+        {
+          p: 'A project has a start, an end, and a scope: a launch, a migration, an implementation. Project management tools shine here — dependencies, timelines, phases, a critical path. If your work is a sequence of steps toward a one-time outcome, that structure earns its keep.',
+        },
+        { h: 'What task management is good at' },
+        {
+          p: 'Most customer success and account work is not a project. It is an endless, repeating rhythm: onboardings, check-ins, business reviews, renewals, the quiet signal that an account has gone cold. There is no finish line — there is next week. Task management fits this: a living list, owned and dated, that you can trust at a glance.',
+        },
+        { h: 'How to tell which you need' },
+        {
+          ul: [
+            'If the work ends, you probably want project management.',
+            'If the work repeats per customer, forever, you want task management.',
+            'If a task only makes sense next to the account it belongs to, you want task management with customer context — not a standalone to-do app, and not a Gantt chart.',
+          ],
+        },
+        { h: 'The hybrid most account teams actually want' },
+        {
+          p: 'The honest answer for a customer team is usually a hybrid: task management as the backbone, with each task tied to the customer, the meeting and the renewal it serves — plus a little project structure for the occasional onboarding or migration. That is the gap Curahold is built for: tasks that live where the customer does.',
+        },
+        {
+          quote: 'Pick the tool that matches the shape of your work. Customer work is a rhythm, not a deadline — so it needs a list you trust, not a plan you finish.',
+        },
+      ],
+    },
+  ],
+  tr: [
+    {
+      slug: 'what-is-task-management',
+      title: 'Görev yönetimi nedir? Müşteri ekipleri için pratik bir rehber',
+      description:
+        'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev aslında nedir, hangi birkaç alan önemlidir ve ortak listeyi nasıl dürüst tutarsın.',
+      date: '2026-10-06',
+      readMinutes: 6,
+      tags: ['Görev yönetimi', 'Müşteri başarısı', 'İş akışları'],
+      body: [
+        {
+          p: 'Görev yönetimi; yapılması gereken işi yakalama, her parçaya bir sorumlu ve bir tarih verme ve işler değiştikçe listeyi dürüst tutma pratiğidir. Bir müşteri başarısı ya da müşteri yönetimi ekibi için bu, bir yenilemeyi zamanında hatırlamakla bir hafta geç fark etmek arasındaki farktır.',
+        },
+        { h: 'Görev, sorumlusu ve tarihi olan bir sözdür' },
+        {
+          p: 'En küçük işe yarar birim tek bir görevdir: tek bir net sonuç, tek bir sorumlu kişi, tek bir son tarih. Geri kalan her şey — notlar, bağlantılar, ait olduğu müşteri — bağlamdır. Bir görevin sorumlusu ya da tarihi yoksa o henüz bir görev değildir; bir dilektir ve kayanlar hep dileklerdir.',
+        },
+        { h: 'Gerçekten önemli olan birkaç alan' },
+        {
+          ul: [
+            'Başlık: sonucu sade sözlerle; eylemi değil. “Yenileme teklifini gönder”, “Yenileme” değil.',
+            'Sorumlu: başkaları yardım etse bile tam olarak tek kişi.',
+            'Son tarih: gerçek bir tarih, ki liste sırada ne olduğuna göre sıralanabilsin.',
+            'Durum: nerede olduğu — yapılacak, yapılıyor, bitti — ve ihtiyaç olana kadar daha fazlası değil.',
+            'Bağlam: geldiği müşteri, toplantı ya da konu, tek tıkla erişilir.',
+          ],
+        },
+        { h: 'Listeyi dürüst tut' },
+        {
+          p: 'Bir görev listesi ancak ekip ona güvenirse işe yarar. Bu güven iki alışkanlıkla kurulur: kafanda ya da gelen kutunda görev olmayan hiçbir şey yaşamaz ve bir görev bittiği an kapatılır — haftalık toplu temizliğe bırakılmaz. Gerçeğin gerisinde kalan liste sessizce okunmaz olur.',
+        },
+        {
+          quote: 'En iyi görev listesi, ekibinin pazartesi sabahı gerçekten açtığı listedir — çünkü onlara bir kez bile yalan söylememiştir.',
+        },
+        { h: 'Görev yönetimi müşteriyle buluştuğunda' },
+        {
+          p: 'Genel yapılacaklar uygulamaları her görevi aynı sayar. Müşteri ekipleri böyle çalışmaz: bir görev neredeyse her zaman bir müşteriye, bir toplantıya ya da bir yenilemeye aittir. Görev o bağlamın yanında yaşadığında — ve bir iş değerlendirmesini bitirmek takip adımlarını kendiliğinden oluşturabildiğinde — liste angarya olmaktan çıkar, planın kendisi olur. Görevlerle müşteri bağlamının bu melezi, Curahold’un tam da üzerine kurulduğu şeydir.',
+        },
+      ],
+    },
+    {
+      slug: 'turn-meetings-into-tasks',
+      title: 'Toplantı notlarını göreve dönüştürmek: gerçekten yerleşen bir akış',
+      description:
+        'Çoğu sonraki adım bir defterde ölür. İşte bir toplantıdaki sözlerin kaybolmasını önleyen sade bir toplantı-görev akışı — sorumlular, tarihler ve bağlam.',
+      date: '2026-10-20',
+      readMinutes: 5,
+      tags: ['Görev yönetimi', 'Toplantılar', 'Müşteri başarısı'],
+      body: [
+        {
+          p: 'Her müşteri ekibi bunu yaşamıştır: iyi bir toplantı, üç net sonraki adım, sıcak vedalar — ve iki hafta sonra kimin neyi üstlendiğini kimse söyleyemez. Notlar yazıldı; görevler yazılmadı. Toplantı notlarını göreve dönüştürmek, bir müşteri ekibinin kurabileceği en yüksek kaldıraçlı alışkanlıktır.',
+        },
+        { h: 'Söyleneni yapılacaktan ayır' },
+        {
+          p: 'Bir toplantı notunda iki tür satır vardır: olanın kaydı ve bundan sonrasına dair taahhüt. Yalnızca ikinci tür göreve dönüşür. Yazarken taahhütleri işaretle — başına bir ok koymak gibi basit bir alışkanlık yeter — ki sonraki adımlar sen görüşmeden çıkmadan belli olsun.',
+        },
+        { h: 'Her sonraki adıma üç şeyi ver' },
+        {
+          ul: [
+            'Bir sorumlu; toplantıda yüksek sesle söylenmiş olsun ki sonradan sürpriz olmasın.',
+            'Bir son tarih; sonradan uydurulan değil, odada anlaşılan.',
+            'Bağlam: hangi müşteri ve geldiği nota bir bağlantı.',
+          ],
+        },
+        { h: 'Bağlam kaybolmadan yap' },
+        {
+          p: 'Bunun için pencere dakikalarla ölçülür, günlerle değil. Toplantıdan uzaklaştıkça daha çok ayrıntı kaybeder ve görevlerin hiç oluşturulmama olasılığı artar. En iyi akış, görevleri toplantıyı kapatmanın bir parçası olarak yakalar — sonra yaparım diye söz verdiğin ayrı bir angarya olarak değil.',
+        },
+        {
+          quote: 'Toplantıda verilen ve sorumlusu ile tarihiyle göreve yazılan söz tutulur. Notta kalan söz bir umuttur.',
+        },
+        { h: 'Angaryayı sisteme taşıt' },
+        {
+          p: 'Bu alışkanlığın başarısız olma nedeni sürtünmedir: isimleri yeniden yazmak, müşteriyi yeniden bulmak, tarihleri kopyalamak. Sürtünmeyi kaldır, alışkanlık yerleşsin. Curahold’da bir toplantıyı kaydetmek, sonraki adımları doğru panoda, müşteriye zaten bağlı görevlere çevirir — böylece kayıt ve plan tek bir eylem olur.',
+        },
+      ],
+    },
+    {
+      slug: 'task-management-vs-project-management',
+      title: 'Görev yönetimi mi, proje yönetimi mi: müşteri ekibin hangisine ihtiyaç duyar?',
+      description:
+        'Görev yönetimi ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğini ve müşteri ekiplerinin neden bir proje planına değil, müşteriye bağlı görevlere ihtiyaç duyduğunu anlatıyoruz.',
+      date: '2026-11-03',
+      readMinutes: 7,
+      tags: ['Görev yönetimi', 'Proje yönetimi', 'Araçlar'],
+      body: [
+        {
+          p: '“Görev yönetimi” ve “proje yönetimi” sık sık aynı şeymiş gibi kullanılır. Değildir ve yanlışını seçmek, ekiplerin araçlarıyla savaşmaya başlama biçimidir. Kısacası: görev yönetimi süregelen işi yürütür; proje yönetimi, tanımlı bir işi bir bitiş çizgisine götürür.',
+        },
+        { h: 'Proje yönetimi neyde iyidir' },
+        {
+          p: 'Bir projenin başı, sonu ve kapsamı vardır: bir lansman, bir göç, bir kurulum. Proje yönetimi araçları burada parlar — bağımlılıklar, zaman çizelgeleri, aşamalar, kritik yol. İşin tek seferlik bir sonuca giden adımlar dizisiyse bu yapı hakkını verir.',
+        },
+        { h: 'Görev yönetimi neyde iyidir' },
+        {
+          p: 'Çoğu müşteri başarısı ve müşteri yönetimi işi bir proje değildir. Bitmeyen, tekrar eden bir ritimdir: başlangıçlar, durum görüşmeleri, iş değerlendirmeleri, yenilemeler, bir müşterinin sessizleştiğine dair o sinyal. Bitiş çizgisi yoktur — gelecek hafta vardır. Görev yönetimi buna uyar: sahipli ve tarihli, bir bakışta güvenebileceğin yaşayan bir liste.',
+        },
+        { h: 'Hangisine ihtiyacın olduğunu nasıl anlarsın' },
+        {
+          ul: [
+            'İş bitiyorsa muhtemelen proje yönetimi istersin.',
+            'İş her müşteri için sonsuza dek tekrar ediyorsa görev yönetimi istersin.',
+            'Bir görev yalnızca ait olduğu müşterinin yanında anlam kazanıyorsa, müşteri bağlamlı görev yönetimi istersin — ne tek başına bir yapılacaklar uygulaması, ne de bir Gantt şeması.',
+          ],
+        },
+        { h: 'Çoğu müşteri ekibinin aslında istediği melez' },
+        {
+          p: 'Bir müşteri ekibi için dürüst cevap genellikle bir melezdir: omurga olarak görev yönetimi, her görev hizmet ettiği müşteriye, toplantıya ve yenilemeye bağlı — artı ara sıraki bir başlangıç ya da göç için biraz proje yapısı. Curahold’un kurulduğu boşluk tam da budur: müşterinin yaşadığı yerde yaşayan görevler.',
+        },
+        {
+          quote: 'İşinin biçimine uyan aracı seç. Müşteri işi bir son tarih değil, bir ritimdir — bu yüzden bitirdiğin bir plana değil, güvendiğin bir listeye ihtiyaç duyar.',
+        },
+      ],
+    },
+  ],
+};
+
+/** The locales the blog is published in — only those with native posts above. */
+export const BLOG_LOCALES = Object.keys(BLOG_POSTS) as Locale[];
+
+/** The posts for a locale (empty when the blog is not published in it). */
+export const blogPosts = (locale: Locale): BlogPost[] => BLOG_POSTS[locale] ?? [];
