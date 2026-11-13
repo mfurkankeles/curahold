@@ -424,3 +424,48 @@ html.js [data-reveal="app"].is-in { opacity: 1; transform: none; }
   .app__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) { .app__grid { grid-template-columns: 1fr; } .showcase { padding-top: 56px; } }
+
+/* ============================================ more product windows =========
+   The task board and the portfolio's health, in the same app frame. */
+.board { padding: 58px 0 20px; }
+.showcase__cap { text-align: center; max-width: 24ch; margin: 0 auto; font: 700 clamp(24px, 3.2vw, 34px) / 1.12 var(--display); letter-spacing: -0.02em; color: var(--ink); }
+.app--wide { max-width: 1040px; }
+.board .app { margin-top: 36px; }
+
+/* ---- task board (kanban) ------------------------------------------------ */
+.app__main--kb { padding: 20px; background: var(--mist); }
+.kb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.kb__col { background: color-mix(in srgb, var(--mist) 55%, var(--paper)); border: 1px solid var(--line); border-radius: 13px; padding: 12px; display: grid; align-content: start; gap: 9px; }
+.kb__h { display: flex; align-items: center; gap: 8px; font: 650 13.5px/1 var(--display); color: var(--ink-2); }
+.kb__h span { min-width: 20px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+.kb__cards { display: grid; gap: 9px; }
+.kt { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; display: grid; gap: 10px; box-shadow: 0 1px 2px rgba(23, 19, 58, .04); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+.kt:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -16px rgba(23, 19, 58, .5); }
+.kt__t { margin: 0; font-size: 14px; font-weight: 550; line-height: 1.35; color: var(--ink); }
+.kt.is-done .kt__t { color: var(--ink-3); text-decoration: line-through; }
+.kt__f { display: flex; align-items: center; gap: 8px; }
+.kt__ava { width: 21px; height: 21px; border-radius: 50%; display: grid; place-items: center; background: var(--iris-wash); color: var(--iris-ink); font-size: 9.5px; font-weight: 700; }
+.kt__due { font-size: 12px; color: var(--ink-3); padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; }
+.kt__dot { margin-inline-start: auto; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); }
+.kt__dot[data-prio='high'] { background: var(--rose); } .kt__dot[data-prio='med'] { background: var(--ember); } .kt__dot[data-prio='low'] { background: var(--fern); }
+.kt__done { margin-inline-start: auto; display: inline-flex; } .kt__done svg { width: 16px; height: 16px; }
+
+/* ---- portfolio health --------------------------------------------------- */
+.app__main--pf { padding: 26px 26px 30px; background: var(--mist); display: grid; gap: 22px; }
+.pf__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.pf__tile { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 16px; display: grid; gap: 2px; overflow: hidden; }
+.pf__tile::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--band); }
+.pf__tile[data-band='risk'] { --band: var(--rose); } .pf__tile[data-band='watch'] { --band: var(--ember); } .pf__tile[data-band='good'] { --band: var(--fern); }
+.pf__n { font: 750 42px/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--band); }
+.pf__l { font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.pf__bar { display: flex; height: 20px; border-radius: 999px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); gap: 2px; padding: 2px; }
+.pf__seg { height: 100%; width: 0; border-radius: 999px; transition: width 1s var(--ease) .25s; }
+.pf__bar.is-in .pf__seg { width: var(--w); }
+.pf__seg[data-band='risk'] { background: var(--rose); } .pf__seg[data-band='watch'] { background: var(--ember); } .pf__seg[data-band='good'] { background: var(--fern); }
+
+@media (prefers-reduced-motion: reduce) { .pf__seg { transition: none; } }
+@media (max-width: 860px) {
+  .kb { grid-template-columns: 1fr; }
+  .pf__tiles { grid-template-columns: 1fr; }
+  .app--wide, .board .app { max-width: 560px; }
+}

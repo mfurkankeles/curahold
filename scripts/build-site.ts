@@ -141,13 +141,55 @@ function page(locale: SiteLocale): string {
       <h2 data-reveal>${esc(c.product.title)}</h2>
       <p class="lead" data-reveal>${esc(c.product.lead)}</p>
       <div class="app" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${accts}</span></div>
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(accts)}</span></div>
         <div class="app__body">
           <nav class="app__side"><span class="app__org">${MARK}<b>Curahold</b></span>${navItems}</nav>
           <div class="app__main">
             <div class="app__head"><h3>${esc(accts)}</h3><span class="app__count">${BOARD.length}</span></div>
             <div class="app__grid">${cards}</div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // Second product window: the task board (kanban). Task titles reuse the copy
+  // already translated for the meeting card and the year timeline.
+  const DUE = `${esc(m.day)} ${esc(m.month)}`;
+  const ktask = (title: string, init: string, i: number, opts: { due?: boolean; prio?: string; done?: boolean } = {}) =>
+    `<article class="kt${opts.done ? ' is-done' : ''}" data-reveal style="--i:${i}">
+              <p class="kt__t">${esc(title)}</p>
+              <div class="kt__f"><span class="kt__ava">${esc(init)}</span>${opts.due ? `<span class="kt__due">${DUE}</span>` : ''}${opts.done ? `<span class="kt__done">${DONE}</span>` : `<span class="kt__dot" data-prio="${opts.prio ?? 'med'}"></span>`}</div>
+            </article>`;
+  const kcol = (titleKey: MessageKey, n: number, body: string) =>
+    `<div class="kb__col"><div class="kb__h">${esc(t(titleKey))}<span>${n}</span></div><div class="kb__cards">${body}</div></div>`;
+  const kanban = `  <section class="board">
+    <div class="wrap">
+      <h3 class="showcase__cap" data-reveal>${esc(c.product.work)}</h3>
+      <div class="app app--wide" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.boards'))}</span></div>
+        <div class="app__main app__main--kb">
+          <div class="kb">
+            ${kcol('board.defaultColumns.todo', 2, ktask(c.year.steps[0].name, 'ZT', 0, { due: true, prio: 'high' }) + ktask(c.meeting.card.open, 'LB', 1, { prio: 'med' }))}
+            ${kcol('board.defaultColumns.doing', 2, ktask(c.meeting.card.done, 'ZT', 2, { due: true, prio: 'high' }) + ktask(c.year.steps[1].name, 'AD', 3, { prio: 'low' }))}
+            ${kcol('board.defaultColumns.done', 1, ktask(c.meeting.card.name, 'SA', 4, { done: true }))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // Third product window: the portfolio's health, three bands and one stacked bar.
+  const pfTile = (band: string, n: number, i: number) =>
+    `<div class="pf__tile" data-band="${band}" data-reveal style="--i:${i}"><span class="pf__n" data-count="${n}">0</span><span class="pf__l">${esc(t(`health.band.${band}` as MessageKey))}</span></div>`;
+  const portfolio = `  <section class="board">
+    <div class="wrap">
+      <h3 class="showcase__cap" data-reveal>${esc(c.product.portfolio)}</h3>
+      <div class="app" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.reports'))}</span></div>
+        <div class="app__main app__main--pf">
+          <div class="pf__tiles">${pfTile('risk', 2, 0)}${pfTile('watch', 3, 1)}${pfTile('good', 12, 2)}</div>
+          <div class="pf__bar" data-reveal><span class="pf__seg" data-band="risk" style="--w:11.8%"></span><span class="pf__seg" data-band="watch" style="--w:17.6%"></span><span class="pf__seg" data-band="good" style="--w:70.6%"></span></div>
         </div>
       </div>
     </div>
@@ -239,6 +281,8 @@ ${showcase}
     </div>
   </section>
 
+${kanban}
+
   <section class="tools">
     <div class="wrap">
       <h2 data-reveal>${esc(c.tools.title)}</h2>
@@ -247,6 +291,8 @@ ${showcase}
       <p class="tools__none">${esc(c.tools.none)}</p>
     </div>
   </section>
+
+${portfolio}
 
   <section class="pricing" id="pricing">
     <div class="wrap">
