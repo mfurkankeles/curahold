@@ -47,6 +47,7 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 | [Çöp kutusundaki](/docs/tr/trash/) silinmiş müşteriler, kayıtlar, görevler ve diğerleri | 30 gün; sonra dosyalarıyla birlikte silinir; yönetici daha erken silebilir |
 | İçe aktarmayı geri alma bilgisi | 30 gün |
 | Webhook teslim kayıtları | 7 gün |
+| Hata kayıtları (ne, nerede bozuldu — istek içeriği asla) | 30 gün |
 | İptal edilmiş API anahtarları | 30 gün |
 
 ## Saklanan sırlar

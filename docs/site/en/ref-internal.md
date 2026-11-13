@@ -10,9 +10,10 @@ These addresses exist but belong to the browser or to other machines. They are l
 
 | Addresses | How many | Why |
 | --- | --- | --- |
-| `/admin/…` | 28 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/admin/…` | 29 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/auth/…` | 5 | Signing in and out happens in the browser. |
 | `/billing/…` | 3 | Plan and payment, with the payment provider. |
+| `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 23 | Managing connections and their field matching: an administrator in the browser. |
 | `/desk/…` | 12 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |

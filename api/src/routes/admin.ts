@@ -18,6 +18,27 @@ import { body, email, param, uuid } from '../lib/validate';
 
 export const adminRoutes = new Hono<AppEnv>();
 
+// The company's recent errors (migration 0032), newest first. An administrator
+// sees what has been breaking for their own people; RLS keeps it to their
+// company. Rows with no company (a fault before sign-in) are not shown here.
+adminRoutes.get('/errors', async (c) => {
+  requirePerm(c, 'org.manage');
+  const source = c.req.query('source');
+  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 100, 1), 200);
+  const rows = await run(c, (q) =>
+    q.query(
+      `select id, at, source, method, path, message, detail, agent, user_id
+         from error_log
+        where ($1::text is null or source = $1)
+        order by at desc limit $2`,
+      [source === 'server' || source === 'browser' ? source : null, limit],
+    ),
+  );
+  return c.json({
+    errors: rows.map((r) => ({ id: r.id, at: iso(r.at), source: r.source, method: r.method, path: r.path, message: r.message, detail: r.detail, agent: r.agent, byId: r.user_id })),
+  });
+});
+
 const INVITE_DAYS = 7;
 
 // ------------------------------------------------------------------ company

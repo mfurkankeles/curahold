@@ -47,6 +47,7 @@ In Settings → People, a person's menu offers:
 | Deleted customers, records, tasks and the rest, in the [trash](/docs/en/trash/) | 30 days, then erased with their files; an administrator can erase sooner |
 | Undo data for imports | 30 days |
 | Webhook delivery records | 7 days |
+| Error records (what broke, where — never request contents) | 30 days |
 | Revoked API keys | 30 days |
 
 ## Stored secrets

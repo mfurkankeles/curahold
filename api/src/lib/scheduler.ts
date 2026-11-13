@@ -78,6 +78,8 @@ export async function cleanUp(deps: Deps) {
     // Keys of changes that must happen once: a retry comes within minutes, not days.
     await q.query(`delete from idempotency_keys where created_at < now() - interval '2 days'`);
     await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
+    // Errors are kept long enough to find and fix a fault, then let go.
+    await q.query(`delete from error_log where at < now() - interval '30 days'`);
     await q.query(`delete from support_sessions where expires_at < now() - interval '30 days'`);
     // Session recordings are kept only as long as useful for support (chunks cascade).
     await q.query(`delete from replay_sessions where last_at < now() - make_interval(days => $1)`, [REPLAY_RETENTION_DAYS]);

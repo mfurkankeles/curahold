@@ -10,9 +10,10 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 
 | Adresler | Kaç tane | Neden |
 | --- | --- | --- |
-| `/admin/…` | 28 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
+| `/admin/…` | 29 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
 | `/auth/…` | 5 | Oturum açma ve kapama tarayıcıda yapılır. |
 | `/billing/…` | 3 | Plan ve ödeme; ödeme sağlayıcısıyla. |
+| `/client-error/…` | 1 | Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye. |
 | `/connect/…` | 1 | Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar. |
 | `/connections/…` | 23 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
 | `/desk/…` | 12 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |

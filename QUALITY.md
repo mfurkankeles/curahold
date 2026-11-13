@@ -83,6 +83,12 @@ Brüt marj bu sıranın içinde değil; her kararın uyması gereken bütçe.
   uygulanır, her erişim ve işlem kayda geçer, veri AB'de durur.
 - Her sunucu ve tarayıcı hatası kayda girer (ücretsiz bir yolla). Kullanıcı teknik hata değil,
   ne olduğunu ve ne yapacağını söyleyen bir mesaj görür.
+  - Yapıldı (13 Kasım): beklenmeyen sunucu hatası (app.onError) ve tarayıcı hatası
+    (`POST /client-error`) `error_log`'a yazılıyor — ne, nerede, kimde; istek gövdesi/başlık/sır
+    tutulmuyor, 30 günde siliniyor. Yönetici kendi şirketininkini görür (`GET /admin/errors`, RLS);
+    şirketsiz hata (girişten önce) Curahold'da kalır. Kişi başına taşma sınırı var. Kullanıcı zaten
+    "bizde bir sorun oldu, tekrar dene" mesajını görüyor. Migration 0032; testler `tests/errlog.test.ts`.
+    Açık kalan: bu kayıtlar için ürün içi bir ekran (şimdilik yalnızca uç nokta).
 
 ### Hız
 - İlk açılış (orta seviye telefon, 4G): ana içerik ≤ 1,5 sn'de görünür (LCP); tekrar açılış

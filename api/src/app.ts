@@ -12,6 +12,7 @@ import { defer, type AppEnv, type Deps, type OrgRow } from './context';
 import { deliverWebhooks } from './lib/webhooks';
 import { Repeated, rememberAnswer, repeatKeyOf, repeatedAnswer, storedAnswer } from './lib/repeats';
 import { flushHealth } from './lib/health';
+import { recordError } from './lib/errlog';
 import { timelineRoutes } from './routes/timeline';
 import { meetingRoutes } from './routes/meetings';
 import { billingRoutes, billingWebhook } from './routes/billing';
@@ -100,6 +101,20 @@ export function createApp(deps: Deps) {
       );
     }
     console.error('[curahold] unhandled', err);
+    // Record it, so a real fault is seen and fixed, not lost to the console.
+    const auth = c.get('auth');
+    defer(
+      c.get('deps'),
+      recordError(c.get('deps'), {
+        source: 'server',
+        orgId: org?.id ?? null,
+        userId: auth?.userId ?? null,
+        method: c.req.method,
+        path: c.req.path,
+        message: err instanceof Error ? err.message : String(err),
+        detail: err instanceof Error ? err.stack : undefined,
+      }),
+    );
     return c.json({ error: 'server', message: translate(locale, 'errors.server') }, 500);
   });
 

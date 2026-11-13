@@ -17,6 +17,7 @@ import { body, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
 import { portalOn } from '../lib/portal';
 import { recordsSessions } from '../lib/support';
+import { browserErrorAllowed, recordError } from '../lib/errlog';
 
 export const meRoutes = new Hono<AppEnv>();
 
@@ -297,6 +298,34 @@ meRoutes.get('/pulse', async (c) => {
   });
   c.header('cache-control', 'no-store');
   return c.json(out);
+});
+
+// A browser error from the app: recorded like a server one, so a fault a person
+// hits is seen even when nothing reached the server. Capped per person.
+meRoutes.post('/client-error', async (c) => {
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const input = await body(
+    c,
+    z.object({
+      message: z.string().trim().min(1).max(1000),
+      detail: z.string().trim().max(4000).optional(),
+      path: z.string().trim().max(500).optional(),
+    }),
+  );
+  const deps = c.get('deps');
+  if (await browserErrorAllowed(deps, org.id, auth.userId)) {
+    await recordError(deps, {
+      source: 'browser',
+      orgId: org.id,
+      userId: auth.userId,
+      path: input.path ?? null,
+      message: input.message,
+      detail: input.detail ?? null,
+      agent: c.req.header('user-agent') ?? null,
+    });
+  }
+  return c.body(null, 204);
 });
 
 meRoutes.get('/notifications/count', async (c) => {

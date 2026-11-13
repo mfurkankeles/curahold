@@ -284,4 +284,5 @@ export const INTERNAL: Record<string, Pair> = {
   portal: ['Managing who can sign in to the customer portal.', 'Müşteri portalına kimlerin girebileceğini yönetme.'],
   logo: ['The company logo.', 'Şirket logosu.'],
   'manifest.webmanifest': ['The installable-app manifest.', 'Kurulabilir uygulama bildirimi.'],
+  'client-error': ['The browser reporting its own errors, so a fault a person hits is recorded.', 'Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye.'],
 };

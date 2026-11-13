@@ -12,6 +12,7 @@ import { navigate, navigateFresh, useLocation } from '../lib/router';
 import { BackBar } from './BackBar';
 import { ShellCtx, TASKS_CHANGED, currentPageDefaults, useNarrow, type QuickDefaults, type ShellActions } from '../lib/shell';
 import { LIVE, startLive, useLive } from '../lib/live';
+import { startErrorLog } from '../lib/errlog';
 import { forgetOffline, useInstall, useOnline } from '../lib/pwa';
 import { useStore } from '../lib/store';
 import { useTheme, type ThemePref } from '../lib/theme';
@@ -218,6 +219,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   };
   // Live refresh runs while the frame is on screen.
   useEffect(() => startLive(), []);
+  // Browser errors are reported so a fault a person hits is seen, not lost.
+  useEffect(() => startErrorLog(), []);
   const online = useOnline();
   const app = useInstall();
   const [installHelp, setInstallHelp] = useState(false);
