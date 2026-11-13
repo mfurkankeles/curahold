@@ -40,6 +40,14 @@ const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 
 const DONE = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2f8f78"/><path d="M4.8 8.2l2.1 2.1L11.3 6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#75719a" stroke-width="1.6"/></svg>`;
 
+// The tools Curahold speaks to, for the strip under the hero. Brand names are
+// the same in every language, so they are not translated. These are the same
+// integrations named in the tools section below — nothing here is a customer.
+const INTEGRATIONS = [
+  'Slack', 'Microsoft Teams', 'Google Chat', 'Salesforce', 'HubSpot', 'Dynamics 365',
+  'Pipedrive', 'Zoho', 'Bitrix24', 'Freshsales', 'Zendesk Sell', 'Google Sheets', 'Excel', 'Claude', 'ChatGPT',
+];
+
 /** What each plan brings (the app's own words): Team's list, then what Business adds. */
 const TEAM_POINTS: MessageKey[] = ['billing.point.boards', 'billing.point.customers', 'billing.point.meetings', 'billing.point.reports', 'billing.point.chat'];
 const BUSINESS_POINTS: MessageKey[] = ['billing.point.crm', 'billing.point.portal', 'billing.point.playbooks'];
@@ -84,9 +92,9 @@ function page(locale: SiteLocale): string {
   ]
     .map(([tone, text], i) => `<li class="chip" data-tone="${tone}" style="--i:${i}">${esc(text)}</li>`)
     .join('');
-  const steps = c.year.steps.map((s) => `<li><h3>${esc(s.name)}</h3><p>${esc(s.text)}</p></li>`).join('');
-  const tools = c.tools.rows.map((r) => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.names)}</dd></div>`).join('');
-  const faq = c.faq.items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+  const steps = c.year.steps.map((s, i) => `<li data-reveal style="--i:${i}"><h3>${esc(s.name)}</h3><p>${esc(s.text)}</p></li>`).join('');
+  const tools = c.tools.rows.map((r, i) => `<div data-reveal style="--i:${i}"><dt>${esc(r.label)}</dt><dd>${esc(r.names)}</dd></div>`).join('');
+  const faq = c.faq.items.map((f, i) => `<details data-reveal style="--i:${i}"><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
   const m = c.meeting.card;
   return `<!doctype html>
 <html lang="${c.lang}" dir="${info.dir}">
@@ -121,6 +129,7 @@ ${alternates}
 </header>
 <main id="main">
   <section class="wrap hero">
+    <div class="hero__aura" aria-hidden="true"></div>
     <div class="hero__text">
       <h1>${esc(c.hero.title)}</h1>
       <p class="hero__lead">${esc(c.hero.lead)}</p>
@@ -137,21 +146,26 @@ ${alternates}
     </figure>
   </section>
 
+  <section class="strip" aria-label="${esc(c.tools.marquee)}">
+    <div class="wrap"><p class="strip__label" data-reveal>${esc(c.tools.marquee)}</p></div>
+    <div class="marq" aria-hidden="true"><div class="marq__track">${INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('')}${INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('')}</div></div>
+  </section>
+
   <section class="year" id="product">
     <div class="wrap">
-      <h2>${esc(c.year.title)}</h2>
-      <p class="lead">${esc(c.year.lead)}</p>
+      <h2 data-reveal>${esc(c.year.title)}</h2>
+      <p class="lead" data-reveal>${esc(c.year.lead)}</p>
       <ol class="year__steps">${steps}</ol>
     </div>
   </section>
 
   <section class="band">
     <div class="wrap band__in">
-      <div class="band__text">
+      <div class="band__text" data-reveal>
         <h2>${esc(c.meeting.title)}</h2>
         <p>${esc(c.meeting.text)}</p>
       </div>
-      <div class="mcard" aria-hidden="true">
+      <div class="mcard" data-reveal="card" aria-hidden="true">
         <div class="mcard__date"><span class="mcard__day">${esc(m.day)}</span><span class="mcard__month">${esc(m.month)}</span></div>
         <div class="mcard__main">
           <div class="mcard__head"><span class="mcard__kind">${esc(m.kind)}</span><span class="mcard__name">${esc(m.name)}</span></div>
@@ -169,8 +183,8 @@ ${alternates}
 
   <section class="tools">
     <div class="wrap">
-      <h2>${esc(c.tools.title)}</h2>
-      <p class="lead">${esc(c.tools.lead)}</p>
+      <h2 data-reveal>${esc(c.tools.title)}</h2>
+      <p class="lead" data-reveal>${esc(c.tools.lead)}</p>
       <dl class="tools__list">${tools}</dl>
       <p class="tools__none">${esc(c.tools.none)}</p>
     </div>
@@ -178,20 +192,20 @@ ${alternates}
 
   <section class="pricing" id="pricing">
     <div class="wrap">
-      <h2>${esc(c.pricing.title)}</h2>
-      <p class="lead">${esc(c.pricing.lead.replace('14', String(TRIAL_DAYS)))}</p>
-      <div class="pricing__switch" role="group" aria-label="${esc(c.nav.pricing)}">
+      <h2 data-reveal>${esc(c.pricing.title)}</h2>
+      <p class="lead" data-reveal>${esc(c.pricing.lead.replace('14', String(TRIAL_DAYS)))}</p>
+      <div class="pricing__switch" role="group" data-reveal aria-label="${esc(c.nav.pricing)}">
         <button type="button" data-interval="month" aria-pressed="false">${esc(c.pricing.monthly)}</button>
         <button type="button" data-interval="year" aria-pressed="true">${esc(c.pricing.yearly)}<small>${esc(c.pricing.save)}</small></button>
       </div>
-      <div class="plans">${plan('team')}${plan('business')}</div>
+      <div class="plans" data-reveal>${plan('team')}${plan('business')}</div>
       <p class="pricing__fine">${esc(c.pricing.fine)}</p>
     </div>
   </section>
 
   <section class="faq">
     <div class="wrap">
-      <h2>${esc(c.faq.title)}</h2>
+      <h2 data-reveal>${esc(c.faq.title)}</h2>
       <div class="faq__list">${faq}</div>
     </div>
   </section>

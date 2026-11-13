@@ -20,7 +20,7 @@ export interface SiteCopy {
     text: string;
     card: { day: string; month: string; kind: string; name: string; ours: string; theirs: string; notes: string; steps: string; done: string; open: string; openWho: string };
   };
-  tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string };
+  tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -79,6 +79,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'AI assistants', names: 'Claude and ChatGPT, through the connector' },
       ],
       none: 'It also works with none of them.',
+      marquee: 'Works with the tools you already have',
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -163,6 +164,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'Yapay zekâ', names: 'Bağlayıcı üzerinden Claude ve ChatGPT' },
       ],
       none: 'Hiçbiri olmadan da çalışır.',
+      marquee: 'Zaten kullandığın araçlarla çalışır',
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -247,6 +249,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'مساعدو الذكاء الاصطناعي', names: 'Claude وChatGPT عبر الموصّل' },
       ],
       none: 'ويعمل أيضًا من دون أي منها.',
+      marquee: 'يعمل مع الأدوات التي تستخدمها بالفعل',
     },
     pricing: {
       title: 'أسعار بسيطة، لكل مقعد',
@@ -331,6 +334,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'עוזרי AI', names: 'Claude ו-ChatGPT דרך המחבר' },
       ],
       none: 'הוא עובד גם בלי אף אחד מהם.',
+      marquee: 'עובד עם הכלים שכבר יש לך',
     },
     pricing: {
       title: 'תמחור פשוט, לכל מושב',
@@ -415,6 +419,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'دستیاران هوش مصنوعی', names: 'Claude و ChatGPT از طریق کانکتور' },
       ],
       none: 'بدون هیچ‌کدام هم کار می‌کند.',
+      marquee: 'با ابزارهایی که همین حالا داری کار می‌کند',
     },
     pricing: {
       title: 'قیمت‌های ساده، به ازای هر صندلی',
@@ -499,6 +504,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'AI 助手', names: '通过连接器使用 Claude 和 ChatGPT' },
       ],
       none: '不接入任何工具也能用。',
+      marquee: '与你已在使用的工具协同工作',
     },
     pricing: {
       title: '简单的按席位定价',
@@ -583,6 +589,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'AI 助理', names: '透過連接器使用 Claude 與 ChatGPT' },
       ],
       none: '不接上任何工具也能運作。',
+      marquee: '與你已在使用的工具協同運作',
     },
     pricing: {
       title: '簡單的按席次定價',
@@ -667,6 +674,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'AI アシスタント', names: 'コネクタ経由で Claude と ChatGPT' },
       ],
       none: 'どれがなくても使えます。',
+      marquee: 'すでにお使いのツールと連携します',
     },
     pricing: {
       title: 'シンプルな、シート単位の料金',
@@ -751,6 +759,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { label: 'AI 어시스턴트', names: '커넥터를 통해 Claude와 ChatGPT' },
       ],
       none: '아무것도 연결하지 않아도 작동합니다.',
+      marquee: '이미 쓰고 있는 도구와 함께 작동합니다',
     },
     pricing: {
       title: '간단한 좌석당 가격',
