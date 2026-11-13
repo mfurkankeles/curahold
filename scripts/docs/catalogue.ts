@@ -272,6 +272,7 @@ export const INTERNAL: Record<string, Pair> = {
   'help-files': ['Files sent to support.', 'Desteğe gönderilen dosyalar.'],
   support: ['Curahold support\'s own desk.', 'Curahold desteğinin kendi masası.'],
   desk: ['Curahold support\'s own queue of help requests and the door for answers by email; open only with Curahold\'s own keys.', 'Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold\'un kendi anahtarlarıyla açılır.'],
+  replay: ['The browser\'s session recording for support (disclosed, inputs masked, kept a week); the page posts its own events here, and only Curahold\'s desk reads them.', 'Tarayıcının destek için oturum kaydı (bildirilen, girdiler maskeli, bir hafta tutulur); sayfa kendi olaylarını buraya gönderir, yalnızca Curahold\'un masası okur.'],
   portal: ['Managing who can sign in to the customer portal.', 'Müşteri portalına kimlerin girebileceğini yönetme.'],
   logo: ['The company logo.', 'Şirket logosu.'],
   'manifest.webmanifest': ['The installable-app manifest.', 'Kurulabilir uygulama bildirimi.'],

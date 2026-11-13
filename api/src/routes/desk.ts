@@ -12,6 +12,7 @@ import { Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { HELP_STATUSES } from '../../../shared/src/help';
+import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { nowOf, orgUrl, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
 import { hmacHex, randomDigits, randomToken, safeEqual, sha256Hex, sign, verify } from '../lib/crypto';
@@ -220,11 +221,20 @@ deskRoutes.get('/requests/:ref', async (c) => {
       ? await db.query(`select id, level, expires_at from support_grants where org_id = $1 and user_id = $2 and revoked_at is null and expires_at > now() order by expires_at desc limit 1`, [h.org_id, h.user_id])
       : [];
     const others = await db.query(`select ref, subject, status from help_requests where org_id = $1 and id <> $2 order by created_at desc limit 5`, [h.org_id, h.id]);
+    // The asker's recordings from the last week, so the team can watch what led to the error.
+    const replays = h.user_id
+      ? await db.query(
+          `select id, started_at, last_at, events, bytes, had_error, page_first, page_last
+             from replay_sessions where org_id = $1 and user_id = $2 and last_at > now() - make_interval(days => $3)
+            order by last_at desc limit 20`,
+          [h.org_id, h.user_id, REPLAY_RETENTION_DAYS],
+        )
+      : [];
     if (staff.via === 'session') await note(db, staff, 'opened', h.ref, h.org_id);
-    return { h, messages, files, grant, others };
+    return { h, messages, files, grant, others, replays };
   });
   if (!out) fail('not_found');
-  const { h, messages, files, grant, others } = out!;
+  const { h, messages, files, grant, others, replays } = out!;
   // Links to the files that work for two weeks without anything else, like the ones in the desk's emails.
   const expires = Math.floor(nowOf(deps).getTime() / 1000) + 14 * 86400;
   const fileLinks = await Promise.all(
@@ -248,6 +258,16 @@ deskRoutes.get('/requests/:ref', async (c) => {
       files: fileLinks,
       access: grant ? { level: grant.level, until: new Date(grant.expires_at).toISOString() } : null,
       others: others.map((o) => ({ ref: o.ref, subject: o.subject, status: o.status })),
+      replays: replays.map((s) => ({
+        id: s.id as string,
+        startedAt: new Date(s.started_at).toISOString(),
+        lastAt: new Date(s.last_at).toISOString(),
+        events: s.events as number,
+        bytes: Number(s.bytes),
+        hadError: !!s.had_error,
+        pageFirst: s.page_first ?? null,
+        pageLast: s.page_last ?? null,
+      })),
       messages: messages.map((m) => ({
         id: m.id,
         author: m.author,
@@ -258,6 +278,46 @@ deskRoutes.get('/requests/:ref', async (c) => {
         createdAt: new Date(m.created_at).toISOString(),
       })),
     },
+  });
+});
+
+/**
+ * One of the asker's recordings, to replay: the events in order, gzipped as
+ * they were stored. Every playback is written to the desk's log with the
+ * staff member's name, like a visit inside a company.
+ */
+deskRoutes.get('/requests/:ref/replays/:id', async (c) => {
+  const staff = await staffOnly(c);
+  const ref = c.req.param('ref');
+  const id = c.req.param('id');
+  if (!REF.test(ref) || !z.string().uuid().safeParse(id).success) fail('not_found');
+  const deps = c.get('deps');
+  const out = await deps.db.system(async (db) => {
+    const [s] = await db.query(
+      `select r.id, r.started_at, r.last_at, r.events, r.bytes, r.had_error, r.page_first, r.page_last, r.org_id
+         from replay_sessions r join help_requests h on h.org_id = r.org_id and h.user_id = r.user_id
+        where r.id = $1 and h.ref = $2`,
+      [id, ref],
+    );
+    if (!s) return null;
+    const chunks = await db.query<{ body: string }>('select body from replay_chunks where session_id = $1 order by seq', [id]);
+    await note(db, staff, 'replay', ref, s.org_id, id);
+    return { s, chunks };
+  });
+  if (!out) fail('not_found');
+  const { s, chunks } = out!;
+  return c.json({
+    meta: {
+      id: s.id as string,
+      startedAt: new Date(s.started_at).toISOString(),
+      lastAt: new Date(s.last_at).toISOString(),
+      events: s.events as number,
+      bytes: Number(s.bytes),
+      hadError: !!s.had_error,
+      pageFirst: s.page_first ?? null,
+      pageLast: s.page_last ?? null,
+    },
+    chunks: chunks.map((x) => x.body),
   });
 });
 

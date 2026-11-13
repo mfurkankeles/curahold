@@ -249,6 +249,16 @@ row-level security, customer reach and field access as the app.
 - **Company policy** (Settings → Security → Support access): anyone /
   administrators only / nobody; narrowing it ends the access it no longer
   allows.
+- **Session recording for support** (disclosed, on by default, switchable off
+  by the company at Settings → Security): the page records itself with rrweb so
+  the desk can see what led to an error. Every input is masked (nothing typed
+  is recorded), events are gzipped and sent in batches, and a recording is kept
+  7 days. A company never reads its own recordings — the replay tables carry no
+  grant to the app's database role; the ingest endpoint writes them through the
+  owner connection, scoped to the signed-in person, and only the desk reads
+  them, through the owner connection, logging each playback. rrweb loads lazily
+  after boot, so the app's own bundle is unchanged; a preview or support visit
+  is never recorded.
 - **The support desk** (`/desk` at the central address, for Curahold's own
   team): queues by whose turn it is (waiting on us, nobody's yet, mine,
   waiting on the customer, solved), the conversation with the company and

@@ -43,6 +43,7 @@ interface Access {
   policy: 'anyone' | 'admins' | 'off';
   canGrant: boolean;
   canGrantEdit: boolean;
+  recordSessions?: boolean;
   grants: (SupportGrant & { userName: string | null })[];
 }
 interface Shot {
@@ -1098,9 +1099,24 @@ export function SupportAccessSettings() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  const setRecording = async (on: boolean) => {
+    const r = await api<{ recordSessions: boolean }>('PUT', '/support/recording', { on });
+    setAccess((a) => (a ? { ...a, recordSessions: r.recordSessions } : a));
+    toast(t('common.saved'));
+  };
   const active = access.grants.filter((g) => g.active);
   return (
     <div>
+      <section className="sheet">
+        <h3 className="section__head">{t('support.recording.title')}</h3>
+        <p className="field__hint">{t('support.recording.explain')}</p>
+        <label className="checkbox">
+          <input type="checkbox" checked={access.recordSessions !== false} onChange={(e) => void setRecording(e.target.checked)} />
+          <span>
+            <strong>{t('support.recording.on')}</strong> <span className="muted">{t('support.recording.onHint')}</span>
+          </span>
+        </label>
+      </section>
       <section className="sheet">
         <h3 className="section__head">{t('support.policy.title')}</h3>
         <p className="field__hint">{t('support.policy.explain')}</p>

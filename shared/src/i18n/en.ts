@@ -3198,6 +3198,17 @@ export const en = {
   'ask.ai.readonly': 'Your seat cannot add tasks.',
   'cura.sub.ai': 'Claude answers, from the docs and your data',
   'desk.plan.trial': 'Trial',
+  'support.recording.title': 'Session recording for support',
+  'support.recording.explain': 'When something breaks, support can replay what happened on the page. Recordings mask everything typed, are kept for 7 days, and are never shown to the customer — only Curahold\'s support team can open them.',
+  'support.recording.on': 'Record sessions for support',
+  'support.recording.onHint': 'On for this company. Turn it off to stop recording.',
+  'desk.replay.title': 'Recordings',
+  'desk.replay.watch': 'Session recording',
+  'desk.replay.error': 'error',
+  'desk.replay.length': '{mins} min',
+  'desk.replay.note': 'The person\'s recent sessions. Opening one is written to the log.',
+  'desk.replay.failed': 'This recording could not be played.',
+  'audit.support.recording': 'turned session recording for support on or off',
 } as const;
 
 export type MessageKey = keyof typeof en;

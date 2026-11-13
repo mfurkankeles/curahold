@@ -13,6 +13,7 @@ import { sendNudges } from './nudges';
 import { startRenewals } from './playbooks';
 import { syncSeats } from './billing';
 import { emptyTrash } from './trash';
+import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 
 const DIGEST_ITEMS = 8;
 
@@ -78,6 +79,8 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from idempotency_keys where created_at < now() - interval '2 days'`);
     await q.query(`delete from webhook_events where created_at < now() - interval '7 days'`);
     await q.query(`delete from support_sessions where expires_at < now() - interval '30 days'`);
+    // Session recordings are kept only as long as useful for support (chunks cascade).
+    await q.query(`delete from replay_sessions where last_at < now() - make_interval(days => $1)`, [REPLAY_RETENTION_DAYS]);
     await q.query(`delete from api_tokens where (revoked_at is not null or coalesce(refresh_expires_at, expires_at) < now()) and coalesce(revoked_at, refresh_expires_at, expires_at) < now() - interval '30 days'`);
   });
 }

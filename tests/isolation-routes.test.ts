@@ -68,6 +68,7 @@ const NOT_BY_ID: Record<string, string> = {
   'PUT /desk/requests/:ref/owner': 'Curahold’s own support desk, behind its staff sign-in (tests/desk.test.ts)',
   'PUT /desk/requests/:ref/status': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',
   'POST /desk/requests/:ref/enter-link': 'Curahold’s own support desk, behind its staff sign-in (tests/desk.test.ts)',
+  'GET /desk/requests/:ref/replays/:id': 'Curahold’s own support desk, behind its staff sign-in or key (tests/replay.test.ts)',
   'PUT /tickets/:source/:externalId': 'the ticket’s id in the caller’s own help desk (tests/timeline.test.ts)',
   'POST /inbound/tickets/:token': 'opened with a secret address, not a session (tests/timeline.test.ts)',
 };

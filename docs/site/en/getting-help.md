@@ -83,3 +83,14 @@ In **Settings → Security → Support access**, choose who may let support in:
 - **Nobody**: support can still answer by email, but cannot come in.
 
 The same page lists the access that is open now, who gave it and the last visit, and lets you close any of it.
+
+## Session recording for support
+
+So that support can see what happened when something breaks — rather than asking you to describe it — the page records itself as you use it (which buttons, which screens, what the app drew). This is separate from letting support look at your account; it runs quietly in the background.
+
+- **Nothing you type is recorded.** Every field — searches, notes, customer details you enter — is masked. The recording is of the interface, not of what you write into it.
+- **Kept for 7 days**, then deleted.
+- **Only Curahold's support team can open a recording**, from its own desk, and each time one is opened it is written to the support desk's log. Your company does not see its own recordings.
+- **Administrators can switch it off** under **Settings → Security → Support access → Session recording for support**. With it off, nothing is recorded.
+
+If your organisation needs to tell its own people about this in a privacy notice, that switch and this page are the basis for it.

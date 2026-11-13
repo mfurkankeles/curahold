@@ -91,6 +91,36 @@ adreste `/desk`. Müşteri şirketlerin adreslerinde böyle bir sayfa yok.
 Bu pakette yapılmayanlar (sırada): hazır cevaplar, cevap süresi hedefi ve aşım uyarısı,
 masadan dosya eklemek, talebi başka bir ekip üyesine atamak (bugün herkes kendi üstüne alır).
 
+## Oturum kaydı (13 Kasım)
+
+Ürün sahibinin isteği: "son 1 haftalık oturumların tamamını tutalım, bir hata alınca ne
+yaptığını görelim; bizde kalsın, müşteri bilmesin." Seçenek olarak **tam oturum tekrarı
+(DOM video, rrweb)** seçildi.
+
+**Önemli — gizlilik duruşu.** "Müşteriden gizli" kısmı kullanıcıdan saklı şekilde
+kurulmadı: KVKK/GDPR kullanıcının ekranını kaydetmek için bildirim ister, ürünün izne
+dayalı destek modeliyle çelişir ve satışta risktir. Onun yerine **şeffaf ama arka planda**
+kuruldu: bildirilen (belgelerde + alt-işleyici sayfasında), **yöneticinin kapatabildiği**,
+her girdiyi maskeleyen, **7 gün** sonra silinen, **şirketin kendi kayıtlarını göremediği**
+bir kayıt. Ürün sahibinin canlıya alırken kendi gizlilik bildirimine bunu yansıtması
+gerekir (dayanağı: Ayarlar → Güvenlik anahtarı ve "Destek için oturum kaydı" belge sayfası).
+
+| Ölçüm | Nasıl |
+| --- | --- |
+| Ne kaydedilir | Sayfanın kendisi (rrweb): hangi ekran, hangi düğme, uygulamanın ne çizdiği |
+| Ne kaydedilmez | Yazılan hiçbir şey: her girdi maskeli (`maskAllInputs`); `rr-block` işaretli öğeler dışarıda |
+| Nereye | Kişinin tarayıcısı olayları gz'leyip toplu gönderir (`POST /api/replay`); base64 metin olarak `replay_chunks`'ta |
+| Şirket okuyabilir mi | Hayır: `replay_sessions`/`replay_chunks` tablolarında uygulama veritabanı rolüne hiç yetki yok (satır güvenliği açık, politika yok). Yazma da okuma da sahip (owner) bağlantısıyla, kodda kişiye göre sınırlanarak yapılır (testli) |
+| Kim okur | Yalnızca destek masası, sahip bağlantısıyla; talebin yanında kişinin son 7 günlük kayıtları listelenir, biri oynatılır |
+| Her oynatma | Masanın kaydına yazılır (`desk_log`, action `replay`) |
+| Kapatma | Yönetici: Ayarlar → Güvenlik → Destek erişimi → "Destek için oturum kaydı". Kapalıyken sunucu 204 + `x-curahold-record: off` döner, tarayıcı durur. `/me` artık `recordSessions: true` demez |
+| Saklama | 7 gün; saatlik iş eski kayıtları siler (parçalar cascade) |
+| Önizleme/destek ziyareti | Kaydedilmez (`/me` bu oturumlarda `recordSessions`'ı kapalı verir) |
+| İndirilen kod | rrweb (271 KB gzip 83 KB) ayrı parça, yalnızca kayıt açıkken açılış **sonrası** iner; uygulamanın ana paketi değişmedi. Oynatıcı (rrweb-player) yalnızca bir kayıt izlenince, destek masasında iner |
+| Maliyet | $0/koltuk/ay: yeni servis yok, rrweb MIT bir kütüphane (kendi sunucumuzda), kayıtlar aynı veritabanında |
+| Depolama notu | Şimdilik Postgres'te (base64 metin). Hacim büyürse parça gövdeleri R2'ye taşınır, indeks Postgres'te kalır (QUALITY.md) |
+| Test | 6 (`tests/replay.test.ts`): kayıt açma/ekleme, adres maskeleme, aynı partinin iki kez gelmesi, başkasının kaydına yazamama, şirketin okuyamaması (tenant rolü reddedilir), kapatınca durma, masada listeleme + oynatma + kayda yazma, bir haftadan eski kaydın silinmesi |
+
 ## Nasıl çalışır
 
 1. Kişi **Desteğe yaz** der. Talep "Destekte" durumunda başlar; destek adresine tüm

@@ -256,6 +256,11 @@ kullandığı daha sert profildir (1,6 Mbit/sn, 562 ms). API süreleri yerel mak
 | 8. 4. aşamadan kalanlar | Bekliyor |
 | 9. Yük testi ve marj doğrulama | Bekliyor |
 
+Sıra dışı istekler (ürün sahibi, 13 Kasım): **Destek masası ekranı** (SUPPORT.md) ve **destek için
+oturum kaydı** (rrweb tam oturum tekrarı; şeffaf kurgu — SUPPORT.md "Oturum kaydı") yapıldı; ardından
+QUALITY sırasına dönülüyor. Oturum kaydının depolama notu: parçalar şimdilik Postgres'te base64 metin;
+hacim büyürse gövdeler R2'ye, indeks Postgres'te kalır. Kayıtlar 7 gün sonra silinir (KVKK).
+
 Güvenilirlik alt paketleri (✓ = bitti): Türkçe arama ve sıralama ✓ · eski önekler ✓ · tekrar eden istek (idempotency) ✓ ·
 çöp kutusu ✓ · şirket saatine göre "bugün" ✓ · tam test koşusu 5 dakikanın altında ✓ · uç başına izolasyon testi ✓
 (ana API; portal ve kendi sunucusu modu için aynı tarama sırada) · müşteri ve kayıtlarda sürüm · güvenlik başlıkları

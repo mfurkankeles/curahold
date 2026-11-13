@@ -16,6 +16,7 @@ import { defsFor } from '../lib/fieldAccess';
 import { body, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
 import { portalOn } from '../lib/portal';
+import { recordsSessions } from '../lib/support';
 
 export const meRoutes = new Hono<AppEnv>();
 
@@ -77,6 +78,8 @@ meRoutes.get('/me', async (c) => {
       setup: org.setup ?? {},
       logoUrl: logoPath(org),
       portal: portalOn(org, c.get('deps')),
+      // The browser records the page for support (disclosed, masked); off for preview/support sessions.
+      recordSessions: recordsSessions(org) && !c.get('previewBy') && !c.get('supportBy'),
       // Where the company stands with its plan (always open while billing is off).
       billing: accessFor(c),
       billingOn: !!c.get('deps').config.billing,

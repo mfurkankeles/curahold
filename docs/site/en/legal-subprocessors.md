@@ -20,3 +20,5 @@ Last updated: [date]. New sub-processors are announced here and by email to admi
 | Microsoft Corporation | Only when the company turns on "Sign in with Microsoft" or connects Excel | [ ] |
 
 **Not our sub-processors:** the tools a company connects itself — its CRM (Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), chat app (Slack, Microsoft Teams, Google Chat), support tool or AI assistant. Data moves to them on the company's instruction, under its own agreement with them.
+
+**Session recording for support** adds no sub-processor: the recording library (rrweb) runs in the browser, and the recordings are kept in the same database as everything else (Supabase, above), for 7 days. A company can switch it off in Settings → Security.

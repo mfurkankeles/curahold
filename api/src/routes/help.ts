@@ -31,6 +31,7 @@ import {
   SUPPORT_SESSION_HOURS,
   endSupportSessions,
   mayGrant,
+  recordsSessions,
   staffKeyOk,
   supportPolicy,
 } from '../lib/support';
@@ -509,8 +510,23 @@ helpRoutes.get('/support/grants', async (c) => {
     policy: supportPolicy(org),
     canGrant: mayGrant(org, auth.perms),
     canGrantEdit: mayGrant(org, auth.perms) && auth.perms.includes('org.manage') && auth.seat === 'full',
+    recordSessions: recordsSessions(org),
     grants: grants.map((g) => ({ ...toGrant(g), userName: g.user_name ?? null })),
   });
+});
+
+/** The company's administrator turns session recording for support on or off. */
+helpRoutes.put('/support/recording', async (c) => {
+  requirePerm(c, 'org.manage');
+  if (c.get('previewBy')) fail('preview_read_only');
+  const { on } = await body(c, z.object({ on: z.boolean() }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  await run(c, async (q) => {
+    await q.query(`update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('recordSessions', $2::boolean) where id = $1`, [org.id, on]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'support.recording', entity: 'org', entityId: org.id, meta: { on } });
+  });
+  return c.json({ recordSessions: on });
 });
 
 helpRoutes.post('/support/grants', async (c) => {

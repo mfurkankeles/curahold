@@ -99,6 +99,8 @@ export function App() {
       if (me.user.locale) setLocale(me.user.locale);
       setCompanyZone(me.org.timezone);
       setBoot({ kind: 'signed-in', org, me });
+      // Record the page for support, if the company has it on (loads rrweb only then).
+      void import('./lib/replay').then((m) => m.startRecording(me)).catch(() => undefined);
       // First things first: an unfinished company setup for its admin,
       // otherwise a new person's own one-minute setup.
       const home = location.pathname === '/' || location.pathname === '/login';

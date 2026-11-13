@@ -87,6 +87,21 @@
 .deskreq__others { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .deskreq__others .linklike { display: inline-flex; align-items: baseline; gap: 7px; border: 0; background: none; padding: 2px 0; text-align: left; color: var(--brand-ink); cursor: pointer; }
 
+/* Recordings of the asker's recent sessions, newest first. */
+.deskreq__replays { width: 100%; }
+.deskreq__reclist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; width: 100%; }
+.deskrec { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-align: left; cursor: pointer; color: var(--ink); }
+.deskrec:hover { border-color: var(--brand); background: var(--brand-wash); }
+.deskrec__main { display: grid; gap: 1px; min-width: 0; }
+.deskrec__top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+/* The player, over the desk. */
+.replaymodal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: rgba(15, 18, 28, 0.55); }
+.replaymodal__box { width: min(1180px, 96vw); max-height: 92vh; overflow: auto; display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-2); }
+.replaymodal__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.replaymodal__player { display: grid; place-items: center; min-height: 200px; }
+.replaymodal__player .rr-player { max-width: 100%; }
+
 /* Narrow: one column at a time. The queues become a strip, and an open request covers the list. */
 @media (max-width: 1100px) {
   .deskreq__body { grid-template-columns: minmax(0, 1fr); overflow: auto; }

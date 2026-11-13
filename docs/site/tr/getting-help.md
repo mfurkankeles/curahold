@@ -83,3 +83,14 @@ Destek içerideyken ekranın üstünde kimin baktığını ve ne zamana kadar ba
 - **Hiç kimse**: Destek yine e-postayla yanıt verir ama içeri giremez.
 
 Aynı sayfada şu an açık olan erişimleri, kimin verdiğini ve son giriş zamanını görür, istediğini kapatırsın.
+
+## Destek için oturum kaydı
+
+Bir şey bozulduğunda destek, onu tarif etmeni istemek yerine ne olduğunu görebilsin diye sayfa sen kullandıkça kendini kaydeder (hangi düğmeler, hangi ekranlar, uygulamanın ne çizdiği). Bu, desteğin hesabına bakmasına izin vermekten ayrıdır; arka planda sessizce çalışır.
+
+- **Yazdığın hiçbir şey kaydedilmez.** Her alan — aramalar, notlar, girdiğin müşteri bilgileri — maskelenir. Kayıt, içine yazdıklarının değil, arayüzün kaydıdır.
+- **7 gün tutulur**, sonra silinir.
+- **Bir kaydı yalnızca Curahold destek ekibi açabilir**, kendi masasından, ve her açılış destek masasının kaydına yazılır. Şirketin kendi kayıtlarını görmez.
+- **Yöneticiler kapatabilir**: **Ayarlar → Güvenlik → Destek erişimi → Destek için oturum kaydı**. Kapalıyken hiçbir şey kaydedilmez.
+
+Kurumun kendi çalışanlarına bunu bir gizlilik bildiriminde anlatması gerekiyorsa, dayanağı bu ayar ve bu sayfadır.

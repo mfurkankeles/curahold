@@ -20,3 +20,5 @@ Son güncelleme: [tarih]. Yeni alt işleyenler, başlamadan en az [30] gün önc
 | Microsoft Corporation | Yalnızca şirket "Microsoft ile giriş"i açtığında ya da Excel bağladığında | [ ] |
 
 **Alt işleyenimiz olmayanlar:** bir şirketin kendisinin bağladığı araçlar — CRM’i (Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), sohbet uygulaması (Slack, Microsoft Teams, Google Chat), destek aracı ya da yapay zekâ asistanı. Veriler bunlara şirketin talimatıyla, şirketin onlarla yaptığı sözleşme çerçevesinde gider.
+
+**Destek için oturum kaydı** yeni bir alt işleyen eklemez: kayıt kütüphanesi (rrweb) tarayıcıda çalışır ve kayıtlar her şeyle aynı veritabanında (yukarıdaki Supabase) 7 gün tutulur. Şirket, Ayarlar → Güvenlik’ten kapatabilir.

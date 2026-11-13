@@ -130,6 +130,8 @@ export interface Org {
   logoUrl: string | null;
   /** The customer portal is on (and this installation has an address for it). */
   portal?: boolean;
+  /** Record the page for support (rrweb, inputs masked); the company can switch it off. */
+  recordSessions?: boolean;
   /** Where the company stands with its plan (see billing.ts); always open while billing is off. */
   billing?: import('./billing').Access;
   /** Billing is set up on this installation (Paddle). */

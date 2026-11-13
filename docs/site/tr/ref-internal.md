@@ -15,7 +15,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/billing/…` | 3 | Plan ve ödeme; ödeme sağlayıcısıyla. |
 | `/connect/…` | 1 | Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar. |
 | `/connections/…` | 23 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
-| `/desk/…` | 11 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |
+| `/desk/…` | 12 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |
 | `/help/…` | 7 | Curahold desteğine yardım talepleri ve konuşmaları; ürünün içinden. |
 | `/help-files/…` | 1 | Desteğe gönderilen dosyalar. |
 | `/hooks/…` | 3 | Sohbet uygulamalarının ve takvimlerin geri çağrıları. |
@@ -25,6 +25,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/oauth/…` | 0 | Uygulamalar ve yapay zekâ asistanları için onay ekranı; "Yapay zekâ bağlayıcısı ve OAuth" sayfasına bak. |
 | `/org/…` | 1 | Şirketin herkese açık oturum açma bilgileri. |
 | `/portal/…` | 6 | Müşteri portalına kimlerin girebileceğini yönetme. |
+| `/replay/…` | 1 | Tarayıcının destek için oturum kaydı (bildirilen, girdiler maskeli, bir hafta tutulur); sayfa kendi olaylarını buraya gönderir, yalnızca Curahold'un masası okur. |
 | `/setup/…` | 5 | Şirketin ilk kurulumu. |
 | `/signup/…` | 4 | Yeni şirket açma web sitesinde yapılır. |
-| `/support/…` | 8 | Curahold desteğinin kendi masası. |
+| `/support/…` | 9 | Curahold desteğinin kendi masası. |

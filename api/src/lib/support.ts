@@ -36,6 +36,11 @@ export function mayGrant(org: Pick<OrgRow, 'settings'>, perms: readonly string[]
   return p === 'anyone' || (p === 'admins' && perms.includes('org.manage'));
 }
 
+/** Does this company have session recording on? On by default; the company can switch it off. */
+export function recordsSessions(org: Pick<OrgRow, 'settings'>): boolean {
+  return (org.settings as any)?.recordSessions !== false;
+}
+
 export function staffKeyOk(c: C): boolean {
   const key = c.get('deps').config.staffKey;
   const given = c.req.header('x-curahold-staff-key') ?? '';

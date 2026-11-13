@@ -2,13 +2,17 @@
 // the left, the requests of the chosen queue beside them, and the request
 // that is open on the right — the conversation, the company it comes from and
 // the team's own notes. Only people on Curahold's staff list can sign in.
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Locale, MessageKey } from '../../../shared/src/i18n';
+import type { ReplayMeta } from '../../../shared/src/replay';
 import { EmptyState } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
 import '../desk.css';
+
+// rrweb's player is heavy: load it only when the team watches a recording.
+const ReplayPlayer = lazy(() => import('../components/ReplayPlayer'));
 
 type Status = 'received' | 'answered' | 'solved';
 interface Row {
@@ -42,6 +46,7 @@ interface Detail extends Omit<Row, 'company' | 'from' | 'notes' | 'lastMessageAt
   files: { name: string; size: number; url: string }[];
   access: { level: 'view' | 'edit'; until: string } | null;
   others: { ref: string; subject: string; status: Status }[];
+  replays: ReplayMeta[];
   messages: Message[];
 }
 interface Me {
@@ -330,6 +335,7 @@ function Request({ reference, me, onBack, onChanged, onOpen, failed }: { referen
       return me.staff.name;
     }
   });
+  const [watching, setWatching] = useState<ReplayMeta | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -530,6 +536,31 @@ function Request({ reference, me, onBack, onChanged, onOpen, failed }: { referen
               </>
             )}
           </section>
+          {d.replays.length > 0 && (
+            <section className="deskreq__replays">
+              <h2>{t('desk.replay.title')}</h2>
+              <ul className="deskreq__reclist">
+                {d.replays.map((r) => {
+                  const mins = Math.max(1, Math.round((new Date(r.lastAt).getTime() - new Date(r.startedAt).getTime()) / 60000));
+                  return (
+                    <li key={r.id}>
+                      <button className="deskrec" onClick={() => setWatching(r)}>
+                        <Icon name="play" size={14} />
+                        <span className="deskrec__main">
+                          <span className="deskrec__top">
+                            {relativeTime(r.lastAt, t)}
+                            {r.hadError && <span className="flag flag--late">{t('desk.replay.error')}</span>}
+                          </span>
+                          <span className="muted">{t('desk.replay.length', { mins })}</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="field__hint">{t('desk.replay.note')}</p>
+            </section>
+          )}
           {d.others.length > 0 && (
             <section>
               <h2>{t('desk.others')}</h2>
@@ -547,6 +578,11 @@ function Request({ reference, me, onBack, onChanged, onOpen, failed }: { referen
           )}
         </aside>
       </div>
+      {watching && (
+        <Suspense fallback={null}>
+          <ReplayPlayer reference={reference} replay={watching} onClose={() => setWatching(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }
