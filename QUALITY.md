@@ -366,14 +366,17 @@ Entegrasyonlar (INTEGRATIONS.md'deki beş karar, 12 Kasım gecesi):
 | Dışarıdan gelen tetikleyici mesajında imza kontrolü (Zapier) | — | değiştirilmiş, eski (5 dakikadan) ya da başka sırla imzalanmış mesaj atılır (testli) |
 | Yeni ücretli servis | — | 0. Aktarıcı açılırsa ayda yaklaşık $4–6 sabit (koltuk başına değil); açılana kadar $0 |
 
-Güvenilirlik paketine eklenen iki not (bu işte görüldü, bu işte değiştirilmedi):
+Güvenilirlik paketine eklenen iki not — ikisi de düzeltildi (13 Kasım):
 
-- Pipedrive'ın tam okuması eskiden yeniye sıralı ve sayfa numarasıyla ilerliyor: okuma sürerken
-  değişen bir satır sona kayar ve arkasındaki bir satır iki sayfanın arasına düşebilir. Yeni
-  bağlayıcılardaki gibi "en yeni önce" sıraya çevrilecek.
-- Eşitleme, bir sonraki koşunun başlangıcını "görülen en yeni değişiklik" olarak alıyor. Okuma
-  sürerken değişen ve çoktan geçilmiş bir satır, daha sonra okunan daha yeni bir satır yüzünden
-  atlanabilir. Başlangıç, "okumanın başladığı an" ile "görülen en yeni"nin erken olanı olmalı.
+- Pipedrive'ın tam okuması eskiden yeniye sıralıydı: okuma sürerken değişen bir satır sona kayar ve
+  arkasındaki bir satır iki sayfanın arasına düşebilirdi. Artık diğer bağlayıcılar gibi "en yeni önce"
+  (`update_time DESC`); değişen satır okunmuş sayfalara kayar, en kötü ihtimalle iki kez okunur, kaybolmaz
+  (`tests/adapters.test.ts`).
+- Eşitleme, bir sonraki koşunun başlangıcını "görülen en yeni değişiklik" olarak alıyordu; okuma sürerken
+  değişen ve çoktan geçilmiş bir satır, daha sonra okunan daha yeni bir satır yüzünden atlanabiliyordu.
+  Artık başlangıç "okumanın başladığı an" ile "görülen en yeni"nin erken olanı — işaret, okumanın başladığı
+  anı hiç geçmiyor, böylece okuma sırasında değişen satır bir sonraki koşuda yeniden okunuyor. Tüm
+  bağlayıcılar için geçerli (`tests/sync.test.ts`).
 
 Test süreleri (12 Kasım gece, 2 çekirdek): birim 490 test, 46 dosya, 122 sn (tarayıcı testi aynı anda koşarken) ·
 tarayıcı 40 senaryo + belgeler, hepsi geçti · demo 41 sn. Birim + tarayıcı birlikte 5 dakikanın altında.

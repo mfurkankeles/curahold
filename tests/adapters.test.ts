@@ -169,6 +169,7 @@ describe('Pipedrive', () => {
     [
       [/GET .*\/personFields/, () => ({ data: [{ key: 'id', name: 'ID', field_type: 'int' }, { key: 'name', name: 'Name', field_type: 'varchar' }, { key: 'email', name: 'Email', field_type: 'varchar' }, { key: 'org_id', name: 'Organization', field_type: 'org' }, { key: 'abc123', name: 'Tier', field_type: 'enum', edit_flag: true, options: [{ id: 7, label: 'Gold' }] }] })],
       [/GET .*\/recents\?/, () => ({ data: [{ item: 'person', id: 5, data: { id: 5, name: 'Selin', email: [{ value: 'w@x.example', primary: false }, { value: 's@x.example', primary: true }], org_id: { value: 12, name: 'Atlas' }, abc123: 7, update_time: '2026-11-10 09:00:00' } }], additional_data: { pagination: { more_items_in_collection: false } } })],
+      [/GET .*\/persons\?/, () => ({ data: [{ id: 5, name: 'Selin', update_time: '2026-11-10 09:00:00' }], additional_data: { pagination: { more_items_in_collection: false } } })],
       [/PUT .*\/persons\/5$/, () => ({ data: { id: 5 } })],
     ],
     { apiDomain: 'https://acme.pipedrive.com' },
@@ -187,6 +188,9 @@ describe('Pipedrive', () => {
     expect(page.rows[0]).toEqual({ id: '5', modifiedAt: '2026-11-10T09:00:00Z', values: { name: 'Selin', email: 's@x.example', org_id: 12, abc123: 7 } });
     await pipedrive.update(ctx, 'persons', '5', { org_id: '13', abc123: '7', name: 'Selin K.' }, fields);
     expect(calls.at(-1)!.body).toEqual({ org_id: 13, abc123: 7, name: 'Selin K.' });
+    // A full read (no `since`) pages newest first, so a row changed mid-read is re-read, not lost.
+    await pipedrive.list(ctx, 'persons', { since: null, cursor: null, fields: fields.slice(1) });
+    expect(decodeURIComponent(calls.at(-1)!.url)).toContain('sort=update_time DESC');
   });
 });
 

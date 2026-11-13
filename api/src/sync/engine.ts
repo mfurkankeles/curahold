@@ -849,8 +849,14 @@ async function pullAll(r: RunCtx, full: boolean): Promise<boolean> {
       if (parents?.pending.length) await settleParents(r, parents);
       if (!done) break;
       delete pages[map.remote];
-      // Next time: changes from the newest one seen (or from when this read began).
-      cursors[map.remote] = maxSeen ?? startedAt;
+      // Next time: changes from the newest one seen — but never past the moment
+      // this read began. A row changed while the read was running, and already
+      // passed, has a timestamp at or after that moment; capping here means the
+      // next run reads it again (at worst twice) instead of a newer row carrying
+      // the mark past it and losing the change. Parsed, not string-compared,
+      // because adapters report modifiedAt in different ISO forms.
+      const begun = Date.parse(startedAt);
+      cursors[map.remote] = maxSeen && Date.parse(maxSeen) < begun ? maxSeen : startedAt;
       if (seen) await archiveMissing(r, map, null, seen);
       else if (!readAll && r.adapter.deleted && since) await archiveMissing(r, map, await r.adapter.deleted(r.ctx, map.remote, since), null);
       await saveDefs(r);

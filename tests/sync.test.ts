@@ -389,4 +389,23 @@ describe('two-way sync with a CRM', () => {
     expect((await ada.get(`/api/accounts/${id}`)).json.account.name).toBe(`${name} Group`);
     env.clock.now = null;
   });
+
+  it('a row changed during a read is not stepped over by a newer one', async () => {
+    const base = Date.now() + 10 * 3_600_000;
+    // A row changes to a moment after this read begins — as if edited mid-read. The run sees it,
+    // so the newest change seen is ahead of when the read started.
+    env.clock.now = new Date(base);
+    demoTouch(demoId, 'Account', '001D0002', { Name: 'Bluebay Ahead' }, new Date(base + 5 * 60_000));
+    await ada.post(`/api/connections/${connId}/sync/run`, {});
+    expect((await lena.get('/api/accounts?q=Bluebay')).json.accounts[0]?.name).toBe('Bluebay Ahead');
+
+    // Another row was edited in that same window: older than the newest seen, but newer than when
+    // the read began. Taking the newest-seen as the next start would step over it; capping the
+    // mark at the read-start reads it again next run.
+    demoTouch(demoId, 'Account', '001D0003', { Name: 'Caught Up Co' }, new Date(base + 2 * 60_000));
+    env.clock.now = new Date(base + 10 * 60_000);
+    await ada.post(`/api/connections/${connId}/sync/run`, {});
+    expect((await lena.get('/api/accounts?q=Caught Up')).json.accounts[0]?.name).toBe('Caught Up Co');
+    env.clock.now = null;
+  });
 });

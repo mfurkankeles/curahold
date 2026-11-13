@@ -169,7 +169,12 @@ export const pipedrive: CrmAdapter = {
       items = (j?.data ?? []).filter((x: any) => x.item === o.singular && x.data).map((x: any) => x.data);
       more = j?.additional_data?.pagination;
     } else {
-      const j = await call(ctx, `${base(ctx)}/${object}?start=${start}&limit=500&sort=${encodeURIComponent('update_time ASC')}`);
+      // Newest first. A full read pages by offset, so a row changed while the
+      // read is running moves: oldest-first it slips to the end, into pages not
+      // read yet, and can push the row behind it across a page boundary and out
+      // of the read. Newest-first moves a changed row to the front, into pages
+      // already read, so it is at worst read twice, never lost.
+      const j = await call(ctx, `${base(ctx)}/${object}?start=${start}&limit=500&sort=${encodeURIComponent('update_time DESC')}`);
       items = j?.data ?? [];
       more = j?.additional_data?.pagination;
     }
