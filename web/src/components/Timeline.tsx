@@ -11,6 +11,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
+import { MailReply, isMailboxProvider } from './MailReply';
 import { Confirm, Dialog, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
 
@@ -213,6 +214,29 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
     if (hasContacts) void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${accountId}`).then((r) => setContacts(r.records)).catch(() => undefined);
   }, [accountId, hasContacts]);
 
+  // Replying to a mail activity sends from the connected mailbox, which the API gates on connections.manage;
+  // discover the active mailbox connection per provider so the timeline only offers Reply when one exists.
+  const canReplyMail = canWrite && can('connections.manage');
+  const [mailboxConns, setMailboxConns] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!canReplyMail) {
+      setMailboxConns({});
+      return;
+    }
+    let live = true;
+    void get<{ connections: { id: string; kind: string; provider: string; status: string }[] }>('/connections')
+      .then((r) => {
+        if (!live) return;
+        const map: Record<string, string> = {};
+        for (const cn of r.connections) if (cn.kind === 'source' && isMailboxProvider(cn.provider) && cn.status !== 'disabled' && !map[cn.provider]) map[cn.provider] = cn.id;
+        setMailboxConns(map);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [canReplyMail]);
+
   const load = useCallback(async () => {
     const r = await get<Timeline>(`/accounts/${accountId}/timeline`);
     setData(r);
@@ -321,6 +345,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
         {(a.contactIds.length > 0 || a.userIds.length > 0) && (
           <p className="tl__with">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
         )}
+        {a.kind === 'email' && a.externalId && mailboxConns[a.source] && <MailReply connectionId={mailboxConns[a.source]} accountId={accountId} activity={a} onSent={load} />}
       </div>
     </li>
   );

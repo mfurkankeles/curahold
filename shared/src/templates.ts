@@ -5,7 +5,7 @@ import type { AutomationPreset } from './automation';
 import { translate, type Locale, type Terms } from './i18n';
 import type { AccountField, Column, Localized } from './model';
 
-export const TEMPLATE_KEYS = ['customer_success', 'account_management', 'sales', 'support', 'blank'] as const;
+export const TEMPLATE_KEYS = ['customer_success', 'account_management', 'sales', 'support', 'marketing', 'hr', 'it', 'finance', 'legal', 'product', 'blank'] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
 export interface TemplateBoard {
@@ -70,6 +70,38 @@ const overdueNotify: AutomationPreset = {
     message: L('This task is 2 days overdue.', 'Bu görev 2 gündür gecikmede.'),
   },
 };
+
+// ---------------------------------------------------------------- product / project management
+//
+// The stages of a product team's board. They are ordinary board columns — a
+// company can rename, add or remove them — and the Product template below seeds
+// a delivery board with them. Defined here (above TEMPLATES) so the template can
+// reuse the one stage list rather than repeat it.
+
+/** The stages of a product team's board, in order. Only "done" counts as finished. */
+export const PM_STAGE_KEYS = ['backlog', 'ready', 'in_progress', 'code_review', 'qa', 'uat', 'done', 'blocked', 'rejected'] as const;
+export type PmStageKey = (typeof PM_STAGE_KEYS)[number];
+
+/** The stage names in both shipped languages — mirrors the pm.stage.* dictionary so a static template board can carry them. */
+const PM_STAGE_L: Record<PmStageKey, Localized> = {
+  backlog: L('Backlog', 'Backlog'),
+  ready: L('Ready', 'Hazır'),
+  in_progress: L('In progress', 'Devam ediyor'),
+  code_review: L('Code review', 'Kod incelemesi'),
+  qa: L('QA', 'QA'),
+  uat: L('UAT', 'UAT'),
+  done: L('Done', 'Tamamlandı'),
+  blocked: L('Blocked', 'Engelli'),
+  rejected: L('Rejected', 'Reddedildi'),
+};
+
+/** The PM workflow as template-board columns (localized, for TEMPLATES). */
+const pmTemplateColumns = (): TemplateBoard['columns'] => PM_STAGE_KEYS.map((key) => ({ key, name: PM_STAGE_L[key], done: key === 'done' }));
+
+/** The PM workflow as board columns, named in the given language (for creating/adding a board at runtime). Only "done" counts as finished. */
+export function pmColumns(locale: Locale): Column[] {
+  return PM_STAGE_KEYS.map((key) => ({ key, name: translate(locale, `pm.stage.${key}`), done: key === 'done' }));
+}
 
 export const TEMPLATES: Record<TemplateKey, Template> = {
   customer_success: {
@@ -281,6 +313,169 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
       },
     ],
   },
+  marketing: {
+    key: 'marketing',
+    name: L('Marketing campaigns', 'Pazarlama kampanyaları'),
+    description: L('Plan, produce and ship campaigns and content, from brief to live.', "Brief'ten yayına kampanya ve içerikleri planlayın, üretin ve yayınlayın."),
+    terms: { account: { en: { one: 'Audience', other: 'Audiences' }, tr: { one: 'Hedef kitle', other: 'Hedef kitleler' } } },
+    accountFields: [website],
+    teams: [L('Marketing', 'Pazarlama')],
+    boards: [
+      {
+        key: 'campaigns',
+        name: L('Campaigns', 'Kampanyalar'),
+        columns: [
+          { key: 'idea', name: L('Idea', 'Fikir'), done: false },
+          { key: 'planned', name: L('Planned', 'Planlandı'), done: false },
+          { key: 'production', name: L('In production', 'Üretimde'), done: false },
+          { key: 'live', name: L('Live', 'Yayında'), done: false },
+          { key: 'wrapped', name: L('Wrapped up', 'Tamamlandı'), done: true },
+        ],
+      },
+      {
+        key: 'content',
+        name: L('Content calendar', 'İçerik takvimi'),
+        columns: [
+          { key: 'todo', name: L('To write', 'Yazılacak'), done: false },
+          { key: 'writing', name: L('Writing', 'Yazılıyor'), done: false },
+          { key: 'review', name: L('In review', 'İncelemede'), done: false },
+          { key: 'published', name: L('Published', 'Yayınlandı'), done: true },
+        ],
+      },
+    ],
+    automations: [overdueNotify],
+  },
+  hr: {
+    key: 'hr',
+    name: L('HR & recruiting', 'İK ve işe alım'),
+    description: L('Run hiring pipelines and people operations in one place.', 'İşe alım hunilerini ve İK operasyonlarını tek yerde yürütün.'),
+    terms: { account: { en: { one: 'Candidate', other: 'Candidates' }, tr: { one: 'Aday', other: 'Adaylar' } } },
+    accountFields: [],
+    teams: [L('People', 'İnsan Kaynakları')],
+    boards: [
+      {
+        key: 'hiring',
+        name: L('Hiring pipeline', 'İşe alım hunisi'),
+        columns: [
+          { key: 'applied', name: L('Applied', 'Başvurdu'), done: false },
+          { key: 'screening', name: L('Screening', 'Ön eleme'), done: false },
+          { key: 'interview', name: L('Interviewing', 'Mülakat'), done: false },
+          { key: 'offer', name: L('Offer', 'Teklif'), done: false },
+          { key: 'hired', name: L('Hired', 'İşe alındı'), done: true },
+          { key: 'declined', name: L('Not moving forward', 'Devam edilmedi'), done: true },
+        ],
+      },
+      { key: 'people_ops', name: L('People operations', 'İK operasyonları'), columns: [COLS.todo, COLS.doing, COLS.done] },
+    ],
+    automations: [overdueNotify],
+  },
+  it: {
+    key: 'it',
+    name: L('IT helpdesk', 'BT yardım masası'),
+    description: L('Take in support requests and changes, triage them and see them through.', 'Destek taleplerini ve değişiklikleri alın, önceliklendirin ve sonuçlandırın.'),
+    terms: { account: { en: { one: 'Requester', other: 'Requesters' }, tr: { one: 'Talep eden', other: 'Talep edenler' } } },
+    accountFields: [],
+    teams: [L('IT', 'BT')],
+    boards: [
+      {
+        key: 'helpdesk',
+        name: L('Helpdesk', 'Yardım masası'),
+        columns: [
+          { key: 'new', name: L('New', 'Yeni'), done: false },
+          { key: 'triage', name: L('Triage', 'Değerlendirme'), done: false },
+          { key: 'doing', name: L('In progress', 'Devam ediyor'), done: false },
+          COLS.waiting,
+          { key: 'resolved', name: L('Resolved', 'Çözüldü'), done: true },
+        ],
+      },
+      {
+        key: 'changes',
+        name: L('Change requests', 'Değişiklik talepleri'),
+        columns: [
+          { key: 'requested', name: L('Requested', 'Talep edildi'), done: false },
+          { key: 'approved', name: L('Approved', 'Onaylandı'), done: false },
+          { key: 'scheduled', name: L('Scheduled', 'Planlandı'), done: false },
+          { key: 'done', name: L('Done', 'Tamamlandı'), done: true },
+        ],
+      },
+    ],
+    automations: [overdueNotify],
+  },
+  finance: {
+    key: 'finance',
+    name: L('Finance & approvals', 'Finans ve onaylar'),
+    description: L('Route approvals and run the recurring finance close.', 'Onayları yönlendirin ve tekrarlayan finans kapanışını yürütün.'),
+    terms: {},
+    accountFields: [],
+    teams: [L('Finance', 'Finans')],
+    boards: [
+      {
+        key: 'approvals',
+        name: L('Approvals', 'Onaylar'),
+        columns: [
+          { key: 'requested', name: L('Requested', 'Talep edildi'), done: false },
+          { key: 'review', name: L('Under review', 'İncelemede'), done: false },
+          { key: 'approved', name: L('Approved', 'Onaylandı'), done: false },
+          { key: 'paid', name: L('Paid', 'Ödendi'), done: true },
+          { key: 'rejected', name: L('Rejected', 'Reddedildi'), done: true },
+        ],
+      },
+      {
+        key: 'close',
+        name: L('Month-end close', 'Ay sonu kapanışı'),
+        columns: [COLS.todo, COLS.doing, { key: 'review', name: L('In review', 'İncelemede'), done: false }, COLS.done],
+      },
+    ],
+    automations: [overdueNotify],
+  },
+  legal: {
+    key: 'legal',
+    name: L('Legal & contracts', 'Hukuk ve sözleşmeler'),
+    description: L('Intake, draft, review and sign contracts and legal requests.', 'Sözleşme ve hukuki talepleri alın, hazırlayın, inceleyin ve imzalayın.'),
+    terms: {},
+    accountFields: [],
+    teams: [L('Legal', 'Hukuk')],
+    boards: [
+      {
+        key: 'contracts',
+        name: L('Contracts', 'Sözleşmeler'),
+        columns: [
+          { key: 'intake', name: L('Intake', 'Talep alındı'), done: false },
+          { key: 'drafting', name: L('Drafting', 'Hazırlanıyor'), done: false },
+          { key: 'review', name: L('In review', 'İncelemede'), done: false },
+          { key: 'negotiation', name: L('Negotiation', 'Müzakere'), done: false },
+          { key: 'signed', name: L('Signed', 'İmzalandı'), done: true },
+        ],
+      },
+      { key: 'requests', name: L('Legal requests', 'Hukuki talepler'), columns: [COLS.todo, COLS.doing, COLS.done] },
+    ],
+    automations: [overdueNotify],
+  },
+  product: {
+    key: 'product',
+    name: L('Product & engineering', 'Ürün ve mühendislik'),
+    description: L(
+      'Ship product with the full delivery workflow — backlog to done — alongside a discovery board.',
+      "Ürünü tam teslim akışıyla geliştirin — backlog'tan tamamlanana — ve yanında bir keşif panosu.",
+    ),
+    terms: {},
+    accountFields: [],
+    teams: [L('Product', 'Ürün'), L('Engineering', 'Mühendislik')],
+    boards: [
+      { key: 'delivery', name: L('Delivery', 'Teslim'), columns: pmTemplateColumns() },
+      {
+        key: 'discovery',
+        name: L('Discovery', 'Keşif'),
+        columns: [
+          { key: 'idea', name: L('Idea', 'Fikir'), done: false },
+          { key: 'research', name: L('Research', 'Araştırma'), done: false },
+          { key: 'shaping', name: L('Shaping', 'Şekillendirme'), done: false },
+          { key: 'ready', name: L('Ready to build', 'Geliştirmeye hazır'), done: true },
+        ],
+      },
+    ],
+    automations: [overdueNotify],
+  },
   blank: {
     key: 'blank',
     name: L('Start empty', 'Boş başla'),
@@ -294,14 +489,3 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
 };
 
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === 'string' && (TEMPLATE_KEYS as readonly string[]).includes(k);
-
-// ---------------------------------------------------------------- product / project management
-
-/** The stages of a product team's board. They are ordinary board columns: a company can rename, add or remove them. */
-export const PM_STAGE_KEYS = ['backlog', 'ready', 'in_progress', 'code_review', 'qa', 'uat', 'done', 'blocked', 'rejected'] as const;
-export type PmStageKey = (typeof PM_STAGE_KEYS)[number];
-
-/** The PM workflow as board columns, named in the given language. Only "done" counts as finished. */
-export function pmColumns(locale: Locale): Column[] {
-  return PM_STAGE_KEYS.map((key) => ({ key, name: translate(locale, `pm.stage.${key}`), done: key === 'done' }));
-}

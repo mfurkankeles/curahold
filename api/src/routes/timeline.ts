@@ -31,6 +31,7 @@ export const toActivity = (r: Row): Activity => ({
   contactIds: r.contact_ids ?? [],
   pinned: r.pinned,
   source: r.source,
+  externalId: r.external_id ?? null,
   createdAt: iso(r.created_at)!,
   editedAt: iso(r.edited_at),
   title: r.title ?? '',
