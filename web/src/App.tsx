@@ -18,28 +18,38 @@ import { useLive } from './lib/live';
 import { TASKS_CHANGED } from './lib/shell';
 import { AccountPage, AccountsPage } from './pages/Accounts';
 import { JoinPage, LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
-import { PersonalPage } from './pages/Personal';
-import { SetupPage } from './pages/Setup';
-import { SignupApp } from './pages/Signup';
 import { BoardPage } from './pages/BoardPage';
-import { CalendarPage } from './pages/Calendar';
-import { DevicesPage } from './pages/Devices';
-import { TrashPage } from './pages/Trash';
 import { MyTasks } from './pages/MyTasks';
-import { SettingsPage } from './pages/Settings';
 import { RecordsPage } from './components/Records';
 import { HomePage } from './pages/Home';
-import { InboxPage } from './pages/Inbox';
-import { MetricsPage } from './pages/Metrics';
-import { PlatformConsolePage } from './pages/PlatformConsole';
-import { FounderPagesPage } from './pages/FounderPages';
 import { ConsentBanner } from './components/ConsentBanner';
+// Reports + ReportBuilder stay eager on purpose: the task panel pulls `hoursText`
+// (and, through it, `ReportTabs`) from these modules, so they load with the shell
+// no matter what. Splitting them needs that helper moved to a lib first.
 import { ReportsPage } from './pages/Reports';
 import { ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
-import { DashboardPage, DashboardsPage } from './pages/Dashboards';
-import { TeamPage } from './pages/Team';
-import { TimelinePage } from './pages/Timeline';
 import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
+
+// Code-splitting: the core daily-flow pages above (home, boards, tasks, records,
+// accounts) load with the app shell; the heavier, less-travelled routes below are
+// fetched on demand, each in its own chunk, behind the <PageFallback> Suspense
+// boundary in <Routes>. Pages use named exports, so each import() maps the right
+// export onto `default`.
+const PersonalPage = lazy(() => import('./pages/Personal').then((m) => ({ default: m.PersonalPage })));
+const SetupPage = lazy(() => import('./pages/Setup').then((m) => ({ default: m.SetupPage })));
+const SignupApp = lazy(() => import('./pages/Signup').then((m) => ({ default: m.SignupApp })));
+const CalendarPage = lazy(() => import('./pages/Calendar').then((m) => ({ default: m.CalendarPage })));
+const DevicesPage = lazy(() => import('./pages/Devices').then((m) => ({ default: m.DevicesPage })));
+const TrashPage = lazy(() => import('./pages/Trash').then((m) => ({ default: m.TrashPage })));
+const SettingsPage = lazy(() => import('./pages/Settings').then((m) => ({ default: m.SettingsPage })));
+const InboxPage = lazy(() => import('./pages/Inbox').then((m) => ({ default: m.InboxPage })));
+const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
+const PlatformConsolePage = lazy(() => import('./pages/PlatformConsole').then((m) => ({ default: m.PlatformConsolePage })));
+const FounderPagesPage = lazy(() => import('./pages/FounderPages').then((m) => ({ default: m.FounderPagesPage })));
+const DashboardPage = lazy(() => import('./pages/Dashboards').then((m) => ({ default: m.DashboardPage })));
+const DashboardsPage = lazy(() => import('./pages/Dashboards').then((m) => ({ default: m.DashboardsPage })));
+const TeamPage = lazy(() => import('./pages/Team').then((m) => ({ default: m.TeamPage })));
+const TimelinePage = lazy(() => import('./pages/Timeline').then((m) => ({ default: m.TimelinePage })));
 
 // Curahold's own support desk: loaded only at the central address, only when asked for.
 const DeskApp = lazy(() => import('./pages/Desk'));
@@ -170,10 +180,14 @@ export function App() {
   const terms = boot.kind === 'signed-in' ? boot.me.org.terms : null;
   return (
     <I18nProvider locale={locale} terms={terms}>
-      {boot.kind === 'loading' && <div className="center-note muted" />}
-      {boot.kind === 'central' && <SignupApp onLocale={changeLocale} />}
+      {boot.kind === 'loading' && <PageFallback />}
+      {boot.kind === 'central' && (
+        <Suspense fallback={<PageFallback />}>
+          <SignupApp onLocale={changeLocale} />
+        </Suspense>
+      )}
       {boot.kind === 'desk' && (
-        <Suspense fallback={<div className="center-note muted" />}>
+        <Suspense fallback={<PageFallback />}>
           <DeskApp onLocale={changeLocale} />
         </Suspense>
       )}
@@ -233,6 +247,15 @@ function ErrorNote({ onRetry }: { onRetry: () => void }) {
       </div>
     </div>
   );
+}
+
+// Shown while a lazily-loaded route (or the desk / signup app) fetches its chunk.
+// Same quiet visual as the app's other loading states, but it carries an
+// accessible name and a polite live region so assistive tech announces the wait
+// instead of landing on a silent, empty page.
+function PageFallback() {
+  const { t } = useI18n();
+  return <div className="center-note muted" role="status" aria-live="polite" aria-label={t('common.loading')} />;
 }
 
 function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
@@ -296,7 +319,9 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   // Each route (and each open panel) has its own boundary: one screen failing leaves the shell and the rest usable.
   return (
     <>
-      <ErrorBoundary resetKey={path}>{page}</ErrorBoundary>
+      <ErrorBoundary resetKey={path}>
+        <Suspense fallback={<PageFallback />}>{page}</Suspense>
+      </ErrorBoundary>
       {recordId && !taskId && (
         <ErrorBoundary resetKey={recordId}>
           <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />
