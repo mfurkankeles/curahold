@@ -25,6 +25,7 @@ import { accountRoutes } from './routes/accounts';
 import { recordRoutes } from './routes/records';
 import { syncRoutes } from './routes/sync';
 import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
+import { segmentInboundRoutes } from './routes/segment';
 import { jiraRoutes } from './routes/jira';
 import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
@@ -194,6 +195,7 @@ export function createApp(deps: Deps) {
   app.route('/api', inboundRoutes);
   // GitHub / GitLab webhooks that link branches, pull requests and commits to tasks (signed, like the ticket inbound).
   app.route('/api', devInboundRoutes);
+  app.route('/api', segmentInboundRoutes);
   // Curahold support: the entry link, its session, the desk's file links.
   app.route('/api', supportEntry);
 

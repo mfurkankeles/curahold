@@ -37,6 +37,8 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /boards/:id/sprints` | Sprint ekler (`name`, isteğe bağlı `goal`, `startsOn`, `endsOn`). |
 | `GET /boards/:id/backlog` | Panonun hiçbir sprintte olmayan üst düzey görevleri, sıra düzeninde. |
 | `GET /boards/:id/epics` | Panonun epikleri ve her birine bağlı hikaye sayısı (`childCount`). |
+| `GET /boards/:id/pm` | Bu panoda ürün yönetiminin (kayıt türleri, hikaye puanları, epikler, sprintler, backlog) açık olup olmadığı. |
+| `PUT /boards/:id/pm` | Bir panoda ürün yönetimini açar ya da kapatır (`enabled`: true, false ya da panonun sütunlarını izlemek için null). |
 | `GET /sprints/:id` | Tek bir sprint. |
 | `PATCH /sprints/:id` | Sprintin adını, hedefini ya da tarihlerini değiştirir. |
 | `PUT /sprints/:id/state` | Sprinti `future`, `active` ya da `closed` durumuna alır. |
@@ -45,6 +47,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `PUT /sprints/:id/items` | Aynı panodaki görevleri sprinte koyar (`taskIds`). |
 | `DELETE /sprints/:id/items/:taskId` | Görevi sprintten çıkarıp backlog'a döndürür. |
 | `GET /sprints/:id/summary` | Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. |
+| `GET /sprints/:id/burndown` | Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla. |
 | `DELETE /tasks/:id` | Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /tasks/bulk` | Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. |
 | `POST /undo/:id` | Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir. |
@@ -292,6 +295,20 @@ Panonun hiçbir sprintte olmayan üst düzey görevleri, sıra düzeninde. `open
 
 Panonun epikleri ve her birine bağlı hikaye sayısı (`childCount`).
 
+### `GET /boards/:id/pm`
+
+Bu panoda ürün yönetiminin (kayıt türleri, hikaye puanları, epikler, sprintler, backlog) açık olup olmadığı.
+
+### `PUT /boards/:id/pm`
+
+Bir panoda ürün yönetimini açar ya da kapatır (`enabled`: true, false ya da panonun sütunlarını izlemek için null).
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `enabled` | evet/hayır | zorunlu | boş (null) olabilir |
+
 ### `GET /sprints/:id`
 
 Tek bir sprint.
@@ -344,6 +361,10 @@ Görevi sprintten çıkarıp backlog'a döndürür.
 ### `GET /sprints/:id/summary`
 
 Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. Biten, durumu bitmiş sayılan bir sütun olandır.
+
+### `GET /sprints/:id/burndown`
+
+Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla.
 
 ### `DELETE /tasks/:id`
 

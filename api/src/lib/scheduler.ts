@@ -13,6 +13,7 @@ import { sendNudges } from './nudges';
 import { startRenewals } from './playbooks';
 import { syncSeats } from './billing';
 import { emptyTrash } from './trash';
+import { snapshotActiveSprints } from './burndown';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 
 const DIGEST_ITEMS = 8;
@@ -144,6 +145,7 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   if (now.getUTCHours() === 3) {
     await cleanUp(deps);
     await archiveFinished(deps, now).catch((e) => console.error('[curahold] archiving finished work failed', e));
+    await snapshotActiveSprints(deps, now).catch((e) => console.error('[curahold] sprint burndown snapshot failed', e));
   }
   // Renewals coming close enough start by themselves, early in the working day.
   if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[curahold] starting renewals failed', e));

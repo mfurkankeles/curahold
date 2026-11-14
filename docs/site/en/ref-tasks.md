@@ -37,6 +37,8 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /boards/:id/sprints` | Adds a sprint (`name`, optional `goal`, `startsOn`, `endsOn`). |
 | `GET /boards/:id/backlog` | The board's top-level tasks that are in no sprint, in rank order. |
 | `GET /boards/:id/epics` | The board's epics with the number of stories linked to each (`childCount`). |
+| `GET /boards/:id/pm` | Whether product management (issue types, story points, epics, sprints, the backlog) is on for this board. |
+| `PUT /boards/:id/pm` | Turns product management on or off for a board (`enabled`: true, false, or null to follow the board's columns). |
 | `GET /sprints/:id` | One sprint. |
 | `PATCH /sprints/:id` | Changes a sprint's name, goal or dates. |
 | `PUT /sprints/:id/state` | Moves a sprint to `future`, `active` or `closed`. |
@@ -45,6 +47,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `PUT /sprints/:id/items` | Puts tasks of the same board into the sprint (`taskIds`). |
 | `DELETE /sprints/:id/items/:taskId` | Takes a task out of the sprint, back to the backlog. |
 | `GET /sprints/:id/summary` | Current totals: points and items, done and in all, with counts by issue type. |
+| `GET /sprints/:id/burndown` | A sprint's burndown: remaining story points and items by day, with a live point for today. |
 | `DELETE /tasks/:id` | Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. |
 | `POST /tasks/bulk` | Changes many tasks at once: column, assignee, due date, priority, archive. |
 | `POST /undo/:id` | Puts back what a change to many tasks or customers replaced. |
@@ -292,6 +295,20 @@ The board's top-level tasks that are in no sprint, in rank order. `open=1` leave
 
 The board's epics with the number of stories linked to each (`childCount`).
 
+### `GET /boards/:id/pm`
+
+Whether product management (issue types, story points, epics, sprints, the backlog) is on for this board.
+
+### `PUT /boards/:id/pm`
+
+Turns product management on or off for a board (`enabled`: true, false, or null to follow the board's columns).
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `enabled` | yes/no | required | may be null |
+
 ### `GET /sprints/:id`
 
 One sprint.
@@ -344,6 +361,10 @@ Takes a task out of the sprint, back to the backlog.
 ### `GET /sprints/:id/summary`
 
 Current totals: points and items, done and in all, with counts by issue type. Done means the status is a finished column.
+
+### `GET /sprints/:id/burndown`
+
+A sprint's burndown: remaining story points and items by day, with a live point for today.
 
 ### `DELETE /tasks/:id`
 

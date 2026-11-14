@@ -114,6 +114,17 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
     if (location.hash === '#help') history.replaceState(null, '', location.pathname + location.search);
   }, []);
   useEffect(() => setNavOpen(false), [path]);
+  // Open the help dialog when a notification deep-links to #help during in-app navigation.
+  useEffect(() => {
+    const onNav = () => {
+      if (location.hash === '#help') {
+        setHelp('mine');
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    };
+    window.addEventListener('app:navigate', onNav);
+    return () => window.removeEventListener('app:navigate', onNav);
+  }, []);
   useEffect(() => {
     if (path.startsWith('/records') || path.startsWith('/accounts')) void reloadTypes();
   }, [path, reloadTypes]);

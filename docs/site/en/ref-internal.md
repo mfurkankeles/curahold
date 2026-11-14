@@ -15,7 +15,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
-| `/connections/…` | 27 | Managing connections and their field matching: an administrator in the browser. |
+| `/connections/…` | 28 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
 | `/desk/…` | 12 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |

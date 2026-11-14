@@ -75,6 +75,8 @@ interface Board {
   form: BoardForm | null;
   /** Finished tasks move to the board's archive after this many days; null keeps them on the board. */
   archiveDays: number | null;
+  /** The board's product-management switch: true/false override, null (or absent) follows the PM stages. */
+  pmEnabled?: boolean | null;
 }
 ```
 

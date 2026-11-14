@@ -29,6 +29,7 @@ These are what the Settings → Developers page calls. A key cannot create or de
 | `POST /dev-hooks/:provider` | Turns the `github` or `gitlab` webhook on, or replaces its secret. |
 | `DELETE /dev-hooks/:provider` | Turns the webhook off. |
 | `POST /inbound/dev/:provider` | Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. |
+| `POST /inbound/segment/:source` | Where Segment sends product events (signed with `x-signature`, HMAC-SHA256). |
 | `GET /tasks/:id/dev` | The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary. |
 | `GET /boards/:id/dev-links` | The development summary of every task on a board that has links. |
 | `DELETE /dev-links/:id` | Removes one link from a task. |
@@ -134,6 +135,10 @@ Turns the webhook off. Links already made stay.
 ### `POST /inbound/dev/:provider`
 
 Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. Not for people.
+
+### `POST /inbound/segment/:source`
+
+Where Segment sends product events (signed with `x-signature`, HMAC-SHA256). Each event becomes an activity on the customer matched by the person's email. Not for people.
 
 ### `GET /tasks/:id/dev`
 

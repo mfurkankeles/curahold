@@ -78,6 +78,7 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /desk/requests/:ref/replays/:id': 'Curahold’s own support desk, behind its staff sign-in or key (tests/replay.test.ts)',
   'PUT /tickets/:source/:externalId': 'the ticket’s id in the caller’s own help desk (tests/timeline.test.ts)',
   'POST /inbound/tickets/:token': 'opened with a secret address, not a session (tests/timeline.test.ts)',
+  'POST /inbound/segment/:source': 'a Segment source id, opened with that company’s own signed secret (tests/wave5c.test.ts)',
   'GET /platform/customers/:orgId': 'the operator-only owner console; any non-owner, including another company, gets 403 (tests/platform.test.ts)',
 };
 

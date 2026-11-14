@@ -29,6 +29,7 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `POST /dev-hooks/:provider` | `github` ya da `gitlab` webhook'unu açar ya da gizli değerini yeniler. |
 | `DELETE /dev-hooks/:provider` | Webhook'u kapatır. |
 | `POST /inbound/dev/:provider` | GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. |
+| `POST /inbound/segment/:source` | Segment'in ürün olaylarını gönderdiği yer (`x-signature`, HMAC-SHA256 ile imzalı). |
 | `GET /tasks/:id/dev` | Bir göreve bağlı dallar, çekme istekleri ve commit'ler; durumları ve kontrolleriyle, bir satırlık özetle. |
 | `GET /boards/:id/dev-links` | Bağlantısı olan, bir panodaki her görevin geliştirme özeti. |
 | `DELETE /dev-links/:id` | Bir görevden tek bir bağlantıyı kaldırır. |
@@ -134,6 +135,10 @@ Webhook'u kapatır. Kurulmuş bağlantılar kalır.
 ### `POST /inbound/dev/:provider`
 
 GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. İnsanlar için değil.
+
+### `POST /inbound/segment/:source`
+
+Segment'in ürün olaylarını gönderdiği yer (`x-signature`, HMAC-SHA256 ile imzalı). Her olay, kişinin e-postasıyla eşleşen müşteride bir etkinliğe dönüşür. İnsanlar için değil.
 
 ### `GET /tasks/:id/dev`
 
