@@ -157,7 +157,7 @@ describe('Front', () => {
 
 describe('which sources take changes', () => {
   it('Jira Service Management and BigQuery only read; the four support tools write', () => {
-    expect(READ_ONLY_PROVIDERS).toEqual(['jsm', 'bigquery']);
+    expect(READ_ONLY_PROVIDERS).toEqual(['jsm', 'bigquery', 'snowflake', 'segment']);
     expect(jsm.readOnly).toBe(true);
     for (const a of [zendesk, freshdesk, intercom, front] as CrmAdapter[]) expect(a.readOnly).toBeFalsy();
     for (const a of [zendesk, freshdesk, intercom, front] as CrmAdapter[]) expect(typeof a.reply).toBe('function');

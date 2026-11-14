@@ -7,7 +7,7 @@ import { optionKey } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
 import { KEY_FIELDS, type RemoteField, type SyncConfig, type SyncProblem } from '../../../shared/src/sync';
-import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
+import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, requireWriter, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { base64url, randomToken, seal, sign, unseal } from '../lib/crypto';
 import { fail } from '../lib/errors';
@@ -253,6 +253,11 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
       tabular: adapter.tabular,
       readOnly: !!adapter.readOnly,
       canReply: !!adapter.reply && !adapter.readOnly,
+      /** Mailboxes attach mail as activities and can send a reply; event streams (Segment) receive at an inbound address. */
+      mailbox: !!adapter.mailbox,
+      inbound: !!adapter.inbound,
+      /** Segment: the address to give the Segment destination (the public source id lives in the connection config). */
+      inboundUrl: adapter.inbound && conn.config?.sourceId ? `${new URL(c.req.url).origin}/api/inbound/${conn.provider}/${conn.config.sourceId}` : null,
     },
     sync: conn.sync,
     state: { lastRun: conn.state.lastRun ?? null, fullAt: conn.state.fullAt ?? null },
@@ -531,7 +536,9 @@ syncRoutes.post('/connections/:id/sync/run', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
   const auth = c.get('auth');
-  if (!conn.sync.objects.some((o) => o.enabled)) fail('validation', { fields: 'objects' }, { fields: ['objects'] });
+  const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
+  // A mailbox has no object mapping: it reads mail straight into activities.
+  if (!adapter.mailbox && !conn.sync.objects.some((o) => o.enabled)) fail('validation', { fields: 'objects' }, { fields: ['objects'] });
   const first = !conn.sync.startedAt;
   if (first) {
     await run(c, async (q) => {
@@ -623,6 +630,49 @@ syncRoutes.post('/connections/:id/tickets/:remoteId/reply', async (c) => {
   }
   await run(c, (q) => audit(q, { orgId: c.get('org').id, actorId: c.get('auth').userId, action: input.internal ? 'connection.ticket_noted' : 'connection.ticket_replied', entity: 'connection', entityId: conn.id, meta: { remoteId } }));
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------- mailbox reply
+
+/** Mailboxes: send a reply from the connected mailbox and log it as an outgoing activity under the customer. */
+syncRoutes.post('/connections/:id/mail/reply', async (c) => {
+  const conn = await loaded(c);
+  requireWriter(c);
+  const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
+  if (!adapter.mailbox || !adapter.send) fail('not_found');
+  if (conn.status === 'disabled') fail('forbidden');
+  const input = await body(
+    c,
+    z.object({
+      accountId: z.string().uuid(),
+      to: z.string().trim().email().max(254),
+      subject: z.string().trim().min(1).max(500),
+      body: z.string().trim().min(1).max(20_000),
+      inReplyTo: z.string().max(200).optional(),
+    }),
+  );
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  let sent;
+  try {
+    sent = await adapter.send!(crmCtx(deps, conn), { to: input.to, subject: input.subject, body: input.body, inReplyTo: input.inReplyTo ?? null });
+  } catch (e) {
+    crmFail(e);
+  }
+  const logged = await run(c, async (q) => {
+    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    if (!a) fail('not_found');
+    await q.query(
+      `insert into activities (org_id, account_id, author_id, kind, body, source, external_id)
+       values ($1, $2, $3, 'email', $4, $5, $6)
+       on conflict (org_id, source, external_id) where external_id is not null do nothing`,
+      [org.id, input.accountId, auth.userId, `Sent to ${input.to}\n${input.subject}\n\n${input.body}`.slice(0, 20_000), conn.provider, sent!.externalId.slice(0, 200)],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.mail_replied', entity: 'connection', entityId: conn.id, meta: { to: input.to } });
+    return true;
+  });
+  return c.json({ ok: logged, id: sent!.externalId });
 });
 
 /** Rolled-up fields recomputed on demand (after changing their definition). */

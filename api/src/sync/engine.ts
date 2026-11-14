@@ -16,6 +16,7 @@ import { iso } from '../lib/mappers';
 import { fullName, ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
 import { recomputeRollups } from '../lib/records';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
+import { syncMailbox } from './mailsync';
 import { crmFetch } from './relay';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
 
@@ -1279,10 +1280,13 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   let authFailed = false;
   try {
     r = await prepare(deps, conn, opts.budgetMs ?? 10 * 60_000);
+    // Mailboxes attach mail to customers as activities instead of mapping objects, and send replies from a route,
+    // so they take their own read path and queue nothing to push.
+    const mailbox = !!r.adapter.mailbox;
     // Read first: a change made there after ours was queued must be seen
     // (and weighed by the conflict rule) before ours goes out.
-    const pulled = opts.pushOnly ? true : await pullAll(r, full);
-    const pushed = await pushChanges(r, !!opts.pushOnly);
+    const pulled = opts.pushOnly ? true : mailbox ? await syncMailbox(deps, conn, r.adapter, r.ctx, full, r.stats, r.deadline) : await pullAll(r, full);
+    const pushed = mailbox ? true : await pushChanges(r, !!opts.pushOnly);
     if (!pushed || !pulled) {
       status = 'partial';
       more = true;

@@ -62,6 +62,32 @@ export interface OAuthSpec {
   exchange(fetcher: typeof fetch, client: OAuthClient, code: string, redirectUri: string, opts: Record<string, string>, now: Date): Promise<Connected>;
 }
 
+/** One message pulled from a mailbox, to attach to a customer as a timeline activity. */
+export interface MailItem {
+  /** The provider's own id for the message (Gmail id, Graph message id): the activity's external id, so a message is attached once. */
+  externalId: string;
+  /** Every email address on the message (from, to, cc), lower-cased: the customer is found from these. */
+  participants: string[];
+  /** The address the message is from, for the activity's text. */
+  from: string | null;
+  subject: string;
+  /** A short, plain-text preview of the body. */
+  snippet: string;
+  /** 'in' for mail received, 'out' for mail the mailbox sent. */
+  direction: 'in' | 'out';
+  /** When the message was sent (ISO). */
+  happenedAt: string | null;
+}
+
+/** A reply to send from a connected mailbox, then logged as an outgoing activity. */
+export interface MailSend {
+  to: string;
+  subject: string;
+  body: string;
+  /** The message replied to, when answering a thread (Gmail threadId / Graph message id). */
+  inReplyTo?: string | null;
+}
+
 export interface CrmAdapter {
   provider: CrmProvider;
   oauth?: OAuthSpec;
@@ -69,6 +95,21 @@ export interface CrmAdapter {
   keyed?: { connect(fetcher: typeof fetch, values: Record<string, string>, now: Date): Promise<Connected> };
   /** Only reads: nothing made or changed in Curahold is written back. */
   readOnly?: boolean;
+  /**
+   * A mailbox source (Gmail, Outlook): recent mail is attached to the matching customer as a timeline activity
+   * instead of going through the object mapping, and a reply can be sent back. The engine runs `messages` on a
+   * schedule; the reply is sent from a route. Such an adapter needs no `objects`/`fields` mapping.
+   */
+  mailbox?: boolean;
+  /**
+   * An event stream pushed into Curahold (Segment): nothing is pulled on a schedule. Its data arrives at the signed
+   * inbound address. `list`/`objects`/`fields` are empty so the generic engine does nothing for it.
+   */
+  inbound?: boolean;
+  /** Mailboxes: recent mail since the last run, oldest first. */
+  messages?(ctx: CrmCtx, opts: { since: string | null; cursor: string | null }): Promise<{ items: MailItem[]; next: string | null }>;
+  /** Mailboxes: send a reply from the connected mailbox; returns the new message's id. */
+  send?(ctx: CrmCtx, input: MailSend): Promise<{ externalId: string }>;
   /** Spreadsheets read everything each time; CRMs read changes since the last run. */
   tabular: boolean;
   refresh(ctx: Omit<CrmCtx, 'token' | 'refresh'>, secret: CrmSecret, client: OAuthClient): Promise<CrmSecret>;

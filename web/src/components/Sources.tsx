@@ -25,12 +25,16 @@ const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitr
 /** Connected with a key the administrator brings; the newest connectors, marked as such. */
 const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell'];
 const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'front', 'jsm'];
-/** Data warehouses: rows from a query, connected with a service-account key. */
-const WAREHOUSES = ['bigquery'];
+/** Data warehouses: rows from a query, connected with a service-account / key-pair key. */
+const WAREHOUSES = ['bigquery', 'snowflake'];
+/** Mailboxes: recent mail becomes activities on the matching customer, and a reply can be sent. */
+const MAILBOXES = ['gmail', 'outlook'];
+/** Event streams pushed into Curahold at a signed inbound address. */
+const EVENTS = ['segment'];
 /** Developer tools: Jira syncs; GitHub and GitLab link branches, pull requests and commits to tasks. */
 const DEV_TOOLS = ['jira'];
 /** Fields typed as several lines. */
-const LONG_FIELDS = ['serviceAccount', 'query'];
+const LONG_FIELDS = ['serviceAccount', 'query', 'privateKey'];
 /** In the try-it demo these buttons run the real steps against the pretend CRM. */
 const DEMO_CRMS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', ...KEYED_CRMS];
 
@@ -72,6 +76,8 @@ export function Sources() {
   const providers = data.providers.filter((p) => p.kind === 'source' && SOURCES.includes(p.id));
   const support = data.providers.filter((p) => p.kind === 'source' && SUPPORT.includes(p.id));
   const warehouses = data.providers.filter((p) => p.kind === 'source' && WAREHOUSES.includes(p.id));
+  const mailboxes = data.providers.filter((p) => p.kind === 'source' && MAILBOXES.includes(p.id));
+  const events = data.providers.filter((p) => p.kind === 'source' && EVENTS.includes(p.id));
   const jiraTool = data.providers.find((p) => p.kind === 'source' && DEV_TOOLS.includes(p.id));
   const mine = data.connections.filter((c) => c.kind === 'source');
   const broken = mine.filter((c) => c.status === 'error');
@@ -218,6 +224,56 @@ export function Sources() {
           <p className="field__hint">{t('warehouse.addHint')}</p>
           <div className="tiles">
             {warehouses.map((p) => (
+              <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
+                <div className="tile__head">
+                  <span className="tile__badge" aria-hidden="true">
+                    {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
+                  </span>
+                  <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+                </div>
+                <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
+                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                  <Icon name="plug" size={16} />
+                  {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {mailboxes.length > 0 && (
+        <>
+          <h3 className="section__head" style={{ marginTop: 22 }}>
+            {t('mailbox.add' as MessageKey)}
+          </h3>
+          <p className="field__hint">{t('mailbox.addHint' as MessageKey)}</p>
+          <div className="tiles">
+            {mailboxes.map((p) => (
+              <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
+                <div className="tile__head">
+                  <span className="tile__badge" aria-hidden="true">
+                    {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
+                  </span>
+                  <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+                </div>
+                <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
+                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                  <Icon name="plug" size={16} />
+                  {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {events.length > 0 && (
+        <>
+          <h3 className="section__head" style={{ marginTop: 22 }}>
+            {t('events.add' as MessageKey)}
+          </h3>
+          <p className="field__hint">{t('events.addHint' as MessageKey)}</p>
+          <div className="tiles">
+            {events.map((p) => (
               <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
                 <div className="tile__head">
                   <span className="tile__badge" aria-hidden="true">
@@ -425,7 +481,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean };
+  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean; mailbox?: boolean; inbound?: boolean; inboundUrl?: string | null };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -443,6 +499,49 @@ interface Draft extends ObjectMap {
 }
 
 type Step = 'file' | 'objects' | 'fields' | 'start';
+
+/** An event stream (Segment): the address to give it, and how it is signed. Nothing is pulled or mapped. */
+function InboundPanel({ d }: { d: Detail }) {
+  const { t } = useI18n();
+  const { toast } = useStore();
+  const url = d.connection.inboundUrl ?? '';
+  const copy = () => void navigator.clipboard?.writeText(url).then(() => toast(t('devtools.copied')));
+  return (
+    <div className="card" style={{ marginTop: 16 }}>
+      <h3 className="section__head">{t('segment.title' as MessageKey)}</h3>
+      <p className="field__hint">{t('segment.how' as MessageKey)}</p>
+      {url && (
+        <label className="field" style={{ display: 'block', marginTop: 8 }}>
+          <span className="field__label">{t('segment.url' as MessageKey)}</span>
+          <span style={{ display: 'flex', gap: 8 }}>
+            <input className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
+            <button className="btn btn--small" onClick={copy}>
+              {t('devtools.copy')}
+            </button>
+          </span>
+        </label>
+      )}
+      <p className="field__hint" style={{ marginTop: 8 }}>
+        {t('segment.secretNote' as MessageKey)}
+      </p>
+    </div>
+  );
+}
+
+/** A mailbox before its first read: there is nothing to map, so just start reading. */
+function MailboxStart({ onStart, running }: { onStart: () => void; running: string | null }) {
+  const { t } = useI18n();
+  return (
+    <div className="card" style={{ marginTop: 16 }}>
+      <h3 className="section__head">{t('mailbox.startTitle' as MessageKey)}</h3>
+      <p className="field__hint">{t('mailbox.startHint' as MessageKey)}</p>
+      <button className="btn btn--primary btn--small" style={{ marginTop: 8 }} disabled={!!running} onClick={onStart}>
+        <Icon name="refresh" size={16} />
+        {running ?? t('mailbox.start' as MessageKey)}
+      </button>
+    </div>
+  );
+}
 
 export function SourceDetail({ id }: { id: string }) {
   const { t, words } = useI18n();
@@ -578,14 +677,18 @@ export function SourceDetail({ id }: { id: string }) {
           }}
         />
       )}
-      {!started && step && d.connection.provider === 'jira' ? (
+      {d.connection.inbound ? (
+        <InboundPanel d={d} />
+      ) : d.connection.mailbox && !started ? (
+        <MailboxStart onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
+      ) : !started && step && d.connection.provider === 'jira' ? (
         <JiraSetup id={id} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : !started && step ? (
         <SetupFlow d={d} step={step} setStep={setStep} reload={load} onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : (
         <>
           <div className="seg source__tabs" role="tablist" onKeyDown={onTabKeys}>
-            {(['status', 'mapping', 'people', 'settings'] as const).map((k) => (
+            {(d.connection.mailbox ? (['status', 'settings'] as const) : (['status', 'mapping', 'people', 'settings'] as const)).map((k) => (
               <button key={k} role="tab" aria-selected={tab === k} tabIndex={tab === k ? 0 : -1} onClick={() => setTab(k)}>
                 {t(`sync.tab.${k}` as MessageKey)}
               </button>

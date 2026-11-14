@@ -9,15 +9,18 @@ import { dynamics } from './dynamics';
 import { hubspot } from './hubspot';
 import { jira } from './jira';
 import { bitrix24, freshsales, zendesksell } from './keyed';
+import { gmail, outlook } from './mailbox';
 import { pipedrive } from './pipedrive';
+import { segment } from './segment';
 import { excel, gsheets } from './sheets';
+import { snowflake } from './snowflake';
 import { salesforce } from './salesforce';
 import type { CrmAdapter, OAuthClient } from './types';
 import { zoho } from './zoho';
 import { freshdesk, front, intercom, jsm, zendesk } from './support';
-import { DEV_PROVIDERS, KEYED_CRM_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
+import { DEV_PROVIDERS, EVENT_PROVIDERS, KEYED_CRM_PROVIDERS, MAILBOX_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
 
-export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, jira, demo };
+export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, snowflake, gmail, outlook, segment, jira, demo };
 
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
@@ -27,8 +30,8 @@ export function oauthClient(cfg: Config, provider: CrmProvider): OAuthClient | n
   if (CRM_ADAPTERS[provider]?.keyed && !CRM_ADAPTERS[provider]?.oauth) return null;
   const own = cfg.connectors.crm?.[provider as keyof NonNullable<typeof cfg.connectors.crm>];
   if (own) return own;
-  if (provider === 'gsheets') return cfg.oauth.google ?? null;
-  if (provider === 'excel' || provider === 'dynamics') return cfg.oauth.microsoft ?? null;
+  if (provider === 'gsheets' || provider === 'gmail') return cfg.oauth.google ?? null;
+  if (provider === 'excel' || provider === 'dynamics' || provider === 'outlook') return cfg.oauth.microsoft ?? null;
   if (provider === 'demo') return cfg.connectors.demoCrm ? { clientId: 'demo', clientSecret: 'demo' } : null;
   return null;
 }
@@ -52,8 +55,12 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
     ...sheets.map(signIn),
     // Support tools need nothing on this server either: the administrator brings an API key. Most also take changes back.
     ...SUPPORT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: !READ_ONLY_PROVIDERS.includes(id), available: true, setup: 'key' })),
-    // Warehouses: the administrator brings a service-account key and a query; read only.
+    // Warehouses: the administrator brings a service-account / key-pair key and a query; read only.
     ...WAREHOUSE_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
+    // Mailboxes (Gmail, Outlook): signed in with Google / Microsoft where registered, otherwise connected with an injected token. Two-way (a reply can be sent).
+    ...MAILBOX_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: true, setup: oauthClient(cfg, id) ? 'oauth' : 'key' })),
+    // Event streams (Segment): the administrator sets a shared secret; events are pushed to the inbound address. Read only.
+    ...EVENT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
     // Developer tools (Jira Cloud): always connectable with an API token; "oauth" says the Atlassian sign-in is registered here too.
     ...DEV_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: true, setup: oauthClient(cfg, id) ? 'oauth' : 'key' })),
   ];

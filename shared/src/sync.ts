@@ -11,10 +11,24 @@ export const CRM_PROVIDERS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 
 export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm', 'front'] as const;
 export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
 /** Data warehouses: rows from a query the administrator writes, read only, connected with a service-account key. */
-export const WAREHOUSE_PROVIDERS = ['bigquery'] as const;
+export const WAREHOUSE_PROVIDERS = ['bigquery', 'snowflake'] as const;
 export type WarehouseProvider = (typeof WAREHOUSE_PROVIDERS)[number];
-/** Sources that never receive anything from Curahold. */
-export const READ_ONLY_PROVIDERS: readonly string[] = ['jsm', 'bigquery'];
+/**
+ * Mailboxes (Gmail, Outlook): recent mail is attached to the matching customer as a timeline activity, and a reply
+ * can be sent and logged back as an activity. Signed in with Google / Microsoft (OAuth), or connected with an
+ * injected refresh token where this server has no app registration (development, tests).
+ */
+export const MAILBOX_PROVIDERS = ['gmail', 'outlook'] as const;
+export type MailboxProvider = (typeof MAILBOX_PROVIDERS)[number];
+/**
+ * Event streams that push into Curahold (Segment): track / identify events arrive at a signed inbound address and
+ * become timeline activities (and link to a contact) under the customer matched by the event's email. Nothing is
+ * pulled on a schedule and nothing is written back, so they are read-only sources with no mapping.
+ */
+export const EVENT_PROVIDERS = ['segment'] as const;
+export type EventProvider = (typeof EVENT_PROVIDERS)[number];
+/** Sources that never receive the standard entity changes (accounts, records, tasks) Curahold queues for a CRM. */
+export const READ_ONLY_PROVIDERS: readonly string[] = ['jsm', 'bigquery', 'snowflake', 'segment'];
 /**
  * CRMs connected with what the administrator brings from the CRM itself (a
  * webhook address, an API key, an access token): two-way like the others, and
@@ -32,10 +46,21 @@ export type DevProvider = (typeof DEV_PROVIDERS)[number];
 /** Where commits, branches and pull requests come from (webhooks into Curahold, not a sync). */
 export const DEV_HOSTS = ['github', 'gitlab'] as const;
 export type DevHost = (typeof DEV_HOSTS)[number];
-export type CrmProvider = (typeof CRM_PROVIDERS)[number] | KeyedCrmProvider | SupportProvider | WarehouseProvider | DevProvider | 'demo';
+export type CrmProvider =
+  | (typeof CRM_PROVIDERS)[number]
+  | KeyedCrmProvider
+  | SupportProvider
+  | WarehouseProvider
+  | MailboxProvider
+  | EventProvider
+  | DevProvider
+  | 'demo';
 
 /** What an administrator types to connect with a key. */
-export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider | WarehouseProvider | DevProvider, { key: string; secret?: boolean; optional?: boolean; placeholder: string }[]> = {
+export const KEY_FIELDS: Record<
+  SupportProvider | KeyedCrmProvider | WarehouseProvider | MailboxProvider | EventProvider | DevProvider,
+  { key: string; secret?: boolean; optional?: boolean; placeholder: string }[]
+> = {
   bitrix24: [{ key: 'webhook', secret: true, placeholder: 'https://yourcompany.bitrix24.com/rest/1/••••••••/' }],
   freshsales: [
     { key: 'domain', placeholder: 'yourcompany.myfreshworks.com' },
@@ -74,6 +99,20 @@ export const KEY_FIELDS: Record<SupportProvider | KeyedCrmProvider | WarehousePr
     { key: 'modifiedColumn', optional: true, placeholder: 'updated_at' },
     { key: 'location', optional: true, placeholder: 'EU' },
   ],
+  snowflake: [
+    { key: 'account', placeholder: 'ab12345.eu-west-1' },
+    { key: 'user', placeholder: 'CURAHOLD_READER' },
+    { key: 'privateKey', secret: true, placeholder: '-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----' },
+    { key: 'name', placeholder: 'customer-health' },
+    { key: 'query', placeholder: 'SELECT customer_id, name, health_score, updated_at FROM analytics.crm.health' },
+    { key: 'idColumn', placeholder: 'CUSTOMER_ID' },
+    { key: 'modifiedColumn', optional: true, placeholder: 'UPDATED_AT' },
+    { key: 'warehouse', optional: true, placeholder: 'ANALYTICS_WH' },
+    { key: 'role', optional: true, placeholder: 'CURAHOLD_READER' },
+  ],
+  gmail: [{ key: 'refreshToken', secret: true, placeholder: '1//0g…' }],
+  outlook: [{ key: 'refreshToken', secret: true, placeholder: '0.AXoA…' }],
+  segment: [{ key: 'signingSecret', secret: true, placeholder: 'a shared secret, 16+ characters' }],
 };
 
 /** Spreadsheets: rows are found by a key column instead of a CRM id. */
