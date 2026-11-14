@@ -1273,7 +1273,11 @@ export interface RunOptions {
 
 async function claim(deps: Deps, conn: LoadedCrm, opts: RunOptions, mode: SyncRun['mode']): Promise<string | null> {
   return deps.db.system(async (q) => {
-    // One run per connection at a time; a run that died long ago no longer counts.
+    // One run per connection at a time. Take the connection row first so two runs
+    // racing to claim the same connection serialize here instead of both passing the
+    // busy-check below and both starting (which would double-push every queued change).
+    await q.query('select 1 from connections where id = $1 and org_id = $2 for update', [conn.id, conn.orgId]);
+    // A run that died long ago no longer counts.
     await q.query(`update sync_runs set status = 'error', finished_at = now(), errors = '[{"object":"","message":"Stopped"}]' where connection_id = $1 and status = 'running' and started_at < $2`, [
       conn.id,
       new Date(nowOf(deps).getTime() - STALE_RUN_MS),
