@@ -19,6 +19,7 @@ begin
   if not exists (select 1 from pg_roles where rolname = 'curahold_portal') then
     create role curahold_portal nologin;
   end if;
+exception when duplicate_object or unique_violation then null;
 end $$;
 grant curahold_portal to current_user;
 grant usage on schema public to curahold_portal;

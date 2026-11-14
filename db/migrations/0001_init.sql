@@ -10,10 +10,14 @@
 -- RLS because no table uses FORCE ROW LEVEL SECURITY); each of them still
 -- filters on app_org() itself.
 
+-- Roles are cluster-global, so parallel test databases (and any concurrent
+-- migrate) race here: two can both pass the exists check and then collide on
+-- pg_authid. Swallow that — whoever lost the race, the role is there now.
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'curahold_app') then
     create role curahold_app nologin;
   end if;
+exception when duplicate_object or unique_violation then null;
 end $$;
 
 -- ---------------------------------------------------------------- tables
