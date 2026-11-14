@@ -26,6 +26,8 @@ export interface SiteCopy {
   // English is the fallback until a native pass lands (column names come from
   // the app's own dictionaries, so those localise everywhere already).
   sprint?: SiteSprintCopy;
+  /** The live analytics dashboard showcase. Optional per locale (English fallback). */
+  dash?: SiteDashCopy;
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -110,6 +112,18 @@ export interface SiteSprintCopy {
   tasks: string[];
 }
 
+/** The live analytics dashboard: self-drawing chart, gauge and KPI tiles. */
+export interface SiteDashCopy {
+  /** Caption over the area chart. */
+  trend: string;
+  /** Label under the radial gauge. */
+  gauge: string;
+  /** "Live" pill. */
+  live: string;
+  /** Three KPI tile labels. */
+  kpis: [string, string, string];
+}
+
 export const COPY: Partial<Record<Locale, SiteCopy>> = {
   en: {
     lang: 'en',
@@ -184,6 +198,12 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       blocked: 'blocked by',
       epics: ['Onboarding', 'Billing', 'Mobile'],
       tasks: ['Draft the welcome sequence', 'Wire the Paddle webhook', 'Finish the burndown chart', 'Push notifications on iOS', 'Seed the demo workspace', 'Ship the plan picker'],
+    },
+    dash: {
+      trend: 'Portfolio health, this quarter',
+      gauge: 'On-time renewals',
+      live: 'Live',
+      kpis: ['Accounts at risk', 'Renewals won', 'Meetings booked'],
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -323,6 +343,12 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       blocked: 'engelleyen',
       epics: ['Kurulum', 'Faturalama', 'Mobil'],
       tasks: ['Karşılama dizisini yaz', 'Paddle webhook’unu bağla', 'Burndown grafiğini bitir', 'iOS’ta anlık bildirim', 'Demo alanını hazırla', 'Plan seçiciyi yayına al'],
+    },
+    dash: {
+      trend: 'Portföy sağlığı, bu çeyrek',
+      gauge: 'Zamanında yenileme',
+      live: 'Canlı',
+      kpis: ['Riskli müşteri', 'Kazanılan yenileme', 'Planlanan görüşme'],
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',

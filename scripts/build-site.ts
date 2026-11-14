@@ -643,18 +643,62 @@ function page(locale: SiteLocale): string {
     d.setMonth(d.getMonth() - (7 - k));
     return new Intl.DateTimeFormat(bcp47Of(locale), { month: 'short' }).format(d);
   });
-  const heights = [34, 42, 38, 50, 54, 50, 66, 76];
-  const repBars = months
-    .map((mn, k) => `<div class="rep__col" data-reveal style="--i:${k}"><span class="rep__bar" style="--h:${heights[k]}%"></span><span class="rep__x">${esc(mn)}</span></div>`)
+  // The analytics dashboard: a self-drawing area chart of portfolio health, a
+  // radial gauge filling to on-time renewals, and KPI tiles with drawing
+  // sparklines. Numbers count up as the window scrolls into view.
+  const dash = c.dash ?? siteCopy('en').dash!;
+  const axis = months.slice(2);
+  const ys = [88, 94, 78, 71, 75, 57];
+  const xs = [40, 120, 200, 280, 360, 440];
+  const line = ys.map((y, k) => `${k ? 'L' : 'M'}${xs[k]} ${y}`).join(' ');
+  const grid = [48, 92, 136, 180].map((y) => `<line class="dash__gl" x1="40" y1="${y}" x2="440" y2="${y}"/>`).join('');
+  const xlabels = axis.map((mn, k) => `<text class="dash__xl" x="${xs[k]}" y="200" text-anchor="middle">${esc(mn)}</text>`).join('');
+  const areaChart = `<svg class="dash__area" viewBox="0 0 480 212" role="img" aria-label="${esc(dash.trend)}">
+            <defs>
+              <linearGradient id="dashFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b4de8" stop-opacity=".26"/><stop offset="1" stop-color="#5b4de8" stop-opacity="0"/></linearGradient>
+              <linearGradient id="dashLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5b4de8"/><stop offset="1" stop-color="#2f8f78"/></linearGradient>
+            </defs>
+            ${grid}
+            <path class="dash__areaf" d="${line} L440 184 L40 184 Z" fill="url(#dashFill)"/>
+            <path class="dash__line" d="${line}" fill="none" stroke="url(#dashLine)"/>
+            <circle class="dash__dot" cx="440" cy="57" r="5"/>
+            ${xlabels}
+          </svg>`;
+  const GC = 327;
+  const gauge = `<div class="dash__gauge">
+            <svg viewBox="0 0 150 150" role="img" aria-label="${esc(dash.gauge)}">
+              <circle class="dash__gtrack" cx="75" cy="75" r="52" fill="none"/>
+              <circle class="dash__gval" cx="75" cy="75" r="52" fill="none" style="--c:${GC};--off:${Math.round(GC * 0.06)}"/>
+            </svg>
+            <div class="dash__gnum"><b data-count="94">0</b><i>%</i></div>
+          </div>`;
+  const SPARKS = ['M2 23 L14 19 L26 21 L38 13 L50 16 L62 8 L74 11 L86 5', 'M2 20 L14 22 L26 15 L38 17 L50 11 L62 13 L74 7 L86 6', 'M2 22 L14 15 L26 18 L38 12 L50 14 L62 9 L74 11 L86 4'];
+  const kpiRows = [
+    { n: 5, d: '−2' },
+    { n: 28, d: '+6' },
+    { n: 12, d: '+3' },
+  ];
+  const kpis = kpiRows
+    .map(
+      (k, i) => `<div class="kpi" data-reveal style="--i:${i}">
+            <span class="kpi__l">${esc(dash.kpis[i])}</span>
+            <span class="kpi__row"><b class="kpi__v" data-count="${k.n}">0</b><i class="kpi__d">${esc(k.d)}</i></span>
+            <svg class="kpi__spark" viewBox="0 0 88 28" aria-hidden="true"><path d="${SPARKS[i]}" fill="none"/></svg>
+          </div>`,
+    )
     .join('');
-  const reports = `  <section class="board">
+  const reports = `  <section class="board" id="reports">
     <div class="wrap">
       <h3 class="showcase__cap" data-reveal>${esc(c.product.reports)}</h3>
       <div class="app app--wide" data-reveal="app" aria-hidden="true">
         <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.reports'))}</span></div>
-        <div class="app__main app__main--rep">
-          <div class="rep__head"><h3>${esc(t('nav.reports'))}</h3><span class="rep__trend">▲ 18%</span></div>
-          <div class="rep__chart">${repBars}</div>
+        <div class="app__main app__main--dash">
+          <div class="dash__head"><h3>${esc(t('nav.reports'))}</h3><span class="dash__live">${esc(dash.live)}</span><span class="rep__trend">▲ 18%</span></div>
+          <div class="dash__row">
+            <figure class="dash__panel dash__panel--area"><figcaption>${esc(dash.trend)}</figcaption>${areaChart}</figure>
+            <figure class="dash__panel dash__panel--gauge">${gauge}<figcaption>${esc(dash.gauge)}</figcaption></figure>
+          </div>
+          <div class="dash__kpis">${kpis}</div>
         </div>
       </div>
     </div>
