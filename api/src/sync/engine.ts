@@ -1138,7 +1138,10 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
     return true;
   }
   const due = await r.deps.db.system((q) =>
-    q.query(`select * from sync_changes where org_id = $1 and connection_id = $2 and next_at <= $3 ${freshOnly ? 'and attempts = 0' : ''} order by changed_at limit 200`, [orgId, r.conn.id, r.ctx.now()]),
+    // date_trunc to milliseconds: next_at is set by the database's now() (microseconds),
+    // while the bound is the app clock as a millisecond JS Date, so a change queued in the
+    // same millisecond as this read would otherwise look like it is in the future.
+    q.query(`select *, changed_at::text as changed_at_text from sync_changes where org_id = $1 and connection_id = $2 and date_trunc('milliseconds', next_at) <= $3 ${freshOnly ? 'and attempts = 0' : ''} order by changed_at limit 200`, [orgId, r.conn.id, r.ctx.now()]),
   );
   due.sort((a, b) => ORDER[a.entity as TargetKind] - ORDER[b.entity as TargetKind]);
   for (const ch of due) {
@@ -1217,7 +1220,11 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
       }
       // Our own write will come back on the next read; forget the old fingerprint so it is compared, not skipped.
       if (link) await r.deps.db.system((q) => q.query('update sync_links set remote_hash = null where connection_id = $1 and object = $2 and remote_id = $3', [r.conn.id, link.object, link.remote_id]));
-      await r.deps.db.system((q) => q.query('delete from sync_changes where id = $1 and org_id = $2 and changed_at = $3', [ch.id, orgId, ch.changed_at]));
+      // Match changed_at as full-precision text: real Postgres keeps microseconds,
+      // but a round-tripped JS Date is millisecond-only, so '= $3' with a Date never
+      // matches and the change would never clear. The guard still skips a re-queue
+      // (which sets changed_at = now()).
+      await r.deps.db.system((q) => q.query('delete from sync_changes where id = $1 and org_id = $2 and changed_at = $3::timestamptz', [ch.id, orgId, ch.changed_at_text]));
       statsOf(r, map.remote).pushed++;
     } catch (e) {
       if (e instanceof CrmError && (e.auth || e.retryAfter)) throw e;
