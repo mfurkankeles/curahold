@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Board, BoardNotify, Column, Connection, Visibility } from '../../../shared/src/model';
 import { ApiFailure, del, get, patch, post, put } from '../lib/api';
 import { PORTAL_FIELDS, type BoardPortal, type PortalField, type PortalSettings } from '../../../shared/src/portal';
+import type { MessageKey } from '../../../shared/src/i18n';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -11,6 +12,7 @@ import { Confirm, Dialog, PeoplePicker } from './ui';
 import { BoardFormEditor, TaskFieldsEditor } from './BoardFields';
 import type { BoardForm, TaskField } from '../../../shared/src/model';
 import { pmColumns } from '../../../shared/src/templates';
+import { pmOn } from './Pm';
 
 const slug = (s: string, taken: Set<string>) => {
   let base = s.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20) || 'col';
@@ -121,6 +123,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
           </span>
         </label>
       )}
+      {board && board.canManage && <BoardPmSettings board={board} />}
       {columns && (
         <div className="field">
           <span className="field__label">{t('board.columns')}</span>
@@ -268,6 +271,36 @@ function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v:
 }
 
 
+
+/** Turn the product-management features (issue types, points, epics, sprints, the backlog and sprint views) on or off for one board. */
+function BoardPmSettings({ board }: { board: Board }) {
+  const { t } = useI18n();
+  const { reloadBoards, toast } = useStore();
+  const [enabled, setEnabled] = useState(pmOn(board));
+  const [busy, setBusy] = useState(false);
+  const change = async (next: boolean) => {
+    setEnabled(next);
+    setBusy(true);
+    try {
+      await put(`/boards/${board.id}/pm`, { enabled: next });
+      await reloadBoards();
+    } catch (e) {
+      setEnabled(!next);
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <label className="checkbox">
+      <input type="checkbox" checked={enabled} disabled={busy} onChange={(e) => change(e.target.checked)} />
+      <span>
+        <strong>{t('pm.board.enable' as MessageKey)}</strong>
+        <span className="field__hint" style={{ display: 'block' }}>{t('pm.board.enableHint' as MessageKey)}</span>
+      </span>
+    </label>
+  );
+}
 
 /** Open this board to customers: where their requests land, what they read for each column, which details they see. */
 function BoardPortalSettings({ board }: { board: Board }) {

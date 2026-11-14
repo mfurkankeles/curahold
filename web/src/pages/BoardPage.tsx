@@ -20,7 +20,7 @@ import { BoardArchive } from '../components/BoardArchive';
 import { ExportMenu } from '../components/Export';
 import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
-import { IssueBadge, isPmBoard, PointsChip } from '../components/Pm';
+import { IssueBadge, pmOn, PointsChip } from '../components/Pm';
 import { BacklogView, SprintsView } from '../components/Sprints';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
@@ -98,8 +98,11 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   );
 
   if (!board) return <div className="empty">{t('errors.not_found')}</div>;
-  const pmView = view === 'backlog' || view === 'sprints';
-  const pmTabs = isPmBoard(board) || pmView;
+  // Product-management features follow the board's switch; when off, its backlog
+  // and sprint views fall back to the ordinary board so a stale link still works.
+  const pm = pmOn(board);
+  const pmView = (view === 'backlog' || view === 'sprints') && pm;
+  const pmTabs = pm;
 
   return (
     <>
@@ -191,9 +194,9 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       )}
       {view === 'archive' ? (
         <BoardArchive board={board} onRestored={() => void load()} />
-      ) : view === 'backlog' ? (
+      ) : pmView && view === 'backlog' ? (
         <BacklogView board={board} refreshKey={refreshKey} />
-      ) : view === 'sprints' ? (
+      ) : pmView && view === 'sprints' ? (
         <SprintsView board={board} refreshKey={refreshKey} />
       ) : tasks === null ? (
         view === 'list' ? (

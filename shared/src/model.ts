@@ -122,7 +122,7 @@ export interface Sprint {
   updatedAt: string;
 }
 
-/** Current totals of a sprint (the burndown history comes later). */
+/** Current totals of a sprint. */
 export interface SprintSummary {
   sprintId: string;
   totalPoints: number;
@@ -132,6 +132,41 @@ export interface SprintSummary {
   /** Items without story points. */
   unestimated: number;
   byType: Record<IssueType, { count: number; done: number; points: number }>;
+}
+
+/** One day on a sprint's burndown: the scope that day and what was left of it. */
+export interface BurndownPoint {
+  /** The company's calendar day, YYYY-MM-DD. */
+  day: string;
+  totalPoints: number;
+  remainingPoints: number;
+  totalCount: number;
+  remainingCount: number;
+}
+
+/**
+ * A sprint's burndown series: the daily snapshots the engine has recorded, plus
+ * a live point for today, so the chart is never empty. The ideal line runs from
+ * `startPoints` on the start day down to zero on the end day.
+ */
+export interface SprintBurndown {
+  sprintId: string;
+  startsOn: string | null;
+  endsOn: string | null;
+  /** The scope the ideal line starts from (the first point's total). */
+  startPoints: number;
+  /** Chronological; the last point is today's live reading. */
+  points: BurndownPoint[];
+}
+
+/**
+ * Whether product-management features are on for one board. `pmEnabled` is the
+ * board's own switch (null = unset); `enabled` is the effective answer, falling
+ * back to whether the board has the product-development stages.
+ */
+export interface BoardPmState {
+  pmEnabled: boolean | null;
+  enabled: boolean;
 }
 
 export interface OrgPublic {
@@ -454,6 +489,8 @@ export interface Board {
   form: BoardForm | null;
   /** Finished tasks move to the board's archive after this many days; null keeps them on the board. */
   archiveDays: number | null;
+  /** The board's product-management switch: true/false override, null (or absent) follows the PM stages. */
+  pmEnabled?: boolean | null;
 }
 
 export const TASK_FIELD_TYPES = ['text', 'number', 'money', 'date', 'select', 'url', 'email', 'person', 'checkbox'] as const;

@@ -1,9 +1,22 @@
 // Backlog and sprints of a board: plan work into a sprint, run the active one on
 // the board's own stages, close it, and read how much was finished.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Board, Sprint, SprintSummary, Task } from '../../../shared/src/model';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import type { Board, Sprint, SprintBurndown, SprintSummary, Task } from '../../../shared/src/model';
 import { ISSUE_TYPES } from '../../../shared/src/model';
 import { KanbanView } from '../pages/BoardPage';
+import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
@@ -70,7 +83,9 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState('');
+  const [dragging, setDragging] = useState<Task | null>(null);
   const open = useMemo(() => (sprints ?? []).filter((s) => s.state !== 'closed'), [sprints]);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
 
   const load = useCallback(async () => {
     try {
@@ -87,8 +102,8 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
     if (!target || !open.some((s) => s.id === target)) setTarget((open.find((s) => s.state === 'active') ?? open[0])?.id ?? '');
   }, [open, target]);
 
-  const addTo = async (ids: string[]) => {
-    const sprint = open.find((s) => s.id === target);
+  const addTo = async (ids: string[], sprintId = target) => {
+    const sprint = open.find((s) => s.id === sprintId);
     if (!sprint || !ids.length) return;
     const ok = await save(() => put(`/sprints/${sprint.id}/items`, { taskIds: ids }), t('pm.backlog.added', { n: ids.length, sprint: sprint.name }));
     if (ok) {
@@ -97,15 +112,16 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
     }
   };
 
-  const move = async (task: Task, dir: -1 | 1) => {
-    const list = tasks ?? [];
-    const i = list.findIndex((x) => x.id === task.id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= list.length) return;
-    // Between the neighbours on the far side of the one it passes.
-    const position = dir < 0 ? positionBetween(list[j - 1]?.position, list[j].position) : positionBetween(list[j].position, list[j + 1]?.position);
+  // Move a task so it sits just before `beforeId` (or at the end): the same
+  // fractional-position step the sprint board makes when a card is dropped.
+  const reorder = async (task: Task, beforeId: string | null) => {
+    const list = (tasks ?? []).filter((x) => x.id !== task.id);
+    const idx = beforeId ? list.findIndex((x) => x.id === beforeId) : list.length;
+    const at = idx < 0 ? list.length : idx;
+    const position = positionBetween(list[at - 1]?.position, list[at]?.position);
+    if (Math.abs(task.position - position) < 1e-9) return;
     const previous = tasks;
-    setTasks(list.map((x) => (x.id === task.id ? { ...x, position } : x)).sort((a, b) => a.position - b.position));
+    setTasks([...list.slice(0, at), { ...task, position }, ...list.slice(at)].sort((a, b) => a.position - b.position));
     try {
       const r = await saveTask(task, { position });
       setTasks((cur) => (cur ?? []).map((x) => (x.id === task.id ? { ...x, ...r.task } : x)).sort((a, b) => a.position - b.position));
@@ -115,101 +131,216 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
     }
   };
 
+  // The up / down buttons stay as the keyboard- and reader-friendly way to reorder.
+  const move = (task: Task, dir: -1 | 1) => {
+    const list = tasks ?? [];
+    const i = list.findIndex((x) => x.id === task.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    void reorder(task, dir < 0 ? list[j].id : (list[j + 1]?.id ?? null));
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    setDragging(null);
+    const task = (tasks ?? []).find((x) => x.id === String(e.active.id));
+    const over = e.over?.id ? String(e.over.id) : null;
+    if (!task || !over) return;
+    if (over.startsWith('sprint:')) void addTo([task.id], over.slice(7));
+    else if (over === 'backlog-end') void reorder(task, null);
+    else if (over.startsWith('row:') && over.slice(4) !== task.id) void reorder(task, over.slice(4));
+  };
+
   if (failed && tasks === null) return <div className="page"><LoadError onRetry={() => void load()} /></div>;
   if (tasks === null) return <div className="page"><SkeletonRows label={t('common.loading')} /></div>;
   const epicName = (id: string | null | undefined) => (id ? epics?.find((e) => e.id === id)?.title : undefined);
 
   return (
-    <div className="page">
-      <p className="muted" style={{ marginTop: 0 }}>
-        {t('pm.backlog.hint')} <span className="num">{t('pm.points.short', { n: sum(tasks) })}</span>
-      </p>
-      {canWrite && (
-        <div className="bulkbar" role="region" aria-label={t('pm.addToSprint')}>
-          <strong>{selected.size ? t('board.selected', { n: selected.size }) : t('pm.addToSprint')}</strong>
-          {open.length ? (
-            <>
-              <select className="select" value={target} aria-label={t('pm.sprint')} onChange={(e) => setTarget(e.target.value)}>
-                {open.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({t(`pm.sprint.${s.state}`)})
-                  </option>
-                ))}
-              </select>
-              <button className="btn btn--primary btn--small" disabled={!selected.size || !target} onClick={() => addTo([...selected])}>
-                {t('pm.addToSprint')}
-              </button>
-            </>
-          ) : (
-            <span className="muted">{t('pm.backlog.noSprints')}</span>
-          )}
-        </div>
-      )}
-      {tasks.length === 0 ? (
-        <EmptyState compact icon="list" title={t('pm.backlog.empty')} />
-      ) : (
-        <table className="table tasklist pm-backlog">
-          <thead>
-            <tr>
-              {canWrite && (
-                <th className="check-cell">
-                  <input type="checkbox" aria-label={t('board.selectAll')} checked={tasks.every((x) => selected.has(x.id))} onChange={(e) => setSelected(e.target.checked ? new Set(tasks.map((x) => x.id)) : new Set())} />
-                </th>
-              )}
-              <th>{t('task.title')}</th>
-              <th>{t('pm.epic')}</th>
-              <th>{t('pm.points')}</th>
-              {canWrite && <th aria-hidden="true" />}
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((x, i) => (
-              <tr key={x.id} className="tasklist__row" onClick={(e) => !(e.target as HTMLElement).closest('input, button, a, select') && setQuery('task', x.id)}>
-                {canWrite && (
-                  <td className="check-cell">
-                    <input
-                      type="checkbox"
-                      aria-label={t('board.select', { title: x.title })}
-                      checked={selected.has(x.id)}
-                      onChange={(e) => {
-                        const next = new Set(selected);
-                        if (e.target.checked) next.add(x.id);
-                        else next.delete(x.id);
-                        setSelected(next);
-                      }}
-                    />
-                  </td>
+    <DndContext
+      sensors={canWrite ? sensors : []}
+      onDragStart={(e: DragStartEvent) => setDragging((tasks ?? []).find((x) => x.id === String(e.active.id)) ?? null)}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setDragging(null)}
+    >
+      <div className="page">
+        <p className="muted" style={{ marginTop: 0 }}>
+          {t('pm.backlog.hint')} <span className="num">{t('pm.points.short', { n: sum(tasks) })}</span>
+        </p>
+        {canWrite && (
+          <div className="bulkbar" role="region" aria-label={t('pm.addToSprint')}>
+            <strong>{selected.size ? t('board.selected', { n: selected.size }) : t('pm.addToSprint')}</strong>
+            {open.length ? (
+              <>
+                <select className="select" value={target} aria-label={t('pm.sprint')} onChange={(e) => setTarget(e.target.value)}>
+                  {open.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({t(`pm.sprint.${s.state}`)})
+                    </option>
+                  ))}
+                </select>
+                <button className="btn btn--primary btn--small" disabled={!selected.size || !target} onClick={() => addTo([...selected])}>
+                  {t('pm.addToSprint')}
+                </button>
+                {dragging && (
+                  <span className="pm-dropzones">
+                    <span className="pm-dropzones__hint">{t('pm.backlog.dropSprint' as MessageKey)}</span>
+                    {open.map((s) => (
+                      <SprintDropZone key={s.id} sprint={s} />
+                    ))}
+                  </span>
                 )}
-                <td className="tasklist__title">
-                  <IssueBadge type={x.issueType ?? 'task'} />
-                  <button className="rowlink" onClick={() => setQuery('task', x.id)}>
-                    {x.title}
-                  </button>
-                </td>
-                <td className="muted">{epicName(x.epicId)}</td>
-                <td>
-                  <PointsChip points={x.storyPoints} />
-                </td>
+              </>
+            ) : (
+              <span className="muted">{t('pm.backlog.noSprints')}</span>
+            )}
+          </div>
+        )}
+        {tasks.length === 0 ? (
+          <EmptyState compact icon="list" title={t('pm.backlog.empty')} />
+        ) : (
+          <table className="table tasklist pm-backlog" data-dragging={dragging ? 'yes' : undefined}>
+            <thead>
+              <tr>
+                {canWrite && <th className="pm-grip-cell" aria-hidden="true" />}
                 {canWrite && (
-                  <td className="pm-rowactions">
-                    <button className="btn btn--quiet btn--icon btn--small" disabled={i === 0} aria-label={t('pm.moveUp')} title={t('pm.moveUp')} onClick={() => move(x, -1)}>
-                      <Icon name="chevronDown" size={14} className="pm-flip" />
-                    </button>
-                    <button className="btn btn--quiet btn--icon btn--small" disabled={i === tasks.length - 1} aria-label={t('pm.moveDown')} title={t('pm.moveDown')} onClick={() => move(x, 1)}>
-                      <Icon name="chevronDown" size={14} />
-                    </button>
-                    <button className="btn btn--quiet btn--small" disabled={!target} onClick={() => addTo([x.id])}>
-                      {t('pm.addToSprint')}
-                    </button>
-                  </td>
+                  <th className="check-cell">
+                    <input type="checkbox" aria-label={t('board.selectAll')} checked={tasks.every((x) => selected.has(x.id))} onChange={(e) => setSelected(e.target.checked ? new Set(tasks.map((x) => x.id)) : new Set())} />
+                  </th>
                 )}
+                <th>{t('task.title')}</th>
+                <th>{t('pm.epic')}</th>
+                <th>{t('pm.points')}</th>
+                {canWrite && <th aria-hidden="true" />}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+            </thead>
+            <tbody>
+              {tasks.map((x, i) => (
+                <BacklogRow
+                  key={x.id}
+                  task={x}
+                  index={i}
+                  count={tasks.length}
+                  canWrite={canWrite}
+                  selected={selected.has(x.id)}
+                  epicName={epicName(x.epicId)}
+                  hasTarget={!!target}
+                  onToggle={(on) => {
+                    const next = new Set(selected);
+                    if (on) next.add(x.id);
+                    else next.delete(x.id);
+                    setSelected(next);
+                  }}
+                  onMove={move}
+                  onAdd={() => addTo([x.id])}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+        {canWrite && tasks.length > 0 && dragging && <BacklogEnd />}
+      </div>
+      <DragOverlay>
+        {dragging ? (
+          <div className="pm-backlog__ghost">
+            <IssueBadge type={dragging.issueType ?? 'task'} /> {dragging.title}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
+}
+
+/** One backlog row: draggable by its grip, a drop target for reordering before it. */
+function BacklogRow({
+  task,
+  index,
+  count,
+  canWrite,
+  selected,
+  epicName,
+  hasTarget,
+  onToggle,
+  onMove,
+  onAdd,
+}: {
+  task: Task;
+  index: number;
+  count: number;
+  canWrite: boolean;
+  selected: boolean;
+  epicName: string | undefined;
+  hasTarget: boolean;
+  onToggle: (on: boolean) => void;
+  onMove: (task: Task, dir: -1 | 1) => void;
+  onAdd: () => void;
+}) {
+  const { t } = useI18n();
+  const drag = useDraggable({ id: task.id });
+  const drop = useDroppable({ id: `row:${task.id}` });
+  const ref = (el: HTMLTableRowElement | null) => {
+    drag.setNodeRef(el);
+    drop.setNodeRef(el);
+  };
+  return (
+    <tr
+      ref={ref}
+      className="tasklist__row"
+      data-dragging={drag.isDragging || undefined}
+      data-over={drop.isOver && !drag.isDragging ? 'yes' : undefined}
+      onClick={(e) => !(e.target as HTMLElement).closest('input, button, a, select') && setQuery('task', task.id)}
+    >
+      {canWrite && (
+        <td className="pm-grip-cell">
+          <button className="btn btn--quiet btn--icon btn--small pm-grip" aria-label={t('pm.reorder' as MessageKey)} title={t('pm.reorder' as MessageKey)} {...drag.attributes} {...drag.listeners}>
+            <Icon name="grip" size={14} />
+          </button>
+        </td>
+      )}
+      {canWrite && (
+        <td className="check-cell">
+          <input type="checkbox" aria-label={t('board.select', { title: task.title })} checked={selected} onChange={(e) => onToggle(e.target.checked)} />
+        </td>
+      )}
+      <td className="tasklist__title">
+        <IssueBadge type={task.issueType ?? 'task'} />
+        <button className="rowlink" onClick={() => setQuery('task', task.id)}>
+          {task.title}
+        </button>
+      </td>
+      <td className="muted">{epicName}</td>
+      <td>
+        <PointsChip points={task.storyPoints} />
+      </td>
+      {canWrite && (
+        <td className="pm-rowactions">
+          <button className="btn btn--quiet btn--icon btn--small" disabled={index === 0} aria-label={t('pm.moveUp')} title={t('pm.moveUp')} onClick={() => onMove(task, -1)}>
+            <Icon name="chevronDown" size={14} className="pm-flip" />
+          </button>
+          <button className="btn btn--quiet btn--icon btn--small" disabled={index === count - 1} aria-label={t('pm.moveDown')} title={t('pm.moveDown')} onClick={() => onMove(task, 1)}>
+            <Icon name="chevronDown" size={14} />
+          </button>
+          <button className="btn btn--quiet btn--small" disabled={!hasTarget} onClick={onAdd}>
+            {t('pm.addToSprint')}
+          </button>
+        </td>
+      )}
+    </tr>
+  );
+}
+
+/** A sprint shown as a drop target while a backlog item is being dragged. */
+function SprintDropZone({ sprint }: { sprint: Sprint }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `sprint:${sprint.id}` });
+  return (
+    <span ref={setNodeRef} className="pm-dropzone" data-over={isOver || undefined}>
+      {sprint.name}
+    </span>
+  );
+}
+
+/** A drop target below the last row, to drop an item at the end of the backlog. */
+function BacklogEnd() {
+  const { setNodeRef, isOver } = useDroppable({ id: 'backlog-end' });
+  return <div ref={setNodeRef} className="pm-backlog__end" data-over={isOver || undefined} aria-hidden="true" />;
 }
 
 // ------------------------------------------------------------------ sprints
@@ -365,6 +496,84 @@ function SummaryStrip({ summary }: { summary: SprintSummary | null }) {
   );
 }
 
+/** Days since the epoch for a YYYY-MM-DD day, to place points along the x-axis. */
+function dayNum(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Math.round(Date.UTC(y, m - 1, d) / 86400000);
+}
+
+/**
+ * The sprint's burndown: the ideal line (scope down to zero across the sprint's
+ * dates) against the actual remaining points. Plain SVG for the two lines with
+ * HTML dots positioned over it — the same lightweight approach as the reports'
+ * line chart, so it carries the palette and needs no chart library.
+ */
+function BurndownChart({ sprintId, refreshKey }: { sprintId: string; refreshKey: number }) {
+  const { t, fmtDate } = useI18n();
+  const [data, setData] = useState<SprintBurndown | null>(null);
+  useEffect(() => {
+    let live = true;
+    setData(null);
+    get<{ burndown: SprintBurndown }>(`/sprints/${sprintId}/burndown`)
+      .then((r) => live && setData(r.burndown))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [sprintId, refreshKey]);
+
+  if (!data || !data.points.length) return null;
+  const pts = data.points;
+  const first = pts[0].day;
+  const last = pts[pts.length - 1].day;
+  const startX = dayNum(data.startsOn ?? first);
+  const endX = dayNum(data.endsOn ?? last);
+  const lo = Math.min(startX, dayNum(first));
+  const hi = Math.max(endX, dayNum(last), lo + 1);
+  const span = hi - lo || 1;
+  const top = Math.max(data.startPoints, ...pts.map((p) => p.remainingPoints), 1);
+  const x = (dn: number) => ((dn - lo) / span) * 100;
+  const y = (v: number) => 100 - (v / top) * 100;
+  const remaining = pts[pts.length - 1].remainingPoints;
+  const actual = pts.map((p) => `${x(dayNum(p.day)).toFixed(2)},${y(p.remainingPoints).toFixed(2)}`).join(' ');
+  const ideal = `M${x(startX).toFixed(2)},${y(data.startPoints).toFixed(2)} L${x(endX).toFixed(2)},${y(0).toFixed(2)}`;
+
+  return (
+    <div className="pm-burndown">
+      <div className="pm-burndown__head">
+        <span className="pm-burndown__title">{t('pm.burndown' as MessageKey)}</span>
+        <ul className="pm-burndown__key">
+          <li>
+            <i className="pm-burndown__swatch pm-burndown__swatch--ideal" /> {t('pm.burndown.ideal' as MessageKey)}
+          </li>
+          <li>
+            <i className="pm-burndown__swatch pm-burndown__swatch--actual" /> {t('pm.burndown.actual' as MessageKey)}
+          </li>
+        </ul>
+      </div>
+      <div className="pm-burndown__plot">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={t('pm.burndown.label' as MessageKey, { remaining, total: data.startPoints })}>
+          <path className="pm-burndown__ideal" d={ideal} vectorEffect="non-scaling-stroke" />
+          <polyline className="pm-burndown__actual" points={actual} vectorEffect="non-scaling-stroke" />
+        </svg>
+        {pts.map((p) => (
+          <i
+            key={p.day}
+            className="pm-burndown__dot"
+            style={{ left: `${x(dayNum(p.day))}%`, top: `${y(p.remainingPoints)}%` }}
+            title={`${fmtDate(p.day)} · ${t('pm.points.short', { n: p.remainingPoints })}`}
+          />
+        ))}
+      </div>
+      <div className="pm-burndown__x">
+        <span>{fmtDate(data.startsOn ?? first)}</span>
+        <span className="pm-burndown__remain num">{t('pm.burndown.left' as MessageKey, { n: remaining })}</span>
+        <span>{fmtDate(data.endsOn ?? last)}</span>
+      </div>
+    </div>
+  );
+}
+
 function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }: { board: Board; sprint: Sprint | null; sprints: Sprint[]; refreshKey: number; onChanged: () => void; onList: () => void }) {
   const { t } = useI18n();
   const { canWrite, toast } = useStore();
@@ -433,6 +642,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
       </div>
       {sprint.goal && <p className="muted" style={{ margin: '0 0 12px' }}>{sprint.goal}</p>}
       <SummaryStrip summary={summary} />
+      {summary && summary.itemCount > 0 && <BurndownChart sprintId={sprint.id} refreshKey={refreshKey + bump} />}
       {items === null ? (
         <SkeletonRows label={t('common.loading')} />
       ) : items.length === 0 ? (

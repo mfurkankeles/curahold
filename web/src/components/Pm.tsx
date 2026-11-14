@@ -11,6 +11,9 @@ import { Icon } from './icons';
 /** A board that was made from the product-development workflow (it has its Backlog and QA stages). */
 export const isPmBoard = (board: Pick<Board, 'columns'> | undefined) => !!board && board.columns.some((c) => c.key === 'backlog') && board.columns.some((c) => c.key === 'qa');
 
+/** Whether product management is on for a board: its own switch wins, else whether it has the PM stages. */
+export const pmOn = (board: Pick<Board, 'columns' | 'pmEnabled'> | undefined): boolean => board?.pmEnabled ?? isPmBoard(board);
+
 const TONE: Record<IssueType, string> = { epic: 'amber', story: 'green', task: 'slate', bug: 'red', subtask: 'slate', spike: 'amber' };
 
 export function IssueBadge({ type }: { type: IssueType }) {

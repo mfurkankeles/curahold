@@ -4,14 +4,14 @@
 // what is visible — another company's sprint is simply "not found".
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { ISSUE_TYPES, SPRINT_STATES, type Column, type IssueType, type SprintSummary } from '../../../shared/src/model';
-import { requireWriter, run, type AppEnv } from '../context';
+import { ISSUE_TYPES, SPRINT_STATES, type BurndownPoint, type Column, type IssueType, type SprintBurndown, type SprintSummary } from '../../../shared/src/model';
+import { requireWriter, run, todayOf, type AppEnv } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { HttpError, fail } from '../lib/errors';
 import { toSprint, toTask } from '../lib/mappers';
 import { body, isoDate, param, uuid } from '../lib/validate';
-import { loadBoard } from './boards';
+import { canManageBoard, loadBoard } from './boards';
 
 export const pmRoutes = new Hono<AppEnv>();
 
@@ -27,6 +27,30 @@ async function loadTask(q: Q, id: string): Promise<Row> {
   return t;
 }
 
+// ----------------------------------------------------- product management on/off
+
+/** A board carries the product-development stages (Backlog … QA): its sprints and backlog show by default. */
+const hasPmStages = (columns: Column[]) => columns.some((c) => c.key === 'backlog') && columns.some((c) => c.key === 'qa');
+
+/** The board's effective PM state: its own switch wins, else whether it has the PM stages. */
+const pmEnabledFor = (board: Row): boolean => (board.pm_enabled == null ? hasPmStages(board.columns) : board.pm_enabled === true);
+
+/**
+ * When a board's owner has switched product management OFF (pm_enabled = false),
+ * its PM endpoints answer "not found" — a non-product team never reaches them.
+ * A board that was never switched (null) keeps its old behaviour, so this never
+ * blocks a board that simply uses issue types without the product workflow.
+ */
+function requirePm(board: Row) {
+  if (board.pm_enabled === false) fail('not_found');
+}
+
+/** Gate a sprint- or task-scoped endpoint by its board's PM switch, without loading the whole board. */
+async function requireBoardPm(q: Q, boardId: string) {
+  const [b] = await q.query('select pm_enabled from boards where id = $1', [boardId]);
+  if (b && b.pm_enabled === false) fail('not_found');
+}
+
 function checkDates(start: string | null | undefined, end: string | null | undefined) {
   if (start && end && start > end) fail('validation', { fields: 'startsOn' }, { fields: ['startsOn'] });
 }
@@ -40,7 +64,7 @@ pmRoutes.get('/boards/:id/sprints', async (c) => {
   const state = c.req.query('state');
   if (state && !(SPRINT_STATES as readonly string[]).includes(state)) fail('validation', { fields: 'state' }, { fields: ['state'] });
   const rows = await run(c, async (q) => {
-    await loadBoard(q, id);
+    requirePm(await loadBoard(q, id));
     return q.query(
       `select * from sprints where board_id = $1 and archived_at is null and ($2::text is null or state = $2)
         order by position, created_at`,
@@ -48,6 +72,35 @@ pmRoutes.get('/boards/:id/sprints', async (c) => {
     );
   });
   return c.json({ sprints: rows.map(toSprint) });
+});
+
+// --------------------------------------------------- product management switch
+
+// The board's own on/off switch for the PM features, and the effective answer.
+pmRoutes.get('/boards/:id/pm', async (c) => {
+  const id = param(c, 'id');
+  const state = await run(c, async (q) => {
+    const b = await loadBoard(q, id);
+    return { pmEnabled: b.pm_enabled ?? null, enabled: pmEnabledFor(b) };
+  });
+  return c.json(state);
+});
+
+// Turn product management on or off for one board (or clear it back to the default).
+pmRoutes.put('/boards/:id/pm', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const input = await body(c, z.object({ enabled: z.boolean().nullable() }));
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const state = await run(c, async (q) => {
+    const b = await loadBoard(q, id);
+    if (!canManageBoard(auth, b)) fail('forbidden');
+    const [u] = await q.query('update boards set pm_enabled = $2 where id = $1 returning *', [id, input.enabled]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'board.updated', entity: 'board', entityId: id, meta: { pmEnabled: input.enabled } });
+    return { pmEnabled: u.pm_enabled ?? null, enabled: pmEnabledFor(u) };
+  });
+  return c.json(state);
 });
 
 const sprintFields = {
@@ -65,7 +118,7 @@ pmRoutes.post('/boards/:id/sprints', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const sprint = await run(c, async (q) => {
-    await loadBoard(q, id);
+    requirePm(await loadBoard(q, id));
     const [m] = await q.query('select coalesce(max(position), 0) + 1024 as p from sprints where board_id = $1', [id]);
     const [s] = await q.query(
       `insert into sprints (org_id, board_id, name, goal, starts_on, ends_on, position, created_by)
@@ -80,7 +133,11 @@ pmRoutes.post('/boards/:id/sprints', async (c) => {
 
 pmRoutes.get('/sprints/:id', async (c) => {
   const id = param(c, 'id');
-  const s = await run(c, (q) => loadSprint(q, id));
+  const s = await run(c, async (q) => {
+    const s = await loadSprint(q, id);
+    await requireBoardPm(q, s.board_id);
+    return s;
+  });
   return c.json({ sprint: toSprint(s) });
 });
 
@@ -92,6 +149,7 @@ pmRoutes.patch('/sprints/:id', async (c) => {
   const org = c.get('org');
   const sprint = await run(c, async (q) => {
     const cur = await loadSprint(q, id);
+    await requireBoardPm(q, cur.board_id);
     const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
     checkDates(input.startsOn !== undefined ? input.startsOn : day(cur.starts_on), input.endsOn !== undefined ? input.endsOn : day(cur.ends_on));
     const [s] = await q.query(
@@ -118,6 +176,7 @@ pmRoutes.put('/sprints/:id/state', async (c) => {
   const sprint = await run(c, async (q) => {
     const cur = await loadSprint(q, id);
     const board = await loadBoard(q, cur.board_id);
+    requirePm(board);
     if (input.state === 'active' && cur.state !== 'active') {
       const [other] = await q.query(
         `select id from sprints where board_id = $1 and state = 'active' and archived_at is null and id <> $2`,
@@ -158,7 +217,8 @@ pmRoutes.delete('/sprints/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    await loadSprint(q, id);
+    const s = await loadSprint(q, id);
+    await requireBoardPm(q, s.board_id);
     await q.query('update tasks set sprint_id = null, version = version + 1, updated_at = now(), updated_by = $2 where sprint_id = $1', [id, auth.userId]);
     await q.query(`update sprints set archived_at = now(), updated_at = now(), state = case when state = 'active' then 'closed' else state end where id = $1`, [id]);
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'sprint.archived', entity: 'sprint', entityId: id });
@@ -174,6 +234,7 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
   const openOnly = c.req.query('open') === '1';
   const rows = await run(c, async (q) => {
     const board = await loadBoard(q, id);
+    requirePm(board);
     return q.query(
       `select t.* from tasks t
         where t.board_id = $1 and t.sprint_id is null and t.parent_id is null and t.archived_at is null
@@ -188,7 +249,7 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
 pmRoutes.get('/boards/:id/epics', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    await loadBoard(q, id);
+    requirePm(await loadBoard(q, id));
     return q.query(
       `select t.*, (select count(*) from tasks s where s.epic_id = t.id and s.archived_at is null) as child_count
          from tasks t where t.board_id = $1 and t.issue_type = 'epic' and t.archived_at is null order by t.position, t.created_at`,
@@ -201,7 +262,8 @@ pmRoutes.get('/boards/:id/epics', async (c) => {
 pmRoutes.get('/sprints/:id/items', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    await loadSprint(q, id);
+    const s = await loadSprint(q, id);
+    await requireBoardPm(q, s.board_id);
     return q.query('select * from tasks where sprint_id = $1 and archived_at is null order by position, created_at', [id]);
   });
   return c.json({ tasks: rows.map(toTask) });
@@ -216,6 +278,7 @@ pmRoutes.put('/sprints/:id/items', async (c) => {
   const org = c.get('org');
   const rows = await run(c, async (q) => {
     const sprint = await loadSprint(q, id);
+    await requireBoardPm(q, sprint.board_id);
     if (sprint.state === 'closed') fail('validation', { fields: 'sprint' }, { fields: ['sprint'] });
     const found = await q.query('select id, board_id from tasks where id = any($1::uuid[]) and archived_at is null', [ids]);
     if (found.length !== ids.length) fail('not_found');
@@ -238,7 +301,8 @@ pmRoutes.delete('/sprints/:id/items/:taskId', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const task = await run(c, async (q) => {
-    await loadSprint(q, id);
+    const s = await loadSprint(q, id);
+    await requireBoardPm(q, s.board_id);
     const [t] = await q.query(
       `update tasks set sprint_id = null, version = version + 1, updated_at = now(), updated_by = $3
         where id = $1 and sprint_id = $2 and archived_at is null returning *`,
@@ -259,6 +323,7 @@ pmRoutes.get('/sprints/:id/summary', async (c) => {
   const { board, rows } = await run(c, async (q) => {
     const sprint = await loadSprint(q, id);
     const board = await loadBoard(q, sprint.board_id);
+    requirePm(board);
     const rows = await q.query(
       `select issue_type, count(*)::int as n,
               count(*) filter (where status = any($2::text[]))::int as done_n,
@@ -284,6 +349,66 @@ pmRoutes.get('/sprints/:id/summary', async (c) => {
   return c.json({ summary: out });
 });
 
+// -------------------------------------------------------------- burndown
+
+// The sprint's burndown series: the engine's daily snapshots (lib/burndown.ts),
+// with a live point for today so the chart renders before the first snapshot and
+// always ends on the current reading. The ideal line is drawn by the client from
+// startPoints down to zero across the sprint's dates.
+pmRoutes.get('/sprints/:id/burndown', async (c) => {
+  const id = param(c, 'id');
+  const today = todayOf(c);
+  const { sprint, snaps, cur } = await run(c, async (q) => {
+    const sprint = await loadSprint(q, id);
+    const board = await loadBoard(q, sprint.board_id);
+    requirePm(board);
+    const snaps = await q.query(
+      `select to_char(day, 'YYYY-MM-DD') as day, total_points, remaining_points, total_count, remaining_count
+         from sprint_burndowns where sprint_id = $1 order by day`,
+      [id],
+    );
+    const [cur] = await q.query(
+      `select coalesce(sum(story_points), 0) as total_points, count(*)::int as total_count,
+              coalesce(sum(story_points) filter (where status = any($2::text[])), 0) as done_points,
+              count(*) filter (where status = any($2::text[]))::int as done_count
+         from tasks where sprint_id = $1 and archived_at is null`,
+      [id, doneKeys(board.columns)],
+    );
+    return { sprint, snaps, cur };
+  });
+
+  const points: BurndownPoint[] = snaps.map((r) => ({
+    day: r.day as string,
+    totalPoints: Number(r.total_points),
+    remainingPoints: Number(r.remaining_points),
+    totalCount: Number(r.total_count),
+    remainingCount: Number(r.remaining_count),
+  }));
+  // Today's live reading, from the current task state. It replaces a stored point
+  // for today, or is slotted in so the series stays in date order.
+  const todayPoint: BurndownPoint = {
+    day: today,
+    totalPoints: Number(cur.total_points),
+    remainingPoints: Number(cur.total_points) - Number(cur.done_points),
+    totalCount: Number(cur.total_count),
+    remainingCount: Number(cur.total_count) - Number(cur.done_count),
+  };
+  const at = points.findIndex((p) => p.day >= today);
+  if (at >= 0 && points[at].day === today) points[at] = todayPoint;
+  else if (at >= 0) points.splice(at, 0, todayPoint);
+  else points.push(todayPoint);
+
+  const sm = toSprint(sprint);
+  const burndown: SprintBurndown = {
+    sprintId: id,
+    startsOn: sm.startsOn,
+    endsOn: sm.endsOn,
+    startPoints: points[0]?.totalPoints ?? 0,
+    points,
+  };
+  return c.json({ burndown });
+});
+
 // ------------------------------------------------------- task PM fields
 
 // Optimistic concurrency like PATCH /tasks/:id: baseVersion must match, else 409 with the current task.
@@ -303,6 +428,7 @@ pmRoutes.patch('/tasks/:id/pm', async (c) => {
   const org = c.get('org');
   const result = await run(c, async (q) => {
     const t = await loadTask(q, id);
+    await requireBoardPm(q, t.board_id);
     if (Number(t.version) !== input.baseVersion) return { conflict: t };
     const type: IssueType = input.issueType ?? t.issue_type;
     let epicId: string | null = input.epicId !== undefined ? input.epicId : (t.epic_id ?? null);
