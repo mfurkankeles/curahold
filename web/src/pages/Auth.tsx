@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { Mark } from '../components/ui';
+import { SsoSignIn } from '../components/SsoSignIn';
 import { ApiFailure, post } from '../lib/api';
 import { deviceLabel, getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
@@ -158,6 +159,8 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
           {t('auth.microsoft')}
         </button>
       )}
+      {/* Enterprise SSO (SAML / OIDC), shown only when the company has it on. */}
+      <SsoSignIn org={org} />
       <p className="field__hint">{org.joinRequests ? t('auth.noAccountJoin') : t('auth.noAccountInvite')}</p>
     </AuthFrame>
   );
