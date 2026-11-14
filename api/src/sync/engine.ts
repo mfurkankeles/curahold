@@ -15,6 +15,8 @@ import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
 import { fullName, ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
 import { recomputeRollups } from '../lib/records';
+import { enqueue } from '../lib/notify';
+import { userManagers } from '../lib/people';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
 import { syncMailbox } from './mailsync';
 import { crmFetch } from './relay';
@@ -23,6 +25,24 @@ import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type Rem
 const MAX_ERRORS = 50;
 const BACKOFF_MIN = [1, 5, 30, 120, 720, 1440];
 const STALE_RUN_MS = 20 * 60_000;
+
+/**
+ * Decide whether to tell the admins about a finished run, once per failure episode.
+ * "Keeps failing" is lost credentials (someone has to reconnect) or two error runs in a row.
+ * `alertedAt` is the episode marker to persist on the connection; `kind` is null when nothing is sent.
+ */
+export function syncAlert(
+  prev: { lastRun?: { status?: string }; alertedAt?: string | null },
+  status: string,
+  authLost: boolean,
+  nowISO: string,
+): { alertedAt: string | null; kind: 'sync_failed' | 'sync_recovered' | null; stamp: string | null } {
+  const prevAlertedAt = prev?.alertedAt ?? null;
+  const persistentFail = authLost || (status === 'error' && prev?.lastRun?.status === 'error');
+  if (persistentFail && !prevAlertedAt) return { alertedAt: nowISO, kind: 'sync_failed', stamp: nowISO };
+  if (status === 'ok') return { alertedAt: null, kind: prevAlertedAt ? 'sync_recovered' : null, stamp: prevAlertedAt };
+  return { alertedAt: prevAlertedAt, kind: null, stamp: prevAlertedAt };
+}
 
 export interface LoadedCrm {
   id: string;
@@ -1316,6 +1336,8 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
   // The service said the credentials no longer work (a CrmError marked so), or its message says as much: someone has to reconnect.
   const authLost = authFailed || (fatal !== null && /reconnect|invalid_grant|expired|revoked|unauthori/i.test(fatal));
   const lastRun = { id: runId, status, more, at: nowOf(deps).toISOString(), stats: r?.stats ?? {} };
+  // Let the admins know when a sync keeps failing — once per episode, never every cycle.
+  const { alertedAt, kind: alertKind, stamp: alertStamp } = syncAlert(conn.state ?? {}, status, authLost, nowOf(deps).toISOString());
   await deps.db.system(async (q) => {
     await q.query(`update sync_runs set status = $3, finished_at = $4, stats = $5, errors = $6, more = $7 where id = $1 and org_id = $2`, [
       runId,
@@ -1330,8 +1352,17 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
       `update connections set state = $3, status = case when $4 then 'error' when status = 'error' and $5 then 'active' else status end,
               last_error = case when $5 then null else $6 end, last_ok_at = case when $5 then now() else last_ok_at end, updated_at = now()
         where id = $1 and org_id = $2`,
-      [conn.id, orgId, JSON.stringify({ ...conn.state, lastRun }), authLost, status !== 'error', fatal],
+      [conn.id, orgId, JSON.stringify({ ...conn.state, lastRun, alertedAt }), authLost, status !== 'error', fatal],
     );
+    // Reach the admins only at the edges: when it starts failing, and when it recovers.
+    if (alertKind) {
+      const managers = await userManagers(q, orgId);
+      const app = conn.label || conn.provider;
+      await enqueue(
+        q,
+        managers.map((m) => ({ orgId, userId: m, connectionId: conn.id, kind: alertKind, dedupeKey: `${alertKind}:${conn.id}:${m}:${alertStamp}`, data: { app, auth: authLost } })),
+      );
+    }
   });
   const [row] = await deps.db.system((q) => q.query('select * from sync_runs where id = $1 and org_id = $2', [runId, orgId]));
   return toRun(row);

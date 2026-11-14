@@ -98,7 +98,7 @@ export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, 
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
@@ -253,6 +253,16 @@ export function render(ctx: RenderCtx): ChatMessage {
       return { ...base, actions: undefined, title: t('notify.boardCreated', { board: task?.board_name ?? '' }), body: task?.title };
     case 'board_done':
       return { ...base, actions: undefined, title: t('notify.boardDone', { board: task?.board_name ?? '' }), body: task?.title, note: ctx.actorName ? t('notify.markedDone', { name: ctx.actorName }) : undefined };
+    case 'sync_failed':
+      // An integration keeps failing: the admins hear about it once, with the quickest way to fix it.
+      return {
+        title: t('notify.syncFailed', { app: data.app ?? '' }),
+        body: data.auth ? t('notify.syncFailedReconnect', { app: data.app ?? '' }) : t('notify.syncFailedRepeated', { app: data.app ?? '' }),
+        url: `${ctx.base}/settings/sources`,
+        openLabel: t('notify.open'),
+      };
+    case 'sync_recovered':
+      return { title: t('notify.syncRecovered', { app: data.app ?? '' }), body: '', url: `${ctx.base}/settings/sources`, openLabel: t('notify.open') };
     case 'test':
       return { title: t('notify.test'), body: t('notify.testBody', { org: ctx.orgName }), url: ctx.base, openLabel: t('notify.open') };
     case 'help':
