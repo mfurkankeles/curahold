@@ -139,7 +139,10 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - name: vitest (all, real Postgres)
-        run: npx vitest run
+        # Cap workers: the full suite against a single Postgres container oversubscribes it at the
+        # default worker count, which both slows the run and widens background-delivery timing races.
+        # Two workers is faster here and runs green deterministically; PGlite (Tests (PGlite)) stays fully parallel.
+        run: npx vitest run --maxWorkers=2
 
   # ------------------------------------------------------------------ REQUIRED guards
   # These three protect the product's top promises (QUALITY.md priority 1: no data leaks

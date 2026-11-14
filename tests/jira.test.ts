@@ -565,6 +565,11 @@ describe('Jira end to end', () => {
 
   it('a task made here becomes an issue there, a sprint made here a sprint there, in the right order', async () => {
     calls.length = 0;
+    // Hold the clock back while we make the task and put it in the sprint, so the eager
+    // background push doesn't fire mid-burst (it would send the task before its sprint is
+    // set); the single run below, after the clock jumps forward, is the one that pushes.
+    const base = Date.now();
+    env.clock.now = new Date(base - 10_000);
     const sp = await ada.post(`/api/boards/${board}/sprints`, { name: 'Sprint 3', goal: 'Polish', startsOn: '2026-12-07', endsOn: '2026-12-18' });
     expect(sp.status).toBe(201);
     const made = await ada.post('/api/tasks', { boardId: board, title: 'Write release notes', description: 'Plain text' });
@@ -573,7 +578,7 @@ describe('Jira end to end', () => {
     await ada.put(`/api/sprints/${sp.json.sprint.id}/items`, { taskIds: [t.id] });
     await ada.patch(`/api/tasks/${t.id}/pm`, { baseVersion: (await ada.get(`/api/tasks/${t.id}`)).json.task.version, issueType: 'story', storyPoints: 3 });
     await env.settle();
-    env.clock.now = new Date(Date.now() + 180_000);
+    env.clock.now = new Date(base + 180_000);
     const run = await runSync();
     expect(run, JSON.stringify(run.errors)).toMatchObject({ status: 'ok' });
     // The sprint first, then the issue, then it joins the sprint there.

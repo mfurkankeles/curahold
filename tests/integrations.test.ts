@@ -142,6 +142,7 @@ describe('the Zapier and Make apps against the real API', () => {
 
     const board = (await run('triggers', 'list_boards'))[0];
     const made = await run('creates', 'create_task', { boardId: board.id, title: 'Call about the renewal' });
+    await env.settle(); // the create/update above also kicks a background delivery; let it finish first
     await deliverWebhooks(env.deps, 50);
     const hit = sent.find((s) => s.url === target)!;
     expect(hit).toBeTruthy();
@@ -163,6 +164,7 @@ describe('the Zapier and Make apps against the real API', () => {
     // "Task completed" lets a change through only once the task is done.
     sent.length = 0;
     await run('creates', 'update_task', { taskId: made.id, title: 'Call about the renewal (booked)' });
+    await env.settle(); // the create/update above also kicks a background delivery; let it finish first
     await deliverWebhooks(env.deps, 50);
     const edit = sent.find((s) => s.url === `${target}-done`)!;
     expect(await done.perform(z, bundle(edit, subDone.secret))).toEqual([]);
@@ -170,6 +172,7 @@ describe('the Zapier and Make apps against the real API', () => {
     env.clock.now = new Date(Date.now() + 120_000);
     const doneKey = (await ada.get('/api/boards')).json.boards.find((b: any) => b.id === board.id).columns.find((c: any) => c.done).key;
     await run('creates', 'update_task', { taskId: made.id, status: doneKey });
+    await env.settle(); // the create/update above also kicks a background delivery; let it finish first
     await deliverWebhooks(env.deps, 50);
     const finished = sent.find((s) => s.url === `${target}-done`)!;
     expect(await done.perform(z, bundle(finished, subDone.secret))).toMatchObject([{ id: made.id, done: true, event: 'task.updated' }]);

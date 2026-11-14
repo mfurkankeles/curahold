@@ -166,6 +166,7 @@ describe('connecting a support tool and filing its tickets', () => {
     const t = (await ada.get('/api/records?type=ticket&limit=50')).json.records.find((r: any) => r.name === 'Report export');
     await ada.patch(`/api/records/${t.id}`, { fields: { priority: 'low' } });
     await ada.post(`/api/connections/${connId}/problems/retry`, {});
+    await env.settle(); // the write kicks a background push; let it finish before checking what went out
     expect(sent).toEqual([{ method: 'PUT', url: 'https://acme.zendesk.com/api/v2/tickets/13.json', body: { ticket: { priority: 'low' } } }]);
     const [n] = await env.db.system((q) => q.query('select count(*)::int as n from sync_changes where connection_id = $1', [connId]));
     expect(n.n).toBe(0);
