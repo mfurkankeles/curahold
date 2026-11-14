@@ -57,7 +57,8 @@ export function Bell() {
     void load();
     if (n.url) {
       const u = new URL(n.url, location.origin);
-      navigate(u.pathname + u.search);
+      // Keep the fragment: a help notice opens the person's requests at "#help".
+      navigate(u.pathname + u.search + u.hash);
     }
   };
 

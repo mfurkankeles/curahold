@@ -16,6 +16,7 @@ import { defer, orgUrl, type Deps } from '../context';
 import type { Q, Row } from '../db';
 import { randomToken } from './crypto';
 import { emailHtml } from './emailHtml';
+import { enqueue, kick } from './notify';
 
 export const toHelpMessage = (m: Row): HelpMessage => ({
   id: m.id,
@@ -171,6 +172,17 @@ export async function addHelpMessage(deps: Deps, orgId: string, requestId: strin
     const token = await tokenOf(q, req);
     const followers = req.followers?.length ? await q.query<{ id: string; name: string; email: string; locale: Locale | null }>(`select id, name, email, locale from users where id = any ($1) and org_id = $2 and status = 'active'`, [req.followers, orgId]) : [];
     const writer = m.author === 'user' && m.userId ? ((await q.query<{ name: string; email: string }>('select name, email from users where id = $1 and org_id = $2', [m.userId, orgId]))[0] ?? null) : null;
+    // A support answer the company can see also reaches the in-app bell/inbox, for
+    // the person who asked and everyone kept in the loop — the email below is the
+    // other half. A note the team keeps to itself, or a reply from the company,
+    // raises neither (the desk hears those by email instead).
+    if (m.author === 'support' && !m.internal) {
+      const recipients = [...new Set([req.user_id, ...(req.followers ?? [])].filter((id: string | null): id is string => !!id))];
+      await enqueue(
+        q,
+        recipients.map((uid) => ({ orgId, userId: uid, kind: 'help', data: { ref: req.ref, subject: req.subject, requestId: req.id, event: 'reply', status: 'answered', staff: msg.staff ?? 'Curahold' } })),
+      );
+    }
     return { req, msg, org, token, followers, writer };
   });
   if (!out) return null;
@@ -186,6 +198,9 @@ export async function addHelpMessage(deps: Deps, orgId: string, requestId: strin
       }
     })().catch((e) => console.error('[curahold] help message notice failed', e)),
   );
+  // A support answer may also need pushing to a linked chat app; the in-app row is
+  // already written. Nothing new to deliver for a reply from the company or a note.
+  if (m.author === 'support' && !m.internal) kick(deps);
   return msg;
 }
 

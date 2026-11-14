@@ -255,6 +255,14 @@ export function render(ctx: RenderCtx): ChatMessage {
       return { ...base, actions: undefined, title: t('notify.boardDone', { board: task?.board_name ?? '' }), body: task?.title, note: ctx.actorName ? t('notify.markedDone', { name: ctx.actorName }) : undefined };
     case 'test':
       return { title: t('notify.test'), body: t('notify.testBody', { org: ctx.orgName }), url: ctx.base, openLabel: t('notify.open') };
+    case 'help':
+      // Curahold support answered a help request: it opens the person's own requests.
+      return {
+        title: t('notify.help.reply' as MessageKey, { ref: data.ref ?? '', staff: data.staff || 'Curahold' }),
+        body: data.subject ?? '',
+        url: `${ctx.base}/home#help`,
+        openLabel: t('notify.open'),
+      };
     default:
       return { ...base, title: n.kind, body: task?.title };
   }

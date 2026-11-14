@@ -14,7 +14,7 @@ import { relativeTime } from '../lib/time';
 
 const FILTERS = ['all', 'mentions', 'assigned', 'comments', 'system'] as const;
 type Filter = (typeof FILTERS)[number];
-const KIND_ICON: Record<string, IconName> = { stale: 'hourglass', escalated: 'alert', assigned: 'checkCircle', mentioned: 'at', comment: 'comment', followed: 'eye', unblocked: 'play', automation: 'zap', digest: 'sun', weekly: 'chart', join_request: 'user' };
+const KIND_ICON: Record<string, IconName> = { stale: 'hourglass', escalated: 'alert', assigned: 'checkCircle', mentioned: 'at', comment: 'comment', followed: 'eye', unblocked: 'play', automation: 'zap', digest: 'sun', weekly: 'chart', join_request: 'user', help: 'lifebuoy' };
 
 export function InboxPage() {
   const { t } = useI18n();
@@ -59,7 +59,8 @@ export function InboxPage() {
     if (!n.readAt) void mark(n, false);
     if (n.url) {
       const u = new URL(n.url, location.origin);
-      navigate(u.pathname + u.search);
+      // Keep the fragment: a help notice opens the person's requests at "#help".
+      navigate(u.pathname + u.search + u.hash);
     }
   };
   const readAll = async () => {

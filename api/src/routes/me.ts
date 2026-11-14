@@ -340,7 +340,7 @@ const NOTICE_FILTERS: Record<string, string[] | null> = {
   mentions: ['mentioned'],
   assigned: ['assigned', 'unblocked'],
   comments: ['comment', 'followed'],
-  system: ['automation', 'digest', 'weekly', 'stale', 'escalated', 'join_request'],
+  system: ['automation', 'digest', 'weekly', 'stale', 'escalated', 'join_request', 'help'],
 };
 
 meRoutes.get('/notifications', async (c) => {
