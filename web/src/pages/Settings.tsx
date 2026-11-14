@@ -13,6 +13,7 @@ import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
 import { SubscriptionPanel } from '../components/BillingManage';
+import { SsoSettings } from '../components/SsoSettings';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
@@ -28,7 +29,7 @@ import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 
-type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
+type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'sso' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -55,6 +56,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['joining', t('settings.tab.joining'), can('users.manage'), 'userPlus'],
         ['teams', t('settings.tab.teams'), can('teams.manage'), 'people'],
         ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage'), 'shield'],
+        ['sso', t('settings.tab.sso'), can('org.manage'), 'shield'],
       ],
     },
     {
@@ -147,6 +149,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'joining' && <JoiningTab />}
           {current === 'teams' && <TeamsTab />}
           {current === 'roles' && <RolesTab />}
+          {current === 'sso' && <SsoSettings />}
           {current === 'connections' && <Connections />}
           {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
           {current === 'automations' && <AutomationList />}

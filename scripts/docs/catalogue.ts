@@ -311,6 +311,8 @@ export const INTERNAL: Record<string, Pair> = {
   platform: ['The operator-only owner console (customers, plans, billing status, overview); not part of a company\'s API.', 'Yalnızca işletmeciye özel owner konsolu (müşteriler, planlar, faturalandırma durumu, genel bakış); bir şirketin API\'sinin parçası değil.'],
   onboarding: ['A new company\'s own setup checklist, used in the browser after sign-up.', 'Yeni bir şirketin kendi kurulum kontrol listesi; kayıttan sonra tarayıcıda kullanılır.'],
   consent: ['The person\'s privacy and cookie choices, recorded from the browser.', 'Kişinin gizlilik ve çerez tercihleri; tarayıcıdan kaydedilir.'],
+  sso: ['Single sign-on: an administrator sets it up in the browser, and the company\'s identity provider handles sign-in and its callbacks.', 'Tek oturum açma: yönetici tarayıcıda kurar; giriş ve geri çağrıları şirketin kimlik sağlayıcısı yürütür.'],
+  scim: ['SCIM 2.0 user provisioning: the identity provider\'s own calls, authorized by a per-company bearer token. Not for people.', 'SCIM 2.0 kullanıcı sağlama: kimlik sağlayıcının kendi çağrıları; şirkete özel taşıyıcı token ile yetkilendirilir. İnsanlar için değil.'],
   'manifest.webmanifest': ['The installable-app manifest.', 'Kurulabilir uygulama bildirimi.'],
   'client-error': ['The browser reporting its own errors, so a fault a person hits is recorded.', 'Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye.'],
 };

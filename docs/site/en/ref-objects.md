@@ -375,6 +375,8 @@ interface Activity {
   contactIds: string[];
   pinned: boolean;
   source: string;
+  /** Where a synced activity came from (a mailbox message id, a Segment event id); null for ones logged by hand. Lets a mail reply thread onto the original. */
+  externalId: string | null;
   createdAt: string;
   editedAt: string | null;
   /** Meetings, reviews and calls: a title ("Quarterly review"), empty otherwise. */

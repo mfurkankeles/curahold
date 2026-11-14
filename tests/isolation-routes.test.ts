@@ -80,6 +80,24 @@ const NOT_BY_ID: Record<string, string> = {
   'POST /inbound/tickets/:token': 'opened with a secret address, not a session (tests/timeline.test.ts)',
   'POST /inbound/segment/:source': 'a Segment source id, opened with that company’s own signed secret (tests/wave5c.test.ts)',
   'GET /platform/customers/:orgId': 'the operator-only owner console; any non-owner, including another company, gets 403 (tests/platform.test.ts)',
+  // Wave-6A enterprise SSO + SCIM. These are NOT session-addressed id routes:
+  //   * SCIM is authenticated by a per-company bearer token (not a session); a
+  //     session cannot reach it, and a token only ever maps to its own company.
+  //   * SSO login picks the company by URL slug + a signed state, before anyone
+  //     is signed in; the per-company IdP certificate / client secret is the
+  //     isolation boundary.
+  // Cross-company isolation for both is proven directly in tests/sso.test.ts
+  // and tests/scim.test.ts (the per-company IdP certificate / client secret /
+  // SCIM bearer token is the boundary).
+  'GET /scim/v2/Users/:id': 'SCIM 2.0 user, bearer-token-authed per company (tests/scim.test.ts)',
+  'PUT /scim/v2/Users/:id': 'SCIM 2.0 user, bearer-token-authed per company (tests/scim.test.ts)',
+  'PATCH /scim/v2/Users/:id': 'SCIM 2.0 user, bearer-token-authed per company (tests/scim.test.ts)',
+  'DELETE /scim/v2/Users/:id': 'SCIM 2.0 user (deactivate), bearer-token-authed per company (tests/scim.test.ts)',
+  'GET /sso/:slug/info': 'SSO status, company chosen by slug, before sign-in (tests/sso.test.ts)',
+  'GET /sso/:slug/saml/metadata': 'SP metadata, company chosen by slug, before sign-in (tests/sso.test.ts)',
+  'GET /sso/:slug/start': 'begins SSO, company chosen by slug + signed state (tests/sso.test.ts)',
+  'POST /sso/:slug/saml/acs': 'SAML ACS; a per-company signed assertion is the boundary (tests/sso.test.ts)',
+  'GET /sso/:slug/oidc/callback': 'OIDC callback; a per-company signed state + id_token is the boundary (tests/sso.test.ts)',
 };
 
 const sys = <T extends Record<string, any> = any>(sql: string, params: unknown[] = []) => env.db.system((q) => q.query<T>(sql, params));

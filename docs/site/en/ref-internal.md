@@ -31,6 +31,8 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/platform/…` | 4 | The operator-only owner console (customers, plans, billing status, overview); not part of a company's API. |
 | `/portal/…` | 6 | Managing who can sign in to the customer portal. |
 | `/replay/…` | 1 | The browser's session recording for support (disclosed, inputs masked, kept a week); the page posts its own events here, and only Curahold's desk reads them. |
+| `/scim/…` | 7 | SCIM 2.0 user provisioning: the identity provider's own calls, authorized by a per-company bearer token. Not for people. |
 | `/setup/…` | 5 | The first-time setup of a company. |
 | `/signup/…` | 4 | Opening a new company happens on the website. |
+| `/sso/…` | 8 | Single sign-on: an administrator sets it up in the browser, and the company's identity provider handles sign-in and its callbacks. |
 | `/support/…` | 9 | Curahold support's own desk. |

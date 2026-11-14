@@ -42,6 +42,8 @@ import { hookRoutes } from './routes/hooks';
 import { setupRoutes } from './routes/setup';
 import { signupRoutes } from './routes/signup';
 import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
+import { ssoAuthRoutes, ssoAdminRoutes } from './routes/sso';
+import { scimRoutes } from './routes/scim';
 import { boardRoutes } from './routes/boards';
 import { meRoutes } from './routes/me';
 import { metricsRoutes } from './routes/metrics';
@@ -146,6 +148,10 @@ export function createApp(deps: Deps) {
   app.post('/api/billing/webhook', billingWebhook);
   // Paddle notifications for the table-based subscription system (signature-checked).
   app.post('/api/inbound/billing/paddle', paddleInboundWebhook);
+  // SSO login and SCIM provisioning resolve the company themselves (by slug or
+  // bearer token), so they mount before companyFromHost and its CSRF guard.
+  app.route('/api/sso', ssoAuthRoutes);
+  app.route('/api/scim/v2', scimRoutes);
 
   // ---------------------------------------------------------------- company
   const companyFromHost = async (c: any, next: () => Promise<void>) => {
@@ -331,6 +337,7 @@ export function createApp(deps: Deps) {
   app.route('/api', billingRoutes);
   app.route('/api', subscriptionRoutes);
   app.route('/api', onboardingRoutes);
+  app.route('/api', ssoAdminRoutes);
   app.route('/api', platformRoutes);
   app.route('/api', consentRoutes);
   app.route('/api', ticketRoutes);
