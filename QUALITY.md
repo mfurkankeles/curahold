@@ -1,5 +1,296 @@
 # Curahold kalite turu
 
+İki tur var: **Tur 2** (15 Kasım 2026) hemen aşağıda, **Tur 1** (12 Kasım 2026) onun altında. Çeliştikleri yerde Tur 2 geçerli.
+
+---
+
+## Tur 2: dünyanın en iyisi (ürün sahibinin 15 Kasım 2026 talimatı, olduğu gibi)
+
+Bu metin, 12 Kasım 2026 tarihli kalite turu talimatımın (repoda QUALITY.md) devamı. Oradaki hedefler, kararlar ve kurallar geçerli; çeliştiği yerde bu metin geçerli. Bu metni QUALITY.md'nin başına "Tur 2" olarak kaydet, her paketten önce oku. Ölçümleri ve durum tablosunu orada güncel tut ki bağlam sıfırlansa da kaldığın yerden devam edebilesin.
+Repo: github.com/mfurkankeles/curahold (private), dal: main.
+
+### Ürün bugün ne
+Curahold bağımsız bir B2B SaaS; hiçbir şirkete özel değil, her sektörden B2B şirket kullanabilir. Üç işi tek üründe yapıyor:
+- Müşteri ve hesap yönetimi: CRM kayıtları, sağlık skoru ve nedenleri, kendiliğinden başlayan yenilemeler, toplantıdan göreve dönüşen sözler, satış hattı, müşteri portalı.
+- Şirketin her biriminin iş ve proje yönetimi: panolar, görevler, otomasyonlar, raporlar, takvim, zaman çizelgesi.
+- Ürün ekibinin yönetimi: epic, sprint, story point, backlog, yol haritası, burndown, hız, bağlı görevler, Jira eşitlemesi.
+Çok kiracılı SaaS olarak ve müşterinin kendi sunucusunda çalışır; 9 dilde (İngilizce, Türkçe, Arapça, İbranice, Farsça, Basitleştirilmiş ve Geleneksel Çince, Japonca, Korece).
+
+### Hedef
+Altı yüzeyin her biri işlev, güvenlik ve arayüz olarak dünyanın en iyisi olacak:
+1. Şirket yöneticisi ekranları (kurulum, ayarlar, roller, SSO, faturalama, işlem günlüğü)
+2. Çalışan ekranları (ana sayfa, görevler, panolar, müşteriler, raporlar ve diğerleri)
+3. Müşterinin müşterisinin gördüğü portal
+4. Ürün ekibi ekranları (backlog, sprint, epic, yol haritası, burndown)
+5. Curahold'un kendi konsolu (sahip paneli, platform konsolu, destek masası)
+6. Satış sitesi, yardım merkezi ve canlı demo
+Üstüne, rakiplerin hiçbirinde olmayan birkaç imza özellik gelecek.
+"En iyi" bir sıfat değil; aşağıdaki ölçülerin tutması demek. Her iddiayı ölçümle ve ekran görüntüsüyle göster: "hızlandı" değil, "764 KB → 160 KB".
+
+### Değişmez kurallar
+- Gerçek veri yok. Gerçek şirket, kişi ya da müşteri adı; Salesforce, Slack ya da Jira kimliği; iç araç adı repoya, demoya, ekran görüntüsüne ya da videoya girmez. Demo yalnızca uydurma veriyle çalışır. tests/leak.test.ts her commit'ten önce koşar ve asla gevşetilmez.
+- Curahold bağımsızdır. Başka bir şirketin verisi ya da iç aracı ürüne girmez. Sahip konsolundaki müşteri verisi yalnızca Paddle'dan ve ürünün kendi veritabanından gelir.
+- Deploy yok. Canlıya alma yalnızca ben "yayına al" deyince ve alan adı alınmışsa olur. GitHub'a push yalnızca yedektir; push'ları biriktir.
+- Her paket ayrı commit. Her commit derlenir, tip kontrolünden ve ilgili testlerden geçer.
+- Yeni ücretli servis ya da aylık maliyet yok. Gerekirse önce seçenek, maliyet ve öneriyle sor. Koltuk başı ücret alan üçüncü parti kullanma. Yapay zekâ maliyeti müşterinin kendi planında kalır.
+- Özgün ol. Rakiplerin adını, terimini, arayüzünü ya da ikonunu kopyalama. Uydurma referans, müşteri logosu, kullanıcı sayısı ya da puan yok. Satış sitesi yalnızca gerçekten var olan özelliği gösterir. Ürüne, siteye ve reklama rakip adı girmez.
+- Karar benim. Karar gereken yerde seçenek + öneri getir; ben seçmeden büyük işe girişme. Kararımı beklemeyen her şeyi beklemeden yap.
+- Dosyalarıma dokunma. Drive, Sheets ya da e-postamda haberim olmadan hiçbir şey değiştirme.
+- Görmeden teslim etme. Arayüze dokunan her paketi 375 / 768 / 1440 px ekran görüntüsüyle kendi gözünle kontrol et. Görmediğin ekranı "bitti" diye bildirme.
+- Testler yalın. Her pakette ilgili testler bir kez, yayından önce tam paket bir kez; tam paket 5 dakikayı geçmez. Yeni test yalnızca kritik yola: veri kaybı, izolasyon, yetki, kaçan değişiklik, senkron, para.
+- Yarım bırakma. "Başlıyorum" deyip durma: bu cevapta yapabildiğin kadarını yap, nerede kaldığını açıkça yaz.
+- Bana Türkçe, kısa ve önce sonuç yaz. Telefondan okuyorum.
+
+### İki hedef çakışırsa öncelik
+1. Veri güvenliği, yetki ve doğruluk: kayıp yok, yanlış veri yok, şirketler arası sızıntı yok
+2. Hız
+3. Sadelik ve kişiselleştirme: varsayılan sade, derinlik isteyene açık
+4. Gerçek zamanlılık
+5. Tasarım
+6. Eşsiz özellikler
+7. Özellik sayısı
+Brüt marj bu sıranın içinde değil; her kararın uyması gereken bütçe.
+
+### Bugünkü durum (15 Kasım 2026, ölçüldü)
+
+Tutanlar; bozma:
+- Dokunma tepkisi: 4 kat yavaş işlemcili telefonda 75. yüzdelik 56 ms, en yavaş 128 ms (görev açma)
+- Tekrar açılış 0,32 sn
+- Gerçek Postgres'te (6 bin müşteri, 210 bin görev) API okumalarının çoğu 5–124 ms; görev ekleme 50 ms, taşıma 31 ms
+- 76 tablonun 76'sında satır düzeyi güvenlik; uç başına izolasyon testi; güvenlik başlıkları; bağımlılık açığı 0
+- Tekrar eden istek kopya üretmiyor; 30 günlük çöp kutusu; Türkçe arama 12/12
+- 735 test, 41 tarayıcı senaryosu; 1.000 koltukta $0,067 / koltuk / ay
+
+Hedefin gerisindekiler (hedef ← şu an):
+
+Hız
+- Uygulamanın ilk ekran JavaScript'i: 170 KB ← 764 KB. 522 KB'ı dokuz dilin sözlüğü ve hepsi baştan yükleniyor; uygulama kabuğu 180 KB.
+- Portalın ilk ekran JavaScript'i: 120 KB ← 564 KB, tek dosya.
+- Sayfa kayması (CLS): 0,05 ← 0,50.
+- İlk açılış, 4G: ağ 2,5 sn'de sakinleşsin ← 4,5 sn. LCP 1,40 sn tutuyor ama ölçülen iskelet olabilir; gerçek içeriği ölç. Yavaş 4G'de LCP: 3 sn ← 5,95 sn.
+- İş raporu (/api/reports/work): 150 ms ← 492–1.432 ms.
+- 20 bin görevli pano: 300 ms ← 90 sn'de açılmıyor (15 bin kart, 171 bin öğe çiziliyor; sanal liste yok).
+- 2 bin müşterili liste: 300 ms ← 6,5 sn.
+- Ctrl K: 100 ms ← 228–236 ms.
+
+Gerçek zamanlılık
+- Başkasının değişikliği: 1 sn ← 1,0–4,3 sn. Yoklamayla çalışıyor; 12 Kasım'da kararlaştırdığım canlı kanal henüz yok.
+
+Güvenlik ve güvenilirlik
+- Genel istek sınırı yok: bir kişiden 2,1 sn'de 400 istek, hiçbiri reddedilmedi.
+- Müşteri ve kayıtlarda sürüm yok: aynı alanı iki kişi değiştirince ikincisi sessizce eziyor (görevlerde var).
+- İçerik güvenlik politikası satır içi stile izin veriyor ('unsafe-inline'); ekranlardaki 239 satır içi stil yüzünden.
+- Ürün ekranlarının (backlog, sprint) hiç tarayıcı senaryosu yok.
+
+Arayüz
+- Erişilebilirlik (axe): 0 ← açık temada 456, koyu temada 427 bulgu; 47 ekranın 47'sinde; 62'si kritik.
+- Sığmayan etiket: 0 ← 375 px'te 32, 768 px'te 30.
+- Tasarım sistemi dağınık: 239 tek seferlik stil, 141 doğrudan yazılmış renk, 30 farklı köşe yarıçapı, 37 farklı yazı boyu, boşlukların %54'ü 4 px ızgarasının dışında, 252 animasyon süresinin 199'u 150–200 ms dışında.
+- Ürünün içinde çerez onayı, ölçüm kimliği tanımlı olmasa da çıkıyor; telefonda ekranın yaklaşık üçte birini kaplıyor.
+- Telefonda liste ekranlarını araç çubukları dolduruyor: müşteri listesinde ilk müşteri ekranın alt üçte birinde başlıyor. Pano araç çubuğunda arama kutusu boş bir kareye küçülüyor. Ekip tablosunun son sütunu kesiliyor.
+- Tarih alanları kişinin dilini değil tarayıcının biçimini kullanıyor (Türkçe arayüzde aa/gg/yyyy). Ana sayfada aynı ekranda ₺ ve $ karışık.
+- Müşteri sayfası ve görev paneli düz form gibi; sağlık, yenileme ve sıradaki söz ilk bakışta görünmüyor. Ürün panosunda 9 sütunun 1440 px'te 4'ü görünüyor. Burndown'da eksen, bugünün çizgisi ve kapsam değişikliği yok.
+
+Diller
+- İngilizce ve Türkçe 3.656 metinle tam; diğer yedi dilde 3.314: her birinde 342 metin İngilizceye düşüyor (ürün yönetimi ekranları dahil).
+- Sözlük dışında yalnızca İngilizce/Türkçe çift olarak yazılmış 417 metin (şablonlar dahil) ve 70 "Türkçe mi?" kontrolü var.
+- Yardım merkezi ve demo dokuz dilin ikisinde.
+
+### Hedefler
+
+Hız
+- İlk ekran JavaScript'i (gzip): uygulama ≤ 170 KB, portal ≤ 120 KB. Yalnızca etkin dil yüklenir; ekranlar ihtiyaç anında gelir.
+- Telefon, 4G: gerçek içerik ≤ 1,5 sn'de görünür, ağ ≤ 2,5 sn'de sakinleşir; yavaş 4G'de ≤ 3 sn. Tekrar açılış ≤ 0,5 sn. CLS ≤ 0,05.
+- Her tıklama, sürükleme ve yazma ≤ 100 ms'de karşılık bulur; INP ≤ 200 ms.
+- API: okuma p95 ≤ 150 ms, yazma p95 ≤ 250 ms; hiçbir istek 400 ms'yi geçmez. N+1 sorgu yok; her sık sorgunun indeksi var.
+- 20 bin görevli pano ve 2 bin müşterili liste ≤ 300 ms (sanal liste + sayfalama); kaydırma 60 kare/sn. Ctrl K ≤ 100 ms.
+- Satış sitesi ve yardım: Lighthouse mobilde her kategoride ≥ 95.
+
+Gerçek zamanlılık
+- Başkasının değişikliği ≤ 1 sn (p95), sayfa yenilemeden. Kanal veri taşımaz, yalnızca "şu kayıt değişti" sinyali taşır; veri aynı yetki kontrolüyle API'den gelir. Bir şirketin sinyali başka şirkete asla gitmez (testli).
+- Hiçbir değişiklik kaçmaz: şirket başına artan değişiklik numarası; bağlantı kopunca kaldığı yerden devam eder.
+- Görev, müşteri ve sprint ekranında o an kimin baktığı ve yazdığı görünür.
+- Boşta duran bağlantının maliyeti ~0.
+
+Güvenlik
+- Yazılı tehdit modeli: altı yüzeyin her biri için kim neye saldırır, hangi kontrol durdurur.
+- OWASP ASVS Seviye 2 ve OWASP API Top 10 madde madde taranır: geçti / kaldı / uygulanmaz. Kalan 0. Her "kaldı" için otomatik test yazılır.
+- İstek sınırı her uç sınıfında: kişi, IP ve şirket başına. Giriş, davet, portal bağlantısı, arama, dışa aktarma ve yapay zekâ bağlayıcısı ayrı sınırlı; aşımda 429 ve ne zaman tekrar deneneceği.
+- Kimlik: passkey ve iki adımlı giriş; yönetici zorunlu kılabilir; SSO zorunluysa sunucuda uygulanır; oturum ve cihaz listesi, uzaktan çıkış; tehlikeli işlemde yeniden doğrulama.
+- Yetki matrisi testi: her rol × her uç × her alan. Alan düzeyinde yetki her çıkış yolunda aynı sonucu verir: liste, arama, dışa aktarma, API, yapay zekâ bağlayıcısı, webhook, bildirim, e-posta.
+- Şirketler arası izolasyon: satır düzeyi güvenlik + uç başına test; portal, ürün yönetimi, destek masası, canlı kanal ve kendi sunucusu modu dahil. Yeni uç testsiz eklenemez.
+- Müşteri ve kayıtlarda sürüm kontrolü: farklı alanlar birleşir, aynı alan çakışırsa kişiye söylenir.
+- Dışarıdan gelen her şey güvenilmezdir: zengin metin, yorum, portal mesajı, e-posta, içe aktarılan dosya, CRM verisi, yapay zekânın okuduğu içerik. XSS, enjeksiyon ve talimat enjeksiyonu testli. Yapay zekâ bağlayıcısı kişinin yetkisiyle çalışır; yazma işlemleri ayrı izinlidir ve işlem günlüğüne düşer.
+- Dosya: tür, boyut ve içerik doğrulaması; indirme ayrı alan adından ve "ek" olarak.
+- Sır ve kişisel veri günlüklerde, hata kayıtlarında ve oturum kayıtlarında görünmez (maskeleme testli). İşlem günlüğü değiştirilemez ve dışa aktarılabilir.
+- İçerik güvenlik politikasında 'unsafe-inline' kalmaz.
+- Tedarik zinciri: kilit dosyası, sabitlenmiş CI adımları, bağımlılık taraması; yüksek ve kritik açık 0.
+- Curahold çalışanı müşteri verisine yalnızca müşterinin açık izniyle, süreli ve salt okunur erişir; her erişim müşteriye görünür.
+- security.txt, sorumlu bildirim politikası, durum sayfası. Yedek ve geri yükleme provası yazılı ve denenmiş.
+
+Güvenilirlik (Tur 1 hedeflerinin hepsi geçerli; açık kalanları bitir)
+- Çevrimdışı yapılan değişiklik kaybolmaz; yan etkiler outbox'tan gider; arka plan işlerinin son başarılı çalışması görünür; KVKK ve GDPR saklama süreleri uygulanır; çalışma süresi ≥ %99,9.
+
+Arayüz ve tasarım
+- Tek tasarım sistemi: tek seferlik stil 0, doğrudan yazılmış renk 0, köşe yarıçapı ≤ 6 çeşit, yazı boyu ≤ 10 çeşit, bütün boşluklar 4 px ızgarasında, hareket 150–200 ms (ortam döngüleri ayrı ve belgeli).
+- WCAG 2.2 AA; axe ile 0 bulgu, iki temada. Sığmayan etiket 0; yana kaydırma 0; dokunma hedefi ≥ 44 px.
+- Tarih, sayı ve para kişinin diline ve şirketin ayarına göre biçimlenir; aynı ekranda tek para birimi, dönüştürüldüyse belirtilir. Tarih seçici ürünün kendi bileşenidir.
+- Ürünün içinde çerez onayı yalnızca gerçekten ölçüm yapılıyorsa çıkar ve hiçbir eylemi kapatmaz.
+- Telefonda her liste ekranında ilk kayıt ekranın üst yarısında başlar; filtreler tek "Filtre" sayfasında toplanır.
+- Bir ekranın bittiğinin ölçüsü: telefon görüntüsünü dünyanın en iyi ürün tasarım ekibine gururla gösterebilir misin? Hayırsa bitmemiştir.
+
+Diller
+- Dokuz dilin dokuzu tam: sözlükte eksik 0, sözlük dışında yazılmış metin 0, "Türkçe mi?" kontrolü 0. Şablonlar, e-postalar, bildirimler, portal ve hata metinleri dahil.
+- Çeviriyi sen yap; kelime kelime değil, o dilde ürün yazan biri gibi. Terimler her dilde tutarlı; sözlükçe repoda durur.
+- Sağdan sola dillerde düzen aynalanır; her yüzey Arapça ve Japonca ekran görüntüsüyle kontrol edilir.
+- Yeni dil eklemek yalnızca bir çeviri dosyası eklemektir.
+
+Kişiselleştirme ve sadelik (Tur 1 hedefleri geçerli)
+- Şirkete özel her şey ayar; her ayar önizlenir, geçmişe yazılır, geri alınır; kurulum dışa aktarılıp başka çalışma alanına kopyalanır.
+- İlk görev 60 sn; kurulum 15 dk, kod bilmeyen biri tek başına. Kapalı modül menüde yer kaplamaz.
+
+İşlevsellik
+- İş yönetimi, ürün yönetimi ve müşteri başarısı araçlarının kullanıcılarının en sık 20 şikâyetini kaynaklarıyla çıkar. Her biri için Curahold'da bugün: çözülmüş / kısmen / yok. "Kısmen" ve "yok" olanları paketlere al.
+- Tur 1'deki on çekirdek iş ve ürün yönetimi uçtan uca kusursuz; her birinin tarayıcı senaryosu var.
+
+Brüt marj
+- 1.000 koltukta ≤ $0,25 / koltuk / ay; en ucuz planda brüt marj ≥ %90. Maliyet modelini her pakette güncelle.
+
+### Her ekran için ortak çıta
+- Beş durum tasarlanmış: boş, yükleniyor, hata, çevrimdışı, yetkisiz. 300 ms'den kısa yüklemede hiçbir şey gösterme; uzunsa içerikle aynı ölçüde iskelet göster ki sayfa kaymasın. Hata, ne olduğunu ve ne yapılacağını söyler. Boş ekran bir davettir.
+- Tek ana eylem; ikincil eylemler sessiz durur.
+- Anında karşılık: sunucu reddederse geri alınır ve söylenir.
+- Her şey klavyeyle. Ctrl K her ekranı, kaydı, ayarı ve eylemi bulur; kısayollar "?" ile görünür.
+- Geri al her yerde: silme, taşıma, toplu değişiklik ve ayar için 10 saniye "Geri al", sonra 30 gün çöp kutusu ya da geçmiş.
+- Çıkmaz yok: her ekranda geri ve yol; derin bağlantı her zaman çalışır; sayfayı yenileyince aynı yerde kalırsın.
+- Telefonda tek elle: 375 px'te tam işlev.
+- Açık ve koyu tema, 9 dil, sağdan sola aynalama; uzun metin taşmaz, kesilmez.
+- Sözler sade: etken, kısa, şirketin kendi terimiyle; teknik hata metni yok.
+
+### Yüzey yüzey çıta
+
+1. Şirket yöneticisi
+- İşlev: Her ayar önizlenir, geçmişe yazılır, geri alınır. "Kim neyi görür, kim ne yapar" tek matriste; her rol için "onun gözüyle gör". Bağlantıların sağlığı tek ekranda. SSO kurulumunda "bağlantıyı dene" ve kilitlenmeye karşı yedek yönetici girişi. Koltuk, fatura ve iptal iki tıkta.
+- Güvenlik: Rol, SSO, SCIM, API anahtarı, dışa aktarma ve silme işlemleri işlem günlüğünde; günlük aranabilir ve dışa aktarılabilir. KVKK ve GDPR dışa aktarma ve silme ürün içinden.
+- Arayüz: Ayarlar aranabilir; kaydedilmemiş değişiklik uyarısı; değişikliğin etkisi kaydetmeden önce görünür.
+- Kabul testi: Kod bilmeyen bir yönetici şablondan şirketini kurar, CRM bağlar, 5 kişi davet eder, rol verir, portalı açar: 15 dakika, yardım almadan. Süre tarayıcı senaryosuyla ölçülür.
+
+2. Çalışan
+- İşlev: Toplu düzenleme, kayıtlı filtre ve görünüm, her listede sürükle-bırak. Müşteri sayfasının en üstünde sağlık ve nedeni, yenileme, tutar ve sıradaki söz; altında kayıtlar, zaman çizelgesi ve sürüklenebilir paydaş şeması. Görev web, telefon, Slack, Teams, Google Chat ve e-postadan açılır, atanır, biter.
+- Güvenlik: Özel pano gerçekten özeldir. Dışa aktarma yetkiye bağlıdır ve kayıt altındadır.
+- Arayüz: 20 bin görevli pano akıcı kayar; görev paneli 100 ms'de açılır; görev açma, atama, taşıma ve bitirme klavyeyle yapılır.
+- Kabul testi: Bir hesap yöneticisi toplantıyı kaydeder, üç sonraki adım göreve döner, birini telefondan bitirir, müşteri sayfasında sağlık nedeni güncellenir: 3 dakika.
+
+3. Müşterinin müşterisi (portal)
+- İşlev: Eğitimsiz kullanılır. Talep açar, yanıtlar, dosya ekler, onay verir; durum e-postaları şirketin markasıyla gider. 9 dil; telefon öncelikli.
+- Güvenlik: Yalnızca kendi şirketine açılmış kayıtları görür; portalın her adresi için izolasyon testi. İç not asla portala gitmez (testli). Bağlantı tek kullanımlık ve süreli. Oturum, istek ve dosya sınırları.
+- Arayüz: Şirketin logosu ve rengi önde, Curahold arka planda. Ana içerik 1,2 saniyede.
+- Kabul testi: Bir müşteri kişisi davet e-postasından girer, talep açar, yanıtı okur: telefonda 2 dakika. Başka şirketin kaydına hiçbir adresle ulaşamaz.
+
+4. Ürün ekibi
+- İşlev: Sprint planlama klavyeyle 2 dakika. Backlog sürükleyerek sıralanır ve sprint'e atılır. Sprint kapanırken bitmeyenler taşınır. Kapsam değişikliği burndown'da görünür. "Engelliyor" zinciri görünür, döngü kurulamaz. Jira ile iki yönlü eşitlemede çakışma kayıp üretmez. Döngü süresi ve çıktı raporu, yayın notu taslağı.
+- Güvenlik: Jira anahtarı mühürlü saklanır; eşitleme yalnızca yetki verilen projeleri okur.
+- Arayüz: Yoğun ama sakin: 9 sütun 1440 px'te kaydırmasız okunur; telefonda sütunlar arasında kaydırılır. Puan, epic ve iş türü tek tıkla değişir. Burndown'da eksenler, bugünün çizgisi, ideal ve gerçek, kapsam değişikliği.
+- Kabul testi: Backlog'dan 12 iş seç, sprint'i başlat, 5'ini bitir, sprint'i kapat, kalanları taşı. Burndown ve hız saat dilimi ve hafta sonunda doğru. En az 4 tarayıcı senaryosu yaz.
+
+5. Curahold'un kendi konsolu
+- İşlev: Aylık ve yıllık yinelenen gelir, denemeden ödemeye geçiş, aktivasyon ve kayıp; gerçek zamanlı. Destek talebi konsoldan çıkmadan çözülür.
+- Güvenlik: Personel girişi passkey ya da iki adımlı; konsol ayrı alt alanda ve ayrı oturumda; her personel işlemi kayıtlı.
+- Arayüz: Aynı tasarım sistemi, aynı ortak çıta.
+
+6. Satış sitesi, yardım ve demo
+- İşlev: 9 dilde yerel metin; fiyat ürünle aynı kaynaktan; canlı demo uydurma veriyle. Yardım merkezi ve demo da 9 dile çıkar (sırası için kararımı sor).
+- Güvenlik: Üçüncü tarafa istek yok (yazı tipleri dahil); onay olmadan izleme yok.
+- Arayüz: Sinematik ama hızlı. Görseller gerçek ürün ekranı; iskelet ya da boş kutu yok.
+
+### Dünyada eşi olmayan özellikler
+Curahold'un rakiplerde olmayan tek şeyi verinin tek yerde durması: müşteri, verilen söz, görev, sprint, yenileme ve gelir aynı veritabanında. Müşteri başarısı araçları sprint bilmez; iş ve ürün yönetimi araçları müşteriyi, yenilemeyi ve geliri bilmez. İmza özellikler bu bağdan doğmalı; başka bir ürünün özelliğinin kopyası olmamalı.
+
+Adaylar (ilk dördü öncelikli; son kararı araştırmandan sonra ben vereceğim):
+1. Söz defteri. Müşteriye verilen her söz (toplantının sonraki adımı, portal talebi, e-posta yanıtı) sahibi, tarihi ve durumuyla birinci sınıf kayıt olur. Kişi, ekip ve müşteri başına "söz tutma oranı" ölçülür; geciken söz sağlık skoruna işler; müşteri portalda sözünün dürüst durumunu görür.
+2. Geliri bilen backlog. Her epic ve story, onu bekleyen müşterileri, toplam sözleşme tutarını, en yakın yenileme tarihini ve sağlık bandını gösterir. Backlog "risk altındaki gelir"e göre sıralanabilir. İş yayına çıkınca bekleyen müşterilerin sahibine hazır bir güncelleme düşer ve portal talebi notuyla kapanır.
+3. Nedenini söyleyen her sayı. Sağlık skorundaki "Neden?" her sayıya yayılır: tahmin, burndown gidişi, yenileme riski, hedef temposu. Her biri kendisini oluşturan kayıtları ve "bunu düzeltecek sıradaki 3 adımı" listeler. Kural tabanlıdır; yapay zekâ maliyeti yoktur.
+4. Zaman makinesi. Her müşteri sayfası, pano ve sprint geçmişteki bir günün haliyle açılabilir; "son iş değerlendirmesinden bugüne ne değişti" tek tıkla görünür; tek alan ya da bütün kayıt geri alınır.
+5. Müşteriyle ortak plan. Portalda iki tarafın da görevi olan paylaşılan plan: onay, dosya, yorum; "onların tarafı gecikti" de ölçülür.
+6. Toplantı modu. Gündem açık sözlerden, sağlık nedenlerinden ve yenileme tarihinden kendiliğinden kurulur; yazılan her sonraki adım anında sahipli ve tarihli göreve döner; toplantı bitince özet müşteriye ve portala gider.
+7. Geçmişte denenmiş kural. Bir otomasyon ya da sağlık skoru ayarı açılmadan önce geçmiş veride koşturulur: "bu ayar geçen yıl kaybedilen 5 müşterinin 4'ünü 60 gün önce işaretlerdi".
+8. 15 dakikada geçiş. Başka bir iş ya da ürün yönetimi aracından panolar, durumlar, sprint'ler, epic'ler, kişiler ve yorumlar yapısıyla gelir; önce kuru prova gösterilir, içe aktarma tek tıkla geri alınır.
+9. Kendi yapay zekânla. Bağlayıcının üstüne hazır işler: iş değerlendirmesi sunumu, yenileme riski özeti, müşteriye sprint özeti. Maliyet müşterinin kendi planında kalır.
+
+Nasıl seçilecek:
+- Her aday için önce araştır: başlıca iş yönetimi, ürün yönetimi ve müşteri başarısı araçlarında var mı? Kullanıcıların en çok şikâyet ettiği neyi çözüyor? Kaynağıyla yaz. Bir rakipte varsa "eşsiz" deme; farkı söyle. Listede olmayan daha iyi bir fikrin varsa ekle.
+- Bana tek tablo getir: aday, kimde var, hangi şikâyeti çözer, kaç paket sürer, maliyet etkisi, önerin. Ben seçince yap.
+- Seçimimi beklerken hız, güvenlik ve cila paketlerine devam et.
+- Her imza özellik ilgili bütün yüzeylerde, 9 dilde ve telefonda çalışır; kendi tarayıcı senaryosu ve izolasyon testi olur.
+
+### Nasıl çalışacaksın
+1. Önce oku: QUALITY.md, ARCHITECTURE.md, SECURITY.md, SUPPORT.md, INTEGRATIONS.md. Repo durumuna ve son commit'lere bak.
+2. Ölç (kod değiştirmeden): scripts/quality altındaki betikler (static, server, browser load tap live big axe fit, lighthouse, cost) ve gerçek Postgres'te scripts/perf.ts. Eksik ölçümleri betiklere ekle: portal için açılış, erişilebilirlik ve sığma; ürün ekranları için dokunma ve sığma; "iskelet değil gerçek içerik göründü" süresi; 9 dilde taşma; sağdan sola düzen. Sığma ölçümü üçüncü genişlikte giriş sınırına takılıp düşüyor; önce onu düzelt.
+3. Ekran envanteri çıkar: her yüzeyin her ekranı × beş durum × 375 / 768 / 1440 px × açık ve koyu tema × en az Türkçe, İngilizce, Arapça ve Japonca. Ekran görüntülerini al, kendi gözünle incele, kusurları listele.
+4. Bana başlangıç raporu ver: yüzey × boyut puan tablosu (0–10), Hedef / Şu an / Fark, en büyük 5 risk, vermem gereken kararlar (seçenek + öneri).
+5. Paketlerle ilerle. Önerdiğim sıra aşağıda; değiştirirsen nedenini yaz.
+6. Her pakette aynı döngü: ölç → yap → aynı betikle yeniden ölç → ekran görüntüsüyle bak → ilgili testler → ayrı commit → QUALITY.md'yi güncelle.
+7. Kendi işine kendin not verme. Her yüzey bitince, o işi görmemiş ayrı bir ajan yüzeyi yalnızca çalışan uygulama ve ekran görüntüleri üzerinden denetlesin: "dünyanın en iyi ürününde bu kabul edilir mi?" Bulduklarını düzelt; puanı o versin.
+8. Paralel çalış. Birbirinden bağımsız işleri (çeviri, ekran taraması, güvenlik taraması, satış sitesi) ayrı ajanlara ver. İki ajan aynı dosyaya yazmaz; her ajan yalnızca kendi dosyalarını commit eder.
+
+Paket sırası:
+1. Hız temeli: dil sözlüklerini ihtiyaç anında yükle, giriş paketini böl, sayfa kaymasını gider, sanal liste ve sayfalama, iş raporu sorgusu
+2. Güvenlik: istek sınırı, müşteri ve kayıtlarda sürüm, tehdit modeli ve tam tarama, portal ve konsol sertleştirme
+3. Gerçek zamanlı kanal (12 Kasım kararı: şirket başına Durable Object + WebSocket Hibernation; kendi sunucusunda WebSocket + LISTEN/NOTIFY; engellenen ağlarda yoklamaya düşer)
+4. Tasarım sistemi temizliği ve erişilebilirlik
+5. Yüzey yüzey cila: çalışan → ürün ekibi → portal → yönetici → Curahold konsolu → yardım ve demo
+6. Dokuz dilin tamamı
+7. Seçtiğim imza özellikler
+8. Yük testi, marj doğrulama, son bağımsız denetim
+
+Yük testi (yerelde, gerçek Postgres): 200 kullanıcı, 50'si aynı anda düzenliyor, 50 pano, 20 bin görev, 2 bin müşteri, 50 özel alan, 20 sprint. p95 sürelerini, canlı yenileme gecikmesini, hata oranını ve koltuk başı maliyeti ölç.
+
+### Her paketin sonunda (Türkçe, kısa, sade)
+- Ne yapıldı
+- Önce → sonra ölçümler ve yüzey × boyut puanları
+- Önce / sonra ekran görüntüleri (telefon ve masaüstü)
+- Maliyet etkisi ($/koltuk/ay)
+- Benden karar bekleyenler (seçenek + öneri)
+- Sıradaki paket; demo linki güncel
+
+### Bitiş koşulu
+- Altı yüzeyin her biri on boyutun her birinde 9,5 ve üstü: güvenilirlik, güvenlik, hız, gerçek zamanlılık, sadelik, işlevsellik, tasarım (erişilebilirlik dahil), diller, kişiselleştirme, brüt marj
+- Bu metindeki bütün sayısal hedefler tutuyor ve aynı betiklerle yeniden üretilebiliyor
+- Bağımsız denetimde açık kritik ya da önemli bulgu 0
+- Tam test paketi yeşil ve 5 dakikanın altında; sızıntı taraması temiz
+- Bana "yayına hazır" raporu: kalan kararlarım ve benim sağlamam gereken hesap ve anahtarlar
+
+### Benden karar bekleyenler
+1. İmza özelliklerden hangileri yapılacak (araştırma tablosundan sonra)
+2. Yardım merkezi ve demonun 9 dile çıkma sırası
+3. Yayından önce bağımsız, ücretli bir sızma testi yaptırılsın mı
+4. Paddle hesabı, anahtarları ve plan fiyat kimlikleri (fiyatlar onaylı: Team $19 / $15, Business $35 / $29)
+5. Alan adı; sonra "yayına al"
+6. E-posta sağlayıcısı ve anahtarları
+7. GA4, Meta ve TikTok ölçüm kimlikleri
+8. Logo dosyaları
+9. KVKK ve GDPR metinleri için avukat incelemesi; marka tescili
+10. Reklam bütçesi ve marka sesi; tanıtım videosunun seslendirmesi (ücretli)
+11. Bağlı posta kutusundan yanıt gönderme izni
+
+### Tur 2 durum (her paketle güncellenir)
+
+| Paket | Durum |
+| --- | --- |
+| 0. Başlangıç ölçümü (15 Kasım) | Tamam: rakamlar yukarıda, "Bugünkü durum" bölümünde |
+| 1. Hız temeli | Başladı |
+| 2. Güvenlik | Başladı |
+| 3. Gerçek zamanlı kanal | Bekliyor |
+| 4. Tasarım sistemi ve erişilebilirlik | Bekliyor |
+| 5. Yüzey yüzey cila | Bekliyor |
+| 6. Dokuz dilin tamamı | Başladı |
+| 7. İmza özellikler | Araştırma tablosu hazırlanıyor; seçim ürün sahibinde |
+| 8. Yük testi, marj doğrulama, son denetim | Bekliyor |
+
+---
+
+## Tur 1 (12 Kasım 2026)
+
 Bu dosya iki şeydir: ürün sahibinin 12 Kasım 2026 tarihli talimatı (aşağıda, olduğu gibi) ve en altta
 her paketle güncellenen ölçümler. Her paketten önce okunur. Talimat metninde yalnızca iki yer
 değişti: eski iç aracın repo adı ile eski çalışma adının örnekleri çıkarıldı, çünkü bu dosyanın
