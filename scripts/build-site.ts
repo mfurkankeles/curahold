@@ -39,6 +39,7 @@ const localeHref = (from: SiteLocale, to: SiteLocale) => {
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DONE = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2f8f78"/><path d="M4.8 8.2l2.1 2.1L11.3 6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#75719a" stroke-width="1.6"/></svg>`;
+const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8M6.9 5.1l.9-.9a2.1 2.1 0 0 1 3 3l-.9.9M9.1 10.9l-.9.9a2.1 2.1 0 0 1-3-3l.9-.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
 // the same in every language, so they are not translated. These are the same
@@ -60,6 +61,19 @@ const BOARD = [
   { name: 'Marisol Mobility', band: 'good', score: 92, chip: null, who: 'Lena', init: 'LB' },
   { name: 'Brightwell Retail', band: 'good', score: 85, chip: null, who: 'Ada', init: 'AD' },
   { name: 'Oreli Cosmetics', band: 'risk', score: 53, chip: 'renewal', who: 'Zeynep', init: 'ZT' },
+] as const;
+
+// The sprint board + burndown showcase. Titles and epic names come from the
+// copy (c.sprint); here is only the structure: which column, how many story
+// points, which epic, who owns it, and whether it is blocked by a linked task.
+// Index-aligned with c.sprint.tasks. Points total 26, with 8 already done.
+const SPRINT = [
+  { col: 'doing', pts: 5, epic: 0, init: 'ZT', link: 'CURA-18' },
+  { col: 'todo', pts: 3, epic: 1, init: 'AD' },
+  { col: 'doing', pts: 8, epic: 2, init: 'LB' },
+  { col: 'todo', pts: 2, epic: 1, init: 'SA' },
+  { col: 'done', pts: 5, epic: 0, init: 'AD' },
+  { col: 'done', pts: 3, epic: 2, init: 'ZT' },
 ] as const;
 
 /** What each plan brings (the app's own words): Team's list, then what Business adds. */
@@ -510,6 +524,57 @@ function page(locale: SiteLocale): string {
     </div>
   </section>`;
 
+  // Product-management window: a sprint board with epics, story points and task
+  // links, and a burndown that draws itself as the window scrolls in. Column
+  // names come from the app's own dictionary; the rest from c.sprint (English
+  // until a native pass lands).
+  const sp = c.sprint ?? siteCopy('en').sprint!;
+  const spTotal = SPRINT.reduce((n, k) => n + k.pts, 0);
+  const spDone = SPRINT.filter((k) => k.col === 'done').reduce((n, k) => n + k.pts, 0);
+  const spCol = (key: MessageKey, col: 'todo' | 'doing' | 'done') => {
+    const picks = SPRINT.map((k, i) => ({ k, i })).filter(({ k }) => k.col === col);
+    const cards = picks
+      .map(({ k, i }) => {
+        const link = (k as { link?: string }).link;
+        const linkEl = link ? `<span class="spt__link">${CHAIN}${esc(sp.blocked)} ${esc(link)}</span>` : '';
+        return `<article class="spt" data-reveal data-epic="${k.epic}" style="--i:${i}">
+              <span class="spt__epic" data-epic="${k.epic}">${esc(sp.epics[k.epic])}</span>
+              <p class="spt__t">${esc(sp.tasks[i] ?? '')}</p>
+              ${linkEl}
+              <div class="spt__f"><span class="spt__ava">${esc(k.init)}</span><span class="spt__pts"><b data-count="${k.pts}">0</b>${esc(sp.pts)}</span></div>
+            </article>`;
+      })
+      .join('');
+    return `<div class="spb__col"><div class="spb__h">${esc(t(key))}<span>${picks.length}</span></div><div class="spb__cards">${cards}</div></div>`;
+  };
+  const burn = `<svg class="sp__burn" viewBox="0 0 248 120" role="img" aria-label="${esc(sp.burndown)}">
+          <line class="sp__axis" x1="30" y1="14" x2="30" y2="98"/><line class="sp__axis" x1="30" y1="98" x2="234" y2="98"/>
+          <path class="sp__ideal" d="M30 16 L230 96" fill="none"/>
+          <path class="sp__actual" d="M30 16 L58 16 L58 34 L96 34 L96 52 L136 52 L136 70 L166 74" fill="none"/>
+          <circle class="sp__now" cx="166" cy="74" r="4.5"/>
+        </svg>`;
+  const sprint = `  <section class="board" id="sprint">
+    <div class="wrap">
+      <h3 class="showcase__cap" data-reveal>${esc(sp.title)}</h3>
+      <p class="lead lead--tight" data-reveal>${esc(sp.lead)}</p>
+      <div class="app app--wide" data-reveal="app" aria-hidden="true">
+        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(sp.name)}</span></div>
+        <div class="app__main app__main--sp">
+          <div class="sp__top">
+            <div class="sp__meta"><b>${esc(sp.name)}</b><span class="sp__dates">${esc(sp.dates)}</span><span class="sp__ok">${esc(sp.status)}</span></div>
+            <div class="sp__prog"><div class="sp__bar"><span class="sp__fill" style="--w:${Math.round((spDone / spTotal) * 100)}%"></span></div><span class="sp__pct">${esc(sp.progress.replace('{done}', String(spDone)).replace('{total}', String(spTotal)))}</span></div>
+            <figure class="sp__chart"><figcaption>${esc(sp.burndown)}</figcaption>${burn}</figure>
+          </div>
+          <div class="spb">
+            ${spCol('board.defaultColumns.todo', 'todo')}
+            ${spCol('board.defaultColumns.doing', 'doing')}
+            ${spCol('board.defaultColumns.done', 'done')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
   // Third product window: the portfolio's health, three bands and one stacked bar.
   const pfTile = (band: string, n: number, i: number) =>
     `<div class="pf__tile" data-band="${band}" data-reveal style="--i:${i}"><span class="pf__n" data-count="${n}">0</span><span class="pf__l">${esc(t(`health.band.${band}` as MessageKey))}</span></div>`;
@@ -691,6 +756,8 @@ ${customer}
   </section>
 
 ${kanban}
+
+${sprint}
 
 ${reports}
 

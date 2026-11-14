@@ -22,6 +22,10 @@ export interface SiteCopy {
   };
   tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
   product: { title: string; lead: string; work: string; portfolio: string; detail: string; reports: string };
+  // The animated sprint / product-management showcase. Optional per locale:
+  // English is the fallback until a native pass lands (column names come from
+  // the app's own dictionaries, so those localise everywhere already).
+  sprint?: SiteSprintCopy;
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -81,6 +85,29 @@ export interface BlogPost {
   readMinutes: number;
   tags: string[];
   body: BlogBlock[];
+}
+
+/** The animated sprint board + burndown showcase. */
+export interface SiteSprintCopy {
+  title: string;
+  lead: string;
+  /** Sprint name shown in the window, e.g. "Sprint 24". */
+  name: string;
+  /** Sprint dates, e.g. "3–14 Nov". */
+  dates: string;
+  /** Health chip, e.g. "On track". */
+  status: string;
+  /** Points unit, e.g. "pts". */
+  pts: string;
+  /** "{done} of {total} points done" — {done}/{total} are filled by the site. */
+  progress: string;
+  burndown: string;
+  /** "blocked by" label for a linked task. */
+  blocked: string;
+  /** Three epic names, index-referenced by the board below. */
+  epics: [string, string, string];
+  /** Task titles, index-aligned with the board structure in build-site.ts. */
+  tasks: string[];
 }
 
 export const COPY: Partial<Record<Locale, SiteCopy>> = {
@@ -144,6 +171,19 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       portfolio: 'The few who need you, never lost in the many',
       detail: 'Open one, and see exactly why',
       reports: 'How the quarter is going, in one chart',
+    },
+    sprint: {
+      title: 'Ship the work in sprints — and watch it burn down',
+      lead: 'Epics, tasks and story points on one board. Link what blocks what, commit a sprint, and the burndown draws itself as the team closes cards.',
+      name: 'Sprint 24',
+      dates: '3–14 Nov',
+      status: 'On track',
+      pts: 'pts',
+      progress: '{done} of {total} points done',
+      burndown: 'Burndown',
+      blocked: 'blocked by',
+      epics: ['Onboarding', 'Billing', 'Mobile'],
+      tasks: ['Draft the welcome sequence', 'Wire the Paddle webhook', 'Finish the burndown chart', 'Push notifications on iOS', 'Seed the demo workspace', 'Ship the plan picker'],
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -270,6 +310,19 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       portfolio: 'İlgi bekleyenler kalabalıkta kaybolmaz',
       detail: 'Birini aç, nedenini tam olarak gör',
       reports: 'Çeyrek nasıl gidiyor, tek grafikte',
+    },
+    sprint: {
+      title: 'İşi sprint’lerle teslim et — yanışını canlı izle',
+      lead: 'Epic’ler, görevler ve story point’ler tek panoda. Neyin neyi engellediğini bağla, sprint’i başlat; ekip kartları kapattıkça burndown kendini çizsin.',
+      name: 'Sprint 24',
+      dates: '3–14 Kas',
+      status: 'Yolunda',
+      pts: 'puan',
+      progress: '{total} puanın {done}’i bitti',
+      burndown: 'Burndown',
+      blocked: 'engelleyen',
+      epics: ['Kurulum', 'Faturalama', 'Mobil'],
+      tasks: ['Karşılama dizisini yaz', 'Paddle webhook’unu bağla', 'Burndown grafiğini bitir', 'iOS’ta anlık bildirim', 'Demo alanını hazırla', 'Plan seçiciyi yayına al'],
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
