@@ -11,7 +11,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { INTERVALS, PLAN_KEYS, PLAN_LIST, type SubscriptionStatus } from '../../../shared/src/billing';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
-import { applyWebhookEvent, providerFor, readSubscription } from '../billing/service';
+import { applyWebhookEvent, ensureSubscription, providerFor, readSubscription } from '../billing/service';
+import { projectBilling } from '../billing/project';
 import { audit } from '../lib/audit';
 import { SEATS_SQL } from '../lib/billing';
 import { fail } from '../lib/errors';
@@ -25,6 +26,8 @@ const LIVE: SubscriptionStatus[] = ['active', 'trialing', 'past_due', 'paused'];
 subscriptionRoutes.get('/billing/subscription', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
+  // Older companies and demo data may predate the table; backfill from their trial.
+  await ensureSubscription(deps, org.id);
   const { sub, profile } = await run(c, async (q) => ({
     sub: await readSubscription(q, nowOf(deps)),
     profile: (await q.query<{ tax_number: string | null; billing_email: string | null }>('select tax_number, billing_email from orgs where id = $1', [org.id]))[0],
@@ -64,6 +67,7 @@ subscriptionRoutes.post('/billing/cancel', async (c) => {
     await q.query('update subscriptions set cancel_at_period_end = true, updated_at = now() where org_id = $1', [org.id]);
     await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { cancelAtPeriodEnd: true } });
   });
+  await projectBilling(deps, org.id);
   return c.json({ ok: true });
 });
 
@@ -80,6 +84,7 @@ subscriptionRoutes.post('/billing/resume', async (c) => {
     await q.query('update subscriptions set cancel_at_period_end = false, updated_at = now() where org_id = $1', [org.id]);
     await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { cancelAtPeriodEnd: false } });
   });
+  await projectBilling(deps, org.id);
   return c.json({ ok: true });
 });
 

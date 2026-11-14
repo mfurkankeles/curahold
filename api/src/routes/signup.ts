@@ -14,6 +14,7 @@ import { randomToken, sha256Hex, sign, verify } from '../lib/crypto';
 import { companyFromDomain, emailDomain, isPublicDomain, slugify, slugProblem } from '../lib/domains';
 import { fail } from '../lib/errors';
 import { createOrg } from '../lib/orgs';
+import { startTrial } from '../billing/service';
 import { body, email } from '../lib/validate';
 
 export const signupRoutes = new Hono<AppEnv>();
@@ -175,6 +176,9 @@ signupRoutes.post('/complete', async (c) => {
     if (/orgs_slug_key|duplicate key/.test(String((err as Error).message))) fail('slug_taken');
     throw err;
   }
+  // Record the company's 3-month trial in the subscriptions table. The gating
+  // snapshot (orgs.billing / trial_ends_at) is kept in step by the trial itself.
+  await startTrial(deps, { orgId: created.orgId, plan: 'business' });
   const token = randomToken(32);
   await deps.db.system(async (q) => {
     await q.query('update signups set org_id = $2 where id = $1', [ticket!.s, created.orgId]);

@@ -12,6 +12,7 @@ import { DeveloperTab } from '../components/Developer';
 import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
+import { SubscriptionPanel } from '../components/BillingManage';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
@@ -132,7 +133,12 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {current === 'records' && <RecordTypesEditor />}
           {current === 'health' && <HealthSettings />}
           {current === 'rhythm' && <RhythmSettings />}
-          {current === 'billing' && <BillingSettings />}
+          {current === 'billing' && (
+            <>
+              <SubscriptionPanel />
+              <BillingSettings />
+            </>
+          )}
           {current === 'currencies' && <CurrencySettings />}
           {current === 'playbooks' && <PlaybooksSettings />}
           {current === 'support' && <SupportAccessSettings />}

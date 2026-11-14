@@ -12,6 +12,7 @@ import { fetchOf, nowOf, type Deps } from '../context';
 import type { Q } from '../db';
 import { audit } from '../lib/audit';
 import { PaddleProvider } from './paddle';
+import { projectBillingQ } from './project';
 import type { PaymentProvider, ProviderInvoice, ProviderSubscription } from './provider';
 
 /** A subscription in one of these states is live and must never be moved between companies. */
@@ -40,8 +41,33 @@ export async function startTrial(deps: Deps, input: { orgId: string; plan: PlanK
        returning id`,
       [input.orgId, input.plan, ends],
     );
-    if (row) await audit(q, { orgId: input.orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: input.orgId, meta: { status: 'trialing', plan: input.plan } });
+    if (row) {
+      await audit(q, { orgId: input.orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: input.orgId, meta: { status: 'trialing', plan: input.plan } });
+      await projectBillingQ(q, input.orgId);
+    }
     return !!row;
+  });
+}
+
+/**
+ * Make sure a company has a subscription row, backfilling one from its current
+ * trial when it is missing (older companies, demo data). Keeps the real trial end
+ * rather than resetting it. Idempotent.
+ */
+export async function ensureSubscription(deps: Deps, orgId: string): Promise<void> {
+  await deps.db.system(async (q) => {
+    const [has] = await q.query<{ one: number }>(`select 1 as one from subscriptions where org_id = $1`, [orgId]);
+    if (has) return;
+    const [org] = await q.query<{ trial_ends_at: unknown }>(`select trial_ends_at from orgs where id = $1`, [orgId]);
+    const ends = org?.trial_ends_at ? (org.trial_ends_at instanceof Date ? org.trial_ends_at.toISOString() : String(org.trial_ends_at)) : trialEndsAt(nowOf(deps)).toISOString();
+    const [row] = await q.query<{ id: string }>(
+      `insert into subscriptions (org_id, provider, plan, status, trial_ends_at)
+         values ($1, 'paddle', 'business', 'trialing', $2)
+       on conflict (org_id) do nothing
+       returning id`,
+      [orgId, ends],
+    );
+    if (row) await projectBillingQ(q, orgId);
   });
 }
 
@@ -90,6 +116,7 @@ async function applySubscription(deps: Deps, sub: ProviderSubscription, occurred
       [orgId, sub.providerCustomerId, sub.providerSubscriptionId, plan, sub.status, trial, sub.currentPeriodEnd, sub.cancelAtPeriodEnd, occurredAt],
     );
     await audit(q, { orgId, actorId: null, action: 'billing.changed', entity: 'org', entityId: orgId, meta: { status: sub.status, plan } });
+    await projectBillingQ(q, orgId);
     return orgId;
   });
 }
