@@ -19,6 +19,7 @@ import { fail, HttpError } from '../lib/errors';
 import { enqueue, kick } from '../lib/notify';
 import { emailHtml } from '../lib/emailHtml';
 import { logoUrl, userManagers } from '../lib/people';
+import { ssoEnforced } from '../lib/sso';
 import { authorizeUrl, exchangeCode, isProvider, PROVIDERS, type ProviderId } from '../lib/oidc';
 import { knownDevice, openSession } from '../lib/sessions';
 import { portalOAuthCallback, type PortalOAuthState } from '../lib/portalOAuth';
@@ -98,6 +99,8 @@ authRoutes.post('/auth/start', async (c) => {
   const input = await body(c, z.object({ email }));
   const deps = c.get('deps');
   const org = c.get('org');
+  // A company that requires SSO accepts only its own identity provider here.
+  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
   // Someone without an account, at one of the company's own domains, gets a
   // link to ask to join (or to join straight away, if the company allows it).
   const mayJoin = (org.join_requests || org.auto_join) && org.domains.includes(emailDomain(input.email));
@@ -409,6 +412,8 @@ authRoutes.get('/auth/oauth/:provider/start', async (c) => {
   const provider = c.req.param('provider');
   const device = c.req.query('device') ?? '';
   const back = `${orgUrl(deps.config, org.slug)}/login`;
+  // A company that requires SSO accepts only its own identity provider, not Google/Microsoft here.
+  if (await run(c, (q) => ssoEnforced(q))) return c.redirect(`${back}?error=sso_required`);
   if (!isProvider(provider) || !deps.config.oauth[provider]) return c.redirect(`${back}?error=oauth_not_configured`);
   if (!deviceId.safeParse(device).success) return c.redirect(`${back}?error=oauth_failed&provider=${provider}`);
   const now = (deps.now ?? (() => new Date()))();

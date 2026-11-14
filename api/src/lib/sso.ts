@@ -66,6 +66,13 @@ interface RawConfig {
  * anchored to app_org() — so `q` MUST be a tenant transaction for the company
  * the login is for. Returns null when the company has no SSO config row.
  */
+/** Whether this company requires SSO — then email-link and app-OAuth sign-in are refused, only the company's IdP is allowed. Reads no secret, so it runs under the request role. */
+export async function ssoEnforced(q: Q): Promise<boolean> {
+  const [row] = await q.query<{ enabled: boolean; enforced: boolean; protocol: string | null }>('select enabled, enforced, protocol from sso_configs');
+  // A protocol must be set, so an "enforced" flag on a half-configured login never locks everyone out.
+  return !!row && row.enabled && row.enforced && !!row.protocol;
+}
+
 export async function loadSsoAuthConfig(q: Q, cfg: Config): Promise<SsoAuthConfig | null> {
   const [row] = await q.query<RawConfig>('select * from sso_auth_config()');
   if (!row) return null;

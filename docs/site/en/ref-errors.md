@@ -51,6 +51,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `preview_read_only` | 403 | You are looking as someone else, so nothing can be changed. Go back to your own view first. |
 | `read_only_seat` | 403 | Your seat is read-only. Ask an administrator for a full seat. |
 | `read_only_token` | 403 | This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes. |
+| `sso_required` | 403 | This company requires single sign-on. Use your organization's SSO to sign in. |
 | `support_blocked` | 403 | Support can't open this part, even with permission. |
 | `support_edit_admins` | 403 | Only administrators can let support make changes. |
 | `support_not_allowed` | 403 | Your company doesn't allow you to let support in. |

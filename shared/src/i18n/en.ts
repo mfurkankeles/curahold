@@ -76,6 +76,7 @@ export const en = {
   'errors.file_too_large': 'Files can be up to {mb} MB.',
   'errors.oauth_failed': 'Sign-in with {provider} did not complete. Try again or use an email link.',
   'errors.oauth_not_configured': '{provider} sign-in is not set up for this workspace.',
+  'errors.sso_required': 'This company requires single sign-on. Use your organization\'s SSO to sign in.',
   'errors.no_account': 'There is no account for {email} in this workspace. Ask your administrator to invite you.',
   'errors.server': 'Something went wrong on our side. Please try again.',
   'errors.network': 'Cannot reach Curahold. Check your connection.',

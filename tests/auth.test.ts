@@ -51,6 +51,18 @@ describe('email link sign-in', () => {
     expect(r.json.error).toBe('invalid_token');
   });
 
+  it('refuses the email link when the company requires SSO, and allows it again when not', async () => {
+    await env.db.system((q) => q.query(`insert into sso_configs (org_id, protocol, enabled, enforced) values ($1, 'saml', true, true)`, [env.b.orgId]));
+    try {
+      const r = await new Client(env, 'beta').post('/api/auth/start', { email: 'anyone@demo.example' });
+      expect(r.json.error).toBe('sso_required');
+    } finally {
+      await env.db.system((q) => q.query(`delete from sso_configs where org_id = $1`, [env.b.orgId]));
+    }
+    const ok = await new Client(env, 'beta').post('/api/auth/start', { email: 'anyone@demo.example' });
+    expect(ok.status).toBe(200);
+  });
+
   it('limits how many links can be requested', async () => {
     const c = new Client(env, 'beta');
     for (let i = 0; i < 5; i++) expect((await c.post('/api/auth/start', { email: 'zeynep@demo.example' })).status).toBe(200);

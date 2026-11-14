@@ -26,6 +26,7 @@ export type ErrorCode =
   | 'join_closed'
   | 'already_member'
   | 'not_configured'
+  | 'sso_required'
   | 'connection_failed'
   | 'import_too_large'
   | 'type_not_empty'
@@ -127,6 +128,7 @@ const STATUS: Record<ErrorCode, number> = {
   form_off: 404,
   already_member: 409,
   not_configured: 400,
+  sso_required: 403,
   connection_failed: 400,
   import_too_large: 413,
   type_not_empty: 409,

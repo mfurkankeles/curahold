@@ -72,6 +72,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.file_too_large': 'Dosyalar en fazla {mb} MB olabilir.',
   'errors.oauth_failed': '{provider} ile giriş tamamlanmadı. Tekrar dene ya da e-posta bağlantısı kullan.',
   'errors.oauth_not_configured': 'Bu çalışma alanında {provider} ile giriş kurulu değil.',
+  'errors.sso_required': 'Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO\'sunu kullanın.',
   'errors.no_account': 'Bu çalışma alanında {email} için hesap yok. Yöneticinden seni davet etmesini iste.',
   'errors.server': 'Bizim tarafta bir sorun oldu. Lütfen tekrar dene.',
   'errors.network': 'Curahold\'e ulaşılamıyor. Bağlantını kontrol et.',

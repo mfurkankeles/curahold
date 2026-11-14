@@ -51,6 +51,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `preview_read_only` | 403 | Şu an başkasının gözünden bakıyorsun, bu yüzden hiçbir şey değiştirilemez. Önce kendi görünümüne dön. |
 | `read_only_seat` | 403 | Koltuğun salt okunur. Tam koltuk için yöneticine başvur. |
 | `read_only_token` | 403 | Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluştur ya da uygulamayı yeniden bağlayıp değişikliğe izin ver. |
+| `sso_required` | 403 | Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO'sunu kullanın. |
 | `support_blocked` | 403 | Destek, izin olsa da bu bölümü açamaz. |
 | `support_edit_admins` | 403 | Desteğin değişiklik yapmasına yalnızca yöneticiler izin verebilir. |
 | `support_not_allowed` | 403 | Şirketin desteğe erişim vermene izin vermiyor. |
