@@ -568,6 +568,66 @@ html.js .app.is-in .kpi__spark path { animation: draw 1.3s var(--ease) calc(.6s 
   html.js .dash__live::before { animation: none; }
 }
 
+/* ---- eyebrow, hero word reveal, bento grid ---- */
+.eyebrow { font: 650 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--iris-ink); display: inline-flex; align-items: center; gap: 9px; }
+.eyebrow::before { content: ''; width: 22px; height: 2px; border-radius: 2px; background: var(--iris); }
+
+.hero__h .w { display: inline-block; overflow: hidden; vertical-align: top; }
+.hero__h .w > span { display: inline-block; }
+html.js .hero__text > h1.hero__h { animation: none; }
+html.js .hero__h .w > span { transform: translateY(112%); animation: wordrise .9s var(--ease) calc(.12s + var(--wi) * .055s) both; }
+@keyframes wordrise { from { transform: translateY(112%); } to { transform: none; } }
+
+.bento { padding: clamp(56px, 8vw, 104px) 0; }
+.bento__h { font: 700 clamp(28px, 4.2vw, 46px)/1.06 var(--display); letter-spacing: -0.025em; max-width: 18ch; margin: 14px 0 0; color: var(--ink); }
+.bento__g { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 42px; }
+.bento__t { position: relative; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px; min-height: 212px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease); }
+.bento__t::after { content: ''; position: absolute; inset: 0; background: radial-gradient(130% 80% at 100% 0%, color-mix(in srgb, var(--iris) 7%, transparent), transparent 55%); opacity: 0; transition: opacity .3s var(--ease); pointer-events: none; }
+.bento__t:hover { transform: translateY(-4px); box-shadow: 0 26px 50px -30px rgba(23, 19, 58, .55); border-color: color-mix(in srgb, var(--iris) 28%, var(--line)); }
+.bento__t:hover::after { opacity: 1; }
+.bento__t--wide { grid-column: span 2; flex-direction: row; align-items: center; gap: 30px; }
+.bento__t--wide .bento__c { flex: 1; }
+.bento__t--full { grid-column: 1 / -1; min-height: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 30px; }
+.bento__c h3 { font: 650 20px/1.15 var(--display); letter-spacing: -0.01em; color: var(--ink); margin: 0 0 7px; }
+.bento__c p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.45; max-width: 34ch; }
+.bviz { flex: none; }
+.bviz--gauge { position: relative; width: 118px; height: 118px; display: grid; place-items: center; }
+.bviz--gauge svg { width: 118px; height: 118px; transform: rotate(-90deg); }
+.bgt { stroke: var(--line); stroke-width: 10; }
+.bgv { stroke: var(--iris); stroke-width: 10; stroke-linecap: round; stroke-dasharray: var(--c); stroke-dashoffset: var(--c); transition: stroke-dashoffset 1.2s var(--ease) .3s; }
+.bento__t.is-in .bgv { stroke-dashoffset: var(--off); }
+.bviz__n { position: absolute; font: 750 30px/1 var(--display); letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bviz--burn { width: 100%; max-width: 190px; height: auto; align-self: flex-end; }
+.bbi { stroke: color-mix(in srgb, var(--iris) 45%, transparent); stroke-width: 1.8; stroke-dasharray: 3 5; }
+.bbl { stroke: var(--fern); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.bbd { fill: var(--fern); stroke: var(--paper); stroke-width: 2.5; }
+.bviz--tasks { display: grid; gap: 11px; width: 100%; }
+.btk { display: flex; align-items: center; gap: 10px; }
+.btk__b { display: inline-flex; flex: none; } .btk__b svg { width: 18px; height: 18px; }
+.btk__l { height: 9px; border-radius: 999px; background: var(--mist); flex: 1; }
+.btk__l--s { max-width: 58%; }
+.bviz--rnw { display: flex; align-items: center; gap: 8px; width: 100%; }
+.brn { font: 600 12px/1 var(--display); color: var(--ink-2); background: var(--mist); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; white-space: nowrap; }
+.brn--on { background: var(--fern-wash); color: var(--fern); border-color: transparent; display: inline-flex; align-items: center; } .brn--on svg { width: 14px; height: 14px; }
+.brn__l { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 10px); }
+.bviz--portal { width: 100%; max-width: 220px; }
+.bpt { display: grid; gap: 8px; background: var(--mist); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.bpt__d { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--iris), var(--fern)); }
+.bpt__b { height: 8px; border-radius: 999px; background: var(--paper); }
+.bpt__b--s { max-width: 55%; }
+.bviz--logos { display: flex; flex-wrap: wrap; gap: 9px; max-width: 440px; justify-content: flex-end; }
+.bviz--logos span { font: 600 14px/1 var(--display); color: var(--ink-2); background: var(--mist); border: 1px solid var(--line); border-radius: 999px; padding: 9px 15px; }
+html.js .bbl { stroke-dasharray: 240; stroke-dashoffset: 240; }
+html.js .bento__t.is-in .bbl { animation: draw 1.3s var(--ease) .25s forwards; }
+html.js .bbd { opacity: 0; transform-box: fill-box; transform-origin: center; }
+html.js .bento__t.is-in .bbd { animation: dotfade .5s var(--ease) 1.3s forwards; }
+@media (prefers-reduced-motion: reduce) {
+  html.js .hero__h .w > span { animation: none; transform: none; }
+  .bgv { transition: none; }
+  html.js .bbl { stroke-dashoffset: 0; animation: none; }
+  html.js .bbd { opacity: 1; animation: none; }
+}
+
 @media (max-width: 860px) {
   .kb { grid-template-columns: 1fr; }
   .pf__tiles { grid-template-columns: 1fr; }
@@ -576,6 +636,9 @@ html.js .app.is-in .kpi__spark path { animation: draw 1.3s var(--ease) calc(.6s 
   .sp__top { grid-template-columns: 1fr; grid-template-areas: 'meta' 'prog' 'chart'; }
   .dash__row { grid-template-columns: 1fr; }
   .dash__kpis { grid-template-columns: 1fr; }
+  .bento__g { grid-template-columns: 1fr; }
+  .bento__t--wide, .bento__t--full { grid-column: auto; flex-direction: column; align-items: flex-start; }
+  .bviz--logos { justify-content: flex-start; }
 }
 
 /* ===================================== mobile fit for product windows ======

@@ -39,7 +39,6 @@ const localeHref = (from: SiteLocale, to: SiteLocale) => {
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const DONE = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#2f8f78"/><path d="M4.8 8.2l2.1 2.1L11.3 6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#75719a" stroke-width="1.6"/></svg>`;
-const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8M6.9 5.1l.9-.9a2.1 2.1 0 0 1 3 3l-.9.9M9.1 10.9l-.9.9a2.1 2.1 0 0 1-3-3l.9-.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
 // the same in every language, so they are not translated. These are the same
@@ -63,18 +62,6 @@ const BOARD = [
   { name: 'Oreli Cosmetics', band: 'risk', score: 53, chip: 'renewal', who: 'Zeynep', init: 'ZT' },
 ] as const;
 
-// The sprint board + burndown showcase. Titles and epic names come from the
-// copy (c.sprint); here is only the structure: which column, how many story
-// points, which epic, who owns it, and whether it is blocked by a linked task.
-// Index-aligned with c.sprint.tasks. Points total 26, with 8 already done.
-const SPRINT = [
-  { col: 'doing', pts: 5, epic: 0, init: 'ZT', link: 'CURA-18' },
-  { col: 'todo', pts: 3, epic: 1, init: 'AD' },
-  { col: 'doing', pts: 8, epic: 2, init: 'LB' },
-  { col: 'todo', pts: 2, epic: 1, init: 'SA' },
-  { col: 'done', pts: 5, epic: 0, init: 'AD' },
-  { col: 'done', pts: 3, epic: 2, init: 'ZT' },
-] as const;
 
 /** What each plan brings (the app's own words): Team's list, then what Business adds. */
 const TEAM_POINTS: MessageKey[] = ['billing.point.boards', 'billing.point.customers', 'billing.point.meetings', 'billing.point.reports', 'billing.point.chat'];
@@ -451,10 +438,7 @@ function page(locale: SiteLocale): string {
   ]
     .map(([tone, text], i) => `<li class="chip" data-tone="${tone}" style="--i:${i}">${esc(text)}</li>`)
     .join('');
-  const steps = c.year.steps.map((s, i) => `<li data-reveal style="--i:${i}"><h3>${esc(s.name)}</h3><p>${esc(s.text)}</p></li>`).join('');
-  const tools = c.tools.rows.map((r, i) => `<div data-reveal style="--i:${i}"><dt>${esc(r.label)}</dt><dd>${esc(r.names)}</dd></div>`).join('');
   const faq = c.faq.items.map((f, i) => `<details data-reveal style="--i:${i}"><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
-  const m = c.meeting.card;
 
   // The product showcase: an app window holding the real Accounts board. Every
   // label is pulled from the app's own dictionaries so it reads in each language.
@@ -498,143 +482,6 @@ function page(locale: SiteLocale): string {
     </div>
   </section>`;
 
-  // Second product window: the task board (kanban). Task titles reuse the copy
-  // already translated for the meeting card and the year timeline.
-  const DUE = `${esc(m.day)} ${esc(m.month)}`;
-  const ktask = (title: string, init: string, i: number, opts: { due?: boolean; prio?: string; done?: boolean } = {}) =>
-    `<article class="kt${opts.done ? ' is-done' : ''}" data-reveal style="--i:${i}">
-              <p class="kt__t">${esc(title)}</p>
-              <div class="kt__f"><span class="kt__ava">${esc(init)}</span>${opts.due ? `<span class="kt__due">${DUE}</span>` : ''}${opts.done ? `<span class="kt__done">${DONE}</span>` : `<span class="kt__dot" data-prio="${opts.prio ?? 'med'}"></span>`}</div>
-            </article>`;
-  const kcol = (titleKey: MessageKey, n: number, body: string) =>
-    `<div class="kb__col"><div class="kb__h">${esc(t(titleKey))}<span>${n}</span></div><div class="kb__cards">${body}</div></div>`;
-  const kanban = `  <section class="board">
-    <div class="wrap">
-      <h3 class="showcase__cap" data-reveal>${esc(c.product.work)}</h3>
-      <div class="app app--wide" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.boards'))}</span></div>
-        <div class="app__main app__main--kb">
-          <div class="kb">
-            ${kcol('board.defaultColumns.todo', 2, ktask(c.year.steps[0].name, 'ZT', 0, { due: true, prio: 'high' }) + ktask(c.meeting.card.open, 'LB', 1, { prio: 'med' }))}
-            ${kcol('board.defaultColumns.doing', 2, ktask(c.meeting.card.done, 'ZT', 2, { due: true, prio: 'high' }) + ktask(c.year.steps[1].name, 'AD', 3, { prio: 'low' }))}
-            ${kcol('board.defaultColumns.done', 1, ktask(c.meeting.card.name, 'SA', 4, { done: true }))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>`;
-
-  // Product-management window: a sprint board with epics, story points and task
-  // links, and a burndown that draws itself as the window scrolls in. Column
-  // names come from the app's own dictionary; the rest from c.sprint (English
-  // until a native pass lands).
-  const sp = c.sprint ?? siteCopy('en').sprint!;
-  const spTotal = SPRINT.reduce((n, k) => n + k.pts, 0);
-  const spDone = SPRINT.filter((k) => k.col === 'done').reduce((n, k) => n + k.pts, 0);
-  const spCol = (key: MessageKey, col: 'todo' | 'doing' | 'done') => {
-    const picks = SPRINT.map((k, i) => ({ k, i })).filter(({ k }) => k.col === col);
-    const cards = picks
-      .map(({ k, i }) => {
-        const link = (k as { link?: string }).link;
-        const linkEl = link ? `<span class="spt__link">${CHAIN}${esc(sp.blocked)} ${esc(link)}</span>` : '';
-        return `<article class="spt" data-reveal data-epic="${k.epic}" style="--i:${i}">
-              <span class="spt__epic" data-epic="${k.epic}">${esc(sp.epics[k.epic])}</span>
-              <p class="spt__t">${esc(sp.tasks[i] ?? '')}</p>
-              ${linkEl}
-              <div class="spt__f"><span class="spt__ava">${esc(k.init)}</span><span class="spt__pts"><b data-count="${k.pts}">0</b>${esc(sp.pts)}</span></div>
-            </article>`;
-      })
-      .join('');
-    return `<div class="spb__col"><div class="spb__h">${esc(t(key))}<span>${picks.length}</span></div><div class="spb__cards">${cards}</div></div>`;
-  };
-  const burn = `<svg class="sp__burn" viewBox="0 0 248 120" role="img" aria-label="${esc(sp.burndown)}">
-          <line class="sp__axis" x1="30" y1="14" x2="30" y2="98"/><line class="sp__axis" x1="30" y1="98" x2="234" y2="98"/>
-          <path class="sp__ideal" d="M30 16 L230 96" fill="none"/>
-          <path class="sp__actual" d="M30 16 L58 16 L58 34 L96 34 L96 52 L136 52 L136 70 L166 74" fill="none"/>
-          <circle class="sp__now" cx="166" cy="74" r="4.5"/>
-        </svg>`;
-  const sprint = `  <section class="board" id="sprint">
-    <div class="wrap">
-      <h3 class="showcase__cap" data-reveal>${esc(sp.title)}</h3>
-      <p class="lead lead--tight" data-reveal>${esc(sp.lead)}</p>
-      <div class="app app--wide" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(sp.name)}</span></div>
-        <div class="app__main app__main--sp">
-          <div class="sp__top">
-            <div class="sp__meta"><b>${esc(sp.name)}</b><span class="sp__dates">${esc(sp.dates)}</span><span class="sp__ok">${esc(sp.status)}</span></div>
-            <div class="sp__prog"><div class="sp__bar"><span class="sp__fill" style="--w:${Math.round((spDone / spTotal) * 100)}%"></span></div><span class="sp__pct">${esc(sp.progress.replace('{done}', String(spDone)).replace('{total}', String(spTotal)))}</span></div>
-            <figure class="sp__chart"><figcaption>${esc(sp.burndown)}</figcaption>${burn}</figure>
-          </div>
-          <div class="spb">
-            ${spCol('board.defaultColumns.todo', 'todo')}
-            ${spCol('board.defaultColumns.doing', 'doing')}
-            ${spCol('board.defaultColumns.done', 'done')}
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>`;
-
-  // Third product window: the portfolio's health, three bands and one stacked bar.
-  const pfTile = (band: string, n: number, i: number) =>
-    `<div class="pf__tile" data-band="${band}" data-reveal style="--i:${i}"><span class="pf__n" data-count="${n}">0</span><span class="pf__l">${esc(t(`health.band.${band}` as MessageKey))}</span></div>`;
-  const portfolio = `  <section class="board">
-    <div class="wrap">
-      <h3 class="showcase__cap" data-reveal>${esc(c.product.portfolio)}</h3>
-      <div class="app" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(t('nav.reports'))}</span></div>
-        <div class="app__main app__main--pf">
-          <div class="pf__tiles">${pfTile('risk', 2, 0)}${pfTile('watch', 3, 1)}${pfTile('good', 12, 2)}</div>
-          <div class="pf__bar" data-reveal><span class="pf__seg" data-band="risk" style="--w:11.8%"></span><span class="pf__seg" data-band="watch" style="--w:17.6%"></span><span class="pf__seg" data-band="good" style="--w:70.6%"></span></div>
-        </div>
-      </div>
-    </div>
-  </section>`;
-
-  // Fourth product window: one customer's health page — the score ring with its
-  // reasons, and the account's timeline. Reasons and timeline labels come from
-  // the app's own dictionaries (filled with demo values), so it localises too.
-  const CIRC = 339;
-  const reasons = (
-    [
-      ['risk', translate(locale, 'health.why.touch', { days: 38, kind: translate(locale, 'health.touchKind.review') })],
-      ['risk', translate(locale, 'health.why.tasks', { n: 3 })],
-      ['watch', translate(locale, 'health.why.championNone')],
-    ] as const
-  )
-    .map(([st, text], i) => `<li data-state="${st}" data-reveal style="--i:${i}"><span>${esc(text)}</span></li>`)
-    .join('');
-  const tline = (
-    [
-      ['meeting', translate(locale, 'timeline.kind.meeting'), c.meeting.card.name, `10 ${m.month}`, false],
-      ['note', translate(locale, 'timeline.kind.note'), c.meeting.card.notes, `8 ${m.month}`, false],
-      ['done', '', c.meeting.card.done, `5 ${m.month}`, true],
-    ] as const
-  )
-    .map(
-      ([k, kind, text, when, done], i) =>
-        `<li class="tl__ev" data-reveal style="--i:${i}"><span class="tl__dot" data-k="${k}">${done ? DONE : ''}</span><div class="tl__b">${kind ? `<span class="tl__kind">${esc(kind)}</span>` : ''}<p class="tl__txt${done ? ' is-done' : ''}">${esc(text)}</p><span class="tl__when">${esc(when)}</span></div></li>`,
-    )
-    .join('');
-  const customer = `  <section class="board">
-    <div class="wrap">
-      <h3 class="showcase__cap" data-reveal>${esc(c.product.detail)}</h3>
-      <div class="app app--wide" data-reveal="app" aria-hidden="true">
-        <div class="app__bar"><span class="app__dots"><i></i><i></i><i></i></span><span class="app__addr">${esc(BOARD[0].name)}</span></div>
-        <div class="app__main app__main--cust">
-          <div class="cust__panel">
-            <div class="cust__top"><span class="cust__name">${esc(BOARD[0].name)}</span><span class="cust__chip">${esc(c.hero.chips.renewal)}</span></div>
-            <div class="ring" data-band="risk">
-              <svg viewBox="0 0 128 128" aria-hidden="true"><circle class="ring__bg" cx="64" cy="64" r="54"/><circle class="ring__fill" cx="64" cy="64" r="54" style="--circ:${CIRC};--off:${Math.round(CIRC * 0.52)}"/></svg>
-              <div class="ring__c"><span class="ring__n" data-count="48">0</span><span class="ring__l" data-band="risk">${esc(t('health.band.risk'))}</span></div>
-            </div>
-            <div class="why"><span class="why__h">${esc(t('health.why'))}</span><ul class="why__list">${reasons}</ul></div>
-          </div>
-          <div class="cust__tl"><span class="tl__h">${esc(t('timeline.title'))}</span><ul class="tl">${tline}</ul></div>
-        </div>
-      </div>
-    </div>
-  </section>`;
 
   // Fifth product window: a reports chart — the one visual the page still lacks.
   // Month labels come localised from Intl; the bars grow on reveal. Demo shape.
@@ -703,6 +550,41 @@ function page(locale: SiteLocale): string {
       </div>
     </div>
   </section>`;
+
+  // The hero headline, split into words so each rises in on its own.
+  const heroTitle = esc(c.hero.title)
+    .split(' ')
+    .map((w, i) => `<span class="w" style="--wi:${i}"><span>${w}</span></span>`)
+    .join(' ');
+
+  // One bento grid in place of the old stack of near-identical windows. Six tiles,
+  // varied in size, each with a small live visual; all words come from c.bento.
+  const b = c.bento ?? siteCopy('en').bento!;
+  const GCB = 289; // 2·π·46
+  const bviz = [
+    `<div class="bviz bviz--gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bgt" cx="60" cy="60" r="46" fill="none"/><circle class="bgv" cx="60" cy="60" r="46" fill="none" style="--c:${GCB};--off:${Math.round(GCB * 0.22)}"/></svg><span class="bviz__n"><b data-count="78">0</b></span></div>`,
+    `<svg class="bviz bviz--burn" viewBox="0 0 170 80" aria-hidden="true"><path class="bbi" d="M10 12 L160 66" fill="none"/><path class="bbl" d="M10 12 L40 12 L40 28 L78 28 L78 44 L120 44 L120 58 L148 62" fill="none"/><circle class="bbd" cx="148" cy="62" r="4.5"/></svg>`,
+    `<div class="bviz bviz--tasks"><span class="btk"><i class="btk__b btk__b--on">${DONE}</i><i class="btk__l"></i></span><span class="btk"><i class="btk__b">${OPEN}</i><i class="btk__l btk__l--s"></i></span></div>`,
+    `<div class="bviz bviz--rnw"><span class="brn">−60</span><span class="brn__l"></span><span class="brn">−30</span><span class="brn__l"></span><span class="brn brn--on">${CHECK}</span></div>`,
+    `<div class="bviz bviz--portal"><span class="bpt"><span class="bpt__d"></span><span class="bpt__b"></span><span class="bpt__b bpt__b--s"></span></span></div>`,
+    `<div class="bviz bviz--logos">${INTEGRATIONS.slice(0, 8).map((n) => `<span>${esc(n)}</span>`).join('')}</div>`,
+  ];
+  const bentoTile = (i: number, cls: string) =>
+    `<article class="bento__t ${cls}" data-reveal style="--i:${i}"><div class="bento__c"><h3>${esc(b.tiles[i]?.h ?? '')}</h3><p>${esc(b.tiles[i]?.p ?? '')}</p></div>${bviz[i]}</article>`;
+  const bento = `  <section class="bento" id="features">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>${esc(b.eyebrow)}</p>
+      <h2 class="bento__h" data-reveal>${esc(b.title)}</h2>
+      <div class="bento__g">
+        ${bentoTile(0, 'bento__t--wide')}
+        ${bentoTile(1, '')}
+        ${bentoTile(2, '')}
+        ${bentoTile(3, '')}
+        ${bentoTile(4, '')}
+        ${bentoTile(5, 'bento__t--full')}
+      </div>
+    </div>
+  </section>`;
   return `<!doctype html>
 <html lang="${c.lang}" dir="${info.dir}">
 <head>
@@ -742,7 +624,7 @@ ${landingJsonLd(locale, canonical, c.description)}
   <section class="wrap hero">
     <div class="hero__aura" aria-hidden="true"></div>
     <div class="hero__text">
-      <h1>${esc(c.hero.title)}</h1>
+      <h1 class="hero__h">${heroTitle}</h1>
       <p class="hero__lead">${esc(c.hero.lead)}</p>
       <div class="hero__ctas">
         <a class="btn btn--primary btn--big" href="${signup}">${esc(c.hero.primary)}</a>
@@ -764,57 +646,9 @@ ${landingJsonLd(locale, canonical, c.description)}
 
 ${showcase}
 
-${customer}
-
-  <section class="year" id="product">
-    <div class="wrap">
-      <h2 data-reveal>${esc(c.year.title)}</h2>
-      <p class="lead" data-reveal>${esc(c.year.lead)}</p>
-      <ol class="year__steps">${steps}</ol>
-    </div>
-  </section>
-
-  <section class="band">
-    <div class="wrap band__in">
-      <div class="band__text" data-reveal>
-        <h2>${esc(c.meeting.title)}</h2>
-        <p>${esc(c.meeting.text)}</p>
-      </div>
-      <div class="meetflow" aria-hidden="true">
-        <div class="mcard" data-reveal="card">
-          <div class="mcard__date"><span class="mcard__day">${esc(m.day)}</span><span class="mcard__month">${esc(m.month)}</span></div>
-          <div class="mcard__main">
-            <div class="mcard__head"><span class="mcard__kind">${esc(m.kind)}</span><span class="mcard__name">${esc(m.name)}</span></div>
-            <p class="mcard__who"><span>${esc(m.ours)}</span><span>${esc(m.theirs)}</span></p>
-            <p class="mcard__notes">${esc(m.notes)}</p>
-          </div>
-        </div>
-        <div class="flowarrow" data-reveal><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="tasks">
-          <span class="tasks__h">${esc(m.steps)}</span>
-          <div class="tcard" data-reveal style="--i:0"><span class="tcard__box" data-done>${DONE}</span><div class="tcard__b"><p class="tcard__t is-done">${esc(m.done)}</p><span class="tcard__f"><span class="tcard__ava">ZT</span>${DUE}</span></div></div>
-          <div class="tcard" data-reveal style="--i:1"><span class="tcard__box">${OPEN}</span><div class="tcard__b"><p class="tcard__t">${esc(m.open)}</p><span class="tcard__f"><span class="tcard__ava">LB</span>${esc(m.openWho)}</span></div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-${kanban}
-
-${sprint}
+${bento}
 
 ${reports}
-
-  <section class="tools">
-    <div class="wrap">
-      <h2 data-reveal>${esc(c.tools.title)}</h2>
-      <p class="lead" data-reveal>${esc(c.tools.lead)}</p>
-      <dl class="tools__list">${tools}</dl>
-      <p class="tools__none">${esc(c.tools.none)}</p>
-    </div>
-  </section>
-
-${portfolio}
 
   <section class="pricing" id="pricing">
     <div class="wrap">

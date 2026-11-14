@@ -28,6 +28,8 @@ export interface SiteCopy {
   sprint?: SiteSprintCopy;
   /** The live analytics dashboard showcase. Optional per locale (English fallback). */
   dash?: SiteDashCopy;
+  /** The bento feature grid that replaces the old stack of windows. Optional (English fallback). */
+  bento?: SiteBentoCopy;
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -124,6 +126,16 @@ export interface SiteDashCopy {
   kpis: [string, string, string];
 }
 
+/** The bento feature grid: one varied section instead of a stack of windows. */
+export interface SiteBentoCopy {
+  /** Small eyebrow above the section. */
+  eyebrow: string;
+  /** Section headline. */
+  title: string;
+  /** Six tiles, each a short heading and one line. Order is fixed by build-site.ts. */
+  tiles: { h: string; p: string }[];
+}
+
 export const COPY: Partial<Record<Locale, SiteCopy>> = {
   en: {
     lang: 'en',
@@ -204,6 +216,18 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       gauge: 'On-time renewals',
       live: 'Live',
       kpis: ['Accounts at risk', 'Renewals won', 'Meetings booked'],
+    },
+    bento: {
+      eyebrow: 'One workspace',
+      title: 'Everything the account needs, in one place',
+      tiles: [
+        { h: 'Health, scored', p: 'Every account gets a number — and the reason behind it.' },
+        { h: 'Ship in sprints', p: 'Epics, story points, and a burndown that stays honest.' },
+        { h: 'Promises become tasks', p: 'Owners, due dates, done.' },
+        { h: 'Renewals, early', p: 'Kicked off weeks ahead — never in a scramble.' },
+        { h: 'A portal for your customers', p: 'Shared plans and updates, in your own brand.' },
+        { h: 'Works with your stack', p: 'Salesforce, HubSpot, Jira, Slack — synced both ways.' },
+      ],
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -349,6 +373,18 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       gauge: 'Zamanında yenileme',
       live: 'Canlı',
       kpis: ['Riskli müşteri', 'Kazanılan yenileme', 'Planlanan görüşme'],
+    },
+    bento: {
+      eyebrow: 'Tek çalışma alanı',
+      title: 'Müşteri için gereken her şey, tek yerde',
+      tiles: [
+        { h: 'Puanlı sağlık', p: 'Her müşteriye bir skor — ve ardındaki neden.' },
+        { h: 'Sprint’lerle teslim', p: 'Epic’ler, story point’ler ve dürüst kalan bir burndown.' },
+        { h: 'Sözler göreve döner', p: 'Sahibi, tarihi, bitti.' },
+        { h: 'Erken yenileme', p: 'Haftalar önce başlar — telaş yok.' },
+        { h: 'Müşterilerine özel portal', p: 'Paylaşılan planlar ve güncellemeler, senin markanla.' },
+        { h: 'Yığınınla çalışır', p: 'Salesforce, HubSpot, Jira, Slack — çift yönlü.' },
+      ],
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
