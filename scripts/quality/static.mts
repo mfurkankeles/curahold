@@ -113,38 +113,46 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
 }
 
 // ---------------------------------------------------------------- styles
+// Counted twice: the app with its customer portal, and the sales site on its own —
+// one merged figure hid what changed on either side.
 {
-  const css = files.filter((f) => /^web\/(src|portal)\/.*\.css$/.test(f) || f === 'site/site.css');
   const tsx = files.filter((f) => /^web\/.*\.tsx$/.test(f));
   const inline = tsx.reduce((n, f) => n + (read(f).match(/style=\{\{/g) ?? []).length, 0);
-  let hex = 0;
-  const radii = new Set<string>();
-  const sizes = new Set<string>();
-  const times: number[] = [];
-  let offGrid = 0;
-  let spaces = 0;
-  for (const f of css) {
-    const s = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
-    // Colours written straight into a rule, not taken from a token (the token lists themselves do not count).
-    for (const rule of s.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
-      const [sel, body] = [rule.slice(0, rule.indexOf('{')), rule.slice(rule.indexOf('{'))];
-      if (/:root|\[data-theme/.test(sel) && /--[a-z-]+:/.test(body)) continue;
-      hex += (body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).length;
-      for (const m of body.matchAll(/border-radius:\s*([^;}]+)/g)) radii.add(m[1].trim());
-      for (const m of body.matchAll(/font-size:\s*([^;}]+)/g)) sizes.add(m[1].trim());
-      for (const m of body.matchAll(/(?:transition|animation)[a-z-]*:\s*([^;}]+)/g)) for (const t of m[1].matchAll(/(?<![\w.])(\d*\.?\d+)(ms|s)\b/g)) times.push(Number(t[1]) * (t[2] === 's' ? 1000 : 1));
-      for (const m of body.matchAll(/(?:padding|margin|gap)[a-z-]*:\s*([^;}]+)/g))
-        for (const px of m[1].matchAll(/(?<![\w.-])(\d+(?:\.\d+)?)px/g)) {
-          spaces++;
-          if (Number(px[1]) % 4 !== 0) offGrid++;
-        }
+  const groups = [
+    { name: 'app + portal', css: files.filter((f) => /^web\/(src|portal)\/.*\.css$/.test(f)), inline: `${inline}` },
+    { name: 'sales site', css: files.filter((f) => f === 'site/site.css'), inline: 'not counted (built by scripts/build-site.ts)' },
+  ];
+  for (const g of groups) {
+    let hex = 0;
+    const radii = new Set<string>();
+    const sizes = new Set<string>();
+    const times: number[] = [];
+    let offGrid = 0;
+    let spaces = 0;
+    for (const f of g.css) {
+      const s = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
+      // Colours written straight into a rule, not taken from a token (the token lists themselves do not count).
+      for (const rule of s.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
+        const [sel, body] = [rule.slice(0, rule.indexOf('{')), rule.slice(rule.indexOf('{'))];
+        if (/:root|\[data-theme/.test(sel) && /--[a-z-]+:/.test(body)) continue;
+        hex += (body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).length;
+        for (const m of body.matchAll(/border-radius:\s*([^;}]+)/g)) radii.add(m[1].trim());
+        for (const m of body.matchAll(/font-size:\s*([^;}]+)/g)) sizes.add(m[1].trim());
+        for (const m of body.matchAll(/(?:transition|animation)[a-z-]*:\s*([^;}]+)/g)) for (const t of m[1].matchAll(/(?<![\w.])(\d*\.?\d+)(ms|s)\b/g)) times.push(Number(t[1]) * (t[2] === 's' ? 1000 : 1));
+        for (const m of body.matchAll(/(?:padding|margin|gap)[a-z-]*:\s*([^;}]+)/g))
+          for (const px of m[1].matchAll(/(?<![\w.-])(\d+(?:\.\d+)?)px/g)) {
+            spaces++;
+            if (Number(px[1]) % 4 !== 0) offGrid++;
+          }
+      }
     }
+    const moving = times.filter((t) => t >= 50);
+    const outside = moving.filter((t) => t < 150 || t > 200).length;
+    const span = moving.length ? ` (shortest ${Math.min(...moving)} ms, longest ${Math.max(...moving)} ms)` : '';
+    say('styles', `${g.name}: styles written on one element in the screens (style={{…}}): ${g.inline}; colours written straight into rules instead of tokens: ${hex}`);
+    say('styles', `${g.name}: different corner radii: ${radii.size}; different text sizes: ${sizes.size}; spacing values off the 4 px grid: ${offGrid} of ${spaces} (${spaces ? Math.round((offGrid / spaces) * 100) : 0}%)`);
+    say('styles', `${g.name}: animation and transition times: ${moving.length}, of which ${outside} are outside 150–200 ms${span}`);
   }
-  const moving = times.filter((t) => t >= 50);
-  const outside = moving.filter((t) => t < 150 || t > 200).length;
-  say('styles', `styles written on one element in the screens (style={{…}}): ${inline}; colours written straight into rules instead of tokens: ${hex}`);
-  say('styles', `different corner radii: ${radii.size}; different text sizes: ${sizes.size}; spacing values off the 4 px grid: ${offGrid} of ${spaces} (${Math.round((offGrid / spaces) * 100)}%)`);
-  say('styles', `animation and transition times: ${moving.length}, of which ${outside} are outside 150–200 ms (shortest ${Math.min(...moving)} ms, longest ${Math.max(...moving)} ms)`);
 }
 
 // ---------------------------------------------------------------- dependencies, tests
