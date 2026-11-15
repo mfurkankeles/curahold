@@ -35,6 +35,7 @@ import { runScheduled } from './lib/scheduler';
 import type { EmailMessage, EmailSender, Storage } from './lib/services';
 import { createPortalApp } from './portal';
 import { configFromEnv, type Env } from './worker';
+import { attachLive, pgListen } from './live/node';
 
 // ---------------------------------------------------------------- mail
 
@@ -170,6 +171,8 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
 
   const port = Number(env.PORT || 8080);
   const server = serve({ fetch: (req: Request, env: unknown) => (isPortal(req) ? portal.fetch(req, env) : app.fetch(req, env)), port });
+  // The live channel: WebSockets at /api/live on this port, woken by Postgres LISTEN/NOTIFY.
+  const live = await attachLive(server as unknown as import('node:http').Server, { db, config, listen: pgListen(env.DATABASE_URL) });
   // Hourly jobs: summaries, automations, renewals, syncs, cleaning up.
   const tick = () => runScheduled(deps).catch((e) => console.error('[curahold] scheduled jobs failed', e));
   const timer = setInterval(tick, 3600_000);
@@ -178,6 +181,7 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
 
   const stop = () => {
     clearInterval(timer);
+    void live.close();
     server.close();
     void db.close?.();
   };

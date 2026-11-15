@@ -62,6 +62,7 @@ import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
 import { signInSupport } from './lib/support';
 import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
+import { liveRoutes } from './live/routes';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
@@ -100,6 +101,9 @@ export function createApp(deps: Deps) {
       // Scores of the customers this change touched, then the webhooks (a new score is a change too).
       defer(deps, flushHealth(deps, 200).then(() => deliverWebhooks(deps, 20)));
     }
+    // The live channel (Cloudflare): tell the company's room to look. Self-hosted, Postgres tells it (live/node.ts).
+    const changed = c.get('org') as OrgRow | undefined;
+    if (deps.live && changed && c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.res.status < 400) defer(deps, deps.live.poke(changed.id));
   });
 
   // ---------------------------------------------------------------- request limits (lib/ratelimit.ts)
@@ -387,6 +391,7 @@ export function createApp(deps: Deps) {
     }
   });
   app.route('/api', meRoutes);
+  app.route('/api', liveRoutes);
   app.route('/api', metricsRoutes);
   app.route('/api', boardRoutes);
   app.route('/api', taskRoutes);

@@ -108,6 +108,8 @@ export interface Deps {
   defer?: (p: Promise<unknown>) => void;
   /** Request budgets of this isolate or process; defaults to the shared one (lib/ratelimit.ts). */
   limiter?: import('./lib/ratelimit').Limiter;
+  /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
+  live?: { poke(orgId: string): Promise<void> };
 }
 
 export interface OrgRow {

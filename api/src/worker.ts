@@ -7,10 +7,16 @@ import { assertOwnerConfigured, type BillingConfig, type Config } from './contex
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
 import { R2Storage, ResendEmail, type R2Like } from './lib/services';
+import { livePoker, liveUpgrade, type DONamespace } from './live/do';
+
+// The live channel's per-company room (wrangler.toml: durable_objects LIVE).
+export { LiveRoomDO } from './live/do';
 
 export interface Env {
   HYPERDRIVE: { connectionString: string };
   FILES: R2Like;
+  /** The live channel: one Durable Object per company (live/do.ts). Unset: pages keep asking /api/pulse. */
+  LIVE?: DONamespace;
   ASSETS: { fetch(req: Request): Promise<Response> };
   BASE_DOMAIN: string;
   CENTRAL_HOST: string;
@@ -190,6 +196,7 @@ export function depsFor(env: Env, ctx: Ctx) {
       email: new ResendEmail(env.RESEND_API_KEY, env.EMAIL_FROM),
       storage: new R2Storage(env.FILES),
       config: configFromEnv(env),
+      live: livePoker(env),
       defer: (p: Promise<unknown>) => {
         pending.push(p);
         ctx.waitUntil(p);
@@ -220,6 +227,8 @@ export default {
     const url = new URL(req.url);
     const toWorker = url.pathname.startsWith('/api/') || url.pathname === '/mcp' || url.pathname.startsWith('/oauth/') || url.pathname.startsWith('/.well-known/');
     if (!toWorker) return env.ASSETS.fetch(req);
+    // A live socket: checked by its ticket, handed to the company's room; no database, no app.
+    if (url.pathname === '/api/live') return liveUpgrade(req, env, configFromEnv(env));
     const { db, deps, pending } = depsFor(env, ctx);
     const app = createApp(deps);
     try {

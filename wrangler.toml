@@ -41,6 +41,17 @@ id = "<hyperdrive-config-id>"
 binding = "FILES"
 bucket_name = "curahold-files"
 
+# The live channel: one Durable Object per company holds its open pages'
+# WebSockets (Hibernation API: an idle connection costs nothing). SQLite-backed,
+# so it runs on the free plan's Durable Objects too. See api/src/live/do.ts.
+[[durable_objects.bindings]]
+name = "LIVE"
+class_name = "LiveRoomDO"
+
+[[migrations]]
+tag = "live-v1"
+new_sqlite_classes = ["LiveRoomDO"]
+
 # Hourly: morning summaries (in each company's time zone), scheduled
 # automations, delivery retries, CRM syncs; clean-up once a day.
 [triggers]

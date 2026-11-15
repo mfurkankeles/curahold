@@ -18,9 +18,11 @@ import { createMemoryPg, pgliteDb } from './db/pglite';
 import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
+import { attachLive } from './live/node';
 
 export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr' }) {
-  const db = pgliteDb(await createMemoryPg());
+  const pg = await createMemoryPg();
+  const db = pgliteDb(pg);
   await migrate(db, loadMigrations());
   // English unless asked (DEMO_LOCALE=tr for a Turkish sample company).
   const demo = await seedDemo(db, { locale: opts.locale ?? (process.env.DEMO_LOCALE === 'tr' ? 'tr' : 'en') });
@@ -81,6 +83,12 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   // The portal's own domain gets the portal, and nothing else.
   const isPortal = (req: Request) => (req.headers.get('host') ?? new URL(req.url).host).split(':')[0].endsWith(`.${config.portalDomain}`);
   const server = serve({ fetch: (req: Request, env: unknown) => (isPortal(req) ? portal.fetch(req, env) : root.fetch(req, env)), port: opts.port });
+  // The live channel: /api/live on the same port; the database says when to look.
+  const live = await attachLive(server as unknown as import('node:http').Server, {
+    db,
+    config,
+    listen: async (onOrg) => pg.listen('curahold_live', onOrg),
+  });
   // Hourly jobs (digests, automations); on Workers this is the cron trigger.
   const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
   timer.unref();
@@ -88,7 +96,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     console.log(`Curahold API on http://localhost:${opts.port}`);
     console.log(`Demo company: http://demo.localhost:${opts.publicPort}  (sign in as ${demo.adminEmail})`);
   }
-  return { server, db, email, demo, config };
+  return { server, db, email, demo, config, live };
 }
 
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
