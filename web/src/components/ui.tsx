@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
 import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
 import { Icon } from './icons';
 
-const AVATAR_TONES = ['#2f6f73', '#8a5a2b', '#5b6aa0', '#7a4f7c', '#3f7a4c', '#9a4a3a', '#46667a', '#6b6b2f'];
+/** Avatar tones: --avatar-0 … --avatar-7 in styles.css. */
+const AVATAR_TONES = 8;
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -19,7 +20,7 @@ export function Avatar({ person, large }: { person?: Person; large?: boolean }) 
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const name = person?.name ?? t('common.unknownUser');
   return (
-    <span className={`avatar${large ? ' avatar--l' : ''}`} style={{ background: person ? AVATAR_TONES[h % AVATAR_TONES.length] : '#9aa7a9' }} title={name} aria-label={name} role="img">
+    <span className={`avatar${large ? ' avatar--l' : ''}`} data-tone={person ? h % AVATAR_TONES : 'none'} title={name} aria-label={name} role="img">
       {person ? initials(person.name) : '?'}
     </span>
   );
@@ -32,7 +33,7 @@ export function Avatars({ people, max = 3 }: { people: (Person | undefined)[]; m
       {shown.map((p, i) => (
         <Avatar key={p?.id ?? i} person={p} />
       ))}
-      {people.length > max && <span className="avatar" style={{ background: '#74878a' }}>+{people.length - max}</span>}
+      {people.length > max && <span className="avatar avatar--more">+{people.length - max}</span>}
     </span>
   );
 }
@@ -40,10 +41,10 @@ export function Avatars({ people, max = 3 }: { people: (Person | undefined)[]; m
 export function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg className="sidebar__mark" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" style={{ fill: 'var(--mark-bg, #eceafe)' }} />
+      <rect width="32" height="32" rx="8" className="mark__bg" />
       {/* A "C" (cura: care) whose open arc holds a dot (hold) — the name's story. */}
-      <path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" style={{ stroke: 'var(--mark-ink, #191541)' }} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="16.5" cy="16" r="2.6" style={{ fill: 'var(--mark-dot, #5b4de8)' }} />
+      <path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" className="mark__ink" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="16.5" cy="16" r="2.6" className="mark__dot" />
     </svg>
   );
 }
@@ -223,13 +224,17 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+  const pid = useId();
   const selected = value.map((id) => people.find((p) => p.id === id)).filter(Boolean) as Person[];
   const needle = q.trim().toLocaleLowerCase();
   const list = people.filter((p) => !needle || p.name.toLocaleLowerCase().includes(needle) || p.email.includes(needle));
   return (
     <div className="picker" ref={ref}>
-      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((o) => !o)}>
-        <span className="sr-only">{label}</span>
+      <span id={`${pid}l`} hidden>
+        {label}
+      </span>
+      {/* Named "field, value": the field's name first, then what the button shows. */}
+      <button type="button" id={pid} className="picker__button" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${pid}l ${pid}`} disabled={disabled} onClick={() => setOpen((o) => !o)}>
         {selected.length ? (
           <>
             <Avatars people={selected} max={4} />

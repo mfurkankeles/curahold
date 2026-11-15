@@ -298,7 +298,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   if (!def || !cat || !source)
     return (
       <div className="page u-pt-24">
-        <div className="pane__wait" style={{ height: 240, borderRadius: 12 }} />
+        <div className="pane__wait pane__wait--big u-height-240" />
       </div>
     );
 
@@ -758,7 +758,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             {running && <span className="rb__running">{t('rb.running')}</span>}
           </header>
           <div className="rb__chart" data-chart={chart}>
-            {result ? <ReportView result={result} def={def} chart={chart} /> : <div className="pane__wait" style={{ height: 260, borderRadius: 12 }} />}
+            {result ? <ReportView result={result} def={def} chart={chart} /> : <div className="pane__wait pane__wait--big u-height-260" />}
           </div>
         </section>
         </div>

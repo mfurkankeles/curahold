@@ -1,5 +1,5 @@
 // Choose the account a task is about: type to search, or create it on the spot.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Account } from '../../../shared/src/model';
 import { get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -45,12 +45,15 @@ export function AccountPicker({ value, name, onChange, disabled }: { value: stri
       toast(t('errors.server'), 'error');
     }
   };
+  const pid = useId();
   const exact = list.some((a) => a.name.toLocaleLowerCase() === q.trim().toLocaleLowerCase());
 
   return (
     <div className="picker" ref={ref}>
-      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((o) => !o)}>
-        <span className="sr-only">{words.one}</span>
+      <span id={`${pid}l`} hidden>
+        {words.one}
+      </span>
+      <button type="button" id={pid} className="picker__button" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${pid}l ${pid}`} disabled={disabled} onClick={() => setOpen((o) => !o)}>
         {name ? <span>{name}</span> : <span className="muted">{t('task.accountPlaceholder')}</span>}
       </button>
       {open && (

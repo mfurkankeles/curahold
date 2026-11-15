@@ -34,7 +34,7 @@ export function DevicesPage() {
           {failed && <LoadError message={failed} onRetry={() => void load()} />}
           {data && <p className="sheet__hint">{t('devices.hint', { max: data.maxDevices })}</p>}
           {data?.sessions.map((s) => (
-            <div key={s.id} className="filerow" style={{ borderTop: '1px solid var(--line)', padding: '12px 0' }}>
+            <div key={s.id} className="filerow filerow--ruled">
               <div className="u-flex-1">
                 <div className="u-font-weight-500">
                   {s.deviceLabel || t('devices.unknown')} {s.current && <span className="badge badge--active">{t('devices.thisDevice')}</span>}

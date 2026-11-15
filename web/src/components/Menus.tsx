@@ -1,6 +1,6 @@
 // Small pop-up menus: the "+ New" menu and the person's own menu. Arrow keys
 // move, Escape closes and gives focus back to the button that opened it.
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Icon, type IconName } from './icons';
 
 /** Closes a pop-up on a click outside it or on Escape. */
@@ -79,12 +79,16 @@ export function MenuButton({
     else if (e.key === 'End') go(all.length - 1);
     else if (e.key === 'Tab') close(false);
   };
+  const hint = useId();
   return (
     <div className={`menuwrap${className ? ` ${className}` : ''}`} ref={ref}>
-      <button ref={trigger} type="button" className={buttonClass} aria-haspopup="menu" aria-expanded={open} title={title} onClick={() => setOpen((o) => !o)}>
+      <button ref={trigger} type="button" className={buttonClass} aria-haspopup="menu" aria-expanded={open} aria-describedby={hint} title={title} onClick={() => setOpen((o) => !o)}>
         {button}
-        <span className="sr-only">{label}</span>
       </button>
+      {/* Named by what it shows; what the menu is for is its description (a visible name must stay in the name). */}
+      <span id={hint} hidden>
+        {label}
+      </span>
       {open && (
         <div className="popmenu" data-place={place} role="menu" aria-label={label} ref={list} onKeyDown={onKey}>
           {header}

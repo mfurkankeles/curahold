@@ -27,11 +27,11 @@ const currencyFor = (tz: string, locale: Locale) =>
 function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale } = useI18n();
   const steps: [string, MessageKey][] = [
-    ['var(--done)', 'signup.rail.company'],
-    ['var(--calm)', 'signup.rail.chat'],
-    ['var(--calm)', 'signup.rail.accounts'],
-    ['var(--calm)', 'signup.rail.people'],
-    ['var(--calm)', 'signup.rail.rules'],
+    ['done', 'signup.rail.company'],
+    ['calm', 'signup.rail.chat'],
+    ['calm', 'signup.rail.accounts'],
+    ['calm', 'signup.rail.people'],
+    ['calm', 'signup.rail.rules'],
   ];
   return (
     <div className="auth">
@@ -41,15 +41,15 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
         </div>
         <div className="auth__lines signup__rail">
           <strong className="auth__org">{t('signup.sideTitle')}</strong>
-          {steps.map(([color, key], i) => (
-            <div className="auth__rail" key={key}>
-              <span style={{ background: color }} />
+          {steps.map(([state, key], i) => (
+            <div className="auth__rail" key={key} data-state={state}>
+              <span />
               <em>{t(key)}</em>
               <small>{[2, 3, 4, 4, 2][i]}′</small>
             </div>
           ))}
         </div>
-        <small style={{ color: '#9cc3bb' }}>{t('signup.sideFoot')}</small>
+        <small className="auth__foot">{t('signup.sideFoot')}</small>
       </aside>
       <main className="auth__main">
         <div className="auth__card">

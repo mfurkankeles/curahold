@@ -194,6 +194,16 @@
   --chart-leaf: #55b35d;
   --chart-rose: #ea639c;
   --chart-stone: #9aa5b8;
+  --avatar-0: #2f6f73;
+  --avatar-1: #8a5a2b;
+  --avatar-2: #5b6aa0;
+  --avatar-3: #7a4f7c;
+  --avatar-4: #3f7a4c;
+  --avatar-5: #9a4a3a;
+  --avatar-6: #46667a;
+  --avatar-7: #6b6b2f;
+  --avatar-none: #9aa7a9;
+  --avatar-more: #74878a;
 }
 
 /* Dark: the same indigo well, lit from below. Status colours are lifted so they
@@ -764,7 +774,7 @@ tr.vspacer td { padding: 0; border: 0; }
   .props { grid-template-columns: 100px 1fr; }
   .form__row { grid-template-columns: 1fr; }
   .cal__day { min-height: 74px; }
-  .input.search { width: auto; min-width: 0; flex: 1; }
+  .input.search { width: auto; min-width: 128px; flex: 1; }
   .hide-phone { display: none; }
 }
 
@@ -2806,6 +2816,37 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
 ) { transform: scaleX(-1); }
 [dir='rtl'] .navlink:hover .icon:is(:has(> path[d^='M7.4 5.6h9'])) { transform: scaleX(-1) translateX(1px); }
 
+/* Moved here from the screens (they were written on the element). */
+.avatar[data-tone='0'] { background: var(--avatar-0); }
+.avatar[data-tone='1'] { background: var(--avatar-1); }
+.avatar[data-tone='2'] { background: var(--avatar-2); }
+.avatar[data-tone='3'] { background: var(--avatar-3); }
+.avatar[data-tone='4'] { background: var(--avatar-4); }
+.avatar[data-tone='5'] { background: var(--avatar-5); }
+.avatar[data-tone='6'] { background: var(--avatar-6); }
+.avatar[data-tone='7'] { background: var(--avatar-7); }
+.avatar[data-tone='none'] { background: var(--avatar-none); }
+.avatar--more { background: var(--avatar-more); }
+.mark__bg { fill: var(--mark-bg); }
+.mark__ink { stroke: var(--mark-ink); }
+.mark__dot { fill: var(--mark-dot); }
+.auth__rail[data-state] span { background: var(--rail); }
+.auth__rail[data-state='calm'] { --rail: var(--calm); }
+.auth__rail[data-state='soon'] { --rail: var(--soon); }
+.auth__rail[data-state='today'] { --rail: var(--today); }
+.auth__rail[data-state='late'] { --rail: var(--late); }
+.auth__rail[data-state='done'] { --rail: var(--done); }
+.auth__lines .auth__rail:nth-child(1) i { width: 72%; }
+.auth__lines .auth__rail:nth-child(2) i { width: 54%; }
+.auth__lines .auth__rail:nth-child(3) i { width: 64%; }
+.auth__lines .auth__rail:nth-child(4) i { width: 38%; }
+.auth__lines .auth__rail:nth-child(5) i { width: 80%; }
+.auth__foot { color: var(--well-mute); }
+.pane__wait--big { border-radius: var(--r-m); }
+.filerow--ruled { border-top: 1px solid var(--line); padding: 12px 0; }
+.errorbox { display: grid; gap: 12px; justify-items: center; text-align: center; max-width: 420px; }
+.errorbox--page { margin: 48px auto; }
+
 /* ------------------------------------------------------------ touch targets
    On a touch screen every control is at least 44 px to aim at (--tap). Controls that are
    small on purpose (an icon, a tick) keep their look and get an invisible 44 px hit area. */
@@ -2877,6 +2918,7 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
 .u-mt-12 { margin-top: 12px !important; }
 .u-mt-16 { margin-top: 16px !important; }
 .u-mt-20 { margin-top: 20px !important; }
+.u-mt-24 { margin-top: 24px !important; }
 .u-mt-4 { margin-top: 4px !important; }
 .u-mt-8 { margin-top: 8px !important; }
 .u-mt-n4 { margin-top: -4px !important; }

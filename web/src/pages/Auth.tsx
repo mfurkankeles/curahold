@@ -32,13 +32,8 @@ function LangSwitch({ onLocale }: { onLocale: (l: Locale) => void }) {
 function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: React.ReactNode; onLocale: (l: Locale) => void }) {
   // The side panel shows the product's one visual idea — time as colour —
   // as a quiet stack of task rails, with the company's own name.
-  const rails: [string, number][] = [
-    ['var(--calm)', 72],
-    ['var(--soon)', 54],
-    ['var(--today)', 64],
-    ['var(--late)', 38],
-    ['var(--done)', 80],
-  ];
+  // Their colours and lengths are in styles.css (.auth__lines .auth__rail:nth-child…).
+  const rails = ['calm', 'soon', 'today', 'late', 'done'];
   return (
     <div className="auth">
       <aside className="auth__side" aria-hidden="true">
@@ -46,10 +41,10 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
           <Mark /> Curahold
         </div>
         <div className="auth__lines">
-          {rails.map(([color, width]) => (
-            <div className="auth__rail" key={color}>
-              <span style={{ background: color }} />
-              <i style={{ width: `${width}%` }} />
+          {rails.map((state) => (
+            <div className="auth__rail" key={state} data-state={state}>
+              <span />
+              <i />
             </div>
           ))}
           {org.logoUrl && (
@@ -59,7 +54,7 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
           )}
           <strong className="auth__org">{org.name}</strong>
         </div>
-        <small style={{ color: '#9cc3bb' }}>{location.host}</small>
+        <small className="auth__foot">{location.host}</small>
       </aside>
       <main className="auth__main">
         <div className="auth__card">

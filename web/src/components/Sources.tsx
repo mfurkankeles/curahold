@@ -142,7 +142,7 @@ export function Sources() {
           </div>
         </>
       )}
-      <h3 className="section__head" style={{ marginTop: mine.length ? 22 : 0 }}>
+      <h3 className={`section__head ${mine.length ? 'u-mt-24' : 'u-mt-0'}`}>
         {t('sync.add')}
       </h3>
       <div className="tiles">

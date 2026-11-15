@@ -7,7 +7,7 @@ function Fallback({ onRetry, whole }: { onRetry: () => void; whole?: boolean }) 
   const { t } = useI18n();
   return (
     <div className={whole ? 'center-note' : 'page'} role="alert">
-      <div style={{ display: 'grid', gap: 12, justifyItems: 'center', textAlign: 'center', margin: whole ? undefined : '48px auto', maxWidth: 420 }}>
+      <div className={`errorbox${whole ? '' : ' errorbox--page'}`}>
         <h2 className="u-m-0 u-fs-l">{t('errors.boundary.title')}</h2>
         <p className="muted u-m-0">
           {t('errors.boundary.body')}

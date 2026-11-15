@@ -276,7 +276,7 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
   // The total of each row also draws its size, so the big ones stand out without reading every number.
   const most = Math.max(1, ...r.groups.map((g) => Math.abs(g.value)));
   return (
-    <div className="tablewrap rtable">
+    <div className="tablewrap rtable" tabIndex={0}>
       <table className="table">
         <thead>
           <tr>
@@ -342,7 +342,7 @@ export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
   };
   return (
     <>
-      <div className="tablewrap rtable">
+      <div className="tablewrap rtable" tabIndex={0}>
         <table className="table">
           <thead>
             <tr>

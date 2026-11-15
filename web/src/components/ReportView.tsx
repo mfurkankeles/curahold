@@ -95,7 +95,7 @@ function SummaryTable({ r }: { r: Ok }) {
 
   return (
     <>
-      <div className="tablewrap rtable">
+      <div className="tablewrap rtable" tabIndex={0}>
         <table className="table rsum">
           {cols.length > 0 && (
             <thead>
