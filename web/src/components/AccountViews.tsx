@@ -2,7 +2,8 @@
 // coming up month by month, and which customers have which products.
 import { useMoney } from '../lib/money';
 import { reviewDue } from '../../../shared/src/rhythm';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useWindow } from '../lib/windowing';
 import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { Account, AccountField } from '../../../shared/src/model';
@@ -145,9 +146,24 @@ export function AccountCards({
   const { t, words, locale } = useI18n();
   const { person, me } = useStore();
   const score = (a: Account) => a.fields[HEALTH_FIELD];
+  // Many cards: draw only the rows of the grid in sight. The grid says how many cards share a row.
+  const grid = useRef<HTMLDivElement>(null);
+  const [per, setPer] = useState(1);
+  useLayoutEffect(() => {
+    const el = grid.current;
+    if (!el) return;
+    const count = () => setPer(Math.max(1, getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length));
+    count();
+    const ro = new ResizeObserver(count);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const many = rows.length > 60;
+  const w = useWindow<HTMLDivElement, HTMLDivElement>(Math.ceil(rows.length / per), many, 190);
   return (
-    <div className="acards">
-      {rows.map(({ a, chips, attention, band }) => {
+    <div className="acards" ref={grid}>
+      {many && <div ref={w.topRef} className="vspacer acards__spacer" aria-hidden="true" style={{ height: w.before }} />}
+      {rows.slice(w.start * per, w.end * per).map(({ a, chips, attention, band }) => {
         const s = score(a);
         const owner = person(a.ownerId);
         return (
@@ -201,6 +217,7 @@ export function AccountCards({
           </article>
         );
       })}
+      {many && <div ref={w.bottomRef} className="vspacer acards__spacer" aria-hidden="true" style={{ height: w.after }} />}
     </div>
   );
 }

@@ -2,7 +2,8 @@
 // company's own fields, bulk changes, import with undo, and a page per
 // account with its tasks.
 import { useMoney } from '../lib/money';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useWindow } from '../lib/windowing';
 import { labelOf } from '../../../shared/src/fields';
 import { calculated, type Account, type AccountField, type Task } from '../../../shared/src/model';
 import type { LinkInfo } from '../../../shared/src/records';
@@ -152,12 +153,25 @@ export function AccountsPage() {
     }
   };
 
+  // The first page draws at once; the rest follows in pages, so sorting and the signal filters
+  // (worked out here, from each customer's numbers) always see every customer, not only the first page.
+  const seq = useRef(0);
   const load = useCallback(async () => {
-    const p = new URLSearchParams({ limit: '500', signals: '1' });
+    const n = ++seq.current;
+    const p = new URLSearchParams({ signals: '1' });
     if (q.trim()) p.set('q', q.trim());
     if (owner !== 'all') p.set('owner', owner);
     if (archived) p.set('archived', '1');
-    setData(await get(`/accounts?${p}`));
+    let have: Account[] = [];
+    for (let page = 0; page < 40; page++) {
+      p.set('limit', page ? '500' : '200');
+      p.set('offset', String(have.length));
+      const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${p}`);
+      if (n !== seq.current) return;
+      have = [...have, ...r.accounts];
+      setData({ accounts: have, total: r.total });
+      if (!r.accounts.length || have.length >= r.total) break;
+    }
   }, [q, owner, archived]);
   useEffect(() => {
     const id = setTimeout(() => void load(), 200);
@@ -203,6 +217,9 @@ export function AccountsPage() {
       .sort((x, y) => by[cardSort](x, y) || x.a.name.localeCompare(y.a.name, locale));
   }, [data, me.org.accountFields, me.org.health, me.org.rhythm?.reviewDays, t, signal, cardSort, valueField, renewalField, locale]);
   const needing = signalRows.filter((r) => r.attention > 0).length;
+  // A long table draws only the rows in sight.
+  const tableWin = view === 'table' && rows.length > 80;
+  const rowsWin = useWindow<HTMLTableRowElement, HTMLTableRowElement>(rows.length, tableWin, 49);
   const atStake = valueField
     ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + money.toBase(Number(r.a.fields[valueField.key]) || 0, r.a.currency), 0)
     : 0;
@@ -497,7 +514,12 @@ export function AccountsPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((a) => (
+                {tableWin && (
+                  <tr ref={rowsWin.topRef} className="vspacer" aria-hidden="true">
+                    <td colSpan={99} style={{ height: rowsWin.before }} />
+                  </tr>
+                )}
+                {rows.slice(rowsWin.start, rowsWin.end).map((a) => (
                   <tr key={a.id} className="rowlink-row" onClick={(e) => (e.target as HTMLElement).closest('input,button,a') || navigate(`/accounts/${a.id}`)}>
                     {manage && (
                       <td>
@@ -544,6 +566,11 @@ export function AccountsPage() {
                     <td className="hide-phone muted">{a.lastActivityAt ? relativeTime(a.lastActivityAt, t) : '—'}</td>
                   </tr>
                 ))}
+                {tableWin && (
+                  <tr ref={rowsWin.bottomRef} className="vspacer" aria-hidden="true">
+                    <td colSpan={99} style={{ height: rowsWin.after }} />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

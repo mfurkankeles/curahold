@@ -7,7 +7,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 const scrollerOf = (el: HTMLElement | null): HTMLElement | null => {
   for (let n = el; n; n = n.parentElement) {
     const o = getComputedStyle(n).overflowY;
-    if (o === 'auto' || o === 'scroll') return n;
+    // A box that could scroll but is as tall as its content (a table's sideways wrapper) does not count.
+    if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
   }
   return null;
 };
@@ -64,7 +65,7 @@ export function useWindow<S extends HTMLElement = HTMLElement, E extends HTMLEle
     if (!on) return;
     let frame = 0;
     const tick = () => {
-      if (!frame) frame = requestAnimationFrame(() => ((frame = 0), measure()));
+      if (!frame) frame = requestAnimationFrame(() => ((frame = 0), (settle.current = 0), measure()));
     };
     const scroller = scrollerOf(top.current?.parentElement ?? null);
     const target: HTMLElement | Window = scroller ?? window;
@@ -83,6 +84,15 @@ export function useWindow<S extends HTMLElement = HTMLElement, E extends HTMLEle
   useLayoutEffect(() => {
     if (on) measure();
   }, [on, count, measure]);
+  // The rows just drawn may be taller or shorter than the guess, which moves everything: look again,
+  // a few times at most, until the window covers the screen.
+  const settle = useRef(0);
+  useEffect(() => {
+    settle.current = 0;
+  }, [count]);
+  useLayoutEffect(() => {
+    if (on && settle.current++ < 4) measure();
+  }, [on, range, measure]);
 
   const topRef = useCallback((el: S | null) => void (top.current = el), []);
   const bottomRef = useCallback((el: E | null) => void (bottom.current = el), []);

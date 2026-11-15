@@ -398,6 +398,9 @@ a { color: var(--brand-ink); }
 /* A long column or list draws only what is in sight; these stand in for the rest. */
 .vspacer { pointer-events: none; }
 tr.vspacer td { padding: 0; border: 0; }
+.acards > .acards__spacer { grid-column: 1 / -1; }
+.acards > .acards__spacer:first-child { margin-bottom: -12px; }
+.acards > .acards__spacer:last-child { margin-top: -12px; }
 .column__reading, .tasklist__reading td { color: var(--ink-3); font-size: 13px; padding: 8px 4px; text-align: center; }
 .column__add { margin: 0 10px 10px; }
 
