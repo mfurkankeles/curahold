@@ -366,7 +366,7 @@ connectionRoutes.get('/connections/teams/package', async (c) => {
   const t = deps.config.connectors.teams;
   if (!t) fail('not_configured');
   const host = deps.config.centralHost;
-  const L = (k: Parameters<typeof translate>[1]) => translate('en', k);
+  const english = (k: Parameters<typeof translate>[1]) => translate('en', k);
   const manifest = {
     $schema: 'https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json',
     manifestVersion: '1.17',
@@ -374,7 +374,7 @@ connectionRoutes.get('/connections/teams/package', async (c) => {
     id: t!.appId,
     developer: { name: 'Curahold', websiteUrl: `https://${deps.config.baseDomain}`, privacyUrl: `https://${deps.config.baseDomain}/privacy`, termsOfUseUrl: `https://${deps.config.baseDomain}/terms` },
     name: { short: 'Curahold', full: 'Curahold' },
-    description: { short: L('teams.package.short'), full: L('teams.package.full') },
+    description: { short: english('teams.package.short'), full: english('teams.package.full') },
     icons: { color: 'color.png', outline: 'outline.png' },
     accentColor: '#12786B',
     bots: [{ botId: t!.appId, scopes: ['personal', 'team'], supportsFiles: false, isNotificationOnly: false }],
@@ -386,9 +386,9 @@ connectionRoutes.get('/connections/teams/package', async (c) => {
             id: 'createTask',
             type: 'action',
             context: ['message'],
-            title: L('teams.package.command'),
+            title: english('teams.package.command'),
             fetchTask: false,
-            parameters: [{ name: 'title', title: L('teams.package.titleParam'), description: L('teams.package.titleParam') }],
+            parameters: [{ name: 'title', title: english('teams.package.titleParam'), description: english('teams.package.titleParam') }],
           },
         ],
       },

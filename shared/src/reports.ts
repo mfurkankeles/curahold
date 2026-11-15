@@ -2,9 +2,9 @@
 // opportunities, contact, time), narrow it down, group it, sum it up, and
 // choose how to draw it. A report is a small description (ReportDef); the
 // server turns it into one query inside what the person asking may see.
+import { phrase as P } from './i18n';
 import type { Localized, OptionColor } from './model';
 
-const L = (en: string, tr: string): Localized => ({ en, tr });
 
 /** 'deals' means the company's opportunities; any other record type is `record:<key>`. */
 export type ReportSource = 'tasks' | 'accounts' | 'deals' | 'activities' | 'time' | `record:${string}`;
@@ -200,82 +200,82 @@ const openDeals: ReportFilter = { field: 'status', op: 'in', values: ['open'] };
 const wonDeals: ReportFilter = { field: 'status', op: 'in', values: ['won'] };
 
 export const REPORT_LIBRARY: LibraryReport[] = [
-  r('open_by_person', L('Open work by person', 'Kişi bazında açık işler'), L('Who is carrying how much right now.', 'Şu an kim ne kadar taşıyor.'), {
+  r('open_by_person', P('rlib.open_work_by_person'), P('rlib.who_is_carrying_how_much_right'), {
     source: 'tasks', filters: [openTasks], groups: [{ field: 'assignee' }], measure: { fn: 'count' }, chart: 'bar', top: 12,
   }),
-  r('overdue_by_person', L('Overdue by person', 'Kişi bazında gecikenler'), L('Open tasks past their date.', 'Tarihi geçmiş açık görevler.'), {
+  r('overdue_by_person', P('rlib.overdue_by_person'), P('rlib.open_tasks_past_their_date'), {
     source: 'tasks', filters: [{ field: 'overdue', op: 'yes' }], groups: [{ field: 'assignee' }], measure: { fn: 'count' }, chart: 'bar', top: 12,
   }),
-  r('done_per_week', L('Finished per week', 'Haftalık biten işler'), L('The last twelve weeks.', 'Son on iki hafta.'), {
+  r('done_per_week', P('rlib.finished_per_week'), P('rlib.the_last_twelve_weeks'), {
     source: 'tasks', filters: [{ field: 'done', op: 'last_days', value: 84 }], groups: [{ field: 'done', bucket: 'week' }], measure: { fn: 'count' }, chart: 'line',
   }),
-  r('created_per_week', L('New work per week', 'Haftalık gelen işler'), L('What came in, by priority.', 'Gelen işler, önceliğe göre.'), {
+  r('created_per_week', P('rlib.new_work_per_week'), P('rlib.what_came_in_by_priority'), {
     source: 'tasks', filters: [{ field: 'created', op: 'last_days', value: 84 }], groups: [{ field: 'created', bucket: 'week' }, { field: 'priority' }], measure: { fn: 'count' }, chart: 'stacked',
   }),
-  r('open_by_status', L('Open work by status', 'Duruma göre açık işler'), L('Where the work is standing.', 'İşler nerede bekliyor.'), {
+  r('open_by_status', P('rlib.open_work_by_status'), P('rlib.where_the_work_is_standing'), {
     source: 'tasks', filters: [openTasks], groups: [{ field: 'status' }], measure: { fn: 'count' }, chart: 'column',
   }),
-  r('open_by_priority', L('Open work by priority', 'Önceliğe göre açık işler'), L('How much of it is urgent.', 'Ne kadarı acil.'), {
+  r('open_by_priority', P('rlib.open_work_by_priority'), P('rlib.how_much_of_it_is_urgent'), {
     source: 'tasks', filters: [openTasks], groups: [{ field: 'priority' }], measure: { fn: 'count' }, chart: 'donut',
   }),
-  r('open_by_board', L('Open work by board', 'Panoya göre açık işler'), L('Which board holds the most.', 'En çok iş hangi panoda.'), {
+  r('open_by_board', P('rlib.open_work_by_board'), P('rlib.which_board_holds_the_most'), {
     source: 'tasks', filters: [openTasks], groups: [{ field: 'board' }], measure: { fn: 'count' }, chart: 'bar',
   }),
-  r('days_to_done', L('Days from opening to done', 'Açılıştan bitişe gün'), L('The average, month by month.', 'Ay ay ortalama.'), {
+  r('days_to_done', P('rlib.days_from_opening_to_done'), P('rlib.the_average_month_by_month'), {
     source: 'tasks', filters: [{ field: 'done', op: 'last_days', value: 180 }], groups: [{ field: 'done', bucket: 'month' }], measure: { fn: 'avg', field: 'days_to_done' }, chart: 'column',
   }),
-  r('tasks_by_customer', L('Open work by customer', 'Müşteri bazında açık işler'), L('The ten customers with the most open work.', 'En çok açık işi olan on müşteri.'), {
+  r('tasks_by_customer', P('rlib.open_work_by_customer'), P('rlib.the_ten_customers_with_the_most'), {
     source: 'tasks', filters: [openTasks, { field: 'account', op: 'not_empty' }], groups: [{ field: 'account' }], measure: { fn: 'count' }, chart: 'bar', top: 10,
   }),
-  r('customers_by_health', L('Customers by health', 'Sağlığa göre müşteriler'), L('How many are well, watched, at risk.', 'Kaçı iyi, kaçı izlemede, kaçı riskli.'), {
+  r('customers_by_health', P('rlib.customers_by_health'), P('rlib.how_many_are_well_watched_at'), {
     source: 'accounts', filters: [], groups: [{ field: '$health' }], measure: { fn: 'count' }, chart: 'donut',
   }),
-  r('value_by_health', L('Value by health', 'Sağlığa göre tutar'), L('How much money sits where.', 'Paranın ne kadarı nerede duruyor.'), {
+  r('value_by_health', P('rlib.value_by_health'), P('rlib.how_much_money_sits_where'), {
     source: 'accounts', filters: [], groups: [{ field: '$health' }], measure: { fn: 'sum', field: '$money' }, chart: 'donut',
   }),
-  r('value_by_owner', L('Value by owner', 'Sorumluya göre tutar'), L('Who looks after how much.', 'Kim ne kadarına bakıyor.'), {
+  r('value_by_owner', P('rlib.value_by_owner'), P('rlib.who_looks_after_how_much'), {
     source: 'accounts', filters: [], groups: [{ field: 'owner' }], measure: { fn: 'sum', field: '$money' }, chart: 'bar', top: 12,
   }),
-  r('customers_by_tier', L('Customers by segment', 'Segmente göre müşteriler'), L('And their health inside each segment.', 'Ve her segmentin içindeki sağlık.'), {
+  r('customers_by_tier', P('rlib.customers_by_segment'), P('rlib.and_their_health_inside_each_segment'), {
     source: 'accounts', filters: [], groups: [{ field: '$tier' }, { field: '$health' }], measure: { fn: 'count' }, chart: 'stacked',
   }),
-  r('renewals_by_month', L('Renewals by month', 'Aylara göre yenilemeler'), L('The value coming up for renewal in the next year.', 'Önümüzdeki bir yılda yenilenecek tutar.'), {
+  r('renewals_by_month', P('rlib.renewals_by_month'), P('rlib.the_value_coming_up_for_renewal'), {
     source: 'accounts', filters: [{ field: '$renewal', op: 'next_days', value: 365 }], groups: [{ field: '$renewal', bucket: 'month' }], measure: { fn: 'sum', field: '$money' }, chart: 'column',
   }),
-  r('health_by_owner', L('Average health score by owner', 'Sorumluya göre ortalama sağlık skoru'), L('Whose customers need a hand.', 'Kimin müşterileri destek istiyor.'), {
+  r('health_by_owner', P('rlib.average_health_score_by_owner'), P('rlib.whose_customers_need_a_hand'), {
     source: 'accounts', filters: [], groups: [{ field: 'owner' }], measure: { fn: 'avg', field: 'health_score' }, chart: 'bar', top: 12,
   }),
-  r('pipeline_by_stage', L('Open pipeline by stage', 'Aşamaya göre açık fırsatlar'), L('The value at each stage.', 'Her aşamadaki tutar.'), {
+  r('pipeline_by_stage', P('rlib.open_pipeline_by_stage'), P('rlib.the_value_at_each_stage'), {
     source: 'deals', filters: [openDeals], groups: [{ field: 'stage' }], measure: { fn: 'sum', field: 'amount' }, chart: 'column',
   }),
-  r('won_by_month', L('Won by month', 'Aylara göre kazanılan'), L('What closed, by type.', 'Kapanan fırsatlar, türüne göre.'), {
+  r('won_by_month', P('rlib.won_by_month'), P('rlib.what_closed_by_type'), {
     source: 'deals', filters: [wonDeals, { field: 'close_date', op: 'last_days', value: 365 }], groups: [{ field: 'close_date', bucket: 'month' }, { field: 'kind' }], measure: { fn: 'sum', field: 'amount' }, chart: 'stacked',
   }),
-  r('won_by_owner', L('Won by owner', 'Sorumluya göre kazanılan'), L('This year, by who closed it.', 'Bu yıl, kapatana göre.'), {
+  r('won_by_owner', P('rlib.won_by_owner'), P('rlib.this_year_by_who_closed_it'), {
     source: 'deals', filters: [wonDeals, { field: 'close_date', op: 'this', period: 'year' }], groups: [{ field: 'owner' }], measure: { fn: 'sum', field: 'amount' }, chart: 'bar', top: 12,
   }),
-  r('pipeline_by_kind', L('Open pipeline by type', 'Türe göre açık fırsatlar'), L('New business, expansion, renewal.', 'Yeni iş, genişleme, yenileme.'), {
+  r('pipeline_by_kind', P('rlib.open_pipeline_by_type'), P('rlib.new_business_expansion_renewal'), {
     source: 'deals', filters: [openDeals], groups: [{ field: 'kind' }], measure: { fn: 'sum', field: 'amount' }, chart: 'donut',
   }),
-  r('deals_by_status', L('Won and lost', 'Kazanılan ve kaybedilen'), L('How the closed ones ended, this year.', 'Bu yıl kapananlar nasıl bitti.'), {
+  r('deals_by_status', P('rlib.won_and_lost'), P('rlib.how_the_closed_ones_ended_this'), {
     source: 'deals', filters: [{ field: 'status', op: 'in', values: ['won', 'lost'] }, { field: 'close_date', op: 'this', period: 'year' }], groups: [{ field: 'status' }], measure: { fn: 'count' }, chart: 'donut',
   }),
-  r('open_pipeline', L('Open pipeline', 'Açık fırsat tutarı'), L('One figure.', 'Tek rakam.'), {
+  r('open_pipeline', P('rlib.open_pipeline'), P('rlib.one_figure'), {
     source: 'deals', filters: [openDeals], groups: [], measure: { fn: 'sum', field: 'amount' }, chart: 'number',
   }),
-  r('won_this_quarter', L('Won this quarter', 'Bu çeyrek kazanılan'), L('One figure.', 'Tek rakam.'), {
+  r('won_this_quarter', P('rlib.won_this_quarter'), P('rlib.one_figure'), {
     source: 'deals', filters: [wonDeals, { field: 'close_date', op: 'this', period: 'quarter' }], groups: [], measure: { fn: 'sum', field: 'amount' }, chart: 'number',
   }),
-  r('contact_per_week', L('Customer contact per week', 'Haftalık müşteri teması'), L('Calls, meetings, emails and notes.', 'Aramalar, toplantılar, e-postalar ve notlar.'), {
+  r('contact_per_week', P('rlib.customer_contact_per_week'), P('rlib.calls_meetings_emails_and_notes'), {
     source: 'activities', filters: [{ field: 'happened', op: 'last_days', value: 84 }], groups: [{ field: 'happened', bucket: 'week' }, { field: 'kind' }], measure: { fn: 'count' }, chart: 'stacked',
   }),
-  r('contact_by_person', L('Customer contact by person', 'Kişi bazında müşteri teması'), L('The last thirty days.', 'Son otuz gün.'), {
+  r('contact_by_person', P('rlib.customer_contact_by_person'), P('rlib.the_last_thirty_days'), {
     source: 'activities', filters: [{ field: 'happened', op: 'last_days', value: 30 }], groups: [{ field: 'author' }], measure: { fn: 'count' }, chart: 'bar', top: 12,
   }),
-  r('hours_by_person', L('Hours by person', 'Kişi bazında saat'), L('Time logged in the last thirty days.', 'Son otuz günde girilen süre.'), {
+  r('hours_by_person', P('rlib.hours_by_person'), P('rlib.time_logged_in_the_last_thirty'), {
     source: 'time', filters: [{ field: 'day', op: 'last_days', value: 30 }], groups: [{ field: 'user' }], measure: { fn: 'sum', field: 'minutes' }, chart: 'bar', top: 12,
   }),
-  r('hours_by_customer', L('Hours by customer', 'Müşteri bazında saat'), L('Where the time went, last ninety days.', 'Süre nereye gitti, son doksan gün.'), {
+  r('hours_by_customer', P('rlib.hours_by_customer'), P('rlib.where_the_time_went_last_ninety'), {
     source: 'time', filters: [{ field: 'day', op: 'last_days', value: 90 }, { field: 'account', op: 'not_empty' }], groups: [{ field: 'account' }], measure: { fn: 'sum', field: 'minutes' }, chart: 'bar', top: 10,
   }),
 ];
@@ -301,8 +301,8 @@ export interface DashboardTemplate {
 export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   {
     key: 'sales',
-    name: L('Sales pipeline', 'Satış hunisi'),
-    help: L('Open pipeline by stage and type, what was won and by whom.', 'Aşama ve türe göre açık fırsatlar, ne kazanıldı, kim kazandı.'),
+    name: P('rlib.sales_pipeline'),
+    help: P('rlib.open_pipeline_by_stage_and_type'),
     look: ['number', 'column', 'stacked', 'donut'],
     cards: [
       { report: 'open_pipeline', size: 'third' },
@@ -317,8 +317,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'renewals',
-    name: L('Renewals and risk', 'Yenileme ve risk'),
-    help: L('What renews when, how much of it is at risk, and who has gone quiet.', 'Ne zaman ne yenileniyor, ne kadarı riskte, kim sessiz kaldı.'),
+    name: P('rlib.renewals_and_risk'),
+    help: P('rlib.what_renews_when_how_much_of'),
     look: ['number', 'column', 'donut', 'table'],
     cards: [
       { type: 'metric', metric: 'renewals', days: 90, size: 'third' },
@@ -333,8 +333,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'health',
-    name: L('Customer health', 'Müşteri sağlığı'),
-    help: L('How the portfolio is doing, segment by segment and owner by owner.', 'Portföy ne durumda: segment segment, sorumlu sorumlu.'),
+    name: P('rlib.customer_health'),
+    help: P('rlib.how_the_portfolio_is_doing_segment'),
     look: ['donut', 'stacked', 'bar', 'table'],
     cards: [
       { report: 'customers_by_health', size: 'third' },
@@ -347,8 +347,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'team',
-    name: L('Team performance', 'Ekip performansı'),
-    help: L('Who carries what, what is late, how fast work gets done and where the hours go.', 'Kim ne taşıyor, ne gecikti, işler ne hızla bitiyor, saatler nereye gidiyor.'),
+    name: P('rlib.team_performance'),
+    help: P('rlib.who_carries_what_what_is_late'),
     look: ['bar', 'line', 'column', 'bar'],
     cards: [
       { report: 'open_by_person', size: 'half' },
@@ -361,8 +361,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'engagement',
-    name: L('Customer contact', 'Müşteri teması'),
-    help: L('How often you talk to customers, who does the talking, and who has heard nothing.', 'Müşterilerle ne sıklıkla konuşuluyor, kim konuşuyor, kim hiç ses duymadı.'),
+    name: P('rlib.customer_contact'),
+    help: P('rlib.how_often_you_talk_to_customers'),
     look: ['stacked', 'bar', 'table', 'bar'],
     cards: [
       { report: 'contact_per_week', size: 'full' },
@@ -374,8 +374,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'flow',
-    name: L('Work flow', 'İş akışı'),
-    help: L('What comes in, what gets done, and where it waits.', 'Ne geliyor, ne bitiyor, nerede bekliyor.'),
+    name: P('rlib.work_flow'),
+    help: P('rlib.what_comes_in_what_gets_done'),
     look: ['stacked', 'line', 'column', 'donut'],
     cards: [
       { report: 'created_per_week', size: 'half' },
@@ -388,8 +388,8 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
   },
   {
     key: 'exec',
-    name: L('Executive summary', 'Yönetici özeti'),
-    help: L('One page for the people who ask "how are we doing?".', '“Nasıl gidiyoruz?” diye soranlar için tek sayfa.'),
+    name: P('rlib.executive_summary'),
+    help: P('rlib.one_page_for_the_people_who'),
     look: ['number', 'number', 'column', 'line'],
     cards: [
       { type: 'metric', metric: 'accounts', size: 'third' },

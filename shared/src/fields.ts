@@ -1,7 +1,7 @@
 // Account field values: what people type or import ("1.250,50 ₺",
 // "05.03.2027", "Riskli") turned into clean values. Shared so the import
 // preview shows exactly what will be saved.
-import type { Locale } from './i18n';
+import { phraseIn, type Locale } from './i18n';
 import type { AccountField, Localized } from './model';
 
 export type FieldValue = string | number | null;
@@ -64,7 +64,7 @@ const fold = (s: string) =>
     .trim();
 
 export function labelOf(l: Localized | undefined, locale: Locale): string {
-  return l?.[locale] ?? l?.en ?? l?.tr ?? '';
+  return phraseIn(l, locale);
 }
 
 export function optionKey(label: string): string {

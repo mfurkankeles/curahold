@@ -1,6 +1,7 @@
 // Pages: a role's home and the shared report pages, built from cards.
 // A page says what to show; each viewer sees it filled with what they are
 // allowed to see (their customers, the fields open to their role).
+import { phrase as P } from './i18n';
 import type { Localized, OptionColor } from './model';
 import type { ChartKind, ReportResult, ReportSource } from './reports';
 
@@ -121,27 +122,26 @@ export type CardData =
   | { kind: 'note'; text: string }
   | { kind: 'report'; name: string; chart: ChartKind; source: ReportSource; reportId: string | null; library: string | null; result: ReportResult; goal?: number };
 
-const L = (en: string, tr: string): Localized => ({ en, tr });
 
 /** Card names and one line each for the card library. */
 export const CARD_INFO: Record<CardType, { name: Localized; help: Localized }> = {
-  my_tasks: { name: L('My open tasks', 'Açık görevlerim'), help: L('Overdue first, then what is due soon.', 'Önce gecikenler, sonra yaklaşanlar.') },
-  renewals: { name: L('Coming renewals', 'Yaklaşan yenilemeler'), help: L('Customers whose renewal date falls within the days you choose.', 'Yenileme tarihi seçtiğin gün içinde olan müşteriler.') },
-  attention: { name: L('Needs attention', 'İlgi bekleyenler'), help: L('Customers marked at risk (or any choices you pick).', 'Riskli işaretlenen (ya da seçtiğin durumdaki) müşteriler.') },
-  quiet: { name: L('Gone quiet', 'Sessiz kalanlar'), help: L('Customers with no task activity for a while.', 'Bir süredir hiç görev hareketi olmayan müşteriler.') },
-  stakeholders: { name: L('Stakeholder risks', 'Paydaş riskleri'), help: L('Blockers and skeptics, and customers with no champion.', 'Engelleyici ve şüpheci kişiler, güçlü destekçisi olmayan müşteriler.') },
-  metric: { name: L('A number', 'Tek sayı'), help: L('One figure: customers, annual value, at risk, renewals, open or overdue tasks.', 'Tek bir rakam: müşteri, yıllık tutar, riskli, yenileme, açık ya da geciken görev.') },
-  breakdown: { name: L('Breakdown', 'Dağılım'), help: L('Customers split by a choice field, by owner or by team.', 'Müşterileri bir seçim alanına, sahibine ya da ekibine göre böler.') },
-  team_load: { name: L('Team load', 'Ekip yükü'), help: L('Per person: customers, open and overdue tasks, customers at risk.', 'Kişi başına: müşteri, açık ve geciken görev, riskli müşteri.') },
-  sync_health: { name: L('Connections', 'Bağlantılar'), help: L('Whether connected tools are syncing. Only people who manage connections see it.', 'Bağlı araçlar eşitleniyor mu. Yalnızca bağlantıları yönetenler görür.') },
-  note: { name: L('Note', 'Not'), help: L('Your own words: a welcome, a weekly focus, useful links.', 'Kendi sözlerin: karşılama, haftanın odağı, işe yarar bağlantılar.') },
-  report: { name: L('Report', 'Rapor'), help: L('A chart from a report you built, or from the ready-made ones.', 'Kendi kurduğun ya da hazır raporlardan bir grafik.') },
+  my_tasks: { name: P('plib.my_open_tasks'), help: P('plib.overdue_first_then_what_is_due') },
+  renewals: { name: P('plib.coming_renewals'), help: P('plib.customers_whose_renewal_date_falls_within') },
+  attention: { name: P('plib.needs_attention'), help: P('plib.customers_marked_at_risk_or_any') },
+  quiet: { name: P('plib.gone_quiet'), help: P('plib.customers_with_no_task_activity_for') },
+  stakeholders: { name: P('plib.stakeholder_risks'), help: P('plib.blockers_and_skeptics_and_customers_with') },
+  metric: { name: P('plib.a_number'), help: P('plib.one_figure_customers_annual_value_at') },
+  breakdown: { name: P('plib.breakdown'), help: P('plib.customers_split_by_a_choice_field') },
+  team_load: { name: P('plib.team_load'), help: P('plib.per_person_customers_open_and_overdue') },
+  sync_health: { name: P('plib.connections'), help: P('plib.whether_connected_tools_are_syncing_only') },
+  note: { name: P('plib.note'), help: P('plib.your_own_words_a_welcome_a') },
+  report: { name: P('plib.report'), help: P('plib.a_chart_from_a_report_you') },
 };
 
 /** The pages every new company starts with. */
 export const DEFAULT_PAGES: { name: Localized; homeFor: string[]; cards: Card[] }[] = [
   {
-    name: L('My day', 'Benim günüm'),
+    name: P('plib.my_day'),
     homeFor: ['member'],
     cards: [
       { id: 'c1', type: 'my_tasks', size: 'half' },
@@ -152,7 +152,7 @@ export const DEFAULT_PAGES: { name: Localized; homeFor: string[]; cards: Card[] 
     ],
   },
   {
-    name: L('Team view', 'Ekip görünümü'),
+    name: P('plib.team_view'),
     homeFor: ['admin', 'manager'],
     cards: [
       { id: 'c1', type: 'metric', size: 'third', metric: 'accounts' },
@@ -167,7 +167,7 @@ export const DEFAULT_PAGES: { name: Localized; homeFor: string[]; cards: Card[] 
     ],
   },
   {
-    name: L('Leadership summary', 'Yönetim özeti'),
+    name: P('plib.leadership_summary'),
     homeFor: ['viewer'],
     cards: [
       { id: 'c1', type: 'metric', size: 'third', metric: 'accounts' },

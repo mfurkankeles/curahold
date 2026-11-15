@@ -1,7 +1,7 @@
 // Records kept under an account — contacts, opportunities, and whatever
 // else a company tracks (risks, renewals, cases…). Built-in kinds come with
 // fields Curahold knows how to use; anything else is the company's own.
-import type { Locale } from './i18n';
+import { phrase as P, phraseIn, type Locale } from './i18n';
 import type { AccountField, FieldOption, Localized } from './model';
 
 export const RECORD_KINDS = ['contact', 'opportunity', 'ticket', 'custom'] as const;
@@ -71,38 +71,37 @@ export interface RecordDetail extends AppRecord {
 /** Built-in columns a record table can show besides the record's own fields. */
 export const RECORD_BUILTIN_COLUMNS = ['account', 'owner', 'created_by', 'created_at', 'updated_at'] as const;
 
-const L = (en: string, tr: string): Localized => ({ en, tr });
 
 /** Where a stakeholder stands towards us. Keys are fixed; labels can be renamed. */
 export const STANCES = [
-  { key: 'champion', label: L('Champion', 'Güçlü destekçi') },
-  { key: 'supporter', label: L('Supporter', 'Destekçi') },
-  { key: 'neutral', label: L('Neutral', 'Nötr') },
-  { key: 'skeptic', label: L('Skeptic', 'Şüpheci') },
-  { key: 'blocker', label: L('Blocker', 'Engelleyici') },
+  { key: 'champion', label: P('rtype.champion') },
+  { key: 'supporter', label: P('rtype.supporter') },
+  { key: 'neutral', label: P('rtype.neutral') },
+  { key: 'skeptic', label: P('rtype.skeptic') },
+  { key: 'blocker', label: P('rtype.blocker') },
 ];
 
 /** How much say a stakeholder has in the decision. */
 export const DECISION_LEVELS = [
-  { key: 'decision_maker', label: L('Decision maker', 'Karar verici') },
-  { key: 'approver', label: L('Approver (budget)', 'Onaylayan (bütçe)') },
-  { key: 'influencer', label: L('Influencer', 'Etkileyen') },
-  { key: 'evaluator', label: L('Evaluator', 'Değerlendiren') },
-  { key: 'user', label: L('User', 'Kullanıcı') },
+  { key: 'decision_maker', label: P('rtype.decision_maker') },
+  { key: 'approver', label: P('rtype.approver_budget') },
+  { key: 'influencer', label: P('rtype.influencer') },
+  { key: 'evaluator', label: P('rtype.evaluator') },
+  { key: 'user', label: P('rtype.user') },
 ];
 
 /** Where a support ticket stands. Every support tool's own states fold into these four. */
 export const TICKET_STATUSES = [
-  { key: 'open', label: L('Open', 'Açık'), color: 'coral' as const },
-  { key: 'pending', label: L('Waiting', 'Beklemede'), color: 'honey' as const },
-  { key: 'solved', label: L('Solved', 'Çözüldü'), color: 'leaf' as const },
-  { key: 'closed', label: L('Closed', 'Kapandı'), color: 'stone' as const },
+  { key: 'open', label: P('rtype.open'), color: 'coral' as const },
+  { key: 'pending', label: P('rtype.waiting'), color: 'honey' as const },
+  { key: 'solved', label: P('rtype.solved'), color: 'leaf' as const },
+  { key: 'closed', label: P('rtype.closed'), color: 'stone' as const },
 ];
 export const TICKET_PRIORITIES = [
-  { key: 'low', label: L('Low', 'Düşük') },
-  { key: 'normal', label: L('Normal', 'Normal') },
-  { key: 'high', label: L('High', 'Yüksek') },
-  { key: 'urgent', label: L('Urgent', 'Acil'), color: 'coral' as const },
+  { key: 'low', label: P('task.priority.low') },
+  { key: 'normal', label: P('task.priority.normal') },
+  { key: 'high', label: P('task.priority.high') },
+  { key: 'urgent', label: P('task.priority.urgent'), color: 'coral' as const },
 ];
 /** Still needing an answer. */
 export const TICKET_OPEN = ['open', 'pending'];
@@ -129,62 +128,62 @@ export const CONTACT_COLUMNS = ['title', 'decision', 'stance', 'email'];
 
 /** Opportunity status options: the one thing every CRM agrees on. */
 export const OPPORTUNITY_STATUS = [
-  { key: 'open', label: L('Open', 'Açık') },
-  { key: 'won', label: L('Won', 'Kazanıldı') },
-  { key: 'lost', label: L('Lost', 'Kaybedildi') },
+  { key: 'open', label: P('rtype.deal_open') },
+  { key: 'won', label: P('rtype.won') },
+  { key: 'lost', label: P('rtype.lost') },
 ];
 
 /** Stages a deal moves through until it is won or lost; a company renames or replaces them, a CRM brings its own. */
 export const OPPORTUNITY_STAGES: FieldOption[] = [
-  { key: 'discovery', label: L('Discovery', 'Keşif'), color: 'sky' },
-  { key: 'proposal', label: L('Proposal', 'Teklif'), color: 'honey' },
-  { key: 'negotiation', label: L('Negotiation', 'Pazarlık'), color: 'plum' },
-  { key: 'commit', label: L('Commit', 'Söz alındı'), color: 'sea' },
+  { key: 'discovery', label: P('rtype.discovery'), color: 'sky' },
+  { key: 'proposal', label: P('rtype.proposal'), color: 'honey' },
+  { key: 'negotiation', label: P('rtype.negotiation'), color: 'plum' },
+  { key: 'commit', label: P('rtype.commit'), color: 'sea' },
 ];
 /** What the deal is: a new customer, more from an existing one, or a renewal. */
 export const OPPORTUNITY_KINDS: FieldOption[] = [
-  { key: 'new', label: L('New business', 'Yeni iş'), color: 'sky' },
-  { key: 'expansion', label: L('Expansion', 'Genişleme'), color: 'leaf' },
-  { key: 'renewal', label: L('Renewal', 'Yenileme'), color: 'stone' },
+  { key: 'new', label: P('rtype.new_business'), color: 'sky' },
+  { key: 'expansion', label: P('rtype.expansion'), color: 'leaf' },
+  { key: 'renewal', label: P('rtype.renewal'), color: 'stone' },
 ];
 
 export const BUILTIN_TYPES: Record<Exclude<RecordKind, 'custom'>, { key: string; name: RecordType['name']; fields: AccountField[] }> = {
   contact: {
     key: 'contact',
-    name: { one: L('Contact', 'Kişi'), other: L('Contacts', 'Kişiler') },
+    name: { one: P('rtype.contact'), other: P('rtype.contacts') },
     fields: [
-      { key: 'first_name', label: L('First name', 'Ad'), type: 'text' },
-      { key: 'last_name', label: L('Last name', 'Soyad'), type: 'text' },
-      { key: 'title', label: L('Job title', 'Unvan'), type: 'text' },
-      { key: 'email', label: L('Email', 'E-posta'), type: 'email' },
-      { key: 'phone', label: L('Phone', 'Telefon'), type: 'text' },
-      { key: 'linkedin', label: L('LinkedIn', 'LinkedIn'), type: 'url' },
-      { key: 'decision', label: L('Decision role', 'Karar düzeyi'), type: 'select', options: DECISION_LEVELS },
-      { key: 'stance', label: L('Stance towards us', 'Bize karşı duruşu'), type: 'select', options: STANCES },
+      { key: 'first_name', label: P('rtype.first_name'), type: 'text' },
+      { key: 'last_name', label: P('rtype.last_name'), type: 'text' },
+      { key: 'title', label: P('rtype.job_title'), type: 'text' },
+      { key: 'email', label: P('rtype.email'), type: 'email' },
+      { key: 'phone', label: P('rtype.phone'), type: 'text' },
+      { key: 'linkedin', label: P('rtype.linkedin'), type: 'url' },
+      { key: 'decision', label: P('rtype.decision_role'), type: 'select', options: DECISION_LEVELS },
+      { key: 'stance', label: P('rtype.stance_towards_us'), type: 'select', options: STANCES },
     ],
   },
   ticket: {
     key: 'ticket',
-    name: { one: L('Support ticket', 'Destek talebi'), other: L('Support tickets', 'Destek talepleri') },
+    name: { one: P('rtype.support_ticket'), other: P('rtype.support_tickets') },
     fields: [
-      { key: 'status', label: L('Status', 'Durum'), type: 'select', options: TICKET_STATUSES },
-      { key: 'priority', label: L('Priority', 'Öncelik'), type: 'select', options: TICKET_PRIORITIES },
-      { key: 'opened_at', label: L('Opened', 'Açıldı'), type: 'date' },
-      { key: 'solved_at', label: L('Solved', 'Çözüldü'), type: 'date' },
-      { key: 'requester', label: L('Requester', 'Talep eden'), type: 'email' },
-      { key: 'channel', label: L('Channel', 'Kanal'), type: 'text' },
-      { key: 'url', label: L('Link', 'Bağlantı'), type: 'url' },
+      { key: 'status', label: P('rtype.status'), type: 'select', options: TICKET_STATUSES },
+      { key: 'priority', label: P('rtype.priority'), type: 'select', options: TICKET_PRIORITIES },
+      { key: 'opened_at', label: P('rtype.opened'), type: 'date' },
+      { key: 'solved_at', label: P('rtype.solved_at'), type: 'date' },
+      { key: 'requester', label: P('rtype.requester'), type: 'email' },
+      { key: 'channel', label: P('rtype.channel'), type: 'text' },
+      { key: 'url', label: P('rtype.link'), type: 'url' },
     ],
   },
   opportunity: {
     key: 'opportunity',
-    name: { one: L('Opportunity', 'Fırsat'), other: L('Opportunities', 'Fırsatlar') },
+    name: { one: P('rtype.opportunity'), other: P('rtype.opportunities') },
     fields: [
-      { key: 'amount', label: L('Amount', 'Tutar'), type: 'money' },
-      { key: 'close_date', label: L('Close date', 'Kapanış tarihi'), type: 'date' },
-      { key: 'stage', label: L('Stage', 'Aşama'), type: 'select', options: OPPORTUNITY_STAGES },
-      { key: 'status', label: L('Status', 'Durum'), type: 'select', options: OPPORTUNITY_STATUS },
-      { key: 'kind', label: L('Type', 'Tür'), type: 'select', options: OPPORTUNITY_KINDS },
+      { key: 'amount', label: P('rtype.amount'), type: 'money' },
+      { key: 'close_date', label: P('rtype.close_date'), type: 'date' },
+      { key: 'stage', label: P('rtype.stage'), type: 'select', options: OPPORTUNITY_STAGES },
+      { key: 'status', label: P('rtype.status'), type: 'select', options: OPPORTUNITY_STATUS },
+      { key: 'kind', label: P('rtype.type'), type: 'select', options: OPPORTUNITY_KINDS },
     ],
   },
 };
@@ -197,112 +196,112 @@ export const BUILTIN_TYPES: Record<Exclude<RecordKind, 'custom'>, { key: string;
 export const RECORD_PRESETS: { key: string; name: RecordType['name']; hint: Localized; fields: AccountField[] }[] = [
   {
     key: 'agreement',
-    name: { one: L('Agreement', 'Sözleşme'), other: L('Agreements', 'Sözleşmeler') },
-    hint: L('Contracts with their link, dates and value; the Renewals view shows them.', 'Bağlantısı, tarihleri ve tutarıyla sözleşmeler; Yenilemeler görünümünde çıkar.'),
+    name: { one: P('rtype.agreement'), other: P('rtype.agreements') },
+    hint: P('rtype.contracts_with_their_link_dates_and'),
     fields: [
-      { key: 'link', label: L('Link', 'Bağlantı'), type: 'url' },
-      { key: 'start_date', label: L('Starts', 'Başlangıç'), type: 'date' },
-      { key: 'end_date', label: L('Ends', 'Bitiş'), type: 'date' },
-      { key: 'value', label: L('Value', 'Tutar'), type: 'money' },
+      { key: 'link', label: P('rtype.link'), type: 'url' },
+      { key: 'start_date', label: P('rtype.starts'), type: 'date' },
+      { key: 'end_date', label: P('rtype.ends'), type: 'date' },
+      { key: 'value', label: P('rtype.value'), type: 'money' },
       {
         key: 'status',
-        label: L('Status', 'Durum'),
+        label: P('rtype.status'),
         type: 'select',
         options: [
-          { key: 'draft', label: L('Draft', 'Taslak'), color: 'stone' },
-          { key: 'signed', label: L('Signed', 'İmzalandı'), color: 'leaf' },
-          { key: 'expired', label: L('Expired', 'Süresi doldu'), color: 'coral' },
+          { key: 'draft', label: P('rtype.draft'), color: 'stone' },
+          { key: 'signed', label: P('rtype.signed'), color: 'leaf' },
+          { key: 'expired', label: P('rtype.expired'), color: 'coral' },
         ],
       },
     ],
   },
   {
     key: 'risk',
-    name: { one: L('Risk', 'Risk'), other: L('Risks', 'Riskler') },
-    hint: L('What could lose a customer, how bad it is, and what is being done.', 'Bir müşteriyi kaybettirebilecek şey, ne kadar ciddi olduğu ve ne yapıldığı.'),
+    name: { one: P('rtype.risk'), other: P('rtype.risks') },
+    hint: P('rtype.what_could_lose_a_customer_how'),
     fields: [
       {
         key: 'severity',
-        label: L('Severity', 'Ciddiyet'),
+        label: P('rtype.severity'),
         type: 'select',
         options: [
-          { key: 'low', label: L('Low', 'Düşük'), color: 'sky' },
-          { key: 'medium', label: L('Medium', 'Orta'), color: 'honey' },
-          { key: 'high', label: L('High', 'Yüksek'), color: 'coral' },
+          { key: 'low', label: P('task.priority.low'), color: 'sky' },
+          { key: 'medium', label: P('rtype.medium'), color: 'honey' },
+          { key: 'high', label: P('task.priority.high'), color: 'coral' },
         ],
       },
       {
         key: 'reason',
-        label: L('Reason', 'Neden'),
+        label: P('rtype.reason'),
         type: 'select',
         options: [
-          { key: 'price', label: L('Price', 'Fiyat'), color: 'honey' },
-          { key: 'product', label: L('Product fit', 'Ürün uyumu'), color: 'plum' },
-          { key: 'champion', label: L('Champion left', 'Destekçi ayrıldı'), color: 'rose' },
-          { key: 'service', label: L('Service', 'Hizmet'), color: 'sky' },
-          { key: 'other', label: L('Other', 'Diğer'), color: 'stone' },
+          { key: 'price', label: P('rtype.price'), color: 'honey' },
+          { key: 'product', label: P('rtype.product_fit'), color: 'plum' },
+          { key: 'champion', label: P('rtype.champion_left'), color: 'rose' },
+          { key: 'service', label: P('rtype.service'), color: 'sky' },
+          { key: 'other', label: P('rtype.other'), color: 'stone' },
         ],
       },
-      { key: 'at_stake', label: L('At stake', 'Risk altındaki tutar'), type: 'money' },
+      { key: 'at_stake', label: P('rtype.at_stake'), type: 'money' },
       {
         key: 'status',
-        label: L('Status', 'Durum'),
+        label: P('rtype.status'),
         type: 'select',
         options: [
-          { key: 'open', label: L('Open', 'Açık'), color: 'coral' },
-          { key: 'handled', label: L('Handled', 'Çözüldü'), color: 'leaf' },
+          { key: 'open', label: P('rtype.open'), color: 'coral' },
+          { key: 'handled', label: P('rtype.handled'), color: 'leaf' },
         ],
       },
     ],
   },
   {
     key: 'request',
-    name: { one: L('Product request', 'Ürün talebi'), other: L('Product requests', 'Ürün talepleri') },
-    hint: L('What customers ask the product for, and how much it matters to them.', 'Müşterilerin üründen istedikleri ve onlar için ne kadar önemli olduğu.'),
+    name: { one: P('rtype.product_request'), other: P('rtype.product_requests') },
+    hint: P('rtype.what_customers_ask_the_product_for'),
     fields: [
       {
         key: 'priority',
-        label: L('Priority', 'Öncelik'),
+        label: P('rtype.priority'),
         type: 'select',
         options: [
-          { key: 'nice', label: L('Nice to have', 'Olsa iyi olur'), color: 'sky' },
-          { key: 'important', label: L('Important', 'Önemli'), color: 'honey' },
-          { key: 'blocker', label: L('Blocker', 'Engelleyici'), color: 'coral' },
+          { key: 'nice', label: P('rtype.nice_to_have'), color: 'sky' },
+          { key: 'important', label: P('rtype.important'), color: 'honey' },
+          { key: 'blocker', label: P('rtype.blocker'), color: 'coral' },
         ],
       },
       {
         key: 'status',
-        label: L('Status', 'Durum'),
+        label: P('rtype.status'),
         type: 'select',
         options: [
-          { key: 'new', label: L('New', 'Yeni'), color: 'stone' },
-          { key: 'planned', label: L('Planned', 'Planlandı'), color: 'plum' },
-          { key: 'shipped', label: L('Shipped', 'Yayında'), color: 'leaf' },
-          { key: 'declined', label: L('Declined', 'Reddedildi'), color: 'rose' },
+          { key: 'new', label: P('rtype.new'), color: 'stone' },
+          { key: 'planned', label: P('rtype.planned'), color: 'plum' },
+          { key: 'shipped', label: P('rtype.shipped'), color: 'leaf' },
+          { key: 'declined', label: P('rtype.declined'), color: 'rose' },
         ],
       },
-      { key: 'link', label: L('Link', 'Bağlantı'), type: 'url' },
+      { key: 'link', label: P('rtype.link'), type: 'url' },
     ],
   },
   {
     key: 'quote',
-    name: { one: L('Quote', 'Teklif'), other: L('Quotes', 'Teklifler') },
-    hint: L('Proposals sent to customers: the amount, until when, and the answer.', 'Müşterilere gönderilen teklifler: tutar, geçerlilik ve yanıt.'),
+    name: { one: P('rtype.quote'), other: P('rtype.quotes') },
+    hint: P('rtype.proposals_sent_to_customers_the_amount'),
     fields: [
-      { key: 'amount', label: L('Amount', 'Tutar'), type: 'money' },
-      { key: 'valid_until', label: L('Valid until', 'Geçerlilik'), type: 'date' },
+      { key: 'amount', label: P('rtype.amount'), type: 'money' },
+      { key: 'valid_until', label: P('rtype.valid_until'), type: 'date' },
       {
         key: 'status',
-        label: L('Status', 'Durum'),
+        label: P('rtype.status'),
         type: 'select',
         options: [
-          { key: 'draft', label: L('Draft', 'Taslak'), color: 'stone' },
-          { key: 'sent', label: L('Sent', 'Gönderildi'), color: 'sky' },
-          { key: 'accepted', label: L('Accepted', 'Kabul edildi'), color: 'leaf' },
-          { key: 'declined', label: L('Declined', 'Reddedildi'), color: 'coral' },
+          { key: 'draft', label: P('rtype.draft'), color: 'stone' },
+          { key: 'sent', label: P('rtype.sent'), color: 'sky' },
+          { key: 'accepted', label: P('rtype.accepted'), color: 'leaf' },
+          { key: 'declined', label: P('rtype.declined'), color: 'coral' },
         ],
       },
-      { key: 'link', label: L('Link', 'Bağlantı'), type: 'url' },
+      { key: 'link', label: P('rtype.link'), type: 'url' },
     ],
   },
 ];
@@ -311,26 +310,26 @@ export const RECORD_PRESETS: { key: string; name: RecordType['name']; hint: Loca
 export const ROLLUP_PRESETS: { kind: RecordKind; field: AccountField }[] = [
   {
     kind: 'opportunity',
-    field: { key: 'open_pipeline', label: L('Open pipeline', 'Açık fırsat tutarı'), type: 'money', rollup: { type: 'opportunity', fn: 'sum', field: 'amount', where: { field: 'status', option: 'open' } } },
+    field: { key: 'open_pipeline', label: P('rtype.open_pipeline'), type: 'money', rollup: { type: 'opportunity', fn: 'sum', field: 'amount', where: { field: 'status', option: 'open' } } },
   },
   {
     kind: 'opportunity',
-    field: { key: 'next_close', label: L('Next close date', 'En yakın kapanış'), type: 'date', rollup: { type: 'opportunity', fn: 'min', field: 'close_date', where: { field: 'status', option: 'open' } } },
+    field: { key: 'next_close', label: P('rtype.next_close_date'), type: 'date', rollup: { type: 'opportunity', fn: 'min', field: 'close_date', where: { field: 'status', option: 'open' } } },
   },
   {
     kind: 'opportunity',
-    field: { key: 'open_opportunities', label: L('Open opportunities', 'Açık fırsat sayısı'), type: 'number', rollup: { type: 'opportunity', fn: 'count', where: { field: 'status', option: 'open' } } },
+    field: { key: 'open_opportunities', label: P('rtype.open_opportunities'), type: 'number', rollup: { type: 'opportunity', fn: 'count', where: { field: 'status', option: 'open' } } },
   },
-  { kind: 'ticket', field: { key: 'open_tickets', label: L('Open tickets', 'Açık destek talebi'), type: 'number', rollup: { type: 'ticket', fn: 'count', where: { field: 'status', option: 'open' } } } },
-  { kind: 'ticket', field: { key: 'tickets', label: L('Support tickets', 'Destek talebi sayısı'), type: 'number', rollup: { type: 'ticket', fn: 'count' } } },
-  { kind: 'contact', field: { key: 'contacts', label: L('Contacts', 'Kişi sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count' } } },
-  { kind: 'contact', field: { key: 'champions', label: L('Champions', 'Güçlü destekçi sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'champion' } } } },
-  { kind: 'contact', field: { key: 'blockers', label: L('Blockers', 'Engelleyici sayısı'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'blocker' } } } },
+  { kind: 'ticket', field: { key: 'open_tickets', label: P('rtype.open_tickets'), type: 'number', rollup: { type: 'ticket', fn: 'count', where: { field: 'status', option: 'open' } } } },
+  { kind: 'ticket', field: { key: 'tickets', label: P('rtype.support_tickets_2'), type: 'number', rollup: { type: 'ticket', fn: 'count' } } },
+  { kind: 'contact', field: { key: 'contacts', label: P('rtype.contacts_2'), type: 'number', rollup: { type: 'contact', fn: 'count' } } },
+  { kind: 'contact', field: { key: 'champions', label: P('rtype.champions'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'champion' } } } },
+  { kind: 'contact', field: { key: 'blockers', label: P('rtype.blockers'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'blocker' } } } },
 ];
 
 export function typeLabel(t: Pick<RecordType, 'name'>, locale: Locale, plural = true): string {
   const l = plural ? t.name.other : t.name.one;
-  return l?.[locale] ?? l?.en ?? l?.tr ?? '';
+  return phraseIn(l, locale);
 }
 
 /** "Ada Demir" from first and last name; whichever is there. */

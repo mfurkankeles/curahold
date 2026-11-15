@@ -105,3 +105,23 @@ export function translate(locale: Locale, key: MessageKey, vars: Vars = {}, term
   };
   return template.replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
 }
+
+/**
+ * One phrase in every language, read from the dictionaries when asked — the
+ * form built-in content takes (template boards and fields, record types, ready
+ * reports and pages). Show it with `labelOf`/`pick` in the reader's language;
+ * when it is written into a company's data, JSON keeps the values present then:
+ * all nine on the server (every dictionary registered), the active one in the
+ * browser. Stored data is never translated again afterwards.
+ */
+export function phrase(key: MessageKey): Partial<Record<Locale, string>> {
+  const out = {} as Partial<Record<Locale, string>>;
+  for (const l of LOCALES) Object.defineProperty(out, l, { enumerable: true, get: () => registry[l]?.[key] });
+  return out;
+}
+
+/** The first text a phrase has: the reader's language, then English, then any language it was stored in. */
+export function phraseIn(l: Partial<Record<Locale, string>> | undefined, locale: Locale): string {
+  if (!l) return '';
+  return l[locale] ?? l.en ?? Object.values(l).find((v) => typeof v === 'string' && v !== '') ?? '';
+}

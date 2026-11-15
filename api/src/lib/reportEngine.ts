@@ -5,7 +5,7 @@
 // record types, the customer fields their role may see). Values go in as
 // parameters. The query runs as the person asking, so row-level security
 // decides which tasks and customers are counted — the same as everywhere else.
-import type { Locale } from '../../../shared/src/i18n';
+import { phrase as P, phraseIn, type Locale } from '../../../shared/src/i18n';
 import type { AccountField, Localized, OptionColor } from '../../../shared/src/model';
 import {
   type Bucket,
@@ -22,7 +22,8 @@ import type { Q } from '../db';
 import { defsFor, type Viewer } from './fieldAccess';
 import { fxRate } from './fx';
 
-const L = (en: string, tr: string): Localized => ({ en, tr });
+/** A name the company wrote itself: the same in every language. */
+const asIs = (s: string): Localized => ({ en: s });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -142,21 +143,21 @@ const field = (key: string, label: Localized, type: ReportField['type'], expr: F
 const MEANING: Record<string, OptionColor> = { won: 'leaf', lost: 'coral', open: 'sky', solved: 'leaf', closed: 'stone', pending: 'honey' };
 
 const PRIORITIES: ReportField['options'] = [
-  { key: 'urgent', label: L('Urgent', 'Acil'), color: 'coral' },
-  { key: 'high', label: L('High', 'Yüksek'), color: 'honey' },
-  { key: 'normal', label: L('Normal', 'Normal'), color: 'sky' },
-  { key: 'low', label: L('Low', 'Düşük'), color: 'stone' },
+  { key: 'urgent', label: P('task.priority.urgent'), color: 'coral' },
+  { key: 'high', label: P('task.priority.high'), color: 'honey' },
+  { key: 'normal', label: P('task.priority.normal'), color: 'sky' },
+  { key: 'low', label: P('task.priority.low'), color: 'stone' },
 ];
 const STATES: ReportField['options'] = [
-  { key: 'open', label: L('Open', 'Açık'), color: 'sky' },
-  { key: 'done', label: L('Done', 'Bitti'), color: 'leaf' },
+  { key: 'open', label: P('rsrc.open'), color: 'sky' },
+  { key: 'done', label: P('rsrc.done'), color: 'leaf' },
 ];
 const ACTIVITY_KINDS: ReportField['options'] = [
-  { key: 'call', label: L('Call', 'Arama'), color: 'sea' },
-  { key: 'meeting', label: L('Meeting', 'Toplantı'), color: 'plum' },
-  { key: 'email', label: L('Email', 'E-posta'), color: 'sky' },
-  { key: 'note', label: L('Note', 'Not'), color: 'stone' },
-  { key: 'review', label: L('Business review', 'İş değerlendirmesi'), color: 'honey' },
+  { key: 'call', label: P('rsrc.call'), color: 'sea' },
+  { key: 'meeting', label: P('rsrc.meeting'), color: 'plum' },
+  { key: 'email', label: P('rsrc.email'), color: 'sky' },
+  { key: 'note', label: P('rsrc.note'), color: 'stone' },
+  { key: 'review', label: P('rsrc.business_review'), color: 'honey' },
 ];
 
 /** What this person can build reports from. */
@@ -175,25 +176,25 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
 
   // One name per status key across the boards (the first board that has it names it).
   const statuses = new Map<string, { key: string; label: Localized; color: OptionColor | null }>();
-  for (const b of boards) for (const c of b.columns ?? []) if (!statuses.has(c.key)) statuses.set(c.key, { key: c.key, label: L(c.name, c.name), color: c.done ? 'leaf' : null });
+  for (const b of boards) for (const c of b.columns ?? []) if (!statuses.has(c.key)) statuses.set(c.key, { key: c.key, label: asIs(c.name), color: c.done ? 'leaf' : null });
 
   add(
     'tasks',
-    L('Tasks', 'Görevler'),
+    P('rsrc.tasks'),
     [
-      field('title', L('Title', 'Başlık'), 'text', plain('t.title')),
-      field('board', L('Board', 'Pano'), 'ref', plain('t.board_id'), { lookup: 'boards' }),
-      field('status', L('Status', 'Durum'), 'choice', plain('t.status'), { options: [...statuses.values()] }),
-      field('state', L('Open or done', 'Açık mı bitti mi'), 'choice', plain(`(case when t.done_at is null then 'open' else 'done' end)`), { options: STATES }),
-      field('priority', L('Priority', 'Öncelik'), 'choice', plain('t.priority'), { options: PRIORITIES }),
-      field('assignee', L('Assignee', 'Sorumlu'), 'person', plain('asg.uid'), { need: 'asg', lookup: 'users', array: 't.assignee_ids' }),
-      field('account', L('Customer', 'Müşteri'), 'ref', plain('t.account_id'), { lookup: 'accounts' }),
-      field('created', L('Created', 'Açıldığı tarih'), 'date', localDay('t.created_at')),
-      field('due', L('Due date', 'Bitiş tarihi'), 'date', plain('t.due_date')),
-      field('done', L('Finished', 'Bittiği tarih'), 'date', localDay('t.done_at')),
-      field('overdue', L('Overdue', 'Gecikmiş'), 'bool', (p, env) => `(t.done_at is null and t.archived_at is null and t.due_date < ${p.once(env.today)}::date)`),
-      field('created_by', L('Created by', 'Açan'), 'person', plain('t.created_by'), { lookup: 'users' }),
-      field('days_to_done', L('Days from opening to done', 'Açılıştan bitişe gün'), 'days', plain('(extract(epoch from (t.done_at - t.created_at)) / 86400.0)'), { measure: true }),
+      field('title', P('rsrc.title'), 'text', plain('t.title')),
+      field('board', P('rsrc.board'), 'ref', plain('t.board_id'), { lookup: 'boards' }),
+      field('status', P('rsrc.status'), 'choice', plain('t.status'), { options: [...statuses.values()] }),
+      field('state', P('rsrc.open_or_done'), 'choice', plain(`(case when t.done_at is null then 'open' else 'done' end)`), { options: STATES }),
+      field('priority', P('rsrc.priority'), 'choice', plain('t.priority'), { options: PRIORITIES }),
+      field('assignee', P('rsrc.assignee'), 'person', plain('asg.uid'), { need: 'asg', lookup: 'users', array: 't.assignee_ids' }),
+      field('account', P('rsrc.customer'), 'ref', plain('t.account_id'), { lookup: 'accounts' }),
+      field('created', P('rsrc.created'), 'date', localDay('t.created_at')),
+      field('due', P('rsrc.due_date'), 'date', plain('t.due_date')),
+      field('done', P('rsrc.finished'), 'date', localDay('t.done_at')),
+      field('overdue', P('rsrc.overdue'), 'bool', (p, env) => `(t.done_at is null and t.archived_at is null and t.due_date < ${p.once(env.today)}::date)`),
+      field('created_by', P('rsrc.created_by'), 'person', plain('t.created_by'), { lookup: 'users' }),
+      field('days_to_done', P('rsrc.days_from_opening_to_done'), 'days', plain('(extract(epoch from (t.done_at - t.created_at)) / 86400.0)'), { measure: true }),
     ],
     {
       from: (_p, need) => `from tasks t join boards b on b.id = t.board_id${need.has('asg') ? ` cross join lateral unnest(case when cardinality(t.assignee_ids) = 0 then array[null::uuid] else t.assignee_ids end) as asg(uid)` : ''}`,
@@ -206,12 +207,12 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
 
   add(
     'accounts',
-    L('Customers', 'Müşteriler'),
+    P('rsrc.customers'),
     [
-      field('name', L('Name', 'Ad'), 'text', plain('a.name'), { group: true }),
-      field('owner', L('Owner', 'Sorumlu'), 'person', plain('a.owner_id'), { lookup: 'users' }),
-      field('team', L('Team', 'Ekip'), 'ref', plain('a.team_id'), { lookup: 'teams' }),
-      field('created', L('Added', 'Eklendiği tarih'), 'date', localDay('a.created_at')),
+      field('name', P('rsrc.name'), 'text', plain('a.name'), { group: true }),
+      field('owner', P('rsrc.owner'), 'person', plain('a.owner_id'), { lookup: 'users' }),
+      field('team', P('rsrc.team'), 'ref', plain('a.team_id'), { lookup: 'teams' }),
+      field('created', P('rsrc.added'), 'date', localDay('a.created_at')),
       ...accountSeen.map((f) => jsonField('a', f)),
     ],
     { from: () => `from accounts a`, where: () => `a.archived_at is null`, order: 'a.name', columns: ['name', 'owner', ...accountSeen.slice(0, 4).map((f) => f.key)] },
@@ -226,10 +227,10 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
       key,
       t.name.other,
       [
-        field('name', L('Name', 'Ad'), 'text', plain('r.name'), { group: true }),
-        field('account', L('Customer', 'Müşteri'), 'ref', plain('r.account_id'), { lookup: 'accounts' }),
-        field('owner', L('Owner', 'Sorumlu'), 'person', plain('r.owner_id'), { lookup: 'users' }),
-        field('created', L('Added', 'Eklendiği tarih'), 'date', localDay('r.created_at')),
+        field('name', P('rsrc.name'), 'text', plain('r.name'), { group: true }),
+        field('account', P('rsrc.customer'), 'ref', plain('r.account_id'), { lookup: 'accounts' }),
+        field('owner', P('rsrc.owner'), 'person', plain('r.owner_id'), { lookup: 'users' }),
+        field('created', P('rsrc.added'), 'date', localDay('r.created_at')),
         ...seen.map((f) => jsonField('r', f)),
       ],
       {
@@ -243,25 +244,25 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
 
   add(
     'activities',
-    L('Customer contact', 'Müşteri teması'),
+    P('rsrc.customer_contact'),
     [
-      field('kind', L('Kind', 'Tür'), 'choice', plain('x.kind'), { options: ACTIVITY_KINDS }),
-      field('account', L('Customer', 'Müşteri'), 'ref', plain('x.account_id'), { lookup: 'accounts' }),
-      field('author', L('Logged by', 'Kaydeden'), 'person', plain('x.author_id'), { lookup: 'users' }),
-      field('happened', L('Date', 'Tarih'), 'date', localDay('x.happened_at')),
+      field('kind', P('rsrc.kind'), 'choice', plain('x.kind'), { options: ACTIVITY_KINDS }),
+      field('account', P('rsrc.customer'), 'ref', plain('x.account_id'), { lookup: 'accounts' }),
+      field('author', P('rsrc.logged_by'), 'person', plain('x.author_id'), { lookup: 'users' }),
+      field('happened', P('rsrc.date'), 'date', localDay('x.happened_at')),
     ],
     { from: () => `from activities x`, where: () => `true`, order: 'x.happened_at desc', columns: ['happened', 'kind', 'account', 'author'] },
   );
 
   add(
     'time',
-    L('Time logged', 'Girilen süre'),
+    P('rsrc.time_logged'),
     [
-      field('user', L('Person', 'Kişi'), 'person', plain('e.user_id'), { lookup: 'users' }),
-      field('day', L('Day', 'Gün'), 'date', plain('e.day')),
-      field('board', L('Board', 'Pano'), 'ref', plain('t.board_id'), { lookup: 'boards' }),
-      field('account', L('Customer', 'Müşteri'), 'ref', plain('t.account_id'), { lookup: 'accounts' }),
-      field('minutes', L('Time', 'Süre'), 'minutes', plain('e.minutes'), { measure: true }),
+      field('user', P('rsrc.person'), 'person', plain('e.user_id'), { lookup: 'users' }),
+      field('day', P('rsrc.day'), 'date', plain('e.day')),
+      field('board', P('rsrc.board'), 'ref', plain('t.board_id'), { lookup: 'boards' }),
+      field('account', P('rsrc.customer'), 'ref', plain('t.account_id'), { lookup: 'accounts' }),
+      field('minutes', P('rsrc.time'), 'minutes', plain('e.minutes'), { measure: true }),
     ],
     { from: () => `from time_entries e join tasks t on t.id = e.task_id`, where: () => `true`, order: 'e.day desc', columns: ['day', 'user', 'account', 'minutes'] },
   );
@@ -373,7 +374,7 @@ function filterSql(f: F, x: ReportFilter, p: Params, env: Env, me: string): stri
 
 // ---------------------------------------------------------------- running
 
-const WORDS = { none: L('(none)', '(yok)'), other: L('Other', 'Diğer'), yes: L('Yes', 'Evet'), no: L('No', 'Hayır') };
+const WORDS = { none: P('rsrc.none'), other: P('rsrc.other'), yes: P('common.yes'), no: P('common.no') };
 const MAX_BUCKETS = 60;
 
 function nextBucket(day: string, b: Bucket): string {
@@ -420,7 +421,7 @@ export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, 
   }
   const { q, locale } = ctx;
   const env: Env = { tz: ctx.tz || 'UTC', today: ctx.today };
-  const word = (l: Localized): string => l[locale] ?? l.en ?? l.tr ?? '';
+  const word = (l: Localized): string => phraseIn(l, locale);
   const mf = def.measure.fn === 'count' ? undefined : src.fields.get(def.measure.field ?? '');
   if (def.measure.fn !== 'count' && !mf?.def.measure) return { kind: 'missing', what: def.measure.field ?? 'measure' };
   const unit = unitOf(def, mf);
@@ -475,7 +476,7 @@ export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, 
     const cell = (f: F, v: unknown): string | number | null => {
       if (v == null) return null;
       if (f.lookup) return (Array.isArray(v) ? v : [v]).map((id) => maps.get(f.lookup!)?.get(String(id)) ?? '').filter(Boolean).join(', ') || null;
-      if (f.def.type === 'choice') return word(f.def.options?.find((o) => o.key === v)?.label ?? L(String(v), String(v)));
+      if (f.def.type === 'choice') return word(f.def.options?.find((o) => o.key === v)?.label ?? asIs(String(v)));
       if (f.def.type === 'bool') return word(v ? WORDS.yes : WORDS.no);
       if (f.def.type === 'minutes') return Math.round((Number(v) / 60) * 10) / 10;
       if (f.def.type === 'number' || f.def.type === 'money' || f.def.type === 'days') return Math.round(Number(v) * 10) / 10;
