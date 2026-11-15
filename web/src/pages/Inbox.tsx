@@ -11,6 +11,8 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
+import { FilterGroup, FilterSheet } from '../components/FilterSheet';
+import '../surfaces/employee-work.css';
 
 const FILTERS = ['all', 'mentions', 'assigned', 'comments', 'system'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -94,24 +96,29 @@ export function InboxPage() {
           <Icon name="sliders" size={16} />
           <span className="hide-phone">{t('inbox.settings')}</span>
         </button>
-        <button className="btn" disabled={!data?.unread} onClick={readAll}>
+        <button className="btn" disabled={!data?.unread} onClick={readAll} aria-label={t('bell.readAll')} title={t('bell.readAll')}>
           <Icon name="check" size={16} />
-          {t('bell.readAll')}
+          <span className="hide-phone">{t('bell.readAll')}</span>
         </button>
       </header>
       <div className="page inbox">
         <div className="toolbar inbox__bar">
-          <div className="seg" role="tablist" aria-label={t('inbox.filter')} onKeyDown={onTabKeys}>
-            {FILTERS.map((f) => (
-              <button key={f} role="tab" aria-selected={filter === f} tabIndex={filter === f ? 0 : -1} onClick={() => setFilter(f)}>
-                {t(`inbox.filter.${f}` as any)}
-              </button>
-            ))}
-          </div>
-          <label className="checkbox">
-            <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} />
-            <span>{t('inbox.unreadOnly')}</span>
-          </label>
+          {/* On a phone the kinds and "unread only" fold into the one Filter sheet. */}
+          <FilterSheet count={(filter !== 'all' ? 1 : 0) + (unreadOnly ? 1 : 0)} onClear={() => { setFilter('all'); setUnreadOnly(false); }}>
+            <FilterGroup label={t('inbox.filter')}>
+              <div className="seg" role="tablist" aria-label={t('inbox.filter')} onKeyDown={onTabKeys}>
+                {FILTERS.map((f) => (
+                  <button key={f} role="tab" aria-selected={filter === f} tabIndex={filter === f ? 0 : -1} onClick={() => setFilter(f)}>
+                    {t(`inbox.filter.${f}` as any)}
+                  </button>
+                ))}
+              </div>
+            </FilterGroup>
+            <label className="checkbox">
+              <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} />
+              <span>{t('inbox.unreadOnly')}</span>
+            </label>
+          </FilterSheet>
         </div>
         {!data ? (
           failed ? (

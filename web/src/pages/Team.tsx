@@ -12,6 +12,7 @@ import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { addDays, dueState, relativeTime, todayIso } from '../lib/time';
 import { hoursText, type WorkReport } from './Reports';
+import '../surfaces/employee-work.css';
 
 interface PersonReport {
   tasks: { id: string; title: string; boardId: string; status: string; dueDate: string | null; priority: string; done: boolean; doneAt: string | null; updatedAt: string; accountId: string | null; accountName: string | null }[];
@@ -187,22 +188,20 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
   );
   return (
     <>
-      <header className="topbar">
-        <div className="topbar__spacer" />
-        {canWrite && p && (
-          <button className="btn btn--primary" onClick={() => quickAdd({ assigneeIds: [id] })}>
-            <Icon name="plus" size={16} />
-            {t('team.give', { name: p.name.split(' ')[0] })}
-          </button>
-        )}
-      </header>
       <div className="page oneone">
-        <div className="oneone__who">
+        {/* Who first, then the one thing to do for them. */}
+        <div className="oneone__who ew-who">
           <Avatar person={p} large />
-          <div>
+          <div className="ew-who__name">
             <h1 className="topbar__title">{p?.name ?? t('common.unknownUser')}</h1>
             <p className="topbar__sub">{t('team.oneOnOne')}</p>
           </div>
+          {canWrite && p && (
+            <button className="btn btn--primary ew-who__give" onClick={() => quickAdd({ assigneeIds: [id] })}>
+              <Icon name="plus" size={16} />
+              {t('team.give', { name: p.name.split(' ')[0] })}
+            </button>
+          )}
         </div>
         {!data ? (
           failed ? (

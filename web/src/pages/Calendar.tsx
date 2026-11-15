@@ -21,6 +21,8 @@ import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState, todayIso } from '../lib/time';
 import { formatDate } from '../lib/format';
+import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
+import '../surfaces/employee-work.css';
 
 const VIEWS = ['day', 'week', 'month', 'year'] as const;
 type View = (typeof VIEWS)[number];
@@ -68,6 +70,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   const { quickAdd } = useShell();
   const { search } = useLocation();
   const today = todayIso();
+  const phone = usePhone();
 
   // ---- what the address asks for ------------------------------------------
   const params = new URLSearchParams(search);
@@ -190,6 +193,42 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
       </button>
     );
 
+  const row = (x: CalendarItem) => {
+    const state = stateOf(x);
+    return (
+      <li key={x.id}>
+        <button className="calrow" data-kind={x.kind} data-due={state} onClick={() => open(x)}>
+          <span className="calrow__icon">
+            <Icon name={KIND_ICON[x.kind]} size={17} />
+          </span>
+          <span className="calrow__main">
+            <strong>{labelOf(x)}</strong>
+            <span className="calrow__meta">
+              {[t(`calendar.one.${x.kind}`), x.time, x.minutes ? t('calendar.minutes', { n: x.minutes }) : null, x.kind !== 'renewal' && x.kind !== 'reviewDue' ? x.accountName : null].filter(Boolean).join(' · ')}
+            </span>
+          </span>
+          {(many || x.personIds.length > 1) && <Avatars people={x.personIds.map((id) => person(id))} max={4} />}
+          {state === 'late' && <span className="flag flag--late">{t('calendar.late')}</span>}
+          {state === 'done' && <span className="flag flag--ok">{t('calendar.done')}</span>}
+        </button>
+      </li>
+    );
+  };
+  // The month on a phone: the days that hold something, one under another, with whole titles.
+  const monthDays = view === 'month' ? [...byDay.keys()].filter((d) => d.slice(0, 7) === date.slice(0, 7)).sort() : [];
+
+  const kinds = (
+    <div className="cal-kinds" role="group" aria-label={t('calendar.kinds')}>
+      {CALENDAR_KINDS.map((k) => (
+        <button key={k} className="cal-kind" data-kind={k} aria-pressed={!hidden.has(k)} onClick={() => toggle(k)}>
+          <Icon name={KIND_ICON[k]} size={14} />
+          {t(`calendar.kind.${k}`)}
+          <span className="num">{counts[k]}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   const weekdays = Array.from({ length: 7 }, (_, i) => long(plus(mondayOf(today), i), { weekday: 'short' }));
 
   return (
@@ -209,46 +248,58 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
               </button>
             ))}
           </div>
+          <FilterSheet
+            count={hidden.size + (who !== 'me' ? 1 : 0)}
+            onClear={() => {
+              setHidden(new Set());
+              remember('app_cal_hidden', '');
+              go({ who: 'me' });
+            }}
+          >
+            <FilterGroup label={t('calendar.who.label')}>
           {reach?.can ? (
-            <label className="cal-who">
-              <Icon name="people" size={15} />
-              <select className="select" value={who} aria-label={t('calendar.who.label')} onChange={(e) => go({ who: e.target.value })}>
-                <option value="me">{t('calendar.who.me')}</option>
-                <option value="all">{t('calendar.who.all')}</option>
-                {reach.teams.length > 0 && (
-                  <optgroup label={t('calendar.who.teams')}>
-                    {reach.teams.map((x) => (
-                      <option key={x.id} value={`t:${x.id}`}>
-                        {x.name} ({x.memberIds.length})
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {reach.personIds.length > 0 && (
-                  <optgroup label={t('calendar.who.people')}>
-                    {reach.personIds
-                      .map((id) => person(id))
-                      .filter((p): p is NonNullable<typeof p> => !!p)
-                      .sort((a, b) => a.name.localeCompare(b.name, locale))
-                      .map((p) => (
-                        <option key={p.id} value={`p:${p.id}`}>
-                          {p.name}
+              <label className="cal-who">
+                <Icon name="people" size={15} />
+                <select className="select" value={who} aria-label={t('calendar.who.label')} onChange={(e) => go({ who: e.target.value })}>
+                  <option value="me">{t('calendar.who.me')}</option>
+                  <option value="all">{t('calendar.who.all')}</option>
+                  {reach.teams.length > 0 && (
+                    <optgroup label={t('calendar.who.teams')}>
+                      {reach.teams.map((x) => (
+                        <option key={x.id} value={`t:${x.id}`}>
+                          {x.name} ({x.memberIds.length})
                         </option>
                       ))}
-                  </optgroup>
-                )}
-              </select>
-            </label>
-          ) : (
-            <div className="seg" role="group" aria-label={t('calendar.who.label')}>
-              <button aria-pressed={who === 'me'} onClick={() => go({ who: 'me' })}>
-                {t('board.filter.mine')}
-              </button>
-              <button aria-pressed={who === 'all'} onClick={() => go({ who: 'all' })}>
-                {t('board.filter.everyone')}
-              </button>
-            </div>
-          )}
+                    </optgroup>
+                  )}
+                  {reach.personIds.length > 0 && (
+                    <optgroup label={t('calendar.who.people')}>
+                      {reach.personIds
+                        .map((id) => person(id))
+                        .filter((p): p is NonNullable<typeof p> => !!p)
+                        .sort((a, b) => a.name.localeCompare(b.name, locale))
+                        .map((p) => (
+                          <option key={p.id} value={`p:${p.id}`}>
+                            {p.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                </select>
+              </label>
+            ) : (
+              <div className="seg" role="group" aria-label={t('calendar.who.label')}>
+                <button aria-pressed={who === 'me'} onClick={() => go({ who: 'me' })}>
+                  {t('board.filter.mine')}
+                </button>
+                <button aria-pressed={who === 'all'} onClick={() => go({ who: 'all' })}>
+                  {t('board.filter.everyone')}
+                </button>
+              </div>
+            )}
+    </FilterGroup>
+            {phone && <FilterGroup label={t('calendar.kinds')}>{kinds}</FilterGroup>}
+          </FilterSheet>
           <div className="cal-step">
             <button className="btn btn--icon" onClick={() => step(-1)} aria-label={t('calendar.prev')} title={t('calendar.prev')}>
               <Icon name="chevronLeft" size={16} />
@@ -263,19 +314,26 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
         </div>
       </header>
       <div className="page">
-        <div className="cal-kinds" role="group" aria-label={t('calendar.kinds')}>
-          {CALENDAR_KINDS.map((k) => (
-            <button key={k} className="cal-kind" data-kind={k} aria-pressed={!hidden.has(k)} onClick={() => toggle(k)}>
-              <Icon name={KIND_ICON[k]} size={14} />
-              {t(`calendar.kind.${k}`)}
-              <span className="num">{counts[k]}</span>
-            </button>
-          ))}
-        </div>
+        {!phone && kinds}
 
         {failed && <LoadError onRetry={() => { setFailed(false); setItems(null); setAttempt((n) => n + 1); }} />}
         {!failed && !items && <SkeletonRows rows={view === 'day' ? 4 : 8} label={t('common.loading')} />}
-        {!failed && items && view === 'month' && (
+        {!failed && items && view === 'month' && phone && monthDays.length > 0 && (
+          <div className="ew-agenda">
+            {monthDays.map((day) => (
+              <section key={day} className="ew-agenda__day" data-today={day === today || undefined}>
+                <h2 className="ew-agenda__head">
+                  <button className="linkbtn linkbtn--plain" onClick={() => go({ view: 'day', date: day })}>
+                    {long(day, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </button>
+                  {addOn(day)}
+                </h2>
+                <ul className="calday__list">{(byDay.get(day) ?? []).map(row)}</ul>
+              </section>
+            ))}
+          </div>
+        )}
+        {!failed && items && view === 'month' && !phone && (
           <div className="cal" role="grid" aria-label={t('calendar.title')}>
             <div className="cal__row" role="row">
             {weekdays.map((w) => (
@@ -345,29 +403,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
                 )}
               </EmptyState>
             ) : (
-              <ul className="calday__list">
-                {(byDay.get(date) ?? []).map((x) => {
-                  const state = stateOf(x);
-                  return (
-                    <li key={x.id}>
-                      <button className="calrow" data-kind={x.kind} data-due={state} onClick={() => open(x)}>
-                        <span className="calrow__icon">
-                          <Icon name={KIND_ICON[x.kind]} size={17} />
-                        </span>
-                        <span className="calrow__main">
-                          <strong>{labelOf(x)}</strong>
-                          <span className="calrow__meta">
-                            {[t(`calendar.one.${x.kind}`), x.time, x.minutes ? t('calendar.minutes', { n: x.minutes }) : null, x.kind !== 'renewal' && x.kind !== 'reviewDue' ? x.accountName : null].filter(Boolean).join(' · ')}
-                          </span>
-                        </span>
-                        {(many || x.personIds.length > 1) && <Avatars people={x.personIds.map((id) => person(id))} max={4} />}
-                        {state === 'late' && <span className="flag flag--late">{t('calendar.late')}</span>}
-                        {state === 'done' && <span className="flag flag--ok">{t('calendar.done')}</span>}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <ul className="calday__list">{(byDay.get(date) ?? []).map(row)}</ul>
             )}
           </div>
         )}
