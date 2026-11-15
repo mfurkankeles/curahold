@@ -4293,4 +4293,5 @@ export const tr: Record<MessageKey, string> = {
   'bell.emptyBody': "Atamalar, etiketlemeler ve hatırlatmalar burada görünür.",
   'board.unavailable': "Bu pano sana açık değil",
   'board.unavailableBody': "Silinmiş olabilir ya da özel bir pano ve sen üyesi değilsin. Panoyu yöneten kişi seni ekleyebilir.",
+  'audit.support.replay': "Curahold desteği kayıtlı bir oturumu izledi",
 };

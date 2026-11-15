@@ -4308,6 +4308,7 @@ export const en = {
   'bell.emptyBody': "Assignments, mentions and reminders show up here.",
   'board.unavailable': "This board is not open to you",
   'board.unavailableBody': "It may have been deleted, or it is private and you are not on it. Whoever runs it can add you.",
+  'audit.support.replay': "Curahold support watched a recorded session",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -4293,4 +4293,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "指派、提及和提醒会显示在这里。",
   'board.unavailable': "你无法查看此看板",
   'board.unavailableBody': "它可能已被删除，或是私有看板而你不是成员。看板管理者可以添加你。",
+  'audit.support.replay': "Curahold 支持人员观看了一段会话录像",
 };

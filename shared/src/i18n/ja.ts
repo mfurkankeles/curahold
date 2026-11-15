@@ -4293,4 +4293,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "割り当て、メンション、リマインダーがここに表示されます。",
   'board.unavailable': "このボードは開けません",
   'board.unavailableBody': "削除されたか、あなたが参加していない非公開のボードです。ボードの管理者が追加できます。",
+  'audit.support.replay': "Curahold サポートが記録されたセッションを再生しました",
 };

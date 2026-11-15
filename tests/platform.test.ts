@@ -21,6 +21,7 @@ import type { AppEnv } from '../api/src/context';
 import { sha256Hex } from '../api/src/lib/crypto';
 import { HttpError } from '../api/src/lib/errors';
 import { platformRoutes } from '../api/src/routes/admin-platform';
+import { metricsRoutes } from '../api/src/routes/metrics';
 
 const OWNER = 'owner@demo.example';
 const STAFF = 'staff@demo.example';
@@ -46,7 +47,7 @@ function harnessClient(signedIn: Client): Client {
   // Reproduce app.ts's /api/* auth for the console: resolve the person from the
   // session cookie. The console reads deps + auth (it is cross-company, so it
   // needs no single org on the context).
-  app.use('/api/platform/*', async (c, next) => {
+  app.use('/api/*', async (c, next) => {
     const token = /app_session=([^;]+)/.exec(c.req.header('cookie') ?? '')?.[1];
     if (token) {
       const [org] = await env.deps.db.tenant({ orgId: null, userId: null }, (q) => q.query<{ id: string }>('select * from resolve_org($1)', ['acme']));
@@ -65,6 +66,7 @@ function harnessClient(signedIn: Client): Client {
   });
   // Mounted exactly as the coordinator mounts it in app.ts: app.route('/api', platformRoutes).
   app.route('/api', platformRoutes);
+  app.route('/api', metricsRoutes);
 
   const c = new Client({ ...env, app }, signedIn.slug, signedIn.device);
   c.cookie = signedIn.cookie;
@@ -111,6 +113,17 @@ describe('platform console: staff need a second step', () => {
     const r = await bare.get('/api/platform/customers');
     expect(r.status).toBe(403);
     expect(r.json.error).toBe('staff_second_step');
+  });
+
+  it('the owner reads the whole-business metrics only after one too', async () => {
+    const bare = harnessClient(await login(env, 'acme', OWNER));
+    const r = await bare.get('/api/metrics');
+    expect(r.status).toBe(403);
+    expect(r.json.error).toBe('staff_second_step');
+    expect((await owner.get('/api/metrics')).status).toBe(200);
+    // Staff open the console, but the metrics are the owner's alone.
+    expect((await staff.get('/api/metrics')).status).toBe(403);
+    expect((await admin.get('/api/metrics')).status).toBe(403);
   });
 });
 

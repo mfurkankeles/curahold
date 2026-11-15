@@ -3,8 +3,8 @@
 // numbers stay current while the screen is open. The figures are only ever as
 // real as the data behind them — a badge says live or demo.
 import { useEffect, useRef, useState } from 'react';
-import { LoadError, SkeletonRows } from '../components/Empty';
-import { get } from '../lib/api';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
+import { ApiFailure, get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useMoney } from '../lib/money';
 import { useStore } from '../lib/store';
@@ -70,6 +70,7 @@ export function MetricsPage() {
   const loaded = useRef(false);
   // A first load that fails says so; a later refresh that fails keeps the numbers already shown.
   const [failed, setFailed] = useState(false);
+  const [needsStep, setNeedsStep] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -78,7 +79,11 @@ export function MetricsPage() {
     const load = () =>
       get<PlatformMetrics>('/metrics')
         .then((d) => live && (setM(d), setFailed(false), (loaded.current = true)))
-        .catch(() => live && !loaded.current && setFailed(true));
+        .catch((e) => {
+          if (!live) return;
+          if (e instanceof ApiFailure && e.code === 'staff_second_step') setNeedsStep(true);
+          else if (!loaded.current) setFailed(true);
+        });
     load();
     const id = window.setInterval(() => document.visibilityState === 'visible' && load(), REFRESH_MS);
     const onVis = () => document.visibilityState === 'visible' && load();
@@ -91,6 +96,7 @@ export function MetricsPage() {
   }, [owner, attempt]);
 
   if (!owner) return <div className="metrics"><p className="metrics__denied">{t('metrics.denied')}</p></div>;
+  if (needsStep) return <div className="metrics"><EmptyState icon="lock" title={t('errors.staff_second_step')} /></div>;
 
   const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);

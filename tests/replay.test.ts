@@ -120,6 +120,11 @@ describe('the support desk watches a recording', () => {
     // The playback is in the desk's own log.
     const [log] = await sys(`select action, message_id from desk_log where action = 'replay' and ref = $1 order by id desc limit 1`, [ref]);
     expect(log.message_id).toBe(id);
+    // And on the company's own activity log, where its administrator sees who watched it.
+    const audit = (await ada.get('/api/admin/audit')).json.entries as any[];
+    const seen = audit.find((e) => e.action === 'support.replay');
+    expect(seen).toBeTruthy();
+    expect(seen.staff).toBeTruthy();
 
     // A recording that is not this person's does not open under their request.
     const other = crypto.randomUUID();

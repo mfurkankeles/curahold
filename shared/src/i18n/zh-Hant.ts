@@ -4293,4 +4293,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "指派、提及和提醒會顯示在這裡。",
   'board.unavailable': "你無法檢視此看板",
   'board.unavailableBody': "它可能已被刪除，或是私人看板而你不是成員。看板管理者可以加入你。",
+  'audit.support.replay': "Curahold 支援人員觀看了一段工作階段錄影",
 };

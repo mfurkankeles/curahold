@@ -1,10 +1,12 @@
 // The platform owner's whole-business metrics: revenue, customers, engagement
 // and usage across every company, in one snapshot. It runs over the owner
 // connection (crossing the per-company isolation every other screen keeps), so
-// only the platform owner may reach it — see requireOwner. No company can grant
+// only the platform owner may reach it, from a session that passed a second
+// step — see requireConsoleOwner. No company can grant
 // itself this; in production it is one configured address and nobody else.
 import { Hono } from 'hono';
-import { requireOwner, type AppEnv } from '../context';
+import type { AppEnv } from '../context';
+import { requireConsoleOwner } from '../lib/platform';
 import { PLANS, type Interval, type PlanKey } from '../../../shared/src/billing';
 import { SEATS_SQL } from '../lib/billing';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
@@ -18,7 +20,7 @@ const interval = (v: unknown): Interval => (v === 'year' ? 'year' : 'month');
 const mrrOf = (plan: PlanKey | null, iv: Interval, seats: number) => (plan ? PLANS[plan].price[iv] * Math.max(0, seats) : 0);
 
 metricsRoutes.get('/metrics', async (c) => {
-  requireOwner(c);
+  requireConsoleOwner(c);
   const deps = c.get('deps');
 
   const data = await deps.db.system(async (q) => {

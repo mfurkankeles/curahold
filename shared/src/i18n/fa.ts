@@ -4293,4 +4293,5 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "واگذاری‌ها، اشاره‌ها و یادآوری‌ها اینجا می‌آیند.",
   'board.unavailable': "این تابلو برای شما باز نیست",
   'board.unavailableBody': "شاید حذف شده باشد، یا خصوصی است و شما عضو آن نیستید. مدیر تابلو می‌تواند شما را اضافه کند.",
+  'audit.support.replay': "پشتیبانی Curahold یک جلسهٔ ضبط‌شده را تماشا کرد",
 };

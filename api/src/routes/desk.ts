@@ -17,6 +17,7 @@ import { deskHostOf, nowOf, orgUrl, secretsKey, type AppEnv, type C } from '../c
 import type { Q } from '../db';
 import { hmacHex, randomDigits, randomToken, safeEqual, seal, sha256Hex, sign, unseal, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
+import { audit } from '../lib/audit';
 import { addHelpMessage, takeMail } from '../lib/helpThread';
 import { ENTRY_LINK_MINUTES, mayGrant, sharedKeyOk, staffPerson, SUPPORT_SESSION_HOURS } from '../lib/support';
 import { body } from '../lib/validate';
@@ -344,7 +345,7 @@ deskRoutes.get('/requests/:ref/replays/:id', async (c) => {
   const deps = c.get('deps');
   const out = await deps.db.system(async (db) => {
     const [s] = await db.query(
-      `select r.id, r.started_at, r.last_at, r.events, r.bytes, r.had_error, r.page_first, r.page_last, r.org_id
+      `select r.id, r.started_at, r.last_at, r.events, r.bytes, r.had_error, r.page_first, r.page_last, r.org_id, r.user_id
          from replay_sessions r join help_requests h on h.org_id = r.org_id and h.user_id = r.user_id
         where r.id = $1 and h.ref = $2`,
       [id, ref],
@@ -352,6 +353,8 @@ deskRoutes.get('/requests/:ref/replays/:id', async (c) => {
     if (!s) return null;
     const chunks = await db.query<{ body: string }>('select body from replay_chunks where session_id = $1 order by seq', [id]);
     await note(db, staff, 'replay', ref, s.org_id, id);
+    // Watching someone's recorded session touches the company's data: it goes on the company's own activity log too.
+    await audit(db, { orgId: s.org_id, actorId: s.user_id ?? null, action: 'support.replay', entity: 'replay_session', entityId: id, meta: { staff: staff.via === 'key' ? 'Curahold' : `${nameFrom(staff.email)} <${staff.email}>`, ref } });
     return { s, chunks };
   });
   if (!out) fail('not_found');

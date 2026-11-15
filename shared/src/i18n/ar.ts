@@ -4293,4 +4293,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "تظهر هنا المهام المسندة والإشارات والتذكيرات.",
   'board.unavailable': "هذه اللوحة غير متاحة لك",
   'board.unavailableBody': "ربما حُذفت، أو أنها لوحة خاصة ولست من أعضائها. يمكن لمن يديرها أن يضيفك.",
+  'audit.support.replay': "شاهد دعم Curahold جلسة مسجّلة",
 };

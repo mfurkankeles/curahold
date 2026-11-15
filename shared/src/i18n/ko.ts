@@ -4293,4 +4293,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'bell.emptyBody': "할당, 멘션, 알림이 여기에 표시됩니다.",
   'board.unavailable': "이 보드는 열 수 없습니다",
   'board.unavailableBody': "삭제되었거나, 내가 속하지 않은 비공개 보드입니다. 보드 관리자가 추가할 수 있습니다.",
+  'audit.support.replay': "Curahold 지원팀이 녹화된 세션을 재생함",
 };

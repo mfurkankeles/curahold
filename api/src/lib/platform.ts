@@ -52,6 +52,15 @@ export function requirePlatform(c: C): void {
   if (staffNeedsSecondStep(c)) fail('staff_second_step');
 }
 
+/**
+ * Guard for the whole-business metrics: the platform owner alone, and — like
+ * the console — only from a session that passed a second step.
+ */
+export function requireConsoleOwner(c: C): void {
+  if (!isOwner(c)) fail('forbidden');
+  if (staffNeedsSecondStep(c)) fail('staff_second_step');
+}
+
 /** The flags the browser needs to decide whether to show the console (no tenant data). */
 export function platformAccess(c: C): { owner: boolean; staff: boolean; platform: boolean; secondStepNeeded?: true } {
   const owner = isOwner(c);
