@@ -1980,6 +1980,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "הבריאות בטווח המעקב",
   'acards.renewalPast': "חידוש באיחור של {n} ימים",
   'acards.renewalIn': "מתחדש בעוד {n} ימים",
+  'recordPanel.moreFields': "עוד {n} שדות",
   'pipeline.moved': "{name} הועבר/ה ל{stage}",
   'org.moved': "{name} כפוף/ה עכשיו ל{to}",
   'org.movedTop': "{name} עכשיו בראש התרשים",

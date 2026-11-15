@@ -2022,6 +2022,7 @@ export const tr: Record<MessageKey, string> = {
   'acards.watchTitle': 'Sağlık izleme bandında',
   'acards.renewalPast': 'Yenileme {n} gün geçti',
   'acards.renewalIn': '{n} gün sonra yenileme',
+  'recordPanel.moreFields': "{n} alan daha",
   'pipeline.moved': "{name}, {stage} aşamasına taşındı",
   'org.moved': "{name} artık {to} kişisine bağlı",
   'org.movedTop': "{name} artık en üstte",

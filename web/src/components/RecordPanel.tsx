@@ -3,6 +3,7 @@
 // what the record says, the tasks that belong to it (with a button for a new
 // one and for a whole playbook), its files, and its thread of comments.
 // Editing the fields happens in the same dialog the lists use.
+import '../surfaces/employee-customers.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { PlanTemplate, Task } from '../../../shared/src/model';
@@ -100,6 +101,40 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
   };
 
   const shown = type ? type.fields.filter((f) => !(type.kind === 'contact' && (f.key === 'first_name' || f.key === 'last_name'))) : [];
+  // What matters first: the fields that hold something (the first six when there are many); the rest and the
+  // empty ones fold away under one line.
+  const filled = rec ? shown.filter((f) => !(rec.fields[f.key] === null || rec.fields[f.key] === undefined || rec.fields[f.key] === '')) : [];
+  const lead = filled.length <= 7 ? filled : filled.slice(0, 6);
+  const rest = shown.filter((f) => !lead.includes(f));
+  const fieldRow = (f: (typeof shown)[number]) => {
+    if (!rec) return null;
+    const v = rec.fields[f.key];
+    const empty = v === null || v === undefined || v === '';
+    const text = fmt(f, v, rec.currency);
+    return (
+      <div key={f.key}>
+        <dt>{labelOf(f.label, locale)}</dt>
+        <dd>
+          {empty ? (
+            <span className="muted">—</span>
+          ) : f.type === 'url' ? (
+            <a href={String(v)} target="_blank" rel="noreferrer noopener">
+              {text}
+            </a>
+          ) : f.type === 'email' ? (
+            <a href={`mailto:${v}`}>{text}</a>
+          ) : f.type === 'select' ? (
+            <span className="optchip" data-color={f.options?.find((o) => o.key === v)?.color}>
+              {text}
+            </span>
+          ) : (
+            text
+          )}
+          {f.type === 'money' && !empty && rec.currency && rec.currency !== money.base && <span className="recpanel__conv muted"> ≈ {money.format(money.toBase(Number(v), rec.currency))}</span>}
+        </dd>
+      </div>
+    );
+  };
   const ownFiles = rec?.files.filter((f) => !f.commentId) ?? [];
   // Open work first, then what was finished in the last ninety days (struck through).
   const tasks = rec?.tasks ?? [];
@@ -172,35 +207,14 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
             <OpenIn links={rec.links} />
 
             <dl className="recpanel__fields">
-              {shown.map((f) => {
-                const v = rec.fields[f.key];
-                const empty = v === null || v === undefined || v === '';
-                const text = fmt(f, v, rec.currency);
-                return (
-                  <div key={f.key}>
-                    <dt>{labelOf(f.label, locale)}</dt>
-                    <dd>
-                      {empty ? (
-                        <span className="muted">—</span>
-                      ) : f.type === 'url' ? (
-                        <a href={String(v)} target="_blank" rel="noreferrer noopener">
-                          {text}
-                        </a>
-                      ) : f.type === 'email' ? (
-                        <a href={`mailto:${v}`}>{text}</a>
-                      ) : f.type === 'select' ? (
-                        <span className="optchip" data-color={f.options?.find((o) => o.key === v)?.color}>
-                          {text}
-                        </span>
-                      ) : (
-                        text
-                      )}
-                      {f.type === 'money' && !empty && rec.currency && rec.currency !== money.base && <span className="recpanel__conv muted"> ≈ {money.format(money.toBase(Number(v), rec.currency))}</span>}
-                    </dd>
-                  </div>
-                );
-              })}
+              {lead.map(fieldRow)}
             </dl>
+            {rest.length > 0 && (
+              <details className="recpanel__more">
+                <summary>{t('recordPanel.moreFields', { n: rest.length })}</summary>
+                <dl className="recpanel__fields">{rest.map(fieldRow)}</dl>
+              </details>
+            )}
 
             <section className="recpanel__section">
               <h3 className="section__head">

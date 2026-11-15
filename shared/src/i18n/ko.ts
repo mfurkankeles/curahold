@@ -2180,6 +2180,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "헬스 스코어가 주시 필요 구간입니다",
   'acards.renewalPast': "갱신 {n}일 지연",
   'acards.renewalIn': "{n}일 후 갱신",
+  'recordPanel.moreFields': "필드 {n}개 더 보기",
   'pipeline.moved': "{name}을(를) '{stage}'(으)로 옮겼습니다",
   'org.moved': "{name} 님이 이제 {to} 님에게 보고합니다",
   'org.movedTop': "{name} 님이 이제 맨 위에 있습니다",

@@ -2037,6 +2037,7 @@ export const en = {
   'acards.watchTitle': 'Health is in the watch band',
   'acards.renewalPast': 'Renewal {n} days late',
   'acards.renewalIn': 'Renews in {n} days',
+  'recordPanel.moreFields': "{n} more fields",
   'pipeline.moved': "{name} moved to {stage}",
   'org.moved': "{name} now reports to {to}",
   'org.movedTop': "{name} is now at the top",

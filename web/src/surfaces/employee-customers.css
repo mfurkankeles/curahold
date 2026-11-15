@@ -130,3 +130,9 @@
   .gantt-tools { flex: 1 1 100%; flex-wrap: nowrap; }
   .gantt-tools__nav { margin-inline-start: auto; }
 }
+
+/* ------------------------------------------------------------ record panel */
+.recpanel__more { margin-top: 8px; }
+.recpanel__more > summary { display: inline-flex; align-items: center; min-height: var(--tap-min); color: var(--brand-ink); font-size: var(--fs-s); font-weight: 600; cursor: pointer; }
+.recpanel__more[open] > summary { margin-bottom: 8px; }
+@media (pointer: coarse) { .recpanel__more > summary { min-height: var(--tap); } }

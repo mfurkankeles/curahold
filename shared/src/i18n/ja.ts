@@ -2180,6 +2180,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "ヘルスが要注意の区分にあります",
   'acards.renewalPast': "更新が{n}日遅れ",
   'acards.renewalIn': "{n}日後に更新",
+  'recordPanel.moreFields': "ほか {n} 項目",
   'pipeline.moved': "{name} を「{stage}」に移動しました",
   'org.moved': "{name} の上長を {to} にしました",
   'org.movedTop': "{name} を最上位にしました",
