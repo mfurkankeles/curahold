@@ -4383,4 +4383,10 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'rb.undo': "撤销上一次更改",
   'rb.loadFailed': "无法打开此报表",
   'rb.viewerNote': "你可以查看和导出；保存报表需要完整席位。",
+  'dash.arrange': "移动卡片",
+  'dash.arrangeHint': "拖动卡片的手柄，或聚焦手柄后使用方向键。每次移动都会立即保存。",
+  'dash.arrangeDone': "完成",
+  'dash.moveCard': "移动“{card}”",
+  'dash.place': "“{card}”：第 {n} 张，共 {total} 张",
+  'dash.moved': "卡片已移动",
 };

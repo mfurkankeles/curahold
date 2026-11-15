@@ -4383,4 +4383,10 @@ export const he: Partial<Record<MessageKey, string>> = {
   'rb.undo': "ביטול השינוי האחרון",
   'rb.loadFailed': "לא ניתן לפתוח את הדוח",
   'rb.viewerNote': "אפשר לצפות ולייצא; שמירת דוח דורשת מושב מלא.",
+  'dash.arrange': "הזזת כרטיסים",
+  'dash.arrangeHint': "גררו כרטיס בעזרת הידית, או העבירו את המיקוד לידית והשתמשו במקשי החיצים. כל הזזה נשמרת מיד.",
+  'dash.arrangeDone': "סיום",
+  'dash.moveCard': "הזזת {card}",
+  'dash.place': "{card}: {n} מתוך {total}",
+  'dash.moved': "הכרטיס הוזז",
 };

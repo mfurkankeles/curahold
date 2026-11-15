@@ -4383,4 +4383,10 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'rb.undo': "برگرداندن آخرین تغییر",
   'rb.loadFailed': "این گزارش باز نشد",
   'rb.viewerNote': "می‌توانی ببینی و خروجی بگیری؛ ذخیرهٔ گزارش صندلی کامل می‌خواهد.",
+  'dash.arrange': "جابه‌جایی کارت‌ها",
+  'dash.arrangeHint': "کارت را از دستگیره‌اش بکش، یا روی دستگیره برو و از کلیدهای جهت‌نما استفاده کن. هر جابه‌جایی فوراً ذخیره می‌شود.",
+  'dash.arrangeDone': "تمام",
+  'dash.moveCard': "جابه‌جایی {card}",
+  'dash.place': "{card}: {n} از {total}",
+  'dash.moved': "کارت جابه‌جا شد",
 };

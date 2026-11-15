@@ -4383,4 +4383,10 @@ export const tr: Record<MessageKey, string> = {
   'rb.undo': "Son değişikliği geri al",
   'rb.loadFailed': "Bu rapor açılamadı",
   'rb.viewerNote': "Bakabilir ve dışa aktarabilirsin; raporu kaydetmek için tam koltuk gerekir.",
+  'dash.arrange': "Kartları taşı",
+  'dash.arrangeHint': "Kartı tutamağından sürükle ya da tutamağa gelip ok tuşlarını kullan. Her taşıma hemen kaydedilir.",
+  'dash.arrangeDone': "Bitti",
+  'dash.moveCard': "{card} kartını taşı",
+  'dash.place': "{card}: {total} kartın {n}. sırası",
+  'dash.moved': "Kart taşındı",
 };

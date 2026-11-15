@@ -4383,4 +4383,10 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'rb.undo': "直前の変更を元に戻す",
   'rb.loadFailed': "このレポートを開けませんでした",
   'rb.viewerNote': "表示とエクスポートはできます。レポートの保存にはフルシートが必要です。",
+  'dash.arrange': "カードを並べ替え",
+  'dash.arrangeHint': "ハンドルをドラッグするか、ハンドルにフォーカスして矢印キーで動かします。移動はすぐに保存されます。",
+  'dash.arrangeDone': "完了",
+  'dash.moveCard': "「{card}」を移動",
+  'dash.place': "「{card}」：{total}枚中{n}番目",
+  'dash.moved': "カードを移動しました",
 };

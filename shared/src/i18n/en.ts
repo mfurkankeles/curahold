@@ -4398,6 +4398,12 @@ export const en = {
   'rb.undo': "Undo the last change",
   'rb.loadFailed': "This report could not be opened",
   'rb.viewerNote': "You can look and export; keeping a report needs a full seat.",
+  'dash.arrange': "Move cards",
+  'dash.arrangeHint': "Drag a card by its handle, or put the focus on the handle and use the arrow keys. Each move is saved at once.",
+  'dash.arrangeDone': "Done",
+  'dash.moveCard': "Move {card}",
+  'dash.place': "{card}: {n} of {total}",
+  'dash.moved': "Card moved",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -4383,4 +4383,10 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'rb.undo': "تراجع عن آخر تغيير",
   'rb.loadFailed': "تعذّر فتح هذا التقرير",
   'rb.viewerNote': "يمكنك العرض والتصدير؛ حفظ التقرير يتطلب مقعدًا كاملًا.",
+  'dash.arrange': "نقل البطاقات",
+  'dash.arrangeHint': "اسحب البطاقة من مقبضها، أو ضع التركيز على المقبض واستخدم مفاتيح الأسهم. يُحفظ كل نقل فورًا.",
+  'dash.arrangeDone': "تم",
+  'dash.moveCard': "نقل {card}",
+  'dash.place': "{card}: {n} من {total}",
+  'dash.moved': "نُقلت البطاقة",
 };

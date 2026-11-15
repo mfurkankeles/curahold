@@ -266,5 +266,28 @@
 .dash-viewas .select { width: auto; min-width: 200px; }
 .page[aria-busy='true'] .dash__grid { opacity: .6; transition: opacity var(--dur-fast) ease; }
 
+/* Moving cards (Dashboards.tsx): a handle on each card, dragged or moved with the arrow keys. */
+.dash-card { display: contents; }
+.dash__grid[data-arranging] .pane { position: relative; border-style: dashed; border-color: var(--line-strong); }
+.dash__grid[data-arranging] .pane__head { padding-inline-end: 40px; }
+.dash-grip {
+  position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; display: grid; place-items: center; padding: 4px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-s); background: var(--surface); color: var(--ink-2); cursor: grab; touch-action: none;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.dash-grip:hover { color: var(--ink); border-color: var(--brand); }
+.dash-grip:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); }
+.dash-card[data-dragging] .pane { box-shadow: var(--shadow-1); }
+.dash-card[data-dragging] .dash-grip { cursor: grabbing; }
+@media (pointer: coarse) { .dash-grip { min-width: var(--tap); min-height: var(--tap); } }
+.dash-arrange { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 12px; border-radius: var(--r-m); background: var(--info-wash); color: var(--info-ink); }
+.dash-arrange__hint { margin: 0; flex: 1; font-size: var(--fs-s); }
+
+/* A phone: figure cards pair up two by two; charts and lists take the whole width. */
+@media (max-width: 760px) {
+  .dash__grid .pane[data-size='third']:has(.kpi) { grid-column: span 3; }
+  .dash__grid .pane[data-size='third'] .kpi__value { font-size: var(--fs-3xl); }
+}
+
 /* The builder: what a viewer seat can do here. */
 .rb-note { margin: 0 0 12px; background: var(--info-wash); border-color: transparent; color: var(--info-ink); }

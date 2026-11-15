@@ -4383,4 +4383,10 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'rb.undo': "復原上一次變更",
   'rb.loadFailed': "無法開啟此報表",
   'rb.viewerNote': "你可以檢視和匯出；儲存報表需要完整席位。",
+  'dash.arrange': "移動卡片",
+  'dash.arrangeHint': "拖曳卡片的把手，或將焦點移到把手後使用方向鍵。每次移動都會立即儲存。",
+  'dash.arrangeDone': "完成",
+  'dash.moveCard': "移動「{card}」",
+  'dash.place': "「{card}」：第 {n} 張，共 {total} 張",
+  'dash.moved': "卡片已移動",
 };

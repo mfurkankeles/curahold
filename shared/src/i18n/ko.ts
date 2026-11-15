@@ -4383,4 +4383,10 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'rb.undo': "마지막 변경 취소",
   'rb.loadFailed': "이 보고서를 열 수 없습니다",
   'rb.viewerNote': "보기와 내보내기는 할 수 있습니다. 보고서를 저장하려면 정식 좌석이 필요합니다.",
+  'dash.arrange': "카드 이동",
+  'dash.arrangeHint': "손잡이를 끌거나, 손잡이에 초점을 두고 화살표 키를 쓰세요. 옮길 때마다 바로 저장됩니다.",
+  'dash.arrangeDone': "완료",
+  'dash.moveCard': "{card} 이동",
+  'dash.place': "{card}: {total}개 중 {n}번째",
+  'dash.moved': "카드를 옮겼습니다",
 };
