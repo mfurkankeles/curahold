@@ -1956,7 +1956,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'portal.footer': "{company}의 고객 포털 · Curahold 기반",
   'portal.poweredBy': "Curahold 기반",
   'portal.footerPlain': "{company}의 고객 포털",
-  'portal.menuFor': "{name}: 계정 및 로그아웃",
+  'portal.menuFor': "내 계정, 언어, 로그아웃",
   'portal.offline': "오프라인 상태입니다. 작성한 내용은 보관되며 연결되면 전송됩니다.",
   'portal.notSentYet': "아직 전송되지 않았습니다. 연결되는 즉시 전송됩니다.",
   'portal.missingTitle': "이 주소에는 포털이 없습니다",

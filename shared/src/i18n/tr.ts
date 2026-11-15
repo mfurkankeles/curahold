@@ -1774,7 +1774,7 @@ export const tr: Record<MessageKey, string> = {
   'portal.footer': '{company} müşteri portalı · Curahold ile çalışır',
   'portal.poweredBy': "Curahold ile çalışır",
   'portal.footerPlain': "{company} müşteri portalı",
-  'portal.menuFor': "{name}: hesap ve çıkış",
+  'portal.menuFor': "Hesabın, dil ve çıkış",
   'portal.offline': "Çevrimdışısın. Yazdıkların saklanır, bağlantı gelince gönderilir.",
   'portal.notSentYet': "Henüz gönderilmedi: bağlantı gelir gelmez gidecek.",
   'portal.missingTitle': "Burada portal yok",

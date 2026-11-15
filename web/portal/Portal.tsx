@@ -163,14 +163,15 @@ function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
   );
 }
 
-/** One of the five states: empty (an invitation), error (what happened, what to do), not found. */
-function State({ icon, title, body, tone, flat, children }: { icon: keyof typeof PATHS; title: string; body?: string; tone?: 'error'; flat?: boolean; children?: ReactNode }) {
+/** One of the five states: empty (an invitation), error (what happened, what to do), not found. `page`: it is the whole page (its title is the h1). */
+function State({ icon, title, body, tone, flat, page, children }: { icon: keyof typeof PATHS; title: string; body?: string; tone?: 'error'; flat?: boolean; page?: boolean; children?: ReactNode }) {
+  const Title = page ? 'h1' : 'h2';
   return (
     <div className={flat ? 'p-state p-state--flat' : 'p-state'} data-tone={tone} role={tone === 'error' ? 'alert' : undefined}>
       <span className="p-state__ico">
         <Ico name={icon} />
       </span>
-      <h2>{title}</h2>
+      <Title>{title}</Title>
       {body && <p>{body}</p>}
       {children}
     </div>
@@ -279,14 +280,15 @@ function MeMenu({ ctx, me, lang, onSignOut }: { ctx: Ctx; me: PortalMe; lang: Re
   const account = link('/account');
   return (
     <div className="p-me p-top__me" ref={box}>
-      <button className="p-me__btn" aria-expanded={open} aria-controls="p-me-pop" aria-label={t('portal.menuFor', { name: me.user.name })} onClick={() => setOpen(!open)}>
+      <button className="p-me__btn" aria-expanded={open} aria-controls="p-me-pop" aria-describedby="p-me-hint" onClick={() => setOpen(!open)}>
         <span className="p-avatar" aria-hidden="true">
           {initials(me.user.name)}
         </span>
-        <span className="p-me__name" aria-hidden="true">
-          {me.user.name}
-        </span>
+        <span className="p-me__name">{me.user.name}</span>
       </button>
+      <span id="p-me-hint" hidden>
+        {t('portal.menuFor')}
+      </span>
       {open && (
         <div className="p-me__pop" id="p-me-pop">
           <div className="p-me__who">
@@ -474,9 +476,9 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
     return (
       <div className="p-center">
         {boot.kind === 'missing' ? (
-          <State icon="search" title={t('portal.missingTitle')} body={t('portal.missing')} />
+          <State page icon="search" title={t('portal.missingTitle')} body={t('portal.missing')} />
         ) : (
-          <State icon="alert" tone="error" title={t('portal.errorTitle')} body={t('portal.errorBody')}>
+          <State page icon="alert" tone="error" title={t('portal.errorTitle')} body={t('portal.errorBody')}>
             <button className="p-btn p-btn--primary" onClick={() => (setBoot({ kind: 'loading' }), void start())}>
               {t('common.retry')}
             </button>
@@ -561,7 +563,7 @@ function Route({ ctx, org, me, path, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
   if (!board)
     return (
       <div className="p-wrap p-page">
-        <State icon="inbox" title={ctx.t('portal.noBoardsTitle')} body={ctx.t('portal.noBoards')} />
+        <State page icon="inbox" title={ctx.t('portal.noBoardsTitle')} body={ctx.t('portal.noBoards')} />
       </div>
     );
   if (task) return <TaskPage key={task} ctx={ctx} org={org} id={task} onSignedOut={onSignedOut} />;
@@ -587,7 +589,9 @@ function SignInPage({ ctx, org, lang, children }: { ctx: Ctx; org: PortalOrg; la
     <div className="p-signin-page">
       <main className="p-center">{children}</main>
       <div>
-        <div className="p-lang">{lang}</div>
+        <nav className="p-lang" aria-label={ctx.t('nav.language')}>
+          {lang}
+        </nav>
         <Foot ctx={ctx} org={org} />
       </div>
     </div>
@@ -933,7 +937,7 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
   if (failed)
     return (
       <div className="p-wrap p-page p-narrow">
-        <LoadFailed ctx={ctx} failure={failed} onRetry={reload} />
+        <LoadFailed page ctx={ctx} failure={failed} onRetry={reload} />
       </div>
     );
   if (!data)
@@ -1107,18 +1111,18 @@ function useLoad<T>(load: () => Promise<T>, deps: unknown[], onSignedOut: (n?: s
 }
 
 /** A load that failed: not there (or not theirs), or something to try again. */
-function LoadFailed({ ctx, failure, onRetry, company }: { ctx: Ctx; failure: Failure; onRetry: () => void; company?: string }) {
+function LoadFailed({ ctx, failure, onRetry, company, page }: { ctx: Ctx; failure: Failure; onRetry: () => void; company?: string; page?: boolean }) {
   const { t } = ctx;
   if (failure.status === 404 || failure.status === 403)
     return (
-      <State icon="search" title={t('portal.notFoundTitle')} body={t('portal.notFound')}>
+      <State page={page} icon="search" title={t('portal.notFoundTitle')} body={t('portal.notFound')}>
         <a className="p-btn p-btn--primary" {...link('/')}>
           {t('portal.seeRequests')}
         </a>
       </State>
     );
   return (
-    <State icon={failure.status === 0 ? 'offline' : 'alert'} tone="error" title={t('portal.loadFailedTitle')} body={t('portal.loadFailedBody', { company: company ?? '' })}>
+    <State page={page} icon={failure.status === 0 ? 'offline' : 'alert'} tone="error" title={t('portal.loadFailedTitle')} body={t('portal.loadFailedBody', { company: company ?? '' })}>
       <button className="p-btn p-btn--primary" onClick={onRetry}>
         {t('common.retry')}
       </button>
@@ -1322,7 +1326,15 @@ function NewRequest({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; b
     e.preventDefault();
     if (title.trim().length < 3) return setShort(true);
     setShort(false);
+    const since = Date.now() - 60_000;
+    let tries = 0;
     void run(async () => {
+      // Sent again after the connection came back: if the first try did arrive, open that one.
+      if (tries++ > 0) {
+        const list = (await call<{ tasks: PortalTask[] }>('GET', `/boards/${board.id}/tasks`)).tasks;
+        const there = list.find((x) => x.mine && x.title === title.trim() && Date.parse(x.createdAt) > since);
+        if (there) return go(`/t/${there.id}`, true);
+      }
       const r = await callWith<{ task: PortalTask }>('POST', `/boards/${board.id}/tasks`, { title, description }, files);
       go(`/t/${r.task.id}`, true);
     });
@@ -1384,7 +1396,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
   if (failed)
     return (
       <div className="p-wrap p-page p-narrow">
-        <LoadFailed ctx={ctx} failure={failed} onRetry={reload} company={org.name} />
+        <LoadFailed page ctx={ctx} failure={failed} onRetry={reload} company={org.name} />
       </div>
     );
   if (!data)
@@ -1396,7 +1408,19 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
   const send = (e: FormEvent) => {
     e.preventDefault();
     if (!reply.trim() && !files.length) return;
+    const since = Date.now() - 60_000;
+    let tries = 0;
     void run(async () => {
+      // Sent again after the connection came back: if the first try did arrive, do not post it twice.
+      if (tries++ > 0) {
+        const now = (await call<{ task: PortalTaskDetail }>('GET', `/tasks/${id}`)).task;
+        if (now.comments.some((c) => c.mine && c.body === reply.trim() && Date.parse(c.createdAt) > since)) {
+          setData(now);
+          setReply('');
+          setFiles([]);
+          return;
+        }
+      }
       const r = await callWith<{ task: PortalTaskDetail }>('POST', `/tasks/${id}/comments`, { body: reply }, files);
       setData(r.task);
       setReply('');

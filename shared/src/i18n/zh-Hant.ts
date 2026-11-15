@@ -1956,7 +1956,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'portal.footer': "{company} 的客戶入口網站 · 由 Curahold 提供支援",
   'portal.poweredBy': "由 Curahold 提供支援",
   'portal.footerPlain': "{company} 的客戶入口網站",
-  'portal.menuFor': "{name}：帳戶與登出",
+  'portal.menuFor': "你的帳戶、語言和登出",
   'portal.offline': "你已離線。你寫的內容會保留，恢復連線後自動傳送。",
   'portal.notSentYet': "尚未傳送：恢復連線後會立即傳送。",
   'portal.missingTitle': "這裡沒有入口網站",

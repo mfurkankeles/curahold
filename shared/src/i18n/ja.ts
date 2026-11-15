@@ -1956,7 +1956,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'portal.footer': "{company}のカスタマーポータル · Curahold で運営",
   'portal.poweredBy': "Curahold で運営",
   'portal.footerPlain': "{company}のカスタマーポータル",
-  'portal.menuFor': "{name}：アカウントとログアウト",
+  'portal.menuFor': "アカウント、言語、ログアウト",
   'portal.offline': "オフラインです。書いた内容は保存され、接続が戻ると送信されます。",
   'portal.notSentYet': "まだ送信されていません。接続が戻りしだい送信します。",
   'portal.missingTitle': "ここにポータルはありません",

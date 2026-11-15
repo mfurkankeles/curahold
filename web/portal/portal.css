@@ -119,8 +119,8 @@ html, body { margin: 0; }
 .p-me__item:hover { background: var(--sunk); }
 .p-me__lang { display: grid; gap: 4px; padding: 4px 12px 8px; font-size: var(--fs-s); color: var(--ink-2); }
 @media (max-width: 599px) {
-  .p-me__name { display: none; }
-  .p-me__btn, [dir='rtl'] .p-me__btn { padding: 4px; }
+  .p-me__name { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; text-overflow: clip; }
+  .p-me__btn, [dir='rtl'] .p-me__btn { padding: 4px; min-inline-size: var(--tap); justify-content: center; }
 }
 
 .p-offline[data-on] { padding-block: 8px; background: var(--warn-wash); color: var(--warn-ink); font-size: var(--fs-m); }

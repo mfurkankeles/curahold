@@ -1956,7 +1956,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'portal.footer': "پورتال مشتری {company} · اجرا شده با Curahold",
   'portal.poweredBy': "قدرت‌گرفته از Curahold",
   'portal.footerPlain': "پورتال مشتری {company}",
-  'portal.menuFor': "{name}: حساب و خروج",
+  'portal.menuFor': "حساب شما، زبان و خروج",
   'portal.offline': "آفلاین هستید. آنچه می‌نویسید نگه داشته می‌شود و با برگشت اتصال ارسال می‌شود.",
   'portal.notSentYet': "هنوز ارسال نشده: به محض برگشت اتصال ارسال می‌شود.",
   'portal.missingTitle': "اینجا پورتالی نیست",

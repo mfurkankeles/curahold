@@ -1789,7 +1789,7 @@ export const en = {
   'portal.footer': '{company}\'s customer portal · runs on Curahold',
   'portal.poweredBy': "Powered by Curahold",
   'portal.footerPlain': "{company} customer portal",
-  'portal.menuFor': "{name}: account and sign-out",
+  'portal.menuFor': "Your account, language and sign-out",
   'portal.offline': "You're offline. What you write is kept and sent when you're back.",
   'portal.notSentYet': "Not sent yet: it goes as soon as you're back online.",
   'portal.missingTitle': "No portal here",

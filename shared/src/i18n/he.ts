@@ -1756,7 +1756,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'portal.footer': "פורטל הלקוחות של {company} · פועל על Curahold",
   'portal.poweredBy': "מופעל על ידי Curahold",
   'portal.footerPlain': "פורטל הלקוחות של {company}",
-  'portal.menuFor': "{name}: חשבון והתנתקות",
+  'portal.menuFor': "החשבון שלך, שפה והתנתקות",
   'portal.offline': "אין חיבור. מה שכתבת נשמר וישלח כשהחיבור יחזור.",
   'portal.notSentYet': "עוד לא נשלח: זה יישלח ברגע שהחיבור יחזור.",
   'portal.missingTitle': "אין כאן פורטל",
