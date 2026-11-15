@@ -228,7 +228,8 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
   const list = people.filter((p) => !needle || p.name.toLocaleLowerCase().includes(needle) || p.email.includes(needle));
   return (
     <div className="picker" ref={ref}>
-      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} aria-label={label} disabled={disabled} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((o) => !o)}>
+        <span className="sr-only">{label}</span>
         {selected.length ? (
           <>
             <Avatars people={selected} max={4} />

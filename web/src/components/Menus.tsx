@@ -81,8 +81,9 @@ export function MenuButton({
   };
   return (
     <div className={`menuwrap${className ? ` ${className}` : ''}`} ref={ref}>
-      <button ref={trigger} type="button" className={buttonClass} aria-haspopup="menu" aria-expanded={open} aria-label={label} title={title} onClick={() => setOpen((o) => !o)}>
+      <button ref={trigger} type="button" className={buttonClass} aria-haspopup="menu" aria-expanded={open} title={title} onClick={() => setOpen((o) => !o)}>
         {button}
+        <span className="sr-only">{label}</span>
       </button>
       {open && (
         <div className="popmenu" data-place={place} role="menu" aria-label={label} ref={list} onKeyDown={onKey}>

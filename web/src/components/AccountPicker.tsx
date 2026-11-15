@@ -49,7 +49,8 @@ export function AccountPicker({ value, name, onChange, disabled }: { value: stri
 
   return (
     <div className="picker" ref={ref}>
-      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} aria-label={words.one} disabled={disabled} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="picker__button" aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((o) => !o)}>
+        <span className="sr-only">{words.one}</span>
         {name ? <span>{name}</span> : <span className="muted">{t('task.accountPlaceholder')}</span>}
       </button>
       {open && (

@@ -278,15 +278,19 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
         {!failed && !items && <SkeletonRows rows={view === 'day' ? 4 : 8} label={t('common.loading')} />}
         {!failed && items && view === 'month' && (
           <div className="cal" role="grid" aria-label={t('calendar.title')}>
+            <div className="cal__row" role="row">
             {weekdays.map((w) => (
               <div className="cal__dow" key={w} role="columnheader">
                 {w}
               </div>
             ))}
-            {Array.from({ length: 42 }, (_, i) => plus(from, i)).map((day) => {
+            </div>
+            {Array.from({ length: 6 }, (_, week) => (
+            <div className="cal__row" role="row" key={week}>
+            {Array.from({ length: 7 }, (_, i) => plus(from, week * 7 + i)).map((day) => {
               const list = byDay.get(day) ?? [];
               return (
-                <div className="cal__day" key={day} role="gridcell" data-out={day.slice(0, 7) !== date.slice(0, 7)} data-today={day === today} aria-label={fmtDate(day, { day: 'numeric', month: 'long' })}>
+                <div className="cal__day" key={day} role="gridcell" data-out={day.slice(0, 7) !== date.slice(0, 7)} data-today={day === today}>
                   <span className="cal__top">
                     <button className="cal__date" onClick={() => go({ view: 'day', date: day })} title={t('calendar.openDay', { date: fmtDate(day, { day: 'numeric', month: 'long' }) })}>
                       {at(day).getUTCDate()}
@@ -302,6 +306,8 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
                 </div>
               );
             })}
+            </div>
+            ))}
           </div>
         )}
 

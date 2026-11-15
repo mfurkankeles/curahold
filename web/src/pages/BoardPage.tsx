@@ -486,7 +486,7 @@ function DraggableCard({ task, done }: { task: Task; done: boolean }) {
     drop.setNodeRef(el);
   };
   return (
-    <div ref={ref} {...drag.attributes} {...drag.listeners} data-dragging={drag.isDragging} style={{ outline: drop.isOver && !drag.isDragging ? '2px solid var(--brand)' : undefined, borderRadius: 6 }}>
+    <div ref={ref} {...drag.attributes} role="group" {...drag.listeners} className="dragcard" data-dragging={drag.isDragging} data-over={(drop.isOver && !drag.isDragging) || undefined}>
       <CardBody task={task} done={done} />
     </div>
   );

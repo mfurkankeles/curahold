@@ -381,10 +381,10 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 items={createItems}
               />
             )}
-            <button className="sidebar__search" onClick={() => setSearching(true)} aria-label={t('search.open')}>
+            <button className="sidebar__search" onClick={() => setSearching(true)}>
               <Icon name="search" size={16} />
               <span>{t('search.open')}</span>
-              <kbd>{modKey()} K</kbd>
+              <kbd aria-hidden="true">{modKey()} K</kbd>
             </button>
           </div>
           {setupLeft > 0 && (

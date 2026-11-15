@@ -59,7 +59,7 @@ export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashb
     <a
       className="tab"
       href={to}
-      aria-selected={active === key}
+      aria-current={active === key ? 'page' : undefined}
       onClick={(e) => {
         e.preventDefault();
         navigateFresh(to);

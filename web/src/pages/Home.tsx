@@ -200,7 +200,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
               key={p.id}
               href={`/pages/${p.id}`}
               className="tab"
-              aria-selected={p.id === current.id}
+              aria-current={p.id === current.id ? 'page' : undefined}
               onClick={(e) => {
                 e.preventDefault();
                 navigateFresh(p.id === homeId ? '/home' : `/pages/${p.id}`);

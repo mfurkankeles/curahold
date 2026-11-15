@@ -188,7 +188,7 @@ function DropColumn({ id, label, color, count, total, closed, children }: { id: 
 function DragCard({ id, disabled, children }: { id: string; disabled: boolean; children: React.ReactNode }) {
   const drag = useDraggable({ id, disabled });
   return (
-    <div ref={drag.setNodeRef} {...drag.attributes} {...drag.listeners} data-dragging={drag.isDragging}>
+    <div ref={drag.setNodeRef} {...drag.attributes} role="group" {...drag.listeners} data-dragging={drag.isDragging}>
       {children}
     </div>
   );

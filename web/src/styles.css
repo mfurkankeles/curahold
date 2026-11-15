@@ -38,7 +38,7 @@
   --soon: #9c6414;
   --today: #b9501a;
   --late: #b23a26;
-  --done: #4e7a3a;
+  --done: #456d33;
   --calm: #8986b6;
   --on-status: #ffffff;
   --soon-wash: #fdf2dd;
@@ -131,11 +131,11 @@
   /* Palettes chosen per record: stance, label colour, calendar kind. */
   --stance-champion: #1d6b45;
   --stance-champion-wash: #dcefe4;
-  --stance-supporter: #3f8a5c;
+  --stance-supporter: #33714b;
   --stance-supporter-wash: #e8f4ec;
-  --stance-neutral: #74878a;
+  --stance-neutral: #5a6a6d;
   --stance-neutral-wash: #edf1f0;
-  --stance-skeptic: #a86a12;
+  --stance-skeptic: #8a560e;
   --stance-skeptic-wash: #fbf0dc;
   --stance-blocker: #b23a26;
   --stance-blocker-wash: #f8e3de;
@@ -143,9 +143,9 @@
   --stance-unknown-wash: #f3f5f4;
   --color-sea: #0f6c60;
   --color-sea-wash: #dff0eb;
-  --color-leaf: #3d7a2c;
+  --color-leaf: #376e28;
   --color-leaf-wash: #e5f1dd;
-  --color-honey: #9a6205;
+  --color-honey: #8d5a04;
   --color-honey-wash: #fbefd3;
   --color-coral: #ad3723;
   --color-coral-wash: #f8e2dc;
@@ -618,6 +618,10 @@ tr.vspacer td { padding: 0; border: 0; }
 /* -------------------------------------------------------------- calendar */
 
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; background: var(--line); gap: 0; }
+.cal__row { display: contents; }
+/* A card on a board: the whole card can be picked up (it holds buttons, so it is a group, not a button). */
+.dragcard { border-radius: var(--r-s); }
+.dragcard[data-over] { outline: 2px solid var(--brand); }
 .cal__dow { background: var(--surface-2); padding: 8px 8px; font-size: var(--fs-xs); color: var(--ink-3); }
 .cal__day { background: var(--surface); min-height: 112px; padding: 8px 4px 8px; display: flex; flex-direction: column; gap: 4px; }
 .cal__day[data-out='true'] { background: var(--surface-2); }
@@ -713,7 +717,7 @@ tr.vspacer td { padding: 0; border: 0; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; overflow-x: auto; }
 .tab { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
-.tab[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--brand); font-weight: 600; }
+:is(.tab[aria-selected='true'], .tab[aria-current='page']) { color: var(--ink); border-bottom-color: var(--brand); font-weight: 600; }
 .form { display: grid; gap: 16px; max-width: 620px; }
 .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 16px; }
@@ -850,7 +854,7 @@ tr.vspacer td { padding: 0; border: 0; }
 .rules { display: grid; gap: 8px; }
 .rule { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px; border-inline-start: 3px solid var(--brand); }
 .rule[data-on='false'] { border-inline-start-color: var(--calm); }
-.rule[data-on='false'] .rule__body { opacity: .65; }
+.rule[data-on='false'] .rule__body { opacity: .9; }
 .rule__body { display: grid; gap: 4px; min-width: 0; }
 .rule__sentence { margin: 0; color: var(--ink-2); }
 .rule__when { color: var(--ink); }
@@ -1957,12 +1961,14 @@ button.wcell:hover { border-style: solid; border-color: var(--brand); color: var
 
 /* The tick: one click and the task is done. */
 .tick {
-  flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); border: 1.5px solid var(--line-strong); background: var(--surface);
-  color: transparent; display: inline-grid; place-items: center; cursor: pointer; padding: 0; vertical-align: -4px; margin-inline-end: 8px;
-  transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  /* 24 px to aim at (the smallest target allowed), drawn as a 20 px ring: the outer 2 px are a clear border. */
+  flex: none; width: 24px; height: 24px; border-radius: var(--r-pill); border: 2px solid transparent; background: var(--surface); background-clip: padding-box;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: transparent; display: inline-grid; place-items: center; cursor: pointer; padding: 0; vertical-align: -6px; margin-block: -2px; margin-inline: -2px 4px;
+  transition: box-shadow var(--dur-fast) ease, background-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
-.tick:hover { border-color: var(--done); color: var(--done); }
-.tick[data-done] { background: var(--done); border-color: var(--done); color: var(--on-status); }
+.tick:hover { box-shadow: inset 0 0 0 1.5px var(--done); color: var(--done); }
+.tick[data-done] { background: var(--done); background-clip: padding-box; box-shadow: inset 0 0 0 1.5px var(--done); color: var(--on-status); }
 .tick[data-pop] { animation: tick-pop var(--dur) var(--ease); }
 @keyframes tick-pop {
   0% { transform: scale(1); }
@@ -2005,7 +2011,7 @@ strong, b { font-weight: 700; }
 .btn--primary, .sidebar__new { font-weight: 650; }
 .navlink { font-weight: 500; }
 .navlink[aria-current='page'] { font-weight: 700; }
-.tab[aria-selected='true'] { font-weight: 700; }
+:is(.tab[aria-selected='true'], .tab[aria-current='page']) { font-weight: 700; }
 .field__label, .stat__label { font-weight: 600; }
 .table th { font-weight: 650; }
 
@@ -2406,7 +2412,7 @@ a.targetline:hover { border-color: var(--line-strong); }
 /* An icon in front of a heading, a tab or a label: what the thing is about, before the words are read. */
 .icon--lead { display: inline-block; flex: none; vertical-align: -0.2em; margin-inline-end: .5em; color: var(--brand-ink); }
 .tab .icon--lead, .admin__link .icon--lead, .props__label .icon--lead { color: currentColor; opacity: .7; margin-inline-end: .45em; }
-.tab[aria-selected='true'] .icon--lead, .admin__link[aria-current='page'] .icon--lead { color: var(--brand-ink); opacity: 1; }
+.tab:is([aria-selected='true'], [aria-current='page']) .icon--lead, .admin__link[aria-current='page'] .icon--lead { color: var(--brand-ink); opacity: 1; }
 .group__head .icon--lead, .section__head .icon--lead { margin-inline-end: 0; }
 /* A group that is late or due today already speaks in its own colour; its icon says the same. */
 .group[data-due='late'] .group__head .icon--lead, .group[data-due='today'] .group__head .icon--lead { color: currentColor; }
@@ -2799,6 +2805,15 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
   :has(> path[d^='M7.4 5.6h9'])
 ) { transform: scaleX(-1); }
 [dir='rtl'] .navlink:hover .icon:is(:has(> path[d^='M7.4 5.6h9'])) { transform: scaleX(-1) translateX(1px); }
+
+/* ------------------------------------------------------------ touch targets
+   On a touch screen every control is at least 44 px to aim at (--tap). Controls that are
+   small on purpose (an icon, a tick) keep their look and get an invisible 44 px hit area. */
+@media (pointer: coarse) {
+  :is(.btn, .seg button, .tab, .navlink, .popmenu__item, .input, .select, .picker__button) { min-height: var(--tap); }
+  :is(.btn--icon, .tick) { position: relative; }
+  :is(.btn--icon, .tick:not([data-pop]))::after { content: ''; position: absolute; top: 50%; left: 50%; width: var(--tap); height: var(--tap); translate: -50% -50%; }
+}
 
 /* ------------------------------------------------------------ utilities
    One property each, for the few places a screen needs a nudge that no component owns.
