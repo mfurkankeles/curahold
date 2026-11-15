@@ -23,7 +23,7 @@ import { useRecordTypes } from './AccountFields';
 import { PROVIDER_NAMES } from './Connections';
 import { OrgChart, StanceBadge } from './OrgChart';
 import { Avatar, Confirm, Dialog, onTabKeys } from './ui';
-import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
+import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from './Empty';
 import { Icon, PageIcon, RECORD_KIND_ICON } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 import { useTrashToast } from '../lib/trash';
@@ -268,12 +268,21 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   };
   const view = !choices.length ? 'table' : (viewPick ?? (type?.kind === 'opportunity' ? 'board' : 'table'));
   const groupKey = choices.some((f) => f.key === groupPick) ? groupPick! : (choices.find((f) => f.key === 'stage') ?? choices[0])?.key ?? '';
+  // A link to a kind of record the company does not keep asks nothing: it waits for the kinds, then says so.
+  const known = !!types?.some((x) => x.key === typeKey);
+  const [failed, setFailed] = useState(false);
   const load = useCallback(async () => {
+    if (!known) return;
     const p = new URLSearchParams({ type: typeKey, limit: '500' });
     if (q.trim()) p.set('q', q.trim());
     if (owner) p.set('owner', owner);
-    setData(await get(`/records?${p}`));
-  }, [typeKey, q, owner]);
+    try {
+      setData(await get(`/records?${p}`));
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
+  }, [typeKey, q, owner, known]);
   useEffect(() => {
     const id = setTimeout(() => void load(), 200);
     return () => clearTimeout(id);
@@ -282,7 +291,11 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   if (types && !type)
     return (
       <div className="page">
-        <EmptyState icon="layout" title={t('errors.not_found')} />
+        <EmptyState icon="layout" title={t('errors.not_found')}>
+          <button className="btn" onClick={() => navigate('/accounts')}>
+            {words.other}
+          </button>
+        </EmptyState>
       </div>
     );
   const cols = type ? tableColumns(type) : [];
@@ -429,7 +442,9 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           )}
           </FilterSheet>
         </div>
-        {!data ? (
+        {failed && !data ? (
+          <LoadError onRetry={() => void load()} />
+        ) : !data ? (
           view === 'board' ? <SkeletonCards columns count={4} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
         ) : rows.length === 0 ? (
           <div className="sheet">
