@@ -206,7 +206,7 @@ function footerHtml(locale: SiteLocale): string {
         <p class="foot__story">${esc(c.footer.story)}</p>
       </div>
       <div>
-        <h4>${esc(c.nav.product)}</h4>
+        <h3>${esc(c.nav.product)}</h3>
         <ul>
           <li><a href="${base}#pricing">${esc(c.nav.pricing)}</a></li>
           <li><a href="${demo}">${esc(c.nav.demo)}</a></li>
@@ -215,7 +215,7 @@ function footerHtml(locale: SiteLocale): string {
         </ul>
       </div>
       <div>
-        <h4>${esc(c.footer.legal)}</h4>
+        <h3>${esc(c.footer.legal)}</h3>
         <ul>
           <li><a href="${legal('terms')}">${esc(c.footer.links.terms)}</a></li>
           <li><a href="${legal('privacy')}">${esc(c.footer.links.privacy)}</a></li>
@@ -463,7 +463,8 @@ function page(locale: SiteLocale): string {
     others.length === 1
       ? langLink(others[0], 'top__lang')
       : `<details class="lang"><summary class="top__lang">${esc(info.name)}</summary><div class="lang__menu">${others.map((l) => langLink(l)).join('')}</div></details>`;
-  const alternates = [...SITE_LOCALES.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${localeHref(locale, l)}">`), `<link rel="alternate" hreflang="x-default" href="${localeHref(locale, 'en')}">`].join('\n');
+  // Search engines want these as full addresses.
+  const alternates = [...SITE_LOCALES.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${localeBase(l)}">`), `<link rel="alternate" hreflang="x-default" href="${ORIGIN}/">`].join('\n');
   const accts = accountWords(locale).other;
   const band = (b: 'good' | 'watch' | 'risk') => t(`health.band.${b}` as MessageKey);
   const av = (init: string) => `<span class="av">${esc(init)}</span>`;
@@ -938,7 +939,7 @@ for (const [pkg, names] of [
 // copied through; the generated SVG is always written as a free fallback.
 const ownOgPng = join(ROOT, 'site', 'og.png');
 if (existsSync(ownOgPng)) copyFileSync(ownOgPng, join(OUT, 'assets', 'og.png'));
-const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#17133a"/><g transform="translate(96,206)"><rect width="120" height="120" rx="28" fill="#241f52"/><path d="M86 34A45 45 0 1 0 86 86" fill="none" stroke="#eceafe" stroke-width="11" stroke-linecap="round"/><circle cx="60" cy="60" r="12" fill="#3fb596"/></g><text x="240" y="302" font-family="'Bricolage Grotesque','Figtree',sans-serif" font-size="94" font-weight="700" fill="#ffffff">Curahold</text><text x="98" y="436" font-family="'Figtree',sans-serif" font-size="38" fill="#a8a3d8">Task management for customer success and account teams</text></svg>`;
+const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#17133a"/><g transform="translate(96,206)"><rect width="120" height="120" rx="28" fill="#241f52"/><path d="M86 34A45 45 0 1 0 86 86" fill="none" stroke="#eceafe" stroke-width="11" stroke-linecap="round"/><circle cx="60" cy="60" r="12" fill="#3fb596"/></g><text x="240" y="302" font-family="'Bricolage Grotesque','Figtree',sans-serif" font-size="94" font-weight="700" fill="#ffffff">Curahold</text><text x="98" y="436" font-family="'Figtree',sans-serif" font-size="38" fill="#a8a3d8">Tasks, sprints and customer renewals in one place</text></svg>`;
 writeFileSync(join(OUT, 'assets', 'og.svg'), OG_SVG);
 
 // The blog: an index and a post per language that has native posts (en, tr).
