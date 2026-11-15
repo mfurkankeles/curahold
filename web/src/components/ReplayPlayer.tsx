@@ -18,6 +18,24 @@ function fromBase64url(s: string): Uint8Array {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
 
+/** A recorded node, as rrweb serialises it (only what is read here). */
+type SnapNode = { tagName?: string; attributes?: Record<string, unknown>; childNodes?: SnapNode[] };
+
+/**
+ * The recorded page's icons (<link rel="icon"> and the like) are never seen in a
+ * replay, but the player would fetch them from the company's own host, which the
+ * desk's content policy refuses. Drop them from every full snapshot.
+ */
+function withoutHeadIcons(events: unknown[]): unknown[] {
+  const prune = (n: SnapNode) => {
+    if (!n.childNodes) return;
+    n.childNodes = n.childNodes.filter((c) => !(c.tagName === 'link' && /(^|\s)(icon|apple-touch-icon(-precomposed)?|mask-icon)(\s|$)/i.test(String(c.attributes?.rel ?? ''))));
+    n.childNodes.forEach(prune);
+  };
+  for (const e of events as { type?: number; data?: { node?: SnapNode } }[]) if (e.type === 2 && e.data?.node) prune(e.data.node);
+  return events;
+}
+
 export default function ReplayPlayer({ reference, replay, onClose }: { reference: string; replay: ReplayMeta; onClose: () => void }) {
   const { t } = useI18n();
   const host = useRef<HTMLDivElement>(null);
@@ -33,7 +51,7 @@ export default function ReplayPlayer({ reference, replay, onClose }: { reference
         const res = await fetch(`/api/desk/requests/${reference}/replays/${replay.id}`, { headers: { 'x-curahold-desk': '1' } });
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as { chunks: string[] };
-        events = data.chunks.flatMap((b) => JSON.parse(strFromU8(gunzipSync(fromBase64url(b)))) as unknown[]);
+        events = withoutHeadIcons(data.chunks.flatMap((b) => JSON.parse(strFromU8(gunzipSync(fromBase64url(b)))) as unknown[]));
       } catch {
         if (live) setError(true);
         return;
