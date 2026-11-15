@@ -15,8 +15,9 @@ export const PRICES_READ_ON = '2026-11-12';
 export const PRICE = {
   // Cloudflare Workers Paid — developers.cloudflare.com/workers/platform/pricing
   workers: { monthly: 5, requestsIncluded: 10e6, perMillionRequests: 0.3, cpuMsIncluded: 30e6, perMillionCpuMs: 0.02 },
-  // Durable Objects (the live channel, not built yet) — developers.cloudflare.com/durable-objects/platform/pricing
-  // An incoming WebSocket message counts as 1/20 of a request; a sleeping (hibernating) object costs no duration.
+  // Durable Objects (the live channel, api/src/live/do.ts) — developers.cloudflare.com/durable-objects/platform/pricing
+  // An incoming WebSocket message counts as 1/20 of a request; a sleeping (hibernating) object costs no duration;
+  // a ping answered by setWebSocketAutoResponse does not wake it; outgoing messages are free.
   durable: { requestsIncluded: 1e6, perMillionRequests: 0.15, gbSecondsIncluded: 400_000, perMillionGbSeconds: 12.5 },
   // R2 (attachments) — developers.cloudflare.com/r2/pricing. Sending files out is free.
   r2: { gbIncluded: 10, perGbMonth: 0.015, writesIncluded: 1e6, perMillionWrites: 4.5, readsIncluded: 10e6, perMillionReads: 0.36 },
@@ -64,10 +65,21 @@ export const USE = {
   trialShare: 0.08,
   // ASSUMPTION: an average company pays for 12 seats (one charge a month, or one a year).
   seatsPerCompany: 12,
-  // With a live channel: each person holds one connection, each change wakes the company's object once.
+  // The live channel as built (api/src/live, web/src/lib/live.ts). Each write pokes the company's object
+  // once (a request; it reads the new change numbers through Hyperdrive and goes back to sleep).
+  // ASSUMPTION: 6 (re)connects a day, each a ticket request to the Worker and a request to the object.
   liveConnectsPerDay: 6,
+  // MEASURED in the code: a ticket again whenever the pages followed change (each page open, ASSUMPTION: all of them).
+  liveTicketsPerDay: 25,
+  // MEASURED in the code: "ping" every 45 s (6 h a day) and a presence word per page open; incoming = 1/20 request.
+  liveMessagesPerDay: 6 * 80 + 25 * 2,
+  // ASSUMPTION until measured on Workers: an awake object for 0.2 s per poke, 128 MB billed while awake.
   liveWakeSeconds: 0.2,
   liveObjectGb: 0.128,
+  // MEASURED in the code: with the channel open the timer asks every 120 s (6 h in front = 180 a day), and a
+  // signal from elsewhere in the company makes the page ask (at most every 1.5 s): ASSUMPTION every write of
+  // the company while the tab is open (3/4 of the day) — 12 seats × 40 writes × 0.75 = 360 a day.
+  livePollsPerDay: 6 * 30 + 12 * 40 * 0.75,
 };
 
 export interface Options {
@@ -83,14 +95,15 @@ export function monthlyCost(seats: number, opt: Options = {}) {
   const u = USE;
   // Everyone who makes the servers work, counted in "full seats' worth of activity".
   const active = seats * (1 + u.viewersPerSeat * u.viewerActivity + u.trialShare);
-  const polls = opt.live ? 0 : u.pollsPerDay;
+  const polls = opt.live ? u.livePollsPerDay + u.liveTicketsPerDay + u.liveConnectsPerDay : u.pollsPerDay;
   const requests = active * u.workDays * (u.opensPerDay * u.apiCallsPerOpen + u.writesPerDay + polls);
   const p = PRICE;
   const workers = p.workers.monthly + (over(requests, p.workers.requestsIncluded) / 1e6) * p.workers.perMillionRequests + (over(requests * u.cpuMsPerRequest, p.workers.cpuMsIncluded) / 1e6) * p.workers.perMillionCpuMs;
   let live = 0;
   if (opt.live) {
     const wakes = active * u.workDays * (u.writesPerDay + u.liveConnectsPerDay);
-    live = (over(wakes, p.durable.requestsIncluded) / 1e6) * p.durable.perMillionRequests + (over(wakes * u.liveWakeSeconds * u.liveObjectGb, p.durable.gbSecondsIncluded) / 1e6) * p.durable.perMillionGbSeconds;
+    const doRequests = wakes + (active * u.workDays * u.liveMessagesPerDay) / 20;
+    live = (over(doRequests, p.durable.requestsIncluded) / 1e6) * p.durable.perMillionRequests + (over(wakes * u.liveWakeSeconds * u.liveObjectGb, p.durable.gbSecondsIncluded) / 1e6) * p.durable.perMillionGbSeconds;
   }
   const dbGb = (seats * (1 + u.trialShare) * u.dbMbPerSeat) / 1024;
   // The machine grows with the company count; PITR needs at least the small one.
