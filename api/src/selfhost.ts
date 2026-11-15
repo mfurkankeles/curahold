@@ -32,6 +32,8 @@ import { postgresDb } from './db/postgres';
 import type { Db } from './db';
 import { createOrg } from './lib/orgs';
 import { resetFactors } from './lib/identity';
+import { guardedFetch } from './lib/outbound';
+import { lookup } from 'node:dns/promises';
 import { audit } from './lib/audit';
 import { runScheduled } from './lib/scheduler';
 import type { EmailMessage, EmailSender, Storage } from './lib/services';
@@ -143,7 +145,7 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
 
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
-  const deps = { db, email, storage, config };
+  const deps = { db, email, storage, config, fetch: outboundFetch(env) };
 
   const app = new Hono();
   app.route('/', createApp(deps));
@@ -225,4 +227,16 @@ export async function breakGlass(db: Db, slug: string, list: string | undefined)
   });
   for (const e of done) console.warn(`[curahold] RESET_SECOND_STEP: the second step of ${e} was removed; remove RESET_SECOND_STEP from the environment now`);
   return done;
+}
+
+/**
+ * Outbound calls reach public addresses only (lib/outbound.ts): each name is
+ * resolved and checked first. OUTBOUND_ALLOW_HOSTS="sso.internal,crm.internal"
+ * lets named internal services through; OUTBOUND_ALLOW_PRIVATE=1 turns it off.
+ */
+export function outboundFetch(env: Record<string, string | undefined>): typeof fetch | undefined {
+  if (env.OUTBOUND_ALLOW_PRIVATE === '1') return undefined;
+  const allow = new Set((env.OUTBOUND_ALLOW_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+  if (env.PUBLIC_URL) allow.add(new URL(env.PUBLIC_URL).hostname.toLowerCase());
+  return guardedFetch(fetch, async (host) => (await lookup(host, { all: true })).map((a) => a.address), allow);
 }

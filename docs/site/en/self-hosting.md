@@ -45,6 +45,10 @@ From there, setting up works as on curahold.com: invite your team, add your cust
 
 Google and Microsoft sign-in, the chat apps and the CRMs use the same settings as on curahold.com; your Curahold contact has the list.
 
+## Outbound calls and security
+
+Webhooks, chat webhooks, CRMs and other connections may only call public addresses: Curahold resolves each name and refuses one that points at this server or a private network, redirects included. If a service inside your network must be reached (your identity provider, an internal CRM), list its host in `OUTBOUND_ALLOW_HOSTS`; `OUTBOUND_ALLOW_PRIVATE=1` turns the check off. As a second line, let the server reach only the outside ports it needs (an egress firewall). Set `SECURITY_CONTACT` to the address that should receive vulnerability reports (shown in `/.well-known/security.txt`). If an administrator loses their authenticator app and recovery codes, start the server once with `RESET_SECOND_STEP=their@address` and remove it afterwards.
+
 ## Backups
 
 Your data lives in two places: the database and the attachments.

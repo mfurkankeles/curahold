@@ -45,6 +45,10 @@ Sonrası curahold.com’daki gibi: ekibini davet et, müşterilerini ekle, sohbe
 
 Google ve Microsoft ile giriş, sohbet uygulamaları ve CRM’ler curahold.com’dakiyle aynı ayarları kullanır; liste Curahold’daki muhatabında.
 
+## Dışarıya giden istekler ve güvenlik
+
+Webhook'lar, sohbet webhook'ları, CRM'ler ve diğer bağlantılar yalnızca herkese açık adreslere istek atabilir: Curahold her adı çözer, bu sunucuyu ya da özel bir ağı gösteren adı (yönlendirmeler dahil) reddeder. Ağınızın içindeki bir hizmete (kimlik sağlayıcınız, şirket içi bir CRM) ulaşılması gerekiyorsa adını `OUTBOUND_ALLOW_HOSTS`'a ekleyin; `OUTBOUND_ALLOW_PRIVATE=1` denetimi kapatır. İkinci bir önlem olarak sunucunun yalnızca gereken dış bağlantılara çıkmasına izin verin (çıkış güvenlik duvarı). Güvenlik açığı bildirimlerinin gideceği adresi `SECURITY_CONTACT` ile belirleyin (`/.well-known/security.txt`'de görünür). Bir yönetici doğrulama uygulamasını ve kurtarma kodlarını kaybederse sunucuyu bir kez `RESET_SECOND_STEP=adresi` ile başlatın, sonra satırı kaldırın.
+
 ## Yedekler
 
 Verin iki yerde durur: veritabanı ve ekler.
