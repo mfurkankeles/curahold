@@ -4054,4 +4054,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': 'מועמדים',
   'tpl.term.requester.one': 'פונה',
   'tpl.term.requester.other': 'פונים',
+  'fields.labelIn': 'שם ב{language}',
+  'help.reply.email.line': '— כתבו את התשובה מעל השורה הזו —',
+  'pwa.manifestDescription': 'לקוחות, משימות וצינור המכירות במקום אחד.',
 };

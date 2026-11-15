@@ -4054,4 +4054,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': '候補者',
   'tpl.term.requester.one': '依頼者',
   'tpl.term.requester.other': '依頼者',
+  'fields.labelIn': '{language}での名前',
+  'help.reply.email.line': '— この行より上に返信を書いてください —',
+  'pwa.manifestDescription': '顧客、タスク、パイプラインをひとつの場所に。',
 };

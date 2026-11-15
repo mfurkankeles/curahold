@@ -4054,4 +4054,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': '후보자',
   'tpl.term.requester.one': '요청자',
   'tpl.term.requester.other': '요청자',
+  'fields.labelIn': '{language} 이름',
+  'help.reply.email.line': '— 이 줄 위에 답장을 작성해 주세요 —',
+  'pwa.manifestDescription': '고객, 작업, 파이프라인을 한곳에서.',
 };

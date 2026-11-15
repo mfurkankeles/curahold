@@ -3,7 +3,7 @@
 // then straight into the company, signed in, with the setup wizard open.
 import { docsHref, docsLink } from '../lib/docs';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { helpLanguageOf, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { pick, TEMPLATES, TEMPLATE_KEYS, type TemplateKey } from '../../../shared/src/templates';
 import { Mark } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
@@ -19,8 +19,10 @@ const browserTz = () => {
     return 'UTC';
   }
 };
+// A language spoken mostly in one country suggests its currency; otherwise the time zone does.
+const HOME_CURRENCY: Partial<Record<Locale, string>> = { tr: 'TRY', ja: 'JPY', ko: 'KRW', 'zh-Hans': 'CNY', 'zh-Hant': 'TWD', he: 'ILS' };
 const currencyFor = (tz: string, locale: Locale) =>
-  tz === 'Europe/Istanbul' || locale === 'tr' ? 'TRY' : tz === 'Europe/London' ? 'GBP' : tz.startsWith('Europe/') ? 'EUR' : tz === 'Asia/Dubai' ? 'AED' : tz === 'Asia/Riyadh' ? 'SAR' : 'USD';
+  HOME_CURRENCY[locale] ?? (tz === 'Europe/Istanbul' ? 'TRY' : tz === 'Europe/London' ? 'GBP' : tz.startsWith('Europe/') ? 'EUR' : tz === 'Asia/Dubai' ? 'AED' : tz === 'Asia/Riyadh' ? 'SAR' : 'USD');
 
 function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale } = useI18n();
@@ -127,11 +129,11 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
           {/* The terms and privacy policy, in the help pages' Legal section. */}
           <p className="field__hint">
             {t('signup.agree')}{' '}
-            <a href={docsHref(`${locale}/legal-terms`)} {...docsLink}>
+            <a href={docsHref(`${helpLanguageOf(locale)}/legal-terms`)} {...docsLink}>
               {t('legal.terms')}
             </a>{' '}
             {t('legal.and')}{' '}
-            <a href={docsHref(`${locale}/legal-privacy`)} {...docsLink}>
+            <a href={docsHref(`${helpLanguageOf(locale)}/legal-privacy`)} {...docsLink}>
               {t('legal.privacy')}
             </a>
             .

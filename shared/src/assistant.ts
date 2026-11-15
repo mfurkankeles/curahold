@@ -10,7 +10,7 @@
 // is Claude, asked from the page on the viewer's own Claude account; a
 // server-side model for the product would plug in the same way.
 import { ask, type AnswerIndex, type DocSection } from './answers';
-import type { Locale } from './i18n';
+import { bcp47Of, helpLanguageOf, LOCALE_INFO, translate, type Locale } from './i18n';
 
 export interface Turn {
   role: 'user' | 'assistant';
@@ -94,7 +94,7 @@ const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00
 
 /** The standing brief: who is asking, what the tools are for, how to answer. */
 export function brief(d: AssistantDeps): string {
-  const language = d.locale === 'tr' ? 'Turkish' : 'English';
+  const language = LOCALE_INFO[d.locale].english;
   return [
     `You are CuraAI, the assistant inside Curahold, a product for managing customers and accounts (tasks, renewals, timelines, health, a customer portal, CRM sync).`,
     `You are talking with ${d.me.name} (${d.me.role}) at ${d.me.company}. Today is ${d.today}. This company calls a customer "${d.me.customer}" (plural "${d.me.customers}"). Money is in ${d.me.currency} unless a customer says otherwise.`,
@@ -148,8 +148,8 @@ export function toolsFor(d: AssistantDeps, trace: Trace): Tool[] {
   return [
     {
       name: 'search_docs',
-      description: `Searches the Curahold help pages, which are written in ${d.locale === 'tr' ? 'Turkish' : 'English'}. Returns up to 3 sections (title, section, text). Use for any "how do I…" or "what is…" question about the product.`,
-      inputSchema: { type: 'object', properties: { query: { type: 'string', description: `The question in a few words, in ${d.locale === 'tr' ? 'Turkish' : 'English'}.` } }, required: ['query'] },
+      description: `Searches the Curahold help pages, which are written in ${LOCALE_INFO[helpLanguageOf(d.locale)].english}. Returns up to 3 sections (title, section, text). Use for any "how do I…" or "what is…" question about the product.`,
+      inputSchema: { type: 'object', properties: { query: { type: 'string', description: `The question in a few words, in ${LOCALE_INFO[helpLanguageOf(d.locale)].english}.` } }, required: ['query'] },
       async execute(input) {
         const found = ask(await d.docs(), str(input.query, 300)).found.slice(0, 3);
         for (const f of found) {
@@ -209,7 +209,7 @@ export function toolsFor(d: AssistantDeps, trace: Trace): Tool[] {
       description: 'Open tasks with a due date in a period. who: "me" (default) or "everyone". due: "overdue", "today", "week" (next 7 days) or "month" (next 30 days). Returns title, due date, priority, customer and who has it.',
       inputSchema: { type: 'object', properties: { who: { type: 'string', enum: ['me', 'everyone'] }, due: { type: 'string', enum: ['overdue', 'today', 'week', 'month'] } } },
       async execute(input) {
-        read(d.locale === 'tr' ? 'görevler' : 'tasks');
+        read(translate(d.locale, 'sync.objects.tasks').toLocaleLowerCase(bcp47Of(d.locale)));
         const due = str(input.due) || 'week';
         const [from, to] = due === 'overdue' ? [addDays(d.today, -365), addDays(d.today, -1)] : due === 'today' ? [d.today, d.today] : [d.today, addDays(d.today, due === 'month' ? 30 : 7)];
         const [r, boards, who] = await Promise.all([d.api(`/tasks?from=${from}&to=${to}${input.who === 'everyone' ? '' : '&assignee=me'}`), d.api('/boards'), names()]);

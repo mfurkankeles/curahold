@@ -119,21 +119,23 @@ const TEXT = {
 // English first; Turkish by choice (the switch in the bar). The choice also travels in the
 // address (#tr), because some places that show the demo give it storage that forgets, and so
 // a link can be sent that opens in Turkish.
-const fromAddress = /^#(tr|en)$/.exec(window.location.hash)?.[1] as 'tr' | 'en' | undefined;
-const demoLocale: 'tr' | 'en' = fromAddress ?? (storedLocale() === 'tr' ? 'tr' : 'en');
+type DemoLang = 'en' | 'tr';
+/** The languages the demo's sample data is written in. */
+const DEMO_LANGS: readonly DemoLang[] = ['en', 'tr'];
+const asDemo = (l: string | null | undefined): DemoLang | undefined => DEMO_LANGS.find((x) => x === l);
+const fromAddress = asDemo(window.location.hash.slice(1));
+const demoLocale: DemoLang = fromAddress ?? asDemo(storedLocale()) ?? 'en';
 if (fromAddress) storeLocale(fromAddress);
 setStartLocale(demoLocale);
 // The bar speaks the visitor's chosen language when it is one of the demo's two; after the
 // app's own menu picked another (Arabic, Japanese…), it stays in the demo's language.
-const lang = (): 'tr' | 'en' => {
-  const l = storedLocale();
-  return l === 'tr' || l === 'en' ? l : demoLocale;
-};
+// It follows the page's language as the app switches it (no reload needed).
+const lang = (): DemoLang => asDemo(document.documentElement.lang) ?? asDemo(storedLocale()) ?? demoLocale;
 /** The demo hub in the demo's language: the page with every guided tour, one level up. */
-const HUB = demoLocale === 'tr' ? '../tr/' : '../';
+const HUB = ({ en: '../', tr: '../tr/' } satisfies Record<DemoLang, string>)[demoLocale];
 
 /** The other language: the sample data is written again in it, so the demo starts over. */
-function switchLanguage(to: 'tr' | 'en') {
+function switchLanguage(to: DemoLang) {
   if (to === demoLocale) return;
   storeLocale(to);
   window.location.hash = to;
@@ -159,7 +161,11 @@ function DemoBar({ current, onSwitch, problem }: { current: Key; onSwitch: (k: K
     const on = () => setTick((n) => n + 1);
     window.addEventListener('app:navigate', on);
     window.addEventListener('storage', on);
+    // The app's own language menu changes <html lang>; the bar follows at once.
+    const seen = new MutationObserver(on);
+    seen.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
     return () => {
+      seen.disconnect();
       window.removeEventListener('app:navigate', on);
       window.removeEventListener('storage', on);
     };

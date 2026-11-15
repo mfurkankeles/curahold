@@ -8,6 +8,7 @@ import { navigate } from '../lib/router';
 import { TASKS_CHANGED, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
+import type { Locale } from '../../../shared/src/i18n';
 
 const ICONS: Record<StartStep, IconName> = { task: 'checkCircle', planned: 'calendar', touch: 'phone', mention: 'at', calendar: 'link', notify: 'bell' };
 
@@ -18,6 +19,9 @@ type StartState = { steps: Record<StartStep, boolean>; hidden: boolean };
 let known: StartState | null | undefined;
 let asking: Promise<void> | null = null;
 /** Asks for the steps' state (one request at a time); resolves when it is known. */
+// Written the way the quick-add reader understands (English and Turkish words for dates).
+const EXAMPLE: Partial<Record<Locale, string>> & { en: string } = { en: 'Send the proposal tomorrow @me', tr: 'Teklifi yarın gönder @ben' };
+
 export function loadStart(): Promise<void> {
   return (asking ??= get<StartState>('/me/start')
     .then(
@@ -47,7 +51,7 @@ export function GettingStarted() {
   const steps: StartStep[] = canWrite ? ['task', 'planned', 'touch', 'mention', 'calendar', 'notify'] : ['calendar', 'notify'];
   const done = steps.filter((s) => state.steps[s]).length;
   if (done === steps.length) return null;
-  const example = locale === 'tr' ? 'Teklifi yarın gönder @ben' : 'Send the proposal tomorrow @me';
+  const example = EXAMPLE[locale] ?? EXAMPLE.en;
   const act: Record<StartStep, () => void> = {
     task: () => shell.quickAdd(),
     planned: () => shell.quickAdd({ text: example }),

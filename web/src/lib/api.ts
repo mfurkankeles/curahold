@@ -1,7 +1,7 @@
 // Thin fetch wrapper. Every call carries this device's id (the device limit
 // and request-forgery check rely on it) and the chosen language.
 import type { ApiError } from '../../../shared/src/model';
-import { translate, type Locale } from '../../../shared/src/i18n';
+import { normalizeLocale, translate } from '../../../shared/src/i18n';
 import { getDeviceId } from './device';
 import { noteFailedRequest } from './diagnostics';
 
@@ -104,7 +104,7 @@ async function send<T>(method: string, path: string, body: unknown, key: string 
     } catch {
       noteFailedRequest(method, path, 0);
       // Said in words, so whatever shows the failure has something to show.
-      const locale = (currentLocale === 'tr' || currentLocale === 'en' ? currentLocale : document.documentElement.lang === 'tr' ? 'tr' : 'en') as Locale;
+      const locale = normalizeLocale(currentLocale || document.documentElement.lang);
       throw new ApiFailure(0, { error: 'network', message: translate(locale, navigator.onLine === false ? 'errors.offline' : 'errors.network') });
     }
   }

@@ -7,9 +7,9 @@ import type { Locale } from '../../../shared/src/i18n';
 import { Icon } from './icons';
 import { Dialog } from './ui';
 
-// Release notes are written English-first with a Turkish pass; every other
-// locale reads the English until a native pass fills it in.
-const pick = (m: { tr: string; en: string }, l: Locale) => (l === 'tr' ? m.tr : m.en);
+// Release notes are written English-first; a language without its own text
+// reads the English until a native pass fills it in.
+const pick = (m: { en: string } & Partial<Record<Locale, string>>, l: Locale) => m[l] ?? m.en;
 
 export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction: (a: NewsAction) => void }) {
   const { t, locale, fmtDate } = useI18n();

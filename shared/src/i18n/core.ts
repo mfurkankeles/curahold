@@ -125,3 +125,51 @@ export function phraseIn(l: Partial<Record<Locale, string>> | undefined, locale:
   if (!l) return '';
   return l[locale] ?? l.en ?? Object.values(l).find((v) => typeof v === 'string' && v !== '') ?? '';
 }
+
+// ---------------------------------------------------------------- dates, numbers and money
+//
+// Everything that formats or reads a date, a number or an amount asks these,
+// so each language gets its own order and separators — never a two-way branch.
+
+/**
+ * The tag Intl formats with. English keeps the day-before-month order it has
+ * always shown ("15 Nov 2026"); Arabic keeps the Western digits its dictionary
+ * uses. Every other language formats exactly as its own tag says.
+ */
+export function intlTag(locale: Locale | string): string {
+  const l = normalizeLocale(locale);
+  return l === 'en' ? 'en-GB' : l === 'ar' ? 'ar-u-nu-latn' : bcp47Of(l);
+}
+
+/** The digit-group and decimal marks people type in this language ("1.250,50" in Turkish). */
+export function numberMarks(locale: Locale | string): { group: string; decimal: string } {
+  const parts = new Intl.NumberFormat(intlTag(locale)).formatToParts(12345.6);
+  return { group: parts.find((p) => p.type === 'group')?.value ?? ',', decimal: parts.find((p) => p.type === 'decimal')?.value ?? '.' };
+}
+
+/** Whether "03/04" means the 3rd of April here (day first) rather than March 4th. Gregorian, as typed. */
+export function dayFirst(locale: Locale): boolean {
+  const order = new Intl.DateTimeFormat(`${bcp47Of(locale)}-u-ca-gregory`, { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(Date.UTC(2027, 11, 31)));
+  return order.findIndex((p) => p.type === 'day') < order.findIndex((p) => p.type === 'month');
+}
+
+/** What separates the columns of a spreadsheet file here: ";" where the decimal mark is a comma. */
+/**
+ * The languages the help centre is written in (scripts/build-docs.ts). Help
+ * search and links use the person's language when it is one of them, English
+ * otherwise; this list grows when the help centre does.
+ */
+export const HELP_LANGUAGES = ['en', 'tr'] as const satisfies readonly Locale[];
+export type HelpLanguage = (typeof HELP_LANGUAGES)[number];
+export const helpLanguageOf = (locale: Locale): HelpLanguage => ((HELP_LANGUAGES as readonly Locale[]).includes(locale) ? (locale as HelpLanguage) : 'en');
+
+/** A language's name as the reader says it ("Japanese" for an English reader, "Japonca" for a Turkish one). */
+export function languageName(of: Locale, reader: Locale): string {
+  try {
+    return new Intl.DisplayNames([intlTag(reader)], { type: 'language' }).of(bcp47Of(of)) ?? LOCALE_INFO[of].name;
+  } catch {
+    return LOCALE_INFO[of].name;
+  }
+}
+
+export const csvSeparator = (locale: Locale | string) => (numberMarks(locale).decimal === ',' ? ';' : ',');

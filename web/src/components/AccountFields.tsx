@@ -6,7 +6,7 @@ import { Icon } from './icons';
 import { useEffect, useState } from 'react';
 import { useRecordTypes } from '../lib/recordTypes';
 import { labelOf, optionKey } from '../../../shared/src/fields';
-import type { MessageKey } from '../../../shared/src/i18n';
+import { languageName, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { FIELD_TYPES, OPTION_COLORS, type AccountField, type FieldAccess, type FieldType, type OptionColor, type Role, type Rollup } from '../../../shared/src/model';
 import { RECORD_PRESETS, ROLLUP_PRESETS, typeLabel, type RecordType } from '../../../shared/src/records';
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
@@ -41,8 +41,10 @@ export function useRollupText(types: RecordType[] | null) {
 
 function FieldListEditor({ initial, onSave, rollups, types }: { initial: AccountField[]; onSave: (list: AccountField[]) => Promise<void>; rollups?: boolean; types?: RecordType[] | null }) {
   const { t, locale } = useI18n();
-  const { toast } = useStore();
-  const other = locale === 'tr' ? 'en' : 'tr';
+  const { toast, me } = useStore();
+  // The second name a field carries: English for everyone else, the company's own language for English readers.
+  const other: Locale = locale !== 'en' ? 'en' : me.org.locale;
+  const otherName = t('fields.labelIn', { language: languageName(other, locale) });
   const [list, setList] = useState<AccountField[]>(() => JSON.parse(JSON.stringify(initial)));
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState<{ label: string; type: FieldType } | null>(null);
@@ -92,7 +94,7 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
           <div className="field-row__main">
             <div className="form__row">
               <input className="input" value={f.label[locale] ?? ''} placeholder={labelOf(f.label, other)} aria-label={t('fields.label')} onChange={(e) => upd(i, { label: { ...f.label, [locale]: e.target.value } })} maxLength={80} />
-              <input className="input" value={f.label[other] ?? ''} placeholder={t(other === 'en' ? 'fields.labelEn' : 'fields.labelTr')} aria-label={t(other === 'en' ? 'fields.labelEn' : 'fields.labelTr')} onChange={(e) => upd(i, { label: { ...f.label, [other]: e.target.value } })} maxLength={80} />
+              {other !== locale && <input className="input" value={f.label[other] ?? ''} placeholder={otherName} aria-label={otherName} onChange={(e) => upd(i, { label: { ...f.label, [other]: e.target.value } })} maxLength={80} />}
             </div>
             <div className="field-row__meta">
               <span className="badge">{t(`fields.type.${f.type}` as MessageKey)}</span>

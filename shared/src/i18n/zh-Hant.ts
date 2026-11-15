@@ -4054,4 +4054,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': '候選人',
   'tpl.term.requester.one': '申請人',
   'tpl.term.requester.other': '申請人',
+  'fields.labelIn': '{language}名稱',
+  'help.reply.email.line': '— 請在此行上方撰寫回覆 —',
+  'pwa.manifestDescription': '客戶、任務與銷售漏斗，集中一處。',
 };

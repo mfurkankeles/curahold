@@ -2,7 +2,7 @@
 // them, delivered after it commits. Each person decides where theirs go
 // (a linked chat app, email, or only the in-app list) and which kinds they
 // want; a chat failure falls back to email so nothing is lost silently.
-import { translate, normalizeLocale, type Locale, type MessageKey, type Terms } from '../../../shared/src/i18n';
+import { translate, normalizeLocale, type Locale, type MessageKey, type Terms, intlTag } from '../../../shared/src/i18n';
 import { MAX_FAVORITES, type NotifyPrefs } from '../../../shared/src/model';
 import { ADAPTERS, loadConnection, markConnection, upsertIdentity } from '../connectors/messaging';
 import { FatalChatError, type ChatMessage } from '../connectors/messaging/types';
@@ -125,7 +125,7 @@ interface RenderCtx {
 const fmtDate = (iso: string | null, locale: Locale) => {
   if (!iso) return '';
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(intlTag(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' });
 };
 
 /** "last touch 32 days ago" — the signal that cost a falling score the most. */

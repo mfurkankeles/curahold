@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { COMMON_CURRENCIES, moneyOf, toBase, usableCurrencies, type Money } from '../../../shared/src/money';
 import { useI18n } from './i18n';
 import { useStore } from './store';
+import { intlTag } from '../../../shared/src/i18n';
 
 export interface MoneyTools extends Money {
   /** In the company's currency. */
@@ -22,7 +23,7 @@ export interface MoneyTools extends Money {
 export function useMoney(): MoneyTools {
   const { locale } = useI18n();
   const { me } = useStore();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   return useMemo(() => {
     const m = moneyOf(me.org.currency, me.org.fx);
     const usable = usableCurrencies(m);

@@ -9,7 +9,7 @@ import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
 import { emailPortalLink, portalAuth, portalOn } from '../lib/portal';
-import { body, param, uuid } from '../lib/validate';
+import { body, localeField, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
 
 export const portalRoutes = new Hono<AppEnv>();
@@ -112,7 +112,7 @@ portalRoutes.post('/portal/users', async (c) => {
       accountId: uuid,
       email: z.string().trim().toLowerCase().email().max(254),
       name: z.string().trim().min(1).max(120),
-      locale: z.enum(['tr', 'en']).nullish(),
+      locale: localeField.nullish(),
     }),
   );
   const person = await run(c, async (q) => {

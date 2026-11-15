@@ -82,7 +82,7 @@ export function slugFromHost(host: string, baseDomain: string): string | null {
  * where everyone starts, and another language is a choice somebody made.
  */
 function requestLocale(header: string | undefined, fallback: Locale): Locale {
-  return header === 'tr' || header === 'en' ? header : fallback;
+  return normalizeLocale(header, fallback);
 }
 
 export function createApp(deps: Deps) {

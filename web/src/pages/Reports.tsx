@@ -18,6 +18,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useFieldFormat } from './Accounts';
+import { intlTag } from '../../../shared/src/i18n';
 
 export interface WorkReport {
   totals: { open: number; overdue: number; dueWeek: number; unassigned: number; done30: number; created30: number; cycleDays: number | null; onTime: number | null };
@@ -31,9 +32,8 @@ export interface WorkReport {
 export const hoursText = (minutes: number, locale: string) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  const hu = locale === 'tr' ? 'sa' : 'h';
-  const mu = locale === 'tr' ? 'dk' : 'm';
-  return h && m ? `${h} ${hu} ${m} ${mu}` : h ? `${h} ${hu}` : `${m} ${mu}`;
+  const unit = (n: number, u: 'hour' | 'minute') => new Intl.NumberFormat(intlTag(locale), { style: 'unit', unit: u, unitDisplay: 'narrow' }).format(n);
+  return h && m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : h ? unit(h, 'hour') : unit(m, 'minute');
 };
 
 /** Two bars per week: what came in, what got done. */
@@ -132,6 +132,7 @@ export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
 
 export function ReportsPage() {
   const { t, locale, words } = useI18n();
+  const percent = (v: number) => new Intl.NumberFormat(intlTag(locale), { style: 'percent', maximumFractionDigits: 0 }).format(v / 100);
   const { boards, person, me } = useStore();
   const fmt = useFieldFormat();
   const [board, setBoard] = useState('');
@@ -207,7 +208,7 @@ export function ReportsPage() {
     return { rows, open: sum(open), won: sum(won), winRate: closed ? Math.round((won.length / closed) * 100) : null, expansion: sum(won.filter((d) => d.fields.kind === 'expansion')) };
   }, [deals, stage, amount, locale, cur]);
 
-  const monthName = (k: string) => new Date(`${k}-01T00:00:00Z`).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { month: 'short', timeZone: 'UTC' });
+  const monthName = (k: string) => new Date(`${k}-01T00:00:00Z`).toLocaleDateString(intlTag(locale), { month: 'short', timeZone: 'UTC' });
   const cols = board ? boards.find((b) => b.id === board)?.columns ?? [] : [];
   return (
     <>
@@ -241,7 +242,7 @@ export function ReportsPage() {
               <Stat label={t('reports.open')} value={String(work.totals.open)} n={work.totals.open} sub={t('reports.unassignedN', { n: work.totals.unassigned })} />
               <Stat label={t('reports.overdue')} value={String(work.totals.overdue)} n={work.totals.overdue} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: work.totals.dueWeek })} />
               <Stat label={t('reports.done30')} value={String(work.totals.done30)} n={work.totals.done30} tone="done" sub={t('reports.created30N', { n: work.totals.created30 })} />
-              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : locale === 'tr' ? `%${work.totals.onTime}` : `${work.totals.onTime}%`} n={work.totals.onTime} fmt={(v) => (locale === 'tr' ? `%${v}` : `${v}%`)} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: work.totals.cycleDays })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
+              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: work.totals.cycleDays })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}
             <div className="reports__stack">

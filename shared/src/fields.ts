@@ -1,7 +1,7 @@
 // Account field values: what people type or import ("1.250,50 ₺",
 // "05.03.2027", "Riskli") turned into clean values. Shared so the import
 // preview shows exactly what will be saved.
-import { phraseIn, type Locale } from './i18n';
+import { dayFirst, numberMarks, phraseIn, type Locale } from './i18n';
 import type { AccountField, Localized } from './model';
 
 export type FieldValue = string | number | null;
@@ -19,8 +19,8 @@ export function parseNumber(raw: string, locale: Locale): number | null {
     const sep = lastComma >= 0 ? ',' : '.';
     const parts = s.split(sep);
     const looksThousands = parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3);
-    // "1.250" is 1250 in Turkish and 1.25 in English; "1,250" the other way round.
-    const thousandsSep = locale === 'tr' ? '.' : ',';
+    // "1.250" is 1250 where the digit groups are dotted (Turkish) and 1.25 in English; "1,250" the other way round.
+    const thousandsSep = numberMarks(locale).group === '.' ? '.' : ',';
     if (parts.length > 2 || (looksThousands && sep === thousandsSep)) s = parts.join('');
     else s = parts.join('.');
   }
@@ -41,6 +41,8 @@ export function parseDate(raw: string, locale: Locale): string | null {
   const s = raw.trim();
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
   if (m) return validYmd(+m[1], +m[2], +m[3]);
+  m = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/.exec(s);
+  if (m) return validYmd(+m[1], +m[2], +m[3]);
   m = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec(s);
   if (m) return validYmd(m[3].length === 2 ? 2000 + +m[3] : +m[3], +m[2], +m[1]);
   m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(s);
@@ -50,7 +52,7 @@ export function parseDate(raw: string, locale: Locale): string | null {
     const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
     if (a > 12) return validYmd(y, b, a);
     if (b > 12) return validYmd(y, a, b);
-    return locale === 'tr' ? validYmd(y, b, a) : validYmd(y, a, b);
+    return dayFirst(locale) ? validYmd(y, b, a) : validYmd(y, a, b);
   }
   return null;
 }

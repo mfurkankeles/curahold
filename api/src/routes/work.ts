@@ -17,7 +17,7 @@ import { cleanTaskFields } from '../lib/taskFields';
 import { onTaskCreated } from '../lib/taskEvents';
 import { iso, toTask } from '../lib/mappers';
 import { kickSync, queueSync } from '../lib/records';
-import { body, isoDate, param, uuid } from '../lib/validate';
+import { body, isoDate, localeField, param, uuid } from '../lib/validate';
 import { loadBoard } from './boards';
 
 export const workRoutes = new Hono<AppEnv>();
@@ -329,7 +329,7 @@ const taskImportSchema = z.object({
     doneAt: col.optional(),
   }),
   /** How the file writes dates that could be read two ways (05/03/2027). */
-  locale: z.enum(['en', 'tr']).optional(),
+  locale: localeField.optional(),
   /** Bring finished tasks too (they land in the board's first "done" column). */
   includeDone: z.boolean().optional(),
 });

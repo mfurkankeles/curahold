@@ -4069,6 +4069,9 @@ export const en = {
   'tpl.term.candidate.other': 'Candidates',
   'tpl.term.requester.one': 'Requester',
   'tpl.term.requester.other': 'Requesters',
+  'fields.labelIn': 'Name in {language}',
+  'help.reply.email.line': '— Write your reply above this line —',
+  'pwa.manifestDescription': 'Customers, tasks and the pipeline in one place.',
 } as const;
 
 export type MessageKey = keyof typeof en;

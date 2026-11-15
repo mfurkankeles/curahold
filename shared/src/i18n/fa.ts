@@ -4054,4 +4054,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': 'داوطلبان',
   'tpl.term.requester.one': 'درخواست‌کننده',
   'tpl.term.requester.other': 'درخواست‌کنندگان',
+  'fields.labelIn': 'نام به {language}',
+  'help.reply.email.line': '— پاسخ خود را بالای این خط بنویسید —',
+  'pwa.manifestDescription': 'مشتریان، وظایف و قیف فروش در یک جا.',
 };

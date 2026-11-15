@@ -22,6 +22,16 @@ interface Past {
   undoable: boolean;
 }
 
+// A sample file with column names the importer recognises (English and Turkish ones); other languages get the English file.
+const SAMPLE_ROWS: Partial<Record<Locale, string[]>> & { en: string[] } = {
+  en: ['Title,Description,Status,Assignee,Due date,Priority,Customer', 'Send the renewal offer,Start from last year’s price,To do,ada@example.com,2027-01-15,High,Example Customer Ltd', 'Prepare the usage report,,In progress,Mert,2027-01-22,Normal,'],
+  tr: ['Başlık;Açıklama;Durum;Atanan;Son tarih;Öncelik;Müşteri', 'Yenileme teklifini gönder;Geçen yılın fiyatıyla başla;Yapılacak;ada@ornek.com;15.01.2027;Yüksek;Örnek Müşteri A.Ş.', 'Kullanım raporunu hazırla;;Devam ediyor;Mert;22.01.2027;Normal;'],
+};
+
+// The two ways a file writes numbers and dates (dotted groups, day first / comma groups, month first);
+// fields.ts reads either, whatever the person's language.
+const DATE_SAMPLE: Partial<Record<Locale, string>> = { tr: '31.12.2027 · 31/12/2027', en: '12/31/2027' };
+
 export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose: () => void; onDone: () => void }) {
   const { t, locale, words, fmtDate } = useI18n();
   const { people, toast } = useStore();
@@ -132,10 +142,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
   };
 
   const sampleCsv = useMemo(() => {
-    const rows =
-      locale === 'tr'
-        ? ['Başlık;Açıklama;Durum;Atanan;Son tarih;Öncelik;Müşteri', 'Yenileme teklifini gönder;Geçen yılın fiyatıyla başla;Yapılacak;ada@ornek.com;15.01.2027;Yüksek;Örnek Müşteri A.Ş.', 'Kullanım raporunu hazırla;;Devam ediyor;Mert;22.01.2027;Normal;']
-        : ['Title,Description,Status,Assignee,Due date,Priority,Customer', 'Send the renewal offer,Start from last year’s price,To do,ada@example.com,2027-01-15,High,Example Customer Ltd', 'Prepare the usage report,,In progress,Mert,2027-01-22,Normal,'];
+    const rows = SAMPLE_ROWS[locale] ?? SAMPLE_ROWS.en;
     return URL.createObjectURL(new Blob([`﻿${rows.join('\n')}\n`], { type: 'text/csv' }));
   }, [locale]);
 
@@ -302,7 +309,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
             <div className="seg">
               {(['tr', 'en'] as Locale[]).map((l) => (
                 <button key={l} type="button" aria-pressed={dateLocale === l} onClick={() => setDateLocale(l)}>
-                  {l === 'tr' ? '31.12.2027 · 31/12/2027' : '12/31/2027'}
+                  {DATE_SAMPLE[l]}
                 </button>
               ))}
             </div>

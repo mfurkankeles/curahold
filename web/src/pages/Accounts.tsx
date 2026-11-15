@@ -35,6 +35,7 @@ import { useLiveScope, usePresence } from '../lib/live';
 import { Presence } from '../components/Presence';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
+import { intlTag } from '../../../shared/src/i18n';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -51,7 +52,7 @@ export function OptionValue({ field, value, text }: { field: AccountField; value
 export function useFieldFormat() {
   const { locale } = useI18n();
   const { me } = useStore();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   return useCallback(
     /** `currency`: the customer's or record's own; none is the company's. */
     (f: AccountField, v: unknown, currency?: string | null): string => {

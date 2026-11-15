@@ -70,7 +70,7 @@ export function createPortalApp(deps: Deps) {
     const org = { ...row, locale: normalizeLocale(row.locale), terms: row.terms ?? {}, settings: row.settings ?? {} } as OrgRow;
     c.set('org', org);
     const want = c.req.header('x-curahold-locale');
-    c.set('locale', want === 'tr' || want === 'en' ? want : org.locale);
+    c.set('locale', normalizeLocale(want, org.locale));
     // A form on another site cannot set this header, so it cannot act for someone here.
     if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.header('x-curahold-portal') !== '1') fail('forbidden');
     await next();

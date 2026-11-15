@@ -24,6 +24,7 @@ import { EmptyState, SkeletonCards, SkeletonRows } from './Empty';
 import { Icon, PageIcon, RECORD_KIND_ICON } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 import { useTrashToast } from '../lib/trash';
+import { intlTag } from '../../../shared/src/i18n';
 
 /**
  * A table column: one of the record's own fields, or something every record
@@ -566,7 +567,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
                 onAdd={(parentId) => setEditing({ type: ty, record: null, parentId })}
               />
             ) : list.length === 0 ? (
-              <p className="muted">{t('records.noneHere', { type: typeLabel(ty, locale).toLocaleLowerCase(locale === 'tr' ? 'tr-TR' : 'en-US') })}</p>
+              <p className="muted">{t('records.noneHere', { type: typeLabel(ty, locale).toLocaleLowerCase(intlTag(locale)) })}</p>
             ) : (
               <ul className="plainlist record-lines">
                 {list.map((r) => (

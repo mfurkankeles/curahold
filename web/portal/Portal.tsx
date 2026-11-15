@@ -2,7 +2,7 @@
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
+import { bcp47Of, intlTag, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
 import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
@@ -70,10 +70,20 @@ const STORE = 'app_portal_locale';
 function storedLocale(): Locale | null {
   try {
     const v = localStorage.getItem(STORE);
-    return v === 'tr' || v === 'en' ? v : null;
+    return v && (LOCALES as string[]).includes(v) ? (v as Locale) : null;
   } catch {
     return null;
   }
+}
+/** The first of the browser's languages the portal speaks ("zh-TW" reads Traditional Chinese); English otherwise. */
+function browserLocale(): Locale {
+  for (const tag of navigator.languages?.length ? navigator.languages : [navigator.language]) {
+    const t = (tag ?? '').toLowerCase();
+    if (t.startsWith('zh')) return /HANT|TW|HK|MO/.test(t.toUpperCase()) ? 'zh-Hant' : 'zh-Hans';
+    const l = normalizeLocale(t.split('-')[0], 'en');
+    if (l !== 'en' || t.startsWith('en')) return l;
+  }
+  return 'en';
 }
 
 interface Ctx {
@@ -103,16 +113,21 @@ export function PortalApp() {
 
 function Portal() {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
-  const [wanted, setLocale] = useState<Locale>(() => storedLocale() ?? (/^tr\b/i.test(navigator.language) ? 'tr' : 'en'));
+  const [wanted, setLocale] = useState<Locale>(() => storedLocale() ?? browserLocale());
   // Drawn in the wanted language once its dictionary is here (see ./i18n).
   const shown = useShownLocale(wanted);
   const locale = shown ?? wanted;
   apiLocale = wanted;
+  // The page reads in its language's own direction: right-to-left for Arabic, Hebrew and Persian.
+  useEffect(() => {
+    document.documentElement.lang = bcp47Of(locale);
+    document.documentElement.dir = LOCALE_INFO[locale].dir;
+  }, [locale]);
   const ctx = useMemo<Ctx>(
     () => ({
       locale,
       t: (k, v) => translate(locale, k, v),
-      when: (iso) => new Date(iso).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      when: (iso) => new Date(iso).toLocaleString(intlTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
     }),
     [locale],
   );
@@ -189,9 +204,13 @@ function Portal() {
     );
 
   const lang = (
-    <button className="p-link" onClick={() => changeLocale(locale === 'tr' ? 'en' : 'tr')}>
-      {locale === 'tr' ? t('portal.english') : t('portal.turkish')}
-    </button>
+    <select className="p-link p-lang" aria-label={t('nav.language')} value={locale} onChange={(e) => changeLocale(e.target.value as Locale)}>
+      {LOCALES.map((l) => (
+        <option key={l} value={l} lang={bcp47Of(l)}>
+          {LOCALE_INFO[l].name}
+        </option>
+      ))}
+    </select>
   );
 
   if (boot.kind === 'out') return <SignIn ctx={ctx} org={boot.org} note={boot.note} lang={lang} onIn={() => void start()} />;
@@ -816,7 +835,7 @@ function List({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; board: 
                 {' · '}
                 {t('portal.updated', { when: when(x.updatedAt) })}
                 {x.replies > 0 && <> · {t('portal.replies', { n: x.replies })}</>}
-                {x.dueDate && <> · {t('portal.due', { when: new Date(x.dueDate).toLocaleDateString(ctx.locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'short' }) })}</>}
+                {x.dueDate && <> · {t('portal.due', { when: new Date(x.dueDate).toLocaleDateString(intlTag(ctx.locale), { day: 'numeric', month: 'short' }) })}</>}
               </span>
             </a>
           </li>
@@ -929,7 +948,7 @@ function TaskPage({ ctx, id, onSignedOut }: { ctx: Ctx; id: string; onSignedOut:
         {fields.includes('due') && data.dueDate && (
           <div>
             <dt>{t('portal.dueLabel')}</dt>
-            <dd>{new Date(data.dueDate).toLocaleDateString(ctx.locale === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
+            <dd>{new Date(data.dueDate).toLocaleDateString(intlTag(ctx.locale), { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
           </div>
         )}
         {fields.includes('assignee') && data.assignees && data.assignees.length > 0 && (

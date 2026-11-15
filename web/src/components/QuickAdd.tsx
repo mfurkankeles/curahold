@@ -24,6 +24,7 @@ import { Icon, type IconName } from './icons';
 import { TaskFieldInput } from './TaskExtras';
 import { RepeatPicker } from './TaskPanel';
 import { Avatar, PeoplePicker } from './ui';
+import type { Locale } from '../../../shared/src/i18n';
 
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
 
@@ -53,6 +54,14 @@ interface RecordOption {
   name: string;
   kind: string;
 }
+
+// The quick-add reader (lib/quickparse.ts) understands dates, repeats and "myself" in
+// English and Turkish; a person in another language sees the English examples it reads.
+const SELF: Partial<Record<Locale, string>> = { en: 'me', tr: 'ben' };
+const EXAMPLES: Partial<Record<Locale, string[]>> & { en: string[] } = {
+  en: ['Renewal call friday @me #', 'Prepare QBR deck nov 15 !high', 'Weekly report every monday', 'Check invoices end of month'],
+  tr: ['Yenileme görüşmesi cuma @ben #', 'QBR sunumu hazırla 15 kasım !yüksek', 'Haftalık rapor her pazartesi', 'Fatura kontrolü ay sonu'],
+};
 
 export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClose: () => void }) {
   const { t, locale, fmtDate, words } = useI18n();
@@ -256,7 +265,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   /** A name picked from the @ / # list goes into the title. */
   const accept = (item: Pickable) => {
     if (!at) return;
-    const insert = `${at.kind}${item.id === meP.id && at.kind === '@' ? (locale === 'tr' ? 'ben' : 'me') : item.name} `;
+    const insert = `${at.kind}${item.id === meP.id && at.kind === '@' ? (SELF[locale] ?? item.name) : item.name} `;
     const next = text.slice(0, at.start) + insert + text.slice(at.end).replace(/^\s+/, '');
     setText(next);
     setSuggest(null);
@@ -382,9 +391,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   /** The small "from the title" mark beside a field the title filled. */
   const fromTitle = (on: boolean) => (on ? <span className="qa__from">{t('quick.fromTitle')}</span> : null);
 
-  const examples = locale === 'tr'
-    ? ['Yenileme görüşmesi cuma @ben #', 'QBR sunumu hazırla 15 kasım !yüksek', 'Haftalık rapor her pazartesi', 'Fatura kontrolü ay sonu']
-    : ['Renewal call friday @me #', 'Prepare QBR deck nov 15 !high', 'Weekly report every monday', 'Check invoices end of month'];
+  const examples = EXAMPLES[locale] ?? EXAMPLES.en;
 
   if (!boards.length) {
     return (

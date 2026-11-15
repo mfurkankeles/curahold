@@ -14,7 +14,7 @@ import { runAccountCreated } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { iso, toTask } from '../lib/mappers';
 import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/records';
-import { body, param, uuid } from '../lib/validate';
+import { body, localeField, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
 import { saveUndo } from '../lib/undo';
@@ -364,7 +364,7 @@ const importSchema = z.object({
   /** Imported customers are existing ones, so "new customer" rules do not run unless asked. */
   runAutomations: z.boolean().optional(),
   /** How the file writes numbers and dates ("1.250,50" / "05.03.2027" vs "1,250.50" / "03/05/2027"). */
-  locale: z.enum(['en', 'tr']).optional(),
+  locale: localeField.optional(),
 });
 
 const fold = (s: string) => foldText(s).trim();

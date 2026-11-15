@@ -4,7 +4,7 @@
 import { strToU8, zipSync } from 'fflate';
 import { labelOf } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
-import type { Locale } from '../../../shared/src/i18n';
+import { csvSeparator, type Locale } from '../../../shared/src/i18n';
 
 export type Cell = string | number | null | undefined;
 export interface Table {
@@ -87,7 +87,7 @@ export function download(t: Table, kind: 'xlsx' | 'csv', locale: string) {
   const blob =
     kind === 'xlsx'
       ? new Blob([toXlsx(t) as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      : new Blob([toCsv(t, locale === 'tr' ? ';' : ',')], { type: 'text/csv;charset=utf-8' });
+      : new Blob([toCsv(t, csvSeparator(locale))], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: file });
   document.body.appendChild(a);

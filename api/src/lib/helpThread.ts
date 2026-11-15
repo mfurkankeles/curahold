@@ -30,11 +30,7 @@ export const toHelpMessage = (m: Row): HelpMessage => ({
 
 // --------------------------------------------------------------- email text
 
-/** The line every email about a request starts with: what is above it is the answer. */
-export const REPLY_LINE = {
-  en: '— Write your reply above this line —',
-  tr: '— Cevabını bu çizginin üstüne yaz —',
-} as const;
+// Every email about a request starts with a line (help.reply.email.line, in the person's language): what is above it is the answer.
 
 const QUOTE_STARTS: RegExp[] = [
   /^—\s.*\s—\s*$/, // our own marker, in any language
@@ -121,7 +117,7 @@ async function tellPeople(deps: Deps, org: Row, req: Row, msg: Row, people: { em
     const locale = (p.locale ?? org.locale ?? 'en') as Locale;
     const canReply = !!replyAddress(deps, token);
     const intro = translate(locale, canReply ? 'help.reply.email.intro' : 'help.reply.email.introApp', { ref: req.ref, staff: msg.staff ?? 'Curahold' }, org.terms);
-    const text = [...(canReply ? [REPLY_LINE[locale === 'tr' ? 'tr' : 'en'], ''] : []), intro, '', msg.body].join('\n');
+    const text = [...(canReply ? [translate(locale, 'help.reply.email.line'), ''] : []), intro, '', msg.body].join('\n');
     await deps.email.send({
       to: p.email,
       subject: `Re: [${req.ref}] ${req.subject}`,

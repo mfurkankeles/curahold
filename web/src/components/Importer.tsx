@@ -32,6 +32,10 @@ function guess(header: string, values: string[], fields: AccountField[], taken: 
 const encode = (t: Target) => (t.kind === 'field' ? `field:${t.key}` : t.kind === 'new' ? `new:${t.type}` : t.kind);
 const decode = (s: string): Target => (s.startsWith('field:') ? { kind: 'field', key: s.slice(6) } : s.startsWith('new:') ? { kind: 'new', type: s.slice(4) as FieldType } : ({ kind: s } as Target));
 
+// The two ways a file writes numbers and dates (dotted groups, day first / comma groups, month first);
+// fields.ts reads either, whatever the person's language.
+const FORMAT_SAMPLE: Partial<Record<Locale, string>> = { tr: '1.250,50 · 31.12.2027', en: '1,250.50 · 12/31/2027' };
+
 export function Importer({ onImported, compact }: { onImported?: (r: ImportResult) => void; compact?: boolean }) {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();
@@ -296,7 +300,7 @@ export function Importer({ onImported, compact }: { onImported?: (r: ImportResul
           <div className="seg">
             {(['tr', 'en'] as Locale[]).map((l) => (
               <button key={l} type="button" aria-pressed={numLocale === l} onClick={() => setNumLocale(l)}>
-                {l === 'tr' ? '1.250,50 · 31.12.2027' : '1,250.50 · 12/31/2027'}
+                {FORMAT_SAMPLE[l]}
               </button>
             ))}
           </div>

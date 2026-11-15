@@ -25,7 +25,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   const db = pgliteDb(pg);
   await migrate(db, loadMigrations());
   // English unless asked (DEMO_LOCALE=tr for a Turkish sample company).
-  const demo = await seedDemo(db, { locale: opts.locale ?? (process.env.DEMO_LOCALE === 'tr' ? 'tr' : 'en') });
+  const demo = await seedDemo(db, { locale: opts.locale ?? (['en', 'tr'] as const).find((l) => l === process.env.DEMO_LOCALE) ?? 'en' });
   const email = new MemoryEmail();
   const origSend = email.send.bind(email);
   email.send = async (m) => {

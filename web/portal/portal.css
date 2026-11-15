@@ -137,6 +137,7 @@ html, body { margin: 0; }
 .p-code { font-size: 22px !important; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
 .p-form-plain { display: grid; gap: 14px; text-align: start; margin-top: 8px; }
 .p-signin .p-link { justify-self: center; }
+.p-lang { text-decoration: none; }
 .p-note--ok { background: var(--accent-wash); color: var(--accent-ink); }
 
 /* The person's own account */

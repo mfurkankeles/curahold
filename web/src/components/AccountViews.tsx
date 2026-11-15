@@ -18,6 +18,7 @@ import { useRecordTypes } from './AccountFields';
 import { Icon } from './icons';
 import { todayIso } from '../lib/time';
 import { Avatar } from './ui';
+import { intlTag } from '../../../shared/src/i18n';
 
 export const QUIET_DAYS = 30;
 const DAY = 86_400_000;
@@ -267,7 +268,7 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
       {keys.map((k) => {
         const list = groups.get(k)!.sort((x, y) => x.days - y.days);
         const risky = list.filter((r) => r.band === 'risk' || r.band === 'watch');
-        const month = k === 'past' ? t('acards.renewalsPast') : new Date(`${k}-01T00:00:00Z`).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        const month = k === 'past' ? t('acards.renewalsPast') : new Date(`${k}-01T00:00:00Z`).toLocaleDateString(intlTag(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' });
         return (
           <section key={k} className="sheet renewals__month" data-past={k === 'past' || undefined}>
             <header className="renewals__head">

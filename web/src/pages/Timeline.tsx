@@ -11,6 +11,7 @@ import { setQuery } from '../lib/router';
 import { usePageDefaults } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { addDays, dueState, todayIso } from '../lib/time';
+import { intlTag } from '../../../shared/src/i18n';
 
 const GROUPS = ['board', 'person', 'account'] as const;
 type Group = (typeof GROUPS)[number];
@@ -84,7 +85,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
       /* per-device convenience */
     }
   };
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   const months = useMemo(() => {
     const out: { label: string; span: number }[] = [];
     for (const d of days) {

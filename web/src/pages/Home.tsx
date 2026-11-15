@@ -32,6 +32,7 @@ import { navigate, navigateFresh, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { useTrashToast } from '../lib/trash';
+import { intlTag } from '../../../shared/src/i18n';
 
 export type Data = Record<string, CardData>;
 
@@ -232,7 +233,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
 function useMoney() {
   const { locale } = useI18n();
   const { me } = useStore();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   return useCallback(
     (v: number, compact = false) => {
       try {
@@ -330,7 +331,7 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
   const { t, locale, fmtDate } = useI18n();
   const { person, can } = useStore();
   const money = useMoney();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
 
   if (data.kind === 'hidden') return <p className="pane__note">{t('home.hiddenForRole')}</p>;
   if (data.kind === 'missing') {

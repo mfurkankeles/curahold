@@ -4054,4 +4054,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': '候选人',
   'tpl.term.requester.one': '申请人',
   'tpl.term.requester.other': '申请人',
+  'fields.labelIn': '{language}名称',
+  'help.reply.email.line': '— 请在此行上方写下回复 —',
+  'pwa.manifestDescription': '客户、任务和销售管道，尽在一处。',
 };

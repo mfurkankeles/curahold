@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
 import { z } from 'zod';
-import { translate, type Locale } from '../../../shared/src/i18n';
+import { accountWords, normalizeLocale, translate, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { logoPath, maxDevices, nowOf, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
 import { buildIcs } from '../lib/ics';
@@ -54,12 +54,12 @@ authRoutes.get('/org', (c) => {
 // anyone signs in, so it carries only what the sign-in page already shows.
 authRoutes.get('/manifest.webmanifest', (c) => {
   const org = c.get('org');
-  const tr = org.locale === 'tr';
+  const lang = normalizeLocale(org.locale);
   const manifest = {
     id: '/',
     name: `${org.name} · Curahold`,
     short_name: 'Curahold',
-    description: tr ? 'Müşteriler, görevler ve satış hattı tek yerde.' : 'Customers, tasks and the pipeline in one place.',
+    description: translate(lang, 'pwa.manifestDescription'),
     lang: org.locale,
     start_url: '/home',
     scope: '/',
@@ -72,9 +72,9 @@ authRoutes.get('/manifest.webmanifest', (c) => {
       { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: tr ? 'Görevlerim' : 'My tasks', url: '/my' },
-      { name: tr ? 'Gelen kutusu' : 'Inbox', url: '/inbox' },
-      { name: tr ? 'Müşteriler' : 'Customers', url: '/accounts' },
+      { name: translate(lang, 'nav.myTasks'), url: '/my' },
+      { name: translate(lang, 'nav.inbox'), url: '/inbox' },
+      { name: accountWords(lang, org.terms).other, url: '/accounts' },
     ],
   };
   return c.body(JSON.stringify(manifest), 200, { 'content-type': 'application/manifest+json; charset=utf-8', 'cache-control': 'public, max-age=3600' });

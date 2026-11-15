@@ -24,6 +24,63 @@ export const ACCOUNTS: [string, string, number, number, string, string, string][
   ['Fjordnet Telecom', 'omar', 120, 98000, 'watch', 'enterprise', 'fjordnet.example'],
 ];
 
+// The demo's sample data, written in the two languages the demo is offered in (its own decision; the
+// product's built-in content comes from the dictionaries). One table, so no line asks "is it Turkish?".
+const DEMO_TEXT = {
+  en: {
+    ask: (id: string) => `@[Zeynep Tunç](${id}) can you add last quarter's usage chart too?`,
+    planned: [
+      ['review', 'Quarterly business review', 'Usage, goals and the renewal roadmap.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
+      ['meeting', 'New module walkthrough', 'Show the team the new module and take questions.', 2, 45, ['lena'], 'none'],
+      ['call', 'Monthly check-in call', 'A short status and the open items.', 21, 30, ['mert'], 'monthly'],
+    ] as [MeetingKind, string, string, number, number, string[], MeetingRepeat][],
+    t1: 'Prepare the quarterly business review',
+    t2: 'Onboarding kickoff call',
+    t3: 'Look into the usage drop',
+    t4: 'Plan training on the new module',
+    t5: 'Share the satisfaction survey results',
+    t6: 'Send the renewal proposal',
+    t7: 'Get the price increase approved',
+    t8: 'Contract signature',
+    t9: 'Review the budget draft',
+    t10: 'Sprint 1',
+    t11: 'The first sprint',
+    t12: ['Write the agenda', 'Pull usage numbers', 'Send the deck'],
+    t13: 'Business review',
+    t14: 'Goals · Usage · Risks · Roadmap',
+    t15: 'USD',
+    t16: 'CS — General',
+    t17: 'Renewals',
+    t18: 'Ada — notes',
+  },
+  tr: {
+    ask: (id: string) => `@[Zeynep Tunç](${id}) geçen çeyreğin kullanım grafiğini de ekleyebilir misin?`,
+    planned: [
+      ['review', 'Çeyrek iş değerlendirmesi', 'Kullanım, hedefler ve yenileme yol haritası.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
+      ['meeting', 'Yeni modül tanıtımı', 'Ekibe yeni modülü gösterelim ve soruları alalım.', 2, 45, ['lena'], 'none'],
+      ['call', 'Aylık durum araması', 'Kısa durum ve açık işler.', 21, 30, ['mert'], 'monthly'],
+    ] as [MeetingKind, string, string, number, number, string[], MeetingRepeat][],
+    t1: 'Çeyrek iş değerlendirmesi hazırlığı',
+    t2: 'Onboarding başlangıç toplantısı',
+    t3: 'Kullanım düşüşünü araştır',
+    t4: 'Yeni ürün eğitimi planla',
+    t5: 'Memnuniyet anketi sonuçlarını paylaş',
+    t6: 'Yenileme teklifini gönder',
+    t7: 'Fiyat artışı onayını al',
+    t8: 'Sözleşme imzası',
+    t9: 'Bütçe taslağını gözden geçir',
+    t10: 'Sprint 1',
+    t11: 'İlk sprint',
+    t12: ['Gündemi yaz', 'Kullanım rakamlarını çek', 'Sunumu gönder'],
+    t13: 'İş değerlendirmesi',
+    t14: 'Hedefler · Kullanım · Riskler · Yol haritası',
+    t15: 'TRY',
+    t16: 'CS — Genel',
+    t17: 'Yenilemeler',
+    t18: 'Ada — notlar',
+  },
+};
+
 function day(offset: number) {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + offset);
@@ -33,12 +90,13 @@ function day(offset: number) {
 export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 'tr' } = {}) {
   const slug = opts.slug ?? 'demo';
   const locale = opts.locale ?? 'en';
+  const W = DEMO_TEXT[locale];
   const { orgId, adminId, roleIds } = await createOrg(db, {
     slug,
     name: 'Demo Company',
     locale,
     timezone: 'Europe/Istanbul',
-    currency: locale === 'tr' ? 'TRY' : 'USD',
+    currency: W.t15,
     template: 'customer_success',
     domains: ['demo.example'],
     admin: { email: 'ada@demo.example', name: 'Ada Demir' },
@@ -78,9 +136,9 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       );
       return b.id;
     };
-    const csBoard = await board(locale === 'tr' ? 'CS — Genel' : 'CS — General', 'team', cs, 'mert');
-    const renewals = await board(locale === 'tr' ? 'Yenilemeler' : 'Renewals', 'org', null, 'ada');
-    const privateBoard = await board(locale === 'tr' ? 'Ada — notlar' : 'Ada — notes', 'private', null, 'ada');
+    const csBoard = await board(W.t16, 'team', cs, 'mert');
+    const renewals = await board(W.t17, 'org', null, 'ada');
+    const privateBoard = await board(W.t18, 'private', null, 'ada');
     await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [orgId, privateBoard, ids.ada]);
 
     const accounts: Record<string, string> = {};
@@ -116,22 +174,21 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       );
       return t.id;
     };
-    const tr = locale === 'tr';
-    const qbr = await task(csBoard, tr ? 'Çeyrek iş değerlendirmesi hazırlığı' : 'Prepare the quarterly business review', 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0][0]);
-    await task(csBoard, tr ? 'Onboarding başlangıç toplantısı' : 'Onboarding kickoff call', 'todo', ['lena'], 1, 'normal', ACCOUNTS[2][0]);
-    await task(csBoard, tr ? 'Kullanım düşüşünü araştır' : 'Look into the usage drop', 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3][0]);
-    await task(csBoard, tr ? 'Yeni ürün eğitimi planla' : 'Plan training on the new module', 'todo', ['lena'], 9, 'low', ACCOUNTS[4][0]);
-    await task(csBoard, tr ? 'Memnuniyet anketi sonuçlarını paylaş' : 'Share the satisfaction survey results', 'done', ['mert'], -5, 'normal', null);
-    await task(renewals, tr ? 'Yenileme teklifini gönder' : 'Send the renewal proposal', 'doing', ['omar'], 6, 'high', ACCOUNTS[1][0], 'ada');
-    await task(renewals, tr ? 'Fiyat artışı onayını al' : 'Get the price increase approved', 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
-    await task(renewals, tr ? 'Sözleşme imzası' : 'Contract signature', 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
-    await task(privateBoard, tr ? 'Bütçe taslağını gözden geçir' : 'Review the budget draft', 'todo', ['ada'], 4, 'normal', null, 'ada');
+    const qbr = await task(csBoard, W.t1, 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0][0]);
+    await task(csBoard, W.t2, 'todo', ['lena'], 1, 'normal', ACCOUNTS[2][0]);
+    await task(csBoard, W.t3, 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3][0]);
+    await task(csBoard, W.t4, 'todo', ['lena'], 9, 'low', ACCOUNTS[4][0]);
+    await task(csBoard, W.t5, 'done', ['mert'], -5, 'normal', null);
+    await task(renewals, W.t6, 'doing', ['omar'], 6, 'high', ACCOUNTS[1][0], 'ada');
+    await task(renewals, W.t7, 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
+    await task(renewals, W.t8, 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
+    await task(privateBoard, W.t9, 'todo', ['ada'], 4, 'normal', null, 'ada');
     await q.query(
       `insert into sprints (org_id, board_id, name, goal, position, created_by) values ($1, $2, $3, $4, 1024, $5)`,
-      [orgId, csBoard, tr ? 'Sprint 1' : 'Sprint 1', tr ? 'İlk sprint' : 'The first sprint', ids.mert],
+      [orgId, csBoard, W.t10, W.t11, ids.mert],
     );
 
-    for (const [i, title] of (tr ? ['Gündemi yaz', 'Kullanım rakamlarını çek', 'Sunumu gönder'] : ['Write the agenda', 'Pull usage numbers', 'Send the deck']).entries()) {
+    for (const [i, title] of (W.t12).entries()) {
       pos += 1024;
       await q.query(
         `insert into tasks (org_id, board_id, parent_id, title, status, assignee_ids, position, created_by)
@@ -145,24 +202,12 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
         orgId,
         qbr,
         ids.mert,
-        tr
-          ? `@[Zeynep Tunç](${ids.zeynep}) geçen çeyreğin kullanım grafiğini de ekleyebilir misin?`
-          : `@[Zeynep Tunç](${ids.zeynep}) can you add last quarter's usage chart too?`,
+        W.ask(ids.zeynep),
         [ids.zeynep],
       ],
     );
     // A few meetings still to come, on the first account's calendar.
-    const planned: [MeetingKind, string, string, number, number, string[], MeetingRepeat][] = tr
-      ? [
-          ['review', 'Çeyrek iş değerlendirmesi', 'Kullanım, hedefler ve yenileme yol haritası.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
-          ['meeting', 'Yeni modül tanıtımı', 'Ekibe yeni modülü gösterelim ve soruları alalım.', 2, 45, ['lena'], 'none'],
-          ['call', 'Aylık durum araması', 'Kısa durum ve açık işler.', 21, 30, ['mert'], 'monthly'],
-        ]
-      : [
-          ['review', 'Quarterly business review', 'Usage, goals and the renewal roadmap.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
-          ['meeting', 'New module walkthrough', 'Show the team the new module and take questions.', 2, 45, ['lena'], 'none'],
-          ['call', 'Monthly check-in call', 'A short status and the open items.', 21, 30, ['mert'], 'monthly'],
-        ];
+    const planned = W.planned;
     for (const [kind, title, agenda, inDays, minutes, who, repeat] of planned) {
       await q.query(
         `insert into planned_meetings (org_id, account_id, created_by, kind, title, agenda, starts_at, minutes, user_ids, repeat)
@@ -173,7 +218,7 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     // One saved meeting type, with an agenda prompt to start from.
     await q.query(
       `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
-      [orgId, JSON.stringify([{ id: 'qbr', label: tr ? 'İş değerlendirmesi' : 'Business review', kind: 'review', minutes: 60, prompt: tr ? 'Hedefler · Kullanım · Riskler · Yol haritası' : 'Goals · Usage · Risks · Roadmap' }])],
+      [orgId, JSON.stringify([{ id: 'qbr', label: W.t13, kind: 'review', minutes: 60, prompt: W.t14 }])],
     );
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);

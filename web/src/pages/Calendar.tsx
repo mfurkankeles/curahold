@@ -20,6 +20,7 @@ import { navigate, setQuery, useLocation } from '../lib/router';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState, todayIso } from '../lib/time';
+import { intlTag } from '../../../shared/src/i18n';
 
 const VIEWS = ['day', 'week', 'month', 'year'] as const;
 type View = (typeof VIEWS)[number];
@@ -67,7 +68,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   const { quickAdd } = useShell();
   const { search } = useLocation();
   const today = todayIso();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
 
   // ---- what the address asks for ------------------------------------------
   const params = new URLSearchParams(search);

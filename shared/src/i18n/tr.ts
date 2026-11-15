@@ -4054,4 +4054,7 @@ export const tr: Record<MessageKey, string> = {
   'tpl.term.candidate.other': 'Adaylar',
   'tpl.term.requester.one': 'Talep eden',
   'tpl.term.requester.other': 'Talep edenler',
+  'fields.labelIn': '{language} adı',
+  'help.reply.email.line': '— Cevabını bu çizginin üstüne yaz —',
+  'pwa.manifestDescription': 'Müşteriler, görevler ve satış hattı tek yerde.',
 };

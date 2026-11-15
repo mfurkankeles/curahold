@@ -1,6 +1,6 @@
 // The customer portal, the company's side: is it on, sign-in links for
 // customers' people, and telling them when a reply is written for them.
-import { translate, type Locale } from '../../../shared/src/i18n';
+import { normalizeLocale, translate, type Locale, intlTag } from '../../../shared/src/i18n';
 import { portalAuthOf, type PortalAuth, type PortalSignInOptions } from '../../../shared/src/portal';
 import { logoPath, orgUrl, portalUrl, type Deps, type OrgRow } from '../context';
 import { randomDigits, randomToken, sha256Hex } from './crypto';
@@ -53,7 +53,7 @@ export function methodAllowed(options: PortalSignInOptions, method: string): boo
   return !!options[method as keyof PortalSignInOptions];
 }
 
-const localeOf = (org: OrgRow, l: string | null | undefined): Locale => (l === 'tr' || l === 'en' ? l : org.locale);
+const localeOf = (org: OrgRow, l: string | null | undefined): Locale => normalizeLocale(l, org.locale);
 
 /** A one-time token for someone at a customer; returns the token (and the code, for sign-in emails). */
 export async function createPortalToken(
@@ -120,7 +120,7 @@ export async function emailConfirmCode(deps: Deps, org: OrgRow, person: Person, 
 export async function emailNewSignIn(deps: Deps, org: OrgRow, person: Person, method: string, client: string | null) {
   const locale = localeOf(org, person.locale);
   const t = (k: Parameters<typeof translate>[1], v: Record<string, string | number> = {}) => translate(locale, k, v, org.terms);
-  const when = new Date().toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-GB', { timeZone: org.timezone || 'UTC', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const when = new Date().toLocaleString(intlTag(locale), { timeZone: org.timezone || 'UTC', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   const text = t('portal.email.noticeBody', { company: org.name, how: t(`portal.method.${method}` as Parameters<typeof translate>[1]), client: client ?? '—', when });
   await sendMail(deps, org, person.email, t('portal.email.noticeSubject', { company: org.name }), text, portalUrl(deps.config, org.slug), t('portal.email.open'));
 }

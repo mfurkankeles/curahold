@@ -4054,4 +4054,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'tpl.term.candidate.other': 'المرشّحون',
   'tpl.term.requester.one': 'مقدّم الطلب',
   'tpl.term.requester.other': 'مقدّمو الطلبات',
+  'fields.labelIn': 'الاسم باللغة {language}',
+  'help.reply.email.line': '— اكتب ردّك فوق هذا السطر —',
+  'pwa.manifestDescription': 'العملاء والمهام ومسار المبيعات في مكان واحد.',
 };

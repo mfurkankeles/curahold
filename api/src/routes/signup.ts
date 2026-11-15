@@ -15,7 +15,7 @@ import { companyFromDomain, emailDomain, isPublicDomain, slugify, slugProblem } 
 import { fail } from '../lib/errors';
 import { createOrg } from '../lib/orgs';
 import { startTrial } from '../billing/service';
-import { body, email } from '../lib/validate';
+import { body, email, localeField } from '../lib/validate';
 
 export const signupRoutes = new Hono<AppEnv>();
 
@@ -39,7 +39,7 @@ signupRoutes.use('*', async (c, next) => {
 });
 
 signupRoutes.post('/start', async (c) => {
-  const input = await body(c, z.object({ email, locale: z.enum(['en', 'tr']).optional() }));
+  const input = await body(c, z.object({ email, locale: localeField.optional() }));
   const deps = c.get('deps');
   const ip = c.req.header('cf-connecting-ip') ?? null;
   const locale = input.locale ?? 'en';
@@ -131,7 +131,7 @@ signupRoutes.post('/complete', async (c) => {
       company: z.string().trim().min(1).max(120),
       slug: z.string().trim().toLowerCase().max(40),
       name: z.string().trim().min(1).max(120),
-      locale: z.enum(['en', 'tr']),
+      locale: localeField,
       timezone: tz,
       currency: z.string().regex(/^[A-Z]{3}$/),
       template: z.enum(TEMPLATE_KEYS),

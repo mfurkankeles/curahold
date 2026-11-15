@@ -8,6 +8,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { CountUp } from './CountUp';
 import { EmptyState } from './Empty';
+import { intlTag } from '../../../shared/src/i18n';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** Colours for parts that have none of their own, in an order that keeps neighbours apart. */
@@ -17,7 +18,7 @@ const colorAt = (i: number, own?: OptionColor | null): OptionColor => own ?? CYC
 export function useReportFormat() {
   const { t, locale } = useI18n();
   const { me } = useStore();
-  const tag = locale === 'tr' ? 'tr-TR' : 'en-GB';
+  const tag = intlTag(locale);
   return useMemo(() => {
     const num = (v: number, digits = 1) => new Intl.NumberFormat(tag, { maximumFractionDigits: digits }).format(v);
     const value = (v: number, unit: ReportUnit, compact = false): string => {

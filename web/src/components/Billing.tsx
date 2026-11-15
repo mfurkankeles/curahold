@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PRICE_CURRENCY, type Access, type Interval, type PlanDef, type PlanKey } from '../../../shared/src/billing';
 import { ApiFailure, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import type { Locale } from '../../../shared/src/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
@@ -47,6 +48,8 @@ function loadPaddle(env: 'sandbox' | 'live', token: string, onEvent: (e: { name?
   });
   return paddle;
 }
+
+const PADDLE_LOCALE: Partial<Record<Locale, string>> = { en: 'en', tr: 'tr', ar: 'ar', ja: 'ja', ko: 'ko', 'zh-Hans': 'zh-Hans', 'zh-Hant': 'zh-TW' };
 
 export function BillingSettings() {
   const { t, fmtDate, locale } = useI18n();
@@ -108,7 +111,8 @@ export function BillingSettings() {
         customer: { email: c.email },
         // How the webhook finds the company: the server's own signed value, never one made here.
         customData: c.customData,
-        settings: { locale: locale === 'tr' ? 'tr' : 'en' },
+        // Paddle's own code for the language where it has one (zh-Hant is zh-TW there); otherwise it follows the browser.
+        settings: PADDLE_LOCALE[locale] ? { locale: PADDLE_LOCALE[locale] } : {},
       });
     } catch {
       toast(t('billing.paddleDown'), 'error');

@@ -12,6 +12,7 @@ import { localDate, localHour } from './automations';
 import { scoreAccounts } from './health';
 import { canSeeField } from './fieldAccess';
 import { enqueue, prefsOf } from './notify';
+import { intlTag } from '../../../shared/src/i18n';
 
 const ITEMS = 5;
 const DROP = 10;
@@ -22,7 +23,7 @@ const OPEN = `t.archived_at is null and b.archived_at is null
 function money(n: number | null, currency: string, locale: string) {
   if (n === null) return null;
   try {
-    return new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', { style: 'currency', currencyDisplay: 'narrowSymbol', currency, maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat(intlTag(locale), { style: 'currency', currencyDisplay: 'narrowSymbol', currency, maximumFractionDigits: 0 }).format(n);
   } catch {
     return String(n);
   }
