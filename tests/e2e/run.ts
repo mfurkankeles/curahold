@@ -243,6 +243,87 @@ await step('phone layout: columns and the menu work', async () => {
 });
 
 
+await step('three next steps become tasks; one is finished on a phone (timed)', async () => {
+  const t0 = Date.now();
+  const phone = await newPage(s.browser, 375, 667);
+  await signIn(phone.page, s.origin, 'zeynep@demo.example');
+  const [z] = await sql(`select id from users where email = 'zeynep@demo.example'`);
+  const [acc] = await sql(`select id from accounts where owner_id = $1 order by name limit 1`, [z.id]);
+  const steps = ['Kullanım raporunu ekiple paylaş', 'İkinci eğitim için iki tarih öner', 'Yenileme teklifini taslak olarak hazırla'];
+  // The meeting half (the customer page's journey) logs these from the meeting dialog; here they arrive the same way.
+  const status = await phone.page.evaluate(
+    async (a, who, list, board) => {
+      const r = await fetch(`/api/accounts/${a}/meetings`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' },
+        body: JSON.stringify({ kind: 'meeting', title: 'Haftalık durum görüşmesi', boardId: board, nextSteps: list.map((title: string) => ({ title, assigneeIds: [who] })) }),
+      });
+      return `${r.status} ${r.ok ? '' : await r.text()}`;
+    },
+    acc.id,
+    z.id,
+    steps,
+    csBoard,
+  );
+  expect(/^20\d/.test(status), `the meeting was not logged (${status})`);
+  await phone.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  for (const title of steps) await phone.page.waitForFunction((x) => [...document.querySelectorAll('.tasklist__row .rowlink')].some((b) => b.textContent === x), { timeout: 8000 }, title);
+  // Every title shows: none is cut down to "…" beside its tick.
+  const thin = await phone.page.$$eval('.tasklist__row .rowlink', (bs) => bs.filter((b) => b.getBoundingClientRect().width < 40).length);
+  expect(thin === 0, `${thin} titles are cut to nothing on a phone`);
+  const opened = Date.now();
+  await (await byText(phone.page, '.tasklist__row .rowlink', steps[0])).click();
+  await phone.page.waitForSelector('.panel .ew-finish.btn--primary');
+  const panelMs = Date.now() - opened;
+  await shot(phone.page, 'ew-01-phone-task');
+  await phone.page.click('.panel .ew-finish');
+  await phone.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Tamamlandı')), { timeout: 5000 });
+  await phone.page.waitForFunction(() => !document.querySelector('.panel .ew-finish.btn--primary'), { timeout: 5000 });
+  const [done] = await sql(`select t.status, b.columns from tasks t join boards b on b.id = t.board_id where t.title = $1`, [steps[0]]);
+  expect(done && done.columns.find((c: { key: string; done?: boolean }) => c.key === done.status)?.done, `not finished: ${done?.status}`);
+  await shot(phone.page, 'ew-02-phone-finished');
+  console.log(`    journey: three next steps → tasks → one finished on a 375 px phone in ${Date.now() - t0} ms (task panel up in ${panelMs} ms)`);
+  expect(phone.errors.length === 0, `script errors: ${phone.errors.join(' | ')}`);
+  await phone.page.browserContext().close();
+});
+
+await step('the keyboard opens, moves, finishes and assigns a task on the board', async () => {
+  const page = mert.page;
+  await page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('[data-card]');
+  const first = await page.$eval('.column [data-card]', (el) => (el as HTMLElement).dataset.card!);
+  await page.focus(`[data-card="${first}"]`);
+  await page.keyboard.press('ArrowDown');
+  const second = await page.evaluate(() => (document.activeElement as HTMLElement).dataset.card);
+  expect(second && second !== first, 'arrow down did not go to the next card');
+  const [before] = await sql('select status from tasks where id = $1', [second]);
+  await page.keyboard.down('Shift');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.up('Shift');
+  await page.waitForFunction((id) => document.activeElement?.closest('.column') !== document.querySelector('.column') && (document.activeElement as HTMLElement)?.dataset.card === id, { timeout: 5000 }, second);
+  for (let i = 0; i < 20; i++) {
+    const [now] = await sql('select status from tasks where id = $1', [second]);
+    if (now.status !== before.status) break;
+    await pause(100);
+  }
+  const [after] = await sql('select status from tasks where id = $1', [second]);
+  expect(after.status !== before.status, 'Shift+→ did not move the card to the next column');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.panel .ew-finish');
+  await page.keyboard.press('m');
+  expect(await page.evaluate(() => document.activeElement?.classList.contains('ew-status')), 'M did not go to the status');
+  await page.evaluate(() => (document.querySelector('.panel') as HTMLElement).focus());
+  await page.keyboard.press('d');
+  await page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Tamamlandı')), { timeout: 5000 });
+  await page.keyboard.press('a');
+  await page.waitForSelector('.panel .picker__pop', { timeout: 3000 });
+  await shot(page, 'ew-03-keyboard-assign');
+  await page.keyboard.press('Escape');
+  await clearToasts(page);
+});
+
+
 // ------------------------------------------------------------- phase 2
 
 const central = `http://app.localhost:${port}`;

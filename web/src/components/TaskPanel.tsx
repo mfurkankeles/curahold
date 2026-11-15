@@ -109,15 +109,8 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
       const el = (sel: string) => panel.current?.querySelector<HTMLElement>(sel);
       if (k === 'd') el('.ew-finish')?.click();
       else if (k === 'a') el('.ew-assign button')?.click();
-      else if (k === 'm') {
-        const st = el('.ew-status') as HTMLSelectElement | null;
-        st?.focus();
-        try {
-          st?.showPicker?.();
-        } catch {
-          /* not allowed without a hand: the focus is enough, arrows change it */
-        }
-      } else return;
+      else if (k === 'm') el('.ew-status')?.focus(); // the arrows then change it, as in any list
+      else return;
       e.preventDefault();
     };
     document.addEventListener('keydown', onKey);
