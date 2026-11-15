@@ -89,6 +89,17 @@ async function afterReconnect(key: string, go: () => Promise<Response>): Promise
   }
 }
 
+/**
+ * A dangerous change (roles, keys, SSO…) answered "confirm it's you first"
+ * (403 reauth_required): the confirmation dialog (components/Reauth.tsx)
+ * asks, and on success the request is sent once more, so every such action
+ * works without its screen knowing about it.
+ */
+let reauth: (() => Promise<boolean>) | null = null;
+export function onReauth(fn: (() => Promise<boolean>) | null) {
+  reauth = fn;
+}
+
 /** A key of its own for every change: sent again with a retry, so the server does the work once. */
 const newKey = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
@@ -110,7 +121,7 @@ export function api<T = any>(method: string, path: string, body?: unknown): Prom
   return sent;
 }
 
-async function send<T>(method: string, path: string, body: unknown, key: string | null): Promise<T> {
+async function send<T>(method: string, path: string, body: unknown, key: string | null, again = false): Promise<T> {
   const headers: Record<string, string> = { 'x-curahold-device': getDeviceId() };
   if (currentLocale) headers['x-curahold-locale'] = currentLocale;
   if (key) headers['idempotency-key'] = key;
@@ -125,12 +136,20 @@ async function send<T>(method: string, path: string, body: unknown, key: string 
   inFlight++;
   if (quietTimer) clearTimeout(quietTimer);
   quietTimer = null;
+  let asked: ApiFailure;
   try {
     return await sendCounted<T>(method, path, headers, payload, key);
+  } catch (e) {
+    if (again || !reauth || !(e instanceof ApiFailure) || e.status !== 403 || e.code !== 'reauth_required') throw e;
+    asked = e;
   } finally {
     inFlight--;
     settle();
   }
+  // "Confirm it's you first": the dialog asks (not counted as a request on its way, so
+  // the page can still go quiet), and on success the change is sent once more.
+  if (reauth && (await reauth())) return send<T>(method, path, body, key ? newKey() : null, true);
+  throw asked;
 }
 
 async function sendCounted<T>(method: string, path: string, headers: Record<string, string>, payload: BodyInit | undefined, key: string | null): Promise<T> {

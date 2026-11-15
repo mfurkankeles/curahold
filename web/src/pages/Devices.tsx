@@ -6,15 +6,20 @@ import { ApiFailure, del, get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useSaver } from '../lib/saver';
 import { relativeTime } from '../lib/time';
+import { post } from '../lib/api';
+import { SignInSecurity } from '../components/SignInSecurity';
 
 export function DevicesPage() {
   const { t } = useI18n();
   const save = useSaver();
   const [data, setData] = useState<{ sessions: SessionInfo[]; maxDevices: number } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [note, setNote] = useState('');
   const load = () => {
     setFailed(null);
-    return get<{ sessions: SessionInfo[]; maxDevices: number }>('/me/sessions').then(setData, (e) => setFailed(e instanceof ApiFailure ? e.body.message : t('errors.loadFailed')));
+    return get<{ sessions: SessionInfo[]; maxDevices: number }>('/me/sessions').then(setData, (e) =>
+      setFailed(e instanceof ApiFailure ? e.body.message : t('errors.loadFailed')),
+    );
   };
   useEffect(() => {
     void load();
@@ -29,32 +34,54 @@ export function DevicesPage() {
         </h1>
       </header>
       <div className="page">
-        <div className="sheet u-max-width-640">
-          {!data && !failed && <SkeletonRows rows={3} label={t('common.loading')} />}
-          {failed && <LoadError message={failed} onRetry={() => void load()} />}
-          {data && <p className="sheet__hint">{t('devices.hint', { max: data.maxDevices })}</p>}
-          {data?.sessions.map((s) => (
-            <div key={s.id} className="filerow filerow--ruled">
-              <div className="u-flex-1">
-                <div className="u-font-weight-500">
-                  {s.deviceLabel || t('devices.unknown')} {s.current && <span className="badge badge--active">{t('devices.thisDevice')}</span>}
+        <div className="form">
+          <div className="sheet u-max-width-640">
+            {!data && !failed && <SkeletonRows rows={3} label={t('common.loading')} />}
+            {failed && <LoadError message={failed} onRetry={() => void load()} />}
+            {data && <p className="sheet__hint">{t('devices.hint', { max: data.maxDevices })}</p>}
+            {data?.sessions.map((s) => (
+              <div key={s.id} className="filerow filerow--ruled">
+                <div className="u-flex-1">
+                  <div className="u-font-weight-500">
+                    {s.deviceLabel || t('devices.unknown')} {s.current && <span className="badge badge--active">{t('devices.thisDevice')}</span>}
+                  </div>
+                  <div className="muted u-fs-s">
+                    {t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}
+                  </div>
                 </div>
-                <div className="muted u-fs-s">
-                  {t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}
-                </div>
+                <button
+                  className="btn btn--small"
+                  onClick={async () => {
+                    if (!(await save(() => del(`/me/sessions/${s.id}`), false))) return;
+                    if (s.current) location.href = '/login';
+                    else void load();
+                  }}
+                >
+                  {t('devices.signOut')}
+                </button>
               </div>
-              <button
-                className="btn btn--small"
-                onClick={async () => {
-                  if (!(await save(() => del(`/me/sessions/${s.id}`), false))) return;
-                  if (s.current) location.href = '/login';
-                  else void load();
-                }}
-              >
-                {t('devices.signOut')}
-              </button>
-            </div>
-          ))}
+            ))}
+            {data && data.sessions.length > 1 && (
+              <div className="toolbar">
+                <button
+                  className="btn btn--small"
+                  onClick={async () => {
+                    let n = 0;
+                    if (await save(async () => (n = (await post<{ signedOut: number }>('/me/sessions/sign-out-others', {})).signedOut), false)) {
+                      setNote(t('sec.signedOutOthers', { n }));
+                      void load();
+                    }
+                  }}
+                >
+                  {t('sec.signOutOthers')}
+                </button>
+                {note && <span className="muted">{note}</span>}
+              </div>
+            )}
+          </div>
+          <div className="sheet">
+            <SignInSecurity />
+          </div>
         </div>
       </div>
     </>

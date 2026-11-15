@@ -1,4 +1,4 @@
-// Sign-in screens: email link, Google / Microsoft, and the new-device code.
+// Sign-in screens: email link, Google / Microsoft, passkey, the new-device code and the second step.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
@@ -8,6 +8,9 @@ import { ApiFailure, post } from '../lib/api';
 import { deviceLabel, getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
+import type { SecondStepNeeded } from '../../../shared/src/identity';
+import { SecondStepForm } from '../components/SecondStep';
+import { passkeysHere, signInWithPasskey } from '../lib/passkey';
 
 function errorText(e: unknown, t: ReturnType<typeof useI18n>['t']) {
   if (e instanceof ApiFailure) return e.status === 0 ? t('errors.network') : e.body.message || t('errors.server');
@@ -143,7 +146,23 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
           {t('auth.sendLink')}
         </button>
       </form>
-      {(org.loginMethods.google || org.loginMethods.microsoft) && <div className="auth__or">{t('auth.or')}</div>}
+      {(org.loginMethods.google || org.loginMethods.microsoft || passkeysHere()) && <div className="auth__or">{t('auth.or')}</div>}
+      {passkeysHere() && (
+        <button
+          className="btn"
+          disabled={busy}
+          onClick={async () => {
+            setError(null);
+            try {
+              if (await signInWithPasskey()) location.href = '/home';
+            } catch (err) {
+              setError(errorText(err, t));
+            }
+          }}
+        >
+          {t('sec.passkeySignIn')}
+        </button>
+      )}
       {org.loginMethods.google && (
         <button className="btn" onClick={() => oauth('google')}>
           {t('auth.google')}
@@ -172,6 +191,7 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [state, setState] = useState<'form' | 'pending'>('form');
+  const [second, setSecond] = useState<SecondStepNeeded | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent) {
@@ -179,14 +199,22 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
     setBusy(true);
     setError('');
     try {
-      const r = await post<{ status: 'ok' | 'pending' }>('/join', { token, name: name.trim(), note: note.trim() || undefined, deviceId: getDeviceId(), deviceLabel: deviceLabel() });
-      if (r.status === 'ok') onJoined();
+      const r = await post<{ status: 'ok' | 'pending' } | SecondStepNeeded>('/join', { token, name: name.trim(), note: note.trim() || undefined, deviceId: getDeviceId(), deviceLabel: deviceLabel() });
+      if (r.status === 'second_step') setSecond(r);
+      else if (r.status === 'ok') onJoined();
       else setState('pending');
     } catch (err) {
       setError(errorText(err, t));
     } finally {
       setBusy(false);
     }
+  }
+  if (second) {
+    return (
+      <AuthFrame org={org} onLocale={onLocale}>
+        <SecondStepForm step={second} orgName={org.name} onDone={onJoined} />
+      </AuthFrame>
+    );
   }
   if (state === 'pending') {
     return (
@@ -223,7 +251,9 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
 
 export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLocale: (l: Locale) => void; onSignedIn: (notice?: string) => void }) {
   const { t } = useI18n();
-  const [state, setState] = useState<'working' | 'code' | 'error'>('working');
+  const [state, setState] = useState<'working' | 'code' | 'second' | 'error'>('working');
+  const [second, setSecond] = useState<SecondStepNeeded | null>(null);
+  const [notice, setNotice] = useState<string | undefined>(undefined);
   const [error, setError] = useState('');
   const [challenge, setChallenge] = useState<{ challenge: string; email: string; devCode?: string } | null>(null);
   const [code, setCode] = useState('');
@@ -240,16 +270,21 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
       setError(t('errors.invalid_token'));
       return;
     }
-    post<{ status: 'ok' | 'device_code'; challenge?: string; email?: string; devCode?: string; evictedDevices?: number }>('/auth/verify', {
+    const after = hash.get('m') === 'signup' ? 'signup' : undefined;
+    setNotice(after);
+    post<{ status: 'ok' | 'device_code'; challenge?: string; email?: string; devCode?: string; evictedDevices?: number } | SecondStepNeeded>('/auth/verify', {
       token,
       deviceId: getDeviceId(),
       deviceLabel: deviceLabel(),
     })
       .then((r) => {
-        if (r.status === 'device_code') {
+        if (r.status === 'second_step') {
+          setSecond(r);
+          setState('second');
+        } else if (r.status === 'device_code') {
           setChallenge({ challenge: r.challenge!, email: r.email!, devCode: r.devCode });
           setState('code');
-        } else onSignedIn(hash.get('m') === 'signup' ? 'signup' : undefined);
+        } else onSignedIn(after);
       })
       .catch((e) => {
         setState('error');
@@ -260,8 +295,12 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
   async function submitCode(e: FormEvent) {
     e.preventDefault();
     try {
-      await post('/auth/device', { challenge: challenge!.challenge, code, deviceId: getDeviceId(), deviceLabel: deviceLabel() });
-      onSignedIn();
+      const r = await post<{ status: 'ok' } | SecondStepNeeded>('/auth/device', { challenge: challenge!.challenge, code, deviceId: getDeviceId(), deviceLabel: deviceLabel() });
+      if (r.status === 'second_step') {
+        setError('');
+        setSecond(r);
+        setState('second');
+      } else onSignedIn();
     } catch (err) {
       setError(errorText(err, t));
     }
@@ -278,6 +317,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
           </button>
         </>
       )}
+      {state === 'second' && second && <SecondStepForm step={second} orgName={org.name} onDone={() => onSignedIn(notice)} />}
       {state === 'code' && challenge && (
         <form onSubmit={submitCode} className="u-display-grid u-gap-12">
           <h1 className="auth__title">{t('auth.deviceTitle')}</h1>

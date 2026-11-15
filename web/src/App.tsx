@@ -1,4 +1,5 @@
 import { setCompanyZone } from './lib/time';
+import { ReauthDialog } from './components/Reauth';
 import { lazy, Suspense, useCallback, useEffect, useState, type ComponentType } from 'react';
 import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
@@ -372,6 +373,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
       <ErrorBoundary resetKey={path}>
         <Suspense fallback={<RouteFallback />}>{page}</Suspense>
       </ErrorBoundary>
+      <ReauthDialog />
       {recordId && !taskId && (
         <ErrorBoundary resetKey={recordId}>
           <Suspense fallback={null}>

@@ -14,6 +14,7 @@ import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
 import { SubscriptionPanel } from '../components/BillingManage';
 import { SsoSettings } from '../components/SsoSettings';
+import { CompanySecurity } from '../components/CompanySecurity';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
@@ -30,7 +31,7 @@ import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { NotAllowed } from '../components/Empty';
 
-type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'sso' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
+type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'sso' | 'signin' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
 
 // The admin area: grouped sections on the left (a menu on phones), one
 // section at a time on the right. Each section is reachable by its own URL.
@@ -58,6 +59,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
         ['teams', t('settings.tab.teams'), can('teams.manage'), 'people'],
         ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage'), 'shield'],
         ['sso', t('settings.tab.sso'), can('org.manage'), 'shield'],
+        ['signin', t('settings.tab.signin'), can('org.manage'), 'lock'],
       ],
     },
     {
@@ -159,6 +161,7 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           {!refused && current === 'teams' && <TeamsTab />}
           {!refused && current === 'roles' && <RolesTab />}
           {!refused && current === 'sso' && <SsoSettings />}
+          {!refused && current === 'signin' && <CompanySecurity />}
           {!refused && current === 'connections' && <Connections />}
           {!refused && current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
           {!refused && current === 'automations' && <AutomationList />}
