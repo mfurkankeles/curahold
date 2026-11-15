@@ -73,6 +73,14 @@ function scopeQuery() {
   return s ? `?${s}` : '';
 }
 
+/** When the channel last told a scope's pages directly: its pulse stamp moving just after is the same change. */
+const firedAt: Record<ScopeKind, Map<string, number>> = { board: new Map(), account: new Map() };
+function fireScope(kind: ScopeKind, id: string) {
+  if (!watched[kind].has(id)) return;
+  firedAt[kind].set(id, Date.now());
+  window.dispatchEvent(new CustomEvent(LIVE_SCOPE, { detail: { kind, id } }));
+}
+
 /** A scope whose stamp moved since we last saw it tells its own pages to refetch. */
 function tellScopes(now: Pulse) {
   for (const kind of ['board', 'account'] as const) {
@@ -83,7 +91,8 @@ function tellScopes(now: Pulse) {
       const prev = seen[id];
       seen[id] = stamp;
       // First sighting sets the baseline, like the global pulse: it does not fire.
-      if (prev !== undefined && stamp !== prev) window.dispatchEvent(new CustomEvent(LIVE_SCOPE, { detail: { kind, id } }));
+      const told = Date.now() - (firedAt[kind].get(id) ?? 0) < 3000;
+      if (prev !== undefined && stamp !== prev && !told) window.dispatchEvent(new CustomEvent(LIVE_SCOPE, { detail: { kind, id } }));
     }
   }
 }
@@ -220,6 +229,8 @@ function onMessage(m: Msg) {
     channel.ready = true;
     channel.tries = 0;
     sendHere();
+    // Pages that started following something while the socket was opening: their scopes now.
+    if (scopes().join(',') !== channel.sent) rewatch();
     schedule();
     // Whatever happened between the last ask and the ticket: look once.
     askSoon(false);
@@ -229,6 +240,11 @@ function onMessage(m: Msg) {
     // A gap between what we had and what this starts from: something was missed, so look.
     const gap = channel.n !== null && m.f !== channel.n;
     channel.n = m.n;
+    // What this page watches: told at once, without waiting for the pulse; the pulse that follows does not tell it twice.
+    if (!busy()) {
+      for (const id of m.b ?? []) fireScope('board', id);
+      for (const id of m.a ?? []) fireScope('account', id);
+    }
     const mine = !!(m.b?.length || m.a?.length || m.k?.includes('unread'));
     if (gap || mine) askSoon(true);
     else if (m.k?.length) askSoon(false);
@@ -402,7 +418,8 @@ export function useLiveScope(kind: ScopeKind, id: string | null | undefined, fn:
   useEffect(() => {
     if (!id) return;
     watched[kind].set(id, (watched[kind].get(id) ?? 0) + 1);
-    nudge(); // start getting this scope's stamp without waiting out the timer
+    // Its stamp's baseline now, while the page loads it: a change a moment later is then not taken for the baseline.
+    askSoon(true);
     rewatch();
     const on = (e: Event) => {
       const d = (e as CustomEvent<{ kind: ScopeKind; id: string }>).detail;

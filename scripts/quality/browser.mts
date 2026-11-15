@@ -13,6 +13,7 @@
 // request (Chrome's "Fast 4G") and a processor four times slower than this
 // machine. "Slow 4G" is the harsher profile Lighthouse uses for its mobile score.
 import http from 'node:http';
+import net from 'node:net';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { gzipSync } from 'node:zlib';
@@ -55,6 +56,18 @@ function compressingFront(target: number, port: number) {
       if (sent.length) up.write(Buffer.concat(sent));
       up.end();
     });
+  });
+  // WebSockets (the live channel) go straight through, as a real host's front passes them.
+  srv.on('upgrade', (req, sock, head) => {
+    const up = net.connect(target, '127.0.0.1', () => {
+      const lines = [`${req.method} ${req.url} HTTP/1.1`];
+      for (let i = 0; i < req.rawHeaders.length; i += 2) lines.push(`${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}`);
+      up.write(`${lines.join('\r\n')}\r\n\r\n`);
+      if (head.length) up.write(head);
+      sock.pipe(up).pipe(sock);
+    });
+    up.on('error', () => sock.destroy());
+    sock.on('error', () => up.destroy());
   });
   return new Promise<http.Server>((r) => srv.listen(port, () => r(srv)));
 }
@@ -219,24 +232,86 @@ if (on('tap')) {
 }
 
 // ---------------------------------------------------------------- live: someone else's change
+// p50/p95 over 20 changes through the live channel; the same with the channel blocked (the timer);
+// a lost connection that comes back and catches up; and a second company that hears nothing.
 if (on('live')) {
-  const boards = (await api(ada.page)('GET', '/api/boards')).boards;
-  const board = boards[0];
-  await go(ada.page, `/b/${board.id}`, 600);
+  // Counts what each page's socket hears (the channel's signals), without changing what the app does.
+  const COUNT = `window.__live = { c: 0, hi: 0 }; const W = window.WebSocket; window.WebSocket = class extends W {
+    constructor(...a) { super(...a); this.addEventListener('message', (e) => { try { const m = JSON.parse(e.data); if (m.t === 'c') { window.__live.c++; window.__live.at = performance.now(); } if (m.t === 'hi') window.__live.hi++; } catch {} }); } };`;
+  // Other people than Ada (two devices each at most: Ada's own page stays signed in for the rest).
+  const watcher = await open();
+  await watcher.page.evaluateOnNewDocument(COUNT);
+  await signInFresh(watcher.page, 'lena@demo.example');
   const other = await open();
   await signInFresh(other.page, 'zeynep@demo.example');
-  const waits: number[] = [];
-  for (let i = 0; i < 3; i++) {
-    // Not in step with the page's own clock: wait a different while before each change.
-    await sleep(2000 + i * 7000);
-    const title = `Canlı ölçüm ${Date.now()}`;
-    const t0 = Date.now();
+  const theirs = new Set(((await api(other.page)('GET', '/api/boards')).boards as { id: string }[]).map((b) => b.id));
+  const board = ((await api(watcher.page)('GET', '/api/boards')).boards as { id: string }[]).find((b) => theirs.has(b.id))!;
+  await go(watcher.page, `/b/${board.id}`, 800);
+  // Another company, open at the same time on its own address.
+  const { seedDemo } = await import('../seed-demo');
+  await seedDemo(s.db, { slug: 'other', locale: 'en' });
+  const stranger = await open();
+  await stranger.page.evaluateOnNewDocument(COUNT);
+  await s.db.system((q: any) => q.query('delete from login_tokens'));
+  await signIn(stranger.page, `http://other.localhost:${PORT + 1}`, 'ada@demo.example');
+  await sleep(1500);
+  const seeOne = async (page: Page, label: string, timeout = 120000) => {
+    const title = `${label} ${Date.now()}`;
+    const t0 = performance.now();
+    const p0 = await page.evaluate(() => performance.now());
     await api(other.page)('POST', '/api/tasks', { boardId: board.id, title });
-    const seen = await ada.page.waitForFunction((t) => document.body.innerText.includes(t), { timeout: 120000, polling: 100 }, title).then(() => true, () => false);
-    waits.push(seen ? (Date.now() - t0) / 1000 : Infinity);
+    const p1 = await page.evaluate(() => performance.now());
+    const seen = await page.waitForFunction((t) => document.body.innerText.includes(t), { timeout, polling: 'mutation' }, title).then(() => true, () => false);
+    const p2 = await page.evaluate(() => {
+      const rs = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+      const q = (re: RegExp) => rs.filter((r) => re.test(r.name)).map((r) => [Math.round(r.startTime), Math.round(r.responseEnd)]).slice(-2);
+      return [performance.now(), (window as any).__live?.at ?? 0, JSON.stringify(q(/\/tasks$/)), JSON.stringify(q(/pulse/))];
+    });
+    if (process.env.LIVE_DEBUG) console.log(`  t0 ${p0.toFixed(0)} post ${(p1 - p0).toFixed(0)} ms, signal at +${(Number(p2[1]) - p0).toFixed(0)} ms, shown +${(Number(p2[0]) - p0).toFixed(0)} ms tasks ${p2[2]} pulse ${p2[3]}`);
+    return seen ? (performance.now() - t0) / 1000 : Infinity;
+  };
+  const fmt = (w: number[]) => `p50 ${pct(w, 50).toFixed(2)} s, p95 ${pct(w, 95).toFixed(2)} s, max ${Math.max(...w).toFixed(2)} s`;
+  if (process.env.LIVE_DEBUG) {
+    for (let i = 0; i < 3; i++) {
+      const g0 = performance.now();
+      await api(watcher.page)('GET', `/api/boards/${board.id}/tasks`);
+      const g1 = performance.now();
+      await api(watcher.page)('GET', `/api/pulse?boards=${board.id}`);
+      console.log(`  board tasks ${(g1 - g0).toFixed(0)} ms, pulse ${(performance.now() - g1).toFixed(0)} ms`);
+    }
   }
-  say('live', `a card added by someone else shows on an open board after: ${waits.map((w) => (Number.isFinite(w) ? `${w.toFixed(1)} s` : 'never (2 min)')).join(', ')} (three tries; no reload)`);
-  await other.page.close();
+  const hi = await watcher.page.evaluate(() => (window as any).__live.hi);
+  const live: number[] = [];
+  for (let i = 0; i < 20; i++) {
+    await sleep(300 + ((i * 377) % 900)); // not in step with anything
+    live.push(await seeOne(watcher.page, 'Live'));
+  }
+  say('live', `channel ${hi ? 'open' : 'NOT open'}: a card added by someone else shows on an open board, 20 changes: ${fmt(live)}`);
+  const heard = await stranger.page.evaluate(() => (window as any).__live);
+  say('live', `another company's open page heard ${heard.c} change signals of those 20 (connected: ${heard.hi ? 'yes' : 'no'})`);
+
+  // Lost connection (the server lets every socket go, as a restart does), a change made meanwhile:
+  // the page comes back with its last change number and catches up, no reload.
+  const t0 = performance.now();
+  s.live.drop();
+  const missed = `While away ${Date.now()}`;
+  await api(other.page)('POST', '/api/tasks', { boardId: board.id, title: missed });
+  const back = await watcher.page.waitForFunction((t) => document.body.innerText.includes(t), { timeout: 60000, polling: 'mutation' }, missed).then(() => (performance.now() - t0) / 1000, () => Infinity);
+  const his = await watcher.page.evaluate(() => (window as any).__live.hi);
+  say('live', `after a lost connection: the change made meanwhile shows ${back.toFixed(2)} s after the connection was dropped (reconnected: ${his > hi ? 'yes' : 'no'})`);
+
+  // A network that blocks the channel: the timer (every 10 s while used) carries it.
+  const blocked = await open();
+  await blocked.page.evaluateOnNewDocument(`localStorage.setItem('app_live_channel', 'off')`);
+  await signInFresh(blocked.page, 'mert@demo.example');
+  await go(blocked.page, `/b/${board.id}`, 800);
+  const poll: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    await sleep(1000 + i * 3100);
+    poll.push(await seeOne(blocked.page, 'Polled', 60000));
+  }
+  say('live', `channel blocked (falls back to asking): ${poll.map((w) => `${w.toFixed(1)} s`).join(', ')}`);
+  for (const p of [watcher, other, stranger, blocked]) await p.page.close();
 }
 
 // ---------------------------------------------------------------- axe and fit: every screen

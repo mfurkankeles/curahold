@@ -60,6 +60,8 @@ export interface LiveHub {
   /** Rooms open now and their connections (for tests and the health page). */
   size(): { rooms: number; conns: number };
   poke(orgId: string): Promise<void>;
+  /** Let every connection go (as a restart does); they come back and catch up. */
+  drop(): void;
   close(): Promise<void>;
 }
 
@@ -143,6 +145,9 @@ export async function attachLive(server: Server, opts: { db: Db; config: Config;
   return {
     size: () => ({ rooms: rooms.size, conns: [...rooms.values()].reduce((n, r) => n + r.conns.size, 0) }),
     poke,
+    drop() {
+      for (const r of rooms.values()) for (const c of r.conns) c.close(CLOSE.restart, 'restart');
+    },
     async close() {
       clearInterval(sweep);
       server.off('upgrade', onUpgrade);
