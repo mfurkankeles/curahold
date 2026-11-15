@@ -219,7 +219,7 @@ export function ReportsPage() {
           <p className="topbar__sub">{t('reports.lead')}</p>
         </div>
         <div className="topbar__spacer" />
-        <select className="select" style={{ width: 'auto' }} value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
+        <select className="select u-width-auto" value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
           <option value="">{t('reports.allBoards')}</option>
           {boards.map((b) => (
             <option key={b.id} value={b.id}>
@@ -365,7 +365,7 @@ export function ReportsPage() {
                     </li>
                   ))}
               </ul>
-              <p className="sheet__hint" style={{ margin: '10px 0 0' }}>
+              <p className="sheet__hint u-m-8-0-0">
                 {customers.quiet ? t('reports.quietN', { n: customers.quiet }) : t('reports.quietNone')}
               </p>
             </section>
@@ -415,7 +415,7 @@ export function ReportsPage() {
                         onClick: () => navigate(`/records/${opp!.key}`),
                       }))}
                     />
-                    {pipeline.expansion > 0 && amount && <p className="sheet__hint" style={{ margin: '10px 0 0' }}>{t('reports.expansionWon', { value: fmt(amount, pipeline.expansion) })}</p>}
+                    {pipeline.expansion > 0 && amount && <p className="sheet__hint u-m-8-0-0">{t('reports.expansionWon', { value: fmt(amount, pipeline.expansion) })}</p>}
                   </section>
                 )}
               </div>

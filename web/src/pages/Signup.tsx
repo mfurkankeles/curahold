@@ -115,7 +115,7 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
           <h1 className="auth__title">{t('signup.title')}</h1>
           <p className="auth__sub">{t('signup.sub')}</p>
           {error && <div className="notice notice--error" role="alert">{error}</div>}
-          <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+          <form onSubmit={submit} className="u-display-grid u-gap-12">
             <label className="field">
               <span className="field__label">{t('auth.email')}</span>
               <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -251,7 +251,7 @@ function Details({ onLocale }: { onLocale: (l: Locale) => void }) {
       {v.existing.length > 0 && (
         <div className="notice">
           {v.existing.map((o) => (
-            <p key={o.url} style={{ margin: 0 }}>
+            <p key={o.url} className="u-m-0">
               {t('signup.colleagues', { name: o.name })}{' '}
               <a href={`${o.url}/login?email=${encodeURIComponent(v.email)}`}>{o.joinRequests ? t('signup.askToJoin') : t('signup.openIt')}</a>
             </p>

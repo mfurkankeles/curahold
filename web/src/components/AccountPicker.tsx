@@ -54,7 +54,7 @@ export function AccountPicker({ value, name, onChange, disabled }: { value: stri
       </button>
       {open && (
         <div className="picker__pop" role="listbox">
-          <input className="input" autoFocus placeholder={t('common.search')} value={q} onChange={(e) => setQ(e.target.value)} style={{ marginBottom: 4 }} />
+          <input className="input u-mb-4" autoFocus placeholder={t('common.search')} value={q} onChange={(e) => setQ(e.target.value)} />
           {value && (
             <button className="picker__opt picker__opt--btn" onClick={() => choose(null)}>
               <span className="muted">{t('task.noAccount')}</span>

@@ -51,7 +51,7 @@ export function RolesTab() {
   return (
     <div className="roles">
       <p className="lede">{t('settings.roles.intro')}</p>
-      <div className="toolbar" style={{ marginBottom: 14 }}>
+      <div className="toolbar u-mb-12">
         <div className="seg" role="group" aria-label={t('settings.roles.view')}>
           <button aria-pressed={view === 'roles'} onClick={() => setView('roles')}>
             {t('settings.roles.byRole')}
@@ -193,9 +193,9 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
           </tbody>
         </table>
       </div>
-      <p className="field__hint" style={{ marginTop: 10 }}>{t('settings.roles.baseline')}</p>
+      <p className="field__hint u-mt-8">{t('settings.roles.baseline')}</p>
       {editable && (
-        <button className="btn btn--primary" style={{ marginTop: 6 }} onClick={() => setAdding(true)}>
+        <button className="btn btn--primary u-mt-4" onClick={() => setAdding(true)}>
           <Icon name="plus" size={16} />
           {t('settings.roles.new')}
         </button>
@@ -258,7 +258,7 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
   const shown = people.filter((p) => (!role || p.roleId === role) && (!needle || p.name.toLocaleLowerCase().includes(needle) || p.email.includes(needle)));
   return (
     <>
-      <div className="toolbar" style={{ marginBottom: 12 }}>
+      <div className="toolbar u-mb-12">
         <input className="input search" type="search" value={q} placeholder={t('settings.people.search')} aria-label={t('settings.people.search')} onChange={(e) => setQ(e.target.value)} />
         <select className="select" value={role} aria-label={t('settings.people.role')} onChange={(e) => setRole(e.target.value)}>
           <option value="">{t('settings.roles.allRoles')}</option>
@@ -292,11 +292,11 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
             return (
               <tr key={p.id}>
                 <td>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div className="u-display-flex u-gap-8 u-align-items-center">
                     <Avatar person={p} />
                     <div>
-                      <div style={{ fontWeight: 500 }}>{p.name}</div>
-                      <div className="muted" style={{ fontSize: 12.5 }}>
+                      <div className="u-font-weight-500">{p.name}</div>
+                      <div className="muted u-fs-xs">
                         {p.email}
                       </div>
                     </div>
@@ -304,13 +304,13 @@ function PeopleAccess({ roles, people, reload }: { roles: Role[]; people: Access
                 </td>
                 <td>
                   {r?.name}
-                  {p.seat === 'viewer' && <span className="badge" style={{ marginInlineStart: 6 }}>{t('settings.people.seat.viewer')}</span>}
-                  {p.status !== 'active' && <span className={`badge badge--${p.status}`} style={{ marginInlineStart: 6 }}>{t(`settings.people.status.${p.status}` as any)}</span>}
+                  {p.seat === 'viewer' && <span className="badge u-ms-4">{t('settings.people.seat.viewer')}</span>}
+                  {p.status !== 'active' && <span className={`${`badge badge--${p.status}`} u-ms-4`}>{t(`settings.people.status.${p.status}` as any)}</span>}
                 </td>
                 <td className="hide-phone muted">
                   {n === GRANT_PERMS.length ? t('settings.roles.everything') : n === 0 ? t('settings.roles.dailyOnly') : t('settings.roles.permCount', { n, total: GRANT_PERMS.length })}
                 </td>
-                <td style={{ textAlign: 'end' }}>
+                <td className="u-text-align-end">
                   <button className="btn btn--small" onClick={() => setOpen(p.id)}>
                     {t('settings.roles.whatCan')}
                   </button>

@@ -105,7 +105,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   return (
     <>
       <header className="topbar">
-        <div style={{ minWidth: 0 }}>
+        <div className="u-min-width-0">
           <h1 className="topbar__title topbar__title--icon">
           <PageIcon name="board" />
           <span>{board.name}</span>

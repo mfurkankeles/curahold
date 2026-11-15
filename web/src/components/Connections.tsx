@@ -134,7 +134,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
   return (
     <div className="conns">
       {broken.length > 0 && (
-        <div className="notice notice--error" role="alert" style={{ marginBottom: 12 }}>
+        <div className="notice notice--error u-mb-12" role="alert">
           <strong>{t('conn.alert', { n: broken.length })}</strong> {t('conn.alertHint')}{' '}
           {broken.some((c) => c.kind === 'source') && (
             <a href="/settings/sources" onClick={(e) => { e.preventDefault(); navigate('/settings/sources'); }}>
@@ -144,7 +144,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
         </div>
       )}
       <h3 className="section__head">{t('conn.twoWay')}</h3>
-      <p className="field__hint" style={{ marginTop: -4 }}>
+      <p className="field__hint u-mt-n4">
         {t('conn.twoWayHint')}
       </p>
       <div className="tiles">
@@ -156,7 +156,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
                 <span className="tile__badge" aria-hidden="true">
                   {PROVIDER_NAMES[p.id][0]}
                 </span>
-                <div style={{ minWidth: 0 }}>
+                <div className="u-min-width-0">
                   <strong>{PROVIDER_NAMES[p.id]}</strong>
                   {c && <div className="muted tile__sub">{c.label}</div>}
                 </div>
@@ -207,7 +207,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
         })}
       </div>
 
-      <h3 className="section__head" style={{ marginTop: 22 }}>
+      <h3 className="section__head u-mt-20">
         <span>{t('conn.oneWay')}</span>
         {!adding && (
           <button className="btn btn--small" onClick={() => setAdding(true)}>
@@ -215,7 +215,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
           </button>
         )}
       </h3>
-      <p className="field__hint" style={{ marginTop: -4 }}>
+      <p className="field__hint u-mt-n4">
         {t('conn.oneWayHint')}
       </p>
       {adding && (
@@ -228,7 +228,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
         />
       )}
       {hooks.length > 0 && (
-        <table className="table" style={{ marginTop: 10 }}>
+        <table className="table u-mt-8">
           <tbody>
             {hooks.map((c) => (
               <tr key={c.id}>
@@ -247,7 +247,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
         </table>
       )}
       {back === 'settings' && (
-        <p className="field__hint" style={{ marginTop: 22 }}>
+        <p className="field__hint u-mt-20">
           {t('conn.sourcesPointer', { n: sources.length })}{' '}
           <a href="/settings/sources" onClick={(e) => { e.preventDefault(); navigate('/settings/sources'); }}>
             {t('settings.tab.sources')}
@@ -311,7 +311,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
   };
 
   return (
-    <form className="sheet form" onSubmit={submit} style={{ maxWidth: 'none' }}>
+    <form className="sheet form u-max-width-none" onSubmit={submit}>
       <div className="form__row">
         <label className="field">
           <span className="field__label">{t('conn.app')}</span>
@@ -347,7 +347,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
         </label>
       )}
       {error && <p className="error-text">{error}</p>}
-      <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+      <div className="inline-actions u-justify-content-flex-start">
         <button className="btn btn--primary" disabled={busy || !url.trim()}>
           <Icon name="plug" size={16} />
           {busy ? t('common.saving') : t('conn.addAndTest')}

@@ -106,7 +106,7 @@ function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: 
       onClose={onClose}
       footer={
         <>
-          <button className="btn btn--quiet" style={{ marginInlineEnd: 'auto' }} onClick={() => void save(null)}>
+          <button className="btn btn--quiet u-me-auto" onClick={() => void save(null)}>
             {t('records.columnsReset')}
           </button>
           <button className="btn btn--quiet" onClick={onClose}>
@@ -118,7 +118,7 @@ function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: 
         </>
       }
     >
-      <p className="field__hint" style={{ marginTop: 0 }}>
+      <p className="field__hint u-mt-0">
         {t('records.columnsLead')}
       </p>
       <ol className="colpick">
@@ -350,7 +350,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
       </header>
       <div className={view === 'board' ? 'page page--board' : 'page'}>
         <RecordTabs current={typeKey} types={types} />
-        <div className="toolbar" style={{ marginBottom: 12 }}>
+        <div className="toolbar u-mb-12">
           {choices.length > 0 && (
             <div className="seg seg--views" role="tablist" onKeyDown={onTabKeys}>
               <button role="tab" aria-selected={view === 'board'} tabIndex={view === 'board' ? 0 : -1} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
@@ -739,7 +739,7 @@ export function RecordDialog({
       footer={
         <>
           {record && can('accounts.manage') && (
-            <button className="btn btn--quiet btn--danger" style={{ marginInlineEnd: 'auto' }} onClick={() => setRemoving(true)}>
+            <button className="btn btn--quiet btn--danger u-me-auto" onClick={() => setRemoving(true)}>
               {t('common.delete')}
             </button>
           )}

@@ -39,8 +39,8 @@ export function SkeletonCards({ count = 6, label, columns }: { count?: number; l
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="skeleton__card">
           <i style={{ width: `${52 + ((i * 29) % 36)}%` }} />
-          <i style={{ width: '38%' }} />
-          {!columns && <i style={{ width: '64%' }} />}
+          <i className="u-width-38pc" />
+          {!columns && <i className="u-width-64pc" />}
           {columns && (
             <>
               <b />
@@ -58,8 +58,8 @@ export function SkeletonCards({ count = 6, label, columns }: { count?: number; l
 export function LoadError({ message, onRetry }: { message?: string | null; onRetry: () => void }) {
   const { t } = useI18n();
   return (
-    <div className="notice notice--error" role="alert" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-      <span style={{ flex: 1, minWidth: 200 }}>{message || t('errors.loadFailed')}</span>
+    <div className="notice notice--error u-display-flex u-gap-12 u-align-items-center u-flex-wrap-wrap" role="alert">
+      <span className="u-flex-1 u-min-width-200">{message || t('errors.loadFailed')}</span>
       <button className="btn btn--small" onClick={onRetry}>
         {t('common.retry')}
       </button>

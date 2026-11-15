@@ -115,7 +115,7 @@ function AccountsStep({ onNext }: { onNext: () => void }) {
   return (
     <>
       <Importer compact onImported={() => setImported(true)} />
-      <p className="field__hint" style={{ marginTop: 12 }}>
+      <p className="field__hint u-mt-12">
         {t('setup.accounts.crm')}{' '}
         <a
           href="/settings/sources"
@@ -213,7 +213,7 @@ function PeopleStep({ onNext }: { onNext: () => void }) {
   return (
     <>
       {Object.keys(teams).length > 0 && (
-        <div className="sheet" style={{ marginBottom: 14 }}>
+        <div className="sheet u-mb-12">
           <h3 className="section__head">{t('setup.people.teams')}</h3>
           <div className="team-picks">
             {Object.entries(teams).map(([name, v]) => (
@@ -242,7 +242,7 @@ function PeopleStep({ onNext }: { onNext: () => void }) {
         <table className="table people-picks">
           <thead>
             <tr>
-              <th style={{ width: 36 }}>
+              <th className="u-width-36">
                 <input
                   type="checkbox"
                   aria-label={t('setup.people.all')}
@@ -304,12 +304,12 @@ function PeopleStep({ onNext }: { onNext: () => void }) {
       )}
 
       {data.nameOnly.length > 0 && (
-        <p className="notice" style={{ marginTop: 12 }}>
+        <p className="notice u-mt-12">
           {t('setup.people.nameOnly', { names: data.nameOnly.map((n) => n.name).join(', ') })}
         </p>
       )}
 
-      <label className="field" style={{ marginTop: 14 }}>
+      <label className="field u-mt-12">
         <span className="field__label">{t('setup.people.paste')}</span>
         <textarea className="textarea" rows={3} value={paste} placeholder={t('setup.people.pastePlaceholder')} onChange={(e) => setPaste(e.target.value)} />
         {pasted.length > 0 && <span className="field__hint">{t('setup.people.pasteCount', { n: pasted.length })}</span>}
@@ -361,7 +361,7 @@ function FinishStep({ done, onGo }: { done: Set<SetupStep>; onGo: (s: SetupStep)
         ))}
       </ul>
       {invited > 0 && (
-        <label className="checkbox" style={{ margin: '16px 0' }}>
+        <label className="checkbox u-m-16-0">
           <input type="checkbox" checked={send} onChange={(e) => setSend(e.target.checked)} />
           <span>{t('setup.finish.sendInvites', { n: invited })}</span>
         </label>

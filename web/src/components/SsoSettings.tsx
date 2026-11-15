@@ -109,7 +109,7 @@ export function SsoSettings() {
   );
 
   return (
-    <div style={{ display: 'grid', gap: 16, maxWidth: 640 }}>
+    <div className="u-display-grid u-gap-16 u-max-width-640">
       <div>
         <h2>{k('sso.title')}</h2>
         <p className="muted">{k('sso.subtitle')}</p>

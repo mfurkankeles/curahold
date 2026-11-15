@@ -53,7 +53,7 @@ export function RequestForm({ board, onClose, onSent }: { board: Board; onClose:
         </>
       }
     >
-      {form.intro?.trim() && <p className="lede" style={{ margin: 0 }}>{form.intro}</p>}
+      {form.intro?.trim() && <p className="lede u-m-0">{form.intro}</p>}
       <label className="field">
         <span className="field__label">{t('boardForm.what')}</span>
         <input className="input" value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)} />

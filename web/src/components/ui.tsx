@@ -199,7 +199,7 @@ export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose,
         </>
       }
     >
-      <p style={{ margin: 0 }}>{body}</p>
+      <p className="u-m-0">{body}</p>
       {children}
     </Dialog>
   );
@@ -232,7 +232,7 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
         {selected.length ? (
           <>
             <Avatars people={selected} max={4} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.map((p) => p.name).join(', ')}</span>
+            <span className="u-overflow-hidden u-text-overflow-ellipsis u-white-space-nowrap">{selected.map((p) => p.name).join(', ')}</span>
           </>
         ) : (
           <span className="muted">{t('task.unassigned')}</span>
@@ -240,7 +240,7 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
       </button>
       {open && (
         <div className="picker__pop" role="listbox" aria-multiselectable="true">
-          <input className="input" autoFocus placeholder={t('common.search')} value={q} onChange={(e) => setQ(e.target.value)} style={{ marginBottom: 4 }} />
+          <input className="input u-mb-4" autoFocus placeholder={t('common.search')} value={q} onChange={(e) => setQ(e.target.value)} />
           {list.map((p) => {
             const on = value.includes(p.id);
             return (

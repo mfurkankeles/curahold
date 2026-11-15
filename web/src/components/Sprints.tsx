@@ -164,7 +164,7 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
       onDragCancel={() => setDragging(null)}
     >
       <div className="page">
-        <p className="muted" style={{ marginTop: 0 }}>
+        <p className="muted u-mt-0">
           {t('pm.backlog.hint')} <span className="num">{t('pm.points.short', { n: sum(tasks) })}</span>
         </p>
         {canWrite && (
@@ -487,7 +487,7 @@ function SummaryStrip({ summary }: { summary: SprintSummary | null }) {
         </div>
       </div>
       <Bar done={summary.donePoints} total={summary.totalPoints} />
-      <div className="card__chips" style={{ marginTop: 8 }}>
+      <div className="card__chips u-mt-8">
         {ISSUE_TYPES.filter((k) => summary.byType[k]?.count).map((k) => (
           <span key={k} className="schip" data-tone="slate">
             {t(`pm.type.${k}`)} {summary.byType[k].done}/{summary.byType[k].count} · {t('pm.points.short', { n: summary.byType[k].points })}
@@ -644,7 +644,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
           </button>
         )}
       </div>
-      {sprint.goal && <p className="muted" style={{ margin: '0 0 12px' }}>{sprint.goal}</p>}
+      {sprint.goal && <p className="muted u-m-0-0-12">{sprint.goal}</p>}
       <SummaryStrip summary={summary} />
       {summary && summary.itemCount > 0 && <BurndownChart sprintId={sprint.id} refreshKey={refreshKey + bump} />}
       {items === null ? (
@@ -740,7 +740,7 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
               </span>
             )}
           </div>
-          {s.goal && <p className="muted" style={{ margin: '0 0 8px' }}>{s.goal}</p>}
+          {s.goal && <p className="muted u-m-0-0-8">{s.goal}</p>}
           <SprintBrief sprint={s} refreshKey={refreshKey} />
           {openId === s.id && <SprintItems sprint={s} editable={canWrite && s.state !== 'closed'} onChanged={onChanged} />}
         </section>
@@ -813,8 +813,7 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
           <PointsChip points={x.storyPoints} />
           {editable && (
             <button
-              className="btn btn--quiet btn--small"
-              style={{ marginInlineStart: 'auto' }}
+              className="btn btn--quiet btn--small u-ms-auto"
               onClick={async () => {
                 if (await save(() => del(`/sprints/${sprint.id}/items/${x.id}`), t('pm.removed'))) {
                   void load();
@@ -939,7 +938,7 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
                 <button className="rowlink" onClick={() => setQuery('task', e.id)}>
                   {e.title}
                 </button>
-                <span className="muted" style={{ marginInlineStart: 'auto' }}>
+                <span className="muted u-ms-auto">
                   {t('pm.sprint.items', { n: e.childCount })}
                 </span>
               </li>

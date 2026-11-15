@@ -114,7 +114,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
 
   if (!pages)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <SkeletonCards count={4} label={t('common.loading')} />
       </div>
     );

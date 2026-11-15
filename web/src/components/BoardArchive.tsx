@@ -50,7 +50,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
   return (
     <div className="page">
       <div className="viewbar">
-        <input className="input" style={{ maxWidth: 320 }} value={q} placeholder={t('archive.search')} aria-label={t('archive.search')} onChange={(e) => setQ(e.target.value)} />
+        <input className="input u-max-width-320" value={q} placeholder={t('archive.search')} aria-label={t('archive.search')} onChange={(e) => setQ(e.target.value)} />
         <p className="viewbar__lead">{keep ? t('archive.leadAuto', { n: keep }) : t('archive.leadManual')}</p>
       </div>
       {!data ? (
@@ -60,7 +60,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
           <EmptyState compact icon="checkCircle" tone="done" title={q.trim() ? t('archive.noMatch') : t('archive.empty')} body={q.trim() ? undefined : keep ? t('archive.emptyBodyAuto', { n: keep }) : t('archive.emptyBody')} />
         </div>
       ) : (
-        <div className="sheet" style={{ padding: 0 }}>
+        <div className="sheet u-p-0">
           <table className="table archive-table">
             <thead>
               <tr>
@@ -87,7 +87,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
                     </span>
                   </td>
                   <td className="num muted">{x.archivedAt ? fmtDate(x.archivedAt.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</td>
-                  <td style={{ textAlign: 'end' }}>
+                  <td className="u-text-align-end">
                     {canWrite && (
                       <button className="btn btn--small" disabled={busy === x.id} onClick={() => void restore(x)}>
                         <Icon name="undo" size={14} /> {t('archive.restore')}
@@ -99,7 +99,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
             </tbody>
           </table>
           {data.more && (
-            <div style={{ padding: 12, textAlign: 'center' }}>
+            <div className="u-p-12 u-text-align-center">
               <button className="btn btn--quiet" onClick={() => void load(data.tasks.length)}>
                 {t('archive.more', { n: data.total - data.tasks.length })}
               </button>

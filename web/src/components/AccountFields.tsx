@@ -590,7 +590,7 @@ export function RecordTypesEditor() {
           </div>
         </section>
       )}
-      <div className="toolbar" style={{ marginTop: 12 }}>
+      <div className="toolbar u-mt-12">
         {!has('contact') && (
           <button className="btn btn--small" onClick={() => addBuiltin('contact')}>
             {t('records.types.addContacts')}
@@ -634,7 +634,7 @@ function TypeNames({ type, onSaved }: { type: RecordType; onSaved: () => unknown
   const [other, setOther] = useState(type.name.other[locale] ?? labelOf(type.name.other, locale));
   const changed = one !== labelOf(type.name.one, locale) || other !== labelOf(type.name.other, locale);
   return (
-    <div className="form__row" style={{ margin: '10px 0 14px' }}>
+    <div className="form__row u-m-8-0-12">
       <label className="field">
         <span className="field__label">{t('records.types.one')}</span>
         <input className="input" value={one} maxLength={60} onChange={(e) => setOne(e.target.value)} />
@@ -644,8 +644,7 @@ function TypeNames({ type, onSaved }: { type: RecordType; onSaved: () => unknown
         <input className="input" value={other} maxLength={60} onChange={(e) => setOther(e.target.value)} />
       </label>
       <button
-        className="btn btn--small"
-        style={{ alignSelf: 'end' }}
+        className="btn btn--small u-align-self-end"
         disabled={!changed || !one.trim() || !other.trim()}
         onClick={async () => {
           try {

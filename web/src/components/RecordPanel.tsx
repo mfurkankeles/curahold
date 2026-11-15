@@ -144,7 +144,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
           </div>
         ) : !rec || !type ? (
           <div className="panel__body">
-            <div className="pane__wait" style={{ height: 160 }} />
+            <div className="pane__wait u-height-160" />
           </div>
         ) : (
           <div className="panel__body">
@@ -214,7 +214,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
                   </button>
                 )}
               </h3>
-              {tasks.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('recordPanel.noTasks')}</p>}
+              {tasks.length === 0 && <p className="muted u-m-0">{t('recordPanel.noTasks')}</p>}
               <ul className="recpanel__tasks">
                 {tasks.map((x) => {
                   const state = dueState(x.dueDate, !!x.done);
@@ -275,7 +275,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
                   {t('task.comments')}
                 </span>
               </h3>
-              {rec.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('recordPanel.noComments')}</p>}
+              {rec.comments.length === 0 && <p className="muted u-m-0">{t('recordPanel.noComments')}</p>}
               {rec.comments.map((c) => (
                 <CommentView
                   key={c.id}
@@ -300,7 +300,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
               )}
             </section>
 
-            <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+            <p className="muted u-m-0 u-fs-xs">
               {rec.createdBy
                 ? t('task.createdBy', { name: person(rec.createdBy)?.name ?? t('common.unknownUser'), date: fmtDate(rec.createdAt, { day: 'numeric', month: 'long', year: 'numeric' }) })
                 : t('recordPanel.createdAt', { date: fmtDate(rec.createdAt, { day: 'numeric', month: 'long', year: 'numeric' }) })}

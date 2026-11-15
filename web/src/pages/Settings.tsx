@@ -233,7 +233,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
               </select>
             </label>
           </div>
-          <label className="field" style={{ maxWidth: 360 }}>
+          <label className="field u-max-width-360">
             <span className="field__label">{t('settings.company.currency')}</span>
             <select className="select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
               {(CURRENCIES.includes(currency) ? CURRENCIES : [currency, ...CURRENCIES]).map((c) => (
@@ -261,7 +261,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
             {t('settings.company.vocabulary')}
           </h2>
         <p className="sheet__hint">{t('settings.company.vocabularyHint')}</p>
-        <div className="field" style={{ marginBottom: 14 }}>
+        <div className="field u-mb-12">
           <span className="field__label">{t('settings.company.vocabularyPick')}</span>
           <div className="rb-chips">
             {VOCAB.map((v) => (
@@ -271,7 +271,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
             ))}
           </div>
         </div>
-        <p className="field__hint" style={{ margin: '0 0 8px' }}>{t('settings.company.vocabularyOwn')}</p>
+        <p className="field__hint u-m-0-0-8">{t('settings.company.vocabularyOwn')}</p>
         <div className="form__row">
           {word('en', 'one', `English, ${t('settings.company.singular').toLocaleLowerCase()}`)}
           {word('en', 'other', `English, ${t('settings.company.plural').toLocaleLowerCase()}`)}
@@ -360,7 +360,7 @@ function PeopleTab() {
         </div>
         <p className="field__hint">{t('settings.people.seatHint', { max: me.org.maxDevices })}</p>
       </div>
-      <div className="toolbar" style={{ marginBottom: 12 }}>
+      <div className="toolbar u-mb-12">
         <input className="input search" type="search" value={q} placeholder={t('settings.people.search')} aria-label={t('settings.people.search')} onChange={(e) => setQ(e.target.value)} />
         <select className="select" value={status} aria-label={t('settings.people.status')} onChange={(e) => setStatus(e.target.value as any)}>
           <option value="all">{t('settings.people.filter.all')}</option>
@@ -397,11 +397,11 @@ function PeopleTab() {
             return (
               <tr key={u.id}>
                 <td>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div className="u-display-flex u-gap-8 u-align-items-center">
                     <Avatar person={u} />
                     <div>
-                      <div style={{ fontWeight: 500 }}>{u.name}</div>
-                      {!deleted && <div className="muted" style={{ fontSize: 12.5 }}>{u.email}</div>}
+                      <div className="u-font-weight-500">{u.name}</div>
+                      {!deleted && <div className="muted u-fs-xs">{u.email}</div>}
                     </div>
                   </div>
                 </td>
@@ -560,9 +560,9 @@ function UserDevices({ user, onClose }: { user: AdminUser; onClose: () => void }
       {list?.length === 0 && <p className="muted">{t('common.none')}</p>}
       {list?.map((s) => (
         <div key={s.id} className="filerow">
-          <div style={{ flex: 1 }}>
+          <div className="u-flex-1">
             <div>{s.deviceLabel || t('devices.unknown')}</div>
-            <div className="muted" style={{ fontSize: 12.5 }}>{t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}</div>
+            <div className="muted u-fs-xs">{t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}</div>
           </div>
           <button className="btn btn--small" onClick={async () => { if (await save(() => del(`/admin/sessions/${s.id}`), false)) await load(); }}>
             {t('devices.signOut')}
@@ -581,10 +581,9 @@ function TeamsTab() {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
   const active = people.filter((p) => p.status !== 'deleted');
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div className="u-max-width-760">
       <form
-        className="toolbar"
-        style={{ marginBottom: 14 }}
+        className="toolbar u-mb-12"
         onSubmit={async (e) => {
           e.preventDefault();
           if (await save(() => post('/admin/teams', { name, memberIds: [] }))) {
@@ -593,7 +592,7 @@ function TeamsTab() {
           }
         }}
       >
-        <input className="input" style={{ maxWidth: 320 }} placeholder={t('settings.teams.new')} aria-label={t('settings.teams.new')} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+        <input className="input u-max-width-320" placeholder={t('settings.teams.new')} aria-label={t('settings.teams.new')} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
         <button className="btn btn--primary" disabled={!name.trim()}>
           <Icon name="plus" size={16} />
           {t('common.create')}
@@ -602,8 +601,8 @@ function TeamsTab() {
       {teams.length === 0 && <div className="empty">{t('settings.teams.empty')}</div>}
       {teams.map((tm) => (
         <div className="sheet" key={tm.id}>
-          <div className="toolbar" style={{ marginBottom: 12 }}>
-            <h2 className="sheet__title" style={{ margin: 0 }}>
+          <div className="toolbar u-mb-12">
+            <h2 className="sheet__title u-m-0">
               <Icon name="people" size={18} className="icon--lead" />
               {tm.name}
             </h2>
@@ -657,7 +656,7 @@ function AuditTab() {
   if (!entries) return <div className="empty">{t('common.loading')}</div>;
   if (!entries.length) return <div className="empty">{t('settings.audit.empty')}</div>;
   return (
-    <table className="table" style={{ maxWidth: 900 }}>
+    <table className="table u-max-width-900">
       <thead>
         <tr>
           <th>{t('settings.audit.when')}</th>
@@ -710,9 +709,9 @@ function ErrorsTab() {
       .catch(() => setRows([]));
   }, [source]);
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div className="u-max-width-900">
       <p className="muted small">{t('settings.errors.intro')}</p>
-      <div className="seg" role="group" aria-label={t('settings.errors.filter')} style={{ marginBottom: 12 }}>
+      <div className="seg u-mb-12" role="group" aria-label={t('settings.errors.filter')}>
         {(['', 'server', 'browser'] as const).map((s) => (
           <button key={s || 'all'} type="button" aria-pressed={source === s} onClick={() => setSource(s)}>
             {t(`settings.errors.${s || 'all'}` as any)}
@@ -857,7 +856,7 @@ function JoiningTab() {
   const policy = me.org.autoJoin ? 'auto' : me.org.joinRequests ? 'requests' : 'invite';
 
   return (
-    <div className="form" style={{ maxWidth: 760 }}>
+    <div className="form u-max-width-760">
       <section className="sheet">
         <h3 className="section__head">{t('join.requestsTitle', { n: requests?.length ?? 0 })}</h3>
         {!requests ? (
@@ -938,9 +937,9 @@ function JoiningTab() {
           {me.org.domains.length === 0 && <span className="muted">{t('join.noDomains')}</span>}
         </div>
         {pendingDomain ? (
-          <div className="toolbar" style={{ marginTop: 12 }}>
+          <div className="toolbar u-mt-12">
             <span>{t('join.codeSent', { email: pendingDomain })}</span>
-            <input className="input code-input" style={{ width: 120 }} inputMode="numeric" maxLength={6} value={code} aria-label={t('join.code')} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+            <input className="input code-input u-width-120" inputMode="numeric" maxLength={6} value={code} aria-label={t('join.code')} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
             <button
               className="btn btn--small btn--primary"
               disabled={code.length !== 6}
@@ -960,8 +959,8 @@ function JoiningTab() {
             </button>
           </div>
         ) : (
-          <div className="toolbar" style={{ marginTop: 12 }}>
-            <input className="input" type="email" style={{ width: 260 }} value={domainEmail} placeholder={t('join.domainEmail')} aria-label={t('join.domainEmail')} onChange={(e) => setDomainEmail(e.target.value)} />
+          <div className="toolbar u-mt-12">
+            <input className="input u-width-260" type="email" value={domainEmail} placeholder={t('join.domainEmail')} aria-label={t('join.domainEmail')} onChange={(e) => setDomainEmail(e.target.value)} />
             <button
               className="btn btn--small"
               disabled={!domainEmail.includes('@')}
@@ -1034,7 +1033,7 @@ function LogoEditor() {
       <div className="logo-editor__body">
         <span className="field__label">{t('settings.company.logo')}</span>
         <span className="field__hint">{me.org.logoUrl ? t('settings.company.logoHint') : `${t('settings.company.logoNone')} ${t('settings.company.logoHint')}`}</span>
-        <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+        <div className="inline-actions u-justify-content-flex-start">
           <input ref={input} type="file" accept={LOGO_TYPES.join(',')} className="sr-only" aria-label={t('settings.company.logoUpload')} onChange={(e) => upload(e.target.files?.[0])} />
           <button type="button" className="btn btn--small" disabled={busy} onClick={() => input.current?.click()}>
             {me.org.logoUrl ? t('settings.company.logoReplace') : t('settings.company.logoUpload')}

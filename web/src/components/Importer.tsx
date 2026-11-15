@@ -185,7 +185,7 @@ export function Importer({ onImported, compact }: { onImported?: (r: ImportResul
                 {t('import.ownersLater', { names: result.unmatchedOwners.slice(0, 5).map((o) => o.email ?? o.name).join(', '), n: result.unmatchedOwners.length })}
               </p>
             )}
-            <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+            <div className="inline-actions u-justify-content-flex-start">
               <button className="btn" onClick={undo} disabled={busy}>
                 {t('import.undo')}
               </button>
@@ -312,7 +312,7 @@ export function Importer({ onImported, compact }: { onImported?: (r: ImportResul
       </div>
       {!nameColumn && <p className="error-text">{t('import.needName')}</p>}
       {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
-      <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+      <div className="inline-actions u-justify-content-flex-start">
         <button className="btn btn--primary" disabled={!nameColumn || duplicate || busy} onClick={run}>
           <Icon name="upload" size={16} />
           {busy ? t('common.saving') : t('import.go', { n: sheet.rows.length })}

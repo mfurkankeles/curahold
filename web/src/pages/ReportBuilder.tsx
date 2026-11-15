@@ -133,7 +133,7 @@ export function ReportsListPage() {
       <ReportTabs active="reports" />
       <div className="page reports">
         {saved && saved.length === 0 && (
-          <div className="sheet" style={{ marginBottom: 16 }}>
+          <div className="sheet u-mb-16">
             <EmptyState compact icon="chart" title={t('rb.noneTitle')} body={t('rb.noneBody')}>
               {canWrite && (
                 <button className="btn btn--primary" onClick={() => navigate('/reports/new')}>
@@ -287,7 +287,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
 
   if (gone)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <EmptyState icon="chart" title={t('rb.goneTitle')} body={t('rb.goneBody')}>
           <button className="btn" onClick={() => navigate('/reports/all')}>
             {t('rb.back')}
@@ -297,7 +297,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     );
   if (!def || !cat || !source)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <div className="pane__wait" style={{ height: 240, borderRadius: 12 }} />
       </div>
     );
@@ -688,7 +688,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
               <span className="rb-step__n">5</span> {t('rb.step.chart')}
             </h2>
             {format !== 'tabular' && (
-              <label className="rb-share" style={{ marginTop: 0, marginBottom: 10 }}>
+              <label className="rb-share u-mt-0 u-mb-8">
                 <input type="checkbox" checked={def.showChart !== false} onChange={(e) => change({ showChart: e.target.checked })} />
                 <span>
                   <b>{t('rb.showChart')}</b>
@@ -707,13 +707,13 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
               </div>
             )}
             {shape === 0 && chart === 'gauge' && (
-              <label className="field" style={{ marginTop: 12, maxWidth: 260 }}>
+              <label className="field u-mt-12 u-max-width-260">
                 <span className="field__label">{t('rb.goal')}</span>
                 <input className="input num" type="number" min={1} value={def.goal ?? ''} placeholder={t('rb.goalHint')} onChange={(e) => change({ goal: e.target.value === '' ? undefined : Math.max(1, Number(e.target.value)) })} />
               </label>
             )}
             {((shape === 0 && chart === 'table') || format === 'summary') && (
-              <div className="field" style={{ marginTop: 12 }}>
+              <div className="field u-mt-12">
                 <span className="field__label">{format === 'summary' ? t('rb.rowColumns') : t('rb.columns')}</span>
                 <div className="rb-chips">
                   {source.fields.filter((o) => !def.groups.some((g) => g.field === o.key)).map((o) => {
@@ -809,9 +809,9 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
   };
   return (
     <Dialog title={t('rb.toDashTitle')} onClose={onClose}>
-      {!report.shared && <p className="field__hint" style={{ marginTop: 0 }}>{t('rb.toDashShares')}</p>}
+      {!report.shared && <p className="field__hint u-mt-0">{t('rb.toDashShares')}</p>}
       {!pages ? (
-        <div className="pane__wait" style={{ height: 80 }} />
+        <div className="pane__wait u-height-80" />
       ) : pages.length === 0 ? (
         <EmptyState compact icon="layout" title={t('rb.dashNone')}>
           <button className="btn btn--primary" onClick={() => navigate('/dashboards')}>

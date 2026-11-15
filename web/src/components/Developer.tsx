@@ -69,7 +69,7 @@ export function AiConnect() {
       <label className="field">
         <span className="field__label">{t('dev.ai.url')}</span>
         <div className="toolbar">
-          <input className="input" readOnly value={url} style={{ flex: 1, minWidth: 220 }} onFocus={(e) => e.target.select()} />
+          <input className="input u-flex-1 u-min-width-220" readOnly value={url} onFocus={(e) => e.target.select()} />
           <button className="btn" onClick={() => copy(url)}>
             {t('me.copy')}
           </button>
@@ -139,7 +139,7 @@ export function KeyList({ all = false }: { all?: boolean }) {
       )}
       {keys && !keys.length && <p className="muted">{t('dev.keys.none')}</p>}
       {!all && (
-        <div className="toolbar" style={{ marginTop: 12 }}>
+        <div className="toolbar u-mt-12">
           <button className="btn" onClick={() => setMaking(true)}>
             {t('dev.keys.new')}
           </button>
@@ -267,7 +267,7 @@ export function DeveloperTab() {
   const eventLabel = (e: string) => t(`dev.event.${e}` as any, { account: words.one });
 
   return (
-    <div className="form" style={{ maxWidth: 760 }}>
+    <div className="form u-max-width-760">
       <section className="sheet">
         <h2 className="sheet__title">
             <Icon name="code" size={18} className="icon--lead" />
@@ -359,7 +359,7 @@ export function DeveloperTab() {
             </ul>
           )}
           {hooks && !hooks.length && <p className="muted">{t('dev.hooks.none')}</p>}
-          <div className="toolbar" style={{ marginTop: 12 }}>
+          <div className="toolbar u-mt-12">
             <button className="btn" onClick={() => setMaking(true)}>
               {t('dev.hooks.new')}
             </button>
@@ -435,7 +435,7 @@ function InboundTickets() {
   "requester": "selin@quillfield.example",
   "url": "https://help.example.com/t/4711"
 }`}</pre>
-      <div className="toolbar" style={{ marginTop: 10 }}>
+      <div className="toolbar u-mt-8">
         <button className="btn" onClick={make}>
           {info?.enabled ? t('inbound.rotate') : t('inbound.create')}
         </button>
@@ -591,7 +591,7 @@ export function ConnectAiPage() {
             <p className="field__hint">
               {t('connect.back', { host: info.redirectHost })} {t('connect.revokeLater')}
             </p>
-            <div className="toolbar" style={{ marginTop: 16 }}>
+            <div className="toolbar u-mt-16">
               <button className="btn btn--primary" disabled={busy} onClick={() => answer(true)}>
                 {t('connect.allow')}
               </button>

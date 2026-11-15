@@ -115,7 +115,7 @@ export function BoardFormEditor({ value, fields, columns, onChange }: { value: B
           </label>
           <label className="field">
             <span className="field__label">{t('boardForm.intro')}</span>
-            <textarea className="textarea" style={{ minHeight: 60 }} value={form.intro ?? ''} maxLength={1000} onChange={(e) => onChange({ ...form, intro: e.target.value })} />
+            <textarea className="textarea u-min-height-60" value={form.intro ?? ''} maxLength={1000} onChange={(e) => onChange({ ...form, intro: e.target.value })} />
           </label>
           <div className="field">
             <span className="field__label">{t('boardForm.asks')}</span>

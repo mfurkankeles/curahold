@@ -86,7 +86,7 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
   ];
   return (
     <Dialog title={t('keys.title')} onClose={onClose} wide footer={<button className="btn" onClick={onClose}>{t('common.close')}</button>}>
-      <p className="muted" style={{ margin: 0 }}>
+      <p className="muted u-m-0">
         {t('keys.lead')}
       </p>
       <div className="keys">

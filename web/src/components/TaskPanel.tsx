@@ -323,7 +323,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             )}
 
             <Section title={t('task.comments')} icon="comment">
-              {task.comments.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('task.noComments')}</p>}
+              {task.comments.length === 0 && <p className="muted u-m-0">{t('task.noComments')}</p>}
               {task.comments.map((c) => (
                 <CommentView
                   key={c.id}
@@ -348,7 +348,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
 
             <HistorySection task={task} board={board} />
 
-            <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+            <p className="muted u-m-0 u-fs-xs">
               {t('task.createdBy', { name: person(task.createdBy)?.name ?? t('common.unknownUser'), date: fmtDate(task.createdAt, { day: 'numeric', month: 'long', year: 'numeric' }) })}
             </p>
           </div>
@@ -382,7 +382,7 @@ function Section({ title, icon, children, action }: { title: string; icon: IconN
         </span>
         {action}
       </h3>
-      <div style={{ display: 'grid', gap: 4 }}>{children}</div>
+      <div className="u-display-grid u-gap-4">{children}</div>
     </section>
   );
 }
@@ -458,7 +458,7 @@ function Subtasks({ task, doneKeys, firstKey, doneKey, editable, reload, onChang
         </div>
       ))}
       {editable && (
-        <form onSubmit={add} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+        <form onSubmit={add} className="u-display-flex u-gap-4 u-mt-4">
           <input className="input" placeholder={t('task.addSubtask')} aria-label={t('task.addSubtask')} value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)} />
           <button className="btn" disabled={!title.trim()}>
             {t('common.add')}
@@ -510,7 +510,7 @@ function Files({ task, editable, reload }: { task: TaskDetail; editable: boolean
       {editable && (
         <>
           <input ref={input} type="file" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-          <button className="btn btn--small" style={{ justifySelf: 'start' }} onClick={() => input.current?.click()}>
+          <button className="btn btn--small u-justify-self-start" onClick={() => input.current?.click()}>
             {t('task.upload')}
           </button>
         </>

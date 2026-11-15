@@ -29,17 +29,17 @@ export function DevicesPage() {
         </h1>
       </header>
       <div className="page">
-        <div className="sheet" style={{ maxWidth: 640 }}>
+        <div className="sheet u-max-width-640">
           {!data && !failed && <SkeletonRows rows={3} label={t('common.loading')} />}
           {failed && <LoadError message={failed} onRetry={() => void load()} />}
           {data && <p className="sheet__hint">{t('devices.hint', { max: data.maxDevices })}</p>}
           {data?.sessions.map((s) => (
             <div key={s.id} className="filerow" style={{ borderTop: '1px solid var(--line)', padding: '12px 0' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 500 }}>
+              <div className="u-flex-1">
+                <div className="u-font-weight-500">
                   {s.deviceLabel || t('devices.unknown')} {s.current && <span className="badge badge--active">{t('devices.thisDevice')}</span>}
                 </div>
-                <div className="muted" style={{ fontSize: 13 }}>
+                <div className="muted u-fs-s">
                   {t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}
                 </div>
               </div>

@@ -153,7 +153,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
     content = (
       <div className="importer">
         <p className="notice">{undone.archived ? t('timport.undoneKept', { removed: undone.removed, kept: undone.archived }) : t('timport.undone', { removed: undone.removed })}</p>
-        <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+        <div className="inline-actions u-justify-content-flex-start">
           <button className="btn" onClick={again}>
             {t('import.another')}
           </button>
@@ -193,7 +193,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
             </ul>
           </details>
         )}
-        <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+        <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" onClick={onClose}>
             {t('timport.seeBoard')}
           </button>
@@ -209,7 +209,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
   } else if (!sheet) {
     content = (
       <div className="importer">
-        <p className="sheet__hint" style={{ marginTop: 0 }}>
+        <p className="sheet__hint u-mt-0">
           {t('timport.lead', { board: board.name })}
         </p>
         <label
@@ -321,7 +321,7 @@ export function TaskImporter({ board, onClose, onDone }: { board: Board; onClose
         </div>
         {!titleColumn && <p className="error-text">{t('timport.needTitle')}</p>}
         {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
-        <div className="inline-actions" style={{ justifyContent: 'flex-start' }}>
+        <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" disabled={!titleColumn || duplicate || busy} onClick={run}>
             <Icon name="upload" size={16} />
             {busy ? t('common.saving') : t('import.go', { n: sheet.rows.length })}

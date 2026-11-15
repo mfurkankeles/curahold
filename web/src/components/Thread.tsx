@@ -246,8 +246,7 @@ export function CommentView({ comment, author, canDelete, deleteUrl, onDeleted }
           <span className="comment__time">{relativeTime(comment.createdAt, t)}</span>
           {canDelete && (
             <button
-              className="btn btn--quiet btn--small"
-              style={{ marginInlineStart: 'auto' }}
+              className="btn btn--quiet btn--small u-ms-auto"
               onClick={async () => {
                 if (await save(() => del(deleteUrl), false)) onDeleted();
               }}
@@ -431,8 +430,7 @@ export function Composer({
       )}
       <textarea
         ref={ref}
-        className="textarea"
-        style={{ minHeight: 72 }}
+        className="textarea u-min-height-72"
         placeholder={placeholder}
         aria-label={placeholder}
         value={text}

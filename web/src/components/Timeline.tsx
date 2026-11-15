@@ -689,7 +689,7 @@ export function HealthSettings() {
   };
 
   return (
-    <div className="form" style={{ maxWidth: 820 }}>
+    <div className="form u-max-width-820">
       <section className="sheet">
         <h2 className="sheet__title">
             <Icon name="heart" size={18} className="icon--lead" />
@@ -793,7 +793,7 @@ export function HealthSettings() {
             </li>
           ))}
         </ul>
-        <div className="toolbar" style={{ marginTop: 12 }}>
+        <div className="toolbar u-mt-12">
           <select
             className="select"
             value=""
@@ -860,7 +860,7 @@ export function HealthSettings() {
             )}
           </div>
         )}
-        <div className="toolbar" style={{ marginTop: 14 }}>
+        <div className="toolbar u-mt-12">
           <button className="btn btn--primary" disabled={saved === JSON.stringify(cfg)} onClick={save}>
             {t('common.save')}
           </button>

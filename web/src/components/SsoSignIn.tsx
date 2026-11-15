@@ -22,7 +22,7 @@ export function SsoSignIn({ org }: { org: OrgPublic }) {
 
   if (!info?.enabled) return null;
   return (
-    <div style={{ display: 'grid', gap: 8 }}>
+    <div className="u-display-grid u-gap-8">
       <button className="btn" onClick={() => startSso(org.slug)}>
         {t('sso.signIn' as MessageKey)}
       </button>

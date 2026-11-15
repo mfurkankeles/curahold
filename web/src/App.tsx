@@ -298,7 +298,7 @@ function ErrorNote({ onRetry }: { onRetry: () => void }) {
   const { t } = useI18n();
   return (
     <div className="center-note">
-      <div style={{ display: 'grid', gap: 12, justifyItems: 'center' }}>
+      <div className="u-display-grid u-gap-12 u-justify-items-center">
         <p>{t('errors.network')}</p>
         <button className="btn" onClick={onRetry}>
           {t('common.retry')}

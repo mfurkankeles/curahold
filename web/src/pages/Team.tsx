@@ -62,7 +62,7 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
         </div>
         <div className="topbar__spacer" />
         {teams.length > 0 && (
-          <select className="select" style={{ width: 'auto' }} value={team} aria-label={t('team.pick')} onChange={(e) => setTeam(e.target.value)}>
+          <select className="select u-width-auto" value={team} aria-label={t('team.pick')} onChange={(e) => setTeam(e.target.value)}>
             <option value="">{t('team.everyone')}</option>
             {teams.map((x) => (
               <option key={x.id} value={x.id}>
@@ -161,7 +161,7 @@ function PersonView({ id, refreshKey }: { id: string; refreshKey: number }) {
         {title} <small className="num muted">{items.length}</small>
       </h2>
       {items.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>
+        <p className="muted u-m-0">
           {empty}
         </p>
       ) : (

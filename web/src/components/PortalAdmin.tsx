@@ -24,7 +24,7 @@ export function PortalSettingsTab() {
       <section className="sheet">
         <h3 className="section__head">{t('portal.admin.title')}</h3>
         <p className="field__hint">{t('portal.admin.explain')}</p>
-        <label className="checkbox" style={{ marginTop: 10 }}>
+        <label className="checkbox u-mt-8">
           <input
             type="checkbox"
             checked={s.enabled}
@@ -46,7 +46,7 @@ export function PortalSettingsTab() {
           </p>
         )}
         {s.enabled && (
-          <div className="field" style={{ marginTop: 12 }}>
+          <div className="field u-mt-12">
             <span className="field__label">{t('portal.admin.boards')}</span>
             {s.boards.length === 0 ? (
               <span className="field__hint">{t('portal.admin.noBoards')}</span>

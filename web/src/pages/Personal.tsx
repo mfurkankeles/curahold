@@ -70,7 +70,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
         {mode === 'welcome' && <span className="topbar__sub">{t('me.welcomeSub', { org: me.org.name })}</span>}
       </header>
       <div className="page">
-        <div className="form" style={{ maxWidth: 680 }}>
+        <div className="form u-max-width-680">
           <section className="sheet">
             <h2 className="sheet__title">
             <Icon name="user" size={18} className="icon--lead" />
@@ -135,7 +135,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               </label>
             </div>
 
-            <h3 className="section__head" style={{ marginTop: 18 }}>
+            <h3 className="section__head u-mt-16">
               {t('me.what')}
             </h3>
             <div className="perms">
@@ -147,7 +147,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               ))}
             </div>
             {prefs.events.digest !== false && (
-              <label className="field" style={{ marginTop: 12, maxWidth: 260 }}>
+              <label className="field u-mt-12 u-max-width-260">
                 <span className="field__label">{t('me.digestAt')}</span>
                 <select className="select" value={prefs.digestHour} onChange={(e) => setPrefs({ ...prefs, digestHour: Number(e.target.value) })}>
                   {[6, 7, 8, 9, 10, 11, 12].map((h) => (
@@ -180,7 +180,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               )}
               <span className="field__hint">{t('me.quietHint')}</span>
             </fieldset>
-            <label className="field" style={{ marginTop: 12, maxWidth: 360 }}>
+            <label className="field u-mt-12 u-max-width-360">
               <span className="field__label">{t('me.defaultBoard')}</span>
               <select className="select" value={prefs.defaultBoardId ?? ''} onChange={(e) => setPrefs({ ...prefs, defaultBoardId: e.target.value || null })}>
                 <option value="">{t('me.defaultBoardAuto')}</option>
@@ -203,7 +203,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
             {calendar.url ? (
               <>
                 <div className="toolbar">
-                  <input className="input" readOnly value={calendar.url} style={{ flex: 1, minWidth: 240 }} onFocus={(e) => e.target.select()} aria-label={t('me.calendar')} />
+                  <input className="input u-flex-1 u-min-width-240" readOnly value={calendar.url} onFocus={(e) => e.target.select()} aria-label={t('me.calendar')} />
                   <button className="btn" onClick={() => copy(calendar.url!)}>
                     {t('me.copy')}
                   </button>

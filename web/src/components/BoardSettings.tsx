@@ -72,7 +72,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
       footer={
         <>
           {board && board.canManage && (
-            <button className="btn btn--danger" style={{ marginInlineEnd: 'auto' }} onClick={() => setArchive(true)}>
+            <button className="btn btn--danger u-me-auto" onClick={() => setArchive(true)}>
               {t('board.archive')}
             </button>
           )}
@@ -119,7 +119,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
           <input type="checkbox" checked={!!columns} onChange={(e) => setColumns(e.target.checked ? pmColumns(locale) : null)} />
           <span>
             <strong>{t('pm.board.preset')}</strong>
-            <span className="field__hint" style={{ display: 'block' }}>{t('pm.board.presetHint')}</span>
+            <span className="field__hint u-display-block">{t('pm.board.presetHint')}</span>
           </span>
         </label>
       )}
@@ -128,7 +128,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         <div className="field">
           <span className="field__label">{t('board.columns')}</span>
           {columns.map((c, i) => (
-            <div key={c.key} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, alignItems: 'center' }}>
+            <div key={c.key} className="u-display-grid u-cols-1fr-auto-auto u-gap-8 u-align-items-center">
               <input className="input" aria-label={t('board.columnName')} value={c.name} maxLength={40} onChange={(e) => setCol(i, { name: e.target.value })} />
               <label className="checkbox">
                 <input type="checkbox" checked={c.done} onChange={(e) => setCol(i, { done: e.target.checked })} />
@@ -140,8 +140,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
             </div>
           ))}
           <button
-            className="btn btn--small"
-            style={{ justifySelf: 'start' }}
+            className="btn btn--small u-justify-self-start"
             disabled={columns.length >= 12}
             onClick={() => {
               const label = t('board.columnName');
@@ -259,7 +258,7 @@ function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v:
             );
           })}
           {value.length < 5 && (
-            <button className="btn btn--small" style={{ justifySelf: 'start' }} onClick={() => onChange([...value, { connectionId: conns[0].id, channel: null, events: ['created', 'done'] }])}>
+            <button className="btn btn--small u-justify-self-start" onClick={() => onChange([...value, { connectionId: conns[0].id, channel: null, events: ['created', 'done'] }])}>
               {t('board.postsAdd')}
             </button>
           )}
@@ -296,7 +295,7 @@ function BoardPmSettings({ board }: { board: Board }) {
       <input type="checkbox" checked={enabled} disabled={busy} onChange={(e) => change(e.target.checked)} />
       <span>
         <strong>{t('pm.board.enable' as MessageKey)}</strong>
-        <span className="field__hint" style={{ display: 'block' }}>{t('pm.board.enableHint' as MessageKey)}</span>
+        <span className="field__hint u-display-block">{t('pm.board.enableHint' as MessageKey)}</span>
       </span>
     </label>
   );
@@ -388,7 +387,7 @@ function BoardPortalSettings({ board }: { board: Board }) {
               </div>
             </>
           )}
-          <button className="btn btn--small" style={{ justifySelf: 'start' }} disabled={busy} onClick={save}>
+          <button className="btn btn--small u-justify-self-start" disabled={busy} onClick={save}>
             {t('portal.board.save')}
           </button>
         </>

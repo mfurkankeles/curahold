@@ -8,11 +8,11 @@ function Fallback({ onRetry, whole }: { onRetry: () => void; whole?: boolean }) 
   return (
     <div className={whole ? 'center-note' : 'page'} role="alert">
       <div style={{ display: 'grid', gap: 12, justifyItems: 'center', textAlign: 'center', margin: whole ? undefined : '48px auto', maxWidth: 420 }}>
-        <h2 style={{ margin: 0, fontSize: 18 }}>{t('errors.boundary.title')}</h2>
-        <p className="muted" style={{ margin: 0 }}>
+        <h2 className="u-m-0 u-fs-l">{t('errors.boundary.title')}</h2>
+        <p className="muted u-m-0">
           {t('errors.boundary.body')}
         </p>
-        <div className="inline-actions" style={{ justifyContent: 'center' }}>
+        <div className="inline-actions u-justify-content-center">
           <button className="btn" onClick={onRetry}>
             {t('common.retry')}
           </button>

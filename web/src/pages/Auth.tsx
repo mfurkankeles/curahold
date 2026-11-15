@@ -139,7 +139,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
       <p className="auth__sub">{t('auth.subtitle')}</p>
       {notice && <div className="notice">{notice}</div>}
       {error && <div className="notice notice--error" role="alert">{error}</div>}
-      <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+      <form onSubmit={submit} className="u-display-grid u-gap-12">
         <label className="field">
           <span className="field__label">{t('auth.email')}</span>
           <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -207,7 +207,7 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
       <p className="auth__sub">{t('join.sub')}</p>
       {!token && <div className="notice notice--error">{t('errors.invalid_token')}</div>}
       {error && <div className="notice notice--error" role="alert">{error}</div>}
-      <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+      <form onSubmit={submit} className="u-display-grid u-gap-12">
         <label className="field">
           <span className="field__label">{t('join.name')}</span>
           <input className="input" required autoComplete="name" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
@@ -284,7 +284,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
         </>
       )}
       {state === 'code' && challenge && (
-        <form onSubmit={submitCode} style={{ display: 'grid', gap: 14 }}>
+        <form onSubmit={submitCode} className="u-display-grid u-gap-12">
           <h1 className="auth__title">{t('auth.deviceTitle')}</h1>
           <p className="auth__sub">{t('auth.deviceBody', { email: challenge.email })}</p>
           {error && <div className="notice notice--error" role="alert">{error}</div>}
@@ -304,7 +304,7 @@ export function OrgNotFound() {
   const { t } = useI18n();
   return (
     <div className="center-note">
-      <div style={{ display: 'grid', gap: 10, justifyItems: 'center', maxWidth: 440 }}>
+      <div className="u-display-grid u-gap-8 u-justify-items-center u-max-width-440">
         <Mark size={40} />
         <h1 className="auth__title">{t('auth.orgNotFound')}</h1>
         <p className="muted">{t('auth.orgNotFoundHint')}</p>

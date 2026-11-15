@@ -370,7 +370,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
       wide
       footer={
         <>
-          <label className="checkbox" style={{ marginInlineEnd: 'auto' }}>
+          <label className="checkbox u-me-auto">
             <input type="checkbox" checked={draft.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
             <span>{t('auto.enabled')}</span>
           </label>

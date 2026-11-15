@@ -65,7 +65,7 @@ export function DashboardsPage() {
   };
   if (!pages || pages.length > 0)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <SkeletonCards count={4} label={t('common.loading')} />
       </div>
     );
@@ -274,13 +274,13 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
     );
   if (!pages)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <SkeletonCards count={4} label={t('common.loading')} />
       </div>
     );
   if (!current)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <EmptyState icon="layout" title={t('dash.notFound')}>
           <button className="btn" onClick={() => navigate('/dashboards')}>
             {t('nav.dashboards')}

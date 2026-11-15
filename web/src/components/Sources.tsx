@@ -101,7 +101,7 @@ export function Sources() {
     <div className="conns sources">
       <p className="lede">{t('sync.intro')}</p>
       {broken.length > 0 && (
-        <div className="notice notice--error" role="alert" style={{ marginBottom: 12 }}>
+        <div className="notice notice--error u-mb-12" role="alert">
           <strong>{t('conn.alert', { n: broken.length })}</strong> {t('conn.alertHint')}
         </div>
       )}
@@ -176,7 +176,7 @@ export function Sources() {
           </div>
         ))}
       </div>
-      <h3 className="section__head" style={{ marginTop: 22 }}>
+      <h3 className="section__head u-mt-20">
         {t('support.add')}
       </h3>
       <p className="field__hint">{t('support.addHint')}</p>
@@ -218,7 +218,7 @@ export function Sources() {
       </div>
       {warehouses.length > 0 && (
         <>
-          <h3 className="section__head" style={{ marginTop: 22 }}>
+          <h3 className="section__head u-mt-20">
             {t('warehouse.add')}
           </h3>
           <p className="field__hint">{t('warehouse.addHint')}</p>
@@ -243,7 +243,7 @@ export function Sources() {
       )}
       {mailboxes.length > 0 && (
         <>
-          <h3 className="section__head" style={{ marginTop: 22 }}>
+          <h3 className="section__head u-mt-20">
             {t('mailbox.add' as MessageKey)}
           </h3>
           <p className="field__hint">{t('mailbox.addHint' as MessageKey)}</p>
@@ -268,7 +268,7 @@ export function Sources() {
       )}
       {events.length > 0 && (
         <>
-          <h3 className="section__head" style={{ marginTop: 22 }}>
+          <h3 className="section__head u-mt-20">
             {t('events.add' as MessageKey)}
           </h3>
           <p className="field__hint">{t('events.addHint' as MessageKey)}</p>
@@ -291,7 +291,7 @@ export function Sources() {
           </div>
         </>
       )}
-      <h3 className="section__head" style={{ marginTop: 22 }}>
+      <h3 className="section__head u-mt-20">
         {t('devtools.add')}
       </h3>
       <p className="field__hint">{t('devtools.addHint')}</p>
@@ -305,7 +305,7 @@ export function Sources() {
               <strong>{PROVIDER_NAMES.jira}</strong>
             </div>
             <p className="field__hint tile__line">{t('devtools.what.jira')}</p>
-            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <div className="row u-gap-8 u-flex-wrap-wrap">
               {jiraTool.setup === 'oauth' && (
                 <a className="btn btn--primary btn--small" href="/api/connect/jira/start">
                   <Icon name="plug" size={16} />
@@ -507,13 +507,13 @@ function InboundPanel({ d }: { d: Detail }) {
   const url = d.connection.inboundUrl ?? '';
   const copy = () => void navigator.clipboard?.writeText(url).then(() => toast(t('devtools.copied')));
   return (
-    <div className="card" style={{ marginTop: 16 }}>
+    <div className="card u-mt-16">
       <h3 className="section__head">{t('segment.title' as MessageKey)}</h3>
       <p className="field__hint">{t('segment.how' as MessageKey)}</p>
       {url && (
-        <label className="field" style={{ display: 'block', marginTop: 8 }}>
+        <label className="field u-display-block u-mt-8">
           <span className="field__label">{t('segment.url' as MessageKey)}</span>
-          <span style={{ display: 'flex', gap: 8 }}>
+          <span className="u-display-flex u-gap-8">
             <input className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
             <button className="btn btn--small" onClick={copy}>
               {t('devtools.copy')}
@@ -521,7 +521,7 @@ function InboundPanel({ d }: { d: Detail }) {
           </span>
         </label>
       )}
-      <p className="field__hint" style={{ marginTop: 8 }}>
+      <p className="field__hint u-mt-8">
         {t('segment.secretNote' as MessageKey)}
       </p>
     </div>
@@ -532,10 +532,10 @@ function InboundPanel({ d }: { d: Detail }) {
 function MailboxStart({ onStart, running }: { onStart: () => void; running: string | null }) {
   const { t } = useI18n();
   return (
-    <div className="card" style={{ marginTop: 16 }}>
+    <div className="card u-mt-16">
       <h3 className="section__head">{t('mailbox.startTitle' as MessageKey)}</h3>
       <p className="field__hint">{t('mailbox.startHint' as MessageKey)}</p>
-      <button className="btn btn--primary btn--small" style={{ marginTop: 8 }} disabled={!!running} onClick={onStart}>
+      <button className="btn btn--primary btn--small u-mt-8" disabled={!!running} onClick={onStart}>
         <Icon name="refresh" size={16} />
         {running ?? t('mailbox.start' as MessageKey)}
       </button>
@@ -651,8 +651,8 @@ export function SourceDetail({ id }: { id: string }) {
       </div>
 
       {d.connection.status === 'error' && (
-        <div className="notice notice--error" role="alert" style={{ margin: '12px 0', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ flex: 1, minWidth: 200 }}>
+        <div className="notice notice--error u-m-12-0 u-display-flex u-gap-12 u-align-items-center u-flex-wrap-wrap" role="alert">
+          <span className="u-flex-1 u-min-width-200">
             <strong>{t('conn.reconnectNeeded')}</strong> {t('conn.reconnectBody', { app: name })}
             {d.connection.lastError && <span className="muted"> · {d.connection.lastError}</span>}
           </span>
@@ -695,7 +695,7 @@ export function SourceDetail({ id }: { id: string }) {
             ))}
           </div>
           {fromSetup && (
-            <div className="notice" style={{ marginBottom: 12 }}>
+            <div className="notice u-mb-12">
               {t('sync.backToSetup')}{' '}
               <a
                 href="/setup/accounts"
@@ -926,7 +926,7 @@ function FileStep({ d, onDone }: { d: Detail; onDone: () => Promise<void> }) {
       <h3 className="section__head">{t(gs ? 'sync.file.titleSheets' : 'sync.file.titleExcel')}</h3>
       <p className="field__hint">{t(gs ? 'sync.file.hintSheets' : 'sync.file.hintExcel')}</p>
       <div className="toolbar">
-        <input className="input" style={{ flex: 1, minWidth: 240 }} value={url} placeholder={gs ? 'https://docs.google.com/spreadsheets/d/…' : 'https://…sharepoint.com/…xlsx'} onChange={(e) => setUrl(e.target.value)} aria-label={t('sync.file.link')} />
+        <input className="input u-flex-1 u-min-width-240" value={url} placeholder={gs ? 'https://docs.google.com/spreadsheets/d/…' : 'https://…sharepoint.com/…xlsx'} onChange={(e) => setUrl(e.target.value)} aria-label={t('sync.file.link')} />
         <button
           className="btn btn--primary"
           disabled={busy || url.trim().length < 10}
@@ -1005,7 +1005,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
               <input type="checkbox" checked={o.enabled} disabled={o.target === 'account' && accountTaken(i)} onChange={(e) => set(i, { enabled: e.target.checked })} />
               <span>
                 <strong>{o.label}</strong>
-                {o.custom && <span className="badge" style={{ marginInlineStart: 6 }}>{t('sync.customObject')}</span>}
+                {o.custom && <span className="badge u-ms-4">{t('sync.customObject')}</span>}
               </span>
             </label>
             {o.enabled && (
@@ -1264,7 +1264,7 @@ function FieldTable({ d, o, accountFields, onChange }: { d: Detail; o: Draft; ac
   return (
     <div className="map-table">
       {d.connection.tabular && (
-        <label className="field" style={{ maxWidth: 360 }}>
+        <label className="field u-max-width-360">
           <span className="field__label">{t('sync.fields.key')}</span>
           <select className="select" value={o.key ?? ''} onChange={(e) => onChange({ key: e.target.value })}>
             {meta.map((f) => (

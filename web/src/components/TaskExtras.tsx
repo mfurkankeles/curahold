@@ -151,7 +151,7 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
           </button>
         )}
       </h3>
-      {links.length === 0 && !adding && <p className="muted small" style={{ margin: 0 }}>{t('task.links.none')}</p>}
+      {links.length === 0 && !adding && <p className="muted small u-m-0">{t('task.links.none')}</p>}
       {groups.map((g) => (
         <div key={g.k} className="tlinks">
           <span className="tlinks__kind">{t(`task.links.${g.k}` as any)}</span>

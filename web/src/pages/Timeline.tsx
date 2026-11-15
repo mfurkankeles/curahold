@@ -124,7 +124,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
               {t('board.filter.mine')}
             </button>
           </div>
-          <select className="select" style={{ width: 'auto' }} value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
+          <select className="select u-width-auto" value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
             <option value="">{t('reports.allBoards')}</option>
             {boards.map((b) => (
               <option key={b.id} value={b.id}>

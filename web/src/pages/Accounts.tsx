@@ -344,7 +344,7 @@ export function AccountsPage() {
             </p>
           )}
         </div>
-        <div className="toolbar" style={{ marginBottom: 12 }}>
+        <div className="toolbar u-mb-12">
           <input className="input search" type="search" value={q} placeholder={t('accounts.search')} aria-label={t('accounts.search')} onChange={(e) => setQ(e.target.value)} />
           <div className="seg">
             <button aria-pressed={owner === 'all'} onClick={() => setOwner('all')}>
@@ -497,7 +497,7 @@ export function AccountsPage() {
               <thead>
                 <tr>
                   {manage && (
-                    <th style={{ width: 36 }}>
+                    <th className="u-width-36">
                       <input type="checkbox" aria-label={t('accounts.selectAll')} checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(rows.map((a) => a.id)))} />
                     </th>
                   )}
@@ -835,7 +835,7 @@ export function AccountPage({ id }: { id: string }) {
     );
   if (!data)
     return (
-      <div className="page" style={{ paddingTop: 24 }}>
+      <div className="page u-pt-24">
         <SkeletonRows rows={5} label={t('common.loading')} />
       </div>
     );
@@ -897,10 +897,10 @@ export function AccountPage({ id }: { id: string }) {
               </span>
               <PlanMenu accountId={a.id} accountName={a.name} onApplied={() => void load()} />
             </h3>
-            {hours && hours.total > 0 && <p className="field__hint" style={{ margin: '-2px 0 10px' }}>{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
+            {hours && hours.total > 0 && <p className="field__hint u-m-n4-0-8">{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
             {canWrite && boards.length > 0 && (
-              <div className="toolbar" style={{ marginBottom: 10 }}>
-                <input className="input" style={{ flex: 1, minWidth: 200 }} value={title} placeholder={t('accounts.addTaskFor', { name: a.name })} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} />
+              <div className="toolbar u-mb-8">
+                <input className="input u-flex-1 u-min-width-200" value={title} placeholder={t('accounts.addTaskFor', { name: a.name })} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} />
                 <select className="select" value={boardId} aria-label={t('task.board')} onChange={(e) => setBoardId(e.target.value)}>
                   {boards.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -918,7 +918,7 @@ export function AccountPage({ id }: { id: string }) {
               <TaskLine key={task.id} task={task} />
             ))}
             {finished.length > 0 && (
-              <details style={{ marginTop: 10 }}>
+              <details className="u-mt-8">
                 <summary className="muted">{t('accounts.finishedN', { n: finished.length })}</summary>
                 {finished.map((task) => (
                   <TaskLine key={task.id} task={task} done />
