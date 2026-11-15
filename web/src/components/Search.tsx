@@ -6,6 +6,7 @@ import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { useTheme } from '../lib/theme';
 
 interface Found {
   accounts: { id: string; name: string }[];
@@ -48,6 +49,7 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const isAdmin = can('org.manage') || can('users.manage') || can('accounts.manage');
+  const [theme, setTheme] = useTheme();
 
   useEffect(() => input.current?.focus(), []);
   useEffect(() => {
@@ -57,15 +59,12 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
       return;
     }
     let live = true;
-    // A short pause only, so a burst of keys sends one question; the answer replaces the narrowed one.
-    const id = setTimeout(() => {
-      get<Found>(`/search?q=${encodeURIComponent(words)}`)
-        .then((r) => live && setAnswer({ q: words, r }))
-        .catch(() => live && setAnswer(null));
-    }, 40);
+    // Asked at once on every key: what is on screen narrows meanwhile, and only the latest answer is kept.
+    get<Found>(`/search?q=${encodeURIComponent(words)}`)
+      .then((r) => live && setAnswer({ q: words, r }))
+      .catch(() => live && setAnswer(null));
     return () => {
       live = false;
-      clearTimeout(id);
     };
   }, [q]);
 
@@ -80,9 +79,56 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
       { key: 'p:cal', group: 'places', title: t('nav.calendar'), go: go('/calendar') },
       { key: 'p:acc', group: 'places', title: words.other, go: go('/accounts') },
       ...boards.map((b) => ({ key: `b:${b.id}`, group: 'places', title: b.name, sub: t('search.board'), go: go(`/b/${b.id}`) })),
+      { key: 'p:inbox', group: 'places', title: t('nav.inbox'), go: go('/inbox') },
+      { key: 'p:team', group: 'places', title: t('nav.team'), go: go('/team') },
+      { key: 'p:timeline', group: 'places', title: t('nav.timeline'), go: go('/timeline') },
+      { key: 'p:reports', group: 'places', title: t('nav.reports'), go: go('/reports') },
+      { key: 'p:dash', group: 'places', title: t('nav.dashboards'), go: go('/dashboards') },
+      { key: 'p:trash', group: 'places', title: t('trash.title'), go: go('/trash') },
       { key: 'p:me', group: 'places', title: t('nav.profile'), go: go('/profile') },
       ...(isAdmin ? [{ key: 'p:set', group: 'places', title: t('nav.settings'), go: go('/settings') }] : []),
-      ...(can('org.manage') ? [{ key: 'p:roles', group: 'places', title: t('search.roles'), go: go('/settings/roles') }] : []),
+    ];
+    // Every settings page this person may open, by its own name.
+    const manage = can('org.manage');
+    const settings: Item[] = (
+      [
+        ['company', t('settings.tab.company'), manage],
+        ['billing', t('settings.tab.billing'), manage && !!me.org.billingOn],
+        ['currencies', t('settings.tab.currencies'), manage],
+        ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
+        ['records', t('settings.tab.records'), can('accounts.manage')],
+        ['health', t('settings.tab.health'), can('accounts.manage')],
+        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || manage],
+        ['people', t('settings.tab.people'), can('users.manage')],
+        ['joining', t('settings.tab.joining'), can('users.manage')],
+        ['teams', t('settings.tab.teams'), can('teams.manage')],
+        ['roles', t('search.roles'), manage || can('users.manage')],
+        ['sso', t('settings.tab.sso'), manage],
+        ['connections', t('settings.tab.connections'), can('connections.manage')],
+        ['sources', t('settings.tab.sources'), can('connections.manage')],
+        ['automations', t('settings.tab.automations'), can('automations.manage')],
+        ['playbooks', t('settings.tab.playbooks'), manage || can('accounts.manage')],
+        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
+        ['portal', t('settings.tab.portal'), manage],
+        ['support', t('settings.tab.support'), manage],
+        ['audit', t('settings.tab.audit'), can('audit.view')],
+        ['errors', t('settings.tab.errors'), manage],
+      ] as [string, string, boolean][]
+    )
+      .filter((x) => x[2])
+      .map(([key, title]) => ({ key: `s:${key}`, group: 'settings', title, sub: t('nav.settings'), go: go(`/settings/${key}`) }));
+    const always: Item[] = [
+      {
+        key: 'a:keys',
+        group: 'actions',
+        title: t('keys.title'),
+        go: () => {
+          onClose();
+          // The sheet opens from its own key once this box has closed.
+          setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' })), 0);
+        },
+      },
+      { key: 'a:theme', group: 'actions', title: theme === 'dark' ? t('search.themeLight') : t('search.themeDark'), go: () => (onClose(), setTheme(theme === 'dark' ? 'light' : 'dark')) },
     ];
     const actions: Item[] = canWrite
       ? [
@@ -97,8 +143,9 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
             },
           },
           { key: 'a:board', group: 'actions', title: t('nav.newBoard'), go: () => (onClose(), onNewBoard()) },
+          ...always,
         ]
-      : [];
+      : always;
     const needle = fold(q.trim());
     // What the last answer already holds that still matches, shown before the new answer comes.
     const was = answer ? fold(answer.q) : null;
@@ -116,7 +163,7 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
           };
     // People are already here: they show from the first key.
     const near = needle.length >= 2 ? people.filter((p) => (p.status === 'active' || p.status === 'invited') && has(p.name, p.email)).slice(0, 6) : [];
-    const local = [...actions, ...places].filter((i) => !needle || fold(i.title).includes(needle));
+    const local = [...actions, ...places, ...settings].filter((i) => !needle || fold(i.title).includes(needle));
     const folks = [...(found?.people ?? []), ...near.filter((p) => !found?.people.some((x) => x.id === p.id))].slice(0, 6);
     const mates: Item[] = folks.map((p) => ({ key: `p:${p.id}`, group: 'people', title: p.name, sub: p.email ?? undefined, go: go(`/accounts?owner=${p.id}`) }));
     if (!found) return needle ? [...mates, ...local] : [...actions, ...places.slice(0, 5)];
@@ -142,7 +189,7 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
       ...mates,
     ];
     return [...remote, ...local];
-  }, [answer, q, t, words, boards, people, isAdmin, can, canWrite, me, locale, onClose, onNewBoard]);
+  }, [answer, q, t, words, boards, people, isAdmin, can, canWrite, me, locale, onClose, onNewBoard, theme, setTheme]);
 
   useEffect(() => setActive(0), [items.length, q]);
   useEffect(() => {
