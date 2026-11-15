@@ -4169,4 +4169,10 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "Curahold 지원팀은 보기만 할 수 있으며 아무것도 변경할 수 없습니다.",
   'help.grant.viewOnly': "읽기 전용: 지원팀은 보기만 하고 아무것도 변경하지 않습니다. 모든 방문은 활동 기록에 표시됩니다.",
   'audit.support.viewed': "Curahold 지원팀이 데이터를 열람함",
+  'settings.audit.export': "기록 내보내기",
+  'settings.audit.exported': "기록을 내보냈습니다. 파일 지문은 기록에 남아 있습니다.",
+  'settings.audit.email': "이메일",
+  'settings.audit.entity': "항목",
+  'settings.audit.details': "세부 정보",
+  'audit.audit.exported': "활동 기록을 내보냄",
 };

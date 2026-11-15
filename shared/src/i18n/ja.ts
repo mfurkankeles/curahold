@@ -4169,4 +4169,10 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "Curahold のサポートは閲覧のみで、何も変更できません。",
   'help.grant.viewOnly': "閲覧のみ：サポートは見るだけで、何も変更しません。アクセスはすべてアクティビティログに表示されます。",
   'audit.support.viewed': "Curahold サポートがデータを閲覧しました",
+  'settings.audit.export': "ログをエクスポート",
+  'settings.audit.exported': "ログをエクスポートしました。ファイルのフィンガープリントはログに記録されています。",
+  'settings.audit.email': "メール",
+  'settings.audit.entity': "対象",
+  'settings.audit.details': "詳細",
+  'audit.audit.exported': "アクティビティログをエクスポートしました",
 };

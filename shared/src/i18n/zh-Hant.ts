@@ -4169,4 +4169,10 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "Curahold 支援人員只能檢視，絕不會變更任何內容。",
   'help.grant.viewOnly': "唯讀：支援人員可以檢視，絕不會變更任何內容。每次造訪都會顯示在活動記錄中。",
   'audit.support.viewed': "Curahold 支援人員檢視了資料",
+  'settings.audit.export': "匯出記錄",
+  'settings.audit.exported': "記錄已匯出。檔案指紋已記錄在記錄中。",
+  'settings.audit.email': "電子郵件",
+  'settings.audit.entity': "項目",
+  'settings.audit.details': "詳細資料",
+  'audit.audit.exported': "匯出了活動記錄",
 };

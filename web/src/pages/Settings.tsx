@@ -15,6 +15,7 @@ import { BillingSettings } from '../components/Billing';
 import { SubscriptionPanel } from '../components/BillingManage';
 import { SsoSettings } from '../components/SsoSettings';
 import { CompanySecurity } from '../components/CompanySecurity';
+import { AuditExport } from '../components/AuditExport';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
@@ -669,7 +670,11 @@ function AuditTab() {
   if (!entries) return <div className="empty">{t('common.loading')}</div>;
   if (!entries.length) return <div className="empty">{t('settings.audit.empty')}</div>;
   return (
-    <table className="table u-max-width-900">
+    <>
+      <div className="toolbar">
+        <AuditExport />
+      </div>
+      <table className="table u-max-width-900">
       <thead>
         <tr>
           <th>{t('settings.audit.when')}</th>
@@ -693,7 +698,8 @@ function AuditTab() {
           );
         })}
       </tbody>
-    </table>
+      </table>
+    </>
   );
 }
 

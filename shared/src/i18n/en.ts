@@ -4184,6 +4184,12 @@ export const en = {
   'errors.support_view_only': "Curahold support can only look, never change anything.",
   'help.grant.viewOnly': "Read only: support can look, never change anything. Every visit shows in your activity log.",
   'audit.support.viewed': "Curahold support viewed data",
+  'settings.audit.export': "Export the log",
+  'settings.audit.exported': "Log exported. The file's fingerprint is in the log.",
+  'settings.audit.email': "Email",
+  'settings.audit.entity': "Item",
+  'settings.audit.details': "Details",
+  'audit.audit.exported': "exported the activity log",
 } as const;
 
 export type MessageKey = keyof typeof en;

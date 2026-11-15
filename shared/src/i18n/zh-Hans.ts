@@ -4169,4 +4169,10 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "Curahold 支持人员只能查看，绝不会更改任何内容。",
   'help.grant.viewOnly': "只读：支持人员可以查看，绝不会更改任何内容。每次访问都会显示在活动日志中。",
   'audit.support.viewed': "Curahold 支持人员查看了数据",
+  'settings.audit.export': "导出日志",
+  'settings.audit.exported': "日志已导出。文件指纹已记录在日志中。",
+  'settings.audit.email': "邮箱",
+  'settings.audit.entity': "对象",
+  'settings.audit.details': "详情",
+  'audit.audit.exported': "导出了活动日志",
 };

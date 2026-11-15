@@ -4169,4 +4169,10 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "پشتیبانی Curahold فقط می‌تواند ببیند و هرگز چیزی را تغییر نمی‌دهد.",
   'help.grant.viewOnly': "فقط خواندنی: پشتیبانی می‌تواند ببیند اما چیزی را تغییر نمی‌دهد. هر بازدید در گزارش فعالیت دیده می‌شود.",
   'audit.support.viewed': "پشتیبانی Curahold داده‌ها را مشاهده کرد",
+  'settings.audit.export': "خروجی گرفتن از گزارش",
+  'settings.audit.exported': "گزارش خروجی گرفته شد. اثر انگشت فایل در گزارش ثبت شد.",
+  'settings.audit.email': "ایمیل",
+  'settings.audit.entity': "مورد",
+  'settings.audit.details': "جزئیات",
+  'audit.audit.exported': "از گزارش فعالیت خروجی گرفت",
 };

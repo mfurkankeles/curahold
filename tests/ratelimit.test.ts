@@ -125,7 +125,12 @@ describe('invitations', () => {
     expect(r.status).toBe(429);
     expect(Number(r.headers.get('retry-after'))).toBeGreaterThan(60);
     // Last hour's only: an hour later the company may invite again.
-    await env.db.system((q) => q.query(`update audit_log set at = at - interval '2 hours' where org_id = $1 and action = 'user.invited'`, [org.id]));
+    // The log is append-only (migration 0055); only the test, as the database owner, steps around that to move time.
+    await env.db.system(async (q) => {
+      await q.query('alter table audit_log disable trigger audit_log_no_update');
+      await q.query(`update audit_log set at = at - interval '2 hours' where org_id = $1 and action = 'user.invited'`, [org.id]);
+      await q.query('alter table audit_log enable trigger audit_log_no_update');
+    });
     expect((await ada.post('/api/portal/users', { accountId: quill, email: 'second@quillfield.example', name: 'Second Contact' })).status).toBe(201);
   });
 });

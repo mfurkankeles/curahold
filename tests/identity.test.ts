@@ -228,3 +228,29 @@ describe('break-glass on a self-hosted install', () => {
     expect(log).toHaveLength(1);
   });
 });
+
+describe('the activity log', () => {
+  it('cannot be changed or removed, not even by the database owner, and exports with a fingerprint', async () => {
+    const sys = (sql: string) => env.db.system((q) => q.query(sql, [env.a.orgId]));
+    await expect(sys(`update audit_log set action = 'x' where org_id = $1`)).rejects.toThrow(/append-only/);
+    await expect(sys(`delete from audit_log where org_id = $1`)).rejects.toThrow(/append-only/);
+    await expect(env.db.system((q) => q.query('truncate audit_log'))).rejects.toThrow(/append-only/);
+    // The request role has no such privilege at all.
+    const [priv] = await env.db.system((q) => q.query(`select has_table_privilege('curahold_app', 'audit_log', 'UPDATE') as u, has_table_privilege('curahold_app', 'audit_log', 'DELETE') as d`));
+    expect(priv).toEqual({ u: false, d: false });
+
+    const sofia = await login(env, 'acme', 'sofia@demo.example');
+    expect((await sofia.get('/api/admin/audit/export')).status).toBe(403);
+    const ada = await firstStep('acme', 'ada@demo.example');
+    if (ada.v.json.status === 'second_step') await ada.c.post('/api/auth/second', { token: ada.v.json.token, deviceId: ada.c.device, recoveryCode: adaRecovery[2] });
+    const r = await ada.c.get('/api/admin/audit/export');
+    expect(r.status).toBe(200);
+    expect(r.json.entries.length).toBeGreaterThan(5);
+    expect(r.json.digest).toBe(r.json.entries.at(-1).chain);
+    const [last] = await env.db.system((q) => q.query(`select meta from audit_log where org_id = $1 and action = 'audit.exported' order by at desc limit 1`, [env.a.orgId]));
+    expect(last.meta.digest).toBe(r.json.digest);
+    // An old session confirms first.
+    await age(ada.c, 30);
+    expect((await ada.c.get('/api/admin/audit/export')).json.error).toBe('reauth_required');
+  });
+});

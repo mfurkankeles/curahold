@@ -4169,4 +4169,10 @@ export const he: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "התמיכה של Curahold יכולה רק לצפות, לעולם לא לשנות דבר.",
   'help.grant.viewOnly': "קריאה בלבד: התמיכה יכולה לצפות, לעולם לא לשנות. כל ביקור מופיע ביומן הפעילות.",
   'audit.support.viewed': "התמיכה של Curahold צפתה בנתונים",
+  'settings.audit.export': "ייצא את היומן",
+  'settings.audit.exported': "היומן יוצא. טביעת האצבע של הקובץ נשמרה ביומן.",
+  'settings.audit.email': "דוא״ל",
+  'settings.audit.entity': "פריט",
+  'settings.audit.details': "פרטים",
+  'audit.audit.exported': "ייצא את יומן הפעילות",
 };

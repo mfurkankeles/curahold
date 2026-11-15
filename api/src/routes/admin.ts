@@ -656,6 +656,8 @@ adminRoutes.post('/users/:id/erase', async (c) => {
 
 // ------------------------------------------------------------- activity log
 
+const AUDIT_EXPORT_MAX = 50_000;
+
 adminRoutes.get('/audit', async (c) => {
   requirePerm(c, 'audit.view');
   const before = c.req.query('before');
@@ -677,6 +679,40 @@ adminRoutes.get('/audit', async (c) => {
     ...(r.staff ? { staff: r.staff as string } : {}),
   }));
   return c.json({ entries });
+});
+
+/**
+ * The whole activity log (or a period of it), for keeping or for an auditor. A
+ * running SHA-256 over the rows makes the file tamper-evident: the final digest
+ * is itself written to the (append-only) log, so a changed copy can be told
+ * from the one that was handed out.
+ */
+adminRoutes.get('/audit/export', async (c) => {
+  requirePerm(c, 'audit.view');
+  await requireFresh(c);
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const ok = (d?: string) => (d && !Number.isNaN(Date.parse(d)) ? d : null);
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const rows = await run(c, (q) =>
+    q.query(
+      `select a.id, a.at, a.actor_id, u.name as actor_name, u.email as actor_email, a.action, a.entity, a.entity_id, a.meta
+         from audit_log a left join users u on u.id = a.actor_id
+        where ($1::timestamptz is null or a.at >= $1::timestamptz) and ($2::timestamptz is null or a.at < $2::timestamptz)
+        order by a.at, a.id limit ${AUDIT_EXPORT_MAX}`,
+      [ok(from), ok(to)],
+    ),
+  );
+  let chain = '';
+  const entries = [];
+  for (const r of rows) {
+    const e = { id: r.id as string, at: iso(r.at)!, actorId: (r.actor_id as string | null) ?? null, actorName: (r.actor_name as string | null) ?? null, actorEmail: (r.actor_email as string | null) ?? null, action: r.action as string, entity: r.entity as string, entityId: (r.entity_id as string | null) ?? null, meta: (r.meta ?? {}) as Record<string, unknown> };
+    chain = await sha256Hex(chain + JSON.stringify(e));
+    entries.push({ ...e, chain });
+  }
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'audit.exported', entity: 'org', entityId: org.id, meta: { rows: entries.length, digest: chain, from: ok(from), to: ok(to) } }));
+  return c.json({ entries, digest: chain, truncated: rows.length >= AUDIT_EXPORT_MAX });
 });
 
 // ------------------------------------------------------------ join requests

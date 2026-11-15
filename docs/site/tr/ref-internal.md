@@ -10,7 +10,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 
 | Adresler | Kaç tane | Neden |
 | --- | --- | --- |
-| `/admin/…` | 32 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
+| `/admin/…` | 33 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
 | `/auth/…` | 10 | Oturum açma ve kapama tarayıcıda yapılır. |
 | `/billing/…` | 8 | Plan ve ödeme; ödeme sağlayıcısıyla. |
 | `/client-error/…` | 1 | Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye. |

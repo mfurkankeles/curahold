@@ -4169,4 +4169,10 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'errors.support_view_only': "يمكن لدعم Curahold الاطلاع فقط، ولا يمكنه تغيير أي شيء.",
   'help.grant.viewOnly': "للقراءة فقط: يمكن للدعم الاطلاع دون تغيير أي شيء. تظهر كل زيارة في سجل النشاط.",
   'audit.support.viewed': "اطّلع دعم Curahold على البيانات",
+  'settings.audit.export': "تصدير السجل",
+  'settings.audit.exported': "تم تصدير السجل. بصمة الملف محفوظة في السجل.",
+  'settings.audit.email': "البريد الإلكتروني",
+  'settings.audit.entity': "العنصر",
+  'settings.audit.details': "التفاصيل",
+  'audit.audit.exported': "صدّر سجل النشاط",
 };

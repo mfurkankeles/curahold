@@ -10,7 +10,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 
 | Addresses | How many | Why |
 | --- | --- | --- |
-| `/admin/…` | 32 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/admin/…` | 33 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/auth/…` | 10 | Signing in and out happens in the browser. |
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |

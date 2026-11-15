@@ -4169,4 +4169,10 @@ export const tr: Record<MessageKey, string> = {
   'errors.support_view_only': "Curahold desteği yalnızca bakabilir, hiçbir şeyi değiştiremez.",
   'help.grant.viewOnly': "Yalnızca okuma: destek bakabilir, hiçbir şeyi değiştiremez. Her ziyaret işlem günlüğünde görünür.",
   'audit.support.viewed': "Curahold desteği verilere baktı",
+  'settings.audit.export': "Günlüğü dışa aktar",
+  'settings.audit.exported': "Günlük dışa aktarıldı. Dosyanın parmak izi günlükte.",
+  'settings.audit.email': "E-posta",
+  'settings.audit.entity': "Öğe",
+  'settings.audit.details': "Ayrıntılar",
+  'audit.audit.exported': "işlem günlüğünü dışa aktardı",
 };
