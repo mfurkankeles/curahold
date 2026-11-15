@@ -19,7 +19,6 @@
   --accent-wash: #eceafe;
   --warn: #b7791f;
   --error: #a8361f;
-  --r: 10px;
   --on-accent: #ffffff;
   --line-strong: #c5c3d9;
   --warn-wash: #fdf3e1;
@@ -81,7 +80,7 @@ html, body { margin: 0; }
 .p-seg button[aria-pressed='true'] { background: var(--sunk); color: var(--ink); font-weight: 600; }
 
 .p-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.p-item { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 16px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); color: inherit; text-decoration: none; }
+.p-item { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 16px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); color: inherit; text-decoration: none; }
 .p-item:hover { border-color: var(--accent); }
 .p-item__title { font-weight: 600; }
 .p-item__meta { grid-column: 1 / -1; font-size: var(--fs-s); color: var(--ink-3); }
@@ -92,7 +91,7 @@ html, body { margin: 0; }
 .p-status[data-step='doing'] { background: var(--accent-wash); color: var(--accent-ink); }
 .p-status[data-step='done'] { background: var(--sunk); color: var(--ink-3); }
 
-.p-empty { padding: 44px 20px; text-align: center; color: var(--ink-3); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); }
+.p-empty { padding: 44px 20px; text-align: center; color: var(--ink-3); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r-m); }
 
 .p-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); padding: clamp(16px, 4vw, 32px); }
 .p-signin { width: min(420px, 100%); text-align: center; }
@@ -144,7 +143,7 @@ html, body { margin: 0; }
 .p-or::before, .p-or::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
 .p-seg--full { display: flex; width: 100%; margin: 4px 0 8px; }
 .p-seg--full button { flex: 1; }
-.p-code { font-size: 22px !important; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
+.p-code, .p-field .p-code { font-size: var(--fs-2xl); letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
 .p-form-plain { display: grid; gap: 12px; text-align: start; margin-top: 8px; }
 .p-signin .p-link { justify-self: center; }
 .p-lang { text-decoration: none; }

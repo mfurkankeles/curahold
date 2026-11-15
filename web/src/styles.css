@@ -1533,7 +1533,7 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
 /* Help and support access */
 /* Ask: a question in your own words, answered from the docs (components/Ask.tsx). */
 .ask { display: grid; gap: 8px; }
-.ask__log { display: flex; flex-direction: column; gap: 8px; min-height: 280px; max-height: min(56vh, 520px); overflow: auto; padding: 12px; background: var(--sunk); border-radius: var(--r-m); scroll-padding-top: 10px; }
+.ask__log { display: flex; flex-direction: column; gap: 8px; min-height: 280px; max-height: min(56vh, 520px); overflow: auto; padding: 12px; background: var(--sunk); border-radius: var(--r-m); scroll-padding-top: 12px; }
 .ask__msg { font-size: var(--fs-m); line-height: 1.55; max-width: 100%; }
 .ask__msg > p { margin: 0; }
 .ask__msg--you { align-self: flex-end; max-width: 86%; background: var(--brand); color: var(--on-fill); border-start-start-radius: var(--r-l); border-start-end-radius: var(--r-l); border-end-end-radius: var(--r-xs); border-end-start-radius: var(--r-l); padding: 8px 12px; }
@@ -1798,6 +1798,11 @@ kbd { font-family: inherit; }
 .route-wait__top { min-height: 67px; }
 .route-wait__title { display: block; width: min(220px, 50%); height: 24px; border-radius: var(--r-s); background: var(--sunk); }
 .page.skeleton { align-content: start; }
+/* Placeholder lines of uneven length, so a skeleton reads as text, not as bars (no inline widths). */
+.skeleton .skeleton__line { width: 62%; }
+.skeleton > :nth-child(4n + 2) .skeleton__line { width: 84%; }
+.skeleton > :nth-child(4n + 3) .skeleton__line { width: 48%; }
+.skeleton > :nth-child(4n + 4) .skeleton__line { width: 72%; }
 /* The assistant panel while its engine loads: holds the panel's height. */
 .cura__wait { flex: 1; min-height: 0; }
 
@@ -2168,7 +2173,7 @@ button.barrows__row:hover { background: var(--surface-2); }
 .oneone__list .plainlist { margin: 0 -6px; display: grid; gap: 4px; }
 
 /* --------------------------------------------------------------- timeline */
-.gantt { --label: 190px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow-x: auto; }
+.gantt { --days: 42; --label: 190px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow-x: auto; }
 .gantt__head, .gantt__group { display: grid; grid-template-columns: var(--label) minmax(720px, 1fr); }
 .gantt__head { position: sticky; top: 0; z-index: 2; background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .gantt__corner { border-inline-end: 1px solid var(--line); }

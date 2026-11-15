@@ -15,7 +15,7 @@ import { intlTag } from '../../../shared/src/i18n';
 
 const GROUPS = ['board', 'person', 'account'] as const;
 type Group = (typeof GROUPS)[number];
-const DAYS = 42;
+const DAYS = 42; // also .gantt { --days } in styles.css
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
 const mondayOf = (iso: string) => {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -153,7 +153,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
             <EmptyState icon="timeline" title={t('timeline.empty')} body={t('timeline.emptyBody')} />
           </div>
         ) : (
-          <div className="gantt" style={{ ['--days' as any]: DAYS }}>
+          <div className="gantt">
             <div className="gantt__head">
               <div className="gantt__corner" />
               <div className="gantt__scale">

@@ -138,10 +138,11 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
     let spaces = 0;
     for (const f of g.css) {
       const s = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
-      // Colours written straight into a rule, not taken from a token (the token lists themselves do not count).
+      // Colours written straight into a rule, not taken from a token. Token definitions
+      // (`--name: value`) do not count wherever they sit: :root, a theme block, or the
+      // portal's own `.p-root` block. Only the rule's own declarations are measured.
       for (const rule of s.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
-        const [sel, body] = [rule.slice(0, rule.indexOf('{')), rule.slice(rule.indexOf('{'))];
-        if (/:root|\[data-theme/.test(sel) && /--[a-z-]+:/.test(body)) continue;
+        const body = rule.slice(rule.indexOf('{')).replace(/--[\w-]+\s*:[^;}]*/g, '');
         hex += (body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).length;
         for (const m of body.matchAll(/border-radius:\s*([^;}]+)/g)) radii.add(m[1].trim());
         for (const m of body.matchAll(/font-size:\s*([^;}]+)/g)) sizes.add(m[1].trim());

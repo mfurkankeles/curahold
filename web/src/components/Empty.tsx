@@ -24,7 +24,7 @@ export function SkeletonRows({ rows = 6, label }: { rows?: number; label: string
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="skeleton__row">
           <i className="skeleton__rail" />
-          <i style={{ width: `${46 + ((i * 37) % 38)}%` }} />
+          <i className="skeleton__line" />
           <i className="skeleton__end" />
         </div>
       ))}
@@ -38,7 +38,7 @@ export function SkeletonCards({ count = 6, label, columns }: { count?: number; l
     <div className={columns ? 'skeleton skeleton--columns' : 'skeleton skeleton--cards'} role="status" aria-label={label}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="skeleton__card">
-          <i style={{ width: `${52 + ((i * 29) % 36)}%` }} />
+          <i className="skeleton__line" />
           <i className="u-width-38pc" />
           {!columns && <i className="u-width-64pc" />}
           {columns && (

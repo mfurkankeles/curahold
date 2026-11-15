@@ -35,7 +35,7 @@ export function RouteFallback() {
         {Array.from({ length: 6 }, (_, i) => (
           <div key={i} className="skeleton__row">
             <i className="skeleton__rail" />
-            <b style={{ width: `${40 + ((i * 17) % 35)}%` }} />
+            <b className="skeleton__line" />
           </div>
         ))}
       </div>
