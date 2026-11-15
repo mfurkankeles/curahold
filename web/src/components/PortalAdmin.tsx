@@ -272,7 +272,7 @@ function BrandSection({ settings, onSaved }: { settings: PortalSettings; onSaved
           <figcaption className="pbrand__foot">{b.poweredBy ? t('portal.poweredBy') : '\u00a0'}</figcaption>
         </figure>
       </div>
-      <button className="btn btn--primary" disabled={busy || !changed} onClick={save}>
+      <button className={changed ? 'btn btn--primary' : 'btn'} disabled={busy || !changed} onClick={save}>
         {t('portal.admin.saveBrand')}
       </button>
     </section>
@@ -334,7 +334,7 @@ function SignInMethods({ settings, onSaved }: { settings: PortalSettings; onSave
           <span>{t('portal.admin.notify')}</span>
         </label>
       </div>
-      <button className="btn btn--primary" disabled={busy || !changed} onClick={save}>
+      <button className={changed ? 'btn btn--primary' : 'btn'} disabled={busy || !changed} onClick={save}>
         {t('portal.admin.saveSignIn')}
       </button>
     </section>
