@@ -33,6 +33,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'common.back': 'بازگشت',
   'common.you': 'شما',
   'common.unknownUser': 'عضو پیشین',
+  'presence.alsoHere': 'این‌جا هم هستند: {names}',
+  'presence.typing': '{name} در حال نوشتن است…',
   'common.optional': 'اختیاری',
   'common.retry': 'دوباره امتحان کنید',
   'common.remove': 'برداشتن',

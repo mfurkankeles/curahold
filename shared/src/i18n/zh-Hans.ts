@@ -33,6 +33,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'common.back': '返回',
   'common.you': '你',
   'common.unknownUser': '前成员',
+  'presence.alsoHere': '也在查看：{names}',
+  'presence.typing': '{name} 正在输入…',
   'common.optional': '可选',
   'common.retry': '重试',
   'common.remove': '移除',

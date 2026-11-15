@@ -33,6 +33,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'common.back': '戻る',
   'common.you': 'あなた',
   'common.unknownUser': '元メンバー',
+  'presence.alsoHere': 'ほかに閲覧中：{names}',
+  'presence.typing': '{name}さんが入力中…',
   'common.optional': '任意',
   'common.retry': '再試行',
   'common.remove': '削除',

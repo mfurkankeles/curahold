@@ -40,6 +40,6 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: ['.localhost'],
-    proxy: { '/api': { target: 'http://localhost:8787', changeOrigin: false } },
+    proxy: { '/api': { target: 'http://localhost:8787', changeOrigin: false, ws: true } },
   },
 });

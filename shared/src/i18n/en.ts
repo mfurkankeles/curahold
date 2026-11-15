@@ -21,6 +21,8 @@ export const en = {
   'common.back': 'Back',
   'common.you': 'you',
   'common.unknownUser': 'Former member',
+  'presence.alsoHere': 'Also here: {names}',
+  'presence.typing': '{name} is typing…',
   'common.optional': 'optional',
   'common.retry': 'Try again',
 

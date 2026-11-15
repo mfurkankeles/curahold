@@ -33,6 +33,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'common.back': 'رجوع',
   'common.you': 'أنت',
   'common.unknownUser': 'عضو سابق',
+  'presence.alsoHere': 'موجود هنا أيضًا: {names}',
+  'presence.typing': '{name} يكتب الآن…',
   'common.optional': 'اختياري',
   'common.retry': 'حاول مرة أخرى',
   'common.remove': 'إزالة',

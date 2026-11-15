@@ -5,7 +5,8 @@ import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, typ
 import { MAX_FILE_MB, PRIORITIES, type Repeat, type Task, type TaskDetail } from '../../../shared/src/model';
 import { repeatText } from '../pages/BoardPage';
 import { ApiFailure, api, del, get, post, put } from '../lib/api';
-import { useLive } from '../lib/live';
+import { useLive, usePresence } from '../lib/live';
+import { Presence } from './Presence';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, setQuery } from '../lib/router';
 import { PanelBack } from './BackBar';
@@ -57,6 +58,9 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
     const typing = !!at && at !== panel.current && !!panel.current?.contains(at) && /^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName);
     if (!typing && !document.querySelector('.dialog')) void load();
   });
+
+  // Who else has this task open, and who is typing in it (the live channel).
+  const here = usePresence(taskId ? `t:${taskId}` : null);
 
   const close = useCallback(() => setQuery('task', null), []);
   // What the way back from another task or record calls this one.
@@ -110,7 +114,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
   return (
     <>
       <div className="scrim" onClick={close} />
-      <aside className="panel" role="dialog" aria-modal="true" aria-label={task?.title ?? t('common.loading')} tabIndex={-1} ref={panel}>
+      <aside className="panel" role="dialog" aria-modal="true" aria-label={task?.title ?? t('common.loading')} tabIndex={-1} ref={panel} onInput={here.typing}>
         <div className="panel__head">
           <PanelBack up={task?.parent ? { title: task.parent.title, go: () => openOver('task', task.parent!.id, true) } : null} />
           {task && target && editable && (
@@ -131,6 +135,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             </button>
           )}
           <span className="panel__crumb" data-sub={task?.parent ? true : undefined}>{board?.name}</span>
+          <Presence who={here.who} />
           {task && !task.parentId && <FollowButton task={task} reload={load} />}
           {task && (
             <button

@@ -64,7 +64,7 @@ export function accept(req: IncomingMessage, socket: Duplex, head: Buffer, on: S
   s.setNoDelay?.(true);
   s.setTimeout?.(0);
 
-  let buf = head.length ? Buffer.from(head) : Buffer.alloc(0);
+  let buf: Buffer = head.length ? Buffer.from(head) : Buffer.alloc(0);
   let parts: Buffer[] = [];
   let partsLen = 0;
   let closed = false;

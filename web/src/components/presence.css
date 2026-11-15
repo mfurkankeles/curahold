@@ -1,0 +1,32 @@
+/* Who else is here (components/Presence.tsx). Only layout and tokens; the faces are the app's avatars. */
+.presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.presence__face {
+  display: inline-flex;
+  border-radius: 50%;
+  transition: box-shadow 160ms ease;
+}
+.presence .avatars .presence__face + .presence__face {
+  margin-inline-start: -8px;
+}
+/* Typing: a ring in the brand colour around the face. */
+.presence__face[data-typing] {
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.presence__typing {
+  color: var(--ink-3);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+@media (max-width: 480px) {
+  .presence__typing {
+    max-width: 96px;
+  }
+}

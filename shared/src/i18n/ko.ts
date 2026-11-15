@@ -33,6 +33,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'common.back': '뒤로',
   'common.you': '나',
   'common.unknownUser': '이전 멤버',
+  'presence.alsoHere': '함께 보는 중: {names}',
+  'presence.typing': '{name}님이 입력 중…',
   'common.optional': '선택 사항',
   'common.retry': '다시 시도',
   'common.remove': '제거',

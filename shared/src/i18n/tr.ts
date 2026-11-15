@@ -20,6 +20,8 @@ export const tr: Record<MessageKey, string> = {
   'common.back': 'Geri',
   'common.you': 'sen',
   'common.unknownUser': 'Eski üye',
+  'presence.alsoHere': 'Burada olanlar: {names}',
+  'presence.typing': '{name} yazıyor…',
   'common.optional': 'isteğe bağlı',
   'common.retry': 'Tekrar dene',
 

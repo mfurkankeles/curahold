@@ -33,6 +33,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'common.back': 'חזרה',
   'common.you': 'אתה',
   'common.unknownUser': 'חבר לשעבר',
+  'presence.alsoHere': 'נמצאים כאן גם: {names}',
+  'presence.typing': '{name} מקליד/ה…',
   'common.optional': 'רשות',
   'common.retry': 'נסה שוב',
   'common.remove': 'הסר',
