@@ -79,7 +79,7 @@ export function BacklogView({ board, refreshKey }: { board: Board; refreshKey: n
   const { t } = useI18n();
   const { canWrite, toast } = useStore();
   const save = useSaver();
-  const { epics } = useEpics(board.id);
+  const { epics } = useEpics(board.id, true, refreshKey);
   const { sprints } = useSprints(board.id, refreshKey);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -835,7 +835,7 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
 /** Sprints in order with their progress, velocity of the closed ones, and the epics. */
 function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint[]; refreshKey: number }) {
   const { t } = useI18n();
-  const { epics } = useEpics(board.id);
+  const { epics } = useEpics(board.id, true, refreshKey);
   const [sums, setSums] = useState<Map<string, SprintSummary> | null>(null);
   useEffect(() => {
     let live = true;

@@ -39,8 +39,8 @@ export interface PmEpic extends Task {
   childCount: number;
 }
 
-/** The board's epics, for the picker and the roadmap. */
-export function useEpics(boardId: string | undefined, enabled = true) {
+/** The board's epics, for the picker and the roadmap; read again when `refreshKey` changes (a task was made an epic). */
+export function useEpics(boardId: string | undefined, enabled = true, refreshKey = 0) {
   const [epics, setEpics] = useState<PmEpic[] | null>(null);
   const load = useCallback(async () => {
     if (!boardId || !enabled) return;
@@ -50,7 +50,7 @@ export function useEpics(boardId: string | undefined, enabled = true) {
       setEpics([]);
     }
   }, [boardId, enabled]);
-  useEffect(() => void load(), [load]);
+  useEffect(() => void load(), [load, refreshKey]);
   return { epics, reload: load };
 }
 
