@@ -221,6 +221,16 @@ if (!keep) {
   console.log(`[${since()}] records in, statistics gathered`);
 }
 
+// A kept database is brought up to today's migrations first: the code being
+// timed is today's, so its tables, triggers and indexes must be too.
+if (keep) {
+  const applied = await migrate(db, loadMigrations());
+  if (applied.length) {
+    await raw.unsafe('analyze');
+    console.log(`[${since()}] ${name} brought up to date: ${applied.join(', ')}`);
+  }
+}
+
 // ------------------------------------------------------------- measuring
 
 const email = new MemoryEmail();
@@ -290,6 +300,9 @@ async function time(c: Client, path: string) {
   return { ms: runs[Math.floor(runs.length / 2)], status, kb: Math.round(size / 1024) };
 }
 
+// One address gets only a few sign-in links in 15 minutes; a timing run signs
+// in over and over, so the earlier runs' links go first (this is a throwaway database).
+await raw.unsafe('delete from login_tokens');
 const people: [string, Client][] = [
   ['member', await login(env, 'big', someone.email)],
   ['team lead', await login(env, 'big', 'mert@demo.example')],
@@ -298,7 +311,9 @@ const people: [string, Client][] = [
 const SLOW = Number(process.env.PERF_SLOW_MS) || 400;
 let slow = 0;
 console.log(`${'request'.padEnd(58)}${people.map(([n]) => n.padStart(13)).join('')}`);
-for (const [label, path] of reads) {
+// PERF_ONLY=writes skips the reads (and the jobs) when only the writing is being looked at.
+const only = process.env.PERF_ONLY;
+for (const [label, path] of only === 'writes' ? [] : reads) {
   const cells: string[] = [];
   for (const [, c] of people) {
     const r = await time(c, path);
@@ -308,16 +323,53 @@ for (const [label, path] of reads) {
   console.log(`${(label ? `${label}: ` : '  ').padEnd(24)}${path.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, '…').slice(0, 33).padEnd(34)}${cells.join('')}`);
 }
 
-// Writing, as one person does it.
+// Writing: one person, many times; then many people at once, as on a busy morning.
+const pct = (xs: number[], q: number) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.min(s.length - 1, Math.floor(q * s.length))];
+};
+const spread = (xs: number[]) => `p50 ${pct(xs, 0.5).toFixed(0)} · p95 ${pct(xs, 0.95).toFixed(0)} · max ${Math.max(...xs).toFixed(0)} ms`;
+const WRITES = Number(process.env.PERF_WRITES) || 40;
+async function addAndMove(c: Client, who: string, adds: number[], moves: number[], fails: number[]) {
+  let at = performance.now();
+  const made = await c.post('/api/tasks', { boardId: busiest.id, title: 'Hız testi görevi', assigneeIds: [who] });
+  adds.push(performance.now() - at);
+  if (made.status !== 201) return void fails.push(made.status);
+  at = performance.now();
+  const moved = await c.patch(`/api/tasks/${made.json.task.id}`, { baseVersion: made.json.task.version, status: 'doing' });
+  moves.push(performance.now() - at);
+  if (moved.status !== 200) fails.push(moved.status);
+}
 const me = people[0][1];
-const at1 = performance.now();
-const made = await me.post('/api/tasks', { boardId: busiest.id, title: 'Hız testi görevi', assigneeIds: [someone.id] });
-const create = performance.now() - at1;
-const at2 = performance.now();
-if (made.json?.task) await me.patch(`/api/tasks/${made.json.task.id}`, { baseVersion: made.json.task.version, status: 'doing' });
-const move = performance.now() - at2;
-console.log(`\n${'Adding a task'.padEnd(58)}${`${create.toFixed(0)} ms`.padStart(13)}${made.status === 201 ? '' : `  (${made.status})`}`);
-console.log(`${'Moving it to another column'.padEnd(58)}${`${move.toFixed(0)} ms`.padStart(13)}`);
+await addAndMove(me, someone.id, [], [], []); // warms the paths
+const adds: number[] = [];
+const moves: number[] = [];
+const fails: number[] = [];
+for (let i = 0; i < WRITES; i++) await addAndMove(me, someone.id, adds, moves, fails);
+console.log(`\n${`Adding a task (${WRITES} times)`.padEnd(40)}${spread(adds)}`);
+console.log(`${'Moving it to another column'.padEnd(40)}${spread(moves)}`);
+const CROWD = Number(process.env.PERF_CROWD) || 50;
+const crowdPeople = await raw.unsafe(`select u.id, u.email from users u where u.org_id = $1 and u.email like 'kisi%' and u.id <> $3 order by u.email limit $2`, [org.id, CROWD, someone.id]);
+const crowd = await Promise.all(crowdPeople.map(async (u: any) => [u.id, await login(env, 'big', u.email)] as const));
+// Two loads. Paced: everyone starts within the same second; each adds a card and
+// moves it, then pauses 1.5–3.5 s (a busy person; ~35 writes a second for the
+// company). Flat out: nobody pauses at all — how many writes a second this one
+// machine can take, the queue showing as waiting.
+const cAdds: number[] = [];
+const cMoves: number[] = [];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+await Promise.all(crowd.map(async ([id, c]) => { await sleep(Math.random() * 1000); for (let i = 0; i < 5; i++) { await addAndMove(c, id, cAdds, cMoves, fails); await sleep(1500 + Math.random() * 2000); } }));
+console.log(`${`${crowd.length} people, paced: adding`.padEnd(40)}${spread(cAdds)}`);
+console.log(`${'                     moving'.padEnd(40)}${spread(cMoves)}`);
+const fAdds: number[] = [];
+const fMoves: number[] = [];
+const flatAt = performance.now();
+await Promise.all(crowd.map(async ([id, c]) => { for (let i = 0; i < 4; i++) await addAndMove(c, id, fAdds, fMoves, fails); }));
+const flatS = (performance.now() - flatAt) / 1000;
+console.log(`${`${crowd.length} people, flat out: adding`.padEnd(40)}${spread(fAdds)}`);
+console.log(`${'                     moving'.padEnd(40)}${spread(fMoves)}  (${((fAdds.length + fMoves.length) / flatS).toFixed(0)} writes/s)`);
+if (fails.length) console.log(`  ${fails.length} write(s) refused: ${[...new Set(fails)].join(', ')}`);
+if (pct(adds, 0.95) > 250 || pct(cAdds, 0.95) > 250 || pct(cMoves, 0.95) > 250) slow++; // the target: p95 ≤ 250 ms (paced)
 
 // The jobs that run by themselves.
 const job = async (label: string, fn: () => Promise<unknown>) => {
@@ -331,10 +383,12 @@ const job = async (label: string, fn: () => Promise<unknown>) => {
   console.log(`${label.padEnd(58)}${`${((performance.now() - at) / 1000).toFixed(1)} s`.padStart(13)}  ${note}`);
 };
 console.log('');
+if (only !== 'writes') {
 const thursday = new Date('2030-03-07T05:00:00Z');
 await job('Nudges (Thursday 08:00, every person)', () => sendNudges(deps, thursday));
 await job('The nightly archive sweep', () => archiveFinished(deps, new Date()));
 await job('The whole hourly run at 03:00 UTC', () => runScheduled(deps, new Date(`${today}T03:00:00Z`)));
+}
 
 console.log(`\n${slow ? `${slow} request(s) over ${SLOW} ms` : `every request under ${SLOW} ms`} · ${name} left in place (PERF_KEEP=${name} measures it again)`);
 await raw.end({ timeout: 2 });
