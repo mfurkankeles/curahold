@@ -7,8 +7,8 @@
 // keeps the two in step. Request limits are lib/ratelimit.ts.
 import type { MiddlewareHandler } from 'hono';
 
-/** The one inline script in index.html (light/dark before first paint), by hash: nothing else inline may run. */
-export const THEME_SCRIPT_SHA256 = 'sha256-nTcd6N2fIyXjWAjNWAFqKMcWXJifrdiW1RlxZ5aJ3wQ=';
+/** The one inline script in index.html (light/dark, and the first downloads, before first paint), by hash: nothing else inline may run. */
+export const THEME_SCRIPT_SHA256 = 'sha256-YLjtk3PNTjWKY8qqVl7G2Ij+vSawErAhPVoZ+zpfqgA=';
 
 export const APP_CSP = [
   "default-src 'self'",

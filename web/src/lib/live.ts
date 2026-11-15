@@ -37,6 +37,13 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let lastAsk = 0;
 let lastInput = Date.now();
 let running = false;
+// When the request behind the pulse now in hand was sent, and when the open socket's
+// ticket came back. A pulse asked after the ticket came back already holds every change
+// the ticket's number covers; the socket brings the ones after it. Nothing to look for.
+let baselineAt = -1;
+let asking = -1;
+let ticketAt = Infinity;
+let ticketDone: () => void = () => undefined;
 
 // What the open pages are watching (a board, a company), with how many of them,
 // and the last stamp seen for each, so a scope follows only its own changes.
@@ -100,11 +107,17 @@ function tellScopes(now: Pulse) {
 async function ask() {
   if (!running || document.hidden || navigator.onLine === false) return;
   lastAsk = Date.now();
+  const sentAt = performance.now();
+  asking = sentAt;
   let now: Pulse;
   try {
     now = await get<Pulse>(`/pulse${scopeQuery()}`);
   } catch {
+    // The socket's hello may have counted on this look: look again soon.
+    if (sentAt >= ticketAt && channel.ready) askSoon(false);
     return;
+  } finally {
+    if (asking === sentAt) asking = -1;
   }
   // Mid-drag is the wrong moment to move things under someone's hand: leave the
   // baselines as they are and catch the change on the next ask (soon, when the channel said so).
@@ -114,6 +127,7 @@ async function ask() {
   }
   tellScopes(now);
   const before = last;
+  baselineAt = sentAt;
   if (!before) {
     last = now;
     tell(['unread'], now);
@@ -232,8 +246,8 @@ function onMessage(m: Msg) {
     // Pages that started following something while the socket was opening: their scopes now.
     if (scopes().join(',') !== channel.sent) rewatch();
     schedule();
-    // Whatever happened between the last ask and the ticket: look once.
-    askSoon(false);
+    // Whatever happened between the last ask and the ticket: look once (unless the last ask came after the ticket).
+    if (Math.max(baselineAt, asking) < ticketAt) askSoon(false);
     return;
   }
   if (m.t === 'c') {
@@ -295,10 +309,13 @@ async function openChannel() {
   let k: Awaited<ReturnType<typeof ticket>>;
   try {
     k = await ticket();
+    ticketAt = performance.now();
   } catch {
+    ticketDone();
     reconnectLater();
     return;
   }
+  ticketDone();
   if (!running || channel.ws) return;
   const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/live?k=${encodeURIComponent(k.k)}&n=${channel.n ?? k.n}`;
   let ws: WebSocket;
@@ -364,8 +381,12 @@ export function startLive(): () => void {
   if (running) return () => undefined;
   running = true;
   last = null;
-  void ask().then(schedule);
+  // The first look waits for the socket's ticket (a moment, at most 2 s): asked after it,
+  // it needs no second look when the socket says hello (one request fewer at start).
+  const ticketIn = new Promise<void>((r) => (ticketDone = r));
   void openChannel();
+  const first = channelOff() || navigator.onLine === false ? Promise.resolve() : Promise.race([ticketIn, new Promise<void>((r) => setTimeout(r, 2000))]);
+  void first.then(ask).then(schedule);
   const online = () => {
     channel.tries = 0;
     reconnectLater(true);

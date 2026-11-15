@@ -91,9 +91,21 @@ async function send<T>(method: string, path: string, body: unknown, key: string 
     headers['content-type'] = 'application/json';
     payload = JSON.stringify(body);
   }
+  inFlight++;
+  if (quietTimer) clearTimeout(quietTimer);
+  quietTimer = null;
+  try {
+    return await sendCounted<T>(method, path, headers, payload, key);
+  } finally {
+    inFlight--;
+    settle();
+  }
+}
+
+async function sendCounted<T>(method: string, path: string, headers: Record<string, string>, payload: BodyInit | undefined, key: string | null): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
+    res = await (early(method, path, headers) ?? fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' }));
   } catch (first) {
     // The request, or its answer, was lost on the way. A change carries its key, so sending it once
     // more is safe: if the first copy did arrive, the server answers with what it did then.
@@ -117,6 +129,46 @@ async function send<T>(method: string, path: string, body: unknown, key: string 
     throw err;
   }
   return data as T;
+}
+
+/**
+ * The company and who is signed in, asked by index.html's first script while this
+ * code was still downloading: taken once, and only if asked as this request would be
+ * (the same device, no preview).
+ */
+function early(method: string, path: string, headers: Record<string, string>): Promise<Response> | null {
+  const w = window as { __early?: Record<string, [string, string, Promise<Response>]> };
+  const hit = method === 'GET' ? w.__early?.[path] : undefined;
+  if (!hit) return null;
+  // Only while the page is opening: an answer left unused is never handed out later as if fresh.
+  if (performance.now() > 15_000) {
+    w.__early = undefined;
+    return null;
+  }
+  delete w.__early![path];
+  const [device, locale, answer] = hit;
+  return device === headers['x-curahold-device'] && locale === (headers['x-curahold-locale'] ?? '') && !headers['x-curahold-preview-as'] ? answer : null;
+}
+
+// Requests on their way: the rest of the language waits until the first screen's are in.
+let inFlight = 0;
+let quietWaiters: (() => void)[] = [];
+let quietTimer: ReturnType<typeof setTimeout> | null = null;
+function settle() {
+  if (quietTimer) clearTimeout(quietTimer);
+  quietTimer = inFlight ? null : setTimeout(() => {
+    const ws = quietWaiters;
+    quietWaiters = [];
+    ws.forEach((f) => f());
+  }, 150);
+}
+/** Runs `fn` once no request has been on its way for a moment (or after `maxMs` at the latest). */
+export function afterQuiet(fn: () => void, maxMs = 4000) {
+  let done = false;
+  const once = () => void (done || ((done = true), fn()));
+  quietWaiters.push(once);
+  setTimeout(once, maxMs);
+  if (!inFlight) settle();
 }
 
 function safeJson(text: string) {

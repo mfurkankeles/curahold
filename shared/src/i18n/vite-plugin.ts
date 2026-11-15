@@ -102,8 +102,12 @@ export function staticClosure(entries: string[]): string[] {
   return [...seen];
 }
 
-/** The mark on a dynamic import that is part of the first screen: `import(/* first-screen *\/ './pages/Home')`. */
-const FIRST_MARK = 'first-screen';
+/**
+ * Marks on a dynamic import that does not wait for the rest of the language: part of
+ * the first screen (`import(/* first-screen *\/ './pages/Home')`), or code that draws
+ * no phrases at all (`/* no-phrases *\/`).
+ */
+const MARKS = ['first-screen', 'no-phrases'];
 const DYNAMIC = /\bimport\(\s*(\/\*([^*]*)\*\/\s*)?(['"])(\.{1,2}\/[^'"]+)\3\s*\)/g;
 
 export function i18nForBrowser({ swap, keys, first }: I18nPluginOptions): Plugin {
@@ -143,7 +147,7 @@ export function i18nForBrowser({ swap, keys, first }: I18nPluginOptions): Plugin
       if (!inScope(id) || !code.includes('import(') || id.endsWith(`${sep}i18n.tsx`)) return null;
       let hit = false;
       const out = code.replace(DYNAMIC, (all, _c, note: string | undefined) => {
-        if (note?.includes(FIRST_MARK)) return all;
+        if (MARKS.some((m) => note?.includes(m))) return all;
         hit = true;
         return `__curaholdFull(${all})`;
       });

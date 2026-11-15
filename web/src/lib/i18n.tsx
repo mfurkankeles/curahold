@@ -14,6 +14,7 @@ import {
   type Terms,
   type Vars,
 } from '../../../shared/src/i18n/core';
+import { afterQuiet } from './api';
 
 // One language at a time, in two parts (see shared/src/i18n/vite-plugin.ts):
 // the phrases the first screen uses, then the rest of the language. Each is its
@@ -171,12 +172,12 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
     if (hold && !hasDictionary(wanted)) return;
     let live = true;
     drawIn(wanted);
-    // The first load draws on the first part (the rest follows at once); a switch
-    // waits for the whole language.
     loadLocale(wanted)
       .then(() => {
-        const rest = loadRest(wanted).catch(() => undefined);
-        return shown ? rest : undefined;
+        // A switch waits for the whole language. On the first load the rest comes once
+        // the first screen's own requests are in (or at once, if a lazy screen asks).
+        if (shown) return loadRest(wanted).catch(() => undefined);
+        afterQuiet(() => void loadRest(wanted).catch(() => undefined));
       })
       .catch(() => (wanted === 'en' ? Promise.reject(new Error('no dictionary')) : loadLocale('en').then(() => 'en' as const)))
       .then((got) => live && setShown(got ?? wanted))

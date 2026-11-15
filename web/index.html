@@ -18,6 +18,41 @@
         var d = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = d ? 'dark' : 'light';
       } catch (e) {}
+      // The first screen's first downloads start now, not after the app's code is in: the
+      // company and who is signed in, and on the home screen its code and its data (each
+      // answer taken once by web/src/lib/api.ts, if asked just as the app would ask), and
+      // the language this browser last read in (file names from the build, above).
+      try {
+        var w = window, l = localStorage, p = location.pathname, h = location.hostname.split('.')[0];
+        var x = JSON.parse((document.getElementById('first-screen') || {}).textContent || '{}');
+        var pre = function (u) {
+          var k = document.createElement('link');
+          k.rel = 'modulepreload';
+          k.href = u;
+          document.head.appendChild(k);
+        };
+        if (h !== 'app' && h !== 'desk' && !/^\/(support\/enter|auth\/verify|join|signup)/.test(p) && !sessionStorage.getItem('app-preview-as')) {
+          var dev = l.getItem('app_device') || '';
+          var lang = l.getItem('app_locale') || l.getItem('app_locale_hint');
+          var ask = function (path, loc) {
+            var r = fetch('/api' + path, { headers: { 'x-curahold-device': dev, 'x-curahold-locale': loc }, credentials: 'same-origin' });
+            r.catch(function () {});
+            (w.__early = w.__early || {})[path] = [dev, loc, r];
+            return r;
+          };
+          ask('/org', l.getItem('app_locale') || 'en');
+          if (dev) ask('/me', l.getItem('app_locale') || 'en');
+          if (x.dict && lang && x.dict[lang]) pre(x.dict[lang]);
+          if (dev && (p === '/' || p === '/home')) {
+            if (x.home) x.home.forEach(pre);
+            ask('/me/start', lang || 'en');
+            ask('/pages', lang || 'en')
+              .then(function (r) { return r.ok ? r.clone().json() : null; })
+              .then(function (j) { if (j && j.homeId) ask('/pages/' + j.homeId + '/data', lang || 'en'); })
+              .catch(function () {});
+          }
+        }
+      } catch (e) {}
     </script>
   </head>
   <body>
