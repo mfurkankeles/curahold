@@ -38,6 +38,9 @@ export function PointsChip({ points }: { points: number | null | undefined }) {
 
 export interface PmEpic extends Task {
   childCount: number;
+  /** The points of its stories, and how many of them are done. */
+  childPoints?: number;
+  childDonePoints?: number;
 }
 
 /** The board's epics, for the picker and the roadmap; read again when `refreshKey` changes (a task was made an epic). */

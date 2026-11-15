@@ -293,14 +293,21 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
 pmRoutes.get('/boards/:id/epics', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    requirePm(await loadBoard(q, id));
+    const board = await loadBoard(q, id);
+    requirePm(board);
+    // With each epic what its stories add up to: how many, their points, and how much of that is done.
     return q.query(
-      `select t.*, (select count(*) from tasks s where s.epic_id = t.id and s.archived_at is null) as child_count
-         from tasks t where t.board_id = $1 and t.issue_type = 'epic' and t.archived_at is null order by t.position, t.created_at`,
-      [id],
+      `select t.*, coalesce(k.n, 0) as child_count, coalesce(k.points, 0) as child_points, coalesce(k.done_points, 0) as child_done_points
+         from tasks t
+         left join lateral (
+           select count(*) as n, sum(s.story_points) as points, sum(s.story_points) filter (where s.status = any($2::text[])) as done_points
+             from tasks s where s.org_id = t.org_id and s.epic_id = t.id and s.archived_at is null
+         ) k on true
+        where t.board_id = $1 and t.issue_type = 'epic' and t.archived_at is null order by t.position, t.created_at`,
+      [id, doneKeys(board.columns)],
     );
   });
-  return c.json({ epics: rows.map((r) => ({ ...toTask(r), childCount: Number(r.child_count) })) });
+  return c.json({ epics: rows.map((r) => ({ ...toTask(r), childCount: Number(r.child_count), childPoints: Number(r.child_points), childDonePoints: Number(r.child_done_points) })) });
 });
 
 pmRoutes.get('/sprints/:id/items', async (c) => {

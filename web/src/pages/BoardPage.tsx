@@ -197,7 +197,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         )}
         <div className="toolbar">
           {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} viewSwitch={phone ? viewSwitch : undefined} />}
-          {(!phone || view === 'archive' || pmView) && viewSwitch}
+          {(!phone || view === 'archive' || (pmView && view !== 'backlog')) && viewSwitch}
           {!phone && view === 'list' && exportMenu}
           {!phone && formButton}
           {view !== 'archive' && canWrite && (
@@ -229,7 +229,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       {view === 'archive' ? (
         <BoardArchive board={board} onRestored={() => void load()} />
       ) : pmView && view === 'backlog' ? (
-        <BacklogView board={board} refreshKey={refreshKey} />
+        <BacklogView board={board} refreshKey={refreshKey} viewSwitch={phone ? viewSwitch : undefined} />
       ) : pmView && view === 'sprints' ? (
         <SprintsView board={board} refreshKey={refreshKey} />
       ) : tasks === null && failed ? (
