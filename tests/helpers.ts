@@ -153,6 +153,8 @@ export const NOT_COMPARED = new Set([
   'notifications', // notices already sent are not kept in the copy
   'portal_sessions', // a customer's people sign in again
   'portal_tokens',
+  'live_changes', // the live channel's change numbers: only ever move forward
+  'live_seq',
 ]);
 
 /** Every row of the company, table by table, as the database holds it. */
