@@ -123,7 +123,12 @@ const fromAddress = /^#(tr|en)$/.exec(window.location.hash)?.[1] as 'tr' | 'en' 
 const demoLocale: 'tr' | 'en' = fromAddress ?? (storedLocale() === 'tr' ? 'tr' : 'en');
 if (fromAddress) storeLocale(fromAddress);
 setStartLocale(demoLocale);
-const lang = () => (storedLocale() ?? demoLocale) as 'tr' | 'en';
+// The bar speaks the visitor's chosen language when it is one of the demo's two; after the
+// app's own menu picked another (Arabic, Japanese…), it stays in the demo's language.
+const lang = (): 'tr' | 'en' => {
+  const l = storedLocale();
+  return l === 'tr' || l === 'en' ? l : demoLocale;
+};
 /** The demo hub in the demo's language: the page with every guided tour, one level up. */
 const HUB = demoLocale === 'tr' ? '../tr/' : '../';
 
