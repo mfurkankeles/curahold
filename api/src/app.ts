@@ -13,7 +13,7 @@ import { securityHeaders } from './lib/headers';
 import { deliverWebhooks } from './lib/webhooks';
 import { Repeated, rememberAnswer, repeatKeyOf, repeatedAnswer, storedAnswer } from './lib/repeats';
 import { flushHealth } from './lib/health';
-import { recordError } from './lib/errlog';
+import { recordError, redact } from './lib/errlog';
 import { timelineRoutes } from './routes/timeline';
 import { meetingRoutes } from './routes/meetings';
 import { billingRoutes, billingWebhook } from './routes/billing';
@@ -176,7 +176,8 @@ export function createApp(deps: Deps) {
         err.status as any,
       );
     }
-    console.error('[curahold] unhandled', err);
+    // The platform's logs get the same masking as the error table (lib/errlog.ts).
+    console.error('[curahold] unhandled', redact(err instanceof Error ? `${err.message}\n${err.stack ?? ''}` : String(err)));
     // Record it, so a real fault is seen and fixed, not lost to the console.
     const auth = c.get('auth');
     defer(

@@ -17,7 +17,29 @@ export interface ErrorEntry {
   requestId?: string | null;
 }
 
-const cut = (s: string | null | undefined, n: number) => (s == null ? null : String(s).slice(0, n));
+const cut = (s: string | null | undefined, n: number) => (s == null ? null : redact(String(s)).slice(0, n));
+
+/**
+ * What an error record may not keep, masked wherever it appears (message, stack, address, browser):
+ * secrets in an address (calendar and inbound links carry one), keys and tokens by their shape,
+ * secrets after a name (token=, password:, authorization), and people's email addresses.
+ * Ids (UUIDs) stay: they say where without saying who.
+ */
+export function redact(text: string): string {
+  return (
+    text
+      // Bearer and basic credentials, JWTs, Curahold's own key and secret prefixes.
+      .replace(/\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi, '$1 [redacted]')
+      .replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, '[redacted]')
+      .replace(/\b(chk|cho|whsec|scim|sk|pk|xox[abpr])_[A-Za-z0-9_-]{8,}/g, '$1_[redacted]')
+      // name=value / "name": "value" for names that hold secrets.
+      .replace(/(\b(?:token|secret|password|passwd|pwd|api[_-]?key|code|signature|authorization|cookie|session)[\w-]*["']?\s*[:=]\s*["']?)[^\s"'&,;}]+/gi, '$1[redacted]')
+      // A long random path segment (a secret link), but not a UUID.
+      .replace(/\/(?![0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:[/?#]|$))[A-Za-z0-9_-]{24,}(?=[/?#.]|$)/gi, '/[redacted]')
+      // Email addresses: the domain stays, the person does not.
+      .replace(/[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '[email]@$1')
+  );
+}
 
 /** Records one error. Never throws into the caller. */
 export async function recordError(deps: Deps, e: ErrorEntry): Promise<void> {

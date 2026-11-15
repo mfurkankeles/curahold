@@ -8,6 +8,7 @@ import type { AccountField } from '../../../shared/src/model';
 import { hmacHex, unseal } from './crypto';
 import { toTask } from './mappers';
 import { fail } from './errors';
+import { privateHost } from '../connectors/messaging/webhook';
 import { hiddenKeys, stripFields, type Viewer } from './fieldAccess';
 
 const BACKOFF_MIN = [1, 5, 30, 120, 360];
@@ -22,19 +23,9 @@ export function checkWebhookUrl(raw: string) {
   } catch {
     return fail('bad_webhook_url');
   }
-  const h = u!.hostname.toLowerCase();
-  const privateHost =
-    h === 'localhost' ||
-    h.endsWith('.localhost') ||
-    h.endsWith('.internal') ||
-    h.endsWith('.local') ||
-    /^\[?(::1|f[cd][0-9a-f]{2}:|fe80:)/.test(h) ||
-    /^(0|10|127)\./.test(h) ||
-    /^169\.254\./.test(h) ||
-    /^192\.168\./.test(h) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(h) ||
-    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h);
-  if (u!.protocol !== 'https:' || privateHost || u!.username || u!.password) fail('bad_webhook_url');
+  // One rule with the chat connectors: no local or private address, no IP literal of IPv6 (::ffff:127.0.0.1 and the like).
+  const privateAddress = privateHost(u!.hostname);
+  if (u!.protocol !== 'https:' || privateAddress || u!.username || u!.password) fail('bad_webhook_url');
   return u!.toString();
 }
 

@@ -15,6 +15,7 @@
 // Mounting (api/src/app.ts, reported to the coordinator — this file edits no hub):
 //   before companyFromHost:  app.route('/api/sso', ssoAuthRoutes)
 //   in the authed block:     app.route('/api', ssoAdminRoutes)
+import { privateHost } from '../connectors/messaging/webhook';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
@@ -293,6 +294,17 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const clean = (v?: string) => (v && v.trim() ? v.trim() : null);
+  // The server fetches the token and key addresses: on the shared service they must be public https
+  // addresses, never this machine or a private network (a self-hosted install may use its own network).
+  if (!cfg.singleTenantSlug) {
+    const bad = (['ssoUrl', 'tokenUrl', 'jwksUrl'] as const).filter((k) => {
+      const v = clean(input[k]);
+      if (!v) return false;
+      const u = new URL(v);
+      return u.protocol !== 'https:' || privateHost(u.hostname);
+    });
+    if (bad.length) fail('validation', { fields: bad.join(', ') }, { fields: bad });
+  }
 
   await run(c, async (q) => {
     const existing = await loadSsoAuthConfig(q, cfg);
