@@ -16,6 +16,12 @@ import type { Plugin } from 'vite';
 import { dictionaries, LOCALES, type Locale } from './index';
 
 const PREFIX = 'virtual:curahold-dict/';
+/**
+ * Keys only the server reads, never shipped to a browser: report-source field names
+ * (api/src/lib/reportEngine.ts) and the template's word for customers, read when a
+ * company is created. (The demo runs the server in the tab with every dictionary.)
+ */
+export const SERVER_ONLY = /^(rsrc|tpl\.term)\./;
 const RESOLVED = '\0curahold-dict:';
 
 export interface I18nPluginOptions {
@@ -75,7 +81,8 @@ export function i18nForBrowser({ swap, keys }: I18nPluginOptions): Plugin {
       const locale = id.slice(RESOLVED.length) as Locale;
       if (!LOCALES.includes(locale)) throw new Error(`unknown locale ${locale}`);
       // JSON.parse of one string literal parses faster than an object literal.
-      return `export default JSON.parse(${JSON.stringify(JSON.stringify(filledDictionary(locale, keys)))});`;
+      const keep = (k: string) => !SERVER_ONLY.test(k) && (keys ? keys(k) : true);
+      return `export default JSON.parse(${JSON.stringify(JSON.stringify(filledDictionary(locale, keep)))});`;
     },
   };
 }
