@@ -61,6 +61,7 @@ import { resolveToken } from './lib/tokens';
 import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
 import { signInSupport } from './lib/support';
+import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
@@ -100,6 +101,65 @@ export function createApp(deps: Deps) {
       defer(deps, flushHealth(deps, 200).then(() => deliverWebhooks(deps, 20)));
     }
   });
+
+  // ---------------------------------------------------------------- request limits (lib/ratelimit.ts)
+  const limiter = deps.limiter ?? sharedLimiter;
+  const scale = cfg.limitScale ?? 1;
+  const limitsOn = scale > 0;
+  type Check = [key: string, budget: BudgetName];
+  // 1. The network address, before anything else is looked up.
+  app.use('*', async (c, next) => {
+    const p = c.req.path;
+    if (!limitsOn || p === '/api/health' || !(p.startsWith('/api/') || p === '/mcp' || p.startsWith('/oauth/') || p.startsWith('/.well-known/'))) return next();
+    const ip = clientIp(c, cfg.clientIp);
+    if (ip) {
+      const checks: Check[] = [[`ip:${ip}`, 'ip']];
+      if (isSignIn(c.req.method, p)) checks.push([`signin:${ip}`, 'signin']);
+      const wait = takeAll(limiter, scale, checks);
+      if (wait) return limited(c, wait);
+    }
+    await next();
+  });
+  // 2. The company (after companyFromHost): everyone at it together, its sign-in steps, its AI connections.
+  const companyLimits = async (c: any, next: () => Promise<void>) => {
+    if (!limitsOn) return next();
+    const org = c.get('org') as OrgRow;
+    const m = c.req.method;
+    const p = c.req.path as string;
+    const checks: Check[] = [[`org:${org.id}`, 'company']];
+    if (isSignIn(m, p)) checks.push([`signin-org:${org.id}`, 'signinCompany']);
+    if (p === '/mcp' && m === 'POST') {
+      const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1];
+      if (bearer) checks.push([`mcp:${(await sha256Hex(bearer)).slice(0, 32)}`, 'mcp']);
+      checks.push([`mcp-org:${org.id}`, 'mcpCompany']);
+    }
+    const wait = takeAll(limiter, scale, checks);
+    if (wait) return limited(c, wait, c.get('locale'));
+    await next();
+  };
+  // 3. The person (after sign-in): everything they ask, their changes, search, exports, invitations.
+  const personLimits = async (c: any, next: () => Promise<void>) => {
+    const auth = c.get('auth');
+    if (!limitsOn || !auth) return next();
+    const org = c.get('org') as OrgRow;
+    const m = c.req.method;
+    const p = c.req.path as string;
+    const who = `${org.id}:${auth.userId}`;
+    const checks: Check[] = [[`person:${who}`, 'person']];
+    if (isWrite(m)) checks.push([`write:${who}`, 'write']);
+    if (isSearch(m, p)) checks.push([`search:${who}`, 'search']);
+    if (isExport(m, p, new URL(c.req.url))) checks.push([`export:${who}`, 'export']);
+    const invite = isInvite(m, p);
+    if (invite) checks.push([`invite:${who}`, 'invite'], [`invite-org:${org.id}`, 'inviteCompany']);
+    const wait = takeAll(limiter, scale, checks);
+    if (wait) return limited(c, wait, c.get('locale'));
+    if (invite) {
+      // Emails in the company's name: the hour's count comes from the database, exact on every isolate.
+      const [{ n }] = await deps.db.tenant({ orgId: org.id, userId: auth.userId }, (q) => q.query<{ n: number }>('select app_invites_last_hour() as n'));
+      if (n >= INVITES_PER_HOUR * scale) return limited(c, 900, c.get('locale'));
+    }
+    await next();
+  };
 
   app.onError((err, c) => {
     const org = c.get('org') as OrgRow | undefined;
@@ -193,6 +253,9 @@ export function createApp(deps: Deps) {
   app.use('/mcp', companyFromHost);
   app.use('/oauth/*', companyFromHost);
   app.use('/.well-known/*', companyFromHost);
+  app.use('/api/*', companyLimits);
+  app.use('/mcp', companyLimits);
+  app.use('/oauth/*', companyLimits);
   app.route('/', oauthRoutes);
   app.route('/', mcpRoutes);
 
@@ -303,6 +366,8 @@ export function createApp(deps: Deps) {
     }
     await next();
   });
+
+  app.use('/api/*', personLimits);
 
   // A change that carries a key happens once: the key is claimed by the request's first
   // transaction, and the answer is kept for whoever sends the key again (lib/repeats.ts).

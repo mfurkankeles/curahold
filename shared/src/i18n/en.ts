@@ -66,6 +66,7 @@ export const en = {
   'errors.validation': 'Some fields are not valid: {fields}',
   'errors.invalid_token': 'This link or code is not valid any more. Request a new one.',
   'errors.too_many_requests': 'Too many attempts. Wait a few minutes and try again.',
+  'errors.rate_limited': 'That was a lot of requests in a short time. Try again in {wait}.',
   'errors.conflict': 'Someone else changed this at the same time.',
   'errors.device_mismatch': 'This session belongs to another device. Please sign in again.',
   'errors.bad_status': 'That column does not exist on this board.',

@@ -101,6 +101,8 @@ export function selfHostConfig(env: Record<string, string | undefined>): Config 
     ...base,
     scheme: url.protocol === 'http:' ? 'http' : 'https',
     publicPort: url.port ? Number(url.port) : undefined,
+    // Behind the reverse proxy the install guide requires: the address it adds (lib/ratelimit.ts).
+    clientIp: 'proxy',
     signupEnabled: false,
     // Your own server: no subscription, everything open.
     billing: undefined,
@@ -167,7 +169,7 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   const isPortal = (req: Request) => !!config.portalDomain && (req.headers.get('host') ?? new URL(req.url).host).split(':')[0] === config.portalDomain;
 
   const port = Number(env.PORT || 8080);
-  const server = serve({ fetch: (req: Request) => (isPortal(req) ? portal.fetch(req) : app.fetch(req)), port });
+  const server = serve({ fetch: (req: Request, env: unknown) => (isPortal(req) ? portal.fetch(req, env) : app.fetch(req, env)), port });
   // Hourly jobs: summaries, automations, renewals, syncs, cleaning up.
   const tick = () => runScheduled(deps).catch((e) => console.error('[curahold] scheduled jobs failed', e));
   const timer = setInterval(tick, 3600_000);

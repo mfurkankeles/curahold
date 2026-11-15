@@ -34,6 +34,9 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     baseDomain: 'localhost',
     scheme: 'http',
     publicPort: opts.publicPort,
+    // The demo and the browser tests fill the company through the API at machine speed: ten times the budgets.
+    clientIp: 'socket',
+    limitScale: 10,
     centralHost: 'app.localhost',
     // Curahold's own support desk, on a host of its own (desk.localhost, as desk.curahold.com).
     deskHost: 'desk.localhost',
@@ -77,7 +80,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   }
   // The portal's own domain gets the portal, and nothing else.
   const isPortal = (req: Request) => (req.headers.get('host') ?? new URL(req.url).host).split(':')[0].endsWith(`.${config.portalDomain}`);
-  const server = serve({ fetch: (req: Request) => (isPortal(req) ? portal.fetch(req) : root.fetch(req)), port: opts.port });
+  const server = serve({ fetch: (req: Request, env: unknown) => (isPortal(req) ? portal.fetch(req, env) : root.fetch(req, env)), port: opts.port });
   // Hourly jobs (digests, automations); on Workers this is the cron trigger.
   const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
   timer.unref();

@@ -7,7 +7,8 @@
 // what was tried, and what came back.
 import { login, setup } from '../../tests/helpers';
 
-const env = await setup();
+// Request limits as in production (the test suite switches them off), the address from Cloudflare's header.
+const env = await setup({ limitScale: 1, clientIp: 'cf' });
 const out: string[] = [];
 const say = (topic: string, text: string) => out.push(`${topic.padEnd(14)} ${text}`);
 const ada = await login(env, 'beta', 'ada@demo.example'); // the Turkish company
@@ -94,10 +95,25 @@ const mert = await login(env, 'beta', 'mert@demo.example');
   const res = await ada.get('/api/me');
   const want = ['content-security-policy', 'strict-transport-security', 'x-content-type-options', 'x-frame-options', 'referrer-policy', 'permissions-policy', 'cache-control'];
   say('security', `headers on an API answer: ${want.map((h) => `${h}=${res.headers.get(h) ? 'yes' : 'no'}`).join(', ')}`);
+  // A person opening ten heavy pages back to back: what the app itself does.
+  const sofia = await login(env, 'beta', 'sofia@demo.example').catch(() => mert);
+  let pageRefused = 0;
+  for (let i = 0; i < 10; i++) for (const p of ['/api/me', '/api/boards', '/api/accounts?limit=500', '/api/people', '/api/search?q=a']) if ((await sofia.get(p)).status === 429) pageRefused++;
+  say('security', `ten pages opened back to back (50 requests): ${pageRefused} refused`);
   let limited = 0;
+  let retry = '';
   const t0 = performance.now();
-  for (let i = 0; i < 400; i++) if ((await ada.get('/api/boards')).status === 429) limited++;
-  say('security', `400 requests in ${((performance.now() - t0) / 1000).toFixed(1)} s from one person: ${limited ? `${limited} refused (429)` : 'none refused (no general request limit)'}`);
+  for (let i = 0; i < 400; i++) {
+    const r = await ada.get('/api/boards');
+    if (r.status === 429) (limited++, (retry ||= `${r.headers.get('retry-after')} s, "${r.json?.message}"`));
+  }
+  say('security', `400 requests in ${((performance.now() - t0) / 1000).toFixed(1)} s from one person: ${limited ? `${limited} refused (429, Retry-After ${retry})` : 'none refused (no general request limit)'}`);
+  let signRefused = 0;
+  for (let i = 0; i < 40; i++) {
+    const r = await env.app.request('https://beta.curahold.test/api/auth/start', { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-device': 'probe', 'cf-connecting-ip': '203.0.113.9' }, body: JSON.stringify({ email: `probe${i}@demo.example` }) });
+    if (r.status === 429) signRefused++;
+  }
+  say('security', `40 sign-in attempts for different addresses from one network address: ${signRefused} refused`);
 }
 
 // ---------------------------------------------------------------- companies apart

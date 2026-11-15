@@ -59,6 +59,10 @@ export interface Config {
   owner?: string;
   /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
   billing?: BillingConfig;
+  /** Where the caller's network address comes from (lib/ratelimit.ts); unset: unknown, no per-address limit. */
+  clientIp?: 'cf' | 'proxy' | 'socket';
+  /** Multiplies every request budget (lib/ratelimit.ts): 1 or unset in production, 0 switches the limits off. */
+  limitScale?: number;
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */
@@ -102,6 +106,8 @@ export interface Deps {
   now?: () => Date;
   /** Runs work after the response (Workers: waitUntil). Defaults to fire-and-forget. */
   defer?: (p: Promise<unknown>) => void;
+  /** Request budgets of this isolate or process; defaults to the shared one (lib/ratelimit.ts). */
+  limiter?: import('./lib/ratelimit').Limiter;
 }
 
 export interface OrgRow {

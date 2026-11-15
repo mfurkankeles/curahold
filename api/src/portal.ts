@@ -2,6 +2,7 @@
 // (acme.curahold-portal.com). It shares nothing with the app's API: its own
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
+import { clientIp, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { z } from 'zod';
@@ -93,6 +94,22 @@ export function createPortalApp(deps: Deps) {
     return c.body(obj!.data, 200, { 'content-type': obj!.mime, 'cache-control': 'public, max-age=86400' });
   });
 
+  // ------------------------------------------------------------ request limits (lib/ratelimit.ts)
+  const limiter = deps.limiter ?? sharedLimiter;
+  const scale = cfg.limitScale ?? 1;
+  app.use('/papi/*', async (c, next) => {
+    if (!(scale > 0)) return next();
+    const org = c.get('org');
+    const ip = clientIp(c, cfg.clientIp);
+    const signin = isSignIn(c.req.method, c.req.path);
+    const checks: [string, BudgetName][] = [[`portal-org:${org.id}`, 'company']];
+    if (ip) checks.unshift([`ip:${ip}`, 'ip'], ...(signin ? ([[`signin:${ip}`, 'signin']] as [string, BudgetName][]) : []));
+    if (signin) checks.push([`portal-signin-org:${org.id}`, 'signinCompany']);
+    const wait = takeAll(limiter, scale, checks);
+    if (wait) return limited(c, wait, c.get('locale'));
+    await next();
+  });
+
   // ------------------------------------------------------------ sign-in
   const signIn = mountSignIn(app, deps);
 
@@ -120,6 +137,13 @@ export function createPortalApp(deps: Deps) {
         await q.query('update portal_sessions set last_seen_at = now() where id = $1', [s.id]);
         await q.query('update portal_users set last_seen_at = now() where id = $1', [s.person_id]);
       });
+    }
+    if (scale > 0) {
+      const who = `portal:${org.id}:${s.person_id}`;
+      const checks: [string, BudgetName][] = [[`person:${who}`, 'person']];
+      if (isWrite(c.req.method)) checks.push([`write:${who}`, 'write']);
+      const wait = takeAll(limiter, scale, checks);
+      if (wait) return limited(c, wait, c.get('locale'));
     }
     await next();
   });

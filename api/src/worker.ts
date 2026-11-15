@@ -113,6 +113,8 @@ export function configFromEnv(env: Env): Config {
     deskHost: env.DESK_HOST || undefined,
     singleTenantSlug: env.SINGLE_TENANT_SLUG || undefined,
     authSecret: env.AUTH_SECRET,
+    // Request limits key on Cloudflare's own client-address header (lib/ratelimit.ts).
+    clientIp: 'cf',
     devExposeTokens: false,
     devOrgHeader: false,
     maxDevices: Number(env.MAX_DEVICES) || 2,

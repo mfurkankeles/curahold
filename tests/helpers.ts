@@ -26,6 +26,8 @@ export function testConfig(over: Partial<Config> = {}): Config {
     oauth: { google: { clientId: 'google-client', clientSecret: 'google-secret' } },
     signupEnabled: true,
     connectors: {},
+    // Request limits off: tests run requests at machine speed. tests/ratelimit.test.ts turns them on.
+    limitScale: 0,
     ...over,
   };
 }

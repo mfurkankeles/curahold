@@ -62,6 +62,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.validation': 'Bazı alanlar geçersiz: {fields}',
   'errors.invalid_token': 'Bu bağlantı ya da kod artık geçerli değil. Yenisini iste.',
   'errors.too_many_requests': 'Çok fazla deneme oldu. Birkaç dakika bekleyip tekrar dene.',
+  'errors.rate_limited': 'Kısa sürede çok fazla istek geldi. {wait} sonra tekrar dene.',
   'errors.conflict': 'Başka biri aynı anda bunu değiştirdi.',
   'errors.device_mismatch': 'Bu oturum başka bir cihaza ait. Lütfen tekrar giriş yap.',
   'errors.bad_status': 'Bu panoda böyle bir sütun yok.',

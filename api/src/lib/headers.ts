@@ -4,8 +4,7 @@
 //
 // The static files (the app itself) get the same set from web/public/_headers,
 // since Cloudflare serves them without running the Worker; tests/security.test.ts
-// keeps the two in step. Rate limiting is NOT done here: it belongs at the edge
-// (see db/OPS-SECURITY.md, "Cloudflare rate rules").
+// keeps the two in step. Request limits are lib/ratelimit.ts.
 import type { MiddlewareHandler } from 'hono';
 
 /** The one inline script in index.html (light/dark before first paint), by hash: nothing else inline may run. */
