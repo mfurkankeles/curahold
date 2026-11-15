@@ -4163,4 +4163,7 @@ export const tr: Record<MessageKey, string> = {
   'sec.status.passkeys': "{n} passkey",
   'sec.status.none': "İkinci adım yok",
   'sec.second.recoveryCode': "Kurtarma kodu",
+  'errors.staff_second_step': "Curahold çalışanları konsolu passkey ya da ikinci adımla açar. Cihazlarım sayfasından bir tane ekle, sonra yeniden giriş yap.",
+  'desk.signin.app': "Şimdi doğrulama uygulamandaki 6 haneli kodu gir.",
+  'desk.signin.appSetup': "Masa bir doğrulama uygulaması da istiyor. Bu anahtarı uygulamana ekle, sonra gösterdiği kodu gir.",
 };

@@ -32,6 +32,7 @@ const NO_ORG_ID: Record<string, string> = {
   schema_migrations: 'migration bookkeeping, no company data',
   desk_claims: "Curahold's own support desk, not a company's (no privileges for the request roles)",
   desk_codes: "Curahold's own support desk sign-in codes (no privileges for the request roles)",
+  desk_factors: "Curahold's own support staff's authenticator apps (no privileges for the request roles)",
   oauth_clients: 'registered apps, global by design (no privileges for the request roles)',
   trash_rows: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   trash_links: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',

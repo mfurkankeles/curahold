@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import type { Page } from 'puppeteer-core';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { base32Decode, hotp, stepOf } from '../../api/src/lib/totp';
 import { DESK_STAFF, SCREENS, STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
 
 /** The fixed port by default; E2E_PORT lets a second checkout run its own journeys alongside. */
@@ -866,6 +867,11 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   const deskCode = deskCodeFor(DESK_STAFF);
   expect(deskCode, 'no desk code was emailed to the staff address');
   await d.type('.desk-signin__code', deskCode!);
+  await d.click('.desk-signin__card .btn--primary');
+  // Then the authenticator app, set up on first use: the key is shown, the app's code confirms it.
+  await d.waitForSelector('.desk-signin__card [data-secret]');
+  const deskSecret = await d.$eval('.desk-signin__card [data-secret]', (el) => (el as HTMLElement).dataset.secret!);
+  await d.type('.desk-signin__card input[autocomplete="one-time-code"]', await hotp(base32Decode(deskSecret), stepOf(Date.now())));
   await d.click('.desk-signin__card .btn--primary');
   await appears('.desk__rail');
 

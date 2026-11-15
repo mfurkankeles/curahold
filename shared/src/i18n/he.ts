@@ -4163,4 +4163,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "{n} מפתחות גישה",
   'sec.status.none': "אין שלב שני",
   'sec.second.recoveryCode': "קוד שחזור",
+  'errors.staff_second_step': "צוות Curahold פותח את הקונסולה עם מפתח גישה או שלב שני. הוסף אחד בעמוד המכשירים שלי והיכנס מחדש.",
+  'desk.signin.app': "עכשיו הזן את הקוד בן 6 הספרות מאפליקציית האימות.",
+  'desk.signin.appSetup': "הדסק דורש גם אפליקציית אימות. הוסף את המפתח לאפליקציה שלך והזן את הקוד שהיא מציגה.",
 };

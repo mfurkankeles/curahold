@@ -4178,6 +4178,9 @@ export const en = {
   'sec.status.passkeys': "{n} passkeys",
   'sec.status.none': "No second step",
   'sec.second.recoveryCode': "Recovery code",
+  'errors.staff_second_step': "Curahold staff open the console with a passkey or a second step. Add one in My devices, then sign in again.",
+  'desk.signin.app': "Now the 6-digit code from your authenticator app.",
+  'desk.signin.appSetup': "The desk needs an authenticator app too. Add this key to yours, then enter the code it shows.",
 } as const;
 
 export type MessageKey = keyof typeof en;

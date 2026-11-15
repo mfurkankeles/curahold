@@ -4163,4 +4163,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "{n} کلید عبور",
   'sec.status.none': "بدون مرحله دوم",
   'sec.second.recoveryCode': "کد بازیابی",
+  'errors.staff_second_step': "کارکنان Curahold کنسول را با کلید عبور یا مرحله دوم باز می‌کنند. یکی را در صفحه دستگاه‌های من اضافه کنید و دوباره وارد شوید.",
+  'desk.signin.app': "اکنون کد ۶ رقمی برنامه احراز هویت را وارد کنید.",
+  'desk.signin.appSetup': "میز پشتیبانی به برنامه احراز هویت هم نیاز دارد. این کلید را به برنامه‌تان اضافه کنید و کدی را که نشان می‌دهد وارد کنید.",
 };

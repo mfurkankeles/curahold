@@ -55,6 +55,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `read_only_token` | 403 | Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluştur ya da uygulamayı yeniden bağlayıp değişikliğe izin ver. |
 | `reauth_required` | 403 | Devam etmek için kimliğini onayla. |
 | `sso_required` | 403 | Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO'sunu kullanın. |
+| `staff_second_step` | 403 | Curahold çalışanları konsolu passkey ya da ikinci adımla açar. Cihazlarım sayfasından bir tane ekle, sonra yeniden giriş yap. |
 | `support_blocked` | 403 | Destek, izin olsa da bu bölümü açamaz. |
 | `support_edit_admins` | 403 | Desteğin değişiklik yapmasına yalnızca yöneticiler izin verebilir. |
 | `support_not_allowed` | 403 | Şirketin desteğe erişim vermene izin vermiyor. |

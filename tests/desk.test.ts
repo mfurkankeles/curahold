@@ -2,6 +2,7 @@
 // sent to a staff address, what a session can and cannot do, taking a request,
 // answering it, closing it, getting in to look (only with the person's
 // consent) — and that none of it is reachable any other way.
+import { base32Decode, hotp, stepOf } from '../api/src/lib/totp';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
@@ -17,6 +18,7 @@ let ada: Client;
 let lena: Client;
 
 /** A browser at the central address: keeps the desk's cookie, sends the header every change needs. */
+const secrets = new Map<string, string>();
 class Desk {
   cookie = '';
   attrs = '';
@@ -32,9 +34,17 @@ class Desk {
   }
   async signIn(email: string) {
     const sent = await this.req('POST', '/sign-in', { email });
-    const done = await this.req('POST', '/sign-in/verify', { email, code: sent.json.devCode });
+    const first = await this.req('POST', '/sign-in/verify', { email, code: sent.json.devCode });
+    expect(first.status, JSON.stringify(first.json)).toBe(200);
+    const done = await this.second(email, first.json.second);
     expect(done.status, JSON.stringify(done.json)).toBe(200);
     return done.json;
+  }
+  /** The authenticator app (set up on first use). The step counter is reset so quick repeat sign-ins in a test can reuse the moment's code. */
+  async second(email: string, s: { ticket: string; enroll: boolean; secret?: string }) {
+    if (s.enroll) secrets.set(email, s.secret!);
+    await env.db.system((q) => q.query('update desk_factors set last_step = 0 where email = $1', [email]));
+    return this.req('POST', '/sign-in/second', { ticket: s.ticket, code: await hotp(base32Decode(secrets.get(email)!), stepOf(Date.now())) });
   }
 }
 const codeMails = (to: string) => env.email.sent.filter((m) => m.to === to && /desk code/.test(m.subject));
@@ -74,7 +84,13 @@ describe('signing in to the desk', () => {
     const sent = await d.req('POST', '/sign-in', { email: DENIZ });
     const code = sent.json.devCode as string;
     expect((await d.req('POST', '/sign-in/verify', { email: EMRE, code })).status).toBe(401);
-    const ok = await d.req('POST', '/sign-in/verify', { email: DENIZ, code });
+    const first = await d.req('POST', '/sign-in/verify', { email: DENIZ, code });
+    expect(first.status).toBe(200);
+    // The emailed code alone opens nothing: the authenticator app comes next.
+    expect(d.cookie).toBe('');
+    expect((await d.req('GET', '/me')).status).toBe(401);
+    expect((await d.req('POST', '/sign-in/second', { ticket: first.json.second.ticket, code: '000000' })).status).toBe(401);
+    const ok = await d.second(DENIZ, first.json.second);
     expect(ok.status).toBe(200);
     expect(ok.json.staff).toEqual({ email: DENIZ, name: 'Deniz Aksoy' });
     expect(d.attrs).toMatch(/HttpOnly/i);

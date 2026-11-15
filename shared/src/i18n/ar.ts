@@ -4163,4 +4163,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "{n} من مفاتيح المرور",
   'sec.status.none': "لا توجد خطوة ثانية",
   'sec.second.recoveryCode': "رمز الاسترداد",
+  'errors.staff_second_step': "يفتح موظفو Curahold وحدة التحكم بمفتاح مرور أو بخطوة ثانية. أضف واحدة من صفحة أجهزتي، ثم سجّل الدخول من جديد.",
+  'desk.signin.app': "والآن أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.",
+  'desk.signin.appSetup': "يتطلب المكتب تطبيق مصادقة أيضًا. أضف هذا المفتاح إلى تطبيقك، ثم أدخل الرمز الذي يظهر.",
 };

@@ -33,14 +33,28 @@ export function isPlatformStaff(c: C): boolean {
   return platformStaff(c.get('deps').config).has(email);
 }
 
-/** Guard for the console routes: a non-owner, non-staff caller gets 403. */
+/**
+ * Curahold's own staff on the hosted service open the console only from a
+ * session that passed a second step (passkey, authenticator app, recovery code
+ * or SSO). A self-hosted or development install, where the company's own
+ * administrator stands in for the owner, has no Curahold staff and is not asked.
+ */
+export function staffNeedsSecondStep(c: C): boolean {
+  const cfg = c.get('deps').config;
+  const email = c.get('auth')?.email?.toLowerCase() ?? '';
+  const curaholdStaff = (!!cfg.owner && email === cfg.owner) || platformStaff(cfg).has(email);
+  return curaholdStaff && !c.get('auth')?.secondStep;
+}
+
+/** Guard for the console routes: a non-owner, non-staff caller gets 403; staff without a second step too. */
 export function requirePlatform(c: C): void {
   if (!isPlatformStaff(c)) fail('forbidden');
+  if (staffNeedsSecondStep(c)) fail('staff_second_step');
 }
 
 /** The flags the browser needs to decide whether to show the console (no tenant data). */
-export function platformAccess(c: C): { owner: boolean; staff: boolean; platform: boolean } {
+export function platformAccess(c: C): { owner: boolean; staff: boolean; platform: boolean; secondStepNeeded?: true } {
   const owner = isOwner(c);
   const staff = isPlatformStaff(c);
-  return { owner, staff, platform: staff };
+  return { owner, staff, platform: staff, ...(staff && staffNeedsSecondStep(c) ? { secondStepNeeded: true as const } : {}) };
 }

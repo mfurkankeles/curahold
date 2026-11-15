@@ -4163,4 +4163,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "パスキー {n} 個",
   'sec.status.none': "2段階目の確認なし",
   'sec.second.recoveryCode': "リカバリーコード",
+  'errors.staff_second_step': "Curahold のスタッフは、パスキーまたは2段階目の確認でコンソールを開きます。「マイデバイス」で追加してから、もう一度ログインしてください。",
+  'desk.signin.app': "続いて、認証アプリの6桁のコードを入力してください。",
+  'desk.signin.appSetup': "デスクには認証アプリも必要です。このキーをアプリに追加し、表示されるコードを入力してください。",
 };

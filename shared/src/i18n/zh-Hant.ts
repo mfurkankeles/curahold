@@ -4163,4 +4163,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "{n} 組密碼金鑰",
   'sec.status.none': "未設定第二步驗證",
   'sec.second.recoveryCode': "復原碼",
+  'errors.staff_second_step': "Curahold 員工需使用密碼金鑰或第二步驗證開啟控制台。請在「我的裝置」中新增一種方式，然後重新登入。",
+  'desk.signin.app': "現在輸入驗證器應用程式中的 6 位數代碼。",
+  'desk.signin.appSetup': "服務台還需要驗證器應用程式。請將此金鑰加入你的應用程式，然後輸入顯示的代碼。",
 };

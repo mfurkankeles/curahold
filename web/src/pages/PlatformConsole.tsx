@@ -86,6 +86,13 @@ export function PlatformConsolePage() {
 
   if (failed && !access) return <div className="pf"><LoadError onRetry={retry} /></div>;
   if (!access) return <div className="pf"><SkeletonRows rows={6} label={t('common.loading')} /></div>;
+  if (access.secondStepNeeded) {
+    return (
+      <div className="pf">
+        <EmptyState icon="lock" title={t('errors.staff_second_step')} />
+      </div>
+    );
+  }
   if (!access.platform) {
     return (
       <div className="pf">

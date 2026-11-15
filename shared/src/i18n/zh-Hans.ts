@@ -4163,4 +4163,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "{n} 个通行密钥",
   'sec.status.none': "未设置第二步验证",
   'sec.second.recoveryCode': "恢复码",
+  'errors.staff_second_step': "Curahold 员工需使用通行密钥或第二步验证打开控制台。请在“我的设备”中添加一种方式，然后重新登录。",
+  'desk.signin.app': "现在输入身份验证器应用中的 6 位数代码。",
+  'desk.signin.appSetup': "服务台还需要身份验证器应用。请将此密钥添加到你的应用，然后输入显示的代码。",
 };

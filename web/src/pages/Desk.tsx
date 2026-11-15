@@ -6,6 +6,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEven
 import { normalizeLocale, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import type { ReplayMeta } from '../../../shared/src/replay';
 import { EmptyState } from '../components/Empty';
+import { TotpSecret } from '../components/SecondStep';
 import { Icon, type IconName } from '../components/icons';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
@@ -136,6 +137,9 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
+  // Third step: the authenticator app (set up the first time).
+  const [second, setSecond] = useState<{ ticket: string; enroll: boolean; secret?: string; uri?: string } | null>(null);
+  const [app, setApp] = useState('');
 
   const send = async (e: FormEvent) => {
     e.preventDefault();
@@ -154,8 +158,17 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
     e.preventDefault();
     setBusy(true);
     try {
-      await desk('POST', '/sign-in/verify', { email, code });
-      onIn();
+      if (second) {
+        await desk('POST', '/sign-in/second', { ticket: second.ticket, code: app });
+        onIn();
+        return;
+      }
+      const r = await desk<{ second?: { ticket: string; enroll: boolean; secret?: string; uri?: string } }>('POST', '/sign-in/verify', { email, code });
+      if (r.second) {
+        setSecond(r.second);
+        setWrong(false);
+        setBusy(false);
+      } else onIn();
     } catch {
       setWrong(true);
       setBusy(false);
@@ -176,7 +189,17 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
           <span className="field__label">{t('desk.signin.email')}</span>
           <input className="input" type="email" autoComplete="username" required autoFocus disabled={sent} value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
-        {sent && (
+        {second && (
+          <>
+            <p className="field__hint">{second.enroll ? t('desk.signin.appSetup') : t('desk.signin.app')}</p>
+            {second.enroll && second.secret && second.uri && <TotpSecret secret={second.secret} uri={second.uri} />}
+            <label className="field">
+              <span className="field__label">{t('sec.second.code')}</span>
+              <input className="input desk-signin__code" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required autoFocus value={app} onChange={(e) => setApp(e.target.value.replace(/\D/g, ''))} />
+            </label>
+          </>
+        )}
+        {sent && !second && (
           <>
             <p className="field__hint">{t('desk.signin.sent')}</p>
             <label className="field">
@@ -202,6 +225,8 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
             onClick={() => {
               setSent(false);
               setCode('');
+              setSecond(null);
+              setApp('');
               setWrong(false);
             }}
           >

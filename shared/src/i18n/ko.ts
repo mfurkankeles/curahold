@@ -4163,4 +4163,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'sec.status.passkeys': "패스키 {n}개",
   'sec.status.none': "2단계 인증 없음",
   'sec.second.recoveryCode': "복구 코드",
+  'errors.staff_second_step': "Curahold 직원은 패스키나 2단계 인증으로 콘솔을 엽니다. 내 기기에서 하나를 추가한 뒤 다시 로그인하세요.",
+  'desk.signin.app': "이제 인증 앱의 6자리 코드를 입력하세요.",
+  'desk.signin.appSetup': "데스크에는 인증 앱도 필요합니다. 이 키를 앱에 추가한 뒤 표시되는 코드를 입력하세요.",
 };

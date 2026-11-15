@@ -103,4 +103,6 @@ export interface PlatformAccess {
   staff: boolean;
   /** owner || staff — whether the console is theirs to open at all. */
   platform: boolean;
+  /** Curahold staff without a second step in this session: the console stays closed until they add one. */
+  secondStepNeeded?: true;
 }

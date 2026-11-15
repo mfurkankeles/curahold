@@ -13,13 +13,14 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { HELP_STATUSES } from '../../../shared/src/help';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
-import { deskHostOf, nowOf, orgUrl, type AppEnv, type C } from '../context';
+import { deskHostOf, nowOf, orgUrl, secretsKey, type AppEnv, type C } from '../context';
 import type { Q } from '../db';
-import { hmacHex, randomDigits, randomToken, safeEqual, sha256Hex, sign, verify } from '../lib/crypto';
+import { hmacHex, randomDigits, randomToken, safeEqual, seal, sha256Hex, sign, unseal, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
 import { addHelpMessage, takeMail } from '../lib/helpThread';
 import { ENTRY_LINK_MINUTES, mayGrant, sharedKeyOk, staffPerson, SUPPORT_SESSION_HOURS } from '../lib/support';
 import { body } from '../lib/validate';
+import { checkTotp, newSecret, otpauthUri } from '../lib/totp';
 
 export const deskRoutes = new Hono<AppEnv>();
 
@@ -28,6 +29,7 @@ const SESSION_HOURS = 8;
 const CODE_MINUTES = 10;
 const CODES_PER_HOUR = 5;
 const TRIES_PER_CODE = 5;
+const SECOND_MINUTES = 10;
 const REF = /^CH-\d{6,}$/;
 
 interface Staff {
@@ -100,7 +102,7 @@ deskRoutes.post('/sign-in', async (c) => {
   return c.json({ ok: true, ...(devCode ? { devCode } : {}) });
 });
 
-/** Step two: the code. Right once, it opens a session for this browser; five wrong tries spend it. */
+/** Step two: the emailed code. Right once, it leads to the second step; five wrong tries spend it. */
 deskRoutes.post('/sign-in/verify', async (c) => {
   if (!onDesk(c)) fail('not_found');
   const input = await body(c, z.object({ email: z.string().trim().toLowerCase().email().max(320), code: z.string().trim().regex(/^\d{6}$/) }));
@@ -118,19 +120,61 @@ deskRoutes.post('/sign-in/verify', async (c) => {
       return false;
     }
     await q.query('delete from desk_codes where email = $1', [input.email]);
-    await note(q, { email: input.email, via: 'session' }, 'signed_in');
     return true;
   });
   if (!ok) fail('unauthenticated');
+  // The emailed code is the first step; the authenticator app is the second (set up on first use).
+  const ticket = await sign({ desk2: 1, e: input.email, x: nowOf(deps).getTime() + SECOND_MINUTES * 60_000, n: randomToken(8) }, deskSecret(c));
+  const [f] = await deps.db.system((q) => q.query<{ confirmed_at: Date | null }>('select confirmed_at from desk_factors where email = $1', [input.email]));
+  if (f?.confirmed_at) return c.json({ second: { ticket, enroll: false } });
+  const secret = newSecret();
+  const sealed = await seal({ s: secret }, secretsKey(deps.config));
+  await deps.db.system((q) =>
+    q.query(
+      `insert into desk_factors (email, secret_sealed) values ($1, $2)
+       on conflict (email) do update set secret_sealed = excluded.secret_sealed, last_step = 0, fails = 0, created_at = now() where desk_factors.confirmed_at is null`,
+      [input.email, sealed],
+    ),
+  );
+  return c.json({ second: { ticket, enroll: true, secret, uri: otpauthUri(secret, input.email, 'Curahold desk') } });
+});
+
+/** Step three: the authenticator app's code (or, the first time, the code that confirms it). Then the session. */
+deskRoutes.post('/sign-in/second', async (c) => {
+  if (!onDesk(c)) fail('not_found');
+  const input = await body(c, z.object({ ticket: z.string().min(20).max(400), code: z.string().trim().regex(/^\d{6}$/) }));
+  const deps = c.get('deps');
+  const t = await verify<{ desk2: number; e: string; x: number }>(input.ticket, deskSecret(c));
+  if (!t || t.desk2 !== 1 || t.x < nowOf(deps).getTime() || !staffList(c).includes(t.e)) fail('unauthenticated');
+  const email = t!.e;
+  const ok = await deps.db.system(async (q) => {
+    const [row] = await q.query<{ secret_sealed: string; last_step: string; fails: number; locked: boolean }>(
+      `select secret_sealed, last_step, fails, (fails >= $2 and failed_at > now() - interval '15 minutes') as locked from desk_factors where email = $1 for update`,
+      [email, TRIES_PER_CODE],
+    );
+    if (!row) return 'no' as const;
+    if (row.locked) return 'locked' as const;
+    const secret = (await unseal<{ s: string }>(row.secret_sealed, secretsKey(deps.config)))?.s;
+    const step = secret ? await checkTotp(secret, input.code, nowOf(deps).getTime(), Number(row.last_step)) : null;
+    if (step === null) {
+      await q.query(`update desk_factors set fails = case when failed_at > now() - interval '15 minutes' then fails + 1 else 1 end, failed_at = now() where email = $1`, [email]);
+      return 'no' as const;
+    }
+    await q.query('update desk_factors set last_step = $2, fails = 0, confirmed_at = coalesce(confirmed_at, now()) where email = $1', [email, step]);
+    await note(q, { email, via: 'session' }, 'signed_in');
+    return 'yes' as const;
+  });
+  if (ok === 'locked') fail('too_many_requests');
+  if (ok !== 'yes') fail('unauthenticated');
   const until = nowOf(deps).getTime() + SESSION_HOURS * 3600_000;
-  setCookie(c, DESK_COOKIE, await sign({ desk: 1, e: input.email, x: until, n: randomToken(8) }, deskSecret(c)), {
+  setCookie(c, DESK_COOKIE, await sign({ desk: 1, e: email, x: until, n: randomToken(8) }, deskSecret(c)), {
     httpOnly: true,
     secure: deps.config.scheme === 'https',
     sameSite: 'Strict',
     path: '/api/desk',
     maxAge: SESSION_HOURS * 3600,
   });
-  return c.json({ staff: { email: input.email, name: nameFrom(input.email) }, until: new Date(until).toISOString() });
+  return c.json({ staff: { email, name: nameFrom(email) }, until: new Date(until).toISOString() });
 });
 
 deskRoutes.post('/sign-out', async (c) => {

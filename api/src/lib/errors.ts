@@ -76,6 +76,7 @@ export type ErrorCode =
   | 'second_step_required'
   | 'second_step_setup_first'
   | 'passkey_failed'
+  | 'staff_second_step'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -158,6 +159,8 @@ const STATUS: Record<ErrorCode, number> = {
   second_step_required: 409,
   second_step_setup_first: 409,
   passkey_failed: 400,
+  // Curahold staff open the platform console only after a second step (lib/platform.ts).
+  staff_second_step: 403,
 };
 
 export class HttpError extends Error {

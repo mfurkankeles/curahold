@@ -53,13 +53,13 @@ function harnessClient(signedIn: Client): Client {
       const hash = await sha256Hex(token);
       const [s] = await env.deps.db.tenant({ orgId: org.id, userId: null }, (q) =>
         q.query(
-          `select u.id as user_id, u.name, u.email, u.seat, r.id as role_id, r.key as role_key, r.perms
+          `select u.id as user_id, u.name, u.email, u.seat, r.id as role_id, r.key as role_key, r.perms, s.second_step
              from sessions s join users u on u.id = s.user_id join roles r on r.id = u.role_id
             where s.token_hash = $1`,
           [hash],
         ),
       );
-      if (s) c.set('auth', { userId: s.user_id, sessionId: 'test', name: s.name, email: s.email, roleId: s.role_id, roleKey: s.role_key, perms: s.perms ?? [], seat: s.seat, locale: null });
+      if (s) c.set('auth', { userId: s.user_id, sessionId: 'test', name: s.name, email: s.email, roleId: s.role_id, roleKey: s.role_key, perms: s.perms ?? [], seat: s.seat, locale: null, secondStep: s.second_step });
     }
     await next();
   });
@@ -100,6 +100,18 @@ beforeAll(async () => {
   owner = harnessClient(await login(env, 'acme', OWNER));
   staff = harnessClient(await login(env, 'acme', STAFF));
   admin = harnessClient(await login(env, 'acme', ADMIN));
+  // Curahold staff open the console only from a session that passed a second step (tests/identity.test.ts covers the step itself).
+  await env.db.system((q) => q.query(`update sessions set second_step = 'passkey' where user_id in (select id from users where email = any($1))`, [[OWNER, STAFF]]));
+});
+
+describe('platform console: staff need a second step', () => {
+  it('a staff session without one is told so and refused', async () => {
+    const bare = harnessClient(await login(env, 'acme', STAFF));
+    expect((await bare.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: true, secondStepNeeded: true });
+    const r = await bare.get('/api/platform/customers');
+    expect(r.status).toBe(403);
+    expect(r.json.error).toBe('staff_second_step');
+  });
 });
 
 describe('platform console: who may open it', () => {
