@@ -1,0 +1,93 @@
+# Design tokens
+
+One scale for each kind of value, defined once at the top of `web/src/styles.css` (`:root`, and
+`:root[data-theme='dark']` for colours). The customer portal is its own page and repeats the scales in
+`.p-root` (`web/portal/portal.css`). Rules below the token block never write a radius, a text size, a
+colour or a duration of their own: they take a token. Spacing is the one exception to "take a token":
+it is written in px, and every value is a multiple of 4.
+
+## Corner radius (6 values)
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `0` | 0 | Square: table cells, full-bleed bars, a corner that meets another surface |
+| `--r-xs` | 4px | Tiny marks: checkboxes, keyboard keys, rails, inline code, small tags |
+| `--r-s` | 6px | Controls: buttons, fields, menu items, chips with a square look |
+| `--r-m` | 10px | Containers: cards, panes, popovers, menus, toasts |
+| `--r-l` | 14px | Large surfaces: dialogs, sheets, the task panel, hero tiles |
+| `--r-pill` | 999px | Pills, avatars, dots, round buttons, progress bars (also replaces `50%` on square elements) |
+
+## Type (10 sizes)
+
+| Token | Size | Use |
+| --- | --- | --- |
+| `--fs-2xs` | 11px | Counters, avatar initials, axis labels, the smallest meta text |
+| `--fs-xs` | 12px | Meta text, captions, badges, table headers |
+| `--fs-s` | 13px | Secondary text, dense lists, menu items, inline code |
+| `--fs-m` | 14px | Body text (the root size) |
+| `--fs-l` | 16px | Emphasised body, card titles, every field on a phone (a phone zooms in under 16px) |
+| `--fs-xl` | 20px | Panel and section titles; the page title on a phone |
+| `--fs-2xl` | 24px | Page titles, dialog titles, sign-in headings |
+| `--fs-3xl` | 30px | Big figures in tiles and gauges |
+| `--fs-4xl` | 36px | Lead figures (KPI, the leading metric tile) |
+| `--fs-5xl` | 56px | A single figure that is the whole chart (report builder "big number") |
+
+Line heights: `--lh-tight` 1.1 for figures, `--lh-snug` 1.25 for headings, `--lh-body` 1.45 for text.
+
+## Spacing (4 px grid)
+
+Every padding, margin and gap is a multiple of 4px (0, 4, 8, 12, 16, 20, 24, 32, 40, 48 …).
+Named steps for new code: `--s-1` 4, `--s-2` 8, `--s-3` 12, `--s-4` 16, `--s-6` 24, `--s-8` 32.
+Negative margins that cancel a border (−1px, −2px) are not spacing and are allowed.
+
+## Motion
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--dur-fast` | 150ms | Hover, press, colour and border changes, small pops (menus, tooltips) |
+| `--dur` | 200ms | Anything that moves or changes size: panels, dialogs, toasts, pages, charts filling in |
+| `--stagger` | 40ms | Delay step between siblings landing one after another (`calc(var(--n) * var(--stagger))`) |
+| `--ease` | cubic-bezier(.2, .7, .3, 1) | Default easing for movement |
+| `--ease-out` | ease-out | Things leaving |
+
+Interface motion is always 150–200 ms. All motion is off under `prefers-reduced-motion: reduce`.
+
+Ambient loops are not answers to a hand, so they are outside the 150–200 ms rule. These are all of them:
+
+| Token | Value | Where |
+| --- | --- | --- |
+| `--loop-shimmer` | 1.4s | Skeleton shimmer (`.skeleton`, `.pane__wait`) |
+| `--loop-shine` | 1.2s | Image placeholder shine (`.thumb__wait`); also the assistant button's start delay |
+| `--loop-caret` | 1s | The blinking caret while the assistant writes |
+| `--loop-pulse` | 1.6s | The guided-tour spotlight pulse (demo only) |
+| `--loop-twinkle` | 5s | The assistant button's twinkle, twice, then still |
+
+## Colour
+
+Semantic, never literal. Each has a light and a dark value; text tokens meet WCAG 2.2 AA (4.5:1) on
+`--paper`, `--surface`, `--surface-2` and `--sunk` in both themes, status fills meet 4.5:1 with `--on-status`.
+
+- Surfaces: `--paper` (page), `--surface` (cards, fields), `--surface-2` (raised rows), `--sunk` (wells, hovers), `--scrim` (behind dialogs).
+- Text: `--ink` (primary), `--ink-2` (secondary), `--ink-3` (meta; the lightest text allowed), `--on-ink`, `--on-brand`, `--on-status`.
+- Lines: `--line` (hairlines), `--line-strong` (field borders, dividers that matter).
+- Brand: `--brand` (fills, marks), `--brand-ink` (brand text and links), `--brand-wash` / `--brand-soft` (tinted backgrounds).
+- Time (the identity): `--calm`, `--soon`, `--today`, `--late`, `--done`, with `--soon-wash/-line/-ink`, `--late-wash/-line/-ink`, `--done-wash`, `--info-wash/-ink`.
+- Navigation well: `--well`, `--well-2`, `--well-3`, `--well-deep`, `--well-ink`, `--well-mute`, `--well-hi`, `--nav-on`, `--nav-on-ink`.
+- Everything else (chart series, label colours, the cookie banner, the demo bar) has its own named token in the same block.
+
+## Elevation
+
+`--shadow-1` (a card lifted under the pointer), `--shadow-2` (popovers, menus, toasts), `--shadow-3`
+(dialogs and sheets). Nothing else casts a shadow.
+
+## Focus and touch
+
+- Focus ring: `--ring` (2px solid `--focus`) at `--ring-offset` (2px), on `:focus-visible` only. A control that
+  clips its outline draws the ring inside (`outline-offset: -2px`) instead of dropping it.
+- Touch targets: `--tap` 44px on phones (`pointer: coarse`), never smaller than `--tap-min` 24px anywhere.
+
+## Values that come from data
+
+Some values cannot be a token because the data decides them (a bar's length, a colour a person chose, a
+position on a timeline). Those are passed as CSS custom properties from the component
+(`style={{ '--w': … }}`) and used by a class. See the list in the sweep report.

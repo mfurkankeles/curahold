@@ -13,49 +13,47 @@
 @keyframes pop-dot { from { opacity: 0; scale: .2; } }
 
 /* A page arriving: the heading first, the body a beat later. */
-.main > .topbar { animation: fade-in .28s ease backwards; }
-.main > .page, .main > .tabs { animation: page-in .36s var(--ease) backwards; }
+.main > .topbar { animation: fade-in var(--dur) ease backwards; }
+.main > .page, .main > .tabs { animation: page-in var(--dur) var(--ease) backwards; }
 
 /* Tiles and cards land one after another, left to right. */
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > * { animation: rise-in .44s var(--ease) backwards; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(2) { animation-delay: .04s; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(3) { animation-delay: .08s; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(4) { animation-delay: .12s; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(5) { animation-delay: .16s; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(6) { animation-delay: .2s; }
-:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(n + 7) { animation-delay: .24s; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > * { animation: rise-in var(--dur) var(--ease) backwards; animation-delay: calc(var(--n, 0) * var(--stagger)); }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(2) { --n: 1; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(3) { --n: 2; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(4) { --n: 3; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(5) { --n: 4; }
+:is(.statstrip, .panes, .reports__grid, .dash__grid, .gallery) > :nth-child(n + 6) { --n: 5; }
 .panes--edit > * { animation: none; }
 
 /* Figures: the big number settles into place. */
-.stat__value, .pane__big, .kpi__value { animation: num-in .5s var(--ease) backwards; animation-delay: .1s; }
+.stat__value, .pane__big, .kpi__value { animation: num-in var(--dur) var(--ease) backwards; }
 
 /* Charts fill in: bars grow from their baseline, lines draw, rings sweep. */
-.barrows__fill, .target__won, .target__open, .hbar__fill { animation: grow-w .8s var(--ease) backwards; animation-delay: .15s; }
-.barrows li:nth-child(2) .barrows__fill, .hbar:nth-child(2) .hbar__fill { animation-delay: .2s; }
-.barrows li:nth-child(3) .barrows__fill, .hbar:nth-child(3) .hbar__fill { animation-delay: .25s; }
-.barrows li:nth-child(4) .barrows__fill, .hbar:nth-child(4) .hbar__fill { animation-delay: .3s; }
-.barrows li:nth-child(5) .barrows__fill, .hbar:nth-child(5) .hbar__fill { animation-delay: .35s; }
-.barrows li:nth-child(n + 6) .barrows__fill, .hbar:nth-child(n + 6) .hbar__fill { animation-delay: .4s; }
-.chart__bar, .vbar__fill { animation: grow-h .7s var(--ease) backwards; animation-delay: calc(.1s + var(--i, 0) * 28ms); }
-.chart__bar b, .vbar__n { animation: fade-in .3s ease backwards; animation-delay: calc(.6s + var(--i, 0) * 28ms); }
-.healthbar span { animation: grow-flex .8s var(--ease) backwards; animation-delay: .15s; }
+.barrows__fill, .target__won, .target__open, .hbar__fill { animation: grow-w var(--dur) var(--ease) backwards; animation-delay: calc(var(--n, 0) * var(--stagger)); }
+.barrows li:nth-child(2) .barrows__fill, .hbar:nth-child(2) .hbar__fill { --n: 1; }
+.barrows li:nth-child(3) .barrows__fill, .hbar:nth-child(3) .hbar__fill { --n: 2; }
+.barrows li:nth-child(4) .barrows__fill, .hbar:nth-child(4) .hbar__fill { --n: 3; }
+.barrows li:nth-child(n + 5) .barrows__fill, .hbar:nth-child(n + 5) .hbar__fill { --n: 4; }
+.chart__bar, .vbar__fill { animation: grow-h var(--dur) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 20ms); }
+.chart__bar b, .vbar__n { animation: fade-in var(--dur) ease backwards; animation-delay: calc(var(--dur) + var(--i, 0) * 20ms); }
+.healthbar span { animation: grow-flex var(--dur) var(--ease) backwards; }
 /* A line is drawn left to right (a wipe, so the stroke stays crisp at any width). */
-.linechart__plot svg { animation: wipe 1s var(--ease) backwards; animation-delay: .15s; }
-.linechart__dot { animation: pop-dot .3s var(--ease) backwards; animation-delay: calc(.35s + var(--i, 0) * 35ms); }
-.donut__arc { animation: sweep 1s var(--ease) backwards; animation-delay: calc(.1s + var(--i, 0) * 90ms); }
+.linechart__plot svg { animation: wipe var(--dur) var(--ease) backwards; }
+.linechart__dot { animation: pop-dot var(--dur-fast) var(--ease) backwards; animation-delay: calc(var(--dur) + var(--i, 0) * 20ms); }
+.donut__arc { animation: sweep var(--dur) var(--ease) backwards; animation-delay: calc(var(--i, 0) * var(--stagger)); }
 
 /* A hand on the page. */
-.btn { transition: background-color .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease, filter .12s ease; }
+.btn { transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) ease, filter var(--dur-fast) ease; }
 .btn:active:not(:disabled) { transform: scale(.97); }
 .btn--primary { background: var(--grad, var(--brand)); background-origin: border-box; }
 .btn--primary:hover { background: var(--grad, var(--brand-ink)); filter: brightness(1.08); }
-.sidebar__new { transition: transform .08s ease, filter .12s ease, box-shadow .12s ease; }
+.sidebar__new { transition: transform var(--dur-fast) ease, filter var(--dur-fast) ease, box-shadow var(--dur-fast) ease; }
 .sidebar__new:active { transform: scale(.98); }
-.navlink .icon { transition: transform .16s var(--ease); }
+.navlink .icon { transition: transform var(--dur-fast) var(--ease); }
 .navlink:hover .icon { transform: translateX(1px) scale(1.06); }
 
 /* Things you can open lift a little under the pointer… */
-:is(.acard, .dealcard, .card, .tile, .gallery__item, .rcard) { transition: transform .16s var(--ease), box-shadow .16s var(--ease), border-color .16s ease; }
+:is(.acard, .dealcard, .card, .tile, .gallery__item, .rcard) { transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) ease; }
 @media (hover: hover) {
   :is(.acard, .dealcard, .tile, .gallery__item, .rcard):hover:not(:has(.dialog)) { transform: translateY(-2px); box-shadow: var(--shadow-1); }
   .board .card:hover { box-shadow: var(--shadow-1); }
@@ -70,8 +68,8 @@
 /* A task finished: the tick pops and throws a few sparks. */
 .tick { position: relative; }
 .tick[data-pop]::after {
-  content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
-  pointer-events: none; animation: sparks .6s ease-out forwards;
+  content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: var(--r-pill);
+  pointer-events: none; animation: sparks var(--dur) ease-out forwards;
 }
 @keyframes sparks {
   0% { opacity: 1; box-shadow: 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand), 0 0 0 0 var(--soon), 0 0 0 0 var(--done), 0 0 0 0 var(--brand); }
@@ -79,8 +77,8 @@
 }
 
 /* Rows that are links: the arrow of attention, not a jump. */
-.rowlink, .table tbody tr { transition: background-color .12s ease; }
+.rowlink, .table tbody tr { transition: background-color var(--dur-fast) ease; }
 
 /* The active page in the sidebar slides its marker in. */
-.navlink[aria-current='page'] { animation: nav-on .22s var(--ease); }
+.navlink[aria-current='page'] { animation: nav-on var(--dur) var(--ease); }
 @keyframes nav-on { from { transform: scale(.97); opacity: .6; } }
