@@ -99,4 +99,13 @@ export const toSprint = (r: Row): Sprint => ({
   createdBy: r.created_by ?? null,
   createdAt: iso(r.created_at)!,
   updatedAt: iso(r.updated_at)!,
+  startedOn: day(r.started_on),
+  startPoints: r.start_points == null ? null : Number(r.start_points),
+  startCount: r.start_count == null ? null : Number(r.start_count),
+  closedOn: day(r.closed_on),
+  donePoints: r.done_points == null ? null : Number(r.done_points),
+  doneCount: r.done_count == null ? null : Number(r.done_count),
+  ...(r.totals_points === undefined
+    ? {}
+    : { totals: { points: Number(r.totals_points), donePoints: Number(r.totals_done_points), items: Number(r.totals_items), doneItems: Number(r.totals_done_items) } }),
 });

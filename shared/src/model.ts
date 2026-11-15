@@ -120,6 +120,16 @@ export interface Sprint {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  /** The company's day it was first started, and its scope (points, items) at that moment; null before. */
+  startedOn?: string | null;
+  startPoints?: number | null;
+  startCount?: number | null;
+  /** The day it was closed, and what was finished by then (its velocity); null before. */
+  closedOn?: string | null;
+  donePoints?: number | null;
+  doneCount?: number | null;
+  /** Live totals (on the board's sprint list): points and items in it, and how many of them are done. */
+  totals?: { points: number; donePoints: number; items: number; doneItems: number };
 }
 
 /** Current totals of a sprint. */
@@ -153,10 +163,16 @@ export interface SprintBurndown {
   sprintId: string;
   startsOn: string | null;
   endsOn: string | null;
-  /** The scope the ideal line starts from (the first point's total). */
+  /** The scope the ideal line starts from: the scope when the sprint was started (else the first point's total). */
   startPoints: number;
-  /** Chronological; the last point is today's live reading. */
+  /** Chronological; while the sprint runs, the last point is today's live reading. */
   points: BurndownPoint[];
+  /** The day the sprint was started and closed (null when it has not been). */
+  startedOn?: string | null;
+  closedOn?: string | null;
+  /** The company's day now, and its weekend (ISO weekdays, 1 = Monday … 7 = Sunday): the ideal line rests on it. */
+  today?: string;
+  weekend?: number[];
 }
 
 /**

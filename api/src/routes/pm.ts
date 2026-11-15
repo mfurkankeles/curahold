@@ -12,6 +12,7 @@ import { HttpError, fail } from '../lib/errors';
 import { toSprint, toTask } from '../lib/mappers';
 import { body, isoDate, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
+import { weekendOf } from '../../../shared/src/burndown';
 
 export const pmRoutes = new Hono<AppEnv>();
 
@@ -64,11 +65,22 @@ pmRoutes.get('/boards/:id/sprints', async (c) => {
   const state = c.req.query('state');
   if (state && !(SPRINT_STATES as readonly string[]).includes(state)) fail('validation', { fields: 'state' }, { fields: ['state'] });
   const rows = await run(c, async (q) => {
-    requirePm(await loadBoard(q, id));
+    const board = await loadBoard(q, id);
+    requirePm(board);
+    // With each sprint its live totals (one pass over its items, by the sprint index), so
+    // planning can show capacity and the roadmap the velocity without a call per sprint.
     return q.query(
-      `select * from sprints where board_id = $1 and archived_at is null and ($2::text is null or state = $2)
-        order by position, created_at`,
-      [id, state ?? null],
+      `select s.*, coalesce(a.points, 0) as totals_points, coalesce(a.done_points, 0) as totals_done_points,
+              coalesce(a.items, 0) as totals_items, coalesce(a.done_items, 0) as totals_done_items
+         from sprints s
+         left join lateral (
+           select sum(t.story_points) as points, sum(t.story_points) filter (where t.status = any($3::text[])) as done_points,
+                  count(*) as items, count(*) filter (where t.status = any($3::text[])) as done_items
+             from tasks t where t.org_id = s.org_id and t.sprint_id = s.id and t.archived_at is null
+         ) a on true
+        where s.board_id = $1 and s.archived_at is null and ($2::text is null or s.state = $2)
+        order by s.position, s.created_at`,
+      [id, state ?? null, doneKeys(board.columns)],
     );
   });
   return c.json({ sprints: rows.map(toSprint) });
@@ -184,6 +196,38 @@ pmRoutes.put('/sprints/:id/state', async (c) => {
       );
       if (other) fail('conflict', {}, { reason: 'sprint_active', activeSprintId: other.id });
     }
+    const today = todayOf(c);
+    const keys = doneKeys(board.columns);
+    // Started: the scope it commits to, once (a sprint sent back to planning and started again keeps its first start).
+    if (input.state === 'active' && cur.state !== 'active' && cur.started_on == null) {
+      await q.query(
+        `update sprints set started_on = $2::date,
+                start_points = (select coalesce(sum(story_points), 0) from tasks where sprint_id = $1 and archived_at is null),
+                start_count = (select count(*) from tasks where sprint_id = $1 and archived_at is null)
+          where id = $1`,
+        [id, today],
+      );
+    }
+    // Closed: what was finished, and the last burndown point, before the unfinished work moves on.
+    if (input.state === 'closed' && cur.state !== 'closed') {
+      const [done] = await q.query(
+        `select coalesce(sum(story_points), 0) as total_points, count(*)::int as total_count,
+                coalesce(sum(story_points) filter (where status = any($2::text[])), 0) as done_points,
+                count(*) filter (where status = any($2::text[]))::int as done_count
+           from tasks where sprint_id = $1 and archived_at is null`,
+        [id, keys],
+      );
+      await q.query('update sprints set closed_on = $2::date, done_points = $3, done_count = $4 where id = $1', [id, today, done.done_points, done.done_count]);
+      if (cur.state === 'active') {
+        await q.query(
+          `insert into sprint_burndowns (org_id, board_id, sprint_id, day, total_points, remaining_points, total_count, remaining_count)
+           values ($1, $2, $3, $4::date, $5, $5::numeric - $6::numeric, $7, $7::int - $8::int)
+           on conflict (org_id, sprint_id, day) do update set total_points = excluded.total_points, remaining_points = excluded.remaining_points,
+             total_count = excluded.total_count, remaining_count = excluded.remaining_count, created_at = now()`,
+          [org.id, cur.board_id, id, today, done.total_points, done.done_points, done.total_count, done.done_count],
+        );
+      }
+    }
     if (input.state === 'closed' && cur.state !== 'closed' && input.moveIncompleteTo !== undefined) {
       if (input.moveIncompleteTo === id) fail('validation', { fields: 'moveIncompleteTo' }, { fields: ['moveIncompleteTo'] });
       if (input.moveIncompleteTo) {
@@ -193,7 +237,7 @@ pmRoutes.put('/sprints/:id/state', async (c) => {
       await q.query(
         `update tasks set sprint_id = $2, version = version + 1, updated_at = now(), updated_by = $4
           where sprint_id = $1 and archived_at is null and not (status = any($3::text[]))`,
-        [id, input.moveIncompleteTo, doneKeys(board.columns), auth.userId],
+        [id, input.moveIncompleteTo, keys, auth.userId],
       );
     }
     let s: Row;
@@ -393,18 +437,26 @@ pmRoutes.get('/sprints/:id/burndown', async (c) => {
     totalCount: Number(cur.total_count),
     remainingCount: Number(cur.total_count) - Number(cur.done_count),
   };
-  const at = points.findIndex((p) => p.day >= today);
-  if (at >= 0 && points[at].day === today) points[at] = todayPoint;
-  else if (at >= 0) points.splice(at, 0, todayPoint);
-  else points.push(todayPoint);
+  // A closed sprint keeps the history it ended with: its unfinished work has moved on.
+  if (sprint.state !== 'closed' || !points.length) {
+    const at = points.findIndex((p) => p.day >= today);
+    if (at >= 0 && points[at].day === today) points[at] = todayPoint;
+    else if (at >= 0) points.splice(at, 0, todayPoint);
+    else points.push(todayPoint);
+  }
 
   const sm = toSprint(sprint);
   const burndown: SprintBurndown = {
     sprintId: id,
     startsOn: sm.startsOn,
     endsOn: sm.endsOn,
-    startPoints: points[0]?.totalPoints ?? 0,
+    // The scope it was started with; a sprint from before that was recorded starts from its first reading.
+    startPoints: sm.startPoints ?? points[0]?.totalPoints ?? 0,
     points,
+    startedOn: sm.startedOn ?? null,
+    closedOn: sm.closedOn ?? null,
+    today,
+    weekend: weekendOf(c.get('org').locale),
   };
   return c.json({ burndown });
 });
