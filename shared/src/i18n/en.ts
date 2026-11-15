@@ -4100,6 +4100,24 @@ export const en = {
   'states.notAllowed.home': 'Go to the home page',
   'convert.note': 'Amounts in other currencies are converted to {currency} at the rates of {date}.',
   'convert.noteNoDate': 'Amounts in other currencies are converted to {currency} at the company’s rates.',
+  // Identity and security (passkeys, second step, confirmation).
+  'email.confirm.subject': "Your confirmation code for {org}: {code}",
+  'email.confirm.body': "Hi {name},\n\nYou asked to confirm it is you before a sensitive change in {org}.\nYour code is {code}. It works for 10 minutes and only once.\n\nIf this was not you, sign out your other devices and tell your administrator.",
+  'errors.reauth_required': "Confirm it's you to continue.",
+  'errors.second_step_failed': "That code didn't work. Check it and try again.",
+  'errors.second_step_required': "Your company requires a second step. Add another one before removing this.",
+  'errors.second_step_setup_first': "Set up your own second step first, so you can't be locked out.",
+  'errors.passkey_failed': "The passkey didn't work. Try again, or use another way.",
+  'audit.second_step.added': "added a second step",
+  'audit.second_step.removed': "removed a second step",
+  'audit.second_step.passed': "passed the second step",
+  'audit.second_step.recovery_used': "signed in with a recovery code",
+  'audit.second_step.recovery_renewed': "made new recovery codes",
+  'audit.second_step.reset': "reset a person's second step",
+  'audit.second_step.break_glass': "second step reset from the server",
+  'audit.session.revoked_others': "signed out their other devices",
+  'audit.user.confirmed': "confirmed it was them",
+  'audit.org.second_step_policy': "changed who needs a second step",
 } as const;
 
 export type MessageKey = keyof typeof en;

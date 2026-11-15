@@ -24,6 +24,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `oauth_failed` | 400 | … ile giriş tamamlanmadı. Tekrar dene ya da e-posta bağlantısı kullan. |
 | `oauth_not_configured` | 400 | Bu çalışma alanında … ile giriş kurulu değil. |
 | `org_loop` | 400 | Bu bir döngü oluşturur: kişi, kendisine bağlı olan birine bağlanamaz. |
+| `passkey_failed` | 400 | Passkey çalışmadı. Tekrar dene ya da başka bir yol kullan. |
 | `plan_no_date` | 400 | Bu playbook yenileme ya da kapanış tarihine göre tarihleniyor; başlanacak bir tarih yok. |
 | `portal_bad_code` | 400 | Kod yanlış ya da süresi dolmuş. Yenisini iste. |
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
@@ -36,6 +37,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `portal_private_board` | 400 | Özel panolar müşterilere açılamaz. |
 | `portal_weak_password` | 400 | En az 10 karakterli, adını içermeyen ve kolay tahmin edilmeyen bir şifre seç. |
 | `required_fields` | 400 | Görevi bitirmeden önce şunları doldur: … |
+| `second_step_failed` | 400 | Bu kod çalışmadı. Kontrol edip tekrar dene. |
 | `support_link_used` | 400 | Bu giriş bağlantısı kullanılmış ya da süresi dolmuş. Yenisini iste. |
 | `validation` | 400 | Bazı alanlar geçersiz: … |
 | `device_mismatch` | 401 | Bu oturum başka bir cihaza ait. Lütfen tekrar giriş yap. |
@@ -51,6 +53,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `preview_read_only` | 403 | Şu an başkasının gözünden bakıyorsun, bu yüzden hiçbir şey değiştirilemez. Önce kendi görünümüne dön. |
 | `read_only_seat` | 403 | Koltuğun salt okunur. Tam koltuk için yöneticine başvur. |
 | `read_only_token` | 403 | Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluştur ya da uygulamayı yeniden bağlayıp değişikliğe izin ver. |
+| `reauth_required` | 403 | Devam etmek için kimliğini onayla. |
 | `sso_required` | 403 | Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO'sunu kullanın. |
 | `support_blocked` | 403 | Destek, izin olsa da bu bölümü açamaz. |
 | `support_edit_admins` | 403 | Desteğin değişiklik yapmasına yalnızca yöneticiler izin verebilir. |
@@ -66,6 +69,8 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `last_admin` | 409 | Şirketinde en az bir aktif yönetici kalmalı. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
 | `role_in_use` | 409 | Bu role sahip kişiler var. Önce onlara başka bir rol ver. |
+| `second_step_required` | 409 | Şirketin ikinci adımı zorunlu tutuyor. Bunu kaldırmadan önce başka bir tane ekle. |
+| `second_step_setup_first` | 409 | Önce kendi ikinci adımını kur; böylece dışarıda kalmazsın. |
 | `slug_taken` | 409 | Bu adres alınmış. Başka bir tane dene. |
 | `support_too_many` | 409 | Zaten açık beş destek erişimin var. Önce birini kapat. |
 | `sync_running` | 409 | Bu bağlantı için şu anda bir eşitleme çalışıyor. Bir dakika sonra tekrar deneyin. |

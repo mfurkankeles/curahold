@@ -19,6 +19,18 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | `GET /me/start` | Kişinin üründeki ilk adımlarından geriye kalanlar. |
 | `GET /me/sessions` | Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı. |
 | `DELETE /me/sessions/:id` | Cihazlarından birinin oturumunu kapatır. |
+| `POST /me/sessions/sign-out-others` | Bu cihaz dışındaki tüm cihazlardan çıkış yapar. |
+| `GET /me/security` | İkinci adımın: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinin bunu zorunlu tutup tutmadığı. |
+| `POST /me/security/totp` | Doğrulama uygulaması kurulumunu başlatır (yalnızca tarayıcı oturumu). |
+| `POST /me/security/totp/confirm` | Uygulamayı ilk koduyla onaylar; on adet tek kullanımlık kurtarma koduyla yanıt verir. |
+| `DELETE /me/security/totp` | Doğrulama uygulamasını ve kurtarma kodlarını kaldırır. |
+| `POST /me/security/recovery-codes` | Yeni kurtarma kodları üretir; eskileri çalışmaz olur. |
+| `POST /me/security/passkeys/options` | Passkey eklemek için seçenekler (WebAuthn). |
+| `POST /me/security/passkeys` | Tarayıcının oluşturduğu passkey'i ekler. |
+| `DELETE /me/security/passkeys/:id` | Passkey'lerinden birini kaldırır. |
+| `POST /me/confirm/options` | Hassas bir değişiklikten önce kimliğini nasıl onaylayabileceğin. |
+| `POST /me/confirm/email` | Onay kodunu e-postayla gönderir (yalnızca ikinci adım yoksa). |
+| `POST /me/confirm` | Kimliğini onaylar; on dakika boyunca hassas değişiklikler yapılabilir. |
 | `GET /me/delivery` | Bu kişinin bildirimleri nereden alabileceği: e-posta ya da şirketin bağladığı bir sohbet uygulaması. |
 | `GET /me/calendar` | Takvim akışı adresin olup olmadığı. |
 | `POST /me/calendar` | Görevlerin için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer. |
@@ -59,6 +71,71 @@ Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldı�
 ### `DELETE /me/sessions/:id`
 
 Cihazlarından birinin oturumunu kapatır.
+
+### `POST /me/sessions/sign-out-others`
+
+Bu cihaz dışındaki tüm cihazlardan çıkış yapar.
+
+### `GET /me/security`
+
+İkinci adımın: doğrulama uygulaması, passkey'ler, kalan kurtarma kodları ve şirketinin bunu zorunlu tutup tutmadığı.
+
+### `POST /me/security/totp`
+
+Doğrulama uygulaması kurulumunu başlatır (yalnızca tarayıcı oturumu).
+
+### `POST /me/security/totp/confirm`
+
+Uygulamayı ilk koduyla onaylar; on adet tek kullanımlık kurtarma koduyla yanıt verir.
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `code` | metin | zorunlu |  |
+
+### `DELETE /me/security/totp`
+
+Doğrulama uygulamasını ve kurtarma kodlarını kaldırır.
+
+### `POST /me/security/recovery-codes`
+
+Yeni kurtarma kodları üretir; eskileri çalışmaz olur.
+
+### `POST /me/security/passkeys/options`
+
+Passkey eklemek için seçenekler (WebAuthn).
+
+### `POST /me/security/passkeys`
+
+Tarayıcının oluşturduğu passkey'i ekler.
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `challengeId` | metin | zorunlu | en çok 40 karakter |
+| `response` | nesne (ad → değer) | zorunlu |  |
+| `name` | metin | isteğe bağlı | en çok 80 karakter |
+
+### `DELETE /me/security/passkeys/:id`
+
+Passkey'lerinden birini kaldırır.
+
+### `POST /me/confirm/options`
+
+Hassas bir değişiklikten önce kimliğini nasıl onaylayabileceğin.
+
+### `POST /me/confirm/email`
+
+Onay kodunu e-postayla gönderir (yalnızca ikinci adım yoksa).
+
+### `POST /me/confirm`
+
+Kimliğini onaylar; on dakika boyunca hassas değişiklikler yapılabilir.
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `code` | metin | isteğe bağlı |  |
+| `emailCode` | metin | isteğe bağlı |  |
+| `recoveryCode` | metin | isteğe bağlı | en az 8 karakter; en çok 20 karakter |
+| `passkey` | nesne | isteğe bağlı |  |
 
 ### `GET /me/delivery`
 

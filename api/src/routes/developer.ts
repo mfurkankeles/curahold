@@ -2,6 +2,7 @@
 // (AI assistants among them) and the company's webhooks.
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { requireFresh } from '../lib/identity';
 import { WEBHOOK_EVENTS, type ApiKeyInfo, type WebhookInfo } from '../../../shared/src/developer';
 import { requirePerm, run, secretsKey, type AppEnv } from '../context';
 import type { Row } from '../db';
@@ -44,6 +45,7 @@ developerRoutes.get('/dev/keys', async (c) => {
 
 developerRoutes.post('/dev/keys', async (c) => {
   if (c.get('tokenKind')) fail('forbidden'); // a key cannot make more keys
+  await requireFresh(c);
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(80), canWrite: z.boolean().default(false), expiresInDays: z.number().int().min(1).max(730).nullable().default(365) }));
   const auth = c.get('auth');
   const org = c.get('org');

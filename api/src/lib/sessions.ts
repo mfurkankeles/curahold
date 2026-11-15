@@ -10,7 +10,9 @@ export interface OpenSessionInput {
   userId: string;
   deviceId: string;
   deviceLabel: string | null;
-  method: 'magic' | 'oauth';
+  method: 'magic' | 'oauth' | 'passkey';
+  /** The second step this sign-in passed (lib/identity.ts); SSO counts, because the identity provider does it. */
+  secondStep?: 'totp' | 'recovery' | 'passkey' | 'sso' | null;
   ip: string | null;
   geo: string | null;
   maxDevices: number;
@@ -51,9 +53,9 @@ export async function openSession(q: Q, s: OpenSessionInput) {
   }
   const token = randomToken(32);
   const [row] = await q.query<{ id: string }>(
-    `insert into sessions (org_id, user_id, token_hash, device_id, device_label, method, ip, geo, expires_at)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, now() + make_interval(days => $9::int)) returning id`,
-    [s.orgId, s.userId, await sha256Hex(token), s.deviceId, s.deviceLabel, s.method, s.ip, s.geo, s.days],
+    `insert into sessions (org_id, user_id, token_hash, device_id, device_label, method, ip, geo, expires_at, second_step)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, now() + make_interval(days => $9::int), $10) returning id`,
+    [s.orgId, s.userId, await sha256Hex(token), s.deviceId, s.deviceLabel, s.method, s.ip, s.geo, s.days, s.secondStep ?? null],
   );
   await audit(q, {
     orgId: s.orgId,
@@ -61,7 +63,7 @@ export async function openSession(q: Q, s: OpenSessionInput) {
     action: 'session.created',
     entity: 'session',
     entityId: row.id,
-    meta: { method: s.method, device: s.deviceLabel },
+    meta: { method: s.method, device: s.deviceLabel, ...(s.secondStep ? { secondStep: s.secondStep } : {}) },
   });
   return { token, sessionId: row.id, evicted };
 }

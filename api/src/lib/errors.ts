@@ -71,6 +71,11 @@ export type ErrorCode =
   | 'trash_parent_first'
   | 'trash_parent_gone'
   | 'trash_conflict'
+  | 'reauth_required'
+  | 'second_step_failed'
+  | 'second_step_required'
+  | 'second_step_setup_first'
+  | 'passkey_failed'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -147,6 +152,12 @@ const STATUS: Record<ErrorCode, number> = {
   trash_parent_first: 409,
   trash_parent_gone: 409,
   trash_conflict: 409,
+  // A dangerous action needs a fresh confirmation (lib/identity.ts requireFresh).
+  reauth_required: 403,
+  second_step_failed: 400,
+  second_step_required: 409,
+  second_step_setup_first: 409,
+  passkey_failed: 400,
 };
 
 export class HttpError extends Error {

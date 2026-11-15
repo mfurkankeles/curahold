@@ -64,6 +64,7 @@ const KINDS: [RegExp, string, string?][] = [
 
 /** Addresses whose parameter is not the id of something a company owns; each with the reason it is not tried here. */
 const NOT_BY_ID: Record<string, string> = {
+  'DELETE /me/security/passkeys/:id': 'one of the caller’s own passkeys, matched by company and person in the statement (tests/identity.test.ts)',
   'POST /inbound/dev/:provider': 'the name of a code host, opened with that company’s own signed webhook (tests/jira.test.ts)',
   'POST /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
   'DELETE /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
@@ -303,6 +304,18 @@ const VIEWER_WRITES: string[] = [
   'POST /tasks/:id/mute',
   'POST /dev/keys', // their own key, read-only like their seat (tests/developer.test.ts)
   'DELETE /dev/keys/:id', // revoking their own key; someone else's is not theirs to see (row-level security)
+  // Their own sign-in security: an authenticator app, recovery codes, passkeys, other devices,
+  // confirming it is them (tests/identity.test.ts).
+  'POST /me/security/totp',
+  'POST /me/security/totp/confirm',
+  'DELETE /me/security/totp',
+  'POST /me/security/recovery-codes',
+  'POST /me/security/passkeys/options',
+  'POST /me/security/passkeys',
+  'POST /me/sessions/sign-out-others',
+  'POST /me/confirm/options',
+  'POST /me/confirm/email',
+  'POST /me/confirm',
 ];
 
 type Person = { name: string; who: () => Client; perms: string[]; seat: 'full' | 'viewer' };

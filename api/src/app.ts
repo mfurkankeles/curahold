@@ -56,6 +56,7 @@ import { pageRoutes } from './routes/pages';
 import { searchRoutes } from './routes/search';
 import { developerRoutes } from './routes/developer';
 import { mcpRoutes } from './routes/mcp';
+import { identityRoutes } from './routes/identity';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
 import { helpRoutes, supportEntry } from './routes/help';
@@ -310,7 +311,7 @@ export function createApp(deps: Deps) {
     const hash = await sha256Hex(token!);
     const rows = await deps.db.tenant({ orgId: org.id, userId: null }, (q) =>
       q.query(
-        `select s.id as session_id, s.device_id, s.revoked_at, s.revoke_reason,
+        `select s.id as session_id, s.device_id, s.revoked_at, s.revoke_reason, s.second_step,
                 s.expires_at < now() as expired,
                 s.last_seen_at < now() - interval '5 minutes' as stale,
                 u.id as user_id, u.name, u.email, u.seat, u.status, u.locale,
@@ -337,6 +338,7 @@ export function createApp(deps: Deps) {
       perms: (s.perms ?? []) as Perm[],
       seat: s.seat,
       locale: s.locale ? normalizeLocale(s.locale) : null,
+      secondStep: s.second_step ?? null,
     });
     if (s.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(s.locale));
     if (s.stale) {
@@ -392,6 +394,7 @@ export function createApp(deps: Deps) {
     }
   });
   app.route('/api', meRoutes);
+  app.route('/api', identityRoutes);
   app.route('/api', liveRoutes);
   app.route('/api', metricsRoutes);
   app.route('/api', boardRoutes);

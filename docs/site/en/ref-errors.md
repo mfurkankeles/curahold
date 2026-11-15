@@ -24,6 +24,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `oauth_failed` | 400 | Sign-in with … did not complete. Try again or use an email link. |
 | `oauth_not_configured` | 400 | … sign-in is not set up for this workspace. |
 | `org_loop` | 400 | That would make a loop: someone cannot report to a person who reports to them. |
+| `passkey_failed` | 400 | The passkey didn't work. Try again, or use another way. |
 | `plan_no_date` | 400 | This playbook is dated from a renewal or a close date, and there is none to start from. |
 | `portal_bad_code` | 400 | That code is wrong or has run out. Ask for a new one. |
 | `portal_bad_password` | 400 | Wrong email or password. |
@@ -36,6 +37,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `portal_private_board` | 400 | Private boards can't be opened to customers. |
 | `portal_weak_password` | 400 | Choose a password of at least 10 characters that isn't your name or a common one. |
 | `required_fields` | 400 | Fill these in before finishing the task: … |
+| `second_step_failed` | 400 | That code didn't work. Check it and try again. |
 | `support_link_used` | 400 | This entry link has been used or has run out. Ask for a new one. |
 | `validation` | 400 | Some fields are not valid: … |
 | `device_mismatch` | 401 | This session belongs to another device. Please sign in again. |
@@ -51,6 +53,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `preview_read_only` | 403 | You are looking as someone else, so nothing can be changed. Go back to your own view first. |
 | `read_only_seat` | 403 | Your seat is read-only. Ask an administrator for a full seat. |
 | `read_only_token` | 403 | This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes. |
+| `reauth_required` | 403 | Confirm it's you to continue. |
 | `sso_required` | 403 | This company requires single sign-on. Use your organization's SSO to sign in. |
 | `support_blocked` | 403 | Support can't open this part, even with permission. |
 | `support_edit_admins` | 403 | Only administrators can let support make changes. |
@@ -66,6 +69,8 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `last_admin` | 409 | Your company needs at least one active administrator. |
 | `portal_email_taken` | 409 | That address already has portal access. |
 | `role_in_use` | 409 | People still have this role. Give them another role first. |
+| `second_step_required` | 409 | Your company requires a second step. Add another one before removing this. |
+| `second_step_setup_first` | 409 | Set up your own second step first, so you can't be locked out. |
 | `slug_taken` | 409 | That address is taken. Try another one. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |

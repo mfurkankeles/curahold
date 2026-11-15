@@ -31,6 +31,8 @@ import { loadMigrations } from './db/migrations-fs';
 import { postgresDb } from './db/postgres';
 import type { Db } from './db';
 import { createOrg } from './lib/orgs';
+import { resetFactors } from './lib/identity';
+import { audit } from './lib/audit';
 import { runScheduled } from './lib/scheduler';
 import type { EmailMessage, EmailSender, Storage } from './lib/services';
 import { createPortalApp } from './portal';
@@ -137,6 +139,7 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   await migrate(db, loadMigrations(join(root, 'db', 'migrations')));
   const slug = config.singleTenantSlug!;
   if ((await ensureCompany(db, env, slug)) === 'created') console.log(`[curahold] company "${slug}" created; sign in at ${env.PUBLIC_URL} with ${env.ADMIN_EMAIL}`);
+  await breakGlass(db, slug, env.RESET_SECOND_STEP);
 
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
@@ -196,4 +199,30 @@ if (process.argv[1] && /selfhost\.(m?js|ts)$/.test(process.argv[1])) {
     console.error('[curahold]', e instanceof Error ? e.message : e);
     process.exit(1);
   });
+}
+
+/**
+ * The break-glass path: RESET_SECOND_STEP="person@example.com,…" removes those
+ * people's authenticator app, recovery codes and passkeys at start-up, so a
+ * locked-out administrator signs in with the emailed link and sets them up
+ * again. Whoever can set the server's environment already holds the database.
+ * Written to the activity log; remove the variable after the restart.
+ */
+export async function breakGlass(db: Db, slug: string, list: string | undefined) {
+  const emails = (list ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (!emails.length) return [];
+  const done: string[] = [];
+  await db.system(async (q) => {
+    const [org] = await q.query<{ id: string }>('select id from orgs where slug = $1', [slug]);
+    if (!org) return;
+    for (const e of emails) {
+      const [u] = await q.query<{ id: string }>(`select id from users where org_id = $1 and email = $2 and status <> 'deleted'`, [org.id, e]);
+      if (!u) continue;
+      await resetFactors(q, org.id, u.id);
+      await audit(q, { orgId: org.id, actorId: null, action: 'second_step.break_glass', entity: 'user', entityId: u.id });
+      done.push(e);
+    }
+  });
+  for (const e of done) console.warn(`[curahold] RESET_SECOND_STEP: the second step of ${e} was removed; remove RESET_SECOND_STEP from the environment now`);
+  return done;
 }

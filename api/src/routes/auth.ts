@@ -22,6 +22,21 @@ import { logoUrl, userManagers } from '../lib/people';
 import { ssoEnforced } from '../lib/sso';
 import { authorizeUrl, exchangeCode, isProvider, PROVIDERS, type ProviderId } from '../lib/oidc';
 import { knownDevice, openSession } from '../lib/sessions';
+import {
+  afterFirstStep,
+  checkPasskey,
+  factorsOf,
+  finishStep,
+  hasFactor,
+  newRecoveryCodes,
+  passkeyOptions,
+  startTotp,
+  takeStep,
+  useRecovery,
+  useTotp,
+  type SignInOutcome,
+} from '../lib/identity';
+import type { SecondStepNeeded } from '../../../shared/src/identity';
 import { portalOAuthCallback, type PortalOAuthState } from '../lib/portalOAuth';
 import { body, deviceId, deviceLabel, email } from '../lib/validate';
 
@@ -183,18 +198,7 @@ authRoutes.post('/join', async (c) => {
         [org.id, email, input.name, role.id, c.get('locale')],
       );
       await audit(q, { orgId: org.id, actorId: u.id, action: 'user.joined', entity: 'user', entityId: u.id });
-      const s = await openSession(q, {
-        orgId: org.id,
-        userId: u.id,
-        deviceId: input.deviceId,
-        deviceLabel: input.deviceLabel ?? null,
-        method: 'magic',
-        ip: c.req.header('cf-connecting-ip') ?? null,
-        geo: c.req.header('cf-ipcountry') ?? null,
-        maxDevices: maxDevices(c),
-        days: deps.config.sessionDays,
-      });
-      return { kind: 'joined' as const, token: s.token };
+      return { kind: 'joined' as const, userId: u.id };
     }
     if (!org.join_requests) fail('join_closed');
     return { kind: 'pending' as const, email };
@@ -215,8 +219,7 @@ authRoutes.post('/join', async (c) => {
     });
   }
   if (outcome.kind === 'joined') {
-    setSessionCookie(c, outcome.token);
-    return c.json({ status: 'ok' });
+    return signedIn(c, await afterFirstStep(c, { id: outcome.userId }, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: 'magic' }), false);
   }
   kick(deps);
   return c.json({ status: 'pending' });
@@ -227,7 +230,7 @@ authRoutes.post('/join', async (c) => {
  * can see someone guessing). At most one line a minute per kind, so guessing
  * cannot fill the log; written on its own, because the failing request rolls back.
  */
-async function loginFailed(c: C, via: 'link' | 'device_code', reason: string) {
+async function loginFailed(c: C, via: 'link' | 'device_code' | 'second_step' | 'passkey', reason: string) {
   const org = c.get('org');
   await c
     .get('deps')
@@ -277,18 +280,7 @@ authRoutes.post('/auth/verify', async (c) => {
       return { kind: 'device' as const, challenge, code, user };
     }
     await q.query(`update users set status = 'active' where id = $1 and status = 'invited'`, [user.id]);
-    const s = await openSession(q, {
-      orgId: org.id,
-      userId: user.id,
-      deviceId: input.deviceId,
-      deviceLabel: input.deviceLabel ?? null,
-      method: tok.kind === 'oauth' ? 'oauth' : 'magic',
-      ip: c.req.header('cf-connecting-ip') ?? null,
-      geo: c.req.header('cf-ipcountry') ?? null,
-      maxDevices: maxDevices(c),
-      days: deps.config.sessionDays,
-    });
-    return { kind: 'session' as const, token: s.token, evicted: s.evicted.length };
+    return { kind: 'ready' as const, user: { id: user.id as string }, method: (tok.kind === 'oauth' ? 'oauth' : 'magic') as 'magic' | 'oauth' };
   });
   let outcome: Awaited<ReturnType<typeof attempt>>;
   try {
@@ -317,8 +309,7 @@ authRoutes.post('/auth/verify', async (c) => {
       ...(deps.config.devExposeTokens ? { devCode: outcome.code } : {}),
     });
   }
-  setSessionCookie(c, outcome.token);
-  return c.json({ status: 'ok', evictedDevices: outcome.evicted });
+  return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: outcome.method }));
 });
 
 authRoutes.post('/auth/device', async (c) => {
@@ -326,8 +317,6 @@ authRoutes.post('/auth/device', async (c) => {
     c,
     z.object({ challenge: z.string().min(20).max(200), code: z.string().regex(/^\d{6}$/), deviceId, deviceLabel }),
   );
-  const deps = c.get('deps');
-  const org = c.get('org');
   const outcome = await run(c, async (q) => {
     const [tok] = await q.query(
       `update login_tokens set attempts = attempts + 1
@@ -342,18 +331,7 @@ authRoutes.post('/auth/device', async (c) => {
     const [user] = await q.query(`select id from users where email = $1 and status in ('active', 'invited')`, [tok.email]);
     if (!user) return { error: 'invalid_token' as const };
     await q.query(`update users set status = 'active' where id = $1 and status = 'invited'`, [user.id]);
-    const s = await openSession(q, {
-      orgId: org.id,
-      userId: user.id,
-      deviceId: input.deviceId,
-      deviceLabel: input.deviceLabel ?? null,
-      method: 'oauth',
-      ip: c.req.header('cf-connecting-ip') ?? null,
-      geo: c.req.header('cf-ipcountry') ?? null,
-      maxDevices: maxDevices(c),
-      days: deps.config.sessionDays,
-    });
-    return { token: s.token, evicted: s.evicted.length };
+    return { user: { id: user.id as string } };
   });
   // The attempt counter must be saved even when the code is wrong, so the
   // error is raised after the transaction has committed.
@@ -361,8 +339,112 @@ authRoutes.post('/auth/device', async (c) => {
     if (outcome.error === 'invalid_token') await loginFailed(c, 'device_code', 'wrong_code');
     throw new HttpError(outcome.error!);
   }
-  setSessionCookie(c, outcome.token);
-  return c.json({ status: 'ok', evictedDevices: outcome.evicted });
+  return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: 'oauth' }));
+});
+
+/** The session, or the second step the person still has to take (lib/identity.ts). */
+function signedIn(c: C, o: SignInOutcome, withEvicted = true) {
+  if (o.kind === 'second') {
+    const out: SecondStepNeeded = { status: 'second_step', token: o.token, methods: o.methods, enroll: o.enroll };
+    return c.json(out);
+  }
+  setSessionCookie(c, o.token);
+  return c.json(withEvicted ? { status: 'ok', evictedDevices: o.evicted } : { status: 'ok' });
+}
+
+// ------------------------------------------------------------ the second step
+
+const stepInput = z.object({ token: z.string().min(20).max(200), deviceId });
+
+/** Setting up an authenticator app during sign-in, when the company requires a second step and the person has none. */
+authRoutes.post('/auth/second/setup', async (c) => {
+  const input = await body(c, stepInput);
+  const step = await takeStep(c, input.token, input.deviceId, false);
+  if (hasFactor(await factorsOf(c, step.user_id))) fail('forbidden');
+  const [u] = await c.get('deps').db.system((q) => q.query('select email from users where org_id = $1 and id = $2', [c.get('org').id, step.user_id]));
+  return c.json(await startTotp(c, { id: step.user_id, email: u.email }));
+});
+
+authRoutes.post('/auth/second/passkey', async (c) => {
+  const input = await body(c, stepInput);
+  const step = await takeStep(c, input.token, input.deviceId, false);
+  return c.json(await passkeyOptions(c, 'confirm', step.user_id));
+});
+
+authRoutes.post('/auth/second', async (c) => {
+  const input = await body(
+    c,
+    stepInput.extend({
+      code: z.string().trim().regex(/^\d{6}$/).optional(),
+      recoveryCode: z.string().trim().min(8).max(20).optional(),
+      passkey: z.object({ challengeId: z.string().max(40), response: z.record(z.string(), z.any()) }).optional(),
+    }),
+  );
+  const step = await takeStep(c, input.token, input.deviceId);
+  const f = await factorsOf(c, step.user_id);
+  let passed: 'totp' | 'recovery' | 'passkey' | null = null;
+  let recoveryCodes: string[] | undefined;
+  if (input.code) {
+    if (hasFactor(f)) passed = (await useTotp(c, step.user_id, input.code)) ? 'totp' : null;
+    else if (await useTotp(c, step.user_id, input.code, true)) {
+      // Setting up during sign-in: the app is confirmed, and the recovery codes are shown once.
+      passed = 'totp';
+      recoveryCodes = await newRecoveryCodes(c, step.user_id);
+    }
+  } else if (input.recoveryCode && hasFactor(f)) {
+    passed = (await useRecovery(c, step.user_id, input.recoveryCode)) ? 'recovery' : null;
+  } else if (input.passkey && f.passkeys) {
+    passed = (await checkPasskey(c, 'confirm', input.passkey.challengeId, input.passkey.response, step.user_id).catch(() => null)) ? 'passkey' : null;
+  }
+  if (!passed) {
+    await loginFailed(c, 'second_step', 'wrong_code');
+    fail('second_step_failed');
+  }
+  const s = await finishStep(c, step, passed!);
+  await c.get('deps').db.system((q) =>
+    audit(q, { orgId: c.get('org').id, actorId: step.user_id, action: recoveryCodes ? 'second_step.added' : passed === 'recovery' ? 'second_step.recovery_used' : 'second_step.passed', entity: 'user', entityId: step.user_id, meta: { via: passed } }),
+  );
+  setSessionCookie(c, s.token);
+  return c.json({ status: 'ok', evictedDevices: s.evicted, ...(recoveryCodes ? { recoveryCodes } : {}) });
+});
+
+// ------------------------------------------------------------ passkey sign-in
+
+/** A passkey is both steps at once (something you have, unlocked by fingerprint, face or PIN). */
+authRoutes.post('/auth/passkey/options', async (c) => {
+  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
+  return c.json(await passkeyOptions(c, 'login', null));
+});
+
+authRoutes.post('/auth/passkey', async (c) => {
+  const input = await body(c, z.object({ challengeId: z.string().max(40), response: z.record(z.string(), z.any()), deviceId, deviceLabel }));
+  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
+  const deps = c.get('deps');
+  const org = c.get('org');
+  let userId: string;
+  try {
+    userId = await checkPasskey(c, 'login', input.challengeId, input.response, null);
+  } catch (e) {
+    await loginFailed(c, 'passkey', 'passkey_failed');
+    throw e;
+  }
+  const s = await run(c, async (q) => {
+    await q.query(`update users set status = 'active' where id = $1 and status = 'invited'`, [userId]);
+    return openSession(q, {
+      orgId: org.id,
+      userId,
+      deviceId: input.deviceId,
+      deviceLabel: input.deviceLabel ?? null,
+      method: 'passkey',
+      secondStep: 'passkey',
+      ip: c.req.header('cf-connecting-ip') ?? null,
+      geo: c.req.header('cf-ipcountry') ?? null,
+      maxDevices: maxDevices(c),
+      days: deps.config.sessionDays,
+    });
+  });
+  setSessionCookie(c, s.token);
+  return c.json({ status: 'ok', evictedDevices: s.evicted.length });
 });
 
 // A person's task calendar, fetched by their calendar app (no cookie): the

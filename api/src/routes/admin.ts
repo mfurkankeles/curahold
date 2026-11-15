@@ -3,6 +3,7 @@
 import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { requireFresh } from '../lib/identity';
 import { translate } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, PERMS, type AdminUser, type AuditEntry, type JoinRequest, type PersonAccess, type Role } from '../../../shared/src/model';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
@@ -134,6 +135,7 @@ adminRoutes.get('/roles', async (c) => {
 
 adminRoutes.post('/roles', async (c) => {
   requirePerm(c, 'org.manage');
+  await requireFresh(c);
   const input = await body(
     c,
     z.object({ key: z.string().regex(/^[a-z][a-z0-9_-]{1,30}$/), name: z.string().trim().min(1).max(60), perms: permsSchema }),
@@ -159,6 +161,7 @@ adminRoutes.post('/roles', async (c) => {
 
 adminRoutes.patch('/roles/:id', async (c) => {
   requirePerm(c, 'org.manage');
+  await requireFresh(c);
   const id = param(c, 'id');
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(60).optional(), perms: permsSchema.optional() }));
   const auth = c.get('auth');
@@ -183,6 +186,7 @@ adminRoutes.patch('/roles/:id', async (c) => {
 
 adminRoutes.delete('/roles/:id', async (c) => {
   requirePerm(c, 'org.manage');
+  await requireFresh(c);
   const id = param(c, 'id');
   // People still holding the role can be moved to another one in the same step.
   const moveTo = c.req.query('moveTo') || null;
@@ -468,6 +472,8 @@ adminRoutes.patch('/users/:id', async (c) => {
       teamIds: z.array(uuid).max(50).optional(),
     }),
   );
+  // A new role, or taking someone out of the company, needs a fresh confirmation.
+  if (input.roleId || input.status === 'disabled') await requireFresh(c);
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
@@ -547,6 +553,7 @@ adminRoutes.delete('/sessions/:id', async (c) => {
 // answer to a data-subject access request (KVKK m.11, GDPR Art. 15/20).
 adminRoutes.get('/users/:id/export', async (c) => {
   requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');
@@ -610,6 +617,7 @@ adminRoutes.get('/users/:id/export', async (c) => {
 // stay as business records but lose the author.
 adminRoutes.post('/users/:id/erase', async (c) => {
   requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');

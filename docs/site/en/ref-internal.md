@@ -10,8 +10,8 @@ These addresses exist but belong to the browser or to other machines. They are l
 
 | Addresses | How many | Why |
 | --- | --- | --- |
-| `/admin/…` | 29 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
-| `/auth/…` | 5 | Signing in and out happens in the browser. |
+| `/admin/…` | 32 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/auth/…` | 10 | Signing in and out happens in the browser. |
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |

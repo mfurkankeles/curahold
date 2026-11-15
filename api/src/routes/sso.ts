@@ -18,6 +18,7 @@
 import { privateHost } from '../connectors/messaging/webhook';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { requireFresh } from '../lib/identity';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { maxDevices, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type Config, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
@@ -96,6 +97,8 @@ async function completeLogin(c: C, org: OrgRow, state: SsoState, identity: { ema
       // Reuse the existing external-identity-provider method; SSO changes nothing
       // about how a session is stored or checked.
       method: 'oauth',
+      // The identity provider does the company's second step; Curahold does not ask again.
+      secondStep: 'sso',
       ...origin(c),
       maxDevices: maxDevices(c),
       days: deps.config.sessionDays,
@@ -289,6 +292,7 @@ ssoAdminRoutes.get('/sso/settings', async (c) => {
 
 ssoAdminRoutes.put('/sso/settings', async (c) => {
   requirePerm(c, 'org.manage');
+  await requireFresh(c);
   const input = await body(c, settingsInput);
   const cfg = c.get('deps').config;
   const org = c.get('org');
@@ -352,6 +356,7 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
 /** Generate (or rotate) the SCIM bearer token. Returned once; only its hash is stored. */
 ssoAdminRoutes.post('/sso/settings/scim-token', async (c) => {
   requirePerm(c, 'org.manage');
+  await requireFresh(c);
   const cfg = c.get('deps').config;
   const org = c.get('org');
   const auth = c.get('auth');

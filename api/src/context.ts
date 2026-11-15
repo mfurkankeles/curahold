@@ -142,6 +142,8 @@ export interface AuthCtx {
   perms: Perm[];
   seat: Seat;
   locale: Locale | null;
+  /** The second step the browser session passed (lib/identity.ts); absent for keys, tokens and support. */
+  secondStep?: string | null;
 }
 
 export type AppEnv = {

@@ -39,10 +39,22 @@ export function authApp(env: Env) {
 /** The authed admin group, with the company and admin injected as app.ts would. */
 export function adminApp(env: Env, org: OrgRow, auth: AuthCtx) {
   const app = new Hono<AppEnv>();
-  app.use('*', (c, next) => {
+  // A real, just-opened session behind the injected admin: dangerous settings need a fresh one (lib/identity.ts).
+  let session: Promise<string> | null = null;
+  const sessionId = () =>
+    (session ??= env.db
+      .system((q) =>
+        q.query<{ id: string }>(
+          `insert into sessions (org_id, user_id, token_hash, device_id, method, expires_at)
+           values ($1, $2, md5(random()::text), 'sso-harness', 'magic', now() + interval '1 day') returning id`,
+          [org.id, auth.userId],
+        ),
+      )
+      .then((r) => r[0].id));
+  app.use('*', async (c, next) => {
     c.set('deps', env.deps as any);
     c.set('org', org);
-    c.set('auth', auth);
+    c.set('auth', { ...auth, sessionId: await sessionId() });
     c.set('locale', org.locale);
     return next();
   });

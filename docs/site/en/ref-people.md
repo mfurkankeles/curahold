@@ -19,6 +19,18 @@ Every request is made as a person. `GET /me` says who that is, what they may do 
 | `GET /me/start` | What is left of the person's first steps in the product. |
 | `GET /me/sessions` | Where you are signed in: devices and when each was last used. |
 | `DELETE /me/sessions/:id` | Signs one of your devices out. |
+| `POST /me/sessions/sign-out-others` | Signs out every device but this one. |
+| `GET /me/security` | Your second step: authenticator app, passkeys, recovery codes left, and whether your company requires one. |
+| `POST /me/security/totp` | Starts setting up an authenticator app (browser session only). |
+| `POST /me/security/totp/confirm` | Confirms the app with its first code; answers with ten one-time recovery codes. |
+| `DELETE /me/security/totp` | Removes the authenticator app and its recovery codes. |
+| `POST /me/security/recovery-codes` | Makes a new set of recovery codes; the old ones stop working. |
+| `POST /me/security/passkeys/options` | Options for adding a passkey (WebAuthn). |
+| `POST /me/security/passkeys` | Adds the passkey the browser made. |
+| `DELETE /me/security/passkeys/:id` | Removes one of your passkeys. |
+| `POST /me/confirm/options` | How you can confirm it is you before a sensitive change. |
+| `POST /me/confirm/email` | Emails a confirmation code (only without a second step). |
+| `POST /me/confirm` | Confirms it is you, for ten minutes of sensitive changes. |
 | `GET /me/delivery` | Where this person can get notifications: email, or a chat app the company connected. |
 | `GET /me/calendar` | Whether you have a calendar feed address. |
 | `POST /me/calendar` | Makes a secret calendar address for your tasks; asking again replaces it. |
@@ -59,6 +71,71 @@ Where you are signed in: devices and when each was last used.
 ### `DELETE /me/sessions/:id`
 
 Signs one of your devices out.
+
+### `POST /me/sessions/sign-out-others`
+
+Signs out every device but this one.
+
+### `GET /me/security`
+
+Your second step: authenticator app, passkeys, recovery codes left, and whether your company requires one.
+
+### `POST /me/security/totp`
+
+Starts setting up an authenticator app (browser session only).
+
+### `POST /me/security/totp/confirm`
+
+Confirms the app with its first code; answers with ten one-time recovery codes.
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `code` | text | required |  |
+
+### `DELETE /me/security/totp`
+
+Removes the authenticator app and its recovery codes.
+
+### `POST /me/security/recovery-codes`
+
+Makes a new set of recovery codes; the old ones stop working.
+
+### `POST /me/security/passkeys/options`
+
+Options for adding a passkey (WebAuthn).
+
+### `POST /me/security/passkeys`
+
+Adds the passkey the browser made.
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `challengeId` | text | required | at most 40 characters |
+| `response` | object (name → value) | required |  |
+| `name` | text | optional | at most 80 characters |
+
+### `DELETE /me/security/passkeys/:id`
+
+Removes one of your passkeys.
+
+### `POST /me/confirm/options`
+
+How you can confirm it is you before a sensitive change.
+
+### `POST /me/confirm/email`
+
+Emails a confirmation code (only without a second step).
+
+### `POST /me/confirm`
+
+Confirms it is you, for ten minutes of sensitive changes.
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `code` | text | optional |  |
+| `emailCode` | text | optional |  |
+| `recoveryCode` | text | optional | at least 8 characters; at most 20 characters |
+| `passkey` | object | optional |  |
 
 ### `GET /me/delivery`
 
