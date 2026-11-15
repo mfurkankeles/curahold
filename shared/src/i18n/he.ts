@@ -4324,4 +4324,13 @@ export const he: Partial<Record<MessageKey, string>> = {
   'audit.support.account': "התמיכה של Curahold עיינה בחשבון",
   'console.noTrials': "אף תקופת ניסיון לא הסתיימה ב־{days} הימים האחרונים",
   'console.noNew': "אין חברות חדשות ב־{days} הימים האחרונים",
+  'pm.burndown.scope': "היקף",
+  'pm.burndown.today': "היום",
+  'pm.burndown.idealNow': "הקו האידיאלי עומד היום על {n} נק׳.",
+  'pm.burndown.added': "נוספו {n} נק׳ אחרי ההתחלה.",
+  'pm.burndown.removed': "הוצאו {n} נק׳ אחרי ההתחלה.",
+  'pm.burndown.scopeChange': "שינוי היקף",
+  'pm.sprint.workDaysLeft': "ימי עבודה שנותרו",
+  'pm.summary.title': "התקדמות הספרינט",
+  'pm.board.columns': "עמודות",
 };

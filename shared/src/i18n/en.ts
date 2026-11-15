@@ -4339,6 +4339,15 @@ export const en = {
   'audit.support.account': "Curahold support looked at the account",
   'console.noTrials': "No trial ended in the last {days} days",
   'console.noNew': "No new company in the last {days} days",
+  'pm.burndown.scope': "Scope",
+  'pm.burndown.today': "Today",
+  'pm.burndown.idealNow': "The ideal line is at {n} points today.",
+  'pm.burndown.added': "{n} points were added after the start.",
+  'pm.burndown.removed': "{n} points were taken out after the start.",
+  'pm.burndown.scopeChange': "Scope change",
+  'pm.sprint.workDaysLeft': "Working days left",
+  'pm.summary.title': "Sprint progress",
+  'pm.board.columns': "Columns",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -4324,4 +4324,13 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'audit.support.account': "پشتیبانی Curahold حساب را مشاهده کرد",
   'console.noTrials': "در {days} روز گذشته هیچ دورهٔ آزمایشی تمام نشده است",
   'console.noNew': "در {days} روز گذشته شرکت تازه‌ای نیامده است",
+  'pm.burndown.scope': "دامنه",
+  'pm.burndown.today': "امروز",
+  'pm.burndown.idealNow': "خط ایده‌آل امروز روی {n} امتیاز است.",
+  'pm.burndown.added': "پس از شروع {n} امتیاز اضافه شد.",
+  'pm.burndown.removed': "پس از شروع {n} امتیاز کم شد.",
+  'pm.burndown.scopeChange': "تغییر دامنه",
+  'pm.sprint.workDaysLeft': "روزهای کاری مانده",
+  'pm.summary.title': "پیشرفت اسپرینت",
+  'pm.board.columns': "ستون‌ها",
 };

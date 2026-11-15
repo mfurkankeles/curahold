@@ -4324,4 +4324,13 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'audit.support.account': "Curahold 지원팀이 계정을 열람함",
   'console.noTrials': "최근 {days}일 동안 끝난 체험이 없습니다",
   'console.noNew': "최근 {days}일 동안 새 회사가 없습니다",
+  'pm.burndown.scope': "범위",
+  'pm.burndown.today': "오늘",
+  'pm.burndown.idealNow': "오늘 이상선은 {n}포인트입니다.",
+  'pm.burndown.added': "시작 후 {n}포인트가 추가되었습니다.",
+  'pm.burndown.removed': "시작 후 {n}포인트가 빠졌습니다.",
+  'pm.burndown.scopeChange': "범위 변경",
+  'pm.sprint.workDaysLeft': "남은 근무일",
+  'pm.summary.title': "스프린트 진행 상황",
+  'pm.board.columns': "열",
 };

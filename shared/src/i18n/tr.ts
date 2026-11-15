@@ -4324,4 +4324,13 @@ export const tr: Record<MessageKey, string> = {
   'audit.support.account': "Curahold desteği hesap özetine baktı",
   'console.noTrials': "Son {days} günde biten deneme yok",
   'console.noNew': "Son {days} günde yeni şirket yok",
+  'pm.burndown.scope': "Kapsam",
+  'pm.burndown.today': "Bugün",
+  'pm.burndown.idealNow': "İdeal çizgi bugün {n} puanda.",
+  'pm.burndown.added': "Başladıktan sonra {n} puan eklendi.",
+  'pm.burndown.removed': "Başladıktan sonra {n} puan çıkarıldı.",
+  'pm.burndown.scopeChange': "Kapsam değişikliği",
+  'pm.sprint.workDaysLeft': "Kalan iş günü",
+  'pm.summary.title': "Sprint ilerlemesi",
+  'pm.board.columns': "Sütunlar",
 };

@@ -4324,4 +4324,13 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'audit.support.account': "Curahold サポートがアカウントを確認しました",
   'console.noTrials': "過去{days}日に終了したトライアルはありません",
   'console.noNew': "過去{days}日に新しい企業はありません",
+  'pm.burndown.scope': "スコープ",
+  'pm.burndown.today': "今日",
+  'pm.burndown.idealNow': "今日の理想ラインは {n} pt です。",
+  'pm.burndown.added': "開始後に {n} pt 追加されました。",
+  'pm.burndown.removed': "開始後に {n} pt 外されました。",
+  'pm.burndown.scopeChange': "スコープ変更",
+  'pm.sprint.workDaysLeft': "残り営業日",
+  'pm.summary.title': "スプリントの進捗",
+  'pm.board.columns': "列",
 };

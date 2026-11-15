@@ -1,6 +1,6 @@
 // Backlog and sprints of a board: plan work into a sprint, run the active one on
 // the board's own stages, close it, and read how much was finished.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -13,8 +13,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import type { Board, Sprint, SprintBurndown, SprintSummary, Task } from '../../../shared/src/model';
-import { ISSUE_TYPES } from '../../../shared/src/model';
+import type { Board, Sprint, SprintSummary, Task } from '../../../shared/src/model';
 import { KanbanView } from '../pages/BoardPage';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put, patch } from '../lib/api';
@@ -27,6 +26,8 @@ import { positionBetween, saveTask } from '../lib/tasks';
 import { EmptyState, LoadError, SkeletonRows } from './Empty';
 import { Icon } from './icons';
 import { IssueBadge, PointsChip, useEpics } from './Pm';
+import { BurndownChart, SprintFacts, useBurndown } from './Burndown';
+import '../surfaces/product.css';
 import { Presence } from './Presence';
 import { Confirm, Dialog } from './ui';
 import { DateField } from './DateField';
@@ -69,7 +70,7 @@ function Bar({ done, total }: { done: number; total: number }) {
   const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
   return (
     <span className="pm-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-      <span style={{ width: `${pct}%` }} />
+      <span style={{ '--w': `${pct}%` } as CSSProperties} />
     </span>
   );
 }
@@ -378,8 +379,9 @@ export function SprintsView({ board, refreshKey }: { board: Board; refreshKey: n
         </div>
         <div className="topbar__spacer" />
         {canWrite && (
-          <button className="btn btn--primary btn--small" onClick={() => setEditing('new')}>
-            <Icon name="plus" size={15} /> {t('pm.sprint.new')}
+          <button className="btn btn--primary btn--small" aria-label={t('pm.sprint.new')} onClick={() => setEditing('new')}>
+            <Icon name="plus" size={15} />
+            <span className="hide-phone">{t('pm.sprint.new')}</span>
           </button>
         )}
       </div>
@@ -464,119 +466,6 @@ function useSummary(sprintId: string | null, refreshKey: number) {
   return summary;
 }
 
-function SummaryStrip({ summary }: { summary: SprintSummary | null }) {
-  const { t } = useI18n();
-  if (!summary) return null;
-  return (
-    <div className="pm-summary">
-      <div className="statstrip">
-        <div className="stat">
-          <span className="muted">{t('pm.points.total')}</span>
-          <strong className="num">{summary.totalPoints}</strong>
-        </div>
-        <div className="stat" data-tone="done">
-          <span className="muted">{t('pm.points.done')}</span>
-          <strong className="num">{summary.donePoints}</strong>
-        </div>
-        <div className="stat">
-          <span className="muted">{t('pm.summary.items')}</span>
-          <strong className="num">{`${summary.doneCount} / ${summary.itemCount}`}</strong>
-        </div>
-        <div className="stat" data-tone={summary.unestimated ? 'soon' : undefined}>
-          <span className="muted">{t('pm.points.unestimated')}</span>
-          <strong className="num">{summary.unestimated}</strong>
-        </div>
-      </div>
-      <Bar done={summary.donePoints} total={summary.totalPoints} />
-      <div className="card__chips u-mt-8">
-        {ISSUE_TYPES.filter((k) => summary.byType[k]?.count).map((k) => (
-          <span key={k} className="schip" data-tone="slate">
-            {t(`pm.type.${k}`)} {summary.byType[k].done}/{summary.byType[k].count} · {t('pm.points.short', { n: summary.byType[k].points })}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Days since the epoch for a YYYY-MM-DD day, to place points along the x-axis. */
-function dayNum(iso: string): number {
-  const [y, m, d] = iso.split('-').map(Number);
-  return Math.round(Date.UTC(y, m - 1, d) / 86400000);
-}
-
-/**
- * The sprint's burndown: the ideal line (scope down to zero across the sprint's
- * dates) against the actual remaining points. Plain SVG for the two lines with
- * HTML dots positioned over it — the same lightweight approach as the reports'
- * line chart, so it carries the palette and needs no chart library.
- */
-function BurndownChart({ sprintId, refreshKey }: { sprintId: string; refreshKey: number }) {
-  const { t, fmtDate } = useI18n();
-  const [data, setData] = useState<SprintBurndown | null>(null);
-  useEffect(() => {
-    let live = true;
-    setData(null);
-    get<{ burndown: SprintBurndown }>(`/sprints/${sprintId}/burndown`)
-      .then((r) => live && setData(r.burndown))
-      .catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, [sprintId, refreshKey]);
-
-  if (!data || !data.points.length) return null;
-  const pts = data.points;
-  const first = pts[0].day;
-  const last = pts[pts.length - 1].day;
-  const startX = dayNum(data.startsOn ?? first);
-  const endX = dayNum(data.endsOn ?? last);
-  const lo = Math.min(startX, dayNum(first));
-  const hi = Math.max(endX, dayNum(last), lo + 1);
-  const span = hi - lo || 1;
-  const top = Math.max(data.startPoints, ...pts.map((p) => p.remainingPoints), 1);
-  const x = (dn: number) => ((dn - lo) / span) * 100;
-  const y = (v: number) => 100 - (v / top) * 100;
-  const remaining = pts[pts.length - 1].remainingPoints;
-  const actual = pts.map((p) => `${x(dayNum(p.day)).toFixed(2)},${y(p.remainingPoints).toFixed(2)}`).join(' ');
-  const ideal = `M${x(startX).toFixed(2)},${y(data.startPoints).toFixed(2)} L${x(endX).toFixed(2)},${y(0).toFixed(2)}`;
-
-  return (
-    <div className="pm-burndown">
-      <div className="pm-burndown__head">
-        <span className="pm-burndown__title">{t('pm.burndown' as MessageKey)}</span>
-        <ul className="pm-burndown__key">
-          <li>
-            <i className="pm-burndown__swatch pm-burndown__swatch--ideal" /> {t('pm.burndown.ideal' as MessageKey)}
-          </li>
-          <li>
-            <i className="pm-burndown__swatch pm-burndown__swatch--actual" /> {t('pm.burndown.actual' as MessageKey)}
-          </li>
-        </ul>
-      </div>
-      <div className="pm-burndown__plot">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={t('pm.burndown.label' as MessageKey, { remaining, total: data.startPoints })}>
-          <path className="pm-burndown__ideal" d={ideal} vectorEffect="non-scaling-stroke" />
-          <polyline className="pm-burndown__actual" points={actual} vectorEffect="non-scaling-stroke" />
-        </svg>
-        {pts.map((p) => (
-          <i
-            key={p.day}
-            className="pm-burndown__dot"
-            style={{ left: `${x(dayNum(p.day))}%`, top: `${y(p.remainingPoints)}%` }}
-            title={`${fmtDate(p.day)} · ${t('pm.points.short', { n: p.remainingPoints })}`}
-          />
-        ))}
-      </div>
-      <div className="pm-burndown__x">
-        <span>{fmtDate(data.startsOn ?? first)}</span>
-        <span className="pm-burndown__remain num">{t('pm.burndown.left' as MessageKey, { n: remaining })}</span>
-        <span>{fmtDate(data.endsOn ?? last)}</span>
-      </div>
-    </div>
-  );
-}
-
 function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }: { board: Board; sprint: Sprint | null; sprints: Sprint[]; refreshKey: number; onChanged: () => void; onList: () => void }) {
   const { t } = useI18n();
   const { canWrite, toast } = useStore();
@@ -587,6 +476,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
   const here = usePresence(sprintId ? `p:${sprintId}` : null);
   const doneKeys = useMemo(() => new Set(board.columns.filter((c) => c.done).map((c) => c.key)), [board]);
   const summary = useSummary(sprintId, refreshKey + bump);
+  const burndown = useBurndown(sprintId, refreshKey + bump);
 
   const load = useCallback(async () => {
     if (!sprintId) return;
@@ -646,8 +536,14 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
         )}
       </div>
       {sprint.goal && <p className="muted u-m-0-0-12">{sprint.goal}</p>}
-      <SummaryStrip summary={summary} />
-      {summary && summary.itemCount > 0 && <BurndownChart sprintId={sprint.id} refreshKey={refreshKey + bump} />}
+      {summary && (
+        <div className="pm-overview">
+          <div className="pm-overview__grid">
+            {summary.itemCount > 0 && burndown && <BurndownChart data={burndown} />}
+            <SprintFacts summary={summary} burndown={burndown} />
+          </div>
+        </div>
+      )}
       {items === null ? (
         <SkeletonRows label={t('common.loading')} />
       ) : items.length === 0 ? (
@@ -887,7 +783,7 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
                 <li key={s.id}>
                   <span className="pm-velocity__name">{s.name}</span>
                   <span className="pm-bar">
-                    <span style={{ width: `${(velocity[i] / peak) * 100}%` }} />
+                    <span style={{ '--w': `${(velocity[i] / peak) * 100}%` } as CSSProperties} />
                   </span>
                   <span className="num">{velocity[i]}</span>
                 </li>

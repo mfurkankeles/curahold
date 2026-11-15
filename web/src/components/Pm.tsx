@@ -1,12 +1,13 @@
 // Product / project management pieces shared by the task panel, the cards and
 // the backlog and sprint screens: issue type, story points and epic.
-import { useCallback, useEffect, useState } from 'react';
-import { FIBONACCI, ISSUE_TYPES, type Board, type IssueType, type Task } from '../../../shared/src/model';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FIBONACCI, ISSUE_TYPES, type Board, type Column, type IssueType, type Task } from '../../../shared/src/model';
 import { ApiFailure, get, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
+import '../surfaces/product.css';
 
 /** A board that was made from the product-development workflow (it has its Backlog and QA stages). */
 export const isPmBoard = (board: Pick<Board, 'columns'> | undefined) => !!board && board.columns.some((c) => c.key === 'backlog') && board.columns.some((c) => c.key === 'qa');
@@ -176,5 +177,68 @@ export function PmRows({ task, editable, onSaved }: { task: Task; editable: bool
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Above a product board on a phone or tablet, where one column fills the screen: every column by
+ * name and count, the one in view marked. Tapping a name brings its column in; swiping the board
+ * moves the mark. Sits right before the board (`.board`) and finds it there.
+ */
+export function ColumnStrip({ columns, counts }: { columns: Column[]; counts: Record<string, number> }) {
+  const { t } = useI18n();
+  const ref = useRef<HTMLElement>(null);
+  const [current, setCurrent] = useState(columns[0]?.key ?? '');
+  const board = () => ref.current?.nextElementSibling as HTMLElement | null;
+  useEffect(() => {
+    const el = board();
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const seen = new Map<string, number>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) seen.set((e.target as HTMLElement).getAttribute('aria-label') ?? '', e.intersectionRatio);
+        let best = '';
+        let most = 0;
+        for (const c of columns) {
+          const r = seen.get(c.name) ?? 0;
+          if (r > most + 0.01) {
+            best = c.key;
+            most = r;
+          }
+        }
+        if (best) setCurrent(best);
+      },
+      { root: el, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    el.querySelectorAll(':scope > .column').forEach((c) => io.observe(c));
+    return () => io.disconnect();
+  }, [columns]);
+  // Keep the marked name in sight inside the strip, sideways only (never scroll the page).
+  useEffect(() => {
+    const strip = ref.current;
+    const btn = strip?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!strip || !btn) return;
+    const rtl = getComputedStyle(strip).direction === 'rtl';
+    const edge = rtl ? strip.scrollWidth - strip.clientWidth + strip.scrollLeft : strip.scrollLeft;
+    if (btn.offsetLeft >= edge && btn.offsetLeft + btn.offsetWidth <= edge + strip.clientWidth) return;
+    const want = Math.max(0, btn.offsetLeft - (strip.clientWidth - btn.offsetWidth) / 2);
+    strip.scrollLeft = rtl ? want - (strip.scrollWidth - strip.clientWidth) : want;
+  }, [current]);
+  const go = (i: number) => {
+    const col = board()?.querySelectorAll<HTMLElement>(':scope > .column')[i];
+    if (!col) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    col.scrollIntoView({ block: 'nearest', inline: 'start', behavior: smooth ? 'smooth' : 'auto' });
+    setCurrent(columns[i].key);
+  };
+  return (
+    <nav ref={ref} className="pm-strip" aria-label={t('pm.board.columns')}>
+      {columns.map((c, i) => (
+        <button key={c.key} type="button" className="pm-strip__item" aria-current={c.key === current || undefined} onClick={() => go(i)}>
+          <span className="pm-strip__name">{c.name}</span>
+          <span className="pm-strip__count num">{counts[c.key] ?? 0}</span>
+        </button>
+      ))}
+    </nav>
   );
 }

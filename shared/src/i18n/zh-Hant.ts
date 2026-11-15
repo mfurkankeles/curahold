@@ -4324,4 +4324,13 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'audit.support.account': "Curahold 支援人員檢視了帳戶",
   'console.noTrials': "近 {days} 天沒有結束的試用",
   'console.noNew': "近 {days} 天沒有新公司",
+  'pm.burndown.scope': "範圍",
+  'pm.burndown.today': "今天",
+  'pm.burndown.idealNow': "今天理想線在 {n} 點。",
+  'pm.burndown.added': "開始後新增了 {n} 點。",
+  'pm.burndown.removed': "開始後移出了 {n} 點。",
+  'pm.burndown.scopeChange': "範圍變更",
+  'pm.sprint.workDaysLeft': "剩餘工作日",
+  'pm.summary.title': "衝刺進度",
+  'pm.board.columns': "欄",
 };

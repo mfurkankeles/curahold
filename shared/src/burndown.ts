@@ -33,6 +33,8 @@ export interface BurndownDay {
   day: string;
   weekend: boolean;
   today: boolean;
+  /** A reading was taken that day (otherwise the last one is carried forward). */
+  read: boolean;
   /** Where the ideal line is at the end of the day. */
   ideal: number;
   /** Points left at the end of the day; null for days still to come or before anything was read. */
@@ -114,7 +116,7 @@ export function burndownSeries(b: SprintBurndown, todayIn?: string): BurndownSer
       if (change > 0) added += change;
       else removed -= change;
     }
-    return { day, weekend: !isWork(day), today: day === today, ideal: round(ideal), remaining: known ? remaining : null, scope: s, change: round(change) };
+    return { day, weekend: !isWork(day), today: day === today, read: !!read, ideal: round(ideal), remaining: known ? remaining : null, scope: s, change: round(change) };
   });
   const top = Math.max(1, start, ...out.map((d) => Math.max(d.scope ?? 0, d.remaining ?? 0)));
   return {

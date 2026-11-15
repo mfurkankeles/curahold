@@ -22,7 +22,7 @@ import { BoardArchive } from '../components/BoardArchive';
 import { ExportMenu } from '../components/Export';
 import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
-import { IssueBadge, pmOn, PointsChip } from '../components/Pm';
+import { ColumnStrip, IssueBadge, pmOn, PointsChip } from '../components/Pm';
 import { BacklogView, SprintsView } from '../components/Sprints';
 import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
@@ -123,7 +123,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
 
   // The view switch: inline on a desktop, inside the filter sheet on a phone.
   const viewSwitch = (
-    <div className="seg" role="group">
+    <div className="seg seg--views" role="group">
       <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
         {t('board.view.board')}
       </button>
@@ -518,7 +518,8 @@ export function KanbanView({
 
   return (
     <DndContext sensors={canWrite ? sensors : []} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
-      <div className="board" onKeyDown={nav}>
+      {pmOn(board) && <ColumnStrip columns={board.columns} counts={Object.fromEntries(board.columns.map((c) => [c.key, cols?.[c.key]?.total ?? byCol.get(c.key)?.length ?? 0]))} />}
+      <div className="board" data-pm={pmOn(board) || undefined} onKeyDown={nav}>
         {board.columns.map((col) => (
           <KanbanColumn
             key={col.key}
