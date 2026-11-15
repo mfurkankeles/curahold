@@ -300,26 +300,39 @@ Biçim: hedef ← sabah → şimdi. ✓ hedef tutuyor. Hepsi bu akşam aynı mak
 
 Tutanlar
 - Dokunma tepkisi (4 kat yavaş işlemci, 75. yüzdelik / en yavaş): ≤ 100 ms ← 56 / 128 ms → 64 / 112 ms ✓. En yavaşı yine görev açma.
+  - Gece: 80 / 104 ms ✓. En yavaşı müşteri listesini açmak.
 - Tekrar açılış: ≤ 0,5 sn ← 0,32 sn → 0,61 sn (gerçek içerik 0,70 sn). Tutmuyor. Ölçüm değişti: sabah iskelet ölçülmüş olabilirdi, şimdi gerçek içerik bekleniyor.
+  - Gece: 4G'de 0,53 sn (gerçek içerik 0,61 sn), yavaş 4G'de 0,59 sn (gerçek içerik 0,64 sn). Hâlâ tutmuyor, ama az kaldı.
 - Gerçek Postgres, okumalar (6 bin müşteri, 210 bin görev): ≤ 150 ms ← 5–124 ms → 4–169 ms. Tutmuyor: iş raporu yönetici için 169, ekip lideri için 155 ms; aylık takvim 150 ms.
+  - Gece: 5–139 ms ✓. En yavaşları iş raporu (ekip lideri 139 ms), aylık takvim (yönetici 111 ms), müşteri kartları (107 ms). Tek ölçüm.
 - Gerçek Postgres, yazma: ≤ 250 ms ← görev ekleme 50, taşıma 31 ms → 264 ve 176 ms. Ekleme tutmuyor; sabaha göre yavaşladı, nedeni henüz incelenmedi (tek ölçüm). 400 ms'yi geçen istek yok ✓.
+  - Gece: görev ekleme p50 15 / p95 24 ms, taşıma 15 / 27 ms ✓ (40'ar ölçüm). Akşamki 264 ms tek ve soğuk bir ölçümdü; ölçülen veritabanı eski şemadaydı. Sütunun sonunu bulmak için yeni bir dizin eklendi.
+  - Gece: 50 kişi aynı anda, makul hızda: ekleme p95 82 ms, taşıma 88 ms ✓. 50 kişi durmadan yazınca: ekleme p95 389 ms, taşıma 556 ms (saniyede 138 yazma). Bu küçük makinede sınırı Postgres'in işlemcisi koyuyor. Okumaların hiçbiri 400 ms'yi geçmiyor ✓.
 - Satır düzeyi güvenlik: hepsi ← 76/76 → 78/78 tablo ✓. Bağımlılık açığı 0 ✓.
 - Tekrar eden istek kopya üretmiyor ✓; çöp kutusundan geri alma ✓; Türkçe arama 12/12 ✓.
 - Testler: 735 test, 41 senaryo → 846 test (85 dosya), 41 tarayıcı senaryosu; hepsi geçti ✓.
+  - Gece: 851 test (86 dosya), 41 tarayıcı senaryosu; hepsi geçti ✓.
 - Maliyet, 1.000 koltuk: ≤ $0,25 ← $0,067 → $0,067 (canlı kanalla $0,068) ✓. En ucuz planda marj %94 ✓.
 
 Hız
 - Uygulamanın ilk ekran JavaScript'i: 170 KB ← 764 KB → 182 KB (66 KB'ı etkin dil). Tutmuyor, 12 KB fazla. Artık yalnızca etkin dil yükleniyor.
   - Gece: 182 → 185 KB. Neden: hazır içerik (şablonlar, kayıt türleri, raporlar) koddan dil dosyalarına taşındı. Her dil dosyası 5–6 KB büyüdü. Süren hız çalışması bunu ayıracak.
+  - Gece, hız paketinden sonra: 185 → 127 KB ✓ (12 KB'ı ilk ekranın dil parçası). 170 KB hedefi artık tutuyor. Her dil iki parça geliyor: önce ilk ekranın metinleri, kalanı sayfa sakinleşince.
 - Portalın ilk ekran JavaScript'i: 120 KB ← 564 KB → 57 KB ✓.
 - Sayfa kayması (CLS): 0,05 ← 0,50 → 0,000 ✓.
+  - Gece: 0,000; yavaş 4G'de ilk açılışta 0,003 ✓.
 - İlk açılış, 4G, ağın sakinleşmesi: 2,5 sn ← 4,5 sn → 3,6 sn. Tutmuyor.
+  - Gece: 3,3 sn. Tutmuyor. Bunun 1,7 saniyesi sayfanın bilerek beklediği süre (dilin kalanı sayfa sakinleşince yükleniyor).
 - İlk açılış, 4G, gerçek içerik: 1,5 sn ← ölçülmüyordu (LCP 1,40 sn) → 1,65 sn (LCP 1,55 sn). Tutmuyor. Ölçüm değişti: artık gerçek içerik ölçülüyor.
+  - Gece: 1,08 sn (LCP 1,02 sn) ✓.
 - Yavaş 4G'de LCP: 3 sn ← 5,95 sn → 3,82 sn. Tutmuyor.
+  - Gece: 3,18 sn. Hâlâ tutmuyor, 0,18 sn fazla. Gerçek içerik 4,43 sn'de geliyor.
 - İş raporu (/api/reports/work): 150 ms ← 492–1.432 ms → 98–169 ms. Üye için tutuyor; yönetici ve ekip lideri için az farkla tutmuyor.
+  - Gece: üye 67, ekip lideri 139, yönetici 125 ms ✓. Tek ölçüm; bu iş için ayrıca bir şey yapılmadı, yeniden ölçülmesi gerekiyor.
 - 20 bin görevli pano: 300 ms ← 90 sn'de açılmıyor → 393 ms (32 satır çiziliyor). Tutmuyor; en yavaş istek bildirim sayısı (210 ms).
 - 2 bin müşterili liste: 300 ms ← 6,5 sn → 486 ms (27 satır çiziliyor). Tutmuyor.
 - Ctrl K: 100 ms ← 228–236 ms → 99–108 ms. Sınırda; üç denemenin biri 108 ms.
+- Gece, hâlâ açık: 20 bin görevli pano (300 ms), 2 bin müşterili liste (300 ms), Ctrl K (100 ms). Hız paketi bunlara henüz başlamadı; bu gece yeniden ölçülmedi. Yavaş 4G (3 sn) ve tekrar açılış (0,5 sn) yukarıda: ikisi de az farkla tutmuyor. İş raporu (150 ms) tek ölçümde tutuyor; yeniden ölçülmeli.
 
 Gerçek zamanlılık
 - Başkasının değişikliği: 1 sn ← 1,0–4,3 sn → p95 0,11 sn ✓ (canlı kanal). Başka şirkete giden sinyal 0 ✓. Bağlantı kopunca kaçan değişiklik 0,63 sn'de geliyor ✓.
