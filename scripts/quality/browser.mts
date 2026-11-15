@@ -6,6 +6,9 @@
 //
 //   npx tsx scripts/quality/browser.mts [load] [tap] [live] [big] [axe] [fit]     (no words: all of them)
 //
+// load: the app's home and the portal's sign-in. "Real content" is when the first real block
+// (the home's cards with their data, the portal's sign-in) is painted, not a skeleton.
+//
 // "A mid-range phone on 4G" here means: 9 Mbit/s down, 1.5 Mbit/s up, 165 ms per
 // request (Chrome's "Fast 4G") and a processor four times slower than this
 // machine. "Slow 4G" is the harsher profile Lighthouse uses for its mobile score.
@@ -61,6 +64,13 @@ const s = await startStack(PORT);
 const front = await compressingFront(PORT, PORT + 1);
 const origin = `http://demo.localhost:${PORT + 1}`;
 
+/** Signs in by email link; clears the earlier links first, as tests/e2e does, so the
+ * sign-in rate limit does not stop the run on its third or fourth sign-in. */
+const signInFresh = async (page: Page, email: string) => {
+  await s.db.system((q: any) => q.query('delete from login_tokens'));
+  await signIn(page, origin, email);
+};
+
 /** Calls the API as whoever is signed in on this page. */
 const api = (page: Page) => <T = any,>(method: string, path: string, body?: unknown): Promise<T> =>
   page.evaluate(
@@ -73,11 +83,20 @@ const api = (page: Page) => <T = any,>(method: string, path: string, body?: unkn
     body,
   ) as Promise<T>;
 
+const REAL = '.panes .pane, .p-signin, .p-head';
 // What the page itself measures: the largest paint, layout shifts, and how long each tap or key took to show.
 const WATCH = `window.__name = (f) => f; window.__q = { lcp: 0, cls: 0, taps: [] };
   new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__q.lcp = e.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
   new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__q.cls += e.value; }).observe({ type: 'layout-shift', buffered: true });
-  new PerformanceObserver((l) => { for (const e of l.getEntries()) if (e.interactionId) window.__q.taps.push([e.interactionId, Math.round(e.duration)]); }).observe({ type: 'event', durationThreshold: 16, buffered: true });`;
+  new PerformanceObserver((l) => { for (const e of l.getEntries()) if (e.interactionId) window.__q.taps.push([e.interactionId, Math.round(e.duration)]); }).observe({ type: 'event', durationThreshold: 16, buffered: true });
+  // Real content, not a skeleton: the home's cards (with their data), the portal's sign-in or its requests.
+  // Recorded at the frame after the element is in the page, i.e. when it is painted.
+  window.__q.real = 0;
+  new MutationObserver((list, obs) => {
+    if (window.__q.real || !document.querySelector('${REAL}')) return;
+    obs.disconnect();
+    requestAnimationFrame(() => (window.__q.real = performance.now()));
+  }).observe(document, { childList: true, subtree: true });`;
 
 /** A fresh browser profile with the watcher in every page it opens. */
 const open = async (width = 1440, height = 900) => {
@@ -86,7 +105,7 @@ const open = async (width = 1440, height = 900) => {
   return p;
 };
 const ada = await open();
-await signIn(ada.page, origin, 'ada@demo.example');
+await signInFresh(ada.page, 'ada@demo.example');
 // The same invented portfolio the demo shows.
 const { seedShowcase } = await import('../seed-showcase');
 await seedShowcase(api(ada.page) as any, s.db).catch((e) => console.warn('seed', e));
@@ -100,7 +119,7 @@ if (on('load')) {
   const NETS = { '4G': { latency: 165, downloadThroughput: (9_000_000 / 8) * 0.9, uploadThroughput: (1_500_000 / 8) * 0.9 }, 'slow 4G': { latency: 562.5, downloadThroughput: (1_638_400 / 8) * 0.9, uploadThroughput: (750_000 / 8) * 0.9 } };
   for (const [net, conditions] of Object.entries(NETS)) {
     const phone = await open(390, 844);
-    await signIn(phone.page, origin, 'ada@demo.example');
+    await signInFresh(phone.page, 'ada@demo.example');
     await go(phone.page, '/home', 1500);
     const cdp = await phone.page.createCDPSession();
     await cdp.send('Network.enable');
@@ -113,7 +132,8 @@ if (on('load')) {
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
       let bytes = 0;
       let requests = 0;
-      const count = (e: any) => ((bytes += e.encodedDataLength), requests++);
+      let last = 0;
+      const count = (e: any) => ((bytes += e.encodedDataLength), requests++, (last = Date.now() - t0));
       cdp.on('Network.loadingFinished', count);
       const t0 = Date.now();
       await phone.page.goto(`${origin}/home`, { waitUntil: 'networkidle0', timeout: 120000 }).catch(() => undefined);
@@ -122,18 +142,39 @@ if (on('load')) {
       cdp.off('Network.loadingFinished', count);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
       await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-      say('load', `${net}, ${label}: largest paint ${(q.lcp / 1000).toFixed(2)} s, layout shift ${q.cls.toFixed(3)}, ${requests} requests, ${(bytes / 1024).toFixed(0)} KB over the wire, quiet after ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      // "quiet after" keeps its old meaning (network idle for 0.5 s, then 1.2 s more, as before); "last byte" is when the network actually stopped.
+      say('load', `${net}, ${label}: largest paint ${(q.lcp / 1000).toFixed(2)} s, real content ${q.real ? `${(q.real / 1000).toFixed(2)} s` : 'not seen'}, layout shift ${q.cls.toFixed(3)}, ${requests} requests, ${(bytes / 1024).toFixed(0)} KB over the wire, last byte ${(last / 1000).toFixed(2)} s, quiet after ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     };
     await measure('first open (nothing cached)', true);
     await measure('opening again', false);
     await phone.page.close();
+  }
+  // The customer portal's first screen (its sign-in), opened cold on a phone.
+  await s.db.system((q: any) => q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || '{"enabled": true}'::jsonb)`));
+  const portal = origin.replace('demo.localhost', 'demo.portal.localhost');
+  for (const [net, conditions] of Object.entries(NETS)) {
+    const p = await open(390, 844);
+    const cdp = await p.page.createCDPSession();
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, ...conditions });
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    let bytes = 0;
+    let requests = 0;
+    let last = 0;
+    const t0 = Date.now();
+    cdp.on('Network.loadingFinished', (e: any) => ((bytes += e.encodedDataLength), requests++, (last = Date.now() - t0)));
+    await p.page.goto(`${portal}/`, { waitUntil: 'networkidle0', timeout: 120000 }).catch(() => undefined);
+    await sleep(1200);
+    const q = await p.page.evaluate(() => (window as any).__q);
+    say('load', `portal, ${net}, first open (nothing cached): largest paint ${(q.lcp / 1000).toFixed(2)} s, real content ${q.real ? `${(q.real / 1000).toFixed(2)} s` : 'not seen'}, layout shift ${q.cls.toFixed(3)}, ${requests} requests, ${(bytes / 1024).toFixed(0)} KB over the wire, last byte ${(last / 1000).toFixed(2)} s`);
+    await p.page.close();
   }
 }
 
 // ---------------------------------------------------------------- tap: how long the screen takes to answer
 if (on('tap')) {
   const p = await open(390, 844);
-  await signIn(p.page, origin, 'ada@demo.example');
+  await signInFresh(p.page, 'ada@demo.example');
   // Motion on, as for most people: the checks elsewhere switch it off.
   await p.page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
   await go(p.page, '/home', 800);
@@ -183,7 +224,7 @@ if (on('live')) {
   const board = boards[0];
   await go(ada.page, `/b/${board.id}`, 600);
   const other = await open();
-  await signIn(other.page, origin, 'zeynep@demo.example');
+  await signInFresh(other.page, 'zeynep@demo.example');
   const waits: number[] = [];
   for (let i = 0; i < 3; i++) {
     // Not in step with the page's own clock: wait a different while before each change.
@@ -201,9 +242,13 @@ if (on('live')) {
 // ---------------------------------------------------------------- axe and fit: every screen
 const screens: string[] = [];
 if (on('axe') || on('fit')) {
-  await go(ada.page, '/home', 500);
-  const nav: string[] = await ada.page.$$eval('.sidebar a[href^="/"]', (els) => [...new Set(els.map((a) => a.getAttribute('href')!))]);
-  const account = (await api(ada.page)('GET', '/api/accounts?limit=1&q=Velto')).accounts[0]?.id;
+  // A fresh sign-in: the sections above sign in on other devices, and the company's device limit may have ended this one.
+  const lister = await open();
+  await signInFresh(lister.page, 'ada@demo.example');
+  await go(lister.page, '/home', 500);
+  const nav: string[] = await lister.page.$$eval('.sidebar a[href^="/"]', (els) => [...new Set(els.map((a) => a.getAttribute('href')!))]);
+  const account = (await api(lister.page)('GET', '/api/accounts?limit=1&q=Velto')).accounts[0]?.id;
+  await lister.page.close();
   const tabs = ['company', 'billing', 'currencies', 'fields', 'health', 'rhythm', 'playbooks', 'records', 'people', 'joining', 'teams', 'roles', 'connections', 'sources', 'automations', 'developer', 'portal', 'support', 'audit'];
   screens.push(...nav, `/accounts/${account}`, '/reports/all', '/reports/new', '/profile', '/devices', '/connect-ai', ...tabs.map((t) => `/settings/${t}`));
 }
@@ -220,7 +265,7 @@ if (on('axe')) {
   const axe = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
   for (const theme of ['light', 'dark'] as const) {
     const p = await open(1440, 900);
-    await signIn(p.page, origin, 'ada@demo.example');
+    await signInFresh(p.page, 'ada@demo.example');
     await look(p.page, theme, 'tr');
     const byRule = new Map<string, number>();
     const byImpact: Record<string, number> = {};
@@ -247,7 +292,7 @@ if (on('axe')) {
 if (on('fit')) {
   for (const [width, locale, theme] of [[375, 'tr', 'light'], [768, 'en', 'dark'], [1440, 'tr', 'light']] as const) {
     const p = await open(width, 900);
-    await signIn(p.page, origin, 'ada@demo.example');
+    await signInFresh(p.page, 'ada@demo.example');
     await look(p.page, theme, locale);
     let sideways = 0;
     let cut = 0;
@@ -304,7 +349,7 @@ if (on('big')) {
     await q.query(`insert into accounts (org_id, name, owner_id, created_by, fields) select $1, 'Yük müşterisi ' || g, $2, $2, jsonb_build_object('arr', g * 100) from generate_series(1, 2000) g`, [d.orgId, d.ids.ada]);
   });
   const p = await open(1440, 900);
-  await signIn(p.page, origin, 'ada@demo.example');
+  await signInFresh(p.page, 'ada@demo.example');
   const timed = async (label: string, path: string, ready: string) => {
     await go(p.page, '/profile', 300);
     const t0 = Date.now();
