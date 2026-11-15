@@ -6,7 +6,7 @@
 //
 //   npm run build:demo && npx tsx tests/e2e/tours.ts
 import { createServer } from 'node:http';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import puppeteer, { type Page } from 'puppeteer-core';
 import { TOURS } from '../../shared/src/tours';
@@ -15,7 +15,8 @@ import { SCREENS } from './browser';
 const HUB = join(import.meta.dirname, '..', '..', 'dist', 'demo-hub');
 const CSP = ["default-src 'self'", "script-src 'self' 'wasm-unsafe-eval'", "style-src 'self' 'unsafe-inline'", 'img-src data: blob:', "font-src 'self' data:", "connect-src 'self'"].join('; ');
 const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.json': 'application/json' };
-const PORT = 8931;
+const PORT = Number(process.env.DEMO_PORT ?? 8931);
+mkdirSync(SCREENS, { recursive: true });
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   let rel = url.pathname.replace(/^\/demo\//, '');

@@ -2,11 +2,12 @@
 // strict content security policy, inside a sandboxed frame of another site,
 // from a sub-path. `npx vite build --config vite.demo.config.ts && npx tsx tests/e2e/demo.ts`
 import { createServer } from 'node:http';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import puppeteer from 'puppeteer-core';
 import { SCREENS } from './browser';
 
+mkdirSync(SCREENS, { recursive: true });
 const DIST = join(import.meta.dirname, '..', '..', 'dist', 'demo');
 const CSP = [
   "default-src 'self'",
@@ -35,7 +36,7 @@ const server = createServer((req, res) => {
   res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream', 'content-security-policy': CSP });
   res.end(readFileSync(file));
 });
-const PORT = 8911;
+const PORT = Number(process.env.DEMO_PORT ?? 8911);
 await new Promise<void>((r) => server.listen(PORT, r));
 
 const browser = await puppeteer.launch({
