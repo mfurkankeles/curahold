@@ -129,6 +129,10 @@ export function App() {
       if (!location.pathname.startsWith('/signup')) navigate('/signup', true);
       return;
     }
+    // Who is signed in is asked together with the company, not after it (one
+    // round trip less before the first screen). Not on the pages that sign in.
+    const early = ['/support/enter', '/auth/verify', '/join'].includes(location.pathname) ? null : get<Me>('/me');
+    early?.catch(() => undefined);
     let org: OrgPublic;
     try {
       org = await get<OrgPublic>('/org');
@@ -167,7 +171,7 @@ export function App() {
       return;
     }
     try {
-      const me = await get<Me>('/me');
+      const me = await (early ?? get<Me>('/me'));
       await ready(me.user.locale ?? orgLocale);
       if (me.user.locale) setLocale(me.user.locale);
       setCompanyZone(me.org.timezone);
@@ -227,7 +231,7 @@ export function App() {
 
   const terms = boot.kind === 'signed-in' ? boot.me.org.terms : null;
   return (
-    <I18nProvider locale={locale} terms={terms}>
+    <I18nProvider locale={locale} terms={terms} hold={boot.kind === 'loading'}>
       {boot.kind === 'loading' && <PageFallback />}
       {boot.kind === 'central' && (
         <Suspense fallback={<PageFallback />}>

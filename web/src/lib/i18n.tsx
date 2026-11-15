@@ -62,16 +62,19 @@ function rememberHint(l: Locale) {
     /* private mode */
   }
 }
-/** Starts fetching the language the next screen will most likely be in. */
-export function preloadLikelyLocale() {
-  let hint: Locale | null = null;
+/** The language this browser chose, or last read in; null on a first visit. */
+export function likelyLocale(): Locale | null {
   try {
     const v = localStorage.getItem(HINT);
-    hint = v ? normalizeLocale(v) : null;
+    return storedLocale() ?? (v ? normalizeLocale(v) : null);
   } catch {
-    /* private mode */
+    return null;
   }
-  void loadLocale(storedLocale() ?? hint ?? startLocale()).catch(() => undefined);
+}
+/** Starts fetching the language the next screen will most likely be in (if there is a good guess). */
+export function preloadLikelyLocale() {
+  const l = likelyLocale();
+  if (l) void loadLocale(l).catch(() => undefined);
 }
 
 export interface I18n {
@@ -83,12 +86,15 @@ export interface I18n {
 
 const Ctx = createContext<I18n | null>(null);
 
-export function I18nProvider({ locale: wanted, terms, children }: { locale: Locale; terms?: Terms | null; children: ReactNode }) {
+export function I18nProvider({ locale: wanted, terms, hold, children }: { locale: Locale; terms?: Terms | null; hold?: boolean; children: ReactNode }) {
   // The language on screen: the wanted one once its dictionary is here. Until
   // then the previous one stays (switching never shows raw keys); on the very
   // first load nothing is drawn — the page is blank at that moment anyway.
   const [shown, setShown] = useState<Locale | null>(() => (hasDictionary(wanted) ? wanted : null));
+  // `hold`: the language is not decided yet (the app is still asking the server);
+  // fetch nothing on a guess, so a first visit never downloads two dictionaries.
   useEffect(() => {
+    if (hold && !hasDictionary(wanted)) return;
     let live = true;
     loadLocale(wanted)
       .catch(() => (wanted === 'en' ? Promise.reject(new Error('no dictionary')) : loadLocale('en').then(() => 'en' as const)))
@@ -97,7 +103,7 @@ export function I18nProvider({ locale: wanted, terms, children }: { locale: Loca
     return () => {
       live = false;
     };
-  }, [wanted]);
+  }, [wanted, hold]);
   // Checked while drawing too: the moment a dictionary lands, every render speaks it.
   const locale: Locale = hasDictionary(wanted) ? wanted : (shown ?? wanted);
   // The page reads in the language's own direction: right-to-left for Arabic,
