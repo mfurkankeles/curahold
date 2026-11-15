@@ -15,9 +15,9 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 
 ## Attackers
 
-- **A1 Outsider** on the internet: no account. Guesses addresses, floods sign-in, sends forged webhooks.
+- **A1 Stranger** anywhere on the web: no account. Guesses addresses, floods sign-in, sends forged webhooks.
 - **A2 Other company's user**: a real account at another company on the same service.
-- **A3 Insider with a narrow role**: member, read-only seat, a custom role, an API key or AI connection of such a person.
+- **A3 Employee with a narrow role**: member, read-only seat, a custom role, an API key or AI connection of such a person.
 - **A4 Customer's customer** (portal contact): signed in to the portal for one account.
 - **A5 Content author**: anyone whose text ends up stored (a customer's email, a portal message, a CRM field, a comment) and is later shown to people or read by an AI assistant.
 - **A6 Curahold staff** with desk or platform console access.
