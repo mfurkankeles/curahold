@@ -10,7 +10,7 @@ import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
 import { ExportMenu } from '../components/Export';
-import { allPages, cellOf } from '../lib/export';
+import { allPages, cellOf, download } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, ConvertedNote, Dialog, DueLabel, onTabKeys } from '../components/ui';
@@ -236,8 +236,8 @@ export function AccountsPage() {
     ? signalRows.filter((r) => r.band === 'risk' || r.chips.some((c) => c.key === 'renewal' && c.tone !== 'slate')).reduce((n, r) => n + money.toBase(Number(r.a.fields[valueField.key]) || 0, r.a.currency), 0)
     : 0;
 
-  const head = (key: string, label: string) => (
-    <th aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}>
+  const head = (key: string, label: string, className?: string) => (
+    <th className={className} aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}>
       <button className="th-sort" onClick={() => setSort({ key, dir: sort.key === key ? (sort.dir === 1 ? -1 : 1) : 1 })}>
         {label}
         {sort.key === key ? (sort.dir === 1 ? ' ↑' : ' ↓') : ''}
@@ -272,9 +272,41 @@ export function AccountsPage() {
   const convertedNote = data && (view === 'cards' || view === 'table' || view === 'renewals') && rows.some((a) => a.currency && a.currency !== me.org.currency && money.rates[a.currency]) ? <ConvertedNote currency={me.org.currency} ratesAt={me.org.fx?.updatedAt} /> : null;
   // On a phone the filters, the order and the view switch fold into one sheet (FilterSheet).
   const activeFilters = (owner !== 'all' ? 1 : 0) + (signal ? 1 : 0) + (archived ? 1 : 0);
+  const makeExport = async () => {
+    const base = new URLSearchParams({ limit: '500' });
+    if (q.trim()) base.set('q', q.trim());
+    if (owner !== 'all') base.set('owner', owner);
+    if (archived) base.set('archived', '1');
+    const list = await allPages(async (offset) => {
+      base.set('offset', String(offset));
+      const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${base}`);
+      return { items: r.accounts, total: r.total };
+    });
+    const defs = me.org.accountFields;
+    return {
+      name: words.other,
+      headers: [t('accounts.name'), t('accounts.owner'), ...defs.map((f) => labelOf(f.label, locale)), t('accounts.openTasks'), t('accounts.lastActivity')],
+      rows: list.map((a) => [
+        a.name,
+        person(a.ownerId)?.name ?? '',
+        ...defs.map((f) => cellOf(f, a.fields[f.key], locale)),
+        a.openTasks ?? 0,
+        a.lastActivityAt ? a.lastActivityAt.slice(0, 10) : '',
+      ]),
+    };
+  };
+  const runExport = async (kind: 'xlsx' | 'csv') => {
+    try {
+      const table = await makeExport();
+      download(table, kind, locale);
+      toast(t('export.done', { n: table.rows.length }));
+    } catch {
+      toast(t('errors.server'), 'error');
+    }
+  };
   return (
     <>
-      <header className="topbar">
+      <header className="topbar listtop" data-place={place ?? undefined}>
         {place ? (
           <div className="topbar__titles topbar__titles--icon">
             <PageIcon name={({ renewals: 'refresh', reviews: 'handshake', products: 'target' } as const)[place]} />
@@ -291,41 +323,31 @@ export function AccountsPage() {
           </>
         )}
         <div className="topbar__spacer" />
-        <ExportMenu
-          disabled={!data?.total}
-          make={async () => {
-            const base = new URLSearchParams({ limit: '500' });
-            if (q.trim()) base.set('q', q.trim());
-            if (owner !== 'all') base.set('owner', owner);
-            if (archived) base.set('archived', '1');
-            const list = await allPages(async (offset) => {
-              base.set('offset', String(offset));
-              const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${base}`);
-              return { items: r.accounts, total: r.total };
-            });
-            const defs = me.org.accountFields;
-            return {
-              name: words.other,
-              headers: [t('accounts.name'), t('accounts.owner'), ...defs.map((f) => labelOf(f.label, locale)), t('accounts.openTasks'), t('accounts.lastActivity')],
-              rows: list.map((a) => [
-                a.name,
-                person(a.ownerId)?.name ?? '',
-                ...defs.map((f) => cellOf(f, a.fields[f.key], locale)),
-                a.openTasks ?? 0,
-                a.lastActivityAt ? a.lastActivityAt.slice(0, 10) : '',
-              ]),
-            };
-          }}
-        />
+        <div className="listtop__wide">
+          <ExportMenu disabled={!data?.total} make={makeExport} />
+        </div>
         {manage && can('accounts.view_all') && canWrite && (
-          <button className="btn" onClick={() => setImporting(true)}>
+          <button className="btn listtop__wide" onClick={() => setImporting(true)}>
             {t('accounts.import')}
           </button>
         )}
+        {/* On a phone, export and import fold into one quiet menu beside the one main action. */}
+        <MenuButton
+          className="listtop__more"
+          label={t('acc.more')}
+          title={t('acc.more')}
+          place="down-end"
+          buttonClass="btn btn--icon"
+          button={<Icon name="more" size={18} />}
+          items={[
+            ...(data?.total ? (['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) })) : []),
+            ...(manage && can('accounts.view_all') && canWrite ? [{ key: 'import', label: t('accounts.import'), icon: 'upload' as const, onSelect: () => setImporting(true) }] : []),
+          ]}
+        />
         {canWrite && (
-          <button className="btn btn--primary" onClick={() => setCreating(true)}>
+          <button className="btn btn--primary listtop__new" aria-label={t('accounts.new')} onClick={() => setCreating(true)}>
             <Icon name="plus" size={16} />
-            {t('accounts.new')}
+            <span className="listtop__newlabel">{t('accounts.new')}</span>
           </button>
         )}
       </header>
@@ -526,7 +548,7 @@ export function AccountsPage() {
                       </button>
                     </th>
                   ))}
-                  {head('open', t('accounts.openTasks'))}
+                  {head('open', t('accounts.openTasks'), 'accounts-table__open')}
                   <th className="hide-phone">{t('accounts.lastActivity')}</th>
                 </tr>
               </thead>
@@ -579,7 +601,7 @@ export function AccountsPage() {
                         <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency, true)} />
                       </td>
                     ))}
-                    <td className="num">{a.openTasks ?? 0}</td>
+                    <td className="num accounts-table__open">{a.openTasks ?? 0}</td>
                     <td className="hide-phone muted">{a.lastActivityAt ? relativeTime(a.lastActivityAt, t) : '—'}</td>
                   </tr>
                 ))}

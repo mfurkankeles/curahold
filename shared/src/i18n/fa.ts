@@ -2180,6 +2180,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "سلامت در بازه مراقبت است",
   'acards.renewalPast': "تمدید {n} روز دیر شده",
   'acards.renewalIn': "تمدید در {n} روز",
+  'pipeline.moved': "{name} به {stage} منتقل شد",
   'org.moved': "{name} اکنون زیرمجموعهٔ {to} است",
   'org.movedTop': "{name} اکنون در بالای نمودار است",
   'org.kbMove': "جابه‌جایی {name}",

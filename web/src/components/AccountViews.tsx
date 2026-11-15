@@ -14,6 +14,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
+import '../surfaces/employee-customers.css';
 import { useRecordTypes } from './AccountFields';
 import { Icon } from './icons';
 import { todayIso } from '../lib/time';
@@ -144,7 +145,7 @@ export function AccountCards({
   fmt: (f: AccountField, v: unknown, currency?: string | null, inBase?: boolean) => string;
   OptionValue: (p: { field: AccountField; value: unknown; text: string }) => JSX.Element;
 }) {
-  const { t, words, locale } = useI18n();
+  const { t, locale } = useI18n();
   const { person, me } = useStore();
   const score = (a: Account) => a.fields[HEALTH_FIELD];
   // Many cards: draw only the rows of the grid in sight. The grid says how many cards share a row.
@@ -208,9 +209,6 @@ export function AccountCards({
               ))}
             </dl>
             <footer className="acard__foot">
-              <button className="btn btn--small" onClick={() => navigate(`/accounts/${a.id}`)}>
-                {t('acards.open', { account: words.one })}
-              </button>
               <button className="btn btn--small btn--quiet" onClick={() => navigate(`/accounts/${a.id}#tasks`)}>
                 {t('acards.tasks', { n: a.openTasks ?? 0 })}
               </button>
@@ -279,11 +277,11 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
                 {risky.length > 0 && value && <> · <span className="schip" data-tone="amber">{t('acards.atStake', { value: money(sum(risky)) })}</span></>}
               </span>
             </header>
-            <table className="table">
+            <table className="table renewals__table">
               <tbody>
                 {list.map((r) => (
                   <tr key={r.a.id} className="rowlink-row" onClick={() => navigate(`/accounts/${r.a.id}`)}>
-                    <td>
+                    <td className="renewals__name">
                       <a
                         className="rowlink"
                         href={`/accounts/${r.a.id}`}
@@ -296,15 +294,16 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
                       </a>
                     </td>
                     <td className="hide-phone">{person(r.a.ownerId)?.name ?? <span className="muted">{t('accounts.noOwner')}</span>}</td>
-                    <td className="num">{fmtDate(r.date, { day: 'numeric', month: 'short' })}</td>
-                    <td className="num muted">{r.days < 0 ? t('acards.daysAgo', { n: -r.days }) : t('acards.inDays', { n: r.days })}</td>
-                    {value && <td className="num">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key], r.a.currency, true)}</td>}
+                    <td className="num renewals__date">{fmtDate(r.date, { day: 'numeric', month: 'short' })}</td>
+                    <td className="num muted renewals__days">{r.days < 0 ? t('acards.daysAgo', { n: -r.days }) : t('acards.inDays', { n: r.days })}</td>
+                    {value && <td className="num renewals__value">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key], r.a.currency, true)}</td>}
                     <td className="renewals__links">
                       <RenewalCell
                         links={links[r.a.id]}
                         own={ownLinks.map((f) => ({ label: labelOf(f.label, locale), url: r.a.fields[f.key] })).filter((x): x is { label: string; url: string } => typeof x.url === 'string' && /^https?:\/\//i.test(x.url))}
                         stageLabel={stageLabel}
                         money={(n, c) => cur.format(n, c)}
+                        account={r.a.name}
                       />
                     </td>
                     <td className="hide-phone">
@@ -335,8 +334,14 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
  * agreement — a link from the customer's own fields, or an agreement record.
  * Presses here don't open the customer (the row does that).
  */
-function RenewalCell({ links, own, stageLabel, money }: { links?: RenewalLinks; own: { label: string; url: string }[]; stageLabel: (typeKey: string, stage: string | null) => string | null; money: (n: number, currency?: string | null) => string }) {
+function RenewalCell({ links, own, stageLabel, money, account }: { links?: RenewalLinks; own: { label: string; url: string }[]; stageLabel: (typeKey: string, stage: string | null) => string | null; money: (n: number, currency?: string | null) => string; account: string }) {
   const { t } = useI18n();
+  // The row already names the customer: a chip says only its own part ("Renewal 2026", not "Corvina Media — Renewal 2026").
+  const short = (name: string) => {
+    if (!name.toLocaleLowerCase().startsWith(account.toLocaleLowerCase())) return name;
+    const rest = name.slice(account.length).replace(/^[\s—–\-:·|/]+/, '');
+    return rest || name;
+  };
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const deal = links?.deal;
   const docs = [...own.map((o) => ({ key: o.url, name: o.label, url: o.url, recordId: null as string | null })), ...(links?.agreements ?? []).map((a) => ({ key: a.recordId, name: a.name, url: a.url, recordId: a.recordId }))].slice(0, 3);
@@ -346,37 +351,37 @@ function RenewalCell({ links, own, stageLabel, money }: { links?: RenewalLinks; 
       {deal && (
         <button
           className="rchip rchip--deal"
-          title={t('renewals.openDeal')}
+          title={`${t('renewals.openDeal')}: ${deal.name}`}
           onClick={(e) => {
             stop(e);
             setQuery('record', deal.id);
           }}
         >
           <Icon name="funnel" size={13} />
-          <span className="rchip__name">{deal.name}</span>
+          <span className="rchip__name">{short(deal.name)}</span>
           {stageLabel(deal.typeKey, deal.stage) && <span className="rchip__meta">{stageLabel(deal.typeKey, deal.stage)}</span>}
           {deal.amount !== null && <span className="rchip__meta num">{money(deal.amount, deal.currency)}</span>}
         </button>
       )}
       {docs.map((d) =>
         d.url ? (
-          <a key={d.key} className="rchip" href={d.url} target="_blank" rel="noreferrer noopener" title={t('renewals.openAgreement')} onClick={stop}>
+          <a key={d.key} className="rchip" href={d.url} target="_blank" rel="noreferrer noopener" title={`${t('renewals.openAgreement')}: ${d.name}`} onClick={stop}>
             <Icon name="paperclip" size={13} />
-            <span className="rchip__name">{d.name}</span>
+            <span className="rchip__name">{short(d.name)}</span>
             <Icon name="external" size={12} />
           </a>
         ) : (
           <button
             key={d.key}
             className="rchip"
-            title={t('renewals.openAgreement')}
+            title={`${t('renewals.openAgreement')}: ${d.name}`}
             onClick={(e) => {
               stop(e);
               setQuery('record', d.recordId!);
             }}
           >
             <Icon name="paperclip" size={13} />
-            <span className="rchip__name">{d.name}</span>
+            <span className="rchip__name">{short(d.name)}</span>
           </button>
         ),
       )}

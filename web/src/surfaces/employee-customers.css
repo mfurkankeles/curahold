@@ -87,3 +87,46 @@
 @media (pointer: coarse) {
   .org-card__handle { min-width: var(--tap); min-height: var(--tap); top: 0; inset-inline-end: 0; }
 }
+
+/* ------------------------------------------------------------ customer list */
+/* A renewal's chips name only their own part; a long one wraps instead of being cut. */
+.renewals .rchip { max-width: 100%; }
+.renewals .rchip__name { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+/* On a phone each renewal is a small card: the customer and the amount, the date and how far, then its links. */
+@media (max-width: 600px) {
+  .renewals__table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .renewals__table tr:first-child { border-top: 0; }
+  .renewals__table td { padding: 0; border: 0; }
+  .renewals__table .renewals__name { grid-column: 1; grid-row: 1; font-weight: 600; }
+  .renewals__table .renewals__value { grid-column: 2; grid-row: 1; text-align: end; font-weight: 600; }
+  .renewals__table .renewals__date { grid-column: 1; grid-row: 2; display: inline; color: var(--ink-2); font-size: var(--fs-s); }
+  .renewals__table .renewals__days { grid-column: 2; grid-row: 2; text-align: end; font-size: var(--fs-s); }
+  .renewals__table .renewals__links { grid-column: 1 / -1; min-width: 0; }
+}
+.listtop__more { display: none; }
+@media (max-width: 860px) {
+  .listtop { flex-wrap: nowrap; }
+  .listtop .topbar__sub, .listtop .topbar__titles .topbar__sub { display: none; }
+  .listtop__wide { display: none; }
+  .listtop__more { display: block; }
+  .listtop__new .listtop__newlabel { display: none; }
+  .listtop__new { min-width: var(--tap); justify-content: center; }
+  /* The places (renewals, reviews, products) have no new-customer button on a phone: the bar's + does that. */
+  .listtop[data-place] .listtop__new { display: none; }
+  .renewals__table .renewals__date { text-align: start; }
+}
+/* On a phone the pipeline's target and totals fold into one line above the deals. */
+.pipe-sum { flex: none; margin-bottom: 8px; }
+.pipe-sum > summary { display: flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); font-weight: 600; cursor: pointer; }
+.pipe-sum__body { display: grid; gap: 12px; padding-top: 8px; }
+/* The table of customers on a phone: name and owner; the counts are on the cards. */
+@media (max-width: 600px) {
+  .accounts-table .accounts-table__open { display: none; }
+}
+
+/* ------------------------------------------------------------ the timeline page */
+.gantt-tools__nav { display: inline-flex; gap: 8px; }
+@media (max-width: 860px) {
+  .gantt-tools { flex: 1 1 100%; flex-wrap: nowrap; }
+  .gantt-tools__nav { margin-inline-start: auto; }
+}

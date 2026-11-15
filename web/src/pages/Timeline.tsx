@@ -13,6 +13,8 @@ import { useStore } from '../lib/store';
 import { addDays, dueState, todayIso } from '../lib/time';
 import { intlTag } from '../../../shared/src/i18n';
 import { formatMonth } from '../lib/format';
+import { FilterGroup, FilterSheet } from '../components/FilterSheet';
+import '../surfaces/employee-customers.css';
 
 const GROUPS = ['board', 'person', 'account'] as const;
 type Group = (typeof GROUPS)[number];
@@ -109,7 +111,25 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
           </p>
         </div>
         <div className="topbar__spacer" />
-        <div className="toolbar">
+        <div className="toolbar gantt-tools">
+          <FilterSheet
+            count={(mine ? 1 : 0) + (board ? 1 : 0)}
+            onClear={() => (setMine(false), setBoard(''))}
+            after={
+              <span className="gantt-tools__nav">
+                <button className="btn btn--icon" onClick={() => setStart(addDays(start, -21))} aria-label={t('calendar.prev')}>
+                  <Icon name="chevronLeft" size={16} />
+                </button>
+                <button className="btn" onClick={() => setStart(mondayOf(addDays(today, -7)))}>
+                  {t('calendar.today')}
+                </button>
+                <button className="btn btn--icon" onClick={() => setStart(addDays(start, 21))} aria-label={t('calendar.next')}>
+                  <Icon name="chevronRight" size={16} />
+                </button>
+              </span>
+            }
+          >
+          <FilterGroup label={t('timeline.groupBy')}>
           <div className="seg" role="group" aria-label={t('timeline.groupBy')}>
             {GROUPS.map((g) => (
               <button key={g} aria-pressed={group === g} onClick={() => pick(g)}>
@@ -117,6 +137,8 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
               </button>
             ))}
           </div>
+          </FilterGroup>
+          <FilterGroup label={t('team.person')}>
           <div className="seg" role="group">
             <button aria-pressed={!mine} onClick={() => setMine(false)}>
               {t('board.filter.everyone')}
@@ -125,6 +147,8 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
               {t('board.filter.mine')}
             </button>
           </div>
+          </FilterGroup>
+          <FilterGroup label={t('task.board')}>
           <select className="select u-width-auto" value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
             <option value="">{t('reports.allBoards')}</option>
             {boards.map((b) => (
@@ -133,15 +157,8 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
               </option>
             ))}
           </select>
-          <button className="btn btn--icon" onClick={() => setStart(addDays(start, -21))} aria-label={t('calendar.prev')}>
-            <Icon name="chevronLeft" size={16} />
-          </button>
-          <button className="btn" onClick={() => setStart(mondayOf(addDays(today, -7)))}>
-            {t('calendar.today')}
-          </button>
-          <button className="btn btn--icon" onClick={() => setStart(addDays(start, 21))} aria-label={t('calendar.next')}>
-            <Icon name="chevronRight" size={16} />
-          </button>
+          </FilterGroup>
+          </FilterSheet>
         </div>
       </header>
       <div className="page">

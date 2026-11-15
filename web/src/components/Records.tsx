@@ -11,7 +11,9 @@ import { CONTACT_COLUMNS, RECORD_BUILTIN_COLUMNS, fullName, splitName, typeLabel
 import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
 import { ExportMenu } from './Export';
-import { allPages, cellOf } from '../lib/export';
+import { allPages, cellOf, download } from '../lib/export';
+import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
+import { MenuButton } from './Menus';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useLive } from '../lib/live';
 import { useI18n } from '../lib/i18n';
@@ -231,7 +233,8 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
 
 export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale, fmtDate, words } = useI18n();
-  const { people, person, canWrite, can } = useStore();
+  const { people, person, canWrite, can, toast } = useStore();
+  const phone = usePhone();
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
   const [q, setQ] = useState('');
@@ -314,9 +317,48 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     return fmtDate(r.updatedAt, { day: 'numeric', month: 'short', year: 'numeric' });
   };
   const colLabel = (c: Column) => ('field' in c ? labelOf(c.field.label, locale) : t(`records.col.${c.builtin}` as any, { account: words.one }));
+  const makeExport = async () => {
+    if (!type) return { name: '', headers: [], rows: [] };
+    const base = new URLSearchParams({ type: typeKey, limit: '500' });
+    if (q.trim()) base.set('q', q.trim());
+    if (owner) base.set('owner', owner);
+    const list = await allPages(async (offset) => {
+      base.set('offset', String(offset));
+      const r = await get<{ records: AppRecord[]; total: number }>(`/records?${base}`);
+      return { items: r.records, total: r.total };
+    });
+    return {
+      name: typeLabel(type, locale),
+      headers: [t('records.name'), t('records.account'), t('records.owner'), ...type.fields.map((f) => labelOf(f.label, locale))],
+      rows: list.map((r) => [r.name, r.accountName ?? '', person(r.ownerId)?.name ?? '', ...type.fields.map((f) => cellOf(f, r.fields[f.key], locale))]),
+    };
+  };
+  const runExport = async (kind: 'xlsx' | 'csv') => {
+    try {
+      const table = await makeExport();
+      download(table, kind, locale);
+      toast(t('export.done', { n: table.rows.length }));
+    } catch {
+      toast(t('errors.server'), 'error');
+    }
+  };
+  // On a phone the view switch, the grouping, the period, the owner and the columns fold into one sheet.
+  const activeFilters = (owner ? 1 : 0) + (closeField && period !== 'any' ? 1 : 0);
+  const viewSeg = choices.length > 0 && (
+    <div className="seg seg--views" role="tablist" onKeyDown={onTabKeys}>
+      <button role="tab" aria-selected={view === 'board'} tabIndex={view === 'board' ? 0 : -1} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
+        <Icon name="board" size={15} />
+        {t('board.view.board')}
+      </button>
+      <button role="tab" aria-selected={view === 'table'} tabIndex={view === 'table' ? 0 : -1} onClick={() => (setViewPick('table'), keep('view', 'table'))}>
+        <Icon name="list" size={15} />
+        {t('acards.view.table')}
+      </button>
+    </div>
+  );
   return (
     <>
-      <header className="topbar">
+      <header className="topbar listtop">
         <h1 className="topbar__title topbar__title--icon">
           <PageIcon name={RECORD_KIND_ICON[type?.kind ?? ''] ?? 'layout'} />
           <span>{type ? typeLabel(type, locale) : ''}</span>
@@ -324,47 +366,33 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         {data && <span className="topbar__sub num">{t('records.total', { n: data.total })}</span>}
         <div className="topbar__spacer" />
         {type && (
-          <ExportMenu
-            disabled={!data?.total}
-            make={async () => {
-              const base = new URLSearchParams({ type: typeKey, limit: '500' });
-              if (q.trim()) base.set('q', q.trim());
-              if (owner) base.set('owner', owner);
-              const list = await allPages(async (offset) => {
-                base.set('offset', String(offset));
-                const r = await get<{ records: AppRecord[]; total: number }>(`/records?${base}`);
-                return { items: r.records, total: r.total };
-              });
-              return {
-                name: typeLabel(type, locale),
-                headers: [t('records.name'), t('records.account'), t('records.owner'), ...type.fields.map((f) => labelOf(f.label, locale))],
-                rows: list.map((r) => [r.name, r.accountName ?? '', person(r.ownerId)?.name ?? '', ...type.fields.map((f) => cellOf(f, r.fields[f.key], locale))]),
-              };
-            }}
-          />
+          <div className="listtop__wide">
+            <ExportMenu disabled={!data?.total} make={makeExport} />
+          </div>
         )}
+        {type && data?.total ? (
+          <MenuButton
+            className="listtop__more"
+            label={t('acc.more')}
+            title={t('acc.more')}
+            place="down-end"
+            buttonClass="btn btn--icon"
+            button={<Icon name="more" size={18} />}
+            items={(['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) }))}
+          />
+        ) : null}
         {canWrite && type && (
-          <button className="btn btn--primary" onClick={() => setEditing('new')}>
+          <button className="btn btn--primary listtop__new" aria-label={t('records.new', { type: typeLabel(type, locale, false) })} onClick={() => setEditing('new')}>
             <Icon name="plus" size={16} />
-            {t('records.new', { type: typeLabel(type, locale, false) })}
+            <span className="listtop__newlabel">{t('records.new', { type: typeLabel(type, locale, false) })}</span>
           </button>
         )}
       </header>
       <div className={view === 'board' ? 'page page--board' : 'page'}>
         <RecordTabs current={typeKey} types={types} />
         <div className="toolbar u-mb-12">
-          {choices.length > 0 && (
-            <div className="seg seg--views" role="tablist" onKeyDown={onTabKeys}>
-              <button role="tab" aria-selected={view === 'board'} tabIndex={view === 'board' ? 0 : -1} onClick={() => (setViewPick('board'), keep('view', 'board'))}>
-                <Icon name="board" size={15} />
-                {t('board.view.board')}
-              </button>
-              <button role="tab" aria-selected={view === 'table'} tabIndex={view === 'table' ? 0 : -1} onClick={() => (setViewPick('table'), keep('view', 'table'))}>
-                <Icon name="list" size={15} />
-                {t('acards.view.table')}
-              </button>
-            </div>
-          )}
+          <FilterSheet count={activeFilters} onClear={() => (setOwner(''), closeField && (setPeriod('any'), keep('period', 'any')))} search={<input className="input search" type="search" value={q} placeholder={t('records.search')} aria-label={t('records.search')} onChange={(e) => setQ(e.target.value)} />}>
+            {phone ? <FilterGroup label={t('acards.viewLabel')}>{viewSeg}</FilterGroup> : viewSeg}
           {view === 'board' && <GroupBy fields={choices} value={groupKey} onChange={(k) => (setGroupPick(k), keep('group', k))} />}
           {closeField && (
             <label className="toolbar__field">
@@ -383,7 +411,6 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
               <DateRangeField from={range.from} to={range.to} labels={{ from: t('records.period.from'), to: t('records.period.to') }} onChange={(r) => setRange((x) => ({ ...x, ...r }))} />
             </span>
           )}
-          <input className="input search" type="search" value={q} placeholder={t('records.search')} aria-label={t('records.search')} onChange={(e) => setQ(e.target.value)} />
           <select className="select" value={owner} aria-label={t('accounts.owner')} onChange={(e) => setOwner(e.target.value)}>
             <option value="">{t('accounts.anyOwner')}</option>
             <option value="me">{t('accounts.filter.mine')}</option>
@@ -400,6 +427,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
               <Icon name="columns" size={15} /> {t('records.columns')}
             </button>
           )}
+          </FilterSheet>
         </div>
         {!data ? (
           view === 'board' ? <SkeletonCards columns count={4} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />

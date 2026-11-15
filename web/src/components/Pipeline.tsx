@@ -1,6 +1,7 @@
 // Records as a board: deals by stage (drag one to move it, drop it on Won
 // or Lost to close it), or any kind of record by one of its choice fields.
 // The strip on top adds the money up: open, weighted by stage, closing soon.
+import '../surfaces/employee-customers.css';
 import { useMoney } from '../lib/money';
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
@@ -17,6 +18,8 @@ import { TargetsPanel, dealsN } from './Rhythm';
 import { Icon } from './icons';
 import { CountUp } from './CountUp';
 import { Avatar } from './ui';
+import { useUndo } from '../lib/undo';
+import { usePhone } from './FilterSheet';
 
 const NONE = '__none__';
 
@@ -28,6 +31,8 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
   const { t, locale, fmtDate } = useI18n();
   const { canWrite, toast, person } = useStore();
   const fmt = useFieldFormat();
+  const offer = useUndo();
+  const phone = usePhone();
   const [active, setActive] = useState<AppRecord | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const group = type.fields.find((f) => f.key === groupKey);
@@ -76,8 +81,16 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
     onChanged({ ...r, fields: { ...r.fields, ...fields } });
     try {
       const res = await patch<{ record: AppRecord }>(`/records/${r.id}`, { fields, ...(r.version ? { baseVersion: r.version } : {}) });
-      onChanged({ ...r, ...res.record, accountName: r.accountName });
-      if (fields[status?.key ?? ''] === 'won') toast(t('pipeline.won', { name: r.name }));
+      const moved = { ...r, ...res.record, accountName: r.accountName };
+      onChanged(moved);
+      // Every move can be taken back for 10 seconds: the same fields, as they were.
+      const before = Object.fromEntries(Object.keys(fields).map((k) => [k, (r.fields[k] as string | null | undefined) ?? null]));
+      const back = async () => {
+        const again = await patch<{ record: AppRecord }>(`/records/${r.id}`, { fields: before, ...(moved.version ? { baseVersion: moved.version } : {}) });
+        onChanged({ ...moved, ...again.record, accountName: r.accountName });
+      };
+      const label = columns.find((c) => c.key === to)?.label ?? '';
+      offer(fields[status?.key ?? ''] === 'won' ? t('pipeline.won', { name: r.name }) : t('pipeline.moved', { name: r.name, stage: label }), back);
     } catch (e) {
       // Moved by someone else meanwhile: theirs stays and shows.
       const current = e instanceof ApiFailure && e.code === 'conflict' ? (e.body.current as AppRecord | undefined) : undefined;
@@ -124,7 +137,8 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
     );
   };
 
-  return (
+  // On a phone the deals come first: the target and the totals fold into one line above the board.
+  const summary = (
     <>
       {type.kind === 'opportunity' && <TargetsPanel type={type} records={records} compact />}
       {money && (
@@ -134,6 +148,20 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
           {date && <Stat label={t('pipeline.closing')} value={cash(sum(closing))} sub={dealsN(t, closing.length)} tone={late.length ? 'late' : undefined} note={late.length ? t('pipeline.lateN', { n: late.length }) : undefined} />}
           {status && <Stat label={t('pipeline.wonTotal')} value={cash(sum(won))} sub={dealsN(t, won.length)} tone="done" />}
         </div>
+      )}
+    </>
+  );
+  return (
+    <>
+      {phone ? (
+        <details className="pipe-sum">
+          <summary>
+            {t('pipeline.open')} · <span className="num">{money ? cash(sum(open)) : dealsN(t, open.length)}</span>
+          </summary>
+          <div className="pipe-sum__body">{summary}</div>
+        </details>
+      ) : (
+        summary
       )}
       <DndContext sensors={canWrite ? sensors : []} onDragStart={(e) => setActive(records.find((x) => x.id === e.active.id) ?? null)} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
         <div className="board board--records">
@@ -150,6 +178,7 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
         </div>
         <DragOverlay>{active ? card(active, true) : null}</DragOverlay>
       </DndContext>
+
     </>
   );
 }
