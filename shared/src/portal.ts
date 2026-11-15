@@ -73,6 +73,20 @@ export interface PortalTask {
   /** The latest reply is the team's: the customer has something new to read. */
   lastFromTeam?: boolean;
 }
+/** A file on a request or a reply, as the customer sees it. */
+export interface PortalFile {
+  id: string;
+  name: string;
+  size: number;
+  mime: string;
+  /** The reply it belongs to; null for the request itself. */
+  commentId: string | null;
+}
+/** Files one request or reply may carry (each up to MAX_FILE_MB). */
+export const PORTAL_MAX_FILES = 5;
+/** The endings a customer may send; the server also checks each file's first bytes (api/src/lib/portal.ts). */
+export const PORTAL_FILE_ENDINGS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'txt', 'csv'] as const;
+
 export interface PortalComment {
   id: string;
   body: string;
@@ -84,6 +98,8 @@ export interface PortalComment {
 export interface PortalTaskDetail extends PortalTask {
   board: PortalBoard;
   comments: PortalComment[];
+  /** Files on the request and its replies (see PortalFile.commentId). */
+  files: PortalFile[];
 }
 export interface PortalOrg {
   name: string;

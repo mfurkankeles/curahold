@@ -244,7 +244,7 @@ html, body { margin: 0; }
 .p-task__head { display: grid; gap: 12px; }
 .p-task__title { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 @media (max-width: 599px) { .p-task__title { flex-direction: column; gap: 8px; } }
-.p-task__desc { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
+.p-task__desc { overflow-wrap: anywhere; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
 .p-meta { display: grid; gap: 12px; margin: 0; }
 .p-meta > div { display: grid; gap: 4px; }
 .p-meta dt { color: var(--ink-3); font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
@@ -307,3 +307,21 @@ html, body { margin: 0; }
   .p-root *, .p-root *::before, .p-root *::after { transition: none !important; scroll-behavior: auto !important; }
   .p-bone { animation: none; }
 }
+
+/* ------------------------------------------------------------ files */
+.p-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.p-files li > a, .p-files--chosen li { display: flex; align-items: center; gap: 8px; min-block-size: var(--tap); padding: 0 8px; border-radius: var(--r-s); background: var(--paper); color: var(--ink); text-decoration: none; font-size: var(--fs-m); }
+.p-msg .p-files li > a { background: var(--surface); }
+.p-msg[data-side='customer'] .p-files li > a { background: var(--surface); }
+.p-files li > a:hover { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+.p-files .p-ico { color: var(--ink-3); }
+.p-files__name { min-inline-size: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-files__size { color: var(--ink-3); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p-files__x { display: grid; place-items: center; inline-size: var(--tap); block-size: var(--tap); margin-inline-end: -8px; border: 0; border-radius: var(--r-s); background: none; color: var(--ink-3); cursor: pointer; }
+.p-files__x:hover { color: var(--error); background: var(--sunk); }
+.p-pick { display: grid; gap: 8px; justify-items: start; min-inline-size: 0; flex: 1 1 200px; }
+.p-pick .p-files { inline-size: 100%; }
+.p-pick__btn { position: relative; padding-inline: 8px; }
+.p-pick__btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.p-task__desc { display: grid; gap: 12px; }
+.p-task__desc > p { white-space: pre-wrap; }

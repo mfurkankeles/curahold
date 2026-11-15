@@ -4,8 +4,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { bcp47Of, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
-import { formatDate, formatDateTime } from '../src/lib/format';
-import { brandPalette, type PortalAccount, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
+import { formatBytes, formatDate, formatDateTime } from '../src/lib/format';
+import { MAX_FILE_MB } from '../../shared/src/model';
+import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 // ------------------------------------------------------------------ api
@@ -33,6 +34,24 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Failure(res.status, data?.error ?? 'server', data?.message ?? res.statusText);
   return data as T;
+}
+
+/** The same, as a form: the fields in "data" and the chosen files (none: plain JSON). */
+function callWith<T>(method: string, path: string, body: unknown, files: File[]): Promise<T> {
+  if (!files.length) return call<T>(method, path, body);
+  const form = new FormData();
+  form.set('data', JSON.stringify(body));
+  for (const f of files) form.append('files', f, f.name);
+  return fetch(`/papi${path}`, { method, headers: { 'x-curahold-portal': '1', 'x-curahold-locale': apiLocale }, body: form, credentials: 'same-origin' }).then(
+    async (res) => {
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Failure(res.status, data?.error ?? 'server', data?.message ?? res.statusText);
+      return data as T;
+    },
+    () => {
+      throw new Failure(0, 'network', '');
+    },
+  );
 }
 
 // --------------------------------------------------------------- router
@@ -289,6 +308,70 @@ function MeMenu({ ctx, me, lang, onSignOut }: { ctx: Ctx; me: PortalMe; lang: Re
         </div>
       )}
     </div>
+  );
+}
+
+const ACCEPT = PORTAL_FILE_ENDINGS.map((e) => `.${e}`).join(',');
+
+/** Files to send with a request or a reply: chosen, checked here first (the server checks again), removable. */
+function FilePick({ ctx, files, setFiles }: { ctx: Ctx; files: File[]; setFiles: (f: File[]) => void }) {
+  const { t } = ctx;
+  const [problem, setProblem] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const add = (list: FileList | null) => {
+    setProblem(null);
+    const next = [...files];
+    for (const f of Array.from(list ?? [])) {
+      const end = /\.([a-z0-9]+)$/i.exec(f.name)?.[1]?.toLowerCase() ?? '';
+      if (!(PORTAL_FILE_ENDINGS as readonly string[]).includes(end)) setProblem(t('errors.portal_file_type', { name: f.name }));
+      else if (f.size > MAX_FILE_MB * 1024 * 1024) setProblem(t('portal.fileTooBig', { name: f.name, mb: MAX_FILE_MB }));
+      else if (next.length >= PORTAL_MAX_FILES) setProblem(t('errors.portal_too_many_files', { n: PORTAL_MAX_FILES }));
+      else next.push(f);
+    }
+    setFiles(next);
+    if (input.current) input.current.value = '';
+  };
+  return (
+    <div className="p-pick">
+      {files.length > 0 && (
+        <ul className="p-files p-files--chosen" aria-label={t('portal.filesChosen')}>
+          {files.map((f, i) => (
+            <li key={`${f.name}-${i}`}>
+              <Ico name="file" />
+              <span className="p-files__name" dir="auto">{f.name}</span>
+              <span className="p-files__size">{formatBytes(f.size, ctx.locale)}</span>
+              <button type="button" className="p-files__x" aria-label={t('portal.removeFile', { name: f.name })} onClick={() => setFiles(files.filter((_, j) => j !== i))}>
+                <Ico name="x" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <label className="p-btn p-btn--quiet p-pick__btn">
+        <Ico name="clip" />
+        {t('portal.attach')}
+        <input ref={input} className="p-sr" type="file" multiple accept={ACCEPT} onChange={(e) => add(e.target.files)} />
+      </label>
+      {problem && <Problem text={problem} />}
+    </div>
+  );
+}
+
+/** Files already sent: each a download (never opened in the page). */
+function Files({ ctx, files }: { ctx: Ctx; files: PortalFile[] }) {
+  if (!files.length) return null;
+  return (
+    <ul className="p-files" aria-label={ctx.t('portal.files')}>
+      {files.map((f) => (
+        <li key={f.id}>
+          <a href={`/papi/files/${f.id}`} download={f.name}>
+            <Ico name="file" />
+            <span className="p-files__name" dir="auto">{f.name}</span>
+            <span className="p-files__size">{formatBytes(f.size, ctx.locale)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -1186,7 +1269,7 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
                   {list.map((x) => (
                     <li key={x.id}>
                       <a className="p-item" {...link(`/t/${x.id}`)}>
-                        <span className="p-item__title">{x.title}</span>
+                        <span className="p-item__title" dir="auto">{x.title}</span>
                         <span className="p-item__side">
                           {x.lastFromTeam && !done.has(x.status) && <span className="p-fresh">{t('portal.newReply')}</span>}
                           <Status board={board} status={x.status} />
@@ -1232,6 +1315,7 @@ function NewRequest({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; b
   const { t } = ctx;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const [short, setShort] = useState(false);
   const { busy, waiting, problem, run } = useSend(onSignedOut, t);
   const submit = (e: FormEvent) => {
@@ -1239,7 +1323,7 @@ function NewRequest({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; b
     if (title.trim().length < 3) return setShort(true);
     setShort(false);
     void run(async () => {
-      const r = await call<{ task: PortalTask }>('POST', `/boards/${board.id}/tasks`, { title, description });
+      const r = await callWith<{ task: PortalTask }>('POST', `/boards/${board.id}/tasks`, { title, description }, files);
       go(`/t/${r.task.id}`, true);
     });
   };
@@ -1268,6 +1352,7 @@ function NewRequest({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; b
             <span>{t('portal.details')}</span>
             <textarea rows={7} value={description} maxLength={20000} onChange={(e) => setDescription(e.target.value)} placeholder={t('portal.detailsPlaceholder')} />
           </label>
+          <FilePick ctx={ctx} files={files} setFiles={setFiles} />
           {problem && <Problem text={problem} />}
           {waiting && (
             <p className="p-note" role="status">
@@ -1292,6 +1377,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
   const { t, when } = ctx;
   const { data, failed, setData, reload } = useLoad(() => call<{ task: PortalTaskDetail }>('GET', `/tasks/${id}`).then((r) => r.task), [id], onSignedOut);
   const [reply, setReply] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const { busy, waiting, problem, run } = useSend(onSignedOut, t);
   if (failed)
     return (
@@ -1307,14 +1393,16 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
     );
   const send = (e: FormEvent) => {
     e.preventDefault();
-    if (!reply.trim()) return;
+    if (!reply.trim() && !files.length) return;
     void run(async () => {
-      const r = await call<{ task: PortalTaskDetail }>('POST', `/tasks/${id}/comments`, { body: reply });
+      const r = await callWith<{ task: PortalTaskDetail }>('POST', `/tasks/${id}/comments`, { body: reply }, files);
       setData(r.task);
       setReply('');
+      setFiles([]);
     });
   };
   const fields = data.board.fields;
+  const own = (data.files ?? []).filter((f) => !f.commentId);
   const facts = (
     <>
       <div>
@@ -1353,12 +1441,17 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
         </a>
         <header className="p-task__head">
           <div className="p-task__title">
-            <h1>{data.title}</h1>
+            <h1 dir="auto">{data.title}</h1>
             <Status board={data.board} status={data.status} />
           </div>
           <dl className="p-meta p-meta--inline">{facts}</dl>
         </header>
-        {data.description && <p className="p-task__desc">{data.description}</p>}
+        {(data.description || own.length > 0) && (
+          <div className="p-task__desc">
+            {data.description && <p dir="auto">{data.description}</p>}
+            <Files ctx={ctx} files={own} />
+          </div>
+        )}
         <section className="p-thread" aria-labelledby="p-conv">
           <h2 id="p-conv">{t('portal.conversation')}</h2>
           {data.comments.length === 0 && <p className="p-muted">{t('portal.noReplies')}</p>}
@@ -1370,7 +1463,8 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
                     <strong>{c.author ?? t('portal.someone')}</strong>
                     <span className="p-muted">{when(c.createdAt)}</span>
                   </div>
-                  <p className="p-msg__body">{c.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1')}</p>
+                  <p className="p-msg__body" dir="auto">{c.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1')}</p>
+                  <Files ctx={ctx} files={(data.files ?? []).filter((f) => f.commentId === c.id)} />
                 </li>
               ))}
             </ol>
@@ -1378,7 +1472,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
           <form className="p-reply" onSubmit={send}>
             <label className="p-field">
               <span>{t('portal.reply')}</span>
-              <textarea rows={3} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
+              <textarea rows={3} dir="auto" value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
             </label>
             {problem && <Problem text={problem} />}
             {waiting && (
@@ -1387,8 +1481,9 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
               </p>
             )}
             <div className="p-actions">
+              <FilePick ctx={ctx} files={files} setFiles={setFiles} />
               <span className="p-actions__end">
-                <button className="p-btn p-btn--primary" disabled={busy || !reply.trim()}>
+                <button className="p-btn p-btn--primary" disabled={busy || (!reply.trim() && !files.length)}>
                   {t('portal.sendReply')}
                 </button>
               </span>

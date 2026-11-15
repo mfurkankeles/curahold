@@ -5,6 +5,9 @@ import { portalAuthOf, portalBrandOf, type PortalAuth, type PortalBrand, type Po
 import { logoPath, orgUrl, portalUrl, type Deps, type OrgRow } from '../context';
 import { randomDigits, randomToken, sha256Hex } from './crypto';
 import { emailHtml } from './emailHtml';
+import { fail } from './errors';
+import { MAX_FILE_MB } from '../../../shared/src/model';
+import { PORTAL_MAX_FILES } from '../../../shared/src/portal';
 
 /** The customer portal's request context (api/src/portal.ts). */
 export type PortalEnv = {
@@ -178,4 +181,51 @@ export async function tellCustomer(deps: Deps, org: OrgRow, taskId: string, byNa
       html: emailHtml({ org: org.name, logo: logo ? `${orgUrl(deps.config, org.slug)}${logo}` : null, text, link, cta: translate(locale, 'portal.email.open', {}, org.terms), ...brandOf(org) }),
     });
   }
+}
+
+// ------------------------------------------------------------ files from customers
+
+/** What a customer may send, by ending: each must also start the way that kind of file does. */
+const PORTAL_KINDS: Record<string, { mime: string; magic?: number[][]; text?: true }> = {
+  png: { mime: 'image/png', magic: [[0x89, 0x50, 0x4e, 0x47]] },
+  jpg: { mime: 'image/jpeg', magic: [[0xff, 0xd8, 0xff]] },
+  jpeg: { mime: 'image/jpeg', magic: [[0xff, 0xd8, 0xff]] },
+  gif: { mime: 'image/gif', magic: [[0x47, 0x49, 0x46, 0x38]] },
+  webp: { mime: 'image/webp', magic: [[0x52, 0x49, 0x46, 0x46]] },
+  pdf: { mime: 'application/pdf', magic: [[0x25, 0x50, 0x44, 0x46, 0x2d]] },
+  docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  xlsx: { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  pptx: { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  txt: { mime: 'text/plain', text: true },
+  csv: { mime: 'text/csv', text: true },
+};
+
+/**
+ * A customer's file, checked by size, by ending and by its first bytes; the type it is kept and
+ * served as is ours, never the browser's word. Anything else is refused with the file's name.
+ */
+export async function checkPortalFile(f: File): Promise<{ name: string; size: number; mime: string; data: ArrayBuffer }> {
+  const name = f.name.replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 200) || 'file';
+  if (f.size > MAX_FILE_MB * 1024 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });
+  if (f.size === 0) fail('portal_file_type', { name: name.slice(0, 80) });
+  const kind = PORTAL_KINDS[/\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase() ?? ''];
+  const data = await f.arrayBuffer();
+  const head = new Uint8Array(data.slice(0, 4096));
+  const ok =
+    !!kind &&
+    (kind.text
+      ? !head.includes(0) && !/^\s*<(?:!doctype|html|script|svg)/i.test(new TextDecoder().decode(head.slice(0, 256)))
+      : kind.magic!.some((m) => m.every((b, i) => head[i] === b)) && (kind.mime !== 'image/webp' || String.fromCharCode(...head.slice(8, 12)) === 'WEBP'));
+  if (!ok) fail('portal_file_type', { name: name.slice(0, 80) });
+  return { name, size: f.size, mime: kind!.mime, data };
+}
+
+/** The files of a form (`files`), at most PORTAL_MAX_FILES, each checked. */
+export async function portalFiles(form: Record<string, unknown>) {
+  const raw = form.files;
+  const files = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter((x): x is File => x instanceof File);
+  if (files.length > PORTAL_MAX_FILES) fail('portal_too_many_files', { n: PORTAL_MAX_FILES });
+  const out = [];
+  for (const f of files) out.push(await checkPortalFile(f));
+  return out;
 }

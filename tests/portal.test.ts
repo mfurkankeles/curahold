@@ -23,8 +23,9 @@ class PortalClient {
   async req(method: string, path: string, body?: unknown, headers: Record<string, string> = {}) {
     const h: Record<string, string> = { 'x-curahold-portal': '1', ...headers };
     if (this.cookie) h.cookie = this.cookie;
-    if (body !== undefined) h['content-type'] = 'application/json';
-    const res = await portal.request(`https://${this.slug}.${PORTAL}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
+    const form = body instanceof FormData;
+    if (body !== undefined && !form) h['content-type'] = 'application/json';
+    const res = await portal.request(`https://${this.slug}.${PORTAL}${path}`, { method, headers: h, body: body === undefined ? undefined : form ? (body as FormData) : JSON.stringify(body) });
     const m = /app_portal=([^;]*)/.exec(res.headers.get('set-cookie') ?? '');
     if (m) this.cookie = m[1] ? `app_portal=${m[1]}` : '';
     const text = await res.text();
@@ -37,6 +38,13 @@ class PortalClient {
     return { status: res.status, json, headers: res.headers };
   }
   get = (p: string) => this.req('GET', p);
+  /** A form: the fields in "data", and files. */
+  send = (p: string, data: unknown, files: [name: string, bytes: Uint8Array | string][]) => {
+    const f = new FormData();
+    f.set('data', JSON.stringify(data));
+    for (const [name, bytes] of files) f.append('files', new File([bytes as BlobPart], name));
+    return this.req('POST', p, f);
+  };
   post = (p: string, b: unknown = {}) => this.req('POST', p, b);
 }
 
@@ -229,6 +237,93 @@ describe('what someone at a customer sees, and never sees', () => {
   });
 });
 
+describe('files, both ways', () => {
+  const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0x25, 0x45, 0x4f, 0x46]);
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+  let request = '';
+  let fileId = '';
+
+  it('a new request carries files; the type is checked by its first bytes, not its name', async () => {
+    const before = (await env.db.system((q) => q.query('select count(*)::int as n from tasks')))[0].n;
+    for (const [name, bytes] of [
+      ['shot.png', '<html><script>alert(1)</script></html>'],
+      ['run.exe', 'MZ'],
+      ['logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'],
+      ['page.txt', '<!doctype html><p>hi'],
+      ['empty.pdf', ''],
+    ] as const) {
+      const r = await selin.send(`/papi/boards/${env.a.boards.csBoard}/tasks`, { title: 'With a bad file' }, [[name, bytes]]);
+      expect(r.status, name).toBe(400);
+      expect(r.json.error, name).toBe('portal_file_type');
+    }
+    const six = Array.from({ length: 6 }, (_, i) => [`n${i}.txt`, 'note'] as [string, string]);
+    expect((await selin.send(`/papi/boards/${env.a.boards.csBoard}/tasks`, { title: 'Too many' }, six)).json.error).toBe('portal_too_many_files');
+    // Nothing half-made from the refused ones.
+    expect((await env.db.system((q) => q.query('select count(*)::int as n from tasks')))[0].n).toBe(before);
+
+    const r = await selin.send(`/papi/boards/${env.a.boards.csBoard}/tasks`, { title: 'Invoice is wrong', description: 'See the attached.' }, [['invoice.pdf', PDF], ['screen.png', PNG]]);
+    expect(r.status).toBe(201);
+    request = r.json.task.id;
+    expect(r.json.task.files.map((f: any) => [f.name, f.mime, f.commentId])).toEqual([
+      ['invoice.pdf', 'application/pdf', null],
+      ['screen.png', 'image/png', null],
+    ]);
+    fileId = r.json.task.files[0].id;
+    // Inside, the team sees them on the task.
+    expect((await zeynep.get(`/api/tasks/${request}`)).json.task.files.map((f: any) => f.name)).toEqual(['invoice.pdf', 'screen.png']);
+  });
+
+  it('a file is only ever downloaded: attachment, its own type, sandboxed', async () => {
+    const r = await selin.get(`/papi/files/${fileId}`);
+    expect(r.status).toBe(200);
+    expect(r.headers.get('content-disposition')).toMatch(/^attachment; filename\*=UTF-8''invoice\.pdf$/);
+    expect(r.headers.get('content-type')).toBe('application/pdf');
+    expect(r.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(r.headers.get('content-security-policy')).toContain('sandbox');
+    expect(r.headers.get('cache-control')).toContain('no-store');
+  });
+
+  it('files on an internal note, or added to the task inside, never reach the portal', async () => {
+    const up = async (name: string) => {
+      const f = new FormData();
+      f.set('file', new File(['secret numbers'], name, { type: 'text/plain' }));
+      return (await zeynep.req('POST', `/api/tasks/${request}/files`, f)).json.file.id as string;
+    };
+    const loose = await up('pricing-internal.txt');
+    const noted = await up('margin-notes.txt');
+    await zeynep.post(`/api/tasks/${request}/comments`, { body: 'Our margin on this.', fileIds: [noted] });
+    const shared = await up('corrected-invoice.txt');
+    await zeynep.post(`/api/tasks/${request}/comments`, { body: 'Here is the corrected one.', visibility: 'customer', fileIds: [shared] });
+    const t = (await selin.get(`/papi/tasks/${request}`)).json.task;
+    expect(t.files.map((f: any) => f.name)).toEqual(['invoice.pdf', 'screen.png', 'corrected-invoice.txt']);
+    expect(t.files.at(-1).commentId).toBe(t.comments.at(-1).id);
+    expect(JSON.stringify(t)).not.toMatch(/margin|pricing-internal/);
+    for (const id of [loose, noted]) expect((await selin.get(`/papi/files/${id}`)).status).toBe(404);
+    expect((await selin.get(`/papi/files/${shared}`)).status).toBe(200);
+  });
+
+  it('a reply can be files alone; another customer can neither see nor add to them', async () => {
+    const r = await selin.send(`/papi/tasks/${request}/comments`, { body: '' }, [['signed.pdf', PDF]]);
+    expect(r.status).toBe(201);
+    expect(r.json.task.comments.at(-1)).toMatchObject({ body: 'signed.pdf', fromCustomer: true });
+    const mila = await signIn('mila@velto.example');
+    expect((await mila.get(`/papi/files/${fileId}`)).status).toBe(404);
+    expect((await mila.get(`/papi/tasks/${request}`)).status).toBe(404);
+    expect((await mila.send(`/papi/tasks/${request}/comments`, { body: 'x' }, [['a.pdf', PDF]])).status).toBe(404);
+    // Not a file id at all, or one from the app's own side: the same answer.
+    expect((await selin.get('/papi/files/not-a-uuid')).status).toBe(404);
+    expect((await selin.get(`/papi/files/${crypto.randomUUID()}`)).status).toBe(404);
+  });
+
+  it('the list says when the latest word is the team’s', async () => {
+    const list = (await selin.get(`/papi/boards/${env.a.boards.csBoard}/tasks`)).json.tasks;
+    expect(list.find((t: any) => t.id === request).lastFromTeam).toBe(false);
+    await zeynep.post(`/api/tasks/${request}/comments`, { body: 'Thanks, all done.', visibility: 'customer' });
+    const again = (await selin.get(`/papi/boards/${env.a.boards.csBoard}/tasks`)).json.tasks;
+    expect(again.find((t: any) => t.id === request).lastFromTeam).toBe(true);
+  });
+});
+
 describe('walls', () => {
   it('the portal role can read no table, only call the portal functions', async () => {
     await expect(env.db.portal({ orgId: env.a.orgId, portalUserId: null }, (q) => q.query('select * from tasks limit 1'))).rejects.toThrow(/permission denied/);
@@ -265,9 +360,10 @@ describe('walls', () => {
     expect((await ada.del(`/api/portal/users/${p.id}`)).status).toBe(200);
     expect((await mila.get('/papi/me')).status).toBe(401);
     // And they cannot ask for a new link.
+    const mails = env.email.sent.filter((m) => m.to === 'mila@velto.example').length;
     await mila.post('/papi/auth/start', { email: 'mila@velto.example' });
     await env.settle();
-    expect(env.email.sent.filter((m) => m.to === 'mila@velto.example')).toHaveLength(2);
+    expect(env.email.sent.filter((m) => m.to === 'mila@velto.example')).toHaveLength(mails);
   });
 
   it('the company’s switch closes the portal for everyone', async () => {

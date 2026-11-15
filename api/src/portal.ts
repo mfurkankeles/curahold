@@ -15,7 +15,9 @@ import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
 import { enqueue, kick } from './lib/notify';
-import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalOn, signInOptions, type PortalEnv } from './lib/portal';
+import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalFiles, portalOn, signInOptions, type PortalEnv } from './lib/portal';
+import { MAX_FILE_MB } from '../../shared/src/model';
+import { PORTAL_MAX_FILES } from '../../shared/src/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
@@ -169,28 +171,75 @@ export function createPortalApp(deps: Deps) {
 
   app.get('/papi/boards/:id/tasks', async (c) => c.json({ tasks: await one(c, 'select portal_tasks($1) as t', [id(c, 'id')]) }));
 
-  app.get('/papi/tasks/:id', async (c) => c.json({ task: await one(c, 'select portal_task($1) as t', [id(c, 'id')]) }));
+  /** A request as the customer sees it, with the files they may open. */
+  const taskOf = async (c: any, taskId: string) => {
+    const task = await one(c, 'select portal_task($1) as t', [taskId]);
+    return { ...task, files: await one(c, 'select portal_task_files($1) as f', [taskId]) };
+  };
+
+  app.get('/papi/tasks/:id', async (c) => c.json({ task: await taskOf(c, id(c, 'id')) }));
+
+  /** JSON alone, or a form with the fields in "data" and up to PORTAL_MAX_FILES files, each checked. */
+  const input = async (c: any) => {
+    if (!(c.req.header('content-type') ?? '').startsWith('multipart/form-data')) return { raw: await c.req.json().catch(() => ({})), files: [] };
+    if (Number(c.req.header('content-length') ?? 0) > PORTAL_MAX_FILES * MAX_FILE_MB * 1024 * 1024 + 256 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });
+    const form = await c.req.parseBody({ all: true });
+    let raw: unknown = {};
+    try {
+      raw = JSON.parse(String(form.data ?? '{}'));
+    } catch {
+      raw = {};
+    }
+    return { raw, files: await portalFiles(form) };
+  };
+  /** Keeps the files, then records each on the request (comment null) or on the reply. */
+  const attach = async (c: any, taskId: string, commentId: string | null, files: Awaited<ReturnType<typeof portalFiles>>) => {
+    const org = c.get('org');
+    for (const f of files) {
+      const key = `${org.id}/${taskId}/${crypto.randomUUID()}`;
+      await deps.storage.put(key, f.data, f.mime);
+      await one(c, 'select portal_add_file($1, $2, $3, $4, $5, $6) as id', [taskId, commentId, f.name, f.size, f.mime, key]);
+    }
+  };
 
   app.post('/papi/boards/:id/tasks', async (c) => {
-    const parsed = z
-      .object({ title: z.string().trim().min(3).max(300), description: z.string().trim().max(20000).default('') })
-      .safeParse(await c.req.json().catch(() => ({})));
+    const { raw, files } = await input(c);
+    const parsed = z.object({ title: z.string().trim().min(3).max(300), description: z.string().trim().max(20000).default('') }).safeParse(raw);
     if (!parsed.success) {
       const fields = [...new Set(parsed.error.issues.map((i) => i.path.join('.') || '(body)'))];
       fail('validation', { fields: fields.join(', ') }, { fields });
     }
     const taskId = await one(c, 'select portal_create_task($1, $2, $3) as id', [id(c, 'id'), parsed.data!.title, parsed.data!.description]);
+    await attach(c, taskId, null, files);
     await tellTeam(c, taskId, 'assigned');
-    return c.json({ task: await one(c, 'select portal_task($1) as t', [taskId]) }, 201);
+    return c.json({ task: await taskOf(c, taskId) }, 201);
   });
 
   app.post('/papi/tasks/:id/comments', async (c) => {
-    const parsed = z.object({ body: z.string().trim().min(1).max(10000) }).safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) fail('validation', { fields: 'body' }, { fields: ['body'] });
+    const { raw, files } = await input(c);
+    const parsed = z.object({ body: z.string().trim().max(10000).default('') }).safeParse(raw);
+    // Words, files, or both; a reply of files alone is named after them.
+    const body = parsed.success ? parsed.data.body || files.map((f) => f.name).join(', ').slice(0, 10000) : '';
+    if (!body) fail('validation', { fields: 'body' }, { fields: ['body'] });
     const taskId = id(c, 'id');
-    await one(c, 'select portal_comment($1, $2) as id', [taskId, parsed.data!.body]);
-    await tellTeam(c, taskId, 'comment', parsed.data!.body);
-    return c.json({ task: await one(c, 'select portal_task($1) as t', [taskId]) }, 201);
+    const commentId = await one(c, 'select portal_comment($1, $2) as id', [taskId, body]);
+    await attach(c, taskId, commentId, files);
+    await tellTeam(c, taskId, 'comment', body);
+    return c.json({ task: await taskOf(c, taskId) }, 201);
+  });
+
+  // A file is always a download, never shown in the page, and can run nothing.
+  app.get('/papi/files/:id', async (c) => {
+    const f = await one(c, 'select portal_file($1) as f', [id(c, 'id')]);
+    const obj = await deps.storage.get(f.key);
+    if (!obj) fail('not_found');
+    return c.body(obj!.data, 200, {
+      'content-type': f.mime,
+      'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(f.name)}`,
+      'content-security-policy': "default-src 'none'; sandbox",
+      'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff',
+    });
   });
 
   /** The people working the task hear about it, in the app and in chat, like any other change. */
