@@ -273,19 +273,75 @@ Yük testi (yerelde, gerçek Postgres): 200 kullanıcı, 50'si aynı anda düzen
 10. Reklam bütçesi ve marka sesi; tanıtım videosunun seslendirmesi (ücretli)
 11. Bağlı posta kutusundan yanıt gönderme izni
 
+Tur 2'de eklenenler:
+- Şirketin resmî unvanı: satış sitesinin alt bilgisinde şimdilik yer tutucu yazıyor.
+- Curahold çalışanı bir müşterinin verisini hiç değiştirebilsin mi? Güvenlik önerisi: yalnızca bakabilsin, süreli.
+- security.txt için güvenlik iletişim adresi.
+- Bir şirkette çok sayıda kişi aynı anda yazınca (24 kişi aynı anda) yazmalar sıraya giriyor: p95 ~0,2 sn. Değişiklik sayacını yeniden tasarlamaya değer mi?
+
 ### Tur 2 durum (her paketle güncellenir)
 
 | Paket | Durum |
 | --- | --- |
 | 0. Başlangıç ölçümü (15 Kasım) | Tamam: rakamlar yukarıda, "Bugünkü durum" bölümünde |
-| 1. Hız temeli | Başladı |
-| 2. Güvenlik | Başladı |
-| 3. Gerçek zamanlı kanal | Bekliyor |
-| 4. Tasarım sistemi ve erişilebilirlik | Bekliyor |
-| 5. Yüzey yüzey cila | Bekliyor |
-| 6. Dokuz dilin tamamı | Başladı |
-| 7. İmza özellikler | Araştırma tablosu hazırlanıyor; seçim ürün sahibinde |
+| 1. Hız temeli | Tamam. Bazı hedefler hâlâ açık: aşağıdaki ölçüm tablosunda |
+| 2. Güvenlik | İlk yarı tamam: istek sınırları, müşteri ve kayıtlarda sürüm, yetki matrisi testi, gizli alanın sızdığı yollar kapandı. İkinci yarı sürüyor: passkey, iki adımlı giriş, değiştirilemez işlem günlüğü |
+| 3. Gerçek zamanlı kanal | Tamam: canlı kanal, kim burada (görev paneli, müşteri sayfası, sprint) |
+| 4. Tasarım sistemi ve erişilebilirlik | Sürüyor |
+| 5. Yüzey yüzey cila | 4'ü bekliyor |
+| 6. Dokuz dilin tamamı | Sözlük dokuz dilde tam. Sözlük dışında kalan metinler sürüyor. Yardım merkezi ve demo hâlâ iki dilde |
+| 7. İmza özellikler | Araştırma tablosu hazır; seçim ürün sahibinde |
 | 8. Yük testi, marj doğrulama, son denetim | Bekliyor |
+
+### Tur 2 ölçümleri (15 Kasım: sabah → akşam)
+
+Biçim: hedef ← sabah → şimdi. ✓ hedef tutuyor. Hepsi bu akşam aynı makinede, yanında başka iş yokken ölçüldü.
+
+Tutanlar
+- Dokunma tepkisi (4 kat yavaş işlemci, 75. yüzdelik / en yavaş): ≤ 100 ms ← 56 / 128 ms → 64 / 112 ms ✓. En yavaşı yine görev açma.
+- Tekrar açılış: ≤ 0,5 sn ← 0,32 sn → 0,61 sn (gerçek içerik 0,70 sn). Tutmuyor. Ölçüm değişti: sabah iskelet ölçülmüş olabilirdi, şimdi gerçek içerik bekleniyor.
+- Gerçek Postgres, okumalar (6 bin müşteri, 210 bin görev): ≤ 150 ms ← 5–124 ms → 4–169 ms. Tutmuyor: iş raporu yönetici için 169, ekip lideri için 155 ms; aylık takvim 150 ms.
+- Gerçek Postgres, yazma: ≤ 250 ms ← görev ekleme 50, taşıma 31 ms → 264 ve 176 ms. Ekleme tutmuyor; sabaha göre yavaşladı, nedeni henüz incelenmedi (tek ölçüm). 400 ms'yi geçen istek yok ✓.
+- Satır düzeyi güvenlik: hepsi ← 76/76 → 78/78 tablo ✓. Bağımlılık açığı 0 ✓.
+- Tekrar eden istek kopya üretmiyor ✓; çöp kutusundan geri alma ✓; Türkçe arama 12/12 ✓.
+- Testler: 735 test, 41 senaryo → 846 test (85 dosya), 41 tarayıcı senaryosu; hepsi geçti ✓.
+- Maliyet, 1.000 koltuk: ≤ $0,25 ← $0,067 → $0,067 (canlı kanalla $0,068) ✓. En ucuz planda marj %94 ✓.
+
+Hız
+- Uygulamanın ilk ekran JavaScript'i: 170 KB ← 764 KB → 182 KB (66 KB'ı etkin dil). Tutmuyor, 12 KB fazla. Artık yalnızca etkin dil yükleniyor.
+- Portalın ilk ekran JavaScript'i: 120 KB ← 564 KB → 57 KB ✓.
+- Sayfa kayması (CLS): 0,05 ← 0,50 → 0,000 ✓.
+- İlk açılış, 4G, ağın sakinleşmesi: 2,5 sn ← 4,5 sn → 3,6 sn. Tutmuyor.
+- İlk açılış, 4G, gerçek içerik: 1,5 sn ← ölçülmüyordu (LCP 1,40 sn) → 1,65 sn (LCP 1,55 sn). Tutmuyor. Ölçüm değişti: artık gerçek içerik ölçülüyor.
+- Yavaş 4G'de LCP: 3 sn ← 5,95 sn → 3,82 sn. Tutmuyor.
+- İş raporu (/api/reports/work): 150 ms ← 492–1.432 ms → 98–169 ms. Üye için tutuyor; yönetici ve ekip lideri için az farkla tutmuyor.
+- 20 bin görevli pano: 300 ms ← 90 sn'de açılmıyor → 393 ms (32 satır çiziliyor). Tutmuyor; en yavaş istek bildirim sayısı (210 ms).
+- 2 bin müşterili liste: 300 ms ← 6,5 sn → 486 ms (27 satır çiziliyor). Tutmuyor.
+- Ctrl K: 100 ms ← 228–236 ms → 99–108 ms. Sınırda; üç denemenin biri 108 ms.
+
+Gerçek zamanlılık
+- Başkasının değişikliği: 1 sn ← 1,0–4,3 sn → p95 0,11 sn ✓ (canlı kanal). Başka şirkete giden sinyal 0 ✓. Bağlantı kopunca kaçan değişiklik 0,63 sn'de geliyor ✓.
+- Kanal engelliyse (eski yoklamaya düşünce): 2,8–7,3 sn. Hedefin dışında; yedek yol.
+
+Güvenlik ve güvenilirlik
+- Bir kişiden 400 istek: reddedilen var ← 0 → 1,5 sn'de 136'sı reddedildi (429, 1 sn sonra tekrar dene) ✓. Normal kullanım (10 sayfa, 50 istek) 0 ret ✓.
+- Müşteri ve kayıtlarda sürüm: var ← yok → var; aynı alan çakışınca ikinci kişiye söyleniyor ✓.
+- İçerik güvenlik politikasında 'unsafe-inline': yok ← var → hâlâ var. Satır içi stil 239 → 248; tasarım paketini bekliyor.
+- Ürün ekranlarının (backlog, sprint) tarayıcı senaryosu: var ← yok → hâlâ yok.
+
+Arayüz
+- Erişilebilirlik (axe): 0 ← açık 456, koyu 427 (62 kritik) → açık 445, koyu 421 (62 kritik). Tutmuyor; tasarım paketi sürüyor.
+- Sığmayan etiket: 0 ← 375 px'te 32, 768 px'te 30 → 32, 30 (1440 px'te 29). Değişmedi.
+- Tasarım sistemi. Ölçüm değişti: sabah uygulama ile satış sitesi birlikte sayılıyordu, şimdi ayrı.
+  - Uygulama + portal: tek seferlik stil 248, doğrudan renk 120, köşe yarıçapı 26 çeşit, yazı boyu 31 çeşit, boşlukların %54'ü ızgara dışı, 139 hareket süresinin 111'i 150–200 ms dışında.
+  - Satış sitesi: doğrudan renk 105, köşe yarıçapı 21, yazı boyu 34, boşlukların %54'ü ızgara dışı, 82 sürenin 71'i dışarıda.
+  - Hedef (0 / 0 / ≤ 6 / ≤ 10 / %0 / 0) hiçbirinde tutmuyor; tasarım paketi sürüyor.
+- Çerez onayı, telefonda liste ekranları, tarih biçimi, müşteri sayfasının düzeni: bu turda sayıyla ölçülmedi; tasarım ve cila paketlerinde.
+
+Diller
+- Sözlük: dokuz dilde tam ← İngilizce ve Türkçe 3.656, diğer yedisi 3.314 → dokuz dilin hepsinde 3.662 ✓.
+- Sözlük dışında yazılmış metin: 0 ← 417 → 417. "Türkçe mi?" kontrolü: 0 ← 70 → 66. Sürüyor.
+- Yardım merkezi ve demo: dokuz dil ← iki → iki.
 
 ---
 
