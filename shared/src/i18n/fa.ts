@@ -4073,4 +4073,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': 'حالا روز آخر را انتخاب کنید',
   'date.from': 'از',
   'date.to': 'تا',
+  'filters.buttonCount': 'فیلتر، {n} فعال',
+  'filters.sheetTitle': 'فیلتر، ترتیب و نما',
+  'filters.apply': 'اعمال',
+  'filters.view': 'نما',
 };

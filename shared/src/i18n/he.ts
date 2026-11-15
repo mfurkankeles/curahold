@@ -4073,4 +4073,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': 'עכשיו יש לבחור את היום האחרון',
   'date.from': 'מ-',
   'date.to': 'עד',
+  'filters.buttonCount': 'סינון, {n} פעילים',
+  'filters.sheetTitle': 'סינון, סדר ותצוגה',
+  'filters.apply': 'החלה',
+  'filters.view': 'תצוגה',
 };

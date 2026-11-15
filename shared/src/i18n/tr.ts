@@ -4073,4 +4073,8 @@ export const tr: Record<MessageKey, string> = {
   'date.rangeLast': 'Şimdi son günü seçin',
   'date.from': 'Başlangıç',
   'date.to': 'Bitiş',
+  'filters.buttonCount': 'Filtre, {n} etkin',
+  'filters.sheetTitle': 'Filtre, sıralama ve görünüm',
+  'filters.apply': 'Uygula',
+  'filters.view': 'Görünüm',
 };

@@ -4088,6 +4088,10 @@ export const en = {
   'date.rangeLast': 'Now pick the last day',
   'date.from': 'From',
   'date.to': 'To',
+  'filters.buttonCount': 'Filter, {n} on',
+  'filters.sheetTitle': 'Filter, order and view',
+  'filters.apply': 'Apply',
+  'filters.view': 'View',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -4073,4 +4073,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': '再选择结束日期',
   'date.from': '开始',
   'date.to': '结束',
+  'filters.buttonCount': '筛选，已启用 {n} 项',
+  'filters.sheetTitle': '筛选、排序和视图',
+  'filters.apply': '应用',
+  'filters.view': '视图',
 };

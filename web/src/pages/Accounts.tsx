@@ -36,6 +36,7 @@ import { Presence } from '../components/Presence';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
+import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -82,6 +83,7 @@ export function AccountsPage() {
   const [q, setQ] = useState('');
   const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
+  const phone = usePhone();
   const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -261,6 +263,18 @@ export function AccountsPage() {
   };
 
   const allOn = rows.length > 0 && rows.every((a) => selected.has(a.id));
+  const viewsSeg = (
+    <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')} onKeyDown={onTabKeys}>
+      {VIEWS.filter((v) => v !== 'reviews' || reviewsOn).map((v) => (
+        <button key={v} role="tab" aria-selected={view === v} tabIndex={view === v ? 0 : -1} onClick={() => setView(v)}>
+          <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', reviews: 'handshake', products: 'target' } as const)[v]} size={15} />
+          {t(`acards.view.${v}` as any)}
+        </button>
+      ))}
+    </div>
+  );
+  // On a phone the filters, the order and the view switch fold into one sheet (FilterSheet).
+  const activeFilters = (owner !== 'all' ? 1 : 0) + (signal ? 1 : 0) + (archived ? 1 : 0);
   return (
     <>
       <header className="topbar">
@@ -321,14 +335,7 @@ export function AccountsPage() {
       <div className="page">
         <RecordTabs current="accounts" types={types} />
         <div className="viewbar">
-          <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')} onKeyDown={onTabKeys}>
-            {VIEWS.filter((v) => v !== 'reviews' || reviewsOn).map((v) => (
-              <button key={v} role="tab" aria-selected={view === v} tabIndex={view === v ? 0 : -1} onClick={() => setView(v)}>
-                <Icon name={({ cards: 'cards', table: 'list', renewals: 'calendar', reviews: 'handshake', products: 'target' } as const)[v]} size={15} />
-                {t(`acards.view.${v}` as any)}
-              </button>
-            ))}
-          </div>
+          {!phone && viewsSeg}
           {data && (view === 'cards' || view === 'table') && (
             <p className="viewbar__lead">
               {t('acards.lead', { n: signalRows.length })}
@@ -345,7 +352,13 @@ export function AccountsPage() {
           )}
         </div>
         <div className="toolbar u-mb-12">
-          <input className="input search" type="search" value={q} placeholder={t('accounts.search')} aria-label={t('accounts.search')} onChange={(e) => setQ(e.target.value)} />
+          <FilterSheet
+            count={activeFilters}
+            onClear={() => (setOwner('all'), setSignal(''), setArchived(false))}
+            search={<input className="input search" type="search" value={q} placeholder={t('accounts.search')} aria-label={t('accounts.search')} onChange={(e) => setQ(e.target.value)} />}
+          >
+          {phone && <FilterGroup label={t('acards.viewLabel')}>{viewsSeg}</FilterGroup>}
+          <FilterGroup label={t('accounts.owner')}>
           <div className="seg">
             <button aria-pressed={owner === 'all'} onClick={() => setOwner('all')}>
               {t('accounts.filter.all')}
@@ -364,7 +377,9 @@ export function AccountsPage() {
                 </option>
               ))}
           </select>
+          </FilterGroup>
           {(view === 'cards' || view === 'renewals' || view === 'reviews') && (
+            <FilterGroup label={t('acards.signalFilter')}>
             <select className="select" value={signal} aria-label={t('acards.signalFilter')} onChange={(e) => setSignal(e.target.value as SignalFilter)}>
               <option value="">{t('acards.signal.any')}</option>
               {SIGNAL_FILTERS.filter((s) => s !== 'review' || reviewsOn).map((s) => (
@@ -373,9 +388,10 @@ export function AccountsPage() {
                 </option>
               ))}
             </select>
+            </FilterGroup>
           )}
           {view === 'cards' && (
-            <>
+            <FilterGroup label={t('acards.sortLabel')}>
               <select
                 className="select"
                 value={cardSort}
@@ -396,7 +412,7 @@ export function AccountsPage() {
                   </option>
                 ))}
               </select>
-            </>
+            </FilterGroup>
           )}
           <details className="fieldsmenu">
             <summary className="btn" aria-label={t('acards.viewOptions')}>
@@ -423,6 +439,7 @@ export function AccountsPage() {
               )}
             </div>
           </details>
+          </FilterSheet>
         </div>
 
         {manage && selected.size > 0 && (

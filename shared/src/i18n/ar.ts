@@ -4073,4 +4073,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': 'اختر الآن اليوم الأخير',
   'date.from': 'من',
   'date.to': 'إلى',
+  'filters.buttonCount': 'تصفية، {n} مفعّلة',
+  'filters.sheetTitle': 'التصفية والترتيب والعرض',
+  'filters.apply': 'تطبيق',
+  'filters.view': 'العرض',
 };

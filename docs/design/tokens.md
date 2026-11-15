@@ -112,3 +112,17 @@ browser's format (mm/dd/yyyy in a Turkish interface).
   desktop, a bottom sheet under 600 px. Arrows (mirrored right-to-left), Home/End, Page Up/Down (+Shift: a
   year), Enter/Space, Escape (focus goes back to the button). Alt+↓ in the box opens it.
 - Text formatting of dates, times and numbers comes from `lib/format.ts`, never from a screen.
+
+### Filter sheet — `FilterSheet`, `FilterGroup`, `usePhone` (`components/FilterSheet.tsx`)
+
+Every list screen's filters, order and view switch. On a desktop they stay inline in the toolbar (the
+component renders them in place); at the phone width (≤ 860 px, where the bottom bar appears) they fold into
+one **Filter** button that shows how many filters are on, and open in a sheet from the bottom with **Clear**
+and **Apply**. Filters work as they change (the list behind updates); Apply closes the sheet.
+
+- `<FilterSheet search={<input …/>} count={n} onClear={reset}>…controls…</FilterSheet>` — the search box
+  stays outside the sheet and shares the first row with the button; the screen's other actions go below.
+- Wrap each control in `<FilterGroup label=…>` so the sheet names it (a no-op on a desktop).
+- A view switch moves into the sheet on a phone: render it inside when `usePhone()` is true, inline otherwise.
+- Count filters only (owner, status, archived …), not the order or the view.
+- Target: on every list screen the first row starts in the top half at 375 × 667.

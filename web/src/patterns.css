@@ -65,3 +65,34 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 @keyframes sheet-up { from { transform: translateY(24px); opacity: .6; } }
 @media (pointer: coarse) { .datepop__day { min-block-size: var(--tap); } }
 @media (prefers-reduced-motion: reduce) { .datepop, .datepop__scrim { animation: none; } }
+
+/* ------------------------------------------------------------ filter sheet (FilterSheet.tsx)
+   On a phone (≤ 860 px) a list's filters, order and view switch fold into one button and a sheet. */
+.filtersheet__open[data-on] { border-color: var(--brand); color: var(--brand-ink); }
+.toolbar:has(> .filtersheet__open) > .input.search,
+.filterbar:has(> .filtersheet__open) > .input.search { flex: 1 1 0; inline-size: auto; min-inline-size: 0; }
+/* The search and the Filter button share the first row; the screen's other actions go to the next one. */
+.toolbar:has(> .filterbar > .filtersheet__open) { inline-size: 100%; }
+.filterbar:has(> .filtersheet__open) > .input.search { min-inline-size: calc(100% - 136px); }
+.filtersheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; background: var(--scrim); animation: fade-in var(--dur-fast) ease; }
+.filtersheet__box {
+  display: flex; flex-direction: column; inline-size: 100%; max-block-size: 88vh; background: var(--surface); color: var(--ink);
+  border-radius: var(--r-l) var(--r-l) 0 0; box-shadow: var(--shadow-3); animation: sheet-up var(--dur) var(--ease);
+}
+.filtersheet__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-block-end: 1px solid var(--line); }
+.filtersheet__title { margin: 0; font-size: var(--fs-l); font-weight: 600; }
+.filtersheet__body { display: grid; gap: 20px; padding: 16px; overflow: auto; overscroll-behavior: contain; }
+.filtersheet__body > * { min-inline-size: 0; }
+.filtersheet__body .select, .filtersheet__body .input { inline-size: 100%; }
+.filtersheet__body .seg { display: flex; flex-wrap: wrap; inline-size: 100%; }
+.filtersheet__body .seg > button { flex: 1 1 auto; }
+.filtersheet__body .menuwrap { position: relative; }
+.filtersheet__group { display: grid; gap: 8px; }
+.filtersheet__label, .filtersheet .filterpop__label { color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; }
+.filtersheet .filterpop__group { display: grid; gap: 8px; }
+.filtersheet .fieldsmenu { display: grid; gap: 8px; }
+.filtersheet .fieldsmenu__pop { position: static; box-shadow: none; border: 0; padding: 0; min-inline-size: 0; }
+.filtersheet__foot { display: flex; gap: 8px; align-items: center; padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); border-block-start: 1px solid var(--line); }
+.filtersheet__apply { margin-inline-start: auto; min-inline-size: 120px; }
+:root[data-sheet='open'] body { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .filtersheet, .filtersheet__box { animation: none; } }

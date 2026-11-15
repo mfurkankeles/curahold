@@ -35,9 +35,11 @@ import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
 import { useWindow } from '../lib/windowing';
 import { DateField } from '../components/DateField';
+import { usePhone } from '../components/FilterSheet';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
+  const phone = usePhone();
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
   const [filters, setFilters] = useState<ViewFilters>({});
@@ -103,6 +105,30 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
   const pmView = (view === 'backlog' || view === 'sprints') && pm;
   const pmTabs = pm;
 
+  // The view switch: inline on a desktop, inside the filter sheet on a phone.
+  const viewSwitch = (
+    <div className="seg" role="group">
+      <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
+        {t('board.view.board')}
+      </button>
+      <button aria-pressed={view === 'list'} onClick={() => setQuery('view', 'list')}>
+        {t('board.view.list')}
+      </button>
+      {pmTabs && (
+        <>
+          <button aria-pressed={view === 'backlog'} onClick={() => setQuery('view', 'backlog')}>
+            {t('pm.backlog')}
+          </button>
+          <button aria-pressed={view === 'sprints'} onClick={() => setQuery('view', 'sprints')}>
+            {t('pm.sprints')}
+          </button>
+        </>
+      )}
+      <button aria-pressed={view === 'archive'} onClick={() => setQuery('view', 'archive')}>
+        {t('board.view.archive')}
+      </button>
+    </div>
+  );
   return (
     <>
       <header className="topbar">
@@ -115,28 +141,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
         <div className="topbar__spacer" />
         <div className="toolbar">
-          {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} />}
-          <div className="seg" role="group">
-            <button aria-pressed={view === 'board'} onClick={() => setQuery('view', null)}>
-              {t('board.view.board')}
-            </button>
-            <button aria-pressed={view === 'list'} onClick={() => setQuery('view', 'list')}>
-              {t('board.view.list')}
-            </button>
-            {pmTabs && (
-              <>
-                <button aria-pressed={view === 'backlog'} onClick={() => setQuery('view', 'backlog')}>
-                  {t('pm.backlog')}
-                </button>
-                <button aria-pressed={view === 'sprints'} onClick={() => setQuery('view', 'sprints')}>
-                  {t('pm.sprints')}
-                </button>
-              </>
-            )}
-            <button aria-pressed={view === 'archive'} onClick={() => setQuery('view', 'archive')}>
-              {t('board.view.archive')}
-            </button>
-          </div>
+          {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} viewSwitch={phone ? viewSwitch : undefined} />}
+          {(!phone || view === 'archive' || pmView) && viewSwitch}
           {view === 'list' && (
             <ExportMenu
               disabled={!visible.length}

@@ -4073,4 +4073,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': '再選擇結束日期',
   'date.from': '開始',
   'date.to': '結束',
+  'filters.buttonCount': '篩選，已啟用 {n} 項',
+  'filters.sheetTitle': '篩選、排序與檢視',
+  'filters.apply': '套用',
+  'filters.view': '檢視',
 };

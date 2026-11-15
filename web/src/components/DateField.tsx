@@ -69,7 +69,11 @@ function useDayText(value: string, onDay: (iso: string) => void, opts: { min?: s
     clearError: () => setError(null),
     props: {
       value: text,
-      onFocus: () => (editing.current = true),
+      onFocus: (e: { target: { select: () => void } }) => {
+        editing.current = true;
+        // Arriving by keyboard: the date is selected, so typing replaces it.
+        e.target.select();
+      },
       onChange: (e: { target: { value: string } }) => {
         setText(e.target.value);
         read(e.target.value, false);

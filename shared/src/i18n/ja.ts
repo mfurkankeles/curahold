@@ -4073,4 +4073,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': '次に最後の日を選んでください',
   'date.from': '開始',
   'date.to': '終了',
+  'filters.buttonCount': 'フィルター（{n} 件適用中）',
+  'filters.sheetTitle': 'フィルター・並び順・表示',
+  'filters.apply': '適用',
+  'filters.view': '表示',
 };

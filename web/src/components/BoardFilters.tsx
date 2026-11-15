@@ -1,7 +1,7 @@
 // Narrow a board down — by person, urgency, due date or the board's own
 // choice fields — and keep a set of filters as a named view, for yourself
 // or for everyone on the board.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import { PRIORITIES, type Board, type SavedView, type Task, type ViewFilters } from '../../../shared/src/model';
 import { ApiFailure, del, get, post } from '../lib/api';
@@ -10,6 +10,7 @@ import { useStore } from '../lib/store';
 import { addDays, todayIso } from '../lib/time';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
+import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -36,8 +37,9 @@ function toggle<T>(list: T[] | undefined, v: T): T[] {
   return cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v];
 }
 
-export function FilterBar({ board, filters, onChange }: { board: Board; filters: ViewFilters; onChange: (f: ViewFilters) => void }) {
+export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Board; filters: ViewFilters; onChange: (f: ViewFilters) => void; viewSwitch?: ReactNode }) {
   const { t, locale } = useI18n();
+  const phone = usePhone();
   const { people, me, toast, canWrite } = useStore();
   const [open, setOpen] = useState<null | 'filter' | 'views'>(null);
   const [views, setViews] = useState<SavedView[]>([]);
@@ -69,9 +71,45 @@ export function FilterBar({ board, filters, onChange }: { board: Board; filters:
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
   };
+  // The choices themselves: in a popover on a desktop, straight in the sheet on a phone.
+  const groups = (
+    <>
+      <div className="filterpop__group">
+        <span className="filterpop__label">{t('task.assignees')}</span>
+        <div className="filterpop__chips">
+          {chip(!!filters.assignees?.includes('me'), t('filters.me'), () => onChange({ ...filters, assignees: toggle(filters.assignees, 'me') }), 'me')}
+          {chip(!!filters.assignees?.includes('none'), t('task.unassigned'), () => onChange({ ...filters, assignees: toggle(filters.assignees, 'none') }), 'none')}
+          {members.filter((p) => p.id !== me.user.id).map((p) => chip(!!filters.assignees?.includes(p.id), p.name, () => onChange({ ...filters, assignees: toggle(filters.assignees, p.id) }), p.id))}
+        </div>
+      </div>
+      <div className="filterpop__group">
+        <span className="filterpop__label">{t('task.due')}</span>
+        <div className="filterpop__chips">{DUE.map((d) => chip(!!filters.due?.includes(d), t(`filters.due.${d}` as any), () => onChange({ ...filters, due: toggle(filters.due, d) }), d))}</div>
+      </div>
+      <div className="filterpop__group">
+        <span className="filterpop__label">{t('task.priority')}</span>
+        <div className="filterpop__chips">{[...PRIORITIES].reverse().map((p) => chip(!!filters.priority?.includes(p), t(`task.priority.${p}`), () => onChange({ ...filters, priority: toggle(filters.priority, p) }), p))}</div>
+      </div>
+      {selects.map((f) => (
+        <div key={f.key} className="filterpop__group">
+          <span className="filterpop__label">{labelOf(f.label, locale)}</span>
+          <div className="filterpop__chips">
+            {f.options!.map((o) => chip(!!filters.fields?.[f.key]?.includes(o.key), labelOf(o.label, locale), () => onChange({ ...filters, fields: { ...(filters.fields ?? {}), [f.key]: toggle(filters.fields?.[f.key], o.key) } }), o.key))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
   return (
     <div className="filterbar" ref={ref}>
-      <input className="input search" type="search" placeholder={t('board.searchPlaceholder')} aria-label={t('common.search')} value={filters.q ?? ''} onChange={(e) => onChange({ ...filters, q: e.target.value })} />
+      <FilterSheet
+        count={n}
+        onClear={() => onChange({ q: filters.q })}
+        search={<input className="input search" type="search" placeholder={t('board.searchPlaceholder')} aria-label={t('common.search')} value={filters.q ?? ''} onChange={(e) => onChange({ ...filters, q: e.target.value })} />}
+      >
+      {phone && viewSwitch && <FilterGroup label={t('filters.view')}>{viewSwitch}</FilterGroup>}
+      {/* On a phone the sheet's own "Me" chip does what this switch does. */}
+      {!phone && (
       <div className="seg" role="group">
         <button aria-pressed={!filters.assignees?.length} onClick={() => onChange({ ...filters, assignees: [] })}>
           {t('board.filter.everyone')}
@@ -80,6 +118,10 @@ export function FilterBar({ board, filters, onChange }: { board: Board; filters:
           {t('board.filter.mine')}
         </button>
       </div>
+      )}
+      {phone ? (
+        groups
+      ) : (
       <div className="menuwrap">
         <button className="btn" aria-haspopup="dialog" aria-expanded={open === 'filter'} data-on={n > 0 || undefined} onClick={() => setOpen(open === 'filter' ? null : 'filter')}>
           <Icon name="filter" size={16} />
@@ -88,30 +130,7 @@ export function FilterBar({ board, filters, onChange }: { board: Board; filters:
         </button>
         {open === 'filter' && (
           <div className="popmenu filterpop" role="dialog" aria-label={t('filters.button')}>
-            <div className="filterpop__group">
-              <span className="filterpop__label">{t('task.assignees')}</span>
-              <div className="filterpop__chips">
-                {chip(!!filters.assignees?.includes('me'), t('filters.me'), () => onChange({ ...filters, assignees: toggle(filters.assignees, 'me') }), 'me')}
-                {chip(!!filters.assignees?.includes('none'), t('task.unassigned'), () => onChange({ ...filters, assignees: toggle(filters.assignees, 'none') }), 'none')}
-                {members.filter((p) => p.id !== me.user.id).map((p) => chip(!!filters.assignees?.includes(p.id), p.name, () => onChange({ ...filters, assignees: toggle(filters.assignees, p.id) }), p.id))}
-              </div>
-            </div>
-            <div className="filterpop__group">
-              <span className="filterpop__label">{t('task.due')}</span>
-              <div className="filterpop__chips">{DUE.map((d) => chip(!!filters.due?.includes(d), t(`filters.due.${d}` as any), () => onChange({ ...filters, due: toggle(filters.due, d) }), d))}</div>
-            </div>
-            <div className="filterpop__group">
-              <span className="filterpop__label">{t('task.priority')}</span>
-              <div className="filterpop__chips">{[...PRIORITIES].reverse().map((p) => chip(!!filters.priority?.includes(p), t(`task.priority.${p}`), () => onChange({ ...filters, priority: toggle(filters.priority, p) }), p))}</div>
-            </div>
-            {selects.map((f) => (
-              <div key={f.key} className="filterpop__group">
-                <span className="filterpop__label">{labelOf(f.label, locale)}</span>
-                <div className="filterpop__chips">
-                  {f.options!.map((o) => chip(!!filters.fields?.[f.key]?.includes(o.key), labelOf(o.label, locale), () => onChange({ ...filters, fields: { ...(filters.fields ?? {}), [f.key]: toggle(filters.fields?.[f.key], o.key) } }), o.key))}
-                </div>
-              </div>
-            ))}
+            {groups}
             <div className="filterpop__foot">
               <button className="linkbtn" disabled={!n} onClick={() => onChange({ q: filters.q })}>
                 {t('filters.clear')}
@@ -120,6 +139,7 @@ export function FilterBar({ board, filters, onChange }: { board: Board; filters:
           </div>
         )}
       </div>
+      )}
       <div className="menuwrap">
         <button className="btn" aria-haspopup="menu" aria-expanded={open === 'views'} onClick={() => setOpen(open === 'views' ? null : 'views')}>
           <Icon name="bookmark" size={16} />
@@ -176,6 +196,7 @@ export function FilterBar({ board, filters, onChange }: { board: Board; filters:
           </div>
         )}
       </div>
+      </FilterSheet>
     </div>
   );
 }

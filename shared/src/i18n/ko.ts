@@ -4073,4 +4073,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'date.rangeLast': '이제 마지막 날을 선택하세요',
   'date.from': '시작',
   'date.to': '종료',
+  'filters.buttonCount': '필터, {n}개 적용됨',
+  'filters.sheetTitle': '필터, 정렬 및 보기',
+  'filters.apply': '적용',
+  'filters.view': '보기',
 };
