@@ -25,6 +25,24 @@ import { useReviewText, useRhythm } from './Rhythm';
 import { Avatars, Confirm, Dialog, DueLabel, PeoplePicker, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
 import { DateField } from './DateField';
+import type { RecordType } from '../../../shared/src/records';
+
+// The customer's people exist only where the company keeps a contact record type: a screen never asks
+// for what is not there. One question per page view, shared by every section and dialog that needs it.
+let contactsAsk: { at: number; answer: Promise<boolean> } | null = null;
+export function useHasContacts() {
+  const [has, setHas] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (!contactsAsk || Date.now() - contactsAsk.at > 30_000)
+      contactsAsk = { at: Date.now(), answer: get<{ types: RecordType[] }>('/record-types').then((r) => r.types.some((x) => x.kind === 'contact'), () => false) };
+    void contactsAsk.answer.then((v) => live && setHas(v));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return has;
+}
 
 export const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail', review: 'handshake' };
 
@@ -98,8 +116,11 @@ export function LogDialog({
   const [error, setError] = useState('');
 
   // The customer's people, to tick who was there.
+  const hasContacts = useHasContacts();
   useEffect(() => {
     if (!account.id || !isMeeting) return setContacts(null);
+    if (hasContacts === false) return setContacts([]);
+    if (!hasContacts) return;
     let live = true;
     void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${account.id}&limit=200`)
       .then((r) => live && setContacts(r.records))
@@ -107,7 +128,7 @@ export function LogDialog({
     return () => {
       live = false;
     };
-  }, [account.id, isMeeting]);
+  }, [account.id, isMeeting, hasContacts]);
 
   const attendees = useMemo(() => people.filter((p) => p.status === 'active' || p.status === 'invited'), [people]);
   const assignable = useMemo(() => attendees.filter((p) => p.seat === 'full'), [attendees]);
@@ -364,11 +385,13 @@ export function AccountMeetings({ account }: { account: Account }) {
     return () => window.removeEventListener(TIMELINE_CHANGED, again);
   }, [load]);
   // The customer's people, to name who was there.
+  const hasContacts = useHasContacts();
   useEffect(() => {
+    if (!hasContacts) return;
     void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${account.id}&limit=500`)
       .then((r) => setContactNames(new Map(r.records.map((x) => [x.id, x.name]))))
       .catch(() => undefined);
-  }, [account.id]);
+  }, [account.id, hasContacts]);
 
   const older = async () => {
     if (!next) return;

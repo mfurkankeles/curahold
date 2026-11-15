@@ -16,7 +16,7 @@ import {
 import { ApiFailure, get, patch, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
-import { TIMELINE_CHANGED } from './Meetings';
+import { TIMELINE_CHANGED, useHasContacts } from './Meetings';
 import { Avatars, Dialog, PeoplePicker, RowMenu } from './ui';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
@@ -68,11 +68,13 @@ export function AccountPlanned({ account }: { account: Account }) {
     window.addEventListener(TIMELINE_CHANGED, again);
     return () => window.removeEventListener(TIMELINE_CHANGED, again);
   }, [load]);
+  const hasContacts = useHasContacts();
   useEffect(() => {
+    if (!hasContacts) return;
     void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${account.id}&limit=500`)
       .then((r) => setContactNames(new Map(r.records.map((x) => [x.id, x.name]))))
       .catch(() => undefined);
-  }, [account.id]);
+  }, [account.id, hasContacts]);
 
   const upcoming = page?.upcoming ?? [];
   const past = page?.past ?? [];
@@ -207,18 +209,21 @@ function PlanDialog({ account, planned, onClose, onSaved }: { account: Account; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const hasContacts = useHasContacts();
   useEffect(() => {
     let live = true;
-    void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${account.id}&limit=200`)
-      .then((r) => live && setContacts(r.records))
-      .catch(() => live && setContacts([]));
+    if (hasContacts === false) setContacts([]);
+    else if (hasContacts)
+      void get<{ records: { id: string; name: string }[] }>(`/records?type=contact&account=${account.id}&limit=200`)
+        .then((r) => live && setContacts(r.records))
+        .catch(() => live && setContacts([]));
     void get<{ types: MeetingType[] }>('/meeting-types')
       .then((r) => live && setTypes(r.types))
       .catch(() => undefined);
     return () => {
       live = false;
     };
-  }, [account.id]);
+  }, [account.id, hasContacts]);
 
   const attendees = useMemo(() => people.filter((p) => p.status === 'active' || p.status === 'invited'), [people]);
   const ready = !!(title.trim() || typeLabel.trim()) && !!when;
