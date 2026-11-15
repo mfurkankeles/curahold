@@ -2859,6 +2859,7 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
 /* ------------------------------------------------------------ utilities
    One property each, for the few places a screen needs a nudge that no component owns.
    They stand in for what used to be written on the element (style={{…}}), so they win like it did. */
+/* (Text sizes win by a tripled class instead of !important, so the size stays one value of the scale.) */
 .u-align-items-center { align-items: center !important; }
 .u-align-self-end { align-self: end !important; }
 .u-cols-1fr-auto-auto { grid-template-columns: 1fr auto auto !important; }
@@ -2868,9 +2869,9 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
 .u-flex-1 { flex: 1 !important; }
 .u-flex-wrap-wrap { flex-wrap: wrap !important; }
 .u-font-weight-500 { font-weight: 500 !important; }
-.u-fs-l { font-size: var(--fs-l) !important; }
-.u-fs-s { font-size: var(--fs-s) !important; }
-.u-fs-xs { font-size: var(--fs-xs) !important; }
+.u-fs-l.u-fs-l.u-fs-l { font-size: var(--fs-l); }
+.u-fs-s.u-fs-s.u-fs-s { font-size: var(--fs-s); }
+.u-fs-xs.u-fs-xs.u-fs-xs { font-size: var(--fs-xs); }
 .u-gap-12 { gap: 12px !important; }
 .u-gap-16 { gap: 16px !important; }
 .u-gap-4 { gap: 4px !important; }
