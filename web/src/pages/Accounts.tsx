@@ -37,6 +37,7 @@ import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
 import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
+import { useServerUndo } from '../lib/undo';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -84,6 +85,7 @@ export function AccountsPage() {
   const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
   const phone = usePhone();
+  const undoable = useServerUndo();
   const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -240,20 +242,7 @@ export function AccountsPage() {
   const bulk = async (body: Record<string, unknown>, msg: string) => {
     try {
       const r = await post<{ updated: number; undoId: string | null }>('/accounts/bulk', { ids: [...selected], ...body });
-      toast(
-        t(msg as any, { n: r.updated }),
-        'info',
-        r.undoId
-          ? {
-              label: t('undo.button'),
-              run: async () => {
-                await post(`/undo/${r.undoId}`);
-                toast(t('undo.done'));
-                await load();
-              },
-            }
-          : undefined,
-      );
+      undoable(t(msg as any, { n: r.updated }), r.undoId, load);
       setSelected(new Set());
       setBulkOwner('');
       await load();

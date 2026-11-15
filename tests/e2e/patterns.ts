@@ -106,6 +106,31 @@ await step('a settings page this person may not open says who can give access', 
   await m.page.close();
 });
 
+await step('undo: a finished task comes back with Ctrl+Z while its toast shows', async () => {
+  const p = desk.page;
+  const [open] = await sql(`select t.id, t.status, t.title from tasks t where t.board_id = $1 and t.archived_at is null and t.status = (select b.columns->0->>'key' from boards b where b.id = $1) order by t.position limit 1`, [csBoard]);
+  await p.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
+  const ticked = await p.evaluate((title) => {
+    const card = [...document.querySelectorAll('.card')].find((c) => c.querySelector('.card__title')?.textContent === title);
+    const tick = card?.querySelector<HTMLElement>('.tick');
+    tick?.click();
+    return !!tick;
+  }, open.title);
+  expect(ticked, 'found the card and its tick');
+  await pause(600);
+  const [after] = await sql('select status from tasks where id = $1', [open.id]);
+  expect(after.status !== open.status, 'the tick finished it');
+  const btn = await p.$eval('.toast__action', (el) => `${el.getAttribute('aria-keyshortcuts')}|${el.textContent}`);
+  expect(btn.startsWith('Control+Z') && btn.includes('Geri al'), `undo button: ${btn}`);
+  await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await p.keyboard.down('Control');
+  await p.keyboard.press('z');
+  await p.keyboard.up('Control');
+  await pause(800);
+  const [back] = await sql('select status from tasks where id = $1', [open.id]);
+  expect(back.status === open.status, `Ctrl+Z put it back: ${back.status}`);
+});
+
 const phone = await newPage(s.browser, 375, 667);
 await signIn(phone.page, s.origin, 'ada@demo.example');
 

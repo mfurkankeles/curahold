@@ -7,10 +7,12 @@ import { tasksChanged } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { doneTarget, saveTask } from '../lib/tasks';
 import { Icon } from './icons';
+import { useUndo } from '../lib/undo';
 
 export function useToggleDone() {
   const { t } = useI18n();
   const { boards, toast } = useStore();
+  const offer = useUndo();
   return async (task: Task, after?: (t: Task) => void) => {
     const board = boards.find((b) => b.id === task.boardId);
     const target = doneTarget(board, task);
@@ -19,13 +21,7 @@ export function useToggleDone() {
       const r = await saveTask(task, { status: target.status });
       after?.(r.task);
       tasksChanged();
-      toast(target.done ? t('task.completed', { title: task.title }) : t('task.reopened', { title: task.title }), 'info', {
-        label: t('undo.button'),
-        run: async () => {
-          await saveTask(r.task, { status: task.status }).catch(() => undefined);
-          tasksChanged();
-        },
-      });
+      offer(target.done ? t('task.completed', { title: task.title }) : t('task.reopened', { title: task.title }), () => saveTask(r.task, { status: task.status }), tasksChanged);
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }

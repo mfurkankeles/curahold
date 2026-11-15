@@ -10,7 +10,7 @@ export interface Toast {
   text: string;
   tone: 'info' | 'error';
   /** e.g. "Undo" — the toast stays a little longer when it has one. */
-  action?: { label: string; run: () => void | Promise<void> };
+  action?: { label: string; run: () => void | Promise<void>; /** An Undo (lib/undo.ts): Ctrl+Z runs it while the toast shows. */ undo?: boolean };
 }
 
 interface Store {
@@ -69,7 +69,7 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
   const toast = useCallback((text: string, tone: Toast['tone'] = 'info', action?: Toast['action']) => {
     const id = ++toastSeq;
     setToasts((list) => [...list, { id, text, tone, action }]);
-    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), action ? 10000 : tone === 'error' ? 6000 : 3500);
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), action ? 10_000 : tone === 'error' ? 6000 : 3500);
   }, []);
 
   const value = useMemo<Store>(() => {

@@ -2,7 +2,7 @@
 // one button that adds anything. On a phone the same things sit in a bar at
 // the bottom, within reach of a thumb.
 import { FAVORITE_ICON } from './Favorites';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { endPreview, get, post } from '../lib/api';
@@ -15,7 +15,8 @@ import { LIVE, startLive, useLive } from '../lib/live';
 import { startErrorLog } from '../lib/errlog';
 import { forgetOffline, useInstall } from '../lib/pwa';
 import { OfflineBar } from './Empty';
-import { useStore } from '../lib/store';
+import { useStore, type Toast } from '../lib/store';
+import { typingIn } from '../lib/undo';
 import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
 import { CuraAI } from './CuraAI';
@@ -576,6 +577,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             <LogDialog accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />
           </Suspense>
         )}
+        <UndoKey toasts={toasts} dismiss={dismiss} />
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
             <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
@@ -584,6 +586,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               {x.action && (
                 <button
                   className="toast__action"
+                  aria-keyshortcuts={x.action.undo ? 'Control+Z Meta+Z' : undefined}
+                  title={x.action.undo ? `${x.action.label} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'} Z)` : undefined}
                   onClick={async () => {
                     dismiss(x.id);
                     await x.action!.run();
@@ -601,4 +605,23 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
       </div>
     </ShellCtx.Provider>
   );
+}
+
+/** Ctrl+Z (⌘Z) takes back the latest change whose Undo toast still shows — unless the focus is in a text field. */
+function UndoKey({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: number) => void }) {
+  const latest = [...toasts].reverse().find((x) => x.action?.undo);
+  const ref = useRef(latest);
+  ref.current = latest;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const x = ref.current;
+      if (!x || e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || typingIn(e.target)) return;
+      e.preventDefault();
+      dismiss(x.id);
+      void x.action!.run();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [dismiss]);
+  return null;
 }

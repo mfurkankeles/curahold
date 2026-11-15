@@ -140,3 +140,14 @@ One family; a screen never draws its own.
 | Not allowed | `NotAllowed` | What is missing and who can give it (an administrator, in Settings → People); a way home. |
 
 `--wait` (300 ms, in the Motion block) is how long a wait shows nothing at all; `useAfter(ms)` is its hook.
+
+### Undo — `useUndo`, `useServerUndo` (`lib/undo.ts`)
+
+The one way a change is taken back. A delete, a move, a bulk change or a settings change says what it did
+in a toast with **Undo** for 10 seconds; **Ctrl+Z / ⌘Z** takes back the latest one while it shows (not
+while the focus is in a text field: there it belongs to the text). The toast area is a polite live region.
+
+- `offer(text, takeBack, after?)` from `useUndo()` — `takeBack` restores, then "Put back" and `after` (reload).
+- `undoable(text, undoId, after?)` from `useServerUndo()` — for answers that carry an `undoId` (bulk changes).
+- `useTrashToast()` (`lib/trash.ts`) — a delete that went to the trash; built on `useUndo`.
+- Never a confirmation dialog where an undo will do; keep `Confirm` for what cannot be undone.

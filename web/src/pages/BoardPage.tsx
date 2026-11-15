@@ -36,10 +36,12 @@ import { positionBetween, saveTask } from '../lib/tasks';
 import { useWindow } from '../lib/windowing';
 import { DateField } from '../components/DateField';
 import { usePhone } from '../components/FilterSheet';
+import { useServerUndo, useUndo } from '../lib/undo';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
   const phone = usePhone();
+  const offerUndo = useUndo();
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
   const [filters, setFilters] = useState<ViewFilters>({});
@@ -88,14 +90,14 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         setTasks((list) => (list ?? []).map((x) => (x.id === task.id ? { ...x, ...r.task } : x)));
         if (r.conflicts.length) toast(t('task.conflictLost'), 'error');
         const col = board?.columns.find((c) => c.key === status);
-        if (col && status !== task.status) toast(t('board.moved', { column: col.name }));
+        if (col && status !== task.status) offerUndo(t('board.moved', { column: col.name }), () => saveTask(r.task, { status: task.status, position: task.position }), load);
       } catch (e) {
         setTasks(previous);
         setWin(previousWin);
         toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
       }
     },
-    [tasks, win, setTasks, setWin, colKeys, board, toast, t],
+    [tasks, win, setTasks, setWin, colKeys, board, toast, t, offerUndo, load],
   );
 
   if (!board) return <div className="empty">{t('errors.not_found')}</div>;
@@ -700,12 +702,13 @@ export function repeatText(t: (k: any, v?: any) => string, r: Repeat) {
 function BulkBar({ board, ids, onDone }: { board: Board; ids: string[]; onDone: () => void }) {
   const { t } = useI18n();
   const { people, toast } = useStore();
+  const undoable = useServerUndo();
   const [busy, setBusy] = useState(false);
   const apply = async (change: Record<string, unknown>, msg: string) => {
     setBusy(true);
     try {
       const r = await post<{ updated: number; undoId: string | null }>('/tasks/bulk', { ids, ...change });
-      toast(t(msg as any, { n: r.updated }), 'info', r.undoId ? { label: t('undo.button'), run: async () => { await post(`/undo/${r.undoId}`); toast(t('undo.done')); onDone(); } } : undefined);
+      undoable(t(msg as any, { n: r.updated }), r.undoId, onDone);
       onDone();
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');

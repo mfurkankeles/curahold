@@ -1,9 +1,9 @@
 // After a delete: say where the thing went and offer to take it back.
 import { useCallback } from 'react';
 import type { TrashRestored } from '../../../shared/src/model';
-import { ApiFailure, post } from './api';
+import { post } from './api';
 import { useI18n } from './i18n';
-import { useStore } from './store';
+import { useUndo } from './undo';
 
 /** Where a thing lives once it is back from the trash (null: nowhere to open). */
 export function placeOf(r: Pick<TrashRestored, 'kind' | 'ids' | 'where'>): string | null {
@@ -36,24 +36,13 @@ export function placeOf(r: Pick<TrashRestored, 'kind' | 'ids' | 'where'>): strin
  */
 export function useTrashToast() {
   const { t } = useI18n();
-  const { toast } = useStore();
+  const offer = useUndo();
   return useCallback(
     (answer: { trashId?: string | null } | null | undefined, back?: () => unknown) => {
       const id = answer?.trashId;
       if (!id) return;
-      toast(t('trash.moved'), 'info', {
-        label: t('undo.button'),
-        run: async () => {
-          try {
-            await post(`/trash/${id}/restore`);
-            toast(t('undo.done'));
-            await back?.();
-          } catch (e) {
-            toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-          }
-        },
-      });
+      offer(t('trash.moved'), () => post(`/trash/${id}/restore`), back);
     },
-    [t, toast],
+    [t, offer],
   );
 }
