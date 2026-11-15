@@ -21,7 +21,7 @@
 .admin__chev { flex: none; color: var(--ink-3); }
 .admin__none { margin: 0; padding: 8px; color: var(--ink-3); font-size: var(--fs-s); }
 
-.admin__content { min-width: 0; max-width: 960px; display: grid; gap: 16px; align-content: start; padding-block-end: 24px; }
+.admin__content { min-width: 0; max-width: 960px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; padding-block-end: 24px; }
 .admin__content > * { min-width: 0; }
 .admin__head { display: grid; gap: 4px; }
 .admin__title { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.01em; line-height: var(--lh-snug); }
@@ -69,7 +69,7 @@
 .admin-effect__list li[data-changed]::before { background: var(--brand); }
 
 /* ---------------------------------------------------------------- activity log */
-.audit { display: grid; gap: 12px; }
+.audit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .audit__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .audit__tools .input.search { flex: 1 1 240px; width: auto; }
 .audit__export { margin-inline-start: auto; }
@@ -91,7 +91,7 @@
 /* ---------------------------------------------------------------- roles: the grid, and one role at a time on a phone */
 .matrix__see { margin-block-start: 4px; margin-inline: auto; max-width: 120px; min-height: 28px; padding: 4px 8px; font-size: var(--fs-xs); gap: 4px; white-space: normal; line-height: var(--lh-snug); text-align: start; }
 .conns .section__head { flex-wrap: wrap; gap: 8px; }
-.rolecard { display: grid; gap: 16px; }
+.rolecard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .rolecard__head { display: flex; align-items: flex-end; gap: 8px; }
 .rolecard__pick { flex: 1; min-width: 0; }
 .rolecard__actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -103,7 +103,7 @@
 .rolecard__row .matrix__scope { flex: none; max-width: 50%; }
 
 /* ---------------------------------------------------------------- the health of every connection */
-.health-list { display: grid; gap: 8px; margin-block-end: 24px; }
+.health-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-block-end: 24px; }
 .health-list__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .health-list__title { margin: 0; font-size: var(--fs-l); font-weight: 600; }
 .health-list__sum { margin: 0; color: var(--ink-2); font-size: var(--fs-s); }
@@ -124,7 +124,7 @@
 .health-list__open { flex: none; }
 
 /* ---------------------------------------------------------------- single sign-on */
-.sso { display: grid; gap: 16px; max-width: 720px; }
+.sso { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 720px; }
 .sso__section { display: grid; gap: 12px; }
 .sso__section > .sheet__title { margin: 0; }
 .sso__protocol { max-width: 320px; }
@@ -141,3 +141,47 @@
   .sso__copyrow { flex-wrap: wrap; }
   .sso__copyrow .input { flex-basis: 100%; }
 }
+
+/* ---------------------------------------------------------------- billing: one status card, plans, billing details */
+.billing-manage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.billing-manage__status { align-items: flex-start; }
+.billing-manage__body { display: grid; gap: 8px; min-width: 0; flex: 1; }
+.billing-manage__body p { margin: 0; }
+.billing-manage__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-block-start: 4px; }
+.billing-manage__profile { display: grid; gap: 12px; }
+.billing-manage__profile .sheet__title { margin: 0; }
+.billing__plans > .sheet + .sheet, .billing-manage > .sheet + .sheet, .billing-manage > .billing, .sso > .sheet + .sheet { margin-block: 0; }
+
+/* ---------------------------------------------------------------- people: a table on a wide screen, cards on a phone */
+.people__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-block-end: 12px; }
+.people__tools .input.search { flex: 1 1 220px; width: auto; }
+.people__invite { margin-inline-start: auto; }
+.people-table .select { min-width: 0; max-width: 100%; }
+@media (max-width: 860px) {
+  .people-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .people-table, .people-table tbody { display: block; }
+  .people-table tbody { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+  .people-table tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 12px; }
+  .people-table tr + tr { border-block-start: 1px solid var(--line); }
+  .people-table td { display: block; padding: 0; border: 0; min-width: 0; }
+  .people-table__who { grid-column: 1 / 3; grid-row: 1; }
+  .people-table__status { grid-column: 3; grid-row: 1; justify-self: end; }
+  .people-table td:last-child { grid-column: 4; grid-row: 1; }
+  .people-table__role { grid-column: 1; grid-row: 2; }
+  .people-table__seat { grid-column: 2 / 5; grid-row: 2; }
+  .people-table .select { width: 100%; }
+  .people__invite { margin-inline-start: 0; }
+}
+
+/* ---------------------------------------------------------------- playbooks and developers on a narrow screen */
+.pblist { grid-template-columns: minmax(0, 1fr); }
+.pblist__body .schip { white-space: normal; max-width: 100%; }
+.admin__content pre { max-width: 100%; overflow-x: auto; }
+@media (max-width: 860px) {
+  .admin__content .kv { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .admin__content .kv dd + dt { margin-block-start: 8px; }
+}
+.rule__actions { display: flex; align-items: center; gap: 4px; flex: none; }
+@media (max-width: 860px) { .rule { grid-template-columns: auto minmax(0, 1fr) auto; } }
+/* A button for the keyboard only: hidden until it has the focus, then a normal button. */
+.sr-only.admin-reveal:focus-visible { position: static; width: auto; height: auto; margin: 8px 0 0; padding: 4px 12px; clip: auto; clip-path: none; overflow: visible; white-space: normal; border: 1px solid var(--line-strong); border-radius: var(--r-s); background: var(--surface); color: var(--ink); }

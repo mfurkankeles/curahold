@@ -4514,6 +4514,14 @@ export const en = {
   'sso.effect.lockout': "Before you require it, sign in through your provider once in a private window. If the provider stops working, nobody can sign in until it is fixed.",
   'sso.effect.off': "When you save, SSO is off: everyone signs in with email links again.",
   'sso.needsDetails': "Fill in your provider's details first.",
+  'billing.manageSeats': "Seats and people",
+  'settings.people.roleSet': "{name} is now {role}",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "{name}'s personal data downloaded",
+  'settings.teams.deleted': "Team {name} deleted",
+  'join.domainRemoved': "@{domain} removed",
+  'auto.actions': "More for {name}",
 } as const;
 
 export type MessageKey = keyof typeof en;

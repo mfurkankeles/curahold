@@ -1,6 +1,7 @@
 // Roles and permissions: a grid of what each role may do, starting points
 // for new roles, and "who can do what" — by permission or by person.
 import { Icon } from './icons';
+import { SkeletonRows } from './Empty';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_SCOPES, GRANT_PERMS, PERM_GROUPS, ROLE_PRESETS, scopeOf, withScope, type AccountScope, type Perm, type PersonAccess, type Role, type Seat, type UserStatus } from '../../../shared/src/model';
 import { compareText } from '../../../shared/src/text';
@@ -51,7 +52,7 @@ export function RolesTab() {
   const { can } = useStore();
   const { data, load } = useAccess();
   const [view, setView] = useState<'roles' | 'people'>('roles');
-  if (!data) return <div className="empty">{t('common.loading')}</div>;
+  if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
   return (
     <div className="roles">
       <p className="lede">{t('settings.roles.intro')}</p>
@@ -444,7 +445,7 @@ export function AccessDialog({ userId, roles, onChanged, onClose }: { userId: st
   return (
     <Dialog title={a ? t('settings.roles.accessOf', { name: a.name }) : t('common.loading')} onClose={onClose} wide>
       {!a ? (
-        <div className="empty">{t('common.loading')}</div>
+        <SkeletonRows rows={4} label={t('common.loading')} />
       ) : (
         <div className="access">
           <div className="access__who">

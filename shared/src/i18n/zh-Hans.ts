@@ -4499,4 +4499,12 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "设为必须之前，请先在无痕窗口中通过身份提供商登录一次。如果提供商出现故障，在修复之前没有人能登录。",
   'sso.effect.off': "保存后 SSO 将关闭：所有人改回使用邮件链接登录。",
   'sso.needsDetails': "请先填写身份提供商信息。",
+  'billing.manageSeats': "席位与成员",
+  'settings.people.roleSet': "{name} 现在是{role}",
+  'settings.people.seatSet': "{name}：{seat}",
+  'settings.people.statusSet': "{name}：{status}",
+  'settings.people.exported': "已下载 {name} 的个人数据",
+  'settings.teams.deleted': "已删除团队“{name}”",
+  'join.domainRemoved': "已移除 @{domain}",
+  'auto.actions': "“{name}”的更多操作",
 };

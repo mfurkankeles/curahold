@@ -23,12 +23,12 @@ import { PortalSettingsTab } from '../components/PortalAdmin';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
-import { getDeviceId } from '../lib/device';
 import { allCurrencies, useMoney } from '../lib/money';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh, setBeforeLeave } from '../lib/router';
 import { useSaver } from '../lib/saver';
 import { useUndo } from '../lib/undo';
+import { useDeleteLater } from '../lib/deleteLater';
 import { formatDateTime, formatMoney } from '../lib/format';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
@@ -193,10 +193,9 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   {current === 'health' && <HealthSettings />}
                   {current === 'rhythm' && <RhythmSettings />}
                   {current === 'billing' && (
-                    <>
-                      <SubscriptionPanel />
-                      <BillingSettings />
-                    </>
+                    <SubscriptionPanel>
+                      <BillingSettings embedded />
+                    </SubscriptionPanel>
                   )}
                   {current === 'currencies' && <CurrencySettings />}
                   {current === 'playbooks' && <PlaybooksSettings />}
@@ -459,6 +458,7 @@ function PeopleTab() {
   const { t } = useI18n();
   const { me, teams, reloadPeople, toast } = useStore();
   const save = useSaver();
+  const offer = useUndo();
   const [data, setData] = useState<{ users: AdminUser[]; seatsUsed: number } | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [invite, setInvite] = useState(false);
@@ -478,28 +478,39 @@ function PeopleTab() {
     void load();
   }, [load]);
 
-  const update = async (u: AdminUser, body: object) => {
-    if (await save(() => patch(`/admin/users/${u.id}`, body))) {
+  // A role, seat or status change applies at once and can be taken back for 10 seconds.
+  const update = async (u: AdminUser, body: { roleId?: string; seat?: string; status?: string }) => {
+    const before = { ...(body.roleId !== undefined ? { roleId: u.roleId } : {}), ...(body.seat !== undefined ? { seat: u.seat } : {}), ...(body.status !== undefined ? { status: u.status } : {}) };
+    if (!(await save(() => patch(`/admin/users/${u.id}`, body), false))) return;
+    await load();
+    await reloadPeople();
+    const what = body.roleId !== undefined
+      ? t('settings.people.roleSet', { name: u.name, role: roles.find((r) => r.id === body.roleId)?.name ?? '' })
+      : body.seat !== undefined
+        ? t('settings.people.seatSet', { name: u.name, seat: t(`settings.people.seat.${body.seat}` as MessageKey) })
+        : t('settings.people.statusSet', { name: u.name, status: t(`settings.people.status.${body.status}` as MessageKey) });
+    offer(what, () => patch(`/admin/users/${u.id}`, before), async () => {
       await load();
       await reloadPeople();
-    }
+    });
   };
 
+  // Through the API client, so "Confirm it's you" can ask first (a personal export needs a fresh sign-in).
   async function exportData(u: AdminUser) {
-    const res = await fetch(`/api/admin/users/${u.id}/export`, { headers: { 'x-curahold-device': getDeviceId() } });
-    if (!res.ok) {
-      toast(t('errors.server'), 'error');
-      return;
+    try {
+      const data = await get<unknown>(`/admin/users/${u.id}/export`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = `curahold-personal-data-${u.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast(t('settings.people.exported', { name: u.name }));
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
-    const blob = await res.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `curahold-personal-data-${u.name.replace(/\s+/g, '-').toLowerCase()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   }
 
-  if (!data) return <div className="empty">{t('common.loading')}</div>;
+  if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
   const needle = q.trim().toLocaleLowerCase();
   const shown = data.users.filter(
     (u) => (status === 'all' ? u.status !== 'deleted' : u.status === status) && (!needle || u.name.toLocaleLowerCase().includes(needle) || u.email.includes(needle)),
@@ -518,26 +529,34 @@ function PeopleTab() {
         </div>
         <p className="field__hint">{t('settings.people.seatHint', { max: me.org.maxDevices })}</p>
       </div>
-      <div className="toolbar u-mb-12">
-        <input className="input search" type="search" value={q} placeholder={t('settings.people.search')} aria-label={t('settings.people.search')} onChange={(e) => setQ(e.target.value)} />
-        <select className="select" value={status} aria-label={t('settings.people.status')} onChange={(e) => setStatus(e.target.value as any)}>
-          <option value="all">{t('settings.people.filter.all')}</option>
-          <option value="active">{t('settings.people.status.active')}</option>
-          <option value="invited">{t('settings.people.status.invited')}</option>
-          <option value="disabled">{t('settings.people.status.disabled')}</option>
-        </select>
-        <div className="topbar__spacer" />
-        <button className="btn btn--primary" onClick={() => setInvite(true)}>
-          <Icon name="userPlus" size={16} />
-          {t('settings.people.invite')}
-        </button>
+      <div className="toolbar people__tools">
+        <FilterSheet
+          count={status === 'all' ? 0 : 1}
+          onClear={() => setStatus('all')}
+          search={<input className="input search" type="search" value={q} placeholder={t('settings.people.search')} aria-label={t('settings.people.search')} onChange={(e) => setQ(e.target.value)} />}
+          after={
+            <button className="btn btn--primary people__invite" onClick={() => setInvite(true)}>
+              <Icon name="userPlus" size={16} />
+              {t('settings.people.invite')}
+            </button>
+          }
+        >
+          <FilterGroup label={t('settings.people.status')}>
+            <select className="select" value={status} aria-label={t('settings.people.status')} onChange={(e) => setStatus(e.target.value as typeof status)}>
+              <option value="all">{t('settings.people.filter.all')}</option>
+              <option value="active">{t('settings.people.status.active')}</option>
+              <option value="invited">{t('settings.people.status.invited')}</option>
+              <option value="disabled">{t('settings.people.status.disabled')}</option>
+            </select>
+          </FilterGroup>
+        </FilterSheet>
       </div>
-      <table className="table">
+      <table className="table people-table">
         <thead>
           <tr>
             <th>{t('settings.people.name')}</th>
             <th>{t('settings.people.role')}</th>
-            <th className="hide-phone">{t('settings.people.seat')}</th>
+            <th>{t('settings.people.seat')}</th>
             <th>{t('settings.people.status')}</th>
             <th />
           </tr>
@@ -554,7 +573,7 @@ function PeopleTab() {
             const deleted = u.status === 'deleted';
             return (
               <tr key={u.id}>
-                <td>
+                <td className="people-table__who">
                   <div className="u-display-flex u-gap-8 u-align-items-center">
                     <Avatar person={u} />
                     <div>
@@ -563,8 +582,8 @@ function PeopleTab() {
                     </div>
                   </div>
                 </td>
-                <td>
-                  <select className="select" value={u.roleId} disabled={deleted} aria-label={t('settings.people.role')} onChange={(e) => update(u, { roleId: e.target.value })}>
+                <td className="people-table__role">
+                  <select className="select" value={u.roleId} disabled={deleted} aria-label={`${t('settings.people.role')}: ${u.name}`} onChange={(e) => update(u, { roleId: e.target.value })}>
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.name}
@@ -572,13 +591,13 @@ function PeopleTab() {
                     ))}
                   </select>
                 </td>
-                <td className="hide-phone">
-                  <select className="select" value={u.seat} disabled={deleted} aria-label={t('settings.people.seat')} onChange={(e) => update(u, { seat: e.target.value })}>
+                <td className="people-table__seat">
+                  <select className="select" value={u.seat} disabled={deleted} aria-label={`${t('settings.people.seat')}: ${u.name}`} onChange={(e) => update(u, { seat: e.target.value })}>
                     <option value="full">{t('settings.people.seat.full')}</option>
                     <option value="viewer">{t('settings.people.seat.viewer')}</option>
                   </select>
                 </td>
-                <td>
+                <td className="people-table__status">
                   <span className={`badge badge--${u.status}`}>{t(`settings.people.status.${u.status}`)}</span>
                 </td>
                 <td>
@@ -736,7 +755,8 @@ function TeamsTab() {
   const { teams, people, reloadPeople } = useStore();
   const save = useSaver();
   const [name, setName] = useState('');
-  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
+  const [gone, setGone] = useState<string[]>([]);
+  const later = useDeleteLater();
   const active = people.filter((p) => p.status !== 'deleted');
   return (
     <div className="u-max-width-760">
@@ -756,8 +776,8 @@ function TeamsTab() {
           {t('common.create')}
         </button>
       </form>
-      {teams.length === 0 && <div className="empty">{t('settings.teams.empty')}</div>}
-      {teams.map((tm) => (
+      {teams.length === 0 && <EmptyState compact icon="people" title={t('settings.teams.empty')} />}
+      {teams.filter((tm) => !gone.includes(tm.id)).map((tm) => (
         <div className="sheet" key={tm.id}>
           <div className="toolbar u-mb-12">
             <h2 className="sheet__title u-m-0">
@@ -765,7 +785,18 @@ function TeamsTab() {
               {tm.name}
             </h2>
             <div className="topbar__spacer" />
-            <button className="btn btn--small btn--danger" onClick={() => setDeleting({ id: tm.id, name: tm.name })}>
+            <button
+              className="btn btn--small btn--quiet"
+              onClick={() =>
+                later(t('settings.teams.deleted', { name: tm.name }), {
+                  hide: () => setGone((g) => [...g, tm.id]),
+                  unhide: () => setGone((g) => g.filter((x) => x !== tm.id)),
+                  commit: () => del(`/admin/teams/${tm.id}`),
+                  after: reloadPeople,
+                })
+              }
+            >
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           </div>
@@ -788,18 +819,7 @@ function TeamsTab() {
           </div>
         </div>
       ))}
-      {deleting && (
-        <Confirm
-          title={t('settings.teams.deleteTitle', { name: deleting.name })}
-          body={t('settings.teams.deleteBody', { name: deleting.name })}
-          confirmLabel={t('common.delete')}
-          danger
-          onClose={() => setDeleting(null)}
-          onConfirm={async () => {
-            if (await save(() => del(`/admin/teams/${deleting.id}`))) await reloadPeople();
-          }}
-        />
-      )}
+
     </div>
   );
 }
@@ -965,9 +985,9 @@ function ErrorsTab() {
         ))}
       </div>
       {!rows ? (
-        <div className="empty">{t('common.loading')}</div>
+        <SkeletonRows rows={5} label={t('common.loading')} />
       ) : rows.length === 0 ? (
-        <div className="empty">{t('settings.errors.empty')}</div>
+        <EmptyState compact tone="done" icon="checkCircle" title={t('settings.errors.empty')} />
       ) : (
         <table className="table">
           <thead>
@@ -1072,6 +1092,9 @@ function JoiningTab() {
   const [domainEmail, setDomainEmail] = useState('');
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
   const [removingDomain, setRemovingDomain] = useState<string | null>(null);
+  const [goneDomains, setGoneDomains] = useState<string[]>([]);
+  const later = useDeleteLater();
+  const offer = useUndo();
   const [code, setCode] = useState('');
   const load = useCallback(async () => {
     const [r, ro] = await Promise.all([get<{ requests: JoinRequest[] }>('/admin/join-requests'), get<{ roles: Role[] }>('/admin/roles')]);
@@ -1097,7 +1120,10 @@ function JoiningTab() {
     }
   };
   const setPolicy = async (body: Record<string, boolean>) => {
-    if (await save(() => patch('/admin/org', body))) await reloadMe();
+    const before = { joinRequests: me.org.joinRequests, autoJoin: me.org.autoJoin };
+    if (!(await save(() => patch('/admin/org', body), false))) return;
+    await reloadMe();
+    offer(t('settings.savedTopic', { topic: t('join.policyTitle') }), () => patch('/admin/org', before), reloadMe);
   };
   const policy = me.org.autoJoin ? 'auto' : me.org.joinRequests ? 'requests' : 'invite';
 
@@ -1172,7 +1198,7 @@ function JoiningTab() {
         <h3 className="section__head">{t('join.domainsTitle')}</h3>
         <p className="sheet__hint">{t('join.domainsHint')}</p>
         <div className="chips-row">
-          {me.org.domains.map((d) => (
+          {me.org.domains.filter((d) => !goneDomains.includes(d)).map((d) => (
             <span className="option-chip" key={d}>
               <span>@{d}</span>
               <button aria-label={`${t('common.remove')} @${d}`} onClick={() => setRemovingDomain(d)}>
@@ -1234,8 +1260,15 @@ function JoiningTab() {
             confirmLabel={t('common.remove')}
             danger
             onClose={() => setRemovingDomain(null)}
-            onConfirm={async () => {
-              if (await save(() => del(`/admin/domains/${removingDomain}`))) await reloadMe();
+            onConfirm={() => {
+              const d = removingDomain;
+              setRemovingDomain(null);
+              later(t('join.domainRemoved', { domain: d }), {
+                hide: () => setGoneDomains((g) => [...g, d]),
+                unhide: () => setGoneDomains((g) => g.filter((x) => x !== d)),
+                commit: () => del(`/admin/domains/${d}`),
+                after: reloadMe,
+              });
             }}
           />
         )}

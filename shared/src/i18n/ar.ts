@@ -4499,4 +4499,12 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "قبل جعله إلزاميًا، سجّل الدخول عبر مزوّدك مرة في نافذة خاصة. إذا توقف المزوّد عن العمل فلن يتمكن أحد من الدخول حتى يُصلح.",
   'sso.effect.off': "عند الحفظ يتوقف SSO: يعود الجميع إلى الدخول بروابط البريد.",
   'sso.needsDetails': "املأ تفاصيل مزوّدك أولًا.",
+  'billing.manageSeats': "المقاعد والأشخاص",
+  'settings.people.roleSet': "أصبح {name} الآن {role}",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "نُزّلت البيانات الشخصية لـ{name}",
+  'settings.teams.deleted': "حُذف فريق {name}",
+  'join.domainRemoved': "أُزيل ‎@{domain}",
+  'auto.actions': "المزيد لـ{name}",
 };

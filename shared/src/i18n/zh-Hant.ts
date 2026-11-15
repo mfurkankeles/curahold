@@ -4499,4 +4499,12 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "設為必須之前，請先在無痕視窗中透過身分識別提供者登入一次。如果提供者出現故障，在修復之前沒有人能登入。",
   'sso.effect.off': "儲存後 SSO 將關閉：所有人改回使用郵件連結登入。",
   'sso.needsDetails': "請先填寫身分識別提供者資訊。",
+  'billing.manageSeats': "席位與成員",
+  'settings.people.roleSet': "{name} 現在是{role}",
+  'settings.people.seatSet': "{name}：{seat}",
+  'settings.people.statusSet': "{name}：{status}",
+  'settings.people.exported': "已下載 {name} 的個人資料",
+  'settings.teams.deleted': "已刪除團隊「{name}」",
+  'join.domainRemoved': "已移除 @{domain}",
+  'auto.actions': "「{name}」的更多操作",
 };

@@ -26,7 +26,7 @@ import { navigate } from '../lib/router';
 import { tasksChanged } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { todayIso } from '../lib/time';
-import { EmptyState } from './Empty';
+import { EmptyState, SkeletonRows } from './Empty';
 import { Icon, type IconName } from './icons';
 import { useDismiss } from './Menus';
 import { Confirm, Dialog } from './ui';
@@ -343,7 +343,7 @@ export function PlaybooksSettings() {
   const have = new Set((plans ?? []).map((p) => p.name.toLocaleLowerCase(locale)));
   const examples = PLAYBOOK_EXAMPLES.filter((ex) => !have.has(labelOf(ex.name, locale).toLocaleLowerCase(locale)));
 
-  if (plans === null) return <div className="muted">{t('common.loading')}</div>;
+  if (plans === null) return <SkeletonRows rows={6} label={t('common.loading')} />;
   return (
     <div className="playbooks">
       <section className="sheet">

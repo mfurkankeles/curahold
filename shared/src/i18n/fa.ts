@@ -4499,4 +4499,12 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "پیش از اجباری کردن، یک بار در پنجره خصوصی از راه ارائه‌دهنده وارد شوید. اگر ارائه‌دهنده از کار بیفتد، تا رفع مشکل کسی نمی‌تواند وارد شود.",
   'sso.effect.off': "با ذخیره، SSO خاموش می‌شود: همه دوباره با پیوند ایمیلی وارد می‌شوند.",
   'sso.needsDetails': "اول مشخصات ارائه‌دهنده را پر کنید.",
+  'billing.manageSeats': "صندلی‌ها و افراد",
+  'settings.people.roleSet': "{name} اکنون {role} است",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "داده‌های شخصی {name} دانلود شد",
+  'settings.teams.deleted': "تیم {name} حذف شد",
+  'join.domainRemoved': "‎@{domain} حذف شد",
+  'auto.actions': "کارهای بیشتر برای {name}",
 };

@@ -4499,4 +4499,12 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "필수로 하기 전에 시크릿 창에서 ID 공급자로 한 번 로그인해 보세요. 공급자가 멈추면 고칠 때까지 아무도 로그인할 수 없습니다.",
   'sso.effect.off': "저장하면 SSO가 꺼지고 모두 다시 이메일 링크로 로그인합니다.",
   'sso.needsDetails': "먼저 ID 공급자 정보를 입력하세요.",
+  'billing.manageSeats': "좌석과 사람",
+  'settings.people.roleSet': "{name}은(는) 이제 {role}입니다",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "{name}의 개인 데이터를 내려받았습니다",
+  'settings.teams.deleted': "{name} 팀을 삭제했습니다",
+  'join.domainRemoved': "@{domain}을(를) 제거했습니다",
+  'auto.actions': "{name} 더 보기",
 };

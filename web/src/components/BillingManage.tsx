@@ -13,7 +13,7 @@
 // + tr.ts. The `as MessageKey` casts keep typechecking green until the keys land
 // (they stay visible to the i18n key scanner, so the coordinator's run lists any
 // still missing).
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { Subscription } from '../../../shared/src/billing';
 import { ApiFailure, get, patch, post } from '../lib/api';
@@ -22,6 +22,8 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
 import { Confirm } from './ui';
+import { useUnsaved } from '../lib/unsaved';
+import '../surfaces/admin.css';
 
 interface SubInfo {
   enabled: boolean;
@@ -31,7 +33,7 @@ interface SubInfo {
 
 const LIVE = ['active', 'trialing', 'past_due', 'paused'];
 
-export function SubscriptionPanel() {
+export function SubscriptionPanel({ children }: { children?: ReactNode }) {
   const { t, fmtDate } = useI18n();
   const { toast, reloadMe } = useStore();
   const [info, setInfo] = useState<SubInfo | null>(null);
@@ -49,6 +51,14 @@ export function SubscriptionPanel() {
   useEffect(() => {
     void load().catch(() => undefined);
   }, [load]);
+  const profileDirty = !!info && (tax !== (info.profile.taxNumber ?? '') || mail !== (info.profile.billingEmail ?? ''));
+  useUnsaved(profileDirty, {
+    save: () => saveProfile(),
+    discard: () => {
+      setTax(info?.profile.taxNumber ?? '');
+      setMail(info?.profile.billingEmail ?? '');
+    },
+  });
 
   if (!info) return null;
   if (!info.enabled) {
@@ -92,12 +102,25 @@ export function SubscriptionPanel() {
     }
   };
 
-  const saveProfile = async () => {
+  const saveProfile = async (): Promise<boolean> => {
     setBusy('profile');
     try {
       await patch('/billing/profile', { taxNumber: tax.trim() || null, billingEmail: mail.trim() || null });
       toast(t('billing.profile.saved' as MessageKey));
       await load();
+      return true;
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  };
+  const portal = async () => {
+    setBusy('portal');
+    try {
+      const { url } = await post<{ url: string }>('/billing/portal');
+      window.open(url, '_blank', 'noopener');
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     } finally {
@@ -111,47 +134,59 @@ export function SubscriptionPanel() {
 
   return (
     <div className="billing-manage">
-      <section className="sheet billing__status" data-state={sub?.status ?? 'none'}>
+      {/* Where it stands, and the three things people come here for: invoices, seats, leaving. */}
+      <section className="sheet billing__status billing-manage__status" data-state={sub?.status ?? 'none'}>
         <Icon name={sub?.cancelAtPeriodEnd || sub?.status === 'past_due' ? 'alert' : sub?.status === 'trialing' ? 'clock' : 'checkCircle'} size={20} />
-        <div>
+        <div className="billing-manage__body">
           <h2 className="billing__title">{t('billing.manage.title' as MessageKey)}</h2>
           <p>{statusLine}</p>
-        </div>
-      </section>
-
-      <section className="sheet">
-        <p className="muted">{t('billing.exit.note' as MessageKey)}</p>
-        <div className="billing-manage__actions">
-          {canExit && (
-            <button className="btn" disabled={!!busy} onClick={() => setConfirmExit(true)}>
-              {t('billing.exit.leave' as MessageKey)}
-            </button>
-          )}
-          {canResume && (
-            <>
-              <span className="muted">{t('billing.exit.resumeNote' as MessageKey, { date: when(sub!.currentPeriodEnd) })}</span>
+          <div className="billing-manage__actions">
+            {sub && (
+              <button className="btn" disabled={busy === 'portal'} onClick={() => void portal()}>
+                {t('billing.portal')} <Icon name="external" size={14} />
+              </button>
+            )}
+            <a
+              className="btn"
+              href="/settings/people"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/settings/people');
+              }}
+            >
+              <Icon name="user" size={16} />
+              {t('billing.manageSeats' as MessageKey)}
+            </a>
+            {canExit && (
+              <button className="btn btn--quiet" disabled={!!busy} onClick={() => setConfirmExit(true)}>
+                {t('billing.exit.leave' as MessageKey)}
+              </button>
+            )}
+            {canResume && (
               <button className="btn btn--primary" disabled={!!busy} onClick={() => void act('resume')}>
                 {busy === 'resume' ? t('common.loading') : t('billing.exit.resume' as MessageKey)}
               </button>
-            </>
-          )}
+            )}
+          </div>
+          <p className="field__hint">{canResume ? t('billing.exit.resumeNote' as MessageKey, { date: when(sub!.currentPeriodEnd) }) : t('billing.exit.note' as MessageKey)}</p>
         </div>
       </section>
 
-      <section className="sheet billing-manage__profile">
-        <h3 className="section__head">{t('billing.profile.title' as MessageKey)}</h3>
-        <label className="field">
-          <span className="field__label">{t('billing.profile.taxNumber' as MessageKey)}</span>
-          <input className="input" value={tax} onChange={(e) => setTax(e.target.value)} placeholder={t('billing.profile.taxNumberPlaceholder' as MessageKey)} maxLength={60} />
-        </label>
-        <label className="field">
-          <span className="field__label">{t('billing.profile.billingEmail' as MessageKey)}</span>
-          <input className="input" type="email" value={mail} onChange={(e) => setMail(e.target.value)} placeholder={t('billing.profile.billingEmailPlaceholder' as MessageKey)} maxLength={200} />
-        </label>
-        <div className="billing-manage__actions">
-          <button className="btn btn--primary" disabled={busy === 'profile'} onClick={() => void saveProfile()}>
-            {busy === 'profile' ? t('common.loading') : t('common.save')}
-          </button>
+      {children}
+
+      <section className="sheet billing-manage__profile" aria-labelledby="billing-profile">
+        <h3 className="sheet__title" id="billing-profile">
+          {t('billing.profile.title' as MessageKey)}
+        </h3>
+        <div className="form__row">
+          <label className="field">
+            <span className="field__label">{t('billing.profile.taxNumber' as MessageKey)}</span>
+            <input className="input" value={tax} onChange={(e) => setTax(e.target.value)} placeholder={t('billing.profile.taxNumberPlaceholder' as MessageKey)} maxLength={60} />
+          </label>
+          <label className="field">
+            <span className="field__label">{t('billing.profile.billingEmail' as MessageKey)}</span>
+            <input className="input" type="email" value={mail} onChange={(e) => setMail(e.target.value)} placeholder={t('billing.profile.billingEmailPlaceholder' as MessageKey)} maxLength={200} />
+          </label>
         </div>
       </section>
 

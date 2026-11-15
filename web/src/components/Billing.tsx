@@ -52,7 +52,7 @@ function loadPaddle(env: 'sandbox' | 'live', token: string, onEvent: (e: { name?
 
 const PADDLE_LOCALE: Partial<Record<Locale, string>> = { en: 'en', tr: 'tr', ar: 'ar', ja: 'ja', ko: 'ko', 'zh-Hans': 'zh-Hans', 'zh-Hant': 'zh-TW' };
 
-export function BillingSettings() {
+export function BillingSettings({ embedded }: { embedded?: boolean }) {
   const { t, fmtDate, locale } = useI18n();
   const { toast, reloadMe } = useStore();
   const [info, setInfo] = useState<BillingInfo | null>(null);
@@ -164,6 +164,7 @@ export function BillingSettings() {
 
   return (
     <div className="billing">
+      {!embedded && (
       <section className="sheet billing__status" data-state={a.state}>
         <Icon name={a.state === 'locked' || a.state === 'past_due' ? 'alert' : a.state === 'trial' ? 'clock' : 'checkCircle'} size={20} />
         <div>
@@ -176,6 +177,7 @@ export function BillingSettings() {
           </button>
         )}
       </section>
+      )}
 
       <div className="billing__toolbar">
         <div className="seg" role="group" aria-label={t('billing.intervalLabel')}>

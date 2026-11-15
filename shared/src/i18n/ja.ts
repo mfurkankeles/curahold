@@ -4499,4 +4499,12 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "必須にする前に、プライベートウィンドウでIDプロバイダー経由のサインインを一度試してください。プロバイダーが止まると、直るまで誰もサインインできません。",
   'sso.effect.off': "保存するとSSOはオフになり、全員がメールのリンクでサインインします。",
   'sso.needsDetails': "先にIDプロバイダーの情報を入力してください。",
+  'billing.manageSeats': "シートとメンバー",
+  'settings.people.roleSet': "{name} のロールを {role} にしました",
+  'settings.people.seatSet': "{name}：{seat}",
+  'settings.people.statusSet': "{name}：{status}",
+  'settings.people.exported': "{name} の個人データをダウンロードしました",
+  'settings.teams.deleted': "チーム「{name}」を削除しました",
+  'join.domainRemoved': "@{domain} を削除しました",
+  'auto.actions': "{name} のその他の操作",
 };

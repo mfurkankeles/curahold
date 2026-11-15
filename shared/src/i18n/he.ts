@@ -4499,4 +4499,12 @@ export const he: Partial<Record<MessageKey, string>> = {
   'sso.effect.lockout': "לפני שתהפוך את זה לחובה, היכנס פעם אחת דרך הספק בחלון פרטי. אם הספק יפסיק לעבוד, אף אחד לא יוכל להיכנס עד שיתוקן.",
   'sso.effect.off': "כשתשמור, SSO יכובה: כולם ייכנסו שוב עם קישורי דוא״ל.",
   'sso.needsDetails': "מלא קודם את פרטי הספק.",
+  'billing.manageSeats': "מושבים ואנשים",
+  'settings.people.roleSet': "{name} עכשיו {role}",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "המידע האישי של {name} הורד",
+  'settings.teams.deleted': "הצוות {name} נמחק",
+  'join.domainRemoved': "‎@{domain} הוסר",
+  'auto.actions': "עוד עבור {name}",
 };

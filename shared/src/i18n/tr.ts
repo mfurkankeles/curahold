@@ -4499,4 +4499,12 @@ export const tr: Record<MessageKey, string> = {
   'sso.effect.lockout': "Zorunlu kılmadan önce gizli bir pencerede bir kez kimlik sağlayıcınla giriş yap. Sağlayıcı çalışmazsa düzelene kadar kimse giremez.",
   'sso.effect.off': "Kaydettiğinde SSO kapanır: herkes yeniden e-posta bağlantısıyla girer.",
   'sso.needsDetails': "Önce kimlik sağlayıcının bilgilerini doldur.",
+  'billing.manageSeats': "Koltuklar ve kişiler",
+  'settings.people.roleSet': "{name} artık {role}",
+  'settings.people.seatSet': "{name}: {seat}",
+  'settings.people.statusSet': "{name}: {status}",
+  'settings.people.exported': "{name} kişisinin verileri indirildi",
+  'settings.teams.deleted': "{name} ekibi silindi",
+  'join.domainRemoved': "@{domain} kaldırıldı",
+  'auto.actions': "{name} için diğer işlemler",
 };

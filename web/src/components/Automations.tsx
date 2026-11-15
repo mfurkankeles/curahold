@@ -1,6 +1,7 @@
 // Automations, built as sentences: "When … (only for …), then …".
 // Every rule can be switched off in one click, run now, and shows what it did.
 import { Icon } from './icons';
+import { SkeletonRows } from './Empty';
 import { useEffect, useMemo, useState } from 'react';
 import { ACCOUNT_TRIGGERS, TRIGGER_TYPES, type Action, type Automation, type AutomationRun, type Condition, type Trigger, type TriggerType } from '../../../shared/src/automation';
 import { labelOf } from '../../../shared/src/fields';
@@ -11,7 +12,9 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
-import { Confirm, Dialog } from './ui';
+import { Confirm, Dialog, RowMenu } from './ui';
+import { useUndo } from '../lib/undo';
+import '../surfaces/admin.css';
 import { useTrashToast } from '../lib/trash';
 import { DateField } from './DateField';
 
@@ -86,6 +89,7 @@ export function AutomationList() {
   const { t } = useI18n();
   const { can, toast } = useStore();
   const trashed = useTrashToast();
+  const offer = useUndo();
   const describe = useDescribe();
   const [list, setList] = useState<Automation[] | null>(null);
   const [editing, setEditing] = useState<Automation | 'new' | null>(null);
@@ -101,7 +105,7 @@ export function AutomationList() {
     setList((l) => l?.map((x) => (x.id === a.id ? { ...x, enabled } : x)) ?? l);
     try {
       await patch(`/automations/${a.id}`, { enabled });
-      toast(enabled ? t('auto.switchedOn', { name: a.name }) : t('auto.paused', { name: a.name }));
+      offer(enabled ? t('auto.switchedOn', { name: a.name }) : t('auto.paused', { name: a.name }), () => patch(`/automations/${a.id}`, { enabled: !enabled }), load);
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
       void load();
@@ -113,7 +117,7 @@ export function AutomationList() {
     void load();
   };
 
-  if (!list) return <div className="muted">{t('common.loading')}</div>;
+  if (!list) return <SkeletonRows rows={6} label={t('common.loading')} />;
   return (
     <div className="rules">
       <div className="section__head">
@@ -155,21 +159,18 @@ export function AutomationList() {
             </p>
           </div>
           {manage && (
-            <div className="inline-actions">
-              {ACCOUNT_TRIGGERS.includes(a.trigger.type) && a.trigger.type !== 'account_created' || a.trigger.type === 'task_overdue' ? (
-                <button className="btn btn--small btn--quiet" onClick={() => runNow(a)}>
-                  {t('auto.runNow')}
-                </button>
-              ) : null}
-              <button className="btn btn--small btn--quiet" onClick={() => setHistory(a)}>
-                {t('auto.history')}
-              </button>
+            <div className="rule__actions">
               <button className="btn btn--small" onClick={() => setEditing(a)}>
                 {t('common.edit')}
               </button>
-              <button className="btn btn--small btn--quiet" aria-label={t('common.delete')} onClick={() => setRemoving(a)}>
-                ✕
-              </button>
+              <RowMenu
+                label={t('auto.actions', { name: a.name })}
+                items={[
+                  ...((ACCOUNT_TRIGGERS.includes(a.trigger.type) && a.trigger.type !== 'account_created') || a.trigger.type === 'task_overdue' ? [{ label: t('auto.runNow'), onClick: () => void runNow(a) }] : []),
+                  { label: t('auto.history'), onClick: () => setHistory(a) },
+                  { label: t('common.delete'), danger: true, onClick: () => setRemoving(a) },
+                ]}
+              />
             </div>
           )}
         </div>

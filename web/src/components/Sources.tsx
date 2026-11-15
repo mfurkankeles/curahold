@@ -2,6 +2,8 @@
 // people, preview, start — then watch the sync and fix what it reports.
 // Everything an administrator needs, without anyone writing a mapping file.
 import { Icon } from './icons';
+import '../surfaces/admin.css';
+import { SkeletonRows } from './Empty';
 import { DemoConnect, DemoCrmConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
@@ -72,7 +74,7 @@ export function Sources() {
     }
   }, [t, toast]);
 
-  if (!data) return <div className="muted">{t('common.loading')}</div>;
+  if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
   const providers = data.providers.filter((p) => p.kind === 'source' && SOURCES.includes(p.id));
   const support = data.providers.filter((p) => p.kind === 'source' && SUPPORT.includes(p.id));
   const warehouses = data.providers.filter((p) => p.kind === 'source' && WAREHOUSES.includes(p.id));
@@ -337,7 +339,7 @@ export function Sources() {
       {keyed && <KeyConnect provider={keyed} onClose={() => setKeyed(null)} />}
       {hooking && <DevHookDialog host={hooking} onClose={() => setHooking(null)} />}
       {asking && <BeforeSignIn provider={asking} onClose={() => setAsking(null)} />}
-      <button className="sr-only" onClick={() => reload()}>
+      <button className="sr-only admin-reveal" onClick={() => reload()}>
         {t('common.refresh')}
       </button>
     </div>
@@ -836,7 +838,7 @@ function JiraSetup({ id, onStart, running }: { id: string; onStart: () => Promis
       .catch(onErr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-  if (!info) return <div className="muted">{t('common.loading')}</div>;
+  if (!info) return <SkeletonRows rows={6} label={t('common.loading')} />;
   const start = async () => {
     setBusy(true);
     try {
@@ -1570,7 +1572,7 @@ function OwnersEditor({ id, crm, embedded, onChange }: { id: string; crm: string
     onChange?.(next);
   };
   const unmatched = useMemo(() => rows?.filter((r) => !map[r.remoteId]).length ?? 0, [rows, map]);
-  if (!rows) return <div className="empty">{t('common.loading')}</div>;
+  if (!rows) return <SkeletonRows rows={6} label={t('common.loading')} />;
   if (!rows.length) return embedded ? null : <p className="muted">{t('sync.owners.none', { crm })}</p>;
   const body = (
     <>

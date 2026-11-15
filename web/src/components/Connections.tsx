@@ -2,6 +2,7 @@
 // and one-way channel posts for everything else. Used by the setup wizard
 // and by Settings → Connections.
 import { Icon } from './icons';
+import { SkeletonRows } from './Empty';
 import { DemoConnect, IN_DEMO } from './DemoConnect';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
@@ -112,7 +113,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
     }
   };
 
-  if (!data) return <div className="muted">{t('common.loading')}</div>;
+  if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
   const twoWay = data.providers.filter((p) => p.kind === 'messaging' && p.twoWay);
   const hooks = data.connections.filter((c) => c.provider === 'webhook');
   const sources = data.connections.filter((c) => c.kind === 'source');
