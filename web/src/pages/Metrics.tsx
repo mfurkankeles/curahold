@@ -10,7 +10,8 @@ import { useMoney } from '../lib/money';
 import { useStore } from '../lib/store';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
-import { formatClock, formatNumber } from '../lib/format';
+import { formatClock, formatNumber, formatPercent } from '../lib/format';
+import '../surfaces/console.css';
 
 const REFRESH_MS = 45_000;
 const VB_W = 300;
@@ -100,7 +101,7 @@ export function MetricsPage() {
 
   const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const pct = (v: number) => formatPercent(v * 100, locale);
 
   const tile = (label: string, value: string, sub?: string, lead?: boolean) => (
     <div className={`mtile${lead ? ' mtile--lead' : ''}`}>

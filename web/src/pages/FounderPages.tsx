@@ -12,6 +12,7 @@ import { navigate } from '../lib/router';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { PlatformAccess } from '../../../shared/src/platform';
 import { PAGE_AREAS } from '../platform/pages-manifest';
+import '../surfaces/console.css';
 
 export function FounderPagesPage() {
   const { t } = useI18n();

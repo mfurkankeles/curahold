@@ -18,6 +18,8 @@ import type { Q } from '../db';
 import { hmacHex, randomDigits, randomToken, safeEqual, seal, sha256Hex, sign, unseal, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
 import { audit } from '../lib/audit';
+import { consolePulse, consoleToday } from '../lib/console';
+import { platformCustomerDetail, platformCustomers } from './admin-platform';
 import { addHelpMessage, takeMail } from '../lib/helpThread';
 import { ENTRY_LINK_MINUTES, mayGrant, sharedKeyOk, staffPerson, SUPPORT_SESSION_HOURS } from '../lib/support';
 import { body } from '../lib/validate';
@@ -198,6 +200,40 @@ deskRoutes.get('/me', async (c) => {
     ),
   );
   return c.json({ staff: { email: staff.email, name: staff.via === 'key' ? 'Curahold' : nameFrom(staff.email) }, counts: n });
+});
+
+/** The console's first screen: how the business is today, and who needs the team. */
+deskRoutes.get('/today', async (c) => {
+  const staff = await staffOnly(c);
+  c.header('cache-control', 'no-store');
+  return c.json(await consoleToday(c.get('deps'), staff.email));
+});
+
+/** A fingerprint of what the console shows; the open console reloads only when it moves. */
+deskRoutes.get('/pulse', async (c) => {
+  await staffOnly(c);
+  c.header('cache-control', 'no-store');
+  return c.json({ v: await consolePulse(c.get('deps')) });
+});
+
+/** Every company with its plan and billing standing. */
+deskRoutes.get('/customers', async (c) => {
+  await staffOnly(c);
+  return c.json({ customers: await platformCustomers(c.get('deps')) });
+});
+
+/** One company's account: written to the desk's log and to the company's own activity log. */
+deskRoutes.get('/customers/:orgId', async (c) => {
+  const staff = await staffOnly(c);
+  const deps = c.get('deps');
+  const detail = await platformCustomerDetail(deps, c.req.param('orgId'));
+  if (!detail) fail('not_found');
+  const orgId = detail!.customer.orgId;
+  await deps.db.system(async (db) => {
+    await note(db, staff, 'account', null, orgId);
+    await audit(db, { orgId, actorId: null, action: 'support.account', entity: 'org', entityId: orgId, meta: { staff: staff.via === 'key' ? 'Curahold' : `${nameFrom(staff.email)} <${staff.email}>` } });
+  });
+  return c.json(detail);
 });
 
 /** The queue: whose turn it is decides the order. `status` narrows; `q` searches subjects and companies. */

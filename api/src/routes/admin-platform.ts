@@ -14,7 +14,7 @@
 //   - the normalized schema (0037): subscriptions, invoices, orgs.tax_number…
 //   - the legacy snapshot: orgs.billing (jsonb) and orgs.trial_ends_at.
 import { Hono } from 'hono';
-import { nowOf, type AppEnv } from '../context';
+import { nowOf, type AppEnv, type Deps } from '../context';
 import type { Q } from '../db';
 import { fail } from '../lib/errors';
 import { platformAccess, requirePlatform } from '../lib/platform';
@@ -74,11 +74,11 @@ platformRoutes.get('/platform/overview', async (c) => {
     const [totals] = billing
       ? await q.query(
           `select count(*)::int as customers,
-                  count(*) filter (where s.status = 'active')::int as active,
-                  count(*) filter (where s.status = 'trialing' or (s.status is null and o.trial_ends_at > now()))::int as trialing,
-                  count(*) filter (where s.status = 'past_due')::int as past_due,
-                  count(*) filter (where s.status = 'canceled')::int as canceled,
-                  count(*) filter (where s.status = 'paused')::int as paused
+                  count(*) filter (where coalesce(s.status, o.billing->>'status') = 'active')::int as active,
+                  count(*) filter (where coalesce(s.status, o.billing->>'status') = 'trialing' or (coalesce(s.status, o.billing->>'status') is null and o.trial_ends_at > now()))::int as trialing,
+                  count(*) filter (where coalesce(s.status, o.billing->>'status') = 'past_due')::int as past_due,
+                  count(*) filter (where coalesce(s.status, o.billing->>'status') = 'canceled')::int as canceled,
+                  count(*) filter (where coalesce(s.status, o.billing->>'status') = 'paused')::int as paused
              from orgs o left join subscriptions s on s.org_id = o.id`,
         )
       : await q.query(
@@ -94,10 +94,11 @@ platformRoutes.get('/platform/overview', async (c) => {
     // The paying companies (active + past_due) with the pieces MRR needs.
     const paying = billing
       ? await q.query(
-          `select s.plan as plan, 'month' as interval,
-                  (select count(*)::int from users u where u.org_id = o.id and u.seat = 'full' and u.status = 'active') as seats
-             from orgs o join subscriptions s on s.org_id = o.id
-            where s.status in ('active', 'past_due')`,
+          `select coalesce(s.plan, o.billing->>'plan') as plan, case when s.org_id is null then coalesce(o.billing->>'interval', 'month') else 'month' end as interval,
+                  coalesce(case when s.org_id is null then (o.billing->>'seats')::int end,
+                           (select count(*)::int from users u where u.org_id = o.id and u.seat = 'full' and u.status = 'active')) as seats
+             from orgs o left join subscriptions s on s.org_id = o.id
+            where coalesce(s.status, o.billing->>'status') in ('active', 'past_due')`,
         )
       : await q.query(
           `select coalesce(o.billing->>'plan', o.plan) as plan,
@@ -144,7 +145,11 @@ platformRoutes.get('/platform/overview', async (c) => {
 
 platformRoutes.get('/platform/customers', async (c) => {
   requirePlatform(c);
-  const deps = c.get('deps');
+  return c.json({ customers: await platformCustomers(c.get('deps')) });
+});
+
+/** Every company, newest first, with its people, plan and billing standing (also the console's Customers). */
+export async function platformCustomers(deps: Deps): Promise<PlatformCustomer[]> {
   const nowMs = nowOf(deps).getTime();
 
   const rows = await deps.db.system(async (q) => {
@@ -154,7 +159,9 @@ platformRoutes.get('/platform/customers', async (c) => {
           `select o.id, o.name, o.slug, o.created_at, o.trial_ends_at, o.tax_number, o.billing_email,
                   (select count(*)::int from users u where u.org_id = o.id and u.status = 'active') as users,
                   (select count(*)::int from users u where u.org_id = o.id and u.status = 'active' and u.seat = 'full') as seats,
-                  s.plan as plan, s.status as status, s.cancel_at_period_end as cancel, s.current_period_end as period_end,
+                  coalesce(s.plan, o.billing->>'plan') as plan, coalesce(s.status, o.billing->>'status') as status,
+                  coalesce(s.cancel_at_period_end, (o.billing->>'cancelAtPeriodEnd')::boolean) as cancel,
+                  coalesce(s.current_period_end::text, o.billing->>'periodEnd') as period_end,
                   inv.status as inv_status, inv.issued_at as inv_at
              from orgs o
              left join subscriptions s on s.org_id = o.id
@@ -196,16 +203,21 @@ platformRoutes.get('/platform/customers', async (c) => {
       latestInvoiceAt: iso(r.inv_at),
     };
   });
-  return c.json({ customers });
-});
+  return customers;
+}
 
 // ------------------------------------------------------------ one customer
 
 platformRoutes.get('/platform/customers/:orgId', async (c) => {
   requirePlatform(c);
-  const deps = c.get('deps');
-  const orgId = c.req.param('orgId');
-  if (!UUID.test(orgId)) fail('not_found');
+  const detail = await platformCustomerDetail(c.get('deps'), c.req.param('orgId'));
+  if (!detail) fail('not_found');
+  return c.json(detail);
+});
+
+/** One company whole: settings, subscription, counts and invoices; null when there is no such company. */
+export async function platformCustomerDetail(deps: Deps, orgId: string): Promise<PlatformCustomerDetail | null> {
+  if (!UUID.test(orgId)) return null;
   const nowMs = nowOf(deps).getTime();
 
   const detail = await deps.db.system(async (q): Promise<PlatformCustomerDetail | null> => {
@@ -322,7 +334,5 @@ platformRoutes.get('/platform/customers/:orgId', async (c) => {
       invoices,
     };
   });
-
-  if (!detail) fail('not_found');
-  return c.json(detail);
-});
+  return detail;
+}

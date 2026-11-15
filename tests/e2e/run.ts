@@ -907,7 +907,7 @@ await step('help: a request with a screenshot and consent; support visits read o
   expect((await p.$('.help__req[data-unread]')) === null, 'the answered request still shows as unread');
 });
 
-await step('the support desk: staff sign in with a code, then note, answer, take and solve a request from the queue', async () => {
+await step('the console: staff sign in with two steps, see the business today change live, and solve a request from who needs them', async () => {
   // Mert writes to support again, with consent to look, so something is waiting in the queue.
   const sent = await mert.page.evaluate(async () => {
     const r = await fetch('/api/help', {
@@ -933,7 +933,7 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   await d.waitForFunction((h) => location.origin === h, {}, deskHost);
   await d.waitForSelector('.desk-signin__card input[type=email]');
   // English first; this team works in Turkish.
-  await (await byText(d, '.desk__langs button', 'Türkçe')).click();
+  await d.select('.desk__langs select', 'tr');
   await d.waitForFunction(() => document.querySelector('.desk-signin__card h1')?.textContent === 'Destek masası');
   await shot(d, 'p7-07-desk-signin');
   // Someone who is not on the staff list is told the same thing, and gets no code.
@@ -959,17 +959,38 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   await d.waitForSelector('.desk-signin__card [data-secret]');
   const deskSecret = await d.$eval('.desk-signin__card [data-secret]', (el) => (el as HTMLElement).dataset.secret!);
   await d.type('.desk-signin__card input[autocomplete="one-time-code"]', await hotp(base32Decode(deskSecret), stepOf(Date.now())));
+  const journey = Date.now();
   await d.click('.desk-signin__card .btn--primary');
-  await appears('.desk__rail');
+  await appears('.console__rail');
 
-  // The queue: what is waiting on support, the blocking one marked.
+  // The first screen: how the business is today, and who needs the team.
+  await appears('.ctoday .ctile[data-lead] .ctile__value');
+  expect(d.url() === `${deskHost}/`, `the console did not open on Today: ${d.url()}`);
+  const tiles = await d.$$eval('.ctile__label', (els) => els.map((e) => e.textContent ?? ''));
+  for (const want of ['MRR', 'ARR', 'Denemeden ödemeye', 'Aktivasyon', 'İptal, 30 gün']) expect(tiles.includes(want), `Today has no "${want}" tile: ${tiles.join(' | ')}`);
+  // A number changes without a reload: a company starts paying, the MRR on screen follows.
+  const mrrBefore = await text(d, '.ctile[data-lead] .ctile__value');
+  const [demoOrg] = await sql(`select id from orgs where slug = 'demo'`);
+  await sql(`update orgs set billing = $2::jsonb where id = $1`, [demoOrg.id, JSON.stringify({ status: 'active', plan: 'business', interval: 'month', seats: 7, eventAt: new Date().toISOString() })]);
+  const changedAt = Date.now();
+  await d.waitForFunction((before) => document.querySelector('.ctile[data-lead] .ctile__value')?.textContent !== before, { timeout: 12000 }, mrrBefore);
+  console.log(`    console: MRR ${mrrBefore} → ${await text(d, '.ctile[data-lead] .ctile__value')} on screen ${Date.now() - changedAt} ms after the billing record changed, no reload`);
+  await shot(d, 'p7-11-console-today');
+  // Who needs the team: the blocking request is there; it opens straight into the conversation.
+  const need = await byText(d, '.cneed .cneed__what', 'Toplu görev aktarımı yarıda kaldı');
+  expect((await text(d, '.cneeds')).includes('İşlerini durduruyor'), 'the blocking request is not marked on Today');
+  await need.click();
+  await appears('.deskreq');
+
+  // The queue beside it: what is waiting on support, the blocking one marked.
   await appears('.desk__row');
   const rows = await d.$$eval('.desk__row', (els) => els.map((e) => e.textContent ?? ''));
   expect(rows.some((r) => r.includes('Toplu görev aktarımı yarıda kaldı') && r.includes('İşlerini durduruyor')), `queue: ${rows.join(' | ')}`);
   expect(!rows.some((r) => r.includes('Yenileme panosu açılmıyor')), 'a solved request is still in the waiting queue');
-  await (await byText(d, '.desk__row strong', 'Toplu görev aktarımı yarıda kaldı')).click();
+  expect(d.url() === `${deskHost}/support?r=${ref}`, `the open request is not in the address: ${d.url()}`);
+  // An old desk link (/?r=) still opens the request.
+  await d.goto(`${deskHost}/?r=${ref}`, { waitUntil: 'networkidle0' });
   await appears('.deskreq');
-  expect(d.url() === `${deskHost}/?r=${ref}`, `the open request is not in the address: ${d.url()}`);
   expect((await text(d, '.deskmsg[data-by="user"]')).includes('40 satırdan yalnızca 12'), 'what was asked is not on the request');
   const side = await text(d, '.deskreq__side');
   expect(side.includes('Mert Aksoy') && side.includes('mert@demo.example'), `who asked is missing: ${side}`);
@@ -1027,6 +1048,7 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   await (await byText(d, '.deskreq__tools .btn', 'Çözüldü işaretle')).click();
   await appears('.desk__status[data-status="solved"]');
   await d.waitForFunction(() => !document.querySelector('.desk__row'));
+  console.log(`    console: signed in to solved in ${Date.now() - journey} ms`);
   // Everything the desk did is on its own log, by name.
   const log = (await sql(`select action from desk_log where staff_email = $1 and ref = $2 order by id`, [DESK_STAFF, ref])).map((r: any) => r.action);
   for (const a of ['opened', 'noted', 'answered', 'released', 'took', 'status:solved']) expect(log.includes(a), `the log has no "${a}": ${log.join(', ')}`);
@@ -1041,7 +1063,8 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   await d.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
 
   // Signing out ends it for this browser.
-  await d.click('.desk__who .btn');
+  await d.click('.console__me summary');
+  await d.click('.console__account .btn');
   await d.waitForSelector('.desk-signin__card');
   const after = await d.evaluate(async () => (await fetch('/api/desk/me')).status);
   expect(after === 401, `the desk still answers after signing out: ${after}`);

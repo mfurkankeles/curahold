@@ -3,14 +3,19 @@
 // that is open on the right — the conversation, the company it comes from and
 // the team's own notes. Only people on Curahold's staff list can sign in.
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { normalizeLocale, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, normalizeLocale, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import type { ConsoleToday } from '../../../shared/src/console';
+import type { PlatformCustomer, PlatformCustomerDetail } from '../../../shared/src/platform';
 import type { ReplayMeta } from '../../../shared/src/replay';
-import { EmptyState } from '../components/Empty';
+import { EmptyState, LoadError, OfflineBar, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { TotpSecret } from '../components/SecondStep';
 import { Icon, type IconName } from '../components/icons';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
-import '../desk.css';
+import { THEMES, useTheme, type ThemePref } from '../lib/theme';
+import { TodayView } from './ConsoleToday';
+import { CustomerDrawer, CustomerList } from './PlatformConsole';
+import '../surfaces/console.css';
 import { formatDate } from '../lib/format';
 
 // rrweb's player is heavy: load it only when the team watches a recording.
@@ -82,17 +87,20 @@ const shortName = (email: string) => email.split('@')[0];
 /** A plan by its name; one this screen has no word for shows as it is stored. */
 const planName = (plan: string, t: (k: MessageKey) => string) => (plan === 'trial' ? t('desk.plan.trial') : plan === 'team' || plan === 'business' ? t(`billing.plan.${plan}`) : plan);
 
-/** English first; Turkish is a choice, kept on this device like everywhere else. */
+/** Any of the nine languages; the choice is kept on this device like everywhere else. */
 function Languages({ onLocale }: { onLocale: (l: Locale) => void }) {
   const { locale, t } = useI18n();
   return (
-    <div className="seg desk__langs" role="group" aria-label={t('nav.language')}>
-      {(['en', 'tr'] as Locale[]).map((l) => (
-        <button key={l} type="button" aria-pressed={locale === l} onClick={() => onLocale(l)}>
-          {l === 'en' ? 'English' : 'Türkçe'}
-        </button>
-      ))}
-    </div>
+    <label className="console__pick desk__langs">
+      <Icon name="globe" size={16} />
+      <select className="input" value={locale} onChange={(e) => onLocale(e.target.value as Locale)} aria-label={t('nav.language')}>
+        {LOCALES.map((l) => (
+          <option key={l} value={l} lang={l}>
+            {LOCALE_INFO[l].name}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -110,13 +118,13 @@ export default function DeskApp({ onLocale }: { onLocale: (l: Locale) => void })
   }, []);
   useEffect(() => void load(), [load]);
   useEffect(() => {
-    document.title = `${t('desk.title')} · Curahold`;
+    document.title = `${t('console.name' as MessageKey)} · Curahold`;
   }, [t]);
 
   if (me === undefined) return <div className="center-note muted" />;
   if (me === null) return <SignIn notice={notice} onIn={load} onLocale={onLocale} />;
   return (
-    <Desk
+    <Console
       me={me}
       onLocale={onLocale}
       refreshCounts={load}
@@ -238,46 +246,260 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-function Desk({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: () => void; onOut: (expired: boolean) => void; onLocale: (l: Locale) => void }) {
+const PULSE_MS = 5_000;
+type Section = 'today' | 'customers' | 'support';
+interface Where {
+  section: Section;
+  /** the open request (support) */
+  r?: string | null;
+  /** the open company (customers) */
+  c?: string | null;
+}
+/** The address says where the console is: / today, /customers(?c=), /support(?r=). An old desk link (/?r=) opens the request. */
+function readWhere(): Where {
+  const p = new URLSearchParams(location.search);
+  const r = p.get('r');
+  if (location.pathname.startsWith('/customers')) return { section: 'customers', c: p.get('c') };
+  if (location.pathname.startsWith('/support') || r) return { section: 'support', r };
+  return { section: 'today' };
+}
+const urlOf = (w: Where) => (w.section === 'today' ? '/' : w.section === 'customers' ? `/customers${w.c ? `?c=${w.c}` : ''}` : `/support${w.r ? `?r=${w.r}` : ''}`);
+
+/**
+ * The console's heartbeat: a short fingerprint of everything it shows, asked for
+ * every few seconds while the tab is in view. It returns a number that moves
+ * only when the fingerprint does, so each section reloads exactly then.
+ */
+function usePulse(failed: (e: unknown) => void): number {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    let last = '';
+    let live = true;
+    const look = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const { v } = await desk<{ v: string }>('GET', '/pulse');
+        if (live && last && v !== last) setBeat((b) => b + 1);
+        last = v;
+      } catch (e) {
+        if (live) failed(e);
+      }
+    };
+    void look();
+    const id = setInterval(look, PULSE_MS);
+    document.addEventListener('visibilitychange', look);
+    return () => {
+      live = false;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', look);
+    };
+  }, [failed]);
+  return beat;
+}
+
+/** A section's data, loaded again on each heartbeat; a first load that fails says so, a later one keeps what is shown. */
+function useConsoleData<T>(path: string, beat: number, failed: (e: unknown) => void): { data: T | null; error: boolean; retry: () => void } {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let live = true;
+    desk<T>('GET', path)
+      .then((d) => {
+        if (!live) return;
+        setData(d);
+        setError(false);
+      })
+      .catch((e) => {
+        failed(e);
+        if (live) setError(true);
+      });
+    return () => {
+      live = false;
+    };
+  }, [path, beat, attempt, failed]);
+  return { data, error, retry: () => setAttempt((a) => a + 1) };
+}
+
+function TodaySection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: (w: Where) => void }) {
   const { t } = useI18n();
+  const { data, error, retry } = useConsoleData<ConsoleToday>('/today', beat, failed);
+  if (!data) return <div className="console__page">{error ? <LoadError onRetry={retry} /> : <SkeletonCards count={5} label={t('common.loading')} />}</div>;
+  return (
+    <div className="console__page">
+      <TodayView data={data} onRequest={(r) => go({ section: 'support', r })} onCompany={(c) => go({ section: 'customers', c })} />
+    </div>
+  );
+}
+
+function CustomersSection({ beat, failed, open, go }: { beat: number; failed: (e: unknown) => void; open: string | null; go: (w: Where, replace?: boolean) => void }) {
+  const { t } = useI18n();
+  const { data, error, retry } = useConsoleData<{ customers: PlatformCustomer[] }>('/customers', beat, failed);
+  const loadOne = useCallback((id: string) => desk<PlatformCustomerDetail>('GET', `/customers/${id}`), []);
+  const close = useCallback(() => go({ section: 'customers' }, true), [go]);
+  return (
+    <div className="console__page">
+      <header className="pf__head">
+        <div>
+          <h1 className="pf__title">{t('metrics.customers')}</h1>
+          <p className="pf__sub">{t('platform.subtitle' as MessageKey)}</p>
+        </div>
+      </header>
+      {!data ? (
+        error ? <LoadError onRetry={retry} /> : <SkeletonRows rows={8} label={t('common.loading')} />
+      ) : data.customers.length === 0 ? (
+        <EmptyState icon="building" title={t('platform.empty' as MessageKey)} />
+      ) : (
+        <CustomerList customers={data.customers} onOpen={(c) => go({ section: 'customers', c })} />
+      )}
+      {open && <CustomerDrawer orgId={open} load={loadOne} onClose={close} />}
+    </div>
+  );
+}
+
+/** Language and appearance, the address signed in with, and the way out. */
+function Account({ me, onLocale, onOut }: { me: Me; onLocale: (l: Locale) => void; onOut: () => void }) {
+  const { t } = useI18n();
+  const [theme, setTheme] = useTheme();
+  return (
+    <div className="console__account">
+      <Languages onLocale={onLocale} />
+      <label className="console__pick">
+        <span className="sr-only">{t('menu.theme')}</span>
+        <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={16} />
+        <select className="input" value={theme} onChange={(e) => setTheme(e.target.value as ThemePref)} aria-label={t('menu.theme')}>
+          {THEMES.map((x) => (
+            <option key={x} value={x}>
+              {t(`menu.theme.${x}` as MessageKey)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <span className="console__email">{me.staff.email}</span>
+      <button type="button" className="btn btn--quiet btn--small" onClick={onOut}>
+        <Icon name="logout" size={14} />
+        {t('desk.signout')}
+      </button>
+    </div>
+  );
+}
+
+function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: () => void; onOut: (expired: boolean) => void; onLocale: (l: Locale) => void }) {
+  const { t } = useI18n();
+  const [where, setWhere] = useState<Where>(readWhere);
   const [queue, setQueue] = useState('received');
+  const failed = useCallback((e: unknown) => (e instanceof DeskError && (e.status === 403 || e.status === 401) ? onOut(true) : undefined), [onOut]);
+  const beat = usePulse(failed);
+  useEffect(() => {
+    if (beat) refreshCounts();
+  }, [beat, refreshCounts]);
+  useEffect(() => {
+    const pop = () => setWhere(readWhere());
+    window.addEventListener('popstate', pop);
+    return () => window.removeEventListener('popstate', pop);
+  }, []);
+  const go = useCallback((w: Where, replace = false) => {
+    if (replace) history.replaceState(null, '', urlOf(w));
+    else history.pushState(null, '', urlOf(w));
+    setWhere(w);
+    if (!replace) document.getElementById('console-main')?.focus({ preventScroll: true });
+  }, []);
+  const link = (section: Section, icon: IconName, label: string, count?: number) => (
+    <a
+      href={urlOf({ section })}
+      className="console__tab"
+      aria-current={where.section === section ? 'page' : undefined}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        go({ section });
+      }}
+    >
+      <Icon name={icon} size={18} />
+      <span>{label}</span>
+      {count ? <span className="desk__count">{count}</span> : null}
+    </a>
+  );
+  const pickQueue = (key: string) => {
+    setQueue(key);
+    if (where.section !== 'support') go({ section: 'support' });
+  };
+
+  return (
+    <div className="console" data-section={where.section}>
+      <aside className="console__rail">
+        <div className="console__brand">
+          <span className="desk__mark" aria-hidden="true">
+            <Icon name="lifebuoy" size={18} />
+          </span>
+          <span className="console__brandname">
+            <strong>Curahold</strong>
+            <span>{t('console.name' as MessageKey)}</span>
+          </span>
+        </div>
+        <nav className="console__nav" aria-label={t('console.name' as MessageKey)}>
+          {link('today', 'chart', t('console.today' as MessageKey))}
+          {link('customers', 'building', t('metrics.customers'))}
+          {link('support', 'lifebuoy', t('console.support' as MessageKey), me.counts.received)}
+        </nav>
+        <Queues me={me} queue={queue} onQueue={pickQueue} className="console__queues" current={where.section === 'support'} />
+        <details className="console__me">
+          <summary aria-label={t('console.account' as MessageKey)}>
+            <Icon name="user" size={18} />
+            <span className="console__metext">{me.staff.name}</span>
+          </summary>
+          <Account me={me} onLocale={onLocale} onOut={() => onOut(false)} />
+        </details>
+      </aside>
+      <main className="console__main" id="console-main" tabIndex={-1}>
+        <OfflineBar />
+        {where.section === 'today' && <TodaySection beat={beat} failed={failed} go={go} />}
+        {where.section === 'customers' && <CustomersSection beat={beat} failed={failed} open={where.c ?? null} go={go} />}
+        {where.section === 'support' && (
+          <Support me={me} queue={queue} onQueue={setQueue} open={where.r ?? null} choose={(r) => go({ section: 'support', r }, !!r === !!where.r)} beat={beat} refreshCounts={refreshCounts} failed={failed} />
+        )}
+      </main>
+    </div>
+  );
+}
+
+/** The queues: in the rail on a desktop, a strip over the list on a phone. */
+function Queues({ me, queue, onQueue, className, current }: { me: Me; queue: string; onQueue: (k: string) => void; className: string; current: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className={className} role="group" aria-label={t('console.queues' as MessageKey)}>
+      {QUEUES.map((x) => (
+        <button key={x.key} type="button" className="desk__queue" aria-pressed={current && queue === x.key} onClick={() => onQueue(x.key)}>
+          <Icon name={x.icon} size={16} />
+          <span>{t(`desk.queue.${x.key}` as MessageKey)}</span>
+          {x.count && me.counts[x.count] > 0 && <span className="desk__count">{me.counts[x.count]}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Support({ me, queue, onQueue, open, choose, beat, refreshCounts, failed }: { me: Me; queue: string; onQueue: (k: string) => void; open: string | null; choose: (ref: string | null) => void; beat: number; refreshCounts: () => void; failed: (e: unknown) => void }) {
+  const { t } = useI18n();
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [open, setOpen] = useState<string | null>(() => new URLSearchParams(location.search).get('r'));
-  const failed = useCallback((e: unknown) => (e instanceof DeskError && (e.status === 403 || e.status === 401) ? onOut(true) : undefined), [onOut]);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     const base = QUEUES.find((x) => x.key === queue)!.query;
     try {
       const r = await desk<{ requests: Row[] }>('GET', `/requests?${base}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ''}`);
       setRows(r.requests);
+      setError(false);
     } catch (e) {
+      setError(true);
       failed(e);
     }
   }, [queue, q, failed]);
   useEffect(() => {
     const id = setTimeout(load, q ? 250 : 0);
     return () => clearTimeout(id);
-  }, [load, q]);
-  // A queue is only useful if it is current: look again every half minute, and when the tab is looked at again.
-  useEffect(() => {
-    const again = () => {
-      if (document.visibilityState === 'visible') {
-        void load();
-        refreshCounts();
-      }
-    };
-    const id = setInterval(again, 30_000);
-    document.addEventListener('visibilitychange', again);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', again);
-    };
-  }, [load, refreshCounts]);
-  const choose = (ref: string | null) => {
-    setOpen(ref);
-    history.replaceState(null, '', ref ? `/?r=${ref}` : '/');
-  };
+  }, [load, q, beat]);
   const changed = () => {
     void load();
     refreshCounts();
@@ -285,37 +507,14 @@ function Desk({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: (
 
   return (
     <div className="desk" data-open={open ? '' : undefined}>
-      <aside className="desk__rail">
-        <div className="desk__brand">
-          <span className="desk__mark" aria-hidden="true">
-            <Icon name="lifebuoy" size={18} />
-          </span>
-          <strong>{t('desk.title')}</strong>
-        </div>
-        <nav className="desk__queues" aria-label={t('desk.title')}>
-          {QUEUES.map((x) => (
-            <button key={x.key} className="desk__queue" aria-current={queue === x.key || undefined} onClick={() => setQueue(x.key)}>
-              <Icon name={x.icon} size={16} />
-              <span>{t(`desk.queue.${x.key}` as MessageKey)}</span>
-              {x.count && me.counts[x.count] > 0 && <span className="desk__count">{me.counts[x.count]}</span>}
-            </button>
-          ))}
-        </nav>
-        <div className="desk__who">
-          <Languages onLocale={onLocale} />
-          <span className="muted">{me.staff.email}</span>
-          <button className="btn btn--quiet btn--small" onClick={() => onOut(false)}>
-            <Icon name="logout" size={14} />
-            {t('desk.signout')}
-          </button>
-        </div>
-      </aside>
-
       <section className="desk__list" aria-label={t(`desk.queue.${queue}` as MessageKey)}>
+        <Queues me={me} queue={queue} onQueue={onQueue} className="desk__strip" current />
         <label className="desk__search">
           <Icon name="search" size={16} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('desk.search')} aria-label={t('desk.search')} />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('desk.search')} aria-label={t('desk.search')} />
         </label>
+        {error && !rows ? <LoadError onRetry={() => void load()} /> : null}
+        {!rows && !error ? <SkeletonRows rows={5} label={t('common.loading')} /> : null}
         {rows && rows.length === 0 && <EmptyState icon="inbox" tone="done" compact title={t('desk.empty')} body={t('desk.emptyBody')} />}
         <ul className="desk__rows">
           {(rows ?? []).map((r) => (
@@ -340,7 +539,7 @@ function Desk({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: (
         </ul>
       </section>
 
-      <section className="desk__detail">
+      <section className="desk__detail" aria-label={t('desk.pick')}>
         {open ? <Request key={open} reference={open} me={me} onBack={() => choose(null)} onChanged={changed} onOpen={choose} failed={failed} /> : <EmptyState icon="lifebuoy" title={t('desk.pick')} body={t('desk.pickBody')} />}
       </section>
     </div>

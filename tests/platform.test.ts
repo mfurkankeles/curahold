@@ -16,7 +16,7 @@
 // itself still goes through the real app, so these are real sessions.
 import { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { Client, login, setup, type Env } from './helpers';
+import { BASE, Client, login, setup, type Env } from './helpers';
 import type { AppEnv } from '../api/src/context';
 import { sha256Hex } from '../api/src/lib/crypto';
 import { HttpError } from '../api/src/lib/errors';
@@ -26,6 +26,8 @@ import { metricsRoutes } from '../api/src/routes/metrics';
 const OWNER = 'owner@demo.example';
 const STAFF = 'staff@demo.example';
 const ADMIN = 'ada@demo.example';
+// Curahold's own console lives on a host of its own; staff are pointed there, nobody else is told.
+const CONSOLE = `https://desk.${BASE}`;
 
 let env: Env;
 let owner: Client;
@@ -109,7 +111,7 @@ beforeAll(async () => {
 describe('platform console: staff need a second step', () => {
   it('a staff session without one is told so and refused', async () => {
     const bare = harnessClient(await login(env, 'acme', STAFF));
-    expect((await bare.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: true, secondStepNeeded: true });
+    expect((await bare.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: true, secondStepNeeded: true, consoleUrl: CONSOLE });
     const r = await bare.get('/api/platform/customers');
     expect(r.status).toBe(403);
     expect(r.json.error).toBe('staff_second_step');
@@ -129,8 +131,8 @@ describe('platform console: staff need a second step', () => {
 
 describe('platform console: who may open it', () => {
   it('tells each person whether the console is theirs', async () => {
-    expect((await owner.get('/api/platform/access')).json).toEqual({ owner: true, staff: true, platform: true });
-    expect((await staff.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: true });
+    expect((await owner.get('/api/platform/access')).json).toEqual({ owner: true, staff: true, platform: true, consoleUrl: CONSOLE });
+    expect((await staff.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: true, consoleUrl: CONSOLE });
     expect((await admin.get('/api/platform/access')).json).toEqual({ owner: false, staff: false, platform: false });
   });
 

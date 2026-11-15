@@ -74,6 +74,7 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
   'GET /desk/requests/:ref': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',
+  'GET /desk/customers/:orgId': 'Curahold’s own console on the desk host, behind its staff sign-in or key; a company session gets 403 (tests/desk.test.ts)',
   'POST /desk/requests/:ref/messages': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',
   'PUT /desk/requests/:ref/owner': 'Curahold’s own support desk, behind its staff sign-in (tests/desk.test.ts)',
   'PUT /desk/requests/:ref/status': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',

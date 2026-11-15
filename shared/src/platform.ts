@@ -105,4 +105,6 @@ export interface PlatformAccess {
   platform: boolean;
   /** Curahold staff without a second step in this session: the console stays closed until they add one. */
   secondStepNeeded?: true;
+  /** Where Curahold's own console lives (its own host and its own sign-in); for staff only. */
+  consoleUrl?: string;
 }

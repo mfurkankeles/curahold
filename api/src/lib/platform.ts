@@ -14,7 +14,8 @@
 // fallback) lives in context.ts; we reuse it so there is a single source of
 // truth and add the staff addresses on top.
 import type { C, Config } from '../context';
-import { isOwner } from '../context';
+import { deskUrl, isOwner } from '../context';
+import type { PlatformAccess } from '../../../shared/src/platform';
 import { fail } from './errors';
 
 /** The staff identifiers (lower-cased emails) allowed into the console beyond the owner. */
@@ -62,8 +63,16 @@ export function requireConsoleOwner(c: C): void {
 }
 
 /** The flags the browser needs to decide whether to show the console (no tenant data). */
-export function platformAccess(c: C): { owner: boolean; staff: boolean; platform: boolean; secondStepNeeded?: true } {
+export function platformAccess(c: C): PlatformAccess {
   const owner = isOwner(c);
   const staff = isPlatformStaff(c);
-  return { owner, staff, platform: staff, ...(staff && staffNeedsSecondStep(c) ? { secondStepNeeded: true as const } : {}) };
+  const cfg = c.get('deps').config;
+  return {
+    owner,
+    staff,
+    platform: staff,
+    ...(staff && staffNeedsSecondStep(c) ? { secondStepNeeded: true as const } : {}),
+    // The console's own address, for Curahold's team on a service that has one (not a single-company install).
+    ...(staff && !cfg.singleTenantSlug && cfg.baseDomain ? { consoleUrl: deskUrl(cfg) } : {}),
+  };
 }

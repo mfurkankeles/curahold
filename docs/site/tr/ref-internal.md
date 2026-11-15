@@ -17,7 +17,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/connect/…` | 1 | Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar. |
 | `/connections/…` | 28 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
 | `/consent/…` | 2 | Kişinin gizlilik ve çerez tercihleri; tarayıcıdan kaydedilir. |
-| `/desk/…` | 13 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |
+| `/desk/…` | 17 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı; yalnızca Curahold'un kendi anahtarlarıyla açılır. |
 | `/help/…` | 7 | Curahold desteğine yardım talepleri ve konuşmaları; ürünün içinden. |
 | `/help-files/…` | 1 | Desteğe gönderilen dosyalar. |
 | `/hooks/…` | 3 | Sohbet uygulamalarının ve takvimlerin geri çağrıları. |

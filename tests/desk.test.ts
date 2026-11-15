@@ -269,3 +269,62 @@ describe('working a request', () => {
     expect(key.status).toBe(403);
   });
 });
+
+describe('the console on the desk host: today, customers, pulse', () => {
+  it('opens only with a desk session: not a company session, not its API key, not a code half-way', async () => {
+    for (const path of ['/today', '/customers', `/customers/${env.a.orgId}`, '/pulse']) {
+      expect((await ada.get(`/api/desk${path}`)).status, path).toBe(403);
+      expect((await new Desk().req('GET', path)).status, path).toBe(403);
+    }
+    // The emailed code alone (no authenticator step yet) is not a session.
+    const d = new Desk();
+    const sent = await d.req('POST', '/sign-in', { email: EMRE });
+    await d.req('POST', '/sign-in/verify', { email: EMRE, code: sent.json.devCode });
+    expect((await d.req('GET', '/today')).status).toBe(403);
+  });
+
+  it('says how the business is today and who is waiting, from billing records and the product itself', async () => {
+    await env.db.system((q) =>
+      q.query(`update orgs set billing = $2::jsonb where id = $1`, [env.a.orgId, JSON.stringify({ status: 'past_due', plan: 'business', interval: 'month', seats: 4, eventAt: new Date().toISOString() })]),
+    );
+    const r = await ask(lena, { subject: 'Board will not load', impact: 'blocking' });
+    const d = new Desk();
+    await d.signIn(DENIZ);
+    const today = await d.req('GET', '/today');
+    expect(today.status).toBe(200);
+    expect(today.json.revenue.mrr).toBe(4 * 35);
+    expect(today.json.revenue.arr).toBe(4 * 35 * 12);
+    expect(today.json.customers.pastDue).toBe(1);
+    expect(today.json.mode).toBe('demo');
+    // Who needs the team: the blocking request first, then the failed payment.
+    const kinds = today.json.attention.map((a: any) => a.kind);
+    expect(today.json.attention[0]).toMatchObject({ kind: 'request', blocking: true });
+    expect(today.json.attention.find((a: any) => a.ref === r.ref)).toMatchObject({ kind: 'request', blocking: true, company: expect.any(String) });
+    expect(kinds).toContain('payment');
+    for (const k of ['trialToPaid', 'activation', 'churn']) expect(today.json[k]).toHaveProperty('days');
+  });
+
+  it('moves its pulse when something it shows changes, and only then', async () => {
+    const d = new Desk();
+    await d.signIn(DENIZ);
+    const a = (await d.req('GET', '/pulse')).json.v;
+    expect((await d.req('GET', '/pulse')).json.v).toBe(a);
+    await ask(ada, { subject: 'A new question' });
+    expect((await d.req('GET', '/pulse')).json.v).not.toBe(a);
+  });
+
+  it('lists every company, and opening one is written to that company’s own activity log', async () => {
+    const d = new Desk();
+    await d.signIn(DENIZ);
+    const list = await d.req('GET', '/customers');
+    expect(list.json.customers.map((c: any) => c.orgId)).toEqual(expect.arrayContaining([env.a.orgId, env.b.orgId]));
+    const one = await d.req('GET', `/customers/${env.b.orgId}`);
+    expect(one.status).toBe(200);
+    expect(one.json.customer.orgId).toBe(env.b.orgId);
+    expect((await d.req('GET', '/customers/not-a-company')).status).toBe(404);
+    const [logged] = await env.db.system((q) => q.query(`select action, meta->>'staff' as staff from audit_log where org_id = $1 and action = 'support.account' order by at desc limit 1`, [env.b.orgId]));
+    expect(logged.staff).toContain(DENIZ);
+    const [desk] = await env.db.system((q) => q.query(`select staff_email from desk_log where action = 'account' and org_id = $1`, [env.b.orgId]));
+    expect(desk.staff_email).toBe(DENIZ);
+  });
+});
