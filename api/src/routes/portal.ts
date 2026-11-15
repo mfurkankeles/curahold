@@ -168,6 +168,24 @@ portalRoutes.post('/portal/users/:id/resend', async (c) => {
 });
 
 /** Switching someone off ends their sessions and links at once. */
+/** Taking back a switch-off (the undo): they can sign in again; ended sessions stay ended. */
+portalRoutes.post('/portal/users/:id/enable', async (c) => {
+  requireWriter(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const n = await run(c, async (q) => {
+    const rows = await q.query(
+      `update portal_users set status = case when last_seen_at is null then 'invited' else 'active' end where id = $1 and status = 'disabled' returning id`,
+      [id],
+    );
+    if (rows.length) await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.enabled_user', entity: 'portal_user', entityId: id });
+    return rows.length;
+  });
+  if (!n) fail('not_found');
+  return c.json({ ok: true });
+});
+
 portalRoutes.delete('/portal/users/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

@@ -10,7 +10,6 @@ import { ApiFailure, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
-import { Confirm } from './ui';
 import { AccountPicker } from './AccountPicker';
 
 export function PortalSettingsTab() {
@@ -85,7 +84,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
-  const [disabling, setDisabling] = useState<PortalPerson | null>(null);
+  const offer = useUndo();
   const load = useCallback(() => void get<{ people: PortalPerson[] }>(`/portal/users${accountId ? `?accountId=${accountId}` : ''}`).then((r) => setList(r.people)), [accountId]);
   useEffect(load, [load]);
 
@@ -119,7 +118,7 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
     <div className="portal-people">
       {list && list.length === 0 && <p className="muted">{t('portal.people.none')}</p>}
       {list && list.length > 0 && (
-        <table className="table">
+        <table className="table portal-people__table">
           <thead>
             <tr>
               <th>{t('portal.people.name')}</th>
@@ -147,7 +146,18 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                       <button className="btn btn--quiet btn--small" onClick={() => act(() => post(`/portal/users/${p.id}/resend`), t('portal.people.resent'))}>
                         {t('portal.people.resend')}
                       </button>
-                      <button className="btn btn--quiet btn--small" onClick={() => setDisabling(p)}>
+                      <button
+                        className="btn btn--quiet btn--small"
+                        onClick={async () => {
+                          try {
+                            await del(`/portal/users/${p.id}`);
+                            load();
+                            offer(t('portal.people.disabledNamed', { name: p.name }), () => post(`/portal/users/${p.id}/enable`), load);
+                          } catch (err) {
+                            toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+                          }
+                        }}
+                      >
                         {t('portal.people.disable')}
                       </button>
                     </>
@@ -181,16 +191,6 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
         </form>
       )}
       <p className="field__hint">{t('portal.people.hint')}</p>
-      {disabling && (
-        <Confirm
-          title={t('portal.people.disableTitle', { name: disabling.name })}
-          body={t('portal.people.disableBody', { email: disabling.email })}
-          confirmLabel={t('portal.people.disable')}
-          danger
-          onClose={() => setDisabling(null)}
-          onConfirm={() => act(() => del(`/portal/users/${disabling.id}`), t('portal.people.disabled'))}
-        />
-      )}
     </div>
   );
 }

@@ -419,6 +419,11 @@ describe('walls', () => {
     await mila.post('/papi/auth/start', { email: 'mila@velto.example' });
     await env.settle();
     expect(env.email.sent.filter((m) => m.to === 'mila@velto.example')).toHaveLength(mails);
+    // Taken back (the undo): she can sign in again, with a new link; the ended session stays ended.
+    expect((await ada.post(`/api/portal/users/${p.id}/enable`)).status).toBe(200);
+    expect((await ada.post(`/api/portal/users/${p.id}/enable`)).status).toBe(404);
+    expect((await mila.get('/papi/me')).status).toBe(401);
+    expect((await (await signIn('mila@velto.example')).get('/papi/me')).status).toBe(200);
   });
 
   it('the company’s switch closes the portal for everyone', async () => {

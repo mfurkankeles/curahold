@@ -28,3 +28,13 @@
   .pbrand { grid-template-columns: 1fr; }
   .pbrand__preview { max-inline-size: 360px; }
 }
+
+/* The people at customers: on a phone each person is a card, not a five-column row. */
+@media (max-width: 600px) {
+  .portal-people__table, .portal-people__table tbody { display: block; }
+  .portal-people__table thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+  .portal-people__table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--s-1) var(--s-3); align-items: center; padding: var(--s-3) 0; border-block-end: 1px solid var(--line); }
+  .portal-people__table td { display: block; padding: 0; border: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .portal-people__table td:first-child { grid-column: 1 / -1; }
+  .portal-people__table td.num { grid-column: 1 / -1; text-align: start; display: flex; gap: var(--s-2); flex-wrap: wrap; }
+}
