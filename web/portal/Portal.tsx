@@ -278,7 +278,7 @@ function MeMenu({ ctx, me, lang, onSignOut }: { ctx: Ctx; me: PortalMe; lang: Re
   }, [open]);
   const account = link('/account');
   return (
-    <div className="p-me" ref={box}>
+    <div className="p-me p-top__me" ref={box}>
       <button className="p-me__btn" aria-expanded={open} aria-controls="p-me-pop" aria-label={t('portal.menuFor', { name: me.user.name })} onClick={() => setOpen(!open)}>
         <span className="p-avatar" aria-hidden="true">
           {initials(me.user.name)}
@@ -1214,7 +1214,7 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
       <section className="p-hero">
         <div className="p-wrap">
           <span className="p-hero__kicker">{me.account.name}</span>
-          <div className="p-hero__row">
+          <div className="p-hero__row p-head">
             <h1>{t('portal.requests')}</h1>
             {!first && (
               <a className="p-btn p-btn--primary" {...newLink}>

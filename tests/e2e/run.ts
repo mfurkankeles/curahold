@@ -998,9 +998,10 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   expect(link && link.startsWith(`http://demo.portal.localhost:${port}/`), `invite link: ${link}`);
   const customer = await newPage(s.browser, 1280, 860);
   await customer.page.goto(link!, { waitUntil: 'networkidle0' });
-  await customer.page.waitForSelector('.p-head');
+  await customer.page.waitForSelector('.p-hero');
   expect(!customer.page.url().includes('token'), 'token stayed in the address bar');
-  await (await byText(customer.page, '.p-head .p-btn--primary', 'Yeni talep')).click();
+  // The one thing to do: "New request" (or, before the first one, the invitation's own button).
+  await (await customer.page.waitForSelector('.p-main .p-btn--primary'))!.click();
   await customer.page.waitForSelector('.p-form input');
   await customer.page.type('.p-form input', 'Rapora iki kullanıcı ekleyelim');
   await customer.page.type('.p-form textarea', 'Ayşe ve Can rapora erişemiyor; pazartesiye kadar açılabilir mi?');
@@ -1041,7 +1042,8 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await cdp.send('WebAuthn.addVirtualAuthenticator', {
     options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
   });
-  await customer.page.click('.p-top__me a');
+  await customer.page.click('.p-me__btn');
+  await customer.page.click('.p-me__pop a');
   await customer.page.waitForSelector('.p-account');
   await (await byText(customer.page, '.p-account .p-btn', 'Bu cihaza passkey ekle')).click();
   await customer.page.waitForSelector('.p-rows li', { timeout: 10000 });
@@ -1054,7 +1056,8 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   const [via] = await sql(`select method from portal_sessions where revoked_at is null order by created_at desc limit 1`);
   expect(via?.method === 'passkey', `signed in by ${via?.method}`);
   // And with the emailed code, the way most people will.
-  await customer.page.click('.p-top__me button.p-link:last-child');
+  await customer.page.click('.p-me__btn');
+  await customer.page.click('.p-me__pop button.p-me__item');
   await customer.page.waitForSelector('.p-signin input[type=email]');
   await customer.page.type('.p-signin input[type=email]', 'selin@quillfield.example');
   await (await byText(customer.page, '.p-signin .p-btn--primary', 'Kod gönder')).click();
@@ -1067,6 +1070,102 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   expect(customer.errors.length === 0, customer.errors.join(' | '));
   await customer.page.browserContext().close();
   await phone.page.browserContext().close();
+});
+
+await step('customer portal acceptance: from the invitation on a phone, open a request with a file, read the reply; no other customer by any address', async () => {
+  // The owner's bar: a customer contact comes in from the invitation email, opens a request and
+  // reads the reply on a phone in under 2 minutes, and cannot reach another customer's record.
+  await sql('delete from login_tokens');
+  const admin = await newPage(s.browser);
+  await signIn(admin.page, s.origin, 'ada@demo.example');
+  const api = (method: string, path: string, body?: unknown) =>
+    admin.page.evaluate(
+      async (m, p, b) => (await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b ? JSON.stringify(b) : undefined })).json(),
+      method,
+      path,
+      body as any,
+    );
+  const settings = await api('GET', '/api/portal');
+  if (!settings.enabled) await api('PUT', '/api/portal/settings', { enabled: true });
+  await api('PUT', '/api/portal/settings', { brand: { color: '#0f766e', poweredBy: true } });
+  const [b] = await sql(`select columns, portal from boards where id = $1`, [csBoard]);
+  if (!b.portal?.enabled) await sql(`update boards set portal = $2 where id = $1`, [csBoard, JSON.stringify({ enabled: true, intake: b.columns[0].key, labels: {}, fields: ['due', 'assignee'] })]);
+  const [quill] = await sql(`select id from accounts where name = 'Quillfield Retail' limit 1`);
+  const [velto] = await sql(`select id from accounts where name = 'Velto Mobility' limit 1`);
+  const invited = await api('POST', '/api/portal/users', { accountId: quill.id, name: 'Arda Yıldız', email: 'arda@quillfield.example' });
+  expect(invited.person, `invite: ${JSON.stringify(invited).slice(0, 160)}`);
+  // Another customer's request, to try to reach.
+  const other = await api('POST', '/api/tasks', { boardId: csBoard, title: 'Velto sözleşme şartları', accountId: velto.id });
+  await api('PUT', `/api/tasks/${other.task.id}/portal`, { shared: true });
+  await pause(300);
+  const invite = s.email.sent.filter((m) => m.to === 'arda@quillfield.example').at(-1);
+  const link = /(http:\/\/\S+\/auth#token=\S+)/.exec(invite?.text ?? '')?.[1];
+  expect(link, 'no invitation link');
+
+  const ctx = await s.browser.createBrowserContext();
+  const phone = await ctx.newPage();
+  await phone.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const errors: string[] = [];
+  phone.on('pageerror', (e) => errors.push(String(e)));
+  const started = Date.now();
+  await phone.goto(link!, { waitUntil: 'networkidle0' });
+  await phone.waitForSelector('.p-hero h1');
+  const firstSecond = Date.now() - started;
+  // Where they are and what they can do, in the first screen: the company, their customer, one action.
+  const first = await phone.evaluate(() => ({
+    brand: document.querySelector('.p-brand')?.textContent ?? '',
+    action: (document.querySelector('.p-hero .p-btn--primary, .p-state .p-btn--primary') as HTMLElement | null)?.getBoundingClientRect().bottom ?? 9999,
+    sideways: document.documentElement.scrollWidth > window.innerWidth,
+  }));
+  expect(first.brand.includes('Quillfield Retail'), `header does not say whose workspace: ${first.brand}`);
+  expect(first.action < 844, `the first action is below the first screen (${first.action})`);
+  expect(!first.sideways, 'the portal scrolls sideways on a phone');
+  await shot(phone, 'p9-01-portal-phone-first');
+
+  await phone.tap('.p-main .p-btn--primary');
+  await phone.waitForSelector('.p-form input');
+  await phone.type('.p-form input', 'Fatura adresimiz değişti');
+  await phone.type('.p-form textarea', 'Yeni adres ekteki belgede. Bu aydan itibaren geçerli olsun.');
+  const pdf = join(SCREENS, 'e2e-adres.pdf');
+  writeFileSync(pdf, '%PDF-1.4\n%%EOF\n');
+  const picker = await phone.$('.p-form input[type=file]');
+  await (picker as any).uploadFile(pdf);
+  await phone.waitForSelector('.p-files--chosen li');
+  await shot(phone, 'p9-02-portal-phone-new');
+  await phone.tap('.p-form .p-btn--primary');
+  await phone.waitForSelector('.p-task .p-files a');
+  const taskId = /\/t\/([0-9a-f-]{36})/.exec(phone.url())?.[1];
+  expect(taskId, 'did not land on the new request');
+
+  // The team answers; the reply email brings them back to it.
+  await api('POST', `/api/tasks/${taskId}/comments`, { body: 'Merhaba Arda, adresi güncelledik; bu ayın faturası yeni adresle gelecek.', visibility: 'customer' });
+  await pause(400);
+  const reply = s.email.sent.filter((m) => m.to === 'arda@quillfield.example').at(-1);
+  const back = /(http:\/\/\S+\/t\/[0-9a-f-]{36})/.exec(reply?.text ?? '')?.[1];
+  expect(back && back.endsWith(taskId!), `reply email link: ${back}`);
+  await phone.goto(back!, { waitUntil: 'networkidle0' });
+  await phone.waitForFunction(() => [...document.querySelectorAll('.p-msg')].some((m) => m.textContent?.includes('adresi güncelledik')), { timeout: 8000 });
+  const took = Date.now() - started;
+  await shot(phone, 'p9-03-portal-phone-reply');
+  console.log(`    portal acceptance on a phone: first screen ${(firstSecond / 1000).toFixed(1)} s, invitation → request → reply read ${(took / 1000).toFixed(1)} s (bar: 120 s)`);
+  expect(took < 120_000, `took ${took} ms`);
+
+  // Another customer's request, by every address the portal has: not there.
+  await phone.goto(`http://demo.portal.localhost:${port}/t/${other.task.id}`, { waitUntil: 'networkidle0' });
+  await phone.waitForSelector('.p-state');
+  const probes = await phone.evaluate(async (id, board) => {
+    const out: Record<string, number> = {};
+    for (const [m, p] of [['GET', `/papi/tasks/${id}`], ['POST', `/papi/tasks/${id}/comments`], ['POST', `/papi/tasks/${id}/approve`], ['GET', `/papi/files/${id}`]] as const)
+      out[`${m} ${p.replace(id, ':id')}`] = (await fetch(p, { method: m, headers: { 'content-type': 'application/json', 'x-curahold-portal': '1' }, body: m === 'POST' ? '{"body":"?"}' : undefined })).status;
+    const list = await (await fetch(`/papi/boards/${board}/tasks`)).json();
+    out.listed = list.tasks.some((t: any) => t.id === id) ? 1 : 0;
+    return out;
+  }, other.task.id, csBoard);
+  for (const [k, v] of Object.entries(probes)) expect(k === 'listed' ? v === 0 : v === 404, `${k}: ${v}`);
+  await shot(phone, 'p9-04-portal-phone-not-theirs');
+  expect(errors.length === 0, errors.join(' | '));
+  await ctx.close();
+  await admin.page.browserContext().close();
 });
 
 await step('tasks from a file: columns are recognised, cards appear, the import can be undone', async () => {
