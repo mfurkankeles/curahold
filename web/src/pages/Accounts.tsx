@@ -2,7 +2,7 @@
 // company's own fields, bulk changes, import with undo, and a page per
 // account with its tasks.
 import { useMoney } from '../lib/money';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useWindow } from '../lib/windowing';
 import { labelOf } from '../../../shared/src/fields';
 import { calculated, type Account, type AccountField, type Task } from '../../../shared/src/model';
@@ -18,14 +18,19 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
-import { AccountTimeline, HealthBadge, ScoreChip } from '../components/Timeline';
+import { AccountTimeline, HealthBadge, HealthWhy, ScoreChip, bandOf as scoreBand, useHealthText, useHealthWhy, weakestPart } from '../components/Timeline';
 import { PortalPeople } from '../components/PortalAdmin';
-import { AccountCards, RenewalsView, SIGNAL_FILTERS, WhitespaceView, keyFields, matchesSignal, signalsOf, type SignalFilter } from '../components/AccountViews';
-import { relativeTime } from '../lib/time';
+import '../surfaces/employee-customers.css';
+import { AccountCards, RenewalsView, SIGNAL_FILTERS, WhitespaceView, bandOf, keyFields, matchesSignal, signalsOf, type SignalFilter } from '../components/AccountViews';
+import { relativeTime, todayIso } from '../lib/time';
+import { HEALTH_FIELD } from '../../../shared/src/health';
+import type { MessageKey } from '../../../shared/src/i18n';
+import { MenuButton } from '../components/Menus';
+import { DateField } from '../components/DateField';
 import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
-import { tasksChanged, usePageDefaults } from '../lib/shell';
+import { TASKS_CHANGED, tasksChanged, usePageDefaults } from '../lib/shell';
 import { PlanMenu } from '../components/Plans';
 import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
@@ -694,7 +699,20 @@ export function FieldInput({ field, value, onSave, disabled }: { field: AccountF
       </select>
     );
   }
-  const type = field.type === 'date' ? 'date' : field.type === 'number' || field.type === 'money' ? 'number' : field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text';
+  // A date is typed and picked in the person's own format, through the product's date field.
+  if (field.type === 'date')
+    return (
+      <DateField
+        value={v.slice(0, 10)}
+        disabled={disabled}
+        label={labelOf(field.label, locale)}
+        onChange={(d) => {
+          setV(d);
+          if ((d || null) !== ((value as string | null | undefined) || null)) onSave(d || null);
+        }}
+      />
+    );
+  const type = field.type === 'number' || field.type === 'money' ? 'number' : field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text';
   return <input className="input" type={type} value={v} disabled={disabled} aria-label={labelOf(field.label, locale)} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />;
 }
 
@@ -752,6 +770,8 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
   );
 }
 
+type AccountTab = 'overview' | 'timeline' | 'people' | 'records' | 'details';
+
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
   const here = usePresence(`a:${id}`);
@@ -761,10 +781,15 @@ export function AccountPage({ id }: { id: string }) {
   const [missing, setMissing] = useState(false);
   const { types } = useRecordTypes();
   const fmt = useFieldFormat();
+  const phone = usePhone();
+  const { search } = useLocation();
   const [removing, setRemoving] = useState(false);
   const [title, setTitle] = useState('');
   const [boardId, setBoardId] = useState(boards[0]?.id ?? '');
   const [hours, setHours] = useState<{ total: number; recent: number } | null>(null);
+  // Bumped after every load, so the health reasons in the band are asked again.
+  const [again, setAgain] = useState(0);
+  const addRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     void get<{ total: number; recent: number }>(`/accounts/${id}/time`).then(setHours, () => undefined);
   }, [id]);
@@ -779,16 +804,21 @@ export function AccountPage({ id }: { id: string }) {
   const load = useCallback(async () => {
     try {
       setData(await get(`/accounts/${id}`));
+      setAgain((n) => n + 1);
     } catch {
       setMissing(true);
     }
   }, [id]);
   useEffect(() => {
     void load();
-    // A review logged from anywhere moves the next one.
+    // A review logged from anywhere moves the next one; a task finished here moves the band.
     const again = () => void load();
     window.addEventListener('app:timeline-changed', again);
-    return () => window.removeEventListener('app:timeline-changed', again);
+    window.addEventListener(TASKS_CHANGED, again);
+    return () => {
+      window.removeEventListener('app:timeline-changed', again);
+      window.removeEventListener(TASKS_CHANGED, again);
+    };
   }, [load]);
   // Someone else changed this company — its fields, a meeting, a task, a record:
   // the page follows, and its sections refetch, without polling the whole company.
@@ -820,6 +850,7 @@ export function AccountPage({ id }: { id: string }) {
         const r = await patch<{ account: Account }>(`/accounts/${id}`, base ? { ...body, baseVersion: base } : body);
         version.current = r.account.version ?? version.current;
         setData((d) => (d ? { ...d, account: { ...d.account, ...r.account } } : d));
+        setAgain((n) => n + 1);
       } catch (e) {
         if (e instanceof ApiFailure && e.code === 'conflict' && e.body.current) {
           const current = e.body.current as Account;
@@ -833,6 +864,35 @@ export function AccountPage({ id }: { id: string }) {
         void load();
       }
     }));
+
+  // The sections below the band, one at a time. The address keeps the open one (?tab=…), so a reload
+  // or a shared link lands in the same place. On a phone the customer's fields are a section of their own.
+  const hasContacts = !!types?.some((x) => x.kind === 'contact');
+  const recordTypes = types?.filter((x) => x.kind !== 'contact') ?? [];
+  const contactTypes = types?.filter((x) => x.kind === 'contact') ?? [];
+  const showPortal = !!me.org.portal && (can('org.manage') || data?.account.ownerId === me.user.id);
+  const tabs: AccountTab[] = (['overview', 'timeline', 'people', 'records', 'details'] as const).filter(
+    (k) => k === 'overview' || k === 'timeline' || (k === 'people' && hasContacts) || (k === 'records' && (recordTypes.length > 0 || showPortal)) || (k === 'details' && phone),
+  );
+  const asked = new URLSearchParams(search).get('tab') as AccountTab | null;
+  // Until the record types are known, a link to their tab waits for them instead of jumping to the overview.
+  const tab: AccountTab = asked && (tabs.includes(asked) || (types === null && (asked === 'people' || asked === 'records'))) ? asked : 'overview';
+  // The open section's tab stays in sight in the strip (on a phone the strip scrolls sideways).
+  useEffect(() => {
+    const el = document.getElementById(`acc-tab-${tab}`);
+    const strip = el?.parentElement;
+    if (!el || !strip || strip.scrollWidth <= strip.clientWidth) return;
+    const box = el.getBoundingClientRect();
+    const bar = strip.getBoundingClientRect();
+    if (box.left < bar.left || box.right > bar.right) el.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [tab, ready]);
+  const pickTab = (k: AccountTab) => {
+    const p = new URLSearchParams(location.search);
+    if (k === 'overview') p.delete('tab');
+    else p.set('tab', k);
+    const qs = p.toString();
+    navigate(location.pathname + (qs ? `?${qs}` : ''), true);
+  };
 
   if (missing)
     return (
@@ -878,6 +938,64 @@ export function AccountPage({ id }: { id: string }) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
   };
+  const startTask = () => {
+    pickTab('overview');
+    requestAnimationFrame(() => addRef.current?.focus());
+  };
+
+  const healthInBand = bandShowsHealth(me.org);
+  const details = (
+    <>
+      <OpenIn links={data.account.links} />
+      <label className="field">
+        <span className="field__label">{t('accounts.owner')}</span>
+        <select className="select" value={a.ownerId ?? ''} disabled={!canWrite} onChange={(e) => save({ ownerId: e.target.value || null })}>
+          <option value="">{t('accounts.noOwner')}</option>
+          {people
+            .filter((p) => p.status === 'active' || p.status === 'invited' || p.id === a.ownerId)
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+        </select>
+      </label>
+      <ReviewField account={a} onSave={save} />
+      <CurrencyField account={a} onSave={save} />
+      {me.org.accountFields.map((f) =>
+        f.health ? (
+          healthInBand ? null : <HealthBadge key={f.key} accountId={a.id} field={f} value={a.fields[f.key]} />
+        ) : calculated(f) ? (
+          <div className="field" key={f.key}>
+            <span className="field__label">{labelOf(f.label, locale)}</span>
+            <span className="calc-value">{fmt(f, a.fields[f.key], a.currency) || '—'}</span>
+          </div>
+        ) : (
+          <label className="field" key={f.key}>
+            <span className="field__label">{labelOf(f.label, locale)}</span>
+            <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite || f.locked} onSave={(v) => save({ fields: { [f.key]: v } })} />
+            {f.locked && <span className="field__hint">{t('fields.access.readOnlyForYou')}</span>}
+          </label>
+        ),
+      )}
+      {me.org.accountFields.length === 0 && can('accounts.manage') && (
+        <p className="field__hint">
+          <a href="/settings/fields" onClick={(e) => { e.preventDefault(); navigate('/settings/fields'); }}>
+            {t('accounts.addFields')}
+          </a>
+        </p>
+      )}
+      <p className="field__hint">{a.links?.length ? t('accounts.fromCrm', { crm: PROVIDER_NAMES[a.links[0].provider] ?? a.links[0].provider }) : t(a.source === 'import' ? 'accounts.fromImport' : 'accounts.addedHere')}</p>
+    </>
+  );
+
+  const tabLabel: Record<AccountTab, string> = {
+    overview: t('acc.tab.overview'),
+    timeline: t('timeline.title'),
+    people: t('org.stakeholders'),
+    records: t('acc.tab.records'),
+    details: t('acc.tab.details'),
+  };
 
   return (
     <>
@@ -885,116 +1003,111 @@ export function AccountPage({ id }: { id: string }) {
         <PageIcon name="building" />
         <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
         <FavoriteButton kind="account" id={a.id} name={a.name} to={`/accounts/${a.id}`} />
-        <Presence who={here.who} />
         <div className="topbar__spacer" />
+        <span className="account-top__here">
+          <Presence who={here.who} />
+        </span>
+        {a.archivedAt && <span className="badge">{t('acc.archived')}</span>}
         {can('accounts.manage') && (
-          <>
-            <button className="btn btn--small" onClick={() => save({ archived: !a.archivedAt })}>
-              {a.archivedAt ? t('accounts.restore') : t('accounts.archive')}
-            </button>
-            <button className="btn btn--small btn--danger" onClick={() => setRemoving(true)}>
-              {t('common.delete')}
-            </button>
-          </>
+          <MenuButton
+            label={t('acc.more')}
+            title={t('acc.more')}
+            place="down-end"
+            buttonClass="btn btn--quiet btn--icon"
+            button={<Icon name="more" size={18} />}
+            items={[
+              { key: 'archive', label: a.archivedAt ? t('accounts.restore') : t('accounts.archive'), icon: a.archivedAt ? 'undo' : 'inbox', onSelect: () => save({ archived: !a.archivedAt }) },
+              'sep',
+              { key: 'delete', label: t('common.delete'), icon: 'trash', danger: true, onSelect: () => setRemoving(true) },
+            ]}
+          />
         )}
       </header>
       <div className="page account-page">
+        <AccountBand account={a} tasks={open} again={again} onAddTask={canWrite && boards.length > 0 ? startTask : undefined} />
         <div className="account-page__main">
-          <section className="sheet" id="tasks">
-            <h3 className="section__head">
-              <span>
-                <Icon name="checkCircle" size={16} className="icon--lead" />
-                {t('accounts.openTasksN', { n: open.length })}
-              </span>
-              <PlanMenu accountId={a.id} accountName={a.name} onApplied={() => void load()} />
-            </h3>
-            {hours && hours.total > 0 && <p className="field__hint u-m-n4-0-8">{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
-            {canWrite && boards.length > 0 && (
-              <div className="toolbar u-mb-8">
-                <input className="input u-flex-1 u-min-width-200" value={title} placeholder={t('accounts.addTaskFor', { name: a.name })} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} />
-                <select className="select" value={boardId} aria-label={t('task.board')} onChange={(e) => setBoardId(e.target.value)}>
-                  {boards.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-                <button className="btn" disabled={!title.trim()} onClick={addTask}>
-                  {t('common.add')}
-                </button>
-              </div>
-            )}
-            {open.length === 0 && <EmptyState compact icon="checkCircle" tone="done" title={t('accounts.noOpenTasks')} />}
-            {open.map((task) => (
-              <TaskLine key={task.id} task={task} />
+          <div className="tabs acc-tabs" role="tablist" aria-label={t('acc.sections')} onKeyDown={onTabKeys}>
+            {tabs.map((k) => (
+              <button key={k} id={`acc-tab-${k}`} className="tab" role="tab" aria-selected={tab === k} aria-controls="acc-panel" tabIndex={tab === k ? 0 : -1} onClick={() => pickTab(k)}>
+                {tabLabel[k]}
+                {k === 'overview' && open.length > 0 && <span className="acc-tabs__n num">{formatNumber(open.length, locale)}</span>}
+              </button>
             ))}
-            {finished.length > 0 && (
-              <details className="u-mt-8">
-                <summary className="muted">{t('accounts.finishedN', { n: finished.length })}</summary>
-                {finished.map((task) => (
-                  <TaskLine key={task.id} task={task} done />
-                ))}
-              </details>
+          </div>
+          <div className="acc-panel" id="acc-panel" role="tabpanel" aria-labelledby={`acc-tab-${tab}`}>
+            {tab === 'overview' && (
+              <>
+                <section className="sheet" id="tasks">
+                  <h3 className="section__head">
+                    <span>
+                      <Icon name="checkCircle" size={16} className="icon--lead" />
+                      {t('accounts.openTasksN', { n: open.length })}
+                    </span>
+                    <PlanMenu accountId={a.id} accountName={a.name} onApplied={() => void load()} />
+                  </h3>
+                  {hours && hours.total > 0 && <p className="field__hint u-m-n4-0-8">{t('accounts.hours', { total: hoursText(hours.total, locale), recent: hoursText(hours.recent, locale) })}</p>}
+                  {canWrite && boards.length > 0 && (
+                    <div className="toolbar acc-add">
+                      <input ref={addRef} className="input acc-add__text" value={title} placeholder={t('accounts.addTaskFor', { name: a.name })} aria-label={t('accounts.addTaskFor', { name: a.name })} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} />
+                      <select className="select" value={boardId} aria-label={t('task.board')} onChange={(e) => setBoardId(e.target.value)}>
+                        {boards.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button className="btn" disabled={!title.trim()} onClick={addTask}>
+                        {t('common.add')}
+                      </button>
+                    </div>
+                  )}
+                  {open.length === 0 && <EmptyState compact icon="checkCircle" tone="done" title={t('accounts.noOpenTasks')} />}
+                  {open.map((task) => (
+                    <TaskLine key={task.id} task={task} />
+                  ))}
+                  {finished.length > 0 && (
+                    <details className="u-mt-8">
+                      <summary className="muted">{t('accounts.finishedN', { n: finished.length })}</summary>
+                      {finished.map((task) => (
+                        <TaskLine key={task.id} task={task} done />
+                      ))}
+                    </details>
+                  )}
+                </section>
+                <AccountPlanned account={a} />
+                <AccountMeetings account={a} />
+              </>
             )}
-          </section>
-          <AccountPlanned account={a} />
-          <AccountMeetings account={a} />
-          <AccountTimeline accountId={a.id} hasContacts={!!types?.some((x) => x.kind === 'contact')} />
-          {types && types.length > 0 && <AccountRecords account={a} types={types} onChange={load} />}
-          {me.org.portal && (can('org.manage') || a.ownerId === me.user.id) && (
-            <section className="sheet">
-              <h3 className="section__head">
-                <span>
-                  <Icon name="globe" size={16} className="icon--lead" />
-                  {t('portal.people.forAccount')}
-                </span>
-              </h3>
-              <PortalPeople accountId={a.id} accountName={a.name} />
-            </section>
-          )}
-        </div>
-        <aside className="sheet account-page__side" onInput={here.typing}>
-          <OpenIn links={data.account.links} />
-          <label className="field">
-            <span className="field__label">{t('accounts.owner')}</span>
-            <select className="select" value={a.ownerId ?? ''} disabled={!canWrite} onChange={(e) => save({ ownerId: e.target.value || null })}>
-              <option value="">{t('accounts.noOwner')}</option>
-              {people
-                .filter((p) => p.status === 'active' || p.status === 'invited' || p.id === a.ownerId)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <ReviewField account={a} onSave={save} />
-          <CurrencyField account={a} onSave={save} />
-          {me.org.accountFields.map((f) =>
-            f.health ? (
-              <HealthBadge key={f.key} accountId={a.id} field={f} value={a.fields[f.key]} />
-            ) : calculated(f) ? (
-              <div className="field" key={f.key}>
-                <span className="field__label">{labelOf(f.label, locale)}</span>
-                <span className="calc-value">{fmt(f, a.fields[f.key], a.currency) || '—'}</span>
+            {tab === 'timeline' && <AccountTimeline accountId={a.id} hasContacts={hasContacts} />}
+            {tab === 'people' && contactTypes.length > 0 && <AccountRecords account={a} types={contactTypes} onChange={load} />}
+            {tab === 'records' && (
+              <>
+                {recordTypes.length > 0 && <AccountRecords account={a} types={recordTypes} onChange={load} />}
+                {showPortal && (
+                  <section className="sheet">
+                    <h3 className="section__head">
+                      <span>
+                        <Icon name="globe" size={16} className="icon--lead" />
+                        {t('portal.people.forAccount')}
+                      </span>
+                    </h3>
+                    <PortalPeople accountId={a.id} accountName={a.name} />
+                  </section>
+                )}
+              </>
+            )}
+            {tab === 'details' && phone && (
+              <div className="sheet account-page__fields" onInput={here.typing}>
+                {details}
               </div>
-            ) : (
-              <label className="field" key={f.key}>
-                <span className="field__label">{labelOf(f.label, locale)}</span>
-                <FieldInput field={f} value={a.fields[f.key]} disabled={!canWrite || f.locked} onSave={(v) => save({ fields: { [f.key]: v } })} />
-                {f.locked && <span className="field__hint">{t('fields.access.readOnlyForYou')}</span>}
-              </label>
-            ),
-          )}
-          {me.org.accountFields.length === 0 && can('accounts.manage') && (
-            <p className="field__hint">
-              <a href="/settings/fields" onClick={(e) => { e.preventDefault(); navigate('/settings/fields'); }}>
-                {t('accounts.addFields')}
-              </a>
-            </p>
-          )}
-          <p className="field__hint">{a.links?.length ? t('accounts.fromCrm', { crm: PROVIDER_NAMES[a.links[0].provider] ?? a.links[0].provider }) : t(a.source === 'import' ? 'accounts.fromImport' : 'accounts.addedHere')}</p>
-        </aside>
+            )}
+          </div>
+        </div>
+        {!phone && (
+          <aside className="sheet account-page__side" aria-label={t('acc.tab.details')} onInput={here.typing}>
+            {details}
+          </aside>
+        )}
       </div>
       {removing && (
         <Confirm
@@ -1013,6 +1126,138 @@ export function AccountPage({ id }: { id: string }) {
   );
 }
 
+/** Whether the band carries the health tile: the worked-out score, or else the team's own judgement. */
+function bandShowsHealth(org: { health?: { enabled: boolean } | null; accountFields: AccountField[] }) {
+  return !!(org.health?.enabled && org.accountFields.some((f) => f.health)) || org.accountFields.some((f) => f.key === 'health' && f.type === 'select');
+}
+
+const DAY_MS = 86400000;
+
+/**
+ * The top of a customer's page, read at a glance: health and the reason for it (all reasons one tap
+ * away), days to renewal, what the contract is worth in the customer's own currency, and the next
+ * promised step with its owner and date. Each tile appears only when the company keeps that field.
+ */
+function AccountBand({ account, tasks, again, onAddTask }: { account: Account; tasks: (Task & { boardName: string })[]; again: number; onAddTask?: () => void }) {
+  const { t, locale } = useI18n();
+  const { me, person } = useStore();
+  const fmt = useFieldFormat();
+  const { renewal, value } = keyFields(me.org.accountFields);
+  const scoreOn = !!(me.org.health?.enabled && me.org.accountFields.some((f) => f.health));
+  const judgement = me.org.accountFields.find((f) => f.key === 'health' && f.type === 'select');
+  const healthTile = bandShowsHealth(me.org);
+  const [why, setWhy] = useState(false);
+  const whyId = useId();
+  const reasons = useHealthWhy(account.id, scoreOn, again);
+  const healthText = useHealthText();
+  const stored = account.fields[HEALTH_FIELD];
+  const score = scoreOn ? (reasons?.health?.score ?? (typeof stored === 'number' ? stored : null)) : null;
+  const band = scoreOn ? scoreBand(score, me.org.health?.bands) : bandOf(account, me.org.health);
+  const weakest = weakestPart(reasons?.health?.parts);
+
+  const renewOn = typeof account.fields[renewal?.key ?? ''] === 'string' && account.fields[renewal!.key] ? String(account.fields[renewal!.key]) : null;
+  const days = renewOn ? Math.round((Date.parse(renewOn.slice(0, 10)) - Date.parse(todayIso())) / DAY_MS) : null;
+  const renewTone = days === null ? undefined : days < 30 ? 'late' : days < 90 ? 'soon' : 'calm';
+  const worth = value ? account.fields[value.key] : null;
+
+  // The next promise: the open step due soonest; one with no date comes after every dated one.
+  const next = [...tasks].sort((x, y) => (x.dueDate ?? '9999').localeCompare(y.dueDate ?? '9999'))[0];
+  const owner = next ? person(next.assigneeIds[0]) : undefined;
+
+  return (
+    <section className="acc-band" aria-label={t('acc.band')}>
+      <div className="acc-band__tiles">
+      {healthTile && (
+        <div className="acc-tile acc-tile--health" data-band={band ?? undefined}>
+          <span className="acc-tile__label">{t('acc.band.health')}</span>
+          <span className="acc-tile__value">
+            {score !== null && <span className="acc-tile__score num">{formatNumber(score, locale)}</span>}
+            <span className="acc-tile__state">{band ? t(`health.band.${band}` as MessageKey) : judgement ? t('acc.band.noJudgement') : '—'}</span>
+          </span>
+          {scoreOn ? (
+            <span className="acc-tile__sub">
+              <span className="acc-tile__reason">{weakest ? healthText(weakest) : reasons ? t('acards.clear') : ''}</span>
+              <button type="button" className="linkbtn acc-tile__why" aria-expanded={why} aria-controls={whyId} onClick={() => setWhy((o) => !o)}>
+                {why ? t('health.hide') : t('health.why')}
+              </button>
+            </span>
+          ) : (
+            <span className="acc-tile__sub">{judgement ? labelOf(judgement.label, locale) : ''}</span>
+          )}
+        </div>
+      )}
+      {renewal && (
+        <div className="acc-tile" data-tone={renewTone}>
+          <span className="acc-tile__label">{labelOf(renewal.label, locale)}</span>
+          <span className="acc-tile__value">
+            {days === null ? (
+              <span className="acc-tile__state">—</span>
+            ) : days === 0 ? (
+              <span className="acc-tile__state">{t('acc.band.today')}</span>
+            ) : (
+              <>
+                <span className="acc-tile__score num">{formatNumber(Math.abs(days), locale)}</span>
+                <span className="acc-tile__state">{days > 0 ? t('acc.band.daysLeft') : t('acc.band.daysLate')}</span>
+              </>
+            )}
+          </span>
+          <span className="acc-tile__sub">{renewOn ? formatDate(renewOn, locale, { day: 'numeric', month: 'long', year: 'numeric' }) : t('acc.band.noDate')}</span>
+        </div>
+      )}
+      {value && (
+        <div className="acc-tile">
+          <span className="acc-tile__label">{labelOf(value.label, locale)}</span>
+          <span className="acc-tile__value">
+            <span className="acc-tile__money num">{worth === null || worth === undefined || worth === '' ? '—' : fmt(value, worth, account.currency)}</span>
+          </span>
+          {account.currency && account.currency !== me.org.currency && <span className="acc-tile__sub">{t('acc.band.ownCurrency', { code: account.currency })}</span>}
+        </div>
+      )}
+      <div className="acc-tile acc-tile--next">
+        <span className="acc-tile__label">{t('acc.band.next')}</span>
+        {next ? (
+          <>
+            <a
+              className="acc-tile__task"
+              href={`/b/${next.boardId}?task=${next.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                const p = new URLSearchParams(location.search);
+                p.set('task', next.id);
+                navigate(`${location.pathname}?${p}`);
+              }}
+            >
+              {next.title}
+            </a>
+            <span className="acc-tile__sub acc-tile__who">
+              {owner && <Avatar person={owner} />}
+              <span className="acc-tile__name">{owner ? owner.name.split(/\s+/)[0] : t('acc.band.nobody')}</span>
+              <DueLabel due={next.dueDate} done={false} />
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="acc-tile__value">
+              <span className="acc-tile__state">{t('acc.band.noNext')}</span>
+            </span>
+            {onAddTask ? (
+              <button type="button" className="linkbtn acc-tile__sub" onClick={onAddTask}>
+                {t('acc.band.addNext')}
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+      </div>
+      {why && scoreOn && (
+        <div className="acc-band__why" id={whyId}>
+          <HealthWhy data={reasons} score={score} />
+        </div>
+      )}
+    </section>
+  );
+}
+
 function TaskLine({ task, done }: { task: Task & { boardName: string }; done?: boolean }) {
   const { person } = useStore();
   return (
@@ -1021,7 +1266,9 @@ function TaskLine({ task, done }: { task: Task & { boardName: string }; done?: b
       href={`/b/${task.boardId}?task=${task.id}`}
       onClick={(e) => {
         e.preventDefault();
-        navigate(`${location.pathname}?task=${task.id}`);
+        const p = new URLSearchParams(location.search);
+        p.set('task', task.id);
+        navigate(`${location.pathname}?${p}`);
       }}
     >
       <span className="taskline__title" data-done={done ? 'true' : undefined}>

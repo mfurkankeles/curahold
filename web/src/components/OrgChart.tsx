@@ -1,8 +1,11 @@
 // A customer's stakeholders as an org chart. Drag a person onto someone to
 // make them report to that person, or onto the top strip to put them at the
-// top. Works with a mouse, a finger (the ⠿ handle) and the keyboard (the
-// menu on each card). Colours show where each person stands towards us.
-import { useEffect, useMemo, useRef, useState } from 'react';
+// top. Works with a mouse, a finger (the ⠿ handle) and the keyboard (the handle:
+// Space picks a card up, the arrows walk the people it may go under, Enter puts it
+// there; or the menu on each card). Every move can be undone for 10 seconds.
+// Colours show where each person stands towards us.
+import '../surfaces/employee-customers.css';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { STANCES, type AppRecord, type RecordType } from '../../../shared/src/records';
@@ -10,6 +13,7 @@ import { ApiFailure, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { Dialog, initials, RowMenu } from './ui';
+import { useUndo } from '../lib/undo';
 
 export const STANCE_KEYS = STANCES.map((s) => s.key);
 // A brand name and its mark, not text to translate.
@@ -57,6 +61,10 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
   const { canWrite, toast } = useStore();
   const [drag, setDrag] = useState<Drag | null>(null);
   const [moving, setMoving] = useState<AppRecord | null>(null);
+  // A card held with the keyboard: where it would go if put down now.
+  const [held, setHeld] = useState<{ id: string; targets: (string | 'root')[]; at: number } | null>(null);
+  const [said, setSaid] = useState('');
+  const offer = useUndo();
   const dragRef = useRef<Drag | null>(null);
   dragRef.current = drag;
   // The click that ends a drag must not also open the card.
@@ -76,14 +84,58 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
     return { roots, children };
   }, [records]);
 
+  const nameOf = (id: string | null) => records.find((x) => x.id === id)?.name ?? '';
   const move = async (id: string, parentId: string | null) => {
     const r = records.find((x) => x.id === id);
     if (!r || (r.parentId ?? null) === parentId) return;
+    const before = r.parentId ?? null;
     try {
       await patch(`/records/${id}`, { parentId });
       onChanged();
+      offer(parentId ? t('org.moved', { name: r.name, to: nameOf(parentId) }) : t('org.movedTop', { name: r.name }), async () => {
+        await patch(`/records/${id}`, { parentId: before });
+        onChanged();
+      });
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    }
+  };
+
+  // The keyboard's drag: Space or Enter on the handle picks the card up; the arrows walk the
+  // places it may go (the top, then everyone who is not below it); Enter puts it down; Escape lets go.
+  const heldTarget = held ? held.targets[held.at] : null;
+  const sayTarget = (to: string | 'root') => setSaid(to === 'root' ? t('org.kbTop') : t('org.kbOver', { name: nameOf(to) }));
+  const onHandleKey = (r: AppRecord, e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (!held || held.id !== r.id) {
+      if (e.key !== ' ' && e.key !== 'Enter') return;
+      e.preventDefault();
+      const blocked = descendants(r.id, children);
+      const targets: (string | 'root')[] = ['root', ...records.filter((x) => x.id !== r.id && !blocked.has(x.id)).map((x) => x.id)];
+      const at = Math.max(0, targets.indexOf(r.parentId ?? 'root'));
+      setHeld({ id: r.id, targets, at });
+      setSaid(`${t('org.kbPicked', { name: r.name })} ${targets[at] === 'root' ? t('org.kbTop') : t('org.kbOver', { name: nameOf(targets[at]) })}`);
+      return;
+    }
+    const step = (n: number) => {
+      e.preventDefault();
+      const at = (held.at + n + held.targets.length) % held.targets.length;
+      setHeld({ ...held, at });
+      sayTarget(held.targets[at]);
+      const to = held.targets[at];
+      document.querySelector(`[data-drop="${to}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') step(1);
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') step(-1);
+    else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const to = held.targets[held.at];
+      setHeld(null);
+      setSaid('');
+      void move(r.id, to === 'root' ? null : to);
+    } else if (e.key === 'Escape' || e.key === 'Tab') {
+      if (e.key === 'Escape') e.preventDefault();
+      setHeld(null);
+      setSaid(t('org.kbCancelled'));
     }
   };
 
@@ -152,8 +204,9 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
         className="org-card"
         data-drop={r.id}
         data-stance={STANCE_KEYS.includes(stance) ? stance : 'unknown'}
-        data-target={drag?.target === r.id || undefined}
+        data-target={drag?.target === r.id || heldTarget === r.id || undefined}
         data-dragged={isDragged || undefined}
+        data-held={held?.id === r.id || undefined}
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest('a, .rowmenu, .org-card__handle')) return;
           start(r, e, false);
@@ -161,9 +214,13 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
       >
         {canWrite && (
           <button
+            type="button"
             className="org-card__handle"
-            aria-hidden="true"
-            tabIndex={-1}
+            aria-label={t('org.kbMove', { name: r.name })}
+            aria-describedby="org-kb-hint"
+            aria-pressed={held?.id === r.id}
+            onKeyDown={(e) => onHandleKey(r, e)}
+            onBlur={() => held?.id === r.id && setHeld(null)}
             onPointerDown={(e) => {
               e.stopPropagation();
               start(r, e, true);
@@ -222,7 +279,13 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
 
   const dragged = drag?.live ? records.find((r) => r.id === drag.id) : null;
   return (
-    <div className="org" data-dragging={drag?.live || undefined}>
+    <div className="org" data-dragging={drag?.live || held ? true : undefined}>
+      <p id="org-kb-hint" className="sr-only">
+        {t('org.kbHint')}
+      </p>
+      <p className="sr-only" role="status" aria-live="assertive">
+        {said}
+      </p>
       <div className="org__summary">
         {STANCES.filter((s) => counts.get(s.key)).map((s) => (
           <span key={s.key} className="org__count">
@@ -250,8 +313,8 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
         )}
       </div>
       {canWrite && (
-        <div className="org__root" data-drop="root" data-target={drag?.target === 'root' || undefined}>
-          {drag?.live ? t('org.dropTop') : t('org.hint')}
+        <div className="org__root" data-drop="root" data-target={drag?.target === 'root' || heldTarget === 'root' || undefined}>
+          {drag?.live || held ? t('org.dropTop') : t('org.hint')}
         </div>
       )}
       {records.length === 0 ? (

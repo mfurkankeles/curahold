@@ -1,6 +1,7 @@
 // Records under accounts — contacts, opportunities, risks and whatever else
 // the company keeps: a list per kind, a section per kind on the account
 // page, and one dialog to add or edit a record.
+import '../surfaces/employee-customers.css';
 import { useMoney } from '../lib/money';
 import { todayIso } from '../lib/time';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -530,7 +531,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
         const cols = shownFields(ty, 3);
         return (
           <section className="sheet" key={ty.id}>
-            <div className="section__row">
+            <div className="section__row recs__row">
               <h3 className="section__head">
                 <span>
                   <Icon name={RECORD_KIND_ICON[ty.kind] ?? 'layout'} size={16} className="icon--lead" />

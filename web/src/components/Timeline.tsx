@@ -88,22 +88,86 @@ function Sparkline({ points }: { points: { day: string; score: number }[] }) {
   );
 }
 
+export type HealthWhyData = { health: HealthResult | null; history: { day: string; score: number }[] };
+
+/** The live score and its reasons for one customer; asked again when `again` changes. */
+export function useHealthWhy(accountId: string, on: boolean, again = 0) {
+  const [data, setData] = useState<HealthWhyData | null>(null);
+  useEffect(() => {
+    if (!on) return;
+    let live = true;
+    void get<HealthWhyData>(`/accounts/${accountId}/health`)
+      .then((r) => live && setData(r))
+      .catch(() => live && setData({ health: null, history: [] }));
+    return () => {
+      live = false;
+    };
+  }, [accountId, on, again]);
+  return data;
+}
+
+/** Each reason in words: what the person is told about one signal. */
+export function useHealthText() {
+  const { t, locale } = useI18n();
+  const { me } = useStore();
+  const defs = me.org.accountFields;
+  const fieldLabel = (key?: string) => labelOf(defs.find((f) => f.key === key)?.label, locale) || key || '';
+  const optionLabel = (key?: string, v?: unknown) => labelOf(defs.find((f) => f.key === key)?.options?.find((o) => o.key === v)?.label, locale) || String(v ?? '');
+  return (p: HealthPart) => partText(t, p, fieldLabel, optionLabel);
+}
+
+/** The reason that costs the most points right now, or null when nothing is wrong. */
+export function weakestPart(parts: HealthPart[] | undefined): HealthPart | null {
+  let worst: HealthPart | null = null;
+  for (const p of parts ?? []) {
+    if (p.weight <= 0 || p.points === null || p.points >= 70) continue;
+    if (!worst || p.share - p.earned > worst.share - worst.earned) worst = p;
+  }
+  return worst;
+}
+
+/** Why the score is what it is: every signal with the points it gave, and the trend. */
+export function HealthWhy({ data, score }: { data: HealthWhyData | null; score: number | null }) {
+  const { t } = useI18n();
+  const text = useHealthText();
+  const first = data?.history[0];
+  const change = first && score !== null ? score - first.score : null;
+  return (
+    <div className="healthwhy">
+      {!data && <p className="muted">{t('common.loading')}</p>}
+      {data?.health && (
+        <>
+          <ul>
+            {data.health.parts
+              .filter((p) => p.weight > 0)
+              .map((p) => (
+                <li key={p.id} data-state={p.points === null ? 'none' : p.points >= 70 ? 'good' : p.points >= 40 ? 'watch' : 'risk'}>
+                  <span>{text(p)}</span>
+                  <span className="healthwhy__pts">{p.points === null ? '—' : `${p.earned}/${p.share}`}</span>
+                </li>
+              ))}
+          </ul>
+          {data.history.length > 1 && (
+            <div className="healthwhy__trend">
+              <Sparkline points={data.history} />
+              {change !== null && <span className="muted">{t('health.trend', { days: data.history.length, change: change > 0 ? `+${change}` : String(change) })}</span>}
+            </div>
+          )}
+          <p className="field__hint">{t('health.explain')}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** On the customer page: the score, and on demand, why. */
 export function HealthBadge({ accountId, field, value }: { accountId: string; field: AccountField; value: unknown }) {
   const { t, locale } = useI18n();
   const { me } = useStore();
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState<{ health: HealthResult | null; history: { day: string; score: number }[] } | null>(null);
-  useEffect(() => {
-    if (open && !data) void get<{ health: HealthResult | null; history: { day: string; score: number }[] }>(`/accounts/${accountId}/health`).then(setData).catch(() => setData({ health: null, history: [] }));
-  }, [open, data, accountId]);
-  const defs = me.org.accountFields;
-  const fieldLabel = (key?: string) => labelOf(defs.find((f) => f.key === key)?.label, locale) || key || '';
-  const optionLabel = (key?: string, v?: unknown) => labelOf(defs.find((f) => f.key === key)?.options?.find((o) => o.key === v)?.label, locale) || String(v ?? '');
+  const data = useHealthWhy(accountId, open);
   const score = typeof value === 'number' ? value : null;
   const band = bandOf(score, me.org.health?.bands);
-  const first = data?.history[0];
-  const change = first && score !== null ? score - first.score : null;
   return (
     <div className="field">
       <span className="field__label">{labelOf(field.label, locale)}</span>
@@ -114,32 +178,7 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
           {open ? t('health.hide') : t('health.why')}
         </button>
       </div>
-      {open && (
-        <div className="healthwhy">
-          {!data && <p className="muted">{t('common.loading')}</p>}
-          {data?.health && (
-            <>
-              <ul>
-                {data.health.parts
-                  .filter((p) => p.weight > 0)
-                  .map((p) => (
-                    <li key={p.id} data-state={p.points === null ? 'none' : p.points >= 70 ? 'good' : p.points >= 40 ? 'watch' : 'risk'}>
-                      <span>{partText(t, p, fieldLabel, optionLabel)}</span>
-                      <span className="healthwhy__pts">{p.points === null ? '—' : `${p.earned}/${p.share}`}</span>
-                    </li>
-                  ))}
-              </ul>
-              {data.history.length > 1 && (
-                <div className="healthwhy__trend">
-                  <Sparkline points={data.history} />
-                  {change !== null && <span className="muted">{t('health.trend', { days: data.history.length, change: change > 0 ? `+${change}` : String(change) })}</span>}
-                </div>
-              )}
-              <p className="field__hint">{t('health.explain')}</p>
-            </>
-          )}
-        </div>
-      )}
+      {open && <HealthWhy data={data} score={score} />}
     </div>
   );
 }
