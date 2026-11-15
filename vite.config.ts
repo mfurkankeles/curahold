@@ -14,6 +14,8 @@ export default defineConfig({
     outDir: '../dist/web',
     emptyOutDir: true,
     sourcemap: false,
+    // Which chunks each screen needs (.vite/manifest.json): read by scripts/quality/static.mts.
+    manifest: true,
     rollupOptions: {
       output: {
         // Pull the large, slow-changing code out of the entry chunk so it caches

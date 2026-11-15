@@ -28,6 +28,22 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
   const html = readFileSync(index, 'utf8');
   const first = [...html.matchAll(/<(?:script[^>]+src|link[^>]+rel="(?:modulepreload|stylesheet)"[^>]+href)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^https?:/.test(u));
   const path = (u: string) => join(root, dir, u.replace(/^\//, ''));
+  // Screens load as chunks of their own: the app's first screen (home) is counted
+  // with every chunk it pulls in, from the build's manifest.
+  const manifestPath = join(root, dir, '.vite', 'manifest.json');
+  if (name === 'app' && existsSync(manifestPath)) {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, { file: string; imports?: string[] }>;
+    const seen = new Set<string>();
+    const walk = (key: string) => {
+      const m = manifest[key];
+      if (!m || seen.has(key)) return;
+      seen.add(key);
+      const u = `/${m.file}`;
+      if (!first.includes(u)) first.push(u);
+      for (const k of m.imports ?? []) walk(k);
+    };
+    walk('src/pages/Home.tsx');
+  }
   const js = first.filter((u) => u.endsWith('.js')).reduce((n, u) => n + gz(path(u)), 0);
   const css = first.filter((u) => u.endsWith('.css')).reduce((n, u) => n + gz(path(u)), 0);
   const all = existsSync(join(root, dir, 'assets')) ? execSync(`ls ${join(root, dir, 'assets')}`, { encoding: 'utf8' }).split('\n').filter((f) => f.endsWith('.js')) : [];

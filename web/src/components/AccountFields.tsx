@@ -3,7 +3,8 @@
 // risks…). Add, rename, reorder, change choices — no code. Account fields
 // can also be worked out from records ("open pipeline").
 import { Icon } from './icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRecordTypes } from '../lib/recordTypes';
 import { labelOf, optionKey } from '../../../shared/src/fields';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { FIELD_TYPES, OPTION_COLORS, type AccountField, type FieldAccess, type FieldType, type OptionColor, type Role, type Rollup } from '../../../shared/src/model';
@@ -22,14 +23,8 @@ const newKey = (label: string, taken: Set<string>) => {
   return out;
 };
 
-export function useRecordTypes() {
-  const [types, setTypes] = useState<RecordType[] | null>(null);
-  const load = useCallback(() => get<{ types: RecordType[] }>('/record-types').then((r) => setTypes(r.types)), []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-  return { types, load };
-}
+// In a small module of its own: the app's frame uses it without loading this file.
+export { useRecordTypes };
 
 /** "Sum of Amount on open Opportunities" — a rollup in words. */
 export function useRollupText(types: RecordType[] | null) {

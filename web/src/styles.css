@@ -1631,6 +1631,13 @@ kbd { font-family: inherit; }
 .skeleton--columns .skeleton__card { flex: 0 0 296px; background: var(--sunk); border-color: transparent; }
 .skeleton--columns .skeleton__card b { height: 58px; border-radius: 8px; background: var(--surface); animation: none; }
 @media (prefers-reduced-motion: reduce) { .skeleton i, .skeleton b { animation: none; } }
+/* A screen's code on its way (RouteFallback): its title bar and rows at their final size. */
+.route-wait { display: contents; }
+.route-wait__top { min-height: 67px; }
+.route-wait__title { display: block; width: min(220px, 50%); height: 24px; border-radius: 6px; background: var(--sunk); }
+.page.skeleton { align-content: start; }
+/* The assistant panel while its engine loads: holds the panel's height. */
+.cura__wait { flex: 1; min-height: 0; }
 
 /* ------------------------------------------------------- shortcuts, news */
 

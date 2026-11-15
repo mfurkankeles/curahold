@@ -1,11 +1,9 @@
 import { setCompanyZone } from './lib/time';
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type ComponentType } from 'react';
 import type { Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Shell } from './components/Shell';
-import { TaskPanel } from './components/TaskPanel';
-import { RecordPanel } from './components/RecordPanel';
 import { ApiFailure, endPreview, get, onAuthLost, patch, post, previewAs, setApiLocale } from './lib/api';
 import { installDiagnostics } from './lib/diagnostics';
 
@@ -16,25 +14,66 @@ import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
 import { useLive } from './lib/live';
 import { TASKS_CHANGED } from './lib/shell';
-import { AccountPage, AccountsPage } from './pages/Accounts';
-import { JoinPage, LoginPage, OrgNotFound, VerifyPage } from './pages/Auth';
-import { BoardPage } from './pages/BoardPage';
-import { MyTasks } from './pages/MyTasks';
-import { RecordsPage } from './components/Records';
-import { HomePage } from './pages/Home';
 import { ConsentBanner } from './components/ConsentBanner';
-// Reports + ReportBuilder stay eager on purpose: the task panel pulls `hoursText`
-// (and, through it, `ReportTabs`) from these modules, so they load with the shell
-// no matter what. Splitting them needs that helper moved to a lib first.
-import { ReportsPage } from './pages/Reports';
-import { ReportBuilderPage, ReportsListPage } from './pages/ReportBuilder';
-import { ConnectAiPage, rememberReturn, takeReturn } from './components/Developer';
+import { rememberReturn, takeReturn } from './lib/returnTo';
+import { PageFallback, RouteFallback } from './components/RouteFallback';
 
-// Code-splitting: the core daily-flow pages above (home, boards, tasks, records,
-// accounts) load with the app shell; the heavier, less-travelled routes below are
-// fetched on demand, each in its own chunk, behind the <PageFallback> Suspense
-// boundary in <Routes>. Pages use named exports, so each import() maps the right
-// export onto `default`.
+// Code-splitting: every screen is its own chunk, so the first one carries only
+// what it needs. The screen the address points at starts loading with the app
+// itself (preloadRoute, below), alongside the sign-in check, so no request
+// waits on another. Pages use named exports; `page` maps one onto `default`.
+type Loader<M> = () => Promise<M>;
+const once = <M,>(load: Loader<M>): Loader<M> => {
+  let p: Promise<M> | null = null;
+  return () => (p ??= load().catch((e) => ((p = null), Promise.reject(e))));
+};
+const page = <M extends Record<K, ComponentType<any>>, K extends keyof M>(load: Loader<M>, name: K) => lazy(() => load().then((m) => ({ default: m[name] })));
+const load = {
+  home: once(() => import('./pages/Home')),
+  myTasks: once(() => import('./pages/MyTasks')),
+  board: once(() => import('./pages/BoardPage')),
+  accounts: once(() => import('./pages/Accounts')),
+  records: once(() => import('./components/Records')),
+  reports: once(() => import('./pages/Reports')),
+  reportBuilder: once(() => import('./pages/ReportBuilder')),
+  auth: once(() => import('./pages/Auth')),
+  developer: once(() => import('./components/Developer')),
+  taskPanel: once(() => import('./components/TaskPanel')),
+  recordPanel: once(() => import('./components/RecordPanel')),
+};
+const HomePage = page(load.home, 'HomePage');
+const MyTasks = page(load.myTasks, 'MyTasks');
+const BoardPage = page(load.board, 'BoardPage');
+const AccountsPage = page(load.accounts, 'AccountsPage');
+const AccountPage = page(load.accounts, 'AccountPage');
+const RecordsPage = page(load.records, 'RecordsPage');
+const ReportsPage = page(load.reports, 'ReportsPage');
+const ReportsListPage = page(load.reportBuilder, 'ReportsListPage');
+const ReportBuilderPage = page(load.reportBuilder, 'ReportBuilderPage');
+const LoginPage = page(load.auth, 'LoginPage');
+const JoinPage = page(load.auth, 'JoinPage');
+const VerifyPage = page(load.auth, 'VerifyPage');
+const OrgNotFound = page(load.auth, 'OrgNotFound');
+const ConnectAiPage = page(load.developer, 'ConnectAiPage');
+const TaskPanel = page(load.taskPanel, 'TaskPanel');
+const RecordPanel = page(load.recordPanel, 'RecordPanel');
+
+/** Starts fetching the chunks the screen at `path` will need (no waiting). */
+function preloadRoute(path: string, search: string) {
+  const want: Loader<unknown>[] = [];
+  if (path === '/' || path === '/login' || path === '/auth/verify' || path === '/join') want.push(load.auth);
+  if (path === '/' || path === '/login' || path === '/home' || path.startsWith('/pages/')) want.push(load.home);
+  else if (path.startsWith('/b/')) want.push(load.board);
+  else if (path.startsWith('/accounts')) want.push(load.accounts);
+  else if (path.startsWith('/records/')) want.push(load.records);
+  else if (path === '/reports') want.push(load.reports);
+  else if (path === '/my') want.push(load.myTasks);
+  if (/[?&]task=/.test(search)) want.push(load.taskPanel);
+  if (/[?&]record=/.test(search)) want.push(load.recordPanel);
+  for (const l of want) void l().catch(() => undefined);
+}
+if (typeof location !== 'undefined') preloadRoute(location.pathname, location.search);
+
 const PersonalPage = lazy(() => import('./pages/Personal').then((m) => ({ default: m.PersonalPage })));
 const SetupPage = lazy(() => import('./pages/Setup').then((m) => ({ default: m.SetupPage })));
 const SignupApp = lazy(() => import('./pages/Signup').then((m) => ({ default: m.SignupApp })));
@@ -200,10 +239,15 @@ export function App() {
           <DeskApp onLocale={changeLocale} />
         </Suspense>
       )}
-      {boot.kind === 'no-org' && <OrgNotFound />}
+      {boot.kind === 'no-org' && (
+        <Suspense fallback={<PageFallback />}>
+          <OrgNotFound />
+        </Suspense>
+      )}
       {boot.kind === 'error' && <ErrorNote onRetry={() => start()} />}
-      {boot.kind === 'signed-out' &&
-        (loc.path === '/auth/verify' ? (
+      {boot.kind === 'signed-out' && (
+        <Suspense fallback={<PageFallback />}>
+        {loc.path === '/auth/verify' ? (
           <VerifyPage
             org={boot.org}
             onLocale={changeLocale}
@@ -223,7 +267,9 @@ export function App() {
           />
         ) : (
           <SignedOut org={boot.org} notice={boot.notice} onLocale={changeLocale} />
-        ))}
+        )}
+        </Suspense>
+      )}
       {boot.kind === 'signed-in' && (
         <ErrorBoundary whole>
           <StoreProvider initialMe={boot.me}>
@@ -256,15 +302,6 @@ function ErrorNote({ onRetry }: { onRetry: () => void }) {
       </div>
     </div>
   );
-}
-
-// Shown while a lazily-loaded route (or the desk / signup app) fetches its chunk.
-// Same quiet visual as the app's other loading states, but it carries an
-// accessible name and a polite live region so assistive tech announces the wait
-// instead of landing on a silent, empty page.
-function PageFallback() {
-  const { t } = useI18n();
-  return <div className="center-note muted" role="status" aria-live="polite" aria-label={t('common.loading')} />;
 }
 
 function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
@@ -329,16 +366,20 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   return (
     <>
       <ErrorBoundary resetKey={path}>
-        <Suspense fallback={<PageFallback />}>{page}</Suspense>
+        <Suspense fallback={<RouteFallback />}>{page}</Suspense>
       </ErrorBoundary>
       {recordId && !taskId && (
         <ErrorBoundary resetKey={recordId}>
-          <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />
+          <Suspense fallback={null}>
+            <RecordPanel key={recordId} recordId={recordId} onChanged={bump} />
+          </Suspense>
         </ErrorBoundary>
       )}
       {taskId && (
         <ErrorBoundary resetKey={taskId}>
-          <TaskPanel key={taskId} taskId={taskId} onChanged={bump} />
+          <Suspense fallback={null}>
+            <TaskPanel key={taskId} taskId={taskId} onChanged={bump} />
+          </Suspense>
         </ErrorBoundary>
       )}
     </>

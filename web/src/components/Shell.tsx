@@ -2,7 +2,7 @@
 // one button that adds anything. On a phone the same things sit in a bar at
 // the bottom, within reach of a thumb.
 import { FAVORITE_ICON } from './Favorites';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { endPreview, get, post } from '../lib/api';
@@ -17,20 +17,22 @@ import { forgetOffline, useInstall, useOnline } from '../lib/pwa';
 import { useStore } from '../lib/store';
 import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
-import { BoardSettings } from './BoardSettings';
-import { HelpDialog } from './Help';
 import { CuraAI } from './CuraAI';
 import { Icon, RECORD_KIND_ICON, type IconName } from './icons';
 import { MenuButton, MenuChoices } from './Menus';
-import { QuickAdd } from './QuickAdd';
 import { SearchPalette, useSearchKey } from './Search';
 import { WhatsNew } from './ShellDialogs';
-import { LogDialog } from './Meetings';
 import { BillingBar } from './Billing';
 import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
 import { Avatar, Dialog, Mark } from './ui';
-import { useRecordTypes } from './AccountFields';
+import { useRecordTypes } from '../lib/recordTypes';
 import { typeLabel } from '../../../shared/src/records';
+
+// Dialogs opened on demand: their code loads the first time one opens.
+const BoardSettings = lazy(() => import('./BoardSettings').then((m) => ({ default: m.BoardSettings })));
+const HelpDialog = lazy(() => import('./Help').then((m) => ({ default: m.HelpDialog })));
+const QuickAdd = lazy(() => import('./QuickAdd').then((m) => ({ default: m.QuickAdd })));
+const LogDialog = lazy(() => import('./Meetings').then((m) => ({ default: m.LogDialog })));
 
 /** Unread notifications, for the number beside "Inbox". */
 function useUnread() {
@@ -526,8 +528,10 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             {link('/calendar', t('nav.calendar'), here.calendar, 'calendar', undefined, 'tabbar__item')}
           </nav>
         )}
-        {newBoard && <BoardSettings onClose={() => setNewBoard(false)} />}
-        {help && <HelpDialog start={help} about={helpAbout} onClose={() => setHelp(null)} />}
+        <Suspense fallback={null}>
+          {newBoard && <BoardSettings onClose={() => setNewBoard(false)} />}
+          {help && <HelpDialog start={help} about={helpAbout} onClose={() => setHelp(null)} />}
+        </Suspense>
         {helpOk && (
           <CuraAI
             open={chat}
@@ -544,7 +548,11 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           />
         )}
         {searching && <SearchPalette onClose={() => setSearching(false)} onNewBoard={() => setNewBoard(true)} />}
-        {quick && <QuickAdd defaults={quick} onClose={() => setQuick(null)} />}
+        {quick && (
+          <Suspense fallback={null}>
+            <QuickAdd defaults={quick} onClose={() => setQuick(null)} />
+          </Suspense>
+        )}
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
         {news && <WhatsNew onClose={() => setNews(false)} onAction={runNews} />}
         {installHelp && (
@@ -556,7 +564,11 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             </ol>
           </Dialog>
         )}
-        {touch && <LogDialog accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />}
+        {touch && (
+          <Suspense fallback={null}>
+            <LogDialog accountId={touch.accountId} accountName={touch.accountName} kind={touch.kind} onClose={() => setTouch(null)} />
+          </Suspense>
+        )}
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
             <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>

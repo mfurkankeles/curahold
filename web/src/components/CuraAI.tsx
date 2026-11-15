@@ -3,10 +3,12 @@
 // an answer does not help, writing to support is one step away with the
 // question already filled in. Closing it keeps the conversation: it is the
 // same chat when it is opened again.
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
-import { Ask } from './Ask';
 import { Icon } from './icons';
+
+// The answering engine loads the first time the panel opens, not with the app.
+const Ask = lazy(() => import('./Ask').then((m) => ({ default: m.Ask })));
 
 export function CuraAI({
   open,
@@ -120,7 +122,9 @@ export function CuraAI({
               <Icon name="chevronDown" size={18} />
             </button>
           </header>
-          <Ask onWrite={onWrite} onEngine={setModel} />
+          <Suspense fallback={<div className="cura__wait" />}>
+            <Ask onWrite={onWrite} onEngine={setModel} />
+          </Suspense>
           <footer className="cura__foot">
             <span>{t('cura.person')}</span>
             <button type="button" className="cura__write" onClick={() => onWrite('')}>
