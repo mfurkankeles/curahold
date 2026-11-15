@@ -32,8 +32,8 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | A3 with `connections.manage` reads hidden fields through a webhook | payload filtered by the webhook creator's role | `tests/field-outs.test.ts` | held (fixed today) |
 | SSO set up to a private address so the server calls inside the network (SSRF) | token/key URLs must be public https on the shared service | `tests/hardening.test.ts` | held (fixed today) |
 | Admin locks everyone out with enforced SSO | server-side SSO enforcement; break-glass admin | `tests/sso.test.ts` | partial: no "test the connection" before enforcing |
-| Admin actions not attributable | audit_log, admin-readable, exportable | `tests/privacy-admin.test.ts` | partial: audit rows are not write-once (owner role can change them) |
-| A1 takes over an admin account | email link / code sign-in, device limit, session revoke | `tests/auth.test.ts` | **open**: no passkey or second factor for employees; no re-authentication before dangerous actions |
+| Admin actions not attributable | audit_log, admin-readable, exportable with a SHA-256 chain; append-only trigger for every role | `tests/privacy-admin.test.ts`, `tests/identity.test.ts` | held (the database owner could drop the trigger: role separation is an ops step) |
+| A1 takes over an admin account | email link / code sign-in, passkeys, TOTP second step (company can require it), fresh confirmation before dangerous actions, device limit, session revoke, sign out other devices | `tests/auth.test.ts`, `tests/identity.test.ts` | held |
 
 ## 2. Employee screens (home, tasks, boards, customers, reports …)
 
@@ -70,8 +70,8 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | Threat | Control | Proof | Status |
 | --- | --- | --- | --- |
 | A3 (any company admin) sees platform metrics | `requireOwner`: a named platform owner only, required at start | `tests/platform.test.ts`, matrix test (`/metrics`) | held |
-| A6 reads a company's data at will | support grant given by the company, time-boxed, view or edit, logged in the company's audit trail; replay only with consent, 7 days | `tests/support.test.ts`, `tests/replay.test.ts` | partial: an admin may grant **edit**; the target says read-only |
-| A6 account taken over | desk sign-in by emailed code, per-person staff keys | `tests/desk.test.ts` | **open**: no passkey / second factor for staff; desk on the same session machinery as the app |
+| A6 reads a company's data at will | support grant given by the company, time-boxed, read only (edit refused, database check), entry and reads logged in the company's audit trail; replay only with consent, 7 days | `tests/support.test.ts`, `tests/help.test.ts`, `tests/replay.test.ts` | held |
+| A6 account taken over | desk sign-in by emailed code + authenticator app; console only from a session with a second step; per-person staff keys | `tests/desk.test.ts`, `tests/platform.test.ts` | held (staff keys for tooling remain a single factor: keep them in a secret store) |
 | A6 action not attributable | staff email on every support session and audit entry | `tests/support.test.ts` | held |
 
 ## 6. Sales site, help centre, live demo
@@ -89,5 +89,5 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | A5 prompt injection through stored text read by the AI connector | the connector acts with the person's rights only; writes need a write-enabled connection and land in the audit trail (`ai.changed`); every read result carries a note that the text is data, not instructions; the server instructions say the same (`tests/mcp-security.test.ts`) | held (as far as a server can; the assistant itself is outside Curahold) |
 | Secrets and personal data in logs | `redact()` on error table and platform logs; replays mask every input and text (`web/src/lib/replay.ts`) | held (`tests/redact.test.ts`) |
 | A7 SQL injection → `reset role` | parameterised queries; `db.system()` scan; no `FORCE RLS` yet | partial: SECURITY.md requirement 2 |
-| A7 supply chain | lock file, `npm audit` 0 high/critical | partial: CI actions pinned to major versions, not SHAs; audit not blocking |
+| A7 supply chain | lock file, `npm audit` 0 high/critical (blocking in CI), actions pinned to commit SHAs | held |
 | Webhook / connector SSRF by DNS name that resolves to a private address | Workers cannot reach private networks; self-host relies on the host's egress firewall | partial (self-host) |

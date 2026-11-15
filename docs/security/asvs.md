@@ -10,12 +10,12 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | # | Risk | Result | Proof |
 | --- | --- | --- | --- |
 | API1 | Broken object level authorisation | pass | RLS on every company table (`tests/rls.test.ts`); every id-taking address called by another company (`tests/isolation-routes.test.ts`); portal by functions only (`tests/portal.test.ts`) |
-| API2 | Broken authentication | partial | sign-in links/codes single use, hashed, expiring, rate-limited (`tests/auth.test.ts`, `tests/ratelimit.test.ts`); no passkey/second factor for employees and staff |
+| API2 | Broken authentication | pass (closed 15 Nov, second pass) | sign-in links/codes single use, hashed, expiring, rate-limited (`tests/auth.test.ts`, `tests/ratelimit.test.ts`); passkeys, TOTP second step, company requirement, fresh confirmation (`tests/identity.test.ts`); staff second step on desk and console (`tests/desk.test.ts`, `tests/platform.test.ts`) |
 | API3 | Broken object property level authorisation | pass (fixed today) | field rules on every way out (`tests/field-outs.test.ts`); writes to hidden/locked fields refused (`tests/views.test.ts`); four leaks fixed: health "why", AI connector, webhooks, weekly email, whitespace |
 | API4 | Unrestricted resource consumption | pass (fixed today) | budgets per address/person/company and per door (`api/src/lib/ratelimit.ts`, `tests/ratelimit.test.ts`); file size cap (`lib/upload.ts`); list limits; import size cap |
 | API5 | Broken function level authorisation | pass | every role × every address (`tests/isolation-routes.test.ts`, "every role × every address") |
 | API6 | Unrestricted access to sensitive business flows | pass | invitations capped per company per hour in the database (migration 0050); sign-up, sign-in, help requests counted (`tests/ratelimit.test.ts`, `tests/help.test.ts`) |
-| API7 | Server side request forgery | partial (fixed today) | webhooks, chat webhooks, keyed CRMs and SSO refuse local/private/IPv6-literal hosts, https only, no redirects followed (`tests/hardening.test.ts`); DNS names resolving to private addresses are stopped only by the platform (Workers) or the self-host firewall |
+| API7 | Server side request forgery | pass | webhooks, chat webhooks, keyed CRMs and SSO refuse local/private/IPv6-literal hosts, https only (`tests/hardening.test.ts`); on self-host every outbound name is resolved and each address (and redirect hop) checked (`api/src/lib/outbound.ts`, `tests/outbound.test.ts`); Workers' network does not reach private addresses. Residual: DNS rebinding between check and connect on self-host (egress firewall recommended) |
 | API8 | Security misconfiguration | pass | CSP, HSTS, nosniff, frame-ancestors, referrer and permissions policy on API and static files (`tests/security.test.ts`); dev switches hard-coded off in the Worker entry |
 | API9 | Improper inventory management | pass | the route list is read from the code (`scripts/docs/routes.ts`); the developer reference and the matrix test fail on an unclassified address |
 | API10 | Unsafe consumption of APIs | pass | CRM/Jira/chat answers validated and treated as data; stored text from them is escaped on output; AI connector marks stored text as data (`tests/mcp-security.test.ts`) |
@@ -32,15 +32,15 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | 1.6.x cryptographic architecture, key management | partial | AES-256-GCM sealing with HKDF from `SECRETS_KEY`; no re-seal tool for key rotation (RUNBOOK) |
 | 1.7.x logging architecture | pass | `error_log` + platform logs, both masked (`lib/errlog.ts`, `tests/redact.test.ts`) |
 | 1.8.x data protection | pass | personal-data export/erasure in product (`tests/privacy-admin.test.ts`); retention jobs |
-| 1.14.x configuration: segregated components, CI | partial | CI read-only, no secrets; actions pinned to major versions, not SHAs |
+| 1.14.x configuration: segregated components, CI | pass | CI read-only, no secrets; actions pinned to commit SHAs (`.github/workflows/*.yml`) |
 
 ### V2 Authentication
 | Ids | Result | Proof |
 | --- | --- | --- |
 | 2.1.x passwords | n.a. (app) / pass (portal) | the app has no passwords; portal passwords: weak-password check, hashed (`tests/portal-signin.test.ts`) |
 | 2.2.1 anti-automation | pass (fixed today) | `tests/ratelimit.test.ts`, existing DB counts per email |
-| 2.2.2–2.2.3 notifications of auth events | partial | new-device sessions listed; no email on new sign-in |
-| 2.2.4–2.2.7 phishing-resistant / multi-factor | **fail** | no passkey or second factor for employees or staff (portal has passkeys) |
+| 2.2.2–2.2.3 notifications of auth events | partial | sessions listed, other devices signed out in one step, second-step changes in the audit trail; no email on new sign-in (not now) |
+| 2.2.4–2.2.7 phishing-resistant / multi-factor | pass (closed 15 Nov) | passkeys with user verification; TOTP + recovery codes; a company can require it; staff need it (`tests/identity.test.ts`, `tests/desk.test.ts`, `tests/platform.test.ts`) |
 | 2.5.x credential recovery | pass | email link only, single use, expiring |
 | 2.7.x out-of-band verifiers (email codes) | pass | 6-digit codes, attempt cap, expiry (`routes/auth.ts`, `tests/auth.test.ts`) |
 | 2.9 / 2.10 service authentication, secrets not in code | pass | Worker secrets; `tests/leak.test.ts`; API keys hashed |
@@ -51,8 +51,8 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | 3.1–3.3 tokens not in URLs, new token on sign-in, logout and expiry | pass | `routes/auth.ts`, `tests/auth.test.ts` |
 | 3.4 cookie attributes | pass | host-only, `HttpOnly`, `Secure`, `SameSite=Lax` |
 | 3.5 token-based sessions (API keys, OAuth) | pass | hashed, revocable, read-only unless granted (`tests/developer.test.ts`) |
-| 3.7.1 re-authentication before sensitive actions | **fail** | not implemented (role changes, SSO, key creation) |
-| session list and remote sign-out | pass | `/me/sessions`, `/admin/users/:id/sessions` |
+| 3.7.1 re-authentication before sensitive actions | pass (closed 15 Nov) | sign-in or confirmation (passkey, app code, recovery code, or emailed code without a second step) within 10 minutes before roles, SSO/SCIM, API keys, personal export/erasure, removing a person, audit export, sign-in security (`requireFresh`, `tests/identity.test.ts`). There is no whole-company export or company deletion route yet: they must call `requireFresh` when added |
+| session list and remote sign-out | pass | `/me/sessions`, `/me/sessions/sign-out-others`, `/admin/users/:id/sessions` |
 
 ### V4 Access control
 | Ids | Result | Proof |
@@ -60,7 +60,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | 4.1.1–4.1.5 enforced server-side, least privilege, deny by default | pass | matrix test; RLS deny by default |
 | 4.2.1 IDOR | pass | `tests/isolation-routes.test.ts` |
 | 4.2.2 CSRF | pass | custom header required on every cookie write (`app.ts companyFromHost`), `SameSite=Lax`; portal header `x-curahold-portal` |
-| 4.3.1 admin interfaces need extra protection | **fail** | same sign-in as the app (see 2.2.4) |
+| 4.3.1 admin interfaces need extra protection | pass (closed 15 Nov) | company-wide second-step requirement for administrators; fresh confirmation for admin changes; desk and console need a second step |
 | 4.3.2 directory browsing / metadata | pass | API answers 404 for unknown addresses |
 | field level | pass (fixed today) | `tests/field-outs.test.ts` |
 
@@ -71,7 +71,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | 5.2.x sanitisation (rich text, SVG, templates) | pass | no user HTML is rendered; SVG never shown inline; `dangerouslySetInnerHTML` only on Curahold's own help text (`Ask.tsx`) |
 | 5.3.1–5.3.3 output encoding, XSS | pass | React; `emailHtml.ts` `esc()`; `tests/text.test.ts` |
 | 5.3.4–5.3.5 SQL injection | pass | parameterised queries only; dynamic identifiers allow-listed |
-| 5.3.9 SSRF / LFI | partial | see API7 |
+| 5.3.9 SSRF / LFI | pass | see API7 |
 | 5.5.x deserialisation | pass | JSON only, schema-checked |
 
 ### V6 Stored cryptography
@@ -86,7 +86,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | --- | --- | --- |
 | 7.1.1–7.1.2 no credentials / sensitive data in logs | pass (fixed today) | `redact()` (`tests/redact.test.ts`) |
 | 7.1.3–7.1.4 security events logged | pass | audit_log: roles, SSO, keys, exports, erasure, support access, AI connector changes |
-| 7.2.x log protection | partial | audit_log readable only by admins, but not write-once: the owner database role can alter rows |
+| 7.2.x log protection | pass (closed 15 Nov) | append-only trigger for every role (migration 0055), no UPDATE/DELETE privilege for the request role, export with SHA-256 chain whose digest is logged (`tests/identity.test.ts`) |
 | 7.4.1 generic error messages | pass | `errors.server` text; no stack to the client |
 
 ### V8 Data protection
@@ -106,7 +106,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | Ids | Result | Proof |
 | --- | --- | --- |
 | 10.3.x deployed application integrity, no back doors | pass | dev switches hard-coded off in production entries; dependency audit 0 high/critical |
-| 10.3.2 dependency integrity (pinned CI) | partial | lock file; CI actions on major tags |
+| 10.3.2 dependency integrity (pinned CI) | pass | lock file; actions pinned to commit SHAs; `npm audit` blocking |
 
 ### V11 Business logic
 | Ids | Result | Proof |
@@ -122,7 +122,7 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 | 12.3.x file names, path traversal | pass | names sanitised; storage keys generated by the server |
 | 12.5.x downloads: `attachment`, `nosniff` | pass | `routes/tasks.ts /files/:id`, `routes/help.ts` |
 | 12.5.2 untrusted files served from a separate domain | **fail** | served from the app's origin; needs a files domain (owner decision: domain) |
-| 12.6.1 SSRF allow-list | partial | see API7 |
+| 12.6.1 SSRF allow-list | pass | see API7 |
 
 ### V13 API and web service
 | Ids | Result | Proof |
@@ -142,19 +142,16 @@ pass. Every remaining **fail** or **partial** is listed again at the end with wh
 
 ## What is still open, and what closing it takes
 
-1. **No passkey / second factor for employees and staff (2.2.4–2.2.7, 4.3.1)** — the largest gap. Needs: WebAuthn
-   registration and sign-in in the app (the portal's implementation in `api/src/portalSignIn.ts` is the model),
-   an admin switch "require for everyone / for admins", and required for the desk and platform console. 2–3 packages.
-2. **No re-authentication before dangerous actions (3.7.1)** — after (1): a fresh passkey or email code within
-   10 minutes before role changes, SSO, API keys, exports and erasure.
-3. **Downloads from the app's own origin (12.5.2)** — needs a separate files domain with short-lived signed links;
+Closed in the second pass (15 November): passkeys and the second step for employees and staff, re-authentication
+before dangerous actions, the write-once audit trail, read-only support, SHA-pinned CI with a blocking audit,
+`/.well-known/security.txt` with a disclosure policy, and the self-host DNS check for SSRF.
+
+Not now, on purpose:
+
+1. **Downloads from the app's own origin (12.5.2)** — needs a separate files domain with short-lived signed links;
    waits for the owner's domain decision.
-4. **CSP `'unsafe-inline'` for styles (14.4.3)** — the design-system package removes the 239 inline styles.
-5. **Audit trail not write-once (7.2.x)** — a trigger refusing update/delete on `audit_log` for every role but the
-   retention job, plus a hash chain for export.
-6. **Owner login owns the tables (1.2.x, SECURITY.md req. 2)** — separate migration role; `FORCE ROW LEVEL SECURITY`.
-7. **SSRF by DNS name on self-host (API7)** — resolve and check the address before each call on Node; document an
-   egress firewall in the self-host guide.
-8. **Support grants may be "edit" (threat model §5)** — the owner's target says staff access is read-only; removing
-   the edit level is a product decision (see the report).
-9. **CI actions on major tags, `npm audit` not blocking (10.3.2)** — pin to commit SHAs, make the audit step required.
+2. **CSP `'unsafe-inline'` for styles (14.4.3)** — the design-system package removes the inline styles (another agent).
+3. **Owner login owns the tables (1.2.x, SECURITY.md req. 2)** — a separate migration role and `FORCE ROW LEVEL
+   SECURITY`; until then the database owner could also drop the audit trigger. An operations change, not code.
+4. **Email on a new sign-in (2.2.2)** — sessions are listed and can be ended; a notification email is a product choice.
+5. **DNS rebinding on self-host (API7)** — the check runs just before the call; an egress firewall closes the gap.

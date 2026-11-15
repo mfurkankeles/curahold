@@ -7,9 +7,10 @@ the people operating Curahold must do for that model to hold.
 ## Reporting a vulnerability
 
 - **Please do not open a public issue** for anything that could expose data or let someone act as another person.
-- Email **support@curahold.com** with the subject line `SECURITY`. *(Maintainer action: create a dedicated
-  `security@` alias, point it at the on-call engineer, and publish it at `/.well-known/security.txt`; until then the
-  support address is the only monitored channel.)*
+- Write to the **Contact** in `/.well-known/security.txt` (served on every address; RFC 9116). The policy for researchers
+  is the help-centre page "Reporting a security problem" (`docs/site/*/responsible-disclosure.md`). *(Owner action: set
+  `SECURITY_CONTACT` to a monitored `security@` address; until then security.txt shows a marked placeholder,
+  `mailto:security-contact-not-set@example.invalid`, and email **support@curahold.com** with the subject `SECURITY`.)*
 - Include: what you found, the affected URL or endpoint, steps to reproduce, and what an attacker gains. Use test
   companies only; do not read, change or delete other people's real data.
 - What to expect: acknowledgement within 2 working days, an initial assessment within 5, and updates until it is
@@ -45,7 +46,16 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
    HSTS, no framing, no content sniffing, on API answers and static files (kept in step by `tests/security.test.ts`).
 8. **Least privilege for non-browser access**: API keys and OAuth app tokens are read-only unless granted write; the
    AI connector (`/mcp`) uses the same tokens. "See it as them" is read-only. Curahold support gets **time-boxed, consented**
-   access (view or edit), logged in the company's audit trail.
+   access, **read only** (no edit grants; the database refuses one, migration 0054), with the entry and what is read every
+   five minutes written to the company's audit trail.
+10. **Identity**: passkeys (WebAuthn) and an authenticator-app second step (TOTP, RFC 6238) with ten one-time recovery
+   codes; a company can require a second step of administrators or everyone (checked at every sign-in on the server; SSO
+   sign-ins pass); a sign-in or confirmation from the last ten minutes is needed for roles, SSO/SCIM, API keys, personal
+   exports and erasure, removing a person and exporting the audit trail. Curahold staff need a second step for the desk
+   (emailed code + app) and the platform console. Lock-out paths: recovery codes, an administrator's reset, the rule that
+   the setting needs the administrator's own second step, and `RESET_SECOND_STEP` on self-hosted installs.
+11. **Audit trail**: append-only in the database (trigger on UPDATE/DELETE/TRUNCATE for every role, no privilege for the
+   request role); exportable with a running SHA-256 whose final digest is itself logged.
 9. **Privacy by product**: personal-data export and deletion inside the product (KVKK/GDPR), retention jobs (error log 30 days,
    support session recordings 7 days, notifications 90 days, trash 30 days), data in the EU region.
 10. **No real customer data outside production**: tests, demos and docs use invented companies and people; `tests/leak.test.ts`
@@ -78,13 +88,15 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 - **Uploads**: picture types are believed only when the first bytes match; everything else is `attachment` with `nosniff`.
   Not yet: a separate files domain.
 - **Outbound addresses**: webhooks, chat webhooks, keyed CRMs and SSO token/key addresses refuse local, private and
-  IPv6-literal hosts and plain http (SSO: on the shared service; a self-hosted install may use its own network).
+  IPv6-literal hosts and plain http (SSO: on the shared service; a self-hosted install may use its own network). On a
+  self-hosted install every outbound call also resolves the name and checks each address, redirects included
+  (`api/src/lib/outbound.ts`; `OUTBOUND_ALLOW_HOSTS` for named internal services). DNS rebinding between check and
+  connection remains possible there: an egress firewall is the second line.
 - **Logs**: the error table and the platform log mask bearer tokens, keys, secret links, `token=`-style values and email
   addresses (`redact()` in `api/src/lib/errlog.ts`, `tests/redact.test.ts`).
 
-Still open (details in asvs.md): passkeys / second factor for employees and staff, re-authentication before dangerous
-actions, a separate files domain, `'unsafe-inline'` styles in the CSP, a write-once audit trail, role separation (row 2
-below), and `/.well-known/security.txt`.
+Still open (details in asvs.md): a separate files domain (needs the owner's domain), `'unsafe-inline'` styles in the CSP
+(the design package removes them), and role separation (row 2 below).
 
 ## Known operational requirements
 
@@ -113,5 +125,6 @@ honestly; items marked OPEN are not done today.
 
 - CI uses no secrets and has read-only repository permissions. Do not add deploy credentials to CI without a separate review
   of environment protection rules.
-- Third-party GitHub Actions are pinned to major versions; consider pinning to commit SHAs.
+- Third-party GitHub Actions are pinned to full commit SHAs (tag in a comment); the production `npm audit` (high/critical) is a
+  required CI job.
 - Keep `package-lock.json` committed; install with `npm ci`.
