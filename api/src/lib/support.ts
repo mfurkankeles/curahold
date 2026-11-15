@@ -2,10 +2,12 @@
 //
 // A person grants access (lib: grants), support asks for a one-time entry link
 // with its staff key, and the link opens a support session in the browser.
-// That session acts as the person who granted it: the same role, the same
-// customers, the same database checks. A "view" grant cannot change anything;
-// an "edit" grant (only an administrator can give one) can, and every change
-// is written to the activity log with the staff member's name.
+// That session acts as the person who granted it, read only: the same role, the
+// same customers, the same database checks, and nothing can be changed (there
+// are no "edit" grants; older ones were made read only by migration 0054).
+// Every visit is written to the company's activity log with the staff member's
+// name: when it starts (support.entered) and every five minutes it is in use
+// (support.viewed, with the address read).
 //
 // Some things stay out of reach whatever the grant: a person's devices and
 // sign-in, API keys, apps and webhooks, exporting or erasing people, roles and
@@ -167,8 +169,9 @@ export async function signInSupport(c: C): Promise<boolean> {
   if (!mayGrant(org, s.perms ?? [])) fail('support_ended');
   const method = c.req.method;
   if (supportBlocked(method, c.req.path)) fail('support_blocked');
+  // Always read-only; asking for the live ticket only reads, so it is let through.
   const writes = method !== 'GET' && method !== 'HEAD' && !asksForTicket(method, c.req.path);
-  if (writes && s.level !== 'edit') fail('support_read_only');
+  if (writes) fail('support_read_only');
 
   c.set('auth', {
     userId: s.user_id,
@@ -178,30 +181,20 @@ export async function signInSupport(c: C): Promise<boolean> {
     roleId: s.role_id,
     roleKey: s.role_key,
     perms: (s.perms ?? []) as Perm[],
-    seat: s.level === 'edit' ? s.seat : 'viewer',
+    seat: 'viewer',
     locale: s.locale ? normalizeLocale(s.locale) : null,
   });
   c.set('supportBy', { staff: s.staff, level: s.level, until: new Date(s.until).toISOString(), grantId: s.grant_id });
 
-  if (s.stale || writes) {
-    await deps.db.tenant({ orgId: org.id, userId: s.user_id }, async (q) => {
-      if (writes) {
-        await audit(q, {
-          orgId: org.id,
-          actorId: s.user_id,
-          action: 'support.changed',
-          entity: 'support_grant',
-          entityId: s.grant_id,
-          meta: { staff: s.staff, method, path: c.req.path },
-        });
-      }
+  if (s.stale) {
+    // What support is looking at, at most once every five minutes per visit: visible to the customer.
+    await deps.db.tenant({ orgId: org.id, userId: s.user_id }, (q) =>
+      audit(q, { orgId: org.id, actorId: s.user_id, action: 'support.viewed', entity: 'support_grant', entityId: s.grant_id, meta: { staff: s.staff, path: c.req.path } }),
+    );
+    await deps.db.system(async (q) => {
+      await q.query('update support_sessions set last_seen_at = now() where id = $1', [s.session_id]);
+      await q.query('update support_grants set last_used_at = now() where id = $1', [s.grant_id]);
     });
-    if (s.stale) {
-      await deps.db.system(async (q) => {
-        await q.query('update support_sessions set last_seen_at = now() where id = $1', [s.session_id]);
-        await q.query('update support_grants set last_used_at = now() where id = $1', [s.grant_id]);
-      });
-    }
   }
   return true;
 }

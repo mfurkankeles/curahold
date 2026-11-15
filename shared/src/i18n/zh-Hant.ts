@@ -4166,4 +4166,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.staff_second_step': "Curahold 員工需使用密碼金鑰或第二步驗證開啟控制台。請在「我的裝置」中新增一種方式，然後重新登入。",
   'desk.signin.app': "現在輸入驗證器應用程式中的 6 位數代碼。",
   'desk.signin.appSetup': "服務台還需要驗證器應用程式。請將此金鑰加入你的應用程式，然後輸入顯示的代碼。",
+  'errors.support_view_only': "Curahold 支援人員只能檢視，絕不會變更任何內容。",
+  'help.grant.viewOnly': "唯讀：支援人員可以檢視，絕不會變更任何內容。每次造訪都會顯示在活動記錄中。",
+  'audit.support.viewed': "Curahold 支援人員檢視了資料",
 };

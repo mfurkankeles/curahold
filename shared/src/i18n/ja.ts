@@ -4166,4 +4166,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.staff_second_step': "Curahold のスタッフは、パスキーまたは2段階目の確認でコンソールを開きます。「マイデバイス」で追加してから、もう一度ログインしてください。",
   'desk.signin.app': "続いて、認証アプリの6桁のコードを入力してください。",
   'desk.signin.appSetup': "デスクには認証アプリも必要です。このキーをアプリに追加し、表示されるコードを入力してください。",
+  'errors.support_view_only': "Curahold のサポートは閲覧のみで、何も変更できません。",
+  'help.grant.viewOnly': "閲覧のみ：サポートは見るだけで、何も変更しません。アクセスはすべてアクティビティログに表示されます。",
+  'audit.support.viewed': "Curahold サポートがデータを閲覧しました",
 };

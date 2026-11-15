@@ -146,7 +146,7 @@ describe('support access, only with consent', () => {
   });
 
   it('only an administrator may allow changes', async () => {
-    expect((await zeynep.post('/api/support/grants', { hours: 24, level: 'edit' })).json.error).toBe('support_edit_admins');
+    expect((await zeynep.post('/api/support/grants', { hours: 24, level: 'edit' })).json.error).toBe('support_view_only');
     expect((await zeynep.post('/api/support/grants', { hours: 5, level: 'view' })).status).toBe(400);
   });
 
@@ -210,18 +210,22 @@ describe('support access, only with consent', () => {
     expect((await zeynep.get('/api/me')).json.supportOpen).toBeUndefined();
   });
 
-  it('an administrator’s edit grant lets support fix things, and every change is logged', async () => {
-    const g = await ada.post('/api/support/grants', { hours: 72, level: 'edit' });
+  it('support only looks: no edit grants, no changes, and every visit is in the activity log', async () => {
+    expect((await ada.post('/api/support/grants', { hours: 72, level: 'edit' })).json.error).toBe('support_view_only');
+    // An old edit grant in the table cannot exist any more.
+    await expect(env.db.system((q) => q.query(`update support_grants set level = 'edit' where org_id = $1`, [env.a.orgId]))).rejects.toThrow();
+    const g = await ada.post('/api/support/grants', { hours: 72, level: 'view' });
     expect(g.status).toBe(201);
     const s = await enter(g.json.grant.id);
-    const made = await s.browser.post('/api/boards', { name: 'Fixed by support', visibility: 'private' });
-    expect(made.status).toBe(201);
-    // Still never: inviting people, roles, keys.
-    expect((await s.browser.post('/api/admin/users', { email: 'x@demo.example' })).json.error).toBe('support_blocked');
-    expect((await s.browser.post('/api/dev/keys', { name: 'k', canWrite: true })).json.error).toBe('support_blocked');
+    expect((await s.browser.post('/api/boards', { name: 'Fixed by support', visibility: 'private' })).json.error).toBe('support_read_only');
+    expect((await s.browser.get('/api/boards')).status).toBe(200);
+    // Five minutes later, what support reads is written down again.
+    await env.db.system((q) => q.query(`update support_sessions set entered_at = now() - interval '6 minutes', last_seen_at = null where org_id = $1`, [env.a.orgId]));
+    expect((await s.browser.get('/api/accounts')).status).toBe(200);
     const log = await ada.get('/api/admin/audit?limit=50');
-    const actions = (log.json.entries ?? log.json.items ?? log.json).map((e: any) => e.action);
-    expect(actions).toEqual(expect.arrayContaining(['support.granted', 'support.entered', 'support.changed']));
+    const entries = log.json.entries ?? log.json.items ?? log.json;
+    expect(entries.map((e: any) => e.action)).toEqual(expect.arrayContaining(['support.granted', 'support.entered', 'support.viewed']));
+    expect(entries.find((e: any) => e.action === 'support.viewed').staff).toBeTruthy();
     await ada.del(`/api/support/grants/${g.json.grant.id}`);
   });
 

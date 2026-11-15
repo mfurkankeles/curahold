@@ -4181,6 +4181,9 @@ export const en = {
   'errors.staff_second_step': "Curahold staff open the console with a passkey or a second step. Add one in My devices, then sign in again.",
   'desk.signin.app': "Now the 6-digit code from your authenticator app.",
   'desk.signin.appSetup': "The desk needs an authenticator app too. Add this key to yours, then enter the code it shows.",
+  'errors.support_view_only': "Curahold support can only look, never change anything.",
+  'help.grant.viewOnly': "Read only: support can look, never change anything. Every visit shows in your activity log.",
+  'audit.support.viewed': "Curahold support viewed data",
 } as const;
 
 export type MessageKey = keyof typeof en;

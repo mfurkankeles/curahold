@@ -4166,4 +4166,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'errors.staff_second_step': "يفتح موظفو Curahold وحدة التحكم بمفتاح مرور أو بخطوة ثانية. أضف واحدة من صفحة أجهزتي، ثم سجّل الدخول من جديد.",
   'desk.signin.app': "والآن أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.",
   'desk.signin.appSetup': "يتطلب المكتب تطبيق مصادقة أيضًا. أضف هذا المفتاح إلى تطبيقك، ثم أدخل الرمز الذي يظهر.",
+  'errors.support_view_only': "يمكن لدعم Curahold الاطلاع فقط، ولا يمكنه تغيير أي شيء.",
+  'help.grant.viewOnly': "للقراءة فقط: يمكن للدعم الاطلاع دون تغيير أي شيء. تظهر كل زيارة في سجل النشاط.",
+  'audit.support.viewed': "اطّلع دعم Curahold على البيانات",
 };

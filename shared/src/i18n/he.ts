@@ -4166,4 +4166,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'errors.staff_second_step': "צוות Curahold פותח את הקונסולה עם מפתח גישה או שלב שני. הוסף אחד בעמוד המכשירים שלי והיכנס מחדש.",
   'desk.signin.app': "עכשיו הזן את הקוד בן 6 הספרות מאפליקציית האימות.",
   'desk.signin.appSetup': "הדסק דורש גם אפליקציית אימות. הוסף את המפתח לאפליקציה שלך והזן את הקוד שהיא מציגה.",
+  'errors.support_view_only': "התמיכה של Curahold יכולה רק לצפות, לעולם לא לשנות דבר.",
+  'help.grant.viewOnly': "קריאה בלבד: התמיכה יכולה לצפות, לעולם לא לשנות. כל ביקור מופיע ביומן הפעילות.",
+  'audit.support.viewed': "התמיכה של Curahold צפתה בנתונים",
 };

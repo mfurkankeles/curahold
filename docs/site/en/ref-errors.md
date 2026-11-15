@@ -39,6 +39,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `required_fields` | 400 | Fill these in before finishing the task: … |
 | `second_step_failed` | 400 | That code didn't work. Check it and try again. |
 | `support_link_used` | 400 | This entry link has been used or has run out. Ask for a new one. |
+| `support_view_only` | 400 | Curahold support can only look, never change anything. |
 | `validation` | 400 | Some fields are not valid: … |
 | `device_mismatch` | 401 | This session belongs to another device. Please sign in again. |
 | `session_evicted` | 401 | You were signed out because your account was used on another device. |

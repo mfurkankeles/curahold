@@ -4166,4 +4166,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.staff_second_step': "Curahold 직원은 패스키나 2단계 인증으로 콘솔을 엽니다. 내 기기에서 하나를 추가한 뒤 다시 로그인하세요.",
   'desk.signin.app': "이제 인증 앱의 6자리 코드를 입력하세요.",
   'desk.signin.appSetup': "데스크에는 인증 앱도 필요합니다. 이 키를 앱에 추가한 뒤 표시되는 코드를 입력하세요.",
+  'errors.support_view_only': "Curahold 지원팀은 보기만 할 수 있으며 아무것도 변경할 수 없습니다.",
+  'help.grant.viewOnly': "읽기 전용: 지원팀은 보기만 하고 아무것도 변경하지 않습니다. 모든 방문은 활동 기록에 표시됩니다.",
+  'audit.support.viewed': "Curahold 지원팀이 데이터를 열람함",
 };

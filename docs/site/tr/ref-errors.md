@@ -39,6 +39,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `required_fields` | 400 | Görevi bitirmeden önce şunları doldur: … |
 | `second_step_failed` | 400 | Bu kod çalışmadı. Kontrol edip tekrar dene. |
 | `support_link_used` | 400 | Bu giriş bağlantısı kullanılmış ya da süresi dolmuş. Yenisini iste. |
+| `support_view_only` | 400 | Curahold desteği yalnızca bakabilir, hiçbir şeyi değiştiremez. |
 | `validation` | 400 | Bazı alanlar geçersiz: … |
 | `device_mismatch` | 401 | Bu oturum başka bir cihaza ait. Lütfen tekrar giriş yap. |
 | `session_evicted` | 401 | Hesabın başka bir cihazda kullanıldığı için çıkış yaptın. |

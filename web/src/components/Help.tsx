@@ -318,7 +318,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
   const [editing, setEditing] = useState<Shot | null>(null);
   const [grant, setGrant] = useState(false);
   const [hours, setHours] = useState<(typeof GRANT_HOURS)[number]>(24);
-  const [level, setLevel] = useState<'view' | 'edit'>('view');
+  const level = 'view' as const;
   const [keep, setKeep] = useState({
     device: true,
     pages: true,
@@ -658,17 +658,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
                   ))}
                 </select>
               </label>
-              <fieldset className="field">
-                <legend className="field__label">{t('help.grant.level')}</legend>
-                <label className="checkbox">
-                  <input type="radio" name="help-level" checked={level === 'view'} onChange={() => setLevel('view')} />
-                  <span>{t('help.grant.view')}</span>
-                </label>
-                <label className="checkbox" title={access?.canGrantEdit ? undefined : t('help.grant.editAdmins')}>
-                  <input type="radio" name="help-level" checked={level === 'edit'} disabled={!access?.canGrantEdit} onChange={() => setLevel('edit')} />
-                  <span>{t('help.grant.edit')}</span>
-                </label>
-              </fieldset>
+              <p className="field__hint">{t('help.grant.viewOnly')}</p>
             </div>
           )}
         </div>

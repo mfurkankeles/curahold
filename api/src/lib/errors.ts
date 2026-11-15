@@ -42,6 +42,7 @@ export type ErrorCode =
   | 'support_read_only'
   | 'support_not_allowed'
   | 'support_edit_admins'
+  | 'support_view_only'
   | 'support_too_many'
   | 'support_link_used'
   | 'help_too_many_files'
@@ -112,6 +113,7 @@ const STATUS: Record<ErrorCode, number> = {
   support_read_only: 403,
   support_not_allowed: 403,
   support_edit_admins: 403,
+  support_view_only: 400,
   support_too_many: 409,
   support_link_used: 400,
   help_too_many_files: 400,

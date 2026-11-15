@@ -4166,4 +4166,7 @@ export const tr: Record<MessageKey, string> = {
   'errors.staff_second_step': "Curahold çalışanları konsolu passkey ya da ikinci adımla açar. Cihazlarım sayfasından bir tane ekle, sonra yeniden giriş yap.",
   'desk.signin.app': "Şimdi doğrulama uygulamandaki 6 haneli kodu gir.",
   'desk.signin.appSetup': "Masa bir doğrulama uygulaması da istiyor. Bu anahtarı uygulamana ekle, sonra gösterdiği kodu gir.",
+  'errors.support_view_only': "Curahold desteği yalnızca bakabilir, hiçbir şeyi değiştiremez.",
+  'help.grant.viewOnly': "Yalnızca okuma: destek bakabilir, hiçbir şeyi değiştiremez. Her ziyaret işlem günlüğünde görünür.",
+  'audit.support.viewed': "Curahold desteği verilere baktı",
 };

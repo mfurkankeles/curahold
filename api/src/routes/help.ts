@@ -140,8 +140,8 @@ async function giveGrant(c: C, q: any, hours: number, level: 'view' | 'edit', re
   const auth = c.get('auth');
   if (c.get('supportBy') || c.get('previewBy') || c.get('tokenKind')) fail('forbidden');
   if (!mayGrant(org, auth.perms)) fail('support_not_allowed');
-  // Changes need an administrator, and someone who could make them themselves.
-  if (level === 'edit' && (!auth.perms.includes('org.manage') || auth.seat !== 'full')) fail('support_edit_admins');
+  // Curahold support looks and never changes anything: a grant is read only, time-boxed and given by the customer.
+  if (level === 'edit') fail('support_view_only');
   const [{ n }] = await q.query(
     `select count(*)::int as n from support_grants where user_id = $1 and revoked_at is null and expires_at > now()`,
     [auth.userId],
@@ -509,7 +509,8 @@ helpRoutes.get('/support/grants', async (c) => {
   return c.json({
     policy: supportPolicy(org),
     canGrant: mayGrant(org, auth.perms),
-    canGrantEdit: mayGrant(org, auth.perms) && auth.perms.includes('org.manage') && auth.seat === 'full',
+    // Support is read only (no edit grants since 15 Nov 2026); kept for older screens.
+    canGrantEdit: false,
     recordSessions: recordsSessions(org),
     grants: grants.map((g) => ({ ...toGrant(g), userName: g.user_name ?? null })),
   });
