@@ -8,8 +8,8 @@
 }
 .presence__face {
   display: inline-flex;
-  border-radius: 50%;
-  transition: box-shadow 160ms ease;
+  border-radius: var(--r-pill);
+  transition: box-shadow var(--dur-fast) ease;
 }
 .presence .avatars .presence__face + .presence__face {
   margin-inline-start: -8px;
@@ -20,7 +20,7 @@
 }
 .presence__typing {
   color: var(--ink-3);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
