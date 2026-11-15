@@ -32,7 +32,12 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
   const css = first.filter((u) => u.endsWith('.css')).reduce((n, u) => n + gz(path(u)), 0);
   const all = existsSync(join(root, dir, 'assets')) ? execSync(`ls ${join(root, dir, 'assets')}`, { encoding: 'utf8' }).split('\n').filter((f) => f.endsWith('.js')) : [];
   const allJs = all.reduce((n, f) => n + gz(join(root, dir, 'assets', f)), 0);
-  say('download', `${name}: first screen ${kb(js)} script + ${kb(css)} styles + ${kb(gzipSync(html).length)} page (gzip); every script together ${kb(allJs)} in ${all.length} file(s)`);
+  // The first screen also waits for one language's dictionary, fetched on its own
+  // (shared/src/i18n/vite-plugin.ts): counted here at the size of the largest.
+  const dicts = all.filter((f) => f.startsWith('_curahold-dict_')).map((f) => gz(join(root, dir, 'assets', f)));
+  const dict = dicts.length ? Math.max(...dicts) : 0;
+  const lang = dicts.length ? ` (with its language: ${kb(dict)}, the largest of ${dicts.length})` : '';
+  say('download', `${name}: first screen ${kb(js + dict)} script${lang} + ${kb(css)} styles + ${kb(gzipSync(html).length)} page (gzip); every script together ${kb(allJs)} in ${all.length} file(s)`);
 }
 
 // ---------------------------------------------------------------- dictionaries and the company's own words

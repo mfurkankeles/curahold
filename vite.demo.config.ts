@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
+import { i18nForBrowser } from './shared/src/i18n/vite-plugin';
 
 // The try-it-now demo: the whole product (API, Postgres with its row-level
 // security, and the app) running inside one browser tab with invented data.
@@ -42,7 +43,9 @@ const renameFsBundle = (): Plugin => ({
 export default defineConfig({
   root: 'web/demo',
   base: './',
-  plugins: [memoryLocation(), react(), renameFsBundle()],
+  // The API runs in the tab and needs every language, so no swap; the app's
+  // loader still asks for its language through the plugin's modules.
+  plugins: [memoryLocation(), i18nForBrowser({ swap: false }), react(), renameFsBundle()],
   define: { 'import.meta.env.APP_DEMO': 'true', __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
   build: {
     outDir: '../../dist/demo',

@@ -1,6 +1,8 @@
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
+import { i18nForBrowser, keysUsedIn } from './shared/src/i18n/vite-plugin';
 
 // The customer portal: its own small bundle, served on its own domain
 // (acme.curahold-portal.com) — none of the app's code ships with it.
@@ -9,7 +11,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   root: 'web/portal',
   define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
-  plugins: [react()],
+  // One language at a time, and only the phrases the portal's own code uses
+  // (shared/src/i18n/vite-plugin.ts).
+  plugins: [i18nForBrowser({ swap: true, keys: keysUsedIn([fileURLToPath(new URL('./web/portal', import.meta.url))]) }), react()],
   build: { outDir: '../../dist/portal', emptyOutDir: true, sourcemap: false },
   server: {
     host: true,

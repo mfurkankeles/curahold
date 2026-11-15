@@ -1,5 +1,78 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
-import { accountWords, bcp47Of, LOCALE_INFO, normalizeLocale, translate, type Locale, type MessageKey, type Terms, type Vars } from '../../../shared/src/i18n';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  accountWords,
+  bcp47Of,
+  hasDictionary,
+  LOCALE_INFO,
+  normalizeLocale,
+  registerDictionary,
+  translate,
+  type Dictionary,
+  type Locale,
+  type MessageKey,
+  type Terms,
+  type Vars,
+} from '../../../shared/src/i18n/core';
+
+// One language at a time: each dictionary is its own chunk, fetched when that
+// language is first needed (already filled with English where a phrase is not
+// translated yet — see shared/src/i18n/vite-plugin.ts). Literal imports, so
+// the bundler can see each one.
+const LOADERS: Record<Locale, () => Promise<{ default: Dictionary }>> = {
+  en: () => import('virtual:curahold-dict/en'),
+  tr: () => import('virtual:curahold-dict/tr'),
+  ar: () => import('virtual:curahold-dict/ar'),
+  he: () => import('virtual:curahold-dict/he'),
+  fa: () => import('virtual:curahold-dict/fa'),
+  'zh-Hans': () => import('virtual:curahold-dict/zh-Hans'),
+  'zh-Hant': () => import('virtual:curahold-dict/zh-Hant'),
+  ja: () => import('virtual:curahold-dict/ja'),
+  ko: () => import('virtual:curahold-dict/ko'),
+};
+const pending = new Map<Locale, Promise<void>>();
+
+/** Fetches and registers a language (once). Resolves when `t` can speak it. */
+export function loadLocale(l: Locale): Promise<void> {
+  if (hasDictionary(l)) return Promise.resolve();
+  let p = pending.get(l);
+  if (!p) {
+    p = LOADERS[l]().then(
+      (m) => {
+        registerDictionary(l, m.default);
+        rememberHint(l);
+      },
+      (e) => {
+        pending.delete(l);
+        throw e;
+      },
+    );
+    pending.set(l, p);
+  }
+  return p;
+}
+export const isLocaleLoaded = hasDictionary;
+
+// The language this browser last read in, so its dictionary can be fetched
+// while the app is still asking who the person is.
+const HINT = 'app_locale_hint';
+function rememberHint(l: Locale) {
+  try {
+    localStorage.setItem(HINT, l);
+  } catch {
+    /* private mode */
+  }
+}
+/** Starts fetching the language the next screen will most likely be in. */
+export function preloadLikelyLocale() {
+  let hint: Locale | null = null;
+  try {
+    const v = localStorage.getItem(HINT);
+    hint = v ? normalizeLocale(v) : null;
+  } catch {
+    /* private mode */
+  }
+  void loadLocale(storedLocale() ?? hint ?? startLocale()).catch(() => undefined);
+}
 
 export interface I18n {
   locale: Locale;
@@ -10,7 +83,23 @@ export interface I18n {
 
 const Ctx = createContext<I18n | null>(null);
 
-export function I18nProvider({ locale, terms, children }: { locale: Locale; terms?: Terms | null; children: ReactNode }) {
+export function I18nProvider({ locale: wanted, terms, children }: { locale: Locale; terms?: Terms | null; children: ReactNode }) {
+  // The language on screen: the wanted one once its dictionary is here. Until
+  // then the previous one stays (switching never shows raw keys); on the very
+  // first load nothing is drawn — the page is blank at that moment anyway.
+  const [shown, setShown] = useState<Locale | null>(() => (hasDictionary(wanted) ? wanted : null));
+  useEffect(() => {
+    let live = true;
+    loadLocale(wanted)
+      .catch(() => (wanted === 'en' ? Promise.reject(new Error('no dictionary')) : loadLocale('en').then(() => 'en' as const)))
+      .then((got) => live && setShown(got ?? wanted))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [wanted]);
+  // Checked while drawing too: the moment a dictionary lands, every render speaks it.
+  const locale: Locale = hasDictionary(wanted) ? wanted : (shown ?? wanted);
   // The page reads in the language's own direction: right-to-left for Arabic,
   // Hebrew and Persian. Set on <html> so the whole layout follows.
   useEffect(() => {
@@ -33,6 +122,7 @@ export function I18nProvider({ locale, terms, children }: { locale: Locale; term
       },
     };
   }, [locale, terms]);
+  if (!shown && !hasDictionary(wanted)) return null;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

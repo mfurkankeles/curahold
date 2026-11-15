@@ -11,7 +11,7 @@ import { installDiagnostics } from './lib/diagnostics';
 
 // Errors, failed requests and recent pages, kept in memory for a help request.
 installDiagnostics();
-import { I18nProvider, startLocale, storeLocale, storedLocale, useI18n } from './lib/i18n';
+import { I18nProvider, loadLocale, startLocale, storeLocale, storedLocale, useI18n } from './lib/i18n';
 import { match, navigate, useLocation } from './lib/router';
 import { StoreProvider } from './lib/store';
 import { useLive } from './lib/live';
@@ -98,6 +98,11 @@ export function App() {
       return;
     }
     if (!storedLocale()) setLocale(org.locale);
+    // The language's dictionary comes while /me is asked; each screen below
+    // waits for it so it opens in its own language, never in a passing one.
+    const orgLocale = storedLocale() ?? org.locale;
+    const ready = (l: Locale) => loadLocale(l).catch(() => undefined);
+    void ready(orgLocale);
     // The company's logo as the tab icon, when it has one.
     if (org.logoUrl) {
       const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]') ?? document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
@@ -111,17 +116,20 @@ export function App() {
         if (!token) throw new Error('no token');
         await post('/support/enter', { token });
       } catch {
+        await ready(orgLocale);
         setBoot({ kind: 'signed-out', org, notice: 'support' });
         navigate('/login', true);
         return;
       }
     }
     if (location.pathname === '/auth/verify' || location.pathname === '/join') {
+      await ready(orgLocale);
       setBoot({ kind: 'signed-out', org, notice });
       return;
     }
     try {
       const me = await get<Me>('/me');
+      await ready(me.user.locale ?? orgLocale);
       if (me.user.locale) setLocale(me.user.locale);
       setCompanyZone(me.org.timezone);
       setBoot({ kind: 'signed-in', org, me });
@@ -147,6 +155,7 @@ export function App() {
       if (location.pathname === '/connect-ai') rememberReturn(location.pathname + location.search);
       const evicted = e instanceof ApiFailure && e.code === 'session_evicted';
       const supportEnded = e instanceof ApiFailure && e.code === 'support_ended';
+      await ready(orgLocale);
       setBoot({ kind: 'signed-out', org, notice: evicted ? 'evicted' : supportEnded ? 'support' : notice });
       if (location.pathname !== '/login') navigate('/login', true);
     }

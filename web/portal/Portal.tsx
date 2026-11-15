@@ -2,7 +2,8 @@
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n';
+import { translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
+import { loadLocale, useShownLocale } from './i18n';
 import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
@@ -102,8 +103,11 @@ export function PortalApp() {
 
 function Portal() {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
-  const [locale, setLocale] = useState<Locale>(() => storedLocale() ?? (/^tr\b/i.test(navigator.language) ? 'tr' : 'en'));
-  apiLocale = locale;
+  const [wanted, setLocale] = useState<Locale>(() => storedLocale() ?? (/^tr\b/i.test(navigator.language) ? 'tr' : 'en'));
+  // Drawn in the wanted language once its dictionary is here (see ./i18n).
+  const shown = useShownLocale(wanted);
+  const locale = shown ?? wanted;
+  apiLocale = wanted;
   const ctx = useMemo<Ctx>(
     () => ({
       locale,
@@ -123,6 +127,9 @@ function Portal() {
       return;
     }
     if (!storedLocale()) setLocale(org.locale);
+    // Each screen below waits for its language, so it never opens in a passing one.
+    let target: Locale = storedLocale() ?? org.locale;
+    void loadLocale(target);
     document.title = org.name;
     // Back from Google/Microsoft with a problem: say what it was.
     const error = new URLSearchParams(location.search).get('error');
@@ -136,22 +143,27 @@ function Portal() {
       const token = hash.get('token');
       history.replaceState(null, '', '/');
       // A first Microsoft sign-in is confirmed with a code; a reset link asks for a new password.
+      if (hash.get('confirm') || hash.get('reset')) await loadLocale(target);
       if (hash.get('confirm')) return setBoot({ kind: 'confirm', org, token: hash.get('confirm')! });
       if (hash.get('reset')) return setBoot({ kind: 'reset', org, token: hash.get('reset')! });
       try {
         if (!token) throw new Error('no token');
         const r = await call<{ locale: Locale | null }>('POST', '/auth/verify', { token });
-        if (r.locale && !storedLocale()) setLocale(r.locale);
+        if (r.locale && !storedLocale()) setLocale((target = r.locale));
       } catch {
+        await loadLocale(target);
         setBoot({ kind: 'out', org, note: 'link' });
         return;
       }
     }
     try {
       const me = await call<PortalMe>('GET', '/me');
-      if (me.user.locale && !storedLocale()) setLocale(me.user.locale);
+      if (me.user.locale && !storedLocale()) target = me.user.locale;
+      await loadLocale(target);
+      setLocale(target);
       setBoot({ kind: 'in', org, me });
     } catch {
+      await loadLocale(target);
       setBoot({ kind: 'out', org, note });
     }
   }, []);
@@ -168,7 +180,7 @@ function Portal() {
   const signedOut = (note?: string) => void start(note ?? 'expired');
 
   const { t } = ctx;
-  if (boot.kind === 'loading') return <div className="p-center" aria-busy="true" />;
+  if (boot.kind === 'loading' || !shown) return <div className="p-center" aria-busy="true" />;
   if (boot.kind === 'missing' || boot.kind === 'error')
     return (
       <div className="p-center">
