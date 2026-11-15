@@ -186,7 +186,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { h: 'A portal for your customers', p: 'They sign in with a link in their email and see only what you share: their tasks, their requests, your replies.' },
         { h: 'In step with the tools you have', p: 'Your CRM, Jira, spreadsheets and chat. A change on either side shows up on the other.' },
         { h: 'The quarter on one screen', p: 'Targets, the weighted pipeline and the health of the whole portfolio, in reports and dashboards you can build yourself.' },
-        { h: 'Nine languages, right-to-left included', p: 'Each person picks their own. The whole interface follows, mirrored where it should be.' },
+        { h: 'Nine languages, right\u2011to\u2011left included', p: 'Each person picks their own. The whole interface follows, mirrored where it should be.' },
         { h: 'Your data stays yours', p: 'Every company is kept apart in the database itself, so no mistake in a screen can show one company another’s data.' },
       ],
       ask: { q: 'Which accounts need me this week?', a: 'Three need your attention:', did: 'I’ve opened a task for Zeynep: book the Marevo review.' },
@@ -943,7 +943,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       ],
       ui: {
         chips: { review: 'ビジネスレビューが14日遅延', renewal: '更新まであと94日' },
-        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', 'モバイルチャネルのサンプルジャーニーを作成'] },
+        meeting: { kind: 'ビジネスレビュー', name: '第3四半期ビジネスレビュー', ours: '自社：Zeynep Tunç、Ada Demir', theirs: '先方：Selin Aytaç', steps: ['追加シートの見積もりを送る', 'モバイル向けのサンプルジャーニーを作成'] },
         todo: '利用状況レポートを共有',
         tasksOpened: '2件のタスクを作成',
         playbook: '更新プレイブック',

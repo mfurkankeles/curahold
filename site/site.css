@@ -92,12 +92,12 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; }
 .brand svg { width: 30px; height: 30px; }
 .top__nav { display: flex; gap: 22px; }
-.top__nav a { position: relative; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 15px; transition: color .18s var(--ease); }
+.top__nav a { position: relative; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 15px; white-space: nowrap; transition: color .18s var(--ease); }
 .top__nav a::after { content: ''; position: absolute; inset-inline: 0; bottom: -5px; height: 2px; border-radius: 2px; background: var(--iris); transform: scaleX(0); transform-origin: var(--start); transition: transform .22s var(--ease); }
 .top__nav a:hover { color: var(--ink); }
 .top__nav a:hover::after { transform: scaleX(1); }
 .top__end { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; }
-.top__lang, .top__signin { color: var(--ink-2); font: 500 15px/1 var(--text); text-decoration: none; background: none; border: 0; cursor: pointer; padding: 8px 4px; }
+.top__lang, .top__signin { color: var(--ink-2); font: 500 15px/1 var(--text); text-decoration: none; background: none; border: 0; cursor: pointer; padding: 8px 4px; white-space: nowrap; }
 .top__lang:hover, .top__signin:hover { color: var(--ink); }
 .lang { position: relative; }
 .lang > summary { list-style: none; }
@@ -136,6 +136,8 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .hero__h .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .12em; margin-bottom: -.12em; max-width: 100%; }
 .hero__h .w > span { display: inline-block; }
 :lang(ja) .hero__h, :lang(zh) .hero__h, :lang(ko) .hero__h { font-size: clamp(32px, 4.3vw, 58px); font-weight: 800; }
+/* Japanese: small enough that the line can end at the comma, and filled in order rather than evened out. */
+:lang(ja) .hero__h { font-size: clamp(32px, 3.3vw, 48px); text-wrap: wrap; }
 :lang(ar) .hero__h, :lang(he) .hero__h, :lang(fa) .hero__h { font-size: clamp(36px, 4.8vw, 64px); }
 .hero__lead { margin: 22px 0 0; font-size: 19px; line-height: 1.55; color: #c9c5e8; max-width: 46ch; text-wrap: pretty; }
 .hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
@@ -179,16 +181,18 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 /* 1 — health */
 .hl { display: grid; gap: 6px; }
 .hl__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font: 700 15px/1.2 var(--display); }
-.hl__row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 10px; border-radius: 11px; background: var(--s2); border: 1px solid transparent; }
+/* On a phone an account with a signal takes two lines: its name, then the signal in full. */
+.hl__row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 5px 10px; min-width: 0; padding: 8px 10px; border-radius: 11px; background: var(--s2); border: 1px solid transparent; }
 .hl__row.is-pick { border-color: color-mix(in srgb, var(--fb) 70%, transparent); background: #2a2650; }
 .hl__name { font-weight: 600; white-space: nowrap; }
-.hl__row .tag, .hl__band { margin-inline-start: auto; }
+.hl__row .tag { grid-column: 2 / -1; justify-self: start; max-width: 100%; }
 .hl__band { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--fi3); white-space: nowrap; }
 .hl__band::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--bc); }
 .hd { position: absolute; inset: 0; padding: inherit; background: var(--s1); box-shadow: calc(var(--sx) * -18px) 0 30px -12px rgba(0, 0, 0, .6); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
 .hd__top { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .hd__top b { font: 700 17px/1.2 var(--display); }
 .hd__top .av { margin-inline-start: auto; }
+.hd__top .tag { display: none; }
 .hd__body { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; align-items: start; }
 .hd__score { display: grid; justify-items: center; gap: 6px; text-align: center; }
 .ring { position: relative; width: 104px; height: 104px; }
@@ -209,7 +213,9 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .why__bar i { display: block; height: 100%; width: max(4px, calc(var(--w) * 100%)); border-radius: 3px; background: var(--bc); }
 @container stage (min-width: 520px) {
   .hl { gap: 8px; }
-  .hl__row { padding: 11px 14px; }
+  .hl__row { display: flex; gap: 10px; padding: 11px 14px; }
+  .hl__row .tag, .hl__band { margin-inline-start: auto; }
+  .hd__top .tag { display: block; }
   .hd__body { grid-template-columns: 150px minmax(0, 1fr); gap: 22px; }
   .ring { width: 132px; height: 132px; }
   .ring__n { font-size: 44px; }
@@ -524,13 +530,13 @@ html:not(.js) .tour__bar { display: none; }
 .pt__list :is(.is-done, .pt__tick) span { color: var(--ink-3); text-decoration: line-through; }
 .pt__list li em { flex: none; margin-inline-start: auto; font-style: normal; font-size: 12px; font-weight: 600; color: var(--iris-ink); white-space: nowrap; }
 .pt__new { justify-self: start; padding: 7px 13px; border-radius: 999px; background: var(--iris); color: #fff; font-size: 13px; font-weight: 650; }
-.pt__mail { justify-self: end; width: min(100%, 340px); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: center; padding: 10px 12px 12px; border-radius: 14px; background: var(--paper); border: 1px solid #d9d4fb; box-shadow: 0 14px 30px -20px rgba(91, 77, 232, .8); font-size: 13px; line-height: 1.3; }
-.pt__lbl { grid-column: 1 / -1; font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
-.pt__field { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); direction: ltr; text-align: start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pt__btn { padding: 8px 12px; border-radius: 8px; background: var(--night); color: #fff; text-align: center; font-weight: 650; white-space: nowrap; }
+.pt__mail { justify-self: end; width: min(100%, 340px); display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 10px 12px 12px; border-radius: 14px; background: var(--paper); border: 1px solid #d9d4fb; box-shadow: 0 14px 30px -20px rgba(91, 77, 232, .8); font-size: 13px; line-height: 1.3; }
+.pt__lbl { flex: 1 0 100%; font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
+.pt__field { flex: 1000 1 168px; min-width: 0; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); direction: ltr; text-align: start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt__btn { flex: 1 0 auto; padding: 8px 12px; border-radius: 8px; background: var(--night); color: #fff; text-align: center; font-weight: 650; white-space: nowrap; }
 
 /* Sync */
-.sy { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; align-self: center; padding: 22px 20px 28px; }
+.sy { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; align-self: end; row-gap: 18px; padding: 22px 20px 24px; }
 .sy__col { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .sy__col li { position: relative; display: flex; align-items: center; min-width: 0; }
 .sy__col--b li { justify-content: flex-end; }
@@ -541,6 +547,17 @@ html:not(.js) .tour__bar { display: none; }
 .sy__hub svg { width: 36px; height: 36px; }
 .sy__hub svg rect { fill: rgba(255, 255, 255, .1); }
 .sy__hub em { font-style: normal; font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+/* One change at a time, under the hub: where it came from, which way it went, what it was. */
+.sy__feed { grid-column: 1 / -1; display: grid; }
+.sy__ev { grid-area: 1 / 1; margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 9px 12px; border-radius: 12px; background: var(--mist); border: 1px solid var(--line); color: var(--ink); font-size: 13px; line-height: 1.35; opacity: 0; }
+.tile .sy__ev { max-width: none; font-size: 13px; color: var(--ink); }
+.sy__ev.is-own { opacity: 1; }
+.sy__ev b { flex: none; font-weight: 700; }
+.sy__ev svg { flex: none; width: 15px; height: 15px; color: var(--iris); }
+[dir='rtl'] .sy__ev svg { transform: scaleX(-1); }
+.sy__ev span { min-width: 0; }
+.sy__ev em { font-style: normal; color: var(--ink-3); }
 
 /* Reports */
 .rp { display: grid; gap: 10px; align-content: end; padding: 22px 28px 28px; font-size: 13px; line-height: 1.35; }
@@ -612,6 +629,7 @@ html:not(.js) .tour__bar { display: none; }
   .tile.is-live .sy__beam::after { animation: beam 2.6s linear calc(var(--i) * .5s) infinite; }
   .tile.is-live .sy__beam--b::after, .tile.is-live li:nth-child(2) .sy__beam--a::after { animation-direction: reverse; }
   .tile.is-live li:nth-child(2) .sy__beam--b::after { animation-direction: normal; }
+  .tile.is-live .sy__ev { animation: ev 9s var(--ease) calc(var(--i) * 3s) infinite both; }
   .tile.is-live .rp__meter i, .tile.is-live .rp__bands i { animation: f-fill 1.1s var(--ease) both; }
   .tile.is-live .rp__open { animation-delay: .35s; }
   .tile.is-live .rp__pace { animation: f-pop .5s var(--ease) 1s both; }
@@ -632,6 +650,7 @@ html:not(.js) .tour__bar { display: none; }
 @keyframes ticks { 0%, 60% { color: var(--ink); text-decoration-color: transparent; } 66%, 100% { color: var(--ink-3); text-decoration-color: currentColor; } }
 @keyframes ptbar { 0%, 60% { transform: scaleX(.333); } 70%, 100% { transform: scaleX(.667); } }
 @keyframes beam { to { transform: translateX(calc(var(--sx) * 250%)); } }
+@keyframes ev { 0% { opacity: 0; transform: translateY(8px); } 4%, 31% { opacity: 1; transform: none; } 35.5%, 100% { opacity: 0; transform: translateY(-8px); } }
 @keyframes lang { 0% { opacity: 0; transform: translateY(10px) scale(.98); } 2.5%, 10.5% { opacity: 1; transform: none; } 13%, 100% { opacity: 0; transform: translateY(-10px) scale(.98); } }
 @keyframes lockring { 0% { opacity: .9; transform: none; } 32%, 100% { opacity: 0; transform: scale(1.75); } }
 
@@ -744,17 +763,17 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
 @media (max-width: 1039px) {
   .hero__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'text' 'tabs' 'film' 'now'; row-gap: 14px; padding: 28px 0 30px; }
   .hero__text { margin-bottom: 18px; }
-  .film { width: min(100%, 620px); justify-self: center; }
+  .film { width: min(100%, 720px); }
   .hero__arc { display: none; }
   /* The chapters become a row of four short tabs over the film; the words for the open one sit under it. */
-  html.js .tour { gap: 4px; width: min(100%, 620px); justify-self: center; }
+  html.js .tour { gap: 4px; width: min(100%, 720px); }
   html.js .tour__tab { justify-items: center; gap: 0; min-height: 44px; padding: 8px 2px 0; border: 0; border-radius: 8px; background: none; text-align: center; }
   html.js .tour__tab.is-on { background: none; }
   html.js .tour__name { display: block; font: 650 13.5px/1.25 var(--text); color: #a8a3d8; white-space: nowrap; }
   html.js .tour__tab.is-on .tour__name { color: #fff; }
   html.js .tour__title, html.js .tour__text { display: none; }
   html.js .tour__bar { order: 2; width: 100%; margin: 9px 0 0; }
-  html.js .tour__now { grid-area: now; display: grid; width: min(100%, 620px); justify-self: center; margin-top: 4px; }
+  html.js .tour__now { grid-area: now; display: grid; width: min(100%, 720px); margin-top: 4px; }
   .tour__nowi { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity .35s var(--ease), visibility 0s .35s; }
   .tour__nowi.is-on { opacity: 1; visibility: visible; transition: opacity .35s var(--ease); }
   .tour__nowi b { display: block; font: 650 19px/1.25 var(--display); color: #fff; }
@@ -769,6 +788,10 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .faq__in { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .foot__in { grid-template-columns: 1fr 1fr; }
   .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Between a phone and a laptop the bar keeps the language, sign-in and the trial. */
+@media (max-width: 900px) {
+  .top__nav { display: none; }
 }
 @media (max-width: 720px) {
   body { font-size: 16px; }

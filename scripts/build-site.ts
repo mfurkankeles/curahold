@@ -522,9 +522,9 @@ function page(locale: SiteLocale): string {
 
   // 2 — Promises: a logged meeting whose next steps become tasks with an owner and a date.
   const m = ui.meeting;
-  const mParts = dayFmt.formatToParts(at(11, 10));
-  const mDay = mParts.find((x) => x.type === 'day')?.value ?? '';
-  const mMonth = mParts.find((x) => x.type === 'month')?.value ?? '';
+  // The date tile: the day's number, and the month as that language abbreviates it alone ("Nov", "11月").
+  const mDay = dayFmt.formatToParts(at(11, 10)).find((x) => x.type === 'day')?.value ?? '';
+  const mMonth = new Intl.DateTimeFormat(dateTag, { month: 'short', timeZone: 'UTC' }).format(at(11, 10));
   // The column is never empty: one task was already waiting there, and the meeting's two land under it.
   const task = (title: string, who: string, name: string, due: string, delay?: number) =>
     `<article class="tk"${delay === undefined ? '' : a('drop', delay)}><p>${esc(title)}</p><div class="tk__f">${av(who)}<span>${esc(name)}</span><span class="due">${esc(due)}</span></div></article>`;
@@ -693,12 +693,22 @@ function page(locale: SiteLocale): string {
 
   // Tile 3 — sync: named tools on both sides of Curahold, changes travelling both ways.
   const beam = (name: string, i: number, side: 'a' | 'b') => `<li style="--i:${i}"><span>${esc(name)}</span><i class="sy__beam sy__beam--${side}"></i></li>`;
+  // Under the hub, what "in step" means, one change at a time: a date arriving from the CRM,
+  // a sprint task closing on both sides, a new task announced in chat.
+  const ARROW = { in: 'M2 8h11M9 4l4 4-4 4', out: 'M14 8H3M7 4L3 8l4 4', both: 'M2 5.5h11M10 2.5l3 3-3 3M14 10.5H3M6 7.5l-3 3 3 3' };
+  const syncEvent = (tool: string, dir: keyof typeof ARROW, what: string, state: string, i: number) =>
+    `<p class="sy__ev${i === 0 ? ' is-own' : ''}" style="--i:${i}"><b>${esc(tool)}</b><svg viewBox="0 0 16 16"><path d="${ARROW[dir]}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${esc(what)} · <em>${esc(state)}</em></span></p>`;
   const tileSync = `<article class="tile tile--sync" data-live data-reveal style="--i:2">
           ${tile(2)}
           <div class="sy" aria-hidden="true">
             <ul class="sy__col sy__col--a">${['Salesforce', 'HubSpot', 'Jira'].map((n, i) => beam(n, i, 'a')).join('')}</ul>
             <div class="sy__hub">${MARK}<em>${esc(t('sync.dir.both'))}</em></div>
             <ul class="sy__col sy__col--b">${['Slack', 'Google Sheets', 'Microsoft Teams'].map((n, i) => beam(n, i, 'b')).join('')}</ul>
+            <div class="sy__feed">
+              ${syncEvent('Salesforce', 'in', ACCOUNTS[1].name, `${t('targets.kind.renewal')} ${day(2, 14, 2027)}`, 0)}
+              ${syncEvent('Jira', 'both', ui.tasks[3], t('board.defaultColumns.done'), 1)}
+              ${syncEvent('Slack', 'out', ui.playbookSteps[1], 'Zeynep', 2)}
+            </div>
           </div>
         </article>`;
 
