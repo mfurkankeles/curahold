@@ -4,6 +4,7 @@
 // another company, or the app itself.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createPortalApp } from '../api/src/portal';
+import { brandPalette, contrast, PORTAL_SURFACES } from '../shared/src/portal';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
 const PORTAL = 'curahold-portal.test';
@@ -82,6 +83,25 @@ describe('turning it on', () => {
     expect(open.json.board.portal).toMatchObject({ enabled: true, labels: { [cols[1].key]: 'Being worked on' } });
   });
 
+  it('the company’s colour and foot line: only administrators set them, only real colours, and the portal reads them', async () => {
+    expect((await zeynep.put('/api/portal/settings', { brand: { color: '#0f766e', poweredBy: false } })).status).toBe(403);
+    expect((await ada.put('/api/portal/settings', { brand: { color: 'red; x', poweredBy: true } })).status).toBe(400);
+    expect((await ada.put('/api/portal/settings', { brand: { color: '#0F766E', poweredBy: false } })).status).toBe(200);
+    expect((await ada.get('/api/portal')).json.brand).toEqual({ color: '#0f766e', poweredBy: false });
+    const org = await new PortalClient().get('/papi/org');
+    expect(org.json.brand).toEqual({ color: '#0f766e', poweredBy: false });
+  });
+
+  it('every colour a company can pick gives readable text in both themes', () => {
+    for (const color of ['#ffffff', '#000000', '#ffeb3b', '#0f766e', '#ff5722', '#2196f3', '#9c27b0', '#808080', '#00ff00', null]) {
+      const p = brandPalette(color);
+      for (const [theme, pal] of [['light', p.light], ['dark', p.dark]] as const) {
+        expect(contrast(pal.fill, pal.onFill), `${color} ${theme} button`).toBeGreaterThanOrEqual(4.5);
+        for (const bg of [PORTAL_SURFACES[theme].paper, PORTAL_SURFACES[theme].surface, pal.wash]) expect(contrast(pal.ink, bg), `${color} ${theme} ink on ${bg}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
   it('the customer’s owner invites someone there; others, and colleagues’ addresses, cannot be', async () => {
     expect((await mert.post('/api/portal/users', { accountId: quill, email: 'x@quillfield.example', name: 'X' })).json.error).toBe('portal_invite_owner');
     expect((await zeynep.post('/api/portal/users', { accountId: quill, email: 'lena@demo.example', name: 'Lena' })).json.error).toBe('portal_internal_email');
@@ -91,6 +111,9 @@ describe('turning it on', () => {
     await env.settle();
     const invite = env.email.last('selin@quillfield.example');
     expect(invite.text).toContain(`https://acme.${PORTAL}/auth#token=`);
+    // In the company's colour, without Curahold's name at the foot (switched off above).
+    expect(invite.html).toContain(`background:${brandPalette('#0f766e').light.fill}`);
+    expect(invite.html).not.toContain('>Curahold</p>');
     expect((await zeynep.post('/api/portal/users', { accountId: quill, email: 'selin@quillfield.example', name: 'Again' })).json.error).toBe('portal_email_taken');
     // Someone at another customer, for the isolation checks below.
     expect((await ada.post('/api/portal/users', { accountId: velto, email: 'mila@velto.example', name: 'Mila' })).status).toBe(201);

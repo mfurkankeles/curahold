@@ -34,6 +34,9 @@ export interface PortalSettings {
   auth: PortalAuth;
   /** Google and Microsoft sign-in set up for this installation. */
   providers: { google: boolean; microsoft: boolean };
+  brand: PortalBrand;
+  /** The company's logo (Settings → Company), shown on the portal and in its emails. */
+  logoUrl: string | null;
 }
 
 // What the portal app reads (from /papi).
@@ -67,6 +70,8 @@ export interface PortalTask {
   priority?: string | null;
   assignees?: string[] | null;
   replies: number;
+  /** The latest reply is the team's: the customer has something new to read. */
+  lastFromTeam?: boolean;
 }
 export interface PortalComment {
   id: string;
@@ -85,6 +90,89 @@ export interface PortalOrg {
   locale: Locale;
   logoUrl: string | null;
   signIn: PortalSignInOptions;
+  brand: PortalBrand;
+}
+
+// ------------------------------------------------------------ the company's brand
+
+/** How the portal and its emails carry the company: its colour, and whether Curahold is named at the foot. */
+export interface PortalBrand {
+  /** '#rrggbb', or null for the portal's own quiet colour. */
+  color: string | null;
+  /** A small "powered by Curahold" at the foot of the portal and its emails. */
+  poweredBy: boolean;
+}
+export const DEFAULT_PORTAL_BRAND: PortalBrand = { color: null, poweredBy: true };
+/** The portal's colour when a company has not chosen one. */
+export const PORTAL_DEFAULT_COLOR = '#5b4de8';
+export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+export function portalBrandOf(raw: unknown): PortalBrand {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  return {
+    color: typeof r.color === 'string' && HEX_COLOR.test(r.color) ? r.color.toLowerCase() : null,
+    poweredBy: typeof r.poweredBy === 'boolean' ? r.poweredBy : true,
+  };
+}
+
+const rgbOf = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const hexOf = (c: number[]) => `#${c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')}`;
+const lum = (hex: string) => {
+  const [r, g, b] = rgbOf(hex).map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+/** WCAG contrast ratio of two '#rrggbb' colours. */
+export function contrast(a: string, b: string): number {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+const mix = (a: string, b: string, t: number) => {
+  const [p, q] = [rgbOf(a), rgbOf(b)];
+  return hexOf(p.map((v, i) => v + (q[i] - v) * t));
+};
+/** The brand colour moved toward `to` just far enough to reach `need` against every background. */
+const reach = (c: string, to: string, bgs: string[], need: number) => {
+  for (let t = 0; t <= 1.0001; t += 0.04) {
+    const m = mix(c, to, t);
+    if (bgs.every((bg) => contrast(m, bg) >= need)) return m;
+  }
+  return to;
+};
+
+/** The portal's surfaces, light and dark (web/portal/portal.css repeats them). */
+export const PORTAL_SURFACES = { light: { paper: '#f5f5fb', surface: '#ffffff', ink: '#17152f' }, dark: { paper: '#0f0e1a', surface: '#171626', ink: '#e7e6f5' } } as const;
+
+export interface BrandPalette {
+  /** Buttons and marks, and the text on them. */
+  fill: string;
+  onFill: string;
+  /** Links and brand text on the page. */
+  ink: string;
+  /** A tinted background (the brand band, a selected tab). */
+  wash: string;
+}
+
+/** Everything drawn from one brand colour, in both themes, each pair at WCAG AA (4.5:1) or better. */
+export function brandPalette(color: string | null): { light: BrandPalette; dark: BrandPalette } {
+  const c = color && HEX_COLOR.test(color) ? color.toLowerCase() : PORTAL_DEFAULT_COLOR;
+  const L = PORTAL_SURFACES.light;
+  const D = PORTAL_SURFACES.dark;
+  const fillFor = (bgLight: boolean) => {
+    // Text on the button: white or the theme's deep ink, whichever reads; the fill moves if neither does.
+    const darkText = bgLight ? L.ink : D.paper;
+    const on = contrast(c, '#ffffff') >= contrast(c, darkText) ? '#ffffff' : darkText;
+    const fill = contrast(c, on) >= 4.5 ? c : reach(c, on === '#ffffff' ? '#000000' : '#ffffff', [on], 4.5);
+    return { fill, onFill: on };
+  };
+  const washL = mix(c, L.surface, 0.88);
+  const washD = mix(c, D.surface, 0.78);
+  return {
+    light: { ...fillFor(true), ink: reach(c, '#000000', [L.paper, L.surface, washL], 4.6), wash: washL },
+    dark: { ...fillFor(false), ink: reach(c, '#ffffff', [D.paper, D.surface, washD], 4.6), wash: washD },
+  };
 }
 
 // ------------------------------------------------------------ signing in

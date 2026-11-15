@@ -1,11 +1,11 @@
 // The customer portal: what a customer's people see of the work a company
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { bcp47Of, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
 import { formatDate, formatDateTime } from '../src/lib/format';
-import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
+import { brandPalette, type PortalAccount, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 // ------------------------------------------------------------------ api
@@ -105,14 +105,203 @@ type Boot =
   | { kind: 'in'; org: PortalOrg; me: PortalMe };
 
 export function PortalApp() {
+  // The company's colour, drawn into both themes with readable text on it (shared/src/portal.ts).
+  const [color, setColor] = useState<string | null>(null);
+  const vars = useMemo(() => {
+    const { light: l, dark: d } = brandPalette(color);
+    return { '--b-fill': l.fill, '--b-on': l.onFill, '--b-ink': l.ink, '--b-wash': l.wash, '--bd-fill': d.fill, '--bd-on': d.onFill, '--bd-ink': d.ink, '--bd-wash': d.wash } as CSSProperties;
+  }, [color]);
   return (
-    <div className="p-root">
-      <Portal />
+    <div className="p-root" style={vars}>
+      <Portal onBrand={setColor} />
     </div>
   );
 }
 
-function Portal() {
+// ---------------------------------------------------------------- pieces
+
+const PATHS = {
+  plus: 'M12 5v14M5 12h14',
+  back: 'M15 18l-6-6 6-6',
+  alert: 'M12 8v5M12 16.5v.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+  offline: 'M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.6 5M5 12.6a10 10 0 0 1 5.2-2.5M19 12.6a10 10 0 0 0-2-1.3M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M3 3l18 18',
+  inbox: 'M22 12h-6l-2 3h-4l-2-3H2M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z',
+  search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3',
+  chat: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+  out: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+  clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 6v6l4 2',
+  x: 'M18 6 6 18M6 6l12 12',
+  clip: 'm21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5',
+  file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM14 2v6h6',
+  check: 'M20 6 9 17l-5-5',
+} as const;
+function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
+  return (
+    <svg className={flip ? 'p-ico p-ico--flip' : 'p-ico'} viewBox="0 0 24 24" aria-hidden="true">
+      <path d={PATHS[name]} />
+    </svg>
+  );
+}
+
+/** One of the five states: empty (an invitation), error (what happened, what to do), not found. */
+function State({ icon, title, body, tone, flat, children }: { icon: keyof typeof PATHS; title: string; body?: string; tone?: 'error'; flat?: boolean; children?: ReactNode }) {
+  return (
+    <div className={flat ? 'p-state p-state--flat' : 'p-state'} data-tone={tone} role={tone === 'error' ? 'alert' : undefined}>
+      <span className="p-state__ico">
+        <Ico name={icon} />
+      </span>
+      <h2>{title}</h2>
+      {body && <p>{body}</p>}
+      {children}
+    </div>
+  );
+}
+
+/** Loading: nothing for 300 ms, then the shape of what is coming, at its size. */
+function Wait({ label, kind }: { label: string; kind: 'list' | 'task' }) {
+  return (
+    <div className="p-wait" role="status" aria-label={label}>
+      {kind === 'list' ? (
+        <>
+          <span className="p-bone p-bone--item" />
+          <span className="p-bone p-bone--item" />
+          <span className="p-bone p-bone--item" />
+        </>
+      ) : (
+        <>
+          <span className="p-bone p-bone--title" />
+          <span className="p-bone p-bone--line" />
+          <span className="p-bone p-bone--block" />
+        </>
+      )}
+    </div>
+  );
+}
+
+function useOnline() {
+  const [on, setOn] = useState(() => navigator.onLine !== false);
+  useEffect(() => {
+    const up = () => setOn(true);
+    const down = () => setOn(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+  return on;
+}
+
+/** Runs `send`; when the connection is gone, keeps the work and sends it again the moment it is back. */
+function useSend(onSignedOut: (n?: string) => void, t: Ctx['t']) {
+  const [busy, setBusy] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const retry = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const on = () => retry.current?.();
+    window.addEventListener('online', on);
+    return () => window.removeEventListener('online', on);
+  }, []);
+  const run = useCallback(
+    async (send: () => Promise<void>) => {
+      setBusy(true);
+      setProblem(null);
+      try {
+        await send();
+        setWaiting(false);
+        retry.current = null;
+      } catch (err) {
+        if (err instanceof Failure && err.status === 401) return onSignedOut('expired');
+        if (err instanceof Failure && err.status === 0) {
+          setWaiting(true);
+          retry.current = () => void run(send);
+        } else setProblem(err instanceof Failure && err.message ? err.message : t('errors.server'));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onSignedOut, t],
+  );
+  return { busy: busy || waiting, waiting, problem, run };
+}
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => [...w][0])
+    .join('')
+    .toLocaleUpperCase();
+
+/** The person, in the corner: their account, their language and signing out, behind one button. */
+function MeMenu({ ctx, me, lang, onSignOut }: { ctx: Ctx; me: PortalMe; lang: ReactNode; onSignOut: () => void }) {
+  const { t } = ctx;
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: Event) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      box.current?.querySelector<HTMLElement>('.p-me__btn')?.focus();
+    };
+    document.addEventListener('pointerdown', down);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      document.removeEventListener('keydown', key);
+    };
+  }, [open]);
+  const account = link('/account');
+  return (
+    <div className="p-me" ref={box}>
+      <button className="p-me__btn" aria-expanded={open} aria-controls="p-me-pop" aria-label={t('portal.menuFor', { name: me.user.name })} onClick={() => setOpen(!open)}>
+        <span className="p-avatar" aria-hidden="true">
+          {initials(me.user.name)}
+        </span>
+        <span className="p-me__name" aria-hidden="true">
+          {me.user.name}
+        </span>
+      </button>
+      {open && (
+        <div className="p-me__pop" id="p-me-pop">
+          <div className="p-me__who">
+            <strong>{me.user.name}</strong>
+            <span>{me.user.email}</span>
+          </div>
+          <a className="p-me__item" href={account.href} onClick={(e) => (setOpen(false), account.onClick(e))}>
+            <Ico name="user" />
+            {t('portal.account')}
+          </a>
+          <label className="p-me__lang">
+            <span>{t('nav.language')}</span>
+            {lang}
+          </label>
+          <button className="p-me__item" onClick={onSignOut}>
+            <Ico name="out" flip />
+            {t('portal.signOut')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Foot({ ctx, org }: { ctx: Ctx; org: PortalOrg }) {
+  return (
+    <footer className="p-foot">
+      <span>{ctx.t('portal.footerPlain', { company: org.name })}</span>
+      {org.brand?.poweredBy !== false && <span className="p-foot__by">{ctx.t('portal.poweredBy')}</span>}
+    </footer>
+  );
+}
+
+function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
   const [boot, setBoot] = useState<Boot>({ kind: 'loading' });
   const [wanted, setLocale] = useState<Locale>(() => storedLocale() ?? browserLocale());
   // Drawn in the wanted language once its dictionary is here (see ./i18n).
@@ -142,6 +331,7 @@ function Portal() {
       setBoot(e instanceof Failure && e.status === 404 ? { kind: 'missing' } : { kind: 'error' });
       return;
     }
+    onBrand(org.brand?.color ?? null);
     if (!storedLocale()) setLocale(org.locale);
     // Each screen below waits for its language, so it never opens in a passing one.
     let target: Locale = storedLocale() ?? org.locale;
@@ -182,7 +372,7 @@ function Portal() {
       await loadLocale(target);
       setBoot({ kind: 'out', org, note });
     }
-  }, []);
+  }, [onBrand]);
   useEffect(() => void start(), [start]);
 
   const changeLocale = (l: Locale) => {
@@ -200,12 +390,20 @@ function Portal() {
   if (boot.kind === 'missing' || boot.kind === 'error')
     return (
       <div className="p-center">
-        <p className="p-muted">{t(boot.kind === 'missing' ? 'portal.missing' : 'errors.server')}</p>
+        {boot.kind === 'missing' ? (
+          <State icon="search" title={t('portal.missingTitle')} body={t('portal.missing')} />
+        ) : (
+          <State icon="alert" tone="error" title={t('portal.errorTitle')} body={t('portal.errorBody')}>
+            <button className="p-btn p-btn--primary" onClick={() => (setBoot({ kind: 'loading' }), void start())}>
+              {t('common.retry')}
+            </button>
+          </State>
+        )}
       </div>
     );
 
   const lang = (
-    <select className="p-link p-lang" aria-label={t('nav.language')} value={locale} onChange={(e) => changeLocale(e.target.value as Locale)}>
+    <select className="p-select" aria-label={t('nav.language')} value={locale} onChange={(e) => changeLocale(e.target.value as Locale)}>
       {LOCALES.map((l) => (
         <option key={l} value={l} lang={bcp47Of(l)}>
           {LOCALE_INFO[l].name}
@@ -222,47 +420,70 @@ function Portal() {
   return (
     <div className="p-shell">
       <header className="p-top">
-        <a className="p-brand" {...link('/')}>
-          {org.logoUrl ? <img src={org.logoUrl} alt="" /> : <span className="p-brand__mark" aria-hidden="true">{org.name.slice(0, 1)}</span>}
-          <span>
-            <strong>{org.name}</strong>
-            <small>{t('portal.for', { account: me.account.name })}</small>
-          </span>
-        </a>
-        <div className="p-top__me">
-          <a className="p-link" {...link('/account')}>
-            {me.user.name}
+        <div className="p-wrap p-top__in">
+          <a className="p-brand" {...link('/')}>
+            {org.logoUrl ? (
+              <img src={org.logoUrl} alt={org.name} />
+            ) : (
+              <span className="p-mark" aria-hidden="true">
+                {[...org.name][0]}
+              </span>
+            )}
+            <span className="p-brand__text">
+              {!org.logoUrl && <strong>{org.name}</strong>}
+              <small>{t('portal.for', { account: me.account.name })}</small>
+            </span>
           </a>
-          {lang}
-          <button
-            className="p-link"
-            onClick={async () => {
+          <MeMenu
+            ctx={ctx}
+            me={me}
+            lang={lang}
+            onSignOut={async () => {
               await call('POST', '/auth/logout').catch(() => undefined);
               void start('out');
             }}
-          >
-            {t('portal.signOut')}
-          </button>
+          />
         </div>
       </header>
+      <Offline ctx={ctx} />
       <main className="p-main">
-        <Route ctx={ctx} me={me} path={path} onSignedOut={signedOut} />
+        <Route ctx={ctx} org={org} me={me} path={path} onSignedOut={signedOut} />
       </main>
-      <footer className="p-foot">{t('portal.footer', { company: org.name })}</footer>
+      <Foot ctx={ctx} org={org} />
     </div>
   );
 }
 
-function Route({ ctx, me, path, onSignedOut }: { ctx: Ctx; me: PortalMe; path: string; onSignedOut: (n?: string) => void }) {
+function Offline({ ctx }: { ctx: Ctx }) {
+  const online = useOnline();
+  // Always in the page (an empty row while online), so a screen reader hears it when it fills.
+  return (
+    <div className="p-offline" role="status" data-on={online ? undefined : ''}>
+      {!online && (
+        <div className="p-wrap">
+          <Ico name="offline" />
+          <span>{ctx.t('portal.offline')}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Route({ ctx, org, me, path, onSignedOut }: { ctx: Ctx; org: PortalOrg; me: PortalMe; path: string; onSignedOut: (n?: string) => void }) {
   const url = new URL(path, location.origin);
   const task = /^\/t\/([0-9a-f-]{36})$/i.exec(url.pathname)?.[1];
   const boardId = url.searchParams.get('board');
   const board = me.boards.find((b) => b.id === boardId) ?? me.boards[0];
-  if (!board) return <Empty>{ctx.t('portal.noBoards')}</Empty>;
-  if (task) return <TaskPage key={task} ctx={ctx} id={task} onSignedOut={onSignedOut} />;
   if (url.pathname === '/account') return <AccountPage ctx={ctx} onSignedOut={onSignedOut} />;
+  if (!board)
+    return (
+      <div className="p-wrap p-page">
+        <State icon="inbox" title={ctx.t('portal.noBoardsTitle')} body={ctx.t('portal.noBoards')} />
+      </div>
+    );
+  if (task) return <TaskPage key={task} ctx={ctx} org={org} id={task} onSignedOut={onSignedOut} />;
   if (url.pathname === '/new') return <NewRequest ctx={ctx} me={me} board={board} onSignedOut={onSignedOut} />;
-  return <List ctx={ctx} me={me} board={board} onSignedOut={onSignedOut} />;
+  return <List ctx={ctx} org={org} me={me} board={board} onSignedOut={onSignedOut} />;
 }
 
 // --------------------------------------------------------------- sign in
@@ -271,8 +492,21 @@ function Brand({ org }: { org: PortalOrg }) {
   return org.logoUrl ? (
     <img className="p-signin__logo" src={org.logoUrl} alt={org.name} />
   ) : (
-    <div className="p-brand__mark p-brand__mark--big" aria-hidden="true">
-      {org.name.slice(0, 1)}
+    <div className="p-mark p-mark--big" aria-hidden="true">
+      {[...org.name][0]}
+    </div>
+  );
+}
+
+/** The page around signing in: the company's colour behind a single card, the language, the foot. */
+function SignInPage({ ctx, org, lang, children }: { ctx: Ctx; org: PortalOrg; lang: ReactNode; children: ReactNode }) {
+  return (
+    <div className="p-signin-page">
+      <main className="p-center">{children}</main>
+      <div>
+        <div className="p-lang">{lang}</div>
+        <Foot ctx={ctx} org={org} />
+      </div>
     </div>
   );
 }
@@ -309,7 +543,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
   const providers = (['google', 'microsoft'] as const).filter((p) => m[p]);
 
   return (
-    <div className="p-center">
+    <SignInPage ctx={ctx} org={org} lang={lang}>
       <div className="p-card p-signin">
         <Brand org={org} />
         <h1>{t('portal.signInTitle', { company: org.name })}</h1>
@@ -342,7 +576,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
         )}
         {(m.email || m.password) && (providers.length > 0 || passkey) && step === 'ask' && <div className="p-or">{t('portal.or')}</div>}
         {m.email && m.password && step === 'ask' && (
-          <div className="p-seg p-seg--full" role="group">
+          <div className="p-tabs p-tabs--full" role="group" aria-label={t('portal.signInHow')}>
             <button aria-pressed={tab === 'email'} onClick={() => setTab('email')}>
               {t('portal.byEmail')}
             </button>
@@ -362,13 +596,13 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
               });
             }}
           >
-            <p className="p-muted">{t('portal.signInLead', { company: org.name })}</p>
+            <p className="p-signin__lead">{t('portal.signInLead', { company: org.name })}</p>
             <label className="p-field">
               <span>{t('portal.email')}</span>
               <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             {problem && <Problem text={problem} />}
-            <button className="p-btn p-btn--primary" disabled={busy || !email}>
+            <button className="p-btn p-btn--primary p-btn--block" disabled={busy || !email}>
               {t('portal.sendCode')}
             </button>
           </form>
@@ -390,7 +624,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
               <input className="p-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="\d{6}" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
             </label>
             {problem && <Problem text={problem} />}
-            <button className="p-btn p-btn--primary" disabled={busy || code.length !== 6}>
+            <button className="p-btn p-btn--primary p-btn--block" disabled={busy || code.length !== 6}>
               {t('portal.signIn')}
             </button>
             <button type="button" className="p-link" onClick={() => (setStep('ask'), setCode(''), setProblem(null))}>
@@ -418,7 +652,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
               <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
             {problem && <Problem text={problem} />}
-            <button className="p-btn p-btn--primary" disabled={busy || !email || !password}>
+            <button className="p-btn p-btn--primary p-btn--block" disabled={busy || !email || !password}>
               {t('portal.signIn')}
             </button>
             <button type="button" className="p-link" onClick={() => (setStep('forgot'), setProblem(null))}>
@@ -430,9 +664,8 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
         {step === 'forgot' && (
           <ForgotPassword ctx={ctx} email={email} setEmail={setEmail} onBack={() => setStep('ask')} />
         )}
-        <div className="p-signin__foot">{lang}</div>
       </div>
-    </div>
+    </SignInPage>
   );
 }
 
@@ -504,7 +737,7 @@ function OneStep({ ctx, org, kind, token, lang, onIn, onBack }: { ctx: Ctx; org:
     }
   };
   return (
-    <div className="p-center">
+    <SignInPage ctx={ctx} org={org} lang={lang}>
       <form className="p-card p-signin" onSubmit={submit}>
         <Brand org={org} />
         <h1>{t(kind === 'confirm' ? 'portal.confirmTitle' : 'portal.resetTitle')}</h1>
@@ -527,9 +760,8 @@ function OneStep({ ctx, org, kind, token, lang, onIn, onBack }: { ctx: Ctx; org:
             {t(kind === 'confirm' ? 'portal.confirm' : 'portal.savePassword')}
           </button>
         </div>
-        <div className="p-signin__foot">{lang}</div>
       </form>
-    </div>
+    </SignInPage>
   );
 }
 
@@ -615,8 +847,18 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
       setBusy(false);
     }
   };
-  if (failed) return <Problem text={failed} />;
-  if (!data) return <p className="p-muted">{t('common.loading')}</p>;
+  if (failed)
+    return (
+      <div className="p-wrap p-page p-narrow">
+        <LoadFailed ctx={ctx} failure={failed} onRetry={reload} />
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="p-wrap p-page p-narrow">
+        <Wait label={t('common.loading')} kind="task" />
+      </div>
+    );
   const m = data.methods;
   // Ways to sign in that would still work if one passkey or linked account went away.
   const waysLeft = (drop: { passkey?: string; identity?: string }) =>
@@ -625,10 +867,12 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
     (m.passkey ? data.passkeys.filter((k) => k.id !== drop.passkey).length : 0) +
     data.identities.filter((i) => i.provider !== drop.identity && m[i.provider]).length;
   return (
-    <div className="p-card p-account">
+    <div className="p-wrap p-page p-narrow">
       <a className="p-back" {...link('/')}>
+        <Ico name="back" flip />
         {t('portal.back')}
       </a>
+    <div className="p-card p-account">
       <h1>{t('portal.account')}</h1>
       <p className="p-muted">{data.email}</p>
       {done && (
@@ -759,6 +1003,7 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
       </section>
       {ask && <Ask ctx={ctx} title={ask.title} body={ask.body} label={ask.label} onYes={ask.run} onClose={() => setAsk(null)} />}
     </div>
+    </div>
   );
 }
 
@@ -766,15 +1011,36 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
 
 function useLoad<T>(load: () => Promise<T>, deps: unknown[], onSignedOut: (n?: string) => void) {
   const [data, setData] = useState<T | null>(null);
-  const [failed, setFailed] = useState<string | null>(null);
+  const [failed, setFailed] = useState<Failure | null>(null);
   const reload = useCallback(() => {
+    setFailed(null);
     load().then(setData, (e) => {
       if (e instanceof Failure && e.status === 401) onSignedOut('expired');
-      else setFailed(e instanceof Failure ? e.message : 'error');
+      else setFailed(e instanceof Failure ? e : new Failure(500, 'server', ''));
     });
   }, deps);
   useEffect(reload, [reload]);
   return { data, failed, reload, setData };
+}
+
+/** A load that failed: not there (or not theirs), or something to try again. */
+function LoadFailed({ ctx, failure, onRetry, company }: { ctx: Ctx; failure: Failure; onRetry: () => void; company?: string }) {
+  const { t } = ctx;
+  if (failure.status === 404 || failure.status === 403)
+    return (
+      <State icon="search" title={t('portal.notFoundTitle')} body={t('portal.notFound')}>
+        <a className="p-btn p-btn--primary" {...link('/')}>
+          {t('portal.seeRequests')}
+        </a>
+      </State>
+    );
+  return (
+    <State icon={failure.status === 0 ? 'offline' : 'alert'} tone="error" title={t('portal.loadFailedTitle')} body={t('portal.loadFailedBody', { company: company ?? '' })}>
+      <button className="p-btn p-btn--primary" onClick={onRetry}>
+        {t('common.retry')}
+      </button>
+    </State>
+  );
 }
 
 function Status({ board, status }: { board: PortalBoard; status: string }) {
@@ -787,67 +1053,177 @@ function Status({ board, status }: { board: PortalBoard; status: string }) {
   );
 }
 
-function List({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; board: PortalBoard; onSignedOut: (n?: string) => void }) {
-  const { t, when } = ctx;
-  const [show, setShow] = useState<'open' | 'done'>('open');
-  const { data, failed } = useLoad(() => call<{ tasks: PortalTask[] }>('GET', `/boards/${board.id}/tasks`).then((r) => r.tasks), [board.id], onSignedOut);
-  const done = new Set(board.columns.filter((c) => c.done).map((c) => c.key));
-  const list = (data ?? []).filter((x) => (show === 'done') === done.has(x.status));
-  const openCount = (data ?? []).filter((x) => !done.has(x.status)).length;
+const SEEN = 'app_portal_welcomed';
+/** The first visit: once per person on this device, until they say they have it. */
+function useWelcome(id: string) {
+  const [show, setShow] = useState(() => {
+    try {
+      return !(localStorage.getItem(SEEN) ?? '').split(',').includes(id);
+    } catch {
+      return false;
+    }
+  });
+  const done = () => {
+    try {
+      localStorage.setItem(SEEN, [...(localStorage.getItem(SEEN) ?? '').split(',').filter(Boolean).slice(-9), id].join(','));
+    } catch {
+      /* private mode */
+    }
+    setShow(false);
+  };
+  return { show, done };
+}
+
+/** How it works, in three steps: on the side of a wide screen, and once at the top of a phone. */
+function How({ ctx, org, me, onClose }: { ctx: Ctx; org: PortalOrg; me: PortalMe; onClose?: () => void }) {
+  const { t } = ctx;
   return (
-    <>
-      {me.boards.length > 1 && (
-        <nav className="p-tabs" aria-label={t('portal.boards')}>
-          {me.boards.map((b) => (
-            <a key={b.id} aria-current={b.id === board.id ? 'page' : undefined} {...link(`/?board=${b.id}`)}>
-              {b.name}
-            </a>
-          ))}
-        </nav>
-      )}
-      <div className="p-head">
-        <div>
-          <h1>{t('portal.requests')}</h1>
-          <p className="p-muted">{t('portal.requestsLead', { company: me.account.name })}</p>
+    <section className={onClose ? 'p-card p-how p-welcome' : 'p-card p-how'} aria-labelledby={onClose ? 'p-how-w' : 'p-how'}>
+      {onClose ? (
+        <div className="p-welcome__head">
+          <h2 id="p-how-w">{t('portal.welcome', { name: me.user.name.split(/\s+/)[0] })}</h2>
+          <button className="p-btn p-btn--quiet" onClick={onClose}>
+            {t('portal.gotIt')}
+          </button>
         </div>
-        <a className="p-btn p-btn--primary" {...link(`/new?board=${board.id}`)}>
-          {t('portal.new')}
-        </a>
-      </div>
-      <div className="p-seg" role="group">
-        <button aria-pressed={show === 'open'} onClick={() => setShow('open')}>
-          {t('portal.open', { n: openCount })}
-        </button>
-        <button aria-pressed={show === 'done'} onClick={() => setShow('done')}>
-          {t('portal.closed')}
-        </button>
-      </div>
-      {failed && <p className="p-note p-note--error">{failed}</p>}
-      {!data && !failed && <p className="p-muted">{t('common.loading')}</p>}
-      {data && list.length === 0 && <Empty>{show === 'open' ? t('portal.noOpen') : t('portal.noClosed')}</Empty>}
-      <ul className="p-list">
-        {list.map((x) => (
-          <li key={x.id}>
-            <a className="p-item" {...link(`/t/${x.id}`)}>
-              <span className="p-item__title">{x.title}</span>
-              <Status board={board} status={x.status} />
-              <span className="p-item__meta">
-                {x.openedBy ? t('portal.openedBy', { name: x.openedBy }) : t('portal.fromTeam')}
-                {' · '}
-                {t('portal.updated', { when: when(x.updatedAt) })}
-                {x.replies > 0 && <> · {t('portal.replies', { n: x.replies })}</>}
-                {x.dueDate && <> · {t('portal.due', { when: formatDate(x.dueDate, ctx.locale, { day: 'numeric', month: 'short' }) })}</>}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </>
+      ) : (
+        <h2 id="p-how">{t('portal.howTitle')}</h2>
+      )}
+      {onClose && <p>{t('portal.welcomeLead', { company: org.name, account: me.account.name })}</p>}
+      <ol>
+        <li>
+          <span>
+            <strong>{t('portal.how1')}</strong>
+            {t('portal.how1b')}
+          </span>
+        </li>
+        <li>
+          <span>
+            <strong>{t('portal.how2')}</strong>
+            {t('portal.how2b')}
+          </span>
+        </li>
+        <li>
+          <span>
+            <strong>{t('portal.how3')}</strong>
+            {t('portal.how3b')}
+          </span>
+        </li>
+      </ol>
+      <p className="p-how__mail">{t('portal.howMail', { email: me.user.email })}</p>
+    </section>
   );
 }
 
-function Empty({ children }: { children: ReactNode }) {
-  return <div className="p-empty">{children}</div>;
+function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; me: PortalMe; board: PortalBoard; onSignedOut: (n?: string) => void }) {
+  const { t, when } = ctx;
+  const [show, setShow] = useState<'open' | 'done'>('open');
+  const welcome = useWelcome(me.user.id);
+  const { data, failed, reload } = useLoad(() => call<{ tasks: PortalTask[] }>('GET', `/boards/${board.id}/tasks`).then((r) => r.tasks), [board.id], onSignedOut);
+  const done = new Set(board.columns.filter((c) => c.done).map((c) => c.key));
+  const all = data ?? [];
+  const list = all.filter((x) => (show === 'done') === done.has(x.status));
+  const openCount = all.filter((x) => !done.has(x.status)).length;
+  const first = data !== null && all.length === 0;
+  const newLink = link(`/new?board=${board.id}`);
+  return (
+    <>
+      <section className="p-hero">
+        <div className="p-wrap">
+          <span className="p-hero__kicker">{me.account.name}</span>
+          <div className="p-hero__row">
+            <h1>{t('portal.requests')}</h1>
+            {!first && (
+              <a className="p-btn p-btn--primary" {...newLink}>
+                <Ico name="plus" />
+                {t('portal.new')}
+              </a>
+            )}
+          </div>
+          <p>{t('portal.requestsLead', { company: me.account.name })}</p>
+        </div>
+        {me.boards.length > 1 && (
+          <div className="p-wrap">
+            <nav className="p-boards" aria-label={t('portal.boards')}>
+              {me.boards.map((b) => (
+                <a key={b.id} aria-current={b.id === board.id ? 'page' : undefined} {...link(`/?board=${b.id}`)}>
+                  {b.name}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+      </section>
+      <div className="p-wrap p-page p-page--aside">
+        <div className="p-page__main">
+          {failed ? (
+            <LoadFailed ctx={ctx} failure={failed} onRetry={reload} company={org.name} />
+          ) : !data ? (
+            <Wait label={t('common.loading')} kind="list" />
+          ) : first ? (
+            <State icon="inbox" title={t('portal.firstTitle', { company: org.name })} body={t('portal.firstBody')}>
+              <a className="p-btn p-btn--primary" {...newLink}>
+                <Ico name="plus" />
+                {t('portal.firstAction')}
+              </a>
+            </State>
+          ) : (
+            <>
+              <div className="p-tabs" role="group" aria-label={t('portal.requests')}>
+                <button aria-pressed={show === 'open'} onClick={() => setShow('open')}>
+                  {t('portal.openTab')}
+                  <span className="p-count">{openCount}</span>
+                </button>
+                <button aria-pressed={show === 'done'} onClick={() => setShow('done')}>
+                  {t('portal.closed')}
+                  <span className="p-count">{all.length - openCount}</span>
+                </button>
+              </div>
+              {list.length === 0 ? (
+                <State flat icon={show === 'open' ? 'check' : 'inbox'} title={show === 'open' ? t('portal.noOpenTitle') : t('portal.noClosedTitle')} body={show === 'open' ? t('portal.noOpen') : t('portal.noClosed')} />
+              ) : (
+                <ul className="p-list">
+                  {list.map((x) => (
+                    <li key={x.id}>
+                      <a className="p-item" {...link(`/t/${x.id}`)}>
+                        <span className="p-item__title">{x.title}</span>
+                        <span className="p-item__side">
+                          {x.lastFromTeam && !done.has(x.status) && <span className="p-fresh">{t('portal.newReply')}</span>}
+                          <Status board={board} status={x.status} />
+                        </span>
+                        <span className="p-item__meta">
+                          <span>{x.openedBy ? t('portal.openedBy', { name: x.openedBy }) : t('portal.fromTeam')}</span>
+                          <span>
+                            <Ico name="clock" />
+                            {t('portal.updated', { when: when(x.updatedAt) })}
+                          </span>
+                          {x.replies > 0 && (
+                            <span>
+                              <Ico name="chat" />
+                              {t('portal.replies', { n: x.replies })}
+                            </span>
+                          )}
+                          {x.dueDate && <span>{t('portal.due', { when: formatDate(x.dueDate, ctx.locale, { day: 'numeric', month: 'short' }) })}</span>}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+          {welcome.show && !first && !failed && data && (
+            <div className="p-welcome-wrap">
+              <How ctx={ctx} org={org} me={me} onClose={welcome.done} />
+            </div>
+          )}
+        </div>
+        <aside className="p-page__aside p-page__aside--wide">
+          <How ctx={ctx} org={org} me={me} />
+        </aside>
+      </div>
+    </>
+  );
 }
 
 // ------------------------------------------------------------------- new
@@ -856,147 +1232,183 @@ function NewRequest({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; b
   const { t } = ctx;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  const submit = async (e: FormEvent) => {
+  const [short, setShort] = useState(false);
+  const { busy, waiting, problem, run } = useSend(onSignedOut, t);
+  const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (title.trim().length < 3) return setProblem(t('portal.needTitle'));
-    setBusy(true);
-    setProblem(null);
-    try {
+    if (title.trim().length < 3) return setShort(true);
+    setShort(false);
+    void run(async () => {
       const r = await call<{ task: PortalTask }>('POST', `/boards/${board.id}/tasks`, { title, description });
       go(`/t/${r.task.id}`, true);
-    } catch (err) {
-      if (err instanceof Failure && err.status === 401) return onSignedOut('expired');
-      setProblem(err instanceof Failure ? err.message : t('errors.server'));
-      setBusy(false);
-    }
+    });
   };
   return (
-    <form className="p-card p-form" onSubmit={submit}>
+    <div className="p-wrap p-page p-narrow">
       <a className="p-back" {...link(`/?board=${board.id}`)}>
+        <Ico name="back" flip />
         {t('portal.back')}
       </a>
-      <h1>{t('portal.newTitle')}</h1>
-      <p className="p-muted">{t('portal.newLead', { account: me.account.name })}</p>
-      <label className="p-field">
-        <span>{t('portal.title')}</span>
-        <input value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)} placeholder={t('portal.titlePlaceholder')} />
-      </label>
-      <label className="p-field">
-        <span>{t('portal.details')}</span>
-        <textarea rows={7} value={description} maxLength={20000} onChange={(e) => setDescription(e.target.value)} placeholder={t('portal.detailsPlaceholder')} />
-      </label>
-      {problem && (
-        <p className="p-note p-note--error" role="alert">
-          {problem}
-        </p>
-      )}
-      <div className="p-actions">
-        <button className="p-btn p-btn--primary" disabled={busy}>
-          {t('portal.send')}
-        </button>
-        <span className="p-muted">{t('portal.sendHint')}</span>
-      </div>
-    </form>
+      <form className="p-form" onSubmit={submit} noValidate>
+        <div className="p-form__head">
+          <h1>{t('portal.newTitle')}</h1>
+          <p className="p-muted">{t('portal.newLead', { account: me.account.name })}</p>
+        </div>
+        <div className="p-card p-form__card">
+          <label className="p-field">
+            <span>{t('portal.title')}</span>
+            <input value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)} placeholder={t('portal.titlePlaceholder')} aria-invalid={short || undefined} aria-describedby={short ? 'p-new-short' : undefined} />
+            {short && (
+              <small id="p-new-short" className="p-note p-note--error">
+                {t('portal.needTitle')}
+              </small>
+            )}
+          </label>
+          <label className="p-field">
+            <span>{t('portal.details')}</span>
+            <textarea rows={7} value={description} maxLength={20000} onChange={(e) => setDescription(e.target.value)} placeholder={t('portal.detailsPlaceholder')} />
+          </label>
+          {problem && <Problem text={problem} />}
+          {waiting && (
+            <p className="p-note" role="status">
+              {t('portal.notSentYet')}
+            </p>
+          )}
+          <div className="p-actions">
+            <span className="p-muted">{t('portal.sendHint')}</span>
+            <button className="p-btn p-btn--primary" disabled={busy}>
+              {t('portal.send')}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }
 
 // ------------------------------------------------------------------ task
 
-function TaskPage({ ctx, id, onSignedOut }: { ctx: Ctx; id: string; onSignedOut: (n?: string) => void }) {
+function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id: string; onSignedOut: (n?: string) => void }) {
   const { t, when } = ctx;
-  const { data, failed, setData } = useLoad(() => call<{ task: PortalTaskDetail }>('GET', `/tasks/${id}`).then((r) => r.task), [id], onSignedOut);
+  const { data, failed, setData, reload } = useLoad(() => call<{ task: PortalTaskDetail }>('GET', `/tasks/${id}`).then((r) => r.task), [id], onSignedOut);
   const [reply, setReply] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  if (failed) return <Empty>{t('portal.notFound')}</Empty>;
-  if (!data) return <p className="p-muted">{t('common.loading')}</p>;
-  const send = async (e: FormEvent) => {
+  const { busy, waiting, problem, run } = useSend(onSignedOut, t);
+  if (failed)
+    return (
+      <div className="p-wrap p-page p-narrow">
+        <LoadFailed ctx={ctx} failure={failed} onRetry={reload} company={org.name} />
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="p-wrap p-page p-narrow">
+        <Wait label={t('common.loading')} kind="task" />
+      </div>
+    );
+  const send = (e: FormEvent) => {
     e.preventDefault();
     if (!reply.trim()) return;
-    setBusy(true);
-    setProblem(null);
-    try {
+    void run(async () => {
       const r = await call<{ task: PortalTaskDetail }>('POST', `/tasks/${id}/comments`, { body: reply });
       setData(r.task);
       setReply('');
-    } catch (err) {
-      if (err instanceof Failure && err.status === 401) return onSignedOut('expired');
-      setProblem(err instanceof Failure ? err.message : t('errors.server'));
-    } finally {
-      setBusy(false);
-    }
+    });
   };
   const fields = data.board.fields;
-  return (
-    <article className="p-card p-task">
-      <a className="p-back" {...link(`/?board=${data.boardId}`)}>
-        {t('portal.back')}
-      </a>
-      <div className="p-task__head">
-        <h1>{data.title}</h1>
-        <Status board={data.board} status={data.status} />
+  const facts = (
+    <>
+      <div>
+        <dt>{t('portal.opened')}</dt>
+        <dd>
+          {when(data.createdAt)}
+          {data.openedBy ? ` · ${data.openedBy}` : ''}
+        </dd>
       </div>
-      <dl className="p-meta">
+      {fields.includes('due') && data.dueDate && (
         <div>
-          <dt>{t('portal.opened')}</dt>
-          <dd>
-            {when(data.createdAt)}
-            {data.openedBy ? ` · ${data.openedBy}` : ''}
-          </dd>
+          <dt>{t('portal.dueLabel')}</dt>
+          <dd>{formatDate(data.dueDate, ctx.locale, { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
         </div>
-        {fields.includes('due') && data.dueDate && (
-          <div>
-            <dt>{t('portal.dueLabel')}</dt>
-            <dd>{formatDate(data.dueDate, ctx.locale, { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
+      )}
+      {fields.includes('assignee') && data.assignees && data.assignees.length > 0 && (
+        <div>
+          <dt>{t('portal.workingOn')}</dt>
+          <dd>{data.assignees.join(', ')}</dd>
+        </div>
+      )}
+      {fields.includes('priority') && data.priority && (
+        <div>
+          <dt>{t('portal.priority')}</dt>
+          <dd>{t(`task.priority.${data.priority}` as MessageKey)}</dd>
+        </div>
+      )}
+    </>
+  );
+  return (
+    <div className="p-wrap p-page p-page--aside">
+      <article className="p-page__main p-task">
+        <a className="p-back" {...link(`/?board=${data.boardId}`)}>
+          <Ico name="back" flip />
+          {t('portal.back')}
+        </a>
+        <header className="p-task__head">
+          <div className="p-task__title">
+            <h1>{data.title}</h1>
+            <Status board={data.board} status={data.status} />
           </div>
-        )}
-        {fields.includes('assignee') && data.assignees && data.assignees.length > 0 && (
-          <div>
-            <dt>{t('portal.workingOn')}</dt>
-            <dd>{data.assignees.join(', ')}</dd>
-          </div>
-        )}
-        {fields.includes('priority') && data.priority && (
-          <div>
-            <dt>{t('portal.priority')}</dt>
-            <dd>{t(`task.priority.${data.priority}` as MessageKey)}</dd>
-          </div>
-        )}
-      </dl>
-      {data.description && <p className="p-task__desc">{data.description}</p>}
-      <section className="p-thread" aria-label={t('portal.conversation')}>
-        <h2>{t('portal.conversation')}</h2>
-        {data.comments.length === 0 && <p className="p-muted">{t('portal.noReplies')}</p>}
-        <ol>
-          {data.comments.map((c) => (
-            <li key={c.id} className="p-msg" data-side={c.fromCustomer ? 'customer' : 'team'}>
-              <div className="p-msg__who">
-                <strong>{c.author ?? t('portal.someone')}</strong>
-                <span className="p-muted">{when(c.createdAt)}</span>
-              </div>
-              <p>{c.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1')}</p>
-            </li>
-          ))}
-        </ol>
-        <form className="p-reply" onSubmit={send}>
-          <label className="p-field">
-            <span>{t('portal.reply')}</span>
-            <textarea rows={3} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
-          </label>
-          {problem && (
-            <p className="p-note p-note--error" role="alert">
-              {problem}
-            </p>
+          <dl className="p-meta p-meta--inline">{facts}</dl>
+        </header>
+        {data.description && <p className="p-task__desc">{data.description}</p>}
+        <section className="p-thread" aria-labelledby="p-conv">
+          <h2 id="p-conv">{t('portal.conversation')}</h2>
+          {data.comments.length === 0 && <p className="p-muted">{t('portal.noReplies')}</p>}
+          {data.comments.length > 0 && (
+            <ol>
+              {data.comments.map((c) => (
+                <li key={c.id} className="p-msg" data-side={c.fromCustomer ? 'customer' : 'team'}>
+                  <div className="p-msg__who">
+                    <strong>{c.author ?? t('portal.someone')}</strong>
+                    <span className="p-muted">{when(c.createdAt)}</span>
+                  </div>
+                  <p className="p-msg__body">{c.body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1')}</p>
+                </li>
+              ))}
+            </ol>
           )}
-          <div className="p-actions">
-            <button className="p-btn p-btn--primary" disabled={busy || !reply.trim()}>
-              {t('portal.sendReply')}
-            </button>
-          </div>
-        </form>
-      </section>
-    </article>
+          <form className="p-reply" onSubmit={send}>
+            <label className="p-field">
+              <span>{t('portal.reply')}</span>
+              <textarea rows={3} value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
+            </label>
+            {problem && <Problem text={problem} />}
+            {waiting && (
+              <p className="p-note" role="status">
+                {t('portal.notSentYet')}
+              </p>
+            )}
+            <div className="p-actions">
+              <span className="p-actions__end">
+                <button className="p-btn p-btn--primary" disabled={busy || !reply.trim()}>
+                  {t('portal.sendReply')}
+                </button>
+              </span>
+            </div>
+          </form>
+        </section>
+      </article>
+      <aside className="p-page__aside p-page__aside--wide">
+        <div className="p-card">
+          <dl className="p-meta">
+            <div>
+              <dt>{t('portal.status')}</dt>
+              <dd>
+                <Status board={data.board} status={data.status} />
+              </dd>
+            </div>
+            {facts}
+          </dl>
+        </div>
+      </aside>
+    </div>
   );
 }

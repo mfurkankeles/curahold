@@ -1,0 +1,30 @@
+/* The customer portal, seen from inside the company (Settings → Customer portal).
+   The preview's colours come from the company's own choice (--pb-*, set by the component). */
+
+.pbrand { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: var(--s-6); align-items: start; margin: var(--s-3) 0 var(--s-4); }
+.pbrand__form { display: grid; gap: var(--s-4); justify-items: start; }
+.pbrand__form .field { display: grid; gap: var(--s-1); justify-items: start; }
+.pbrand__color { display: flex; gap: var(--s-2); align-items: center; }
+.pbrand__swatch { inline-size: 44px; block-size: 44px; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-s); background: var(--surface); cursor: pointer; }
+.pbrand__swatch::-webkit-color-swatch-wrapper { padding: 4px; }
+.pbrand__swatch::-webkit-color-swatch { border: 0; border-radius: var(--r-xs); }
+.pbrand__hex { inline-size: 120px; font-variant-numeric: tabular-nums; text-transform: lowercase; }
+
+.pbrand__preview { margin: 0; display: grid; gap: var(--s-2); padding: 0 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper); overflow: hidden; }
+.pbrand__top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--surface); border-block-start: 4px solid var(--pb-fill); border-block-end: 1px solid var(--line); }
+.pbrand__top img { max-block-size: 24px; max-inline-size: 120px; }
+.pbrand__mark { inline-size: 24px; block-size: 24px; border-radius: var(--r-s); background: var(--pb-fill); }
+.pbrand__lines { display: flex; gap: var(--s-1); }
+.pbrand__lines i { inline-size: 24px; block-size: 8px; border-radius: var(--r-pill); background: var(--sunk); }
+.pbrand__band { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin: 0 var(--s-3); padding: var(--s-3); border-radius: var(--r-s); background: var(--pb-wash); }
+.pbrand__title { font-weight: 600; color: var(--pb-ink); }
+.pbrand__btn { padding: var(--s-1) var(--s-2); border-radius: var(--r-s); background: var(--pb-fill); color: var(--pb-on); font-size: var(--fs-s); font-weight: 600; white-space: nowrap; }
+.pbrand__row { display: block; block-size: 28px; margin: 0 var(--s-3); border-radius: var(--r-s); background: var(--surface); border: 1px solid var(--line); }
+.pbrand__foot { text-align: center; font-size: var(--fs-2xs); color: var(--ink-3); }
+:root[data-theme='dark'] .pbrand__band { background: var(--surface-2); }
+:root[data-theme='dark'] .pbrand__title { color: var(--ink); }
+
+@media (max-width: 760px) {
+  .pbrand { grid-template-columns: 1fr; }
+  .pbrand__preview { max-inline-size: 360px; }
+}

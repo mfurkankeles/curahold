@@ -15,7 +15,7 @@ import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
 import { enqueue, kick } from './lib/notify';
-import { PORTAL_COOKIE, methodAllowed, portalAuth, portalOn, signInOptions, type PortalEnv } from './lib/portal';
+import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalOn, signInOptions, type PortalEnv } from './lib/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
@@ -83,6 +83,7 @@ export function createPortalApp(deps: Deps) {
       locale: org.locale,
       logoUrl: (org.settings as any)?.logo?.key ? `/papi/logo?v=${encodeURIComponent(String((org.settings as any).logo.v ?? 1))}` : null,
       signIn: signInOptions(org, deps),
+      brand: portalBrand(org),
     };
     return c.json(out);
   });

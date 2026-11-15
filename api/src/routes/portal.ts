@@ -2,13 +2,13 @@
 // board, inviting customers' people, sharing a task with them.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { PORTAL_FIELDS, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
-import { defer, portalUrl, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
+import { HEX_COLOR, PORTAL_FIELDS, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { defer, logoPath, portalUrl, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
-import { emailPortalLink, portalAuth, portalOn } from '../lib/portal';
+import { emailPortalLink, portalAuth, portalBrand, portalOn } from '../lib/portal';
 import { body, localeField, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
 
@@ -37,6 +37,8 @@ portalRoutes.get('/portal', async (c) => {
     boards: boards.map((b) => ({ id: b.id, name: b.name })),
     auth: portalAuth(org),
     providers: { google: !!deps.config.oauth.google, microsoft: !!deps.config.oauth.microsoft },
+    brand: portalBrand(org),
+    logoUrl: logoPath(org),
   };
   return c.json(out);
 });
@@ -59,7 +61,14 @@ const authSchema = z.object({
 portalRoutes.put('/portal/settings', async (c) => {
   requirePerm(c, 'org.manage');
   if (c.get('previewBy') || c.get('supportBy')) fail('forbidden');
-  const input = await body(c, z.object({ enabled: z.boolean().optional(), auth: authSchema.optional() }));
+  const input = await body(
+    c,
+    z.object({
+      enabled: z.boolean().optional(),
+      auth: authSchema.optional(),
+      brand: z.object({ color: z.string().regex(HEX_COLOR).nullable(), poweredBy: z.boolean() }).optional(),
+    }),
+  );
   const deps = c.get('deps');
   // The customer portal is part of the Business plan.
   if (input.enabled) requirePlan(c, 'portal');
@@ -80,6 +89,11 @@ portalRoutes.put('/portal/settings', async (c) => {
     if (input.auth) {
       await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('auth', $2::jsonb)) where id = $1`, [org.id, JSON.stringify(input.auth)]);
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.signin_changed', entity: 'org', entityId: org.id, meta: input.auth });
+    }
+    if (input.brand) {
+      const brand = { color: input.brand.color?.toLowerCase() ?? null, poweredBy: input.brand.poweredBy };
+      await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('brand', $2::jsonb)) where id = $1`, [org.id, JSON.stringify(brand)]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.brand_changed', entity: 'org', entityId: org.id, meta: brand });
     }
   });
   return c.json({ ok: true });

@@ -1,7 +1,7 @@
 // The customer portal, the company's side: is it on, sign-in links for
 // customers' people, and telling them when a reply is written for them.
 import { normalizeLocale, translate, type Locale, intlTag } from '../../../shared/src/i18n';
-import { portalAuthOf, type PortalAuth, type PortalSignInOptions } from '../../../shared/src/portal';
+import { portalAuthOf, portalBrandOf, type PortalAuth, type PortalBrand, type PortalSignInOptions } from '../../../shared/src/portal';
 import { logoPath, orgUrl, portalUrl, type Deps, type OrgRow } from '../context';
 import { randomDigits, randomToken, sha256Hex } from './crypto';
 import { emailHtml } from './emailHtml';
@@ -33,6 +33,13 @@ export function portalOn(org: Pick<OrgRow, 'settings'>, deps?: Deps): boolean {
 export function portalAuth(org: Pick<OrgRow, 'settings'>): PortalAuth {
   return portalAuthOf((org.settings as any)?.portal?.auth);
 }
+
+/** The company's colour and the foot line, as set in Settings → Customer portal. */
+export function portalBrand(org: Pick<OrgRow, 'settings'>): PortalBrand {
+  return portalBrandOf((org.settings as any)?.portal?.brand);
+}
+
+const brandOf = (org: Pick<OrgRow, 'settings'>) => ({ brand: portalBrand(org).color, poweredBy: portalBrand(org).poweredBy });
 
 /** What the sign-in page offers: the company's choice, where this installation can do it. */
 export function signInOptions(org: Pick<OrgRow, 'settings'>, deps: Deps): PortalSignInOptions {
@@ -132,7 +139,7 @@ async function sendMail(deps: Deps, org: OrgRow, to: string, subject: string, te
     to,
     subject,
     text: link ? `${text}\n\n${link}` : text,
-    ...(link && cta ? { html: emailHtml({ org: org.name, logo: logoUrl, text, link, cta }) } : {}),
+    ...(link && cta ? { html: emailHtml({ org: org.name, logo: logoUrl, text, link, cta, ...brandOf(org) }) } : {}),
   });
 }
 
@@ -168,7 +175,7 @@ export async function tellCustomer(deps: Deps, org: OrgRow, taskId: string, byNa
       to: p.email,
       subject: translate(locale, 'portal.email.replySubject', { title: p.title }, org.terms),
       text: `${text}\n\n${link}`,
-      html: emailHtml({ org: org.name, logo: logo ? `${orgUrl(deps.config, org.slug)}${logo}` : null, text, link, cta: translate(locale, 'portal.email.open', {}, org.terms) }),
+      html: emailHtml({ org: org.name, logo: logo ? `${orgUrl(deps.config, org.slug)}${logo}` : null, text, link, cta: translate(locale, 'portal.email.open', {}, org.terms), ...brandOf(org) }),
     });
   }
 }

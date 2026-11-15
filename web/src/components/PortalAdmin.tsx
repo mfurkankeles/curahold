@@ -1,8 +1,10 @@
 // The customer portal, from inside: the company's switch, the boards it
 // opened, and the customers' people who can sign in.
 import { Icon } from './icons';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { PORTAL_SESSION_DAYS, type PortalAuth, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { brandPalette, HEX_COLOR, PORTAL_DEFAULT_COLOR, PORTAL_SESSION_DAYS, type PortalAuth, type PortalBrand, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { useUndo } from '../lib/undo';
+import '../surfaces/portal.css';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -62,6 +64,7 @@ export function PortalSettingsTab() {
           </div>
         )}
       </section>
+      {s.enabled && <BrandSection settings={s} onSaved={load} />}
       {s.enabled && <SignInMethods settings={s} onSaved={load} />}
       {s.enabled && (
         <section className="sheet">
@@ -189,6 +192,90 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
         />
       )}
     </div>
+  );
+}
+
+/** The company in front: its colour on the portal and in its emails, its logo, and whether Curahold is named at the foot. */
+function BrandSection({ settings, onSaved }: { settings: PortalSettings; onSaved: () => void }) {
+  const { t } = useI18n();
+  const { toast } = useStore();
+  const offer = useUndo();
+  const [b, setB] = useState<PortalBrand>(settings.brand);
+  const [hex, setHex] = useState(settings.brand.color ?? '');
+  const [busy, setBusy] = useState(false);
+  const changed = JSON.stringify(b) !== JSON.stringify(settings.brand);
+  const pal = brandPalette(b.color).light;
+  const save = async () => {
+    const before = settings.brand;
+    setBusy(true);
+    try {
+      await put('/portal/settings', { brand: b });
+      onSaved();
+      offer(t('portal.admin.brandSaved'), () => put('/portal/settings', { brand: before }), onSaved);
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const typed = (v: string) => {
+    setHex(v);
+    const h = v.startsWith('#') ? v : `#${v}`;
+    if (HEX_COLOR.test(h)) setB({ ...b, color: h.toLowerCase() });
+  };
+  return (
+    <section className="sheet">
+      <h3 className="section__head">{t('portal.admin.brand')}</h3>
+      <p className="field__hint">{t('portal.admin.brandLead')}</p>
+      <div className="pbrand">
+        <div className="pbrand__form">
+          <div className="field">
+            <span className="field__label" id="pbrand-color">
+              {t('portal.admin.color')}
+            </span>
+            <div className="pbrand__color">
+              <input type="color" className="pbrand__swatch" aria-labelledby="pbrand-color" value={b.color ?? PORTAL_DEFAULT_COLOR} onChange={(e) => typed(e.target.value)} />
+              <input className="input pbrand__hex" aria-label={t('portal.admin.colorHex')} value={hex} placeholder={PORTAL_DEFAULT_COLOR} maxLength={7} spellCheck={false} onChange={(e) => typed(e.target.value.trim())} />
+            </div>
+            {b.color && (
+              <button type="button" className="btn btn--quiet btn--small pbrand__reset" onClick={() => (setB({ ...b, color: null }), setHex(''))}>
+                {t('portal.admin.colorDefault')}
+              </button>
+            )}
+          </div>
+          <div className="field">
+            <span className="field__label">{t('portal.admin.logo')}</span>
+            <span className="field__hint">{settings.logoUrl ? t('portal.admin.logoLead') : t('portal.admin.noLogo')}</span>
+            <button type="button" className="btn btn--small pbrand__logo" onClick={() => navigate('/settings/company')}>
+              {t('portal.admin.changeLogo')}
+            </button>
+          </div>
+          <label className="checkbox">
+            <input type="checkbox" checked={b.poweredBy} onChange={(e) => setB({ ...b, poweredBy: e.target.checked })} />
+            <span>{t('portal.admin.poweredBy')}</span>
+          </label>
+        </div>
+        <figure className="pbrand__preview" aria-label={t('portal.admin.preview')} style={{ '--pb-fill': pal.fill, '--pb-on': pal.onFill, '--pb-ink': pal.ink, '--pb-wash': pal.wash } as CSSProperties}>
+          <div className="pbrand__top">
+            {settings.logoUrl ? <img src={settings.logoUrl} alt="" /> : <span className="pbrand__mark" aria-hidden="true" />}
+            <span className="pbrand__lines" aria-hidden="true">
+              <i />
+              <i />
+            </span>
+          </div>
+          <div className="pbrand__band">
+            <span className="pbrand__title">{t('portal.requests')}</span>
+            <span className="pbrand__btn">{t('portal.new')}</span>
+          </div>
+          <span className="pbrand__row" aria-hidden="true" />
+          <span className="pbrand__row" aria-hidden="true" />
+          <figcaption className="pbrand__foot">{b.poweredBy ? t('portal.poweredBy') : '\u00a0'}</figcaption>
+        </figure>
+      </div>
+      <button className="btn btn--primary" disabled={busy || !changed} onClick={save}>
+        {t('portal.admin.saveBrand')}
+      </button>
+    </section>
   );
 }
 

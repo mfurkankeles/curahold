@@ -1,9 +1,13 @@
 // A plain, light HTML version of the emails people act on (invitations,
-// sign-in links), carrying the company's logo. The text version is always
-// sent too, for clients that show text only.
+// sign-in links), carrying the company's logo and, for the customer portal, its
+// colour. The text version is always sent too, for clients that show text only.
+import { brandPalette } from '../../../shared/src/portal';
+
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function emailHtml(o: { org: string; logo: string | null; text: string; link: string; cta: string }): string {
+export function emailHtml(o: { org: string; logo: string | null; text: string; link: string; cta: string; brand?: string | null; poweredBy?: boolean }): string {
+  // The button in the company's colour (its text always readable on it); the portal's own colour otherwise.
+  const { fill, onFill } = brandPalette(o.brand ?? null).light;
   const paragraphs = o.text
     .split(/\n{2,}/)
     .map((p) => p.trim())
@@ -18,7 +22,7 @@ export function emailHtml(o: { org: string; logo: string | null; text: string; l
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #d8dfdd;border-radius:10px">
 <tr><td style="padding:22px 26px;border-bottom:1px solid #e9eeec">${head}</td></tr>
 <tr><td style="padding:24px 26px 8px;font-size:15px">${paragraphs}
-<p style="margin:8px 0 22px"><a href="${esc(o.link)}" style="display:inline-block;background:#5b4de8;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:6px;font-weight:600">${esc(o.cta)}</a></p>
+<p style="margin:8px 0 22px"><a href="${esc(o.link)}" style="display:inline-block;background:${fill};color:${onFill};text-decoration:none;padding:11px 18px;border-radius:6px;font-weight:600">${esc(o.cta)}</a></p>
 <p style="margin:0 0 18px;font-size:12px;color:#74878a;word-break:break-all">${esc(o.link)}</p></td></tr>
-</table><p style="font-size:12px;color:#74878a;margin:14px 0 0">Curahold</p></td></tr></table></body></html>`;
+</table>${o.poweredBy === false ? '' : '<p style="font-size:12px;color:#74878a;margin:14px 0 0">Curahold</p>'}</td></tr></table></body></html>`;
 }
