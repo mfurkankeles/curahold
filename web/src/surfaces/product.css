@@ -112,7 +112,7 @@
   .board[data-pm] .card { grid-template-columns: var(--tap-min) minmax(0, 1fr); gap: var(--s-1); padding-block: var(--s-2); padding-inline-start: var(--s-3); padding-inline-end: var(--s-2); }
   /* The title takes the card's whole width; the tick moves down beside the date and people. */
   .board[data-pm] .card__top { display: contents; }
-  .board[data-pm] .card > * { grid-column: 1 / -1; }
+  .board[data-pm] .card > *, .board[data-pm] .card__top > * { grid-column: 1 / -1; }
   .board[data-pm] .card .tick { grid-column: 1; order: 9; align-self: center; }
   .board[data-pm] .card .card__meta { grid-column: 2; order: 10; }
   .board[data-pm] .card__title { font-size: var(--fs-s); hyphens: auto; overflow-wrap: break-word; }
@@ -234,3 +234,19 @@
   .pm-inline, .pm-epic { min-height: var(--tap); }
   .pm-row__check { width: 22px; height: 22px; }
 }
+
+/* ---------------------------------------------------------------- closing a sprint, the sprint list, the roadmap */
+.pm-carry { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+.pm-carry__head { margin: 0; font-size: var(--fs-s); }
+.pm-carry__list { list-style: none; display: grid; gap: 0; max-height: 240px; overflow: auto; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-s); }
+.pm-carry__list li { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); border-top: 1px solid var(--line); font-size: var(--fs-s); }
+.pm-carry__list li:first-child { border-top: 0; }
+.pm-carry__title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pm-brief--plan { align-items: center; }
+.pm-brief--plan .pm-cap { flex: 1; max-width: 420px; }
+.pm-facts--wide { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: var(--s-3); }
+.pm-epiclist li { flex-wrap: wrap; }
+.pm-epiclist .rowlink { flex: 1 1 160px; min-width: 0; text-align: start; }
+.pm-epiclist__bar { display: flex; flex: 0 1 160px; min-width: 80px; }
+.pm-epiclist__nums { font-size: var(--fs-xs); white-space: nowrap; }
+.pm-notes { font-family: var(--mono, ui-monospace, monospace); font-size: var(--fs-s); line-height: 1.5; resize: vertical; }

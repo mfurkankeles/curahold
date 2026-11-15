@@ -14,7 +14,11 @@ import { EmptyState, LoadError, SkeletonRows } from './Empty';
 import { Icon } from './icons';
 import { IssueBadge, PointsChip, useEpics } from './Pm';
 import { BurndownChart, SprintFacts, useBurndown } from './Burndown';
-import { useSprints } from './pmData';
+import { closedInOrder, finishedPoints, pointsOf, teamVelocity, useSprints } from './pmData';
+import { CapacityMeter } from './Backlog';
+import { ReleaseNotes } from './ReleaseNotes';
+import { useUndo } from '../lib/undo';
+import { useFormat } from '../lib/useFormat';
 import '../surfaces/product.css';
 import { Presence } from './Presence';
 import { Confirm, Dialog } from './ui';
@@ -251,54 +255,81 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
       ) : (
         <KanbanView board={board} tasks={items} doneKeys={doneKeys} onMove={onMove} canWrite={canWrite} />
       )}
-      {closing && <CloseSprint sprint={sprint} sprints={sprints} onClose={() => setClosing(false)} onDone={onChanged} />}
+      {closing && <CloseSprint sprint={sprint} sprints={sprints} doneKeys={doneKeys} onClose={() => setClosing(false)} onDone={onChanged} />}
     </>
   );
 }
 
-function CloseSprint({ sprint, sprints, onClose, onDone }: { sprint: Sprint; sprints: Sprint[]; onClose: () => void; onDone: () => void }) {
+function CloseSprint({ sprint, sprints, doneKeys, onClose, onDone }: { sprint: Sprint; sprints: Sprint[]; doneKeys: Set<string>; onClose: () => void; onDone: () => void }) {
   const { t } = useI18n();
+  const f = useFormat();
   const save = useSaver();
   const summary = useSummary(sprint.id, 0);
-  const [to, setTo] = useState('');
   const others = sprints.filter((s) => s.id !== sprint.id && s.state !== 'closed');
-  const left = summary ? summary.itemCount - summary.doneCount : 0;
+  // Unfinished work goes on to the next planned sprint by default, else back to the backlog.
+  const [to, setTo] = useState(() => others.find((s) => s.state === 'future')?.id ?? '');
+  const [items, setItems] = useState<Task[] | null>(null);
+  useEffect(() => {
+    get<{ tasks: Task[] }>(`/sprints/${sprint.id}/items`)
+      .then((r) => setItems(r.tasks))
+      .catch(() => setItems([]));
+  }, [sprint.id]);
+  const open = (items ?? []).filter((x) => !doneKeys.has(x.status));
+  const left = summary ? summary.itemCount - summary.doneCount : open.length;
   return (
     <Confirm
       title={t('pm.sprint.completeTitle', { name: sprint.name })}
-      body={summary ? t('pm.sprint.completeBody', { done: summary.doneCount, total: summary.itemCount, left }) : t('common.loading')}
+      body={summary ? t('pm.sprint.completeBody', { done: f.number(summary.doneCount), total: f.number(summary.itemCount), left: f.number(left) }) : t('common.loading')}
       confirmLabel={t('pm.sprint.complete')}
       onClose={onClose}
       onConfirm={async () => {
-        const ok = await save(() => put(`/sprints/${sprint.id}/state`, { state: 'closed', moveIncompleteTo: to || null }));
+        const ok = await save(() => put(`/sprints/${sprint.id}/state`, { state: 'closed', moveIncompleteTo: to || null }), t('pm.sprint.closedToast', { name: sprint.name }));
         if (ok) onDone();
       }}
     >
       {left > 0 && (
-        <label className="field">
-          <span className="field__label">{t('pm.sprint.moveTo')}</span>
-          <select className="select" value={to} onChange={(e) => setTo(e.target.value)}>
-            <option value="">{t('pm.backlog')}</option>
-            {others.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <>
+          <label className="field">
+            <span className="field__label">{t('pm.sprint.moveTo')}</span>
+            <select className="select" value={to} onChange={(e) => setTo(e.target.value)}>
+              <option value="">{t('pm.backlog')}</option>
+              {others.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {open.length > 0 && (
+            <div className="pm-carry">
+              <p className="pm-carry__head muted num">{t('pm.sprint.carry', { n: f.number(open.length), points: t('pm.points.short', { n: f.number(pointsOf(open)) }) })}</p>
+              <ul className="pm-carry__list">
+                {open.map((x) => (
+                  <li key={x.id}>
+                    <IssueBadge type={x.issueType ?? 'task'} />
+                    <span className="pm-carry__title">{x.title}</span>
+                    <PointsChip points={x.storyPoints} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
     </Confirm>
   );
 }
 
 function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: Board; sprints: Sprint[]; refreshKey: number; onChanged: () => void; onEdit: (s: Sprint) => void }) {
-  void board;
+  void refreshKey;
   const { t } = useI18n();
   const { canWrite } = useStore();
   const save = useSaver();
   const [starting, setStarting] = useState<Sprint | null>(null);
   const [closing, setClosing] = useState<Sprint | null>(null);
   const [removing, setRemoving] = useState<Sprint | null>(null);
+  const [notes, setNotes] = useState<Sprint | null>(null);
+  const doneKeys = useMemo(() => new Set(board.columns.filter((c) => c.done).map((c) => c.key)), [board]);
   const [openId, setOpenId] = useState<string | null>(null);
   if (!sprints.length) return <EmptyState compact icon="play" title={t('pm.sprint.empty')} body={t('pm.sprint.emptyBody')} />;
   const order = { active: 0, future: 1, closed: 2 } as const;
@@ -326,6 +357,12 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
                     {t('pm.sprint.complete')}
                   </button>
                 )}
+                {s.state === 'closed' && (
+                  <button className="btn btn--small" onClick={() => setNotes(s)}>
+                    <Icon name="list" size={14} />
+                    {t('pm.notes.button')}
+                  </button>
+                )}
                 {s.state !== 'closed' && (
                   <button className="btn btn--quiet btn--icon btn--small" aria-label={t('pm.sprint.edit')} title={t('pm.sprint.edit')} onClick={() => onEdit(s)}>
                     <Icon name="edit" size={15} />
@@ -338,7 +375,7 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
             )}
           </div>
           {s.goal && <p className="muted u-m-0-0-8">{s.goal}</p>}
-          <SprintBrief sprint={s} refreshKey={refreshKey} />
+          <SprintBrief sprint={s} sprints={sprints} />
           {openId === s.id && <SprintItems sprint={s} editable={canWrite && s.state !== 'closed'} onChanged={onChanged} />}
         </section>
       ))}
@@ -353,7 +390,8 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
           }}
         />
       )}
-      {closing && <CloseSprint sprint={closing} sprints={sprints} onClose={() => setClosing(null)} onDone={onChanged} />}
+      {closing && <CloseSprint sprint={closing} sprints={sprints} doneKeys={doneKeys} onClose={() => setClosing(null)} onDone={onChanged} />}
+      {notes && <ReleaseNotes sprint={notes} doneKeys={doneKeys} onClose={() => setNotes(null)} />}
       {removing && (
         <Confirm
           title={t('pm.sprint.deleteTitle', { name: removing.name })}
@@ -370,16 +408,26 @@ function SprintList({ board, sprints, refreshKey, onChanged, onEdit }: { board: 
   );
 }
 
-/** One line under a sprint: points done of total, as a thin bar. */
-function SprintBrief({ sprint, refreshKey }: { sprint: Sprint; refreshKey: number }) {
+/** One line under a sprint: points done of total; a planned sprint shows how full it is against the team's pace. */
+function SprintBrief({ sprint, sprints }: { sprint: Sprint; sprints: Sprint[] }) {
   const { t } = useI18n();
-  const summary = useSummary(sprint.id, refreshKey);
-  if (!summary) return null;
+  const f = useFormat();
+  const tot = sprint.totals;
+  if (!tot) return null;
+  if (sprint.state === 'future') {
+    return (
+      <div className="pm-brief pm-brief--plan">
+        <CapacityMeter planned={tot.points} limit={teamVelocity(sprints).average} />
+        <span className="muted num">{t('pm.sprint.items', { n: f.number(tot.items) })}</span>
+      </div>
+    );
+  }
+  const done = sprint.state === 'closed' ? finishedPoints(sprint) : tot.donePoints;
   return (
     <div className="pm-brief">
-      <Bar done={summary.donePoints} total={summary.totalPoints} />
+      <Bar done={done} total={tot.points} />
       <span className="muted num">
-        {t('pm.summary.progress', { done: summary.donePoints, total: summary.totalPoints })} · {t('pm.sprint.items', { n: summary.itemCount })}
+        {t('pm.summary.progress', { done: f.number(done), total: f.number(tot.points) })} · {t('pm.sprint.items', { n: f.number(tot.items) })}
       </span>
     </div>
   );
@@ -388,6 +436,7 @@ function SprintBrief({ sprint, refreshKey }: { sprint: Sprint; refreshKey: numbe
 function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable: boolean; onChanged: () => void }) {
   const { t } = useI18n();
   const save = useSaver();
+  const offer = useUndo();
   const [items, setItems] = useState<Task[] | null>(null);
   const load = useCallback(async () => {
     try {
@@ -397,7 +446,7 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
     }
   }, [sprint.id]);
   useEffect(() => void load(), [load]);
-  if (items === null) return <p className="muted">{t('common.loading')}</p>;
+  if (items === null) return <SkeletonRows rows={2} label={t('common.loading')} />;
   if (!items.length) return <p className="muted">{t('pm.sprint.itemsEmpty')}</p>;
   return (
     <ul className="pm-items">
@@ -412,9 +461,14 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
             <button
               className="btn btn--quiet btn--small u-ms-auto"
               onClick={async () => {
-                if (await save(() => del(`/sprints/${sprint.id}/items/${x.id}`), t('pm.removed'))) {
+                if (await save(() => del(`/sprints/${sprint.id}/items/${x.id}`), false)) {
                   void load();
                   onChanged();
+                  offer(
+                    t('pm.removed'),
+                    () => put(`/sprints/${sprint.id}/items`, { taskIds: [x.id] }),
+                    () => (void load(), onChanged()),
+                  );
                 }
               }}
             >
@@ -429,31 +483,17 @@ function SprintItems({ sprint, editable, onChanged }: { sprint: Sprint; editable
 
 // ------------------------------------------------------------------ roadmap
 
-/** Sprints in order with their progress, velocity of the closed ones, and the epics. */
+/** Sprints in order with their progress, the team's velocity, and the epics with what their stories add up to. */
 function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint[]; refreshKey: number }) {
   const { t } = useI18n();
+  const f = useFormat();
   const { epics } = useEpics(board.id, true, refreshKey);
-  const [sums, setSums] = useState<Map<string, SprintSummary> | null>(null);
-  useEffect(() => {
-    let live = true;
-    setSums(null);
-    void Promise.all(
-      sprints.map((s) =>
-        get<{ summary: SprintSummary }>(`/sprints/${s.id}/summary`)
-          .then((r) => [s.id, r.summary] as const)
-          .catch(() => null),
-      ),
-    ).then((rows) => live && setSums(new Map(rows.filter((r): r is readonly [string, SprintSummary] => !!r))));
-    return () => {
-      live = false;
-    };
-  }, [sprints, refreshKey]);
-
   const ordered = [...sprints].sort((a, b) => a.position - b.position);
-  const closed = ordered.filter((s) => s.state === 'closed' && sums?.get(s.id));
-  const velocity = closed.map((s) => sums!.get(s.id)!.donePoints);
-  const average = velocity.length ? Math.round((velocity.reduce((a, b) => a + b, 0) / velocity.length) * 10) / 10 : null;
+  const closed = closedInOrder(sprints);
+  const velocity = closed.map(finishedPoints);
+  const { average, last } = teamVelocity(sprints);
   const peak = Math.max(1, ...velocity);
+  const n = (v: number) => f.number(v, { digits: v % 1 ? 1 : 0 });
 
   return (
     <div className="pm-roadmap">
@@ -462,22 +502,20 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
           <span>{t('pm.velocity')}</span>
         </h3>
         <p className="field__hint">{t('pm.velocity.hint')}</p>
-        {sums === null ? (
-          <SkeletonRows rows={2} label={t('common.loading')} />
-        ) : closed.length === 0 ? (
+        {closed.length === 0 ? (
           <p className="muted">{t('pm.velocity.none')}</p>
         ) : (
           <>
-            <div className="statstrip">
-              <div className="stat" data-tone="done">
-                <span className="muted">{t('pm.velocity.last')}</span>
-                <strong className="num">{velocity[velocity.length - 1]}</strong>
+            <dl className="pm-facts pm-facts--wide">
+              <div className="pm-fact" data-tone="done">
+                <dt>{t('pm.velocity.last')}</dt>
+                <dd className="num">{n(velocity[velocity.length - 1])}</dd>
               </div>
-              <div className="stat">
-                <span className="muted">{t('pm.velocity.average')}</span>
-                <strong className="num">{average}</strong>
+              <div className="pm-fact">
+                <dt>{t('pm.velocity.average3', { n: n(last.length) })}</dt>
+                <dd className="num">{average == null ? '–' : n(average)}</dd>
               </div>
-            </div>
+            </dl>
             <ul className="pm-velocity">
               {closed.map((s, i) => (
                 <li key={s.id}>
@@ -485,7 +523,7 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
                   <span className="pm-bar">
                     <span style={{ '--w': `${(velocity[i] / peak) * 100}%` } as CSSProperties} />
                   </span>
-                  <span className="num">{velocity[i]}</span>
+                  <span className="num">{n(velocity[i])}</span>
                 </li>
               ))}
             </ul>
@@ -500,22 +538,14 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
           <p className="muted">{t('pm.sprint.empty')}</p>
         ) : (
           <ul className="pm-timeline">
-            {ordered.map((s) => {
-              const sm = sums?.get(s.id);
-              return (
-                <li key={s.id} data-state={s.state}>
-                  <div>
-                    <strong>{s.name}</strong> <StateChip state={s.state} /> <SprintDates sprint={s} />
-                  </div>
-                  {sm && (
-                    <div className="pm-brief">
-                      <Bar done={sm.donePoints} total={sm.totalPoints} />
-                      <span className="muted num">{t('pm.summary.progress', { done: sm.donePoints, total: sm.totalPoints })}</span>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+            {ordered.map((s) => (
+              <li key={s.id} data-state={s.state}>
+                <div>
+                  <strong>{s.name}</strong> <StateChip state={s.state} /> <SprintDates sprint={s} />
+                </div>
+                <SprintBrief sprint={s} sprints={sprints} />
+              </li>
+            ))}
           </ul>
         )}
       </section>
@@ -528,15 +558,18 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
         ) : epics.length === 0 ? (
           <p className="muted">{t('pm.epics.empty')}</p>
         ) : (
-          <ul className="pm-items">
+          <ul className="pm-items pm-epiclist">
             {epics.map((e) => (
               <li key={e.id}>
                 <IssueBadge type="epic" />
                 <button className="rowlink" onClick={() => setQuery('task', e.id)}>
                   {e.title}
                 </button>
-                <span className="muted u-ms-auto">
-                  {t('pm.sprint.items', { n: e.childCount })}
+                <span className="pm-epiclist__bar">
+                  <Bar done={e.childDonePoints ?? 0} total={e.childPoints ?? 0} />
+                </span>
+                <span className="muted num pm-epiclist__nums">
+                  {t('pm.summary.progress', { done: n(e.childDonePoints ?? 0), total: n(e.childPoints ?? 0) })} · {t('pm.sprint.items', { n: n(e.childCount) })}
                 </span>
               </li>
             ))}

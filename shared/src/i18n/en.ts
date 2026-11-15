@@ -4370,6 +4370,18 @@ export const en = {
   'pm.inline.label': "{field}: {title}",
   'pm.sprint.started': "{name} has started.",
   'pm.backlog.search': "Search the backlog",
+  'pm.sprint.carry': "Not finished: {n} items · {points}",
+  'pm.velocity.average3': "Average of the last {n}",
+  'pm.sprint.closedToast': "{name} is closed.",
+  'pm.notes.button': "Release notes",
+  'pm.notes.title': "Release notes for {name}",
+  'pm.notes.hint': "A draft from what this sprint finished. Edit it, then copy it to where you publish.",
+  'pm.notes.new': "New",
+  'pm.notes.fixed': "Fixed",
+  'pm.notes.improved': "Improved",
+  'pm.notes.copy': "Copy",
+  'pm.notes.copied': "Copied.",
+  'pm.notes.empty': "Nothing was finished in this sprint.",
 } as const;
 
 export type MessageKey = keyof typeof en;
