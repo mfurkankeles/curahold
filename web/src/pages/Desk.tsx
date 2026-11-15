@@ -246,7 +246,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-const PULSE_MS = 5_000;
+const PULSE_MS = 2_000;
 type Section = 'today' | 'customers' | 'support';
 interface Where {
   section: Section;
@@ -444,7 +444,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
         </nav>
         <Queues me={me} queue={queue} onQueue={pickQueue} className="console__queues" current={where.section === 'support'} />
         <details className="console__me">
-          <summary aria-label={t('console.account' as MessageKey)}>
+          <summary>
             <Icon name="user" size={18} />
             <span className="console__metext">{me.staff.name}</span>
           </summary>

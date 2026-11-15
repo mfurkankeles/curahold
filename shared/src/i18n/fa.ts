@@ -4298,7 +4298,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'console.today': "امروز",
   'console.support': "پشتیبانی",
   'console.queues': "صف‌های پشتیبانی",
-  'console.account': "حساب شما",
   'console.business': "کسب‌وکار امروز",
   'console.mrrNew': "+{amount} در ۳۰ روز گذشته",
   'console.arrIs': "سالانه {amount}",

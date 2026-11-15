@@ -4298,7 +4298,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'console.today': "今天",
   'console.support': "支援",
   'console.queues': "支援佇列",
-  'console.account': "你的帳戶",
   'console.business': "今日業務",
   'console.mrrNew': "近 30 天 +{amount}",
   'console.arrIs': "每年 {amount}",

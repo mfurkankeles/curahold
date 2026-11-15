@@ -4298,7 +4298,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'console.today': "היום",
   'console.support': "תמיכה",
   'console.queues': "תורי תמיכה",
-  'console.account': "החשבון שלך",
   'console.business': "העסק היום",
   'console.mrrNew': "+{amount} ב־30 הימים האחרונים",
   'console.arrIs': "{amount} בשנה",

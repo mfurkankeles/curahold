@@ -4298,7 +4298,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'console.today': "오늘",
   'console.support': "지원",
   'console.queues': "지원 대기열",
-  'console.account': "내 계정",
   'console.business': "오늘의 비즈니스",
   'console.mrrNew': "최근 30일 +{amount}",
   'console.arrIs': "연 {amount}",

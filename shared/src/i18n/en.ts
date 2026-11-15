@@ -4313,7 +4313,6 @@ export const en = {
   'console.today': "Today",
   'console.support': "Support",
   'console.queues': "Support queues",
-  'console.account': "Your account",
   'console.business': "The business today",
   'console.mrrNew': "+{amount} in the last 30 days",
   'console.arrIs': "{amount} a year",

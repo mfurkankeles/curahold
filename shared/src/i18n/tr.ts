@@ -4298,7 +4298,6 @@ export const tr: Record<MessageKey, string> = {
   'console.today': "Bugün",
   'console.support': "Destek",
   'console.queues': "Destek kuyrukları",
-  'console.account': "Hesabın",
   'console.business': "İşin bugünkü hali",
   'console.mrrNew': "Son 30 günde +{amount}",
   'console.arrIs': "Yılda {amount}",

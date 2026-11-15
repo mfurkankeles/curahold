@@ -4298,7 +4298,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'console.today': "今日",
   'console.support': "サポート",
   'console.queues': "サポートのキュー",
-  'console.account': "アカウント",
   'console.business': "今日のビジネス",
   'console.mrrNew': "過去30日で +{amount}",
   'console.arrIs': "年 {amount}",

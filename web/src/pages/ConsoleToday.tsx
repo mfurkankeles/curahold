@@ -5,7 +5,7 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import type { ConsoleAttention, ConsoleToday } from '../../../shared/src/console';
 import { EmptyState } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
-import { formatClock, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
+import { formatClock, formatDate, formatMoney, formatMonth, formatNumber, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
 
@@ -133,6 +133,10 @@ export function TodayView({ data, onRequest, onCompany }: { data: ConsoleToday; 
             <>
               <h2 className="ccard__title">{t('metrics.buildup')}</h2>
               <Trend points={r.trend} label={t('metrics.buildup')} />
+              <p className="ctoday__axis" aria-hidden="true">
+                <span>{formatMonth(r.trend[0].t, locale, { short: true, year: true })}</span>
+                <span>{formatMonth(r.trend[r.trend.length - 1].t, locale, { short: true, year: true })}</span>
+              </p>
             </>
           ) : null}
         </section>

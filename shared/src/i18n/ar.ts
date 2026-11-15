@@ -4298,7 +4298,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'console.today': "اليوم",
   'console.support': "الدعم",
   'console.queues': "قوائم انتظار الدعم",
-  'console.account': "حسابك",
   'console.business': "النشاط اليوم",
   'console.mrrNew': "+{amount} خلال آخر 30 يومًا",
   'console.arrIs': "{amount} سنويًا",
