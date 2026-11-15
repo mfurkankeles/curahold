@@ -4289,4 +4289,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'links.removed': "已移除与“{title}”的关联",
   'time.removed': "已从耗时中删除 {time}",
   'views.removed': "已删除视图“{name}”",
+  'bell.emptyTitle': "暂无新消息",
+  'bell.emptyBody': "指派、提及和提醒会显示在这里。",
 };

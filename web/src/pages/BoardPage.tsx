@@ -734,7 +734,17 @@ export function ListView({
           <th className="rail-cell" aria-hidden="true" />
           {pick && (
             <th className="check-cell">
-              <input type="checkbox" aria-label={t('board.selectAll')} checked={tasks.length > 0 && tasks.every((x) => selected!.has(x.id))} onChange={(e) => onSelect!(e.target.checked ? new Set(tasks.map((x) => x.id)) : new Set())} />
+              <input
+                type="checkbox"
+                aria-label={t('board.selectAll')}
+                checked={tasks.length > 0 && tasks.every((x) => selected!.has(x.id))}
+                onChange={(e) => {
+                  // This list's rows join (or leave) what is already chosen: several lists can share one choice.
+                  const next = new Set(selected);
+                  for (const x of tasks) (e.target.checked ? next.add(x.id) : next.delete(x.id));
+                  onSelect!(next);
+                }}
+              />
             </th>
           )}
           <th>{t('task.title')}</th>
@@ -819,7 +829,7 @@ export function repeatText(t: (k: any, v?: any) => string, r: Repeat) {
 }
 
 /** Change the chosen tasks at once: column, a person, due date, priority, archive — with undo. */
-function BulkBar({ board, ids, total, onSelectAll, onDone }: { board: Board; ids: string[]; /** How many match when more are there than are read. */ total?: number; onSelectAll: () => Promise<void>; onDone: () => void }) {
+export function BulkBar({ board, ids, total, onSelectAll, onDone }: { /** Without a board (tasks from many): no column to move to. */ board?: Board; ids: string[]; /** How many match when more are there than are read. */ total?: number; onSelectAll?: () => Promise<void>; onDone: () => void }) {
   const { t } = useI18n();
   const { people, toast } = useStore();
   const undoable = useServerUndo();
@@ -840,17 +850,19 @@ function BulkBar({ board, ids, total, onSelectAll, onDone }: { board: Board; ids
   return (
     <div className="bulkbar" role="region" aria-label={t('board.bulk')}>
       <strong>{t('board.selected', { n: ids.length })}</strong>
-      {total !== undefined && total > ids.length && ids.length < BULK_MAX && (
+      {onSelectAll && total !== undefined && total > ids.length && ids.length < BULK_MAX && (
         <button className="linkbtn" disabled={busy} onClick={() => (setBusy(true), void onSelectAll().finally(() => setBusy(false)))}>
           {total > BULK_MAX ? t('board.selectFirstN', { n: BULK_MAX, total }) : t('board.selectAllN', { n: total })}
         </button>
       )}
-      <select className="select" disabled={busy} value="" aria-label={t('board.bulk.move')} onChange={(e) => e.target.value && apply({ status: e.target.value }, 'board.bulk.moved')}>
-        <option value="">{t('board.bulk.move')}</option>
-        {board.columns.map((c) => (
-          <option key={c.key} value={c.key}>{c.name}</option>
-        ))}
-      </select>
+      {board && (
+        <select className="select" disabled={busy} value="" aria-label={t('board.bulk.move')} onChange={(e) => e.target.value && apply({ status: e.target.value }, 'board.bulk.moved')}>
+          <option value="">{t('board.bulk.move')}</option>
+          {board.columns.map((c) => (
+            <option key={c.key} value={c.key}>{c.name}</option>
+          ))}
+        </select>
+      )}
       <select className="select" disabled={busy} value="" aria-label={t('board.bulk.assign')} onChange={(e) => e.target.value && apply({ addAssignee: e.target.value }, 'board.bulk.changed')}>
         <option value="">{t('board.bulk.assign')}</option>
         {active.map((p) => (

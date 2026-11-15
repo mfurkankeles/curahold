@@ -4289,4 +4289,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'links.removed': "「{title}」へのリンクを外しました",
   'time.removed': "作業時間から {time} を削除しました",
   'views.removed': "ビュー「{name}」を削除しました",
+  'bell.emptyTitle': "新しいお知らせはありません",
+  'bell.emptyBody': "割り当て、メンション、リマインダーがここに表示されます。",
 };

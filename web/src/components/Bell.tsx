@@ -79,7 +79,7 @@ export function Bell() {
             )}
           </div>
           {data.notifications.length === 0 ? (
-            <EmptyState compact icon="inbox" tone="done" title={t('bell.empty')} />
+            <EmptyState compact icon="inbox" tone="done" title={t('bell.emptyTitle')} body={t('bell.emptyBody')} />
           ) : (
             <ul className="bell__list">
               {data.notifications.slice(0, 12).map((n) => (

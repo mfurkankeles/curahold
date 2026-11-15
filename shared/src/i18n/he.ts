@@ -4289,4 +4289,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'links.removed': "הקישור ל“{title}” הוסר",
   'time.removed': "{time} הוסרו מהזמן שהושקע",
   'views.removed': "התצוגה “{name}” הוסרה",
+  'bell.emptyTitle': "אין חדש",
+  'bell.emptyBody': "שיוכים, אזכורים ותזכורות יופיעו כאן.",
 };

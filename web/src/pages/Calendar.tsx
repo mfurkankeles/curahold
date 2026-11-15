@@ -20,7 +20,7 @@ import { navigate, setQuery, useLocation } from '../lib/router';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState, todayIso } from '../lib/time';
-import { formatDate } from '../lib/format';
+import { formatDate, weekStart } from '../lib/format';
 import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 import '../surfaces/employee-work.css';
 
@@ -31,8 +31,8 @@ const DAY = 86_400_000;
 const at = (iso: string) => new Date(`${iso}T00:00:00Z`);
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const plus = (day: string, n: number) => iso(new Date(at(day).getTime() + n * DAY));
-/** Weeks start on Monday — the norm in Türkiye and most of Europe. */
-const mondayOf = (day: string) => plus(day, -((at(day).getUTCDay() + 6) % 7));
+/** The first day of the week holding `day`; the week starts where the language starts it (Monday in Türkiye, Saturday in Arabic…). */
+const weekOf = (day: string, first: number) => plus(day, -((at(day).getUTCDay() - first + 7) % 7));
 const monthStart = (day: string) => `${day.slice(0, 7)}-01`;
 const addMonths = (day: string, n: number) => {
   const d = at(monthStart(day));
@@ -71,6 +71,8 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
   const { search } = useLocation();
   const today = todayIso();
   const phone = usePhone();
+  const weekFirst = weekStart(locale);
+  const mondayOf = (day: string) => weekOf(day, weekFirst);
 
   // ---- what the address asks for ------------------------------------------
   const params = new URLSearchParams(search);
@@ -103,7 +105,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
     if (view === 'year') return [`${date.slice(0, 4)}-01-01`, `${date.slice(0, 4)}-12-31`];
     const start = mondayOf(monthStart(date));
     return [start, plus(start, 41)];
-  }, [view, date]);
+  }, [view, date, weekFirst]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [items, setItems] = useState<CalendarItem[] | null>(null);
   // A load that failed is not an empty calendar: it says so and offers a retry.

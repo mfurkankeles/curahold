@@ -4304,6 +4304,8 @@ export const en = {
   'links.removed': "Link to “{title}” removed",
   'time.removed': "{time} removed from the time spent",
   'views.removed': "The view “{name}” was removed",
+  'bell.emptyTitle': "Nothing new",
+  'bell.emptyBody': "Assignments, mentions and reminders show up here.",
 } as const;
 
 export type MessageKey = keyof typeof en;

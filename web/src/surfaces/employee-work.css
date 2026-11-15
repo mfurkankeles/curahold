@@ -5,19 +5,19 @@
 .ew-phone { display: none; }
 @media (max-width: 600px) {
   .ew-phone { display: inline; }
-  .ew-desk { display: none; }
+  .ew-desk, .keycap.ew-desk { display: none; }
 }
 
 /* ------------------------------------------------------------------ task lists
    The title takes the room left beside the tick and the marks; on a phone it may use two lines. */
 .tasklist__line { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tasklist__line > * { flex: none; }
-.tasklist__line > .rowlink { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tasklist .tasklist__line > .rowlink { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tasklist__line .tasklist__prio { margin-inline-start: 0; }
 @media (max-width: 860px) {
   .tasklist__row > .tasklist__title { white-space: normal; }
   .tasklist__line { align-items: flex-start; }
-  .tasklist__line > .rowlink {
+  .tasklist .tasklist__line > .rowlink {
     white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     line-height: var(--lh-snug);
   }
@@ -90,3 +90,15 @@
 .ew-agenda__day[data-today] .ew-agenda__head .linkbtn { color: var(--brand-ink); }
 .ew-agenda__head .cal__add { margin-inline-start: auto; opacity: 1; }
 .ew-agenda .calday__list { border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); overflow: hidden; }
+
+/* A day's rows (the day view and the phone's month list) show whole titles. */
+.calrow .calrow__main strong, .calrow__main .calrow__meta { white-space: normal; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ Ctrl K on a phone: the title gets the width, the place goes under it */
+@media (max-width: 600px) {
+  .palette-list .palette-item { flex-direction: column; align-items: stretch; gap: 0; }
+  .palette-list .palette-item__title, .palette-list .palette-item__sub { white-space: normal; overflow-wrap: anywhere; }
+  .palette-list .palette-item__title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: var(--lh-snug); }
+  /* One person's lists: titles may take two lines. */
+  .oneone .pane-row__title { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}

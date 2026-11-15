@@ -433,8 +433,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             aria-label={t('quick.label')}
             aria-describedby="qa-tip"
             aria-autocomplete="list"
-            aria-expanded={!!(suggest && at && suggest.items.length)}
-            aria-controls="qa-suggest"
+            aria-controls={suggest && at && suggest.items.length > 0 ? 'qa-suggest' : undefined}
             onChange={(e) => {
               setText(e.target.value);
               setCaret(e.target.selectionStart);

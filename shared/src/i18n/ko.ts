@@ -4289,4 +4289,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'links.removed': "“{title}” 연결을 제거했습니다",
   'time.removed': "소요 시간에서 {time}을 삭제했습니다",
   'views.removed': "“{name}” 보기를 삭제했습니다",
+  'bell.emptyTitle': "새 소식이 없습니다",
+  'bell.emptyBody': "할당, 멘션, 알림이 여기에 표시됩니다.",
 };

@@ -4289,4 +4289,6 @@ export const tr: Record<MessageKey, string> = {
   'links.removed': "“{title}” bağlantısı kaldırıldı",
   'time.removed': "Harcanan süreden {time} silindi",
   'views.removed': "“{name}” görünümü silindi",
+  'bell.emptyTitle': "Yeni bir şey yok",
+  'bell.emptyBody': "Atamalar, etiketlemeler ve hatırlatmalar burada görünür.",
 };

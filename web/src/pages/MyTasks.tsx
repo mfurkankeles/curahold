@@ -7,7 +7,7 @@ import { useI18n } from '../lib/i18n';
 import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { addDays, todayIso } from '../lib/time';
-import { ListView } from './BoardPage';
+import { BulkBar, ListView } from './BoardPage';
 import '../surfaces/employee-work.css';
 
 /** Looks like a text box; opens quick add, and whatever key started it lands there too. */
@@ -42,10 +42,12 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const { boards, me, canWrite } = useStore();
   const { quickAdd } = useShell();
   const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [again, setAgain] = useState(0);
 
   useEffect(() => {
     get<{ tasks: Task[] }>('/tasks?assignee=me').then((r) => setTasks(r.tasks));
-  }, [refreshKey]);
+  }, [refreshKey, again]);
 
   const doneKeys = useMemo(() => {
     const s = new Set<string>();
@@ -101,6 +103,15 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
       </header>
       <div className="page">
         {canWrite && <AddBar label={t('myTasks.addBar')} short={t('myTasks.addBarShort')} onOpen={add} />}
+        {canWrite && selected.size > 0 && (
+          <BulkBar
+            ids={[...selected]}
+            onDone={() => {
+              setSelected(new Set());
+              setAgain((n) => n + 1);
+            }}
+          />
+        )}
         {tasks === null && <SkeletonRows rows={6} label={t('common.loading')} />}
         {tasks && groups.length === 0 && (
           <EmptyState icon="checkCircle" tone="done" title={t('myTasks.emptyTitle')} body={t('myTasks.emptyBody')}>
@@ -118,7 +129,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
               <Icon name={GROUP_ICON[g.key] ?? 'dot'} size={17} className="icon--lead" />
               {g.label} <small className="num">{g.list.length}</small>
             </h2>
-            <ListView tasks={g.list} isDone={isDone} showBoard={boardName} />
+            <ListView tasks={g.list} isDone={isDone} showBoard={boardName} selected={canWrite ? selected : undefined} onSelect={setSelected} />
           </section>
         ))}
       </div>

@@ -34,6 +34,7 @@ import { relativeTime } from '../lib/time';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
 import { formatMoney, formatNumber } from '../lib/format';
+import '../surfaces/employee-work.css';
 
 export type Data = Record<string, CardData>;
 
@@ -186,13 +187,14 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         <span className="topbar__spacer" />
         {admin && (
           <div className="toolbar">
-            <button className="btn" onClick={() => setDraft(draftOf(current))}>
+            {/* On a phone the two keep to the title's line as icons, named for whoever cannot see them. */}
+            <button className="btn" onClick={() => setDraft(draftOf(current))} aria-label={t('home.edit')} title={t('home.edit')}>
               <Icon name="edit" size={16} />
-              {t('home.edit')}
+              <span className="hide-phone">{t('home.edit')}</span>
             </button>
-            <button className="btn btn--quiet" onClick={newHome}>
+            <button className="btn btn--quiet" onClick={newHome} aria-label={t('home.newPage')} title={t('home.newPage')}>
               <Icon name="plus" size={16} />
-              {t('home.newPage')}
+              <span className="hide-phone">{t('home.newPage')}</span>
             </button>
           </div>
         )}

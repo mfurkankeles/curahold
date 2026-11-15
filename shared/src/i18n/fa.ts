@@ -4289,4 +4289,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'links.removed': "پیوند به «{title}» برداشته شد",
   'time.removed': "{time} از زمان صرف‌شده حذف شد",
   'views.removed': "نمای «{name}» حذف شد",
+  'bell.emptyTitle': "خبر تازه‌ای نیست",
+  'bell.emptyBody': "واگذاری‌ها، اشاره‌ها و یادآوری‌ها اینجا می‌آیند.",
 };

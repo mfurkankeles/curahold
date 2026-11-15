@@ -24,7 +24,7 @@ import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
 import { isPmBoard, PmRows } from './Pm';
 import { DateField } from './DateField';
-import { SkeletonRows } from './Empty';
+import { LoadError, SkeletonRows } from './Empty';
 import { typing } from '../lib/shell';
 import { takeSeed } from './taskSeed';
 import '../surfaces/employee-work.css';
@@ -213,7 +213,11 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
             <Icon name="close" size={16} />
           </button>
         </div>
-        {error && <div className="panel__body"><div className="notice notice--error">{error}</div></div>}
+        {error && (
+          <div className="panel__body">
+            <LoadError message={error} onRetry={() => void load()} />
+          </div>
+        )}
         {!view && !error && (
           <div className="panel__body">
             <SkeletonRows rows={6} label={t('common.loading')} />

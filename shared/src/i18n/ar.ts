@@ -4289,4 +4289,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'links.removed': "أُزيل الربط بـ «{title}»",
   'time.removed': "حُذف {time} من الوقت المستغرق",
   'views.removed': "حُذف العرض «{name}»",
+  'bell.emptyTitle': "لا جديد",
+  'bell.emptyBody': "تظهر هنا المهام المسندة والإشارات والتذكيرات.",
 };

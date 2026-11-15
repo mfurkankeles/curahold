@@ -4289,4 +4289,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'links.removed': "已移除與「{title}」的關聯",
   'time.removed': "已從耗時中刪除 {time}",
   'views.removed': "已刪除檢視「{name}」",
+  'bell.emptyTitle': "暫無新消息",
+  'bell.emptyBody': "指派、提及和提醒會顯示在這裡。",
 };
