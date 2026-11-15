@@ -29,6 +29,7 @@ import { Icon } from './icons';
 import { IssueBadge, PointsChip, useEpics } from './Pm';
 import { Presence } from './Presence';
 import { Confirm, Dialog } from './ui';
+import { DateField } from './DateField';
 
 const sum = (xs: Task[]) => xs.reduce((n, x) => n + (x.storyPoints ?? 0), 0);
 
@@ -438,9 +439,9 @@ function SprintForm({ boardId, sprint, onClose, onSaved }: { boardId: string; sp
       <div className="field">
         <span className="field__label">{t('pm.sprint.dates')}</span>
         <span className="daterange">
-          <input className="input num" type="date" value={startsOn} max={endsOn || undefined} aria-label={t('pm.sprint.startsOn')} onChange={(e) => setStartsOn(e.target.value)} />
+          <DateField value={startsOn} max={endsOn || undefined} label={t('pm.sprint.startsOn')} onChange={setStartsOn} />
           <Icon name="arrowRight" size={14} />
-          <input className="input num" type="date" value={endsOn} min={startsOn || undefined} aria-label={t('pm.sprint.endsOn')} onChange={(e) => setEndsOn(e.target.value)} />
+          <DateField value={endsOn} min={startsOn || undefined} label={t('pm.sprint.endsOn')} onChange={setEndsOn} />
         </span>
       </div>
     </Dialog>

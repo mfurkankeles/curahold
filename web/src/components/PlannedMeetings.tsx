@@ -20,6 +20,7 @@ import { TIMELINE_CHANGED } from './Meetings';
 import { Avatars, Dialog, PeoplePicker, RowMenu } from './ui';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
+import { DateField } from './DateField';
 
 interface PlannedPage {
   upcoming: PlannedMeeting[];
@@ -301,7 +302,7 @@ function PlanDialog({ account, planned, onClose, onSaved }: { account: Account; 
       <div className="planned__grid">
         <label className="field">
           <span className="field__label">{t('plannedForm.when')}</span>
-          <input className="input" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+          <DateField time value={when} onChange={setWhen} />
         </label>
         <label className="field">
           <span className="field__label">{t('plannedForm.length')}</span>
@@ -414,7 +415,7 @@ function HoldDialog({ account, planned, onClose, onDone }: { account: Account; p
       <div className="planned__grid">
         <label className="field">
           <span className="field__label">{t('plannedHold.when')}</span>
-          <input className="input" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+          <DateField time value={when} onChange={setWhen} />
         </label>
         <label className="field">
           <span className="field__label">{t('plannedHold.length')}</span>
@@ -484,7 +485,7 @@ function PostponeDialog({ planned, onClose, onDone }: { planned: PlannedMeeting;
       </label>
       <label className="field">
         <span className="field__label">{t('plannedPostpone.newDate')}</span>
-        <input className="input" type="datetime-local" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+        <DateField time value={newDate} onChange={setNewDate} />
       </label>
     </Dialog>
   );

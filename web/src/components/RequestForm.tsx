@@ -9,6 +9,7 @@ import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 import { TaskFieldInput } from './TaskExtras';
 import { Dialog } from './ui';
+import { DateField } from './DateField';
 
 export function RequestForm({ board, onClose, onSent }: { board: Board; onClose: () => void; onSent: () => void }) {
   const { t, locale, words } = useI18n();
@@ -73,7 +74,7 @@ export function RequestForm({ board, onClose, onSent }: { board: Board; onClose:
       {asks('due') && (
         <label className="field">
           <span className="field__label">{t('boardForm.field.due')}</span>
-          <input className="input" type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          <DateField value={due} onChange={setDue} />
         </label>
       )}
       {fields.map((f) => (

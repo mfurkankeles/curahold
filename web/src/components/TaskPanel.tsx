@@ -23,6 +23,7 @@ import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInp
 import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
 import { isPmBoard, PmRows } from './Pm';
+import { DateField } from './DateField';
 
 /** A board's own field, by what it holds. */
 const FIELD_ICON: Record<string, IconName> = { text: 'text', number: 'hash', money: 'coins', date: 'calendar', select: 'list', url: 'link', email: 'mail', person: 'user', checkbox: 'check' };
@@ -201,11 +202,11 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
               <span className="daterange">
                 {(task.startDate || showStart) && (
                   <>
-                    <input className="input num" type="date" value={task.startDate ?? ''} max={task.dueDate ?? undefined} disabled={!editable} aria-label={t('task.start')} title={t('task.start')} onChange={(e) => save({ startDate: e.target.value || null })} />
+                    <DateField value={task.startDate ?? ''} max={task.dueDate ?? undefined} disabled={!editable} label={t('task.start')} title={t('task.start')} onChange={(v) => save({ startDate: v || null })} />
                     <Icon name="arrowRight" size={14} />
                   </>
                 )}
-                <input className="input num" type="date" value={task.dueDate ?? ''} min={task.startDate ?? undefined} disabled={!editable} aria-label={t('task.due')} onChange={(e) => save({ dueDate: e.target.value || null })} />
+                <DateField value={task.dueDate ?? ''} min={task.startDate ?? undefined} disabled={!editable} label={t('task.due')} onChange={(v) => save({ dueDate: v || null })} />
                 {!task.startDate && !showStart && editable && !task.parentId && (
                   <button className="linkbtn" onClick={() => setShowStart(true)}>
                     {t('task.addStart')}

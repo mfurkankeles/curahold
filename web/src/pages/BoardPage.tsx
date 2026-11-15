@@ -34,6 +34,7 @@ import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
 import { useWindow } from '../lib/windowing';
+import { DateField } from '../components/DateField';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
@@ -724,7 +725,7 @@ function BulkBar({ board, ids, onDone }: { board: Board; ids: string[]; onDone: 
       </select>
       <label className="bulkbar__date">
         <span>{t('board.bulk.due')}</span>
-        <input className="input" type="date" disabled={busy} onChange={(e) => e.target.value && apply({ dueDate: e.target.value }, 'board.bulk.changed')} />
+        <DateField value="" disabled={busy} label={t('board.bulk.due')} onChange={(v) => v && apply({ dueDate: v }, 'board.bulk.changed')} />
       </label>
       <select className="select" disabled={busy} value="" aria-label={t('task.priority')} onChange={(e) => e.target.value && apply({ priority: e.target.value }, 'board.bulk.changed')}>
         <option value="">{t('task.priority')}</option>

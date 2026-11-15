@@ -39,6 +39,7 @@ import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useTrashToast } from '../lib/trash';
+import { DateField } from '../components/DateField';
 
 interface CatalogData {
   sources: ReportSourceInfo[];
@@ -454,7 +455,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             ))}
           </select>
         );
-      if (x.op === 'before' || x.op === 'after') return <input className="input" type="date" value={x.date ?? ''} onChange={(e) => setFilter(at, { ...x, date: e.target.value || undefined })} />;
+      if (x.op === 'before' || x.op === 'after') return <DateField value={x.date ?? ''} onChange={(v) => setFilter(at, { ...x, date: v || undefined })} />;
       return (
         <label className="rb-days">
           <input className="input" type="number" min={1} max={3650} value={Number(x.value ?? 30)} onChange={(e) => setFilter(at, { ...x, value: Number(e.target.value) })} />

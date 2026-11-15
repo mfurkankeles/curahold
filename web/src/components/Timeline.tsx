@@ -15,6 +15,7 @@ import { MailReply, isMailboxProvider } from './MailReply';
 import { Confirm, Dialog, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
+import { DateField } from './DateField';
 
 function useFail() {
   const { t } = useI18n();
@@ -526,7 +527,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
               <div className="tl__extra">
                 <label className="field">
                   <span className="field__label">{t('timeline.when')}</span>
-                  <input className="input" type="datetime-local" value={when} max={localInput(new Date())} onChange={(e) => setWhen(e.target.value)} />
+                  <DateField time value={when} max={localInput(new Date())} onChange={setWhen} />
                 </label>
                 {contacts.length > 0 && (
                   <fieldset className="field tl__who">

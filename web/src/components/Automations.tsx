@@ -13,6 +13,7 @@ import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Confirm, Dialog } from './ui';
 import { useTrashToast } from '../lib/trash';
+import { DateField } from './DateField';
 
 type Draft = { name: string; enabled: boolean; trigger: Trigger; conditions: Condition[]; action: Action; preset?: string | null };
 
@@ -484,7 +485,11 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                       ))}
                     </select>
                   ) : (
-                    <input className="input" type={f?.type === 'date' ? 'date' : f && ['number', 'money'].includes(f.type) ? 'number' : 'text'} value={String(c.value ?? '')} onChange={(e) => upd({ value: f && ['number', 'money'].includes(f.type) ? Number(e.target.value) : e.target.value })} aria-label={t('auto.cond.value')} />
+                    f?.type === 'date' ? (
+                      <DateField value={String(c.value ?? '')} label={t('auto.cond.value')} onChange={(v) => upd({ value: v })} />
+                    ) : (
+                    <input className="input" type={f && ['number', 'money'].includes(f.type) ? 'number' : 'text'} value={String(c.value ?? '')} onChange={(e) => upd({ value: f && ['number', 'money'].includes(f.type) ? Number(e.target.value) : e.target.value })} aria-label={t('auto.cond.value')} />
+                    )
                   ))}
                 <button className="btn btn--quiet btn--small" aria-label={t('common.remove')} onClick={() => set({ conditions: draft.conditions.filter((_, j) => j !== i) })}>
                   ✕

@@ -25,6 +25,7 @@ import { Icon, PageIcon, RECORD_KIND_ICON } from './icons';
 import { GroupBy, RecordBoard, groupChoices } from './Pipeline';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
+import { DateRangeField } from './DateField';
 
 /**
  * A table column: one of the record's own fields, or something every record
@@ -378,9 +379,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           )}
           {closeField && period === 'range' && (
             <span className="toolbar__range">
-              <input className="input" type="date" value={range.from} aria-label={t('records.period.from')} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} />
-              <span aria-hidden="true">–</span>
-              <input className="input" type="date" value={range.to} aria-label={t('records.period.to')} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} />
+              <DateRangeField from={range.from} to={range.to} labels={{ from: t('records.period.from'), to: t('records.period.to') }} onChange={(r) => setRange((x) => ({ ...x, ...r }))} />
             </span>
           )}
           <input className="input search" type="search" value={q} placeholder={t('records.search')} aria-label={t('records.search')} onChange={(e) => setQ(e.target.value)} />

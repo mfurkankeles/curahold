@@ -4072,6 +4072,22 @@ export const en = {
   'fields.labelIn': 'Name in {language}',
   'help.reply.email.line': '— Write your reply above this line —',
   'pwa.manifestDescription': 'Customers, tasks and the pipeline in one place.',
+  'date.open': 'Open the calendar',
+  'date.calendar': 'Calendar',
+  'date.prevMonth': 'Previous month',
+  'date.nextMonth': 'Next month',
+  'date.today': 'Today',
+  'date.clear': 'Clear',
+  'date.done': 'Done',
+  'date.invalid': 'Type a date like {example}',
+  'date.tooEarly': 'Pick {min} or later',
+  'date.tooLate': 'Pick {max} or earlier',
+  'date.time': 'Time',
+  'date.timeInvalid': 'Type a time like {example}',
+  'date.rangeFirst': 'Pick the first day',
+  'date.rangeLast': 'Now pick the last day',
+  'date.from': 'From',
+  'date.to': 'To',
 } as const;
 
 export type MessageKey = keyof typeof en;

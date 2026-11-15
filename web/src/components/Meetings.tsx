@@ -24,6 +24,7 @@ import { Icon, type IconName } from './icons';
 import { useReviewText, useRhythm } from './Rhythm';
 import { Avatars, Confirm, Dialog, DueLabel, PeoplePicker, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
+import { DateField } from './DateField';
 
 export const KIND_ICON: Record<ActivityKind, IconName> = { note: 'note', call: 'phone', meeting: 'people', email: 'mail', review: 'handshake' };
 
@@ -218,7 +219,7 @@ export function LogDialog({
             <div className="logform__row">
               <label className="field">
                 <span className="field__label">{t('meetingForm.date')}</span>
-                <input className="input num" type="date" value={date} max={today} onChange={(e) => setDate(e.target.value || today)} />
+                <DateField value={date} max={today} required onChange={(v) => setDate(v || today)} />
               </label>
               <label className="field">
                 <span className="field__label">{t('meetingForm.length')}</span>
@@ -285,7 +286,7 @@ export function LogDialog({
                     </option>
                   ))}
                 </select>
-                <input className="input num" type="date" value={s.dueDate} min={today} aria-label={t('meetingForm.stepDue')} title={t('meetingForm.stepDue')} onChange={(e) => step(s.key, { dueDate: e.target.value })} />
+                <DateField value={s.dueDate} min={today} label={t('meetingForm.stepDue')} title={t('meetingForm.stepDue')} onChange={(v) => step(s.key, { dueDate: v })} />
                 <button type="button" className="btn btn--quiet btn--icon btn--small" aria-label={t('meetingForm.removeStep')} title={t('meetingForm.removeStep')} onClick={() => setSteps((list) => list.filter((x) => x.key !== s.key))}>
                   <Icon name="close" size={14} />
                 </button>

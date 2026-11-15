@@ -25,6 +25,7 @@ import { TaskFieldInput } from './TaskExtras';
 import { RepeatPicker } from './TaskPanel';
 import { Avatar, PeoplePicker } from './ui';
 import type { Locale } from '../../../shared/src/i18n';
+import { DateField } from './DateField';
 
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
 
@@ -645,12 +646,10 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
               {t('task.due')} {fromTitle(!many && dueFromTitle && !!due)}
             </span>
             <span className="qa__due">
-              <input
-                className="input num"
-                type="date"
+              <DateField
                 value={(many ? fixedDue : due) ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value || null;
+                onChange={(raw) => {
+                  const v = raw || null;
                   takeOver('due', !v);
                   setFixedDue(v);
                   setDueByHand(true);

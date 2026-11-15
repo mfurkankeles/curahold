@@ -91,3 +91,24 @@ Semantic, never literal. Each has a light and a dark value; text tokens meet WCA
 Some values cannot be a token because the data decides them (a bar's length, a colour a person chose, a
 position on a timeline). Those are passed as CSS custom properties from the component
 (`style={{ '--w': … }}`) and used by a class. See the list in the sweep report.
+
+## Components
+
+Shared patterns live in `web/src/components/` with their styles in `web/src/patterns.css`. A screen uses
+these instead of building its own; each one is tokens-only, keyboard-complete, right-to-left aware and phone-first.
+
+### Date field — `DateField`, `DateRangeField` (`components/DateField.tsx`)
+
+Every date the person types or picks. Never `<input type="date">` or `datetime-local`: those show the
+browser's format (mm/dd/yyyy in a Turkish interface).
+
+- `<DateField value={iso} onChange={…} label=… min=… max=… />` — one day, `'YYYY-MM-DD'` or `''`.
+- `<DateField time …/>` — a day and a time, `'YYYY-MM-DDTHH:mm'` in the person's clock; the time is a 24-hour box.
+- `<DateRangeField from to onChange={({ from, to }) => …} />` — a period; the calendar takes the first day, then the last.
+- Typing works in the person's own order and digits (`15.11.2026`, `15/11`, `2026/11/15`, Persian digits);
+  a whole date is taken as soon as it is typed, a partial one on Enter or leaving the box. Out of `min`/`max`
+  or unreadable: a short message under the box says what to type.
+- The calendar: week start, month and weekday names from the language (Intl, Gregorian); a popover on a
+  desktop, a bottom sheet under 600 px. Arrows (mirrored right-to-left), Home/End, Page Up/Down (+Shift: a
+  year), Enter/Space, Escape (focus goes back to the button). Alt+↓ in the box opens it.
+- Text formatting of dates, times and numbers comes from `lib/format.ts`, never from a screen.

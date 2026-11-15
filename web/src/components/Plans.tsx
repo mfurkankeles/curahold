@@ -30,6 +30,7 @@ import { EmptyState } from './Empty';
 import { Icon, type IconName } from './icons';
 import { useDismiss } from './Menus';
 import { Confirm, Dialog } from './ui';
+import { DateField } from './DateField';
 
 /** The icon that says what a playbook's dates count from. */
 const ANCHOR_ICON: Record<PlanAnchor, IconName> = { start: 'play', renewal: 'repeat', close: 'funnel' };
@@ -99,7 +100,7 @@ export function PlanMenu({ accountId, accountName, onApplied }: { accountId: str
           {anyFromStart && (
             <label className="field">
               <span className="filterpop__label">{t('plans.start')}</span>
-              <input className="input" type="date" value={start} onChange={(e) => setStart(e.target.value || todayIso())} />
+              <DateField value={start} required onChange={(v) => setStart(v || todayIso())} />
             </label>
           )}
           {usable === null && <span className="popmenu__note">{t('common.loading')}</span>}

@@ -24,6 +24,8 @@ import { useI18n } from '../lib/i18n';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { Avatar, Dialog, onTabKeys } from './ui';
+import { DateField } from './DateField';
+import { todayIso } from '../lib/time';
 
 const TYPES = [
   'image/png',
@@ -611,7 +613,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
           </div>
           <label className="field">
             <span className="field__label">{t('help.neededByLabel')}</span>
-            <input className="input" type="date" value={neededBy} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setNeededBy(e.target.value)} />
+            <DateField value={neededBy} min={todayIso()} onChange={setNeededBy} />
           </label>
         </div>
         <div className="field">
