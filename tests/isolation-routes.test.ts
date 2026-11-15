@@ -30,7 +30,9 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/admin\/users\/:id/, 'users', `email = 'lena@demo.example'`],
   [/^\/reports\/person\/:id/, 'users', `email = 'lena@demo.example'`],
   [/^\/admin\/teams\/:id/, 'teams'],
-  [/^\/(admin|me)\/sessions\/:id/, 'sessions'],
+  // A session of someone who plays no part here (signed in below): never the caller's own, which the
+  // caller may end (DELETE /me/sessions/:id is "sign this device out"), leaving the rest of the run signed out.
+  [/^\/(admin|me)\/sessions\/:id/, 'sessions', `user_id = (select id from users u where u.email = 'zeynep@demo.example' and u.org_id = sessions.org_id)`],
   [/^\/admin\/join-requests\/:id/, 'join_requests'],
   [/^\/automations\/:id/, 'automations'],
   [/^\/sprints\/:id/, 'sprints'],
@@ -113,6 +115,8 @@ beforeAll(async () => {
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
   stranger = await login(env, 'beta', 'ada@demo.example');
+  // Only so there is a session nobody in this file uses (see KINDS).
+  await login(env, 'acme', 'zeynep@demo.example');
   // The other company has its portal on too, so "your portal is off" never answers in place of "not found".
   await stranger.put('/api/portal/settings', { enabled: true });
 
