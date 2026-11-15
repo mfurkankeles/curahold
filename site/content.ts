@@ -1,4 +1,4 @@
-// The sales site's words, in English and Turkish. Prices and what each plan
+// The sales site's words, in nine languages. Prices and what each plan
 // includes come from shared/src/billing.ts and the app's own dictionaries,
 // so the site and the product never disagree.
 //
@@ -12,7 +12,7 @@ export interface SiteCopy {
   lang: string;
   title: string;
   description: string;
-  nav: { product: string; pricing: string; demo: string; help: string; signIn: string; tryFree: string; other: string };
+  nav: { product: string; pricing: string; demo: string; help: string; signIn: string; tryFree: string; other: string; skip?: string };
   hero: { title: string; lead: string; primary: string; secondary: string; note: string; customer: string; chips: { renewal: string; review: string; step: string; health: string } };
   year: { title: string; lead: string; steps: { name: string; text: string }[] };
   meeting: {
@@ -22,14 +22,12 @@ export interface SiteCopy {
   };
   tools: { title: string; lead: string; rows: { label: string; names: string }[]; none: string; marquee: string };
   product: { title: string; lead: string; work: string; portfolio: string; detail: string; reports: string };
-  // The animated sprint / product-management showcase. Optional per locale:
-  // English is the fallback until a native pass lands (column names come from
-  // the app's own dictionaries, so those localise everywhere already).
-  sprint?: SiteSprintCopy;
-  /** The live analytics dashboard showcase. Optional per locale (English fallback). */
-  dash?: SiteDashCopy;
-  /** The bento feature grid that replaces the old stack of windows. Optional (English fallback). */
+  /** The live product tour in the hero: four chapters of one customer's loop. */
+  tour?: SiteTourCopy;
+  /** The bento of what sets Curahold apart: six tiles, each a living mini-UI. */
   bento?: SiteBentoCopy;
+  /** The closing call to action. */
+  cta?: { title: string; text: string };
   pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   signIn: { title: string; text: string; label: string; go: string; close: string; none: string };
@@ -91,63 +89,65 @@ export interface BlogPost {
   body: BlogBlock[];
 }
 
-/** The animated sprint board + burndown showcase. */
-export interface SiteSprintCopy {
+/** The hero's product tour. Chapters run in loop order: health, promises, renewals, sprints. */
+export interface SiteTourCopy {
+  /** Accessible name of the chapter tabs. */
+  label: string;
+  /** Four chapters: a short tab word, a headline and one sentence. */
+  steps: { tab: string; title: string; text: string }[];
+  /** Words inside the film that the app's own dictionaries do not carry in every language. */
+  ui: {
+    /** Toast after the meeting's next steps are saved. */
+    tasksOpened: string;
+    /** Name of the playbook the renewal starts with. */
+    playbook: string;
+    /** Three playbook tasks, in order. */
+    playbookSteps: string[];
+    /** Sprint name, e.g. "Sprint 24". */
+    sprint: string;
+    /** Sprint state chip. */
+    active: string;
+    /** "{done} of {total} points" — filled by the site. */
+    points: string;
+    /** "{n} pts left" — filled by the site. */
+    ptsLeft: string;
+    /** Story-points unit on a card. */
+    pts: string;
+    burndown: string;
+    ideal: string;
+    actual: string;
+    /** The "Code review" workflow stage. */
+    review: string;
+    /** Three epic names. */
+    epics: string[];
+    /** Five sprint cards, index-aligned with SPRINT in build-site.ts. */
+    tasks: string[];
+  };
+}
+
+/** The bento grid. Tile order is fixed by build-site.ts: assistant, portal, sync, reports, languages, security. */
+export interface SiteBentoCopy {
   title: string;
   lead: string;
-  /** Sprint name shown in the window, e.g. "Sprint 24". */
-  name: string;
-  /** Sprint dates, e.g. "3–14 Nov". */
-  dates: string;
-  /** Health chip, e.g. "On track". */
-  status: string;
-  /** Points unit, e.g. "pts". */
-  pts: string;
-  /** "{done} of {total} points done" — {done}/{total} are filled by the site. */
-  progress: string;
-  burndown: string;
-  /** "blocked by" label for a linked task. */
-  blocked: string;
-  /** Three epic names, index-referenced by the board below. */
-  epics: [string, string, string];
-  /** Task titles, index-aligned with the board structure in build-site.ts. */
-  tasks: string[];
-}
-
-/** The live analytics dashboard: self-drawing chart, gauge and KPI tiles. */
-export interface SiteDashCopy {
-  /** Caption over the area chart. */
-  trend: string;
-  /** Label under the radial gauge. */
-  gauge: string;
-  /** "Live" pill. */
-  live: string;
-  /** Three KPI tile labels. */
-  kpis: [string, string, string];
-}
-
-/** The bento feature grid: one varied section instead of a stack of windows. */
-export interface SiteBentoCopy {
-  /** Small eyebrow above the section. */
-  eyebrow: string;
-  /** Section headline. */
-  title: string;
-  /** Six tiles, each a short heading and one line. Order is fixed by build-site.ts. */
   tiles: { h: string; p: string }[];
+  /** The assistant thread: the question, the answer's first line, and what it did. */
+  ask: { q: string; a: string; did: string };
+  /** Short security facts shown as a list in the last tile. */
+  facts: string[];
 }
 
 export const COPY: Partial<Record<Locale, SiteCopy>> = {
   en: {
     lang: 'en',
-    title: 'Curahold: work management for customer success teams',
-    description: 'Renewals that start on their own, meetings whose next steps become tasks, and every customer that needs attention at a glance. In English and Turkish.',
-    nav: { product: 'Product', pricing: 'Pricing', demo: 'Live demo', help: 'Help', signIn: 'Sign in', tryFree: 'Try it free', other: 'Türkçe' },
+    title: 'Curahold: tasks, sprints and customer renewals in one place',
+    description: 'Renewals that start on their own, meetings whose next steps become tasks, and every customer that needs attention at a glance. The app speaks nine languages.',
+    nav: { product: 'Product', pricing: 'Pricing', demo: 'Live demo', help: 'Help', signIn: 'Sign in', tryFree: 'Try it free', other: 'Türkçe', skip: 'Skip to content' },
     hero: {
-      title: 'Hold every customer with care.',
-      lead: 'Curahold is where customer success and account teams keep track. Renewals start on their own, every promise made in a meeting becomes a task, and you see at a glance which customer needs you.',
+      title: 'All your company’s work, in good hands.',
+      lead: 'Tasks, projects, product sprints and customer renewals in one place. Every promise made in a meeting becomes a task, renewals start on their own, and you see at a glance which customer needs you.',
       primary: 'Try it free for 3 months',
       secondary: 'Open the live demo',
-      note: 'No card needed. In English and Turkish.',
+      note: 'No card needed. The app speaks nine languages.',
       customer: 'Your customer',
       chips: { renewal: 'Renewal in 94 days', review: 'Business review 14 days late', step: 'Next step: send the quote, Zeynep', health: 'Health score 66, worth watching' },
     },
@@ -198,36 +198,48 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       detail: 'Open one, and see exactly why',
       reports: 'How the quarter is going, in one chart',
     },
-    sprint: {
-      title: 'Ship the work in sprints — and watch it burn down',
-      lead: 'Epics, tasks and story points on one board. Link what blocks what, commit a sprint, and the burndown draws itself as the team closes cards.',
-      name: 'Sprint 24',
-      dates: '3–14 Nov',
-      status: 'On track',
-      pts: 'pts',
-      progress: '{done} of {total} points done',
-      burndown: 'Burndown',
-      blocked: 'blocked by',
-      epics: ['Onboarding', 'Billing', 'Mobile'],
-      tasks: ['Draft the welcome sequence', 'Wire the Paddle webhook', 'Finish the burndown chart', 'Push notifications on iOS', 'Seed the demo workspace', 'Ship the plan picker'],
-    },
-    dash: {
-      trend: 'Portfolio health, this quarter',
-      gauge: 'On-time renewals',
-      live: 'Live',
-      kpis: ['Accounts at risk', 'Renewals won', 'Meetings booked'],
+    tour: {
+      label: 'Product tour',
+      steps: [
+        { tab: 'Health', title: 'See who needs you', text: 'Every account carries a score from 0 to 100 and the reasons behind it, so the one going quiet comes forward by itself.' },
+        { tab: 'Promises', title: 'Keep every promise', text: 'Log the meeting and its next steps become tasks, each with an owner and a date. Nothing said in the room gets lost.' },
+        { tab: 'Renewals', title: 'Renew early', text: 'Ninety days before the date, the renewal playbook opens its tasks and a renewal opportunity. Nobody has to remember.' },
+        { tab: 'Sprints', title: 'Ship in sprints', text: 'Epics, story points and linked tasks on the same boards, with a burndown that draws itself as the cards close.' },
+      ],
+      ui: {
+        tasksOpened: '2 tasks opened',
+        playbook: 'Renewal playbook',
+        playbookSteps: ['Review usage and health', 'Book the renewal call', 'Send the renewal quote'],
+        sprint: 'Sprint 24',
+        active: 'Active',
+        points: '{done} of {total} points',
+        ptsLeft: '{n} pts left',
+        pts: 'pts',
+        burndown: 'Burndown',
+        ideal: 'Ideal',
+        actual: 'Actual',
+        review: 'Code review',
+        epics: ['Billing', 'Mobile', 'Onboarding'],
+        tasks: ['Sample journey for the mobile channel', 'Welcome checklist', 'Fix the CSV export', 'Seat-based invoices', 'Push notifications on iOS'],
+      },
     },
     bento: {
-      eyebrow: 'One workspace',
-      title: 'Everything the account needs, in one place',
+      title: 'The rest of the job, built in',
+      lead: 'Your customers get their own door, your assistant gets real answers, and your data stays yours.',
       tiles: [
-        { h: 'Health, scored', p: 'Every account gets a number — and the reason behind it.' },
-        { h: 'Ship in sprints', p: 'Epics, story points, and a burndown that stays honest.' },
-        { h: 'Promises become tasks', p: 'Owners, due dates, done.' },
-        { h: 'Renewals, early', p: 'Kicked off weeks ahead — never in a scramble.' },
-        { h: 'A portal for your customers', p: 'Shared plans and updates, in your own brand.' },
-        { h: 'Works with your stack', p: 'Salesforce, HubSpot, Jira, Slack — synced both ways.' },
+        { h: 'Ask your assistant about your accounts', p: 'Connect Claude or ChatGPT. It works as you: it sees and changes only what you can.' },
+        { h: 'A portal for your customers', p: 'They sign in with a link in their email and see only what you share: their tasks, their requests, your replies.' },
+        { h: 'In step with the tools you have', p: 'Your CRM, Jira, spreadsheets and chat. A change on either side shows up on the other.' },
+        { h: 'The quarter on one screen', p: 'Targets, the weighted pipeline and the health of the whole portfolio, in reports and dashboards you can build yourself.' },
+        { h: 'Nine languages, right-to-left included', p: 'Each person picks their own. The whole interface follows, mirrored where it should be.' },
+        { h: 'Your data stays yours', p: 'Every company is kept apart in the database itself, so no mistake in a screen can show one company another’s data.' },
       ],
+      ask: { q: 'Which accounts need me this week?', a: 'Three need your attention:', did: 'I’ve opened a task for Zeynep: book the Marevo review.' },
+      facts: ['SSO with SAML 2.0 or OpenID Connect', 'SCIM provisioning', 'Audit log', 'Database in the European Union', 'Runs on your own servers too'],
+    },
+    cta: {
+      title: 'Give every customer a team that never forgets.',
+      text: 'Three months free, with everything switched on. Bring your customers from a spreadsheet and be at work in fifteen minutes.',
     },
     pricing: {
       title: 'Simple prices, per seat',
@@ -248,7 +260,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { q: 'Can we run it on our own servers?', a: 'Yes. A single-company package runs on your own server or cloud with its own database; it has no billing.' },
         { q: 'Do we need a CRM?', a: 'No. Customers can come from a spreadsheet, or be added by hand. If you have a CRM, Curahold keeps in step with it both ways.' },
         { q: 'Can we cancel at any time?', a: 'Yes. A cancelled plan works until the end of the period paid for, and everything can be exported.' },
-        { q: 'Can we use our own words?', a: 'Yes. Call your customers accounts, partners or clients, and the whole interface follows. Curahold is in English and Turkish.' },
+        { q: 'Can we use our own words?', a: 'Yes. Call your customers accounts, partners or clients, and the whole interface follows. The app speaks nine languages; the help center and the live demo are in English and Turkish.' },
         { q: 'How long does setting up take?', a: 'About fifteen minutes: choose your address, bring your customers from a spreadsheet, invite your team.' },
       ],
     },
@@ -296,15 +308,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
   },
   tr: {
     lang: 'tr',
-    title: 'Curahold: müşteri başarısı ekipleri için iş yönetimi',
-    description: 'Kendiliğinden başlayan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve ilgi bekleyen her müşteri tek bakışta. Türkçe ve İngilizce.',
-    nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz dene', other: 'English' },
+    title: 'Curahold: görevler, sprint’ler ve müşteri yenilemeleri tek yerde',
+    description: 'Kendiliğinden başlayan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve ilgi bekleyen her müşteri tek bakışta. Uygulama dokuz dilde.',
+    nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz dene', other: 'English', skip: 'İçeriğe geç' },
     hero: {
-      title: 'Müşterilerini özenle tut.',
-      lead: 'Curahold, müşteri başarısı ve müşteri yönetimi ekiplerinin işi takip ettiği yer. Yenilemeler kendiliğinden başlar, toplantıda verilen her söz bir göreve dönüşür ve hangi müşterinin seni beklediğini ilk bakışta görürsün.',
+      title: 'Şirketinin bütün işi emin ellerde.',
+      lead: 'Görevler, projeler, ürün sprint’leri ve müşteri yenilemeleri tek yerde. Toplantıda verilen her söz göreve dönüşür, yenilemeler kendiliğinden başlar ve hangi müşterinin seni beklediğini ilk bakışta görürsün.',
       primary: '3 ay ücretsiz dene',
       secondary: 'Canlı demoyu aç',
-      note: 'Kart gerekmez. Türkçe ve İngilizce.',
+      note: 'Kart gerekmez. Uygulama dokuz dilde.',
       customer: 'Müşterin',
       chips: { renewal: 'Yenilemeye 94 gün var', review: 'İş değerlendirmesi 14 gün gecikti', step: 'Sonraki adım: teklifi gönder, Zeynep', health: 'Sağlık skoru 66, izlenmeli' },
     },
@@ -355,36 +367,48 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       detail: 'Birini aç, nedenini tam olarak gör',
       reports: 'Çeyrek nasıl gidiyor, tek grafikte',
     },
-    sprint: {
-      title: 'İşi sprint’lerle teslim et — yanışını canlı izle',
-      lead: 'Epic’ler, görevler ve story point’ler tek panoda. Neyin neyi engellediğini bağla, sprint’i başlat; ekip kartları kapattıkça burndown kendini çizsin.',
-      name: 'Sprint 24',
-      dates: '3–14 Kas',
-      status: 'Yolunda',
-      pts: 'puan',
-      progress: '{total} puanın {done}’i bitti',
-      burndown: 'Burndown',
-      blocked: 'engelleyen',
-      epics: ['Kurulum', 'Faturalama', 'Mobil'],
-      tasks: ['Karşılama dizisini yaz', 'Paddle webhook’unu bağla', 'Burndown grafiğini bitir', 'iOS’ta anlık bildirim', 'Demo alanını hazırla', 'Plan seçiciyi yayına al'],
-    },
-    dash: {
-      trend: 'Portföy sağlığı, bu çeyrek',
-      gauge: 'Zamanında yenileme',
-      live: 'Canlı',
-      kpis: ['Riskli müşteri', 'Kazanılan yenileme', 'Planlanan görüşme'],
+    tour: {
+      label: 'Ürün turu',
+      steps: [
+        { tab: 'Sağlık', title: 'Kimin seni beklediğini gör', text: 'Her müşterinin 0–100 arası bir skoru ve ardındaki nedenleri var; sessizleşen müşteri kendiliğinden öne çıkar.' },
+        { tab: 'Sözler', title: 'Verilen her sözü tut', text: 'Toplantıyı kaydet; sonraki adımlar sorumlusu ve tarihiyle göreve dönüşsün. Masada konuşulan hiçbir şey kaybolmaz.' },
+        { tab: 'Yenileme', title: 'Yenilemeye erken başla', text: 'Tarihten doksan gün önce yenileme playbook’u görevlerini ve yenileme fırsatını açar. Kimsenin hatırlaması gerekmez.' },
+        { tab: 'Sprint', title: 'Sprint’lerle teslim et', text: 'Epikler, hikaye puanları ve bağlı görevler aynı panolarda; kartlar kapandıkça burndown grafiği kendini çizer.' },
+      ],
+      ui: {
+        tasksOpened: '2 görev açıldı',
+        playbook: 'Yenileme playbook’u',
+        playbookSteps: ['Kullanımı ve sağlığı gözden geçir', 'Yenileme görüşmesini planla', 'Yenileme teklifini gönder'],
+        sprint: 'Sprint 24',
+        active: 'Aktif',
+        points: '{total} puanın {done} tanesi bitti',
+        ptsLeft: '{n} puan kaldı',
+        pts: 'puan',
+        burndown: 'Burndown grafiği',
+        ideal: 'İdeal',
+        actual: 'Gerçekleşen',
+        review: 'Kod incelemesi',
+        epics: ['Faturalama', 'Mobil', 'Kurulum'],
+        tasks: ['Mobil kanal için örnek akış', 'Karşılama kontrol listesi', 'CSV dışa aktarımını düzelt', 'Kullanıcı bazlı faturalar', 'iOS’ta anlık bildirimler'],
+      },
     },
     bento: {
-      eyebrow: 'Tek çalışma alanı',
-      title: 'Müşteri için gereken her şey, tek yerde',
+      title: 'İşin geri kalanı da hazır',
+      lead: 'Müşterilerine kendi kapıları, asistanına gerçek cevaplar, sana da verinin tam kontrolü.',
       tiles: [
-        { h: 'Puanlı sağlık', p: 'Her müşteriye bir skor — ve ardındaki neden.' },
-        { h: 'Sprint’lerle teslim', p: 'Epic’ler, story point’ler ve dürüst kalan bir burndown.' },
-        { h: 'Sözler göreve döner', p: 'Sahibi, tarihi, bitti.' },
-        { h: 'Erken yenileme', p: 'Haftalar önce başlar — telaş yok.' },
-        { h: 'Müşterilerine özel portal', p: 'Paylaşılan planlar ve güncellemeler, senin markanla.' },
-        { h: 'Yığınınla çalışır', p: 'Salesforce, HubSpot, Jira, Slack — çift yönlü.' },
+        { h: 'Müşterilerini asistanına sor', p: 'Claude ya da ChatGPT’yi bağla. Senin adına çalışır: yalnızca senin görebildiğini görür, değiştirebildiğini değiştirir.' },
+        { h: 'Müşterilerine özel portal', p: 'E-postalarına gelen bağlantıyla girerler ve yalnızca paylaştığını görürler: görevlerini, taleplerini, senin yanıtlarını.' },
+        { h: 'Elindeki araçlarla aynı adımda', p: 'CRM’in, Jira, tabloların ve sohbet uygulaman. Bir taraftaki değişiklik diğerinde de görünür.' },
+        { h: 'Çeyrek tek ekranda', p: 'Hedefler, ağırlıklı fırsat tahmini ve bütün portföyün sağlığı; kendin kurabileceğin rapor ve gösterge panolarında.' },
+        { h: 'Dokuz dil, sağdan sola yazılanlar dahil', p: 'Herkes kendi dilini seçer. Bütün arayüz ona uyar; gereken yerde ayna gibi döner.' },
+        { h: 'Verin senin kalır', p: 'Her şirket veritabanının kendisinde ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez.' },
       ],
+      ask: { q: 'Bu hafta hangi müşteriler beni bekliyor?', a: 'Üç müşteri ilgi bekliyor:', did: 'Zeynep’e bir görev açtım: Marevo değerlendirmesini planla.' },
+      facts: ['SAML 2.0 ya da OpenID Connect ile SSO', 'SCIM ile kullanıcı yönetimi', 'Denetim kaydı', 'Veritabanı Avrupa Birliği’nde', 'Kendi sunucunda da çalışır'],
+    },
+    cta: {
+      title: 'Her müşterine, hiçbir şeyi unutmayan bir ekip ver.',
+      text: 'Her şey açık, üç ay ücretsiz. Müşterilerini bir tablodan getir, on beş dakikada işe koyul.',
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -405,7 +429,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
         { q: 'Kendi sunucularımızda çalıştırabilir miyiz?', a: 'Evet. Tek şirketlik paket, kendi veritabanıyla kendi sunucunda ya da bulutunda çalışır; aboneliği yoktur.' },
         { q: 'CRM’imiz olması gerekiyor mu?', a: 'Hayır. Müşteriler bir tablodan gelebilir ya da elle eklenebilir. CRM’in varsa Curahold onunla iki yönlü uyumlu kalır.' },
         { q: 'İstediğimiz zaman iptal edebilir miyiz?', a: 'Evet. İptal edilen plan ödenmiş dönemin sonuna kadar çalışır ve her şey dışa aktarılabilir.' },
-        { q: 'Kendi kelimelerimizi kullanabilir miyiz?', a: 'Evet. Müşterilerine müşteri, partner ya da hesap de; bütün arayüz ona göre konuşur. Curahold Türkçe ve İngilizcedir.' },
+        { q: 'Kendi kelimelerimizi kullanabilir miyiz?', a: 'Evet. Müşterilerine müşteri, partner ya da hesap de; bütün arayüz ona göre konuşur. Uygulama dokuz dilde; yardım merkezi ve canlı demo Türkçe ve İngilizce.' },
         { q: 'Kurulum ne kadar sürer?', a: 'Yaklaşık on beş dakika: adresini seç, müşterilerini bir tablodan getir, ekibini davet et.' },
       ],
     },
