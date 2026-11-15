@@ -229,3 +229,67 @@ export async function portalFiles(form: Record<string, unknown>) {
   for (const f of files) out.push(await checkPortalFile(f));
   return out;
 }
+
+// ------------------------------------------------------------ status emails
+
+/**
+ * "Work has started" and "Done: please approve", to the people at the customer who follow a
+ * request, in their own language and the company's brand. Each step is told once
+ * (tasks.portal_status_told); moving back to work clears an earlier approval.
+ * Called whenever a task changes column (lib/automations.ts runTaskMoved).
+ */
+export async function tellCustomerStatus(deps: Deps, orgId: string, taskId: string) {
+  if (!deps.config.portalDomain) return;
+  const [raw] = await deps.db.system((q) => q.query<OrgRow>('select * from orgs where id = $1', [orgId]));
+  if (!raw) return;
+  const org = { ...raw, locale: normalizeLocale(raw.locale), terms: raw.terms ?? {}, settings: raw.settings ?? {} } as OrgRow;
+  if (!portalOn(org, deps)) return;
+  const [t] = await deps.db.system((q) =>
+    q.query<{ title: string; status: string; told: string | null; columns: { key: string; done?: boolean }[]; portal: any; shared: boolean }>(
+      `select t.title, t.status, t.portal_status_told as told, b.columns, b.portal, t.portal_shared as shared
+         from tasks t join boards b on b.id = t.board_id and b.org_id = t.org_id
+        where t.id = $1 and t.org_id = $2 and t.archived_at is null`,
+      [taskId, orgId],
+    ),
+  );
+  if (!t || !t.shared || !t.portal?.enabled) return;
+  const i = t.columns.findIndex((c) => c.key === t.status);
+  if (i < 0) return;
+  const step = t.columns[i].done ? 'done' : t.status === (t.portal.intake ?? t.columns[0]?.key) ? null : 'doing';
+  if (!step || step === t.told) return;
+  // Claim the step first, so two moves at once tell it once.
+  const claimed = await deps.db.system((q) =>
+    q.query(
+      `update tasks set portal_status_told = $3, portal_approved_at = case when $3 = 'doing' then null else portal_approved_at end,
+              portal_approved_by = case when $3 = 'doing' then null else portal_approved_by end
+        where id = $1 and org_id = $2 and portal_status_told is distinct from $3 returning id`,
+      [taskId, orgId, step],
+    ),
+  );
+  if (!claimed.length) return;
+  const base = portalUrl(deps.config, org.slug);
+  if (!base) return;
+  const people = await deps.db.system((q) =>
+    q.query<{ email: string; name: string; locale: string | null }>(
+      `select distinct pu.email, pu.name, pu.locale
+         from tasks t
+         join portal_users pu on pu.org_id = t.org_id and pu.account_id = t.account_id and pu.status = 'active'
+        where t.id = $1 and t.org_id = $2
+          and (pu.id = t.portal_author_id or exists (select 1 from comments c where c.task_id = t.id and c.portal_author_id = pu.id))`,
+      [taskId, orgId],
+    ),
+  );
+  const link = `${base}/t/${taskId}`;
+  const logo = logoPath(org);
+  for (const p of people) {
+    const locale = localeOf(org, p.locale);
+    const t2 = (k: Parameters<typeof translate>[1], v: Record<string, string | number> = {}) => translate(locale, k, v, org.terms);
+    const text = t2(step === 'done' ? 'portal.email.doneBody' : 'portal.email.doingBody', { company: org.name, title: t.title });
+    await deps.email.send({
+      to: p.email,
+      subject: t2(step === 'done' ? 'portal.email.doneSubject' : 'portal.email.doingSubject', { title: t.title }),
+      text: `${text}\n\n${link}`,
+      html: emailHtml({ org: org.name, logo: logo ? `${orgUrl(deps.config, org.slug)}${logo}` : null, text, link, cta: t2(step === 'done' ? 'portal.email.review' : 'portal.email.open'), ...brandOf(org) }),
+    });
+  }
+}

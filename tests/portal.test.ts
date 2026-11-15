@@ -324,6 +324,61 @@ describe('files, both ways', () => {
   });
 });
 
+describe('approval and status emails', () => {
+  let req = '';
+  const cols = async () => (await ada.get('/api/boards')).json.boards.find((b: any) => b.id === env.a.boards.csBoard).columns as { key: string; done?: boolean }[];
+  const move = async (status: string) => {
+    const full = (await mert.get(`/api/tasks/${req}`)).json.task;
+    expect((await mert.patch(`/api/tasks/${req}`, { status, baseVersion: full.version })).status).toBe(200);
+    await env.settle();
+  };
+  const mails = () => env.email.sent.filter((m) => m.to === 'selin@quillfield.example');
+
+  it('the customer hears once when work starts, and once when it is done, in the company’s colour', async () => {
+    req = (await selin.post(`/papi/boards/${env.a.boards.csBoard}/tasks`, { title: 'Renew the SSL certificate' })).json.task.id;
+    const c = await cols();
+    const doing = c.filter((x) => !x.done).slice(1);
+    const done = c.find((x) => x.done)!;
+    const before = mails().length;
+    await move(doing[0].key);
+    expect(mails().length).toBe(before + 1);
+    expect(mails().at(-1)!.subject).toContain('Renew the SSL certificate');
+    expect(mails().at(-1)!.text).toContain(`https://acme.${PORTAL}/t/${req}`);
+    if (doing[1]) {
+      await move(doing[1].key);
+      expect(mails().length).toBe(before + 1);
+    }
+    // Not finished yet: nothing to approve.
+    expect((await selin.post(`/papi/tasks/${req}/approve`)).status).toBe(404);
+    await move(done.key);
+    expect(mails().length).toBe(before + 2);
+    expect(mails().at(-1)!.html).toContain(`background:${brandPalette('#0f766e').light.fill}`);
+  });
+
+  it('a finished request is approved once; the approval is in the conversation for both sides', async () => {
+    const r = await selin.post(`/papi/tasks/${req}/approve`);
+    expect(r.status).toBe(200);
+    expect(r.json.task).toMatchObject({ approvedBy: 'Selin Kaya' });
+    expect(r.json.task.approvedAt).toBeTruthy();
+    const again = await selin.post(`/papi/tasks/${req}/approve`);
+    expect(again.json.task.comments.filter((x: any) => x.fromCustomer)).toHaveLength(1);
+    const inside = (await mert.get(`/api/tasks/${req}`)).json.task.comments;
+    expect(inside.at(-1)).toMatchObject({ visibility: 'customer', portalAuthorName: 'Selin Kaya' });
+    // Someone at another customer cannot approve it.
+    const mila = await signIn('mila@velto.example');
+    expect((await mila.post(`/papi/tasks/${req}/approve`)).status).toBe(404);
+  });
+
+  it('an internal note sends the customer nothing and never shows', async () => {
+    const before = mails().length;
+    await mert.post(`/api/tasks/${req}/comments`, { body: 'INTERNAL ONLY: discount was a mistake' });
+    await env.settle();
+    expect(mails().length).toBe(before);
+    expect(JSON.stringify((await selin.get(`/papi/tasks/${req}`)).json)).not.toContain('INTERNAL ONLY');
+    expect(JSON.stringify((await selin.get(`/papi/boards/${env.a.boards.csBoard}/tasks`)).json)).not.toContain('INTERNAL ONLY');
+  });
+});
+
 describe('walls', () => {
   it('the portal role can read no table, only call the portal functions', async () => {
     await expect(env.db.portal({ orgId: env.a.orgId, portalUserId: null }, (q) => q.query('select * from tasks limit 1'))).rejects.toThrow(/permission denied/);

@@ -1379,6 +1379,8 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
   const [reply, setReply] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const { busy, waiting, problem, run } = useSend(onSignedOut, t);
+  const approving = useSend(onSignedOut, t);
+  const replyBox = useRef<HTMLTextAreaElement>(null);
   if (failed)
     return (
       <div className="p-wrap p-page p-narrow">
@@ -1403,6 +1405,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
   };
   const fields = data.board.fields;
   const own = (data.files ?? []).filter((f) => !f.commentId);
+  const finished = !!data.board.columns.find((c) => c.key === data.status)?.done;
   const facts = (
     <>
       <div>
@@ -1452,6 +1455,37 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
             <Files ctx={ctx} files={own} />
           </div>
         )}
+        {finished && data.approvedAt && (
+          <p className="p-note p-note--ok p-approved">
+            <Ico name="check" />
+            {t('portal.approvedBy', { name: data.approvedBy ?? t('portal.someone'), when: when(data.approvedAt) })}
+          </p>
+        )}
+        {finished && !data.approvedAt && (
+          <section className="p-card p-approve" aria-labelledby="p-approve">
+            <h2 id="p-approve">{t('portal.approveTitle')}</h2>
+            <p>{t('portal.approveBody', { company: org.name })}</p>
+            {approving.problem && <Problem text={approving.problem} />}
+            <div className="p-approve__do">
+              <button
+                className="p-btn p-btn--primary"
+                disabled={approving.busy}
+                onClick={() =>
+                  void approving.run(async () => {
+                    const r = await call<{ task: PortalTaskDetail }>('POST', `/tasks/${id}/approve`, {});
+                    setData(r.task);
+                  })
+                }
+              >
+                <Ico name="check" />
+                {t('portal.approve')}
+              </button>
+              <button className="p-btn p-btn--quiet" onClick={() => replyBox.current?.focus()}>
+                {t('portal.notYet')}
+              </button>
+            </div>
+          </section>
+        )}
         <section className="p-thread" aria-labelledby="p-conv">
           <h2 id="p-conv">{t('portal.conversation')}</h2>
           {data.comments.length === 0 && <p className="p-muted">{t('portal.noReplies')}</p>}
@@ -1472,7 +1506,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
           <form className="p-reply" onSubmit={send}>
             <label className="p-field">
               <span>{t('portal.reply')}</span>
-              <textarea rows={3} dir="auto" value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
+              <textarea ref={replyBox} rows={3} dir="auto" value={reply} maxLength={10000} onChange={(e) => setReply(e.target.value)} />
             </label>
             {problem && <Problem text={problem} />}
             {waiting && (

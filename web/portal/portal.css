@@ -325,3 +325,9 @@ html, body { margin: 0; }
 .p-pick__btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 .p-task__desc { display: grid; gap: 12px; }
 .p-task__desc > p { white-space: pre-wrap; }
+
+/* ------------------------------------------------------------ approval */
+.p-approve { display: grid; gap: 8px; border-color: var(--accent); background: var(--accent-wash); }
+.p-approve p { color: var(--ink-2); }
+.p-approve__do { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 8px; }
+.p-approved { display: flex; align-items: center; gap: 8px; }

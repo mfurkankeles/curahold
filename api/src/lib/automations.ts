@@ -5,6 +5,7 @@
 //
 // It runs with owner access (rules act for the company, not for whoever
 // happens to be signed in), so every query here filters on org_id itself.
+import { tellCustomerStatus } from './portal';
 import { addDays, localDate, localHour } from '../../../shared/src/days';
 import { fillTitle, type Action, type Condition, type Trigger } from '../../../shared/src/automation';
 import type { Column } from '../../../shared/src/model';
@@ -266,6 +267,8 @@ export async function runAccountCreated(deps: Deps, orgId: string, accountIds: s
 }
 
 export async function runTaskMoved(deps: Deps, orgId: string, taskId: string, column: string, now: Date) {
+  // People at the customer hear when work starts and when it is done (lib/portal.ts).
+  await tellCustomerStatus(deps, orgId, taskId).catch((e) => console.error('[curahold] portal status email', e));
   const rules = await deps.db.system((q) =>
     q.query(`select * from automations where org_id = $1 and enabled and trigger->>'type' = 'task_moved' and trigger->>'column' = $2`, [orgId, column]),
   );

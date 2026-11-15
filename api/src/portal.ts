@@ -228,6 +228,16 @@ export function createPortalApp(deps: Deps) {
     return c.json({ task: await taskOf(c, taskId) }, 201);
   });
 
+  // "Done the way we wanted": on a finished request, once; it also goes into the conversation.
+  app.post('/papi/tasks/:id/approve', async (c) => {
+    const taskId = id(c, 'id');
+    const org = c.get('org');
+    const body = translate(org.locale, 'portal.approvedComment', {}, org.terms);
+    const commentId = await one(c, 'select portal_approve($1, $2) as id', [taskId, body]);
+    if (commentId) await tellTeam(c, taskId, 'comment', body);
+    return c.json({ task: await taskOf(c, taskId) });
+  });
+
   // A file is always a download, never shown in the page, and can run nothing.
   app.get('/papi/files/:id', async (c) => {
     const f = await one(c, 'select portal_file($1) as f', [id(c, 'id')]);

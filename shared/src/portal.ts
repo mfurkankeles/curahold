@@ -72,6 +72,9 @@ export interface PortalTask {
   replies: number;
   /** The latest reply is the team's: the customer has something new to read. */
   lastFromTeam?: boolean;
+  /** When someone at the customer approved the finished work, and who. */
+  approvedAt?: string | null;
+  approvedBy?: string | null;
 }
 /** A file on a request or a reply, as the customer sees it. */
 export interface PortalFile {
