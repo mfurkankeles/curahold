@@ -112,6 +112,7 @@ Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir.
 | `fields` | nesne (ad → değer) | isteğe bağlı |  |
 | `archived` | evet/hayır | isteğe bağlı |  |
 | `currency` | metin | isteğe bağlı | boş (null) olabilir |
+| `baseVersion` | tam sayı | isteğe bağlı | en az 1 |
 
 ### `DELETE /records/:id`
 

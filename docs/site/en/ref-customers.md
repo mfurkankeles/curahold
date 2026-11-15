@@ -91,6 +91,7 @@ Changes a customer: name, owner, team, fields, review rhythm, or archives and re
 | `archived` | yes/no | optional |  |
 | `reviewDays` | whole number | optional | at least 0; at most 730; may be null |
 | `currency` | text | optional | may be null |
+| `baseVersion` | whole number | optional | at least 1 |
 
 ### `DELETE /accounts/:id`
 

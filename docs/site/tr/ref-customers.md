@@ -91,6 +91,7 @@ Müşteriyi değiştirir: ad, sahip, ekip, alanlar, görüşme sıklığı; arş
 | `archived` | evet/hayır | isteğe bağlı |  |
 | `reviewDays` | tam sayı | isteğe bağlı | en az 0; en çok 730; boş (null) olabilir |
 | `currency` | metin | isteğe bağlı | boş (null) olabilir |
+| `baseVersion` | tam sayı | isteğe bağlı | en az 1 |
 
 ### `DELETE /accounts/:id`
 

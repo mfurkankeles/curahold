@@ -112,6 +112,7 @@ Changes a record; only the fields you send change.
 | `fields` | object (name → value) | optional |  |
 | `archived` | yes/no | optional |  |
 | `currency` | text | optional | may be null |
+| `baseVersion` | whole number | optional | at least 1 |
 
 ### `DELETE /records/:id`
 

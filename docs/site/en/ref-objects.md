@@ -33,6 +33,8 @@ interface Account {
   lastReviewAt?: string | null;
   /** The currency of this customer's amounts; null is the company's. */
   currency?: string | null;
+  /** Goes up with every change; a save sends the one it started from (baseVersion). */
+  version?: number;
 }
 ```
 
@@ -349,6 +351,8 @@ interface AppRecord {
   /** The currency of its amounts; null is the company's. */
   currency?: string | null;
   createdBy?: string | null;
+  /** Goes up with every change; a save sends the one it started from (baseVersion). */
+  version?: number;
 }
 ```
 
