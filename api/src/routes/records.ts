@@ -1,6 +1,7 @@
 // Records under accounts (contacts, opportunities, risks…) and the kinds of
 // record a company keeps. Works with or without a CRM; when one is
 // connected, edits here are queued for it.
+import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { MENTION_RE, type Task } from '../../../shared/src/model';
@@ -52,6 +53,7 @@ export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
   links,
   currency: r.currency ?? null,
   createdBy: r.created_by ?? null,
+  ...(r.version != null ? { version: Number(r.version) } : {}),
 });
 
 /** Fields each kind of record keeps from this person, by type id. */
@@ -524,6 +526,8 @@ recordRoutes.patch('/records/:id', async (c) => {
       fields: recordValues.optional(),
       archived: z.boolean().optional(),
       currency: z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
+      /** The version the editor started from (lib/versions.ts); without it, what is sent is written. */
+      baseVersion: z.number().int().min(1).optional(),
     }),
   );
   const org = c.get('org');
@@ -531,11 +535,28 @@ recordRoutes.patch('/records/:id', async (c) => {
   const deps = c.get('deps');
   if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
-    const [r] = await q.query('select * from records where id = $1', [id]);
+    // Locked until this change is written, so the version check and the write are one step.
+    const [r] = await q.query('select * from records where id = $1 for update', [id]);
     if (!r) fail('not_found');
     const [type] = await q.query('select * from record_types where id = $1', [r.type_id]);
     await checkRefs(q, input.accountId, input.ownerId);
     const cleaned = input.fields ? cleanFields(type.fields, input.fields, org.locale) : {};
+    if (input.baseVersion !== undefined && r.version !== input.baseVersion) {
+      const writes: Write[] = [
+        ...(input.name !== undefined ? [{ key: 'name', name: 'name', next: input.name, current: r.name }] : []),
+        ...(input.ownerId !== undefined ? [{ key: 'owner_id', name: 'ownerId', next: input.ownerId, current: r.owner_id }] : []),
+        ...(input.accountId !== undefined ? [{ key: 'account_id', name: 'accountId', next: input.accountId, current: r.account_id }] : []),
+        ...(input.parentId !== undefined ? [{ key: 'parent_id', name: 'parentId', next: input.parentId, current: r.parent_id }] : []),
+        ...(input.archived !== undefined ? [{ key: 'archived_at', name: 'archived', next: input.archived, current: !!r.archived_at }] : []),
+        ...(input.currency !== undefined ? [{ key: 'currency', name: 'currency', next: input.currency && input.currency !== org.currency ? input.currency : null, current: r.currency }] : []),
+        ...fieldWrites(input.fields ? cleaned : undefined, r.fields),
+      ];
+      const names = clashes(r, input.baseVersion, writes);
+      if (names.length) {
+        const [full] = await q.query(`${SELECT} where r.id = $1`, [id]);
+        refuseClash(names, viewRecord(full, await hiddenByType(q, auth), (await linksFor(q, 'record', [id])).get(id)));
+      }
+    }
     checkEditable(type.fields ?? [], changedFieldKeys(r.fields, cleaned), auth);
     const fields = input.fields ? { ...(r.fields ?? {}), ...cleaned } : r.fields;
     const namesChanged = !!input.fields && ('first_name' in input.fields || 'last_name' in input.fields);

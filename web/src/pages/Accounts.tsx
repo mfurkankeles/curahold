@@ -786,15 +786,39 @@ export function AccountPage({ id }: { id: string }) {
     if (!boardId && boards[0]) setBoardId(boards[0].id);
   }, [boards, boardId]);
 
-  const save = async (body: Record<string, unknown>) => {
-    try {
-      const r = await patch<{ account: Account }>(`/accounts/${id}`, body);
-      setData((d) => (d ? { ...d, account: r.account } : d));
-    } catch (e) {
-      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-      void load();
-    }
-  };
+  // Saves go one after another, each from the version the last one left (lib/versions.ts on the server):
+  // a change to another field merges; the same field changed by someone else meanwhile is refused and shown.
+  const version = useRef<number | undefined>(undefined);
+  version.current = data?.account.version ?? version.current;
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const clashLabel = (name: string) =>
+    name.startsWith('fields.')
+      ? labelOf(me.org.accountFields.find((f) => f.key === name.slice(7))?.label, locale) || name.slice(7)
+      : name === 'ownerId' || name === 'teamId'
+        ? t('accounts.owner')
+        : name === 'currency'
+          ? t('money.currency')
+          : t('accounts.name');
+  const save = (body: Record<string, unknown>) =>
+    (queue.current = queue.current.then(async () => {
+      try {
+        const base = version.current;
+        const r = await patch<{ account: Account }>(`/accounts/${id}`, base ? { ...body, baseVersion: base } : body);
+        version.current = r.account.version ?? version.current;
+        setData((d) => (d ? { ...d, account: { ...d.account, ...r.account } } : d));
+      } catch (e) {
+        if (e instanceof ApiFailure && e.code === 'conflict' && e.body.current) {
+          const current = e.body.current as Account;
+          version.current = current.version;
+          setData((d) => (d ? { ...d, account: { ...d.account, ...current } } : d));
+          const names = ((e.body.fields as string[] | undefined) ?? []).map(clashLabel);
+          toast(t('versions.clashShown', { fields: new Intl.ListFormat(locale, { type: 'conjunction' }).format([...new Set(names)]) }), 'error');
+          return;
+        }
+        toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+        void load();
+      }
+    }));
 
   if (missing)
     return (

@@ -666,11 +666,27 @@ export function RecordDialog({
     for (const [k, v] of Object.entries(values)) if ((record?.fields[k] ?? null) !== v) out[k] = v;
     return out;
   }, [values, record]);
+  // The version this edit started from; after a clash, the one that was shown to the person.
+  const [version, setVersion] = useState(record?.version);
+  const [clash, setClash] = useState<string[] | null>(null);
+  const clashLabel = (name: string) =>
+    name.startsWith('fields.')
+      ? labelOf(type.fields.find((f) => f.key === name.slice(7))?.label, locale) || name.slice(7)
+      : name === 'ownerId'
+        ? t('accounts.owner')
+        : name === 'accountId'
+          ? words.one
+          : name === 'parentId'
+            ? t('org.reportsTo')
+            : name === 'currency'
+              ? t('money.currency')
+              : t('records.name');
   const save = async () => {
     setBusy(true);
     try {
       if (record) {
         await patch(`/records/${record.id}`, {
+          ...(version ? { baseVersion: version } : {}),
           ...(!isContact && name.trim() !== record.name ? { name: name.trim() } : {}),
           ...(ownerId !== (record.ownerId ?? '') ? { ownerId: ownerId || null } : {}),
           ...(account !== (record.accountId ?? '') ? { accountId: account || null } : {}),
@@ -692,7 +708,23 @@ export function RecordDialog({
       await onDone();
       onClose();
     } catch (e) {
-      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      // Someone else changed one of these fields while this was open: say which, keep what was typed,
+      // and let a second Save decide (it now starts from their version).
+      if (e instanceof ApiFailure && e.code === 'conflict' && e.body.current) {
+        const current = e.body.current as AppRecord;
+        setVersion(current.version);
+        // Each with what it says now, so the person can choose without closing this.
+        const theirs = (name: string) => {
+          if (name === 'name') return current.name;
+          if (name === 'ownerId') return people.find((p) => p.id === current.ownerId)?.name ?? '—';
+          if (!name.startsWith('fields.')) return '';
+          const f = type.fields.find((x) => x.key === name.slice(7));
+          const v = current.fields?.[name.slice(7)];
+          if (v === null || v === undefined || v === '') return '—';
+          return f?.type === 'select' ? labelOf(f.options?.find((o) => o.key === v)?.label, locale) || String(v) : String(v);
+        };
+        setClash(((e.body.fields as string[] | undefined) ?? []).map((n) => (theirs(n) ? `${clashLabel(n)} (“${theirs(n)}”)` : clashLabel(n))));
+      } else toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     } finally {
       setBusy(false);
     }
@@ -721,6 +753,11 @@ export function RecordDialog({
         </>
       }
     >
+      {clash && (
+        <div className="notice notice--wait" role="alert">
+          {t('versions.clash', { fields: new Intl.ListFormat(locale, { type: 'conjunction' }).format(clash) })}
+        </div>
+      )}
       {record && <OpenIn links={record.links} />}
       {isContact && record && <ContactLinks fields={values} name={effectiveName} />}
       <div className="form">

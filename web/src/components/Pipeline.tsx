@@ -75,11 +75,13 @@ export function RecordBoard({ type, records, groupKey, onOpen, onChanged }: { ty
     }
     onChanged({ ...r, fields: { ...r.fields, ...fields } });
     try {
-      const res = await patch<{ record: AppRecord }>(`/records/${r.id}`, { fields });
+      const res = await patch<{ record: AppRecord }>(`/records/${r.id}`, { fields, ...(r.version ? { baseVersion: r.version } : {}) });
       onChanged({ ...r, ...res.record, accountName: r.accountName });
       if (fields[status?.key ?? ''] === 'won') toast(t('pipeline.won', { name: r.name }));
     } catch (e) {
-      onChanged(r);
+      // Moved by someone else meanwhile: theirs stays and shows.
+      const current = e instanceof ApiFailure && e.code === 'conflict' ? (e.body.current as AppRecord | undefined) : undefined;
+      onChanged(current ? { ...r, ...current, accountName: r.accountName } : r);
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
     }
   };

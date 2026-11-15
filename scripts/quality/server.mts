@@ -53,9 +53,20 @@ const mert = await login(env, 'beta', 'mert@demo.example');
   const a2 = await mert.patch(`/api/accounts/${acc.id}`, { fields: { renewal_date: '2027-03-01' } });
   const after = (await ada.get(`/api/accounts/${acc.id}`)).json.account;
   say('concurrency', `customer, different fields one after the other: ${a1.status}, ${a2.status}; both kept: ${after?.fields?.arr === 1000 && after?.fields?.renewal_date === '2027-03-01' ? 'yes' : `NO (${JSON.stringify(after?.fields)})`}`);
-  const n1 = await ada.patch(`/api/accounts/${acc.id}`, { name: 'Ada yazdı' });
-  const n2 = await mert.patch(`/api/accounts/${acc.id}`, { name: 'Mert yazdı' });
-  say('concurrency', `customer, the same field from two people: ${n1.status}, ${n2.status}; ${n2.status === 200 ? 'the second silently replaces the first (no version, no warning)' : 'the second is refused'}`);
+  // Both started from the version they opened; the app sends it as baseVersion.
+  const opened = (await ada.get(`/api/accounts/${acc.id}`)).json.account;
+  const d1 = await ada.patch(`/api/accounts/${acc.id}`, { baseVersion: opened.version, fields: { arr: 2000 } });
+  const d2 = await mert.patch(`/api/accounts/${acc.id}`, { baseVersion: opened.version, fields: { renewal_date: '2027-04-01' } });
+  say('concurrency', `customer, different fields from the same starting version: ${d1.status}, ${d2.status}${d2.status === 200 ? ' (merged by the server)' : ''}`);
+  const n1 = await ada.patch(`/api/accounts/${acc.id}`, { baseVersion: opened.version, name: 'Ada yazdı' });
+  const n2 = await mert.patch(`/api/accounts/${acc.id}`, { baseVersion: opened.version, name: 'Mert yazdı' });
+  say('concurrency', `customer, the same field from two people: ${n1.status}, ${n2.status}; ${n2.status === 200 ? 'the second silently replaces the first (no version, no warning)' : `the second is refused (${n2.json?.error}, shown "${n2.json?.current?.name}")`}`);
+  const rtypes = (await ada.get('/api/record-types')).json.types ?? [];
+  const opp = rtypes.find((t: any) => t.kind === 'opportunity') ?? (await ada.post('/api/record-types', { kind: 'opportunity' })).json.type;
+  const rec = (await ada.post('/api/records', { typeId: opp.id, accountId: acc.id, name: 'Yenileme 2027', fields: {} })).json.record;
+  const r1 = await ada.patch(`/api/records/${rec.id}`, { baseVersion: rec.version, name: 'Ada' });
+  const r2 = await mert.patch(`/api/records/${rec.id}`, { baseVersion: rec.version, name: 'Mert' });
+  say('concurrency', `record, the same field from two people: ${r1.status}, ${r2.status}${r2.status === 409 ? ' (the second is refused, the person is told)' : ''}`);
   const versioned = await env.db.system((q) => q.query(`select table_name from information_schema.columns where table_schema = 'public' and column_name = 'version' order by 1`));
   say('concurrency', `tables with a version number: ${versioned.map((r: any) => r.table_name).join(', ') || 'none'}`);
 }

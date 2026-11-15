@@ -150,6 +150,8 @@ export const en = {
   'task.deleteConfirm': 'Delete "{title}" and its subtasks? They stay in the trash for 30 days.',
   'task.conflictMerged': 'Someone changed this task while you were editing. Their changes are loaded and yours were kept.',
   'task.conflictLost': 'Someone changed the same field at the same time. Their version is shown; please re-enter yours.',
+  'versions.clash': 'While you had this open, someone else changed: {fields}. What you typed is still here. Save again to keep yours, or cancel to keep theirs.',
+  'versions.clashShown': 'Someone else changed {fields} at the same time. Their version is shown now; change it again if yours should stand.',
   'task.unassigned': 'Unassigned',
   'task.pickPeople': 'Choose people',
   'task.board': 'Board',

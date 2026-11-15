@@ -307,6 +307,8 @@ export interface Account {
   lastReviewAt?: string | null;
   /** The currency of this customer's amounts; null is the company's. */
   currency?: string | null;
+  /** Goes up with every change; a save sends the one it started from (baseVersion). */
+  version?: number;
 }
 
 export interface ImportResult {

@@ -143,6 +143,8 @@ export const tr: Record<MessageKey, string> = {
   'task.deleteConfirm': '"{title}" ve alt görevleri silinsin mi? 30 gün çöp kutusunda kalırlar.',
   'task.conflictMerged': 'Sen düzenlerken başka biri bu görevi değiştirdi. Onun değişiklikleri yüklendi, seninkiler korundu.',
   'task.conflictLost': 'Başka biri aynı alanı aynı anda değiştirdi. Onun hali gösteriliyor; lütfen seninkini tekrar gir.',
+  'versions.clash': 'Bu açıkken başka biri şunu değiştirdi: {fields}. Yazdıkların duruyor. Seninkini korumak için tekrar kaydet, onunkini korumak için vazgeç.',
+  'versions.clashShown': 'Başka biri aynı anda şunu değiştirdi: {fields}. Şimdi onun hali görünüyor; seninki kalmalıysa yeniden değiştir.',
   'task.unassigned': 'Atanmamış',
   'task.pickPeople': 'Kişi seç',
   'task.board': 'Pano',

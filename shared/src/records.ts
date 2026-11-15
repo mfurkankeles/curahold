@@ -46,6 +46,8 @@ export interface AppRecord {
   /** The currency of its amounts; null is the company's. */
   currency?: string | null;
   createdBy?: string | null;
+  /** Goes up with every change; a save sends the one it started from (baseVersion). */
+  version?: number;
 }
 
 /** A comment under a record (an opportunity's thread). */

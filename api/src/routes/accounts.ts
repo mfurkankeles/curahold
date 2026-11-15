@@ -1,5 +1,6 @@
 // Accounts (customers) and their fields; importing from a file with undo;
 // bulk changes. Works the same whether or not a CRM is connected.
+import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { foldText } from '../../../shared/src/text';
 import { allowedCurrency } from '../lib/fx';
 import { Hono } from 'hono';
@@ -42,6 +43,7 @@ export const toAccount = (r: Row): Account => ({
   reviewDays: r.review_days ?? null,
   ...(r.last_review !== undefined ? { lastReviewAt: iso(r.last_review) } : {}),
   currency: r.currency ?? null,
+  ...(r.version != null ? { version: Number(r.version) } : {}),
 });
 
 const currencyInput = z.string().regex(/^[A-Z]{3}$/).nullable();
@@ -214,6 +216,8 @@ accountRoutes.patch('/accounts/:id', async (c) => {
       /** Days between business reviews; null follows the company's rhythm, 0 is none. */
       reviewDays: z.number().int().min(0).max(730).nullable().optional(),
       currency: currencyInput.optional(),
+      /** The version the editor started from (lib/versions.ts); without it, what is sent is written. */
+      baseVersion: z.number().int().min(1).optional(),
     }),
   );
   const org = c.get('org');
@@ -221,10 +225,24 @@ accountRoutes.patch('/accounts/:id', async (c) => {
   if (input.archived !== undefined) requirePerm(c, 'accounts.manage');
   if (!allowedCurrency(org, input.currency)) fail('validation', { fields: 'currency' }, { fields: ['currency'] });
   const row = await run(c, async (q) => {
-    const [a] = await q.query('select * from accounts where id = $1', [id]);
+    // Locked until this change is written, so the version check and the write are one step.
+    const [a] = await q.query('select * from accounts where id = $1 for update', [id]);
     if (!a) fail('not_found');
     if (input.ownerId !== undefined) await checkOwner(q, input.ownerId);
     const cleaned = input.fields ? cleanFields(org.account_fields, input.fields, org.locale) : {};
+    if (input.baseVersion !== undefined) {
+      const archivedNow = !!a.archived_at;
+      const writes: Write[] = [
+        ...(input.name !== undefined ? [{ key: 'name', name: 'name', next: input.name, current: a.name }] : []),
+        ...(input.ownerId !== undefined ? [{ key: 'owner_id', name: 'ownerId', next: input.ownerId, current: a.owner_id }] : []),
+        ...(input.teamId !== undefined ? [{ key: 'team_id', name: 'teamId', next: input.teamId, current: a.team_id }] : []),
+        ...(input.archived !== undefined ? [{ key: 'archived_at', name: 'archived', next: input.archived, current: archivedNow }] : []),
+        ...(input.reviewDays !== undefined ? [{ key: 'review_days', name: 'reviewDays', next: input.reviewDays, current: a.review_days }] : []),
+        ...(input.currency !== undefined ? [{ key: 'currency', name: 'currency', next: input.currency && input.currency !== org.currency ? input.currency : null, current: a.currency }] : []),
+        ...fieldWrites(input.fields ? cleaned : undefined, a.fields),
+      ];
+      refuseClash(clashes(a, input.baseVersion, writes), viewOf(c)(a));
+    }
     // Sending a read-only field back unchanged is fine; changing it is not.
     checkEditable(org.account_fields, changedFieldKeys(a.fields, cleaned), auth);
     const fields = input.fields ? { ...(a.fields ?? {}), ...cleaned } : a.fields;
