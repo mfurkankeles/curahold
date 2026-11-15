@@ -264,6 +264,7 @@ export const en = {
   'audit.user.invited': 'invited someone',
   'audit.user.updated': 'changed a person',
   'audit.user.exported': 'downloaded personal data',
+  'audit.ai.changed': 'made a change through the AI assistant',
   'audit.user.erased': 'erased personal data',
   'audit.org.updated': 'changed company settings',
   'audit.role.created': 'created a role',

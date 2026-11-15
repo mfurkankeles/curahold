@@ -609,6 +609,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': '사람을 초대함',
   'audit.user.updated': '사람을 변경함',
   'audit.user.exported': '개인 데이터를 다운로드함',
+  'audit.ai.changed': 'AI 어시스턴트를 통해 변경함',
   'audit.user.erased': '개인 데이터를 삭제함',
   'audit.org.updated': '회사 설정을 변경함',
   'audit.role.created': '역할을 만듦',
@@ -3682,4 +3683,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': '보내는 중…',
   'mailbox.reply.sent': '답장을 보냈습니다',
   'mailbox.reply.hint': '연결된 메일함에서 보내고 여기에 기록됩니다.',
+  'errors.rate_limited': '짧은 시간에 요청이 너무 많았습니다. {wait} 후에 다시 시도하세요.',
+  'versions.clash': '이 화면을 열어 둔 동안 다른 사람이 다음 항목을 변경했습니다: {fields}. 입력한 내용은 그대로 있습니다. 내 내용을 유지하려면 다시 저장하고, 상대의 내용을 유지하려면 취소하세요.',
+  'versions.clashShown': '다른 사람이 동시에 {fields}을(를) 변경했습니다. 지금은 상대의 버전이 표시됩니다. 내 내용이 맞다면 다시 변경하세요.',
 };

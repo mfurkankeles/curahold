@@ -609,6 +609,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': '人を招待した',
   'audit.user.updated': '人を変更した',
   'audit.user.exported': '個人データをダウンロードした',
+  'audit.ai.changed': 'AI アシスタント経由で変更した',
   'audit.user.erased': '個人データを消去した',
   'audit.org.updated': '会社設定を変更した',
   'audit.role.created': 'ロールを作成した',
@@ -3682,4 +3683,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': '送信中…',
   'mailbox.reply.sent': '返信を送信しました',
   'mailbox.reply.hint': '接続中のメールボックスから送信され、ここに記録されます。',
+  'errors.rate_limited': '短時間にリクエストが集中しました。{wait}後にもう一度お試しください。',
+  'versions.clash': '開いている間に、別の人が次の項目を変更しました：{fields}。入力した内容は残っています。自分の内容を残すにはもう一度保存し、相手の内容を残すにはキャンセルしてください。',
+  'versions.clashShown': '別の人が同時に {fields} を変更しました。現在は相手のバージョンを表示しています。自分の内容にする場合は、もう一度変更してください。',
 };

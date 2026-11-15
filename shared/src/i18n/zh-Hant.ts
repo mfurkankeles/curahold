@@ -609,6 +609,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': '邀請了某人',
   'audit.user.updated': '更改了一個人',
   'audit.user.exported': '下載了個人資料',
+  'audit.ai.changed': '透過 AI 助理做了變更',
   'audit.user.erased': '清除了個人資料',
   'audit.org.updated': '更改了公司設定',
   'audit.role.created': '建立了一個角色',
@@ -3682,4 +3683,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': '傳送中…',
   'mailbox.reply.sent': '回覆已送出',
   'mailbox.reply.hint': '從已連線的信箱寄出，並記錄在這裡。',
+  'errors.rate_limited': '短時間內的要求過多。請在 {wait} 後再試一次。',
+  'versions.clash': '在你開啟此頁面期間,其他人變更了:{fields}。你輸入的內容仍在。再次儲存可保留你的內容,取消則保留對方的內容。',
+  'versions.clashShown': '其他人同時變更了 {fields}。目前顯示的是對方的版本;如要保留你的內容,請重新修改。',
 };

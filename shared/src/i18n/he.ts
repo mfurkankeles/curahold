@@ -609,6 +609,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': 'הזמין מישהו',
   'audit.user.updated': 'שינה אדם',
   'audit.user.exported': 'הוריד מידע אישי',
+  'audit.ai.changed': 'ביצע שינוי דרך עוזר הבינה המלאכותית',
   'audit.user.erased': 'מחק מידע אישי',
   'audit.org.updated': 'שינה הגדרות חברה',
   'audit.role.created': 'יצר תפקיד',
@@ -3682,4 +3683,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': "שולח…",
   'mailbox.reply.sent': "התשובה נשלחה",
   'mailbox.reply.hint': "נשלח מתיבת הדואר המחוברת ונרשם כאן.",
+  'errors.rate_limited': 'נשלחו הרבה בקשות בזמן קצר. אפשר לנסות שוב בעוד {wait}.',
+  'versions.clash': 'בזמן שהדף היה פתוח אצלך, מישהו אחר שינה: {fields}. מה שהקלדת עדיין כאן. כדי לשמור את הגרסה שלך יש לשמור שוב, וכדי להשאיר את שלו יש לבטל.',
+  'versions.clashShown': 'מישהו אחר שינה את {fields} באותו זמן. כעת מוצגת הגרסה שלו; אם הגרסה שלך צריכה להישאר, יש לשנות שוב.',
 };

@@ -609,6 +609,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': 'کسی را دعوت کرد',
   'audit.user.updated': 'یک شخص را تغییر داد',
   'audit.user.exported': 'داده‌های شخصی را دانلود کرد',
+  'audit.ai.changed': 'از طریق دستیار هوش مصنوعی تغییری ایجاد کرد',
   'audit.user.erased': 'داده‌های شخصی را پاک کرد',
   'audit.org.updated': 'تنظیمات شرکت را تغییر داد',
   'audit.role.created': 'یک نقش ساخت',
@@ -3682,4 +3683,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': "در حال ارسال…",
   'mailbox.reply.sent': "پاسخ ارسال شد",
   'mailbox.reply.hint': "از صندوق ایمیل متصل ارسال و اینجا ثبت شد.",
+  'errors.rate_limited': 'در زمانی کوتاه درخواست‌های زیادی رسید. {wait} دیگر دوباره تلاش کنید.',
+  'versions.clash': 'هنگامی که این صفحه باز بود، فرد دیگری این موارد را تغییر داد: {fields}. آنچه نوشته‌اید همچنان اینجاست. برای نگه‌داشتن نسخهٔ خودتان دوباره ذخیره کنید، یا برای نگه‌داشتن نسخهٔ او انصراف دهید.',
+  'versions.clashShown': 'فرد دیگری هم‌زمان {fields} را تغییر داد. اکنون نسخهٔ او نمایش داده می‌شود؛ اگر نسخهٔ شما باید بماند، دوباره تغییرش دهید.',
 };

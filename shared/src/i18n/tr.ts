@@ -250,6 +250,7 @@ export const tr: Record<MessageKey, string> = {
   'audit.user.invited': 'birini davet etti',
   'audit.user.updated': 'bir kişiyi değiştirdi',
   'audit.user.exported': 'kişisel verileri indirdi',
+  'audit.ai.changed': 'yapay zekâ asistanıyla bir değişiklik yaptı',
   'audit.user.erased': 'kişisel verileri sildi',
   'audit.org.updated': 'şirket ayarlarını değiştirdi',
   'audit.role.created': 'rol oluşturdu',

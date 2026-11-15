@@ -609,6 +609,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'audit.user.invited': 'دعا شخصًا',
   'audit.user.updated': 'غيّر شخصًا',
   'audit.user.exported': 'نزّل بيانات شخصية',
+  'audit.ai.changed': 'أجرى تغييرًا عبر مساعد الذكاء الاصطناعي',
   'audit.user.erased': 'محا بيانات شخصية',
   'audit.org.updated': 'غيّر إعدادات الشركة',
   'audit.role.created': 'أنشأ دورًا',
@@ -3682,4 +3683,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sending': "جارٍ الإرسال…",
   'mailbox.reply.sent': "أُرسل الرد",
   'mailbox.reply.hint': "أُرسل من صندوق البريد المتصل وسُجّل هنا.",
+  'errors.rate_limited': 'وصلت طلبات كثيرة في وقت قصير. حاول مجددًا بعد {wait}.',
+  'versions.clash': 'أثناء فتحك لهذه الصفحة غيّر شخص آخر: {fields}. ما كتبته ما زال هنا. احفظ مجددًا للإبقاء على تعديلك، أو ألغِ للإبقاء على تعديله.',
+  'versions.clashShown': 'غيّر شخص آخر {fields} في الوقت نفسه. تظهر الآن نسخته؛ غيّرها مجددًا إن أردت أن تبقى نسختك.',
 };
