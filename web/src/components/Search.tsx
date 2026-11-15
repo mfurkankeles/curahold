@@ -40,9 +40,10 @@ const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').repla
 
 export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
   const { t, words, locale } = useI18n();
-  const { me, boards, can, canWrite } = useStore();
+  const { me, boards, people, can, canWrite } = useStore();
   const [q, setQ] = useState('');
-  const [found, setFound] = useState<Found | null>(null);
+  // The last answer and the words it was for: typing on narrows it at once while the server is asked again.
+  const [answer, setAnswer] = useState<{ q: string; r: Found } | null>(null);
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -50,16 +51,18 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
 
   useEffect(() => input.current?.focus(), []);
   useEffect(() => {
-    if (q.trim().length < 2) {
-      setFound(null);
+    const words = q.trim();
+    if (words.length < 2) {
+      setAnswer(null);
       return;
     }
     let live = true;
+    // A short pause only, so a burst of keys sends one question; the answer replaces the narrowed one.
     const id = setTimeout(() => {
-      get<Found>(`/search?q=${encodeURIComponent(q.trim())}`)
-        .then((r) => live && setFound(r))
-        .catch(() => live && setFound(null));
-    }, 160);
+      get<Found>(`/search?q=${encodeURIComponent(words)}`)
+        .then((r) => live && setAnswer({ q: words, r }))
+        .catch(() => live && setAnswer(null));
+    }, 40);
     return () => {
       live = false;
       clearTimeout(id);
@@ -97,8 +100,26 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
         ]
       : [];
     const needle = fold(q.trim());
+    // What the last answer already holds that still matches, shown before the new answer comes.
+    const was = answer ? fold(answer.q) : null;
+    const has = (...texts: (string | null | undefined)[]) => texts.some((x) => x && fold(x).includes(needle));
+    const found: Found | null = !answer || was === null || !needle.startsWith(was)
+      ? null
+      : was === needle
+        ? answer.r
+        : {
+            accounts: answer.r.accounts.filter((a) => has(a.name)),
+            tasks: answer.r.tasks.filter((x) => has(x.title, x.accountName)),
+            records: answer.r.records.filter((r) => has(r.name, r.accountName)),
+            boards: answer.r.boards.filter((b) => has(b.name)),
+            people: answer.r.people.filter((p) => has(p.name, p.email)),
+          };
+    // People are already here: they show from the first key.
+    const near = needle.length >= 2 ? people.filter((p) => (p.status === 'active' || p.status === 'invited') && has(p.name, p.email)).slice(0, 6) : [];
     const local = [...actions, ...places].filter((i) => !needle || fold(i.title).includes(needle));
-    if (!found) return needle ? local : [...actions, ...places.slice(0, 5)];
+    const folks = [...(found?.people ?? []), ...near.filter((p) => !found?.people.some((x) => x.id === p.id))].slice(0, 6);
+    const mates: Item[] = folks.map((p) => ({ key: `p:${p.id}`, group: 'people', title: p.name, sub: p.email ?? undefined, go: go(`/accounts?owner=${p.id}`) }));
+    if (!found) return needle ? [...mates, ...local] : [...actions, ...places.slice(0, 5)];
     const remote: Item[] = [
       ...found.accounts.map((a) => ({ key: `acc:${a.id}`, group: 'accounts', title: a.name, go: go(`/accounts/${a.id}`) })),
       ...found.tasks.map((x) => ({
@@ -118,10 +139,10 @@ export function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; on
         sub: [r.typeName?.one?.[locale] ?? r.typeName?.one?.en, r.accountName].filter(Boolean).join(', '),
         go: go(r.accountId ? `/accounts/${r.accountId}` : `/records/${r.typeKey}`),
       })),
-      ...found.people.map((p) => ({ key: `p:${p.id}`, group: 'people', title: p.name, sub: p.email, go: go(`/accounts?owner=${p.id}`) })),
+      ...mates,
     ];
     return [...remote, ...local];
-  }, [found, q, t, words, boards, isAdmin, can, canWrite, me, locale, onClose, onNewBoard]);
+  }, [answer, q, t, words, boards, people, isAdmin, can, canWrite, me, locale, onClose, onNewBoard]);
 
   useEffect(() => setActive(0), [items.length, q]);
   useEffect(() => {
