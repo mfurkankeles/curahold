@@ -287,15 +287,16 @@ Tur 2'de eklenenler:
 | 1. Hız temeli | Tamam. Bazı hedefler hâlâ açık: aşağıdaki ölçüm tablosunda |
 | 2. Güvenlik | İlk yarı tamam: istek sınırları, müşteri ve kayıtlarda sürüm, yetki matrisi testi, gizli alanın sızdığı yollar kapandı. İkinci yarı sürüyor: passkey, iki adımlı giriş, değiştirilemez işlem günlüğü |
 | 3. Gerçek zamanlı kanal | Tamam: canlı kanal, kim burada (görev paneli, müşteri sayfası, sprint) |
-| 4. Tasarım sistemi ve erişilebilirlik | Sürüyor |
+| 4. Tasarım sistemi ve erişilebilirlik | Tamam, açık uçlarla. Kalanlar: sığmayan etiketler, birkaç axe bulgusu, içerik güvenlik politikası satır içi stile hâlâ izin veriyor (destek masasındaki oturum oynatıcı buna ihtiyaç duyuyor) |
 | 5. Yüzey yüzey cila | 4'ü bekliyor |
-| 6. Dokuz dilin tamamı | Sözlük dokuz dilde tam. Sözlük dışında kalan metinler sürüyor. Yardım merkezi ve demo hâlâ iki dilde |
+| 6. Dokuz dilin tamamı | Sözlük ve sözlük dışında kalan metinler dokuz dilde tamam. Yardım merkezi ve demo hâlâ iki dilde. Farsçada resmi hitap geçişi açık |
 | 7. İmza özellikler | Araştırma tablosu hazır; seçim ürün sahibinde |
 | 8. Yük testi, marj doğrulama, son denetim | Bekliyor |
 
 ### Tur 2 ölçümleri (15 Kasım: sabah → akşam)
 
 Biçim: hedef ← sabah → şimdi. ✓ hedef tutuyor. Hepsi bu akşam aynı makinede, yanında başka iş yokken ölçüldü.
+"Gece:" ile başlayan satırlar dil ve tasarım paketleri ana dala girdikten sonra ölçüldü.
 
 Tutanlar
 - Dokunma tepkisi (4 kat yavaş işlemci, 75. yüzdelik / en yavaş): ≤ 100 ms ← 56 / 128 ms → 64 / 112 ms ✓. En yavaşı yine görev açma.
@@ -309,6 +310,7 @@ Tutanlar
 
 Hız
 - Uygulamanın ilk ekran JavaScript'i: 170 KB ← 764 KB → 182 KB (66 KB'ı etkin dil). Tutmuyor, 12 KB fazla. Artık yalnızca etkin dil yükleniyor.
+  - Gece: 182 → 185 KB. Neden: hazır içerik (şablonlar, kayıt türleri, raporlar) koddan dil dosyalarına taşındı. Her dil dosyası 5–6 KB büyüdü. Süren hız çalışması bunu ayıracak.
 - Portalın ilk ekran JavaScript'i: 120 KB ← 564 KB → 57 KB ✓.
 - Sayfa kayması (CLS): 0,05 ← 0,50 → 0,000 ✓.
 - İlk açılış, 4G, ağın sakinleşmesi: 2,5 sn ← 4,5 sn → 3,6 sn. Tutmuyor.
@@ -327,20 +329,27 @@ Güvenlik ve güvenilirlik
 - Bir kişiden 400 istek: reddedilen var ← 0 → 1,5 sn'de 136'sı reddedildi (429, 1 sn sonra tekrar dene) ✓. Normal kullanım (10 sayfa, 50 istek) 0 ret ✓.
 - Müşteri ve kayıtlarda sürüm: var ← yok → var; aynı alan çakışınca ikinci kişiye söyleniyor ✓.
 - İçerik güvenlik politikasında 'unsafe-inline': yok ← var → hâlâ var. Satır içi stil 239 → 248; tasarım paketini bekliyor.
+  - Gece: satır içi stil 248 → 52. Kalanlar veriye bağlı (çubuk boyu, grafik konumu gibi). 'unsafe-inline' hâlâ var: destek masasındaki oturum oynatıcı buna ihtiyaç duyuyor.
 - Ürün ekranlarının (backlog, sprint) tarayıcı senaryosu: var ← yok → hâlâ yok.
 
 Arayüz
 - Erişilebilirlik (axe): 0 ← açık 456, koyu 427 (62 kritik) → açık 445, koyu 421 (62 kritik). Tutmuyor; tasarım paketi sürüyor.
+  - Gece: açık 445 → 3, koyu 421 → 8. Kritik bulgu yok, hepsi "ciddi". En sık: renk karşıtlığı (koyu temada 5), görünen yazı ile okunan adın uyuşmaması (2), küçük dokunma alanı (1). Tutmuyor ama az kaldı.
 - Sığmayan etiket: 0 ← 375 px'te 32, 768 px'te 30 → 32, 30 (1440 px'te 29). Değişmedi.
+  - Gece: 375 px'te 32, 768 px'te 29, 1440 px'te 29. Neredeyse değişmedi; bunlar yerleşim kararı istiyor (takvim öğesi başlığı, müşteri adı çipi, ekleme çubuğu).
 - Tasarım sistemi. Ölçüm değişti: sabah uygulama ile satış sitesi birlikte sayılıyordu, şimdi ayrı.
   - Uygulama + portal: tek seferlik stil 248, doğrudan renk 120, köşe yarıçapı 26 çeşit, yazı boyu 31 çeşit, boşlukların %54'ü ızgara dışı, 139 hareket süresinin 111'i 150–200 ms dışında.
   - Satış sitesi: doğrudan renk 105, köşe yarıçapı 21, yazı boyu 34, boşlukların %54'ü ızgara dışı, 82 sürenin 71'i dışarıda.
   - Hedef (0 / 0 / ≤ 6 / ≤ 10 / %0 / 0) hiçbirinde tutmuyor; tasarım paketi sürüyor.
+  - Gece, uygulama + portal: tek seferlik stil 248 → 52, doğrudan renk 120 → 17, köşe yarıçapı 26 → 7 çeşit, yazı boyu 31 → 11 çeşit, ızgara dışı boşluk %54 → %0 (1.913'te 1), 150–200 ms dışındaki süre 111 → 0. Hepsi artık token'dan geliyor.
+  - Kalan küçük farklar: 17 renk portalın kendi renk listesinde (.p-root), ölçüm onları henüz liste olarak saymıyor. Portalda bir eski köşe değeri (var(--r)) ve bir 22 px yazı, ana stil dosyasında bir 10 px boşluk var.
+  - Satış sitesi bu pakete dahil değildi; rakamları aynı.
 - Çerez onayı, telefonda liste ekranları, tarih biçimi, müşteri sayfasının düzeni: bu turda sayıyla ölçülmedi; tasarım ve cila paketlerinde.
 
 Diller
 - Sözlük: dokuz dilde tam ← İngilizce ve Türkçe 3.656, diğer yedisi 3.314 → dokuz dilin hepsinde 3.662 ✓.
 - Sözlük dışında yazılmış metin: 0 ← 417 → 417. "Türkçe mi?" kontrolü: 0 ← 70 → 66. Sürüyor.
+  - Gece: sözlük dışı metin 417 → 0 ✓, "Türkçe mi?" kontrolü 66 → 0 ✓. Yardım sayfaları ayrı sayılıyor: hâlâ iki dilde, 3 dosyada 7 kontrol.
 - Yardım merkezi ve demo: dokuz dil ← iki → iki.
 
 ---
