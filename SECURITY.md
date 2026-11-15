@@ -61,6 +61,31 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 - A compromised `AUTH_SECRET` allows forging state tokens, sign-up tickets and file-download links; a compromised `SECRETS_KEY`
   exposes stored CRM and chat credentials. See rotation in the runbook.
 
+## Further controls (Tur 2, 15 November 2026)
+
+- **Threat model and ASVS pass**: [docs/security/threat-model.md](docs/security/threat-model.md) (six surfaces) and
+  [docs/security/asvs.md](docs/security/asvs.md) (ASVS 4.0.3 Level 2 + OWASP API Top 10, with the open items and what closing them takes).
+- **Authorisation matrix**: `tests/isolation-routes.test.ts` calls every API address as five roles (admin, manager, member,
+  read-only seat, a role with no permission). A new address without a classification fails the test.
+- **Field permissions on every way out**: list, one record, export pages, search, API keys, the AI connector, webhooks
+  (filtered by the role of the person who set the webhook up), health reasons, timeline, the weekly email and the
+  whitespace table (`tests/field-outs.test.ts`).
+- **Versions** on tasks, customers and records: a save naming the version it started from is refused (409, with the
+  current value) only when the same field changed meanwhile; different fields merge. Writers that send no version
+  (public API, AI connector, automations, imports, CRM sync) write as before and still move the version (migration 0051).
+- **AI connector**: acts with the person's rights; changes need a write-enabled connection and each is written to the
+  audit trail as `ai.changed` with the tool's name; every read result says that stored text is data, not instructions.
+- **Uploads**: picture types are believed only when the first bytes match; everything else is `attachment` with `nosniff`.
+  Not yet: a separate files domain.
+- **Outbound addresses**: webhooks, chat webhooks, keyed CRMs and SSO token/key addresses refuse local, private and
+  IPv6-literal hosts and plain http (SSO: on the shared service; a self-hosted install may use its own network).
+- **Logs**: the error table and the platform log mask bearer tokens, keys, secret links, `token=`-style values and email
+  addresses (`redact()` in `api/src/lib/errlog.ts`, `tests/redact.test.ts`).
+
+Still open (details in asvs.md): passkeys / second factor for employees and staff, re-authentication before dangerous
+actions, a separate files domain, `'unsafe-inline'` styles in the CSP, a write-once audit trail, role separation (row 2
+below), and `/.well-known/security.txt`.
+
 ## Known operational requirements
 
 These are things the **operators** must ensure, because they are deployment facts the code cannot enforce. Status is stated
@@ -68,7 +93,7 @@ honestly; items marked OPEN are not done today.
 
 | # | Requirement | Why | Status |
 | --- | --- | --- | --- |
-| 1 | **Rate limiting at the edge** (Cloudflare rate rules) for `POST /api/*` sign-in, magic-link, sign-up, help and webhook endpoints, and the portal's `/papi/*` | The application deliberately does not rate-limit (see `api/src/lib/headers.ts`). Without edge rules, sign-in link and sign-up endpoints can be abused for email bombing and brute force. | **OPEN**: no rules are defined in this repository. Define and document them (the code comments point to `db/OPS-SECURITY.md`, which does not exist; this file replaces it). |
+| 1 | **Request limits** | Flooding, brute force, email bombing. | **Done in the application** (`api/src/lib/ratelimit.ts`): token buckets per network address, per person, per company, with tighter budgets for sign-in steps, invitations, search, exports and the AI connector; 429 with `Retry-After`. On Workers the buckets live per isolate (approximate under a spread-out attack); self-hosted, one process sees all and the limit is exact. Invitations per company per hour are counted in the database (exact everywhere). Optional extra: one free Cloudflare rate rule on `POST /api/auth/*` and `/papi/auth/*`. |
 | 2 | **Role separation**: a separate login role for the API that does not own the tables, with `FORCE ROW LEVEL SECURITY` for the request roles, plus a distinct, tightly guarded owner/migration role used only by `system()` work | Limits the damage of SQL injection or a leaked DB credential (see above). The current model uses one owner login; README "Database roles" describes the minimum. | **OPEN** (deployment, not schema). Design needed because `system()` paths currently share the connection. |
 | 3 | `PLATFORM_OWNER` (or `SUPPORT_STAFF`) set in every multi-company install | Owner-only metrics fail closed; the app refuses to start without it. | Enforced at start. |
 | 4 | Per-person support keys (`STAFF_KEYS`) in production, shared `STAFF_KEY` disabled in practice | Every support entry must be attributable; one leaver = one key removed. | Supported; operator must configure. |
