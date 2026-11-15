@@ -359,7 +359,7 @@ a { color: var(--brand-ink); }
 }
 .input:focus, .select:focus, .textarea:focus { border-color: var(--brand); outline: 2px solid var(--brand-wash); outline-offset: 0; }
 .textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
-.checkbox { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.checkbox { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap-min); cursor: pointer; }
 .checkbox input { width: 16px; height: 16px; accent-color: var(--brand); }
 
 .seg { display: inline-flex; gap: 0; padding: 4px; border-radius: var(--r-m); background: var(--sunk); border: 1px solid var(--line); }

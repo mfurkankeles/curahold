@@ -237,7 +237,10 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
       <button type="button" id={pid} className="picker__button" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${pid}l ${pid}`} disabled={disabled} onClick={() => setOpen((o) => !o)}>
         {selected.length ? (
           <>
-            <Avatars people={selected} max={4} />
+            {/* The faces repeat the names that follow: hidden from the name, so it says what the button shows. */}
+            <span aria-hidden="true" className="u-display-flex">
+              <Avatars people={selected} max={4} />
+            </span>
             <span className="u-overflow-hidden u-text-overflow-ellipsis u-white-space-nowrap">{selected.map((p) => p.name).join(', ')}</span>
           </>
         ) : (

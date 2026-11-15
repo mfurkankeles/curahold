@@ -387,7 +387,7 @@ if (on('fit')) {
         const samples: string[] = [];
         for (const el of document.querySelectorAll<HTMLElement>('body *')) {
           const box = el.getBoundingClientRect();
-          if (!box.width || !box.height || getComputedStyle(el).visibility === 'hidden') continue;
+          if (!box.width || !box.height || getComputedStyle(el).visibility === 'hidden' || el.closest('.sr-only')) continue; // text for screen readers only is cut on purpose
           const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim().length > 1);
           // A label (button, tab, heading, menu item, field name) whose own text does not fit its box.
           if (ownText && el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible' && el.closest('button, [role="tab"], h1, h2, h3, label, th, .btn, .tab, .navlink, .admin__link, .field__label, .stat__label, .sheet__title')) {
