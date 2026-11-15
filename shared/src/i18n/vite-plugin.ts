@@ -10,8 +10,8 @@
 //    not translated yet — so a complete language costs one download and an
 //    incomplete one still never shows a raw key. `keys` narrows what ships (the
 //    portal needs a few hundred phrases, not thousands).
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
 import type { Plugin } from 'vite';
 import { dictionaries, LOCALES, type Locale } from './index';
 
@@ -29,7 +29,18 @@ export interface I18nPluginOptions {
   swap: boolean;
   /** Ship only the keys this returns true for (default: all). */
   keys?: (key: string) => boolean;
+  /**
+   * Ship each language in two parts: `virtual:curahold-dict/<l>` holds what the
+   * files reached statically from `entries` use; `virtual:curahold-dict/<l>/rest`
+   * the rest. Dynamic imports in files under `dirs` are wrapped so they resolve
+   * only once the rest is in (`loader` exports `afterFullLanguage`); an import
+   * marked first-screen is left alone. Without this option the rest is empty.
+   */
+  first?: { entries: string[]; dirs: string[]; loader: string };
 }
+const REST = '/rest';
+// Its own name, so its chunk reads _curahold-rest_<locale>.
+const RESOLVED_REST = '\0curahold-rest:';
 
 /** Every key in English, the language that defines them. */
 export const ALL_KEYS = Object.keys(dictionaries.en);
@@ -48,15 +59,20 @@ export function filledDictionary(locale: Locale, keep: (key: string) => boolean 
  * key, and every key under a static prefix used in a template (`portal.method.${x}`).
  */
 export function keysUsedIn(dirs: string[]): (key: string) => boolean {
-  const all = new Set(ALL_KEYS);
-  const used = new Set<string>();
-  const prefixes = new Set<string>();
   const files = (dir: string): string[] =>
     readdirSync(dir).flatMap((n) => {
       const p = join(dir, n);
       return statSync(p).isDirectory() ? files(p) : /\.(ts|tsx)$/.test(n) ? [p] : [];
     });
-  for (const f of dirs.flatMap(files)) {
+  return keysUsedInFiles(dirs.flatMap(files));
+}
+
+/** The same, for a list of files. */
+export function keysUsedInFiles(list: string[]): (key: string) => boolean {
+  const all = new Set(ALL_KEYS);
+  const used = new Set<string>();
+  const prefixes = new Set<string>();
+  for (const f of list) {
     const s = readFileSync(f, 'utf8');
     for (const m of s.matchAll(/(['"`])([A-Za-z][\w.-]{1,100})\1/g)) if (all.has(m[2])) used.add(m[2]);
     for (const m of s.matchAll(/`([A-Za-z]\w*(?:\.[\w-]+)*\.)\$\{/g)) prefixes.add(m[1]);
@@ -65,24 +81,74 @@ export function keysUsedIn(dirs: string[]): (key: string) => boolean {
   return (k) => used.has(k);
 }
 
-export function i18nForBrowser({ swap, keys }: I18nPluginOptions): Plugin {
+/**
+ * Every source file the given entry files reach through static imports (not
+ * `import()`, not `import type`): what is on screen before any lazy chunk loads.
+ * The dictionaries themselves (shared/src/i18n) are left out.
+ */
+export function staticClosure(entries: string[]): string[] {
+  const seen = new Set<string>();
+  const find = (p: string) => [p, `${p}.ts`, `${p}.tsx`, join(p, 'index.ts'), join(p, 'index.tsx')].find((f) => existsSync(f) && statSync(f).isFile());
+  const visit = (file: string) => {
+    if (seen.has(file) || /[\\/]shared[\\/]src[\\/]i18n[\\/]/.test(file) || !/\.(ts|tsx)$/.test(file)) return;
+    seen.add(file);
+    const src = readFileSync(file, 'utf8');
+    for (const m of src.matchAll(/(?:^|[\n;])\s*(?:import|export)\s+(?!type\b)(?:[^'";]*?\sfrom\s*)?(['"])(\.{1,2}\/[^'"]+)\1/g)) {
+      const f = find(resolve(dirname(file), m[2]));
+      if (f) visit(f);
+    }
+  };
+  for (const e of entries) visit(resolve(e));
+  return [...seen];
+}
+
+/** The mark on a dynamic import that is part of the first screen: `import(/* first-screen *\/ './pages/Home')`. */
+const FIRST_MARK = 'first-screen';
+const DYNAMIC = /\bimport\(\s*(\/\*([^*]*)\*\/\s*)?(['"])(\.{1,2}\/[^'"]+)\3\s*\)/g;
+
+export function i18nForBrowser({ swap, keys, first }: I18nPluginOptions): Plugin {
+  // Split in two: the phrases the first screen's own files use come with it;
+  // the rest follows, and every other screen waits for it (see `transform`).
+  let firstKeys: ((key: string) => boolean) | null = null;
+  const firstOf = () => (firstKeys ??= first ? keysUsedInFiles(staticClosure(first.entries)) : () => true);
+  const inScope = (id: string) => !!first && first.dirs.some((d) => id.startsWith(resolve(d) + sep)) && /\.(ts|tsx)$/.test(id);
   return {
     name: 'curahold-i18n',
     enforce: 'pre',
     async resolveId(source, importer, opts) {
-      if (source.startsWith(PREFIX)) return RESOLVED + source.slice(PREFIX.length);
+      if (source.startsWith(PREFIX)) {
+        const name = source.slice(PREFIX.length);
+        return name.endsWith(REST) ? RESOLVED_REST + name.slice(0, -REST.length) : RESOLVED + name;
+      }
       if (!swap || !importer || !/i18n(\/index(\.ts)?)?$/.test(source) || source.includes('virtual:')) return null;
       const r = await this.resolve(source, importer, { ...opts, skipSelf: true });
       if (r && /[\\/]shared[\\/]src[\\/]i18n[\\/]index\.ts$/.test(r.id)) return r.id.replace(/index\.ts$/, 'core.ts');
       return null;
     },
     load(id) {
-      if (!id.startsWith(RESOLVED)) return null;
-      const locale = id.slice(RESOLVED.length) as Locale;
+      const rest = id.startsWith(RESOLVED_REST);
+      if (!rest && !id.startsWith(RESOLVED)) return null;
+      const locale = id.slice((rest ? RESOLVED_REST : RESOLVED).length) as Locale;
       if (!LOCALES.includes(locale)) throw new Error(`unknown locale ${locale}`);
-      // JSON.parse of one string literal parses faster than an object literal.
+      // Server-only keys never reach a browser, in either part.
       const keep = (k: string) => !SERVER_ONLY.test(k) && (keys ? keys(k) : true);
-      return `export default JSON.parse(${JSON.stringify(JSON.stringify(filledDictionary(locale, keep)))});`;
+      const part = first ? (rest ? (k: string) => keep(k) && !firstOf()(k) : (k: string) => keep(k) && firstOf()(k)) : rest ? () => false : keep;
+      // JSON.parse of one string literal parses faster than an object literal.
+      return `export default JSON.parse(${JSON.stringify(JSON.stringify(filledDictionary(locale, part)))});`;
+    },
+    // Every other screen is a lazy chunk: its import also waits for the rest of
+    // the language, so no screen past the first can ever draw a missing phrase.
+    // The chunk still downloads at once; only drawing it waits.
+    transform(code, id) {
+      if (!inScope(id) || !code.includes('import(') || id.endsWith(`${sep}i18n.tsx`)) return null;
+      let hit = false;
+      const out = code.replace(DYNAMIC, (all, _c, note: string | undefined) => {
+        if (note?.includes(FIRST_MARK)) return all;
+        hit = true;
+        return `__curaholdFull(${all})`;
+      });
+      if (!hit) return null;
+      return { code: `import { afterFullLanguage as __curaholdFull } from ${JSON.stringify(first!.loader)};\n${out}`, map: null };
     },
   };
 }

@@ -1,15 +1,26 @@
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { i18nForBrowser } from './shared/src/i18n/vite-plugin';
+
+const web = (p: string) => fileURLToPath(new URL(`./web/${p}`, import.meta.url));
 
 // Local development: open http://demo.localhost:5173. The proxy keeps the
 // Host header, so the API sees the company subdomain exactly as in production.
 export default defineConfig({
   root: 'web',
   define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
-  // One language at a time: see shared/src/i18n/vite-plugin.ts.
-  plugins: [i18nForBrowser({ swap: true }), react()],
+  // One language at a time, in two parts: the first screen's phrases (what the
+  // app shell and Home reach without a lazy import), then the rest — which every
+  // other screen waits for. See shared/src/i18n/vite-plugin.ts.
+  plugins: [
+    i18nForBrowser({
+      swap: true,
+      first: { entries: [web('src/main.tsx'), web('src/pages/Home.tsx')], dirs: [web('src')], loader: web('src/lib/i18n.tsx') },
+    }),
+    react(),
+  ],
   build: {
     outDir: '../dist/web',
     emptyOutDir: true,

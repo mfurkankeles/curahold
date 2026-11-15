@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import {
   accountWords,
   bcp47Of,
+  dictionaries,
   hasDictionary,
   LOCALE_INFO,
   normalizeLocale,
@@ -14,11 +15,14 @@ import {
   type Vars,
 } from '../../../shared/src/i18n/core';
 
-// One language at a time: each dictionary is its own chunk, fetched when that
-// language is first needed (already filled with English where a phrase is not
-// translated yet — see shared/src/i18n/vite-plugin.ts). Literal imports, so
-// the bundler can see each one.
-const LOADERS: Record<Locale, () => Promise<{ default: Dictionary }>> = {
+// One language at a time, in two parts (see shared/src/i18n/vite-plugin.ts):
+// the phrases the first screen uses, then the rest of the language. Each is its
+// own chunk, already filled with English where a phrase is not translated yet.
+// The first screen draws as soon as the first part is in; every other screen is
+// a lazy chunk whose import also waits for the rest (`afterFullLanguage`, added
+// to each such import by the build). Literal imports, so the bundler sees each.
+type Part = () => Promise<{ default: Dictionary }>;
+const LOADERS: Record<Locale, Part> = {
   en: () => import('virtual:curahold-dict/en'),
   tr: () => import('virtual:curahold-dict/tr'),
   ar: () => import('virtual:curahold-dict/ar'),
@@ -29,16 +33,70 @@ const LOADERS: Record<Locale, () => Promise<{ default: Dictionary }>> = {
   ja: () => import('virtual:curahold-dict/ja'),
   ko: () => import('virtual:curahold-dict/ko'),
 };
+const REST_LOADERS: Record<Locale, Part> = {
+  en: () => import('virtual:curahold-dict/en/rest'),
+  tr: () => import('virtual:curahold-dict/tr/rest'),
+  ar: () => import('virtual:curahold-dict/ar/rest'),
+  he: () => import('virtual:curahold-dict/he/rest'),
+  fa: () => import('virtual:curahold-dict/fa/rest'),
+  'zh-Hans': () => import('virtual:curahold-dict/zh-Hans/rest'),
+  'zh-Hant': () => import('virtual:curahold-dict/zh-Hant/rest'),
+  ja: () => import('virtual:curahold-dict/ja/rest'),
+  ko: () => import('virtual:curahold-dict/ko/rest'),
+};
 const pending = new Map<Locale, Promise<void>>();
+const restPending = new Map<Locale, Promise<void>>();
+const parts = new Map<Locale, { first?: Dictionary; rest?: Dictionary }>();
+/** Told when the rest of a language lands, so what is on screen draws again. */
+const listeners = new Set<() => void>();
 
-/** Fetches and registers a language (once). Resolves when `t` can speak it. */
+function put(l: Locale, part: 'first' | 'rest', dict: Dictionary) {
+  const p = { ...parts.get(l), [part]: dict };
+  parts.set(l, p);
+  // Registered only once the first part is here: before that the language is not "loaded".
+  if (p.first) registerDictionary(l, p.rest ? { ...p.first, ...p.rest } : p.first);
+  if (p.first && p.rest) listeners.forEach((f) => f());
+}
+const hasRest = (l: Locale) => !!parts.get(l)?.rest;
+/** The whole language is in (a dictionary registered some other way, as in the demo, counts as whole). */
+const isWhole = (l: Locale) => hasDictionary(l) && (hasRest(l) || !parts.get(l)?.first);
+
+/** Fetches the rest of a language (once). */
+function loadRest(l: Locale): Promise<void> {
+  if (isWhole(l)) return Promise.resolve();
+  let p = restPending.get(l);
+  if (!p) {
+    p = REST_LOADERS[l]().then(
+      (m) => put(l, 'rest', m.default),
+      (e) => {
+        restPending.delete(l);
+        throw e;
+      },
+    );
+    restPending.set(l, p);
+  }
+  return p;
+}
+
+// The language the screens are being drawn in; lazy screens wait for all of it.
+let target: Locale | null = null;
+let decided: () => void = () => undefined;
+const targetSet = new Promise<void>((r) => (decided = r));
+
+/** The language the screens are drawn in (set by I18nProvider): its rest is fetched, and lazy screens wait for it. */
+function drawIn(l: Locale) {
+  target = l;
+  decided();
+}
+
+/** Fetches and registers a language's first part (once). Resolves when `t` can speak it. */
 export function loadLocale(l: Locale): Promise<void> {
   if (hasDictionary(l)) return Promise.resolve();
   let p = pending.get(l);
   if (!p) {
     p = LOADERS[l]().then(
       (m) => {
-        registerDictionary(l, m.default);
+        put(l, 'first', m.default);
         rememberHint(l);
       },
       (e) => {
@@ -49,6 +107,16 @@ export function loadLocale(l: Locale): Promise<void> {
     pending.set(l, p);
   }
   return p;
+}
+
+/**
+ * A lazy screen's import, resolved once the language it will be drawn in is all
+ * here (a failed download does not hold the screen: it draws, missing phrases fall
+ * back as usual). The build wraps every dynamic import in web/src with this.
+ */
+export function afterFullLanguage<M>(load: Promise<M>): Promise<M> {
+  const whole = targetSet.then(() => (target ? loadRest(target).catch(() => undefined) : undefined));
+  return Promise.all([load, whole]).then(([m]) => m);
 }
 export const isLocaleLoaded = hasDictionary;
 
@@ -93,19 +161,33 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
   const [shown, setShown] = useState<Locale | null>(() => (hasDictionary(wanted) ? wanted : null));
   // `hold`: the language is not decided yet (the app is still asking the server);
   // fetch nothing on a guess, so a first visit never downloads two dictionaries.
+  const [, redraw] = useState(0);
+  useEffect(() => {
+    const f = () => redraw((n) => n + 1);
+    listeners.add(f);
+    return () => void listeners.delete(f);
+  }, []);
   useEffect(() => {
     if (hold && !hasDictionary(wanted)) return;
     let live = true;
+    drawIn(wanted);
+    // The first load draws on the first part (the rest follows at once); a switch
+    // waits for the whole language.
     loadLocale(wanted)
+      .then(() => {
+        const rest = loadRest(wanted).catch(() => undefined);
+        return shown ? rest : undefined;
+      })
       .catch(() => (wanted === 'en' ? Promise.reject(new Error('no dictionary')) : loadLocale('en').then(() => 'en' as const)))
       .then((got) => live && setShown(got ?? wanted))
       .catch(() => undefined);
     return () => {
       live = false;
     };
+    // (`shown` only picks how much to wait for; it is not a reason to fetch again.)
   }, [wanted, hold]);
   // Checked while drawing too: the moment a dictionary lands, every render speaks it.
-  const locale: Locale = hasDictionary(wanted) ? wanted : (shown ?? wanted);
+  const locale: Locale = hasDictionary(wanted) && (isWhole(wanted) || !shown || shown === wanted) ? wanted : (shown ?? wanted);
   // The page reads in the language's own direction: right-to-left for Arabic,
   // Hebrew and Persian. Set on <html> so the whole layout follows.
   useEffect(() => {
@@ -120,14 +202,17 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
     const tag = bcp47Of(locale);
     return {
       locale,
-      t: (key, vars) => translate(locale, key, vars, terms),
+      // A phrase from the rest of the language, asked for before the rest is here
+      // (one the first screen's files do not name, such as a key the server sent):
+      // blank for that moment, never the raw key; the rest's arrival draws it again.
+      t: (key, vars) => (restPending.has(locale) && !hasRest(locale) && dictionaries[locale]?.[key] === undefined ? '' : translate(locale, key, vars, terms)),
       words: accountWords(locale, terms),
       fmtDate: (iso, opts) => {
         const d = iso.length === 10 ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
         return new Intl.DateTimeFormat(tag, opts ?? { day: 'numeric', month: 'short' }).format(d);
       },
     };
-  }, [locale, terms]);
+  }, [locale, terms, parts.get(locale)?.rest]);
   if (!shown && !hasDictionary(wanted)) return null;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

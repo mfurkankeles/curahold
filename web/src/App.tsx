@@ -29,7 +29,7 @@ const once = <M,>(load: Loader<M>): Loader<M> => {
 };
 const page = <M extends Record<K, ComponentType<any>>, K extends keyof M>(load: Loader<M>, name: K) => lazy(() => load().then((m) => ({ default: m[name] })));
 const load = {
-  home: once(() => import('./pages/Home')),
+  home: once(() => import(/* first-screen */ './pages/Home')),
   myTasks: once(() => import('./pages/MyTasks')),
   board: once(() => import('./pages/BoardPage')),
   accounts: once(() => import('./pages/Accounts')),
