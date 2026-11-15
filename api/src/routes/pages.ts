@@ -151,9 +151,15 @@ pageRoutes.get('/pages/:id/data', async (c) => {
       people = (await q.query<{ user_id: string }>('select user_id from team_members where team_id = $1', [team])).map((r) => r.user_id);
       if (!people.length) people = ['00000000-0000-0000-0000-000000000000'];
     }
-    return cardsData(c, q, row.cards ?? [], people);
+    const cards = await cardsData(c, q, row.cards ?? [], people);
+    // Amounts are counted in the company's currency; say so when a customer kept in another one was converted.
+    const [fx] = await q.query<{ v: boolean }>(
+      `select exists(select 1 from accounts a, orgs o where o.id = app_org() and a.currency is not null and a.currency <> o.currency
+                     and (o.settings->'fx'->'rates') ? a.currency) as v`,
+    );
+    return { cards, converted: !!fx?.v };
   });
-  return c.json({ data, at: new Date(nowOf(c.get('deps'))).toISOString() });
+  return c.json({ data: data.cards, converted: data.converted, at: new Date(nowOf(c.get('deps'))).toISOString() });
 });
 
 /** What cards would show, before the page is saved (for the editor). */

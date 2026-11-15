@@ -1,7 +1,7 @@
 // Home: the page an administrator chose for this person's role, made of
 // cards. Each card is filled with what this person may see, so one page
 // works for a whole role. Administrators edit pages in place.
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { AccountField, Role } from '../../../shared/src/model';
 import {
@@ -22,7 +22,7 @@ import { PROVIDER_NAMES } from '../components/Connections';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted, loadStart, startKnown } from '../components/GettingStarted';
-import { Avatar, Confirm, Dialog } from '../components/ui';
+import { Avatar, Confirm, ConvertedNote, Dialog } from '../components/ui';
 import { CountUp } from '../components/CountUp';
 import { ReportChart } from '../components/Charts';
 import { CHARTS, REPORT_LIBRARY, type SavedReport } from '../../../shared/src/reports';
@@ -77,6 +77,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   const [pages, setPages] = useState<Page[] | null>(null);
   const [homeId, setHomeId] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
+  const [converted, setConverted] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const admin = can('org.manage') && !me.previewBy;
   // The getting-started box sits above the cards: the cards wait until it is
@@ -100,7 +101,9 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   const current = pages?.find((p) => p.id === (pageId ?? homeId)) ?? null;
   const loadData = useCallback(async () => {
     if (!current) return;
-    setData((await get<{ data: Data }>(`/pages/${current.id}/data`)).data);
+    const r = await get<{ data: Data; converted?: boolean }>(`/pages/${current.id}/data`);
+    setData(r.data);
+    setConverted(!!r.converted);
   }, [current?.id, current?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setData(null);
@@ -218,11 +221,15 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         {(current.id === homeId && !startReady) || (data === null && current.cards.length > 0) ? null : current.cards.length === 0 ? (
           <EmptyState icon="layout" title={t('home.emptyPage')} />
         ) : (
-          <div className="panes">
-            {shown.map((card) => (
-              <Tile key={card.id} card={card} data={data?.[card.id]} />
-            ))}
-          </div>
+          <Converted.Provider value={converted}>
+            <div className="panes">
+              {shown.map((card) => (
+                <Tile key={card.id} card={card} data={data?.[card.id]} />
+              ))}
+            </div>
+            {/* One currency on the page: the company's. Amounts kept in another were converted, and it says so. */}
+            {converted && data && Object.values(data).some(hasMoney) && <ConvertedNote currency={me.org.currency} ratesAt={me.org.fx?.updatedAt} />}
+          </Converted.Provider>
         )}
       </div>
     </>
@@ -231,15 +238,22 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
 
 // ------------------------------------------------------------------ panes
 
+/** Whether the page's amounts include customers kept in another currency (converted at the company's rates). */
+const Converted = createContext(false);
+const hasMoney = (d: CardData) =>
+  (d.kind === 'number' && (d.unit === 'money' || d.sub?.unit === 'money')) || (d.kind === 'people' && d.unit === 'money') || (d.kind === 'list' && d.rows.some((r) => r.amount != null));
+
 function useMoney() {
   const { locale } = useI18n();
   const { me } = useStore();
+  const converted = useContext(Converted);
   const tag = intlTag(locale);
   return useCallback(
     (v: number, compact = false) => {
-      return formatMoney(v, me.org.currency, locale, { compact });
+      const text = formatMoney(v, me.org.currency, locale, { compact });
+      return converted ? `≈ ${text}` : text;
     },
-    [tag, me.org.currency],
+    [tag, me.org.currency, converted],
   );
 }
 
