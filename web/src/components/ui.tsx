@@ -21,9 +21,9 @@ export function Avatar({ person, large }: { person?: Person; large?: boolean }) 
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const name = person?.name ?? t('common.unknownUser');
   return (
-    <span className={`avatar${large ? ' avatar--l' : ''}`} data-tone={person ? h % AVATAR_TONES : 'none'} title={name} aria-label={name} role="img">
-      {person ? initials(person.name) : '?'}
-    </span>
+    // The initials are drawn by CSS (data-initials), not written as text: the avatar is an image named
+    // after the person, so a control holding it is named by the names it shows (axe label-content-name-mismatch).
+    <span className={`avatar${large ? ' avatar--l' : ''}`} data-tone={person ? h % AVATAR_TONES : 'none'} data-initials={person ? initials(person.name) : '?'} title={name} aria-label={name} role="img" />
   );
 }
 

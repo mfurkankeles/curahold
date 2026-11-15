@@ -165,3 +165,11 @@ or `toLocale*String` itself (tests/format.test.ts fails if one does).
 - **One currency per screen.** A list shows every amount in the company's currency; an amount kept in
   another is converted and marked `≈`, and `ConvertedNote` (components/ui.tsx) under the list says at which
   rates and of which date. A screen about one customer shows that customer's own currency.
+
+### Targets and focus of shared controls
+
+Every shared control is at least `--tap-min` (24 px) and `--tap` (44 px) on a touch screen — the date
+field and its calendar days, the filter button and sheet, chips, toasts and their Undo/close, checkboxes —
+and its keyboard focus shows the ring (`--ring`, drawn inside with `outline-offset: -2px` where the control
+clips). Avatars draw their initials with CSS (`data-initials`): the avatar is an image named after the person,
+so a button holding avatars is named by the names it shows. Checked by `browser.mts tap fit axe`.

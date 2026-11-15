@@ -56,7 +56,7 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
   .datepop__scrim { display: block; position: fixed; inset: 0; z-index: 59; background: var(--scrim); animation: fade-in var(--dur-fast) ease; }
   .datepop {
     inset: auto 0 0 0; inline-size: auto; visibility: visible; padding: 16px 16px 24px;
-    border-radius: var(--r-l) var(--r-l) 0 0; border-block-end: 0; box-shadow: var(--shadow-3);
+    border-radius: var(--r-l); border-end-start-radius: 0; border-end-end-radius: 0; border-block-end: 0; box-shadow: var(--shadow-3);
     animation: sheet-up var(--dur) var(--ease);
   }
   .datepop__day { min-block-size: var(--tap); font-size: var(--fs-m); }
@@ -77,7 +77,7 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 .filtersheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; background: var(--scrim); animation: fade-in var(--dur-fast) ease; }
 .filtersheet__box {
   display: flex; flex-direction: column; inline-size: 100%; max-block-size: 88vh; background: var(--surface); color: var(--ink);
-  border-radius: var(--r-l) var(--r-l) 0 0; box-shadow: var(--shadow-3); animation: sheet-up var(--dur) var(--ease);
+  border-radius: var(--r-l); border-end-start-radius: 0; border-end-end-radius: 0; box-shadow: var(--shadow-3); animation: sheet-up var(--dur) var(--ease);
 }
 .filtersheet__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-block-end: 1px solid var(--line); }
 .filtersheet__title { margin: 0; font-size: var(--fs-l); font-weight: 600; }
@@ -106,3 +106,15 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 
 /* ------------------------------------------------------------ money in text (lib/format.ts) */
 .convertednote { margin: 0 0 12px; color: var(--ink-3); font-size: var(--fs-xs); }
+
+/* ------------------------------------------------------------ targets and focus of shared controls
+   Every shared control is at least --tap-min (24 px) to aim at, and --tap (44 px) on a touch screen;
+   its keyboard focus is always visible (the ring, inside when the control clips it). */
+.toast__action, .toast__close, .fchip { min-block-size: var(--tap-min); }
+.toast__close { min-inline-size: var(--tap-min); }
+@media (pointer: coarse) {
+  .toast__action, .toast__close, .fchip, .filtersheet__open, .datefield__time, .datefield__input, .checkbox { min-block-size: var(--tap); }
+  .toast__close { min-inline-size: var(--tap); }
+}
+.popmenu__item:focus-visible, .menu__item:focus-visible, .picker__opt:has(:focus-visible), .fchip:focus-visible, .toast__action:focus-visible, .toast__close:focus-visible { outline: var(--ring); outline-offset: -2px; }
+.avatar[data-initials]::before { content: attr(data-initials); }
