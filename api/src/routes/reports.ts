@@ -19,36 +19,66 @@ const DONE = `t.done_at is not null`;
 const BASE = `from tasks t join boards b on b.id = t.board_id where b.archived_at is null and t.parent_id is null and ($1::uuid is null or t.board_id = $1::uuid)`;
 const OPEN = `t.archived_at is null and t.done_at is null`;
 // What a report looks at: everything still open, and what was finished or came in during the last twelve weeks.
-const RECENT = `(t.done_at is null or t.done_at > now() - interval '90 days' or t.created_at > now() - interval '90 days')`;
+// (An archived task that never finished and came in long ago counts for nothing here, so it is not read.)
+const RECENT = `((t.done_at is null and t.archived_at is null) or t.done_at > now() - interval '90 days' or t.created_at > now() - interval '90 days')`;
 
 reportRoutes.get('/reports/work', async (c) => {
   const b = c.req.query('board');
   const board = b && uuid.safeParse(b).success ? b : null;
   const out = await run(c, async (q) => {
-    const [totals] = await q.query(
-      `select count(*) filter (where ${OPEN})::int as open,
-              count(*) filter (where ${OPEN} and t.due_date < app_today())::int as overdue,
-              count(*) filter (where ${OPEN} and t.due_date between app_today() and app_today() + 7)::int as due_week,
-              count(*) filter (where ${OPEN} and cardinality(t.assignee_ids) = 0)::int as unassigned,
-              count(*) filter (where t.done_at > now() - interval '30 days')::int as done_30,
-              count(*) filter (where t.created_at > now() - interval '30 days')::int as created_30,
-              round(avg(extract(epoch from (t.done_at - t.created_at)) / 86400) filter (where t.done_at > now() - interval '90 days'))::int as cycle_days,
-              round(100.0 * count(*) filter (where t.done_at > now() - interval '90 days' and t.due_date is not null and t.done_at::date <= t.due_date)
-                    / nullif(count(*) filter (where t.done_at > now() - interval '90 days' and t.due_date is not null), 0))::int as on_time
-         ${BASE} and ${RECENT}`,
+    // One pass over the tasks a report looks at, grouped four ways at once (per board, per week created,
+    // per week finished, per set of assignees); everything else is summed from those few hundred groups.
+    // app_today() is read once (as a sub-select) rather than once per row, and the grouping gets the
+    // memory to hash instead of spilling a sort to disk.
+    await q.query(`set local work_mem = '16MB'`);
+    const [row] = await q.query(
+      `with d as materialized (
+         select (select app_today()) as today, date_trunc('week', now()) - interval '11 weeks' as w0,
+                now() - interval '30 days' as d30, now() - interval '90 days' as d90),
+       s as (
+         select board_id, cw, dw, who, grouping(board_id) as gb,
+                count(*) filter (where open)::int as open,
+                count(*) filter (where open and due_date < today)::int as overdue,
+                count(*) filter (where open and due_date between today and today + 7)::int as due_week,
+                count(*) filter (where open and cardinality(assignee_ids) = 0)::int as unassigned,
+                count(*) filter (where done_at > d30)::int as done_30,
+                count(*) filter (where created_at > d30)::int as created_30,
+                sum(extract(epoch from (done_at - created_at)) / 86400) filter (where done_at > d90) as cycle_sum,
+                count(*) filter (where done_at > d90) as cycle_n,
+                count(*) filter (where done_at > d90 and due_date is not null and done_at::date <= due_date) as ontime_n,
+                count(*) filter (where done_at > d90 and due_date is not null) as ontime_d,
+                count(*)::int as n
+           from (
+             select t.board_id, t.created_at, t.done_at, t.due_date, t.assignee_ids, d.today, d.d30, d.d90,
+                    (${OPEN}) as open,
+                    case when t.created_at >= d.w0 then date_trunc('week', t.created_at) end as cw,
+                    case when t.done_at >= d.w0 then date_trunc('week', t.done_at) end as dw,
+                    case when (${OPEN}) or t.done_at > d.d30 then t.assignee_ids end as who
+               from d, tasks t join boards b on b.id = t.board_id
+              where b.archived_at is null and t.parent_id is null and ($1::uuid is null or t.board_id = $1::uuid) and ${RECENT}) r
+          group by grouping sets ((board_id), (cw), (dw), (who)))
+       select
+         (select json_build_object('open', coalesce(sum(open), 0), 'overdue', coalesce(sum(overdue), 0), 'due_week', coalesce(sum(due_week), 0),
+                   'unassigned', coalesce(sum(unassigned), 0), 'done_30', coalesce(sum(done_30), 0), 'created_30', coalesce(sum(created_30), 0),
+                   'cycle_days', round(sum(cycle_sum) / nullif(sum(cycle_n), 0))::int,
+                   'on_time', round(100.0 * sum(ontime_n) / nullif(sum(ontime_d), 0))::int)
+            from s where gb = 0) as totals,
+         (select coalesce(json_agg(json_build_object('week', to_char(cw, 'YYYY-MM-DD'), 'n', n)), '[]') from s where cw is not null) as made,
+         (select coalesce(json_agg(json_build_object('week', to_char(dw, 'YYYY-MM-DD'), 'n', n)), '[]') from s where dw is not null) as finished,
+         (select coalesce(json_agg(json_build_object('board_id', board_id, 'open', open, 'overdue', overdue) order by open desc, board_id), '[]')
+            from s where gb = 0 and open > 0) as boards,
+         (select coalesce(json_agg(x order by x.open desc, x.user_id), '[]') from (
+            select a.uid as user_id, sum(s.open)::int as open, sum(s.overdue)::int as overdue, sum(s.due_week)::int as due_week, sum(s.done_30)::int as done_30
+              from s cross join lateral unnest(s.who) as a(uid)
+             where exists (select 1 from users u where u.id = a.uid and u.status <> 'deleted')
+             group by a.uid order by 2 desc, 1 limit 100) x) as people`,
       [board],
     );
-    // Twelve weeks of created and finished, oldest first: two grouped passes, not one per week.
-    const made = await q.query(
-      `select to_char(date_trunc('week', t.created_at), 'YYYY-MM-DD') as week, count(*)::int as n
-         ${BASE} and t.created_at >= date_trunc('week', now()) - interval '11 weeks' group by 1`,
-      [board],
-    );
-    const finished = await q.query(
-      `select to_char(date_trunc('week', t.done_at), 'YYYY-MM-DD') as week, count(*)::int as n
-         ${BASE} and t.done_at >= date_trunc('week', now()) - interval '11 weeks' group by 1`,
-      [board],
-    );
+    const totals = row.totals;
+    const made = row.made as { week: string; n: number }[];
+    const finished = row.finished as { week: string; n: number }[];
+    const people = row.people as any[];
+    const boards = row.boards as any[];
     const starts = await q.query<{ week: string }>(
       `select to_char(w, 'YYYY-MM-DD') as week from generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') w order by w`,
     );
@@ -57,24 +87,6 @@ reportRoutes.get('/reports/work', async (c) => {
       created: made.find((x) => x.week === w.week)?.n ?? 0,
       done: finished.find((x) => x.week === w.week)?.n ?? 0,
     }));
-    const people = await q.query(
-      `select a.uid as user_id,
-              count(*) filter (where ${OPEN})::int as open,
-              count(*) filter (where ${OPEN} and t.due_date < app_today())::int as overdue,
-              count(*) filter (where ${OPEN} and t.due_date between app_today() and app_today() + 7)::int as due_week,
-              count(*) filter (where t.done_at > now() - interval '30 days')::int as done_30
-         from tasks t join boards b on b.id = t.board_id cross join lateral unnest(t.assignee_ids) as a(uid)
-        where b.archived_at is null and t.parent_id is null and ($1::uuid is null or t.board_id = $1::uuid)
-          and ((${OPEN}) or t.done_at > now() - interval '30 days')
-          and exists (select 1 from users u where u.id = a.uid and u.status <> 'deleted')
-        group by a.uid order by 2 desc limit 100`,
-      [board],
-    );
-    const boards = await q.query(
-      `select b.id as board_id, count(*)::int as open, count(*) filter (where t.due_date < app_today())::int as overdue
-         ${BASE} and ${OPEN} group by b.id order by 2 desc`,
-      [board],
-    );
     const statuses = board
       ? await q.query(`select t.status, count(*)::int as n ${BASE} and t.archived_at is null group by t.status`, [board])
       : [];
@@ -82,11 +94,11 @@ reportRoutes.get('/reports/work', async (c) => {
     const hours = board
       ? await q.query(
           `select e.user_id, sum(e.minutes)::int as minutes from time_entries e
-            where e.day > app_today() - 30 and e.task_id in (select t.id from tasks t where t.board_id = $1::uuid)
+            where e.day > (select app_today()) - 30 and e.task_id in (select t.id from tasks t where t.board_id = $1::uuid)
             group by e.user_id order by 2 desc limit 100`,
           [board],
         )
-      : await q.query(`select e.user_id, sum(e.minutes)::int as minutes from time_entries e where e.day > app_today() - 30 group by e.user_id order by 2 desc limit 100`);
+      : await q.query(`select e.user_id, sum(e.minutes)::int as minutes from time_entries e where e.day > (select app_today()) - 30 group by e.user_id order by 2 desc limit 100`);
     return { totals, weeks, people, boards, statuses, hours };
   });
   const n = (v: unknown) => (v == null ? null : Number(v));
@@ -128,7 +140,7 @@ reportRoutes.get('/reports/person/:id', async (c) => {
     );
     const [touch] = await q.query(`select count(*)::int as n, max(happened_at) as last from activities where author_id = $1 and happened_at > now() - interval '30 days'`, [id]);
     const [owned] = await q.query(`select count(*)::int as n from accounts where owner_id = $1 and archived_at is null`, [id]);
-    const [hours] = await q.query(`select coalesce(sum(minutes), 0)::int as m from time_entries where user_id = $1 and day > app_today() - 30`, [id]);
+    const [hours] = await q.query(`select coalesce(sum(minutes), 0)::int as m from time_entries where user_id = $1 and day > (select app_today()) - 30`, [id]);
     return { tasks, touch, owned, hours };
   });
   const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
