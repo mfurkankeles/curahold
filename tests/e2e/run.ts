@@ -255,7 +255,9 @@ await step('a new company signs up alone and lands in the setup wizard, signed i
   const p = founder.page;
   await p.goto(`${central}/`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('input[type=email]');
-  await (await byText(p, '.seg button', 'Türkçe')).click();
+  // Nine languages, chosen from a list; this founder works in Turkish.
+  await p.select('.auth__langs select', 'tr');
+  await p.waitForFunction(() => document.documentElement.lang === 'tr' && document.querySelector('.auth__title')?.textContent === "Ekibin için Curahold'i kur");
   await shot(p, 'p2-01-signup');
   await p.type('input[type=email]', 'deniz@yeni-sirket.example');
   await p.click('form button.btn--primary');
@@ -849,14 +851,20 @@ await step('the support desk: staff sign in with a code, then note, answer, take
   await d.type('.desk-signin__card input[type=email]', 'mert@demo.example');
   await d.click('.desk-signin__card .btn--primary');
   await d.waitForSelector('.desk-signin__code');
-  expect((await d.$('.desk-signin__dev')) === null, 'a code was made for someone who is not staff');
+  // A built app never shows the code on the screen; it arrives by email, as it does for the real team.
+  const deskCodeFor = (to: string) => s.email.sent.filter((m) => m.to === to && /desk code/.test(m.subject)).map((m) => /\b(\d{6})\b/.exec(m.text)?.[1]).at(-1);
+  expect(deskCodeFor('mert@demo.example') === undefined, 'a code was made for someone who is not staff');
+  expect((await d.$('.desk-signin__dev')) === null, 'the built desk shows a code on the screen');
   await (await byText(d, '.desk-signin__card .btn--quiet', 'Başka adres kullan')).click();
   await d.click('.desk-signin__card input[type=email]', { count: 3 });
   await d.keyboard.press('Backspace');
   await d.type('.desk-signin__card input[type=email]', DESK_STAFF);
   await d.click('.desk-signin__card .btn--primary');
-  await d.waitForSelector('.desk-signin__dev');
-  await d.click('.desk-signin__dev');
+  await d.waitForFunction(() => !!document.querySelector('.desk-signin__code:not([disabled])'));
+  for (let i = 0; i < 40 && !deskCodeFor(DESK_STAFF); i++) await pause(100);
+  const deskCode = deskCodeFor(DESK_STAFF);
+  expect(deskCode, 'no desk code was emailed to the staff address');
+  await d.type('.desk-signin__code', deskCode!);
   await d.click('.desk-signin__card .btn--primary');
   await appears('.desk__rail');
 
