@@ -224,7 +224,7 @@ export function App() {
           </StoreProvider>
         </ErrorBoundary>
       )}
-      <ConsentBanner />
+      <ConsentBanner signedIn={boot.kind === 'signed-in'} />
     </I18nProvider>
   );
 }

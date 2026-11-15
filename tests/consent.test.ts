@@ -12,7 +12,7 @@ import {
   rejectAll,
   serializeConsent,
 } from '../web/src/lib/consent';
-import { plannedLoads } from '../web/src/lib/analytics';
+import { hasMeasurement, plannedLoads } from '../web/src/lib/analytics';
 import { setup, type Env } from './helpers';
 
 describe('consent state', () => {
@@ -69,6 +69,12 @@ describe('analytics gating', () => {
 
   it('loads nothing before an explicit opt-in, even with every id set', () => {
     expect(plannedLoads(defaultConsent(), ids)).toEqual({ ga4: false, meta: false, tiktok: false });
+  });
+
+  it('asks for consent only when some id is configured', () => {
+    expect(hasMeasurement({})).toBe(false);
+    expect(hasMeasurement({ ga4: '' })).toBe(false);
+    expect(hasMeasurement({ tiktok: 'CABCDEF0123456789' })).toBe(true);
   });
 
   it('reject keeps every tracker off', () => {

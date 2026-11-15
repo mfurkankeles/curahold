@@ -34,11 +34,16 @@ export function plannedLoads(state: ConsentState, ids: AnalyticsIds): PlannedLoa
   };
 }
 
-function envIds(): AnalyticsIds {
-  const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-  const env = meta.env ?? {};
+/** Pure: is there any tracker to consent to? With no id configured, nothing non-essential can ever load. */
+export function hasMeasurement(ids: AnalyticsIds): boolean {
+  return !!(ids.ga4 || ids.meta || ids.tiktok);
+}
+
+export function envIds(): AnalyticsIds {
+  // Written out in full so the build can replace each one with its literal value;
+  // reading them through a variable would leave every id empty in a production build.
   const clean = (v: string | undefined) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
-  return { ga4: clean(env.VITE_GA4_ID), meta: clean(env.VITE_META_PIXEL_ID), tiktok: clean(env.VITE_TIKTOK_PIXEL_ID) };
+  return { ga4: clean(import.meta.env.VITE_GA4_ID), meta: clean(import.meta.env.VITE_META_PIXEL_ID), tiktok: clean(import.meta.env.VITE_TIKTOK_PIXEL_ID) };
 }
 
 // Each tracker is injected at most once per page load.

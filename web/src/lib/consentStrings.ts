@@ -22,6 +22,8 @@ export interface ConsentStrings {
   reopen: string;
   reopenAria: string;
   bannerAria: string;
+  /** The quiet line on the profile page when nothing is measured. */
+  noneNote: string;
 }
 
 export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
@@ -43,6 +45,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'Privacy choices',
     reopenAria: 'Open privacy and cookie choices',
     bannerAria: 'Privacy and cookie consent',
+    noneNote: 'This installation measures nothing beyond what it needs to run, so there is nothing to choose.',
   },
   tr: {
     title: 'Gizliliğin, senin seçimin',
@@ -62,5 +65,6 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'Gizlilik tercihleri',
     reopenAria: 'Gizlilik ve çerez tercihlerini aç',
     bannerAria: 'Gizlilik ve çerez onayı',
+    noneNote: 'Bu kurulum çalışmak için gerekenin ötesinde hiçbir ölçüm yapmaz; seçilecek bir şey yok.',
   },
 };

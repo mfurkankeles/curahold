@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { NOTIFY_EVENTS, type DeliveryOption, type NotifyPrefs } from '../../../shared/src/model';
 import { PROVIDER_NAMES } from '../components/Connections';
+import { PrivacyLine } from '../components/ConsentBanner';
 import { AiConnect, KeyList } from '../components/Developer';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -250,6 +251,8 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               </a>
             </section>
           )}
+
+          {mode === 'profile' && <PrivacyLine />}
 
           <div className="wizard__nav">
             <button className="btn btn--primary" disabled={busy} onClick={save}>

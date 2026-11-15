@@ -4,22 +4,54 @@
 
 .consent-banner {
   position: fixed;
-  inset-inline: 12px;
-  bottom: 12px;
-  z-index: 80;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 20px;
-  max-width: 920px;
-  margin-inline: auto;
-  padding: 16px 18px;
+  inset-inline-end: 22px;
+  bottom: 88px; /* clear of the helper button in the corner */
+  z-index: 29;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  width: min(510px, calc(100vw - 44px));
+  padding: 14px 16px;
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--r-l);
   box-shadow: var(--shadow-2);
+}
+/* Desktop: the three choices on one row. */
+.consent-banner .consent-actions { flex-wrap: nowrap; gap: 6px; justify-content: flex-end; }
+.consent-banner .btn { white-space: nowrap; padding-inline: 12px; }
+
+/* A phone: a slim strip just above the bottom tab bar (about a tenth of the screen);
+   the helper button steps up above it. The title is for screen readers there. */
+@media (max-width: 860px) {
+  .consent-banner {
+    inset-inline: 8px;
+    bottom: 8px;
+    width: auto;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .consent-banner[data-tabbar] { bottom: calc(64px + env(safe-area-inset-bottom) + 8px); }
+  .consent-banner__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .consent-banner__body {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .consent-banner .consent-actions { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 6px; }
+  .consent-banner .btn { min-width: 0; height: auto; min-height: 36px; padding: 4px 6px; font-size: 12.5px; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; justify-content: center; text-align: center; }
+  html[data-consent] .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom) + var(--consent-h, 0px) + 8px); }
 }
 
 .consent-banner__text {
@@ -128,26 +160,24 @@
   color: var(--ink-3);
 }
 
-.consent-reopen {
-  position: fixed;
-  inset-inline-start: 12px;
-  bottom: 12px;
-  z-index: 70;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
+.consent-line {
+  margin: 14px 0 0;
+  font-size: 12.5px;
   color: var(--ink-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 6px 12px;
+}
+.consent-line__btn {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
-  box-shadow: var(--shadow-1);
 }
-.consent-reopen:hover {
-  color: var(--ink);
-  background: var(--sunk);
-}
+.consent-line__btn:hover { color: var(--ink); }
+.consent-line__btn:focus-visible, .consent-dialog:focus-visible { outline: 3px solid var(--brand-wash); outline-offset: 2px; }
+.consent-dialog:focus { outline: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   .consent-banner,

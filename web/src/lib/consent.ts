@@ -101,3 +101,15 @@ export function onConsent(cb: (state: ConsentState) => void): () => void {
   window.addEventListener(CONSENT_EVENT, handler);
   return () => window.removeEventListener(CONSENT_EVENT, handler);
 }
+
+/** Asks the consent component to open its choices panel (from the profile page's privacy line). */
+export const CONSENT_OPEN_EVENT = 'curahold:consent-open';
+export function openConsentChoices(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(CONSENT_OPEN_EVENT));
+}
+export function onConsentOpen(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => undefined;
+  window.addEventListener(CONSENT_OPEN_EVENT, cb);
+  return () => window.removeEventListener(CONSENT_OPEN_EVENT, cb);
+}

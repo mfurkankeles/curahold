@@ -1,62 +1,132 @@
-// The product's cookie/consent banner. Shown until the person makes a choice;
-// afterwards it collapses to a small "Privacy choices" control that re-opens the
-// manage panel, so a choice can always be changed. Every visible word comes from
-// the consent strings (never hard-coded), and the banner mounts once at the app
-// root — see the hook reported for App.tsx.
-import { useEffect, useState } from 'react';
+// The product's cookie/consent notice. It exists only when a measurement id is
+// configured (see hasMeasurement) — with none, nothing non-essential can load, so
+// there is nothing to ask and nothing is rendered. When something is configured
+// it is a compact, non-modal notice that never covers a primary action: a card
+// above the bottom tab bar on a phone, a small corner card on a desktop. The
+// choices can be re-opened any time from the profile page (PrivacyLine), so no
+// floating button stays on screen. Every visible word comes from the consent
+// strings, and the notice mounts once at the app root.
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { CONSENT_STRINGS, type ConsentStrings } from '../lib/consentStrings';
+import { envIds, hasMeasurement } from '../lib/analytics';
+import { post } from '../lib/api';
 import {
   acceptAll,
   chooseConsent,
   emitConsent,
   loadConsent,
+  onConsentOpen,
+  openConsentChoices,
   rejectAll,
   saveConsent,
   type ConsentState,
 } from '../lib/consent';
 
+const useStrings = (): ConsentStrings => {
+  const { locale } = useI18n();
+  return CONSENT_STRINGS[locale] ?? CONSENT_STRINGS.en!;
+};
+
+/** The quiet line on a person's own profile page: re-opens the choices, or says there are none. */
+export function PrivacyLine() {
+  const s = useStrings();
+  if (!hasMeasurement(envIds())) return <p className="consent-line">{s.noneNote}</p>;
+  return (
+    <p className="consent-line">
+      <button type="button" className="consent-line__btn" aria-label={s.reopenAria} onClick={openConsentChoices}>
+        {s.reopen}
+      </button>
+    </p>
+  );
+}
+
 type View = 'hidden' | 'banner' | 'manage';
 
-export function ConsentBanner() {
-  const { locale } = useI18n();
-  const s: ConsentStrings = CONSENT_STRINGS[locale] ?? CONSENT_STRINGS.en!;
+export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
+  const s = useStrings();
+  const active = hasMeasurement(envIds());
   const [view, setView] = useState<View>('hidden');
-  const [state, setState] = useState<ConsentState>(() => loadConsent());
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const card = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  const returnTo = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!active) return;
+    setView(loadConsent().decided ? 'hidden' : 'banner');
+  }, [active]);
+
+  const openManage = () => {
+    returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const current = loadConsent();
-    setState(current);
-    setView(current.decided ? 'hidden' : 'banner');
-  }, []);
+    setAnalytics(current.analytics);
+    setMarketing(current.marketing);
+    setView('manage');
+  };
+  useEffect(() => (active ? onConsentOpen(openManage) : undefined), [active]);
+
+  // The phone's helper button stands above the notice (see consent.css), so the notice
+  // publishes its own height while it is on screen.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    if (view === 'banner' && card.current) {
+      root.style.setProperty('--consent-h', `${card.current.offsetHeight}px`);
+      root.dataset.consent = '';
+    }
+    return () => {
+      root.style.removeProperty('--consent-h');
+      delete root.dataset.consent;
+    };
+  }, [view, s]);
+
+  // The panel is a real dialog: focus moves in, Tab stays inside, Escape closes it
+  // without making a choice, and focus goes back to where it came from.
+  useEffect(() => {
+    if (view !== 'manage') return;
+    dialog.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setView(loadConsent().decided ? 'hidden' : 'banner');
+        return;
+      }
+      if (e.key !== 'Tab' || !dialog.current) return;
+      const items = Array.from(dialog.current.querySelectorAll<HTMLElement>('button, input')).filter((el) => !el.hasAttribute('disabled'));
+      if (!items.length) return;
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      const at = document.activeElement;
+      if (e.shiftKey && (at === first || at === dialog.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && at === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      returnTo.current?.focus?.();
+    };
+  }, [view]);
+
+  if (!active || view === 'hidden') return null;
 
   const apply = (next: ConsentState) => {
     saveConsent(next);
-    setState(next);
     emitConsent(next);
     setView('hidden');
+    // The durable per-person record; best effort, and only for someone signed in.
+    if (signedIn) void post('/consent', { analytics: next.analytics, marketing: next.marketing, source: 'app' }).catch(() => undefined);
   };
-  const openManage = () => {
-    setAnalytics(state.analytics);
-    setMarketing(state.marketing);
-    setView('manage');
-  };
-
-  if (view === 'hidden') {
-    return (
-      <button type="button" className="consent-reopen" aria-label={s.reopenAria} onClick={openManage}>
-        {s.reopen}
-      </button>
-    );
-  }
 
   if (view === 'manage') {
     return (
       <div className="consent-scrim" role="presentation">
-        <div className="consent-dialog" role="dialog" aria-modal="true" aria-label={s.manageTitle}>
-          <h2 className="consent-dialog__title">{s.manageTitle}</h2>
+        <div ref={dialog} tabIndex={-1} className="consent-dialog" role="dialog" aria-modal="true" aria-labelledby="consent-dlg-title">
+          <h2 id="consent-dlg-title" className="consent-dialog__title">{s.manageTitle}</h2>
           <p className="consent-dialog__lead">{s.body}</p>
           <ul className="consent-cats">
             <li className="consent-cat">
@@ -98,9 +168,9 @@ export function ConsentBanner() {
   }
 
   return (
-    <div className="consent-banner" role="region" aria-label={s.bannerAria}>
+    <div ref={card} className="consent-banner" data-tabbar={signedIn || undefined} role="region" aria-labelledby="consent-title">
       <div className="consent-banner__text">
-        <strong className="consent-banner__title">{s.title}</strong>
+        <strong id="consent-title" className="consent-banner__title">{s.title}</strong>
         <p className="consent-banner__body">{s.body}</p>
       </div>
       <div className="consent-actions">
