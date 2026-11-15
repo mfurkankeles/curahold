@@ -70,14 +70,21 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
   say('words', `other fixed words a company may call differently: "deal/opportunity" ${fixed(en, /\b(deals?|opportunit(y|ies))\b/i)} texts, "contact" ${fixed(en, /\bcontacts?\b/i)}, "renewal" ${fixed(en, /\brenewals?\b/i)}, "board" ${fixed(en, /\bboards?\b/i)}`);
   // A third language: every place that knows there are exactly two.
   const src = files.filter((f) => /^(api|web|shared|scripts)\/.*\.(ts|tsx)$/.test(f) && !f.includes('/i18n/'));
+  // The help centre, its API reference and the demo hub are two-language pages by the owner's
+  // pending decision (tests/i18n-no-pairs.test.ts, TWO_LANGUAGE_PAGES): counted on their own line.
+  const helpPages = ['scripts/build-docs.ts', 'scripts/docs/api-reference.ts', 'scripts/build-demo-hub.ts'];
   let twoWay = 0;
   let pairs = 0;
+  let helpChecks = 0;
   for (const f of src) {
     const s = read(f);
-    twoWay += (s.match(/locale === 'tr'|locale === "tr"|=== 'tr' \?/g) ?? []).length;
+    const n = (s.match(/locale === 'tr'|locale === "tr"|=== 'tr' \?/g) ?? []).length;
+    if (helpPages.includes(f)) helpChecks += n;
+    else twoWay += n;
     pairs += (s.match(/\bL\('/g) ?? []).length;
   }
   say('words', `places in the code that assume exactly two languages: ${twoWay} "is it Turkish?" checks, ${pairs} texts written as an English/Turkish pair outside the dictionaries`);
+  say('words', `two-language help pages (help centre, API reference, demo hub; waiting for the owner's decision): ${helpChecks} checks in ${helpPages.length} files`);
 }
 
 // ---------------------------------------------------------------- old names

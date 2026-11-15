@@ -296,6 +296,30 @@ normal permission checks. QUALITY.md decision 1 is to replace polling with one D
 WebSocket Hibernation (Node: `ws` + Postgres `LISTEN/NOTIFY` for self-host), falling back to polling when WebSockets are
 blocked. That is **decided but not built**.
 
+## 9a. Languages
+
+Nine languages (`shared/src/i18n/core.ts`, `LOCALE_INFO`), one dictionary file each; English defines the keys and
+`tests/i18n.test.ts` keeps all nine complete. The server registers every dictionary; the web app and the portal load
+only the one in use (`vite-plugin.ts`; the portal ships only the keys its own code names). Adding a language is adding
+a dictionary file and its line in `LOCALE_INFO`. Nothing else in the code knows how many languages there are —
+`tests/i18n-no-pairs.test.ts` fails on an English/Turkish pair written in place or an "is it Turkish?" branch:
+
+- **Words on screen** — `t('key')` at render time.
+- **Built-in content** (template boards, stages, fields and automations, built-in record types, the report library,
+  ready dashboards and page cards) — `phrase('key')`, a `Localized` whose values are read from the dictionaries when
+  asked. Shown with `labelOf` / `pick` in the reader's language. When something is created from it, its JSON is stored
+  as data: all nine languages when the server creates it (sign-up templates, built-in types, seeds), the creator's
+  language when a browser posts a preset. It is never translated again afterwards — a company's renamed stage stays
+  renamed. Readers fall back to English, then to any stored language, never to an empty label.
+- **Dates, numbers, money** — `intlTag(locale)` for `Intl` (English keeps day-before-month; Arabic keeps the Western
+  digits its dictionary uses), `numberMarks` / `dayFirst` for reading typed values, `csvSeparator` for files.
+- **Features that themselves speak two languages** say so in one named table, not a branch: the quick-add reader
+  (`lib/quickparse.ts`, English and Turkish words), the help centre (`HELP_LANGUAGES`, `helpLanguageOf`), the demo's
+  sample data (`DEMO_TEXT` in `scripts/seed-demo.ts`), importer format samples. The help centre, its API reference and
+  the demo hub are the only two-language pages left, waiting for the owner's decision (`TWO_LANGUAGE_PAGES`).
+
+Right-to-left languages (Arabic, Hebrew, Persian) set `dir="rtl"` on the page in both the app and the portal.
+
 ## 10. Deployment shapes
 
 | Shape | How | Config |

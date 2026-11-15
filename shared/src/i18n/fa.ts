@@ -2802,7 +2802,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'plans.anchorShort.renewal': "از تمدید به عقب شمرده می‌شود",
   'plans.anchorShort.close': "از تاریخ بسته شدن به عقب شمرده می‌شود",
   'plans.stepAfter': "{n} روز پس از شروع",
-  'plans.stepBefore': "{n} روز پیش از",
+  'plans.stepBefore': "{n} روز پیش از موعد",
   'plans.preview': "گام نخست {first}، گام آخر {last}.",
   'plans.deleteTitle': "«{name}» حذف شود؟",
   'plans.deleteBody': "وظایفی که قبلاً ساخته همان‌جا می‌مانند. اگر تمدیدها با آن شروع می‌شوند، به‌جای آن یک وظیفه برای مسئول باز می‌کنند.",
