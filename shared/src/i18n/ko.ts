@@ -4077,4 +4077,10 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': '필터, 정렬 및 보기',
   'filters.apply': '적용',
   'filters.view': '보기',
+  'states.offline': '오프라인 상태입니다. 지금 바꾼 내용은 이 탭에 보관되었다가 다시 연결되면 바로 전송됩니다.',
+  'states.waiting': '{n}개 대기 중',
+  'states.sending': '다시 연결되었습니다. 변경 내용을 보내는 중…',
+  'states.notAllowed.title': '이곳에 접근할 권한이 없습니다',
+  'states.notAllowed.body': '{org} 관리자가 권한을 줄 수 있습니다. 설정 → 사용자에서 역할을 바꿔 달라고 요청하세요.',
+  'states.notAllowed.home': '홈으로 이동',
 };

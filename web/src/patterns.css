@@ -96,3 +96,10 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 .filtersheet__apply { margin-inline-start: auto; min-inline-size: 120px; }
 :root[data-sheet='open'] body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .filtersheet, .filtersheet__box { animation: none; } }
+
+/* ------------------------------------------------------------ the five states (Empty.tsx)
+   Loading: a skeleton appears only after --wait (a short wait shows nothing), already at its final size. */
+.skeleton:not(.page) { animation: wait-in var(--dur-fast) ease var(--wait) both; }
+@keyframes wait-in { from { opacity: 0; } }
+.errorbox .emptystate__icon[data-tone='late'] { background: var(--late-wash); color: var(--late-ink); }
+.offlinebar__count { margin-inline-start: auto; padding: 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--soon-ink); font-size: var(--fs-xs); font-weight: 600; }

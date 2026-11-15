@@ -4077,4 +4077,10 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': 'فیلتر، ترتیب و نما',
   'filters.apply': 'اعمال',
   'filters.view': 'نما',
+  'states.offline': 'آفلاین هستید. تغییراتی که الان می‌دهید در همین زبانه نگه داشته می‌شود و به‌محض وصل شدن ارسال می‌شود.',
+  'states.waiting': '{n} در انتظار',
+  'states.sending': 'اتصال برقرار شد — در حال ارسال تغییرات…',
+  'states.notAllowed.title': 'به این بخش دسترسی ندارید',
+  'states.notAllowed.body': 'یکی از مدیران {org} می‌تواند این دسترسی را بدهد: از او بخواهید نقش شما را در تنظیمات ← افراد تغییر دهد.',
+  'states.notAllowed.home': 'رفتن به صفحهٔ اصلی',
 };

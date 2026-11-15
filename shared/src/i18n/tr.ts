@@ -4077,4 +4077,10 @@ export const tr: Record<MessageKey, string> = {
   'filters.sheetTitle': 'Filtre, sıralama ve görünüm',
   'filters.apply': 'Uygula',
   'filters.view': 'Görünüm',
+  'states.offline': 'Çevrimdışısın. Şimdi yaptığın değişiklikler bu sekmede tutuluyor; bağlantı gelir gelmez gönderilecek.',
+  'states.waiting': '{n} değişiklik bekliyor',
+  'states.sending': 'Bağlantı geldi, değişikliklerin gönderiliyor…',
+  'states.notAllowed.title': 'Buraya erişimin yok',
+  'states.notAllowed.body': '{org} yöneticilerinden biri bu erişimi verebilir: Ayarlar → Kişiler\'den rolünü değiştirmesini iste.',
+  'states.notAllowed.home': 'Ana sayfaya dön',
 };

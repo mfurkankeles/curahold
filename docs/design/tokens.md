@@ -126,3 +126,17 @@ and **Apply**. Filters work as they change (the list behind updates); Apply clos
 - A view switch moves into the sheet on a phone: render it inside when `usePhone()` is true, inline otherwise.
 - Count filters only (owner, status, archived …), not the order or the view.
 - Target: on every list screen the first row starts in the top half at 375 × 667.
+
+### The five states — `components/Empty.tsx`
+
+One family; a screen never draws its own.
+
+| State | Component | Rule |
+| --- | --- | --- |
+| Empty | `EmptyState` (icon, title, body, one action as children) | An invitation: what goes here and the first step. A filtered-out list says "nothing matches", not "empty". |
+| Loading | `SkeletonRows`, `SkeletonCards`; `RouteFallback` for a whole screen | Nothing for `--wait` (300 ms), then the content's shape at its final size: nothing moves when it arrives. |
+| Error | `ErrorState` (whole screen or `ErrorBoundary`), `LoadError` = `ErrorState compact` (inside a screen) | What happened, what to do, **Try again**. Never an empty list in place of a failed load. |
+| Offline | `OfflineBar` (in the shell) | Changes made offline are held in the tab with their key and sent when the connection is back (`lib/api.ts`); the bar says so and counts them. |
+| Not allowed | `NotAllowed` | What is missing and who can give it (an administrator, in Settings → People); a way home. |
+
+`--wait` (300 ms, in the Motion block) is how long a wait shows nothing at all; `useAfter(ms)` is its hook.

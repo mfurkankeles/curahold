@@ -2,25 +2,13 @@
 // and replaced with a plain message and a way back (try again, or reload).
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useI18n } from '../lib/i18n';
+import { ErrorState } from './Empty';
 
 function Fallback({ onRetry, whole }: { onRetry: () => void; whole?: boolean }) {
   const { t } = useI18n();
   return (
-    <div className={whole ? 'center-note' : 'page'} role="alert">
-      <div className={`errorbox${whole ? '' : ' errorbox--page'}`}>
-        <h2 className="u-m-0 u-fs-l">{t('errors.boundary.title')}</h2>
-        <p className="muted u-m-0">
-          {t('errors.boundary.body')}
-        </p>
-        <div className="inline-actions u-justify-content-center">
-          <button className="btn" onClick={onRetry}>
-            {t('common.retry')}
-          </button>
-          <button className="btn btn--primary" onClick={() => location.reload()}>
-            {t('errors.boundary.reload')}
-          </button>
-        </div>
-      </div>
+    <div className={whole ? 'center-note' : 'page'}>
+      <ErrorState className={whole ? undefined : 'errorbox--page'} title={t('errors.boundary.title')} body={t('errors.boundary.body')} onRetry={onRetry} onReload={() => location.reload()} />
     </div>
   );
 }

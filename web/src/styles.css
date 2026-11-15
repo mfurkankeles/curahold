@@ -99,6 +99,8 @@
   --loop-caret: 1s;
   --loop-pulse: 1.6s;
   --loop-twinkle: 5s;
+  /* How long a wait shows nothing at all before a skeleton appears (Empty.tsx, RouteFallback.tsx). */
+  --wait: 300ms;
 
   --ring: 2px solid var(--focus);
   --ring-offset: 2px;

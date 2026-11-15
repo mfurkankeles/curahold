@@ -4092,6 +4092,12 @@ export const en = {
   'filters.sheetTitle': 'Filter, order and view',
   'filters.apply': 'Apply',
   'filters.view': 'View',
+  'states.offline': 'You are offline. What you change now is kept in this tab and sent as soon as you are back online.',
+  'states.waiting': '{n} waiting',
+  'states.sending': 'Back online — sending your changes…',
+  'states.notAllowed.title': 'You do not have access to this',
+  'states.notAllowed.body': 'An administrator of {org} can give it to you: ask them to change your role in Settings → People.',
+  'states.notAllowed.home': 'Go to the home page',
 } as const;
 
 export type MessageKey = keyof typeof en;

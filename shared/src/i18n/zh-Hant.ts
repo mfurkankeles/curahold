@@ -4077,4 +4077,10 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': '篩選、排序與檢視',
   'filters.apply': '套用',
   'filters.view': '檢視',
+  'states.offline': '你已離線。現在所做的變更會保留在此分頁中，恢復連線後立即送出。',
+  'states.waiting': '{n} 項待送出',
+  'states.sending': '已恢復連線，正在送出你的變更…',
+  'states.notAllowed.title': '你沒有存取此處的權限',
+  'states.notAllowed.body': '{org} 的管理員可以為你開通：請他們在「設定 → 成員」中變更你的角色。',
+  'states.notAllowed.home': '前往首頁',
 };

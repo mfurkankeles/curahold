@@ -4077,4 +4077,10 @@ export const he: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': 'סינון, סדר ותצוגה',
   'filters.apply': 'החלה',
   'filters.view': 'תצוגה',
+  'states.offline': 'אין חיבור. מה שתשנו עכשיו נשמר בלשונית הזו ויישלח ברגע שהחיבור יחזור.',
+  'states.waiting': '{n} ממתינים',
+  'states.sending': 'החיבור חזר — השינויים נשלחים…',
+  'states.notAllowed.title': 'אין לך גישה לכאן',
+  'states.notAllowed.body': 'מנהל/ת של {org} יכולים לתת לך גישה: בקשו לשנות את התפקיד שלך בהגדרות ← אנשים.',
+  'states.notAllowed.home': 'מעבר לדף הבית',
 };

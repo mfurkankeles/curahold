@@ -28,6 +28,7 @@ import { nameIt, navigateFresh } from '../lib/router';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
+import { NotAllowed } from '../components/Empty';
 
 type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'sso' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
 
@@ -80,6 +81,8 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
     },
   ];
   const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
+  // A tab that exists but is not this person's to open says so (and who can grant it) instead of showing another one.
+  const refused = !allowed.length || (groups.flatMap((g) => g.items).some((x) => x[0] === tab) && !allowed.some((x) => x[0] === tab));
   const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
   const currentLabel = allowed.find((x) => x[0] === current)?.[1] ?? '';
   // The way back to here says which settings, not just "Settings".
@@ -93,8 +96,13 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           <PageIcon name="sliders" />
           <span>{t('settings.title')}</span>
         </h1>
-        <span className="topbar__sub">{currentLabel}</span>
+        <span className="topbar__sub">{refused ? '' : currentLabel}</span>
       </header>
+      {!allowed.length ? (
+        <div className="page">
+          <NotAllowed />
+        </div>
+      ) : (
       <div className="page admin">
         <nav className="admin__nav" aria-label={t('settings.title')}>
           <select className="select admin__navselect" value={current} aria-label={t('settings.title')} onChange={(e) => navigateFresh(`/settings/${e.target.value}`)}>
@@ -130,34 +138,36 @@ export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
           })}
         </nav>
         <div className="admin__content">
-          {current === 'company' && <CompanyTab />}
-          {current === 'fields' && <AccountFieldsEditor />}
-          {current === 'records' && <RecordTypesEditor />}
-          {current === 'health' && <HealthSettings />}
-          {current === 'rhythm' && <RhythmSettings />}
-          {current === 'billing' && (
+          {refused && <NotAllowed />}
+          {!refused && current === 'company' && <CompanyTab />}
+          {!refused && current === 'fields' && <AccountFieldsEditor />}
+          {!refused && current === 'records' && <RecordTypesEditor />}
+          {!refused && current === 'health' && <HealthSettings />}
+          {!refused && current === 'rhythm' && <RhythmSettings />}
+          {!refused && current === 'billing' && (
             <>
               <SubscriptionPanel />
               <BillingSettings />
             </>
           )}
-          {current === 'currencies' && <CurrencySettings />}
-          {current === 'playbooks' && <PlaybooksSettings />}
-          {current === 'support' && <SupportAccessSettings />}
-          {current === 'portal' && <PortalSettingsTab />}
-          {current === 'people' && <PeopleTab />}
-          {current === 'joining' && <JoiningTab />}
-          {current === 'teams' && <TeamsTab />}
-          {current === 'roles' && <RolesTab />}
-          {current === 'sso' && <SsoSettings />}
-          {current === 'connections' && <Connections />}
-          {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
-          {current === 'automations' && <AutomationList />}
-          {current === 'developer' && <DeveloperTab />}
-          {current === 'audit' && <AuditTab />}
-          {current === 'errors' && <ErrorsTab />}
+          {!refused && current === 'currencies' && <CurrencySettings />}
+          {!refused && current === 'playbooks' && <PlaybooksSettings />}
+          {!refused && current === 'support' && <SupportAccessSettings />}
+          {!refused && current === 'portal' && <PortalSettingsTab />}
+          {!refused && current === 'people' && <PeopleTab />}
+          {!refused && current === 'joining' && <JoiningTab />}
+          {!refused && current === 'teams' && <TeamsTab />}
+          {!refused && current === 'roles' && <RolesTab />}
+          {!refused && current === 'sso' && <SsoSettings />}
+          {!refused && current === 'connections' && <Connections />}
+          {!refused && current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
+          {!refused && current === 'automations' && <AutomationList />}
+          {!refused && current === 'developer' && <DeveloperTab />}
+          {!refused && current === 'audit' && <AuditTab />}
+          {!refused && current === 'errors' && <ErrorsTab />}
         </div>
       </div>
+      )}
     </>
   );
 }

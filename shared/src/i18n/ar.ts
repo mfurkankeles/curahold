@@ -4077,4 +4077,10 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': 'التصفية والترتيب والعرض',
   'filters.apply': 'تطبيق',
   'filters.view': 'العرض',
+  'states.offline': 'أنت غير متصل. ما تغيّره الآن يُحفظ في هذه العلامة ويُرسَل فور عودة الاتصال.',
+  'states.waiting': '{n} بانتظار الإرسال',
+  'states.sending': 'عاد الاتصال — جارٍ إرسال تغييراتك…',
+  'states.notAllowed.title': 'ليست لديك صلاحية الوصول إلى هذا',
+  'states.notAllowed.body': 'يمكن لأحد مسؤولي {org} منحك إياها: اطلب منه تغيير دورك من الإعدادات ← الأشخاص.',
+  'states.notAllowed.home': 'الانتقال إلى الصفحة الرئيسية',
 };

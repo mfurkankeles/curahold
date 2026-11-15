@@ -4077,4 +4077,10 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': '筛选、排序和视图',
   'filters.apply': '应用',
   'filters.view': '视图',
+  'states.offline': '你已离线。现在所做的更改会保留在此标签页中，恢复联网后立即发送。',
+  'states.waiting': '{n} 项待发送',
+  'states.sending': '已恢复联网，正在发送你的更改…',
+  'states.notAllowed.title': '你没有访问此处的权限',
+  'states.notAllowed.body': '{org} 的管理员可以为你开通：请他们在“设置 → 成员”中更改你的角色。',
+  'states.notAllowed.home': '前往首页',
 };

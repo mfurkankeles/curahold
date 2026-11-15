@@ -58,6 +58,37 @@ export function onAuthLost(fn: Listener) {
   };
 }
 
+// Changes made while offline: held here, each with its key, until the connection is back.
+const waiting = new Set<string>();
+const waitingListeners = new Set<() => void>();
+const tellWaiting = () => waitingListeners.forEach((f) => f());
+/** How many changes are waiting for the connection (for OfflineBar). */
+export const changesWaiting = () => waiting.size;
+export function onChangesWaiting(f: () => void) {
+  waitingListeners.add(f);
+  return () => void waitingListeners.delete(f);
+}
+const online = () => new Promise<void>((r) => (navigator.onLine === false ? window.addEventListener('online', () => r(), { once: true }) : r()));
+/** Holds a change until the connection is back, then sends it (the first moments online can still fail: tried a few times). */
+async function afterReconnect(key: string, go: () => Promise<Response>): Promise<Response> {
+  waiting.add(key);
+  tellWaiting();
+  try {
+    for (let i = 0; ; i++) {
+      await online();
+      await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+      try {
+        return await go();
+      } catch (e) {
+        if (i >= 4 && navigator.onLine !== false) throw e;
+      }
+    }
+  } finally {
+    waiting.delete(key);
+    tellWaiting();
+  }
+}
+
 /** A key of its own for every change: sent again with a retry, so the server does the work once. */
 const newKey = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
@@ -109,10 +140,14 @@ async function sendCounted<T>(method: string, path: string, headers: Record<stri
   } catch (first) {
     // The request, or its answer, was lost on the way. A change carries its key, so sending it once
     // more is safe: if the first copy did arrive, the server answers with what it did then.
+    // Offline, a change waits in this tab until the connection is back, then goes (OfflineBar says so).
     try {
-      if (!key || navigator.onLine === false) throw first;
-      await new Promise((r) => setTimeout(r, 700));
-      res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
+      if (!key) throw first;
+      if (navigator.onLine === false) res = await afterReconnect(key, () => fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' }));
+      else {
+        await new Promise((r) => setTimeout(r, 700));
+        res = await fetch(`/api${path}`, { method, headers, body: payload, credentials: 'same-origin' });
+      }
     } catch {
       noteFailedRequest(method, path, 0);
       // Said in words, so whatever shows the failure has something to show.

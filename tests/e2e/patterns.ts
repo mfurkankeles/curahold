@@ -77,6 +77,35 @@ await step('an impossible date says what to type and saves nothing', async () =>
   expect((await dueOf()) === '2028-01-21', 'nothing saved');
 });
 
+await step('offline: a change waits in the tab, the bar says so, and it is sent when the connection is back', async () => {
+  const p = desk.page;
+  await p.goto(`${s.origin}/b/${csBoard}?task=${task.id}`, { waitUntil: 'networkidle0' });
+  await p.setOfflineMode(true);
+  await pause(300);
+  const box = await p.waitForSelector('.panel input.datefield__input[aria-label="Son tarih"]');
+  await box!.click();
+  await selectAll(box!);
+  await box!.type('05.03.2028');
+  await p.keyboard.press('Tab');
+  await pause(500);
+  const bar = await p.$eval('.offlinebar', (el) => el.textContent ?? '').catch(() => '');
+  expect(/tutuluyor/.test(bar) && /1 değişiklik bekliyor/.test(bar), `bar says: ${bar}`);
+  expect((await dueOf()) !== '2028-03-05', 'not sent while offline');
+  await p.setOfflineMode(false);
+  await p.waitForFunction(() => !document.querySelector('.offlinebar'), { timeout: 8000 });
+  await pause(500);
+  expect((await dueOf()) === '2028-03-05', `sent after reconnecting: ${await dueOf()}`);
+});
+
+await step('a settings page this person may not open says who can give access', async () => {
+  const m = await newPage(s.browser);
+  await signIn(m.page, s.origin, 'mert@demo.example');
+  await m.page.goto(`${s.origin}/settings/people`, { waitUntil: 'networkidle0' });
+  const text = await m.page.$eval('.main', (el) => el.textContent ?? '');
+  expect(/erişimin yok/.test(text) && /yöneticilerinden/.test(text), `shows: ${text.slice(0, 200)}`);
+  await m.page.close();
+});
+
 const phone = await newPage(s.browser, 375, 667);
 await signIn(phone.page, s.origin, 'ada@demo.example');
 

@@ -13,7 +13,8 @@ import { BackBar } from './BackBar';
 import { ShellCtx, TASKS_CHANGED, currentPageDefaults, useNarrow, type QuickDefaults, type ShellActions } from '../lib/shell';
 import { LIVE, startLive, useLive } from '../lib/live';
 import { startErrorLog } from '../lib/errlog';
-import { forgetOffline, useInstall, useOnline } from '../lib/pwa';
+import { forgetOffline, useInstall } from '../lib/pwa';
+import { OfflineBar } from './Empty';
 import { useStore } from '../lib/store';
 import { useTheme, type ThemePref } from '../lib/theme';
 import { Bell } from './Bell';
@@ -243,7 +244,6 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useEffect(() => startLive(), []);
   // Browser errors are reported so a fault a person hits is seen, not lost.
   useEffect(() => startErrorLog(), []);
-  const online = useOnline();
   const app = useInstall();
   const [installHelp, setInstallHelp] = useState(false);
   const meMenu = (
@@ -481,12 +481,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         </nav>
         {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
         <div className="main">
-          {!online && (
-            <div className="offlinebar" role="status">
-              <Icon name="alert" size={16} />
-              <span>{t('pwa.offline')}</span>
-            </div>
-          )}
+          <OfflineBar />
           {me.previewBy && (
             <div className="previewbar" role="status">
               <span className="previewbar__eye" aria-hidden="true" />

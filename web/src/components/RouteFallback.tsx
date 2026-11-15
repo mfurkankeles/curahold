@@ -1,19 +1,10 @@
-import { useEffect, useState } from 'react';
 import { useI18n } from '../lib/i18n';
+import { useAfter } from './Empty';
 
 // What a screen shows while its code is on the way. Most waits are short: for
 // the first 300 ms nothing is drawn (no flash). A longer wait shows a quiet
 // skeleton the size of the screen it stands for, so nothing jumps when the
 // screen arrives.
-function useAfter(ms: number) {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setOn(true), ms);
-    return () => clearTimeout(t);
-  }, [ms]);
-  return on;
-}
-
 /** A whole-page wait (starting up, the sign-in page, sign-up, the desk): blank, then a quiet note. */
 export function PageFallback() {
   const { t } = useI18n();

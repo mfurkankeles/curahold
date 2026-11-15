@@ -4077,4 +4077,10 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'filters.sheetTitle': 'フィルター・並び順・表示',
   'filters.apply': '適用',
   'filters.view': '表示',
+  'states.offline': 'オフラインです。いま行った変更はこのタブに保持され、接続が戻りしだい送信されます。',
+  'states.waiting': '{n} 件が送信待ち',
+  'states.sending': '接続が戻りました。変更を送信しています…',
+  'states.notAllowed.title': 'ここへのアクセス権がありません',
+  'states.notAllowed.body': '{org} の管理者がアクセス権を付与できます。「設定 → メンバー」であなたのロールを変更するよう依頼してください。',
+  'states.notAllowed.home': 'ホームへ移動',
 };
