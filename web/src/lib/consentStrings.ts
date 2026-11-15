@@ -85,6 +85,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'プライバシー設定',
     reopenAria: 'プライバシーと Cookie の設定を開く',
     bannerAria: 'プライバシーと Cookie の同意',
+    noneNote: 'この環境では、動作に必要なもの以外は一切計測していないため、選択する項目はありません。',
   },
   ko: {
     title: '개인정보, 직접 선택하세요',
@@ -104,6 +105,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: '개인정보 설정',
     reopenAria: '개인정보 및 쿠키 설정 열기',
     bannerAria: '개인정보 및 쿠키 동의',
+    noneNote: '이 설치 환경은 작동에 필요한 것 외에는 아무것도 측정하지 않으므로 선택할 항목이 없습니다.',
   },
   'zh-Hans': {
     title: '你的隐私，由你决定',
@@ -123,6 +125,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: '隐私选项',
     reopenAria: '打开隐私与 Cookie 选项',
     bannerAria: '隐私与 Cookie 同意',
+    noneNote: '此安装除运行所必需的内容外不做任何统计,因此无需选择。',
   },
   'zh-Hant': {
     title: '你的隱私，由你決定',
@@ -142,5 +145,6 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: '隱私權選項',
     reopenAria: '開啟隱私權與 Cookie 選項',
     bannerAria: '隱私權與 Cookie 同意',
+    noneNote: '此安裝除了運作所需之外不進行任何量測,因此沒有需要選擇的項目。',
   },
 };
