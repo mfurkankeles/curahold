@@ -235,6 +235,16 @@ jobs:
         run: npm run build
       - name: Build the self-host server bundle
         run: npm run build:server
+      # The live demo runs the whole API in a browser tab. Its build fails when a
+      # server-only module (one on Node's crypto, zlib, util...) lands in it
+      # (vite.demo.config.ts); then it must actually start in headless Chrome,
+      # in English and after switching to Turkish (QUICK: no long journeys).
+      - name: Build the live demo
+        run: npm run build:demo
+      - name: Demo boots
+        env:
+          QUICK: '1'
+        run: npx tsx tests/e2e/demo.ts
 
   docker:
     name: Docker image builds
