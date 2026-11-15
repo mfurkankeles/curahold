@@ -65,13 +65,13 @@ const ACCOUNTS = [
 
 // Why Marevo scores 48: points earned out of the points each signal can give
 // (the app shows exactly this under "Why?"). 5 + 3 + 0 + 15 + 15 + 10 = 48 of
-// 100. The last two only fit the roomier desktop stage.
+// 100. The last one only fits the roomier desktop stage.
 const WHY = [
   { got: 5, of: 25 },
   { got: 3, of: 20 },
   { got: 0, of: 15 },
   { got: 15, of: 15 },
-  { got: 15, of: 15, wide: true },
+  { got: 15, of: 15 },
   { got: 10, of: 10, wide: true },
 ] as const;
 
@@ -436,8 +436,15 @@ function page(locale: SiteLocale): string {
   const tag = bcp47Of(locale);
   // Persian copy writes Gregorian months, so its dates do too.
   const dateTag = locale === 'fa' ? 'fa-u-ca-gregory' : tag;
-  const money = (n: number) => new Intl.NumberFormat(tag, { style: 'currency', currency: PRICE_CURRENCY, maximumFractionDigits: 0 }).format(n);
-  const moneyShort = (n: number) => new Intl.NumberFormat(tag, { style: 'currency', currency: PRICE_CURRENCY, notation: 'compact', maximumFractionDigits: 0 }).format(n);
+  // "$15" in every language: the fine print says the prices are US dollars, and a bare sign
+  // (Arabic would otherwise write "US$") stays whole inside right-to-left text.
+  const usd = (opts: Intl.NumberFormatOptions) => (n: number) =>
+    new Intl.NumberFormat(tag, { style: 'currency', currency: PRICE_CURRENCY, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0, ...opts })
+      .formatToParts(n)
+      .map((p) => (p.type === 'currency' && PRICE_CURRENCY === 'USD' ? '$' : p.value))
+      .join('');
+  const money = usd({});
+  const moneyShort = usd({ notation: 'compact' });
   const num = (n: number) => new Intl.NumberFormat(tag, { useGrouping: false }).format(n);
   const at = (m: number, d: number, y = 2026) => new Date(Date.UTC(y, m - 1, d, 12));
   const dayFmt = new Intl.DateTimeFormat(dateTag, { day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -518,8 +525,9 @@ function page(locale: SiteLocale): string {
   const mParts = dayFmt.formatToParts(at(11, 10));
   const mDay = mParts.find((x) => x.type === 'day')?.value ?? '';
   const mMonth = mParts.find((x) => x.type === 'month')?.value ?? '';
-  const newTask = (title: string, who: string, name: string, due: string, delay: number) =>
-    `<article class="tk"${a('drop', delay)}><p>${esc(title)}</p><div class="tk__f">${av(who)}<span>${esc(name)}</span><span class="due">${esc(due)}</span></div></article>`;
+  // The column is never empty: one task was already waiting there, and the meeting's two land under it.
+  const task = (title: string, who: string, name: string, due: string, delay?: number) =>
+    `<article class="tk"${delay === undefined ? '' : a('drop', delay)}><p>${esc(title)}</p><div class="tk__f">${av(who)}<span>${esc(name)}</span><span class="due">${esc(due)}</span></div></article>`;
   const scenePromise = `<div class="sc sc--promise" data-sc="1">
             <div class="mt">
               <div class="mt__head">
@@ -528,43 +536,47 @@ function page(locale: SiteLocale): string {
               </div>
               <div class="mt__steps">
                 <span class="mt__h">${esc(t('meetings.nextSteps'))}</span>
-                <span class="mt__step"${a('type', 500)}>${OPEN}<span>${esc(m.steps[0])}</span></span>
-                <span class="mt__step"${a('type', 1250)}>${OPEN}<span>${esc(m.steps[1])}</span></span>
-                <span class="mt__save"${a('press', 2450)}>${esc(t('common.save'))}</span>
+                <span class="mt__step">${OPEN}<span>${esc(m.steps[0])}</span></span>
+                <span class="mt__step"${a('type', 300)}>${OPEN}<span>${esc(m.steps[1])}</span></span>
+                <span class="mt__save"${a('press', 1500)}>${esc(t('common.save'))}</span>
               </div>
             </div>
             <div class="mk">
-              <div class="mk__h"><b>${esc(t('board.defaultColumns.todo'))}</b><span class="mk__toast"${a('pop', 3500)}>${CHECK}${esc(ui.tasksOpened)}</span></div>
-              ${newTask(m.steps[0], 'ZT', 'Zeynep', day(11, 14), 2850)}
-              ${newTask(m.steps[1], 'LB', 'Lena', day(11, 22), 3100)}
+              <div class="mk__h"><b>${esc(t('board.defaultColumns.todo'))}</b><span class="mk__toast"${a('pop', 2650)}>${CHECK}${esc(ui.tasksOpened)}</span></div>
+              ${task(ui.todo, 'AD', 'Ada', day(11, 12))}
+              ${task(m.steps[0], 'ZT', 'Zeynep', day(11, 14), 1900)}
+              ${task(m.steps[1], 'LB', 'Lena', day(11, 22), 2150)}
             </div>
             <span class="cur cur--promise">${CURSOR}</span>
           </div>`;
 
   // 3 — Renewals: the setting is on, the day arrives, the work opens itself. Nobody clicks.
-  const playTask = (title: string, due: string, delay: number) => `<li${a('up', delay)}>${OPEN}<span>${esc(title)}</span>${av('ZT')}<span class="due">${esc(due)}</span></li>`;
+  // The playbook is there from the start, as the app lists it: steps counted back from the renewal.
+  // When the day arrives each step becomes a task: its offset turns into a date and it gets its owner.
+  const playTask = (title: string, before: number, due: string, delay: number) =>
+    `<li style="--d:${delay}ms">${OPEN}<span class="rn__t">${esc(title)}</span><span class="rn__av">${av('ZT')}</span><span class="rn__when"><span class="rn__off">${esc(t('plans.stepBefore', { n: num(before) }))}</span><span class="due">${esc(due)}</span></span></li>`;
   const sceneRenew = `<div class="sc sc--renew" data-sc="2">
-            <div class="rn__set"${a('up', 150)}>
+            <div class="rn__set">
               <span class="tog"><i></i></span><b>${esc(t('rhythm.renewalsOn'))}</b>
               <span class="tag">${esc(t('rhythm.daysAhead', { n: num(90) }))}</span>
             </div>
-            <div class="rn__line"${a('up', 350)}>
+            <div class="rn__line">
               <div class="rn__who"><b>${esc(ACCOUNTS[1].name)}</b>${av('ZT')}</div>
               <div class="rn__track">
-                <span class="rn__fill"${a('fill', 700)}></span>
-                <span class="rn__mark"${a('hit', 1900)}></span>
+                <span class="rn__fill"${a('fill', 350)}></span>
+                <span class="rn__mark"${a('hit', 1500)}></span>
                 <span class="rn__end"></span>
               </div>
               <div class="rn__dates"><span>${esc(day(11, 16))}</span><span>${esc(day(2, 14, 2027))} · ${esc(t('targets.kind.renewal'))}</span></div>
             </div>
             <div class="rn__out">
-              <div class="rn__h"${a('up', 2050)}><b>${esc(ui.playbook)}</b><span class="cnt">${num(3)}</span></div>
+              <div class="rn__h"><b>${esc(ui.playbook)}</b><span class="cnt">${num(3)}</span></div>
               <ul class="rn__tasks">
-                ${playTask(ui.playbookSteps[0], day(11, 20), 2300)}
-                ${playTask(ui.playbookSteps[1], day(12, 1), 2550)}
-                ${playTask(ui.playbookSteps[2], day(12, 15), 2800)}
+                ${playTask(ui.playbookSteps[0], 85, day(11, 21), 1700)}
+                ${playTask(ui.playbookSteps[1], 75, day(12, 1), 1950)}
+                ${playTask(ui.playbookSteps[2], 60, day(12, 16), 2200)}
               </ul>
-              <div class="rn__deal"${a('pop', 3500)}><span class="rn__dk">${esc(t('records.kind.opportunity'))}</span><b>${esc(ACCOUNTS[1].name)}</b><span class="tag" data-band="good">${esc(t('targets.kind.renewal'))}</span></div>
+              <div class="rn__deal"${a('pop', 2900)}><span class="rn__dk">${esc(t('records.kind.opportunity'))}</span><b>${esc(ACCOUNTS[1].name)}</b><span class="tag" data-band="good">${esc(t('targets.kind.renewal'))}</span></div>
             </div>
           </div>`;
 
@@ -575,10 +587,9 @@ function page(locale: SiteLocale): string {
   const points = (done: number) => ui.points.replace('{done}', num(done)).replace('{total}', num(spTotal));
   const spCard = (k: (typeof SPRINT)[number], i: number) =>
     `<article class="spc${'lands' in k ? ' spc--lands' : ''}${'wide' in k ? ' spc--wide' : ''}"${'lands' in k ? a('land', 2500) : ''}>
-                  <span class="spc__e" data-epic="${k.epic}">${esc(ui.epics[k.epic])}</span>
+                  <div class="spc__t"><span class="spc__e" data-epic="${k.epic}">${esc(ui.epics[k.epic])}</span><span class="spc__p">${num(k.pts)}</span>${av(k.who)}</div>
                   <p>${esc(ui.tasks[i])}</p>
                   ${'lands' in k ? `<span class="spc__l">${CHAIN}${esc(t('task.links.blocks'))} · ${num(1)}</span>` : ''}
-                  <div class="spc__f">${av(k.who)}<span class="spc__p">${num(k.pts)} ${esc(ui.pts)}</span></div>
                 </article>`;
   const spCol = (col: 'doing' | 'review' | 'done', label: string) => {
     const cards = SPRINT.map((k, i) => ({ k, i })).filter(({ k }) => k.col === col);
@@ -603,7 +614,7 @@ function page(locale: SiteLocale): string {
               ${spCol('done', t('board.defaultColumns.done'))}
             </div>
             <div class="sp__chart">
-              <div class="sp__lg"><b>${esc(ui.burndown)}</b><span class="sp__k sp__k--i">${esc(ui.ideal)}</span><span class="sp__k sp__k--a">${esc(ui.actual)}</span><em${a('now', 3600)}>${esc(ui.ptsLeft.replace('{n}', num(spTotal - spDone)))}</em></div>
+              <div class="sp__lg"><b>${esc(ui.burndown)}</b><em${a('now', 3600)}>${esc(ui.ptsLeft.replace('{n}', num(spTotal - spDone)))}</em><span class="sp__lgk"><span class="sp__k sp__k--i">${esc(ui.ideal)}</span><span class="sp__k sp__k--a">${esc(ui.actual)}</span></span></div>
               ${burn}
             </div>
             <span class="cur cur--sprint">${CURSOR}</span>
@@ -623,26 +634,29 @@ function page(locale: SiteLocale): string {
     .join('');
   const nows = tour.steps.map((s, i) => `<div class="tour__nowi${i === 0 ? ' is-on' : ''}" data-now="${i}"><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div>`).join('');
 
-  // The headline arrives word by word. Languages written without spaces break
-  // after their own commas instead, so a line never ends on a stray character.
+  // The headline arrives word by word. Languages written without spaces break where
+  // the copy allows it (U+200B) and after their own commas, so a line never ends on a
+  // stray character — and get no space between the parts.
+  let wordNo = 0;
   const heroTitle = c.hero.title
-    .split(/\s+|(?<=[，、；])/)
+    .replace(/\u200b|(?<=[，、；])(?=\S)/g, '\u0001')
+    .split(/(\s+|\u0001)/)
     .filter(Boolean)
-    .map((w, i) => `<span class="w" style="--wi:${i}"><span>${esc(w)}</span></span>`)
-    .join(' ');
+    .map((w) => (w === '\u0001' ? '<wbr>' : /^\s+$/.test(w) ? ' ' : `<span class="w" style="--wi:${wordNo++}"><span>${esc(w)}</span></span>`))
+    .join('');
 
   // ------------------------------------------------------------------ the bento
   const tile = (i: number) => `<div class="tile__c"><h3>${esc(bento.tiles[i].h)}</h3><p>${esc(bento.tiles[i].p)}</p></div>`;
 
   // Tile 1 — the assistant: a question, and an answer made of the demo's own accounts.
   const askRow = (r: (typeof ACCOUNTS)[number], text: string, n: number) =>
-    `<li class="lp lp${n}"><span class="sco" data-band="${r.band}">${num(r.score)}</span><b>${esc(r.name)}</b><span>${esc(text)}</span></li>`;
+    `<li class="lp lp${n}"><span class="sco" data-band="${r.band}">${num(r.score)}</span><span class="ask__b"><b>${esc(r.name)}</b><span>${esc(text)}</span></span></li>`;
   const tileAsk = `<article class="tile tile--ask" data-live data-reveal>
           ${tile(0)}
           <div class="ask" aria-hidden="true">
-            <p class="ask__q"><span class="lp lp1">${esc(bento.ask.q)}</span></p>
+            <p class="ask__q"><span>${esc(bento.ask.q)}</span></p>
             <div class="ask__a">
-              <span class="ask__who lp lp2">${SPARK}Claude</span>
+              <span class="ask__who">${SPARK}Claude<span class="ask__dots"><i></i><i></i><i></i></span></span>
               <p class="lp lp2">${esc(bento.ask.a)}</p>
               <ul>
                 ${askRow(ACCOUNTS[0], ui.chips.review, 3)}
@@ -658,6 +672,11 @@ function page(locale: SiteLocale): string {
   const tilePortal = `<article class="tile tile--portal" data-live data-reveal style="--i:1">
           ${tile(1)}
           <div class="pt" aria-hidden="true">
+            <div class="pt__mail">
+              <span class="pt__lbl">${esc(t('portal.email'))}</span>
+              <span class="pt__field">selin@marevo.example</span>
+              <span class="pt__btn">${esc(t('portal.sendLink'))}</span>
+            </div>
             <div class="pt__win">
               <div class="pt__top"><span class="pt__logo">M</span><b>${esc(t('portal.for', { account: ACCOUNTS[0].name }))}</b>${av('SA')}</div>
               <div class="pt__tabs"><span class="is-on">${esc(t('portal.boards'))}</span><span>${esc(t('portal.requests'))}</span><em>${esc(t('portal.open', { n: num(2) }))}</em></div>
@@ -668,11 +687,6 @@ function page(locale: SiteLocale): string {
                 <li>${OPEN}<span>${esc(m.steps[1])}</span><em>${esc(t('portal.replies', { n: num(2) }))}</em></li>
               </ul>
               <span class="pt__new">+ ${esc(t('portal.new'))}</span>
-            </div>
-            <div class="pt__mail">
-              <span class="pt__lbl">${esc(t('portal.email'))}</span>
-              <span class="pt__field">selin@marevo.example</span>
-              <span class="pt__btn">${esc(t('portal.sendLink'))}</span>
             </div>
           </div>
         </article>`;
@@ -717,21 +731,19 @@ function page(locale: SiteLocale): string {
         </article>`;
 
   // Tile 6 — security: each company behind its own wall, and the audit log as the app keeps it.
-  const wall = (slug: string, i: number) => `<li style="--i:${i}"><span class="sec__lock">${LOCK}</span><span class="sec__host">${esc(slug)}.${esc(BASE_DOMAIN)}</span><span class="sec__rows"><i></i><i></i><i></i></span></li>`;
-  const logRow = (h: number, mm: number, who: string, what: string, i: number) => `<li style="--i:${i}"><time>${esc(clock(h, mm))}</time><b>${esc(who)}</b><span>${esc(what)}</span></li>`;
+  const wall = (slug: string, n: number, i: number) => `<li style="--i:${i}"><span class="sec__lock">${LOCK}</span><span class="sec__w"><span class="sec__host">${esc(slug)}.${esc(BASE_DOMAIN)}</span><span class="sec__n">${esc(accts)}<b>${num(n)}</b></span></span></li>`;
+  const logRow = (h: number, mm: number, who: string, what: string, i: number) => `<time class="sec__c" style="--i:${i}">${esc(clock(h, mm))}</time><span class="sec__c sec__e" style="--i:${i}"><b>${esc(who)}</b> <span>${esc(what)}</span></span>`;
   const tileSec = `<article class="tile tile--sec" data-live data-reveal style="--i:5">
           <div class="tile__c"><h3>${esc(bento.tiles[5].h)}</h3><p>${esc(bento.tiles[5].p)}</p>
             <ul class="facts">${bento.facts.map((f) => `<li>${CHECK}<span>${esc(f)}</span></li>`).join('')}</ul>
           </div>
           <div class="sec" aria-hidden="true">
-            <ul class="sec__walls">${['company-a', 'company-b', 'company-c'].map(wall).join('')}<span class="sec__probe"></span></ul>
+            <ul class="sec__walls">${wall('company-a', 214, 0)}${wall('company-b', 58, 1)}${wall('company-c', 936, 2)}</ul>
             <div class="sec__log">
-              <div class="sec__lh"><span>${esc(t('settings.audit.when'))}</span><span>${esc(t('settings.audit.who'))}</span><span>${esc(t('settings.audit.what'))}</span></div>
-              <ul>
-                ${logRow(9, 41, 'Zeynep Tunç', t('audit.session.created'), 0)}
-                ${logRow(9, 44, 'Ada Demir', t('audit.account.updated'), 1)}
-                ${logRow(9, 52, 'Lena', t('audit.org.field_access'), 2)}
-              </ul>
+              <span class="sec__lh">${esc(t('settings.audit.when'))}</span><span class="sec__lh">${esc(t('settings.audit.who'))}</span><span class="sec__lh">${esc(t('settings.audit.what'))}</span>
+              ${logRow(9, 41, 'Zeynep Tunç', t('audit.session.created'), 0)}
+              ${logRow(9, 44, 'Ada Demir', t('audit.account.updated'), 1)}
+              ${logRow(9, 52, 'Lena', t('audit.org.field_access'), 2)}
             </div>
           </div>
         </article>`;
