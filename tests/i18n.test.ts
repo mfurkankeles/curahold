@@ -119,10 +119,16 @@ describe('the locale registry', () => {
     expect(LOCALES.filter(isRtl).sort()).toEqual(['ar', 'fa', 'he']);
   });
 
-  it('has a dictionary for every locale, English and Turkish complete', () => {
-    for (const l of LOCALES) expect(dictionaries[l], l).toBeTruthy();
-    expect(Object.keys(dictionaries.en).length).toBeGreaterThan(100);
-    expect(Object.keys(dictionaries.tr).length).toBe(Object.keys(dictionaries.en).length);
+  it('has a complete dictionary for every locale: the same keys as English, none empty', () => {
+    const en = Object.keys(dictionaries.en);
+    expect(en.length).toBeGreaterThan(100);
+    for (const l of LOCALES) {
+      expect(dictionaries[l], l).toBeTruthy();
+      const own = dictionaries[l] as Record<string, string>;
+      expect(Object.keys(own).filter((k) => !(k in dictionaries.en)), `${l}: keys English does not have`).toEqual([]);
+      expect(en.filter((k) => !(k in own)), `${l}: keys still missing`).toEqual([]);
+      expect(Object.keys(own).filter((k) => !String(own[k]).trim()), `${l}: empty text`).toEqual([]);
+    }
   });
 
   it('reads each locale its own text, and falls back to English for any key it lacks', () => {
