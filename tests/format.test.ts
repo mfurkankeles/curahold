@@ -1,7 +1,10 @@
 // The one formatter module (web/src/lib/format.ts): dates typed and shown in each
 // language's own order and digits, the calendar's week start and shape.
 import { describe, expect, it } from 'vitest';
-import { dayOrder, formatDayNumeric, formatInt, formatTime, monthGrid, parseDay, parseTime, shiftMonth, weekdayNames, weekStart } from '../web/src/lib/format';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { dayOrder, formatBytes, formatDate, formatDayNumeric, formatInt, formatMoney, formatMonth, formatNumber, formatPercent, formatTime, monthGrid, parseDay, parseTime, shiftMonth, weekdayNames, weekStart } from '../web/src/lib/format';
 
 const today = '2026-11-15';
 
@@ -80,5 +83,25 @@ describe('the calendar', () => {
   it('moves by months without leaving the month', () => {
     expect(shiftMonth('2027-01-31', 1)).toBe('2027-02-28');
     expect(shiftMonth('2026-11-15', -12)).toBe('2025-11-15');
+  });
+});
+
+describe('numbers, money and dates in text', () => {
+  it('writes each language’s own way', () => {
+    expect(formatMoney(12000, 'TRY', 'tr')).toBe('₺12.000');
+    expect(formatMoney(1200, 'USD', 'en')).toBe('$1,200');
+    expect(formatMoney(125000, 'TRY', 'tr', { compact: true })).toMatch(/125/);
+    expect(formatNumber(12345.6, 'tr', { digits: 1 })).toBe('12.345,6');
+    expect(formatPercent(42, 'tr')).toBe('%42');
+    expect(formatDate('2026-11-15', 'tr')).toBe('15 Kas');
+    expect(formatDate('2026-11-15', 'fa', { day: 'numeric', month: 'long', year: 'numeric' })).toContain('۲۰۲۶'); // Gregorian, Persian digits
+    expect(formatMonth('2026-11', 'en')).toBe('November 2026');
+    expect(formatBytes(2 * 1024 * 1024, 'en')).toMatch(/2 ?MB/);
+  });
+  it('is the only place that formats: no Intl or toLocale* by hand in the app or the portal', () => {
+    const root = join(import.meta.dirname, '..');
+    const files = execSync('git ls-files web/src web/portal', { cwd: root, encoding: 'utf8' }).split('\n').filter((f) => /\.tsx?$/.test(f) && !f.endsWith('lib/format.ts'));
+    const by = files.filter((f) => /new Intl\.(NumberFormat|DateTimeFormat)\(|\.toLocale(Date|Time)?String\(/.test(readFileSync(join(root, f), 'utf8')));
+    expect(by).toEqual([]);
   });
 });

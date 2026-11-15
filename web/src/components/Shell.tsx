@@ -29,6 +29,7 @@ import { ShortcutsDialog, modKey, useShortcuts } from './Shortcuts';
 import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from '../lib/recordTypes';
 import { typeLabel } from '../../../shared/src/records';
+import { formatDateTime } from '../lib/format';
 
 // Dialogs opened on demand: their code loads the first time one opens.
 const BoardSettings = lazy(() => import('./BoardSettings').then((m) => ({ default: m.BoardSettings })));
@@ -168,7 +169,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useSearchKey(useCallback(() => setSearching(true), []));
   useShortcuts(actions, canWrite);
 
-  const until = (iso: string) => new Date(iso).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const until = (iso: string) => formatDateTime(iso, locale);
   const isAdmin = me.user.perms.some((p) => ADMIN_PERMS.includes(p));
   const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
   const helpOk = !me.previewBy && !me.supportBy;

@@ -21,6 +21,7 @@ import { Icon } from './icons';
 import { usePlaybooks } from './Plans';
 import { Avatar } from './ui';
 import { intlTag } from '../../../shared/src/i18n';
+import { formatMonth, formatNumber } from '../lib/format';
 
 /** "1 deal", "4 deals" (Turkish says "1 fırsat", "4 fırsat"). */
 export const dealsN = (t: I18n['t'], n: number) => (n === 1 ? t('pipeline.deal1') : t('pipeline.deals', { n }));
@@ -58,7 +59,7 @@ function usePeriodLabel() {
   return (p: Period) => {
     if (p.kind === 'year') return p.key;
     if (p.kind === 'quarter') return t('targets.quarter', { year: p.key.slice(0, 4), n: p.key.slice(-1) });
-    return new Date(`${p.start}T00:00:00Z`).toLocaleDateString(intlTag(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    return formatMonth(p.start, locale);
   };
 }
 
@@ -401,7 +402,7 @@ export function RhythmSettings() {
   // Types switched on but not given an amount yet still show their box.
   const [kindsOn, setKindsOn] = useState<string[]>(() => Object.keys((me.org.rhythm ?? DEFAULT_RHYTHM).targets.amounts));
   const [busy, setBusy] = useState(false);
-  const grouped = new Intl.NumberFormat(intlTag(locale));
+  const grouped = { format: (n: number) => formatNumber(n, locale) };
   const num = (v: string) => (v.trim() === '' ? null : Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) || null);
   const show = (n: number | null | undefined) => (n == null ? '' : grouped.format(n));
 

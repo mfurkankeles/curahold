@@ -15,10 +15,11 @@ import { ReportTabs } from './ReportBuilder';
 import { Avatar } from '../components/ui';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import type { Locale } from '../../../shared/src/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useFieldFormat } from './Accounts';
-import { intlTag } from '../../../shared/src/i18n';
+import { formatMonth, formatPercent, formatUnit } from '../lib/format';
 
 export interface WorkReport {
   totals: { open: number; overdue: number; dueWeek: number; unassigned: number; done30: number; created30: number; cycleDays: number | null; onTime: number | null };
@@ -29,10 +30,10 @@ export interface WorkReport {
   hours: { userId: string; minutes: number }[];
 }
 
-export const hoursText = (minutes: number, locale: string) => {
+export const hoursText = (minutes: number, locale: Locale) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  const unit = (n: number, u: 'hour' | 'minute') => new Intl.NumberFormat(intlTag(locale), { style: 'unit', unit: u, unitDisplay: 'narrow' }).format(n);
+  const unit = (n: number, u: 'hour' | 'minute') => formatUnit(n, u, locale);
   return h && m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : h ? unit(h, 'hour') : unit(m, 'minute');
 };
 
@@ -132,7 +133,7 @@ export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
 
 export function ReportsPage() {
   const { t, locale, words } = useI18n();
-  const percent = (v: number) => new Intl.NumberFormat(intlTag(locale), { style: 'percent', maximumFractionDigits: 0 }).format(v / 100);
+  const percent = (v: number) => formatPercent(v, locale);
   const { boards, person, me } = useStore();
   const fmt = useFieldFormat();
   const [board, setBoard] = useState('');
@@ -208,7 +209,7 @@ export function ReportsPage() {
     return { rows, open: sum(open), won: sum(won), winRate: closed ? Math.round((won.length / closed) * 100) : null, expansion: sum(won.filter((d) => d.fields.kind === 'expansion')) };
   }, [deals, stage, amount, locale, cur]);
 
-  const monthName = (k: string) => new Date(`${k}-01T00:00:00Z`).toLocaleDateString(intlTag(locale), { month: 'short', timeZone: 'UTC' });
+  const monthName = (k: string) => formatMonth(k, locale, { short: true });
   const cols = board ? boards.find((b) => b.id === board)?.columns ?? [] : [];
   return (
     <>

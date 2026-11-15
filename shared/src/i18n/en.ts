@@ -4098,6 +4098,8 @@ export const en = {
   'states.notAllowed.title': 'You do not have access to this',
   'states.notAllowed.body': 'An administrator of {org} can give it to you: ask them to change your role in Settings → People.',
   'states.notAllowed.home': 'Go to the home page',
+  'convert.note': 'Amounts in other currencies are converted to {currency} at the rates of {date}.',
+  'convert.noteNoDate': 'Amounts in other currencies are converted to {currency} at the company’s rates.',
 } as const;
 
 export type MessageKey = keyof typeof en;

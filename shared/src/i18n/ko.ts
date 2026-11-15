@@ -4083,4 +4083,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': '이곳에 접근할 권한이 없습니다',
   'states.notAllowed.body': '{org} 관리자가 권한을 줄 수 있습니다. 설정 → 사용자에서 역할을 바꿔 달라고 요청하세요.',
   'states.notAllowed.home': '홈으로 이동',
+  'convert.note': '다른 통화의 금액은 {date} 환율로 {currency}(으)로 환산했습니다.',
+  'convert.noteNoDate': '다른 통화의 금액은 회사 환율로 {currency}(으)로 환산했습니다.',
 };

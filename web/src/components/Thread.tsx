@@ -10,11 +10,13 @@ import { MAX_FILE_MB, MENTION_RE, type FileMeta, type Person } from '../../../sh
 import { ApiFailure, api, del, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
+import type { Locale } from '../../../shared/src/i18n';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { Icon } from './icons';
 import { Avatar, Dialog } from './ui';
+import { formatBytes } from '../lib/format';
 
 // ------------------------------------------------------------- smart links
 
@@ -129,7 +131,7 @@ export function renderBody(body: string): ReactNode[] {
 
 const PICTURE = /^image\/(png|jpeg|gif|webp)$/;
 export const isPicture = (f: { mime: string }) => PICTURE.test(f.mime);
-export const sizeText = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+export const sizeText = (n: number, locale: Locale = 'en') => formatBytes(n, locale);
 
 /**
  * A stored file as something the page can show or save. Fetched through the
@@ -195,7 +197,7 @@ function Picture({ file }: { file: FileMeta }) {
 
 /** A file under a comment or in a Files list: pictures as thumbnails, the rest as a chip to save. */
 export function FileItem({ file, onDelete }: { file: FileMeta; onDelete?: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <span className="fileitem">
       {isPicture(file) ? (
@@ -204,7 +206,7 @@ export function FileItem({ file, onDelete }: { file: FileMeta; onDelete?: () => 
         <button type="button" className="filechip" title={t('thread.download')} onClick={() => void downloadFile(file)}>
           <Icon name="paperclip" size={14} />
           <span className="filechip__name">{file.name}</span>
-          <span className="muted num">{sizeText(file.size)}</span>
+          <span className="muted num">{sizeText(file.size, locale)}</span>
         </button>
       )}
       {onDelete && (
@@ -302,7 +304,7 @@ export function Composer({
   above?: ReactNode;
   tone?: 'customer';
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<Pending[]>([]);
@@ -466,7 +468,7 @@ export function Composer({
                 <span className="filechip">
                   <Icon name="paperclip" size={14} />
                   <span className="filechip__name">{f.file.name}</span>
-                  <span className="muted num">{sizeText(f.file.size)}</span>
+                  <span className="muted num">{sizeText(f.file.size, locale)}</span>
                 </span>
               )}
               <button type="button" className="fileitem__x" aria-label={t('thread.removeFile', { name: f.file.name })} onClick={() => drop(f.key)}>

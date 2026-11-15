@@ -10,6 +10,7 @@ import { useMoney } from '../lib/money';
 import { useStore } from '../lib/store';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
+import { formatClock, formatNumber } from '../lib/format';
 
 const REFRESH_MS = 45_000;
 const VB_W = 300;
@@ -91,8 +92,7 @@ export function MetricsPage() {
 
   if (!owner) return <div className="metrics"><p className="metrics__denied">{t('metrics.denied')}</p></div>;
 
-  const nf = new Intl.NumberFormat(locale);
-  const n = (v: number) => nf.format(Math.round(v));
+  const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);
   const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -119,7 +119,7 @@ export function MetricsPage() {
         </div>
         <div className="metrics__end">
           {m ? <span className="metrics__badge" data-mode={m.mode}>{t(m.mode === 'live' ? 'metrics.live' : 'metrics.demo')}</span> : null}
-          {m ? <span className="metrics__time">{t('metrics.asOf', { time: new Date(m.asOf).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })}</span> : null}
+          {m ? <span className="metrics__time">{t('metrics.asOf', { time: formatClock(m.asOf, locale) })}</span> : null}
         </div>
       </div>
       {m?.mode === 'demo' ? <p className="metrics__note">{t('metrics.demoNote')}</p> : null}

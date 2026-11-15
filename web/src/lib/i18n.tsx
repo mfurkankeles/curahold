@@ -15,6 +15,7 @@ import {
   type Vars,
 } from '../../../shared/src/i18n/core';
 import { afterQuiet } from './api';
+import { formatDate } from './format';
 
 // One language at a time, in two parts (see shared/src/i18n/vite-plugin.ts):
 // the phrases the first screen uses, then the rest of the language. Each is its
@@ -200,7 +201,6 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
     };
   }, [locale]);
   const value = useMemo<I18n>(() => {
-    const tag = bcp47Of(locale);
     return {
       locale,
       // A phrase from the rest of the language, asked for before the rest is here
@@ -208,10 +208,7 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
       // blank for that moment, never the raw key; the rest's arrival draws it again.
       t: (key, vars) => (restPending.has(locale) && !hasRest(locale) && dictionaries[locale]?.[key] === undefined ? '' : translate(locale, key, vars, terms)),
       words: accountWords(locale, terms),
-      fmtDate: (iso, opts) => {
-        const d = iso.length === 10 ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
-        return new Intl.DateTimeFormat(tag, opts ?? { day: 'numeric', month: 'short' }).format(d);
-      },
+      fmtDate: (iso, opts) => formatDate(iso, locale, opts),
     };
   }, [locale, terms, parts.get(locale)?.rest]);
   if (!shown && !hasDictionary(wanted)) return null;

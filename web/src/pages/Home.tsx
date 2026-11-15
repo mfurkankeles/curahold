@@ -33,6 +33,7 @@ import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { useTrashToast } from '../lib/trash';
 import { intlTag } from '../../../shared/src/i18n';
+import { formatMoney, formatNumber } from '../lib/format';
 
 export type Data = Record<string, CardData>;
 
@@ -236,11 +237,7 @@ function useMoney() {
   const tag = intlTag(locale);
   return useCallback(
     (v: number, compact = false) => {
-      try {
-        return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: me.org.currency, maximumFractionDigits: compact && Math.abs(v) >= 10000 ? 1 : 0, notation: compact && Math.abs(v) >= 10000 ? 'compact' : 'standard' }).format(v);
-      } catch {
-        return String(v);
-      }
+      return formatMoney(v, me.org.currency, locale, { compact });
     },
     [tag, me.org.currency],
   );
@@ -331,7 +328,6 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
   const { t, locale, fmtDate } = useI18n();
   const { person, can } = useStore();
   const money = useMoney();
-  const tag = intlTag(locale);
 
   if (data.kind === 'hidden') return <p className="pane__note">{t('home.hiddenForRole')}</p>;
   if (data.kind === 'missing') {
@@ -350,7 +346,7 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
   if (data.kind === 'note') return <div className="pane__text">{data.text ? linkify(data.text) : <span className="muted">{t('home.note.empty')}</span>}</div>;
 
   if (data.kind === 'number') {
-    const value = <CountUp value={data.value} format={(n) => (data.unit === 'money' ? money(n, true) : new Intl.NumberFormat(tag).format(n))} />;
+    const value = <CountUp value={data.value} format={(n) => (data.unit === 'money' ? money(n, true) : formatNumber(n, locale))} />;
     const sub = data.sub ? (data.sub.unit === 'money' ? money(data.sub.value) : t('home.accountsN', { n: data.sub.value })) : null;
     return (
       <div className="pane__number">

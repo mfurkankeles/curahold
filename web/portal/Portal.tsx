@@ -2,8 +2,9 @@
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { bcp47Of, intlTag, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
+import { bcp47Of, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
+import { formatDate, formatDateTime } from '../src/lib/format';
 import type { PortalAccount, PortalBoard, PortalMe, PortalOrg, PortalTask, PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
@@ -127,7 +128,7 @@ function Portal() {
     () => ({
       locale,
       t: (k, v) => translate(locale, k, v),
-      when: (iso) => new Date(iso).toLocaleString(intlTag(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      when: (iso) => formatDateTime(iso, locale),
     }),
     [locale],
   );
@@ -835,7 +836,7 @@ function List({ ctx, me, board, onSignedOut }: { ctx: Ctx; me: PortalMe; board: 
                 {' · '}
                 {t('portal.updated', { when: when(x.updatedAt) })}
                 {x.replies > 0 && <> · {t('portal.replies', { n: x.replies })}</>}
-                {x.dueDate && <> · {t('portal.due', { when: new Date(x.dueDate).toLocaleDateString(intlTag(ctx.locale), { day: 'numeric', month: 'short' }) })}</>}
+                {x.dueDate && <> · {t('portal.due', { when: formatDate(x.dueDate, ctx.locale, { day: 'numeric', month: 'short' }) })}</>}
               </span>
             </a>
           </li>
@@ -948,7 +949,7 @@ function TaskPage({ ctx, id, onSignedOut }: { ctx: Ctx; id: string; onSignedOut:
         {fields.includes('due') && data.dueDate && (
           <div>
             <dt>{t('portal.dueLabel')}</dt>
-            <dd>{new Date(data.dueDate).toLocaleDateString(intlTag(ctx.locale), { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
+            <dd>{formatDate(data.dueDate, ctx.locale, { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
           </div>
         )}
         {fields.includes('assignee') && data.assignees && data.assignees.length > 0 && (

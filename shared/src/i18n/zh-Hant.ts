@@ -4083,4 +4083,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': '你沒有存取此處的權限',
   'states.notAllowed.body': '{org} 的管理員可以為你開通：請他們在「設定 → 成員」中變更你的角色。',
   'states.notAllowed.home': '前往首頁',
+  'convert.note': '其他幣別的金額已按 {date} 的匯率換算為 {currency}。',
+  'convert.noteNoDate': '其他幣別的金額已按公司匯率換算為 {currency}。',
 };

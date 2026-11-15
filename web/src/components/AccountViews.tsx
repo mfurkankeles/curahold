@@ -18,7 +18,7 @@ import { useRecordTypes } from './AccountFields';
 import { Icon } from './icons';
 import { todayIso } from '../lib/time';
 import { Avatar } from './ui';
-import { intlTag } from '../../../shared/src/i18n';
+import { formatMonth } from '../lib/format';
 
 export const QUIET_DAYS = 30;
 const DAY = 86_400_000;
@@ -141,7 +141,7 @@ export function AccountCards({
 }: {
   rows: { a: Account; chips: Chip[]; attention: number; band: Band }[];
   shown: AccountField[];
-  fmt: (f: AccountField, v: unknown, currency?: string | null) => string;
+  fmt: (f: AccountField, v: unknown, currency?: string | null, inBase?: boolean) => string;
   OptionValue: (p: { field: AccountField; value: unknown; text: string }) => JSX.Element;
 }) {
   const { t, words, locale } = useI18n();
@@ -203,7 +203,7 @@ export function AccountCards({
               {shown.map((f) => (
                 <div key={f.key}>
                   <dt>{typeof f.label === 'string' ? f.label : (f.label[locale] ?? f.label.en)}</dt>
-                  <dd>{a.fields[f.key] === null || a.fields[f.key] === undefined || a.fields[f.key] === '' ? <span className="muted">—</span> : <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency)} />}</dd>
+                  <dd>{a.fields[f.key] === null || a.fields[f.key] === undefined || a.fields[f.key] === '' ? <span className="muted">—</span> : <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency, true)} />}</dd>
                 </div>
               ))}
             </dl>
@@ -229,7 +229,7 @@ function agreementFields(defs: AccountField[]) {
   return defs.filter((f) => f.type === 'url' && AGREEMENT_RE.test(`${f.key} ${JSON.stringify(f.label)}`));
 }
 
-export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[]; band: Band }[]; fmt: (f: AccountField, v: unknown, currency?: string | null) => string }) {
+export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[]; band: Band }[]; fmt: (f: AccountField, v: unknown, currency?: string | null, inBase?: boolean) => string }) {
   const cur = useMoney();
   const { t, fmtDate, locale } = useI18n();
   const { me, person } = useStore();
@@ -268,7 +268,7 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
       {keys.map((k) => {
         const list = groups.get(k)!.sort((x, y) => x.days - y.days);
         const risky = list.filter((r) => r.band === 'risk' || r.band === 'watch');
-        const month = k === 'past' ? t('acards.renewalsPast') : new Date(`${k}-01T00:00:00Z`).toLocaleDateString(intlTag(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        const month = k === 'past' ? t('acards.renewalsPast') : formatMonth(k, locale);
         return (
           <section key={k} className="sheet renewals__month" data-past={k === 'past' || undefined}>
             <header className="renewals__head">
@@ -298,7 +298,7 @@ export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[];
                     <td className="hide-phone">{person(r.a.ownerId)?.name ?? <span className="muted">{t('accounts.noOwner')}</span>}</td>
                     <td className="num">{fmtDate(r.date, { day: 'numeric', month: 'short' })}</td>
                     <td className="num muted">{r.days < 0 ? t('acards.daysAgo', { n: -r.days }) : t('acards.inDays', { n: r.days })}</td>
-                    {value && <td className="num">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key], r.a.currency)}</td>}
+                    {value && <td className="num">{r.a.fields[value.key] === null || r.a.fields[value.key] === undefined ? '—' : fmt(value, r.a.fields[value.key], r.a.currency, true)}</td>}
                     <td className="renewals__links">
                       <RenewalCell
                         links={links[r.a.id]}

@@ -4083,4 +4083,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': 'به این بخش دسترسی ندارید',
   'states.notAllowed.body': 'یکی از مدیران {org} می‌تواند این دسترسی را بدهد: از او بخواهید نقش شما را در تنظیمات ← افراد تغییر دهد.',
   'states.notAllowed.home': 'رفتن به صفحهٔ اصلی',
+  'convert.note': 'مبالغ با ارزهای دیگر با نرخ‌های {date} به {currency} تبدیل شده‌اند.',
+  'convert.noteNoDate': 'مبالغ با ارزهای دیگر با نرخ‌های شرکت به {currency} تبدیل شده‌اند.',
 };

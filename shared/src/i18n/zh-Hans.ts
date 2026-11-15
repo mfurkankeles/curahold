@@ -4083,4 +4083,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': '你没有访问此处的权限',
   'states.notAllowed.body': '{org} 的管理员可以为你开通：请他们在“设置 → 成员”中更改你的角色。',
   'states.notAllowed.home': '前往首页',
+  'convert.note': '其他币种的金额已按 {date} 的汇率换算为 {currency}。',
+  'convert.noteNoDate': '其他币种的金额已按公司汇率换算为 {currency}。',
 };

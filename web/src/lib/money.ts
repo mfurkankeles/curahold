@@ -5,6 +5,7 @@ import { COMMON_CURRENCIES, moneyOf, toBase, usableCurrencies, type Money } from
 import { useI18n } from './i18n';
 import { useStore } from './store';
 import { intlTag } from '../../../shared/src/i18n';
+import { currencySign, formatMoney } from './format';
 
 export interface MoneyTools extends Money {
   /** In the company's currency. */
@@ -33,22 +34,8 @@ export function useMoney(): MoneyTools {
     } catch {
       names = null;
     }
-    const format = (amount: number, currency?: string | null, compact = false) => {
-      const cur = currency || m.base;
-      const big = compact && Math.abs(amount) >= 10000;
-      try {
-        return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: cur, maximumFractionDigits: big ? 1 : 0, notation: big ? 'compact' : 'standard' }).format(amount);
-      } catch {
-        return `${new Intl.NumberFormat(tag, { maximumFractionDigits: 0 }).format(amount)} ${cur}`;
-      }
-    };
-    const symbolOf = (code?: string | null) => {
-      try {
-        return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: code || m.base }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? (code || m.base);
-      } catch {
-        return code || m.base;
-      }
-    };
+    const format = (amount: number, currency?: string | null, compact = false) => formatMoney(amount, currency || m.base, locale, { compact });
+    const symbolOf = (code?: string | null) => currencySign(code || m.base, locale);
     return { ...m, usable, multi: usable.length > 1, toBase: (a, c) => toBase(a, c, m), format, nameOf: (code) => names?.of(code) ?? code, symbolOf };
   }, [me.org.currency, me.org.fx, tag]);
 }

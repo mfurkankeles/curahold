@@ -3,13 +3,14 @@
 // that is open on the right — the conversation, the company it comes from and
 // the team's own notes. Only people on Curahold's staff list can sign in.
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import type { Locale, MessageKey } from '../../../shared/src/i18n';
+import { normalizeLocale, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import type { ReplayMeta } from '../../../shared/src/replay';
 import { EmptyState } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
 import '../desk.css';
+import { formatDate } from '../lib/format';
 
 // rrweb's player is heavy: load it only when the team watches a recording.
 const ReplayPlayer = lazy(() => import('../components/ReplayPlayer'));
@@ -75,7 +76,7 @@ const QUEUES: { key: string; query: string; icon: IconName; count?: keyof Me['co
   { key: 'all', query: '', icon: 'list' },
 ];
 const SIGNED_AS = 'desk_signed_as';
-const day = (iso: string, locale: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+const day = (iso: string, locale: string) => formatDate(iso, normalizeLocale(locale), { day: 'numeric', month: 'short', year: 'numeric' });
 const shortName = (email: string) => email.split('@')[0];
 /** A plan by its name; one this screen has no word for shows as it is stored. */
 const planName = (plan: string, t: (k: MessageKey) => string) => (plan === 'trial' ? t('desk.plan.trial') : plan === 'team' || plan === 'business' ? t(`billing.plan.${plan}`) : plan);

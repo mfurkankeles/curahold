@@ -4083,4 +4083,6 @@ export const tr: Record<MessageKey, string> = {
   'states.notAllowed.title': 'Buraya erişimin yok',
   'states.notAllowed.body': '{org} yöneticilerinden biri bu erişimi verebilir: Ayarlar → Kişiler\'den rolünü değiştirmesini iste.',
   'states.notAllowed.home': 'Ana sayfaya dön',
+  'convert.note': 'Başka para birimindeki tutarlar {date} kurlarıyla {currency} cinsine çevrildi.',
+  'convert.noteNoDate': 'Başka para birimindeki tutarlar şirketin kurlarıyla {currency} cinsine çevrildi.',
 };

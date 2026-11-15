@@ -13,7 +13,7 @@ import { ExportMenu } from '../components/Export';
 import { allPages, cellOf } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
-import { Avatar, Confirm, Dialog, DueLabel, onTabKeys } from '../components/ui';
+import { Avatar, Confirm, ConvertedNote, Dialog, DueLabel, onTabKeys } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh, useLocation } from '../lib/router';
@@ -35,9 +35,9 @@ import { useLiveScope, usePresence } from '../lib/live';
 import { Presence } from '../components/Presence';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
-import { intlTag } from '../../../shared/src/i18n';
 import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 import { useServerUndo } from '../lib/undo';
+import { formatDate, formatMoney, formatNumber } from '../lib/format';
 
 /** A choice shown in its colour when it has one; anything else as plain text. */
 export function OptionValue({ field, value, text }: { field: AccountField; value: unknown; text: string }) {
@@ -54,25 +54,26 @@ export function OptionValue({ field, value, text }: { field: AccountField; value
 export function useFieldFormat() {
   const { locale } = useI18n();
   const { me } = useStore();
-  const tag = intlTag(locale);
+  const money = useMoney();
   return useCallback(
-    /** `currency`: the customer's or record's own; none is the company's. */
-    (f: AccountField, v: unknown, currency?: string | null): string => {
+    /**
+     * `currency`: the customer's or record's own; none is the company's. `inBase`: a list
+     * shows one currency — an amount in another is converted and marked "≈" (ConvertedNote
+     * under the list says at which rates).
+     */
+    (f: AccountField, v: unknown, currency?: string | null, inBase = false): string => {
       if (v === null || v === undefined || v === '') return '';
+      if (f.type === 'money' && inBase && currency && currency !== me.org.currency && money.rates[currency]) return `≈ ${formatMoney(money.toBase(Number(v), currency), me.org.currency, locale)}`;
       if (f.type === 'money') {
-        try {
-          return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: currency || me.org.currency, maximumFractionDigits: 0 }).format(Number(v));
-        } catch {
-          return String(v);
-        }
+        return formatMoney(Number(v), currency || me.org.currency, locale);
       }
-      if (f.type === 'number') return new Intl.NumberFormat(tag).format(Number(v));
-      if (f.type === 'date') return new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${v}T12:00:00Z`));
+      if (f.type === 'number') return formatNumber(Number(v), locale, { digits: 2 });
+      if (f.type === 'date') return formatDate(String(v), locale, { day: 'numeric', month: 'short', year: 'numeric' });
       if (f.type === 'select') return labelOf(f.options?.find((o) => o.key === v)?.label, locale) || String(v);
       if (f.type === 'url') return String(v).replace(/^https?:\/\//, '').replace(/\/$/, '');
       return String(v);
     },
-    [tag, me.org.currency, locale],
+    [money, me.org.currency, locale],
   );
 }
 
@@ -262,6 +263,8 @@ export function AccountsPage() {
       ))}
     </div>
   );
+  // One currency on the screen: amounts in another are converted (≈) and this says at which rates — under the list on a phone.
+  const convertedNote = data && (view === 'cards' || view === 'table' || view === 'renewals') && rows.some((a) => a.currency && a.currency !== me.org.currency && money.rates[a.currency]) ? <ConvertedNote currency={me.org.currency} ratesAt={me.org.fx?.updatedAt} /> : null;
   // On a phone the filters, the order and the view switch fold into one sheet (FilterSheet).
   const activeFilters = (owner !== 'all' ? 1 : 0) + (signal ? 1 : 0) + (archived ? 1 : 0);
   return (
@@ -456,6 +459,7 @@ export function AccountsPage() {
           </div>
         )}
 
+        {!phone && convertedNote}
         {!data ? (
           view === 'cards' ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
         ) : rows.length === 0 ? (
@@ -567,7 +571,7 @@ export function AccountsPage() {
                     </td>
                     {fields.map((f) => (
                       <td key={f.key} className={`hide-phone${f.type === 'money' || f.type === 'number' ? ' num' : ''}`} data-type={f.type} data-value={f.type === 'select' ? String(a.fields[f.key] ?? '') : undefined}>
-                        <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency)} />
+                        <OptionValue field={f} value={a.fields[f.key]} text={fmt(f, a.fields[f.key], a.currency, true)} />
                       </td>
                     ))}
                     <td className="num">{a.openTasks ?? 0}</td>
@@ -583,6 +587,7 @@ export function AccountsPage() {
             </table>
           </div>
         )}
+        {phone && convertedNote}
       </div>
       {importing && (
         <Dialog title={t('accounts.importTitle', { accounts: words.other })} onClose={() => { setImporting(false); void load(); }} wide>

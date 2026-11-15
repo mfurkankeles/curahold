@@ -4083,4 +4083,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': 'אין לך גישה לכאן',
   'states.notAllowed.body': 'מנהל/ת של {org} יכולים לתת לך גישה: בקשו לשנות את התפקיד שלך בהגדרות ← אנשים.',
   'states.notAllowed.home': 'מעבר לדף הבית',
+  'convert.note': 'סכומים במטבעות אחרים הומרו ל-{currency} לפי שערי {date}.',
+  'convert.noteNoDate': 'סכומים במטבעות אחרים הומרו ל-{currency} לפי שערי החברה.',
 };

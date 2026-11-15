@@ -151,3 +151,17 @@ while the focus is in a text field: there it belongs to the text). The toast are
 - `undoable(text, undoId, after?)` from `useServerUndo()` — for answers that carry an `undoId` (bulk changes).
 - `useTrashToast()` (`lib/trash.ts`) — a delete that went to the trash; built on `useUndo`.
 - Never a confirmation dialog where an undo will do; keep `Confirm` for what cannot be undone.
+
+### Numbers, money and dates in text — `lib/format.ts`, `useFormat()` (`lib/useFormat.ts`)
+
+The one formatter module. Nothing in `web/src` or `web/portal` calls `Intl.NumberFormat`, `Intl.DateTimeFormat`
+or `toLocale*String` itself (tests/format.test.ts fails if one does).
+
+- `formatNumber`, `formatPercent` (0–100), `formatUnit`, `formatBytes`, `formatMoney`, `currencySign`,
+  `formatDate` (a `'YYYY-MM-DD'` day is the same day everywhere; a timestamp is in the reader's clock),
+  `formatDateTime`, `formatClock`, `formatMonth`, and the date field's `formatDayNumeric` / `parseDay`.
+- Gregorian in every language, with the language's own digits (Persian digits in Persian; the Western digits
+  the Arabic dictionary uses in Arabic).
+- **One currency per screen.** A list shows every amount in the company's currency; an amount kept in
+  another is converted and marked `≈`, and `ConvertedNote` (components/ui.tsx) under the list says at which
+  rates and of which date. A screen about one customer shows that customer's own currency.

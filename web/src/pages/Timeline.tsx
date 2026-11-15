@@ -12,6 +12,7 @@ import { usePageDefaults } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { addDays, dueState, todayIso } from '../lib/time';
 import { intlTag } from '../../../shared/src/i18n';
+import { formatMonth } from '../lib/format';
 
 const GROUPS = ['board', 'person', 'account'] as const;
 type Group = (typeof GROUPS)[number];
@@ -89,7 +90,7 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
   const months = useMemo(() => {
     const out: { label: string; span: number }[] = [];
     for (const d of days) {
-      const label = new Date(`${d}T00:00:00Z`).toLocaleDateString(tag, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      const label = formatMonth(d, locale);
       if (out.length && out[out.length - 1].label === label) out[out.length - 1].span += 1;
       else out.push({ label, span: 1 });
     }

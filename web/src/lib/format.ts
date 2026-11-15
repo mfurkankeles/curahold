@@ -183,3 +183,68 @@ export function monthGrid(monthIso: string, locale: Locale): string[][] {
   const start = shiftDay(first, -back);
   return Array.from({ length: 6 }, (_, w) => Array.from({ length: 7 }, (_, d) => shiftDay(start, w * 7 + d)));
 }
+
+// ---------------------------------------------------------------- numbers, money, dates in text
+// Everything a screen writes as text goes through these (or `useFormat()` in lib/useFormat.ts,
+// which binds the reader's language). Nothing formats with Intl or toLocale* by hand.
+
+const nfCache = new Map<string, Intl.NumberFormat>();
+function nf(locale: Locale, opts: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const key = `${locale}|${JSON.stringify(opts)}`;
+  let f = nfCache.get(key);
+  if (!f) nfCache.set(key, (f = new Intl.NumberFormat(intlTag(locale), opts)));
+  return f;
+}
+/** 12.345 / 12,345 / ۱۲٬۳۴۵ — `digits` decimals at most; `compact` writes 12K above 10 000. */
+export function formatNumber(n: number, locale: Locale, { digits = 0, compact = false }: { digits?: number; compact?: boolean } = {}): string {
+  const big = compact && Math.abs(n) >= 10000;
+  return nf(locale, { maximumFractionDigits: big ? 1 : digits, notation: big ? 'compact' : 'standard' }).format(n);
+}
+/** "%42" in Turkish, "42%" in English: `value` is 0–100. */
+export const formatPercent = (value: number, locale: Locale, digits = 0) => nf(locale, { style: 'percent', maximumFractionDigits: digits }).format(value / 100);
+/** "3 sa", "45 dk" — a duration or size in the language's short unit. */
+export const formatUnit = (n: number, unit: 'hour' | 'minute' | 'day' | 'kilobyte' | 'megabyte', locale: Locale, digits = 0) =>
+  nf(locale, { style: 'unit', unit, unitDisplay: 'narrow', maximumFractionDigits: digits }).format(n);
+/** A file size: "820 KB", "1,4 MB". */
+export const formatBytes = (n: number, locale: Locale) => (n > 1024 * 1024 ? formatUnit(n / 1024 / 1024, 'megabyte', locale, 1) : formatUnit(Math.max(1, Math.round(n / 1024)), 'kilobyte', locale));
+/** "₺12.000", "$1,200", "12 B ₺" with `compact` — in the amount's own currency. */
+export function formatMoney(amount: number, currency: string, locale: Locale, { compact = false }: { compact?: boolean } = {}): string {
+  const big = compact && Math.abs(amount) >= 10000;
+  try {
+    return nf(locale, { style: 'currency', currencyDisplay: 'narrowSymbol', currency, maximumFractionDigits: big ? 1 : 0, notation: big ? 'compact' : 'standard' }).format(amount);
+  } catch {
+    return `${formatNumber(amount, locale)} ${currency}`;
+  }
+}
+/** The currency's own sign here ("₺", "$"). */
+export function currencySign(currency: string, locale: Locale): string {
+  try {
+    return nf(locale, { style: 'currency', currencyDisplay: 'narrowSymbol', currency }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? currency;
+  } catch {
+    return currency;
+  }
+}
+
+/**
+ * A date in running text. 'YYYY-MM-DD' is a calendar day (the same everywhere); a full
+ * timestamp is shown in the reader's own clock. Default: "15 Kas".
+ */
+export function formatDate(at: string | Date, locale: Locale, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }): string {
+  const day = typeof at === 'string' && at.length === 10;
+  const d = typeof at === 'string' ? (day ? dayDate(at) : new Date(at)) : at;
+  return dtfLocal(locale, day ? { ...opts, timeZone: 'UTC' } : opts).format(d);
+}
+/** A moment with its time: "15 Kas 14:30". */
+export const formatDateTime = (at: string | Date, locale: Locale, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) => formatDate(at, locale, opts);
+/** The time of a moment: "14:30". */
+export const formatClock = (at: string | Date, locale: Locale) => formatDate(at, locale, { hour: '2-digit', minute: '2-digit' });
+/** A month key 'YYYY-MM' (or any day in it) as "Kasım 2026", or "Kas" with `short`. */
+export const formatMonth = (key: string, locale: Locale, { short = false, year = !short }: { short?: boolean; year?: boolean } = {}) =>
+  formatDate(`${key.slice(0, 7)}-01`, locale, { month: short ? 'short' : 'long', ...(year ? { year: 'numeric' } : {}) });
+
+function dtfLocal(locale: Locale, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `L|${locale}|${JSON.stringify(opts)}`;
+  let f = fmtCache.get(key);
+  if (!f) fmtCache.set(key, (f = new Intl.DateTimeFormat(intlTag(locale), { calendar: 'gregory', ...opts })));
+  return f;
+}

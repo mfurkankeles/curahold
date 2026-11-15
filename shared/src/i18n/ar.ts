@@ -4083,4 +4083,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': 'ليست لديك صلاحية الوصول إلى هذا',
   'states.notAllowed.body': 'يمكن لأحد مسؤولي {org} منحك إياها: اطلب منه تغيير دورك من الإعدادات ← الأشخاص.',
   'states.notAllowed.home': 'الانتقال إلى الصفحة الرئيسية',
+  'convert.note': 'حُوّلت المبالغ بالعملات الأخرى إلى {currency} بأسعار صرف {date}.',
+  'convert.noteNoDate': 'حُوّلت المبالغ بالعملات الأخرى إلى {currency} بأسعار صرف الشركة.',
 };

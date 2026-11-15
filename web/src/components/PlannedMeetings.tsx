@@ -21,6 +21,7 @@ import { Avatars, Dialog, PeoplePicker, RowMenu } from './ui';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
 import { DateField } from './DateField';
+import { formatClock, formatDate } from '../lib/format';
 
 interface PlannedPage {
   upcoming: PlannedMeeting[];
@@ -114,7 +115,7 @@ export function AccountPlanned({ account }: { account: Account }) {
             <li key={m.id} className="planned__item" data-kind={m.kind}>
               <div className="planned__when" aria-hidden="true">
                 <strong>{fmtDate(m.startsAt, { day: 'numeric', month: 'short' })}</strong>
-                <span>{new Date(m.startsAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{formatClock(m.startsAt, locale)}</span>
               </div>
               <div className="planned__main">
                 <div className="planned__row">
@@ -370,7 +371,7 @@ function PlanDialog({ account, planned, onClose, onSaved }: { account: Account; 
 // -------------------------------------------------------------- mark as held
 
 function HoldDialog({ account, planned, onClose, onDone }: { account: Account; planned: PlannedMeeting; onClose: () => void; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
   const [body, setBody] = useState(planned.agenda ?? '');
   const [when, setWhen] = useState(toLocalInput(new Date().toISOString()));
@@ -385,7 +386,7 @@ function HoldDialog({ account, planned, onClose, onDone }: { account: Account; p
     try {
       const r = await post<{ next: PlannedMeeting | null }>(`/planned/${planned.id}/hold`, { body: body.trim(), happenedAt: fromLocalInput(when), minutes });
       toast(t('plannedHold.done', { account: account.name }), 'info');
-      if (r.next) toast(t('plannedHold.nextMade', { date: new Date(r.next.startsAt).toLocaleDateString() }), 'info');
+      if (r.next) toast(t('plannedHold.nextMade', { date: formatDate(r.next.startsAt, locale, { day: 'numeric', month: 'long' }) }), 'info');
       onDone();
       onClose();
     } catch (e) {
@@ -440,7 +441,7 @@ function HoldDialog({ account, planned, onClose, onDone }: { account: Account; p
 // ---------------------------------------------------------------- postpone
 
 function PostponeDialog({ planned, onClose, onDone }: { planned: PlannedMeeting; onClose: () => void; onDone: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
   const [reason, setReason] = useState('');
   const [newDate, setNewDate] = useState('');
@@ -453,7 +454,7 @@ function PostponeDialog({ planned, onClose, onDone }: { planned: PlannedMeeting;
     setError('');
     try {
       const r = await post<{ next: PlannedMeeting | null }>(`/planned/${planned.id}/postpone`, { reason: reason.trim(), ...(newDate ? { startsAt: fromLocalInput(newDate) } : {}) });
-      toast(r.next ? t('plannedPostpone.rescheduled', { date: new Date(r.next.startsAt).toLocaleDateString() }) : t('plannedPostpone.done'), 'info');
+      toast(r.next ? t('plannedPostpone.rescheduled', { date: formatDate(r.next.startsAt, locale, { day: 'numeric', month: 'long' }) }) : t('plannedPostpone.done'), 'info');
       onDone();
       onClose();
     } catch (e) {

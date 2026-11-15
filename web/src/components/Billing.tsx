@@ -14,6 +14,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
 import { Confirm } from './ui';
+import { formatMoney } from '../lib/format';
 
 interface BillingInfo {
   enabled: boolean;
@@ -79,7 +80,7 @@ export function BillingSettings() {
     );
   }
 
-  const money = (n: number) => new Intl.NumberFormat(locale, { style: 'currency', currency: PRICE_CURRENCY, maximumFractionDigits: 0 }).format(n);
+  const money = (n: number) => formatMoney(n, PRICE_CURRENCY, locale);
   const seats = Math.max(1, info.seats);
   const sub = info.subscription;
   const live = !!sub && ['active', 'trialing', 'past_due'].includes(sub.status);

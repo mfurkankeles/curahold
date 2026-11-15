@@ -103,3 +103,6 @@ td[aria-selected='true'] > .datepop__day, td[data-lit='end'] > .datepop__day { b
 @keyframes wait-in { from { opacity: 0; } }
 .errorbox .emptystate__icon[data-tone='late'] { background: var(--late-wash); color: var(--late-ink); }
 .offlinebar__count { margin-inline-start: auto; padding: 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--soon-ink); font-size: var(--fs-xs); font-weight: 600; }
+
+/* ------------------------------------------------------------ money in text (lib/format.ts) */
+.convertednote { margin: 0 0 12px; color: var(--ink-3); font-size: var(--fs-xs); }

@@ -4083,4 +4083,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'states.notAllowed.title': 'ここへのアクセス権がありません',
   'states.notAllowed.body': '{org} の管理者がアクセス権を付与できます。「設定 → メンバー」であなたのロールを変更するよう依頼してください。',
   'states.notAllowed.home': 'ホームへ移動',
+  'convert.note': '他の通貨の金額は {date} のレートで {currency} に換算しています。',
+  'convert.noteNoDate': '他の通貨の金額は会社のレートで {currency} に換算しています。',
 };

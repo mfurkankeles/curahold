@@ -499,7 +499,7 @@ function MeetingRow({
       <time className="meeting__date" dateTime={m.happenedAt}>
         <span className="meeting__day num">{fmtDate(day, { day: 'numeric' })}</span>
         <span className="meeting__month">{fmtDate(day, { month: 'short', year: 'numeric' })}</span>
-        <span className="meeting__weekday muted">{new Date(`${day}T12:00:00`).toLocaleDateString(locale, { weekday: 'short' })}</span>
+        <span className="meeting__weekday muted">{fmtDate(day, { weekday: 'short' })}</span>
       </time>
       <div className="meeting__main">
         <div className="meeting__head">

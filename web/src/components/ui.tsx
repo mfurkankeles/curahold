@@ -3,6 +3,7 @@ import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
 import { Icon } from './icons';
+import { formatDate } from '../lib/format';
 
 /** Avatar tones: --avatar-0 … --avatar-7 in styles.css. */
 const AVATAR_TONES = 8;
@@ -328,5 +329,19 @@ export function RowMenu({ label, items }: { label: string; items: { label: strin
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * One currency per screen: under a list whose amounts were converted (marked "≈"), the
+ * currency they are shown in and the date of the rates used.
+ */
+export function ConvertedNote({ currency, ratesAt }: { currency: string; ratesAt?: string | null }) {
+  const { t, locale } = useI18n();
+  return (
+    <p className="convertednote">
+      <span aria-hidden="true">≈ </span>
+      {ratesAt ? t('convert.note', { currency, date: formatDate(ratesAt, locale, { day: 'numeric', month: 'long', year: 'numeric' }) }) : t('convert.noteNoDate', { currency })}
+    </p>
   );
 }

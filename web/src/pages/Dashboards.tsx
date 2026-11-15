@@ -28,7 +28,7 @@ import { TRASH_DAYS } from '../../../shared/src/model';
 import { useStore } from '../lib/store';
 import { draftOf, PageEditor, Tile, type Data, type Draft } from './Home';
 import { ReportTabs } from './ReportBuilder';
-import { intlTag } from '../../../shared/src/i18n';
+import { formatClock } from '../lib/format';
 
 const link = (to: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -290,7 +290,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
     );
 
   const filters = current.filters ?? {};
-  const time = asOf?.toLocaleTimeString(intlTag(locale), { hour: '2-digit', minute: '2-digit' });
+  const time = asOf ? formatClock(asOf, locale) : undefined;
   const shown = current.cards.filter((c) => data?.[c.id]?.kind !== 'hidden');
   return (
     <>

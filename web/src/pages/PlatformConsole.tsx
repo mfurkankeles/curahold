@@ -12,6 +12,7 @@ import { useI18n } from '../lib/i18n';
 import { useMoney } from '../lib/money';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { PlatformAccess, PlatformCustomer, PlatformCustomerDetail, PlatformOverview, SubStatus } from '../../../shared/src/platform';
+import { formatNumber } from '../lib/format';
 
 /** Billing lifecycle → the dot colour beside it. */
 const STATUS_TONE: Record<SubStatus, string> = {
@@ -79,8 +80,7 @@ export function PlatformConsolePage() {
     setAttempt((n) => n + 1);
   }, []);
 
-  const nf = new Intl.NumberFormat(locale);
-  const n = (v: number) => nf.format(Math.round(v));
+  const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number, cur: string) => money.format(v, cur, v >= 10_000);
   const date = (v: string | null) => (v ? fmtDate(v, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 

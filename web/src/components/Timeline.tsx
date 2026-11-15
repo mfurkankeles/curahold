@@ -14,8 +14,9 @@ import { Icon, type IconName } from './icons';
 import { MailReply, isMailboxProvider } from './MailReply';
 import { Confirm, Dialog, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
-import { intlTag } from '../../../shared/src/i18n';
+import { normalizeLocale } from '../../../shared/src/i18n';
 import { DateField } from './DateField';
+import { formatClock, formatDate } from '../lib/format';
 
 function useFail() {
   const { t } = useI18n();
@@ -176,13 +177,13 @@ function dayLabel(iso: string, locale: string, t: (k: MessageKey) => string) {
   const now = new Date();
   const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
   const yesterday = new Date(now.getTime() - 86_400_000);
-  const date = new Intl.DateTimeFormat(intlTag(locale), { weekday: 'long', day: 'numeric', month: 'long', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' }).format(d);
+  const date = formatDate(d, normalizeLocale(locale), { weekday: 'long', day: 'numeric', month: 'long', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
   if (same(d, now)) return `${t('timeline.today')} · ${date}`;
   if (same(d, yesterday)) return `${t('timeline.yesterday')} · ${date}`;
   return date;
 }
 function timeLabel(iso: string, locale: string) {
-  return new Intl.DateTimeFormat(intlTag(locale), { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+  return formatClock(iso, normalizeLocale(locale));
 }
 const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 

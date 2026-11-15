@@ -13,6 +13,7 @@ import { hoursText } from '../pages/Reports';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { Avatar, Avatars } from './ui';
+import { formatDateTime } from '../lib/format';
 
 type Reload = () => void | Promise<void>;
 const useFail = () => {
@@ -452,7 +453,7 @@ export function HistorySection({ task, board }: { task: TaskDetail; board: Board
           <li key={e.id}>
             <span className="thistory__who">{e.actorId ? (person(e.actorId)?.name ?? t('common.unknownUser')) : t('task.history.system')}</span>
             <span className="thistory__what">{say(e)}</span>
-            <time className="thistory__when" dateTime={e.createdAt} title={new Date(e.createdAt).toLocaleString(locale)}>
+            <time className="thistory__when" dateTime={e.createdAt} title={formatDateTime(e.createdAt, locale, { dateStyle: 'medium', timeStyle: 'short' })}>
               {relativeTime(e.createdAt, t)}
             </time>
           </li>

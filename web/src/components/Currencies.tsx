@@ -18,7 +18,7 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
-import { intlTag } from '../../../shared/src/i18n';
+import { formatNumber } from '../lib/format';
 
 /** One row being edited: the text as typed, so "34," can be on its way to "34,25". */
 interface Row {
@@ -37,8 +37,7 @@ export function CurrencySettings() {
   const { me, reloadMe, toast } = useStore();
   const money = useMoney();
   const base = me.org.currency;
-  const tag = intlTag(locale);
-  const plain = (n: number) => new Intl.NumberFormat(tag, { maximumFractionDigits: 6 }).format(n);
+  const plain = (n: number) => formatNumber(n, locale, { digits: 6 });
   const [rows, setRows] = useState<Row[]>(() =>
     Object.entries(me.org.fx?.rates ?? {})
       .sort(([a], [b]) => a.localeCompare(b))

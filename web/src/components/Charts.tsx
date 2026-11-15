@@ -9,6 +9,7 @@ import { useStore } from '../lib/store';
 import { CountUp } from './CountUp';
 import { EmptyState } from './Empty';
 import { intlTag } from '../../../shared/src/i18n';
+import { formatDate, formatMoney, formatNumber } from '../lib/format';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** Colours for parts that have none of their own, in an order that keeps neighbours apart. */
@@ -20,25 +21,20 @@ export function useReportFormat() {
   const { me } = useStore();
   const tag = intlTag(locale);
   return useMemo(() => {
-    const num = (v: number, digits = 1) => new Intl.NumberFormat(tag, { maximumFractionDigits: digits }).format(v);
+    const num = (v: number, digits = 1) => formatNumber(v, locale, { digits });
     const value = (v: number, unit: ReportUnit, compact = false): string => {
       if (unit === 'money') {
-        try {
-          const big = compact && Math.abs(v) >= 10000;
-          return new Intl.NumberFormat(tag, { style: 'currency', currencyDisplay: 'narrowSymbol', currency: me.org.currency, maximumFractionDigits: big ? 1 : 0, notation: big ? 'compact' : 'standard' }).format(v);
-        } catch {
-          return num(v, 0);
-        }
+        return formatMoney(v, me.org.currency, locale, { compact });
       }
       if (unit === 'hours') return t('rb.unit.hours', { n: num(v) });
       if (unit === 'days') return t('rb.unit.days', { n: num(v) });
-      if (compact && Math.abs(v) >= 10000) return new Intl.NumberFormat(tag, { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+      if (compact && Math.abs(v) >= 10000) return formatNumber(v, locale, { compact: true });
       return num(v, unit === 'count' ? 0 : 1);
     };
     const bucket = (key: string, b: Bucket | null): string => {
       if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
       const d = new Date(`${key}T00:00:00Z`);
-      const opt = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString(tag, { timeZone: 'UTC', ...o });
+      const opt = (o: Intl.DateTimeFormatOptions) => formatDate(key, locale, o);
       if (b === 'year') return String(d.getUTCFullYear());
       if (b === 'quarter') return `${t('rb.quarterShort', { n: Math.floor(d.getUTCMonth() / 3) + 1 })} ${String(d.getUTCFullYear()).slice(2)}`;
       if (b === 'month') return opt({ month: 'short', year: '2-digit' });
