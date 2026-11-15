@@ -347,6 +347,10 @@ if (on('big')) {
       [d.orgId, d.boards.csBoard, d.ids.ada],
     );
     await q.query(`insert into accounts (org_id, name, owner_id, created_by, fields) select $1, 'Yük müşterisi ' || g, $2, $2, jsonb_build_object('arr', g * 100) from generate_series(1, 2000) g`, [d.orgId, d.ids.ada]);
+    // A real database looks at a table again after a load this big (autovacuum); the test one is told to, so
+    // the plans are the ones a customer gets a minute after an import.
+    await q.query('analyze tasks');
+    await q.query('analyze accounts');
   });
   const p = await open(1440, 900);
   await signInFresh(p.page, 'ada@demo.example');

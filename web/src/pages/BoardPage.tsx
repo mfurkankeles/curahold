@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewFilters } from '../../../shared/src/model';
 import { labelOf } from '../../../shared/src/fields';
 import { FilterBar, matchFilters } from '../components/BoardFilters';
@@ -33,12 +33,12 @@ import { setQuery } from '../lib/router';
 import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
+import { useWindow } from '../lib/windowing';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
   const { boards, me, canWrite, toast, person } = useStore();
   const board = boards.find((b) => b.id === boardId);
-  const [tasks, setTasks] = useState<Task[] | null>(null);
   const [filters, setFilters] = useState<ViewFilters>({});
   const [asking, setAsking] = useState(false);
   useEffect(() => setFilters({}), [boardId]);
@@ -56,33 +56,30 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     }
   }, [board, canWrite, quickAdd]);
 
-  const load = useCallback(async () => {
-    try {
-      setTasks((await get<{ tasks: Task[] }>(`/boards/${boardId}/tasks`)).tasks);
-    } catch (e) {
-      if (e instanceof ApiFailure && e.status === 404) setTasks([]);
-    }
-  }, [boardId]);
-
-  useEffect(() => {
-    setTasks(null);
-    void load();
-  }, [load, refreshKey]);
+  const listMode = view === 'list';
+  const colKeys = useMemo(() => board?.columns.map((c) => c.key) ?? [], [board]);
+  const { tasks, setTasks, win, setWin, load, more } = useBoardTasks(boardId, listMode, filters, refreshKey, colKeys);
   // Someone else moved or added a card on this board: it follows, quietly.
-  useLiveScope('board', boardId, () => void load());
+  useLiveScope('board', boardId, () => void load(true));
 
   const doneKeys = useMemo(() => new Set(board?.columns.filter((c) => c.done).map((c) => c.key)), [board]);
-  const visible = useMemo(() => (tasks ?? []).filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))), [tasks, filters, me.user.id, doneKeys]);
+  // A board read whole is filtered here, at once; a big one was filtered by the server.
+  const visible = useMemo(() => (win ? (tasks ?? []) : (tasks ?? []).filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status)))), [win, tasks, filters, me.user.id, doneKeys]);
 
   const move = useCallback(
     async (task: Task, status: string, beforeId: string | null) => {
       const inCol = (tasks ?? []).filter((x) => x.status === status && x.id !== task.id).sort((a, b) => a.position - b.position);
       const idx = beforeId ? inCol.findIndex((x) => x.id === beforeId) : inCol.length;
       const at = idx < 0 ? inCol.length : idx;
-      const position = positionBetween(inCol[at - 1]?.position, inCol[at]?.position);
+      // Dropped below the last card drawn of a column that has more: it goes before the next one not yet read.
+      const next = inCol[at]?.position ?? (win?.cols?.[status]?.after ?? undefined);
+      const position = positionBetween(inCol[at - 1]?.position, next);
       if (task.status === status && Math.abs(task.position - position) < 1e-9) return;
       const previous = tasks;
+      const previousWin = win;
       setTasks((list) => (list ?? []).map((x) => (x.id === task.id ? { ...x, status, position } : x)));
+      const from = colKeys.includes(task.status) ? task.status : colKeys[0];
+      if (win?.cols && status !== from) setWin(shiftCount(win, from, status));
       try {
         const r = await saveTask(task, { status, position });
         setTasks((list) => (list ?? []).map((x) => (x.id === task.id ? { ...x, ...r.task } : x)));
@@ -91,10 +88,11 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         if (col && status !== task.status) toast(t('board.moved', { column: col.name }));
       } catch (e) {
         setTasks(previous);
+        setWin(previousWin);
         toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
       }
     },
-    [tasks, board, toast, t],
+    [tasks, win, setTasks, setWin, colKeys, board, toast, t],
   );
 
   if (!board) return <div className="empty">{t('errors.not_found')}</div>;
@@ -141,10 +139,11 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
           {view === 'list' && (
             <ExportMenu
               disabled={!visible.length}
-              make={() => ({
+              make={async () => ({
                 name: board.name,
                 headers: [t('task.title'), t('task.status'), words.one, t('task.due'), t('task.assignees'), t('task.priority'), t('task.repeat')],
-                rows: visible.map((x) => [
+                // A big board is exported whole (with the same filter), not only the rows read so far.
+                rows: (win ? (await get<{ tasks: Task[] }>(`/boards/${board.id}/tasks`)).tasks.filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))) : visible).map((x) => [
                   x.title,
                   board.columns.find((col) => col.key === x.status)?.name ?? x.status,
                   x.accountName ?? '',
@@ -211,30 +210,179 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       ) : view === 'list' ? (
         <div className="page">
           {canWrite && selected.size > 0 && <BulkBar board={board} ids={[...selected]} onDone={() => { setSelected(new Set()); void load(); }} />}
-          <ListView board={board} tasks={visible} isDone={(x) => doneKeys.has(x.status)} selected={canWrite ? selected : undefined} onSelect={setSelected} />
+          <ListView board={board} tasks={visible} onMore={win?.more ? () => more(null) : undefined} isDone={(x) => doneKeys.has(x.status)} selected={canWrite ? selected : undefined} onSelect={setSelected} />
         </div>
       ) : (
-        <KanbanView board={board} tasks={visible} doneKeys={doneKeys} onMove={move} canWrite={canWrite} onAdd={(status) => quickAdd({ boardId: board.id, status })} />
+        <KanbanView board={board} tasks={visible} cols={win?.cols} onMore={more} doneKeys={doneKeys} onMove={move} canWrite={canWrite} onAdd={(status) => quickAdd({ boardId: board.id, status })} />
       )}
-      {view !== 'archive' && !pmView && tasks !== null && tasks.length > 0 && visible.length === 0 && (
+      {view !== 'archive' && !pmView && tasks !== null && (win ? win.all : tasks.length) > 0 && visible.length === 0 && (
         <div className="boardhint">
           <Icon name="filter" size={16} />
-          <span>{t('filters.noneMatch', { n: tasks.length })}</span>
+          <span>{t('filters.noneMatch', { n: win ? win.all : tasks.length })}</span>
           <button className="btn btn--small" onClick={() => setFilters({})}>
             {t('filters.clear')}
           </button>
         </div>
       )}
       {settings && <BoardSettings board={board} onClose={() => setSettings(false)} />}
-      {importing && <TaskImporter board={board} onClose={() => setImporting(false)} onDone={() => void load()} />}
-      {asking && <RequestForm board={board} onClose={() => setAsking(false)} onSent={() => void load()} />}
+      {importing && <TaskImporter board={board} onClose={() => setImporting(false)} onDone={() => void load(true)} />}
+      {asking && <RequestForm board={board} onClose={() => setAsking(false)} onSent={() => void load(true)} />}
     </>
   );
 }
 
+// ------------------------------------------------------------------ a big board, a window at a time
+
+/** A column of a board read in windows: its true count, whether more is to come, and where the next card sits. */
+export interface ColWindow {
+  key: string;
+  total: number;
+  more: boolean;
+  after: number | null;
+}
+/** How a big board was read; null when it was read whole (and is filtered in the browser). */
+export interface BoardWindow {
+  all: number;
+  cols?: Record<string, ColWindow>;
+  total?: number;
+  more?: boolean;
+}
+
+// Cards read per column (and rows per list page) at a time. A board under this is read whole, as before.
+const PER = 100;
+const PAGE = 200;
+
+const shiftCount = (w: BoardWindow, from: string, to: string): BoardWindow => {
+  const cols = { ...w.cols };
+  if (cols[from]) cols[from] = { ...cols[from], total: Math.max(0, cols[from].total - 1) };
+  if (cols[to]) cols[to] = { ...cols[to], total: cols[to].total + 1 };
+  return { ...w, cols };
+};
+const hasFilter = (f: ViewFilters) => !!(f.q?.trim() || f.assignees?.length || f.priority?.length || f.due?.length || Object.values(f.fields ?? {}).some((v) => v.length));
+const filterParam = (f: ViewFilters) => {
+  if (!hasFilter(f)) return '';
+  const { q, assignees, priority, due, fields } = f;
+  return `&filters=${encodeURIComponent(JSON.stringify({ q: q?.trim() || undefined, assignees, priority, due, fields }))}`;
+};
+
+type Page = { tasks: Task[]; all: number; columns?: ColWindow[]; total?: number; more?: boolean };
+
+/**
+ * The cards of a board. A board that fits in one window is read whole and filtered here, exactly as
+ * before; a bigger one is read a window per column (or a page of the list), filtered by the server,
+ * and read further as its columns are scrolled.
+ */
+function useBoardTasks(boardId: string, list: boolean, filters: ViewFilters, refreshKey: number, keys: string[]) {
+  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [win, setWin] = useState<BoardWindow | null>(null);
+  const big = useRef(false);
+  const state = useRef({ tasks, win });
+  state.current = { tasks, win };
+  const busy = useRef(new Set<string>());
+  const seq = useRef(0);
+  const fRef = useRef(filters);
+  fRef.current = filters;
+  // The column a card shows in: its own, or the first when its column has gone.
+  const kRef = useRef(keys);
+  kRef.current = keys;
+  const colOf = (x: Task) => (kRef.current.includes(x.status) ? x.status : kRef.current[0]);
+
+  const load = useCallback(
+    async (keep = true) => {
+      const n = ++seq.current;
+      const cur = keep ? state.current.tasks ?? [] : [];
+      const f = big.current ? filterParam(fRef.current) : '';
+      try {
+        let url: string;
+        if (list) url = `/boards/${boardId}/tasks?limit=${Math.min(500, Math.max(PAGE, cur.length))}${f}`;
+        else {
+          const most = Math.max(0, ...Object.values(cur.reduce<Record<string, number>>((m, x) => ((m[colOf(x)] = (m[colOf(x)] ?? 0) + 1), m), {})));
+          url = `/boards/${boardId}/tasks?per=${Math.min(500, Math.max(PER, most))}${f}`;
+        }
+        const r = await get<Page>(url);
+        if (n !== seq.current) return;
+        const partial = list ? !!r.more : !!r.columns?.some((c) => c.more);
+        // Found to be big only now, with a filter already set: read it again, filtered.
+        if (partial && !big.current && hasFilter(fRef.current)) {
+          big.current = true;
+          return void load(false);
+        }
+        big.current = big.current || partial;
+        setTasks(r.tasks);
+        setWin(big.current ? { all: r.all, total: r.total, more: r.more, cols: r.columns ? Object.fromEntries(r.columns.map((c) => [c.key, c])) : undefined } : null);
+      } catch (e) {
+        if (n === seq.current && e instanceof ApiFailure && e.status === 404) setTasks([]);
+      }
+    },
+    [boardId, list],
+  );
+
+  // A new board (or view): from the top.
+  useEffect(() => {
+    big.current = false;
+    busy.current.clear();
+    setTasks(null);
+    setWin(null);
+    void load(false);
+  }, [load, refreshKey]);
+  // A big board asks the server again when the filter changes (typing settles first).
+  const fKey = JSON.stringify(filters);
+  useEffect(() => {
+    if (!big.current) return;
+    const h = setTimeout(() => void load(false), 180);
+    return () => clearTimeout(h);
+  }, [fKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** The next window of one column (status) or of the list (null). */
+  const more = useCallback(
+    async (status: string | null) => {
+      const key = status ?? '';
+      const { tasks: have, win: w } = state.current;
+      if (!have || !w || busy.current.has(key)) return;
+      if (status ? !w.cols?.[status]?.more : !w.more) return;
+      busy.current.add(key);
+      const n = seq.current;
+      const f = filterParam(fRef.current);
+      try {
+        const offset = status ? have.filter((x) => colOf(x) === status).length : have.length;
+        const r = await get<Page>(status ? `/boards/${boardId}/tasks?per=${PER}&status=${encodeURIComponent(status)}&offset=${offset}${f}` : `/boards/${boardId}/tasks?limit=${PAGE}&offset=${offset}${f}`);
+        if (n !== seq.current) return;
+        setTasks((list) => {
+          const seen = new Set((list ?? []).map((x) => x.id));
+          return [...(list ?? []), ...r.tasks.filter((x) => !seen.has(x.id))];
+        });
+        setWin((cur) => (!cur ? cur : status ? { ...cur, cols: { ...cur.cols, ...(r.columns ? { [status]: r.columns[0] } : {}) } } : { ...cur, total: r.total, more: r.more }));
+      } finally {
+        busy.current.delete(key);
+      }
+    },
+    [boardId],
+  );
+
+  return { tasks, setTasks, win, setWin, load, more };
+}
+
 const DONE_SHOWN = 6;
 
-export function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: { board: Board; tasks: Task[]; doneKeys: Set<string>; onMove: (t: Task, status: string, beforeId: string | null) => void; canWrite: boolean; onAdd?: (status: string) => void }) {
+export function KanbanView({
+  board,
+  tasks,
+  cols,
+  onMore,
+  doneKeys,
+  onMove,
+  canWrite,
+  onAdd,
+}: {
+  board: Board;
+  tasks: Task[];
+  cols?: Record<string, ColWindow>;
+  onMore?: (status: string) => void;
+  doneKeys: Set<string>;
+  onMove: (t: Task, status: string, beforeId: string | null) => void;
+  canWrite: boolean;
+  onAdd?: (status: string) => void;
+}) {
   const [active, setActive] = useState<Task | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const byCol = useMemo(() => {
@@ -262,7 +410,16 @@ export function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: 
     <DndContext sensors={canWrite ? sensors : []} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
       <div className="board">
         {board.columns.map((col) => (
-          <KanbanColumn key={col.key} col={col} tasks={byCol.get(col.key) ?? []} doneKeys={doneKeys} canWrite={canWrite} onAdd={onAdd ? () => onAdd(col.key) : undefined} />
+          <KanbanColumn
+            key={col.key}
+            col={col}
+            tasks={byCol.get(col.key) ?? []}
+            win={cols?.[col.key]}
+            onMore={onMore ? () => onMore(col.key) : undefined}
+            doneKeys={doneKeys}
+            canWrite={canWrite}
+            onAdd={onAdd ? () => onAdd(col.key) : undefined}
+          />
         ))}
       </div>
       <DragOverlay>{active ? <CardBody task={active} done={doneKeys.has(active.status)} overlay /> : null}</DragOverlay>
@@ -270,28 +427,43 @@ export function KanbanView({ board, tasks, doneKeys, onMove, canWrite, onAdd }: 
   );
 }
 
-function KanbanColumn({ col, tasks, doneKeys, canWrite, onAdd }: { col: Column; tasks: Task[]; doneKeys: Set<string>; canWrite: boolean; onAdd?: () => void }) {
+// Columns longer than this draw only the cards in sight.
+const WINDOW_FROM = 40;
+
+function KanbanColumn({ col, tasks, win, onMore, doneKeys, canWrite, onAdd }: { col: Column; tasks: Task[]; win?: ColWindow; onMore?: () => void; doneKeys: Set<string>; canWrite: boolean; onAdd?: () => void }) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `col:${col.key}` });
   // A finished column grows for ever: newest first, the older ones one click away.
   const finished = doneKeys.has(col.key);
   const [all, setAll] = useState(false);
   const ordered = useMemo(() => (finished ? [...tasks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) : tasks), [finished, tasks]);
-  const shown = finished && !all && ordered.length > DONE_SHOWN + 2 ? ordered.slice(0, DONE_SHOWN) : ordered;
+  // The true count: on a big board most cards are not read yet.
+  const total = win ? win.total : tasks.length;
+  const shown = finished && !all && total > DONE_SHOWN + 2 ? ordered.slice(0, DONE_SHOWN) : ordered;
+  const windowed = shown.length > WINDOW_FROM;
+  const w = useWindow<HTMLDivElement, HTMLDivElement>(shown.length, windowed, 96);
+  const reading = !!win?.more && (!finished || all || total <= DONE_SHOWN + 2);
+  // Near the end of what is read: read the next window.
+  useEffect(() => {
+    if (reading && onMore && w.end >= shown.length - 8) onMore();
+  }, [reading, onMore, w.end, shown.length]);
   return (
     <section className="column" ref={setNodeRef} data-over={isOver} aria-label={col.name}>
       <div className="column__head">
         <span className="column__name">{col.name}</span>
-        <span className="column__count num">{tasks.length}</span>
+        <span className="column__count num">{total}</span>
       </div>
       <div className="column__list">
-        {tasks.length === 0 && <div className="column__empty">{t('board.emptyColumn')}</div>}
-        {shown.map((x) => (
+        {total === 0 && <div className="column__empty">{t('board.emptyColumn')}</div>}
+        {windowed && <div ref={w.topRef} className="vspacer" aria-hidden="true" style={{ height: w.before }} />}
+        {shown.slice(w.start, w.end).map((x) => (
           <DraggableCard key={x.id} task={x} done={doneKeys.has(x.status)} />
         ))}
-        {finished && ordered.length > DONE_SHOWN + 2 && (
+        {windowed && <div ref={w.bottomRef} className="vspacer" aria-hidden="true" style={{ height: w.after }} />}
+        {reading && <div className="column__reading" role="status">{t('common.loading')}</div>}
+        {finished && total > DONE_SHOWN + 2 && (
           <button className="btn btn--quiet btn--small column__more" onClick={() => setAll((v) => !v)}>
-            {all ? t('board.doneLess') : t('board.doneMore', { n: ordered.length - DONE_SHOWN })}
+            {all ? t('board.doneLess') : t('board.doneMore', { n: total - DONE_SHOWN })}
           </button>
         )}
       </div>
@@ -392,6 +564,7 @@ function CardChips({ task }: { task: Task }) {
 export function ListView({
   board,
   tasks,
+  onMore,
   isDone,
   showBoard,
   selected,
@@ -399,6 +572,8 @@ export function ListView({
 }: {
   board?: Board;
   tasks: Task[];
+  /** Reads the next page; given while there is more. */
+  onMore?: () => void;
   isDone: (t: Task) => boolean;
   showBoard?: (t: Task) => string;
   selected?: Set<string>;
@@ -407,8 +582,15 @@ export function ListView({
   const { t, words } = useI18n();
   const { person, boards } = useStore();
   const colName = (task: Task) => (board ?? boards.find((b) => b.id === task.boardId))?.columns.find((c) => c.key === task.status)?.name ?? task.status;
-  if (!tasks.length) return <EmptyState compact icon="list" title={t('board.listEmpty')} />;
   const pick = !!(selected && onSelect);
+  const cells = 6 + (pick ? 1 : 0) + (showBoard ? 1 : 0);
+  // A long list draws only the rows in sight.
+  const windowed = tasks.length > 80;
+  const w = useWindow<HTMLTableRowElement, HTMLTableRowElement>(tasks.length, windowed, 45);
+  useEffect(() => {
+    if (onMore && w.end >= tasks.length - 20) onMore();
+  }, [onMore, w.end, tasks.length]);
+  if (!tasks.length) return <EmptyState compact icon="list" title={t('board.listEmpty')} />;
   return (
     <table className="table tasklist" data-board={showBoard ? 'yes' : undefined} data-pick={pick || undefined}>
       <colgroup>
@@ -438,7 +620,12 @@ export function ListView({
         </tr>
       </thead>
       <tbody>
-        {tasks.map((x) => {
+        {windowed && (
+          <tr ref={w.topRef} className="vspacer" aria-hidden="true">
+            <td colSpan={cells} style={{ height: w.before }} />
+          </tr>
+        )}
+        {tasks.slice(w.start, w.end).map((x) => {
           const done = isDone(x);
           return (
             <tr key={x.id} data-due={railState(x.dueDate, done)} className="tasklist__row" onClick={(e) => !(e.target as HTMLElement).closest('input, button, a') && setQuery('task', x.id)}>
@@ -480,6 +667,18 @@ export function ListView({
             </tr>
           );
         })}
+        {windowed && (
+          <tr ref={w.bottomRef} className="vspacer" aria-hidden="true">
+            <td colSpan={cells} style={{ height: w.after }} />
+          </tr>
+        )}
+        {onMore && (
+          <tr className="tasklist__reading">
+            <td colSpan={cells} role="status">
+              {t('common.loading')}
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );

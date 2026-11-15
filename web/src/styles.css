@@ -395,6 +395,10 @@ a { color: var(--brand-ink); }
 .column__done { margin-inline-start: auto; font-size: 12px; color: var(--done); }
 .column__list { display: grid; gap: 8px; padding: 2px 10px 10px; overflow-y: auto; align-content: start; min-height: 40px; }
 .column__empty { color: var(--ink-3); font-size: 13px; padding: 10px 4px; }
+/* A long column or list draws only what is in sight; these stand in for the rest. */
+.vspacer { pointer-events: none; }
+tr.vspacer td { padding: 0; border: 0; }
+.column__reading, .tasklist__reading td { color: var(--ink-3); font-size: 13px; padding: 8px 4px; text-align: center; }
 .column__add { margin: 0 10px 10px; }
 
 .card {

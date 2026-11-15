@@ -178,19 +178,26 @@ async function windowed(c: Context<AppEnv>, id: string, w: Record<'per' | 'limit
     // a finished column newest first, as the board shows it.
     const want = status !== undefined ? keys.filter((k) => k === status) : keys;
     const off = add(offset);
+    // A card whose column has gone shows in the first column, as on a board read whole.
+    const ks = want.includes(keys[0]) ? add(keys) : null;
     const parts = want.map(
       (key) =>
-        `(select t.*, ${COUNTS} from tasks t where ${base} and t.status = ${add(key)}
+        `(select t.*, ${COUNTS}, ${add(key)}::text as col_key from tasks t
+           where ${base} and (t.status = ${add(key)}${key === keys[0] && ks ? ` or not (t.status = any(${ks}::text[]))` : ''})
            order by ${done.includes(key) ? 't.updated_at desc, t.id' : 't.position, t.created_at, t.id'} limit ${n + 1} offset ${off})`,
     );
     const rows = parts.length ? await q.query(parts.join(' union all '), params) : [];
-    const counts = await q.query(`select t.status as key, count(*)::int as n from tasks t where ${base} group by 1`, only);
+    const counts = await q.query(
+      `select case when t.status = any(${`$${only.push(keys)}`}::text[]) then t.status else ${`$${only.push(keys[0] ?? '')}`} end as key, count(*)::int as n
+         from tasks t where ${base} group by 1`,
+      only,
+    );
     const cols = want.map((key) => {
-      const mine = rows.filter((r) => r.status === key);
+      const mine = rows.filter((r) => r.col_key === key);
       const extra = mine.length > n ? mine[n] : null;
       return { key, total: counts.find((x) => x.key === key)?.n ?? 0, more: !!extra, after: extra && !done.includes(key) ? Number(extra.position) : null };
     });
-    const shown = cols.flatMap((x) => rows.filter((r) => r.status === x.key).slice(0, n));
+    const shown = cols.flatMap((x) => rows.filter((r) => r.col_key === x.key).slice(0, n));
     return { all, rows: shown, cols };
   });
   const body: Record<string, unknown> = { tasks: out.rows.map(toTask), all: out.all };
