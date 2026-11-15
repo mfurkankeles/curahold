@@ -18,7 +18,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /boards` | Adds a board: its columns, who sees it, its task fields and request form. |
 | `PATCH /boards/:id` | Changes a board. |
 | `DELETE /boards/:id` | Archives a board with its tasks. |
-| `GET /boards/:id/tasks` | The tasks of one board. |
+| `GET /boards/:id/tasks` | The tasks of one board, all at once. |
 | `POST /boards/:id/requests` | Sends a request through the board's form: it lands in the form's column, unassigned. |
 | `POST /boards/:id/import` | Brings tasks in from rows of a file onto one board. |
 | `GET /boards/:id/imports` | Your recent task imports onto a board, newest first. |
@@ -123,9 +123,9 @@ Archives a board with its tasks.
 
 ### `GET /boards/:id/tasks`
 
-The tasks of one board. `q` searches titles, `archived=1` gives archived ones, `offset` pages through.
+The tasks of one board, all at once. For a big board, ask a window: `per=N` gives the first N tasks of every column with each column's true `total`, `more` and `after` (the position of the next task), and `status` with `offset` pages through one column; `limit=N` with `offset` gives the board in list order with its `total`. `filters` (JSON: `q`, `assignees` with `me` and `none`, `priority`, `due`, `fields`) narrows either window; `all` counts the board unfiltered. `archived=1` gives archived tasks, `q` searches them, `offset` pages through.
 
-**Query:** `archived`, `q`, `offset`
+**Query:** `archived`, `q`, `offset`, `per`, `limit`, `filters`, `status`
 
 ### `POST /boards/:id/requests`
 

@@ -1,7 +1,7 @@
 import { INLINE_TYPES, readUpload } from '../lib/upload';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import { MENTION_RE, type Column, type TaskDetail } from '../../../shared/src/model';
+import { MENTION_RE, PRIORITIES, type Column, type TaskDetail } from '../../../shared/src/model';
 import { defer, nowOf, requireWriter, run, todayOf, type AppEnv } from '../context';
 import { portalOn, tellCustomer } from '../lib/portal';
 import { runTaskMoved } from '../lib/automations';
@@ -77,17 +77,127 @@ taskRoutes.get('/boards/:id/tasks', async (c) => {
     });
     return c.json({ tasks: out.rows.slice(0, 100).map((r) => ({ ...toTask(r), archivedAt: iso(r.archived_at), accountName: r.account_name ?? null })), total: out.total, more: out.rows.length > 100 });
   }
-  const rows = await run(c, async (q) => {
-    await loadBoard(q, id);
-    return q.query(
-      `select t.*, ${COUNTS} from tasks t
-        where t.board_id = $1 and t.parent_id is null and t.archived_at is null
-        order by t.position, t.created_at`,
-      [id],
-    );
-  });
-  return c.json({ tasks: rows.map(toTask) });
+  const per = c.req.query('per');
+  const limit = c.req.query('limit');
+  // Without a window: every open card at once, as the board has always been read.
+  if (per === undefined && limit === undefined) {
+    const rows = await run(c, async (q) => {
+      await loadBoard(q, id);
+      return q.query(
+        `select t.*, ${COUNTS} from tasks t
+          where t.board_id = $1 and t.parent_id is null and t.archived_at is null
+          order by t.position, t.created_at`,
+        [id],
+      );
+    });
+    return c.json({ tasks: rows.map(toTask) });
+  }
+  return windowed(c, id, { per, limit, filters: c.req.query('filters'), status: c.req.query('status'), offset: c.req.query('offset') });
 });
+
+// A filter as the board's filter bar holds it (the same shape a saved view keeps).
+const windowFilters = z
+  .object({
+    q: z.string().max(100),
+    assignees: z.array(z.union([uuid, z.enum(['me', 'none'])])).max(100),
+    priority: z.array(z.enum(PRIORITIES)).max(4),
+    due: z.array(z.enum(['late', 'today', 'week', 'later', 'none'])).max(5),
+    fields: z.record(z.string().max(60), z.array(z.string().max(200)).max(100)),
+  })
+  .partial();
+const count = (v: string | undefined, dflt: number, max: number) => Math.min(max, Math.max(1, Math.floor(Number(v ?? dflt)) || dflt));
+
+/**
+ * A big board, a window at a time. per=N: the first N cards of every column (or, with status, of
+ * that one column from offset), each column with its true count. limit=N: the board in list order,
+ * N rows from offset, with the true count. filters (JSON) narrows both on the server, exactly as the
+ * filter bar does on a board that is read whole.
+ */
+async function windowed(c: Context<AppEnv>, id: string, w: Record<'per' | 'limit' | 'filters' | 'status' | 'offset', string | undefined>) {
+  const { per, limit, status } = w;
+  const auth = c.get('auth');
+  let f: z.infer<typeof windowFilters> = {};
+  const raw = w.filters;
+  if (raw) {
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      fail('validation', { fields: 'filters' }, { fields: ['filters'] });
+    }
+    const parsed = windowFilters.safeParse(json);
+    if (!parsed.success) fail('validation', { fields: 'filters' }, { fields: ['filters'] });
+    f = parsed.data!;
+  }
+  const offset = Math.max(0, Math.floor(Number(w.offset ?? 0)) || 0);
+  const today = todayOf(c);
+  const out = await run(c, async (q) => {
+    const board = await loadBoard(q, id);
+    const columns = (board.columns ?? []) as Column[];
+    const keys = columns.map((x) => x.key);
+    const done = columns.filter((x) => x.done).map((x) => x.key);
+    const people = (f.assignees ?? []).map((a) => (a === 'me' ? auth.userId : a)).filter((a) => a !== 'none');
+    const params: unknown[] = [id];
+    const add = (v: unknown) => `$${params.push(v)}`;
+    const where: string[] = [];
+    const text = (f.q ?? '').trim().replace(/[%_\\]/g, '');
+    if (text) {
+      const p = add(text);
+      where.push(`(t.title_fold like '%' || fold_text(${p}) || '%' or exists (select 1 from accounts ac where ac.id = t.account_id and ac.name_fold like '%' || fold_text(${p}) || '%'))`);
+    }
+    if (f.assignees?.length) {
+      const none = f.assignees.includes('none');
+      where.push(`(t.assignee_ids && ${add(people)}::uuid[]${none ? ' or cardinality(t.assignee_ids) = 0' : ''})`);
+    }
+    if (f.priority?.length) where.push(`t.priority = any(${add(f.priority)}::text[])`);
+    if (f.due?.length) {
+      const d = add(today);
+      const fin = add(done);
+      const b = `(case when t.due_date is null then 'none' when t.status = any(${fin}::text[]) then null when t.due_date < ${d}::date then 'late'
+                       when t.due_date = ${d}::date then 'today' when t.due_date <= ${d}::date + 7 then 'week' else 'later' end)`;
+      where.push(`${b} = any(${add(f.due)}::text[])`);
+    }
+    for (const [k, vals] of Object.entries(f.fields ?? {})) {
+      if (vals.length) where.push(`coalesce(t.fields ->> ${add(k)}, '') = any(${add(vals)}::text[])`);
+    }
+    const base = `t.board_id = $1 and t.parent_id is null and t.archived_at is null${where.length ? ` and ${where.join(' and ')}` : ''}`;
+    // The counts read the filter alone; the window's own offset and columns come after.
+    const only = [...params];
+    const [{ all }] = await q.query(`select count(*)::int as "all" from tasks t where t.board_id = $1 and t.parent_id is null and t.archived_at is null`, [id]);
+    if (limit !== undefined) {
+      const n = count(limit, 200, 500);
+      const rows = await q.query(
+        `select t.*, ${COUNTS} from tasks t where ${base} order by t.position, t.created_at, t.id limit ${n + 1} offset ${add(offset)}`,
+        params,
+      );
+      const [{ total }] = await q.query(`select count(*)::int as total from tasks t where ${base}`, only);
+      return { all, rows: rows.slice(0, n), total, more: rows.length > n };
+    }
+    const n = count(per, 100, 500);
+    // One small read per column, each walking its own index: open columns in board order,
+    // a finished column newest first, as the board shows it.
+    const want = status !== undefined ? keys.filter((k) => k === status) : keys;
+    const off = add(offset);
+    const parts = want.map(
+      (key) =>
+        `(select t.*, ${COUNTS} from tasks t where ${base} and t.status = ${add(key)}
+           order by ${done.includes(key) ? 't.updated_at desc, t.id' : 't.position, t.created_at, t.id'} limit ${n + 1} offset ${off})`,
+    );
+    const rows = parts.length ? await q.query(parts.join(' union all '), params) : [];
+    const counts = await q.query(`select t.status as key, count(*)::int as n from tasks t where ${base} group by 1`, only);
+    const cols = want.map((key) => {
+      const mine = rows.filter((r) => r.status === key);
+      const extra = mine.length > n ? mine[n] : null;
+      return { key, total: counts.find((x) => x.key === key)?.n ?? 0, more: !!extra, after: extra && !done.includes(key) ? Number(extra.position) : null };
+    });
+    const shown = cols.flatMap((x) => rows.filter((r) => r.status === x.key).slice(0, n));
+    return { all, rows: shown, cols };
+  });
+  const body: Record<string, unknown> = { tasks: out.rows.map(toTask), all: out.all };
+  if ('cols' in out) body.columns = out.cols;
+  else Object.assign(body, { total: out.total, more: out.more });
+  return c.json(body);
+}
 
 // Across every board the person can see: "My tasks", the calendar, the timeline, a colleague's work.
 taskRoutes.get('/tasks', async (c) => {

@@ -18,7 +18,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /boards` | Pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu. |
 | `PATCH /boards/:id` | Panoyu değiştirir. |
 | `DELETE /boards/:id` | Panoyu görevleriyle birlikte arşivler. |
-| `GET /boards/:id/tasks` | Bir panonun görevleri. |
+| `GET /boards/:id/tasks` | Bir panonun görevleri, hepsi birden. |
 | `POST /boards/:id/requests` | Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. |
 | `POST /boards/:id/import` | Bir dosyanın satırlarından tek bir panoya görev alır. |
 | `GET /boards/:id/imports` | Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
@@ -123,9 +123,9 @@ Panoyu görevleriyle birlikte arşivler.
 
 ### `GET /boards/:id/tasks`
 
-Bir panonun görevleri. `q` başlıklarda arar, `archived=1` arşivlenenleri verir, `offset` sayfalar.
+Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere iste: `per=N` her sütunun ilk N görevini, sütunun gerçek `total` sayısı, `more` ve `after` (sıradaki görevin konumu) ile verir; `status` ile `offset` tek bir sütunda sayfalar; `limit=N` ile `offset` panoyu liste sırasıyla ve `total` ile verir. `filters` (JSON: `q`, `me` ve `none` alabilen `assignees`, `priority`, `due`, `fields`) iki pencereyi de daraltır; `all` panonun filtresiz sayısıdır. `archived=1` arşivlenenleri verir, `q` onlarda arar, `offset` sayfalar.
 
-**Sorgu:** `archived`, `q`, `offset`
+**Sorgu:** `archived`, `q`, `offset`, `per`, `limit`, `filters`, `status`
 
 ### `POST /boards/:id/requests`
 
