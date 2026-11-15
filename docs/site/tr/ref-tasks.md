@@ -152,7 +152,7 @@ Bir dosyanın satırlarından tek bir panoya görev alır. Kimseye bildirim gitm
 | `fileName` | metin | isteğe bağlı | en çok 200 karakter |
 | `rows` | nesne (ad → değer) listesi | zorunlu | en az 1 öğe; en çok MAX_TASK_ROWS öğe |
 | `mapping` | nesne | zorunlu |  |
-| `locale` | şunlardan biri: en \| tr | isteğe bağlı |  |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı |  |
 | `includeDone` | evet/hayır | isteğe bağlı |  |
 
 ### `GET /boards/:id/imports`

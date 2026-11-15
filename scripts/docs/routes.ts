@@ -4,6 +4,7 @@
 // it cannot drift from the code: a new address or a new field shows up in the
 // reference on the next build, and a test keeps the two in step.
 import { readFileSync, readdirSync } from 'node:fs';
+import { LOCALES } from '../../shared/src/i18n/core';
 import { join } from 'node:path';
 // The parser that ships with the build tool (no extra dependency); it reads TypeScript as it is.
 import { parseSync } from 'rolldown/experimental';
@@ -75,7 +76,7 @@ function reader(src: string) {
 
   /** A schema kept under a name: `uuid`, `isoDate`, or one field of a bag such as `accountInput.name`. */
   function named(base: Node, consts: Map<string, Node>, depth: number): Omit<BodyField, 'name'> | null {
-    const known: Record<string, string> = { uuid: 'id', isoDate: 'date (YYYY-MM-DD)', dateStr: 'date (YYYY-MM-DD)', day: 'date (YYYY-MM-DD)', dateOnly: 'date (YYYY-MM-DD)', email: 'email' };
+    const known: Record<string, string> = { uuid: 'id', isoDate: 'date (YYYY-MM-DD)', dateStr: 'date (YYYY-MM-DD)', day: 'date (YYYY-MM-DD)', dateOnly: 'date (YYYY-MM-DD)', email: 'email', localeField: `one of ${LOCALES.join(' | ')}` };
     if (base.type === 'Identifier') {
       if (base.name === 'z') return null;
       if (known[base.name]) return { type: known[base.name], required: true, notes: [] };

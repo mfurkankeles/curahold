@@ -152,7 +152,7 @@ Brings tasks in from rows of a file onto one board. Nobody is notified and no ru
 | `fileName` | text | optional | at most 200 characters |
 | `rows` | list of object (name → value) | required | at least 1 items; at most MAX_TASK_ROWS items |
 | `mapping` | object | required |  |
-| `locale` | one of en \| tr | optional |  |
+| `locale` | one of en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | optional |  |
 | `includeDone` | yes/no | optional |  |
 
 ### `GET /boards/:id/imports`
