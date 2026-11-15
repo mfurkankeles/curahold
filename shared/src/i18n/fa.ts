@@ -4291,4 +4291,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'views.removed': "نمای «{name}» حذف شد",
   'bell.emptyTitle': "خبر تازه‌ای نیست",
   'bell.emptyBody': "واگذاری‌ها، اشاره‌ها و یادآوری‌ها اینجا می‌آیند.",
+  'board.unavailable': "این تابلو برای شما باز نیست",
+  'board.unavailableBody': "شاید حذف شده باشد، یا خصوصی است و شما عضو آن نیستید. مدیر تابلو می‌تواند شما را اضافه کند.",
 };

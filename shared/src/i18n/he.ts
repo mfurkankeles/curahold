@@ -4291,4 +4291,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'views.removed': "התצוגה “{name}” הוסרה",
   'bell.emptyTitle': "אין חדש",
   'bell.emptyBody': "שיוכים, אזכורים ותזכורות יופיעו כאן.",
+  'board.unavailable': "הלוח הזה לא פתוח בפניך",
+  'board.unavailableBody': "ייתכן שהוא נמחק, או שהוא פרטי ואינך חבר בו. מי שמנהל אותו יכול להוסיף אותך.",
 };

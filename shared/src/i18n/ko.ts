@@ -4291,4 +4291,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'views.removed': "“{name}” 보기를 삭제했습니다",
   'bell.emptyTitle': "새 소식이 없습니다",
   'bell.emptyBody': "할당, 멘션, 알림이 여기에 표시됩니다.",
+  'board.unavailable': "이 보드는 열 수 없습니다",
+  'board.unavailableBody': "삭제되었거나, 내가 속하지 않은 비공개 보드입니다. 보드 관리자가 추가할 수 있습니다.",
 };

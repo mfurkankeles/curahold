@@ -4306,6 +4306,8 @@ export const en = {
   'views.removed': "The view “{name}” was removed",
   'bell.emptyTitle': "Nothing new",
   'bell.emptyBody': "Assignments, mentions and reminders show up here.",
+  'board.unavailable': "This board is not open to you",
+  'board.unavailableBody': "It may have been deleted, or it is private and you are not on it. Whoever runs it can add you.",
 } as const;
 
 export type MessageKey = keyof typeof en;

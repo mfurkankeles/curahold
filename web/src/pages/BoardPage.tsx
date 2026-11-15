@@ -31,7 +31,7 @@ import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../compone
 import { ApiFailure, get, post } from '../lib/api';
 import { useLiveScope } from '../lib/live';
 import { useI18n } from '../lib/i18n';
-import { setQuery } from '../lib/router';
+import { navigate, setQuery } from '../lib/router';
 import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
@@ -104,7 +104,17 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
     [tasks, win, setTasks, setWin, colKeys, board, toast, t, offerUndo, load],
   );
 
-  if (!board) return <div className="empty">{t('errors.not_found')}</div>;
+  // Gone, or private and not shared with this person: the same answer, so a link tells nothing it should not.
+  if (!board)
+    return (
+      <div className="page">
+        <EmptyState icon="board" tone="calm" title={t('board.unavailable')} body={t('board.unavailableBody')}>
+          <button className="btn" onClick={() => navigate('/home')}>
+            {t('states.notAllowed.home')}
+          </button>
+        </EmptyState>
+      </div>
+    );
   // Product-management features follow the board's switch; when off, its backlog
   // and sprint views fall back to the ordinary board so a stale link still works.
   const pm = pmOn(board);

@@ -4291,4 +4291,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'views.removed': "حُذف العرض «{name}»",
   'bell.emptyTitle': "لا جديد",
   'bell.emptyBody': "تظهر هنا المهام المسندة والإشارات والتذكيرات.",
+  'board.unavailable': "هذه اللوحة غير متاحة لك",
+  'board.unavailableBody': "ربما حُذفت، أو أنها لوحة خاصة ولست من أعضائها. يمكن لمن يديرها أن يضيفك.",
 };

@@ -102,3 +102,7 @@
   /* One person's lists: titles may take two lines. */
   .oneone .pane-row__title { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 }
+
+/* The bulk bar sits on the dark well: its fields keep their own ink, its link the bar's. */
+.bulkbar .select, .bulkbar .input { color: var(--ink); }
+.bulkbar .linkbtn { color: var(--on-fill); text-decoration: underline; }
