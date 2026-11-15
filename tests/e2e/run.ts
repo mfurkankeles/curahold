@@ -402,7 +402,11 @@ await step('phone: wizard and accounts fit a phone screen', async () => {
   await phone.page.waitForSelector('.acards');
   expect(!(await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)), 'customer cards scroll sideways on a phone');
   await shot(phone.page, 'p2-19-phone-cards');
-  await (await byText(phone.page, '.seg--views button', 'Tablo')).click();
+  // On a phone the view switch lives in the filter sheet: open it, pick the table, close it.
+  await phone.page.click('.filtersheet__open');
+  await phone.page.waitForSelector('.filtersheet__box .seg--views');
+  await (await byText(phone.page, '.filtersheet__box .seg--views button', 'Tablo')).click();
+  await phone.page.click('.filtersheet__apply');
   await phone.page.waitForSelector('.accounts-table');
   const overflow = await phone.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'accounts page scrolls sideways on a phone');
