@@ -172,12 +172,20 @@ export class LiveRoom {
     });
   }
 
-  /** A message from a browser. Unknown or oversized: the connection is closed. */
-  async message(conn: Conn, text: string): Promise<void> {
+  /**
+   * A message from a browser, in the order they came: a new ticket ("w") is
+   * checked before the "here" sent right after it is weighed against its scopes.
+   * Unknown or oversized: the connection is closed.
+   */
+  message(conn: Conn, text: string): Promise<void> {
     if (text === PING) {
       conn.send(PONG);
-      return;
+      return Promise.resolve();
     }
+    return this.serial(() => this.read(conn, text));
+  }
+
+  private async read(conn: Conn, text: string): Promise<void> {
     const s = conn.get();
     if (!s) return;
     let m: ClientMessage;

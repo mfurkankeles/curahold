@@ -3,6 +3,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex: 0 1 auto;
   min-width: 0;
 }
 .presence__face {
@@ -23,10 +24,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 160px;
+  max-width: 128px;
 }
-@media (max-width: 480px) {
+/* A phone's panel header has no room for the words: the ring around the face says it. */
+@media (max-width: 520px) {
   .presence__typing {
-    max-width: 96px;
+    display: none;
   }
 }

@@ -22,8 +22,17 @@ export function Presence({ who }: { who: Who }) {
   };
   const name = (p: (typeof others)[number]['p']) => p?.name ?? t('common.unknownUser');
   const typing = others.filter((o) => o.typing);
+  // In the header, first names keep it short; the full names are in the label read aloud.
+  const first = (p: (typeof others)[number]['p']) => name(p).split(/\s+/)[0];
+  const typingLine = typing.length ? t('presence.typing', { name: list(typing.map((o) => first(o.p))) }) : '';
+  const label = [
+    t('presence.alsoHere', { names: list(others.map((o) => name(o.p))) }),
+    typing.length ? t('presence.typing', { name: list(typing.map((o) => name(o.p))) }) : '',
+  ]
+    .filter(Boolean)
+    .join('. ');
   return (
-    <span className="presence" role="status" aria-label={t('presence.alsoHere', { names: list(others.map((o) => name(o.p))) })}>
+    <span className="presence" role="status" aria-label={label}>
       <span className="avatars" aria-hidden="true">
         {others.slice(0, 3).map((o, i) => (
           <span key={o.p?.id ?? i} className="presence__face" data-typing={o.typing || undefined}>
@@ -31,7 +40,11 @@ export function Presence({ who }: { who: Who }) {
           </span>
         ))}
       </span>
-      {typing.length > 0 && <span className="presence__typing">{t('presence.typing', { name: list(typing.map((o) => name(o.p))) })}</span>}
+      {typingLine && (
+        <span className="presence__typing" aria-hidden="true">
+          {typingLine}
+        </span>
+      )}
     </span>
   );
 }

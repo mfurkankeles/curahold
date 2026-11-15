@@ -239,3 +239,17 @@ describe('the ticket', () => {
     expect((await anon.post('/api/live/ticket', { w: [] })).status).toBe(401);
   });
 });
+
+describe('order of messages', () => {
+  it('a "here" sent right after a new ticket counts against the new ticket', async () => {
+    const A = roomOf(acme);
+    const task = `t:${(await ada.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Opened later' })).json.task.id}`;
+    const c = await A.join({ u: adaId, w: [] });
+    c.take();
+    const k = await signTicket(env.config.authSecret, { o: acme, s: 'acme', u: adaId, w: [task], e: Date.now() + 60_000 });
+    // Not awaited one by one: as they arrive from the socket.
+    await Promise.all([A.room.message(c, JSON.stringify({ t: 'w', k })), A.room.message(c, JSON.stringify({ t: 'h', on: task, y: 0 }))]);
+    expect(c.state?.on).toBe(task);
+    expect(c.take()).toEqual([{ t: 'p', on: task, who: [[adaId, 0]] }]);
+  });
+});
