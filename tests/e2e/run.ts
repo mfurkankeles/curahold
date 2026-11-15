@@ -7,7 +7,9 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DESK_STAFF, SCREENS, STAFF_KEY, byText, newPage, shot, signIn, startStack } from './browser';
 
-const s = await startStack(8899);
+/** The fixed port by default; E2E_PORT lets a second checkout run its own journeys alongside. */
+const port = Number(process.env.E2E_PORT ?? 8899);
+const s = await startStack(port);
 const results: { name: string; ok: boolean; error?: string }[] = [];
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -242,7 +244,6 @@ await step('phone layout: columns and the menu work', async () => {
 
 // ------------------------------------------------------------- phase 2
 
-const port = 8899;
 const central = `http://app.localhost:${port}`;
 // Curahold's own support desk, on a host of its own.
 const deskHost = `http://desk.localhost:${port}`;
@@ -760,7 +761,7 @@ await step('help: a request with a screenshot and consent; support visits read o
 
   // Support's side: an entry link from its own tooling, opened in a separate browser.
   const [grant] = await sql(`select id from support_grants order by created_at desc limit 1`);
-  const res = await fetch(`http://localhost:8899/api/support/enter-link`, {
+  const res = await fetch(`http://localhost:${port}/api/support/enter-link`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-curahold-org': 'demo', 'x-curahold-staff-key': STAFF_KEY },
     body: JSON.stringify({ grantId: grant.id, staff: 'Deniz · Curahold' }),
@@ -787,7 +788,7 @@ await step('help: a request with a screenshot and consent; support visits read o
   await staff.page.browserContext().close();
 
   // The request is a conversation: support answers from its desk, the person sees it waiting and replies.
-  const answered = await fetch(`http://localhost:8899/api/desk/requests/${req.ref}/messages`, {
+  const answered = await fetch(`http://localhost:${port}/api/desk/requests/${req.ref}/messages`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-curahold-staff-key': STAFF_KEY },
     body: JSON.stringify({ body: 'Listeyi yenileyince düzeliyor mu? Bizde tekrar edemedik.', staff: 'Deniz' }),
@@ -988,7 +989,7 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await pause(300);
   const invite = s.email.sent.filter((m) => m.to === 'selin@quillfield.example').at(-1);
   const link = /(http:\/\/\S+\/auth#token=\S+)/.exec(invite?.text ?? '')?.[1];
-  expect(link && link.startsWith('http://demo.portal.localhost:8899/'), `invite link: ${link}`);
+  expect(link && link.startsWith(`http://demo.portal.localhost:${port}/`), `invite link: ${link}`);
   const customer = await newPage(s.browser, 1280, 860);
   await customer.page.goto(link!, { waitUntil: 'networkidle0' });
   await customer.page.waitForSelector('.p-head');
@@ -1020,12 +1021,12 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await customer.page.waitForSelector('.p-msg');
   expect((await text(customer.page, '.p-thread')).includes('bugün ekliyoruz'), 'reply not shown to the customer');
   await shot(customer.page, 'p8-04-portal-task');
-  await customer.page.goto('http://demo.portal.localhost:8899/', { waitUntil: 'networkidle0' });
+  await customer.page.goto(`http://demo.portal.localhost:${port}/`, { waitUntil: 'networkidle0' });
   await customer.page.waitForSelector('.p-item');
   await shot(customer.page, 'p8-05-portal-list');
   const phone = await newPage(s.browser, 390, 844);
   await phone.page.setCookie(...(await customer.page.cookies()));
-  await phone.page.goto(`http://demo.portal.localhost:8899/t/${taskId}`, { waitUntil: 'networkidle0' });
+  await phone.page.goto(`http://demo.portal.localhost:${port}/t/${taskId}`, { waitUntil: 'networkidle0' });
   await phone.page.waitForSelector('.p-msg');
   await shot(phone.page, 'p8-06-portal-phone');
   // Her own account: a passkey on this device (Chrome's virtual authenticator), then in with it.
@@ -1450,6 +1451,341 @@ await step('trash: a deleted task can be taken back at once, or later from the t
   expect(lena.page.url().includes(`task=${task.id}`), `"Open" went to ${lena.page.url()}`);
   expect(lena.errors.length === 0, lena.errors.join(' | '));
   await lena.page.browserContext().close();
+});
+
+// ------------------------------------------------------- product team: backlog and sprints
+// A product manager's week on a board made from the product-development workflow: the
+// backlog with an epic and its stories, planning a sprint, the sprint in flight, closing it.
+// Known gaps (no feature yet, so no step): a sprint has no capacity and no over-capacity
+// warning; the burndown does not mark scope added mid-sprint; an epic shows how many
+// stories it has, not their points; there is no "product team" permission — access to the
+// backlog is access to the board.
+
+const pmState = { board: '', epic: '', stories: [] as string[], sprint: '', next: '' };
+const pmStories = [
+  ['Çevrimdışı görev listesi', 3],
+  ['Bağlantı gelince eşitleme', 5],
+  ['Çakışan düzenlemeleri birleştir', 8],
+] as const;
+const pmPage = { current: null as Awaited<ReturnType<typeof newPage>> | null };
+/** The product manager's page, signed in once and kept across the journeys. */
+async function pmUser() {
+  if (!pmPage.current) {
+    pmPage.current = await newPage(s.browser);
+    await signIn(pmPage.current.page, s.origin, 'mert@demo.example');
+  }
+  return pmPage.current;
+}
+/** A date field: the browser's own picker cannot be typed into reliably, so set it as the picker would. */
+async function setDate(page: Page, sel: string, value: string) {
+  await page.$eval(
+    sel,
+    (el, v) => {
+      const input = el as HTMLInputElement;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, v);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    },
+    value,
+  );
+}
+/** The select next to a label in the task panel's properties. */
+async function panelSelect(page: Page, label: string, value: string) {
+  const handle = await page.evaluateHandle((l) => {
+    const lab = [...document.querySelectorAll('.panel .props__label')].find((e) => e.textContent?.trim() === l);
+    const next = lab?.nextElementSibling;
+    return (next?.matches('select') ? next : next?.querySelector('select')) ?? null;
+  }, label);
+  const el = handle.asElement();
+  if (!el) throw new Error(`no "${label}" field in the task panel`);
+  await (el as any).select(value);
+}
+const backlogTitles = (page: Page) => page.$$eval('.pm-backlog .tasklist__title .rowlink', (els) => els.map((e) => e.textContent ?? ''));
+/** Wait for a control with this text to be on the page, then press it. */
+async function press(page: Page, sel: string, label: string) {
+  await page.waitForFunction((s, l) => [...document.querySelectorAll(s)].some((e) => (e.textContent?.trim() ?? '').startsWith(l)), { timeout: 8000 }, sel, label);
+  await (await byText(page, sel, label)).click();
+}
+const isoDay = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString().slice(0, 10);
+/** Drag with the mouse in small steps, as a hand does, so the drag library sees a real drag. */
+async function dragTo(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  for (let i = 1; i <= 15; i++) {
+    await page.mouse.move(from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15);
+    await pause(20);
+  }
+  await pause(120);
+  await page.mouse.up();
+}
+const centre = async (h: { boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null> }) => {
+  const b = (await h.boundingBox())!;
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+};
+
+await step('product team: a backlog with an epic and three estimated stories, reordered by dragging', async () => {
+  const { page, errors } = await pmUser();
+  // A new board from the product-development workflow, visible only to the people on it.
+  await page.goto(`${s.origin}/home`, { waitUntil: 'networkidle0' });
+  await clearToasts(page);
+  await page.click('.sidebar__add[aria-label="Yeni pano"]');
+  await page.waitForSelector('.dialog input.input');
+  await page.type('.dialog input.input', 'Mobil uygulama');
+  await page.select('.dialog select.select', 'private');
+  await press(page, '.dialog label.checkbox', 'Ürün geliştirme akışını kullan');
+  await press(page, '.dialog .btn--primary', 'Oluştur');
+  await page.waitForFunction(() => /\/b\/[0-9a-f-]{36}/.test(location.pathname), { timeout: 8000 });
+  pmState.board = /\/b\/([0-9a-f-]{36})/.exec(page.url())![1];
+  await press(page, '.toolbar .seg button', 'Backlog');
+  await page.waitForFunction(() => location.search.includes('view=backlog'));
+
+  // Everything is written from the backlog: "New task" puts it in the Backlog stage, the panel sets type, points and epic.
+  const add = async (title: string) => {
+    await press(page, '.toolbar .btn--primary', 'Yeni görev');
+    await page.waitForSelector('.qa__input');
+    await page.type('.qa__input', title);
+    await page.keyboard.press('Enter');
+    await page.waitForFunction((x) => [...document.querySelectorAll('.pm-backlog .rowlink')].some((e) => e.textContent === x), { timeout: 8000 }, title);
+    await (await byText(page, '.pm-backlog .rowlink', title)).click();
+    await page.waitForSelector('.panel .props__label');
+  };
+  const closePanel = async () => {
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('.panel'));
+  };
+  await add('Çevrimdışı çalışma');
+  await panelSelect(page, 'Kayıt türü', 'epic');
+  await page.waitForFunction(() => [...document.querySelectorAll('.panel .props__label')].every((e) => e.textContent?.trim() !== 'Bağlı epik'));
+  await closePanel();
+  const [epic] = await sql(`select id, issue_type from tasks where board_id = $1 and title = 'Çevrimdışı çalışma'`, [pmState.board]);
+  expect(epic?.issue_type === 'epic', `the epic was stored as ${epic?.issue_type}`);
+  pmState.epic = epic.id;
+
+  for (const [title, points] of pmStories) {
+    await add(title);
+    await panelSelect(page, 'Kayıt türü', 'story');
+    await page.waitForFunction((t) => (document.querySelector('.panel select[aria-label="Bağlı epik"]') as HTMLSelectElement | null)?.options.length! > 1, {}, title);
+    await page.select('.panel select[aria-label="Hikaye puanı"]', String(points));
+    await page.waitForFunction((n) => (document.querySelector('.panel select[aria-label="Hikaye puanı"]') as HTMLSelectElement)?.value === n, {}, String(points));
+    await page.select('.panel select[aria-label="Bağlı epik"]', pmState.epic);
+    await page.waitForSelector('.panel button[aria-label="Epiği aç"]');
+    await closePanel();
+  }
+  const stored = await sql(`select id, title, issue_type, story_points::float as pts, epic_id from tasks where board_id = $1 and epic_id is not null order by position`, [pmState.board]);
+  expect(stored.length === 3 && stored.every((r: any) => r.issue_type === 'story' && r.epic_id === pmState.epic), `stories: ${JSON.stringify(stored)}`);
+  pmState.stories = pmStories.map(([title]) => stored.find((r: any) => r.title === title)!.id);
+
+  // The backlog lists them in order, names their epic and adds up the points.
+  await page.waitForFunction(() => document.querySelector('.page > p.muted .num')?.textContent === '16 puan', { timeout: 8000 });
+  const epicCells = await page.$$eval('.pm-backlog .tasklist__row', (rows) => rows.map((r) => r.children[3]?.textContent ?? ''));
+  expect(epicCells.filter((c) => c === 'Çevrimdışı çalışma').length === 3, `epic column: ${epicCells.join(' | ')}`);
+  expect((await backlogTitles(page)).slice(-3).join('|') === pmStories.map(([t]) => t).join('|'), `order before: ${(await backlogTitles(page)).join(' | ')}`);
+  await shot(page, 'pm-01-backlog');
+
+  // The biggest story matters most: drag it by its grip above the first story.
+  const grip = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!.querySelector('.pm-grip')!, pmStories[2][0]);
+  const firstRow = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!, pmStories[0][0]);
+  const to = await centre(firstRow as any);
+  await dragTo(page, await centre(grip as any), { x: to.x, y: to.y - 4 });
+  const want = [pmStories[2][0], pmStories[0][0], pmStories[1][0]].join('|');
+  await page.waitForFunction((w) => [...document.querySelectorAll('.pm-backlog .tasklist__title .rowlink')].map((e) => e.textContent).slice(-3).join('|') === w, { timeout: 5000 }, want).catch(() => undefined);
+  expect((await backlogTitles(page)).slice(-3).join('|') === want, `order after the drag: ${(await backlogTitles(page)).join(' | ')}`);
+  await pause(400);
+
+  // A reload shows the same order: it was saved, not only drawn.
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('.pm-backlog');
+  expect((await backlogTitles(page)).slice(-3).join('|') === want, `order after a reload: ${(await backlogTitles(page)).join(' | ')}`);
+  const ranked = await sql(`select title from tasks where epic_id = $1 order by position`, [pmState.epic]);
+  expect(ranked.map((r: any) => r.title).join('|') === want, `stored order: ${ranked.map((r: any) => r.title).join(' | ')}`);
+
+  // The epic's own summary, on the roadmap: its three stories (it shows a count, not their points).
+  await press(page, '.toolbar .seg button', 'Sprintler');
+  await press(page, '.pm-bar-row .seg button', 'Yol haritası');
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .pm-items li')].some((li) => li.textContent?.includes('Çevrimdışı çalışma') && li.textContent.includes('3 kayıt')), { timeout: 8000 });
+  await shot(page, 'pm-02-roadmap-epic');
+  expect(errors.length === 0, errors.join(' | '));
+});
+
+await step('product team: plan a sprint with dates, pull stories in from the backlog and start it', async () => {
+  const { page, errors } = await pmUser();
+  await page.goto(`${s.origin}/b/${pmState.board}?view=sprints`, { waitUntil: 'networkidle0' });
+  await press(page, '.pm-bar-row .btn--primary', 'Yeni sprint');
+  await page.waitForSelector('.dialog input.input');
+  await page.type('.dialog input.input', 'Sprint 1');
+  await page.type('.dialog textarea', 'Çevrimdışı listeyi ve eşitlemeyi bitir');
+  await setDate(page, '.dialog input[aria-label="Başlangıç"]', isoDay(-3));
+  await setDate(page, '.dialog input[aria-label="Bitiş"]', isoDay(10));
+  await press(page, '.dialog .btn--primary', 'Oluştur');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  const [sp] = await sql(`select id, state, to_char(starts_on, 'YYYY-MM-DD') as starts, to_char(ends_on, 'YYYY-MM-DD') as ends from sprints where board_id = $1 and name = 'Sprint 1'`, [pmState.board]);
+  expect(sp?.state === 'future' && sp.starts === isoDay(-3) && sp.ends === isoDay(10), `sprint: ${JSON.stringify(sp)}`);
+  pmState.sprint = sp.id;
+
+  // Pull the two stories at the top of the backlog into it, together.
+  await press(page, '.toolbar .seg button', 'Backlog');
+  await page.waitForSelector('.pm-backlog');
+  for (const t of [pmStories[2][0], pmStories[0][0]]) await page.click(`.pm-backlog input[type=checkbox][aria-label*="${t}"]`);
+  const target = await page.$eval('.bulkbar select', (el) => (el as HTMLSelectElement).value);
+  expect(target === pmState.sprint, 'the new sprint is not the one offered');
+  await press(page, '.bulkbar .btn--primary', 'Sprinte ekle');
+  await page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('2 kayıt Sprint 1 sprintine eklendi')), { timeout: 5000 });
+  await page.waitForFunction(() => document.querySelector('.page > p.muted .num')?.textContent === '5 puan', { timeout: 5000 });
+  expect(!(await backlogTitles(page)).includes(pmStories[2][0]), 'a planned story stayed in the backlog');
+  await clearToasts(page);
+
+  // The sprint list shows what is planned, then the sprint starts.
+  await press(page, '.toolbar .seg button', 'Sprintler');
+  await press(page, '.pm-bar-row .seg button', 'Tüm sprintler');
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 1') && x.textContent.includes('11 puanın 0 tanesi') && x.textContent.includes('2 kayıt')), { timeout: 5000 });
+  await shot(page, 'pm-03-planned');
+  await press(page, '.pm-sprint .btn', 'Sprinti başlat');
+  await press(page, '.dialog .btn--primary', 'Sprinti başlat');
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint[data-state="active"]')].some((x) => x.textContent?.includes('Sprint 1')), { timeout: 5000 });
+  const [st] = await sql('select state from sprints where id = $1', [pmState.sprint]);
+  expect(st.state === 'active', `state ${st.state}`);
+  expect(errors.length === 0, errors.join(' | '));
+});
+
+await step('product team: a story moved to done burns down; a story added mid-sprint is counted', async () => {
+  const { page, errors } = await pmUser();
+  await page.goto(`${s.origin}/b/${pmState.board}?view=sprints`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.pm-burndown');
+  const left = () => page.$eval('.pm-burndown__remain', (e) => e.textContent ?? '');
+  const stat = (label: string) => page.evaluate((l) => [...document.querySelectorAll('.pm-summary .stat')].find((x) => x.querySelector('.muted')?.textContent === l)?.querySelector('strong')?.textContent ?? '', label);
+  expect((await left()) === '11 puan kaldı', `burndown before: ${await left()}`);
+  expect((await stat('Toplam puan')) === '11' && (await stat('Tamamlanan puan')) === '0', 'summary before');
+  await shot(page, 'pm-04-sprint-board');
+
+  // Drag the small story across the board into Done: the board scrolls along when the card reaches its edge.
+  const card = await byText(page, '.card__title', pmStories[0][0]);
+  const from = await centre(card as any);
+  const doneBox = () => page.evaluate(() => {
+    const r = [...document.querySelectorAll('.column')].find((c) => c.querySelector('.column__name')?.textContent === 'Tamamlandı')!.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, right: r.right };
+  });
+  const edge = { x: 1440 - 12, y: from.y };
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  for (let i = 1; i <= 15; i++) {
+    await page.mouse.move(from.x + ((edge.x - from.x) * i) / 15, from.y);
+    await pause(20);
+  }
+  for (let i = 0; i < 80 && (await doneBox()).right > 1440; i++) {
+    await page.mouse.move(edge.x + (i % 2), edge.y);
+    await pause(50);
+  }
+  // Back from the edge, so the board stops scrolling, then onto the column where it now is.
+  await page.mouse.move(900, from.y, { steps: 4 });
+  await pause(200);
+  const box = await doneBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + 60, { steps: 6 });
+  await pause(150);
+  await page.mouse.up();
+  await page.waitForFunction(() => document.querySelector('.pm-burndown__remain')?.textContent === '8 puan kaldı', { timeout: 8000 }).catch(() => undefined);
+  const [moved] = await sql('select status from tasks where id = $1', [pmState.stories[0]]);
+  expect(moved.status === 'done', `the story is in ${moved.status}, not done`);
+  expect((await left()) === '8 puan kaldı', `burndown after the move: ${await left()}`);
+  expect((await stat('Tamamlanan puan')) === '3' && (await stat('Biten kayıt')) === '1 / 2', `summary after the move: ${await stat('Tamamlanan puan')}, ${await stat('Biten kayıt')}`);
+  await shot(page, 'pm-05-burned-down');
+
+  // A story added after the start: from the backlog straight into the running sprint.
+  await press(page, '.toolbar .seg button', 'Backlog');
+  await page.waitForSelector('.pm-backlog');
+  const row = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!, pmStories[1][0]);
+  await (await (row as any).$('.pm-rowactions .btn--small:not(.btn--icon)')).click();
+  await page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('1 kayıt Sprint 1 sprintine eklendi')), { timeout: 5000 });
+  await clearToasts(page);
+  await press(page, '.toolbar .seg button', 'Sprintler');
+  await page.waitForFunction(() => document.querySelector('.pm-burndown__remain')?.textContent === '13 puan kaldı', { timeout: 8000 });
+  expect((await stat('Toplam puan')) === '16', `total after the addition: ${await stat('Toplam puan')}`);
+  // Not there yet: the burndown does not set the added 5 points apart as scope change.
+  await shot(page, 'pm-06-scope-added');
+  expect(errors.length === 0, errors.join(' | '));
+});
+
+await step('product team: close the sprint with work left, carry it to the next sprint, read the velocity', async () => {
+  const { page, errors } = await pmUser();
+  // The next sprint has to exist to be chosen.
+  await page.goto(`${s.origin}/b/${pmState.board}?view=sprints`, { waitUntil: 'networkidle0' });
+  await press(page, '.pm-bar-row .btn--primary', 'Yeni sprint');
+  await page.waitForSelector('.dialog input.input');
+  await page.type('.dialog input.input', 'Sprint 2');
+  await setDate(page, '.dialog input[aria-label="Başlangıç"]', isoDay(11));
+  await setDate(page, '.dialog input[aria-label="Bitiş"]', isoDay(24));
+  await press(page, '.dialog .btn--primary', 'Oluştur');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  pmState.next = (await sql(`select id from sprints where board_id = $1 and name = 'Sprint 2'`, [pmState.board]))[0].id;
+
+  await page.waitForSelector('.pm-head .btn');
+  await press(page, '.pm-head .btn', 'Sprinti kapat');
+  await page.waitForFunction(() => document.querySelector('.dialog')?.textContent?.includes('3 kaydın 1 tanesi tamamlandı, 2 tanesi tamamlanmadı.'), { timeout: 5000 });
+  const options = await page.$$eval('.dialog select option', (els) => els.map((e) => e.textContent));
+  expect(options.join('|') === 'Backlog|Sprint 2', `where unfinished work can go: ${options.join(' | ')}`);
+  await page.select('.dialog select', pmState.next);
+  await shot(page, 'pm-07-close');
+  await press(page, '.dialog .btn--primary', 'Sprinti kapat');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  await page.waitForFunction(() => document.body.innerText.includes('Aktif sprint yok.'), { timeout: 5000 });
+  const rows = await sql(`select t.title, s.name as sprint from tasks t left join sprints s on s.id = t.sprint_id where t.epic_id = $1 order by t.title`, [pmState.epic]);
+  const where = Object.fromEntries(rows.map((r: any) => [r.title, r.sprint]));
+  expect(where[pmStories[0][0]] === 'Sprint 1' && where[pmStories[1][0]] === 'Sprint 2' && where[pmStories[2][0]] === 'Sprint 2', `after closing: ${JSON.stringify(where)}`);
+
+  // Planning the next sprint: Sprint 2 already holds the carried work, and the roadmap gives the team's velocity.
+  await press(page, '.pm-bar-row .seg button', 'Tüm sprintler');
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 2') && x.textContent.includes('13 puanın 0 tanesi')), { timeout: 5000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint[data-state="closed"]')].some((x) => x.textContent?.includes('Sprint 1') && x.textContent.includes('3 puanın 3 tanesi')), { timeout: 5000 });
+  await press(page, '.pm-bar-row .seg button', 'Yol haritası');
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .stat')].some((x) => x.textContent?.includes('Son kapanan sprint') && x.querySelector('strong')?.textContent === '3'), { timeout: 8000 });
+  await shot(page, 'pm-08-velocity');
+  expect(errors.length === 0, errors.join(' | '));
+});
+
+await step('product team: a story linked to a customer opens from the customer; someone off the board never sees the backlog', async () => {
+  const { page, errors } = await pmUser();
+  const story = pmState.stories[1];
+  await page.goto(`${s.origin}/b/${pmState.board}?view=sprints&task=${story}`, { waitUntil: 'networkidle0' });
+  // The customer field of the panel: the picker that is not the assignees' (its label is the company's own word for a customer).
+  const customerPicker = `[...document.querySelectorAll('.panel .props__label')].find((e) => e.textContent.trim() !== 'Atananlar' && e.nextElementSibling?.matches('.picker'))?.nextElementSibling?.querySelector('.picker__button')`;
+  await page.waitForFunction(customerPicker, { timeout: 8000 });
+  const customerField = () => page.evaluateHandle(customerPicker);
+  await ((await customerField()) as any).click();
+  await page.waitForSelector('.picker__pop input');
+  await page.type('.picker__pop input', 'Quillfield');
+  await press(page, '.picker__pop .picker__opt', 'Quillfield Retail');
+  await page.waitForFunction(() => [...document.querySelectorAll('.panel .picker__button')].some((b) => b.textContent === 'Quillfield Retail'), { timeout: 5000 });
+  const [acc] = await sql(`select a.id from tasks t join accounts a on a.id = t.account_id where t.id = $1`, [story]);
+  expect(acc, 'the customer link was not stored');
+  await page.keyboard.press('Escape');
+
+  // On the customer's page the story is among the open work, and opens there.
+  await page.goto(`${s.origin}/accounts/${acc.id}`, { waitUntil: 'networkidle0' });
+  const line = await byText(page, '#tasks .taskline__title', pmStories[1][0]);
+  await line.click();
+  await page.waitForFunction((id) => location.search.includes(`task=${id}`) && !!document.querySelector('.panel .panel__crumb'), { timeout: 5000 }, story);
+  await page.waitForFunction(() => document.querySelector('.panel .panel__crumb')?.textContent?.includes('Mobil uygulama'), { timeout: 5000 }).catch(() => undefined);
+  expect((await text(page, '.panel .panel__crumb')).includes('Mobil uygulama'), `the story does not name its board: "${await text(page, '.panel .panel__crumb')}"`);
+  await shot(page, 'pm-09-from-customer');
+  await page.keyboard.press('Escape');
+  expect(errors.length === 0, errors.join(' | '));
+
+  // Lena is not on the private product board: no link to it, and its address asks nothing of the backlog or sprints.
+  const lena = await newPage(s.browser);
+  const refused: string[] = [];
+  lena.page.on('response', (r) => r.status() >= 400 && r.url().includes('/api/') && refused.push(`${r.status()} ${new URL(r.url()).pathname}`));
+  await signIn(lena.page, s.origin, 'lena@demo.example');
+  await lena.page.goto(`${s.origin}/home`, { waitUntil: 'networkidle0' });
+  expect(!(await lena.page.$$eval('.sidebar a', (as) => as.some((a) => a.textContent?.includes('Mobil uygulama')))), 'the private board is in her sidebar');
+  await lena.page.goto(`${s.origin}/b/${pmState.board}?view=backlog`, { waitUntil: 'networkidle0' });
+  await pause(300);
+  expect(!(await lena.page.$('.pm-backlog')) && !(await lena.page.evaluate(() => document.body.innerText.includes('Çakışan düzenlemeleri birleştir'))), 'she sees the backlog');
+  const pmAsked = refused.filter((r) => /\/(backlog|sprints|epics|pm)\b/.test(r));
+  expect(pmAsked.length === 0, `the screen asked for what she may not see: ${pmAsked.join(', ')}`);
+  await shot(lena.page, 'pm-10-not-on-board');
+  expect(lena.errors.length === 0, `console: ${lena.errors.join(' | ')}; refused: ${refused.join(', ')}`);
+  await lena.page.browserContext().close();
+  await page.browserContext().close();
+  pmPage.current = null;
 });
 
 await step('no script errors in the browser', async () => {
