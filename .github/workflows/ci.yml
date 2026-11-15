@@ -11,7 +11,7 @@
 #   * "RLS isolation (postgres)"  \
 #   * "Leak scan"                  > also listed on their own, so a failure is
 #   * "i18n completeness"         /  never hidden behind a skipped aggregate
-# Informational (never block): "Format check", "Dependency audit".
+# Informational (never block): "Format check", "Dependency audit", "Browser journeys (informational)".
 #
 # Node: pinned through .nvmrc (single source of truth; Dockerfile uses the
 # same major). Change the version there, not here.
@@ -245,6 +245,38 @@ jobs:
         env:
           QUICK: '1'
         run: npx tsx tests/e2e/demo.ts
+
+  # The 41 browser journeys (tests/e2e/run.ts): the built app and the real API on the in-memory
+  # Postgres, driven in the runner's Chrome. About three minutes. Informational for now: the
+  # "live" journey still fails now and then in a full run (it passes on its own); make this
+  # required (add it to the gate) once it has run green for a while.
+  e2e:
+    name: Browser journeys (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    env:
+      TEST_DATABASE_URL: ''
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Build app, portal and help pages
+        run: npm run build
+      - name: Browser journeys
+        run: npx tsx tests/e2e/run.ts
+      - name: Screenshots of the journeys (a failed step leaves fail-*.png)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screens
+          path: tests/e2e/screens/*.png
+          retention-days: 7
+          if-no-files-found: ignore
 
   docker:
     name: Docker image builds
