@@ -68,7 +68,7 @@ web/src/                 the React app (Vite)
   pages/                 whole screens (Accounts, Reports, Dashboards, Settings, Home…)
   components/            parts of screens (TaskPanel, RecordPanel, Thread, Plans, Rhythm, Charts…)
   lib/                   api client, store (who is signed in, people, boards), i18n, router, money
-  *.css                  styles.css (tokens and base), reports.css, motion.css, work.css —
+  *.css                  styles.css (tokens and base), surfaces/*.css (one per screen group), motion.css, work.css —
                          all loaded by stylesheets.ts (app and demo); a new one goes there
 db/migrations/           the schema, in order (0001, 0002, …). Each file runs once.
 scripts/                 dev server, migrations, demo data (seed-demo.ts, seed-showcase.ts), docs build

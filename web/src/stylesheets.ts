@@ -2,7 +2,7 @@
 // demo (demo/main.tsx) both load this one file, so a new stylesheet cannot be
 // forgotten in one of them.
 import './styles.css';
-import './reports.css';
+import './surfaces/employee-insight.css';
 import './motion.css';
 import './work.css';
 import './consent.css';

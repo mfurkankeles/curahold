@@ -1,4 +1,6 @@
-/* Reports people build: the charts, the gallery of ready-made reports and
+/* employee-insight surface (reports, the builder, dashboards). Loaded for the whole app
+   (stylesheets.ts): the report chips and right-aligned number cells are used by other screens too.
+   Reports people build: the charts, the gallery of ready-made reports and
    dashboards, and the builder. Charts take their colour from the palette
    (--brand) unless a part has a colour of its own (--oc, from data-color). */
 
