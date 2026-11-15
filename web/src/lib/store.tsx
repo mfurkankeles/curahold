@@ -18,6 +18,8 @@ interface Store {
   people: Person[];
   teams: Team[];
   boards: Board[];
+  /** False until the first board list has arrived (an empty list is not "no boards" yet). */
+  boardsLoaded: boolean;
   person: (id: string | null) => Person | undefined;
   can: (perm: string) => boolean;
   canWrite: boolean;
@@ -37,10 +39,15 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
   const [people, setPeople] = useState<Person[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
+  const [boardsLoaded, setBoardsLoaded] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const reloadBoards = useCallback(async () => {
-    setBoards((await get<{ boards: Board[] }>('/boards')).boards);
+    try {
+      setBoards((await get<{ boards: Board[] }>('/boards')).boards);
+    } finally {
+      setBoardsLoaded(true);
+    }
   }, []);
   const reloadPeople = useCallback(async () => {
     const r = await get<{ people: Person[]; teams: Team[] }>('/people');
@@ -72,6 +79,7 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
       people,
       teams,
       boards,
+      boardsLoaded,
       person: (id) => (id ? byId.get(id) : undefined),
       can: (perm) => me.user.perms.includes(perm as any),
       // Looking as someone else is always read only.
@@ -83,7 +91,7 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
       dismiss,
       toasts,
     };
-  }, [me, people, teams, boards, reloadBoards, reloadPeople, reloadMe, toast, dismiss, toasts]);
+  }, [me, people, teams, boards, boardsLoaded, reloadBoards, reloadPeople, reloadMe, toast, dismiss, toasts]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

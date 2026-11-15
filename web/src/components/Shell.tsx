@@ -74,7 +74,7 @@ function useMyCounts() {
 
 export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (l: Locale) => void }) {
   const { t, locale, words } = useI18n();
-  const { me, boards, canWrite, person, toasts, can, dismiss } = useStore();
+  const { me, boards, boardsLoaded, canWrite, person, toasts, can, dismiss } = useStore();
   const { path, search } = useLocation();
   const narrow = useNarrow();
   const [navOpen, setNavOpen] = useState(false);
@@ -93,6 +93,15 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const [theme, setTheme] = useTheme();
   const counts = useMyCounts();
   const { types: recordTypes, load: reloadTypes } = useRecordTypes();
+  // The sections below the first links wait for the lists they show (boards,
+  // record types), so they are laid out once instead of growing and pushing
+  // each other down; a slow list stops holding them back after 3 seconds.
+  const [listsLate, setListsLate] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setListsLate(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
+  const listsReady = (boardsLoaded && recordTypes !== null) || listsLate;
   const unread = useUnread();
   // Sections of the menu fold away; which ones is remembered on this device.
   const [folded, setFolded] = useState<string[]>(() => {
@@ -410,7 +419,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 t('nav.favorites'),
                 <>{favorites.map((f) => link(f.to, f.name, `${path}${search}` === f.to || path === f.to, FAVORITE_ICON[f.kind]))}</>,
               )}
-            {section(
+            {listsReady &&
+              section(
               'crm',
               words.other,
               <>
@@ -421,7 +431,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/accounts?view=products', t('nav.products'), productsOn, 'target')}
               </>,
             )}
-            {section(
+            {listsReady &&
+              section(
               'work',
               t('nav.work'),
               <>
@@ -442,7 +453,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 </button>
               ) : undefined,
             )}
-            {section(
+            {listsReady &&
+              section(
               'insight',
               t('nav.insight'),
               <>

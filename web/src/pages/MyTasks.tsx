@@ -77,6 +77,8 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
         <div className="topbar__titles topbar__titles--icon">
           <PageIcon name="checkCircle" />
           <h1 className="topbar__title">{t('myTasks.title')}</h1>
+          {/* The line's room is kept while the tasks load, so the page below does not jump. */}
+          {!tasks && <p className="topbar__sub" aria-hidden="true">&nbsp;</p>}
           {tasks && open > 0 && (
             <p className="topbar__sub">
               {late > 0 && <span className="due due--late">{t('myTasks.lateN', { n: late })}</span>}

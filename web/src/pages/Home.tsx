@@ -21,7 +21,7 @@ import {
 import { PROVIDER_NAMES } from '../components/Connections';
 import { EmptyState, SkeletonCards } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
-import { GettingStarted } from '../components/GettingStarted';
+import { GettingStarted, loadStart, startKnown } from '../components/GettingStarted';
 import { Avatar, Confirm, Dialog } from '../components/ui';
 import { CountUp } from '../components/CountUp';
 import { ReportChart } from '../components/Charts';
@@ -77,6 +77,13 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   const [data, setData] = useState<Data | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const admin = can('org.manage') && !me.previewBy;
+  // The getting-started box sits above the cards: the cards wait until it is
+  // known whether it shows, and for their data (an empty card grows when its
+  // data comes), so they are laid out once, in their final place.
+  const [startReady, setStartReady] = useState(startKnown);
+  useEffect(() => {
+    if (!startReady) void loadStart().then(() => setStartReady(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPages = useCallback(async () => {
     const r = await get<{ pages: Page[]; homeId: string | null }>('/pages');
@@ -205,8 +212,8 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
         </nav>
       )}
       <div className="page">
-        {current.id === homeId && <GettingStarted />}
-        {current.cards.length === 0 ? (
+        {current.id === homeId && !startReady ? null : current.id === homeId && <GettingStarted />}
+        {(current.id === homeId && !startReady) || (data === null && current.cards.length > 0) ? null : current.cards.length === 0 ? (
           <EmptyState icon="layout" title={t('home.emptyPage')} />
         ) : (
           <div className="panes">

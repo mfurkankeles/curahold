@@ -11,13 +11,30 @@ import { Icon, type IconName } from './icons';
 
 const ICONS: Record<StartStep, IconName> = { task: 'checkCircle', planned: 'calendar', touch: 'phone', mention: 'at', calendar: 'link', notify: 'bell' };
 
+type StartState = { steps: Record<StartStep, boolean>; hidden: boolean };
+
+// The steps' state, kept between mounts so Home can wait for it before laying
+// out its cards (the box appearing late pushed every card down the page).
+let known: StartState | null | undefined;
+let asking: Promise<void> | null = null;
+/** Asks for the steps' state (one request at a time); resolves when it is known. */
+export function loadStart(): Promise<void> {
+  return (asking ??= get<StartState>('/me/start')
+    .then(
+      (s) => void (known = s),
+      () => void (known ??= null),
+    )
+    .finally(() => (asking = null)));
+}
+export const startKnown = () => known !== undefined;
+
 export function GettingStarted() {
   const { t, locale } = useI18n();
   const { canWrite, me } = useStore();
   const shell = useShell();
-  const [state, setState] = useState<{ steps: Record<StartStep, boolean>; hidden: boolean } | null>(null);
+  const [state, setState] = useState<StartState | null>(known ?? null);
   useEffect(() => {
-    const load = () => void get<{ steps: Record<StartStep, boolean>; hidden: boolean }>('/me/start').then(setState, () => undefined);
+    const load = () => void loadStart().then(() => known !== undefined && setState(known));
     load();
     window.addEventListener(TASKS_CHANGED, load);
     window.addEventListener('focus', load);

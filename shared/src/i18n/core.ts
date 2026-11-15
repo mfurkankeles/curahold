@@ -55,7 +55,6 @@ export const LOCALES = Object.keys(LOCALE_INFO) as Locale[];
 export const isRtl = (locale: Locale) => LOCALE_INFO[locale].dir === 'rtl';
 export const bcp47Of = (locale: Locale) => LOCALE_INFO[locale].bcp47;
 
-
 // The company's own words for the things it manages. Stored on the org as
 //   { "account": { "en": { "one": "Client", "other": "Clients" }, "tr": {...} } }
 export interface Terms {
@@ -104,7 +103,5 @@ export function translate(locale: Locale, key: MessageKey, vars: Vars = {}, term
     accounts_l: lower(words.other),
     ...vars,
   };
-  return template.replace(/\{(\w+)\}/g, (m, name: string) =>
-    Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m,
-  );
+  return template.replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
 }
