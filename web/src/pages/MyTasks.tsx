@@ -8,9 +8,10 @@ import { usePageDefaults, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { addDays, todayIso } from '../lib/time';
 import { ListView } from './BoardPage';
+import '../surfaces/employee-work.css';
 
 /** Looks like a text box; opens quick add, and whatever key started it lands there too. */
-export function AddBar({ label, onOpen }: { label: string; onOpen: (text?: string) => void }) {
+export function AddBar({ label, short, onOpen }: { label: string; /** A shorter hint for a phone. */ short?: string; onOpen: (text?: string) => void }) {
   return (
     <button
       type="button"
@@ -26,7 +27,8 @@ export function AddBar({ label, onOpen }: { label: string; onOpen: (text?: strin
       <span className="addbar__plus" aria-hidden="true">
         <Icon name="plus" size={16} />
       </span>
-      <span className="addbar__text">{label}</span>
+      <span className={short ? 'addbar__text ew-desk' : 'addbar__text'}>{label}</span>
+      {short && <span className="addbar__text ew-phone">{short}</span>}
       <kbd className="keycap">N</kbd>
     </button>
   );
@@ -98,7 +100,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
         )}
       </header>
       <div className="page">
-        {canWrite && <AddBar label={t('myTasks.addBar')} onOpen={add} />}
+        {canWrite && <AddBar label={t('myTasks.addBar')} short={t('myTasks.addBarShort')} onOpen={add} />}
         {tasks === null && <SkeletonRows rows={6} label={t('common.loading')} />}
         {tasks && groups.length === 0 && (
           <EmptyState icon="checkCircle" tone="done" title={t('myTasks.emptyTitle')} body={t('myTasks.emptyBody')}>

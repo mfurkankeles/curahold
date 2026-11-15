@@ -14,6 +14,7 @@ import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { Avatar, Avatars } from './ui';
 import { formatDateTime } from '../lib/format';
+import { useUndo } from '../lib/undo';
 
 type Reload = () => void | Promise<void>;
 const useFail = () => {
@@ -111,6 +112,7 @@ const LINK_KINDS = ['blocked_by', 'blocks', 'relates'] as const;
 export function LinksSection({ task, editable, reload }: { task: TaskDetail; editable: boolean; reload: Reload }) {
   const { t } = useI18n();
   const fail = useFail();
+  const offer = useUndo();
   const [adding, setAdding] = useState(false);
   const [kind, setKind] = useState<(typeof LINK_KINDS)[number]>('blocked_by');
   const [q, setQ] = useState('');
@@ -170,7 +172,12 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
                     aria-label={t('common.remove')}
                     title={t('common.remove')}
                     onClick={async () => {
-                      await del(`/tasks/${task.id}/links/${l.taskId}?kind=${l.kind}`).catch(fail);
+                      try {
+                        await del(`/tasks/${task.id}/links/${l.taskId}?kind=${l.kind}`);
+                        offer(t('links.removed', { title: l.title }), () => post(`/tasks/${task.id}/links`, { otherId: l.taskId, kind: l.kind }), reload);
+                      } catch (e) {
+                        fail(e);
+                      }
                       await reload();
                     }}
                   >
@@ -221,6 +228,7 @@ export function TimeSection({ task, editable, reload }: { task: TaskDetail; edit
   const { t, locale, fmtDate } = useI18n();
   const { person, me, can } = useStore();
   const fail = useFail();
+  const offer = useUndo();
   const [custom, setCustom] = useState('');
   const [open, setOpen] = useState(false);
   const time = task.time ?? { total: 0, entries: [] };
@@ -293,7 +301,12 @@ export function TimeSection({ task, editable, reload }: { task: TaskDetail; edit
                   className="btn btn--quiet btn--icon btn--small"
                   aria-label={t('common.remove')}
                   onClick={async () => {
-                    await del(`/time/${e.id}`).catch(fail);
+                    try {
+                      await del(`/time/${e.id}`);
+                      offer(t('time.removed', { time: hoursText(e.minutes, locale) }), () => post(`/tasks/${task.id}/time`, { minutes: e.minutes, day: e.day, ...(e.note ? { note: e.note } : {}) }), reload);
+                    } catch (err) {
+                      fail(err);
+                    }
                     await reload();
                   }}
                 >

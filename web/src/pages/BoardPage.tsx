@@ -3,7 +3,8 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useDraggable,
   useDroppable,
   useSensor,
@@ -12,6 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent as KeyEvent } from 'react';
 import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewFilters } from '../../../shared/src/model';
 import { labelOf } from '../../../shared/src/fields';
 import { FilterBar, matchFilters } from '../components/BoardFilters';
@@ -37,6 +39,8 @@ import { useWindow } from '../lib/windowing';
 import { DateField } from '../components/DateField';
 import { usePhone } from '../components/FilterSheet';
 import { useServerUndo, useUndo } from '../lib/undo';
+import '../surfaces/employee-work.css';
+import { seedTask } from '../components/taskSeed';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t, words } = useI18n();
@@ -131,22 +135,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       </button>
     </div>
   );
-  return (
-    <>
-      <header className="topbar">
-        <div className="u-min-width-0">
-          <h1 className="topbar__title topbar__title--icon">
-          <PageIcon name="board" />
-          <span>{board.name}</span>
-        </h1>
-        </div>
-        <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
-        <div className="topbar__spacer" />
-        <div className="toolbar">
-          {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} viewSwitch={phone ? viewSwitch : undefined} />}
-          {(!phone || view === 'archive' || pmView) && viewSwitch}
-          {view === 'list' && (
-            <ExportMenu
+  const exportMenu = (
+    <ExportMenu
               disabled={!visible.length}
               make={async () => ({
                 name: board.name,
@@ -163,25 +153,51 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
                 ]),
               })}
             />
-          )}
-          {view !== 'archive' && board.form?.on && canWrite && (
-            <button className="btn" onClick={() => setAsking(true)}>
-              <Icon name="form" size={16} />
-              <span className="hide-phone">{t('boardForm.open')}</span>
-            </button>
-          )}
+  );
+  const formButton = view !== 'archive' && board.form?.on && canWrite && (
+    <button className="btn" onClick={() => setAsking(true)} title={t('boardForm.open')}>
+      <Icon name="form" size={16} />
+      <span className={phone ? 'sr-only' : undefined}>{t('boardForm.open')}</span>
+    </button>
+  );
+  const settingsButton = board.canManage && (
+    <button className="btn btn--icon" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
+      <Icon name="sliders" size={16} />
+    </button>
+  );
+  return (
+    <>
+      <header className="topbar">
+        <div className="u-min-width-0">
+          <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name="board" />
+          <span>{board.name}</span>
+        </h1>
+        </div>
+        <FavoriteButton kind="board" id={board.id} name={board.name} to={`/b/${board.id}`} />
+        <div className="topbar__spacer" />
+        {/* On a phone the board's own tools sit on the title's line, so the first card comes up;
+            a new task is the bottom bar's + and each column's "Add task". */}
+        {phone && (
+          <div className="ew-boardtools">
+            {view === 'list' && exportMenu}
+            {formButton}
+            {settingsButton}
+          </div>
+        )}
+        <div className="toolbar">
+          {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} viewSwitch={phone ? viewSwitch : undefined} />}
+          {(!phone || view === 'archive' || pmView) && viewSwitch}
+          {!phone && view === 'list' && exportMenu}
+          {!phone && formButton}
           {view !== 'archive' && canWrite && (
             <button className="btn btn--icon hide-phone" onClick={() => setImporting(true)} aria-label={t('timport.title')} title={t('timport.title')}>
               <Icon name="upload" size={16} />
             </button>
           )}
-          {board.canManage && (
-            <button className="btn btn--icon" onClick={() => setSettings(true)} aria-label={t('board.settings')} title={t('board.settings')}>
-              <Icon name="sliders" size={16} />
-            </button>
-          )}
+          {!phone && settingsButton}
           {view !== 'archive' && canWrite && (
-            <button className="btn btn--primary" onClick={() => quickAdd({ boardId: board.id, status: board.columns[0].key })}>
+            <button className="btn btn--primary hide-phone" onClick={() => quickAdd({ boardId: board.id, status: board.columns[0].key })}>
               <Icon name="plus" size={16} />
               {t('board.newTask')}
             </button>
@@ -218,7 +234,28 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         )
       ) : view === 'list' ? (
         <div className="page">
-          {canWrite && selected.size > 0 && <BulkBar board={board} ids={[...selected]} onDone={() => { setSelected(new Set()); void load(); }} />}
+          {canWrite && selected.size > 0 && (
+            <BulkBar
+              board={board}
+              ids={[...selected]}
+              total={win?.more ? (win.total ?? win.all) : undefined}
+              onSelectAll={async () => {
+                // A long list is read a page at a time: "all" is asked of the server, with the same filter.
+                const ids: string[] = [];
+                for (let offset = 0; ids.length < BULK_MAX; ) {
+                  const r = await get<Page>(`/boards/${board.id}/tasks?limit=${BULK_MAX}&offset=${offset}${filterParam(filters)}`);
+                  ids.push(...r.tasks.map((x) => x.id));
+                  if (!r.more || !r.tasks.length) break;
+                  offset += r.tasks.length;
+                }
+                setSelected(new Set(ids.slice(0, BULK_MAX)));
+              }}
+              onDone={() => {
+                setSelected(new Set());
+                void load();
+              }}
+            />
+          )}
           <ListView board={board} tasks={visible} onMore={win?.more ? () => more(null) : undefined} isDone={(x) => doneKeys.has(x.status)} selected={canWrite ? selected : undefined} onSelect={setSelected} />
         </div>
       ) : (
@@ -372,6 +409,8 @@ function useBoardTasks(boardId: string, list: boolean, filters: ViewFilters, ref
 }
 
 const DONE_SHOWN = 6;
+/** The most tasks one bulk change takes (the server's limit). */
+const BULK_MAX = 500;
 
 export function KanbanView({
   board,
@@ -393,7 +432,13 @@ export function KanbanView({
   onAdd?: (status: string) => void;
 }) {
   const [active, setActive] = useState<Task | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
+  // A mouse drags at once; a finger holds a moment first, so a swipe still scrolls the columns.
+  // Space picks a card up from the keyboard (Enter opens it).
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] } }),
+  );
   const byCol = useMemo(() => {
     const m = new Map<string, Task[]>();
     for (const c of board.columns) m.set(c.key, []);
@@ -415,9 +460,47 @@ export function KanbanView({
     }
   };
 
+  // From the keyboard: arrows go from card to card (left and right follow the reading direction),
+  // Shift with left or right moves the card to the next column.
+  const shift = (task: Task, dir: number) => {
+    const keys = board.columns.map((c) => c.key);
+    const to = keys[keys.indexOf(task.status) + dir];
+    if (!canWrite || !to) return;
+    onMove(task, to, null);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-card="${task.id}"]`)?.focus());
+  };
+  const nav = (e: KeyEvent<HTMLDivElement>) => {
+    const card = e.target as HTMLElement;
+    if (active || !card.dataset.card || e.ctrlKey || e.metaKey || e.altKey) return;
+    const rtl = getComputedStyle(card).direction === 'rtl';
+    const side = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
+    const task = tasks.find((x) => x.id === card.dataset.card);
+    if (side && e.shiftKey && task) {
+      e.preventDefault();
+      shift(task, side);
+      return;
+    }
+    const col = card.closest('.column');
+    const cols = [...e.currentTarget.querySelectorAll<HTMLElement>('.column')];
+    const list = [...(col?.querySelectorAll<HTMLElement>('[data-card]') ?? [])];
+    const i = list.indexOf(card);
+    let next: HTMLElement | undefined;
+    if (e.key === 'ArrowDown') next = list[i + 1];
+    else if (e.key === 'ArrowUp') next = list[i - 1];
+    else if (side && col) {
+      const other = [...(cols[cols.indexOf(col as HTMLElement) + side]?.querySelectorAll<HTMLElement>('[data-card]') ?? [])];
+      next = other[Math.min(i, other.length - 1)];
+    }
+    if (next) {
+      e.preventDefault();
+      next.focus();
+      next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  };
+
   return (
     <DndContext sensors={canWrite ? sensors : []} onDragStart={onStart} onDragEnd={onEnd} onDragCancel={() => setActive(null)}>
-      <div className="board">
+      <div className="board" onKeyDown={nav}>
         {board.columns.map((col) => (
           <KanbanColumn
             key={col.key}
@@ -489,13 +572,29 @@ function KanbanColumn({ col, tasks, win, onMore, doneKeys, canWrite, onAdd }: { 
 
 function DraggableCard({ task, done }: { task: Task; done: boolean }) {
   const drag = useDraggable({ id: task.id });
+  const onKeyDown = (e: KeyEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        seedTask(task);
+        setQuery('task', task.id);
+        return;
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        e.currentTarget.querySelector<HTMLElement>('.tick')?.click();
+        return;
+      }
+    }
+    drag.listeners?.onKeyDown?.(e);
+  };
   const drop = useDroppable({ id: `card:${task.id}` });
   const ref = (el: HTMLElement | null) => {
     drag.setNodeRef(el);
     drop.setNodeRef(el);
   };
   return (
-    <div ref={ref} {...drag.attributes} role="group" {...drag.listeners} className="dragcard" data-dragging={drag.isDragging} data-over={(drop.isOver && !drag.isDragging) || undefined}>
+    <div ref={ref} {...drag.attributes} role="group" {...drag.listeners} onKeyDown={onKeyDown} data-card={task.id} aria-label={task.title} className="dragcard" data-dragging={drag.isDragging} data-over={(drop.isOver && !drag.isDragging) || undefined}>
       <CardBody task={task} done={done} />
     </div>
   );
@@ -508,9 +607,9 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
     <article
       className={`card${overlay ? ' card--overlay' : ''}`}
       data-due={railState(task.dueDate, done)}
-      onClick={() => setQuery('task', task.id)}
+      onClick={() => (seedTask(task), setQuery('task', task.id))}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') setQuery('task', task.id);
+        if (e.key === 'Enter') (seedTask(task), setQuery('task', task.id));
       }}
       aria-label={`${t('task.open')}: ${task.title}`}
     >
@@ -601,7 +700,25 @@ export function ListView({
   }, [onMore, w.end, tasks.length]);
   if (!tasks.length) return <EmptyState compact icon="list" title={t('board.listEmpty')} />;
   return (
-    <table className="table tasklist" data-board={showBoard ? 'yes' : undefined} data-pick={pick || undefined}>
+    <table
+      className="table tasklist"
+      data-board={showBoard ? 'yes' : undefined}
+      data-pick={pick || undefined}
+      onKeyDown={(e) => {
+        // Up and down go from task to task; D finishes the one in focus.
+        const at = (e.target as HTMLElement).closest('.tasklist__row');
+        if (!at || e.ctrlKey || e.metaKey || e.altKey || (e.target as HTMLElement).tagName === 'INPUT') return;
+        const rows = [...e.currentTarget.querySelectorAll<HTMLElement>('.tasklist__row')];
+        const next = e.key === 'ArrowDown' ? rows[rows.indexOf(at as HTMLElement) + 1] : e.key === 'ArrowUp' ? rows[rows.indexOf(at as HTMLElement) - 1] : undefined;
+        if (next) {
+          e.preventDefault();
+          next.querySelector<HTMLElement>('.rowlink')?.focus();
+        } else if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          at.querySelector<HTMLElement>('.tick')?.click();
+        }
+      }}
+    >
       <colgroup>
         <col className="tasklist__railcol" />
         {pick && <col className="tasklist__checkcol" />}
@@ -637,7 +754,7 @@ export function ListView({
         {tasks.slice(w.start, w.end).map((x) => {
           const done = isDone(x);
           return (
-            <tr key={x.id} data-due={railState(x.dueDate, done)} className="tasklist__row" onClick={(e) => !(e.target as HTMLElement).closest('input, button, a') && setQuery('task', x.id)}>
+            <tr key={x.id} data-due={railState(x.dueDate, done)} className="tasklist__row" onClick={(e) => !(e.target as HTMLElement).closest('input, button, a') && (seedTask(x), setQuery('task', x.id))}>
               <td className="rail-cell">
                 <span />
               </td>
@@ -657,12 +774,15 @@ export function ListView({
                 </td>
               )}
               <td className="tasklist__title">
-                <Tick task={x} done={done} />
-                <button className="rowlink" data-done={done || undefined} onClick={() => setQuery('task', x.id)}>
-                  {x.title}
-                </button>
-                {x.repeat && <span className="repeat-mark" title={repeatText(t, x.repeat)} aria-label={repeatText(t, x.repeat)}>↻</span>}
-                {(x.priority === 'urgent' || x.priority === 'high') && <span className={`prio prio--${x.priority} tasklist__prio`}>{t(`task.priority.${x.priority}`)}</span>}
+                {/* One line that gives the title the room left; a button in a cut cell would vanish whole into "…". */}
+                <span className="tasklist__line">
+                  <Tick task={x} done={done} />
+                  <button className="rowlink" data-done={done || undefined} onClick={() => (seedTask(x), setQuery('task', x.id))}>
+                    {x.title}
+                  </button>
+                  {x.repeat && <span className="repeat-mark" title={repeatText(t, x.repeat)} aria-label={repeatText(t, x.repeat)}>↻</span>}
+                  {(x.priority === 'urgent' || x.priority === 'high') && <span className={`prio prio--${x.priority} tasklist__prio`}>{t(`task.priority.${x.priority}`)}</span>}
+                </span>
               </td>
               {showBoard && <td className="tasklist__board muted">{showBoard(x)}</td>}
               <td className="tasklist__status">{colName(x)}</td>
@@ -699,7 +819,7 @@ export function repeatText(t: (k: any, v?: any) => string, r: Repeat) {
 }
 
 /** Change the chosen tasks at once: column, a person, due date, priority, archive — with undo. */
-function BulkBar({ board, ids, onDone }: { board: Board; ids: string[]; onDone: () => void }) {
+function BulkBar({ board, ids, total, onSelectAll, onDone }: { board: Board; ids: string[]; /** How many match when more are there than are read. */ total?: number; onSelectAll: () => Promise<void>; onDone: () => void }) {
   const { t } = useI18n();
   const { people, toast } = useStore();
   const undoable = useServerUndo();
@@ -720,6 +840,11 @@ function BulkBar({ board, ids, onDone }: { board: Board; ids: string[]; onDone: 
   return (
     <div className="bulkbar" role="region" aria-label={t('board.bulk')}>
       <strong>{t('board.selected', { n: ids.length })}</strong>
+      {total !== undefined && total > ids.length && ids.length < BULK_MAX && (
+        <button className="linkbtn" disabled={busy} onClick={() => (setBusy(true), void onSelectAll().finally(() => setBusy(false)))}>
+          {total > BULK_MAX ? t('board.selectFirstN', { n: BULK_MAX, total }) : t('board.selectAllN', { n: total })}
+        </button>
+      )}
       <select className="select" disabled={busy} value="" aria-label={t('board.bulk.move')} onChange={(e) => e.target.value && apply({ status: e.target.value }, 'board.bulk.moved')}>
         <option value="">{t('board.bulk.move')}</option>
         {board.columns.map((c) => (

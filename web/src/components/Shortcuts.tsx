@@ -73,6 +73,18 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
       ],
     },
     {
+      title: t('keys.group.tasks'),
+      rows: [
+        [['↑', '↓'], t('keys.taskNav')],
+        [['Enter'], t('keys.taskOpen')],
+        [['D'], t('keys.taskDone')],
+        [['A'], t('keys.taskAssign')],
+        [['M'], t('keys.taskStatus')],
+        [['Shift', '→'], t('keys.taskColumn')],
+        [['Space'], t('keys.taskDrag')],
+      ],
+    },
+    {
       title: t('keys.group.quick'),
       rows: [
         [['Enter'], t('keys.quickAdd')],

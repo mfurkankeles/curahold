@@ -11,6 +11,7 @@ import { addDays, todayIso } from '../lib/time';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
+import { useUndo } from '../lib/undo';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -41,6 +42,7 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
   const { t, locale } = useI18n();
   const phone = usePhone();
   const { people, me, toast, canWrite } = useStore();
+  const offer = useUndo();
   const [open, setOpen] = useState<null | 'filter' | 'views'>(null);
   const [views, setViews] = useState<SavedView[]>([]);
   const [name, setName] = useState('');
@@ -168,7 +170,12 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
                     aria-label={t('views.remove', { name: v.name })}
                     title={t('common.delete')}
                     onClick={async () => {
-                      await del(`/views/${v.id}`).catch(() => undefined);
+                      try {
+                        await del(`/views/${v.id}`);
+                        offer(t('views.removed', { name: v.name }), () => post('/views', { boardId: board.id, name: v.name, filters: v.filters, shared: v.shared }), loadViews);
+                      } catch (e) {
+                        toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+                      }
                       await loadViews();
                     }}
                   >
