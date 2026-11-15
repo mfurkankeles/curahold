@@ -9,6 +9,10 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { Avatar, Dialog, RowMenu } from './ui';
+import { usePhone } from './FilterSheet';
+import { useUndo } from '../lib/undo';
+import type { MessageKey } from '../../../shared/src/i18n';
+import '../surfaces/admin.css';
 
 interface AccessPerson {
   id: string;
@@ -74,30 +78,144 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
   const [removing, setRemoving] = useState<Role | null>(null);
   const [who, setWho] = useState<{ title: string; people: AccessPerson[] } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [pick, setPick] = useState<string | null>(null);
+  const { me } = useStore();
+  const phone = usePhone();
+  const offer = useUndo();
 
   const inRole = (r: Role) => people.filter((p) => p.roleId === r.id && counts(p));
   const holders = (perm: Perm) => people.filter((p) => counts(p) && roles.find((r) => r.id === p.roleId)?.perms.includes(perm));
 
   async function toggle(r: Role, perm: Perm, on: boolean) {
-    await savePerms(r, on ? [...r.perms, perm] : r.perms.filter((x) => x !== perm), `${r.id}:${perm}`);
+    const before = r.perms;
+    const n = inRole(r).length;
+    if (!(await savePerms(r, on ? [...r.perms, perm] : r.perms.filter((x) => x !== perm), `${r.id}:${perm}`))) return;
+    // Applied at once for everyone in the role; Undo puts the old permissions back.
+    const what = t(on ? 'settings.roles.permOn' : 'settings.roles.permOff', { role: r.name, perm: t(`perm.${perm}` as MessageKey) });
+    offer(`${what} · ${t('settings.roles.people', { n })}`, () => patch(`/admin/roles/${r.id}`, { perms: before }), reload);
   }
   async function setScope(r: Role, scope: AccountScope) {
-    await savePerms(r, withScope(r.perms, scope), `${r.id}:scope`);
+    const before = r.perms;
+    if (!(await savePerms(r, withScope(r.perms, scope), `${r.id}:scope`))) return;
+    offer(t('settings.roles.scopeSet', { role: r.name, scope: t(`settings.roles.scope.${scope}` as MessageKey) }), () => patch(`/admin/roles/${r.id}`, { perms: before }), reload);
   }
   async function savePerms(r: Role, perms: Perm[], key: string) {
     setBusy(key);
     try {
       await patch(`/admin/roles/${r.id}`, { perms });
       await reload();
+      return true;
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      return false;
     } finally {
       setBusy(null);
     }
   }
+  /** Someone else in the role, whose view the administrator can open (read-only). */
+  const lookout = (r: Role) => inRole(r).find((p) => p.status === 'active' && p.id !== me.user.id) ?? null;
+  const seeAs = (r: Role) => {
+    const p = lookout(r);
+    return (
+      <button
+        type="button"
+        className="btn btn--small btn--quiet matrix__see"
+        disabled={!p}
+        title={p ? t('settings.roles.seeAsWho', { name: p.name, role: r.name }) : t('settings.roles.seeAsNobody')}
+        aria-label={`${t('settings.roles.seeAs')}: ${r.name}`}
+        onClick={() => p && startPreview(p.id, p.name)}
+      >
+        <Icon name="eye" size={14} />
+        <span>{t('settings.roles.seeAs')}</span>
+      </button>
+    );
+  };
+  const scopeSelect = (r: Role) => (
+    <select
+      className="select matrix__scope"
+      value={scopeOf(r.perms)}
+      disabled={r.key === 'admin' || !editable || busy === `${r.id}:scope`}
+      aria-label={`${r.name}: ${t('settings.roles.scope')}`}
+      onChange={(e) => setScope(r, e.target.value as AccountScope)}
+    >
+      {ACCOUNT_SCOPES.map((sc) => (
+        <option key={sc} value={sc}>
+          {t(`settings.roles.scope.${sc}` as MessageKey)}
+        </option>
+      ))}
+    </select>
+  );
+  const box = (r: Role, perm: Perm) => (
+    <input
+      type="checkbox"
+      checked={r.perms.includes(perm)}
+      disabled={r.key === 'admin' || !editable || busy === `${r.id}:${perm}`}
+      title={r.key === 'admin' ? t('settings.roles.adminLocked') : undefined}
+      aria-label={`${r.name}: ${t(`perm.${perm}` as MessageKey)}`}
+      onChange={(e) => toggle(r, perm, e.target.checked)}
+    />
+  );
+  const menu = (r: Role) =>
+    editable && (
+      <RowMenu
+        label={t('settings.roles.actions', { name: r.name })}
+        items={[
+          { label: t('settings.roles.rename'), onClick: () => setRenaming(r) },
+          ...(r.system ? [] : [{ label: t('common.delete'), danger: true, onClick: () => setRemoving(r) }]),
+        ]}
+      />
+    );
+  const role = roles.find((r) => r.id === pick) ?? roles[0];
 
   return (
     <>
+      {phone && role ? (
+        // A phone: one role at a time, its permissions as one list.
+        <div className="rolecard">
+          <div className="rolecard__head">
+            <label className="field rolecard__pick">
+              <span className="field__label">{t('settings.roles.role')}</span>
+              <select className="select" value={role.id} onChange={(e) => setPick(e.target.value)}>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} · {t('settings.roles.people', { n: inRole(r).length })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {menu(role)}
+          </div>
+          <div className="rolecard__actions">
+            <button className="btn btn--small" onClick={() => setWho({ title: t('settings.roles.inRole', { role: role.name }), people: inRole(role) })}>
+              {t('settings.roles.people', { n: inRole(role).length })}
+            </button>
+            {seeAs(role)}
+          </div>
+          {PERM_GROUPS.map((g) => (
+            <section key={g.key} className="rolecard__group" aria-label={t(`settings.roles.group.${g.key}` as MessageKey)}>
+              <h3 className="rolecard__grouplabel">{t(`settings.roles.group.${g.key}` as MessageKey)}</h3>
+              {g.key === 'accounts' && (
+                <div className="rolecard__row">
+                  <span className="rolecard__text">
+                    <span className="matrix__label">{t('settings.roles.scope')}</span>
+                    <span className="matrix__hint">{t('settings.roles.scope.hint')}</span>
+                  </span>
+                  {scopeSelect(role)}
+                </div>
+              )}
+              {g.perms.map((perm) => (
+                <label key={perm} className="rolecard__row">
+                  <span className="rolecard__text">
+                    <span className="matrix__label">{t(`perm.${perm}` as MessageKey)}</span>
+                    <span className="matrix__hint">{t(`perm.${perm}.hint` as MessageKey)}</span>
+                  </span>
+                  {box(role, perm)}
+                </label>
+              ))}
+            </section>
+          ))}
+        </div>
+      ) : (
       <div className="table-wrap">
         <table className="table matrix">
           <thead>
@@ -109,19 +227,12 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
                   <th scope="col" key={r.id} className="matrix__role">
                     <div className="matrix__rolehead">
                       <span className="matrix__rolename">{r.name}</span>
-                      {editable && (
-                        <RowMenu
-                          label={t('settings.roles.actions', { name: r.name })}
-                          items={[
-                            { label: t('settings.roles.rename'), onClick: () => setRenaming(r) },
-                            ...(r.system ? [] : [{ label: t('common.delete'), danger: true, onClick: () => setRemoving(r) }]),
-                          ]}
-                        />
-                      )}
+                      {menu(r)}
                     </div>
                     <button className="linkbtn matrix__count" onClick={() => setWho({ title: t('settings.roles.inRole', { role: r.name }), people: members })}>
                       {t('settings.roles.people', { n: members.length })}
                     </button>
+                    {seeAs(r)}
                   </th>
                 );
               })}
@@ -130,7 +241,7 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
           </thead>
           <tbody>
             {PERM_GROUPS.map((g) => (
-              <Group key={g.key} label={t(`settings.roles.group.${g.key}` as any)} span={roles.length + 2}>
+              <Group key={g.key} label={t(`settings.roles.group.${g.key}` as MessageKey)} span={roles.length + 2}>
                 {g.key === 'accounts' && (
                   <tr>
                     <th scope="row" className="matrix__perm">
@@ -139,19 +250,7 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
                     </th>
                     {roles.map((r) => (
                       <td key={r.id} className="matrix__cell">
-                        <select
-                          className="select matrix__scope"
-                          value={scopeOf(r.perms)}
-                          disabled={r.key === 'admin' || !editable || busy === `${r.id}:scope`}
-                          aria-label={`${r.name}: ${t('settings.roles.scope')}`}
-                          onChange={(e) => setScope(r, e.target.value as AccountScope)}
-                        >
-                          {ACCOUNT_SCOPES.map((sc) => (
-                            <option key={sc} value={sc}>
-                              {t(`settings.roles.scope.${sc}` as any)}
-                            </option>
-                          ))}
-                        </select>
+                        {scopeSelect(r)}
                       </td>
                     ))}
                     <td className="matrix__who" />
@@ -162,26 +261,16 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
                   return (
                     <tr key={perm}>
                       <th scope="row" className="matrix__perm">
-                        <div className="matrix__label">{t(`perm.${perm}` as any)}</div>
-                        <div className="matrix__hint">{t(`perm.${perm}.hint` as any)}</div>
+                        <div className="matrix__label">{t(`perm.${perm}` as MessageKey)}</div>
+                        <div className="matrix__hint">{t(`perm.${perm}.hint` as MessageKey)}</div>
                       </th>
-                      {roles.map((r) => {
-                        const locked = r.key === 'admin' || !editable;
-                        return (
-                          <td key={r.id} className="matrix__cell">
-                            <input
-                              type="checkbox"
-                              checked={r.perms.includes(perm)}
-                              disabled={locked || busy === `${r.id}:${perm}`}
-                              title={r.key === 'admin' ? t('settings.roles.adminLocked') : undefined}
-                              aria-label={`${r.name}: ${t(`perm.${perm}` as any)}`}
-                              onChange={(e) => toggle(r, perm, e.target.checked)}
-                            />
-                          </td>
-                        );
-                      })}
+                      {roles.map((r) => (
+                        <td key={r.id} className="matrix__cell">
+                          {box(r, perm)}
+                        </td>
+                      ))}
                       <td className="matrix__who">
-                        <button className="linkbtn" onClick={() => setWho({ title: t('settings.roles.whoHasTitle', { perm: t(`perm.${perm}` as any) }), people: h })}>
+                        <button className="linkbtn" onClick={() => setWho({ title: t('settings.roles.whoHasTitle', { perm: t(`perm.${perm}` as MessageKey) }), people: h })}>
                           {t('settings.roles.people', { n: h.length })}
                         </button>
                       </td>
@@ -193,6 +282,7 @@ function RoleGrid({ roles, people, reload, editable }: { roles: Role[]; people: 
           </tbody>
         </table>
       </div>
+      )}
       <p className="field__hint u-mt-8">{t('settings.roles.baseline')}</p>
       {editable && (
         <button className="btn btn--primary u-mt-4" onClick={() => setAdding(true)}>

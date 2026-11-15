@@ -87,3 +87,57 @@
   .audit__when { grid-row: 2; }
   .audit__export { margin-inline-start: 0; }
 }
+
+/* ---------------------------------------------------------------- roles: the grid, and one role at a time on a phone */
+.matrix__see { margin-block-start: 4px; margin-inline: auto; max-width: 120px; min-height: 28px; padding: 4px 8px; font-size: var(--fs-xs); gap: 4px; white-space: normal; line-height: var(--lh-snug); text-align: start; }
+.conns .section__head { flex-wrap: wrap; gap: 8px; }
+.rolecard { display: grid; gap: 16px; }
+.rolecard__head { display: flex; align-items: flex-end; gap: 8px; }
+.rolecard__pick { flex: 1; min-width: 0; }
+.rolecard__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rolecard__group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+.rolecard__grouplabel { margin: 0; padding: 8px 12px; background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; }
+.rolecard__row { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 56px; border-block-start: 1px solid var(--line); }
+.rolecard__text { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.rolecard__row input[type='checkbox'] { flex: none; width: 24px; height: 24px; accent-color: var(--brand); }
+.rolecard__row .matrix__scope { flex: none; max-width: 50%; }
+
+/* ---------------------------------------------------------------- the health of every connection */
+.health-list { display: grid; gap: 8px; margin-block-end: 24px; }
+.health-list__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.health-list__title { margin: 0; font-size: var(--fs-l); font-weight: 600; }
+.health-list__sum { margin: 0; color: var(--ink-2); font-size: var(--fs-s); }
+.health-list__sum[data-bad] { color: var(--late-ink); font-weight: 600; }
+.health-list__none { margin: 0; padding: 16px; color: var(--ink-3); background: var(--surface); border: 1px dashed var(--line-strong); border-radius: var(--r-m); }
+.health-list__rows { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+.health-list__row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; min-height: 56px; }
+.health-list__row + .health-list__row { border-block-start: 1px solid var(--line); }
+.health-list__dot { flex: none; width: 10px; height: 10px; border-radius: var(--r-pill); background: var(--done); }
+.health-list__row[data-state='bad'] .health-list__dot { background: var(--late); }
+.health-list__row[data-state='off'] .health-list__dot { background: var(--line-strong); }
+.health-list__text { display: grid; gap: 0; flex: 1; min-width: 0; }
+.health-list__name { font-weight: 600; overflow-wrap: anywhere; }
+.health-list__meta { color: var(--ink-3); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.health-list__row[data-state='bad'] .health-list__line { color: var(--late-ink); }
+.health-list__state { flex: none; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.health-list__row[data-state='bad'] .health-list__state { color: var(--late-ink); }
+.health-list__open { flex: none; }
+
+/* ---------------------------------------------------------------- single sign-on */
+.sso { display: grid; gap: 16px; max-width: 720px; }
+.sso__section { display: grid; gap: 12px; }
+.sso__section > .sheet__title { margin: 0; }
+.sso__protocol { max-width: 320px; }
+.sso__copyrow { display: flex; gap: 8px; min-width: 0; }
+.sso__copyrow .input { flex: 1; min-width: 0; }
+.sso__mono { font-family: var(--mono, ui-monospace, monospace); font-size: var(--fs-s); }
+.sso__switch { display: flex; align-items: center; gap: 16px; padding-block: 8px; }
+.sso__switch + .sso__switch { border-block-start: 1px solid var(--line); padding-block-start: 12px; }
+.sso__switchtext { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.sso__switchlabel { font-weight: 600; }
+.sso__effect { display: grid; gap: 4px; }
+.sso__effect p { margin: 0; }
+@media (max-width: 860px) {
+  .sso__copyrow { flex-wrap: wrap; }
+  .sso__copyrow .input { flex-basis: 100%; }
+}
