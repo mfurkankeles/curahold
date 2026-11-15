@@ -362,7 +362,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/trash') page = <TrashPage />;
   else if (path === '/connect-ai') page = <ConnectAiPage />;
   else if (ss) page = <SettingsPage tab={ss.tab as any} sub={ss.sub} />;
-  else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? 'company'} />;
+  else if (path === '/settings' || s) page = <SettingsPage tab={(s?.tab as any) ?? null} />;
   else if (rec) page = <RecordsPage typeKey={rec.type} key={rec.type} />;
   else if (path === '/home' || pg) page = <HomePage pageId={pg?.id ?? null} key={pg?.id ?? 'home'} />;
   else page = <MyTasks refreshKey={quiet} />;

@@ -1,0 +1,89 @@
+/* The company administrator's screens: settings, setup, sign-up, devices, profile, trash.
+   Tokens only (docs/design/tokens.md). Loaded with the screens that import it. */
+
+/* ---------------------------------------------------------------- settings: two levels, one topic per screen */
+.admin { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 32px; align-items: start; }
+.admin__nav { position: sticky; top: 0; display: grid; gap: 16px; padding-block-end: 24px; }
+.admin__search { position: relative; display: flex; align-items: center; }
+.admin__search > svg { position: absolute; inset-inline-start: 12px; color: var(--ink-3); pointer-events: none; }
+.admin__search .input { width: 100%; padding-inline-start: 36px; }
+.admin__group { display: grid; gap: 4px; }
+.admin__grouplabel { margin: 0; padding-inline: 8px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); text-transform: none; }
+.admin__links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.admin__link { display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 4px 8px; border-radius: var(--r-s); color: var(--ink-2); text-decoration: none; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.admin__link:hover { background: var(--sunk); color: var(--ink); }
+.admin__link[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line); }
+.admin__linkicon { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-s); color: var(--ink-3); }
+.admin__link[aria-current='page'] .admin__linkicon { color: var(--brand-ink); }
+.admin__linktext { display: grid; gap: 0; min-width: 0; flex: 1; }
+.admin__linklabel { overflow-wrap: anywhere; }
+.admin__linkabout { font-size: var(--fs-xs); font-weight: 400; color: var(--ink-3); line-height: var(--lh-snug); }
+.admin__chev { flex: none; color: var(--ink-3); }
+.admin__none { margin: 0; padding: 8px; color: var(--ink-3); font-size: var(--fs-s); }
+
+.admin__content { min-width: 0; max-width: 960px; display: grid; gap: 16px; align-content: start; padding-block-end: 24px; }
+.admin__content > * { min-width: 0; }
+.admin__head { display: grid; gap: 4px; }
+.admin__title { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.01em; line-height: var(--lh-snug); }
+.admin__about { margin: 0; color: var(--ink-3); font-size: var(--fs-s); }
+
+/* One bar for unsaved changes, at the bottom of the topic, always in reach. */
+.admin__unsaved {
+  position: sticky; inset-block-end: 16px; z-index: 5; justify-self: start; width: min(100%, 720px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 8px 8px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-m);
+  background: var(--surface); box-shadow: var(--shadow-2);
+  animation: admin-rise var(--dur) var(--ease);
+}
+.admin__unsavedtext { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-weight: 600; }
+.admin__unsaveddot { width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--soon); flex: none; }
+@keyframes admin-rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .admin__unsaved { animation: none; } }
+
+.admin__phonetitle { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.admin__phonetitle > span { min-width: 0; overflow-wrap: anywhere; }
+.admin__back { margin-inline-start: -8px; }
+[dir='rtl'] .admin__back svg, [dir='rtl'] .admin__chev { transform: scaleX(-1); }
+
+@media (max-width: 860px) {
+  .admin { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .admin__nav { position: static; gap: 20px; }
+  .admin__search .input { font-size: var(--fs-l); min-height: 44px; }
+  /* The list of topics is the page: rows with a line of what is inside. */
+  .admin[data-list] .admin__links { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+  .admin[data-list] .admin__links li + li { border-block-start: 1px solid var(--line); }
+  .admin[data-list] .admin__link { min-height: 56px; padding: 8px 12px; border-radius: 0; color: var(--ink); }
+  .admin[data-list] .admin__linkicon { width: 32px; height: 32px; background: var(--brand-wash); color: var(--brand-ink); }
+  .admin[data-list] .admin__linklabel { font-weight: 600; }
+  .admin__unsaved { inset-block-end: 8px; padding: 8px 8px 8px 12px; }
+  .admin__unsavedtext { flex-basis: 100%; }
+  .admin__unsaved .btn { flex: 1; justify-content: center; }
+}
+
+/* ---------------------------------------------------------------- the effect of a change, before it is saved */
+.admin-effect { background: var(--sunk); border-style: dashed; }
+.admin-effect__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.admin-effect__list li { display: flex; gap: 8px; align-items: baseline; color: var(--ink-2); overflow-wrap: anywhere; }
+.admin-effect__list li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--line-strong); transform: translateY(-2px); }
+.admin-effect__list li[data-changed] { color: var(--ink); font-weight: 600; }
+.admin-effect__list li[data-changed]::before { background: var(--brand); }
+
+/* ---------------------------------------------------------------- activity log */
+.audit { display: grid; gap: 12px; }
+.audit__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.audit__tools .input.search { flex: 1 1 240px; width: auto; }
+.audit__export { margin-inline-start: auto; }
+.audit__list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+.audit__row { display: grid; grid-template-columns: 128px minmax(120px, 200px) minmax(0, 1fr); gap: 4px 16px; align-items: baseline; padding: 8px 16px; }
+.audit__row + .audit__row { border-block-start: 1px solid var(--line); }
+.audit__when { color: var(--ink-3); font-size: var(--fs-s); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.audit__who { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.audit__what { color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
+.audit__more { justify-self: center; }
+@media (max-width: 860px) {
+  .audit__row { grid-template-columns: minmax(0, 1fr) auto; padding: 12px; }
+  .audit__what { grid-column: 1 / -1; grid-row: 1; color: var(--ink); }
+  .audit__who { grid-row: 2; font-weight: 400; color: var(--ink-2); font-size: var(--fs-s); }
+  .audit__when { grid-row: 2; }
+  .audit__export { margin-inline-start: 0; }
+}

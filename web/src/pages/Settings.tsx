@@ -1,8 +1,8 @@
 // Company settings: the company itself, people (with devices and the
 // KVKK/GDPR tools), teams, roles and the activity log.
-import { Icon, PageIcon, type IconName } from '../components/icons';
+import { Icon, PageIcon } from '../components/icons';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { accountWords, LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
+import { accountWords, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
 import { AccountFieldsEditor, RecordTypesEditor } from '../components/AccountFields';
 import { SourceDetail, Sources } from '../components/Sources';
@@ -26,151 +26,241 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
 import { allCurrencies, useMoney } from '../lib/money';
 import { useI18n } from '../lib/i18n';
-import { nameIt, navigateFresh } from '../lib/router';
+import { nameIt, navigate, navigateFresh, setBeforeLeave } from '../lib/router';
 import { useSaver } from '../lib/saver';
+import { useUndo } from '../lib/undo';
+import { formatDateTime, formatMoney } from '../lib/format';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
-import { NotAllowed } from '../components/Empty';
+import { EmptyState, ErrorState, NotAllowed, SkeletonRows } from '../components/Empty';
+import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
+import { forgetUnsaved, hasUnsaved, useUnsaved, useUnsavedForm } from '../lib/unsaved';
+import { fold, groupLabel, SETTINGS_GROUPS, SETTINGS_TOPICS, topicAbout, topicLabel, topicMatches, type SettingsTab } from '../lib/settingsIndex';
+import '../surfaces/admin.css';
 
-type Tab = 'company' | 'billing' | 'currencies' | 'fields' | 'health' | 'rhythm' | 'playbooks' | 'records' | 'people' | 'joining' | 'teams' | 'roles' | 'sso' | 'signin' | 'connections' | 'sources' | 'automations' | 'developer' | 'portal' | 'support' | 'audit' | 'errors';
-
-// The admin area: grouped sections on the left (a menu on phones), one
-// section at a time on the right. Each section is reachable by its own URL.
-export function SettingsPage({ tab, sub }: { tab: Tab; sub?: string }) {
+// The admin area: one topic per screen. A wide screen has the topics on the
+// left (with a search on top) and the topic on the right; a phone has the
+// list of topics at /settings and one topic per screen under it.
+export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: string }) {
   const { t, words } = useI18n();
   const { can, me } = useStore();
-  const groups: { label: string; items: [Tab, string, boolean, IconName][] }[] = [
-    {
-      label: t('settings.group.company'),
-      items: [
-        ['company', t('settings.tab.company'), can('org.manage'), 'building'],
-        ['billing', t('settings.tab.billing'), can('org.manage') && !!me.org.billingOn, 'card'],
-        ['currencies', t('settings.tab.currencies'), can('org.manage'), 'coins'],
-        ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage'), 'form'],
-        ['records', t('settings.tab.records'), can('accounts.manage'), 'tag'],
-        ['health', t('settings.tab.health'), can('accounts.manage'), 'heart'],
-        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || can('org.manage'), 'target'],
-      ],
-    },
-    {
-      label: t('settings.group.team'),
-      items: [
-        ['people', t('settings.tab.people'), can('users.manage'), 'user'],
-        ['joining', t('settings.tab.joining'), can('users.manage'), 'userPlus'],
-        ['teams', t('settings.tab.teams'), can('teams.manage'), 'people'],
-        ['roles', t('settings.tab.roles'), can('org.manage') || can('users.manage'), 'shield'],
-        ['sso', t('settings.tab.sso'), can('org.manage'), 'shield'],
-        ['signin', t('settings.tab.signin'), can('org.manage'), 'lock'],
-      ],
-    },
-    {
-      label: t('settings.group.work'),
-      items: [
-        ['connections', t('settings.tab.connections'), can('connections.manage'), 'plug'],
-        ['sources', t('settings.tab.sources'), can('connections.manage'), 'refresh'],
-        ['automations', t('settings.tab.automations'), can('automations.manage'), 'zap'],
-        ['playbooks', t('settings.tab.playbooks'), can('org.manage') || can('accounts.manage'), 'book'],
-        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage'), 'code'],
-        ['portal', t('settings.tab.portal'), can('org.manage'), 'globe'],
-      ],
-    },
-    {
-      label: t('settings.group.security'),
-      items: [
-        ['support', t('settings.tab.support'), can('org.manage'), 'lifebuoy'],
-        ['audit', t('settings.tab.audit'), can('audit.view'), 'history'],
-        ['errors', t('settings.tab.errors'), can('org.manage'), 'alert'],
-      ],
-    },
-  ];
-  const allowed = groups.flatMap((g) => g.items).filter((x) => x[2]);
-  // A tab that exists but is not this person's to open says so (and who can grant it) instead of showing another one.
-  const refused = !allowed.length || (groups.flatMap((g) => g.items).some((x) => x[0] === tab) && !allowed.some((x) => x[0] === tab));
-  const current = allowed.find((x) => x[0] === tab)?.[0] ?? allowed[0]?.[0];
-  const currentLabel = allowed.find((x) => x[0] === current)?.[1] ?? '';
+  const phone = usePhone();
+  const [q, setQ] = useState('');
+  const allowed = SETTINGS_TOPICS.filter((x) => x.allowed(can, !!me.org.billingOn));
+  // A topic that exists but is not this person's to open says so (and who can grant it) instead of showing another one.
+  const refused = !allowed.length || (SETTINGS_TOPICS.some((x) => x.key === tab) && !allowed.some((x) => x.key === tab));
+  const listOnly = phone && !allowed.some((x) => x.key === tab) && !refused;
+  const current: SettingsTab | null = allowed.find((x) => x.key === tab)?.key ?? (listOnly ? null : (allowed[0]?.key ?? null));
+  const currentLabel = current ? topicLabel(t, words, current) : '';
   // The way back to here says which settings, not just "Settings".
   useEffect(() => {
     if (current) nameIt(`/settings/${current}`, currentLabel);
   }, [current, currentLabel]);
+
+  // Unsaved changes: one bar while there are some, and a question before leaving the topic.
+  const unsaved = useUnsavedForm();
+  const [leaving, setLeaving] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    setBeforeLeave((to) => {
+      if (!hasUnsaved() || to.split('?')[0] === location.pathname) return true;
+      setLeaving(to);
+      return false;
+    });
+    return () => setBeforeLeave(null);
+  }, []);
+  const saveNow = async () => {
+    if (!unsaved || saving) return false;
+    setSaving(true);
+    try {
+      return await unsaved.save();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const go = (key: SettingsTab | null) => navigateFresh(key ? `/settings/${key}` : '/settings');
+  const found = q.trim() ? allowed.filter((x) => topicMatches(t, words, x.key, q)) : allowed;
+  const nav = (
+    <nav className="admin__nav" aria-label={t('settings.title')}>
+      <div className="admin__search">
+        <Icon name="search" size={16} />
+        <input
+          type="search"
+          className="input"
+          value={q}
+          placeholder={t('settings.search')}
+          aria-label={t('settings.search')}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && found[0]) {
+              e.preventDefault();
+              setQ('');
+              go(found[0].key);
+            }
+            if (e.key === 'Escape' && q) {
+              e.preventDefault();
+              setQ('');
+            }
+          }}
+        />
+      </div>
+      {SETTINGS_GROUPS.map((g) => {
+        const items = found.filter((x) => x.group === g);
+        if (!items.length) return null;
+        return (
+          <section className="admin__group" key={g} aria-labelledby={`admin-group-${g}`}>
+            <h2 className="admin__grouplabel" id={`admin-group-${g}`}>
+              {groupLabel(t, words, g)}
+            </h2>
+            <ul className="admin__links">
+              {items.map(({ key, icon }) => (
+                <li key={key}>
+                  <a
+                    href={`/settings/${key}`}
+                    className="admin__link"
+                    aria-current={key === current ? 'page' : undefined}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      go(key);
+                    }}
+                  >
+                    <span className="admin__linkicon" aria-hidden="true">
+                      <Icon name={icon} size={16} />
+                    </span>
+                    <span className="admin__linktext">
+                      <span className="admin__linklabel">{topicLabel(t, words, key)}</span>
+                      {(listOnly || q.trim()) && <span className="admin__linkabout">{topicAbout(t, key)}</span>}
+                    </span>
+                    {listOnly && <Icon name="chevronRight" size={16} className="admin__chev" />}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+      {q.trim() && !found.length && <p className="admin__none">{t('settings.searchNone', { q: q.trim() })}</p>}
+    </nav>
+  );
+
   return (
     <>
       <header className="topbar">
-        <h1 className="topbar__title topbar__title--icon">
-          <PageIcon name="sliders" />
-          <span>{t('settings.title')}</span>
-        </h1>
-        <span className="topbar__sub">{refused ? '' : currentLabel}</span>
+        {phone && current ? (
+          <h1 className="topbar__title admin__phonetitle">
+            <a
+              className="btn btn--icon btn--quiet admin__back"
+              href="/settings"
+              aria-label={t('settings.backTo')}
+              title={t('settings.backTo')}
+              onClick={(e) => {
+                e.preventDefault();
+                go(null);
+              }}
+            >
+              <Icon name="chevronLeft" size={20} />
+            </a>
+            <span>{currentLabel}</span>
+          </h1>
+        ) : (
+          <h1 className="topbar__title topbar__title--icon">
+            <PageIcon name="sliders" />
+            <span>{t('settings.title')}</span>
+          </h1>
+        )}
       </header>
       {!allowed.length ? (
         <div className="page">
           <NotAllowed />
         </div>
       ) : (
-      <div className="page admin">
-        <nav className="admin__nav" aria-label={t('settings.title')}>
-          <select className="select admin__navselect" value={current} aria-label={t('settings.title')} onChange={(e) => navigateFresh(`/settings/${e.target.value}`)}>
-            {allowed.map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          {groups.map((g) => {
-            const items = g.items.filter((x) => x[2]);
-            if (!items.length) return null;
-            return (
-              <div className="admin__group" key={g.label}>
-                <div className="admin__grouplabel">{g.label}</div>
-                {items.map(([key, label, , icon]) => (
-                  <a
-                    key={key}
-                    href={`/settings/${key}`}
-                    className="admin__link"
-                    aria-current={key === current ? 'page' : undefined}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigateFresh(`/settings/${key}`);
-                    }}
-                  >
-                    <Icon name={icon} size={16} className="icon--lead" />
-                    {label}
-                  </a>
-                ))}
-              </div>
-            );
-          })}
-        </nav>
-        <div className="admin__content">
-          {refused && <NotAllowed />}
-          {!refused && current === 'company' && <CompanyTab />}
-          {!refused && current === 'fields' && <AccountFieldsEditor />}
-          {!refused && current === 'records' && <RecordTypesEditor />}
-          {!refused && current === 'health' && <HealthSettings />}
-          {!refused && current === 'rhythm' && <RhythmSettings />}
-          {!refused && current === 'billing' && (
-            <>
-              <SubscriptionPanel />
-              <BillingSettings />
-            </>
+        <div className="page admin" data-list={listOnly || undefined}>
+          {(!phone || listOnly) && nav}
+          {current && (
+            <div className="admin__content">
+              {refused ? (
+                <NotAllowed />
+              ) : (
+                <>
+                  <header className="admin__head">
+                    {!phone && <h2 className="admin__title">{currentLabel}</h2>}
+                    <p className="admin__about">{topicAbout(t, current)}</p>
+                  </header>
+                  {current === 'company' && <CompanyTab />}
+                  {current === 'fields' && <AccountFieldsEditor />}
+                  {current === 'records' && <RecordTypesEditor />}
+                  {current === 'health' && <HealthSettings />}
+                  {current === 'rhythm' && <RhythmSettings />}
+                  {current === 'billing' && (
+                    <>
+                      <SubscriptionPanel />
+                      <BillingSettings />
+                    </>
+                  )}
+                  {current === 'currencies' && <CurrencySettings />}
+                  {current === 'playbooks' && <PlaybooksSettings />}
+                  {current === 'support' && <SupportAccessSettings />}
+                  {current === 'portal' && <PortalSettingsTab />}
+                  {current === 'people' && <PeopleTab />}
+                  {current === 'joining' && <JoiningTab />}
+                  {current === 'teams' && <TeamsTab />}
+                  {current === 'roles' && <RolesTab />}
+                  {current === 'sso' && <SsoSettings />}
+                  {current === 'signin' && <CompanySecurity />}
+                  {current === 'connections' && <Connections />}
+                  {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
+                  {current === 'automations' && <AutomationList />}
+                  {current === 'developer' && <DeveloperTab />}
+                  {current === 'audit' && <AuditTab />}
+                  {current === 'errors' && <ErrorsTab />}
+                </>
+              )}
+              {unsaved && (
+                <div className="admin__unsaved" role="region" aria-label={t('settings.unsaved.bar')}>
+                  <span className="admin__unsavedtext">
+                    <span className="admin__unsaveddot" aria-hidden="true" />
+                    {t('settings.unsaved.bar')}
+                  </span>
+                  <button type="button" className="btn btn--quiet" onClick={() => unsaved.discard()}>
+                    {t('settings.unsaved.discard')}
+                  </button>
+                  <button type="button" className="btn btn--primary" disabled={saving} onClick={() => void saveNow()}>
+                    {t('common.save')}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
-          {!refused && current === 'currencies' && <CurrencySettings />}
-          {!refused && current === 'playbooks' && <PlaybooksSettings />}
-          {!refused && current === 'support' && <SupportAccessSettings />}
-          {!refused && current === 'portal' && <PortalSettingsTab />}
-          {!refused && current === 'people' && <PeopleTab />}
-          {!refused && current === 'joining' && <JoiningTab />}
-          {!refused && current === 'teams' && <TeamsTab />}
-          {!refused && current === 'roles' && <RolesTab />}
-          {!refused && current === 'sso' && <SsoSettings />}
-          {!refused && current === 'signin' && <CompanySecurity />}
-          {!refused && current === 'connections' && <Connections />}
-          {!refused && current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
-          {!refused && current === 'automations' && <AutomationList />}
-          {!refused && current === 'developer' && <DeveloperTab />}
-          {!refused && current === 'audit' && <AuditTab />}
-          {!refused && current === 'errors' && <ErrorsTab />}
         </div>
-      </div>
+      )}
+      {leaving && (
+        <Dialog
+          title={t('settings.unsaved.title')}
+          onClose={() => setLeaving(null)}
+          footer={
+            <>
+              <button type="button" className="btn btn--quiet" onClick={() => setLeaving(null)}>
+                {t('settings.unsaved.stay')}
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger"
+                onClick={() => {
+                  const to = leaving;
+                  setLeaving(null);
+                  unsaved?.discard();
+                  forgetUnsaved();
+                  navigate(to);
+                }}
+              >
+                {t('settings.unsaved.leave')}
+              </button>
+            </>
+          }
+        >
+          <p>{t('settings.unsaved.body', { topic: currentLabel })}</p>
+        </Dialog>
       )}
     </>
   );
@@ -185,27 +275,64 @@ function CompanyTab() {
 }
 
 export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; submitLabel?: string }) {
-  const { t } = useI18n();
-  const { me, reloadMe } = useStore();
-  const save = useSaver();
-  const [name, setName] = useState(me.org.name);
-  const [locale, setLocale] = useState<Locale>(me.org.locale);
-  const [tz, setTz] = useState(me.org.timezone);
-  const [currency, setCurrency] = useState(me.org.currency);
+  const { t, locale: viewer } = useI18n();
+  const { me, reloadMe, toast } = useStore();
+  const offer = useUndo();
   const money = useMoney();
-  const [terms, setTerms] = useState({
-    en: { one: me.org.terms.account?.en?.one ?? '', other: me.org.terms.account?.en?.other ?? '' },
-    tr: { one: me.org.terms.account?.tr?.one ?? '', other: me.org.terms.account?.tr?.other ?? '' },
+  // What is saved, and what is on screen: the difference is "unsaved", and its effect shows before saving.
+  const savedForm = () => ({
+    name: me.org.name,
+    locale: me.org.locale,
+    timezone: me.org.timezone,
+    currency: me.org.currency,
+    terms: {
+      en: { one: me.org.terms.account?.en?.one ?? '', other: me.org.terms.account?.en?.other ?? '' },
+      tr: { one: me.org.terms.account?.tr?.one ?? '', other: me.org.terms.account?.tr?.other ?? '' },
+    },
   });
+  type Form = ReturnType<typeof savedForm>;
+  const [base, setBase] = useState<Form>(savedForm);
+  const [form, setForm] = useState<Form>(base);
+  const { name, locale, timezone: tz, currency, terms } = form;
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const setTerms = (v: Form['terms']) => set('terms', v);
+  const dirty = JSON.stringify(form) !== JSON.stringify(base);
   const zones = TIMEZONES.includes(tz) ? TIMEZONES : [tz, ...TIMEZONES];
+  const inSettings = !submitLabel;
+
+  const body = (f: Form) => ({ name: f.name, locale: f.locale, timezone: f.timezone, currency: f.currency, terms: { account: f.terms } });
+  async function save(): Promise<boolean> {
+    const before = base;
+    const now = form;
+    try {
+      await patch('/admin/org', body(now));
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      return false;
+    }
+    setBase(now);
+    await reloadMe();
+    const topic = t('settings.tab.company');
+    // Saved, with a way back for ten seconds: the old values go back the same way.
+    if (inSettings)
+      offer(t('settings.savedTopic', { topic }), async () => {
+        await patch('/admin/org', body(before));
+        setBase(before);
+        setForm(before);
+        await reloadMe();
+      });
+    else toast(t('common.saved'));
+    onSaved?.();
+    return true;
+  }
+  useUnsaved(inSettings && dirty, { save, discard: () => setForm(base) });
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (await save(() => patch('/admin/org', { name, locale, timezone: tz, currency, terms: { account: terms } }))) {
-      await reloadMe();
-      onSaved?.();
-    }
+    await save();
   }
+  // The words this company will see, in the language on screen (English otherwise).
+  const shown = accountWords(viewer, { account: terms });
   const word = (l: 'en' | 'tr', k: 'one' | 'other', label: string) => (
     <label className="field">
       <span className="field__label">{label}</span>
@@ -219,7 +346,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
         <div className="form">
           <label className="field">
             <span className="field__label">{t('settings.company.name')}</span>
-            <input className="input" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+            <input className="input" value={name} maxLength={120} onChange={(e) => set('name', e.target.value)} />
           </label>
           <div className="field">
             <span className="field__label">{t('settings.company.address')}</span>
@@ -228,7 +355,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
           <div className="form__row">
             <label className="field">
               <span className="field__label">{t('settings.company.language')}</span>
-              <select className="select" value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
+              <select className="select" value={locale} onChange={(e) => set('locale', e.target.value as Locale)}>
                 {LOCALES.map((l) => (
                   <option key={l} value={l}>
                     {LOCALE_INFO[l].name}
@@ -238,7 +365,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
             </label>
             <label className="field">
               <span className="field__label">{t('settings.company.timezone')}</span>
-              <select className="select" value={tz} onChange={(e) => setTz(e.target.value)}>
+              <select className="select" value={tz} onChange={(e) => set('timezone', e.target.value)}>
                 {zones.map((z) => (
                   <option key={z} value={z}>
                     {z}
@@ -249,7 +376,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
           </div>
           <label className="field u-max-width-360">
             <span className="field__label">{t('settings.company.currency')}</span>
-            <select className="select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            <select className="select" value={currency} onChange={(e) => set('currency', e.target.value)}>
               {(CURRENCIES.includes(currency) ? CURRENCIES : [currency, ...CURRENCIES]).map((c) => (
                 <option key={c} value={c}>
                   {c} · {money.nameOf(c)}
@@ -280,22 +407,39 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
           <div className="rb-chips">
             {VOCAB.map((v) => (
               <button key={v.en.one} type="button" className="rb-chip" aria-pressed={terms.en.one === v.en.one && terms.tr.one === v.tr.one} onClick={() => setTerms({ en: { ...v.en }, tr: { ...v.tr } })}>
-                {((v as Partial<Record<Locale, { one: string }>>)[locale] ?? v.en).one}
+                {((v as Partial<Record<Locale, { one: string }>>)[viewer] ?? v.en).one}
               </button>
             ))}
           </div>
         </div>
         <p className="field__hint u-m-0-0-8">{t('settings.company.vocabularyOwn')}</p>
         <div className="form__row">
-          {word('en', 'one', `English, ${t('settings.company.singular').toLocaleLowerCase()}`)}
-          {word('en', 'other', `English, ${t('settings.company.plural').toLocaleLowerCase()}`)}
-          {word('tr', 'one', `Türkçe, ${t('settings.company.singular').toLocaleLowerCase()}`)}
-          {word('tr', 'other', `Türkçe, ${t('settings.company.plural').toLocaleLowerCase()}`)}
+          {word('en', 'one', `${LOCALE_INFO.en.name} · ${t('settings.company.singular')}`)}
+          {word('en', 'other', `${LOCALE_INFO.en.name} · ${t('settings.company.plural')}`)}
+          {word('tr', 'one', `${LOCALE_INFO.tr.name} · ${t('settings.company.singular')}`)}
+          {word('tr', 'other', `${LOCALE_INFO.tr.name} · ${t('settings.company.plural')}`)}
         </div>
       </div>
-      <div>
-        <button className="btn btn--primary">{submitLabel ?? t('common.save')}</button>
-      </div>
+      {/* The effect of what is on screen, before it is saved. */}
+      <section className="sheet admin-effect" aria-labelledby="company-effect" aria-live="polite">
+        <h2 className="sheet__title" id="company-effect">
+          <Icon name="eye" size={18} className="icon--lead" />
+          {t('settings.company.effect')}
+        </h2>
+        <ul className="admin-effect__list">
+          <li data-changed={tz !== base.timezone || undefined}>{t('settings.company.effectTime', { time: formatDateTime(new Date(), viewer, { weekday: 'long', hour: '2-digit', minute: '2-digit', timeZone: tz }) })}</li>
+          <li data-changed={currency !== base.currency || undefined}>{t('settings.company.effectMoney', { amount: formatMoney(12500, currency, viewer) })}</li>
+          <li data-changed={locale !== base.locale || undefined}>{t('settings.company.effectLanguage', { language: LOCALE_INFO[locale].name })}</li>
+          <li data-changed={JSON.stringify(terms) !== JSON.stringify(base.terms) || undefined}>
+            {t('settings.company.effectWords', { one: shown.one, other: shown.other })}
+          </li>
+        </ul>
+      </section>
+      {!inSettings && (
+        <div>
+          <button className="btn btn--primary">{submitLabel}</button>
+        </div>
+      )}
     </form>
   );
 }
@@ -660,46 +804,129 @@ function TeamsTab() {
   );
 }
 
+const AUDIT_KINDS = ['access', 'people', 'signin', 'keys', 'exports', 'deletes', 'settings'] as const;
+
+/** The activity log: newest first, narrowed by kind, person and words; older pages on request; exportable. */
 function AuditTab() {
   const { t, fmtDate } = useI18n();
-  const { person } = useStore();
+  const { person, people } = useStore();
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
-  useEffect(() => {
-    get('/admin/audit').then((r) => setEntries(r.entries));
-  }, []);
-  if (!entries) return <div className="empty">{t('common.loading')}</div>;
-  if (!entries.length) return <div className="empty">{t('settings.audit.empty')}</div>;
+  const [failed, setFailed] = useState(false);
+  const [more, setMore] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState('');
+  const [actor, setActor] = useState('');
+  const [q, setQ] = useState('');
+  const query = useCallback((before?: string) => {
+    const p = new URLSearchParams();
+    if (before) p.set('before', before);
+    if (kind) p.set('kind', kind);
+    if (actor) p.set('actor', actor);
+    return get<{ entries: AuditEntry[] }>(`/admin/audit?${p}`);
+  }, [kind, actor]);
+  const load = useCallback(() => {
+    setFailed(false);
+    setEntries(null);
+    query()
+      .then((r) => {
+        setEntries(r.entries);
+        setMore(r.entries.length >= 200);
+      })
+      .catch(() => setFailed(true));
+  }, [query]);
+  useEffect(load, [load]);
+  const older = async () => {
+    const last = entries?.at(-1);
+    if (!last || busy) return;
+    setBusy(true);
+    try {
+      const r = await query(last.at);
+      setEntries((e) => [...(e ?? []), ...r.entries]);
+      setMore(r.entries.length >= 200);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const label = (e: AuditEntry) => {
+    const key = `audit.${e.action}` as MessageKey;
+    const l = t(key);
+    return l === key ? e.action : l;
+  };
+  const who = (e: AuditEntry) => (e.actorId ? (person(e.actorId)?.name ?? t('common.unknownUser')) : t('audit.system'));
+  const needle = fold(q.trim());
+  const shown = (entries ?? []).filter((e) => !needle || fold(`${label(e)} ${who(e)} ${e.staff ?? ''}`).includes(needle));
+  const filtered = !!(kind || actor || q.trim());
+  const clear = () => (setKind(''), setActor(''), setQ(''));
+  const everyone = [...people].filter((p) => p.status !== 'disabled').sort((x, y) => x.name.localeCompare(y.name));
   return (
-    <>
-      <div className="toolbar">
-        <AuditExport />
+    <div className="audit">
+      <div className="toolbar audit__tools">
+        <FilterSheet
+          count={(kind ? 1 : 0) + (actor ? 1 : 0)}
+          onClear={() => (setKind(''), setActor(''))}
+          search={<input className="input search" type="search" value={q} placeholder={t('settings.audit.search')} aria-label={t('settings.audit.search')} onChange={(e) => setQ(e.target.value)} />}
+          after={<span className="audit__export"><AuditExport /></span>}
+        >
+          <FilterGroup label={t('settings.audit.kind')}>
+            <select className="select" value={kind} aria-label={t('settings.audit.kind')} onChange={(e) => setKind(e.target.value)}>
+              <option value="">{t('settings.audit.kind.all')}</option>
+              {AUDIT_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {t(`settings.audit.kind.${k}` as MessageKey)}
+                </option>
+              ))}
+            </select>
+          </FilterGroup>
+          <FilterGroup label={t('settings.audit.person')}>
+            <select className="select" value={actor} aria-label={t('settings.audit.person')} onChange={(e) => setActor(e.target.value)}>
+              <option value="">{t('settings.audit.anyone')}</option>
+              {everyone.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </FilterGroup>
+        </FilterSheet>
       </div>
-      <table className="table u-max-width-900">
-      <thead>
-        <tr>
-          <th>{t('settings.audit.when')}</th>
-          <th>{t('settings.audit.who')}</th>
-          <th>{t('settings.audit.what')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {entries.map((e) => {
-          const key = `audit.${e.action}` as any;
-          const label = t(key);
-          return (
-            <tr key={e.id}>
-              <td className="num muted">{fmtDate(e.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
-              <td>{person(e.actorId)?.name ?? t('common.unknownUser')}</td>
-              <td>
-                {label === key ? e.action : label}
-                {e.staff && <span className="muted"> · {t('support.byStaff', { staff: e.staff })}</span>}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-      </table>
-    </>
+      {failed ? (
+        <ErrorState compact onRetry={load} />
+      ) : !entries ? (
+        <SkeletonRows rows={8} label={t('common.loading')} />
+      ) : !shown.length ? (
+        filtered ? (
+          <EmptyState compact icon="history" title={t('settings.audit.none')}>
+            <button type="button" className="btn" onClick={clear}>
+              {t('settings.audit.clear')}
+            </button>
+          </EmptyState>
+        ) : (
+          <EmptyState compact icon="history" title={t('settings.audit.empty')} />
+        )
+      ) : (
+        <>
+          <ol className="audit__list">
+            {shown.map((e) => (
+              <li key={e.id} className="audit__row">
+                <time className="audit__when" dateTime={e.at}>
+                  {fmtDate(e.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </time>
+                <span className="audit__who">{who(e)}</span>
+                <span className="audit__what">
+                  {label(e)}
+                  {e.staff && <span className="muted"> · {t('support.byStaff', { staff: e.staff })}</span>}
+                </span>
+              </li>
+            ))}
+          </ol>
+          {more && (
+            <button type="button" className="btn audit__more" disabled={busy} onClick={() => void older()}>
+              {t('settings.audit.older')}
+            </button>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

@@ -65,8 +65,15 @@ function sync() {
   if (trail[at].url !== here()) trail[at] = { ...trail[at], url: here() };
 }
 
+/** Asked before every move inside the app; false keeps the person where they are (settings with unsaved changes). */
+let beforeLeave: ((to: string) => boolean) | null = null;
+export function setBeforeLeave(fn: ((to: string) => boolean) | null) {
+  beforeLeave = fn;
+}
+
 export function navigate(to: string, replace = false, fresh = false) {
   if (to === here()) return;
+  if (beforeLeave && !beforeLeave(to)) return;
   sync();
   if (replace) {
     history.replaceState({ i: at }, '', to);

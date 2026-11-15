@@ -5,6 +5,7 @@ import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
 
 interface Found {
@@ -20,6 +21,8 @@ interface Item {
   group: string;
   title: string;
   sub?: string | null;
+  /** More words it is found by than its title (settings topics). */
+  find?: string;
   go: () => void;
 }
 
@@ -76,35 +79,16 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
       { key: 'p:me', group: 'places', title: t('nav.profile'), go: go('/profile') },
       ...(isAdmin ? [{ key: 'p:set', group: 'places', title: t('nav.settings'), go: go('/settings') }] : []),
     ];
-    // Every settings page this person may open, by its own name.
-    const manage = can('org.manage');
-    const settings: Item[] = (
-      [
-        ['company', t('settings.tab.company'), manage],
-        ['billing', t('settings.tab.billing'), manage && !!me.org.billingOn],
-        ['currencies', t('settings.tab.currencies'), manage],
-        ['fields', t('settings.tab.fields', { account: words.one }), can('accounts.manage')],
-        ['records', t('settings.tab.records'), can('accounts.manage')],
-        ['health', t('settings.tab.health'), can('accounts.manage')],
-        ['rhythm', t('settings.tab.rhythm'), can('accounts.manage') || manage],
-        ['people', t('settings.tab.people'), can('users.manage')],
-        ['joining', t('settings.tab.joining'), can('users.manage')],
-        ['teams', t('settings.tab.teams'), can('teams.manage')],
-        ['roles', t('search.roles'), manage || can('users.manage')],
-        ['sso', t('settings.tab.sso'), manage],
-        ['connections', t('settings.tab.connections'), can('connections.manage')],
-        ['sources', t('settings.tab.sources'), can('connections.manage')],
-        ['automations', t('settings.tab.automations'), can('automations.manage')],
-        ['playbooks', t('settings.tab.playbooks'), manage || can('accounts.manage')],
-        ['developer', t('settings.tab.developer'), can('connections.manage') || can('users.manage')],
-        ['portal', t('settings.tab.portal'), manage],
-        ['support', t('settings.tab.support'), manage],
-        ['audit', t('settings.tab.audit'), can('audit.view')],
-        ['errors', t('settings.tab.errors'), manage],
-      ] as [string, string, boolean][]
-    )
-      .filter((x) => x[2])
-      .map(([key, title]) => ({ key: `s:${key}`, group: 'settings', title, sub: t('nav.settings'), go: go(`/settings/${key}`) }));
+    // Every settings page this person may open, by its own name and the words its topic is known by
+    // (the same index as Settings' own search, lib/settingsIndex.ts).
+    const settings: Item[] = SETTINGS_TOPICS.filter((x) => x.allowed(can, !!me.org.billingOn)).map((x) => ({
+      key: `s:${x.key}`,
+      group: 'settings',
+      title: topicLabel(t, words, x.key),
+      sub: t('nav.settings'),
+      find: `${topicWords(t, words, x.key)} ${t('settings.title')}`,
+      go: go(`/settings/${x.key}`),
+    }));
     const always: Item[] = [
       {
         key: 'a:keys',
@@ -151,7 +135,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
           };
     // People are already here: they show from the first key.
     const near = needle.length >= 2 ? people.filter((p) => (p.status === 'active' || p.status === 'invited') && has(p.name, p.email)).slice(0, 6) : [];
-    const local = [...actions, ...places, ...settings].filter((i) => !needle || fold(i.title).includes(needle));
+    const local = [...actions, ...places, ...settings].filter((i) => !needle || fold(i.find ?? i.title).includes(needle));
     const folks = [...(found?.people ?? []), ...near.filter((p) => !found?.people.some((x) => x.id === p.id))].slice(0, 6);
     const mates: Item[] = folks.map((p) => ({ key: `p:${p.id}`, group: 'people', title: p.name, sub: p.email ?? undefined, go: go(`/accounts?owner=${p.id}`) }));
     if (!found) return needle ? [...mates, ...local] : [...actions, ...places.slice(0, 5)];

@@ -658,15 +658,30 @@ adminRoutes.post('/users/:id/erase', async (c) => {
 
 const AUDIT_EXPORT_MAX = 50_000;
 
+/** The kinds of entry the activity log can be narrowed to (LIKE patterns over the action). */
+const AUDIT_KINDS: Record<string, string[]> = {
+  access: ['role.%', 'org.field_access', 'user.previewed', 'support.%'],
+  people: ['user.%', 'join.%', 'team.%'],
+  signin: ['sso.%', 'second_step.%', 'session.%', 'user.confirmed', 'org.second_step_policy'],
+  keys: ['api_key.%', 'webhook.%', 'devhook.%', 'devlink.%', 'inbound.%', 'app.connected', 'connection.%'],
+  exports: ['%.exported', '%.export%'],
+  deletes: ['%.deleted', '%.erased', '%.purged', '%.removed', '%.revoked', '%.deactivated', '%.disabled_user', 'org.domain_removed'],
+  settings: ['org.%', 'health.updated', 'rhythm.updated', 'billing.%', 'portal.%', 'automation.%', 'record_type.%'],
+};
+
 adminRoutes.get('/audit', async (c) => {
   requirePerm(c, 'audit.view');
   const before = c.req.query('before');
+  const actor = c.req.query('actor');
+  const kind = AUDIT_KINDS[c.req.query('kind') ?? ''] ?? null;
   const rows = await run(c, (q) =>
     q.query(
       `select id, actor_id, action, entity, entity_id, at, case when action like 'support.%' then meta->>'staff' end as staff from audit_log
         where ($1::timestamptz is null or at < $1::timestamptz)
+          and ($2::uuid is null or actor_id = $2::uuid)
+          and ($3::text[] is null or action like any($3::text[]))
         order by at desc limit 200`,
-      [before && !Number.isNaN(Date.parse(before)) ? before : null],
+      [before && !Number.isNaN(Date.parse(before)) ? before : null, actor && /^[0-9a-f-]{36}$/i.test(actor) ? actor : null, kind],
     ),
   );
   const entries: AuditEntry[] = rows.map((r) => ({
