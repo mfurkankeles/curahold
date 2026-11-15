@@ -189,7 +189,9 @@ describe('weekly summary', () => {
     const monday = new Date();
     monday.setUTCDate(monday.getUTCDate() + 2 + ((8 - monday.getUTCDay() - 2 + 7) % 7));
     monday.setUTCHours(5, 0, 0, 0);
-    const weekBefore = new Date(monday.getTime() - 8 * 86400000).toISOString().slice(0, 10);
+    // Exactly the day the summary compares against (that Monday less 7). A day earlier lost to
+    // today's real score whenever the tests ran on a Monday, because today is then that very day.
+    const weekBefore = new Date(monday.getTime() - 7 * 86400000).toISOString().slice(0, 10);
     const id = acc['Velto Mobility'];
     const now = (await ada.get(`/api/accounts/${id}`)).json.account.fields.health_score;
     await env.db.system((q) => q.query(`update orgs set timezone = 'Europe/Istanbul' where id = $1`, [env.a.orgId]));
