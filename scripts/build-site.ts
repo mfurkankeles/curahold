@@ -41,6 +41,7 @@ const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" 
 const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8M6.9 5.1l.9-.9a2.1 2.1 0 0 1 3 3l-.9.9M9.1 10.9l-.9.9a2.1 2.1 0 0 1-3-3l.9-.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 const CURSOR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.2l13.4 8.2-5.9 1.5-2.9 5.6z" fill="#fff" stroke="#17133a" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.8" fill="currentColor"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+const PLAY = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.3v9.4a.6.6 0 0 0 .9.5l7.6-4.7a.6.6 0 0 0 0-1L5.9 2.8a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>`;
 const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
@@ -194,7 +195,6 @@ function footerHtml(locale: SiteLocale): string {
   const docsLocale = DOCS_LANGS.has(locale) ? locale : 'en';
   const docs = `${DOCS}/${docsLocale}/`;
   const legal = (slug: string) => `${DOCS}/${docsLocale}/legal-${slug}/`;
-  const blogLabel = c.footer.blog ?? siteBlog(locale).nav;
   const footLang = SITE_LOCALES.filter((l) => l !== locale)
     .map((l) => `<a href="${localeBase(l)}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`)
     .join(' · ');
@@ -210,7 +210,7 @@ function footerHtml(locale: SiteLocale): string {
         <ul>
           <li><a href="${base}#pricing">${esc(c.nav.pricing)}</a></li>
           <li><a href="${demo}">${esc(c.nav.demo)}</a></li>
-          <li><a href="${blogBaseOf(locale)}">${esc(blogLabel)}</a></li>
+          <li><a href="${blogBaseOf(locale)}">${esc(c.nav.blog)}</a></li>
           <li><a href="${docs}">${esc(c.footer.help)}</a></li>
         </ul>
       </div>
@@ -265,7 +265,7 @@ function blogHeader(locale: SiteLocale): string {
       <a href="${base}#product">${esc(c.nav.product)}</a>
       <a href="${base}#pricing">${esc(c.nav.pricing)}</a>
       <a href="${demo}">${esc(c.nav.demo)}</a>
-      <a href="${blogBaseOf(locale)}" aria-current="page">${esc(c.footer.blog ?? siteBlog(locale).nav)}</a>
+      <a href="${blogBaseOf(locale)}" aria-current="page">${esc(c.nav.blog)}</a>
       <a href="${docs}">${esc(c.nav.help)}</a>
     </nav>
     <div class="top__end">
@@ -342,7 +342,7 @@ function blogIndexPage(locale: SiteLocale): string {
   });
   return `${blogHead(locale, { title: b.metaTitle, description: b.metaDescription, canonical, path: 'blog/', ogType: 'website', rel, extraLd: ld })}
 <body class="blog">
-<a class="skip" href="#main">${locale === 'tr' ? 'İçeriğe geç' : 'Skip to content'}</a>
+<a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
 ${blogHeader(locale)}
 <main id="main" class="wrap blog-wrap">
   <header class="blog-hero">
@@ -395,7 +395,7 @@ function blogPostPage(locale: SiteLocale, post: BlogPost): string {
   const tags = post.tags.map((t) => `<li class="post-tag">${esc(t)}</li>`).join('');
   return `${blogHead(locale, { title: `${post.title} — Curahold`, description: post.description, canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
 <body class="blog">
-<a class="skip" href="#main">${locale === 'tr' ? 'İçeriğe geç' : 'Skip to content'}</a>
+<a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
 ${blogHeader(locale)}
 <main id="main" class="wrap post-wrap">
   <article class="post">
@@ -422,9 +422,7 @@ ${consentTags(locale, rel, policyUrl)}
 
 function page(locale: SiteLocale): string {
   const c = siteCopy(locale);
-  const tour = c.tour ?? siteCopy('en').tour!;
-  const bento = c.bento ?? siteCopy('en').bento!;
-  const cta = c.cta ?? siteCopy('en').cta!;
+  const { tour, bento, cta } = c;
   const ui = tour.ui;
   const info = LOCALE_INFO[locale];
   const rel = locale === 'en' ? '' : '../';
@@ -474,7 +472,7 @@ function page(locale: SiteLocale): string {
     (r, i) => `<div class="hl__row${i === 0 ? ' is-pick' : ''}"${a('up', 150 + i * 90)}>
                 <span class="sco" data-band="${r.band}">${num(r.score)}</span>
                 <span class="hl__name">${esc(r.name)}</span>
-                ${r.chip ? `<span class="tag" data-band="${r.band}">${esc(c.hero.chips[r.chip])}</span>` : `<span class="hl__band" data-band="${r.band}">${esc(band(r.band))}</span>`}
+                ${r.chip ? `<span class="tag" data-band="${r.band}">${esc(ui.chips[r.chip])}</span>` : `<span class="hl__band" data-band="${r.band}">${esc(band(r.band))}</span>`}
               </div>`,
   ).join('');
   const whyText = [
@@ -499,7 +497,7 @@ function page(locale: SiteLocale): string {
               ${listRows}
             </div>
             <div class="hd"${a('slide', 1950)}>
-              <div class="hd__top"><b>${esc(ACCOUNTS[0].name)}</b><span class="tag" data-band="risk">${esc(c.hero.chips.review)}</span>${av('ZT')}</div>
+              <div class="hd__top"><b>${esc(ACCOUNTS[0].name)}</b><span class="tag" data-band="risk">${esc(ui.chips.review)}</span>${av('ZT')}</div>
               <div class="hd__body">
                 <div class="hd__score">
                   <div class="ring" data-band="risk">
@@ -516,10 +514,10 @@ function page(locale: SiteLocale): string {
           </div>`;
 
   // 2 — Promises: a logged meeting whose next steps become tasks with an owner and a date.
-  const m = c.meeting.card;
+  const m = ui.meeting;
   const mParts = dayFmt.formatToParts(at(11, 10));
-  const mDay = mParts.find((x) => x.type === 'day')?.value ?? m.day;
-  const mMonth = mParts.find((x) => x.type === 'month')?.value ?? m.month;
+  const mDay = mParts.find((x) => x.type === 'day')?.value ?? '';
+  const mMonth = mParts.find((x) => x.type === 'month')?.value ?? '';
   const newTask = (title: string, who: string, name: string, due: string, delay: number) =>
     `<article class="tk"${a('drop', delay)}><p>${esc(title)}</p><div class="tk__f">${av(who)}<span>${esc(name)}</span><span class="due">${esc(due)}</span></div></article>`;
   const scenePromise = `<div class="sc sc--promise" data-sc="1">
@@ -530,15 +528,15 @@ function page(locale: SiteLocale): string {
               </div>
               <div class="mt__steps">
                 <span class="mt__h">${esc(t('meetings.nextSteps'))}</span>
-                <span class="mt__step"${a('type', 500)}>${OPEN}<span>${esc(m.done)}</span></span>
-                <span class="mt__step"${a('type', 1250)}>${OPEN}<span>${esc(m.open)}</span></span>
+                <span class="mt__step"${a('type', 500)}>${OPEN}<span>${esc(m.steps[0])}</span></span>
+                <span class="mt__step"${a('type', 1250)}>${OPEN}<span>${esc(m.steps[1])}</span></span>
                 <span class="mt__save"${a('press', 2450)}>${esc(t('common.save'))}</span>
               </div>
             </div>
             <div class="mk">
               <div class="mk__h"><b>${esc(t('board.defaultColumns.todo'))}</b><span class="mk__toast"${a('pop', 3500)}>${CHECK}${esc(ui.tasksOpened)}</span></div>
-              ${newTask(m.done, 'ZT', 'Zeynep', day(11, 14), 2850)}
-              ${newTask(m.open, 'LB', 'Lena', day(11, 22), 3100)}
+              ${newTask(m.steps[0], 'ZT', 'Zeynep', day(11, 14), 2850)}
+              ${newTask(m.steps[1], 'LB', 'Lena', day(11, 22), 3100)}
             </div>
             <span class="cur cur--promise">${CURSOR}</span>
           </div>`;
@@ -647,8 +645,8 @@ function page(locale: SiteLocale): string {
               <span class="ask__who lp lp2">${SPARK}Claude</span>
               <p class="lp lp2">${esc(bento.ask.a)}</p>
               <ul>
-                ${askRow(ACCOUNTS[0], c.hero.chips.review, 3)}
-                ${askRow(ACCOUNTS[1], c.hero.chips.renewal, 4)}
+                ${askRow(ACCOUNTS[0], ui.chips.review, 3)}
+                ${askRow(ACCOUNTS[1], ui.chips.renewal, 4)}
                 ${askRow(ACCOUNTS[2], band('watch'), 5)}
               </ul>
               <p class="ask__did lp lp6">${CHECK}<span>${esc(bento.ask.did)}</span></p>
@@ -663,11 +661,11 @@ function page(locale: SiteLocale): string {
             <div class="pt__win">
               <div class="pt__top"><span class="pt__logo">M</span><b>${esc(t('portal.for', { account: ACCOUNTS[0].name }))}</b>${av('SA')}</div>
               <div class="pt__tabs"><span class="is-on">${esc(t('portal.boards'))}</span><span>${esc(t('portal.requests'))}</span><em>${esc(t('portal.open', { n: num(2) }))}</em></div>
-              <div class="pt__plan"><b>${esc(c.year.steps[0].name)}</b><span class="pt__bar"><i></i></span><span>${num(2)}/${num(3)}</span></div>
+              <div class="pt__plan"><b>${esc(bento.portal.plan)}</b><span class="pt__bar"><i></i></span><span>${num(2)}/${num(3)}</span></div>
               <ul class="pt__list">
-                <li class="is-done">${CHECK}<span>${esc(m.done)}</span></li>
+                <li class="is-done">${CHECK}<span>${esc(m.steps[0])}</span></li>
                 <li class="pt__tick">${CHECK}<span>${esc(m.name)}</span></li>
-                <li>${OPEN}<span>${esc(m.open)}</span><em>${esc(t('portal.replies', { n: num(2) }))}</em></li>
+                <li>${OPEN}<span>${esc(m.steps[1])}</span><em>${esc(t('portal.replies', { n: num(2) }))}</em></li>
               </ul>
               <span class="pt__new">+ ${esc(t('portal.new'))}</span>
             </div>
@@ -754,7 +752,7 @@ function page(locale: SiteLocale): string {
   const arc = `<svg class="hero__arc" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="arcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c7dff"/><stop offset=".55" stop-color="#5b4de8"/><stop offset="1" stop-color="#3fb596"/></linearGradient></defs><path d="M319.3 79.8A170 170 0 1 0 319.3 340.2" pathLength="100"/></svg>`;
 
   return `<!doctype html>
-<html lang="${c.lang}" dir="${info.dir}">
+<html lang="${tag}" dir="${info.dir}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -770,7 +768,7 @@ ${landingJsonLd(locale, canonical, c.description)}
 <link rel="stylesheet" href="${rel}assets/consent.css">
 </head>
 <body class="home">
-<a class="skip" href="#main">${esc(c.nav.skip ?? 'Skip to content')}</a>
+<a class="skip" href="#main">${esc(c.nav.skip)}</a>
 <header class="top top--night">
   <div class="wrap top__in">
     <a class="brand" href="./">${MARK}Curahold</a>
@@ -778,7 +776,7 @@ ${landingJsonLd(locale, canonical, c.description)}
       <a href="#product">${esc(c.nav.product)}</a>
       <a href="#pricing">${esc(c.nav.pricing)}</a>
       <a href="${demo}">${esc(c.nav.demo)}</a>
-      <a href="${blogBaseOf(locale)}">${esc(c.footer.blog ?? siteBlog(locale).nav)}</a>
+      <a href="${blogBaseOf(locale)}">${esc(c.nav.blog)}</a>
       <a href="${docs}">${esc(c.nav.help)}</a>
     </nav>
     <div class="top__end">
@@ -797,7 +795,7 @@ ${landingJsonLd(locale, canonical, c.description)}
         <p class="hero__lead">${esc(c.hero.lead)}</p>
         <div class="hero__ctas">
           <a class="btn btn--primary btn--big" href="${signup}">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}">${esc(c.hero.secondary)}</a>
+          <a class="btn btn--glass btn--big" href="${demo}">${PLAY}${esc(c.nav.demo)}</a>
         </div>
         <p class="hero__note">${esc(c.hero.note)}</p>
       </div>
@@ -818,8 +816,8 @@ ${landingJsonLd(locale, canonical, c.description)}
       </div>
       <div class="tour__now" aria-hidden="true">${nows}</div>
     </div>
-    <div class="strip" aria-label="${esc(c.tools.marquee)}">
-      <p class="strip__label">${esc(c.tools.marquee)}</p>
+    <div class="strip" aria-label="${esc(c.hero.works)}">
+      <p class="strip__label">${esc(c.hero.works)}</p>
       <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}</div></div>
     </div>
   </section>
@@ -868,7 +866,7 @@ ${landingJsonLd(locale, canonical, c.description)}
         <p>${esc(cta.text)}</p>
         <div class="cta__row">
           <a class="btn btn--primary btn--big" href="${signup}">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}">${esc(c.hero.secondary)}</a>
+          <a class="btn btn--glass btn--big" href="${demo}">${PLAY}${esc(c.nav.demo)}</a>
         </div>
       </div>
     </div>
@@ -879,7 +877,7 @@ ${footerHtml(locale)}
   <form>
     <h2 id="signin-title">${esc(c.signIn.title)}</h2>
     <p>${esc(c.signIn.text)}</p>
-    <label class="signin__field"><input name="slug" autocomplete="organization" spellcheck="false" aria-label="${esc(c.signIn.label)}" placeholder="${locale === 'tr' ? 'sirketin' : 'yourcompany'}" required><span>.${esc(BASE_DOMAIN)}</span></label>
+    <label class="signin__field"><input name="slug" autocomplete="organization" spellcheck="false" aria-label="${esc(c.signIn.label)}" placeholder="${esc(c.signIn.placeholder)}" required><span>.${esc(BASE_DOMAIN)}</span></label>
     <div class="signin__row">
       <button class="btn btn--primary" type="submit">${esc(c.signIn.go)}</button>
       <button class="btn btn--ghost" type="button" data-close>${esc(c.signIn.close)}</button>
