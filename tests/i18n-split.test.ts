@@ -4,7 +4,7 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { dictionaries, LOCALES, translate, type MessageKey } from '../shared/src/i18n';
-import { ALL_KEYS, filledDictionary, i18nForBrowser, keysUsedIn, keysUsedInFiles, staticClosure } from '../shared/src/i18n/vite-plugin';
+import { ALL_KEYS, filledDictionary, i18nForBrowser, keysUsedIn, keysUsedInFiles, SERVER_ONLY, staticClosure } from '../shared/src/i18n/vite-plugin';
 
 describe('one language at a time', () => {
   it('a filled dictionary has every key and reads like translate() with all nine loaded', () => {
@@ -44,7 +44,9 @@ describe('one language at a time', () => {
     for (const l of ['tr', 'ja'] as const) {
       const a = await load(`virtual:curahold-dict/${l}`);
       const b = await load(`virtual:curahold-dict/${l}/rest`);
-      expect({ ...a, ...b }).toEqual(filledDictionary(l));
+      // Together the two parts are the whole language, less the keys only the server reads.
+      expect({ ...a, ...b }).toEqual(filledDictionary(l, (k) => !SERVER_ONLY.test(k)));
+      expect(Object.keys({ ...a, ...b }).some((k) => SERVER_ONLY.test(k))).toBe(false);
       expect(Object.keys(a).filter((k) => k in b)).toEqual([]);
       for (const k of Object.keys(a)) expect(keep(k)).toBe(true);
       expect(Object.keys(a).length).toBeLessThan(ALL_KEYS.length / 4);
