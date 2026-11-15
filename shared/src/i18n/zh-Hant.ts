@@ -4369,4 +4369,12 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "本衝刺沒有完成任何項目。",
   'pm.points.doneOf': "{name} 中已完成的點數",
   'pm.sprint.carryList': "將移走的未完成項目",
+  'rb.axis.count': "列數",
+  'rb.axis.money': "金額（{currency}）",
+  'rb.axis.hours': "小時",
+  'rb.axis.days': "天數",
+  'rb.axis.number': "數值",
+  'rb.chartTable': "圖表中的數值",
+  'rb.chartLabel': "含 {n} 個數值的圖表。用方向鍵逐一讀取，下方表格列出全部數值。",
+  'rb.chartKeys': "圖表各列。用方向鍵讀取每列的組成。",
 };

@@ -4369,4 +4369,12 @@ export const he: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "שום דבר לא הושלם בספרינט הזה.",
   'pm.points.doneOf': "נקודות שהושלמו ב-{name}",
   'pm.sprint.carryList': "פריטים שלא הושלמו ויועברו",
+  'rb.axis.count': "מספר שורות",
+  'rb.axis.money': "סכום ({currency})",
+  'rb.axis.hours': "שעות",
+  'rb.axis.days': "ימים",
+  'rb.axis.number': "ערך",
+  'rb.chartTable': "הנתונים שבתרשים",
+  'rb.chartLabel': "תרשים של {n} ערכים. מקשי החיצים קוראים אותם אחד אחד; הטבלה שאחריו מפרטת את כולם.",
+  'rb.chartKeys': "שורות התרשים. מקשי החיצים קוראים את החלקים של כל שורה.",
 };

@@ -20,7 +20,8 @@
 .kpi__sub { font-size: var(--fs-xs); color: var(--ink-3); }
 
 /* ------------------------------------------------------------------ bars */
-.hbars ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hbars, .vchart, .linechart { margin: 0; }
+.hbars__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .hbar { display: grid; grid-template-columns: minmax(84px, 32%) minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: var(--fs-s); }
 .hbar__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 .hbar__track { height: 14px; border-radius: var(--r-pill); background: var(--sunk); overflow: hidden; }
@@ -33,8 +34,16 @@
 .chartkey i { display: inline-block; width: 10px; height: 10px; border-radius: var(--r-xs); background: var(--oc, var(--brand)); margin-inline-end: 4px; vertical-align: -1px; }
 
 /* --------------------------------------------------------------- columns */
-.vchart, .linechart { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
-.vchart__body { display: contents; }
+.vchart, .linechart { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
+
+/* Above the plot: what the figures are (start) and the value being read (end). */
+.charttop { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; min-width: 0; font-size: var(--fs-2xs); line-height: var(--lh-body); color: var(--ink-3); }
+.charttop__unit { white-space: nowrap; }
+.charttop__read { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 600; font-size: var(--fs-xs); }
+/* One part read: the others step back, so the one read is not told by its colour alone. */
+:is(.vbar, .hbar)[data-off] { opacity: .4; }
+:is(.vbar, .hbar) { transition: opacity var(--dur-fast) ease; }
+:is(.vchart__plot, .linechart__plot, .hbars__list):focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); border-radius: var(--r-xs); }
 .vchart__axis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; font-size: var(--fs-2xs); color: var(--ink-3); font-variant-numeric: tabular-nums; margin: -7px 0; white-space: nowrap; }
 .vchart__plot, .linechart__plot {
   position: relative; height: 190px; border-bottom: 1px solid var(--line-strong);
@@ -50,18 +59,28 @@
 .vbar__n { position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%); font-size: var(--fs-2xs); font-weight: 650; color: var(--ink-2); white-space: nowrap; }
 .vchart__x { grid-column: 2; display: flex; gap: clamp(4px, 1.2%, 12px); padding: 4px 4px 0; }
 .vchart__x span { flex: 1 1 0; min-width: 0; text-align: center; font-size: var(--fs-2xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vchart[data-many] .vchart__x span { overflow: visible; }
+.vchart[data-many] .vchart__x span, .vchart__x[data-time] span { overflow: visible; text-overflow: clip; }
+.vchart__x[data-time] span { display: flex; justify-content: center; }
+/* Room above the tallest column for its figure. */
+.vchart .charttop { margin-bottom: 16px; }
 
 /* ------------------------------------------------------------------ line */
 .linechart__plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .linechart__path { fill: none; stroke: var(--oc, var(--brand)); stroke-width: 2.5px; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .linechart__area { fill: var(--oc, var(--brand)); opacity: .12; stroke: none; }
 .linechart__dot { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: var(--r-pill); background: var(--surface); border: 2.5px solid var(--oc, var(--brand)); }
-.linechart__dot:hover { scale: 1.5; }
+.linechart__dot[data-on] { scale: 1.5; }
+.linechart__hits { position: absolute; inset: 0; display: flex; }
+.linechart__hits span { flex: 1 1 0; }
+.linechart__rule { position: absolute; top: 0; bottom: 0; left: var(--x); width: 1px; background: var(--line-strong); pointer-events: none; }
+.linechart__dot { pointer-events: none; }
 .linechart__x { grid-column: 2; position: relative; height: 20px; margin-top: 4px; }
 .linechart__x span { position: absolute; top: 0; transform: translateX(-50%); font-size: var(--fs-2xs); color: var(--ink-3); white-space: nowrap; }
-.linechart__x span:first-child { transform: none; }
-.linechart__x span:last-child { transform: translateX(-100%); }
+.linechart__x span[data-edge='start'] { transform: none; }
+.linechart__x span[data-edge='end'] { transform: translateX(-100%); }
+/* A narrow chart keeps every other time label (the ones marked data-thin step aside). */
+.vchart, .linechart { container-type: inline-size; }
+@container (max-width: 420px) { :is(.vchart__x, .linechart__x) span[data-thin] { visibility: hidden; } }
 
 /* ------------------------------------------------------------------ ring */
 .donut { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -178,7 +197,7 @@
 .rb__chart .donut__mid { font-size: var(--fs-2xl); }
 .rb__chart .donut__key { font-size: var(--fs-m); gap: 8px; }
 .rb__chart .hbar__track { height: 18px; }
-.rb__chart .hbars ul { gap: 8px; }
+.rb__chart .hbars__list { gap: 8px; }
 .rb__chart .kpi { min-height: 240px; justify-items: center; text-align: center; }
 .rb__chart .kpi__value { font-size: var(--fs-5xl); }
 .rb__chart .kpi__sub { font-size: var(--fs-m); }
@@ -246,3 +265,4 @@
 .dash-viewas { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-3); }
 .dash-viewas .select { width: auto; min-width: 200px; }
 .page[aria-busy='true'] .dash__grid { opacity: .6; transition: opacity var(--dur-fast) ease; }
+

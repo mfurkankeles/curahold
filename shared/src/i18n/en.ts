@@ -4384,6 +4384,14 @@ export const en = {
   'pm.notes.empty': "Nothing was finished in this sprint.",
   'pm.points.doneOf': "Points done in {name}",
   'pm.sprint.carryList': "Unfinished items that move",
+  'rb.axis.count': "Number of rows",
+  'rb.axis.money': "Amount ({currency})",
+  'rb.axis.hours': "Hours",
+  'rb.axis.days': "Days",
+  'rb.axis.number': "Value",
+  'rb.chartTable': "The chart's figures",
+  'rb.chartLabel': "Chart of {n} values. The arrow keys read them one by one; the table that follows lists them all.",
+  'rb.chartKeys': "Chart rows. The arrow keys read each one's parts.",
 } as const;
 
 export type MessageKey = keyof typeof en;

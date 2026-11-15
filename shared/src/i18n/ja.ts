@@ -4369,4 +4369,12 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "このスプリントで完了したものはありません。",
   'pm.points.doneOf': "{name} の完了ポイント",
   'pm.sprint.carryList': "移動する未完了の課題",
+  'rb.axis.count': "行数",
+  'rb.axis.money': "金額（{currency}）",
+  'rb.axis.hours': "時間",
+  'rb.axis.days': "日数",
+  'rb.axis.number': "値",
+  'rb.chartTable': "グラフの数値",
+  'rb.chartLabel': "{n}個の値のグラフ。矢印キーで1つずつ読み上げます。すべての値は続く表にあります。",
+  'rb.chartKeys': "グラフの各行。矢印キーで各行の内訳を読み上げます。",
 };

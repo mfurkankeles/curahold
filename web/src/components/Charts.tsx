@@ -1,7 +1,7 @@
 // Draws a report's result: one figure, bars, columns, a line, a ring, or a
 // table. Plain HTML and SVG (no chart library): the shapes are simple, they
 // take the palette's colours, and they grow in when the data lands.
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { OptionColor } from '../../../shared/src/model';
 import type { Bucket, ChartKind, ReportGroupRow, ReportResult, ReportUnit } from '../../../shared/src/reports';
 import { useI18n } from '../lib/i18n';
@@ -9,7 +9,7 @@ import { useStore } from '../lib/store';
 import { CountUp } from './CountUp';
 import { EmptyState } from './Empty';
 import { intlTag } from '../../../shared/src/i18n';
-import { formatDate, formatMoney, formatNumber } from '../lib/format';
+import { currencySign, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 
 type Ok = Extract<ReportResult, { kind: 'ok' }>;
 /** Colours for parts that have none of their own, in an order that keeps neighbours apart. */
@@ -59,7 +59,107 @@ function axis(max: number): number[] {
 const pct = (v: number, of: number) => `${of > 0 ? Math.max(0, Math.min(100, (v / of) * 100)) : 0}%`;
 const i = (n: number) => ({ '--i': n }) as CSSProperties;
 
-export function ReportChart({ result, chart, compact, goal }: { result: ReportResult; chart: ChartKind; compact?: boolean; goal?: number }) {
+/** What a chart's figures are, said above its axis: "Number of rows", "Amount (₺)", "Hours". */
+function useUnitName() {
+  const { t, locale } = useI18n();
+  const { me } = useStore();
+  return (unit: ReportUnit) => (unit === 'money' ? t('rb.axis.money', { currency: currencySign(me.org.currency, locale) }) : t(`rb.axis.${unit}` as const));
+}
+
+/**
+ * Reading a chart's values one by one: with the pointer over a bar or a point, or with the
+ * arrow keys once the chart has the focus (Home, End; Escape lets go). The value read is
+ * written above the plot, where it never covers the bar it belongs to and is announced.
+ */
+function useReadout(n: number) {
+  const [at, setAt] = useState<number | null>(null);
+  const focused = useRef(false);
+  const onKeyDown = (e: KeyboardEvent) => {
+    const back = document.documentElement.dir === 'rtl';
+    const cur = at ?? -1;
+    let next: number;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') next = cur + ((e.key === 'ArrowRight') !== back ? 1 : -1);
+    else if (e.key === 'ArrowDown') next = cur + 1;
+    else if (e.key === 'ArrowUp') next = cur - 1;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = n - 1;
+    else if (e.key === 'Escape' && at != null) {
+      e.stopPropagation();
+      return setAt(null);
+    } else return;
+    e.preventDefault();
+    setAt(Math.max(0, Math.min(n - 1, next < 0 && cur < 0 ? 0 : next)));
+  };
+  return {
+    at,
+    plot: {
+      tabIndex: 0,
+      onKeyDown,
+      onFocus: () => {
+        focused.current = true;
+      },
+      onBlur: () => {
+        focused.current = false;
+        setAt(null);
+      },
+      onPointerLeave: (e: PointerEvent) => {
+        if (e.pointerType === 'mouse' && !focused.current) setAt(null);
+      },
+    },
+    item: (k: number) => ({ onPointerEnter: () => setAt(k), 'data-on': at === k || undefined, 'data-off': (at != null && at !== k) || undefined }),
+  };
+}
+
+/** The line above a chart: what the figures are, and the value being read. */
+function ChartTop({ unit, read }: { unit: string; read: string }) {
+  return (
+    <div className="charttop">
+      <span className="charttop__unit">{unit}</span>
+      <span className="charttop__read num" role="status">
+        {read}
+      </span>
+    </div>
+  );
+}
+
+/** The chart's figures as a table, for screen readers (the drawing itself is one image). */
+function ChartTable({ r, label, unit, apart }: { r: Ok; label: (g: ReportGroupRow) => string; unit: string; apart?: boolean }) {
+  const { t } = useI18n();
+  const f = useReportFormat();
+  const split = r.series.length > 0;
+  return (
+    <table className="sr-only">
+      <caption>{t('rb.chartTable')}</caption>
+      <thead>
+        <tr>
+          <td />
+          {split ? r.series.map((s) => <th key={s.key} scope="col">{s.label}</th>) : null}
+          {!(split && apart) && <th scope="col">{split ? t('rb.total') : unit}</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {r.groups.map((g) => (
+          <tr key={g.key}>
+            <th scope="row">{label(g)}</th>
+            {split ? r.series.map((s, si) => <td key={s.key}>{f.value(g.cells?.[si] ?? 0, r.unit)}</td>) : null}
+            {!(split && apart) && <td>{f.value(g.value, r.unit)}</td>}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** "Kurumsal · İyi 3 · İzlenmeli 2 — 5": a group's figures in one line. */
+function readOf(r: Ok, g: ReportGroupRow | undefined, label: (g: ReportGroupRow) => string, value: (v: number) => string, total: string | null): string {
+  if (!g) return '';
+  if (!r.series.length) return `${label(g)}: ${value(g.value)}`;
+  const parts = r.series.map((s, si) => (g.cells?.[si] || total === null ? `${s.label} ${value(g.cells?.[si] ?? 0)}` : null)).filter(Boolean);
+  return `${label(g)}: ${[...parts, ...(total === null ? [] : [`${total} ${value(g.value)}`])].join(' · ')}`;
+}
+
+/** `apart`: the series are side by side and never added up (what came in, what got done). */
+export function ReportChart({ result, chart, compact, goal, apart }: { result: ReportResult; chart: ChartKind; compact?: boolean; goal?: number; apart?: boolean }) {
   const { t } = useI18n();
   const f = useReportFormat();
   if (result.kind === 'missing') return <p className="pane__note">{t('rb.missing', { what: result.what.replace(/^\$/, '') })}</p>;
@@ -83,10 +183,17 @@ export function ReportChart({ result, chart, compact, goal }: { result: ReportRe
   if (r.table) return <RowsTable r={r} compact={compact} />;
   if (!r.groups.length || r.matched === 0) return <EmptyState compact icon="chart" title={t('rb.nothing')} />;
   if (chart === 'table') return <GroupTable r={r} label={label} />;
+  if (chart === 'donut') return <Donut r={r} label={label} compact={compact} />;
+  if (chart === 'bar') return <Bars r={r} label={label} />;
+  if (chart === 'line') return <Line r={r} label={label} compact={compact} />;
+  return <Columns r={r} label={label} compact={compact} stacked={chart === 'stacked'} apart={apart} />;
+}
 
-  const split = r.series.length > 0;
-  const colored = r.groups.some((g) => g.color);
-  const legend = split ? (
+type Drawn = { r: Ok; label: (g: ReportGroupRow) => string; compact?: boolean };
+
+function Legend({ r }: { r: Ok }) {
+  if (!r.series.length) return null;
+  return (
     <ul className="chartkey">
       {r.series.map((s, k) => (
         <li key={s.key}>
@@ -94,148 +201,192 @@ export function ReportChart({ result, chart, compact, goal }: { result: ReportRe
         </li>
       ))}
     </ul>
-  ) : null;
+  );
+}
 
-  if (chart === 'donut') {
-    const total = r.groups.reduce((n, g) => n + Math.max(0, g.value), 0) || 1;
-    const R = 42;
-    const C = 2 * Math.PI * R;
-    let at = 0;
-    return (
-      <div className="donut" data-compact={compact || undefined}>
-        <div className="donut__ring">
-          <svg viewBox="0 0 120 120" role="img" aria-label={r.groups.map((g) => `${label(g)}: ${f.value(g.value, r.unit)}`).join(', ')}>
-            <circle cx="60" cy="60" r={R} className="donut__track" />
-            {r.groups.map((g, k) => {
-              const len = (Math.max(0, g.value) / total) * C;
-              const arc = <circle key={g.key} cx="60" cy="60" r={R} className="donut__arc" data-color={colorAt(k, g.color)} style={{ strokeDasharray: `${Math.max(0, len - 1.5)} ${C}`, strokeDashoffset: -at, ...i(k) }} />;
-              at += len;
-              return arc;
-            })}
-          </svg>
-          <div className="donut__mid">
-            <strong className="num">{f.value(r.total, r.unit, true)}</strong>
-          </div>
+function Donut({ r, label, compact }: Drawn) {
+  const { locale } = useI18n();
+  const f = useReportFormat();
+  const total = r.groups.reduce((n, g) => n + Math.max(0, g.value), 0) || 1;
+  const R = 42;
+  const C = 2 * Math.PI * R;
+  let at = 0;
+  return (
+    <div className="donut" data-compact={compact || undefined}>
+      <div className="donut__ring">
+        <svg viewBox="0 0 120 120" role="img" aria-label={r.groups.map((g) => `${label(g)}: ${f.value(g.value, r.unit)}`).join(', ')}>
+          <circle cx="60" cy="60" r={R} className="donut__track" />
+          {r.groups.map((g, k) => {
+            const len = (Math.max(0, g.value) / total) * C;
+            const arc = <circle key={g.key} cx="60" cy="60" r={R} className="donut__arc" data-color={colorAt(k, g.color)} style={{ strokeDasharray: `${Math.max(0, len - 1.5)} ${C}`, strokeDashoffset: -at, ...i(k) }} />;
+            at += len;
+            return arc;
+          })}
+        </svg>
+        <div className="donut__mid" aria-hidden="true">
+          <strong className="num">{f.value(r.total, r.unit, true)}</strong>
         </div>
-        <ul className="donut__key">
-          {r.groups.map((g, k) => (
-            <li key={g.key}>
-              <i data-color={colorAt(k, g.color)} />
-              <span className="donut__label">{label(g)}</span>
-              <b className="num">{f.value(g.value, r.unit, true)}</b>
-              <span className="donut__pct num">{Math.round((Math.max(0, g.value) / total) * 100)}%</span>
-            </li>
-          ))}
-        </ul>
       </div>
-    );
-  }
+      <ul className="donut__key">
+        {r.groups.map((g, k) => (
+          <li key={g.key}>
+            <i data-color={colorAt(k, g.color)} />
+            <span className="donut__label">{label(g)}</span>
+            <b className="num">{f.value(g.value, r.unit, true)}</b>
+            <span className="donut__pct num">{formatPercent((Math.max(0, g.value) / total) * 100, locale)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
-  if (chart === 'bar') {
-    const max = Math.max(1e-9, ...r.groups.map((g) => g.value));
-    return (
-      <div className="hbars">
-        <ul>
-          {r.groups.map((g, k) => (
-            <li className="hbar" key={g.key} title={`${label(g)}: ${f.value(g.value, r.unit)}`}>
-              <span className="hbar__label">{label(g)}</span>
-              <span className="hbar__track">
-                <span className="hbar__fill" data-color={split ? undefined : colored ? colorAt(k, g.color) : undefined} style={{ width: pct(g.value, max) }}>
-                  {split && g.cells?.map((v, si) => (v > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: v }} title={`${r.series[si]?.label}: ${f.value(v, r.unit)}`} /> : null))}
-                </span>
+function Bars({ r, label }: Drawn) {
+  const { t } = useI18n();
+  const f = useReportFormat();
+  const unit = useUnitName()(r.unit);
+  const read = useReadout(r.groups.length);
+  const split = r.series.length > 0;
+  const colored = r.groups.some((g) => g.color);
+  const max = Math.max(1e-9, ...r.groups.map((g) => g.value));
+  const v = (n: number) => f.value(n, r.unit);
+  return (
+    <figure className="hbars">
+      {split && <ChartTop unit={unit} read={readOf(r, read.at == null ? undefined : r.groups[read.at], label, v, t('rb.total'))} />}
+      {/* Every row's label and figure are text already: the list reads well as it is; the arrows only light a row. */}
+      <ul className="hbars__list" {...(split ? { ...read.plot, 'aria-label': t('rb.chartKeys') } : {})}>
+        {r.groups.map((g, k) => (
+          <li className="hbar" key={g.key} {...(split ? read.item(k) : {})}>
+            <span className="hbar__label">{label(g)}</span>
+            <span className="hbar__track" aria-hidden="true">
+              <span className="hbar__fill" data-color={split ? undefined : colored ? colorAt(k, g.color) : undefined} style={{ width: pct(g.value, max) }}>
+                {split && g.cells?.map((c, si) => (c > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
               </span>
-              <b className="hbar__value num">{f.value(g.value, r.unit, true)}</b>
-            </li>
+            </span>
+            <b className="hbar__value num">{f.value(g.value, r.unit, true)}</b>
+            {split && <span className="sr-only">{readOf(r, g, label, v, t('rb.total'))}</span>}
+          </li>
+        ))}
+      </ul>
+      <Legend r={r} />
+    </figure>
+  );
+}
+
+function Line({ r, label, compact }: Drawn) {
+  const { t } = useI18n();
+  const f = useReportFormat();
+  const unit = useUnitName()(r.unit);
+  const read = useReadout(r.groups.length);
+  const split = r.series.length > 0;
+  const lines = split ? r.series.map((s, si) => ({ key: s.key, label: s.label, color: colorAt(si, s.color), points: r.groups.map((g) => g.cells?.[si] ?? 0) })) : [{ key: 'v', label: '', color: null as OptionColor | null, points: r.groups.map((g) => g.value) }];
+  const ticks = axis(Math.max(0, ...lines.flatMap((l) => l.points)));
+  const top = ticks[ticks.length - 1] || 1;
+  const n = r.groups.length;
+  const x = (k: number) => (n <= 1 ? 50 : (k / (n - 1)) * 100);
+  const y = (v: number) => 100 - (v / top) * 100;
+  // Labels under the axis: as many as fit (fewer on a small card), never two touching.
+  const every = Math.max(1, Math.ceil(n / (compact ? 4 : 7)));
+  const shown = (k: number) => k % every === 0 && (k === n - 1 || n - 1 - k >= every * 0.75 || every === 1);
+  const v = (n: number) => f.value(n, r.unit);
+  return (
+    <figure className="linechart">
+      <ChartTop unit={unit} read={readOf(r, read.at == null ? undefined : r.groups[read.at], label, v, t('rb.total'))} />
+      <div className="vchart__axis" aria-hidden="true">
+        {[...ticks].reverse().map((tv) => (
+          <span key={tv}>{f.value(tv, r.unit, true)}</span>
+        ))}
+      </div>
+      <div className="linechart__plot" style={{ '--rows': ticks.length - 1 } as CSSProperties} role="img" aria-label={t('rb.chartLabel', { n: f.num(n, 0) })} {...read.plot}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {lines.map((l) => {
+            const d = l.points.map((pv, k) => `${k ? 'L' : 'M'}${x(k).toFixed(2)},${y(pv).toFixed(2)}`).join(' ');
+            return (
+              <g key={l.key} data-color={l.color ?? undefined}>
+                {!split && <path className="linechart__area" d={`${d} L${x(n - 1)},100 L${x(0)},100 Z`} />}
+                <path className="linechart__path" d={d} />
+              </g>
+            );
+          })}
+        </svg>
+        {/* One slice of the width per point, so the pointer reads the nearest one. */}
+        <div className="linechart__hits">
+          {r.groups.map((g, k) => (
+            <span key={g.key} {...read.item(k)} />
           ))}
-        </ul>
-        {legend}
-      </div>
-    );
-  }
-
-  if (chart === 'line') {
-    const lines = split ? r.series.map((s, si) => ({ key: s.key, label: s.label, color: colorAt(si, s.color), points: r.groups.map((g) => g.cells?.[si] ?? 0) })) : [{ key: 'v', label: '', color: null as OptionColor | null, points: r.groups.map((g) => g.value) }];
-    const ticks = axis(Math.max(0, ...lines.flatMap((l) => l.points)));
-    const top = ticks[ticks.length - 1] || 1;
-    const n = r.groups.length;
-    const x = (k: number) => (n <= 1 ? 50 : (k / (n - 1)) * 100);
-    const y = (v: number) => 100 - (v / top) * 100;
-    const every = Math.max(1, Math.ceil(n / (compact ? 4 : 8)));
-    return (
-      <div className="linechart">
-        <div className="vchart__body">
-          <div className="vchart__axis" aria-hidden="true">
-            {[...ticks].reverse().map((v) => (
-              <span key={v}>{f.value(v, r.unit, true)}</span>
-            ))}
-          </div>
-          <div className="linechart__plot" style={{ '--rows': ticks.length - 1 } as CSSProperties}>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={r.groups.map((g) => `${label(g)}: ${f.value(g.value, r.unit)}`).join(', ')}>
-              {lines.map((l) => {
-                const d = l.points.map((v, k) => `${k ? 'L' : 'M'}${x(k).toFixed(2)},${y(v).toFixed(2)}`).join(' ');
-                return (
-                  <g key={l.key} data-color={l.color ?? undefined}>
-                    {!split && <path className="linechart__area" d={`${d} L${x(n - 1)},100 L${x(0)},100 Z`} />}
-                    <path className="linechart__path" d={d} />
-                  </g>
-                );
-              })}
-            </svg>
-            {n <= 40 &&
-              lines.map((l) =>
-                l.points.map((v, k) => <i key={`${l.key}${k}`} className="linechart__dot" data-color={l.color ?? undefined} style={{ left: `${x(k)}%`, top: `${y(v)}%`, ...i(k) }} title={`${label(r.groups[k])}${l.label ? ` · ${l.label}` : ''}: ${f.value(v, r.unit)}`} />),
-              )}
-          </div>
         </div>
-        <div className="linechart__x" aria-hidden="true">
-          {r.groups.map((g, k) => (k % every === 0 || k === n - 1 ? <span key={g.key} style={{ left: `${x(k)}%` }}>{label(g)}</span> : null))}
-        </div>
-        {legend}
+        {read.at != null && <i className="linechart__rule" style={{ '--x': `${x(read.at)}%` } as CSSProperties} />}
+        {(n <= 40 || read.at != null) &&
+          lines.map((l) =>
+            l.points.map((pv, k) => (n <= 40 || k === read.at ? <i key={`${l.key}${k}`} className="linechart__dot" data-color={l.color ?? undefined} data-on={k === read.at || undefined} style={{ left: `${x(k)}%`, top: `${y(pv)}%`, ...i(k) }} /> : null)),
+          )}
       </div>
-    );
-  }
+      <div className="linechart__x" aria-hidden="true">
+        {r.groups.map((g, k) =>
+          shown(k) ? (
+            <span key={g.key} data-thin={(k / every) % 2 === 1 || undefined} data-edge={x(k) < 8 ? 'start' : x(k) > 92 ? 'end' : undefined} style={{ left: `${x(k)}%` }}>
+              {label(g)}
+            </span>
+          ) : null,
+        )}
+      </div>
+      <ChartTable r={r} label={label} unit={unit} />
+      <Legend r={r} />
+    </figure>
+  );
+}
 
-  // column, stacked
-  const stacked = chart === 'stacked' && split;
+function Columns({ r, label, compact, stacked: asked, apart }: Drawn & { stacked: boolean; apart?: boolean }) {
+  const { t } = useI18n();
+  const f = useReportFormat();
+  const unit = useUnitName()(r.unit);
+  const read = useReadout(r.groups.length);
+  const split = r.series.length > 0;
+  const stacked = asked && split;
+  const colored = r.groups.some((g) => g.color);
   const peaks = r.groups.map((g) => (split && !stacked ? Math.max(0, ...(g.cells ?? [])) : g.value));
   const ticks = axis(Math.max(0, ...peaks));
   const top = ticks[ticks.length - 1] || 1;
   const many = r.groups.length > (compact ? 8 : 14);
   const every = Math.max(1, Math.ceil(r.groups.length / (compact ? 6 : 12)));
+  const v = (n: number) => f.value(n, r.unit);
   return (
-    <div className="vchart" data-many={many || undefined}>
-      <div className="vchart__body">
-        <div className="vchart__axis" aria-hidden="true">
-          {[...ticks].reverse().map((v) => (
-            <span key={v}>{f.value(v, r.unit, true)}</span>
-          ))}
-        </div>
-        <div className="vchart__plot" style={{ '--rows': ticks.length - 1 } as CSSProperties}>
-          {r.groups.map((g, k) => (
-            <div className="vbar" key={g.key} style={i(k)} title={`${label(g)}: ${f.value(g.value, r.unit)}`}>
-              {stacked ? (
-                <span className="vbar__fill vbar__fill--stack" style={{ height: pct(g.value, top) }}>
-                  {g.cells?.map((v, si) => (v > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: v }} title={`${r.series[si]?.label}: ${f.value(v, r.unit)}`} /> : null))}
-                  {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
-                </span>
-              ) : split ? (
-                g.cells?.map((v, si) => <span key={si} className="vbar__fill" data-color={colorAt(si, r.series[si]?.color)} style={{ height: pct(v, top) }} title={`${r.series[si]?.label}: ${f.value(v, r.unit)}`} />)
-              ) : (
-                <span className="vbar__fill" data-color={colored ? colorAt(k, g.color) : undefined} style={{ height: pct(g.value, top) }}>
-                  {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="vchart__x" aria-hidden="true">
-        {r.groups.map((g, k) => (
-          <span key={g.key}>{!r.bucket || k % every === 0 || k === r.groups.length - 1 ? label(g) : ''}</span>
+    <figure className="vchart" data-many={many || undefined}>
+      <ChartTop unit={unit} read={readOf(r, read.at == null ? undefined : r.groups[read.at], label, v, apart ? null : t('rb.total'))} />
+      <div className="vchart__axis" aria-hidden="true">
+        {[...ticks].reverse().map((tv) => (
+          <span key={tv}>{f.value(tv, r.unit, true)}</span>
         ))}
       </div>
-      {legend}
-    </div>
+      <div className="vchart__plot" style={{ '--rows': ticks.length - 1 } as CSSProperties} role="img" aria-label={t('rb.chartLabel', { n: f.num(r.groups.length, 0) })} {...read.plot}>
+        {r.groups.map((g, k) => (
+          <div className="vbar" key={g.key} style={i(k)} {...read.item(k)}>
+            {stacked ? (
+              <span className="vbar__fill vbar__fill--stack" style={{ height: pct(g.value, top) }}>
+                {g.cells?.map((c, si) => (c > 0 ? <i key={si} data-color={colorAt(si, r.series[si]?.color)} style={{ flexGrow: c }} /> : null))}
+                {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
+              </span>
+            ) : split ? (
+              g.cells?.map((c, si) => <span key={si} className="vbar__fill" data-color={colorAt(si, r.series[si]?.color)} style={{ height: pct(c, top) }} />)
+            ) : (
+              <span className="vbar__fill" data-color={colored ? colorAt(k, g.color) : undefined} style={{ height: pct(g.value, top) }}>
+                {!many && g.value > 0 && <b className="vbar__n num">{f.value(g.value, r.unit, true)}</b>}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="vchart__x" aria-hidden="true" data-time={r.bucket ? true : undefined}>
+        {/* Time labels every few columns; on a narrow card every other one of those (data-thin, CSS). */}
+        {r.groups.map((g, k) => (
+          <span key={g.key} data-thin={(r.bucket && (k / every) % 2 === 1) || undefined}>
+            {!r.bucket || k % every === 0 ? label(g) : ''}
+          </span>
+        ))}
+      </div>
+      <ChartTable r={r} label={label} unit={unit} apart={apart} />
+      <Legend r={r} />
+    </figure>
   );
 }
 
@@ -260,7 +411,7 @@ function Gauge({ value, goal, unit, compact }: { value: number; goal: number; un
         <strong className="num">
           <CountUp value={value} format={(v) => f.value(v, unit, true)} />
         </strong>
-        <span className="gauge__goal">{t('rb.gaugeOf', { goal: f.value(goal, unit, true), pct: Math.round((value / goal) * 100) })}</span>
+        <span className="gauge__goal">{t('rb.gaugeOf', { goal: f.value(goal, unit, true), pct: f.num(Math.round((value / goal) * 100), 0) })}</span>
       </div>
     </div>
   );

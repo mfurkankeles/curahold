@@ -19,7 +19,9 @@ import type { Locale } from '../../../shared/src/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { useFieldFormat } from './Accounts';
-import { formatMonth, formatPercent, formatUnit } from '../lib/format';
+import { formatMonth, formatNumber, formatPercent, formatUnit } from '../lib/format';
+import { ReportChart } from '../components/Charts';
+import type { ReportResult } from '../../../shared/src/reports';
 
 export interface WorkReport {
   totals: { open: number; overdue: number; dueWeek: number; unassigned: number; done30: number; created30: number; cycleDays: number | null; onTime: number | null };
@@ -37,41 +39,26 @@ export const hoursText = (minutes: number, locale: Locale) => {
   return h && m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : h ? unit(h, 'hour') : unit(m, 'minute');
 };
 
-/** Two bars per week: what came in, what got done. */
+/** Two columns per week: what came in, what got done (side by side, never added up). */
 function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
-  const { t, fmtDate } = useI18n();
-  const max = Math.max(1, ...weeks.flatMap((w) => [w.created, w.done]));
-  // Every other week has its date, and the last one; never two dates side by side, as each may
-  // spread over its empty neighbours on a narrow screen (styles.css, .chart__tick).
-  const last = weeks.length - 1;
-  const tick = (i: number) => i === last || (i % 2 === 0 && i < last - 1);
-  return (
-    <figure className="chart">
-      <div className="chart__plot" role="img" aria-label={t('reports.flowTitle')}>
-        {weeks.map((w, i) => (
-          <div key={w.week} className="chart__col" style={{ '--i': i } as React.CSSProperties} title={`${fmtDate(w.week)}: ${t('reports.created')} ${w.created}, ${t('reports.done')} ${w.done}`}>
-            <div className="chart__bars">
-              <span className="chart__bar chart__bar--in" style={{ height: `${(w.created / max) * 100}%` }}>
-                {w.created > 0 && <b className="num">{w.created}</b>}
-              </span>
-              <span className="chart__bar chart__bar--out" style={{ height: `${(w.done / max) * 100}%` }}>
-                {w.done > 0 && <b className="num">{w.done}</b>}
-              </span>
-            </div>
-            <span className="chart__tick">{tick(i) ? fmtDate(w.week) : ''}</span>
-          </div>
-        ))}
-      </div>
-      <figcaption className="chart__legend">
-        <span>
-          <i className="chart__key chart__key--in" /> {t('reports.created')}
-        </span>
-        <span>
-          <i className="chart__key chart__key--out" /> {t('reports.done')}
-        </span>
-      </figcaption>
-    </figure>
+  const { t } = useI18n();
+  const result = useMemo<ReportResult>(
+    () => ({
+      kind: 'ok',
+      unit: 'count',
+      total: weeks.reduce((n, w) => n + w.done, 0),
+      matched: weeks.reduce((n, w) => n + w.created + w.done, 0),
+      bucket: 'week',
+      table: null,
+      series: [
+        { key: 'in', label: t('reports.created'), color: 'stone' },
+        { key: 'out', label: t('reports.done'), color: 'sky' },
+      ],
+      groups: weeks.map((w) => ({ key: w.week, label: w.week, value: w.created + w.done, cells: [w.created, w.done] })),
+    }),
+    [weeks, t],
   );
+  return <ReportChart result={result} chart="column" apart />;
 }
 
 /** Rows of labelled bars; an optional darker part (overdue inside open). */
@@ -94,6 +81,7 @@ export interface BarRow {
 // The whole list shares one set of columns (styles.css, .barrows): every bar starts and ends at
 // the same place and the numbers line up on the right, however long each number is.
 export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
+  const { locale } = useI18n();
   const top = max ?? Math.max(1, ...rows.map((r) => r.value));
   const counted = rows.some((r) => r.count != null);
   return (
@@ -109,10 +97,10 @@ export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
             </span>
             {counted && (
               <span className="barrows__count num" title={r.countLabel} aria-label={r.countLabel}>
-                {r.count ?? ''}
+                {r.count == null ? '' : formatNumber(r.count, locale)}
               </span>
             )}
-            <span className="barrows__value num">{r.text ?? r.value}</span>
+            <span className="barrows__value num">{r.text ?? formatNumber(r.value, locale)}</span>
           </>
         );
         return (
@@ -134,6 +122,7 @@ export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
 export function ReportsPage() {
   const { t, locale, words } = useI18n();
   const percent = (v: number) => formatPercent(v, locale);
+  const num = (v: number) => formatNumber(v, locale);
   const { boards, person, me } = useStore();
   const fmt = useFieldFormat();
   const [board, setBoard] = useState('');
@@ -164,7 +153,7 @@ export function ReportsPage() {
 
   const { renewal, value } = keyFields(me.org.accountFields);
   const cur = useMoney();
-  const cash = (n: number) => (value ? fmt(value, n) : String(n));
+  const cash = (n: number) => (value ? fmt(value, n) : formatNumber(n, locale));
   const customers = useMemo(() => {
     const list = accounts ?? [];
     const bands = { good: 0, watch: 0, risk: 0, none: 0 };
@@ -240,10 +229,10 @@ export function ReportsPage() {
         ) : (
           <>
             <div className="statstrip">
-              <Stat label={t('reports.open')} value={String(work.totals.open)} n={work.totals.open} sub={t('reports.unassignedN', { n: work.totals.unassigned })} />
-              <Stat label={t('reports.overdue')} value={String(work.totals.overdue)} n={work.totals.overdue} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: work.totals.dueWeek })} />
-              <Stat label={t('reports.done30')} value={String(work.totals.done30)} n={work.totals.done30} tone="done" sub={t('reports.created30N', { n: work.totals.created30 })} />
-              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: work.totals.cycleDays })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
+              <Stat label={t('reports.open')} value={num(work.totals.open)} n={work.totals.open} fmt={num} sub={t('reports.unassignedN', { n: num(work.totals.unassigned) })} />
+              <Stat label={t('reports.overdue')} value={num(work.totals.overdue)} n={work.totals.overdue} fmt={num} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: num(work.totals.dueWeek) })} />
+              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} tone="done" sub={t('reports.created30N', { n: num(work.totals.created30) })} />
+              <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: num(work.totals.cycleDays) })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}
             <div className="reports__stack">
@@ -273,7 +262,7 @@ export function ReportsPage() {
                       ),
                       value: p.open,
                       part: p.overdue,
-                      text: p.overdue ? `${p.open} · ${t('reports.lateShort', { n: p.overdue })}` : String(p.open),
+                      text: p.overdue ? `${num(p.open)} · ${t('reports.lateShort', { n: num(p.overdue) })}` : num(p.open),
                       onClick: () => navigate(`/team?person=${p.userId}`),
                     }))}
                   />
@@ -315,7 +304,7 @@ export function ReportsPage() {
                         label: boards.find((x) => x.id === b.boardId)?.name ?? '—',
                         value: b.open,
                         part: b.overdue,
-                        text: b.overdue ? `${b.open} · ${t('reports.lateShort', { n: b.overdue })}` : String(b.open),
+                        text: b.overdue ? `${num(b.open)} · ${t('reports.lateShort', { n: num(b.overdue) })}` : num(b.open),
                         onClick: () => setBoard(b.boardId),
                       }))}
                     />
@@ -353,8 +342,8 @@ export function ReportsPage() {
             {t('reports.health')}
           </h2>
               <p className="sheet__hint">{customers.atRisk > 0 ? t('reports.healthRisk', { value: cash(customers.atRisk) }) : t('reports.healthHint')}</p>
-              <div className="healthbar" role="img" aria-label={t('reports.health')}>
-                {(['good', 'watch', 'risk', 'none'] as const).map((b) => (customers.bands[b] ? <span key={b} data-band={b} style={{ flexGrow: customers.bands[b] }} title={`${t(`reports.band.${b}` as any)}: ${customers.bands[b]}`} /> : null))}
+              <div className="healthbar" aria-hidden="true">
+                {(['good', 'watch', 'risk', 'none'] as const).map((b) => (customers.bands[b] ? <span key={b} data-band={b} style={{ flexGrow: customers.bands[b] }} title={`${t(`reports.band.${b}` as any)}: ${num(customers.bands[b])}`} /> : null))}
               </div>
               <ul className="healthkey">
                 {/* "Not rated" only when some are. */}
@@ -362,12 +351,12 @@ export function ReportsPage() {
                   .filter((b) => b !== 'none' || customers.bands.none > 0)
                   .map((b) => (
                     <li key={b}>
-                      <i data-band={b} /> {t(`reports.band.${b}` as any)} <strong className="num">{customers.bands[b]}</strong>
+                      <i data-band={b} /> {t(`reports.band.${b}` as any)} <strong className="num">{num(customers.bands[b])}</strong>
                     </li>
                   ))}
               </ul>
               <p className="sheet__hint u-m-8-0-0">
-                {customers.quiet ? t('reports.quietN', { n: customers.quiet }) : t('reports.quietNone')}
+                {customers.quiet ? t('reports.quietN', { n: num(customers.quiet) }) : t('reports.quietNone')}
               </p>
             </section>
             {(renewal || pipeline) && (
@@ -386,8 +375,8 @@ export function ReportsPage() {
                         value: value ? m.total : m.n,
                         // With an amount: how many renew, then for how much, each in its own column.
                         count: value ? m.n : undefined,
-                        countLabel: value ? t('home.accountsN', { n: m.n }) : undefined,
-                        text: value ? cash(m.total) : String(m.n),
+                        countLabel: value ? t('home.accountsN', { n: num(m.n) }) : undefined,
+                        text: value ? cash(m.total) : num(m.n),
                         color: 'honey',
                         onClick: () => navigate('/accounts?view=renewals'),
                       }))}
@@ -402,7 +391,7 @@ export function ReportsPage() {
           </h2>
                     <p className="sheet__hint">
                       {t('reports.pipelineHint', { open: amount ? fmt(amount, pipeline.open) : pipeline.open, won: amount ? fmt(amount, pipeline.won) : pipeline.won })}
-                      {pipeline.winRate != null && <> {t('reports.winRate', { n: pipeline.winRate })}</>}
+                      {pipeline.winRate != null && <> {t('reports.winRate', { n: num(pipeline.winRate) })}</>}
                     </p>
                     <BarRows
                       rows={pipeline.rows.map((r) => ({
@@ -411,7 +400,7 @@ export function ReportsPage() {
                         value: r.value,
                         count: r.count,
                         countLabel: dealsN(t, r.count),
-                        text: amount ? fmt(amount, r.value) : String(r.value),
+                        text: amount ? fmt(amount, r.value) : num(r.value),
                         color: r.color,
                         onClick: () => navigate(`/records/${opp!.key}`),
                       }))}

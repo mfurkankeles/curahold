@@ -4369,4 +4369,12 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "در این اسپرینت چیزی تمام نشد.",
   'pm.points.doneOf': "امتیازهای انجام‌شده در {name}",
   'pm.sprint.carryList': "آیتم‌های تمام‌نشده‌ای که منتقل می‌شوند",
+  'rb.axis.count': "تعداد ردیف‌ها",
+  'rb.axis.money': "مبلغ ({currency})",
+  'rb.axis.hours': "ساعت",
+  'rb.axis.days': "روز",
+  'rb.axis.number': "مقدار",
+  'rb.chartTable': "اعداد نمودار",
+  'rb.chartLabel': "نمودار با {n} مقدار. کلیدهای جهت‌نما آن‌ها را یکی‌یکی می‌خوانند و جدول بعدی همه را فهرست می‌کند.",
+  'rb.chartKeys': "ردیف‌های نمودار. کلیدهای جهت‌نما اجزای هر ردیف را می‌خوانند.",
 };

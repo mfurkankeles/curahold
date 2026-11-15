@@ -4369,4 +4369,12 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "이 스프린트에서 완료한 항목이 없습니다.",
   'pm.points.doneOf': "{name}에서 완료한 포인트",
   'pm.sprint.carryList': "옮겨질 미완료 항목",
+  'rb.axis.count': "행 개수",
+  'rb.axis.money': "금액({currency})",
+  'rb.axis.hours': "시간",
+  'rb.axis.days': "일수",
+  'rb.axis.number': "값",
+  'rb.chartTable': "차트의 수치",
+  'rb.chartLabel': "값 {n}개짜리 차트입니다. 화살표 키로 하나씩 읽고, 이어지는 표에서 모두 볼 수 있습니다.",
+  'rb.chartKeys': "차트의 행입니다. 화살표 키로 각 행의 구성을 읽습니다.",
 };

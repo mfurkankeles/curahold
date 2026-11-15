@@ -4369,4 +4369,12 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "لم يُنجز شيء في هذا السبرنت.",
   'pm.points.doneOf': "النقاط المنجزة في {name}",
   'pm.sprint.carryList': "العناصر غير المكتملة التي ستُنقل",
+  'rb.axis.count': "عدد الصفوف",
+  'rb.axis.money': "المبلغ ({currency})",
+  'rb.axis.hours': "الساعات",
+  'rb.axis.days': "الأيام",
+  'rb.axis.number': "القيمة",
+  'rb.chartTable': "أرقام الرسم البياني",
+  'rb.chartLabel': "رسم بياني من {n} قيم. تقرؤها مفاتيح الأسهم واحدة تلو الأخرى، والجدول التالي يسردها كلها.",
+  'rb.chartKeys': "صفوف الرسم البياني. تقرأ مفاتيح الأسهم أجزاء كل صف.",
 };

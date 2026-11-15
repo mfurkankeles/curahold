@@ -4369,4 +4369,12 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'pm.notes.empty': "本迭代没有完成任何工作。",
   'pm.points.doneOf': "{name} 中已完成的点数",
   'pm.sprint.carryList': "将移走的未完成工作项",
+  'rb.axis.count': "行数",
+  'rb.axis.money': "金额（{currency}）",
+  'rb.axis.hours': "小时",
+  'rb.axis.days': "天数",
+  'rb.axis.number': "数值",
+  'rb.chartTable': "图表中的数值",
+  'rb.chartLabel': "含 {n} 个数值的图表。用方向键逐个读取，下方表格列出全部数值。",
+  'rb.chartKeys': "图表各行。用方向键读取每行的组成。",
 };

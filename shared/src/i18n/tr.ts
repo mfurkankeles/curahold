@@ -4369,4 +4369,12 @@ export const tr: Record<MessageKey, string> = {
   'pm.notes.empty': "Bu sprintte biten bir şey yok.",
   'pm.points.doneOf': "{name} içinde tamamlanan puan",
   'pm.sprint.carryList': "Taşınacak bitmemiş kayıtlar",
+  'rb.axis.count': "Kayıt sayısı",
+  'rb.axis.money': "Tutar ({currency})",
+  'rb.axis.hours': "Saat",
+  'rb.axis.days': "Gün",
+  'rb.axis.number': "Değer",
+  'rb.chartTable': "Grafikteki değerler",
+  'rb.chartLabel': "{n} değerli grafik. Ok tuşlarıyla tek tek okunur; hepsi ardından gelen tabloda.",
+  'rb.chartKeys': "Grafiğin satırları. Ok tuşları her birinin parçalarını okur.",
 };
