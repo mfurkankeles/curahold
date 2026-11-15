@@ -4392,6 +4392,12 @@ export const en = {
   'rb.chartTable': "The chart's figures",
   'rb.chartLabel': "Chart of {n} values. The arrow keys read them one by one; the table that follows lists them all.",
   'rb.chartKeys': "Chart rows. The arrow keys read each one's parts.",
+  'rb.tryExample': "Try one: {name}",
+  'audit.data.exported': "exported a file",
+  'rb.more': "More actions",
+  'rb.undo': "Undo the last change",
+  'rb.loadFailed': "This report could not be opened",
+  'rb.viewerNote': "You can look and export; keeping a report needs a full seat.",
 } as const;
 
 export type MessageKey = keyof typeof en;

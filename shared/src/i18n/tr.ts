@@ -4377,4 +4377,10 @@ export const tr: Record<MessageKey, string> = {
   'rb.chartTable': "Grafikteki değerler",
   'rb.chartLabel': "{n} değerli grafik. Ok tuşlarıyla tek tek okunur; hepsi ardından gelen tabloda.",
   'rb.chartKeys': "Grafiğin satırları. Ok tuşları her birinin parçalarını okur.",
+  'rb.tryExample': "Bir örnekle başla: {name}",
+  'audit.data.exported': "dosya dışa aktardı",
+  'rb.more': "Diğer işlemler",
+  'rb.undo': "Son değişikliği geri al",
+  'rb.loadFailed': "Bu rapor açılamadı",
+  'rb.viewerNote': "Bakabilir ve dışa aktarabilirsin; raporu kaydetmek için tam koltuk gerekir.",
 };

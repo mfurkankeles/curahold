@@ -32,6 +32,7 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `POST /reports/saved` | Rapor kaydeder. |
 | `PATCH /reports/saved/:id` | Kayıtlı raporu değiştirir. |
 | `DELETE /reports/saved/:id` | Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. |
+| `POST /exports` | Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim. |
 
 ## Ayrıntılar
 
@@ -180,3 +181,14 @@ Kayıtlı raporu değiştirir.
 Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 
 **Gerekenler:** yazabilen bir koltuk
+
+### `POST /exports`
+
+Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim.
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `source` | metin | zorunlu |  |
+| `name` | metin | zorunlu | en çok 120 karakter |
+| `rows` | tam sayı | zorunlu | en az 0; en çok 10_000_000 |
+| `format` | şunlardan biri: xlsx \| csv | zorunlu |  |

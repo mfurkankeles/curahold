@@ -266,3 +266,5 @@
 .dash-viewas .select { width: auto; min-width: 200px; }
 .page[aria-busy='true'] .dash__grid { opacity: .6; transition: opacity var(--dur-fast) ease; }
 
+/* The builder: what a viewer seat can do here. */
+.rb-note { margin: 0 0 12px; background: var(--info-wash); border-color: transparent; color: var(--info-ink); }

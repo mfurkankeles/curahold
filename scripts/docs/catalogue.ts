@@ -225,6 +225,7 @@ export const GROUPS: Group[] = [
       ['POST /reports/saved', 'Saves a report.', 'Rapor kaydeder.'],
       ['PATCH /reports/saved/:id', 'Changes a saved report.', 'Kayıtlı raporu değiştirir.'],
       ['DELETE /reports/saved/:id', 'Moves a saved report to the trash, where it stays for 30 days. The answer carries `trashId`.', 'Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.'],
+      ['POST /exports', 'Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format.', 'Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim.'],
     ],
   },
   {

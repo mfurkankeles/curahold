@@ -30,10 +30,15 @@ import {
 import { AccountPicker } from '../components/AccountPicker';
 import { ChartGlyph, useReportFormat } from '../components/Charts';
 import { formatOf, ReportView } from '../components/ReportView';
-import { EmptyState } from '../components/Empty';
+import { EmptyState, ErrorState, LoadError, SkeletonCards } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Confirm, Dialog, PeoplePicker } from '../components/ui';
+import { MenuButton, type MenuItem } from '../components/Menus';
+import { ExportMenu, useExport } from '../components/Export';
+import { usePhone } from '../components/FilterSheet';
+import { typingIn } from '../lib/undo';
+import type { Table } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh } from '../lib/router';
@@ -46,13 +51,20 @@ interface CatalogData {
   deals: string | null;
 }
 
+/** What can be reported on; `failed` when it could not be read (with `retry`). */
 function useCatalog() {
   const [cat, setCat] = useState<CatalogData | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    void get<CatalogData>('/reports/catalog').then(setCat);
-  }, []);
-  return cat;
+    setFailed(null);
+    void get<CatalogData>('/reports/catalog').then(setCat, (e) => setFailed(e instanceof ApiFailure ? e.body.message : ''));
+  }, [attempt]);
+  return { cat, failed, retry: () => setAttempt((n) => n + 1) };
 }
+
+/** The example an empty list offers: one ready-made report, opened in the builder. */
+const EXAMPLE = 'customers_by_health';
 
 export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashboards' }) {
   const { t } = useI18n();
@@ -84,11 +96,18 @@ export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashb
 export function ReportsListPage() {
   const { t, locale } = useI18n();
   const { canWrite, person } = useStore();
-  const cat = useCatalog();
+  const { cat } = useCatalog();
   const [saved, setSaved] = useState<SavedReport[] | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    void get<{ reports: SavedReport[] }>('/reports/saved').then((r) => setSaved(r.reports));
-  }, []);
+    setFailed(null);
+    void get<{ reports: SavedReport[] }>('/reports/saved').then(
+      (r) => setSaved(r.reports),
+      (e) => setFailed(e instanceof ApiFailure ? e.body.message : ''),
+    );
+  }, [attempt]);
+  const example = libraryReport(EXAMPLE);
   const sourceName = (s: ReportSource) => {
     const key = s === 'deals' ? cat?.deals : s;
     return labelOf(cat?.sources.find((x) => x.key === key)?.name, locale);
@@ -133,11 +152,27 @@ export function ReportsListPage() {
       </header>
       <ReportTabs active="reports" />
       <div className="page reports">
+        {failed !== null && !saved && <LoadError message={failed} onRetry={() => setAttempt((n) => n + 1)} />}
+        {!saved && failed === null && <SkeletonCards count={2} label={t('common.loading')} />}
         {saved && saved.length === 0 && (
           <div className="sheet u-mb-16">
+            {/* An invitation: what a report is, and one to open right now. */}
             <EmptyState compact icon="chart" title={t('rb.noneTitle')} body={t('rb.noneBody')}>
+              {example && (
+                <a
+                  className="btn btn--primary"
+                  href={`/reports/new?from=${EXAMPLE}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/reports/new?from=${EXAMPLE}`);
+                  }}
+                >
+                  <ChartGlyph kind={fitChart(example.def)} size={20} />
+                  {t('rb.tryExample', { name: labelOf(example.name, locale) })}
+                </a>
+              )}
               {canWrite && (
-                <button className="btn btn--primary" onClick={() => navigate('/reports/new')}>
+                <button className="btn" onClick={() => navigate('/reports/new')}>
                   <Icon name="plus" size={16} />
                   {t('rb.new')}
                 </button>
@@ -193,17 +228,15 @@ export function ReportsListPage() {
 
 /** The charts that fit a report's shape: a list or one figure; one grouping; two. */
 const CHART_CHOICES: Record<0 | 1 | 2, ChartKind[]> = { 0: ['table', 'number', 'gauge'], 1: ['bar', 'column', 'line', 'donut'], 2: ['stacked', 'column', 'line', 'bar'] };
-const csvCell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
-  return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
 
 export function ReportBuilderPage({ id, from }: { id: string | null; from: string | null }) {
   const { t, locale } = useI18n();
   const { canWrite, can, me, toast, people, boards, teams } = useStore();
   const trashed = useTrashToast();
   const f = useReportFormat();
-  const cat = useCatalog();
+  const { cat, failed: catFailed, retry: catRetry } = useCatalog();
+  const phone = usePhone();
+  const exporter = useExport('report');
   const admin = can('org.manage') && !me.previewBy;
   const [saved, setSaved] = useState<SavedReport | null>(null);
   const [def, setDef] = useState<ReportDef | null>(null);
@@ -217,12 +250,21 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   const [removing, setRemoving] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [accountNames, setAccountNames] = useState<Record<string, string>>({});
+  const [loadFailed, setLoadFailed] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  // What the report was before each change, newest last: Undo (and Ctrl/⌘Z) steps back through it.
+  const history = useRef<ReportDef[]>([]);
+  const [steps, setSteps] = useState(0);
   useEffect(() => nameIt(id ? `/reports/r/${id}` : '/reports/new', name), [id, name]);
 
   // Start: a kept report, one from the library (made this company's own first), or a blank one.
   useEffect(() => {
     let off = false;
     setResult(null);
+    setLoadFailed(null);
+    setGone(false);
+    history.current = [];
+    setSteps(0);
     (async () => {
       if (id) {
         try {
@@ -233,8 +275,11 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
           setName(r.report.name);
           setShared(r.report.shared);
           setDirty(false);
-        } catch {
-          if (!off) setGone(true);
+        } catch (e) {
+          if (off) return;
+          // Gone (deleted, or kept private by its maker) is not the same as a load that failed.
+          if (e instanceof ApiFailure && (e.status === 404 || e.status === 403)) setGone(true);
+          else setLoadFailed(e instanceof ApiFailure ? e.body.message : '');
         }
         return;
       }
@@ -243,10 +288,15 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
       const lib = from ? libraryReport(from) : null;
       if (lib) {
         setName(labelOf(lib.name, locale));
-        const r = await post<{ result: ReportResult; def?: ReportDef }>('/reports/run', { def: lib.def, resolve: true });
-        if (off) return;
-        setDef(r.def ?? lib.def);
-        setResult(r.result);
+        try {
+          const r = await post<{ result: ReportResult; def?: ReportDef }>('/reports/run', { def: lib.def, resolve: true });
+          if (off) return;
+          setDef(r.def ?? lib.def);
+          setResult(r.result);
+        } catch {
+          // The builder still opens; the preview runs (and says what is wrong) as it is drawn.
+          if (!off) setDef(lib.def);
+        }
       } else {
         setName('');
         setDef(blankDef('tasks'));
@@ -256,7 +306,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     return () => {
       off = true;
     };
-  }, [id, from]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, from, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const source = useMemo(() => cat?.sources.find((s) => s.key === (def?.source === 'deals' ? cat.deals : def?.source)), [cat, def?.source]);
   const fieldOf = useCallback((k: string | undefined) => source?.fields.find((x) => x.key === k), [source]);
@@ -281,10 +331,36 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     return () => clearTimeout(timer);
   }, [def, cat, problem]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const remember = () => {
+    if (!def) return;
+    history.current = [...history.current.slice(-49), def];
+    setSteps(history.current.length);
+  };
   const change = (patchDef: Partial<ReportDef>) => {
-    setDef((d) => (d ? { ...d, ...patchDef } : d));
+    if (!def) return;
+    remember();
+    setDef({ ...def, ...patchDef });
     setDirty(true);
   };
+  const undo = () => {
+    const back = history.current.pop();
+    if (!back) return;
+    setSteps(history.current.length);
+    setDef(back);
+    setDirty(true);
+  };
+  const undoRef = useRef(undo);
+  undoRef.current = undo;
+  useEffect(() => {
+    // After the toast's own Ctrl+Z (Shell.tsx), which wins while an Undo toast shows.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || typingIn(e.target) || !history.current.length) return;
+      e.preventDefault();
+      undoRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (gone)
     return (
@@ -294,6 +370,19 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             {t('rb.back')}
           </button>
         </EmptyState>
+      </div>
+    );
+  if (loadFailed !== null || (catFailed !== null && !cat))
+    return (
+      <div className="page u-pt-24">
+        <ErrorState
+          title={t('rb.loadFailed')}
+          body={loadFailed || catFailed}
+          onRetry={() => {
+            if (loadFailed !== null) setAttempt((n) => n + 1);
+            else catRetry();
+          }}
+        />
       </div>
     );
   if (!def || !cat || !source)
@@ -312,6 +401,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   const columns = def.columns?.length ? def.columns : source.fields.slice(0, 6).map((x) => x.key);
 
   const setSource = (key: ReportSource) => {
+    remember();
     setDef(blankDef(key));
     setDirty(true);
   };
@@ -370,31 +460,42 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
     }
   };
 
-  const exportCsv = () => {
-    if (!result || result.kind !== 'ok') return;
-    const lines: string[] = [];
+  // The file has what the preview shows: in a summary, each row also says which group it is in.
+  const exportTable = (): Table => {
+    const title = name.trim() || t('rb.untitled');
+    if (!result || result.kind !== 'ok') return { name: title, headers: [], rows: [] };
     if (result.table) {
-      // In a summary each row also says which group (and inner group) it is in.
       const groupNames = result.table.keys ? def.groups.map((g) => L(fieldOf(g.field) ?? { label: { en: g.field } })) : [];
       const groupLabel = (k: string) => result.groups.find((g) => g.key === k)?.label ?? k;
       const seriesLabel = (k: string) => result.series.find((x) => x.key === k)?.label ?? k;
-      lines.push([...groupNames, ...result.table.columns.map((c) => c.label)].map(csvCell).join(';'));
-      result.table.rows.forEach((row, i) => {
-        const keys = result.table!.keys?.[i] ?? [];
-        const named = keys.map((k, at) => (at === 0 ? (result.bucket ? f.bucket(k, result.bucket) : groupLabel(k)) : seriesLabel(k)));
-        lines.push([...named, ...row].map(csvCell).join(';'));
-      });
-    } else {
-      lines.push(['', ...result.series.map((s) => s.label), result.series.length ? t('rb.total') : t(`rb.fn.${def.measure.fn}` as any)].map(csvCell).join(';'));
-      for (const g of result.groups) lines.push([result.bucket ? g.key : g.label, ...(g.cells ?? []), g.value].map(csvCell).join(';'));
+      return {
+        name: title,
+        headers: [...groupNames, ...result.table.columns.map((c) => c.label)],
+        rows: result.table.rows.map((row, i) => {
+          const keys = result.table!.keys?.[i] ?? [];
+          return [...keys.map((k, at) => (at === 0 ? (result.bucket ? f.bucket(k, result.bucket) : groupLabel(k)) : seriesLabel(k))), ...row];
+        }),
+      };
     }
-    const blob = new Blob([`﻿${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${(name.trim() || t('rb.untitled')).replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'report'}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    return {
+      name: title,
+      headers: ['', ...result.series.map((x) => x.label), result.series.length ? t('rb.total') : t(`rb.fn.${def.measure.fn}` as any)],
+      rows: result.groups.map((g) => [result.bucket ? f.bucket(g.key, result.bucket) : g.label, ...(g.cells ?? []), g.value]),
+    };
   };
+  const canExport = result?.kind === 'ok';
+  // One main action (Save); the rest wait in "More" — on a phone, Export and "Add to dashboard" too.
+  const more: MenuItem[] = [
+    ...(phone && canExport
+      ? [
+          { key: 'xlsx', label: t('export.xlsx'), icon: 'download' as const, onSelect: () => void exporter.run(exportTable, 'xlsx') },
+          { key: 'csv', label: t('export.csv'), icon: 'download' as const, onSelect: () => void exporter.run(exportTable, 'csv') },
+        ]
+      : []),
+    ...(phone && admin && saved && !dirty ? [{ key: 'dash', label: t('rb.toDash'), icon: 'layout' as const, onSelect: () => setPlacing(true) }] : []),
+    ...(saved && canWrite ? [{ key: 'copy', label: t('rb.saveCopy'), icon: 'copy' as const, onSelect: () => void save(true) }] : []),
+    ...(saved && canEdit ? [{ key: 'delete', label: t('common.delete'), icon: 'trash' as const, danger: true, onSelect: () => setRemoving(true) }] : []),
+  ];
 
   const opLabel = (op: FilterOp) => t(`rb.op.${op}` as any);
   const valueControl = (x: ReportFilter, at: number): ReactNode => {
@@ -488,26 +589,31 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         />
         {saved && <FavoriteButton kind="report" id={saved.id} name={saved.name} to={`/reports/r/${saved.id}`} />}
         <div className="topbar__spacer" />
-        <div className="toolbar">
-          {result?.kind === 'ok' && (
-            <button className="btn btn--quiet" onClick={exportCsv}>
-              <Icon name="download" size={16} /> {t('rb.export')}
+        <div className="toolbar rb-tools">
+          {steps > 0 && canEdit && (
+            <button className="btn btn--quiet btn--icon" aria-label={t('rb.undo')} title={`${t('rb.undo')} (Ctrl+Z)`} onClick={undo}>
+              <Icon name="undo" size={16} />
             </button>
           )}
-          {admin && saved && !dirty && (
+          {!phone && canExport && <ExportMenu make={exportTable} source="report" quiet />}
+          {!phone && admin && saved && !dirty && (
             <button className="btn" onClick={() => setPlacing(true)}>
               <Icon name="layout" size={16} /> {t('rb.toDash')}
             </button>
           )}
-          {saved && canWrite && (
-            <button className="btn btn--quiet" disabled={busy} onClick={() => void save(true)}>
-              {t('rb.saveCopy')}
-            </button>
-          )}
-          {saved && canEdit && (
-            <button className="btn btn--quiet btn--icon" aria-label={t('common.delete')} title={t('common.delete')} onClick={() => setRemoving(true)}>
-              <Icon name="trash" size={16} />
-            </button>
+          {more.length > 0 && (
+            <MenuButton
+              label={t('rb.more')}
+              buttonClass="btn btn--quiet btn--icon"
+              place={phone ? 'down' : 'down-end'}
+              button={
+                <>
+                  <Icon name="more" size={16} />
+                  <span className="sr-only">{t('rb.more')}</span>
+                </>
+              }
+              items={more}
+            />
           )}
           {canEdit && (
             <button className="btn btn--primary" disabled={busy || !!problem || (!dirty && !!saved)} onClick={() => void save(false)}>
@@ -517,6 +623,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         </div>
       </header>
       <div className="page">
+        {!canWrite && <p className="notice rb-note">{t('rb.viewerNote')}</p>}
         <div className="rb">
         <div className="rb__rail">
           <section className="sheet rb-step">

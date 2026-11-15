@@ -4377,4 +4377,10 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "グラフの数値",
   'rb.chartLabel': "{n}個の値のグラフ。矢印キーで1つずつ読み上げます。すべての値は続く表にあります。",
   'rb.chartKeys': "グラフの各行。矢印キーで各行の内訳を読み上げます。",
+  'rb.tryExample': "例から始める：{name}",
+  'audit.data.exported': "ファイルをエクスポートしました",
+  'rb.more': "その他の操作",
+  'rb.undo': "直前の変更を元に戻す",
+  'rb.loadFailed': "このレポートを開けませんでした",
+  'rb.viewerNote': "表示とエクスポートはできます。レポートの保存にはフルシートが必要です。",
 };

@@ -32,6 +32,7 @@ Home pages and dashboards are made of cards; `GET /pages/:id/data` gives what ea
 | `POST /reports/saved` | Saves a report. |
 | `PATCH /reports/saved/:id` | Changes a saved report. |
 | `DELETE /reports/saved/:id` | Moves a saved report to the trash, where it stays for 30 days. |
+| `POST /exports` | Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format. |
 
 ## Details
 
@@ -180,3 +181,14 @@ Changes a saved report.
 Moves a saved report to the trash, where it stays for 30 days. The answer carries `trashId`.
 
 **Needs:** a seat that can write
+
+### `POST /exports`
+
+Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format.
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `source` | text | required |  |
+| `name` | text | required | at most 120 characters |
+| `rows` | whole number | required | at least 0; at most 10_000_000 |
+| `format` | one of xlsx \| csv | required |  |

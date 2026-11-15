@@ -4377,4 +4377,10 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'rb.chartTable': "차트의 수치",
   'rb.chartLabel': "값 {n}개짜리 차트입니다. 화살표 키로 하나씩 읽고, 이어지는 표에서 모두 볼 수 있습니다.",
   'rb.chartKeys': "차트의 행입니다. 화살표 키로 각 행의 구성을 읽습니다.",
+  'rb.tryExample': "예시로 시작: {name}",
+  'audit.data.exported': "파일을 내보냈습니다",
+  'rb.more': "추가 작업",
+  'rb.undo': "마지막 변경 취소",
+  'rb.loadFailed': "이 보고서를 열 수 없습니다",
+  'rb.viewerNote': "보기와 내보내기는 할 수 있습니다. 보고서를 저장하려면 정식 좌석이 필요합니다.",
 };
