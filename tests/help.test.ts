@@ -5,6 +5,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cleanPageUrl } from '../api/src/routes/help';
 import { supportBlocked } from '../api/src/lib/support';
+import { readTicket } from '../api/src/live/protocol';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
 const STAFF_KEY = 'staff-key-staff-key-staff-key-0123';
@@ -179,6 +180,12 @@ describe('support access, only with consent', () => {
     expect(sAccounts).toEqual(zAccounts);
     const write = await s.browser.post('/api/boards', { name: 'Should not exist', visibility: 'private' });
     expect(write.json.error).toBe('support_read_only');
+    // The page's live ticket only reads: a looking-only visit gets one, quiet, as Zeynep.
+    const ticket = await s.browser.post('/api/live/ticket', { w: [] });
+    expect(ticket.status).toBe(200);
+    const t = await readTicket(env.config.authSecret, ticket.json.k);
+    expect(t?.u).toBe(me.json.user.id);
+    expect(t?.q).toBe(1);
     // Never: devices, keys, support access itself.
     for (const p of ['/api/me/sessions', '/api/dev/keys', '/api/support/grants']) {
       expect((await s.browser.get(p)).json.error).toBe('support_blocked');

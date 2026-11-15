@@ -19,6 +19,7 @@ import { normalizeLocale } from '../../../shared/src/i18n';
 import { audit } from './audit';
 import { safeEqual, sha256Hex } from './crypto';
 import { fail } from './errors';
+import { asksForTicket } from '../live/protocol';
 
 export const SUPPORT_COOKIE = 'app_support';
 /** A support session lasts at most this long, and never past the grant. */
@@ -102,6 +103,8 @@ const NO_CHANGES: RegExp[] = [
 // the company's administration, billing, keys, apps, people, imports or portal.
 const ALLOWED: RegExp[] = [
   /^\/api\/me$/,
+  // The live channel's ticket: it only reads what the person may follow (live/protocol.ts).
+  /^\/api\/live\/ticket$/,
   /^\/api\/(notifications|people|pulse|client-error|boards|tasks|comments|files|time|undo|accounts|checklists|plans|records|views|reports|rhythm|account-fields|record-types|record-comments|renewals|pages|search|activities|health|meeting-types|planned|rollups|connections|automations|trash|help)(\/|$)/,
 ];
 
@@ -164,7 +167,7 @@ export async function signInSupport(c: C): Promise<boolean> {
   if (!mayGrant(org, s.perms ?? [])) fail('support_ended');
   const method = c.req.method;
   if (supportBlocked(method, c.req.path)) fail('support_blocked');
-  const writes = method !== 'GET' && method !== 'HEAD';
+  const writes = method !== 'GET' && method !== 'HEAD' && !asksForTicket(method, c.req.path);
   if (writes && s.level !== 'edit') fail('support_read_only');
 
   c.set('auth', {

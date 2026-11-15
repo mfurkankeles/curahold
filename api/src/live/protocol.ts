@@ -40,6 +40,12 @@ export interface Ticket {
 
 export const TICKET_MS = 60_000;
 
+/** Where a page asks for its ticket. A POST, but it changes nothing: it only reads what the
+ * person may follow. So the read-only ways in (an administrator's preview, a support visit
+ * that may only look) let it through, and the ticket comes out quiet. */
+export const TICKET_PATH = '/api/live/ticket';
+export const asksForTicket = (method: string, path: string) => method === 'POST' && path === TICKET_PATH;
+
 // ------------------------------------------------------------- messages
 
 /** Browser → server. */

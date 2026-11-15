@@ -1,5 +1,6 @@
 // Who sees what, and how: customer reach per role, per-field access,
 // pages of cards (each role's home) and "see it as them".
+import { readTicket } from '../api/src/live/protocol';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Client, login, setup, type Env } from './helpers';
 
@@ -209,6 +210,13 @@ describe('see it as them', () => {
     const write = await ada.req('POST', '/api/accounts', { name: 'Nope' }, as(env.a.ids.lena));
     expect(write.status).toBe(403);
     expect(write.json.error).toBe('preview_read_only');
+    // The page's live ticket only reads, so the preview gets one — as Lena, and quiet (not "here").
+    const ticket = await ada.req('POST', '/api/live/ticket', { w: [] }, as(env.a.ids.lena));
+    expect(ticket.status).toBe(200);
+    const t = await readTicket(env.config.authSecret, ticket.json.k);
+    expect(t?.u).toBe(env.a.ids.lena);
+    expect(t?.q).toBe(1);
+    expect((await ada.req('POST', '/api/live/ticketx', { w: [] }, as(env.a.ids.lena))).status).toBe(403);
     expect((await lena.req('GET', '/api/me', undefined, as(env.a.ids.ada))).status).toBe(403);
     expect((await ada.req('GET', '/api/me/sessions', undefined, as(env.a.ids.lena))).status).toBe(403);
     const log = (await ada.get('/api/admin/audit?action=user.previewed')).json;

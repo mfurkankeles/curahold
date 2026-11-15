@@ -63,6 +63,7 @@ import { portalRoutes } from './routes/portal';
 import { signInSupport } from './lib/support';
 import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { liveRoutes } from './live/routes';
+import { asksForTicket } from './live/protocol';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
@@ -350,7 +351,7 @@ export function createApp(deps: Deps) {
     const previewAs = c.req.header('x-curahold-preview-as');
     if (previewAs && previewAs !== s.user_id) {
       if (!((s.perms ?? []) as string[]).includes('org.manage')) fail('forbidden');
-      if (c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('preview_read_only');
+      if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && !asksForTicket(c.req.method, c.req.path)) fail('preview_read_only');
       if (!/^[0-9a-f-]{36}$/i.test(previewAs) || c.req.path.startsWith('/api/me/sessions')) fail('forbidden');
       const [t] = await deps.db.tenant({ orgId: org.id, userId: s.user_id }, (q) =>
         q.query(
