@@ -183,10 +183,11 @@ connectionRoutes.get('/connections/:id/channels', async (c) => {
   const deps = c.get('deps');
   const conn = await loadConnection(deps, c.get('org').id, id);
   if (!conn) fail('not_found');
+  // A CRM or code-host connection has no messaging adapter: nothing to list, not a crash.
   const adapter = ADAPTERS[conn!.provider];
-  if (!adapter.channels) return c.json({ channels: [] });
+  if (!adapter?.channels) return c.json({ channels: [] });
   try {
-    return c.json({ channels: await adapter.channels(deps, conn!) });
+    return c.json({ channels: await adapter.channels!(deps, conn!) });
   } catch (err) {
     fail('connection_failed', {}, { reason: (err as Error).message });
   }
@@ -199,9 +200,9 @@ connectionRoutes.get('/connections/:id/directory', async (c) => {
   const conn = await loadConnection(deps, c.get('org').id, id);
   if (!conn) fail('not_found');
   const adapter = ADAPTERS[conn!.provider];
-  if (!adapter.directory) return c.json({ people: [], groups: [] });
+  if (!adapter?.directory) return c.json({ people: [], groups: [] });
   try {
-    return c.json(await adapter.directory(deps, conn!));
+    return c.json(await adapter.directory!(deps, conn!));
   } catch (err) {
     fail('connection_failed', {}, { reason: (err as Error).message });
   }

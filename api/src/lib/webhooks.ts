@@ -4,9 +4,11 @@
 import type { Deps } from '../context';
 import { fetchOf, orgUrl, secretsKey } from '../context';
 import type { Q, Row } from '../db';
+import type { AccountField } from '../../../shared/src/model';
 import { hmacHex, unseal } from './crypto';
 import { toTask } from './mappers';
 import { fail } from './errors';
+import { hiddenKeys, stripFields, type Viewer } from './fieldAccess';
 
 const BACKOFF_MIN = [1, 5, 30, 120, 360];
 const MAX_ATTEMPTS = 6;
@@ -71,6 +73,30 @@ async function payloadOf(q: Q, orgId: string, event: string, id: string): Promis
   return cm ? { id: cm.id, taskId: cm.task_id, authorId: cm.author_id, body: cm.body, createdAt: cm.created_at } : null;
 }
 
+/** The field rules that apply to a customer or record payload, and the roles of the people who set up the webhooks. */
+async function fieldRules(q: Q, orgId: string, data: Record<string, unknown> | null, hooks: Row[]) {
+  const viewers = new Map<string, Viewer>();
+  let defs: AccountField[] = [];
+  if (!data || !('fields' in data)) return { defs, viewers };
+  defs =
+    'type' in data
+      ? ((await q.query('select fields from record_types where org_id = $1 and key = $2', [orgId, data.type]))[0]?.fields ?? [])
+      : ((await q.query('select account_fields from orgs where id = $1', [orgId]))[0]?.account_fields ?? []);
+  const ids = hooks.map((h) => h.created_by).filter(Boolean);
+  if (ids.length && defs.some((d) => d.access?.view?.length)) {
+    const rows = await q.query(`select u.id, u.seat, r.key, r.perms from users u join roles r on r.id = u.role_id where u.org_id = $1 and u.id = any ($2::uuid[]) and u.status = 'active'`, [orgId, ids]);
+    for (const r of rows) viewers.set(r.id, { roleKey: r.key, perms: r.perms ?? [], seat: r.seat });
+  }
+  return { defs, viewers };
+}
+
+/** The payload as `viewer` may see it; nobody known (the person left): only fields open to everyone. */
+function forViewer(data: Record<string, unknown>, defs: AccountField[], viewer: Viewer | null): Record<string, unknown> {
+  if (!('fields' in data) || !defs.some((d) => d.access?.view?.length)) return data;
+  const hidden = viewer ? hiddenKeys(defs, viewer) : new Set(defs.filter((d) => d.access?.view?.length).map((d) => d.key));
+  return { ...data, fields: stripFields((data.fields ?? {}) as Record<string, unknown>, hidden) };
+}
+
 export async function signBody(secret: string, body: string, at: number) {
   return `t=${at},v1=${await hmacHex(secret, `${at}.${body}`)}`;
 }
@@ -123,18 +149,19 @@ export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
     ),
   );
   for (const e of claimed) {
-    const { hooks, data, slug } = await deps.db.system(async (q) => ({
-      hooks: await q.query('select * from webhooks where org_id = $1 and active and $2 = any (events)', [e.org_id, e.event]),
-      data: await payloadOf(q, e.org_id, e.event, e.entity_id),
-      slug: (await q.query('select slug from orgs where id = $1', [e.org_id]))[0]?.slug,
-    }));
+    const { hooks, data, slug, defs, viewers } = await deps.db.system(async (q) => {
+      const hooks = await q.query('select * from webhooks where org_id = $1 and active and $2 = any (events)', [e.org_id, e.event]);
+      const data = await payloadOf(q, e.org_id, e.event, e.entity_id);
+      return { hooks, data, slug: (await q.query('select slug from orgs where id = $1', [e.org_id]))[0]?.slug, ...(await fieldRules(q, e.org_id, data, hooks)) };
+    });
     if (!hooks.length || !data) {
       await deps.db.system((q) => q.query(`update webhook_events set state = 'sent' where id = $1`, [e.id]));
       continue;
     }
-    const body = JSON.stringify({ id: e.id, event: e.event, occurredAt: e.created_at, company: slug, url: orgUrl(deps.config, slug), data });
     let allOk = true;
     for (const h of hooks) {
+      // A webhook carries what the person who set it up may see: fields hidden from their role stay out.
+      const body = JSON.stringify({ id: e.id, event: e.event, occurredAt: e.created_at, company: slug, url: orgUrl(deps.config, slug), data: forViewer(data, defs, viewers.get(h.created_by) ?? null) });
       const status = await postWebhook(deps, h, body, e.event);
       const ok = status >= 200 && status < 300;
       allOk &&= ok;

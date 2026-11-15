@@ -108,7 +108,8 @@ const upload = (who: Client, path: string) => {
 };
 
 beforeAll(async () => {
-  env = await setup({ connectors: { demoCrm: true }, portalDomain: 'portal.curahold.test' });
+  // A named platform owner, as production requires: no company administrator is the owner.
+  env = await setup({ connectors: { demoCrm: true }, portalDomain: 'portal.curahold.test', owner: 'owner@curahold.test' });
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
   stranger = await login(env, 'beta', 'ada@demo.example');
@@ -250,3 +251,128 @@ describe('every address that names a thing by id', () => {
 
 /** Addresses that refuse before looking the thing up, with what they answer. */
 const EARLY: string[] = [];
+
+// ---------------------------------------------------------------- the authorisation matrix
+//
+// Every role × every address of the API, inside one company. What each address needs is read
+// from its own code (a writing seat, permissions; scripts/docs/routes.ts) and, where a whole
+// area belongs to one permission whatever its handlers say, from POLICY below, written
+// independently. A person without what an address needs is refused (4xx) and nothing of the
+// company changes; a person with it is never told "not allowed" when reading. Writes that would
+// succeed are not made (they would change what the next call finds), except the few a
+// read-only seat may make (VIEWER_WRITES), which are pinned so a new one is looked at.
+
+/** Areas that need a permission whatever their handlers ask for (any one of the list). */
+const POLICY: [RegExp, string[], ('GET' | 'WRITE' | 'ALL')?][] = [
+  [/^\/admin\/(users|teams|join-requests)/, ['users.manage', 'teams.manage', 'org.manage']],
+  [/^\/admin\/(roles|domains|org|errors|access)/, ['org.manage']],
+  [/^\/admin\/audit/, ['audit.view', 'org.manage']],
+  [/^\/sso\/settings/, ['org.manage']],
+  [/^\/dev\/webhooks|^\/dev\/inbound/, ['connections.manage']],
+  // Reading a connection's details needs the permission; its channel list does not (a board owner picks a channel).
+  [/^\/connections\/:id(?!\/channels$)/, ['connections.manage'], 'ALL'],
+  [/^\/connections/, ['connections.manage'], 'WRITE'],
+  [/^\/admin\/users\/:id\/access/, ['users.manage', 'org.manage']],
+  // Curahold's own whole-business numbers: the platform owner only, never a company role.
+  [/^\/metrics/, ['platform.owner']],
+  [/^\/setup/, ['org.manage'], 'ALL'],
+  [/^\/automations/, ['automations.manage'], 'WRITE'],
+  [/^\/portal\/settings/, ['org.manage'], 'WRITE'],
+  [/^\/support\/(policy|recording)/, ['org.manage'], 'WRITE'],
+  [/^\/account-fields/, ['org.manage', 'accounts.manage'], 'WRITE'],
+  [/^\/record-types/, ['org.manage', 'accounts.manage'], 'WRITE'],
+];
+
+/** What a read-only seat may still change: its own things. Pinned; a new entry is a decision. */
+const VIEWER_WRITES: string[] = [
+  'PATCH /me', // their own name, language, notification settings
+  'POST /me/calendar', // their own calendar link
+  'DELETE /me/calendar',
+  'POST /notifications/read',
+  'POST /consent', // their own cookie choice
+  'POST /client-error', // an error their browser reports
+  'POST /replay', // their own consented session recording
+  'POST /support/leave', // ending a support visit
+  'POST /views', // their own saved view of a board they can see
+  'PUT /tasks/:id/watch', // following a task they can see
+  'DELETE /tasks/:id/watch',
+  'POST /tasks/:id/mute',
+  'POST /dev/keys', // their own key, read-only like their seat (tests/developer.test.ts)
+  'DELETE /dev/keys/:id', // revoking their own key; someone else's is not theirs to see (row-level security)
+];
+
+type Person = { name: string; who: () => Client; perms: string[]; seat: 'full' | 'viewer' };
+
+describe('every role × every address', () => {
+  it('is refused without what it needs, and changes nothing; is never refused a read it may make', async () => {
+    const org = env.a.orgId;
+    // A role with no permission at all, on a full seat: what a newly made role starts from.
+    const [role] = await sys<{ id: string }>(`insert into roles (org_id, key, name, perms) values ($1, 'nothing', 'Nothing', '{}') returning id`, [org]);
+    await sys(`insert into users (org_id, email, name, role_id, seat, status) values ($1, 'nothing@demo.example', 'No Perms', $2, 'full', 'active')`, [org, role.id]);
+    const mert = await login(env, 'acme', 'mert@demo.example');
+    const sofia = await login(env, 'acme', 'sofia@demo.example');
+    const nothing = await login(env, 'acme', 'nothing@demo.example');
+    const permsOf = async (key: string) => (await sys<{ perms: string[] }>(`select perms from roles where org_id = $1 and key = $2`, [org, key]))[0].perms;
+    const people: Person[] = [
+      { name: 'admin', who: () => ada, perms: await permsOf('admin'), seat: 'full' },
+      { name: 'manager', who: () => mert, perms: await permsOf('manager'), seat: 'full' },
+      { name: 'member', who: () => lena, perms: await permsOf('member'), seat: 'full' },
+      { name: 'viewer', who: () => sofia, perms: await permsOf('viewer'), seat: 'viewer' },
+      { name: 'nothing', who: () => nothing, perms: [], seat: 'full' },
+    ];
+
+    const PUBLIC = /^\/(auth|signup|sso\/:slug|scim|desk|hooks|inbound|oauth\/callback|connect\/callback|billing\/webhook|inbound|health|join|support\/enter|help-files|calendar\/:file|tickets|platform)/;
+    const routes = readRoutes().filter((r) => r.api && !PUBLIC.test(r.path) && !NOT_BY_ID[`${r.method} ${r.path}`]);
+    const ids = async (table: string, where?: string) =>
+      (await sys<{ id: string }>(`select id from ${table} where org_id = $1 ${where ? `and ${where}` : ''} order by id limit 2`, [org])).map((r) => r.id);
+    const tasks = await ids('tasks', 'parent_id is null');
+    const filled = async (path: string) => {
+      const kind = KINDS.find(([re]) => re.test(path));
+      const [id] = kind ? await ids(kind[1], kind[2]) : [undefined];
+      return { id, path: path.replace(':id', id ?? '00000000-0000-4000-8000-000000000000').replace(':other', tasks[1]).replace(':object', 'Account').replace(':taskId', tasks[0]).replace(':remoteId', 'rem-1') };
+    };
+    const needs = (method: string, path: string, r: (typeof routes)[number]) => {
+      const write = method !== 'GET';
+      const anyOf = POLICY.filter(([re, , when]) => re.test(path) && (!when || when === 'ALL' || (when === 'WRITE') === write)).map(([, p]) => p);
+      return { writer: r.writer, perms: r.perms, anyOf };
+    };
+    const allowed = (p: Person, n: ReturnType<typeof needs>, method: string) =>
+      (!n.writer || p.seat === 'full') &&
+      (method === 'GET' || p.seat === 'full' || VIEWER_WRITES.includes(`${method}`)) &&
+      n.perms.every((x) => p.perms.includes(x)) &&
+      n.anyOf.every((set) => set.some((x) => p.perms.includes(x)));
+
+    const before = await picture(env, org);
+    const wrong: string[] = [];
+    const viewerWrote: string[] = [];
+    let calls = 0;
+    for (const p of people) {
+      for (const r of routes) {
+        const key = `${r.method} ${r.path}`;
+        const n = needs(r.method, r.path, r);
+        if (p.seat === 'viewer' && VIEWER_WRITES.includes(key)) continue;
+        const may = allowed(p, n, r.method);
+        if (may && r.method !== 'GET') continue;
+        const { id, path } = await filled(r.path);
+        const special = OVERRIDES[key]?.({ board: env.a.boards.csBoard, user: env.a.ids.lena, otherTask: tasks[1] }) ?? {};
+        const body = special.body ?? Object.fromEntries(r.body.filter((f) => f.required).map((f) => [f.name, sample(f, id ?? '00000000-0000-4000-8000-000000000000')]));
+        const address = `/api${path}${special.query ?? ''}`;
+        const who = p.who();
+        const res = /\/files$|\/file$/.test(r.path) && r.method === 'POST' ? await upload(who, address) : await who.req(r.method, address, r.method === 'GET' ? undefined : body);
+        calls++;
+        if (!may && !(res.status >= 400 && res.status < 500)) (p.seat === 'viewer' && r.method !== 'GET' && !n.perms.length && !n.anyOf.length ? viewerWrote : wrong).push(`${p.name}: ${key} → ${res.status} (needs ${[n.writer ? 'a full seat' : '', ...n.perms, ...n.anyOf.map((s) => s.join('|'))].filter(Boolean).join(', ') || 'a full seat'})`);
+        // 502/503: the outside service did not answer (a test company's made-up Jira); anything else 5xx is a crash.
+        if (res.status >= 500 && res.status !== 502 && res.status !== 503) wrong.push(`${p.name}: ${key} → ${res.status} (a crash)`);
+        else if (may && [401, 403].includes(res.status)) wrong.push(`${p.name}: ${key} → ${res.status} although allowed: ${JSON.stringify(res.json).slice(0, 120)}`);
+      }
+    }
+    expect(wrong, 'role × address mismatches').toEqual([]);
+    expect(viewerWrote, 'writes a read-only seat could make that are not in VIEWER_WRITES').toEqual([]);
+    const after = await picture(env, org);
+    // users: last seen; roles: the one made above; subscriptions: reading the plan starts the trial row the first time (billing/service.ts).
+    for (const table of Object.keys(before)) if (!['users', 'roles', 'subscriptions'].includes(table)) expect(after[table], table).toEqual(before[table]);
+    expect(calls).toBeGreaterThan(routes.length * 2);
+    // Every pinned self-service write is still an address (a removed one leaves the list).
+    for (const key of VIEWER_WRITES) expect(routes.some((r) => `${r.method} ${r.path}` === key), key).toBe(true);
+  });
+});

@@ -19,7 +19,7 @@ import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
 import { saveUndo } from '../lib/undo';
 import { toTrash } from '../lib/trash';
-import { changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
+import { canSeeField, changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
 
 export const accountRoutes = new Hono<AppEnv>();
 
@@ -137,7 +137,8 @@ accountRoutes.get('/accounts/whitespace', async (c) => {
     const [type] = await q.query('select id, fields from record_types where id = $1 and archived_at is null', [typeId]);
     if (!type) fail('not_found');
     const def = (type.fields as AccountField[]).find((f) => f.key === field && f.type === 'select');
-    if (!def) fail('validation', { fields: 'field' }, { fields: ['field'] });
+    // A field hidden from this person is not counted for them either.
+    if (!def || !canSeeField(def, c.get('auth'))) fail('validation', { fields: 'field' }, { fields: ['field'] });
     const cells = await q.query<{ account_id: string; v: string; n: number }>(
       `select r.account_id, r.fields->>$2 as v, count(*)::int as n from records r
         where r.type_id = $1 and r.archived_at is null and r.account_id is not null and r.fields->>$2 is not null

@@ -250,7 +250,14 @@ timelineRoutes.get('/accounts/:id/health', async (c) => {
     history: await q.query(`select day::text as day, score from health_history where account_id = $1 and day > app_today() - 91 order by day`, [id]),
   }));
   const cfg = healthConfig(c.get('org').settings?.health ?? DEFAULT_HEALTH);
-  return c.json({ health: result, bands: cfg.bands, history });
+  // A signal read from a field this person may not see keeps its points but not the field's value.
+  const defs = c.get('org').account_fields as AccountField[];
+  const hidden = (key: unknown) => {
+    const def = defs.find((f) => f.key === key);
+    return !!def && !canSeeField(def, viewer(c));
+  };
+  const health = result && { ...result, parts: result.parts.map((p) => (hidden(p.detail?.field) ? { ...p, detail: { field: p.detail.field } } : p)) };
+  return c.json({ health, bands: cfg.bands, history });
 });
 
 timelineRoutes.get('/health/config', async (c) => {

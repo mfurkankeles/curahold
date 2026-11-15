@@ -10,6 +10,7 @@ import type { Deps } from '../context';
 import type { Q } from '../db';
 import { localDate, localHour } from './automations';
 import { scoreAccounts } from './health';
+import { canSeeField } from './fieldAccess';
 import { enqueue, prefsOf } from './notify';
 
 const ITEMS = 5;
@@ -47,8 +48,14 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
   const ids = await portfolioOf(q, orgId, userId);
   if (!ids.length) return null;
   const today = localDate(now, org.timezone || 'UTC');
-  const renewal = defs.find((f) => f.key === 'renewal_date') ?? defs.find((f) => f.type === 'date' && /renew|yenile/i.test(`${f.key} ${f.label.en ?? ''} ${f.label.tr ?? ''}`));
-  const value = defs.find((f) => f.type === 'money' && !f.rollup);
+  // The summary shows only fields the person may see (the same rule as every screen and the API).
+  const [me] = await q.query(`select u.seat, r.key, r.perms from users u join roles r on r.id = u.role_id where u.org_id = $1 and u.id = $2`, [orgId, userId]);
+  const viewer = me ? { roleKey: me.key, perms: me.perms ?? [], seat: me.seat } : null;
+  const sees = (f: AccountField | undefined) => !!f && !!viewer && canSeeField(f, viewer);
+  const renewalDef = defs.find((f) => f.key === 'renewal_date') ?? defs.find((f) => f.type === 'date' && /renew|yenile/i.test(`${f.key} ${f.label.en ?? ''} ${f.label.tr ?? ''}`));
+  const renewal = sees(renewalDef) ? renewalDef : undefined;
+  const valueDef = defs.find((f) => f.type === 'money' && !f.rollup);
+  const value = sees(valueDef) ? valueDef : undefined;
 
   const renewals = renewal
     ? await q.query(
@@ -63,7 +70,7 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
 
   // Health: now against a week ago, with the signal that cost the most points.
   const drops: { id: string; name: string; from: number; to: number; reason: Record<string, unknown> | null }[] = [];
-  if (defs.some((f) => f.health)) {
+  if (sees(defs.find((f) => f.health))) {
     const rows = await q.query(
       `select a.id, a.name, (a.fields->>'${HEALTH_FIELD}')::int as now_score,
               (select h.score from health_history h where h.org_id = a.org_id and h.account_id = a.id and h.day <= $3::date - 7 order by h.day desc limit 1) as before
@@ -75,7 +82,8 @@ export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date
     for (const r of fell) {
       const parts = (why.get(r.id)?.parts ?? []).filter((p: any) => p.points !== null && p.share > 0);
       const worst = parts.sort((x: any, y: any) => y.share - y.earned - (x.share - x.earned))[0];
-      drops.push({ id: r.id, name: r.name, from: r.before, to: r.now_score, reason: worst && worst.share > worst.earned ? { key: worst.key, ...worst.detail } : null });
+      const detail = worst?.detail?.field && !sees(defs.find((f) => f.key === worst.detail.field)) ? { field: worst.detail.field } : worst?.detail;
+      drops.push({ id: r.id, name: r.name, from: r.before, to: r.now_score, reason: worst && worst.share > worst.earned ? { key: worst.key, ...detail } : null });
     }
   }
 
