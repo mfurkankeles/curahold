@@ -15,36 +15,40 @@ searchRoutes.get('/search', async (c) => {
   // Plain text only: the wildcard characters of LIKE are taken literally.
   const like = `%${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
   const prefix = `${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+  // One statement, one trip to the database: the five lists are asked together (inside the same access rules).
   const out = await run(c, async (q) => {
-    // Found by their text first (see app_find_* in the migrations), then read like anything else.
-    const accounts = await q.query(
-      `select id, name, owner_id from accounts where id = any(array(select app_find_accounts(fold_text($1), fold_text($2), ${PER_KIND})))
-        order by (name_fold like fold_text($2)) desc, sort_key(name_fold, name_tr)`,
+    const list = (sql: string) => `(select coalesce(json_agg(x), '[]'::json) from (${sql}) x)`;
+    const [r] = await q.query(
+      `select
+        ${list(
+          // Found by their text first (see app_find_* in the migrations), then read like anything else.
+          `select id, name, owner_id from accounts where id = any(array(select app_find_accounts(fold_text($1), fold_text($2), ${PER_KIND})))
+            order by (name_fold like fold_text($2)) desc, sort_key(name_fold, name_tr)`,
+        )} as accounts,
+        ${list(
+          // A task by its own title, or by its customer's name.
+          `select t.id, t.title, t.due_date::text as due, t.board_id, b.name as board_name, a.name as account_name
+             from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
+            where t.archived_at is null and b.archived_at is null
+              and (t.id = any(array(select app_find_tasks(fold_text($1), fold_text($2), ${PER_KIND * 4}))) or t.account_id = any(array(select app_find_accounts(fold_text($1), fold_text($2), ${PER_KIND}))))
+            order by (t.title_fold like fold_text($2)) desc, t.updated_at desc limit ${PER_KIND}`,
+        )} as tasks,
+        ${list(
+          `select r.id, r.name, r.account_id, a.name as account_name, rt.key as type_key, rt.name as type_name
+             from records r join record_types rt on rt.id = r.type_id left join accounts a on a.id = r.account_id
+            where r.id = any(array(select app_find_records(fold_text($1), fold_text($2), ${PER_KIND})))
+            order by (r.name_fold like fold_text($2)) desc, sort_key(r.name_fold, r.name_tr)`,
+        )} as records,
+        ${list(`select id, name from boards where archived_at is null and fold_text(name) like fold_text($1) order by sort_text(name) limit ${PER_KIND}`)} as boards,
+        ${list(
+          `select id, name, email from users where status in ('active', 'invited') and (fold_text(name) like fold_text($1) or email ilike $1)
+            order by (fold_text(name) like fold_text($2)) desc, sort_text(name) limit ${PER_KIND}`,
+        )} as people`,
       [like, prefix],
     );
-    // A task by its own title, or by its customer's name.
-    const tasks = await q.query(
-      `select t.id, t.title, t.due_date::text as due, t.board_id, b.name as board_name, a.name as account_name
-         from tasks t join boards b on b.id = t.board_id left join accounts a on a.id = t.account_id
-        where t.archived_at is null and b.archived_at is null
-          and (t.id = any(array(select app_find_tasks(fold_text($1), fold_text($2), ${PER_KIND * 4}))) or t.account_id = any(array(select app_find_accounts(fold_text($1), fold_text($2), ${PER_KIND}))))
-        order by (t.title_fold like fold_text($2)) desc, t.updated_at desc limit ${PER_KIND}`,
-      [like, prefix],
-    );
-    const records = await q.query(
-      `select r.id, r.name, r.account_id, a.name as account_name, rt.key as type_key, rt.name as type_name
-         from records r join record_types rt on rt.id = r.type_id left join accounts a on a.id = r.account_id
-        where r.id = any(array(select app_find_records(fold_text($1), fold_text($2), ${PER_KIND})))
-        order by (r.name_fold like fold_text($2)) desc, sort_key(r.name_fold, r.name_tr)`,
-      [like, prefix],
-    );
-    const boards = await q.query(`select id, name from boards where archived_at is null and fold_text(name) like fold_text($1) order by sort_text(name) limit ${PER_KIND}`, [like]);
-    const people = await q.query(
-      `select id, name, email from users where status in ('active', 'invited') and (fold_text(name) like fold_text($1) or email ilike $1)
-        order by (fold_text(name) like fold_text($2)) desc, sort_text(name) limit ${PER_KIND}`,
-      [like, prefix],
-    );
-    return { accounts, tasks, records, boards, people };
+    type Row = Record<string, any>;
+    const rows = (v: unknown): Row[] => (typeof v === 'string' ? JSON.parse(v) : (v as Row[])) ?? [];
+    return { accounts: rows(r.accounts), tasks: rows(r.tasks), records: rows(r.records), boards: rows(r.boards), people: rows(r.people) };
   });
   return c.json({
     accounts: out.accounts.map((r) => ({ id: r.id, name: r.name, ownerId: r.owner_id })),
