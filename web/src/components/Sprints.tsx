@@ -19,6 +19,7 @@ import { KanbanView } from '../pages/BoardPage';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { usePresence } from '../lib/live';
 import { setQuery } from '../lib/router';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
@@ -26,6 +27,7 @@ import { positionBetween, saveTask } from '../lib/tasks';
 import { EmptyState, LoadError, SkeletonRows } from './Empty';
 import { Icon } from './icons';
 import { IssueBadge, PointsChip, useEpics } from './Pm';
+import { Presence } from './Presence';
 import { Confirm, Dialog } from './ui';
 
 const sum = (xs: Task[]) => xs.reduce((n, x) => n + (x.storyPoints ?? 0), 0);
@@ -581,6 +583,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
   const [closing, setClosing] = useState(false);
   const [bump, setBump] = useState(0);
   const sprintId = sprint?.id ?? null;
+  const here = usePresence(sprintId ? `p:${sprintId}` : null);
   const doneKeys = useMemo(() => new Set(board.columns.filter((c) => c.done).map((c) => c.key)), [board]);
   const summary = useSummary(sprintId, refreshKey + bump);
 
@@ -634,6 +637,7 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
         <h2 className="pm-head__title">
           {sprint.name} <StateChip state={sprint.state} /> <SprintDates sprint={sprint} />
         </h2>
+        <Presence who={here.who} />
         {canWrite && (
           <button className="btn btn--small" onClick={() => setClosing(true)}>
             {t('pm.sprint.complete')}

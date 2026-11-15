@@ -31,7 +31,8 @@ import { FavoriteButton } from '../components/Favorites';
 import { ReviewField, ReviewsView } from '../components/Rhythm';
 import { AccountMeetings, TIMELINE_CHANGED } from '../components/Meetings';
 import { AccountPlanned } from '../components/PlannedMeetings';
-import { useLiveScope } from '../lib/live';
+import { useLiveScope, usePresence } from '../lib/live';
+import { Presence } from '../components/Presence';
 import { hoursText } from './Reports';
 import { useTrashToast } from '../lib/trash';
 
@@ -741,6 +742,7 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
 
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
+  const here = usePresence(`a:${id}`);
   const { me, people, boards, canWrite, can, toast } = useStore();
   const trashed = useTrashToast();
   const [data, setData] = useState<{ account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] } | null>(null);
@@ -871,6 +873,7 @@ export function AccountPage({ id }: { id: string }) {
         <PageIcon name="building" />
         <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
         <FavoriteButton kind="account" id={a.id} name={a.name} to={`/accounts/${a.id}`} />
+        <Presence who={here.who} />
         <div className="topbar__spacer" />
         {can('accounts.manage') && (
           <>
@@ -938,7 +941,7 @@ export function AccountPage({ id }: { id: string }) {
             </section>
           )}
         </div>
-        <aside className="sheet account-page__side">
+        <aside className="sheet account-page__side" onInput={here.typing}>
           <OpenIn links={data.account.links} />
           <label className="field">
             <span className="field__label">{t('accounts.owner')}</span>
