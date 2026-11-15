@@ -793,17 +793,24 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
 }
 
 type AccountTab = 'overview' | 'timeline' | 'people' | 'records' | 'details';
+type AccountData = { account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] };
+// The page is drawn again after changes elsewhere in the app (a new key): it starts from what it last
+// showed for this customer and refreshes, instead of flashing back to a skeleton.
+const lastSeen = new Map<string, AccountData>();
 
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
   const here = usePresence(`a:${id}`);
   const { me, people, boards, canWrite, can, toast } = useStore();
   const trashed = useTrashToast();
-  const [data, setData] = useState<{ account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] } | null>(null);
+  const [data, setData] = useState<AccountData | null>(() => lastSeen.get(id) ?? null);
   const [missing, setMissing] = useState(false);
   const { types } = useRecordTypes();
   const fmt = useFieldFormat();
   const phone = usePhone();
+  useEffect(() => {
+    if (data) lastSeen.set(id, data);
+  }, [id, data]);
   const { search } = useLocation();
   const [removing, setRemoving] = useState(false);
   const [title, setTitle] = useState('');

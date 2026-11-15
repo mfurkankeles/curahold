@@ -91,13 +91,17 @@ function Sparkline({ points }: { points: { day: string; score: number }[] }) {
 export type HealthWhyData = { health: HealthResult | null; history: { day: string; score: number }[] };
 
 /** The live score and its reasons for one customer; asked again when `again` changes. */
+const whyCache = new Map<string, HealthWhyData>();
 export function useHealthWhy(accountId: string, on: boolean, again = 0) {
-  const [data, setData] = useState<HealthWhyData | null>(null);
+  const [data, setData] = useState<HealthWhyData | null>(() => whyCache.get(accountId) ?? null);
   useEffect(() => {
     if (!on) return;
     let live = true;
     void get<HealthWhyData>(`/accounts/${accountId}/health`)
-      .then((r) => live && setData(r))
+      .then((r) => {
+        whyCache.set(accountId, r);
+        if (live) setData(r);
+      })
       .catch(() => live && setData({ health: null, history: [] }));
     return () => {
       live = false;

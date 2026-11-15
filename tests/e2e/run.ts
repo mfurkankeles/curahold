@@ -1897,6 +1897,68 @@ await step('product team: a story linked to a customer opens from the customer; 
   pmPage.current = null;
 });
 
+await step('account manager: a meeting, three next steps, one finished on a phone, the customer page follows (≤ 3 min)', async () => {
+  const started = Date.now();
+  // The company works its health score out (an administrator turned it on).
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  const turnedOn = await ada.page.evaluate(async () => {
+    const head = { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' };
+    const { config } = await (await fetch('/api/health/config', { headers: head })).json();
+    return (await fetch('/api/health/config', { method: 'PUT', headers: head, body: JSON.stringify({ config: { ...config, enabled: true } }) })).ok;
+  });
+  expect(turnedOn, 'health scoring could not be turned on');
+  await ada.page.browserContext().close();
+  // Zeynep looks after Velto Mobility. At her desk: the band says how the customer is and why.
+  const desk = await newPage(s.browser, 1440, 900);
+  await signIn(desk.page, s.origin, 'zeynep@demo.example');
+  const [acc] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Velto Mobility'`);
+  await desk.page.goto(`${s.origin}/accounts/${acc.id}`, { waitUntil: 'networkidle0' });
+  await desk.page.waitForSelector('.acc-band .acc-tile--health');
+  await desk.page.waitForFunction(() => !!document.querySelector('.acc-tile--health .acc-tile__reason')?.textContent?.trim());
+  const reasonBefore = await text(desk.page, '.acc-tile--health .acc-tile__reason');
+  // She logs the meeting with three next steps.
+  await (await byText(desk.page, '.btn', 'Toplantı kaydet')).click();
+  await desk.page.waitForSelector('.logform input.input');
+  await desk.page.type('.logform input.input', 'Kullanım toparlama görüşmesi');
+  await desk.page.type('.logform textarea', 'Ürün ekibiyle ortak plan: eğitim, rapor ve haftalık kontrol.');
+  const steps = ['Eğitim oturumunu takvime koy', 'Kullanım raporunu paylaş', 'Haftalık kontrolü başlat'];
+  for (const [i, title] of steps.entries()) {
+    await (await byText(desk.page, '.logform .btn', 'Adım ekle')).click();
+    await desk.page.waitForFunction((n) => document.querySelectorAll('.logform__step').length === n, {}, i + 1);
+    const rows = await desk.page.$$('.logform__step');
+    await (await rows[i].$('input.input'))!.type(title);
+  }
+  await (await byText(desk.page, '.dialog .btn--primary', 'Kaydet')).click();
+  await desk.page.waitForFunction(() => !document.querySelector('.logform'));
+  const [meeting] = await sql(`select id from activities where account_id = $1 and title = 'Kullanım toparlama görüşmesi'`, [acc.id]);
+  expect(meeting, 'the meeting was not logged');
+  const made = await sql(`select id, title from tasks where activity_id = $1 order by title`, [meeting.id]);
+  expect(made.length === 3 && steps.every((x) => made.some((m) => m.title === x)), `three next steps did not become tasks: ${made.map((m) => m.title).join(', ')}`);
+  // The last touch was the weakest reason, or the page now says something new: the band follows at once.
+  await desk.page.waitForFunction((before) => document.querySelector('.acc-tile--health .acc-tile__reason')?.textContent?.trim() !== before, { timeout: 8000 }, reasonBefore);
+  await shot(desk.page, 'ec-01-customer-after-meeting');
+  // On her phone she finishes one.
+  const phone = await newPage(s.browser, 390, 844);
+  await signIn(phone.page, s.origin, 'zeynep@demo.example');
+  await phone.page.goto(`${s.origin}/my`, { waitUntil: 'networkidle0' });
+  await phone.page.waitForFunction((title) => [...document.querySelectorAll('.tasklist__row')].some((r) => r.textContent?.includes(title)), { timeout: 8000 }, steps[0]);
+  await phone.page.evaluate((title) => ([...document.querySelectorAll('.tasklist__row')].find((r) => r.textContent?.includes(title))?.querySelector('.tick') as HTMLElement)?.click(), steps[0]);
+  await phone.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Tamamlandı')), { timeout: 5000 });
+  const [doneTask] = await sql(`select t.status, b.columns from tasks t join boards b on b.id = t.board_id where t.activity_id = $1 and t.title = $2`, [meeting.id, steps[0]]);
+  expect(doneTask && (doneTask.columns as { key: string; done?: boolean }[]).find((c) => c.key === doneTask.status)?.done, 'the step was not finished');
+  await shot(phone.page, 'ec-02-phone-finished');
+  // Back at the desk, without a reload: the customer page drops it from its open tasks.
+  await desk.page.waitForFunction((title) => ![...document.querySelectorAll('#tasks > .taskline')].some((r) => r.textContent?.includes(title)), { timeout: 8000 }, steps[0]);
+  await shot(desk.page, 'ec-03-customer-after-phone');
+  const took = (Date.now() - started) / 1000;
+  console.log(`    account manager journey: ${took.toFixed(1)} s (target 180 s)`);
+  expect(took <= 180, `the journey took ${took.toFixed(1)} s`);
+  expect(desk.errors.length === 0 && phone.errors.length === 0, `console: ${[...desk.errors, ...phone.errors].join(' | ')}`);
+  await phone.page.browserContext().close();
+  await desk.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });
