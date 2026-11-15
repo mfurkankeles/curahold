@@ -57,6 +57,7 @@ import { searchRoutes } from './routes/search';
 import { developerRoutes } from './routes/developer';
 import { mcpRoutes } from './routes/mcp';
 import { identityRoutes } from './routes/identity';
+import { securityTxt } from './routes/securitytxt';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
 import { helpRoutes, supportEntry } from './routes/help';
@@ -202,6 +203,8 @@ export function createApp(deps: Deps) {
   });
 
   app.get('/api/health', (c) => c.json({ ok: true }));
+  // Where to report a vulnerability, on every address (before any company is looked up).
+  app.get('/.well-known/security.txt', securityTxt);
 
   // The central address (app.curahold.com): OAuth returns, chat services'
   // inbound calls and company sign-up — all before any company is known.

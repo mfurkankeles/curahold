@@ -14,13 +14,19 @@ Every query runs under row-level security rules in the database. One company's d
 
 Sessions are bound to the device; a copied cookie does not work on another machine. Going over the device limit signs the oldest session out. See and end your sessions in Your settings → Devices.
 
+## Passkeys and the second step
+
+Besides the emailed link, you can sign in with a **passkey** (fingerprint, face or device PIN) and add a **second step**: an authenticator app, with ten one-time recovery codes for a lost phone. Set them up in **My devices → Sign-in security**, where you can also sign out every other device at once. An administrator can require a second step of administrators or of everyone in **Settings → Sign-in**; it is checked on the server at every sign-in. People who sign in with single sign-on are not asked again: the identity provider does it. Nobody is locked out: an administrator can reset someone's second step, and a self-hosted install has a reset in the server's environment (`RESET_SECOND_STEP`).
+
+Changing roles, single sign-on or SCIM, making an API key, exporting or erasing personal data, removing a person and exporting the activity log ask you to confirm it is you (passkey, app code or an emailed code) when your sign-in is more than ten minutes old.
+
 ## What is kept on the device
 
 So that you can read without a connection, the app keeps a copy of the lists you last saw in the browser's own storage (your tasks, boards, customers, the inbox; not attachments, not settings). The copy stays on that device and in that browser and is sent nowhere. It is removed when you sign out, or at the first connection after your session was ended on the server. On a shared computer, sign out when you are done.
 
 ## Activity log
 
-Sign-ins, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log.
+Sign-ins, second steps, changes to people and roles, connections, API keys, webhooks and personal-data actions are written to the activity log, in Settings → Activity log. The log can be added to, never changed or deleted, not even through the database role the application uses. **Export the log** downloads it with a running SHA-256 fingerprint; the final fingerprint is written to the log too, so a copy can be checked later.
 
 ## Customer portal
 
@@ -28,7 +34,7 @@ The customer portal runs on a separate domain with its own sessions and cookie. 
 
 ## Curahold support's access
 
-Curahold support only comes into a company with a person's consent: they tick the box on a help request and choose for how long (24 hours to 7 days). Support sees what that person sees and, by default, can only look; only administrators can allow changes. Access can be closed at any moment. Every visit, and every change made with permission, is written to the activity log with the support person's name. Administrators can limit this to administrators or turn it off in **Settings → Security → Support access**. Details: [Getting help](/docs/en/getting-help/).
+Curahold support only comes into a company with a person's consent: they tick the box on a help request and choose for how long (24 hours to 7 days). Support sees what that person sees and can only look: it can never change anything. Access ends when the chosen time is up and can be closed at any moment. Every visit, and what support reads while it lasts, is written to the activity log with the support person's name. Administrators can limit this to administrators or turn it off in **Settings → Security → Support access**. Details: [Getting help](/docs/en/getting-help/).
 
 ## Personal data
 

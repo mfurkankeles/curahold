@@ -22,6 +22,8 @@ export interface Env {
   CENTRAL_HOST: string;
   /** Curahold's own support desk; desk.<BASE_DOMAIN> when not set. */
   DESK_HOST?: string;
+  /** Where security researchers write (security.txt): an address or https link. The owner sets it. */
+  SECURITY_CONTACT?: string;
   AUTH_SECRET: string;
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
@@ -117,6 +119,7 @@ export function configFromEnv(env: Env): Config {
     scheme: 'https',
     centralHost: env.CENTRAL_HOST,
     deskHost: env.DESK_HOST || undefined,
+    securityContact: env.SECURITY_CONTACT || undefined,
     singleTenantSlug: env.SINGLE_TENANT_SLUG || undefined,
     authSecret: env.AUTH_SECRET,
     // Request limits key on Cloudflare's own client-address header (lib/ratelimit.ts).

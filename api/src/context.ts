@@ -57,6 +57,8 @@ export interface Config {
   staffKeys?: Record<string, string>;
   /** The platform owner's email: who alone may see the whole-business metrics. Defaults to the first support-staff address. */
   owner?: string;
+  /** security.txt Contact (SECURITY_CONTACT): "mailto:…" or an https address; unset shows a marked placeholder. */
+  securityContact?: string;
   /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
   billing?: BillingConfig;
   /** Where the caller's network address comes from (lib/ratelimit.ts); unset: unknown, no per-address limit. */

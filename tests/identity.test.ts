@@ -254,3 +254,20 @@ describe('the activity log', () => {
     expect((await ada.c.get('/api/admin/audit/export')).json.error).toBe('reauth_required');
   });
 });
+
+describe('security.txt', () => {
+  it('is served on every address, with a marked placeholder until the operator sets the contact', async () => {
+    const r = await env.app.request('https://acme.curahold.test/.well-known/security.txt');
+    expect(r.status).toBe(200);
+    expect(r.headers.get('content-type')).toMatch(/^text\/plain/);
+    const text = await r.text();
+    expect(text).toMatch(/^# PLACEHOLDER/m);
+    expect(text).toMatch(/^Contact: mailto:security-contact-not-set@example\.invalid$/m);
+    expect(text).toMatch(/^Policy: https:\/\/app\.curahold\.test\/docs\/en\/responsible-disclosure\/$/m);
+    const exp = Date.parse(/^Expires: (.+)$/m.exec(text)![1]);
+    expect(exp - Date.now()).toBeGreaterThan(90 * 86400_000);
+    expect(exp - Date.now()).toBeLessThan(366 * 86400_000);
+    // An unknown host gets it too (no company is looked up).
+    expect((await env.app.request('https://nobody-here.curahold.test/.well-known/security.txt')).status).toBe(200);
+  });
+});
