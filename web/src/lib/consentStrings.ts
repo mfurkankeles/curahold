@@ -165,6 +165,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'خيارات الخصوصية',
     reopenAria: 'فتح خيارات الخصوصية وملفات تعريف الارتباط',
     bannerAria: 'الموافقة على الخصوصية وملفات تعريف الارتباط',
+    noneNote: 'لا يقيس هذا التثبيت أي شيء يتجاوز ما يلزم لتشغيله، لذا لا يوجد ما تختاره.',
   },
   he: {
     title: 'הפרטיות שלך, הבחירה שלך',
@@ -184,6 +185,7 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'הגדרות פרטיות',
     reopenAria: 'פתח את הגדרות הפרטיות והעוגיות',
     bannerAria: 'הסכמה לפרטיות ולעוגיות',
+    noneNote: 'ההתקנה הזו לא מודדת דבר מעבר למה שנדרש להפעלתה, ולכן אין מה לבחור.',
   },
   fa: {
     title: 'حریم خصوصی شما، انتخاب شما',
@@ -203,5 +205,6 @@ export const CONSENT_STRINGS: Partial<Record<Locale, ConsentStrings>> = {
     reopen: 'انتخاب‌های حریم خصوصی',
     reopenAria: 'باز کردن انتخاب‌های حریم خصوصی و کوکی',
     bannerAria: 'رضایت حریم خصوصی و کوکی',
+    noneNote: 'این نصب چیزی فراتر از آنچه برای کارکردن لازم است اندازه‌گیری نمی‌کند؛ بنابراین چیزی برای انتخاب وجود ندارد.',
   },
 };
