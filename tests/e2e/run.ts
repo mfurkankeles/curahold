@@ -2176,6 +2176,67 @@ await step('product team acceptance: pick 12 from the backlog by keyboard, start
   expect(errors.length === 0, errors.join(' | '));
 });
 
+await step('product team flow: cycle time and throughput on the roadmap, the whole blocking chain, a sprint card changed in place', async () => {
+  const { page, errors } = await pmUser();
+  const columns = (await sql(`select columns from boards where id = $1`, [pmState.board]))[0].columns;
+  const board = (await api(page, 'POST', '/boards', { name: 'Akış', visibility: 'private', columns })).board.id as string;
+  const make = async (title: string, status = 'backlog') => (await api(page, 'POST', '/tasks', { boardId: board, title, status })).task;
+  // Two finished with a real working stage, one straight to done; the clock is put on them afterwards.
+  const done: any[] = [];
+  for (const title of ['Akış biten 1', 'Akış biten 2', 'Akış doğrudan biten']) {
+    let t = await make(title);
+    for (const status of title.includes('doğrudan') ? ['done'] : ['in_progress', 'done']) t = (await api(page, 'PATCH', `/tasks/${t.id}`, { baseVersion: t.version, status })).task;
+    done.push(t);
+  }
+  await sql(`update task_events set created_at = now() - interval '2 days' where task_id = any($1::uuid[]) and kind = 'status' and data->>'to' = 'in_progress'`, [done.slice(0, 2).map((t) => t.id)]);
+  // A chain: the first waits for the second, which waits for the third.
+  const [c1, c2, c3] = [await make('Akış zincir başı', 'ready'), await make('Akış zincir ortası', 'in_progress'), await make('Akış zincir sonu', 'in_progress')];
+  await api(page, 'POST', `/tasks/${c2.id}/links`, { otherId: c1.id, kind: 'blocks' });
+  await api(page, 'POST', `/tasks/${c3.id}/links`, { otherId: c2.id, kind: 'blocks' });
+  const sprint = (await api(page, 'POST', `/boards/${board}/sprints`, { name: 'Akış 1', startsOn: isoDay(-1), endsOn: isoDay(12) })).sprint.id as string;
+  await api(page, 'PUT', `/sprints/${sprint}/items`, { taskIds: [c1.id, c2.id, c3.id] });
+  await api(page, 'PUT', `/sprints/${sprint}/state`, { state: 'active' });
+  const ada = (await sql(`select id from users where email = 'ada@demo.example'`))[0].id as string;
+
+  const t0 = Date.now();
+  // The sprint card: the whole chain counted on it; points and owner changed in place, one control each.
+  await page.goto(`${s.origin}/b/${board}?view=sprints`, { waitUntil: 'networkidle0' });
+  const card = `[data-card="${c1.id}"]`;
+  await page.waitForSelector(`${card} .pm-cardedit`);
+  const waits = await page.$eval(`${card} .pm-chainchip`, (e) => e.textContent ?? '');
+  expect(waits.includes('2'), `the chain count on the card: ${waits}`);
+  await page.select(`${card} .pm-inline--pts`, '5');
+  await page.select(`${card} .pm-owner__pick`, ada);
+  for (let i = 0; i < 40; i++) {
+    const [row] = await sql(`select story_points::float as pts, assignee_ids from tasks where id = $1`, [c1.id]);
+    if (row.pts === 5 && row.assignee_ids?.[0] === ada) break;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  const [saved] = await sql(`select story_points::float as pts, assignee_ids from tasks where id = $1`, [c1.id]);
+  expect(saved.pts === 5 && saved.assignee_ids[0] === ada, `changed in place: ${JSON.stringify(saved)}`);
+  expect(!(await page.$('.panel')), 'changing a card field opened the task');
+  await shot(page, 'pm-21-card-in-place');
+  // The task panel: two steps back, the task, nothing on.
+  await page.goto(`${s.origin}/b/${board}?view=sprints&task=${c1.id}`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.pm-chain');
+  const steps = await page.$$eval('.pm-chain__step', (els) => els.map((e) => (e as HTMLElement).dataset.dir ?? 'self'));
+  expect(JSON.stringify(steps) === '["up","up","self"]', `chain steps: ${JSON.stringify(steps)}`);
+  await shot(page, 'pm-22-chain');
+  // The roadmap: cycle time from the working stage to done, throughput by week, as charts with their tables.
+  await page.goto(`${s.origin}/b/${board}?view=sprints`, { waitUntil: 'networkidle0' });
+  await press(page, '.pm-bar-row .seg button', 'Yol haritası');
+  await page.waitForSelector('.pm-flow .pm-flow__chart figure');
+  const finished = await page.evaluate(() => [...document.querySelectorAll('.pm-flow .pm-fact')].find((x) => x.querySelector('dt')?.textContent === '12 haftada biten')?.querySelector('dd')?.textContent ?? '');
+  expect(finished === '3', `finished in 12 weeks: ${finished}`);
+  const unstarted = await page.evaluate(() => document.querySelector('.pm-flow')?.textContent?.includes('1 iş çalışılan bir aşamadan geçmeden') ?? false);
+  expect(unstarted, 'the one that went straight to done is not said apart');
+  expect((await page.$$('.pm-flow table.sr-only')).length === 2, 'the charts have no table for screen readers');
+  await shot(page, 'pm-23-flow');
+  const total = Date.now() - t0;
+  console.log(`    product team flow: card changed in place, chain read and flow drawn in ${(total / 1000).toFixed(1)} s`);
+  expect(errors.length === 0, errors.join(' | '));
+});
+
 await step('product team: a story linked to a customer opens from the customer; someone off the board never sees the backlog', async () => {
   const { page, errors } = await pmUser();
   const story = pmState.stories[1];
