@@ -775,7 +775,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
                   <select className="select" value={def.top ?? 12} onChange={(e) => change({ top: Number(e.target.value) })}>
                     {[5, 10, 12, 20, 50].map((n) => (
                       <option key={n} value={n}>
-                        {t('rb.topN', { n })}
+                        {t('rb.topN', { n: f.num(n, 0) })}
                       </option>
                     ))}
                   </select>
@@ -895,11 +895,18 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
 function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: () => void }) {
   const { t } = useI18n();
   const { toast } = useStore();
+  const f = useReportFormat();
   const [pages, setPages] = useState<Page[] | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    void get<{ pages: Page[] }>('/pages?kind=dashboard').then((r) => setPages(r.pages));
-  }, []);
+    setFailed(null);
+    void get<{ pages: Page[] }>('/pages?kind=dashboard').then(
+      (r) => setPages(r.pages),
+      (e) => setFailed(e instanceof ApiFailure ? e.body.message : ''),
+    );
+  }, [attempt]);
   const place = async (p: Page) => {
     if (p.cards.length >= 24) return toast(t('rb.dashFull'), 'error');
     setBusy(true);
@@ -918,7 +925,9 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
   return (
     <Dialog title={t('rb.toDashTitle')} onClose={onClose}>
       {!report.shared && <p className="field__hint u-mt-0">{t('rb.toDashShares')}</p>}
-      {!pages ? (
+      {!pages && failed !== null ? (
+        <LoadError message={failed} onRetry={() => setAttempt((n) => n + 1)} />
+      ) : !pages ? (
         <div className="pane__wait u-height-80" />
       ) : pages.length === 0 ? (
         <EmptyState compact icon="layout" title={t('rb.dashNone')}>
@@ -932,7 +941,7 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
             <li key={p.id}>
               <button className="library__item" disabled={busy} onClick={() => void place(p)}>
                 <span className="library__name">{p.name}</span>
-                <span className="library__help">{t('rb.dashCards', { n: p.cards.length })}</span>
+                <span className="library__help">{t('rb.dashCards', { n: f.num(p.cards.length, 0) })}</span>
               </button>
             </li>
           ))}

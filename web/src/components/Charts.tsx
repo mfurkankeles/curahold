@@ -324,7 +324,7 @@ function Line({ r, label, compact }: Drawn) {
       <div className="linechart__x" aria-hidden="true">
         {r.groups.map((g, k) =>
           shown(k) ? (
-            <span key={g.key} data-thin={(k / every) % 2 === 1 || undefined} data-edge={x(k) < 8 ? 'start' : x(k) > 92 ? 'end' : undefined} style={{ left: `${x(k)}%` }}>
+            <span key={g.key} data-thin={(k / every) % 3 !== 0 || undefined} data-edge={x(k) < 8 ? 'start' : x(k) > 92 ? 'end' : undefined} style={{ left: `${x(k)}%` }}>
               {label(g)}
             </span>
           ) : null,
@@ -377,9 +377,9 @@ function Columns({ r, label, compact, stacked: asked, apart }: Drawn & { stacked
         ))}
       </div>
       <div className="vchart__x" aria-hidden="true" data-time={r.bucket ? true : undefined}>
-        {/* Time labels every few columns; on a narrow card every other one of those (data-thin, CSS). */}
+        {/* Time labels every few columns; on a narrow card every third one of those (data-thin, CSS). */}
         {r.groups.map((g, k) => (
-          <span key={g.key} data-thin={(r.bucket && (k / every) % 2 === 1) || undefined}>
+          <span key={g.key} data-thin={(r.bucket && (k / every) % 3 !== 0) || undefined}>
             {!r.bucket || k % every === 0 ? label(g) : ''}
           </span>
         ))}
@@ -513,7 +513,7 @@ export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
           </tbody>
         </table>
       </div>
-      {(table.more || rows.length < r.matched) && <p className="rtable__more">{t('rb.showing', { shown: rows.length, total: f.num(r.matched, 0) })}</p>}
+      {(table.more || rows.length < r.matched) && <p className="rtable__more">{t('rb.showing', { shown: f.num(rows.length, 0), total: f.num(r.matched, 0) })}</p>}
     </>
   );
 }

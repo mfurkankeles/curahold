@@ -78,7 +78,7 @@
 .linechart__x span { position: absolute; top: 0; transform: translateX(-50%); font-size: var(--fs-2xs); color: var(--ink-3); white-space: nowrap; }
 .linechart__x span[data-edge='start'] { transform: none; }
 .linechart__x span[data-edge='end'] { transform: translateX(-100%); }
-/* A narrow chart keeps every other time label (the ones marked data-thin step aside). */
+/* A narrow chart keeps every third time label (the ones marked data-thin step aside). */
 .vchart, .linechart { container-type: inline-size; }
 @container (max-width: 420px) { :is(.vchart__x, .linechart__x) span[data-thin] { visibility: hidden; } }
 
@@ -291,3 +291,5 @@
 
 /* The builder: what a viewer seat can do here. */
 .rb-note { margin: 0 0 12px; background: var(--info-wash); border-color: transparent; color: var(--info-ink); }
+/* On a phone the builder's tools start a row of their own: its More menu opens towards the page. */
+.rb-tools .popmenu[data-place='down'] { inset-inline-start: 0; inset-inline-end: auto; }

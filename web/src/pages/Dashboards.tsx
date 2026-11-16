@@ -123,7 +123,7 @@ export function DashboardsPage() {
               <h3 className="dashcard__name">{labelOf(d.name, locale)}</h3>
               <p className="dashcard__help">{labelOf(d.help, locale)}</p>
               <div className="dashcard__foot">
-                <span className="muted">{t('rb.dashCards', { n: d.cards.length })}</span>
+                <span className="muted">{t('rb.dashCards', { n: formatNumber(d.cards.length, locale) })}</span>
                 {admin && (
                   <button className="btn btn--small btn--primary" disabled={adding !== null} onClick={() => void add(d.key)}>
                     <Icon name="plus" size={16} />

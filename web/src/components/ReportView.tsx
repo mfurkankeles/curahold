@@ -154,7 +154,7 @@ function SummaryTable({ r }: { r: Ok }) {
           </tbody>
         </table>
       </div>
-      {table?.more && <p className="rtable__more">{t('rb.showing', { shown: table.rows.length, total: f.num(r.matched, 0) })}</p>}
+      {table?.more && <p className="rtable__more">{t('rb.showing', { shown: f.num(table.rows.length, 0), total: f.num(r.matched, 0) })}</p>}
     </>
   );
 }
