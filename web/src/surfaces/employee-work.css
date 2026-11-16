@@ -89,6 +89,7 @@
 .ew-agenda__head .linkbtn { color: var(--ink); font-weight: 650; min-height: var(--tap-min); }
 .ew-agenda__day[data-today] .ew-agenda__head .linkbtn { color: var(--brand-ink); }
 .ew-agenda__head .cal__add { margin-inline-start: auto; opacity: 1; }
+@media (pointer: coarse) { .ew-agenda__head :is(.linkbtn, .cal__add) { min-block-size: var(--tap); min-inline-size: var(--tap); } }
 .ew-agenda .calday__list { border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); overflow: hidden; }
 
 /* A day's rows (the day view and the phone's month list) show whole titles. */

@@ -2863,8 +2863,18 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
    small on purpose (an icon, a tick) keep their look and get an invisible 44 px hit area. */
 @media (pointer: coarse) {
   :is(.btn, .seg button, .tab, .navlink, .popmenu__item, .input, .select, .picker__button) { min-height: var(--tap); }
+  /* A button is as wide as it is tall at least: an icon on its own (a phone hides the words) is still 44 px. */
+  :is(.btn, .seg button) { min-inline-size: var(--tap); }
+  /* The shell: the phone's top bar, the bell, and the sidebar's search, "+" and section toggles. */
+  :is(.mbar__btn, .bell__btn, .sidebar__add) { min-inline-size: var(--tap); min-block-size: var(--tap); }
+  :is(.sidebar__search, .navsec__toggle, .backbar__back, .title-input, .panel__title, .taskline, .record-tabs a) { min-block-size: var(--tap); }
+  /* A text button standing on its own line (the task panel, a section's head) is a full 44 px row. */
+  :is(.panel, .section__head, .daterange) .linkbtn { min-block-size: var(--tap); }
   :is(.btn--icon, .tick) { position: relative; }
   :is(.btn--icon, .tick:not([data-pop]))::after { content: ''; position: absolute; top: 50%; left: 50%; width: var(--tap); height: var(--tap); translate: -50% -50%; }
+  /* Small on purpose, with a 44 px area to aim at around them: the switch, a text link button, a "+n" chip, a calendar "+". */
+  :is(.switch, .linkbtn, .schip--more, .cal__add) { position: relative; }
+  :is(.switch, .linkbtn, .schip--more, .cal__add)::after { content: ''; position: absolute; top: 50%; left: 50%; min-width: var(--tap); width: 100%; height: var(--tap); translate: -50% -50%; }
 }
 
 /* ------------------------------------------------------------ utilities

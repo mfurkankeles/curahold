@@ -59,6 +59,7 @@
   .acc-tile__score { font-size: var(--fs-2xl); }
   .acc-tile__money { font-size: var(--fs-xl); }
   .acc-tile__task { font-size: var(--fs-m); }
+  @media (pointer: coarse) { .acc-tile__task { min-block-size: var(--tap); } }
   .acc-tile__sub, .acc-tile__why { font-size: var(--fs-xs); }
   .acc-tabs .tab { min-height: var(--tap); padding: 8px 12px; }
 }
