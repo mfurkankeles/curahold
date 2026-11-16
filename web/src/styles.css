@@ -586,7 +586,11 @@ tr.vspacer td { padding: 0; border: 0; }
 [data-due='done'] { --rail: var(--done); }
 .card[data-dragging='true'] { opacity: .35; }
 .card--overlay { box-shadow: var(--shadow-2); cursor: grabbing; transform: rotate(1.5deg); }
-.card__title { font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+/* A title breaks between words; a word longer than the column is hyphenated in the page's language
+   (html lang), and only where the browser has no rules for it is it broken without a hyphen. */
+.card__title { font-weight: 500; line-height: 1.35; overflow-wrap: break-word; hyphens: auto; }
+/* A chip on a card never runs past the card: in a narrow column its words wrap inside it. */
+.card .schip { max-width: 100%; height: auto; min-height: 22px; white-space: normal; overflow-wrap: break-word; hyphens: auto; }
 .card[data-due='done'] .card__title { color: var(--ink-2); }
 .card__account { font-size: var(--fs-xs); color: var(--ink-2); }
 .card__meta { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--ink-3); flex-wrap: wrap; }
