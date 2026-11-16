@@ -4507,4 +4507,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "{name} 팀을 삭제했습니다",
   'join.domainRemoved': "@{domain}을(를) 제거했습니다",
   'auto.actions': "{name} 더 보기",
+  'settings.allSaved': "모든 변경 사항이 저장됨",
 };

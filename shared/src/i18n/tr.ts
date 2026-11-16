@@ -4507,4 +4507,5 @@ export const tr: Record<MessageKey, string> = {
   'settings.teams.deleted': "{name} ekibi silindi",
   'join.domainRemoved': "@{domain} kaldırıldı",
   'auto.actions': "{name} için diğer işlemler",
+  'settings.allSaved': "Tüm değişiklikler kaydedildi",
 };

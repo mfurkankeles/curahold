@@ -4507,4 +4507,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "已删除团队“{name}”",
   'join.domainRemoved': "已移除 @{domain}",
   'auto.actions': "“{name}”的更多操作",
+  'settings.allSaved': "所有更改已保存",
 };

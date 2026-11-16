@@ -4507,4 +4507,5 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "تیم {name} حذف شد",
   'join.domainRemoved': "‎@{domain} حذف شد",
   'auto.actions': "کارهای بیشتر برای {name}",
+  'settings.allSaved': "همه تغییرات ذخیره شد",
 };

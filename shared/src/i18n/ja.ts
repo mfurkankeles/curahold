@@ -4507,4 +4507,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "チーム「{name}」を削除しました",
   'join.domainRemoved': "@{domain} を削除しました",
   'auto.actions': "{name} のその他の操作",
+  'settings.allSaved': "すべての変更を保存しました",
 };

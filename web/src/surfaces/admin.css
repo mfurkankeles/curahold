@@ -4,13 +4,15 @@
 /* ---------------------------------------------------------------- settings: two levels, one topic per screen */
 .admin { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 32px; align-items: start; }
 .admin__nav { position: sticky; top: 0; display: grid; gap: 16px; padding-block-end: 24px; }
+/* All topics in reach on a short window: the list scrolls on its own, under the page's title. */
+@media (min-width: 861px) { .admin__nav { max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; padding-inline-end: 4px; scrollbar-width: thin; } }
 .admin__search { position: relative; display: flex; align-items: center; }
 .admin__search > svg { position: absolute; inset-inline-start: 12px; color: var(--ink-3); pointer-events: none; }
 .admin__search .input { width: 100%; padding-inline-start: 36px; }
 .admin__group { display: grid; gap: 4px; }
 .admin__grouplabel { margin: 0; padding-inline: 8px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); text-transform: none; }
 .admin__links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.admin__link { display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 4px 8px; border-radius: var(--r-s); color: var(--ink-2); text-decoration: none; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.admin__link { display: flex; align-items: center; gap: 12px; min-height: 32px; padding: 4px 8px; border-radius: var(--r-s); color: var(--ink-2); text-decoration: none; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
 .admin__link:hover { background: var(--sunk); color: var(--ink); }
 .admin__link[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line); }
 .admin__linkicon { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-s); color: var(--ink-3); }
@@ -190,7 +192,18 @@
 @media (max-width: 860px) {
   .wizard__rail { overflow: visible; flex-wrap: wrap; gap: 4px; padding-block: 4px; }
   .wizard__rail button { justify-content: center; min-width: 44px; min-height: 44px; padding: 4px; }
+  /* The button carries the step's name (aria-label); the panel's title shows it. */
   .wizard__rail .wizard__label,
-  .wizard__rail li[data-state='current'] .wizard__label { display: inline; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wizard__rail li[data-state='current'] .wizard__label { display: none; }
   .wizard__dot { margin-inline-start: 0; }
+}
+
+/* ---------------------------------------------------------------- touch: every control on these screens at least 44 px */
+.admin__back { min-inline-size: var(--tap-min); }
+@media (pointer: coarse) {
+  .admin__back, .admin .btn, .admin .btn--icon { min-inline-size: var(--tap); }
+  .admin .rb-chip, .admin .option-chip > button { min-block-size: var(--tap); }
+  .admin .option-chip > button { min-inline-size: var(--tap); }
+  /* The shared switch keeps its look; a transparent edge makes the target 44 px. */
+  .admin .switch { box-sizing: content-box; width: 38px; height: 22px; border: 11px solid transparent; background-clip: padding-box; margin: -11px; }
 }

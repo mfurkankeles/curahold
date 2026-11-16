@@ -57,7 +57,7 @@ export function SetupPage({ step }: { step: string | null }) {
             const state = s === current ? 'current' : s !== 'finish' && done.has(s) ? 'done' : 'todo';
             return (
               <li key={s} data-state={state}>
-                <button onClick={() => go(s)} aria-current={s === current ? 'step' : undefined}>
+                <button onClick={() => go(s)} aria-current={s === current ? 'step' : undefined} aria-label={label(s)} title={label(s)}>
                   <span className="wizard__dot" aria-hidden="true">
                     {state === 'done' ? '✓' : i + 1}
                   </span>

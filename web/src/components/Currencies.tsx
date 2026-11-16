@@ -10,6 +10,8 @@
 // api/src/lib/fx.ts, which converts inside the SQL that adds amounts up.
 // Saved with PUT /admin/fx (api/src/routes/admin.ts).
 import { useMemo, useState } from 'react';
+import { useUndo } from '../lib/undo';
+import { useUnsaved } from '../lib/unsaved';
 import { COMMON_CURRENCIES, CURRENCY_RE } from '../../../shared/src/money';
 import { ApiFailure, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -44,7 +46,7 @@ export function CurrencySettings() {
       .map(([code, rate]) => ({ code, text: plain(rate) })),
   );
   const [adding, setAdding] = useState('');
-  const [busy, setBusy] = useState(false);
+  const offer = useUndo();
 
   // Every ISO currency the browser knows, the usual ones first; minus those already here.
   const choices = useMemo(() => {
@@ -61,19 +63,34 @@ export function CurrencySettings() {
     setAdding('');
   };
 
-  const save = async () => {
+  const saved = useMemo(
+    () => Object.entries(me.org.fx?.rates ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([code, rate]) => ({ code, text: plain(rate) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [me.org.fx],
+  );
+  const dirty = JSON.stringify(rows) !== JSON.stringify(saved);
+  const save = async (): Promise<boolean> => {
+    if (bad.length) {
+      toast(t('fx.fixRates', { codes: bad.map((r) => r.code).join(', ') }), 'error');
+      return false;
+    }
+    const before = me.org.fx?.rates ?? {};
     const rates = Object.fromEntries(rows.map((r) => [r.code, parseRate(r.text)]).filter(([, v]) => v !== null));
-    setBusy(true);
     try {
       await put('/admin/fx', { rates });
       await reloadMe();
-      toast(t('common.saved'));
+      offer(t('settings.savedTopic', { topic: t('settings.tab.currencies') }), async () => {
+        await put('/admin/fx', { rates: before });
+        await reloadMe();
+        setRows(Object.entries(before).sort(([a], [b]) => a.localeCompare(b)).map(([code, rate]) => ({ code, text: plain(rate) })));
+      });
+      return true;
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-    } finally {
-      setBusy(false);
+      return false;
     }
   };
+  useUnsaved(dirty, { save, discard: () => setRows(saved) });
 
   return (
     <div className="currencies">
@@ -158,9 +175,7 @@ export function CurrencySettings() {
 
       <div className="toolbar">
         {bad.length > 0 && <span className="error-text">{t('fx.fixRates', { codes: bad.map((r) => r.code).join(', ') })}</span>}
-        <button className="btn btn--primary" disabled={busy || bad.length > 0} onClick={save}>
-          {busy ? t('common.saving') : t('common.save')}
-        </button>
+        {!dirty && <span className="field__hint">{t('settings.allSaved')}</span>}
       </div>
     </div>
   );

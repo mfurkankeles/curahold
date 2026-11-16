@@ -166,7 +166,7 @@ export function Sources() {
               // The demo runs in the browser and cannot reach a real CRM: every CRM's button opens the pretend one.
               <DemoCrmConnect id={p.id} app={PROVIDER_NAMES[p.id] ?? p.id} onError={onErr} />
             ) : p.available ? (
-              <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+              <button className="btn btn--small" onClick={() => connect(p)}>
                 <Icon name="plug" size={16} />
                 {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
               </button>
@@ -192,7 +192,7 @@ export function Sources() {
               <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
             </div>
             <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
-            <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+            <button className="btn btn--small" onClick={() => connect(p)}>
               <Icon name="plug" size={16} />
               {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
             </button>
@@ -234,7 +234,7 @@ export function Sources() {
                   <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
                 </div>
                 <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
-                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                <button className="btn btn--small" onClick={() => connect(p)}>
                   <Icon name="plug" size={16} />
                   {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
                 </button>
@@ -259,7 +259,7 @@ export function Sources() {
                   <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
                 </div>
                 <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
-                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                <button className="btn btn--small" onClick={() => connect(p)}>
                   <Icon name="plug" size={16} />
                   {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
                 </button>
@@ -284,7 +284,7 @@ export function Sources() {
                   <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
                 </div>
                 <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
-                <button className="btn btn--primary btn--small" onClick={() => connect(p)}>
+                <button className="btn btn--small" onClick={() => connect(p)}>
                   <Icon name="plug" size={16} />
                   {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
                 </button>
@@ -309,7 +309,7 @@ export function Sources() {
             <p className="field__hint tile__line">{t('devtools.what.jira')}</p>
             <div className="row u-gap-8 u-flex-wrap-wrap">
               {jiraTool.setup === 'oauth' && (
-                <a className="btn btn--primary btn--small" href="/api/connect/jira/start">
+                <a className="btn btn--small" href="/api/connect/jira/start">
                   <Icon name="plug" size={16} />
                   {t('devtools.jira.signIn')}
                 </a>
@@ -329,7 +329,7 @@ export function Sources() {
               <strong>{PROVIDER_NAMES[h]}</strong>
             </div>
             <p className="field__hint tile__line">{t('devtools.what.host', { key: devKey('1a2b3c4d') })}</p>
-            <button className="btn btn--primary btn--small" onClick={() => setHooking(h)}>
+            <button className="btn btn--small" onClick={() => setHooking(h)}>
               <Icon name="plug" size={16} />
               {t('devtools.hook.set', { app: PROVIDER_NAMES[h] })}
             </button>

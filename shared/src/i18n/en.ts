@@ -4522,6 +4522,7 @@ export const en = {
   'settings.teams.deleted': "Team {name} deleted",
   'join.domainRemoved': "@{domain} removed",
   'auto.actions': "More for {name}",
+  'settings.allSaved': "All changes saved",
 } as const;
 
 export type MessageKey = keyof typeof en;

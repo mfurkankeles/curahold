@@ -4507,4 +4507,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "حُذف فريق {name}",
   'join.domainRemoved': "أُزيل ‎@{domain}",
   'auto.actions': "المزيد لـ{name}",
+  'settings.allSaved': "حُفظت كل التغييرات",
 };

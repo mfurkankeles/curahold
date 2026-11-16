@@ -4507,4 +4507,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'settings.teams.deleted': "已刪除團隊「{name}」",
   'join.domainRemoved': "已移除 @{domain}",
   'auto.actions': "「{name}」的更多操作",
+  'settings.allSaved': "所有變更已儲存",
 };
