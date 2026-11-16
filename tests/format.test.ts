@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { dayOrder, formatBytes, formatDate, formatDayNumeric, formatInt, formatMoney, formatMonth, formatNumber, formatPercent, formatTime, monthGrid, parseDay, parseTime, shiftMonth, weekdayNames, weekStart } from '../web/src/lib/format';
+import { dayOrder, formatBytes, formatDate, formatDayNumeric, formatInt, formatMoney, formatMonth, formatNumber, formatPercent, formatTime, formatUnit, monthGrid, parseDay, parseTime, shiftMonth, weekdayNames, weekStart } from '../web/src/lib/format';
 
 const today = '2026-11-15';
 
@@ -97,6 +97,14 @@ describe('numbers, money and dates in text', () => {
     expect(formatDate('2026-11-15', 'fa', { day: 'numeric', month: 'long', year: 'numeric' })).toContain('۲۰۲۶'); // Gregorian, Persian digits
     expect(formatMonth('2026-11', 'en')).toBe('November 2026');
     expect(formatBytes(2 * 1024 * 1024, 'en')).toMatch(/2 ?MB/);
+  });
+  it('writes a duration in each language’s short unit, never a letter that reads as another unit', () => {
+    expect(formatUnit(45, 'minute', 'tr')).toBe('45 dk'); // the narrow unit wrote "45d", read as 45 days
+    expect(formatUnit(2, 'hour', 'tr')).toBe('2 sa');
+    expect(formatUnit(45, 'minute', 'en')).toMatch(/^45 mins?$/);
+    expect(formatUnit(45, 'minute', 'ja')).toMatch(/^45 ?分$/);
+    expect(formatUnit(45, 'minute', 'fa')).toContain('دقیقه');
+    expect(formatUnit(3, 'day', 'tr')).toBe('3 gün');
   });
   it('is the only place that formats: no Intl or toLocale* by hand in the app or the portal', () => {
     const root = join(import.meta.dirname, '..');
