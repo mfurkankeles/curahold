@@ -2619,6 +2619,67 @@ await step('shared controls on a phone: 44 px targets, the assistant steps aside
   await p.browserContext().close();
 });
 
+await step('saved views and export: save a customer view, open it by its link in a new tab, share it, a colleague sees it; the file is logged', async () => {
+  await sql('delete from login_tokens');
+  const started = Date.now();
+  const [z] = await sql(`select u.id from users u join orgs o on o.id = u.org_id where o.slug = 'demo' and u.email = 'zeynep@demo.example'`);
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  const p = ada.page;
+  await p.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.acard');
+  // Zeynep's customers: the owner filter, kept as a view.
+  await p.select('.toolbar select.select', z.id);
+  await p.waitForFunction(() => document.querySelectorAll('.acard').length > 0);
+  await p.click('.savedviews > .btn');
+  await p.waitForSelector('.savedviews input.input');
+  await p.type('.savedviews input.input', 'Zeynep’in müşterileri');
+  await p.click('.savedviews .btn--primary');
+  await p.waitForFunction(() => new URLSearchParams(location.search).get('saved'));
+  const id = new URL(p.url()).searchParams.get('saved')!;
+  expect((await text(p, '.savedviews > .btn')).includes('Zeynep’in müşterileri'), 'the open view is not named on its button');
+  // Its link, in a new tab: the same filter, the view named.
+  const tab = await p.browserContext().newPage();
+  await tab.setViewport({ width: 1440, height: 900 });
+  await tab.goto(`${s.origin}/accounts?saved=${id}`, { waitUntil: 'networkidle0' });
+  await tab.waitForSelector('.savedviews > .btn[data-on]');
+  const owner = await tab.$eval('.toolbar select.select', (el) => (el as HTMLSelectElement).value);
+  expect(owner === z.id, `the link opened owner ${owner}, not Zeynep`);
+  await tab.close();
+  // Shared with the company.
+  await clearToasts(p);
+  await p.click('.savedviews > .btn');
+  await p.waitForSelector('.savedviews__list .btn[aria-pressed="false"]');
+  await p.click('.savedviews__list .btn[aria-pressed="false"]');
+  await p.waitForFunction(() => document.querySelector('.toast')?.textContent?.includes('herkese görünüyor'));
+  const [row] = await sql('select shared from saved_views where id = $1', [id]);
+  expect(row?.shared === true, 'the view was not shared');
+  // The list as a file: made by the server, logged once with its filter.
+  await clearToasts(p);
+  await p.keyboard.press('Escape');
+  await p.click('.listtop__wide .menu-wrap > .btn');
+  await (await byText(p, '.listtop__wide .menu .menu__item', 'Excel')).click();
+  await p.waitForFunction(() => /satır dışa aktarıldı/.test(document.querySelector('.toast')?.textContent ?? ''), { timeout: 15000 });
+  const [log] = await sql(`select a.meta from audit_log a join users u on u.id = a.actor_id where a.action = 'data.exported' and u.email = 'ada@demo.example' order by a.at desc limit 1`);
+  expect(log?.meta?.source === 'accounts' && log.meta.filter?.owner === z.id && log.meta.format === 'xlsx', `export not logged as expected: ${JSON.stringify(log?.meta)}`);
+  // A colleague sees the shared view and opens it.
+  const mert2 = await newPage(s.browser);
+  await signIn(mert2.page, s.origin, 'mert@demo.example');
+  await mert2.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  await mert2.page.click('.savedviews > .btn');
+  await (await byText(mert2.page, '.savedviews__list .popmenu__item', 'Zeynep’in müşterileri')).click();
+  await mert2.page.waitForFunction((zid) => (document.querySelector('.toolbar select.select') as HTMLSelectElement | null)?.value === zid, {}, z.id);
+  expect(new URL(mert2.page.url()).searchParams.get('saved') === id, 'the colleague’s address does not name the view');
+  // A member may not export: no button, nothing asked.
+  const lena = await newPage(s.browser);
+  await signIn(lena.page, s.origin, 'lena@demo.example');
+  await lena.page.goto(`${s.origin}/accounts`, { waitUntil: 'networkidle0' });
+  expect(!(await lena.page.$('.listtop__wide .menu-wrap')), 'a member sees the export button');
+  console.log(`  saved views + export journey: ${((Date.now() - started) / 1000).toFixed(1)} s (save, open by link in a new tab, share, a colleague opens it, export logged)`);
+  for (const who of [ada, mert2, lena]) expect(who.errors.length === 0, `script errors: ${who.errors.join(' | ')}`);
+  for (const who of [ada, mert2, lena]) await who.page.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

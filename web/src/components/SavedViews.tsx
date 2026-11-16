@@ -198,6 +198,8 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
     if (await ctl.save(n, shared)) {
       setName('');
       setShared(false);
+      // Saved: the button now carries the view's name.
+      setOpen(false);
     }
     setBusy(false);
   };
