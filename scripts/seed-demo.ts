@@ -3,18 +3,20 @@
 import type { Db } from '../api/src/db';
 import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
 import { TEMPLATES } from '../shared/src/templates';
-import type { MeetingKind, MeetingRepeat } from '../shared/src/timeline';
+import type { Locale } from '../shared/src/i18n/core';
+import { amount, sayer, seedWords } from './seed-words';
 
+// Their names, like every other text of the demo company, are in its language (scripts/seed-words).
 const PEOPLE = [
-  { key: 'ada', name: 'Ada Demir', role: 'admin', seat: 'full' },
-  { key: 'mert', name: 'Mert Aksoy', role: 'manager', seat: 'full' },
-  { key: 'zeynep', name: 'Zeynep Tunç', role: 'member', seat: 'full' },
-  { key: 'lena', name: 'Lena Fischer', role: 'member', seat: 'full' },
-  { key: 'omar', name: 'Omar Haddad', role: 'member', seat: 'full' },
-  { key: 'sofia', name: 'Sofia Rossi', role: 'viewer', seat: 'viewer' },
+  { key: 'ada', role: 'admin', seat: 'full' },
+  { key: 'mert', role: 'manager', seat: 'full' },
+  { key: 'zeynep', role: 'member', seat: 'full' },
+  { key: 'lena', role: 'member', seat: 'full' },
+  { key: 'omar', role: 'member', seat: 'full' },
+  { key: 'sofia', role: 'viewer', seat: 'viewer' },
 ] as const;
 
-// [name, owner, renewal in N days, annual value, health, tier, website]
+// [name, owner, renewal in N days, annual value (in US dollars), health, tier, website]
 export const ACCOUNTS: [string, string, number, number, string, string, string][] = [
   ['Quillfield Retail', 'zeynep', 160, 84000, 'good', 'enterprise', 'quillfield.example'],
   ['Harborline Bank', 'omar', 45, 126000, 'watch', 'enterprise', 'harborline.example'],
@@ -24,82 +26,26 @@ export const ACCOUNTS: [string, string, number, number, string, string, string][
   ['Fjordnet Telecom', 'omar', 120, 98000, 'watch', 'enterprise', 'fjordnet.example'],
 ];
 
-// The demo's sample data, written in the two languages the demo is offered in (its own decision; the
-// product's built-in content comes from the dictionaries). One table, so no line asks "is it Turkish?".
-const DEMO_TEXT = {
-  en: {
-    ask: (id: string) => `@[Zeynep Tunç](${id}) can you add last quarter's usage chart too?`,
-    planned: [
-      ['review', 'Quarterly business review', 'Usage, goals and the renewal roadmap.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
-      ['meeting', 'New module walkthrough', 'Show the team the new module and take questions.', 2, 45, ['lena'], 'none'],
-      ['call', 'Monthly check-in call', 'A short status and the open items.', 21, 30, ['mert'], 'monthly'],
-    ] as [MeetingKind, string, string, number, number, string[], MeetingRepeat][],
-    t1: 'Prepare the quarterly business review',
-    t2: 'Onboarding kickoff call',
-    t3: 'Look into the usage drop',
-    t4: 'Plan training on the new module',
-    t5: 'Share the satisfaction survey results',
-    t6: 'Send the renewal proposal',
-    t7: 'Get the price increase approved',
-    t8: 'Contract signature',
-    t9: 'Review the budget draft',
-    t10: 'Sprint 1',
-    t11: 'The first sprint',
-    t12: ['Write the agenda', 'Pull usage numbers', 'Send the deck'],
-    t13: 'Business review',
-    t14: 'Goals · Usage · Risks · Roadmap',
-    t15: 'USD',
-    t16: 'CS — General',
-    t17: 'Renewals',
-    t18: 'Ada — notes',
-  },
-  tr: {
-    ask: (id: string) => `@[Zeynep Tunç](${id}) geçen çeyreğin kullanım grafiğini de ekleyebilir misin?`,
-    planned: [
-      ['review', 'Çeyrek iş değerlendirmesi', 'Kullanım, hedefler ve yenileme yol haritası.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
-      ['meeting', 'Yeni modül tanıtımı', 'Ekibe yeni modülü gösterelim ve soruları alalım.', 2, 45, ['lena'], 'none'],
-      ['call', 'Aylık durum araması', 'Kısa durum ve açık işler.', 21, 30, ['mert'], 'monthly'],
-    ] as [MeetingKind, string, string, number, number, string[], MeetingRepeat][],
-    t1: 'Çeyrek iş değerlendirmesi hazırlığı',
-    t2: 'Onboarding başlangıç toplantısı',
-    t3: 'Kullanım düşüşünü araştır',
-    t4: 'Yeni ürün eğitimi planla',
-    t5: 'Memnuniyet anketi sonuçlarını paylaş',
-    t6: 'Yenileme teklifini gönder',
-    t7: 'Fiyat artışı onayını al',
-    t8: 'Sözleşme imzası',
-    t9: 'Bütçe taslağını gözden geçir',
-    t10: 'Sprint 1',
-    t11: 'İlk sprint',
-    t12: ['Gündemi yaz', 'Kullanım rakamlarını çek', 'Sunumu gönder'],
-    t13: 'İş değerlendirmesi',
-    t14: 'Hedefler · Kullanım · Riskler · Yol haritası',
-    t15: 'TRY',
-    t16: 'CS — Genel',
-    t17: 'Yenilemeler',
-    t18: 'Ada — notlar',
-  },
-};
-
 function day(offset: number) {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
 
-export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 'tr' } = {}) {
+export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale } = {}) {
   const slug = opts.slug ?? 'demo';
-  const locale = opts.locale ?? 'en';
-  const W = DEMO_TEXT[locale];
+  const { locale, words: W } = await seedWords(opts.locale ?? 'en');
+  const say = sayer(locale, W);
+  const B = W.base;
   const { orgId, adminId, roleIds } = await createOrg(db, {
     slug,
-    name: 'Demo Company',
+    name: W.company,
     locale,
-    timezone: 'Europe/Istanbul',
-    currency: W.t15,
+    timezone: W.timezone,
+    currency: W.money.currency,
     template: 'customer_success',
     domains: ['demo.example'],
-    admin: { email: 'ada@demo.example', name: 'Ada Demir' },
+    admin: { email: 'ada@demo.example', name: W.people.ada },
     boardMap: {},
   });
   return db.system(async (q) => {
@@ -108,7 +54,7 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       if (p.key === 'ada') continue;
       const [u] = await q.query<{ id: string }>(
         `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'active') returning id`,
-        [orgId, `${p.key}@demo.example`, p.name, roleIds[p.role], p.seat],
+        [orgId, `${p.key}@demo.example`, W.people[p.key], roleIds[p.role], p.seat],
       );
       ids[p.key] = u.id;
     }
@@ -123,8 +69,8 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       }
       return t.id;
     };
-    const cs = await team('Customer Success', 'mert', ['zeynep', 'lena']);
-    await team('Account Management', 'omar', ['ada']);
+    const cs = await team(W.teams.cs, 'mert', ['zeynep', 'lena']);
+    await team(W.teams.am, 'omar', ['ada']);
 
     const cols = defaultColumns(locale);
     let made = 0;
@@ -136,16 +82,16 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       );
       return b.id;
     };
-    const csBoard = await board(W.t16, 'team', cs, 'mert');
-    const renewals = await board(W.t17, 'org', null, 'ada');
-    const privateBoard = await board(W.t18, 'private', null, 'ada');
+    const csBoard = await board(B.boards.cs, 'team', cs, 'mert');
+    const renewals = await board(B.boards.renewals, 'org', null, 'ada');
+    const privateBoard = await board(B.boards.notes, 'private', null, 'ada');
     await q.query('insert into board_members (org_id, board_id, user_id) values ($1, $2, $3)', [orgId, privateBoard, ids.ada]);
 
     const accounts: Record<string, string> = {};
     for (const [name, owner, renewIn, value, health, tier, site] of ACCOUNTS) {
       const [a] = await q.query<{ id: string }>(
         `insert into accounts (org_id, name, owner_id, team_id, fields, created_at) values ($1, $2, $3, $4, $5, now() - interval '200 days') returning id`,
-        [orgId, name, ids[owner], owner === 'omar' ? null : cs, JSON.stringify({ renewal_date: day(renewIn), arr: value, health, tier, website: `https://${site}/` })],
+        [orgId, say(name), ids[owner], owner === 'omar' ? null : cs, JSON.stringify({ renewal_date: day(renewIn), arr: amount(W, value), health, tier, website: `https://${site}/` })],
       );
       accounts[name] = a.id;
     }
@@ -174,21 +120,22 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
       );
       return t.id;
     };
-    const qbr = await task(csBoard, W.t1, 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0][0]);
-    await task(csBoard, W.t2, 'todo', ['lena'], 1, 'normal', ACCOUNTS[2][0]);
-    await task(csBoard, W.t3, 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3][0]);
-    await task(csBoard, W.t4, 'todo', ['lena'], 9, 'low', ACCOUNTS[4][0]);
-    await task(csBoard, W.t5, 'done', ['mert'], -5, 'normal', null);
-    await task(renewals, W.t6, 'doing', ['omar'], 6, 'high', ACCOUNTS[1][0], 'ada');
-    await task(renewals, W.t7, 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
-    await task(renewals, W.t8, 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
-    await task(privateBoard, W.t9, 'todo', ['ada'], 4, 'normal', null, 'ada');
+    const [t1, t2, t3, t4, t5, t6, t7, t8, t9] = B.tasks;
+    const qbr = await task(csBoard, t1, 'doing', ['zeynep'], 3, 'high', ACCOUNTS[0][0]);
+    await task(csBoard, t2, 'todo', ['lena'], 1, 'normal', ACCOUNTS[2][0]);
+    await task(csBoard, t3, 'todo', ['zeynep', 'mert'], -2, 'urgent', ACCOUNTS[3][0]);
+    await task(csBoard, t4, 'todo', ['lena'], 9, 'low', ACCOUNTS[4][0]);
+    await task(csBoard, t5, 'done', ['mert'], -5, 'normal', null);
+    await task(renewals, t6, 'doing', ['omar'], 6, 'high', ACCOUNTS[1][0], 'ada');
+    await task(renewals, t7, 'todo', ['ada'], 14, 'normal', ACCOUNTS[5][0], 'ada');
+    await task(renewals, t8, 'done', ['omar'], -1, 'normal', ACCOUNTS[0][0], 'ada');
+    await task(privateBoard, t9, 'todo', ['ada'], 4, 'normal', null, 'ada');
     await q.query(
       `insert into sprints (org_id, board_id, name, goal, position, created_by) values ($1, $2, $3, $4, 1024, $5)`,
-      [orgId, csBoard, W.t10, W.t11, ids.mert],
+      [orgId, csBoard, B.sprint[0], B.sprint[1], ids.mert],
     );
 
-    for (const [i, title] of (W.t12).entries()) {
+    for (const [i, title] of B.subtasks.entries()) {
       pos += 1024;
       await q.query(
         `insert into tasks (org_id, board_id, parent_id, title, status, assignee_ids, position, created_by)
@@ -202,12 +149,12 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
         orgId,
         qbr,
         ids.mert,
-        W.ask(ids.zeynep),
+        `@[${W.people.zeynep}](${ids.zeynep}) ${B.ask}`,
         [ids.zeynep],
       ],
     );
     // A few meetings still to come, on the first account's calendar.
-    const planned = W.planned;
+    const planned = B.planned;
     for (const [kind, title, agenda, inDays, minutes, who, repeat] of planned) {
       await q.query(
         `insert into planned_meetings (org_id, account_id, created_by, kind, title, agenda, starts_at, minutes, user_ids, repeat)
@@ -218,10 +165,10 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: 'en' | 't
     // One saved meeting type, with an agenda prompt to start from.
     await q.query(
       `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
-      [orgId, JSON.stringify([{ id: 'qbr', label: W.t13, kind: 'review', minutes: 60, prompt: W.t14 }])],
+      [orgId, JSON.stringify([{ id: 'qbr', label: B.meetingType[0], kind: 'review', minutes: 60, prompt: B.meetingType[1] }])],
     );
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);
-    return { orgId, slug, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };
+    return { orgId, slug, locale, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };
   });
 }

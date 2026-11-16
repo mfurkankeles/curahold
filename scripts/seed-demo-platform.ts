@@ -10,6 +10,7 @@
 // in the demo user's own account views — only the cross-tenant owner metrics
 // aggregate it.
 import type { Db } from '../api/src/db';
+import type { Locale } from '../shared/src/i18n/core';
 
 const PRE = [
   'Northpeak', 'Brightwell', 'Vireo', 'Marisol', 'Keystone', 'Oreli', 'Amberline', 'Cobalt',
@@ -39,7 +40,7 @@ function plan(i: number): { status: Status; plan: 'team' | 'business'; interval:
   return { status: 'canceled', plan: planKey, interval, seats, createdAgo: eventAgo + 30 + (i % 40), eventAgo };
 }
 
-export async function seedPlatform(db: Db, opts: { locale?: 'en' | 'tr' } = {}): Promise<void> {
+export async function seedPlatform(db: Db, opts: { locale?: Locale } = {}): Promise<void> {
   const locale = opts.locale ?? 'tr';
   let s = 987654321;
   const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);

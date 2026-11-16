@@ -66,6 +66,12 @@ try {
   ok = false;
 }
 console.log(`ready: ${ok} in ${Date.now() - t0} ms`);
+// Every text the seed sent is said in the demo's language (scripts/seed-words): none left in Turkish.
+if (ok) {
+  await frame!.waitForFunction(() => !!(globalThis as any).__demo, { timeout: 10000 }).catch(() => undefined);
+  const left = await frame!.evaluate(() => (globalThis as any).__demo?.untranslated?.() ?? ['(no __demo)']).catch(() => ['(not ready)']);
+  if (left.length) errors.push(`seed texts not said in English: ${left.slice(0, Number(process.env.SHOW_LEFT ?? 8)).join(' | ')}${left.length > 8 ? ` … (${left.length})` : ''}`);
+}
 /** Chooses Turkish in the bar; the demo starts over with its sample data written in Turkish. */
 async function chooseTurkish(f: NonNullable<typeof frame>, who: string) {
   const first = await f.evaluate(() => ({ pressed: document.querySelector('.demobar__lang button[aria-pressed="true"]')?.textContent, nav: document.querySelector('.sidebar')?.textContent ?? '' }));

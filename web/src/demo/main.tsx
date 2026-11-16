@@ -237,6 +237,8 @@ async function main() {
   await seedShowcase(server.call, server.db, demoLocale);
   const { seedPortal } = await import('./portal-seed');
   await seedPortal(server, demoLocale).catch((e) => console.warn('[demo] portal seed', e));
+  // Any text of the seed this language does not say yet (the browser check reads it).
+  const { untranslated } = await import('../../../scripts/seed-words');
   step(92, 'app');
 
   const [{ App }, { navigate }, { PortalApp }] = await Promise.all([import('../App'), import('../lib/router'), import('../../portal/Portal')]);
@@ -362,7 +364,7 @@ async function main() {
     return true;
   };
   // For the browser checks of every tour (tests/e2e/tours.ts), and nothing else.
-  (globalThis as any).__demo = { play, navigate: go, who: () => current, as: switchTo, reset: () => reload(current === 'customer' ? '/' : '/home') };
+  (globalThis as any).__demo = { play, navigate: go, who: () => current, as: switchTo, reset: () => reload(current === 'customer' ? '/' : '/home'), untranslated: () => [...untranslated] };
   // curahold.com/demo/app/?tour=renewals — a tour from the demo hub.
   const asked = new URLSearchParams(window.location.search).get('tour');
   if (asked) setTimeout(() => void play(asked), 350);

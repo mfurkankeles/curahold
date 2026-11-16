@@ -2,7 +2,8 @@
 // more customers, their stakeholders, upsell opportunities and a working
 // week of tasks. Everything goes through the public API as the admin, so the
 // same rules apply as for any other client. No name here is real.
-import { deepEnglish, toEnglish } from './seed-showcase.en';
+import { amount, deepSay, sayer, seedWords } from './seed-words';
+import type { Locale } from '../shared/src/i18n/core';
 import type { Db } from '../api/src/db';
 import { enqueue } from '../api/src/lib/notify';
 import { buildWeekly } from '../api/src/lib/weekly';
@@ -178,26 +179,38 @@ const HISTORY = [
   'İlk ay değerlendirmesi',
 ];
 
-export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'en') {
-  // Written in Turkish; an English demo gets every text in English on its way in.
-  const tx = (text: string) => (locale === 'en' ? toEnglish(text) : text);
-  const call: Call = locale === 'en' ? (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deepEnglish(body))) as Call) : send;
+export async function seedShowcase(send: Call, db?: Db, locale?: Locale) {
+  // Written in Turkish; any other language gets every text in its own words on its way in
+  // (scripts/seed-words). Without a language, the company's own is used, so the showcase never
+  // lands in another language than the company it fills.
+  const lang = locale ?? (await send<{ org: { locale: Locale } }>('GET', '/api/me')).org.locale;
+  const { locale: L, words: W } = await seedWords(lang);
+  const EN = (await seedWords('en')).words;
+  const tx = sayer(L, W);
+  const deep = deepSay(tx);
+  const call: Call = L === 'tr' ? send : (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deep(body))) as Call);
+  /** A label the company wrote, in its language, and in English for whoever reads the app in English. */
+  const label = (s: string) => (L === 'en' ? { en: EN.text[s] ?? s } : L === 'tr' ? { tr: s, en: EN.text[s] ?? s } : { [L]: tx(s), en: EN.text[s] ?? s });
+  const money = (usd: number) => amount(W, usd);
   const { people, teams } = await call<{ people: { id: string; email: string }[]; teams: { id: string; name: string }[] }>('GET', '/api/people');
   const who = (key: string) => people.find((p) => p.email === `${key}@demo.example`)!.id;
-  const cs = teams.find((t) => t.name === 'Customer Success')?.id ?? null;
+  const cs = teams.find((t) => t.name === W.teams.cs)?.id ?? null;
 
   const accounts: Record<string, string> = {};
   const ownerOf: Record<string, string | null> = {};
+  // The base demo's customers, by the name the seed knows them by (seed-demo.ts).
+  const known = new Map(BASE_ACCOUNTS.map(([n]) => [tx(n), n]));
   for (const a of (await call<{ accounts: { id: string; name: string; ownerId: string | null }[] }>('GET', '/api/accounts?limit=100')).accounts) {
-    accounts[a.name] = a.id;
-    ownerOf[a.name] = a.ownerId;
+    const name = known.get(a.name) ?? a.name;
+    accounts[name] = a.id;
+    ownerOf[name] = a.ownerId;
   }
   for (const [name, owner, renewIn, value, health, tier, site] of ACCOUNTS) {
     const { account } = await call('POST', '/api/accounts', {
       name,
       ownerId: who(owner),
       teamId: owner === 'omar' ? null : cs,
-      fields: { renewal_date: day(renewIn), arr: value, health, tier, website: `https://${site}/` },
+      fields: { renewal_date: day(renewIn), arr: money(value), health, tier, website: `https://${site}/` },
     });
     accounts[name] = account.id;
     ownerOf[name] = who(owner);
@@ -206,42 +219,44 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
   const { type: contact } = await call('POST', '/api/record-types', { kind: 'contact' });
   for (const [acc, first, last, title, decision, stance] of CONTACTS) {
     const email = `${first}.${last}`.toLocaleLowerCase('tr').replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/İ/g, 'i');
-    await call('POST', '/api/records', {
+    // The address stays in Latin letters, as company e-mail addresses are.
+    await send('POST', '/api/records', {
       typeId: contact.id,
       accountId: accounts[acc],
-      name: `${first} ${last}`,
-      fields: { first_name: first, last_name: last, title, decision, stance, email: `${email}@${acc.split(' ')[0].toLowerCase()}.example` },
+      name: W.fullName(tx(first), tx(last)),
+      fields: { first_name: tx(first), last_name: tx(last), title: tx(title), decision, stance, email: `${email}@${acc.split(' ')[0].toLowerCase()}.example` },
     });
   }
   const { type: opportunity } = await call('POST', '/api/record-types', { kind: 'opportunity' });
   for (const [acc, name, amount, closeIn, stage, kind, status] of OPPORTUNITIES) {
     if (!accounts[acc]) continue;
-    await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, ownerId: ownerOf[acc] ?? null, fields: { amount, close_date: day(closeIn), stage, kind, status } });
+    await call('POST', '/api/records', { typeId: opportunity.id, accountId: accounts[acc], name, ownerId: ownerOf[acc] ?? null, fields: { amount: money(amount), close_date: day(closeIn), stage, kind, status } });
   }
 
   // What the team aims for this quarter (a target for each type of deal), a review with every customer each 90 days, and both nudges on.
-  await call('PUT', '/api/rhythm', { targets: { period: 'quarter', amounts: { new: 40000, expansion: 120000, renewal: 80000 }, total: null }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
+  await call('PUT', '/api/rhythm', { targets: { period: 'quarter', amounts: { new: money(40000), expansion: money(120000), renewal: money(80000) }, total: null }, reviewDays: 90, staleDays: 14, escalateDays: 3 });
 
   // A few customers pay in other currencies, at the company's own rates (invented, like everything here).
-  await call('PUT', '/api/admin/fx', { rates: locale === 'en' ? { EUR: 1.08, GBP: 1.27, TRY: 0.029 } : { USD: 34.2, EUR: 37.1, GBP: 43.6 } }).catch(() => undefined);
-  const abroad: Record<string, string> = locale === 'en' ? { 'Fjordnet Telecom': 'EUR', 'Brightmoor Enerji': 'EUR', 'Lindenhall Sigorta': 'TRY' } : { 'Fjordnet Telecom': 'EUR', 'Brightmoor Enerji': 'EUR', 'Harborline Bank': 'USD' };
+  await call('PUT', '/api/admin/fx', { rates: W.money.fx }).catch(() => undefined);
+  const abroad = W.money.abroad;
   for (const [name, currency] of Object.entries(abroad)) {
     if (accounts[name]) await call('PATCH', `/api/accounts/${accounts[name]}`, { currency }).catch(() => undefined);
   }
 
   // Agreements kept as records, each with a link to the signed document (the Renewals view shows them).
   const agreementKind = RECORD_PRESETS.find((x) => x.key === 'agreement')!;
-  const { type: agreement } = await call('POST', '/api/record-types', { kind: 'custom', key: agreementKind.key, name: agreementKind.name, fields: agreementKind.fields }).catch(() => ({ type: null }));
+  // Built-in words, already in every language: sent as they are.
+  const { type: agreement } = await send('POST', '/api/record-types', { kind: 'custom', key: agreementKind.key, name: agreementKind.name, fields: agreementKind.fields }).catch(() => ({ type: null }));
   if (agreement) {
     for (const [acc, , renewIn, value] of [...ACCOUNTS, ...BASE_ACCOUNTS]) {
       if (!accounts[acc] || renewIn > 200) continue;
       const slug = acc.split(' ')[0].toLowerCase();
-      await call('POST', '/api/records', {
+      await send('POST', '/api/records', {
         typeId: agreement.id,
         accountId: accounts[acc],
-        name: `${tx(acc)} — ${locale === 'en' ? 'Master agreement' : 'Ana sözleşme'}`,
+        name: `${tx(acc)} — ${tx('Ana sözleşme')}`,
         ownerId: ownerOf[acc] ?? null,
-        fields: { link: `https://docs.example/agreements/${slug}.pdf`, start_date: day(renewIn - 365), end_date: day(renewIn), value, status: 'signed' },
+        fields: { link: `https://docs.example/agreements/${slug}.pdf`, start_date: day(renewIn - 365), end_date: day(renewIn), value: money(value), status: 'signed' },
       }).catch(() => undefined);
     }
   }
@@ -255,10 +270,10 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
   await call('POST', '/api/pages/from-template', { template: 'team' }).catch(() => undefined);
 
   const { boards } = await call<{ boards: { id: string; name: string }[] }>('GET', '/api/boards');
-  // The starting boards are named in the company's language.
-  const board = (...prefixes: string[]) => boards.find((b) => prefixes.some((x) => b.name.startsWith(x)))!.id;
-  const main = board('CS');
-  const renewals = board('Yenile', 'Renew');
+  // The base demo's boards, by the names it gave them in the company's language.
+  const board = (name: string) => boards.find((b) => b.name === name)!.id;
+  const main = board(W.base.boards.cs);
+  const renewals = board(W.base.boards.renewals);
   // [board, title, column, assignees, due in N days, priority, account]
   const TASKS: [string, string, string, string[], number | null, string, string | null][] = [
     [renewals, 'Yenileme görüşmesi: bütçe onayı', 'doing', ['omar'], 2, 'urgent', 'Lindenhall Sigorta'],
@@ -289,8 +304,8 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
     });
     ids.push(task.id);
   }
-  await call('POST', `/api/tasks/${ids[0]}/comments`, { body: `@[Omar Haddad](${who('omar')}) finans ekibi çeyrek sonuna kadar beklemek istiyor. Bu hafta bir ara çözüm önerelim mi?` });
-  await call('POST', `/api/tasks/${ids[3]}/comments`, { body: `@[Lena Fischer](${who('lena')}) geçen yıl %10 vermiştik, bu sefer kullanım artışını gösterip daha az indirimle kapatmayı deneyelim.` });
+  await call('POST', `/api/tasks/${ids[0]}/comments`, { body: `@[${W.people.omar}](${who('omar')}) finans ekibi çeyrek sonuna kadar beklemek istiyor. Bu hafta bir ara çözüm önerelim mi?` });
+  await call('POST', `/api/tasks/${ids[3]}/comments`, { body: `@[${W.people.lena}](${who('lena')}) geçen yıl %10 vermiştik, bu sefer kullanım artışını gösterip daha az indirimle kapatmayı deneyelim.` });
 
   // The customer's people, to say who was in each meeting.
   const { records: contactRows } = await call<{ records: { id: string; accountId: string; fields: Record<string, unknown> }[] }>('GET', '/api/records?type=contact&limit=500');
@@ -309,7 +324,7 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
       body,
       happenedAt: ago(days, 6 + (days % 8)),
       minutes: more.minutes,
-      contactIds: met(acc, body),
+      contactIds: met(acc, tx(body)),
       userIds: ours,
       ...(more.steps?.length ? { boardId: main, nextSteps: more.steps.map(([title, by, due]) => ({ title, assigneeIds: [who(by)], dueDate: due === null ? null : day(due) })) } : {}),
     });
@@ -334,7 +349,7 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
       agenda,
       startsAt: new Date(Date.now() + inDays * 86_400_000).toISOString().slice(0, 11) + '09:00:00.000Z',
       minutes,
-      contactIds: met(acc, agenda),
+      contactIds: met(acc, tx(agenda)),
       userIds: ours,
       repeat,
     });
@@ -360,17 +375,17 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
     taskFields: [
       {
         key: 'kind',
-        label: { tr: 'Tür', en: 'Type' },
+        label: label('Tür'),
         type: 'select',
         options: [
-          { key: 'meeting', label: { tr: 'Toplantı', en: 'Meeting' }, color: 'sky' },
-          { key: 'analysis', label: { tr: 'Analiz', en: 'Analysis' }, color: 'plum' },
-          { key: 'followup', label: { tr: 'Takip', en: 'Follow-up' }, color: 'honey' },
-          { key: 'training', label: { tr: 'Eğitim', en: 'Training' }, color: 'leaf' },
+          { key: 'meeting', label: label('Toplantı'), color: 'sky' },
+          { key: 'analysis', label: label('Analiz'), color: 'plum' },
+          { key: 'followup', label: label('Takip'), color: 'honey' },
+          { key: 'training', label: label('Eğitim'), color: 'leaf' },
         ],
       },
-      { key: 'outcome', label: { tr: 'Sonuç', en: 'Outcome' }, type: 'text' },
-      { key: 'doc', label: { tr: 'Belge bağlantısı', en: 'Document link' }, type: 'url' },
+      { key: 'outcome', label: label('Sonuç'), type: 'text' },
+      { key: 'doc', label: label('Belge bağlantısı'), type: 'url' },
     ],
     form: { on: true, title: 'CS ekibinden talep', intro: 'Ne lazım olduğunu yaz; ekip sıraya alır, ilerledikçe haber veririz.', fields: ['description', 'account', 'due', 'f:kind'], column: null },
   }).catch(() => undefined);
@@ -391,11 +406,11 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
   // The renewal playbook, and renewals that start by themselves six months ahead, with an opportunity each.
   const ex = PLAYBOOK_EXAMPLES.find((x) => x.key === 'renewal')!;
   const renewalPlan = await call<{ plan: { id: string } }>('POST', '/api/plans', {
-    name: labelOf(ex.name, locale),
-    description: labelOf(ex.description, locale),
+    name: tx(labelOf(ex.name, 'tr')),
+    description: tx(labelOf(ex.description, 'tr')),
     boardId: renewals,
     anchor: 'renewal',
-    tasks: ex.steps.map((st) => ({ title: labelOf(st.title, locale), dueInDays: st.days, assignee: 'account_owner' })),
+    tasks: ex.steps.map((st) => ({ title: tx(labelOf(st.title, 'tr')), dueInDays: st.days, assignee: 'account_owner' })),
   }).catch(() => null);
   await call('PUT', '/api/rhythm', { renewal: { days: 180, planId: renewalPlan?.plan.id ?? null, opportunity: true } }).catch(() => undefined);
   await call('POST', '/api/plans', {
@@ -465,8 +480,8 @@ export async function seedShowcase(send: Call, db?: Db, locale: 'tr' | 'en' = 'e
     // Seven weeks of score history, ending at today's score, so trends and drops show.
     await db.system(async (q) => {
       const rows = await q.query(`select id, name, (fields->>'health_score')::int as score, org_id from accounts where jsonb_typeof(fields->'health_score') = 'number'`);
-      const falling = new Set(['Velto Mobility', 'Kilnworth Yapı', 'Corvina Medya', 'Saltmarsh Turizm']);
-      const rising = new Set(['Brightmoor Enerji', 'Lindenhall Sigorta']);
+      const falling = new Set(['Velto Mobility', 'Kilnworth Yapı', 'Corvina Medya', 'Saltmarsh Turizm'].map(tx));
+      const rising = new Set(['Brightmoor Enerji', 'Lindenhall Sigorta'].map(tx));
       let seed = 7;
       const noise = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280 - 0.5) * 4;
       const points: { org: string; account: string; d: number; score: number }[] = [];

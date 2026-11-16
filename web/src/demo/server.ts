@@ -4,6 +4,7 @@
 // answered here instead of over the network.
 import type { Config, Deps } from '../../../api/src/context';
 import type { Db } from '../../../api/src/db';
+import type { Locale } from '../../../shared/src/i18n/core';
 import { ORIGIN } from './memory';
 
 // --- Browsers drop Cookie / Set-Cookie on script-made requests and responses.
@@ -93,7 +94,7 @@ const DEVICE = (() => {
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 })();
 
-export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: 'tr' | 'en' = 'tr'): Promise<DemoServer> {
+export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: Locale = 'tr'): Promise<DemoServer> {
   step(8, 'db');
   const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
     import('../../../api/src/app'),
