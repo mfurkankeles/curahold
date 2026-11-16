@@ -598,6 +598,103 @@ describe('Jira end to end', () => {
     expect(store.issues.filter((i) => i.fields.summary === 'Write release notes')).toHaveLength(1);
   });
 
+  // ---- conflicts: nothing is lost, whichever side the rule keeps
+  const issue = (id: string) => store.issues.find((i) => i.id === id)!;
+  const notes = async (taskId: string) => ((await ada.get(`/api/tasks/${taskId}`)).json.task.events as any[]).filter((e) => e.kind === 'sync_conflict').map((e) => e.data);
+  /** A change made here, with the clock held back so the eager push waits for the run below. */
+  const editHere = async (fn: () => Promise<unknown>) => {
+    const mark = env.clock.now?.getTime() ?? Date.now();
+    env.clock.now = new Date(Date.now() - 10_000);
+    await fn();
+    await env.settle();
+    env.clock.now = new Date(Math.max(mark, Date.now()) + 60_000);
+  };
+
+  it('the same field changed on both sides: the latest wins and the other is kept in the task’s history', async () => {
+    calls.length = 0;
+    const story = (await tasks()).find((t) => t.title === 'Pay with a card')!;
+    await editHere(() => ada.patch(`/api/tasks/${story.id}`, { baseVersion: story.version, title: 'Pay with a saved card' }));
+    expect(calls).toEqual([]);
+    Object.assign(issue('1002').fields, { summary: 'Pay by card', updated: env.clock.now!.toISOString() });
+    const run = await runSync();
+    expect(run, JSON.stringify(run.errors)).toMatchObject({ status: 'ok' });
+    expect((await ada.get(`/api/tasks/${story.id}`)).json.task.title).toBe('Pay by card');
+    expect(calls.filter((c) => c.body?.fields?.summary)).toEqual([]);
+    expect(await notes(story.id)).toEqual([{ case: 'both', app: 'acme-dev.atlassian.net', kept: 'there', fields: [{ field: 'title', kept: 'Pay by card', lost: 'Pay with a saved card' }] }]);
+    expect(await pending()).toBe(0);
+  });
+
+  it('with "Curahold wins" the change made here goes out, and the other tool’s value is kept in the history', async () => {
+    await env.db.system((q) => q.query(`update connections set config = jsonb_set(config, '{sync,conflict}', '"curahold"') where id = $1`, [connId]));
+    calls.length = 0;
+    const story = (await tasks()).find((t) => t.title === 'Pay by card')!;
+    await editHere(() => ada.patch(`/api/tasks/${story.id}/pm`, { baseVersion: story.version, storyPoints: 13 }));
+    Object.assign(issue('1002').fields, { customfield_10016: 21, updated: env.clock.now!.toISOString() });
+    const run = await runSync();
+    expect(run, JSON.stringify(run.errors)).toMatchObject({ status: 'ok' });
+    await env.db.system((q) => q.query(`update connections set config = jsonb_set(config, '{sync,conflict}', '"latest"') where id = $1`, [connId]));
+    expect((await ada.get(`/api/tasks/${story.id}`)).json.task.storyPoints).toBe(13);
+    expect(issue('1002').fields.customfield_10016).toBe(13);
+    // Newest first.
+    expect((await notes(story.id))[0]).toEqual({ case: 'both', app: 'acme-dev.atlassian.net', kept: 'here', fields: [{ field: 'story_points', kept: 13, lost: 21 }] });
+  });
+
+  it('moved on one side, edited on the other: both changes stay, and no conflict is noted', async () => {
+    calls.length = 0;
+    const story = (await tasks()).find((t) => t.title === 'Pay by card')!;
+    const before = (await notes(story.id)).length;
+    // Moved in Jira (to Done) while the title changes here.
+    await editHere(() => ada.patch(`/api/tasks/${story.id}`, { baseVersion: story.version, title: 'Pay by card or wallet' }));
+    Object.assign(issue('1002').fields, { status: status('Done'), updated: env.clock.now!.toISOString() });
+    await runSync();
+    expect((await ada.get(`/api/tasks/${story.id}`)).json.task).toMatchObject({ title: 'Pay by card or wallet', status: 'done' });
+    expect(issue('1002').fields.summary).toBe('Pay by card or wallet');
+    // Moved here (to another sprint) while the summary changes in Jira.
+    const sp = (await sprints()).find((s) => s.name === 'Sprint 3')!;
+    await editHere(() => ada.put(`/api/sprints/${sp.id}/items`, { taskIds: [story.id] }));
+    Object.assign(issue('1002').fields, { summary: 'Pay by card or digital wallet', updated: env.clock.now!.toISOString() });
+    await runSync();
+    expect((await ada.get(`/api/tasks/${story.id}`)).json.task).toMatchObject({ title: 'Pay by card or digital wallet', sprintId: sp.id });
+    expect(issue('1002').fields.customfield_10020[0].name).toBe('Sprint 3');
+    expect((await notes(story.id)).length).toBe(before);
+    expect(await pending()).toBe(0);
+  });
+
+  it('deleted there while changed here: the task stays, unlinked, with a note; one not changed here is archived', async () => {
+    calls.length = 0;
+    const list = await tasks();
+    const fix = list.find((t) => t.title === 'Fix totals')!;
+    const untouched = list.find((t) => t.title === 'Write release notes')!;
+    await editHere(() => ada.patch(`/api/tasks/${fix.id}`, { baseVersion: fix.version, title: 'Fix the totals' }));
+    store.issues = store.issues.filter((i) => i.id !== '1003' && i.fields.summary !== 'Write release notes');
+    const run = (await ada.post(`/api/connections/${connId}/sync/run`, { full: true })).json.run;
+    expect(run, JSON.stringify(run.errors)).toMatchObject({ status: 'ok', mode: 'full' });
+    const after = await tasks();
+    expect(after.find((t) => t.id === fix.id)).toMatchObject({ title: 'Fix the totals' });
+    expect(after.find((t) => t.id === untouched.id)).toBeUndefined();
+    expect(await notes(fix.id)).toEqual([{ case: 'deleted_there', app: 'acme-dev.atlassian.net' }]);
+    const [link] = await env.db.system((q) => q.query('select ignored from sync_links where connection_id = $1 and entity_id = $2', [connId, fix.id]));
+    expect(link.ignored).toBe(true);
+    expect(calls.filter((c) => c.url.includes('/1003'))).toEqual([]);
+    expect(await pending()).toBe(0);
+  });
+
+  it('deleted here while changed there: it does not come back twice, and the change is in it when it is restored', async () => {
+    const story = (await tasks()).find((t) => t.title === 'Pay by card or digital wallet')!;
+    const gone = await ada.del(`/api/tasks/${story.id}`);
+    expect(gone.status).toBe(200);
+    env.clock.now = new Date(env.clock.now!.getTime() + 60_000);
+    Object.assign(issue('1002').fields, { summary: 'Pay by card, wallet or link', updated: env.clock.now.toISOString() });
+    await runSync();
+    expect((await tasks()).filter((t) => t.title.startsWith('Pay by card'))).toEqual([]);
+    expect((await ada.post(`/api/trash/${gone.json.trashId}/restore`, {})).status).toBe(200);
+    env.clock.now = new Date(env.clock.now.getTime() + 60_000);
+    const run = (await ada.post(`/api/connections/${connId}/sync/run`, { full: true })).json.run;
+    expect(run, JSON.stringify(run.errors)).toMatchObject({ status: 'ok' });
+    expect((await ada.get(`/api/tasks/${story.id}`)).json.task.title).toBe('Pay by card, wallet or link');
+    expect((await tasks()).filter((t) => t.title.startsWith('Pay by card'))).toHaveLength(1);
+  });
+
   it('a default mapping covers exactly what is synced, and an epic made here goes to the epics', () => {
     const maps = jiraDefaultSync('board-1');
     expect(maps.map((m) => [m.remote, m.target, m.issueTypes ?? null])).toEqual([

@@ -13,7 +13,8 @@ import { hoursText } from '../pages/Reports';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { Avatar, Avatars } from './ui';
-import { formatDateTime } from '../lib/format';
+import { formatDateTime, formatNumber } from '../lib/format';
+import { syncConflictText } from './syncNote';
 import { useUndo } from '../lib/undo';
 
 type Reload = () => void | Promise<void>;
@@ -443,6 +444,8 @@ export function HistorySection({ task, board }: { task: TaskDetail; board: Board
         return d.auto ? t('task.history.archivedAuto') : t('task.history.archived');
       case 'restored':
         return t('task.history.restored');
+      case 'sync_conflict':
+        return syncConflictText(d, t, (day) => fmtDate(day), (n) => formatNumber(n, locale, { digits: n % 1 ? 1 : 0 }));
       default:
         return e.kind;
     }

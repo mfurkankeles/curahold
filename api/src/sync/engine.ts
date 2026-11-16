@@ -20,6 +20,7 @@ import { userManagers } from '../lib/people';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
 import { syncMailbox } from './mailsync';
 import { crmFetch } from './relay';
+import { localValue, noteConflict } from './conflicts';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
 
 const MAX_ERRORS = 50;
@@ -961,10 +962,26 @@ async function applyPage(
           const localKeys: string[] | null = pend.fields;
           const remoteNewer = row.modifiedAt ? new Date(row.modifiedAt).getTime() > new Date(pend.changed_at).getTime() : false;
           const keepLocal = r.conn.sync.conflict === 'curahold' || (r.conn.sync.conflict === 'latest' && !remoteNewer);
+          // The side that loses is kept as a note in the task's history (sync/conflicts.ts).
+          const app = r.conn.label || r.conn.provider;
+          // A task's field the other side did not change since it was last read is no conflict: the change made here stands
+          // (the other side only sent its old value along with a change elsewhere). Without what was read last, every field may be.
+          const base = map.target === 'task' ? (link?.remote_values as Record<string, unknown> | null | undefined) : null;
+          if (base) {
+            const mine = new Set(localKeys ?? Object.keys(patch));
+            const same = (k: string) => (base[k] as { $sent?: boolean } | null | undefined)?.$sent === true || JSON.stringify(vals[k] ?? null) === JSON.stringify(base[k] ?? null);
+            patch = Object.fromEntries(Object.entries(patch).filter(([k]) => !(mine.has(k) && same(k))));
+          }
           if (keepLocal) {
             const keys = new Set(localKeys ?? Object.keys(patch));
+            const lost = Object.keys(patch).filter((k) => keys.has(k));
+            if (map.target === 'task' && lost.length)
+              await noteConflict(q, { orgId, task: entity!, app, case: 'both', kept: 'here', board, fields: lost.map((k) => ({ field: k, kept: localValue(entity!, k, board?.columns), lost: patch[k] })) });
             patch = Object.fromEntries(Object.entries(patch).filter(([k]) => !keys.has(k)));
           } else if (localKeys) {
+            const lost = localKeys.filter((k) => k in patch);
+            if (map.target === 'task' && lost.length)
+              await noteConflict(q, { orgId, task: entity!, app, case: 'both', kept: 'there', board, fields: lost.map((k) => ({ field: k, kept: patch[k], lost: localValue(entity!, k, board?.columns) })) });
             const left = localKeys.filter((k) => !(k in patch));
             if (left.length) await q.query('update sync_changes set fields = $2 where org_id = $1 and entity_id = $3 and connection_id = $4', [orgId, left, entity!.id, r.conn.id]);
             else await q.query('delete from sync_changes where org_id = $1 and entity_id = $2 and connection_id = $3', [orgId, entity!.id, r.conn.id]);
@@ -980,6 +997,8 @@ async function applyPage(
           id = await writeEntity(q, r, map, entity, patch);
           if (entity) st.updated++;
           else st.created++;
+          // Changed there while it sits in the trash here: the change is in it, and said so for when it comes back.
+          if (map.target === 'task' && entity?.archived_at) await noteConflict(q, { orgId, task: entity, app: r.conn.label || r.conn.provider, case: 'archived_here' });
         }
         if (map.target === 'account') touchedAccounts.add(id!);
         if (map.target === 'record') {
@@ -987,11 +1006,11 @@ async function applyPage(
           if (vals.account) touchedAccounts.add(vals.account as string);
         }
         await q.query(
-          `insert into sync_links (org_id, connection_id, object, remote_id, entity, entity_id, remote_hash, remote_modified_at, synced_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, now())
+          `insert into sync_links (org_id, connection_id, object, remote_id, entity, entity_id, remote_hash, remote_modified_at, synced_at, remote_values)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, now(), $9::jsonb)
            on conflict (connection_id, object, remote_id) do update set entity_id = excluded.entity_id, remote_hash = excluded.remote_hash,
-              remote_modified_at = excluded.remote_modified_at, synced_at = now()`,
-          [orgId, r.conn.id, map.remote, row.id, map.target, id, remoteHash, row.modifiedAt ?? null],
+              remote_modified_at = excluded.remote_modified_at, synced_at = now(), remote_values = excluded.remote_values`,
+          [orgId, r.conn.id, map.remote, row.id, map.target, id, remoteHash, row.modifiedAt ?? null, map.target === 'task' ? JSON.stringify(vals) : null],
         );
         if (map.target === 'account') {
           r.accountLinks.set(row.id, id!);
@@ -1034,6 +1053,17 @@ async function archiveMissing(r: RunCtx, map: ObjectMap, remoteIds: string[] | n
       }
     }
     for (const l of gone) {
+      // Deleted (or moved out of reach) there, but changed here since the last sync: the task stays, unlinked, with a note.
+      if (l.entity_id && map.target === 'task') {
+        const [ch] = await q.query('select id from sync_changes where org_id = $1 and connection_id = $2 and entity = $3 and entity_id = $4', [orgId, r.conn.id, 'task', l.entity_id]);
+        const [task] = ch ? await q.query('select * from tasks where id = $1 and org_id = $2 and archived_at is null', [l.entity_id, orgId]) : [];
+        if (task) {
+          await q.query('delete from sync_changes where id = $1 and org_id = $2', [ch.id, orgId]);
+          await q.query('update sync_links set ignored = true, synced_at = now() where connection_id = $1 and object = $2 and remote_id = $3', [r.conn.id, map.remote, l.remote_id]);
+          await noteConflict(q, { orgId, task, app: r.conn.label || r.conn.provider, case: 'deleted_there' });
+          continue;
+        }
+      }
       if (l.entity_id) await q.query(`update ${TABLE[map.target]} set archived_at = coalesce(archived_at, now()) where id = $1 and org_id = $2`, [l.entity_id, orgId]);
       await q.query('update sync_links set ignored = true, synced_at = now() where connection_id = $1 and object = $2 and remote_id = $3', [r.conn.id, map.remote, l.remote_id]);
       statsOf(r, map.remote).archived++;
@@ -1240,6 +1270,13 @@ async function pushChanges(r: RunCtx, freshOnly = false): Promise<boolean> {
       }
       // Our own write will come back on the next read; forget the old fingerprint so it is compared, not skipped.
       if (link) await r.deps.db.system((q) => q.query('update sync_links set remote_hash = null where connection_id = $1 and object = $2 and remote_id = $3', [r.conn.id, link.object, link.remote_id]));
+      // What was just sent is what the other side holds now, until the next read says otherwise (no conflict with it).
+      if (link && target === 'task') {
+        const sent = Object.fromEntries((ch.fields ?? map.fields.map((f) => f.local)).map((k: string) => [k, { $sent: true }]));
+        await r.deps.db.system((q) =>
+          q.query('update sync_links set remote_values = remote_values || $4::jsonb where org_id = $5 and connection_id = $1 and object = $2 and remote_id = $3 and remote_values is not null', [r.conn.id, link.object, link.remote_id, JSON.stringify(sent), orgId]),
+        );
+      }
       // Match changed_at as full-precision text: real Postgres keeps microseconds,
       // but a round-tripped JS Date is millisecond-only, so '= $3' with a Date never
       // matches and the change would never clear. The guard still skips a re-queue
