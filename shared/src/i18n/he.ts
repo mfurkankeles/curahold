@@ -4321,6 +4321,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "אין חברה תואמת",
   'console.accountLogged': "פתיחת החשבון הזה נרשמת ביומן הפעילות של החברה עצמה.",
   'console.open': "פתיחת המסוף",
+  'console.elsewhere.title': "למסוף יש כתובת משלו",
+  'console.elsewhere.body': "לקוחות, הכנסות ובקשות תמיכה נמצאים ב-{host}, עם כניסה נפרדת.",
   'audit.support.account': "התמיכה של Curahold עיינה בחשבון",
   'console.noTrials': "אף תקופת ניסיון לא הסתיימה ב־{days} הימים האחרונים",
   'console.noNew': "אין חברות חדשות ב־{days} הימים האחרונים",

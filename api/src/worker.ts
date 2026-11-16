@@ -121,6 +121,8 @@ export function configFromEnv(env: Env): Config {
     deskHost: env.DESK_HOST || undefined,
     securityContact: env.SECURITY_CONTACT || undefined,
     singleTenantSlug: env.SINGLE_TENANT_SLUG || undefined,
+    // The in-app console (/platform, /metrics) only where the operator is the company: a single-company install.
+    inAppConsole: !!env.SINGLE_TENANT_SLUG,
     authSecret: env.AUTH_SECRET,
     // Request limits key on Cloudflare's own client-address header (lib/ratelimit.ts).
     clientIp: 'cf',

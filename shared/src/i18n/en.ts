@@ -4336,6 +4336,8 @@ export const en = {
   'console.noMatch': "No company matches",
   'console.accountLogged': "Opening this account is written to the company's own activity log.",
   'console.open': "Open the console",
+  'console.elsewhere.title': "The console has its own address",
+  'console.elsewhere.body': "Customers, revenue and support requests are at {host}, with a sign-in of its own.",
   'audit.support.account': "Curahold support looked at the account",
   'console.noTrials': "No trial ended in the last {days} days",
   'console.noNew': "No new company in the last {days} days",

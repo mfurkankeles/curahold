@@ -224,6 +224,23 @@ export function CustomerDrawer({ orgId, load, onClose }: { orgId: string; load: 
 }
 
 /** The in-product page: overview tiles, the list, and a way to Curahold's own console when there is one. */
+/**
+ * On the hosted service the in-app console is off: Curahold's own team is pointed to its console,
+ * on a host of its own with its own sign-in; anyone else is told the screen is not theirs.
+ */
+export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | null; denied: string }) {
+  const { t } = useI18n();
+  if (!access) return <SkeletonRows rows={3} label={t('common.loading')} />;
+  if (!access.consoleUrl) return <EmptyState icon="lock" title={denied} />;
+  return (
+    <EmptyState icon="external" title={t('console.elsewhere.title')} body={t('console.elsewhere.body', { host: new URL(access.consoleUrl).host })}>
+      <a className="btn btn--primary" href={access.consoleUrl}>
+        {t('console.open' as MessageKey)}
+      </a>
+    </EmptyState>
+  );
+}
+
 export function PlatformConsolePage() {
   const { t, locale } = useI18n();
   const [access, setAccess] = useState<PlatformAccess | null>(null);
@@ -265,7 +282,7 @@ export function PlatformConsolePage() {
   if (failed) return <div className="pf"><LoadError onRetry={retry} /></div>;
   if (!access) return <div className="pf"><SkeletonRows rows={6} label={t('common.loading')} /></div>;
   if (access.secondStepNeeded) return <div className="pf"><EmptyState icon="lock" title={t('errors.staff_second_step')} /></div>;
-  if (!access.platform) return <div className="pf"><EmptyState icon="lock" title={t('platform.denied' as MessageKey)} /></div>;
+  if (!access.platform) return <div className="pf"><ConsoleElsewhere access={access} denied={t('platform.denied' as MessageKey)} /></div>;
 
   const n = (v: number) => formatNumber(v, locale);
   const usd = (v: number, cur: string) => formatMoney(v, cur, locale, { compact: v >= 10_000 });

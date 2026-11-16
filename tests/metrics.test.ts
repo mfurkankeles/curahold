@@ -7,7 +7,8 @@ import { login, setup, type Env } from './helpers';
 let env: Env;
 
 beforeAll(async () => {
-  env = await setup();
+  // The in-app metrics screen, as a self-hosted install has it (tests/platform.test.ts: off on the hosted service).
+  env = await setup({ inAppConsole: true });
   // Make acme a paying Business customer with five seats: 5 × $35 = $175 MRR.
   await env.deps.db.system((q) =>
     q.query(`update orgs set billing = $2::jsonb where id = $1`, [

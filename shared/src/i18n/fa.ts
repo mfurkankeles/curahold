@@ -4321,6 +4321,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "شرکتی پیدا نشد",
   'console.accountLogged': "باز کردن این حساب در گزارش فعالیت خود شرکت ثبت می‌شود.",
   'console.open': "باز کردن کنسول",
+  'console.elsewhere.title': "کنسول نشانی خودش را دارد",
+  'console.elsewhere.body': "مشتریان، درآمد و درخواست‌های پشتیبانی در {host} هستند، با ورود جداگانه.",
   'audit.support.account': "پشتیبانی Curahold حساب را مشاهده کرد",
   'console.noTrials': "در {days} روز گذشته هیچ دورهٔ آزمایشی تمام نشده است",
   'console.noNew': "در {days} روز گذشته شرکت تازه‌ای نیامده است",

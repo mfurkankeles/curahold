@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { FAVORITE_PATH, MAX_FAVORITES, NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
 import { accessFor, isOwner, logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
+import { inAppConsole } from '../lib/platform';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
@@ -86,7 +87,8 @@ meRoutes.get('/me', async (c) => {
       billingOn: !!c.get('deps').config.billing,
     },
     teamIds: data.teamIds,
-    owner: isOwner(c),
+    // The in-app owner screens (/metrics, /platform) exist only where the operator is the company (self-hosted).
+    owner: isOwner(c) && inAppConsole(c.get('deps').config),
     sessionId: auth.sessionId,
     ...(c.get('previewBy') ? { previewBy: c.get('previewBy') } : {}),
     ...(c.get('supportBy') ? { supportBy: c.get('supportBy') } : {}),

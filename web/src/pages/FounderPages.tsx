@@ -29,7 +29,8 @@ export function FounderPagesPage() {
   }, []);
 
   if (!access) return <div className="pf"><SkeletonRows rows={5} label={t('common.loading')} /></div>;
-  if (!access.platform) {
+  // Only links, no company's data: Curahold's team sees it on any install.
+  if (!access.staff) {
     return (
       <div className="pf">
         <EmptyState icon="lock" title={t('platform.denied' as MessageKey)} />

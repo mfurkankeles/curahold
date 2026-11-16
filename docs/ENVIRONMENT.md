@@ -33,7 +33,7 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `EMAIL_FROM` | From address, e.g. `Curahold <no-reply@example.com>` | Yes (hosted) | Self-host default `Curahold <curahold@<PUBLIC_URL host>>`. |
 | `MAX_DEVICES` | Devices one seat may use at once | No | `2`. |
 | `SIGNUP_ENABLED` | `0` turns company sign-up off | No | On, except when `SINGLE_TENANT_SLUG` is set. |
-| `SINGLE_TENANT_SLUG` | Pins every request to one company (self-host mode) | No | Unset (multi-tenant). Set by `selfhost.ts`. |
+| `SINGLE_TENANT_SLUG` | Pins every request to one company (self-host mode). Also turns on the in-app console pages (`/platform`, `/metrics`), where the operator is the company | No | Unset (multi-tenant): the in-app console pages answer 404 to everyone, and Curahold's team uses the console at `DESK_HOST`. Set by `selfhost.ts`. |
 | `DESK_HOST` | Host of Curahold's own support desk | No | `desk.<BASE_DOMAIN>`. |
 | `PORTAL_DOMAIN` | Customer portal's own registrable domain | No | Unset: no portal. Must be set on **both** Workers. Self-host: the portal is this address. |
 | `DEMO_CRM` | `1` offers the pretend CRM | No | Live demo only. Never set in production. |

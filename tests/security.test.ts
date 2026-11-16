@@ -28,6 +28,8 @@ describe('the platform owner fails closed', () => {
   it('without a configured owner, in production mode, nobody is the owner (not even a company administrator)', async () => {
     const dev = env.config.devExposeTokens;
     env.config.devExposeTokens = false;
+    // The in-app metrics, as a self-hosted install has them (the hosted service: off, below).
+    env.config.inAppConsole = true;
     try {
       expect((await ada.get('/api/me')).json.owner).toBe(false);
       expect((await ada.get('/api/metrics')).status).toBe(403);
@@ -39,8 +41,13 @@ describe('the platform owner fails closed', () => {
       await env.db.system((q) => q.query(`update sessions set second_step = 'passkey' where user_id = $1`, [env.a.ids.ada]));
       expect((await ada.get('/api/metrics')).status).toBe(200);
       expect((await zeynep.get('/api/metrics')).status).toBe(403);
+      // On the hosted service the address is not there at all, for the owner's two-step session too.
+      env.config.inAppConsole = false;
+      expect((await ada.get('/api/metrics')).status).toBe(404);
+      expect((await ada.get('/api/me')).json.owner).toBe(false);
     } finally {
       env.config.devExposeTokens = dev;
+      delete env.config.inAppConsole;
       delete env.config.owner;
     }
   });

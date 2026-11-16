@@ -22,6 +22,7 @@ import { sha256Hex } from '../api/src/lib/crypto';
 import { HttpError } from '../api/src/lib/errors';
 import { platformRoutes } from '../api/src/routes/admin-platform';
 import { metricsRoutes } from '../api/src/routes/metrics';
+import { deskRoutes } from '../api/src/routes/desk';
 
 const OWNER = 'owner@demo.example';
 const STAFF = 'staff@demo.example';
@@ -76,7 +77,8 @@ function harnessClient(signedIn: Client): Client {
 }
 
 beforeAll(async () => {
-  env = await setup({ owner: OWNER, staffKeys: { [STAFF]: 'k'.repeat(24) }, maxDevices: 5 });
+  // The in-app console as a self-hosted install has it; the hosted service (off) is the last block of this file.
+  env = await setup({ owner: OWNER, staffKeys: { [STAFF]: 'k'.repeat(24) }, maxDevices: 5, inAppConsole: true });
   await env.deps.db.system(async (q) => {
     // The operator and one staff member — a viewer account each in one company so they can sign in
     // (viewer so acme keeps exactly its five full seats: 5 × $35 = $175 MRR).
@@ -226,5 +228,42 @@ describe('platform console: a company with no billing rows (defensive)', () => {
     expect(json.subscription).toBeNull();
     expect(json.invoices).toEqual([]);
     expect(json.customer.status).toBe('trialing');
+  });
+});
+
+describe('on the hosted service: the in-app console is off', () => {
+  it('a company session gets nothing across companies from any address, the owner’s own with a second step included', async () => {
+    env.config.inAppConsole = false;
+    try {
+      const [beta] = await env.db.system((q) => q.query<{ name: string; slug: string }>('select name, slug from orgs where id = $1', [env.b.orgId]));
+      const inApp = [...platformRoutes.routes, ...metricsRoutes.routes].filter((r) => r.path !== '/platform/access');
+      expect(inApp.length).toBeGreaterThanOrEqual(4);
+      const seen = (r: { json: unknown }) => JSON.stringify(r.json ?? null);
+      for (const who of [owner, staff, admin]) {
+        for (const r of inApp) {
+          const res = await who.req(r.method, `/api${r.path.replace(':orgId', env.b.orgId)}`);
+          expect(res.status, `${r.method} ${r.path}`).toBe(404);
+          expect(seen(res)).not.toContain(beta.name);
+        }
+      }
+      // Staff are pointed to the console on its own host; nobody is offered the in-app one.
+      expect((await owner.get('/api/platform/access')).json).toEqual({ owner: false, staff: true, platform: false, consoleUrl: CONSOLE });
+      expect((await admin.get('/api/platform/access')).json).toEqual({ owner: false, staff: false, platform: false });
+      // Through the real app too: the owner's company session is not "the owner" here, and the console's own addresses refuse it.
+      const real = await login(env, 'acme', OWNER);
+      expect((await real.get('/api/me')).json.owner).toBe(false);
+      for (const r of deskRoutes.routes.filter((x) => x.method === 'GET' && x.path !== '/me')) {
+        const res = await real.get(`/api/desk${r.path.replace(':orgId', env.b.orgId).replace(':ref', 'CH-000001').replace(':id', env.b.orgId)}`);
+        expect(res.status, `GET /desk${r.path}`).toBe(403);
+        expect(seen(res)).not.toContain(beta.name);
+      }
+      for (const path of ['/api/metrics', '/api/platform/overview', '/api/platform/customers', `/api/platform/customers/${env.b.orgId}`]) {
+        const res = await real.get(path);
+        expect(res.status, path).toBe(404);
+        expect(seen(res)).not.toContain(beta.name);
+      }
+    } finally {
+      env.config.inAppConsole = true;
+    }
   });
 });

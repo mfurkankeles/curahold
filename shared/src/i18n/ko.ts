@@ -4321,6 +4321,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "일치하는 회사가 없습니다",
   'console.accountLogged': "이 계정을 열면 해당 회사의 활동 기록에 남습니다.",
   'console.open': "콘솔 열기",
+  'console.elsewhere.title': "콘솔은 별도 주소에 있습니다",
+  'console.elsewhere.body': "고객, 매출, 지원 요청은 {host}에 있으며 로그인도 따로 합니다.",
   'audit.support.account': "Curahold 지원팀이 계정을 열람함",
   'console.noTrials': "최근 {days}일 동안 끝난 체험이 없습니다",
   'console.noNew': "최근 {days}일 동안 새 회사가 없습니다",

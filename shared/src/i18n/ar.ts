@@ -4321,6 +4321,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "لا توجد شركة مطابقة",
   'console.accountLogged': "يُسجَّل فتحك لهذا الحساب في سجل نشاط الشركة نفسها.",
   'console.open': "افتح وحدة التحكم",
+  'console.elsewhere.title': "لوحدة التحكم عنوان خاص بها",
+  'console.elsewhere.body': "العملاء والإيرادات وطلبات الدعم موجودة على {host}، بتسجيل دخول خاص بها.",
   'audit.support.account': "اطّلع دعم Curahold على الحساب",
   'console.noTrials': "لم تنتهِ أي تجربة خلال آخر {days} يومًا",
   'console.noNew': "لا شركات جديدة خلال آخر {days} يومًا",

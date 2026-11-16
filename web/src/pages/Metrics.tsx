@@ -10,6 +10,8 @@ import { useMoney } from '../lib/money';
 import { useStore } from '../lib/store';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
+import type { PlatformAccess } from '../../../shared/src/platform';
+import { ConsoleElsewhere } from './PlatformConsole';
 import { formatClock, formatNumber, formatPercent } from '../lib/format';
 import '../surfaces/console.css';
 
@@ -62,6 +64,22 @@ function Empty() {
   );
 }
 
+/** Not the owner here: on the hosted service, Curahold's team finds the numbers in its console. */
+function NotHere() {
+  const { t } = useI18n();
+  const [access, setAccess] = useState<PlatformAccess | null>(null);
+  useEffect(() => {
+    let live = true;
+    get<PlatformAccess>('/platform/access')
+      .then((a) => live && setAccess(a))
+      .catch(() => live && setAccess({ owner: false, staff: false, platform: false }));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return <ConsoleElsewhere access={access} denied={t('metrics.denied')} />;
+}
+
 export function MetricsPage() {
   const { t, locale } = useI18n();
   const money = useMoney();
@@ -96,7 +114,7 @@ export function MetricsPage() {
     };
   }, [owner, attempt]);
 
-  if (!owner) return <div className="metrics"><p className="metrics__denied">{t('metrics.denied')}</p></div>;
+  if (!owner) return <div className="metrics"><NotHere /></div>;
   if (needsStep) return <div className="metrics"><EmptyState icon="lock" title={t('errors.staff_second_step')} /></div>;
 
   const n = (v: number) => formatNumber(Math.round(v), locale);

@@ -97,11 +97,11 @@ export interface PlatformOverview {
 
 /** What GET /api/platform/access tells the browser about the signed-in person. */
 export interface PlatformAccess {
-  /** The single configured platform owner (PLATFORM_OWNER). */
+  /** The platform owner, on an install whose in-app console is on (the whole-business metrics are theirs here). */
   owner: boolean;
   /** owner, or a listed staff identifier (STAFF_KEYS / SUPPORT_STAFF). */
   staff: boolean;
-  /** owner || staff — whether the console is theirs to open at all. */
+  /** Staff, on an install whose in-app console is on (self-hosted): /platform is theirs to open here. */
   platform: boolean;
   /** Curahold staff without a second step in this session: the console stays closed until they add one. */
   secondStepNeeded?: true;

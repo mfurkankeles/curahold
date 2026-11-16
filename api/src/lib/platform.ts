@@ -47,8 +47,16 @@ export function staffNeedsSecondStep(c: C): boolean {
   return curaholdStaff && !c.get('auth')?.secondStep;
 }
 
-/** Guard for the console routes: a non-owner, non-staff caller gets 403; staff without a second step too. */
+/**
+ * Is the in-app console (/platform, /metrics) here at all? Only on a self-hosted install, where the
+ * operator is the company. On the hosted service these addresses do not exist for anyone, a Curahold
+ * owner's own company session with a second step included: the console is desk.<domain>.
+ */
+export const inAppConsole = (cfg: Pick<Config, 'inAppConsole'>): boolean => cfg.inAppConsole === true;
+
+/** Guard for the console routes: off on the hosted service (404); a non-owner, non-staff caller gets 403; staff without a second step too. */
 export function requirePlatform(c: C): void {
+  if (!inAppConsole(c.get('deps').config)) fail('not_found');
   if (!isPlatformStaff(c)) fail('forbidden');
   if (staffNeedsSecondStep(c)) fail('staff_second_step');
 }
@@ -58,20 +66,22 @@ export function requirePlatform(c: C): void {
  * the console — only from a session that passed a second step.
  */
 export function requireConsoleOwner(c: C): void {
+  if (!inAppConsole(c.get('deps').config)) fail('not_found');
   if (!isOwner(c)) fail('forbidden');
   if (staffNeedsSecondStep(c)) fail('staff_second_step');
 }
 
 /** The flags the browser needs to decide whether to show the console (no tenant data). */
 export function platformAccess(c: C): PlatformAccess {
-  const owner = isOwner(c);
-  const staff = isPlatformStaff(c);
   const cfg = c.get('deps').config;
+  const here = inAppConsole(cfg);
+  const owner = here && isOwner(c);
+  const staff = isPlatformStaff(c);
   return {
     owner,
     staff,
-    platform: staff,
-    ...(staff && staffNeedsSecondStep(c) ? { secondStepNeeded: true as const } : {}),
+    platform: here && staff,
+    ...(here && staff && staffNeedsSecondStep(c) ? { secondStepNeeded: true as const } : {}),
     // The console's own address, for Curahold's team on a service that has one (not a single-company install).
     ...(staff && !cfg.singleTenantSlug && cfg.baseDomain ? { consoleUrl: deskUrl(cfg) } : {}),
   };

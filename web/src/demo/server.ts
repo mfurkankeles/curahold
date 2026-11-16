@@ -135,6 +135,8 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     // In the demo the primary user is the platform owner, so the business-metrics
     // screen can be shown. config.billing stays unset, so it carries a "Demo data" badge.
     owner: 'ada@demo.example',
+    // The demo is one install with its own invented tenants: the in-app console stays on, as when self-hosted.
+    inAppConsole: true,
   };
   const email = new services.MemoryEmail();
   const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };

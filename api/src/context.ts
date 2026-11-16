@@ -59,6 +59,13 @@ export interface Config {
   owner?: string;
   /** security.txt Contact (SECURITY_CONTACT): "mailto:…" or an https address; unset shows a marked placeholder. */
   securityContact?: string;
+  /**
+   * The in-app console pages (/platform, /metrics), which read across every company. On only for a
+   * self-hosted install, where the operator is the company (configFromEnv: SINGLE_TENANT_SLUG). The
+   * hosted service leaves it off: Curahold's team works at desk.<domain>, with a session of its own,
+   * and a company session gets nothing across companies from any address.
+   */
+  inAppConsole?: boolean;
   /** Subscriptions through Paddle. Unset: billing is off and everything is open (self-hosted, demo, tests). */
   billing?: BillingConfig;
   /** Where the caller's network address comes from (lib/ratelimit.ts); unset: unknown, no per-address limit. */

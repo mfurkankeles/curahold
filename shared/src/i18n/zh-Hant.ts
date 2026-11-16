@@ -4321,6 +4321,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "沒有符合的公司",
   'console.accountLogged': "開啟此帳戶會記入該公司自己的活動紀錄。",
   'console.open': "開啟主控台",
+  'console.elsewhere.title': "主控台有自己的網址",
+  'console.elsewhere.body': "客戶、營收和支援請求都在 {host}，需另外登入。",
   'audit.support.account': "Curahold 支援人員檢視了帳戶",
   'console.noTrials': "近 {days} 天沒有結束的試用",
   'console.noNew': "近 {days} 天沒有新公司",
