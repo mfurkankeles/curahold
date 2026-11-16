@@ -59,7 +59,7 @@
 .cchart__dot { position: absolute; left: var(--x); top: var(--y); width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: var(--r-pill); background: var(--brand); outline: 2px solid var(--surface); pointer-events: none; }
 .cchart__rule { position: absolute; top: 0; bottom: 0; left: var(--x); width: 1px; background: var(--line-strong); pointer-events: none; }
 .cchart__cols { position: absolute; inset: 0; display: flex; align-items: flex-end; }
-.cchart__col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 2px; transition: opacity var(--dur-fast) ease; }
+.cchart__col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 4px; transition: opacity var(--dur-fast) ease; }
 .cchart__col i { display: block; width: 100%; max-width: 24px; height: var(--h); min-height: 2px; background: var(--brand); border-start-start-radius: var(--r-xs); border-start-end-radius: var(--r-xs); }
 .cchart__col[data-off] { opacity: .45; }
 .cchart__hits { position: absolute; inset: 0; display: flex; }
