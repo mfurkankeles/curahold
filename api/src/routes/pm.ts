@@ -13,6 +13,8 @@ import { toSprint, toTask } from '../lib/mappers';
 import { body, isoDate, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
 import { weekendOf } from '../../../shared/src/burndown';
+import { boardFlow, firstDayOf, type FlowMove, type FlowTask } from '../../../shared/src/flow';
+import { columnCategory } from '../sync/engine';
 
 export const pmRoutes = new Hono<AppEnv>();
 
@@ -466,6 +468,51 @@ pmRoutes.get('/sprints/:id/burndown', async (c) => {
     weekend: weekendOf(c.get('org').locale),
   };
   return c.json({ burndown });
+});
+
+// ------------------------------------------------------------- flow
+
+// Cycle time per work type and weekly throughput, from the board's status-change history
+// (shared/src/flow.ts does the arithmetic on the company's clock and weekend).
+pmRoutes.get('/boards/:id/flow', async (c) => {
+  const id = param(c, 'id');
+  const weeks = Math.max(4, Math.min(26, Number(c.req.query('weeks')) || 12));
+  const org = c.get('org');
+  const today = todayOf(c);
+  const firstDay = firstDayOf(org.locale);
+  const weekend = weekendOf(org.locale);
+  const { board, rows, events } = await run(c, async (q) => {
+    const board = await loadBoard(q, id);
+    requirePm(board);
+    // A day of slack on the cut: the exact week edges are drawn on the company's clock below.
+    const since = new Date(Date.parse(`${today}T00:00:00Z`) - (7 * weeks + 1) * 86_400_000);
+    const rows = await q.query(
+      `select id, issue_type, story_points, status, created_at, done_at from tasks
+        where org_id = $1 and board_id = $2 and archived_at is null and done_at is not null and done_at >= $3 and status = any($4::text[])`,
+      [org.id, id, since, doneKeys(board.columns)],
+    );
+    const events = rows.length
+      ? await q.query(`select task_id, data->>'from' as "from", data->>'to' as "to", created_at from task_events where task_id = any($1::uuid[]) and kind = 'status' order by created_at`, [rows.map((r) => r.id)])
+      : [];
+    return { board, rows, events };
+  });
+  const firstFrom = new Map<string, string>();
+  const moves: FlowMove[] = [];
+  for (const e of events) {
+    if (!firstFrom.has(e.task_id) && e.from) firstFrom.set(e.task_id, e.from);
+    if (e.to) moves.push({ taskId: e.task_id, to: e.to, at: new Date(e.created_at).toISOString() });
+  }
+  const tasks: FlowTask[] = rows.map((r) => ({
+    id: r.id,
+    issueType: r.issue_type,
+    storyPoints: r.story_points == null ? null : Number(r.story_points),
+    createdAt: new Date(r.created_at).toISOString(),
+    createdIn: firstFrom.get(r.id) ?? r.status,
+    doneAt: new Date(r.done_at).toISOString(),
+  }));
+  const cols = board.columns as Column[];
+  const started = new Set(cols.filter((col) => columnCategory(cols, col) === 'indeterminate').map((col) => col.key));
+  return c.json({ flow: boardFlow({ boardId: id, tasks, moves, started, today, timeZone: org.timezone || 'UTC', weekend, firstDay, weeks }) });
 });
 
 // ------------------------------------------------------- task PM fields

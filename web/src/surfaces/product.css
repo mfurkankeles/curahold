@@ -264,3 +264,11 @@
 @media (pointer: coarse) and (max-width: 860px) {
   .pm-row { grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr); column-gap: var(--s-1); }
 }
+
+/* ---------------------------------------------------------------- flow: cycle time and throughput (Roadmap tab) */
+.pm-flow { display: grid; gap: var(--s-2); min-width: 0; }
+.pm-flow > .section__head, .pm-flow > .field__hint { margin: 0; }
+.pm-flow .pm-facts--wide { margin-bottom: 0; }
+.pm-flow__charts { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); margin-top: var(--s-2); }
+.pm-flow__chart { display: grid; gap: var(--s-2); margin: 0; padding: var(--s-3) var(--s-4); min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
+.pm-flow__title { font-weight: 700; font-size: var(--fs-m); color: var(--ink); }

@@ -23,6 +23,7 @@ import '../surfaces/product.css';
 import { Presence } from './Presence';
 import { Confirm, Dialog } from './ui';
 import { DateField } from './DateField';
+import { FlowReport } from './Flow';
 
 export { BacklogView } from './Backlog';
 
@@ -530,6 +531,7 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
           </>
         )}
       </section>
+      <FlowReport boardId={board.id} refreshKey={refreshKey} />
       <section>
         <h3 className="section__head">
           <span>{t('pm.sprints')}</span>

@@ -48,6 +48,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `DELETE /sprints/:id/items/:taskId` | Takes a task out of the sprint, back to the backlog. |
 | `GET /sprints/:id/summary` | Current totals: points and items, done and in all, with counts by issue type. |
 | `GET /sprints/:id/burndown` | A sprint's burndown: remaining story points and items by day, with a live point for today. |
+| `GET /boards/:id/flow` | Cycle time and throughput of a product board over the last `weeks` weeks (4–26, default 12): median and 85th-percentile cycle time per issue type in working days, and items finished each week, on the company's time zone and weekend. |
 | `DELETE /tasks/:id` | Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. |
 | `POST /tasks/bulk` | Changes many tasks at once: column, assignee, due date, priority, archive. |
 | `POST /undo/:id` | Puts back what a change to many tasks or customers replaced. |
@@ -365,6 +366,12 @@ Current totals: points and items, done and in all, with counts by issue type. Do
 ### `GET /sprints/:id/burndown`
 
 A sprint's burndown: remaining story points and items by day, with a live point for today.
+
+### `GET /boards/:id/flow`
+
+Cycle time and throughput of a product board over the last `weeks` weeks (4–26, default 12): median and 85th-percentile cycle time per issue type in working days, and items finished each week, on the company's time zone and weekend.
+
+**Query:** `weeks`
 
 ### `DELETE /tasks/:id`
 
