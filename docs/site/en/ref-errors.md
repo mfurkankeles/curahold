@@ -76,6 +76,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `second_step_required` | 409 | Your company requires a second step. Add another one before removing this. |
 | `second_step_setup_first` | 409 | Set up your own second step first, so you can't be locked out. |
 | `slug_taken` | 409 | That address is taken. Try another one. |
+| `sso_untested` | 409 | Test sign-in through your identity provider with these details first; then SSO can be required. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |
 | `trash_conflict` | 409 | Something else has taken its place since (the same CRM id or email). Change or remove that first. |

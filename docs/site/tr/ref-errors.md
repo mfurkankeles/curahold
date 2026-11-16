@@ -76,6 +76,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `second_step_required` | 409 | Şirketin ikinci adımı zorunlu tutuyor. Bunu kaldırmadan önce başka bir tane ekle. |
 | `second_step_setup_first` | 409 | Önce kendi ikinci adımını kur; böylece dışarıda kalmazsın. |
 | `slug_taken` | 409 | Bu adres alınmış. Başka bir tane dene. |
+| `sso_untested` | 409 | Önce bu bilgilerle kimlik sağlayıcın üzerinden girişi dene; sonra SSO zorunlu kılınabilir. |
 | `support_too_many` | 409 | Zaten açık beş destek erişimin var. Önce birini kapat. |
 | `sync_running` | 409 | Bu bağlantı için şu anda bir eşitleme çalışıyor. Bir dakika sonra tekrar deneyin. |
 | `trash_conflict` | 409 | O zamandan beri yerini başka bir şey almış (aynı CRM kimliği ya da e-posta). Önce onu değiştir ya da kaldır. |
