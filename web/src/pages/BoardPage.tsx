@@ -799,7 +799,7 @@ export function ListView({
         {tasks.slice(w.start, w.end).map((x) => {
           const done = isDone(x);
           return (
-            <tr key={x.id} data-due={railState(x.dueDate, done)} className="tasklist__row" onClick={(e) => !(e.target as HTMLElement).closest('input, button, a') && (seedTask(x), setQuery('task', x.id))}>
+            <tr key={x.id} data-due={railState(x.dueDate, done)} className="tasklist__row" onClick={(e) => (e.target as HTMLElement).classList.contains('check-cell') ? (e.target as HTMLElement).querySelector('input')?.click() : !(e.target as HTMLElement).closest('input, button, a') && (seedTask(x), setQuery('task', x.id))}>
               <td className="rail-cell">
                 <span />
               </td>
