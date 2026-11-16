@@ -290,9 +290,9 @@
 .pm-chain__task { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-2); min-width: 0; font-size: var(--fs-s); color: var(--ink-2); }
 .pm-chain__task > svg { flex: none; }
 .pm-chain__task[data-done] > svg { color: var(--done); }
-.pm-chain__title { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; text-align: start; color: var(--ink); }
+.pm-chain__title { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; text-align: start; color: var(--ink); }
 .pm-chain__task[data-done] .pm-chain__title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
-.pm-chain__where { margin-inline-start: auto; font-size: var(--fs-xs); color: var(--ink-2); }
+.pm-chain__where { font-size: var(--fs-xs); color: var(--ink-2); }
 @media (pointer: coarse) {
   .pm-chain__task > button.pm-chain__title { display: inline-flex; align-items: center; min-height: var(--tap); }
 }
