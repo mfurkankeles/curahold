@@ -185,3 +185,12 @@
 @media (max-width: 860px) { .rule { grid-template-columns: auto minmax(0, 1fr) auto; } }
 /* A button for the keyboard only: hidden until it has the focus, then a normal button. */
 .sr-only.admin-reveal:focus-visible { position: static; width: auto; height: auto; margin: 8px 0 0; padding: 4px 12px; clip: auto; clip-path: none; overflow: visible; white-space: normal; border: 1px solid var(--line-strong); border-radius: var(--r-s); background: var(--surface); color: var(--ink); }
+
+/* ---------------------------------------------------------------- setup on a phone: numbered dots, the step's name is the panel's title */
+@media (max-width: 860px) {
+  .wizard__rail { overflow: visible; flex-wrap: wrap; gap: 4px; padding-block: 4px; }
+  .wizard__rail button { justify-content: center; min-width: 44px; min-height: 44px; padding: 4px; }
+  .wizard__rail .wizard__label,
+  .wizard__rail li[data-state='current'] .wizard__label { display: inline; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wizard__dot { margin-inline-start: 0; }
+}

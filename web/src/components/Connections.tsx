@@ -11,6 +11,7 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import type { WebhookInfo } from '../../../shared/src/developer';
 import '../surfaces/admin.css';
+import { useDeleteLater } from '../lib/deleteLater';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
@@ -80,14 +81,16 @@ function Status({ c }: { c: Connection }) {
 export function Connections({ back = 'settings', onChange }: { back?: 'settings' | 'setup'; onChange?: (list: Connection[]) => void }) {
   const { t } = useI18n();
   const { toast } = useStore();
-  const { data, reload } = useConnections();
+  const { data: raw, reload } = useConnections();
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<Connection | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [gone, setGone] = useState<string[]>([]);
+  const later = useDeleteLater();
 
   useEffect(() => {
-    if (data) onChange?.(data.connections);
-  }, [data, onChange]);
+    if (raw) onChange?.(raw.connections);
+  }, [raw, onChange]);
 
   // Coming back from a service's consent screen.
   useEffect(() => {
@@ -113,7 +116,8 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
     }
   };
 
-  if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
+  if (!raw) return <SkeletonRows rows={6} label={t('common.loading')} />;
+  const data = { ...raw, connections: raw.connections.filter((c) => !gone.includes(c.id)) };
   const twoWay = data.providers.filter((p) => p.kind === 'messaging' && p.twoWay);
   const hooks = data.connections.filter((c) => c.provider === 'webhook');
   const sources = data.connections.filter((c) => c.kind === 'source');
@@ -265,10 +269,16 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
           confirmLabel={t('common.remove')}
           danger
           onClose={() => setRemoving(null)}
-          onConfirm={async () => {
+          onConfirm={() => {
             const id = removing.id;
             setRemoving(null);
-            await act(id, () => del(`/connections/${id}`), t('conn.removed'));
+            // Off the screen now, removed after the 10-second Undo.
+            later(t('conn.removed'), {
+              hide: () => setGone((g) => [...g, id]),
+              unhide: () => setGone((g) => g.filter((x) => x !== id)),
+              commit: () => del(`/connections/${id}`),
+              after: reload,
+            });
           }}
         />
       )}

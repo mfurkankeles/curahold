@@ -13,6 +13,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { CompanyForm } from './Settings';
+import '../surfaces/admin.css';
 
 type Step = SetupStep | 'finish';
 const ORDER: Step[] = [...SETUP_STEPS, 'finish'];
