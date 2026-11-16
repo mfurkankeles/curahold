@@ -6,10 +6,12 @@ import type { IncomingMessage, Server } from 'node:http';
 import type { Duplex } from 'node:stream';
 import postgres from 'postgres';
 import { slugFromHost } from '../app';
-import type { Config } from '../context';
+import { deskHostOf, type Config } from '../context';
 import type { Db } from '../db';
+import { consolePulse } from '../lib/console';
+import { PLATFORM_PATH, PlatformRoom, type PlatformState } from './platform';
 import { CLOSE, readTicket } from './protocol';
-import { LiveRoom, hostAllows, type Conn, type ConnState } from './room';
+import { LiveRoom, hostAllows, type ConnState } from './room';
 import { dbSource } from './source';
 import { accept, refuse, type NodeSocket } from './ws';
 
@@ -39,8 +41,8 @@ interface Room {
   conns: Set<NodeConn>;
 }
 
-class NodeConn implements Conn {
-  state: ConnState | null = null;
+class NodeConn<S = ConnState> {
+  state: S | null = null;
   ws!: NodeSocket;
   send(text: string) {
     this.ws.send(text);
@@ -51,7 +53,7 @@ class NodeConn implements Conn {
   get() {
     return this.state;
   }
-  set(s: ConnState) {
+  set(s: S) {
     this.state = s;
   }
 }
@@ -60,6 +62,8 @@ export interface LiveHub {
   /** Rooms open now and their connections (for tests and the health page). */
   size(): { rooms: number; conns: number };
   poke(orgId: string): Promise<void>;
+  /** Curahold's own console: something it shows may have changed (live/platform.ts). */
+  platform(): Promise<void>;
   /** Let every connection go (as a restart does); they come back and catch up. */
   drop(): void;
   close(): Promise<void>;
@@ -83,8 +87,38 @@ export async function attachLive(server: Server, opts: { db: Db; config: Config;
     await rooms.get(orgId)?.room.poke();
   };
 
+  // Curahold's own console: one room, on the desk host only, for staff signed in there.
+  const consoles = new Set<NodeConn<PlatformState>>();
+  const staff = () => config.support?.staff ?? [];
+  const platform = new PlatformRoom({ secret: config.authSecret, look: () => consolePulse({ db }), conns: () => [...consoles], staff });
+  const onPlatform = (req: IncomingMessage, socket: Duplex, head: Buffer, raw: string | null) => {
+    const conn = new NodeConn<PlatformState>();
+    const ws = accept(req, socket, head, {
+      message: (text) => platform.message(conn, text),
+      close: () => void consoles.delete(conn),
+    });
+    if (!ws) return;
+    conn.ws = ws;
+    const host = String(req.headers.host ?? '').toLowerCase().split(':')[0];
+    if (host !== deskHostOf(config)) {
+      ws.close(CLOSE.ticket, 'ticket');
+      return;
+    }
+    consoles.add(conn);
+    void platform
+      .open(conn, raw)
+      .catch(() => false)
+      .then((ok) => {
+        if (!ok) {
+          consoles.delete(conn);
+          ws.close(CLOSE.ticket, 'ticket');
+        }
+      });
+  };
+
   const onUpgrade = (req: IncomingMessage, socket: Duplex, head: Buffer) => {
     const url = new URL(req.url ?? '/', 'http://x');
+    if (url.pathname === PLATFORM_PATH) return onPlatform(req, socket, head, url.searchParams.get('k'));
     if (url.pathname !== LIVE_PATH) {
       refuse(socket, 404, 'Not Found');
       return;
@@ -130,6 +164,8 @@ export async function attachLive(server: Server, opts: { db: Db; config: Config;
   // Connections nobody has heard from in two minutes are let go.
   const sweep = setInterval(() => {
     for (const r of rooms.values()) for (const c of r.conns) if (c.ws.quietFor() > SILENT_MS) c.close(1001, 'quiet');
+    for (const c of consoles) if (c.ws.quietFor() > SILENT_MS) c.close(1001, 'quiet');
+    platform.sweep();
   }, 30_000);
   sweep.unref();
 
@@ -145,14 +181,18 @@ export async function attachLive(server: Server, opts: { db: Db; config: Config;
   return {
     size: () => ({ rooms: rooms.size, conns: [...rooms.values()].reduce((n, r) => n + r.conns.size, 0) }),
     poke,
+    platform: () => platform.poke().catch(() => undefined),
     drop() {
       for (const r of rooms.values()) for (const c of r.conns) c.close(CLOSE.restart, 'restart');
+      for (const c of consoles) c.close(CLOSE.restart, 'restart');
     },
     async close() {
       clearInterval(sweep);
       server.off('upgrade', onUpgrade);
       for (const r of rooms.values()) for (const c of r.conns) c.close(CLOSE.restart, 'restart');
+      for (const c of consoles) c.close(CLOSE.restart, 'restart');
       rooms.clear();
+      consoles.clear();
       await stopListen?.();
     },
   };

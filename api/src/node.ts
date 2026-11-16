@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { Hono } from 'hono';
 import { createApp } from './app';
 import { createPortalApp } from './portal';
-import type { Config } from './context';
+import type { Config, Deps } from './context';
 import { migrate } from './db/migrate';
 import { loadMigrations } from './db/migrations-fs';
 import { createMemoryPg, pgliteDb } from './db/pglite';
@@ -57,7 +57,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     staffKey: opts.staffKey,
   };
   const storage = new MemoryStorage();
-  const api = createApp({ db, email, storage, config });
+  const deps: Deps = { db, email, storage, config };
+  const api = createApp(deps);
   const root = new Hono();
   root.route('/', api);
   const portal = new Hono();
@@ -89,6 +90,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     config,
     listen: async (onOrg) => pg.listen('curahold_live', onOrg),
   });
+  // Curahold's console's room is told by the app after a write (app.ts); a company's, by Postgres.
+  deps.live = { platform: () => live.platform() };
   // Hourly jobs (digests, automations); on Workers this is the cron trigger.
   const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
   timer.unref();

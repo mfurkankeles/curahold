@@ -296,6 +296,14 @@ normal permission checks. QUALITY.md decision 1 is to replace polling with one D
 WebSocket Hibernation (Node: `ws` + Postgres `LISTEN/NOTIFY` for self-host), falling back to polling when WebSockets are
 blocked. That is **decided but not built**.
 
+Curahold's own console (desk.<domain>) has one room of its own, `live/platform.ts`: the same carry-no-data rule, on both
+hosts (a Durable Object named `platform`; the Node server's hub). Only a desk session may join (the authenticator step is
+part of signing in there), through `POST /api/desk/live/ticket` and the socket `/api/desk/live` on the desk host; staff
+keys get no ticket, and its ticket is signed apart from a company's. The app tells it after any successful write that can
+change the console (`touchesConsole`: sign-up, billing, help requests and the desk itself), and on Cloudflare also after
+an answer by email and the hourly jobs. It reads one fingerprint (`consolePulse`) and sends `{t:'c', v}` only when that
+moved. Without the room the console asks `GET /api/desk/pulse` every 5 s; with it, once a minute for what no request carries.
+
 ## 9a. Languages
 
 Nine languages (`shared/src/i18n/core.ts`, `LOCALE_INFO`), one dictionary file each; English defines the keys and

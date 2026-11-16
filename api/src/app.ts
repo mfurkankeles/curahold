@@ -66,6 +66,7 @@ import { signInSupport } from './lib/support';
 import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { liveRoutes } from './live/routes';
 import { asksForTicket } from './live/protocol';
+import { touchesConsole } from './live/platform';
 
 const RESERVED = new Set(['www', 'app', 'api', 'auth', 'admin', 'mail', 'status', 'docs', 'help', 'desk']);
 
@@ -106,7 +107,10 @@ export function createApp(deps: Deps) {
     }
     // The live channel (Cloudflare): tell the company's room to look. Self-hosted, Postgres tells it (live/node.ts).
     const changed = c.get('org') as OrgRow | undefined;
-    if (deps.live && changed && c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.res.status < 400) defer(deps, deps.live.poke(changed.id));
+    const wrote = c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.res.status < 400;
+    if (deps.live?.poke && changed && wrote) defer(deps, deps.live.poke(changed.id));
+    // Curahold's own console, when this write may have changed what it shows (live/platform.ts).
+    if (deps.live?.platform && wrote && touchesConsole(c.req.method, c.req.path)) defer(deps, deps.live.platform());
   });
 
   // ---------------------------------------------------------------- request limits (lib/ratelimit.ts)

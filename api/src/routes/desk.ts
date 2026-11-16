@@ -19,6 +19,7 @@ import { hmacHex, randomDigits, randomToken, safeEqual, seal, sha256Hex, sign, u
 import { fail } from '../lib/errors';
 import { audit } from '../lib/audit';
 import { consolePulse, consoleToday } from '../lib/console';
+import { signPlatformTicket } from '../live/platform';
 import { platformCustomerDetail, platformCustomers } from './admin-platform';
 import { addHelpMessage, takeMail } from '../lib/helpThread';
 import { ENTRY_LINK_MINUTES, mayGrant, sharedKeyOk, staffPerson, SUPPORT_SESSION_HOURS } from '../lib/support';
@@ -39,6 +40,8 @@ interface Staff {
   /** Who is acting; "key" when tooling uses the staff key and names nobody. */
   email: string;
   via: 'session' | 'key';
+  /** When a desk session ends (ms since epoch); none for a key. */
+  until?: number;
 }
 
 const staffList = (c: C) => c.get('deps').config.support?.staff ?? [];
@@ -64,7 +67,7 @@ async function staffOnly(c: C): Promise<Staff> {
     if (t && t.desk === 1 && typeof t.e === 'string' && t.x > nowOf(c.get('deps')).getTime() && staffList(c).includes(t.e)) {
       // A form on another site cannot set a header: every change made with the cookie must carry this one.
       if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.header('x-curahold-desk') !== '1') fail('forbidden');
-      return { email: t.e, via: 'session' };
+      return { email: t.e, via: 'session', until: t.x };
     }
   }
   return fail('forbidden');
@@ -209,11 +212,25 @@ deskRoutes.get('/today', async (c) => {
   return c.json(await consoleToday(c.get('deps'), staff.email));
 });
 
-/** A fingerprint of what the console shows; the open console reloads only when it moves. */
+/**
+ * A fingerprint of what the console shows. The console hears when it moves through its live room;
+ * it asks here only while that room is out of reach, and now and then for what no request carries.
+ */
 deskRoutes.get('/pulse', async (c) => {
   await staffOnly(c);
   c.header('cache-control', 'no-store');
   return c.json({ v: await consolePulse(c.get('deps')) });
+});
+
+/**
+ * A ticket for the console's live room (live/platform.ts): for someone signed in here, which means
+ * after the authenticator step. Tooling with a staff key reads the desk, it does not listen to it.
+ */
+deskRoutes.post('/live/ticket', async (c) => {
+  const staff = await staffOnly(c);
+  if (staff.via !== 'session' || !staff.until) fail('forbidden');
+  c.header('cache-control', 'no-store');
+  return c.json({ k: await signPlatformTicket(c.get('deps').config.authSecret, { email: staff.email, until: staff.until! }) });
 });
 
 /** Every company with its plan and billing standing. */

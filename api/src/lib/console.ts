@@ -116,13 +116,16 @@ export async function consoleToday(deps: Deps, staffEmail: string): Promise<Cons
 /**
  * A short fingerprint of everything the console shows: a company joins, pays,
  * fails to pay or leaves; a request arrives, is answered, taken or closed. The
- * open console asks for it every few seconds and reloads only when it moves.
+ * console's live room (live/platform.ts) reads it when a write may have
+ * changed something, and tells the open consoles only when it moved. Every
+ * company's billing and trial count, not only the newest event: the hourly seat
+ * count changes a bill without a new event.
  */
-export async function consolePulse(deps: Deps): Promise<string> {
+export async function consolePulse(deps: Pick<Deps, 'db'>): Promise<string> {
   const [r] = await deps.db.system((q) =>
     q.query<{ v: string }>(
       `select concat_ws('|',
-         (select count(*) from orgs), (select max(nullif(billing->>'eventAt', '')) from orgs), (select max(trial_ends_at) from orgs),
+         (select count(*) || ':' || coalesce(sum(hashtext(coalesce(billing::text, '') || coalesce(trial_ends_at::text, ''))), 0) from orgs),
          (select count(*) from help_requests), (select max(updated_at) from help_requests), (select max(last_message_at) from help_requests),
          (select count(*) from desk_claims), (select max(at) from desk_claims)) as v`,
     ),

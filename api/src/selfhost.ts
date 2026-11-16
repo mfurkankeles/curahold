@@ -25,7 +25,7 @@ import { Hono } from 'hono';
 import { createTransport, type Transporter } from 'nodemailer';
 import { normalizeLocale } from '../../shared/src/i18n';
 import { createApp } from './app';
-import type { Config } from './context';
+import type { Config, Deps } from './context';
 import { migrate } from './db/migrate';
 import { loadMigrations } from './db/migrations-fs';
 import { postgresDb } from './db/postgres';
@@ -145,7 +145,7 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
 
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
-  const deps = { db, email, storage, config, fetch: outboundFetch(env) };
+  const deps: Deps = { db, email, storage, config, fetch: outboundFetch(env) };
 
   const app = new Hono();
   app.route('/', createApp(deps));
@@ -178,6 +178,8 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
   const server = serve({ fetch: (req: Request, env: unknown) => (isPortal(req) ? portal.fetch(req, env) : app.fetch(req, env)), port });
   // The live channel: WebSockets at /api/live on this port, woken by Postgres LISTEN/NOTIFY.
   const live = await attachLive(server as unknown as import('node:http').Server, { db, config, listen: pgListen(env.DATABASE_URL) });
+  // Curahold's console's room is told by the app after a write (app.ts); a company's, by Postgres.
+  deps.live = { platform: () => live.platform() };
   // Hourly jobs: summaries, automations, renewals, syncs, cleaning up.
   const tick = () => runScheduled(deps).catch((e) => console.error('[curahold] scheduled jobs failed', e));
   const timer = setInterval(tick, 3600_000);

@@ -17,7 +17,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 28 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
-| `/desk/…` | 17 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
+| `/desk/…` | 18 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |
 | `/hooks/…` | 3 | Chat apps and calendars calling back. |

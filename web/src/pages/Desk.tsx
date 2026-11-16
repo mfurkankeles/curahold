@@ -246,7 +246,6 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-const PULSE_MS = 2_000;
 type Section = 'today' | 'customers' | 'support';
 interface Where {
   section: Section;
@@ -265,33 +264,130 @@ function readWhere(): Where {
 }
 const urlOf = (w: Where) => (w.section === 'today' ? '/' : w.section === 'customers' ? `/customers${w.c ? `?c=${w.c}` : ''}` : `/support${w.r ? `?r=${w.r}` : ''}`);
 
+/** While the live room is there: a look now and then for what no request carries (a trial reaching its last week). */
+const BACKSTOP_MS = 60_000;
+/** While it is not (a dropped connection, a server without it): asking, as before. */
+const FALLBACK_MS = 5_000;
+
 /**
- * The console's heartbeat: a short fingerprint of everything it shows, asked for
- * every few seconds while the tab is in view. It returns a number that moves
- * only when the fingerprint does, so each section reloads exactly then.
+ * The console's heartbeat: its live room (/api/desk/live) says within a moment
+ * that something it shows has changed, with a short fingerprint and never a
+ * figure. The number returned moves exactly then, and each section reloads.
+ * A hidden tab notes it and reloads when it is in view again. Without the
+ * room, the console asks for the fingerprint every few seconds instead.
  */
-function usePulse(failed: (e: unknown) => void): number {
+function useConsoleLive(failed: (e: unknown) => void): number {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
-    let last = '';
     let live = true;
-    const look = async () => {
-      if (document.visibilityState !== 'visible') return;
+    let last = '';
+    let missed = false;
+    let ws: WebSocket | null = null;
+    let tries = 0;
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let ping: ReturnType<typeof setInterval> | null = null;
+    const seen = () => document.visibilityState === 'visible';
+    const moved = (v: string) => {
+      if (live && last && v !== last) {
+        if (seen()) setBeat((b) => b + 1);
+        else missed = true;
+      }
+      last = v;
+    };
+    const ask = async () => {
+      if (!seen()) return;
       try {
-        const { v } = await desk<{ v: string }>('GET', '/pulse');
-        if (live && last && v !== last) setBeat((b) => b + 1);
-        last = v;
+        moved((await desk<{ v: string }>('GET', '/pulse')).v);
       } catch (e) {
         if (live) failed(e);
       }
     };
-    void look();
-    const id = setInterval(look, PULSE_MS);
-    document.addEventListener('visibilitychange', look);
+    const every = (ms: number) => {
+      if (timer) clearInterval(timer);
+      timer = setInterval(ask, ms);
+    };
+    const later = () => {
+      if (!live || retry || ws) return;
+      // 0.5 s, 1, 2, 4… up to 30 s, with jitter so a restarted server is not met by every console at once.
+      const wait = Math.min(30_000, 500 * 2 ** tries++) * (0.75 + Math.random() * 0.5);
+      retry = setTimeout(() => {
+        retry = null;
+        void open();
+      }, wait);
+    };
+    const open = async () => {
+      if (!live || ws || navigator.onLine === false) return;
+      let k: string;
+      try {
+        k = (await desk<{ k: string }>('POST', '/live/ticket')).k;
+      } catch (e) {
+        if (live) failed(e);
+        later();
+        return;
+      }
+      if (!live || ws) return;
+      const sock = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/desk/live?k=${encodeURIComponent(k)}`);
+      ws = sock;
+      sock.onmessage = (e) => {
+        if (typeof e.data !== 'string' || e.data === 'pong') return;
+        try {
+          const m = JSON.parse(e.data) as { t?: string; v?: unknown };
+          if ((m.t !== 'hi' && m.t !== 'c') || typeof m.v !== 'string') return;
+          if (m.t === 'hi') {
+            tries = 0;
+            every(BACKSTOP_MS);
+          }
+          moved(m.v);
+        } catch {
+          /* not ours */
+        }
+      };
+      sock.onclose = () => {
+        if (ws === sock) ws = null;
+        if (ping) clearInterval(ping);
+        ping = null;
+        if (!live) return;
+        every(FALLBACK_MS);
+        later();
+      };
+      // Proxies close quiet sockets: a word every 45 s, answered without waking the server's room.
+      if (ping) clearInterval(ping);
+      ping = setInterval(() => sock.readyState === WebSocket.OPEN && sock.send('ping'), 45_000);
+    };
+    const back = () => {
+      if (!seen()) return;
+      if (missed) {
+        missed = false;
+        setBeat((b) => b + 1);
+      }
+      void ask();
+    };
+    const online = () => {
+      tries = 0;
+      if (retry) clearTimeout(retry);
+      retry = null;
+      void open();
+    };
+    void ask();
+    every(FALLBACK_MS);
+    void open();
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('online', online);
     return () => {
       live = false;
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', look);
+      if (timer) clearInterval(timer);
+      if (ping) clearInterval(ping);
+      if (retry) clearTimeout(retry);
+      document.removeEventListener('visibilitychange', back);
+      window.removeEventListener('online', online);
+      const sock = ws;
+      ws = null;
+      if (sock) {
+        sock.onclose = null;
+        sock.onmessage = null;
+        sock.close(1000);
+      }
     };
   }, [failed]);
   return beat;
@@ -389,7 +485,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
   const [where, setWhere] = useState<Where>(readWhere);
   const [queue, setQueue] = useState('received');
   const failed = useCallback((e: unknown) => (e instanceof DeskError && (e.status === 403 || e.status === 401) ? onOut(true) : undefined), [onOut]);
-  const beat = usePulse(failed);
+  const beat = useConsoleLive(failed);
   useEffect(() => {
     if (beat) refreshCounts();
   }, [beat, refreshCounts]);

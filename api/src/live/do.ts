@@ -6,10 +6,13 @@
 //
 // Bound in wrangler.toml as LIVE (class LiveRoomDO). The Worker (worker.ts)
 // checks the ticket, sends the socket to the company's object, and after
-// every write says "poke" to it.
+// every write says "poke" to it. The same class, under the name "platform",
+// is Curahold's own console's room (live/platform.ts).
 import { postgresDb } from '../db/postgres';
 import { slugFromHost } from '../app';
-import type { Config } from '../context';
+import { deskHostOf, type Config } from '../context';
+import { consolePulse } from '../lib/console';
+import { PLATFORM_ROOM, PlatformRoom, type PlatformConn, type PlatformState } from './platform';
 import { CLOSE, PING, PONG, readTicket } from './protocol';
 import { LiveRoom, hostAllows, type Conn, type ConnState, type Source } from './room';
 import { dbSource } from './source';
@@ -39,9 +42,23 @@ interface LiveEnv {
   HYPERDRIVE: { connectionString: string };
   AUTH_SECRET: string;
   LIVE?: DONamespace;
+  /** Curahold's own people (the console's room lets go of anyone taken off the list). */
+  SUPPORT_STAFF?: string;
 }
 
 const ORG_HEADER = 'x-curahold-live-org';
+/** Says the object is Curahold's console's room ("platform"), not a company's. */
+const KIND_HEADER = 'x-curahold-live-kind';
+
+/** The console's fingerprint, over a connection for one look. */
+async function consoleLook(env: LiveEnv): Promise<string> {
+  const db = postgresDb(env.HYPERDRIVE.connectionString, { max: 1 });
+  try {
+    return await consolePulse({ db });
+  } finally {
+    await db.close();
+  }
+}
 
 /** A database connection for one look, closed after it. */
 function hyperdriveSource(env: LiveEnv): Source {
@@ -62,6 +79,8 @@ function hyperdriveSource(env: LiveEnv): Source {
 export class LiveRoomDO {
   private room: LiveRoom | null = null;
   private readonly conns = new WeakMap<CfSocket, Conn>();
+  private console_: PlatformRoom | null = null;
+  private readonly consoleConns = new WeakMap<CfSocket, PlatformConn>();
 
   constructor(
     private readonly state: DOState,
@@ -85,6 +104,39 @@ export class LiveRoomDO {
     return c;
   }
 
+  private consoleConn(ws: CfSocket): PlatformConn {
+    let c = this.consoleConns.get(ws);
+    if (!c) {
+      c = {
+        send: (t) => ws.send(t),
+        close: (code, reason) => ws.close(code, reason),
+        get: () => (ws.deserializeAttachment() as PlatformState | null) ?? null,
+        set: (s) => ws.serializeAttachment(s),
+      };
+      this.consoleConns.set(ws, c);
+    }
+    return c;
+  }
+
+  /** Is this object the console's room? Said by the Worker; after a wake-up, by a socket's own state. */
+  private isConsole(req?: Request, ws?: CfSocket): boolean {
+    if (req) return req.headers.get(KIND_HEADER) === PLATFORM_ROOM;
+    return (ws?.deserializeAttachment() as { p?: number } | null)?.p === 1;
+  }
+
+  private consoleRoom(): PlatformRoom {
+    if (!this.console_) {
+      const staff = (this.env.SUPPORT_STAFF || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      this.console_ = new PlatformRoom({
+        secret: this.env.AUTH_SECRET,
+        look: () => consoleLook(this.env),
+        conns: () => this.state.getWebSockets().map((ws) => this.consoleConn(ws)),
+        staff: () => staff,
+      });
+    }
+    return this.console_;
+  }
+
   /** The room, for the company this object is (named by the Worker; after a wake-up, read from a socket). */
   private roomFor(orgId: string | null): LiveRoom | null {
     if (this.room) return this.room;
@@ -106,8 +158,18 @@ export class LiveRoomDO {
   }
 
   async fetch(req: Request): Promise<Response> {
-    const orgId = req.headers.get(ORG_HEADER);
     const url = new URL(req.url);
+    if (this.isConsole(req)) {
+      if (url.pathname === '/poke') {
+        if (this.state.getWebSockets().length) await this.consoleRoom().poke();
+        return new Response(null, { status: 204 });
+      }
+      const pair = new WebSocketPair();
+      this.state.acceptWebSocket(pair[1]);
+      await this.consoleRoom().open(this.consoleConn(pair[1]), url.searchParams.get('k'));
+      return new Response(null, { status: 101, webSocket: pair[0] } as ResponseInit);
+    }
+    const orgId = req.headers.get(ORG_HEADER);
     if (url.pathname === '/poke') {
       // Nobody connected: nothing to read, nothing to send.
       if (this.state.getWebSockets().length) await this.roomFor(orgId)?.poke();
@@ -124,13 +186,17 @@ export class LiveRoomDO {
   }
 
   async webSocketMessage(ws: CfSocket, msg: string | ArrayBuffer) {
+    if (this.isConsole(undefined, ws)) {
+      if (typeof msg !== 'string') return ws.close(CLOSE.bad, 'bad');
+      return this.consoleRoom().message(this.consoleConn(ws), msg);
+    }
     const room = this.roomFor(null);
     if (!room || typeof msg !== 'string') return ws.close(CLOSE.bad, 'bad');
     await room.message(this.conn(ws), msg);
   }
 
   async webSocketClose(ws: CfSocket, code: number) {
-    this.roomFor(null)?.closed(this.conn(ws));
+    if (!this.isConsole(undefined, ws)) this.roomFor(null)?.closed(this.conn(ws));
     try {
       ws.close(code === 1005 ? 1000 : code, 'bye');
     } catch {
@@ -139,7 +205,7 @@ export class LiveRoomDO {
   }
 
   async webSocketError(ws: CfSocket) {
-    this.roomFor(null)?.closed(this.conn(ws));
+    if (!this.isConsole(undefined, ws)) this.roomFor(null)?.closed(this.conn(ws));
   }
 }
 
@@ -163,13 +229,35 @@ export async function liveUpgrade(req: Request, env: LiveEnv, config: Config): P
   return env.LIVE.get(env.LIVE.idFromName(t.o)).fetch(new Request(req.url, { headers }));
 }
 
-/** After a write: the company's object looks for new changes (and sleeps on if nobody is connected). */
-export function livePoker(env: LiveEnv): { poke(orgId: string): Promise<void> } | undefined {
+/**
+ * GET /api/desk/live with a console ticket, on the desk host only: to the one "platform" object,
+ * which checks the ticket itself. Anything else is closed at once (4401).
+ */
+export async function platformUpgrade(req: Request, env: LiveEnv, config: Config): Promise<Response> {
+  if (req.headers.get('upgrade')?.toLowerCase() !== 'websocket') return new Response('expected a WebSocket', { status: 426 });
+  const url = new URL(req.url);
+  const host = (req.headers.get('host') ?? url.host).toLowerCase().split(':')[0];
+  if (!env.LIVE || host !== deskHostOf(config)) {
+    const pair = new WebSocketPair();
+    pair[1].accept();
+    pair[1].close(CLOSE.ticket, 'ticket');
+    return new Response(null, { status: 101, webSocket: pair[0] } as ResponseInit);
+  }
+  const headers = new Headers(req.headers);
+  headers.set(KIND_HEADER, PLATFORM_ROOM);
+  return env.LIVE.get(env.LIVE.idFromName(PLATFORM_ROOM)).fetch(new Request(req.url, { headers }));
+}
+
+/** After a write: the company's object looks for new changes (and sleeps on if nobody is connected); the console's object likewise. */
+export function livePoker(env: LiveEnv): { poke(orgId: string): Promise<void>; platform(): Promise<void> } | undefined {
   const ns = env.LIVE;
   if (!ns) return undefined;
   return {
     async poke(orgId) {
       await ns.get(ns.idFromName(orgId)).fetch('https://live/poke', { method: 'POST', headers: { [ORG_HEADER]: orgId } });
+    },
+    async platform() {
+      await ns.get(ns.idFromName(PLATFORM_ROOM)).fetch('https://live/poke', { method: 'POST', headers: { [KIND_HEADER]: PLATFORM_ROOM } });
     },
   };
 }

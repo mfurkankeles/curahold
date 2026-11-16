@@ -118,7 +118,12 @@ export interface Deps {
   /** Request budgets of this isolate or process; defaults to the shared one (lib/ratelimit.ts). */
   limiter?: import('./lib/ratelimit').Limiter;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
-  live?: { poke(orgId: string): Promise<void> };
+  live?: {
+    /** A company's room (Cloudflare; on Node, Postgres tells it). */
+    poke?(orgId: string): Promise<void>;
+    /** Curahold's own console's room (live/platform.ts), on both hosts. */
+    platform?(): Promise<void>;
+  };
 }
 
 export interface OrgRow {

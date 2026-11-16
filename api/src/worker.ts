@@ -7,7 +7,8 @@ import { assertOwnerConfigured, type BillingConfig, type Config } from './contex
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
 import { R2Storage, ResendEmail, type R2Like } from './lib/services';
-import { livePoker, liveUpgrade, type DONamespace } from './live/do';
+import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './live/do';
+import { PLATFORM_PATH } from './live/platform';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
 export { LiveRoomDO } from './live/do';
@@ -222,6 +223,8 @@ export default {
       const raw = await new Response(message.raw).arrayBuffer();
       const outcome = await takeMail(deps, await readRawMail(raw, { from: message.from, to: message.to }));
       if (!outcome.taken) console.log('[curahold] mail not taken:', outcome.reason);
+      // An answer by email moves a request: the console hears it like any other.
+      else if (deps.live?.platform) pending.push(deps.live.platform().catch(() => undefined));
     } catch (e) {
       console.error('[curahold] mail failed', e);
     } finally {
@@ -234,6 +237,8 @@ export default {
     if (!toWorker) return env.ASSETS.fetch(req);
     // A live socket: checked by its ticket, handed to the company's room; no database, no app.
     if (url.pathname === '/api/live') return liveUpgrade(req, env, configFromEnv(env));
+    // The console's live room (desk host only), the same way.
+    if (url.pathname === PLATFORM_PATH) return platformUpgrade(req, env, configFromEnv(env));
     const { db, deps, pending } = depsFor(env, ctx);
     const app = createApp(deps);
     try {
@@ -247,6 +252,11 @@ export default {
   // Cron trigger (wrangler.toml): digests, scheduled automations, retries.
   async scheduled(_event: unknown, env: Env, ctx: Ctx) {
     const { db, deps } = depsFor(env, ctx);
-    ctx.waitUntil(runScheduled(deps).finally(() => db.close()));
+    // The hourly jobs change bills (seats) and trials: the console hears it after them.
+    ctx.waitUntil(
+      runScheduled(deps)
+        .then(() => deps.live?.platform?.().catch(() => undefined))
+        .finally(() => db.close()),
+    );
   },
 };

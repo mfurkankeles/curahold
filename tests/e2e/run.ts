@@ -969,13 +969,46 @@ await step('the console: staff sign in with two steps, see the business today ch
   expect(d.url() === `${deskHost}/`, `the console did not open on Today: ${d.url()}`);
   const tiles = await d.$$eval('.ctile__label', (els) => els.map((e) => e.textContent ?? ''));
   for (const want of ['MRR', 'ARR', 'Denemeden ödemeye', 'Aktivasyon', 'İptal, 30 gün']) expect(tiles.includes(want), `Today has no "${want}" tile: ${tiles.join(' | ')}`);
-  // A number changes without a reload: a company starts paying, the MRR on screen follows.
-  const mrrBefore = await text(d, '.ctile[data-lead] .ctile__value');
+  // A number changes without a reload: a company starts paying, the MRR on screen follows. The billing record is
+  // written as the provider's notification writes it, and the console's live room is told as that request tells
+  // it (app.ts → live/platform.ts; tests/live-platform.test.ts covers the request → signal step). Ten changes, for a p95.
+  const mrrFirst = await text(d, '.ctile[data-lead] .ctile__value');
   const [demoOrg] = await sql(`select id from orgs where slug = 'demo'`);
-  await sql(`update orgs set billing = $2::jsonb where id = $1`, [demoOrg.id, JSON.stringify({ status: 'active', plan: 'business', interval: 'month', seats: 7, eventAt: new Date().toISOString() })]);
-  const changedAt = Date.now();
-  await d.waitForFunction((before) => document.querySelector('.ctile[data-lead] .ctile__value')?.textContent !== before, { timeout: 12000 }, mrrBefore);
-  console.log(`    console: MRR ${mrrBefore} → ${await text(d, '.ctile[data-lead] .ctile__value')} on screen ${Date.now() - changedAt} ms after the billing record changed, no reload`);
+  const mrrWaits: number[] = [];
+  for (let i = 0; i < 10; i++) {
+    const before = await text(d, '.ctile[data-lead] .ctile__value');
+    await sql(`update orgs set billing = $2::jsonb where id = $1`, [demoOrg.id, JSON.stringify({ status: 'active', plan: 'business', interval: 'month', seats: 7 + i, eventAt: new Date().toISOString() })]);
+    const changedAt = Date.now();
+    void s.live.platform();
+    await d.waitForFunction((b) => document.querySelector('.ctile[data-lead] .ctile__value')?.textContent !== b, { timeout: 5000 }, before);
+    mrrWaits.push(Date.now() - changedAt);
+  }
+  mrrWaits.sort((a, b) => a - b);
+  const mrrP95 = mrrWaits[Math.ceil(mrrWaits.length * 0.95) - 1];
+  console.log(`    console: MRR ${mrrFirst} → ${await text(d, '.ctile[data-lead] .ctile__value')} on screen after a billing change, no reload: p50 ${mrrWaits[4]} ms, p95 ${mrrP95} ms (10 changes)`);
+  expect(mrrP95 <= 1000, `MRR reached the screen in p95 ${mrrP95} ms, over a second`);
+  // Through the API alone: a company asks for help, and the console's "needs you" count follows.
+  const needBefore = await text(d, '#cneed-h');
+  const askedAt = Date.now();
+  const asked = await mert.page.evaluate(async () => {
+    const r = await fetch('/api/help', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' },
+      credentials: 'include',
+      body: JSON.stringify({ category: 'question', subject: 'Pano filtresi kayboldu', description: 'Dün kaydettiğim filtre bugün listede görünmüyor.' }),
+    });
+    return { status: r.status, id: ((await r.json()) as { request?: { id: string } }).request?.id ?? '' };
+  });
+  expect(asked.status === 201, `Mert could not ask again: ${asked.status}`);
+  await d.waitForFunction((b) => document.querySelector('#cneed-h')?.textContent !== b, { timeout: 5000 }, needBefore);
+  console.log(`    console: a company's new request on Today ${Date.now() - askedAt} ms after it was sent through the API, no reload`);
+  // He finds the filter himself and settles it; it leaves Today the same way.
+  const settledAt = Date.now();
+  await mert.page.evaluate(async (id) => {
+    await fetch(`/api/help/${id}/solve`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, credentials: 'include', body: '{}' });
+  }, asked.id);
+  await d.waitForFunction((b) => document.querySelector('#cneed-h')?.textContent === b, { timeout: 5000 }, needBefore);
+  console.log(`    console: and gone from Today ${Date.now() - settledAt} ms after he settled it`);
   await shot(d, 'p7-11-console-today');
   // Who needs the team: the blocking request is there; it opens straight into the conversation.
   const need = await byText(d, '.cneed .cneed__what', 'Toplu görev aktarımı yarıda kaldı');

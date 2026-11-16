@@ -1,6 +1,6 @@
 // The console's first screen: how the business is today, and who needs the
 // team — at a glance, on a phone too. The numbers come from the server's
-// /api/desk/today; the console reloads them when its pulse moves.
+// /api/desk/today; the console reloads them when its live room says something moved.
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { ConsoleAttention, ConsoleToday } from '../../../shared/src/console';
 import { EmptyState } from '../components/Empty';
