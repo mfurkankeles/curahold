@@ -1408,6 +1408,12 @@ tr.vspacer td { padding: 0; border: 0; }
 .palette-item[data-active] { background: var(--brand-wash); box-shadow: inset 3px 0 0 var(--brand); }
 .palette-item__title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .palette-item__sub { color: var(--ink-3); font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Ctrl K on a phone, from any screen: the title gets the whole width (two lines at most), the place goes under it. */
+@media (max-width: 600px) {
+  .palette-item { flex-direction: column; align-items: stretch; gap: 0; }
+  .palette-item__title, .palette-item__sub { white-space: normal; overflow-wrap: break-word; }
+  .palette-item__title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: var(--lh-snug); }
+}
 .palette-none { margin: 0; padding: 16px; color: var(--ink-3); }
 .palette-foot { border-top: 1px solid var(--line); padding: 8px 12px; font-size: var(--fs-xs); color: var(--ink-3); }
 
