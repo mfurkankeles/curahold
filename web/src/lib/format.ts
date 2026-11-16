@@ -202,14 +202,15 @@ export function formatNumber(n: number, locale: Locale, { digits = 0, compact = 
 }
 /** "%42" in Turkish, "42%" in English: `value` is 0–100. */
 export const formatPercent = (value: number, locale: Locale, digits = 0) => nf(locale, { style: 'percent', maximumFractionDigits: digits }).format(value / 100);
+/** Languages whose interfaces write a short unit without the abbreviation's full stop ("45 dk", not "45 dk."). */
+const UNIT_WITHOUT_STOP = new Set<Locale>(['tr']);
 /**
  * "3 sa", "45 dk", "45 min", "45 分" — a duration or size in the language's short unit. Not the narrow one:
  * that writes 45 minutes as "45d" in Turkish (read as days) and as "45m" in Persian and Japanese.
- * Turkish drops the abbreviation's full stop, as interfaces write it ("45 dk kaydedildi", not "45 dk. kaydedildi").
  */
 export const formatUnit = (n: number, unit: 'hour' | 'minute' | 'day' | 'kilobyte' | 'megabyte', locale: Locale, digits = 0) => {
   const text = nf(locale, { style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits: digits }).format(n);
-  return locale === 'tr' ? text.replace(/\.$/, '') : text;
+  return UNIT_WITHOUT_STOP.has(locale) ? text.replace(/\.$/, '') : text;
 };
 /** A file size: "820 KB", "1,4 MB". */
 export const formatBytes = (n: number, locale: Locale) => (n > 1024 * 1024 ? formatUnit(n / 1024 / 1024, 'megabyte', locale, 1) : formatUnit(Math.max(1, Math.round(n / 1024)), 'kilobyte', locale));
