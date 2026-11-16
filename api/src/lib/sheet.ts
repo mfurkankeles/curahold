@@ -133,59 +133,63 @@ export function sheetStream(format: SheetFormat, head: SheetHead, pages: AsyncIt
     for (const c of out) ctl.enqueue(c);
     out = [];
   };
+  // One step: the start (the fixed parts, the headings and the first page), then a page at a time, then the end.
+  const step = async () => {
+    if (!started) {
+      started = true;
+      for (const [path, xml] of Object.entries(STATIC)) {
+        const f = new ZipDeflate(path, { level: 6 });
+        zip.add(f);
+        f.push(strToU8(xml), true);
+      }
+      const book = new ZipDeflate('xl/workbook.xml', { level: 6 });
+      zip.add(book);
+      book.push(
+        strToU8(
+          `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${sheetName}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+        ),
+        true,
+      );
+      const first = await pages.next();
+      const rows = first.done ? [] : first.value;
+      const cols = head.headers
+        .map((h, i) => {
+          const longest = Math.max(h.length, ...rows.slice(0, 200).map((r) => width(r[i])));
+          return `<col min="${i + 1}" max="${i + 1}" width="${Math.min(60, Math.max(8, longest + 2))}" customWidth="1"/>`;
+        })
+        .join('');
+      sheet = new ZipDeflate('xl/worksheets/sheet1.xml', { level: 6 });
+      zip.add(sheet);
+      sheet.push(
+        strToU8(
+          `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"${/^(ar|he|fa)$/.test(head.locale) ? ' rightToLeft="1"' : ''}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols ? `<cols>${cols}</cols>` : ''}<sheetData>` +
+            xlsxRows([head.headers], 1, true) +
+            xlsxRows(rows, row),
+        ),
+      );
+      row += rows.length;
+      if (first.done) {
+        sheet.push(strToU8('</sheetData></worksheet>'), true);
+        zip.end();
+      }
+      return;
+    }
+    const next = await pages.next();
+    if (next.done) {
+      sheet!.push(strToU8('</sheetData></worksheet>'), true);
+      zip.end();
+    } else {
+      sheet!.push(strToU8(xlsxRows(next.value, row)));
+      row += next.value.length;
+    }
+  };
   return new ReadableStream<Uint8Array>({
+    // The compressor may keep a page to itself; a pull that hands over nothing would leave the
+    // reader waiting for ever, so steps go on until there are bytes to give or the file is whole.
     async pull(ctl) {
       try {
-        if (!started) {
-          started = true;
-          for (const [path, xml] of Object.entries(STATIC)) {
-            const f = new ZipDeflate(path, { level: 6 });
-            zip.add(f);
-            f.push(strToU8(xml), true);
-          }
-          const book = new ZipDeflate('xl/workbook.xml', { level: 6 });
-          zip.add(book);
-          book.push(
-            strToU8(
-              `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${sheetName}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
-            ),
-            true,
-          );
-          const first = await pages.next();
-          const rows = first.done ? [] : first.value;
-          const cols = head.headers
-            .map((h, i) => {
-              const longest = Math.max(h.length, ...rows.slice(0, 200).map((r) => width(r[i])));
-              return `<col min="${i + 1}" max="${i + 1}" width="${Math.min(60, Math.max(8, longest + 2))}" customWidth="1"/>`;
-            })
-            .join('');
-          sheet = new ZipDeflate('xl/worksheets/sheet1.xml', { level: 6 });
-          zip.add(sheet);
-          sheet.push(
-            strToU8(
-              `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"${/^(ar|he|fa)$/.test(head.locale) ? ' rightToLeft="1"' : ''}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols ? `<cols>${cols}</cols>` : ''}<sheetData>` +
-                xlsxRows([head.headers], 1, true) +
-                xlsxRows(rows, row),
-            ),
-          );
-          row += rows.length;
-          if (first.done) {
-            sheet.push(strToU8('</sheetData></worksheet>'), true);
-            zip.end();
-          }
-          flush(ctl);
-          if (done) ctl.close();
-          return;
-        }
-        if (done) return ctl.close();
-        const next = await pages.next();
-        if (next.done) {
-          sheet!.push(strToU8('</sheetData></worksheet>'), true);
-          zip.end();
-        } else {
-          sheet!.push(strToU8(xlsxRows(next.value, row)));
-          row += next.value.length;
-        }
+        do await step();
+        while (!out.length && !done);
         flush(ctl);
         if (done) ctl.close();
       } catch (e) {

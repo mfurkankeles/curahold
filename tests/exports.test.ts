@@ -171,6 +171,24 @@ describe('a big file', () => {
   });
 });
 
+describe('a file that compresses well', () => {
+  it('still reaches its end: a page the compressor keeps to itself does not leave the reader waiting', async () => {
+    async function* same(): AsyncGenerator<Cell[][]> {
+      for (let p = 0; p < 40; p++) yield Array.from({ length: 500 }, () => ['Görev teklif', 1, 'todo']);
+    }
+    const reader = sheetStream('xlsx', { name: 'Same', headers: ['A', 'B', 'C'], locale: 'tr' }, same()).getReader();
+    const chunks: Uint8Array[] = [];
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+    chunks.reduce((at, c) => (bytes.set(c, at), at + c.length), 0);
+    expect((strFromU8(unzipSync(bytes)['xl/worksheets/sheet1.xml']).match(/<row /g) ?? []).length).toBe(20_001);
+  }, 20_000);
+});
+
 describe('the export budget', () => {
   it('refuses with 429 and a time to wait after the budget is spent', async () => {
     const limited = await setup({ limitScale: 1, clientIp: 'cf' });
