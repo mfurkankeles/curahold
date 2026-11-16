@@ -249,6 +249,13 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useEffect(() => startErrorLog(), []);
   // A strip of tabs wider than a phone keeps the chosen tab in view.
   useEffect(() => startStrips(), []);
+  // On a phone the open menu is a modal drawer: the screen and the bottom bar behind its scrim cannot be
+  // reached (by a tap, the keyboard or a screen reader) until it closes.
+  const mainRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    for (const el of [mainRef.current, barRef.current]) el?.toggleAttribute('inert', navOpen && narrow);
+  }, [navOpen, narrow]);
   const app = useInstall();
   const [installHelp, setInstallHelp] = useState(false);
   const meMenu = (
@@ -485,7 +492,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           </div>
         </nav>
         {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
-        <div className="main">
+        <div className="main" ref={mainRef}>
           <OfflineBar />
           {me.previewBy && (
             <div className="previewbar" role="status">
@@ -526,7 +533,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           {children}
         </div>
         {narrow && (
-          <nav className="tabbar" aria-label={t('nav.quick')}>
+          <nav className="tabbar" aria-label={t('nav.quick')} ref={barRef}>
             {link('/home', t('nav.home'), here.home, 'home', undefined, 'tabbar__item')}
             {link('/my', t('nav.myTasksShort'), here.my, 'checkCircle', dueBadge, 'tabbar__item')}
             {canWrite ? (
