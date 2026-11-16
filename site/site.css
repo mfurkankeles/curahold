@@ -409,6 +409,8 @@ html.is-past .sky { opacity: .62; }
   html.is-away .sky i::after { animation-play-state: paused; }
   .marq__track { animation: marq 56s linear infinite; }
   html:is(.is-past, .is-away) .marq__track { animation-play-state: paused; }
+  .cue__line i { animation: cue 2.4s var(--ease) infinite; }
+  html:is(.is-past, .is-away) .cue__line i { animation-play-state: paused; }
   .blog .sky i::after { animation: none; }
 }
 @keyframes f-up { from { opacity: 0; transform: translateY(10px); } }
@@ -467,6 +469,7 @@ html.is-past .sky { opacity: .62; }
 @keyframes draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
 @keyframes ping { 0% { opacity: .9; transform: scale(.4); } 70%, 100% { opacity: 0; transform: scale(1.9); } }
 @keyframes marq { to { transform: translateX(-50%); } }
+@keyframes cue { from { transform: translateY(-14px); } 70%, to { transform: translateY(36px); } }
 
 /* ----------------------------------------------------- the tour's chapters */
 .tour { grid-area: tabs; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -491,6 +494,190 @@ html:not(.js) .tour__bar { display: none; }
 .marq__item { flex: none; margin: 0 22px; display: inline-flex; align-items: center; gap: 9px; color: #c9c5e8; font: 600 17px/1 var(--display); white-space: nowrap; opacity: .8; }
 .marq__item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--iris-hi); opacity: .7; }
 .marq:hover .marq__track { animation-play-state: paused; }
+
+/* ------------------------------------------------------------- the story */
+/* The hero's quiet way in: a hairline with a light running down it. */
+.cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
+.cue:hover { color: var(--ink); }
+.cue__line { position: relative; width: 1px; height: 36px; background: rgba(255, 255, 255, .16); overflow: hidden; }
+.cue__line i { position: absolute; left: -1px; top: 0; width: 3px; height: 14px; border-radius: 3px; background: linear-gradient(transparent, var(--iris-hi)); transform: translateY(22px); }
+
+/* One customer, six steps. The steps are the text; the stage beside them (above
+   them on a phone) holds still and follows the reading. The script sets --p
+   (0 to 6) on the stage as the page scrolls; everything below is drawn from it. */
+.story { padding: 96px 0 24px; overflow-x: clip; }
+.story__head { max-width: 760px; }
+.story__track { position: relative; margin-top: 40px; }
+.story__steps { list-style: none; margin: 0; padding: 0; }
+.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 56vh; padding-block: 28px; }
+.story__n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(140, 125, 255, .45); color: var(--iris-ink); font: 700 13px/1 var(--text); font-variant-numeric: tabular-nums; transition: background-color .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease); }
+.story__step h3 { font-size: clamp(23px, 2.3vw, 30px); line-height: 1.15; letter-spacing: -0.02em; max-width: 22ch; }
+.story__step p { margin: 0; color: var(--ink-2); font-size: 17px; line-height: 1.6; max-width: 44ch; text-wrap: pretty; }
+html.js .story__step { opacity: .34; transition: opacity .4s var(--ease); }
+html.js .story__step.is-on { opacity: 1; }
+.story__step.is-on .story__n { background: var(--iris); border-color: var(--iris); color: #fff; }
+/* Without the script there is nothing to follow: the steps are simply a list. */
+html:not(.js) .story__pin { display: none; }
+html:not(.js) .story__step { min-height: 0; }
+
+.story__pin { --p: 0; }
+.story__win { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); box-shadow: 0 50px 90px -50px rgba(70, 50, 230, .7), 0 30px 60px -30px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .06); }
+.story__stage { position: relative; overflow: hidden; container: stage / size; }
+.story__bar { position: absolute; inset-inline: 0; bottom: 0; height: 2px; background: rgba(255, 255, 255, .06); }
+.story__bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--iris-hi), var(--good)); transform: scaleX(calc(var(--p) / 6)); transform-origin: var(--start); }
+/* Scene k comes in across the boundary at k and leaves across the one at k + 1;
+   its own action (--t, 0 to 1) runs over the first two thirds of its step. */
+.ss, .story__addr > span {
+  --in: clamp(0, (var(--p) - var(--k) + .14) / .28, 1);
+  --out: clamp(0, (var(--p) - var(--k) - .86) / .28, 1);
+}
+.ss:first-child, .story__addr > span:first-child { --in: 1; }
+.ss:last-child, .story__addr > span:last-child { --out: 0; }
+.story__addr > span { opacity: calc(var(--in) - var(--out)); transition: none; }
+.ss { position: absolute; inset: 0; padding: 14px; --t: clamp(0, (var(--p) - var(--k) - .08) / .62, 1); opacity: calc(var(--in) - var(--out)); transform: translateY(calc((1 - var(--in) - var(--out)) * 14px)); will-change: opacity, transform; }
+@container stage (min-width: 520px) { .ss { padding: 22px; } }
+/* A part that follows its scene's action between --a and --b: --s runs 0 to 1. */
+.sv, .sa, .sm, .xf, .sr { --s: clamp(0, (var(--t) - var(--a)) / (var(--b) - var(--a)), 1); }
+.sa { opacity: var(--s); transform: translateY(calc((1 - var(--s)) * 8px)); }
+.sm { clip-path: inset(0 calc((1 - var(--s)) * 100%) 0 0); }
+[dir='rtl'] .sm { clip-path: inset(0 0 0 calc((1 - var(--s)) * 100%)); }
+.xf { display: inline-grid; }
+.xf > * { grid-area: 1 / 1; }
+/* Two states of one thing: the first is gone before the second arrives, so two words never overlap. */
+.xf > :first-child { opacity: clamp(0, (.5 - var(--s)) * 4, 1); }
+.xf > :last-child { opacity: clamp(0, (var(--s) - .5) * 4, 1); }
+
+/* 1 and 6 — the account: the ring drains or fills, its colour moving with it. */
+.ss--health { display: grid; align-content: start; gap: 12px; }
+@container stage (min-width: 520px) { .ss--health { align-content: safe center; gap: 18px; } }
+.ss--health .hd__top .tag { display: block; }
+.sr { --bc: color-mix(in srgb, var(--c1) calc(var(--s) * 100%), var(--c0)); }
+.sr .ring__val { stroke-dasharray: 100 100; stroke-dashoffset: calc(100 - var(--v0) - (var(--v1) - var(--v0)) * var(--s)); }
+.ss--health .hd__trend.xf { justify-items: center; }
+.ss--health .why { gap: 6px; }
+/* A phone's band is short: the reasons that changed most stay, the rest wait for room. */
+@container stage (max-width: 519px) {
+  .ss--health .hd__body { grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+  .ss--health .ring { width: 92px; height: 92px; }
+  .ss--health .ring__n { font-size: 30px; }
+  .ss--health .why li:nth-child(n + 3) { display: none; }
+  .sdeal { padding: 6px 9px; }
+  .sdeal__k { display: none; }
+}
+@container stage (max-width: 519px) and (min-height: 250px) {
+  .ss--health:not(:has(.sdeal)) .why li:nth-child(3) { display: grid; }
+}
+.sdeal { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; padding: 7px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--good) 40%, transparent); font-size: 12.5px; line-height: 1.3; }
+.sdeal__k { flex: 1 0 100%; font-size: 11px; color: var(--fi3); }
+.sdeal b { min-width: 0; font-weight: 600; }
+.sdeal .xf { margin-inline-start: auto; }
+
+/* 2 — the meeting: the promise is written into its next steps. */
+.ss--meet { display: grid; align-content: safe center; }
+@container stage (min-width: 520px) {
+  .ss--meet .mt { width: min(100%, 540px); justify-self: center; padding: 22px 24px; gap: 18px; }
+  .ss--meet .mt__date { width: 52px; }
+  .ss--meet .mt__date b { font-size: 21px; }
+  .ss--meet .mt__main b { font-size: 17px; }
+  .ss--meet .mt__main span { font-size: 13px; }
+  .ss--meet .mt__steps { gap: 10px; padding-top: 14px; }
+  .ss--meet :is(.mt__step, .mt__h) { font-size: 14.5px; }
+  .ss--meet .mt__save { top: 12px; padding: 7px 16px; font-size: 13px; }
+}
+.mt__promise { margin-inline: -7px; padding: 5px 7px; border-radius: 9px; background: color-mix(in srgb, var(--fb) calc(var(--s) * 16%), transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fb) calc(var(--s) * 55%), transparent); }
+.mt__save.sv { box-shadow: 0 0 0 calc(var(--s) * 7px) color-mix(in srgb, var(--fb) calc((1 - var(--s)) * 50%), transparent); }
+
+/* 3 — the task: on the board, and its fields already filled. */
+.ss--task { display: grid; align-content: safe center; gap: 14px; }
+.st__col { display: none; }
+.td { position: relative; display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--s2); border: 1px solid var(--fl); }
+.td .mk__toast { position: absolute; top: -11px; inset-inline-end: 12px; margin: 0; background: #183a35; }
+.td__h { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; line-height: 1.3; }
+.td__h svg { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--fi3); }
+.td__f { margin: 0; display: grid; gap: 5px; }
+.td__f > div { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: 10px; min-height: 30px; padding-top: 5px; border-top: 1px solid var(--fl); }
+.td__f dt { font-size: 11.5px; color: var(--fi3); }
+.td__f dd { margin: 0; display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 12.5px; font-weight: 600; }
+.td__f .due { margin-inline-start: 0; }
+.td__acc { flex: none; width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; background: var(--fb); color: var(--deep); font: 700 10.5px/1 var(--display); }
+.ss .tog { background: color-mix(in srgb, var(--fb) calc(var(--s) * 100%), var(--fl)); }
+.ss .tog i { inset-inline-end: auto; inset-inline-start: 2px; transform: translateX(calc(var(--sx) * var(--s) * 12px)); }
+@container stage (min-width: 520px) {
+  .ss--task { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 16px; }
+  .st__col { display: grid; }
+  .td { gap: 10px; padding: 18px 18px 14px; }
+  .td__h { font-size: 15px; font-weight: 600; }
+  .td__f > div { min-height: 36px; }
+  .td__f dd { font-size: 13.5px; }
+}
+
+/* 4 — the sprint: the linked card crosses from review to Done; the points follow. */
+.ss--sprint { display: grid; align-content: start; gap: 12px; }
+@container stage (min-width: 520px) and (min-height: 380px) { .ss--sprint { align-content: safe center; gap: 22px; } }
+.ssp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.ssp__col { display: grid; gap: 7px; align-content: start; min-width: 0; }
+.ssp__col--doing { display: none; }
+.ss .sp__chart { display: none; }
+.ss .sp__step { stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--s) * 100); }
+.ss .sp__dot { opacity: var(--s); }
+@container stage (min-width: 520px) and (min-height: 400px) { .ss .sp__chart { display: grid; } }
+.ss .sp__bar i { transform: scaleX(calc(var(--from) + (var(--to) - var(--from)) * var(--s))); }
+.ssp__move { position: relative; z-index: 2; transform: translateX(calc(var(--sx) * -1 * (100% + 10px) * (1 - var(--s)))) translateY(calc(min(var(--s), 1 - var(--s)) * -16px)); border-color: color-mix(in srgb, var(--good) calc(var(--s) * 100%), var(--fb)); box-shadow: 0 16px 30px -12px rgb(0 0 0 / calc(min(var(--s), 1 - var(--s)) * 1.4)); will-change: transform; }
+@container stage (min-width: 520px) {
+  .ssp { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ssp__col--doing { display: grid; }
+}
+
+/* 5 — the customer's portal: the shared task turns Done, the reply under it. */
+.ss--portal { display: grid; align-content: safe center; }
+.spt { display: grid; gap: 10px; padding: 12px 14px 14px; border-radius: 12px; background: var(--s2); border: 1px solid var(--fl); }
+.spt__top { display: flex; align-items: center; gap: 9px; font-size: 13.5px; }
+.spt__top .av { margin-inline-start: auto; background: #1d3b35; color: #9be7cb; }
+.spt__tabs { display: flex; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--fl); font-size: 12px; color: var(--fi3); }
+.spt__tabs span { padding: 4px 9px; border-radius: 7px; }
+.spt__tabs .is-on { background: color-mix(in srgb, var(--fb) 18%, transparent); color: #cfc8ff; font-weight: 650; }
+.spt__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.spt__list > li { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--s1); border: 1px solid var(--fl); font-size: 12.5px; line-height: 1.35; }
+.spt__list svg { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--good); }
+.spt__list > li > span:not(.xf, .av), .spt__reply > div { flex: 1; min-width: 0; }
+.spt__list .tag { font-style: normal; }
+.spt__it .xf:first-child > :first-child { color: var(--fi3); }
+.spt__reply { margin-inline-start: 24px; background: color-mix(in srgb, var(--fb) 9%, var(--s1)) !important; }
+.spt__reply b { font-size: 12px; }
+.spt__reply p { margin: 2px 0 0; color: var(--fi2); }
+@container stage (min-width: 520px) {
+  .spt { gap: 12px; padding: 16px 18px 18px; }
+  .spt__list > li { padding: 10px 12px; font-size: 13.5px; }
+}
+
+/* The shortest band (a small phone): each scene keeps what tells its step, and lets the rest go. */
+@container stage (max-height: 269px) {
+  .td__f > div:nth-child(4), .spt__tabs { display: none; }
+  .td__f > div { min-height: 26px; }
+  .ssp__col > .spc:not(.ssp__move) { display: none; }
+  .ss--health .why ul { gap: 4px; }
+}
+
+@media (min-width: 1040px) {
+  .story__track { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(40px, 5vw, 72px); --sh: min(520px, 100vh - 150px); }
+  .story__pin { grid-column: 2; grid-row: 1; align-self: start; position: sticky; top: calc(34px + 50vh - var(--sh) / 2); height: var(--sh); }
+  .story__steps { grid-column: 1; grid-row: 1; padding-block: calc(var(--sh) / 2); }
+}
+@media (max-width: 1039px) {
+  .story__track { --sh: clamp(300px, 46svh, 440px); }
+  .story__pin { position: sticky; top: 76px; z-index: 2; width: min(100%, 720px); height: var(--sh); }
+  /* The band hides the steps as they pass under it, and lets them fade in below. */
+  .story__win { box-shadow: 0 24px 40px -24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06); }
+  .story__pin::before { content: ''; position: absolute; z-index: -1; inset-inline: -50vw; top: -14px; bottom: -40px; background: linear-gradient(180deg, var(--deep) calc(100% - 40px), rgba(15, 12, 43, 0)); }
+  .story__steps { position: relative; z-index: 1; width: min(100%, 720px); }
+  .story__step { min-height: 50svh; }
+}
+@media (max-width: 720px) {
+  .story { padding-top: 64px; }
+  .story__track { margin-top: 28px; --sh: clamp(250px, 41svh, 330px); }
+  .story__step h3 { font-size: 22px; }
+  .story__step p { font-size: 16px; }
+}
 
 /* ------------------------------------------------------------------ bento */
 .bento { padding: 104px 0 48px; --px: 8%; --py: 140px; --pw: 50%; --ph: 520px; }
@@ -871,4 +1058,7 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   html.js [data-reveal] { opacity: 1 !important; transform: none !important; transition: none; }
   .btn::after { display: none; }
   .sc, .tour__nowi, .film__addr span { transition: none; }
+  /* The story still follows the reading, one step at a time, with a plain fade. */
+  .ss, .story__addr > span { transform: none; transition: opacity .35s var(--ease); }
+  .story__bar i { transition: transform .35s var(--ease); }
 }

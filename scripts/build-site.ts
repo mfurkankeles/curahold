@@ -10,10 +10,11 @@
 // SITE_DOCS_URL and SITE_BASE_DOMAIN.
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { PLANS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
-import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
+import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 
 const ROOT = join(import.meta.dirname, '..');
 const OUT = process.argv[2] ?? join(ROOT, 'dist', 'site');
@@ -424,7 +425,7 @@ ${consentTags(locale, rel, policyUrl)}
 `;
 }
 
-function page(locale: SiteLocale): string {
+export function page(locale: SiteLocale): string {
   const c = siteCopy(locale);
   const { tour, bento, cta } = c;
   const ui = tour.ui;
@@ -624,6 +625,171 @@ function page(locale: SiteLocale): string {
             </div>
             <span class="cur cur--sprint">${CURSOR}</span>
           </div>`;
+
+  // ------------------------------------------------------- the scroll story
+  // One customer, six steps, right after the hero. The steps are plain text, in
+  // order; the stage is a picture (aria-hidden) built from the film's parts. The
+  // script sets one number as the reader scrolls, --p from 0 to 6, and the
+  // stylesheet draws every scene from it, so it plays backwards as well as
+  // forwards. A part that follows the scroll names when, within its scene's
+  // action (0–1), it starts and ends: --a and --b. Only in STORY_LOCALES.
+  const story = siteStory(locale);
+  const when = (from: number, to: number, more = '') => ` style="--a:${from};--b:${to}${more}"`;
+  const storyHtml = (() => {
+    if (!story) return '';
+    const marevo = ACCOUNTS[0].name;
+    type Band = 'good' | 'watch' | 'risk';
+    const whyRow = (text: string, got: number, of: number, a: number, wide = false) => {
+      const share = got / of;
+      const b: Band = share >= 0.7 ? 'good' : share >= 0.35 ? 'watch' : 'risk';
+      return `<li class="sa${wide ? ' why--wide' : ''}" data-band="${b}"${when(a, a + 0.2)}><span class="why__t">${esc(text)}</span><span class="why__p">${num(got)}/${num(of)}</span><span class="why__bar"><i style="--w:${share.toFixed(2)}"></i></span></li>`;
+    };
+    // The account as the app shows it: the score ring, its band, the trend and the reasons.
+    // Scene 1 and scene 6 are the same screen: the score falls in the first and climbs back in the last.
+    const health = (k: number, o: { from: number; to: number; b0: Band; b1: Band; at: [number, number]; top: string; trend: string; extra: string; rows: string }) => `<div class="ss ss--health" style="--k:${k}">
+              <div class="hd__top"><b>${esc(marevo)}</b>${o.top}${av('ZT')}</div>
+              <div class="hd__body">
+                <div class="hd__score">
+                  <div class="ring sr"${when(o.at[0], o.at[1], `;--v0:${o.from};--v1:${o.to};--c0:var(--${o.b0});--c1:var(--${o.b1})`)}>
+                    <svg viewBox="0 0 120 120"><circle class="ring__bg" cx="60" cy="60" r="50"/><circle class="ring__val" cx="60" cy="60" r="50" pathLength="100"/></svg>
+                    <span class="ring__n" data-count="${k},${o.at[0]},${o.at[1]},${o.from},${o.to}">${num(o.from)}</span>
+                  </div>
+                  <span class="xf"${when(o.at[0] + 0.15, o.at[1])}><span class="hd__band" data-band="${o.b0}">${esc(band(o.b0))}</span><span class="hd__band" data-band="${o.b1}">${esc(band(o.b1))}</span></span>
+                  ${o.trend}
+                </div>
+                <div class="why">${o.extra}<span class="why__h">${esc(t('health.why'))}</span><ul>${o.rows}</ul></div>
+              </div>
+            </div>`;
+    const reasons = (touch: string, tasks: string, at: number) =>
+      [
+        whyRow(touch, at === 0 ? 5 : 25, 25, 0.42 - at * 0.3),
+        whyRow(tasks, at === 0 ? 3 : 20, 20, 0.52 - at * 0.3),
+        whyRow(t('health.why.championNone'), 0, 15, 0.62 - at * 0.3),
+        whyRow(t('health.why.decision', { names: 'Selin Aytaç' }), 15, 15, 0.72 - at * 0.3, true),
+        whyRow(t('health.why.blockersNone'), 15, 15, 0.8 - at * 0.3, true),
+      ].join('');
+    const trendDown = t('health.trend', { change: `−${num(12)}`, days: num(30) });
+    const trendUp = t('health.trend', { change: `+${num(37)}`, days: num(30) });
+
+    // 1 — the score falls from 60 to 48 and the reasons line up under "Why?".
+    const s1 = health(0, {
+      from: 60, to: 48, b0: 'watch', b1: 'risk', at: [0, 0.4],
+      top: `<span class="tag sa" data-band="risk"${when(0.3, 0.45)}>${esc(ui.chips.review)}</span>`,
+      trend: `<span class="hd__trend sa"${when(0.25, 0.4)}>${esc(trendDown)}</span>`,
+      extra: '',
+      rows: reasons(t('health.why.touch', { days: num(38), kind: t('health.touchKind.review') }), t('health.why.tasks', { n: num(3) }), 0),
+    });
+
+    // 2 — the business review: a second next step is written down. That is the promise.
+    const s2 = `<div class="ss ss--meet" style="--k:1">
+              <div class="mt">
+                <div class="mt__head">
+                  <div class="mt__date"><b>${esc(mDay)}</b><span>${esc(mMonth)}</span></div>
+                  <div class="mt__main"><b>${esc(m.name)}</b><span>${esc(m.ours)}</span><span>${esc(m.theirs)}</span></div>
+                </div>
+                <div class="mt__steps">
+                  <span class="mt__h">${esc(t('meetings.nextSteps'))}</span>
+                  <span class="mt__step">${OPEN}<span>${esc(m.steps[0])}</span></span>
+                  <span class="mt__step mt__promise sv"${when(0.05, 0.25)}>${OPEN}<span class="sm"${when(0.1, 0.7)}>${esc(m.steps[1])}</span></span>
+                  <span class="mt__save sv"${when(0.78, 0.95)}>${esc(t('common.save'))}</span>
+                </div>
+              </div>
+            </div>`;
+
+    // 3 — saved, the step is a task: on the board, and with its owner, date, account and sharing filled in.
+    const field = (label: string, value: string, a: number) => `<div class="sa"${when(a, a + 0.14)}><dt>${esc(label)}</dt><dd>${value}</dd></div>`;
+    const s3 = `<div class="ss ss--task" style="--k:2">
+              <div class="mk st__col">
+                <div class="mk__h"><b>${esc(t('board.defaultColumns.todo'))}</b></div>
+                ${task(ui.todo, 'AD', 'Ada', day(11, 12))}
+                <article class="tk sa"${when(0, 0.22)}><p>${esc(m.steps[1])}</p><div class="tk__f">${av('LB')}<span>Lena</span><span class="due">${esc(day(11, 22))}</span></div></article>
+              </div>
+              <div class="td">
+                <span class="mk__toast sa"${when(0, 0.18)}>${CHECK}${esc(story.ui.opened)}</span>
+                <div class="td__h">${OPEN}<b>${esc(m.steps[1])}</b></div>
+                <dl class="td__f">
+                  ${field(accountWords(locale).one, `<span class="td__acc">M</span>${esc(marevo)}`, 0.2)}
+                  ${field(t('task.assignees'), `${av('LB')}Lena`, 0.34)}
+                  ${field(t('task.due'), `<span class="due">${esc(day(11, 22))}</span>`, 0.48)}
+                  ${field(story.ui.from, esc(m.name), 0.62)}
+                  ${field(t('portal.share.label'), `<span class="tog sv"${when(0.84, 0.98)}><i></i></span>`, 0.76)}
+                </dl>
+              </div>
+            </div>`;
+
+    // 4 — Sprint 24: the card linked to the promise moves from review to Done; the points follow.
+    const card = (i: number, epic: number, pts: number, who: string, more = '', attrs = '', link = '') => `<article class="spc${more}"${attrs}><div class="spc__t"><span class="spc__e" data-epic="${epic}">${esc(ui.epics[epic])}</span><span class="spc__p">${num(pts)}</span>${av(who)}</div><p>${esc(ui.tasks[i])}</p>${link}</article>`;
+    const pts = (done: number) => ui.points.replace('{done}', num(done)).replace('{total}', num(26));
+    const s4 = `<div class="ss ss--sprint" style="--k:3">
+              <div class="sp__head">
+                <b>${esc(ui.sprint)}</b><span class="tag" data-band="good">${esc(ui.active)}</span>
+                <span class="sp__dates">${esc(dayFmt.formatRange(at(11, 10), at(11, 21)))}</span>
+                <span class="sp__prog"><span class="sp__bar"><i class="sv"${when(0.7, 0.9, ';--from:.308;--to:.5')}></i></span><span class="sp__pts xf"${when(0.7, 0.9)}><span>${esc(pts(8))}</span><span>${esc(pts(13))}</span></span></span>
+              </div>
+              <div class="ssp">
+                <div class="ssp__col ssp__col--doing"><div class="sp__ch">${esc(t('board.defaultColumns.doing'))}</div>${card(4, 1, 8, 'LB')}</div>
+                <div class="ssp__col"><div class="sp__ch">${esc(ui.review)}</div>${card(1, 2, 5, 'ZT')}</div>
+                <div class="ssp__col"><div class="sp__ch">${esc(t('board.defaultColumns.done'))}</div>${card(2, 0, 8, 'AD')}${card(0, 1, 5, 'LB', ' ssp__move sv', when(0.12, 0.66), `<span class="spc__l">${CHAIN}${esc(t('task.links.blocks'))} · ${num(1)}</span>`)}</div>
+              </div>
+              <div class="sp__chart">
+                <div class="sp__lg"><b>${esc(ui.burndown)}</b><em class="xf"${when(0.7, 0.9)}><span>${esc(ui.ptsLeft.replace('{n}', num(18)))}</span><span>${esc(ui.ptsLeft.replace('{n}', num(13)))}</span></em><span class="sp__lgk"><span class="sp__k sp__k--i">${esc(ui.ideal)}</span><span class="sp__k sp__k--a">${esc(ui.actual)}</span></span></div>
+                <div class="sp__plot"><svg class="sp__burn" viewBox="0 0 300 96" preserveAspectRatio="none"><path class="sp__ideal" d="M4 8 L296 88"/><path class="sp__actual" d="M4 8 H48 V17 H92 V33 H136"/><path class="sp__step sv"${when(0.66, 0.84)} d="M136 33 V48 H150" pathLength="100"/></svg><span class="sp__dot sv"${when(0.8, 0.9)}></span></div>
+              </div>
+            </div>`;
+
+    // 5 — the customer's side: the shared task turns Done, and Zeynep's reply is under it.
+    const s5 = `<div class="ss ss--portal" style="--k:4">
+              <div class="spt">
+                <div class="spt__top"><span class="pt__logo">M</span><b>${esc(t('portal.for', { account: marevo }))}</b>${av('SA')}</div>
+                <div class="spt__tabs"><span class="is-on">${esc(t('portal.boards'))}</span><span>${esc(t('portal.requests'))}</span></div>
+                <ul class="spt__list">
+                  <li>${CHECK}<span>${esc(m.steps[0])}</span><em class="tag" data-band="good">${esc(t('portal.step.done'))}</em></li>
+                  <li class="spt__it"><span class="xf"${when(0.25, 0.45)}>${OPEN}${CHECK}</span><span>${esc(m.steps[1])}</span><span class="xf"${when(0.25, 0.45)}><em class="tag" data-band="watch">${esc(t('portal.step.doing'))}</em><em class="tag" data-band="good">${esc(t('portal.step.done'))}</em></span></li>
+                  <li class="spt__reply sa"${when(0.5, 0.8)}>${av('ZT')}<div><b>Zeynep</b><p>${esc(story.ui.reply)}</p></div></li>
+                </ul>
+              </div>
+            </div>`;
+
+    // 6 — the renewal closes as won, and the score climbs back from 48 to 85.
+    const s6 = health(5, {
+      from: 48, to: 85, b0: 'risk', b1: 'good', at: [0.22, 0.65],
+      top: '',
+      trend: `<span class="hd__trend xf"${when(0.3, 0.6)}><span>${esc(trendDown)}</span><span>${esc(trendUp)}</span></span>`,
+      extra: `<div class="sdeal"><span class="sdeal__k">${esc(t('records.kind.opportunity'))}</span><b>${esc(t('renewal.dealName', { account: marevo, year: num(2027) }))}</b><span class="xf"${when(0, 0.2)}><span class="tag" data-band="watch">${esc(t('targets.kind.renewal'))}</span><span class="tag" data-band="good">${esc(t('tpl.won'))}</span></span></div>`,
+      rows: reasons(t('health.why.touch', { days: num(6), kind: t('health.touchKind.meeting') }), t('health.why.tasksNone'), 1),
+    });
+
+    const crumbs6 = [`${accts} / ${marevo}`, `${t('meetings.title')} / ${m.kind}`, `${t('nav.boards')} / ${story.ui.board}`, `${t('nav.boards')} / ${ui.sprint}`, `${t('portal.board.title')} / ${marevo}`, `${t('nav.renewals')} / ${marevo}`];
+    const steps = story.steps
+      .map((s, i) => `<li class="story__step${i === 0 ? ' is-on' : ''}"><span class="story__n" aria-hidden="true">${num(i + 1)}</span><h3>${esc(s.title)}</h3><p>${esc(s.text)}</p></li>`)
+      .join('');
+    return `<section class="story" id="story" data-story aria-labelledby="story-title">
+    <div class="wrap">
+      <header class="story__head">
+        <h2 id="story-title">${esc(story.title)}</h2>
+        <p class="lead">${esc(story.lead)}</p>
+      </header>
+      <div class="story__track">
+        <div class="story__pin" aria-hidden="true">
+          <div class="film__win story__win">
+            <div class="film__bar"><span class="film__dots"><i></i><i></i><i></i></span><span class="film__addr story__addr">${crumbs6.map((x, i) => `<span style="--k:${i}">${esc(x)}</span>`).join('')}</span></div>
+            <div class="story__stage">
+            ${s1}
+            ${s2}
+            ${s3}
+            ${s4}
+            ${s5}
+            ${s6}
+            </div>
+            <span class="story__bar"><i></i></span>
+          </div>
+        </div>
+        <ol class="story__steps">${steps}</ol>
+      </div>
+    </div>
+  </section>`;
+  })();
+  const cue = story ? `<a class="cue" href="#story"><span class="cue__line" aria-hidden="true"><i></i></span><span>${esc(story.cue)}</span></a>` : '';
 
   const crumbs = [`${accts} / ${ACCOUNTS[0].name}`, `${t('meetings.title')} / ${m.kind}`, `${t('nav.renewals')} / ${ACCOUNTS[1].name}`, `${t('nav.boards')} / ${ui.sprint}`];
   const DURS = [7600, 7000, 7000, 7600];
@@ -843,11 +1009,14 @@ ${SKY}
       </div>
       <div class="tour__now" aria-hidden="true">${nows}</div>
     </div>
+    ${cue}
     <div class="strip" aria-label="${esc(c.hero.works)}">
       <p class="strip__label">${esc(c.hero.works)}</p>
       <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}</div></div>
     </div>
   </section>
+
+  ${storyHtml}
 
   <section class="bento pool" id="features">
     <div class="wrap">
@@ -919,64 +1088,69 @@ ${consentTags(locale, rel, legal('cookies'))}
 `;
 }
 
-mkdirSync(join(OUT, 'assets'), { recursive: true });
-for (const locale of SITE_LOCALES) {
-  const dir = locale === 'en' ? OUT : join(OUT, locale);
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'index.html'), page(locale));
-}
-copyFileSync(join(ROOT, 'site', 'site.css'), join(OUT, 'assets', 'site.css'));
-copyFileSync(join(ROOT, 'site', 'site.js'), join(OUT, 'assets', 'site.js'));
-copyFileSync(join(ROOT, 'site', 'consent.css'), join(OUT, 'assets', 'consent.css'));
-copyFileSync(join(ROOT, 'site', 'consent.js'), join(OUT, 'assets', 'consent.js'));
-// The same open fonts as the app (SIL OFL), served from the site itself: no third party sees a visit.
-for (const [pkg, names] of [
-  ['figtree', ['figtree-latin-wght-normal.woff2', 'figtree-latin-ext-wght-normal.woff2']],
-  ['bricolage-grotesque', ['bricolage-grotesque-latin-wght-normal.woff2', 'bricolage-grotesque-latin-ext-wght-normal.woff2']],
-] as const) {
-  for (const name of names) {
-    const from = join(ROOT, 'node_modules', '@fontsource-variable', pkg, 'files', name);
-    if (existsSync(from)) copyFileSync(from, join(OUT, 'assets', name));
-  }
-}
-// A share-card image. An owner-supplied raster (site/og.png) is preferred and
-// copied through; the generated SVG is always written as a free fallback.
-const ownOgPng = join(ROOT, 'site', 'og.png');
-if (existsSync(ownOgPng)) copyFileSync(ownOgPng, join(OUT, 'assets', 'og.png'));
-const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#17133a"/><g transform="translate(96,206)"><rect width="120" height="120" rx="28" fill="#241f52"/><path d="M86 34A45 45 0 1 0 86 86" fill="none" stroke="#eceafe" stroke-width="11" stroke-linecap="round"/><circle cx="60" cy="60" r="12" fill="#3fb596"/></g><text x="240" y="302" font-family="'Bricolage Grotesque','Figtree',sans-serif" font-size="94" font-weight="700" fill="#ffffff">Curahold</text><text x="98" y="436" font-family="'Figtree',sans-serif" font-size="38" fill="#a8a3d8">Tasks, sprints and customer renewals in one place</text></svg>`;
-writeFileSync(join(OUT, 'assets', 'og.svg'), OG_SVG);
+// Run as a script, it writes the site; imported (by a test), it only lends page().
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) build();
 
-// The blog: an index and a post per language that has native posts (en, tr).
-let blogPageCount = 0;
-for (const locale of BLOG_LOCALES) {
-  const dir = locale === 'en' ? join(OUT, 'blog') : join(OUT, locale, 'blog');
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'index.html'), blogIndexPage(locale));
-  blogPageCount++;
-  for (const post of blogPosts(locale)) {
-    const pdir = join(dir, post.slug);
-    mkdirSync(pdir, { recursive: true });
-    writeFileSync(join(pdir, 'index.html'), blogPostPage(locale, post));
+function build() {
+  mkdirSync(join(OUT, 'assets'), { recursive: true });
+  for (const locale of SITE_LOCALES) {
+    const dir = locale === 'en' ? OUT : join(OUT, locale);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), page(locale));
+  }
+  copyFileSync(join(ROOT, 'site', 'site.css'), join(OUT, 'assets', 'site.css'));
+  copyFileSync(join(ROOT, 'site', 'site.js'), join(OUT, 'assets', 'site.js'));
+  copyFileSync(join(ROOT, 'site', 'consent.css'), join(OUT, 'assets', 'consent.css'));
+  copyFileSync(join(ROOT, 'site', 'consent.js'), join(OUT, 'assets', 'consent.js'));
+  // The same open fonts as the app (SIL OFL), served from the site itself: no third party sees a visit.
+  for (const [pkg, names] of [
+    ['figtree', ['figtree-latin-wght-normal.woff2', 'figtree-latin-ext-wght-normal.woff2']],
+    ['bricolage-grotesque', ['bricolage-grotesque-latin-wght-normal.woff2', 'bricolage-grotesque-latin-ext-wght-normal.woff2']],
+  ] as const) {
+    for (const name of names) {
+      const from = join(ROOT, 'node_modules', '@fontsource-variable', pkg, 'files', name);
+      if (existsSync(from)) copyFileSync(from, join(OUT, 'assets', name));
+    }
+  }
+  // A share-card image. An owner-supplied raster (site/og.png) is preferred and
+  // copied through; the generated SVG is always written as a free fallback.
+  const ownOgPng = join(ROOT, 'site', 'og.png');
+  if (existsSync(ownOgPng)) copyFileSync(ownOgPng, join(OUT, 'assets', 'og.png'));
+  const OG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#17133a"/><g transform="translate(96,206)"><rect width="120" height="120" rx="28" fill="#241f52"/><path d="M86 34A45 45 0 1 0 86 86" fill="none" stroke="#eceafe" stroke-width="11" stroke-linecap="round"/><circle cx="60" cy="60" r="12" fill="#3fb596"/></g><text x="240" y="302" font-family="'Bricolage Grotesque','Figtree',sans-serif" font-size="94" font-weight="700" fill="#ffffff">Curahold</text><text x="98" y="436" font-family="'Figtree',sans-serif" font-size="38" fill="#a8a3d8">Tasks, sprints and customer renewals in one place</text></svg>`;
+  writeFileSync(join(OUT, 'assets', 'og.svg'), OG_SVG);
+
+  // The blog: an index and a post per language that has native posts (en, tr).
+  let blogPageCount = 0;
+  for (const locale of BLOG_LOCALES) {
+    const dir = locale === 'en' ? join(OUT, 'blog') : join(OUT, locale, 'blog');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'index.html'), blogIndexPage(locale));
     blogPageCount++;
+    for (const post of blogPosts(locale)) {
+      const pdir = join(dir, post.slug);
+      mkdirSync(pdir, { recursive: true });
+      writeFileSync(join(pdir, 'index.html'), blogPostPage(locale, post));
+      blogPageCount++;
+    }
   }
+
+  // sitemap.xml with hreflang alternates, and robots.txt pointing to it.
+  const today = new Date().toISOString().slice(0, 10);
+  const latestPost = (locale: SiteLocale) => blogPosts(locale).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01');
+  const sitemapUrl = (loc: string, lastmod: string, priority: string, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
+    const links = [...alternates.map((l) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${pathOf(l)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${pathOf('en')}"/>`].join('\n');
+    return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>${priority}</priority>\n${links}\n  </url>`;
+  };
+  const entries: string[] = [];
+  for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}`, today, l === 'en' ? '1.0' : '0.8', SITE_LOCALES, localeBase));
+  for (const l of BLOG_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, latestPost(l), '0.6', BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
+  for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
+  writeFileSync(join(OUT, 'sitemap.xml'), sitemap);
+  writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
+
+  // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
+  const HUB = join(ROOT, 'dist', 'demo-hub');
+  if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
+  console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemap.xml + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
 }
-
-// sitemap.xml with hreflang alternates, and robots.txt pointing to it.
-const today = new Date().toISOString().slice(0, 10);
-const latestPost = (locale: SiteLocale) => blogPosts(locale).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01');
-const sitemapUrl = (loc: string, lastmod: string, priority: string, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
-  const links = [...alternates.map((l) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${pathOf(l)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${pathOf('en')}"/>`].join('\n');
-  return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>${priority}</priority>\n${links}\n  </url>`;
-};
-const entries: string[] = [];
-for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}`, today, l === 'en' ? '1.0' : '0.8', SITE_LOCALES, localeBase));
-for (const l of BLOG_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, latestPost(l), '0.6', BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
-for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
-writeFileSync(join(OUT, 'sitemap.xml'), sitemap);
-writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
-
-// The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
-const HUB = join(ROOT, 'dist', 'demo-hub');
-if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
-console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemap.xml + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);

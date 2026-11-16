@@ -142,4 +142,78 @@
     tabs.forEach((tb, k) => (tb.tabIndex = k === cur ? 0 : -1));
     tour.style.setProperty('--dur', `${tabs[0]?.dataset.dur || 7000}ms`);
   }
+
+  // The story: six steps of text, and a stage that follows them. The reading line
+  // is the stage's middle on a wide screen, the middle of the space under it on a
+  // phone. As each step crosses it, p runs from that step's number to the next;
+  // the stylesheet draws every scene from p, so the story plays both ways with the
+  // scroll. Nothing is measured while scrolling, and nothing runs off screen.
+  const story = document.querySelector('[data-story]');
+  if (story && canWatch) {
+    const pin = story.querySelector('.story__pin');
+    const steps = [...story.querySelectorAll('.story__step')];
+    const wide = window.matchMedia('(min-width: 1040px)');
+    const fmt = new Intl.NumberFormat(root.lang);
+    const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    // Numbers that count with the scroll: scene, start, end (of its action), from, to.
+    const counts = [...story.querySelectorAll('[data-count]')].map((el) => {
+      const [k, a, b, from, to] = el.dataset.count.split(',').map(Number);
+      return { el, k, a, b, from, to, shown: from };
+    });
+    let blocks = [];
+    let line = 0;
+    let last = -1;
+    let on = 0;
+    let raf = 0;
+    const measure = () => {
+      blocks = steps.map((s) => {
+        const r = s.getBoundingClientRect();
+        return [r.top + window.scrollY, r.height];
+      });
+      const top = parseFloat(getComputedStyle(pin).top) || 0;
+      line = wide.matches ? top + pin.offsetHeight / 2 : (top + pin.offsetHeight + window.innerHeight) / 2;
+    };
+    const frame = () => {
+      raf = 0;
+      const y = window.scrollY + line;
+      let p = 0;
+      blocks.forEach(([top, h], i) => {
+        if (y >= top) p = i + clamp((y - top) / h);
+      });
+      // Without motion the story moves a whole step at a time, each step complete.
+      if (reduce) p = Math.min(Math.floor(p), steps.length - 1) + 0.75;
+      if (Math.abs(p - last) < 0.001) return;
+      last = p;
+      pin.style.setProperty('--p', p.toFixed(3));
+      const now = Math.min(Math.floor(p), steps.length - 1);
+      if (now !== on) {
+        steps[on].classList.remove('is-on');
+        steps[now].classList.add('is-on');
+        on = now;
+      }
+      for (const c of counts) {
+        const s = clamp((clamp((p - c.k - 0.08) / 0.62) - c.a) / (c.b - c.a));
+        const v = Math.round(c.from + (c.to - c.from) * s);
+        if (v !== c.shown) c.el.textContent = fmt.format((c.shown = v));
+      }
+    };
+    const ask = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+    const again = () => {
+      measure();
+      ask();
+    };
+    new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          again();
+          window.addEventListener('scroll', ask, { passive: true });
+        } else window.removeEventListener('scroll', ask);
+      },
+      { rootMargin: '100px 0px' },
+    ).observe(story);
+    if ('ResizeObserver' in window) new ResizeObserver(again).observe(story);
+    window.addEventListener('resize', again);
+  }
 })();

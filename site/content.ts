@@ -1142,6 +1142,83 @@ export const siteCopy = (locale: Locale): SiteCopy => COPY[locale] ?? COPY.en!;
 /** The consent words for a locale. */
 export const siteConsent = (locale: Locale): SiteConsentCopy => siteCopy(locale).consent;
 
+/**
+ * The story right after the hero: one customer (the demo's Marevo) through six
+ * steps, told in text on one side while a product screen follows the scroll on
+ * the other. Every screen is drawn from the app's own words where the app has
+ * them; these are the words it does not.
+ */
+export interface SiteStoryCopy {
+  /** The quiet link at the foot of the hero that leads into the story. */
+  cue: string;
+  title: string;
+  lead: string;
+  /** Six steps, in order: health drops, the promise, the task, the sprint, the portal, the renewal. */
+  steps: { title: string; text: string }[];
+  ui: {
+    /** Toast once the meeting is saved and its next step has become a task. */
+    opened: string;
+    /** Task field: the meeting the task came from. */
+    from: string;
+    /** The customer-success board the task lands on. */
+    board: string;
+    /** The reply the customer reads under the finished task in their portal. */
+    reply: string;
+  };
+}
+
+export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
+  en: {
+    cue: 'Scroll to follow one customer',
+    title: 'One customer, start to finish',
+    lead: 'Follow Marevo through one quarter: a warning, a promise, the work that keeps it, and a renewal saved.',
+    steps: [
+      { title: 'The score drops, and says why', text: 'Marevo slips from 60 to 48 and turns at risk. Open Why? and the reasons are listed: no touch in 38 days, three overdue tasks, no champion.' },
+      { title: 'A promise is made in the room', text: 'At the Q3 business review, Selin asks for a sample journey for their mobile channel. Zeynep logs it as a next step before the call ends.' },
+      { title: 'It becomes a task by itself', text: 'Saving the meeting turns the next step into a task: it has an owner and a due date, it is linked to Marevo, and it is shared with them.' },
+      { title: 'The sprint ships it', text: 'The product team builds it in Sprint 24, on a card linked to the promise. When the card reaches Done, the sprint’s points move with it.' },
+      { title: 'Marevo sees it in their portal', text: 'Selin signs in with the link in her email. The task shows as done, with Zeynep’s reply under it. Nobody had to write a status email.' },
+      { title: 'The renewal is saved, and health climbs back', text: 'With a recent touch and nothing overdue, Marevo’s score climbs back to 85. The renewal opportunity closes as won, well before the date.' },
+    ],
+    ui: {
+      opened: 'Task opened',
+      from: 'From the meeting',
+      board: 'Customer success',
+      reply: 'The sample journey is ready in your workspace.',
+    },
+  },
+  tr: {
+    cue: 'Kaydır, bir müşteriyi baştan sona izle',
+    title: 'Bir müşteri, baştan sona',
+    lead: 'Marevo’nun bir çeyreğini izle: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
+    steps: [
+      { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. Neden?’i aç; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
+      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
+      { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
+      { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
+      { title: 'Marevo onu kendi portalında görür', text: 'Selin e-postasındaki bağlantıyla girer. Görev tamamlandı olarak görünür, altında Zeynep’in yanıtı durur. Kimsenin durum e-postası yazması gerekmez.' },
+      { title: 'Yenileme kurtulur, sağlık geri yükselir', text: 'Yakın zamanda temas var, geciken iş yok; Marevo’nun skoru yeniden 85’e çıkar. Yenileme fırsatı, tarihinden çok önce kazanıldı olarak kapanır.' },
+    ],
+    ui: {
+      opened: 'Görev açıldı',
+      from: 'Geldiği toplantı',
+      board: 'Müşteri başarısı',
+      reply: 'Örnek akış çalışma alanında hazır.',
+    },
+  },
+};
+
+/**
+ * The languages the story ships in, and only these: English and Turkish now, the
+ * other seven on Thursday (19 Nov). Until a language is here, its page leaves the
+ * story — and the hero's cue that leads into it — out entirely: no English on its
+ * page and no empty section. tests/site-copy.test.ts holds the list to this.
+ */
+export const STORY_LOCALES = Object.keys(STORY_COPY) as Locale[];
+
+/** The story's words for a locale, or null where the story does not ship yet. */
+export const siteStory = (locale: Locale): SiteStoryCopy | null => STORY_COPY[locale] ?? null;
+
 // The blog's own labels, in the languages the blog is written in.
 export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
   en: {
