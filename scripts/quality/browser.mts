@@ -326,7 +326,10 @@ if (on('axe') || on('fit')) {
   await lister.page.close();
   const tabs = ['company', 'billing', 'currencies', 'fields', 'health', 'rhythm', 'playbooks', 'records', 'people', 'joining', 'teams', 'roles', 'connections', 'sources', 'automations', 'developer', 'portal', 'support', 'audit'];
   screens.push(...nav, `/accounts/${account}`, '/reports/all', '/reports/new', '/profile', '/devices', '/connect-ai', ...tabs.map((t) => `/settings/${t}`));
+  // SCREENS=/reports,/dashboards — only these, each with what was found on it (a surface's own gate).
+  if (process.env.SCREENS) screens.splice(0, screens.length, ...process.env.SCREENS.split(','));
 }
+const each = !!process.env.SCREENS;
 const look = async (page: Page, theme: 'light' | 'dark', locale: 'tr' | 'en') => {
   await api(page)('PATCH', '/api/me', { locale });
   await page.evaluate((m) => {
@@ -353,6 +356,7 @@ if (on('axe')) {
         return r.violations.map((v: any) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
       });
       if (found.length) withFindings++;
+      if (each && found.length) say('axe', `  ${theme} ${path}: ${found.map((f) => `${f.id} ${f.nodes}`).join(', ')}`);
       for (const f of found) {
         byRule.set(f.id, (byRule.get(f.id) ?? 0) + f.nodes);
         byImpact[f.impact] = (byImpact[f.impact] ?? 0) + f.nodes;
@@ -400,6 +404,7 @@ if (on('fit')) {
         const main = [...document.querySelectorAll<HTMLElement>('.main .btn--primary')].filter((b) => b.offsetParent && !b.closest('.dialog, .panel, .billingbar')).length;
         return { sideways: document.documentElement.scrollWidth > vw + 1, cut, out, main, samples };
       });
+      if (each && (r.cut || r.sideways || r.out || r.main > 1)) say('fit', `  ${width} ${path}: cut ${r.cut}${r.samples.length ? ` ("${r.samples.join('", "')}")` : ''}, sideways ${r.sideways}, out ${r.out}, main buttons ${r.main}`);
       if (r.sideways) sideways++;
       cut += r.cut;
       out2 += r.out;
