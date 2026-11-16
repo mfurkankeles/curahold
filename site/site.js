@@ -5,7 +5,8 @@
   const root = document.documentElement;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const canWatch = 'IntersectionObserver' in window;
-  // Tell the stylesheet the script is here: only now may it hide what it will reveal.
+  // The page's head already told the stylesheet the script is coming (so the first
+  // paint is the right one); say it again in case that line was stripped.
   root.classList.add('js');
 
   // Monthly or yearly: every element with data-month / data-year shows the chosen one.
@@ -200,13 +201,17 @@
     const ask = () => {
       if (!raf) raf = requestAnimationFrame(frame);
     };
+    // Measured only while the story is near the screen: when it arrives, and when its size changes.
+    let near = false;
     const again = () => {
+      if (!near) return;
       measure();
       ask();
     };
     new IntersectionObserver(
       ([e]) => {
-        if (e.isIntersecting) {
+        near = e.isIntersecting;
+        if (near) {
           again();
           window.addEventListener('scroll', ask, { passive: true });
         } else window.removeEventListener('scroll', ask);

@@ -88,9 +88,9 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 [dir='rtl'] .btn svg { transform: scaleX(-1); }
 
 /* --------------------------------------------------------------- header */
-.top { position: sticky; top: 0; z-index: 30; background: transparent; border-bottom: 1px solid transparent; transition: background-color .3s var(--ease), border-color .3s var(--ease); }
-/* Clear glass over the night; once the page moves, a darker pane and a hairline keep the words readable. */
-.top.is-scrolled { background: rgba(15, 12, 43, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom-color: rgba(255, 255, 255, .08); }
+.top { position: sticky; top: 0; z-index: 30; background: rgba(15, 12, 43, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, .08); transition: background-color .3s var(--ease), border-color .3s var(--ease); }
+/* Over the hero it is clear glass; once the page moves, the darker pane and its hairline come back. */
+.home .top:not(.is-scrolled) { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: transparent; }
 .top__in { display: flex; align-items: center; gap: 28px; min-height: 68px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; }
 .brand svg { width: 30px; height: 30px; }
@@ -496,6 +496,10 @@ html:not(.js) .tour__bar { display: none; }
 .marq:hover .marq__track { animation-play-state: paused; }
 
 /* ------------------------------------------------------------- the story */
+/* Below the first screen the browser lays a section out only as it comes near, so
+   the first paint does not wait for the whole page. Sizes are remembered once seen. */
+.story, .bento, .pricing, .faq { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
+.story { contain-intrinsic-size: auto 4200px; }
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }
@@ -519,17 +523,19 @@ html.js .story__step.is-on { opacity: 1; }
 /* Without the script there is nothing to follow: the steps are simply a list. */
 html:not(.js) .story__pin { display: none; }
 html:not(.js) .story__step { min-height: 0; }
+html:not(.js) .story__steps { padding-block: 0; }
 
 .story__pin { --p: 0; }
 .story__win { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); box-shadow: 0 50px 90px -50px rgba(70, 50, 230, .7), 0 30px 60px -30px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .06); }
 .story__stage { position: relative; overflow: hidden; container: stage / size; }
 .story__bar { position: absolute; inset-inline: 0; bottom: 0; height: 2px; background: rgba(255, 255, 255, .06); }
 .story__bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--iris-hi), var(--good)); transform: scaleX(calc(var(--p) / 6)); transform-origin: var(--start); }
-/* Scene k comes in across the boundary at k and leaves across the one at k + 1;
-   its own action (--t, 0 to 1) runs over the first two thirds of its step. */
+/* Scene k leaves just before the boundary at k + 1 and the next arrives just after it,
+   so two screens never sit on top of each other wherever the reader stops. Its own
+   action (--t, 0 to 1) runs over the first two thirds of its step. */
 .ss, .story__addr > span {
-  --in: clamp(0, (var(--p) - var(--k) + .14) / .28, 1);
-  --out: clamp(0, (var(--p) - var(--k) - .86) / .28, 1);
+  --in: clamp(0, (var(--p) - var(--k)) / .16, 1);
+  --out: clamp(0, (var(--p) - var(--k) - .84) / .16, 1);
 }
 .ss:first-child, .story__addr > span:first-child { --in: 1; }
 .ss:last-child, .story__addr > span:last-child { --out: 0; }

@@ -957,6 +957,7 @@ ${seoTags({ canonical, title: c.title, description: c.description, locale, ogTyp
 ${alternates}
 ${landingJsonLd(locale, canonical, c.description)}
 <link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
 <link rel="stylesheet" href="${rel}assets/site.css">
 <link rel="stylesheet" href="${rel}assets/consent.css">
 </head>
