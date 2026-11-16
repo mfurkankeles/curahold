@@ -286,21 +286,22 @@ Tur 2'de eklenenler:
 | 0. Başlangıç ölçümü (15 Kasım) | Tamam: rakamlar yukarıda, "Bugünkü durum" bölümünde |
 | 1. Hız temeli | Tamam. Bazı hedefler hâlâ açık: aşağıdaki ölçüm tablosunda |
 | 2. Güvenlik | Tamam: istek sınırları, sürüm, yetki matrisi, passkey, iki adımlı giriş, önemli işlemlerden önce "sen misin?" onayı, salt okunur destek erişimi, değiştirilemez işlem günlüğü, security.txt. Açık kalanlar: dosyalar için ayrı alan adı, alan adı kararını bekliyor. Veritabanının sahibi olan rol, işlem günlüğünü koruyan tetikleyiciyi hâlâ kaldırabilir. Kendi sunucusunda kuranlar için ad çözümlemesiyle iç ağa yönlenme riski kurulum belgesindeki dış trafik güvenlik duvarı notuyla karşılanıyor. security.txt'teki iletişim adresi ürün sahibini bekliyor |
-| 3. Gerçek zamanlı kanal | Tamam: canlı kanal, kim burada (görev paneli, müşteri sayfası, sprint) |
-| 4. Tasarım sistemi ve erişilebilirlik | Tamam, açık uçlarla. Kalanlar: sığmayan etiketler, birkaç axe bulgusu, içerik güvenlik politikası satır içi stile hâlâ izin veriyor (destek masasındaki oturum oynatıcı buna ihtiyaç duyuyor) |
-| 5. Yüzey yüzey cila | 4'ü bekliyor |
-| 6. Dokuz dilin tamamı | Sözlük ve sözlük dışında kalan metinler dokuz dilde tamam. Yardım merkezi ve demo hâlâ iki dilde. Farsçada resmi hitap geçişi açık |
+| 3. Gerçek zamanlı kanal | Tamam: canlı kanal, kim burada (görev paneli, müşteri sayfası, sprint). Konsolun da kendi canlı odası var |
+| 4. Tasarım sistemi ve erişilebilirlik | Tamam. axe bulgusu ve sığmayan etiket kalmadı. Açık kalan: içerik güvenlik politikası satır içi stile hâlâ izin veriyor (destek masasındaki oturum oynatıcı buna ihtiyaç duyuyor) |
+| 5. Yüzey yüzey cila | Yedi yüzeyin yedisi de tamam: çalışanın işi, müşteriler, içgörü, ürün ekibi, yönetici, müşteri portalı, konsol. İkinci cila dalgası sürüyor; ürün ekibinin ikinci paketi ve konsolun ikinci paketi ana dalda. Açık uçlar: kayıtlı müşteri görünümleri yok. Dışa aktarma izni ve kaydı sürüyor. SSO zorunluyken yedek yönetici girişi yok (ürün sahibi kararı). Portalda iş başlamadan teklif onayı yok. Telefonda backlog satırları ve bazı başlıklar hâlâ kalabalık. Ana dalda iki test geçmiyor (aşağıda, "Sabah 16 Kasım") |
+| 6. Dokuz dilin tamamı | Sözlük ve sözlük dışında kalan metinler dokuz dilde tamam. Yardım merkezi ve demo hâlâ iki dilde: yardım ve demo paketi sürüyor, henüz ana dalda değil. Farsçada resmi hitap geçişi açık |
 | 7. İmza özellikler | Araştırma tablosu hazır; seçim ürün sahibinde |
-| 8. Yük testi, marj doğrulama, son denetim | Bekliyor |
+| 8. Yük testi, marj doğrulama, son denetim | Sırada: yük testi ve bağımsız gözden geçirme |
 
 ### Tur 2 ölçümleri (15 Kasım: sabah → akşam)
 
 Biçim: hedef ← sabah → şimdi. ✓ hedef tutuyor. Hepsi bu akşam aynı makinede, yanında başka iş yokken ölçüldü.
-"Gece:" ile başlayan satırlar paketler ana dala girdikten sonra ölçüldü; en alttakiler en son.
+"Gece:" ile başlayan satırlar paketler ana dala girdikten sonra ölçüldü; en alttakiler en son. "Sabah 16 Kasım:" satırları yüzey paketleri de girdikten sonra, aynı makinede ölçüldü.
 
 Tutanlar
 - Dokunma tepkisi (4 kat yavaş işlemci, 75. yüzdelik / en yavaş): ≤ 100 ms ← 56 / 128 ms → 64 / 112 ms ✓. En yavaşı yine görev açma.
   - Gece: 80 / 104 ms ✓. En yavaşı müşteri listesini açmak.
+  - Sabah 16 Kasım: 72 / 112 ms ✓. En yavaşı yine müşteri listesini açmak (112 ms).
 - Tekrar açılış: ≤ 0,5 sn ← 0,32 sn → 0,61 sn (gerçek içerik 0,70 sn). Tutmuyor. Ölçüm değişti: sabah iskelet ölçülmüş olabilirdi, şimdi gerçek içerik bekleniyor.
   - Gece: 4G'de 0,53 sn (gerçek içerik 0,61 sn), yavaş 4G'de 0,59 sn (gerçek içerik 0,64 sn). Hâlâ tutmuyor, ama az kaldı.
 - Gerçek Postgres, okumalar (6 bin müşteri, 210 bin görev): ≤ 150 ms ← 5–124 ms → 4–169 ms. Tutmuyor: iş raporu yönetici için 169, ekip lideri için 155 ms; aylık takvim 150 ms.
@@ -313,6 +314,8 @@ Tutanlar
 - Testler: 735 test, 41 senaryo → 846 test (85 dosya), 41 tarayıcı senaryosu; hepsi geçti ✓.
   - Gece: 851 test (86 dosya), 41 tarayıcı senaryosu; hepsi geçti ✓.
   - Gece, güvenlik paketinden sonra: 879 test (89 dosya) geçti ✓. Tarayıcı senaryosu 41 → 46 (ürün ekibinin beş yolculuğu eklendi); 45'i geçiyor. Geçmeyen: telefonda müşteri görünümü. Filtreler telefonda tek bir panele toplandı, senaryo buna göre güncellenmedi. Ortak kalıpların 8 yeni senaryosu geçiyor ✓.
+  - Sabah 16 Kasım: 937 test (95 dosya), 935'i geçiyor. Geçmeyen ikisi: salt okunur koltuk dışa aktarmayı kaydedebiliyor (içgörü paketi; dışa aktarma paketi düzeltecek) ve konsolun iki yeni sorgusu gözden geçirilmiş listede değil (konsolun ikinci paketi). Tarayıcı senaryosu 46 → 54, hepsi geçiyor ✓. Ortak kalıpların 8 senaryosu geçiyor ✓.
+  - Sabah 16 Kasım, kabul yolculukları (hepsi sınırın çok altında ✓): müşteri sorumlusu 9,2 sn (sınır 3 dk), yönetici 10 sn (15 dk), portal 2,5 sn (2 dk), ürün ekibi 4,4 sn, içgörü 4,3 sn, telefonda üç adım 3,6 sn, konsolda girişten çözüme 3,5 sn.
 - Maliyet, 1.000 koltuk: ≤ $0,25 ← $0,067 → $0,067 (canlı kanalla $0,068) ✓. En ucuz planda marj %94 ✓.
 
 Hız
@@ -320,7 +323,9 @@ Hız
   - Gece: 182 → 185 KB. Neden: hazır içerik (şablonlar, kayıt türleri, raporlar) koddan dil dosyalarına taşındı. Her dil dosyası 5–6 KB büyüdü. Süren hız çalışması bunu ayıracak.
   - Gece, hız paketinden sonra: 185 → 127 KB ✓ (12 KB'ı ilk ekranın dil parçası). 170 KB hedefi artık tutuyor. Her dil iki parça geliyor: önce ilk ekranın metinleri, kalanı sayfa sakinleşince.
   - Gece, son: 127 → 129 KB (ortak kalıplar) → 133 KB (güvenlik) ✓. Hedef hâlâ tutuyor.
+  - Sabah 16 Kasım: 134 KB ✓.
 - Portalın ilk ekran JavaScript'i: 120 KB ← 564 KB → 57 KB ✓.
+  - Sabah 16 Kasım: 62 KB ✓. Dosyalar, onay ve şirketin markası eklendi.
 - Sayfa kayması (CLS): 0,05 ← 0,50 → 0,000 ✓.
   - Gece: 0,000; yavaş 4G'de ilk açılışta 0,003 ✓.
 - İlk açılış, 4G, ağın sakinleşmesi: 2,5 sn ← 4,5 sn → 3,6 sn. Tutmuyor.
@@ -339,6 +344,7 @@ Hız
 Gerçek zamanlılık
 - Başkasının değişikliği: 1 sn ← 1,0–4,3 sn → p95 0,11 sn ✓ (canlı kanal). Başka şirkete giden sinyal 0 ✓. Bağlantı kopunca kaçan değişiklik 0,63 sn'de geliyor ✓.
 - Kanal engelliyse (eski yoklamaya düşünce): 2,8–7,3 sn. Hedefin dışında; yedek yol.
+- Sabah 16 Kasım, konsol: bir ödeme değişikliği konsolun ekranına p50 25 ms, p95 31 ms'de geliyor (10 değişiklik) ✓. Önce 2 saniyelik yoklamayla yaklaşık 2 sn sürüyordu. Yeni bir talep 40 ms'de görünüyor.
 
 Güvenlik ve güvenilirlik
 - Bir kişiden 400 istek: reddedilen var ← 0 → 1,5 sn'de 136'sı reddedildi (429, 1 sn sonra tekrar dene) ✓. Normal kullanım (10 sayfa, 50 istek) 0 ret ✓.
@@ -346,15 +352,18 @@ Güvenlik ve güvenilirlik
 - İçerik güvenlik politikasında 'unsafe-inline': yok ← var → hâlâ var. Satır içi stil 239 → 248; tasarım paketini bekliyor.
   - Gece: satır içi stil 248 → 52. Kalanlar veriye bağlı (çubuk boyu, grafik konumu gibi). 'unsafe-inline' hâlâ var: destek masasındaki oturum oynatıcı buna ihtiyaç duyuyor.
   - Gece, son: satır içi stil 52 → 48. 'unsafe-inline' hâlâ var, nedeni aynı.
+  - Sabah 16 Kasım: satır içi stil 48 → 54. Yeni gelenler veriye bağlı (ürün panosundaki konumlar, portaldaki marka önizlemesi).
 - Ürün ekranlarının (backlog, sprint) tarayıcı senaryosu: var ← yok → hâlâ yok.
 
 Arayüz
 - Erişilebilirlik (axe): 0 ← açık 456, koyu 427 (62 kritik) → açık 445, koyu 421 (62 kritik). Tutmuyor; tasarım paketi sürüyor.
   - Gece: açık 445 → 3, koyu 421 → 8. Kritik bulgu yok, hepsi "ciddi". En sık: renk karşıtlığı (koyu temada 5), görünen yazı ile okunan adın uyuşmaması (2), küçük dokunma alanı (1). Tutmuyor ama az kaldı.
   - Gece, son: açık 3 → 0 ✓, koyu 8 → 5. Kalan beşi tek ekranda (platform konsolu), hepsi renk karşıtlığı.
+  - Sabah 16 Kasım: açık 0 ✓, koyu 5 → 0 ✓. Artık 44 ekran ölçülüyor: barındırılan hizmette uygulamanın içindeki platform ve metrik sayfaları kapandı, konsol kendi adresinde.
 - Sığmayan etiket: 0 ← 375 px'te 32, 768 px'te 30 → 32, 30 (1440 px'te 29). Değişmedi.
   - Gece: 375 px'te 32, 768 px'te 29, 1440 px'te 29. Neredeyse değişmedi; bunlar yerleşim kararı istiyor (takvim öğesi başlığı, müşteri adı çipi, ekleme çubuğu).
   - Gece, son: 28, 25, 25. Dördü aslında ekranda görünmeyen, yalnızca ekran okuyucuya yazılan metindi; ölçüm artık onları saymıyor. Kalanlar yine yerleşim kararı istiyor.
+  - Sabah 16 Kasım: 0, 0, 0 ✓.
 - Tasarım sistemi. Ölçüm değişti: sabah uygulama ile satış sitesi birlikte sayılıyordu, şimdi ayrı.
   - Uygulama + portal: tek seferlik stil 248, doğrudan renk 120, köşe yarıçapı 26 çeşit, yazı boyu 31 çeşit, boşlukların %54'ü ızgara dışı, 139 hareket süresinin 111'i 150–200 ms dışında.
   - Satış sitesi: doğrudan renk 105, köşe yarıçapı 21, yazı boyu 34, boşlukların %54'ü ızgara dışı, 82 sürenin 71'i dışarıda.
@@ -363,8 +372,10 @@ Arayüz
   - Kalan küçük farklar: 17 renk portalın kendi renk listesinde (.p-root), ölçüm onları henüz liste olarak saymıyor. Portalda bir eski köşe değeri (var(--r)) ve bir 22 px yazı, ana stil dosyasında bir 10 px boşluk var.
   - Satış sitesi bu pakete dahil değildi; rakamları aynı.
   - Gece, son (uygulama + portal): tek seferlik stil 52 → 48, doğrudan renk 17 → 0 ✓, köşe yarıçapı 7 → 6 ✓, yazı boyu 11 → 10 ✓, ızgara dışı boşluk 0 ✓ (1.940'ta 0), 150–200 ms dışında süre 0 ✓. Tek seferlik stil dışında hedeflerin hepsi tutuyor.
+  - Sabah 16 Kasım (uygulama + portal): doğrudan renk 0 ✓, köşe yarıçapı 6 ✓, yazı boyu 10 ✓, ızgara dışı boşluk 0 ✓ (2.250'de 0), 150–200 ms dışında süre 0 ✓. Tutmayan tek hedef tek seferlik stil: 54.
 - Çerez onayı, telefonda liste ekranları, tarih biçimi, müşteri sayfasının düzeni: bu turda sayıyla ölçülmedi; tasarım ve cila paketlerinde.
   - Gece: telefonda (375 × 667) ilk müşteri 332 px'te, panodaki ilk kart 277 px'te başlıyor. İkisi de ekranın üst yarısında (333 px'e kadar). Müşteri listesinde pay 1 px: üstüne bir satır daha eklenirse yarının altına düşer.
+  - Sabah 16 Kasım: ilk müşteri 332 → 280 px, panodaki ilk kart 277 → 225 px, kişiler 269 px, fırsatlar 328 px. Ürün panosunda ilk kart 281 px (üstte sütun şeridi var). İçgörü panosunda ilk kart 288 px. Hepsi ekranın üst yarısında ✓.
 
 Diller
 - Sözlük: dokuz dilde tam ← İngilizce ve Türkçe 3.656, diğer yedisi 3.314 → dokuz dilin hepsinde 3.662 ✓.
