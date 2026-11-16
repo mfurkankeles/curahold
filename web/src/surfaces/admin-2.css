@@ -3,3 +3,16 @@
 /* SSO: a chosen backup administrator who could not get in says why, in the warning colour. */
 .sso-backup__row { flex-wrap: nowrap; }
 .sso-backup__warn { color: var(--late-ink); }
+
+/* Touch targets on the settings topics that now save through the bar (health score, customer fields):
+   at least 44 px to aim at on a touch screen; the small pill and link keep their look with an invisible hit area. */
+@media (pointer: coarse) {
+  .signal__weight input[type='range'] { min-block-size: var(--tap); }
+  .option-chip__input { min-block-size: var(--tap); }
+  :is(.signal__top .linkbtn, .access-pill) { position: relative; }
+  .signal__top .linkbtn::after { content: ''; position: absolute; top: 50%; left: 50%; width: var(--tap); height: var(--tap); translate: -50% -50%; }
+  /* A choice's colour dot stays a dot (the 44 px rule for the chip's buttons is for its ✕); its hit area is invisible. */
+  .admin .option-chip > .option-chip__swatch { min-inline-size: 0; min-block-size: 0; position: relative; }
+  .admin .option-chip > .option-chip__swatch::after { content: ''; position: absolute; top: 50%; left: 50%; width: var(--tap); height: var(--tap); translate: -50% -50%; }
+  .access-pill::after { content: ''; position: absolute; top: 50%; left: 50%; width: max(100%, var(--tap)); height: var(--tap); translate: -50% -50%; }
+}

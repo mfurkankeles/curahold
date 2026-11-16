@@ -37,6 +37,7 @@ import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 import { forgetUnsaved, hasUnsaved, useUnsaved, useUnsavedForm } from '../lib/unsaved';
 import { fold, groupLabel, SETTINGS_GROUPS, SETTINGS_TOPICS, topicAbout, topicLabel, topicMatches, type SettingsTab } from '../lib/settingsIndex';
 import '../surfaces/admin.css';
+import '../surfaces/admin-2.css';
 
 // The admin area: one topic per screen. A wide screen has the topics on the
 // left (with a search on top) and the topic on the right; a phone has the
