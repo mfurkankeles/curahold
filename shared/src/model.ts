@@ -552,6 +552,29 @@ export interface TaskLink {
   done: boolean;
 }
 
+/** One task in another task's blocks chain (GET /tasks/:id/chain). */
+export interface ChainNode {
+  id: string;
+  title: string;
+  status: string;
+  statusName: string;
+  done: boolean;
+  boardId: string;
+  boardName: string;
+  /** 1: linked to the task itself; 2: linked to one of those; and so on. */
+  depth: number;
+  /** The task one step nearer that it is linked to. */
+  via: string;
+}
+
+/** A task's whole blocks chain: what it waits for, step by step back (`up`), and what waits for it (`down`). */
+export interface TaskChain {
+  up: ChainNode[];
+  down: ChainNode[];
+  /** More than 200 one way: the nearest are shown. */
+  more: boolean;
+}
+
 export interface TimeEntry {
   id: string;
   userId: string;
@@ -647,6 +670,9 @@ export interface Task {
   startDate?: string | null;
   /** How many unfinished tasks this one waits for. */
   blockedBy?: number;
+  /** Through the whole blocks chain (unfinished tasks only): how many it waits for, and how many wait for it. */
+  waitsFor?: number;
+  holdsUp?: number;
   /** Finished (given where a list mixes open and finished work, such as a record's tasks). */
   done?: boolean;
   /** The record it belongs to (an opportunity, a ticket…). */

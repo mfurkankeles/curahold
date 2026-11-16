@@ -20,6 +20,7 @@ import { doneTarget } from '../lib/tasks';
 import { useToggleDone } from './Tick';
 import { labelOf } from '../../../shared/src/fields';
 import { ChecklistMenu, FollowButton, HistorySection, LinksSection, TaskFieldInput, TimeSection } from './TaskExtras';
+import { ChainSection } from './Chain';
 import { CommentView, Composer, FileItem } from './Thread';
 import { useTrashToast } from '../lib/trash';
 import { isPmBoard, PmRows } from './Pm';
@@ -384,6 +385,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
 
                 <Subtasks task={task} doneKeys={doneKeys} firstKey={board?.columns[0]?.key ?? 'todo'} doneKey={board?.columns.find((c) => c.done)?.key} editable={editable} reload={load} onChanged={onChanged} />
                 {!task.parentId && <LinksSection task={task} editable={editable} reload={() => (void load(), onChanged())} />}
+                {!task.parentId && <ChainSection task={task} />}
                 {!task.parentId && <TimeSection task={task} editable={editable} reload={load} />}
 
                 <Section title={t('task.files')} icon="paperclip">

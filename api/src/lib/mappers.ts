@@ -37,6 +37,8 @@ export const toTask = (r: Row): Task => ({
   fields: r.fields ?? {},
   startDate: day(r.start_date),
   ...(r.blocked_by != null ? { blockedBy: Number(r.blocked_by) } : {}),
+  ...(r.waits_for ? { waitsFor: Number(r.waits_for) } : {}),
+  ...(r.holds_up ? { holdsUp: Number(r.holds_up) } : {}),
   recordId: r.record_id ?? null,
   issueType: r.issue_type ?? 'task',
   storyPoints: r.story_points == null ? null : Number(r.story_points),

@@ -15,6 +15,7 @@ import { canManageBoard, loadBoard } from './boards';
 import { weekendOf } from '../../../shared/src/burndown';
 import { boardFlow, firstDayOf, type FlowMove, type FlowTask } from '../../../shared/src/flow';
 import { columnCategory } from '../sync/engine';
+import { addChainCounts, chainOf } from '../lib/chain';
 
 export const pmRoutes = new Hono<AppEnv>();
 
@@ -317,7 +318,9 @@ pmRoutes.get('/sprints/:id/items', async (c) => {
   const rows = await run(c, async (q) => {
     const s = await loadSprint(q, id);
     await requireBoardPm(q, s.board_id);
-    return q.query('select * from tasks where sprint_id = $1 and archived_at is null order by position, created_at', [id]);
+    const rows = await q.query('select * from tasks where sprint_id = $1 and archived_at is null order by position, created_at', [id]);
+    await addChainCounts(q, rows);
+    return rows;
   });
   return c.json({ tasks: rows.map(toTask) });
 });
@@ -513,6 +516,18 @@ pmRoutes.get('/boards/:id/flow', async (c) => {
   const cols = board.columns as Column[];
   const started = new Set(cols.filter((col) => columnCategory(cols, col) === 'indeterminate').map((col) => col.key));
   return c.json({ flow: boardFlow({ boardId: id, tasks, moves, started, today, timeZone: org.timezone || 'UTC', weekend, firstDay, weeks }) });
+});
+
+// ------------------------------------------------------------- the blocks chain
+
+// Everything a task waits for, step by step back, and everything waiting for it (lib/chain.ts).
+pmRoutes.get('/tasks/:id/chain', async (c) => {
+  const id = param(c, 'id');
+  const chain = await run(c, async (q) => {
+    await loadTask(q, id);
+    return chainOf(q, id);
+  });
+  return c.json({ chain });
 });
 
 // ------------------------------------------------------- task PM fields

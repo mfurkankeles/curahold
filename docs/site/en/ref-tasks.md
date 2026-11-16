@@ -49,6 +49,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `GET /sprints/:id/summary` | Current totals: points and items, done and in all, with counts by issue type. |
 | `GET /sprints/:id/burndown` | A sprint's burndown: remaining story points and items by day, with a live point for today. |
 | `GET /boards/:id/flow` | Cycle time and throughput of a product board over the last `weeks` weeks (4–26, default 12): median and 85th-percentile cycle time per issue type in working days, and items finished each week, on the company's time zone and weekend. |
+| `GET /tasks/:id/chain` | A task's whole blocks chain: what it waits for, step by step back (`up`), and what waits for it, step by step on (`down`), each with its `depth` and the task it is linked through (`via`). |
 | `DELETE /tasks/:id` | Moves a task to the trash with its subtasks, comments, time and files, where it stays for 30 days. |
 | `POST /tasks/bulk` | Changes many tasks at once: column, assignee, due date, priority, archive. |
 | `POST /undo/:id` | Puts back what a change to many tasks or customers replaced. |
@@ -372,6 +373,10 @@ A sprint's burndown: remaining story points and items by day, with a live point 
 Cycle time and throughput of a product board over the last `weeks` weeks (4–26, default 12): median and 85th-percentile cycle time per issue type in working days, and items finished each week, on the company's time zone and weekend.
 
 **Query:** `weeks`
+
+### `GET /tasks/:id/chain`
+
+A task's whole blocks chain: what it waits for, step by step back (`up`), and what waits for it, step by step on (`down`), each with its `depth` and the task it is linked through (`via`). A finished task is listed but not looked past; tasks you cannot see are left out.
 
 ### `DELETE /tasks/:id`
 

@@ -20,6 +20,7 @@ import { body, isoDate, param, uuid } from '../lib/validate';
 import { addEvent, recordChanges } from '../lib/history';
 import { cleanTaskFields, missingForDone } from '../lib/taskFields';
 import { loadBoard } from './boards';
+import { addChainCounts } from '../lib/chain';
 
 export const taskRoutes = new Hono<AppEnv>();
 
@@ -83,12 +84,14 @@ taskRoutes.get('/boards/:id/tasks', async (c) => {
   if (per === undefined && limit === undefined) {
     const rows = await run(c, async (q) => {
       await loadBoard(q, id);
-      return q.query(
+      const rows = await q.query(
         `select t.*, ${COUNTS} from tasks t
           where t.board_id = $1 and t.parent_id is null and t.archived_at is null
           order by t.position, t.created_at`,
         [id],
       );
+      await addChainCounts(q, rows);
+      return rows;
     });
     return c.json({ tasks: rows.map(toTask) });
   }
@@ -198,6 +201,7 @@ async function windowed(c: Context<AppEnv>, id: string, w: Record<'per' | 'limit
       return { key, total: counts.find((x) => x.key === key)?.n ?? 0, more: !!extra, after: extra && !done.includes(key) ? Number(extra.position) : null };
     });
     const shown = cols.flatMap((x) => rows.filter((r) => r.col_key === x.key).slice(0, n));
+    await addChainCounts(q, shown);
     return { all, rows: shown, cols };
   });
   const body: Record<string, unknown> = { tasks: out.rows.map(toTask), all: out.all };

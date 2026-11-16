@@ -668,14 +668,21 @@ function CardChips({ task }: { task: Task }) {
     .map((f) => ({ f, o: f.options?.find((o) => o.key === task.fields![f.key]) }))
     .filter((x) => x.o);
   const pm = !!task.issueType && (task.issueType !== 'task' || task.storyPoints != null);
-  if (!chips.length && !task.blockedBy && !pm) return null;
+  // The whole blocks chain, both ways (only the direct count where the chain was not read).
+  const waits = task.waitsFor ?? task.blockedBy ?? 0;
+  if (!chips.length && !waits && !task.holdsUp && !pm) return null;
   return (
     <div className="card__chips">
       {pm && <IssueBadge type={task.issueType!} />}
       <PointsChip points={task.storyPoints} />
-      {!!task.blockedBy && (
-        <span className="schip" data-tone="amber" title={t('task.waitingShort', { n: task.blockedBy })}>
-          <Icon name="hourglass" size={12} /> {t('task.waitingShort', { n: task.blockedBy })}
+      {!!waits && (
+        <span className="schip" data-tone="amber" title={waits > (task.blockedBy ?? 0) ? t('pm.chain.waitsTitle', { direct: task.blockedBy ?? 0, n: waits }) : t('task.waitingShort', { n: waits })}>
+          <Icon name="hourglass" size={12} /> {t('task.waitingShort', { n: waits })}
+        </span>
+      )}
+      {!!task.holdsUp && (
+        <span className="schip" data-tone="slate" title={t('pm.chain.holdsTitle', { n: task.holdsUp })}>
+          <Icon name="link" size={12} /> {t('pm.chain.holdsUpShort', { n: task.holdsUp })}
         </span>
       )}
       {chips.map(({ f, o }) => (

@@ -49,6 +49,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `GET /sprints/:id/summary` | Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. |
 | `GET /sprints/:id/burndown` | Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla. |
 | `GET /boards/:id/flow` | Bir ürün panosunun son `weeks` haftadaki (4–26, varsayılan 12) döngü süresi ve çıktısı: kayıt türüne göre iş günü cinsinden ortanca ve 85. |
+| `GET /tasks/:id/chain` | Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). |
 | `DELETE /tasks/:id` | Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /tasks/bulk` | Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. |
 | `POST /undo/:id` | Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir. |
@@ -372,6 +373,10 @@ Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugü
 Bir ürün panosunun son `weeks` haftadaki (4–26, varsayılan 12) döngü süresi ve çıktısı: kayıt türüne göre iş günü cinsinden ortanca ve 85. yüzdelik döngü süresi, haftada biten kayıtlar; şirketin saat dilimi ve hafta sonuyla.
 
 **Sorgu:** `weeks`
+
+### `GET /tasks/:id/chain`
+
+Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). Bitmiş görev listelenir ama ötesine bakılmaz; göremediğin görevler çıkarılır.
 
 ### `DELETE /tasks/:id`
 

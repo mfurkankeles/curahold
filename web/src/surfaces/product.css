@@ -272,3 +272,27 @@
 .pm-flow__charts { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); margin-top: var(--s-2); }
 .pm-flow__chart { display: grid; gap: var(--s-2); margin: 0; padding: var(--s-3) var(--s-4); min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
 .pm-flow__title { font-weight: 700; font-size: var(--fs-m); color: var(--ink); }
+
+/* ---------------------------------------------------------------- the blocks chain (task panel): steps back, the task, steps on */
+.pm-chain { display: grid; gap: var(--s-2); }
+.pm-chain__hint { margin: 0; font-size: var(--fs-xs); color: var(--ink-2); }
+.pm-chain__steps { list-style: none; display: grid; gap: 0; margin: 0; padding: 0; }
+.pm-chain__step { position: relative; display: grid; gap: var(--s-1); padding-block: var(--s-2); padding-inline: var(--s-6) 0; }
+/* The thread down the side that ties the steps together, with a knot at each step. */
+.pm-chain__step::before { content: ''; position: absolute; inset-block: 0; inset-inline-start: 7px; border-inline-start: 2px solid var(--line); }
+.pm-chain__step:first-child::before { inset-block-start: var(--s-4); }
+.pm-chain__step:last-child::before { inset-block-end: calc(100% - var(--s-4)); }
+.pm-chain__step::after { content: ''; position: absolute; inset-block-start: var(--s-3); inset-inline-start: 3px; width: 10px; height: 10px; border-radius: var(--r-pill); background: var(--surface); border: 2px solid var(--ink-3); }
+.pm-chain__step[data-dir='up']::after { border-color: var(--soon); }
+.pm-chain__step[data-self]::after { background: var(--brand); border-color: var(--brand); }
+.pm-chain__at { font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.pm-chain__tasks { list-style: none; display: grid; gap: var(--s-1); margin: 0; padding: 0; }
+.pm-chain__task { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s-2); min-width: 0; font-size: var(--fs-s); color: var(--ink-2); }
+.pm-chain__task > svg { flex: none; }
+.pm-chain__task[data-done] > svg { color: var(--done); }
+.pm-chain__title { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; text-align: start; color: var(--ink); }
+.pm-chain__task[data-done] .pm-chain__title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.pm-chain__where { margin-inline-start: auto; font-size: var(--fs-xs); color: var(--ink-2); }
+@media (pointer: coarse) {
+  .pm-chain__title { min-height: var(--tap); }
+}
