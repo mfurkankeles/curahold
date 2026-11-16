@@ -2268,6 +2268,90 @@ await step('account manager: a meeting, three next steps, one finished on a phon
   await desk.page.browserContext().close();
 });
 
+// The owner's acceptance for the company administrator: someone who cannot code sets the company up
+// from a template, connects a CRM, invites five people, gives roles and opens the portal — alone, in
+// under 15 minutes. The journey prints its time and fails above the limit.
+await step('admin: a new company from a template, a CRM, five people with roles and the portal — under 15 minutes', async () => {
+  const started = Date.now();
+  const { page: p, errors } = await newPage(s.browser);
+  const wait = (fn: () => boolean, timeout = 15_000) => p.waitForFunction(fn, { timeout });
+  const primary = async (scope: string, label: string) => (await byText(p, `${scope} .btn--primary`, label)).click();
+  // Sign up with a work email, name the company and pick a starting template.
+  await p.goto(`${central}/`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('input[type=email]');
+  await p.select('.auth__langs select', 'tr');
+  await p.type('input[type=email]', 'ece@kuzey-lojistik.example');
+  await p.click('form button.btn--primary');
+  await (await p.waitForSelector('a.btn[href^="/signup/verify"]'))!.click();
+  await p.waitForSelector('.signup-form');
+  await p.$eval('.signup-form input', (el) => ((el as HTMLInputElement).value = ''));
+  await p.type('.signup-form input', 'Kuzey Lojistik');
+  await wait(() => document.querySelector('#slug-msg')?.textContent === 'Uygun.');
+  const inputs = await p.$$('.signup-form input.input');
+  await inputs[2].type('Ece Yalın');
+  const templates = await p.$$('.templates input[type=radio]');
+  expect(templates.length > 2, `templates offered: ${templates.length}`);
+  await templates[1].click();
+  await p.click('.signup-form button.btn--primary');
+  await p.waitForSelector('.wizard', { timeout: 15_000 });
+  const origin = new URL(p.url()).origin;
+  // The wizard: the company as suggested, no chat app yet, then straight to the people.
+  await primary('.wizard__panel', 'Kaydet ve devam et');
+  await p.waitForSelector('.tiles');
+  await p.goto(`${origin}/setup/people`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.wizard__panel textarea');
+  const five = ['Arda Kaya', 'Bora Tan', 'Cem Uslu', 'Derya Ak', 'Eda Sezer'];
+  await p.type('.wizard__panel textarea', five.map((n) => `${n.split(' ')[0].toLowerCase()}@kuzey-lojistik.example, ${n}`).join('\n'));
+  await p.click('.wizard__nav .btn--primary');
+  await p.waitForSelector('.rules .rule', { timeout: 15_000 });
+  await primary('.wizard__nav', 'Devam et');
+  await p.waitForSelector('.checklist');
+  await primary('.wizard__nav', 'Bitir ve çalışmaya başla');
+  await p.waitForSelector('.board', { timeout: 15_000 });
+  const invited = s.email.sent.filter((m) => m.to.endsWith('@kuzey-lojistik.example') && m.to !== 'ece@kuzey-lojistik.example');
+  expect(new Set(invited.map((m) => m.to)).size === 5, `invitations: ${invited.map((m) => m.to).join(', ')}`);
+  // A CRM: the demo connector, from Settings, found with the settings search.
+  await p.goto(`${origin}/settings`, { waitUntil: 'networkidle0' });
+  await p.type('.admin__search input', 'CRM');
+  await p.keyboard.press('Enter');
+  await p.waitForSelector('.tiles');
+  const demoTile = await p.evaluateHandle(() => [...document.querySelectorAll('.tile')].find((t) => t.textContent?.includes('Demo CRM')));
+  await (await (demoTile as any).$('button')).click();
+  await p.waitForSelector('.object-list');
+  await primary('.stepbar', 'Devam');
+  await p.waitForSelector('.map-table');
+  await wait(() => [...document.querySelectorAll('.map-object .badge')].every((b) => !b.textContent?.includes('Yükleniyor')));
+  await primary('.stepbar', 'Devam');
+  await p.waitForSelector('.preview-list li', { timeout: 15_000 });
+  await primary('.stepbar', 'Eşitlemeyi başlat');
+  await wait(() => !!document.querySelector('.run--ok, .run--partial'), 30_000);
+  // Roles: two of the five lead teams; the change says what it did and can be undone.
+  await p.goto(`${origin}/settings/people`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.people-table');
+  const roles = await sql(`select r.id, r.key from roles r join orgs o on o.id = r.org_id where o.slug = 'kuzey-lojistik'`);
+  const manager = roles.find((r) => r.key === 'manager')?.id;
+  for (const who of ['Arda Kaya', 'Bora Tan']) {
+    await p.select(`.people-table select[aria-label="Rol: ${who}"]`, manager);
+    await wait(() => !!document.querySelector('.toast'));
+    await clearToasts(p);
+  }
+  const leads = await sql(`select u.name from users u join roles r on r.id = u.role_id join orgs o on o.id = u.org_id where o.slug = 'kuzey-lojistik' and r.key = 'manager' order by u.name`);
+  expect(leads.map((r) => r.name).join(',') === 'Arda Kaya,Bora Tan', `team leads: ${JSON.stringify(leads)}`);
+  // The customer portal, switched on.
+  await p.goto(`${origin}/settings/portal`, { waitUntil: 'networkidle0' });
+  const on = await p.evaluateHandle(() => [...document.querySelectorAll('label, button, [role=switch]')].find((el) => el.textContent?.includes('Müşteri portalı açık')));
+  await (on as any).click();
+  await p.waitForSelector('.portal-admin__address', { timeout: 10_000 });
+  const [portal] = await sql(`select o.settings->'portal'->>'enabled' as on from orgs o where o.slug = 'kuzey-lojistik'`);
+  await shot(p, 'admin-journey-portal');
+  const seconds = Math.round((Date.now() - started) / 1000);
+  console.log(`admin journey: ${seconds} s (limit 900 s)`);
+  expect(seconds <= 900, `took ${seconds} s`);
+  expect(portal?.on === 'true', `portal: ${JSON.stringify(portal)}`);
+  expect(errors.length === 0, `console: ${errors.join(' | ')}`);
+  await p.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });
