@@ -14,7 +14,8 @@ import { emailDomain, isPublicDomain } from '../lib/domains';
 import { createInviteToken, sendInvite } from '../lib/people';
 import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
-import { iso, toComment, toTask } from '../lib/mappers';
+import { iso } from '../lib/mappers';
+import { personalData } from '../lib/personalData';
 import { body, email, localeField, param, uuid } from '../lib/validate';
 
 export const adminRoutes = new Hono<AppEnv>();
@@ -557,56 +558,10 @@ adminRoutes.get('/users/:id/export', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');
-  const u = await run(c, async (q) => {
-    const [row] = await q.query(
-      'select u.id, u.email, u.name, u.seat, u.status, u.locale, u.created_at, u.last_active_at, r.name as role from users u join roles r on r.id = u.role_id where u.id = $1',
-      [id],
-    );
-    if (!row) fail('not_found');
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.exported', entity: 'user', entityId: id });
-    return row;
-  });
-  // Owner-level reads, always filtered by this company: the export must
-  // include tasks on boards the administrator personally cannot open.
-  const out = await c.get('deps').db.system(async (sq) => {
-    const tasks = await sq.query(
-      `select * from tasks where org_id = $1 and (created_by = $2 or $2 = any(assignee_ids)) order by created_at`,
-      [org.id, id],
-    );
-    const comments = await sq.query('select * from comments where org_id = $1 and author_id = $2 order by created_at', [org.id, id]);
-    const sessions = await sq.query(
-      'select device_label, method, ip, geo, created_at, last_seen_at, revoked_at, revoke_reason from sessions where org_id = $1 and user_id = $2 order by created_at',
-      [org.id, id],
-    );
-    const activity = await sq.query(
-      'select action, entity, entity_id, at from audit_log where org_id = $1 and actor_id = $2 order by at',
-      [org.id, id],
-    );
-    const teams = await sq.query(
-      'select t.name from teams t join team_members m on m.team_id = t.id where t.org_id = $1 and m.user_id = $2',
-      [org.id, id],
-    );
-    return { tasks, comments, sessions, activity, teams };
-  });
-  const data = {
-    exportedAt: new Date().toISOString(),
-    company: org.name,
-    person: { ...u, created_at: iso(u.created_at), last_active_at: iso(u.last_active_at) },
-    teams: out.teams.map((t) => t.name),
-    tasks: out.tasks.map(toTask),
-    comments: out.comments.map(toComment),
-    sessions: out.sessions.map((s) => ({
-      device: s.device_label,
-      method: s.method,
-      ip: s.ip,
-      country: s.geo,
-      createdAt: iso(s.created_at),
-      lastSeenAt: iso(s.last_seen_at),
-      endedAt: iso(s.revoked_at),
-      endReason: s.revoke_reason,
-    })),
-    activity: out.activity.map((a) => ({ action: a.action, entity: a.entity, entityId: a.entity_id, at: iso(a.at) })),
-  };
+  // The whole of it (lib/personalData.ts): tasks on boards the administrator personally cannot open included.
+  const data = await personalData(c, id, 'admin');
+  if (!data) fail('not_found');
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.exported', entity: 'user', entityId: id }));
   c.header('content-disposition', `attachment; filename="curahold-personal-data-${id}.json"`);
   return c.json(data);
 });

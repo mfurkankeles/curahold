@@ -44,6 +44,25 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
     }
   };
 
+  // My own data (KVKK / GDPR): through the API client, so "Confirm it's you" can ask first.
+  const [exporting, setExporting] = useState(false);
+  const downloadMine = async () => {
+    setExporting(true);
+    try {
+      const data = await get<unknown>('/me/export');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = 'curahold-my-data.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast(t('me.data.done'));
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const makeCalendar = async () => {
     const r = await post<{ url: string }>('/me/calendar', {});
     setCalendar({ enabled: true, url: r.url });
@@ -249,6 +268,22 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
               >
                 {t('me.devicesOpen')}
               </a>
+            </section>
+          )}
+
+          {mode === 'profile' && (
+            <section className="sheet" aria-labelledby="me-data">
+              <h2 className="sheet__title" id="me-data">
+                <Icon name="download" size={18} className="icon--lead" />
+                {t('me.data.title')}
+              </h2>
+              <p className="sheet__hint">{t('me.data.hint', { org: me.org.name })}</p>
+              <div>
+                <button type="button" className="btn" disabled={exporting} onClick={() => void downloadMine()}>
+                  <Icon name="download" size={16} />
+                  {t('me.data.download')}
+                </button>
+              </div>
             </section>
           )}
 

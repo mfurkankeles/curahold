@@ -129,7 +129,7 @@ const SIGNIN = [
   /^\/papi\/auth\/oauth\/[^/]+\/start$/,
 ];
 const INVITE = [/^\/api\/admin\/users$/, /^\/api\/setup\/people$/, /^\/api\/portal\/users(\/[^/]+\/resend)?$/, /^\/api\/admin\/join-requests\/[^/]+\/approve$/];
-const EXPORTS = [/^\/api\/admin\/users\/[^/]+\/export$/, /^\/api\/admin\/audit$/];
+const EXPORTS = [/^\/api\/admin\/users\/[^/]+\/export$/, /^\/api\/admin\/audit$/, /^\/api\/me\/export$/];
 
 export const isSignIn = (method: string, path: string) =>
   (method === 'POST' || /\/(start|authorize|callback)$/.test(path)) && SIGNIN.some((r) => r.test(path));
@@ -166,10 +166,13 @@ export function clientIp(c: Context, mode: ClientIpMode | undefined): string | n
 
 // ---------------------------------------------------------------- the answer
 
-function waitText(locale: Locale, seconds: number) {
+/** "40 seconds", "3 minutes", "23 hours" in the person's language (a daily limit waits hours, not 1,440 minutes). */
+export function waitText(locale: Locale, seconds: number) {
   const tag = bcp47Of(locale);
   try {
-    return seconds >= 90
+    return seconds >= 90 * 60
+      ? new Intl.NumberFormat(tag, { style: 'unit', unit: 'hour', unitDisplay: 'long' }).format(Math.ceil(seconds / 3600))
+      : seconds >= 90
       ? new Intl.NumberFormat(tag, { style: 'unit', unit: 'minute', unitDisplay: 'long' }).format(Math.ceil(seconds / 60))
       : new Intl.NumberFormat(tag, { style: 'unit', unit: 'second', unitDisplay: 'long' }).format(seconds);
   } catch {

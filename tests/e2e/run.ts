@@ -2530,6 +2530,42 @@ await step('admin: SSO is required and the provider is down; a backup administra
   }
 });
 
+await step('my data: someone downloads their own data after confirming it is them; the activity log has it', async () => {
+  const started = Date.now();
+  const { page: p, errors } = await newPage(s.browser, 390, 844);
+  try {
+    await sql(`delete from login_tokens where email = 'lena@demo.example'`);
+    await signIn(p, s.origin, 'lena@demo.example');
+    // Signed in a while ago: the download asks "Confirm it's you" first.
+    const device = await p.evaluate(() => localStorage.getItem('app_device'));
+    await sql(`update sessions set created_at = now() - interval '30 minutes', confirmed_at = null where device_id = $1 and revoked_at is null`, [device]);
+    await p.goto(`${s.origin}/profile`, { waitUntil: 'networkidle0' });
+    await p.waitForSelector('#me-data');
+    await shot(p, 'e2e-my-data');
+    await (await byText(p, 'section[aria-labelledby="me-data"] .btn', 'Verilerimi indir')).click();
+    // No second step set up: a code by email.
+    await p.waitForSelector('.dialog .btn--primary');
+    const mails = s.email.sent.length;
+    await p.click('.dialog .btn--primary');
+    for (let i = 0; i < 40 && !s.email.sent.slice(mails).some((m) => m.to === 'lena@demo.example'); i++) await pause(100);
+    const code = /\b(\d{6})\b/.exec(s.email.sent.slice(mails).find((m) => m.to === 'lena@demo.example')?.text ?? '')?.[1];
+    expect(code, 'no confirmation code was emailed');
+    await p.waitForSelector('.dialog .code-input');
+    await p.type('.dialog .code-input', code!);
+    await p.click('.dialog form button.btn--primary');
+    // The download goes on by itself after the confirmation.
+    await p.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Verilerin indirildi')), { timeout: 10_000 });
+    const [line] = await sql(`select a.actor_id from audit_log a join users u on u.id = a.actor_id where u.email = 'lena@demo.example' and a.action = 'user.self_exported'`);
+    expect(line, 'the download is not in the activity log');
+    console.log(`my data journey: ${Math.round((Date.now() - started) / 1000)} s`);
+    // The first try is answered "confirm it's you" (403) on purpose; nothing else may go wrong.
+    const other = errors.filter((e) => !/status of 403/.test(e));
+    expect(other.length === 0, `console: ${other.join(' | ')}`);
+  } finally {
+    await p.browserContext().close();
+  }
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

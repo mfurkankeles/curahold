@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { healthConfig } from '../../../shared/src/health';
 import { deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
-import { normalizeLocale } from '../../../shared/src/i18n';
+import { normalizeLocale, translate } from '../../../shared/src/i18n';
 import { FAVORITE_PATH, MAX_FAVORITES, NOTIFY_EVENTS, START_STEPS, type DeliveryOption, type Me, type Notification, type Person, type SessionInfo, type Team } from '../../../shared/src/model';
 import { accessFor, isOwner, logoPath, maxDevices, orgUrl, run, type AppEnv } from '../context';
 import { inAppConsole } from '../lib/platform';
@@ -13,6 +13,9 @@ import { loadRenderCtxMany, prefsOf, render } from '../lib/notify';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
+import { personalData } from '../lib/personalData';
+import { requireFresh } from '../lib/identity';
+import { waitText } from '../lib/ratelimit';
 import { defsFor } from '../lib/fieldAccess';
 import { body, localeField, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
@@ -402,6 +405,42 @@ meRoutes.delete('/me/calendar', async (c) => {
   const auth = c.get('auth');
   await run(c, (q) => q.query('update users set calendar_token_hash = null where id = $1', [auth.userId]));
   return c.json({ ok: true });
+});
+
+// ----------------------------------------------- my own data (KVKK / GDPR)
+
+/** How many times a day a person may download their own data (each one reads all of it). */
+export const SELF_EXPORTS_PER_DAY = 3;
+
+/**
+ * A person downloads everything Curahold holds about them here (KVKK m.11, GDPR Art. 15/20),
+ * without asking an administrator: after "Confirm it's you", at most three times a day,
+ * and each download goes in the activity log. The administrator's export (routes/admin.ts) stays.
+ */
+meRoutes.get('/me/export', async (c) => {
+  await requireFresh(c);
+  const auth = c.get('auth');
+  const org = c.get('org');
+  const db = c.get('deps').db;
+  // Counted in the database, so the limit holds exactly wherever the request lands.
+  const recent = await db.system((q) =>
+    q.query<{ wait: number }>(
+      `select ceil(extract(epoch from (at + interval '1 day' - now())))::int as wait from audit_log
+        where org_id = $1 and actor_id = $2 and action = 'user.self_exported' and at > now() - interval '1 day' order by at`,
+      [org.id, auth.userId],
+    ),
+  );
+  if (recent.length >= SELF_EXPORTS_PER_DAY) {
+    const wait = Math.max(1, recent[recent.length - SELF_EXPORTS_PER_DAY].wait);
+    const locale = normalizeLocale(c.get('locale') ?? org.locale);
+    return c.json({ error: 'too_many_requests', message: translate(locale, 'errors.self_export_limit', { n: SELF_EXPORTS_PER_DAY, wait: waitText(locale, wait) }), retryAfter: wait }, 429, { 'retry-after': String(wait) });
+  }
+  const data = await personalData(c, auth.userId, 'self');
+  if (!data) fail('not_found');
+  await db.system((q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'user.self_exported', entity: 'user', entityId: auth.userId }));
+  c.header('content-disposition', `attachment; filename="curahold-my-data.json"`);
+  c.header('cache-control', 'no-store');
+  return c.json(data);
 });
 
 meRoutes.get('/me/calendar', async (c) => {
