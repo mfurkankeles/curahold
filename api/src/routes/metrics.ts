@@ -66,6 +66,7 @@ metricsRoutes.get('/metrics', async (c) => {
          from audit_log where actor_id is not null`,
     )) as { dau: number; wau: number; mau: number }[];
 
+    // Reviewed (system-sql-reviewed.json): owner-wide by design, the reviewed daily-actives read padded with empty days.
     const dauTrend = (await q.query(
       `select to_char(d, 'YYYY-MM-DD') as t, coalesce(x.v, 0)::int as v
          from generate_series(date_trunc('day', now()) - interval '29 days', date_trunc('day', now()), interval '1 day') d
@@ -96,6 +97,7 @@ metricsRoutes.get('/metrics', async (c) => {
               coalesce((select sum(minutes) from time_entries),0)::int as minutes`,
     )) as { tasks: number; boards: number; meetings: number; records: number; comments: number; minutes: number }[];
 
+    // Reviewed (system-sql-reviewed.json): owner-wide by design, the reviewed tasks-per-week read padded with empty weeks.
     const created = (await q.query(
       `select to_char(w, 'YYYY-MM-DD') as t, coalesce(x.v, 0)::int as v
          from generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') w
