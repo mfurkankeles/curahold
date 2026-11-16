@@ -10,3 +10,16 @@
 @media (pointer: coarse) {
   .savedviews__list .btn--icon { min-width: var(--tap); min-height: var(--tap); }
 }
+
+/* Picking customer cards for the bulk bar: a box before the name, the picked card outlined. */
+.acard__pick { display: inline-grid; place-items: center; flex: none; min-width: var(--tap-min); min-height: var(--tap-min); cursor: pointer; position: relative; z-index: 1; }
+.acard[data-picked] { box-shadow: 0 0 0 2px var(--brand); }
+@media (pointer: coarse) {
+  .acard__pick { min-width: var(--tap); min-height: var(--tap); margin: calc(var(--s-2) * -1); }
+}
+/* A records list's bulk bar: the boxes column stays narrow. */
+.table .rec-pick { width: var(--tap-min); }
+
+/* The bulk bar is dark: its controls keep their own ink, its link the bar's (as on a board, employee-work.css). */
+.bulkbar .select, .bulkbar .input { color: var(--ink); }
+.bulkbar .linkbtn { color: var(--on-fill); text-decoration: underline; }

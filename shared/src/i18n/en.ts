@@ -4655,6 +4655,12 @@ export const en = {
   'myTasks.anyPriority': "Any priority",
   'views.title': "Saved views",
   'views.titleCount': "Saved views ({n})",
+  'acards.pick': "Select {name}",
+  'bulk.selectAllN': "Select all {n} that match",
+  'bulk.selectFirstN': "Select the first {n} of {total} (the most one change takes)",
+  'records.bulk.set': "Set {field}…",
+  'records.bulk.changed': "{n} changed.",
+  'audit.record.bulk_updated': "changed several records",
 } as const;
 
 export type MessageKey = keyof typeof en;

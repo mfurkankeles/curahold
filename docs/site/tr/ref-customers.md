@@ -107,7 +107,7 @@ Birçok müşteriyi birden değiştirir: yeni sahip, yeni ekip, arşivle ya da g
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
-| `ids` | kimlik listesi | zorunlu | en az 1 öğe; en çok 2000 öğe |
+| `ids` | kimlik listesi | zorunlu | en az 1 öğe; en çok 500 öğe |
 | `ownerId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `teamId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `archived` | evet/hayır | isteğe bağlı |  |

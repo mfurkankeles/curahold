@@ -4640,4 +4640,10 @@ export const tr: Record<MessageKey, string> = {
   'myTasks.anyPriority': "Her öncelik",
   'views.title': "Kayıtlı görünümler",
   'views.titleCount': "Kayıtlı görünümler ({n})",
+  'acards.pick': "{name} seç",
+  'bulk.selectAllN': "Eşleşen {n} kaydın hepsini seç",
+  'bulk.selectFirstN': "{total} kaydın ilk {n} tanesini seç (bir değişiklik en çok bu kadarını kapsar)",
+  'records.bulk.set': "{field} seç…",
+  'records.bulk.changed': "{n} kayıt değişti.",
+  'audit.record.bulk_updated': "birden çok kaydı değiştirdi",
 };

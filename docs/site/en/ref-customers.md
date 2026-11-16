@@ -107,7 +107,7 @@ Changes many customers at once: new owner, new team, archive or restore. The ans
 
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
-| `ids` | list of id | required | at least 1 items; at most 2000 items |
+| `ids` | list of id | required | at least 1 items; at most 500 items |
 | `ownerId` | id | optional | may be null |
 | `teamId` | id | optional | may be null |
 | `archived` | yes/no | optional |  |

@@ -9,6 +9,7 @@ import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, ty
 import { requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
+import { saveUndo } from '../lib/undo';
 import { fail } from '../lib/errors';
 import { iso, toFile, toTask } from '../lib/mappers';
 import { allowedCurrency } from '../lib/fx';
@@ -536,6 +537,65 @@ recordRoutes.post('/records', async (c) => {
   });
   kickSync(deps, org.id);
   return c.json({ record: viewRecord(row.full, row.hidden) }, 201);
+});
+
+/**
+ * Change many records of one kind at once (a records list's bulk bar): a new owner, a value of
+ * its fields (a stage, say), put away or back. At most 500 per change, each one the person may
+ * change (row-level security) and every field one they may edit; what was there is kept for Undo.
+ */
+recordRoutes.post('/records/bulk', async (c) => {
+  requireWriter(c);
+  const input = await body(
+    c,
+    z.object({ ids: z.array(uuid).min(1).max(500), ownerId: uuid.nullable().optional(), archived: z.boolean().optional(), fields: recordValues.optional() }),
+  );
+  if (input.ownerId === undefined && input.archived === undefined && !input.fields) fail('validation', { fields: 'ids' }, { fields: ['ids'] });
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const out = await run(c, async (q) => {
+    await checkRefs(q, undefined, input.ownerId);
+    const rows = await q.query('select id, type_id, account_id, owner_id, archived_at, fields from records where id = any($1::uuid[]) for update', [input.ids]);
+    if (!rows.length) fail('not_found');
+    const typeIds = [...new Set(rows.map((r) => r.type_id))];
+    let cleaned: Record<string, unknown> = {};
+    if (input.fields) {
+      // Field values belong to one kind of record: a list holds one.
+      if (typeIds.length !== 1) fail('validation', { fields: 'fields' }, { fields: ['fields'] });
+      const [type] = await q.query('select fields from record_types where id = $1', [typeIds[0]]);
+      cleaned = cleanFields(type.fields ?? [], input.fields, org.locale);
+      checkEditable(type.fields ?? [], Object.keys(cleaned), auth);
+    }
+    const keys = Object.keys(cleaned);
+    // Only what this change touches is kept, so Undo leaves later edits of other fields alone.
+    const undoId = await saveUndo(
+      q,
+      org.id,
+      auth.userId,
+      'records',
+      rows.map((r) => ({
+        id: r.id,
+        ...(input.ownerId !== undefined ? { owner_id: r.owner_id ?? null } : {}),
+        ...(input.archived !== undefined ? { archived_at: r.archived_at ?? null } : {}),
+        ...(keys.length ? { fields: Object.fromEntries(keys.map((k) => [k, r.fields?.[k] ?? null])) } : {}),
+      })),
+    );
+    const ids = rows.map((r) => r.id);
+    await q.query(
+      `update records set owner_id = case when $2 then $3::uuid else owner_id end,
+              archived_at = case when $4::boolean is null then archived_at when $4 then coalesce(archived_at, now()) else null end,
+              fields = coalesce(fields, '{}'::jsonb) || $5::jsonb, updated_at = now()
+        where id = any($1::uuid[])`,
+      [ids, input.ownerId !== undefined, input.ownerId ?? null, input.archived ?? null, JSON.stringify(cleaned)],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'record.bulk_updated', entity: 'record', meta: { count: rows.length, fields: Object.keys(input).filter((k) => k !== 'ids'), keys } });
+    await recomputeRollups(q, org.id, org.account_fields, [...new Set(rows.map((r) => r.account_id))]);
+    const synced = [...(input.ownerId !== undefined ? ['owner'] : []), ...keys.map((k) => `f:${k}`)];
+    if (synced.length) await queueSync(q, org.id, 'record', ids, synced);
+    return { updated: rows.length, undoId };
+  });
+  kickSync(c.get('deps'), org.id);
+  return c.json(out);
 });
 
 recordRoutes.patch('/records/:id', async (c) => {

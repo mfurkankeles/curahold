@@ -21,6 +21,7 @@ Kayıt, bir müşterinin altında tutulan her şeydir: kişi, fırsat, destek ka
 | `GET /records` | Bir türün (`type`), bir müşterinin (`account`) ya da ikisinin kayıtlarını listeler. |
 | `GET /records/:id` | Tek bir kayıt. |
 | `POST /records` | Bir müşterinin altına, bir türden kayıt ekler. |
+| `POST /records/bulk` | Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived` ve/veya `fields` (kişinin düzenleyebildiği değerler). |
 | `PATCH /records/:id` | Bir kaydı değiştirir; yalnızca gönderdiğin alanlar değişir. |
 | `DELETE /records/:id` | Bir kaydı yorumları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
 | `POST /records/:id/comments` | Bir kayda yorum yazar; `@ad` ile anılan kişiye bildirim gider. |
@@ -96,6 +97,19 @@ Bir müşterinin altına, bir türden kayıt ekler.
 | `ownerId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `fields` | nesne (ad → değer) | isteğe bağlı |  |
 | `currency` | metin | isteğe bağlı | boş (null) olabilir |
+
+### `POST /records/bulk`
+
+Aynı türden en fazla 500 kaydı bir kerede değiştirir: `ownerId`, `archived` ve/veya `fields` (kişinin düzenleyebildiği değerler). Yanıtta `updated` ve `POST /undo/:id` için `undoId` vardır; geri alma yalnızca bu değişikliğin dokunduğunu geri koyar.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `ids` | kimlik listesi | zorunlu | en az 1 öğe; en çok 500 öğe |
+| `ownerId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `archived` | evet/hayır | isteğe bağlı |  |
+| `fields` | nesne (ad → değer) | isteğe bağlı |  |
 
 ### `PATCH /records/:id`
 

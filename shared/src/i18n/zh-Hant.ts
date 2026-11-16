@@ -4640,4 +4640,10 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'myTasks.anyPriority': "任意優先順序",
   'views.title': "已儲存的檢視",
   'views.titleCount': "已儲存的檢視（{n}）",
+  'acards.pick': "選取「{name}」",
+  'bulk.selectAllN': "選取全部 {n} 個符合項目",
+  'bulk.selectFirstN': "選取 {total} 個中的前 {n} 個（一次變更最多這麼多）",
+  'records.bulk.set': "設定{field}…",
+  'records.bulk.changed': "已變更 {n} 項。",
+  'audit.record.bulk_updated': "更改了多筆紀錄",
 };

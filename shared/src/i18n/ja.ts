@@ -4640,4 +4640,10 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'myTasks.anyPriority': "すべての優先度",
   'views.title': "保存済みビュー",
   'views.titleCount': "保存済みビュー（{n}）",
+  'acards.pick': "「{name}」を選択",
+  'bulk.selectAllN': "一致する {n} 件をすべて選択",
+  'bulk.selectFirstN': "{total} 件のうち最初の {n} 件を選択（1回の変更の上限）",
+  'records.bulk.set': "{field}を設定…",
+  'records.bulk.changed': "{n} 件を変更しました。",
+  'audit.record.bulk_updated': "複数のレコードを変更した",
 };

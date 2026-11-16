@@ -21,6 +21,7 @@ A record is anything kept under a customer: a contact, an opportunity, a support
 | `GET /records` | Lists records of one kind (`type`), of one customer (`account`), or both. |
 | `GET /records/:id` | One record. |
 | `POST /records` | Adds a record of a kind, under a customer. |
+| `POST /records/bulk` | Changes up to 500 records of one kind at once: `ownerId`, `archived` and/or `fields` (values the person may edit). |
 | `PATCH /records/:id` | Changes a record; only the fields you send change. |
 | `DELETE /records/:id` | Moves a record to the trash with its comments and files, where it stays for 30 days. |
 | `POST /records/:id/comments` | Comments on a record; `@name` mentions notify. |
@@ -96,6 +97,19 @@ Adds a record of a kind, under a customer.
 | `ownerId` | id | optional | may be null |
 | `fields` | object (name → value) | optional |  |
 | `currency` | text | optional | may be null |
+
+### `POST /records/bulk`
+
+Changes up to 500 records of one kind at once: `ownerId`, `archived` and/or `fields` (values the person may edit). The answer carries `updated` and `undoId` for `POST /undo/:id`, which puts back only what this change touched.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `ids` | list of id | required | at least 1 items; at most 500 items |
+| `ownerId` | id | optional | may be null |
+| `archived` | yes/no | optional |  |
+| `fields` | object (name → value) | optional |  |
 
 ### `PATCH /records/:id`
 

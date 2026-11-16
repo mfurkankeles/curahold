@@ -139,11 +139,16 @@ export function AccountCards({
   shown,
   fmt,
   OptionValue,
+  picked,
+  onPick,
 }: {
   rows: { a: Account; chips: Chip[]; attention: number; band: Band }[];
   shown: AccountField[];
   fmt: (f: AccountField, v: unknown, currency?: string | null, inBase?: boolean) => string;
   OptionValue: (p: { field: AccountField; value: unknown; text: string }) => JSX.Element;
+  /** Cards picked for a change to many at once (the list's bulk bar); without it, no boxes. */
+  picked?: Set<string>;
+  onPick?: (id: string) => void;
 }) {
   const { t, locale } = useI18n();
   const { person, me } = useStore();
@@ -169,8 +174,13 @@ export function AccountCards({
         const s = score(a);
         const owner = person(a.ownerId);
         return (
-          <article key={a.id} className="acard" data-attention={attention > 0 || undefined} data-band={band ?? undefined}>
+          <article key={a.id} className="acard" data-attention={attention > 0 || undefined} data-band={band ?? undefined} data-picked={picked?.has(a.id) || undefined}>
             <header className="acard__head">
+              {onPick && (
+                <label className="acard__pick">
+                  <input type="checkbox" checked={!!picked?.has(a.id)} aria-label={t('acards.pick', { name: a.name })} onChange={() => onPick(a.id)} />
+                </label>
+              )}
               <a
                 className="acard__name"
                 href={`/accounts/${a.id}`}

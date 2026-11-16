@@ -310,7 +310,7 @@ accountRoutes.post('/accounts/bulk', async (c) => {
   requirePerm(c, 'accounts.manage');
   const input = await body(
     c,
-    z.object({ ids: z.array(uuid).min(1).max(2000), ownerId: uuid.nullable().optional(), teamId: uuid.nullable().optional(), archived: z.boolean().optional() }),
+    z.object({ ids: z.array(uuid).min(1).max(500), ownerId: uuid.nullable().optional(), teamId: uuid.nullable().optional(), archived: z.boolean().optional() }),
   );
   const org = c.get('org');
   const auth = c.get('auth');

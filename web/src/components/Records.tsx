@@ -12,6 +12,8 @@ import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
 import { ExportMenu, useExport } from './Export';
 import { SavedViews, useSavedViews } from './SavedViews';
+import { BULK_MAX, SelectMatching } from './ListBulk';
+import { useServerUndo } from '../lib/undo';
 import type { ExportRequest } from '../lib/export';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 import { MenuButton } from './Menus';
@@ -234,9 +236,14 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
 
 export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale, fmtDate, words } = useI18n();
-  const { people, person, canWrite, can } = useStore();
+  const { people, person, canWrite, can, toast } = useStore();
   const phone = usePhone();
   const exporter = useExport();
+  const undoable = useServerUndo();
+  // Records picked in the table for a change to many at once (at most 500, with Undo).
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkOwner, setBulkOwner] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
   const [q, setQ] = useState('');
@@ -343,6 +350,64 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     return fmtDate(r.updatedAt, { day: 'numeric', month: 'short', year: 'numeric' });
   };
   const colLabel = (c: Column) => ('field' in c ? labelOf(c.field.label, locale) : t(`records.col.${c.builtin}` as any, { account: words.one }));
+  const pickRecord = (id: string) =>
+    setPicked((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < BULK_MAX) next.add(id);
+      return next;
+    });
+  // The choice field the board groups by (a stage, say) is the one field the bar can set.
+  const bulkField = type && view === 'table' ? (type.fields.find((f) => f.key === groupKey && f.type === 'select' && f.options?.length && !f.locked) ?? null) : null;
+  const bulk = async (change: Record<string, unknown>, msg: string) => {
+    setBulkBusy(true);
+    try {
+      const r = await post<{ updated: number; undoId: string | null }>('/records/bulk', { ids: [...picked], ...change });
+      undoable(t(msg as any, { n: r.updated }), r.undoId, () => void load());
+      setPicked(new Set());
+      setBulkOwner('');
+      await load();
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+  const bulkBar = canWrite && view === 'table' && picked.size > 0 && (
+    <div className="bulkbar" role="region" aria-label={t('accounts.bulk')}>
+      <strong>{t('accounts.selected', { n: picked.size })}</strong>
+      <SelectMatching picked={picked.size} matching={rows.length} onPick={() => setPicked(new Set(rows.slice(0, BULK_MAX).map((r) => r.id)))} />
+      <select className="select" value={bulkOwner} disabled={bulkBusy} aria-label={t('accounts.newOwner')} onChange={(e) => setBulkOwner(e.target.value)}>
+        <option value="">{t('accounts.newOwner')}</option>
+        {people
+          .filter((p) => p.status === 'active' || p.status === 'invited')
+          .map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+      </select>
+      <button className="btn btn--small" disabled={!bulkOwner || bulkBusy} onClick={() => void bulk({ ownerId: bulkOwner }, 'accounts.reassigned')}>
+        {t('accounts.reassign')}
+      </button>
+      {bulkField && (
+        <select className="select" value="" disabled={bulkBusy} aria-label={t('records.bulk.set', { field: labelOf(bulkField.label, locale) })} onChange={(e) => e.target.value && void bulk({ fields: { [bulkField.key]: e.target.value } }, 'records.bulk.changed')}>
+          <option value="">{t('records.bulk.set', { field: labelOf(bulkField.label, locale) })}</option>
+          {bulkField.options!.map((o) => (
+            <option key={o.key} value={o.key}>
+              {labelOf(o.label, locale)}
+            </option>
+          ))}
+        </select>
+      )}
+      <button className="btn btn--small btn--quiet" disabled={bulkBusy} onClick={() => void bulk({ archived: true }, 'accounts.archivedN')}>
+        {t('accounts.archive')}
+      </button>
+      <button className="btn btn--small btn--quiet" onClick={() => setPicked(new Set())}>
+        {t('common.cancel')}
+      </button>
+    </div>
+  );
   // The file is made by the server from the same filter the list shows (POST /exports), the period included.
   const exportAsk = (): ExportRequest => ({ source: 'records', type: typeKey, q: q.trim() || undefined, owner: owner || undefined, span: span && closeField ? { field: closeField.key, from: span.from, to: span.to } : null });
   const exportItems = exporter.items(exportAsk, !!type && !!data?.total);
@@ -434,6 +499,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           {type && <SavedViews ctl={savedViews} />}
           </FilterSheet>
         </div>
+        {bulkBar}
         {failed && !data ? (
           <LoadError onRetry={() => void load()} />
         ) : !data ? (
@@ -470,6 +536,16 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
             <table className="table">
               <thead>
                 <tr>
+                  {canWrite && (
+                    <th className="rec-pick">
+                      <input
+                        type="checkbox"
+                        aria-label={t('accounts.selectAll')}
+                        checked={rows.length > 0 && rows.slice(0, BULK_MAX).every((r) => picked.has(r.id))}
+                        onChange={(e) => setPicked(e.target.checked ? new Set(rows.slice(0, BULK_MAX).map((r) => r.id)) : new Set())}
+                      />
+                    </th>
+                  )}
                   <th>{t('records.name')}</th>
                   {cols.map((c, i) => (
                     <th key={c.key} className={i > 0 ? 'hide-phone' : undefined}>
@@ -480,7 +556,12 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="row-link" onClick={() => openRecord(r)}>
+                  <tr key={r.id} className="row-link" data-picked={picked.has(r.id) || undefined} onClick={() => openRecord(r)}>
+                    {canWrite && (
+                      <td className="rec-pick" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" aria-label={r.name} checked={picked.has(r.id)} onChange={() => pickRecord(r.id)} />
+                      </td>
+                    )}
                     <td>
                       <button
                         className="linkbtn linkbtn--plain"

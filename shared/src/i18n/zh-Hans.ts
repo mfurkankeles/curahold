@@ -4640,4 +4640,10 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'myTasks.anyPriority': "任意优先级",
   'views.title': "已保存的视图",
   'views.titleCount': "已保存的视图（{n}）",
+  'acards.pick': "选择“{name}”",
+  'bulk.selectAllN': "选择全部 {n} 个匹配项",
+  'bulk.selectFirstN': "选择 {total} 个中的前 {n} 个（一次更改最多这么多）",
+  'records.bulk.set': "设置{field}…",
+  'records.bulk.changed': "已更改 {n} 项。",
+  'audit.record.bulk_updated': "更改了多条记录",
 };

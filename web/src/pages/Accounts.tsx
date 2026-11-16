@@ -11,6 +11,7 @@ import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
 import { ExportMenu, useExport } from '../components/Export';
 import { SavedViews, useSavedViews } from '../components/SavedViews';
+import { BULK_MAX, SelectMatching } from '../components/ListBulk';
 import type { ExportRequest } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
@@ -266,7 +267,15 @@ export function AccountsPage() {
     }
   };
 
-  const allOn = rows.length > 0 && rows.every((a) => selected.has(a.id));
+  // At most 500 per change: the header box and "select all that match" stop there.
+  const allOn = rows.length > 0 && rows.slice(0, BULK_MAX).every((a) => selected.has(a.id));
+  const pickOne = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < BULK_MAX) next.add(id);
+      return next;
+    });
   const viewsSeg = (
     <div className="seg seg--views" role="tablist" aria-label={t('acards.viewLabel')} onKeyDown={onTabKeys}>
       {VIEWS.filter((v) => v !== 'reviews' || reviewsOn).map((v) => (
@@ -453,6 +462,7 @@ export function AccountsPage() {
         {manage && selected.size > 0 && (
           <div className="bulkbar" role="region" aria-label={t('accounts.bulk')}>
             <strong>{t('accounts.selected', { n: selected.size })}</strong>
+            <SelectMatching picked={selected.size} matching={(view === 'table' ? rows : signalRows).length} onPick={() => setSelected(new Set((view === 'table' ? rows : signalRows.map((x) => x.a)).slice(0, BULK_MAX).map((a) => a.id)))} />
             <select className="select" value={bulkOwner} aria-label={t('accounts.newOwner')} onChange={(e) => setBulkOwner(e.target.value)}>
               <option value="">{t('accounts.newOwner')}</option>
               {people
@@ -503,7 +513,7 @@ export function AccountsPage() {
           </div>
         ) : view === 'cards' ? (
           signalRows.length ? (
-            <AccountCards rows={signalRows} shown={shown} fmt={fmt} OptionValue={OptionValue} />
+            <AccountCards rows={signalRows} shown={shown} fmt={fmt} OptionValue={OptionValue} picked={manage && canWrite ? selected : undefined} onPick={manage && canWrite ? pickOne : undefined} />
           ) : (
             <div className="sheet">
               <EmptyState compact icon="filter" title={t('acards.noSignalMatch')}>
@@ -526,7 +536,7 @@ export function AccountsPage() {
                 <tr>
                   {manage && (
                     <th className="u-width-36">
-                      <input type="checkbox" aria-label={t('accounts.selectAll')} checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(rows.map((a) => a.id)))} />
+                      <input type="checkbox" aria-label={t('accounts.selectAll')} checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(rows.slice(0, BULK_MAX).map((a) => a.id)))} />
                     </th>
                   )}
                   {head('name', words.one)}
@@ -557,12 +567,7 @@ export function AccountsPage() {
                           type="checkbox"
                           aria-label={a.name}
                           checked={selected.has(a.id)}
-                          onChange={() => {
-                            const next = new Set(selected);
-                            if (next.has(a.id)) next.delete(a.id);
-                            else next.add(a.id);
-                            setSelected(next);
-                          }}
+                          onChange={() => pickOne(a.id)}
                         />
                       </td>
                     )}

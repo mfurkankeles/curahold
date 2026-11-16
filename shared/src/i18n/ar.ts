@@ -4640,4 +4640,10 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'myTasks.anyPriority': "أي أولوية",
   'views.title': "العروض المحفوظة",
   'views.titleCount': "العروض المحفوظة ({n})",
+  'acards.pick': "حدّد {name}",
+  'bulk.selectAllN': "حدّد كل الـ{n} المطابقة",
+  'bulk.selectFirstN': "حدّد أول {n} من {total} (أقصى ما يشمله تغيير واحد)",
+  'records.bulk.set': "تعيين {field}…",
+  'records.bulk.changed': "تم تغيير {n}.",
+  'audit.record.bulk_updated': "غيّر عدة سجلات",
 };

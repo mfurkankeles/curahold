@@ -10,7 +10,7 @@ import { saveUndo, UNDO_MINUTES } from '../lib/undo';
 import { toTrash } from '../lib/trash';
 import { kick } from '../lib/notify';
 import { isDone, onComment, onTaskCreated, onTaskUpdated } from '../lib/taskEvents';
-import { kickSync, queueSync, taskKeys } from '../lib/records';
+import { kickSync, queueSync, recomputeRollups, taskKeys } from '../lib/records';
 import { foldText } from '../../../shared/src/text';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
@@ -808,6 +808,7 @@ taskRoutes.post('/undo/:id', async (c) => {
     const [u] = await q.query(`select * from undo_log where id = $1 and used_at is null and created_at > now() - make_interval(mins => $2)`, [id, UNDO_MINUTES]);
     if (!u) fail('not_found');
     let restored = 0;
+    const touched = new Set<string | null>();
     for (const p of u.payload as Row[]) {
       if (u.kind === 'tasks') {
         const r = await q.query(
@@ -816,6 +817,20 @@ taskRoutes.post('/undo/:id', async (c) => {
           [p.id, p.status, p.assignee_ids ?? [], p.due_date, p.priority, p.archived_at, p.repeat ? JSON.stringify(p.repeat) : null, auth.userId],
         );
         restored += r.length;
+      } else if (u.kind === 'records') {
+        // Only what the change touched: the owner, put away or not, the fields it set.
+        const fields = (p.fields ?? {}) as Record<string, unknown>;
+        const unset = Object.keys(fields).filter((k) => fields[k] === null);
+        const back = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null));
+        const r = await q.query(
+          `update records set owner_id = case when $2 then $3::uuid else owner_id end,
+                  archived_at = case when $4 then $5::timestamptz else archived_at end,
+                  fields = (coalesce(fields, '{}'::jsonb) - $6::text[]) || $7::jsonb, updated_at = now()
+            where id = $1 returning account_id`,
+          [p.id, 'owner_id' in p, p.owner_id ?? null, 'archived_at' in p, p.archived_at ?? null, unset, JSON.stringify(back)],
+        );
+        restored += r.length;
+        if (r[0]) touched.add(r[0].account_id);
       } else {
         await q.query('update accounts set archived_at = $2, updated_at = now() where id = $1', [p.id, p.archived_at]);
         await q.query('select app_reassign_accounts($1::uuid[], true, $2::uuid, true, $3::uuid)', [[p.id], p.owner_id, p.team_id]);
@@ -824,8 +839,11 @@ taskRoutes.post('/undo/:id', async (c) => {
     }
     await q.query('update undo_log set used_at = now() where id = $1', [id]);
     if (u.kind === 'tasks') await queueSync(q, org.id, 'task', (u.payload as Row[]).map((p) => p.id), null);
-    else await queueSync(q, org.id, 'account', (u.payload as Row[]).map((p) => p.id), ['owner']);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'undo.used', entity: u.kind === 'tasks' ? 'task' : 'account', meta: { count: restored } });
+    else if (u.kind === 'records') {
+      await recomputeRollups(q, org.id, org.account_fields, [...touched]);
+      await queueSync(q, org.id, 'record', (u.payload as Row[]).map((p) => p.id), null);
+    } else await queueSync(q, org.id, 'account', (u.payload as Row[]).map((p) => p.id), ['owner']);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'undo.used', entity: u.kind === 'tasks' ? 'task' : u.kind === 'records' ? 'record' : 'account', meta: { count: restored } });
     return restored;
   });
   kickSync(c.get('deps'), org.id);
