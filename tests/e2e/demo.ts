@@ -107,7 +107,7 @@ if (ok && !process.env.QUICK) {
   await frame!.waitForSelector('.meetings .meeting', { timeout: 10000 }).catch(() => errors.push('a customer shows no meetings'));
   await page.screenshot({ path: join(SCREENS, 'demo-meetings.png') });
   await click('.navlink', 'Raporlar');
-  await frame!.waitForSelector('.chart__col', { timeout: 10000 }).catch(() => errors.push('reports show no chart'));
+  await frame!.waitForSelector('.reports .vchart', { timeout: 10000 }).catch(() => errors.push('reports show no chart'));
   await frame!.waitForSelector('.target__track', { timeout: 10000 }).catch(() => errors.push('reports show no target'));
   await new Promise((r) => setTimeout(r, 400));
   await page.screenshot({ path: join(SCREENS, 'demo-reports.png') });

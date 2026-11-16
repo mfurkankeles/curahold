@@ -1350,7 +1350,9 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   );
   // Any of them can be deleted, and taken back from the toast.
   const doomed = await text(ada.page, '.topbar__title');
-  await ada.page.click('.dash-top__delete');
+  // Delete waits in "More" (one main action on the header).
+  await ada.page.click('.dash-tools .menuwrap > button');
+  await (await byText(ada.page, '.popmenu__item', 'Bu paneli sil')).click();
   await (await byText(ada.page, '.dialog .btn--danger', 'Bu paneli sil')).click();
   await ada.page.waitForFunction((n) => document.querySelectorAll('.dashpick__item').length === n - 1, {}, ready);
   expect(!(await ada.page.$$eval('.dashpick__item', (xs) => xs.map((x) => x.textContent))).includes(doomed), 'the deleted dashboard is still listed');
@@ -1364,6 +1366,73 @@ await step('reports: build one and keep it; a ready-made dashboard lands on the 
   expect(kind?.kind === 'dashboard', `made a ${kind?.kind}`);
   expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
   await ada.page.close();
+});
+
+await step('insight acceptance: a report from nothing (customers by health, last quarter) onto a dashboard, opened on a phone', async () => {
+  // Some customers came in last quarter, so the report has something to count.
+  await sql(`update accounts set created_at = date_trunc('quarter', now()) - interval '40 days' where org_id = (select id from orgs where slug = 'demo') and name < 'M'`);
+  const ada = await newPage(s.browser);
+  await signIn(ada.page, s.origin, 'ada@demo.example');
+  const started = Date.now();
+  const p = ada.page;
+  await p.goto(`${s.origin}/reports/all`, { waitUntil: 'networkidle0' });
+  await (await byText(p, '.topbar .btn--primary', 'Yeni rapor')).click();
+  await p.waitForSelector('.rb-source');
+  await (await byText(p, '.rb-source', 'Müşteriler')).click();
+  await p.waitForFunction(() => document.querySelector('.rb-source[aria-pressed="true"]')?.textContent?.includes('Müşteriler'));
+  // Narrow: added last quarter.
+  await (await byText(p, '.rb-step .btn', 'Koşul ekle')).click();
+  await p.waitForSelector('.rb-filter__top select');
+  await p.select('.rb-filter__top select:nth-of-type(1)', 'created');
+  await p.select('.rb-filter__top select:nth-of-type(2)', 'last');
+  await p.waitForSelector('.rb-filter > select');
+  await p.select('.rb-filter > select', 'quarter');
+  // Group by health, drawn as a ring.
+  await (await byText(p, '.rb-format button', 'Gruplu')).click();
+  await p.waitForSelector('.rb__rail > section:nth-child(3) select');
+  await p.select('.rb__rail > section:nth-child(3) select', 'health');
+  await (await byText(p, '.rb-chart span', 'Halka')).click();
+  await p.waitForSelector('.rb__chart .donut');
+  // Every change can be taken back: Ctrl+Z puts the chart back to bars, the Undo button to the ring again is not needed.
+  await p.click('.rb__viewhead .sheet__title');
+  await p.keyboard.down('Control');
+  await p.keyboard.press('z');
+  await p.keyboard.up('Control');
+  await p.waitForSelector('.rb__chart .hbars');
+  await (await byText(p, '.rb-chart span', 'Halka')).click();
+  await p.waitForSelector('.rb__chart .donut');
+  await p.type('.rb-name', 'Sağlık · geçen çeyrek');
+  await (await byText(p, '.topbar .btn--primary', 'Raporu kaydet')).click();
+  await p.waitForFunction(() => location.pathname.startsWith('/reports/r/'));
+  const [kept] = await sql(`select r.def from reports r join orgs o on o.id = r.org_id where o.slug = 'demo' and r.name = 'Sağlık · geçen çeyrek'`);
+  expect(kept?.def?.groups?.[0]?.field === 'health' && kept.def.filters?.[0]?.period === 'quarter' && kept.def.chart === 'donut', `the report was not kept as built: ${JSON.stringify(kept?.def)}`);
+  // Onto a dashboard, then open it from the toast.
+  await p.waitForFunction(() => [...document.querySelectorAll('.topbar .btn')].some((b) => b.textContent?.includes('Panele ekle')), { timeout: 10000 });
+  await (await byText(p, '.topbar .btn', 'Panele ekle')).click();
+  await p.waitForSelector('.dialog .library__item');
+  const board = await text(p, '.dialog .library__item .library__name');
+  await p.click('.dialog .library__item');
+  await p.waitForFunction(() => [...document.querySelectorAll('.toast__action')].some((b) => b.textContent === 'Aç'), { timeout: 10000 });
+  await (await byText(p, '.toast__action', 'Aç')).click();
+  await p.waitForFunction((n) => document.querySelector('.topbar__title')?.textContent === n, {}, board);
+  await p.waitForSelector('.pane[aria-label="Sağlık · geçen çeyrek"] .donut');
+  // The same dashboard on a phone: one column, nothing sideways, the first card in the top half.
+  await p.setViewport({ width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await p.reload({ waitUntil: 'networkidle0' });
+  await p.waitForSelector('.pane[aria-label="Sağlık · geçen çeyrek"] .donut');
+  const look = await p.evaluate(() => ({
+    first: document.querySelector('.dash__grid .pane')?.getBoundingClientRect().top ?? 9999,
+    wide: document.documentElement.scrollWidth - window.innerWidth,
+    card: document.querySelector('.pane[aria-label="Sağlık · geçen çeyrek"]')?.getBoundingClientRect().width ?? 0,
+  }));
+  expect(look.first < 667 / 2, `the first card starts at ${Math.round(look.first)} px of 667`);
+  expect(look.wide <= 1, `the dashboard scrolls sideways by ${look.wide} px`);
+  expect(look.card > 300, `the new card is ${Math.round(look.card)} px wide on a phone`);
+  await p.evaluate(() => document.querySelector('.pane[aria-label="Sağlık · geçen çeyrek"]')?.scrollIntoView({ block: 'center' }));
+  await shot(p, 'p9-03-insight-phone');
+  console.log(`  insight acceptance journey: ${((Date.now() - started) / 1000).toFixed(1)} s (report from nothing → dashboard → phone)`);
+  expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
+  await p.close();
 });
 
 await step('settings: a currency and its rate, a playbook from an example, renewals that start by themselves', async () => {

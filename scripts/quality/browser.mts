@@ -449,6 +449,9 @@ if (on('big')) {
   };
   await timed('a board with 20,000 tasks', `/b/${d.boards.csBoard}`, '.card');
   await timed('the customer list with 2,000 customers', '/accounts', '.acard, .accounts-table tbody tr');
+  // Reports on the same big company: the overview's week chart, and a ready-made report drawn in the builder.
+  await timed('the reports overview', '/reports', '.reports .vchart__plot .vbar');
+  await timed('a ready-made report (open tasks by person)', '/reports/new?from=open_by_person', '.rb__chart .hbar');
   await go(p.page, '/home', 500);
   const typed: number[] = [];
   for (const word of ['yük', 'velto', 'harbor']) {
