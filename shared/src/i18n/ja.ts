@@ -4367,4 +4367,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "コピー",
   'pm.notes.copied': "コピーしました。",
   'pm.notes.empty': "このスプリントで完了したものはありません。",
+  'pm.points.doneOf': "{name} の完了ポイント",
+  'pm.sprint.carryList': "移動する未完了の課題",
 };

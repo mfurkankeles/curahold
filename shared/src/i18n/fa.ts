@@ -4367,4 +4367,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "کپی",
   'pm.notes.copied': "کپی شد.",
   'pm.notes.empty': "در این اسپرینت چیزی تمام نشد.",
+  'pm.points.doneOf': "امتیازهای انجام‌شده در {name}",
+  'pm.sprint.carryList': "آیتم‌های تمام‌نشده‌ای که منتقل می‌شوند",
 };

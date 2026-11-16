@@ -4367,4 +4367,6 @@ export const tr: Record<MessageKey, string> = {
   'pm.notes.copy': "Kopyala",
   'pm.notes.copied': "Kopyalandı.",
   'pm.notes.empty': "Bu sprintte biten bir şey yok.",
+  'pm.points.doneOf': "{name} içinde tamamlanan puan",
+  'pm.sprint.carryList': "Taşınacak bitmemiş kayıtlar",
 };

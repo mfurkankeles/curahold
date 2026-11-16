@@ -4367,4 +4367,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "复制",
   'pm.notes.copied': "已复制。",
   'pm.notes.empty': "本迭代没有完成任何工作。",
+  'pm.points.doneOf': "{name} 中已完成的点数",
+  'pm.sprint.carryList': "将移走的未完成工作项",
 };

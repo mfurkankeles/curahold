@@ -143,7 +143,7 @@ export function PmRows({ task, editable, onSaved }: { task: Task; editable: bool
         <Icon name="tag" size={15} className="icon--lead" />
         {t('pm.type.label')}
       </span>
-      <select className="select" value={type} disabled={!editable} onChange={(e) => run({ issueType: e.target.value as IssueType })}>
+      <select className="select" value={type} disabled={!editable} aria-label={t('pm.type.label')} onChange={(e) => run({ issueType: e.target.value as IssueType })}>
         {ISSUE_TYPES.map((k) => (
           <option key={k} value={k}>
             {t(`pm.type.${k}`)}

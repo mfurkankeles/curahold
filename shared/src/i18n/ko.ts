@@ -4367,4 +4367,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "복사",
   'pm.notes.copied': "복사했습니다.",
   'pm.notes.empty': "이 스프린트에서 완료한 항목이 없습니다.",
+  'pm.points.doneOf': "{name}에서 완료한 포인트",
+  'pm.sprint.carryList': "옮겨질 미완료 항목",
 };

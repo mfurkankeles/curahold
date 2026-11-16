@@ -176,7 +176,10 @@
 .pm-row__h--title { grid-column: 3 / 5; }
 .pm-row__h--epic { grid-column: 5; }
 .pm-row__h--pts { grid-column: 6; }
-.pm-row__check { width: 18px; height: 18px; margin: 0; justify-self: center; accent-color: var(--brand); cursor: pointer; }
+.pm-row__pick { display: grid; place-items: center; min-width: var(--tap-min); min-height: var(--tap-min); }
+.pm-row__check { width: 18px; height: 18px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+/* The names that open a task or a sprint are full-size targets, not just their line of text. */
+.pm-row__title .rowlink, .pm-sprint .pm-head__title .rowlink, .pm-epiclist .rowlink, .pm-items .rowlink { display: inline-flex; align-items: center; min-height: var(--tap-min); }
 .pm-row__title { grid-column: 4; grid-row: 1; min-width: 0; }
 .pm-row__title .rowlink { text-align: start; overflow-wrap: anywhere; }
 .pm-row__props { display: contents; }
@@ -216,7 +219,7 @@
   .pm-plan__go { grid-column: 2; grid-row: 1; }
   .pm-plan__cap { grid-column: 1 / -1; grid-row: 2; }
   .pm-plan__picked { display: none; }
-  .pm-plan__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pm-plan__label { display: none; }
   .pm-cap { min-height: 0; }
   :root:has(.pm-plan) .cura__fab { display: none; }
   .pm-tools { flex-wrap: nowrap; }
@@ -233,6 +236,11 @@
 @media (pointer: coarse) {
   .pm-inline, .pm-epic { min-height: var(--tap); }
   .pm-row__check { width: 22px; height: 22px; }
+  /* A finger needs 44 px: the pick box is reached through its 44 px cell (clicking the cell picks the row). */
+  .pm-row__pick { min-width: var(--tap); min-height: var(--tap); }
+  .pm-row > .pm-grip { min-width: var(--tap); min-height: var(--tap); }
+  .pm-row__title .rowlink, .pm-sprint .pm-head__title .rowlink, .pm-epiclist .rowlink, .pm-items .rowlink { min-height: var(--tap); }
+  .pm-bar-row > .btn, .pm-sprint .pm-rowactions .btn--icon { min-width: var(--tap); justify-content: center; }
 }
 
 /* ---------------------------------------------------------------- closing a sprint, the sprint list, the roadmap */
@@ -250,3 +258,9 @@
 .pm-epiclist__bar { display: flex; flex: 0 1 160px; min-width: 80px; }
 .pm-epiclist__nums { font-size: var(--fs-xs); white-space: nowrap; }
 .pm-notes { font-family: var(--mono, ui-monospace, monospace); font-size: var(--fs-s); line-height: 1.5; resize: vertical; }
+/* A closed sprint is set apart by its well, not by fading its text (faded text fails contrast). */
+.pm-sprint[data-state='closed'] { opacity: 1; background: var(--surface-2); }
+.pm-carry__list:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); }
+@media (pointer: coarse) and (max-width: 860px) {
+  .pm-row { grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr); column-gap: var(--s-1); }
+}

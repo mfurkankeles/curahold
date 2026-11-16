@@ -4367,4 +4367,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "نسخ",
   'pm.notes.copied': "تم النسخ.",
   'pm.notes.empty': "لم يُنجز شيء في هذا السبرنت.",
+  'pm.points.doneOf': "النقاط المنجزة في {name}",
+  'pm.sprint.carryList': "العناصر غير المكتملة التي ستُنقل",
 };

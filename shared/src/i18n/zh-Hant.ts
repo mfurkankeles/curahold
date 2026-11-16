@@ -4367,4 +4367,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "複製",
   'pm.notes.copied': "已複製。",
   'pm.notes.empty': "本衝刺沒有完成任何項目。",
+  'pm.points.doneOf': "{name} 中已完成的點數",
+  'pm.sprint.carryList': "將移走的未完成項目",
 };

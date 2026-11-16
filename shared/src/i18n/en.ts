@@ -4382,6 +4382,8 @@ export const en = {
   'pm.notes.copy': "Copy",
   'pm.notes.copied': "Copied.",
   'pm.notes.empty': "Nothing was finished in this sprint.",
+  'pm.points.doneOf': "Points done in {name}",
+  'pm.sprint.carryList': "Unfinished items that move",
 } as const;
 
 export type MessageKey = keyof typeof en;

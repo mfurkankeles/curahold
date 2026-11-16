@@ -235,16 +235,18 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
           <section className="pm-plan" aria-label={t('pm.plan.title')}>
             {open.length ? (
               <>
-                <label className="pm-plan__target">
-                  <span className="pm-plan__label">{t('pm.plan.into')}</span>
-                  <select className="select" value={target} onChange={(e) => setTarget(e.target.value)}>
+                <div className="pm-plan__target">
+                  <span className="pm-plan__label" aria-hidden="true">
+                    {t('pm.plan.into')}
+                  </span>
+                  <select className="select" value={target} aria-label={t('pm.plan.into')} onChange={(e) => setTarget(e.target.value)}>
                     {open.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} · {t(`pm.sprint.${s.state}`)}
                       </option>
                     ))}
                   </select>
-                </label>
+                </div>
                 <div className="pm-plan__cap">
                   <span className="pm-plan__label">{velocity.average != null ? t('pm.capacity.velocity', { n: n(velocity.average) }) : t('pm.capacity.title')}</span>
                   <CapacityMeter planned={sprint?.totals?.points ?? 0} adding={pointsOf(picked)} limit={velocity.average} />
@@ -455,6 +457,7 @@ function BacklogRow({
         <span />
       )}
       {canWrite ? (
+        <label className="pm-row__pick">
         <input
           type="checkbox"
           className="pm-row__check"
@@ -465,6 +468,7 @@ function BacklogRow({
           onFocus={onFocus}
           onKeyDown={onKey}
         />
+        </label>
       ) : (
         <span />
       )}

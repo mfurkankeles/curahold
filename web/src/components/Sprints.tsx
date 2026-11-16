@@ -42,10 +42,10 @@ function StateChip({ state }: { state: Sprint['state'] }) {
   );
 }
 
-function Bar({ done, total }: { done: number; total: number }) {
+function Bar({ done, total, label }: { done: number; total: number; label: string }) {
   const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
   return (
-    <span className="pm-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+    <span className="pm-bar" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
       <span style={{ '--w': `${pct}%` } as CSSProperties} />
     </span>
   );
@@ -303,7 +303,7 @@ function CloseSprint({ sprint, sprints, doneKeys, onClose, onDone }: { sprint: S
           {open.length > 0 && (
             <div className="pm-carry">
               <p className="pm-carry__head muted num">{t('pm.sprint.carry', { n: f.number(open.length), points: t('pm.points.short', { n: f.number(pointsOf(open)) }) })}</p>
-              <ul className="pm-carry__list">
+              <ul className="pm-carry__list" tabIndex={0} aria-label={t('pm.sprint.carryList')}>
                 {open.map((x) => (
                   <li key={x.id}>
                     <IssueBadge type={x.issueType ?? 'task'} />
@@ -425,7 +425,7 @@ function SprintBrief({ sprint, sprints }: { sprint: Sprint; sprints: Sprint[] })
   const done = sprint.state === 'closed' ? finishedPoints(sprint) : tot.donePoints;
   return (
     <div className="pm-brief">
-      <Bar done={done} total={tot.points} />
+      <Bar done={done} total={tot.points} label={t('pm.points.doneOf', { name: sprint.name })} />
       <span className="muted num">
         {t('pm.summary.progress', { done: f.number(done), total: f.number(tot.points) })} · {t('pm.sprint.items', { n: f.number(tot.items) })}
       </span>
@@ -566,7 +566,7 @@ function Roadmap({ board, sprints, refreshKey }: { board: Board; sprints: Sprint
                   {e.title}
                 </button>
                 <span className="pm-epiclist__bar">
-                  <Bar done={e.childDonePoints ?? 0} total={e.childPoints ?? 0} />
+                  <Bar done={e.childDonePoints ?? 0} total={e.childPoints ?? 0} label={t('pm.points.doneOf', { name: e.title })} />
                 </span>
                 <span className="muted num pm-epiclist__nums">
                   {t('pm.summary.progress', { done: n(e.childDonePoints ?? 0), total: n(e.childPoints ?? 0) })} · {t('pm.sprint.items', { n: n(e.childCount) })}

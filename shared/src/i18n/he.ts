@@ -4367,4 +4367,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'pm.notes.copy': "העתקה",
   'pm.notes.copied': "הועתק.",
   'pm.notes.empty': "שום דבר לא הושלם בספרינט הזה.",
+  'pm.points.doneOf': "נקודות שהושלמו ב-{name}",
+  'pm.sprint.carryList': "פריטים שלא הושלמו ויועברו",
 };
