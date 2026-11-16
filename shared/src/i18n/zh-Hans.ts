@@ -4390,4 +4390,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'dash.place': "“{card}”：第 {n} 张，共 {total} 张",
   'dash.moved': "卡片已移动",
   'rb.showMore': "再显示 {n} 行",
+  'rb.value': "值",
+  'rb.periodOf': "期间",
 };

@@ -4390,4 +4390,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'dash.place': "{card}: {n} از {total}",
   'dash.moved': "کارت جابه‌جا شد",
   'rb.showMore': "نمایش {n} ردیف دیگر",
+  'rb.value': "مقدار",
+  'rb.periodOf': "دوره",
 };

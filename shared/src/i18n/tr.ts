@@ -4390,4 +4390,6 @@ export const tr: Record<MessageKey, string> = {
   'dash.place': "{card}: {total} kartın {n}. sırası",
   'dash.moved': "Kart taşındı",
   'rb.showMore': "{n} satır daha göster",
+  'rb.value': "Değer",
+  'rb.periodOf': "Dönem",
 };

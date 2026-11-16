@@ -544,11 +544,11 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         </div>
       );
     }
-    if (fd.type === 'text') return <input className="input" value={String(x.value ?? '')} placeholder={t('rb.textHint')} onChange={(e) => setFilter(at, { ...x, value: e.target.value })} />;
+    if (fd.type === 'text') return <input className="input" value={String(x.value ?? '')} placeholder={t('rb.textHint')} aria-label={t('rb.textHint')} onChange={(e) => setFilter(at, { ...x, value: e.target.value })} />;
     if (fd.type === 'date') {
       if (x.op === 'this' || x.op === 'last')
         return (
-          <select className="select" value={x.period ?? 'month'} onChange={(e) => setFilter(at, { ...x, period: e.target.value as any })}>
+          <select className="select" value={x.period ?? 'month'} aria-label={t('rb.periodOf')} onChange={(e) => setFilter(at, { ...x, period: e.target.value as any })}>
             {PERIODS.map((p) => (
               <option key={p} value={p}>
                 {t(`rb.period.${p}` as any)}
@@ -556,7 +556,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
             ))}
           </select>
         );
-      if (x.op === 'before' || x.op === 'after') return <DateField value={x.date ?? ''} onChange={(v) => setFilter(at, { ...x, date: v || undefined })} />;
+      if (x.op === 'before' || x.op === 'after') return <DateField value={x.date ?? ''} label={t('rb.value')} onChange={(v) => setFilter(at, { ...x, date: v || undefined })} />;
       return (
         <label className="rb-days">
           <input className="input" type="number" min={1} max={3650} value={Number(x.value ?? 30)} onChange={(e) => setFilter(at, { ...x, value: Number(e.target.value) })} />
@@ -564,7 +564,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         </label>
       );
     }
-    return <input className="input" type="number" value={x.value === undefined ? '' : Number(x.value)} onChange={(e) => setFilter(at, { ...x, value: e.target.value === '' ? undefined : Number(e.target.value) })} />;
+    return <input className="input" type="number" aria-label={t('rb.value')} value={x.value === undefined ? '' : Number(x.value)} onChange={(e) => setFilter(at, { ...x, value: e.target.value === '' ? undefined : Number(e.target.value) })} />;
   };
 
   const summary =

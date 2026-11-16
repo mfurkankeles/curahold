@@ -4390,4 +4390,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'dash.place': "{card}: {n} من {total}",
   'dash.moved': "نُقلت البطاقة",
   'rb.showMore': "اعرض {n} صفوف أخرى",
+  'rb.value': "القيمة",
+  'rb.periodOf': "الفترة",
 };

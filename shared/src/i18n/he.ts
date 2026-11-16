@@ -4390,4 +4390,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'dash.place': "{card}: {n} מתוך {total}",
   'dash.moved': "הכרטיס הוזז",
   'rb.showMore': "הצגת {n} שורות נוספות",
+  'rb.value': "ערך",
+  'rb.periodOf': "תקופה",
 };

@@ -4390,4 +4390,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'dash.place': "{card}: {total}개 중 {n}번째",
   'dash.moved': "카드를 옮겼습니다",
   'rb.showMore': "{n}개 행 더 보기",
+  'rb.value': "값",
+  'rb.periodOf': "기간",
 };
