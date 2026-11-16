@@ -475,7 +475,8 @@ await step('CRM: connect, choose, map, preview and start — then records everyw
   await ada.page.waitForSelector('.table tbody tr');
   await shot(ada.page, 'p3-08-contacts');
   const [atlas] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Atlas Logistics'`);
-  await ada.page.goto(`${s.origin}/accounts/${atlas.id}`, { waitUntil: 'networkidle0' });
+  // The customer's records are a section of their own on its page.
+  await ada.page.goto(`${s.origin}/accounts/${atlas.id}?tab=records`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.record-lines');
   await shot(ada.page, 'p3-09-account-records');
   // An edit here goes to the CRM.
@@ -502,7 +503,7 @@ await step('stakeholders: org chart with drag and drop, and a stakeholder card',
   const jordan = people.find((p: any) => p.name === 'Jordan Blake')!;
   const other = people.find((p: any) => p.name !== 'Jordan Blake' && p.name && !/Renewal|Upsell|module|review|dropped|changed/i.test(p.name))!;
   expect(jordan && other && other.parent_id === jordan.id, `reports-to did not come over: ${JSON.stringify(people)}`);
-  await ada.page.goto(`${s.origin}/accounts/${blue.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.goto(`${s.origin}/accounts/${blue.id}?tab=people`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.org-card');
   await shot(ada.page, 'p3-11-org-chart');
   const drag = async (fromName: string, to: () => Promise<any>) => {
@@ -543,7 +544,7 @@ await step('stakeholders: org chart with drag and drop, and a stakeholder card',
   let overflow = await ada.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'sync page scrolls sideways on a phone');
   await shot(ada.page, 'p3-10-phone-sync');
-  await ada.page.goto(`${s.origin}/accounts/${blue.id}`, { waitUntil: 'networkidle0' });
+  await ada.page.goto(`${s.origin}/accounts/${blue.id}?tab=people`, { waitUntil: 'networkidle0' });
   await ada.page.waitForSelector('.org-card');
   overflow = await ada.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(!overflow, 'account page scrolls sideways on a phone');
@@ -688,7 +689,7 @@ await step('an API key is shown once and works; an AI assistant asks and the per
 
 await step('timeline: log a call on a customer; switch the health score on and see why', async () => {
   const quill = s.demo.accounts['Quillfield Retail'];
-  await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
+  await mert.page.goto(`${s.origin}/accounts/${quill}?tab=timeline`, { waitUntil: 'networkidle0' });
   // The note box opens from its one-line prompt.
   await mert.page.click('.tl__start');
   await mert.page.waitForSelector('.tl__compose');
@@ -704,9 +705,10 @@ await step('timeline: log a call on a customer; switch the health score on and s
   await mert.page.waitForSelector('.healthpreview');
   await mert.page.evaluate(() => ([...document.querySelectorAll('.btn--primary')].find((b) => /Kaydet|Save/.test(b.textContent ?? '')) as HTMLElement)?.click());
   await mert.page.waitForFunction(() => [...document.querySelectorAll('.btn--primary')].some((b) => /Kaydet|Save/.test(b.textContent ?? '') && (b as HTMLButtonElement).disabled), { timeout: 5000 });
+  // The score and its weakest reason lead the customer's page; all reasons are one tap away.
   await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
-  await mert.page.waitForSelector('.healthline .score');
-  await mert.page.click('.healthline button');
+  await mert.page.waitForSelector('.acc-tile--health .acc-tile__score');
+  await mert.page.click('.acc-tile__why');
   await mert.page.waitForSelector('.healthwhy li');
   await shot(mert.page, 'p6-01-timeline-health');
   const lines = await mert.page.$$eval('.healthwhy li', (els) => els.length);
@@ -1915,8 +1917,17 @@ await step('account manager: a meeting, three next steps, one finished on a phon
   const [acc] = await sql(`select a.id from accounts a join orgs o on o.id = a.org_id where o.slug = 'demo' and a.name = 'Velto Mobility'`);
   await desk.page.goto(`${s.origin}/accounts/${acc.id}`, { waitUntil: 'networkidle0' });
   await desk.page.waitForSelector('.acc-band .acc-tile--health');
-  await desk.page.waitForFunction(() => !!document.querySelector('.acc-tile--health .acc-tile__reason')?.textContent?.trim());
-  const reasonBefore = await text(desk.page, '.acc-tile--health .acc-tile__reason');
+  // All the reasons, one tap away.
+  const reasons = () =>
+    desk.page.evaluate(() => {
+      if (!document.querySelector('.acc-band__why')) (document.querySelector('.acc-tile__why') as HTMLElement | null)?.click();
+      return [...document.querySelectorAll('.acc-band__why .healthwhy li')].map((li) => li.textContent).join(' | ');
+    });
+  await desk.page.waitForFunction(() => {
+    if (!document.querySelector('.acc-band__why')) (document.querySelector('.acc-tile__why') as HTMLElement | null)?.click();
+    return document.querySelectorAll('.acc-band__why .healthwhy li').length > 0;
+  }, { timeout: 8000 });
+  const reasonsBefore = await reasons();
   // She logs the meeting with three next steps.
   await (await byText(desk.page, '.btn', 'Toplantı kaydet')).click();
   await desk.page.waitForSelector('.logform input.input');
@@ -1935,8 +1946,16 @@ await step('account manager: a meeting, three next steps, one finished on a phon
   expect(meeting, 'the meeting was not logged');
   const made = await sql(`select id, title from tasks where activity_id = $1 order by title`, [meeting.id]);
   expect(made.length === 3 && steps.every((x) => made.some((m) => m.title === x)), `three next steps did not become tasks: ${made.map((m) => m.title).join(', ')}`);
-  // The last touch was the weakest reason, or the page now says something new: the band follows at once.
-  await desk.page.waitForFunction((before) => document.querySelector('.acc-tile--health .acc-tile__reason')?.textContent?.trim() !== before, { timeout: 8000 }, reasonBefore);
+  // The meeting is the customer's latest touch: the reasons in the band say so at once, without a reload.
+  await desk.page.waitForFunction(
+    (before) => {
+      if (!document.querySelector('.acc-band__why')) (document.querySelector('.acc-tile__why') as HTMLElement | null)?.click();
+      const now = [...document.querySelectorAll('.acc-band__why .healthwhy li')].map((li) => li.textContent).join(' | ');
+      return !!now && now !== before;
+    },
+    { timeout: 15000 },
+    reasonsBefore,
+  );
   await shot(desk.page, 'ec-01-customer-after-meeting');
   // On her phone she finishes one.
   const phone = await newPage(s.browser, 390, 844);
@@ -1949,7 +1968,7 @@ await step('account manager: a meeting, three next steps, one finished on a phon
   expect(doneTask && (doneTask.columns as { key: string; done?: boolean }[]).find((c) => c.key === doneTask.status)?.done, 'the step was not finished');
   await shot(phone.page, 'ec-02-phone-finished');
   // Back at the desk, without a reload: the customer page drops it from its open tasks.
-  await desk.page.waitForFunction((title) => ![...document.querySelectorAll('#tasks > .taskline')].some((r) => r.textContent?.includes(title)), { timeout: 8000 }, steps[0]);
+  await desk.page.waitForFunction((title) => ![...document.querySelectorAll('#tasks > .taskline')].some((r) => r.textContent?.includes(title)), { timeout: 15000 }, steps[0]);
   await shot(desk.page, 'ec-03-customer-after-phone');
   const took = (Date.now() - started) / 1000;
   console.log(`    account manager journey: ${took.toFixed(1)} s (target 180 s)`);

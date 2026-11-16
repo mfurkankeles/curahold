@@ -2180,6 +2180,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "健康度位於留意區間",
   'acards.renewalPast': "續約已逾期 {n} 天",
   'acards.renewalIn': "{n} 天後續約",
+  'acc.band.judged': "團隊的判斷",
   'recordPanel.moreFields': "另外 {n} 個欄位",
   'pipeline.moved': "{name} 已移到「{stage}」",
   'org.moved': "{name} 現在向 {to} 匯報",

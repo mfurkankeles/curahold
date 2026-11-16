@@ -1211,7 +1211,7 @@ function AccountBand({ account, tasks, again, onAddTask }: { account: Account; t
               </button>
             </span>
           ) : (
-            <span className="acc-tile__sub">{judgement ? labelOf(judgement.label, locale) : ''}</span>
+            <span className="acc-tile__sub">{t('acc.band.judged')}</span>
           )}
         </div>
       )}

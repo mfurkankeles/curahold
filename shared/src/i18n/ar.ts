@@ -2180,6 +2180,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'acards.watchTitle': "الصحة في نطاق المراقبة",
   'acards.renewalPast': "تجديد متأخر {n} يومًا",
   'acards.renewalIn': "يُجدَّد خلال {n} يومًا",
+  'acc.band.judged': "تقدير الفريق",
   'recordPanel.moreFields': "{n} حقول أخرى",
   'pipeline.moved': "نُقلت {name} إلى {stage}",
   'org.moved': "أصبح {name} يتبع {to}",
