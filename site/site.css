@@ -498,8 +498,9 @@ html:not(.js) .tour__bar { display: none; }
 /* ------------------------------------------------------------- the story */
 /* Below the first screen the browser lays a section out only as it comes near, so
    the first paint does not wait for the whole page. Sizes are remembered once seen. */
-.story, .bento, .pricing, .faq { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
-.story { contain-intrinsic-size: auto 4200px; }
+/* Drawn only when near the screen. Not the story: it holds a pinned stage, and a
+   lazily drawn parent makes a pinned child jump on some phones. */
+.bento, .pricing, .faq { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }

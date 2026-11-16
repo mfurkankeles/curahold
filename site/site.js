@@ -161,8 +161,15 @@
       const [k, a, b, from, to] = el.dataset.count.split(',').map(Number);
       return { el, k, a, b, from, to, shown: from };
     });
+    // The small viewport's height (100svh), measured once and again only when the width changes.
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;height:100svh;width:0;top:0';
+    document.body.appendChild(probe);
+    let smallH = 0;
+    const small = () => smallH || (smallH = probe.offsetHeight || window.innerHeight);
     let blocks = [];
     let line = 0;
+    let shown = -1;
     let last = -1;
     let on = 0;
     let raf = 0;
@@ -172,28 +179,36 @@
         return [r.top + window.scrollY, r.height];
       });
       const top = parseFloat(getComputedStyle(pin).top) || 0;
-      line = wide.matches ? top + pin.offsetHeight / 2 : (top + pin.offsetHeight + window.innerHeight) / 2;
+      // The reading line. On a phone it sits halfway between the band and the bottom of
+      // the SMALL viewport, which does not change while the browser's bars slide away.
+      line = wide.matches ? top + pin.offsetHeight / 2 : (top + pin.offsetHeight + small()) / 2;
     };
     const frame = () => {
       raf = 0;
       const y = window.scrollY + line;
-      let p = 0;
+      let target = 0;
       blocks.forEach(([top, h], i) => {
-        if (y >= top) p = i + clamp((y - top) / h);
+        if (y >= top) target = i + clamp((y - top) / h);
       });
       // Without motion the story moves a whole step at a time, each step complete.
-      if (reduce) p = Math.min(Math.floor(p), steps.length - 1) + 0.75;
-      if (Math.abs(p - last) < 0.001) return;
-      last = p;
-      pin.style.setProperty('--p', p.toFixed(3));
-      const now = Math.min(Math.floor(p), steps.length - 1);
+      if (reduce) target = Math.min(Math.floor(target), steps.length - 1) + 0.75;
+      // Glide toward the scroll instead of copying each scroll event: phones deliver
+      // scroll positions unevenly, and copying them makes the scene tremble.
+      const p = reduce || shown < 0 ? target : shown + (target - shown) * 0.28;
+      const settled = Math.abs(target - p) < 0.002;
+      shown = settled ? target : p;
+      if (!settled) raf = requestAnimationFrame(frame);
+      if (Math.abs(shown - last) < 0.001) return;
+      last = shown;
+      pin.style.setProperty('--p', shown.toFixed(3));
+      const now = Math.min(Math.floor(shown), steps.length - 1);
       if (now !== on) {
         steps[on].classList.remove('is-on');
         steps[now].classList.add('is-on');
         on = now;
       }
       for (const c of counts) {
-        const s = clamp((clamp((p - c.k - 0.08) / 0.62) - c.a) / (c.b - c.a));
+        const s = clamp((clamp((shown - c.k - 0.08) / 0.62) - c.a) / (c.b - c.a));
         const v = Math.round(c.from + (c.to - c.from) * s);
         if (v !== c.shown) c.el.textContent = fmt.format((c.shown = v));
       }
@@ -219,6 +234,13 @@
       { rootMargin: '100px 0px' },
     ).observe(story);
     if ('ResizeObserver' in window) new ResizeObserver(again).observe(story);
-    window.addEventListener('resize', again);
+    // A phone's bars sliding in and out change only the height: that must not move the story.
+    let width = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
+      smallH = 0;
+      again();
+    });
   }
 })();
