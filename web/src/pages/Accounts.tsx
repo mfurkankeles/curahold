@@ -27,7 +27,7 @@ import { HEALTH_FIELD } from '../../../shared/src/health';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { MenuButton } from '../components/Menus';
 import { DateField } from '../components/DateField';
-import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { parseQuick } from '../lib/quickparse';
 import { TASKS_CHANGED, tasksChanged, usePageDefaults } from '../lib/shell';
@@ -93,6 +93,7 @@ export function AccountsPage() {
   const phone = usePhone();
   const undoable = useServerUndo();
   const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
+  const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 });
   const [importing, setImporting] = useState(false);
@@ -175,14 +176,20 @@ export function AccountsPage() {
     if (owner !== 'all') p.set('owner', owner);
     if (archived) p.set('archived', '1');
     let have: Account[] = [];
-    for (let page = 0; page < 40; page++) {
-      p.set('limit', page ? '500' : '200');
-      p.set('offset', String(have.length));
-      const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${p}`);
-      if (n !== seq.current) return;
-      have = [...have, ...r.accounts];
-      setData({ accounts: have, total: r.total });
-      if (!r.accounts.length || have.length >= r.total) break;
+    try {
+      for (let page = 0; page < 40; page++) {
+        p.set('limit', page ? '500' : '200');
+        p.set('offset', String(have.length));
+        const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${p}`);
+        if (n !== seq.current) return;
+        have = [...have, ...r.accounts];
+        setData({ accounts: have, total: r.total });
+        setFailed(false);
+        if (!r.accounts.length || have.length >= r.total) break;
+      }
+    } catch {
+      // A failed load says so and offers to try again; it never shows as an empty list.
+      if (n === seq.current && !have.length) setFailed(true);
     }
   }, [q, owner, archived]);
   useEffect(() => {
@@ -487,7 +494,9 @@ export function AccountsPage() {
         )}
 
         {!phone && convertedNote}
-        {!data ? (
+        {failed && !data ? (
+          <LoadError onRetry={() => void load()} />
+        ) : !data ? (
           view === 'cards' ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />
         ) : rows.length === 0 ? (
           <div className="sheet">
