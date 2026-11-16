@@ -4492,7 +4492,7 @@ export const tr: Record<MessageKey, string> = {
   'conn.health.open': "Aç",
   'conn.health.off': "Kapalı",
   'sso.idp.title': "Kimlik sağlayıcının bilgileri",
-  'sso.on.title': "Aç",
+  'sso.on.title': "SSO'yu aç",
   'sso.enableHint': "Giriş sayfasında “SSO ile giriş” seçilebilir. E-posta bağlantıları çalışmaya devam eder.",
   'sso.enforceHint': "Herkes yalnızca kimlik sağlayıcın üzerinden girer; e-posta bağlantıları ve diğer giriş yolları çalışmaz.",
   'sso.effect.enforce': "Kaydettiğinde {n} kişi yalnızca kimlik sağlayıcın üzerinden girebilecek.",
