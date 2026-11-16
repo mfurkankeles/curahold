@@ -1672,10 +1672,9 @@ await step('trash: a deleted task can be taken back at once, or later from the t
 // ------------------------------------------------------- product team: backlog and sprints
 // A product manager's week on a board made from the product-development workflow: the
 // backlog with an epic and its stories, planning a sprint, the sprint in flight, closing it.
-// Known gaps (no feature yet, so no step): a sprint has no capacity and no over-capacity
-// warning; the burndown does not mark scope added mid-sprint; an epic shows how many
-// stories it has, not their points; there is no "product team" permission — access to the
-// backlog is access to the board.
+// The capacity while planning is the team's pace (average of the last three closed sprints);
+// scope added mid-sprint shows on the burndown; epics show their stories' points. There is
+// no "product team" permission — access to the backlog is access to the board.
 
 const pmState = { board: '', epic: '', stories: [] as string[], sprint: '', next: '' };
 const pmStories = [
@@ -1716,7 +1715,7 @@ async function panelSelect(page: Page, label: string, value: string) {
   if (!el) throw new Error(`no "${label}" field in the task panel`);
   await (el as any).select(value);
 }
-const backlogTitles = (page: Page) => page.$$eval('.pm-backlog .tasklist__title .rowlink', (els) => els.map((e) => e.textContent ?? ''));
+const backlogTitles = (page: Page) => page.$$eval('.pm-backlog .pm-row__title .rowlink', (els) => els.map((e) => e.textContent ?? ''));
 /** Wait for a control with this text to be on the page, then press it. */
 async function press(page: Page, sel: string, label: string) {
   await page.waitForFunction((s, l) => [...document.querySelectorAll(s)].some((e) => (e.textContent?.trim() ?? '').startsWith(l)), { timeout: 8000 }, sel, label);
@@ -1792,19 +1791,22 @@ await step('product team: a backlog with an epic and three estimated stories, re
   pmState.stories = pmStories.map(([title]) => stored.find((r: any) => r.title === title)!.id);
 
   // The backlog lists them in order, names their epic and adds up the points.
-  await page.waitForFunction(() => document.querySelector('.page > p.muted .num')?.textContent === '16 puan', { timeout: 8000 });
-  const epicCells = await page.$$eval('.pm-backlog .tasklist__row', (rows) => rows.map((r) => r.children[3]?.textContent ?? ''));
+  await page.waitForFunction(() => document.querySelector('.pm-backlog__sum .num')?.textContent?.endsWith('16 puan'), { timeout: 8000 });
+  // The epic is not a row to plan: it is the filter above the list, with its stories' points.
+  expect(!(await backlogTitles(page)).includes('Çevrimdışı çalışma'), 'the epic is listed as backlog work');
+  expect(await page.evaluate(() => [...document.querySelectorAll('.pm-epic')].some((b) => b.textContent?.includes('Çevrimdışı çalışma') && b.textContent.includes('16 puan'))), 'no epic filter with its points');
+  const epicCells = await page.$$eval('.pm-backlog .pm-row:not(.pm-row--head) .pm-inline--epic', (els) => els.map((e) => (e as HTMLSelectElement).selectedOptions[0]?.textContent ?? ''));
   expect(epicCells.filter((c) => c === 'Çevrimdışı çalışma').length === 3, `epic column: ${epicCells.join(' | ')}`);
   expect((await backlogTitles(page)).slice(-3).join('|') === pmStories.map(([t]) => t).join('|'), `order before: ${(await backlogTitles(page)).join(' | ')}`);
   await shot(page, 'pm-01-backlog');
 
   // The biggest story matters most: drag it by its grip above the first story.
-  const grip = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!.querySelector('.pm-grip')!, pmStories[2][0]);
-  const firstRow = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!, pmStories[0][0]);
+  const grip = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .pm-row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!.querySelector('.pm-grip')!, pmStories[2][0]);
+  const firstRow = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .pm-row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!, pmStories[0][0]);
   const to = await centre(firstRow as any);
   await dragTo(page, await centre(grip as any), { x: to.x, y: to.y - 4 });
   const want = [pmStories[2][0], pmStories[0][0], pmStories[1][0]].join('|');
-  await page.waitForFunction((w) => [...document.querySelectorAll('.pm-backlog .tasklist__title .rowlink')].map((e) => e.textContent).slice(-3).join('|') === w, { timeout: 5000 }, want).catch(() => undefined);
+  await page.waitForFunction((w) => [...document.querySelectorAll('.pm-backlog .pm-row__title .rowlink')].map((e) => e.textContent).slice(-3).join('|') === w, { timeout: 5000 }, want).catch(() => undefined);
   expect((await backlogTitles(page)).slice(-3).join('|') === want, `order after the drag: ${(await backlogTitles(page)).join(' | ')}`);
   await pause(400);
 
@@ -1815,10 +1817,10 @@ await step('product team: a backlog with an epic and three estimated stories, re
   const ranked = await sql(`select title from tasks where epic_id = $1 order by position`, [pmState.epic]);
   expect(ranked.map((r: any) => r.title).join('|') === want, `stored order: ${ranked.map((r: any) => r.title).join(' | ')}`);
 
-  // The epic's own summary, on the roadmap: its three stories (it shows a count, not their points).
+  // The epic's own summary, on the roadmap: its three stories and their 16 points, none done yet.
   await press(page, '.toolbar .seg button', 'Sprintler');
   await press(page, '.pm-bar-row .seg button', 'Yol haritası');
-  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .pm-items li')].some((li) => li.textContent?.includes('Çevrimdışı çalışma') && li.textContent.includes('3 kayıt')), { timeout: 8000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .pm-items li')].some((li) => li.textContent?.includes('Çevrimdışı çalışma') && li.textContent.includes('3 kayıt') && li.textContent.includes('16 puanın 0 tanesi')), { timeout: 8000 });
   await shot(page, 'pm-02-roadmap-epic');
   expect(errors.length === 0, errors.join(' | '));
 });
@@ -1842,18 +1844,20 @@ await step('product team: plan a sprint with dates, pull stories in from the bac
   await press(page, '.toolbar .seg button', 'Backlog');
   await page.waitForSelector('.pm-backlog');
   for (const t of [pmStories[2][0], pmStories[0][0]]) await page.click(`.pm-backlog input[type=checkbox][aria-label*="${t}"]`);
-  const target = await page.$eval('.bulkbar select', (el) => (el as HTMLSelectElement).value);
+  const target = await page.$eval('.pm-plan select', (el) => (el as HTMLSelectElement).value);
   expect(target === pmState.sprint, 'the new sprint is not the one offered');
-  await press(page, '.bulkbar .btn--primary', 'Sprinte ekle');
+  // A first sprint has no pace to measure against yet: the capacity says what is planned.
+  await page.waitForFunction(() => document.querySelector('.pm-cap__text')?.textContent?.startsWith('11 puan planlandı'), { timeout: 5000 });
+  await press(page, '.pm-plan .btn--primary', 'Sprinte ekle');
   await page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('2 kayıt Sprint 1 sprintine eklendi')), { timeout: 5000 });
-  await page.waitForFunction(() => document.querySelector('.page > p.muted .num')?.textContent === '5 puan', { timeout: 5000 });
+  await page.waitForFunction(() => document.querySelector('.pm-backlog__sum .num')?.textContent?.endsWith('5 puan'), { timeout: 5000 });
   expect(!(await backlogTitles(page)).includes(pmStories[2][0]), 'a planned story stayed in the backlog');
   await clearToasts(page);
 
   // The sprint list shows what is planned, then the sprint starts.
   await press(page, '.toolbar .seg button', 'Sprintler');
   await press(page, '.pm-bar-row .seg button', 'Tüm sprintler');
-  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 1') && x.textContent.includes('11 puanın 0 tanesi') && x.textContent.includes('2 kayıt')), { timeout: 5000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 1') && x.textContent.includes('11 puan planlandı') && x.textContent.includes('2 kayıt')), { timeout: 5000 });
   await shot(page, 'pm-03-planned');
   await press(page, '.pm-sprint .btn', 'Sprinti başlat');
   await press(page, '.dialog .btn--primary', 'Sprinti başlat');
@@ -1866,9 +1870,9 @@ await step('product team: plan a sprint with dates, pull stories in from the bac
 await step('product team: a story moved to done burns down; a story added mid-sprint is counted', async () => {
   const { page, errors } = await pmUser();
   await page.goto(`${s.origin}/b/${pmState.board}?view=sprints`, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.pm-burndown');
-  const left = () => page.$eval('.pm-burndown__remain', (e) => e.textContent ?? '');
-  const stat = (label: string) => page.evaluate((l) => [...document.querySelectorAll('.pm-summary .stat')].find((x) => x.querySelector('.muted')?.textContent === l)?.querySelector('strong')?.textContent ?? '', label);
+  await page.waitForSelector('.pm-bd');
+  const left = () => page.$eval('.pm-bd__now', (e) => e.textContent ?? '');
+  const stat = (label: string) => page.evaluate((l) => [...document.querySelectorAll('.pm-summary .pm-fact')].find((x) => x.querySelector('dt')?.textContent === l)?.querySelector('dd')?.textContent ?? '', label);
   expect((await left()) === '11 puan kaldı', `burndown before: ${await left()}`);
   expect((await stat('Toplam puan')) === '11' && (await stat('Tamamlanan puan')) === '0', 'summary before');
   await shot(page, 'pm-04-sprint-board');
@@ -1898,7 +1902,7 @@ await step('product team: a story moved to done burns down; a story added mid-sp
   await page.mouse.move(box.x + box.width / 2, box.y + 60, { steps: 6 });
   await pause(150);
   await page.mouse.up();
-  await page.waitForFunction(() => document.querySelector('.pm-burndown__remain')?.textContent === '8 puan kaldı', { timeout: 8000 }).catch(() => undefined);
+  await page.waitForFunction(() => document.querySelector('.pm-bd__now')?.textContent === '8 puan kaldı', { timeout: 8000 }).catch(() => undefined);
   const [moved] = await sql('select status from tasks where id = $1', [pmState.stories[0]]);
   expect(moved.status === 'done', `the story is in ${moved.status}, not done`);
   expect((await left()) === '8 puan kaldı', `burndown after the move: ${await left()}`);
@@ -1908,14 +1912,16 @@ await step('product team: a story moved to done burns down; a story added mid-sp
   // A story added after the start: from the backlog straight into the running sprint.
   await press(page, '.toolbar .seg button', 'Backlog');
   await page.waitForSelector('.pm-backlog');
-  const row = await page.evaluateHandle((t) => [...document.querySelectorAll('.pm-backlog .tasklist__row')].find((r) => r.querySelector('.rowlink')?.textContent === t)!, pmStories[1][0]);
-  await (await (row as any).$('.pm-rowactions .btn--small:not(.btn--icon)')).click();
+  await page.click(`.pm-backlog .pm-row__check[aria-label*="${pmStories[1][0]}"]`);
+  await press(page, '.pm-plan .btn--primary', 'Sprinte ekle');
   await page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('1 kayıt Sprint 1 sprintine eklendi')), { timeout: 5000 });
   await clearToasts(page);
   await press(page, '.toolbar .seg button', 'Sprintler');
-  await page.waitForFunction(() => document.querySelector('.pm-burndown__remain')?.textContent === '13 puan kaldı', { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelector('.pm-bd__now')?.textContent === '13 puan kaldı', { timeout: 8000 });
   expect((await stat('Toplam puan')) === '16', `total after the addition: ${await stat('Toplam puan')}`);
-  // Not there yet: the burndown does not set the added 5 points apart as scope change.
+  // The 5 points added after the start are scope change: a step on the burndown and a figure beside it.
+  expect((await stat('Kapsam değişikliği')) === '+5', `scope change: ${await stat('Kapsam değişikliği')}`);
+  expect(await page.evaluate(() => [...document.querySelectorAll('.pm-bd__change')].some((e) => e.textContent === '+5')), 'no +5 step on the burndown');
   await shot(page, 'pm-06-scope-added');
   expect(errors.length === 0, errors.join(' | '));
 });
@@ -1949,11 +1955,121 @@ await step('product team: close the sprint with work left, carry it to the next 
 
   // Planning the next sprint: Sprint 2 already holds the carried work, and the roadmap gives the team's velocity.
   await press(page, '.pm-bar-row .seg button', 'Tüm sprintler');
-  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 2') && x.textContent.includes('13 puanın 0 tanesi')), { timeout: 5000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint')].some((x) => x.textContent?.includes('Sprint 2') && x.textContent.includes('13 / 3 puan') && x.textContent.includes('Ekibin hızını 10 puan aşıyor')), { timeout: 5000 });
   await page.waitForFunction(() => [...document.querySelectorAll('.pm-sprint[data-state="closed"]')].some((x) => x.textContent?.includes('Sprint 1') && x.textContent.includes('3 puanın 3 tanesi')), { timeout: 5000 });
   await press(page, '.pm-bar-row .seg button', 'Yol haritası');
-  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .stat')].some((x) => x.textContent?.includes('Son kapanan sprint') && x.querySelector('strong')?.textContent === '3'), { timeout: 8000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('.pm-roadmap .pm-fact')].some((x) => x.querySelector('dt')?.textContent === 'Son kapanan sprint' && x.querySelector('dd')?.textContent === '3'), { timeout: 8000 });
   await shot(page, 'pm-08-velocity');
+  expect(errors.length === 0, errors.join(' | '));
+});
+
+/** A call to the API from the signed-in page, as the screens make it. */
+async function api<T = any>(page: Page, method: string, path: string, body?: unknown): Promise<T> {
+  return page.evaluate(
+    async (m, u, b) => {
+      const r = await fetch(u, { method: m, credentials: 'include', headers: { 'content-type': 'application/json', 'x-curahold-device': localStorage.getItem('app_device') ?? '' }, body: b === undefined ? undefined : JSON.stringify(b) });
+      return r.json();
+    },
+    method,
+    `/api${path}`,
+    body,
+  ) as Promise<T>;
+}
+
+await step('product team acceptance: pick 12 from the backlog by keyboard, start, finish 5, close and carry the rest; burndown and velocity right', async () => {
+  const { page, errors } = await pmUser();
+  // A product board with fourteen estimated stories, a sprint to plan and the next one after it.
+  const columns = (await sql(`select columns from boards where id = $1`, [pmState.board]))[0].columns;
+  const made = await api(page, 'POST', '/boards', { name: 'Ödeme altyapısı', visibility: 'private', columns });
+  expect(made.board, `board: ${JSON.stringify(made).slice(0, 200)}`);
+  const board = made.board.id as string;
+  const points = [3, 5, 2, 8, 1, 3, 5, 2, 3, 1, 2, 5, 3, 8];
+  for (const [i, p] of points.entries()) {
+    const t = (await api(page, 'POST', '/tasks', { boardId: board, title: `Ödeme adımı ${i + 1}`, status: 'backlog' })).task;
+    await api(page, 'PATCH', `/tasks/${t.id}/pm`, { baseVersion: t.version, issueType: 'story', storyPoints: p });
+  }
+  const sprintA = (await api(page, 'POST', `/boards/${board}/sprints`, { name: 'Ödeme 1', startsOn: isoDay(-1), endsOn: isoDay(12) })).sprint.id as string;
+  const sprintB = (await api(page, 'POST', `/boards/${board}/sprints`, { name: 'Ödeme 2', startsOn: isoDay(13), endsOn: isoDay(26) })).sprint.id as string;
+  const planned = points.slice(0, 12).reduce((a, b) => a + b, 0); // 40
+
+  // Planning, timed: the keyboard only, from opening the backlog to the started sprint.
+  const t0 = Date.now();
+  await page.goto(`${s.origin}/b/${board}?view=backlog`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.pm-backlog .pm-row__check');
+  await page.select('.pm-plan select', sprintA);
+  await page.focus('.pm-backlog .pm-row__check');
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press('Space');
+    if (i === 5) {
+      // Capacity as you go: the six picked so far, in points.
+      const so = points.slice(0, 6).reduce((a, b) => a + b, 0);
+      await page.waitForFunction((n) => document.querySelector('.pm-plan__picked')?.textContent?.includes(`${n} puan`), { timeout: 3000 }, so);
+    }
+    await page.keyboard.press('ArrowDown');
+  }
+  await page.waitForFunction((n) => document.querySelector('.pm-cap__text')?.textContent?.startsWith(`${n} puan planlandı`), { timeout: 5000 }, planned);
+  await page.keyboard.down('Control');
+  await page.keyboard.press('Enter');
+  await page.keyboard.up('Control');
+  await page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('12 kayıt Ödeme 1 sprintine eklendi')), { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelector('.pm-backlog__sum .num')?.textContent === '2 kayıt · 11 puan', { timeout: 8000 });
+  await clearToasts(page);
+  await press(page, '.pm-plan .btn', 'Sprinti başlat');
+  await press(page, '.dialog .btn--primary', 'Sprinti başlat');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  const planning = Date.now() - t0;
+  const [started] = await sql(`select state, start_points::float as pts, start_count as n from sprints where id = $1`, [sprintA]);
+  expect(started.state === 'active' && started.pts === planned && started.n === 12, `started: ${JSON.stringify(started)}`);
+
+  // Finish five on the sprint board, with the tick on each card.
+  await page.goto(`${s.origin}/b/${board}?view=sprints`, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('.pm-bd');
+  const finished = [0, 1, 2, 3, 4];
+  for (const i of finished) {
+    await page.click(`.board .tick[aria-label*="“Ödeme adımı ${i + 1}”"]`);
+    await page.waitForFunction((n) => !!document.querySelector(`.tick[data-done][aria-label*="${n}"]`), { timeout: 5000 }, `“Ödeme adımı ${i + 1}”`);
+  }
+  await clearToasts(page);
+  const done = finished.reduce((a, i) => a + points[i], 0); // 19
+  await page.waitForFunction((n) => document.querySelector('.pm-bd__now')?.textContent === `${n} puan kaldı`, { timeout: 8000 }, planned - done);
+  const fact = (label: string) => page.evaluate((l) => [...document.querySelectorAll('.pm-summary .pm-fact')].find((x) => x.querySelector('dt')?.textContent === l)?.querySelector('dd')?.textContent ?? '', label);
+  expect((await fact('Tamamlanan puan')) === String(done) && (await fact('Biten kayıt')) === '5 / 12', `facts: ${await fact('Tamamlanan puan')}, ${await fact('Biten kayıt')}`);
+  expect((await fact('Kapsam değişikliği')) === '0', `scope change without any: ${await fact('Kapsam değişikliği')}`);
+  await shot(page, 'pm-11-acceptance-sprint');
+
+  // Close it; the seven unfinished go on to the next sprint in the same dialog.
+  await press(page, '.pm-head .btn', 'Sprinti kapat');
+  await page.waitForFunction(() => document.querySelector('.dialog')?.textContent?.includes('12 kaydın 5 tanesi tamamlandı, 7 tanesi tamamlanmadı.'), { timeout: 5000 });
+  const target = await page.$eval('.dialog select', (el) => (el as HTMLSelectElement).value);
+  expect(target === sprintB, 'the next sprint is not offered first');
+  expect((await page.$$('.dialog .pm-carry__list li')).length === 7, 'the dialog does not list the seven that move');
+  await shot(page, 'pm-12-acceptance-close');
+  await press(page, '.dialog .btn--primary', 'Sprinti kapat');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  const rows = await sql(`select sprint_id, count(*)::int as n, sum(story_points)::float as pts from tasks where board_id = $1 and sprint_id is not null group by sprint_id`, [board]);
+  const by = Object.fromEntries(rows.map((r: any) => [r.sprint_id, r]));
+  expect(by[sprintA]?.n === 5 && by[sprintA].pts === done && by[sprintB]?.n === 7 && by[sprintB].pts === planned - done, `after closing: ${JSON.stringify(rows)}`);
+
+  // Velocity and the closed sprint's burndown: what was finished, kept.
+  const [closed] = await sql(`select done_points::float as pts, done_count as n from sprints where id = $1`, [sprintA]);
+  expect(closed.pts === done && closed.n === 5, `velocity kept at close: ${JSON.stringify(closed)}`);
+  const bd = (await api(page, 'GET', `/sprints/${sprintA}/burndown`)).burndown;
+  expect(bd.startPoints === planned && bd.points.at(-1).remainingPoints === planned - done && bd.points.at(-1).totalPoints === planned, `burndown: ${JSON.stringify(bd.points.at(-1))}`);
+  // A release-notes draft from what it finished: the five stories under "Yeni", the unfinished ones nowhere.
+  await press(page, '.pm-bar-row .seg button', 'Tüm sprintler');
+  await press(page, '.pm-sprint[data-state="closed"] .btn', 'Yayın notu');
+  await page.waitForSelector('.dialog textarea.pm-notes');
+  const notes = await page.$eval('.dialog textarea.pm-notes', (e) => (e as HTMLTextAreaElement).value);
+  expect(notes.startsWith('Ödeme 1') && notes.includes('\nYeni\n- Ödeme adımı 1\n') && !notes.includes('Ödeme adımı 6'), `release notes: ${notes}`);
+  await shot(page, 'pm-13-release-notes');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.dialog'));
+  await press(page, '.pm-bar-row .seg button', 'Yol haritası');
+  await page.waitForFunction((n) => [...document.querySelectorAll('.pm-roadmap .pm-fact')].some((x) => x.querySelector('dt')?.textContent === 'Son kapanan sprint' && x.querySelector('dd')?.textContent === String(n)), { timeout: 8000 }, done);
+  const total = Date.now() - t0;
+  console.log(`    product team acceptance: 12 picked and the sprint started in ${(planning / 1000).toFixed(1)} s; the whole journey ${(total / 1000).toFixed(1)} s`);
+  writeFileSync(join(SCREENS, 'pm-acceptance-time.txt'), `planning ${planning} ms\nwhole ${total} ms\n`);
+  expect(planning < 120_000, `planning took ${planning} ms`);
   expect(errors.length === 0, errors.join(' | '));
 });
 
