@@ -92,7 +92,7 @@ export function InboxPage() {
           {data && <p className="topbar__sub">{data.unread ? t('inbox.unreadN', { n: data.unread }) : t('inbox.allRead')}</p>}
         </div>
         <div className="topbar__spacer" />
-        <button className="btn btn--quiet" onClick={() => navigate('/profile')}>
+        <button className="btn btn--quiet" onClick={() => navigate('/profile')} aria-label={t('inbox.settings')} title={t('inbox.settings')}>
           <Icon name="sliders" size={16} />
           <span className="hide-phone">{t('inbox.settings')}</span>
         </button>

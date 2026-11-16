@@ -62,6 +62,8 @@ function FilterButton({ count, open, onOpen }: { count: number; open: boolean; o
     <button type="button" className="btn filtersheet__open" aria-haspopup="dialog" aria-expanded={open} data-on={count > 0 || undefined} onClick={onOpen} aria-label={count ? t('filters.buttonCount', { n: count }) : t('filters.button')}>
       <Icon name="filter" size={16} />
       {t('filters.button')}
+      {/* A space between the word and its count, so the name read aloud contains the label as seen ("Filter 2"). */}
+      {count > 0 && ' '}
       {count > 0 && (
         <span className="fcount num" aria-hidden="true">
           {count}
