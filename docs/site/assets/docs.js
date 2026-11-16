@@ -4,8 +4,25 @@
   var q = document.getElementById('q');
   var box = document.getElementById('results');
   var index = null;
+  // One form for what is typed and what is indexed, in every script: case, accents and Turkish
+  // dotless i; Arabic and Persian vowel marks, alef and yeh forms; Hebrew points.
   var fold = function (s) {
-    return s.toLocaleLowerCase(cfg.lang === 'tr' ? 'tr' : 'en').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
+    var low;
+    try { low = s.toLocaleLowerCase(cfg.lang); } catch (e) { low = s.toLowerCase(); }
+    return low.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
+      .replace(/[\u064b-\u065f\u0670\u0640]/g, '').replace(/[\u0622\u0623\u0625]/g, '\u0627').replace(/\u0649/g, '\u064a').replace(/\u06cc/g, '\u064a').replace(/\u06a9/g, '\u0643').replace(/\u0629/g, '\u0647')
+      .replace(/[\u0591-\u05c7]/g, '').normalize('NFC');
+  };
+  // Chinese, Japanese and Korean are written without spaces: a run of their letters is searched
+  // for as overlapping pairs ("顧客インポート" finds "顧客をインポートする"), everything else by word.
+  var WIDE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
+  var termsOf = function (text) {
+    var out = [];
+    fold(text).split(/[\s,.;:!?、。，．；：！？「」『』（）()]+/).filter(Boolean).forEach(function (w) {
+      if (!WIDE.test(w) || w.length < 3) { out.push(w); return; }
+      for (var i = 0; i < w.length - 1; i++) out.push(w.slice(i, i + 2));
+    });
+    return out;
   };
   var esc = function (s) {
     return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
@@ -18,7 +35,7 @@
     });
   }
   function search(term) {
-    var words = fold(term).split(/\s+/).filter(Boolean);
+    var words = termsOf(term);
     if (!words.length) return [];
     var out = [];
     index.forEach(function (e) {

@@ -6,68 +6,41 @@
 // and nothing typed here leaves the page.
 import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 
+/** The panel's words, in the page's language: the docs build puts them in the page (docs.ask.* in the dictionaries). */
+interface Words {
+  open: string;
+  title: string;
+  close: string;
+  hello: string;
+  hi: string;
+  thanks: string;
+  empty: string;
+  placeholder: string;
+  from: string;
+  more: string;
+  also: string;
+  unsure: string;
+  none: string;
+  support: string;
+  helped: string;
+  yes: string;
+  no: string;
+  sorry: string;
+  loading: string;
+  failed: string;
+  you: string;
+  examples: string[];
+}
 interface Cfg {
-  lang: 'en' | 'tr';
+  lang: string;
   base?: string;
   index?: string;
+  words: Words;
 }
 const cfg = (window as unknown as { APP_DOCS: Cfg }).APP_DOCS;
 const base = cfg.base || '/docs/';
 const tail = cfg.index || '';
-
-const WORDS = {
-  en: {
-    open: 'Ask',
-    title: 'Ask Curahold',
-    close: 'Close',
-    hello: 'Ask how to do something in Curahold, in your own words. I answer from these docs and show where each answer comes from.',
-    hi: 'Hello! What would you like to do in Curahold?',
-    thanks: 'Glad that helped. Ask another whenever you like.',
-    empty: 'Write a few words about what you want to do.',
-    placeholder: 'How do I import my customers?',
-    send: 'Ask',
-    from: 'From',
-    more: 'Show all of it',
-    also: 'Related',
-    unsure: 'I am not sure this is it, but these are the closest parts of the docs:',
-    none: 'I could not find that in the docs. Try other words, or get in touch with support.',
-    support: 'Contact support',
-    helped: 'Did this answer it?',
-    yes: 'Yes',
-    no: 'No',
-    sorry: 'Try asking it another way, or pick one of these:',
-    loading: 'Reading the docs…',
-    failed: 'The docs could not be loaded. Check your connection and try again.',
-    you: 'You',
-    examples: ['How do I connect Salesforce?', 'How do I make an API key?', 'What can each role see?'],
-  },
-  tr: {
-    open: 'Sor',
-    title: 'Curahold’a sor',
-    close: 'Kapat',
-    hello: 'Curahold’da bir şeyin nasıl yapıldığını kendi cümlelerinle sor. Cevabı bu belgelerden veririm ve nereden geldiğini gösteririm.',
-    hi: 'Merhaba! Curahold’da ne yapmak istiyorsun?',
-    thanks: 'İşine yaradıysa ne güzel. İstediğin zaman yine sor.',
-    empty: 'Ne yapmak istediğini birkaç kelimeyle yaz.',
-    placeholder: 'Müşterilerimi nasıl içe aktarırım?',
-    send: 'Sor',
-    from: 'Kaynak',
-    more: 'Tamamını göster',
-    also: 'İlgili',
-    unsure: 'Tam bu olduğundan emin değilim; belgelerde en yakın yerler şunlar:',
-    none: 'Bunu belgelerde bulamadım. Başka kelimelerle dene ya da destekle iletişime geç.',
-    support: 'Desteğe yaz',
-    helped: 'Sorunu cevapladı mı?',
-    yes: 'Evet',
-    no: 'Hayır',
-    sorry: 'Başka türlü sormayı dene ya da şunlardan birini seç:',
-    loading: 'Belgeler okunuyor…',
-    failed: 'Belgeler yüklenemedi. Bağlantını kontrol edip yeniden dene.',
-    you: 'Sen',
-    examples: ['Salesforce’u nasıl bağlarım?', 'API anahtarı nasıl oluşturulur?', 'Hangi rol neyi görür?'],
-  },
-} as const;
-const w = WORDS[cfg.lang === 'tr' ? 'tr' : 'en'];
+const w = { ...cfg.words, send: cfg.words.open };
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, html?: string) => {

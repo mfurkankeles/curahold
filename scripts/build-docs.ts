@@ -9,13 +9,13 @@
 // With --relative every link is written relative to the page, so the
 // folder works wherever it is put (inside the try-it demo, in a preview).
 // DOCS_APP_HREF says where "Go to the app" leads from the docs folder then.
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { buildSync } from 'esbuild';
 import { Marked, type Tokens } from 'marked';
 import type { DocSection } from '../shared/src/answers';
-import { LOCALE_INFO } from '../shared/src/i18n';
+import { LOCALE_INFO, LOCALES, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 
 const ROOT = join(import.meta.dirname, '..');
 const SRC = join(ROOT, 'docs', 'site');
@@ -23,85 +23,61 @@ const ARGS = process.argv.slice(2);
 const OUT = ARGS.find((a) => !a.startsWith('--')) ?? join(ROOT, 'dist', 'web', 'docs');
 const RELATIVE = ARGS.includes('--relative') || process.env.DOCS_RELATIVE === '1';
 const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
-const LANGS = ['tr', 'en'] as const;
-type Lang = (typeof LANGS)[number];
+/**
+ * The languages the docs are written in: a folder per language under docs/site.
+ * Adding a language is adding its folder. Its user guide (section help) must be
+ * whole; any other page it does not have yet is shown in English, with a note
+ * (developer pages, the API reference, release notes and legal texts are kept
+ * in English outside English and Turkish, the two reviewed sources).
+ */
+// (A folder with only pictures, img/, is not a language of the docs yet: the demo hub uses them.)
+const LANGS: Locale[] = LOCALES.filter((l) => existsSync(join(SRC, l)) && readdirSync(join(SRC, l)).some((f) => f.endsWith('.md')));
+type Lang = Locale;
+/** English and Turkish carry every page themselves. */
+const WHOLE: Lang[] = ['en', 'tr'];
 const SECTIONS = ['help', 'developers', 'reference', 'releases', 'legal'] as const;
 type Section = (typeof SECTIONS)[number];
 
-const UI = {
-  tr: {
-    site: 'Curahold Belgeleri',
-    search: 'Belgelerde ara',
-    none: 'Sonuç yok.',
-    app: 'Uygulamaya git',
-    other: 'English',
-    onPage: 'Bu sayfada',
-    prev: 'Önceki',
-    next: 'Sonraki',
-    copy: 'Kopyala',
-    copied: 'Kopyalandı',
-    menu: 'Menü',
-    sections: { help: 'Kullanım rehberi', developers: 'Geliştirici rehberi', reference: 'API başvurusu', releases: 'Sürüm notları', legal: 'Yasal' },
-    lead: 'Curahold’u kullanmak, ekibine göre ayarlamak ve kendi araçlarına bağlamak için ihtiyacın olan her şey.',
-    start: {
-      help: 'Curahold’u her gün kullan: müşteriler, görevler, panolar, raporlar ve müşteri portalı.',
-      developers: 'Kendi sistemlerini bağla: anahtarlar, webhook’lar ve beş dakikada ilk istek.',
-      reference: 'Her adres, alan alan; ürünün kendi kodundan üretilir.',
-      releases: 'Neler yeni, neler değişti.',
-      legal: 'Kullanım koşulları, gizlilik, KVKK aydınlatma metni, veri işleme sözleşmesi ve alt işleyenler.',
-    },
-    connections: { title: 'Bağlantılar', text: 'CRM’ler, tablolar, sohbet uygulamaları, destek araçları ve listede olmayan araçlar.' },
-    hero: 'Ne yapmak istiyorsun?',
-    askPlaceholder: 'Müşterilerimi nasıl içe aktarırım?',
-    askLabel: 'Bir soru sor ya da belgelerde ara',
-    ask: 'Sor',
-    paths: 'Buradan başla',
-    asked: 'En çok sorulanlar',
-    questions: ['Müşterileri bir tablodan nasıl içe aktarırım?', 'Salesforce’u nasıl bağlarım?', 'Hangi rol neyi görür?', 'API anahtarı nasıl oluşturulur?', 'Webhook imzasını nasıl doğrularım?', 'Sağlık skoru nasıl hesaplanır?'],
-    recent: 'Son güncellenenler',
-    whatsNew: 'Yenilikler',
-    allNotes: 'Bütün sürüm notları',
-    minutes: 'dk okuma',
+/** The docs' own words in a language (docs.* in the dictionaries). */
+function uiOf(lang: Lang) {
+  const say = (k: string, vars?: Record<string, string | number>) => translate(lang, `docs.${k}` as MessageKey, vars);
+  return {
+    site: say('site'),
+    search: say('search'),
+    none: say('none'),
+    app: say('app'),
+    language: say('language'),
+    onPage: say('onPage'),
+    prev: say('prev'),
+    next: say('next'),
+    copy: say('copy'),
+    copied: say('copied'),
+    menu: say('menu'),
+    skip: say('skip'),
+    sections: { help: say('section.help'), developers: say('section.developers'), reference: say('section.reference'), releases: say('section.releases'), legal: say('section.legal') } as Record<Section, string>,
+    lead: say('lead'),
+    start: { help: say('start.help'), developers: say('start.developers'), reference: say('start.reference') },
+    connections: { title: say('connections.title'), text: say('connections.text') },
+    hero: say('hero'),
+    askPlaceholder: say('ask.placeholder'),
+    askLabel: say('askLabel'),
+    ask: say('ask.open'),
+    paths: say('paths'),
+    asked: say('asked'),
+    questions: [1, 2, 3, 4, 5, 6].map((n) => say(`q.${n}`)),
+    recent: say('recent'),
+    whatsNew: say('whatsNew'),
+    allNotes: say('allNotes'),
+    minutes: (n: number) => say('minutes', { n: new Intl.NumberFormat(intlTag(lang)).format(n) }),
     foot: 'Curahold',
-    edited: 'Son güncelleme',
-  },
-  en: {
-    site: 'Curahold Docs',
-    search: 'Search the docs',
-    none: 'No results.',
-    app: 'Open the app',
-    other: 'Türkçe',
-    onPage: 'On this page',
-    prev: 'Previous',
-    next: 'Next',
-    copy: 'Copy',
-    copied: 'Copied',
-    menu: 'Menu',
-    sections: { help: 'User guide', developers: 'Developer guide', reference: 'API reference', releases: 'Release notes', legal: 'Legal' },
-    lead: 'Everything you need to use Curahold, set it up for your team and connect it to your own tools.',
-    start: {
-      help: 'Use Curahold day to day: customers, tasks, boards, reports and the customer portal.',
-      developers: 'Connect your own systems: keys, webhooks and a first request in five minutes.',
-      reference: 'Every address, field by field, built from the product’s own code.',
-      releases: 'What is new and what changed.',
-      legal: 'Terms of service, privacy, the KVKK notice, the data processing agreement and sub-processors.',
-    },
-    connections: { title: 'Connections', text: 'CRMs, spreadsheets, chat apps, support desks and tools that are not on the list.' },
-    hero: 'What do you want to do?',
-    askPlaceholder: 'How do I import my customers?',
-    askLabel: 'Ask a question or search the docs',
-    ask: 'Ask',
-    paths: 'Start here',
-    asked: 'Asked most',
-    questions: ['How do I import customers from a spreadsheet?', 'How do I connect Salesforce?', 'What can each role see?', 'How do I make an API key?', 'How do I verify a webhook signature?', 'How is the health score worked out?'],
-    recent: 'Recently updated',
-    whatsNew: 'What is new',
-    allNotes: 'All release notes',
-    minutes: 'min read',
-    foot: 'Curahold',
-    edited: 'Last updated',
-  },
-} as const;
+    edited: say('edited'),
+    inEnglish: say('inEnglish'),
+    /** What the Ask panel says (docs/site/assets/ask.ts reads it from the page). */
+    askWords: Object.fromEntries(
+      ['open', 'title', 'close', 'hello', 'hi', 'thanks', 'empty', 'placeholder', 'from', 'more', 'also', 'unsure', 'none', 'support', 'helped', 'yes', 'no', 'sorry', 'loading', 'failed', 'you'].map((k) => [k, say(`ask.${k}`)]),
+    ),
+  };
+}
 
 interface Page {
   lang: Lang;
@@ -118,16 +94,20 @@ interface Page {
   html: string;
   toc: { id: string; text: string }[];
   text: string;
+  /** Shown in English inside another language's docs (that language has no page of its own yet). */
+  borrowed?: boolean;
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', İ: 'i' };
+// Headings become anchors in every script: Turkish letters fold to ASCII as they always did,
+// letters of other scripts (Arabic, Hebrew, Han, kana, Hangul) stay as they are.
 const slugify = (s: string) =>
   s
     .toLocaleLowerCase('tr')
     .replace(/[çğıöşüİ]/g, (c) => FOLD[c] ?? c)
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .trim()
     .replace(/\s+/g, '-');
 
@@ -141,7 +121,22 @@ function lastChange(file: string): string {
   }
   return new Date().toISOString().slice(0, 10);
 }
-const longDate = (lang: Lang, day: string) => new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+// Gregorian in every language (Persian included, as the product writes its dates).
+const longDate = (lang: Lang, day: string) => new Intl.DateTimeFormat(`${intlTag(lang)}-u-ca-gregory`.replace(/-u-(.*)-u-/, '-u-$1-'), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+
+/** The width and height of a WebP picture, read from its header (for a page that does not shift as it loads). */
+function webpSize(file: string): [number, number] | null {
+  const b = readFileSync(file);
+  if (b.toString('ascii', 0, 4) !== 'RIFF' || b.toString('ascii', 8, 12) !== 'WEBP') return null;
+  const kind = b.toString('ascii', 12, 16);
+  if (kind === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+  if (kind === 'VP8 ') return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+  if (kind === 'VP8L') {
+    const n = b.readUInt32LE(21);
+    return [1 + (n & 0x3fff), 1 + ((n >> 14) & 0x3fff)];
+  }
+  return null;
+}
 
 /**
  * A page cut into the pieces "Ask" answers with: its opening, then one piece
@@ -169,8 +164,8 @@ function sectionsOf(lang: Lang, p: Page): DocSection[] {
   return out;
 }
 
-function parse(lang: Lang, file: string): Page {
-  const raw = readFileSync(join(SRC, lang, file), 'utf8');
+function parse(lang: Lang, file: string, from: Lang = lang): Page {
+  const raw = readFileSync(join(SRC, from, file), 'utf8');
   const m = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(raw);
   if (!m) throw new Error(`${lang}/${file}: front matter missing`);
   const meta = Object.fromEntries(m[1].split('\n').map((l) => [l.slice(0, l.indexOf(':')).trim(), l.slice(l.indexOf(':') + 1).trim()]));
@@ -188,7 +183,15 @@ function parse(lang: Lang, file: string): Page {
         return `<h${depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${text}</h${depth}>\n`;
       },
       code({ text, lang: l }: Tokens.Code) {
-        return `<div class="code"><div class="code__bar"><span>${esc(l ?? '')}</span><button type="button" class="copy">${UI[lang].copy}</button></div><pre><code>${esc(text)}</code></pre></div>\n`;
+        return `<div class="code"><div class="code__bar"><span>${esc(l ?? '')}</span><button type="button" class="copy">${uiOf(lang).copy}</button></div><pre><code>${esc(text)}</code></pre></div>\n`;
+      },
+      // A picture of the product: img/<name>.webp next to the page's language folder, a real screen.
+      image({ href, text }: Tokens.Image) {
+        const m = /^img\/([\w-]+\.webp)$/.exec(href);
+        if (!m) throw new Error(`${from}/${file}: pictures are img/<name>.webp (got ${href})`);
+        const size = webpSize(join(SRC, from, 'img', m[1]));
+        if (!size) throw new Error(`${from}/${file}: ${href} is missing; take it with scripts/docs/shots.ts`);
+        return `<img class="shot" src="/docs/${from}/img/${m[1]}" width="${size[0]}" height="${size[1]}" alt="${esc(text)}" loading="lazy" decoding="async">`;
       },
       table(token: Tokens.Table) {
         const head = token.header.map((c) => `<th>${this.parser.parseInline(c.tokens)}</th>`).join('');
@@ -198,9 +201,11 @@ function parse(lang: Lang, file: string): Page {
     },
   });
   const html = marked.parse(m[2]) as string;
-  const text = m[2].replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`|[\]()-]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const minutes = Math.max(1, Math.round(text.split(' ').length / 220));
-  return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], updated: lastChange(join(SRC, lang, file)), minutes, html, toc, text };
+  const text = m[2].replace(/```[\s\S]*?```/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/[#>*_`|[\]()-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // About 220 words a minute; Chinese, Japanese and Korean are counted by character instead (about 450).
+  const wide = (text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu) ?? []).length;
+  const minutes = Math.max(1, Math.round(text.replace(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu, '').split(' ').filter(Boolean).length / 220 + wide / 450));
+  return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], updated: lastChange(join(SRC, from, file)), minutes, html, toc, text, borrowed: from !== lang };
 }
 
 const ASK_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.6 3.7a.6.6 0 0 1-1-.5V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
@@ -214,8 +219,13 @@ const icon = (k: keyof typeof ICONS) => `<svg class="entry__icon" viewBox="0 0 2
 
 const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe"/><path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" stroke="#191541" stroke-width="3" stroke-linecap="round"/><circle cx="16.5" cy="16" r="2.6" fill="#2f8f78"/></svg>`;
 
-function layout(lang: Lang, pages: Page[], page: Page | null, body: string, otherHref: string) {
-  const ui = UI[lang];
+/** A page of the docs. `path` is where it sits inside a language ('' for the start page, '<slug>/'), so the language menu lands on the same page. */
+function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path: string) {
+  const ui = uiOf(lang);
+  const info = LOCALE_INFO[lang];
+  const others = LANGS.filter((l) => l !== lang);
+  const langLink = (l: Lang) => `<a href="/docs/${l}/${path}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`;
+  const langMenu = others.length === 1 ? langLink(others[0]).replace('<a ', '<a class="top__link" ') : `<details class="langs"><summary class="top__link" aria-label="${esc(ui.language)}">${esc(info.name)}</summary><div class="langs__menu">${others.map(langLink).join('')}</div></details>`;
   const nav = SECTIONS.map((s) => {
     const items = pages.filter((p) => p.section === s);
     if (!items.length) return '';
@@ -225,18 +235,18 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
   }).join('');
   const title = page ? `${page.title} · ${ui.site}` : ui.site;
   return `<!doctype html>
-<html lang="${lang}" dir="${LOCALE_INFO[lang].dir}">
+<html lang="${bcp47Of(lang)}" dir="${info.dir}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(page?.summary ?? ui.lead)}">
-<link rel="alternate" hreflang="${lang === 'tr' ? 'en' : 'tr'}" href="${otherHref}">
+${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/${l}/${path}">`).join('\n')}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%2367c2a8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/docs/assets/docs.css">
 </head>
 <body data-lang="${lang}">
-<a class="skip" href="#main">${lang === 'tr' ? 'İçeriğe geç' : 'Skip to content'}</a>
+<a class="skip" href="#main">${esc(ui.skip)}</a>
 <header class="top">
   <button class="top__menu" type="button" aria-expanded="false" aria-controls="nav">${ui.menu}</button>
   <a class="brand" href="/docs/${lang}/">${MARK}<span>${ui.site}</span></a>
@@ -244,7 +254,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
     <input id="q" type="search" placeholder="${ui.search}" aria-label="${ui.search}" autocomplete="off">
     <div id="results" class="results" hidden></div>
   </div>
-  <a class="top__link" href="${otherHref}" hreflang="${lang === 'tr' ? 'en' : 'tr'}">${ui.other}</a>
+  ${langMenu}
   <button class="top__ask" type="button" data-ask="">${ASK_ICON}<span>${ui.ask}</span></button>
   <a class="top__link top__app" href="/">${ui.app}</a>
 </header>
@@ -253,7 +263,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '' })}</script>
+<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]] } }).replace(/</g, '\\u003c')}</script>
 <script src="/docs/assets/docs.js" defer></script>
 <script src="/docs/assets/ask.js" defer></script>
 </body>
@@ -263,28 +273,34 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, othe
 
 function build() {
   mkdirSync(join(OUT, 'assets'), { recursive: true });
-  const all: Record<Lang, Page[]> = { tr: [], en: [] };
+  const all = {} as Record<Lang, Page[]>;
+  const filesOf = (l: Lang) => readdirSync(join(SRC, l)).filter((f) => f.endsWith('.md'));
+  const english = filesOf('en');
   for (const lang of LANGS) {
-    const files = readdirSync(join(SRC, lang)).filter((f) => f.endsWith('.md'));
-    all[lang] = files.map((f) => parse(lang, f)).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
+    const own = new Set(filesOf(lang));
+    const extra = [...own].filter((f) => !english.includes(f));
+    if (extra.length) throw new Error(`${lang}: pages English does not have: ${extra.join(', ')}`);
+    // English and Turkish carry every page; the other languages at least the whole user guide.
+    const needed = english.filter((f) => WHOLE.includes(lang) || parse('en', f).section === 'help');
+    const missing = needed.filter((f) => !own.has(f));
+    if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
+    all[lang] = english.map((f) => parse(lang, f, own.has(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
   }
-  // Both languages must have the same pages, so the language switch always lands.
-  const missing = all.tr.map((p) => p.slug).filter((s) => !all.en.some((p) => p.slug === s)).concat(all.en.map((p) => p.slug).filter((s) => !all.tr.some((p) => p.slug === s)));
-  if (missing.length) throw new Error(`pages missing in one language: ${missing.join(', ')}`);
 
   for (const lang of LANGS) {
-    const other: Lang = lang === 'tr' ? 'en' : 'tr';
     const pages = all[lang];
-    const ui = UI[lang];
+    const ui = uiOf(lang);
     pages.forEach((p, i) => {
       const prev = pages[i - 1];
       const next = pages[i + 1];
       const pager = `<nav class="pager">${prev ? `<a href="/docs/${lang}/${prev.slug}/"><small>${ui.prev}</small>${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a class="pager__next" href="/docs/${lang}/${next.slug}/"><small>${ui.next}</small>${esc(next.title)}</a>` : ''}</nav>`;
-      const meta = `<p class="doc__meta">${ui.edited} <time datetime="${p.updated}">${longDate(lang, p.updated)}</time> · ${p.minutes} ${ui.minutes}</p>`;
-      const body = `<div class="crumb"><a href="/docs/${lang}/">${ui.site}</a> › ${ui.sections[p.section]}</div><article class="doc">${p.html.replace('</h1>', `</h1>${meta}`)}</article>${pager}`;
+      const meta = `<p class="doc__meta">${ui.edited} <time datetime="${p.updated}">${longDate(lang, p.updated)}</time> · ${ui.minutes(p.minutes)}</p>`;
+      // A page this language does not have yet is English, said so in the reader's language.
+      const note = p.borrowed ? `<p class="doc__lang">${esc(ui.inEnglish)}</p>` : '';
+      const body = `<div class="crumb"><a href="/docs/${lang}/">${ui.site}</a> › ${ui.sections[p.section]}</div>${note}<article class="doc"${p.borrowed ? ' lang="en" dir="ltr"' : ''}>${p.html.replace('</h1>', `</h1>${meta}`)}</article>${pager}`;
       const dir = join(OUT, lang, p.slug);
       mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, 'index.html'), layout(lang, pages, p, body, `/docs/${other}/${p.slug}/`));
+      writeFileSync(join(dir, 'index.html'), layout(lang, pages, p, body, `${p.slug}/`));
       writeFileSync(join(OUT, lang, `${p.slug}.md`), `# ${p.title}\n\n${p.md.trim()}\n`);
     });
     const by = (slug: string) => pages.find((p) => p.slug === slug);
@@ -335,7 +351,9 @@ ${news}
 <footer class="foot"><span>© ${new Date().getFullYear()} ${ui.foot}</span><span>${footLinks}</span></footer>
 </div>`;
     mkdirSync(join(OUT, lang), { recursive: true });
-    writeFileSync(join(OUT, lang, 'index.html'), layout(lang, pages, null, home, `/docs/${other}/`));
+    writeFileSync(join(OUT, lang, 'index.html'), layout(lang, pages, null, home, ''));
+    // The pictures of the product in this language (scripts/docs/shots.ts).
+    if (existsSync(join(SRC, lang, 'img'))) cpSync(join(SRC, lang, 'img'), join(OUT, lang, 'img'), { recursive: true });
     writeFileSync(join(OUT, lang, 'answers.json'), JSON.stringify(pages.flatMap((p) => sectionsOf(lang, p))));
     writeFileSync(
       join(OUT, lang, 'search.json'),
@@ -385,12 +403,10 @@ ${news}
     '',
     ...SECTIONS.flatMap((s) => {
       const items = en.filter((p) => p.section === s);
-      return items.length ? [`## ${UI.en.sections[s]}`, '', ...items.map((p) => `- [${p.title}](/docs/en/${p.slug}.md): ${p.summary}`), ''] : [];
+      return items.length ? [`## ${uiOf('en').sections[s]}`, '', ...items.map((p) => `- [${p.title}](/docs/en/${p.slug}.md): ${p.summary}`), ''] : [];
     }),
-    '## Türkçe',
-    '',
-    ...all.tr.map((p) => `- [${p.title}](/docs/tr/${p.slug}.md): ${p.summary}`),
-    '',
+    // Every other language, by its own name, with the pages it has itself.
+    ...LANGS.filter((l) => l !== 'en').flatMap((l) => [`## ${LOCALE_INFO[l].name}`, '', ...all[l].filter((p) => !p.borrowed).map((p) => `- [${p.title}](/docs/${l}/${p.slug}.md): ${p.summary}`), '']),
   ].join('\n');
   if (!RELATIVE) writeFileSync(join(OUT, '..', 'llms.txt'), llms);
   writeFileSync(join(OUT, 'llms-full.txt'), en.map((p) => `# ${p.title}\n\nSource: /docs/en/${p.slug}/\n\n${p.md.trim()}\n`).join('\n\n'));
@@ -399,7 +415,7 @@ ${news}
     // No server to send the reader on from the folder's own address: it opens on the English start page itself.
     writeFileSync(join(OUT, 'index.html'), readFileSync(join(OUT, 'en', 'index.html'), 'utf8').replaceAll('"../', '"./'));
   }
-  console.log(`docs: ${all.tr.length} pages × ${LANGS.length} languages → ${OUT}`);
+  console.log(`docs: ${english.length} pages × ${LANGS.length} languages (${LANGS.map((l) => `${l} ${all[l].filter((p) => !p.borrowed).length}`).join(', ')} of their own) → ${OUT}`);
 }
 
 /**
@@ -418,7 +434,8 @@ function makeRelative(dir: string, root = dir) {
     const up = depth ? '../'.repeat(depth) : './';
     const html = readFileSync(file, 'utf8')
       .replace(/(href|src)="\/docs\/assets\//g, `$1="${up}assets/`)
-      .replace(/href="\/docs\/(en|tr)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang, slug, hash) => `href="${up}${lang}/${slug}index.html${hash ?? ''}"`)
+      .replace(/src="\/docs\/([A-Za-z-]+)\/img\//g, (_m, lang) => `src="${up}${lang}/img/`)
+      .replace(/href="\/docs\/([a-z]{2}(?:-[A-Z][a-z]{3})?)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang, slug, hash) => `href="${up}${lang}/${slug}index.html${hash ?? ''}"`)
       .replace('class="top__link top__app" href="/"', `class="top__link top__app" href="${up}${APP_HREF}"`)
       .replace('"base":"/docs/","index":""', `"base":"${up}","index":"index.html"`)
       // The language chooser at the top of the folder.
