@@ -12,7 +12,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as KeyEvent } from 'react';
 import { PRIORITIES, type Board, type Column, type Repeat, type Task, type ViewFilters } from '../../../shared/src/model';
 import { labelOf } from '../../../shared/src/fields';
@@ -22,7 +22,7 @@ import { BoardArchive } from '../components/BoardArchive';
 import { ExportMenu } from '../components/Export';
 import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
-import { ColumnStrip, IssueBadge, pmOn, PointsChip } from '../components/Pm';
+import { CardEditContext, ColumnStrip, IssueBadge, pmOn, PointsChip } from '../components/Pm';
 import { BacklogView, SprintsView } from '../components/Sprints';
 import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
@@ -622,6 +622,8 @@ function DraggableCard({ task, done }: { task: Task; done: boolean }) {
 function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?: boolean }) {
   const { t } = useI18n();
   const { person } = useStore();
+  // A sprint board changes type, points and owner on the card itself (components/Pm.tsx CardFields).
+  const edit = useContext(CardEditContext);
   return (
     <article
       className={`card${overlay ? ' card--overlay' : ''}`}
@@ -651,7 +653,7 @@ function CardBody({ task, done, overlay }: { task: Task; done: boolean; overlay?
             <IconComment /> {task.commentCount}
           </span>
         )}
-        <Avatars people={task.assigneeIds.map((id) => person(id))} />
+        {!edit && <Avatars people={task.assigneeIds.map((id) => person(id))} />}
       </div>
     </article>
   );
@@ -670,19 +672,25 @@ function CardChips({ task }: { task: Task }) {
   const pm = !!task.issueType && (task.issueType !== 'task' || task.storyPoints != null);
   // The whole blocks chain, both ways (only the direct count where the chain was not read).
   const waits = task.waitsFor ?? task.blockedBy ?? 0;
-  if (!chips.length && !waits && !task.holdsUp && !pm) return null;
+  const edit = useContext(CardEditContext);
+  if (!chips.length && !waits && !task.holdsUp && !pm && !edit) return null;
   return (
     <div className="card__chips">
-      {pm && <IssueBadge type={task.issueType!} />}
-      <PointsChip points={task.storyPoints} />
+      {edit ? edit(task) : pm && <IssueBadge type={task.issueType!} />}
+      {!edit && <PointsChip points={task.storyPoints} />}
+      {/* On a narrow card only the number shows; the words stay for screen readers (product.css). */}
       {!!waits && (
-        <span className="schip" data-tone="amber" title={waits > (task.blockedBy ?? 0) ? t('pm.chain.waitsTitle', { direct: task.blockedBy ?? 0, n: waits }) : t('task.waitingShort', { n: waits })}>
-          <Icon name="hourglass" size={12} /> {t('task.waitingShort', { n: waits })}
+        <span className="schip pm-chainchip" data-tone="amber" title={waits > (task.blockedBy ?? 0) ? t('pm.chain.waitsTitle', { direct: task.blockedBy ?? 0, n: waits }) : t('task.waitingShort', { n: waits })}>
+          <Icon name="hourglass" size={12} />
+          <span className="pm-chainchip__long">{t('task.waitingShort', { n: waits })}</span>
+          <span className="pm-chainchip__short num" aria-hidden="true">{waits}</span>
         </span>
       )}
       {!!task.holdsUp && (
-        <span className="schip" data-tone="slate" title={t('pm.chain.holdsTitle', { n: task.holdsUp })}>
-          <Icon name="link" size={12} /> {t('pm.chain.holdsUpShort', { n: task.holdsUp })}
+        <span className="schip pm-chainchip" data-tone="slate" title={t('pm.chain.holdsTitle', { n: task.holdsUp })}>
+          <Icon name="link" size={12} />
+          <span className="pm-chainchip__long">{t('pm.chain.holdsUpShort', { n: task.holdsUp })}</span>
+          <span className="pm-chainchip__short num" aria-hidden="true">{task.holdsUp}</span>
         </span>
       )}
       {chips.map(({ f, o }) => (

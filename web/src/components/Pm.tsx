@@ -1,12 +1,14 @@
 // Product / project management pieces shared by the task panel, the cards and
 // the backlog and sprint screens: issue type, story points and epic.
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FIBONACCI, ISSUE_TYPES, type Board, type Column, type IssueType, type Task } from '../../../shared/src/model';
+import { createContext, useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { FIBONACCI, ISSUE_TYPES, type Board, type Column, type IssueType, type Person, type Task } from '../../../shared/src/model';
 import { ApiFailure, get, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { useFormat } from '../lib/useFormat';
 import { Icon } from './icons';
+import { Avatars } from './ui';
 import '../surfaces/product.css';
 
 /** A board that was made from the product-development workflow (it has its Backlog and QA stages). */
@@ -243,5 +245,80 @@ export function ColumnStrip({ columns, counts }: { columns: Column[]; counts: Re
         </button>
       ))}
     </nav>
+  );
+}
+
+// ------------------------------------------------------------------ sprint cards, changed in place
+
+/**
+ * A board that lets its cards be changed in place gives the cards this: they draw it where they
+ * show type and points, and leave out their own avatars (the owner is in it).
+ */
+export type CardEdit = (task: Task) => ReactNode;
+export const CardEditContext = createContext<CardEdit | null>(null);
+
+export type CardChanges = PmChanges & { assigneeIds?: string[] };
+
+/** A click, key or drag start inside the card's controls stays there: it neither opens nor picks up the card. */
+const keep = { onClick: (e: SyntheticEvent) => e.stopPropagation(), onKeyDown: (e: SyntheticEvent) => e.stopPropagation(), onMouseDown: (e: SyntheticEvent) => e.stopPropagation(), onTouchStart: (e: SyntheticEvent) => e.stopPropagation(), onPointerDown: (e: SyntheticEvent) => e.stopPropagation() };
+
+/** Type, points and owner on a sprint card: each one click (or tap) away, as in the backlog rows. */
+export function CardFields({ task, people, canWrite, onEdit }: { task: Task; people: Person[]; canWrite: boolean; onEdit: (c: CardChanges) => void }) {
+  const { t } = useI18n();
+  const f = useFormat();
+  const { person } = useStore();
+  const type = task.issueType ?? 'task';
+  const known = task.storyPoints == null || (FIBONACCI as readonly number[]).includes(task.storyPoints);
+  const name = (field: string) => t('pm.inline.label', { field, title: task.title });
+  const owner = task.assigneeIds[0] ?? '';
+  const ownerGone = !!owner && !people.some((p) => p.id === owner);
+  return (
+    <span className="pm-cardedit" {...keep}>
+      <select className="pm-inline pm-inline--type" data-tone={TONE[type]} value={type} disabled={!canWrite} aria-label={name(t('pm.type.label'))} onChange={(e) => onEdit({ issueType: e.target.value as IssueType })}>
+        {ISSUE_TYPES.map((k) => (
+          <option key={k} value={k}>
+            {t(`pm.type.${k}`)}
+          </option>
+        ))}
+      </select>
+      <select
+        className="pm-inline pm-inline--pts num"
+        data-empty={task.storyPoints == null || undefined}
+        value={task.storyPoints ?? ''}
+        disabled={!canWrite}
+        aria-label={name(t('pm.points'))}
+        onChange={(e) => onEdit({ storyPoints: e.target.value === '' ? null : Number(e.target.value) })}
+      >
+        <option value="">{t('pm.points.none')}</option>
+        {!known && <option value={task.storyPoints!}>{t('pm.points.short', { n: f.number(task.storyPoints!, { digits: 1 }) })}</option>}
+        {FIBONACCI.map((v) => (
+          <option key={v} value={v}>
+            {t('pm.points.short', { n: f.number(v) })}
+          </option>
+        ))}
+      </select>
+      <span className="pm-owner" data-empty={!owner || undefined}>
+        {owner ? <Avatars people={task.assigneeIds.map((id) => person(id))} max={2} /> : <Icon name="userPlus" size={15} />}
+        <select
+          className="pm-owner__pick"
+          value={owner}
+          disabled={!canWrite}
+          aria-label={owner ? t('pm.card.ownerOf', { title: task.title, name: person(owner)?.name ?? t('common.unknownUser') }) : t('pm.card.noOwnerOf', { title: task.title })}
+          onChange={(e) => {
+            const v = e.target.value;
+            const rest = task.assigneeIds.slice(1).filter((x) => x !== v);
+            onEdit({ assigneeIds: v ? [v, ...rest] : rest });
+          }}
+        >
+          <option value="">{t('pm.card.noOwner')}</option>
+          {ownerGone && <option value={owner}>{person(owner)?.name ?? t('common.unknownUser')}</option>}
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </span>
+    </span>
   );
 }

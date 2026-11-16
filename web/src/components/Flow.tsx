@@ -88,7 +88,8 @@ function cycleResult(flow: BoardFlow, t: T): ReportResult {
     unit: 'days',
     total: flow.all?.p85 ?? 0,
     matched: flow.all?.count ?? 0,
-    groups: flow.cycle.map((c) => ({ key: c.type, label: t(`pm.type.${c.type}`), value: c.p85, count: c.count, cells: [c.median, c.p85] })),
+    // Under a column the type's plain name: a gloss in brackets ("Research (spike)") would not fit a phone.
+    groups: flow.cycle.map((c) => ({ key: c.type, label: t(`pm.type.${c.type}`).replace(/\s*[(（][^)）]*[)）]\s*$/, ''), value: c.p85, count: c.count, cells: [c.median, c.p85] })),
     series: [
       { key: 'median', label: t('pm.flow.medianShort'), color: 'sea' },
       { key: 'p85', label: t('pm.flow.p85Short'), color: 'honey' },

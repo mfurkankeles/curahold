@@ -12,7 +12,7 @@ import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
 import { EmptyState, LoadError, SkeletonRows } from './Empty';
 import { Icon } from './icons';
-import { IssueBadge, PointsChip, useEpics } from './Pm';
+import { CardEditContext, CardFields, IssueBadge, PointsChip, savePm, useEpics, type CardChanges } from './Pm';
 import { BurndownChart, SprintFacts, useBurndown } from './Burndown';
 import { closedInOrder, finishedPoints, pointsOf, teamVelocity, useSprints } from './pmData';
 import { CapacityMeter } from './Backlog';
@@ -173,7 +173,7 @@ function useSummary(sprintId: string | null, refreshKey: number) {
 
 function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }: { board: Board; sprint: Sprint | null; sprints: Sprint[]; refreshKey: number; onChanged: () => void; onList: () => void }) {
   const { t } = useI18n();
-  const { canWrite, toast } = useStore();
+  const { canWrite, toast, people } = useStore();
   const [items, setItems] = useState<Task[] | null>(null);
   const [closing, setClosing] = useState(false);
   const [bump, setBump] = useState(0);
@@ -218,6 +218,29 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
     [items, toast, t],
   );
 
+  // Type, points and owner changed on the card: shown at once, put back and said if the server refuses.
+  const assignable = useMemo(() => people.filter((p) => p.seat === 'full' && (p.status === 'active' || p.status === 'invited')), [people]);
+  const editCard = useCallback(
+    async (task: Task, c: CardChanges) => {
+      setItems((list) => (list ?? []).map((x) => (x.id === task.id ? { ...x, ...c } : x)));
+      try {
+        let saved: Task;
+        if (c.assigneeIds) {
+          const r = await saveTask(task, { assigneeIds: c.assigneeIds });
+          if (r.conflicts.length) toast(t('task.conflictLost'), 'error');
+          saved = r.task;
+        } else saved = await savePm(task, c);
+        setItems((list) => (list ?? []).map((x) => (x.id === task.id ? { ...x, ...saved } : x)));
+        if (c.storyPoints !== undefined) setBump((n) => n + 1);
+      } catch (e) {
+        setItems((list) => (list ?? []).map((x) => (x.id === task.id ? task : x)));
+        toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      }
+    },
+    [toast, t],
+  );
+  const cardEdit = useCallback((task: Task) => <CardFields task={task} people={assignable} canWrite={canWrite} onEdit={(c) => void editCard(task, c)} />, [assignable, canWrite, editCard]);
+
   if (!sprint) {
     return (
       <EmptyState compact icon="play" title={t('pm.sprint.noActive')} body={t('pm.sprint.noActiveBody')}>
@@ -254,7 +277,9 @@ function ActiveSprint({ board, sprint, sprints, refreshKey, onChanged, onList }:
       ) : items.length === 0 ? (
         <EmptyState compact icon="list" title={t('pm.sprint.itemsEmpty')} />
       ) : (
-        <KanbanView board={board} tasks={items} doneKeys={doneKeys} onMove={onMove} canWrite={canWrite} />
+        <CardEditContext.Provider value={cardEdit}>
+          <KanbanView board={board} tasks={items} doneKeys={doneKeys} onMove={onMove} canWrite={canWrite} />
+        </CardEditContext.Provider>
       )}
       {closing && <CloseSprint sprint={sprint} sprints={sprints} doneKeys={doneKeys} onClose={() => setClosing(false)} onDone={onChanged} />}
     </>
