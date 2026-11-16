@@ -2567,6 +2567,58 @@ await step('my data: someone downloads their own data after confirming it is the
   }
 });
 
+await step('shared controls on a phone: 44 px targets, the assistant steps aside, tabs keep the chosen in view, the task panel fits (timed)', async () => {
+  const started = Date.now();
+  await sql('delete from login_tokens');
+  const phone = await newPage(s.browser, 390, 844);
+  const p = phone.page;
+  // A touch screen, so (pointer: coarse) holds as on a real phone.
+  await p.setViewport({ width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  await signIn(p, s.origin, 'mert@demo.example');
+  const quill = s.demo.accounts['Quillfield Retail'];
+  await p.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.acc-tabs [role="tab"]');
+  // Every control of the shell is at least 44 px each way.
+  const small = await p.$$eval('.mbar__btn, .bell__btn, .tabbar__item, .tabbar__add, .backbar__back', (els) =>
+    els.filter((e) => e.getBoundingClientRect().width > 0).map((e) => e.getBoundingClientRect()).filter((b) => b.width < 44 || b.height < 44).length,
+  );
+  expect(small === 0, `${small} shell controls under 44 px`);
+  // The section tabs scroll sideways with a faded edge; the last one, once picked, is fully in view.
+  const strip = await p.$eval('.acc-tabs', (el) => ({ scrolls: el.scrollWidth > el.clientWidth, mask: getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage }));
+  if (strip.scrolls) {
+    expect(strip.mask && strip.mask !== 'none', 'a scrolling tab strip has no edge fade');
+    await p.$$eval('.acc-tabs [role="tab"]', (tabs) => (tabs[tabs.length - 1] as HTMLElement).click());
+    await pause(400);
+    const seen = await p.$eval('.acc-tabs', (el) => {
+      const tab = el.querySelector('[aria-selected="true"]')!.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      return tab.left >= box.left - 1 && tab.right <= box.right + 1;
+    });
+    expect(seen, 'the chosen tab is cut at the edge of its strip');
+    await p.$$eval('.acc-tabs [role="tab"]', (tabs) => (tabs[0] as HTMLElement).click());
+    await pause(300);
+  }
+  // The assistant's button steps aside while a field has the focus, and comes back after.
+  await p.waitForSelector('.cura__fab');
+  await p.focus('.acc-add input');
+  await pause(350);
+  expect(await p.$eval('.cura__fab', (b) => b.hasAttribute('data-away')), 'the assistant button stays over the field being typed in');
+  await p.$eval('.acc-add input', (el) => (el as HTMLElement).blur());
+  await pause(350);
+  expect(!(await p.$eval('.cura__fab', (b) => b.hasAttribute('data-away'))), 'the assistant button did not come back');
+  // A task panel fits the phone: nothing in it is wider than the screen.
+  const [task] = await sql(`select id from tasks where board_id = $1 and archived_at is null order by created_at limit 1`, [csBoard]);
+  await p.goto(`${s.origin}/b/${csBoard}?task=${task.id}`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.panel__body');
+  const body = await p.$eval('.panel__body', (el) => el.scrollWidth - el.clientWidth);
+  expect(body <= 1, `the task panel is ${body} px wider than the phone`);
+  await shot(p, 'e2e-polish-phone-panel');
+  const seconds = (Date.now() - started) / 1000;
+  console.log(`shared controls on a phone: ${seconds.toFixed(1)} s`);
+  expect(phone.errors.length === 0, `console: ${phone.errors.join(' | ')}`);
+  await p.browserContext().close();
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });
