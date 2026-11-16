@@ -12,6 +12,13 @@ import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
 
 startTheme();
+// The live channel needs a server to hold a WebSocket; the demo has none (its API runs in this tab),
+// so the app keeps to its polling, which reaches the in-tab API like every other request.
+try {
+  localStorage.setItem('app_live_channel', 'off');
+} catch {
+  /* no storage: the channel tries, fails and falls back by itself */
+}
 
 /** Who the visitor can be: the demo company's people (their names are in its language), or a customer's person in the portal. */
 const PEOPLE = [
@@ -265,14 +272,14 @@ async function main() {
     (globalThis as any).appHistory.pushState(null, '', to);
     window.dispatchEvent(new Event('app:portal-nav'));
   };
-  const { tourById, SIGNUP_URL, TOUR_LANGS } = await import('../../../shared/src/tours');
+  const { tourById, SIGNUP_URL } = await import('../../../shared/src/tours');
   const play = async (id: string) => {
     const tour = tourById(id);
     if (!tour) return false;
     const as = tour.as ?? 'ada';
     if (as !== current) await switchTo(as);
     const { playTour } = await import('./tour');
-    playTour(tour, { lang: TOUR_LANGS.find((x) => x === demoLocale) ?? 'en', go, startFree: SIGNUP_URL, hub: HUB });
+    playTour(tour, { lang: demoLocale, go, startFree: SIGNUP_URL, hub: HUB });
     return true;
   };
   // For the browser checks of every tour (tests/e2e/tours.ts), and nothing else.

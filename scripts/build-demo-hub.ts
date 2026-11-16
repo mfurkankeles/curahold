@@ -14,7 +14,7 @@
 // Addresses outside the hub: SITE_URL, SITE_APP_URL, SITE_DOCS_URL.
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, type TourArea, type TourLang } from '../shared/src/tours';
+import { TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, tourText, type TourLang } from '../shared/src/tours';
 import { FAVICON, MARK } from '../site/brand';
 import { HUB } from '../site/hub';
 
@@ -39,6 +39,7 @@ const CSS = readFileSync(join(ROOT, 'site', 'site.css'), 'utf8') + '\n' + readFi
 
 function page(locale: TourLang): string {
   const c = HUB[locale];
+  const w = tourText(locale);
   const tr = locale === 'tr';
   const assets = tr ? '../assets/' : 'assets/';
   const app = tr ? '../app/' : 'app/';
@@ -54,33 +55,31 @@ function page(locale: TourLang): string {
   const byRole = counts((t) => t.roles);
   const byGoal = counts((t) => t.goals);
   const byArea = counts((t) => [t.area]);
-  const chips = (group: 'role' | 'goal' | 'area', defs: Record<string, Record<TourLang, string>>, n: Record<string, number>) =>
-    Object.entries(defs)
-      .filter(([k]) => n[k])
-      .map(([k, d]) => `<button type="button" class="hub-chip" data-group="${group}" data-value="${k}" aria-pressed="false">${esc(d[locale])} <span>${n[k]}</span></button>`)
+  const chips = <K extends string>(group: 'role' | 'goal' | 'area', keys: readonly K[], name: (k: K) => string, n: Record<string, number>) =>
+    keys
+      .filter((k) => n[k])
+      .map((k) => `<button type="button" class="hub-chip" data-group="${group}" data-value="${k}" aria-pressed="false">${esc(name(k))} <span>${n[k]}</span></button>`)
       .join('');
 
   const card = (t: (typeof TOURS)[number]) => `
           <article class="hub-card" data-roles="${t.roles.join(' ')}" data-goals="${t.goals.join(' ')}" data-area="${t.area}" id="tour-${t.id}">
-            <div class="hub-card__goals">${t.goals.map((g) => `<span class="hub-goal">${esc(TOUR_GOALS[g][locale])}</span>`).join('')}</div>
-            <h3>${esc(t.title[locale])}</h3>
-            <p>${esc(t.blurb[locale])}</p>
+            <div class="hub-card__goals">${t.goals.map((g) => `<span class="hub-goal">${esc(w.goal(g))}</span>`).join('')}</div>
+            <h3>${esc(w.title(t))}</h3>
+            <p>${esc(w.blurb(t))}</p>
             <div class="hub-card__foot">
               <span class="hub-card__meta">${esc(c.card.meta(t.minutes, t.steps.length))}</span>
               <span class="hub-trail" aria-hidden="true">${'<i></i>'.repeat(t.steps.length)}</span>
-              <a class="btn btn--primary" href="${tourHref(t.id)}" aria-label="${esc(`${c.card.start}: ${t.title[locale]}`)}">${esc(c.card.start)}</a>
+              <a class="btn btn--primary" href="${tourHref(t.id)}" aria-label="${esc(`${c.card.start}: ${w.title(t)}`)}">${esc(c.card.start)}</a>
             </div>
           </article>`;
 
-  const areaSections = (Object.keys(TOUR_AREAS) as TourArea[])
-    .filter((a) => TOURS.some((t) => t.area === a))
+  const areaSections = TOUR_AREAS.filter((a) => TOURS.some((t) => t.area === a))
     .map((a) => {
-      const def = TOUR_AREAS[a];
       return `
         <section class="hub-area" data-area="${a}" aria-labelledby="area-${a}">
           <header class="hub-area__head">
-            <h2 id="area-${a}">${esc(def[locale])}</h2>
-            <p>${esc(def.blurb[locale])}</p>
+            <h2 id="area-${a}">${esc(w.area(a))}</h2>
+            <p>${esc(w.areaBlurb(a))}</p>
           </header>
           <div class="hub-cards">${TOURS.filter((t) => t.area === a).map(card).join('')}
           </div>
@@ -153,8 +152,8 @@ function page(locale: TourLang): string {
 
   <section class="wrap hub-roles" aria-labelledby="roles-title">
     <h2 id="roles-title">${esc(c.picker.title)}</h2>
-    <div class="hub-roles__list">${Object.entries(TOUR_ROLES)
-      .map(([k, d]) => `<button type="button" class="hub-role" data-value="${k}" aria-pressed="false">${esc(d[locale])} <span>${esc(c.picker.count(byRole[k] ?? 0))}</span></button>`)
+    <div class="hub-roles__list">${TOUR_ROLES
+      .map((k) => `<button type="button" class="hub-role" data-value="${k}" aria-pressed="false">${esc(w.role(k))} <span>${esc(c.picker.count(byRole[k] ?? 0))}</span></button>`)
       .join('')}</div>
   </section>
 
@@ -163,9 +162,9 @@ function page(locale: TourLang): string {
       <button type="button" class="hub-filters__toggle" aria-expanded="false">${esc(c.filters.show)} <span></span></button>
       <div class="hub-filters__body">
         <div class="hub-filters__head"><h2>${esc(c.filters.title)}</h2><button type="button" class="hub-filters__clear" hidden>${esc(c.filters.clear)}</button></div>
-        <fieldset><legend>${esc(c.filters.role)}</legend><div class="hub-chips">${chips('role', TOUR_ROLES, byRole)}</div></fieldset>
-        <fieldset><legend>${esc(c.filters.goal)}</legend><div class="hub-chips">${chips('goal', TOUR_GOALS, byGoal)}</div></fieldset>
-        <fieldset><legend>${esc(c.filters.area)}</legend><div class="hub-chips">${chips('area', TOUR_AREAS, byArea)}</div></fieldset>
+        <fieldset><legend>${esc(c.filters.role)}</legend><div class="hub-chips">${chips('role', TOUR_ROLES, w.role, byRole)}</div></fieldset>
+        <fieldset><legend>${esc(c.filters.goal)}</legend><div class="hub-chips">${chips('goal', TOUR_GOALS, w.goal, byGoal)}</div></fieldset>
+        <fieldset><legend>${esc(c.filters.area)}</legend><div class="hub-chips">${chips('area', TOUR_AREAS, w.area, byArea)}</div></fieldset>
       </div>
     </aside>
     <div class="hub-results">

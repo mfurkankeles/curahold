@@ -136,6 +136,9 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     // In the demo the primary user is the platform owner, so the business-metrics
     // screen can be shown. config.billing stays unset, so it carries a "Demo data" badge.
     owner: 'ada@demo.example',
+    // One visitor in one tab, and a seed that sends a few hundred requests in its first seconds:
+    // request limits protect nothing here, and they cut the seed short (the portal stayed signed out).
+    limitScale: 0,
   };
   const email = new services.MemoryEmail();
   const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };
