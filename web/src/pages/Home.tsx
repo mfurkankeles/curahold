@@ -19,7 +19,7 @@ import {
   type Page,
 } from '../../../shared/src/pages';
 import { PROVIDER_NAMES } from '../components/Connections';
-import { EmptyState, SkeletonCards } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted, loadStart, startKnown } from '../components/GettingStarted';
 import { Avatar, Confirm, ConvertedNote, Dialog } from '../components/ui';
@@ -79,6 +79,7 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   const [homeId, setHomeId] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [converted, setConverted] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const admin = can('org.manage') && !me.previewBy;
   // The getting-started box sits above the cards: the cards wait until it is
@@ -102,9 +103,14 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
   const current = pages?.find((p) => p.id === (pageId ?? homeId)) ?? null;
   const loadData = useCallback(async () => {
     if (!current) return;
-    const r = await get<{ data: Data; converted?: boolean }>(`/pages/${current.id}/data`);
-    setData(r.data);
-    setConverted(!!r.converted);
+    try {
+      const r = await get<{ data: Data; converted?: boolean }>(`/pages/${current.id}/data`);
+      setData(r.data);
+      setConverted(!!r.converted);
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
   }, [current?.id, current?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setData(null);
@@ -220,7 +226,14 @@ export function HomePage({ pageId, create }: { pageId: string | null; create?: b
       )}
       <div className="page">
         {current.id === homeId && !startReady ? null : current.id === homeId && <GettingStarted />}
-        {(current.id === homeId && !startReady) || (data === null && current.cards.length > 0) ? null : current.cards.length === 0 ? (
+        {data === null && failed && current.cards.length > 0 ? (
+          <LoadError
+            onRetry={() => {
+              setFailed(false);
+              void loadData();
+            }}
+          />
+        ) : (current.id === homeId && !startReady) || (data === null && current.cards.length > 0) ? null : current.cards.length === 0 ? (
           <EmptyState icon="layout" title={t('home.emptyPage')} />
         ) : (
           <Converted.Provider value={converted}>

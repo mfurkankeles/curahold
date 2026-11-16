@@ -24,7 +24,7 @@ import { TaskImporter } from '../components/TaskImporter';
 import { BoardSettings } from '../components/BoardSettings';
 import { IssueBadge, pmOn, PointsChip } from '../components/Pm';
 import { BacklogView, SprintsView } from '../components/Sprints';
-import { EmptyState, SkeletonCards, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { Tick } from '../components/Tick';
 import { Avatars, DueLabel, IconCheck, IconComment, railState } from '../components/ui';
@@ -67,7 +67,7 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
 
   const listMode = view === 'list';
   const colKeys = useMemo(() => board?.columns.map((c) => c.key) ?? [], [board]);
-  const { tasks, setTasks, win, setWin, load, more } = useBoardTasks(boardId, listMode, filters, refreshKey, colKeys);
+  const { tasks, setTasks, win, setWin, load, more, failed } = useBoardTasks(boardId, listMode, filters, refreshKey, colKeys);
   // Someone else moved or added a card on this board: it follows, quietly.
   useLiveScope('board', boardId, () => void load(true));
 
@@ -232,6 +232,10 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         <BacklogView board={board} refreshKey={refreshKey} />
       ) : pmView && view === 'sprints' ? (
         <SprintsView board={board} refreshKey={refreshKey} />
+      ) : tasks === null && failed ? (
+        <div className="page">
+          <LoadError onRetry={() => void load(false)} />
+        </div>
       ) : tasks === null ? (
         view === 'list' ? (
           <div className="page">
@@ -331,6 +335,8 @@ type Page = { tasks: Task[]; all: number; columns?: ColWindow[]; total?: number;
 function useBoardTasks(boardId: string, list: boolean, filters: ViewFilters, refreshKey: number, keys: string[]) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [win, setWin] = useState<BoardWindow | null>(null);
+  // A first read that failed says so (with Try again) instead of a skeleton for ever.
+  const [failed, setFailed] = useState(false);
   const big = useRef(false);
   const state = useRef({ tasks, win });
   state.current = { tasks, win };
@@ -365,9 +371,11 @@ function useBoardTasks(boardId: string, list: boolean, filters: ViewFilters, ref
         }
         big.current = big.current || partial;
         setTasks(r.tasks);
+        setFailed(false);
         setWin(big.current ? { all: r.all, total: r.total, more: r.more, cols: r.columns ? Object.fromEntries(r.columns.map((c) => [c.key, c])) : undefined } : null);
       } catch (e) {
         if (n === seq.current && e instanceof ApiFailure && e.status === 404) setTasks([]);
+        else if (n === seq.current) setFailed(true);
       }
     },
     [boardId, list],
@@ -415,7 +423,7 @@ function useBoardTasks(boardId: string, list: boolean, filters: ViewFilters, ref
     [boardId],
   );
 
-  return { tasks, setTasks, win, setWin, load, more };
+  return { tasks, setTasks, win, setWin, load, more, failed };
 }
 
 const DONE_SHOWN = 6;

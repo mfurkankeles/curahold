@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Task } from '../../../shared/src/model';
-import { EmptyState, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -44,9 +44,16 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [again, setAgain] = useState(0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    get<{ tasks: Task[] }>('/tasks?assignee=me').then((r) => setTasks(r.tasks));
+    get<{ tasks: Task[] }>('/tasks?assignee=me').then(
+      (r) => {
+        setTasks(r.tasks);
+        setFailed(false);
+      },
+      () => setFailed(true),
+    );
   }, [refreshKey, again]);
 
   const doneKeys = useMemo(() => {
@@ -112,7 +119,17 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
             }}
           />
         )}
-        {tasks === null && <SkeletonRows rows={6} label={t('common.loading')} />}
+        {tasks === null &&
+          (failed ? (
+            <LoadError
+              onRetry={() => {
+                setFailed(false);
+                setAgain((n) => n + 1);
+              }}
+            />
+          ) : (
+            <SkeletonRows rows={6} label={t('common.loading')} />
+          ))}
         {tasks && groups.length === 0 && (
           <EmptyState icon="checkCircle" tone="done" title={t('myTasks.emptyTitle')} body={t('myTasks.emptyBody')}>
             {canWrite && (
