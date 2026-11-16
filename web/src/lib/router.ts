@@ -102,10 +102,38 @@ export function navigateFresh(to: string) {
   navigate(to, false, true);
 }
 
+// The browser's own back and forward are asked the same question as a move inside the app (unsaved
+// changes). The browser has already moved when it says so: the move is held, the address goes back to
+// where the person was (without the screen changing), and only then is the question asked, so the screen
+// sees itself as the one being left. If leaving is fine, the browser's move is made again.
+let held: { to: string; delta: number } | null = null;
+let passing = false;
+
 // The browser's own back and forward: find where in the trail that lands.
-function onPop() {
+function onPop(e: PopStateEvent) {
   const i = (history.state as { i?: unknown } | null)?.i;
   const url = here();
+  if (held) {
+    // Back where the person was: nobody else hears about this step.
+    e.stopImmediatePropagation();
+    const { to, delta } = held;
+    held = null;
+    if (!beforeLeave || beforeLeave(to)) {
+      passing = true;
+      history.go(delta);
+    }
+    return;
+  }
+  const from = trail[at]?.url;
+  // Where in the trail the browser went (the first page of a visit carries no index of its own).
+  const to = typeof i === 'number' ? i : trail[at - 1]?.url === url ? at - 1 : trail[at + 1]?.url === url ? at + 1 : null;
+  if (!passing && beforeLeave && to !== null && to !== at && from && url.split('?')[0] !== from.split('?')[0]) {
+    e.stopImmediatePropagation();
+    held = { to: url, delta: to - at };
+    history.go(at - to);
+    return;
+  }
+  passing = false;
   if (typeof i === 'number' && trail[i]) {
     at = i;
     trail[at] = { ...trail[at], url };
