@@ -4624,4 +4624,5 @@ export const he: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "בדק כניסה יחידה",
   'perm.data.export': "ייצוא נתונים",
   'perm.data.export.hint': "הורדת לקוחות, רשומות, משימות ודוחות כקובץ Excel או CSV. הקובץ כולל רק את מה שהאדם הזה רשאי לראות, וכל ייצוא נרשם ביומן הפעילות.",
+  'errors.export_too_large': "קובץ אחד מכיל עד {max} שורות. צמצם את הרשימה עם מסנן ואז ייצא שוב.",
 };

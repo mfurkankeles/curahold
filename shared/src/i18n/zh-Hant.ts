@@ -4624,4 +4624,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "測試了單一登入",
   'perm.data.export': "匯出資料",
   'perm.data.export.hint': "將客戶、紀錄、任務和報表下載為 Excel 或 CSV。檔案只包含此人有權檢視的內容，每次匯出都會記入活動紀錄。",
+  'errors.export_too_large': "一個檔案最多容納 {max} 列。請先用篩選縮小清單，再重新匯出。",
 };

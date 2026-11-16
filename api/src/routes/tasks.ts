@@ -99,7 +99,7 @@ taskRoutes.get('/boards/:id/tasks', async (c) => {
 });
 
 // A filter as the board's filter bar holds it (the same shape a saved view keeps).
-const windowFilters = z
+export const windowFilters = z
   .object({
     q: z.string().max(100),
     assignees: z.array(z.union([uuid, z.enum(['me', 'none'])])).max(100),
@@ -109,6 +109,36 @@ const windowFilters = z
   })
   .partial();
 const count = (v: string | undefined, dflt: number, max: number) => Math.min(max, Math.max(1, Math.floor(Number(v ?? dflt)) || dflt));
+
+/**
+ * The filter bar's filter as conditions on tasks `t`: a big board's window and the board's
+ * export read exactly the rows the filter bar shows. `add` places a value and names it.
+ */
+export function taskFilterSql(f: z.infer<typeof windowFilters>, me: string, today: string, done: string[], add: (v: unknown) => string): string[] {
+  const people = (f.assignees ?? []).map((a) => (a === 'me' ? me : a)).filter((a) => a !== 'none');
+  const where: string[] = [];
+  const text = (f.q ?? '').trim().replace(/[%_\\]/g, '');
+  if (text) {
+    const p = add(text);
+    where.push(`(t.title_fold like '%' || fold_text(${p}) || '%' or exists (select 1 from accounts ac where ac.id = t.account_id and ac.name_fold like '%' || fold_text(${p}) || '%'))`);
+  }
+  if (f.assignees?.length) {
+    const none = f.assignees.includes('none');
+    where.push(`(t.assignee_ids && ${add(people)}::uuid[]${none ? ' or cardinality(t.assignee_ids) = 0' : ''})`);
+  }
+  if (f.priority?.length) where.push(`t.priority = any(${add(f.priority)}::text[])`);
+  if (f.due?.length) {
+    const d = add(today);
+    const fin = add(done);
+    const b = `(case when t.due_date is null then 'none' when t.status = any(${fin}::text[]) then null when t.due_date < ${d}::date then 'late'
+                     when t.due_date = ${d}::date then 'today' when t.due_date <= ${d}::date + 7 then 'week' else 'later' end)`;
+    where.push(`${b} = any(${add(f.due)}::text[])`);
+  }
+  for (const [k, vals] of Object.entries(f.fields ?? {})) {
+    if (vals.length) where.push(`coalesce(t.fields ->> ${add(k)}, '') = any(${add(vals)}::text[])`);
+  }
+  return where;
+}
 
 /**
  * A big board, a window at a time. per=N: the first N cards of every column (or, with status, of
@@ -139,30 +169,9 @@ async function windowed(c: Context<AppEnv>, id: string, w: Record<'per' | 'limit
     const columns = (board.columns ?? []) as Column[];
     const keys = columns.map((x) => x.key);
     const done = columns.filter((x) => x.done).map((x) => x.key);
-    const people = (f.assignees ?? []).map((a) => (a === 'me' ? auth.userId : a)).filter((a) => a !== 'none');
     const params: unknown[] = [id];
     const add = (v: unknown) => `$${params.push(v)}`;
-    const where: string[] = [];
-    const text = (f.q ?? '').trim().replace(/[%_\\]/g, '');
-    if (text) {
-      const p = add(text);
-      where.push(`(t.title_fold like '%' || fold_text(${p}) || '%' or exists (select 1 from accounts ac where ac.id = t.account_id and ac.name_fold like '%' || fold_text(${p}) || '%'))`);
-    }
-    if (f.assignees?.length) {
-      const none = f.assignees.includes('none');
-      where.push(`(t.assignee_ids && ${add(people)}::uuid[]${none ? ' or cardinality(t.assignee_ids) = 0' : ''})`);
-    }
-    if (f.priority?.length) where.push(`t.priority = any(${add(f.priority)}::text[])`);
-    if (f.due?.length) {
-      const d = add(today);
-      const fin = add(done);
-      const b = `(case when t.due_date is null then 'none' when t.status = any(${fin}::text[]) then null when t.due_date < ${d}::date then 'late'
-                       when t.due_date = ${d}::date then 'today' when t.due_date <= ${d}::date + 7 then 'week' else 'later' end)`;
-      where.push(`${b} = any(${add(f.due)}::text[])`);
-    }
-    for (const [k, vals] of Object.entries(f.fields ?? {})) {
-      if (vals.length) where.push(`coalesce(t.fields ->> ${add(k)}, '') = any(${add(vals)}::text[])`);
-    }
+    const where = taskFilterSql(f, auth.userId, today, done, add);
     const base = `t.board_id = $1 and t.parent_id is null and t.archived_at is null${where.length ? ` and ${where.join(' and ')}` : ''}`;
     // The counts read the filter alone; the window's own offset and columns come after.
     const only = [...params];

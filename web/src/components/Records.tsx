@@ -10,8 +10,8 @@ import type { Account } from '../../../shared/src/model';
 import { CONTACT_COLUMNS, RECORD_BUILTIN_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
 import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
-import { ExportMenu } from './Export';
-import { allPages, cellOf, download } from '../lib/export';
+import { ExportMenu, useExportItems } from './Export';
+import type { ExportRequest } from '../lib/export';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 import { MenuButton } from './Menus';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -233,7 +233,7 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
 
 export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale, fmtDate, words } = useI18n();
-  const { people, person, canWrite, can, toast } = useStore();
+  const { people, person, canWrite, can } = useStore();
   const phone = usePhone();
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
@@ -330,31 +330,9 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     return fmtDate(r.updatedAt, { day: 'numeric', month: 'short', year: 'numeric' });
   };
   const colLabel = (c: Column) => ('field' in c ? labelOf(c.field.label, locale) : t(`records.col.${c.builtin}` as any, { account: words.one }));
-  const makeExport = async () => {
-    if (!type) return { name: '', headers: [], rows: [] };
-    const base = new URLSearchParams({ type: typeKey, limit: '500' });
-    if (q.trim()) base.set('q', q.trim());
-    if (owner) base.set('owner', owner);
-    const list = await allPages(async (offset) => {
-      base.set('offset', String(offset));
-      const r = await get<{ records: AppRecord[]; total: number }>(`/records?${base}`);
-      return { items: r.records, total: r.total };
-    });
-    return {
-      name: typeLabel(type, locale),
-      headers: [t('records.name'), t('records.account'), t('records.owner'), ...type.fields.map((f) => labelOf(f.label, locale))],
-      rows: list.map((r) => [r.name, r.accountName ?? '', person(r.ownerId)?.name ?? '', ...type.fields.map((f) => cellOf(f, r.fields[f.key], locale))]),
-    };
-  };
-  const runExport = async (kind: 'xlsx' | 'csv') => {
-    try {
-      const table = await makeExport();
-      download(table, kind, locale);
-      toast(t('export.done', { n: table.rows.length }));
-    } catch {
-      toast(t('errors.server'), 'error');
-    }
-  };
+  // The file is made by the server from the same filter the list shows (POST /exports), the period included.
+  const exportAsk = (): ExportRequest => ({ source: 'records', type: typeKey, q: q.trim() || undefined, owner: owner || undefined, span: span && closeField ? { field: closeField.key, from: span.from, to: span.to } : null });
+  const exportItems = useExportItems(exportAsk, !!type && !!data?.total);
   // On a phone the view switch, the grouping, the period, the owner and the columns fold into one sheet.
   const activeFilters = (owner ? 1 : 0) + (closeField && period !== 'any' ? 1 : 0);
   const viewSeg = choices.length > 0 && (
@@ -380,10 +358,10 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         <div className="topbar__spacer" />
         {type && (
           <div className="listtop__wide">
-            <ExportMenu disabled={!data?.total} make={makeExport} />
+            <ExportMenu disabled={!data?.total} ask={exportAsk} />
           </div>
         )}
-        {type && data?.total && can('data.export') ? (
+        {exportItems.length ? (
           <MenuButton
             className="listtop__more"
             label={t('acc.more')}
@@ -391,7 +369,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
             place="down-end"
             buttonClass="btn btn--icon"
             button={<Icon name="more" size={18} />}
-            items={(['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) }))}
+            items={exportItems}
           />
         ) : null}
         {canWrite && type && (

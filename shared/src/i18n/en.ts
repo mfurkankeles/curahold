@@ -4639,6 +4639,7 @@ export const en = {
   'audit.sso.tested': "tested single sign-on",
   'perm.data.export': "Export data",
   'perm.data.export.hint': "Download customers, records, tasks and reports as Excel or CSV. A file holds only what this person may see, and every export is written to the activity log.",
+  'errors.export_too_large': "One file holds up to {max} rows. Narrow the list with a filter, then export again.",
 } as const;
 
 export type MessageKey = keyof typeof en;

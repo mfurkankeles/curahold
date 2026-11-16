@@ -43,10 +43,10 @@ import '../surfaces/employee-work.css';
 import { seedTask } from '../components/taskSeed';
 
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
-  const { t, words } = useI18n();
+  const { t } = useI18n();
   const phone = usePhone();
   const offerUndo = useUndo();
-  const { boards, me, canWrite, toast, person } = useStore();
+  const { boards, me, canWrite, toast } = useStore();
   const board = boards.find((b) => b.id === boardId);
   const [filters, setFilters] = useState<ViewFilters>({});
   const [asking, setAsking] = useState(false);
@@ -145,25 +145,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
       </button>
     </div>
   );
-  const exportMenu = (
-    <ExportMenu
-              disabled={!visible.length}
-              make={async () => ({
-                name: board.name,
-                headers: [t('task.title'), t('task.status'), words.one, t('task.due'), t('task.assignees'), t('task.priority'), t('task.repeat')],
-                // A big board is exported whole (with the same filter), not only the rows read so far.
-                rows: (win ? (await get<{ tasks: Task[] }>(`/boards/${board.id}/tasks`)).tasks.filter((x) => matchFilters(x, filters, me.user.id, doneKeys.has(x.status))) : visible).map((x) => [
-                  x.title,
-                  board.columns.find((col) => col.key === x.status)?.name ?? x.status,
-                  x.accountName ?? '',
-                  x.dueDate ?? '',
-                  x.assigneeIds.map((id) => person(id)?.name ?? '').filter(Boolean).join(', '),
-                  t(`task.priority.${x.priority}`),
-                  x.repeat ? repeatText(t, x.repeat) : '',
-                ]),
-              })}
-            />
-  );
+  // The whole board with the same filter (POST /exports), not only the rows read so far.
+  const exportMenu = <ExportMenu disabled={!visible.length} ask={{ source: 'board', board: board.id, filters: { ...filters } }} />;
   const formButton = view !== 'archive' && board.form?.on && canWrite && (
     <button className="btn" onClick={() => setAsking(true)} title={t('boardForm.open')}>
       <Icon name="form" size={16} />

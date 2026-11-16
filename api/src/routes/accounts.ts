@@ -7,7 +7,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { normalizeValue, optionKey } from '../../../shared/src/fields';
 import { calculated, type Account, type AccountField, type ImportResult } from '../../../shared/src/model';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv } from '../context';
+import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { runAccountCreated } from '../lib/automations';
@@ -70,7 +70,7 @@ const SIGNALS = `(select count(*) from tasks t join boards b on b.id = t.board_i
            (select max(t.done_at) from tasks t where t.account_id = a.id)) as last_touch`;
 
 /** An account as this person may see it (fields closed to their role left out). */
-function viewOf(c: Parameters<typeof requireWriter>[0]) {
+function viewOf(c: C) {
   const hidden = hiddenKeys(c.get('org').account_fields, c.get('auth'));
   return (r: Row): Account => {
     const a = toAccount(r);
@@ -89,32 +89,41 @@ async function checkOwner(q: Q, ownerId: string | null | undefined) {
   if (!u) fail('bad_assignee');
 }
 
+/** What the customer list is narrowed to: the list, its export and a saved view read the same. */
+export interface AccountQuery {
+  q?: string;
+  ownerId?: string | null;
+  archived?: boolean;
+}
+
+/**
+ * One page of the customer list as this person may see it (fields closed to their role left
+ * out): the list reads it, and so does every export, a page at a time.
+ */
+export async function accountPage(c: C, q: Q, f: AccountQuery, limit: number, offset: number, opts: { signals?: boolean; count?: boolean } = {}) {
+  const where = `($1 = '' or a.name_fold like '%' || fold_text($1) || '%')
+          and ($2::uuid is null or a.owner_id = $2::uuid)
+          and (case when $3 then a.archived_at is not null else a.archived_at is null end)`;
+  const args = [(f.q ?? '').trim().slice(0, 100).replace(/[%_]/g, ''), f.ownerId ?? null, !!f.archived];
+  const list = await q.query(
+    `select a.*, ${OPEN_TASKS}${opts.signals ? `, ${SIGNALS}` : ''} from accounts a where ${where}
+      order by sort_key(a.name_fold, a.name_tr), a.id limit ${limit} offset ${offset}`,
+    args,
+  );
+  const total = opts.count === false ? null : (await q.query<{ n: number }>(`select count(*)::int as n from accounts a where ${where}`, args))[0].n;
+  return { accounts: list.map(viewOf(c)), total };
+}
+
 accountRoutes.get('/accounts', async (c) => {
-  const search = (c.req.query('q') ?? '').trim().slice(0, 100);
+  const search = c.req.query('q') ?? '';
   const owner = c.req.query('owner');
   const archived = c.req.query('archived') === '1';
   const limit = Math.min(500, Math.max(1, Number(c.req.query('limit') ?? 200)));
   const offset = Math.max(0, Number(c.req.query('offset') ?? 0));
   const ownerId = owner === 'me' ? c.get('auth').userId : owner && uuid.safeParse(owner).success ? owner : null;
   const signals = c.req.query('signals') === '1';
-  const rows = await run(c, async (q) => {
-    const list = await q.query(
-      `select a.*, ${OPEN_TASKS}${signals ? `, ${SIGNALS}` : ''} from accounts a
-        where ($1 = '' or a.name_fold like '%' || fold_text($1) || '%')
-          and ($2::uuid is null or a.owner_id = $2::uuid)
-          and (case when $3 then a.archived_at is not null else a.archived_at is null end)
-        order by sort_key(a.name_fold, a.name_tr) limit $4 offset $5`,
-      [search.replace(/[%_]/g, ''), ownerId, archived, limit, offset],
-    );
-    const [{ n }] = await q.query(
-      `select count(*)::int as n from accounts a
-        where ($1 = '' or a.name_fold like '%' || fold_text($1) || '%') and ($2::uuid is null or a.owner_id = $2::uuid)
-          and (case when $3 then a.archived_at is not null else a.archived_at is null end)`,
-      [search.replace(/[%_]/g, ''), ownerId, archived],
-    );
-    return { list, total: n };
-  });
-  return c.json({ accounts: rows.list.map(viewOf(c)), total: rows.total });
+  const page = await run(c, (q) => accountPage(c, q, { q: search, ownerId, archived }, limit, offset, { signals }));
+  return c.json({ accounts: page.accounts, total: page.total });
 });
 
 const accountInput = {

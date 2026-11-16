@@ -4624,4 +4624,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "シングルサインオンをテストしました",
   'perm.data.export': "データをエクスポートする",
   'perm.data.export.hint': "顧客、レコード、タスク、レポートを Excel または CSV でダウンロードします。ファイルにはこの人が見られるものだけが入り、エクスポートはすべてアクティビティログに記録されます。",
+  'errors.export_too_large': "1つのファイルに入るのは最大 {max} 行です。フィルターで一覧を絞り込んでから、もう一度エクスポートしてください。",
 };

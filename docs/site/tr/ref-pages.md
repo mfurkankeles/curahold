@@ -32,7 +32,7 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `POST /reports/saved` | Rapor kaydeder. |
 | `PATCH /reports/saved/:id` | Kayıtlı raporu değiştirir. |
 | `DELETE /reports/saved/:id` | Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. |
-| `POST /exports` | Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim. |
+| `POST /exports` | Bir listenin ya da raporun dosyasını yapar ve indirme olarak gönderir (Excel `xlsx` ya da `csv`, okuyanın dilinde ve sayı biçiminde). |
 
 ## Ayrıntılar
 
@@ -184,13 +184,8 @@ Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId`
 
 ### `POST /exports`
 
-Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim.
+Bir listenin ya da raporun dosyasını yapar ve indirme olarak gönderir (Excel `xlsx` ya da `csv`, okuyanın dilinde ve sayı biçiminde). `source`: `accounts` (`q`, `owner`, `archived` ile), `records` (`type`, `q`, `owner`, `archived`, `span` ile), `board` (`board` ve filtre çubuğunun `filters` alanıyla) ya da `report` (`def` ve `name` ile). Kişinin göremediği alanlar dosyaya girmez; her dışa aktarma işlem günlüğünde tek satırdır; en fazla 50.000 satır (`export_too_large`). `x-curahold-rows` başlığı satır sayısını söyler.
 
 **Gerekenler:** yetki `data.export`
 
-| Alan | Tür | | Not |
-| --- | --- | --- | --- |
-| `source` | metin | zorunlu |  |
-| `name` | metin | zorunlu | en çok 120 karakter |
-| `rows` | tam sayı | zorunlu | en az 0; en çok 10_000_000 |
-| `format` | şunlardan biri: xlsx \| csv | zorunlu |  |
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.

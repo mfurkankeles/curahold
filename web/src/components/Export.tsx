@@ -1,53 +1,59 @@
-// "Export" — an Excel or CSV file of what is on screen, made in the browser.
-// Nothing the person may not see can be in it: the rows come from the same answers
-// the screen shows (field permissions are applied there, tests/field-outs.test.ts).
-// Every export is written to the company's activity log (POST /exports).
+// "Export" — an Excel or CSV file of a list or a report, made by the server
+// (POST /exports): it needs the data.export permission, leaves out fields closed
+// to the person's role and writes every export to the activity log. Without the
+// permission there is no button and no menu item, so the screen never asks.
 import { useState } from 'react';
-import { download, type Table } from '../lib/export';
-import { post } from '../lib/api';
+import { ApiFailure } from '../lib/api';
+import { exportFile, type ExportFormat, type ExportRequest } from '../lib/export';
+import { formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
-import { formatNumber } from '../lib/format';
 import { Icon } from './icons';
+import type { MenuItem } from './Menus';
 
-export type ExportKind = 'xlsx' | 'csv';
+export type ExportKind = ExportFormat;
+/** The request, or a way to make it at the moment of the click (the filter as it is then). */
+type Ask = ExportRequest | (() => ExportRequest);
 
-/** `run(make, kind)`: makes the file, downloads it, says how many rows, and logs it. */
-export function useExport(source: string) {
+/** `run(ask, kind)`: the server makes the file; it is saved, and the toast says how many rows. */
+export function useExport() {
   const { t, locale } = useI18n();
-  const { toast } = useStore();
+  const { toast, can } = useStore();
   const [busy, setBusy] = useState(false);
-  const run = async (make: () => Table | Promise<Table>, kind: ExportKind) => {
+  const run = async (ask: Ask, kind: ExportKind) => {
     setBusy(true);
     try {
-      const table = await make();
-      download(table, kind, locale);
-      toast(t('export.done', { n: formatNumber(table.rows.length, locale) }));
-      // The log is kept by the server; a file already in hand is not taken back if it fails.
-      void post('/exports', { source, name: table.name.slice(0, 120), rows: table.rows.length, format: kind }).catch(() => undefined);
-    } catch {
-      toast(t('errors.server'), 'error');
+      const { rows } = await exportFile(typeof ask === 'function' ? ask() : ask, kind, locale);
+      toast(t('export.done', { n: formatNumber(rows, locale) }));
+    } catch (e) {
+      toast(e instanceof ApiFailure && e.body.message ? e.body.message : t('errors.server'), 'error');
     } finally {
       setBusy(false);
     }
   };
-  return { run, busy };
+  return { run, busy, allowed: can('data.export') };
 }
 
-export function ExportMenu({ make, disabled, source = 'list', quiet }: { make: () => Table | Promise<Table>; disabled?: boolean; source?: string; quiet?: boolean }) {
+/** Export's two choices for a "More" menu (a phone header): none without the permission. */
+export function useExportItems(ask: Ask, on = true): MenuItem[] {
+  const { t } = useI18n();
+  const { run, allowed } = useExport();
+  if (!allowed || !on) return [];
+  return (['xlsx', 'csv'] as const).map((kind) => ({ key: `export-${kind}`, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void run(ask, kind) }));
+}
+
+export function ExportMenu({ ask, disabled, quiet }: { ask: Ask; disabled?: boolean; quiet?: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const { run, busy } = useExport(source);
-  const { can } = useStore();
-  // Exporting is a permission of its own (data.export): without it there is no button, and nothing is asked.
-  if (!can('data.export')) return null;
+  const { run, busy, allowed } = useExport();
+  if (!allowed) return null;
   const pick = (kind: ExportKind) => {
     setOpen(false);
-    void run(make, kind);
+    void run(ask, kind);
   };
   return (
     <div className="menu-wrap">
-      <button className={quiet ? 'btn btn--quiet' : 'btn'} aria-haspopup="menu" aria-expanded={open} disabled={disabled || busy} onClick={() => setOpen(!open)}>
+      <button className={quiet ? 'btn btn--quiet' : 'btn'} aria-haspopup="menu" aria-expanded={open} aria-busy={busy || undefined} disabled={disabled || busy} onClick={() => setOpen(!open)}>
         {quiet && <Icon name="download" size={16} />}
         {t('export.button')}
       </button>

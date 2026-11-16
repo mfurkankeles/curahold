@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AccountField } from '../../../shared/src/model';
 import { BUCKETS, CHARTS, FORMATS, MEASURE_FNS, PERIODS, type ReportDef, type SavedReport } from '../../../shared/src/reports';
-import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { nowOf, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { toTrash } from '../lib/trash';
@@ -156,25 +156,4 @@ builderRoutes.delete('/reports/saved/:id', async (c) => {
     return trashId;
   });
   return c.json({ ok: true, trashId });
-});
-
-/**
- * A file the person made in the browser from what the screen showed (a report, a list): the rows
- * were already theirs to see; this keeps the export in the company's activity log.
- */
-builderRoutes.post('/exports', async (c) => {
-  requirePerm(c, 'data.export');
-  const input = await body(
-    c,
-    z.object({
-      source: z.string().regex(/^[a-z][a-z0-9_-]{0,39}$/),
-      name: z.string().trim().max(120),
-      rows: z.number().int().min(0).max(10_000_000),
-      format: z.enum(['xlsx', 'csv']),
-    }),
-  );
-  const org = c.get('org');
-  const auth = c.get('auth');
-  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'data.exported', entity: 'org', entityId: org.id, meta: input }));
-  return c.json({ ok: true });
 });

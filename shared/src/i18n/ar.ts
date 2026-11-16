@@ -4624,4 +4624,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "اختبر تسجيل الدخول الموحد",
   'perm.data.export': "تصدير البيانات",
   'perm.data.export.hint': "تنزيل العملاء والسجلات والمهام والتقارير بصيغة Excel أو CSV. لا يضم الملف إلا ما يحق لهذا الشخص رؤيته، ويُسجَّل كل تصدير في سجل النشاط.",
+  'errors.export_too_large': "يتسع الملف الواحد لـ {max} صف كحد أقصى. ضيّق القائمة بعامل تصفية، ثم صدّرها مجددًا.",
 };

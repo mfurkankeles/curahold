@@ -4624,4 +4624,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "싱글 사인온을 테스트함",
   'perm.data.export': "데이터 내보내기",
   'perm.data.export.hint': "고객, 레코드, 작업, 보고서를 Excel 또는 CSV로 내려받습니다. 파일에는 이 사람이 볼 수 있는 것만 담기며, 모든 내보내기는 활동 로그에 기록됩니다.",
+  'errors.export_too_large': "파일 하나에는 최대 {max}개 행까지 담을 수 있습니다. 필터로 목록을 좁힌 뒤 다시 내보내세요.",
 };

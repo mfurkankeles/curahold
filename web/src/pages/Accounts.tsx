@@ -9,8 +9,8 @@ import { calculated, type Account, type AccountField, type Task } from '../../..
 import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
-import { ExportMenu } from '../components/Export';
-import { allPages, cellOf, download } from '../lib/export';
+import { ExportMenu, useExportItems } from '../components/Export';
+import type { ExportRequest } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
 import { Avatar, Confirm, ConvertedNote, Dialog, DueLabel, onTabKeys } from '../components/ui';
@@ -279,38 +279,9 @@ export function AccountsPage() {
   const convertedNote = data && (view === 'cards' || view === 'table' || view === 'renewals') && rows.some((a) => a.currency && a.currency !== me.org.currency && money.rates[a.currency]) ? <ConvertedNote currency={me.org.currency} ratesAt={me.org.fx?.updatedAt} /> : null;
   // On a phone the filters, the order and the view switch fold into one sheet (FilterSheet).
   const activeFilters = (owner !== 'all' ? 1 : 0) + (signal ? 1 : 0) + (archived ? 1 : 0);
-  const makeExport = async () => {
-    const base = new URLSearchParams({ limit: '500' });
-    if (q.trim()) base.set('q', q.trim());
-    if (owner !== 'all') base.set('owner', owner);
-    if (archived) base.set('archived', '1');
-    const list = await allPages(async (offset) => {
-      base.set('offset', String(offset));
-      const r = await get<{ accounts: Account[]; total: number }>(`/accounts?${base}`);
-      return { items: r.accounts, total: r.total };
-    });
-    const defs = me.org.accountFields;
-    return {
-      name: words.other,
-      headers: [t('accounts.name'), t('accounts.owner'), ...defs.map((f) => labelOf(f.label, locale)), t('accounts.openTasks'), t('accounts.lastActivity')],
-      rows: list.map((a) => [
-        a.name,
-        person(a.ownerId)?.name ?? '',
-        ...defs.map((f) => cellOf(f, a.fields[f.key], locale)),
-        a.openTasks ?? 0,
-        a.lastActivityAt ? a.lastActivityAt.slice(0, 10) : '',
-      ]),
-    };
-  };
-  const runExport = async (kind: 'xlsx' | 'csv') => {
-    try {
-      const table = await makeExport();
-      download(table, kind, locale);
-      toast(t('export.done', { n: table.rows.length }));
-    } catch {
-      toast(t('errors.server'), 'error');
-    }
-  };
+  // The file is made by the server from the same filter the list shows (POST /exports).
+  const exportAsk = (): ExportRequest => ({ source: 'accounts', q: q.trim() || undefined, owner: owner !== 'all' ? owner : undefined, archived: archived || undefined });
+  const exportItems = useExportItems(exportAsk, !!data?.total);
   return (
     <>
       <header className="topbar listtop" data-place={place ?? undefined}>
@@ -331,7 +302,7 @@ export function AccountsPage() {
         )}
         <div className="topbar__spacer" />
         <div className="listtop__wide">
-          <ExportMenu disabled={!data?.total} make={makeExport} />
+          <ExportMenu disabled={!data?.total} ask={exportAsk} />
         </div>
         {manage && can('accounts.view_all') && canWrite && (
           <button className="btn listtop__wide" onClick={() => setImporting(true)}>
@@ -347,7 +318,7 @@ export function AccountsPage() {
           buttonClass="btn btn--icon"
           button={<Icon name="more" size={18} />}
           items={[
-            ...(data?.total && can('data.export') ? (['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) })) : []),
+            ...exportItems,
             ...(manage && can('accounts.view_all') && canWrite ? [{ key: 'import', label: t('accounts.import'), icon: 'upload' as const, onSelect: () => setImporting(true) }] : []),
           ]}
         />

@@ -32,6 +32,7 @@ export type ErrorCode =
   | 'backup_not_admin'
   | 'connection_failed'
   | 'import_too_large'
+  | 'export_too_large'
   | 'type_not_empty'
   | 'org_loop'
   | 'sync_running'
@@ -150,6 +151,7 @@ const STATUS: Record<ErrorCode, number> = {
   backup_not_admin: 400,
   connection_failed: 400,
   import_too_large: 413,
+  export_too_large: 413,
   type_not_empty: 409,
   org_loop: 400,
   sync_running: 409,

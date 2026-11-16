@@ -85,6 +85,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `trash_parent_first` | 409 | “…” is in the trash too. Put that back first. |
 | `trash_parent_gone` | 409 | What this belonged to no longer exists, so it cannot be put back. |
 | `type_not_empty` | 409 | There are still … records of this kind. Archive or delete them first. |
+| `export_too_large` | 413 | One file holds up to … rows. Narrow the list with a filter, then export again. |
 | `file_too_large` | 413 | Files can be up to … MB. |
 | `import_too_large` | 413 | Import up to … rows at a time. |
 | `repeat_mismatch` | 422 | This request was sent with a key that already belongs to a different change. Nothing was changed. |

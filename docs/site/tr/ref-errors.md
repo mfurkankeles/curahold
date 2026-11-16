@@ -85,6 +85,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `trash_parent_first` | 409 | “…” de çöp kutusunda. Önce onu geri al. |
 | `trash_parent_gone` | 409 | Bunun bağlı olduğu şey artık yok; bu yüzden geri alınamıyor. |
 | `type_not_empty` | 409 | Bu türde hâlâ … kayıt var. Önce onları arşivleyin veya silin. |
+| `export_too_large` | 413 | Bir dosyaya en fazla … satır sığar. Listeyi bir filtreyle daralt, sonra yeniden dışa aktar. |
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |

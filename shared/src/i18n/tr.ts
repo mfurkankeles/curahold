@@ -4624,4 +4624,5 @@ export const tr: Record<MessageKey, string> = {
   'audit.sso.tested': "tek oturum açmayı denedi",
   'perm.data.export': "Veriyi dışa aktarma",
   'perm.data.export.hint': "Müşterileri, kayıtları, görevleri ve raporları Excel ya da CSV olarak indirir. Dosyada yalnızca bu kişinin görebildikleri olur; her dışa aktarma etkinlik kaydına yazılır.",
+  'errors.export_too_large': "Bir dosyaya en fazla {max} satır sığar. Listeyi bir filtreyle daralt, sonra yeniden dışa aktar.",
 };

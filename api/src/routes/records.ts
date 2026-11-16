@@ -6,7 +6,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { MENTION_RE, type Task } from '../../../shared/src/model';
 import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordComment, type RecordDetail, type RecordType, type RenewalLinks } from '../../../shared/src/records';
-import { requirePerm, requireWriter, run, type AppEnv } from '../context';
+import { requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
@@ -220,29 +220,54 @@ async function typeOf(q: Q, ref: string): Promise<Row> {
   return t;
 }
 
+/** What a records list is narrowed to: the list, its export and a saved view read the same. */
+export interface RecordQuery {
+  /** The kind of record, by id or key. */
+  type?: string;
+  accountId?: string | null;
+  q?: string;
+  ownerId?: string | null;
+  archived?: boolean;
+  /** Only those whose date field falls in [from, to] (the deals list's period). */
+  span?: { field: string; from: string; to: string } | null;
+}
+
+/**
+ * One page of a records list as this person may see it (fields closed to their role left out):
+ * the list reads it, and so does every export, a page at a time.
+ */
+export async function recordPage(c: C, q: Q, f: RecordQuery, limit: number, offset: number, opts: { links?: boolean; count?: boolean } = {}) {
+  const type = f.type ? await typeOf(q, f.type) : null;
+  const hidden = await hiddenByType(q, c.get('auth'));
+  const args: unknown[] = [type?.id ?? null, f.accountId ?? null, (f.q ?? '').trim().slice(0, 100).replace(/[%_]/g, ''), f.ownerId ?? null, !!f.archived];
+  let where = `($1::uuid is null or r.type_id = $1) and ($2::uuid is null or r.account_id = $2)
+      and ($3 = '' or r.name_fold like '%' || fold_text($3) || '%' or a.name_fold like '%' || fold_text($3) || '%')
+      and ($4::uuid is null or r.owner_id = $4)
+      and (case when $5 then r.archived_at is not null else r.archived_at is null end)`;
+  if (f.span) {
+    // A field this person may not see cannot narrow what they get (it would tell its values).
+    if (!type || hidden.get(type.id)?.has(f.span.field)) fail('validation', { fields: 'span' }, { fields: ['span'] });
+    args.push(f.span.field, f.span.from, f.span.to);
+    where += ` and substr(r.fields ->> $6, 1, 10) between $7 and $8`;
+  }
+  const rows = await q.query(`${SELECT} where ${where} order by sort_key(r.name_fold, r.name_tr), r.id limit ${limit} offset ${offset}`, args);
+  const total = opts.count === false ? null : (await q.query<{ n: number }>(`select count(*)::int as n from records r left join accounts a on a.id = r.account_id where ${where}`, args))[0].n;
+  const links = opts.links === false ? new Map<string, LinkInfo[]>() : await linksFor(q, 'record', rows.map((r) => r.id));
+  return { type, records: rows.map((r) => viewRecord(r, hidden, links.get(r.id))), total };
+}
+
 recordRoutes.get('/records', async (c) => {
   const typeRef = c.req.query('type') ?? '';
   const account = c.req.query('account');
-  const search = (c.req.query('q') ?? '').trim().slice(0, 100).replace(/[%_]/g, '');
+  const search = c.req.query('q') ?? '';
   const owner = c.req.query('owner');
   const archived = c.req.query('archived') === '1';
   const limit = Math.min(500, Math.max(1, Number(c.req.query('limit') ?? 200)));
   const offset = Math.max(0, Number(c.req.query('offset') ?? 0));
   const ownerId = owner === 'me' ? c.get('auth').userId : owner && uuid.safeParse(owner).success ? owner : null;
   const accountId = account && uuid.safeParse(account).success ? account : null;
-  const data = await run(c, async (q) => {
-    const type = typeRef ? await typeOf(q, typeRef) : null;
-    const where = `($1::uuid is null or r.type_id = $1) and ($2::uuid is null or r.account_id = $2)
-      and ($3 = '' or r.name_fold like '%' || fold_text($3) || '%' or a.name_fold like '%' || fold_text($3) || '%')
-      and ($4::uuid is null or r.owner_id = $4)
-      and (case when $5 then r.archived_at is not null else r.archived_at is null end)`;
-    const args = [type?.id ?? null, accountId, search, ownerId, archived];
-    const rows = await q.query(`${SELECT} where ${where} order by sort_key(r.name_fold, r.name_tr) limit ${limit} offset ${offset}`, args);
-    const [{ n }] = await q.query<{ n: number }>(`select count(*)::int as n from records r left join accounts a on a.id = r.account_id where ${where}`, args);
-    const links = await linksFor(q, 'record', rows.map((r) => r.id));
-    return { rows, n, links, hidden: await hiddenByType(q, c.get('auth')) };
-  });
-  return c.json({ records: data.rows.map((r) => viewRecord(r, data.hidden, data.links.get(r.id))), total: data.n });
+  const page = await run(c, (q) => recordPage(c, q, { type: typeRef, accountId, q: search, ownerId, archived }, limit, offset));
+  return c.json({ records: page.records, total: page.total });
 });
 
 // ------------------------------------------------------------- renewals

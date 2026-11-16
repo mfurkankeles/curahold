@@ -39,7 +39,7 @@ import { MenuButton, type MenuItem } from '../components/Menus';
 import { ExportMenu, useExport } from '../components/Export';
 import { usePhone } from '../components/FilterSheet';
 import { typingIn } from '../lib/undo';
-import type { Table } from '../lib/export';
+import type { ExportRequest } from '../lib/export';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh } from '../lib/router';
@@ -237,7 +237,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   const f = useReportFormat();
   const { cat, failed: catFailed, retry: catRetry } = useCatalog();
   const phone = usePhone();
-  const exporter = useExport('report');
+  const exporter = useExport();
   const admin = can('org.manage') && !me.previewBy;
   const [saved, setSaved] = useState<SavedReport | null>(null);
   const [def, setDef] = useState<ReportDef | null>(null);
@@ -461,35 +461,15 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
   };
 
   // The file has what the preview shows: in a summary, each row also says which group it is in.
-  const exportTable = (): Table => {
-    const title = name.trim() || t('rb.untitled');
-    if (!result || result.kind !== 'ok') return { name: title, headers: [], rows: [] };
-    if (result.table) {
-      const groupNames = result.table.keys ? def.groups.map((g) => L(fieldOf(g.field) ?? { label: { en: g.field } })) : [];
-      const groupLabel = (k: string) => result.groups.find((g) => g.key === k)?.label ?? k;
-      const seriesLabel = (k: string) => result.series.find((x) => x.key === k)?.label ?? k;
-      return {
-        name: title,
-        headers: [...groupNames, ...result.table.columns.map((c) => c.label)],
-        rows: result.table.rows.map((row, i) => {
-          const keys = result.table!.keys?.[i] ?? [];
-          return [...keys.map((k, at) => (at === 0 ? (result.bucket ? f.bucket(k, result.bucket) : groupLabel(k)) : seriesLabel(k))), ...row];
-        }),
-      };
-    }
-    return {
-      name: title,
-      headers: ['', ...result.series.map((x) => x.label), result.series.length ? t('rb.total') : t(`rb.fn.${def.measure.fn}` as any)],
-      rows: result.groups.map((g) => [result.bucket ? f.bucket(g.key, result.bucket) : g.label, ...(g.cells ?? []), g.value]),
-    };
-  };
+  // The server runs the report as it stands now and makes the file (POST /exports).
+  const exportAsk = (): ExportRequest => ({ source: 'report', name: name.trim() || t('rb.untitled'), def });
   const canExport = result?.kind === 'ok' && can('data.export');
   // One main action (Save); the rest wait in "More" — on a phone, Export and "Add to dashboard" too.
   const more: MenuItem[] = [
     ...(phone && canExport
       ? [
-          { key: 'xlsx', label: t('export.xlsx'), icon: 'download' as const, onSelect: () => void exporter.run(exportTable, 'xlsx') },
-          { key: 'csv', label: t('export.csv'), icon: 'download' as const, onSelect: () => void exporter.run(exportTable, 'csv') },
+          { key: 'xlsx', label: t('export.xlsx'), icon: 'download' as const, onSelect: () => void exporter.run(exportAsk, 'xlsx') },
+          { key: 'csv', label: t('export.csv'), icon: 'download' as const, onSelect: () => void exporter.run(exportAsk, 'csv') },
         ]
       : []),
     ...(phone && admin && saved && !dirty ? [{ key: 'dash', label: t('rb.toDash'), icon: 'layout' as const, onSelect: () => setPlacing(true) }] : []),
@@ -595,7 +575,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
               <Icon name="undo" size={16} />
             </button>
           )}
-          {!phone && canExport && <ExportMenu make={exportTable} source="report" quiet />}
+          {!phone && canExport && <ExportMenu ask={exportAsk} quiet />}
           {!phone && admin && saved && !dirty && (
             <button className="btn" onClick={() => setPlacing(true)}>
               <Icon name="layout" size={16} /> {t('rb.toDash')}

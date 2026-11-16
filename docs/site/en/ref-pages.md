@@ -32,7 +32,7 @@ Home pages and dashboards are made of cards; `GET /pages/:id/data` gives what ea
 | `POST /reports/saved` | Saves a report. |
 | `PATCH /reports/saved/:id` | Changes a saved report. |
 | `DELETE /reports/saved/:id` | Moves a saved report to the trash, where it stays for 30 days. |
-| `POST /exports` | Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format. |
+| `POST /exports` | Makes a file of a list or a report and sends it as a download (Excel `xlsx` or `csv`, in the reader's language and number format). |
 
 ## Details
 
@@ -184,13 +184,8 @@ Moves a saved report to the trash, where it stays for 30 days. The answer carrie
 
 ### `POST /exports`
 
-Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format.
+Makes a file of a list or a report and sends it as a download (Excel `xlsx` or `csv`, in the reader's language and number format). `source` is `accounts` (with `q`, `owner`, `archived`), `records` (with `type`, `q`, `owner`, `archived`, `span`), `board` (with `board` and the filter bar's `filters`) or `report` (with `def` and `name`). Fields the person may not see are left out; each export is one line in the activity log; at most 50,000 rows (`export_too_large`). The header `x-curahold-rows` says how many rows.
 
 **Needs:** permission `data.export`
 
-| Field | Type | | Notes |
-| --- | --- | --- | --- |
-| `source` | text | required |  |
-| `name` | text | required | at most 120 characters |
-| `rows` | whole number | required | at least 0; at most 10_000_000 |
-| `format` | one of xlsx \| csv | required |  |
+Takes a body whose shape depends on what is sent; see the guide for this area.

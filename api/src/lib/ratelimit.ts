@@ -58,7 +58,7 @@ export const BUDGETS = {
   inviteCompany: { cap: 100, perSec: 1 / 30 },
   /** Search (Ctrl K and the AI connector's search). */
   search: { cap: 60, perSec: 2 },
-  /** Exports: deep pages of a list, personal-data and audit exports. */
+  /** Exports: every file made from a list or report (POST /exports), deep pages of a list, personal-data and audit exports. */
   export: { cap: 30, perSec: 1 / 4 },
   /** The AI connector, per connection. */
   mcp: { cap: 60, perSec: 1 },
@@ -137,7 +137,7 @@ export const isInvite = (method: string, path: string) => method === 'POST' && I
 export const isSearch = (method: string, path: string) => method === 'GET' && path === '/api/search';
 /** An export reads the whole of something: a named export, or a list read past its first pages. */
 export const isExport = (method: string, path: string, url: URL) =>
-  method === 'GET' && (EXPORTS.some((r) => r.test(path)) || Number(url.searchParams.get('offset') ?? 0) >= 1000);
+  (method === 'POST' && path === '/api/exports') || (method === 'GET' && (EXPORTS.some((r) => r.test(path)) || Number(url.searchParams.get('offset') ?? 0) >= 1000));
 export const isWrite = (method: string) => method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
 
 // ---------------------------------------------------------------- who is asking

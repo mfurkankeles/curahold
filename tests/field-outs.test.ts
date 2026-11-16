@@ -1,6 +1,6 @@
 // Field-level permission, every way out. A field one role may not see stays out of
 // everything that reaches that role: the list and one customer (tests/views.test.ts),
-// reports (tests/report-builder.test.ts), and here: export pages, search, an API key,
+// reports (tests/report-builder.test.ts), and here: export pages, the export file, search, an API key,
 // the AI connector, webhooks (as their creator may see), the health "why", the
 // timeline, the weekly summary email, and the whitespace table.
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -40,6 +40,18 @@ describe('a field hidden from a role', () => {
 
   it('stays out of every list page, including the deep pages an export reads', async () => {
     for (const offset of [0, 500, 1000]) expect(has((await lena.get(`/api/accounts?limit=500&offset=${offset}`)).json)).toBe(false);
+  });
+
+  it('stays out of an export file, for a role that may export but not see the field', async () => {
+    // Members may not export by default: given the permission for this, the hidden field still stays out.
+    await env.db.system((q) => q.query(`update roles set perms = perms || '{data.export}' where org_id = $1 and key = 'member'`, [env.a.orgId]));
+    const lenaCsv = await lena.post('/api/exports', { source: 'accounts', format: 'csv', q: 'Cedarmoor' });
+    expect(lenaCsv.status).toBe(200);
+    expect(String(lenaCsv.json)).toContain('Cedarmoor Health');
+    expect(has(lenaCsv.json)).toBe(false);
+    // The same file for a role that may see it carries it (the test reads what it thinks it reads).
+    expect(has((await mert.post('/api/exports', { source: 'accounts', format: 'csv', q: 'Cedarmoor' })).json)).toBe(true);
+    await env.db.system((q) => q.query(`update roles set perms = array_remove(perms, 'data.export') where org_id = $1 and key = 'member'`, [env.a.orgId]));
   });
 
   it('stays out of search', async () => {

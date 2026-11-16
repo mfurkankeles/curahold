@@ -4624,4 +4624,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'audit.sso.tested': "测试了单点登录",
   'perm.data.export': "导出数据",
   'perm.data.export.hint': "将客户、记录、任务和报表下载为 Excel 或 CSV。文件只包含此人有权查看的内容，每次导出都会记入活动日志。",
+  'errors.export_too_large': "一个文件最多容纳 {max} 行。请先用筛选缩小列表，再重新导出。",
 };
