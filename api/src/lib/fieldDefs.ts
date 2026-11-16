@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { normalizeValue } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
+import { LOCALES } from '../../../shared/src/i18n/core';
 import { calculated, FIELD_TYPES, OPTION_COLORS, type AccountField } from '../../../shared/src/model';
 import { fail } from './errors';
 
@@ -26,10 +27,11 @@ export function cleanFields(defs: AccountField[], input: Record<string, unknown>
 
 
 const roleKey = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,40}$/);
-const label60 = z.object({ en: z.string().trim().max(80).optional(), tr: z.string().trim().max(80).optional() });
+// A label in each language the company writes it in (any of the nine).
+const label60 = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(80).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> });
 export const fieldSchema = z.object({
   key: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
-  label: label60.refine((l) => !!(l.en || l.tr)),
+  label: label60.refine((l) => Object.values(l).some(Boolean)),
   type: z.enum(FIELD_TYPES),
   options: z
     .array(z.object({ key: z.string().regex(/^[a-z0-9_]{1,40}$/), label: label60, value: z.string().max(200).optional(), color: z.enum(OPTION_COLORS).optional() }))

@@ -3,11 +3,13 @@
 import { z } from 'zod';
 import { normalizeValue } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
+import { LOCALES } from '../../../shared/src/i18n/core';
 import { OPTION_COLORS, TASK_FIELD_TYPES, type AccountField, type TaskField, type TaskFieldValue } from '../../../shared/src/model';
 import type { Q } from '../db';
 import { fail } from './errors';
 
-const label = z.object({ en: z.string().trim().max(80).optional(), tr: z.string().trim().max(80).optional() }).refine((l) => !!(l.en || l.tr));
+// A label in each language the company writes it in (any of the nine).
+const label = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(80).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> }).refine((l) => Object.values(l).some(Boolean));
 
 export const taskFieldsSchema = z
   .array(
