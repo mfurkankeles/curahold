@@ -106,4 +106,3 @@
 
 /* The bulk bar sits on the dark well: its fields keep their own ink, its link the bar's. */
 .bulkbar .select, .bulkbar .input { color: var(--ink); }
-.bulkbar .linkbtn { color: var(--on-fill); text-decoration: underline; }
