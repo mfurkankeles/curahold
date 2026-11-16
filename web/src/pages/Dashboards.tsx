@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { Card, Page } from '../../../shared/src/pages';
 import { DASHBOARD_TEMPLATES } from '../../../shared/src/reports';
-import { ChartGlyph } from '../components/Charts';
+import { ChartGlyph } from '../components/ChartGlyph';
 import { EmptyState, ErrorState, LoadError, NotAllowed, SkeletonCards } from '../components/Empty';
 import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 import { MenuButton, type MenuItem } from '../components/Menus';

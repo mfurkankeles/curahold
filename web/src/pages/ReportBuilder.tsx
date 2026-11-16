@@ -28,7 +28,8 @@ import {
   type SavedReport,
 } from '../../../shared/src/reports';
 import { AccountPicker } from '../components/AccountPicker';
-import { ChartGlyph, useReportFormat } from '../components/Charts';
+import { useReportFormat } from '../components/Charts';
+import { ChartGlyph } from '../components/ChartGlyph';
 import { formatOf, ReportView } from '../components/ReportView';
 import { EmptyState, ErrorState, LoadError, SkeletonCards, useAfter } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
