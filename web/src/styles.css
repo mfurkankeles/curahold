@@ -2112,19 +2112,6 @@ strong, b { font-weight: 700; }
 .reports__grid .sheet + .sheet { margin-top: 0; }
 .reports__wide { grid-column: 1 / -1; }
 .reports__h { display: flex; align-items: center; gap: 8px; margin: 28px 0 12px; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 650; }
-.chart { margin: 0; }
-.chart__plot { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; height: 190px; align-items: end; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--line) calc(25% - 1px), var(--line) 25%); background-size: 100% calc(100% - 22px); background-repeat: no-repeat; }
-.chart__col { display: grid; grid-template-rows: minmax(0, 1fr) 22px; height: 100%; min-width: 0; }
-.chart__bars { display: flex; align-items: flex-end; justify-content: center; gap: 4px; min-height: 0; }
-.chart__bar { position: relative; width: min(16px, 38%); border-start-start-radius: var(--r-xs); border-start-end-radius: var(--r-xs); border-end-end-radius: 0; border-end-start-radius: 0; min-height: 0; }
-.chart__bar b { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); font-size: var(--fs-2xs); font-weight: 600; color: var(--ink-2); }
-.chart__bar--in { background: var(--calm); }
-.chart__bar--out { background: var(--brand); }
-.chart__tick { display: flex; justify-content: center; font-size: var(--fs-2xs); color: var(--ink-3); white-space: nowrap; padding-top: 4px; }
-.chart__legend { display: flex; gap: 16px; font-size: var(--fs-xs); color: var(--ink-2); margin-top: 8px; }
-.chart__key { display: inline-block; width: 10px; height: 10px; border-radius: var(--r-xs); margin-inline-end: 4px; vertical-align: -1px; }
-.chart__key--in { background: var(--calm); }
-.chart__key--out { background: var(--brand); }
 .barrows { list-style: none; margin: 0; padding: 0; display: grid; row-gap: 4px; }
 .barrows__row { display: grid; gap: 12px; align-items: center; width: 100%; padding: 8px 4px; border: 0; background: none; border-radius: var(--r-m); text-align: start; color: var(--ink); font-size: var(--fs-s); }
 /* One set of columns for the whole list (label, bar, count, number): the rows are subgrids of it,

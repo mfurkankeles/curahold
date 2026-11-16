@@ -34,8 +34,8 @@
 .barrows li:nth-child(3) .barrows__fill, .hbar:nth-child(3) .hbar__fill { --n: 2; }
 .barrows li:nth-child(4) .barrows__fill, .hbar:nth-child(4) .hbar__fill { --n: 3; }
 .barrows li:nth-child(n + 5) .barrows__fill, .hbar:nth-child(n + 5) .hbar__fill { --n: 4; }
-.chart__bar, .vbar__fill { animation: grow-h var(--dur) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 20ms); }
-.chart__bar b, .vbar__n { animation: fade-in var(--dur) ease backwards; animation-delay: calc(var(--dur) + var(--i, 0) * 20ms); }
+.vbar__fill { animation: grow-h var(--dur) var(--ease) backwards; animation-delay: calc(var(--i, 0) * 20ms); }
+.vbar__n { animation: fade-in var(--dur) ease backwards; animation-delay: calc(var(--dur) + var(--i, 0) * 20ms); }
 .healthbar span { animation: grow-flex var(--dur) var(--ease) backwards; }
 /* A line is drawn left to right (a wipe, so the stroke stays crisp at any width). */
 .linechart__plot svg { animation: wipe var(--dur) var(--ease) backwards; }
