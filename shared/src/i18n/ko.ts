@@ -3560,6 +3560,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "{n}개 대기시킴",
   'pm.chain.waitsTitle': "직접 {direct}개, 체인 전체에서 {n}개 대기 중",
   'pm.chain.holdsTitle': "체인에서 {n}개 작업이 이 작업을 기다립니다",
+  'pm.view.label': "보기",
   'pm.card.ownerOf': "{title} 담당자: {name}",
   'pm.card.noOwnerOf': "{title} 담당자: 아직 없음",
   'pm.card.noOwner': "없음",

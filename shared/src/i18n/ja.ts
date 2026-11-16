@@ -3560,6 +3560,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "{n}件を待たせています",
   'pm.chain.waitsTitle': "直接 {direct} 件、連鎖全体で {n} 件待ち",
   'pm.chain.holdsTitle': "連鎖内の {n} 件がこのタスクを待っています",
+  'pm.view.label': "表示",
   'pm.card.ownerOf': "{title} の担当者：{name}",
   'pm.card.noOwnerOf': "{title} の担当者：未設定",
   'pm.card.noOwner': "なし",

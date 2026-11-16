@@ -3560,6 +3560,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "تؤخر {n}",
   'pm.chain.waitsTitle': "بانتظار {direct} مباشرةً، و{n} في السلسلة كلها",
   'pm.chain.holdsTitle': "{n} مهام في السلسلة تنتظر هذه",
+  'pm.view.label': "العرض",
   'pm.card.ownerOf': "مسؤول {title}: {name}",
   'pm.card.noOwnerOf': "مسؤول {title}: لا أحد بعد",
   'pm.card.noOwner': "لا أحد",

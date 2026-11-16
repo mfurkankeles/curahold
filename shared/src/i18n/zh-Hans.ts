@@ -3560,6 +3560,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "阻塞 {n} 项",
   'pm.chain.waitsTitle': "直接等待 {direct} 项，整条链共 {n} 项",
   'pm.chain.holdsTitle': "链中有 {n} 项在等待此任务",
+  'pm.view.label': "视图",
   'pm.card.ownerOf': "{title} 的负责人：{name}",
   'pm.card.noOwnerOf': "{title} 的负责人：暂无",
   'pm.card.noOwner': "无人",

@@ -7,6 +7,7 @@ import { ApiFailure, del, get, post, put, patch } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { usePresence } from '../lib/live';
 import { setQuery } from '../lib/router';
+import { usePhone } from './FilterSheet';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { positionBetween, saveTask } from '../lib/tasks';
@@ -59,6 +60,7 @@ type Tab = 'board' | 'list' | 'roadmap';
 export function SprintsView({ board, refreshKey }: { board: Board; refreshKey: number }) {
   const { t } = useI18n();
   const { canWrite } = useStore();
+  const phone = usePhone();
   const { sprints, failed, reload } = useSprints(board.id, refreshKey);
   const [tab, setTab] = useState<Tab>('board');
   const [editing, setEditing] = useState<Sprint | 'new' | null>(null);
@@ -75,13 +77,39 @@ export function SprintsView({ board, refreshKey }: { board: Board; refreshKey: n
   return (
     <div className="page pm-page">
       <div className="pm-bar-row">
-        <div className="seg" role="group">
-          {(['board', 'list', 'roadmap'] as const).map((k) => (
-            <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>
-              {t(`pm.tab.${k}`)}
-            </button>
-          ))}
-        </div>
+        {phone ? (
+          // On a phone the board's views and the sprint's tabs are one picker on one line, so the sprint comes up.
+          <select
+            className="select pm-viewpick"
+            aria-label={t('pm.view.label')}
+            value={`sprints:${tab}`}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v.startsWith('sprints:')) setTab(v.slice(8) as Tab);
+              else setQuery('view', v === 'board' ? null : v);
+            }}
+          >
+            <option value="board">{t('board.view.board')}</option>
+            <option value="list">{t('board.view.list')}</option>
+            <option value="backlog">{t('pm.backlog')}</option>
+            <optgroup label={t('pm.sprints')}>
+              {(['board', 'list', 'roadmap'] as const).map((k) => (
+                <option key={k} value={`sprints:${k}`}>
+                  {t(`pm.tab.${k}`)}
+                </option>
+              ))}
+            </optgroup>
+            <option value="archive">{t('board.view.archive')}</option>
+          </select>
+        ) : (
+          <div className="seg" role="group">
+            {(['board', 'list', 'roadmap'] as const).map((k) => (
+              <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>
+                {t(`pm.tab.${k}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="topbar__spacer" />
         {canWrite && (
           <button className="btn btn--primary btn--small" aria-label={t('pm.sprint.new')} onClick={() => setEditing('new')}>

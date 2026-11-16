@@ -3560,6 +3560,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "مانع {n} کار",
   'pm.chain.waitsTitle': "مستقیم منتظر {direct} کار و در کل زنجیره منتظر {n} کار",
   'pm.chain.holdsTitle': "{n} کار در زنجیره منتظر این کارند",
+  'pm.view.label': "نما",
   'pm.card.ownerOf': "مسئول {title}: {name}",
   'pm.card.noOwnerOf': "مسئول {title}: هنوز کسی نیست",
   'pm.card.noOwner': "هیچ‌کس",

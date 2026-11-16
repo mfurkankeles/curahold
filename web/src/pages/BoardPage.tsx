@@ -197,7 +197,8 @@ export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view
         )}
         <div className="toolbar">
           {view !== 'archive' && !pmView && <FilterBar board={board} filters={filters} onChange={setFilters} viewSwitch={phone ? viewSwitch : undefined} />}
-          {(!phone || view === 'archive' || (pmView && view !== 'backlog')) && viewSwitch}
+          {/* On a phone the sprints view has the views in its own picker (Sprints.tsx). */}
+          {(!phone || view === 'archive' || (pmView && view !== 'backlog' && view !== 'sprints')) && viewSwitch}
           {!phone && view === 'list' && exportMenu}
           {!phone && formButton}
           {view !== 'archive' && canWrite && (

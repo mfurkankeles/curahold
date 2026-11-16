@@ -294,7 +294,7 @@
 .pm-chain__task[data-done] .pm-chain__title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
 .pm-chain__where { margin-inline-start: auto; font-size: var(--fs-xs); color: var(--ink-2); }
 @media (pointer: coarse) {
-  .pm-chain__title { min-height: var(--tap); }
+  .pm-chain__task > button.pm-chain__title { display: inline-flex; align-items: center; min-height: var(--tap); }
 }
 
 /* ---------------------------------------------------------------- sprint cards: type, points and owner changed in place */
@@ -320,3 +320,10 @@
   .pm-chainchip__long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .pm-chainchip__short { display: inline; }
 }
+
+/* ---------------------------------------------------------------- phone: the views and the sprint's tabs in one picker */
+.pm-viewpick { field-sizing: content; width: auto; flex: 0 1 auto; min-width: 0; max-width: 100%; font-weight: 600; }
+@media (max-width: 860px) {
+  .pm-page > .pm-bar-row { margin-bottom: var(--s-3); }
+}
+

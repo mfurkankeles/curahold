@@ -3555,6 +3555,7 @@ export const tr: Record<MessageKey, string> = {
   'pm.chain.holdsUpShort': "{n} işi bekletiyor",
   'pm.chain.waitsTitle': "Doğrudan {direct}, zincirin tamamında {n} işi bekliyor",
   'pm.chain.holdsTitle': "Zincirde {n} iş bunu bekliyor",
+  'pm.view.label': "Görünüm",
   'pm.card.ownerOf': "{title} sorumlusu: {name}",
   'pm.card.noOwnerOf': "{title} sorumlusu: henüz yok",
   'pm.card.noOwner': "Kimse",

@@ -3570,6 +3570,7 @@ export const en = {
   'pm.chain.holdsUpShort': "Holds up {n}",
   'pm.chain.waitsTitle': "Waiting for {direct} directly, {n} in the whole chain",
   'pm.chain.holdsTitle': "{n} tasks in the chain wait for this one",
+  'pm.view.label': "View",
   'pm.card.ownerOf': "Owner of {title}: {name}",
   'pm.card.noOwnerOf': "Owner of {title}: nobody yet",
   'pm.card.noOwner': "Nobody",

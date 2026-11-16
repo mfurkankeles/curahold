@@ -3560,6 +3560,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'pm.chain.holdsUpShort': "מעכבת {n}",
   'pm.chain.waitsTitle': "ממתינה ל-{direct} ישירות, ל-{n} בכל השרשרת",
   'pm.chain.holdsTitle': "{n} משימות בשרשרת ממתינות לזו",
+  'pm.view.label': "תצוגה",
   'pm.card.ownerOf': "האחראי על {title}: {name}",
   'pm.card.noOwnerOf': "האחראי על {title}: עדיין אין",
   'pm.card.noOwner': "אף אחד",
