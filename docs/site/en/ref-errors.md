@@ -10,6 +10,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 
 | Code | Status | What the person is told |
 | --- | --- | --- |
+| `backup_not_admin` | 400 | Only active administrators can be backup administrators. |
 | `bad_assignee` | 400 | Tasks can only be assigned to active people with a full seat in your company. |
 | `bad_status` | 400 | That column does not exist on this board. |
 | `bad_webhook_url` | 400 | Use a public https address for webhooks. |
@@ -76,6 +77,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `second_step_required` | 409 | Your company requires a second step. Add another one before removing this. |
 | `second_step_setup_first` | 409 | Set up your own second step first, so you can't be locked out. |
 | `slug_taken` | 409 | That address is taken. Try another one. |
+| `sso_no_backup` | 409 | Choose at least one backup administrator with a passkey or authenticator app before you require SSO, so a provider outage cannot lock everyone out. |
 | `sso_untested` | 409 | Test sign-in through your identity provider with these details first; then SSO can be required. |
 | `support_too_many` | 409 | You already have five open support accesses. Close one first. |
 | `sync_running` | 409 | A sync is already running for this connection. Try again in a minute. |

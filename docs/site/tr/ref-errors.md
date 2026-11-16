@@ -10,6 +10,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 
 | Kod | Durum | Kişiye söylenen |
 | --- | --- | --- |
+| `backup_not_admin` | 400 | Yalnızca etkin yöneticiler yedek yönetici olabilir. |
 | `bad_assignee` | 400 | Görevler yalnızca şirketindeki, tam koltuğu olan aktif kişilere atanabilir. |
 | `bad_status` | 400 | Bu panoda böyle bir sütun yok. |
 | `bad_webhook_url` | 400 | Webhook için herkese açık bir https adresi kullan. |
@@ -76,6 +77,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `second_step_required` | 409 | Şirketin ikinci adımı zorunlu tutuyor. Bunu kaldırmadan önce başka bir tane ekle. |
 | `second_step_setup_first` | 409 | Önce kendi ikinci adımını kur; böylece dışarıda kalmazsın. |
 | `slug_taken` | 409 | Bu adres alınmış. Başka bir tane dene. |
+| `sso_no_backup` | 409 | SSO'yu zorunlu kılmadan önce passkey'i ya da doğrulama uygulaması olan en az bir yedek yönetici seç; böylece sağlayıcı çökerse herkes dışarıda kalmaz. |
 | `sso_untested` | 409 | Önce bu bilgilerle kimlik sağlayıcın üzerinden girişi dene; sonra SSO zorunlu kılınabilir. |
 | `support_too_many` | 409 | Zaten açık beş destek erişimin var. Önce birini kapat. |
 | `sync_running` | 409 | Bu bağlantı için şu anda bir eşitleme çalışıyor. Bir dakika sonra tekrar deneyin. |
