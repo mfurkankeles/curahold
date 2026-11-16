@@ -92,6 +92,12 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
   self-hosted install every outbound call also resolves the name and checks each address, redirects included
   (`api/src/lib/outbound.ts`; `OUTBOUND_ALLOW_HOSTS` for named internal services). DNS rebinding between check and
   connection remains possible there: an egress firewall is the second line.
+- **Curahold's own console**: on the hosted service the in-app `/platform` and `/metrics` answer 404 to everyone, the
+  platform owner's own company session with a second step included; only a single-company install (self-hosted, where
+  the operator is the company) has them (`inAppConsole`, from `SINGLE_TENANT_SLUG`). The console lives at desk.<domain>
+  with a session of its own; its live room (`api/src/live/platform.ts`) admits only a desk session (no staff key), with
+  a ticket signed apart from a company's, and carries a fingerprint, never a figure (`tests/platform.test.ts`,
+  `tests/live-platform.test.ts`).
 - **Logs**: the error table and the platform log mask bearer tokens, keys, secret links, `token=`-style values and email
   addresses (`redact()` in `api/src/lib/errlog.ts`, `tests/redact.test.ts`).
 

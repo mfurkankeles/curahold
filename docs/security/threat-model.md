@@ -73,6 +73,8 @@ The ASVS / API Top 10 pass that goes item by item is [asvs.md](asvs.md).
 | A6 reads a company's data at will | support grant given by the company, time-boxed, read only (edit refused, database check), entry and reads logged in the company's audit trail; replay only with consent, 7 days | `tests/support.test.ts`, `tests/help.test.ts`, `tests/replay.test.ts` | held |
 | A6 account taken over | desk sign-in by emailed code + authenticator app; console only from a session with a second step; per-person staff keys | `tests/desk.test.ts`, `tests/platform.test.ts` | held (staff keys for tooling remain a single factor: keep them in a secret store) |
 | A6 action not attributable | staff email on every support session and audit entry | `tests/support.test.ts` | held |
+| A3/A6 a company session (even the owner's, with a second step) reads across companies through the in-app pages | on the hosted service `/platform` and `/metrics` do not exist (404 for everyone); the console is desk.<domain> with its own session; only a single-company install has the in-app pages | `tests/platform.test.ts` (every in-app and desk address with a hosted company session), `tests/security.test.ts` | held |
+| Anyone listens to the console's live room | desk session only (no staff key), desk host only, a ticket signed apart from a company's; ended sessions and people off the staff list are let go; it carries a fingerprint, never a figure | `tests/live-platform.test.ts` | held |
 
 ## 6. Sales site, help centre, live demo
 
