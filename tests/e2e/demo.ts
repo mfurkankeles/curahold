@@ -80,6 +80,20 @@ async function chooseTurkish(f: NonNullable<typeof frame>, who: string) {
   await f.waitForFunction(() => !document.getElementById('boot') && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push(`${who}: choosing Turkish did not give a Turkish demo`));
 }
 if (ok) await chooseTurkish(frame!, 'desktop');
+// Every language the demo company is written in: Arabic here, right to left, its own data, nothing left in Turkish.
+if (ok) {
+  const tl = Date.now();
+  await frame!.select('.demobar__lang select', 'ar');
+  await frame!.waitForFunction(() => !document.getElementById('boot') && document.documentElement.dir === 'rtl' && (document.querySelector('.sidebar')?.textContent ?? '').includes('العملاء'), { timeout: 60000 }).catch(() => errors.push('choosing Arabic did not give an Arabic demo'));
+  await frame!.waitForFunction(() => !!(globalThis as any).__demo, { timeout: 10000 }).catch(() => undefined);
+  const seen = await frame!.evaluate(() => ({ left: (globalThis as any).__demo?.untranslated?.() ?? ['?'], bar: document.querySelector('.demobar__tours')?.textContent ?? '', who: document.querySelector('.sidebar')?.textContent ?? '' })).catch(() => ({ left: ['?'], bar: '', who: '' }));
+  if (seen.left.length) errors.push(`Arabic demo: seed texts left unsaid: ${seen.left.slice(0, 5).join(' | ')}`);
+  if (seen.bar !== 'كل الجولات') errors.push(`Arabic demo: the bar is not in Arabic (${seen.bar})`);
+  if (/Demo Company|Quillfield|Velto/.test(seen.who)) errors.push('Arabic demo: English names in the sidebar');
+  console.log(`arabic demo ready in ${Date.now() - tl} ms`);
+  await frame!.select('.demobar__lang select', 'tr');
+  await frame!.waitForFunction(() => !document.getElementById('boot') && document.documentElement.dir === 'ltr' && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push('back to Turkish did not work'));
+}
 console.log('money:', await frame!.$$eval('.pane', (els) => els.slice(1, 2).map((e) => e.textContent?.slice(0, 40))).catch(() => '?'));
 const step = await frame!.$eval('#boot-step', (e) => e.textContent).catch(() => null);
 if (step) console.log('boot text:', step);

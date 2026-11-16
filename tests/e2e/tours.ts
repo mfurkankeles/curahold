@@ -13,8 +13,9 @@ import { TOURS } from '../../shared/src/tours';
 import { SCREENS } from './browser';
 
 const HUB = join(import.meta.dirname, '..', '..', 'dist', 'demo-hub');
-const CSP = ["default-src 'self'", "script-src 'self' 'wasm-unsafe-eval'", "style-src 'self' 'unsafe-inline'", 'img-src data: blob:', "font-src 'self' data:", "connect-src 'self'"].join('; ');
-const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.json': 'application/json' };
+// Nothing from any other address. The hub's pictures (real screens of the demo, one set per language) are its own files.
+const CSP = ["default-src 'self'", "script-src 'self' 'wasm-unsafe-eval'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self' data:", "connect-src 'self'"].join('; ');
+const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.json': 'application/json', '.webp': 'image/webp' };
 const PORT = Number(process.env.DEMO_PORT ?? 8931);
 mkdirSync(SCREENS, { recursive: true });
 const server = createServer((req, res) => {
@@ -106,7 +107,21 @@ const t0 = Date.now();
   await tr.page.screenshot({ path: join(SCREENS, 'hub-tr-phone.png') });
   if (tr.errors.length) fail(`hub tr: ${tr.errors.join(' | ')}`);
   await tr.page.close();
-  console.log(`hub: ${TOURS.length} tours, filters, both languages — ${failures.length ? 'problems above' : 'fine'}`);
+  // Every other language: its own page, the right direction, its own picture of the product, a phone's width.
+  for (const l of ['ar', 'he', 'fa', 'ja', 'zh-Hans', 'zh-Hant', 'ko']) {
+    const x = await open(`${l}/`, 390, 844);
+    await x.page.waitForSelector('.hub-card');
+    await x.page.waitForFunction(() => [...document.images].every((i) => i.complete), { timeout: 10000 }).catch(() => undefined);
+    const seen = await x.page.evaluate(() => ({ lang: document.documentElement.lang, dir: document.documentElement.dir, shot: (document.querySelector('.hub-shot img') as HTMLImageElement | null)?.currentSrc ?? '', loaded: [...document.images].every((i) => i.naturalWidth > 0), wide: document.documentElement.scrollWidth > innerWidth, link: document.querySelector('.hub-card .btn')?.getAttribute('href') ?? '' }));
+    const rtl = ['ar', 'he', 'fa'].includes(l);
+    if (seen.lang !== l || seen.dir !== (rtl ? 'rtl' : 'ltr')) fail(`hub ${l}: lang ${seen.lang}, dir ${seen.dir}`);
+    if (!seen.shot.includes(`/${l}-`) || !seen.loaded) fail(`hub ${l}: picture ${seen.shot || 'missing'}${seen.loaded ? '' : ' (not loaded)'}`);
+    if (seen.wide) fail(`hub ${l}: wider than a phone`);
+    if (!seen.link.endsWith(`#${l}`)) fail(`hub ${l}: tour link ${seen.link}`);
+    if (x.errors.length) fail(`hub ${l}: ${x.errors.join(' | ')}`);
+    await x.page.close();
+  }
+  console.log(`hub: ${TOURS.length} tours, filters, nine languages — ${failures.length ? 'problems above' : 'fine'}`);
 }
 
 // ----------------------------------------------------------------- the tours
