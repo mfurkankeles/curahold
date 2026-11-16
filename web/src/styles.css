@@ -790,15 +790,6 @@ tr.vspacer td { padding: 0; border: 0; }
 .dialog__box--wide { width: min(760px, 100%); }
 .error-text { color: var(--late); font-size: var(--fs-s); margin: 0; }
 
-/* admin area */
-.admin { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 28px; align-items: start; }
-.admin__nav { position: sticky; top: 0; display: grid; gap: 12px; }
-.admin__navselect { display: none; }
-.admin__grouplabel { font-size: var(--fs-xs); color: var(--ink-3); margin-block: 0 4px; margin-inline-start: 8px; margin-inline-end: 0; }
-.admin__link { display: block; padding: 8px 8px; border-radius: var(--r-s); color: var(--ink-2); text-decoration: none; border-inline-start: 3px solid transparent; }
-.admin__link:hover { background: var(--sunk); color: var(--ink); }
-.admin__link[aria-current='page'] { background: var(--surface); color: var(--ink); font-weight: 600; border-inline-start-color: var(--brand); box-shadow: inset 0 0 0 1px var(--line); }
-.admin__content { min-width: 0; max-width: 980px; }
 
 /* setup wizard: a vertical rail that fills in as you go */
 .wizard { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
@@ -998,10 +989,7 @@ tr.vspacer td { padding: 0; border: 0; }
 .auth__card:has(.signup-form) { width: min(460px, 100%); }
 
 @media (max-width: 860px) {
-  .admin, .wizard { grid-template-columns: 1fr; gap: 12px; }
-  .admin__nav { position: static; }
-  .admin__group { display: none; }
-  .admin__navselect { display: block; }
+  .wizard { grid-template-columns: 1fr; gap: 12px; }
   .wizard__rail { position: static; display: flex; overflow-x: auto; gap: 4px; }
   .wizard__rail li + li::before { display: none; }
   .wizard__label { display: none; }
@@ -2415,8 +2403,8 @@ a.targetline:hover { border-color: var(--line-strong); }
 
 /* An icon in front of a heading, a tab or a label: what the thing is about, before the words are read. */
 .icon--lead { display: inline-block; flex: none; vertical-align: -0.2em; margin-inline-end: .5em; color: var(--brand-ink); }
-.tab .icon--lead, .admin__link .icon--lead, .props__label .icon--lead { color: currentColor; opacity: .7; margin-inline-end: .45em; }
-.tab:is([aria-selected='true'], [aria-current='page']) .icon--lead, .admin__link[aria-current='page'] .icon--lead { color: var(--brand-ink); opacity: 1; }
+.tab .icon--lead, .props__label .icon--lead { color: currentColor; opacity: .7; margin-inline-end: .45em; }
+.tab:is([aria-selected='true'], [aria-current='page']) .icon--lead { color: var(--brand-ink); opacity: 1; }
 .group__head .icon--lead, .section__head .icon--lead { margin-inline-end: 0; }
 /* A group that is late or due today already speaks in its own colour; its icon says the same. */
 .group[data-due='late'] .group__head .icon--lead, .group[data-due='today'] .group__head .icon--lead { color: currentColor; }
