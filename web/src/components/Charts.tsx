@@ -324,7 +324,7 @@ function Line({ r, label, compact }: Drawn) {
       <div className="linechart__x" aria-hidden="true">
         {r.groups.map((g, k) =>
           shown(k) ? (
-            <span key={g.key} data-thin={(k / every) % 3 !== 0 || undefined} data-edge={x(k) < 8 ? 'start' : x(k) > 92 ? 'end' : undefined} style={{ left: `${x(k)}%` }}>
+            <span key={g.key} data-thin={(k / every) % 2 !== 0 || undefined} data-edge={x(k) < 8 ? 'start' : x(k) > 92 ? 'end' : undefined} style={{ left: `${x(k)}%` }}>
               {label(g)}
             </span>
           ) : null,
