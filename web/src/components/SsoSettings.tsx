@@ -141,7 +141,7 @@ export function SsoSettings() {
     <label className="field">
       <span className="field__label">{label}</span>
       <span className="sso__copyrow">
-        <input className="input sso__mono" readOnly value={value} onFocus={(e) => e.currentTarget.select()} />
+        <input className="input sso__mono" dir="ltr" readOnly value={value} onFocus={(e) => e.currentTarget.select()} />
         <button type="button" className="btn" onClick={() => void copy(value)}>
           <Icon name="copy" size={16} />
           {k('sso.copy')}
@@ -198,7 +198,7 @@ export function SsoSettings() {
             <Field label={k('sso.saml.ssoUrl')} value={form.ssoUrl} onChange={(v) => set('ssoUrl', v)} />
             <label className="field">
               <span className="field__label">{k('sso.saml.cert')}</span>
-              <textarea className="input sso__mono" rows={4} value={form.cert} onChange={(e) => set('cert', e.target.value)} />
+              <textarea className="input sso__mono" dir="ltr" rows={4} value={form.cert} onChange={(e) => set('cert', e.target.value)} />
               {data.config?.certSet && <span className="field__hint">{k('sso.secretKept')}</span>}
             </label>
           </>

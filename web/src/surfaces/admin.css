@@ -184,7 +184,11 @@
   .admin__content .kv dd + dt { margin-block-start: 8px; }
 }
 .rule__actions { display: flex; align-items: center; gap: 4px; flex: none; }
-@media (max-width: 860px) { .rule { grid-template-columns: auto minmax(0, 1fr) auto; } }
+@media (max-width: 860px) {
+  /* A phone: the sentence gets the width, its actions sit under it. */
+  .rule { grid-template-columns: auto minmax(0, 1fr); }
+  .rule__actions { grid-column: 2; justify-self: start; }
+}
 /* A button for the keyboard only: hidden until it has the focus, then a normal button. */
 .sr-only.admin-reveal:focus-visible { position: static; width: auto; height: auto; margin: 8px 0 0; padding: 4px 12px; clip: auto; clip-path: none; overflow: visible; white-space: normal; border: 1px solid var(--line-strong); border-radius: var(--r-s); background: var(--surface); color: var(--ink); }
 
