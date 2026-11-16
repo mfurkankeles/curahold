@@ -32,6 +32,11 @@ describe('the platform owner fails closed', () => {
       expect((await ada.get('/api/me')).json.owner).toBe(false);
       expect((await ada.get('/api/metrics')).status).toBe(403);
       env.config.owner = 'ada@demo.example';
+      // The owner is Curahold staff: the metrics open only from a session that passed a second step.
+      const bare = await ada.get('/api/metrics');
+      expect(bare.status).toBe(403);
+      expect(bare.json.error).toBe('staff_second_step');
+      await env.db.system((q) => q.query(`update sessions set second_step = 'passkey' where user_id = $1`, [env.a.ids.ada]));
       expect((await ada.get('/api/metrics')).status).toBe(200);
       expect((await zeynep.get('/api/metrics')).status).toBe(403);
     } finally {

@@ -2,6 +2,7 @@
  "api/src/connectors/messaging/index.ts :: delete from chat_identities where connection_id = $1 and external_id =",
  "api/src/connectors/messaging/index.ts :: select * from connections where provider = $1 and external_id = $2 and",
  "api/src/lib/chatActions.ts :: select u.id, u.name, u.locale, i.data from chat_identities i join user",
+ "api/src/lib/console.ts :: select count(*) filter (where h.status = 'received')::int as waiting, ",
  "api/src/lib/helpThread.ts :: select * from help_requests where reply_token = any ($1)",
  "api/src/lib/helpThread.ts :: select 1 from help_messages where email_id = $1",
  "api/src/lib/helpThread.ts :: select h.* from help_requests h join help_messages m on m.request_id =",
