@@ -70,8 +70,9 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `GET /checklists` | Kontrol listesi şablonları. |
 | `POST /checklists` | Kontrol listesi şablonu kaydeder. |
 | `DELETE /checklists/:id` | Kontrol listesi şablonunu siler. |
-| `GET /views` | Bir panodaki kayıtlı görünümlerin (filtreler, gruplama, sıra). |
-| `POST /views` | Görünüm kaydeder. |
+| `GET /views` | Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`). |
+| `GET /views/:id` | Bağlantısıyla açmak için tek bir kayıtlı görünüm: senin ya da şirketle paylaşılmış olan. |
+| `POST /views` | Görünüm kaydeder: `scope` (varsayılan `board`, `boardId` ile), `name`, `filters` (bir panonun filtresi ya da başka bir listenin düz durumu: filtre, sıra, sütunlar, düzen) ve `shared`. |
 | `PATCH /views/:id` | Kayıtlı görünümü değiştirir. |
 | `DELETE /views/:id` | Kayıtlı görünümü siler. |
 
@@ -535,19 +536,24 @@ Kontrol listesi şablonunu siler.
 
 ### `GET /views`
 
-Bir panodaki kayıtlı görünümlerin (filtreler, gruplama, sıra).
+Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`).
 
-**Sorgu:** `board`
+**Sorgu:** `board`, `scope`
+
+### `GET /views/:id`
+
+Bağlantısıyla açmak için tek bir kayıtlı görünüm: senin ya da şirketle paylaşılmış olan.
 
 ### `POST /views`
 
-Görünüm kaydeder.
+Görünüm kaydeder: `scope` (varsayılan `board`, `boardId` ile), `name`, `filters` (bir panonun filtresi ya da başka bir listenin düz durumu: filtre, sıra, sütunlar, düzen) ve `shared`.
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
+| `scope` | metin | isteğe bağlı |  |
 | `boardId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
-| `filters` | nesne | zorunlu |  |
+| `filters` | herhangi bir değer | zorunlu |  |
 | `shared` | evet/hayır | isteğe bağlı |  |
 
 ### `PATCH /views/:id`
@@ -557,7 +563,7 @@ Kayıtlı görünümü değiştirir.
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
 | `name` | metin | isteğe bağlı | en az 1 karakter; en çok 80 karakter |
-| `filters` | nesne | isteğe bağlı |  |
+| `filters` | herhangi bir değer | isteğe bağlı |  |
 | `shared` | evet/hayır | isteğe bağlı |  |
 
 ### `DELETE /views/:id`

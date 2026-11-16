@@ -598,8 +598,14 @@ export interface ViewFilters {
   view?: 'board' | 'list' | 'timeline';
 }
 
+/** Which list a saved view belongs to: a board, the customer list, a records list, My tasks, the timeline. */
+export type ViewScope = 'board' | 'accounts' | 'my_tasks' | 'timeline' | `records:${string}`;
+/** How a list other than a board is shown, as a saved view keeps it: flat values only. */
+export type ListState = Record<string, string | number | boolean | null | string[]>;
+
 export interface SavedView {
   id: string;
+  scope: ViewScope;
   boardId: string | null;
   name: string;
   filters: ViewFilters;
@@ -607,6 +613,9 @@ export interface SavedView {
   /** Made by the person asking (they may change or remove it). */
   mine: boolean;
 }
+
+/** A list's saved view: its state in place of a board's filter. */
+export type SavedListView = Omit<SavedView, 'filters'> & { filters: ListState };
 
 export interface ChecklistTemplate {
   id: string;

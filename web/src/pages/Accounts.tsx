@@ -9,7 +9,8 @@ import { calculated, type Account, type AccountField, type Task } from '../../..
 import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
-import { ExportMenu, useExportItems } from '../components/Export';
+import { ExportMenu, useExport } from '../components/Export';
+import { SavedViews } from '../components/SavedViews';
 import type { ExportRequest } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
@@ -91,6 +92,7 @@ export function AccountsPage() {
   const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
   const phone = usePhone();
+  const exporter = useExport();
   const undoable = useServerUndo();
   const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
   const [failed, setFailed] = useState(false);
@@ -279,9 +281,21 @@ export function AccountsPage() {
   const convertedNote = data && (view === 'cards' || view === 'table' || view === 'renewals') && rows.some((a) => a.currency && a.currency !== me.org.currency && money.rates[a.currency]) ? <ConvertedNote currency={me.org.currency} ratesAt={me.org.fx?.updatedAt} /> : null;
   // On a phone the filters, the order and the view switch fold into one sheet (FilterSheet).
   const activeFilters = (owner !== 'all' ? 1 : 0) + (signal ? 1 : 0) + (archived ? 1 : 0);
+  // A saved view keeps the filter, the order, the card fields and the layout (components/SavedViews.tsx).
+  const viewState = { q: q.trim(), owner, archived, signal, layout, cardSort, sortKey: sort.key, sortDir: sort.dir, fields: shownKeys };
+  const applyView = (v: Partial<typeof viewState>) => {
+    setQ(typeof v.q === 'string' ? v.q : '');
+    setOwner(typeof v.owner === 'string' && v.owner ? v.owner : 'all');
+    setArchived(v.archived === true);
+    setSignal(((typeof v.signal === 'string' ? v.signal : '') as SignalFilter) || '');
+    if (v.layout === 'cards' || v.layout === 'table') setLayout(v.layout);
+    if (typeof v.cardSort === 'string' && (CARD_SORTS as readonly string[]).includes(v.cardSort)) setCardSort(v.cardSort as (typeof CARD_SORTS)[number]);
+    if (typeof v.sortKey === 'string') setSort({ key: v.sortKey, dir: v.sortDir === -1 ? -1 : 1 });
+    if (Array.isArray(v.fields)) setShownKeys(v.fields.filter((k): k is string => typeof k === 'string').slice(0, 6));
+  };
   // The file is made by the server from the same filter the list shows (POST /exports).
   const exportAsk = (): ExportRequest => ({ source: 'accounts', q: q.trim() || undefined, owner: owner !== 'all' ? owner : undefined, archived: archived || undefined });
-  const exportItems = useExportItems(exportAsk, !!data?.total);
+  const exportItems = exporter.items(exportAsk, !!data?.total);
   return (
     <>
       <header className="topbar listtop" data-place={place ?? undefined}>
@@ -436,6 +450,7 @@ export function AccountsPage() {
               )}
             </div>
           </details>
+          <SavedViews scope="accounts" state={viewState} onApply={applyView} />
           </FilterSheet>
         </div>
 

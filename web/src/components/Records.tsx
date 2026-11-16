@@ -10,7 +10,8 @@ import type { Account } from '../../../shared/src/model';
 import { CONTACT_COLUMNS, RECORD_BUILTIN_COLUMNS, fullName, splitName, typeLabel, type AppRecord, type LinkInfo, type RecordType } from '../../../shared/src/records';
 import type { AccountField } from '../../../shared/src/model';
 import { FieldInput, useFieldFormat } from '../pages/Accounts';
-import { ExportMenu, useExportItems } from './Export';
+import { ExportMenu, useExport } from './Export';
+import { SavedViews } from './SavedViews';
 import type { ExportRequest } from '../lib/export';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 import { MenuButton } from './Menus';
@@ -235,6 +236,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { people, person, canWrite, can } = useStore();
   const phone = usePhone();
+  const exporter = useExport();
   const { types, load: loadTypes } = useRecordTypes();
   const type = types?.find((x) => x.key === typeKey) ?? null;
   const [q, setQ] = useState('');
@@ -330,9 +332,19 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
     return fmtDate(r.updatedAt, { day: 'numeric', month: 'short', year: 'numeric' });
   };
   const colLabel = (c: Column) => ('field' in c ? labelOf(c.field.label, locale) : t(`records.col.${c.builtin}` as any, { account: words.one }));
+  // A saved view keeps the filter, the period, the layout and the grouping (components/SavedViews.tsx).
+  const viewState = { q: q.trim(), owner, view, group: groupKey, period, from: range.from, to: range.to };
+  const applyView = (v: Partial<typeof viewState>) => {
+    setQ(typeof v.q === 'string' ? v.q : '');
+    setOwner(typeof v.owner === 'string' ? v.owner : '');
+    if (v.view === 'board' || v.view === 'table') setViewPick(v.view);
+    if (typeof v.group === 'string' && v.group) setGroupPick(v.group);
+    if (typeof v.period === 'string' && (PERIODS as readonly string[]).includes(v.period)) setPeriod(v.period as PeriodPick);
+    setRange({ from: typeof v.from === 'string' ? v.from : '', to: typeof v.to === 'string' ? v.to : '' });
+  };
   // The file is made by the server from the same filter the list shows (POST /exports), the period included.
   const exportAsk = (): ExportRequest => ({ source: 'records', type: typeKey, q: q.trim() || undefined, owner: owner || undefined, span: span && closeField ? { field: closeField.key, from: span.from, to: span.to } : null });
-  const exportItems = useExportItems(exportAsk, !!type && !!data?.total);
+  const exportItems = exporter.items(exportAsk, !!type && !!data?.total);
   // On a phone the view switch, the grouping, the period, the owner and the columns fold into one sheet.
   const activeFilters = (owner ? 1 : 0) + (closeField && period !== 'any' ? 1 : 0);
   const viewSeg = choices.length > 0 && (
@@ -418,6 +430,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
               <Icon name="columns" size={15} /> {t('records.columns')}
             </button>
           )}
+          {type && <SavedViews scope={`records:${type.key}`} state={viewState} onApply={applyView} />}
           </FilterSheet>
         </div>
         {failed && !data ? (

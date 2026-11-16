@@ -14,6 +14,7 @@ import { addDays, dueState, todayIso } from '../lib/time';
 import { intlTag } from '../../../shared/src/i18n';
 import { formatMonth } from '../lib/format';
 import { FilterGroup, FilterSheet } from '../components/FilterSheet';
+import { SavedViews } from '../components/SavedViews';
 import '../surfaces/employee-customers.css';
 
 const GROUPS = ['board', 'person', 'account'] as const;
@@ -158,6 +159,15 @@ export function TimelinePage({ refreshKey }: { refreshKey: number }) {
             ))}
           </select>
           </FilterGroup>
+          <SavedViews
+            scope="timeline"
+            state={{ group, mine, board }}
+            onApply={(v) => {
+              if (typeof v.group === 'string' && (GROUPS as readonly string[]).includes(v.group)) pick(v.group as Group);
+              setMine(v.mine === true);
+              setBoard(typeof v.board === 'string' && boards.some((b) => b.id === v.board) ? v.board : '');
+            }}
+          />
           </FilterSheet>
         </div>
       </header>

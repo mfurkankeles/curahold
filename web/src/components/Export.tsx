@@ -15,11 +15,15 @@ export type ExportKind = ExportFormat;
 /** The request, or a way to make it at the moment of the click (the filter as it is then). */
 type Ask = ExportRequest | (() => ExportRequest);
 
-/** `run(ask, kind)`: the server makes the file; it is saved, and the toast says how many rows. */
+/**
+ * `run(ask, kind)`: the server makes the file; it is saved, and the toast says how many rows.
+ * `items(ask)`: Export's two choices for a "More" menu (a phone header), none without the permission.
+ */
 export function useExport() {
   const { t, locale } = useI18n();
   const { toast, can } = useStore();
   const [busy, setBusy] = useState(false);
+  const allowed = can('data.export');
   const run = async (ask: Ask, kind: ExportKind) => {
     setBusy(true);
     try {
@@ -31,15 +35,11 @@ export function useExport() {
       setBusy(false);
     }
   };
-  return { run, busy, allowed: can('data.export') };
-}
-
-/** Export's two choices for a "More" menu (a phone header): none without the permission. */
-export function useExportItems(ask: Ask, on = true): MenuItem[] {
-  const { t } = useI18n();
-  const { run, allowed } = useExport();
-  if (!allowed || !on) return [];
-  return (['xlsx', 'csv'] as const).map((kind) => ({ key: `export-${kind}`, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void run(ask, kind) }));
+  const items = (ask: Ask, on = true): MenuItem[] =>
+    !allowed || !on
+      ? []
+      : (['xlsx', 'csv'] as const).map((kind) => ({ key: `export-${kind}`, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void run(ask, kind) }));
+  return { run, busy, allowed, items };
 }
 
 export function ExportMenu({ ask, disabled, quiet }: { ask: Ask; disabled?: boolean; quiet?: boolean }) {

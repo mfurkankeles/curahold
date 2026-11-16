@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Task } from '../../../shared/src/model';
+import { PRIORITIES, type Priority, type Task } from '../../../shared/src/model';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
+import { FilterGroup, FilterSheet } from '../components/FilterSheet';
+import { SavedViews } from '../components/SavedViews';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -45,6 +47,11 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [again, setAgain] = useState(0);
   const [failed, setFailed] = useState(false);
+  // A search, a board and a priority narrow the list; a saved view keeps them (components/SavedViews.tsx).
+  const [q, setQ] = useState('');
+  const [board, setBoard] = useState('');
+  const [priority, setPriority] = useState<Priority | ''>('');
+  const narrowed = (board ? 1 : 0) + (priority ? 1 : 0);
 
   useEffect(() => {
     get<{ tasks: Task[] }>('/tasks?assignee=me').then(
@@ -67,7 +74,14 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const groups = useMemo(() => {
     const today = todayIso();
     const week = addDays(today, 7);
-    const open = (tasks ?? []).filter((x) => !isDone(x));
+    const text = q.trim().toLocaleLowerCase();
+    const open = (tasks ?? []).filter(
+      (x) =>
+        !isDone(x) &&
+        (!board || x.boardId === board) &&
+        (!priority || x.priority === priority) &&
+        (!text || x.title.toLocaleLowerCase().includes(text) || (x.accountName ?? '').toLocaleLowerCase().includes(text)),
+    );
     return [
       { key: 'late', label: t('myTasks.group.overdue'), list: open.filter((x) => x.dueDate && x.dueDate < today) },
       { key: 'today', label: t('myTasks.group.today'), list: open.filter((x) => x.dueDate === today) },
@@ -75,7 +89,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
       { key: 'later', label: t('myTasks.group.later'), list: open.filter((x) => x.dueDate && x.dueDate > week) },
       { key: 'none', label: t('myTasks.group.noDate'), list: open.filter((x) => !x.dueDate) },
     ].filter((g) => g.list.length);
-  }, [tasks, doneKeys, t]);
+  }, [tasks, doneKeys, t, q, board, priority]);
   const late = groups.find((g) => g.key === 'late')?.list.length ?? 0;
   const today = groups.find((g) => g.key === 'today')?.list.length ?? 0;
   const open = groups.reduce((n, g) => n + g.list.length, 0);
@@ -110,6 +124,46 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
       </header>
       <div className="page">
         {canWrite && <AddBar label={t('myTasks.addBar')} short={t('myTasks.addBarShort')} onOpen={add} />}
+        {tasks && tasks.length > 0 && (
+          <div className="toolbar u-mb-12">
+            <FilterSheet
+              count={narrowed}
+              onClear={() => (setBoard(''), setPriority(''))}
+              search={<input className="input search" type="search" value={q} placeholder={t('board.searchPlaceholder')} aria-label={t('common.search')} onChange={(e) => setQ(e.target.value)} />}
+            >
+              <FilterGroup label={t('task.board')}>
+                <select className="select u-width-auto" value={board} aria-label={t('task.board')} onChange={(e) => setBoard(e.target.value)}>
+                  <option value="">{t('reports.allBoards')}</option>
+                  {boards.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </FilterGroup>
+              <FilterGroup label={t('task.priority')}>
+                <select className="select u-width-auto" value={priority} aria-label={t('task.priority')} onChange={(e) => setPriority(e.target.value as Priority | '')}>
+                  <option value="">{t('myTasks.anyPriority')}</option>
+                  {[...PRIORITIES].reverse().map((p) => (
+                    <option key={p} value={p}>
+                      {t(`task.priority.${p}`)}
+                    </option>
+                  ))}
+                </select>
+              </FilterGroup>
+              <SavedViews
+                scope="my_tasks"
+                state={{ q: q.trim(), board, priority }}
+                canSave={!!(q.trim() || board || priority)}
+                onApply={(v) => {
+                  setQ(typeof v.q === 'string' ? v.q : '');
+                  setBoard(typeof v.board === 'string' && boards.some((b) => b.id === v.board) ? v.board : '');
+                  setPriority(typeof v.priority === 'string' && (PRIORITIES as readonly string[]).includes(v.priority) ? (v.priority as Priority) : '');
+                }}
+              />
+            </FilterSheet>
+          </div>
+        )}
         {canWrite && selected.size > 0 && (
           <BulkBar
             ids={[...selected]}
@@ -130,7 +184,14 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
           ) : (
             <SkeletonRows rows={6} label={t('common.loading')} />
           ))}
-        {tasks && groups.length === 0 && (
+        {tasks && groups.length === 0 && (q.trim() || narrowed > 0) && (
+          <EmptyState icon="filter" title={t('accounts.noMatch')}>
+            <button className="btn" onClick={() => (setQ(''), setBoard(''), setPriority(''))}>
+              {t('filters.clear')}
+            </button>
+          </EmptyState>
+        )}
+        {tasks && groups.length === 0 && !q.trim() && narrowed === 0 && (
           <EmptyState icon="checkCircle" tone="done" title={t('myTasks.emptyTitle')} body={t('myTasks.emptyBody')}>
             {canWrite && (
               <button className="btn btn--primary" onClick={() => add()}>

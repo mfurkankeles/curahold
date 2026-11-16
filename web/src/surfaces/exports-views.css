@@ -1,0 +1,10 @@
+/* Saved views on every list (components/SavedViews.tsx) and the bulk bars of the
+   customer cards and the records lists. Tokens only (docs/design/tokens.md). */
+.savedviews__body { display: grid; gap: var(--s-2); }
+.savedviews__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
+.savedviews__list .viewrow[data-active] .popmenu__item { background: var(--sunk); font-weight: 600; }
+.savedviews .btn[data-on] { border-color: var(--brand); color: var(--brand-ink); }
+.filtersheet .savedviews__body { gap: var(--s-3); }
+@media (pointer: coarse) {
+  .savedviews__list .btn--icon { min-width: var(--tap); min-height: var(--tap); }
+}

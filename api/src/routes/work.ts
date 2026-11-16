@@ -24,6 +24,7 @@ export const workRoutes = new Hono<AppEnv>();
 
 // ------------------------------------------------------------ saved views
 
+// A board's view: the filter bar's filter (the board reads it on the server, routes/tasks.ts).
 const filters = z
   .object({
     q: z.string().max(200).optional(),
@@ -35,31 +36,61 @@ const filters = z
     view: z.enum(['board', 'list', 'timeline']).optional(),
   })
   .strict();
+// Any other list's view: its filter, order, columns and layout as flat values the screen reads back
+// (the customer list, a records list, My tasks, the timeline). Small, and never anything nested.
+const listState = z
+  .record(z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,39}$/), z.union([z.string().max(200), z.number().finite(), z.boolean(), z.null(), z.array(z.string().max(200)).max(50)]))
+  .refine((o) => Object.keys(o).length <= 30);
+/** Which list a view belongs to. */
+const scopeOf = z.string().regex(/^(board|accounts|my_tasks|timeline|records:[a-z][a-z0-9_]{0,40})$/);
 
-const toView = (r: Row, me: string) => ({ id: r.id, boardId: r.board_id ?? null, name: r.name, filters: r.filters ?? {}, shared: !!r.shared, mine: r.user_id === me });
+const toView = (r: Row, me: string) => ({ id: r.id, scope: r.scope ?? 'board', boardId: r.board_id ?? null, name: r.name, filters: r.filters ?? {}, shared: !!r.shared, mine: r.user_id === me });
 
 workRoutes.get('/views', async (c) => {
   const board = c.req.query('board');
+  const scoped = scopeOf.safeParse(c.req.query('scope'));
+  const scope = scoped.success ? scoped.data : 'board';
   const auth = c.get('auth');
   const rows = await run(c, (q) =>
-    q.query('select * from saved_views where ($1::uuid is null and board_id is null) or board_id = $1::uuid order by shared desc, sort_text(name)', [uuid.safeParse(board).success ? board : null]),
+    q.query(
+      `select * from saved_views where scope = $2 and (($1::uuid is null and board_id is null) or board_id = $1::uuid) order by shared desc, sort_text(name)`,
+      [scope === 'board' && uuid.safeParse(board).success ? board : null, scope],
+    ),
   );
   return c.json({ views: rows.map((r) => toView(r, auth.userId)) });
 });
 
+/** One view, for opening it by its link: the maker's own, or one shared with the company. */
+workRoutes.get('/views/:id', async (c) => {
+  const id = param(c, 'id');
+  const auth = c.get('auth');
+  const [row] = await run(c, (q) => q.query('select * from saved_views where id = $1', [id]));
+  if (!row) fail('not_found');
+  return c.json({ view: toView(row, auth.userId) });
+});
+
 workRoutes.post('/views', async (c) => {
-  const input = await body(c, z.object({ boardId: uuid.nullable().optional(), name: z.string().trim().min(1).max(80), filters, shared: z.boolean().optional() }));
+  const input = await body(
+    c,
+    z.object({ scope: scopeOf.optional(), boardId: uuid.nullable().optional(), name: z.string().trim().min(1).max(80), filters: z.unknown(), shared: z.boolean().optional() }),
+  );
+  const scope = input.scope ?? 'board';
+  // A board's view keeps the board's filter shape; another list's, its own flat state.
+  const parsed = (scope === 'board' ? filters : listState).safeParse(input.filters ?? {});
+  if (!parsed.success) fail('validation', { fields: 'filters' }, { fields: ['filters'] });
+  if (scope !== 'board' && input.boardId) fail('validation', { fields: 'boardId' }, { fields: ['boardId'] });
   const auth = c.get('auth');
   const org = c.get('org');
   const row = await run(c, async (q) => {
     if (input.boardId) await loadBoard(q, input.boardId);
-    const [r] = await q.query('insert into saved_views (org_id, user_id, board_id, name, filters, shared) values ($1, $2, $3, $4, $5, $6) returning *', [
+    const [r] = await q.query('insert into saved_views (org_id, user_id, board_id, name, filters, shared, scope) values ($1, $2, $3, $4, $5, $6, $7) returning *', [
       org.id,
       auth.userId,
       input.boardId ?? null,
       input.name,
-      JSON.stringify(input.filters),
+      JSON.stringify(parsed.data),
       !!input.shared && auth.seat === 'full',
+      scope,
     ]);
     return r;
   });
@@ -68,17 +99,25 @@ workRoutes.post('/views', async (c) => {
 
 workRoutes.patch('/views/:id', async (c) => {
   const id = param(c, 'id');
-  const input = await body(c, z.object({ name: z.string().trim().min(1).max(80).optional(), filters: filters.optional(), shared: z.boolean().optional() }));
+  const input = await body(c, z.object({ name: z.string().trim().min(1).max(80).optional(), filters: z.unknown().optional(), shared: z.boolean().optional() }));
   const auth = c.get('auth');
-  const [row] = await run(c, (q) =>
-    q.query('update saved_views set name = coalesce($2, name), filters = coalesce($3::jsonb, filters), shared = coalesce($4, shared) where id = $1 and user_id = $5 returning *', [
+  const [row] = await run(c, async (q) => {
+    const [had] = await q.query<{ scope: string }>('select scope from saved_views where id = $1 and user_id = $2', [id, auth.userId]);
+    if (!had) fail('not_found');
+    let next: unknown = null;
+    if (input.filters !== undefined) {
+      const parsed = (had.scope === 'board' ? filters : listState).safeParse(input.filters);
+      if (!parsed.success) fail('validation', { fields: 'filters' }, { fields: ['filters'] });
+      next = parsed.data;
+    }
+    return q.query('update saved_views set name = coalesce($2, name), filters = coalesce($3::jsonb, filters), shared = coalesce($4, shared) where id = $1 and user_id = $5 returning *', [
       id,
       input.name ?? null,
-      input.filters ? JSON.stringify(input.filters) : null,
+      next === null ? null : JSON.stringify(next),
       input.shared === undefined ? null : input.shared && auth.seat === 'full',
       auth.userId,
-    ]),
-  );
+    ]);
+  });
   if (!row) fail('not_found');
   return c.json({ view: toView(row, auth.userId) });
 });

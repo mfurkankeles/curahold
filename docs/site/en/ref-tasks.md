@@ -70,8 +70,9 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `GET /checklists` | Checklist templates. |
 | `POST /checklists` | Saves a checklist template. |
 | `DELETE /checklists/:id` | Deletes a checklist template. |
-| `GET /views` | Your saved views of a board (filters, grouping, order). |
-| `POST /views` | Saves a view. |
+| `GET /views` | Your saved views of a list, and those shared with the company: of a board (`board`), or of another list (`scope`: `accounts`, `records:<kind>`, `my_tasks`, `timeline`). |
+| `GET /views/:id` | One saved view, for opening it by its link: your own, or one shared with the company. |
+| `POST /views` | Saves a view: its `scope` (default `board`, with `boardId`), `name`, `filters` (a board's filter, or another list's flat state: filter, order, columns, layout) and `shared`. |
 | `PATCH /views/:id` | Changes a saved view. |
 | `DELETE /views/:id` | Deletes a saved view. |
 
@@ -535,19 +536,24 @@ Deletes a checklist template.
 
 ### `GET /views`
 
-Your saved views of a board (filters, grouping, order).
+Your saved views of a list, and those shared with the company: of a board (`board`), or of another list (`scope`: `accounts`, `records:<kind>`, `my_tasks`, `timeline`).
 
-**Query:** `board`
+**Query:** `board`, `scope`
+
+### `GET /views/:id`
+
+One saved view, for opening it by its link: your own, or one shared with the company.
 
 ### `POST /views`
 
-Saves a view.
+Saves a view: its `scope` (default `board`, with `boardId`), `name`, `filters` (a board's filter, or another list's flat state: filter, order, columns, layout) and `shared`.
 
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
+| `scope` | text | optional |  |
 | `boardId` | id | optional | may be null |
 | `name` | text | required | at least 1 characters; at most 80 characters |
-| `filters` | object | required |  |
+| `filters` | any value | required |  |
 | `shared` | yes/no | optional |  |
 
 ### `PATCH /views/:id`
@@ -557,7 +563,7 @@ Changes a saved view.
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
 | `name` | text | optional | at least 1 characters; at most 80 characters |
-| `filters` | object | optional |  |
+| `filters` | any value | optional |  |
 | `shared` | yes/no | optional |  |
 
 ### `DELETE /views/:id`

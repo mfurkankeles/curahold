@@ -4640,6 +4640,19 @@ export const en = {
   'perm.data.export': "Export data",
   'perm.data.export.hint': "Download customers, records, tasks and reports as Excel or CSV. A file holds only what this person may see, and every export is written to the activity log.",
   'errors.export_too_large': "One file holds up to {max} rows. Narrow the list with a filter, then export again.",
+  'views.saveList': "Keep this list as it is now: filter, order, layout",
+  'views.shareCompany': "Show it to everyone in the company",
+  'views.copyLink': "Copy the link to {name}",
+  'views.linkCopied': "Link to “{name}” copied. Whoever may see this view can open it.",
+  'views.linkInAddress': "The link to “{name}” is in the address bar now; copy it from there.",
+  'views.shareOn': "Show {name} to everyone in the company",
+  'views.shareOff': "Keep {name} to yourself",
+  'views.nowShared': "Everyone in the company now sees “{name}”",
+  'views.nowPrivate': "“{name}” is yours alone again",
+  'views.gone': "That saved view has been deleted, or it is not shared with you.",
+  'views.sharedTag': "Shared with the company",
+  'views.current': "View: {name}",
+  'myTasks.anyPriority': "Any priority",
 } as const;
 
 export type MessageKey = keyof typeof en;

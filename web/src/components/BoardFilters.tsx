@@ -1,17 +1,16 @@
 // Narrow a board down — by person, urgency, due date or the board's own
 // choice fields — and keep a set of filters as a named view, for yourself
 // or for everyone on the board.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { labelOf } from '../../../shared/src/fields';
-import { PRIORITIES, type Board, type SavedView, type Task, type ViewFilters } from '../../../shared/src/model';
-import { ApiFailure, del, get, post } from '../lib/api';
+import { PRIORITIES, type Board, type Task, type ViewFilters } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { addDays, todayIso } from '../lib/time';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
-import { useUndo } from '../lib/undo';
+import { SavedViews } from './SavedViews';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -41,18 +40,10 @@ function toggle<T>(list: T[] | undefined, v: T): T[] {
 export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Board; filters: ViewFilters; onChange: (f: ViewFilters) => void; viewSwitch?: ReactNode }) {
   const { t, locale } = useI18n();
   const phone = usePhone();
-  const { people, me, toast, canWrite } = useStore();
-  const offer = useUndo();
-  const [open, setOpen] = useState<null | 'filter' | 'views'>(null);
-  const [views, setViews] = useState<SavedView[]>([]);
-  const [name, setName] = useState('');
-  const [shared, setShared] = useState(false);
+  const { people, me } = useStore();
+  const [open, setOpen] = useState<null | 'filter'>(null);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, !!open, () => setOpen(null));
-  const loadViews = () => get<{ views: SavedView[] }>(`/views?board=${board.id}`).then((r) => setViews(r.views), () => undefined);
-  useEffect(() => {
-    void loadViews();
-  }, [board.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const n = filterCount(filters);
   const selects = board.taskFields.filter((f) => f.type === 'select' && f.options?.length);
   const members = people.filter((p) => p.seat === 'full' && p.status === 'active');
@@ -61,18 +52,6 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
       {label}
     </button>
   );
-  const save = async () => {
-    if (!name.trim()) return;
-    try {
-      await post('/views', { boardId: board.id, name: name.trim(), filters: { ...filters, q: undefined }, shared });
-      setName('');
-      setShared(false);
-      toast(t('views.saved', { name: name.trim() }));
-      await loadViews();
-    } catch (e) {
-      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-    }
-  };
   // The choices themselves: in a popover on a desktop, straight in the sheet on a phone.
   const groups = (
     <>
@@ -142,67 +121,7 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
         )}
       </div>
       )}
-      <div className="menuwrap">
-        <button className="btn" aria-haspopup="menu" aria-expanded={open === 'views'} onClick={() => setOpen(open === 'views' ? null : 'views')}>
-          <Icon name="bookmark" size={16} />
-          <span className="hide-phone">{t('views.button')}</span>
-          {views.length > 0 && <span className="fcount fcount--quiet num">{views.length}</span>}
-        </button>
-        {open === 'views' && (
-          <div className="popmenu filterpop" role="menu" aria-label={t('views.button')}>
-            {views.length === 0 && <span className="popmenu__note">{t('views.none')}</span>}
-            {views.map((v) => (
-              <div key={v.id} className="viewrow">
-                <button
-                  role="menuitem"
-                  className="popmenu__item"
-                  onClick={() => {
-                    onChange({ ...v.filters, q: '' });
-                    setOpen(null);
-                  }}
-                >
-                  <Icon name={v.shared ? 'people' : 'bookmark'} size={16} />
-                  <span className="popmenu__label">{v.name}</span>
-                </button>
-                {v.mine && (
-                  <button
-                    className="btn btn--quiet btn--icon btn--small"
-                    aria-label={t('views.remove', { name: v.name })}
-                    title={t('common.delete')}
-                    onClick={async () => {
-                      try {
-                        await del(`/views/${v.id}`);
-                        offer(t('views.removed', { name: v.name }), () => post('/views', { boardId: board.id, name: v.name, filters: v.filters, shared: v.shared }), loadViews);
-                      } catch (e) {
-                        toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-                      }
-                      await loadViews();
-                    }}
-                  >
-                    <Icon name="trash" size={14} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <div className="popmenu__sep" role="separator" />
-            <div className="viewsave">
-              <span className="filterpop__label">{n ? t('views.saveThese') : t('views.saveHint')}</span>
-              <div className="popmenu__form">
-                <input className="input" value={name} placeholder={t('views.name')} aria-label={t('views.name')} maxLength={80} disabled={!n} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void save()} />
-                <button className="btn btn--primary btn--small" disabled={!n || !name.trim()} onClick={save}>
-                  {t('common.save')}
-                </button>
-              </div>
-              {canWrite && (
-                <label className="checkbox small">
-                  <input type="checkbox" checked={shared} disabled={!n} onChange={(e) => setShared(e.target.checked)} />
-                  <span>{t('views.share')}</span>
-                </label>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      <SavedViews scope="board" boardId={board.id} state={{ ...filters, q: undefined }} canSave={n > 0} onApply={(v) => onChange({ ...(v as ViewFilters), q: '' })} />
       </FilterSheet>
     </div>
   );
