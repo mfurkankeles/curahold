@@ -1634,12 +1634,13 @@ await step('trash: a deleted task can be taken back at once, or later from the t
   const rowsOf = async () => Number((await sql('select (select count(*) from tasks where id = $1 or parent_id = $1) + (select count(*) from comments where task_id = $1) as n', [task.id]))[0].n);
   expect((await rowsOf()) === 3, 'the task, its subtask and its comment were not made');
 
-  // Delete from the task's panel: the notice offers to take it back.
+  // Delete from the task's panel: nothing asks first; the notice offers to take it back.
   await lena.page.goto(`${s.origin}/b/${csBoard}?task=${task.id}`, { waitUntil: 'networkidle0' });
   await lena.page.waitForSelector('button[aria-label="Görevi sil"]');
   await lena.page.click('button[aria-label="Görevi sil"]');
-  await (await byText(lena.page, '.dialog .btn--danger', 'Sil')).click();
   await lena.page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Çöp kutusuna taşındı')));
+  expect((await lena.page.$('.dialog')) === null, 'deleting a task asked for a confirmation');
+  expect((await text(lena.page, '.toast__action')).includes('Geri al'), 'the notice does not offer Undo');
   expect((await rowsOf()) === 0, 'the task was not removed');
   await lena.page.click('.toast__action');
   await lena.page.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Geri alındı')));
