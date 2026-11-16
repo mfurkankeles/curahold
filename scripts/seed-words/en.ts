@@ -308,5 +308,13 @@ export const words: SeedWords = {
   'Raporları zamanlanmış olarak gönder': 'Send reports on a schedule',
   'Mobilde koyu tema': 'Dark theme on mobile',
   'Sesli komutla görev ekleme araştırması': 'Research: adding tasks by voice',
+  // the admin's inbox (seed-inbox.ts): comments after a mention of Ada, and the renewal rule
+  'izin penceresindeki metni sen de okur musun? Mağaza incelemesinden önce netleşsin.':
+    "can you read the wording in the permission prompt too? Let's settle it before the store review.",
+  'saklama süresi sorusunu ürün ekibine sordum; ayar bu sprintte geliyor, Melis’e cuma dönebiliriz.':
+    'I asked the product team about the retention question. The setting ships this sprint, so we can get back to Melis on Friday.',
+  'Güvenlik dokümanının son sürümünü ekledim. 4. ve 7. sorular hâlâ açık.': "I've attached the latest version of the security document. Questions 4 and 7 are still open.",
+  'Yenilemeye 30 gün kala haber ver': 'Heads-up 30 days before a renewal',
+  'Yenileme teklifini ve onay sürecini bu hafta başlatalım.': "Let's start the renewal proposal and the approval process this week.",
   },
 };

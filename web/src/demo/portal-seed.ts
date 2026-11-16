@@ -35,6 +35,11 @@ export async function seedPortal(server: DemoServer, locale: Locale = 'tr') {
   });
   await server.call('POST', '/api/portal/users', { accountId: ids.account, name: W.fullName(W.customer.first, W.customer.last), email: PORTAL_EMAIL });
   if (ids.task) {
+    // Ada (the admin, who sat in this customer's review) works on it with its owner, so
+    // Selin's reply from the portal reaches her inbox too.
+    const { task } = await call('GET', `/api/tasks/${ids.task}`);
+    const { user } = await call('GET', '/api/me');
+    if (!task.assigneeIds.includes(user.id)) await call('PATCH', `/api/tasks/${ids.task}`, { baseVersion: task.version, assigneeIds: [...task.assigneeIds, user.id] });
     await call('PUT', `/api/tasks/${ids.task}/portal`, { shared: true });
     await call('POST', `/api/tasks/${ids.task}/comments`, { body: 'Bir iç not: fiyat konusunda itiraz gelebilir, hazırlıklı olalım.' });
     await call('POST', `/api/tasks/${ids.task}/comments`, { body: 'Selin Hanım merhaba, sunumun taslağı cuma günü hazır olacak; önce size göndereceğiz.', visibility: 'customer' });

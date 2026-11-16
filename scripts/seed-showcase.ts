@@ -13,6 +13,7 @@ import { PLAYBOOK_EXAMPLES } from '../shared/src/playbooks';
 import { RECORD_PRESETS } from '../shared/src/records';
 import { startRenewalsIn } from '../api/src/lib/playbooks';
 import { ACCOUNTS as BASE_ACCOUNTS } from './seed-demo';
+import { seedInbox } from './seed-inbox';
 import { seedProduct } from './seed-product';
 
 type Call = <T = any>(method: string, path: string, body?: unknown) => Promise<T>;
@@ -575,5 +576,7 @@ export async function seedShowcase(send: Call, db?: Db, locale?: Locale) {
 
   // The product team's board, its sprints and their past (scripts/seed-product.ts). Made after the
   // spreading above, which would scatter its stories' dates.
-  await seedProduct({ send, call, db, locale: L, tx, who, accounts }).catch((e) => (console.warn('[seed] product', e), null));
+  const product = await seedProduct({ send, call, db, locale: L, tx, who, accounts }).catch((e) => (console.warn('[seed] product', e), null));
+  // What the last working days left in the admin's inbox (scripts/seed-inbox.ts).
+  if (db && product) await seedInbox({ call, db, W, tx, who, accounts, product, shared: ids[1] ?? null }).catch((e) => console.warn('[seed] inbox', e));
 }
