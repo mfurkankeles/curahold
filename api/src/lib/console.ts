@@ -119,14 +119,17 @@ export async function consoleToday(deps: Deps, staffEmail: string): Promise<Cons
  * console's live room (live/platform.ts) reads it when a write may have
  * changed something, and tells the open consoles only when it moved. Every
  * company's billing and trial count, not only the newest event: the hourly seat
- * count changes a bill without a new event.
+ * count changes a bill without a new event. So does every open request's status:
+ * a request settled by its own author moves no timestamp.
  */
 export async function consolePulse(deps: Pick<Deps, 'db'>): Promise<string> {
   const [r] = await deps.db.system((q) =>
     q.query<{ v: string }>(
       `select concat_ws('|',
          (select count(*) || ':' || coalesce(sum(hashtext(coalesce(billing::text, '') || coalesce(trial_ends_at::text, ''))), 0) from orgs),
-         (select count(*) from help_requests), (select max(updated_at) from help_requests), (select max(last_message_at) from help_requests),
+         (select count(*) || ':' || count(*) filter (where status = 'solved') || ':'
+                 || coalesce(sum(hashtext(id::text || status)) filter (where status <> 'solved'), 0) from help_requests),
+         (select max(updated_at) from help_requests), (select max(last_message_at) from help_requests),
          (select count(*) from desk_claims), (select max(at) from desk_claims)) as v`,
     ),
   );

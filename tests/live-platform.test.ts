@@ -274,6 +274,10 @@ describe('the console room on the Node server', () => {
     console.log(`    console room: a company's write heard by the console in p50 ${waits[9].toFixed(0)} ms, p95 ${p95.toFixed(0)} ms (20 writes, through the API)`);
     expect(p95).toBeLessThan(1000);
 
+    // Settling it herself moves no timestamp; the console hears it all the same (the status is in the fingerprint).
+    expect((await ada('POST', `/api/help/${opened.json.request.id}/solve`, {})).status).toBe(200);
+    expect((await s.next((m) => m.t === 'c'))?.m.t, 'a request settled by its author was not heard').toBe('c');
+
     // A write that changes nothing the console shows says nothing.
     expect((await ada('POST', '/api/tasks', { title: 'Not the console’s business', boardId: stack.demo.boards.csBoard })).status).toBe(201);
     expect(await s.next((m) => m.t === 'c', 600)).toBeNull();
