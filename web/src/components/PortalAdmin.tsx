@@ -4,6 +4,8 @@ import { Icon } from './icons';
 import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { brandPalette, HEX_COLOR, PORTAL_DEFAULT_COLOR, PORTAL_SESSION_DAYS, type PortalAuth, type PortalBrand, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
 import { useUndo } from '../lib/undo';
+import { useUnsaved } from '../lib/unsaved';
+import { ErrorState, SkeletonRows } from './Empty';
 import '../surfaces/portal.css';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post, put } from '../lib/api';
@@ -13,12 +15,53 @@ import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
 
 export function PortalSettingsTab() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useStore();
+  const offer = useUndo();
   const [s, setS] = useState<PortalSettings | null>(null);
-  const load = useCallback(() => void get<PortalSettings>('/portal').then(setS), []);
+  const [failed, setFailed] = useState(false);
+  // The brand and the ways in are one form: one Save bar, one leave check, one Undo.
+  const [form, setForm] = useState<{ brand: PortalBrand; auth: PortalAuth } | null>(null);
+  const load = useCallback(() => {
+    setFailed(false);
+    get<PortalSettings>('/portal')
+      .then((x) => {
+        setS(x);
+        setForm({ brand: x.brand, auth: x.auth });
+      })
+      .catch(() => setFailed(true));
+  }, []);
   useEffect(load, [load]);
-  if (!s) return <p className="muted">{t('common.loading')}</p>;
+  const brandChanged = !!s && !!form && JSON.stringify(form.brand) !== JSON.stringify(s.brand);
+  const authChanged = !!s && !!form && JSON.stringify(form.auth) !== JSON.stringify(s.auth);
+  const save = async (): Promise<boolean> => {
+    if (!s || !form) return false;
+    const before = { brand: s.brand, auth: s.auth };
+    const body = { ...(brandChanged ? { brand: form.brand } : {}), ...(authChanged ? { auth: form.auth } : {}) };
+    try {
+      await put('/portal/settings', body);
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+      return false;
+    }
+    setS({ ...s, ...form });
+    load();
+    // The colour, the footer and the ways in go back the same way.
+    offer(brandChanged && !authChanged ? t('portal.admin.brandSaved') : t('settings.savedTopic', { topic: t('settings.tab.portal') }), () => put('/portal/settings', before), load);
+    return true;
+  };
+  useUnsaved(brandChanged || authChanged, { save, discard: () => s && setForm({ brand: s.brand, auth: s.auth }) });
+  const turn = async (on: boolean) => {
+    try {
+      await put('/portal/settings', { enabled: on });
+      load();
+      offer(on ? t('portal.admin.turnedOn') : t('portal.admin.turnedOff'), () => put('/portal/settings', { enabled: !on }), load);
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+    }
+  };
+  if (failed) return <ErrorState compact onRetry={load} />;
+  if (!s || !form) return <SkeletonRows rows={5} label={t('common.loading')} />;
   if (!s.available) return <div className="empty">{t('portal.admin.unavailable')}</div>;
   return (
     <div>
@@ -26,19 +69,7 @@ export function PortalSettingsTab() {
         <h3 className="section__head">{t('portal.admin.title')}</h3>
         <p className="field__hint">{t('portal.admin.explain')}</p>
         <label className="checkbox u-mt-8">
-          <input
-            type="checkbox"
-            checked={s.enabled}
-            onChange={async (e) => {
-              try {
-                await put('/portal/settings', { enabled: e.target.checked });
-                toast(t('common.saved'));
-                load();
-              } catch (err) {
-                toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
-              }
-            }}
-          />
+          <input type="checkbox" checked={s.enabled} onChange={(e) => void turn(e.target.checked)} />
           <strong>{t('portal.admin.enabled')}</strong>
         </label>
         {s.enabled && s.address && (
@@ -63,8 +94,8 @@ export function PortalSettingsTab() {
           </div>
         )}
       </section>
-      {s.enabled && <BrandSection settings={s} onSaved={load} />}
-      {s.enabled && <SignInMethods settings={s} onSaved={load} />}
+      {s.enabled && <BrandSection settings={s} value={form.brand} onChange={(brand) => setForm({ ...form, brand })} />}
+      {s.enabled && <SignInMethods settings={s} value={form.auth} onChange={(auth) => setForm({ ...form, auth })} locale={locale} />}
       {s.enabled && (
         <section className="sheet">
           <h3 className="section__head">{t('portal.people.title')}</h3>
@@ -196,28 +227,12 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
 }
 
 /** The company in front: its colour on the portal and in its emails, its logo, and whether Curahold is named at the foot. */
-function BrandSection({ settings, onSaved }: { settings: PortalSettings; onSaved: () => void }) {
+function BrandSection({ settings, value: b, onChange: setB }: { settings: PortalSettings; value: PortalBrand; onChange: (b: PortalBrand) => void }) {
   const { t } = useI18n();
-  const { toast } = useStore();
-  const offer = useUndo();
-  const [b, setB] = useState<PortalBrand>(settings.brand);
-  const [hex, setHex] = useState(settings.brand.color ?? '');
-  const [busy, setBusy] = useState(false);
-  const changed = JSON.stringify(b) !== JSON.stringify(settings.brand);
+  const [hex, setHex] = useState(b.color ?? '');
+  // Discard or Undo puts the saved colour back: the typed text follows it.
+  useEffect(() => setHex(b.color ?? ''), [b.color]);
   const pal = brandPalette(b.color).light;
-  const save = async () => {
-    const before = settings.brand;
-    setBusy(true);
-    try {
-      await put('/portal/settings', { brand: b });
-      onSaved();
-      offer(t('portal.admin.brandSaved'), () => put('/portal/settings', { brand: before }), onSaved);
-    } catch (err) {
-      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
   const typed = (v: string) => {
     setHex(v);
     const h = v.startsWith('#') ? v : `#${v}`;
@@ -272,34 +287,22 @@ function BrandSection({ settings, onSaved }: { settings: PortalSettings; onSaved
           <figcaption className="pbrand__foot">{b.poweredBy ? t('portal.poweredBy') : '\u00a0'}</figcaption>
         </figure>
       </div>
-      <button className={changed ? 'btn btn--primary' : 'btn'} disabled={busy || !changed} onClick={save}>
-        {t('portal.admin.saveBrand')}
-      </button>
     </section>
   );
 }
 
-/** The company's choice of ways into the portal, and how long a sign-in lasts. */
-function SignInMethods({ settings, onSaved }: { settings: PortalSettings; onSaved: () => void }) {
+/** The company's choice of ways into the portal, and how long a sign-in lasts; what it means shows before saving. */
+function SignInMethods({ settings, value: a, onChange: setA, locale }: { settings: PortalSettings; value: PortalAuth; onChange: (a: PortalAuth) => void; locale: string }) {
   const { t } = useI18n();
-  const { toast } = useStore();
-  const [a, setA] = useState<PortalAuth>(settings.auth);
-  const [busy, setBusy] = useState(false);
   const methods = ['email', 'google', 'microsoft', 'passkey', 'password'] as const;
   const missing = (m: (typeof methods)[number]) => (m === 'google' || m === 'microsoft') && !settings.providers[m];
-  const changed = JSON.stringify(a) !== JSON.stringify(settings.auth);
-  const save = async () => {
-    setBusy(true);
-    try {
-      await put('/portal/settings', { auth: a });
-      toast(t('common.saved'));
-      onSaved();
-    } catch (err) {
-      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const ways = methods.filter((m) => a[m] && !missing(m)).map((m) => t(`portal.admin.m.${m}` as MessageKey));
+  const was = settings.auth;
+  const days = (n: number) => (n === 1 ? t('portal.admin.day1') : t('portal.admin.days', { n }));
+  const effect = [
+    { key: 'ways', text: ways.length ? t('portal.admin.effectWays', { ways: new Intl.ListFormat(locale, { type: 'conjunction' }).format(ways) }) : t('portal.admin.effectNone'), changed: methods.some((m) => a[m] !== was[m]), warn: !ways.length },
+    { key: 'session', text: t('portal.admin.effectSession', { days: days(a.sessionDays) }), changed: a.sessionDays !== was.sessionDays, warn: false },
+  ];
   return (
     <section className="sheet">
       <h3 className="section__head">{t('portal.admin.signIn')}</h3>
@@ -334,9 +337,13 @@ function SignInMethods({ settings, onSaved }: { settings: PortalSettings; onSave
           <span>{t('portal.admin.notify')}</span>
         </label>
       </div>
-      <button className={changed ? 'btn btn--primary' : 'btn'} disabled={busy || !changed} onClick={save}>
-        {t('portal.admin.saveSignIn')}
-      </button>
+      <ul className="admin-effect__list portal-effect" aria-live="polite">
+        {effect.map((e) => (
+          <li key={e.key} data-changed={e.changed || undefined} data-warn={e.warn || undefined}>
+            {e.text}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

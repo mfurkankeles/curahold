@@ -667,8 +667,9 @@ await step('field access: hide a field from members, then look as one of them', 
   await (await byText(ada.page, '.faccess .seg button', 'Seçili roller')).click();
   await shot(ada.page, 'p4-03-field-access');
   await (await byText(ada.page, '.dialog .btn--primary', 'Kaydet')).click();
-  await ada.page.click('.savebar .btn--primary');
-  await pause(500);
+  // Saved through the settings bar, which then goes away.
+  await ada.page.click('.admin__unsaved .btn--primary');
+  await ada.page.waitForFunction(() => !document.querySelector('.admin__unsaved'));
   const [org] = await sql(`select account_fields from orgs where slug = 'demo'`);
   const arr = org.account_fields.find((f: any) => f.key === 'arr');
   expect(arr.access?.view?.includes('manager') && !arr.access.view.includes('member'), `access not saved: ${JSON.stringify(arr.access)}`);
@@ -1131,8 +1132,8 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await admin.page.waitForFunction(() => document.querySelector('.portal-people table')?.textContent?.includes('selin@quillfield.example'), { timeout: 5000 });
   // Passwords too, for this company.
   await (await byText(admin.page, '.portal-methods strong', 'Şifre')).click();
-  await (await byText(admin.page, '.sheet .btn--primary', 'Kaydet')).click();
-  await admin.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')), { timeout: 5000 });
+  await (await byText(admin.page, '.admin__unsaved .btn--primary', 'Kaydet')).click();
+  await admin.page.waitForFunction(() => !document.querySelector('.admin__unsaved'), { timeout: 5000 });
   await shot(admin.page, 'p8-01-portal-settings');
   await admin.page.browserContext().close();
 
@@ -1502,8 +1503,10 @@ await step('settings: a currency and its rate, a playbook from an example, renew
   expect((await days.evaluate((el) => (el as HTMLSelectElement).value)) === '180', 'renewals do not start six months ahead');
   await playbook.select(pb.id);
   await shot(ada.page, 'p10-03-rhythm');
-  await (await byText(ada.page, '.rhythm__save .btn--primary', 'Kaydet')).click();
-  await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')));
+  // What saving changes shows first; the settings bar saves it.
+  await ada.page.waitForSelector('.admin-effect li[data-changed]');
+  await (await byText(ada.page, '.admin__unsaved .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => !document.querySelector('.admin__unsaved'));
   const [rh] = await sql(`select settings->'rhythm' as r from orgs where slug = 'demo'`);
   expect(rh?.r?.reviewDays === 90 && rh.r.renewal?.days === 180 && rh.r.renewal?.planId === pb.id, `rhythm kept: ${JSON.stringify(rh?.r)}`);
   // With reviews on, customers have a Business reviews view.

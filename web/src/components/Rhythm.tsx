@@ -7,6 +7,9 @@ import { typeLabel, type AppRecord, type RecordType } from '../../../shared/src/
 import { DEFAULT_RHYTHM, TARGET_KINDS, TARGET_PERIODS, reviewDue, targetReport, type DealLike, type Period, type ReviewDue, type Rhythm, type TargetKind, type TargetRow } from '../../../shared/src/rhythm';
 import { labelOf } from '../../../shared/src/fields';
 import { ApiFailure, put } from '../lib/api';
+import { useUndo } from '../lib/undo';
+import { useUnsaved } from '../lib/unsaved';
+import { formatMoney } from '../lib/format';
 import { useI18n, type I18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useShell } from '../lib/shell';
@@ -397,11 +400,12 @@ export function RhythmSettings() {
   const { me, reloadMe, toast } = useStore();
   const { types } = useRecordTypes();
   const { plans } = usePlaybooks();
-  const [r, setR] = useState<Rhythm>(me.org.rhythm ?? DEFAULT_RHYTHM);
-  const [mode, setMode] = useState<TargetMode>(() => modeOf(me.org.rhythm ?? DEFAULT_RHYTHM));
+  const offer = useUndo();
+  const [saved, setSaved] = useState<Rhythm>(me.org.rhythm ?? DEFAULT_RHYTHM);
+  const [r, setR] = useState<Rhythm>(saved);
+  const [mode, setMode] = useState<TargetMode>(() => modeOf(saved));
   // Types switched on but not given an amount yet still show their box.
-  const [kindsOn, setKindsOn] = useState<string[]>(() => Object.keys((me.org.rhythm ?? DEFAULT_RHYTHM).targets.amounts));
-  const [busy, setBusy] = useState(false);
+  const [kindsOn, setKindsOn] = useState<string[]>(() => Object.keys(saved.targets.amounts));
   const grouped = { format: (n: number) => formatNumber(n, locale) };
   const num = (v: string) => (v.trim() === '' ? null : Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) || null);
   const show = (n: number | null | undefined) => (n == null ? '' : grouped.format(n));
@@ -427,21 +431,62 @@ export function RhythmSettings() {
     if (!on) setAmount(k, null);
   };
 
-  const save = async () => {
-    // Only what the chosen way of setting targets uses is kept.
-    const amounts = mode === 'kinds' ? Object.fromEntries(Object.entries(r.targets.amounts).filter(([k, v]) => kindsOn.includes(k) && v > 0)) : {};
-    const total = mode === 'total' ? r.targets.total : null;
-    setBusy(true);
+  // What saving sends: only what the chosen way of setting targets uses is kept.
+  const bodyOf = (x: Rhythm, m: TargetMode, on: string[]): Rhythm => ({
+    ...x,
+    targets: {
+      period: x.targets.period,
+      amounts: m === 'kinds' ? Object.fromEntries(Object.entries(x.targets.amounts).filter(([k, v]) => on.includes(k) && v > 0)) : {},
+      total: m === 'total' ? x.targets.total : null,
+    },
+  });
+  const next = bodyOf(r, mode, kindsOn);
+  const dirty = JSON.stringify(next) !== JSON.stringify(bodyOf(saved, modeOf(saved), Object.keys(saved.targets.amounts)));
+  const reset = (x: Rhythm) => {
+    setSaved(x);
+    setR(x);
+    setMode(modeOf(x));
+    setKindsOn(Object.keys(x.targets.amounts));
+  };
+  // Saved through the settings bar, with ten seconds to take it back.
+  const save = async (): Promise<boolean> => {
+    const before = saved;
     try {
-      await put('/rhythm', { ...r, targets: { period: r.targets.period, amounts, total } });
-      await reloadMe();
-      toast(t('common.saved'));
+      await put('/rhythm', next);
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
-    } finally {
-      setBusy(false);
+      return false;
     }
+    reset(next);
+    await reloadMe();
+    offer(t('settings.savedTopic', { topic: t('rhythm.targets') }), async () => {
+      await put('/rhythm', before);
+      reset(before);
+      await reloadMe();
+    });
+    return true;
   };
+  useUnsaved(dirty, { save, discard: () => reset(saved) });
+
+  // What these settings do, in words, before saving: the lines that would change stand out.
+  const was = bodyOf(saved, modeOf(saved), Object.keys(saved.targets.amounts));
+  const money = (n: number) => formatMoney(n, me.org.currency, locale);
+  const targetLine = (x: Rhythm) => {
+    const total = x.targets.total ?? Object.values(x.targets.amounts).reduce((n, v) => n + v, 0);
+    return total ? t('rhythm.effect.target', { amount: money(total), period: t(`rhythm.period.${x.targets.period}` as const) }) : t('rhythm.effect.noTarget');
+  };
+  const planName = (id: string | null) => (id ? (plans?.find((p) => p.id === id)?.name ?? t('rhythm.renewalOneTask')) : t('rhythm.renewalOneTask'));
+  const effect: { key: string; text: string; changed: boolean }[] = [
+    { key: 'target', text: targetLine(next), changed: JSON.stringify(next.targets) !== JSON.stringify(was.targets) },
+    { key: 'reviews', text: next.reviewDays ? t('rhythm.effect.reviews', { n: next.reviewDays }) : t('rhythm.effect.reviewsOff'), changed: next.reviewDays !== was.reviewDays },
+    {
+      key: 'renewal',
+      text: next.renewal.days ? t('rhythm.effect.renewals', { n: next.renewal.days, with: planName(next.renewal.planId) }) : t('rhythm.effect.renewalsOff'),
+      changed: JSON.stringify(next.renewal) !== JSON.stringify(was.renewal),
+    },
+    { key: 'stale', text: next.staleDays ? t('rhythm.effect.stale', { n: next.staleDays }) : t('rhythm.effect.staleOff'), changed: next.staleDays !== was.staleDays },
+    { key: 'escalate', text: next.escalateDays ? t('rhythm.effect.escalate', { n: next.escalateDays }) : t('rhythm.effect.escalateOff'), changed: next.escalateDays !== was.escalateDays },
+  ];
 
   const days = (label: string, value: number, choices: number[], onChange: (n: number) => void, opts: { unit?: 'rhythm.days' | 'rhythm.daysLate' | 'rhythm.daysAhead'; hint?: string; off?: boolean } = {}) => (
     <label className="field rhythm__pick">
@@ -603,11 +648,20 @@ export function RhythmSettings() {
         {days(t('rhythm.escalate'), r.escalateDays, [2, 3, 5, 7], (n) => setR({ ...r, escalateDays: n }), { unit: 'rhythm.daysLate', hint: t('rhythm.escalateHint') })}
       </section>
 
-      <div className="toolbar rhythm__save">
-        <button className="btn btn--primary" disabled={busy} onClick={save}>
-          {busy ? t('common.saving') : t('common.save')}
-        </button>
-      </div>
+      {/* The effect of what is on screen, before it is saved. */}
+      <section className="sheet admin-effect" aria-labelledby="rhythm-effect" aria-live="polite">
+        <h2 className="sheet__title" id="rhythm-effect">
+          <Icon name="eye" size={18} className="icon--lead" />
+          {t('settings.effect')}
+        </h2>
+        <ul className="admin-effect__list">
+          {effect.map((e) => (
+            <li key={e.key} data-changed={(dirty && e.changed) || undefined}>
+              {e.text}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

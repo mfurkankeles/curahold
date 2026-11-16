@@ -17,6 +17,9 @@ import { useTrashToast } from '../lib/trash';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { DateField } from './DateField';
 import { formatClock, formatDate } from '../lib/format';
+import { useUndo } from '../lib/undo';
+import { useUnsaved } from '../lib/unsaved';
+import { ErrorState, SkeletonRows } from './Empty';
 
 function useFail() {
   const { t } = useI18n();
@@ -690,30 +693,72 @@ const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'support', 'champion'
 
 export function HealthSettings() {
   const { t, locale } = useI18n();
-  const { me, reloadMe, toast } = useStore();
+  const { me, reloadMe } = useStore();
   const fail = useFail();
+  const offer = useUndo();
+  // What is saved (as the server has it, for Undo), what the screen starts from, and what is on screen.
+  const [stored, setStored] = useState<HealthConfig | null>(null);
+  const [base, setBase] = useState<HealthConfig | null>(null);
   const [cfg, setCfg] = useState<HealthConfig | null>(null);
-  const [saved, setSaved] = useState<string>('');
-  const [preview, setPreview] = useState<{ counts: Record<string, number>; lowest: { id: string; name: string; score: number | null; band: string | null; current: number | null }[] } | null>(null);
-  useEffect(() => {
-    void get<{ config: HealthConfig }>('/health/config').then((r) => {
-      // Start from the recommended set the first time.
-      const c = r.config.signals.length ? r.config : { ...DEFAULT_HEALTH, enabled: r.config.enabled };
-      setCfg(c);
-      setSaved(JSON.stringify(c));
-    });
+  const [failed, setFailed] = useState(false);
+  type Preview = { counts: Record<string, number>; lowest: { id: string; name: string; score: number | null; band: string | null; current: number | null }[] };
+  const [preview, setPreview] = useState<Preview | null>(null);
+  // The same numbers for what is saved now, so the effect of a change shows as "before → after".
+  const [before, setBefore] = useState<Preview | null>(null);
+  const load = useCallback(() => {
+    setFailed(false);
+    get<{ config: HealthConfig }>('/health/config')
+      .then((r) => {
+        // Start from the recommended set the first time.
+        const c = r.config.signals.length ? r.config : { ...DEFAULT_HEALTH, enabled: r.config.enabled };
+        setStored(r.config);
+        setBase(c);
+        setCfg(c);
+      })
+      .catch(() => setFailed(true));
   }, []);
+  useEffect(load, [load]);
   // What these settings would give, a moment after each change.
   useEffect(() => {
     if (!cfg) return;
     const h = setTimeout(() => {
-      void post<typeof preview>('/health/preview', { config: cfg })
+      void post<Preview>('/health/preview', { config: cfg })
         .then(setPreview)
         .catch(() => undefined);
     }, 350);
     return () => clearTimeout(h);
   }, [cfg]);
-  if (!cfg) return <p className="muted">{t('common.loading')}</p>;
+  useEffect(() => {
+    if (!base) return;
+    void post<Preview>('/health/preview', { config: base })
+      .then(setBefore)
+      .catch(() => undefined);
+  }, [base]);
+  const dirty = !!cfg && JSON.stringify(cfg) !== JSON.stringify(base);
+  // Saved through the settings bar, with ten seconds to take it back (the scores are worked out again either way).
+  const save = async (): Promise<boolean> => {
+    if (!cfg) return false;
+    const old = stored;
+    try {
+      await put('/health/config', { config: cfg });
+    } catch (e) {
+      fail(e);
+      return false;
+    }
+    setStored(cfg);
+    setBase(cfg);
+    await reloadMe();
+    if (old)
+      offer(t('settings.savedTopic', { topic: t('health.settings.title') }), async () => {
+        await put('/health/config', { config: old });
+        load();
+        await reloadMe();
+      });
+    return true;
+  };
+  useUnsaved(dirty, { save, discard: () => setCfg(base) });
+  if (failed) return <ErrorState compact onRetry={load} />;
+  if (!cfg) return <SkeletonRows rows={6} label={t('common.loading')} />;
 
   const selects = me.org.accountFields.filter((f) => f.type === 'select');
   const numbers = me.org.accountFields.filter((f) => (f.type === 'number' || f.type === 'money') && !f.health);
@@ -721,17 +766,6 @@ export function HealthSettings() {
   const has = (key: HealthSignalKey) => cfg.signals.some((s) => s.key === key);
   const total = cfg.signals.reduce((n, s) => n + s.weight, 0) || 1;
   const fieldName = (f: AccountField) => labelOf(f.label, locale);
-
-  const save = async () => {
-    try {
-      await put('/health/config', { config: cfg });
-      setSaved(JSON.stringify(cfg));
-      await reloadMe();
-      toast(t('common.saved'));
-    } catch (e) {
-      fail(e);
-    }
-  };
 
   return (
     <div className="form u-max-width-820">
@@ -881,8 +915,8 @@ export function HealthSettings() {
           <div className="healthpreview">
             <div className="healthpreview__counts">
               {(['good', 'watch', 'risk'] as const).map((b) => (
-                <span key={b} className="score" data-band={b}>
-                  {t(`health.band.${b}` as MessageKey)}: {preview.counts[b] ?? 0}
+                <span key={b} className="score" data-band={b} data-changed={(dirty && before && (before.counts[b] ?? 0) !== (preview.counts[b] ?? 0)) || undefined}>
+                  {t(`health.band.${b}` as MessageKey)}: {dirty && before && (before.counts[b] ?? 0) !== (preview.counts[b] ?? 0) ? t('health.settings.countChange', { from: before.counts[b] ?? 0, to: preview.counts[b] ?? 0 }) : (preview.counts[b] ?? 0)}
                 </span>
               ))}
               {preview.counts.none ? <span className="muted">{t('health.settings.noData', { n: preview.counts.none })}</span> : null}
@@ -905,12 +939,7 @@ export function HealthSettings() {
             )}
           </div>
         )}
-        <div className="toolbar u-mt-12">
-          <button className="btn btn--primary" disabled={saved === JSON.stringify(cfg)} onClick={save}>
-            {t('common.save')}
-          </button>
-          <span className="field__hint">{t('health.settings.saveHint')}</span>
-        </div>
+        <p className="field__hint u-mt-12">{t('health.settings.saveHint')}</p>
       </section>
     </div>
   );

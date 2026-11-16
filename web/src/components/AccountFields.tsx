@@ -4,6 +4,7 @@
 // can also be worked out from records ("open pipeline").
 import { Icon } from './icons';
 import { useEffect, useState } from 'react';
+import { topicLabel } from '../lib/settingsIndex';
 import { useRecordTypes } from '../lib/recordTypes';
 import { labelOf, optionKey } from '../../../shared/src/fields';
 import { languageName, type Locale, type MessageKey } from '../../../shared/src/i18n';
@@ -12,6 +13,8 @@ import { RECORD_PRESETS, ROLLUP_PRESETS, typeLabel, type RecordType } from '../.
 import { ApiFailure, api, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
+import { useUndo } from '../lib/undo';
+import { useUnsaved } from '../lib/unsaved';
 import { Confirm, Dialog } from './ui';
 
 const newKey = (label: string, taken: Set<string>) => {
@@ -39,7 +42,12 @@ export function useRollupText(types: RecordType[] | null) {
   };
 }
 
-function FieldListEditor({ initial, onSave, rollups, types }: { initial: AccountField[]; onSave: (list: AccountField[]) => Promise<void>; rollups?: boolean; types?: RecordType[] | null }) {
+/**
+ * `topic`: the editor is a settings topic of its own (Settings → customer fields): it saves through the
+ * settings bar (with the leave check), offers Undo, and says what saving changes before it is saved.
+ * Without it (several kinds of records on one screen) it keeps its own small save bar.
+ */
+function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: AccountField[]; onSave: (list: AccountField[]) => Promise<void>; rollups?: boolean; types?: RecordType[] | null; topic?: string }) {
   const { t, locale } = useI18n();
   const { toast, me } = useStore();
   // The second name a field carries: English for everyone else, the company's own language for English readers.
@@ -66,17 +74,26 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
     [next[i], next[j]] = [next[j], next[i]];
     setList(next);
   };
-  const save = async () => {
+  const offer = useUndo();
+  const save = async (): Promise<boolean> => {
+    const before: AccountField[] = JSON.parse(JSON.stringify(initial));
+    const now = list;
     setBusy(true);
     try {
-      await onSave(list);
-      toast(t('common.saved'));
+      await onSave(now);
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+      return false;
     } finally {
       setBusy(false);
     }
+    // A removed field keeps its values on every customer, so Undo brings it back whole.
+    if (topic) offer(t('settings.savedTopic', { topic }), () => onSave(before));
+    else toast(t('common.saved'));
+    return true;
   };
+  useUnsaved(!!topic && dirty, { save, discard: () => setList(JSON.parse(JSON.stringify(initial))) });
+  const effect = topic && dirty ? fieldChanges(initial, list, locale, t) : [];
 
   return (
     <div className="fields-editor">
@@ -209,15 +226,32 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
           )}
         </div>
       )}
-      <div className="savebar" data-dirty={dirty ? 'true' : 'false'}>
-        <span>{dirty ? t('fields.unsaved') : t('fields.allSaved')}</span>
-        <button className="btn btn--quiet btn--small" disabled={!dirty || busy} onClick={() => setList(JSON.parse(JSON.stringify(initial)))}>
-          {t('fields.discard')}
-        </button>
-        <button className="btn btn--primary btn--small" disabled={!dirty || busy} onClick={save}>
-          {t('common.save')}
-        </button>
-      </div>
+      {effect.length > 0 && (
+        <section className="sheet admin-effect" aria-labelledby="fields-effect" aria-live="polite">
+          <h2 className="sheet__title" id="fields-effect">
+            <Icon name="eye" size={18} className="icon--lead" />
+            {t('settings.effect')}
+          </h2>
+          <ul className="admin-effect__list">
+            {effect.map((line) => (
+              <li key={line} data-changed>
+                {line}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!topic && (
+        <div className="savebar" data-dirty={dirty ? 'true' : 'false'}>
+          <span>{dirty ? t('fields.unsaved') : t('fields.allSaved')}</span>
+          <button className="btn btn--quiet btn--small" disabled={!dirty || busy} onClick={() => setList(JSON.parse(JSON.stringify(initial)))}>
+            {t('fields.discard')}
+          </button>
+          <button className="btn btn--primary btn--small" disabled={!dirty || busy} onClick={() => void save()}>
+            {t('common.save')}
+          </button>
+        </div>
+      )}
       {accessOf !== null && list[accessOf] && (
         <FieldAccessDialog
           field={list[accessOf]}
@@ -231,6 +265,29 @@ function FieldListEditor({ initial, onSave, rollups, types }: { initial: Account
       {rolling && types && <RollupDialog types={types} taken={new Set(list.map((x) => x.key))} onClose={() => setRolling(false)} onAdd={(f) => setList([...list, f])} />}
     </div>
   );
+}
+
+/** What saving the list would change, one line each: added, removed, renamed, choices, who sees it, the order. */
+function fieldChanges(before: AccountField[], after: AccountField[], locale: Locale, t: ReturnType<typeof useI18n>['t']): string[] {
+  const name = (f: AccountField) => labelOf(f.label, locale) || f.key;
+  const old = new Map(before.map((f) => [f.key, f]));
+  const kept = new Set(after.map((f) => f.key));
+  const out: string[] = [];
+  for (const f of after) {
+    const o = old.get(f.key);
+    if (!o) {
+      out.push(t('fields.effect.added', { name: name(f) }));
+      continue;
+    }
+    if (name(o) !== name(f)) out.push(t('fields.effect.renamed', { from: name(o), to: name(f) }));
+    else if (JSON.stringify(o.label) !== JSON.stringify(f.label)) out.push(t('fields.effect.relabelled', { name: name(f) }));
+    if (JSON.stringify(o.options ?? []) !== JSON.stringify(f.options ?? [])) out.push(t('fields.effect.choices', { name: name(f) }));
+    if (JSON.stringify(o.access ?? null) !== JSON.stringify(f.access ?? null)) out.push(t('fields.effect.access', { name: name(f) }));
+  }
+  for (const f of before) if (!kept.has(f.key)) out.push(t('fields.effect.removed', { name: name(f) }));
+  const order = (list: AccountField[]) => list.filter((f) => old.has(f.key) && kept.has(f.key)).map((f) => f.key).join();
+  if (order(before) !== order(after)) out.push(t('fields.effect.order'));
+  return out;
 }
 
 const withColor = <T extends { color?: OptionColor }>(o: T, c: OptionColor | undefined): T => {
@@ -489,7 +546,7 @@ function RollupDialog({ types, taken, onClose, onAdd }: { types: RecordType[]; t
 }
 
 export function AccountFieldsEditor() {
-  const { t } = useI18n();
+  const { t, words } = useI18n();
   const { me, reloadMe } = useStore();
   const { types } = useRecordTypes();
   return (
@@ -499,6 +556,7 @@ export function AccountFieldsEditor() {
         initial={me.org.accountFields}
         rollups
         types={types}
+        topic={topicLabel(t, words, 'fields')}
         onSave={async (list) => {
           await api('PUT', '/account-fields', { fields: list });
           await reloadMe();
