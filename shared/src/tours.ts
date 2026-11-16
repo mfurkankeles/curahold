@@ -10,6 +10,8 @@
 // changes and a step no longer finds its element, the check says which.
 
 export type TourLang = 'en' | 'tr';
+/** The languages the tours are written in. */
+export const TOUR_LANGS: readonly TourLang[] = ['en', 'tr'];
 type Words = Record<TourLang, string>;
 
 /** The areas of the product; the hub groups tours by these, in this order. */

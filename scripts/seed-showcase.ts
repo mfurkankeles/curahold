@@ -2,7 +2,7 @@
 // more customers, their stakeholders, upsell opportunities and a working
 // week of tasks. Everything goes through the public API as the admin, so the
 // same rules apply as for any other client. No name here is real.
-import { amount, deepSay, sayer, seedWords } from './seed-words';
+import { amount, deepSay, sayer, seedWords, SOURCE } from './seed-words';
 import type { Locale } from '../shared/src/i18n/core';
 import type { Db } from '../api/src/db';
 import { enqueue } from '../api/src/lib/notify';
@@ -188,9 +188,9 @@ export async function seedShowcase(send: Call, db?: Db, locale?: Locale) {
   const EN = (await seedWords('en')).words;
   const tx = sayer(L, W);
   const deep = deepSay(tx);
-  const call: Call = L === 'tr' ? send : (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deep(body))) as Call);
+  const call: Call = L === SOURCE ? send : (((method: string, path: string, body?: unknown) => send(method, path, body === undefined ? body : deep(body))) as Call);
   /** A label the company wrote, in its language, and in English for whoever reads the app in English. */
-  const label = (s: string) => (L === 'en' ? { en: EN.text[s] ?? s } : L === 'tr' ? { tr: s, en: EN.text[s] ?? s } : { [L]: tx(s), en: EN.text[s] ?? s });
+  const label = (s: string) => ({ en: EN.text[s] ?? s, [L]: tx(s) });
   const money = (usd: number) => amount(W, usd);
   const { people, teams } = await call<{ people: { id: string; email: string }[]; teams: { id: string; name: string }[] }>('GET', '/api/people');
   const who = (key: string) => people.find((p) => p.email === `${key}@demo.example`)!.id;

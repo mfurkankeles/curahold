@@ -11,6 +11,9 @@ const LOADERS: Partial<Record<Locale, () => Promise<{ words: SeedWords }>>> = {
   tr: () => import('./tr'),
 };
 
+/** The language the seed itself is written in: its texts go in as they are. */
+export const SOURCE: Locale = 'tr';
+
 /** The languages the demo company can be written in, English first. */
 export const SEED_LOCALES = Object.keys(LOADERS) as Locale[];
 
@@ -22,7 +25,7 @@ export async function seedWords(locale: Locale): Promise<{ locale: Locale; words
 
 /**
  * Texts the seed sent that the language does not say (the browser checks of the
- * demo read this: tests/e2e/demo.ts). Turkish is the source and never misses.
+ * demo read this: tests/e2e/demo.ts). The source language never misses.
  */
 export const untranslated = new Set<string>();
 
@@ -31,7 +34,7 @@ const isText = (s: string) => /\p{L}/u.test(s) && /\s|[^\x00-\x7F]/.test(s) && !
 
 /** The seed's Turkish text in the company's language. A comment keeps its @mention and says the rest. */
 export function sayer(locale: Locale, w: SeedWords) {
-  if (locale === 'tr') return (s: string) => s;
+  if (locale === SOURCE) return (s: string) => s;
   // What is already in the language (a name the seed put together from these words, say) stays as it is.
   const said = new Set([...Object.values(w.text), ...Object.values(w.people), w.company, w.teams.cs, w.teams.am]);
   const say = (s: string): string => {

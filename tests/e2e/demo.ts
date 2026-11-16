@@ -74,9 +74,9 @@ if (ok) {
 }
 /** Chooses Turkish in the bar; the demo starts over with its sample data written in Turkish. */
 async function chooseTurkish(f: NonNullable<typeof frame>, who: string) {
-  const first = await f.evaluate(() => ({ pressed: document.querySelector('.demobar__lang button[aria-pressed="true"]')?.textContent, nav: document.querySelector('.sidebar')?.textContent ?? '' }));
-  if (first.pressed !== 'EN' || !first.nav.includes('Renewals') || first.nav.includes('Yenilemeler')) errors.push(`${who}: the demo does not open in English (${first.pressed})`);
-  await f.evaluate(() => (document.querySelector('.demobar__lang button[lang="tr"]') as HTMLButtonElement).click());
+  const first = await f.evaluate(() => ({ chosen: (document.querySelector('.demobar__lang select') as HTMLSelectElement | null)?.value, nav: document.querySelector('.sidebar')?.textContent ?? '' }));
+  if (first.chosen !== 'en' || !first.nav.includes('Renewals') || first.nav.includes('Yenilemeler')) errors.push(`${who}: the demo does not open in English (${first.chosen})`);
+  await f.select('.demobar__lang select', 'tr');
   await f.waitForFunction(() => !document.getElementById('boot') && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push(`${who}: choosing Turkish did not give a Turkish demo`));
 }
 if (ok) await chooseTurkish(frame!, 'desktop');

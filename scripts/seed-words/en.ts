@@ -252,6 +252,8 @@ export const words: SeedWords = {
   'Kurucu Ortak': 'Co-founder',
   // the first customers (seed-demo.ts)
   'Quillfield Retail': 'Quillfield Retail',
+  // its name on its own, as the demo bar says it: "Customer · Quillfield portal"
+  Quillfield: 'Quillfield',
   'Harborline Bank': 'Harborline Bank',
   'Cedarmoor Health': 'Cedarmoor Health',
   'Velto Mobility': 'Velto Mobility',

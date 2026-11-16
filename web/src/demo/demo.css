@@ -37,11 +37,8 @@
 }
 .demobar button:hover, .demobar select:hover { border-color: var(--demo-edge-hi); }
 .demobar :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.demobar__lang { display: flex; flex: none; }
-.demobar__lang button { padding: 4px 8px; border-radius: 0; }
-.demobar__lang button:first-child { border-start-start-radius: var(--r-s); border-start-end-radius: 0; border-end-end-radius: 0; border-end-start-radius: var(--r-s); }
-.demobar__lang button:last-child { border-start-start-radius: 0; border-start-end-radius: var(--r-s); border-end-end-radius: var(--r-s); border-end-start-radius: 0; margin-inline-start: -1px; }
-.demobar__lang button[aria-pressed='true'] { background: var(--tint-on-fill); border-color: var(--demo-edge-hi); }
+.demobar__lang { flex: none; }
+.demobar__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .demobar__more { position: relative; }
 .demobar__short { display: none; }
 .demobar__ideas {
@@ -59,6 +56,8 @@
   .demobar__tag, .demobar__more { flex: none; }
   .demobar__note { display: none; }
   .demobar__as span { display: none; }
+  .demobar__lang { flex: none; }
+  .demobar__lang select { width: auto; max-width: 112px; }
   .demobar { justify-content: space-between; }
   .demobar select { max-width: calc(100vw - 130px); }
   .demobar__long { display: none; }
