@@ -4638,4 +4638,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "به اشتراک گذاشته‌شده با شرکت",
   'views.current': "نما: {name}",
   'myTasks.anyPriority': "هر اولویتی",
+  'views.title': "نماهای ذخیره‌شده",
+  'views.titleCount': "نماهای ذخیره‌شده ({n})",
 };

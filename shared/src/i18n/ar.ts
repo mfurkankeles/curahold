@@ -4638,4 +4638,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "مشترك مع الشركة",
   'views.current': "العرض: {name}",
   'myTasks.anyPriority': "أي أولوية",
+  'views.title': "العروض المحفوظة",
+  'views.titleCount': "العروض المحفوظة ({n})",
 };

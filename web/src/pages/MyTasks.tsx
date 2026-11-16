@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PRIORITIES, type Priority, type Task } from '../../../shared/src/model';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { FilterGroup, FilterSheet } from '../components/FilterSheet';
-import { SavedViews } from '../components/SavedViews';
+import { SavedViews, useSavedViews } from '../components/SavedViews';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -52,6 +52,15 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const [board, setBoard] = useState('');
   const [priority, setPriority] = useState<Priority | ''>('');
   const narrowed = (board ? 1 : 0) + (priority ? 1 : 0);
+  const savedViews = useSavedViews({
+    scope: 'my_tasks',
+    state: { q: q.trim(), board, priority },
+    onApply: (v) => {
+      setQ(typeof v.q === 'string' ? v.q : '');
+      setBoard(typeof v.board === 'string' && boards.some((b) => b.id === v.board) ? v.board : '');
+      setPriority(typeof v.priority === 'string' && (PRIORITIES as readonly string[]).includes(v.priority) ? (v.priority as Priority) : '');
+    },
+  });
 
   useEffect(() => {
     get<{ tasks: Task[] }>('/tasks?assignee=me').then(
@@ -151,16 +160,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
                   ))}
                 </select>
               </FilterGroup>
-              <SavedViews
-                scope="my_tasks"
-                state={{ q: q.trim(), board, priority }}
-                canSave={!!(q.trim() || board || priority)}
-                onApply={(v) => {
-                  setQ(typeof v.q === 'string' ? v.q : '');
-                  setBoard(typeof v.board === 'string' && boards.some((b) => b.id === v.board) ? v.board : '');
-                  setPriority(typeof v.priority === 'string' && (PRIORITIES as readonly string[]).includes(v.priority) ? (v.priority as Priority) : '');
-                }}
-              />
+              <SavedViews ctl={savedViews} canSave={!!(q.trim() || board || priority)} />
             </FilterSheet>
           </div>
         )}

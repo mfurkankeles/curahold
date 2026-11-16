@@ -4638,4 +4638,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "社内に共有中",
   'views.current': "ビュー：{name}",
   'myTasks.anyPriority': "すべての優先度",
+  'views.title': "保存済みビュー",
+  'views.titleCount': "保存済みビュー（{n}）",
 };

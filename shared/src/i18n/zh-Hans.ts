@@ -4638,4 +4638,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "已与公司共享",
   'views.current': "视图：{name}",
   'myTasks.anyPriority': "任意优先级",
+  'views.title': "已保存的视图",
+  'views.titleCount': "已保存的视图（{n}）",
 };

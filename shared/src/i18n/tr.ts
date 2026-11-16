@@ -4638,4 +4638,6 @@ export const tr: Record<MessageKey, string> = {
   'views.sharedTag': "Şirketle paylaşılan",
   'views.current': "Görünüm: {name}",
   'myTasks.anyPriority': "Her öncelik",
+  'views.title': "Kayıtlı görünümler",
+  'views.titleCount': "Kayıtlı görünümler ({n})",
 };

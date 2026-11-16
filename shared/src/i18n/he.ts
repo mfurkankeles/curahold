@@ -4638,4 +4638,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "משותף עם החברה",
   'views.current': "תצוגה: {name}",
   'myTasks.anyPriority': "כל עדיפות",
+  'views.title': "תצוגות שמורות",
+  'views.titleCount': "תצוגות שמורות ({n})",
 };

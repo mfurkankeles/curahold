@@ -4638,4 +4638,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "已與公司共用",
   'views.current': "檢視：{name}",
   'myTasks.anyPriority': "任意優先順序",
+  'views.title': "已儲存的檢視",
+  'views.titleCount': "已儲存的檢視（{n}）",
 };

@@ -10,7 +10,7 @@ import { addDays, todayIso } from '../lib/time';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
-import { SavedViews } from './SavedViews';
+import { SavedViews, useSavedViews } from './SavedViews';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -45,6 +45,7 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(ref, !!open, () => setOpen(null));
   const n = filterCount(filters);
+  const savedViews = useSavedViews({ scope: 'board', boardId: board.id, state: { ...filters, q: undefined }, onApply: (v) => onChange({ ...(v as ViewFilters), q: '' }) });
   const selects = board.taskFields.filter((f) => f.type === 'select' && f.options?.length);
   const members = people.filter((p) => p.seat === 'full' && p.status === 'active');
   const chip = (on: boolean, label: string, click: () => void, key: string) => (
@@ -121,7 +122,7 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
         )}
       </div>
       )}
-      <SavedViews scope="board" boardId={board.id} state={{ ...filters, q: undefined }} canSave={n > 0} onApply={(v) => onChange({ ...(v as ViewFilters), q: '' })} />
+      <SavedViews ctl={savedViews} canSave={n > 0} />
       </FilterSheet>
     </div>
   );

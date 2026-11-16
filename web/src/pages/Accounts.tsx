@@ -10,7 +10,7 @@ import type { LinkInfo } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { Importer } from '../components/Importer';
 import { ExportMenu, useExport } from '../components/Export';
-import { SavedViews } from '../components/SavedViews';
+import { SavedViews, useSavedViews } from '../components/SavedViews';
 import type { ExportRequest } from '../lib/export';
 import { AccountRecords, OpenIn, RecordTabs } from '../components/Records';
 import { PROVIDER_NAMES } from '../components/Connections';
@@ -293,9 +293,12 @@ export function AccountsPage() {
     if (typeof v.sortKey === 'string') setSort({ key: v.sortKey, dir: v.sortDir === -1 ? -1 : 1 });
     if (Array.isArray(v.fields)) setShownKeys(v.fields.filter((k): k is string => typeof k === 'string').slice(0, 6));
   };
+  const savedViews = useSavedViews({ scope: 'accounts', state: viewState, onApply: applyView });
   // The file is made by the server from the same filter the list shows (POST /exports).
   const exportAsk = (): ExportRequest => ({ source: 'accounts', q: q.trim() || undefined, owner: owner !== 'all' ? owner : undefined, archived: archived || undefined });
   const exportItems = exporter.items(exportAsk, !!data?.total);
+  // Without the export permission and import rights the phone's "More" has nothing in it, and is not shown.
+  const moreItems = [...exportItems, ...(manage && can('accounts.view_all') && canWrite ? [{ key: 'import', label: t('accounts.import'), icon: 'upload' as const, onSelect: () => setImporting(true) }] : [])];
   return (
     <>
       <header className="topbar listtop" data-place={place ?? undefined}>
@@ -315,6 +318,8 @@ export function AccountsPage() {
           </>
         )}
         <div className="topbar__spacer" />
+        {/* Saved views sit here on a desktop (the filter row is full); on a phone, in the filter sheet. */}
+        {!phone && <SavedViews ctl={savedViews} />}
         <div className="listtop__wide">
           <ExportMenu disabled={!data?.total} ask={exportAsk} />
         </div>
@@ -324,18 +329,9 @@ export function AccountsPage() {
           </button>
         )}
         {/* On a phone, export and import fold into one quiet menu beside the one main action. */}
-        <MenuButton
-          className="listtop__more"
-          label={t('acc.more')}
-          title={t('acc.more')}
-          place="down-end"
-          buttonClass="btn btn--icon"
-          button={<Icon name="more" size={18} />}
-          items={[
-            ...exportItems,
-            ...(manage && can('accounts.view_all') && canWrite ? [{ key: 'import', label: t('accounts.import'), icon: 'upload' as const, onSelect: () => setImporting(true) }] : []),
-          ]}
-        />
+        {moreItems.length > 0 && (
+          <MenuButton className="listtop__more" label={t('acc.more')} title={t('acc.more')} place="down-end" buttonClass="btn btn--icon" button={<Icon name="more" size={18} />} items={moreItems} />
+        )}
         {canWrite && (
           <button className="btn btn--primary listtop__new" aria-label={t('accounts.new')} onClick={() => setCreating(true)}>
             <Icon name="plus" size={16} />
@@ -450,7 +446,7 @@ export function AccountsPage() {
               )}
             </div>
           </details>
-          <SavedViews scope="accounts" state={viewState} onApply={applyView} />
+          {phone && <SavedViews ctl={savedViews} />}
           </FilterSheet>
         </div>
 

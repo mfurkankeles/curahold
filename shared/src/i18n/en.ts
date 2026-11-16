@@ -4653,6 +4653,8 @@ export const en = {
   'views.sharedTag': "Shared with the company",
   'views.current': "View: {name}",
   'myTasks.anyPriority': "Any priority",
+  'views.title': "Saved views",
+  'views.titleCount': "Saved views ({n})",
 } as const;
 
 export type MessageKey = keyof typeof en;

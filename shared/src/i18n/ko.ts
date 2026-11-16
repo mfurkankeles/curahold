@@ -4638,4 +4638,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'views.sharedTag': "회사와 공유됨",
   'views.current': "보기: {name}",
   'myTasks.anyPriority': "모든 우선순위",
+  'views.title': "저장된 보기",
+  'views.titleCount': "저장된 보기 ({n})",
 };

@@ -48,34 +48,28 @@ function markLink(id: string | null) {
   navigate(location.pathname + (qs ? `?${qs}` : ''), true);
 }
 
-export function SavedViews<S extends State>({
-  scope,
-  boardId,
-  state,
-  onApply,
-  canSave = true,
-}: {
+export interface SavedViewsCtl {
   scope: ViewScope;
-  boardId?: string;
-  /** How the list is shown now: what "Save" keeps. */
-  state: S;
-  onApply: (s: S) => void;
-  /** Whether there is anything to keep yet (a filter on, an order or layout chosen). */
-  canSave?: boolean;
-}) {
+  views: View[];
+  active: View | null;
+  apply: (v: View) => void;
+  save: (name: string, shared: boolean) => Promise<boolean>;
+  share: (v: View) => Promise<void>;
+  copy: (v: View) => Promise<void>;
+  remove: (v: View) => void;
+}
+
+/**
+ * A list's saved views. Called by the list itself (so a link to a view opens it even while the
+ * phone filter sheet, where the views are shown, is closed); <SavedViews ctl> shows them.
+ */
+export function useSavedViews<S extends State>({ scope, boardId, state, onApply }: { scope: ViewScope; boardId?: string; /** How the list is shown now: what "Save" keeps. */ state: S; onApply: (s: S) => void }): SavedViewsCtl {
   const { t } = useI18n();
   const { toast, canWrite } = useStore();
-  const phone = usePhone();
   const later = useDeleteLater();
   const [views, setViews] = useState<View[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [shared, setShared] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [active, setActive] = useState<View | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  useDismiss(ref, open, () => setOpen(false));
   const query = scope === 'board' ? `board=${boardId ?? ''}` : `scope=${encodeURIComponent(scope)}`;
   const load = () => get<{ views: View[] }>(`/views?${query}`).then((r) => setViews(r.views), () => undefined);
   useEffect(() => {
@@ -109,68 +103,106 @@ export function SavedViews<S extends State>({
   }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fail = (e: unknown) => toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+  return {
+    scope,
+    views: views.filter((v) => !hidden.has(v.id)),
+    active,
+    apply: (v) => {
+      setActive(v);
+      markLink(v.id);
+      onApply(v.filters as S);
+    },
+    save: async (name, shared) => {
+      try {
+        const r = await post<{ view: View }>('/views', { scope, ...(scope === 'board' ? { boardId } : {}), name, filters: state, shared: shared && canWrite });
+        toast(t('views.saved', { name }));
+        setActive(r.view);
+        markLink(r.view.id);
+        await load();
+        return true;
+      } catch (e) {
+        fail(e);
+        return false;
+      }
+    },
+    share: async (v) => {
+      try {
+        await patch(`/views/${v.id}`, { shared: !v.shared });
+        toast(t(v.shared ? 'views.nowPrivate' : 'views.nowShared', { name: v.name }));
+        await load();
+      } catch (e) {
+        fail(e);
+      }
+    },
+    copy: async (v) => {
+      const link = `${location.origin}${location.pathname}?saved=${v.id}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        toast(t('views.linkCopied', { name: v.name }));
+      } catch {
+        markLink(v.id);
+        toast(t('views.linkInAddress', { name: v.name }));
+      }
+    },
+    remove: (v) => {
+      if (active?.id === v.id) {
+        setActive(null);
+        markLink(null);
+      }
+      later(t('views.removed', { name: v.name }), {
+        hide: () => setHidden((h) => new Set(h).add(v.id)),
+        unhide: () =>
+          setHidden((h) => {
+            const next = new Set(h);
+            next.delete(v.id);
+            return next;
+          }),
+        commit: () => del(`/views/${v.id}`),
+        after: () => void load(),
+      });
+    },
+  };
+}
+
+/** The views of a list: a "Views" popover on a desktop, a group of its own in the phone filter sheet. */
+export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Whether there is anything to keep yet (a filter on, an order or layout chosen). */ canSave?: boolean }) {
+  const { t } = useI18n();
+  const { canWrite } = useStore();
+  const phone = usePhone();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [shared, setShared] = useState(false);
+  const [busy, setBusy] = useState(false);
+  // The popover opens towards the side with room: from the button's start, or back from its end.
+  const [place, setPlace] = useState<'start' | 'end'>('start');
+  const ref = useRef<HTMLDivElement>(null);
+  useDismiss(ref, open, () => setOpen(false));
+  const { scope, active } = ctl;
+  const toggle = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r && !open) {
+      const rtl = getComputedStyle(ref.current!).direction === 'rtl';
+      const room = rtl ? r.right : window.innerWidth - r.left;
+      setPlace(room >= Math.min(372, window.innerWidth - 24) ? 'start' : 'end');
+    }
+    setOpen(!open);
+  };
   const apply = (v: View) => {
-    setActive(v);
-    markLink(v.id);
-    onApply(v.filters as S);
+    ctl.apply(v);
     setOpen(false);
   };
   const save = async () => {
     const n = name.trim();
     if (!n || busy) return;
     setBusy(true);
-    try {
-      const r = await post<{ view: View }>('/views', { scope, ...(scope === 'board' ? { boardId } : {}), name: n, filters: state, shared: shared && canWrite });
+    if (await ctl.save(n, shared)) {
       setName('');
       setShared(false);
-      toast(t('views.saved', { name: n }));
-      setActive(r.view);
-      markLink(r.view.id);
-      await load();
-    } catch (e) {
-      fail(e);
-    } finally {
-      setBusy(false);
     }
+    setBusy(false);
   };
-  const share = async (v: View) => {
-    try {
-      await patch(`/views/${v.id}`, { shared: !v.shared });
-      toast(t(v.shared ? 'views.nowPrivate' : 'views.nowShared', { name: v.name }));
-      await load();
-    } catch (e) {
-      fail(e);
-    }
-  };
-  const copy = async (v: View) => {
-    const link = `${location.origin}${location.pathname}?saved=${v.id}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      toast(t('views.linkCopied', { name: v.name }));
-    } catch {
-      markLink(v.id);
-      toast(t('views.linkInAddress', { name: v.name }));
-    }
-  };
-  const remove = (v: View) => {
-    if (active?.id === v.id) {
-      setActive(null);
-      markLink(null);
-    }
-    later(t('views.removed', { name: v.name }), {
-      hide: () => setHidden((h) => new Set(h).add(v.id)),
-      unhide: () =>
-        setHidden((h) => {
-          const next = new Set(h);
-          next.delete(v.id);
-          return next;
-        }),
-      commit: () => del(`/views/${v.id}`),
-      after: () => void load(),
-    });
-  };
-
-  const list = views.filter((v) => !hidden.has(v.id));
+  const { copy, share, remove } = ctl;
+  const list = ctl.views;
   const body = (
     <div className="savedviews__body">
       {list.length === 0 && <p className="popmenu__note">{t('views.none')}</p>}
@@ -236,16 +268,30 @@ export function SavedViews<S extends State>({
   );
 
   // In the phone filter sheet: a group of its own, open.
-  if (phone) return <FilterGroup label={active ? t('views.current', { name: active.name }) : t('views.button')}>{body}</FilterGroup>;
+  if (phone) return <FilterGroup label={active ? t('views.current', { name: active.name }) : t('views.title')}>{body}</FilterGroup>;
+  // In a full toolbar: the bookmark and how many there are; the open view's name once one is open.
   return (
     <div className="menuwrap savedviews" ref={ref}>
-      <button type="button" className="btn" aria-haspopup="dialog" aria-expanded={open} data-on={active ? true : undefined} onClick={() => setOpen(!open)}>
+      <button
+        type="button"
+        className="btn"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={active ? t('views.current', { name: active.name }) : t('views.titleCount', { n: list.length })}
+        title={t('views.title')}
+        data-on={active ? true : undefined}
+        onClick={toggle}
+      >
         <Icon name="bookmark" size={16} />
-        <span className="savedviews__label">{active ? active.name : t('views.button')}</span>
-        {!active && list.length > 0 && <span className="fcount fcount--quiet num">{list.length}</span>}
+        {active && <span className="savedviews__label">{active.name}</span>}
+        {!active && list.length > 0 && (
+          <span className="fcount fcount--quiet num" aria-hidden="true">
+            {list.length}
+          </span>
+        )}
       </button>
       {open && (
-        <div className="popmenu filterpop" role="dialog" aria-label={t('views.button')}>
+        <div className="popmenu filterpop" role="dialog" aria-label={t('views.title')} data-place={place}>
           {body}
         </div>
       )}
