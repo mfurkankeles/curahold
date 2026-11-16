@@ -58,6 +58,11 @@ describe('platform metrics', () => {
     expect(m.usage.boards).toBeGreaterThan(0);
     expect(m.usage.tasks).toBeGreaterThan(0);
 
+    // Every period is there, an empty one as 0, so a chart never skips one.
+    expect(m.customers.newOrgs).toHaveLength(12);
+    expect(m.engagement.dauTrend).toHaveLength(30);
+    expect(m.usage.created).toHaveLength(12);
+
     // Billing is off in tests, so the numbers are labelled demo.
     expect(m.mode).toBe('demo');
   });

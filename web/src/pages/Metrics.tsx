@@ -10,59 +10,14 @@ import { useMoney } from '../lib/money';
 import { useStore } from '../lib/store';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
+import type { CSSProperties } from 'react';
 import type { PlatformAccess } from '../../../shared/src/platform';
 import { ConsoleElsewhere } from './PlatformConsole';
+import { ConsoleChart, periodOf } from './ConsoleChart';
 import { formatClock, formatNumber, formatPercent } from '../lib/format';
 import '../surfaces/console.css';
 
 const REFRESH_MS = 45_000;
-const VB_W = 300;
-const VB_H = 120;
-
-/** A filled line over a short series. Labels are left to the surrounding card. */
-function LineChart({ points }: { points: MetricPoint[] }) {
-  if (points.length < 2) return <Empty />;
-  const xs = points.map((_, i) => (i / (points.length - 1)) * VB_W);
-  const max = Math.max(1, ...points.map((p) => p.v));
-  const y = (v: number) => VB_H - 8 - (v / max) * (VB_H - 16);
-  const line = points.map((p, i) => `${xs[i].toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
-  const area = `0,${VB_H} ${line} ${VB_W},${VB_H}`;
-  const last = points.length - 1;
-  return (
-    <svg className="mchart" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none" aria-hidden="true">
-      <polygon className="mchart__area" points={area} />
-      <polyline className="mchart__line" points={line} vectorEffect="non-scaling-stroke" />
-      <circle className="mchart__dot" cx={xs[last]} cy={y(points[last].v)} r={3} />
-    </svg>
-  );
-}
-
-/** Vertical bars over a short series. */
-function BarChart({ points }: { points: MetricPoint[] }) {
-  if (!points.length) return <Empty />;
-  const max = Math.max(1, ...points.map((p) => p.v));
-  const gap = 4;
-  const w = (VB_W - gap * (points.length - 1)) / points.length;
-  return (
-    <svg className="mchart" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none" aria-hidden="true">
-      {points.map((p, i) => {
-        const h = (p.v / max) * (VB_H - 12);
-        return <rect key={i} className="mchart__bar" x={i * (w + gap)} y={VB_H - h} width={w} height={Math.max(1, h)} rx={2} />;
-      })}
-    </svg>
-  );
-}
-
-function Empty() {
-  const { t } = useI18n();
-  return (
-    <svg className="mchart" viewBox={`0 0 ${VB_W} ${VB_H}`} aria-hidden="true">
-      <text className="mchart__empty" x={VB_W / 2} y={VB_H / 2} textAnchor="middle" dominantBaseline="middle">
-        {t('metrics.empty')}
-      </text>
-    </svg>
-  );
-}
 
 /** Not the owner here: on the hosted service, Curahold's team finds the numbers in its console. */
 function NotHere() {
@@ -120,6 +75,23 @@ export function MetricsPage() {
   const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);
   const pct = (v: number) => formatPercent(v * 100, locale);
+  const chart = (title: string, kind: 'line' | 'columns', points: MetricPoint[], cash?: boolean) => (
+    <div className="mcard">
+      <h3 className="mcard__title">{title}</h3>
+      {points.length ? (
+        <ConsoleChart
+          kind={kind}
+          points={points}
+          label={title}
+          value={(v) => (cash ? usd(v) : n(v))}
+          tick={(v, short) => (cash ? money.format(v, 'USD', short) : formatNumber(v, locale, { compact: short }))}
+          when={(p) => periodOf(p, locale)}
+        />
+      ) : (
+        <p className="mcard__empty">{t('metrics.empty')}</p>
+      )}
+    </div>
+  );
 
   const tile = (label: string, value: string, sub?: string, lead?: boolean) => (
     <div className={`mtile${lead ? ' mtile--lead' : ''}`}>
@@ -161,7 +133,7 @@ export function MetricsPage() {
       {/* Revenue */}
       <section className="metrics__sec">
         <h2>{t('metrics.revenue')}</h2>
-        <div className="mtiles">
+        <div className="mtiles" data-n={5}>
           {tile(t('metrics.mrr'), usd(r?.mrr ?? 0), undefined, true)}
           {tile(t('metrics.arr'), usd(r?.arr ?? 0))}
           {tile(t('metrics.payingOrgs'), n(r?.payingOrgs ?? 0))}
@@ -169,12 +141,9 @@ export function MetricsPage() {
           {tile(t('metrics.newPaying'), n(r?.newPaying30 ?? 0))}
         </div>
         <div className="mcards">
+          {chart(t('metrics.buildup'), 'line', r?.buildup ?? [], true)}
           <div className="mcard">
-            <p className="mcard__title">{t('metrics.buildup')}</p>
-            <LineChart points={r?.buildup ?? []} />
-          </div>
-          <div className="mcard">
-            <p className="mcard__title">{t('metrics.byPlan')}</p>
+            <h3 className="mcard__title">{t('metrics.byPlan')}</h3>
             <div className="mlist">
               {(r?.byPlan ?? []).map((p) => (
                 <div className="mlist__row" key={p.plan}>
@@ -191,7 +160,7 @@ export function MetricsPage() {
       {/* Customers */}
       <section className="metrics__sec">
         <h2>{t('metrics.customers')}</h2>
-        <div className="mtiles">
+        <div className="mtiles" data-n={5}>
           {tile(t('metrics.orgs'), n(cu?.orgs ?? 0), undefined, true)}
           {tile(t('metrics.paying'), n(cu?.paying ?? 0))}
           {tile(t('metrics.trialing'), n(cu?.trialing ?? 0))}
@@ -200,23 +169,20 @@ export function MetricsPage() {
         </div>
         <div className="mcards">
           <div className="mcard">
-            <p className="mcard__title">{t('metrics.funnel')}</p>
+            <h3 className="mcard__title">{t('metrics.funnel')}</h3>
             <div className="mfunnel">
               {(cu?.funnel ?? []).map((f) => (
                 <div className="mfunnel__row" key={f.stage}>
                   <span className="mfunnel__label">{t(`metrics.funnel.${f.stage}` as MessageKey)}</span>
-                  <span className="mfunnel__track"><span className="mfunnel__fill" style={{ width: `${(f.n / funnelMax) * 100}%` }} /></span>
+                  <span className="mfunnel__track"><span className="mfunnel__fill" style={{ '--w': `${(f.n / funnelMax) * 100}%` } as CSSProperties} /></span>
                   <span className="mfunnel__n">{n(f.n)}</span>
                 </div>
               ))}
             </div>
           </div>
+          {chart(t('metrics.newOrgs'), 'columns', cu?.newOrgs ?? [])}
           <div className="mcard">
-            <p className="mcard__title">{t('metrics.newOrgs')}</p>
-            <BarChart points={cu?.newOrgs ?? []} />
-          </div>
-          <div className="mcard">
-            <p className="mcard__title">{t('metrics.topOrgs')}</p>
+            <h3 className="mcard__title">{t('metrics.topOrgs')}</h3>
             <div className="mlist">
               {(cu?.top ?? []).map((o, i) => (
                 <div className="mlist__row" key={i}>
@@ -233,7 +199,7 @@ export function MetricsPage() {
       {/* Engagement */}
       <section className="metrics__sec">
         <h2>{t('metrics.engagement')}</h2>
-        <div className="mtiles">
+        <div className="mtiles" data-n={8}>
           {tile(t('metrics.dau'), n(en?.dau ?? 0), undefined, true)}
           {tile(t('metrics.wau'), n(en?.wau ?? 0))}
           {tile(t('metrics.mau'), n(en?.mau ?? 0))}
@@ -244,17 +210,14 @@ export function MetricsPage() {
           {tile(t('metrics.churn30'), n(en?.churn30 ?? 0))}
         </div>
         <div className="mcards">
-          <div className="mcard">
-            <p className="mcard__title">{t('metrics.dauTrend')}</p>
-            <LineChart points={en?.dauTrend ?? []} />
-          </div>
+          {chart(t('metrics.dauTrend'), 'line', en?.dauTrend ?? [])}
         </div>
       </section>
 
       {/* Product usage */}
       <section className="metrics__sec">
         <h2>{t('metrics.usage')}</h2>
-        <div className="mtiles">
+        <div className="mtiles" data-n={7}>
           {tile(t('metrics.tasks'), n(us?.tasks ?? 0), undefined, true)}
           {tile(t('metrics.boards'), n(us?.boards ?? 0))}
           {tile(t('metrics.meetings'), n(us?.meetings ?? 0))}
@@ -264,10 +227,7 @@ export function MetricsPage() {
           {tile(t('metrics.perOrg'), n(us?.tasksPerOrg ?? 0))}
         </div>
         <div className="mcards">
-          <div className="mcard">
-            <p className="mcard__title">{t('metrics.created')}</p>
-            <BarChart points={us?.created ?? []} />
-          </div>
+          {chart(t('metrics.created'), 'columns', us?.created ?? [])}
         </div>
       </section>
         </>

@@ -5,29 +5,10 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import type { ConsoleAttention, ConsoleToday } from '../../../shared/src/console';
 import { EmptyState } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
-import { formatClock, formatDate, formatMoney, formatMonth, formatNumber, formatPercent } from '../lib/format';
+import { formatClock, formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
-
-const VB_W = 300;
-const VB_H = 80;
-
-/** How MRR built up month by month: one quiet line, the last point marked. */
-function Trend({ points, label }: { points: { t: string; v: number }[]; label: string }) {
-  if (points.length < 2) return null;
-  const max = Math.max(1, ...points.map((p) => p.v));
-  const x = (i: number) => (i / (points.length - 1)) * VB_W;
-  const y = (v: number) => VB_H - 6 - (v / max) * (VB_H - 12);
-  const line = points.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
-  const last = points.length - 1;
-  return (
-    <svg className="ctoday__trend" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none" role="img" aria-label={label}>
-      <polygon className="ctoday__trend-area" points={`0,${VB_H} ${line} ${VB_W},${VB_H}`} />
-      <polyline className="ctoday__trend-line" points={line} vectorEffect="non-scaling-stroke" />
-      <circle className="ctoday__trend-dot" cx={x(last)} cy={y(points[last].v)} r={3} />
-    </svg>
-  );
-}
+import { ConsoleChart, periodOf } from './ConsoleChart';
 
 const KIND_ICON: Record<ConsoleAttention['kind'], IconName> = { request: 'lifebuoy', payment: 'alert', trial: 'hourglass' };
 
@@ -114,32 +95,37 @@ export function TodayView({ data, onRequest, onCompany }: { data: ConsoleToday; 
           )}
         </section>
 
-        <section className="ccard" aria-labelledby="cbiz-h">
-          <h2 className="ccard__title" id="cbiz-h">{t('metrics.customers')}</h2>
-          <dl className="cfacts">
-            <div><dt>{t('metrics.orgs')}</dt><dd>{n(c.total)}</dd></div>
-            <div><dt>{t('metrics.paying')}</dt><dd>{n(c.paying)}</dd></div>
-            <div><dt>{t('metrics.trialing')}</dt><dd>{n(c.trialing)}</dd></div>
-            <div><dt>{t('console.pastDue' as MessageKey)}</dt><dd>{n(c.pastDue)}</dd></div>
-          </dl>
-          <h2 className="ccard__title">{t('desk.title')}</h2>
-          <dl className="cfacts">
-            <div><dt>{t('desk.queue.received')}</dt><dd>{n(s.waiting)}</dd></div>
-            <div><dt>{t('desk.queue.unclaimed')}</dt><dd>{n(s.unclaimed)}</dd></div>
-            <div><dt>{t('desk.blocking')}</dt><dd>{n(s.blocking)}</dd></div>
-            <div><dt>{t('desk.queue.mine')}</dt><dd>{n(s.mine)}</dd></div>
-          </dl>
+        <div className="ctoday__side">
           {r.trend.length > 1 ? (
-            <>
-              <h2 className="ccard__title">{t('metrics.buildup')}</h2>
-              <Trend points={r.trend} label={t('metrics.buildup')} />
-              <p className="ctoday__axis" aria-hidden="true">
-                <span>{formatMonth(r.trend[0].t, locale, { short: true, year: true })}</span>
-                <span>{formatMonth(r.trend[r.trend.length - 1].t, locale, { short: true, year: true })}</span>
-              </p>
-            </>
+            <section className="ccard" aria-labelledby="ctrend-h">
+              <h2 className="ccard__title" id="ctrend-h">{t('metrics.buildup')}</h2>
+              <ConsoleChart
+                kind="line"
+                points={r.trend}
+                label={t('metrics.buildup')}
+                value={(v) => formatMoney(v, data.currency, locale)}
+                tick={(v, short) => formatMoney(v, data.currency, locale, { compact: short })}
+                when={(p) => periodOf(p, locale)}
+              />
+            </section>
           ) : null}
-        </section>
+          <section className="ccard" aria-labelledby="cbiz-h">
+            <h2 className="ccard__title" id="cbiz-h">{t('metrics.customers')}</h2>
+            <dl className="cfacts">
+              <div><dt>{t('metrics.orgs')}</dt><dd>{n(c.total)}</dd></div>
+              <div><dt>{t('metrics.paying')}</dt><dd>{n(c.paying)}</dd></div>
+              <div><dt>{t('metrics.trialing')}</dt><dd>{n(c.trialing)}</dd></div>
+              <div><dt>{t('console.pastDue' as MessageKey)}</dt><dd>{n(c.pastDue)}</dd></div>
+            </dl>
+            <h2 className="ccard__title">{t('desk.title')}</h2>
+            <dl className="cfacts">
+              <div><dt>{t('desk.queue.received')}</dt><dd>{n(s.waiting)}</dd></div>
+              <div><dt>{t('desk.queue.unclaimed')}</dt><dd>{n(s.unclaimed)}</dd></div>
+              <div><dt>{t('desk.blocking')}</dt><dd>{n(s.blocking)}</dd></div>
+              <div><dt>{t('desk.queue.mine')}</dt><dd>{n(s.mine)}</dd></div>
+            </dl>
+          </section>
+        </div>
       </div>
     </div>
   );

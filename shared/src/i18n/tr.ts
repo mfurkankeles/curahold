@@ -4321,6 +4321,7 @@ export const tr: Record<MessageKey, string> = {
   'console.noMatch': "Eşleşen şirket yok",
   'console.accountLogged': "Bu hesabı açman şirketin kendi işlem günlüğüne yazılır.",
   'console.open': "Konsolu aç",
+  'console.signin.title': "Curahold konsolu",
   'console.elsewhere.title': "Konsolun kendi adresi var",
   'console.elsewhere.body': "Müşteriler, gelir ve destek talepleri {host} adresinde, ayrı bir girişle.",
   'audit.support.account': "Curahold desteği hesap özetine baktı",

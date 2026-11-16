@@ -51,10 +51,12 @@ metricsRoutes.get('/metrics', async (c) => {
     )) as { total: number; verified: number; converted: number }[];
 
     const newOrgs = (await q.query(
-      `select to_char(date_trunc('month', created_at), 'YYYY-MM') as t, count(*)::int as v
-         from orgs
-        where created_at >= date_trunc('month', now()) - interval '11 months'
-        group by 1 order by 1`,
+      // Every one of the last twelve months, a month without a new company as 0 (a chart never skips one).
+      `select to_char(m, 'YYYY-MM') as t, coalesce(x.v, 0)::int as v
+         from generate_series(date_trunc('month', now()) - interval '11 months', date_trunc('month', now()), interval '1 month') m
+         left join (select date_trunc('month', created_at) as m, count(*) as v from orgs
+                     where created_at >= date_trunc('month', now()) - interval '11 months' group by 1) x using (m)
+        order by m`,
     )) as MetricPoint[];
 
     const [engage] = (await q.query(
@@ -65,10 +67,11 @@ metricsRoutes.get('/metrics', async (c) => {
     )) as { dau: number; wau: number; mau: number }[];
 
     const dauTrend = (await q.query(
-      `select to_char(date_trunc('day', at), 'YYYY-MM-DD') as t, count(distinct actor_id)::int as v
-         from audit_log
-        where actor_id is not null and at >= now() - interval '29 days'
-        group by 1 order by 1`,
+      `select to_char(d, 'YYYY-MM-DD') as t, coalesce(x.v, 0)::int as v
+         from generate_series(date_trunc('day', now()) - interval '29 days', date_trunc('day', now()), interval '1 day') d
+         left join (select date_trunc('day', at) as d, count(distinct actor_id) as v from audit_log
+                     where actor_id is not null and at >= date_trunc('day', now()) - interval '29 days' group by 1) x using (d)
+        order by d`,
     )) as MetricPoint[];
 
     const [seats] = (await q.query(
@@ -94,10 +97,11 @@ metricsRoutes.get('/metrics', async (c) => {
     )) as { tasks: number; boards: number; meetings: number; records: number; comments: number; minutes: number }[];
 
     const created = (await q.query(
-      `select to_char(date_trunc('week', created_at), 'YYYY-MM-DD') as t, count(*)::int as v
-         from tasks
-        where created_at >= date_trunc('week', now()) - interval '11 weeks'
-        group by 1 order by 1`,
+      `select to_char(w, 'YYYY-MM-DD') as t, coalesce(x.v, 0)::int as v
+         from generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') w
+         left join (select date_trunc('week', created_at) as w, count(*) as v from tasks
+                     where created_at >= date_trunc('week', now()) - interval '11 weeks' group by 1) x using (w)
+        order by w`,
     )) as MetricPoint[];
 
     return { paying, counts, signups, newOrgs, engage, dauTrend, seats, churn, usage, created };

@@ -4336,6 +4336,7 @@ export const en = {
   'console.noMatch': "No company matches",
   'console.accountLogged': "Opening this account is written to the company's own activity log.",
   'console.open': "Open the console",
+  'console.signin.title': "Curahold console",
   'console.elsewhere.title': "The console has its own address",
   'console.elsewhere.body': "Customers, revenue and support requests are at {host}, with a sign-in of its own.",
   'audit.support.account': "Curahold support looked at the account",

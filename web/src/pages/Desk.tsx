@@ -191,7 +191,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
           </span>
           <Languages onLocale={onLocale} />
         </div>
-        <h1>{t('desk.title')}</h1>
+        <h1>{t('console.signin.title')}</h1>
         <p className="muted">{notice ?? t('desk.signin.lead')}</p>
         <label className="field">
           <span className="field__label">{t('desk.signin.email')}</span>

@@ -935,7 +935,7 @@ await step('the console: staff sign in with two steps, see the business today ch
   await d.waitForSelector('.desk-signin__card input[type=email]');
   // English first; this team works in Turkish.
   await d.select('.desk__langs select', 'tr');
-  await d.waitForFunction(() => document.querySelector('.desk-signin__card h1')?.textContent === 'Destek masası');
+  await d.waitForFunction(() => document.querySelector('.desk-signin__card h1')?.textContent === 'Curahold konsolu');
   await shot(d, 'p7-07-desk-signin');
   // Someone who is not on the staff list is told the same thing, and gets no code.
   await d.type('.desk-signin__card input[type=email]', 'mert@demo.example');

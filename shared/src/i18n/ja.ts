@@ -4321,6 +4321,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "一致する企業はありません",
   'console.accountLogged': "このアカウントを開くと、その企業のアクティビティログに記録されます。",
   'console.open': "コンソールを開く",
+  'console.signin.title': "Curahold コンソール",
   'console.elsewhere.title': "コンソールは専用のアドレスにあります",
   'console.elsewhere.body': "顧客、収益、サポートリクエストは {host} にあります。サインインも別です。",
   'audit.support.account': "Curahold サポートがアカウントを確認しました",

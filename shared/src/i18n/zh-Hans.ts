@@ -4321,6 +4321,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'console.noMatch': "没有匹配的公司",
   'console.accountLogged': "打开此账户会记入该公司自己的活动日志。",
   'console.open': "打开控制台",
+  'console.signin.title': "Curahold 控制台",
   'console.elsewhere.title': "控制台有自己的地址",
   'console.elsewhere.body': "客户、收入和支持请求都在 {host}，需要单独登录。",
   'audit.support.account': "Curahold 支持人员查看了账户",
