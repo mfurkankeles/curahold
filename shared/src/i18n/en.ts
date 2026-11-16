@@ -4523,6 +4523,19 @@ export const en = {
   'join.domainRemoved': "@{domain} removed",
   'auto.actions': "More for {name}",
   'settings.allSaved': "All changes saved",
+  'sso.test.button': "Test sign-in",
+  'sso.test.hint': "Opens your provider. Sign in there and you come back here; nobody else is affected and SSO does not switch on.",
+  'sso.test.saveFirst': "Save your changes first, then test.",
+  'sso.test.ok': "The connection works: your provider signed in {email}.",
+  'sso.test.failed': "The test did not pass: {reason} Check the details above and try again.",
+  'sso.test.last': "Last test passed {when} ({email}).",
+  'sso.test.stale': "The details changed since the last test. Test again before requiring SSO.",
+  'sso.test.first': "Test sign-in once with these details; then SSO can be required.",
+  'sso.test.why.oauth_failed': "your provider did not complete the sign-in.",
+  'sso.test.why.no_account': "the answer carried no email address (check the email attribute).",
+  'sso.test.why.not_configured': "the provider's details are not complete.",
+  'errors.sso_untested': "Test sign-in through your identity provider with these details first; then SSO can be required.",
+  'audit.sso.tested': "tested single sign-on",
 } as const;
 
 export type MessageKey = keyof typeof en;

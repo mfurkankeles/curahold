@@ -13,6 +13,8 @@ import { useStore } from '../lib/store';
 import { useUndo } from '../lib/undo';
 import { useUnsaved } from '../lib/unsaved';
 import { ErrorState, SkeletonRows } from './Empty';
+import { getDeviceId } from '../lib/device';
+import { relativeTime } from '../lib/time';
 import { Icon } from './icons';
 import '../surfaces/admin.css';
 import { getSsoSettings, rotateScimToken, saveSsoSettings, type SsoProtocol, type SsoSettings as Settings } from '../lib/sso';
@@ -38,13 +40,22 @@ const blank: Form = { enabled: false, enforced: false, protocol: 'saml', issuer:
 export function SsoSettings() {
   const { t } = useI18n();
   const k = (s: string) => t(s as MessageKey);
-  const { toast, people } = useStore();
+  const { toast, people, me } = useStore();
   const offer = useUndo();
   const [data, setData] = useState<Settings | null>(null);
   const [failed, setFailed] = useState(false);
   const [base, setBase] = useState<Form>(blank);
   const [form, setForm] = useState<Form>(blank);
   const [scim, setScim] = useState<{ token: string; baseUrl: string; hint: string } | null>(null);
+  // Back from a test sign-in: the result is in the address once, then the address is tidied.
+  const [tested] = useState(() => {
+    const q = new URLSearchParams(location.search);
+    const r = q.get('ssoTest');
+    return r ? { ok: r === 'ok', as: q.get('as') ?? '', reason: r } : null;
+  });
+  useEffect(() => {
+    if (tested) history.replaceState(history.state, '', location.pathname);
+  }, [tested]);
   const load = useCallback(() => {
     setFailed(false);
     getSsoSettings()
@@ -137,6 +148,9 @@ export function SsoSettings() {
   if (!data) return <SkeletonRows rows={6} label={t('common.loading')} />;
   const ready = !!form.ssoUrl.trim() && (form.protocol === 'saml' ? !!(form.cert.trim() || data.config?.certSet) : !!form.clientId.trim());
   const active = people.filter((p) => p.status === 'active').length;
+  // A test runs against what is saved; requiring SSO needs a passed test of exactly that (the server checks too).
+  const savedReady = !!data.config?.protocol && !!data.config.ssoUrl;
+  const testedNow = !dirty && (!!data.test?.current || (!!tested?.ok && !!data.test?.current));
   const ReadonlyRow = ({ label, value }: { label: string; value: string }) => (
     <label className="field">
       <span className="field__label">{label}</span>
@@ -227,8 +241,34 @@ export function SsoSettings() {
           {k('sso.on.title')}
         </h3>
         {!ready && !form.enabled && <p className="field__hint">{k('sso.needsDetails')}</p>}
+        {tested && (
+          <p className={`notice sso__effect${tested.ok ? ' sso__ok' : ' notice--error'}`} role="status">
+            {tested.ok ? t('sso.test.ok', { email: tested.as }) : t('sso.test.failed', { reason: t(`sso.test.why.${['oauth_failed', 'no_account', 'not_configured'].includes(tested.reason) ? tested.reason : 'oauth_failed'}` as MessageKey) })}
+          </p>
+        )}
+        <div className="sso__test">
+          <a
+            className="btn"
+            aria-disabled={dirty || !savedReady || undefined}
+            href={`/api/sso/${me.org.slug}/start?test=1&device=${encodeURIComponent(getDeviceId())}`}
+            onClick={(e) => {
+              if (dirty || !savedReady) e.preventDefault();
+            }}
+          >
+            <Icon name="external" size={16} />
+            {k('sso.test.button')}
+          </a>
+          <span className="field__hint">{dirty ? k('sso.test.saveFirst') : data.test && !tested ? (data.test.current ? t('sso.test.last', { when: relativeTime(data.test.at, t), email: data.test.email ?? '' }) : k('sso.test.stale')) : k('sso.test.hint')}</span>
+        </div>
         <Switch id="sso-enable" on={form.enabled} disabled={!ready && !form.enabled} label={k('sso.enable')} hint={k('sso.enableHint')} onChange={(v) => setForm((f) => ({ ...f, enabled: v, enforced: v ? f.enforced : false }))} />
-        <Switch id="sso-enforce" on={form.enabled && form.enforced} disabled={!form.enabled} label={k('sso.enforce')} hint={k('sso.enforceHint')} onChange={(v) => set('enforced', v)} />
+        <Switch
+          id="sso-enforce"
+          on={form.enabled && form.enforced}
+          disabled={!form.enabled || (!base.enforced && !testedNow)}
+          label={k('sso.enforce')}
+          hint={!base.enforced && !testedNow ? k('sso.test.first') : k('sso.enforceHint')}
+          onChange={(v) => set('enforced', v)}
+        />
         {/* What saving would do, before it is done. */}
         {form.enabled && form.enforced && !(base.enabled && base.enforced) && (
           <div className="notice sso__effect" role="status">

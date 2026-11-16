@@ -211,3 +211,6 @@
   /* The shared switch keeps its look; a transparent edge makes the target 44 px. */
   .admin .switch { box-sizing: content-box; width: 38px; height: 22px; border: 11px solid transparent; background-clip: padding-box; margin: -11px; }
 }
+.sso__test { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sso__test .btn[aria-disabled] { opacity: .55; pointer-events: none; }
+.sso__ok { background: var(--done-wash); border-color: var(--done); }

@@ -43,6 +43,7 @@ import {
   spEntityId,
   verifyIdToken,
   verifyState,
+  type SsoAuthConfig,
   type SsoState,
 } from '../lib/sso';
 import { body, deviceId as deviceIdField } from '../lib/validate';
@@ -81,6 +82,27 @@ async function resolveOrg(c: C, slug: string): Promise<OrgRow | null> {
 }
 
 const loginBack = (cfg: Config, slug: string, error?: string) => `${orgUrl(cfg, slug)}/login${error ? `?error=${error}` : ''}`;
+/** Back to the SSO settings with the result of a test sign-in. */
+const testBack = (cfg: Config, slug: string, result: string, email?: string) => `${orgUrl(cfg, slug)}/settings/sso?ssoTest=${encodeURIComponent(result)}${email ? `&as=${encodeURIComponent(email)}` : ''}`;
+/** Once the state is known: a test goes back to the settings, a sign-in to the sign-in page. */
+const failBack = (cfg: Config, slug: string, state: SsoState, error: string) => (state.t ? testBack(cfg, slug, error) : loginBack(cfg, slug, error));
+
+/**
+ * The connection details a test sign-in proved, as a keyed fingerprint (never the details
+ * or secrets themselves). Requiring SSO needs a passed test with exactly these details.
+ */
+async function connectionPrint(cfg: Config, v: { protocol: string | null; issuer: string | null; ssoUrl: string | null; tokenUrl: string | null; jwksUrl: string | null; clientId: string | null; attrEmail: string | null; cert: string | null; clientSecret: string | null }) {
+  return sha256Hex(`${cfg.authSecret}|sso-test|${JSON.stringify([v.protocol, v.issuer, v.ssoUrl, v.tokenUrl, v.jwksUrl, v.clientId, v.attrEmail, v.cert, v.clientSecret])}`);
+}
+
+/** A test sign-in that worked: kept in the activity log with what it proved, nobody signed in. */
+async function passTest(c: C, org: OrgRow, config: SsoAuthConfig, email: string) {
+  const cfg = c.get('deps').config;
+  const fp = await connectionPrint(cfg, config);
+  await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => audit(q, { orgId: org.id, actorId: null, action: 'sso.tested', entity: 'org', entityId: org.id, meta: { ok: true, email, fp } }));
+  return testBack(cfg, org.slug, 'ok', email);
+}
+
 const origin = (c: C) => ({ ip: c.req.header('cf-connecting-ip') ?? null, geo: c.req.header('cf-ipcountry') ?? null });
 
 /** Mint the session for a verified identity and set the cookie. Shared by SAML and OIDC. */
@@ -140,19 +162,21 @@ ssoAuthRoutes.get('/:slug/start', async (c) => {
   const device = c.req.query('device') ?? '';
   if (!deviceIdField.safeParse(device).success) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
   const label = (c.req.query('dl') ?? '').slice(0, 120) || undefined;
+  // A test from the settings may run before SSO is switched on; it signs nobody in.
+  const test = c.req.query('test') === '1';
   const config = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => loadSsoAuthConfig(q, cfg));
-  if (!config || !config.enabled || !config.protocol) return c.redirect(loginBack(cfg, slug, 'not_configured'));
+  if (!config || (!config.enabled && !test) || !config.protocol) return c.redirect(test ? testBack(cfg, slug, 'not_configured') : loginBack(cfg, slug, 'not_configured'));
   const now = nowOf(c.get('deps'));
-  const base: SsoState = { o: slug, p: config.protocol, d: device, dl: label, n: randomToken(16), x: now.getTime() + 10 * 60_000 };
+  const base: SsoState = { o: slug, p: config.protocol, d: device, dl: label, n: randomToken(16), x: now.getTime() + 10 * 60_000, ...(test ? { t: 1 as const } : {}) };
 
   if (config.protocol === 'saml') {
-    if (!config.ssoUrl || !config.cert) return c.redirect(loginBack(cfg, slug, 'not_configured'));
+    if (!config.ssoUrl || !config.cert) return c.redirect(failBack(cfg, slug, base, 'not_configured'));
     const saml = makeSaml(cfg, slug, config);
     const relay = await signState(base, cfg);
     return c.redirect(await samlRedirectUrl(saml, relay));
   }
   // OIDC
-  if (!config.ssoUrl || !config.clientId) return c.redirect(loginBack(cfg, slug, 'not_configured'));
+  if (!config.ssoUrl || !config.clientId) return c.redirect(failBack(cfg, slug, base, 'not_configured'));
   const { verifier, challenge } = await pkce();
   const state: SsoState = { ...base, cv: await seal(verifier, secretsKey(cfg)) };
   const signed = await signState(state, cfg);
@@ -170,20 +194,21 @@ ssoAuthRoutes.post('/:slug/saml/acs', async (c) => {
   const now = nowOf(c.get('deps'));
   if (!samlResponse || !state || state.p !== 'saml' || state.o !== slug || state.x < now.getTime()) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
   const org = await resolveOrg(c, slug);
-  if (!org) return c.redirect(loginBack(cfg, slug, 'org_not_found'));
+  if (!org) return c.redirect(failBack(cfg, slug, state, 'org_not_found'));
 
   const config = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => loadSsoAuthConfig(q, cfg));
-  if (!config || !config.enabled || config.protocol !== 'saml' || !config.cert) return c.redirect(loginBack(cfg, slug, 'not_configured'));
+  if (!config || (!config.enabled && !state.t) || config.protocol !== 'saml' || !config.cert) return c.redirect(failBack(cfg, slug, state, 'not_configured'));
 
   const saml = makeSaml(cfg, slug, config);
   const verified = await verifySamlResponse(saml, samlResponse);
-  if (!verified) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
+  if (!verified) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
 
   // One-time use of the assertion (per company), then map to an identity.
   const fresh = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => claimAssertion(q, org.id, verified.assertionXml));
-  if (!fresh) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
+  if (!fresh) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
   const identity = mapIdentity(verified.attributes, config, verified.nameId);
-  if (!identity) return c.redirect(loginBack(cfg, slug, 'no_account'));
+  if (!identity) return c.redirect(failBack(cfg, slug, state, 'no_account'));
+  if (state.t) return c.redirect(await passTest(c, org, config, identity.email));
 
   try {
     const to = await completeLogin(c, org, state, identity);
@@ -202,32 +227,33 @@ ssoAuthRoutes.get('/:slug/oidc/callback', async (c) => {
   const now = nowOf(deps);
   if (!state || state.p !== 'oidc' || state.o !== slug || state.x < now.getTime()) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
   const code = c.req.query('code');
-  if (!code || c.req.query('error')) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
+  if (!code || c.req.query('error')) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
   const org = await resolveOrg(c, slug);
-  if (!org) return c.redirect(loginBack(cfg, slug, 'org_not_found'));
+  if (!org) return c.redirect(failBack(cfg, slug, state, 'org_not_found'));
 
   const config = await deps.db.tenant({ orgId: org.id, userId: null }, (q) => loadSsoAuthConfig(q, cfg));
-  if (!config || !config.enabled || config.protocol !== 'oidc' || !config.issuer || !config.jwksUrl || !config.tokenUrl || !config.clientId) {
-    return c.redirect(loginBack(cfg, slug, 'not_configured'));
+  if (!config || (!config.enabled && !state.t) || config.protocol !== 'oidc' || !config.issuer || !config.jwksUrl || !config.tokenUrl || !config.clientId) {
+    return c.redirect(failBack(cfg, slug, state, 'not_configured'));
   }
   const verifier = state.cv ? await unseal<string>(state.cv, secretsKey(cfg)) : null;
-  if (!verifier) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
+  if (!verifier) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
 
   const fetchFn = deps.fetch ?? fetch;
   const tokens = await exchangeOidcCode(config, { code, redirectUri: oidcRedirectUri(cfg, slug), verifier }, fetchFn);
-  if (!tokens?.id_token) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
+  if (!tokens?.id_token) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
   const keys = await fetchJwks(config.jwksUrl, fetchFn);
   const claims = await verifyIdToken(tokens.id_token, keys, { issuer: config.issuer, audience: config.clientId, nonce: state.n, now });
-  if (!claims) return c.redirect(loginBack(cfg, slug, 'oauth_failed'));
-  if (claims.email_verified === false) return c.redirect(loginBack(cfg, slug, 'no_account'));
+  if (!claims) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
+  if (claims.email_verified === false) return c.redirect(failBack(cfg, slug, state, 'no_account'));
   const identity = mapIdentity(claims, config, null);
-  if (!identity) return c.redirect(loginBack(cfg, slug, 'no_account'));
+  if (!identity) return c.redirect(failBack(cfg, slug, state, 'no_account'));
+  if (state.t) return c.redirect(await passTest(c, org, config, identity.email));
 
   try {
     const to = await completeLogin(c, org, state, identity);
     return c.redirect(to);
   } catch {
-    return c.redirect(loginBack(cfg, slug, 'no_account'));
+    return c.redirect(failBack(cfg, slug, state, 'no_account'));
   }
 });
 
@@ -267,7 +293,11 @@ ssoAdminRoutes.get('/sso/settings', async (c) => {
   const cfg = c.get('deps').config;
   const org = c.get('org');
   const config = await run(c, (q) => loadSsoAuthConfig(q, cfg));
+  // The last test sign-in, and whether it proved the details stored now.
+  const [last] = await run(c, (q) => q.query<{ at: Date; email: string | null; fp: string | null }>(`select at, meta->>'email' as email, meta->>'fp' as fp from audit_log where action = 'sso.tested' order by at desc limit 1`));
+  const current = config ? await connectionPrint(cfg, config) : null;
   return c.json({
+    test: last ? { at: last.at instanceof Date ? last.at.toISOString() : String(last.at), email: last.email, current: !!current && last.fp === current } : null,
     config: config
       ? {
           protocol: config.protocol,
@@ -330,6 +360,13 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
       input.scimEnabled ?? existing?.scimEnabled ?? false,
       auth.userId,
     ];
+    // Requiring SSO locks every other way of signing in: only after a test sign-in has worked
+    // with exactly these connection details (a mistyped address or certificate would lock everyone out).
+    if (input.enabled && input.enforced && !(existing?.enabled && existing?.enforced)) {
+      const fp = await connectionPrint(cfg, { protocol: input.protocol ?? null, issuer: clean(input.issuer), ssoUrl: clean(input.ssoUrl), tokenUrl: clean(input.tokenUrl), jwksUrl: clean(input.jwksUrl), clientId: clean(input.clientId), attrEmail: input.attrEmail ?? 'email', cert, clientSecret });
+      const [ok] = await q.query<{ x: number }>(`select 1 as x from audit_log where action = 'sso.tested' and meta->>'fp' = $1 and at > now() - interval '30 days' limit 1`, [fp]);
+      if (!ok) fail('sso_untested');
+    }
     // Deliberately not ON CONFLICT: the request role has no SELECT on `secret`
     // (it is sealed and out of reach), and ON CONFLICT DO UPDATE of that column
     // would trip a privilege check. A plain insert or update is fine.

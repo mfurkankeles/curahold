@@ -27,6 +27,7 @@ export type ErrorCode =
   | 'already_member'
   | 'not_configured'
   | 'sso_required'
+  | 'sso_untested'
   | 'connection_failed'
   | 'import_too_large'
   | 'type_not_empty'
@@ -141,6 +142,7 @@ const STATUS: Record<ErrorCode, number> = {
   already_member: 409,
   not_configured: 400,
   sso_required: 403,
+  sso_untested: 409,
   connection_failed: 400,
   import_too_large: 413,
   type_not_empty: 409,

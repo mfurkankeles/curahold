@@ -122,6 +122,7 @@ export interface SsoState {
   x: number; // expiry (ms since epoch)
   cv?: string; // OIDC only: the PKCE code_verifier, sealed
   rt?: string; // optional return path inside the app
+  t?: 1; // a test from the SSO settings: report back, sign nobody in
 }
 
 export const signState = (state: SsoState, cfg: Config) => sign(state, cfg.authSecret);

@@ -48,6 +48,8 @@ export interface SsoSp {
 export interface SsoSettings {
   config: SsoConfig | null;
   sp: SsoSp;
+  /** The last test sign-in, and whether it proved the details stored now. */
+  test?: { at: string; email: string | null; current: boolean } | null;
 }
 
 export const getSsoSettings = () => get<SsoSettings>('/sso/settings');

@@ -123,6 +123,54 @@ describe('OIDC login', () => {
   });
 });
 
+describe('test sign-in, and requiring SSO only after one worked', () => {
+  const details = (oidp: Awaited<ReturnType<typeof newDemoOidp>>, extra: Record<string, unknown>) =>
+    JSON.stringify({ protocol: 'oidc', issuer: oidp.issuer, ssoUrl: 'https://oidc.demo.example/authorize', tokenUrl: 'https://oidc.demo.example/token', jwksUrl: 'https://oidc.demo.example/jwks', clientId: oidp.clientId, clientSecret: 'demo-secret', attrEmail: 'email', ...extra });
+  const put = (admin: ReturnType<typeof adminApp>, body: string) => admin.request('https://x/api/sso/settings', { method: 'PUT', headers: { 'content-type': 'application/json' }, body });
+
+  it('a test runs before SSO is on, signs nobody in, and unlocks "require" for exactly those details', async () => {
+    const oidp = await newDemoOidp();
+    const org = await orgRowOf(env, env.b.orgId);
+    const admin = adminApp(env, org, adminAuth(env.b.ids.ada, 'ada@beta.example'));
+    // Saved but off, then asked to be required at once: refused, nothing has proved the details yet.
+    expect((await put(admin, details(oidp, { enabled: false }))).status).toBe(200);
+    const early = await put(admin, details(oidp, { enabled: true, enforced: true }));
+    expect(early.status).toBe(409);
+    expect(JSON.stringify(await early.json())).toContain('sso_untested');
+
+    const app = authApp(env);
+    const start = await app.request(url(org.slug, `/api/sso/${org.slug}/start?test=1&device=${newDevice()}`));
+    expect(start.status).toBe(302);
+    const loc = new URL(start.headers.get('location')!);
+    const state = loc.searchParams.get('state')!;
+    const nonce = loc.searchParams.get('nonce')!;
+    env.fetchHolder.impl = async (u: string) => {
+      if (u === 'https://oidc.demo.example/token') return new Response(JSON.stringify({ id_token: await oidp.sign(oidp.claims({ nonce, email: 'it@beta.example', name: 'IT Desk' })) }), { headers: { 'content-type': 'application/json' } });
+      if (u === 'https://oidc.demo.example/jwks') return new Response(JSON.stringify(oidp.jwks), { headers: { 'content-type': 'application/json' } });
+      return new Response('no', { status: 404 });
+    };
+    const cb = await app.request(url(org.slug, `/api/sso/${org.slug}/oidc/callback?code=abc&state=${encodeURIComponent(state)}`));
+    expect(cb.status).toBe(302);
+    const back = new URL(cb.headers.get('location')!);
+    expect(back.pathname).toBe('/settings/sso');
+    expect(back.searchParams.get('ssoTest')).toBe('ok');
+    expect(back.searchParams.get('as')).toBe('it@beta.example');
+    // Nobody was signed in, and nobody was created.
+    expect(cookieOf(cb)).toBe('');
+    const made = await env.db.system((q) => q.query(`select 1 from users where email = 'it@beta.example'`));
+    expect(made.length).toBe(0);
+
+    const got = await (await admin.request('https://x/api/sso/settings')).json();
+    expect(got.test?.current).toBe(true);
+    expect((await put(admin, details(oidp, { enabled: true, enforced: true }))).status).toBe(200);
+    // Other details (a different client) have not been proved: requiring them again after switching off is refused.
+    expect((await put(admin, details(oidp, { enabled: false }))).status).toBe(200);
+    const other = await put(admin, details(oidp, { enabled: true, enforced: true, clientId: 'another-client' }));
+    expect(other.status).toBe(409);
+    await put(admin, details(oidp, { enabled: false }));
+  });
+});
+
 describe('SAML login', () => {
   async function configure(e: Env, orgId: string, idp: ReturnType<typeof newDemoIdp>) {
     const org = await orgRowOf(e, orgId);
