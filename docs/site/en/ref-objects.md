@@ -126,6 +126,9 @@ interface Task {
   startDate?: string | null;
   /** How many unfinished tasks this one waits for. */
   blockedBy?: number;
+  /** Through the whole blocks chain (unfinished tasks only): how many it waits for, and how many wait for it. */
+  waitsFor?: number;
+  holdsUp?: number;
   /** Finished (given where a list mixes open and finished work, such as a record's tasks). */
   done?: boolean;
   /** The record it belongs to (an opportunity, a ticket…). */
