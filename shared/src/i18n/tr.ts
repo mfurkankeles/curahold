@@ -4389,4 +4389,5 @@ export const tr: Record<MessageKey, string> = {
   'dash.moveCard': "{card} kartını taşı",
   'dash.place': "{card}: {total} kartın {n}. sırası",
   'dash.moved': "Kart taşındı",
+  'rb.showMore': "{n} satır daha göster",
 };

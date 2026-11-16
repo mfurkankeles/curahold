@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { foldTop, type ChartKind, type ReportDef, type ReportFormat, type ReportResult } from '../../../shared/src/reports';
 import { useI18n } from '../lib/i18n';
-import { GroupTable, ReportChart, RowsTable, useReportFormat } from './Charts';
+import { GroupTable, PAGE_ROWS, ReportChart, RowsTable, useReportFormat } from './Charts';
 import { EmptyState } from './Empty';
 import { Icon } from './icons';
 
@@ -47,6 +47,9 @@ function SummaryTable({ r }: { r: Ok }) {
   const { t, fmtDate } = useI18n();
   const f = useReportFormat();
   const [folded, setFolded] = useState<Set<string>>(new Set());
+  // Rows are drawn up to a budget, group after group; "Show more" raises it (heads and subtotals always show).
+  const [limit, setLimit] = useState(PAGE_ROWS);
+  let budget = limit;
   const table = r.table;
   const label = (g: { key: string; label: string }) => (r.bucket ? f.bucket(g.key, r.bucket) : g.label);
   const two = r.series.length > 0;
@@ -82,8 +85,10 @@ function SummaryTable({ r }: { r: Ok }) {
       else n.add(key);
       return n;
     });
-  const rowsOf = (list: (string | number | null)[][] | undefined, key: string) =>
-    (list ?? []).map((row, i) => (
+  const rowsOf = (all: (string | number | null)[][] | undefined, key: string) => {
+    const list = (all ?? []).slice(0, Math.max(0, budget));
+    budget -= list.length;
+    return list.map((row, i) => (
       <tr key={`${key}:${i}`} className="rsum__row">
         {row.map((v, ci) => (
           <td key={ci} className={isNum(cols[ci]?.type ?? '') ? 'num' : undefined}>
@@ -92,6 +97,7 @@ function SummaryTable({ r }: { r: Ok }) {
         ))}
       </tr>
     ));
+  };
 
   return (
     <>
@@ -154,7 +160,16 @@ function SummaryTable({ r }: { r: Ok }) {
           </tbody>
         </table>
       </div>
-      {table?.more && <p className="rtable__more">{t('rb.showing', { shown: f.num(table.rows.length, 0), total: f.num(r.matched, 0) })}</p>}
+      {(table?.more || limit < (table?.rows.length ?? 0)) && (
+        <p className="rtable__more">
+          {t('rb.showing', { shown: f.num(Math.min(limit, table?.rows.length ?? 0), 0), total: f.num(r.matched, 0) })}
+          {limit < (table?.rows.length ?? 0) && (
+            <button type="button" className="btn btn--small btn--quiet" onClick={() => setLimit((n) => n + PAGE_ROWS * 2)}>
+              {t('rb.showMore', { n: f.num(Math.min((table?.rows.length ?? 0) - limit, PAGE_ROWS * 2), 0) })}
+            </button>
+          )}
+        </p>
+      )}
     </>
   );
 }

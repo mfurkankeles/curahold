@@ -103,7 +103,7 @@
 .rtable .table { border: 0; font-size: var(--fs-s); }
 .rtable .table th { position: sticky; top: 0; background: var(--surface-2); z-index: 1; white-space: nowrap; }
 .rtable .table td { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rtable__more { margin: 8px 4px 0; font-size: var(--fs-xs); color: var(--ink-3); }
+.rtable__more { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 4px 0; font-size: var(--fs-xs); color: var(--ink-3); }
 .table th.num, .table td.num { text-align: end; }
 
 /* --------------------------------------------------------- small pictures */

@@ -473,12 +473,18 @@ export function GroupTable({ r, label }: { r: Ok; label: (g: ReportGroupRow) => 
   );
 }
 
+/** How many rows a list or summary draws at first; "Show more" adds twice as many. */
+export const PAGE_ROWS = 100;
+
 export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
   const { t, fmtDate } = useI18n();
   const f = useReportFormat();
   const table = r.table!;
+  // A long list draws its first rows and more on request: two thousand rows at once kept a big report from opening in time.
+  const [limit, setLimit] = useState(PAGE_ROWS);
   if (!table.rows.length) return <EmptyState compact icon="list" title={t('rb.nothing')} />;
-  const rows = compact ? table.rows.slice(0, 8) : table.rows;
+  const rows = table.rows.slice(0, compact ? 8 : limit);
+  const left = compact ? 0 : table.rows.length - rows.length;
   const cell = (v: string | number | null, type: string) => {
     if (v == null || v === '') return <span className="muted">—</span>;
     if (type === 'date' && typeof v === 'string') return fmtDate(v);
@@ -513,7 +519,16 @@ export function RowsTable({ r, compact }: { r: Ok; compact?: boolean }) {
           </tbody>
         </table>
       </div>
-      {(table.more || rows.length < r.matched) && <p className="rtable__more">{t('rb.showing', { shown: f.num(rows.length, 0), total: f.num(r.matched, 0) })}</p>}
+      {(table.more || rows.length < r.matched) && (
+        <p className="rtable__more">
+          {t('rb.showing', { shown: f.num(rows.length, 0), total: f.num(r.matched, 0) })}
+          {left > 0 && (
+            <button type="button" className="btn btn--small btn--quiet" onClick={() => setLimit((n) => n + PAGE_ROWS * 2)}>
+              {t('rb.showMore', { n: f.num(Math.min(left, PAGE_ROWS * 2), 0) })}
+            </button>
+          )}
+        </p>
+      )}
     </>
   );
 }

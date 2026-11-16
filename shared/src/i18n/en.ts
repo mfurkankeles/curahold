@@ -4404,6 +4404,7 @@ export const en = {
   'dash.moveCard': "Move {card}",
   'dash.place': "{card}: {n} of {total}",
   'dash.moved': "Card moved",
+  'rb.showMore': "Show {n} more",
 } as const;
 
 export type MessageKey = keyof typeof en;

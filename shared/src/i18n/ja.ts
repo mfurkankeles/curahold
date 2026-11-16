@@ -4389,4 +4389,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'dash.moveCard': "「{card}」を移動",
   'dash.place': "「{card}」：{total}枚中{n}番目",
   'dash.moved': "カードを移動しました",
+  'rb.showMore': "さらに{n}行を表示",
 };

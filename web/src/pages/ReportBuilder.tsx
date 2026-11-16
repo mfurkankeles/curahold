@@ -290,8 +290,10 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         setName(labelOf(lib.name, locale));
         try {
           const r = await post<{ result: ReportResult; def?: ReportDef }>('/reports/run', { def: lib.def, resolve: true });
-          if (off) return;
-          setDef(r.def ?? lib.def);
+            if (off) return;
+          const made = r.def ?? lib.def;
+          ranFor.current = made;
+          setDef(made);
           setResult(r.result);
         } catch {
           // The builder still opens; the preview runs (and says what is wrong) as it is drawn.
@@ -314,8 +316,10 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
 
   // Draw as it is built: a moment after the last change, and only what is asked last.
   const ticket = useRef(0);
+  // The definition whose result is already on screen (a library report arrives run): not run again.
+  const ranFor = useRef<ReportDef | null>(null);
   useEffect(() => {
-    if (!def || !cat || problem) return;
+    if (!def || !cat || problem || def === ranFor.current) return;
     const mine = ++ticket.current;
     setRunning(true);
     const timer = setTimeout(async () => {
