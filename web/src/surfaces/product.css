@@ -134,7 +134,7 @@
 .pm-plan__go { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-2); flex-wrap: wrap; }
 .pm-plan__picked { font-size: var(--fs-s); color: var(--ink-2); }
 .pm-plan__keys, .pm-plan > .pm-dropzones { grid-column: 1 / -1; margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
-.pm-plan__keys kbd { display: inline-block; min-width: 20px; margin-inline-end: 2px; padding: 0 var(--s-1); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: var(--r-xs); background: var(--surface-2); color: var(--ink-2); font-size: var(--fs-2xs); text-align: center; }
+.pm-plan__keys kbd { display: inline-block; min-width: 20px; margin-inline-end: var(--s-1); padding: 0 var(--s-1); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: var(--r-xs); background: var(--surface-2); color: var(--ink-2); font-size: var(--fs-2xs); text-align: center; }
 .pm-plan__empty { grid-column: 1 / -1; margin: 0; }
 
 .pm-cap { display: grid; gap: var(--s-1); min-height: 36px; align-content: center; }
@@ -165,7 +165,7 @@
 
 .pm-backlog { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
 .pm-row {
-  display: grid; grid-template-columns: var(--tap-min) var(--tap-min) auto minmax(0, 1fr) minmax(120px, 200px) 96px auto;
+  display: grid; grid-template-columns: var(--tap-min) var(--tap-min) auto minmax(0, 1fr) minmax(120px, 200px) minmax(96px, max-content) auto;
   align-items: center; gap: var(--s-2); min-height: 44px; padding: var(--s-1) var(--s-3); border-top: 1px solid var(--line);
 }
 .pm-row:first-child { border-top: 0; }
@@ -213,7 +213,7 @@
   .shell[data-helper] .page.pm-backlog-page, .shell .page.pm-backlog-page { padding-bottom: 0; }
   .pm-plan {
     order: 10; position: sticky; top: auto; bottom: 0; z-index: 5; margin: var(--s-3) calc(-1 * var(--s-3)) 0; grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-2); padding: var(--s-2) var(--s-3); border-radius: var(--r-m) var(--r-m) 0 0; border-bottom: 0; box-shadow: var(--shadow-2);
+    gap: var(--s-2); padding: var(--s-2) var(--s-3); border-radius: var(--r-m); border-end-start-radius: 0; border-end-end-radius: 0; border-bottom: 0; box-shadow: var(--shadow-2);
   }
   .pm-plan__target { grid-column: 1; grid-row: 1; min-width: 0; }
   .pm-plan__go { grid-column: 2; grid-row: 1; }
