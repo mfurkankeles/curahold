@@ -30,7 +30,7 @@ import {
 import { AccountPicker } from '../components/AccountPicker';
 import { ChartGlyph, useReportFormat } from '../components/Charts';
 import { formatOf, ReportView } from '../components/ReportView';
-import { EmptyState, ErrorState, LoadError, SkeletonCards } from '../components/Empty';
+import { EmptyState, ErrorState, LoadError, SkeletonCards, useAfter } from '../components/Empty';
 import { FavoriteButton } from '../components/Favorites';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Confirm, Dialog, PeoplePicker } from '../components/ui';
@@ -385,12 +385,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
         />
       </div>
     );
-  if (!def || !cat || !source)
-    return (
-      <div className="page u-pt-24">
-        <div className="pane__wait pane__wait--big u-height-240" />
-      </div>
-    );
+  if (!def || !cat || !source) return <BuilderWait />;
 
   const L = (x: { label: ReportField['label'] }) => labelOf(x.label, locale);
   const groupable = source.fields.filter((x) => x.group);
@@ -888,6 +883,28 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
       )}
       {placing && saved && <PlaceOnDashboard report={saved} onClose={() => setPlacing(false)} />}
     </>
+  );
+}
+
+/** The builder's shape while it loads (after --wait): its five steps and the preview, so nothing moves when they land. */
+function BuilderWait() {
+  const { t } = useI18n();
+  const shown = useAfter(300);
+  return (
+    <div className="page u-pt-24">
+      <div className="rb" role="status" aria-label={t('common.loading')}>
+        {shown && (
+          <>
+            <div className="rb__rail">
+              {[0, 1, 2, 3, 4].map((k) => (
+                <div key={k} className="pane__wait u-height-160" />
+              ))}
+            </div>
+            <div className="pane__wait rb-wait__view" />
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

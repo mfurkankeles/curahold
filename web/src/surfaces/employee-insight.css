@@ -286,10 +286,12 @@
 /* A phone: figure cards pair up two by two; charts and lists take the whole width. */
 @media (max-width: 760px) {
   .dash__grid .pane[data-size='third']:has(.kpi) { grid-column: span 3; }
-  .dash__grid .pane[data-size='third'] .kpi__value { font-size: var(--fs-3xl); }
+  .dash__grid .pane[data-size='third'] .kpi__value { font-size: var(--fs-2xl); }
 }
 
 /* The builder: what a viewer seat can do here. */
 .rb-note { margin: 0 0 12px; background: var(--info-wash); border-color: transparent; color: var(--info-ink); }
 /* On a phone the builder's tools start a row of their own: its More menu opens towards the page. */
 .rb-tools .popmenu[data-place='down'] { inset-inline-start: 0; inset-inline-end: auto; }
+.rb-wait__view { min-height: 440px; border-radius: var(--r-m); }
+@media (max-width: 980px) { .rb-wait__view { order: -1; min-height: 260px; } }
