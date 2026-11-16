@@ -14,6 +14,11 @@
   --tour-mute: #6f6c93;
   --tour-ink: #3a3758;
 }
+/* In the dark theme the tour card is dark too: its words take the theme's ink, not the light theme's. */
+:root[data-theme='dark'] {
+  --tour-mute: var(--ink-3);
+  --tour-ink: var(--ink-2);
+}
 #root { height: calc(100% - var(--demobar)); }
 
 .demobar {
@@ -38,6 +43,7 @@
 .demobar button:hover, .demobar select:hover { border-color: var(--demo-edge-hi); }
 .demobar :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .demobar__lang { flex: none; }
+.demobar__globe { display: none; }
 .demobar__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .demobar__more { position: relative; }
 .demobar__short { display: none; }
@@ -56,12 +62,19 @@
   .demobar__tag, .demobar__more { flex: none; }
   .demobar__note { display: none; }
   .demobar__as span { display: none; }
-  .demobar__lang { flex: none; }
-  .demobar__lang select { width: auto; max-width: 112px; }
   .demobar { justify-content: space-between; }
   .demobar select { max-width: calc(100vw - 130px); }
   .demobar__long { display: none; }
   .demobar__short { display: inline; font-weight: 600; }
+  /* A finger's worth: the strip grows to hold 44 px controls. */
+  :root { --demobar: 52px; }
+  .demobar select, .demobar button, .demobar__tours { min-height: 44px; min-width: 44px; }
+  .demobar__tours { display: inline-flex; align-items: center; }
+  /* The language is a globe; the real list sits on top of it, unseen, so a tap opens it. */
+  .demobar__lang { flex: none; position: relative; width: 44px; height: 44px; justify-content: center; border: 1px solid var(--demo-edge); border-radius: var(--r-s); background: var(--well-2); color: var(--on-fill); }
+  .demobar__lang select { position: absolute; inset: 0; width: 100%; max-width: none; height: 100%; opacity: 0; cursor: pointer; }
+  .demobar__lang:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .demobar__globe { display: block; width: 20px; height: 20px; }
 }
 
 /* Signing in again did not help: said under the bar, with a way out. */

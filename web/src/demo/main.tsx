@@ -71,6 +71,14 @@ function step(pct: number, key: 'db' | 'schema' | 'data' | 'app') {
 function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch: (k: Key) => void; problem: string | null; words: SeedWords }) {
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
+  // On a phone the strip has room for a short label: the given name and the role, not the full name.
+  const [narrow, setNarrow] = useState(() => matchMedia('(max-width: 760px)').matches);
+  useEffect(() => {
+    const q = matchMedia('(max-width: 760px)');
+    const on = () => setNarrow(q.matches);
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
   useEffect(() => {
     const on = () => setTick((n) => n + 1);
     window.addEventListener('app:navigate', on);
@@ -87,6 +95,8 @@ function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch
   const l = lang();
   const company = words.text.Quillfield ?? 'Quillfield';
   const nameOf = (k: Key) => (k === 'customer' ? words.fullName(words.customer.first, words.customer.last) : words.people[k]);
+  // "Ada Demir" → "Ada"; "佐藤 彩" → "佐藤" (Japanese and Chinese say the family name first, and use it).
+  const shortOf = (k: Key) => nameOf(k).split(' ')[0];
   return (
     <div className="demobar" lang={l} dir={LOCALE_INFO[l].dir}>
       <span className="demobar__tag">{say('demo.bar.tag')}</span>
@@ -96,13 +106,18 @@ function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch
         <select value={current} onChange={(e) => onSwitch(e.target.value as Key)}>
           {PEOPLE.map((p) => (
             <option key={p.key} value={p.key}>
-              {nameOf(p.key)} · {say(p.role, { company })}
+              {narrow ? shortOf(p.key) : nameOf(p.key)} · {say(p.role, { company })}
             </option>
           ))}
         </select>
       </label>
       <label className="demobar__as demobar__lang">
         <span className="demobar__sr">{say('demo.bar.language')}</span>
+        {/* On a phone the language is a globe; the list it opens names every language in its own words. */}
+        <svg className="demobar__globe" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+          <path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        </svg>
         <select value={demoLocale} onChange={(e) => switchLanguage(e.target.value as Locale)} aria-label={say('demo.bar.language')}>
           {SEED_LOCALES.map((x) => (
             <option key={x} value={x} lang={x}>
