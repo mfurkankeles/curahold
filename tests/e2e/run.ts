@@ -1430,7 +1430,7 @@ await step('insight acceptance: a report from nothing (customers by health, last
   expect(look.card > 300, `the new card is ${Math.round(look.card)} px wide on a phone`);
   await p.evaluate(() => document.querySelector('.pane[aria-label="Sağlık · geçen çeyrek"]')?.scrollIntoView({ block: 'center' }));
   await shot(p, 'p9-03-insight-phone');
-  console.log(`  insight acceptance journey: ${((Date.now() - started) / 1000).toFixed(1)} s (report from nothing → dashboard → phone)`);
+  console.log(`  insight acceptance journey: ${((Date.now() - started) / 1000).toFixed(1)} s (report from nothing → dashboard → phone); on the phone the first card starts at ${Math.round(look.first)} px of 667`);
   expect(ada.errors.length === 0, `script errors: ${ada.errors.join(' | ')}`);
   await p.close();
 });
