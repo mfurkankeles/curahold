@@ -25,11 +25,23 @@ export function startStrips(): () => void {
       reveal(strip.querySelector(CHOSEN));
     }
   };
+  // New parts of the page are looked through when the browser is idle, never in the middle of answering a tap.
+  const later: Element[] = [];
+  let queued = false;
+  const idle = (fn: () => void) => ('requestIdleCallback' in window ? window.requestIdleCallback(fn, { timeout: 300 }) : setTimeout(fn, 50));
+  const flush = () => {
+    queued = false;
+    for (const n of later.splice(0)) if (n.isConnected) fresh(n);
+  };
   const mo = new MutationObserver((list) => {
     for (const m of list) {
       if (m.type === 'attributes') {
         if (m.target instanceof Element && m.target.matches(CHOSEN)) reveal(m.target);
-      } else for (const n of m.addedNodes) if (n instanceof Element) fresh(n);
+      } else for (const n of m.addedNodes) if (n instanceof Element && n.firstElementChild) later.push(n);
+    }
+    if (later.length && !queued) {
+      queued = true;
+      idle(flush);
     }
   });
   mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-selected', 'aria-current'] });
