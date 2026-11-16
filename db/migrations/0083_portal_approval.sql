@@ -9,7 +9,7 @@ alter table tasks add column portal_status_told text check (portal_status_told i
 
 -- The task as the customer sees it, now with who approved it and when.
 create or replace function portal_task_json(t tasks, b boards) returns jsonb
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, pg_temp as $$
   select jsonb_build_object(
     'id', t.id,
     'boardId', t.board_id,
@@ -35,7 +35,7 @@ $$;
 -- "Done, and done well": only on a finished request, once, by someone at the customer.
 -- The approval goes into the conversation (p_body, in the company's language) for both sides.
 create function portal_approve(p_task uuid, p_body text) returns uuid
-language plpgsql volatile security definer set search_path = public as $$
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
 declare me record; t tasks; id uuid;
 begin
   select * into me from portal_whoami();

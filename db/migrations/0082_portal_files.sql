@@ -12,7 +12,7 @@ create index files_portal_author_idx on files (org_id, portal_author_id, created
 
 -- The task as the customer sees it, now also saying whether the latest reply is the team's.
 create or replace function portal_task_json(t tasks, b boards) returns jsonb
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, pg_temp as $$
   select jsonb_build_object(
     'id', t.id,
     'boardId', t.board_id,
@@ -35,7 +35,7 @@ $$;
 
 -- The task the signed-in person may see, or nothing.
 create function portal_visible_task(p_task uuid) returns tasks
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, pg_temp as $$
 declare me record; t tasks;
 begin
   select * into me from portal_whoami();
@@ -49,7 +49,7 @@ end $$;
 
 -- Is this file on this task one the customer may see?
 create function portal_file_open(f files, t tasks) returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, pg_temp as $$
   select f.task_id = t.id and f.org_id = t.org_id and (
     (f.comment_id is not null and exists (select 1 from comments c where c.id = f.comment_id and c.task_id = t.id and c.org_id = t.org_id and c.visibility = 'customer'))
     or (f.comment_id is null and f.portal_author_id is not null))
@@ -57,7 +57,7 @@ $$;
 
 -- The files of a request: on the request itself (commentId null) and on its replies.
 create function portal_task_files(p_task uuid) returns jsonb
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, pg_temp as $$
 declare t tasks;
 begin
   t := portal_visible_task(p_task);
@@ -67,7 +67,7 @@ end $$;
 
 -- One file, for downloading: where it is kept, what it is called.
 create function portal_file(p_file uuid) returns jsonb
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, pg_temp as $$
 declare me record; f files; t tasks;
 begin
   select * into me from portal_whoami();
@@ -82,7 +82,7 @@ end $$;
 -- A file from the customer: on their request (p_comment null, only the person who opened it)
 -- or on a reply they wrote. Limited per person per day.
 create function portal_add_file(p_task uuid, p_comment uuid, p_name text, p_size int, p_mime text, p_key text) returns uuid
-language plpgsql volatile security definer set search_path = public as $$
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
 declare me record; t tasks; id uuid; n int;
 begin
   select * into me from portal_whoami();
