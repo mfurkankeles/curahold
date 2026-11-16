@@ -11,6 +11,7 @@ const LOADERS: Partial<Record<Locale, () => Promise<{ words: SeedWords }>>> = {
   tr: () => import('./tr'),
   ar: () => import('./ar'),
   ja: () => import('./ja'),
+  'zh-Hans': () => import('./zh-Hans'),
 };
 
 /** The language the seed itself is written in: its texts go in as they are. */
