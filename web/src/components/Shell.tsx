@@ -9,6 +9,7 @@ import { endPreview, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { newsUnseen, type NewsAction } from '../lib/news';
 import { navigate, navigateFresh, useLocation } from '../lib/router';
+import { startStrips } from '../lib/strips';
 import { BackBar } from './BackBar';
 import { ShellCtx, TASKS_CHANGED, currentPageDefaults, useNarrow, type QuickDefaults, type ShellActions } from '../lib/shell';
 import { LIVE, startLive, useLive } from '../lib/live';
@@ -246,6 +247,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useEffect(() => startLive(), []);
   // Browser errors are reported so a fault a person hits is seen, not lost.
   useEffect(() => startErrorLog(), []);
+  // A strip of tabs wider than a phone keeps the chosen tab in view.
+  useEffect(() => startStrips(), []);
   const app = useInstall();
   const [installHelp, setInstallHelp] = useState(false);
   const meMenu = (

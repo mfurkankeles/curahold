@@ -728,6 +728,32 @@ tr.vspacer td { padding: 0; border: 0; }
 /* -------------------------------------------------------------- settings */
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; overflow-x: auto; }
+/* A strip of tabs wider than the screen scrolls sideways. Its edges fade where there is more to see, so a
+   cut label reads as "more this way", not as a broken word; nothing fades when it all fits. The fade follows
+   the scroll (a scroll-driven animation: inactive, so no fade, while the strip does not scroll), and the
+   chosen tab is kept in view (lib/strips.ts). Only the mask's alpha counts, so its colour is any opaque one. */
+@property --strip-start { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --strip-end { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@supports (animation-timeline: scroll()) {
+  :is(.tabs, .record-tabs) {
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, transparent, var(--ink) var(--strip-start), var(--ink) calc(100% - var(--strip-end)), transparent);
+    animation: strip-edges linear both;
+    animation-timeline: scroll(self inline);
+  }
+  [dir='rtl'] :is(.tabs, .record-tabs) { mask-image: linear-gradient(to left, transparent, var(--ink) var(--strip-start), var(--ink) calc(100% - var(--strip-end)), transparent); }
+  :is(.tabs, .record-tabs)::-webkit-scrollbar { display: none; }
+  /* Not motion: the fade moves only with the person's own finger, so it stays when motion is reduced. */
+  @media (prefers-reduced-motion: reduce) {
+    :is(.tabs, .record-tabs) { animation: strip-edges linear both !important; animation-timeline: scroll(self inline) !important; }
+  }
+}
+@keyframes strip-edges {
+  from { --strip-start: 0px; --strip-end: 40px; }
+  8% { --strip-start: 40px; }
+  92% { --strip-end: 40px; }
+  to { --strip-start: 40px; --strip-end: 0px; }
+}
 .tab { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 :is(.tab[aria-selected='true'], .tab[aria-current='page']) { color: var(--ink); border-bottom-color: var(--brand); font-weight: 600; }
 .form { display: grid; gap: 16px; max-width: 620px; }
