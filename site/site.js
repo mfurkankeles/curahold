@@ -38,15 +38,19 @@
   });
   dialog?.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
 
-  // The header: a hairline once the page has scrolled, and day colours once the night hero is behind it.
+  // The header: a darker pane and a hairline once the page has scrolled.
   const top = document.querySelector('.top');
-  const hero = document.querySelector('.hero');
-  const onScroll = () => {
-    top?.classList.toggle('is-scrolled', window.scrollY > 8);
-    if (hero) top?.classList.toggle('is-day', hero.getBoundingClientRect().bottom < 40);
-  };
+  const onScroll = () => top?.classList.toggle('is-scrolled', window.scrollY > 8);
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  // The sky moves only while someone can see it: its rings stop in a background tab,
+  // and once the first screen is behind, the sky steps back and the tools strip stops.
+  const away = () => root.classList.toggle('is-away', document.hidden);
+  document.addEventListener('visibilitychange', away);
+  away();
+  const hero = document.querySelector('.hero');
+  if (hero && canWatch) new IntersectionObserver(([e]) => root.classList.toggle('is-past', !e.isIntersecting)).observe(hero);
 
   // Sections settle into place as they are reached. If motion is unwelcome, or
   // the browser has no observer, everything is simply shown at once.

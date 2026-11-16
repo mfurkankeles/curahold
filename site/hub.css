@@ -3,6 +3,23 @@
    the hero's "peek": a piece of the product with a tour step pointing at it —
    what every tour on this page looks like, drawn in the page itself. */
 
+/* The sales site turned night on 16 Nov; the hub keeps its daylight palette until it
+   gets the same treatment, so here the shared tokens take their day values again. */
+:root {
+  --paper: #ffffff; --mist: #f6f5fb; --line: #dedaf0;
+  --iris-ink: #4234c8; --iris-wash: #eceafe; --fern-ink: #1a6552; --fern-wash: #e3f3ee;
+  --ember-ink: #8a4f0c; --ember-wash: #fbefdf;
+  --ink: #17133a; --ink-2: #4a4670; --ink-3: #6f6b95;
+  --risk: #b8305a; --watch: #8a4f0c; --good: #1a6b57;
+}
+body { background: var(--mist); }
+.top { background: color-mix(in srgb, var(--mist) 88%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.top.is-scrolled { background: color-mix(in srgb, var(--mist) 88%, transparent); border-bottom-color: var(--line); }
+.top .brand svg rect { fill: var(--night); }
+.top__nav a::after { background: var(--iris); }
+.btn--ghost { background: var(--paper); border-color: var(--line); }
+.btn--ghost:hover { border-color: var(--iris); color: var(--iris-ink); background: var(--paper); }
+
 .hub-top .top__nav a[aria-current='page'] { color: var(--ink); font-weight: 650; }
 
 /* ----------------------------------------------------------------- hero */

@@ -42,6 +42,8 @@ const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8
 const CURSOR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.2l13.4 8.2-5.9 1.5-2.9 5.6z" fill="#fff" stroke="#17133a" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.8" fill="currentColor"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 const PLAY = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.3v9.4a.6.6 0 0 0 .9.5l7.6-4.7a.6.6 0 0 0 0-1L5.9 2.8a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>`;
+// The night sky behind every page: the grid is drawn by the stylesheet, these are the few glowing dots.
+const SKY = `<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
 const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
@@ -342,6 +344,7 @@ function blogIndexPage(locale: SiteLocale): string {
   });
   return `${blogHead(locale, { title: b.metaTitle, description: b.metaDescription, canonical, path: 'blog/', ogType: 'website', rel, extraLd: ld })}
 <body class="blog">
+${SKY}
 <a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
 ${blogHeader(locale)}
 <main id="main" class="wrap blog-wrap">
@@ -395,6 +398,7 @@ function blogPostPage(locale: SiteLocale, post: BlogPost): string {
   const tags = post.tags.map((t) => `<li class="post-tag">${esc(t)}</li>`).join('');
   return `${blogHead(locale, { title: `${post.title} — Curahold`, description: post.description, canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
 <body class="blog">
+${SKY}
 <a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
 ${blogHeader(locale)}
 <main id="main" class="wrap post-wrap">
@@ -791,8 +795,9 @@ ${landingJsonLd(locale, canonical, c.description)}
 <link rel="stylesheet" href="${rel}assets/consent.css">
 </head>
 <body class="home">
+${SKY}
 <a class="skip" href="#main">${esc(c.nav.skip)}</a>
-<header class="top top--night">
+<header class="top">
   <div class="wrap top__in">
     <a class="brand" href="./">${MARK}Curahold</a>
     <nav class="top__nav" aria-label="${esc(c.nav.product)}">
@@ -811,7 +816,6 @@ ${landingJsonLd(locale, canonical, c.description)}
 </header>
 <main id="main">
   <section class="hero">
-    <div class="hero__sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="wrap hero__in" data-tour>
       <div class="hero__text">
         <h1 class="hero__h">${heroTitle}</h1>
@@ -845,7 +849,7 @@ ${landingJsonLd(locale, canonical, c.description)}
     </div>
   </section>
 
-  <section class="bento" id="features">
+  <section class="bento pool" id="features">
     <div class="wrap">
       <h2 data-reveal>${esc(bento.title)}</h2>
       <p class="lead" data-reveal>${esc(bento.lead)}</p>
@@ -860,7 +864,7 @@ ${landingJsonLd(locale, canonical, c.description)}
     </div>
   </section>
 
-  <section class="pricing" id="pricing">
+  <section class="pricing calm pool" id="pricing">
     <div class="wrap">
       <div class="pricing__top">
         <div><h2 data-reveal>${esc(c.pricing.title)}</h2><p class="lead" data-reveal>${esc(c.pricing.lead)}</p></div>
@@ -874,7 +878,7 @@ ${landingJsonLd(locale, canonical, c.description)}
     </div>
   </section>
 
-  <section class="faq">
+  <section class="faq calm">
     <div class="wrap faq__in">
       <h2 data-reveal>${esc(c.faq.title)}</h2>
       <div class="faq__list" data-reveal>${faq}</div>
