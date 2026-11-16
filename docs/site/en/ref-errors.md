@@ -28,6 +28,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `plan_no_date` | 400 | This playbook is dated from a renewal or a close date, and there is none to start from. |
 | `portal_bad_code` | 400 | That code is wrong or has run out. Ask for a new one. |
 | `portal_bad_password` | 400 | Wrong email or password. |
+| `portal_file_type` | 400 | … can't be attached. Pictures, PDF, Word, Excel, PowerPoint, text and CSV files can. |
 | `portal_internal_email` | 400 | That address belongs to someone in your company. The portal is for customers. |
 | `portal_method_off` | 400 | This way of signing in is switched off. |
 | `portal_no_method` | 400 | Leave at least one way of signing in: email, Google, Microsoft or password. |
@@ -35,6 +36,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `portal_off` | 400 | The customer portal is off. Turn it on in Settings → Customer portal. |
 | `portal_passkey_failed` | 400 | The passkey didn't work. Try again, or sign in another way. |
 | `portal_private_board` | 400 | Private boards can't be opened to customers. |
+| `portal_too_many_files` | 400 | Up to … files at a time. |
 | `portal_weak_password` | 400 | Choose a password of at least 10 characters that isn't your name or a common one. |
 | `required_fields` | 400 | Fill these in before finishing the task: … |
 | `second_step_failed` | 400 | That code didn't work. Check it and try again. |

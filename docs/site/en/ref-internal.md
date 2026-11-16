@@ -29,7 +29,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/onboarding/…` | 2 | A new company's own setup checklist, used in the browser after sign-up. |
 | `/org/…` | 1 | The company's public sign-in details. |
 | `/platform/…` | 4 | The operator-only owner console (customers, plans, billing status, overview); not part of a company's API. |
-| `/portal/…` | 6 | Managing who can sign in to the customer portal. |
+| `/portal/…` | 7 | Managing who can sign in to the customer portal. |
 | `/replay/…` | 1 | The browser's session recording for support (disclosed, inputs masked, kept a week); the page posts its own events here, and only Curahold's desk reads them. |
 | `/scim/…` | 7 | SCIM 2.0 user provisioning: the identity provider's own calls, authorized by a per-company bearer token. Not for people. |
 | `/setup/…` | 5 | The first-time setup of a company. |

@@ -28,6 +28,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `plan_no_date` | 400 | Bu playbook yenileme ya da kapanış tarihine göre tarihleniyor; başlanacak bir tarih yok. |
 | `portal_bad_code` | 400 | Kod yanlış ya da süresi dolmuş. Yenisini iste. |
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
+| `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, metin ve CSV dosyaları eklenebilir. |
 | `portal_internal_email` | 400 | Bu adres şirketindeki birine ait. Portal müşteriler içindir. |
 | `portal_method_off` | 400 | Bu giriş yolu kapalı. |
 | `portal_no_method` | 400 | En az bir giriş yolu açık kalmalı: e-posta, Google, Microsoft ya da şifre. |
@@ -35,6 +36,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `portal_off` | 400 | Müşteri portalı kapalı. Ayarlar → Müşteri portalı'ndan aç. |
 | `portal_passkey_failed` | 400 | Passkey çalışmadı. Tekrar dene ya da başka bir yolla giriş yap. |
 | `portal_private_board` | 400 | Özel panolar müşterilere açılamaz. |
+| `portal_too_many_files` | 400 | Bir seferde en fazla … dosya eklenebilir. |
 | `portal_weak_password` | 400 | En az 10 karakterli, adını içermeyen ve kolay tahmin edilmeyen bir şifre seç. |
 | `required_fields` | 400 | Görevi bitirmeden önce şunları doldur: … |
 | `second_step_failed` | 400 | Bu kod çalışmadı. Kontrol edip tekrar dene. |

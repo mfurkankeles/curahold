@@ -29,7 +29,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/onboarding/…` | 2 | Yeni bir şirketin kendi kurulum kontrol listesi; kayıttan sonra tarayıcıda kullanılır. |
 | `/org/…` | 1 | Şirketin herkese açık oturum açma bilgileri. |
 | `/platform/…` | 4 | Yalnızca işletmeciye özel owner konsolu (müşteriler, planlar, faturalandırma durumu, genel bakış); bir şirketin API'sinin parçası değil. |
-| `/portal/…` | 6 | Müşteri portalına kimlerin girebileceğini yönetme. |
+| `/portal/…` | 7 | Müşteri portalına kimlerin girebileceğini yönetme. |
 | `/replay/…` | 1 | Tarayıcının destek için oturum kaydı (bildirilen, girdiler maskeli, bir hafta tutulur); sayfa kendi olaylarını buraya gönderir, yalnızca Curahold'un masası okur. |
 | `/scim/…` | 7 | SCIM 2.0 kullanıcı sağlama: kimlik sağlayıcının kendi çağrıları; şirkete özel taşıyıcı token ile yetkilendirilir. İnsanlar için değil. |
 | `/setup/…` | 5 | Şirketin ilk kurulumu. |
