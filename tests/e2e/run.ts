@@ -2191,6 +2191,8 @@ await step('product team: a story linked to a customer opens from the customer; 
 });
 
 await step('account manager: a meeting, three next steps, one finished on a phone, the customer page follows (≤ 3 min)', async () => {
+  // Ada has signed in many times in this run; the sign-in rate limit is not what is tested here.
+  await sql('delete from login_tokens');
   const started = Date.now();
   // The company works its health score out (an administrator turned it on).
   const ada = await newPage(s.browser);
