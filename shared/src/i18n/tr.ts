@@ -4639,7 +4639,6 @@ export const tr: Record<MessageKey, string> = {
   'views.current': "Görünüm: {name}",
   'myTasks.anyPriority': "Her öncelik",
   'views.title': "Kayıtlı görünümler",
-  'views.titleCount': "Kayıtlı görünümler ({n})",
   'acards.pick': "{name} seç",
   'bulk.selectAllN': "Eşleşen {n} kaydın hepsini seç",
   'bulk.selectFirstN': "{total} kaydın ilk {n} tanesini seç (bir değişiklik en çok bu kadarını kapsar)",

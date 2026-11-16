@@ -4639,7 +4639,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'views.current': "ビュー：{name}",
   'myTasks.anyPriority': "すべての優先度",
   'views.title': "保存済みビュー",
-  'views.titleCount': "保存済みビュー（{n}）",
   'acards.pick': "「{name}」を選択",
   'bulk.selectAllN': "一致する {n} 件をすべて選択",
   'bulk.selectFirstN': "{total} 件のうち最初の {n} 件を選択（1回の変更の上限）",

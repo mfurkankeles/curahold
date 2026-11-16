@@ -4639,7 +4639,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'views.current': "العرض: {name}",
   'myTasks.anyPriority': "أي أولوية",
   'views.title': "العروض المحفوظة",
-  'views.titleCount': "العروض المحفوظة ({n})",
   'acards.pick': "حدّد {name}",
   'bulk.selectAllN': "حدّد كل الـ{n} المطابقة",
   'bulk.selectFirstN': "حدّد أول {n} من {total} (أقصى ما يشمله تغيير واحد)",

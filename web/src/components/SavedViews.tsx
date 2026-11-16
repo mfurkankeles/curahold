@@ -279,18 +279,15 @@ export function SavedViews({ ctl, canSave = true }: { ctl: SavedViewsCtl; /** Wh
         className="btn"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={active ? t('views.current', { name: active.name }) : t('views.titleCount', { n: list.length })}
         title={t('views.title')}
         data-on={active ? true : undefined}
         onClick={toggle}
       >
         <Icon name="bookmark" size={16} />
+        {/* The name read out is what is shown, with "Saved views" in front for a screen reader. */}
+        <span className="sr-only">{t('views.title')}</span>
         {active && <span className="savedviews__label">{active.name}</span>}
-        {!active && list.length > 0 && (
-          <span className="fcount fcount--quiet num" aria-hidden="true">
-            {list.length}
-          </span>
-        )}
+        {!active && list.length > 0 && <span className="fcount fcount--quiet num">{list.length}</span>}
       </button>
       {open && (
         <div className="popmenu filterpop" role="dialog" aria-label={t('views.title')} data-place={place}>

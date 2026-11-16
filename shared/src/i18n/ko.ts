@@ -4639,7 +4639,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'views.current': "보기: {name}",
   'myTasks.anyPriority': "모든 우선순위",
   'views.title': "저장된 보기",
-  'views.titleCount': "저장된 보기 ({n})",
   'acards.pick': "{name} 선택",
   'bulk.selectAllN': "일치하는 {n}개 모두 선택",
   'bulk.selectFirstN': "{total}개 중 처음 {n}개 선택 (한 번의 변경 최대치)",

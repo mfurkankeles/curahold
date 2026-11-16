@@ -4639,7 +4639,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'views.current': "תצוגה: {name}",
   'myTasks.anyPriority': "כל עדיפות",
   'views.title': "תצוגות שמורות",
-  'views.titleCount': "תצוגות שמורות ({n})",
   'acards.pick': "לבחור את {name}",
   'bulk.selectAllN': "לבחור את כל {n} התואמים",
   'bulk.selectFirstN': "לבחור את {n} הראשונים מתוך {total} (המקסימום לשינוי אחד)",

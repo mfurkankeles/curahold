@@ -4654,7 +4654,6 @@ export const en = {
   'views.current': "View: {name}",
   'myTasks.anyPriority': "Any priority",
   'views.title': "Saved views",
-  'views.titleCount': "Saved views ({n})",
   'acards.pick': "Select {name}",
   'bulk.selectAllN': "Select all {n} that match",
   'bulk.selectFirstN': "Select the first {n} of {total} (the most one change takes)",

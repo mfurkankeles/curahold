@@ -4639,7 +4639,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'views.current': "نما: {name}",
   'myTasks.anyPriority': "هر اولویتی",
   'views.title': "نماهای ذخیره‌شده",
-  'views.titleCount': "نماهای ذخیره‌شده ({n})",
   'acards.pick': "انتخاب {name}",
   'bulk.selectAllN': "انتخاب همهٔ {n} مورد منطبق",
   'bulk.selectFirstN': "انتخاب {n} مورد نخست از {total} (بیشترین تعداد در یک تغییر)",
