@@ -144,6 +144,13 @@ describe('signing in on the portal', () => {
     expect(me.json.account).toMatchObject({ id: quill, name: 'Quillfield Retail' });
     expect(me.json.boards.map((b: any) => b.id)).toEqual([env.a.boards.csBoard]);
     expect(me.json.boards[0].columns[1].name).toBe('Being worked on');
+    // Where the company wrote nothing, the customer gets the step, never the team's own column name.
+    const shown = me.json.boards[0].columns as { key: string; name: string | null; step: string; done: boolean }[];
+    expect(shown[0]).toMatchObject({ name: null, step: 'new' });
+    expect(shown[1].step).toBe('doing');
+    for (const c of shown) if (c.done) expect(c.step).toBe('done');
+    const internal = ((await ada.get('/api/boards')).json.boards.find((b: any) => b.id === env.a.boards.csBoard).columns as { name: string }[]).map((c) => c.name);
+    for (const c of shown) if (c.key !== shown[1].key) expect(internal).not.toContain(c.name);
   });
 
   it('asking for a link gives nothing away', async () => {

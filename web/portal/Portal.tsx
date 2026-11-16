@@ -1130,12 +1130,13 @@ function LoadFailed({ ctx, failure, onRetry, company, page }: { ctx: Ctx; failur
   );
 }
 
-function Status({ board, status }: { board: PortalBoard; status: string }) {
+/** The company's own word for the column, or the portal's plain word for the step; never the team's column name. */
+function Status({ ctx, board, status }: { ctx: Ctx; board: PortalBoard; status: string }) {
   const col = board.columns.find((c) => c.key === status);
-  const i = board.columns.findIndex((c) => c.key === status);
+  const step = col?.step ?? (col?.done ? 'done' : 'doing');
   return (
-    <span className="p-status" data-done={col?.done || undefined} data-step={col?.done ? 'done' : i <= 0 ? 'new' : 'doing'}>
-      {col?.name ?? status}
+    <span className="p-status" data-done={col?.done || undefined} data-step={step}>
+      {col?.name || ctx.t(`portal.step.${step}`)}
     </span>
   );
 }
@@ -1276,7 +1277,7 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
                         <span className="p-item__title" dir="auto">{x.title}</span>
                         <span className="p-item__side">
                           {x.lastFromTeam && !done.has(x.status) && <span className="p-fresh">{t('portal.newReply')}</span>}
-                          <Status board={board} status={x.status} />
+                          <Status ctx={ctx} board={board} status={x.status} />
                         </span>
                         <span className="p-item__meta">
                           <span>{x.openedBy ? t('portal.openedBy', { name: x.openedBy }) : t('portal.fromTeam')}</span>
@@ -1469,7 +1470,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
         <header className="p-task__head">
           <div className="p-task__title">
             <h1 dir="auto">{data.title}</h1>
-            <Status board={data.board} status={data.status} />
+            <Status ctx={ctx} board={data.board} status={data.status} />
           </div>
           <dl className="p-meta p-meta--inline">{facts}</dl>
         </header>
@@ -1555,7 +1556,7 @@ function TaskPage({ ctx, org, id, onSignedOut }: { ctx: Ctx; org: PortalOrg; id:
             <div>
               <dt>{t('portal.status')}</dt>
               <dd>
-                <Status board={data.board} status={data.status} />
+                <Status ctx={ctx} board={data.board} status={data.status} />
               </dd>
             </div>
             {facts}

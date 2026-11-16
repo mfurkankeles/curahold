@@ -42,7 +42,10 @@ export interface PortalSettings {
 // What the portal app reads (from /papi).
 export interface PortalColumn {
   key: string;
-  name: string;
+  /** What the company wrote for this column in the board's portal settings; null: the portal names the step. */
+  name: string | null;
+  /** Where a request in this column stands, for the customer: received, being worked on, finished. */
+  step: 'new' | 'doing' | 'done';
   done: boolean;
 }
 export interface PortalBoard {

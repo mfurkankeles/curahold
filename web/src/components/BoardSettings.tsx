@@ -360,7 +360,7 @@ function BoardPortalSettings({ board }: { board: Board }) {
                       <input
                         className="input"
                         maxLength={60}
-                        placeholder={c.name}
+                        placeholder={t(`portal.step.${c.done ? 'done' : c.key === (cfg.intake || board.columns[0]?.key) ? 'new' : 'doing'}`)}
                         value={cfg.labels[c.key] ?? ''}
                         onChange={(e) => setCfg({ ...cfg, labels: { ...cfg.labels, [c.key]: e.target.value } })}
                       />
