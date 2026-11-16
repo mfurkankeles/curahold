@@ -86,9 +86,9 @@ function page(locale: Locale): string {
   const langLink = (l: Locale) => `<a href="${hrefOf(l)}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`;
   const langMenu = others.length === 1 ? langLink(others[0]).replace('<a ', '<a class="top__lang" ') : others.length ? `<details class="lang"><summary class="top__lang">${esc(info.name)}</summary><div class="lang__menu">${others.map(langLink).join('')}</div></details>` : '';
   // A real screen of the demo in this language (no drawing of one): the wide one, and the phone one on a phone.
-  const shot = existsSync(shotOf(locale, 'customers')) && existsSync(shotOf(locale, 'customers-phone'));
+  const shot = existsSync(shotOf(locale, 'customers')) && existsSync(shotOf(locale, 'customer-phone'));
   const figure = shot
-    ? `<figure class="hub-shot"><picture><source media="(max-width: 700px)" srcset="${assets}${locale}-customers-phone.webp" width="375" height="667"><img src="${assets}${locale}-customers.webp" width="1280" height="800" alt="${esc(c.shot)}" fetchpriority="high"></picture></figure>`
+    ? `<figure class="hub-shot"><picture><source media="(max-width: 700px)" srcset="${assets}${locale}-customer-phone.webp" width="375" height="667"><img src="${assets}${locale}-customers.webp" width="1280" height="800" alt="${esc(c.shot)}" fetchpriority="high"></picture></figure>`
     : '';
   const tourHref = (id: string) => `${app}?tour=${id}${hash}`;
   const counts = (pick: (t: (typeof TOURS)[number]) => string[]) => {
@@ -233,7 +233,7 @@ mkdirSync(join(OUT, 'assets'), { recursive: true });
 for (const l of LANGS) {
   mkdirSync(join(OUT, dirOf(l)), { recursive: true });
   writeFileSync(join(OUT, dirOf(l), 'index.html'), page(l));
-  for (const name of ['customers', 'customers-phone']) if (existsSync(shotOf(l, name))) cpSync(shotOf(l, name), join(OUT, 'assets', `${l}-${name}.webp`));
+  for (const name of ['customers', 'customer-phone']) if (existsSync(shotOf(l, name))) cpSync(shotOf(l, name), join(OUT, 'assets', `${l}-${name}.webp`));
 }
 writeFileSync(join(OUT, 'assets', 'hub.css'), CSS);
 cpSync(join(ROOT, 'site', 'hub.js'), join(OUT, 'assets', 'hub.js'));

@@ -6,7 +6,7 @@ summary: The sales pipeline, the inbox, the timeline, reports and getting ready 
 ---
 # Pipeline, reports and team
 
-The menu on the left has four parts: everyday work at the top (Home, My tasks, Inbox, Calendar), **Customers**, **Work** (boards and the timeline) and **Insight** (Reports, Team). Click a part's heading to fold it away.
+The menu on the left has four parts: everyday work at the top (Home, My tasks, Inbox, Calendar), **Customers**, **Work** (boards and the timeline) and **Insight** (Reports, Dashboards, Team). Click a part's heading to fold it away.
 
 ## Opportunities: the pipeline
 
@@ -44,7 +44,7 @@ Everything sent to you in one list: tasks given to you, mentions, comments, move
 
 ## Build your own report
 
-**Reports → Reports → New report.** Five steps, and the result on the right is redrawn as you change them:
+**Insight → Reports → New report.** Five steps, and the result on the right is redrawn as you change them:
 
 1. **What are you looking at?** Tasks, customers, opportunities (and the company's other record types), customer contact, or time logged.
 2. **Narrow it down.** Add conditions: “Status is one of: Open”, “Close date in this quarter”, “Annual value is at least 50,000”, “Assignee: Me”. Dates offer “in the last 30 days”, “in the next 90 days”, and “this / the last full week, month, quarter, year”.
@@ -60,7 +60,7 @@ Without a grouping the report is a list of rows, and you pick its columns. **Exp
 
 ## Dashboards
 
-A dashboard is a page made of charts and lists (the tabs on your home). Under **Reports → Dashboards**:
+A dashboard is a page made of charts and lists (the tabs on your home). Under **Insight → Dashboards**:
 
 - **Ready-made dashboards arrive filled:** Sales pipeline, Renewals and risk, Customer health, Team performance, Customer contact, Work flow and Executive summary are there the first time anyone opens Dashboards, drawn from your own data. Nothing has to be added first.
 - **Dashboards opens on a dashboard:** the one you looked at last. The names along the top move from one to another in one click.

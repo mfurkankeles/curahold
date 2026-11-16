@@ -29,4 +29,4 @@ Kartların çoğu "benim", "ekibimin" ya da "herkesin" kapsamıyla çalışır. 
 
 Yöneticiler **Sayfayı düzenle** ile kart ekler, sıralar, boyutunu seçer ve sayfanın hangi rollerin ana sayfası olduğunu belirler. Sayfa yalnızca bazı rollere de gösterilebilir.
 
-> **İpucu:** Bir rolün ne gördüğünü merak ediyorsan Ayarlar → Roller'de **Onun gözünden bak** ile o kişinin ekranını salt okunur olarak açabilirsin.
+> **İpucu:** Bir rolün ne gördüğünü merak ediyorsan Ayarlar → Roller ve yetkiler'de **… gözünden bak** ile o kişinin ekranını salt okunur olarak açabilirsin.

@@ -8,6 +8,8 @@ summary: Your company address, signing in, first setup and the device limit.
 
 Curahold is where customer success and account teams run their customers, stakeholders and day-to-day work in one place. This page covers your first fifteen minutes.
 
+![Curahold's Home: the Getting started card, the customer figures and the team's load](img/home.webp)
+
 ## Your company address
 
 Every company has its own address: `yourcompany.curahold.com`. Everyone on your team signs in there. No other company's data ever appears at that address; the separation is enforced inside the database itself.
@@ -16,6 +18,9 @@ Every company has its own address: `yourcompany.curahold.com`. Everyone on your 
 
 - **Email link:** type your email address and click the link we send. No passwords.
 - **Google or Microsoft:** one click, if your company switched it on. On a device we have not seen before, we also ask for the 6-digit code sent to your email.
+- **Passkey:** your fingerprint, face or device PIN, after a first sign-in.
+- **Second step:** add an authenticator app in Your settings → **Sign-in security**, with 10 recovery codes. An administrator can require the second step of administrators or of everyone.
+- Before sensitive actions (changing roles, API keys, exporting your data…) you are asked to **Confirm it's you** if you have not signed in within the last ten minutes.
 - An address gets at most 5 sign-in links in 15 minutes.
 
 ## First setup
@@ -32,12 +37,12 @@ The **+ New** button on the left adds anything from one place: a task, a custome
 
 ## Language
 
-Curahold starts in English. Turkish is a choice, made in one of two places:
+Curahold speaks nine languages: English, Turkish, Arabic, Hebrew, Persian, Simplified and Traditional Chinese, Japanese and Korean. The language is chosen in one of two places:
 
 - **For yourself:** Your settings → Language. It follows you to every device.
 - **For the company:** an administrator sets it in Settings → Company. New people then start in that language, and emails to the whole company use it.
 
-Nothing is guessed from your browser, so everyone who opens the same link sees the same thing. Dates, numbers and amounts follow the language you chose.
+Nothing is guessed from your browser, so everyone who opens the same link sees the same thing. Dates, numbers and amounts follow the language you chose; Arabic, Hebrew and Persian read right to left.
 
 ## Device limit
 
@@ -56,7 +61,7 @@ The installed app opens in its own window; a long press on its icon offers My ta
 
 **Without a connection** the app still opens and shows what you last saw: your tasks, boards, customers, the inbox. A strip at the top says you are offline; changes cannot be saved until you are connected. Signing out removes the copy kept on the device.
 
-**Live refresh:** while a page is open, someone else's change (a new card, a moved task, a comment, a new notice) shows up by itself within half a minute; there is no need to reload. Nothing moves under your hands while you are typing or dragging a card.
+**Live refresh:** while a page is open, someone else's change (a new card, a moved task, a comment, a new notice) shows up by itself within seconds; there is no need to reload. Nothing moves under your hands while you are typing or dragging a card.
 
 ## Next
 

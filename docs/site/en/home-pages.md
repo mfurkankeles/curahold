@@ -29,4 +29,4 @@ Most cards work for "mine", "my team's" or "everyone's". A card is worked out wi
 
 Admins use **Edit page** to add, order and size cards, and to choose which roles start on that page. A page can also be shown to some roles only.
 
-> **Tip:** To check what a role sees, use **See it as them** in Settings → Roles. It opens that person's screens, read only.
+> **Tip:** To check what a role sees, use **See it as …** in Settings → Roles and permissions. It opens that person's screens, read only.
