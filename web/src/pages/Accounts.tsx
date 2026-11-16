@@ -347,7 +347,7 @@ export function AccountsPage() {
           buttonClass="btn btn--icon"
           button={<Icon name="more" size={18} />}
           items={[
-            ...(data?.total ? (['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) })) : []),
+            ...(data?.total && can('data.export') ? (['xlsx', 'csv'] as const).map((kind) => ({ key: kind, label: `${t('export.button')} · ${t(`export.${kind}` as const)}`, icon: 'download' as const, onSelect: () => void runExport(kind) })) : []),
             ...(manage && can('accounts.view_all') && canWrite ? [{ key: 'import', label: t('accounts.import'), icon: 'upload' as const, onSelect: () => setImporting(true) }] : []),
           ]}
         />

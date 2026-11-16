@@ -4637,6 +4637,8 @@ export const en = {
   'sso.test.why.not_configured': "the provider's details are not complete.",
   'errors.sso_untested': "Test sign-in through your identity provider with these details first; then SSO can be required.",
   'audit.sso.tested': "tested single sign-on",
+  'perm.data.export': "Export data",
+  'perm.data.export.hint': "Download customers, records, tasks and reports as Excel or CSV. A file holds only what this person may see, and every export is written to the activity log.",
 } as const;
 
 export type MessageKey = keyof typeof en;

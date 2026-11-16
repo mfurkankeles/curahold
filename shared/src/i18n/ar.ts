@@ -4622,4 +4622,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "تفاصيل المزوّد غير مكتملة.",
   'errors.sso_untested': "جرّب أولًا تسجيل الدخول عبر مزوّد الهوية بهذه التفاصيل؛ بعدها يمكن جعل SSO إلزاميًا.",
   'audit.sso.tested': "اختبر تسجيل الدخول الموحد",
+  'perm.data.export': "تصدير البيانات",
+  'perm.data.export.hint': "تنزيل العملاء والسجلات والمهام والتقارير بصيغة Excel أو CSV. لا يضم الملف إلا ما يحق لهذا الشخص رؤيته، ويُسجَّل كل تصدير في سجل النشاط.",
 };

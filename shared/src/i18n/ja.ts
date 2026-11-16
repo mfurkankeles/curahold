@@ -4622,4 +4622,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "IDプロバイダーの情報が不足しています。",
   'errors.sso_untested': "まずこの情報でIDプロバイダー経由のサインインを試してください。その後SSOを必須にできます。",
   'audit.sso.tested': "シングルサインオンをテストしました",
+  'perm.data.export': "データをエクスポートする",
+  'perm.data.export.hint': "顧客、レコード、タスク、レポートを Excel または CSV でダウンロードします。ファイルにはこの人が見られるものだけが入り、エクスポートはすべてアクティビティログに記録されます。",
 };

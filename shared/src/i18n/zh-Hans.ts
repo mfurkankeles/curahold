@@ -4622,4 +4622,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "身份提供商信息不完整。",
   'errors.sso_untested': "请先用这些信息通过身份提供商测试登录，之后才能将 SSO 设为必须。",
   'audit.sso.tested': "测试了单点登录",
+  'perm.data.export': "导出数据",
+  'perm.data.export.hint': "将客户、记录、任务和报表下载为 Excel 或 CSV。文件只包含此人有权查看的内容，每次导出都会记入活动日志。",
 };

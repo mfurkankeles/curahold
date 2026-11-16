@@ -4622,4 +4622,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "身分識別提供者資訊不完整。",
   'errors.sso_untested': "請先用這些資訊透過身分識別提供者測試登入，之後才能將 SSO 設為必須。",
   'audit.sso.tested': "測試了單一登入",
+  'perm.data.export': "匯出資料",
+  'perm.data.export.hint': "將客戶、紀錄、任務和報表下載為 Excel 或 CSV。檔案只包含此人有權檢視的內容，每次匯出都會記入活動紀錄。",
 };

@@ -204,11 +204,13 @@ describe('reports people keep', () => {
 
 describe('a file made from a report or a list', () => {
   it('is written to the activity log: who, what, how many rows, which format', async () => {
-    const r = await sofia.post('/api/exports', { source: 'report', name: 'Sağlığa göre müşteriler', rows: 14, format: 'xlsx' });
+    // A read-only seat has no data.export by default: refused, and nothing is written.
+    expect((await sofia.post('/api/exports', { source: 'report', name: 'x', rows: 1, format: 'xlsx' })).status).toBe(403);
+    const r = await ada.post('/api/exports', { source: 'report', name: 'Sağlığa göre müşteriler', rows: 14, format: 'xlsx' });
     expect(r.status).toBe(200);
-    const [row] = await env.db.system((q) => q.query(`select a.meta from audit_log a join users u on u.id = a.actor_id where a.action = 'data.exported' and u.email = 'sofia@demo.example' order by a.at desc limit 1`));
+    const [row] = await env.db.system((q) => q.query(`select a.meta from audit_log a join users u on u.id = a.actor_id where a.action = 'data.exported' and u.email = 'ada@demo.example' order by a.at desc limit 1`));
     expect(row.meta).toMatchObject({ source: 'report', rows: 14, format: 'xlsx' });
-    expect((await sofia.post('/api/exports', { source: 'report', name: 'x', rows: 1, format: 'pdf' })).status).toBe(400);
+    expect((await ada.post('/api/exports', { source: 'report', name: 'x', rows: 1, format: 'pdf' })).status).toBe(400);
   });
 });
 

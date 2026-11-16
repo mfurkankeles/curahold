@@ -186,6 +186,8 @@ Moves a saved report to the trash, where it stays for 30 days. The answer carrie
 
 Notes in the activity log that the person exported a file (a report or a list) made in the browser: what, how many rows, which format.
 
+**Needs:** permission `data.export`
+
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
 | `source` | text | required |  |

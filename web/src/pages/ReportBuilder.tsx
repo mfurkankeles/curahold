@@ -483,7 +483,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
       rows: result.groups.map((g) => [result.bucket ? f.bucket(g.key, result.bucket) : g.label, ...(g.cells ?? []), g.value]),
     };
   };
-  const canExport = result?.kind === 'ok';
+  const canExport = result?.kind === 'ok' && can('data.export');
   // One main action (Save); the rest wait in "More" — on a phone, Export and "Add to dashboard" too.
   const more: MenuItem[] = [
     ...(phone && canExport

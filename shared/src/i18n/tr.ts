@@ -4622,4 +4622,6 @@ export const tr: Record<MessageKey, string> = {
   'sso.test.why.not_configured': "kimlik sağlayıcının bilgileri eksik.",
   'errors.sso_untested': "Önce bu bilgilerle kimlik sağlayıcın üzerinden girişi dene; sonra SSO zorunlu kılınabilir.",
   'audit.sso.tested': "tek oturum açmayı denedi",
+  'perm.data.export': "Veriyi dışa aktarma",
+  'perm.data.export.hint': "Müşterileri, kayıtları, görevleri ve raporları Excel ya da CSV olarak indirir. Dosyada yalnızca bu kişinin görebildikleri olur; her dışa aktarma etkinlik kaydına yazılır.",
 };

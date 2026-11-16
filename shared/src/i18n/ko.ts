@@ -4622,4 +4622,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "ID 공급자 정보가 완전하지 않습니다.",
   'errors.sso_untested': "먼저 이 정보로 ID 공급자를 통한 로그인을 테스트하세요. 그 후 SSO를 필수로 할 수 있습니다.",
   'audit.sso.tested': "싱글 사인온을 테스트함",
+  'perm.data.export': "데이터 내보내기",
+  'perm.data.export.hint': "고객, 레코드, 작업, 보고서를 Excel 또는 CSV로 내려받습니다. 파일에는 이 사람이 볼 수 있는 것만 담기며, 모든 내보내기는 활동 로그에 기록됩니다.",
 };

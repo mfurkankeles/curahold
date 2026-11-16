@@ -186,6 +186,8 @@ Kayıtlı raporu çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId`
 
 Kişinin tarayıcıda oluşturduğu bir dosyayı (rapor ya da liste) dışa aktardığını işlem günlüğüne yazar: ne, kaç satır, hangi biçim.
 
+**Gerekenler:** yetki `data.export`
+
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
 | `source` | metin | zorunlu |  |

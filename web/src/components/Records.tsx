@@ -383,7 +383,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
             <ExportMenu disabled={!data?.total} make={makeExport} />
           </div>
         )}
-        {type && data?.total ? (
+        {type && data?.total && can('data.export') ? (
           <MenuButton
             className="listtop__more"
             label={t('acc.more')}

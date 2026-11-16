@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AccountField } from '../../../shared/src/model';
 import { BUCKETS, CHARTS, FORMATS, MEASURE_FNS, PERIODS, type ReportDef, type SavedReport } from '../../../shared/src/reports';
-import { nowOf, requireWriter, run, type AppEnv, type C } from '../context';
+import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { toTrash } from '../lib/trash';
@@ -163,6 +163,7 @@ builderRoutes.delete('/reports/saved/:id', async (c) => {
  * were already theirs to see; this keeps the export in the company's activity log.
  */
 builderRoutes.post('/exports', async (c) => {
+  requirePerm(c, 'data.export');
   const input = await body(
     c,
     z.object({

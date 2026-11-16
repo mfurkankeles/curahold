@@ -4622,4 +4622,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'sso.test.why.not_configured': "פרטי הספק אינם מלאים.",
   'errors.sso_untested': "בדוק קודם כניסה דרך ספק הזהויות עם הפרטים האלה; אחר כך אפשר לחייב SSO.",
   'audit.sso.tested': "בדק כניסה יחידה",
+  'perm.data.export': "ייצוא נתונים",
+  'perm.data.export.hint': "הורדת לקוחות, רשומות, משימות ודוחות כקובץ Excel או CSV. הקובץ כולל רק את מה שהאדם הזה רשאי לראות, וכל ייצוא נרשם ביומן הפעילות.",
 };

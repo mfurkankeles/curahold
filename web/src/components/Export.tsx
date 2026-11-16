@@ -38,6 +38,9 @@ export function ExportMenu({ make, disabled, source = 'list', quiet }: { make: (
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const { run, busy } = useExport(source);
+  const { can } = useStore();
+  // Exporting is a permission of its own (data.export): without it there is no button, and nothing is asked.
+  if (!can('data.export')) return null;
   const pick = (kind: ExportKind) => {
     setOpen(false);
     void run(make, kind);
