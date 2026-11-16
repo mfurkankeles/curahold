@@ -2454,6 +2454,79 @@ await step('admin: a new company from a template, a CRM, five people with roles 
   await p.browserContext().close();
 });
 
+await step('admin: SSO is required and the provider is down; a backup administrator still gets in with a second step, and the other admins are told', async () => {
+  const started = Date.now();
+  const [ada] = await sql(`select id, role_id, org_id from users where email = 'ada@demo.example'`);
+  const [zeynep] = await sql(`select id, role_id from users where email = 'zeynep@demo.example'`);
+  // Zeynep is a second administrator here (she is the one told).
+  await sql(`update users set role_id = $2 where id = $1`, [zeynep.id, ada.role_id]);
+  const { page: p, errors } = await newPage(s.browser);
+  try {
+    // Ada sets up an authenticator app, then chooses herself as a backup administrator in Settings → SSO.
+    await sql(`delete from login_tokens where email = 'ada@demo.example'`);
+    await signIn(p, s.origin, 'ada@demo.example');
+    const setup = await api(p, 'POST', '/me/security/totp', {});
+    const confirmed = await api(p, 'POST', '/me/security/totp/confirm', { code: await hotp(base32Decode(setup.secret), stepOf(Date.now())) });
+    expect(confirmed.recoveryCodes?.length, `app not confirmed: ${JSON.stringify(confirmed).slice(0, 160)}`);
+    await sql(`insert into sso_configs (org_id, protocol, enabled, enforced, issuer, sso_url) values ($1, 'saml', true, false, 'https://idp.demo.example/entity', 'https://idp.demo.example/sso') on conflict (org_id) do nothing`, [ada.org_id]);
+    await p.goto(`${s.origin}/settings/sso`, { waitUntil: 'networkidle0' });
+    await p.waitForSelector('#sso-backup');
+    await p.select('section[aria-labelledby="sso-backup"] select', ada.id);
+    await p.waitForFunction(() => document.querySelector('section[aria-labelledby="sso-backup"] .keyrow__name')?.textContent === 'Ada Demir');
+    await (await byText(p, '.admin__unsaved .btn--primary', 'Kaydet')).click();
+    await p.waitForFunction(() => !document.querySelector('.admin__unsaved'));
+    const [stored] = await sql(`select backup_admin_ids from sso_configs where org_id = $1`, [ada.org_id]);
+    expect(stored.backup_admin_ids?.[0] === ada.id, `stored: ${JSON.stringify(stored)}`);
+    await shot(p, 'e2e-sso-backup-settings');
+    // The provider is set to required (a real test sign-in needs a real provider), and then it goes down.
+    await sql(`update sso_configs set enforced = true where org_id = $1`, [ada.org_id]);
+
+    const { page: b } = await newPage(s.browser, 390, 844);
+    await b.goto(`${s.origin}/login`, { waitUntil: 'networkidle0' });
+    // Only SSO is offered; the backup way is one quiet link under it.
+    await b.waitForSelector('.auth__card .btn--primary');
+    expect((await b.$('.auth__card input[type=email]')) === null, 'the email form shows while SSO is required');
+    await (await byText(b, '.auth__card .btn--quiet', 'Yedek yönetici misin?')).click();
+    // Someone who is not a backup administrator is told the same and gets no link.
+    await b.type('input[type=email]', 'mert@demo.example');
+    await b.click('form button.btn--primary');
+    await b.waitForFunction(() => document.querySelector('.auth__title')?.textContent === 'Gelen kutunu kontrol et');
+    expect((await b.$('a.btn[href^="/auth/verify"]')) === null, 'a link was made for someone who is not a backup administrator');
+    // Another address: still the backup way.
+    await (await byText(b, '.auth__card .btn--quiet', 'Başka bir e-posta')).click();
+    await b.waitForSelector('input[type=email]');
+    await b.click('input[type=email]', { count: 3 });
+    await b.keyboard.press('Backspace');
+    await b.type('input[type=email]', 'ada@demo.example');
+    await b.click('form button.btn--primary');
+    await (await b.waitForSelector('a.btn[href^="/auth/verify"]'))!.click();
+    // The link alone is not enough: the app's code, and no recovery code on offer.
+    await b.waitForSelector('.code-input');
+    expect((await b.$$eval('.signup-form .btn--quiet', (els) => els.length)) === 0, 'a recovery code is offered to a backup administrator');
+    await shot(b, 'e2e-sso-backup-second-step');
+    const mails = s.email.sent.length;
+    await b.type('.code-input', await hotp(base32Decode(setup.secret), stepOf(Date.now()) + 1));
+    await b.click('.signup-form .btn--primary');
+    await b.waitForSelector('.sidebar, .bottomnav, .pane', { timeout: 15_000 });
+    // In the activity log, and every other administrator is emailed.
+    const [line] = await sql(`select actor_id from audit_log where org_id = $1 and action = 'login.backup' order by at desc limit 1`, [ada.org_id]);
+    expect(line?.actor_id === ada.id, 'no line in the activity log');
+    for (let i = 0; i < 30 && s.email.sent.length === mails; i++) await pause(100);
+    const told = s.email.sent.slice(mails).map((m) => m.to);
+    expect(told.includes('zeynep@demo.example') && !told.includes('ada@demo.example'), `emailed: ${told.join(', ')}`);
+    await b.browserContext().close();
+    const seconds = Math.round((Date.now() - started) / 1000);
+    console.log(`backup administrator journey: ${seconds} s`);
+    expect(errors.length === 0, `console: ${errors.join(' | ')}`);
+  } finally {
+    await sql(`update sso_configs set enforced = false, enabled = false, backup_admin_ids = '{}' where org_id = $1`, [ada.org_id]);
+    await sql(`update users set role_id = $2 where id = $1`, [zeynep.id, zeynep.role_id]);
+    await sql(`delete from user_totp where user_id = $1`, [ada.id]);
+    await sql(`delete from user_recovery_codes where user_id = $1`, [ada.id]);
+    await p.browserContext().close();
+  }
+});
+
 await step('no script errors in the browser', async () => {
   expect(mert.errors.length === 0, mert.errors.join(' | '));
 });

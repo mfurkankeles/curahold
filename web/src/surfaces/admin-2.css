@@ -1,0 +1,5 @@
+/* Settings, second round (agent admin-2): backup administrators, the save bar on the remaining topics, personal export. */
+
+/* SSO: a chosen backup administrator who could not get in says why, in the warning colour. */
+.sso-backup__row { flex-wrap: nowrap; }
+.sso-backup__warn { color: var(--late-ink); }

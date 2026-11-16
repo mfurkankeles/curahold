@@ -162,7 +162,13 @@ describe('test sign-in, and requiring SSO only after one worked', () => {
 
     const got = await (await admin.request('https://x/api/sso/settings')).json();
     expect(got.test?.current).toBe(true);
-    expect((await put(admin, details(oidp, { enabled: true, enforced: true }))).status).toBe(200);
+    // Tested, but nobody could get in if the provider failed: still refused until a backup administrator
+    // with a second step is chosen (tests/sso-backup.test.ts has the sign-in itself).
+    const noBackup = await put(admin, details(oidp, { enabled: true, enforced: true }));
+    expect(noBackup.status).toBe(409);
+    expect(JSON.stringify(await noBackup.json())).toContain('sso_no_backup');
+    await env.db.system((q) => q.query(`insert into user_totp (org_id, user_id, secret_sealed, confirmed_at) values ($1, $2, 'sealed-for-test', now()) on conflict do nothing`, [org.id, env.b.ids.ada]));
+    expect((await put(admin, details(oidp, { enabled: true, enforced: true, backupAdminIds: [env.b.ids.ada] }))).status).toBe(200);
     // Other details (a different client) have not been proved: requiring them again after switching off is refused.
     expect((await put(admin, details(oidp, { enabled: false }))).status).toBe(200);
     const other = await put(admin, details(oidp, { enabled: true, enforced: true, clientId: 'another-client' }));

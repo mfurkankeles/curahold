@@ -45,13 +45,29 @@ export interface SsoSp {
   scimBaseUrl: string;
 }
 
+/** An administrator who is (or could be) a backup administrator: without a second step the backup sign-in does not let them in. */
+export interface BackupPerson {
+  id: string;
+  name: string;
+  email: string;
+  admin: boolean;
+  secondStep: boolean;
+}
+
+export interface BackupState {
+  ids: string[];
+  people: BackupPerson[];
+}
+
 export interface SsoSettings {
   config: SsoConfig | null;
   sp: SsoSp;
+  /** Up to two administrators who keep the emailed link (with their second step) when SSO is required. */
+  backup?: BackupState;
   /** The last test sign-in, and whether it proved the details stored now. */
   test?: { at: string; email: string | null; current: boolean } | null;
 }
 
 export const getSsoSettings = () => get<SsoSettings>('/sso/settings');
-export const saveSsoSettings = (body: Partial<SsoConfig> & { cert?: string; clientSecret?: string }) => put<{ ok: true; sp: SsoSp }>('/sso/settings', body);
+export const saveSsoSettings = (body: Partial<SsoConfig> & { cert?: string; clientSecret?: string; backupAdminIds?: string[] }) => put<{ ok: true; sp: SsoSp; backup?: BackupState }>('/sso/settings', body);
 export const rotateScimToken = () => post<{ token: string; baseUrl: string; hint: string }>('/sso/settings/scim-token');

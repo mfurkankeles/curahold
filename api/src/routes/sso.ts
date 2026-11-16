@@ -38,6 +38,7 @@ import {
   oidcAuthUrl,
   oidcRedirectUri,
   pkce,
+  readyBackupAdmins,
   scimBaseUrl,
   signState,
   spEntityId,
@@ -276,6 +277,8 @@ const settingsInput = z.object({
   cert: z.string().trim().max(20000).optional(),
   clientSecret: z.string().trim().max(2000).optional(),
   scimEnabled: z.boolean().optional(),
+  // Up to two administrators who keep the emailed link (plus their second step) when SSO is required.
+  backupAdminIds: z.array(z.string().uuid()).max(2).optional(),
 });
 
 function spDetails(cfg: Config, slug: string) {
@@ -296,7 +299,9 @@ ssoAdminRoutes.get('/sso/settings', async (c) => {
   // The last test sign-in, and whether it proved the details stored now.
   const [last] = await run(c, (q) => q.query<{ at: Date; email: string | null; fp: string | null }>(`select at, meta->>'email' as email, meta->>'fp' as fp from audit_log where action = 'sso.tested' order by at desc limit 1`));
   const current = config ? await connectionPrint(cfg, config) : null;
+  const backup = await backupState(c);
   return c.json({
+    backup,
     test: last ? { at: last.at instanceof Date ? last.at.toISOString() : String(last.at), email: last.email, current: !!current && last.fp === current } : null,
     config: config
       ? {
@@ -340,6 +345,21 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
     if (bad.length) fail('validation', { fields: bad.join(', ') }, { fields: bad });
   }
 
+  // Backup administrators: only administrators can be one, and requiring SSO needs one who
+  // can actually get in (an active administrator with a passkey or an authenticator app).
+  const [stored] = await c.get('deps').db.system((q) => q.query<{ on: boolean; ids: string[] }>(`select (enabled and enforced) as on, backup_admin_ids as ids from sso_configs where org_id = $1`, [org.id]));
+  const backupIds = input.backupAdminIds ? [...new Set(input.backupAdminIds)] : (stored?.ids ?? []);
+  if (input.backupAdminIds?.length) {
+    const admins = await c.get('deps').db.system((q) =>
+      q.query<{ id: string }>(`select u.id from users u join roles r on r.id = u.role_id where u.org_id = $1 and u.id = any($2::uuid[]) and u.status = 'active' and 'org.manage' = any(r.perms)`, [org.id, backupIds]),
+    );
+    if (admins.length !== backupIds.length) fail('backup_not_admin');
+  }
+  const requiring = !!input.enabled && !!input.enforced;
+  const backupMatters = requiring && (!stored?.on || input.backupAdminIds !== undefined);
+  const ready = backupMatters ? await c.get('deps').db.system((q) => readyBackupAdmins(q, org.id, backupIds)) : [];
+  const backupChanged = JSON.stringify([...backupIds].sort()) !== JSON.stringify([...(stored?.ids ?? [])].sort());
+
   await run(c, async (q) => {
     const existing = await loadSsoAuthConfig(q, cfg);
     const cert = input.cert !== undefined ? clean(input.cert) : (existing?.cert ?? null);
@@ -367,6 +387,8 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
       const [ok] = await q.query<{ x: number }>(`select 1 as x from audit_log where action = 'sso.tested' and meta->>'fp' = $1 and at > now() - interval '30 days' limit 1`, [fp]);
       if (!ok) fail('sso_untested');
     }
+    // Requiring SSO with nobody who could get in if the provider fails would lock the company out.
+    if (backupMatters && !ready.length) fail('sso_no_backup');
     // Deliberately not ON CONFLICT: the request role has no SELECT on `secret`
     // (it is sealed and out of reach), and ON CONFLICT DO UPDATE of that column
     // would trip a privilege check. A plain insert or update is fine.
@@ -374,20 +396,21 @@ ssoAdminRoutes.put('/sso/settings', async (c) => {
     if (row) {
       await q.query(
         `update sso_configs set protocol=$2, enabled=$3, enforced=$4, issuer=$5, sso_url=$6, token_url=$7, jwks_url=$8,
-                client_id=$9, attr_email=$10, attr_name=$11, secret=$12, scim_enabled=$13, updated_by=$14, updated_at=now()
+                client_id=$9, attr_email=$10, attr_name=$11, secret=$12, scim_enabled=$13, updated_by=$14, backup_admin_ids=$15, updated_at=now()
           where org_id=$1`,
-        [org.id, ...vals],
+        [org.id, ...vals, backupIds],
       );
     } else {
       await q.query(
-        `insert into sso_configs (org_id, protocol, enabled, enforced, issuer, sso_url, token_url, jwks_url, client_id, attr_email, attr_name, secret, scim_enabled, updated_by)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-        [org.id, ...vals],
+        `insert into sso_configs (org_id, protocol, enabled, enforced, issuer, sso_url, token_url, jwks_url, client_id, attr_email, attr_name, secret, scim_enabled, updated_by, backup_admin_ids)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        [org.id, ...vals, backupIds],
       );
     }
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'sso.configured', entity: 'org', entityId: org.id, meta: { protocol: input.protocol ?? null, enabled: input.enabled ?? false } });
+    if (backupChanged) await audit(q, { orgId: org.id, actorId: auth.userId, action: 'sso.backup_changed', entity: 'org', entityId: org.id, meta: { backupAdminIds: backupIds } });
   });
-  return c.json({ ok: true, sp: spDetails(cfg, org.slug) });
+  return c.json({ ok: true, sp: spDetails(cfg, org.slug), backup: await backupState(c) });
 });
 
 /** Generate (or rotate) the SCIM bearer token. Returned once; only its hash is stored. */
@@ -411,5 +434,29 @@ ssoAdminRoutes.post('/sso/settings/scim-token', async (c) => {
   });
   return c.json({ token, baseUrl: scimBaseUrl(cfg, org.slug), hint });
 });
+
+/**
+ * The backup administrators chosen, and every administrator who could be one, each with
+ * whether they have a second step (without one, the backup sign-in does not let them in).
+ */
+async function backupState(c: C) {
+  const org = c.get('org');
+  const rows = await c.get('deps').db.system((q) =>
+    q.query<{ id: string; name: string; email: string; admin: boolean; second_step: boolean; chosen: boolean }>(
+      `select u.id, u.name, u.email, ('org.manage' = any(r.perms)) as admin, u.id = any(coalesce(s.backup_admin_ids, '{}')) as chosen,
+              (exists (select 1 from user_totp t where t.org_id = u.org_id and t.user_id = u.id and t.confirmed_at is not null)
+               or exists (select 1 from user_passkeys p where p.org_id = u.org_id and p.user_id = u.id)) as second_step
+         from users u join roles r on r.id = u.role_id left join sso_configs s on s.org_id = u.org_id
+        where u.org_id = $1 and u.status = 'active' and ('org.manage' = any(r.perms) or u.id = any(coalesce(s.backup_admin_ids, '{}')))
+        order by u.name`,
+      [org.id],
+    ),
+  );
+  const [s] = await c.get('deps').db.system((q) => q.query<{ ids: string[] }>('select backup_admin_ids as ids from sso_configs where org_id = $1', [org.id]));
+  return {
+    ids: s?.ids ?? [],
+    people: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, admin: r.admin, secondStep: r.second_step })),
+  };
+}
 
 export const _test = { completeLogin };

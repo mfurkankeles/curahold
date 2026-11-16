@@ -12,6 +12,8 @@
 //   - a self-hosted install can reset a person from the server's environment
 //     (RESET_SECOND_STEP, see selfhost.ts) — the break-glass path.
 // SSO sign-ins pass: the identity provider does the company's second step.
+// When SSO is required, a backup administrator's emailed link (routes/auth.ts) always
+// needs a passkey or the authenticator app; recovery codes and setting one up are not offered.
 //
 // The tables (migration 0052) are reachable only with owner access, so every
 // statement here names the company.
@@ -94,6 +96,8 @@ export async function afterFirstStep(
   c: C,
   user: { id: string },
   device: { deviceId: string; deviceLabel: string | null; method: 'magic' | 'oauth' },
+  // A backup administrator's sign-in while SSO is required: always a passkey or the app, never the link alone.
+  backup = false,
 ): Promise<SignInOutcome> {
   const deps = c.get('deps');
   const org = c.get('org');
@@ -102,7 +106,8 @@ export async function afterFirstStep(
     q.query<{ perms: Perm[] }>('select r.perms from users u join roles r on r.id = u.role_id where u.org_id = $1 and u.id = $2', [org.id, user.id]),
   );
   const required = secondStepRequired(org, role?.perms ?? []);
-  if (!hasFactor(f) && !required) {
+  if (backup && !hasFactor(f)) fail('sso_required');
+  if (!hasFactor(f) && !required && !backup) {
     const s = await run(c, (q) =>
       openSession(q, { orgId: org.id, userId: user.id, ...device, ...ip(c), maxDevices: maxDevices(c), days: deps.config.sessionDays }),
     );
@@ -112,15 +117,15 @@ export async function afterFirstStep(
   const tokenHash = await sha256Hex(token);
   await deps.db.system((q) =>
     q.query(
-      `insert into identity_steps (org_id, user_id, kind, token_hash, device_id, device_label, method, expires_at)
-       values ($1, $2, 'second', $3, $4, $5, $6, now() + make_interval(mins => $7::int))`,
-      [org.id, user.id, tokenHash, device.deviceId, device.deviceLabel, device.method, SECOND_STEP_MINUTES],
+      `insert into identity_steps (org_id, user_id, kind, token_hash, device_id, device_label, method, backup, expires_at)
+       values ($1, $2, 'second', $3, $4, $5, $6, $8, now() + make_interval(mins => $7::int))`,
+      [org.id, user.id, tokenHash, device.deviceId, device.deviceLabel, device.method, SECOND_STEP_MINUTES, backup],
     ),
   );
   const methods: ('totp' | 'passkey' | 'recovery')[] = [];
   if (f.totp) methods.push('totp');
   if (f.passkeys) methods.push('passkey');
-  if (f.recoveryLeft) methods.push('recovery');
+  if (f.recoveryLeft && !backup) methods.push('recovery');
   return { kind: 'second', token, methods, enroll: !hasFactor(f) };
 }
 
@@ -132,6 +137,7 @@ interface Step {
   method: 'magic' | 'oauth';
   challenge: string | null;
   attempts: number;
+  backup: boolean;
 }
 
 /** A sign-in waiting for its second step, for this company and this device; counts a try. */
@@ -141,7 +147,7 @@ export async function takeStep(c: C, token: string, deviceId: string, count = tr
     q.query<Step>(
       `update identity_steps set attempts = attempts + $3
         where org_id = $1 and token_hash = $2 and kind = 'second' and used_at is null and expires_at > now()
-        returning id, user_id, device_id, device_label, method, challenge, attempts`,
+        returning id, user_id, device_id, device_label, method, challenge, attempts, backup`,
       [c.get('org').id, tokenHash, count ? 1 : 0],
     ),
   );

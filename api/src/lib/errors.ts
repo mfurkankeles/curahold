@@ -28,6 +28,8 @@ export type ErrorCode =
   | 'not_configured'
   | 'sso_required'
   | 'sso_untested'
+  | 'sso_no_backup'
+  | 'backup_not_admin'
   | 'connection_failed'
   | 'import_too_large'
   | 'type_not_empty'
@@ -143,6 +145,9 @@ const STATUS: Record<ErrorCode, number> = {
   not_configured: 400,
   sso_required: 403,
   sso_untested: 409,
+  // Requiring SSO needs a backup administrator with a second step; only administrators can be one.
+  sso_no_backup: 409,
+  backup_not_admin: 400,
   connection_failed: 400,
   import_too_large: 413,
   type_not_empty: 409,

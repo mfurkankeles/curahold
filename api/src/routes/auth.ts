@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
 import { z } from 'zod';
-import { accountWords, normalizeLocale, translate, type Locale } from '../../../shared/src/i18n';
+import { accountWords, intlTag, normalizeLocale, translate, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { logoPath, maxDevices, nowOf, orgUrl, run, type AppEnv, type C, type OrgRow } from '../context';
 import { buildIcs } from '../lib/ics';
@@ -19,7 +19,7 @@ import { fail, HttpError } from '../lib/errors';
 import { enqueue, kick } from '../lib/notify';
 import { emailHtml } from '../lib/emailHtml';
 import { logoUrl, userManagers } from '../lib/people';
-import { ssoEnforced } from '../lib/sso';
+import { readyBackupAdmins, ssoEnforced, type BackupAdmin } from '../lib/sso';
 import { authorizeUrl, exchangeCode, isProvider, PROVIDERS, type ProviderId } from '../lib/oidc';
 import { knownDevice, openSession } from '../lib/sessions';
 import {
@@ -111,11 +111,14 @@ authRoutes.get('/logo', async (c) => {
 });
 
 authRoutes.post('/auth/start', async (c) => {
-  const input = await body(c, z.object({ email }));
+  const input = await body(c, z.object({ email, backup: z.boolean().optional() }));
   const deps = c.get('deps');
   const org = c.get('org');
-  // A company that requires SSO accepts only its own identity provider here.
-  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
+  // A company that requires SSO accepts only its own identity provider here — and its backup administrators.
+  if (await run(c, (q) => ssoEnforced(q))) {
+    if (!input.backup) fail('sso_required');
+    return backupStart(c, input.email);
+  }
   // Someone without an account, at one of the company's own domains, gets a
   // link to ask to join (or to join straight away, if the company allows it).
   const mayJoin = (org.join_requests || org.auto_join) && org.domains.includes(emailDomain(input.email));
@@ -165,6 +168,93 @@ authRoutes.post('/auth/start', async (c) => {
   return c.json({ ok: true, ...(dev ? (result.kind === 'join' ? { devJoinToken: result.token } : { devToken: result.token }) : {}) });
 });
 
+/**
+ * A chosen backup administrator who could get in right now (active, an administrator,
+ * with a passkey or the authenticator app) — or null. Owner access: the factor tables
+ * are out of the request role's reach.
+ */
+async function backupAdmin(c: C, who: { email?: string; id?: string }): Promise<BackupAdmin | null> {
+  const orgId = c.get('org').id;
+  return c.get('deps').db.system(async (q) => {
+    const [s] = await q.query<{ ids: string[] }>('select backup_admin_ids as ids from sso_configs where org_id = $1', [orgId]);
+    const ready = await readyBackupAdmins(q, orgId, s?.ids ?? []);
+    return ready.find((a) => (who.id ? a.id === who.id : a.email.toLowerCase() === who.email?.toLowerCase())) ?? null;
+  });
+}
+
+/**
+ * The emailed link while SSO is required: sent only to a backup administrator, and the
+ * answer is the same for every address (nobody learns who the backup administrators are).
+ * The second step always follows (lib/identity.ts afterFirstStep).
+ */
+async function backupStart(c: C, address: string) {
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const admin = await backupAdmin(c, { email: address });
+  const token = admin
+    ? await run(c, async (q) => {
+        const [recent] = await q.query<{ n: number }>(
+          `select count(*)::int as n from login_tokens where email = $1 and kind in ('magic', 'join') and created_at > now() - interval '15 minutes'`,
+          [admin.email],
+        );
+        // Over the limit: nothing is sent, and the answer stays the same.
+        if (recent.n >= MAX_LINKS_PER_15_MIN) return null;
+        const t = randomToken(32);
+        await q.query(
+          `insert into login_tokens (org_id, email, token_hash, kind, expires_at) values ($1, $2, $3, 'magic', now() + make_interval(mins => $4::int))`,
+          [org.id, admin.email, await sha256Hex(t), MAGIC_MINUTES],
+        );
+        return t;
+      })
+    : null;
+  if (admin && token) {
+    const locale = normalizeLocale(admin.locale ?? org.locale);
+    const link = `${orgUrl(deps.config, org.slug)}/auth/verify#token=${token}`;
+    const text = translate(locale, 'email.magic.body', { org: org.name, name: admin.name, link });
+    await deps.email.send({
+      to: admin.email,
+      subject: translate(locale, 'email.magic.subject', { org: org.name }),
+      text,
+      html: emailHtml({ org: org.name, logo: logoUrl(deps, org), text, link, cta: translate(locale, 'email.cta.signIn') }),
+    });
+  }
+  return c.json({ ok: true, ...(deps.config.devExposeTokens && token ? { devToken: token } : {}) });
+}
+
+/**
+ * A backup administrator got in while SSO is required: one line in the activity log,
+ * and an email to every other administrator (in their own language), so nobody can
+ * use the backup way in unnoticed.
+ */
+async function backupSignedIn(c: C, userId: string, via: 'totp' | 'passkey', device: string | null) {
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const { me, others } = await deps.db.system(async (q) => {
+    await audit(q, { orgId: org.id, actorId: userId, action: 'login.backup', entity: 'user', entityId: userId, meta: { via, device } });
+    const [me] = await q.query<{ name: string; email: string }>('select name, email from users where org_id = $1 and id = $2', [org.id, userId]);
+    const others = await q.query<{ email: string; name: string; locale: string | null }>(
+      `select u.email, u.name, u.locale from users u join roles r on r.id = u.role_id
+        where u.org_id = $1 and u.id <> $2 and u.status = 'active' and 'org.manage' = any(r.perms)`,
+      [org.id, userId],
+    );
+    return { me, others };
+  });
+  const at = nowOf(deps);
+  const link = `${orgUrl(deps.config, org.slug)}/settings/audit`;
+  for (const o of others) {
+    const locale = normalizeLocale(o.locale ?? org.locale);
+    const when = at.toLocaleString(intlTag(locale), { dateStyle: 'medium', timeStyle: 'short', timeZone: org.timezone || 'UTC' });
+    const vars = { org: org.name, who: me?.name ?? '', email: me?.email ?? '', when, device: device ?? '—', method: translate(locale, via === 'passkey' ? 'email.backupSignIn.passkey' : 'email.backupSignIn.app'), link };
+    const text = translate(locale, 'email.backupSignIn.body', vars);
+    await deps.email.send({
+      to: o.email,
+      subject: translate(locale, 'email.backupSignIn.subject', vars),
+      text,
+      html: emailHtml({ org: org.name, logo: logoUrl(deps, org), text, link, cta: translate(locale, 'email.backupSignIn.cta') }),
+    });
+  }
+}
+
 // Step two of joining: the link proved the address; now the name, and
 // either a request for an administrator or (auto-join) a session right away.
 authRoutes.post('/join', async (c) => {
@@ -180,6 +270,8 @@ authRoutes.post('/join', async (c) => {
   );
   const deps = c.get('deps');
   const org = c.get('org');
+  // A link sent before the company required SSO does not open a way around it.
+  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
   const outcome = await run(c, async (q) => {
     const [tok] = await q.query(
       `update login_tokens set used_at = now()
@@ -251,6 +343,15 @@ authRoutes.post('/auth/verify', async (c) => {
   const input = await body(c, verifyInput);
   const deps = c.get('deps');
   const org = c.get('org');
+  // While SSO is required, only a backup administrator's emailed link goes on (to the second step);
+  // a provider sign-in or anyone else's link, even one sent before, is refused.
+  const sso = await run(c, (q) => ssoEnforced(q));
+  if (sso) {
+    const [tok] = await run(c, async (q) =>
+      q.query<{ email: string; kind: string }>(`select email, kind from login_tokens where token_hash = $1 and kind in ('magic', 'oauth') and used_at is null and expires_at > now()`, [await sha256Hex(input.token)]),
+    );
+    if (tok && (tok.kind !== 'magic' || !(await backupAdmin(c, { email: tok.email })))) fail('sso_required');
+  }
   const attempt = () => run(c, async (q) => {
     const [tok] = await q.query(
       `update login_tokens set used_at = now()
@@ -309,7 +410,7 @@ authRoutes.post('/auth/verify', async (c) => {
       ...(deps.config.devExposeTokens ? { devCode: outcome.code } : {}),
     });
   }
-  return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: outcome.method }));
+  return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: outcome.method }, sso));
 });
 
 authRoutes.post('/auth/device', async (c) => {
@@ -317,6 +418,7 @@ authRoutes.post('/auth/device', async (c) => {
     c,
     z.object({ challenge: z.string().min(20).max(200), code: z.string().regex(/^\d{6}$/), deviceId, deviceLabel }),
   );
+  if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
   const outcome = await run(c, async (q) => {
     const [tok] = await q.query(
       `update login_tokens set attempts = attempts + 1
@@ -382,6 +484,8 @@ authRoutes.post('/auth/second', async (c) => {
   );
   const step = await takeStep(c, input.token, input.deviceId);
   const f = await factorsOf(c, step.user_id);
+  // A backup administrator under required SSO: only a passkey or the app they already have.
+  if (step.backup && !hasFactor(f)) fail('sso_required');
   let passed: 'totp' | 'recovery' | 'passkey' | null = null;
   let recoveryCodes: string[] | undefined;
   if (input.code) {
@@ -391,7 +495,7 @@ authRoutes.post('/auth/second', async (c) => {
       passed = 'totp';
       recoveryCodes = await newRecoveryCodes(c, step.user_id);
     }
-  } else if (input.recoveryCode && hasFactor(f)) {
+  } else if (input.recoveryCode && hasFactor(f) && !step.backup) {
     passed = (await useRecovery(c, step.user_id, input.recoveryCode)) ? 'recovery' : null;
   } else if (input.passkey && f.passkeys) {
     passed = (await checkPasskey(c, 'confirm', input.passkey.challengeId, input.passkey.response, step.user_id).catch(() => null)) ? 'passkey' : null;
@@ -404,6 +508,7 @@ authRoutes.post('/auth/second', async (c) => {
   await c.get('deps').db.system((q) =>
     audit(q, { orgId: c.get('org').id, actorId: step.user_id, action: recoveryCodes ? 'second_step.added' : passed === 'recovery' ? 'second_step.recovery_used' : 'second_step.passed', entity: 'user', entityId: step.user_id, meta: { via: passed } }),
   );
+  if (step.backup) await backupSignedIn(c, step.user_id, passed === 'passkey' ? 'passkey' : 'totp', step.device_label);
   setSessionCookie(c, s.token);
   return c.json({ status: 'ok', evictedDevices: s.evicted, ...(recoveryCodes ? { recoveryCodes } : {}) });
 });

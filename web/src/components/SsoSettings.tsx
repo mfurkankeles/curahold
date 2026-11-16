@@ -16,8 +16,10 @@ import { ErrorState, SkeletonRows } from './Empty';
 import { getDeviceId } from '../lib/device';
 import { relativeTime } from '../lib/time';
 import { Icon } from './icons';
+import { Avatar } from './ui';
 import '../surfaces/admin.css';
-import { getSsoSettings, rotateScimToken, saveSsoSettings, type SsoProtocol, type SsoSettings as Settings } from '../lib/sso';
+import '../surfaces/admin-2.css';
+import { getSsoSettings, rotateScimToken, saveSsoSettings, type BackupPerson, type SsoProtocol, type SsoSettings as Settings } from '../lib/sso';
 
 type Form = {
   enabled: boolean;
@@ -33,12 +35,15 @@ type Form = {
   cert: string;
   clientSecret: string;
   scimEnabled: boolean;
+  /** The backup administrators (at most two) who keep the emailed link, with their second step, when SSO is required. */
+  backup: string[];
 };
 
-const blank: Form = { enabled: false, enforced: false, protocol: 'saml', issuer: '', ssoUrl: '', tokenUrl: '', jwksUrl: '', clientId: '', attrEmail: 'email', attrName: '', cert: '', clientSecret: '', scimEnabled: false };
+const blank: Form = { enabled: false, enforced: false, protocol: 'saml', issuer: '', ssoUrl: '', tokenUrl: '', jwksUrl: '', clientId: '', attrEmail: 'email', attrName: '', cert: '', clientSecret: '', scimEnabled: false, backup: [] };
+const MAX_BACKUP = 2;
 
 export function SsoSettings() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const k = (s: string) => t(s as MessageKey);
   const { toast, people, me } = useStore();
   const offer = useUndo();
@@ -77,8 +82,9 @@ export function SsoSettings() {
               cert: '',
               clientSecret: '',
               scimEnabled: c.scimEnabled,
+              backup: s.backup?.ids ?? [],
             }
-          : blank;
+          : { ...blank, backup: s.backup?.ids ?? [] };
         setBase(f);
         setForm(f);
       })
@@ -98,6 +104,7 @@ export function SsoSettings() {
       attrEmail: f.attrEmail,
       attrName: f.attrName,
       scimEnabled: f.scimEnabled,
+      backupAdminIds: f.backup,
     };
     if (f.protocol === 'oidc') Object.assign(body, { tokenUrl: f.tokenUrl, jwksUrl: f.jwksUrl, clientId: f.clientId });
     // Only send signing material when the admin typed some, so a blank keeps it.
@@ -109,7 +116,7 @@ export function SsoSettings() {
     const before = base;
     try {
       const r = await saveSsoSettings(bodyOf(form));
-      setData((d) => (d ? { ...d, sp: r.sp, config: d.config ? { ...d.config, certSet: d.config.certSet || !!form.cert.trim(), clientSecretSet: d.config.clientSecretSet || !!form.clientSecret.trim() } : d.config } : d));
+      setData((d) => (d ? { ...d, sp: r.sp, backup: r.backup ?? d.backup, config: d.config ? { ...d.config, certSet: d.config.certSet || !!form.cert.trim(), clientSecretSet: d.config.clientSecretSet || !!form.clientSecret.trim() } : d.config } : d));
     } catch (e) {
       toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
       return false;
@@ -151,6 +158,15 @@ export function SsoSettings() {
   // A test runs against what is saved; requiring SSO needs a passed test of exactly that (the server checks too).
   const savedReady = !!data.config?.protocol && !!data.config.ssoUrl;
   const testedNow = !dirty && (!!data.test?.current || (!!tested?.ok && !!data.test?.current));
+  // Backup administrators: chosen ones first, then the administrators who could be one.
+  const backupPeople = data.backup?.people ?? [];
+  const personOf = (id: string): BackupPerson | undefined => backupPeople.find((p) => p.id === id);
+  const chosen = form.backup.map((id) => personOf(id)).filter((p): p is BackupPerson => !!p);
+  const canGetIn = (p: BackupPerson) => p.admin && p.secondStep;
+  const backupReady = chosen.some(canGetIn);
+  const addable = backupPeople.filter((p) => p.admin && !form.backup.includes(p.id));
+  const names = new Intl.ListFormat(locale, { type: 'conjunction' }).format(chosen.filter(canGetIn).map((p) => p.name));
+  const enforceBlocked = !base.enforced && !testedNow ? 'sso.test.first' : !backupReady ? 'sso.backup.first' : null;
   const ReadonlyRow = ({ label, value }: { label: string; value: string }) => (
     <label className="field">
       <span className="field__label">{label}</span>
@@ -236,6 +252,52 @@ export function SsoSettings() {
         </div>
       </section>
 
+      <section className="sheet sso__section" aria-labelledby="sso-backup">
+        <h3 className="sheet__title" id="sso-backup">
+          {t('sso.backup.title')}
+        </h3>
+        <p className="field__hint">{t('sso.backup.hint')}</p>
+        {chosen.length > 0 && (
+          <ul className="keylist">
+            {chosen.map((p) => (
+              <li className="keyrow sso-backup__row" key={p.id}>
+                <Avatar person={people.find((x) => x.id === p.id) ?? { id: p.id, name: p.name, email: p.email, seat: 'full', status: 'active' }} />
+                <div className="keyrow__main">
+                  <div className="keyrow__name">{p.name}</div>
+                  <div className={canGetIn(p) ? 'keyrow__meta' : 'keyrow__meta sso-backup__warn'}>
+                    {!p.admin ? t('sso.backup.notAdmin') : p.secondStep ? t('sso.backup.ready') : t('sso.backup.noStep')}
+                  </div>
+                </div>
+                <button type="button" className="btn btn--quiet btn--icon" aria-label={t('sso.backup.remove', { name: p.name })} title={t('sso.backup.remove', { name: p.name })} onClick={() => set('backup', form.backup.filter((id) => id !== p.id))}>
+                  <Icon name="close" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {form.backup.length < MAX_BACKUP && addable.length > 0 && (
+          <label className="field sso__protocol">
+            <span className="field__label">{form.backup.length ? t('sso.backup.addSecond') : t('sso.backup.add')}</span>
+            <select
+              className="select"
+              value=""
+              onChange={(e) => {
+                const id = e.target.value;
+                if (id) set('backup', [...form.backup, id]);
+              }}
+            >
+              <option value="">{t('sso.backup.pick')}</option>
+              {addable.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.secondStep ? p.name : t('sso.backup.optionNoStep', { name: p.name })}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {chosen.some((p) => p.admin && !p.secondStep) && <p className="field__hint">{t('sso.backup.howStep')}</p>}
+      </section>
+
       <section className="sheet sso__section" aria-labelledby="sso-on">
         <h3 className="sheet__title" id="sso-on">
           {k('sso.on.title')}
@@ -264,11 +326,17 @@ export function SsoSettings() {
         <Switch
           id="sso-enforce"
           on={form.enabled && form.enforced}
-          disabled={!form.enabled || (!base.enforced && !testedNow)}
+          disabled={!form.enabled || (!form.enforced && !!enforceBlocked)}
           label={k('sso.enforce')}
-          hint={!base.enforced && !testedNow ? k('sso.test.first') : k('sso.enforceHint')}
+          hint={!form.enforced && enforceBlocked ? k(enforceBlocked) : k('sso.enforceHint')}
           onChange={(v) => set('enforced', v)}
         />
+        {/* Required, but nobody could get in if the provider failed: saving is refused, so say it here first. */}
+        {form.enabled && form.enforced && !backupReady && (
+          <p className="notice notice--error sso__effect" role="alert">
+            {t('errors.sso_no_backup')}
+          </p>
+        )}
         {/* What saving would do, before it is done. */}
         {form.enabled && form.enforced && !(base.enabled && base.enforced) && (
           <div className="notice sso__effect" role="status">
@@ -276,6 +344,7 @@ export function SsoSettings() {
               <strong>{t('sso.effect.enforce', { n: active })}</strong>
             </p>
             <p>{k('sso.effect.lockout')}</p>
+            {backupReady && <p>{t('sso.effect.backup', { names })}</p>}
           </div>
         )}
         {base.enabled && !form.enabled && (

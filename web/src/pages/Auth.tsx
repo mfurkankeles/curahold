@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { Mark } from '../components/ui';
-import { SsoSignIn } from '../components/SsoSignIn';
+import { SsoSignIn, useSsoInfo } from '../components/SsoSignIn';
 import { ApiFailure, post } from '../lib/api';
 import { deviceLabel, getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
@@ -87,13 +87,17 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
     return t(key, { provider, email: params.get('email') ?? '' });
   });
   const [busy, setBusy] = useState(false);
+  // A company that requires SSO: its provider is the way in; the emailed link is only for its backup administrators.
+  const sso = useSsoInfo(org.slug);
+  const ssoOnly = !!sso?.enforced;
+  const [backup, setBackup] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const r = await post<{ ok: true; devToken?: string; devJoinToken?: string }>('/auth/start', { email });
+      const r = await post<{ ok: true; devToken?: string; devJoinToken?: string }>('/auth/start', ssoOnly ? { email, backup: true } : { email });
       setSent({ email, devToken: r.devToken, devJoinToken: r.devJoinToken });
     } catch (err) {
       setError(errorText(err, t));
@@ -110,8 +114,8 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
     return (
       <AuthFrame org={org} onLocale={onLocale}>
         <h1 className="auth__title">{t('auth.checkInbox')}</h1>
-        <p className="auth__sub">{t('auth.linkSent', { email: sent.email, org: org.name })}</p>
-        {org.joinRequests && <p className="field__hint">{t('auth.linkSentJoin')}</p>}
+        <p className="auth__sub">{ssoOnly ? t('auth.backup.sent', { email: sent.email, org: org.name }) : t('auth.linkSent', { email: sent.email, org: org.name })}</p>
+        {org.joinRequests && !ssoOnly && <p className="field__hint">{t('auth.linkSentJoin')}</p>}
         {sent.devToken && (
           <a className="btn" href={`/auth/verify#token=${sent.devToken}`}>
             {t('auth.devLink')}
@@ -129,6 +133,46 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
     );
   }
 
+  const emailForm = (
+    <form onSubmit={submit} className="u-display-grid u-gap-12">
+      <label className="field">
+        <span className="field__label">{t('auth.email')}</span>
+        <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
+      </label>
+      <button className="btn btn--primary" disabled={busy}>
+        {t('auth.sendLink')}
+      </button>
+    </form>
+  );
+
+  // The ways in depend on the answer (a few milliseconds): nothing that would change under the person's finger.
+  if (sso === undefined) {
+    return (
+      <AuthFrame org={org} onLocale={onLocale}>
+        <div>
+          <h1 className="auth__title">{t('auth.signInTo', { org: org.name })}</h1>
+        </div>
+      </AuthFrame>
+    );
+  }
+
+  if (ssoOnly) {
+    return (
+      <AuthFrame org={org} onLocale={onLocale}>
+        <div>
+          <h1 className="auth__title">{backup ? t('auth.backup.title') : t('auth.signInTo', { org: org.name })}</h1>
+        </div>
+        <p className="auth__sub">{backup ? t('auth.backup.sub') : t('sso.required')}</p>
+        {notice && <div className="notice">{notice}</div>}
+        {error && <div className="notice notice--error" role="alert">{error}</div>}
+        {backup ? emailForm : <SsoSignIn org={org} info={sso} primary />}
+        <button type="button" className="btn btn--quiet" onClick={() => (setBackup(!backup), setError(null))}>
+          {backup ? t('auth.backup.back') : t('auth.backup.open')}
+        </button>
+      </AuthFrame>
+    );
+  }
+
   return (
     <AuthFrame org={org} onLocale={onLocale}>
       <div>
@@ -137,15 +181,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
       <p className="auth__sub">{t('auth.subtitle')}</p>
       {notice && <div className="notice">{notice}</div>}
       {error && <div className="notice notice--error" role="alert">{error}</div>}
-      <form onSubmit={submit} className="u-display-grid u-gap-12">
-        <label className="field">
-          <span className="field__label">{t('auth.email')}</span>
-          <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <button className="btn btn--primary" disabled={busy}>
-          {t('auth.sendLink')}
-        </button>
-      </form>
+      {emailForm}
       {(org.loginMethods.google || org.loginMethods.microsoft || passkeysHere()) && <div className="auth__or">{t('auth.or')}</div>}
       {passkeysHere() && (
         <button
@@ -174,7 +210,7 @@ export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale:
         </button>
       )}
       {/* Enterprise SSO (SAML / OIDC), shown only when the company has it on. */}
-      <SsoSignIn org={org} />
+      <SsoSignIn org={org} info={sso} />
       <p className="field__hint">{org.joinRequests ? t('auth.noAccountJoin') : t('auth.noAccountInvite')}</p>
     </AuthFrame>
   );

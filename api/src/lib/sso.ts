@@ -73,6 +73,30 @@ export async function ssoEnforced(q: Q): Promise<boolean> {
   return !!row && row.enabled && row.enforced && !!row.protocol;
 }
 
+export interface BackupAdmin {
+  id: string;
+  email: string;
+  name: string;
+  locale: string | null;
+}
+
+/**
+ * Of these people, the ones who can sign in as a backup administrator right now:
+ * still active, still an administrator, and with a passkey or an authenticator app
+ * (an emailed link alone is never enough). The factor tables are reachable only
+ * with owner access, so `q` is a system transaction and the company is named.
+ */
+export async function readyBackupAdmins(q: Q, orgId: string, ids: readonly string[]): Promise<BackupAdmin[]> {
+  if (!ids.length) return [];
+  return q.query<BackupAdmin>(
+    `select u.id, u.email, u.name, u.locale from users u join roles r on r.id = u.role_id
+      where u.org_id = $1 and u.id = any($2::uuid[]) and u.status = 'active' and 'org.manage' = any(r.perms)
+        and (exists (select 1 from user_totp t where t.org_id = u.org_id and t.user_id = u.id and t.confirmed_at is not null)
+             or exists (select 1 from user_passkeys p where p.org_id = u.org_id and p.user_id = u.id))`,
+    [orgId, [...ids]],
+  );
+}
+
 export async function loadSsoAuthConfig(q: Q, cfg: Config): Promise<SsoAuthConfig | null> {
   const [row] = await q.query<RawConfig>('select * from sso_auth_config()');
   if (!row) return null;

@@ -1,32 +1,33 @@
 // "Sign in with SSO" on the login page. Shown only when the company has SSO on;
 // resolves the company (it is already on the company's own address) and starts
-// the flow. New i18n keys: sso.signIn, sso.required.
+// the flow. When the company requires SSO, the login page shows only this way in
+// (plus the backup administrators' sign-in) and puts it first itself.
 import { useEffect, useState } from 'react';
-import type { MessageKey } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { ssoInfo, startSso, type SsoInfo } from '../lib/sso';
 
-export function SsoSignIn({ org }: { org: OrgPublic }) {
-  const { t } = useI18n();
-  const [info, setInfo] = useState<SsoInfo | null>(null);
+/** Whether the company has SSO on, and requires it: undefined while asking, null when it could not be told. */
+export function useSsoInfo(slug: string): SsoInfo | null | undefined {
+  const [info, setInfo] = useState<SsoInfo | null | undefined>(undefined);
   useEffect(() => {
     let live = true;
-    ssoInfo(org.slug)
+    ssoInfo(slug)
       .then((i) => live && setInfo(i))
       .catch(() => live && setInfo(null));
     return () => {
       live = false;
     };
-  }, [org.slug]);
+  }, [slug]);
+  return info;
+}
 
+export function SsoSignIn({ org, info, primary }: { org: OrgPublic; info: SsoInfo | null | undefined; primary?: boolean }) {
+  const { t } = useI18n();
   if (!info?.enabled) return null;
   return (
-    <div className="u-display-grid u-gap-8">
-      <button className="btn" onClick={() => startSso(org.slug)}>
-        {t('sso.signIn' as MessageKey)}
-      </button>
-      {info.enforced && <p className="field__hint">{t('sso.required' as MessageKey)}</p>}
-    </div>
+    <button type="button" className={primary ? 'btn btn--primary' : 'btn'} onClick={() => startSso(org.slug)}>
+      {t('sso.signIn')}
+    </button>
   );
 }
