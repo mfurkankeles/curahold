@@ -1,6 +1,8 @@
 // Search, copy buttons and the phone menu for the docs. No libraries.
 (function () {
-  var cfg = window.APP_DOCS || { lang: 'en', none: 'No results.', copied: 'Copied', copy: 'Copy' };
+  // The page's settings are a JSON block, not a script: the app's content policy runs no inline script.
+  var el = document.getElementById('docs-cfg');
+  var cfg = (el && JSON.parse(el.textContent)) || { lang: document.documentElement.lang || 'en', none: 'No results.', copied: 'Copied', copy: 'Copy' };
   var q = document.getElementById('q');
   var box = document.getElementById('results');
   var index = null;
@@ -14,13 +16,17 @@
       .replace(/[\u0591-\u05c7]/g, '').normalize('NFC');
   };
   // Chinese, Japanese and Korean are written without spaces: a run of their letters is searched
-  // for as overlapping pairs ("顧客インポート" finds "顧客をインポートする"), everything else by word.
+  // for as overlapping pairs. A short run needs every pair (so "インポート" does not find
+  // "レポート"); in a longer one two in three are enough ("顧客インポート" finds "顧客をインポート"),
+  // and the run found whole counts most. Everything else is searched for by word, every word needed.
   var WIDE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
-  var termsOf = function (text) {
+  var groupsOf = function (text) {
     var out = [];
     fold(text).split(/[\s,.;:!?、。，．；：！？「」『』（）()]+/).filter(Boolean).forEach(function (w) {
-      if (!WIDE.test(w) || w.length < 3) { out.push(w); return; }
-      for (var i = 0; i < w.length - 1; i++) out.push(w.slice(i, i + 2));
+      if (!WIDE.test(w) || w.length < 3) { out.push({ terms: [w], need: 1 }); return; }
+      var pairs = [];
+      for (var i = 0; i < w.length - 1; i++) pairs.push(w.slice(i, i + 2));
+      out.push({ terms: pairs, need: pairs.length <= 4 ? pairs.length : Math.ceil((pairs.length * 2) / 3), whole: w });
     });
     return out;
   };
@@ -35,22 +41,37 @@
     });
   }
   function search(term) {
-    var words = termsOf(term);
-    if (!words.length) return [];
+    var groups = groupsOf(term);
+    if (!groups.length) return [];
     var out = [];
     index.forEach(function (e) {
       var score = 0;
       var hit = null;
-      var all = words.every(function (w) {
-        var s = 0;
-        if (e.t.indexOf(w) >= 0) s += 10;
-        e.h.forEach(function (h) { if (h[2].indexOf(w) >= 0) { s += 5; hit = hit || h; } });
-        if (e.x.indexOf(w) >= 0) s += 1;
-        score += s;
-        return s > 0;
+      var first = -1;
+      var all = groups.every(function (g) {
+        var found = 0;
+        g.terms.forEach(function (w) {
+          // A pair counts little: "ポート" in a title is no reason to put "サポート" first.
+          var s = 0;
+          if (e.t.indexOf(w) >= 0) s += g.whole ? 2 : 10;
+          e.h.forEach(function (h) { if (h[2].indexOf(w) >= 0) { s += g.whole ? 1 : 5; hit = hit || h; } });
+          var at = e.x.indexOf(w);
+          if (at >= 0) { s += 1; if (first < 0) first = at; }
+          score += s;
+          if (s > 0) found++;
+        });
+        if (g.whole) {
+          if (e.t.indexOf(g.whole) >= 0) score += 30;
+          var head = null;
+          e.h.forEach(function (h) { if (h[2].indexOf(g.whole) >= 0) { score += 15; head = head || h; } });
+          if (head) hit = head;
+          var wx = e.x.indexOf(g.whole);
+          if (wx >= 0) { score += 3; first = wx; }
+        }
+        return found >= g.need;
       });
       if (!all) return;
-      var at = e.x.indexOf(words[0]);
+      var at = first;
       var snip = at >= 0 ? e.p.x.slice(Math.max(0, at - 50), at + 110) : '';
       out.push({ score: score, url: (cfg.base ? cfg.base + e.p.u.replace(/^\/docs\//, '') + (cfg.index || '') : e.p.u) + (hit ? '#' + hit[0] : ''), title: e.p.t + (hit ? ' › ' + hit[1] : ''), sub: (at > 50 ? '…' : '') + snip + '…' });
     });

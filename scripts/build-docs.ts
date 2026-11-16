@@ -208,6 +208,8 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
   return { lang, slug: file.replace(/\.md$/, ''), title: meta.title, summary: meta.summary ?? '', section, order: Number(meta.order ?? 99), md: m[2], updated: lastChange(join(SRC, from, file)), minutes, html, toc, text, borrowed: from !== lang };
 }
 
+/** The language menu's sign: a plain globe. */
+const GLOBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 const ASK_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.6 3.7a.6.6 0 0 1-1-.5V16A2.5 2.5 0 0 1 4 13.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
 const ICONS = {
   help: '<path d="M5 4.5h9a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h9"/>',
@@ -225,7 +227,7 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path
   const info = LOCALE_INFO[lang];
   const others = LANGS.filter((l) => l !== lang);
   const langLink = (l: Lang) => `<a href="/docs/${l}/${path}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`;
-  const langMenu = others.length === 1 ? langLink(others[0]).replace('<a ', '<a class="top__link" ') : `<details class="langs"><summary class="top__link" aria-label="${esc(ui.language)}">${esc(info.name)}</summary><div class="langs__menu">${others.map(langLink).join('')}</div></details>`;
+  const langMenu = others.length === 1 ? langLink(others[0]).replace('<a ', '<a class="top__link" ') : `<details class="langs"><summary class="top__link langs__now" aria-label="${esc(ui.language)}: ${esc(info.name)}">${GLOBE}<span>${esc(info.name)}</span></summary><div class="langs__menu">${others.map(langLink).join('')}</div></details>`;
   const nav = SECTIONS.map((s) => {
     const items = pages.filter((p) => p.section === s);
     if (!items.length) return '';
@@ -263,7 +265,7 @@ ${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script>window.APP_DOCS=${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]] } }).replace(/</g, '\\u003c')}</script>
+<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]] } }).replace(/</g, '\\u003c')}</script>
 <script src="/docs/assets/docs.js" defer></script>
 <script src="/docs/assets/ask.js" defer></script>
 </body>

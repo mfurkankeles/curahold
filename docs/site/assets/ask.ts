@@ -37,7 +37,8 @@ interface Cfg {
   index?: string;
   words: Words;
 }
-const cfg = (window as unknown as { APP_DOCS: Cfg }).APP_DOCS;
+// The settings are a JSON block in the page (not an inline script, which the content policy would stop).
+const cfg = JSON.parse(document.getElementById('docs-cfg')?.textContent ?? 'null') as Cfg;
 const base = cfg.base || '/docs/';
 const tail = cfg.index || '';
 const w = { ...cfg.words, send: cfg.words.open };

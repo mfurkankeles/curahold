@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer-core';
 import { startLocal } from '../../api/src/node';
 import { SCREENS } from './browser';
 
+const t0 = Date.now();
 const local = await startLocal({ port: 8921, publicPort: 8921, serveStatic: true, quiet: true });
 const base = 'http://localhost:8921';
 const browser = await puppeteer.launch({
@@ -18,6 +19,10 @@ const page = await browser.newPage();
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 page.on('response', (r) => r.status() >= 400 && errors.push(`${r.status()} ${r.url()}`));
+// Nothing is asked of anyone else: no font, script or picture from another address.
+// The app's content policy runs no inline script: the pages must not need one.
+page.on('console', (m) => m.type() === 'error' && /Content Security Policy/.test(m.text()) && errors.push(`policy: ${m.text().slice(0, 160)}`));
+page.on('request', (r) => !r.url().startsWith(base) && !r.url().startsWith('data:') && errors.push(`third party: ${r.url()}`));
 const check = (ok: boolean, what: string) => {
   console.log(`${ok ? '✓' : '✗'} ${what}`);
   if (!ok) errors.push(what);
@@ -31,7 +36,8 @@ for (const [path, w, h] of [['/docs/tr/', 1440, 900], ['/docs/tr/webhooks/', 144
 }
 await page.setViewport({ width: 1440, height: 900 });
 await page.goto(`${base}/docs/tr/webhooks/`, { waitUntil: 'networkidle0' });
-await page.click('.top__link[hreflang="en"]');
+await page.click('.langs > summary');
+await page.click('.langs__menu a[hreflang="en"]');
 await page.waitForNavigation({ waitUntil: 'networkidle0' }).catch(() => undefined);
 check(page.url().endsWith('/docs/en/webhooks/'), 'language switch keeps the page');
 await page.type('#q', 'signature');
@@ -62,6 +68,24 @@ check((await page.$$('.ask__msg--you')).length === 1 && (await page.$$('.ask__ms
 const wide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 check(!wide, 'the start page does not scroll sideways on a phone');
 
+// Every language of the docs: right to left where it should be, its own pictures, search in its own script.
+await page.setViewport({ width: 1440, height: 900 });
+await page.goto(`${base}/docs/ar/customers/`, { waitUntil: 'networkidle0' });
+const ar = await page.evaluate(() => ({ dir: document.documentElement.dir, navRight: (document.querySelector('.nav')?.getBoundingClientRect().left ?? 0) > innerWidth / 2, shots: [...document.querySelectorAll<HTMLImageElement>('img.shot')].map((i) => i.naturalWidth) }));
+check(ar.dir === 'rtl' && ar.navRight, 'Arabic pages read right to left, the menu on the right');
+check(ar.shots.length >= 2 && ar.shots.every((w) => w > 0), 'Arabic pages show the Arabic demo\'s own screens');
+await page.screenshot({ path: join(SCREENS, 'docs-ar-customers.png') });
+await page.type('#q', 'سلة المحذوفات');
+await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefined);
+check((await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')))).some((h) => h?.startsWith('/docs/ar/trash/')), 'search in Arabic finds the trash page');
+await page.goto(`${base}/docs/ja/`, { waitUntil: 'networkidle0' });
+await page.type('#q', '顧客インポート');
+await page.waitForSelector('#results a', { timeout: 3000 }).catch(() => undefined);
+check((await page.$$eval('#results a', (as) => as.map((a) => a.getAttribute('href')))).some((h) => h?.startsWith('/docs/ja/customers/')), 'search in Japanese finds a phrase written without spaces');
+await page.goto(`${base}/docs/ja/webhooks/`, { waitUntil: 'networkidle0' });
+check(await page.evaluate(() => !!document.querySelector('.doc__lang') && document.querySelector('article.doc')?.getAttribute('lang') === 'en'), 'a page not written in Japanese yet says it is in English');
+
+console.log(`docs journey: ${Date.now() - t0} ms`);
 console.log(errors.length ? `errors:\n${errors.join('\n')}` : 'docs ok');
 await browser.close();
 local.server.close();
