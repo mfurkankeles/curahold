@@ -154,6 +154,8 @@ const PATHS = {
   clip: 'm21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5',
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM14 2v6h6',
   check: 'M20 6 9 17l-5-5',
+  globe: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20',
+  down: 'm6 9 6 6 6-6',
 } as const;
 function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
   return (
@@ -487,14 +489,19 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
       </div>
     );
 
+  // A quiet "globe + language" control under the sign-in card, not a bare field at the foot of the page.
   const lang = (
-    <select className="p-select" aria-label={t('nav.language')} value={locale} onChange={(e) => changeLocale(e.target.value as Locale)}>
-      {LOCALES.map((l) => (
-        <option key={l} value={l} lang={bcp47Of(l)}>
-          {LOCALE_INFO[l].name}
-        </option>
-      ))}
-    </select>
+    <span className="p-langpick">
+      <Ico name="globe" />
+      <select className="p-langpick__select" aria-label={t('nav.language')} value={locale} onChange={(e) => changeLocale(e.target.value as Locale)}>
+        {LOCALES.map((l) => (
+          <option key={l} value={l} lang={bcp47Of(l)}>
+            {LOCALE_INFO[l].name}
+          </option>
+        ))}
+      </select>
+      <Ico name="down" />
+    </span>
   );
 
   if (boot.kind === 'out') return <SignIn ctx={ctx} org={boot.org} note={boot.note} lang={lang} onIn={() => void start()} />;
@@ -587,13 +594,15 @@ function Brand({ org }: { org: PortalOrg }) {
 function SignInPage({ ctx, org, lang, children }: { ctx: Ctx; org: PortalOrg; lang: ReactNode; children: ReactNode }) {
   return (
     <div className="p-signin-page">
-      <main className="p-center">{children}</main>
-      <div>
-        <nav className="p-lang" aria-label={ctx.t('nav.language')}>
-          {lang}
-        </nav>
-        <Foot ctx={ctx} org={org} />
-      </div>
+      <main className="p-center">
+        <div className="p-signin-stack">
+          {children}
+          <nav className="p-lang" aria-label={ctx.t('nav.language')}>
+            {lang}
+          </nav>
+        </div>
+      </main>
+      <Foot ctx={ctx} org={org} />
     </div>
   );
 }

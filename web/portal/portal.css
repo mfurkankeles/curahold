@@ -288,8 +288,19 @@ html, body { margin: 0; }
 .p-or::before, .p-or::after { content: ''; flex: 1; border-block-start: 1px solid var(--line); }
 .p-tabs--full { inline-size: 100%; }
 .p-tabs--full > * { flex: 1; justify-content: center; }
+/* The card and, right under it, the language: one block in the middle of the page. */
+.p-signin-stack { display: grid; justify-items: center; gap: 12px; inline-size: min(420px, 100%); }
 .p-lang { display: flex; justify-content: center; }
-.p-lang .p-select { inline-size: auto; min-inline-size: 160px; font-size: var(--fs-m); }
+.p-langpick { position: relative; display: inline-flex; align-items: center; color: var(--ink-2); border-radius: var(--r-pill); }
+.p-langpick:hover { color: var(--ink); background: var(--sunk); }
+.p-langpick:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.p-langpick .p-ico { position: absolute; pointer-events: none; inset-inline-start: 12px; }
+.p-langpick .p-ico:last-child { inset-inline-start: auto; inset-inline-end: 12px; }
+.p-langpick__select {
+  appearance: none; font: inherit; font-size: var(--fs-m); font-weight: 500; color: inherit; background: transparent; border: 0; border-radius: var(--r-pill);
+  min-block-size: var(--tap); padding-block: 0; padding-inline: 40px 36px; cursor: pointer;
+}
+.p-langpick__select:focus { outline: none; }
 
 /* ------------------------------------------------------------ the person's own account */
 .p-account { display: grid; gap: 16px; }
