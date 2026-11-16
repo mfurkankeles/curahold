@@ -80,6 +80,47 @@ export function CuraAI({
       el.style.removeProperty('height');
     };
   }, [open, made]);
+  // On a phone the button never sits on what the person is working with: it steps aside while they type
+  // (the keyboard is up, the field is what matters) and while they scroll down through a page or a list,
+  // and it is back as soon as they scroll up, reach the end of the page (which ends above it) or stop typing.
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    if (!lifted) {
+      setAway(false);
+      return;
+    }
+    const seen = new WeakMap<Element, number>();
+    const typing = () => {
+      const a = document.activeElement;
+      return !!a && !box.current?.contains(a) && a.matches('textarea, select, [contenteditable="true"], input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=range], [type=color])');
+    };
+    const onScroll = (e: Event) => {
+      const el = e.target instanceof Element ? e.target : document.scrollingElement;
+      if (!el || box.current?.contains(el)) return;
+      const y = el.scrollTop;
+      const before = seen.get(el);
+      seen.set(el, y);
+      if (before === undefined || Math.abs(y - before) < 6) return; // the first event, or a sideways scroll
+      const atEnd = el.classList.contains('page') && y + el.clientHeight >= el.scrollHeight - 8;
+      setAway(typing() || (y > before && !atEnd));
+    };
+    const onFocus = () => setAway(typing());
+    const onBlur = () => requestAnimationFrame(onFocus);
+    // A new screen starts at its top: the button is back.
+    const onMove = () => setAway(false);
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    document.addEventListener('focusin', onFocus);
+    document.addEventListener('focusout', onBlur);
+    window.addEventListener('popstate', onMove);
+    window.addEventListener('app:navigate', onMove);
+    return () => {
+      document.removeEventListener('scroll', onScroll, { capture: true });
+      document.removeEventListener('focusin', onFocus);
+      document.removeEventListener('focusout', onBlur);
+      window.removeEventListener('popstate', onMove);
+      window.removeEventListener('app:navigate', onMove);
+    };
+  }, [lifted]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -92,7 +133,7 @@ export function CuraAI({
   return (
     <>
       {!open && (
-        <button ref={fab} type="button" className="cura__fab" data-lifted={lifted || undefined} aria-label={t('cura.open')} title={t('cura.open')} onClick={onOpen}>
+        <button ref={fab} type="button" className="cura__fab" data-lifted={lifted || undefined} data-away={away || undefined} aria-label={t('cura.open')} title={t('cura.open')} onClick={onOpen}>
           <span className="cura__mark">
             <Icon name="spark" size={20} />
           </span>

@@ -2490,8 +2490,11 @@ a.targetline:hover { border-color: var(--line-strong); }
   .shell[data-helper] .page { padding-bottom: 84px; }
   .shell[data-helper] .savebar, .shell[data-helper] .stepbar { padding-inline-end: 68px; }
   /* A phone keeps its main menu at the bottom: the button stands above it, without its name. */
-  .cura__fab { inset-inline-end: 14px; bottom: 16px; padding: 8px; }
+  .cura__fab { inset-inline-end: 12px; bottom: 16px; padding: 4px; }
   .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom)); }
+  /* It steps aside while the person types or scrolls down (CuraAI.tsx), and comes back when they scroll up. */
+  .cura__fab { transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), visibility 0s linear 0s; }
+  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out), visibility 0s linear var(--dur); }
   .cura__fabname { display: none; }
   .cura__mark { width: 40px; height: 40px; }
   /* The whole screen, measured from its edges: a width in vw can be wider than what a phone shows. */
