@@ -216,8 +216,9 @@ await step("the company's own vocabulary appears in the interface", async () => 
     await ada.page.keyboard.up('Control');
     await inputs[i].type(word);
   }
-  await (await byText(ada.page, 'form .btn--primary', 'Kaydet')).click();
-  await pause(500);
+  // Settings save through the one bar that appears with a change (and can be undone from the toast).
+  await (await byText(ada.page, '.admin__unsaved .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => !document.querySelector('.admin__unsaved'));
   await ada.page.goto(`${s.origin}/b/${csBoard}`, { waitUntil: 'networkidle0' });
   const ph = await ada.page.$eval('input.search', (el) => (el as HTMLInputElement).placeholder);
   expect(ph === 'Görev veya partner ara', `placeholder: ${ph}`);
@@ -1443,8 +1444,8 @@ await step('settings: a currency and its rate, a playbook from an example, renew
   await (await byText(ada.page, '.fxadd .btn', 'Para birimi ekle')).click();
   await ada.page.waitForSelector('.fxrow input');
   await ada.page.type('.fxrow input', '37,1');
-  await (await byText(ada.page, '.currencies .btn--primary', 'Kaydet')).click();
-  await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => x.textContent?.includes('Kaydedildi')));
+  await (await byText(ada.page, '.admin__unsaved .btn--primary', 'Kaydet')).click();
+  await ada.page.waitForFunction(() => [...document.querySelectorAll('.toast')].some((x) => /kaydedildi/i.test(x.textContent ?? '')));
   const [fx] = await sql(`select settings->'fx'->'rates' as rates from orgs where slug = 'demo'`);
   expect(Number(fx?.rates?.EUR) === 37.1, `rates kept: ${JSON.stringify(fx?.rates)}`);
   await shot(ada.page, 'p10-01-currencies');
@@ -2325,6 +2326,11 @@ await step('admin: a new company from a template, a CRM, five people with roles 
   await p.waitForSelector('.preview-list li', { timeout: 15_000 });
   await primary('.stepbar', 'Eşitlemeyi başlat');
   await wait(() => !!document.querySelector('.run--ok, .run--partial'), 30_000);
+  // Its health shows on the one list of every connection.
+  await p.goto(`${origin}/settings/connections`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.health-list__row', { timeout: 10_000 });
+  expect(await p.$eval('.health-list__rows', (el) => el.textContent?.includes('Demo CRM') || el.textContent?.includes('CRM')), 'the CRM is not on the health list');
+  await shot(p, 'admin-journey-health');
   // Roles: two of the five lead teams; the change says what it did and can be undone.
   await p.goto(`${origin}/settings/people`, { waitUntil: 'networkidle0' });
   await p.waitForSelector('.people-table');

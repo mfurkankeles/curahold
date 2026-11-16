@@ -4491,7 +4491,7 @@ export const en = {
   'settings.roles.scopeSet': "{role} now sees: {scope}",
   'settings.roles.role': "Role",
   'conn.health.title': "Health of every connection",
-  'conn.health.allGood': "All {n} are working.",
+  'conn.health.allGood': "All working ({n}).",
   'conn.health.someBad': "{bad} of {n} need attention.",
   'conn.health.none': "Nothing is connected yet. Connect a chat app or a CRM below, and how each one is doing shows here.",
   'conn.health.kind.messaging': "Chat app",

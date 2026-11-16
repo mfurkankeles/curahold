@@ -4476,7 +4476,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "{role} 現在可檢視：{scope}",
   'settings.roles.role': "角色",
   'conn.health.title': "所有連線的狀態",
-  'conn.health.allGood': "全部 {n} 個連線運作正常。",
+  'conn.health.allGood': "全部正常（{n}）。",
   'conn.health.someBad': "{n} 個中有 {bad} 個需要處理。",
   'conn.health.none': "還沒有任何連線。在下方連接聊天應用程式或 CRM，各自的狀態會顯示在這裡。",
   'conn.health.kind.messaging': "聊天應用程式",

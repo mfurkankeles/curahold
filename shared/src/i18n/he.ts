@@ -4476,7 +4476,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "{role} רואה עכשיו: {scope}",
   'settings.roles.role': "תפקיד",
   'conn.health.title': "מצב כל החיבורים",
-  'conn.health.allGood': "כל ה־{n} עובדים.",
+  'conn.health.allGood': "הכול עובד ({n}).",
   'conn.health.someBad': "{bad} מתוך {n} דורשים טיפול.",
   'conn.health.none': "עדיין לא חובר דבר. חבר למטה אפליקציית צ׳אט או CRM, והמצב של כל אחד יופיע כאן.",
   'conn.health.kind.messaging': "אפליקציית צ׳אט",

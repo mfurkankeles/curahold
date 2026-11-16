@@ -4476,7 +4476,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "{role} اکنون می‌بیند: {scope}",
   'settings.roles.role': "نقش",
   'conn.health.title': "سلامت همه اتصال‌ها",
-  'conn.health.allGood': "هر {n} اتصال کار می‌کنند.",
+  'conn.health.allGood': "همه کار می‌کنند ({n}).",
   'conn.health.someBad': "{bad} از {n} اتصال نیاز به رسیدگی دارد.",
   'conn.health.none': "هنوز چیزی وصل نیست. در پایین یک برنامه گفتگو یا CRM وصل کنید تا وضعیت هر کدام اینجا دیده شود.",
   'conn.health.kind.messaging': "برنامه گفتگو",

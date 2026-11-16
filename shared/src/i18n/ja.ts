@@ -4476,7 +4476,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "{role} の表示範囲：{scope}",
   'settings.roles.role': "ロール",
   'conn.health.title': "すべての接続の状態",
-  'conn.health.allGood': "{n} 件すべて正常に動いています。",
+  'conn.health.allGood': "すべて正常です（{n}）。",
   'conn.health.someBad': "{n} 件中 {bad} 件に対応が必要です。",
   'conn.health.none': "まだ何も接続されていません。下でチャットアプリやCRMを接続すると、それぞれの状態がここに表示されます。",
   'conn.health.kind.messaging': "チャットアプリ",

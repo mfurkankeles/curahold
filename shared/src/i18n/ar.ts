@@ -4476,7 +4476,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "أصبح {role} يرى: {scope}",
   'settings.roles.role': "الدور",
   'conn.health.title': "حالة كل الاتصالات",
-  'conn.health.allGood': "جميعها تعمل ({n}).",
+  'conn.health.allGood': "كلها تعمل ({n}).",
   'conn.health.someBad': "{bad} من {n} تحتاج إلى انتباه.",
   'conn.health.none': "لا يوجد شيء متصل بعد. اربط تطبيق دردشة أو نظام CRM أدناه، وستظهر حالة كل منها هنا.",
   'conn.health.kind.messaging': "تطبيق دردشة",

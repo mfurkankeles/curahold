@@ -4476,7 +4476,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.roles.scopeSet': "{role}이(가) 이제 보는 범위: {scope}",
   'settings.roles.role': "역할",
   'conn.health.title': "모든 연결의 상태",
-  'conn.health.allGood': "{n}개 모두 정상입니다.",
+  'conn.health.allGood': "모두 정상입니다({n}).",
   'conn.health.someBad': "{n}개 중 {bad}개를 확인해야 합니다.",
   'conn.health.none': "아직 연결된 것이 없습니다. 아래에서 채팅 앱이나 CRM을 연결하면 각각의 상태가 여기에 표시됩니다.",
   'conn.health.kind.messaging': "채팅 앱",

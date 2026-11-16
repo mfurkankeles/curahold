@@ -4476,7 +4476,7 @@ export const tr: Record<MessageKey, string> = {
   'settings.roles.scopeSet': "{role} artık şunları görür: {scope}",
   'settings.roles.role': "Rol",
   'conn.health.title': "Tüm bağlantıların sağlığı",
-  'conn.health.allGood': "{n} bağlantının hepsi çalışıyor.",
+  'conn.health.allGood': "Hepsi çalışıyor ({n}).",
   'conn.health.someBad': "{n} bağlantıdan {bad} tanesi ilgi bekliyor.",
   'conn.health.none': "Henüz bağlı bir şey yok. Aşağıdan bir sohbet uygulaması ya da CRM bağla; her birinin durumu burada görünür.",
   'conn.health.kind.messaging': "Sohbet uygulaması",
