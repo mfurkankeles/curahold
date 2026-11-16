@@ -1,7 +1,7 @@
 // Which languages the demo company can be written in, and the few helpers the
 // seeds share. Each language is its own file, loaded only when it is asked for
 // (the live demo carries one language's sample data, not nine).
-import type { Locale } from '../../shared/src/i18n/core';
+import { LOCALES, type Locale } from '../../shared/src/i18n/core';
 import type { SeedWords } from './types';
 
 export type { PersonKey, SeedWords } from './types';
@@ -9,6 +9,7 @@ export type { PersonKey, SeedWords } from './types';
 const LOADERS: Partial<Record<Locale, () => Promise<{ words: SeedWords }>>> = {
   en: () => import('./en'),
   tr: () => import('./tr'),
+  ar: () => import('./ar'),
 };
 
 /** The language the seed itself is written in: its texts go in as they are. */
@@ -49,11 +50,15 @@ export function sayer(locale: Locale, w: SeedWords) {
   return say;
 }
 
+/** A label already given in each language it needs ({ en, ar }): sent as it is. */
+const isLocalized = (v: object) => Object.keys(v).length > 0 && Object.keys(v).every((k) => (LOCALES as string[]).includes(k));
+
 /** Every text inside a request body, said in the company's language. */
 export function deepSay(say: (s: string) => string) {
   const deep = <T>(v: T): T => {
     if (typeof v === 'string') return say(v) as T;
     if (Array.isArray(v)) return v.map(deep) as T;
+    if (v && typeof v === 'object' && isLocalized(v)) return v;
     if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, deep(x)])) as T;
     return v;
   };

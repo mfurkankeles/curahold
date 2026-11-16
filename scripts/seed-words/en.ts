@@ -44,6 +44,7 @@ export const words: SeedWords = {
     meetingType: ['Business review', 'Goals · Usage · Risks · Roadmap'],
     boards: { cs: 'CS — General', renewals: 'Renewals', notes: 'Ada — notes' },
   },
+  // Add new texts at the end: the other languages give theirs in this order (order.ts).
   text: {
     ...PLAYBOOK,
   // meetings: titles and next steps
