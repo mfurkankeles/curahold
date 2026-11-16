@@ -786,8 +786,9 @@ await step('timeline: log a call on a customer; switch the health score on and s
   await mert.page.waitForSelector('.signal');
   await mert.page.click('.sheet .checkbox input');
   await mert.page.waitForSelector('.healthpreview');
-  await mert.page.evaluate(() => ([...document.querySelectorAll('.btn--primary')].find((b) => /Kaydet|Save/.test(b.textContent ?? '')) as HTMLElement)?.click());
-  await mert.page.waitForFunction(() => [...document.querySelectorAll('.btn--primary')].some((b) => /Kaydet|Save/.test(b.textContent ?? '') && (b as HTMLButtonElement).disabled), { timeout: 5000 });
+  // Saved through the settings bar, which goes away once it is saved.
+  await mert.page.click('.admin__unsaved .btn--primary');
+  await mert.page.waitForFunction(() => !document.querySelector('.admin__unsaved'), { timeout: 5000 });
   // The score and its weakest reason lead the customer's page; all reasons are one tap away.
   await mert.page.goto(`${s.origin}/accounts/${quill}`, { waitUntil: 'networkidle0' });
   await mert.page.waitForSelector('.acc-tile--health .acc-tile__score');
