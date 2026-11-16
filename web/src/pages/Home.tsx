@@ -1,7 +1,7 @@
 // Home: the page an administrator chose for this person's role, made of
 // cards. Each card is filled with what this person may see, so one page
 // works for a whole role. Administrators edit pages in place.
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { AccountField, Role } from '../../../shared/src/model';
 import {
@@ -24,7 +24,6 @@ import { Icon, PageIcon, type IconName } from '../components/icons';
 import { GettingStarted, loadStart, startKnown } from '../components/GettingStarted';
 import { Avatar, Confirm, ConvertedNote, Dialog } from '../components/ui';
 import { CountUp } from '../components/CountUp';
-import { ReportChart } from '../components/Charts';
 import { CHARTS, REPORT_LIBRARY, type SavedReport } from '../../../shared/src/reports';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -39,6 +38,11 @@ import '../surfaces/employee-work.css';
 export type Data = Record<string, CardData>;
 
 /** The icon a card carries beside its title: what it is about, before the words are read. */
+// The charts come with the first report card, not with the app's first screen: a home page without
+// one never downloads them, and a page with one starts the download as the card mounts, with its data.
+const loadCharts = () => import('../components/Charts');
+const ReportChart = lazy(() => loadCharts().then((m) => ({ default: m.ReportChart })));
+
 const CARD_ICON: Record<CardType, IconName> = {
   my_tasks: 'checkCircle',
   renewals: 'refresh',
@@ -302,6 +306,9 @@ export function useCardTitle() {
 }
 
 export function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefined; tools?: ReactNode; dim?: boolean }) {
+  useEffect(() => {
+    if (card.type === 'report') void loadCharts();
+  }, [card.type]);
   const { t } = useI18n();
   const money = useMoney();
   const named = useCardTitle()(card);
@@ -371,7 +378,12 @@ function TileBody({ card, data }: { card: Card; data: CardData }) {
       </p>
     );
   }
-  if (data.kind === 'report') return <ReportChart result={data.result} chart={data.chart} goal={data.goal} compact={card.size !== 'full'} />;
+  if (data.kind === 'report')
+    return (
+      <Suspense fallback={<div className="pane__wait" />}>
+        <ReportChart result={data.result} chart={data.chart} goal={data.goal} compact={card.size !== 'full'} />
+      </Suspense>
+    );
   if (data.kind === 'note') return <div className="pane__text">{data.text ? linkify(data.text) : <span className="muted">{t('home.note.empty')}</span>}</div>;
 
   if (data.kind === 'number') {
