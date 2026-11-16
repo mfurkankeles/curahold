@@ -81,7 +81,18 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
         [['A'], t('keys.taskAssign')],
         [['M'], t('keys.taskStatus')],
         [['Shift', '→'], t('keys.taskColumn')],
-        [['Space'], t('keys.taskDrag')],
+        [[t('pm.plan.keySpace')], t('keys.taskDrag')],
+      ],
+    },
+    {
+      // The planning keys of a product board's backlog, on a row's checkbox (Backlog.tsx).
+      title: t('pm.backlog'),
+      rows: [
+        [['↑', '↓'], t('keys.backlogWalk')],
+        [[t('pm.plan.keySpace')], t('keys.backlogPick')],
+        [['Enter'], t('keys.taskOpen')],
+        [['Alt', '↑↓'], t('keys.backlogMove')],
+        [[mod, 'Enter'], t('keys.backlogSprint')],
       ],
     },
     {
