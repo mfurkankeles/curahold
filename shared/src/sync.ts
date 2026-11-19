@@ -46,8 +46,11 @@ export type DevProvider = (typeof DEV_PROVIDERS)[number];
 /** Where commits, branches and pull requests come from (webhooks into Curahold, not a sync). */
 export const DEV_HOSTS = ['github', 'gitlab'] as const;
 export type DevHost = (typeof DEV_HOSTS)[number];
+/** Accounting programs, read only (see accounting.ts); `finfile` is a file in the template's columns. */
+export type AccountingSource = 'zohobooks' | 'xero' | 'odoo' | 'freee' | 'parasut' | 'quickbooks' | 'finfile';
 export type CrmProvider =
   | (typeof CRM_PROVIDERS)[number]
+  | AccountingSource
   | KeyedCrmProvider
   | SupportProvider
   | WarehouseProvider
@@ -58,7 +61,7 @@ export type CrmProvider =
 
 /** What an administrator types to connect with a key. */
 export const KEY_FIELDS: Record<
-  SupportProvider | KeyedCrmProvider | WarehouseProvider | MailboxProvider | EventProvider | DevProvider,
+  SupportProvider | KeyedCrmProvider | WarehouseProvider | MailboxProvider | EventProvider | DevProvider | 'odoo' | 'parasut',
   { key: string; secret?: boolean; optional?: boolean; placeholder: string }[]
 > = {
   bitrix24: [{ key: 'webhook', secret: true, placeholder: 'https://yourcompany.bitrix24.com/rest/1/••••••••/' }],
@@ -113,6 +116,21 @@ export const KEY_FIELDS: Record<
   gmail: [{ key: 'refreshToken', secret: true, placeholder: '1//0g…' }],
   outlook: [{ key: 'refreshToken', secret: true, placeholder: '0.AXoA…' }],
   segment: [{ key: 'signingSecret', secret: true, placeholder: 'a shared secret, 16+ characters' }],
+  // Accounting programs connected with a key (the rest sign in, or take a file).
+  odoo: [
+    { key: 'url', placeholder: 'https://yourcompany.odoo.com' },
+    { key: 'database', optional: true, placeholder: 'yourcompany' },
+    { key: 'login', placeholder: 'finance@yourcompany.com' },
+    { key: 'apiKey', secret: true, placeholder: '••••••••' },
+  ],
+  // The password is used once, to get a renewable key, and is not kept.
+  parasut: [
+    { key: 'companyId', placeholder: '123456' },
+    { key: 'clientId', placeholder: '••••••••' },
+    { key: 'clientSecret', secret: true, placeholder: '••••••••' },
+    { key: 'username', placeholder: 'finance@yourcompany.com' },
+    { key: 'password', secret: true, placeholder: '••••••••' },
+  ],
 };
 
 /** Spreadsheets: rows are found by a key column instead of a CRM id. */

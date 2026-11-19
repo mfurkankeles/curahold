@@ -18,6 +18,7 @@ export const PERMS = [
   'connections.manage',
   'calendar.view_team',
   'data.export',
+  'finance.view',
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -26,7 +27,7 @@ export const PERM_GROUPS: { key: string; perms: Perm[] }[] = [
   { key: 'company', perms: ['org.manage', 'audit.view', 'privacy.manage', 'data.export'] },
   { key: 'people', perms: ['users.manage', 'teams.manage'] },
   { key: 'work', perms: ['boards.view_all', 'boards.manage_all', 'tasks.delete_any', 'calendar.view_team'] },
-  { key: 'accounts', perms: ['accounts.manage'] },
+  { key: 'accounts', perms: ['accounts.manage', 'finance.view'] },
   { key: 'connect', perms: ['automations.manage', 'connections.manage'] },
 ];
 
@@ -36,7 +37,7 @@ export const ADMIN_PERMS: Perm[] = ['org.manage', 'users.manage', 'teams.manage'
 /** Starting points offered when an administrator adds a role. */
 export const ROLE_PRESETS: { key: string; perms: Perm[] }[] = [
   { key: 'blank', perms: ['accounts.view_all'] },
-  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage', 'calendar.view_team', 'data.export'] },
+  { key: 'lead', perms: ['boards.view_all', 'teams.manage', 'tasks.delete_any', 'accounts.manage', 'accounts.view_all', 'automations.manage', 'calendar.view_team', 'data.export', 'finance.view'] },
   { key: 'ops', perms: ['accounts.manage', 'accounts.view_all', 'automations.manage', 'connections.manage', 'data.export'] },
   { key: 'people', perms: ['users.manage', 'teams.manage', 'accounts.view_all'] },
   { key: 'observer', perms: ['boards.view_all', 'audit.view', 'accounts.view_all'] },

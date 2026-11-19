@@ -55,6 +55,11 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
     );
     for (const t of list) tickets.set(t.account_id, { open: t.open, urgent: t.urgent });
   }
+  // Late payments from a connected accounting program: days and counts only (see finance_late in 0130).
+  const late = new Map<string, { lateDays: number; overdue: number }>();
+  for (const f of await q.query<{ account_id: string; late: number; overdue: number }>('select account_id, late, overdue from finance_late($1, $2, $3::date)', [orgId, ids, today])) {
+    late.set(f.account_id, { lateDays: f.late, overdue: f.overdue });
+  }
   const out = new Map<string, HealthInput>();
   for (const r of rows) {
     // A touch is contact with the customer: a logged call, meeting, email or
@@ -72,6 +77,7 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
       tickets: ticketType ? (tickets.get(r.id) ?? { open: 0, urgent: 0 }) : null,
       contacts: types.n ? (contacts.get(r.id) ?? []) : null,
       fields: r.fields ?? {},
+      finance: late.get(r.id) ?? null,
     });
   }
   return out;

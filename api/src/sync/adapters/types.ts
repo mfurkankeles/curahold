@@ -1,6 +1,7 @@
 // What every CRM or spreadsheet adapter provides to the sync engine. The
 // engine never talks to a provider directly: it asks for objects, fields,
 // users and pages of rows, and hands back values to write.
+import type { FinKind, FinPayment, FinRow } from '../../../../shared/src/accounting';
 import type { CrmProvider, RemoteField, RemoteObject, RemoteUser } from '../../../../shared/src/sync';
 
 export interface CrmSecret {
@@ -106,6 +107,25 @@ export interface CrmAdapter {
    * inbound address. `list`/`objects`/`fields` are empty so the generic engine does nothing for it.
    */
   inbound?: boolean;
+  /**
+   * An accounting program (Zoho Books, Xero, Odoo, freee, Paraşüt, QuickBooks Online, a file): customers, invoices
+   * and payments are read into Curahold's finance tables by `finance` and matched to customers; nothing is ever
+   * written back (`update`/`create` refuse). `perMinute` paces the requests below the program's own limit and
+   * `perDay` stops a run before a daily allowance is used up (the next run carries on).
+   */
+  accounting?: {
+    perMinute: number;
+    perDay?: number;
+    /** Payments come with the invoices they pay (freee, Paraşüt): there is no separate read for them. */
+    paymentsWithInvoices?: boolean;
+    /** A file the administrator uploads (finfile): nothing to fetch on a schedule. */
+    file?: boolean;
+  };
+  /**
+   * Accounting: one page of customers, invoices or payments changed since `since` (all of them when null). A page of
+   * invoices may bring the payments made on them in `payments`.
+   */
+  finance?(ctx: CrmCtx, kind: FinKind, opts: { since: string | null; cursor: string | null }): Promise<{ rows: FinRow[]; next: string | null; payments?: FinPayment[] }>;
   /** Mailboxes: recent mail since the last run, oldest first. */
   messages?(ctx: CrmCtx, opts: { since: string | null; cursor: string | null }): Promise<{ items: MailItem[]; next: string | null }>;
   /** Mailboxes: send a reply from the connected mailbox; returns the new message's id. */

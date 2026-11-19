@@ -5347,6 +5347,17 @@ export const en = {
   'dept.tpl.notFit': "Not a fit",
   'dept.demo.lead': "Inbound lead: logistics company, 40 seats",
   'dept.demo.onboard': "Kick-off and data import",
+  'perm.finance.view': "See finance figures",
+  'perm.finance.view.hint': "Open balance, overdue invoices and payments from the connected accounting program, on each customer's page. Without it, people see only how many days a payment is late, inside the health score.",
+  'health.signal.payment': "Payments on time",
+  'health.signalHint.payment': "From the connected accounting program: days the oldest unpaid invoice is past its due date. Customers not matched to the program are left out.",
+  'health.why.payment': "{n} overdue invoices, the oldest {days} days late",
+  'health.why.paymentNone': "Not matched to the accounting program, so this does not count",
+  'health.why.paymentNone2': "No overdue invoices",
+  'health.settings.paymentGood': "Forgiven for (days late)",
+  'health.settings.paymentBad': "No points after (days late)",
+  'audit.finance.match_changed': "matched an accounting customer",
+  'audit.finance.imported': "uploaded an accounting file",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -19,6 +19,7 @@ import { enqueue } from '../lib/notify';
 import { userManagers } from '../lib/people';
 import { CRM_ADAPTERS, isCrm, oauthClient } from './adapters';
 import { syncMailbox } from './mailsync';
+import { syncAccounting } from './accountingsync';
 import { crmFetch } from './relay';
 import { localValue, noteConflict } from './conflicts';
 import { CrmError, plain, type CrmAdapter, type CrmCtx, type CrmSecret, type RemoteRow } from './adapters/types';
@@ -1350,11 +1351,19 @@ export async function syncConnection(deps: Deps, orgId: string, connectionId: st
     r = await prepare(deps, conn, opts.budgetMs ?? 10 * 60_000);
     // Mailboxes attach mail to customers as activities instead of mapping objects, and send replies from a route,
     // so they take their own read path and queue nothing to push.
+    // Accounting programs copy customers, invoices and payments into the finance tables and never take anything back.
     const mailbox = !!r.adapter.mailbox;
+    const accounting = !!r.adapter.accounting;
     // Read first: a change made there after ours was queued must be seen
     // (and weighed by the conflict rule) before ours goes out.
-    const pulled = opts.pushOnly ? true : mailbox ? await syncMailbox(deps, conn, r.adapter, r.ctx, full, r.stats, r.deadline) : await pullAll(r, full);
-    const pushed = mailbox ? true : await pushChanges(r, !!opts.pushOnly);
+    const pulled = opts.pushOnly
+      ? true
+      : accounting
+        ? await syncAccounting(deps, conn, r.adapter, r.ctx, full, r.stats, r.deadline, r.errors)
+        : mailbox
+          ? await syncMailbox(deps, conn, r.adapter, r.ctx, full, r.stats, r.deadline)
+          : await pullAll(r, full);
+    const pushed = mailbox || accounting ? true : await pushChanges(r, !!opts.pushOnly);
     if (!pushed || !pulled) {
       status = 'partial';
       more = true;

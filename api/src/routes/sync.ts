@@ -94,7 +94,8 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
   if (!adapter?.oauth || !client) return c.redirect(`${home}?error=not_configured&provider=${provider}`);
   let made;
   try {
-    const extras: Record<string, string> = { ...state.q, 'accounts-server': c.req.query('accounts-server') ?? '' };
+    // Zoho says which data centre the account is on; QuickBooks which company (realm) was chosen.
+    const extras: Record<string, string> = { ...state.q, 'accounts-server': c.req.query('accounts-server') ?? '', realmId: c.req.query('realmId') ?? '' };
     if (adapter.oauth.pkce) {
       const proof = state.k ? await unseal<{ v: string }>(state.k, secretsKey(cfg)) : null;
       if (!proof?.v) return c.redirect(`${home}?error=connection_failed&provider=${provider}`);
@@ -256,6 +257,8 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
       /** Mailboxes attach mail as activities and can send a reply; event streams (Segment) receive at an inbound address. */
       mailbox: !!adapter.mailbox,
       inbound: !!adapter.inbound,
+      /** Accounting programs: read into the finance tables and matched to customers on a review list. */
+      accounting: !!adapter.accounting,
       /** Segment: the address to give the Segment destination (the public source id lives in the connection config). */
       inboundUrl: adapter.inbound && conn.config?.sourceId ? `${new URL(c.req.url).origin}/api/inbound/${conn.provider}/${conn.config.sourceId}` : null,
     },
@@ -538,7 +541,7 @@ syncRoutes.post('/connections/:id/sync/run', async (c) => {
   const auth = c.get('auth');
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
   // A mailbox has no object mapping: it reads mail straight into activities.
-  if (!adapter.mailbox && !conn.sync.objects.some((o) => o.enabled)) fail('validation', { fields: 'objects' }, { fields: ['objects'] });
+  if (!adapter.mailbox && !adapter.accounting && !conn.sync.objects.some((o) => o.enabled)) fail('validation', { fields: 'objects' }, { fields: ['objects'] });
   const first = !conn.sync.startedAt;
   if (first) {
     await run(c, async (q) => {

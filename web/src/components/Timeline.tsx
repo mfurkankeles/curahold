@@ -74,6 +74,8 @@ function partText(t: (k: MessageKey, v?: Record<string, string | number>) => str
       return p.points === null ? t('health.why.judgementNone', { field: fieldLabel(d.field) }) : t('health.why.judgement', { field: fieldLabel(d.field), value: optionLabel(d.field, d.value) });
     case 'number':
       return p.points === null ? t('health.why.numberNone', { field: fieldLabel(d.field) }) : t('health.why.number', { field: fieldLabel(d.field), value: String(d.value ?? '') });
+    case 'payment':
+      return p.points === null ? t('health.why.paymentNone' as MessageKey) : d.count ? t('health.why.payment' as MessageKey, { n: d.count, days: d.days ?? 0 }) : t('health.why.paymentNone2' as MessageKey);
   }
 }
 
@@ -689,7 +691,7 @@ function EditActivity({ activity, onClose, onSaved }: { activity: Activity; onCl
 
 // ------------------------------------------------------- the score settings
 
-const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement'];
+const SIGNAL_ORDER: HealthSignalKey[] = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement', 'payment'];
 
 export function HealthSettings() {
   const { t, locale } = useI18n();
@@ -846,6 +848,18 @@ export function HealthSettings() {
                   </label>
                 </div>
               )}
+              {s.key === 'payment' && (
+                <div className="signal__params">
+                  <label className="field">
+                    <span className="field__label">{t('health.settings.paymentGood' as MessageKey)}</span>
+                    <input className="input" type="number" min={0} max={365} value={s.good ?? 0} onChange={(e) => set(s.id, { good: Number(e.target.value) })} />
+                  </label>
+                  <label className="field">
+                    <span className="field__label">{t('health.settings.paymentBad' as MessageKey)}</span>
+                    <input className="input" type="number" min={1} max={730} value={s.bad ?? 60} onChange={(e) => set(s.id, { bad: Number(e.target.value) })} />
+                  </label>
+                </div>
+              )}
               {s.key === 'number' && (
                 <div className="signal__params">
                   <label className="field">
@@ -881,7 +895,7 @@ export function HealthSettings() {
               const key = e.target.value as HealthSignalKey;
               if (!key) return;
               const id = key === 'number' ? `number_${Date.now().toString(36)}` : key;
-              setCfg({ ...cfg, signals: [...cfg.signals, { id, key, weight: 10, ...(key === 'touch' ? { good: 14, bad: 45 } : key === 'tasks' ? { bad: 3 } : key === 'support' ? { bad: 5 } : {}) }] });
+              setCfg({ ...cfg, signals: [...cfg.signals, { id, key, weight: 10, ...(key === 'touch' ? { good: 14, bad: 45 } : key === 'tasks' ? { bad: 3 } : key === 'support' ? { bad: 5 } : key === 'payment' ? { good: 0, bad: 60 } : {}) }] });
             }}
           >
             <option value="">{t('health.settings.add')}</option>

@@ -17,10 +17,18 @@ import { snowflake } from './snowflake';
 import { salesforce } from './salesforce';
 import type { CrmAdapter, OAuthClient } from './types';
 import { zoho } from './zoho';
+import { finfile } from './accounting/finfile';
+import { freee } from './accounting/freee';
+import { odooAdapter } from './accounting/odoo';
+import { parasut } from './accounting/parasut';
+import { quickbooks } from './accounting/quickbooks';
+import { xeroAdapter } from './accounting/xero';
+import { zohobooks } from './accounting/zohobooks';
+import { ACCOUNTING_ALL } from '../../../../shared/src/accounting';
 import { freshdesk, front, intercom, jsm, zendesk } from './support';
 import { DEV_PROVIDERS, EVENT_PROVIDERS, KEYED_CRM_PROVIDERS, MAILBOX_PROVIDERS, READ_ONLY_PROVIDERS, SUPPORT_PROVIDERS, WAREHOUSE_PROVIDERS } from '../../../../shared/src/sync';
 
-export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, snowflake, gmail, outlook, segment, jira, demo };
+export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, bigquery, snowflake, gmail, outlook, segment, jira, demo, zohobooks, xero: xeroAdapter, odoo: odooAdapter, freee, parasut, quickbooks, finfile };
 
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
@@ -31,6 +39,8 @@ export function oauthClient(cfg: Config, provider: CrmProvider): OAuthClient | n
   const own = cfg.connectors.crm?.[provider as keyof NonNullable<typeof cfg.connectors.crm>];
   if (own) return own;
   if (provider === 'gsheets' || provider === 'gmail') return cfg.oauth.google ?? null;
+  // One Zoho app registration serves Zoho CRM and Zoho Books (each asks for its own scopes).
+  if (provider === 'zohobooks') return cfg.connectors.crm?.zoho ?? null;
   if (provider === 'excel' || provider === 'dynamics' || provider === 'outlook') return cfg.oauth.microsoft ?? null;
   if (provider === 'demo') return cfg.connectors.demoCrm ? { clientId: 'demo', clientSecret: 'demo' } : null;
   return null;
@@ -63,6 +73,12 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
     ...EVENT_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: false, available: true, setup: 'key' })),
     // Developer tools (Jira Cloud): always connectable with an API token; "oauth" says the Atlassian sign-in is registered here too.
     ...DEV_PROVIDERS.map((id): ProviderInfo => ({ id, kind: 'source', twoWay: true, available: true, setup: oauthClient(cfg, id) ? 'oauth' : 'key' })),
+    // Accounting programs, read only: a sign-in where this server is registered with the program, a key (Odoo,
+    // Paraşüt), or a file in the template's columns for every other program.
+    ...ACCOUNTING_ALL.map((id): ProviderInfo => {
+      const adapter = CRM_ADAPTERS[id];
+      return { id, kind: 'source', twoWay: false, available: adapter.oauth ? !!oauthClient(cfg, id) : true, setup: adapter.oauth ? 'oauth' : 'key' };
+    }),
   ];
 }
 

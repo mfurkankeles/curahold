@@ -24,6 +24,7 @@ import { HttpError, fail } from './lib/errors';
 import { accountRoutes } from './routes/accounts';
 import { recordRoutes } from './routes/records';
 import { syncRoutes } from './routes/sync';
+import { financeRoutes } from './routes/finance';
 import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
 import { segmentInboundRoutes } from './routes/segment';
 import { jiraRoutes } from './routes/jira';
@@ -463,6 +464,7 @@ export function createApp(deps: Deps) {
   app.route('/api', portalRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
+  app.route('/api', financeRoutes);
   app.route('/api', jiraRoutes);
   app.route('/api', devLinkRoutes);
   app.route('/api', connectionRoutes);

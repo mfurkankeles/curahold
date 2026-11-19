@@ -4,7 +4,7 @@
 // a signal a person can see and act on.
 import type { AccountField } from './model';
 
-export const HEALTH_SIGNALS = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement', 'number'] as const;
+export const HEALTH_SIGNALS = ['touch', 'tasks', 'support', 'champion', 'decision', 'blockers', 'judgement', 'number', 'payment'] as const;
 export type HealthSignalKey = (typeof HEALTH_SIGNALS)[number];
 
 export interface HealthSignal {
@@ -13,9 +13,9 @@ export interface HealthSignal {
   key: HealthSignalKey;
   /** Relative weight, 0–100. Signals without data for a customer are left out and the rest share their weight. */
   weight: number;
-  /** touch: days still counted as fresh. number: the value that earns full points. */
+  /** touch: days still counted as fresh. number: the value that earns full points. payment: days late still forgiven. */
   good?: number;
-  /** touch: days after which it counts as gone quiet. tasks: overdue tasks that take all points. number: the value that earns none. */
+  /** touch: days after which it counts as gone quiet. tasks: overdue tasks that take all points. number: the value that earns none. payment: days late that take all points. */
   bad?: number;
   /** judgement: a choice field (first option best). number: a number or money field. */
   field?: string;
@@ -58,7 +58,15 @@ export interface HealthInput {
   /** null when the company does not keep contacts at all. */
   contacts: { id: string; name: string; stance: string | null; decision: string | null }[] | null;
   fields: Record<string, unknown>;
+  /**
+   * From a connected accounting program: how many days the oldest unpaid invoice is past due, and how many are.
+   * Absent or null when the customer is not matched to an accounting customer (the signal then does not count).
+   */
+  finance?: { lateDays: number; overdue: number } | null;
 }
+
+/** The late-payment signal as it is added when an accounting program is connected. */
+export const PAYMENT_SIGNAL: HealthSignal = { id: 'payment', key: 'payment', weight: 15, good: 0, bad: 60 };
 
 export interface HealthPart {
   id: string;
@@ -151,6 +159,14 @@ export function computeHealth(cfg: HealthConfig, defs: AccountField[], input: He
         const v = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' && !Number.isNaN(Number(raw)) ? Number(raw) : null;
         if (!def || v === null || s.good === undefined || s.bad === undefined) return part(null, { field: s.field });
         return part(between(v, s.good, s.bad), { field: def.key, value: v });
+      }
+      case 'payment': {
+        // Days the oldest unpaid invoice is late: within `good` days nothing is lost, at `bad` days everything is.
+        if (!input.finance) return part(null);
+        const good = Math.max(0, s.good ?? 0);
+        const bad = Math.max(good + 1, s.bad ?? 60);
+        const days = input.finance.lateDays;
+        return part(days <= good ? 100 : between(days, good, bad), { days, count: input.finance.overdue });
       }
     }
   });
