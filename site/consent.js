@@ -13,7 +13,8 @@
   if (!cfg || typeof document === 'undefined') return;
   var S = cfg.strings || {};
   var ids = cfg.ids || {};
-  if (!(ids.ga4 || ids.meta || ids.tiktok)) return; // nothing non-essential to load
+  // cfg.ab: the site's A/B test is switched on (site/ab/config.ts), which needs analytics consent too.
+  if (!(ids.ga4 || ids.meta || ids.tiktok || cfg.ab)) return; // nothing non-essential to load
 
   var KEY = 'curahold_consent_v1';
 
@@ -26,7 +27,18 @@
       return { analytics: false, marketing: false, decided: false };
     }
   }
+  // The edge (site/ab/worker.js) cannot read localStorage, so the analytics choice is
+  // mirrored in a first-party cookie: "a1" took part, "a0" said no. It only records the
+  // choice itself, which is a strictly necessary cookie.
+  function mirror(state) {
+    try {
+      document.cookie = 'cura_consent=' + (state.analytics ? 'a1' : 'a0') + '; Max-Age=31536000; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+    } catch (e) {
+      /* no cookies: the A/B test simply leaves this visitor out */
+    }
+  }
   function write(state) {
+    mirror(state);
     try {
       localStorage.setItem(KEY, JSON.stringify({ analytics: state.analytics, marketing: state.marketing, decided: true, at: new Date().toISOString() }));
     } catch (e) {
