@@ -69,6 +69,30 @@ const dropFile = `await wait('[data-tour="import-drop"] input'); const csv = ['I
 const pause = (ms: number) => `await new Promise((r) => setTimeout(r, ${ms}))`;
 const next = `document.querySelector('.dialog .btn--primary').click(); ${pause(1500)}`;
 /**
+ * The connectors of 20 November (B19): chat-notifications, odoo-crm, calendars, azure-devops, zoho-desk,
+ * accounting-stripe, whatsapp and incoming-webhooks. One picture per step that happens in Curahold.
+ */
+const sources = go('/settings/sources');
+const hookMade = `${json}; const post = (u, b) => fetch(u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json()); let hooks = (await get('/api/inbound-hooks')).hooks; if (!hooks.length) { await post('/api/inbound-hooks', { name: 'Zapier', recipe: 'curahold' }); hooks = (await get('/api/inbound-hooks')).hooks; } const h = hooks[0]; const sample = (await get('/api/inbound-hooks')).recipes.find((r) => r.key === h.source).sample; await post('/api/inbound-hooks/' + h.id + '/test', { payload: sample }); __demo.navigate('/settings/sources'); await wait('[data-tour="hook-open"]'); document.querySelector('[data-tour="hook-open"]').click(); await wait('[data-tour="hook-tab-setup"]')`;
+const B19: Shot[] = [
+  { name: 'b19-chat-add', go: go('/settings/connections'), ready: '[data-tour="conn-add-app"]', mark: '[data-tour="conn-add-app"]', n: 1 },
+  { name: 'b19-chat-form', go: `${go('/settings/connections')}; await wait('[data-tour="conn-add-app"]'); document.querySelector('[data-tour="conn-add-app"]').click()`, ready: '[data-tour="conn-app"]', mark: '[data-tour="conn-app"]', n: 2 },
+  { name: 'b19-odoocrm-tile', go: sources, ready: '[data-tour="crm-odoocrm"]', mark: '[data-tour="crm-odoocrm"]', n: 1 },
+  { name: 'b19-calendar-tile', go: sources, ready: '[data-tour="calendars"]', mark: '[data-tour="calendars"]', n: 1 },
+  { name: 'b19-ado-tile', go: sources, ready: '[data-tour="dev-azuredevops"]', mark: '[data-tour="dev-azuredevops"]', n: 1 },
+  { name: 'b19-ado-form', go: `${sources}; await wait('[data-tour="dev-azuredevops"] button'); document.querySelector('[data-tour="dev-azuredevops"] button').click(); await wait('.dialog .btn--primary'); document.querySelector('.dialog .btn--primary').click()`, ready: '.dialog input[readonly]', mark: '.dialog .form', n: 2 },
+  { name: 'b19-zohodesk-tile', go: sources, ready: '[data-tour="crm-zohodesk"]', mark: '[data-tour="crm-zohodesk"]', n: 1 },
+  { name: 'b19-stripe-tile', go: sources, ready: '[data-tour="fin-stripe"]', mark: '[data-tour="fin-stripe"]', n: 1 },
+  { name: 'b19-whatsapp-tile', go: sources, ready: '[data-tour="crm-whatsapp"]', mark: '[data-tour="crm-whatsapp"]', n: 1 },
+  { name: 'b19-whatsapp-panel', go: `${sources}; await wait('[data-tour="crm-whatsapp"] button'); document.querySelector('[data-tour="crm-whatsapp"] button').click()`, ready: '.dialog input', mark: '.dialog .form, .dialog form', n: 2 },
+  { name: 'b19-hooks-add', go: sources, ready: '[data-tour="hook-add"]', mark: '[data-tour="hook-add"]', n: 1 },
+  { name: 'b19-hooks-form', go: `${sources}; await wait('[data-tour="hook-add"]'); document.querySelector('[data-tour="hook-add"]').click()`, ready: '[data-tour="hook-create"]', mark: '.dialog .form', n: 2 },
+  { name: 'b19-hooks-address', go: hookMade, ready: '[data-tour="hook-url"]', mark: '[data-tour="hook-url"]', n: 3 },
+  { name: 'b19-hooks-test', go: `${hookMade}; document.querySelector('[data-tour="hook-tab-test"]').click(); await wait('[data-tour="hook-preview"]'); document.querySelector('[data-tour="hook-preview"]').click()`, ready: '[data-tour="hook-test"] table', mark: '[data-tour="hook-send-test"]', n: 4 },
+  { name: 'b19-hooks-log', go: `${hookMade}; document.querySelector('[data-tour="hook-tab-log"]').click()`, ready: '[data-tour="hook-log"] table', mark: '[data-tour="hook-log"] table', n: 5 },
+].map((x) => ({ ...x, width: 1280, height: 800 }));
+
+/**
  * The guides written for the features of 16–19 November (docs-completeness audit):
  * departments, hand-over and requests, moving in, the team's weeks, CuraAI's AI
  * answers, the BI feed and the accounting programs. One picture per step.
@@ -145,6 +169,7 @@ const SHOTS: Shot[] = [
   { name: 'ob-plans', go: `__demo.navigate('/onboarding/plans')`, ready: '.ob-port__table', mark: '.ob-port__table tbody tr a', width: 1280, height: 800 },
   { name: 'ob-phone', go: `__demo.navigate('/onboarding')`, ready: '[data-tour="ob-next"]', mark: '[data-tour="ob-next"] .btn--primary', width: 375, height: 667 },
   ...GUIDES,
+  ...B19,
 ];
 
 /** Rings the element and puts its number beside it (inline-start, so it follows right-to-left too). */
