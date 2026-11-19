@@ -108,7 +108,7 @@ The table is written from the product's own words, so it always matches the scre
 | … analytics keys stop working within two weeks (Worth fixing) | Reports in your BI tool will stop refreshing. Rotate the key and paste the new one there. | **Open analytics keys** |
 | Your BI tool has not pulled data for a week (When you have a minute) | Its dashboards show last week's numbers. Check its scheduled refresh, or the key it uses. | **Open analytics keys** |
 
-### Customer portal
+### Customer portal checks
 
 | What we notice | Why it matters | The button |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ The table is written from the product's own words, so it always matches the scre
 | … automations point at a board that is gone (Fix first) | The tasks it should make have nowhere to go. Choose another board. | **Fix the rule** |
 | No automations yet (When you have a minute) | One rule, like a task 60 days before each renewal, saves a reminder every time. Ready ones are waiting to be switched on. | **See ready rules** |
 
-### Your data
+### Checks on your data
 
 | What we notice | Why it matters | The button |
 | --- | --- | --- |

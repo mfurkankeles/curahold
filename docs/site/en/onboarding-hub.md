@@ -62,7 +62,7 @@ Click **Share report** and copy the link. Whoever has it sees the progress repor
 
 ![The page header with Share report marked](img/ob-share.webp)
 
-## 8. Your customers' plans {#customers}
+## 8. Your customers' getting-started plans {#customers}
 
 Click **Onboarding plans** under Customers. When a deal is won, a draft plan opens by itself with a hand-over note; it starts when the hand-over is confirmed. The list shows every plan, how far it is, who is waited on and which are stuck. Click a customer to open its plan.
 

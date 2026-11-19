@@ -108,7 +108,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 | … analiz anahtarı iki hafta içinde çalışmayı bırakacak (Düzeltmeye değer) | BI aracınızdaki raporlar yenilenmeyi bırakır. Anahtarı yenileyip yenisini oraya yapıştırın. | **Analiz anahtarlarını aç** |
 | BI aracınız bir haftadır veri çekmedi (Bir dakikanız olduğunda) | Panoları geçen haftanın rakamlarını gösterir. Zamanlanmış yenilemesine ya da kullandığı anahtara bakın. | **Analiz anahtarlarını aç** |
 
-### Müşteri portalı
+### Müşteri portalı kontrolleri
 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 | … otomasyon artık olmayan bir panoyu gösteriyor (Önce bunu) | Oluşturması gereken görevlerin gidecek yeri yok. Başka bir pano seçin. | **Kuralı düzelt** |
 | Henüz otomasyon yok (Bir dakikanız olduğunda) | Her yenilemeden 60 gün önce bir görev gibi tek bir kural, her seferinde bir hatırlatmayı üstlenir. Açılmaya hazır kurallar var. | **Hazır kurallara bak** |
 
-### Verileriniz
+### Verilerinizle ilgili kontroller
 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |

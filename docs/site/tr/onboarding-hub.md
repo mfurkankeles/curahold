@@ -62,7 +62,7 @@ Tarihler şöyle yazılır:
 
 ![Sayfa başlığı, Raporu paylaş işaretli](img/ob-share.webp)
 
-## 8. Müşterilerinizin planları {#customers}
+## 8. Müşterilerinizin başlangıç planları {#customers}
 
 Müşteriler altında **Ortak planlar**'a tıklayın. Bir fırsat kazanılınca devir notuyla birlikte taslak bir plan kendiliğinden açılır; devir onaylanınca başlar. Liste her planı, ne kadar ilerlediğini, kimin beklendiğini ve hangilerinin takıldığını gösterir. Planını açmak için bir müşteriye tıklayın.
 
