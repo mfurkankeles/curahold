@@ -63,7 +63,7 @@ export async function backup(opts: { url: string; dir: string; passphrase?: stri
     run('openssl', ['enc', '-aes-256-cbc', '-pbkdf2', '-iter', '200000', '-salt', '-in', dump, '-out', file, '-pass', 'env:BACKUP_PASSPHRASE'], { BACKUP_PASSPHRASE: opts.passphrase });
     rmSync(dump);
   }
-  const m: Manifest = { createdAt: new Date().toISOString(), file: file.split('/').pop()!, bytes: statSync(file).size, sha256: sha256(file), encrypted: !!opts.passphrase, lastMigration, extensions, rows };
+  const m: Manifest = { createdAt: new Date().toISOString(), file: file.split('/').pop() ?? file, bytes: statSync(file).size, sha256: sha256(file), encrypted: !!opts.passphrase, lastMigration, extensions, rows };
   const manifest = file.replace(/\.dump(\.enc)?$/, '.manifest.json');
   writeFileSync(manifest, JSON.stringify(m, null, 2));
   return { file, manifest, m };

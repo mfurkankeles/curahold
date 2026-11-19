@@ -125,13 +125,14 @@ export async function released(deps: Pick<Deps, 'db'>, orgId: string, storageKey
 
 /** Scans one held file: clean → released (the row goes); infected → the bytes go and the owner hears it; error → tried again later. */
 export async function scanOne(deps: Deps, orgId: string, storageKey: string): Promise<'clean' | 'infected' | 'error' | 'gone'> {
-  if (!deps.scanner) return 'error';
+  const scanner = deps.scanner;
+  if (!scanner) return 'error';
   const obj = await deps.storage.get(storageKey);
   if (!obj) {
     await deps.db.system((q) => q.query(`delete from file_scans where org_id = $1 and storage_key = $2 and status <> 'infected'`, [orgId, storageKey]));
     return 'gone';
   }
-  const v = await deps.scanner.scan(new Uint8Array(obj.data)).catch((e): ScanVerdict => ({ verdict: 'error', note: e instanceof Error ? e.message : String(e) }));
+  const v = await scanner.scan(new Uint8Array(obj.data)).catch((e): ScanVerdict => ({ verdict: 'error', note: e instanceof Error ? e.message : String(e) }));
   if (v.verdict === 'clean') {
     await deps.db.system((q) => q.query(`delete from file_scans where org_id = $1 and storage_key = $2`, [orgId, storageKey]));
     return 'clean';
@@ -142,7 +143,7 @@ export async function scanOne(deps: Deps, orgId: string, storageKey: string): Pr
       await q.query(`update file_scans set status = 'infected', note = $3, scanned_at = now(), attempts = attempts + 1 where org_id = $1 and storage_key = $2`, [orgId, storageKey, v.signature.slice(0, 200)]);
       await q.query(
         `insert into company_log (seat, kind, body, ref, meta) select 'system', 'alert', $1, $2, $3 where not exists (select 1 from company_log where ref = $2)`,
-        [`Upload scan: a file was found infected (${v.signature.slice(0, 80)}) and deleted`, `scan:infected:${orgId}:${storageKey.slice(-36)}`, JSON.stringify({ org_id: orgId, scanner: deps.scanner!.name })],
+        [`Upload scan: a file was found infected (${v.signature.slice(0, 80)}) and deleted`, `scan:infected:${orgId}:${storageKey.slice(-36)}`, JSON.stringify({ org_id: orgId, scanner: scanner.name })],
       );
     });
     console.warn('[curahold] upload infected', JSON.stringify({ org: orgId, signature: v.signature.slice(0, 80) }));
