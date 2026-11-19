@@ -103,8 +103,6 @@ export const TICKET_PRIORITIES = [
   { key: 'high', label: P('task.priority.high') },
   { key: 'urgent', label: P('task.priority.urgent'), color: 'coral' as const },
 ];
-/** Still needing an answer. */
-export const TICKET_OPEN = ['open', 'pending'];
 
 /** Any tool's ticket state in Curahold's four ("Problem Solved", "Waiting on customer", "Kapandı"…). */
 export function ticketStatusOf(v: unknown): 'open' | 'pending' | 'solved' | 'closed' {
