@@ -13,6 +13,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { AccountPicker } from './AccountPicker';
+import { Confirm } from './ui';
 
 export function PortalSettingsTab() {
   const { t, locale } = useI18n();
@@ -133,7 +134,10 @@ export function PortalSettingsTab() {
 /** The people at customers who can sign in; for one customer when `accountId` is given. */
 export function PortalPeople({ accountId, accountName }: { accountId?: string; accountName?: string }) {
   const { t, fmtDate } = useI18n();
-  const { toast, canWrite } = useStore();
+  const { toast, canWrite, can } = useStore();
+  // The KVKK/GDPR tools for portal people, like those for the company's own people (Settings → People).
+  const privacy = can('privacy.manage');
+  const [erase, setErase] = useState<PortalPerson | null>(null);
   const [list, setList] = useState<PortalPerson[] | null>(null);
   const [account, setAccount] = useState<{ id: string | null; name: string | null }>({ id: accountId ?? null, name: accountName ?? null });
   const [name, setName] = useState('');
@@ -169,8 +173,33 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
     }
   };
 
+  // Through the API client, so "Confirm it's you" can ask first (a personal export needs a fresh sign-in).
+  async function exportData(p: PortalPerson) {
+    try {
+      const data = await get<unknown>(`/admin/portal-users/${p.id}/export`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = `curahold-personal-data-${p.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast(t('portal.people.exported', { name: p.name }));
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+    }
+  }
+
   return (
     <div className="portal-people">
+      {erase && (
+        <Confirm
+          title={t('portal.people.erase')}
+          body={t('portal.people.eraseConfirm', { name: erase.name })}
+          confirmLabel={t('portal.people.erase')}
+          danger
+          onClose={() => setErase(null)}
+          onConfirm={() => act(() => post(`/admin/portal-users/${erase.id}/erase`), t('portal.people.erased', { name: erase.name }))}
+        />
+      )}
       {list && list.length === 0 && <p className="muted">{t('portal.people.none')}</p>}
       {list && list.length > 0 && (
         <table className="table portal-people__table">
@@ -214,6 +243,16 @@ export function PortalPeople({ accountId, accountName }: { accountId?: string; a
                         }}
                       >
                         {t('portal.people.disable')}
+                      </button>
+                    </>
+                  )}
+                  {privacy && (
+                    <>
+                      <button className="btn btn--quiet btn--small" onClick={() => void exportData(p)}>
+                        {t('portal.people.export')}
+                      </button>
+                      <button className="btn btn--quiet btn--small btn--danger" onClick={() => setErase(p)}>
+                        {t('portal.people.erase')}
                       </button>
                     </>
                   )}

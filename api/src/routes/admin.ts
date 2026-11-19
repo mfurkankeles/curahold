@@ -16,7 +16,8 @@ import { createInviteToken, sendInvite } from '../lib/people';
 import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
 import { iso } from '../lib/mappers';
-import { personalData } from '../lib/personalData';
+import { personalData, portalPersonalData } from '../lib/personalData';
+import { erasePortalUser, eraseUserExtras } from '../lib/erasure';
 import { graceDaysOf } from '../lib/companyDeletion';
 import { body, email, localeField, param, uuid } from '../lib/validate';
 
@@ -573,8 +574,10 @@ adminRoutes.get('/users/:id/export', async (c) => {
 
 // Erasure (KVKK m.7, GDPR Art. 17). The person disappears from the
 // company: name and email are replaced, sessions and one-time tokens are
-// deleted, they are removed from every task, team and board. Comments
-// stay as business records but lose the author.
+// deleted, they are removed from every task, team and board, and what
+// lib/erasure.ts lists goes too (CuraAI questions, notifications, sign-in
+// factors, recordings, mentions in AI memory). Comments stay as business
+// records but lose the author; what the law keeps is listed there.
 adminRoutes.post('/users/:id/erase', async (c) => {
   requirePerm(c, 'privacy.manage');
   await requireFresh(c);
@@ -604,13 +607,48 @@ adminRoutes.post('/users/:id/erase', async (c) => {
     await sq.query('delete from team_members where org_id = $1 and user_id = $2', [o, id]);
     await sq.query('delete from board_members where org_id = $1 and user_id = $2', [o, id]);
     await sq.query('update teams set lead_id = null where org_id = $1 and lead_id = $2', [o, id]);
+    // CuraAI questions, notifications, chat links, sign-in factors, recordings and mentions in AI memory (lib/erasure.ts).
+    await eraseUserExtras(sq, o, id, { email: target.email, name: target.name });
     await sq.query(
-      `update users set name = '—', email = $3, status = 'deleted', locale = null, last_active_at = null
+      `update users set name = '—', email = $3, status = 'deleted', locale = null, last_active_at = null, prefs = '{}'::jsonb
         where org_id = $1 and id = $2`,
       [o, id, `erased+${id}@invalid.curahold`],
     );
     await audit(sq, { orgId: o, actorId: auth.userId, action: 'user.erased', entity: 'user', entityId: id });
   });
+  return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------- portal people's personal data
+
+/** Everything held about one person at a customer who uses the portal (KVKK m.11, GDPR Art. 15/20). */
+adminRoutes.get('/portal-users/:id/export', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const data = await portalPersonalData(c, id);
+  if (!data) fail('not_found');
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'portal.user_exported', entity: 'portal_user', entityId: id }));
+  c.header('content-disposition', `attachment; filename="curahold-personal-data-${id}.json"`);
+  return c.json(data);
+});
+
+// Erasure of a person at a customer (KVKK m.7, GDPR Art. 17): the portal
+// account is deleted, not only switched off; what they wrote stays with no
+// author. Owner-level and filtered by this company, like the user erase.
+adminRoutes.post('/portal-users/:id/erase', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const done = await c.get('deps').db.system(async (sq) => {
+    const ok = await erasePortalUser(sq, org.id, id);
+    if (ok) await audit(sq, { orgId: org.id, actorId: auth.userId, action: 'portal.user_erased', entity: 'portal_user', entityId: id });
+    return ok;
+  });
+  if (!done) fail('not_found');
   return c.json({ ok: true });
 });
 
