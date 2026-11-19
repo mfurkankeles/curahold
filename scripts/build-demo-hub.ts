@@ -13,7 +13,9 @@
 // every link inside the hub is relative, so the same folder works under
 // curahold.com/demo/, on a claude.ai page, or on any static host — and under a
 // strict content security policy (nothing inline runs).
-// Addresses outside the hub: SITE_URL, SITE_APP_URL, SITE_DOCS_URL.
+// Addresses outside the hub: SITE_URL, SITE_APP_URL, SITE_DOCS_URL. For a copy that cannot follow
+// the docs' own paths (a preview), SITE_DOCS_HOME sends every docs link to that one address; and
+// SITE_SIGNUP_URL replaces the sign-up address (a relative one, such as index.html, is from the hub's root).
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, intentTable, tourText } from '../shared/src/tours';
@@ -27,6 +29,8 @@ const OUT = process.argv[2] ?? join(ROOT, 'dist', 'demo-hub');
 const SITE = (process.env.SITE_URL ?? 'https://curahold.com').replace(/\/$/, '');
 const APP = (process.env.SITE_APP_URL ?? 'https://app.curahold.com').replace(/\/$/, '');
 const DOCS = (process.env.SITE_DOCS_URL ?? `${APP}/docs`).replace(/\/$/, '');
+const DOCS_HOME = process.env.SITE_DOCS_HOME ?? '';
+const SIGNUP = process.env.SITE_SIGNUP_URL ?? `${APP}/signup`;
 /** The languages the help centre is written in (its folders); the hub links to English where it has none. */
 const DOC_LANGS = readdirSync(join(ROOT, 'docs', 'site')).filter((d) => d !== 'assets');
 
@@ -86,6 +90,11 @@ function page(locale: Locale): string {
   const site = `${SITE}/${dirOf(locale)}`;
   const info = LOCALE_INFO[locale];
   const docs = `${DOCS}/${DOC_LANGS.includes(locale) ? locale : 'en'}/`;
+  /** A docs page in this language, or the one docs address when the docs cannot be linked page by page. */
+  const docsAt = (page = '') => DOCS_HOME || `${docs}${page}`;
+  /** A docs copy elsewhere opens in its own tab (a preview's frame cannot show it). */
+  const away = DOCS_HOME ? ' target="_blank" rel="noopener"' : '';
+  const signup = /^[a-z]+:/.test(SIGNUP) ? SIGNUP : `${up}${SIGNUP}`;
   const hrefOf = (l: Locale) => `${up}${dirOf(l)}` || './';
   // The language button opens the chooser (web/src/demo/hub-lang.js); without a script it still
   // opens, as the address's target. The first visit to the English root opens it by itself.
@@ -195,11 +204,11 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
     <nav class="top__nav" aria-label="${esc(c.nav.tours)}">
       <a href="#tours" aria-current="page">${esc(c.nav.tours)}</a>
       <a href="${site}#pricing">${esc(c.nav.pricing)}</a>
-      <a href="${docs}">${esc(c.nav.docs)}</a>
+      <a href="${docsAt()}"${away}>${esc(c.nav.docs)}</a>
     </nav>
     <div class="top__end">
       ${langMenu}
-      <a class="btn btn--primary" href="${APP}/signup">${esc(c.nav.start)}</a>
+      <a class="btn btn--primary" href="${signup}">${esc(c.nav.start)}</a>
     </div>
   </div>
 </header>
@@ -249,8 +258,8 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
         <p>${esc(c.band.text)}</p>
       </div>
       <div class="hub-band__ctas">
-        <a class="btn btn--light btn--big" href="${APP}/signup">${esc(c.band.primary)}</a>
-        <a class="btn btn--line btn--big" href="${docs}">${esc(c.band.secondary)}</a>
+        <a class="btn btn--light btn--big" href="${signup}">${esc(c.band.primary)}</a>
+        <a class="btn btn--line btn--big" href="${docsAt()}"${away}>${esc(c.band.secondary)}</a>
       </div>
     </div>
   </section>
@@ -258,7 +267,7 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
 <footer class="foot hub-foot">
   <div class="wrap foot__base">
     <span>${esc(c.foot.made)}</span>
-    <span><a href="${site}">${esc(c.foot.home)}</a> · <a href="${docs}legal-privacy/">${esc(c.foot.privacy)}</a> · <a href="${docs}legal-terms/">${esc(c.foot.terms)}</a></span>
+    <span><a href="${site}">${esc(c.foot.home)}</a> · <a href="${docsAt('legal-privacy/')}"${away}>${esc(c.foot.privacy)}</a> · <a href="${docsAt('legal-terms/')}"${away}>${esc(c.foot.terms)}</a></span>
   </div>
 </footer>
 <script type="application/json" id="hub-words">${words}</script>

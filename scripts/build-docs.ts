@@ -490,7 +490,7 @@ function makeRelative(dir: string, root = dir) {
       .replace(/(href|src)="\/docs\/assets\//g, `$1="${up}assets/`)
       .replace(/src="\/docs\/([A-Za-z-]+)\/img\//g, (_m, lang) => `src="${up}${lang}/img/`)
       .replace(/href="\/docs\/([a-z]{2}(?:-[A-Z][a-z]{3})?)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang, slug, hash) => `href="${up}${lang}/${slug}index.html${hash ?? ''}"`)
-      .replace('class="top__link top__app" href="/"', `class="top__link top__app" href="${up}${APP_HREF}"`)
+      .replace('class="top__link top__app" href="/"', `class="top__link top__app" href="${/^[a-z]+:/.test(APP_HREF) ? APP_HREF : `${up}${APP_HREF}`}"`)
       .replace('"base":"/docs/","index":""', `"base":"${up}","index":"index.html"`)
       // The language chooser at the top of the folder.
       .replace('content="0; url=/docs/en/"', 'content="0; url=en/index.html"')
