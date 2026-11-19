@@ -49,7 +49,7 @@
 
   [].slice.call(root.querySelectorAll('.hub-intent__q')).forEach(function (q) {
     var name = q.getAttribute('data-q');
-    var chips = [].slice.call(q.querySelectorAll('.hub-chip'));
+    var chips = [].slice.call(q.querySelectorAll('.hub-ichip'));
     q.setAttribute('role', 'radiogroup');
     chips.forEach(function (b, i) {
       b.setAttribute('role', 'radio');

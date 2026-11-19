@@ -153,7 +153,7 @@ function page(locale: Locale): string {
   const question = <K extends string>(q: 'team' | 'goal' | 'today', keys: readonly K[], name: (k: K) => string) => `
       <fieldset class="hub-intent__q" data-q="${q}">
         <legend>${esc(say(`q.${q}`))}</legend>
-        <div class="hub-chips">${keys.map((k) => `<button type="button" class="hub-chip" data-value="${k}" aria-pressed="false">${esc(name(k))}</button>`).join('')}</div>
+        <div class="hub-ichips">${keys.map((k) => `<button type="button" class="hub-ichip" data-value="${k}" aria-pressed="false">${esc(name(k))}</button>`).join('')}</div>
       </fieldset>`;
   const intentData = JSON.stringify({
     table: intentTable(),

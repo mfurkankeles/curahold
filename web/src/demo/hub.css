@@ -65,3 +65,12 @@
 @media (max-width: 900px) {
   .hub-intent__qs { grid-template-columns: 1fr; }
 }
+/* The questions' answers look like the filter chips but are their own (site/hub.js binds .hub-chip to the filters). */
+.hub-ichips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-ichip {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 6px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 500 13.5px/1.2 var(--text);
+}
+.hub-ichip:hover { border-color: var(--iris); }
+.hub-ichip[aria-pressed='true'] { background: var(--iris-wash); border-color: var(--iris); color: var(--iris-ink); font-weight: 650; }
+.hub-ichip:focus-visible { outline: 2px solid var(--iris); outline-offset: 2px; }
