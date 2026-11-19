@@ -254,10 +254,6 @@ export function assertOwnerConfigured(cfg: Pick<Config, 'owner' | 'singleTenantS
   throw new Error('PLATFORM_OWNER (or SUPPORT_STAFF) must be set: a multi-company install needs an explicit platform owner');
 }
 
-export function requireOwner(c: C) {
-  if (!isOwner(c)) fail('forbidden');
-}
-
 /** Where this company stands with billing (always open when billing is off). */
 export function accessFor(c: C): Access {
   const org = c.get('org');

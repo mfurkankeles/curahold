@@ -10,8 +10,6 @@ import type { MetricPoint } from './metrics';
 
 export const PLAN_METRICS = ['site_visitors', 'trial_requests', 'trials_approved', 'activations', 'paying_customers', 'seats', 'mrr', 'arr', 'invoices', 'churned'] as const;
 export type PlanMetric = (typeof PLAN_METRICS)[number];
-/** Metrics that are a level at a moment (the rest are counts within the month). */
-export const STOCK_METRICS: readonly PlanMetric[] = ['paying_customers', 'seats', 'mrr', 'arr'];
 
 export type Pace = 'on-track' | 'close' | 'behind' | 'no-target';
 

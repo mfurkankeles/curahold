@@ -1,6 +1,6 @@
 # 0007. Live updates: one Durable Object per company, with polling fallback
 
-- Status: Accepted (not built; polling is the current behaviour)
+- Status: Accepted (built: `api/src/live/` — a Durable Object per company on Cloudflare, `LISTEN/NOTIFY` on Node; polling stays as the fallback)
 - Date: 2026-11-12
 - Deciders: product owner
 

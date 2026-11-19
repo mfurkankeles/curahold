@@ -137,7 +137,6 @@ export interface PortalBrand {
   /** A small "powered by Curahold" at the foot of the portal and its emails. */
   poweredBy: boolean;
 }
-export const DEFAULT_PORTAL_BRAND: PortalBrand = { color: null, poweredBy: true };
 /** The portal's colour when a company has not chosen one. */
 export const PORTAL_DEFAULT_COLOR = '#5b4de8';
 export const HEX_COLOR = /^#[0-9a-f]{6}$/i;

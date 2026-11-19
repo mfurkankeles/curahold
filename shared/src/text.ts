@@ -20,9 +20,6 @@ export function foldText(s: string): string {
     .replace(/[øłđß]/g, (c) => WHOLE[c]);
 }
 
-/** Does `text` contain `part`, the way a person means it? */
-export const hasText = (text: string, part: string): boolean => foldText(text).includes(foldText(part));
-
 /** The same name, however it was typed. */
 export const sameText = (a: string, b: string): boolean => foldText(a.trim()) === foldText(b.trim());
 
