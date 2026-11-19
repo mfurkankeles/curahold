@@ -671,6 +671,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': 'בקשה יכולה לשאת עד {n} קבצים.',
   'errors.help_file_type': 'אי אפשר לצרף את {name}. אפשר לצרף תמונות, PDF, טקסט, CSV, JSON, Excel וסרטונים קצרים.',
   'errors.portal_file_type': "אי אפשר לצרף את {name}. אפשר לצרף תמונות, PDF, ‏Word, ‏Excel, ‏PowerPoint, ‏OpenDocument, טקסט, CSV ו-ZIP.",
+  'errors.portal_file_unsafe': "אי אפשר לצרף את {name}: התוכן שלו לא נראה בטוח (ארכיון גדול מכדי לפתוח, תוכנה או מאקרו בתוכו, או PDF שמריץ קוד). שלחו אותו כקובץ רגיל.",
+  'errors.file_quarantined': "הקובץ נבדק עכשיו לאיתור וירוסים. נסו שוב בעוד דקה.",
   'errors.portal_too_many_files': "עד {n} קבצים בכל פעם.",
   'errors.portal_off': 'פורטל הלקוחות כבוי. הפעל אותו בהגדרות ← פורטל לקוחות.',
   'errors.portal_invite_owner': 'רק מנהל או הבעלים של הלקוח יכולים להזמין אנשים לפורטל.',

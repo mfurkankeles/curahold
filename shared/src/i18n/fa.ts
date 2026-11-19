@@ -671,6 +671,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': 'یک درخواست می‌تواند تا {n} فایل داشته باشد.',
   'errors.help_file_type': '{name} قابل پیوست نیست. تصاویر، PDF، متن، CSV، JSON، Excel و ویدیوهای کوتاه قابل پیوست‌اند.',
   'errors.portal_file_type': "{name} را نمی‌توان پیوست کرد. تصویر، PDF، Word، Excel، PowerPoint، OpenDocument، متن، CSV و ZIP را می‌توان پیوست کرد.",
+  'errors.portal_file_unsafe': "{name} را نمی‌توان پیوست کرد: محتوای آن امن به نظر نمی‌رسد (بایگانی‌ای بزرگ‌تر از آنکه باز شود، برنامه یا ماکرو درون آن، یا PDF که کد اجرا می‌کند). آن را به‌صورت فایل ساده بفرستید.",
+  'errors.file_quarantined': "این فایل در حال بررسی برای ویروس است. یک دقیقه دیگر دوباره امتحان کنید.",
   'errors.portal_too_many_files': "هر بار حداکثر {n} فایل.",
   'errors.portal_off': 'پورتال مشتری خاموش است. آن را از تنظیمات ← پورتال مشتری روشن کن.',
   'errors.portal_invite_owner': 'فقط یک مدیر یا مالک مشتری می‌تواند افراد را به پورتال دعوت کند.',

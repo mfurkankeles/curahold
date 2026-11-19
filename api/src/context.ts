@@ -139,6 +139,8 @@ export interface Deps {
   watch?: import('./lib/botGuard').TrafficWatch;
   /** Error-rate and latency watch (lib/ops.ts); tests give their own. */
   ops?: import('./lib/ops').OpsWatch;
+  /** The optional upload scanner (lib/uploadScan.ts; self-host: ClamAV, lib/clamav.ts). Unset: nothing is quarantined. */
+  scanner?: import('./lib/uploadScan').FileScanner;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
   /** The assistant: where the docs' sections are read from, and (tests) a model to use instead of the configured one. */
   assistant?: { docs?: import('./assistant/store').DocsLoader; provider?: import('./assistant/provider').LlmProvider | null };

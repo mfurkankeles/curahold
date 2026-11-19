@@ -4,6 +4,7 @@
 // progress report. Everything runs under the person's own rights: row
 // security decides which plans they see and change; the product's own
 // signals move a plan on with owner access (they are the company's facts).
+import { quarantine } from '../lib/uploadScan';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
@@ -483,6 +484,7 @@ onboardingPlanRoutes.post('/onboarding-steps/:id/files', async (c) => {
     await touch(q, s.plan_id);
     return s.plan_id as string;
   });
+  await quarantine(deps, org.id, key);
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 

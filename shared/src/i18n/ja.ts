@@ -671,6 +671,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': '1件のリクエストには最大 {n} 個のファイルを添付できます。',
   'errors.help_file_type': '{name} は添付できません。画像、PDF、テキスト、CSV、JSON、Excel、短い動画を添付できます。',
   'errors.portal_file_type': "{name} は添付できません。画像、PDF、Word、Excel、PowerPoint、OpenDocument、テキスト、CSV、ZIP を添付できます。",
+  'errors.portal_file_unsafe': "{name} は添付できません。内容が安全ではないようです（開けないほど大きい圧縮ファイル、プログラムやマクロを含むファイル、またはコードを実行する PDF）。通常のファイルとして送ってください。",
+  'errors.file_quarantined': "このファイルはウイルスチェック中です。1分後にもう一度お試しください。",
   'errors.portal_too_many_files': "一度に添付できるのは {n} 件までです。",
   'errors.portal_off': 'カスタマーポータルはオフです。設定 → カスタマーポータルでオンにしてください。',
   'errors.portal_invite_owner': '管理者または顧客の担当者のみがポータルに人を招待できます。',

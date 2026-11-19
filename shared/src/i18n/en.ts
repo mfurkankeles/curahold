@@ -2038,6 +2038,8 @@ export const en = {
   'errors.help_too_many_files': 'A request can carry up to {n} files.',
   'errors.help_file_type': '{name} can\'t be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can.',
   'errors.portal_file_type': "{name} can't be attached. Pictures, PDF, Word, Excel, PowerPoint, OpenDocument, text, CSV and ZIP files can.",
+  'errors.portal_file_unsafe': "{name} can't be attached: its contents look unsafe (a packed archive too large to open, a program or macro inside, or a PDF that runs code). Send it as a plain file instead.",
+  'errors.file_quarantined': "This file is being checked for viruses. Try again in a minute.",
   'errors.portal_too_many_files': "Up to {n} files at a time.",
   'settings.tab.portal': 'Customer portal',
   'portal.admin.title': 'Customer portal',

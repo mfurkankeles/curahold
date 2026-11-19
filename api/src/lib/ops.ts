@@ -103,13 +103,19 @@ export async function raiseOpsAlert(deps: Deps, a: OpsAlert): Promise<boolean> {
 export async function opsHourlyCheck(deps: Deps, now: Date): Promise<OpsAlert[]> {
   if (deps.config.ops?.alerts === false) return [];
   const hour = now.toISOString().slice(0, 13);
-  const [e] = await deps.db.system((q) => q.query<{ n: number }>(`select count(*)::int as n from error_log where source = 'server' and at > $1::timestamptz - interval '1 hour'`, [now.toISOString()]));
+  // Across every company on purpose (the installation's health); how many companies is part of the alert.
+  const [e] = await deps.db.system((q) =>
+    q.query<{ n: number; orgs: number }>(`select count(*)::int as n, count(distinct org_id)::int as orgs from error_log where source = 'server' and at > $1::timestamptz - interval '1 hour'`, [now.toISOString()]),
+  );
   const [d] = await deps.db.system((q) =>
-    q.query<{ n: number }>(`select count(*)::int as n from notifications where state = 'pending' and created_at < $1::timestamptz - interval '1 hour' and created_at > $1::timestamptz - interval '2 days'`, [now.toISOString()]),
+    q.query<{ n: number; orgs: number }>(
+      `select count(*)::int as n, count(distinct org_id)::int as orgs from notifications where state = 'pending' and created_at < $1::timestamptz - interval '1 hour' and created_at > $1::timestamptz - interval '2 days'`,
+      [now.toISOString()],
+    ),
   );
   const out: OpsAlert[] = [];
-  if (Number(e?.n) >= OPS_RULES.errorLogPerHour) out.push({ rule: 'error-log', ref: `ops:error-log:${hour}`, body: `Errors: ${e.n} server errors recorded in the last hour`, meta: { count: Number(e.n) } });
-  if (Number(d?.n) >= OPS_RULES.stuckDeliveries) out.push({ rule: 'deliveries', ref: `ops:deliveries:${hour}`, body: `Deliveries: ${d.n} notifications waiting for more than an hour`, meta: { count: Number(d.n) } });
+  if (Number(e?.n) >= OPS_RULES.errorLogPerHour) out.push({ rule: 'error-log', ref: `ops:error-log:${hour}`, body: `Errors: ${e.n} server errors recorded in the last hour`, meta: { count: Number(e.n), companies: Number(e.orgs) } });
+  if (Number(d?.n) >= OPS_RULES.stuckDeliveries) out.push({ rule: 'deliveries', ref: `ops:deliveries:${hour}`, body: `Deliveries: ${d.n} notifications waiting for more than an hour`, meta: { count: Number(d.n), companies: Number(d.orgs) } });
   for (const a of out) await raiseOpsAlert(deps, a);
   return out;
 }

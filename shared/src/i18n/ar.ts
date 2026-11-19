@@ -671,6 +671,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': 'يمكن أن يحمل الطلب حتى {n} ملفات.',
   'errors.help_file_type': 'لا يمكن إرفاق {name}. يمكن إرفاق الصور وPDF والنصوص وCSV وJSON وExcel ومقاطع فيديو قصيرة.',
   'errors.portal_file_type': "لا يمكن إرفاق {name}. يمكن إرفاق الصور وملفات PDF وWord وExcel وPowerPoint وOpenDocument والنصوص وCSV وZIP.",
+  'errors.portal_file_unsafe': "لا يمكن إرفاق {name}: يبدو محتواه غير آمن (أرشيف أكبر من أن يُفتح، أو برنامج أو ماكرو بداخله، أو ملف PDF يشغّل تعليمات برمجية). أرسله كملف عادي بدلاً من ذلك.",
+  'errors.file_quarantined': "يجري فحص هذا الملف بحثًا عن الفيروسات. حاول مرة أخرى بعد دقيقة.",
   'errors.portal_too_many_files': "يمكن إرفاق {n} ملفات كحد أقصى في كل مرة.",
   'errors.portal_off': 'بوابة العملاء مغلقة. شغّلها من الإعدادات ← بوابة العملاء.',
   'errors.portal_invite_owner': 'يمكن للمسؤول أو مالك العميل فقط دعوة أشخاص إلى البوابة.',

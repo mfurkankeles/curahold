@@ -671,6 +671,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': '한 요청에 최대 {n}개의 파일을 담을 수 있습니다.',
   'errors.help_file_type': '{name}은(는) 첨부할 수 없습니다. 이미지, PDF, 텍스트, CSV, JSON, Excel, 짧은 동영상을 첨부할 수 있습니다.',
   'errors.portal_file_type': "{name}은(는) 첨부할 수 없습니다. 이미지, PDF, Word, Excel, PowerPoint, OpenDocument, 텍스트, CSV, ZIP 파일을 첨부할 수 있습니다.",
+  'errors.portal_file_unsafe': "{name}은(는) 첨부할 수 없습니다. 내용이 안전하지 않아 보입니다(열 수 없을 만큼 큰 압축 파일, 프로그램이나 매크로가 포함된 파일, 코드를 실행하는 PDF). 일반 파일로 보내 주세요.",
+  'errors.file_quarantined': "이 파일은 바이러스 검사 중입니다. 1분 후에 다시 시도해 주세요.",
   'errors.portal_too_many_files': "한 번에 최대 {n}개 파일까지 첨부할 수 있습니다.",
   'errors.portal_off': '고객 포털이 꺼져 있습니다. 설정 → 고객 포털에서 켜세요.',
   'errors.portal_invite_owner': '관리자 또는 고객의 담당자만 포털에 사람을 초대할 수 있습니다.',

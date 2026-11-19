@@ -20,6 +20,7 @@ import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
 import { readiness } from './lib/ops';
+import { quarantine, released } from './lib/uploadScan';
 import { enqueue, kick } from './lib/notify';
 import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalBytesUsed, portalFiles, portalOn, portalQuotaMb, signInOptions, type PortalEnv } from './lib/portal';
 import { PORTAL_FILE_MB, PORTAL_MAX_FILES } from '../../shared/src/portal';
@@ -257,6 +258,8 @@ export function createPortalApp(deps: Deps) {
       await deps.storage.delete(key).catch(() => undefined);
       throw e;
     }
+    // With a scanner configured, nobody opens it until it is found clean (lib/uploadScan.ts).
+    await quarantine(deps, key.slice(0, 36), key);
   };
 
   /** Keeps the files, then records each on the request (comment null) or on the reply. */
@@ -352,6 +355,7 @@ export function createPortalApp(deps: Deps) {
   // A file is always a download, never shown in the page, and can run nothing.
   app.get('/papi/files/:id', async (c) => {
     const f = await one(c, 'select portal_file($1) as f', [id(c, 'id')]);
+    if (!(await released(deps, c.get('org').id, f.key))) fail('file_quarantined');
     const obj = await deps.storage.get(f.key);
     if (!obj) fail('not_found');
     return c.body(obj!.data, 200, {

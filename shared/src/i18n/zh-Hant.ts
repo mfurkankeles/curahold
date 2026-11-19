@@ -671,6 +671,8 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': '一個請求最多可攜帶 {n} 個檔案。',
   'errors.help_file_type': '無法附加 {name}。可附加圖片、PDF、文字、CSV、JSON、Excel 與短影片。',
   'errors.portal_file_type': "無法附加 {name}。可以附加圖片、PDF、Word、Excel、PowerPoint、OpenDocument、文字、CSV 和 ZIP 檔案。",
+  'errors.portal_file_unsafe': "無法附加 {name}：其內容看起來不安全（壓縮檔過大無法開啟、內含程式或巨集，或是會執行程式碼的 PDF）。請改為傳送一般檔案。",
+  'errors.file_quarantined': "正在檢查此檔案是否含有病毒。請一分鐘後再試。",
   'errors.portal_too_many_files': "每次最多 {n} 個檔案。",
   'errors.portal_off': '客戶入口已關閉。請在「設定 → 客戶入口」中開啟。',
   'errors.portal_invite_owner': '只有管理員或該客戶的負責人才能邀請人員加入入口。',

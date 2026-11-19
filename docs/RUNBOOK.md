@@ -65,11 +65,18 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
    company: `Type: CNAME  Name: *  Target: curahold.com  Proxy: on`. Every company's address
    (`<slug>.curahold.com`) and its onboarding hub (`/onboarding`) answer from then on; the portal domain
    gets the same single record. Nothing is added when a company signs up.
-2. **Files from customers have no malware scan yet.** The portal takes files only on requests or tickets
-   shared with the customer and on steps of their onboarding plan; each is checked by ending and first
-   bytes, at most 25 MB, within the company's allowance (Settings → Customer portal), stored privately and
-   only ever served as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). Decide on a
-   scan before go-live (no paid service has been added); until then this is the standing risk.
+2. **Files from customers are looked into before they are kept** (`api/src/lib/uploadScan.ts`, free, on every
+   hosting). The portal takes files only on requests or tickets shared with the customer and on steps of their
+   onboarding plan; each is checked by ending and first bytes, at most 25 MB, within the company's allowance
+   (Settings → Customer portal), then by its contents without unpacking: ZIP directories (at most 2,000 entries,
+   250 MB unpacked, ratio 120:1; no encrypted, nested-archive, program or climbing-path entries), Office macros
+   (`vbaProject.bin`), PDFs with `/JavaScript`, `/JS`, `/Launch` or `/EmbeddedFile`. Stored privately, served only
+   as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). **A signature virus scan is
+   optional:** self-host sets `CLAMAV_HOST` (the commented `clamav` service in `docker-compose.yml`); every upload
+   (portal, tasks, records, onboarding steps) is then held (`file_scans`, answer 423 `file_quarantined`) until
+   clamd finds it clean, deleted if infected (alert in the owner console), retried hourly if clamd is down. The
+   hosted Workers have no free signature scanner; the content checks above are the hosted line (decision in
+   `/home/claude/orch/out/owner-questions.md`).
 
 ## Rollback
 

@@ -1,3 +1,4 @@
+import { quarantine, released } from '../lib/uploadScan';
 import { INLINE_TYPES, readUpload } from '../lib/upload';
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
@@ -962,6 +963,7 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: r.id, meta: { name } });
     return r;
   });
+  await quarantine(deps, org.id, key);
   return c.json({ file: toFile(row) }, 201);
 });
 
@@ -972,6 +974,7 @@ taskRoutes.get('/files/:id', async (c) => {
     if (!r) fail('not_found');
     return r;
   });
+  if (!(await released(c.get('deps'), row.org_id, row.storage_key))) fail('file_quarantined');
   const obj = await c.get('deps').storage.get(row.storage_key);
   if (!obj) fail('not_found');
   // A picture may be shown in the page (a pasted screenshot); everything else is a download.
