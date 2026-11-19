@@ -265,7 +265,7 @@ export function HandoverCard({ id, onDone }: { id: string; onDone: () => void })
               ))}
             </select>
           </label>
-          <label className="field">
+          <label className="field" data-tour="flow-owner">
             <span className="field__label">{t('flow.handover.owner', { dept: deptName(p.toDepartment) })}</span>
             <select className="select" value={owner} disabled={!canWrite} onChange={(e) => setOwner(e.target.value)}>
               <option value="">{t('flow.handover.pickOwner')}</option>

@@ -36,7 +36,7 @@ export function AssistantSettings() {
   const usd = (n: number) => formatMoney(n, 'USD', locale);
   const s = view.settings;
   return (
-    <section className="sheet">
+    <section className="sheet" data-tour="ai-settings">
       <h3 className="section__head">{t('assist.settings.title')}</h3>
       <p className="field__hint">{t('assist.settings.lead')}</p>
       {!view.engine.available && <p className="muted">{t('assist.settings.unavailable')}</p>}

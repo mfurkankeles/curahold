@@ -52,6 +52,80 @@ const SETUP: Shot[] = [
   { name: 'setup-test-bundles', go: go('/setup-test'), ready: '.sh-bundle', mark: '[data-tour="setup-bundles"]', n: 5 },
   { name: 'setup-test-gate', go: go('/setup-test'), ready: '.sh-gate', mark: '[data-tour="setup-gate"]', n: 6 },
 ].map((x) => ({ ...x, width: 1280, height: 800 }));
+/** The first board link under a department's heading in the menu, as JS that leaves its address in `href`. */
+const boardOf = (dept: string) =>
+  `let a = document.querySelector('.sidebar .navdept[data-dept="${dept}"]'); while (a && !(a.matches && a.matches('a.navlink--board'))) a = a.nextElementSibling; const href = a.getAttribute('href')`;
+/**
+ * The demo's two customers of the flow guide, found by what they have (their names are the demo
+ * language's own): the one whose won deal waits on its hand-over card, and the one with shipped work
+ * still to tell them about.
+ */
+const json = `const get = async (u) => (await fetch(u)).json()`;
+const cedar = `${json}; const h = (await get('/api/handovers')).handovers[0]; __demo.navigate('/accounts/' + h.accountId)`;
+const quill = `${json}; for (const a of (await get('/api/accounts?limit=100')).accounts) { const f = await get('/api/accounts/' + a.id + '/flow'); if (f.work.some((w) => w.done && !w.toldAt)) { __demo.navigate('/accounts/' + a.id); break; } }`;
+const customer = (who: 'Cedarmoor' | 'Quillfield') => (who === 'Cedarmoor' ? cedar : quill);
+/** An export from another tool, dropped on the import page (read in the tab, as a real file would be). */
+const dropFile = `await wait('[data-tour="import-drop"] input'); const csv = ['ID,Title,List,Status,Assignee,Due date,Priority,Customer,Parent ID,Comments,Story points', '1,Kick-off call,Onboarding,To do,,2026-12-01,High,Cedarmoor Health,,,', '2,Import their users,Onboarding,In progress,,,Medium,Cedarmoor Health,,,3', '3,Fix the login bug,Bugs,To do,,,High,,,,2', '4,Prepare the renewal,Renewals,To do,,,Medium,Quillfield Retail,,,', '5,Send the agenda,Onboarding,To do,,,,,1,Ask about single sign-on,', '6,Check the invoice,Billing,To do,,31/13/2026,,,,,'].join(String.fromCharCode(10)); const inp = document.querySelector('[data-tour="import-drop"] input'); const dt = new DataTransfer(); dt.items.add(new File([csv], 'old-tool-export.csv', { type: 'text/csv' })); inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true })); await wait('.wizard-steps')`;
+const pause = (ms: number) => `await new Promise((r) => setTimeout(r, ${ms}))`;
+const next = `document.querySelector('.dialog .btn--primary').click(); ${pause(1500)}`;
+/**
+ * The guides written for the features of 16–19 November (docs-completeness audit):
+ * departments, hand-over and requests, moving in, the team's weeks, CuraAI's AI
+ * answers, the BI feed and the accounting programs. One picture per step.
+ */
+const GUIDES: Shot[] = [
+  // departments.md
+  { name: 'dept-open', go: go('/settings/departments'), ready: '.dept-sheet', mark: 'a[href="/settings/departments"]', n: 1 },
+  { name: 'dept-plan', go: go('/settings/departments'), ready: '.dept-sheet', mark: '.dept-sheet[data-dept="onboarding"] .dept-sheet__head', n: 2 },
+  { name: 'dept-leads', go: go('/settings/departments'), ready: '.dept-sheet', mark: '.dept-sheet[data-dept="success"] .dept-sheet__people > .field:first-child', n: 3 },
+  { name: 'dept-members', go: go('/settings/departments'), ready: '.dept-sheet', mark: '.dept-sheet[data-dept="success"] .dept-sheet__people > .field:nth-child(2)', n: 4 },
+  { name: 'dept-band', go: go('/settings/departments'), ready: '.dept-sheet', mark: '.dept-sheet[data-dept="finance"] .dept-sheet__band', n: 5 },
+  { name: 'dept-menu', go: go('/home'), ready: '.sidebar .navdept', mark: '.sidebar .navdept[data-dept="success"]', n: 1 },
+  { name: 'dept-newboard', go: `${go('/home')}; await wait('.sidebar__add'); document.querySelector('.sidebar__add').click()`, ready: '.dialog select', mark: '.dialog .field:has(select)', n: 2 },
+  { name: 'dept-ask', go: `${go('/home')}; await wait('.sidebar .navdept'); ${boardOf('success')}; __demo.navigate(href); await wait('.board .card'); document.querySelector('.board .card').click()`, ready: '.panel [data-tour="dept-ask"]', mark: '.panel [data-tour="dept-ask"]', n: 3 },
+  { name: 'dept-customer', go: customer('Cedarmoor'), ready: '.acc-depts', mark: '.acc-depts', n: 1 },
+  { name: 'dept-owners', go: `${customer('Cedarmoor')}; await wait('.flow-team')`, ready: '.flow-team', mark: '.flow-team', n: 2 },
+  // handover-and-requests.md
+  { name: 'flow-card', go: customer('Cedarmoor'), ready: '.flow-handover', mark: '.flow-handover__head', n: 1 },
+  { name: 'flow-owner', go: customer('Cedarmoor'), ready: '.flow-handover [data-tour="flow-owner"]', mark: '.flow-handover [data-tour="flow-owner"]', n: 2 },
+  {
+    name: 'flow-confirm',
+    go: `${customer('Cedarmoor')}; await wait('[data-tour="flow-owner"] select'); const s = document.querySelector('[data-tour="flow-owner"] select'); const o = [...s.options].find((x) => x.value); if (o) { s.value = o.value; s.dispatchEvent(new Event('change', { bubbles: true })); }`,
+    ready: '.flow-handover__foot .btn--primary',
+    mark: '.flow-handover__foot .btn--primary',
+    n: 3,
+  },
+  { name: 'flow-link', go: `${customer('Quillfield')}; await wait('.flow-waiting')`, ready: '.flow-waiting button.btn', mark: '.flow-waiting button.btn', n: 1 },
+  { name: 'flow-demand', go: `${go('/home')}; await wait('.sidebar .navdept'); ${boardOf('product')}; __demo.navigate(href + '?view=backlog')`, ready: '.pm-demand', mark: '.pm-demand', n: 2 },
+  { name: 'flow-renewing', go: `${go('/home')}; await wait('.sidebar .navdept'); ${boardOf('product')}; __demo.navigate(href + '?view=backlog')`, ready: '.pm-ready', mark: '.pm-ready', n: 3 },
+  { name: 'flow-told', go: `${customer('Quillfield')}; await wait('.flow-loop')`, ready: '.flow-loop__actions', mark: '.flow-loop__actions .btn--primary', n: 1 },
+  { name: 'flow-settings', go: `${go('/settings/automations')}; await wait('.flow-settings')`, ready: '.flow-settings', mark: '.flow-settings', n: 1 },
+  // moving-in.md
+  { name: 'imp-drop', go: go('/import'), ready: '[data-tour="import-drop"]', mark: '[data-tour="import-drop"]', n: 1 },
+  { name: 'imp-columns', go: `${go('/import')}; ${dropFile}; ${pause(500)}`, ready: '.dialog .btn--primary', mark: '.dialog .btn--primary', n: 2 },
+  { name: 'imp-boards', go: `${go('/import')}; ${dropFile}; ${pause(500)}; ${next}`, ready: '.dialog .seg', mark: '.dialog .seg', n: 3 },
+  { name: 'imp-check', go: `${go('/import')}; ${dropFile}; ${pause(500)}; ${next}; ${next}; ${pause(1000)}`, ready: '.adopt-plan', mark: '.dialog .btn--primary', n: 4 },
+  { name: 'imp-undo', go: `${go('/import')}; ${dropFile}; ${pause(500)}; ${next}; ${next}; ${pause(1000)}; ${next}; ${pause(2500)}`, ready: '.import-result', mark: '.import-result ~ .inline-actions .btn:not(.btn--primary), .importer .inline-actions .btn:not(.btn--primary)', n: 5 },
+  // team-load.md
+  { name: 'team-weeks', go: go('/team?view=weeks'), ready: '.weeks', mark: '[data-tour="team-weeks"]', n: 1 },
+  { name: 'team-cell', go: go('/team?view=weeks'), ready: '.weeks', mark: '.weeks tbody tr:first-child td:nth-child(3) .weeks__box, .weeks tbody tr:first-child .weeks__box', n: 2 },
+  { name: 'team-customers', go: go('/team?view=customers'), ready: '.portfolio', mark: '.portfolio thead', n: 1 },
+  { name: 'team-cost', go: go('/reports/all'), ready: 'a.rcard[href*="cost_to_serve"]', mark: 'a.rcard[href*="cost_to_serve"]', n: 1 },
+  // automations.md
+  { name: 'auto-new', go: go('/settings/automations'), ready: '.admin__content .btn--primary', mark: '.admin__content .btn--primary', n: 1 },
+  { name: 'auto-presets', go: `${go('/settings/automations')}; await wait('.admin__content .btn--primary'); document.querySelector('.admin__content .btn--primary').click()`, ready: '.preset-list', mark: '.preset-list', n: 2 },
+  { name: 'auto-rule', go: `${go('/settings/automations')}; await wait('.admin__content .btn--primary'); document.querySelector('.admin__content .btn--primary').click(); await wait('.preset-list .preset'); document.querySelector('.preset-list .preset').click()`, ready: '.rule-editor .clause', mark: '.rule-editor .clause', n: 3 },
+  { name: 'auto-save', go: `${go('/settings/automations')}; await wait('.admin__content .btn--primary'); document.querySelector('.admin__content .btn--primary').click(); await wait('.preset-list .preset'); document.querySelector('.preset-list .preset').click()`, ready: '.rule-editor', mark: '.dialog .btn--primary', n: 4 },
+  // getting-help.md
+  { name: 'ai-open', go: go('/home'), ready: '.navlink--ask', mark: '.navlink--ask', n: 1 },
+  { name: 'ai-settings', go: go('/settings/support'), ready: '[data-tour="ai-settings"]', mark: '[data-tour="ai-settings"]', n: 1 },
+  { name: 'ai-switch', go: go('/settings/support'), ready: '[data-tour="ai-settings"] .checkbox', mark: '[data-tour="ai-settings"] .checkbox', n: 2 },
+  // bi-tools.md
+  { name: 'bi-new', go: go('/settings/analytics'), ready: '[data-tour="bi-new"]', mark: '[data-tour="bi-new"]', n: 2 },
+  { name: 'bi-feed', go: go('/settings/analytics'), ready: '[data-tour="bi-feed"]', mark: '[data-tour="bi-feed"] .form', n: 3 },
+  // accounting.md
+  { name: 'fin-tiles', go: go('/settings/sources'), ready: '[data-tour="fin-finfile"]', mark: '[data-tour="fin-odoo"], [data-tour="fin-finfile"]', n: 2 },
+].map((x) => ({ ...x, width: 1280, height: 800 }));
 const SHOTS: Shot[] = [
   { name: 'customers', go: `__demo.navigate('/accounts')`, ready: '.acard', width: 1280, height: 800 },
   { name: 'customer-phone', go: `__demo.navigate('/accounts'); await wait('.acard__name'); document.querySelector('.acard__name').click()`, ready: '.acc-band', width: 375, height: 667 },
@@ -70,6 +144,7 @@ const SHOTS: Shot[] = [
   { name: 'ob-share', go: `__demo.navigate('/onboarding')`, ready: '.ob-top__tools', mark: '.ob-top__tools .btn:last-child', width: 1280, height: 800 },
   { name: 'ob-plans', go: `__demo.navigate('/onboarding/plans')`, ready: '.ob-port__table', mark: '.ob-port__table tbody tr a', width: 1280, height: 800 },
   { name: 'ob-phone', go: `__demo.navigate('/onboarding')`, ready: '[data-tour="ob-next"]', mark: '[data-tour="ob-next"] .btn--primary', width: 375, height: 667 },
+  ...GUIDES,
 ];
 
 /** Rings the element and puts its number beside it (inline-start, so it follows right-to-left too). */
@@ -124,8 +199,8 @@ try {
       await page.setViewport({ width: shot.width, height: shot.height, deviceScaleFactor: shot.width < 600 ? 2 : 1, isMobile: shot.width < 600, hasTouch: shot.width < 600 });
       await page.goto(`http://127.0.0.1:${PORT}/index.html#${l}`);
       await page.waitForFunction(() => !document.getElementById('boot') && (globalThis as any).__demo, { timeout: 120000 });
-      await page.evaluate(`(async () => { const wait = (s) => new Promise((ok, no) => { const t0 = Date.now(); const f = () => document.querySelector(s) ? ok() : Date.now() - t0 > 15000 ? no(new Error('no ' + s)) : setTimeout(f, 100); f(); }); ${shot.go}; })()`);
       try {
+        await page.evaluate(`(async () => { const wait = (s) => new Promise((ok, no) => { const t0 = Date.now(); const f = () => document.querySelector(s) ? ok() : Date.now() - t0 > 15000 ? no(new Error('no ' + s)) : setTimeout(f, 100); f(); }); ${shot.go}; })()`);
         await page.waitForSelector(shot.ready, { visible: true, timeout: 20000 });
         // Past the 300 ms skeleton rule and any entrance motion: only finished screens.
         await page.waitForFunction(() => !document.querySelector('.skeleton, [aria-busy="true"]'), { timeout: 10000 }).catch(() => undefined);

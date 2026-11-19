@@ -161,7 +161,7 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
             <button className="linkbtn" onClick={() => setAdding(true)}>
               {t('task.links.add')}
             </button>
-            <button className="linkbtn" onClick={() => setHandoff(true)}>
+            <button className="linkbtn" data-tour="dept-ask" onClick={() => setHandoff(true)}>
               {t('links.handoff')}
             </button>
           </span>

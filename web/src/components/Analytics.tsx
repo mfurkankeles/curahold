@@ -81,7 +81,7 @@ export function AnalyticsTab() {
 
   return (
     <div className="form u-max-width-760">
-      <section className="sheet">
+      <section className="sheet" data-tour="bi-feed">
         <h2 className="sheet__title">
           <Icon name="chart" size={18} className="icon--lead" />
           {t('analytics.title')}
@@ -147,7 +147,7 @@ export function AnalyticsTab() {
         {keys && !keys.length && <p className="muted">{t('analytics.noKeys')}</p>}
         {mayExport ? (
           <div className="toolbar u-mt-12">
-            <button type="button" className="btn btn--primary" onClick={() => setMaking(true)}>
+            <button type="button" className="btn btn--primary" data-tour="bi-new" onClick={() => setMaking(true)}>
               <Icon name="plus" size={16} />
               {t('analytics.newKey')}
             </button>
