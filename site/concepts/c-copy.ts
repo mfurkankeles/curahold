@@ -33,8 +33,8 @@ export const C_COPY: Record<Locale, ConceptCCopy> = {
     words: ['Promise', 'Task', 'Portal', 'Renewal'], endA: 'The customer at the centre.', endB: 'Everyone around them.',
   },
   tr: {
-    title: 'Curahold: Müşterin merkezde', desc: 'Dört ekip tek müşteri kaydının etrafında çalışır: satış, müşteri başarısı, ürün ve finans.',
-    h1a: 'Müşterin', h1b: 'merkezde.', sub: 'Dört ekip, tek müşteri kaydının etrafında döner.', health: 'sağlık {n}',
+    title: 'Curahold: Müşteriniz merkezde', desc: 'Dört ekip tek müşteri kaydının etrafında çalışır: satış, müşteri başarısı, ürün ve finans.',
+    h1a: 'Müşteriniz', h1b: 'merkezde.', sub: 'Dört ekip, tek müşteri kaydının etrafında döner.', health: 'sağlık {n}',
     sat: ['Fırsat kazanıldı, kurulum Müşteri Başarısı’na geçti.', 'Sağlık 48’e düştü. Neden: 38 gündür temas yok.', 'Verilen söz Sprint 24’te teslim edildi.', 'Yenileme faturası taslağı hazır.'],
     cap: ['Satış kazandı, müşteri içeri girdi.', 'Müşteri Başarısı sessizleşmeyi fark etti.', 'Ürün, verilen sözü teslim etti.', 'Finans yenilemeyi hazırladı.'],
     lineH: 'Bir sözün 6 durağı',
