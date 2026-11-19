@@ -4,11 +4,21 @@
 // read the docs, and a small search index per language. No server, no
 // third-party script, nothing to run: it costs nothing to host.
 //
-//   npx tsx scripts/build-docs.ts [outDir] [--relative]
+//   npx tsx scripts/build-docs.ts [outDir] [--relative] [--preview]
 //
 // With --relative every link is written relative to the page, so the
 // folder works wherever it is put (inside the try-it demo, in a preview).
 // DOCS_APP_HREF says where "Go to the app" leads from the docs folder then.
+//
+// --preview (or DOCS_PREVIEW=1; implies --relative) is the small copy for a
+// host that takes a few hundred files: all nine languages, but no .md twin
+// per page, a page a language does not have yet links to the English page
+// instead of a copy of it, and the languages other than English and Turkish
+// show the English pictures. The production build is unchanged.
+//
+// DOCS_DATA_ONLY=1 keeps only what the try-it demo reads at run time when its
+// docs links go elsewhere (DEMO_DOCS_URL): each language's search.json and
+// answers.json, and the English pictures the answers show.
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -22,7 +32,9 @@ const ROOT = join(import.meta.dirname, '..');
 const SRC = join(ROOT, 'docs', 'site');
 const ARGS = process.argv.slice(2);
 const OUT = ARGS.find((a) => !a.startsWith('--')) ?? join(ROOT, 'dist', 'web', 'docs');
-const RELATIVE = ARGS.includes('--relative') || process.env.DOCS_RELATIVE === '1';
+const PREVIEW = ARGS.includes('--preview') || process.env.DOCS_PREVIEW === '1';
+const DATA_ONLY = ARGS.includes('--data-only') || process.env.DOCS_DATA_ONLY === '1';
+const RELATIVE = PREVIEW || ARGS.includes('--relative') || process.env.DOCS_RELATIVE === '1';
 const APP_HREF = process.env.DOCS_APP_HREF ?? '../index.html';
 /**
  * The languages the docs are written in: a folder per language under docs/site.
@@ -37,6 +49,18 @@ type Lang = Locale;
 /** English and Turkish carry every page themselves. */
 const WHOLE: Lang[] = ['en', 'tr'];
 const SECTIONS = ['help', 'developers', 'reference', 'releases', 'legal'] as const;
+/** Preview only: `<lang>/<slug>` of every page a language shows in English (it links to the English page). */
+const BORROWED = new Set<string>();
+/** Preview only: the language whose page or picture a link really goes to. */
+const pageLang = (lang: string, slug: string) => (PREVIEW && BORROWED.has(`${lang}/${slug}`) ? 'en' : lang);
+const imgLang = (lang: string) => (DATA_ONLY || (PREVIEW && !(WHOLE as string[]).includes(lang)) ? 'en' : lang);
+/** Preview only: absolute docs addresses inside a piece of HTML or JSON, sent where the preview has them. */
+const previewed = (text: string) =>
+  PREVIEW || DATA_ONLY
+    ? text
+        .replace(/\/docs\/([A-Za-z-]+)\/img\//g, (_m, l: string) => `/docs/${imgLang(l)}/img/`)
+        .replace(/\/docs\/([a-z]{2}(?:-[A-Z][a-z]{3})?)\/([a-z0-9-]+)\//g, (_m, l: string, slug: string) => `/docs/${pageLang(l, slug)}/${slug}/`)
+    : text;
 type Section = (typeof SECTIONS)[number];
 
 /** The docs' own words in a language (docs.* in the dictionaries). */
@@ -294,6 +318,7 @@ function build() {
     const missing = needed.filter((f) => !own.has(f));
     if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
     all[lang] = english.map((f) => parse(lang, f, own.has(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
+    for (const p of all[lang]) if (p.borrowed) BORROWED.add(`${lang}/${p.slug}`);
   }
 
   for (const lang of LANGS) {
@@ -307,10 +332,12 @@ function build() {
       // A page this language does not have yet is English, said so in the reader's language.
       const note = p.borrowed ? `<p class="doc__lang">${esc(ui.inEnglish)}</p>` : '';
       const body = `<div class="crumb"><a href="/docs/${lang}/">${ui.site}</a> › ${ui.sections[p.section]}</div>${note}<article class="doc"${p.borrowed ? ' lang="en" dir="ltr"' : ''}>${p.html.replace('</h1>', `</h1>${meta}`)}</article>${pager}`;
+      // The preview links to the English page instead of keeping a copy of it, and has no .md twins.
+      if (PREVIEW && p.borrowed) return;
       const dir = join(OUT, lang, p.slug);
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'index.html'), layout(lang, pages, p, body, `${p.slug}/`));
-      writeFileSync(join(OUT, lang, `${p.slug}.md`), `# ${p.title}\n\n${p.md.trim()}\n`);
+      if (!PREVIEW) writeFileSync(join(OUT, lang, `${p.slug}.md`), `# ${p.title}\n\n${p.md.trim()}\n`);
     });
     const by = (slug: string) => pages.find((p) => p.slug === slug);
     const link = (slug: string) => (by(slug) ? `<a href="/docs/${lang}/${slug}/">${esc(by(slug)!.title)}</a>` : '');
@@ -362,11 +389,11 @@ ${news}
     mkdirSync(join(OUT, lang), { recursive: true });
     writeFileSync(join(OUT, lang, 'index.html'), layout(lang, pages, null, home, ''));
     // The pictures of the product in this language (scripts/docs/shots.ts).
-    if (existsSync(join(SRC, lang, 'img'))) cpSync(join(SRC, lang, 'img'), join(OUT, lang, 'img'), { recursive: true });
-    writeFileSync(join(OUT, lang, 'answers.json'), JSON.stringify(pages.flatMap((p) => sectionsOf(lang, p))));
+    if (existsSync(join(SRC, lang, 'img')) && imgLang(lang) === lang) cpSync(join(SRC, lang, 'img'), join(OUT, lang, 'img'), { recursive: true });
+    writeFileSync(join(OUT, lang, 'answers.json'), previewed(JSON.stringify(pages.flatMap((p) => sectionsOf(lang, p)))));
     writeFileSync(
       join(OUT, lang, 'search.json'),
-      JSON.stringify(pages.map((p) => ({ u: `/docs/${lang}/${p.slug}/`, t: p.title, s: ui.sections[p.section], h: p.toc.map((h) => [h.id, h.text]), x: p.text.slice(0, 6000) }))),
+      previewed(JSON.stringify(pages.map((p) => ({ u: `/docs/${lang}/${p.slug}/`, t: p.title, s: ui.sections[p.section], h: p.toc.map((h) => [h.id, h.text]), x: p.text.slice(0, 6000) })))),
     );
   }
   // /docs/ opens in English; the Turkish docs are one click away on every page.
@@ -424,7 +451,25 @@ ${news}
     // No server to send the reader on from the folder's own address: it opens on the English start page itself.
     writeFileSync(join(OUT, 'index.html'), readFileSync(join(OUT, 'en', 'index.html'), 'utf8').replaceAll('"../', '"./'));
   }
+  if (DATA_ONLY) keepData(OUT);
   console.log(`docs: ${english.length} pages × ${LANGS.length} languages (${LANGS.map((l) => `${l} ${all[l].filter((p) => !p.borrowed).length}`).join(', ')} of their own) → ${OUT}`);
+}
+
+/** DOCS_DATA_ONLY: only the search and answer files, and the pictures the answers show. */
+function keepData(out: string) {
+  const answers = readdirSync(out).filter((l) => existsSync(join(out, l, 'answers.json')));
+  const pictures = new Set(answers.flatMap((l) => [...readFileSync(join(out, l, 'answers.json'), 'utf8').matchAll(/\/docs\/([A-Za-z-]+\/img\/[\w.-]+)/g)].map((m) => m[1])));
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const file = join(dir, name);
+      const rel = relative(out, file).split(/[\\/]/).join('/');
+      if (statSync(file).isDirectory()) {
+        walk(file);
+        if (!readdirSync(file).length) rmSync(file, { recursive: true });
+      } else if (!/^[A-Za-z-]+\/(search|answers)\.json$/.test(rel) && !pictures.has(rel)) rmSync(file);
+    }
+  };
+  walk(out);
 }
 
 /**
@@ -441,7 +486,7 @@ function makeRelative(dir: string, root = dir) {
     if (!name.endsWith('.html')) continue;
     const depth = relative(root, dir).split(/[\\/]/).filter(Boolean).length;
     const up = depth ? '../'.repeat(depth) : './';
-    const html = readFileSync(file, 'utf8')
+    const html = previewed(readFileSync(file, 'utf8'))
       .replace(/(href|src)="\/docs\/assets\//g, `$1="${up}assets/`)
       .replace(/src="\/docs\/([A-Za-z-]+)\/img\//g, (_m, lang) => `src="${up}${lang}/img/`)
       .replace(/href="\/docs\/([a-z]{2}(?:-[A-Z][a-z]{3})?)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang, slug, hash) => `href="${up}${lang}/${slug}index.html${hash ?? ''}"`)
