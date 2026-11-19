@@ -140,6 +140,16 @@ export const BASE: BaseCase[] = [
     rubric: 'Gives the total value of customers renewing in the next 90 days exactly as the tool computed it (totalValue and currency), with no invented figure.',
     q: { en: 'What is the total value of customers renewing in the next 90 days?', tr: 'Önümüzdeki 90 günde yenilenen müşterilerin toplam değeri ne?', ar: 'ما القيمة الإجمالية للعملاء الذين يتجددون خلال 90 يومًا؟', he: 'מה הערך הכולל של הלקוחות שמתחדשים ב-90 הימים הקרובים?', fa: 'ارزش کل مشتریانی که در ۹۰ روز آینده تمدید می‌شوند چقدر است؟', 'zh-Hans': '未来 90 天内续约客户的总价值是多少？', 'zh-Hant': '未來 90 天內續約客戶的總價值是多少？', ja: '今後 90 日以内に更新する顧客の合計金額は？', ko: '앞으로 90일 안에 갱신되는 고객의 총 가치는 얼마인가요?' },
   },
+  {
+    id: 'live-setup-wrong', category: 'live_data', kinds: ['answer'], live: true,
+    rubric: 'Lists only the failing setup checks the setup_health tool returned (problem and why), says each has its fix button, and never claims to have fixed anything.',
+    q: { en: "What's wrong with my setup?", tr: 'Kurulumda ne eksik?', ar: 'ما المشكلة في إعدادي؟', he: 'מה לא בסדר בהגדרות?', fa: 'چه مشکلی در تنظیمات هست؟', 'zh-Hans': '我的设置有什么问题？', 'zh-Hant': '我的設定有什麼問題？', ja: '設定のどこがおかしいですか？', ko: '설정에 뭐가 문제인가요?' },
+  },
+  {
+    id: 'live-setup-missing', category: 'live_data', kinds: ['answer'], live: true,
+    rubric: 'Answers from the setup_health tool: what is still missing in the setup, worst first, each with the screen that fixes it; no invented checks, nothing fixed for the person.',
+    q: { en: 'What is still missing in our setup?', tr: 'Kurulumumuzda hâlâ ne eksik?', ar: 'ما الذي لا يزال ناقصًا في إعدادنا؟', he: 'מה עוד חסר בהגדרות שלנו?', fa: 'هنوز چه چیزی در راه‌اندازی ما کم است؟', 'zh-Hans': '我们的设置还缺什么？', 'zh-Hant': '我們的設定還缺什麼？', ja: 'セットアップでまだ足りないものは？', ko: '우리 설정에서 아직 빠진 게 뭐예요?' },
+  },
   // ------------------------------------------------------------ off-topic
   {
     id: 'off-weather', category: 'off_topic', kinds: ['decline'],

@@ -346,6 +346,27 @@ export const GROUPS: Group[] = [
       ['DELETE /trash/:id', 'Deletes it for good now, files included, without waiting for the 30 days. Needs the right to change company settings or to manage privacy.', '30 günü beklemeden, dosyalarıyla birlikte şimdi kalıcı olarak siler. Şirket ayarlarını değiştirme ya da gizliliği yönetme yetkisi gerekir.'],
     ],
   },
+  {
+    id: 'setup',
+    title: ['Reference: setup health', 'Başvuru: kurulum sağlığı'],
+    summary: ['The setup checks and the "Test your setup" list: read them, run a step, record the result, approve go-live.', 'Kurulum kontrolleri ve "Kurulumu test et" listesi: okuyun, bir adımı çalıştırın, sonucu kaydedin, canlıya geçişi onaylayın.'],
+    intro: [
+      'Setup health is a set of cheap checks over the company\'s own data (no model, no cost), each with a plain sentence, the reason it matters and the screen that fixes it. Everything is read as the caller: each person sees the checks they can fix, administrators see them all. Nothing here fixes anything; a test step does what its name says (a test ticket, one sync run, a dry run of a rule) and nothing more. Every try is kept with what it saw.',
+      'Kurulum sağlığı, şirketin kendi verisi üzerinde çalışan ucuz kontrollerdir (model yok, maliyet yok); her biri sade bir cümle, neden önemli olduğu ve düzelten ekranla gelir. Her şey çağıranın yetkisiyle okunur: herkes düzeltebileceği kontrolleri, yöneticiler hepsini görür. Burada hiçbir şey düzeltilmez; bir test adımı adının söylediğini yapar (bir test talebi, bir eşitleme, bir kuralın deneme çalıştırması), fazlasını değil. Her deneme gördüğüyle birlikte saklanır.',
+    ],
+    routes: [
+      ['GET /setup-health', 'The checks the caller can fix, worst first: `status`, `problem`, `why`, `fix` (the screen), and the counts `failing`, `found` and `fixed`. `?area=sync,import` limits it to some areas.', 'Çağıranın düzeltebileceği kontroller, en önemlisi başta: `status`, `problem`, `why`, `fix` (ekran) ve `failing`, `found`, `fixed` sayıları. `?area=sync,import` bazı alanlarla sınırlar.'],
+      ['POST /setup-health/check', 'The same checks, run now, and what fails is remembered, so a later read can count what was fixed. Answers as `GET /setup-health` does.', 'Aynı kontroller, şimdi çalıştırılır ve kalanlar hatırlanır; sonraki okuma kaçının düzeldiğini sayabilir. Cevap `GET /setup-health` ile aynıdır.'],
+      ['POST /setup-health/:id/confirm', 'For a check that cannot be read from here (mail domain records): `done: true` says it was done, `false` takes it back.', 'Buradan okunamayan bir kontrol için (e-posta alan adı kayıtları): `done: true` yapıldığını söyler, `false` geri alır.'],
+      ['GET /setup-test', 'The test steps of the company, each with `status`, `required`, the last tries (`runs`, with what each saw), its `issue` and its kept `input`; the `bundles` and the go-live `gate`.', 'Şirketin test adımları; her biri `status`, `required`, son denemeler (`runs`, her birinin gördüğüyle), `issue` ve saklanan `input` ile; ayrıca `bundles` ve canlıya geçiş `gate` bilgisi.'],
+      ['POST /setup-test/:id/run', 'Runs a step the server can run (a test ticket, one sync run, a dry run of a rule) and keeps the try. Answers with the whole list.', 'Sunucunun çalıştırabildiği bir adımı çalıştırır (test talebi, bir eşitleme, kuralın deneme çalıştırması) ve denemeyi saklar. Cevap listenin tamamıdır.'],
+      ['POST /setup-test/:id/mark', 'A person\'s verdict on a step: `pass`, `fail`, `skipped` (optional steps only) or `todo`, with an optional `note`.', 'Bir kişinin adım hakkındaki kararı: `pass`, `fail`, `skipped` (yalnızca isteğe bağlı adımlar) ya da `todo`; isteğe bağlı `note` ile.'],
+      ['POST /setup-test/:id/input', 'What the step is tried with (a customer, a connection, a colleague), kept for the next try. `value: null` lets it choose.', 'Adımın neyle deneneceği (bir müşteri, bir bağlantı, bir çalışma arkadaşı); sonraki deneme için saklanır. `value: null` seçimi ona bırakır.'],
+      ['POST /setup-test/:id/issue', 'Turns a failed step into an issue (also on the company\'s onboarding plan, when there is one). It closes by itself when the step passes.', 'Kalan bir adımı soruna çevirir (varsa şirketin onboarding planında da görünür). Adım geçince kendiliğinden kapanır.'],
+      ['POST /setup-test/approve', 'A go-live approval, once every required step passed: `side: customer` (an administrator of the company) or `vendor` (Curahold). With both, the setup is complete.', 'Her zorunlu adım geçtikten sonra canlıya geçiş onayı: `side: customer` (şirketin bir yöneticisi) ya da `vendor` (Curahold). İkisi de varsa kurulum tamamdır.'],
+      ['POST /setup-test/reset', 'Starts the list again (administrators). The tries stay on record.', 'Listeyi baştan başlatır (yöneticiler). Denemeler kayıtta kalır.'],
+    ],
+  },
 ];
 
 /**

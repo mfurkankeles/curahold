@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { prepare, type AnswerIndex, type DocSection } from '../../shared/src/answers';
 import type { AssistReply } from '../../shared/src/assist';
-import { emptyTrace, type Tool } from '../../shared/src/assistant';
+import { emptyTrace, setupHealthTool, type Tool } from '../../shared/src/assistant';
 import { answer, settingsOf, type AssistEnv, type AssistStore } from '../../api/src/assistant/core';
 import { assistantConfigFrom, costMicros } from '../../api/src/assistant/cost';
 import { anthropicProvider, type LlmProvider } from '../../api/src/assistant/provider';
@@ -82,6 +82,22 @@ function workspace(): { tools: Tool[]; trace: ReturnType<typeof emptyTrace> } {
           return { total: 2, tasks: [{ title: 'Quarterly review call', due: day(9), customer: 'Cedarmoor Health', who: ['Ada Demir'] }, { title: 'Onboarding check-in', due: day(5), customer: 'Quillfield Labs', who: ['Ada Demir'] }] };
         },
       },
+      // The setup checks (shared/src/setupHealth.ts), read-only: two failing, one fixed.
+      setupHealthTool(
+        {
+          api: (async () => ({
+            failing: 2,
+            fixed: 1,
+            found: 3,
+            checks: [
+              { status: 'fail', severity: 'high', area: 'sync', problem: 'A connected tool no longer accepts our sign-in', why: 'Nothing comes in or goes out until it is connected again.', fix: '/settings/sources/c1', fixLabel: 'Connect again' },
+              { status: 'fail', severity: 'medium', area: 'import', problem: '3 rows had a date we could not read', why: 'Write dates like 2026-03-31.', fix: '/import', fixLabel: 'Import again' },
+              { status: 'ok', severity: 'low', area: 'team', problem: 'Invitations not accepted', why: '', fix: '/settings/people', fixLabel: 'See invitations' },
+            ],
+          })) as never,
+        },
+        trace,
+      ),
     ],
   };
 }

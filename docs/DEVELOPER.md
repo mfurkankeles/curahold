@@ -252,6 +252,48 @@ to run twice (remember what was done, as `playbook_runs` does for renewals)
 and let one company's failure not stop the others (`try`/`catch` per
 company).
 
+### a setup health check
+
+A check finds one thing an administrator can get wrong or leave missing while
+setting up (a broken sign-in, rows an import could not read, a rule that
+points at a deleted field). It never fixes anything: it says what, why, and
+links to the one screen that fixes it.
+
+1. Add it to `CHECKS` in `shared/src/setupHealth.ts`: `id` (`area.whatIsWrong`),
+   `area`, `severity` (`high` breaks something now, `medium` will, `low` is
+   tidiness), `fixer` (the permissions that may see and fix it; `'owner'` for
+   the install's own settings) and `fix` (the screen; `{ref}` is filled with
+   what the query found, such as a connection id).
+2. Add its query to `SQL_CHECKS` in `api/src/lib/setupHealth.ts`: one scalar
+   sub-query returning `{n, ref}`, built with `count(...)` or `flag(...)`. Name
+   `org_id = $1` yourself: the same SQL runs under the person's row security
+   (the panel) and with owner access (the daily run). No model, no outside
+   call, nothing written. A check that reads the server's configuration goes
+   in `CONFIG_CHECKS` instead.
+3. Write `sh.<id>.problem`, `.why` and `.fix` in all nine dictionaries (add
+   `.problem.one` when `{n}` can be 1). Plain words: what we noticed, why it
+   matters, the button's label.
+4. Run `npx tsx scripts/docs/setup-health-page.ts`: it writes the check into
+   the help page of every language. `tests/setup-health.test.ts` fails until
+   steps 1–4 are all there.
+
+A screen shows its own warnings with `<SetupWarnings path="/settings/x" />`
+(the failing checks whose `fix` is that screen). A test step of "Test your
+setup" is an entry in `TEST_STEPS` (with `required`, `minutes` and, if it is
+tried with something, `input`), its words `sh.test.<id>.title / .how /
+.expect`, and, when the server can run it, a branch in
+`POST /setup-test/:id/run` (`api/src/routes/setupHealth.ts`).
+
+Other features read the checks through a small interface, never their
+internals: `listSetupChecks()`, `setupHealthFor(q, deps, …)` (one person's
+panel) and `setupSummary(q, orgId)` (the last daily failures, each step's
+state and issue, the approvals, `doneAt`), all in `api/src/lib/setupHealth.ts`.
+By contract in the database, `setup_progress` holds kind `daily` / item `last`
+(`detail.failing`) and kind `done` once both go-live approvals are in. A failed
+step turned into an issue is also written to `onboarding_issues` (the
+company's own `self` plan) when that table exists, and resolved there when the
+step passes again.
+
 ---
 
 ## 6. Tests
@@ -296,6 +338,7 @@ saves a screenshot. Run them after any change to a screen.
 | Records (contacts, opportunities, presets) | `routes/records.ts`, `lib/records.ts` | `components/Records.tsx`, `Pipeline.tsx` | `records.ts` | `deals.test.ts`, `sync.test.ts` |
 | A record on its own, its thread and files | `routes/records.ts` (`/records/:id?full=1`, comments, files) | `components/RecordPanel.tsx`, `Thread.tsx` | `records.ts` | `deals.test.ts` |
 | Playbooks | `routes/work.ts` (`/plans`), `lib/playbooks.ts` | `components/Plans.tsx` | `model.ts` (PlanTemplate), `playbooks.ts` | `deals.test.ts`, `tasks-plus.test.ts` |
+| Setup health, "Test your setup", go-live gate | `lib/setupHealth.ts`, `routes/setupHealth.ts`, `lib/scheduler.ts` (daily) | `pages/SetupHealth.tsx`, `pages/SetupTest.tsx`, `components/SetupWarnings.tsx` | `setupHealth.ts` | `setup-health.test.ts` |
 | Renewals that start by themselves | `lib/playbooks.ts` (`startRenewals`), `lib/scheduler.ts` | `components/Rhythm.tsx` (Renewals section) | `rhythm.ts` | `deals.test.ts` |
 | Renewals view (deal and agreement per customer) | `routes/records.ts` (`/renewals/links`) | `components/AccountViews.tsx` (RenewalsView) | `records.ts` (RenewalLinks) | `deals.test.ts` |
 | Targets, business reviews, nudges | `routes/reports.ts` (`/rhythm`), `lib/nudges.ts` | `components/Rhythm.tsx` | `rhythm.ts` | `rhythm.test.ts` |

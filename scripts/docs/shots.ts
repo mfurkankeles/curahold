@@ -6,7 +6,11 @@
 //   npx tsx scripts/docs/shots.ts [lang …]     (default: every demo language)
 //
 // The demo hub uses two of them (customers, customer-phone) as its hero.
-// ONLY=name,name takes just those pictures.
+// ONLY=name,name takes just those pictures (ONLY=setup- takes every picture whose name starts so).
+//
+// A picture of a step ("click this") sets `mark`: the element is ringed and
+// numbered on the picture itself, so a guide can say one action per step and
+// show exactly where it is. The ring is drawn on top of the page, never in it.
 import { createServer } from 'node:http';
 import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
@@ -28,7 +32,26 @@ interface Shot {
   ready: string;
   width: number;
   height: number;
+  /** The element the step is about (a CSS selector): ringed and numbered on the picture. */
+  mark?: string;
+  /** The number on the ring (default 1). */
+  n?: number;
 }
+const go = (path: string) => `__demo.navigate('${path}')`;
+/** Setup health and "Test your setup" (docs/site/<lang>/setup-health.md): one picture per step. */
+const SETUP: Shot[] = [
+  { name: 'setup-nav', go: go('/home'), ready: '[data-tour="setup-badge"]', mark: '.navlink:has([data-tour="setup-badge"])', n: 1 },
+  { name: 'setup-first', go: go('/setup-health'), ready: '.sh-item', mark: '[data-tour="setup-first"]', n: 2 },
+  { name: 'setup-fix', go: go('/setup-health'), ready: '.sh-item', mark: '[data-tour="setup-fix"]', n: 3 },
+  { name: 'setup-recheck', go: go('/setup-health'), ready: '.sh-item', mark: '[data-tour="setup-recheck"]', n: 4 },
+  { name: 'setup-warning', go: go('/settings/sources'), ready: '.sh-warn', mark: '.sh-warn', n: 5 },
+  { name: 'setup-test-link', go: go('/setup-health'), ready: '.sh-item', mark: '[data-tour="setup-test-link"]', n: 1 },
+  { name: 'setup-test-run', go: go('/setup-test'), ready: '.sh-step', mark: '[data-tour="setup-run"]', n: 2 },
+  { name: 'setup-test-evidence', go: go('/setup-test'), ready: '.sh-evidence', mark: '.sh-step[data-status="pass"] .sh-evidence', n: 3 },
+  { name: 'setup-test-issue', go: go('/setup-test'), ready: '.sh-issue', mark: '[data-tour="setup-issue"] .sh-step__body', n: 4 },
+  { name: 'setup-test-bundles', go: go('/setup-test'), ready: '.sh-bundle', mark: '[data-tour="setup-bundles"]', n: 5 },
+  { name: 'setup-test-gate', go: go('/setup-test'), ready: '.sh-gate', mark: '[data-tour="setup-gate"]', n: 6 },
+].map((x) => ({ ...x, width: 1280, height: 800 }));
 const SHOTS: Shot[] = [
   { name: 'customers', go: `__demo.navigate('/accounts')`, ready: '.acard', width: 1280, height: 800 },
   { name: 'customer-phone', go: `__demo.navigate('/accounts'); await wait('.acard__name'); document.querySelector('.acard__name').click()`, ready: '.acc-band', width: 375, height: 667 },
@@ -36,7 +59,27 @@ const SHOTS: Shot[] = [
   { name: 'task', go: `document.querySelector('.navlink--board')?.click(); await wait('.board .card'); document.querySelector('.board .card').click()`, ready: '.panel', width: 1280, height: 800 },
   { name: 'home', go: `__demo.navigate('/home')`, ready: '.pane', width: 1280, height: 800 },
   { name: 'portal', go: `await __demo.as('customer')`, ready: '.p-list', width: 1280, height: 800 },
+  ...SETUP,
+  { name: 'setup-phone', go: go('/setup-health'), ready: '.sh-item', width: 390, height: 780 },
 ];
+
+/** Rings the element and puts its number beside it (inline-start, so it follows right-to-left too). */
+const ring = (sel: string, n: number) => `(() => {
+  const el = document.querySelector(${JSON.stringify(sel)});
+  if (!el) throw new Error('no mark ' + ${JSON.stringify(sel)});
+  el.scrollIntoView({ block: 'center', inline: 'nearest' });
+  const r = el.getBoundingClientRect();
+  const rtl = document.documentElement.dir === 'rtl';
+  const box = document.createElement('div');
+  box.setAttribute('aria-hidden', 'true');
+  box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:3px solid #d9480f;border-radius:10px;box-shadow:0 0 0 5px rgba(217,72,15,.18)';
+  Object.assign(box.style, { left: (r.left - 6) + 'px', top: (r.top - 6) + 'px', width: (r.width + 12) + 'px', height: (r.height + 12) + 'px' });
+  const dot = document.createElement('div');
+  dot.textContent = String(${n});
+  dot.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;width:28px;height:28px;border-radius:50%;background:#d9480f;color:#fff;font:700 15px/28px system-ui,sans-serif;text-align:center';
+  Object.assign(dot.style, { top: Math.max(4, r.top - 20) + 'px', left: (rtl ? Math.min(innerWidth - 32, r.right - 8) : Math.max(4, r.left - 20)) + 'px' });
+  document.body.append(box, dot);
+})()`;
 
 const server = createServer((req, res) => {
   try {
@@ -59,7 +102,7 @@ try {
     const out = join(ROOT, 'docs', 'site', l, 'img');
     mkdirSync(out, { recursive: true });
     const only = process.env.ONLY?.split(',');
-    for (const shot of SHOTS.filter((x) => !only || only.includes(x.name))) {
+    for (const shot of SHOTS.filter((x) => !only || only.some((o) => (o.endsWith('-') ? x.name.startsWith(o) : x.name === o)))) {
       // A fresh tab for each picture, so one screen's state never leaks into the next.
       const page = await browser.newPage();
       await page.evaluateOnNewDocument(() => {
@@ -81,6 +124,10 @@ try {
         // The demo bar is the demo's, not the product's: it stays out of the picture.
         await page.addStyleTag({ content: '.demobar{display:none!important}#root{height:100%!important}' });
         await new Promise((r) => setTimeout(r, 300));
+        if (shot.mark) {
+          await page.evaluate(ring(shot.mark, shot.n ?? 1));
+          await new Promise((r) => setTimeout(r, 150));
+        }
         await page.screenshot({ path: join(out, `${shot.name}.webp`) as `${string}.webp`, type: 'webp', quality: 72 });
         console.log(`${l} ${shot.name}`);
       } catch (e) {
