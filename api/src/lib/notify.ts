@@ -58,6 +58,7 @@ export function prefsOf(raw: unknown): NotifyPrefs {
     digestHour: Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : 8,
     defaultBoardId: p.defaultBoardId ?? null,
     quiet: validQuiet(p.quiet),
+    batch: p.batch !== false,
     ...(p.startHidden ? { startHidden: true } : {}),
     ...(Array.isArray(p.favorites) && p.favorites.length ? { favorites: p.favorites.slice(0, MAX_FAVORITES) } : {}),
   };
@@ -96,9 +97,12 @@ export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, 
   return new Date(now.getTime() + 12 * 3600_000);
 }
 
+/** Kinds that wait for the morning summary when the person batches (the default): everything not addressed to them. */
+export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated']);
+
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'handover', 'handover_owner']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
@@ -110,6 +114,9 @@ const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   stale: 'nudges',
   escalated: 'nudges',
   automation: 'automation',
+  // A won customer waiting for (or given to) its next owner is work for them, like an assignment.
+  handover: 'assigned',
+  handover_owner: 'assigned',
 };
 
 interface RenderCtx {
@@ -184,6 +191,10 @@ export function render(ctx: RenderCtx): ChatMessage {
       return { ...base, title: t('notify.comment', { actor }), body: `${task?.title ?? data.recordName ?? ''}\n“${data.excerpt ?? ''}”` };
     case 'automation':
       return { ...base, title: t('notify.automation', { rule: data.rule ?? '' }), body: [data.message, task?.title ?? data.account].filter(Boolean).join('\n') };
+    case 'handover':
+      return { ...base, title: t('notify.handover', { account: data.account ?? '' }), body: t('notify.handoverBody', { deal: data.deal ?? '' }), url: `${ctx.base}/accounts/${data.accountId}` };
+    case 'handover_owner':
+      return { ...base, title: t('notify.handoverOwner', { account: data.account ?? '', actor }), body: data.deal ?? '', url: `${ctx.base}/accounts/${data.accountId}` };
     case 'followed':
       return data.what === 'comment'
         ? { ...base, title: t('notify.followedComment', { actor }), body: `${task?.title ?? ''}\n“${data.excerpt ?? ''}”` }
@@ -200,6 +211,11 @@ export function render(ctx: RenderCtx): ChatMessage {
       };
       list(data.overdue ?? [], data.overdueCount ?? 0, 'notify.digestOverdue');
       list(data.today ?? [], data.todayCount ?? 0, 'notify.digestToday');
+      if (data.updatesCount) {
+        lines.push(t('notify.digestUpdates', { n: data.updatesCount }));
+        for (const u of data.updates ?? []) lines.push(`• ${t(`notify.digestKind.${u.kind}` as MessageKey)}: ${u.title}`);
+        if (data.updatesCount > (data.updates?.length ?? 0)) lines.push(t('notify.digestMore', { n: data.updatesCount - (data.updates?.length ?? 0) }));
+      }
       return { title: t('notify.digestTitle'), body: lines.join('\n'), url: `${ctx.base}/my`, openLabel: t('notify.open') };
     }
     case 'weekly': {
@@ -340,6 +356,8 @@ async function sendToPerson(deps: Deps, ctx: Awaited<ReturnType<typeof loadRende
   const prefKey = PREF_OF_KIND[n.kind];
   if (prefKey && prefs.events[prefKey] === false) return { via: 'inapp', state: 'skipped' };
   if (prefs.channel === 'none') return { via: 'inapp', state: 'skipped' };
+  // In the in-app list now; in the morning summary instead of a message of its own.
+  if (prefs.batch !== false && prefs.events.digest !== false && BATCHED_KINDS.has(n.kind)) return { via: 'digest', state: 'skipped' };
   // Quiet hours: the notice waits (the morning digest is the person's own choice of hour).
   if (prefs.quiet && n.kind !== 'digest' && n.kind !== 'weekly') {
     const now = nowOf(deps);

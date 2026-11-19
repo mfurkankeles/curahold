@@ -62,6 +62,9 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/views\/:id/, 'saved_views'],
   [/^\/checklists\/:id/, 'checklist_templates'],
   [/^\/plans\/:id/, 'plan_templates'],
+  [/^\/promises\/:id/, 'promises'],
+  [/^\/handovers\/:id/, 'handovers'],
+  [/^\/request-links\/:id/, 'request_links'],
 ];
 
 /** Addresses whose parameter is not the id of something a company owns; each with the reason it is not tried here. */
@@ -172,6 +175,9 @@ beforeAll(async () => {
   await sys(`insert into connections (org_id, kind, provider, label, config) values ($1, 'source', 'jira', 'acme-dev.atlassian.net', '{"mode":"basic","projects":[]}')`, [org]);
   await sys(`insert into dev_links (org_id, task_id, provider, kind, repo, ref, title) values ($1, $2, 'github', 'branch', 'acme/web', 'CURA-12345678-fix', '')`, [org, task.id]);
   await sys(`insert into saved_views (org_id, user_id, board_id, name) values ($1, $2, $3, 'A view')`, [org, lenaId, board]);
+  await sys(`insert into promises (org_id, account_id, body) values ($1, $2, 'A promise')`, [org, account]);
+  await sys(`insert into handovers (org_id, account_id, source_kind, source_id) values ($1, $2, 'task', $3)`, [org, account, task.id]);
+  await sys(`insert into request_links (org_id, story_id, account_id, source, shipped_at) values ($1, $2, $3, 'account', now())`, [org, task.id, account]);
   await sys(`insert into checklist_templates (org_id, name, items) values ($1, 'A checklist', '[]')`, [org]);
   await sys(`insert into plan_templates (org_id, name, board_id, tasks) values ($1, 'A plan', $2, '[]')`, [org, board]);
   await sys(`insert into api_tokens (org_id, user_id, kind, name, token_hash, prefix) values ($1, $2, 'key', 'A key', 'not-a-real-hash', 'chk_test')`, [org, lenaId]);
@@ -320,6 +326,7 @@ const POLICY: [RegExp, string[], ('GET' | 'WRITE' | 'ALL')?][] = [
 const VIEWER_WRITES: string[] = [
   'PATCH /me', // their own name, language, notification settings
   'POST /me/calendar', // their own calendar link
+  'POST /assist', // a question to the assistant: it reads, and counts towards the company's cap
   'DELETE /me/calendar',
   'POST /notifications/read',
   'POST /consent', // their own cookie choice

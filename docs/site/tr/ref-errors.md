@@ -76,6 +76,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `already_member` | 409 | Burada zaten hesabın var — giriş yap. |
 | `conflict` | 409 | Başka biri aynı anda bunu değiştirdi. |
 | `email_taken` | 409 | Şirketinde bu e-postayı kullanan biri zaten var. |
+| `handover_confirmed` | 409 | Bu devir zaten onaylandı. |
 | `last_admin` | 409 | Şirketinde en az bir aktif yönetici kalmalı. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
 | `role_in_use` | 409 | Bu role sahip kişiler var. Önce onlara başka bir rol ver. |

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { MENTION_RE, PRIORITIES, type Column, type TaskDetail } from '../../../shared/src/model';
 import { defer, nowOf, requireWriter, run, todayOf, type AppEnv } from '../context';
 import { portalOn, tellCustomer } from '../lib/portal';
-import { runTaskMoved } from '../lib/automations';
+import { runTaskEvent, runTaskMoved } from '../lib/automations';
 import { spawnNext } from '../lib/recurring';
 import { saveUndo, UNDO_MINUTES } from '../lib/undo';
 import { toTrash } from '../lib/trash';
@@ -385,6 +385,7 @@ taskRoutes.post('/tasks', async (c) => {
   });
   kick(c.get('deps'));
   kickSync(c.get('deps'), org.id);
+  await runTaskEvent(c.get('deps'), c.get('org').id, task.id, 'task_created', nowOf(c.get('deps'))).catch(() => 0);
   return c.json({ task: toTask(task) }, 201);
 });
 

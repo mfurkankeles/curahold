@@ -76,6 +76,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `already_member` | 409 | You already have an account here — sign in instead. |
 | `conflict` | 409 | Someone else changed this at the same time. |
 | `email_taken` | 409 | Someone in your company already uses this email. |
+| `handover_confirmed` | 409 | This hand-over is already confirmed. |
 | `last_admin` | 409 | Your company needs at least one active administrator. |
 | `portal_email_taken` | 409 | That address already has portal access. |
 | `role_in_use` | 409 | People still have this role. Give them another role first. |

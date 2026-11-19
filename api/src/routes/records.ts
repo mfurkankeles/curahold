@@ -7,7 +7,9 @@ import { z } from 'zod';
 import { LOCALES, type Locale } from '../../../shared/src/i18n/core';
 import { MENTION_RE, type Task } from '../../../shared/src/model';
 import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordComment, type RecordDetail, type RecordType, type RenewalLinks } from '../../../shared/src/records';
-import { requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { nowOf, requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
+import { runRecordEvent } from '../lib/automations';
+import { flowAfterRecord } from '../lib/handoff';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { saveUndo } from '../lib/undo';
@@ -538,6 +540,8 @@ recordRoutes.post('/records', async (c) => {
     return { full, hidden: await hiddenByType(q, auth) };
   });
   kickSync(deps, org.id);
+  // A new support ticket fires "ticket opened" rules (other kinds: nothing happens on creation).
+  await runRecordEvent(deps, org.id, row.full.id, 'ticket_opened', null, nowOf(deps)).catch(() => 0);
   return c.json({ record: viewRecord(row.full, row.hidden) }, 201);
 });
 
@@ -594,11 +598,22 @@ recordRoutes.post('/records/bulk', async (c) => {
     await recomputeRollups(q, org.id, org.account_fields, [...new Set(rows.map((r) => r.account_id))]);
     const synced = [...(input.ownerId !== undefined ? ['owner'] : []), ...keys.map((k) => `f:${k}`)];
     if (synced.length) await queueSync(q, org.id, 'record', ids, synced);
-    return { updated: rows.length, undoId };
+    return { updated: rows.length, undoId, changed: input.fields ? rows.map((r) => ({ id: r.id, before: r.fields ?? {}, after: { ...(r.fields ?? {}), ...cleaned } })) : [] };
   });
   kickSync(c.get('deps'), org.id);
-  return c.json(out);
+  for (const ch of out.changed.slice(0, 100)) await afterRecordChange(c, ch.id, ch.before, ch.after);
+  return c.json({ updated: out.updated, undoId: out.undoId });
 });
+
+/** After a record's fields changed: rules on a stage (record_stage) and a won deal's hand-over card (lib/handoff.ts). */
+async function afterRecordChange(c: C, id: string, before: Record<string, unknown>, after: Record<string, unknown>) {
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const changed = Object.fromEntries(Object.entries(after).filter(([k, v]) => JSON.stringify(v ?? null) !== JSON.stringify(before[k] ?? null)));
+  if (!Object.keys(changed).length) return;
+  await runRecordEvent(deps, org.id, id, 'record_stage', changed, nowOf(deps)).catch(() => 0);
+  await flowAfterRecord(deps, org.id, c.get('auth').userId, id, before, after).catch((e) => console.error('[curahold] hand-over', e));
+}
 
 recordRoutes.patch('/records/:id', async (c) => {
   requireWriter(c);
@@ -673,9 +688,10 @@ recordRoutes.patch('/records/:id', async (c) => {
     if (keys.length) await queueSync(q, org.id, 'record', [id], keys);
     const [full] = await q.query(`${SELECT} where r.id = $1`, [id]);
     const links = await linksFor(q, 'record', [id]);
-    return { full, links, hidden: await hiddenByType(q, auth) };
+    return { full, links, hidden: await hiddenByType(q, auth), before: r.fields ?? {}, after: fields ?? {} };
   });
   kickSync(deps, org.id);
+  await afterRecordChange(c, id, row.before, row.after);
   return c.json({ record: viewRecord(row.full, row.hidden, row.links.get(id)) });
 });
 

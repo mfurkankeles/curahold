@@ -15,7 +15,17 @@ export type Trigger =
   /** A task is N days past its due date and not finished. */
   | { type: 'task_overdue'; days: number }
   /** A task moves into a column (on one board, or any board with that column). */
-  | { type: 'task_moved'; boardId: string | null; column: string };
+  | { type: 'task_moved'; boardId: string | null; column: string }
+  /** A task is added (on one board, or any board). Tasks made by other rules never fire it. */
+  | { type: 'task_created'; boardId: string | null }
+  /** A task is finished (moved into a done column). */
+  | { type: 'task_done'; boardId: string | null }
+  /** A request arrives through a board's form (a person's, another department's, or the customer portal's). */
+  | { type: 'form_received'; boardId: string | null }
+  /** A record's choice field takes a value: a deal's status becomes "won", its stage "proposal"… */
+  | { type: 'record_stage'; typeKey: string | null; field: string; value: string }
+  /** A support ticket is opened (by hand or from a support tool). */
+  | { type: 'ticket_opened' };
 
 export type TriggerType = Trigger['type'];
 export const TRIGGER_TYPES: TriggerType[] = [
@@ -25,8 +35,19 @@ export const TRIGGER_TYPES: TriggerType[] = [
   'account_created',
   'task_overdue',
   'task_moved',
+  'task_created',
+  'task_done',
+  'form_received',
+  'record_stage',
+  'ticket_opened',
 ];
 export const ACCOUNT_TRIGGERS: TriggerType[] = ['account_date', 'account_every', 'account_inactive', 'account_created'];
+/** Triggers that hand a task to the action (assign, move, comment act on it). */
+export const TASK_TRIGGERS: TriggerType[] = ['task_overdue', 'task_moved', 'task_created', 'task_done', 'form_received'];
+/** Triggers that hand a record (a deal, a ticket) to the action. */
+export const RECORD_TRIGGERS: TriggerType[] = ['record_stage', 'ticket_opened'];
+/** Triggers that fire the moment something happens, not on the hourly round. */
+export const EVENT_TRIGGERS: TriggerType[] = ['account_created', 'task_moved', 'task_created', 'task_done', 'form_received', 'record_stage', 'ticket_opened'];
 
 export type ConditionOp = 'eq' | 'neq' | 'gt' | 'lt' | 'empty' | 'not_empty';
 /** Only for accounts where … (all conditions must hold). `field` is an account field key or "owner". */
@@ -50,7 +71,37 @@ export interface TaskBlueprint {
 
 export type Action =
   | { type: 'create_tasks'; boardId: string; column?: string | null; tasks: TaskBlueprint[] }
-  | { type: 'notify'; to: Recipient[]; message: string };
+  | { type: 'notify'; to: Recipient[]; message: string }
+  /** Gives the task (or the record, for record triggers) to someone. */
+  | { type: 'assign'; to: Assignee }
+  /** Moves the task into a column of its own board. */
+  | { type: 'move'; column: string }
+  /** Sets a field: the task's own field, the customer's, or the record's. */
+  | { type: 'set_field'; target: 'task' | 'account' | 'record'; field: string; value: string | number | null }
+  /** Writes a comment on the task (or the record), signed by the rule. May contain {account_name}. */
+  | { type: 'comment'; body: string }
+  /** Sends the task or record to the company's webhooks that listen for "automation". */
+  | { type: 'webhook' }
+  /** Prepares the hand-over card for the next team (a won deal). */
+  | { type: 'handover' };
+
+export type ActionType = Action['type'];
+export const ACTION_TYPES: ActionType[] = ['create_tasks', 'notify', 'assign', 'move', 'set_field', 'comment', 'webhook', 'handover'];
+/** Actions that need a task or record from the trigger to act on. */
+export const ACTIONS_ON_ITEM: ActionType[] = ['assign', 'move', 'set_field', 'comment', 'webhook', 'handover'];
+
+/** Which actions make sense after a trigger: moving needs a task; a hand-over needs a deal. */
+export function actionsFor(trigger: TriggerType): ActionType[] {
+  const onTask = TASK_TRIGGERS.includes(trigger);
+  const onRecord = RECORD_TRIGGERS.includes(trigger);
+  return ACTION_TYPES.filter((a) => {
+    if (a === 'move') return onTask;
+    if (a === 'handover') return trigger === 'record_stage' || trigger === 'task_moved' || trigger === 'task_done';
+    if (a === 'assign' || a === 'comment' || a === 'webhook') return onTask || onRecord;
+    if (a === 'set_field') return true;
+    return true;
+  });
+}
 
 export interface Automation {
   id: string;

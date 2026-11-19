@@ -7,7 +7,7 @@ import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type 
 import { nowOf, requirePerm, requirePlan, requireWriter, run, todayOf, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
-import { localDate } from '../lib/automations';
+import { localDate, runTaskEvent } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { addEvent } from '../lib/history';
 import { kick } from '../lib/notify';
@@ -341,6 +341,7 @@ workRoutes.post('/boards/:id/requests', async (c) => {
     await onTaskCreated(q, org.id, auth.userId, t, board);
     return t;
   });
+  await runTaskEvent(c.get('deps'), org.id, task.id, 'form_received', nowOf(c.get('deps'))).catch(() => 0);
   kick(c.get('deps'));
   return c.json({ task: toTask(task) }, 201);
 });

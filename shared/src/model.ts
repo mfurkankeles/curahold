@@ -442,6 +442,11 @@ export interface NotifyPrefs {
   events: Partial<Record<NotifyEvent, boolean>>;
   digestHour: number;
   defaultBoardId?: string | null;
+  /**
+   * Right away only what is for you (assignments, mentions, a customer handed to you);
+   * comments, followed work and nudges wait for the morning summary. Default on.
+   */
+  batch?: boolean;
   /** Hold notices between these hours (company time zone), e.g. 20 → 8. */
   quiet?: { from: number; to: number } | null;
   /** The person put away the "getting started" card on Home. */

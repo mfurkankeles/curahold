@@ -52,6 +52,7 @@ import { ssoAuthRoutes, ssoAdminRoutes } from './routes/sso';
 import { scimRoutes } from './routes/scim';
 import { boardRoutes } from './routes/boards';
 import { departmentRoutes } from './routes/departments';
+import { handoffRoutes } from './routes/handoff';
 import { meRoutes } from './routes/me';
 import { metricsRoutes } from './routes/metrics';
 import { pmRoutes } from './routes/pm';
@@ -443,6 +444,7 @@ export function createApp(deps: Deps) {
   app.route('/api', metricsRoutes);
   app.route('/api', boardRoutes);
   app.route('/api', departmentRoutes);
+  app.route('/api', handoffRoutes);
   app.route('/api', taskRoutes);
   app.route('/api', pmRoutes);
   app.route('/api', workRoutes);

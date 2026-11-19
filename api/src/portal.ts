@@ -9,7 +9,8 @@ import { z } from 'zod';
 import { normalizeLocale, translate, type Locale } from '../../shared/src/i18n';
 import type { PortalOrg } from '../../shared/src/portal';
 import { slugFromHost } from './app';
-import { defer, type Deps, type OrgRow } from './context';
+import { defer, nowOf, type Deps, type OrgRow } from './context';
+import { runTaskEvent } from './lib/automations';
 import type { Q } from './db';
 import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
@@ -217,6 +218,7 @@ export function createPortalApp(deps: Deps) {
     const taskId = await one(c, 'select portal_create_task($1, $2, $3) as id', [id(c, 'id'), parsed.data!.title, parsed.data!.description]);
     await attach(c, taskId, null, files);
     await tellTeam(c, taskId, 'assigned');
+    await runTaskEvent(deps, c.get('org').id, taskId, 'form_received', nowOf(deps)).catch(() => 0);
     return c.json({ task: await taskOf(c, taskId) }, 201);
   });
 

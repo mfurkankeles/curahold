@@ -2,7 +2,7 @@
 // each person's company time zone, scheduled automations, delivery retries
 // and data clean-up (KVKK/GDPR: nothing is kept longer than it is useful).
 import type { Deps } from '../context';
-import { localDate, localHour, runScheduledAutomations } from './automations';
+import { localDate, localHour, runScheduledAutomations, sweepRecordEvents } from './automations';
 import { day } from './mappers';
 import { deliverPending, enqueue, prefsOf } from './notify';
 import { runScheduledSyncs } from '../sync/engine';
@@ -40,7 +40,16 @@ export async function sendDigests(deps: Deps, now: Date) {
           [org.id, u.id, today],
         ),
       );
-      if (!tasks.length) continue;
+      // What waited for this summary instead of a message of its own (lib/notify.ts BATCHED_KINDS).
+      const updates = await deps.db.system((q) =>
+        q.query(
+          `select n.kind, coalesce(t.title, n.data->>'account', n.data->>'rule', '') as title from notifications n left join tasks t on t.id = n.task_id
+            where n.org_id = $1 and n.user_id = $2 and n.via = 'digest' and n.created_at > $3::timestamptz - interval '24 hours'
+            order by n.created_at desc limit 200`,
+          [org.id, u.id, now.toISOString()],
+        ),
+      );
+      if (!tasks.length && !updates.length) continue;
       const item = (t: any) => ({ id: t.id, title: t.title, due: day(t.due_date) });
       const overdue = tasks.filter((t) => day(t.due_date)! < today);
       const dueToday = tasks.filter((t) => day(t.due_date) === today);
@@ -56,6 +65,8 @@ export async function sendDigests(deps: Deps, now: Date) {
               overdueCount: overdue.length,
               today: dueToday.slice(0, DIGEST_ITEMS).map(item),
               todayCount: dueToday.length,
+              updates: updates.slice(0, DIGEST_ITEMS).map((x) => ({ kind: x.kind, title: String(x.title).slice(0, 140) })),
+              updatesCount: updates.length,
             },
           },
         ]),
@@ -120,7 +131,7 @@ export async function archiveFinished(deps: Deps, now: Date): Promise<number> {
 
 export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Date()))()) {
   const digests = await sendDigests(deps, now);
-  const fired = await runScheduledAutomations(deps, now);
+  const fired = (await runScheduledAutomations(deps, now)) + (await sweepRecordEvents(deps, now).catch((e) => (console.error('[curahold] record events', e), 0)));
   const weekly = await sendWeekly(deps, now).catch((e) => {
     console.error('[curahold] weekly summary failed', e);
     return 0;

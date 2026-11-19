@@ -27,6 +27,23 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `GET /accounts/whitespace` | Hangi müşteride hangi ürün var, hangisinde yok: bir türün kayıtları müşteri başına ve bir alanın seçeneği başına sayılır. |
 | `GET /accounts/:id/timeline` | Bir müşteriyle olan her şey, en yenisi başta: notlar, aramalar, toplantılar, e-postalar, biten görevler, değişiklikler. |
 | `POST /accounts/:id/activities` | Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder. |
+| `GET /accounts/:id/flow` | Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsan), ona verilen sözler ve devir kartları. |
+| `PUT /accounts/:id/team` | Müşterinin bir departmandaki sahibini belirler (`userId: null` ile kaldırır). |
+| `POST /accounts/:id/promises` | Müşteriye verilen bir sözü kaydeder (`body`; isteğe bağlı `recordId`, `activityId`, `dueDate`). |
+| `PATCH /promises/:id` | Bir sözü değiştirir ya da tutuldu olarak işaretler (`kept: true`). |
+| `DELETE /promises/:id` | Bir sözü siler. |
+| `GET /handovers` | Görebildiğin devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi. |
+| `GET /handovers/:id` | Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsan) ve devralabilecek kişiler. |
+| `POST /handovers` | Bir fırsatın devir kartını elle hazırlar (`sourceKind`: `record` ya da `task`, `sourceId`). |
+| `PATCH /handovers/:id` | Açık bir kartın özetini ya da önerilen planını değiştirir veya kartı kaldırır (`status: dismissed`). |
+| `POST /handovers/:id/confirm` | Devri onaylar: `ownerId` devralan departmanda müşterinin sahibi olur, plan (`planId` ya da önerilen) uygulanır ve sahibe haber verilir. |
+| `GET /stories/linkable` | Bir müşteri talebinin bağlanabileceği ürün işleri (`q` başlıklarda arar): başlık, durum ve kaç müşterinin beklediği; yeni talep için Ürün'ün talep panoları. |
+| `POST /request-links` | Bir müşteri talebini bir işe bağlar (`storyId`, `accountId`, `source`: account, ticket, meeting, portal ya da task; isteğe bağlı `sourceId` ve `note`). |
+| `DELETE /request-links/:id` | Bir bağı kaldırır. |
+| `PATCH /request-links/:id` | Bağla birlikte saklanan "yayında" mesaj taslağını düzenler. |
+| `POST /request-links/:id/told` | Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin gönderdin). |
+| `POST /request-links/:id/close-portal` | Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. |
+| `POST /assist/draft` | Asistandan bir taslak (model yoksa ya da sınır aşıldıysa şablondan): `handover_note`, `shipped_message` ya da `meeting_promises`. |
 | `PATCH /activities/:id` | Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler. |
 | `DELETE /activities/:id` | Kaydedilmiş bir etkinliği çöp kutusuna taşır; orada 30 gün kalır. |
 | `GET /accounts/:id/meetings` | Bir müşterinin toplantıları, değerlendirmeleri ve aramaları; sonraki adımlarıyla. |
@@ -175,6 +192,153 @@ Zaman çizelgesine not, arama, toplantı ya da e-posta kaydeder.
 | `happenedAt` | tarih ve saat | isteğe bağlı |  |
 | `contactIds` | kimlik listesi | isteğe bağlı | en çok 20 öğe |
 | `pinned` | evet/hayır | isteğe bağlı |  |
+
+### `GET /accounts/:id/flow`
+
+Bir müşteri için departmanlar arası akış: her departmandaki sahibi, beklediği ürün işi (başlık, durum, sprint bitişi, departman; pano yalnızca açabiliyorsan), ona verilen sözler ve devir kartları.
+
+### `PUT /accounts/:id/team`
+
+Müşterinin bir departmandaki sahibini belirler (`userId: null` ile kaldırır). Müşteri yöneticileri, departman liderleri ve müşterinin sahibi yapabilir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `departmentId` | kimlik | zorunlu |  |
+| `userId` | kimlik | zorunlu | boş (null) olabilir |
+
+### `POST /accounts/:id/promises`
+
+Müşteriye verilen bir sözü kaydeder (`body`; isteğe bağlı `recordId`, `activityId`, `dueDate`). Devir kartı açık olanları listeler.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `body` | metin | zorunlu | en az 1 karakter; en çok 500 karakter |
+| `recordId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `activityId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `dueDate` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
+
+### `PATCH /promises/:id`
+
+Bir sözü değiştirir ya da tutuldu olarak işaretler (`kept: true`).
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `body` | metin | isteğe bağlı | en az 1 karakter; en çok 500 karakter |
+| `kept` | evet/hayır | isteğe bağlı |  |
+| `dueDate` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
+
+### `DELETE /promises/:id`
+
+Bir sözü siler. Cevap sözü taşır; geri yazılabilir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `GET /handovers`
+
+Görebildiğin devir kartları, en yenisi başta: açık olanlar ya da `status=all` ile hepsi.
+
+**Sorgu:** `status`
+
+### `GET /handovers/:id`
+
+Bir devir kartının tamamı: paydaşlar ve duruşları, açık sözler, bekleyen ürün talepleri, kapanış ve yenileme tarihleri, müşterinin yıllık değeri (o alanı görebiliyorsan) ve devralabilecek kişiler.
+
+### `POST /handovers`
+
+Bir fırsatın devir kartını elle hazırlar (`sourceKind`: `record` ya da `task`, `sourceId`). Fırsat başına bir kez; kazanılan fırsat kendiliğinden alır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `sourceKind` | şunlardan biri: record \| task | zorunlu |  |
+| `sourceId` | kimlik | zorunlu |  |
+
+### `PATCH /handovers/:id`
+
+Açık bir kartın özetini ya da önerilen planını değiştirir veya kartı kaldırır (`status: dismissed`).
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `summary` | metin | isteğe bağlı | en çok 8000 karakter |
+| `planId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `status` | şunlardan biri: open \| dismissed | isteğe bağlı |  |
+
+### `POST /handovers/:id/confirm`
+
+Devri onaylar: `ownerId` devralan departmanda müşterinin sahibi olur, plan (`planId` ya da önerilen) uygulanır ve sahibe haber verilir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `ownerId` | kimlik | zorunlu |  |
+| `planId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `summary` | metin | isteğe bağlı | en çok 8000 karakter |
+
+### `GET /stories/linkable`
+
+Bir müşteri talebinin bağlanabileceği ürün işleri (`q` başlıklarda arar): başlık, durum ve kaç müşterinin beklediği; yeni talep için Ürün'ün talep panoları.
+
+**Sorgu:** `q`
+
+### `POST /request-links`
+
+Bir müşteri talebini bir işe bağlar (`storyId`, `accountId`, `source`: account, ticket, meeting, portal ya da task; isteğe bağlı `sourceId` ve `note`). Aynı talep iki kez tek bağdır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `storyId` | kimlik | zorunlu |  |
+| `accountId` | kimlik | zorunlu |  |
+| `source` | şunlardan biri: REQUEST_SOURCES | zorunlu |  |
+| `sourceId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `note` | metin | isteğe bağlı | en çok 2000 karakter |
+
+### `DELETE /request-links/:id`
+
+Bir bağı kaldırır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `PATCH /request-links/:id`
+
+Bağla birlikte saklanan "yayında" mesaj taslağını düzenler.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `draft` | metin | zorunlu | en çok 8000 karakter |
+
+### `POST /request-links/:id/told`
+
+Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin gönderdin).
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `POST /request-links/:id/close-portal`
+
+Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. İşin bitmesi bunu kendiliğinden yapmaz.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `POST /assist/draft`
+
+Asistandan bir taslak (model yoksa ya da sınır aşıldıysa şablondan): `handover_note`, `shipped_message` ya da `meeting_promises`. Hiçbir şey kaydedilmez.
+
+**Gerekenler:** yazabilen bir koltuk
+
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
 
 ### `PATCH /activities/:id`
 

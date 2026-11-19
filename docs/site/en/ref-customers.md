@@ -27,6 +27,23 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `GET /accounts/whitespace` | Which customers have which products and which do not: records of one type counted per customer and per option of a field. |
 | `GET /accounts/:id/timeline` | Everything that happened with a customer, newest first: notes, calls, meetings, emails, finished tasks, changes. |
 | `POST /accounts/:id/activities` | Logs a note, call, meeting or email on the timeline. |
+| `GET /accounts/:id/flow` | The flow between departments for one customer: its owner in each department, the product work it waits for (title, status, sprint end, department; the board only when you can open it), promises made to it and its hand-over cards. |
+| `PUT /accounts/:id/team` | Sets (or, with `userId: null`, clears) who owns the customer in one department. |
+| `POST /accounts/:id/promises` | Writes down a promise made to the customer (`body`, optionally `recordId`, `activityId`, `dueDate`). |
+| `PATCH /promises/:id` | Changes a promise, or marks it kept (`kept: true`). |
+| `DELETE /promises/:id` | Deletes a promise. |
+| `GET /handovers` | Hand-over cards you can see, newest first: open ones, or every one with `status=all`. |
+| `GET /handovers/:id` | One hand-over card in full: stakeholders and their stance, open promises, product requests still waiting, close and renewal dates, the customer's annual value (when you may see that field) and who may take it over. |
+| `POST /handovers` | Prepares the hand-over card of a deal by hand (`sourceKind`: `record` or `task`, `sourceId`). |
+| `PATCH /handovers/:id` | Edits an open card's summary or suggested playbook, or puts it away (`status: dismissed`). |
+| `POST /handovers/:id/confirm` | Confirms the hand-over: `ownerId` becomes the customer's owner in the taking-over department, the playbook (`planId`, or the suggested one) is put on, and the owner is told. |
+| `GET /stories/linkable` | Product work a customer request can be linked to (`q` searches titles): title, status and how many customers already wait for it, plus Product's intake boards for a new request. |
+| `POST /request-links` | Links a customer's request to a story (`storyId`, `accountId`, `source`: account, ticket, meeting, portal or task, optional `sourceId` and `note`). |
+| `DELETE /request-links/:id` | Removes a link. |
+| `PATCH /request-links/:id` | Edits the drafted "it shipped" message kept with the link. |
+| `POST /request-links/:id/told` | Marks that the customer has been told the work shipped (you sent the message yourself). |
+| `POST /request-links/:id/close-portal` | Closes the customer's portal request behind the link: it moves to done, which sends the portal's own message and asks the customer to confirm. |
+| `POST /assist/draft` | A draft from the assistant (or from the template, with no model or over the cap): `handover_note`, `shipped_message` or `meeting_promises`. |
 | `PATCH /activities/:id` | Changes a logged activity, or pins it to the top. |
 | `DELETE /activities/:id` | Moves a logged activity to the trash, where it stays for 30 days. |
 | `GET /accounts/:id/meetings` | A customer's meetings, reviews and calls with their next steps. |
@@ -175,6 +192,153 @@ Logs a note, call, meeting or email on the timeline.
 | `happenedAt` | date and time | optional |  |
 | `contactIds` | list of id | optional | at most 20 items |
 | `pinned` | yes/no | optional |  |
+
+### `GET /accounts/:id/flow`
+
+The flow between departments for one customer: its owner in each department, the product work it waits for (title, status, sprint end, department; the board only when you can open it), promises made to it and its hand-over cards.
+
+### `PUT /accounts/:id/team`
+
+Sets (or, with `userId: null`, clears) who owns the customer in one department. Account managers, the department's leads and the customer's owner may.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `departmentId` | id | required |  |
+| `userId` | id | required | may be null |
+
+### `POST /accounts/:id/promises`
+
+Writes down a promise made to the customer (`body`, optionally `recordId`, `activityId`, `dueDate`). The hand-over card lists the open ones.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `body` | text | required | at least 1 characters; at most 500 characters |
+| `recordId` | id | optional | may be null |
+| `activityId` | id | optional | may be null |
+| `dueDate` | date (YYYY-MM-DD) | optional | may be null |
+
+### `PATCH /promises/:id`
+
+Changes a promise, or marks it kept (`kept: true`).
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `body` | text | optional | at least 1 characters; at most 500 characters |
+| `kept` | yes/no | optional |  |
+| `dueDate` | date (YYYY-MM-DD) | optional | may be null |
+
+### `DELETE /promises/:id`
+
+Deletes a promise. The answer carries it, so it can be written back.
+
+**Needs:** a seat that can write
+
+### `GET /handovers`
+
+Hand-over cards you can see, newest first: open ones, or every one with `status=all`.
+
+**Query:** `status`
+
+### `GET /handovers/:id`
+
+One hand-over card in full: stakeholders and their stance, open promises, product requests still waiting, close and renewal dates, the customer's annual value (when you may see that field) and who may take it over.
+
+### `POST /handovers`
+
+Prepares the hand-over card of a deal by hand (`sourceKind`: `record` or `task`, `sourceId`). Once per deal; a won deal gets one by itself.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `sourceKind` | one of record \| task | required |  |
+| `sourceId` | id | required |  |
+
+### `PATCH /handovers/:id`
+
+Edits an open card's summary or suggested playbook, or puts it away (`status: dismissed`).
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `summary` | text | optional | at most 8000 characters |
+| `planId` | id | optional | may be null |
+| `status` | one of open \| dismissed | optional |  |
+
+### `POST /handovers/:id/confirm`
+
+Confirms the hand-over: `ownerId` becomes the customer's owner in the taking-over department, the playbook (`planId`, or the suggested one) is put on, and the owner is told.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `ownerId` | id | required |  |
+| `planId` | id | optional | may be null |
+| `summary` | text | optional | at most 8000 characters |
+
+### `GET /stories/linkable`
+
+Product work a customer request can be linked to (`q` searches titles): title, status and how many customers already wait for it, plus Product's intake boards for a new request.
+
+**Query:** `q`
+
+### `POST /request-links`
+
+Links a customer's request to a story (`storyId`, `accountId`, `source`: account, ticket, meeting, portal or task, optional `sourceId` and `note`). The same request twice is one link.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `storyId` | id | required |  |
+| `accountId` | id | required |  |
+| `source` | one of REQUEST_SOURCES | required |  |
+| `sourceId` | id | optional | may be null |
+| `note` | text | optional | at most 2000 characters |
+
+### `DELETE /request-links/:id`
+
+Removes a link.
+
+**Needs:** a seat that can write
+
+### `PATCH /request-links/:id`
+
+Edits the drafted "it shipped" message kept with the link.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `draft` | text | required | at most 8000 characters |
+
+### `POST /request-links/:id/told`
+
+Marks that the customer has been told the work shipped (you sent the message yourself).
+
+**Needs:** a seat that can write
+
+### `POST /request-links/:id/close-portal`
+
+Closes the customer's portal request behind the link: it moves to done, which sends the portal's own message and asks the customer to confirm. Finishing the story never does this by itself.
+
+**Needs:** a seat that can write
+
+### `POST /assist/draft`
+
+A draft from the assistant (or from the template, with no model or over the cap): `handover_note`, `shipped_message` or `meeting_promises`. Nothing is saved.
+
+**Needs:** a seat that can write
+
+Takes a body whose shape depends on what is sent; see the guide for this area.
 
 ### `PATCH /activities/:id`
 

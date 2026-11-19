@@ -86,11 +86,21 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
         where r.account_id = $1 and rt.kind = 'ticket' and r.archived_at is null order by r.created_at desc limit 200`,
       [id],
     );
+    const handovers = await q.query(
+      `select id, source_name, created_by, created_at, confirmed_at, confirmed_by, owner_id from handovers
+        where account_id = $1 and status <> 'dismissed' and created_at < $2 order by created_at desc limit $3`,
+      [id, at, limit],
+    );
+    const built = await q.query(
+      `select distinct on (l.story_id) l.story_id, t.title, l.shipped_at from request_links l join tasks t on t.id = l.story_id
+        where l.account_id = $1 and l.shipped_at is not null and l.shipped_at < $2 order by l.story_id, l.shipped_at limit $3`,
+      [id, at, limit],
+    );
     const ticketLinks = tickets.length ? await linksFor(q, 'record', tickets.map((t) => t.id)) : new Map();
     const history = withScore
       ? await q.query(`select day::text as day, score from health_history where account_id = $1 and day <= $2::date order by day desc limit 120`, [id, at.slice(0, 10)])
       : [];
-    return { acts, pinned, created, done, comments, contacts, history, tickets, ticketLinks };
+    return { acts, pinned, created, done, comments, contacts, history, tickets, ticketLinks, handovers, built };
   });
   const items: TimelineItem[] = [
     ...data.acts.map((r): TimelineItem => ({ type: 'activity', at: iso(r.happened_at)!, activity: toActivity(r) })),
@@ -99,6 +109,11 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
     ...data.comments.map((r): TimelineItem => ({ type: 'comment', at: iso(r.created_at)!, id: r.id, taskId: r.task_id, title: r.title, boardId: r.board_id, byId: r.author_id, body: r.body })),
     ...data.contacts.map((r): TimelineItem => ({ type: 'contact', at: iso(r.created_at)!, recordId: r.id, name: r.name, byId: r.created_by })),
   ];
+  for (const h of data.handovers) {
+    items.push({ type: 'handover', at: iso(h.created_at)!, handoverId: h.id, deal: h.source_name, byId: h.created_by, ownerId: null });
+    if (h.confirmed_at) items.push({ type: 'handover_confirmed', at: iso(h.confirmed_at)!, handoverId: h.id, deal: h.source_name, byId: h.confirmed_by, ownerId: h.owner_id });
+  }
+  for (const b of data.built) items.push({ type: 'built', at: iso(b.shipped_at)!, storyId: b.story_id, title: b.title });
   // Support tickets: when they were opened and when they were solved (dates from the support tool).
   const noon = (d: unknown) => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T12:00:00.000Z` : null);
   for (const r of data.tickets) {

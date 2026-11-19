@@ -50,6 +50,8 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `DELETE /sprints/:id/items/:taskId` | Görevi sprintten çıkarıp backlog'a döndürür. |
 | `GET /sprints/:id/summary` | Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. |
 | `GET /sprints/:id/burndown` | Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla. |
+| `GET /boards/:id/demand` | Açabildiğin bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsan) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla. |
+| `GET /tasks/:id/customers` | Bir işi bekleyen müşteriler (yalnızca görebildiklerinin adı), her birinin ne zaman istediği ve yayında olduğunun söylenip söylenmediği. |
 | `GET /boards/:id/flow` | Bir ürün panosunun son `weeks` haftadaki (4–26, varsayılan 12) döngü süresi ve çıktısı: kayıt türüne göre iş günü cinsinden ortanca ve 85. |
 | `GET /tasks/:id/chain` | Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). |
 | `DELETE /tasks/:id` | Görevi alt görevleri, yorumları, süre kayıtları ve dosyalarıyla çöp kutusuna taşır; orada 30 gün kalır. |
@@ -394,6 +396,14 @@ Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne 
 ### `GET /sprints/:id/burndown`
 
 Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla.
+
+### `GET /boards/:id/demand`
+
+Açabildiğin bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsan) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla.
+
+### `GET /tasks/:id/customers`
+
+Bir işi bekleyen müşteriler (yalnızca görebildiklerinin adı), her birinin ne zaman istediği ve yayında olduğunun söylenip söylenmediği.
 
 ### `GET /boards/:id/flow`
 

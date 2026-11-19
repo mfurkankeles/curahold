@@ -3,7 +3,8 @@
 import { Icon } from './icons';
 import { SkeletonRows } from './Empty';
 import { useEffect, useMemo, useState } from 'react';
-import { ACCOUNT_TRIGGERS, TRIGGER_TYPES, type Action, type Automation, type AutomationRun, type Condition, type Trigger, type TriggerType } from '../../../shared/src/automation';
+import { ACCOUNT_TRIGGERS, actionsFor, EVENT_TRIGGERS, RECORD_TRIGGERS, TASK_TRIGGERS, TRIGGER_TYPES, type Action, type ActionType, type Assignee, type Automation, type AutomationRun, type Condition, type Trigger, type TriggerType } from '../../../shared/src/automation';
+import { useRecordTypes } from '../lib/recordTypes';
 import { labelOf } from '../../../shared/src/fields';
 import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { Board } from '../../../shared/src/model';
@@ -32,6 +33,14 @@ const defaultTrigger = (type: TriggerType, dateField?: string): Trigger => {
       return { type, days: 1 };
     case 'task_moved':
       return { type, boardId: null, column: 'done' };
+    case 'task_created':
+    case 'task_done':
+    case 'form_received':
+      return { type, boardId: null };
+    case 'record_stage':
+      return { type, typeKey: 'opportunity', field: 'status', value: 'won' };
+    case 'ticket_opened':
+      return { type };
     default:
       return { type: 'account_created' };
   }
@@ -49,6 +58,7 @@ export function Switch({ on, onChange, label, disabled }: { on: boolean; onChang
 export function useDescribe() {
   const { t, locale, words } = useI18n();
   const { me, boards, person } = useStore();
+  const { types } = useRecordTypes();
   const fieldName = (k: string) => (k === 'owner' ? t('auto.cond.owner') : labelOf(me.org.accountFields.find((f) => f.key === k)?.label, locale) || k);
   const boardName = (id: string | null | undefined) => boards.find((b) => b.id === id)?.name ?? t('auto.anyBoard');
   const who = (a: string) => (a.startsWith('user:') ? person(a.slice(5))?.name ?? t('common.unknownUser') : t(`auto.who.${a}` as MessageKey));
@@ -68,19 +78,47 @@ export function useDescribe() {
           const col = b?.columns.find((c) => c.key === tr.column)?.name ?? tr.column;
           return t('auto.when.task_moved.text', { column: col, board: boardName(tr.boardId) });
         }
+        case 'task_created':
+        case 'task_done':
+        case 'form_received':
+          return t(`auto.when.${tr.type}.text` as MessageKey, { board: boardName(tr.boardId) });
+        case 'ticket_opened':
+          return t('auto.when.ticket_opened.text');
+        case 'record_stage': {
+          const type = types?.find((x) => x.key === tr.typeKey);
+          const f = type?.fields.find((x) => x.key === tr.field);
+          const opt = f?.options?.find((o) => o.key === tr.value);
+          return t('auto.when.record_stage.text', { type: labelOf(type?.name.one, locale) || tr.typeKey || '', field: labelOf(f?.label, locale) || tr.field, value: labelOf(opt?.label, locale) || tr.value });
+        }
         default:
           return t('auto.when.account_created.text');
       }
     },
-    then: (a: Action) =>
-      a.type === 'notify'
-        ? t('auto.then.notify.text', { who: a.to.map(who).join(', ') })
-        : t('auto.then.create.text', {
+    then: (a: Action) => {
+      switch (a.type) {
+        case 'notify':
+          return t('auto.then.notify.text', { who: a.to.map(who).join(', ') });
+        case 'create_tasks':
+          return t('auto.then.create.text', {
             n: a.tasks.length,
             title: (a.tasks[0]?.title ?? '').replace(/\{account_name\}/g, `‹${words.one}›`),
             board: boardName(a.boardId),
             who: who(a.tasks[0]?.assignee ?? 'none'),
-          }),
+          });
+        case 'assign':
+          return t('auto.then.assign.text', { who: who(a.to) });
+        case 'move': {
+          const col = boards.flatMap((b) => b.columns).find((c) => c.key === a.column)?.name ?? a.column;
+          return t('auto.then.move.text', { column: col });
+        }
+        case 'set_field':
+          return t('auto.then.set_field.text', { field: a.target === 'account' ? fieldName(a.field) : a.field, value: String(a.value ?? '—') });
+        case 'comment':
+          return t('auto.then.comment.text', { body: a.body.slice(0, 60) });
+        default:
+          return t(`auto.then.${a.type}.text` as MessageKey);
+      }
+    },
     fieldName,
   };
 }
@@ -267,9 +305,10 @@ function presetDrafts(locale: Locale, boards: Board[]): { key: string; template:
 }
 
 export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null; onClose: () => void; onSaved: () => void | Promise<void> }) {
-  const { t, locale } = useI18n();
+  const { t, locale, words } = useI18n();
   const { me, boards, people, toast } = useStore();
   const describe = useDescribe();
+  const { types } = useRecordTypes();
   const fields = me.org.accountFields;
   const dateFields = fields.filter((f) => f.type === 'date');
   const presets = useMemo(() => presetDrafts(locale, boards), [locale, boards]);
@@ -292,7 +331,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
   useEffect(() => {
     if (!draft) return;
     const tr = draft.trigger;
-    if (tr.type === 'account_created' || tr.type === 'task_moved') {
+    if (EVENT_TRIGGERS.includes(tr.type)) {
       setPreview(null);
       return;
     }
@@ -331,7 +370,41 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
   const accountBased = ACCOUNT_TRIGGERS.includes(tr.type);
   const act = draft.action;
   const num = (v: string, min = 0) => Math.max(min, Math.min(3650, Math.round(Number(v) || 0)));
-  const moveBoard = tr.type === 'task_moved' ? boards.find((b) => b.id === tr.boardId) : undefined;
+  const moveBoard = 'boardId' in tr ? boards.find((b) => b.id === tr.boardId) : undefined;
+  const allowed = actionsFor(tr.type);
+  const recordType = tr.type === 'record_stage' ? types?.find((x) => x.key === tr.typeKey) : undefined;
+  const choiceFields = (recordType?.fields ?? []).filter((f) => f.type === 'select' && f.options?.length);
+  const stageField = tr.type === 'record_stage' ? choiceFields.find((f) => f.key === tr.field) : undefined;
+  const itemBased = TASK_TRIGGERS.includes(tr.type) || RECORD_TRIGGERS.includes(tr.type);
+  const starter = (type: ActionType): Action => {
+    switch (type) {
+      case 'notify':
+        return { type, to: [accountBased ? 'account_owner' : 'assignees'], message: '' };
+      case 'assign':
+        return { type, to: (people.find((p) => p.status === 'active' && p.seat === 'full') ? `user:${people.find((p) => p.status === 'active' && p.seat === 'full')!.id}` : 'none') as Assignee };
+      case 'move':
+        return { type, column: (moveBoard?.columns ?? allColumns)[0]?.key ?? 'done' };
+      case 'set_field':
+        return { type, target: 'account', field: fields[0]?.key ?? '', value: '' };
+      case 'comment':
+        return { type, body: '' };
+      case 'webhook':
+      case 'handover':
+        return { type };
+      default:
+        return { type: 'create_tasks', boardId: boards[0]?.id ?? '', tasks: [{ title: '', dueInDays: 3, assignee: accountBased ? 'account_owner' : 'assignees', subtasks: [] }] };
+    }
+  };
+  // A trigger change that leaves the action without what it needs swaps it for opening tasks.
+  const pickTrigger = (type: TriggerType) => {
+    const next = defaultTrigger(type, dateFields[0]?.key);
+    set({ trigger: next, action: actionsFor(type).includes(act.type) ? act : starter('create_tasks') });
+  };
+  const incomplete =
+    (act.type === 'create_tasks' && (!act.boardId || act.tasks.some((x) => !x.title.trim()))) ||
+    (act.type === 'notify' && (!act.to.length || !act.message.trim())) ||
+    (act.type === 'comment' && !act.body.trim()) ||
+    (act.type === 'set_field' && !act.field);
   const allColumns = [...new Map(boards.flatMap((b) => b.columns).map((c) => [c.key, c])).values()];
 
   const save = async () => {
@@ -379,7 +452,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
           <button className="btn btn--quiet" onClick={onClose}>
             {t('common.cancel')}
           </button>
-          <button className="btn btn--primary" disabled={busy || (act.type === 'create_tasks' && (!act.boardId || act.tasks.some((x) => !x.title.trim()))) || (act.type === 'notify' && (!act.to.length || !act.message.trim()))} onClick={save}>
+          <button className="btn btn--primary" disabled={busy || incomplete} onClick={save}>
             {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
@@ -393,7 +466,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
 
         <section className="clause" data-kind="when">
           <h4 className="clause__label">{t('auto.when')}</h4>
-          <select className="select" value={tr.type} onChange={(e) => set({ trigger: defaultTrigger(e.target.value as TriggerType, dateFields[0]?.key) })}>
+          <select className="select" value={tr.type} aria-label={t('auto.when')} onChange={(e) => pickTrigger(e.target.value as TriggerType)}>
             {TRIGGER_TYPES.filter((x) => x !== 'account_date' || dateFields.length).map((x) => (
               <option key={x} value={x}>
                 {t(`auto.when.${x}` as MessageKey)}
@@ -418,6 +491,42 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
               <>
                 <input className="input input--num" type="number" min={tr.type === 'task_overdue' ? 0 : 1} value={tr.days} onChange={(e) => setTr({ days: num(e.target.value, tr.type === 'task_overdue' ? 0 : 1) })} aria-label={t('auto.days')} />
                 <span>{t(`auto.unit.${tr.type}` as MessageKey)}</span>
+              </>
+            )}
+            {(tr.type === 'task_created' || tr.type === 'task_done' || tr.type === 'form_received') && (
+              <select className="select" value={tr.boardId ?? ''} onChange={(e) => setTr({ boardId: e.target.value || null })} aria-label={t('auto.board')}>
+                <option value="">{t('auto.anyBoard')}</option>
+                {boards.filter((b) => tr.type !== 'form_received' || b.form?.on).map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {tr.type === 'record_stage' && (
+              <>
+                <select className="select" value={tr.typeKey ?? ''} aria-label={t('auto.recordType')} onChange={(e) => setTr({ typeKey: e.target.value || null })}>
+                  {(types ?? []).filter((x) => x.kind !== 'contact').map((x) => (
+                    <option key={x.key} value={x.key}>
+                      {labelOf(x.name.one, locale)}
+                    </option>
+                  ))}
+                </select>
+                <select className="select" value={tr.field} aria-label={t('auto.cond.field')} onChange={(e) => setTr({ field: e.target.value, value: choiceFields.find((f) => f.key === e.target.value)?.options?.[0]?.key ?? '' })}>
+                  {choiceFields.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {labelOf(f.label, locale)}
+                    </option>
+                  ))}
+                </select>
+                <span>{t('auto.becomes')}</span>
+                <select className="select" value={tr.value} aria-label={t('auto.cond.value')} onChange={(e) => setTr({ value: e.target.value })}>
+                  {(stageField?.options ?? []).map((o) => (
+                    <option key={o.key} value={o.key}>
+                      {labelOf(o.label, locale)}
+                    </option>
+                  ))}
+                </select>
               </>
             )}
             {tr.type === 'task_moved' && (
@@ -505,14 +614,50 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
 
         <section className="clause" data-kind="then">
           <h4 className="clause__label">{t('auto.then')}</h4>
-          <div className="seg">
-            <button type="button" aria-pressed={act.type === 'create_tasks'} onClick={() => set({ action: { type: 'create_tasks', boardId: boards[0]?.id ?? '', tasks: [{ title: '', dueInDays: 3, assignee: accountBased ? 'account_owner' : 'assignees', subtasks: [] }] } })}>
-              {t('auto.then.create')}
-            </button>
-            <button type="button" aria-pressed={act.type === 'notify'} onClick={() => set({ action: { type: 'notify', to: [accountBased ? 'account_owner' : 'assignees'], message: '' } })}>
-              {t('auto.then.notify')}
-            </button>
-          </div>
+          <select className="select" value={act.type} aria-label={t('auto.then')} onChange={(e) => set({ action: starter(e.target.value as ActionType) })}>
+            {allowed.map((a) => (
+              <option key={a} value={a}>
+                {t(a === 'create_tasks' ? 'auto.then.create' : a === 'notify' ? 'auto.then.notify' : (`auto.then.${a}` as MessageKey))}
+              </option>
+            ))}
+          </select>
+          {act.type === 'assign' && <div className="clause__params">{assigneeSelect(act.to, (v) => set({ action: { ...act, to: v as Assignee } }))}</div>}
+          {act.type === 'move' && (
+            <div className="clause__params">
+              <span>{t('auto.toColumn')}</span>
+              <select className="select" value={act.column} aria-label={t('auto.column')} onChange={(e) => set({ action: { ...act, column: e.target.value } })}>
+                {(moveBoard?.columns ?? allColumns).map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {act.type === 'set_field' && (
+            <div className="clause__params">
+              <select className="select" value={act.target} aria-label={t('auto.setOn')} onChange={(e) => set({ action: { ...act, target: e.target.value as 'account' | 'task' | 'record', field: '' } })}>
+                <option value="account">{words.one}</option>
+                {TASK_TRIGGERS.includes(tr.type) && (moveBoard?.taskFields?.length ?? 0) > 0 && <option value="task">{t('auto.setOn.task')}</option>}
+                {RECORD_TRIGGERS.includes(tr.type) && <option value="record">{t('auto.setOn.record')}</option>}
+              </select>
+              <select className="select" value={act.field} aria-label={t('auto.cond.field')} onChange={(e) => set({ action: { ...act, field: e.target.value } })}>
+                <option value="">—</option>
+                {(act.target === 'account' ? fields.filter((f) => !f.rollup && !f.health) : act.target === 'task' ? (moveBoard?.taskFields ?? []) : (recordType?.fields ?? [])).map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {labelOf(f.label, locale)}
+                  </option>
+                ))}
+              </select>
+              <span>{t('auto.becomes')}</span>
+              <input className="input" value={String(act.value ?? '')} aria-label={t('auto.cond.value')} onChange={(e) => set({ action: { ...act, value: e.target.value } })} maxLength={500} />
+            </div>
+          )}
+          {act.type === 'comment' && (
+            <textarea className="textarea" rows={2} value={act.body} placeholder={t('auto.commentText')} aria-label={t('auto.commentText')} onChange={(e) => set({ action: { ...act, body: e.target.value } })} maxLength={2000} />
+          )}
+          {(act.type === 'webhook' || act.type === 'handover') && <p className="field__hint">{t(`auto.then.${act.type}.hint` as MessageKey)}</p>}
+          {!itemBased && act.type !== 'create_tasks' && act.type !== 'notify' && act.type !== 'set_field' && <p className="field__hint">{t('auto.needsItem')}</p>}
           {act.type === 'create_tasks' ? (
             <>
               <div className="clause__params">
@@ -558,7 +703,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                 </button>
               )}
             </>
-          ) : (
+          ) : act.type === 'notify' ? (
             <>
               <div className="clause__params clause__params--wrap">
                 {(['account_owner', 'assignees', 'team_lead', 'admins'] as const)
@@ -572,7 +717,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
               </div>
               <textarea className="textarea" rows={2} value={act.message} placeholder={t('auto.message')} aria-label={t('auto.message')} onChange={(e) => set({ action: { ...act, message: e.target.value } })} maxLength={500} />
             </>
-          )}
+          ) : null}
         </section>
 
         <div className="rule-preview" aria-live="polite">
@@ -587,7 +732,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                 : t('auto.wouldActNone')}
             </p>
           )}
-          {(tr.type === 'account_created' || tr.type === 'task_moved') && <p className="muted">{t('auto.eventHint')}</p>}
+          {EVENT_TRIGGERS.includes(tr.type) && <p className="muted">{t('auto.eventHint')}</p>}
           <p className="muted">{t('auto.onceHint')}</p>
         </div>
         {error && <p className="error-text">{error}</p>}

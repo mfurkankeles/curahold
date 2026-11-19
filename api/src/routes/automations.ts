@@ -3,7 +3,7 @@
 // what it did.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { Automation, AutomationRun } from '../../../shared/src/automation';
+import { actionsFor, RECORD_TRIGGERS, TASK_TRIGGERS, type Automation, type AutomationRun } from '../../../shared/src/automation';
 import { nowOf, requirePerm, run, type AppEnv, type C } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
@@ -25,6 +25,11 @@ export const triggerSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('account_created') }),
   z.object({ type: z.literal('task_overdue'), days }),
   z.object({ type: z.literal('task_moved'), boardId: uuid.nullable(), column: z.string().min(1).max(24) }),
+  z.object({ type: z.literal('task_created'), boardId: uuid.nullable() }),
+  z.object({ type: z.literal('task_done'), boardId: uuid.nullable() }),
+  z.object({ type: z.literal('form_received'), boardId: uuid.nullable() }),
+  z.object({ type: z.literal('record_stage'), typeKey: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/).nullable(), field: fieldKey, value: z.string().min(1).max(60) }),
+  z.object({ type: z.literal('ticket_opened') }),
 ]);
 
 const conditionSchema = z.object({
@@ -55,6 +60,12 @@ export const actionSchema = z.discriminatedUnion('type', [
       .max(10),
   }),
   z.object({ type: z.literal('notify'), to: z.array(recipient).min(1).max(10), message: z.string().trim().min(1).max(500) }),
+  z.object({ type: z.literal('assign'), to: assignee }),
+  z.object({ type: z.literal('move'), column: z.string().min(1).max(24) }),
+  z.object({ type: z.literal('set_field'), target: z.enum(['task', 'account', 'record']), field: fieldKey, value: z.union([z.string().max(500), z.number(), z.null()]) }),
+  z.object({ type: z.literal('comment'), body: z.string().trim().min(1).max(2000) }),
+  z.object({ type: z.literal('webhook') }),
+  z.object({ type: z.literal('handover') }),
 ]);
 
 const toAutomation = (r: Row): Automation => {
@@ -80,12 +91,16 @@ async function checkRefs(c: C, action: z.infer<typeof actionSchema>, trigger: z.
       const [b] = await q.query('select columns from boards where id = $1 and archived_at is null', [action.boardId]);
       if (!b) fail('validation', { fields: 'action.boardId' }, { fields: ['action.boardId'] });
     }
-    if (trigger.type === 'task_moved' && trigger.boardId) {
+    // An action that works on the trigger's task or record needs a trigger that has one.
+    if (!actionsFor(trigger.type).includes(action.type)) fail('validation', { fields: 'action.type' }, { fields: ['action.type'] });
+    if (action.type === 'set_field' && ((action.target === 'task' && !TASK_TRIGGERS.includes(trigger.type)) || (action.target === 'record' && !RECORD_TRIGGERS.includes(trigger.type))))
+      fail('validation', { fields: 'action.target' }, { fields: ['action.target'] });
+    if ('boardId' in trigger && trigger.boardId) {
       const [b] = await q.query('select 1 from boards where id = $1', [trigger.boardId]);
       if (!b) fail('validation', { fields: 'trigger.boardId' }, { fields: ['trigger.boardId'] });
     }
     const people = [
-      ...(action.type === 'notify' ? action.to : action.tasks.map((t) => t.assignee)),
+      ...(action.type === 'notify' ? action.to : action.type === 'create_tasks' ? action.tasks.map((t) => t.assignee) : action.type === 'assign' ? [action.to] : []),
     ].filter((p) => p.startsWith('user:')).map((p) => p.slice(5));
     if (people.length) {
       const rows = await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited')`, [people]);

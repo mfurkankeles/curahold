@@ -108,7 +108,11 @@ export type TimelineItem =
   | { type: 'comment'; at: string; id: string; taskId: string; title: string; boardId: string; byId: string | null; body: string }
   | { type: 'contact'; at: string; recordId: string; name: string; byId: string | null }
   | { type: 'score'; at: string; from: number; to: number }
-  | { type: 'ticket_opened' | 'ticket_solved'; at: string; recordId: string; title: string; priority: string | null; url: string | null };
+  | { type: 'ticket_opened' | 'ticket_solved'; at: string; recordId: string; title: string; priority: string | null; url: string | null }
+  /** A won deal's hand-over card was made, or confirmed with the next owner. */
+  | { type: 'handover' | 'handover_confirmed'; at: string; handoverId: string; deal: string; byId: string | null; ownerId: string | null }
+  /** Product work this customer asked for was finished: "built for you". */
+  | { type: 'built'; at: string; storyId: string; title: string };
 
 export interface Timeline {
   items: TimelineItem[];

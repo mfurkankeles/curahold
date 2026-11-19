@@ -17,6 +17,7 @@ import { addEvent } from './history';
 import { kick } from './notify';
 import { queueSync, recomputeRollups } from './records';
 import { onTaskCreated } from './taskEvents';
+import { builtForLines } from './handoff';
 
 export type Anchor = 'start' | 'renewal' | 'close';
 
@@ -207,6 +208,11 @@ async function startFor(q: Q, org: Row, now: Date): Promise<number> {
     let made = 0;
     if (plan) made = (await applyPlan(q, { orgId: org.id, actorId: null, plan: { ...plan, anchor: 'renewal' }, account: a, record, from: a.day, today, catchUp: { locale } })).length;
     else made = await oneTask(q, org, a, record, today, locale);
+    // On the renewal deal too: what was built for them this term, as the first line of its thread.
+    if (record) {
+      const built = await builtForLines(q, org.id, a.id, addDays(today, -365), locale);
+      if (built) await q.query('insert into record_comments (org_id, record_id, author_id, body) values ($1, $2, null, $3)', [org.id, record.id, built]);
+    }
     await q.query('insert into playbook_runs (org_id, account_id, anchor_day, plan_id, record_id, tasks) values ($1, $2, $3, $4, $5, $6) on conflict do nothing', [
       org.id,
       a.id,
@@ -231,10 +237,12 @@ async function oneTask(q: Q, org: Row, a: Row, record: Row | null, today: string
   const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, columns[0].key]);
   // Two weeks to get going, and never after the renewal itself.
   const dueDay = [addDays(today, 14), a.day].sort()[0];
+  // The renewal's summary: what was built for the customer this term (lib/handoff.ts).
+  const built = await builtForLines(q, org.id, a.id, addDays(today, -365), locale);
   const [t] = await q.query(
-    `insert into tasks (org_id, board_id, title, status, assignee_ids, account_id, record_id, due_date, position) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `insert into tasks (org_id, board_id, title, status, assignee_ids, account_id, record_id, due_date, position, description) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11)
      returning *, $10::text as account_name`,
-    [org.id, board.id, words(locale, 'renewal.taskTitle', { account: a.name }).slice(0, 300), columns[0].key, a.owner_id ? [a.owner_id] : [], a.id, record?.id ?? null, dueDay, Number(p), a.name],
+    [org.id, board.id, words(locale, 'renewal.taskTitle', { account: a.name }).slice(0, 300), columns[0].key, a.owner_id ? [a.owner_id] : [], a.id, record?.id ?? null, dueDay, Number(p), a.name, built],
   );
   await addEvent(q, org.id, t.id, null, 'created', { renewal: a.day });
   await onTaskCreated(q, org.id, null, t, board, { rule: words(locale, 'renewal.rule') });
