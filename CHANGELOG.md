@@ -43,6 +43,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   picture; footer column titles are no longer headings. The help centre's production build gets absolute canonical and
   hreflang addresses (only to languages that really have the page), article structured data and its own sitemap, which
   the docs host's robots.txt now names. New settings: `SITE_LASTMOD`, `DOCS_ORIGIN` (ADR 0020).
+- Sales site speed and motion: no stylesheet blocks the first paint any more (first-screen styles inline, the rest cut to
+  what each kind of page uses and loaded after); the headline and its buttons show at once instead of sliding in; Arabic,
+  Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
+  no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
+  a Pause button and stays still for anyone who asked their system for less motion.
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

@@ -64,7 +64,7 @@ function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: stri
       <p class="ip__lead">${esc(o.lead)}</p>
       ${o.compact ? '' : `<div class="ip__ctas">${ctaPair(locale, o.urls)}</div>`}
     </div>
-  </header>`;
+  </header>${o.compact ? '' : '<!--fold-->'}`;
 }
 
 /** A ruled list of claims: the heading on one side, its sentence on the other. */
@@ -170,6 +170,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     main: `${hero(locale, { crumb: c.pricingPage.title, title: c.pricingPage.title, lead: c.pricingPage.lead, urls, compact: true })}
   ${pricing.plans}
   ${pricing.compare}
+  <!--fold-->
   ${pricing.faq}
   <section class="ip__body"><div class="wrap"><h2 class="ip__gh">${esc(c.pricingPage.dontTitle)}</h2>${points(c.pricingPage.dont, ' ip__points--dont')}</div></section>
   ${closing(locale, urls)}`,

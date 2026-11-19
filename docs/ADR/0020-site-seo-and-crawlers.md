@@ -35,6 +35,12 @@ paid SEO service, no runtime dependency) and make only true claims.
   words; a page shown in English inside another language is a copy whose canonical is the English page; `TechArticle` +
   `BreadcrumbList`; a docs sitemap. The docs origin is `DOCS_ORIGIN` (default: the app address the site links to). The
   relative and preview builds stay closed to crawlers and add no files (ADR 0016's file limit holds).
+- **Speed:** the four hand-written sheets stay as they are for editing; the build minifies them (esbuild, already a dev
+  tool), cuts each kind of page's styles to the classes it uses (`scripts/site-css.ts`), inlines what the first screen
+  needs and loads the rest at low priority without blocking. Latin pages preload their two fonts; body text uses
+  `font-display: optional` so a late font never repaints the page; other scripts use their system faces and download
+  no font. The first screen is never hidden for an animation. Trade-off: every page carries its first-screen styles
+  inline (about 10 KB compressed on the landing page) instead of a cached file.
 - **AI crawlers:** training crawlers are always refused. Answer engines (the robots that fetch for an AI search answer)
   stay refused by default on both the site and the docs, as before; one build-time setting opens the site to them
   (`SITE_AI_CRAWLERS=allow`) and one configuration flag opens the docs host (`crawlers.docsAiAnswers`). Changing the

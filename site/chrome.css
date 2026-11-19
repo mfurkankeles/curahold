@@ -4,12 +4,31 @@
    Its colours are set on its own blocks, so a version with a palette of its own
    (concept C's black and lime) cannot bleed into them. */
 
+/* Type per script (review E4): each script gets its operating system's own reading face first,
+   so no web font downloads for it (0 KB) and nothing falls back to a random font. Figtree and
+   Bricolage cover Latin (en, tr). --script-* is read by every block's --text and --display. */
+:root:lang(ar), :root:lang(fa) { --script-text: 'Segoe UI', 'SF Arabic', 'Geeza Pro', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(he) { --script-text: 'Segoe UI', 'SF Hebrew', 'Arial Hebrew', 'Noto Sans Hebrew', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(ja) { --script-text: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo, 'Noto Sans JP', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(ko) { --script-text: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(zh-Hans) { --script-text: 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(zh-Hant) { --script-text: 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', system-ui, sans-serif; --script-display: var(--script-text); }
+/* Chinese, Japanese and Korean have no true bold or italic in most system faces: never fake them. */
+:root:is(:lang(ja), :lang(ko), :lang(zh)) { font-synthesis: none; }
+:root:is(:lang(ja), :lang(zh)) :is(em, i) { font-style: normal; }
+/* Reading size and line height per script; nothing below 12 px outside Latin. */
+:root:is(:lang(ar), :lang(fa)) body { font-size: 18px; line-height: 1.7; }
+:root:lang(he) body { font-size: 18px; line-height: 1.6; }
+:root:is(:lang(ja), :lang(ko), :lang(zh)) body { font-size: 16px; line-height: 1.7; }
+/* The wordmark is the brand's own letters in every language. */
+.hx__brand, .foot__brand { font-family: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif !important; }
+
 .hx, .foot, .wy, .cc-host {
   --night: #17133a; --night-2: #241f52; --deep: #0f0c2b; --paper: #19153f; --mist: #221e4c; --line: #332e66;
   --iris: #5b4de8; --iris-ink: #b9b0ff; --iris-wash: #2a2560; --iris-hi: #8c7dff; --fern-ink: #7fe0bd; --ember: #e2953a;
   --ink: #f4f3fd; --ink-2: #c9c5e8; --ink-3: #a5a0d3;
-  --display: 'Bricolage Grotesque', 'Bricolage', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
-  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --display: var(--script-display, 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif);
+  --text: var(--script-text, 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif);
   --wrap: 1180px; --ease: cubic-bezier(.2, .7, .2, 1);
   --hx-h: 64px; --well: #100d2c;
 }

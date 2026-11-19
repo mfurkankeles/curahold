@@ -4,8 +4,10 @@
    never by switching to white; long reading sits on a calmer veil. One brand shape:
    the mark's "C", drawn large, holding the live window. */
 
-@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Body text: preloaded, and `optional` so a font that arrives late never repaints the page (no shift, no second largest paint);
+   the next page has it from the cache. Headlines keep `swap` for the brand face. */
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: optional; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: optional; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
@@ -34,8 +36,9 @@
   --risk: #f2735c;
   --watch: #e3a54a;
   --good: #5ccfa6;
-  --display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
-  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  /* Per-script faces come from --script-* (site/chrome.css, set by the page's lang). */
+  --display: var(--script-display, 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif);
+  --text: var(--script-text, 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif);
   --wrap: 1180px;
   /* The primary button's hover: darker, never lighter, so white text keeps ≥ 4.5:1 (7:1 here). */
   --iris-down: #4b3fd8;
@@ -111,7 +114,6 @@ body.home, body.blog {
 html.is-past .sky { opacity: .62; }
 .blog .sky { opacity: .5; }
 .sky i { position: absolute; left: calc(28px * var(--x) + 11.5px); top: calc(28px * var(--y) + 11.5px); width: 5px; height: 5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 14px 3px color-mix(in srgb, var(--c) 70%, transparent); }
-.sky i::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--c); opacity: 0; }
 .sky i:nth-child(1) { --c: #f2735c; --x: 21; --y: 5; }
 .sky i:nth-child(2) { --c: #e3a54a; --x: 48; --y: 23; }
 .sky i:nth-child(3) { --c: #e3a54a; --x: 14; --y: 3; }
@@ -384,19 +386,14 @@ html.is-past .sky { opacity: .62; }
      pausing the hero pauses the bar and every scene with it. */
   html.js .tour__tab.is-on .tour__bar i { animation: bar var(--dur, 7s) linear both; }
   .hero__in.is-paused :is(.film *, .tour__bar i) { animation-play-state: paused !important; }
-  .hero__h .w > span { animation: wordrise .9s var(--ease) both; animation-delay: calc(.05s + var(--wi) * .07s); }
-  .hero__lead { animation: rise .7s var(--ease) .4s both; }
-  .hero__ctas { animation: rise .7s var(--ease) .5s both; }
-  .hero__note { animation: rise .6s var(--ease) .6s both; }
-  .film__win { animation: filmin 1s var(--ease) .25s both; }
+  /* The headline, its lead and the buttons are there from the first paint (they are what the page
+     is judged by, and what a slow phone shows first); the film and the arc carry the motion. */
+  .film__win { animation: filmin .5s var(--ease) .1s both; }
   .hero__arc path { animation: draw 1.7s var(--ease) .5s both; }
-  .sky i::after { animation: ping 3.4s var(--ease) calc(var(--x) * .13s) infinite; }
-  html.is-away .sky i::after { animation-play-state: paused; }
   .marq__track { animation: marq 56s linear infinite; }
-  html:is(.is-past, .is-away) .marq__track { animation-play-state: paused; }
+  html:is(.is-past, .is-away) .marq__track, .strip.is-paused .marq__track { animation-play-state: paused; }
   .cue__line i { animation: cue 2.4s var(--ease) infinite; }
   html:is(.is-past, .is-away) .cue__line i { animation-play-state: paused; }
-  .blog .sky i::after { animation: none; }
 }
 @keyframes f-up { from { opacity: 0; transform: translateY(10px); } }
 @keyframes f-pop { from { opacity: 0; transform: scale(.7); } }
@@ -448,11 +445,8 @@ html.is-past .sky { opacity: .62; }
   .cur--sprint { --grab-x: 20cqw; --grab-y: 50cqh; --drop-x: 84cqw; }
 }
 @keyframes bar { from { transform: scaleX(0); } }
-@keyframes wordrise { from { transform: translateY(112%); } }
-@keyframes rise { from { opacity: 0; transform: translateY(18px); } }
 @keyframes filmin { from { opacity: 0; transform: translateY(34px) scale(.97); } }
 @keyframes draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-@keyframes ping { 0% { opacity: .9; transform: scale(.4); } 70%, 100% { opacity: 0; transform: scale(1.9); } }
 @keyframes marq { to { transform: translateX(-50%); } }
 @keyframes cue { from { transform: translateY(-14px); } 70%, to { transform: translateY(36px); } }
 
@@ -479,6 +473,15 @@ html:not(.js) .tour__bar { display: none; }
 .marq__item { flex: none; margin: 0 22px; display: inline-flex; align-items: center; gap: 9px; color: #c9c5e8; font: 600 17px/1 var(--display); white-space: nowrap; opacity: .8; }
 .marq__item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--iris-hi); opacity: .7; }
 .marq:hover .marq__track { animation-play-state: paused; }
+/* Anything that moves for more than five seconds can be stopped (WCAG 2.2.2): a pause button with its words. */
+.strip { position: relative; }
+.strip__toggle { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html.js .strip__toggle { position: absolute; inset-inline-end: max(20px, calc((100% - var(--wrap)) / 2)); top: -6px; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--edge); border-radius: 999px; background: rgba(15, 12, 43, .7); color: var(--ink-2); font: 600 13px/1 var(--text); cursor: pointer; }
+  html.js .strip__toggle:hover { color: var(--ink); }
+  .strip__toggle svg { width: 12px; height: 12px; }
+}
+@media (pointer: coarse) { html.js .strip__toggle { min-height: 44px; } }
 
 /* ------------------------------------------------------------- the story */
 /* Below the first screen the browser lays a section out only as it comes near, so
@@ -961,7 +964,8 @@ html:not(.js) .story__steps { padding-block: 0; }
 /* ------------------------------------------------------- sign-in dialog */
 
 /* ---- sections settle into place once; hidden only after the script takes ownership ---- */
-html.js [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: calc(var(--i, 0) * .06s); }
+/* Below the first screen, sections settle in: 300 ms, 12 px, at most five steps of 30 ms. */
+html.js [data-reveal] { opacity: 0; transform: translateY(12px); transition: opacity .3s var(--ease), transform .3s var(--ease); transition-delay: calc(min(var(--i, 0), 5) * 30ms); }
 html.js [data-reveal].is-in { opacity: 1; transform: none; }
 
 /* ------------------------------------------------------------ narrower */

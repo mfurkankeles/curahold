@@ -9,6 +9,7 @@
 // Addresses can be changed for a preview with SITE_APP_URL, SITE_DEMO_URL,
 // SITE_DOCS_URL and SITE_BASE_DOMAIN.
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -23,6 +24,7 @@ import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
 import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
+import { classesIn, minifyCss, pruneCss } from './site-css';
 import { innerPages, type InnerPage, type PageUrls } from './site-pages';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -53,6 +55,8 @@ const CURSOR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.2l13
 const LOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.8" fill="currentColor"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 // The night sky behind every page: the grid is drawn by the stylesheet, these are the few glowing dots.
 const SKY = `<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
+/** The integrations strip's control: pause, and the play mark it turns into. */
+const PAUSE = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.5v7M8.5 2.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
 
 // The tools Curahold speaks to, for the strip under the hero. Brand names are
@@ -420,12 +424,9 @@ ${seoTags({ canonical, title: p.title, description: p.description, locale, ogTyp
 <link rel="icon" href="${FAVICON}">
 ${alternatesFor(p.path)}
 ${ld}
-<link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+${fontPreload(locale, rel)}
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="${rel}assets/site.css">
-<link rel="stylesheet" href="${rel}assets/chrome.css">
-<link rel="stylesheet" href="${rel}assets/pages.css">
-<link rel="stylesheet" href="${rel}assets/consent.css">
+${cssSlot('page', rel)}
 </head>
 <body class="inner">
 ${SKY}
@@ -581,10 +582,8 @@ ${seoTags({ canonical: opts.canonical, title: opts.title, description: opts.desc
 <link rel="icon" href="${FAVICON}">
 ${alternates}
 ${opts.extraLd ?? ''}
-<link rel="preload" href="${opts.rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${opts.rel}assets/site.css">
-<link rel="stylesheet" href="${opts.rel}assets/chrome.css">
-<link rel="stylesheet" href="${opts.rel}assets/consent.css">
+${fontPreload(locale, opts.rel)}
+${cssSlot('blog', opts.rel)}
 </head>`;
 }
 
@@ -1223,11 +1222,9 @@ ${seoTags({ canonical, title: seoTitle, description: seoDesc, locale, ogType: 'w
 <link rel="icon" href="${FAVICON}">
 ${alternates}
 ${landingJsonLd(locale, canonical, seoDesc)}
-<link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+${fontPreload(locale, rel)}
 <script>document.documentElement.classList.add('js')</script>
-<link rel="stylesheet" href="${rel}assets/site.css">
-<link rel="stylesheet" href="${rel}assets/chrome.css">
-<link rel="stylesheet" href="${rel}assets/consent.css">
+${cssSlot('home', rel)}
 </head>
 <body class="home">
 ${SKY}
@@ -1264,9 +1261,11 @@ ${chromeHeader(locale, '', 'classic')}
     ${cue}
     <div class="strip" aria-label="${esc(c.hero.works)}">
       <p class="strip__label">${esc(c.hero.works)}</p>
+      <button class="strip__toggle" type="button" aria-pressed="false" data-pause="${esc(c.hero.pause)}" data-play="${esc(c.hero.play)}">${PAUSE}<span>${esc(c.hero.pause)}</span></button>
       <div class="marq" aria-hidden="true"><div class="marq__track">${marquee}${marquee}</div></div>
     </div>
   </section>
+  <!--fold-->
 
   ${storyHtml}
 
@@ -1318,6 +1317,67 @@ ${chromeTail(locale, rel, 'classic')}
 `;
 }
 
+// ------------------------------------------------------------------ styles per kind of page
+
+type CssKind = 'home' | 'page' | 'blog';
+/** Which hand-written sheets each kind of page draws from (scripts/site-css.ts cuts them down). */
+const CSS_SOURCES: Record<CssKind, string[]> = {
+  home: ['site.css', 'chrome.css', 'consent.css'],
+  page: ['site.css', 'chrome.css', 'pages.css', 'consent.css'],
+  blog: ['site.css', 'chrome.css', 'consent.css'],
+};
+/** Where a page's styles go; build() fills it once every page of that kind is known. */
+const cssSlot = (kind: CssKind, rel: string) => `<!--css:${kind}:${rel}-->`;
+
+/**
+ * Latin pages preload the headline face; other scripts read their system faces (site/chrome.css
+ * :lang rules), so they download no font at all.
+ */
+const fontPreload = (locale: SiteLocale, rel: string) =>
+  locale === 'en' || locale === 'tr'
+    ? ['bricolage-grotesque-latin-wght-normal', 'figtree-latin-wght-normal'].map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')
+    : '';
+
+/** Pages waiting for their styles: written once the styles of their kind are cut. */
+const pending: { file: string; html: string }[] = [];
+const emit = (file: string, html: string) => pending.push({ file, html });
+
+/**
+ * Cuts each kind of page's styles to the classes it uses, writes them as one hashed file
+ * (cached for good), inlines what the first screen needs (everything above <!--fold-->), and
+ * loads the file without blocking the first paint, at low priority (media=print until it
+ * arrives) so the fonts are fetched first. Then writes the pages.
+ */
+function writePages(): string {
+  const report: string[] = [];
+  for (const kind of Object.keys(CSS_SOURCES) as CssKind[]) {
+    const mine = pending.filter((p) => p.html.includes(`<!--css:${kind}:`));
+    if (!mine.length) continue;
+    const full = minifyCss(CSS_SOURCES[kind].map((f) => readFileSync(join(ROOT, 'site', f), 'utf8')).join('\n'));
+    const used = new Set<string>();
+    const first = new Set<string>();
+    for (const p of mine) {
+      for (const c of classesIn(p.html)) used.add(c);
+      const fold = p.html.indexOf('<!--fold-->');
+      // A page without a fold mark (the blog: short pages) is all first screen.
+      for (const c of classesIn(fold < 0 ? p.html : p.html.slice(0, fold))) first.add(c);
+    }
+    const sheet = pruneCss(full, used);
+    const critical = pruneCss(full, first);
+    const name = `${kind}.${createHash('sha256').update(sheet).digest('hex').slice(0, 10)}.css`;
+    writeFileSync(join(OUT, 'assets', name), sheet);
+    report.push(`${kind} ${Math.round(critical.length / 1024)} KB inline + ${Math.round(sheet.length / 1024)} KB file`);
+    for (const p of mine) {
+      p.html = p.html.replace(/<!--css:(\w+):([^>]*)-->/, (_m, _k, rel: string) =>
+        // Inline, a font's url() is read from the page, not from assets/: point it there.
+        `<style>${critical.replace(/url\((?![a-z]+:|\/|#)/g, `url(${rel}assets/`)}</style>\n<link rel="stylesheet" href="${rel}assets/${name}" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="${rel}assets/${name}"></noscript>`,
+      ).replace('<!--fold-->', '');
+    }
+  }
+  for (const p of pending) writeFileSync(p.file, p.html);
+  return report.join(', ');
+}
+
 // Run as a script, it writes the site; imported (by a test), it only lends page().
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) build();
 
@@ -1326,22 +1386,22 @@ function build() {
   for (const locale of SITE_LOCALES) {
     const dir = locale === 'en' ? OUT : join(OUT, locale);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), page(locale));
+    emit(join(dir, 'index.html'), page(locale));
     // The inner pages the menu points to, and the two animated versions.
     for (const p of innerPages(locale, urlsOf(locale), { plans: plansHtml(locale), compare: compareHtml(locale), faq: pricingFaqHtml(locale), offers: (url) => offersLd(locale, url), faqLd, fill: (t) => t.replace('{team}', moneyIn(locale)(PLANS.team.price.year)).replace('{business}', moneyIn(locale)(PLANS.business.price.year)) })) {
       mkdirSync(join(dir, p.path), { recursive: true });
-      writeFileSync(join(dir, p.path, 'index.html'), innerDoc(locale, p));
+      emit(join(dir, p.path, 'index.html'), innerDoc(locale, p));
     }
     for (const [which, path] of [['a', PAGE.ai], ['c', PAGE.orbit]] as const) {
       mkdirSync(join(dir, path), { recursive: true });
       writeFileSync(join(dir, path, 'index.html'), conceptDoc(locale, which));
     }
   }
-  copyFileSync(join(ROOT, 'site', 'site.css'), join(OUT, 'assets', 'site.css'));
   copyFileSync(join(ROOT, 'site', 'site.js'), join(OUT, 'assets', 'site.js'));
   copyFileSync(join(ROOT, 'site', 'consent.css'), join(OUT, 'assets', 'consent.css'));
   copyFileSync(join(ROOT, 'site', 'consent.js'), join(OUT, 'assets', 'consent.js'));
-  for (const f of ['chrome.css', 'chrome.js', 'pages.css']) copyFileSync(join(ROOT, 'site', f), join(OUT, 'assets', f));
+  // The animated versions still link the shared header's and the consent banner's sheets as they are.
+  for (const f of ['chrome.css', 'chrome.js']) copyFileSync(join(ROOT, 'site', f), join(OUT, 'assets', f));
   copyFileSync(join(ROOT, 'site', 'ab', 'measure.js'), join(OUT, 'assets', 'measure.js'));
   // The A/B edge script ships only once the test is switched on (site/ab/config.ts).
   if (AB.enabled) writeFileSync(join(OUT, '_worker.js'), `const AB = ${JSON.stringify(AB)};\n${readFileSync(join(ROOT, 'site', 'ab', 'worker.js'), 'utf8')}`);
@@ -1367,15 +1427,17 @@ function build() {
   for (const locale of BLOG_LOCALES) {
     const dir = locale === 'en' ? join(OUT, 'blog') : join(OUT, locale, 'blog');
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), blogIndexPage(locale));
+    emit(join(dir, 'index.html'), blogIndexPage(locale));
     blogPageCount++;
     for (const post of blogPosts(locale)) {
       const pdir = join(dir, post.slug);
       mkdirSync(pdir, { recursive: true });
-      writeFileSync(join(pdir, 'index.html'), blogPostPage(locale, post));
+      emit(join(pdir, 'index.html'), blogPostPage(locale, post));
       blogPageCount++;
     }
   }
+
+  const cssReport = writePages();
 
   // The sitemaps: one per language (each page with its hreflang alternates) and an index
   // (sitemap.xml) that robots.txt points to. No <priority> (search engines ignore it);
@@ -1408,5 +1470,6 @@ function build() {
   // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
   const HUB = join(ROOT, 'dist', 'demo-hub');
   if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
+  console.log(`styles: ${cssReport}`);
   console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemaps + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
 }

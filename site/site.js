@@ -30,6 +30,20 @@
 
   // Sections settle into place as they are reached. If motion is unwelcome, or
   // the browser has no observer, everything is simply shown at once.
+  // The integrations strip moves on its own; its button stops and restarts it (WCAG 2.2.2).
+  const strip = document.querySelector('.strip');
+  const toggle = strip && strip.querySelector('.strip__toggle');
+  if (toggle) {
+    const pauseIcon = toggle.querySelector('svg').outerHTML;
+    const playIcon = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" fill="currentColor"/></svg>';
+    toggle.addEventListener('click', () => {
+      const paused = strip.classList.toggle('is-paused');
+      toggle.setAttribute('aria-pressed', String(paused));
+      toggle.innerHTML = (paused ? playIcon : pauseIcon) + '<span></span>';
+      toggle.lastChild.textContent = paused ? toggle.dataset.play : toggle.dataset.pause;
+    });
+  }
+
   const reveals = document.querySelectorAll('[data-reveal]');
   if (reduce || !canWatch) {
     reveals.forEach((el) => el.classList.add('is-in'));
