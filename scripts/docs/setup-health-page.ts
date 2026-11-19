@@ -28,7 +28,9 @@ export function helpBlock(l: Locale): string {
     const rows = CHECKS.filter((c) => c.area === a)
       .sort((x, y) => SEVERITIES.indexOf(x.severity) - SEVERITIES.indexOf(y.severity))
       .map((c) => `| ${cell(say(`sh.${c.id}.problem`))} (${cell(say(`sh.sev.${c.severity}`))}) | ${cell(say(`sh.${c.id}.why`))} | **${cell(say(`sh.${c.id}.fix`))}** |`);
-    return `### ${say(`sh.area.${a}`)}\n\n${head}\n${rows.join('\n')}`;
+    // An area whose plain name would answer someone else's question in Ask has a heading of its own on this page.
+    const own = say(`sh.doc.area.${a}`);
+    return `### ${own.startsWith('sh.') ? say(`sh.area.${a}`) : own}\n\n${head}\n${rows.join('\n')}`;
   });
   return `${START}\n\n${parts.join('\n\n')}\n\n${END}`;
 }

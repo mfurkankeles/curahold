@@ -6688,4 +6688,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   "timeline.portalFileStep": "{name} 为入门计划发送了文件：",
   "errors.portal_quota": "服务方的文件空间已满。请用其他方式发送文件，或请对方腾出空间。",
   "audit.portal.quota_changed": "更改了客户文件存储空间",
+  "sh.doc.area.portal": "客户门户检查",
+  "sh.doc.area.data": "你的数据检查",
 };

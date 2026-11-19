@@ -6688,4 +6688,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   "timeline.portalFileStep": "{name} שלח/ה קובץ לתוכנית ההתחלה:",
   "errors.portal_quota": "נפח הקבצים אצל הספק שלכם מלא. שלחו את הקובץ בדרך אחרת, או בקשו מהם לפנות מקום.",
   "audit.portal.quota_changed": "שינה/תה את האחסון לקבצי לקוחות",
+  "sh.doc.area.portal": "בדיקות פורטל הלקוחות",
+  "sh.doc.area.data": "בדיקות הנתונים שלכם",
 };

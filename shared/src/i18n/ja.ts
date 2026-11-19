@@ -6688,4 +6688,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   "timeline.portalFileStep": "{name} がスタートプランにファイルを送りました：",
   "errors.portal_quota": "提供元のファイル容量がいっぱいです。別の方法で送るか、空きを作るよう依頼してください。",
   "audit.portal.quota_changed": "顧客ファイルの保存容量を変更しました",
+  "sh.doc.area.portal": "顧客ポータルのチェック",
+  "sh.doc.area.data": "データのチェック",
 };

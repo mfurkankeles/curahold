@@ -6688,4 +6688,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   "timeline.portalFileStep": "أرسل {name} ملفًا لخطة البدء:",
   "errors.portal_quota": "مساحة الملفات لدى مزوّدك ممتلئة. أرسل الملف بطريقة أخرى أو اطلب منهم إفساح المجال.",
   "audit.portal.quota_changed": "غيّر مساحة ملفات العملاء",
+  "sh.doc.area.portal": "فحوصات بوابة العملاء",
+  "sh.doc.area.data": "فحوصات بياناتك",
 };

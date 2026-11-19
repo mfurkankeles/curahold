@@ -51,7 +51,7 @@ import { EmptyState } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Dialog } from '../components/ui';
 import { ApiFailure, del, get, patch, post, put } from '../lib/api';
-import { formatDayShort, formatPercent } from '../lib/format';
+import { formatBytes, formatDayShort, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { runSetupTest } from '../lib/setupContract';
@@ -849,7 +849,7 @@ function StepFiles({ ctx, step }: { ctx: Ctx; step: PlanStep }) {
             <li key={f.id}>
               <Icon name="paperclip" size={14} />
               <a href={`/api/files/${f.id}`}>{f.name}</a>
-              <span className="muted">{new Intl.NumberFormat(locale, { style: 'unit', unit: 'kilobyte', maximumFractionDigits: 0 }).format(Math.max(1, f.size / 1024))}</span>
+              <span className="muted">{formatBytes(f.size, locale)}</span>
             </li>
           ))}
         </ul>

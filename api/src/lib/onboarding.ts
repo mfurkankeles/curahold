@@ -338,11 +338,17 @@ export async function refreshMapping(q: Q, orgId: string, planId: string) {
  * did; a failing row that passes again is fixed at once (it leaves the open
  * list without waiting for anything).
  */
+/** Today in the company's own time zone (never the database server's day). */
+export async function companyDay(q: Q, orgId: string): Promise<string> {
+  const [o] = await q.query<{ timezone: string | null }>('select timezone from orgs where id = $1', [orgId]);
+  return localDate(new Date(), o?.timezone || 'UTC');
+}
+
 export async function judgeFields(q: Q, orgId: string, planId: string) {
   const rows = await q.query('select id, type, required, received, auto_ok, failing_since, fixed_at from onboarding_fields where plan_id = $1 and org_id = $2', [planId, orgId]);
   for (const f of rows) {
     const failing = checkField({ type: f.type, required: f.required, received: f.received ?? null }).length > 0 || f.auto_ok === false;
-    if (failing && !f.failing_since) await q.query('update onboarding_fields set failing_since = current_date, fixed_at = null where id = $1', [f.id]);
+    if (failing && !f.failing_since) await q.query('update onboarding_fields set failing_since = $2, fixed_at = null where id = $1', [f.id, await companyDay(q, orgId)]);
     else if (!failing && f.failing_since) await q.query('update onboarding_fields set failing_since = null, fixed_at = now() where id = $1', [f.id]);
   }
 }

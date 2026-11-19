@@ -14,6 +14,7 @@ import { translate, type Locale, type MessageKey } from '../../../shared/src/i18
 import { bySeverity, canSeeCheck, CHECKS, TEST_BUNDLES, TEST_STEPS, type SetupCheckDef, type SetupCheckResult, type SetupHealth } from '../../../shared/src/setupHealth';
 import type { Deps } from '../context';
 import type { Q } from '../db';
+import { localDate } from '../../../shared/src/days';
 import { assistantConfig, providerOf } from '../routes/assist';
 
 /** Providers that only read mail or events: they have no object mapping to finish. */
@@ -246,6 +247,12 @@ export async function dailySetupHealth(deps: Deps): Promise<number> {
 
 // ------------------------------------------------------------------ the onboarding plan's issues, one row per step
 
+/** Today in the company's own time zone (a reopened issue is dated by it). */
+async function companyDay(q: Q, orgId: string): Promise<string> {
+  const [o] = await q.query<{ timezone: string | null }>('select timezone from orgs where id = $1', [orgId]);
+  return localDate(new Date(), o?.timezone || 'UTC');
+}
+
 /**
  * A failed test step's issue. Two records of the same thing: the setup list's
  * own (setup_progress kind 'issue', detail.ref = the plan's row) and the ONE row
@@ -271,10 +278,10 @@ export async function openStepIssue(
        on conflict (plan_id, source, source_ref) where source_ref is not null
        do update set status = 'open', resolved_at = null,
                      body = case when onboarding_issues.status = 'resolved' then excluded.body else onboarding_issues.body end,
-                     opened_on = case when onboarding_issues.status = 'resolved' then current_date else onboarding_issues.opened_on end,
+                     opened_on = case when onboarding_issues.status = 'resolved' then $8::date else onboarding_issues.opened_on end,
                      updated_at = case when onboarding_issues.status = 'resolved' then now() else onboarding_issues.updated_at end
        returning id`,
-      [o.orgId, o.title.slice(0, 200), o.body.slice(0, 4000), o.urgent ? 'high' : 'normal', o.stepId, o.userId, o.planId ?? null],
+      [o.orgId, o.title.slice(0, 200), o.body.slice(0, 4000), o.urgent ? 'high' : 'normal', o.stepId, o.userId, o.planId ?? null, await companyDay(q, o.orgId)],
     );
     ref = row?.id ?? null;
     await q.query('release savepoint setup_issue');

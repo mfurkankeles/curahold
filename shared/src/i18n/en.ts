@@ -6703,6 +6703,8 @@ export const en = {
   "timeline.portalFileStep": "{name} sent a file for their onboarding plan:",
   "errors.portal_quota": "Your provider's storage for files is full. Please send the file another way, or ask them to make room.",
   "audit.portal.quota_changed": "changed the storage for customers' files",
+  "sh.doc.area.portal": "Customer portal checks",
+  "sh.doc.area.data": "Checks on your data",
 } as const;
 
 export type MessageKey = keyof typeof en;

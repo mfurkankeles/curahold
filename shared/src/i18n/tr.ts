@@ -6688,4 +6688,6 @@ export const tr: Record<MessageKey, string> = {
   "timeline.portalFileStep": "{name} başlangıç planı için bir dosya gönderdi:",
   "errors.portal_quota": "Sağlayıcınızın dosya alanı dolu. Dosyayı başka bir yolla gönderin ya da yer açmalarını isteyin.",
   "audit.portal.quota_changed": "müşteri dosyalarının alanını değiştirdi",
+  "sh.doc.area.portal": "Müşteri portalı kontrolleri",
+  "sh.doc.area.data": "Verilerinizle ilgili kontroller",
 };

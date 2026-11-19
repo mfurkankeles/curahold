@@ -6688,4 +6688,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   "timeline.portalFileStep": "{name}님이 시작 계획에 파일을 보냈습니다:",
   "errors.portal_quota": "제공업체의 파일 공간이 가득 찼습니다. 다른 방법으로 보내거나 공간을 비워 달라고 요청하세요.",
   "audit.portal.quota_changed": "고객 파일 저장 공간을 변경함",
+  "sh.doc.area.portal": "고객 포털 점검",
+  "sh.doc.area.data": "데이터 점검",
 };

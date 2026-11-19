@@ -296,8 +296,8 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/steps', async (c) => {
     while (keys.includes(key)) key = `${key}x`;
     await q.query(
       `insert into onboarding_steps (org_id, plan_id, key, title, body, phase, position, side, due_on, start_on, depends_on, required)
-       values ($1, $2, $3, $4, $5, $6, 1000 + $7, $8, $9, current_date, $10, $11)`,
-      [org.id, planId, key, input.title, input.body, input.phase, keys.length, input.side, input.dueOn ?? null, input.after.filter((k) => keys.includes(k)), input.required],
+       values ($1, $2, $3, $4, $5, $6, 1000 + $7, $8, $9, $12, $10, $11)`,
+      [org.id, planId, key, input.title, input.body, input.phase, keys.length, input.side, input.dueOn ?? null, input.after.filter((k) => keys.includes(k)), input.required, todayOf(c)],
     );
     await touch(q, planId);
   });
@@ -600,9 +600,9 @@ onboardingPlanRoutes.patch('/onboarding-goals/:id', async (c) => {
       `update onboarding_goals set title = case when $2::text is null then title else $2 end, title_key = case when $2::text is null then title_key else null end,
               priority = coalesce($3, priority), status = coalesce($4, status),
               target_on = case when $5::boolean then $6::date else target_on end,
-              done_on = case when $4 = 'done' and done_on is null then current_date when $4 is not null and $4 <> 'done' then null else done_on end,
+              done_on = case when $4 = 'done' and done_on is null then $9::date when $4 is not null and $4 <> 'done' then null else done_on end,
               proof_url = case when $7::boolean then $8 else proof_url end where id = $1`,
-      [id, input.title ?? null, input.priority ?? null, input.status ?? null, input.targetOn !== undefined, input.targetOn ?? null, input.proofUrl !== undefined, input.proofUrl ?? null],
+      [id, input.title ?? null, input.priority ?? null, input.status ?? null, input.targetOn !== undefined, input.targetOn ?? null, input.proofUrl !== undefined, input.proofUrl ?? null, todayOf(c)],
     );
     await touch(q, planId);
     return planId;
