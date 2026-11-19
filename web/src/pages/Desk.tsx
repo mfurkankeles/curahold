@@ -32,12 +32,16 @@ import {
   type OwnerSection,
 } from './OwnerConsole';
 import { OWNER_LOCALES } from '../../../shared/src/i18n/owner';
+import { officeWord, type OfficeKey } from '../../../shared/src/i18n/ownerOffice';
+import { RouteFallback } from '../components/RouteFallback';
 import { ChatSection, MeetingsSection, TeamSection, useTeamWords, type TeamGo } from './OwnerTeam';
 import '../surfaces/console.css';
 import { formatDate } from '../lib/format';
 
 // rrweb's player is heavy: load it only when the team watches a recording.
 const ReplayPlayer = lazy(() => import('../components/ReplayPlayer'));
+// The 3D Office carries three.js and its people: only the owner who opens it downloads them.
+const OwnerOffice = lazy(() => import('./OwnerOffice'));
 
 type Status = 'received' | 'answered' | 'solved';
 interface Row {
@@ -266,7 +270,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-type Section = 'today' | 'customers' | 'support' | Exclude<OwnerSection, 'today'> | 'team' | 'chats' | 'meetings';
+type Section = 'today' | 'customers' | 'support' | Exclude<OwnerSection, 'today'> | 'team' | 'chats' | 'meetings' | 'office';
 interface Where {
   section: Section;
   /** the open trial request (requests) */
@@ -292,6 +296,8 @@ const OWNER_PATHS: Record<string, Section> = {
   '/team': 'team',
   '/chats': 'chats',
   '/meetings': 'meetings',
+  // The 3D Office (OwnerOffice.tsx, its own chunk): ?q= is the selected seat.
+  '/office': 'office',
 };
 const PATH_OF = Object.fromEntries(Object.entries(OWNER_PATHS).map(([k, v]) => [v, k])) as Record<string, string>;
 function readWhere(): Where {
@@ -558,16 +564,19 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     setWhere(w);
     if (!replace) document.getElementById('console-main')?.focus({ preventScroll: true });
   }, []);
-  const { w: teamWords } = useTeamWords();
+  const { w: teamWords, locale: teamLocale } = useTeamWords();
+  const officeWords = (k: OfficeKey) => officeWord(teamLocale, k);
   const teamGo: TeamGo = useCallback((to) => go({ section: to.section, q: to.q ?? null }), [go]);
   const ownerGo: OwnerGo = useCallback((to) => go({ section: to.section as Section, c: to.c ?? null, r: to.r ?? null, q: to.q ?? null }, to.section === where.section && to.section === 'requests'), [go, where.section]);
   // Keys for the command layout: A approvals, R requests, C checklist, O overview (not while typing).
   useEffect(() => {
     if (!owner) return;
-    const keys: Record<string, Section> = { a: 'approvals', r: 'requests', c: 'checklist', o: 'today', p: 'plan' };
+    const keys: Record<string, Section> = { a: 'approvals', r: 'requests', c: 'checklist', o: 'today', p: 'plan', g: 'office' };
     const on = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       if (e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
+      // The Office has its own keys (A there opens its approval panel).
+      if (location.pathname === '/office') return;
       const to = keys[e.key.toLowerCase()];
       if (to) {
         e.preventDefault();
@@ -599,6 +608,14 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
   };
   const name = owner ? o('console.title') : t('console.name' as MessageKey);
 
+  // The Office takes the whole window (its own rail, panel and bars).
+  if (owner && where.section === 'office')
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <OwnerOffice beat={beat} failed={failed} open={where.q ?? null} onOpen={(q) => go({ section: 'office', q }, true)} onExit={() => go({ section: 'today' })} teamGo={teamGo} />
+      </Suspense>
+    );
+
   return (
     <div className="console" data-section={where.section} data-owner={owner ? '' : undefined}>
       <aside className="console__rail">
@@ -628,6 +645,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
             {link('system', 'shield', o('nav.system'))}
             {link('activity', 'history', o('nav.activity'))}
             <p className="console__group">{teamWords('nav.group')}</p>
+            {link('office', 'building', officeWords('nav.office'))}
             {link('team', 'people', teamWords('nav.team'))}
             {link('chats', 'comment', teamWords('nav.chats'))}
             {link('meetings', 'calendar', teamWords('nav.meetings'))}

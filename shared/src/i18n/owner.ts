@@ -22,7 +22,7 @@ export const OWNER_EN = {
   'nav.system': 'System',
   'nav.activity': 'Activity log',
   'console.title': 'Owner console',
-  'keys.hint': 'Shortcuts: A approvals · R requests · C checklist · O overview',
+  'keys.hint': 'Shortcuts: A approvals · R requests · C checklist · O overview · G office',
   // top bar
   'bar.label': 'Console status',
   'privacy.line': 'You see companies, billing, usage counts and metadata. A customer’s own records only through time-boxed, view-only support access, written to that customer’s own activity log.',
@@ -523,7 +523,7 @@ export const OWNER_TR: Record<OwnerKey, string> = {
   'nav.system': 'Sistem',
   'nav.activity': 'Etkinlik kaydı',
   'console.title': 'Yönetim konsolu',
-  'keys.hint': 'Kısayollar: A onaylar · R talepler · C kontrol listesi · O genel bakış',
+  'keys.hint': 'Kısayollar: A onaylar · R talepler · C kontrol listesi · O genel bakış · G ofis',
   'bar.label': 'Konsol durumu',
   'privacy.line': 'Şirketleri, faturalamayı, kullanım sayılarını ve üst verileri görürsün. Bir müşterinin kendi kayıtlarını yalnızca süreli, salt görüntüleme destek erişimiyle görürsün; bu erişim o müşterinin kendi etkinlik kaydına yazılır.',
   'bar.approvals': '{n} onay bekliyor',

@@ -1035,7 +1035,7 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
   );
 }
 
-function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval; who: (seat: string) => string; failed: (e: unknown) => void; onDone: () => void; go: OwnerGo }) {
+export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval; who: (seat: string) => string; failed: (e: unknown) => void; onDone: () => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const [mode, setMode] = useState<'view' | 'edit' | 'reject'>('view');
   const [title, setTitle] = useState(a.title);

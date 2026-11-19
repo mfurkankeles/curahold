@@ -91,7 +91,7 @@ export function Avatar({ seat, size = 'm' }: { seat: Pick<TeamSeat, 'name' | 'te
   );
 }
 
-function Status({ seat }: { seat: TeamSeat }) {
+export function Status({ seat }: { seat: TeamSeat }) {
   const { w } = useTeamWords();
   if (seat.paused) return <span className="tm-chip" data-tone="late">{w('status.paused')}</span>;
   if (seat.state === 'dormant') return <span className="tm-chip">{w('status.dormant')}</span>;
@@ -295,7 +295,7 @@ interface SeatDetail {
   lastWake: { checked_at: string; last_result: string } | null;
 }
 
-function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { seat: TeamSeat; onClose: () => void; onChanged: () => void; go: TeamGo; failed: (e: unknown) => void; pauses: TeamOrg['pauses'] }) {
+export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { seat: TeamSeat; onClose: () => void; onChanged: () => void; go: TeamGo; failed: (e: unknown) => void; pauses: TeamOrg['pauses'] }) {
   const { w, locale, t } = useTeamWords();
   const detail = useLoad<SeatDetail>(`/team/seats/${seat.seat}`, 0, failed);
   const [note, setNote] = useState<string | null>(null);
@@ -633,7 +633,7 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
   );
 }
 
-function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelOn, mem, onMem }: { seat: TeamSeat; thread: string | null; onNeedThread: () => Promise<void>; onDelete: () => void; onSent: () => void; failed: (e: unknown) => void; modelOn: boolean; mem: boolean; onMem: () => void }) {
+export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelOn, mem, onMem }: { seat: TeamSeat; thread: string | null; onNeedThread: () => Promise<void>; onDelete: () => void; onSent: () => void; failed: (e: unknown) => void; modelOn: boolean; mem: boolean; onMem: () => void }) {
   const { w, locale } = useTeamWords();
   const [rows, setRows] = useState<MessageRow[]>([]);
   const [more, setMore] = useState(false);
@@ -795,7 +795,7 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
   );
 }
 
-function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unknown) => void }) {
+export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unknown) => void }) {
   const { w, locale } = useTeamWords();
   const mem = useLoad<MemoryView>(`/team/seats/${seat.seat}/memory`, 0, failed);
   const [edit, setEdit] = useState<{ key: string; value: string } | null>(null);
@@ -952,7 +952,7 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
   );
 }
 
-function CallMeeting({ seats, onCancel, onDone, failed }: { seats: TeamSeat[]; onCancel: () => void; onDone: (id: string) => void; failed: (e: unknown) => void }) {
+export function CallMeeting({ seats, onCancel, onDone, failed }: { seats: TeamSeat[]; onCancel: () => void; onDone: (id: string) => void; failed: (e: unknown) => void }) {
   const { w } = useTeamWords();
   const [title, setTitle] = useState('');
   const [goal, setGoal] = useState('');
@@ -1019,7 +1019,7 @@ function CallMeeting({ seats, onCancel, onDone, failed }: { seats: TeamSeat[]; o
   );
 }
 
-function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s: string) => string; failed: (e: unknown) => void; onBack: () => void }) {
+export function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s: string) => string; failed: (e: unknown) => void; onBack: () => void }) {
   const { w, locale } = useTeamWords();
   const [beat, setBeat] = useState(0);
   const view = useLoad<MeetingView>(`/team/meetings/${id}`, beat, failed);
