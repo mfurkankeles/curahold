@@ -233,6 +233,14 @@ html, body { margin: 0; }
 .p-how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: how; }
 .p-how li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: how; color: var(--ink-2); }
 .p-how li::before { content: counter(how); inline-size: 28px; block-size: 28px; border-radius: var(--r-pill); display: grid; place-items: center; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: var(--fs-s); }
+/* The portal's assistant: a question, the answer, and one question back with choices when it is unclear. */
+.p-ask { display: grid; gap: 12px; }
+@media (min-width: 960px) { .p-ask-narrow { display: none; } }
+.p-ask h2 { font-size: var(--fs-l); }
+.p-ask .p-form-plain { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.p-ask .p-msg { max-inline-size: 100%; }
+.p-ask .p-actions { justify-content: flex-start; gap: 8px; }
+.p-ask > .p-muted:last-child { font-size: var(--fs-s); }
 .p-how li strong { display: block; color: var(--ink); }
 .p-how__mail { font-size: var(--fs-s); color: var(--ink-3); padding-block-start: 12px; border-block-start: 1px solid var(--line); overflow-wrap: anywhere; }
 .p-welcome { position: relative; border-color: var(--accent); }

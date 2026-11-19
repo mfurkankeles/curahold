@@ -6,18 +6,23 @@
 // and nothing typed here leaves the browser. When the answer does not help,
 // support is one click away with the question already written.
 //
-// Where a model is available (the demo, where Claude answers on the viewer's
-// own account), the same chat hands the question to it instead: it reads the
-// docs and the workspace through tools and writes the answer (lib/assistant).
-// Whenever the model cannot answer, the docs answer as before.
+// Where the company's server has a model (api/src/assistant, GET /assist/status),
+// the question goes there instead: the one assistant core every chatbot shares
+// writes the answer from the docs and from what this person may see, asks one
+// short question back when the question means several things, and says so when
+// the docs do not cover it. In the demo, Claude answers on the viewer's own
+// account (lib/assistant). Whenever no model can answer, the docs answer as
+// before, on this device — still asking back on a question that means several things.
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
+import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 import { reply, type Sampler, type Trace, type Turn } from '../../../shared/src/assistant';
 import type { MessageKey } from '../../../shared/src/i18n';
-import { post } from '../lib/api';
+import { get, post } from '../lib/api';
 import { depsFor, findSampler, Lite } from '../lib/assistant';
 import { docsFile, docsHref, docsLink } from '../lib/docs';
+import { navigate } from '../lib/router';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 
@@ -26,6 +31,8 @@ type Message =
   | { id: number; by: 'bot'; say: MessageKey; examples?: boolean; write?: string }
   | { id: number; by: 'bot'; answer: Found; others: Found[]; question: string }
   | { id: number; by: 'bot'; say: MessageKey; picks: Found[]; question: string }
+  /** From the assistant core on the server (or its free rules, run here): an answer, one question back, a polite no, or "the docs do not say". */
+  | { id: number; by: 'bot'; srv: AssistReply; question: string; created?: boolean }
   /** Written by the model: grows while it writes, then carries what it read. */
   | { id: number; by: 'bot'; ai: string; done: boolean; trace?: Trace; note?: MessageKey; created?: boolean; question: string };
 
@@ -81,7 +88,11 @@ function Section({ found }: { found: Found }) {
   );
 }
 
-export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void; onEngine?: (model: boolean) => void }) {
+/** Whether the server answers with a model, asked once per page load. */
+let serverAnswers: Promise<boolean> | null = null;
+const askServer = () => (serverAnswers ??= get<{ available: boolean }>('/assist/status').then((r) => !!r.available, () => false));
+
+export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: string) => void; onEngine?: (model: boolean) => void; mode?: 'help' | 'onboarding' }) {
   const { t, locale, words } = useI18n();
   const { me, boards, canWrite } = useStore();
   const [messages, setMessages] = useState<Message[]>([{ id: 0, by: 'bot', say: 'ask.hello', examples: true }]);
@@ -90,6 +101,15 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
   // undefined: still finding out whether a model is here; null: there is none.
   const [sampler, setSampler] = useState<Sampler | null | undefined>(undefined);
   const [deep, setDeep] = useState(false);
+  // undefined: still finding out; true: the server's assistant answers.
+  const [server, setServer] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void askServer().then((on) => live && setServer(on));
+    return () => {
+      live = false;
+    };
+  }, []);
   const turns = useRef<Turn[]>([]);
   const running = useRef<AbortController | null>(null);
   const deps = useMemo(() => depsFor(me, locale, words, me.user.roleKey), [me, locale, words]);
@@ -127,6 +147,7 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
     add({ by: 'bot', answer, others, question });
   };
 
+  const changeSrv = (id: number, more: Partial<Extract<Message, { srv: AssistReply }>>) => setMessages((list) => list.map((m) => (m.id === id && 'srv' in m ? { ...m, ...more } : m)));
   const change = (id: number, more: Partial<Extract<Message, { ai: string }>>) => setMessages((list) => list.map((m) => (m.id === id && 'ai' in m ? { ...m, ...more } : m)));
 
   /** The model's answer, written into one message as it arrives. Returns false when the docs should answer instead. */
@@ -172,7 +193,34 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
     }
   }
 
-  async function question(raw: string) {
+  /** The server's assistant. Returns false when the docs on this device should answer instead. */
+  async function askCore(q: string, intent?: string): Promise<boolean> {
+    const history: AssistTurn[] = turns.current.slice(-6);
+    const { reply: r } = await post<{ reply: AssistReply }>('/assist', { question: q, history, ...(intentOf(intent) ? { intent } : {}), mode, page: window.location.pathname.slice(0, 200) });
+    // The docs search answered on the server (no model now): the same search here shows it better.
+    if (r.engine === 'docs') {
+      if (r.fallback === 'cap' || r.fallback === 'rate' || r.fallback === 'error') add({ by: 'bot', say: r.fallback === 'cap' ? 'assist.fallback.cap' : 'assist.fallback.busy' });
+      return false;
+    }
+    turns.current.push({ role: 'user', content: q }, { role: 'assistant', content: r.text });
+    add({ by: 'bot', srv: r, question: q });
+    if (r.opened) navigate(r.opened);
+    return true;
+  }
+
+  /** On this device: a question that means several things gets one question back, like the server's. */
+  function clarifyHere(q: string): boolean {
+    const a = ambiguityOf(q);
+    if (!a) return false;
+    add({
+      by: 'bot',
+      question: q,
+      srv: { kind: 'clarify', text: t(a.question), options: a.options.map((o) => ({ id: o.id, label: t(o.label) })), citations: [], data: [], opened: null, proposal: null, lang: locale, engine: 'rules' },
+    });
+    return true;
+  }
+
+  async function question(raw: string, intent?: string) {
     const q = raw.trim();
     if (!q || busy) return;
     setText('');
@@ -182,7 +230,18 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
       // A moment for the model to be found, if the question came before that was known.
       const model = sampler === undefined ? await Promise.race([findSampler(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]) : sampler;
       if (model && (await askModel(q, model))) return;
+      if ((server ?? (await askServer())) && (await askCore(q, intent).catch(() => false))) return;
+      if (!intent && clarifyHere(q)) return;
+      // A tapped choice: its own pages answer first.
+      const pages = intentOf(intent)?.option.pages;
       const a = ask(await load(locale), q, lastPage.current);
+      if (pages) {
+        const mine = a.found.filter((f) => pages.some((p) => f.section.u.includes(`/${p}/`)));
+        if (mine.length) {
+          show(mine[0], mine, q);
+          return;
+        }
+      }
       if (a.kind === 'hello') add({ by: 'bot', say: 'ask.hi' });
       else if (a.kind === 'thanks') add({ by: 'bot', say: 'ask.thanks' });
       else if (a.kind === 'empty') add({ by: 'bot', say: 'ask.empty' });
@@ -199,13 +258,13 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
   }
 
   /** The task the model prepared, made real only when the person presses the button. */
-  async function createTask(id: number, trace: Trace) {
+  async function createTask(id: number, trace: Pick<Trace, 'proposal'>, done: (id: number) => void = (i) => change(i, { created: true })) {
     const p = trace.proposal;
     const boardId = me.user.prefs?.defaultBoardId ?? boards[0]?.id;
     if (!p || !boardId) return;
     try {
       await post('/tasks', { boardId, title: p.title, ...(p.customer ? { accountId: p.customer.id } : {}), ...(p.dueDate ? { dueDate: p.dueDate } : {}), assigneeIds: [me.user.id] });
-      change(id, { created: true });
+      done(id);
     } catch {
       add({ by: 'bot', say: 'ask.failed' });
     }
@@ -240,6 +299,60 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
             <div key={m.id} className="ask__msg ask__msg--you">
               <span className="sr-only">{t('ask.you')}: </span>
               {m.text}
+            </div>
+          ) : 'srv' in m ? (
+            <div key={m.id} className="ask__msg ask__msg--bot ask__ai" data-kind={m.srv.kind}>
+              <div className="ask__body" dir="auto">
+                <Lite text={m.srv.text} />
+              </div>
+              {m.srv.kind === 'clarify' && m.srv.options && (
+                <div className="ask__chips">
+                  {m.srv.options.map((o) => (
+                    <button key={o.id} type="button" className="ask__chip" disabled={busy} onClick={() => void question(o.label, o.id)}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {m.srv.proposal && (
+                <div className="ask__proposal">
+                  <span className="ask__label">{t('ask.ai.task')}</span>
+                  <strong>{m.srv.proposal.title}</strong>
+                  <span className="muted">
+                    {[m.srv.proposal.customer ? t('ask.ai.taskFor', { name: m.srv.proposal.customer.name }) : '', m.srv.proposal.dueDate ? t('ask.ai.taskDue', { date: m.srv.proposal.dueDate }) : ''].filter(Boolean).join(' · ')}
+                  </span>
+                  {m.created ? (
+                    <span className="ask__done">
+                      <Icon name="checkCircle" size={16} />
+                      {t('ask.ai.created')}
+                    </span>
+                  ) : canWrite ? (
+                    <button type="button" className="btn btn--primary btn--small" onClick={() => void createTask(m.id, m.srv, (i) => changeSrv(i, { created: true }))}>
+                      <Icon name="plus" size={14} />
+                      {t('ask.ai.create')}
+                    </button>
+                  ) : (
+                    <span className="muted">{t('ask.ai.readonly')}</span>
+                  )}
+                </div>
+              )}
+              {m.srv.opened && <p className="ask__from">{t('ask.ai.opened')}</p>}
+              {m.srv.citations.length > 0 && (
+                <p className="ask__from">
+                  {t('ask.ai.sourcesDocs')}{' '}
+                  {m.srv.citations.map((d, i) => (
+                    <span key={d.url}>
+                      {i > 0 && ', '}
+                      <a href={`${docsBase}${d.url.replace(/^\/docs\//, '')}`} {...docsLink}>
+                        {d.section ? `${d.title} › ${d.section}` : d.title}
+                      </a>
+                    </span>
+                  ))}
+                </p>
+              )}
+              {m.srv.data.length > 0 && <p className="ask__from">{t('ask.ai.sourcesData', { what: m.srv.data.join(', ') })}</p>}
+              {m.srv.engine === 'llm' && m.srv.kind === 'answer' && <p className="ask__from">{t('assist.ai.note')}</p>}
+              {(m.srv.kind === 'not_covered' || m.srv.ticket) && write(m.question)}
             </div>
           ) : 'ai' in m ? (
             <div key={m.id} className="ask__msg ask__msg--bot ask__ai" data-live={!m.done || undefined}>
@@ -391,7 +504,7 @@ export function Ask({ onWrite, onEngine }: { onWrite: (question: string) => void
           </button>
         )}
       </form>
-      <p className="field__hint ask__private">{t(sampler ? 'ask.ai.private' : 'ask.private')}</p>
+      <p className="field__hint ask__private">{t(sampler ? 'ask.ai.private' : server ? 'assist.private' : 'ask.private')}</p>
     </div>
   );
 }

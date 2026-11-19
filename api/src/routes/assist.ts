@@ -154,6 +154,13 @@ assistRoutes.post('/assist', async (c) => {
   return c.json({ reply });
 });
 
+/** Whether a model answers here: the app sends questions to the server only then (otherwise they stay on the device). */
+assistRoutes.get('/assist/status', (c) => {
+  const deps = c.get('deps');
+  const settings = settingsOf(assistantSettingsOf(c.get('org')), assistantConfig(deps));
+  return c.json({ available: !!providerOf(deps) && settings.enabled && !c.get('tokenKind') });
+});
+
 const settingsInput = z.object({
   enabled: z.boolean().optional(),
   monthlyCapUsd: z.number().min(0).max(100_000).optional(),
@@ -222,6 +229,9 @@ assistPublicRoutes.post('/api/assist/public', async (c: Context<AppEnv>) => {
 
 // ------------------------------------------------------------------ the customer portal
 
+
+/** Whether the portal's chat shows at all: a model, and the company has not switched it off. */
+export const portalAssistAvailable = (deps: Deps, org: OrgRow): boolean => !!providerOf(deps) && settingsOf(assistantSettingsOf(org), assistantConfig(deps)).enabled;
 
 /** Mounted by portal.ts after its sign-in: the person is a customer of the company, reading their own requests. */
 export async function portalAssist(

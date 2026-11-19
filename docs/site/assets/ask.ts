@@ -1,10 +1,15 @@
 // "Ask" on the docs site: a small chat that answers from these pages.
 //
-// The answering itself is shared/src/answers.ts (the same code the app uses);
-// this file is only the panel: a button, a list of messages and an input. It
-// is bundled into assets/ask.js when the docs are built. No server is asked
-// and nothing typed here leaves the page.
+// Where the docs are served by Curahold itself, the question goes to the one
+// assistant core every chatbot shares (POST /api/assist/public, docs only, no
+// workspace): it writes the answer from these pages and names the section,
+// asks one short question back when a question means several things, and says
+// so when the docs do not cover it. When that server has no model (or cannot
+// be reached, as in the static demo), the answering is shared/src/answers.ts
+// on this page, as before — and a question that means several things still
+// gets one question back (shared/src/assist.ts). This file is only the panel.
 import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
+import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 
 /** The panel's words, in the page's language: the docs build puts them in the page (docs.ask.* in the dictionaries). */
 interface Words {
@@ -29,7 +34,12 @@ interface Words {
   loading: string;
   failed: string;
   you: string;
+  /** Under an answer the model wrote. */
+  ai: string;
   examples: string[];
+  /** The question back and its choices when a question means several things (assist.clarify.*, assist.opt.*), for when no server answers. */
+  clarify: Record<string, string>;
+  options: Record<string, string>;
 }
 interface Cfg {
   lang: string;
@@ -205,14 +215,103 @@ function supportLink(): HTMLElement {
   return p;
 }
 
-async function question(text: string) {
+// The server's assistant: only where Curahold serves these pages (an absolute base), and only while it has a model.
+let serverAnswers = base.startsWith('/') && location.protocol.startsWith('http');
+const turns: AssistTurn[] = [];
+
+/** The model's text as the chat shows it: paragraphs, "- " lists and **bold**; everything escaped, nothing a link. */
+function lite(text: string): string {
+  const bold = (line: string) => esc(line).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  let out = '';
+  let list: string[] = [];
+  const flush = () => {
+    if (list.length) out += `<ul>${list.map((li) => `<li>${bold(li)}</li>`).join('')}</ul>`;
+    list = [];
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    const item = /^(?:[-*•]|\d+[.)])\s+(.*)$/.exec(line);
+    if (item) list.push(item[1]);
+    else {
+      flush();
+      if (line) out += `<p dir="auto">${bold(line)}</p>`;
+    }
+  }
+  flush();
+  return out;
+}
+
+function optionChips(options: { id: string; label: string }[]): HTMLElement {
+  const row = el('div', 'ask__chips');
+  for (const o of options) {
+    const b = el('button', 'ask__chip');
+    b.type = 'button';
+    b.textContent = o.label;
+    b.addEventListener('click', () => void question(o.label, intentOf(o.id) ? o.id : undefined));
+    row.appendChild(b);
+  }
+  return row;
+}
+
+/** Asks the server. Returns false when this page should answer instead. */
+async function askServer(q: string, intent?: string): Promise<boolean> {
+  if (!serverAnswers) return false;
+  try {
+    const res = await fetch('/api/assist/public', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-curahold-ask': '1' },
+      body: JSON.stringify({ question: q, history: turns.slice(-6), lang: cfg.lang, surface: 'docs', ...(intent ? { intent } : {}) }),
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    const { reply } = (await res.json()) as { reply: AssistReply };
+    // No model there now: the same search runs here, where its answer reads better.
+    if (reply.engine === 'docs') {
+      if (reply.fallback === 'no_key' || reply.fallback === 'off') serverAnswers = false;
+      return false;
+    }
+    turns.push({ role: 'user', content: q }, { role: 'assistant', content: reply.text });
+    const extra: (HTMLElement | null)[] = [];
+    if (reply.kind === 'clarify' && reply.options?.length) extra.push(optionChips(reply.options));
+    if (reply.citations.length) {
+      const from = el('p', 'ask__from');
+      from.innerHTML = `${esc(w.from)}: ${reply.citations
+        .map((c) => `<a href="${base}${c.url.replace(/^\/docs\//, '')}${tail}">${esc(c.section ? `${c.title} › ${c.section}` : c.title)}</a>`)
+        .join(', ')}`;
+      extra.push(from);
+    }
+    if (reply.kind === 'answer') extra.push(el('p', 'ask__from', esc(w.ai)));
+    if (reply.kind === 'not_covered') extra.push(supportLink());
+    bot(lite(reply.text), ...extra);
+    return true;
+  } catch {
+    // Not served by Curahold here (a static copy): this page answers from now on.
+    serverAnswers = false;
+    return false;
+  }
+}
+
+async function question(text: string, intent?: string) {
   const q = text.trim();
   if (!q) return;
   bubble('ask__msg--you', `<span class="ask__who">${esc(w.you)}</span><p>${esc(q)}</p>`);
   const wait = bot(`<p class="ask__wait">${esc(w.loading)}</p>`);
   try {
+    if (await askServer(q, intent)) {
+      wait.remove();
+      return;
+    }
+    // A question that means several things: one question back, with the choices.
+    const unclear = intent ? null : ambiguityOf(q);
+    if (unclear) {
+      wait.remove();
+      return void bot(`<p>${esc(w.clarify[unclear.id] ?? '')}</p>`, optionChips(unclear.options.map((o) => ({ id: o.id, label: w.options[o.id] ?? o.id }))));
+    }
     const answer = ask(await load(), q, lastPage);
     wait.remove();
+    // A tapped choice: its own pages first.
+    const pages = intentOf(intent)?.option.pages;
+    const mine = pages ? answer.found.filter((f) => pages.some((p) => f.section.u.includes(`/${p}/`))) : [];
+    if (mine.length) return showSection(mine[0], mine);
     if (answer.kind === 'hello') return void bot(`<p>${esc(w.hi)}</p>`);
     if (answer.kind === 'thanks') return void bot(`<p>${esc(w.thanks)}</p>`);
     if (answer.kind === 'empty') return void bot(`<p>${esc(w.empty)}</p>`);

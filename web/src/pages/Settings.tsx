@@ -38,6 +38,7 @@ import { forgetUnsaved, hasUnsaved, useUnsaved, useUnsavedForm } from '../lib/un
 import { fold, groupLabel, SETTINGS_GROUPS, SETTINGS_TOPICS, topicAbout, topicLabel, topicMatches, type SettingsTab } from '../lib/settingsIndex';
 import '../surfaces/admin.css';
 import '../surfaces/admin-2.css';
+import { AssistantSettings } from '../components/AssistantSettings';
 
 // The admin area: one topic per screen. A wide screen has the topics on the
 // left (with a search on top) and the topic on the right; a phone has the
@@ -200,7 +201,12 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   )}
                   {current === 'currencies' && <CurrencySettings />}
                   {current === 'playbooks' && <PlaybooksSettings />}
-                  {current === 'support' && <SupportAccessSettings />}
+                  {current === 'support' && (
+                    <>
+                      <SupportAccessSettings />
+                      <AssistantSettings />
+                    </>
+                  )}
                   {current === 'portal' && <PortalSettingsTab />}
                   {current === 'people' && <PeopleTab />}
                   {current === 'joining' && <JoiningTab />}

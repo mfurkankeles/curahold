@@ -21,7 +21,7 @@ import { PORTAL_MAX_FILES } from '../../shared/src/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
-import { portalAssist } from './routes/assist';
+import { portalAssist, portalAssistAvailable } from './routes/assist';
 
 /** Errors raised inside the portal_* functions, by name. */
 const DB_ERRORS: Record<string, 'unauthenticated' | 'not_found' | 'too_many_requests'> = {
@@ -172,6 +172,7 @@ export function createPortalApp(deps: Deps) {
 
   // The portal's assistant: how to use the portal, and the person's own requests (routes/assist.ts).
   app.post('/papi/assist', (c) => portalAssist(c, deps, (fn) => db(c, fn)));
+  app.get('/papi/assist/status', (c) => c.json({ available: portalAssistAvailable(deps, c.get('org')) }));
 
   app.get('/papi/boards/:id/tasks', async (c) => c.json({ tasks: await one(c, 'select portal_tasks($1) as t', [id(c, 'id')]) }));
 

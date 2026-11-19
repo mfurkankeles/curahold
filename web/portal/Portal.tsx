@@ -8,6 +8,7 @@ import { formatBytes, formatDate, formatDateTime } from '../src/lib/format';
 import { MAX_FILE_MB } from '../../shared/src/model';
 import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
+import { intentOf, type AssistReply } from '../../shared/src/assist';
 
 // ------------------------------------------------------------------ api
 
@@ -1314,12 +1315,100 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
               <How ctx={ctx} org={org} me={me} onClose={welcome.done} />
             </div>
           )}
+          {/* On a phone the side column is not shown: the questions box comes under the list. */}
+          <div className="p-ask-narrow">
+            <PortalAsk ctx={ctx} />
+          </div>
         </div>
         <aside className="p-page__aside p-page__aside--wide">
           <How ctx={ctx} org={org} me={me} />
+          <PortalAsk ctx={ctx} />
         </aside>
       </div>
     </>
+  );
+}
+
+/** Whether this company's server answers portal questions with a model (asked once). */
+let portalAssistOn: Promise<boolean> | null = null;
+
+/**
+ * Questions about using the portal and one's own requests, answered by the
+ * assistant every Curahold chatbot shares (POST /papi/assist). It reads only
+ * what this person sees here. Shown only where the server has a model.
+ */
+function PortalAsk({ ctx }: { ctx: Ctx }) {
+  const { t } = ctx;
+  const [on, setOn] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [log, setLog] = useState<{ side: 'customer' | 'bot'; text: string; options?: { id: string; label: string }[] }[]>([]);
+  useEffect(() => {
+    let live = true;
+    void (portalAssistOn ??= call<{ available: boolean }>('GET', '/assist/status').then((r) => !!r.available, () => false)).then((v) => live && setOn(v));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!on) return null;
+  const send = async (q: string, intent?: string) => {
+    if (!q.trim() || busy) return;
+    const history = log.filter((m) => !m.options).map((m) => ({ role: m.side === 'customer' ? ('user' as const) : ('assistant' as const), content: m.text })).slice(-6);
+    setLog((l) => [...l, { side: 'customer', text: q }]);
+    setText('');
+    setBusy(true);
+    try {
+      const { reply } = await call<{ reply: AssistReply }>('POST', '/assist', { question: q, history, ...(intentOf(intent) ? { intent } : {}) });
+      // Without a model the company's internal docs would answer: not for customers. Point to a new request instead.
+      const said = reply.engine === 'docs' || reply.kind === 'not_covered' ? t('assist.portal.none') : reply.text;
+      setLog((l) => [...l, { side: 'bot', text: said, options: reply.kind === 'clarify' ? reply.options : undefined }]);
+    } catch {
+      setLog((l) => [...l, { side: 'bot', text: t('assist.portal.none') }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="p-card p-ask" aria-labelledby="p-ask">
+      <h2 id="p-ask">{t('assist.portal.title')}</h2>
+      <p className="p-muted">{t('assist.portal.hello')}</p>
+      {log.length > 0 && (
+        <div className="p-thread" role="log" aria-live="polite">
+          {log.map((m, i) => (
+            <div key={i} className="p-msg" data-side={m.side === 'customer' ? 'customer' : undefined}>
+              <div className="p-msg__body" dir="auto">
+                {m.text.replace(/\*\*/g, '')}
+              </div>
+              {m.options && (
+                <div className="p-actions">
+                  {m.options.map((o) => (
+                    <button key={o.id} type="button" className="p-btn" disabled={busy} onClick={() => void send(o.label, o.id)}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <form
+        className="p-form-plain"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(text);
+        }}
+      >
+        <label className="p-field">
+          <span className="p-sr">{t('assist.portal.title')}</span>
+          <input dir="auto" value={text} maxLength={300} placeholder={t('assist.portal.placeholder')} onChange={(e) => setText(e.target.value)} />
+        </label>
+        <button className="p-btn p-btn--primary" type="submit" disabled={busy || !text.trim()}>
+          {busy ? t('ask.loading') : t('ask.send')}
+        </button>
+      </form>
+      <p className="p-muted">{t('assist.private')}</p>
+    </section>
   );
 }
 
