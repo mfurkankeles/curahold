@@ -17,10 +17,10 @@
   var started = Date.now();
   var sentTime = false;
 
+  // Asks the site's consent library (site/consent.js), which also applies the policy version and the 12-month limit.
   function consented() {
     try {
-      var v = JSON.parse(localStorage.getItem('curahold_consent_v1') || 'null');
-      return !!(v && v.analytics === true);
+      return !!(window.curaConsent && window.curaConsent.allows('analytics'));
     } catch {
       return false;
     }

@@ -50,6 +50,52 @@
   font-size: 14px;
 }
 
+/* Phone: a compact bar at the bottom edge instead of a card over a third of the screen.
+   The three choices stay side by side and of equal weight. */
+@media (max-width: 639px) {
+  .cc-banner {
+    inset-inline: 0;
+    bottom: 0;
+    gap: 10px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-inline: 0;
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .cc-banner__text {
+    flex-basis: 100%;
+  }
+  .cc-banner__title {
+    display: inline;
+    font-size: 15px;
+    margin: 0;
+    margin-inline-end: 6px;
+  }
+  .cc-banner__policy {
+    margin-inline-start: 6px;
+    font-size: 13px;
+  }
+  .cc-banner__body {
+    display: inline;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .cc-actions {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .cc-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+}
+
 .cc-scrim {
   position: fixed;
   inset: 0;
