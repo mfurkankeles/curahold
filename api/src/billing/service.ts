@@ -115,8 +115,13 @@ async function applySubscription(deps: Deps, provider: string, event: WebhookEve
     };
     type Cur = { org_id: string; plan: string; status: SubscriptionStatus; provider_customer_id: string | null; provider_subscription_id: string | null; trial_ends_at: unknown; event_at: unknown; past_due_since: unknown; billing_interval: Interval | null; seats: number | null; currency: string | null };
     const cols = `org_id, plan, status, provider_customer_id, provider_subscription_id, trial_ends_at, event_at, past_due_since, billing_interval, seats, currency`;
-    // The company already holding this provider subscription, if any.
-    let [cur] = await q.query<Cur>(`select ${cols} from subscriptions where provider_subscription_id = $1 limit 1`, [sub.providerSubscriptionId]);
+    // The company already holding this provider subscription, if any: a lookup across companies by the
+    // provider's id, which is how a webhook finds its company (the result's org_id is then the only scope used).
+    let [cur] = await q.query<Cur>(
+      `select org_id, plan, status, provider_customer_id, provider_subscription_id, trial_ends_at, event_at, past_due_since, billing_interval, seats, currency
+         from subscriptions where provider_subscription_id = $1 limit 1`,
+      [sub.providerSubscriptionId],
+    );
     if (cur) {
       // A subscription that belongs to a company stays there: custom data cannot re-point it, nor can a new customer take it.
       if (sub.signedOrgId && sub.signedOrgId !== cur.org_id) return refuse(cur.org_id, 'named_other_org');
