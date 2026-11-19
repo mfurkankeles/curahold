@@ -66,15 +66,15 @@ export function noticeTable(kind: 'privacy' | 'kvkk', lang: 'en' | 'tr'): string
   const recipients = (a: Activity) => [...a.processors.map(company), ...(a.others ? [a.others[lang]] : [])].join('; ');
   const basis = (a: Activity) => {
     if (kind === 'kvkk') return a.basis.tr[lang];
-    if (lang === 'tr') return a.basis.tr.tr;
+    if (lang !== 'en') return a.basis.tr[lang];
     return `EU/UK: ${a.basis.eu}. Türkiye: ${a.basis.tr.en}. Gulf: ${a.basis.gulf}. Elsewhere: ${a.basis.other}.`;
   };
-  const head =
-    lang === 'tr'
-      ? ['Amaç', 'Kişisel veriler', 'Kimin verisi', kind === 'kvkk' ? 'Hukuki sebep (KVKK m. 5)' : 'Hukuki dayanak (Türkiye; diğer bölgeler İngilizce sürümde)', 'Saklama süresi', 'Alıcılar']
-      : ['Purpose', 'Personal data', 'Whose data', kind === 'kvkk' ? 'Legal ground (KVKK art. 5)' : 'Legal basis by region', 'Kept for', 'Recipients'];
+  const head = {
+    tr: ['Amaç', 'Kişisel veriler', 'Kimin verisi', kind === 'kvkk' ? 'Hukuki sebep (KVKK m. 5)' : 'Hukuki dayanak (Türkiye; diğer bölgeler İngilizce sürümde)', 'Saklama süresi', 'Alıcılar'],
+    en: ['Purpose', 'Personal data', 'Whose data', kind === 'kvkk' ? 'Legal ground (KVKK art. 5)' : 'Legal basis by region', 'Kept for', 'Recipients'],
+  }[lang];
   const rows = controller.map((a) => [
-    a.role === 'processor' ? `${a.purpose[lang]} (${lang === 'tr' ? 'müşteri adına, veri işleyen olarak' : 'for the customer, as processor'})` : a.purpose[lang],
+    a.role === 'processor' ? `${a.purpose[lang]} (${{ tr: 'müşteri adına, veri işleyen olarak', en: 'for the customer, as processor' }[lang]})` : a.purpose[lang],
     a.data[lang],
     a.subjects[lang],
     basis(a),

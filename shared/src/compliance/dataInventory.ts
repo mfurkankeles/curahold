@@ -379,6 +379,9 @@ export const ACTIVITIES: Activity[] = [
 
 const regionName = (code: string, locale: Locale) => (code.startsWith('[') ? code : (new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code));
 
+/** The text in this language when the inventory has it (English and Turkish today), else English. */
+const inLanguage = (text: Two | undefined, locale: Locale) => (text ? ((text as Partial<Record<Locale, string>>)[locale] ?? text.en) : '');
+
 /** {storage_countries}, {processors} and the rest, true on the day they are shown (only providers that handle trial leads). */
 export function consentPlaceholders(locale: Locale): Placeholders {
   const leads = SUBPROCESSORS.filter((s) => s.leads);
@@ -390,7 +393,7 @@ export function consentPlaceholders(locale: Locale): Placeholders {
     contact: COMPANY.privacyEmail,
     storage_countries: list.format(codes.map((c) => regionName(c, locale))),
     processors: list.format(leads.map((s) => s.company)),
-    retention: ACTIVITIES.find((a) => a.id === 'trialLeads')?.retention[locale === 'tr' ? 'tr' : 'en'] ?? '',
+    retention: inLanguage(ACTIVITIES.find((a) => a.id === 'trialLeads')?.retention, locale),
     eu_rep: '[EU representative — appointed at the first EU customer]',
     uk_rep: '[UK representative — appointed at the first UK customer]',
     cn_rep: '[not appointed]',
