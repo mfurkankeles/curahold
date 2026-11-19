@@ -308,7 +308,15 @@ trialRoutes.post('/submit', async (c) => {
     freeMailNote: input.freeMailNote,
   };
   const made = await insertTrialRequest(deps, request);
-  await deps.db.system((q) => recordConsents(q, evidence, { requestId: made.id, email: to, locale: input.uiLocale as Locale, ipCountry: country }));
+  await deps.db.system((q) =>
+    recordConsents(q, evidence, {
+      requestId: made.id,
+      email: to,
+      locale: input.uiLocale as Locale,
+      ipCountry: country,
+      userAgent: c.req.header('user-agent') ?? null,
+    }),
+  );
 
   const l = input.language as Locale;
   const vars = { name: input.name, ref: made.ref, unsubscribe: await unsubscribeLink(c, to) };

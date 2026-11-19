@@ -47,6 +47,7 @@ create table consent_records (
   ip_country  text check (ip_country is null or ip_country ~ '^[A-Z]{2}$'),
   -- Where it happened: the trial form, a link in an e-mail (withdrawal), the console.
   source      text not null default 'trial_form' check (source in ('trial_form', 'email_link', 'console')),
+  user_agent  text check (user_agent is null or length(user_agent) <= 400),
   created_at  timestamptz not null default now()
 );
 create index consent_records_request_idx on consent_records (request_id, created_at);

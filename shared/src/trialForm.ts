@@ -11,7 +11,7 @@
 // Storage of the request itself: shared/src/trialRequest.ts (owner console).
 
 /** Bump on any change to a consent sentence in any language. */
-export const CONSENT_VERSION = '2026-11-19.draft1';
+export const CONSENT_VERSION = '2026-11-19.0.1-draft';
 /** True while the texts are placeholders; the console shows it next to every record. */
 export const CONSENT_DRAFT = true;
 
@@ -76,15 +76,28 @@ export interface ConsentBlockDef {
 
 export type ConsentTextKey =
   | 'trial.consent.notice'
+  | 'trial.consent.capacity'
   | 'trial.consent.processing'
+  | 'trial.consent.processingAbroad'
   | 'trial.consent.transfer'
   | 'trial.consent.itemised'
   | 'trial.consent.marketingEmail'
-  | 'trial.consent.marketingPhone'
   | 'trial.consent.iysEmail'
-  | 'trial.consent.iysSms'
-  | 'trial.consent.iysCall'
-  | 'trial.consent.dnc';
+  | 'trial.consent.trMarketing';
+
+/**
+ * The choices the legal research left to the owner and the lawyer
+ * (orch out/research-legal.md §1.0 and §1.15). Defaults follow its table.
+ */
+export const CONSENT_SWITCHES = {
+  /** Türkiye: a consent box for hosting abroad. Off: since Sep 2024 it only covers occasional transfers, and asking for consent where another basis exists counts as misleading. Standard contracts + notice to the Authority instead. */
+  trTransfer: false,
+  /** Japan: consent to handling in the countries named (APPI art. 28). Optional; the lawyer's call. */
+  jpTransfer: false,
+  /** Saudi Arabia and Qatar: a required consent box (the research's default). */
+  saConsent: true,
+  qaConsent: true,
+} as const;
 
 const notice = (r: ConsentRegion, basis: string): ConsentBlockDef => ({
   key: `${r}.notice`,
@@ -93,11 +106,11 @@ const notice = (r: ConsentRegion, basis: string): ConsentBlockDef => ({
   text: 'trial.consent.notice',
   basis,
 });
-const processing = (r: ConsentRegion, basis: string): ConsentBlockDef => ({
-  key: `${r}.processing`,
+const consent = (r: ConsentRegion, basis: string, text: ConsentTextKey = 'trial.consent.processing'): ConsentBlockDef => ({
+  key: `${r}.consent`,
   kind: 'consent',
   required: true,
-  text: 'trial.consent.processing',
+  text,
   basis,
 });
 const transfer = (r: ConsentRegion, basis: string): ConsentBlockDef => ({
@@ -107,86 +120,97 @@ const transfer = (r: ConsentRegion, basis: string): ConsentBlockDef => ({
   text: 'trial.consent.transfer',
   basis,
 });
+const on = (flag: boolean, ...defs: ConsentBlockDef[]) => (flag ? defs : []);
 
 /**
- * The blocks per region (DRAFT). Conservative on purpose: where a law leans on
- * consent for collection or for sending data abroad, a separate, unticked box
- * is asked; marketing is always separate, optional and unticked.
+ * The blocks per rule set (DRAFT 0.1, research-legal §1.15 "Which blocks each
+ * rule set shows"): N notice everywhere (never a box), C a required consent
+ * where the law rests on consent, T a separate cross-border consent where
+ * needed, M marketing — optional, unticked, e-mail only — and the capacity
+ * line (18+, on behalf of the company) for everyone.
  */
 export const CONSENT_RULES: Record<ConsentRegion, ConsentBlockDef[]> = {
   tr: [
-    notice('tr', 'KVKK art. 10 aydınlatma yükümlülüğü + Aydınlatma Tebliği (always shown, never a checkbox)'),
-    transfer(
-      'tr',
-      'KVKK art. 9 (2024 amendment): explicit consent for transfer abroad only when no adequacy decision / standard contract covers it — kept until the lawyer confirms the standard-contract route (then set required:false or remove)',
-    ),
+    notice('tr', 'KVKK art. 10 + Aydınlatma Tebliği; basis art. 5/2-c and 5/2-f, so no consent box for the request'),
+    ...on(CONSENT_SWITCHES.trTransfer, transfer('tr', 'KVKK art. 9/6-a: explicit consent, valid for occasional transfers only')),
   ],
-  eu: [notice('eu', 'GDPR art. 13; processing basis art. 6(1)(b) steps before a contract; transfers via SCCs (Chapter V), no consent needed')],
-  ae: [notice('ae', 'UAE PDPL (Federal Decree-Law 45/2021) art. 13 information; basis: contract steps (art. 4)')],
-  sa: [notice('sa', 'Saudi PDPL art. 12 privacy notice'), processing('sa', 'Saudi PDPL art. 5-6: consent as the main basis; conservative until reviewed')],
-  eg: [
-    notice('eg', 'Egypt PDPL (Law 151/2020) art. 2-3'),
-    processing('eg', 'Egypt PDPL art. 2: explicit consent'),
-    transfer('eg', 'Egypt PDPL art. 14-15: cross-border transfer'),
+  eu: [notice('eu', 'GDPR / UK GDPR art. 13; basis art. 6(1)(f); transfers under SCCs/IDTA, no consent box')],
+  ae: [
+    notice('ae', 'UAE PDPL art. 13'),
+    consent('ae', 'UAE PDPL: consent is the rule (no legitimate-interest basis); covers storage abroad', 'trial.consent.processingAbroad'),
   ],
-  qa: [notice('qa', 'Qatar PDPPL (Law 13/2016) art. 6, 9')],
-  il: [notice('il', 'Israel Privacy Protection Law §11 notice; Amendment 13')],
-  jp: [notice('jp', 'APPI art. 21 purpose of use'), transfer('jp', 'APPI art. 28: consent to provide data to a third party in a foreign country')],
+  sa: [
+    notice('sa', 'Saudi PDPL art. 12'),
+    ...on(CONSENT_SWITCHES.saConsent, consent('sa', 'Saudi PDPL: consent by default (switchable)', 'trial.consent.processingAbroad')),
+  ],
+  eg: [notice('eg', 'Egypt PDPL'), consent('eg', 'Egypt PDPL: express consent'), transfer('eg', 'Egypt PDPL arts. 14-15: transfer licence + consent')],
+  qa: [notice('qa', 'Qatar PDPPL'), ...on(CONSENT_SWITCHES.qaConsent, consent('qa', 'Qatar PDPPL: consent by default (switchable)'))],
+  il: [notice('il', 'Israel Privacy Protection Law s. 11 (full notice); Amendment 13')],
+  jp: [notice('jp', 'APPI art. 21 purpose of use'), ...on(CONSENT_SWITCHES.jpTransfer, transfer('jp', "APPI art. 28 (optional, lawyer's switch)"))],
   kr: [
-    notice('kr', 'PIPA art. 15(2), 22: items stated per consent'),
     {
-      key: 'kr.processing',
-      kind: 'consent',
-      required: true,
+      key: 'kr.notice',
+      kind: 'notice',
+      required: false,
       text: 'trial.consent.itemised',
-      basis: 'PIPA art. 15(1)(1): itemised consent (items, purpose, retention, right to refuse)',
+      basis: 'PIPA art. 15(1)(4): itemised notice (items, purpose, retention, ground)',
     },
-    transfer('kr', 'PIPA art. 28-8: separate consent for overseas transfer'),
+    transfer('kr', "PIPA art. 28-8: separate consent for overseas transfer (or the disclosure route, lawyer's call)"),
   ],
   cn: [
     notice('cn', 'PIPL art. 17'),
-    processing('cn', 'PIPL art. 13-14: informed consent'),
-    transfer('cn', 'PIPL art. 39: separate consent for cross-border provision'),
+    consent('cn', 'PIPL arts. 13-14: informed consent'),
+    transfer('cn', 'PIPL art. 39: separate consent for provision abroad'),
   ],
-  twn: [notice('twn', 'Taiwan PDPA art. 8 notice')],
+  twn: [notice('twn', 'Taiwan PDPA art. 8 notice'), consent('twn', 'Taiwan PDPA art. 7: consent as cheap proof')],
   hk: [notice('hk', 'PDPO DPP1(3) Personal Information Collection Statement')],
-  sg: [notice('sg', 'Singapore PDPA s.20 notification'), processing('sg', 'Singapore PDPA s.13-14: consent obligation (explicit rather than deemed)')],
+  sg: [notice('sg', 'Singapore PDPA s. 20 notification')],
   any: [notice('any', 'Generic privacy notice')],
 };
 
-/** Marketing, optional and separate (all regions; Turkey splits by channel for İYS). */
+/** Rule sets where marketing is not offered until a licence or the owner decides (Egypt, mainland China). */
+const NO_MARKETING: ConsentRegion[] = ['eg', 'cn'];
+
+/** Marketing, optional and separate, by e-mail only; Türkiye asks Law 6563 approval and KVKK consent as two boxes (Board Decision 2025/1072). */
 export function marketingBlocks(regions: ConsentRegion[]): ConsentBlockDef[] {
+  if (regions.some((r) => NO_MARKETING.includes(r))) return [];
   if (regions.includes('tr')) {
     return [
       {
-        key: 'tr.iys.email',
+        key: 'tr.m1',
         kind: 'marketing',
         required: false,
         text: 'trial.consent.iysEmail',
-        basis: 'Law 6563 + Ticari İletişim Yönetmeliği art. 7: prior consent per channel, registered in İYS',
+        basis: 'Law 6563 + Regulation art. 7: prior approval, unticked, not a condition; İYS',
       },
-      { key: 'tr.iys.sms', kind: 'marketing', required: false, text: 'trial.consent.iysSms', basis: 'Law 6563, İYS (SMS channel)' },
-      { key: 'tr.iys.call', kind: 'marketing', required: false, text: 'trial.consent.iysCall', basis: 'Law 6563, İYS (call channel)' },
+      {
+        key: 'tr.m2',
+        kind: 'marketing',
+        required: false,
+        text: 'trial.consent.trMarketing',
+        basis: 'KVKK explicit consent for marketing, separate box (Board Decision 2025/1072)',
+      },
     ];
   }
-  const out: ConsentBlockDef[] = [
+  return [
     {
-      key: 'any.marketing.email',
+      key: 'any.marketing',
       kind: 'marketing',
       required: false,
       text: 'trial.consent.marketingEmail',
-      basis: 'ePrivacy art. 13 / Israel Communications Law §30A / Qatar PDPPL art. 22 / PDPO Part 6A: opt-in, unticked',
-    },
-    {
-      key: 'any.marketing.phone',
-      kind: 'marketing',
-      required: false,
-      text: regions.includes('sg') ? 'trial.consent.dnc' : 'trial.consent.marketingPhone',
-      basis: 'Opt-in for calls/SMS; Singapore DNC clear-and-unambiguous consent',
+      basis: 'ePrivacy / PECR, Israel §30A, Qatar, PDPO Part 6A, PIPA, Singapore (e-mail only, no calls/SMS)',
     },
   ];
-  return out;
 }
+
+/** Shown to everyone, recorded as shown; not a consent. */
+export const CAPACITY_BLOCK: ConsentBlockDef = {
+  key: 'any.capacity',
+  kind: 'notice',
+  required: false,
+  text: 'trial.consent.capacity',
+  basis: 'Block A: 18 or older, acting for the company (research-legal §1.15)',
+};
 
 export interface ConsentBlock extends ConsentBlockDef {
   region: ConsentRegion;
@@ -213,6 +237,7 @@ export function consentBlocksFor(countries: (string | null | undefined)[]): Cons
   for (const r of regions) for (const d of CONSENT_RULES[r]) if (d.kind === 'notice') add(d, r);
   for (const r of regions) for (const d of CONSENT_RULES[r]) if (d.kind === 'consent') add(d, r);
   for (const d of marketingBlocks(regions)) add(d, d.key.startsWith('tr.') ? 'tr' : regions[0]);
+  add(CAPACITY_BLOCK, regions[0]);
   return out;
 }
 
@@ -235,8 +260,12 @@ export const NOTICE_PAGE: Record<ConsentRegion, 'legal-kvkk' | 'legal-privacy'> 
   any: P,
 };
 
-/** Countries the trial is not offered in (sanctions). A setting the owner can widen. */
-export const NOT_OFFERED = ['IR'];
+/**
+ * Countries the trial is not offered in: Iran (sanctions); Egypt (fully enforceable since 1 Nov 2026 —
+ * licence, DPO, local representative) and mainland China (representative in China) until the owner and
+ * a local lawyer decide (research-legal §0). Their rule sets above are ready for when they are taken off.
+ */
+export const NOT_OFFERED = ['IR', 'EG', 'CN'];
 
 /** ISO 3166-1 alpha-2 codes; names come from Intl.DisplayNames in the reader's language. */
 export const COUNTRIES = (

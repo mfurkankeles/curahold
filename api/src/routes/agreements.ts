@@ -6,7 +6,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { AGREEMENTS, AGREEMENT_DOCS } from '../../../shared/src/trialForm';
-import { requirePerm, run, type AppEnv } from '../context';
+import { helpLanguageOf, translate } from '../../../shared/src/i18n';
+import { nowOf, orgUrl, requirePerm, run, type AppEnv } from '../context';
 import { sha256Hex } from '../lib/crypto';
 import { audit } from '../lib/audit';
 import { agreementStatement, ipCountryOf, type AgreementRow } from '../lib/trial';
@@ -62,5 +63,26 @@ agreementRoutes.post('/agreements/accept', async (c) => {
       });
     return done;
   });
+  // The durable copy: what was accepted, when, and where every version stays readable.
+  if (accepted.length) {
+    const docs = (doc: 'terms' | 'dpa') => `${orgUrl(deps.config, org.slug)}/docs/${helpLanguageOf(input.locale)}/${AGREEMENTS[doc].docs}/`;
+    const vars = {
+      name: auth.name,
+      org: org.name,
+      at: nowOf(deps).toISOString().slice(0, 16).replace('T', ' '),
+      statement: agreementStatement(input.locale),
+      terms: AGREEMENTS.terms.version,
+      dpa: AGREEMENTS.dpa.version,
+      termsLink: docs('terms'),
+      dpaLink: docs('dpa'),
+    };
+    await deps.email
+      .send({
+        to: auth.email,
+        subject: translate(input.locale, 'email.agreements.subject', vars),
+        text: translate(input.locale, 'email.agreements.body', vars),
+      })
+      .catch((e) => console.error('[curahold] agreement copy failed', e));
+  }
   return c.json({ accepted });
 });

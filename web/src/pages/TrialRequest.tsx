@@ -19,6 +19,7 @@ import {
   TIMELINES,
   TOOL_KINDS,
   TRIAL_FORM,
+  CAPACITY_BLOCK,
   consentBlocksFor,
   NOTICE_PAGE,
   type ConsentBlock,
@@ -748,10 +749,10 @@ function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]
     <div className="trial__consents">
       <h2 className="trial__h2">{t('trial.consent.title')}</h2>
       {blocks
-        .filter((b) => b.kind === 'notice')
+        .filter((b) => b.kind === 'notice' && b.key !== CAPACITY_BLOCK.key)
         .map((b) => (
           <p key={b.key} className="trial__notice" data-block={b.key} data-version={b.version}>
-            {t('trial.consent.notice', { law: law(b) })}{' '}
+            {t(b.text as MessageKey, { law: law(b) })}{' '}
             <a href={page(b)} {...docsLink}>
               {t('trial.consent.read')}
             </a>
@@ -778,6 +779,11 @@ function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]
             </div>
           );
         })}
+      {blocks.some((b) => b.key === CAPACITY_BLOCK.key) && (
+        <p className="trial__capacity" data-block={CAPACITY_BLOCK.key} data-version={blocks[0].version}>
+          {t(CAPACITY_BLOCK.text as MessageKey)}
+        </p>
+      )}
       {marketing.length > 0 && (
         <fieldset className="trial__set">
           <legend className="field__hint">{t('trial.consent.marketingNote')}</legend>

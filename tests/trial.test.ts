@@ -95,12 +95,7 @@ describe('sending the request', () => {
   it('stores the request for the owner, with the consent evidence, and mails a receipt', async () => {
     const to = 'nora@northwind.example';
     const { c, ticket } = await proven(to);
-    const r = await c.req(
-      'POST',
-      '/api/trial/submit',
-      { ...form(), ticket, stamp: await oldStamp(), consents: ['any.marketing.email'] },
-      { 'cf-ipcountry': 'DE' },
-    );
+    const r = await c.req('POST', '/api/trial/submit', { ...form(), ticket, stamp: await oldStamp(), consents: ['any.marketing'] }, { 'cf-ipcountry': 'DE' });
     expect(r.status).toBe(201);
     expect(r.json.ref).toMatch(/^TQ-\d+$/);
     const [row] = await env.db.system((q) =>
@@ -117,9 +112,9 @@ describe('sending the request', () => {
         [row.id],
       ),
     );
-    expect(records.map((x) => x.block)).toEqual(['any.marketing.email', 'any.marketing.phone', 'eu.notice']);
+    expect(records.map((x) => x.block)).toEqual(['any.capacity', 'any.marketing', 'eu.notice']);
     expect(records.every((x) => x.version === CONSENT_VERSION && x.ip_country === 'DE' && /^[0-9a-f]{64}$/.test(x.text_hash))).toBe(true);
-    expect(records.find((x) => x.block === 'any.marketing.phone')!.granted).toBe(false);
+    expect(records.find((x) => x.block === 'any.marketing')!.granted).toBe(true);
     // The owner hears of it; the person gets a receipt with the way out of marketing.
     expect(env.email.sent.some((m) => m.to === 'owner@curahold.test' && m.text.includes(to))).toBe(true);
     expect(env.email.last(to).text).toMatch(/\/signup\/unsubscribe#t=/);
@@ -128,34 +123,29 @@ describe('sending the request', () => {
   it('asks every consent the countries that apply need — the one picked and the one connected from', async () => {
     const { c, ticket } = await proven('ayse@kuzey.example');
     const stamp = await oldStamp();
-    // Turkey picked, from Korea: KVKK transfer + PIPA itemised and transfer consents, all required.
+    // Türkiye picked (notice only: no consent box where another basis exists), from Korea: PIPA's separate transfer consent.
     const need = consentBlocksFor(['TR', 'KR'])
       .filter((b) => b.required)
       .map((b) => b.key);
-    expect(need).toEqual(['tr.transfer', 'kr.processing', 'kr.transfer']);
-    const missing = await c.req(
-      'POST',
-      '/api/trial/submit',
-      { ...form({ country: 'TR' }), ticket, stamp, consents: ['tr.transfer'] },
-      { 'cf-ipcountry': 'KR' },
-    );
+    expect(need).toEqual(['kr.transfer']);
+    // The United Arab Emirates rest on consent: a required box.
+    expect(
+      consentBlocksFor(['AE'])
+        .filter((b) => b.required)
+        .map((b) => b.key),
+    ).toEqual(['ae.consent']);
+    const missing = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [] }, { 'cf-ipcountry': 'KR' });
     expect(missing.status).toBe(400);
-    expect(missing.json.missing).toEqual(['kr.processing', 'kr.transfer']);
-    const ok = await c.req(
-      'POST',
-      '/api/trial/submit',
-      { ...form({ country: 'TR' }), ticket, stamp, consents: [...need, 'tr.iys.email'] },
-      { 'cf-ipcountry': 'KR' },
-    );
+    expect(missing.json.missing).toEqual(['kr.transfer']);
+    const ok = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [...need, 'tr.m1'] }, { 'cf-ipcountry': 'KR' });
     expect(ok.status).toBe(201);
-    // Turkey's marketing is per channel (İYS); the ticked one only.
+    // Türkiye's marketing is two separate boxes (Law 6563 approval, KVKK consent); the ticked one only.
     const rows = await env.db.system((q) =>
       q.query(`select block, granted from consent_records where email = 'ayse@kuzey.example' and kind = 'marketing' order by block`),
     );
     expect(rows).toEqual([
-      { block: 'tr.iys.call', granted: false },
-      { block: 'tr.iys.email', granted: true },
-      { block: 'tr.iys.sms', granted: false },
+      { block: 'tr.m1', granted: true },
+      { block: 'tr.m2', granted: false },
     ]);
   });
 
@@ -192,7 +182,7 @@ describe('sending the request', () => {
     const r = await central().post('/api/trial/unsubscribe', { t: link, locale: 'en' });
     expect(r.json).toMatchObject({ ok: true, withdrawn: 1 });
     const rows = await env.db.system((q) =>
-      q.query(`select kind, granted from consent_records where email = 'nora@northwind.example' and block = 'any.marketing.email' order by created_at`),
+      q.query(`select kind, granted from consent_records where email = 'nora@northwind.example' and block = 'any.marketing' order by created_at`),
     );
     expect(rows).toEqual([
       { kind: 'marketing', granted: true },
@@ -234,6 +224,8 @@ describe('a trial company: terms first, then seats within the cap', () => {
     expect(row.accepted_email).toBe('lead@capco.example');
     expect(row.text_hash).toMatch(/^[0-9a-f]{64}$/);
     expect((await admin.get('/api/me')).json.org.agreementsDue).toBe(false);
+    // A copy goes to the person who accepted, with both versions and where they stay readable.
+    expect(env.email.last('lead@capco.example').text).toMatch(/legal-terms\/[\s\S]*legal-dpa\//);
   });
 
   it('stops at the seat cap for full seats; viewers are free', async () => {

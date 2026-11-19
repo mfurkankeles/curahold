@@ -62,14 +62,28 @@ export async function recordConsents(
     email: string;
     locale: Locale;
     ipCountry: string | null;
+    userAgent?: string | null;
     source?: 'trial_form' | 'email_link' | 'console';
   },
 ) {
   for (const r of rows) {
     await q.query(
-      `insert into consent_records (request_id, org_id, email, block, version, kind, locale, text_hash, granted, ip_country, source)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [at.requestId, at.orgId ?? null, at.email, r.key, r.version, r.kind, at.locale, r.hash, r.granted, at.ipCountry, at.source ?? 'trial_form'],
+      `insert into consent_records (request_id, org_id, email, block, version, kind, locale, text_hash, granted, ip_country, source, user_agent)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        at.requestId,
+        at.orgId ?? null,
+        at.email,
+        r.key,
+        r.version,
+        r.kind,
+        at.locale,
+        r.hash,
+        r.granted,
+        at.ipCountry,
+        at.source ?? 'trial_form',
+        at.userAgent?.slice(0, 400) || null,
+      ],
     );
   }
 }

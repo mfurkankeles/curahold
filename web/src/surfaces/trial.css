@@ -96,6 +96,12 @@
   font-size: var(--fs-s);
   line-height: var(--lh-body);
 }
+.trial__capacity {
+  margin: 0;
+  font-size: var(--fs-s);
+  font-weight: 500;
+  color: var(--ink-2);
+}
 .trial__consent {
   display: grid;
   gap: 4px;
