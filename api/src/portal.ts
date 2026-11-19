@@ -233,13 +233,27 @@ export function createPortalApp(deps: Deps) {
     if (used + files.reduce((n, f) => n + f.size, 0) > quota) fail('portal_quota');
   };
 
+  /**
+   * Keeps one file, then records it. The database decides whether it may be kept (the
+   * person's own request or step, the daily count): when it refuses, the bytes go too, so a
+   * refused upload never stays in storage outside the company's quota.
+   */
+  const keep = async (key: string, f: { data: ArrayBuffer; mime: string }, record: () => Promise<unknown>) => {
+    await deps.storage.put(key, f.data, f.mime);
+    try {
+      await record();
+    } catch (e) {
+      await deps.storage.delete(key).catch(() => undefined);
+      throw e;
+    }
+  };
+
   /** Keeps the files, then records each on the request (comment null) or on the reply. */
   const attach = async (c: any, taskId: string, commentId: string | null, files: Awaited<ReturnType<typeof portalFiles>>) => {
     const org = c.get('org');
     for (const f of files) {
       const key = `${org.id}/${taskId}/${crypto.randomUUID()}`;
-      await deps.storage.put(key, f.data, f.mime);
-      await one(c, 'select portal_add_file($1, $2, $3, $4, $5, $6) as id', [taskId, commentId, f.name, f.size, f.mime, key]);
+      await keep(key, f, () => one(c, 'select portal_add_file($1, $2, $3, $4, $5, $6) as id', [taskId, commentId, f.name, f.size, f.mime, key]));
     }
   };
 
@@ -311,8 +325,7 @@ export function createPortalApp(deps: Deps) {
     const org = c.get('org');
     for (const f of files) {
       const key = `${org.id}/onboarding/${stepId}/${crypto.randomUUID()}`;
-      await deps.storage.put(key, f.data, f.mime);
-      await one(c, 'select portal_onboarding_add_file($1, $2, $3, $4, $5) as id', [stepId, f.name, f.size, f.mime, key]);
+      await keep(key, f, () => one(c, 'select portal_onboarding_add_file($1, $2, $3, $4, $5) as id', [stepId, f.name, f.size, f.mime, key]));
     }
     // The plan's owner hears of it in the app.
     await deps.db.system(async (q) => {
