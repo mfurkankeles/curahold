@@ -59,10 +59,9 @@ describe('sales site copy', () => {
   }
 });
 
-// The scroll story after the hero ships in English and Turkish first; the other
-// seven languages get it on Thursday. Until a language is on this list, its page
-// leaves the story out entirely — no English words on it, no empty section.
-const STORY_NOW = ['en', 'tr'];
+// The scroll story after the hero ships in all nine languages. A language off this
+// list would leave the story out entirely — no English words on it, no empty section.
+const STORY_NOW = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'];
 
 describe('the scroll story', () => {
   const enStory = leaves(STORY_COPY.en as SiteStoryCopy);
