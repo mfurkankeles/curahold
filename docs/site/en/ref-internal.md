@@ -11,13 +11,14 @@ These addresses exist but belong to the browser or to other machines. They are l
 | Addresses | How many | Why |
 | --- | --- | --- |
 | `/admin/…` | 33 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
+| `/agent/…` | 14 | The AI team's own door: each seat's agent with its own key reads its slice and proposes; never a company's API. |
 | `/auth/…` | 10 | Signing in and out happens in the browser. |
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
 | `/connections/…` | 28 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
-| `/desk/…` | 18 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
+| `/desk/…` | 54 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |
 | `/hooks/…` | 3 | Chat apps and calendars calling back. |

@@ -73,6 +73,26 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /auth/oauth/:provider/start': 'the name of a sign-in provider',
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
+  'GET /desk/owner/requests/:id': 'a trial request: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/owner/requests/:id/contacted': 'a trial request; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/owner/requests/:id/approve': 'a trial request; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/owner/requests/:id/reject': 'a trial request; owner session only (tests/owner-console.test.ts)',
+  'PATCH /desk/owner/plan/tasks/:id': 'the owner’s own plan task; owner session only (tests/owner-console.test.ts)',
+  'DELETE /desk/owner/plan/tasks/:id': 'the owner’s own plan task; owner session only (tests/owner-console.test.ts)',
+  'PUT /desk/owner/checklist/:item': 'a go-live checklist item from the repository; owner session only (tests/owner-console.test.ts)',
+  'PUT /desk/office/seats/:seat': 'a seat of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/office/seats/:seat/key': 'a seat of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/office/seats/:seat/handover': 'a seat of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/office/approvals/:id/decide': 'an approval of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'GET /desk/office/meetings/:id': 'a meeting of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'POST /desk/office/meetings/:id/lines': 'a meeting of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'DELETE /desk/office/pauses/:id': 'a pause switch of Curahold’s own AI team; owner session only (tests/owner-console.test.ts)',
+  'PUT /agent/memory/:key': 'a key in the calling seat’s own memory, by its seat key (tests/owner-console.test.ts)',
+  'DELETE /agent/memory/:key': 'a key in the calling seat’s own memory, by its seat key (tests/owner-console.test.ts)',
+  'PATCH /agent/tasks/:id': 'a task of the calling seat only, matched by seat in the statement (tests/owner-console.test.ts)',
+  'GET /agent/meetings/:id': 'a meeting the calling seat attends, by its seat key (tests/owner-console.test.ts)',
+  'POST /agent/meetings/:id/lines': 'a meeting the calling seat attends, by its seat key (tests/owner-console.test.ts)',
+  'PUT /agent/meetings/:id/minutes': 'a meeting, written only by the note-taker seat (tests/owner-console.test.ts)',
   'GET /desk/requests/:ref': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',
   'GET /desk/customers/:orgId': 'Curahold’s own console on the desk host, behind its staff sign-in or key; a company session gets 403 (tests/desk.test.ts)',
   'POST /desk/requests/:ref/messages': 'Curahold’s own support desk, behind its staff sign-in or key (tests/desk.test.ts)',
@@ -339,7 +359,7 @@ describe('every role × every address', () => {
       { name: 'nothing', who: () => nothing, perms: [], seat: 'full' },
     ];
 
-    const PUBLIC = /^\/(auth|signup|sso\/:slug|scim|desk|hooks|inbound|oauth\/callback|connect\/callback|billing\/webhook|inbound|health|join|support\/enter|help-files|calendar\/:file|tickets|platform)/;
+    const PUBLIC = /^\/(auth|signup|sso\/:slug|scim|desk|agent|hooks|inbound|oauth\/callback|connect\/callback|billing\/webhook|inbound|health|join|support\/enter|help-files|calendar\/:file|tickets|platform)/;
     const routes = readRoutes().filter((r) => r.api && !PUBLIC.test(r.path) && !NOT_BY_ID[`${r.method} ${r.path}`]);
     const ids = async (table: string, where?: string) =>
       (await sys<{ id: string }>(`select id from ${table} where org_id = $1 ${where ? `and ${where}` : ''} order by id limit 2`, [org])).map((r) => r.id);
