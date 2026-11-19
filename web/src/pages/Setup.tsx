@@ -117,6 +117,11 @@ function AccountsStep({ onNext }: { onNext: () => void }) {
     <>
       <Importer compact onImported={() => setImported(true)} />
       <p className="field__hint u-mt-12">
+        <a href="/import" onClick={(e) => (e.preventDefault(), navigate('/import'))}>
+          {t('imp.page.fromSetup')}
+        </a>
+      </p>
+      <p className="field__hint u-mt-12">
         {t('setup.accounts.crm')}{' '}
         <a
           href="/settings/sources"

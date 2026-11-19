@@ -7,7 +7,6 @@ import { columnFor, fold, matchPerson, parseDay, priorityFor, splitPeople, type 
 import { nowOf, requirePerm, requirePlan, requireWriter, run, todayOf, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
-import { toTrash } from '../lib/trash';
 import { localDate } from '../lib/automations';
 import { fail } from '../lib/errors';
 import { addEvent } from '../lib/history';
@@ -532,34 +531,5 @@ workRoutes.get('/boards/:id/imports', async (c) => {
   });
 });
 
-/**
- * Undo an import of tasks: what nobody has touched since is removed; a task
- * someone has since changed or written on is kept, in the board's archive.
- */
-workRoutes.post('/task-imports/:id/undo', async (c) => {
-  requireWriter(c);
-  const id = param(c, 'id');
-  const auth = c.get('auth');
-  const org = c.get('org');
-  const out = await run(c, async (q) => {
-    const [b] = await q.query(`select * from import_batches where id = $1 and kind = 'tasks' for update`, [id]);
-    if (!b || b.undone_at || Date.now() - new Date(b.created_at).getTime() > 30 * 86400_000) fail('not_found');
-    const ids = (b.created_ids ?? []) as string[];
-    const kept = await q.query(
-      `update tasks t set archived_at = coalesce(archived_at, now())
-        where t.id = any($1::uuid[]) and (t.version > 1 or exists (select 1 from comments cm where cm.task_id = t.id)) returning t.id`,
-      [ids],
-    );
-    const keep = kept.map((r) => r.id as string);
-    // What nobody touched goes to the trash as one item, for the 30 days anything deleted stays there.
-    const there = await q.query<{ id: string; title: string }>(`select id, title from tasks where id = any($1::uuid[]) and not (id = any($2::uuid[])) order by created_at`, [ids, keep]);
-    const [bd] = await q.query<{ name: string }>('select name from boards where id = $1', [b.board_id]);
-    const trashId = await toTrash(q, 'task', there.map((r) => r.id), there[0]?.title ?? '', { boardId: b.board_id, board: bd?.name, via: 'import' });
-    const removed = await q.query(`delete from tasks where id = any($1::uuid[]) returning id`, [there.map((r) => r.id)]);
-    if (removed.length !== there.length) fail('forbidden');
-    await q.query(`update import_batches set undone_at = now() where id = $1`, [id]);
-    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'task.import_undone', entity: 'import', entityId: id, meta: { removed: removed.length, archived: keep.length, trashId } });
-    return { removed: removed.length, archived: keep.length, trashId };
-  });
-  return c.json(out);
-});
+// Undoing an import of tasks: routes/imports.ts (it also undoes imports onto several boards).
+

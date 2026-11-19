@@ -122,6 +122,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
             },
           },
           ...(canOpenBoards ? [{ key: 'a:board', group: 'actions', title: t('nav.newBoard'), go: () => (onClose(), onNewBoard()) }] : []),
+          { key: 'a:import', group: 'actions', title: t('imp.page.title'), go: () => (onClose(), navigate('/import')) },
           ...always,
         ]
       : always;

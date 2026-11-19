@@ -26,6 +26,11 @@ function toSheet(matrix: string[][]): Sheet {
 }
 
 export function parseCsv(text: string): Sheet {
+  return toSheet(csvMatrix(text));
+}
+
+/** The cells of a CSV, row by row (any delimiter, quoted fields). */
+export function csvMatrix(text: string): string[][] {
   const src = text.replace(/^﻿/, '');
   const firstLine = src.split(/\r?\n/, 1)[0] ?? '';
   const delim = [';', '\t', ','].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
@@ -58,7 +63,7 @@ export function parseCsv(text: string): Sheet {
     row.push(cell);
     out.push(row);
   }
-  return toSheet(out);
+  return out;
 }
 
 const DATE_FORMAT_IDS = new Set([14, 15, 16, 17, 18, 19, 20, 21, 22, 45, 46, 47]);
@@ -78,6 +83,11 @@ function serialToIso(serial: number): string {
 const text = (el: Element | null | undefined) => (el ? Array.from(el.getElementsByTagName('t')).map((t) => t.textContent ?? '').join('') : '');
 
 export function parseXlsx(buf: ArrayBuffer): Sheet {
+  return toSheet(xlsxMatrix(buf));
+}
+
+/** The cells of an .xlsx file's first sheet, row by row. */
+export function xlsxMatrix(buf: ArrayBuffer): string[][] {
   const files = unzipSync(new Uint8Array(buf));
   const xml = (path: string) => (files[path] ? new DOMParser().parseFromString(strFromU8(files[path]), 'application/xml') : null);
   // First sheet in workbook order.
@@ -123,10 +133,16 @@ export function parseXlsx(buf: ArrayBuffer): Sheet {
     }
     matrix.push(Array.from(row, (x) => x ?? ''));
   }
-  return toSheet(matrix);
+  return matrix;
 }
 
 export async function readSheet(file: File): Promise<Sheet> {
   if (/\.xlsx$/i.test(file.name)) return parseXlsx(await file.arrayBuffer());
   return parseCsv(await file.text());
+}
+
+/** A file's cells as rows (CSV or .xlsx), for readers that look at its shape before its headings. */
+export async function readMatrix(file: File): Promise<string[][]> {
+  if (/\.xlsx$/i.test(file.name)) return xlsxMatrix(await file.arrayBuffer());
+  return csvMatrix(await file.text());
 }

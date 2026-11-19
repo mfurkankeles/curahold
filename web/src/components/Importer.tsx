@@ -1,7 +1,7 @@
 // Bringing accounts in from a spreadsheet: choose the file, check how its
 // columns map (guessed for you), import, and undo if it was the wrong file.
 import { Icon } from './icons';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { guessFieldType, HEADER_HINTS, labelOf, normalizeValue, optionKey } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
 import { calculated, FIELD_TYPES, type AccountField, type FieldType, type ImportResult } from '../../../shared/src/model';
@@ -36,7 +36,7 @@ const decode = (s: string): Target => (s.startsWith('field:') ? { kind: 'field',
 // fields.ts reads either, whatever the person's language.
 const FORMAT_SAMPLE: Partial<Record<Locale, string>> = { tr: '1.250,50 · 31.12.2027', en: '1,250.50 · 12/31/2027' };
 
-export function Importer({ onImported, compact }: { onImported?: (r: ImportResult) => void; compact?: boolean }) {
+export function Importer({ onImported, compact, file: firstFile }: { onImported?: (r: ImportResult) => void; compact?: boolean; file?: File | null }) {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();
   const fields = me.org.accountFields.filter((f) => !calculated(f));
@@ -50,6 +50,10 @@ export function Importer({ onImported, compact }: { onImported?: (r: ImportResul
   const [undone, setUndone] = useState(false);
   const [readError, setReadError] = useState('');
   const input = useRef<HTMLInputElement>(null);
+  // A file chosen before this opened (the import page reads what was dropped on it).
+  useEffect(() => {
+    if (firstFile) void open(firstFile);
+  }, [firstFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const open = async (file: File | undefined) => {
     if (!file) return;

@@ -22,7 +22,9 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /boards/:id/requests` | Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. |
 | `POST /boards/:id/import` | Bir dosyanın satırlarından tek bir panoya görev alır. |
 | `GET /boards/:id/imports` | Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
-| `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`). |
+| `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`); içe aktarma için açılıp boş kalan pano kaldırılır. |
+| `GET /task-imports` | Herhangi bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
+| `POST /task-imports` | Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevler, yorumlar, panonun kendi alanları ve “şunu bekliyor” bağlarıyla. |
 | `PUT /boards/:id/portal` | Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı). |
 | `GET /tasks` | Panolar genelinde görevler. |
 | `GET /calendar` | `from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. |
@@ -167,9 +169,30 @@ Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta.
 
 ### `POST /task-imports/:id/undo`
 
-Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`).
+Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`); içe aktarma için açılıp boş kalan pano kaldırılır.
 
 **Gerekenler:** yazabilen bir koltuk
+
+### `GET /task-imports`
+
+Herhangi bir panoya yaptığın son görev içe aktarmaları; en yenisi başta.
+
+### `POST /task-imports`
+
+Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevler, yorumlar, panonun kendi alanları ve “şunu bekliyor” bağlarıyla. `dryRun` ile yalnızca neyin gelip neyin gelmeyeceğini ve yeni bir panonun neyle açılacağını söyler.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `fileName` | metin | isteğe bağlı | en çok 200 karakter |
+| `rows` | nesne listesi | zorunlu | en az 1 öğe; en çok MAX_ROWS öğe |
+| `mapping` | nesne (ad → değer) | zorunlu |  |
+| `targets` | nesne (ad → değer) | zorunlu |  |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı |  |
+| `includeDone` | evet/hayır | isteğe bağlı |  |
+| `dryRun` | evet/hayır | isteğe bağlı |  |
+| `createdBoards` | kimlik listesi | isteğe bağlı | en çok 50 öğe |
 
 ### `PUT /boards/:id/portal`
 

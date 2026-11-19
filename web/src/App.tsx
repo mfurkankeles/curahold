@@ -91,6 +91,7 @@ const FounderPagesPage = lazy(() => import('./pages/FounderPages').then((m) => (
 const DashboardPage = lazy(() => import('./pages/Dashboards').then((m) => ({ default: m.DashboardPage })));
 const DashboardsPage = lazy(() => import('./pages/Dashboards').then((m) => ({ default: m.DashboardsPage })));
 const TeamPage = lazy(() => import('./pages/Team').then((m) => ({ default: m.TeamPage })));
+const ImportPage = lazy(() => import('./pages/ImportPage').then((m) => ({ default: m.ImportPage })));
 const TimelinePage = lazy(() => import('./pages/Timeline').then((m) => ({ default: m.TimelinePage })));
 
 // Curahold's own support desk: loaded only at the central address, only when asked for.
@@ -365,6 +366,7 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (rep) page = <ReportBuilderPage id={rep.id} from={null} key={rep.id} />;
   else if (path === '/pages/new') page = <HomePage pageId={null} create />;
   else if (path === '/team') page = <TeamPage refreshKey={refreshKey} />;
+  else if (path === '/import') page = <ImportPage />;
   else if (path === '/timeline') page = <TimelinePage refreshKey={quiet} />;
   else if (path === '/devices') page = <DevicesPage />;
   else if (path === '/trash') page = <TrashPage />;

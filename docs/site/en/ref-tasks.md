@@ -22,7 +22,9 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | `POST /boards/:id/requests` | Sends a request through the board's form: it lands in the form's column, unassigned. |
 | `POST /boards/:id/import` | Brings tasks in from rows of a file onto one board. |
 | `GET /boards/:id/imports` | Your recent task imports onto a board, newest first. |
-| `POST /task-imports/:id/undo` | Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`). |
+| `POST /task-imports/:id/undo` | Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`); a board made for the import and left empty is put away. |
+| `GET /task-imports` | Your recent task imports, on any board, newest first. |
+| `POST /task-imports` | Brings tasks in from rows of a file onto one or more boards, with sub-tasks, comments, the board’s own fields and “waits for” links. |
 | `PUT /boards/:id/portal` | Opens a board to customers in the portal, or closes it (an administrator's decision). |
 | `GET /tasks` | Tasks across boards. |
 | `GET /calendar` | What falls on which day between `from` and `to` (at most 430 days): tasks by due date, meetings, calls and reviews that were held, renewals, and business reviews falling due. |
@@ -167,9 +169,30 @@ Your recent task imports onto a board, newest first.
 
 ### `POST /task-imports/:id/undo`
 
-Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`).
+Undoes an import of tasks: what nobody touched since is removed, and goes to the trash as one item (`trashId`); a board made for the import and left empty is put away.
 
 **Needs:** a seat that can write
+
+### `GET /task-imports`
+
+Your recent task imports, on any board, newest first.
+
+### `POST /task-imports`
+
+Brings tasks in from rows of a file onto one or more boards, with sub-tasks, comments, the board’s own fields and “waits for” links. With `dryRun` it only says what would come in and what would not, and what a new board would be made with.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `fileName` | text | optional | at most 200 characters |
+| `rows` | list of object | required | at least 1 items; at most MAX_ROWS items |
+| `mapping` | object (name → value) | required |  |
+| `targets` | object (name → value) | required |  |
+| `locale` | one of en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | optional |  |
+| `includeDone` | yes/no | optional |  |
+| `dryRun` | yes/no | optional |  |
+| `createdBoards` | list of id | optional | at most 50 items |
 
 ### `PUT /boards/:id/portal`
 
