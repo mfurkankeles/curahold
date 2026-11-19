@@ -5,7 +5,7 @@ Every setting Curahold reads, taken from the code (`api/src/worker.ts` `Env`, `a
 placeholders. **Never commit real values.** `.env`, `.env.*` and `.dev.vars` are git-ignored.
 
 > A scan of `process.env.*`, the Worker `Env` interface, the self-host entry and the dynamically built CRM keys
-> (`<NAME>_CLIENT_ID` / `_SECRET`) finds **about 89 distinct keys**, including the three Worker bindings and the
+> (`<NAME>_CLIENT_ID` / `_SECRET`) finds **about 135 distinct keys** (19 Nov 2026), including the four Worker bindings and the
 > developer-tooling switches in section 8. Keys marked **(S)** are secrets: store them with `wrangler secret put NAME`
 > (hosted) or in `.env` / your secret manager (self-host), and rotate per [docs/RUNBOOK.md](RUNBOOK.md#rotating-secrets).
 
@@ -40,6 +40,9 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `HYPERDRIVE` (binding) | Hyperdrive config, exposes `connectionString` | Yes (hosted) | Config id in `wrangler.toml` `[[hyperdrive]]`. |
 | `FILES` (binding) | R2 bucket for attachments and logos | Yes (hosted) | Bucket `curahold-files`. |
 | `ASSETS` (binding) | Static assets (the built web app) | Yes (hosted) | Provided by the `[assets]` block. |
+| `LIVE` (binding) | Durable Object class `LiveRoomDO`: the live channel (one room per company, plus the console's `platform` room) | Yes (hosted) | `[[durable_objects.bindings]]` in `wrangler.toml`. Without it the app polls. |
+| `SIGNUP_MODE` | What "Try it free" on the central host does: `request` (a trial request the operator approves) or `instant` (the earlier self-serve sign-up) | No | `request` (ADR 0017). |
+| `SECURITY_CONTACT` | Address or https link published in `/.well-known/security.txt` | Before go-live | Unset: a clearly marked placeholder is served. |
 
 ## 2. Platform owner and support desk (hosted)
 
@@ -94,6 +97,49 @@ simply not offered when their keys are missing ("a service without its secrets i
 
 Google Sheets and Excel reuse the Google and Microsoft sign-in keys.
 
+## 6a. More connectors (each optional)
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `JIRA_CLIENT_ID`, `JIRA_CLIENT_SECRET` **(S)** | Atlassian OAuth 2.0 (3LO) app for Jira Cloud | Both | Without them Jira connects with an API token only (`sync/adapters/jira.ts`). |
+| `XERO_CLIENT_ID`, `XERO_CLIENT_SECRET` **(S)** | Xero (accounting, read only) | Both | |
+| `FREEE_CLIENT_ID`, `FREEE_CLIENT_SECRET` **(S)** | freee (accounting, read only) | Both | |
+| `QUICKBOOKS_CLIENT_ID`, `QUICKBOOKS_CLIENT_SECRET` **(S)** | QuickBooks Online (accounting, read only) | Both | Zoho Books reuses the Zoho keys. |
+
+## 6b. Product e-mail (`api/src/lib/smtpRelay.ts`, ADR 0018)
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `EMAIL_PROVIDER` | `google_relay`, `resend` or `console` | No | `google_relay` when `SMTP_RELAY_USER` is set, else Resend when its key is set, else the log. |
+| `SMTP_RELAY_HOST` | The relay host | No | `smtp-relay.gmail.com`. |
+| `SMTP_RELAY_PORT` | Relay port (STARTTLS) | No | `587` (port 25 is blocked on Workers). |
+| `SMTP_RELAY_USER` | The sending Workspace user, e.g. `no-reply@<domain>` | For the relay | |
+| `SMTP_RELAY_PASSWORD` **(S)** | That user's app password | For the relay | |
+
+## 6c. The assistant and the AI team (`api/src/assistant/cost.ts`, `api/src/team/config.ts`; ADR 0010, 0011)
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `ANTHROPIC_API_KEY` **(S)** | The model key for every model call the server makes (assistant and AI team) | No | Unset: the docs search answers (no cost) and the AI team runs its code-only pre-checks. |
+| `ASSISTANT_PROVIDER` | `off` switches the model off for the whole install | No | `anthropic`. |
+| `ASSISTANT_MODEL` | Model for the assistant | No | `claude-sonnet-5-5` (`DEFAULT_MODEL`). |
+| `ASSISTANT_GLOBAL_MONTHLY_USD` | Cap for the whole install, USD a month | No | `100`. |
+| `ASSISTANT_COMPANY_MONTHLY_USD` | Default cap per company, USD a month | No | `5`. |
+| `ASSISTANT_COMPANY_MAX_USD` | Highest cap a company may choose | No | `50`. |
+| `ASSISTANT_BLOCKED_NAMES` | Other products' names the assistant declines to discuss, comma-separated (kept out of the code) | No | Empty. |
+| `ASSISTANT_PUBLIC_CHAT` | `0` closes the public chat on the docs and sales site | No | Open (rate-limited, inside the global cap). |
+| `TEAM_MONTHLY_USD` | Cap for all AI-team model spend, USD a month | No | `40`. |
+| `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per seat profile, and the golden-task judge | No | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`, `claude-opus-5-5`. |
+
+## 6d. Robots and public forms (`lib/botGuard.ts`, `lib/humanCheck.ts`; ADR 0015)
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `ROBOT_GUARD` | `strict` (production), `crawlers` (refuse named crawlers only) or `off` | No | `strict` when unset. Local development and tests run `crawlers`. |
+| `CRAWLERS_DOCS_AI` | `allow` lets AI answer/search robots read the documentation | No | Blocked. |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` **(S)** | Cloudflare Turnstile (free) on the public forms | Both | Without them the honeypot, fill-time check and rate limits stand alone. |
+| `TURNSTILE` | `off` switches Turnstile off even with keys | No | On when both keys are set. |
+
 ## 7. Self-host only (`api/src/selfhost.ts`, `docker-compose.yml`, `selfhost.env.example`)
 
 All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`, `AUTH_SECRET`, ...) also apply.
@@ -117,6 +163,9 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | `DB_POOL` | Max Postgres connections | No | `10`. |
 | `PORT` | HTTP port | No | `8080` (self-host), `8787` (local API). |
 | `NODE_ENV` | Set to `production` in the image | No | |
+| `OUTBOUND_ALLOW_PRIVATE` | `1` turns off the check that refuses outbound calls to private network addresses | No | Off (calls to private addresses refused). |
+| `OUTBOUND_ALLOW_HOSTS` | Internal hosts allowed through that check, comma-separated (e.g. an internal identity provider or CRM) | No | Empty. |
+| `RESET_SECOND_STEP` | Break-glass: e-mails whose second sign-in step is removed at start (`a@x.com,b@x.com`) | No | Remove it again right after use; the log says so. |
 
 ## 8. Local development and tooling
 
@@ -135,6 +184,17 @@ All hosted settings above that make sense (support, connectors, `PORTAL_DOMAIN`,
 | `SITE_URL`, `SITE_APP_URL`, `SITE_DOCS_URL`, `SITE_DEMO_URL`, `SITE_BASE_DOMAIN` | Addresses baked into the marketing site build (`npm run build:site`) | `https://curahold.com`, `https://app.curahold.com`, `<app>/docs`, `/demo/`, `curahold.com`. |
 | `DOCS_APP_HREF`, `DOCS_RELATIVE` | Link target of the help pages and whether links are relative (used by the demo build) | `../index.html`, off. |
 | `RELAY_KEY` **(S)**, `PORT` | `tools/relay/relay.mjs`: the shared key (24+ chars) and listen port | Port `8787`. |
+| `SITE_ORIGIN`, `SITE_TRIAL_URL`, `SITE_SIGNUP_URL`, `SITE_DOCS_HOME`, `SITE_CONSENT_LOG_URL` | More addresses baked into the sales site and demo hub builds | Derived from `BASE_DOMAIN`. |
+| `SITE_GA4_ID`, `SITE_META_PIXEL_ID`, `SITE_TIKTOK_PIXEL_ID` | Analytics / advertising ids for the sales site (loaded only after consent) | Empty. |
+| `CURAHOLD_MARKETING_PIXELS` | `1` allows the advertising pixels at all (they stay off by configuration otherwise, ADR 0014) | Off. |
+| `SITE_AI_CRAWLERS`, `SITE_SEO_ROBOTS` | Sales-site `robots.txt`: `allow` lets AI answer engines / SEO tools in | Blocked. |
+| `SITE_AI_VERSION`, `SITE_CONCEPT_SLOW` | Sales-site build variants (which AI page version; concept page animation speed) | `a`, `1.6`. |
+| `DOCS_PREVIEW`, `DOCS_PREVIEW_PICTURES`, `DOCS_DATA_ONLY` | Small docs builds for previews (ADR 0016) | Off; pictures `en`. |
+| `EVAL_ONLY`, `EVAL_LANGS`, `EVAL_OUT`, `EVAL_CONCURRENCY`, `ASSISTANT_JUDGE_MODEL` | `tests/assistant-eval/run.ts`: which cases and languages, results file, parallel calls, judge model | All, all, none, `4`, `claude-opus-5-5`. |
+| `LOAD_PEOPLE`, `LOAD_WRITERS`, `LOAD_SECONDS`, `LOAD_PORT`, `LOAD_KEEP` | `scripts/load.ts` (the load test) | `200`, `50`, `120`. |
+| `PERF_CROWD`, `PERF_ONLY`, `PERF_WRITES` | `scripts/perf.ts` concurrency and what to time | `50`, all, `40`. |
+| `E2E_PORT`, `DEMO_PORT`, `SHOTS_PORT`, `CHROME` | Ports of the browser runs and the help screenshots, and Chrome's path for `scripts/docs/shots.ts` | `8899`, `8931`, `10045`, `/usr/bin/google-chrome`. |
+| `SCREENS`, `LIVE_DEBUG`, `SHOW_LEFT` | Narrow or explain quality/e2e runs | Off. |
 | `APP_DEMO` (Vite define) | Build-time flag set by `vite.demo.config.ts` for the in-browser demo | Not an environment variable you set. |
 
 ## 9. Keys that could not be classified with certainty

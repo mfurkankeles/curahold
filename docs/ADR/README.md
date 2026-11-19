@@ -13,9 +13,24 @@ and QUALITY.md disagree, QUALITY.md's dated decision is the source and the ADR n
 | [0002](0002-supabase-postgres-and-paddle.md) | Supabase Postgres (EU) for data, Paddle as merchant of record | Accepted |
 | [0003](0003-cloudflare-workers-and-hono.md) | Cloudflare Workers + Hono as the runtime (not Netlify, not a long-running server) | Accepted |
 | [0004](0004-tenant-isolation-with-rls.md) | Tenant isolation enforced by Postgres row-level security | Accepted |
-| [0005](0005-i18n-fallback-and-two-complete-languages.md) | Two complete languages, other languages fall back to English | Accepted |
+| [0005](0005-i18n-fallback-and-two-complete-languages.md) | Two complete languages, other languages fall back to English | Superseded by 0008 |
 | [0006](0006-data-integrity-discipline.md) | Data-integrity discipline: versions, idempotency, outbox, trash | Accepted (partly built) |
-| [0007](0007-live-updates-websocket-per-company.md) | Live updates: one Durable Object per company, with polling fallback | Accepted (not built) |
+| [0007](0007-live-updates-websocket-per-company.md) | Live updates: one Durable Object per company, with polling fallback | Accepted (built) |
+| [0008](0008-nine-complete-languages.md) | Every offered language is complete; no English fallback in shipped screens | Accepted |
+| [0009](0009-departments-walls-in-row-security.md) | Departments are walls in row security; work crosses only through links and hand-overs | Accepted |
+| [0010](0010-one-assistant-core-with-cost-caps.md) | One assistant core behind every chatbot, free rules first, hard monthly caps | Accepted |
+| [0011](0011-ai-team-approval-gate.md) | The AI team proposes; only the operator's own yes runs anything outside | Accepted |
+| [0012](0012-onboarding-hub-one-mutual-plan.md) | One mutual onboarding plan model for the company itself and its customers | Accepted |
+| [0013](0013-setup-health-read-only-checks.md) | Setup health: zero-cost, read-only checks that link to the fix | Accepted |
+| [0014](0014-consent-and-evidence-append-only.md) | One consent library; consent and contract evidence append-only and hash-chained | Accepted |
+| [0015](0015-bot-protection-free-layers.md) | Bot and scraper protection from free layers | Accepted |
+| [0016](0016-preview-build-limits.md) | Static previews of docs and demo fit the preview host's file limits | Accepted |
+| [0017](0017-trial-by-request-three-months.md) | "Try it free" is a request the operator approves; trials last three months | Accepted |
+| [0018](0018-product-mail-through-workspace-relay.md) | Product e-mail through the Google Workspace SMTP relay | Accepted |
+| [0019](0019-one-billing-path-proposed.md) | Billing has one system of record: the subscriptions table | Proposed |
+
+0008-0019 were recorded on 19 November 2026 from the code and the dated decisions of 15-19 November, during the
+handover audit. They give product and engineering reasons only.
 
 ## Writing a new ADR
 

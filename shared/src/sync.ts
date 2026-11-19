@@ -133,9 +133,6 @@ export const KEY_FIELDS: Record<
   ],
 };
 
-/** Spreadsheets: rows are found by a key column instead of a CRM id. */
-export const TABULAR: CrmProvider[] = ['gsheets', 'excel'];
-
 export type RemoteFieldType =
   | 'id'
   | 'text'

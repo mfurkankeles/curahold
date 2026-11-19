@@ -8,7 +8,6 @@ import type { Localized, OptionColor } from './model';
 
 /** 'deals' means the company's opportunities; any other record type is `record:<key>`. */
 export type ReportSource = 'tasks' | 'accounts' | 'deals' | 'activities' | 'time' | `record:${string}`;
-export const BASE_SOURCES = ['tasks', 'accounts', 'activities', 'time'] as const;
 
 export const REPORT_FIELD_TYPES = ['text', 'number', 'money', 'days', 'minutes', 'date', 'choice', 'person', 'ref', 'bool'] as const;
 export type ReportFieldType = (typeof REPORT_FIELD_TYPES)[number];

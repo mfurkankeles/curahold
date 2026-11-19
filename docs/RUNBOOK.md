@@ -79,6 +79,10 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
   additive (new nullable column, new table, new index). Therefore: ship destructive changes (drop/rename/type change) in two
   releases: first stop using the thing, deploy; then drop it in a later migration.
 - If a bad migration already ran: restore from backup is the last resort (see below); first try a **new** corrective migration.
+- **Hand-run undo scripts** exist for the larger recent migrations in `db/rollback/` (0120 departments, 0170 flow, 0195 setup health,
+  0200/0210/0211 onboarding). They are not migrations (the runner never reads that folder) and they delete the feature's data: run one only
+  on the owner's decision, as the owner, in one transaction (`psql "$DATABASE_URL" -1 -f db/rollback/<file>.sql`), after a backup, and
+  roll the code back first. `tests/departments-migration.test.ts` exercises the 0120 one.
 
 ## Migrations
 
