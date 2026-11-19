@@ -89,6 +89,19 @@ describe('legal pack generated from the data inventory', () => {
   });
 });
 
+describe('mail guides (Google Workspace, SMTP relay)', () => {
+  it('exist in all nine languages with the same sections, records and settings', () => {
+    for (const page of ['mail-google-workspace', 'mail-smtp-relay']) {
+      const en = readFileSync(join(ROOT, 'docs', 'site', 'en', `${page}.md`), 'utf8');
+      const shape = (t: string) => ({ h2: (t.match(/^## /gm) ?? []).length, codes: [...t.matchAll(/`([^`\n]+)`/g)].map((m) => m[1]).filter((c) => /[_=.:@]/.test(c!)).sort() });
+      for (const l of LOCALES) {
+        const t = readFileSync(join(ROOT, 'docs', 'site', l, `${page}.md`), 'utf8');
+        expect(shape(t), `${l}/${page}`).toEqual(shape(en));
+      }
+    }
+  });
+});
+
 // ------------------------------------------------------------------ the static pages' banner, in a fake DOM
 
 class El {

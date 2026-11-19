@@ -6,7 +6,9 @@ import { readRawMail, takeMail } from './lib/helpThread';
 import { assertOwnerConfigured, type BillingConfig, type Config } from './context';
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
-import { R2Storage, ResendEmail, type R2Like } from './lib/services';
+import { R2Storage, ResendEmail, type EmailSender, type R2Like } from './lib/services';
+import { ConsoleMailer } from './lib/mailer';
+import { SmtpRelayEmail, mailProvider, relayOptions, workerSockets } from './lib/smtpRelay';
 import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './live/do';
 import { PLATFORM_PATH } from './live/platform';
 import { assistantConfigFrom } from './assistant/cost';
@@ -28,6 +30,12 @@ export interface Env {
   /** Where security researchers write (security.txt): an address or https link. The owner sets it. */
   SECURITY_CONTACT?: string;
   AUTH_SECRET: string;
+  /** Product mail: the Google Workspace SMTP relay (lib/smtpRelay.ts) when set, else Resend, else the log. */
+  EMAIL_PROVIDER?: string;
+  SMTP_RELAY_HOST?: string;
+  SMTP_RELAY_PORT?: string;
+  SMTP_RELAY_USER?: string;
+  SMTP_RELAY_PASSWORD?: string;
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
   SINGLE_TENANT_SLUG?: string;
@@ -222,7 +230,7 @@ export function depsFor(env: Env, ctx: Ctx) {
     pending,
     deps: {
       db,
-      email: new ResendEmail(env.RESEND_API_KEY, env.EMAIL_FROM),
+      email: emailFor(env),
       storage: new R2Storage(env.FILES),
       config: configFromEnv(env),
       live: livePoker(env),
@@ -285,3 +293,11 @@ export default {
     );
   },
 };
+
+/** The product's mail path (owner's choice: Google Workspace; see lib/smtpRelay.ts). */
+export function emailFor(env: Env): EmailSender {
+  const p = mailProvider(env);
+  if (p === 'google_relay') return new SmtpRelayEmail(relayOptions(env), workerSockets);
+  if (p === 'resend') return new ResendEmail(env.RESEND_API_KEY, env.EMAIL_FROM);
+  return new ConsoleMailer();
+}
