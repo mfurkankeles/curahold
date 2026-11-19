@@ -15,7 +15,7 @@ export const words: SeedWords = {
   people: { ada: 'سارة المنصوري', mert: 'خالد العتيبي', zeynep: 'نور الهاشمي', lena: 'ريم الشامي', omar: 'عمر حداد', sofia: 'دانة القحطاني' },
   customer: { first: 'ليان', last: 'السعدي' },
   fullName: (first, last) => `${first} ${last}`,
-  teams: { cs: 'نجاح العملاء', am: 'إدارة الحسابات' },
+  teams: { cs: 'نجاح العملاء', am: 'المبيعات' },
   base: {
     ask: 'هل يمكنك إضافة مخطط الاستخدام للربع الماضي أيضًا؟',
     planned: [

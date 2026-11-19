@@ -4710,7 +4710,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': 'دیدن وضعیت کارها',
   'demo.tour.goal.setup': 'راه‌اندازی به روش خودت',
   'demo.tour.role.csm': 'موفقیت مشتری',
-  'demo.tour.role.sales': 'مدیریت حساب',
+  'demo.tour.role.sales': 'فروش',
   'demo.tour.role.lead': 'سرپرست تیم',
   'demo.tour.role.exec': 'مدیران ارشد',
   'demo.tour.role.ops': 'عملیات و مدیریت سیستم',

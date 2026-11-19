@@ -4710,7 +4710,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': '현황 파악',
   'demo.tour.goal.setup': '우리 방식대로 설정',
   'demo.tour.role.csm': '고객 성공',
-  'demo.tour.role.sales': '어카운트 관리',
+  'demo.tour.role.sales': '영업',
   'demo.tour.role.lead': '팀 리더',
   'demo.tour.role.exec': '경영진',
   'demo.tour.role.ops': '운영과 관리',

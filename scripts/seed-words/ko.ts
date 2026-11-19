@@ -16,7 +16,7 @@ export const words: SeedWords = {
   people: { ada: '김서연', mert: '이준호', zeynep: '박지은', lena: '최유나', omar: '정민수', sofia: '강하늘' },
   customer: { first: '서진', last: '윤' },
   fullName: (first, last) => `${last}${first}`,
-  teams: { cs: '고객성공팀', am: '어카운트관리팀' },
+  teams: { cs: '고객성공팀', am: '영업팀' },
   base: {
     ask: '지난 분기 사용량 차트도 추가해 줄 수 있을까요?',
     planned: [

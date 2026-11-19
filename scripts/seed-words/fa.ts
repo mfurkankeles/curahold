@@ -17,7 +17,7 @@ export const words: SeedWords = {
   people: { ada: 'سارا رحیمی', mert: 'آرش کریمی', zeynep: 'مریم احمدی', lena: 'نگار حسینی', omar: 'امید رضایی', sofia: 'الهام موسوی' },
   customer: { first: 'نازنین', last: 'کاظمی' },
   fullName: (first, last) => `${first} ${last}`,
-  teams: { cs: 'موفقیت مشتری', am: 'مدیریت حساب‌ها' },
+  teams: { cs: 'موفقیت مشتری', am: 'فروش' },
   base: {
     ask: 'می‌شود نمودار استفادهٔ فصل گذشته را هم اضافه کنی؟',
     planned: [

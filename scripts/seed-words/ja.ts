@@ -16,7 +16,7 @@ export const words: SeedWords = {
   people: { ada: '佐藤 彩', mert: '高橋 誠', zeynep: '山本 結衣', lena: '中村 玲奈', omar: '小林 大輔', sofia: '伊藤 早紀' },
   customer: { first: '千尋', last: '松本' },
   fullName: (first, last) => `${last} ${first}`,
-  teams: { cs: 'カスタマーサクセス', am: 'アカウントマネジメント' },
+  teams: { cs: 'カスタマーサクセス', am: '営業' },
   base: {
     ask: '前四半期の利用状況のグラフも追加してもらえますか？',
     planned: [

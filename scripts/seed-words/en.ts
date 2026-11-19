@@ -20,7 +20,7 @@ export const words: SeedWords = {
   people: { ada: 'Ada Demir', mert: 'Mert Aksoy', zeynep: 'Zeynep Tunç', lena: 'Lena Fischer', omar: 'Omar Haddad', sofia: 'Sofia Rossi' },
   customer: { first: 'Selin', last: 'Kaya' },
   fullName: (first, last) => `${first} ${last}`,
-  teams: { cs: 'Customer Success', am: 'Account Management' },
+  teams: { cs: 'Customer Success', am: 'Sales' },
   base: {
     ask: "can you add last quarter's usage chart too?",
     planned: [

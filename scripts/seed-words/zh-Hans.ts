@@ -16,7 +16,7 @@ export const words: SeedWords = {
   people: { ada: '林悦', mert: '王浩然', zeynep: '陈思雨', lena: '刘婉清', omar: '张志强', sofia: '周婷' },
   customer: { first: '佳琪', last: '吴' },
   fullName: (first, last) => `${last}${first}`,
-  teams: { cs: '客户成功部', am: '客户经营部' },
+  teams: { cs: '客户成功部', am: '销售部' },
   base: {
     ask: '能把上个季度的使用情况图表也加上吗？',
     planned: [

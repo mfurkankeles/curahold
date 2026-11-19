@@ -4725,7 +4725,7 @@ export const en = {
   'demo.tour.goal.see': 'See where things stand',
   'demo.tour.goal.setup': 'Set it up your way',
   'demo.tour.role.csm': 'Customer success',
-  'demo.tour.role.sales': 'Account management',
+  'demo.tour.role.sales': 'Sales',
   'demo.tour.role.lead': 'Team lead',
   'demo.tour.role.exec': 'Executive',
   'demo.tour.role.ops': 'Operations and admin',

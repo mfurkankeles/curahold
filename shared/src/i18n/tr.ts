@@ -4710,7 +4710,7 @@ export const tr: Record<MessageKey, string> = {
   'demo.tour.goal.see': 'Durumu gör',
   'demo.tour.goal.setup': 'Kendine göre kur',
   'demo.tour.role.csm': 'Müşteri başarısı',
-  'demo.tour.role.sales': 'Hesap yönetimi',
+  'demo.tour.role.sales': 'Satış',
   'demo.tour.role.lead': 'Ekip lideri',
   'demo.tour.role.exec': 'Yönetici',
   'demo.tour.role.ops': 'Operasyon ve sistem',

@@ -4710,7 +4710,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': '掌握整体情况',
   'demo.tour.goal.setup': '按你的方式设置',
   'demo.tour.role.csm': '客户成功',
-  'demo.tour.role.sales': '客户经营',
+  'demo.tour.role.sales': '销售',
   'demo.tour.role.lead': '团队负责人',
   'demo.tour.role.exec': '管理层',
   'demo.tour.role.ops': '运营与管理',

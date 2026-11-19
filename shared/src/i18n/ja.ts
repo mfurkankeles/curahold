@@ -4710,7 +4710,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': 'いまの状況をつかむ',
   'demo.tour.goal.setup': '自社流に設定する',
   'demo.tour.role.csm': 'カスタマーサクセス',
-  'demo.tour.role.sales': 'アカウントマネジメント',
+  'demo.tour.role.sales': '営業',
   'demo.tour.role.lead': 'チームリーダー',
   'demo.tour.role.exec': '経営層',
   'demo.tour.role.ops': '運用・管理',

@@ -4710,7 +4710,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': 'לראות איפה הדברים עומדים',
   'demo.tour.goal.setup': 'להגדיר בדרך שלכם',
   'demo.tour.role.csm': 'הצלחת לקוחות',
-  'demo.tour.role.sales': 'ניהול לקוחות',
+  'demo.tour.role.sales': 'מכירות',
   'demo.tour.role.lead': 'ראש צוות',
   'demo.tour.role.exec': 'הנהלה',
   'demo.tour.role.ops': 'תפעול וניהול מערכת',

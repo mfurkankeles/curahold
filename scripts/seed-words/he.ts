@@ -16,7 +16,7 @@ export const words: SeedWords = {
   people: { ada: 'נועה כהן', mert: 'איתי לוי', zeynep: 'מאיה פרידמן', lena: 'שירה אברהם', omar: 'יואב מזרחי', sofia: 'תמר רוזן' },
   customer: { first: 'ליאת', last: 'ברק' },
   fullName: (first, last) => `${first} ${last}`,
-  teams: { cs: 'הצלחת לקוחות', am: 'ניהול לקוחות' },
+  teams: { cs: 'הצלחת לקוחות', am: 'מכירות' },
   base: {
     ask: 'אפשר להוסיף גם את גרף השימוש של הרבעון הקודם?',
     planned: [

@@ -14,7 +14,7 @@ export const words: SeedWords = {
   people: { ada: 'Ada Demir', mert: 'Mert Aksoy', zeynep: 'Zeynep Tunç', lena: 'Lena Fischer', omar: 'Omar Haddad', sofia: 'Sofia Rossi' },
   customer: { first: 'Selin', last: 'Kaya' },
   fullName: (first, last) => `${first} ${last}`,
-  teams: { cs: 'Müşteri Başarısı', am: 'Hesap Yönetimi' },
+  teams: { cs: 'Müşteri Başarısı', am: 'Satış' },
   base: {
     ask: 'geçen çeyreğin kullanım grafiğini de ekleyebilir misin?',
     planned: [

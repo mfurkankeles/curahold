@@ -4710,7 +4710,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'demo.tour.goal.see': 'معرفة أين تقف الأمور',
   'demo.tour.goal.setup': 'الإعداد على طريقتك',
   'demo.tour.role.csm': 'نجاح العملاء',
-  'demo.tour.role.sales': 'إدارة الحسابات',
+  'demo.tour.role.sales': 'المبيعات',
   'demo.tour.role.lead': 'قائد فريق',
   'demo.tour.role.exec': 'الإدارة العليا',
   'demo.tour.role.ops': 'العمليات والإدارة',
