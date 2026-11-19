@@ -231,6 +231,8 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
     .join('');
   const contrast = `<div class="wy__vs" id="vs"><p class="wy__vsh">${esc(w.contrastTitle)}</p><div class="wy__cols"><ul class="wy__before">${w.before.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><ul class="wy__after">${w.after.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
   const forWho = `<ul class="wy__who">${w.forWho.map((x, i) => `<li><a href="${base}${PAGE.dept(DEPTS[i])}">${GLYPH[DEPTS[i]]}<span>${esc(x)}</span></a></li>`).join('')}</ul>`;
+  // Only on /why/ itself: the honest limits, so a visitor who is not a fit learns it before a trial.
+  const notFor = opts.headingLevel === 1 ? `<div class="wy__not" id="not-for"><h2>${esc(w.notForTitle)}</h2><p>${esc(w.notForLead)}</p><ul>${w.notFor.map(([h, p]) => `<li><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join('')}</ul></div>` : '';
   return `<section class="wy${opts.compact ? ' wy--compact' : ''}" id="why" aria-labelledby="why-title">
   <div class="wy__wrap">
     <${h} id="why-title">${esc(w.title)}</${h}>
@@ -239,7 +241,27 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
     ${flowHtml(locale)}
     ${contrast}
     ${forWho}
+    ${notFor}
     <div class="wy__ctas">${ctaPair(locale, opts.urls)}</div>
+  </div>
+</section>`;
+}
+
+/**
+ * The landing page's "Why Curahold?": three of the reasons, each linking to the page that shows it,
+ * and a link to /why/ for the rest. The full block lives on /why/ only, so the two never repeat.
+ */
+export function whyBriefHtml(locale: SiteLocale): string {
+  const w = infoCopy(locale).why;
+  const base = localeBase(locale);
+  const picks: [number, string, string][] = [[0, PAGE.dept('inside'), GLYPH.product], [1, PAGE.feature('meetings'), GLYPH.meetings], [2, PAGE.feature('health'), GLYPH.health]];
+  const cards = picks.map(([i, link, icon]) => { const [t, p, l] = w.proofs[i]; return `<li class="wy__card"><span class="wy__ic">${icon}</span><h3>${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${link}">${esc(l)}</a></li>`; }).join('');
+  return `<section class="wy wy--brief" id="why" aria-labelledby="why-title">
+  <div class="wy__wrap">
+    <h2 id="why-title">${esc(w.title)}</h2>
+    <p class="wy__lead">${esc(w.lead)}</p>
+    <ul class="wy__grid">${cards}</ul>
+    <a class="wy__more" href="${base}${PAGE.why}"><span>${esc(w.more)}</span>${ICON_GO}</a>
   </div>
 </section>`;
 }

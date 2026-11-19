@@ -291,6 +291,9 @@ export const en: InfoCopy = {
       'For product: what was promised, linked to the card that ships it.',
       'For finance: contract value and late payments on the same record (coming soon).',
     ],
+    notForTitle: 'Who it is not for', notForLead: 'An honest answer saves you a trial.',
+    notFor: [['A personal to-do list', 'If you work alone, a simpler app will serve you better. Curahold is built for teams that share customers.'], ['A help desk', 'Curahold brings tickets in from your support tool and counts them in each customer’s health; it does not replace that tool.'], ['Bookkeeping and invoicing', 'Curahold reads figures from your accounting program; it does not keep the books or send invoices.'], ['A critical-path schedule', 'Boards, sprints and a timeline cover customer work and product delivery, not the critical-path plan of a large one-off project.']],
+    more: 'See all the reasons',
   },
   about: {
     title: 'About Curahold',

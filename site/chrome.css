@@ -203,12 +203,27 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .wy__who svg { flex: none; width: 18px; height: 18px; color: var(--fern-ink); }
 .wy__ctas { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 12px; }
 .wy--compact { padding: 88px 0; }
+/* The landing page's short version: three reasons and the way to the rest. */
+.wy--brief { padding: 56px 0 32px; }
+.wy--brief .wy__grid { margin-top: 32px; }
+.wy__more { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 20px; font-weight: 650; text-decoration: none; }
+.wy__more:hover span { text-decoration: underline; }
+.wy__more svg { width: 16px; height: 16px; }
+/* /why/: who it is not for. Plain and ruled, like the reasons above it. */
+.wy__not { margin-top: 56px; }
+.wy__not h2 { font-size: clamp(26px, 2.6vw, 34px); }
+.wy__not > p { margin: 8px 0 0; color: var(--ink-2); }
+.wy__not ul { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; border-top: 1px solid rgba(255, 255, 255, .12); }
+.wy__not li { padding: 20px 0; border-bottom: 1px solid rgba(255, 255, 255, .12); }
+.wy__not h3 { font-size: 18px; }
+.wy__not li p { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; }
 .wy :focus-visible { outline: 3px solid var(--iris-hi); outline-offset: 3px; border-radius: 6px; }
 @media (max-width: 900px) {
   .wy { padding: 72px 0; }
   .wy__grid { grid-template-columns: 1fr; }
   .wy__card, .wy__card:not(:nth-child(3n + 1)) { padding: 24px 0; border-inline-start: 0; }
-  .wy__cols, .wy__who { grid-template-columns: 1fr; }
+  .wy__cols, .wy__who, .wy__not ul { grid-template-columns: 1fr; }
+  .wy--brief { padding: 56px 0 24px; }
 }
 :lang(ja) .wy :is(h1, h2, h3), :lang(zh) .wy :is(h1, h2, h3), :lang(ko) .wy :is(h1, h2, h3), :lang(ar) .wy :is(h1, h2, h3), :lang(he) .wy :is(h1, h2, h3), :lang(fa) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
 

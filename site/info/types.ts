@@ -143,6 +143,12 @@ export interface InfoCopy {
     after: string[];
     /** "Who it is for": one line per department, in DeptKey order (six). */
     forWho: string[];
+    /** "Who it is not for": honest limits, each checked against what the product does today. */
+    notForTitle: string;
+    notForLead: string;
+    notFor: Point[];
+    /** The landing page's short version links to /why/ with these words. */
+    more: string;
   };
   about: {
     title: string;

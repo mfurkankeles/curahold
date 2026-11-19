@@ -34,6 +34,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   the full plans; /pricing/ shows the prices in the first screen and adds a plan comparison table, pricing questions and a line for
   larger companies. Its structured data now lists all four offers (Team and Business, monthly and yearly) at the prices the page shows,
   instead of one $19 offer next to a page showing $15. Prices themselves are unchanged.
+- Sales site: the landing page is about a third shorter (about 7,900 px at 1440 wide, from 12,400): "Why Curahold" shows three reasons
+  and links to /why/, which now ends with an honest "Who it is not for" (a personal to-do list, a help desk, bookkeeping, a
+  critical-path schedule) and the two calls to action. The scroll story's steps are a little shorter.
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

@@ -291,6 +291,9 @@ export const tr: InfoCopy = {
       'Ürün için: verilen söz, onu teslim eden karta bağlı.',
       'Finans için: sözleşme değeri ve geciken ödemeler aynı kayıtta (yakında).',
     ],
+    notForTitle: 'Kimler için değil', notForLead: 'Dürüst bir cevap, size bir deneme süresi kazandırır.',
+    notFor: [['Kişisel yapılacaklar listesi', 'Tek başınıza çalışıyorsanız daha basit bir uygulama işinizi daha iyi görür. Curahold, müşterileri paylaşan ekipler için yapıldı.'], ['Destek masası', 'Curahold destek aracınızdaki talepleri getirir ve her müşterinin sağlığında sayar; o aracın yerini almaz.'], ['Muhasebe ve faturalama', 'Curahold muhasebe programınızdaki rakamları okur; defter tutmaz, fatura kesmez.'], ['Kritik yol planı', 'Panolar, sprint’ler ve zaman çizelgesi müşteri işini ve ürün teslimini kapsar; büyük, tek seferlik bir projenin kritik yol planını değil.']],
+    more: 'Tüm nedenleri görün',
   },
   about: {
     title: 'Curahold hakkında',

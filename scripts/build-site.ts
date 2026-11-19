@@ -19,7 +19,7 @@ import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
-import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyHtml, type Version } from './site-chrome';
+import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyBriefHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
 import { innerPages, type InnerPage, type PageUrls } from './site-pages';
 
@@ -1270,7 +1270,7 @@ ${chromeHeader(locale, '', 'classic')}
     </div>
   </section>
 
-  ${whyHtml(locale, { headingLevel: 2, urls: urlsOf(locale) })}
+  ${whyBriefHtml(locale)}
 
   ${pricingSummaryHtml(locale)}
 

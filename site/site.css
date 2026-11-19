@@ -485,7 +485,9 @@ html:not(.js) .tour__bar { display: none; }
    the first paint does not wait for the whole page. Sizes are remembered once seen. */
 /* Drawn only when near the screen. Not the story: it holds a pinned stage, and a
    lazily drawn parent makes a pinned child jump on some phones. */
-.bento, .pricing, .faq { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
+/* Off-screen sections skip rendering until near; the placeholder sizes are close to the real ones so the scrollbar does not jump. */
+.bento, .faq { content-visibility: auto; contain-intrinsic-size: auto 1600px; }
+.faq { contain-intrinsic-size: auto 560px; }
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }
@@ -495,11 +497,12 @@ html:not(.js) .tour__bar { display: none; }
 /* One customer, six steps. The steps are the text; the stage beside them (above
    them on a phone) holds still and follows the reading. The script sets --p
    (0 to 6) on the stage as the page scrolls; everything below is drawn from it. */
-.story { padding: 96px 0 24px; overflow-x: clip; }
+.story { padding: 72px 0 24px; overflow-x: clip; }
 .story__head { max-width: 760px; }
 .story__track { position: relative; margin-top: 40px; }
 .story__steps { list-style: none; margin: 0; padding: 0; }
-.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 56vh; padding-block: 28px; }
+/* Each step holds the stage for about half a screen of scrolling: long enough to read, short enough to keep the page brisk. */
+.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 40vh; padding-block: 24px; }
 .story__n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(140, 125, 255, .45); color: var(--iris-ink); font: 700 13px/1 var(--text); font-variant-numeric: tabular-nums; transition: background-color .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease); }
 .story__step h3 { font-size: clamp(23px, 2.3vw, 30px); line-height: 1.15; letter-spacing: -0.02em; max-width: 22ch; }
 .story__step p { margin: 0; color: var(--ink-2); font-size: 17px; line-height: 1.6; max-width: 44ch; text-wrap: pretty; }
@@ -672,7 +675,7 @@ html:not(.js) .story__steps { padding-block: 0; }
 }
 
 /* ------------------------------------------------------------------ bento */
-.bento { padding: 104px 0 48px; --px: 8%; --py: 140px; --pw: 50%; --ph: 520px; }
+.bento { padding: 72px 0 40px; --px: 8%; --py: 140px; --pw: 50%; --ph: 520px; }
 .bento__g { margin-top: 44px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
 .tile { position: relative; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; background: var(--paper); border: 1px solid rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); overflow: hidden; }
 .tile__c { display: grid; gap: 8px; align-content: start; padding: 28px 28px 0; }
@@ -904,7 +907,7 @@ html:not(.js) .story__steps { padding-block: 0; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* -------------------------------------------------------------------- faq */
-.faq { padding: 56px 0 88px; --ct: 0px; }
+.faq { padding: 56px 0 64px; --ct: 0px; }
 .faq__in { display: grid; grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); gap: 48px; align-items: start; }
 .faq details { border-top: 1px solid var(--line); }
 .faq details:last-child { border-bottom: 1px solid var(--line); }
