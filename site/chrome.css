@@ -209,6 +209,30 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 }
 :lang(ja) .wy :is(h1, h2, h3), :lang(zh) .wy :is(h1, h2, h3), :lang(ko) .wy :is(h1, h2, h3), :lang(ar) .wy :is(h1, h2, h3), :lang(he) .wy :is(h1, h2, h3), :lang(fa) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
 
+/* The departments as one flow: the chain, then product and finance connected to it. */
+.fl { margin-top: 56px; }
+.fl__h { margin: 0 0 16px; font: 700 clamp(24px, 2.4vw, 30px)/1.15 var(--display); color: var(--ink); }
+.fl ol, .fl ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.fl__chain li { position: relative; display: flex; align-items: center; }
+.fl__chain li:not(:last-child)::after { content: ''; width: 22px; height: 2px; margin-inline: 6px 0; background: linear-gradient(90deg, #8c7dff, #3fb596); border-radius: 2px; }
+.fl a { display: inline-flex; align-items: center; gap: 9px; min-height: 46px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .14); color: var(--ink); text-decoration: none; font: 600 15px/1.2 var(--text); }
+.fl a:hover, .fl .is-here a { border-color: #8c7dff; background: rgba(91, 77, 232, .2); }
+.fl svg { width: 17px; height: 17px; color: var(--fern-ink); }
+.fl em { font-style: normal; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .08); color: var(--ink-3); font: 600 11.5px/1.4 var(--text); }
+.fl em.is-soon { background: rgba(226, 149, 58, .16); color: #f0b878; }
+.fl__under { margin-top: 12px !important; padding-top: 12px !important; border-top: 1px dashed rgba(255, 255, 255, .16); }
+.fl__note { margin: 12px 0 0; color: var(--ink-2); font-size: 15.5px; }
+.fl__soon { margin: 10px 0 0; color: var(--ink-3); font-size: 15px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.fl__soon b { color: var(--ink-2); }
+[dir='rtl'] .fl__chain li:not(:last-child)::after { background: linear-gradient(270deg, #8c7dff, #3fb596); }
+@media (max-width: 640px) { .fl__chain { flex-direction: column; align-items: flex-start; } .fl__chain li { flex-direction: column; align-items: flex-start; } .fl__chain li:not(:last-child)::after { width: 2px; height: 12px; margin: 4px 0 0 22px; } }
+
+/* The menu's department column reads as the same flow: a thread between the first four. */
+.hx__col--flow li { position: relative; }
+.hx__col--flow li:nth-child(-n + 3) .hx__ic::after { content: ''; position: absolute; inset-inline-start: 26px; top: 46px; width: 2px; height: calc(100% - 42px); background: linear-gradient(#8c7dff, #3fb596); opacity: .5; border-radius: 2px; }
+.hx__col--flow li:nth-child(4) { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255, 255, 255, .12); }
+.hx__opt { padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .08); color: var(--ink-3); font: 600 11.5px/1.4 var(--text); }
+
 /* ------------------------------------------- consent buttons on every version */
 .cc-host .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid transparent; font: 600 15px/1 var(--text); cursor: pointer; white-space: nowrap; }
 .cc-host .btn--primary { background: var(--iris); color: #fff; }

@@ -55,6 +55,13 @@
 
 .ip__review { position: relative; z-index: 2; margin: 0; padding: 12px 20px; text-align: center; background: rgba(226, 149, 58, .14); border-bottom: 1px solid rgba(226, 149, 58, .35); color: #f6cf9f; font-size: 14.5px; }
 
+.ip__next { display: grid; gap: 6px; margin-top: 24px; padding: 20px 22px; border-radius: 18px; border: 1px dashed rgba(226, 149, 58, .45); background: rgba(226, 149, 58, .06); }
+.ip__next .ip__soon { justify-self: start; }
+.ip__next h2 { font-size: 21px; }
+.ip__next p { margin: 0; color: var(--ink-2); }
+.ip__points--dont li { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+.ip__body .fl { margin-top: 40px; }
+
 @media (max-width: 900px) {
   .ip__hero { padding: 44px 0 36px; }
   .ip__points li { grid-template-columns: 1fr; padding: 22px 0; }

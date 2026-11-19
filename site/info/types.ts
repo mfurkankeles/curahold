@@ -10,7 +10,8 @@
 /** A short heading and the sentence under it. */
 export type Point = [h: string, p: string];
 
-export type DeptKey = 'sales' | 'success' | 'product' | 'finance';
+/** In the order of the customer's journey: inside sales → sales → onboarding (optional) → customer success and support, with product and finance connected throughout. */
+export type DeptKey = 'inside' | 'sales' | 'onboarding' | 'success' | 'product' | 'finance';
 export type FeatureKey = 'health' | 'meetings' | 'sprints' | 'portal' | 'renewals' | 'assistant' | 'reports' | 'sync';
 export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation' | 'accounting';
 
@@ -74,6 +75,12 @@ export interface InfoCopy {
     news: string;
     /** True facts shown as a strip in the "Why Curahold" panel. */
     facts: string[];
+    /** The departments as one flow: its heading, the note under it, the "optional" pill (onboarding). */
+    flow: string;
+    flowNote: string;
+    optional: string;
+    /** Planned for the whole flow; shown with "Coming soon" until it ships. */
+    flowSoon: Point;
   };
   /** Shared blocks on the inner pages. */
   common: {
@@ -87,7 +94,8 @@ export interface InfoCopy {
     /** Heading of the features list on a department page. */
     uses: string;
   };
-  depts: Record<DeptKey, { name: string; short: string; title: string; lead: string; points: Point[]; forWho: string }>;
+  /** `next`: planned work for this team, shown with "Coming soon" until it ships. */
+  depts: Record<DeptKey, { name: string; short: string; title: string; lead: string; points: Point[]; forWho: string; next?: Point }>;
   features: Record<FeatureKey, { name: string; short: string; title: string; lead: string; points: Point[] }>;
   solutions: {
     title: string;
@@ -104,7 +112,8 @@ export interface InfoCopy {
     groups: Record<IntegrationGroup, { name: string; text: string }>;
     missing: Point;
   };
-  pricingPage: { title: string; lead: string };
+  /** `dont`: what the price does not count, each checked against shared/src/billing.ts and api/src/lib/billing.ts. */
+  pricingPage: { title: string; lead: string; dontTitle: string; dont: Point[] };
   faqPage: { title: string; lead: string; more: { q: string; a: string }[] };
   trust: { title: string; lead: string; points: Point[] };
   why: {
@@ -115,7 +124,7 @@ export interface InfoCopy {
     contrastTitle: string;
     before: string[];
     after: string[];
-    /** "Who it is for": one line per department, in DeptKey order. */
+    /** "Who it is for": one line per department, in DeptKey order (six). */
     forWho: string[];
   };
   about: {

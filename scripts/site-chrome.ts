@@ -14,12 +14,15 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 export const localeBase = (locale: SiteLocale) => (locale === 'en' ? '/' : `/${locale}/`);
 
 /** Where each inner page lives under a language's base. Slugs are the same in every language. */
-export const DEPT_SLUG: Record<DeptKey, string> = { sales: 'sales', success: 'customer-success', product: 'product', finance: 'finance' };
+export const DEPT_SLUG: Record<DeptKey, string> = { inside: 'inside-sales', sales: 'sales', onboarding: 'onboarding', success: 'customer-success', product: 'product', finance: 'finance' };
 export const FEATURE_SLUG: Record<FeatureKey, string> = {
   health: 'health-score', meetings: 'meetings', sprints: 'boards-and-sprints', portal: 'customer-portal',
   renewals: 'renewals-and-automations', assistant: 'ai-connector', reports: 'reports', sync: 'two-way-sync',
 };
-export const DEPTS: DeptKey[] = ['sales', 'success', 'product', 'finance'];
+/** The journey's order; the first four are one chain, product and finance connect to all of it. */
+export const DEPTS: DeptKey[] = ['inside', 'sales', 'onboarding', 'success', 'product', 'finance'];
+export const CHAIN: DeptKey[] = ['inside', 'sales', 'onboarding', 'success'];
+export const OPTIONAL_DEPTS = new Set<DeptKey>(['onboarding']);
 export const FEATURES: FeatureKey[] = ['health', 'meetings', 'sprints', 'portal', 'renewals', 'assistant', 'reports', 'sync'];
 /** What is not shipped yet carries the "Coming soon" label wherever it appears. */
 export const SOON_DEPTS = new Set<DeptKey>(['finance']);
@@ -53,7 +56,9 @@ export const INTEGRATION_GROUPS: { key: IntegrationGroup; names: string[]; soon?
 // Small line glyphs, drawn for Curahold (16 × 16, currentColor).
 const g = (d: string) => `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 export const GLYPH: Record<DeptKey | FeatureKey | 'help' | 'developers' | 'releases' | 'trust' | 'blog' | 'faq' | 'why' | 'about', string> = {
+  inside: g('M3.2 2.6h2.6l1.2 3-1.6 1a7.6 7.6 0 0 0 4 4l1-1.6 3 1.2v2.6a1.2 1.2 0 0 1-1.3 1.2A11 11 0 0 1 2 3.9a1.2 1.2 0 0 1 1.2-1.3z'),
   sales: g('M2 12.5l4-4 3 2.5 5-6M10.5 5H14v3.5'),
+  onboarding: g('M3 13.6V2.4M3 3h8.6l-1.8 2.6 1.8 2.6H3'),
   success: g('M2 8.5h2.6l1.6-3.5 2.8 6.5 1.6-3H14'),
   product: g('M8 2.2l5.6 3L8 8.2 2.4 5.2zM2.4 8.2L8 11.2l5.6-3M2.4 11.1L8 14l5.6-2.9'),
   finance: g('M8 2v12M11.2 4.6C10.6 3.6 9.4 3 8 3 6.2 3 5 4 5 5.3c0 3.2 6.2 1.8 6.2 5.2C11.2 11.9 9.8 13 8 13c-1.5 0-2.8-.6-3.4-1.8'),
@@ -105,8 +110,8 @@ export function headerHtml(o: HeaderOpts): string {
   const base = localeBase(o.locale);
   const href = (p: string) => `${base}${p}`;
   const soon = `<span class="hx__soon">${esc(n.soon)}</span>`;
-  const item = (url: string, glyph: string, name: string, line: string, isSoon = false) =>
-    `<li><a class="hx__link" href="${esc(url)}"${url === href(o.page) ? ' aria-current="page"' : ''}><span class="hx__ic">${glyph}</span><span class="hx__tx"><b>${esc(name)}${isSoon ? soon : ''}</b><small>${esc(line)}</small></span></a></li>`;
+  const item = (url: string, glyph: string, name: string, line: string, isSoon = false, pill = '') =>
+    `<li><a class="hx__link" href="${esc(url)}"${url === href(o.page) ? ' aria-current="page"' : ''}><span class="hx__ic">${glyph}</span><span class="hx__tx"><b>${esc(name)}${isSoon ? soon : ''}${pill ? `<span class="hx__opt">${esc(pill)}</span>` : ''}</b><small>${esc(line)}</small></span></a></li>`;
   const plain = (url: string, name: string, line: string) =>
     `<li><a class="hx__link hx__link--plain" href="${esc(url)}"><span class="hx__tx"><b>${esc(name)}</b><small>${esc(line)}</small></span></a></li>`;
   const panel = (id: string, label: string, body: string, layout: string) =>
@@ -117,7 +122,7 @@ export function headerHtml(o: HeaderOpts): string {
   const product = panel(
     'product',
     n.product,
-    col(n.departments, DEPTS.map((k) => item(href(PAGE.dept(k)), GLYPH[k], c.depts[k].name, c.depts[k].short, SOON_DEPTS.has(k))).join('')) +
+    col(n.departments, DEPTS.map((k) => item(href(PAGE.dept(k)), GLYPH[k], c.depts[k].name, c.depts[k].short, SOON_DEPTS.has(k), OPTIONAL_DEPTS.has(k) ? n.optional : '')).join(''), ' hx__col--flow') +
       col(n.features, FEATURES.map((k) => item(href(PAGE.feature(k)), GLYPH[k], c.features[k].name, c.features[k].short)).join(''), ' hx__col--two') +
       feat(n.featured.title, n.featured.text, `<a class="hx__btn hx__btn--solid" href="${esc(o.urls.demo)}" data-ab="demo">${esc(n.demo)}</a>`),
     'product',
@@ -205,7 +210,7 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
   const c = infoCopy(locale);
   const w = c.why;
   const base = localeBase(locale);
-  const links = [PAGE.dept('success'), PAGE.feature('meetings'), PAGE.feature('health'), `${PAGE.solutions}#region-1`, PAGE.trust, PAGE.integrations];
+  const links = [PAGE.dept('inside'), PAGE.feature('meetings'), PAGE.feature('health'), `${PAGE.solutions}#region-1`, PAGE.trust, PAGE.integrations];
   const icons = [GLYPH.product, GLYPH.meetings, GLYPH.health, GLYPH.why, GLYPH.trust, GLYPH.sync];
   const h = opts.headingLevel === 1 ? 'h1' : 'h2';
   const cards = w.proofs
@@ -218,9 +223,26 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
     <${h} id="why-title">${esc(w.title)}</${h}>
     <p class="wy__lead">${esc(w.lead)}</p>
     <ul class="wy__grid">${cards}</ul>
+    ${flowHtml(locale)}
     ${contrast}
     ${forWho}
     <div class="wy__ctas"><a class="hx__btn hx__btn--solid hx__btn--big" href="${esc(opts.urls.trial)}" data-ab="go">${esc(c.nav.go)}</a><a class="hx__btn hx__btn--ghost hx__btn--big" href="${esc(opts.urls.demo)}" data-ab="demo">${esc(c.nav.demo)}</a></div>
   </div>
 </section>`;
+}
+
+/** The departments as one flow: the chain from the first call to the renewal, with product and finance connected to all of it. */
+export function flowHtml(locale: SiteLocale, current?: DeptKey): string {
+  const c = infoCopy(locale);
+  const base = localeBase(locale);
+  const chip = (k: DeptKey) =>
+    `<li${k === current ? ' class="is-here"' : ''}><a href="${base}${PAGE.dept(k)}"${k === current ? ' aria-current="page"' : ''}>${GLYPH[k]}<span>${esc(c.depts[k].name)}</span>${OPTIONAL_DEPTS.has(k) ? `<em>${esc(c.nav.optional)}</em>` : ''}${SOON_DEPTS.has(k) ? `<em class="is-soon">${esc(c.nav.soon)}</em>` : ''}</a></li>`;
+  const [sh, sp] = c.nav.flowSoon;
+  return `<div class="fl" id="flow">
+  <p class="fl__h">${esc(c.nav.flow)}</p>
+  <ol class="fl__chain">${CHAIN.map(chip).join('')}</ol>
+  <ul class="fl__under">${DEPTS.filter((k) => !CHAIN.includes(k)).map(chip).join('')}</ul>
+  <p class="fl__note">${esc(c.nav.flowNote)}</p>
+  <p class="fl__soon"><span class="hx__soon">${esc(c.nav.soon)}</span><b>${esc(sh)}</b> ${esc(sp)}</p>
+</div>`;
 }

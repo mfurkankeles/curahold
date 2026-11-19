@@ -5,7 +5,7 @@
 import { siteCopy, type SiteLocale } from '../site/content';
 import { infoCopy } from '../site/info';
 import type { DeptKey, FeatureKey, Point } from '../site/info/types';
-import { DEPTS, FEATURES, GLYPH, INTEGRATION_GROUPS, PAGE, SOON_DEPTS, localeBase, whyHtml } from './site-chrome';
+import { DEPTS, FEATURES, GLYPH, INTEGRATION_GROUPS, PAGE, SOON_DEPTS, flowHtml, localeBase, whyHtml } from './site-chrome';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -26,7 +26,9 @@ export interface InnerPage {
 }
 
 const RELATED: Record<DeptKey, FeatureKey[]> = {
+  inside: ['meetings', 'sync', 'reports'],
   sales: ['renewals', 'reports', 'sync'],
+  onboarding: ['renewals', 'portal', 'health'],
   success: ['health', 'meetings', 'portal'],
   product: ['sprints', 'meetings', 'sync'],
   finance: ['reports', 'health', 'sync'],
@@ -86,7 +88,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
       title: `${d.name} | Curahold`,
       description: d.lead,
       main: `${hero(locale, { crumb: d.name, title: d.title, lead: d.lead, glyph: GLYPH[k], soon: SOON_DEPTS.has(k), urls })}
-  <section class="ip__body"><div class="wrap">${points(d.points)}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p></div></section>
+  <section class="ip__body"><div class="wrap">${points(d.points)}${d.next ? `<div class="ip__next"><span class="ip__soon">${esc(c.nav.soon)}</span><h2>${esc(d.next[0])}</h2><p>${esc(d.next[1])}</p></div>` : ''}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
   ${featureLinks(locale, c.common.uses, RELATED[k])}
   ${closing(locale, urls)}`,
     });
@@ -142,6 +144,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
     description: c.pricingPage.lead,
     main: `${hero(locale, { crumb: c.pricingPage.title, title: c.pricingPage.title, lead: c.pricingPage.lead, urls })}
   ${pricing}
+  <section class="ip__body"><div class="wrap"><h2 class="ip__gh">${esc(c.pricingPage.dontTitle)}</h2>${points(c.pricingPage.dont, ' ip__points--dont')}</div></section>
   ${closing(locale, urls)}`,
   });
 

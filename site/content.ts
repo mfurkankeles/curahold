@@ -143,7 +143,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'Tasks, projects, sprints and customer renewals in one place, so no promise is ever forgotten.',
       primary: 'Try it free for 3 months',
       note: 'No card needed. The app speaks nine languages.',
-      works: 'Works with the tools you already have',
+      works: 'Start beside the tools you have today, move over at your pace',
     },
     tour: {
       label: 'Product tour',
@@ -263,7 +263,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'Görevler, projeler, sprint’ler ve müşteri yenilemeleri tek yerde. Verilen hiçbir söz unutulmaz.',
       primary: '3 ay ücretsiz dene',
       note: 'Kart gerekmez. Uygulama dokuz dilde.',
-      works: 'Zaten kullandığın araçlarla çalışır',
+      works: 'Bugünkü araçlarının yanında başla, kendi hızında geç',
     },
     tour: {
       label: 'Ürün turu',
@@ -383,7 +383,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'المهام والمشاريع والسبرنتات وتجديدات العملاء في مكان واحد، فلا يُنسى أي وعد.',
       primary: 'جرّبه مجانًا لمدة 3 أشهر',
       note: 'لا حاجة إلى بطاقة. التطبيق متاح بتسع لغات.',
-      works: 'يعمل مع الأدوات التي تستخدمها بالفعل',
+      works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
     },
     tour: {
       label: 'جولة في المنتج',
@@ -503,7 +503,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'משימות, פרויקטים, ספרינטים וחידושי לקוחות במקום אחד, כך ששום הבטחה לא נשכחת.',
       primary: 'התנסות חינם ל-3 חודשים',
       note: 'לא נדרש כרטיס. האפליקציה זמינה בתשע שפות.',
-      works: 'עובד עם הכלים שכבר יש לך',
+      works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
     },
     tour: {
       label: 'סיור במוצר',
@@ -617,7 +617,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       lead: 'وظایف، پروژه‌ها، اسپرینت‌ها و تمدید مشتریان در یک‌جا؛ تا هیچ قولی فراموش نشود.',
       primary: '۳ ماه رایگان امتحان کنید',
       note: 'نیازی به کارت نیست. برنامه به نُه زبان در دسترس است.',
-      works: 'با ابزارهایی که همین حالا دارید کار می‌کند',
+      works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
     },
     tour: {
       label: 'گشتی در محصول',
@@ -732,7 +732,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：任务、迭代与客户续约，尽在一处',
     description: '自动开始的续约、后续步骤会变成任务的会议，以及一眼看清每个需要关注的客户。应用支持九种语言。',
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { title: '全公司的工作，尽在掌握。', lead: '任务、项目、迭代和客户续约，尽在一处，任何承诺都不会被遗忘。', primary: '免费试用 3 个月', note: '无需信用卡。应用支持九种语言。', works: '与你已在使用的工具协同工作' },
+    hero: { title: '全公司的工作，尽在掌握。', lead: '任务、项目、迭代和客户续约，尽在一处，任何承诺都不会被遗忘。', primary: '免费试用 3 个月', note: '无需信用卡。应用支持九种语言。', works: '先与现有工具并行，再按自己的节奏迁移' },
     tour: {
       label: '产品导览',
       steps: [
@@ -832,7 +832,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：任務、衝刺與客戶續約，盡在一處',
     description: '自動開始的續約、後續步驟會變成任務的會議，以及一眼看清每位需要關注的客戶。應用程式支援九種語言。',
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { title: '全公司的工作，盡在掌握。', lead: '任務、專案、衝刺與客戶續約，盡在一處，任何承諾都不會被遺忘。', primary: '免費試用 3 個月', note: '不需信用卡。應用程式支援九種語言。', works: '與你已在使用的工具協同運作' },
+    hero: { title: '全公司的工作，盡在掌握。', lead: '任務、專案、衝刺與客戶續約，盡在一處，任何承諾都不會被遺忘。', primary: '免費試用 3 個月', note: '不需信用卡。應用程式支援九種語言。', works: '先與現有工具並行，再依自己的步調轉換' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -932,7 +932,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：タスク、スプリント、顧客の更新をひとつの場所で',
     description: 'ひとりでに始まる更新、次のステップがタスクになるミーティング、対応が必要な顧客がひと目でわかる画面。アプリは9言語に対応しています。',
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { title: '会社の\u200bすべての\u200b仕事を、\u200b確かな\u200b手に。', lead: 'タスク、プロジェクト、スプリント、顧客の更新をひとつの場所で。交わした約束は、ひとつも忘れられません。', primary: '3か月間無料で試す', note: 'カード不要。アプリは9言語に対応。', works: 'すでにお使いのツールと連携します' },
+    hero: { title: '会社の\u200bすべての\u200b仕事を、\u200b確かな\u200b手に。', lead: 'タスク、プロジェクト、スプリント、顧客の更新をひとつの場所で。交わした約束は、ひとつも忘れられません。', primary: '3か月間無料で試す', note: 'カード不要。アプリは9言語に対応。', works: '今のツールと並べて始め、自分のペースで移れます' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -1032,7 +1032,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold: 작업, 스프린트, 고객 갱신을 한곳에서',
     description: '저절로 시작되는 갱신, 다음 단계가 작업이 되는 미팅, 그리고 관심이 필요한 모든 고객을 한눈에. 앱은 9개 언어를 지원합니다.',
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { title: '회사의 모든 일, 믿고 맡기세요.', lead: '작업, 프로젝트, 스프린트, 고객 갱신을 한곳에서. 어떤 약속도 잊히지 않습니다.', primary: '3개월 무료로 시작', note: '카드가 필요 없습니다. 앱은 9개 언어를 지원합니다.', works: '이미 쓰고 있는 도구와 함께 작동합니다' },
+    hero: { title: '회사의 모든 일, 믿고 맡기세요.', lead: '작업, 프로젝트, 스프린트, 고객 갱신을 한곳에서. 어떤 약속도 잊히지 않습니다.', primary: '3개월 무료로 시작', note: '카드가 필요 없습니다. 앱은 9개 언어를 지원합니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요' },
     tour: {
       label: '제품 둘러보기',
       steps: [

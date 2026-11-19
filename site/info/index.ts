@@ -3,7 +3,14 @@ import type { Locale } from '../../shared/src/i18n';
 import type { InfoCopy } from './types';
 import { en } from './en';
 import { tr } from './tr';
+import { ar } from './ar';
+import { he } from './he';
+import { fa } from './fa';
+import { zhHans } from './zh-Hans';
+import { zhHant } from './zh-Hant';
+import { ja } from './ja';
+import { ko } from './ko';
 
-export const INFO: Partial<Record<Locale, InfoCopy>> = { en, tr };
+export const INFO: Record<Locale, InfoCopy> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko };
 
-export const infoCopy = (locale: Locale): InfoCopy => INFO[locale] ?? en;
+export const infoCopy = (locale: Locale): InfoCopy => INFO[locale];
