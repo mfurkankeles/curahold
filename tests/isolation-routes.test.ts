@@ -220,6 +220,10 @@ beforeAll(async () => {
   await lena.post(`/api/onboarding-plans/${planId}/goals`, { title: 'Live by spring' });
   await lena.post(`/api/onboarding-plans/${planId}/issues`, { title: 'A question' });
   await ada.post('/api/onboarding-templates', { name: 'A template', from: 'standard' });
+  // The company's own plan opens on its administrator's first visit, and reading a plan moves it on from what the
+  // product sees (lib/onboarding.ts): both happen here, once, so the reads below must leave every table as it is.
+  await ada.get('/api/onboarding/self');
+  await lena.get(`/api/onboarding-plans/${planId}`);
   await sys(`insert into checklist_templates (org_id, name, items) values ($1, 'A checklist', '[]')`, [org]);
   await sys(`insert into plan_templates (org_id, name, board_id, tasks) values ($1, 'A plan', $2, '[]')`, [org, board]);
   await sys(`insert into api_tokens (org_id, user_id, kind, name, token_hash, prefix) values ($1, $2, 'key', 'A key', 'not-a-real-hash', 'chk_test')`, [org, lenaId]);
@@ -468,9 +472,8 @@ describe('every role × every address', () => {
     expect(wrong, 'role × address mismatches').toEqual([]);
     expect(viewerWrote, 'writes a read-only seat could make that are not in VIEWER_WRITES').toEqual([]);
     const after = await picture(env, org);
-    // users: last seen; roles: the one made above; subscriptions: reading the plan starts the trial row the first time (billing/service.ts);
-    // onboarding_*: reading a plan moves it on from what the product sees, and the company's own plan opens on its administrator's first visit (lib/onboarding.ts).
-    for (const table of Object.keys(before)) if (!['users', 'roles', 'subscriptions'].includes(table) && !table.startsWith('onboarding_')) expect(after[table], table).toEqual(before[table]);
+    // users: last seen; roles: the one made above; subscriptions: reading the plan starts the trial row the first time (billing/service.ts).
+    for (const table of Object.keys(before)) if (!['users', 'roles', 'subscriptions'].includes(table)) expect(after[table], table).toEqual(before[table]);
     expect(calls).toBeGreaterThan(routes.length * 2);
     // Every pinned self-service write is still an address (a removed one leaves the list).
     for (const key of VIEWER_WRITES) expect(routes.some((r) => `${r.method} ${r.path}` === key), key).toBe(true);

@@ -290,9 +290,10 @@ panel) and `setupSummary(q, orgId)` (the last daily failures, each step's
 state and issue, the approvals, `doneAt`), all in `api/src/lib/setupHealth.ts`.
 By contract in the database, `setup_progress` holds kind `daily` / item `last`
 (`detail.failing`) and kind `done` once both go-live approvals are in. A failed
-step turned into an issue is also written to `onboarding_issues` (the
-company's own `self` plan) when that table exists, and resolved there when the
-step passes again.
+step is an issue at once: `openStepIssue` writes the step's own record
+(`setup_progress` kind `issue`) and the ONE row the company's own `self` plan
+lists (`onboarding_issues`, `source = 'setup_test'`, `source_ref` = the step);
+`closeStepIssue` resolves both when the step passes or is left out.
 
 ---
 
@@ -440,10 +441,12 @@ works out what was expected by today from the due days, and counts who is waited
 
 **The setup checks (contract).** The hub never imports the setup feature's code. It reads its state
 through one adapter, `lib/onboardingSetup.ts` (`SetupState`: failing check ids, test states, all
-tests done), from the table that feature keeps (`setup_progress`), and asks it to run a test through
-`POST /setup-test/:id/run` (`web/src/lib/setupContract.ts`; a 404 there opens `/setup-test` instead).
-A failed test is ONE shared issue row (`source = 'setup_test'`, `source_ref` = the test id, unique per
-plan), opened again on the same row if it breaks again, resolved when it passes. Tests swap the
+tests done), from that feature's `setupSummary(q, orgId)`, and asks it to run a test through
+`POST /setup-test/:id/run` (`web/src/lib/setupContract.ts`; a step that needs a person's verdict opens
+`/setup-test#<id>` instead). A failed test is ONE shared issue row (`source = 'setup_test'`,
+`source_ref` = the test id, unique per plan): the test list opens it when the step fails and resolves it
+when it passes (`openStepIssue` / `closeStepIssue`); the plan only catches up, through the same two
+functions, with failures from before it existed. Tests swap the
 source with `setSetupSource`.
 
 **Nothing is copied.** An issue links a support ticket (`record_id`; the ticket's status resolves it);

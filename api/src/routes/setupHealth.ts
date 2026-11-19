@@ -24,7 +24,7 @@ import type { Q } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { localDate, preview, splitTrigger } from '../lib/automations';
-import { mirrorIssue, resolveMirroredIssue, runSqlChecks, setupHealthFor, type Asker } from '../lib/setupHealth';
+import { closeStepIssue, openStepIssue, runSqlChecks, setupHealthFor, type Asker } from '../lib/setupHealth';
 import { body } from '../lib/validate';
 import { syncConnection } from '../sync/engine';
 import { createRecordType } from './records';
@@ -259,6 +259,22 @@ async function testFor(c: C, q: Q): Promise<SetupTest> {
   };
 }
 
+/** A failed step's issue, in the company's words: what was expected, what was seen, and where to re-test. */
+function issueText(c: C, step: TestStepDef, title: string | null, detail: { reason?: string | null; seen?: Record<string, unknown> }) {
+  const org = c.get('org');
+  const say = (key: string, vars: Record<string, string> = {}) => translate(c.get('locale'), key as MessageKey, vars, org.terms);
+  const reason = detail.reason ?? null;
+  const body = [
+    `${say('sh.run.expected')} ${say(`sh.test.${step.id}.expect`)}`,
+    reason ? `${say('sh.run.saw')} ${say(`sh.test.reason.${reason}`, { error: '' })}` : '',
+    detail.seen?.error ? String(detail.seen.error).slice(0, 300) : '',
+    `/setup-test#${step.id}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { title: title ?? say('sh.issue.title', { step: say(`sh.test.${step.id}.title`) }), body };
+}
+
 /**
  * Keeps one try of a step (with what it saw) and its new state. A pass resolves
  * the step's open issue. Before "Setup complete", a required step that stops
@@ -279,13 +295,11 @@ async function save(c: C, q: Q, id: string, status: TestStatus, how: TestRun['ho
       [org.id, id, status, JSON.stringify({ reason: detail.reason ?? null, seen: detail.seen ?? {} }), auth.userId],
     );
   }
-  if (status === 'pass') {
-    const [open] = await q.query<{ detail: any }>(
-      `update setup_progress set status = 'resolved', at = now() where org_id = $1 and kind = 'issue' and item = $2 and status = 'open' returning detail`,
-      [org.id, id],
-    );
-    if (open?.detail?.ref) await resolveMirroredIssue(q, org.id, String(open.detail.ref));
-  }
+  // A failed step is an issue at once (the plan lists the same row); a pass, or leaving it out, closes it.
+  if (status === 'fail') {
+    const step = testStepDef(id);
+    if (step) await openStepIssue(q, { orgId: org.id, userId: auth.userId, stepId: id, ...issueText(c, step, null, detail), urgent: step.required });
+  } else if (status === 'pass' || status === 'skipped') await closeStepIssue(q, org.id, id);
   const [done] = await q.query(`select 1 from setup_progress where org_id = $1 and kind = 'done'`, [org.id]);
   if (done) return;
   const ctx = await contextOf(c, q);
@@ -338,29 +352,13 @@ setupHealthRoutes.post('/setup-test/:id/issue', async (c) => {
   const input = await body(c, z.object({ title: z.string().trim().min(1).max(200).optional() }));
   const org = c.get('org');
   const auth = c.get('auth');
-  const locale = c.get('locale');
-  const say = (key: string, vars: Record<string, string> = {}) => translate(locale, key as MessageKey, vars, org.terms);
   const out = await run(c, async (q) => {
     const [row] = await q.query<{ status: string; detail: any }>(`select status, detail from setup_progress where org_id = $1 and kind = 'test' and item = $2`, [org.id, step.id]);
     if (row?.status !== 'fail') fail('validation', { fields: 'id' }, { fields: ['id'], reason: 'not_failed' });
     const [had] = await q.query(`select 1 from setup_progress where org_id = $1 and kind = 'issue' and item = $2 and status = 'open'`, [org.id, step.id]);
     if (had) return testFor(c, q);
-    const title = input.title ?? say('sh.issue.title', { step: say(`sh.test.${step.id}.title`) });
-    const reason = row!.detail?.reason as string | null;
-    const text = [
-      `${say('sh.run.expected')} ${say(`sh.test.${step.id}.expect`)}`,
-      reason ? `${say('sh.run.saw')} ${say(`sh.test.reason.${reason}`, { error: '' })}` : '',
-      row!.detail?.seen?.error ? String(row!.detail.seen.error).slice(0, 300) : '',
-      `/setup-test#${step.id}`,
-    ]
-      .filter(Boolean)
-      .join('\n');
-    const ref = await mirrorIssue(q, { orgId: org.id, userId: auth.userId, title, body: text, urgent: step.required });
-    await q.query(
-      `insert into setup_progress (org_id, kind, item, status, detail, by_user) values ($1, 'issue', $2, 'open', $3, $4)
-       on conflict (org_id, kind, item) do update set status = 'open', detail = excluded.detail, by_user = excluded.by_user, at = now()`,
-      [org.id, step.id, JSON.stringify({ title, ref }), auth.userId],
-    );
+    const text = issueText(c, step, input.title ?? null, row!.detail ?? {});
+    await openStepIssue(q, { orgId: org.id, userId: auth.userId, stepId: step.id, ...text, urgent: step.required });
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'setup.issue_opened', entity: 'org', entityId: org.id, meta: { step: step.id } });
     return testFor(c, q);
   });

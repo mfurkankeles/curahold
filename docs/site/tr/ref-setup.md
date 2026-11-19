@@ -1,7 +1,7 @@
 ---
 title: Başvuru: kurulum sağlığı
 section: reference
-order: 28
+order: 29
 summary: Kurulum kontrolleri ve "Kurulumu test et" listesi: okuyun, bir adımı çalıştırın, sonucu kaydedin, canlıya geçişi onaylayın.
 ---
 # Başvuru: kurulum sağlığı

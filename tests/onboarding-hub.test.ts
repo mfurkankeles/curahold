@@ -127,6 +127,32 @@ describe('the company’s own plan', () => {
     setSetupSource(null);
   });
 
+  it('the real test list: a failed step opens the plan’s one row at once, a pass closes it', async () => {
+    const mine = (p: Plan) => p.issues.filter((i) => i.source === 'setup_test' && i.sourceRef === 'invite');
+    let r = await ada.post('/api/setup-test/invite/mark', { status: 'fail' });
+    expect(r.status).toBe(200);
+    // The step and the plan point at the same row.
+    const ref = r.json.steps.find((s: { id: string }) => s.id === 'invite').issue;
+    expect(ref).toMatchObject({ status: 'open' });
+    let plan: Plan = (await ada.get('/api/onboarding/self')).json.plan;
+    expect(mine(plan)).toHaveLength(1);
+    expect(mine(plan)[0]).toMatchObject({ id: ref.ref, status: 'open', side: 'customer', urgency: 'high' });
+    // Asking for an issue again, or the plan catching up, adds nothing.
+    expect((await ada.post('/api/setup-test/invite/issue')).status).toBe(200);
+    plan = (await ada.get('/api/onboarding/self')).json.plan;
+    expect(mine(plan)).toHaveLength(1);
+    r = await ada.post('/api/setup-test/invite/mark', { status: 'pass' });
+    expect(r.json.steps.find((s: { id: string }) => s.id === 'invite').issue.status).toBe('resolved');
+    plan = (await ada.get('/api/onboarding/self')).json.plan;
+    expect(mine(plan)).toHaveLength(1);
+    expect(mine(plan)[0].status).toBe('resolved');
+    // Breaking again opens the same row again.
+    await ada.post('/api/setup-test/invite/mark', { status: 'fail' });
+    plan = (await ada.get('/api/onboarding/self')).json.plan;
+    expect(mine(plan).map((i) => [i.id, i.status])).toEqual([[ref.ref, 'open']]);
+    await ada.post('/api/setup-test/invite/mark', { status: 'pass' });
+  });
+
   it('reminds whoever owns a step, in the app only (e-mail is an opt-in setting)', async () => {
     const [p] = await sys(`select p.id, p.org_id, p.owner_id, p.created_by, p.name, p.account_id, o.timezone, o.settings from onboarding_plans p join orgs o on o.id = p.org_id where p.id = $1`, [planId]);
     const n = await env.db.system((q) => remindPlan(q, p, new Date()));

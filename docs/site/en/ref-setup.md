@@ -1,7 +1,7 @@
 ---
 title: Reference: setup health
 section: reference
-order: 28
+order: 29
 summary: The setup checks and the "Test your setup" list: read them, run a step, record the result, approve go-live.
 ---
 # Reference: setup health

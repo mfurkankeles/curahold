@@ -89,7 +89,7 @@ async function companyFacts(q: Q, orgId: string): Promise<SignalFacts> {
     'portal.branded': !!r.portal,
     'automation.first': !!r.automation,
   };
-  // The setup checks, by contract (absent until that feature is installed: the steps then wait for a person).
+  // The setup checks, by contract (lib/onboardingSetup.ts; a customer's plan has none: its steps wait for a person).
   const setup = await setupState(q, orgId);
   if (setup.available) {
     if (setup.checkedAt) facts['setup.health'] = setup.failing.length === 0;

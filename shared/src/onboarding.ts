@@ -691,7 +691,7 @@ export interface SetupTestState {
   at: string | null;
 }
 export interface SetupState {
-  /** The setup feature is installed here (otherwise these steps wait for a person). */
+  /** The setup checks apply to this plan (the company's own); a customer's plan has none and those steps wait for a person. */
   available: boolean;
   /** Checks failing at the last check, by id. */
   failing: string[];

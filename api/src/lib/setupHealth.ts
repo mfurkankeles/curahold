@@ -244,42 +244,62 @@ export async function dailySetupHealth(deps: Deps): Promise<number> {
   return n;
 }
 
-// ------------------------------------------------------------------ the onboarding plan's issues, by contract
+// ------------------------------------------------------------------ the onboarding plan's issues, one row per step
 
 /**
- * A failed test step, turned into an issue, is the same row the company's own
- * onboarding plan lists (onboarding_issues, when that feature is installed):
- * one issue, not a second card. Written under the person's own row security,
- * inside a savepoint so that a missing table or a refused write leaves the
- * step's own record (setup_progress kind 'issue') standing. Returns its id, or null.
+ * A failed test step's issue. Two records of the same thing: the setup list's
+ * own (setup_progress kind 'issue', detail.ref = the plan's row) and the ONE row
+ * the company's own onboarding plan lists (onboarding_issues, source
+ * 'setup_test', source_ref = the step's id) — not a second card. Breaking again
+ * later opens the same row again. The plan's row is written inside a savepoint,
+ * so that a refused write (row security) or no plan yet leaves the step's own
+ * record standing; the plan picks the step up when it is made (lib/onboardingSetup.ts).
+ * Returns the plan row's id, or null.
  */
-export async function mirrorIssue(q: Q, o: { orgId: string; userId: string | null; title: string; body: string; urgent: boolean }): Promise<string | null> {
-  const [has] = await q.query<{ ok: boolean }>(`select to_regclass('public.onboarding_issues') is not null and to_regclass('public.onboarding_plans') is not null as ok`);
-  if (!has?.ok) return null;
+export async function openStepIssue(
+  q: Q,
+  o: { orgId: string; userId: string | null; stepId: string; title: string; body: string; urgent: boolean; planId?: string },
+): Promise<string | null> {
+  let ref: string | null = null;
   await q.query('savepoint setup_issue');
   try {
     const [row] = await q.query<{ id: string }>(
-      `insert into onboarding_issues (org_id, plan_id, title, body, side, type, urgency, created_by)
-       select $1, p.id, $2, $3, 'vendor', 'bug', $4, $5 from onboarding_plans p
-        where p.org_id = $1 and p.kind = 'self' and p.status in ('draft', 'active', 'paused') order by p.created_at desc limit 1
+      `insert into onboarding_issues (org_id, plan_id, title, body, side, type, urgency, status, source, source_ref, created_by)
+       select $1, p.id, $2, $3, 'customer', 'bug', $4, 'open', 'setup_test', $5, $6 from onboarding_plans p
+        where p.org_id = $1 and p.kind = 'self' and p.status in ('draft', 'active', 'paused') and ($7::uuid is null or p.id = $7::uuid)
+        order by p.created_at desc limit 1
+       on conflict (plan_id, source, source_ref) where source_ref is not null
+       do update set status = 'open', resolved_at = null,
+                     body = case when onboarding_issues.status = 'resolved' then excluded.body else onboarding_issues.body end,
+                     opened_on = case when onboarding_issues.status = 'resolved' then current_date else onboarding_issues.opened_on end,
+                     updated_at = case when onboarding_issues.status = 'resolved' then now() else onboarding_issues.updated_at end
        returning id`,
-      [o.orgId, o.title.slice(0, 200), o.body.slice(0, 4000), o.urgent ? 'high' : 'normal', o.userId],
+      [o.orgId, o.title.slice(0, 200), o.body.slice(0, 4000), o.urgent ? 'high' : 'normal', o.stepId, o.userId, o.planId ?? null],
     );
+    ref = row?.id ?? null;
     await q.query('release savepoint setup_issue');
-    return row?.id ?? null;
   } catch {
     await q.query('rollback to savepoint setup_issue');
-    return null;
   }
+  await q.query(
+    `insert into setup_progress (org_id, kind, item, status, detail, by_user) values ($1, 'issue', $2, 'open', $3, $4)
+     on conflict (org_id, kind, item) do update set status = 'open', detail = excluded.detail, by_user = coalesce(excluded.by_user, setup_progress.by_user),
+       at = case when setup_progress.status = 'open' then setup_progress.at else now() end`,
+    [o.orgId, o.stepId, JSON.stringify({ title: o.title.slice(0, 200), ref }), o.userId],
+  );
+  return ref;
 }
 
-/** The step passes again: its issue in the plan is resolved too (the test is the truth). */
-export async function resolveMirroredIssue(q: Q, orgId: string, id: string): Promise<void> {
-  const [has] = await q.query<{ ok: boolean }>(`select to_regclass('public.onboarding_issues') is not null as ok`);
-  if (!has?.ok) return;
+/** The step passes again (or is left out): its issue is resolved, in the list and in the plan (the test is the truth). */
+export async function closeStepIssue(q: Q, orgId: string, stepId: string): Promise<void> {
+  await q.query(`update setup_progress set status = 'resolved', at = now() where org_id = $1 and kind = 'issue' and item = $2 and status = 'open'`, [orgId, stepId]);
   await q.query('savepoint setup_issue');
   try {
-    await q.query(`update onboarding_issues set status = 'resolved', resolved_at = now(), updated_at = now() where org_id = $1 and id = $2 and status <> 'resolved'`, [orgId, id]);
+    await q.query(
+      `update onboarding_issues set status = 'resolved', resolved_at = now(), updated_at = now()
+        where org_id = $1 and source = 'setup_test' and source_ref = $2 and status <> 'resolved'`,
+      [orgId, stepId],
+    );
     await q.query('release savepoint setup_issue');
   } catch {
     await q.query('rollback to savepoint setup_issue');
@@ -299,7 +319,7 @@ export interface SetupSummary {
   /** Check ids failing at the last daily run (empty: all green), and when that was. */
   failing: string[];
   dailyAt: string | null;
-  tests: { id: string; status: 'todo' | 'pass' | 'fail' | 'skipped'; required: boolean; issue: { status: 'open' | 'resolved'; ref: string | null } | null }[];
+  tests: { id: string; status: 'todo' | 'pass' | 'fail' | 'skipped'; required: boolean; reason: string | null; at: string | null; issue: { status: 'open' | 'resolved'; ref: string | null } | null }[];
   approvals: { customer: string | null; vendor: string | null };
   doneAt: string | null;
 }
@@ -317,10 +337,13 @@ export async function setupSummary(q: Q, orgId: string): Promise<SetupSummary> {
     dailyAt: at(daily),
     tests: TEST_STEPS.map((s) => {
       const issue = one('issue', s.id);
+      const test = one('test', s.id);
       return {
         id: s.id,
-        status: ((one('test', s.id)?.status as SetupSummary['tests'][number]['status'] | undefined) ?? 'todo'),
+        status: ((test?.status as SetupSummary['tests'][number]['status'] | undefined) ?? 'todo'),
         required: s.required,
+        reason: typeof test?.detail?.reason === 'string' ? test.detail.reason : null,
+        at: at(test),
         issue: issue ? { status: issue.status === 'open' ? 'open' : 'resolved', ref: (issue.detail?.ref as string | undefined) ?? null } : null,
       };
     }),
