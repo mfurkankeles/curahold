@@ -86,7 +86,7 @@ export async function checkDelivery(auth: HookAuth, secret: string, inc: Incomin
 export interface Outcome {
   status: 'ok' | 'skipped' | 'failed';
   error?: string;
-  result?: { kind: HookTarget; id: string; action: 'created' | 'updated' };
+  result?: { kind: HookTarget; id: string; how: 'created' | 'updated' };
 }
 
 const hostOf = (v: string) => v.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[/:?#].*$/, '');
@@ -193,7 +193,7 @@ export async function applyHook(
         );
         if (after) {
           await onTaskUpdated(q, orgId, actorId, before, after, board);
-          return { status: 'ok', result: { kind: 'task', id: existing, action: 'updated' } };
+          return { status: 'ok', result: { kind: 'task', id: existing, how: 'updated' } };
         }
       }
     }
@@ -206,7 +206,7 @@ export async function applyHook(
     );
     await onTaskCreated(q, orgId, actorId, t, board, { via: 'webhook' });
     await remember(t.id);
-    return { status: 'ok', result: { kind: 'task', id: t.id, action: 'created' } };
+    return { status: 'ok', result: { kind: 'task', id: t.id, how: 'created' } };
   }
 
   if (hook.target === 'ticket') {
@@ -224,7 +224,7 @@ export async function applyHook(
       account: { id: account },
     } as any, today);
     await remember(out.id);
-    return { status: 'ok', result: { kind: 'ticket', id: out.id, action: out.created ? 'created' : 'updated' } };
+    return { status: 'ok', result: { kind: 'ticket', id: out.id, how: out.created ? 'created' : 'updated' } };
   }
 
   if (hook.target === 'activity') {
@@ -246,7 +246,7 @@ export async function applyHook(
     );
     if (!rows[0]) return { status: 'failed', error: 'the entry could not be written' };
     await remember(rows[0].id);
-    return { status: 'ok', result: { kind: 'activity', id: rows[0].id, action: rows[0].created ? 'created' : 'updated' } };
+    return { status: 'ok', result: { kind: 'activity', id: rows[0].id, how: rows[0].created ? 'created' : 'updated' } };
   }
 
   // A note on a deal: the opportunity found by its id in the CRM it came from, else by name under the customer.
@@ -256,7 +256,7 @@ export async function applyHook(
     const [still] = await q.query('select id from record_comments where id = $1', [existing]);
     if (still) {
       later.push((s) => s.query('update record_comments set body = $3, edited_at = now() where id = $1 and org_id = $2', [existing, orgId, body]));
-      return { status: 'ok', result: { kind: 'deal_note', id: existing, action: 'updated' } };
+      return { status: 'ok', result: { kind: 'deal_note', id: existing, how: 'updated' } };
     }
   }
   const dealId = render(m.dealId, payload);
@@ -272,7 +272,7 @@ export async function applyHook(
   if (!deal) return { status: 'failed', error: 'deal: no deal matches this delivery' };
   const [c] = await q.query('insert into record_comments (org_id, record_id, author_id, body) values ($1, $2, $3, $4) returning id', [orgId, deal.id, actorId, body]);
   await remember(c.id);
-  return { status: 'ok', result: { kind: 'deal_note', id: c.id, action: 'created' } };
+  return { status: 'ok', result: { kind: 'deal_note', id: c.id, how: 'created' } };
 }
 
 // ------------------------------------------------------------------ the whole delivery

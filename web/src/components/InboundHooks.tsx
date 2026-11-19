@@ -330,8 +330,8 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
                 const payload = parsed();
                 if (payload === undefined) return;
                 try {
-                  const r = await post<{ status: string; error?: string; result?: { kind: string; action: string } }>(`/inbound-hooks/${hook.id}/test`, { payload });
-                  setOutcome(r.status === 'ok' ? t('hooks.test.ok' as MessageKey, { what: t(`hooks.target.${r.result?.kind ?? hook.target}` as MessageKey), action: t(`hooks.action.${r.result?.action ?? 'created'}` as MessageKey) }) : `${t(`hooks.status.${r.status}` as MessageKey)}: ${r.error ?? ''}`);
+                  const r = await post<{ status: string; error?: string; result?: { kind: string; how: string } }>(`/inbound-hooks/${hook.id}/test`, { payload });
+                  setOutcome(r.status === 'ok' ? t('hooks.test.ok' as MessageKey, { what: t(`hooks.target.${r.result?.kind ?? hook.target}` as MessageKey), action: t(`hooks.action.${r.result?.how ?? 'created'}` as MessageKey) }) : `${t(`hooks.status.${r.status}` as MessageKey)}: ${r.error ?? ''}`);
                   await onChanged();
                 } catch (e) {
                   fail(e);
@@ -382,7 +382,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
                       {d.test && <span className="badge u-ms-4">{t('hooks.log.test' as MessageKey)}</span>}
                     </td>
                     <td className="muted">{d.eventId ?? '—'}</td>
-                    <td>{d.result ? `${t(`hooks.target.${d.result.kind}` as MessageKey)} · ${t(`hooks.action.${d.result.action}` as MessageKey)}` : (d.error ?? '—')}</td>
+                    <td>{d.result ? `${t(`hooks.target.${d.result.kind}` as MessageKey)} · ${t(`hooks.action.${d.result.how}` as MessageKey)}` : (d.error ?? '—')}</td>
                   </tr>
                 ))}
               </tbody>

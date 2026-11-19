@@ -6819,7 +6819,7 @@ export const en = {
   "hooks.rotated": "A new secret is set; the old one stops working now.",
   "hooks.remove": "Remove webhook",
   "hooks.removeBody": "The address stops at once and the log is deleted. What it made (tasks, tickets, entries) stays.",
-  "hooks.map.lede": "Write each value as text with {{path}} for a value from the delivery (pick one from the list after a preview on the Test tab). The customer is found by a contact's email, then a web address, then the name.",
+  "hooks.map.lede": "Write each value as text; put a value from the delivery as its path in double curly brackets (pick one from the list after a preview on the Test tab). The customer is found by a contact's email, then a web address, then the name.",
   "hooks.field.externalId": "The tool's id for the item (the same id updates it)",
   "hooks.field.title": "Title",
   "hooks.field.description": "Description",
@@ -6864,6 +6864,12 @@ export const en = {
   "sh.sync.whatsappSilent.problem": "WhatsApp is connected but no message has arrived",
   "sh.sync.whatsappSilent.why": "After a day, this usually means the callback address and verify token are not saved in the Meta app, or “messages” is not subscribed.",
   "sh.sync.whatsappSilent.fix": "Open the connection",
+  "audit.connection.meeting_planned": "planned a meeting in a connected calendar",
+  "audit.connection.whatsapp_sent": "sent a WhatsApp message",
+  "audit.inbound_hook.created": "added an incoming webhook",
+  "audit.inbound_hook.updated": "changed an incoming webhook",
+  "audit.inbound_hook.rotated": "gave an incoming webhook a new secret",
+  "audit.inbound_hook.deleted": "removed an incoming webhook",
 } as const;
 
 export type MessageKey = keyof typeof en;

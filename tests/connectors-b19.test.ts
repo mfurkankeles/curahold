@@ -686,7 +686,7 @@ describe('Incoming webhooks: any tool, signed, mapped, replay-proof', () => {
     const t = Math.floor(env.clock.now!.getTime() / 1000);
     const r = await send(generic.url, body, { 'x-curahold-signature': await curaholdSignature(generic.secret, t, body), 'x-curahold-event-id': 'evt_1' });
     expect(r.status).toBe(200);
-    expect(await r.json()).toMatchObject({ ok: true, status: 'ok', result: { kind: 'activity', action: 'created' } });
+    expect(await r.json()).toMatchObject({ ok: true, status: 'ok', result: { kind: 'activity', how: 'created' } });
     w.firstData();
     expect(JSON.stringify((await ada.get(`/api/accounts/${account}/timeline`)).json)).toContain('Signed the order form');
   });
@@ -705,7 +705,7 @@ describe('Incoming webhooks: any tool, signed, mapped, replay-proof', () => {
     // The same item with a new event id updates the entry instead of adding one.
     const edit = JSON.stringify({ id: 'evt_1', email: 'mert@hooks.example', text: 'Signed the order form (countersigned)' });
     const upd = await send(generic.url, edit, { 'x-curahold-signature': await curaholdSignature(generic.secret, t, edit), 'x-curahold-event-id': 'evt_4' });
-    expect(await upd.json()).toMatchObject({ status: 'ok', result: { action: 'updated' } });
+    expect(await upd.json()).toMatchObject({ status: 'ok', result: { how: 'updated' } });
     const log = (await ada.get(`/api/inbound-hooks/${generic.id}/deliveries`)).json.deliveries;
     expect(log.map((d: any) => d.status)).toEqual(['ok', 'rejected', 'rejected', 'ok']);
     expect(log[1].error).toBe('bad_signature');
@@ -730,7 +730,7 @@ describe('Incoming webhooks: any tool, signed, mapped, replay-proof', () => {
     expect(h).toMatchObject({ secret: null, senderSecretSet: true, target: 'deal_note' });
     const body = JSON.stringify({ event: 'envelope-completed', generatedDateTime: new Date().toISOString(), data: { envelopeId: 'env-1', envelopeSummary: { status: 'completed', emailSubject: 'Pinecrest Hooks renewal', recipients: { signers: [{ email: 'mert@hooks.example' }] } } } });
     const r = await send(h.url, body, { 'x-docusign-signature-1': await hmac('SHA-256', key, body, 'base64') });
-    expect(await r.json()).toMatchObject({ status: 'ok', result: { kind: 'deal_note', action: 'created' } });
+    expect(await r.json()).toMatchObject({ status: 'ok', result: { kind: 'deal_note', how: 'created' } });
     const skipped = JSON.stringify({ event: 'recipient-viewed', generatedDateTime: new Date().toISOString(), data: { envelopeId: 'env-1' } });
     expect(await (await send(h.url, skipped, { 'x-docusign-signature-1': await hmac('SHA-256', key, skipped, 'base64') })).json()).toMatchObject({ status: 'skipped' });
   });
@@ -745,15 +745,15 @@ describe('Incoming webhooks: any tool, signed, mapped, replay-proof', () => {
 
     const tawk = (await ada.post('/api/inbound-hooks', { name: 'Chats', recipe: 'tawkto', senderSecret: 'tawk-secret-0001' })).json.hook;
     const chat = JSON.stringify({ event: 'chat:end', chatId: 'c-1', time: new Date().toISOString(), visitor: { name: 'Mert', email: 'mert@hooks.example' }, property: { name: 'Website' } });
-    expect(await (await send(tawk.url, chat, { 'x-tawk-signature': await hmac('SHA-1', 'tawk-secret-0001', chat, 'hex') })).json()).toMatchObject({ status: 'ok', result: { kind: 'ticket', action: 'created' } });
+    expect(await (await send(tawk.url, chat, { 'x-tawk-signature': await hmac('SHA-1', 'tawk-secret-0001', chat, 'hex') })).json()).toMatchObject({ status: 'ok', result: { kind: 'ticket', how: 'created' } });
 
     const tasks = (await ada.post('/api/inbound-hooks', { name: 'Jobs', recipe: 'custom', mapping: { externalId: '{{id}}', title: '{{title}}', status: '{{state}}', customer: { email: '{{email}}' }, boardId: env.a.boards.csBoard } })).json.hook;
     const tok = tasks.secret;
     const one = await send(tasks.url, JSON.stringify({ id: 'job-1', title: 'Call back about the invoice', state: 'open', email: 'mert@hooks.example' }), { 'x-curahold-token': tok });
     const made = (await one.json()).result;
-    expect(made).toMatchObject({ kind: 'task', action: 'created' });
+    expect(made).toMatchObject({ kind: 'task', how: 'created' });
     const two = await send(`${tasks.url}?token=${tok}`, JSON.stringify({ id: 'job-1', title: 'Call back about the invoice', state: 'done', email: 'mert@hooks.example' }), {});
-    expect((await two.json()).result).toMatchObject({ kind: 'task', id: made.id, action: 'updated' });
+    expect((await two.json()).result).toMatchObject({ kind: 'task', id: made.id, how: 'updated' });
     const [row] = await env.db.system((q) => q.query('select done_at from tasks where id = $1', [made.id]));
     expect(row.done_at).toBeTruthy();
   });

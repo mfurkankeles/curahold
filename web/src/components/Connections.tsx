@@ -377,7 +377,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
         <>
           <label className="field">
             <span className="field__label">{t('conn.telegram.token' as MessageKey)}</span>
-            <input className="input" value={token} required autoComplete="off" placeholder="123456789:AA…" onChange={(e) => setToken(e.target.value)} />
+            <input className="input" value={token} required autoComplete="off" onChange={(e) => setToken(e.target.value)} />
             <span className="field__hint">{t('conn.where.telegram' as MessageKey)}</span>
           </label>
           <label className="field">

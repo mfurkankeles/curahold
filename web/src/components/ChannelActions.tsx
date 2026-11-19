@@ -67,11 +67,11 @@ export function WhatsAppReply({ connectionId, accountId, activity, onSent }: { c
         <div className="form__row">
           <label className="field">
             <span className="field__label">{t('whatsapp.reply.template' as MessageKey)}</span>
-            <input className="input" value={template} placeholder="renewal_reminder" onChange={(e) => setTemplate(e.target.value)} />
+            <input className="input" value={template} onChange={(e) => setTemplate(e.target.value)} />
           </label>
           <label className="field">
             <span className="field__label">{t('whatsapp.reply.language' as MessageKey)}</span>
-            <input className="input" value={language} placeholder="en_US" onChange={(e) => setLanguage(e.target.value)} />
+            <input className="input" value={language} onChange={(e) => setLanguage(e.target.value)} />
           </label>
         </div>
       ) : (
@@ -163,7 +163,7 @@ export function CalendarPlan({ connectionId, app, accountId, guests }: { connect
       </div>
       <label className="field">
         <span className="field__label">{t('calendar.plan.guests' as MessageKey)}</span>
-        <input className="input" value={who} placeholder="name@customer.com" onChange={(e) => setWho(e.target.value)} />
+        <input className="input" value={who} onChange={(e) => setWho(e.target.value)} />
       </label>
       {error && (
         <div className="notice notice--error" role="alert">

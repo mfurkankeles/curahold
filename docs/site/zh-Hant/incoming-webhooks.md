@@ -2,11 +2,11 @@
 title: 傳入 Webhook
 section: help
 order: 8.4
-summary: 連接任何能呼叫網址的工具——電子簽名、電話、聊天、付款、Zapier、Make——把每次推送變成任務、工單、時間軸紀錄或商機備註。
+summary: 連接任何能呼叫網址的工具——電子簽名、電話、聊天、付款、Zapier、Make——把每次推送變成任務、工單、時間軸紀錄或交易備註。
 ---
 # 傳入 Webhook
 
-適用於 Curahold 還沒有現成連接器的工具。工具向你專屬的位址推送；每次推送都會變成一個 **任務**、一張 **支援工單**、一筆 **客戶時間軸紀錄** 或一則 **商機備註**。同一項再次推送時會更新先前產生的內容。每次推送都會檢查：簽名（或共用權杖）、時間，以及每個事件只用一次。
+適用於 Curahold 還沒有現成連接器的工具。工具向你專屬的位址推送；每次推送都會變成一個 **任務**、一張 **支援工單**、一筆 **客戶時間軸紀錄** 或一則 **交易備註**。同一項再次推送時會更新先前產生的內容。每次推送都會檢查：簽名（或共用權杖）、時間，以及每個事件只用一次。
 
 ## 在 Curahold 中 {#connect}
 
@@ -29,7 +29,7 @@ summary: 連接任何能呼叫網址的工具——電子簽名、電話、聊�
 
 | 工具 | 簽名方式 | 產生 |
 | --- | --- | --- |
-| 電子簽名（DocuSign Connect；CloudSign、Modusign、Leegality 同理） | `X-DocuSign-Signature-1`, HMAC-SHA256, base64, 你在工具中產生的金鑰 | 商機備註 |
+| 電子簽名（DocuSign Connect；CloudSign、Modusign、Leegality 同理） | `X-DocuSign-Signature-1`, HMAC-SHA256, base64, 你在工具中產生的金鑰 | 交易備註 |
 | Aircall | 請求本文中的 Webhook token | 客戶底下的一通通話 |
 | Tawk.to | `X-Tawk-Signature`, HMAC-SHA1, hex | 工單 |
 | Razorpay（iyzico 同理） | `X-Razorpay-Signature`, HMAC-SHA256, hex | 客戶底下的一筆紀錄 |
@@ -66,7 +66,7 @@ fetch(address, { method: 'POST', body, headers: { 'content-type': 'application/j
 | Money Forward Cloud | 發票建立或付款 | `id`、`email`、`text`（編號、金額、到期日） | 紀錄 |
 | Channel Talk | 對話結束 | `id`、`email`、`title` | 工單 |
 | KakaoWork | 機器人訊息 | `id`、`email`、`text` | 紀錄 |
-| LeadSquared | 潛在客戶或商機更新 | `id`、`email`、`title`、`status` | 任務 |
+| LeadSquared | 潛在客戶或交易更新 | `id`、`email`、`title`、`status` | 任務 |
 | Razorpay | 收款成功 | `id`、`email`、`text` | 紀錄（或使用配方） |
 | DingTalk | 機器人訊息 | `id`、`email`、`text` | 紀錄 |
 | WeCom | 應用程式訊息 | `id`、`email`、`text` | 紀錄 |

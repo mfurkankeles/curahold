@@ -87,7 +87,7 @@ export interface HookDelivery {
   status: 'ok' | 'skipped' | 'failed' | 'rejected';
   test: boolean;
   error: string | null;
-  result: { kind: HookTarget; id: string; action: 'created' | 'updated' } | null;
+  result: { kind: HookTarget; id: string; how: 'created' | 'updated' } | null;
   payload: string | null;
 }
 
