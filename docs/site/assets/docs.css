@@ -259,5 +259,5 @@ h1, h2, h3 { font-family: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, syste
   .top .brand { display: none; }
 }
 /* The legal notice: copyright and the copyright/trade-secret line, footer-size (shared/src/compliance/notice.ts). */
-.legal-notice { margin: 40px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
+.legal-notice { margin: 40px 0 0; max-width: 72ch; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
 .foot .legal-notice { flex-basis: 100%; margin: 0; }
