@@ -967,10 +967,11 @@ await step('the console: staff sign in with two steps, see the business today ch
   await appears('.console__rail');
 
   // The first screen: how the business is today, and who needs the team.
-  await appears('.ctoday .ctile[data-lead] .ctile__value');
+  await appears('.oc .ctile[data-lead] .ctile__value');
   expect(d.url() === `${deskHost}/`, `the console did not open on Today: ${d.url()}`);
   const tiles = await d.$$eval('.ctile__label', (els) => els.map((e) => e.textContent ?? ''));
-  for (const want of ['MRR', 'ARR', 'Denemeden ödemeye', 'Aktivasyon', 'İptal, 30 gün']) expect(tiles.includes(want), `Today has no "${want}" tile: ${tiles.join(' | ')}`);
+  // The platform owner's console opens on his Overview (pages/OwnerConsole.tsx).
+  for (const want of ['MRR', 'Ödenen faturalar (30 gün)', 'Açık deneme talepleri', 'Onayını bekleyen', 'Bekleyen destek', 'Hatalar (24 sa)']) expect(tiles.includes(want), `Overview has no "${want}" tile: ${tiles.join(' | ')}`);
   // A number changes without a reload: a company starts paying, the MRR on screen follows. The billing record is
   // written as the provider's notification writes it, and the console's live room is told as that request tells
   // it (app.ts → live/platform.ts; tests/live-platform.test.ts covers the request → signal step). Ten changes, for a p95.

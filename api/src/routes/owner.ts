@@ -54,8 +54,8 @@ ownerRoutes.get('/activity', async (c) => {
 const statusQ = z.enum([...TRIAL_REQUEST_STATUSES, 'open', 'all']);
 ownerRoutes.get('/requests', async (c) => {
   const s = statusQ.safeParse(c.req.query('status') ?? 'open');
-  if (!s.success) fail('validation');
-  return c.json({ requests: await listTrialRequests(c.get('deps'), s.data!), settings: await consoleSettings(c.get('deps')) });
+  if (!s.success) return fail('validation');
+  return c.json({ requests: await listTrialRequests(c.get('deps'), s.data), settings: await consoleSettings(c.get('deps')) });
 });
 ownerRoutes.get('/requests/:id', async (c) => {
   const d = await trialRequestDetail(c.get('deps'), id(c));
@@ -71,7 +71,7 @@ ownerRoutes.post('/requests/:id/approve', async (c) => {
   const input = await body(
     c,
     z.object({
-      departments: z.array(z.enum(TRIAL_DEPARTMENTS)).min(1).max(4),
+      departments: z.array(z.enum(TRIAL_DEPARTMENTS)).min(1).max(TRIAL_DEPARTMENTS.length),
       seatCap: z.number().int().min(1).max(100000),
       endsOn: isoDate.nullable().optional(),
       slug: z.string().trim().toLowerCase().max(40).nullable().optional(),

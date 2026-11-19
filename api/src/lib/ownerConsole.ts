@@ -22,13 +22,14 @@ import {
   type PlanTask,
 } from '../../../shared/src/ownerConsole';
 import { nowOf, type Deps } from '../context';
-import type { Q } from '../db';
+import type { Q, Row } from '../db';
 import { consoleToday } from './console';
 
 const num = (v: unknown) => Number(v) || 0;
+const isoAt = (v: unknown): string => iso(v) ?? '';
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
-const PAYING = `o.billing->>'status' in ('active', 'past_due')`;
-const TRIAL = `(o.billing->>'status' = 'trialing' or (coalesce(o.billing->>'status', '') = '' and o.trial_ends_at > now()))`;
+const PAYING = `coalesce(o.billing->>'status' in ('active', 'past_due'), false)`;
+const TRIAL = `coalesce(o.billing->>'status' = 'trialing' or (coalesce(o.billing->>'status', '') = '' and o.trial_ends_at > now()), false)`;
 const monthOf = (d: Date) => d.toISOString().slice(0, 7);
 const dayOf = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -89,7 +90,7 @@ export function paceOf(metric: PlanMetric, actual: number | null, target: number
   return { expected, pace: actual >= expected ? 'on-track' : actual >= expected * 0.8 ? 'close' : 'behind' };
 }
 
-const taskOf = (r: Record<string, any>): PlanTask => ({ id: String(r.id), title: r.title, dueOn: iso(r.due_on)!.slice(0, 10), doneAt: iso(r.done_at), source: r.source });
+const taskOf = (r: Row): PlanTask => ({ id: String(r.id), title: r.title, dueOn: isoAt(r.due_on).slice(0, 10), doneAt: iso(r.done_at), source: r.source });
 
 export async function ownerPlan(deps: Deps, at?: Date): Promise<OwnerPlan> {
   const now = at ?? nowOf(deps);
@@ -175,7 +176,7 @@ export async function ownerChecklist(deps: Deps): Promise<OwnerChecklist> {
         note: p?.note ?? null,
         evidence: p?.evidence ?? null,
         at: p && p.status !== 'todo' ? iso(p.at) : null,
-        triggered: firedAt ? { at: firedAt.toISOString(), why: String(p!.trigger_why ?? ''), due: dayOf(new Date(firedAt.getTime() + days * 86400_000)) } : null,
+        triggered: firedAt ? { at: firedAt.toISOString(), why: String(p?.trigger_why ?? ''), due: dayOf(new Date(firedAt.getTime() + days * 86400_000)) } : null,
         ready: (item.after ?? []).every(done),
       };
     });
@@ -297,7 +298,7 @@ export async function ownerRevenue(deps: Deps, staffEmail: string): Promise<Owne
       trend: today.revenue.trend,
       totals: { paid: num(t.paid), failed: num(t.failed), other: num(t.other), paidAmount: num(t.amount) / 100 },
       invoices: inv.map((r) => ({ orgId: String(r.org_id), company: String(r.name), amountCents: num(r.amount_cents), currency: String(r.currency), status: String(r.status), issuedAt: iso(r.issued_at) })),
-      upcoming: up.map((r) => ({ orgId: String(r.org_id), company: String(r.name), at: iso(r.current_period_end)!, status: String(r.status) })),
+      upcoming: up.map((r) => ({ orgId: String(r.org_id), company: String(r.name), at: isoAt(r.current_period_end), status: String(r.status) })),
     };
   });
 }
@@ -351,7 +352,7 @@ export async function ownerSystem(deps: Deps): Promise<OwnerSystem> {
       `select c.org_id, o.name, c.provider, left(c.last_error, 300) as last_error from connections c join orgs o on o.id = c.org_id where c.status = 'error' order by o.name limit 50`,
     );
     return {
-      errors: { server24h: num(er.server), browser24h: num(er.browser), top: top.map((r) => ({ message: String(r.message), source: String(r.source), n: num(r.n), last: iso(r.last)! })) },
+      errors: { server24h: num(er.server), browser24h: num(er.browser), top: top.map((r) => ({ message: String(r.message), source: String(r.source), n: num(r.n), last: isoAt(r.last) })) },
       sync: { failed24h: num(sy.failed), ran24h: num(sy.ran), inError: bad.map((r) => ({ orgId: String(r.org_id), company: String(r.name), provider: String(r.provider), error: r.last_error ? String(r.last_error) : null })) },
       live: { mode: deps.config.billing ? 'live' : 'demo' },
     };
@@ -369,7 +370,7 @@ export async function ownerActivity(deps: Pick<Deps, 'db'>, before?: string): Pr
       before ? [before] : [],
     ),
   );
-  return rows.map((r) => ({ at: iso(r.at)!, who: String(r.who), action: String(r.action), ref: r.ref ? String(r.ref) : null, company: r.company ? String(r.company) : null }));
+  return rows.map((r) => ({ at: isoAt(r.at), who: String(r.who), action: String(r.action), ref: r.ref ? String(r.ref) : null, company: r.company ? String(r.company) : null }));
 }
 
 export async function ownerSupport(deps: Pick<Deps, 'db'>): Promise<OwnerSupport> {

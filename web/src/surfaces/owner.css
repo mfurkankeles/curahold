@@ -1,0 +1,241 @@
+/* The owner's cockpit in the console (pages/OwnerConsole.tsx): a command layout on a desktop —
+   grouped rail, a status bar on top, wide pages with columns — stacked on a phone.
+   Tokens only (docs/design/tokens.md). */
+
+/* ------------------------------------------------------------------ rail */
+.console__nav--owner { gap: 4px; }
+.console__nav--owner .console__tab { min-height: 36px; padding-block: 4px; }
+.console__group { margin: 12px 12px 4px; font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.console__group:first-child { margin-top: 0; }
+.console__keys { margin: 0 12px; font-size: var(--fs-2xs); color: var(--ink-3); line-height: var(--lh-body); }
+
+/* ------------------------------------------------------------------ top bar */
+.ocbar { position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 8px clamp(16px, 3vw, 32px); background: var(--surface); border-bottom: 1px solid var(--line); }
+.ocbar__privacy { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 360px; min-width: 0; margin: 0; font-size: var(--fs-xs); color: var(--ink-2); line-height: var(--lh-body); }
+.ocbar__privacy svg { flex: none; color: var(--ink-3); }
+.ocbar__right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ocbar__chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.ocbar__chip:hover { background: var(--sunk); }
+.ocbar__chip[data-on] { background: var(--soon-wash); border-color: var(--soon-line); color: var(--soon-ink); }
+.ocbar__meter { display: grid; gap: 4px; min-width: 160px; font-size: var(--fs-2xs); color: var(--ink-3); }
+.ocmeter, .ocprogress { display: block; height: 4px; border-radius: var(--r-pill); background: var(--sunk); overflow: hidden; }
+.ocmeter i, .ocprogress i { display: block; height: 100%; width: var(--w); background: var(--brand); border-radius: var(--r-pill); transition: width var(--dur) var(--ease); }
+.ocmeter i[data-high] { background: var(--soon); }
+.ocprogress[data-pace='behind'] i { background: var(--late); }
+.ocprogress[data-pace='close'] i { background: var(--soon); }
+.ocprogress[data-pace='on-track'] i { background: var(--done); }
+
+/* ------------------------------------------------------------------ page frame */
+.oc[data-wide] { max-width: 1440px; }
+.oc__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+.oc__title { margin: 0; font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 680; letter-spacing: -.02em; line-height: var(--lh-snug); }
+.oc__sub { margin: 4px 0 0; max-width: 72ch; color: var(--ink-3); font-size: var(--fs-s); }
+.oc__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oc__muted { margin: 0; color: var(--ink-3); font-size: var(--fs-s); }
+.oc__big { margin: 0; font-size: var(--fs-l); font-weight: 640; }
+.oc__gap { margin-top: 16px; }
+.oc__ref { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.ocwrap { overflow-wrap: anywhere; }
+/* On a phone the privacy line moves from the bar into the Overview. */
+.oc__privacy { display: none; }
+
+/* Segmented filter. */
+.ocseg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface-2); }
+.ocseg button { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--fs-s); cursor: pointer; }
+.ocseg button:hover { background: var(--sunk); color: var(--ink); }
+.ocseg button[aria-pressed='true'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
+
+/* Pills and links. */
+.ocpill { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; }
+.ocpill[data-tone='done'] { background: var(--done-wash); color: var(--done-ink, var(--ink)); }
+.ocpill[data-tone='soon'] { background: var(--soon-wash); color: var(--soon-ink); }
+.ocpill[data-tone='late'] { background: var(--late-wash); color: var(--late-ink); }
+.oclink { padding: 0; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
+.oclink:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------ overview */
+.ocstrip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; width: 100%; margin: 0 0 16px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface-2); color: var(--ink); font: inherit; text-align: start; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.ocstrip:hover { background: var(--sunk); }
+.ocstrip__sum { display: grid; gap: 4px; min-width: 200px; font-size: var(--fs-s); color: var(--ink-2); }
+.ocstrip__sum strong { color: var(--ink); }
+.ocstrip__rows { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.ocpace { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ocpace[data-pace='on-track'] { background: var(--done-wash); color: var(--done-ink, var(--ink)); }
+.ocpace[data-pace='close'] { background: var(--soon-wash); color: var(--soon-ink); }
+.ocpace[data-pace='behind'] { background: var(--late-wash); color: var(--late-ink); }
+
+.octiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.octile { font: inherit; text-align: start; color: inherit; }
+button.octile { cursor: pointer; transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow-1); }
+.octile[data-tone='late'] { border-color: var(--late-line); }
+.octile[data-tone='late'] .ctile__value { color: var(--late-ink); }
+.octile[data-tone='soon'] { border-color: var(--soon-line); }
+.octile .ctile__value { font-size: var(--fs-2xl); }
+.octile[data-lead] .ctile__value { font-size: var(--fs-3xl); }
+
+.occols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; align-items: start; }
+.occols--2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.occols--card { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); margin-top: 0; }
+.occols--plan { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); margin-top: 0; }
+.occolstack { display: grid; gap: 16px; min-width: 0; }
+.ccard__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+
+.ocstates { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ocstate { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 4px 8px; border: 0; border-radius: var(--r-s); background: transparent; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.ocstate:hover { background: var(--sunk); }
+.ocstate__label { flex: 1; color: var(--ink-2); }
+.ocstate strong { font-variant-numeric: tabular-nums; }
+.ocstate__dot { width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--ink-3); }
+.ocstate[data-state='paying'] .ocstate__dot { background: var(--done); }
+.ocstate[data-state='trial'] .ocstate__dot { background: var(--brand); }
+.ocstate[data-state='requested'] .ocstate__dot { background: var(--soon); }
+.ocstate[data-state='churned'] .ocstate__dot { background: var(--late); }
+.ocnextlink { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
+.ocnextlink:hover { background: var(--sunk); }
+
+/* ------------------------------------------------------------------ tables, lists */
+.octablewrap { overflow-x: auto; padding: 0; }
+.octable { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
+.octable th, .octable td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: middle; }
+.octable thead th { position: sticky; top: 0; background: var(--surface); font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); white-space: nowrap; }
+.octable tbody tr:hover { background: var(--surface-2); }
+.octable tbody tr:last-child td, .octable tbody tr:last-child th { border-bottom: 0; }
+.octable .num { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.octable td[data-over] { color: var(--late-ink); font-weight: 600; }
+.octable--dense th, .octable--dense td { padding: 4px 8px; }
+.octable--plan tbody th { font-weight: 500; }
+.octable--plan td:last-child { min-width: 160px; }
+.octable--plan .ocprogress { margin-top: 4px; }
+.oclist { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.oclist li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-s); }
+.oclist li:last-child { border-bottom: 0; }
+.oclist--decided li { justify-content: flex-start; align-items: flex-start; }
+.oclist__main { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.oclist__main .oc__muted { font-size: var(--fs-xs); }
+
+/* ------------------------------------------------------------------ requests */
+.ocsettings { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 16px; }
+.ocsettings label { display: grid; gap: 4px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.ocsettings .oc__muted { flex: 1 1 240px; font-size: var(--fs-xs); }
+.ocsplit { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2.2fr); gap: 16px; align-items: start; }
+.ocreqs { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; position: sticky; top: 64px; max-height: calc(100vh - 160px); overflow: auto; }
+.ocreq { display: grid; gap: 4px; width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); color: var(--ink); font: inherit; text-align: start; cursor: pointer; transition: border-color var(--dur-fast) var(--ease); }
+.ocreq:hover { border-color: var(--line-strong); }
+.ocreq[aria-current='true'] { border-color: var(--brand); background: var(--brand-wash); }
+.ocreq__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ocreq__top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ocreq__meta { font-size: var(--fs-xs); color: var(--ink-3); }
+.ocreq .flag { justify-self: start; }
+.ocreq__h { margin: 0 0 8px; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.ocreqdetail { min-width: 0; }
+.ocreqcard { display: grid; gap: 16px; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); }
+.ocback { display: none; justify-self: start; }
+.ocreqcard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ocreqcard__title { margin: 4px 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 680; line-height: var(--lh-snug); }
+.ocflags { display: flex; flex-wrap: wrap; gap: 4px; }
+.ocflags:empty { display: none; }
+.ocflags .flag:not(.flag--soon) { background: var(--done-wash); color: var(--done-ink, var(--ink)); }
+.ocreqgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.ocdl { display: grid; gap: 4px; margin: 0; }
+.ocdl div { display: grid; grid-template-columns: minmax(120px, 2fr) minmax(0, 3fr); gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-s); }
+.ocdl dt { color: var(--ink-3); }
+.ocdl dd { margin: 0; overflow-wrap: anywhere; }
+.occonsents { display: grid; gap: 4px; margin: 0 0 8px; padding: 0; list-style: none; font-size: var(--fs-s); }
+.occonsents li { display: flex; align-items: center; gap: 8px; color: var(--ink-3); }
+.occonsents li[data-granted] { color: var(--ink); }
+.occonsents li[data-granted] svg { color: var(--done); }
+.ocdecide, .ocdecided { padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.ocdecided p { margin: 0; }
+.ocapprove { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
+.ocapprove__note { flex-basis: 100%; }
+.ocdeps { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; border: 0; }
+.ocdeps legend { margin-bottom: 4px; padding: 0; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.occheck { display: inline-flex; align-items: center; gap: 8px; min-height: 28px; font-size: var(--fs-s); cursor: pointer; }
+.occheck[data-done] span { color: var(--ink-3); text-decoration: line-through; }
+.ocfield { display: grid; gap: 4px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.ocfield--wide { flex-basis: 100%; }
+.ocfield .textarea, .ocfield .input:not(.input--num) { width: 100%; font-weight: 400; }
+.ocbuttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ocdraft { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface-2); }
+.ocdraft__text { margin: 0; white-space: pre-wrap; font: inherit; font-size: var(--fs-s); line-height: var(--lh-body); }
+
+/* ------------------------------------------------------------------ approvals, next task */
+.ocpager { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ocap, .ocnext { gap: 16px; padding: 24px; border-radius: var(--r-l); }
+.ocap[data-priority='urgent'] { border-color: var(--late-line); }
+.ocap__who { margin: 0; font-size: var(--fs-s); font-weight: 600; color: var(--brand-ink); }
+.ocap__title { margin: 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 680; line-height: var(--lh-snug); }
+.ocap__summary { margin: 0; color: var(--ink-2); line-height: var(--lh-body); }
+.ocapfacts { display: grid; gap: 0; margin: 0; }
+.ocapfacts div { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(0, 3fr); gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-s); }
+.ocapfacts dt { color: var(--ink-3); }
+.ocapfacts dd { margin: 0; line-height: var(--lh-body); }
+.ocap__buttons { padding-top: 4px; }
+.ocapedit { display: grid; gap: 12px; }
+.ocsteps { display: grid; gap: 8px; margin: 0; padding-inline-start: 24px; line-height: var(--lh-body); }
+.ocnext__form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ocprog { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ocprog li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; font-size: var(--fs-s); }
+.ocprog .ocprogress { grid-column: 1 / -1; }
+.ocareas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.occhecks { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.occhecks li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-s); }
+.occhecks li[data-current] { background: var(--brand-wash); border-radius: var(--r-s); padding-inline: 8px; }
+.occhecks li[data-status='done'] .occhecks__main > span:first-child { color: var(--ink-3); text-decoration: line-through; }
+.occhecks__main { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.occhecks__main .oc__muted { font-size: var(--fs-xs); }
+.occheckrow { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--ink-3); cursor: pointer; }
+.occheckrow:hover { background: var(--sunk); color: var(--ink); }
+.occheckrow[aria-pressed='true'] { color: var(--done); }
+
+/* ------------------------------------------------------------------ plan */
+.octaskadd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.octaskadd > .input { flex: 1 1 200px; }
+.octasks ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.octasks li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.octasks[data-kind='overdue'] .ocreq__h { color: var(--late-ink); }
+
+/* ------------------------------------------------------------------ narrower desktops */
+@media (max-width: 1360px) {
+  .octiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .occols, .occols--2, .occols--card, .occols--plan { grid-template-columns: minmax(0, 1fr); }
+  .ocsplit { grid-template-columns: minmax(240px, 1fr) minmax(0, 1.6fr); }
+  .ocreqgrid, .ocareas { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ------------------------------------------------------------------ phone: stacked */
+@media (max-width: 860px) {
+  .console[data-owner] .console__nav { display: flex; grid-template-columns: none; overflow-x: auto; scrollbar-width: none; gap: 0; }
+  .console[data-owner] .console__tab { flex: 0 0 76px; }
+  .console[data-owner] .console__group, .console__keys { display: none; }
+  .ocbar { position: static; padding: 8px 16px; }
+  .ocbar__privacy { display: none; }
+  .oc__privacy { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; font-size: var(--fs-xs); color: var(--ink-2); line-height: var(--lh-body); }
+  .oc__privacy svg { flex: none; color: var(--ink-3); }
+  .ocseg { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .ocseg button { flex: none; }
+  .ocbar__right { width: 100%; justify-content: space-between; }
+  .ocbar__meter { min-width: 120px; }
+  .octiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .octile[data-lead] { grid-column: 1 / -1; }
+  .ocsplit { grid-template-columns: minmax(0, 1fr); }
+  .ocreqs { position: static; max-height: none; }
+  .ocsplit[data-open] .ocreqs { display: none; }
+  .ocsplit:not([data-open]) .ocreqdetail { display: none; }
+  .ocback { display: inline-flex; }
+  .ocreqcard, .ocap, .ocnext { padding: 16px; }
+  .ocdl div, .ocapfacts div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .ocnext__form { grid-template-columns: minmax(0, 1fr); }
+  .octable .ocwide { display: none; }
+  .octable--plan th, .octable--plan td { padding-inline: 4px; }
+  .octable--plan td:last-child { min-width: 96px; }
+  .octable--plan .input--num { width: 72px; }
+  .ccard:has(> .octable) { overflow-x: auto; }
+}
+@media (pointer: coarse) {
+  .ocseg button, .ocbar__chip, .ocstate, .occheck, .occheckrow, .ocnextlink { min-height: var(--tap); }
+  .occheckrow { width: var(--tap); }
+}

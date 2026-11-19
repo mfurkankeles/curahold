@@ -15,6 +15,23 @@ import { relativeTime } from '../lib/time';
 import { THEMES, useTheme, type ThemePref } from '../lib/theme';
 import { TodayView } from './ConsoleToday';
 import { CustomerDrawer, CustomerList } from './PlatformConsole';
+import {
+  ActivitySection,
+  ApprovalsSection,
+  ChecklistSection,
+  OverviewSection,
+  OwnerBar,
+  PlanSection,
+  RequestsSection,
+  RevenueSection,
+  SupportOverviewSection,
+  SystemSection,
+  TrialsSection,
+  useOwnerWords,
+  type OwnerGo,
+  type OwnerSection,
+} from './OwnerConsole';
+import { OWNER_LOCALES } from '../../../shared/src/i18n/owner';
 import '../surfaces/console.css';
 import { formatDate } from '../lib/format';
 
@@ -58,6 +75,8 @@ interface Detail extends Omit<Row, 'company' | 'from' | 'notes' | 'lastMessageAt
 }
 interface Me {
   staff: { email: string; name: string };
+  /** The platform owner in his own session: the owner sections are his. */
+  owner?: boolean;
   counts: { received: number; answered: number; solved: number; mine: number; unclaimed: number };
 }
 
@@ -88,13 +107,13 @@ const shortName = (email: string) => email.split('@')[0];
 const planName = (plan: string, t: (k: MessageKey) => string) => (plan === 'trial' ? t('desk.plan.trial') : plan === 'team' || plan === 'business' ? t(`billing.plan.${plan}`) : plan);
 
 /** Any of the nine languages; the choice is kept on this device like everywhere else. */
-function Languages({ onLocale }: { onLocale: (l: Locale) => void }) {
+function Languages({ onLocale, only }: { onLocale: (l: Locale) => void; only?: Locale[] }) {
   const { locale, t } = useI18n();
   return (
     <label className="console__pick desk__langs">
       <Icon name="globe" size={16} />
       <select className="input" value={locale} onChange={(e) => onLocale(e.target.value as Locale)} aria-label={t('nav.language')}>
-        {LOCALES.map((l) => (
+        {(only ?? LOCALES).map((l) => (
           <option key={l} value={l} lang={l}>
             {LOCALE_INFO[l].name}
           </option>
@@ -246,23 +265,47 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-type Section = 'today' | 'customers' | 'support';
+type Section = 'today' | 'customers' | 'support' | Exclude<OwnerSection, 'today'>;
 interface Where {
   section: Section;
+  /** the open trial request (requests) */
+  q?: string | null;
   /** the open request (support) */
   r?: string | null;
   /** the open company (customers) */
   c?: string | null;
 }
 /** The address says where the console is: / today, /customers(?c=), /support(?r=). An old desk link (/?r=) opens the request. */
+/** The owner's own sections, by address (owner sections answer 403 to anyone else, so others never get here). */
+const OWNER_PATHS: Record<string, Section> = {
+  '/revenue': 'revenue',
+  '/trials': 'trials',
+  '/requests': 'requests',
+  '/approvals': 'approvals',
+  '/plan': 'plan',
+  '/checklist': 'checklist',
+  '/support-overview': 'supportview',
+  '/system': 'system',
+  '/activity': 'activity',
+};
+const PATH_OF = Object.fromEntries(Object.entries(OWNER_PATHS).map(([k, v]) => [v, k])) as Record<string, string>;
 function readWhere(): Where {
   const p = new URLSearchParams(location.search);
   const r = p.get('r');
+  const own = OWNER_PATHS[location.pathname];
+  if (own) return { section: own, q: p.get('q') };
   if (location.pathname.startsWith('/customers')) return { section: 'customers', c: p.get('c') };
   if (location.pathname.startsWith('/support') || r) return { section: 'support', r };
   return { section: 'today' };
 }
-const urlOf = (w: Where) => (w.section === 'today' ? '/' : w.section === 'customers' ? `/customers${w.c ? `?c=${w.c}` : ''}` : `/support${w.r ? `?r=${w.r}` : ''}`);
+const urlOf = (w: Where) =>
+  w.section === 'today'
+    ? '/'
+    : w.section === 'customers'
+      ? `/customers${w.c ? `?c=${w.c}` : ''}`
+      : w.section === 'support'
+        ? `/support${w.r ? `?r=${w.r}` : ''}`
+        : `${PATH_OF[w.section]}${w.q ? `?q=${encodeURIComponent(w.q)}` : ''}`;
 
 /** While the live room is there: a look now and then for what no request carries (a trial reaching its last week). */
 const BACKSTOP_MS = 60_000;
@@ -428,7 +471,7 @@ function TodaySection({ beat, failed, go }: { beat: number; failed: (e: unknown)
   );
 }
 
-function CustomersSection({ beat, failed, open, go }: { beat: number; failed: (e: unknown) => void; open: string | null; go: (w: Where, replace?: boolean) => void }) {
+function CustomersSection({ beat, failed, open, go, privacy }: { beat: number; failed: (e: unknown) => void; open: string | null; go: (w: Where, replace?: boolean) => void; privacy?: string }) {
   const { t } = useI18n();
   const { data, error, retry } = useConsoleData<{ customers: PlatformCustomer[] }>('/customers', beat, failed);
   const loadOne = useCallback((id: string) => desk<PlatformCustomerDetail>('GET', `/customers/${id}`), []);
@@ -438,7 +481,7 @@ function CustomersSection({ beat, failed, open, go }: { beat: number; failed: (e
       <header className="pf__head">
         <div>
           <h1 className="pf__title">{t('metrics.customers')}</h1>
-          <p className="pf__sub">{t('platform.subtitle' as MessageKey)}</p>
+          <p className="pf__sub">{privacy ?? t('platform.subtitle' as MessageKey)}</p>
         </div>
       </header>
       {!data ? (
@@ -459,7 +502,7 @@ function Account({ me, onLocale, onOut }: { me: Me; onLocale: (l: Locale) => voi
   const [theme, setTheme] = useTheme();
   return (
     <div className="console__account">
-      <Languages onLocale={onLocale} />
+      <Languages onLocale={onLocale} only={me.owner ? OWNER_LOCALES : undefined} />
       <label className="console__pick">
         <span className="sr-only">{t('menu.theme')}</span>
         <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={16} />
@@ -481,10 +524,12 @@ function Account({ me, onLocale, onOut }: { me: Me; onLocale: (l: Locale) => voi
 }
 
 function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts: () => void; onOut: (expired: boolean) => void; onLocale: (l: Locale) => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { o } = useOwnerWords();
   const [where, setWhere] = useState<Where>(readWhere);
   const [queue, setQueue] = useState('received');
-  const failed = useCallback((e: unknown) => (e instanceof DeskError && (e.status === 403 || e.status === 401) ? onOut(true) : undefined), [onOut]);
+  const owner = !!me.owner;
+  const failed = useCallback((e: unknown) => ((e instanceof DeskError || (e as { status?: number })?.status) && [401, 403].includes((e as { status: number }).status) ? onOut(true) : undefined), [onOut]);
   const beat = useConsoleLive(failed);
   useEffect(() => {
     if (beat) refreshCounts();
@@ -494,12 +539,37 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     window.addEventListener('popstate', pop);
     return () => window.removeEventListener('popstate', pop);
   }, []);
+  // On a phone the owner's sections sit in a bar that scrolls sideways: keep the open one in view.
+  useEffect(() => {
+    document.querySelector('.console[data-owner] .console__tab[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [where.section]);
+  // The owner console speaks Turkish or English only (his choice); another language reads English.
+  useEffect(() => {
+    if (owner && !OWNER_LOCALES.includes(locale)) onLocale('en');
+  }, [owner, locale, onLocale]);
   const go = useCallback((w: Where, replace = false) => {
     if (replace) history.replaceState(null, '', urlOf(w));
     else history.pushState(null, '', urlOf(w));
     setWhere(w);
     if (!replace) document.getElementById('console-main')?.focus({ preventScroll: true });
   }, []);
+  const ownerGo: OwnerGo = useCallback((to) => go({ section: to.section as Section, c: to.c ?? null, r: to.r ?? null, q: to.q ?? null }, to.section === where.section && to.section === 'requests'), [go, where.section]);
+  // Keys for the command layout: A approvals, R requests, C checklist, O overview (not while typing).
+  useEffect(() => {
+    if (!owner) return;
+    const keys: Record<string, Section> = { a: 'approvals', r: 'requests', c: 'checklist', o: 'today', p: 'plan' };
+    const on = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
+      const to = keys[e.key.toLowerCase()];
+      if (to) {
+        e.preventDefault();
+        go({ section: to });
+      }
+    };
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, [owner, go]);
   const link = (section: Section, icon: IconName, label: string, count?: number) => (
     <a
       href={urlOf({ section })}
@@ -520,25 +590,46 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     setQueue(key);
     if (where.section !== 'support') go({ section: 'support' });
   };
+  const name = owner ? o('console.title') : t('console.name' as MessageKey);
 
   return (
-    <div className="console" data-section={where.section}>
+    <div className="console" data-section={where.section} data-owner={owner ? '' : undefined}>
       <aside className="console__rail">
         <div className="console__brand">
           <span className="desk__mark" aria-hidden="true">
-            <Icon name="lifebuoy" size={18} />
+            <Icon name={owner ? 'gauge' : 'lifebuoy'} size={18} />
           </span>
           <span className="console__brandname">
             <strong>Curahold</strong>
-            <span>{t('console.name' as MessageKey)}</span>
+            <span>{name}</span>
           </span>
         </div>
-        <nav className="console__nav" aria-label={t('console.name' as MessageKey)}>
-          {link('today', 'chart', t('console.today' as MessageKey))}
-          {link('customers', 'building', t('metrics.customers'))}
-          {link('support', 'lifebuoy', t('console.support' as MessageKey), me.counts.received)}
-        </nav>
-        <Queues me={me} queue={queue} onQueue={pickQueue} className="console__queues" current={where.section === 'support'} />
+        {owner ? (
+          <nav className="console__nav console__nav--owner" aria-label={name}>
+            <p className="console__group">{o('nav.group.business')}</p>
+            {link('today', 'gauge', o('nav.overview'))}
+            {link('customers', 'building', o('nav.customers'))}
+            {link('revenue', 'coins', o('nav.revenue'))}
+            {link('trials', 'hourglass', o('nav.trials'))}
+            <p className="console__group">{o('nav.group.decide')}</p>
+            {link('requests', 'form', o('nav.requests'))}
+            {link('approvals', 'checkCircle', o('nav.approvals'))}
+            {link('plan', 'target', o('nav.plan'))}
+            {link('checklist', 'list', o('nav.checklist'))}
+            <p className="console__group">{o('nav.group.run')}</p>
+            {link('supportview', 'lifebuoy', o('nav.support'), me.counts.received)}
+            {link('system', 'shield', o('nav.system'))}
+            {link('activity', 'history', o('nav.activity'))}
+          </nav>
+        ) : (
+          <nav className="console__nav" aria-label={name}>
+            {link('today', 'chart', t('console.today' as MessageKey))}
+            {link('customers', 'building', t('metrics.customers'))}
+            {link('support', 'lifebuoy', t('console.support' as MessageKey), me.counts.received)}
+          </nav>
+        )}
+        {owner && where.section !== 'support' ? null : <Queues me={me} queue={queue} onQueue={pickQueue} className="console__queues" current={where.section === 'support'} />}
+        {owner ? <p className="console__keys">{o('keys.hint')}</p> : null}
         <details className="console__me">
           <summary>
             <Icon name="user" size={18} />
@@ -549,11 +640,21 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
       </aside>
       <main className="console__main" id="console-main" tabIndex={-1}>
         <OfflineBar />
-        {where.section === 'today' && <TodaySection beat={beat} failed={failed} go={go} />}
-        {where.section === 'customers' && <CustomersSection beat={beat} failed={failed} open={where.c ?? null} go={go} />}
+        {owner && where.section !== 'support' ? <OwnerBar beat={beat} failed={failed} go={ownerGo} /> : null}
+        {where.section === 'today' && (owner ? <OverviewSection beat={beat} failed={failed} go={ownerGo} /> : <TodaySection beat={beat} failed={failed} go={go} />)}
+        {where.section === 'customers' && <CustomersSection beat={beat} failed={failed} open={where.c ?? null} go={go} privacy={owner ? o('privacy.line') : undefined} />}
         {where.section === 'support' && (
           <Support me={me} queue={queue} onQueue={setQueue} open={where.r ?? null} choose={(r) => go({ section: 'support', r }, !!r === !!where.r)} beat={beat} refreshCounts={refreshCounts} failed={failed} />
         )}
+        {owner && where.section === 'revenue' && <RevenueSection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'trials' && <TrialsSection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'requests' && <RequestsSection beat={beat} failed={failed} open={where.q ?? null} go={ownerGo} />}
+        {owner && where.section === 'approvals' && <ApprovalsSection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'plan' && <PlanSection beat={beat} failed={failed} />}
+        {owner && where.section === 'checklist' && <ChecklistSection beat={beat} failed={failed} />}
+        {owner && where.section === 'supportview' && <SupportOverviewSection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'system' && <SystemSection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'activity' && <ActivitySection beat={beat} failed={failed} go={ownerGo} />}
       </main>
     </div>
   );

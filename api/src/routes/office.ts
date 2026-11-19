@@ -145,8 +145,8 @@ officeRoutes.post('/seats/:seat/handover', async (c) => {
 
 officeRoutes.get('/approvals', async (c) => {
   const s = z.enum(['pending', 'approved', 'rejected', 'meeting', 'done', 'failed', 'open', 'all']).safeParse(c.req.query('status') ?? 'open');
-  if (!s.success) fail('validation');
-  return c.json({ approvals: await listApprovals(c.get('deps'), s.data!) });
+  if (!s.success) return fail('validation');
+  return c.json({ approvals: await listApprovals(c.get('deps'), s.data) });
 });
 /** The owner decides: approve (optionally with edits), reject, or call a meeting on it. */
 officeRoutes.post('/approvals/:id/decide', async (c) => {
@@ -239,11 +239,11 @@ const DENIALS_TO_PAUSE = 3;
 const agentAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   const raw = (c.req.header('authorization') ?? '').replace(/^Bearer\s+/i, '');
   const m = KEY.exec(raw);
-  if (!m) fail('unauthenticated');
+  if (!m) return fail('unauthenticated');
   const deps = c.get('deps');
   const hash = await sha256Hex(raw);
-  const [s] = await deps.db.system((q) => q.query<{ seat: string; tier: string; team: string; key_hash: string | null; filled_by: string }>('select seat, tier, team, key_hash, filled_by from seats where seat = $1', [m![1]]));
-  if (!s || !s.key_hash || !safeEqual(s.key_hash, hash) || s.filled_by === 'human') fail('unauthenticated');
+  const [s] = await deps.db.system((q) => q.query<{ seat: string; tier: string; team: string; key_hash: string | null; filled_by: string }>('select seat, tier, team, key_hash, filled_by from seats where seat = $1', [m[1]]));
+  if (!s || !s.key_hash || !safeEqual(s.key_hash, hash) || s.filled_by === 'human') return fail('unauthenticated');
   SEAT_OF.set(c.req.raw, { seat: s.seat, tier: s.tier, team: s.team });
   const write = c.req.method !== 'GET';
   const paused = await deps.db.system((q) => isPaused(q, s.seat));
@@ -267,7 +267,7 @@ const agentAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   }
 };
 agentRoutes.use('*', agentAuth);
-const me = (c: C) => SEAT_OF.get(c.req.raw)!;
+const me = (c: C) => SEAT_OF.get(c.req.raw) ?? fail('unauthenticated');
 
 agentRoutes.get('/me', async (c) => {
   const deps = c.get('deps');
@@ -352,8 +352,8 @@ agentRoutes.post('/meetings/:id/lines', async (c) => {
 });
 agentRoutes.get('/meetings/:id', async (c) => {
   const d = await meetingDetail(c.get('deps'), idOf(c));
-  if (!d) fail('not_found');
-  if (me(c).tier !== 'note-taker' && d!.meeting.calledBy !== me(c).seat && !d!.meeting.attendees.includes(me(c).seat)) fail('forbidden');
+  if (!d) return fail('not_found');
+  if (me(c).tier !== 'note-taker' && d.meeting.calledBy !== me(c).seat && !d.meeting.attendees.includes(me(c).seat)) fail('forbidden');
   return c.json(d);
 });
 agentRoutes.put('/meetings/:id/minutes', async (c) => {

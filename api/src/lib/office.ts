@@ -3,13 +3,14 @@
 // routes/office.ts officeRoutes) and the agents (a seat's own key,
 // routes/office.ts agentRoutes). Only the first can decide an approval.
 import type { Deps } from '../context';
-import type { Q } from '../db';
+import type { Q, Row } from '../db';
 import type { Approval, ApprovalProposal, AuditLine, LogEntry, LogKind, Meeting, MeetingLine, MeetingMinutes, Pause, Seat } from '../../../shared/src/office';
 import { weekOf } from '../../../shared/src/office';
 import { fail } from './errors';
 
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
 const num = (v: unknown) => Number(v) || 0;
+const isoAt = (v: unknown): string => iso(v) ?? '';
 
 /** The seat whose words are the owner's own (meeting lines, log entries he writes). */
 export const OWNER_SEAT = 'owner';
@@ -38,7 +39,7 @@ export async function isPaused(q: Q, seat: string): Promise<boolean> {
 
 export async function listPauses(deps: Pick<Deps, 'db'>): Promise<Pause[]> {
   const rows = await deps.db.system((q) => q.query('select * from agent_pauses where resumed_at is null order by paused_at desc'));
-  return rows.map((r) => ({ id: String(r.id), scope: r.scope, target: r.target ?? null, reason: r.reason ?? null, pausedAt: iso(r.paused_at)!, pausedBy: String(r.paused_by) }));
+  return rows.map((r) => ({ id: String(r.id), scope: r.scope, target: r.target ?? null, reason: r.reason ?? null, pausedAt: isoAt(r.paused_at), pausedBy: String(r.paused_by) }));
 }
 
 export async function pause(q: Q, scope: Pause['scope'], target: string | null, by: string, reason: string | null) {
@@ -58,7 +59,7 @@ export async function resume(q: Q, id: string, by: string) {
 
 // ------------------------------------------------------------ seats
 
-const seatOf = (r: Record<string, any>, pausedSeats: Set<string>, allPaused: boolean, pausedTeams: Set<string>): Seat => ({
+const seatOf = (r: Row, pausedSeats: Set<string>, allPaused: boolean, pausedTeams: Set<string>): Seat => ({
   seat: r.seat,
   title: r.title,
   titleTr: r.title_tr ?? '',
@@ -157,7 +158,7 @@ export async function handOver(q: Q, seat: string, to: { filledBy: Seat['filledB
 
 // ------------------------------------------------------------ approvals
 
-const approvalOf = (r: Record<string, any>): Approval => ({
+const approvalOf = (r: Row): Approval => ({
   id: String(r.id),
   ref: String(r.ref),
   title: r.title,
@@ -183,7 +184,7 @@ const approvalOf = (r: Record<string, any>): Approval => ({
   edited: r.edited ?? null,
   result: r.result ?? null,
   resultAt: iso(r.result_at),
-  createdAt: iso(r.created_at)!,
+  createdAt: isoAt(r.created_at),
 });
 
 /** Text that must never reach the owner's queue (or the log): keys, tokens, private keys. */
@@ -281,7 +282,7 @@ export async function decide(deps: Deps, id: string, owner: string, d: Decision)
 
 // ------------------------------------------------------------ log, memory, audit
 
-const logOf = (r: Record<string, any>): LogEntry => ({ id: Number(r.id), at: iso(r.at)!, seat: r.seat, kind: r.kind, thread: r.thread ? String(r.thread) : null, body: r.body, ref: r.ref ?? null });
+const logOf = (r: Row): LogEntry => ({ id: Number(r.id), at: isoAt(r.at), seat: r.seat, kind: r.kind, thread: r.thread ? String(r.thread) : null, body: r.body, ref: r.ref ?? null });
 
 export async function writeLog(q: Q, seat: string, e: { kind: LogKind; body: string; thread?: string | null; ref?: string | null }) {
   if (hasSecret(e.body, e.ref)) fail('validation', { fields: 'secret' }, { fields: ['body'], reason: 'secret' });
@@ -315,7 +316,7 @@ export async function readAudit(deps: Pick<Deps, 'db'>, opts: { seat?: string; b
   if (opts.seat) where.push(`seat = $${args.push(opts.seat)}`);
   if (opts.before) where.push(`id < $${args.push(opts.before)}`);
   const rows = await deps.db.system((q) => q.query(`select * from agent_audit ${where.length ? `where ${where.join(' and ')}` : ''} order by id desc limit 200`, args));
-  return rows.map((r) => ({ id: Number(r.id), at: iso(r.at)!, seat: r.seat, actor: r.actor, action: r.action, target: r.target ?? null, detail: r.detail ?? {} }));
+  return rows.map((r) => ({ id: Number(r.id), at: isoAt(r.at), seat: r.seat, actor: r.actor, action: r.action, target: r.target ?? null, detail: r.detail ?? {} }));
 }
 
 /** Usage after a run; over the weekly budget the seat pauses itself and the COO hears of it. */
@@ -341,7 +342,7 @@ export async function addUsage(q: Q, seat: string, now: Date, u: { tokens: numbe
 
 // ------------------------------------------------------------ meetings
 
-const meetingOf = (r: Record<string, any>): Meeting => ({
+const meetingOf = (r: Row): Meeting => ({
   id: String(r.id),
   title: r.title,
   goal: r.goal ?? null,
@@ -355,7 +356,7 @@ const meetingOf = (r: Record<string, any>): Meeting => ({
   startedAt: iso(r.started_at),
   endedAt: iso(r.ended_at),
   minutes: r.minutes ?? null,
-  createdAt: iso(r.created_at)!,
+  createdAt: isoAt(r.created_at),
 });
 
 export async function listMeetings(deps: Pick<Deps, 'db'>, opts: { withOwner?: boolean; seat?: string }): Promise<Meeting[]> {
@@ -372,7 +373,7 @@ export async function meetingDetail(deps: Pick<Deps, 'db'>, id: string): Promise
     const [m] = await q.query('select * from meetings where id = $1', [id]);
     if (!m) return null;
     const lines = await q.query('select id, speaker, body, at from meeting_lines where meeting = $1 order by id limit 2000', [id]);
-    return { meeting: meetingOf(m), lines: lines.map((l) => ({ id: Number(l.id), speaker: l.speaker, body: l.body, at: iso(l.at)! })) };
+    return { meeting: meetingOf(m), lines: lines.map((l) => ({ id: Number(l.id), speaker: l.speaker, body: l.body, at: isoAt(l.at) })) };
   });
 }
 
@@ -392,7 +393,7 @@ export async function addMeetingLine(q: Q, id: string, speaker: string, text: st
   if (m.status === 'ended' || m.status === 'cancelled') fail('conflict');
   if (m.status === 'scheduled') await q.query(`update meetings set status = 'live', started_at = now() where id = $1`, [id]);
   const [l] = await q.query('insert into meeting_lines (meeting, speaker, body) values ($1, $2, $3) returning id, speaker, body, at', [id, speaker, text]);
-  return { id: Number(l.id), speaker: l.speaker, body: l.body, at: iso(l.at)! } as MeetingLine;
+  return { id: Number(l.id), speaker: l.speaker, body: l.body, at: isoAt(l.at) } as MeetingLine;
 }
 
 /** The note taker's minutes end the meeting; each proposed decision becomes an approval card (nothing runs before his yes). */

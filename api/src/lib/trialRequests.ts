@@ -129,6 +129,7 @@ export async function insertTrialRequest(deps: Deps, input: TrialRequestInput): 
 // ------------------------------------------------------------ reading
 
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
+const isoAt = (v: unknown): string => iso(v) ?? '';
 
 /** Same address, same company domain (not a public mail service), or the same company name. */
 const SAME = `(o.email = r.email or (split_part(o.email, '@', 2) = split_part(r.email, '@', 2) and not (split_part(r.email, '@', 2) = any ($1::text[]))) or lower(o.company) = lower(r.company))`;
@@ -158,7 +159,7 @@ export async function listTrialRequests(deps: Pick<Deps, 'db'>, status: TrialReq
       country: String(r.country),
       departments: (r.departments ?? []) as TrialRequestRow['departments'],
       seats: r.seats == null ? null : Number(r.seats),
-      createdAt: iso(r.created_at)!,
+      createdAt: isoAt(r.created_at),
       duplicateOf: r.dup ? String(r.dup) : null,
     }));
   });
@@ -181,12 +182,12 @@ export async function trialRequestDetail(deps: Pick<Deps, 'db'>, id: string): Pr
       status: r.status as TrialRequestStatus,
       name: String(r.name),
       email: String(r.email),
-      emailVerifiedAt: iso(r.email_verified_at)!,
+      emailVerifiedAt: isoAt(r.email_verified_at),
       company: String(r.company),
       country: String(r.country),
       departments: (r.departments ?? []) as TrialRequestRow['departments'],
       seats: r.seats == null ? null : Number(r.seats),
-      createdAt: iso(r.created_at)!,
+      createdAt: isoAt(r.created_at),
       duplicateOf: dups[0] ? String(dups[0].ref) : null,
       freeMailNote: d.freeMailNote ?? null,
       phone: d.phone ?? null,
@@ -267,9 +268,9 @@ async function freeSlug(q: Q, wanted: string): Promise<string> {
 
 export async function approveTrialRequest(deps: Deps, id: string, by: string, input: ApproveInput) {
   const detail = await trialRequestDetail(deps, id);
-  if (!detail) fail('not_found');
-  if (detail!.status === 'approved' || detail!.status === 'rejected') fail('conflict');
-  const r = detail!;
+  if (!detail) return fail('not_found');
+  if (detail.status === 'approved' || detail.status === 'rejected') fail('conflict');
+  const r = detail;
   const now = nowOf(deps);
   const months = await getConsoleSetting(deps, 'trial.months');
   const ends = input.endsOn ? new Date(`${input.endsOn}T23:59:59Z`) : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + months, now.getUTCDate(), 23, 59, 59));
@@ -315,14 +316,14 @@ export async function approveTrialRequest(deps: Deps, id: string, by: string, in
 /** Rejecting sends nothing: it prepares a polite answer in the person's language for the owner to send himself. */
 export async function rejectTrialRequest(deps: Deps, id: string, by: string, reason: string | null) {
   const detail = await trialRequestDetail(deps, id);
-  if (!detail) fail('not_found');
-  if (detail!.status === 'approved' || detail!.status === 'rejected') fail('conflict');
-  const locale = normalizeLocale(detail!.language);
-  const draft = translate(locale, 'trialMail.rejected.body', { name: detail!.name, company: detail!.company });
+  if (!detail) return fail('not_found');
+  if (detail.status === 'approved' || detail.status === 'rejected') fail('conflict');
+  const locale = normalizeLocale(detail.language);
+  const draft = translate(locale, 'trialMail.rejected.body', { name: detail.name, company: detail.company });
   await deps.db.system(async (q) => {
     await q.query(`update trial_requests set status = 'rejected', decided_at = now(), decided_by = $2, reject_reason = $3, reply_draft = $4, updated_at = now() where id = $1`, [id, by, reason, draft]);
-    await deskNote(q, by, 'trial.rejected', detail!.ref);
+    await deskNote(q, by, 'trial.rejected', detail.ref);
   });
   await deps.live?.platform?.().catch(() => undefined);
-  return { subject: translate(locale, 'trialMail.rejected.subject', { company: detail!.company }), draft, to: detail!.email };
+  return { subject: translate(locale, 'trialMail.rejected.subject', { company: detail.company }), draft, to: detail.email };
 }
