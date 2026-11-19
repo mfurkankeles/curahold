@@ -39,6 +39,7 @@ export type ErrorCode =
   | 'org_loop'
   | 'sync_running'
   | 'crm_error'
+  | 'crm_unreachable'
   | 'field_locked'
   | 'preview_read_only'
   | 'read_only_token'
@@ -173,6 +174,7 @@ const STATUS: Record<ErrorCode, number> = {
   org_loop: 400,
   sync_running: 409,
   crm_error: 502,
+  crm_unreachable: 502,
   server: 500,
   plan_no_date: 400,
   // 402 Payment Required: a plan is needed for this.

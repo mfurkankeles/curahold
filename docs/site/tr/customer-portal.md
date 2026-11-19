@@ -29,6 +29,8 @@ Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve A
    - **Müşterinin her sütun için gördüğü ad:** "Hukuk onayı bekliyor" yerine "İnceleniyor" gibi. Boş bırakırsan sütunun adı görünür.
    - **Müşterinin gördüğü ayrıntılar:** bitiş tarihi, öncelik, kim ilgileniyor.
 
+   Daha hızlısı, henüz açık pano yokken: **Ayarlar → Müşteri portalı** panolarını listeler; taleplerin düşeceği panoda **… panosunu müşterilere aç**'a tıkla (talepler ilk sütununa düşer).
+
 Özel panolar müşterilere açılamaz. Ayardaki şalter kapanınca portal herkes için hemen kapanır.
 
 ## Kişileri davet etmek

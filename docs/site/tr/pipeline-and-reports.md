@@ -12,6 +12,8 @@ Sol menü dört bölümdür: üstte günlük işler (Ana sayfa, Görevlerim, Gel
 
 **Müşteriler → Fırsatlar** fırsatları aşamalarına göre sütunlarda gösterir. Bir kartı sürükleyip başka aşamaya bırak; **Kazanıldı** ya da **Kaybedildi** sütununa bırakınca fırsat kapanır. Üstteki şerit toplamları verir: açık fırsatlar, ağırlıklı tahmin (ileri aşamalar daha çok sayılır), bu ay kapanacaklar ve kazanılan.
 
+Menüde yok mu? Satış ya da İç Satış seçen şirkette baştan vardır; yoksa **Ayarlar → Kayıt türleri**'ni açıp **Fırsatları ekle**'ye tıklayın.
+
 Her fırsatın bir **türü** vardır: yeni iş, genişleme ya da yenileme. Aşamaları ve türleri Ayarlar → Kayıt türleri’nden kendine göre değiştirirsin; bir CRM bağlıysa aşamalar oradan gelir. **Tablo** düğmesi aynı fırsatları liste olarak gösterir. Seçim alanı olan her kayıt türü aynı şekilde pano olarak görüntülenebilir.
 
 ## Hedefler ve gidişat

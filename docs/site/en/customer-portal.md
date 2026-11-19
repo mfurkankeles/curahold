@@ -29,6 +29,8 @@ The portal runs on a separate domain: the app's sessions, cookies and API cannot
    - **What customers read for each column:** "Being reviewed" instead of "Waiting for legal", say. Left empty, the column's own name shows.
    - **Details customers see:** due date, priority, who is working on it.
 
+   Quicker, while no board is open yet: **Settings → Customer portal** lists your boards; click **Open … to customers** on the one where requests should land (they land in its first column).
+
 Private boards cannot be opened. Turning the switch off closes the portal for everyone, at once.
 
 ## Inviting people

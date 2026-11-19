@@ -16,7 +16,7 @@ import { AccountPicker } from './AccountPicker';
 
 export function PortalSettingsTab() {
   const { t, locale } = useI18n();
-  const { toast } = useStore();
+  const { toast, boards, reloadBoards } = useStore();
   const offer = useUndo();
   const [s, setS] = useState<PortalSettings | null>(null);
   const [failed, setFailed] = useState(false);
@@ -32,6 +32,18 @@ export function PortalSettingsTab() {
       .catch(() => setFailed(true));
   }, []);
   useEffect(load, [load]);
+  const openBoard = async (b: { id: string; columns: { key: string }[] }) => {
+    try {
+      await put(`/boards/${b.id}/portal`, { enabled: true, intake: b.columns[0]?.key ?? '', labels: {}, fields: ['due'] });
+      await reloadBoards();
+      // Only the list of boards changes: a brand being edited stays as it is.
+      const x = await get<PortalSettings>('/portal');
+      setS((prev) => (prev ? { ...prev, boards: x.boards } : x));
+      toast(t('common.saved'));
+    } catch (err) {
+      toast(err instanceof ApiFailure ? err.body.message : t('errors.server'), 'error');
+    }
+  };
   const brandChanged = !!s && !!form && JSON.stringify(form.brand) !== JSON.stringify(s.brand);
   const authChanged = !!s && !!form && JSON.stringify(form.auth) !== JSON.stringify(s.auth);
   const save = async (): Promise<boolean> => {
@@ -81,7 +93,18 @@ export function PortalSettingsTab() {
           <div className="field u-mt-12">
             <span className="field__label">{t('portal.admin.boards')}</span>
             {s.boards.length === 0 ? (
-              <span className="field__hint">{t('portal.admin.noBoards')}</span>
+              // No board open yet: open one right here (where requests land: its first column), one click each.
+              <>
+                <span className="field__hint">{t('portal.admin.noBoards')}</span>
+                <div className="chips-row u-mt-8">
+                  {boards.map((b) => (
+                    <button key={b.id} type="button" className="btn btn--small" onClick={() => void openBoard(b)}>
+                      <Icon name="plus" size={14} />
+                      {t('portal.admin.openBoard', { name: b.name })}
+                    </button>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="chips-row">
                 {s.boards.map((b) => (

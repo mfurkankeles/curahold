@@ -223,6 +223,8 @@ function prefillOf(provider: string, config: Record<string, any>): Record<string
 
 function crmFail(e: unknown): never {
   if (e instanceof CrmError) fail('crm_error', { message: e.message }, { reason: e.message, auth: e.auth });
+  // The address could not be reached at all (a mistyped site name, a network that blocks it): say so, not "our side".
+  if (e instanceof TypeError && /fetch failed|ENOTFOUND|ECONNREFUSED|EAI_AGAIN|network/i.test(`${e.message} ${String((e as { cause?: unknown }).cause ?? '')}`)) fail('crm_unreachable');
   throw e;
 }
 
