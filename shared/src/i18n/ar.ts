@@ -5215,12 +5215,6 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "يتطلب إنشاء مفتاح تحليلات صلاحية تصدير البيانات. اطلبها من مسؤول.",
   'analytics.pulls': "آخر عمليات القراءة",
   'analytics.pullsHint': "تُسجَّل كل قراءة من الموجز: من قرأ، وبأي مفتاح، وأي مجموعة بيانات، وكم صفًا.",
-  'analytics.col.when': "متى",
-  'analytics.col.who': "من",
-  'analytics.col.key': "المفتاح",
-  'analytics.col.dataset': "مجموعة البيانات",
-  'analytics.col.rows': "الصفوف",
-  'analytics.col.tool': "الأداة",
   'analytics.noPulls': "لم يُقرأ شيء من الموجز بعد.",
   'analytics.keyGone': "مفتاح ملغى",
   'analytics.inApp': "بتسجيل الدخول",
@@ -5252,4 +5246,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "برنامج نصي",
   'analytics.tool.other': "أداة أخرى",
   'analytics.tool.unknown': "غير معروف",
+  'analytics.rowsN': "{n} صف",
 };

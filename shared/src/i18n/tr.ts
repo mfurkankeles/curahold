@@ -5215,12 +5215,6 @@ export const tr: Record<MessageKey, string> = {
   'analytics.needExport': "Analiz anahtarı oluşturmak için veri dışa aktarma izni gerekir. Bir yöneticiye sor.",
   'analytics.pulls': "Son çekimler",
   'analytics.pullsHint': "Akıştan yapılan her okuma kaydedilir: kim, hangi anahtarla, hangi veri kümesini, kaç satır.",
-  'analytics.col.when': "Ne zaman",
-  'analytics.col.who': "Kim",
-  'analytics.col.key': "Anahtar",
-  'analytics.col.dataset': "Veri kümesi",
-  'analytics.col.rows': "Satır",
-  'analytics.col.tool': "Araç",
   'analytics.noPulls': "Akıştan henüz bir şey okunmadı.",
   'analytics.keyGone': "İptal edilmiş anahtar",
   'analytics.inApp': "Oturum açarak",
@@ -5252,4 +5246,5 @@ export const tr: Record<MessageKey, string> = {
   'analytics.tool.script': "Betik",
   'analytics.tool.other': "Başka bir araç",
   'analytics.tool.unknown': "Bilinmiyor",
+  'analytics.rowsN': "{n} satır",
 };

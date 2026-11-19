@@ -5215,12 +5215,6 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "برای ساختن کلید تحلیل، مجوز خروجی گرفتن از داده‌ها لازم است. از یک مدیر بخواهید.",
   'analytics.pulls': "خواندن‌های اخیر",
   'analytics.pullsHint': "هر خواندن از فید ثبت می‌شود: چه کسی، با کدام کلید، کدام مجموعه‌داده و چند ردیف.",
-  'analytics.col.when': "زمان",
-  'analytics.col.who': "چه کسی",
-  'analytics.col.key': "کلید",
-  'analytics.col.dataset': "مجموعه‌داده",
-  'analytics.col.rows': "ردیف‌ها",
-  'analytics.col.tool': "ابزار",
   'analytics.noPulls': "هنوز چیزی از فید خوانده نشده است.",
   'analytics.keyGone': "کلید باطل‌شده",
   'analytics.inApp': "با ورود به حساب",
@@ -5252,4 +5246,5 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "اسکریپت",
   'analytics.tool.other': "ابزار دیگر",
   'analytics.tool.unknown': "نامشخص",
+  'analytics.rowsN': "{n} ردیف",
 };

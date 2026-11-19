@@ -5215,12 +5215,6 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "분석 키를 만들려면 데이터 내보내기 권한이 필요합니다. 관리자에게 요청하세요.",
   'analytics.pulls': "최근 읽기",
   'analytics.pullsHint': "피드에서 읽을 때마다 기록됩니다: 누가, 어떤 키로, 어떤 데이터 세트를, 몇 행.",
-  'analytics.col.when': "시간",
-  'analytics.col.who': "사용자",
-  'analytics.col.key': "키",
-  'analytics.col.dataset': "데이터 세트",
-  'analytics.col.rows': "행 수",
-  'analytics.col.tool': "도구",
   'analytics.noPulls': "아직 피드에서 읽은 내용이 없습니다.",
   'analytics.keyGone': "폐기된 키",
   'analytics.inApp': "로그인 상태",
@@ -5252,4 +5246,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "스크립트",
   'analytics.tool.other': "기타 도구",
   'analytics.tool.unknown': "알 수 없음",
+  'analytics.rowsN': "{n}행",
 };

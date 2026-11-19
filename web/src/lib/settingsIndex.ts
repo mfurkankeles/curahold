@@ -9,7 +9,7 @@ export type SettingsTab =
   | 'company' | 'billing' | 'currencies'
   | 'fields' | 'records' | 'health' | 'rhythm' | 'playbooks'
   | 'people' | 'joining' | 'teams' | 'roles'
-  | 'connections' | 'sources' | 'automations' | 'developer' | 'portal'
+  | 'connections' | 'sources' | 'automations' | 'developer' | 'analytics' | 'portal'
   | 'signin' | 'sso' | 'support' | 'audit' | 'errors';
 
 export type SettingsGroup = 'company' | 'customers' | 'team' | 'connect' | 'security';
@@ -44,6 +44,7 @@ export const SETTINGS_TOPICS: SettingsTopic[] = [
   { key: 'sources', group: 'connect', icon: 'refresh', allowed: links },
   { key: 'automations', group: 'connect', icon: 'zap', allowed: (can) => can('automations.manage') },
   { key: 'developer', group: 'connect', icon: 'code', allowed: (can) => links(can) || users(can) },
+  { key: 'analytics', group: 'connect', icon: 'chart', allowed: (can) => can('data.export') || users(can) || org(can) },
   { key: 'portal', group: 'connect', icon: 'globe', allowed: org },
   { key: 'signin', group: 'security', icon: 'lock', allowed: org },
   { key: 'sso', group: 'security', icon: 'shield', allowed: org },

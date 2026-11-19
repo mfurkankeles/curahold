@@ -5215,12 +5215,6 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "分析キーの作成にはデータをエクスポートする権限が必要です。管理者に依頼してください。",
   'analytics.pulls': "最近の読み込み",
   'analytics.pullsHint': "フィードからの読み込みはすべて記録されます：誰が、どのキーで、どのデータセットを、何行。",
-  'analytics.col.when': "日時",
-  'analytics.col.who': "ユーザー",
-  'analytics.col.key': "キー",
-  'analytics.col.dataset': "データセット",
-  'analytics.col.rows': "行数",
-  'analytics.col.tool': "ツール",
   'analytics.noPulls': "フィードからの読み込みはまだありません。",
   'analytics.keyGone': "無効にしたキー",
   'analytics.inApp': "サインイン中",
@@ -5252,4 +5246,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "スクリプト",
   'analytics.tool.other': "その他のツール",
   'analytics.tool.unknown': "不明",
+  'analytics.rowsN': "{n} 行",
 };

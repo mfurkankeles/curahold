@@ -5215,12 +5215,6 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "创建分析密钥需要导出数据的权限。请联系管理员。",
   'analytics.pulls': "最近的读取",
   'analytics.pullsHint': "每次从数据源读取都会被记录：谁、用哪个密钥、哪个数据集、多少行。",
-  'analytics.col.when': "时间",
-  'analytics.col.who': "人员",
-  'analytics.col.key': "密钥",
-  'analytics.col.dataset': "数据集",
-  'analytics.col.rows': "行数",
-  'analytics.col.tool': "工具",
   'analytics.noPulls': "尚未从数据源读取任何内容。",
   'analytics.keyGone': "已吊销的密钥",
   'analytics.inApp': "已登录",
@@ -5252,4 +5246,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "脚本",
   'analytics.tool.other': "其他工具",
   'analytics.tool.unknown': "未知",
+  'analytics.rowsN': "{n} 行",
 };

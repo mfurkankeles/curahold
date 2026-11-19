@@ -5215,12 +5215,6 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "建立分析金鑰需要匯出資料的權限。請聯絡管理員。",
   'analytics.pulls': "最近的讀取",
   'analytics.pullsHint': "每次從資料來源讀取都會被記錄：誰、用哪把金鑰、哪個資料集、多少列。",
-  'analytics.col.when': "時間",
-  'analytics.col.who': "人員",
-  'analytics.col.key': "金鑰",
-  'analytics.col.dataset': "資料集",
-  'analytics.col.rows': "列數",
-  'analytics.col.tool': "工具",
   'analytics.noPulls': "尚未從資料來源讀取任何內容。",
   'analytics.keyGone': "已撤銷的金鑰",
   'analytics.inApp': "已登入",
@@ -5252,4 +5246,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "指令碼",
   'analytics.tool.other': "其他工具",
   'analytics.tool.unknown': "未知",
+  'analytics.rowsN': "{n} 列",
 };

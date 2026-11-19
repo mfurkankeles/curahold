@@ -9,6 +9,7 @@ import { SourceDetail, Sources } from '../components/Sources';
 import { AutomationList } from '../components/Automations';
 import { Connections } from '../components/Connections';
 import { DeveloperTab } from '../components/Developer';
+import { AnalyticsTab } from '../components/Analytics';
 import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
@@ -218,6 +219,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   {current === 'sources' && (sub ? <SourceDetail id={sub} key={sub} /> : <Sources />)}
                   {current === 'automations' && <AutomationList />}
                   {current === 'developer' && <DeveloperTab />}
+                  {current === 'analytics' && <AnalyticsTab />}
                   {current === 'audit' && <AuditTab />}
                   {current === 'errors' && <ErrorsTab />}
                 </>

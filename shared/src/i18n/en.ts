@@ -5230,12 +5230,6 @@ export const en = {
   'analytics.needExport': "Making an analytics key needs the permission to export data. Ask an administrator.",
   'analytics.pulls': "Recent reads",
   'analytics.pullsHint': "Every read from the feed is written down: who, with which key, which dataset and how many rows.",
-  'analytics.col.when': "When",
-  'analytics.col.who': "Who",
-  'analytics.col.key': "Key",
-  'analytics.col.dataset': "Dataset",
-  'analytics.col.rows': "Rows",
-  'analytics.col.tool': "Tool",
   'analytics.noPulls': "Nothing has been read from the feed yet.",
   'analytics.keyGone': "Revoked key",
   'analytics.inApp': "Signed in",
@@ -5267,6 +5261,7 @@ export const en = {
   'analytics.tool.script': "Script",
   'analytics.tool.other': "Other tool",
   'analytics.tool.unknown': "Unknown",
+  'analytics.rowsN': "{n} rows",
 } as const;
 
 export type MessageKey = keyof typeof en;

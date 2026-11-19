@@ -5215,12 +5215,6 @@ export const he: Partial<Record<MessageKey, string>> = {
   'analytics.needExport': "כדי ליצור מפתח אנליטיקה צריך הרשאה לייצוא נתונים. פנו למנהל.",
   'analytics.pulls': "קריאות אחרונות",
   'analytics.pullsHint': "כל קריאה מהפיד נרשמת: מי, באיזה מפתח, איזה מערך נתונים וכמה שורות.",
-  'analytics.col.when': "מתי",
-  'analytics.col.who': "מי",
-  'analytics.col.key': "מפתח",
-  'analytics.col.dataset': "מערך נתונים",
-  'analytics.col.rows': "שורות",
-  'analytics.col.tool': "כלי",
   'analytics.noPulls': "עדיין לא נקרא דבר מהפיד.",
   'analytics.keyGone': "מפתח שבוטל",
   'analytics.inApp': "מחובר",
@@ -5252,4 +5246,5 @@ export const he: Partial<Record<MessageKey, string>> = {
   'analytics.tool.script': "סקריפט",
   'analytics.tool.other': "כלי אחר",
   'analytics.tool.unknown': "לא ידוע",
+  'analytics.rowsN': "{n} שורות",
 };
