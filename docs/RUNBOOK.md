@@ -127,14 +127,26 @@ After any rotation: run the deploy verification checklist, and record the date a
 - R2 objects (attachments, logos): no versioning or cross-region copy configured **[not yet in place]**; enable R2 object
   versioning / replication or a periodic `rclone` copy to a second provider.
 
-**Targets from QUALITY.md that are not in place yet [not yet in place]**
+**Scripted backup and the restore drill (free; `scripts/backup/`)**
 
-- A weekly **encrypted off-site copy** of the database.
-- A written, **rehearsed** restore, repeated at least quarterly. This section is the written part; the rehearsal is still to do.
-- **Point-in-time recovery**: decided to switch on with the first paying customer (about $105 per month fixed). Until then the
-  recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
+- `scripts/backup/backup.ts`: `pg_dump` (custom format, `public` schema) of `BACKUP_DATABASE_URL`, encrypted with
+  `BACKUP_PASSPHRASE` (openssl AES-256, PBKDF2), plus a manifest (exact row count per table, extensions, last
+  migration, SHA-256). Weekly off-site copy: put the two files in a second place, e.g. an R2 bucket
+  `curahold-backups` (`npx wrangler r2 object put curahold-backups/<file> --file <file> --remote`; R2's free tier is
+  10 GB) and a copy on the owner's computer. Keep the passphrase in the password manager, never beside the file.
+- `scripts/backup/restore.ts <file>`: into an **empty** database only (refuses one with tables): checks the
+  checksum, creates the request roles and extensions, `pg_restore`, then verifies every table's row count against
+  the manifest and the row-level security gates (RLS on, no privileges without a policy, SECURITY DEFINER search
+  paths, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything differs.
+- `scripts/backup/restore-drill.ts` (`DRILL_PG=<throwaway server>`): build → back up → **wipe** → restore → verify,
+  timed. **Rehearsed 19 Nov 2026 on local Postgres 16:** sample install (144 tables) passed in 4.1 s (backup 0.4 s,
+  restore 1.4 s, verify 0.1 s); the large test company (473 MB, 90 tables, 1.29 million rows) backed up in 15 s
+  (72 MB encrypted) and restored + verified in 161 s; `tests/rls.test.ts` passed on the same server. Repeat it
+  quarterly and after big schema changes, and once against a copy of production (Supabase "restore to a new project").
+- Point-in-time recovery: decided to switch on with the first paying customer (about $105 per month fixed). Until
+  then the recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
 
-**Restore procedure (draft; rehearse it on a scratch project before you need it)**
+**Restore procedure (rehearsed with the drill above; repeat on a scratch project before you need it)**
 
 1. Declare an incident; stop writes if corruption is ongoing (put a maintenance route in front, or `wrangler rollback` is not enough
    to stop writes: use a Cloudflare WAF/maintenance rule on `/api/*`).
