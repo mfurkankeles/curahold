@@ -306,8 +306,12 @@ async function main() {
   let productBoard: Promise<string> | null = null;
   const findProduct = () =>
     (productBoard ??= server
-      .call<{ boards: { id: string; columns: { key: string }[] }[] }>('GET', '/api/boards')
-      .then((r) => r.boards.find((b) => b.columns.some((c) => c.key === 'code_review'))?.id ?? '')
+      .call<{ boards: { id: string; columns: { key: string }[]; form?: unknown }[] }>('GET', '/api/boards')
+      .then((r) => {
+        // The product team's own board (with its sprints), not the Product department's request desk, which has an intake form.
+        const pm = r.boards.filter((b) => b.columns.some((c) => c.key === 'code_review'));
+        return (pm.find((b) => !b.form) ?? pm[0])?.id ?? '';
+      })
       .catch(() => ''));
   void findProduct();
   // Moving between screens for a tour: the portal keeps its own little router.
