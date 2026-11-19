@@ -12,6 +12,8 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
 import { MailReply, isMailboxProvider } from './MailReply';
+import { CalendarPlan, WhatsAppReply } from './ChannelActions';
+import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
 import { normalizeLocale } from '../../../shared/src/i18n';
@@ -283,7 +285,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
       .then((r) => {
         if (!live) return;
         const map: Record<string, string> = {};
-        for (const cn of r.connections) if (cn.kind === 'source' && isMailboxProvider(cn.provider) && cn.status !== 'disabled' && !map[cn.provider]) map[cn.provider] = cn.id;
+        for (const cn of r.connections) if (cn.kind === 'source' && (isMailboxProvider(cn.provider) || ['whatsapp', 'gcal', 'outlookcal'].includes(cn.provider)) && cn.status !== 'disabled' && !map[cn.provider]) map[cn.provider] = cn.id;
         setMailboxConns(map);
       })
       .catch(() => undefined);
@@ -401,6 +403,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           <p className="tl__with">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
         )}
         {a.kind === 'email' && a.externalId && mailboxConns[a.source] && <MailReply connectionId={mailboxConns[a.source]} accountId={accountId} activity={a} onSent={load} />}
+        {a.source === 'whatsapp' && a.externalId && mailboxConns.whatsapp && !a.authorId && <WhatsAppReply connectionId={mailboxConns.whatsapp} accountId={accountId} activity={a} onSent={load} />}
       </div>
     </li>
   );
@@ -603,6 +606,11 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           </button>
         </div>
       </div>
+      {canReplyMail && (mailboxConns.gcal || mailboxConns.outlookcal) && (
+        <div className="toolbar u-mb-8">
+          <CalendarPlan connectionId={mailboxConns.gcal ?? mailboxConns.outlookcal} app={PROVIDER_NAMES[mailboxConns.gcal ? 'gcal' : 'outlookcal']} accountId={accountId} guests={[]} />
+        </div>
+      )}
       {canWrite &&
         (!composing && !text ? (
           <button

@@ -19,21 +19,26 @@ import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES, useConnections } from './Connections';
 import { Confirm, Dialog, RowMenu, onTabKeys } from './ui';
 import { AccountingFile, AccountingMatches, AccountingStart, AccountingTiles } from './Accounting';
+import { InboundHooks } from './InboundHooks';
 
 /** What the screens call the app on the other side; in the try-it demo, the CRM the pretend one stands in for. */
 const appName = (c: { provider: string; standsFor?: string | null }) => PROVIDER_NAMES[c.standsFor ?? c.provider] ?? c.provider;
 
 const DYNAMICS_HINT = 'https://yourcompany.crm4.dynamics.com';
-const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo'];
+const SOURCES = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'odoocrm', 'gsheets', 'excel', 'demo'];
 /** Connected with a key the administrator brings; the newest connectors, marked as such. */
-const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell'];
-const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'front', 'jsm'];
+const KEYED_CRMS = ['bitrix24', 'freshsales', 'zendesksell', 'odoocrm'];
+const SUPPORT = ['zendesk', 'freshdesk', 'intercom', 'front', 'jsm', 'zohodesk'];
 /** Data warehouses: rows from a query, connected with a service-account / key-pair key. */
 const WAREHOUSES = ['bigquery', 'snowflake'];
 /** Mailboxes: recent mail becomes activities on the matching customer, and a reply can be sent. */
 const MAILBOXES = ['gmail', 'outlook'];
 /** Event streams pushed into Curahold at a signed inbound address. */
 const EVENTS = ['segment'];
+/** Calendars: past meetings come in as meetings on the customer, a planned meeting goes out. */
+const CALENDARS = ['gcal', 'outlookcal'];
+/** Messaging apps with the company's own account: messages in at a signed callback, replies out. */
+const MESSAGES = ['whatsapp'];
 /** Developer tools: Jira syncs; GitHub and GitLab link branches, pull requests and commits to tasks. */
 const DEV_TOOLS = ['jira'];
 /** Fields typed as several lines. */
@@ -81,6 +86,33 @@ export function Sources() {
   const warehouses = data.providers.filter((p) => p.kind === 'source' && WAREHOUSES.includes(p.id));
   const mailboxes = data.providers.filter((p) => p.kind === 'source' && MAILBOXES.includes(p.id));
   const events = data.providers.filter((p) => p.kind === 'source' && EVENTS.includes(p.id));
+  const calendars = data.providers.filter((p) => p.kind === 'source' && CALENDARS.includes(p.id));
+  const messages = data.providers.filter((p) => p.kind === 'source' && MESSAGES.includes(p.id));
+  /** A group of plain tiles: a heading, a line, and one Connect button per tool. */
+  const group = (list: ProviderInfo[], head: MessageKey, hint: MessageKey, tour: string) =>
+    list.length > 0 && (
+      <>
+        <h3 className="section__head u-mt-20">{t(head)}</h3>
+        <p className="field__hint">{t(hint)}</p>
+        <div className="tiles" data-tour={tour}>
+          {list.map((p) => (
+            <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
+              <div className="tile__head">
+                <span className="tile__badge" aria-hidden="true">
+                  {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
+                </span>
+                <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
+              </div>
+              <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
+              <button className="btn btn--small" onClick={() => connect(p)}>
+                <Icon name="plug" size={16} />
+                {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+              </button>
+            </div>
+          ))}
+        </div>
+      </>
+    );
   const jiraTool = data.providers.find((p) => p.kind === 'source' && DEV_TOOLS.includes(p.id));
   const mine = data.connections.filter((c) => c.kind === 'source');
   const broken = mine.filter((c) => c.status === 'error');
@@ -180,13 +212,14 @@ export function Sources() {
         ))}
       </div>
       <AccountingTiles providers={data.providers} />
+      <InboundHooks />
       <h3 className="section__head u-mt-20">
         {t('support.add')}
       </h3>
       <p className="field__hint">{t('support.addHint')}</p>
       <div className="tiles">
         {support.map((p) => (
-          <div className="tile" key={p.id} data-state="ready">
+          <div className="tile" key={p.id} data-state="ready" data-tour={`crm-${p.id}`}>
             <div className="tile__head">
               <span className="tile__badge" aria-hidden="true">
                 {(PROVIDER_NAMES[p.id] ?? p.id)[0]}
@@ -194,10 +227,16 @@ export function Sources() {
               <strong>{PROVIDER_NAMES[p.id] ?? p.id}</strong>
             </div>
             <p className="field__hint tile__line">{t(`support.what.${p.id}` as MessageKey)}</p>
-            <button className="btn btn--small" onClick={() => connect(p)}>
-              <Icon name="plug" size={16} />
-              {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
-            </button>
+            {p.available ? (
+              <button className="btn btn--small" onClick={() => connect(p)}>
+                <Icon name="plug" size={16} />
+                {t('conn.connect', { app: PROVIDER_NAMES[p.id] ?? p.id })}
+              </button>
+            ) : IN_DEMO ? (
+              <DemoConnect app={PROVIDER_NAMES[p.id] ?? p.id} />
+            ) : (
+              <p className="field__hint tile__line">{t('conn.notOnServer')}</p>
+            )}
           </div>
         ))}
         <div className="tile" data-state="ready">
@@ -270,6 +309,8 @@ export function Sources() {
           </div>
         </>
       )}
+      {group(calendars, 'calendar.add' as MessageKey, 'calendar.addHint' as MessageKey, 'calendars')}
+      {group(messages, 'whatsapp.add' as MessageKey, 'whatsapp.addHint' as MessageKey, 'messages')}
       {events.length > 0 && (
         <>
           <h3 className="section__head u-mt-20">
@@ -485,7 +526,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean; mailbox?: boolean; inbound?: boolean; inboundUrl?: string | null; accounting?: boolean };
+  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean; mailbox?: boolean; calendar?: boolean; inbound?: boolean; inboundUrl?: string | null; verifyToken?: string | null; accounting?: boolean };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -504,30 +545,31 @@ interface Draft extends ObjectMap {
 
 type Step = 'file' | 'objects' | 'fields' | 'start';
 
-/** An event stream (Segment): the address to give it, and how it is signed. Nothing is pulled or mapped. */
+/** An event stream (Segment) or WhatsApp: the address to give it, and how it is signed. Nothing is pulled or mapped. */
 function InboundPanel({ d }: { d: Detail }) {
   const { t } = useI18n();
   const { toast } = useStore();
   const url = d.connection.inboundUrl ?? '';
-  const copy = () => void navigator.clipboard?.writeText(url).then(() => toast(t('devtools.copied')));
+  const wa = d.connection.provider === 'whatsapp';
+  const copy = (text: string) => void navigator.clipboard?.writeText(text).then(() => toast(t('devtools.copied')));
+  const row = (label: string, value: string, tour?: string) => (
+    <label className="field u-display-block u-mt-8" data-tour={tour}>
+      <span className="field__label">{label}</span>
+      <span className="u-display-flex u-gap-8">
+        <input className="input" readOnly value={value} onFocus={(e) => e.currentTarget.select()} />
+        <button className="btn btn--small" onClick={() => copy(value)}>
+          {t('devtools.copy')}
+        </button>
+      </span>
+    </label>
+  );
   return (
     <div className="card u-mt-16">
-      <h3 className="section__head">{t('segment.title' as MessageKey)}</h3>
-      <p className="field__hint">{t('segment.how' as MessageKey)}</p>
-      {url && (
-        <label className="field u-display-block u-mt-8">
-          <span className="field__label">{t('segment.url' as MessageKey)}</span>
-          <span className="u-display-flex u-gap-8">
-            <input className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
-            <button className="btn btn--small" onClick={copy}>
-              {t('devtools.copy')}
-            </button>
-          </span>
-        </label>
-      )}
-      <p className="field__hint u-mt-8">
-        {t('segment.secretNote' as MessageKey)}
-      </p>
+      <h3 className="section__head">{t((wa ? 'whatsapp.title' : 'segment.title') as MessageKey)}</h3>
+      <p className="field__hint">{t((wa ? 'whatsapp.how' : 'segment.how') as MessageKey)}</p>
+      {url && row(t((wa ? 'whatsapp.url' : 'segment.url') as MessageKey), url, wa ? 'wa-url' : undefined)}
+      {wa && d.connection.verifyToken && row(t('whatsapp.verify' as MessageKey), d.connection.verifyToken, 'wa-verify')}
+      <p className="field__hint u-mt-8">{t((wa ? 'whatsapp.cost' : 'segment.secretNote') as MessageKey)}</p>
     </div>
   );
 }
@@ -824,13 +866,13 @@ function DevHookDialog({ host, onClose }: { host: DevHost; onClose: () => void }
               </button>
             </label>
             <label className="field">
-              <span className="field__label">{t(host === 'github' ? 'devtools.hook.secretGithub' : 'devtools.hook.secretGitlab')}</span>
+              <span className="field__label">{t(host === 'github' ? 'devtools.hook.secretGithub' : host === 'azuredevops' ? ('devtools.hook.secretAzure' as MessageKey) : 'devtools.hook.secretGitlab')}</span>
               <input className="input" readOnly value={hook.secret} onFocus={(e) => e.currentTarget.select()} />
               <button type="button" className="btn btn--quiet btn--small" onClick={() => copy(hook.secret!)}>
                 {t('devtools.copy')}
               </button>
             </label>
-            <p className="field__hint">{t(host === 'github' ? 'devtools.hook.eventsGithub' : 'devtools.hook.eventsGitlab')}</p>
+            <p className="field__hint">{t(host === 'github' ? 'devtools.hook.eventsGithub' : host === 'azuredevops' ? ('devtools.hook.eventsAzure' as MessageKey) : 'devtools.hook.eventsGitlab')}</p>
             <p className="field__hint">{t('devtools.hook.linked', { n: hook.links })}</p>
           </>
         )}
