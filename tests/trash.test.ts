@@ -13,6 +13,8 @@ import { Client, login, picture as pictureOf, setup, type Env } from './helpers'
 
 const picture = (orgId = env.a.orgId) => pictureOf(env, orgId);
 
+/** A customer's onboarding plan and everything inside it (db/migrations/0200_onboarding.sql). */
+const OB_TABLES = ['onboarding_plans', 'onboarding_steps', 'onboarding_people', 'onboarding_goals', 'onboarding_issues', 'onboarding_fields', 'onboarding_sites', 'onboarding_metrics'];
 let env: Env;
 let ada: Client; // administrator
 let mert: Client; // manager: may delete customers and anyone's tasks
@@ -80,6 +82,15 @@ describe('a deleted customer', () => {
     await sys(`insert into promises (org_id, account_id, body, record_id, due_date) values ($1, $2, 'Send the renewal draft', $3, current_date + 7)`, [env.a.orgId, velto, deal.id]);
     await sys(`insert into handovers (org_id, account_id, source_kind, source_id, source_name, summary) values ($1, $2, 'record', $3, 'Velto renewal', 'Won; kick-off next week.')`, [env.a.orgId, velto, deal.id]);
     await sys(`insert into request_links (org_id, story_id, account_id, source, note) values ($1, $2, $3, 'account', 'Asked for a renewal reminder')`, [env.a.orgId, t.id, velto]);
+    // Its onboarding plan, with something of every kind inside, a step's file, and an issue linked to the task (the link goes, the task stays).
+    const ob = (await zeynep.post('/api/onboarding-plans', { accountId: velto, templateId: 'multisite' })).json.plan;
+    await zeynep.post(`/api/onboarding-plans/${ob.id}/people`, { side: 'customer', name: 'Mila Novak', role: 'sponsor' });
+    await zeynep.post(`/api/onboarding-plans/${ob.id}/goals`, { title: 'Live in every depot' });
+    await zeynep.post(`/api/onboarding-plans/${ob.id}/issues`, { title: 'Depot list missing' });
+    await sys(`update onboarding_steps set task_id = $2 where plan_id = $1 and key = 'training'`, [ob.id, t.id]);
+    const obFile = new FormData();
+    obFile.append('file', new File(['depots'], 'depots.csv', { type: 'text/csv' }));
+    expect((await zeynep.req('POST', `/api/onboarding-steps/${ob.steps.find((x: any) => x.key === 'details').id}/files`, obFile)).status).toBe(201);
     await env.settle();
 
     before = await picture();
@@ -96,7 +107,7 @@ describe('a deleted customer', () => {
     expect((await ada.get(`/api/accounts/${velto}`)).status).toBe(404);
     expect((await ada.get(`/api/records/${deal.id}`)).status).toBe(404);
     const during = await picture();
-    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links']) {
+    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', ...OB_TABLES]) {
       expect(during[table].length, table).toBeLessThan(before[table].length);
     }
     expect((during.tasks as any[]).some((k) => k.account_id === velto || k.record_id === deal.id)).toBe(false);
@@ -106,7 +117,8 @@ describe('a deleted customer', () => {
     // The list says what it is, what went with it and how long it stays.
     const [item] = await trashOf(mert);
     expect(item).toMatchObject({ id: trashId, kind: 'account', label: 'Velto Mobility', count: 1, ids: [velto], deletedBy: env.a.ids.mert });
-    expect(item.contents).toMatchObject({ records: 2, comments: 1, files: 1, entries: 1, portalPeople: 1, tasksLinked: linked });
+    // files: the deal's and the onboarding step's.
+    expect(item.contents).toMatchObject({ records: 2, comments: 1, files: 2, entries: 1, portalPeople: 1, tasksLinked: linked });
     const days = (Date.parse(item.purgeAt) - Date.parse(item.deletedAt)) / 86_400_000;
     expect(Math.round(days)).toBe(30);
     // The file itself is still in storage: it has to be there when the customer comes back.
@@ -480,7 +492,7 @@ describe('the schema stays restorable', () => {
     const blocking = await sys(`select child, parent from app_trash_fks() where rule in ('a', 'r') and parent = any ($1::text[])`, [reached.map((r) => r.t)]);
     expect(blocking).toEqual([]);
     // What the tests above put a row in: a table reached by a delete but never filled here would not be proven.
-    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
+    const proven = new Set([...OB_TABLES, 'accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
     expect(reached.map((r) => r.t).filter((t) => !proven.has(t))).toEqual([]);
   });
 });

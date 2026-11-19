@@ -24,6 +24,7 @@ import { day, iso } from '../lib/mappers';
 import { enqueue, kick } from '../lib/notify';
 import { applyPlan, renewalField, valueField } from '../lib/playbooks';
 import { runTaskMoved } from '../lib/automations';
+import { startPlanForHandover } from '../lib/onboarding';
 import { body, isoDate, param, uuid } from '../lib/validate';
 
 export const handoffRoutes = new Hono<AppEnv>();
@@ -332,6 +333,8 @@ handoffRoutes.post('/handovers/:id/confirm', async (c) => {
       [id, input.ownerId, planId ?? null, input.summary ?? null, auth.userId],
     );
     await enqueue(q, [{ orgId: org.id, userId: input.ownerId, kind: 'handover_owner', actorId: auth.userId, data: { account: account.name, accountId: h.account_id, deal: h.source_name } }]);
+    // The draft onboarding plan the card opened starts now, owned by the new owner.
+    await startPlanForHandover(q, org.id, id, input.ownerId, null, todayOf(c));
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'handover.confirmed', entity: 'account', entityId: h.account_id, meta: { owner: input.ownerId, plan: planId ?? null, tasks: tasks.length } });
     const [row] = await q.query(`${HANDOVER_SQL} where h.id = $1`, [id]);
     return { row, tasks: tasks.length };

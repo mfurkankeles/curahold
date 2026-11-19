@@ -102,7 +102,7 @@ export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
-const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'handover', 'handover_owner']);
+const EMAIL_KINDS = new Set(['assigned', 'mentioned', 'digest', 'weekly', 'stale', 'escalated', 'automation', 'join_request', 'sync_failed', 'handover', 'handover_owner', 'onboarding_mail']);
 const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   assigned: 'assigned',
   mentioned: 'mentioned',
@@ -193,6 +193,12 @@ export function render(ctx: RenderCtx): ChatMessage {
       return { ...base, title: t('notify.automation', { rule: data.rule ?? '' }), body: [data.message, task?.title ?? data.account].filter(Boolean).join('\n') };
     case 'handover':
       return { ...base, title: t('notify.handover', { account: data.account ?? '' }), body: t('notify.handoverBody', { deal: data.deal ?? '' }), url: `${ctx.base}/accounts/${data.accountId}` };
+    case 'onboarding':
+    case 'onboarding_mail': {
+      const step = data.stepKey ? t(`ob.step.${data.stepKey}.title` as MessageKey) : (data.step ?? '');
+      const url = data.kind === 'self' ? `${ctx.base}/onboarding` : `${ctx.base}/onboarding/plans/${data.planId}`;
+      return { ...base, title: t(data.what === 'stalled' ? 'notify.obStalled' : 'notify.obTurn', { step }), body: data.plan ?? '', url };
+    }
     case 'handover_owner':
       return { ...base, title: t('notify.handoverOwner', { account: data.account ?? '', actor }), body: data.deal ?? '', url: `${ctx.base}/accounts/${data.accountId}` };
     case 'followed':

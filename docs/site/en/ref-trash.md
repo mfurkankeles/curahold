@@ -1,7 +1,7 @@
 ---
 title: Reference: trash
 section: reference
-order: 27
+order: 28
 summary: What was deleted in the last 30 days: listing it, putting it back, deleting it for good.
 ---
 # Reference: trash

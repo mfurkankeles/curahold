@@ -1,7 +1,7 @@
 ---
 title: Başvuru: çöp kutusu
 section: reference
-order: 27
+order: 28
 summary: Son 30 günde silinenler: listeleme, geri alma, kalıcı silme.
 ---
 # Başvuru: çöp kutusu

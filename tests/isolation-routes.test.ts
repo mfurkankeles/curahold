@@ -65,6 +65,15 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/promises\/:id/, 'promises'],
   [/^\/handovers\/:id/, 'handovers'],
   [/^\/request-links\/:id/, 'request_links'],
+  [/^\/onboarding-plans\/:id/, 'onboarding_plans'],
+  [/^\/onboarding-steps\/:id/, 'onboarding_steps'],
+  [/^\/onboarding-people\/:id/, 'onboarding_people'],
+  [/^\/onboarding-goals\/:id/, 'onboarding_goals'],
+  [/^\/onboarding-issues\/:id/, 'onboarding_issues'],
+  [/^\/onboarding-fields\/:id/, 'onboarding_fields'],
+  [/^\/onboarding-sites\/:id/, 'onboarding_sites'],
+  [/^\/onboarding-metrics\/:id/, 'onboarding_metrics'],
+  [/^\/onboarding-templates\/:id/, 'onboarding_templates'],
 ];
 
 /** Addresses whose parameter is not the id of something a company owns; each with the reason it is not tried here. */
@@ -77,6 +86,7 @@ const NOT_BY_ID: Record<string, string> = {
   'POST /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
   'DELETE /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
   'DELETE /admin/domains/:domain': 'a domain name, checked against the caller’s own company',
+  'GET /share/onboarding/:secret': 'opened with the secret of a shared report link, not a session; the secret is looked up inside the host’s own company (tests/onboarding-hub.test.ts)',
   'GET /calendar/:file': 'opened with a personal calendar link, not a session (tests/notifications.test.ts)',
   'GET /auth/oauth/:provider/start': 'the name of a sign-in provider',
   'POST /setup-health/:id/confirm': 'the name of a setup check, kept for the caller’s own company (tests/setup-health.test.ts)',
@@ -204,6 +214,12 @@ beforeAll(async () => {
   await sys(`insert into promises (org_id, account_id, body) values ($1, $2, 'A promise')`, [org, account]);
   await sys(`insert into handovers (org_id, account_id, source_kind, source_id) values ($1, $2, 'task', $3)`, [org, account, task.id]);
   await sys(`insert into request_links (org_id, story_id, account_id, source, shipped_at) values ($1, $2, $3, 'account', now())`, [org, task.id, account]);
+  // A customer's onboarding plan with something of every kind in it (a step, a person, a goal, an issue, a mapping row, a site, a metric), and a template.
+  const planId = (await lena.post('/api/onboarding-plans', { accountId: account, templateId: 'multisite' })).json.plan.id;
+  await lena.post(`/api/onboarding-plans/${planId}/people`, { side: 'customer', name: 'Someone There', role: 'sponsor' });
+  await lena.post(`/api/onboarding-plans/${planId}/goals`, { title: 'Live by spring' });
+  await lena.post(`/api/onboarding-plans/${planId}/issues`, { title: 'A question' });
+  await ada.post('/api/onboarding-templates', { name: 'A template', from: 'standard' });
   await sys(`insert into checklist_templates (org_id, name, items) values ($1, 'A checklist', '[]')`, [org]);
   await sys(`insert into plan_templates (org_id, name, board_id, tasks) values ($1, 'A plan', $2, '[]')`, [org, board]);
   await sys(`insert into api_tokens (org_id, user_id, kind, name, token_hash, prefix) values ($1, $2, 'key', 'A key', 'not-a-real-hash', 'chk_test')`, [org, lenaId]);
@@ -247,6 +263,9 @@ const OVERRIDES: Record<string, (own: Own) => { body?: unknown; query?: string }
   'PUT /sprints/:id/items': (o) => ({ body: { taskIds: [o.otherTask] } }),
   'PUT /sprints/:id/state': () => ({ body: { state: 'active' } }),
   'PUT /boards/:id/portal': () => ({ body: { enabled: true, intake: 'todo' } }),
+  'POST /onboarding-plans/:id/people': () => ({ body: { side: 'customer', name: 'Someone' } }),
+  'POST /onboarding-plans/:id/steps': () => ({ body: { title: 'A step', phase: 'setup', side: 'vendor' } }),
+  'PATCH /onboarding-metrics/:id': () => ({ body: { current: 1 } }),
 };
 
 describe('every address that names a thing by id', () => {
@@ -449,8 +468,9 @@ describe('every role × every address', () => {
     expect(wrong, 'role × address mismatches').toEqual([]);
     expect(viewerWrote, 'writes a read-only seat could make that are not in VIEWER_WRITES').toEqual([]);
     const after = await picture(env, org);
-    // users: last seen; roles: the one made above; subscriptions: reading the plan starts the trial row the first time (billing/service.ts).
-    for (const table of Object.keys(before)) if (!['users', 'roles', 'subscriptions'].includes(table)) expect(after[table], table).toEqual(before[table]);
+    // users: last seen; roles: the one made above; subscriptions: reading the plan starts the trial row the first time (billing/service.ts);
+    // onboarding_*: reading a plan moves it on from what the product sees, and the company's own plan opens on its administrator's first visit (lib/onboarding.ts).
+    for (const table of Object.keys(before)) if (!['users', 'roles', 'subscriptions'].includes(table) && !table.startsWith('onboarding_')) expect(after[table], table).toEqual(before[table]);
     expect(calls).toBeGreaterThan(routes.length * 2);
     // Every pinned self-service write is still an address (a removed one leaves the list).
     for (const key of VIEWER_WRITES) expect(routes.some((r) => `${r.method} ${r.path}` === key), key).toBe(true);

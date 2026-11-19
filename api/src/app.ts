@@ -30,6 +30,7 @@ import { segmentInboundRoutes } from './routes/segment';
 import { jiraRoutes } from './routes/jira';
 import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
+import { onboardingPlanRoutes, onboardingShareRoutes } from './routes/onboardingPlans';
 import { platformRoutes } from './routes/admin-platform';
 import { consentEventRoutes, consentRoutes } from './routes/consent';
 import { adminRoutes } from './routes/admin';
@@ -308,6 +309,8 @@ export function createApp(deps: Deps) {
   app.route('/api', segmentInboundRoutes);
   // Curahold support: the entry link, its session, the desk's file links.
   app.route('/api', supportEntry);
+  // A shared onboarding progress report, opened with its secret link (no session).
+  app.route('/api', onboardingShareRoutes);
 
   // ---------------------------------------------------------------- person
   app.use('/api/*', async (c, next) => {
@@ -464,6 +467,7 @@ export function createApp(deps: Deps) {
   app.route('/api', billingRoutes);
   app.route('/api', subscriptionRoutes);
   app.route('/api', onboardingRoutes);
+  app.route('/api', onboardingPlanRoutes);
   app.route('/api', ssoAdminRoutes);
   app.route('/api', platformRoutes);
   app.route('/api', consentRoutes);

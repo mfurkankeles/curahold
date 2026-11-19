@@ -245,6 +245,29 @@ export function createPortalApp(deps: Deps) {
     return c.json({ task: await taskOf(c, taskId) });
   });
 
+  // ------------------------------------------------------------ onboarding (db/migrations/0200_onboarding.sql)
+  // The customer's own plans, in the company's colours; they tick their own manual
+  // steps, answer a step's form (written to their record), say a mapping row looks
+  // right, and raise an issue for the company's side.
+  app.get('/papi/onboarding', async (c) => c.json({ plans: (await one(c, 'select portal_onboarding() as p', [])) ?? [] }));
+  app.post('/papi/onboarding/:id/:kind', async (c) => {
+    const kind = c.req.param('kind');
+    if (!['tick', 'check', 'issue', 'answer'].includes(kind)) fail('not_found');
+    const raw = await c.req.json().catch(() => ({}));
+    const parsed = z.record(z.string(), z.string().max(4000)).safeParse(raw);
+    if (!parsed.success) fail('validation', { fields: '(body)' }, { fields: ['(body)'] });
+    const out = await one(c, 'select portal_onboarding_act($1, $2, $3) as r', [kind, id(c, 'id'), JSON.stringify(parsed.data)]);
+    // The plan's owner hears of a new issue in the app.
+    if (kind === 'issue' && out?.id) {
+      const org = c.get('org');
+      await deps.db.system(async (q) => {
+        const [p] = await q.query(`select p.id, p.name, p.owner_id, p.account_id from onboarding_issues i join onboarding_plans p on p.id = i.plan_id where i.id = $1 and i.org_id = $2`, [out.id, org.id]);
+        if (p?.owner_id) await enqueue(q, [{ orgId: org.id, userId: p.owner_id, kind: 'onboarding', data: { what: 'issue', plan: p.name, planId: p.id, kind: 'client', accountId: p.account_id, step: parsed.data!.title ?? '' } }]);
+      });
+    }
+    return c.json({ plans: (await one(c, 'select portal_onboarding() as p', [])) ?? [] });
+  });
+
   // A file is always a download, never shown in the page, and can run nothing.
   app.get('/papi/files/:id', async (c) => {
     const f = await one(c, 'select portal_file($1) as f', [id(c, 'id')]);

@@ -3,6 +3,7 @@
 // and data clean-up (KVKK/GDPR: nothing is kept longer than it is useful).
 import type { Deps } from '../context';
 import { localDate, localHour, runScheduledAutomations, sweepRecordEvents } from './automations';
+import { sweepOnboarding } from './onboarding';
 import { day } from './mappers';
 import { deliverPending, enqueue, prefsOf } from './notify';
 import { runScheduledSyncs } from '../sync/engine';
@@ -141,6 +142,8 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     console.error('[curahold] nudges failed', e);
     return { stale: 0, escalated: 0 };
   });
+  // Onboarding plans move on from what the product sees, and whoever's turn it is hears it (in the app).
+  await sweepOnboarding(deps, now).catch((e) => console.error('[curahold] onboarding sweep failed', e));
   let delivered = 0;
   for (let i = 0; i < 20; i++) {
     const n = await deliverPending(deps, 100);

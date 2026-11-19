@@ -30,7 +30,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/manifest.webmanifest/…` | 1 | The installable-app manifest. |
 | `/metrics/…` | 1 | The operator-only platform metrics (the owner dashboard); not part of a company's API. |
 | `/oauth/…` | 0 | The consent screen for apps and AI assistants; see "AI connector and OAuth". |
-| `/onboarding/…` | 2 | A new company's own setup checklist, used in the browser after sign-up. |
+| `/onboarding/…` | 6 | A new company's own setup checklist, used in the browser after sign-up. |
 | `/org/…` | 1 | The company's public sign-in details. |
 | `/platform/…` | 4 | The operator-only owner console (customers, plans, billing status, overview); not part of a company's API. |
 | `/portal/…` | 7 | Managing who can sign in to the customer portal. |

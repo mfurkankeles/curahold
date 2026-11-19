@@ -19,6 +19,7 @@ import { addDays, localDate } from '../../../shared/src/days';
 import { kick, enqueue } from './notify';
 import { renewalField } from './playbooks';
 import { onTaskCreated } from './taskEvents';
+import { openPlanForHandover } from './onboarding';
 
 export interface FlowSettings {
   /** Prepare a hand-over card when a deal is won (default on). */
@@ -89,6 +90,8 @@ export async function createHandover(q: Q, orgId: string, actorId: string | null
   );
   if (!row) return null;
   await audit(q, { orgId, actorId, action: 'handover.created', entity: 'account', entityId: deal.account_id, meta: { source: src.kind, id: src.id } });
+  // The customer's onboarding plan opens as a draft with the card (it starts when the card is confirmed).
+  await openPlanForHandover(q, orgId, row.id, localDate(new Date(), (await q.query('select timezone from orgs where id = $1', [orgId]))[0]?.timezone));
   // The takeover department's leads hear about it at once (it is work waiting for them).
   const leads = dept
     ? await q.query<{ user_id: string }>(`select user_id from department_members where department_id = $1 and role = 'lead'`, [dept.id])
