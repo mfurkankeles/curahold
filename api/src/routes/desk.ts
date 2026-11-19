@@ -36,7 +36,7 @@ const TRIES_PER_CODE = 5;
 const SECOND_MINUTES = 10;
 const REF = /^CH-\d{6,}$/;
 
-interface Staff {
+export interface Staff {
   /** Who is acting; "key" when tooling uses the staff key and names nobody. */
   email: string;
   via: 'session' | 'key';
@@ -44,7 +44,7 @@ interface Staff {
   until?: number;
 }
 
-const staffList = (c: C) => c.get('deps').config.support?.staff ?? [];
+export const staffList = (c: C) => c.get('deps').config.support?.staff ?? [];
 /** A separate secret for desk sessions, so nothing else this server signs can pass for one. */
 const deskSecret = (c: C) => `${c.get('deps').config.authSecret}:desk`;
 /**
@@ -54,7 +54,7 @@ const deskSecret = (c: C) => `${c.get('deps').config.authSecret}:desk`;
 const onDesk = (c: C) => (c.req.header('host') ?? new URL(c.req.url).host).toLowerCase().split(':')[0] === deskHostOf(c.get('deps').config);
 
 /** A support person's key (tooling), or the session of someone still on the staff list. */
-async function staffOnly(c: C): Promise<Staff> {
+export async function staffOnly(c: C): Promise<Staff> {
   // A person's own key names them in the desk's log. The old shared key names nobody: it is kept for
   // development, and in production only while no per-person keys exist yet (a transition).
   const person = staffPerson(c);
@@ -71,6 +71,21 @@ async function staffOnly(c: C): Promise<Staff> {
     }
   }
   return fail('forbidden');
+}
+/**
+ * The platform owner, in his own console session (after the authenticator step): the only one who sees the
+ * owner sections and the only one who may decide (trial requests, approvals, pauses). Never a key: no tool,
+ * agent or script can stand in for him. Owner = PLATFORM_OWNER, or the first support-staff address.
+ */
+export function isConsoleOwner(c: C, staff: Staff): boolean {
+  const cfg = c.get('deps').config;
+  const owner = (cfg.owner ?? staffList(c)[0] ?? '').toLowerCase();
+  return staff.via === 'session' && !!owner && staff.email === owner && staffList(c).includes(staff.email);
+}
+export async function ownerOnly(c: C): Promise<Staff> {
+  const staff = await staffOnly(c);
+  if (!isConsoleOwner(c, staff)) fail('forbidden');
+  return staff;
 }
 const note = (q: Q, staff: Staff, action: string, ref?: string | null, orgId?: string | null, messageId?: string | null) =>
   q.query('insert into desk_log (staff_email, action, ref, org_id, message_id) values ($1, $2, $3, $4, $5)', [staff.email, action, ref ?? null, orgId ?? null, messageId ?? null]);
@@ -202,7 +217,7 @@ deskRoutes.get('/me', async (c) => {
       [staff.email],
     ),
   );
-  return c.json({ staff: { email: staff.email, name: staff.via === 'key' ? 'Curahold' : nameFrom(staff.email) }, counts: n });
+  return c.json({ staff: { email: staff.email, name: staff.via === 'key' ? 'Curahold' : nameFrom(staff.email) }, owner: isConsoleOwner(c, staff), counts: n });
 });
 
 /** The console's first screen: how the business is today, and who needs the team. */
