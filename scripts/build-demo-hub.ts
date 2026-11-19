@@ -18,7 +18,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, write
 import { join } from 'node:path';
 import { TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, tourText } from '../shared/src/tours';
 import { FAVICON, MARK } from '../site/brand';
-import { LOCALE_INFO, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
+import { LOCALES, LOCALE_INFO, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { SEED_LOCALES } from './seed-words';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -30,6 +30,7 @@ const DOCS = (process.env.SITE_DOCS_URL ?? `${APP}/docs`).replace(/\/$/, '');
 /** The languages the help centre is written in (its folders); the hub links to English where it has none. */
 const DOC_LANGS = readdirSync(join(ROOT, 'docs', 'site')).filter((d) => d !== 'assets');
 
+const GLOBE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5S9.6 5.9 12 3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** The same open fonts as the app and the site (SIL OFL), served by the hub itself. */
@@ -42,7 +43,7 @@ const FONTS = [
 /** The site's styles (its fonts beside them in assets/), the hub's, then this page's own (web/src/demo/hub.css). */
 const CSS = ['site/site.css', 'site/hub.css', 'web/src/demo/hub.css'].map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
 /** The languages of the hub: those the demo company is written in, English at the root. */
-const LANGS = SEED_LOCALES;
+const LANGS = LOCALES.filter((l) => SEED_LOCALES.includes(l)).sort((a, b) => Number(b === 'en') - Number(a === 'en'));
 /** Where a language's page is, from the root of the hub. */
 const dirOf = (l: Locale) => (l === 'en' ? '' : `${l}/`);
 /** A real screen of the demo in a language, taken by scripts/docs/shots.ts (the help centre's pictures). */
@@ -68,6 +69,7 @@ function copyOf(l: Locale) {
     foot: { home: say('foot.home'), privacy: say('foot.privacy'), terms: say('foot.terms'), made: say('foot.made') },
     /** The site's page in this language (it has all nine). */
     words: { one: say('count.one'), many: say('count.many') },
+    lang: { title: say('lang.title'), note: say('lang.note'), close: say('lang.close'), button: (name: string) => say('lang.button', { name }) },
   };
 }
 
@@ -81,10 +83,22 @@ function page(locale: Locale): string {
   const site = `${SITE}/${dirOf(locale)}`;
   const info = LOCALE_INFO[locale];
   const docs = `${DOCS}/${DOC_LANGS.includes(locale) ? locale : 'en'}/`;
-  const others = LANGS.filter((l) => l !== locale);
   const hrefOf = (l: Locale) => `${up}${dirOf(l)}` || './';
-  const langLink = (l: Locale) => `<a href="${hrefOf(l)}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}">${esc(LOCALE_INFO[l].name)}</a>`;
-  const langMenu = others.length === 1 ? langLink(others[0]).replace('<a ', '<a class="top__lang" ') : others.length ? `<details class="lang"><summary class="top__lang">${esc(info.name)}</summary><div class="lang__menu">${others.map(langLink).join('')}</div></details>` : '';
+  // The language button opens the chooser (web/src/demo/hub-lang.js); without a script it still
+  // opens, as the address's target. The first visit to the English root opens it by itself.
+  const langMenu = `<a class="top__lang hub-lang__open" href="#lang-pick" aria-haspopup="dialog" aria-label="${esc(c.lang.button(info.name))}">${GLOBE}<span>${esc(info.name)}</span></a>`;
+  // English's link says so (?lang=en): the root page otherwise sends a visitor back to the language they chose before.
+  const pickLink = (l: Locale) =>
+    `<a href="${hrefOf(l)}${l === 'en' ? '?lang=en' : ''}" data-l="${l}" hreflang="${bcp47Of(l)}" lang="${bcp47Of(l)}" dir="${LOCALE_INFO[l].dir}"${l === locale ? ' aria-current="true"' : ''}>${esc(LOCALE_INFO[l].name)}</a>`;
+  const chooser = `<div id="lang-pick" class="hub-lang" role="dialog" aria-modal="true" aria-labelledby="lang-pick-title" data-here="${locale}"${locale === 'en' ? ' data-root="1"' : ''}>
+  <div class="hub-lang__card">
+    <a class="hub-lang__close" href="#" aria-label="${esc(c.lang.close)}">×</a>
+    ${MARK}
+    <h2 id="lang-pick-title">${esc(c.lang.title)}</h2>
+    <nav class="hub-lang__list" aria-labelledby="lang-pick-title">${LANGS.map(pickLink).join('')}</nav>
+    <p class="hub-lang__note">${esc(c.lang.note)}</p>
+  </div>
+</div>`;
   // A real screen of the demo in this language (no drawing of one): the wide one, and the phone one on a phone.
   const shot = existsSync(shotOf(locale, 'customers')) && existsSync(shotOf(locale, 'customer-phone'));
   const figure = shot
@@ -218,7 +232,9 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
   </div>
 </footer>
 <script type="application/json" id="hub-words">${words}</script>
+${chooser}
 <script src="${assets}hub.js" defer></script>
+<script src="${assets}hub-lang.js" defer></script>
 </body>
 </html>
 `;
@@ -237,6 +253,7 @@ for (const l of LANGS) {
 }
 writeFileSync(join(OUT, 'assets', 'hub.css'), CSS);
 cpSync(join(ROOT, 'site', 'hub.js'), join(OUT, 'assets', 'hub.js'));
+cpSync(join(ROOT, 'web', 'src', 'demo', 'hub-lang.js'), join(OUT, 'assets', 'hub-lang.js'));
 for (const [pkg, name] of FONTS) {
   const from = join(ROOT, 'node_modules', '@fontsource-variable', pkg, 'files', name);
   if (existsSync(from)) cpSync(from, join(OUT, 'assets', name));

@@ -9,3 +9,41 @@
 @media (max-width: 700px) {
   .hub-shot { max-width: 320px; margin-inline: auto; }
 }
+
+/* The language chooser (web/src/demo/hub-lang.js): asked on the first visit, then behind the
+   header's language button. Without a script it opens as the address's target (#lang-pick). */
+.hub-lang__open { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.hub-lang__open svg { flex: none; }
+.hub-lang {
+  position: fixed; inset: 0; z-index: 1000; display: none; place-items: center; padding: 20px;
+  background: rgba(9, 8, 28, .78); backdrop-filter: blur(6px); overflow-y: auto;
+}
+.hub-lang.is-open, .hub-lang:target { display: grid; }
+.hub-lang__card {
+  position: relative; width: min(460px, 100%); padding: 28px 24px 22px; text-align: center;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 20px; color: var(--ink);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .6);
+  animation: hub-lang-in .22s var(--ease) both;
+}
+.hub-lang__card > svg { display: block; width: 44px; height: 44px; margin-inline: auto; }
+.hub-lang__card h2 { margin: 12px 0 18px; font: 700 24px/1.2 var(--display); }
+.hub-lang__list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hub-lang__list a {
+  display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--mist); color: var(--ink);
+  font: 600 17px/1.2 var(--text); text-decoration: none;
+}
+/* English first and wide: the default. */
+.hub-lang__list a:first-child { grid-column: 1 / -1; }
+.hub-lang.is-first .hub-lang__list a:first-child, .hub-lang__list a[aria-current] { background: var(--iris); border-color: var(--iris); color: #fff; }
+.hub-lang__list a:hover, .hub-lang__list a:focus-visible { border-color: var(--iris-hi); outline: none; box-shadow: 0 0 0 3px rgba(140, 125, 255, .35); }
+.hub-lang__note { margin: 16px 0 0; color: var(--ink-3); font-size: 14px; line-height: 1.5; }
+.hub-lang__close {
+  position: absolute; inset-block-start: 8px; inset-inline-end: 8px; display: grid; place-items: center;
+  width: 44px; height: 44px; border-radius: 50%; color: var(--ink-2); font-size: 26px; line-height: 1; text-decoration: none;
+}
+.hub-lang__close:hover, .hub-lang__close:focus-visible { color: var(--ink); background: var(--mist); outline: none; }
+/* The first question has no "close": closing it is choosing English (Esc does that). */
+.hub-lang.is-first .hub-lang__close { display: none; }
+@keyframes hub-lang-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .hub-lang__card { animation: none; } }

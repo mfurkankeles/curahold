@@ -40,7 +40,16 @@ const asDemo = (l: string | null | undefined): Locale | undefined => SEED_LOCALE
 const asLocale = (l: string | null | undefined): Locale | undefined => LOCALES.find((x) => x === l);
 const fromAddress = asDemo(decodeURIComponent(window.location.hash.slice(1)));
 const demoLocale: Locale = fromAddress ?? asDemo(storedLocale()) ?? 'en';
-if (fromAddress) storeLocale(fromAddress);
+/** The hub's own memory of the language (web/src/demo/hub-lang.js), so the hub follows a switch made here. */
+function keepDemoLocale(l: Locale) {
+  storeLocale(l);
+  try {
+    localStorage.setItem('curahold_demo_lang', l);
+  } catch {
+    /* storage that forgets */
+  }
+}
+if (fromAddress) keepDemoLocale(fromAddress);
 setStartLocale(demoLocale);
 // The bar speaks the page's language: the demo's, or whichever the app's own menu picked since
 // (it follows <html lang> as the app switches it; no reload needed).
@@ -52,7 +61,7 @@ const HUB = demoLocale === 'en' ? '../' : `../${demoLocale}/`;
 /** Another language: the sample data is written again in it, so the demo starts over. */
 function switchLanguage(to: Locale) {
   if (to === demoLocale) return;
-  storeLocale(to);
+  keepDemoLocale(to);
   window.location.hash = to;
   window.location.reload();
 }

@@ -62,6 +62,19 @@ const t0 = Date.now();
 {
   const { page, errors } = await open('');
   await page.waitForSelector('.hub-card');
+  // A first visit asks for a language: nine, by their own names, English first and chosen; Esc keeps English.
+  const ask = await page.evaluate(() => ({
+    open: getComputedStyle(document.getElementById('lang-pick')!).display !== 'none',
+    names: [...document.querySelectorAll('#lang-pick a[data-l]')].map((a) => a.getAttribute('data-l')),
+    focused: document.activeElement?.getAttribute('data-l') ?? '',
+  }));
+  if (!ask.open) fail('hub: a first visit is not asked for a language');
+  if (ask.names.length !== 9 || ask.names[0] !== 'en') fail(`hub: the language chooser lists ${ask.names.join(',')}`);
+  if (ask.focused !== 'en') fail(`hub: the chooser's focus is on “${ask.focused}”, not English`);
+  await page.screenshot({ path: join(SCREENS, 'hub-en-chooser.png') });
+  await page.keyboard.press('Escape');
+  const kept = await page.evaluate(() => ({ open: getComputedStyle(document.getElementById('lang-pick')!).display !== 'none', lang: localStorage.getItem('curahold_demo_lang'), app: localStorage.getItem('app_locale') }));
+  if (kept.open || kept.lang !== 'en' || kept.app !== 'en') fail(`hub: Esc on the chooser left ${JSON.stringify(kept)}`);
   const total = await page.$$eval('.hub-card', (c) => c.length);
   if (total !== TOURS.length) fail(`hub: ${total} cards for ${TOURS.length} tours`);
   // The role strip: one role, the tours for it, and the choice in the address.
@@ -121,7 +134,25 @@ const t0 = Date.now();
     if (x.errors.length) fail(`hub ${l}: ${x.errors.join(' | ')}`);
     await x.page.close();
   }
-  console.log(`hub: ${TOURS.length} tours, filters, nine languages — ${failures.length ? 'problems above' : 'fine'}`);
+  // The language button opens the chooser again; a pick opens the hub in it, and the app with it;
+  // the root sends a returning visitor there; ?lang=en in a link comes back to English.
+  {
+    const { page: p, errors: e } = await open('?lang=en');
+    await p.click('.hub-lang__open');
+    await p.waitForSelector('#lang-pick.is-open a[data-l="ja"]', { visible: true });
+    await Promise.all([p.waitForNavigation(), p.click('#lang-pick a[data-l="ja"]')]);
+    const ja = await p.evaluate(() => ({ lang: document.documentElement.lang, app: localStorage.getItem('app_locale'), hint: localStorage.getItem('app_locale_hint') }));
+    if (ja.lang !== 'ja' || ja.app !== 'ja' || ja.hint !== 'ja') fail(`hub: picking 日本語 gave ${JSON.stringify(ja)}`);
+    await p.goto(BASE);
+    await p.waitForFunction(() => document.documentElement.lang === 'ja', { timeout: 5000 }).catch(() => fail('hub: the root does not open the language chosen before'));
+    await p.goto(BASE + '?lang=en');
+    await p.waitForSelector('.hub-card');
+    const back = await p.evaluate(() => ({ lang: document.documentElement.lang, app: localStorage.getItem('app_locale'), url: location.search, open: getComputedStyle(document.getElementById('lang-pick')!).display !== 'none' }));
+    if (back.lang !== 'en' || back.app !== 'en' || back.url !== '' || back.open) fail(`hub: ?lang=en gave ${JSON.stringify(back)}`);
+    if (e.length) fail(`hub chooser: ${e.join(' | ')}`);
+    await p.close();
+  }
+  console.log(`hub: ${TOURS.length} tours, filters, nine languages, the language chooser — ${failures.length ? 'problems above' : 'fine'}`);
 }
 
 // ----------------------------------------------------------------- the tours
