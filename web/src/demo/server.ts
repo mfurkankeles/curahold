@@ -197,7 +197,7 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
   };
 
   const { seedDemo } = await import('../../../scripts/seed-demo');
-  await seedDemo(db, { locale });
+  await seedDemo(db, { locale, departments: true });
   // Demo-only: a platform of invented tenants so the owner's metrics screen has
   // a realistic shape. RLS keeps them out of the demo user's own views.
   const { seedPlatform } = await import('../../../scripts/seed-demo-platform');

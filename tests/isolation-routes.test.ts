@@ -37,6 +37,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/automations\/:id/, 'automations'],
   [/^\/sprints\/:id/, 'sprints'],
   [/^\/boards\/:id/, 'boards'],
+  [/^\/departments\/:id/, 'departments'],
   [/^\/reports\/saved\/:id/, 'reports'],
   [/^\/connections\/:id/, 'connections'],
   [/^\/dev\/analytics\/keys\/:id/, 'api_tokens'],
@@ -246,7 +247,7 @@ describe('every address that names a thing by id', () => {
         continue;
       }
       const tasks = await idsOf('tasks', 'parent_id is null');
-      const path = r.path.replace(':id', id).replace(':other', tasks[1] ?? tasks[0]).replace(':object', 'Account').replace(':taskId', tasks[0]).replace(':remoteId', 'rem-1');
+      const path = r.path.replace(':id', id).replace(':other', tasks[1] ?? tasks[0]).replace(':object', 'Account').replace(':taskId', tasks[0]).replace(':remoteId', 'rem-1').replace(':userId', env.a.ids.lena);
       expect(path.includes(':'), `${key}: a parameter was left unfilled`).toBe(false);
       const special = OVERRIDES[key]?.({ board: env.b.boards.csBoard, user: env.b.ids.lena, otherTask: tasks[1] ?? tasks[0] }) ?? {};
       const body = special.body ?? Object.fromEntries(r.body.filter((f) => f.required).map((f) => [f.name, sample(f, id)]));

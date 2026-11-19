@@ -17,6 +17,7 @@ import { personalData } from '../lib/personalData';
 import { requireFresh } from '../lib/identity';
 import { waitText } from '../lib/ratelimit';
 import { defsFor } from '../lib/fieldAccess';
+import { listDepartments } from '../lib/departments';
 import { body, localeField, param } from '../lib/validate';
 import { SESSION_COOKIE } from './auth';
 import { portalOn } from '../lib/portal';
@@ -46,6 +47,7 @@ meRoutes.get('/me', async (c) => {
       plan: o?.plan ?? 'trial',
       seatCap: (o?.trial_seat_cap as number | null) ?? null,
       agreementsDue: !!o?.agreements_due,
+      departments: await listDepartments(q, auth),
       teamIds: teams.map((t) => t.team_id),
       onboardedAt: iso(u?.onboarded_at),
       prefs: prefsOf(u?.prefs),
@@ -98,6 +100,7 @@ meRoutes.get('/me', async (c) => {
       billingOn: !!c.get('deps').config.billing,
     },
     teamIds: data.teamIds,
+    departments: data.departments,
     // The in-app owner screens (/metrics, /platform) exist only where the operator is the company (self-hosted).
     owner: isOwner(c) && inAppConsole(c.get('deps').config),
     sessionId: auth.sessionId,

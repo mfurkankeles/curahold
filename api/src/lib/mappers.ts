@@ -48,6 +48,7 @@ export const toTask = (r: Row): Task => ({
 });
 
 export const toBoard = (r: Row, canManage: boolean): Board => ({
+  departmentId: r.department_id,
   id: r.id,
   name: r.name,
   visibility: r.visibility,

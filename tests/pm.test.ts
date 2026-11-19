@@ -20,7 +20,9 @@ beforeAll(async () => {
   stranger = await login(env, 'beta', env.b.adminEmail);
   // A product board with the PM stages.
   const r = await mert.post('/api/boards', { name: 'Product', visibility: 'org', columns: pmColumns('en') });
-  expect(r.status).toBe(403); // org-wide boards need boards.manage_all; a team board then
+  // A department's lead opens boards for the whole department (mert leads Customer Success); a member cannot.
+  expect(r.status).toBe(201);
+  expect((await sofia.post('/api/boards', { name: 'Product', visibility: 'org', columns: pmColumns('en') })).status).toBe(403);
   board = env.a.boards.csBoard;
   const pmBoard = await login(env, 'acme', env.a.adminEmail);
   const b = await pmBoard.post('/api/boards', { name: 'Product', visibility: 'org', columns: pmColumns('en') });

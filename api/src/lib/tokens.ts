@@ -37,7 +37,8 @@ export async function resolveToken(db: Db, orgId: string, token: string, opts: {
   const rows = await db.system((q) =>
     q.query(
       `select t.id as token_id, t.kind, t.can_write, t.datasets, t.departments, t.last_used_at < now() - interval '5 minutes' or t.last_used_at is null as stale,
-              u.id as user_id, u.name, u.email, u.seat, u.status, u.locale, r.id as role_id, r.key as role_key, r.perms
+              u.id as user_id, u.name, u.email, u.seat, u.status, u.locale, r.id as role_id, r.key as role_key, r.perms,
+              array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
          from api_tokens t join users u on u.id = t.user_id and u.org_id = t.org_id join roles r on r.id = u.role_id
         where t.token_hash = $1 and t.org_id = $2 and t.revoked_at is null and (t.expires_at is null or t.expires_at > now())`,
       [hash, orgId],

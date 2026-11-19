@@ -168,6 +168,8 @@ export interface AuthCtx {
   perms: Perm[];
   seat: Seat;
   locale: Locale | null;
+  /** Departments this person is in (switched-on ones): field rules can name a department. Absent = none. */
+  depts?: string[];
   /** The second step the browser session passed (lib/identity.ts); absent for keys, tokens and support. */
   secondStep?: string | null;
 }

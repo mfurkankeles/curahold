@@ -86,7 +86,37 @@ export const USER_STATUSES = ['active', 'invited', 'disabled', 'deleted'] as con
 export type UserStatus = (typeof USER_STATUSES)[number];
 
 export const VISIBILITIES = ['org', 'team', 'private'] as const;
+/** Inside a department: 'org' = everyone in the board's department, 'team' = one team, 'private' = the people named. */
 export type Visibility = (typeof VISIBILITIES)[number];
+
+/** The four departments a company can work in, in the order a customer meets them. */
+export const DEPARTMENT_KEYS = ['sales', 'success', 'product', 'finance'] as const;
+export type DepartmentKey = (typeof DEPARTMENT_KEYS)[number];
+export type DepartmentRole = 'lead' | 'member';
+/** A field rule naming a department instead of a role ("dept:finance"). */
+export const deptToken = (k: DepartmentKey) => `dept:${k}`;
+
+export interface Department {
+  id: string;
+  key: DepartmentKey;
+  /** Part of the company's plan; a switched-off department is hidden and keeps its boards. */
+  enabled: boolean;
+  position: number;
+  /** Departments that see this department's band on the customer page; null = every department. */
+  bandView: DepartmentKey[] | null;
+  leadIds: string[];
+  /** The signed-in person's place in it (null: not in it). */
+  myRole: DepartmentRole | null;
+}
+
+/** One department's open work for one customer, as counts (the shared customer page). */
+export interface AccountDepartmentWork {
+  key: DepartmentKey;
+  open: number;
+  overdue: number;
+  nextDue: string | null;
+  mine: boolean;
+}
 
 export const MAX_FILE_MB = 10;
 export const MAX_LOGO_KB = 1024;
@@ -459,6 +489,8 @@ export interface Me {
   user: Person & { locale: Locale | null; roleId: string; roleKey: string; perms: Perm[]; onboardedAt: string | null; prefs: NotifyPrefs };
   org: Org;
   teamIds: string[];
+  /** The company's departments (switched-off ones only for administrators), in order. */
+  departments: Department[];
   /** The platform owner sees the whole-business metrics screen. */
   owner?: boolean;
   sessionId: string;
@@ -497,6 +529,7 @@ export interface AdminUser extends Person {
 export interface Board {
   id: string;
   name: string;
+  departmentId: string;
   visibility: Visibility;
   teamId: string | null;
   columns: Column[];
@@ -550,8 +583,13 @@ export interface TaskEvent {
 export interface TaskLink {
   taskId: string;
   title: string;
-  boardId: string;
-  boardName: string;
+  /** Null when the other task is on a board this person cannot open (another department's). */
+  boardId: string | null;
+  boardName: string | null;
+  departmentKey?: DepartmentKey;
+  /** Where the other task stands (its column), shown when the board itself is not open to this person. */
+  statusName?: string | null;
+  dueDate?: string | null;
   /** Seen from this task: it blocks the other, it waits for the other (blocked_by), or they relate. */
   kind: 'blocks' | 'blocked_by' | 'relates';
   done: boolean;

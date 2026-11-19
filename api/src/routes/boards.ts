@@ -8,6 +8,7 @@ import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
 import { defaultColumns } from '../lib/orgs';
 import { body, param, uuid } from '../lib/validate';
+import { departmentForNewBoard, mayOpenBoards } from '../lib/departments';
 import { taskFieldsSchema } from '../lib/taskFields';
 
 export const boardRoutes = new Hono<AppEnv>();
@@ -25,13 +26,14 @@ const columnsSchema = z
 
 const BOARD_SELECT = `
   select b.*, t.lead_id as team_lead_id,
-         coalesce((select array_agg(m.user_id) from board_members m where m.board_id = b.id), '{}') as member_ids
+         coalesce((select array_agg(m.user_id) from board_members m where m.board_id = b.id), '{}') as member_ids,
+         exists (select 1 from department_members dm where dm.department_id = b.department_id and dm.user_id = app_user() and dm.role = 'lead') as dept_lead
     from boards b left join teams t on t.id = b.team_id`;
 
 export function canManageBoard(auth: AuthCtx, b: Row): boolean {
   return (
     auth.seat === 'full' &&
-    (auth.perms.includes('boards.manage_all') || b.created_by === auth.userId || (!!b.team_id && b.team_lead_id === auth.userId))
+    (auth.perms.includes('boards.manage_all') || !!b.dept_lead || b.created_by === auth.userId || (!!b.team_id && b.team_lead_id === auth.userId))
   );
 }
 
@@ -47,9 +49,10 @@ async function checkPeople(q: Q, ids: string[]) {
   if (rows.length !== new Set(ids).size) fail('validation', { fields: 'memberIds' }, { fields: ['memberIds'] });
 }
 
-async function checkVisibility(c: C, q: Q, visibility: string, teamId: string | null) {
+async function checkVisibility(c: C, q: Q, visibility: string, teamId: string | null, departmentId: string) {
   const auth = c.get('auth');
-  if (visibility === 'org' && !auth.perms.includes('boards.manage_all')) fail('forbidden');
+  // "Everyone in the department": its leads and administrators decide that.
+  if (visibility === 'org' && !(await mayOpenBoards(q, auth, departmentId))) fail('forbidden');
   if (visibility === 'team') {
     if (!teamId) fail('validation', { fields: 'teamId' }, { fields: ['teamId'] });
     const [t] = await q.query(
@@ -72,6 +75,8 @@ boardRoutes.get('/boards', async (c) => {
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),
+  /** The department it lives in; left out: one the person leads (administrators: the company's home one). */
+  departmentId: uuid.nullable().optional(),
   visibility: z.enum(['org', 'team', 'private']),
   teamId: uuid.nullable().optional(),
   memberIds: z.array(uuid).max(200).optional(),
@@ -109,8 +114,9 @@ boardRoutes.post('/boards', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const board = await run(c, async (q) => {
+    const departmentId = await departmentForNewBoard(q, auth, input.departmentId);
     const teamId = input.visibility === 'team' ? input.teamId ?? null : null;
-    await checkVisibility(c, q, input.visibility, teamId);
+    await checkVisibility(c, q, input.visibility, teamId, departmentId);
     const members = [...new Set([...(input.memberIds ?? []), ...(input.visibility === 'private' ? [auth.userId] : [])])];
     await checkPeople(q, members);
     await checkNotify(q, input.notify);
@@ -119,9 +125,9 @@ boardRoutes.post('/boards', async (c) => {
     // see a row inserted by the same statement, so the id is made here.
     const b = { id: crypto.randomUUID() };
     await q.query(
-      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by, notify, task_fields, form)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? []), JSON.stringify(input.taskFields ?? []), input.form ? JSON.stringify(input.form) : null],
+      `insert into boards (id, org_id, team_id, name, visibility, columns, created_by, notify, task_fields, form, department_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [b.id, org.id, teamId, input.name, input.visibility, JSON.stringify(columns), auth.userId, JSON.stringify(input.notify ?? []), JSON.stringify(input.taskFields ?? []), input.form ? JSON.stringify(input.form) : null, departmentId],
     );
     if (input.archiveDays !== undefined) await q.query('update boards set archive_days = $2 where id = $1', [b.id, input.archiveDays]);
     for (const m of members) {
@@ -144,9 +150,20 @@ boardRoutes.patch('/boards/:id', async (c) => {
   const board = await run(c, async (q) => {
     const b = await loadBoard(q, id);
     if (!canManageBoard(auth, b)) fail('forbidden');
+    // Moving a board to another department is an administrator's decision (the database says so too).
+    let departmentId: string = b.department_id;
+    if (input.departmentId && input.departmentId !== b.department_id) {
+      if (!auth.perms.includes('boards.manage_all')) fail('forbidden');
+      const [d] = await q.query('select id, enabled from departments where id = $1', [input.departmentId]);
+      if (!d) fail('validation', { fields: 'departmentId' }, { fields: ['departmentId'] });
+      if (!d.enabled) fail('department_off');
+      departmentId = input.departmentId;
+      await q.query('update boards set department_id = $2 where id = $1', [id, departmentId]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'board.moved', entity: 'board', entityId: id, meta: { from: b.department_id, to: departmentId } });
+    }
     const visibility = input.visibility ?? b.visibility;
     const teamId = visibility === 'team' ? (input.teamId !== undefined ? input.teamId : b.team_id) : null;
-    if (input.visibility !== undefined || input.teamId !== undefined) await checkVisibility(c, q, visibility, teamId);
+    if ((input.visibility !== undefined && input.visibility !== b.visibility) || input.teamId !== undefined) await checkVisibility(c, q, visibility, teamId, departmentId);
     if (input.notify) await checkNotify(q, input.notify);
     if (input.columns) {
       const keys = new Set(input.columns.map((col) => col.key));

@@ -5,7 +5,10 @@ import { calculated, type AccountField, type Perm } from '../../../shared/src/mo
 import type { AuthCtx } from '../context';
 import { fail } from './errors';
 
-export type Viewer = Pick<AuthCtx, 'roleKey' | 'perms' | 'seat'>;
+export type Viewer = Pick<AuthCtx, 'roleKey' | 'perms' | 'seat'> & { depts?: string[] };
+
+/** A rule list names roles ("member") and departments ("dept:finance"); either lets the person in. */
+const named = (list: string[], v: Viewer) => list.includes(v.roleKey) || (v.depts ?? []).some((d) => list.includes(`dept:${d}`));
 
 /** People who run the company settings see and change every field (they set the rules). */
 export const seesEverything = (v: Viewer) => v.perms.includes('org.manage' as Perm);
@@ -13,7 +16,7 @@ export const seesEverything = (v: Viewer) => v.perms.includes('org.manage' as Pe
 export function canSeeField(f: AccountField, v: Viewer) {
   if (seesEverything(v)) return true;
   const view = f.access?.view;
-  return !view?.length || view.includes(v.roleKey);
+  return !view?.length || named(view, v);
 }
 
 export function canEditField(f: AccountField, v: Viewer) {
@@ -21,7 +24,7 @@ export function canEditField(f: AccountField, v: Viewer) {
   if (calculated(f)) return false;
   if (seesEverything(v)) return true;
   const edit = f.access?.edit;
-  return !edit?.length || edit.includes(v.roleKey);
+  return !edit?.length || named(edit, v);
 }
 
 /** The field list as this person should get it: hidden ones left out, read-only ones marked. */

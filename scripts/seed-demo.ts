@@ -1,6 +1,7 @@
 // Demo company with invented people and accounts — nothing here is real.
 // Used by the local server, the browser tests and (later) the live demo.
 import type { Db } from '../api/src/db';
+import { seedDepartments } from './seed-departments';
 import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
 import { TEMPLATES } from '../shared/src/templates';
 import type { Locale } from '../shared/src/i18n/core';
@@ -32,7 +33,8 @@ function day(offset: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale } = {}) {
+/** `departments: true` (the live demo) also opens a board in each department with work that crosses between them. */
+export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale; departments?: boolean } = {}) {
   const slug = opts.slug ?? 'demo';
   const { locale, words: W } = await seedWords(opts.locale ?? 'en');
   const say = sayer(locale, W);
@@ -167,6 +169,7 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale } 
       `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
       [orgId, JSON.stringify([{ id: 'qbr', label: B.meetingType[0], kind: 'review', minutes: 60, prompt: B.meetingType[1] }])],
     );
+    await seedDepartments(q, { orgId, ids, locale, accounts, boards: !!opts.departments });
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);
     return { orgId, slug, locale, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };

@@ -70,6 +70,8 @@ export type ErrorCode =
   | 'required_fields'
   | 'link_loop'
   | 'form_off'
+  | 'board_lead_only'
+  | 'department_off'
   | 'billing_locked'
   | 'seat_cap_reached'
   | 'terms_required'
@@ -116,6 +118,8 @@ const STATUS: Record<ErrorCode, number> = {
   domain_public: 400,
   join_closed: 403,
   field_locked: 403,
+  board_lead_only: 403,
+  department_off: 400,
   preview_read_only: 403,
   read_only_token: 403,
   bad_webhook_url: 400,

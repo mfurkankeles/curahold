@@ -450,17 +450,9 @@ taskRoutes.get('/tasks/:id', async (c) => {
     const [mute] = await q.query('select 1 from task_mutes where task_id = $1', [id]);
     const events = await q.query('select * from task_events where task_id = $1 order by created_at desc limit 200', [id]);
     const watchers = await q.query('select user_id from task_watchers where task_id = $1 order by created_at', [id]);
-    // Both directions of every link, seen from this task; tasks on boards the person cannot open are left out.
-    const links = await q.query(
-      `select o.id, o.title, o.board_id, b.name as board_name, l.kind, (l.from_id = $1) as outgoing,
-              o.done_at is not null as done
-         from task_links l
-         join tasks o on o.id = case when l.from_id = $1 then l.to_id else l.from_id end
-         join boards b on b.id = o.board_id
-        where (l.from_id = $1 or l.to_id = $1) and o.archived_at is null
-        order by l.created_at`,
-      [id],
-    );
+    // Both directions of every link, seen from this task. A task in another department shows
+    // its title, where it stands and its department; its board only to people who can open it.
+    const links = await q.query('select * from app_task_link_cards($1)', [id]);
     const time = await q.query('select * from time_entries where task_id = $1 order by day desc, created_at desc limit 200', [id]);
     return { t: counted ?? t, subtasks, comments, files, muted: !!mute, events, watchers, links, time };
   });
@@ -475,10 +467,13 @@ taskRoutes.get('/tasks/:id', async (c) => {
     events: detail.events.map((e) => ({ id: e.id, actorId: e.actor_id ?? null, kind: e.kind, data: e.data ?? {}, createdAt: iso(e.created_at)! })),
     watchers: detail.watchers.map((w) => w.user_id),
     links: detail.links.map((l) => ({
-      taskId: l.id,
+      taskId: l.task_id,
       title: l.title,
-      boardId: l.board_id,
-      boardName: l.board_name,
+      boardId: l.board_id ?? null,
+      boardName: l.board_name ?? null,
+      departmentKey: l.department_key,
+      statusName: l.board_id ? null : (l.status_name ?? null),
+      dueDate: day(l.due_date) ?? null,
       kind: l.kind === 'relates' ? 'relates' : l.outgoing ? 'blocks' : 'blocked_by',
       done: !!l.done,
     })),

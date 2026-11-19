@@ -23,7 +23,7 @@ const ids: Record<string, string> = {};
 const boards: Record<string, string> = {};
 let before: Record<string, string[]>;
 
-const sys = <T>(fn: (q: any) => Promise<T>) => db.system(fn);
+const sys = (fn: (q: any) => Promise<any>): Promise<any> => db.system(fn);
 async function seesAll(): Promise<Record<string, string[]>> {
   const out: Record<string, string[]> = {};
   for (const [k, id] of Object.entries(ids)) {

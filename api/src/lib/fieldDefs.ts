@@ -26,7 +26,8 @@ export function cleanFields(defs: AccountField[], input: Record<string, unknown>
 }
 
 
-const roleKey = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,40}$/);
+// A role's key, or a department ("dept:finance"): either may be given a field.
+const roleKey = z.string().regex(/^([a-z0-9][a-z0-9_-]{0,40}|dept:(sales|success|product|finance))$/);
 // A label in each language the company writes it in (any of the nine).
 const label60 = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(80).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> });
 export const fieldSchema = z.object({

@@ -50,6 +50,7 @@ import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
 import { ssoAuthRoutes, ssoAdminRoutes } from './routes/sso';
 import { scimRoutes } from './routes/scim';
 import { boardRoutes } from './routes/boards';
+import { departmentRoutes } from './routes/departments';
 import { meRoutes } from './routes/me';
 import { metricsRoutes } from './routes/metrics';
 import { pmRoutes } from './routes/pm';
@@ -326,6 +327,7 @@ export function createApp(deps: Deps) {
         perms: (u.perms ?? []) as Perm[],
         seat: t!.canWrite ? u.seat : 'viewer',
         locale: u.locale ? normalizeLocale(u.locale) : null,
+        depts: u.dept_keys ?? [],
       });
       c.set('tokenKind', t!.kind);
       if (t!.scope) c.set('analyticsScope', t!.scope);
@@ -347,7 +349,8 @@ export function createApp(deps: Deps) {
                 s.expires_at < now() as expired,
                 s.last_seen_at < now() - interval '5 minutes' as stale,
                 u.id as user_id, u.name, u.email, u.seat, u.status, u.locale,
-                r.id as role_id, r.key as role_key, r.perms
+                r.id as role_id, r.key as role_key, r.perms,
+                array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
            from sessions s
            join users u on u.id = s.user_id
            join roles r on r.id = u.role_id
@@ -370,6 +373,7 @@ export function createApp(deps: Deps) {
       perms: (s.perms ?? []) as Perm[],
       seat: s.seat,
       locale: s.locale ? normalizeLocale(s.locale) : null,
+      depts: s.dept_keys ?? [],
       secondStep: s.second_step ?? null,
     });
     if (s.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(s.locale));
@@ -389,7 +393,8 @@ export function createApp(deps: Deps) {
       if (!/^[0-9a-f-]{36}$/i.test(previewAs) || c.req.path.startsWith('/api/me/sessions')) fail('forbidden');
       const [t] = await deps.db.tenant({ orgId: org.id, userId: s.user_id }, (q) =>
         q.query(
-          `select u.id, u.name, u.email, u.seat, u.status, r.id as role_id, r.key as role_key, r.perms
+          `select u.id, u.name, u.email, u.seat, u.status, r.id as role_id, r.key as role_key, r.perms,
+                  array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
              from users u join roles r on r.id = u.role_id where u.id = $1`,
           [previewAs],
         ),
@@ -397,7 +402,7 @@ export function createApp(deps: Deps) {
       if (!t || t.status !== 'active') fail('not_found');
       const real = c.get('auth');
       c.set('previewBy', { id: real.userId, name: real.name });
-      c.set('auth', { ...real, userId: t.id, name: t.name, email: t.email, roleId: t.role_id, roleKey: t.role_key, perms: (t.perms ?? []) as Perm[], seat: t.seat });
+      c.set('auth', { ...real, userId: t.id, name: t.name, email: t.email, roleId: t.role_id, roleKey: t.role_key, perms: (t.perms ?? []) as Perm[], seat: t.seat, depts: t.dept_keys ?? [] });
       if (c.req.path === '/api/me') {
         await deps.db.tenant({ orgId: org.id, userId: real.userId }, (q) =>
           audit(q, { orgId: org.id, actorId: real.userId, action: 'user.previewed', entity: 'user', entityId: t.id }),
@@ -431,6 +436,7 @@ export function createApp(deps: Deps) {
   app.route('/api', liveRoutes);
   app.route('/api', metricsRoutes);
   app.route('/api', boardRoutes);
+  app.route('/api', departmentRoutes);
   app.route('/api', taskRoutes);
   app.route('/api', pmRoutes);
   app.route('/api', workRoutes);

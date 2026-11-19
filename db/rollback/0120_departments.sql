@@ -48,6 +48,7 @@ drop function if exists app_board_department_default();
 drop function if exists app_departments_for_new_org();
 drop function if exists app_account_departments(uuid);
 drop function if exists app_link_handoff(uuid, uuid);
+drop function if exists app_request_created(uuid);
 drop function if exists app_task_link_cards(uuid);
 drop function if exists app_request_desks();
 

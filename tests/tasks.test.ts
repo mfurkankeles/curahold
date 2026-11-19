@@ -177,12 +177,18 @@ describe('boards', () => {
     expect((await ada.post('/api/boards', { name: 'All hands', visibility: 'org' })).status).toBe(201);
   });
 
-  it('a team board needs a team you belong to', async () => {
+  it('boards are opened by administrators and department leads, not by every member', async () => {
     const teams = (await zeynep.get('/api/people')).json.teams;
-    const am = teams.find((t: any) => t.name === 'Sales');
-    expect((await zeynep.post('/api/boards', { name: 'X', visibility: 'team', teamId: am.id })).status).toBe(403);
     const cs = teams.find((t: any) => t.name === 'Customer Success');
-    expect((await zeynep.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id })).status).toBe(201);
+    // zeynep is a member of Customer Success, not its lead: her own work belongs in My tasks.
+    const refused = await zeynep.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id });
+    expect(refused.status).toBe(403);
+    expect(refused.json.error).toBe('board_lead_only');
+    // mert leads Customer Success: his board lands there.
+    const made = await mert.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id });
+    expect(made.status).toBe(201);
+    const success = (await mert.get('/api/me')).json.departments.find((d: any) => d.key === 'success');
+    expect(made.json.board.departmentId).toBe(success.id);
   });
 
   it('a member cannot change a board they did not create', async () => {

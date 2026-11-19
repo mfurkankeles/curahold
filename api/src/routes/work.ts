@@ -293,12 +293,18 @@ workRoutes.post('/boards/:id/requests', async (c) => {
       accountId: uuid.nullable().optional(),
       dueDate: isoDate.nullable().optional(),
       fields: z.record(z.string().max(40), z.unknown()).optional(),
+      /** The sender's own task this request comes from: the two are linked (a hand-off across departments). */
+      fromTaskId: uuid.nullable().optional(),
     }),
   );
   const auth = c.get('auth');
   const org = c.get('org');
   const task = await run(c, async (q) => {
-    const board = await loadBoard(q, id);
+    // Another department's intake board is reached without opening it: only its form is known here.
+    const [seen] = await q.query('select id from boards where id = $1 and archived_at is null', [id]);
+    const [desk] = seen ? [null] : await q.query('select * from app_request_desks() where id = $1', [id]);
+    if (!seen && !desk) fail('not_found');
+    const board = seen ? await loadBoard(q, id) : desk!;
     const form = board.form as { on?: boolean; fields?: string[]; column?: string | null } | null;
     if (!form?.on) fail('form_off');
     const asked = new Set(form!.fields ?? []);
@@ -311,15 +317,28 @@ workRoutes.post('/boards/:id/requests', async (c) => {
       if (!ok.length) fail('validation', { fields: 'accountId' }, { fields: ['accountId'] });
     }
     const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [id, status]);
-    const [t] = await q.query(
-      `insert into tasks (org_id, board_id, title, description, status, account_id, due_date, position, created_by, updated_by, fields)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10)
-       returning *, (select name from accounts a where a.id = account_id) as account_name`,
-      [org.id, id, input.title, asked.has('description') ? (input.description ?? '') : '', status, asked.has('account') ? (input.accountId ?? null) : null, asked.has('due') ? (input.dueDate ?? null) : null, Number(p), auth.userId, JSON.stringify(values)],
+    // No RETURNING: a request to another department's board is not readable by its sender.
+    const taskId = crypto.randomUUID();
+    const row = [org.id, id, input.title, asked.has('description') ? (input.description ?? '') : '', status, asked.has('account') ? (input.accountId ?? null) : null, asked.has('due') ? (input.dueDate ?? null) : null, Number(p), auth.userId, JSON.stringify(values), taskId];
+    await q.query(
+      `insert into tasks (org_id, board_id, title, description, status, account_id, due_date, position, created_by, updated_by, fields, id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $11)`,
+      row,
     );
-    await addEvent(q, org.id, t.id, auth.userId, 'created', { form: true });
-    // Whoever asked follows what happens to it.
-    await q.query('insert into task_watchers (org_id, task_id, user_id) values ($1, $2, $3) on conflict do nothing', [org.id, t.id, auth.userId]);
+    const [t] = seen
+      ? await q.query(`select *, (select name from accounts a where a.id = account_id) as account_name from tasks where id = $1`, [taskId])
+      : [{ id: taskId, org_id: org.id, board_id: id, title: input.title, description: row[3], status, account_id: row[5], due_date: row[6], position: Number(p), created_by: auth.userId, updated_by: auth.userId, fields: values, assignee_ids: [], priority: 'normal', version: 1, created_at: new Date(), updated_at: new Date(), parent_id: null }];
+    if (seen) {
+      await addEvent(q, org.id, taskId, auth.userId, 'created', { form: true });
+      // Whoever asked follows what happens to it.
+      await q.query('insert into task_watchers (org_id, task_id, user_id) values ($1, $2, $3) on conflict do nothing', [org.id, taskId, auth.userId]);
+    } else await q.query('select app_request_created($1)', [taskId]);
+    if (input.fromTaskId) {
+      const [ok] = seen
+        ? await q.query(`insert into task_links (org_id, from_id, to_id, kind, created_by) select $1, least($2::uuid, $3::uuid), greatest($2::uuid, $3::uuid), 'relates', $4 where exists (select 1 from tasks where id = $2) on conflict do nothing returning 1 as ok`, [org.id, input.fromTaskId, taskId, auth.userId])
+        : await q.query('select app_link_handoff($1, $2) as ok', [input.fromTaskId, taskId]);
+      if (ok?.ok) await addEvent(q, org.id, input.fromTaskId, auth.userId, 'linked', { kind: 'relates', taskId, title: input.title });
+    }
     await onTaskCreated(q, org.id, auth.userId, t, board);
     return t;
   });

@@ -12,14 +12,15 @@ import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { runAccountCreated } from '../lib/automations';
 import { fail } from '../lib/errors';
-import { iso, toTask } from '../lib/mappers';
+import { day, iso, toTask } from '../lib/mappers';
 import { changedKeys, kickSync, queueSync, recomputeRollups } from '../lib/records';
 import { body, localeField, param, uuid } from '../lib/validate';
 import { cleanFields, fieldSchema } from '../lib/fieldDefs';
 import { linksFor } from '../lib/links';
 import { saveUndo } from '../lib/undo';
 import { toTrash } from '../lib/trash';
-import { canSeeField, changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, stripFields } from '../lib/fieldAccess';
+import { canSeeField, changedFieldKeys, checkEditable, hiddenKeys, mergeDefs, seesEverything, stripFields } from '../lib/fieldAccess';
+import type { AccountDepartmentWork } from '../../../shared/src/model';
 
 export const accountRoutes = new Hono<AppEnv>();
 
@@ -207,9 +208,20 @@ accountRoutes.get('/accounts/:id', async (c) => {
       [id],
     );
     const links = await linksFor(q, 'account', [id]);
-    return { a, tasks, links };
+    // The shared customer page: every department's open work here, as counts, where that
+    // department's band is open to this person (its own boards stay behind its wall).
+    const depts = await q.query(
+      `select w.*, d.band_view from app_account_departments($1) w join departments d on d.key = w.department_key`,
+      [id],
+    );
+    return { a, tasks, links, depts };
   });
-  return c.json({ account: { ...viewOf(c)(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })) });
+  const auth = c.get('auth');
+  const mine = new Set(auth.depts ?? []);
+  const departments: AccountDepartmentWork[] = data.depts
+    .filter((d) => seesEverything(auth) || !d.band_view || d.band_view.some((k: string) => mine.has(k)))
+    .map((d) => ({ key: d.department_key, open: d.open, overdue: d.overdue, nextDue: day(d.next_due), mine: !!d.mine }));
+  return c.json({ account: { ...viewOf(c)(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })), departments });
 });
 
 accountRoutes.patch('/accounts/:id', async (c) => {

@@ -104,8 +104,9 @@ $$;
 create function app_departments_for_new_org() returns trigger
 language plpgsql security definer set search_path = public, pg_temp as $$
 begin
-  insert into departments (org_id, key, position)
-  values (new.id, 'sales', 0), (new.id, 'success', 1), (new.id, 'product', 2), (new.id, 'finance', 3)
+  -- Finance's band on the customer page (money owed, invoices) is Finance's own until an administrator widens it.
+  insert into departments (org_id, key, position, band_view)
+  values (new.id, 'sales', 0, null), (new.id, 'success', 1, null), (new.id, 'product', 2, null), (new.id, 'finance', 3, array['finance'])
   on conflict do nothing;
   return new;
 end
@@ -227,6 +228,16 @@ begin
 end
 $$;
 
+-- The history line of a request just sent to another department's board ("came in through the form").
+create function app_request_created(p_task uuid) returns void
+language sql volatile security definer set search_path = public, pg_temp as $$
+  insert into task_events (org_id, task_id, actor_id, kind, data)
+  select t.org_id, t.id, app_user(), 'created', '{"form": true}'::jsonb
+    from tasks t join app_request_desks() r on r.id = t.board_id
+   where t.id = p_task and t.org_id = app_org() and t.created_by = app_user() and t.created_at > now() - interval '10 minutes'
+     and not exists (select 1 from task_events e where e.task_id = t.id and e.kind = 'created')
+$$;
+
 -- The shared customer page: each department's open work for one customer, as counts.
 -- Only for a customer the person can see (the same test as the accounts policy).
 create function app_account_departments(p_account uuid)
@@ -294,8 +305,8 @@ alter policy tasks_insert on tasks with check (
 
 -- ------------------------------------------------------- existing companies
 
-insert into departments (org_id, key, position)
-select o.id, k.key, k.position from orgs o
+insert into departments (org_id, key, position, band_view)
+select o.id, k.key, k.position, case when k.key = 'finance' then array['finance'] end from orgs o
  cross join (values ('sales', 0), ('success', 1), ('product', 2), ('finance', 3)) as k (key, position)
 on conflict do nothing;
 
