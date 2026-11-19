@@ -1,15 +1,15 @@
 {
   "versions": {
-    "terms": "2026-11-19.draft2",
+    "terms": "2026-11-19.draft3",
     "dpa": "2026-11-19.draft2",
     "sla": "2026-11-19.draft1",
-    "aup": "2026-11-19.draft1",
+    "aup": "2026-11-19.draft2",
     "order_form": "2026-11-19.draft1"
   },
   "sha256": {
     "legal-terms": {
-      "en": "61b61a048f3a9dcfa02cb40bd935c1861db68416de4651b9ad4f6211215e69ab",
-      "tr": "d131e97b03604234b9b444ce9ef59b24e52cd6a05ae6133f40e57393ab64f4b8"
+      "en": "6e6ea0647463dcd9607ced40c752f22dd0074d7b0293a6c896314e4918de1cef",
+      "tr": "bd8a6eafbe0f7c78de84725d6d020a838e2049f8fca60856429bb24f6f29756a"
     },
     "legal-dpa": {
       "en": "b43122e69d5c23444baacea646eac07f80384229a6e9a45821b31b4bb9ffbfaf",
@@ -20,8 +20,8 @@
       "tr": "d8f3a91af25ae83b496379b122ec278c21dc60720dfd95d2003166e67f7bc810"
     },
     "legal-aup": {
-      "en": "b8a09de611bbf2a116b47fd28d92b6cd232300261727cd2f2957f7f6addfe1aa",
-      "tr": "2f05058d3e68e5abca73acbada3608517d3b9b450d1fd10c5b7480b164fa92df"
+      "en": "5745f18e855b03c08df2b766016442ff96a97ef91cb5f4758659f71162968679",
+      "tr": "b03592488a09d572f726439b974734b690a925d1efd5ac71e7d543bd989b93db"
     },
     "legal-order-form": {
       "en": "c85d026676d4045df21644c2e04d1901f5fb31053cf8e69e7c34a899786d5c5b",

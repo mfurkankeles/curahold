@@ -8,7 +8,7 @@ been rehearsed. Do not assume they protect you; see [SECURITY.md](../SECURITY.md
 
 Contents: [Ground rules](#ground-rules) · [Deploy](#deploy) · [Rollback](#rollback) · [Migrations](#migrations) ·
 [Rotating secrets](#rotating-secrets) · [Backups and restore](#backups-and-restore) · [On-call basics](#on-call-basics) ·
-[Common incidents](#common-incidents) · [Self-host notes](#self-host-notes)
+[Common incidents](#common-incidents) · [Go-live: bots and scrapers](#go-live-bots-and-scrapers-cloudflare-free-plan) · [Self-host notes](#self-host-notes)
 
 ## Ground rules
 
@@ -186,6 +186,84 @@ cosmetic. QUALITY.md targets uptime >= 99.9% with the app still opening and show
 | Everyone "device limit" signed out | `MAX_DEVICES` lowered or shared seats | Check the variable; explain policy. |
 | Self-host cannot sign in | No `SMTP_URL`: mail goes to the app log | `docker compose logs app` for the link. |
 | Salesforce token errors from a fixed-IP-only org | Relay down or key mismatch | Check the relay host and `SALESFORCE_RELAY_URL/KEY`. |
+
+## Go-live: bots and scrapers (Cloudflare free plan)
+
+Switch these on once the domains exist (`curahold.com` for the site and the app, `curahold-portal.com` for the portal).
+Everything here is on Cloudflare's free plan; nothing is bought. What the code already does without them is in
+[SECURITY.md → Robots, scrapers and bots](../SECURITY.md#robots-scrapers-and-bots). Menu names are the 2026 dashboard's.
+
+**1. Turnstile (free) for the public forms.** Dashboard → **Turnstile** → **Add widget**: name `Curahold forms`,
+hostnames `app.curahold.com` and `curahold-portal.com`, **Widget Mode: Managed**, pre-clearance: No. Then:
+
+```
+wrangler secret put TURNSTILE_SECRET_KEY
+wrangler secret put TURNSTILE_SECRET_KEY -c wrangler.portal.toml
+```
+
+and under `[vars]` in both `wrangler.toml` and `wrangler.portal.toml`:
+
+```
+TURNSTILE_SITE_KEY = "<the widget's site key>"
+```
+
+Deploy. The trial form, the instant sign-up and the portal's sign-in, password and reset forms then show the check.
+`TURNSTILE = "off"` switches it off again without removing the keys; with no keys the forms keep the honeypot and
+fill-time checks.
+
+**2. AI crawlers.** Security → **Settings** → filter **Bot traffic** → **AI Crawler and Agent access policies**:
+
+| Behaviour | Action | Why |
+| --- | --- | --- |
+| Training | **Block** | The owner's rule: no training on Curahold's pages. |
+| Search | **Allow (do not block)** for now | This category may hold search crawlers; robots.txt already asks AI search robots to stay out. Change only after Security Analytics shows Googlebot/Bingbot are untouched. |
+| Agent | **Allow (do not block)** | The AI connector (`/mcp`, `/oauth`) is used by AI agents on a customer's behalf; the Worker refuses agents everywhere else unless they carry the customer's own key. |
+
+Leave Cloudflare's managed robots.txt **off**: the site and the Worker serve the policy themselves
+(`shared/src/compliance/crawlers.ts`).
+
+**3. Bot Fight Mode.** Security → **Settings** → filter **Bot traffic** → **Bot fight mode** → On, on
+`curahold-portal.com` (browsers only). On `curahold.com` turn it on, then watch Security → **Analytics** for 48 hours:
+it cannot be skipped per path, and it may challenge API calls with keys, inbound webhooks (`/api/hooks/*`,
+`/api/inbound/*`, `/api/billing/webhook`) and the AI connector. If any of those are challenged, turn it **off** on
+`curahold.com` and rely on steps 2, 4 and 5 (the code's limits and robot rules do the same work per path).
+
+**4. WAF custom rules (free plan: 5).** Security → **Security rules** → **Create rule** → **Custom rules**.
+
+Rule `AI and scraper robots on the site` — action **Block**:
+
+```
+(http.host in {"curahold.com" "www.curahold.com"} and http.request.uri.path ne "/robots.txt" and (lower(http.user_agent) contains "gptbot" or lower(http.user_agent) contains "claudebot" or lower(http.user_agent) contains "anthropic-ai" or lower(http.user_agent) contains "ccbot" or lower(http.user_agent) contains "bytespider" or lower(http.user_agent) contains "perplexitybot" or lower(http.user_agent) contains "amazonbot" or lower(http.user_agent) contains "meta-externalagent" or lower(http.user_agent) contains "applebot-extended" or lower(http.user_agent) contains "ahrefsbot" or lower(http.user_agent) contains "semrushbot" or lower(http.user_agent) contains "mj12bot" or lower(http.user_agent) contains "dataforseobot"))
+```
+
+Rule `No name on the public doors` — action **Block**:
+
+```
+(http.user_agent eq "" and (starts_with(http.request.uri.path, "/api/trial/") or starts_with(http.request.uri.path, "/api/signup/") or http.request.uri.path eq "/api/assist/public" or starts_with(http.request.uri.path, "/papi/auth/")))
+```
+
+(The app host itself needs no user-agent rule: the Worker refuses the same robots by name, with exceptions for the AI
+connector and API keys that an edge rule cannot see.)
+
+**5. Rate limiting rule (free plan: 1 rule, IP only, 10 s period, 10 s block).** Security → **Security rules** →
+**Create rule** → **Rate limiting rules**, on `curahold.com`, name `Public doors`:
+
+```
+(starts_with(http.request.uri.path, "/api/trial/") or starts_with(http.request.uri.path, "/api/signup/") or starts_with(http.request.uri.path, "/api/auth/") or http.request.uri.path eq "/api/assist/public")
+```
+
+When rate exceeds: **20 requests** per **10 seconds**, counted per **IP**; then **Block** for **10 seconds**.
+On `curahold-portal.com` the same with `starts_with(http.request.uri.path, "/papi/auth/")`. The Worker's own
+budgets (`api/src/lib/ratelimit.ts`) stay the exact, per-person and per-company line behind it.
+
+**What to watch, first week and then weekly.**
+- The owner console's alerts: rows `traffic:burst`, `traffic:ip-burst`, `traffic:robots` (company log, kind alert).
+  One alert per rule per 15 minutes per Worker isolate; the log line `[curahold] traffic alert` has the same.
+- Security → **Analytics** / **Events**: blocks by the two custom rules, the rate limiting rule and the AI policy; any
+  challenge or block on `/api/`, `/mcp`, `/oauth/` or a webhook path is a false positive to fix at once.
+- Workers logs (`wrangler tail`): 429 and 403 `robot_refused` answers by path.
+- Turnstile → the widget's analytics: a solve rate far under 90% means people are being stopped, not robots.
+- Search Console / Bing Webmaster: the site and `/docs/` still indexed; `app` and company hosts not.
 
 ## Self-host notes
 

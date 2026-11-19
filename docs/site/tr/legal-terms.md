@@ -6,7 +6,7 @@ summary: Curahold ile müşteri şirket arasındaki sözleşme — deneme, planl
 ---
 # Kullanım koşulları (ana abonelik sözleşmesi)
 
-> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-19.draft2. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
+> **Taslak — avukat onayı gerekli.** Sürüm 2026-11-19.draft3. [Köşeli parantez] içindeki yerler doldurulacak. Hukuki görüş değildir.
 
 Bu koşullar **[Şirket unvanı]**, [merkez adresi], [MERSİS / vergi no.] ("Curahold", "biz") ile Curahold'u kullanan şirket ya da kuruluş ("Müşteri", "siz") arasındaki sözleşmedir. Koşulları kabul eden kişi, kutuyu işaretleyerek Müşteri'yi bağlamaya yetkili olduğunu beyan eder. Kendi kaydolan müşteriler bu koşulları tıklayarak kabul eder; kurumsal müşteriler bu koşullara atıf yapan bir **Sipariş formu** imzalar. **Veri işleme sözleşmesi (VİS)**, **Hizmet düzeyi sözleşmesi (SLA)** ve **Kabul edilebilir kullanım politikası** bu koşulların parçasıdır.
 
@@ -55,6 +55,18 @@ Taraflar birbirinin gizli bilgisini gizli tutar, yalnızca bu sözleşme için k
 ## 9. Fikrî mülkiyet ve geri bildirim
 
 Hizmet bize, Müşteri verisi ve kendi materyalleri Müşteri'ye aittir. Müşteri'nin verdiği geri bildirimi bir yükümlülük doğmadan serbestçe kullanabiliriz. Hiçbir hüküm mülkiyeti devretmez.
+
+**Korunan unsurlar.** Hizmet'in yazılımı, tasarımı ve arayüzü, dokümantasyonu, içeriği ve özellikleri telif hakkı ve ticari sırrımız olarak korunur; Curahold™ markamızdır. Bu koşulların izin verdiği durumlar dışında kopyalanamaz, çoğaltılamaz, değiştirilemez, çevrilemez ve dağıtılamaz. [avukat: ifadeyi 5846 sayılı Fikir ve Sanat Eserleri Kanunu ve ticari sır hükümleri bakımından teyit edin; bir patent başvurusu olmadıkça "patentli" ya da "patent başvurusu yapılmış" ifadeleri kullanılamaz.]
+
+**Önceden yazılı iznimiz olmadan Müşteri ve kullanıcıları şunları yapamaz:**
+
+1. Hizmet'i, sayfalarını ya da dokümantasyonu otomatik yollarla kazımak (scraping), taramak (crawling) ya da başka şekilde erişip veri çekmek — Müşteri'nin kendi anahtarıyla, yayımlanmış API üzerinden ve belgelenmiş sınırlar içinde yapılan erişim hariç;
+2. Hizmet'in özelliklerini, ekranlarını, iş akışlarını, içeriğini ya da tasarımını keşfetmek, kaydetmek, haritalamak ya da çıkarmak için yapay zekâ ajanları, botlar, tarayıcı otomasyonu ya da benzeri araçlar kullanmak;
+3. Hizmet üzerinde tersine mühendislik yapmak, kaynak koda dönüştürmek (decompile) ya da ayrıştırmak veya kaynak kodunu, modellerini ya da veri yapılarını elde etmeye çalışmak — emredici hukukun bu maddeye rağmen izin verdiği ölçü hariç;
+4. Hizmet'i ya da ondan öğrenilen herhangi bir şeyi rakip bir ürün ya da hizmet geliştirmek, eğitmek ya da iyileştirmek için kullanmak veya Hizmet'i bu amaçla kıyaslamak (benchmark) ya da test etmek;
+5. Hizmet, dokümantasyon ya da web sitelerimiz üzerinde metin ve veri madenciliği yapmak. Bu hakları 2019/790 sayılı (AB) Direktifi'nin 4(3). maddesi ve ilgili ulusal mevzuat uyarınca, makinece okunabilir biçimde de (robots.txt, /.well-known/tdmrep.json adresindeki TDMRep dosyası ve tdm-reservation etiketleri) açıkça saklı tutuyoruz.
+
+Bu madde, Müşteri'nin her zaman dışa aktarabileceği kendi verisini kullanmasını sınırlamaz (13. madde). Bu maddenin ihlali esaslı bir ihlaldir (13. madde); ihlalde kullanılan erişimi askıya alabiliriz.
 
 ## 10. Bağlanan üçüncü taraf araçlar
 

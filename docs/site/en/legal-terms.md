@@ -6,7 +6,7 @@ summary: The agreement between Curahold and a customer company — the trial, pl
 ---
 # Terms of service (master subscription agreement)
 
-> **Draft — lawyer approval required.** Version 2026-11-19.draft2. Text in [square brackets] is to be filled in. Not legal advice.
+> **Draft — lawyer approval required.** Version 2026-11-19.draft3. Text in [square brackets] is to be filled in. Not legal advice.
 
 These terms are an agreement between **[Company legal name]**, [registered address], [registry / tax number] ("Curahold", "we") and the company or organisation that uses Curahold ("the Customer", "you"). The person who accepts them confirms, by ticking the box, that they are authorised to bind the Customer. Self-serve customers accept these terms with a click; enterprise customers sign an **Order form** that refers to them. The **Data processing agreement**, the **Service level agreement** and the **Acceptable use policy** are part of these terms.
 
@@ -55,6 +55,18 @@ Each party keeps the other's confidential information confidential, uses it only
 ## 9. Intellectual property and feedback
 
 We own the Service; the Customer owns its data and its own materials. The Customer may give us feedback, which we may use freely without obligation. Nothing transfers ownership.
+
+**Protected material.** The software, its design and interface, the documentation, content and features of the Service are protected by copyright and as our trade secrets; Curahold™ is our trade mark. Except as these terms allow, they may not be copied, reproduced, modified, translated or distributed. [lawyer: confirm the wording under the Turkish copyright act (FSEK, Law 5846) and trade-secret rules; "patented" or "patent pending" may not be used while no patent application exists.]
+
+**Without our prior written permission, the Customer and its users may not:**
+
+1. scrape, crawl, spider or otherwise access or extract the Service, its pages or the documentation by automated means — except through the published API with the Customer's own key and within its documented limits;
+2. use AI agents, bots, browser automation or similar tools to explore, record, map or extract the Service's features, screens, workflows, content or design;
+3. reverse engineer, decompile or disassemble the Service or try to derive its source code, models or data structures, except to the extent mandatory law allows this despite this clause;
+4. use the Service, or anything learned from it, to build, train or improve a competing product or service, or benchmark or test the Service for that purpose;
+5. carry out text and data mining on the Service, the documentation or our websites. We expressly reserve these rights under Article 4(3) of Directive (EU) 2019/790 and the corresponding national laws, also in machine-readable form (robots.txt, the TDMRep file at /.well-known/tdmrep.json and tdm-reservation tags).
+
+This does not limit the Customer's use of its own data, which it may export at any time (section 13). A breach of this section is a material breach (section 13), and we may suspend the access used for it.
 
 ## 10. Connected third-party tools
 

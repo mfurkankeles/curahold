@@ -104,6 +104,41 @@ Full detail: [ARCHITECTURE.md, section 4](ARCHITECTURE.md#4-tenant-isolation) an
 Still open (details in asvs.md): a separate files domain (needs the owner's domain), `'unsafe-inline'` styles in the CSP
 (the design package removes them), and role separation (row 2 below).
 
+## Robots, scrapers and bots
+
+The owner's rule: no one may scan the product with an automation and copy its features, and robot traffic must not
+raise costs. What is in place (free mechanisms only), and what it cannot do:
+
+- **Crawler policy, one list** (`shared/src/compliance/crawlers.ts`): the sales site lets search engines index the
+  marketing pages and blocks AI training/answer crawlers and site-analysis robots; the app host shows `/docs/` to
+  search engines only; company hosts, the portal, the demo, the hubs and the API say `Disallow: /`, send
+  `X-Robots-Tag: noindex, nofollow` and carry a `noindex, nofollow, noai, noimageai` meta. Owner switches:
+  `SITE_AI_CRAWLERS=allow` (site build), `CRAWLERS_DOCS_AI=allow` (Worker) let AI answer robots read pages again.
+- **Text-and-data-mining rights reserved** (EU DSM Directive Art. 4(3)): `/.well-known/tdmrep.json`, the
+  `tdm-reservation: 1` header and meta, and the terms (section 9) and AUP.
+- **Robots refused by name** (`api/src/lib/botGuard.ts`): known AI crawlers and analysis robots get 403 on the app,
+  API and portal — never on `/mcp`, `/oauth`, `/.well-known` or a request with its own API key. In production
+  (`ROBOT_GUARD=strict`) scripted HTTP tools and an empty user agent are also refused at the public doors (trial,
+  sign-up, public Ask, portal sign-in).
+- **Limits** (`api/src/lib/ratelimit.ts`): per address, person and company as before, plus the public Ask door per
+  address (`assistDoor`), uploads per person and company, and unknown addresses per address (`probe`: a scanner
+  mapping the API waits). The assistant's money caps are unchanged (`api/src/assistant/cost.ts`).
+- **Public forms** (`api/src/lib/humanCheck.ts`): honeypot, fill time, and Cloudflare Turnstile when its keys are set
+  (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`; `TURNSTILE=off`). A robot caught by the honeypot or the clock gets the
+  usual answer and nothing is sent; a refused Turnstile token is told plainly. If Cloudflare is unreachable the form is
+  let through (logged) so an outage cannot lock people out.
+- **Alerts**: bursts of 429s, one address limited again and again, or many refused robots write one alert per rule
+  per 15 minutes to the console's alerts (`company_log`, kind `alert`, ref `traffic:*`), with a salted fingerprint
+  instead of the address.
+- **Edge settings for go-live** (Bot Fight Mode, AI crawler policy, WAF and rate-limiting rules, Turnstile widget):
+  [docs/RUNBOOK.md → Go-live: bots and scrapers](docs/RUNBOOK.md#go-live-bots-and-scrapers-cloudflare-free-plan).
+
+**Honest limits.** robots.txt, the TDM reservation and the meta tags are requests that well-behaved robots follow.
+A robot that drives a real browser and sends a browser's name is not recognised by name, and Turnstile only guards
+forms. What stands then is that the product itself is behind sign-in, every person and company has limits, the
+counts raise alerts, and the terms forbid it (which gives a legal remedy, not a technical wall). The marketing pages
+and the docs are public by design; anything public can be read by a determined person.
+
 ## Known operational requirements
 
 These are things the **operators** must ensure, because they are deployment facts the code cannot enforce. Status is stated
