@@ -3,18 +3,13 @@
 // each side, both at once, an expired token, a rate limit, a refused field, withdrawn access,
 // reconnect and disconnect. scripts/integrations/onboard.ts times the same flow.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { runAccountingFlow, runFlow, type FlowSpec, type Http } from './vendors/flow';
+import { runAccountingFlow, runFlow, type Http } from './vendors/flow';
+import { ACCOUNTING_SPECS, SPECS } from './vendors/specs';
 import { VENDOR_MOCKS } from './vendors';
 import { vendorWorld, type VendorWorld } from './vendors/kit';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
-export const SPECS: FlowSpec[] = [
-  { provider: 'salesforce', objects: [{ remote: 'Account', target: 'account' }, { remote: 'Contact', target: 'record', kind: 'contact' }, { remote: 'Opportunity', target: 'record', kind: 'opportunity' }], expect: 'Pinecrest Foods', twoWay: true },
-  { provider: 'hubspot', objects: [{ remote: 'companies', target: 'account' }, { remote: 'contacts', target: 'record', kind: 'contact' }, { remote: 'deals', target: 'record', kind: 'opportunity' }], expect: 'Pinecrest Foods', twoWay: true },
-  { provider: 'bitrix24', objects: [{ remote: 'company', target: 'account' }, { remote: 'contact', target: 'record', kind: 'contact' }, { remote: 'deal', target: 'record', kind: 'opportunity' }], expect: 'Pinecrest Foods', twoWay: true },
-];
 
-export const ACCOUNTING_SPECS = [{ provider: 'odoo', customer: 'Quillfield Retail' }];
 
 function httpFor(env: Env, ada: Client): Http {
   return {

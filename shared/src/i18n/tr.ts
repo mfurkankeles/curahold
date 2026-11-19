@@ -1392,7 +1392,7 @@ export const tr: Record<MessageKey, string> = {
   'sync.status.errors': '{n} öğe eşitlenemedi',
   'sync.status.errors.one': "1 öğe eşitlenemedi",
   'sync.errorCode.rate': "{app}, Curahold'dan biraz yavaşlamasını istedi. Bir sorun yok: eşitleme bir sonraki saatlik çalışmada kendiliğinden devam eder.",
-  'sync.errorCode.auth': "{app}, Curahold'un girişini ya da anahtarını artık kabul etmiyor. Bu sayfanın üstünden Yeniden bağlan'ı seç.",
+  'sync.errorCode.auth': "{app}, Curahold'un girişini ya da anahtarını artık kabul etmiyor. Bu sayfanın üstünden Yeniden bağla'yı seç.",
   'sync.errorCode.permission': "Curahold'un bağlandığı {app} hesabının bunu okuma ya da değiştirme izni yok. {app} yöneticinden bu hesaba erişim vermesini iste, sonra Şimdi eşitle'yi seç.",
   'sync.errorCode.unreachable': "{app} adresine ulaşılamadı. Curahold bir sonraki saatlik çalışmada kendiliğinden yeniden dener.",
   'sync.status.schedule': 'Burada yapılan değişiklikler hemen gider. Her şey ayrıca saatte bir kontrol edilir, günde bir kez de baştan okunur.',

@@ -1169,9 +1169,12 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
     };
   }, [drafts, d, setDrafts, onErr]);
 
+  // A contact's name is made from its first and last name when the name itself is not synced (as the sync does).
+  const isContact = (o: Draft) => o.target === 'record' && (o.kind === 'contact' || d.recordTypes.find((r) => r.key === o.typeKey)?.kind === 'contact');
+  const named = (o: Draft) => o.fields.some((f) => f.local === (o.target === 'task' ? 'title' : 'name') || (isContact(o) && (f.local === 'f:first_name' || f.local === 'f:last_name')));
   const problems = enabled
     .filter((o) => o.meta)
-    .filter((o) => !o.fields.some((f) => f.local === (o.target === 'task' ? 'title' : 'name')))
+    .filter((o) => !named(o))
     .map((o) => o.label);
 
   const save = async () => {

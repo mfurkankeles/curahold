@@ -34,11 +34,19 @@ export interface Step {
   note?: string;
 }
 
-export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
+export interface RealSide {
+  /** The key values for a key-based vendor (from the environment). */
+  keyValues?: Record<string, string>;
+  /** OAuth: the person opens this address, clicks Allow, and the promise ends when the app has the connection. */
+  signIn?: (startUrl: string) => Promise<string | null>;
+}
+
+/** With `real`, the vendor is the real sandbox: steps that need the vendor's side changed by hand are skipped and say so. */
+export async function runFlow(http: Http, world: VendorWorld | null, spec: FlowSpec, real?: RealSide) {
   const steps: Step[] = [];
-  const mock = world.mock(spec.provider);
-  mock.reset();
-  world.clear(spec.provider);
+  const mock = real ? null : world!.mock(spec.provider);
+  mock?.reset();
+  world?.clear(spec.provider);
   let id = '';
   const t0 = Date.now();
   const step = async (name: string, fn: () => Promise<boolean | string>) => {
@@ -63,18 +71,18 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
     return p?.available ? true : `not offered: ${JSON.stringify(p)}`;
   });
 
+  const keyValues = real ? real.keyValues : mock!.keyValues;
   const connect = async () => {
-    if (mock.keyValues) {
-      const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    if (keyValues) {
+      const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
       if (r.status >= 300) return `key refused ${r.status} ${JSON.stringify(r.json)}`;
       id = r.json.id;
       return true;
     }
-    const q = new URLSearchParams(mock.startQuery ?? {});
+    const q = new URLSearchParams(mock?.startQuery ?? {});
     const go = await http.location(`/api/connect/${spec.provider}/start?${q}`);
-    if (!go || !mock.hosts.test(new URL(go).host)) return `start went to ${go}`;
-    const back = mock.consent!(new URL(go), world.ctl(spec.provider));
-    const done = await http.location(back);
+    if (!go || !/^https:/.test(go)) return `start went to ${go}`;
+    const done = real ? await real.signIn!(go) : await http.location(mock!.consent!(new URL(go), world!.ctl(spec.provider)));
     const m = done && /\/settings\/sources\/([0-9a-f-]{36})/.exec(done);
     if (!m) return `callback went to ${done}`;
     id = m[1];
@@ -110,9 +118,11 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
     return (await accounts(spec.expect)).length === 1 ? true : `${spec.expect} not here after first sync`;
   });
 
-  await step('edit-there', async () => {
+  const vendorSide = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: 'skipped: needs a change made by hand in the vendor' }) : step(name, fn));
+
+  await vendorSide('edit-there', async () => {
     http.advance(60_000);
-    mock.remoteEdit!(world.ctl(spec.provider), 'Orbital Freight Ltd');
+    mock!.remoteEdit!(world!.ctl(spec.provider), 'Orbital Freight Ltd');
     const run = await runNow();
     if (run?.status === 'error') return `run error ${JSON.stringify(run.errors)}`;
     return (await accounts('Orbital Freight Ltd')).length === 1 ? true : 'change there did not arrive';
@@ -125,21 +135,22 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
     await http.settle();
     if (!spec.twoWay) return true;
     const link = (await http.get(`/api/accounts/${mine.id}`)).json.account.links?.find((l: any) => l.provider === spec.provider);
-    const row = link && mock.remoteRow!(spec.objects[0].remote, link.remoteId);
+    if (real) return link ? true : 'no link to the vendor record';
+    const row = link && mock!.remoteRow!(spec.objects[0].remote, link.remoteId);
     return row && Object.values(row).includes(`${spec.expect} Group`) ? true : `change here not written there: ${JSON.stringify(row)}`;
   });
 
-  await step('conflict', async () => {
+  await vendorSide('conflict', async () => {
     if (!spec.twoWay) return true;
     // Both sides change the same customer before a run: the change here waits (the vendor is busy and
     // refuses the write for now), the vendor's change is a minute newer. The default rule: the newer wins.
     const other = (await accounts('Orbital Freight Ltd'))[0];
-    world.arm(spec.provider, 'ratelimit', 3);
+    world!.arm(spec.provider, 'ratelimit', 3);
     await http.patch(`/api/accounts/${other.id}`, { name: 'Orbital Freight (here)' });
     await http.settle();
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     http.advance(60_000);
-    mock.remoteEdit!(world.ctl(spec.provider), 'Orbital Freight (there)');
+    mock!.remoteEdit!(world!.ctl(spec.provider), 'Orbital Freight (there)');
     http.advance(60_000);
     const run = await runNow();
     if (run?.status === 'error') return `run error ${JSON.stringify(run.errors)}`;
@@ -147,39 +158,39 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
     return now === 'Orbital Freight (there)' ? true : `newer change did not win (here shows "${now}")`;
   });
 
-  await step('expired-token', async () => {
-    world.arm(spec.provider, 'expired');
+  await vendorSide('expired-token', async () => {
+    world!.arm(spec.provider, 'expired');
     http.advance(60_000);
     const run = await runNow();
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return run?.status !== 'error' && conn.status !== 'error' ? true : `expired token broke the run: ${run?.status} ${JSON.stringify(run?.errors)}`;
   });
 
-  await step('rate-limit', async () => {
-    world.arm(spec.provider, 'ratelimit');
+  await vendorSide('rate-limit', async () => {
+    world!.arm(spec.provider, 'ratelimit');
     http.advance(60_000);
     const run = await runNow();
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     // A rate limit is not an error: the run stops with its place kept, the connection stays healthy.
     if (conn.status === 'error') return `rate limit marked the connection broken (${run?.status}: ${JSON.stringify(run?.errors).slice(0, 160)})`;
     return run?.status === 'error' ? `rate limit made the run an error: ${JSON.stringify(run?.errors).slice(0, 160)}` : true;
   });
 
-  await step('bad-field', async () => {
+  await vendorSide('bad-field', async () => {
     if (!spec.twoWay) return true;
-    world.arm(spec.provider, 'badfield');
+    world!.arm(spec.provider, 'badfield');
     await http.patch(`/api/accounts/${mine.id}`, { name: `${spec.expect} Holding` });
     await http.settle();
     await runNow();
     const problems = (await http.get(`/api/connections/${id}/problems`)).json;
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     const list = problems.problems ?? problems.items ?? [];
     return list.length ? true : `refused write not listed as a problem: ${JSON.stringify(problems).slice(0, 160)}`;
   });
 
-  await step('revoked', async () => {
-    world.arm(spec.provider, 'revoked');
+  await vendorSide('revoked', async () => {
+    world!.arm(spec.provider, 'revoked');
     http.advance(3_700_000);
     await runNow();
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
@@ -187,14 +198,13 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
   });
 
   await step('reconnect', async () => {
-    world.clear(spec.provider);
-    if (mock.keyValues) {
-      const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    world?.clear(spec.provider);
+    if (keyValues) {
+      const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
       if (r.json?.id !== id) return `reconnect made a second connection (${r.status})`;
     } else {
       const go = await http.location(`/api/connect/${spec.provider}/start?reconnect=${id}`);
-      const back = mock.consent!(new URL(go!), world.ctl(spec.provider));
-      const done = await http.location(back);
+      const done = real ? await real.signIn!(go!) : await http.location(mock!.consent!(new URL(go!), world!.ctl(spec.provider)));
       if (!done?.includes(id)) return `reconnect went to ${done}`;
     }
     const run = await runNow();
