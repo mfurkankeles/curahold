@@ -38,6 +38,8 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
     ),
     activity: await q.query('select action, entity, entity_id, at from audit_log where org_id = $1 and actor_id = $2 order by at', [org.id, userId]),
     teams: await q.query('select t.name from teams t join team_members m on m.team_id = t.id where t.org_id = $1 and m.user_id = $2', [org.id, userId]),
+    // What they asked CuraAI, as long as the company keeps it (api/src/assistant).
+    assistant: await q.query('select surface, question, kind, created_at from assistant_log where org_id = $1 and user_id = $2 order by created_at', [org.id, userId]),
   }));
   return {
     exportedAt: new Date().toISOString(),
@@ -57,5 +59,6 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
       endReason: s.revoke_reason,
     })),
     activity: own.activity.map((a) => ({ action: a.action, entity: a.entity, entityId: a.entity_id, at: iso(a.at) })),
+    assistantQuestions: own.assistant.map((a) => ({ where: a.surface, question: a.question, reply: a.kind, at: iso(a.created_at) })),
   };
 }

@@ -120,6 +120,7 @@ while the Processor processes Customer Data.
 | [E-mail provider] | Transactional e-mail delivery | [region] | [adequacy / SCCs] |
 | [Payment processor] | Billing and payments | [region] | [adequacy / SCCs] |
 | [Analytics provider] | Product/site analytics (consent-gated) | [region] | [adequacy / SCCs] |
+| Anthropic, PBC | AI assistant answers (question, docs excerpts, the asker's permitted workspace data); no training on Customer Data; only while the Customer keeps the assistant on | [United States] | [SCCs + transfer impact assessment; KVKK standard contract + notification] |
 
 *(Keep this list current and publish it at the sub-processors page.)*
 

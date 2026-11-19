@@ -18,6 +18,7 @@ Son güncelleme: [tarih]. Yeni alt işleyenler, başlamadan en az [30] gün önc
 | Paddle.com Market Ltd | Ödemeler ve faturalar (satış sorumlusu; yalnızca ödeme yapan şirketin fatura yetkilisi) | Birleşik Krallık ve [ ] |
 | Google LLC | Yalnızca şirket "Google ile giriş"i açtığında ya da Google Sheets bağladığında | [ ] |
 | Microsoft Corporation | Yalnızca şirket "Microsoft ile giriş"i açtığında ya da Excel bağladığında | [ ] |
+| Anthropic, PBC | Yapay zekâ asistanı (CuraAI, belgelerdeki "Sor", portaldaki soru kutusu, destek için ilk cevap taslakları): soru, belgelerimizden birkaç bölüm ve yalnızca soran kişinin zaten görebildiği çalışma alanı verileri. Model eğitiminde kullanılmaz. Yalnızca şirket asistanı açık tuttuğu sürece (Ayarlar → Destek). | [Amerika Birleşik Devletleri] |
 
 **Alt işleyenimiz olmayanlar:** bir şirketin kendisinin bağladığı araçlar — CRM’i (Salesforce, HubSpot, Dynamics 365, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), sohbet uygulaması (Slack, Microsoft Teams, Google Chat), destek aracı ya da yapay zekâ asistanı. Veriler bunlara şirketin talimatıyla, şirketin onlarla yaptığı sözleşme çerçevesinde gider.
 
