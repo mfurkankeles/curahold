@@ -18,6 +18,7 @@ import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES, useConnections } from './Connections';
 import { Confirm, Dialog, RowMenu, onTabKeys } from './ui';
+import { AccountingFile, AccountingMatches, AccountingStart, AccountingTiles } from './Accounting';
 
 /** What the screens call the app on the other side; in the try-it demo, the CRM the pretend one stands in for. */
 const appName = (c: { provider: string; standsFor?: string | null }) => PROVIDER_NAMES[c.standsFor ?? c.provider] ?? c.provider;
@@ -178,6 +179,7 @@ export function Sources() {
           </div>
         ))}
       </div>
+      <AccountingTiles providers={data.providers} />
       <h3 className="section__head u-mt-20">
         {t('support.add')}
       </h3>
@@ -483,7 +485,7 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
 // ----------------------------------------------------------- one source
 
 interface Detail {
-  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean; mailbox?: boolean; inbound?: boolean; inboundUrl?: string | null };
+  connection: { id: string; provider: string; standsFor?: string | null; label: string; status: string; lastError?: string | null; reconnect?: 'oauth' | 'key' | null; prefill?: Record<string, string>; tabular: boolean; readOnly?: boolean; canReply?: boolean; mailbox?: boolean; inbound?: boolean; inboundUrl?: string | null; accounting?: boolean };
   sync: SyncConfig;
   state: { lastRun: { id: string; status: SyncRun['status']; at: string; stats: Record<string, SyncStats> } | null; fullAt: string | null };
   recordTypes: { id: string; key: string; name: any; kind: string; fields: AccountField[] }[];
@@ -551,7 +553,7 @@ export function SourceDetail({ id }: { id: string }) {
   const { toast } = useStore();
   const [d, setD] = useState<Detail | null>(null);
   const [missing, setMissing] = useState(false);
-  const [tab, setTab] = useState<'status' | 'mapping' | 'people' | 'settings'>('status');
+  const [tab, setTab] = useState<'status' | 'mapping' | 'people' | 'settings' | 'matches' | 'upload'>('status');
   const [step, setStep] = useState<Step | null>(null);
   const [removing, setRemoving] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
@@ -636,10 +638,12 @@ export function SourceDetail({ id }: { id: string }) {
         </div>
         {started && (
           <>
-            <button className="btn btn--primary btn--small" disabled={!!running || d.connection.status === 'disabled'} onClick={() => syncNow()}>
-              <Icon name="refresh" size={16} />
-              {running ?? t('sync.now')}
-            </button>
+            {d.connection.provider !== 'finfile' && (
+              <button className="btn btn--primary btn--small" disabled={!!running || d.connection.status === 'disabled'} onClick={() => syncNow()}>
+                <Icon name="refresh" size={16} />
+                {running ?? t('sync.now')}
+              </button>
+            )}
             <RowMenu
               label={t('sync.more')}
               items={[
@@ -681,6 +685,12 @@ export function SourceDetail({ id }: { id: string }) {
       )}
       {d.connection.inbound ? (
         <InboundPanel d={d} />
+      ) : d.connection.accounting && !started ? (
+        d.connection.provider === 'finfile' ? (
+          <AccountingFile id={id} onDone={async () => { await load(); setTab('matches'); }} />
+        ) : (
+          <AccountingStart provider={d.connection.provider} onStart={async () => { await syncNow({ start: true }); setTab('matches'); }} running={running} />
+        )
       ) : d.connection.mailbox && !started ? (
         <MailboxStart onStart={async () => { await syncNow({ start: true }); setTab('status'); }} running={running} />
       ) : !started && step && d.connection.provider === 'jira' ? (
@@ -690,7 +700,14 @@ export function SourceDetail({ id }: { id: string }) {
       ) : (
         <>
           <div className="seg source__tabs" role="tablist" onKeyDown={onTabKeys}>
-            {(d.connection.mailbox ? (['status', 'settings'] as const) : (['status', 'mapping', 'people', 'settings'] as const)).map((k) => (
+            {(d.connection.accounting
+              ? d.connection.provider === 'finfile'
+                ? (['status', 'upload', 'matches', 'settings'] as const)
+                : (['status', 'matches', 'settings'] as const)
+              : d.connection.mailbox
+                ? (['status', 'settings'] as const)
+                : (['status', 'mapping', 'people', 'settings'] as const)
+            ).map((k) => (
               <button key={k} role="tab" aria-selected={tab === k} tabIndex={tab === k ? 0 : -1} onClick={() => setTab(k)}>
                 {t(`sync.tab.${k}` as MessageKey)}
               </button>
@@ -719,6 +736,8 @@ export function SourceDetail({ id }: { id: string }) {
           {tab === 'mapping' && <MappingEditor d={d} reload={load} />}
           {tab === 'people' && <OwnersEditor id={id} crm={name} />}
           {tab === 'settings' && <SettingsTab id={id} d={d} reload={load} />}
+          {tab === 'matches' && <AccountingMatches id={id} />}
+          {tab === 'upload' && <AccountingFile id={id} onDone={() => void load()} />}
         </>
       )}
       {removing && (
@@ -1410,7 +1429,9 @@ function StatusTab({ id, d, refresh, reload }: { id: string; d: Detail; refresh:
     void load().catch(onErr);
   }, [load, refresh, onErr]);
   const last = runs?.[0] ?? null;
-  const labels = new Map(d.sync.objects.map((o) => [o.remote, o.label]));
+  const labels = new Map<string, string>(d.sync.objects.map((o) => [o.remote, o.label]));
+  // Accounting programs: what each part of a run read.
+  if (d.connection.accounting) for (const k of ['customers', 'invoices', 'payments', 'matched']) labels.set(k, t(`fin.kind.${k}` as MessageKey));
   return (
     <>
       <section className="sheet">

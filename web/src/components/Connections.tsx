@@ -45,6 +45,13 @@ export const PROVIDER_NAMES: Record<string, string> = {
   outlook: 'Outlook',
   segment: 'Segment',
   jira: 'Jira',
+  zohobooks: 'Zoho Books',
+  xero: 'Xero',
+  odoo: 'Odoo',
+  freee: 'freee',
+  parasut: 'Paraşüt',
+  quickbooks: 'QuickBooks Online',
+  finfile: 'CSV / Excel',
   github: 'GitHub',
   gitlab: 'GitLab',
 };

@@ -17,13 +17,33 @@ import { emptyStats } from '../../../shared/src/sync';
 
 export const financeRoutes = new Hono<AppEnv>();
 
+/** An invoice row as the finance tables hold it. */
+interface InvoiceRow {
+  connection_id: string;
+  remote_id: string;
+  number: string | null;
+  issued_on: unknown;
+  due_on: unknown;
+  currency: string | null;
+  total: string | number;
+  balance: string | number;
+  status: 'open' | 'paid' | 'void' | 'draft';
+}
+interface ConnRow {
+  id: string;
+  provider: string;
+  label: string;
+  config: Record<string, unknown> | null;
+  last_ok_at: unknown;
+}
+
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 const dayText = (v: unknown) => (v ? (v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10)) : null);
 
 /** The accounting connections of this company (owner access, by company). */
 async function accountingConnections(c: C) {
   const org = c.get('org');
-  const rows = await c.get('deps').db.system((q) => q.query(`select id, provider, label, config, last_ok_at from connections where org_id = $1 and kind = 'source'`, [org.id]));
+  const rows = await c.get('deps').db.system((q) => q.query<ConnRow>(`select id, provider, label, config, last_ok_at from connections where org_id = $1 and kind = 'source'`, [org.id]));
   return rows.filter((r) => isAccounting(r.provider));
 }
 
@@ -45,29 +65,29 @@ financeRoutes.get('/accounts/:id/finance', async (c) => {
     if (!links.length) return null;
     const pairs = JSON.stringify(links.map((l) => ({ c: l.connection_id, r: l.remote_id })));
     const match = `exists (select 1 from jsonb_to_recordset($1::jsonb) as k(c uuid, r text) where k.c = x.connection_id and k.r = x.customer_id)`;
-    const open = await q.query(`select x.* from finance_invoices x where ${match} and x.status = 'open' and x.balance > 0 order by x.due_on nulls last, x.issued_on limit 500`, [pairs]);
-    const recent = await q.query(`select x.* from finance_invoices x where ${match} and x.status in ('open', 'paid') order by x.issued_on desc nulls last limit 20`, [pairs]);
-    const payments = await q.query(`select x.paid_on, x.amount, x.currency from finance_payments x where ${match} and x.amount > 0 order by x.paid_on desc nulls last limit 1`, [pairs]);
+    const open = await q.query<InvoiceRow>(`select x.* from finance_invoices x where ${match} and x.status = 'open' and x.balance > 0 order by x.due_on nulls last, x.issued_on limit 500`, [pairs]);
+    const recent = await q.query<InvoiceRow>(`select x.* from finance_invoices x where ${match} and x.status in ('open', 'paid') order by x.issued_on desc nulls last limit 20`, [pairs]);
+    const payments = await q.query<{ paid_on: unknown; amount: string | number; currency: string | null }>(`select x.paid_on, x.amount, x.currency from finance_payments x where ${match} and x.amount > 0 order by x.paid_on desc nulls last limit 1`, [pairs]);
     return { a, links, open, recent, payments };
   });
   if (!data) return c.json({ finance: { linked: false, sources: conns.map((x) => ({ provider: x.provider, label: x.label })) } });
   const fallback = data.a.currency ?? c.get('org').currency ?? 'USD';
   const summary = financeSummary(
-    data.open.map((i: any) => ({ dueOn: dayText(i.due_on), currency: i.currency, balance: Number(i.balance), status: i.status })),
-    data.payments.map((p: any) => ({ paidOn: dayText(p.paid_on), amount: Number(p.amount), currency: p.currency })),
+    data.open.map((i) => ({ dueOn: dayText(i.due_on), currency: i.currency, balance: Number(i.balance), status: i.status })),
+    data.payments.map((p) => ({ paidOn: dayText(p.paid_on), amount: Number(p.amount), currency: p.currency })),
     todayOf(c),
     fallback,
   );
   const seen = new Set<string>();
   const invoices = [...data.open, ...data.recent]
-    .filter((i: any) => {
+    .filter((i) => {
       const k = `${i.connection_id}:${i.remote_id}`;
       if (seen.has(k)) return false;
       seen.add(k);
       return true;
     })
     .slice(0, 30)
-    .map((i: any) => {
+    .map((i) => {
       const conn = byId.get(i.connection_id);
       return {
         id: i.remote_id,
@@ -79,10 +99,10 @@ financeRoutes.get('/accounts/:id/finance', async (c) => {
         balance: Number(i.balance),
         status: i.status,
         provider: conn?.provider ?? null,
-        url: conn ? recordUrl(conn.provider, conn.config ?? {}, 'invoices', i.remote_id) : null,
+        url: conn ? recordUrl(conn.provider, (conn.config ?? {}) as Record<string, string>, 'invoices', i.remote_id) : null,
       };
     });
-  const used = [...new Set(data.links.map((l) => l.connection_id))].map((cid) => byId.get(cid)).filter(Boolean) as any[];
+  const used = [...new Set(data.links.map((l) => l.connection_id))].map((cid) => byId.get(cid)).filter((x): x is ConnRow => !!x);
   return c.json({
     finance: {
       linked: true,
@@ -100,7 +120,7 @@ async function accountingConnection(c: C) {
   const id = param(c, 'id');
   const [row] = await c.get('deps').db.system((q) => q.query(`select id, provider, label, config from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, c.get('org').id]));
   if (!row || !isAccounting(row.provider)) fail('not_found');
-  return row as { id: string; provider: string; label: string; config: Record<string, any> };
+  return row as { id: string; provider: string; label: string; config: Record<string, unknown> };
 }
 
 financeRoutes.get('/connections/:id/finance/matches', async (c) => {

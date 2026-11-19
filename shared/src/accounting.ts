@@ -97,7 +97,7 @@ export function domainOf(v: string | null | undefined): string | null {
   if (!v) return null;
   let s = v.trim().toLowerCase();
   if (!s) return null;
-  if (s.includes('@')) s = s.split('@').pop()!;
+  if (s.includes('@')) s = s.slice(s.lastIndexOf('@') + 1);
   s = s.replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').replace(/[/:?#].*$/, '');
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(s) || PUBLIC_MAIL.test(s)) return null;
   return s;
@@ -162,8 +162,9 @@ export function matcher(targets: MatchTarget[]): (c: Pick<FinCustomer, 'name' | 
   const by = { tax: new Map<string, Set<string>>(), domain: new Map<string, Set<string>>(), name: new Map<string, Set<string>>() };
   const put = (m: Map<string, Set<string>>, k: string | null, id: string) => {
     if (!k) return;
-    if (!m.has(k)) m.set(k, new Set());
-    m.get(k)!.add(id);
+    const set = m.get(k) ?? new Set<string>();
+    set.add(id);
+    m.set(k, set);
   };
   for (const t of targets) {
     for (const x of t.taxIds) put(by.tax, taxKey(x), t.id);

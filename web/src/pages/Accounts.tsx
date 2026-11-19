@@ -22,6 +22,7 @@ import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { nameIt, navigate, navigateFresh, useLocation } from '../lib/router';
 import { useStore } from '../lib/store';
+import { FinanceBand } from '../components/FinanceBand';
 import { AccountTimeline, HealthBadge, HealthWhy, ScoreChip, bandOf as scoreBand, useHealthText, useHealthWhy, weakestPart } from '../components/Timeline';
 import { PortalPeople } from '../components/PortalAdmin';
 import '../surfaces/employee-customers.css';
@@ -1053,6 +1054,7 @@ export function AccountPage({ id }: { id: string }) {
       <div className="page account-page">
         <AccountBand account={a} tasks={open} again={again} onAddTask={canWrite && boards.length > 0 ? startTask : undefined} />
         <AccountDepartments work={data.departments} />
+        <FinanceBand accountId={a.id} today={todayIso()} />
         <div className="account-page__main">
           <div className="tabs acc-tabs" role="tablist" aria-label={t('acc.sections')} onKeyDown={onTabKeys}>
             {tabs.map((k) => (

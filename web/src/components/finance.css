@@ -1,0 +1,66 @@
+/* Accounting: the finance band on the customer page, and the accounting screens in Settings → Data
+   sources (steps, the review list, the file upload). Tokens only (docs/design/tokens.md). */
+
+/* ------------------------------------------------------------ the band on the customer page */
+.account-page > .fin-band { grid-column: 1 / -1; }
+.fin-band { display: grid; gap: 8px; min-width: 0; }
+.fin-band__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; min-width: 0; }
+.fin-band__title { display: inline-flex; align-items: center; font-size: var(--fs-s); font-weight: 600; color: var(--ink-2); }
+.fin-band__from { font-size: var(--fs-xs); min-width: 0; overflow-wrap: anywhere; }
+.fin-band .acc-tile[data-tone='late'] { border-inline-start: 4px solid var(--late); }
+.fin-band .acc-tile[data-tone='late'] .fin-band__overdue { color: var(--late); }
+.fin-band--quiet .fin-band__note { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0; font-size: var(--fs-s); color: var(--ink-3); }
+.fin-band__list { min-width: 0; overflow-x: auto; }
+.fin-invoices { font-size: var(--fs-s); }
+.fin-invoices td, .fin-invoices th { white-space: nowrap; }
+.fin-invoices .num { text-align: end; font-variant-numeric: tabular-nums; }
+.fin-invoices a { display: inline-flex; align-items: center; gap: 4px; }
+.fin-invoices tr[data-late] td:first-child { box-shadow: inset 3px 0 0 var(--late); }
+.fin-invoices .badge[data-tone='late'] { background: var(--late-wash); color: var(--late-ink); border-color: var(--late-line); }
+.fin-invoices .badge[data-tone='done'] { color: var(--done); }
+
+/* ------------------------------------------------------------ connecting */
+.fin-steps { display: grid; gap: 8px; margin: 0; padding-inline-start: 20px; font-size: var(--fs-m); line-height: var(--lh-body); color: var(--ink); }
+.fin-steps li::marker { font-weight: 600; color: var(--ink-3); }
+.fin-readonly { display: flex; align-items: flex-start; gap: 4px; margin: 0; font-size: var(--fs-s); }
+.fin-start { display: grid; gap: 12px; }
+
+/* ------------------------------------------------------------ the review list */
+.fin-matches { display: grid; gap: 12px; }
+.fin-matches > .section__head, .fin-matches > .field__hint, .fin-start > .section__head, .fin-start > .field__hint, .fin-file > .section__head, .fin-file > .field__hint { margin: 0; }
+.fin-matches__list { display: grid; margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.fin-matches__none { margin: 0; }
+.fin-match { display: grid; grid-template-columns: minmax(0, 2fr) auto minmax(0, 2fr) minmax(0, 2fr); align-items: center; gap: 8px 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.fin-match:last-child { border-bottom: 0; }
+.fin-match[data-state='ignored'] { color: var(--ink-3); }
+.fin-match__them { display: grid; gap: 2px; min-width: 0; }
+.fin-match__name { overflow-wrap: anywhere; }
+.fin-match__meta { font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.fin-match__open { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-match__fit { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-match__us { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+.fin-match__act { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.fin-pick { position: relative; flex: 1 1 160px; min-width: 0; }
+.fin-pick__q { width: 100%; }
+.fin-pick__list { position: absolute; inset-inline: 0; top: calc(100% + 4px); z-index: 5; display: grid; margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); box-shadow: var(--shadow-2); }
+.fin-pick__list .linkbtn { display: block; width: 100%; min-height: var(--tap-min); padding: 4px 8px; text-align: start; }
+
+/* ------------------------------------------------------------ a file */
+.fin-file { display: grid; gap: 12px; }
+.fin-file__kinds { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.fin-file__kind { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.fin-file__what { display: grid; gap: 2px; min-width: 0; }
+.fin-file__cols { font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.fin-file__done { font-size: var(--fs-s); color: var(--done); }
+
+@media (max-width: 860px) {
+  .fin-match { grid-template-columns: minmax(0, 1fr) auto; }
+  .fin-match__us, .fin-match__act { grid-column: 1 / -1; }
+  .fin-pick__q { font-size: var(--fs-l); }
+}
+@media (max-width: 600px) {
+  /* A phone keeps what matters: which invoice, when due, what is left, and its state. */
+  .fin-invoices th:nth-child(3), .fin-invoices td:nth-child(3) { display: none; }
+  .fin-invoices th, .fin-invoices td { padding: 8px; }
+  .fin-invoices td:first-child { white-space: normal; overflow-wrap: anywhere; }
+}
