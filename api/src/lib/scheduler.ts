@@ -19,6 +19,8 @@ import { sendTrialReminders } from './trial';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { purgeAssistantLogs } from '../assistant/store';
 import { dailySetupHealth } from './setupHealth';
+import { purgeExpired } from './retention';
+import { purgeDueCompanies } from './companyDeletion';
 
 const DIGEST_ITEMS = 8;
 
@@ -84,6 +86,10 @@ export async function cleanUp(deps: Deps) {
   await emptyTrash(deps).catch((e) => console.error('[curahold] emptying the trash failed', e));
   // The assistant's log past each company's retention, and cached answers older than a week.
   await purgeAssistantLogs(deps.db).catch((e) => console.error('[curahold] assistant log clean-up failed', e));
+  // The stated retention periods: trial requests, consent proof, support, the activity log (lib/retention.ts).
+  await purgeExpired(deps).catch((e) => console.error('[curahold] retention purge failed', e));
+  // Companies whose deletion grace period has ended go for good, with a certificate (lib/companyDeletion.ts).
+  await purgeDueCompanies(deps).catch((e) => console.error('[curahold] company deletion failed', e));
   await deps.db.system(async (q) => {
     await q.query(`delete from login_tokens where expires_at < now() - interval '1 day'`);
     await q.query(`delete from signups where org_id is null and expires_at < now() - interval '7 days'`);

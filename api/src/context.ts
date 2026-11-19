@@ -84,6 +84,8 @@ export interface Config {
   crawlers?: { docsAiAnswers?: boolean };
   /** Cloudflare Turnstile on the public forms (lib/humanCheck.ts); unset: honeypot + fill-time checks only. */
   turnstile?: { siteKey: string; secretKey: string };
+  /** How long records are kept, and the grace before a company's deletion (lib/retention.ts); unset: the stated defaults. */
+  retention?: Partial<import('./lib/retention').RetentionConfig>;
   /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */
   assistant?: import('./assistant/cost').AssistantConfig;
   /** The AI team's models and monthly cap (api/src/team/config.ts); unset: the defaults there. */

@@ -13,6 +13,7 @@ import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './liv
 import { PLATFORM_PATH } from './live/platform';
 import { assistantConfigFrom } from './assistant/cost';
 import { edgeAnswer } from './lib/botGuard';
+import { retentionFrom } from './lib/retention';
 import type { DocSection } from '../../shared/src/answers';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
@@ -126,6 +127,12 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE?: string;
+  /** Retention periods in days (lib/retention.ts; docs/ENVIRONMENT.md §6e): unset = the stated defaults. */
+  RETENTION_TRIAL_REQUEST_DAYS?: string;
+  RETENTION_CONSENT_DAYS?: string;
+  RETENTION_SUPPORT_DAYS?: string;
+  RETENTION_AUDIT_DAYS?: string;
+  COMPANY_DELETE_GRACE_DAYS?: string;
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
@@ -180,6 +187,7 @@ export function configFromEnv(env: Env): Config {
     portalDomain,
     billing: billingFromEnv(env),
     assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
+    retention: retentionFrom(env as unknown as Record<string, string | undefined>),
     support: {
       email: env.SUPPORT_EMAIL || undefined,
       webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,

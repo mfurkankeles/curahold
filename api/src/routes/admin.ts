@@ -17,6 +17,7 @@ import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
 import { iso } from '../lib/mappers';
 import { personalData } from '../lib/personalData';
+import { graceDaysOf } from '../lib/companyDeletion';
 import { body, email, localeField, param, uuid } from '../lib/validate';
 
 export const adminRoutes = new Hono<AppEnv>();
@@ -611,6 +612,59 @@ adminRoutes.post('/users/:id/erase', async (c) => {
     await audit(sq, { orgId: o, actorId: auth.userId, action: 'user.erased', entity: 'user', entityId: id });
   });
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------- deleting the company
+
+const deletionOf = (r: any) => (r ? { id: r.id, requestedAt: iso(r.requested_at), purgeAfter: iso(r.purge_after), cancelledAt: iso(r.cancelled_at), purgedAt: iso(r.purged_at) } : null);
+
+/** The company's open deletion request (or null), and the grace period on this installation. */
+adminRoutes.get('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const rows = await run(c, (q) => q.query(`select * from company_deletions where cancelled_at is null and purged_at is null limit 1`));
+  return c.json({ deletion: deletionOf(rows[0]), graceDays: graceDaysOf(c.get('deps')) });
+});
+
+// An administrator asks for the whole company to be deleted (KVKK m.7, GDPR
+// Art. 17/28(3)(g), DPA §11). Irreversible once purged, so: the
+// administrator role (not just org.manage), a fresh sign-in, the company's
+// address typed back, and a grace period in which any administrator cancels.
+// The purge itself is the nightly job (lib/companyDeletion.ts).
+adminRoutes.post('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const auth = c.get('auth');
+  if (auth.roleKey !== 'admin' || c.get('previewBy')) fail('forbidden');
+  await requireFresh(c);
+  const org = c.get('org');
+  const input = await body(c, z.object({ confirm: z.string().trim().max(80) }));
+  if (input.confirm.toLowerCase() !== org.slug.toLowerCase()) fail('validation');
+  const days = graceDaysOf(c.get('deps'));
+  const row = await run(c, async (q) => {
+    const open = await q.query(`select 1 from company_deletions where cancelled_at is null and purged_at is null`);
+    if (open.length) fail('conflict');
+    const [r] = await q.query(
+      `insert into company_deletions (org_id, org_slug, org_name, requested_by, purge_after)
+       values ($1, $2, $3, $4, $5::timestamptz + make_interval(days => $6)) returning *`,
+      [org.id, org.slug, org.name, auth.userId, nowOf(c.get('deps')).toISOString(), days],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.deletion_requested', entity: 'org', entityId: org.id, meta: { purgeAfter: iso(r.purge_after) } });
+    return r;
+  });
+  return c.json({ deletion: deletionOf(row), graceDays: days });
+});
+
+/** Cancels the open deletion request (any administrator, during the grace period). */
+adminRoutes.delete('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const auth = c.get('auth');
+  if (auth.roleKey !== 'admin' || c.get('previewBy')) fail('forbidden');
+  const org = c.get('org');
+  await run(c, async (q) => {
+    const done = await q.query(`update company_deletions set cancelled_at = now(), cancelled_by = $1 where cancelled_at is null and purged_at is null returning id`, [auth.userId]);
+    if (!done.length) fail('not_found');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.deletion_cancelled', entity: 'org', entityId: org.id });
+  });
+  return c.json({ deletion: null, graceDays: graceDaysOf(c.get('deps')) });
 });
 
 // ------------------------------------------------------------- activity log
