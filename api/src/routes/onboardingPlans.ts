@@ -31,7 +31,8 @@ import {
   type Blueprint,
   type Template,
 } from '../../../shared/src/onboarding';
-import { nowOf, orgUrl, portalUrl, requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
+import { accessFor, nowOf, orgUrl, portalUrl, requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
+import { checkStorage } from '../billing/entitlements';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { randomToken, sha256Hex } from '../lib/crypto';
@@ -474,6 +475,8 @@ onboardingPlanRoutes.post('/onboarding-steps/:id/files', async (c) => {
   const planId = await run(c, async (q) => {
     const [s] = await q.query('select plan_id, upload from onboarding_steps where id = $1', [id]);
     if (!s) fail('not_found');
+    // The plan's storage cap (shared/src/plans.json), before anything is stored.
+    await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
     const [r] = await q.query(
       `insert into files (org_id, onboarding_step_id, name, size, mime, storage_key, uploaded_by) values ($1, $2, $3, $4, $5, $6, $7) returning id`,

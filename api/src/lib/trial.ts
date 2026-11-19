@@ -13,6 +13,8 @@ import { TRIAL_DEFAULTS } from '../../../shared/src/trialRequest';
 import { sha256Hex } from './crypto';
 import { emailDomain, isPublicDomain } from './domains';
 import { fail } from './errors';
+import { planOf } from '../../../shared/src/billing';
+import { withinCap } from '../billing/entitlements';
 import { trialApprovedHooks } from './trialRequests';
 
 const FREE = new Set(MORE_FREE_MAIL);
@@ -115,22 +117,27 @@ export async function withdrawMarketing(deps: Pick<Deps, 'db'>, email: string, l
  * Before a full seat is added (an invitation, a person from a list): a trial
  * company stays inside the seats it was approved for, and its administrator has
  * accepted the terms first. Viewer seats are free and never counted. A company
- * that pays is governed by its plan, not by the trial's cap.
+ * that pays is governed by its plan's seat limit, not by the trial's cap.
  */
 export async function seatGuard(q: Q, orgId: string, adding: number, seat: string = 'full'): Promise<void> {
-  const [o] = await q.query<{ cap: number | null; status: string | null; due: boolean }>(
-    `select o.trial_seat_cap as cap, o.billing->>'status' as status,
+  const [o] = await q.query<{ cap: number | null; status: string | null; plan: string | null; due: boolean }>(
+    `select o.trial_seat_cap as cap, o.billing->>'status' as status, o.billing->>'plan' as plan,
             exists (select 1 from org_agreements a where a.org_id = o.id and a.accepted_at is null) as due
        from orgs o where o.id = $1`,
     [orgId],
   );
   if (!o) return;
   if (o.due) fail('terms_required');
-  if (seat !== 'full' || adding <= 0 || o.cap == null || o.status === 'active' || o.status === 'past_due') return;
+  if (seat !== 'full' || adding <= 0) return;
+  const paying = o.status === 'active' || o.status === 'past_due';
+  // A paying company: its plan's seat limit (shared/src/plans.json → caps.seatsMax; null: none).
+  const planCap = paying ? (planOf(o.plan)?.caps.seatsMax ?? null) : null;
+  if (paying ? planCap == null : o.cap == null) return;
   const [n] = await q.query<{ n: number }>(`select count(*)::int as n from users where org_id = $1 and seat = 'full' and status in ('active', 'invited')`, [
     orgId,
   ]);
-  if (n.n + adding > o.cap) fail('seat_cap_reached', { cap: o.cap, used: n.n }, { cap: o.cap, used: n.n });
+  if (paying) withinCap('seats', planCap, n.n, adding);
+  else if (n.n + adding > o.cap!) fail('seat_cap_reached', { cap: o.cap!, used: n.n }, { cap: o.cap, used: n.n });
 }
 
 // ------------------------------------------------------------------ agreements at activation

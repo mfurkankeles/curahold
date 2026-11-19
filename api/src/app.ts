@@ -28,7 +28,6 @@ import { financeRoutes } from './routes/finance';
 import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
 import { segmentInboundRoutes } from './routes/segment';
 import { jiraRoutes } from './routes/jira';
-import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
 import { onboardingPlanRoutes, onboardingShareRoutes } from './routes/onboardingPlans';
 import { platformRoutes } from './routes/admin-platform';
@@ -277,10 +276,10 @@ export function createApp(deps: Deps) {
   app.route('/api/desk', deskRoutes);
   // The public docs' and sales site's "Ask": no company, docs only (routes/assist.ts).
   app.route('/', assistPublicRoutes);
-  // Paddle's notifications about subscriptions (checked against its secret).
+  // Paddle's notifications (signature-checked), one handler on two addresses: the
+  // documented one and the older one, so either Paddle destination works (ADR 0019).
+  app.post('/api/inbound/billing/paddle', billingWebhook);
   app.post('/api/billing/webhook', billingWebhook);
-  // Paddle notifications for the table-based subscription system (signature-checked).
-  app.post('/api/inbound/billing/paddle', paddleInboundWebhook);
   // SSO login and SCIM provisioning resolve the company themselves (by slug or
   // bearer token), so they mount before companyFromHost and its CSRF guard.
   app.route('/api/sso', ssoAuthRoutes);
@@ -496,7 +495,6 @@ export function createApp(deps: Deps) {
   app.route('/api', timelineRoutes);
   app.route('/api', meetingRoutes);
   app.route('/api', billingRoutes);
-  app.route('/api', subscriptionRoutes);
   app.route('/api', onboardingRoutes);
   app.route('/api', onboardingPlanRoutes);
   app.route('/api', ssoAdminRoutes);

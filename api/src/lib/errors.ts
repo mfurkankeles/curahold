@@ -78,6 +78,9 @@ export type ErrorCode =
   | 'handover_confirmed'
   | 'billing_locked'
   | 'seat_cap_reached'
+  | 'plan_limit_seats'
+  | 'plan_limit_storage'
+  | 'plan_limit_connectors'
   | 'terms_required'
   | 'free_mail_note'
   | 'repeat_mismatch'
@@ -178,6 +181,9 @@ const STATUS: Record<ErrorCode, number> = {
   // 402 Payment Required: a plan is needed for this.
   billing_locked: 402,
   seat_cap_reached: 409,
+  plan_limit_seats: 409,
+  plan_limit_storage: 413,
+  plan_limit_connectors: 409,
   terms_required: 403,
   free_mail_note: 400,
   repeat_mismatch: 422,

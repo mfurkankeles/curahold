@@ -113,7 +113,7 @@ async function envFor(
   return {
     config,
     provider: providerOf(deps),
-    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0 }),
+    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing }),
     docs,
     docsVersion: version,
     surface: opts.surface,

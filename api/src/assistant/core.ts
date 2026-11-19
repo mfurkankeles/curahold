@@ -66,7 +66,14 @@ export function settingsOf(raw: unknown, cfg: AssistantConfig): CompanyAssistSet
 export interface UsageNow {
   companyMicros: number;
   globalMicros: number;
+  /** Model-answered questions this month, and the plan's cap on them (null or absent: no cap). */
+  companyQuestions?: number;
+  questionCap?: number | null;
 }
+
+/** Whether a money cap or the plan's question cap is reached: then the free docs search answers instead of the model. */
+export const overCap = (used: UsageNow, globalUsd: number, companyUsd: number | null): boolean =>
+  used.globalMicros >= globalUsd * 1e6 || (companyUsd != null && used.companyMicros >= companyUsd * 1e6) || (used.questionCap != null && (used.companyQuestions ?? 0) >= used.questionCap);
 export interface Spend {
   model: boolean;
   usage: LlmUsage;
@@ -325,7 +332,7 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
   let why: AssistFallback | undefined = fallbackWhy;
   if (!why) {
     const used = await env.store.usage().catch(() => ({ companyMicros: Infinity, globalMicros: Infinity }));
-    if (used.globalMicros >= env.config.globalMonthlyUsd * 1e6 || (env.orgId && used.companyMicros >= env.settings.monthlyCapUsd * 1e6)) why = 'cap';
+    if (overCap(used, env.config.globalMonthlyUsd, env.orgId ? env.settings.monthlyCapUsd : null)) why = 'cap';
   }
   if (why) {
     // Without the model, an instruction hidden in the question is simply not followed.

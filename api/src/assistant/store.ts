@@ -4,19 +4,24 @@ import type { HelpLanguage } from '../../../shared/src/i18n';
 import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistReply } from '../../../shared/src/assist';
 import type { Db, Q } from '../db';
+import type { OrgBilling } from '../../../shared/src/billing';
+import { capsForOrgRow } from '../billing/entitlements';
 import { CACHE_TTL_DAYS, type AssistStore, type Spend } from './core';
 
 const MONTH = `date_trunc('month', now())::date`;
 
 /** Usage, cache and log for one company and person (or the public docs: no company). */
-export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | null; surface: string; retentionDays: number }): AssistStore {
+export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | null; surface: string; retentionDays: number; billingOn?: boolean }): AssistStore {
   const tx = <T>(fn: (q: Q) => Promise<T>) => db.tenant<T>({ orgId: ctx.orgId, userId: ctx.userId }, fn);
   return {
     async usage() {
       return tx(async (q) => {
         const [g] = await q.query(`select cost_micros from assistant_global where month = ${MONTH}`);
-        const [c] = ctx.orgId ? await q.query(`select cost_micros from assistant_usage where org_id = $1 and month = ${MONTH}`, [ctx.orgId]) : [];
-        return { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0) };
+        const [c] = ctx.orgId ? await q.query(`select cost_micros, model_questions from assistant_usage where org_id = $1 and month = ${MONTH}`, [ctx.orgId]) : [];
+        // The plan's cap on model-answered questions a month (shared/src/plans.json → caps.aiQuestionsPerSeat × full seats).
+        const [o] = ctx.orgId ? await q.query(`select id, billing, trial_ends_at from orgs where id = $1`, [ctx.orgId]) : [];
+        const questionCap = o ? (await capsForOrgRow(q, o as { id: string; billing: OrgBilling | null; trial_ends_at: unknown }, !!ctx.billingOn, new Date())).aiQuestionsPerMonth : null;
+        return { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0), companyQuestions: Number(c?.model_questions ?? 0), questionCap };
       });
     },
     async record(s: Spend) {

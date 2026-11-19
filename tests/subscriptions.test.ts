@@ -4,7 +4,7 @@
 // end, keep access until then) and resume, and strict company isolation. The
 // provider's HTTP calls are mocked — nothing here touches the network.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { checkoutCustomData } from '../api/src/lib/billing';
+import { checkoutCustomData } from '../api/src/billing/sign';
 import { hmacHex } from '../api/src/lib/crypto';
 import { startTrial } from '../api/src/billing/service';
 import { BASE, setup, type Env } from './helpers';

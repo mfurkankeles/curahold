@@ -10,6 +10,8 @@ import type { Locale } from '../../../shared/src/i18n';
 import { calculated, ISSUE_TYPES, SPRINT_STATES, type AccountField, type Column, type FieldOption } from '../../../shared/src/model';
 import { emptyStats, type FieldMap, type ObjectMap, type RemoteField, type RemoteUser, type SyncConfig, type SyncPreview, type SyncRun, type SyncStats, type TargetKind } from '../../../shared/src/sync';
 import { nowOf, secretsKey, type Deps } from '../context';
+import { accessOf, capsOf } from '../../../shared/src/billing';
+import { syncGapMinutes } from '../billing/entitlements';
 import type { Q, Row } from '../db';
 import { seal, sha256Hex, unseal } from '../lib/crypto';
 import { iso } from '../lib/mappers';
@@ -1446,14 +1448,21 @@ export async function pushOrg(deps: Deps, orgId: string) {
 /** The hourly run: every live connection reads its changes; failed sends are retried. */
 export async function runScheduledSyncs(deps: Deps, now: Date, budgetMs = 10 * 60_000) {
   const conns = await deps.db.system((q) =>
-    q.query(`select id, org_id, state from connections where kind = 'source' and status <> 'disabled' and config->'sync'->>'startedAt' is not null order by updated_at`),
+    q.query(
+      `select c.id, c.org_id, c.state, o.billing, o.trial_ends_at
+         from connections c join orgs o on o.id = c.org_id
+        where c.kind = 'source' and c.status <> 'disabled' and c.config->'sync'->>'startedAt' is not null order by c.updated_at`,
+    ),
   );
+  // How often each company's tools sync on their own is the plan's (caps.syncEveryMinutes); the scheduler runs hourly.
+  const billingOn = !!deps.config.billing;
   let ran = 0;
   const until = Date.now() + budgetMs;
   for (const c of conns) {
     if (Date.now() > until) break;
     const last = c.state?.lastRun?.at ? new Date(c.state.lastRun.at).getTime() : 0;
-    if (now.getTime() - last < 50 * 60_000 && !c.state?.lastRun?.more) continue;
+    const gap = syncGapMinutes(capsOf(accessOf(billingOn, c.billing, c.trial_ends_at ? new Date(c.trial_ends_at).toISOString() : null, now), 1));
+    if (now.getTime() - last < gap * 60_000 && !c.state?.lastRun?.more) continue;
     await syncConnection(deps, c.org_id, c.id, { trigger: 'schedule', budgetMs: Math.max(30_000, until - Date.now()) }).catch(() => null);
     ran++;
   }

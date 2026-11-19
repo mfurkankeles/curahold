@@ -12,7 +12,7 @@ import { dailyHealth, flushHealth } from './health';
 import { sendWeekly } from './weekly';
 import { sendNudges } from './nudges';
 import { startRenewals } from './playbooks';
-import { syncSeats } from './billing';
+import { syncSeats } from '../billing/service';
 import { emptyTrash } from './trash';
 import { snapshotActiveSprints } from './burndown';
 import { sendTrialReminders } from './trial';
