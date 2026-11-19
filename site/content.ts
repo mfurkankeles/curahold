@@ -1128,6 +1128,368 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       ariaBanner: '개인정보 및 쿠키 동의',
     },
   },
+  hi: {
+    title: "Curahold: टास्क, स्प्रिंट और ग्राहक रिन्यूअल एक ही जगह",
+    description: "अपने आप शुरू होने वाले रिन्यूअल, ऐसी मीटिंग जिनके अगले स्टेप टास्क बन जाते हैं, और ध्यान देने की ज़रूरत वाला हर ग्राहक एक नज़र में। ऐप ग्यारह भाषाएं बोलता है।",
+    nav: {
+      product: "प्रोडक्ट",
+      pricing: "कीमतें",
+      demo: "लाइव डेमो",
+      blog: "ब्लॉग",
+      help: "सहायता",
+      signIn: "साइन इन करें",
+      tryFree: "मुफ़्त आज़माएं",
+      skip: "कंटेंट पर जाएं",
+    },
+    hero: {
+      title: "आपकी कंपनी का सारा काम, भरोसेमंद हाथों में।",
+      lead: "टास्क, प्रोजेक्ट, स्प्रिंट और ग्राहक रिन्यूअल एक ही जगह, ताकि कोई वादा कभी न भूले।",
+      primary: "3 महीने मुफ़्त आज़माएं",
+      note: "कार्ड की ज़रूरत नहीं। ऐप ग्यारह भाषाएं बोलता है।",
+      works: "आज के अपने टूल के साथ शुरू करें, अपनी रफ़्तार से आगे बढ़ें",
+    },
+    tour: {
+      label: "प्रोडक्ट टूर",
+      steps: [{
+          tab: "हेल्थ",
+          title: "देखें किसे आपकी ज़रूरत है",
+          text: "हर अकाउंट का 0 से 100 तक का स्कोर और उसकी वजहें होती हैं, ताकि शांत होता अकाउंट अपने आप सामने आ जाए।",
+        }, {
+          tab: "वादे",
+          title: "हर वादा निभाएं",
+          text: "मीटिंग दर्ज करें और उसके अगले स्टेप टास्क बन जाते हैं, हर एक ओनर और तारीख के साथ। मीटिंग में कही कोई बात नहीं खोती।",
+        }, {
+          tab: "रिन्यूअल",
+          title: "जल्दी रिन्यू करें",
+          text: "तारीख से नब्बे दिन पहले, रिन्यूअल प्लेबुक अपने टास्क और एक रिन्यूअल अवसर खोल देती है। किसी को याद नहीं रखना पड़ता।",
+        }, {
+          tab: "स्प्रिंट",
+          title: "स्प्रिंट में शिप करें",
+          text: "एपिक, स्टोरी पॉइंट और लिंक किए गए टास्क एक ही बोर्ड पर, ऐसे बर्नडाउन के साथ जो कार्ड बंद होते ही खुद बनता है।",
+        }],
+      ui: {
+        chips: {
+          review: "बिज़नेस रिव्यू 14 दिन देर से",
+          renewal: "94 दिनों में रिन्यूअल",
+        },
+        meeting: {
+          kind: "बिज़नेस रिव्यू",
+          name: "Q3 बिज़नेस रिव्यू",
+          ours: "हमारी तरफ़: Zeynep Tunç, Ada Demir",
+          theirs: "उनकी तरफ़: Selin Aytaç",
+          steps: ["अतिरिक्त सीटों का कोटेशन भेजें", "मोबाइल चैनल के लिए सैंपल जर्नी का ड्राफ़्ट बनाएं"],
+        },
+        todo: "उपयोग रिपोर्ट शेयर करें",
+        tasksOpened: "2 टास्क खोले गए",
+        playbook: "रिन्यूअल प्लेबुक",
+        playbookSteps: ["उपयोग और हेल्थ की समीक्षा करें", "रिन्यूअल कॉल बुक करें", "रिन्यूअल कोटेशन भेजें"],
+        sprint: "स्प्रिंट 24",
+        active: "सक्रिय",
+        points: "{total} में से {done} पॉइंट",
+        ptsLeft: "{n} पॉइंट बाकी",
+        burndown: "बर्नडाउन",
+        ideal: "आदर्श",
+        actual: "असल",
+        review: "कोड रिव्यू",
+        epics: ["बिलिंग", "मोबाइल", "ऑनबोर्डिंग"],
+        tasks: ["मोबाइल चैनल के लिए सैंपल जर्नी", "स्वागत चेकलिस्ट", "CSV एक्सपोर्ट ठीक करें", "सीट के हिसाब से इनवॉइस", "iOS पर पुश नोटिफ़िकेशन"],
+      },
+    },
+    bento: {
+      title: "बाकी काम भी, पहले से तैयार",
+      lead: "आपके ग्राहकों को उनका अपना दरवाज़ा मिलता है, आपके असिस्टेंट को असली जवाब, और आपका डेटा आपका ही रहता है।",
+      tiles: [{
+          h: "अपने असिस्टेंट से अपने अकाउंट के बारे में पूछें",
+          p: "Claude या ChatGPT कनेक्ट करें। यह आपके रूप में काम करता है: सिर्फ़ वही देखता और बदलता है जो आप कर सकते हैं।",
+        }, {
+          h: "आपके ग्राहकों के लिए एक पोर्टल",
+          p: "वे अपने ईमेल के लिंक से साइन इन करते हैं और सिर्फ़ वही देखते हैं जो आप शेयर करते हैं: उनके टास्क, उनके अनुरोध, आपके जवाब।",
+        }, {
+          h: "आपके मौजूदा टूल के साथ तालमेल में",
+          p: "आपका CRM, Jira, स्प्रेडशीट और चैट। किसी भी तरफ़ का बदलाव दूसरी तरफ़ दिखता है।",
+        }, {
+          h: "पूरी तिमाही एक स्क्रीन पर",
+          p: "लक्ष्य, वेटेड पाइपलाइन और पूरे पोर्टफ़ोलियो की हेल्थ, उन रिपोर्ट और डैशबोर्ड में जिन्हें आप खुद बना सकते हैं।",
+        }, {
+          h: "ग्यारह भाषाएं, दाएं से बाएं वाली भी",
+          p: "हर व्यक्ति अपनी भाषा चुनता है। पूरा इंटरफ़ेस उसके साथ चलता है, जहां ज़रूरी हो वहां उलटा भी।",
+        }, {
+          h: "आपका डेटा आपका ही रहता है",
+          p: "हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके।",
+        }],
+      ask: {
+        q: "इस हफ़्ते किन अकाउंट को मेरी ज़रूरत है?",
+        a: "तीन पर आपका ध्यान चाहिए:",
+        did: "मैंने Zeynep के लिए एक टास्क खोला है: Marevo का रिव्यू बुक करें।",
+      },
+      portal: {
+        plan: "ऑनबोर्डिंग",
+      },
+      facts: ["SAML 2.0 या OpenID Connect के साथ SSO", "SCIM प्रोविज़निंग", "ऑडिट लॉग", "यूरोपीय संघ में डेटाबेस", "आपके अपने सर्वर पर भी चलता है"],
+    },
+    pricing: {
+      title: "आसान कीमतें, प्रति सीट",
+      lead: "हर प्लान सब कुछ के 3 महीने के ट्रायल से शुरू होता है। व्यूअर सीटें मुफ़्त हैं।",
+      monthly: "मासिक",
+      yearly: "सालाना",
+      save: "करीब 20% कम",
+      perSeat: "प्रति सीट प्रति महीना",
+      perSeatYearly: "प्रति सीट प्रति महीना, सालाना भुगतान",
+      choose: "मुफ़्त ट्रायल शुरू करें",
+      business: "Team में सब कुछ, और साथ में",
+      fine: "कीमतें अमेरिकी डॉलर में; टैक्स चेकआउट पर जोड़े जाते हैं। सीटें जुड़े हुए लोगों के हिसाब से चलती हैं। भुगतान हमारे रीसेलर Paddle संभालते हैं।",
+    },
+    faq: {
+      title: "सवाल",
+      items: [{
+          q: "हमारा डेटा कहां रखा जाता है?",
+          a: "डेटाबेस यूरोपीय संघ में है। हर कंपनी डेटाबेस में ही अलग रखी जाती है, ताकि किसी स्क्रीन की कोई गलती एक कंपनी को दूसरी का डेटा न दिखा सके। डेटा प्रोसेसिंग एग्रीमेंट GDPR और तुर्किये के KVKK को कवर करता है।",
+        }, {
+          q: "क्या हम इसे अपने सर्वर पर चला सकते हैं?",
+          a: "हां। एक-कंपनी पैकेज आपके अपने सर्वर या क्लाउड पर, अपने डेटाबेस के साथ चलता है; इसमें बिलिंग नहीं होती।",
+        }, {
+          q: "क्या हमें CRM चाहिए?",
+          a: "नहीं। ग्राहक स्प्रेडशीट से आ सकते हैं, या हाथ से जोड़े जा सकते हैं। अगर आपके पास CRM है, तो Curahold दोनों तरफ़ उसके साथ तालमेल में रहता है।",
+        }, {
+          q: "क्या हम कभी भी रद्द कर सकते हैं?",
+          a: "हां। रद्द किया गया प्लान भुगतान की गई अवधि के अंत तक काम करता है, और सब कुछ एक्सपोर्ट किया जा सकता है।",
+        }, {
+          q: "क्या हम अपने शब्द इस्तेमाल कर सकते हैं?",
+          a: "हां। अपने ग्राहकों को अकाउंट, पार्टनर या क्लाइंट कहें, और पूरा इंटरफ़ेस उसी के हिसाब से चलेगा। ऐप ग्यारह भाषाएं बोलता है; सहायता केंद्र और लाइव डेमो भी हिन्दी में उपलब्ध हैं।",
+        }, {
+          q: "सेटअप में कितना समय लगता है?",
+          a: "करीब पंद्रह मिनट: अपना पता चुनें, स्प्रेडशीट से अपने ग्राहक लाएं, अपनी टीम को आमंत्रित करें।",
+        }],
+    },
+    cta: {
+      title: "हर ग्राहक को ऐसी टीम दें जो कभी नहीं भूलती।",
+      text: "तीन महीने मुफ़्त, सब कुछ चालू। स्प्रेडशीट से अपने ग्राहक लाएं और पंद्रह मिनट में काम शुरू करें।",
+    },
+    signIn: {
+      title: "साइन इन करें",
+      text: "हर कंपनी का अपना पता होता है। उसके साइन-इन पेज पर जाने के लिए अपना पता टाइप करें।",
+      label: "आपकी कंपनी का पता",
+      placeholder: "yourcompany",
+      go: "जाएं",
+      close: "बंद करें",
+      none: "अभी कोई पता नहीं? मुफ़्त ट्रायल शुरू करें।",
+    },
+    footer: {
+      story: "यह नाम लैटिन शब्द cura (देखभाल) और अंग्रेज़ी शब्द hold से बना है।",
+      help: "सहायता केंद्र",
+      legal: "कानूनी",
+      links: {
+        terms: "सेवा की शर्तें",
+        privacy: "गोपनीयता नीति",
+        kvkk: "KVKK सूचना",
+        dpa: "डेटा प्रोसेसिंग",
+        subprocessors: "सब-प्रोसेसर",
+        cookies: "कुकी",
+      },
+      company: "[कंपनी का कानूनी नाम]",
+    },
+    consent: {
+      title: "आपकी गोपनीयता, आपकी पसंद",
+      body: "हम सिर्फ़ वही इस्तेमाल करते हैं जो साइट चलाने के लिए ज़रूरी है। आपकी सहमति से हम यह भी मापते हैं कि इसका इस्तेमाल कैसे होता है और उन लोगों तक पहुंचते हैं जिन्हें Curahold पसंद आ सकता है। जब तक आप न चुनें, कुछ भी गैर-ज़रूरी लोड नहीं होता।",
+      acceptAll: "सभी स्वीकार करें",
+      rejectAll: "गैर-ज़रूरी अस्वीकार करें",
+      manage: "पसंद मैनेज करें",
+      save: "पसंद सेव करें",
+      close: "बंद करें",
+      alwaysOn: "हमेशा चालू",
+      manageTitle: "गोपनीयता की पसंद",
+      necessaryTitle: "ज़रूरी",
+      necessaryBody: "यह पसंद याद रखती है और पेज को चलाए रखती है। ये कभी आपको ट्रैक नहीं करतीं और बंद नहीं की जा सकतीं।",
+      analyticsTitle: "एनालिटिक्स",
+      analyticsBody: "हमें समझने में मदद करता है कि साइट कैसे इस्तेमाल होती है, ताकि हम इसे बेहतर बना सकें। Google Analytics सिर्फ़ आपकी सहमति से लोड होता है।",
+      marketingTitle: "मार्केटिंग",
+      marketingBody: "हमें उन लोगों को मापने और उन तक पहुंचने देता है जिन्हें Curahold उपयोगी लग सकता है। Meta और TikTok पिक्सेल सिर्फ़ आपकी सहमति से लोड होते हैं।",
+      reopen: "गोपनीयता की पसंद",
+      policy: "कुकी नीति पढ़ें",
+      ariaBanner: "गोपनीयता और कुकी सहमति",
+    },
+  },
+  ms: {
+    title: "Curahold: tugasan, sprint dan pembaharuan pelanggan di satu tempat",
+    description: "Pembaharuan yang bermula sendiri, mesyuarat yang langkah seterusnya menjadi tugasan, dan setiap pelanggan yang perlu perhatian sepintas lalu. Aplikasi ini bertutur dalam sebelas bahasa.",
+    nav: {
+      product: "Produk",
+      pricing: "Harga",
+      demo: "Demo langsung",
+      blog: "Blog",
+      help: "Bantuan",
+      signIn: "Log masuk",
+      tryFree: "Cuba percuma",
+      skip: "Langkau ke kandungan",
+    },
+    hero: {
+      title: "Semua kerja syarikat anda, dalam tangan yang baik.",
+      lead: "Tugasan, projek, sprint dan pembaharuan pelanggan di satu tempat, supaya tiada janji yang pernah dilupakan.",
+      primary: "Cuba percuma selama 3 bulan",
+      note: "Tiada kad diperlukan. Aplikasi ini bertutur dalam sebelas bahasa.",
+      works: "Mulakan bersama alat yang anda ada hari ini, beralih mengikut rentak anda",
+    },
+    tour: {
+      label: "Lawatan produk",
+      steps: [{
+          tab: "Kesihatan",
+          title: "Lihat siapa yang memerlukan anda",
+          text: "Setiap akaun membawa skor dari 0 hingga 100 dan sebab di sebaliknya, jadi yang semakin senyap muncul di hadapan dengan sendirinya.",
+        }, {
+          tab: "Janji",
+          title: "Tunaikan setiap janji",
+          text: "Rekodkan mesyuarat dan langkah seterusnya menjadi tugasan, setiap satu dengan pemilik dan tarikh. Tiada apa yang dikatakan dalam bilik mesyuarat hilang.",
+        }, {
+          tab: "Pembaharuan",
+          title: "Perbaharui lebih awal",
+          text: "Sembilan puluh hari sebelum tarikh, playbook pembaharuan membuka tugasannya dan peluang pembaharuan. Tiada sesiapa perlu mengingatinya.",
+        }, {
+          tab: "Sprint",
+          title: "Keluarkan dalam sprint",
+          text: "Epik, mata cerita dan tugasan yang dipautkan pada papan yang sama, dengan burndown yang terlukis sendiri apabila kad ditutup.",
+        }],
+      ui: {
+        chips: {
+          review: "Semakan perniagaan lewat 14 hari",
+          renewal: "Pembaharuan dalam 94 hari",
+        },
+        meeting: {
+          kind: "Semakan perniagaan",
+          name: "Semakan perniagaan S3",
+          ours: "Pihak kami: Zeynep Tunç, Ada Demir",
+          theirs: "Pihak mereka: Selin Aytaç",
+          steps: ["Hantar sebut harga tempat duduk tambahan", "Draf contoh perjalanan untuk saluran mudah alih"],
+        },
+        todo: "Kongsi laporan penggunaan",
+        tasksOpened: "2 tugasan dibuka",
+        playbook: "Playbook pembaharuan",
+        playbookSteps: ["Semak penggunaan dan kesihatan", "Tempah panggilan pembaharuan", "Hantar sebut harga pembaharuan"],
+        sprint: "Sprint 24",
+        active: "Aktif",
+        points: "{done} daripada {total} mata",
+        ptsLeft: "{n} mata lagi",
+        burndown: "Burndown",
+        ideal: "Ideal",
+        actual: "Sebenar",
+        review: "Semakan kod",
+        epics: ["Pengebilan", "Mudah alih", "Onboarding"],
+        tasks: ["Contoh perjalanan untuk saluran mudah alih", "Senarai semak alu-aluan", "Betulkan eksport CSV", "Invois berasaskan tempat duduk", "Pemberitahuan tolak pada iOS"],
+      },
+    },
+    bento: {
+      title: "Selebihnya kerja, sudah terbina",
+      lead: "Pelanggan anda mendapat pintu mereka sendiri, pembantu anda mendapat jawapan sebenar, dan data anda kekal milik anda.",
+      tiles: [{
+          h: "Tanya pembantu anda tentang akaun anda",
+          p: "Sambungkan Claude atau ChatGPT. Ia bertindak sebagai anda: ia hanya melihat dan mengubah apa yang anda boleh.",
+        }, {
+          h: "Portal untuk pelanggan anda",
+          p: "Mereka log masuk dengan pautan dalam e-mel mereka dan hanya melihat apa yang anda kongsi: tugasan mereka, permintaan mereka, balasan anda.",
+        }, {
+          h: "Selaras dengan alat yang anda ada",
+          p: "CRM, Jira, hamparan dan sembang anda. Perubahan di mana-mana pihak dipaparkan di pihak yang satu lagi.",
+        }, {
+          h: "Suku tahun pada satu skrin",
+          p: "Sasaran, saluran jualan berwajaran dan kesihatan seluruh portfolio, dalam laporan dan papan pemuka yang boleh anda bina sendiri.",
+        }, {
+          h: "Sebelas bahasa, termasuk kanan-ke-kiri",
+          p: "Setiap orang memilih bahasanya sendiri. Seluruh antara muka mengikut, dicerminkan di mana perlu.",
+        }, {
+          h: "Data anda kekal milik anda",
+          p: "Setiap syarikat diasingkan dalam pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat.",
+        }],
+      ask: {
+        q: "Akaun mana yang memerlukan saya minggu ini?",
+        a: "Tiga memerlukan perhatian anda:",
+        did: "Saya telah membuka tugasan untuk Zeynep: tempah semakan Marevo.",
+      },
+      portal: {
+        plan: "Onboarding",
+      },
+      facts: ["SSO dengan SAML 2.0 atau OpenID Connect", "Peruntukan SCIM", "Log audit", "Pangkalan data di Kesatuan Eropah", "Juga berjalan pada pelayan anda sendiri"],
+    },
+    pricing: {
+      title: "Harga mudah, setiap tempat duduk",
+      lead: "Setiap pelan bermula dengan percubaan 3 bulan untuk semua ciri. Tempat duduk pemerhati adalah percuma.",
+      monthly: "Bulanan",
+      yearly: "Tahunan",
+      save: "kira-kira 20% kurang",
+      perSeat: "setiap tempat duduk sebulan",
+      perSeatYearly: "setiap tempat duduk sebulan, dibayar tahunan",
+      choose: "Mulakan percubaan percuma",
+      business: "Semua dalam Team, serta",
+      fine: "Harga dalam dolar AS; cukai ditambah semasa pembayaran. Tempat duduk mengikut orang yang telah menyertai. Pembayaran dikendalikan oleh Paddle, penjual semula kami.",
+    },
+    faq: {
+      title: "Soalan",
+      items: [{
+          q: "Di mana data kami disimpan?",
+          a: "Pangkalan data berada di Kesatuan Eropah. Setiap syarikat diasingkan pada pangkalan data itu sendiri, jadi tiada kesilapan pada skrin boleh menunjukkan data syarikat lain kepada satu syarikat. Perjanjian pemprosesan data merangkumi GDPR dan KVKK Türkiye.",
+        }, {
+          q: "Bolehkah kami menjalankannya pada pelayan kami sendiri?",
+          a: "Ya. Pakej satu syarikat berjalan pada pelayan atau awan anda sendiri dengan pangkalan datanya sendiri; ia tiada pengebilan.",
+        }, {
+          q: "Adakah kami memerlukan CRM?",
+          a: "Tidak. Pelanggan boleh datang daripada hamparan, atau ditambah secara manual. Jika anda mempunyai CRM, Curahold kekal selaras dengannya dua hala.",
+        }, {
+          q: "Bolehkah kami membatalkan bila-bila masa?",
+          a: "Ya. Pelan yang dibatalkan berfungsi sehingga akhir tempoh yang dibayar, dan semuanya boleh dieksport.",
+        }, {
+          q: "Bolehkah kami menggunakan perkataan kami sendiri?",
+          a: "Ya. Panggil pelanggan anda akaun, rakan kongsi atau klien, dan seluruh antara muka mengikut. Aplikasi ini bertutur dalam sebelas bahasa; pusat bantuan dan demo langsung juga tersedia dalam Bahasa Melayu.",
+        }, {
+          q: "Berapa lama persediaan mengambil masa?",
+          a: "Kira-kira lima belas minit: pilih alamat anda, bawa pelanggan anda daripada hamparan, jemput pasukan anda.",
+        }],
+    },
+    cta: {
+      title: "Berikan setiap pelanggan pasukan yang tidak pernah lupa.",
+      text: "Tiga bulan percuma, dengan semua ciri dihidupkan. Bawa pelanggan anda daripada hamparan dan mula bekerja dalam lima belas minit.",
+    },
+    signIn: {
+      title: "Log masuk",
+      text: "Setiap syarikat mempunyai alamatnya sendiri. Taip alamat anda untuk pergi ke halaman log masuknya.",
+      label: "Alamat syarikat anda",
+      placeholder: "yourcompany",
+      go: "Pergi",
+      close: "Tutup",
+      none: "Belum ada alamat? Mulakan percubaan percuma.",
+    },
+    footer: {
+      story: "Nama ini berasal daripada perkataan Latin cura, penjagaan, dan perkataan Inggeris hold.",
+      help: "Pusat bantuan",
+      legal: "Undang-undang",
+      links: {
+        terms: "Terma perkhidmatan",
+        privacy: "Dasar privasi",
+        kvkk: "Notis KVKK",
+        dpa: "Pemprosesan data",
+        subprocessors: "Subpemproses",
+        cookies: "Kuki",
+      },
+      company: "[Nama sah syarikat]",
+    },
+    consent: {
+      title: "Privasi anda, pilihan anda",
+      body: "Kami hanya menggunakan apa yang diperlukan untuk menjalankan laman ini. Dengan persetujuan anda, kami juga mengukur cara ia digunakan dan menjangkau orang yang mungkin menyukai Curahold. Tiada apa yang tidak penting dimuatkan sehingga anda memilih.",
+      acceptAll: "Terima semua",
+      rejectAll: "Tolak yang tidak penting",
+      manage: "Urus pilihan",
+      save: "Simpan pilihan",
+      close: "Tutup",
+      alwaysOn: "Sentiasa hidup",
+      manageTitle: "Pilihan privasi",
+      necessaryTitle: "Diperlukan",
+      necessaryBody: "Mengingati pilihan ini dan memastikan halaman berfungsi. Ia tidak pernah menjejaki anda dan tidak boleh dimatikan.",
+      analyticsTitle: "Analitik",
+      analyticsBody: "Membantu kami memahami cara laman ini digunakan, supaya kami boleh menambah baiknya. Memuatkan Google Analytics hanya dengan persetujuan anda.",
+      marketingTitle: "Pemasaran",
+      marketingBody: "Membolehkan kami mengukur dan menjangkau orang yang mungkin mendapati Curahold berguna. Memuatkan piksel Meta dan TikTok hanya dengan persetujuan anda.",
+      reopen: "Pilihan privasi",
+      policy: "Baca dasar kuki",
+      ariaBanner: "Persetujuan privasi dan kuki",
+    },
+  },
 };
 
 // The locales whose marketing copy is authored and ready to publish, English
@@ -1303,6 +1665,66 @@ export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
       { title: '갱신을 지키고, 건강도가 회복됩니다', text: '최근 접점이 있고 기한 초과도 없으니 Marevo의 점수는 85로 돌아옵니다. 갱신 기회는 마감일보다 한참 전에 성사로 마무리됩니다.' },
     ],
     ui: { opened: '작업이 생성됨', from: '출처 회의', board: '고객 성공', reply: '샘플 여정이 워크스페이스에 준비되어 있습니다.' },
+  },
+  hi: {
+    cue: "एक ग्राहक को फ़ॉलो करने के लिए स्क्रॉल करें",
+    title: "एक ग्राहक, शुरू से आख़िर तक",
+    lead: "एक तिमाही में Marevo को फ़ॉलो करें: एक चेतावनी, एक वादा, उसे निभाने वाला काम, और बचाया गया रिन्यूअल।",
+    steps: [{
+        title: "स्कोर गिरता है, और वजह बताता है",
+        text: "Marevo 60 से 48 पर फिसलता है और जोखिम में आ जाता है। “क्यों?” खोलें और वजहें दिखती हैं: 38 दिनों से कोई संपर्क नहीं, तीन देर वाले टास्क, कोई चैंपियन नहीं।",
+      }, {
+        title: "मीटिंग में एक वादा होता है",
+        text: "Q3 बिज़नेस रिव्यू में, Selin अपने मोबाइल चैनल के लिए एक सैंपल जर्नी मांगती हैं। कॉल खत्म होने से पहले Zeynep इसे अगले स्टेप के रूप में दर्ज करती हैं।",
+      }, {
+        title: "यह अपने आप टास्क बन जाता है",
+        text: "मीटिंग सेव करने पर अगला स्टेप एक टास्क बन जाता है: इसका एक ओनर और नियत तारीख है, यह Marevo से लिंक है, और उनके साथ शेयर किया गया है।",
+      }, {
+        title: "स्प्रिंट इसे शिप करता है",
+        text: "प्रोडक्ट टीम इसे स्प्रिंट 24 में, वादे से लिंक किए एक कार्ड पर बनाती है। कार्ड पूरा हुआ तक पहुंचने पर स्प्रिंट के पॉइंट भी साथ बढ़ते हैं।",
+      }, {
+        title: "Marevo इसे अपने पोर्टल में देखता है",
+        text: "Selin अपने ईमेल के लिंक से साइन इन करती हैं। टास्क पूरा दिखता है, नीचे Zeynep का जवाब है। किसी को स्टेटस ईमेल नहीं लिखना पड़ा।",
+      }, {
+        title: "रिन्यूअल बच जाता है, और हेल्थ वापस बढ़ती है",
+        text: "हाल के संपर्क और किसी देर वाले काम के न होने से Marevo का स्कोर वापस 85 तक चढ़ता है। रिन्यूअल अवसर तारीख से काफ़ी पहले जीती के रूप में बंद होता है।",
+      }],
+    ui: {
+      opened: "टास्क खोला गया",
+      from: "मीटिंग से",
+      board: "कस्टमर सक्सेस",
+      reply: "सैंपल जर्नी आपके वर्कस्पेस में तैयार है।",
+    },
+  },
+  ms: {
+    cue: "Tatal untuk mengikuti seorang pelanggan",
+    title: "Seorang pelanggan, dari awal hingga akhir",
+    lead: "Ikuti Marevo sepanjang satu suku tahun: satu amaran, satu janji, kerja yang menunaikannya, dan pembaharuan yang diselamatkan.",
+    steps: [{
+        title: "Skor jatuh, dan menyatakan sebabnya",
+        text: "Marevo merosot dari 60 ke 48 dan menjadi berisiko. Buka Mengapa? dan sebab-sebabnya disenaraikan: tiada hubungan selama 38 hari, tiga tugasan lewat, tiada juara.",
+      }, {
+        title: "Janji dibuat dalam bilik mesyuarat",
+        text: "Pada semakan perniagaan S3, Selin meminta contoh perjalanan untuk saluran mudah alih mereka. Zeynep merekodkannya sebagai langkah seterusnya sebelum panggilan tamat.",
+      }, {
+        title: "Ia menjadi tugasan dengan sendirinya",
+        text: "Menyimpan mesyuarat menjadikan langkah seterusnya tugasan: ia mempunyai pemilik dan tarikh akhir, dipautkan kepada Marevo, dan dikongsi dengan mereka.",
+      }, {
+        title: "Sprint mengeluarkannya",
+        text: "Pasukan produk membinanya dalam Sprint 24, pada kad yang dipautkan kepada janji. Apabila kad sampai ke Selesai, mata sprint turut bergerak.",
+      }, {
+        title: "Marevo melihatnya dalam portal mereka",
+        text: "Selin log masuk dengan pautan dalam e-melnya. Tugasan dipaparkan sebagai selesai, dengan balasan Zeynep di bawahnya. Tiada sesiapa perlu menulis e-mel status.",
+      }, {
+        title: "Pembaharuan diselamatkan, dan kesihatan pulih",
+        text: "Dengan hubungan terkini dan tiada yang lewat, skor Marevo naik semula ke 85. Peluang pembaharuan ditutup sebagai dimenangi, jauh sebelum tarikhnya.",
+      }],
+    ui: {
+      opened: "Tugasan dibuka",
+      from: "Daripada mesyuarat",
+      board: "Kejayaan pelanggan",
+      reply: "Contoh perjalanan sudah sedia dalam ruang kerja anda.",
+    },
   },
 };
 

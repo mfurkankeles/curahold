@@ -104,6 +104,8 @@ const A: TextBlock = {
     'zh-Hant': '我已年滿 18 歲，並代表我的公司提出此申請。',
     ja: '私は 18 歳以上で、会社を代表してこの申し込みを行います。',
     ko: '만 18세 이상이며 회사를 대표하여 신청합니다.',
+    hi: "मेरी उम्र 18 साल या उससे ज़्यादा है और मैं यह अनुरोध अपनी कंपनी की ओर से कर रहा/रही हूं।",
+    ms: "Saya berumur 18 tahun atau lebih dan saya membuat permintaan ini bagi pihak syarikat saya.",
   },
 };
 
@@ -118,6 +120,8 @@ export const REQUIRED_LINE: Record<Locale, string> = {
   'zh-Hant': '缺少此項，我們無法送出您的申請。',
   ja: 'これがないと、お申し込みを送信できません。',
   ko: '이 항목이 없으면 신청을 보낼 수 없습니다.',
+  hi: "इसके बिना हम आपका अनुरोध नहीं भेज सकते।",
+  ms: "Tanpa ini kami tidak dapat menghantar permintaan anda.",
 };
 
 const ROW_N: Partial<Record<Locale, string>> = {
@@ -130,6 +134,8 @@ const ROW_N: Partial<Record<Locale, string>> = {
   'zh-Hant': '{company}（{company_country}）使用您填寫的資料來審核試用申請、就申請與您聯絡並開通試用。資料由我們位於 {storage_countries} 的服務提供者依隱私聲明所述的保護措施處理；保存期間和您的權利也載於隱私聲明。',
   ja: '{company}（{company_country}）は、ご入力いただいた情報を、トライアルのお申し込みの審査、お申し込みに関するご連絡、トライアルの準備のために利用します。データは、プライバシーポリシーに記載した保護措置のもと、{storage_countries} にある当社の委託先が取り扱います。保存期間とお客様の権利もプライバシーポリシーに記載しています。',
   ko: '{company}({company_country})는 입력하신 정보를 체험 신청 검토, 신청 관련 연락, 체험 준비에 사용합니다. 데이터는 개인정보 처리방침에 설명된 보호 조치에 따라 {storage_countries}에 있는 서비스 제공업체가 처리하며, 보관 기간과 권리도 그곳에서 확인할 수 있습니다.',
+  hi: "{company} ({company_country}) आपकी दर्ज की गई जानकारी का इस्तेमाल आपके ट्रायल अनुरोध का आकलन करने, उसके बारे में आपसे संपर्क करने और आपका ट्रायल सेट अप करने के लिए करती है। यह डेटा {storage_countries} में हमारे सर्विस प्रोवाइडर हमारी गोपनीयता सूचना में बताए गए सुरक्षा उपायों के तहत संभालते हैं; वहीं आपको यह भी मिलेगा कि हम इसे कितने समय तक रखते हैं और आपके अधिकार क्या हैं।",
+  ms: "{company} ({company_country}) menggunakan butiran yang anda masukkan untuk menilai permintaan percubaan anda, menghubungi anda mengenainya dan menyediakan percubaan anda. Data dikendalikan oleh penyedia perkhidmatan kami di {storage_countries} di bawah perlindungan yang diterangkan dalam Notis Privasi kami, di mana anda juga akan menemui tempoh kami menyimpannya dan hak anda.",
 };
 
 const ROW_M: Partial<Record<Locale, string>> = {
@@ -142,6 +148,8 @@ const ROW_M: Partial<Record<Locale, string>> = {
   'zh-Hant': '是的，請透過電子郵件向我傳送 Curahold 的產品消息和使用技巧。我可以隨時取消訂閱。',
   ja: 'はい、Curahold の製品ニュースや活用のヒントをメールで受け取ります。配信はいつでも停止できます。',
   ko: '네, Curahold의 제품 소식과 활용 팁을 이메일로 받겠습니다. 언제든지 수신을 거부할 수 있습니다.',
+  hi: "हां, मुझे Curahold से प्रोडक्ट की खबरें और सुझाव ईमेल से भेजें। मैं कभी भी अनसब्सक्राइब कर सकता/सकती हूं।",
+  ms: "Ya, hantarkan saya berita produk dan petua daripada Curahold melalui e-mel. Saya boleh berhenti melanggan bila-bila masa.",
 };
 
 const nAr = 'تستخدم {company} ({company_country}) البيانات التي تُدخلها لتقييم طلب التجربة والتواصل معك بشأنه وإعداد حسابك التجريبي. تُخزَّن هذه البيانات وتُعالَج لدى مزوّدي خدماتنا في {storage_countries}. تجد مدة الاحتفاظ بالبيانات وحقوقك وطريقة ممارستها في إشعار الخصوصية.';
@@ -464,6 +472,8 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         basis: 'PIPA art. 15(1)(4) steps for a contract; itemised notice',
         texts: {
           ko: '개인정보 수집·이용 안내\n· 수집 항목: 이름, 회사 이메일, 직함, 회사명, 국가 등 신청서에 입력한 정보\n· 수집·이용 목적: 무료 체험 신청 검토, 신청 관련 연락, 체험 계정 개설\n· 보유·이용 기간: {retention}\n· 처리 근거: 「개인정보 보호법」 제15조 제1항 제4호\n자세한 내용은 개인정보 처리방침에서 확인하실 수 있습니다.',
+          hi: "व्यक्तिगत जानकारी के संग्रह और उपयोग की सूचना · आइटम: नाम, काम का ईमेल, पद, कंपनी, देश और फ़ॉर्म में दर्ज बाकी जानकारी · उद्देश्य: मुफ़्त ट्रायल अनुरोध की समीक्षा, उसके बारे में संपर्क, ट्रायल अकाउंट खोलना · रखने की अवधि: {retention} · आधार: Personal Information Protection Act, अनुच्छेद 15(1), मद 4 · विवरण गोपनीयता नीति में है।",
+          ms: "Notis pengumpulan dan penggunaan maklumat peribadi · Item: nama, e-mel kerja, jawatan, syarikat, negara dan butiran lain yang dimasukkan dalam borang · Tujuan: menyemak permintaan percubaan percuma, menghubungi anda mengenainya, membuka akaun percubaan · Tempoh simpanan: {retention} · Asas: Personal Information Protection Act, Perkara 15(1), butiran 4 · Butirannya ada dalam Dasar privasi.",
           en: 'Notice of collection and use of personal information · Items: name, work e-mail, job title, company, country and the other details entered in the form · Purpose: reviewing the free-trial request, contacting you about it, opening the trial account · Retention: {retention} · Ground: Personal Information Protection Act, Article 15(1), item 4 · Details are in the Privacy policy.',
         },
       },
@@ -476,6 +486,8 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         basis: 'PIPA art. 28-8: separate consent to overseas transfer, itemised (or disclosure route by the lawyer)',
         texts: {
           ko: '[필수] 개인정보 국외 이전 동의\n· 이전받는 자: {company}({company_country}, {contact}) 및 수탁자 {processors}\n· 이전되는 국가: {storage_countries}\n· 이전 일시 및 방법: 신청서 제출 시 정보통신망을 통해 전송\n· 이전 항목: 신청서에 입력한 정보 전체\n· 이용 목적 및 보유·이용 기간: 위 안내와 같음\n· 동의를 거부할 수 있으나, 거부하시면 무료 체험을 신청하실 수 없습니다.\n위 내용을 확인하였으며 개인정보의 국외 이전에 동의합니다.',
+          hi: "[ज़रूरी] विदेश में ट्रांसफ़र की सहमति · प्राप्तकर्ता: {company} ({company_country}, {contact}) और इसके ठेकेदार {processors} · देश: {storage_countries} · कब और कैसे: फ़ॉर्म जमा करने पर नेटवर्क से भेजा जाता है · आइटम: फ़ॉर्म में दर्ज सब कुछ · उद्देश्य और रखने की अवधि: ऊपर की सूचना के अनुसार · आप मना कर सकते हैं, लेकिन तब मुफ़्त ट्रायल का अनुरोध नहीं किया जा सकता। मैंने ऊपर पढ़ लिया है और अपनी व्यक्तिगत जानकारी के विदेश में ट्रांसफ़र के लिए सहमति देता/देती हूं।",
+          ms: "[Wajib] Persetujuan pemindahan ke luar negara · Penerima: {company} ({company_country}, {contact}) dan kontraktornya {processors} · Negara: {storage_countries} · Bila dan bagaimana: dihantar melalui rangkaian apabila borang diserahkan · Item: semua yang dimasukkan dalam borang · Tujuan dan tempoh simpanan: seperti dalam notis di atas · Anda boleh menolak, tetapi percubaan percuma tidak boleh diminta. Saya telah membaca perkara di atas dan bersetuju dengan pemindahan maklumat peribadi saya ke luar negara.",
           en: '[Required] Consent to overseas transfer · Recipient: {company} ({company_country}, {contact}) and its contractors {processors} · Countries: {storage_countries} · When and how: sent over the network when the form is submitted · Items: everything entered in the form · Purpose and retention: as in the notice above · You may refuse, but then the free trial cannot be requested. I have read the above and consent to the overseas transfer of my personal information.',
         },
       },
@@ -490,6 +502,8 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         basis: 'PIPA art. 22 + Network Act art. 50: separate optional consent; "(광고)" in the subject; re-confirm every 2 years',
         texts: {
           ko: '[선택] 광고성 정보 수신 동의\n· 목적: Curahold 제품 소식 및 혜택 안내 · 항목: 이름, 회사 이메일 · 보유 기간: 동의 철회 시까지\n· 동의하지 않아도 무료 체험 신청에는 영향이 없으며, 언제든지 수신을 거부할 수 있습니다.\n이메일로 광고성 정보를 받는 데 동의합니다.',
+          hi: "[वैकल्पिक] विज्ञापन पाने की सहमति · उद्देश्य: Curahold प्रोडक्ट की खबरें और ऑफ़र · आइटम: नाम, काम का ईमेल · सहमति वापस लेने तक रखा जाता है · मना करने से ट्रायल अनुरोध पर कोई असर नहीं पड़ता, और आप कभी भी ऑप्ट आउट कर सकते हैं। मैं ईमेल से विज्ञापन पाने के लिए सहमत हूं।",
+          ms: "[Pilihan] Persetujuan untuk menerima iklan · Tujuan: berita dan tawaran produk Curahold · Item: nama, e-mel kerja · Disimpan sehingga persetujuan ditarik balik · Menolak tidak menjejaskan permintaan percubaan, dan anda boleh menarik diri bila-bila masa. Saya bersetuju untuk menerima iklan melalui e-mel.",
           en: '[Optional] Consent to receive advertising · Purpose: Curahold product news and offers · Items: name, work e-mail · Kept until consent is withdrawn · Refusing does not affect the trial request, and you can opt out at any time. I agree to receive advertising by e-mail.',
         },
       },

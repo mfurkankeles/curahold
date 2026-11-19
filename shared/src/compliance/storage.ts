@@ -93,6 +93,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '讓您在此裝置上保持登入狀態。HttpOnly：頁面指令碼無法讀取。',
     ja: 'この端末でログイン状態を保ちます。HttpOnly のため、ページのスクリプトからは読み取れません。',
     ko: '이 기기에서 로그인 상태를 유지합니다. HttpOnly라서 페이지 스크립트가 읽을 수 없습니다.',
+    hi: "आपको इस डिवाइस पर साइन इन रखता है। HttpOnly: पेज की स्क्रिप्ट इसे नहीं पढ़ सकतीं।",
+    ms: "Memastikan anda kekal log masuk pada peranti ini. HttpOnly: skrip halaman tidak dapat membacanya.",
   },
   portalSession: {
     en: 'Keeps a customer signed in to the customer portal.',
@@ -104,6 +106,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '讓客戶在客戶入口網站中保持登入狀態。',
     ja: 'お客様が顧客ポータルにログインした状態を保ちます。',
     ko: '고객이 고객 포털에 로그인한 상태를 유지합니다.',
+    hi: "ग्राहक को ग्राहक पोर्टल में साइन इन रखता है।",
+    ms: "Memastikan pelanggan kekal log masuk ke portal pelanggan.",
   },
   portalFlow: {
     en: 'Carries one step of the portal sign-in (protection against forged sign-ins).',
@@ -115,6 +119,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '保存入口網站登入過程中的一個步驟（防止偽造登入）。',
     ja: 'ポータルのログイン手順の一部を保持します（なりすましログインの防止）。',
     ko: '포털 로그인의 한 단계를 담습니다(위조 로그인 방지).',
+    hi: "पोर्टल साइन इन का एक स्टेप साथ रखता है (नकली साइन इन से सुरक्षा)।",
+    ms: "Membawa satu langkah log masuk portal (perlindungan terhadap log masuk palsu).",
   },
   support: {
     en: 'Lets Curahold support into your company only for the time an administrator allowed; every action is logged.',
@@ -126,6 +132,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '僅在管理員允許的時間內讓 Curahold 支援人員進入您的公司；每項操作都會記錄。',
     ja: '管理者が許可した時間に限り、Curahold サポートが貴社の環境に入れるようにします。すべての操作は記録されます。',
     ko: '관리자가 허용한 시간 동안만 Curahold 지원팀이 회사 계정에 들어갈 수 있게 합니다. 모든 작업이 기록됩니다.',
+    hi: "Curahold सपोर्ट को आपकी कंपनी में सिर्फ़ उतने समय के लिए आने देता है जितनी एक एडमिन ने अनुमति दी; हर कार्रवाई लॉग होती है।",
+    ms: "Membenarkan sokongan Curahold masuk ke syarikat anda hanya untuk tempoh yang dibenarkan oleh pentadbir; setiap tindakan direkodkan.",
   },
   desk: {
     en: "Keeps Curahold's own staff signed in to the internal console (not used for customers).",
@@ -137,6 +145,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '讓 Curahold 自己的員工在內部主控台保持登入（不用於客戶）。',
     ja: 'Curahold 社内スタッフの内部コンソールへのログインを保ちます（お客様には使われません）。',
     ko: 'Curahold 내부 직원의 내부 콘솔 로그인을 유지합니다(고객에게는 사용되지 않음).',
+    hi: "Curahold के अपने स्टाफ़ को अंदरूनी कंसोल में साइन इन रखता है (ग्राहकों के लिए इस्तेमाल नहीं होता)।",
+    ms: "Memastikan kakitangan Curahold sendiri kekal log masuk ke konsol dalaman (tidak digunakan untuk pelanggan).",
   },
   deskEmail: {
     en: 'Remembers which staff e-mail address was typed on the internal console sign-in form.',
@@ -148,6 +158,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '記住在內部主控台登入表單中輸入的員工電子郵件地址。',
     ja: '内部コンソールのログイン画面に入力したスタッフのメールアドレスを記憶します。',
     ko: '내부 콘솔 로그인 양식에 입력한 직원 이메일 주소를 기억합니다.',
+    hi: "याद रखता है कि अंदरूनी कंसोल के साइन-इन फ़ॉर्म पर कौन-सा स्टाफ़ ईमेल पता टाइप किया गया था।",
+    ms: "Mengingati alamat e-mel kakitangan yang ditaip pada borang log masuk konsol dalaman.",
   },
   device: {
     en: 'A random identifier for this device, for the device limit on seats and alerts about new sign-ins. Never used for tracking or advertising.',
@@ -159,6 +171,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '此裝置的隨機識別碼，用於每個席位的裝置數量限制和新登入提醒。絕不用於追蹤或廣告。',
     ja: 'この端末のランダムな識別子です。シートごとの端末数の上限と、新しいログインの通知に使います。追跡や広告には一切使いません。',
     ko: '이 기기의 무작위 식별자로, 좌석당 기기 수 제한과 새 로그인 알림에 쓰입니다. 추적이나 광고에는 절대 쓰지 않습니다.',
+    hi: "इस डिवाइस के लिए एक रैंडम पहचानकर्ता, सीटों की डिवाइस सीमा और नए साइन इन की चेतावनी के लिए। कभी ट्रैकिंग या विज्ञापन के लिए इस्तेमाल नहीं होता।",
+    ms: "Pengecam rawak untuk peranti ini, bagi had peranti tempat duduk dan amaran tentang log masuk baharu. Tidak pernah digunakan untuk penjejakan atau pengiklanan.",
   },
   consent: {
     en: 'Remembers your cookie choice, its date and the version of this policy you saw, so you are not asked again on every page.',
@@ -170,6 +184,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '記住您的 Cookie 選擇、選擇日期以及您看到的政策版本，避免每個頁面都再次詢問。',
     ja: 'Cookie の選択内容、その日付、表示されたポリシーの版を記憶し、ページごとに再度尋ねないようにします。',
     ko: '쿠키 선택, 선택한 날짜, 본 정책의 버전을 기억해 페이지마다 다시 묻지 않습니다.',
+    hi: "आपकी कुकी पसंद, उसकी तारीख और आपको दिखाया गया इस नीति का वर्ज़न याद रखता है, ताकि हर पेज पर आपसे दोबारा न पूछा जाए।",
+    ms: "Mengingati pilihan kuki anda, tarikhnya dan versi dasar ini yang anda lihat, supaya anda tidak ditanya lagi pada setiap halaman.",
   },
   consentMirror: {
     en: 'A copy of your analytics choice only ("yes" or "no"), so the website server can respect it before the page loads.',
@@ -181,6 +197,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '僅複製您的分析選擇（「是」或「否」），以便網站伺服器在頁面載入前就能遵守。',
     ja: '分析に関する選択（「はい」か「いいえ」）だけのコピーです。ページの読み込み前にウェブサーバーがその選択を守れるようにします。',
     ko: '분석 선택(“예” 또는 “아니요”)의 사본일 뿐이며, 페이지가 열리기 전에 웹사이트 서버가 이를 따를 수 있게 합니다.',
+    hi: "सिर्फ़ आपकी एनालिटिक्स पसंद की एक कॉपी (\"हां\" या \"नहीं\"), ताकि वेबसाइट सर्वर पेज लोड होने से पहले उसका सम्मान कर सके।",
+    ms: "Salinan pilihan analitik anda sahaja (\"ya\" atau \"tidak\"), supaya pelayan laman web dapat menghormatinya sebelum halaman dimuatkan.",
   },
   prefs: {
     en: 'Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.',
@@ -192,6 +210,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '在您做出選擇後，記住您對介面的設定——主題、摺疊選單、所選檢視、排序、篩選、上次使用的看板。僅儲存在您的裝置上，絕不用於追蹤。',
     ja: 'テーマ、折りたたんだメニュー、表示、並べ替え、フィルター、最後に開いたボードなど、ご自身で選んだ画面の設定を記憶します。端末内にのみ保存され、追跡には使いません。',
     ko: '테마, 접은 메뉴, 선택한 보기, 정렬, 필터, 마지막 보드 등 직접 고른 화면 설정을 기억합니다. 기기에만 남으며 추적에 쓰지 않습니다.',
+    hi: "याद रखता है कि आपने इंटरफ़ेस कैसे सेट किया — थीम, मुड़ा हुआ मेनू, चुना गया व्यू, क्रम, फ़िल्टर, आख़िरी बोर्ड — आपके चुनने के बाद। आपके डिवाइस पर रहता है; कभी ट्रैकिंग के लिए इस्तेमाल नहीं होता।",
+    ms: "Mengingati cara anda menyediakan antara muka — tema, menu dilipat, paparan dipilih, susunan, penapis, papan terakhir — selepas anda memilihnya. Kekal pada peranti anda; tidak pernah digunakan untuk penjejakan.",
   },
   locale: {
     en: 'Remembers the language you chose.',
@@ -203,6 +223,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '記住您選擇的語言。',
     ja: '選択した言語を記憶します。',
     ko: '선택한 언어를 기억합니다.',
+    hi: "आपकी चुनी हुई भाषा याद रखता है।",
+    ms: "Mengingati bahasa yang anda pilih.",
   },
   returnTo: {
     en: 'Takes you back to the page you were on once you have signed in.',
@@ -214,6 +236,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '登入後帶您回到之前所在的頁面。',
     ja: 'ログイン後、元のページに戻れるようにします。',
     ko: '로그인한 뒤 보던 페이지로 돌아가게 합니다.',
+    hi: "साइन इन के बाद आपको उसी पेज पर वापस ले जाता है जहां आप थे।",
+    ms: "Membawa anda kembali ke halaman yang anda buka setelah anda log masuk.",
   },
   tabState: {
     en: 'Holds one step of what you are doing in this tab (finishing set-up, previewing as another role). Gone when the tab closes.',
@@ -225,6 +249,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '保存您在此分頁中正在進行的一個步驟（完成設定、以其他角色預覽）。關閉分頁後即刪除。',
     ja: 'このタブで行っている操作の一段階（初期設定の仕上げ、別のロールでのプレビュー）を保持します。タブを閉じると消えます。',
     ko: '이 탭에서 하던 작업의 한 단계(설정 마무리, 다른 역할로 미리 보기)를 보관합니다. 탭을 닫으면 사라집니다.',
+    hi: "इस टैब में आप जो कर रहे हैं उसका एक स्टेप रखता है (सेटअप पूरा करना, किसी दूसरी भूमिका के रूप में देखना)। टैब बंद होने पर हट जाता है।",
+    ms: "Memegang satu langkah daripada apa yang anda lakukan dalam tab ini (menyelesaikan persediaan, pratonton sebagai peranan lain). Hilang apabila tab ditutup.",
   },
   trail: {
     en: 'Remembers the pages you went through in this tab, for the back links. Gone when the tab closes.',
@@ -236,6 +262,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '記住您在此分頁中瀏覽過的頁面，用於返回連結。關閉分頁後即刪除。',
     ja: '「戻る」リンクのため、このタブでたどったページを記憶します。タブを閉じると消えます。',
     ko: '뒤로 가기 링크를 위해 이 탭에서 거친 페이지를 기억합니다. 탭을 닫으면 사라집니다.',
+    hi: "वापस जाने वाले लिंक के लिए, इस टैब में देखे गए पेज याद रखता है। टैब बंद होने पर हट जाता है।",
+    ms: "Mengingati halaman yang anda lalui dalam tab ini, untuk pautan kembali. Hilang apabila tab ditutup.",
   },
   swCache: {
     en: 'Keeps the app itself and recently opened screens on this device, so it opens fast and works offline. Cleared when you sign out.',
@@ -247,6 +275,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '在此裝置上保存應用程式本身和最近開啟的畫面，讓它開啟更快並可離線使用。登出時清除。',
     ja: 'アプリ本体と最近開いた画面をこの端末に保存し、すばやく開いてオフラインでも使えるようにします。ログアウトすると消去されます。',
     ko: '앱 자체와 최근에 연 화면을 이 기기에 보관해 빠르게 열리고 오프라인에서도 작동하게 합니다. 로그아웃하면 지워집니다.',
+    hi: "ऐप और हाल में खोली गई स्क्रीन इस डिवाइस पर रखता है, ताकि यह जल्दी खुले और ऑफ़लाइन काम करे। साइन आउट करने पर साफ़ हो जाता है।",
+    ms: "Menyimpan aplikasi itu sendiri dan skrin yang baru dibuka pada peranti ini, supaya ia dibuka dengan pantas dan berfungsi di luar talian. Dikosongkan apabila anda log keluar.",
   },
   abVariant: {
     en: 'Keeps the version of the website you were shown in a test, so it does not change between visits. Set only after you accept analytics.',
@@ -258,6 +288,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': '記住測試中向您展示的網站版本，使其在多次造訪之間保持一致。僅在您同意分析後才會設定。',
     ja: 'テストで表示されたウェブサイトの版を保持し、訪問のたびに変わらないようにします。分析に同意した後にのみ設定されます。',
     ko: '테스트에서 보여 드린 웹사이트 버전을 유지해 방문할 때마다 바뀌지 않게 합니다. 분석에 동의한 뒤에만 설정됩니다.',
+    hi: "किसी टेस्ट में आपको दिखाया गया वेबसाइट वर्ज़न रखता है, ताकि विज़िट के बीच यह न बदले। सिर्फ़ एनालिटिक्स स्वीकार करने के बाद सेट होता है।",
+    ms: "Menyimpan versi laman web yang ditunjukkan kepada anda dalam ujian, supaya ia tidak berubah antara lawatan. Ditetapkan hanya selepas anda menerima analitik.",
   },
   ga4: {
     en: 'Google Analytics 4: counts visits and how pages are used, with shortened IP addresses. Loaded only after you accept analytics, and only when an id is configured.',
@@ -269,6 +301,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': 'Google Analytics 4：統計造訪次數和頁面使用方式，IP 位址經過截短。僅在您同意分析且已設定 ID 時載入。',
     ja: 'Google Analytics 4：訪問数とページの使われ方を、短縮した IP アドレスで集計します。分析に同意し、かつ ID が設定されている場合にのみ読み込みます。',
     ko: 'Google Analytics 4: 방문 수와 페이지 사용 방식을 단축된 IP 주소로 집계합니다. 분석에 동의하고 ID가 설정된 경우에만 불러옵니다.',
+    hi: "Google Analytics 4: छोटे किए गए IP पतों के साथ विज़िट और पेजों के इस्तेमाल को गिनता है। सिर्फ़ एनालिटिक्स स्वीकार करने के बाद, और सिर्फ़ id सेट होने पर लोड होता है।",
+    ms: "Google Analytics 4: mengira lawatan dan cara halaman digunakan, dengan alamat IP yang dipendekkan. Dimuatkan hanya selepas anda menerima analitik, dan hanya apabila id dikonfigurasikan.",
   },
   meta: {
     en: 'Meta pixel: measures whether our ads on Meta platforms lead to visits and sign-ups, and can build audiences of site visitors for ads. Off by default; loaded only after you accept marketing.',
@@ -280,6 +314,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': 'Meta 像素：衡量我們在 Meta 平台上的廣告是否帶來造訪和註冊，並可用網站訪客建立廣告受眾。預設關閉；僅在您同意行銷後載入。',
     ja: 'Meta ピクセル：Meta のプラットフォーム上の広告が訪問や登録につながったかを測定し、サイト訪問者から広告用のオーディエンスを作成することがあります。初期状態はオフで、マーケティングに同意した後にのみ読み込みます。',
     ko: 'Meta 픽셀: Meta 플랫폼의 광고가 방문과 가입으로 이어지는지 측정하고, 사이트 방문자로 광고 대상을 만들 수 있습니다. 기본값은 꺼짐이며 마케팅에 동의한 뒤에만 불러옵니다.',
+    hi: "Meta पिक्सेल: मापता है कि Meta प्लेटफ़ॉर्म पर हमारे विज्ञापन विज़िट और साइन अप तक ले जाते हैं या नहीं, और विज्ञापनों के लिए साइट विज़िटर की ऑडियंस बना सकता है। डिफ़ॉल्ट रूप से बंद; सिर्फ़ मार्केटिंग स्वीकार करने के बाद लोड होता है।",
+    ms: "Piksel Meta: mengukur sama ada iklan kami di platform Meta membawa kepada lawatan dan pendaftaran, dan boleh membina audiens pelawat laman untuk iklan. Dimatikan secara lalai; dimuatkan hanya selepas anda menerima pemasaran.",
   },
   tiktok: {
     en: 'TikTok pixel: measures whether our ads on TikTok lead to visits and sign-ups, and can build audiences of site visitors for ads. Off by default; loaded only after you accept marketing.',
@@ -291,6 +327,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': 'TikTok 像素：衡量我們在 TikTok 上的廣告是否帶來造訪和註冊，並可用網站訪客建立廣告受眾。預設關閉；僅在您同意行銷後載入。',
     ja: 'TikTok ピクセル：TikTok 上の広告が訪問や登録につながったかを測定し、サイト訪問者から広告用のオーディエンスを作成することがあります。初期状態はオフで、マーケティングに同意した後にのみ読み込みます。',
     ko: 'TikTok 픽셀: TikTok 광고가 방문과 가입으로 이어지는지 측정하고, 사이트 방문자로 광고 대상을 만들 수 있습니다. 기본값은 꺼짐이며 마케팅에 동의한 뒤에만 불러옵니다.',
+    hi: "TikTok पिक्सेल: मापता है कि TikTok पर हमारे विज्ञापन विज़िट और साइन अप तक ले जाते हैं या नहीं, और विज्ञापनों के लिए साइट विज़िटर की ऑडियंस बना सकता है। डिफ़ॉल्ट रूप से बंद; सिर्फ़ मार्केटिंग स्वीकार करने के बाद लोड होता है।",
+    ms: "Piksel TikTok: mengukur sama ada iklan kami di TikTok membawa kepada lawatan dan pendaftaran, dan boleh membina audiens pelawat laman untuk iklan. Dimatikan secara lalai; dimuatkan hanya selepas anda menerima pemasaran.",
   },
   paddle: {
     en: 'Paddle checkout: our reseller (merchant of record) processes the payment safely. Loaded only on the billing screen, where it sets its own cookies under its own policy.',
@@ -302,6 +340,8 @@ export const PURPOSES: Record<PurposeId, Words> = {
     'zh-Hant': 'Paddle 結帳：我們的經銷商（記錄商戶）安全地處理付款。僅在帳單畫面載入，並在那裡依其自身政策設定自己的 Cookie。',
     ja: 'Paddle 決済：当社の販売代理店（販売者）が支払いを安全に処理します。請求画面でのみ読み込まれ、そこで同社のポリシーに基づき独自の Cookie を設定します。',
     ko: 'Paddle 결제: 판매 대행사(판매 기록자)가 결제를 안전하게 처리합니다. 결제 화면에서만 불러오며, 그곳에서 자체 정책에 따라 자체 쿠키를 설정합니다.',
+    hi: "Paddle चेकआउट: हमारा रीसेलर (merchant of record) भुगतान सुरक्षित रूप से प्रोसेस करता है। सिर्फ़ बिलिंग स्क्रीन पर लोड होता है, जहां यह अपनी नीति के तहत अपनी कुकी सेट करता है।",
+    ms: "Pembayaran Paddle: penjual semula kami (merchant of record) memproses pembayaran dengan selamat. Dimuatkan hanya pada skrin pengebilan, di mana ia menetapkan kukinya sendiri di bawah dasarnya sendiri.",
   },
 };
 

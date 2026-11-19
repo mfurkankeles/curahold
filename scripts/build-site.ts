@@ -131,7 +131,7 @@ const OG_IMAGE_URL = `${ORIGIN}/assets/${OG_IMAGE}`;
 // og:locale wants language_TERRITORY; these are the conventional pairs.
 const OG_LOCALE: Record<SiteLocale, string> = {
   en: 'en_US', tr: 'tr_TR', ar: 'ar_AR', he: 'he_IL', fa: 'fa_IR',
-  'zh-Hans': 'zh_CN', 'zh-Hant': 'zh_TW', ja: 'ja_JP', ko: 'ko_KR',
+  'zh-Hans': 'zh_CN', 'zh-Hant': 'zh_TW', ja: 'ja_JP', ko: 'ko_KR', hi: 'hi_IN', ms: 'ms_MY',
 };
 
 /** The root-relative path a locale's landing page is served at ('/', '/tr/', …). */

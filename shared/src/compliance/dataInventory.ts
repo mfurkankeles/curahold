@@ -69,6 +69,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '託管應用程式及其前端網路、檔案儲存（R2）、收件郵件路由。',
       ja: 'アプリケーションのホスティング、その前段のネットワーク、ファイル保存（R2）、受信メールの転送。',
       ko: '애플리케이션 호스팅, 앞단 네트워크, 파일 저장(R2), 수신 메일 라우팅.',
+      hi: "ऐप्लिकेशन की होस्टिंग, उसके आगे का नेटवर्क, फ़ाइल स्टोरेज (R2), आने वाले मेल की रूटिंग।",
+      ms: "Pengehosan aplikasi, rangkaian di hadapannya, storan fail (R2), penghalaan mel masuk.",
     },
   },
   {
@@ -89,6 +91,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '保存帳戶、公司資料和備份的資料庫（PostgreSQL）。',
       ja: 'アカウント、企業データ、バックアップを保存するデータベース（PostgreSQL）。',
       ko: '계정, 회사 데이터, 백업을 보관하는 데이터베이스(PostgreSQL).',
+      hi: "डेटाबेस (PostgreSQL), जिसमें अकाउंट, कंपनी का डेटा और बैकअप रखे जाते हैं।",
+      ms: "Pangkalan data (PostgreSQL) yang menyimpan akaun, data syarikat dan sandaran.",
     },
   },
   {
@@ -109,6 +113,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '我們公司自己的信箱，以及透過 Workspace SMTP 轉送服務寄送產品郵件（登入連結、提醒、摘要）。',
       ja: '当社のメールボックス、および Workspace の SMTP リレーによる製品メール（ログインリンク、リマインダー、サマリー）の送信。',
       ko: '당사 메일함, 그리고 Workspace SMTP 릴레이를 통한 제품 메일(로그인 링크, 알림, 요약) 발송.',
+      hi: "हमारी अपनी कंपनी के मेलबॉक्स, और Workspace SMTP रिले के ज़रिए प्रोडक्ट के ईमेल (साइन-इन लिंक, रिमाइंडर, सारांश) भेजना।",
+      ms: "Peti mel syarikat kami sendiri, dan penghantaran e-mel produk (pautan log masuk, peringatan, ringkasan) melalui geganti SMTP Workspace.",
     },
   },
   {
@@ -129,6 +135,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '作為記錄商戶處理付款、發票和銷售稅（僅涉及付款公司的帳單聯絡人）。',
       ja: '販売者（merchant of record）としての決済、請求書、売上税（支払う企業の請求担当者のみ）。',
       ko: '판매 기록자로서 결제, 청구서, 판매세 처리(결제하는 회사의 청구 담당자만).',
+      hi: "मर्चेंट ऑफ़ रिकॉर्ड के रूप में भुगतान, इनवॉइस और बिक्री कर (सिर्फ़ भुगतान करने वाली कंपनी का बिलिंग संपर्क)।",
+      ms: "Pembayaran, invois dan cukai jualan sebagai merchant of record (hanya kenalan pengebilan syarikat yang membayar).",
     },
   },
   {
@@ -149,6 +157,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '內建 AI 助理（CuraAI、說明、支援）的回答。僅傳送所需的最少資料，絕不用於訓練模型。',
       ja: '組み込みの AI アシスタント（CuraAI、ヘルプ、サポート）の回答。必要最小限のデータだけを送り、モデルの学習には一切使われません。',
       ko: '내장 AI 도우미(CuraAI, 도움말, 지원)의 답변. 꼭 필요한 최소한만 보내며 모델 학습에는 절대 쓰이지 않습니다.',
+      hi: "बिल्ट-इन AI असिस्टेंट (CuraAI, सहायता, सपोर्ट) के जवाब। सिर्फ़ ज़रूरी न्यूनतम जानकारी भेजी जाती है; इसका इस्तेमाल मॉडल ट्रेन करने में कभी नहीं होता।",
+      ms: "Jawapan pembantu AI terbina dalam (CuraAI, bantuan, sokongan). Hanya maklumat minimum yang diperlukan dihantar; ia tidak pernah digunakan untuk melatih model.",
     },
   },
   {
@@ -169,6 +179,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '專用郵件寄送服務——目前未使用；僅當產品郵件量超出 Workspace 轉送服務能力時才啟用（提前 30 天通知）。',
       ja: 'メール配信専用サービス。現在は使っていません。製品メールの量が Workspace リレーを超えた場合にのみ利用します（30 日前にお知らせします）。',
       ko: '전용 메일 발송 서비스 — 현재 사용하지 않음. 제품 메일 양이 Workspace 릴레이 한도를 넘을 때만 사용(30일 전 공지).',
+      hi: "एक अलग ईमेल भेजने वाली सेवा — आज इस्तेमाल नहीं होती; सिर्फ़ तब जब प्रोडक्ट के मेल की मात्रा Workspace रिले से ज़्यादा हो जाए (30 दिन पहले बताया जाएगा)।",
+      ms: "Perkhidmatan penghantaran e-mel khusus — tidak digunakan hari ini; hanya jika jumlah mel produk melebihi geganti Workspace (dimaklumkan 30 hari lebih awal).",
     },
   },
   {
@@ -189,6 +201,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '「使用 Google 登入」和 Google 試算表——僅在公司開啟時。',
       ja: '「Google でログイン」と Google スプレッドシート（企業がオンにした場合のみ）。',
       ko: '“Google로 로그인”과 Google 스프레드시트 — 회사가 켠 경우에만.',
+      hi: "\"Google से साइन इन करें\" और Google Sheets — सिर्फ़ तब जब कंपनी इन्हें चालू करे।",
+      ms: "\"Log masuk dengan Google\" dan Google Sheets — hanya apabila syarikat menghidupkannya.",
     },
   },
   {
@@ -209,6 +223,8 @@ export const SUBPROCESSORS: Subprocessor[] = [
       'zh-Hant': '「使用 Microsoft 登入」和 Excel——僅在公司開啟時。',
       ja: '「Microsoft でログイン」と Excel（企業がオンにした場合のみ）。',
       ko: '“Microsoft로 로그인”과 Excel — 회사가 켠 경우에만.',
+      hi: "\"Microsoft से साइन इन करें\" और Excel — सिर्फ़ तब जब कंपनी इन्हें चालू करे।",
+      ms: "\"Log masuk dengan Microsoft\" dan Excel — hanya apabila syarikat menghidupkannya.",
     },
   },
 ];
