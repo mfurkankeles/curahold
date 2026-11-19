@@ -38,6 +38,12 @@ describe('dictionaries', () => {
     }
   });
 
+  it('a key with a .one sibling takes it for exactly one', () => {
+    expect(translate('en', 'pm.points.short', { n: '1' })).toBe('1 pt');
+    expect(translate('en', 'pm.points.short', { n: 3 })).toBe('3 pts');
+    expect(translate('tr', 'pm.points.short', { n: 1 })).toBe('1 puan');
+  });
+
   it('every key used in the code exists', () => {
     const files = [...sources(join(ROOT, 'web', 'src')), ...sources(join(ROOT, 'api', 'src'))];
     const missing: string[] = [];

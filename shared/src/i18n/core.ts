@@ -92,8 +92,11 @@ export type Vars = Record<string, string | number>;
 // {account}/{accounts} are always available from the terms; lower-case
 // variants {account_l}/{accounts_l} are filled for use inside sentences.
 // A phrase missing from the chosen language falls back to English.
+// A key with a "<key>.one" sibling takes that form when {n} is exactly 1 ("1 pt", "3 pts").
 export function translate(locale: Locale, key: MessageKey, vars: Vars = {}, terms?: Terms | null): string {
-  const template = registry[locale]?.[key] ?? registry.en?.[key] ?? key;
+  const dict = registry[locale]?.[key] !== undefined ? registry[locale] : registry.en;
+  const one = vars.n === 1 || vars.n === '1' ? dict?.[`${key}.one` as MessageKey] : undefined;
+  const template = one ?? dict?.[key] ?? key;
   const words = accountWords(locale, terms);
   const lower = (s: string) => s.toLocaleLowerCase(bcp47Of(locale));
   const all: Vars = {
