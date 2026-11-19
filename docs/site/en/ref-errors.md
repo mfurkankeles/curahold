@@ -22,6 +22,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `free_mail_note` | 400 | Tell us in a sentence why you use a personal address for a company trial. |
 | `help_file_type` | 400 | … can't be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can. |
 | `help_too_many_files` | 400 | A request can carry up to … files. |
+| `human_check` | 400 | We could not confirm that a person sent this. Complete the check on the form and try again. |
 | `invalid_token` | 400 | This link or code is not valid any more. Request a new one. |
 | `link_loop` | 400 | These tasks would end up waiting for each other. |
 | `not_configured` | 400 | This service is not set up on this server yet. |
@@ -62,6 +63,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `read_only_seat` | 403 | Your seat is read-only. Ask an administrator for a full seat. |
 | `read_only_token` | 403 | This key or app can only read. Make a key that can make changes, or reconnect the app and allow changes. |
 | `reauth_required` | 403 | Confirm it's you to continue. |
+| `robot_refused` | 403 | Automated access to Curahold needs our written permission. To connect a tool, use the API with a key. |
 | `sso_required` | 403 | This company requires single sign-on. Use your organization's SSO to sign in. |
 | `staff_second_step` | 403 | Curahold staff open the console with a passkey or a second step. Add one in My devices, then sign in again. |
 | `support_blocked` | 403 | Support can't open this part, even with permission. |

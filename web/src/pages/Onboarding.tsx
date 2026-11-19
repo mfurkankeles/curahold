@@ -58,6 +58,7 @@ import { runSetupTest } from '../lib/setupContract';
 import { useStore } from '../lib/store';
 import { docsHref, docsLink } from '../lib/docs';
 import '../surfaces/onboarding.css';
+import { LegalNotice } from '../components/LegalNotice';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
 const useT = () => {
@@ -198,6 +199,7 @@ function Hub({ plan, onPlan, reload }: { plan: Plan; onPlan: (p: Plan) => void; 
             {show('mapping') && <Mapping ctx={ctx} />}
             {show('sites') && plan.sites.length > 0 && <Sites ctx={ctx} />}
             {show('metrics') && plan.metrics.length > 0 && <Metrics ctx={ctx} />}
+            <LegalNotice t={t} />
           </div>
           <aside className="ob-side">
             <ProgressCard ctx={ctx} />

@@ -3488,6 +3488,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'legal.terms': "شرایط خدمات",
   'legal.privacy': "سیاست حریم خصوصی",
   'legal.and': "و",
+  'legal.notice.rights': '© {years} Curahold. همهٔ حقوق محفوظ است.',
+  'legal.notice.protected': 'نرم‌افزار، طراحی، محتوا و قابلیت‌های Curahold™ با حق نشر و به‌عنوان اسرار تجاری محافظت می‌شوند؛ کپی، تکثیر یا مهندسی معکوس آن‌ها بدون اجازه مجاز نیست.',
   'pipeline.deal1': "۱ معامله",
   'conn.demo.crm.title': "اتصال {app} (نمایشی)",
   'conn.demo.crm.lede': "در محصول واقعی این گام، صفحه ورود خود {app} است. اینجا یک {app} ساختگی با داده‌های ساختگی جایش را می‌گیرد تا بتوانید کل مسیر را طی کنید: انتخاب آنچه می‌آید، تطبیق فیلدها، اجرای نخستین همگام‌سازی.",
@@ -4131,6 +4133,8 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': "پاسخ ارسال شد",
   'mailbox.reply.hint': "از صندوق ایمیل متصل ارسال و اینجا ثبت شد.",
   'errors.rate_limited': 'در زمانی کوتاه درخواست‌های زیادی رسید. {wait} دیگر دوباره تلاش کنید.',
+  'errors.robot_refused': 'دسترسی خودکار به Curahold به اجازهٔ کتبی ما نیاز دارد. برای وصل کردن یک ابزار، از API با کلید استفاده کنید.',
+  'errors.human_check': 'نتوانستیم تأیید کنیم که این را یک انسان فرستاده است. بررسی فرم را کامل کنید و دوباره امتحان کنید.',
   'versions.clash': 'هنگامی که این صفحه باز بود، فرد دیگری این موارد را تغییر داد: {fields}. آنچه نوشته‌اید همچنان اینجاست. برای نگه‌داشتن نسخهٔ خودتان دوباره ذخیره کنید، یا برای نگه‌داشتن نسخهٔ او انصراف دهید.',
   'versions.clashShown': 'فرد دیگری هم‌زمان {fields} را تغییر داد. اکنون نسخهٔ او نمایش داده می‌شود؛ اگر نسخهٔ شما باید بماند، دوباره تغییرش دهید.',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

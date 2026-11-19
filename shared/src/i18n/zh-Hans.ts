@@ -3488,6 +3488,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'legal.terms': "服务条款",
   'legal.privacy': "隐私政策",
   'legal.and': "和",
+  'legal.notice.rights': '© {years} Curahold。保留所有权利。',
+  'legal.notice.protected': 'Curahold™ 的软件、设计、内容和功能受著作权及商业秘密保护；未经许可，不得复制、转载或进行逆向工程。',
   'pipeline.deal1': "1 个商机",
   'conn.demo.crm.title': "连接 {app}（演示）",
   'conn.demo.crm.lede': "在正式产品中，这一步是 {app} 自己的登录页面。这里由一个使用虚构数据的模拟 {app} 代替，让你可以走完整个流程：选择要导入的内容、匹配字段、运行首次同步。",
@@ -4131,6 +4133,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': '回复已发送',
   'mailbox.reply.hint': '从已连接的邮箱发送，并记录在这里。',
   'errors.rate_limited': '短时间内请求过多。请在 {wait} 后重试。',
+  'errors.robot_refused': '自动访问 Curahold 需要我们的书面许可。如需连接工具，请使用带密钥的 API。',
+  'errors.human_check': '我们无法确认这是由真人提交的。请完成表单上的验证后重试。',
   'versions.clash': '在你打开此页面期间,其他人更改了:{fields}。你输入的内容仍在。再次保存可保留你的内容,取消则保留对方的内容。',
   'versions.clashShown': '其他人同时更改了 {fields}。现在显示的是对方的版本;如需保留你的内容,请重新修改。',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

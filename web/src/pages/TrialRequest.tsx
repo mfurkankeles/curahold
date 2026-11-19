@@ -28,6 +28,8 @@ import { docsHref, docsLink } from '../lib/docs';
 import { useI18n } from '../lib/i18n';
 import { useLocation } from '../lib/router';
 import '../surfaces/trial.css';
+import { useHumanCheck } from '../lib/humanCheck';
+import { LegalNotice } from '../components/LegalNotice';
 
 const LegacySignup = lazy(() => import('./Signup').then((m) => ({ default: m.SignupApp })));
 
@@ -35,6 +37,8 @@ interface Config {
   mode: 'request' | 'instant';
   ipCountry: string | null;
   stamp: string;
+  /** Cloudflare Turnstile's site key when it is on (lib/humanCheck.tsx). */
+  turnstile?: string | null;
 }
 
 /** Which screen the central address shows: the trial request, or the earlier instant sign-up. */
@@ -50,7 +54,7 @@ export function TrialEntry({ onLocale }: { onLocale: (l: Locale) => void }) {
   if (config?.mode === 'instant' || (failed && path === '/signup/verify')) {
     return (
       <Suspense fallback={null}>
-        <LegacySignup onLocale={onLocale} />
+        <LegacySignup onLocale={onLocale} turnstile={config?.turnstile} />
       </Suspense>
     );
   }
@@ -182,6 +186,7 @@ function Frame({ step, onLocale, children }: { step: number; onLocale: (l: Local
           </div>
           {children}
         </div>
+        <LegalNotice t={t} />
       </main>
     </div>
   );
@@ -238,6 +243,8 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
   const [codeSent, setCodeSent] = useState<{ freeMail: boolean; devCode?: string } | null>(null);
   const [code, setCode] = useState('');
   const [hp, setHp] = useState('');
+  // Fill time and, when on, Cloudflare's check before the code e-mail goes out (this form has its own honeypot below).
+  const human = useHumanCheck(config?.turnstile, { label: t('trial.hp'), locale, honeypot: false });
   const [errors, setErrors] = useState<Errors>({});
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
@@ -329,12 +336,13 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
     setErrors({});
     setBusy(true);
     try {
-      setCodeSent(await post('/trial/code', { email: d.email.trim(), locale, ...(hp ? { hp } : {}) }));
+      setCodeSent(await post('/trial/code', { email: d.email.trim(), locale, ...human.proof(), ...(hp ? { hp } : {}) }));
       setCode('');
       requestAnimationFrame(() => document.getElementById('trial-code')?.focus());
     } catch (err) {
       setProblem(errorText(err, t));
     } finally {
+      human.reset();
       setBusy(false);
     }
   }
@@ -505,6 +513,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
       {step === 0 && !proof && !codeSent && (
         <form className="trial__form" onSubmit={sendCode} noValidate>
           {input('email', t('trial.email.label'), { type: 'email', autoComplete: 'email', dir: 'ltr' })}
+          {human.field}
           <button className="btn btn--primary" disabled={busy || !config}>
             {t('trial.email.send')}
           </button>

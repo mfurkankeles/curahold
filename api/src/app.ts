@@ -78,7 +78,8 @@ import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
 import { assistPublicRoutes, assistRoutes } from './routes/assist';
 import { signInSupport } from './lib/support';
-import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
+import { BUDGETS, INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
+import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
 import { liveRoutes } from './live/routes';
 import { asksForTicket } from './live/protocol';
 import { touchesConsole } from './live/platform';
@@ -111,6 +112,27 @@ export function createApp(deps: Deps) {
   // Browser-side protections on every answer (CSP, HSTS, framing, sniffing); see lib/headers.ts.
   app.use('*', securityHeaders(cfg.scheme === 'https'));
 
+  // Robots (lib/botGuard.ts): robots.txt and the TDM reservation per host, known
+  // crawlers refused by name, and bursts of refused or limited answers noted for the console.
+  const watch = deps.watch ?? sharedWatch;
+  const notice = (kind: 'limited' | 'refused', ip: string | null, detail: string) => {
+    const alert = watch.note(kind, ip, detail);
+    if (alert) defer(deps, raiseTrafficAlert(deps, alert));
+  };
+  app.use('*', async (c, next) => {
+    const early = edgeAnswer(c.req.raw, cfg);
+    if (early) return early;
+    const ip = clientIp(c, cfg.clientIp);
+    const refused = robotRefusal(cfg.robotGuard, { path: c.req.path, ua: c.req.header('user-agent'), bearer: /^Bearer\s/i.test(c.req.header('authorization') ?? '') });
+    if (refused) {
+      notice('refused', ip, refused);
+      const loc = normalizeLocale(c.req.header('x-curahold-locale'), 'en');
+      return c.json({ error: 'robot_refused', message: translate(loc, 'errors.robot_refused') }, 403);
+    }
+    await next();
+    if (c.res.status === 429) notice('limited', ip, c.req.path);
+  });
+
   app.use('*', async (c, next) => {
     c.set('deps', deps);
     c.set('self', app);
@@ -142,10 +164,18 @@ export function createApp(deps: Deps) {
       const checks: Check[] = [[`ip:${ip}`, 'ip']];
       if (isSignIn(c.req.method, p)) checks.push([`signin:${ip}`, 'signin']);
       if (p === '/api/consent-event') checks.push([`consent:${ip}`, 'consent']);
+      if (p === '/api/assist/public') checks.push([`assist-door:${ip}`, 'assistDoor']);
+      // A scanner's run of unknown addresses: its allowance is spent by each 404 below, and checked here first.
+      const held = watch.waitOf(ip);
+      if (held) return limited(c, held);
       const wait = takeAll(limiter, scale, checks);
       if (wait) return limited(c, wait);
     }
     await next();
+    if (ip && c.res.status === 404 && p.startsWith('/api/')) {
+      const wait = limiter.take(`probe:${ip}`, BUDGETS.probe, scale);
+      if (wait) watch.hold(ip, wait);
+    }
   });
   // 2. The company (after companyFromHost): everyone at it together, its sign-in steps, its AI connections.
   const companyLimits = async (c: any, next: () => Promise<void>) => {
@@ -176,6 +206,7 @@ export function createApp(deps: Deps) {
     if (isWrite(m)) checks.push([`write:${who}`, 'write']);
     if (isSearch(m, p)) checks.push([`search:${who}`, 'search']);
     if (isExport(m, p, new URL(c.req.url))) checks.push([`export:${who}`, 'export']);
+    if (isUpload(m, p, c.req.header('content-type'))) checks.push([`upload:${who}`, 'upload'], [`upload-org:${org.id}`, 'uploadCompany']);
     if (isFeed(p)) checks.push([`analytics:${org.id}:${auth.sessionId}`, 'analytics']);
     const invite = isInvite(m, p);
     if (invite) checks.push([`invite:${who}`, 'invite'], [`invite-org:${org.id}`, 'inviteCompany']);

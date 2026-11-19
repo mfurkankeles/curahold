@@ -169,6 +169,7 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .foot a { color: #c9c5e8; text-decoration: none; transition: color .18s var(--ease); }
 .foot a:hover { color: #fff; text-decoration: underline; }
 .foot__base { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--night-2); display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; color: #9b96c4; }
+.foot__notice { flex-basis: 100%; font-size: 12px; line-height: 1.45; opacity: .85; }
 .foot__langs { display: flex; gap: 8px 16px; flex-wrap: wrap; }
 @media (max-width: 900px) { .foot__in { grid-template-columns: repeat(2, minmax(0, 1fr)); } .foot__in > :first-child { grid-column: 1 / -1; } }
 

@@ -78,6 +78,12 @@ export interface Config {
   clientIp?: 'cf' | 'proxy' | 'socket';
   /** Multiplies every request budget (lib/ratelimit.ts): 1 or unset in production, 0 switches the limits off. */
   limitScale?: number;
+  /** Robots refused by name (lib/botGuard.ts): 'strict' in production; unset = 'crawlers' (AI and scraper robots only). */
+  robotGuard?: import('./lib/botGuard').RobotGuard;
+  /** The crawler policy's owner switches (shared/src/compliance/crawlers.ts). */
+  crawlers?: { docsAiAnswers?: boolean };
+  /** Cloudflare Turnstile on the public forms (lib/humanCheck.ts); unset: honeypot + fill-time checks only. */
+  turnstile?: { siteKey: string; secretKey: string };
   /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */
   assistant?: import('./assistant/cost').AssistantConfig;
   /** The AI team's models and monthly cap (api/src/team/config.ts); unset: the defaults there. */
@@ -127,6 +133,8 @@ export interface Deps {
   defer?: (p: Promise<unknown>) => void;
   /** Request budgets of this isolate or process; defaults to the shared one (lib/ratelimit.ts). */
   limiter?: import('./lib/ratelimit').Limiter;
+  /** Unusual-traffic counter (lib/botGuard.ts); unset: the isolate's shared one. */
+  watch?: import('./lib/botGuard').TrafficWatch;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
   /** The assistant: where the docs' sections are read from, and (tests) a model to use instead of the configured one. */
   assistant?: { docs?: import('./assistant/store').DocsLoader; provider?: import('./assistant/provider').LlmProvider | null };

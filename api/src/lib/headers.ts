@@ -12,13 +12,14 @@ export const THEME_SCRIPT_SHA256 = 'sha256-YLjtk3PNTjWKY8qqVl7G2Ij+vSawErAhPVoZ+
 
 export const APP_CSP = [
   "default-src 'self'",
-  `script-src 'self' '${THEME_SCRIPT_SHA256}' https://cdn.paddle.com`,
+  // Cloudflare Turnstile (lib/humanCheck.ts) on the public forms, only when its keys are set.
+  `script-src 'self' '${THEME_SCRIPT_SHA256}' https://cdn.paddle.com https://challenges.cloudflare.com`,
   // The app sets some styles inline (positions, colours); styles cannot run code.
   "style-src 'self' 'unsafe-inline' https://cdn.paddle.com",
   "img-src 'self' data: blob: https://*.paddle.com",
   "font-src 'self'",
   "connect-src 'self' https://*.paddle.com",
-  'frame-src https://buy.paddle.com https://sandbox-buy.paddle.com https://checkout.paddle.com https://sandbox-checkout.paddle.com',
+  'frame-src https://buy.paddle.com https://sandbox-buy.paddle.com https://checkout.paddle.com https://sandbox-checkout.paddle.com https://challenges.cloudflare.com',
   "worker-src 'self'",
   "manifest-src 'self'",
   "media-src 'self' blob:",
@@ -35,6 +36,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), display-capture=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com")',
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+  // The product is closed to robots and reserves text-and-data-mining rights (shared/src/compliance/crawlers.ts).
+  'X-Robots-Tag': 'noindex, nofollow',
+  'tdm-reservation': '1',
 };
 export const HSTS = 'max-age=31536000; includeSubDomains';
 

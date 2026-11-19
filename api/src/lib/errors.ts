@@ -10,6 +10,8 @@ export type ErrorCode =
   | 'validation'
   | 'invalid_token'
   | 'too_many_requests'
+  | 'human_check'
+  | 'robot_refused'
   | 'conflict'
   | 'device_mismatch'
   | 'bad_status'
@@ -109,6 +111,8 @@ const STATUS: Record<ErrorCode, number> = {
   bad_assignee: 400,
   file_too_large: 413,
   too_many_requests: 429,
+  human_check: 400,
+  robot_refused: 403,
   conflict: 409,
   email_taken: 409,
   role_in_use: 409,

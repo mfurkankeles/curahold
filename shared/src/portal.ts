@@ -124,6 +124,8 @@ export interface PortalOrg {
   logoUrl: string | null;
   signIn: PortalSignInOptions;
   brand: PortalBrand;
+  /** Cloudflare Turnstile's public key for the sign-in forms, when it is on (api/src/lib/humanCheck.ts). */
+  turnstile?: string | null;
 }
 
 // ------------------------------------------------------------ the company's brand

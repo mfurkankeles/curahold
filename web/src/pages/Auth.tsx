@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { OrgPublic } from '../../../shared/src/model';
 import { Mark } from '../components/ui';
+import { LegalNotice } from '../components/LegalNotice';
 import { SsoSignIn, useSsoInfo } from '../components/SsoSignIn';
 import { ApiFailure, post } from '../lib/api';
 import { deviceLabel, getDeviceId } from '../lib/device';
@@ -37,6 +38,7 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
   // as a quiet stack of task rails, with the company's own name.
   // Their colours and lengths are in styles.css (.auth__lines .auth__rail:nth-child…).
   const rails = ['calm', 'soon', 'today', 'late', 'done'];
+  const { t } = useI18n();
   return (
     <div className="auth">
       <aside className="auth__side" aria-hidden="true">
@@ -69,6 +71,7 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
           )}
           {children}
         </div>
+        <LegalNotice t={t} />
       </main>
     </div>
   );

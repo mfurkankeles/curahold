@@ -2,7 +2,10 @@
 // (acme.curahold-portal.com). It shares nothing with the app's API: its own
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
-import { clientIp, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
+import { clientIp, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
+import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
+import { turnstileSiteKey } from './lib/humanCheck';
+import { CLOSED_X_ROBOTS } from '../../shared/src/compliance/crawlers';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { z } from 'zod';
@@ -34,9 +37,29 @@ export function createPortalApp(deps: Deps) {
   const app = new Hono<PortalEnv>();
   const cfg = deps.config;
 
+  // Robots (lib/botGuard.ts): robots.txt says Disallow: / here, crawlers are refused by name, bursts are noted.
+  const watch = deps.watch ?? sharedWatch;
+  const notice = (kind: 'limited' | 'refused', ip: string | null, detail: string) => {
+    const alert = watch.note(kind, ip, detail);
+    if (alert) defer(deps, raiseTrafficAlert(deps, alert));
+  };
+  app.use('*', async (c, next) => {
+    const early = edgeAnswer(c.req.raw, { ...cfg, centralHost: '' });
+    if (early) return early;
+    const ip = clientIp(c, cfg.clientIp);
+    const refused = robotRefusal(cfg.robotGuard, { path: c.req.path, ua: c.req.header('user-agent'), bearer: false });
+    if (refused) {
+      notice('refused', ip, refused);
+      return c.json({ error: 'robot_refused', message: translate(normalizeLocale(c.req.header('x-curahold-locale'), 'en'), 'errors.robot_refused') }, 403);
+    }
+    await next();
+    if (c.res.status === 429) notice('limited', ip, c.req.path);
+  });
+
   app.use('*', async (c, next) => {
     await next();
     c.header('x-content-type-options', 'nosniff');
+    c.header('x-robots-tag', CLOSED_X_ROBOTS);
     c.header('referrer-policy', 'no-referrer');
     if (c.req.path.startsWith('/papi/')) c.header('cache-control', 'no-store');
     // Writes: the people's tasks and replies move on, and the company's webhooks hear of it.
@@ -87,6 +110,7 @@ export function createPortalApp(deps: Deps) {
       logoUrl: (org.settings as any)?.logo?.key ? `/papi/logo?v=${encodeURIComponent(String((org.settings as any).logo.v ?? 1))}` : null,
       signIn: signInOptions(org, deps),
       brand: portalBrand(org),
+      turnstile: turnstileSiteKey(deps),
     };
     return c.json(out);
   });
@@ -146,6 +170,7 @@ export function createPortalApp(deps: Deps) {
       const who = `portal:${org.id}:${s.person_id}`;
       const checks: [string, BudgetName][] = [[`person:${who}`, 'person']];
       if (isWrite(c.req.method)) checks.push([`write:${who}`, 'write']);
+      if (isUpload(c.req.method, c.req.path, c.req.header('content-type'))) checks.push([`upload:${who}`, 'upload'], [`upload-org:portal:${org.id}`, 'uploadCompany']);
       const wait = takeAll(limiter, scale, checks);
       if (wait) return limited(c, wait, c.get('locale'));
     }

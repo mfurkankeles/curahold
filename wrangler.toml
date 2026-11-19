@@ -16,7 +16,7 @@ directory = "dist/web"
 not_found_handling = "single-page-application"
 # The API, the AI connector and app sign-in run in the worker; everything else
 # (the app, /docs/, llms.txt) is a static file.
-run_worker_first = ["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]
+run_worker_first = ["/api/*", "/mcp", "/oauth/*", "/.well-known/*", "/robots.txt"]
 
 [vars]
 BASE_DOMAIN = "curahold.com"
@@ -67,6 +67,10 @@ crons = ["0 * * * *"]
 # ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET (also Zoho Books),
 # XERO_CLIENT_ID, XERO_CLIENT_SECRET, FREEE_CLIENT_ID, FREEE_CLIENT_SECRET, QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET
 # (a service without its secrets is simply not offered; webhooks always work)
+# Bot protection (SECURITY.md → Robots, scrapers and bots): TURNSTILE_SECRET_KEY is a secret;
+# TURNSTILE_SITE_KEY (public) goes under [vars] once the Turnstile widget exists. Without both,
+# the public forms use the honeypot + fill-time checks. ROBOT_GUARD = "strict" (default) | "crawlers" | "off";
+# CRAWLERS_DOCS_AI = "allow" lets AI answer robots read /docs/ (default: blocked).
 # DEMO_CRM = "1" only on the public demo.
 
 # Salesforce extras (all optional): SALESFORCE_INSTALL_URL (the package's install link, shown before the

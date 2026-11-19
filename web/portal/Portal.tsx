@@ -9,6 +9,8 @@ import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_FILE_MB, PORTAL_MAX_FILES, ty
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { intentOf, type AssistReply } from '../../shared/src/assist';
 import { PortalOnboarding, OnboardingBanner } from './Onboarding';
+import { useHumanCheck } from '../src/lib/humanCheck';
+import { copyrightYears } from '../../shared/src/compliance/notice';
 
 // ------------------------------------------------------------------ api
 
@@ -385,6 +387,12 @@ function Foot({ ctx, org }: { ctx: Ctx; org: PortalOrg }) {
     <footer className="p-foot">
       <span>{ctx.t('portal.footerPlain', { company: org.name })}</span>
       {org.brand?.poweredBy !== false && <span className="p-foot__by">{ctx.t('portal.poweredBy')}</span>}
+      {/* Curahold's own notice rides with "Powered by": a white-label portal names only the company. */}
+      {org.brand?.poweredBy !== false && (
+        <span className="p-foot__by">
+          {ctx.t('legal.notice.rights', { years: copyrightYears() })} {ctx.t('legal.notice.protected')}
+        </span>
+      )}
     </footer>
   );
 }
@@ -625,6 +633,8 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'ask' | 'code' | 'forgot'>('ask');
+  // Honeypot, fill time and (when on) Cloudflare's check on the e-mail and password forms (web/src/lib/humanCheck.tsx).
+  const human = useHumanCheck(org.turnstile, { label: t('trial.hp'), locale: ctx.locale });
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const run = async (fn: () => Promise<void>) => {
@@ -692,7 +702,11 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
             onSubmit={(e) => {
               e.preventDefault();
               void run(async () => {
-                await call('POST', '/auth/start', { email });
+                try {
+                  await call('POST', '/auth/start', { email, ...human.proof() });
+                } finally {
+                  human.reset();
+                }
                 setStep('code');
               });
             }}
@@ -702,6 +716,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
               <span>{t('portal.email')}</span>
               <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
+            {human.field}
             {problem && <Problem text={problem} />}
             <button className="p-btn p-btn--primary p-btn--block" disabled={busy || !email}>
               {t('portal.sendCode')}
@@ -739,7 +754,11 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
             onSubmit={(e) => {
               e.preventDefault();
               void run(async () => {
-                await call('POST', '/auth/password', { email, password });
+                try {
+                  await call('POST', '/auth/password', { email, password, ...human.proof() });
+                } finally {
+                  human.reset();
+                }
                 onIn();
               });
             }}
@@ -752,6 +771,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
               <span>{t('portal.password')}</span>
               <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
+            {human.field}
             {problem && <Problem text={problem} />}
             <button className="p-btn p-btn--primary p-btn--block" disabled={busy || !email || !password}>
               {t('portal.signIn')}
@@ -763,7 +783,7 @@ function SignIn({ ctx, org, note, lang, onIn }: { ctx: Ctx; org: PortalOrg; note
         )}
 
         {step === 'forgot' && (
-          <ForgotPassword ctx={ctx} email={email} setEmail={setEmail} onBack={() => setStep('ask')} />
+          <ForgotPassword ctx={ctx} turnstile={org.turnstile} email={email} setEmail={setEmail} onBack={() => setStep('ask')} />
         )}
       </div>
     </SignInPage>
@@ -778,8 +798,9 @@ function Problem({ text }: { text: string }) {
   );
 }
 
-function ForgotPassword({ ctx, email, setEmail, onBack }: { ctx: Ctx; email: string; setEmail: (v: string) => void; onBack: () => void }) {
+function ForgotPassword({ ctx, turnstile, email, setEmail, onBack }: { ctx: Ctx; turnstile?: string | null; email: string; setEmail: (v: string) => void; onBack: () => void }) {
   const { t } = ctx;
+  const human = useHumanCheck(turnstile, { label: t('trial.hp'), locale: ctx.locale });
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   if (sent)
@@ -796,7 +817,8 @@ function ForgotPassword({ ctx, email, setEmail, onBack }: { ctx: Ctx; email: str
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
-        await call('POST', '/auth/forgot', { email }).catch(() => undefined);
+        await call('POST', '/auth/forgot', { email, ...human.proof() }).catch(() => undefined);
+        human.reset();
         setBusy(false);
         setSent(true);
       }}
@@ -806,6 +828,7 @@ function ForgotPassword({ ctx, email, setEmail, onBack }: { ctx: Ctx; email: str
         <span>{t('portal.email')}</span>
         <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
+      {human.field}
       <button className="p-btn p-btn--primary" disabled={busy || !email}>
         {t('portal.sendReset')}
       </button>

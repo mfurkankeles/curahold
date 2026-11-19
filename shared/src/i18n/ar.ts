@@ -3488,6 +3488,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'legal.terms': "شروط الخدمة",
   'legal.privacy': "سياسة الخصوصية",
   'legal.and': "و",
+  'legal.notice.rights': '© {years} Curahold. جميع الحقوق محفوظة.',
+  'legal.notice.protected': 'برمجيات Curahold™ وتصميمها ومحتواها وميزاتها محمية بحقوق النشر وبصفتها أسرارًا تجارية؛ ولا يجوز نسخها أو إعادة إنتاجها أو إجراء هندسة عكسية لها دون إذن.',
   'pipeline.deal1': "صفقة واحدة",
   'conn.demo.crm.title': "ربط {app} (تجريبي)",
   'conn.demo.crm.lede': "في المنتج الحقيقي تكون هذه الخطوة صفحة تسجيل الدخول الخاصة بـ {app}. أما هنا فيحلّ محلها {app} وهمي ببيانات مختلقة، لتتمكن من السير في الطريق كله: اختر ما سيُنقل، وطابق الحقول، وشغّل أول مزامنة.",
@@ -4131,6 +4133,8 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': "أُرسل الرد",
   'mailbox.reply.hint': "أُرسل من صندوق البريد المتصل وسُجّل هنا.",
   'errors.rate_limited': 'وصلت طلبات كثيرة في وقت قصير. حاول مجددًا بعد {wait}.',
+  'errors.robot_refused': 'الوصول الآلي إلى Curahold يتطلب إذنًا كتابيًا منا. لربط أداة، استخدم واجهة API بمفتاح.',
+  'errors.human_check': 'تعذّر علينا التأكد من أن شخصًا أرسل هذا. أكمل التحقق في النموذج ثم حاول مرة أخرى.',
   'versions.clash': 'أثناء فتحك لهذه الصفحة غيّر شخص آخر: {fields}. ما كتبته ما زال هنا. احفظ مجددًا للإبقاء على تعديلك، أو ألغِ للإبقاء على تعديله.',
   'versions.clashShown': 'غيّر شخص آخر {fields} في الوقت نفسه. تظهر الآن نسخته؛ غيّرها مجددًا إن أردت أن تبقى نسختك.',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

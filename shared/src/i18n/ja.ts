@@ -3488,6 +3488,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'legal.terms': "利用規約",
   'legal.privacy': "プライバシーポリシー",
   'legal.and': "および",
+  'legal.notice.rights': '© {years} Curahold. 無断転載を禁じます。',
+  'legal.notice.protected': 'Curahold™ のソフトウェア、デザイン、コンテンツ、機能は著作権および営業秘密として保護されています。許可なく複製、転載、リバースエンジニアリングを行うことはできません。',
   'pipeline.deal1': "商談1件",
   'conn.demo.crm.title': "{app}を接続（デモ）",
   'conn.demo.crm.lede': "実際の製品では、この手順は{app}のログインページになります。ここでは、架空のデータを持つ仮の{app}を使って、取り込む内容の選択、項目の対応づけ、初回の同期までの流れをひととおり体験できます。",
@@ -4131,6 +4133,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': '返信を送信しました',
   'mailbox.reply.hint': '接続中のメールボックスから送信され、ここに記録されます。',
   'errors.rate_limited': '短時間にリクエストが集中しました。{wait}後にもう一度お試しください。',
+  'errors.robot_refused': 'Curahold への自動アクセスには当社の書面による許可が必要です。ツールを接続するには、キーを使って API をご利用ください。',
+  'errors.human_check': '人による送信であることを確認できませんでした。フォームの確認を完了してから、もう一度お試しください。',
   'versions.clash': '開いている間に、別の人が次の項目を変更しました：{fields}。入力した内容は残っています。自分の内容を残すにはもう一度保存し、相手の内容を残すにはキャンセルしてください。',
   'versions.clashShown': '別の人が同時に {fields} を変更しました。現在は相手のバージョンを表示しています。自分の内容にする場合は、もう一度変更してください。',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

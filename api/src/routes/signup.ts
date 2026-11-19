@@ -13,6 +13,7 @@ import { audit } from '../lib/audit';
 import { randomToken, sha256Hex, sign, verify } from '../lib/crypto';
 import { companyFromDomain, emailDomain, isPublicDomain, slugify, slugProblem } from '../lib/domains';
 import { fail } from '../lib/errors';
+import { humanCheck, humanFields } from '../lib/humanCheck';
 import { createOrg } from '../lib/orgs';
 import { startTrial } from '../billing/service';
 import { body, email, localeField } from '../lib/validate';
@@ -41,9 +42,13 @@ signupRoutes.use('*', async (c, next) => {
 });
 
 signupRoutes.post('/start', async (c) => {
-  const input = await body(c, z.object({ email, locale: localeField.optional() }));
+  const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
   const ip = c.req.header('cf-connecting-ip') ?? null;
+  // Honeypot, fill time and (when on) Turnstile (lib/humanCheck.ts): a robot gets the usual answer and no e-mail.
+  const human = await humanCheck(deps, input, { ip });
+  if (human === 'bot') return c.json({ ok: true });
+  if (human === 'failed') fail('human_check');
   const locale = input.locale ?? 'en';
   const token = randomToken(32);
   await deps.db.system(async (q) => {

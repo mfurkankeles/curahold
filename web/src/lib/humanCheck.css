@@ -1,0 +1,17 @@
+/* lib/humanCheck.tsx — the field robots fill and people never meet: out of sight and out of the tab order. */
+.human-hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Cloudflare's check, when it is on: its own small box, kept to the form's width. */
+.human-ts:empty {
+  display: none;
+}
+.human-ts {
+  max-width: 100%;
+  overflow: hidden;
+}

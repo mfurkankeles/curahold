@@ -1,0 +1,4 @@
+# Curahold crawler policy. Automated access, scraping and text-and-data mining need written permission (terms of service; TDM rights reserved under EU DSM Art. 4).
+
+User-agent: *
+Disallow: /

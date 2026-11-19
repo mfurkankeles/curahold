@@ -68,6 +68,14 @@ export const BUDGETS = {
   mcp: { cap: 60, perSec: 1 },
   /** The AI connector, per company. */
   mcpCompany: { cap: 300, perSec: 5 },
+  /** The public docs/site "Ask" door per address, before any answer is looked for (the model's own caps are assistant/cost.ts). */
+  assistDoor: { cap: 20, perSec: 1 / 6 },
+  /** Files one person uploads (task, record and onboarding files, portal attachments). */
+  upload: { cap: 30, perSec: 1 / 6 },
+  /** Files one company uploads, everyone together. */
+  uploadCompany: { cap: 300, perSec: 2 },
+  /** Unknown API addresses (404) from one network address: a scanner mapping the API, not a person (lib/botGuard.ts). */
+  probe: { cap: 60, perSec: 1 / 5 },
 } satisfies Record<string, Budget>;
 export type BudgetName = keyof typeof BUDGETS;
 
@@ -143,6 +151,9 @@ export const isSearch = (method: string, path: string) => method === 'GET' && pa
 /** An export reads the whole of something: a named export, or a list read past its first pages. */
 export const isExport = (method: string, path: string, url: URL) =>
   (method === 'POST' && path === '/api/exports') || (method === 'GET' && (EXPORTS.some((r) => r.test(path)) || Number(url.searchParams.get('offset') ?? 0) >= 1000));
+/** A file sent to Curahold: a multipart POST, or a POST to a files address. */
+export const isUpload = (method: string, path: string, contentType: string | undefined) =>
+  method === 'POST' && (/\/files$/.test(path) || (contentType ?? '').startsWith('multipart/form-data'));
 export const isWrite = (method: string) => method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
 
 // ---------------------------------------------------------------- who is asking

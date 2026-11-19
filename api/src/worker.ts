@@ -12,6 +12,7 @@ import { SmtpRelayEmail, mailProvider, relayOptions, workerSockets } from './lib
 import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './live/do';
 import { PLATFORM_PATH } from './live/platform';
 import { assistantConfigFrom } from './assistant/cost';
+import { edgeAnswer } from './lib/botGuard';
 import type { DocSection } from '../../shared/src/answers';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
@@ -117,6 +118,14 @@ export interface Env {
   ASSISTANT_BLOCKED_NAMES?: string;
   /** "0" closes the public docs chat. */
   ASSISTANT_PUBLIC_CHAT?: string;
+  /** Robots refused by name (lib/botGuard.ts): unset = strict; "crawlers" or "off". */
+  ROBOT_GUARD?: string;
+  /** "allow" lets AI answer/search robots read the documentation (crawler policy; default: blocked). */
+  CRAWLERS_DOCS_AI?: string;
+  /** Cloudflare Turnstile (free): the site key (public) and the secret key (a secret); TURNSTILE=off switches it off. */
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  TURNSTILE?: string;
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
@@ -156,6 +165,11 @@ export function configFromEnv(env: Env): Config {
     authSecret: env.AUTH_SECRET,
     // Request limits key on Cloudflare's own client-address header (lib/ratelimit.ts).
     clientIp: 'cf',
+    // Robots refused by name, the public doors included (lib/botGuard.ts); ROBOT_GUARD=crawlers|off relaxes it.
+    robotGuard: env.ROBOT_GUARD === 'off' ? 'off' : env.ROBOT_GUARD === 'crawlers' ? 'crawlers' : 'strict',
+    crawlers: { docsAiAnswers: env.CRAWLERS_DOCS_AI === 'allow' },
+    // Cloudflare Turnstile on the public forms when both keys are set and TURNSTILE is not "off" (lib/humanCheck.ts).
+    turnstile: env.TURNSTILE !== 'off' && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? { siteKey: env.TURNSTILE_SITE_KEY, secretKey: env.TURNSTILE_SECRET_KEY } : undefined,
     devExposeTokens: false,
     devOrgHeader: false,
     maxDevices: Number(env.MAX_DEVICES) || 2,
@@ -266,8 +280,11 @@ export default {
   },
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
-    const toWorker = url.pathname.startsWith('/api/') || url.pathname === '/mcp' || url.pathname.startsWith('/oauth/') || url.pathname.startsWith('/.well-known/');
+    const toWorker = url.pathname.startsWith('/api/') || url.pathname === '/mcp' || url.pathname.startsWith('/oauth/') || url.pathname.startsWith('/.well-known/') || url.pathname === '/robots.txt';
     if (!toWorker) return env.ASSETS.fetch(req);
+    // robots.txt and the TDM reservation, per host, with no database (lib/botGuard.ts).
+    const early = edgeAnswer(req, { centralHost: env.CENTRAL_HOST, singleTenantSlug: env.SINGLE_TENANT_SLUG || undefined, crawlers: { docsAiAnswers: env.CRAWLERS_DOCS_AI === 'allow' } });
+    if (early) return early;
     // A live socket: checked by its ticket, handed to the company's room; no database, no app.
     if (url.pathname === '/api/live') return liveUpgrade(req, env, configFromEnv(env));
     // The console's live room (desk host only), the same way.

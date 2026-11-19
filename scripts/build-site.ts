@@ -16,6 +16,8 @@ import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type Messa
 import { FAVICON, MARK } from '../site/brand';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 import { infoCopy } from '../site/info';
+import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
+import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
 import { DEPTS, FEATURES, PAGE, headerHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
@@ -155,7 +157,9 @@ function seoTags(opts: { canonical: string; title: string; description: string; 
     .join('\n');
   return [
     `<link rel="canonical" href="${esc(canonical)}">`,
-    `<meta name="robots" content="index, follow, max-image-preview:large">`,
+    // Search engines yes; AI training and text-and-data mining no (shared/src/compliance/crawlers.ts).
+    `<meta name="robots" content="index, follow, max-image-preview:large, noai, noimageai">`,
+    TDM_META,
     `<meta property="og:type" content="${ogType}">`,
     `<meta property="og:site_name" content="Curahold">`,
     `<meta property="og:title" content="${esc(title)}">`,
@@ -381,6 +385,8 @@ ${alternatesFor(path)}
 // whatever depth the page sits at.
 function footerHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
+  // © with the right years, Curahold™ and the copyright/trade-secret line (shared/src/compliance/notice.ts).
+  const notice = legalNotice((k, v) => translate(locale, k, v));
   const n = infoCopy(locale);
   const base = localeBase(locale);
   const u = urlsOf(locale);
@@ -433,8 +439,9 @@ function footerHtml(locale: SiteLocale): string {
       </div>
     </div>
     <div class="foot__base">
-      <span>© ${new Date().getFullYear()} ${esc(c.footer.company)}</span>
+      <span>${esc(notice.rights)}</span>
       <span class="foot__langs">${footLang}</span>
+      <small class="foot__notice">${esc(notice.protected)}</small>
     </div>
   </div>
 </footer>`;
@@ -1283,7 +1290,11 @@ function build() {
   for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
   writeFileSync(join(OUT, 'sitemap.xml'), sitemap);
-  writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
+  // The crawler policy (shared/src/compliance/crawlers.ts): search engines in, AI crawlers out, the TDM reservation.
+  writeFileSync(join(OUT, 'robots.txt'), robotsTxt('site', { sitemap: `${ORIGIN}/sitemap.xml`, allowAiAnswers: process.env.SITE_AI_CRAWLERS === 'allow' }));
+  mkdirSync(join(OUT, '.well-known'), { recursive: true });
+  writeFileSync(join(OUT, '.well-known', 'tdmrep.json'), TDMREP_JSON);
+  writeFileSync(join(OUT, '_headers'), `/*\n  ${TDM_HEADER.name}: ${TDM_HEADER.value}\n\n/demo/*\n  X-Robots-Tag: ${CLOSED_X_ROBOTS}\n`);
 
   // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
   const HUB = join(ROOT, 'dist', 'demo-hub');

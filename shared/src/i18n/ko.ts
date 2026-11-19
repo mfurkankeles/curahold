@@ -3488,6 +3488,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'legal.terms': "서비스 약관",
   'legal.privacy': "개인정보 처리방침",
   'legal.and': "및",
+  'legal.notice.rights': '© {years} Curahold. 모든 권리 보유.',
+  'legal.notice.protected': 'Curahold™의 소프트웨어, 디자인, 콘텐츠와 기능은 저작권 및 영업비밀로 보호됩니다. 허가 없이 복제, 재생산하거나 리버스 엔지니어링할 수 없습니다.',
   'pipeline.deal1': "딜 1개",
   'conn.demo.crm.title': "{app} 연결(데모)",
   'conn.demo.crm.lede': "실제 제품에서는 이 단계가 {app}의 로그인 페이지입니다. 여기서는 가상의 데이터가 들어 있는 모의 {app}이(가) 대신하므로 가져올 항목 선택, 필드 매칭, 첫 동기화까지 전체 과정을 체험할 수 있습니다.",
@@ -4131,6 +4133,8 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': '답장을 보냈습니다',
   'mailbox.reply.hint': '연결된 메일함에서 보내고 여기에 기록됩니다.',
   'errors.rate_limited': '짧은 시간에 요청이 너무 많았습니다. {wait} 후에 다시 시도하세요.',
+  'errors.robot_refused': 'Curahold에 자동으로 접근하려면 당사의 서면 허가가 필요합니다. 도구를 연결하려면 키와 함께 API를 사용하세요.',
+  'errors.human_check': '사람이 보낸 것인지 확인하지 못했습니다. 양식의 확인 절차를 마친 뒤 다시 시도하세요.',
   'versions.clash': '이 화면을 열어 둔 동안 다른 사람이 다음 항목을 변경했습니다: {fields}. 입력한 내용은 그대로 있습니다. 내 내용을 유지하려면 다시 저장하고, 상대의 내용을 유지하려면 취소하세요.',
   'versions.clashShown': '다른 사람이 동시에 {fields}을(를) 변경했습니다. 지금은 상대의 버전이 표시됩니다. 내 내용이 맞다면 다시 변경하세요.',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

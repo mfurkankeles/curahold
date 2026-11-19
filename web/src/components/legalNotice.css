@@ -1,0 +1,15 @@
+/* components/LegalNotice.tsx — footer-size, quiet, never in the way. */
+.legal-notice {
+  margin: var(--s-4) 0 0;
+  font-size: var(--fs-2xs);
+  line-height: var(--lh-body);
+  color: var(--ink-3);
+  max-width: 60ch;
+}
+/* Under the sign-in, sign-up and trial cards: the card keeps the middle, the notice sits at the foot. */
+.auth__main:has(> .legal-notice) {
+  grid-template-rows: 1fr auto;
+}
+.auth__main > .legal-notice {
+  text-align: center;
+}

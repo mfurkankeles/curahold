@@ -27,6 +27,12 @@ import { Marked, type Tokens } from 'marked';
 import type { DocSection } from '../shared/src/answers';
 import { CLARIFY } from '../shared/src/assist';
 import { LOCALE_INFO, LOCALES, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
+// Search engines may index the docs; AI crawlers and text-and-data mining may not (a copy inside the demo: nobody).
+import { CLOSED_ROBOTS, TDM_META } from '../shared/src/compliance/crawlers';
+import { legalNotice } from '../shared/src/compliance/notice';
+
+/** The copyright line and the copyright/trade-secret line, in one language (shared/src/compliance/notice.ts). */
+const noticeOf = (lang: Locale) => legalNotice((k, v) => translate(lang, k, v));
 
 const ROOT = join(import.meta.dirname, '..');
 const SRC = join(ROOT, 'docs', 'site');
@@ -274,6 +280,8 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(page?.summary ?? ui.lead)}">
+<meta name="robots" content="${RELATIVE ? CLOSED_ROBOTS : 'index, follow, noai, noimageai'}">
+${TDM_META}
 ${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/${l}/${path}">`).join('\n')}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%2367c2a8'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/docs/assets/docs.css">
@@ -331,7 +339,7 @@ function build() {
       const meta = `<p class="doc__meta">${ui.edited} <time datetime="${p.updated}">${longDate(lang, p.updated)}</time> · ${ui.minutes(p.minutes)}</p>`;
       // A page this language does not have yet is English, said so in the reader's language.
       const note = p.borrowed ? `<p class="doc__lang">${esc(ui.inEnglish)}</p>` : '';
-      const body = `<div class="crumb"><a href="/docs/${lang}/">${ui.site}</a> › ${ui.sections[p.section]}</div>${note}<article class="doc"${p.borrowed ? ' lang="en" dir="ltr"' : ''}>${p.html.replace('</h1>', `</h1>${meta}`)}</article>${pager}`;
+      const body = `<div class="crumb"><a href="/docs/${lang}/">${ui.site}</a> › ${ui.sections[p.section]}</div>${note}<article class="doc"${p.borrowed ? ' lang="en" dir="ltr"' : ''}>${p.html.replace('</h1>', `</h1>${meta}`)}</article>${pager}<p class="legal-notice">${esc(noticeOf(lang).rights)} ${esc(noticeOf(lang).protected)}</p>`;
       // The preview links to the English page instead of keeping a copy of it, and has no .md twins.
       if (PREVIEW && p.borrowed) return;
       const dir = join(OUT, lang, p.slug);
@@ -384,7 +392,7 @@ function build() {
   <section><h2>${ui.recent}</h2><ul class="recent">${recent}</ul></section>
 </div>
 ${news}
-<footer class="foot"><span>© ${new Date().getFullYear()} ${ui.foot}</span><span>${footLinks}</span></footer>
+<footer class="foot"><span>${esc(noticeOf(lang).rights)}</span><span>${footLinks}</span><small class="legal-notice">${esc(noticeOf(lang).protected)}</small></footer>
 </div>`;
     mkdirSync(join(OUT, lang), { recursive: true });
     writeFileSync(join(OUT, lang, 'index.html'), layout(lang, pages, null, home, ''));

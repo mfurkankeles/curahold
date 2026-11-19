@@ -3288,6 +3288,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'legal.terms': "תנאי השירות",
   'legal.privacy': "מדיניות הפרטיות",
   'legal.and': "ול",
+  'legal.notice.rights': '© {years} Curahold. כל הזכויות שמורות.',
+  'legal.notice.protected': 'התוכנה, העיצוב, התוכן והתכונות של Curahold™ מוגנים בזכויות יוצרים וכסודות מסחריים; אין להעתיק, לשכפל או לבצע בהם הנדסה לאחור ללא רשות.',
   'pipeline.deal1': "עסקה אחת",
   'conn.demo.crm.title': "חבר את {app} (הדגמה)",
   'conn.demo.crm.lede': "במוצר האמיתי השלב הזה הוא דף ההתחברות של {app} עצמו. כאן {app} מדומה עם נתונים בדויים מחליף אותו, כדי שתוכל לעבור את כל הדרך: לבחור מה מגיע, להתאים את השדות ולהריץ את הסנכרון הראשון.",
@@ -4131,6 +4133,8 @@ export const he: Partial<Record<MessageKey, string>> = {
   'mailbox.reply.sent': "התשובה נשלחה",
   'mailbox.reply.hint': "נשלח מתיבת הדואר המחוברת ונרשם כאן.",
   'errors.rate_limited': 'נשלחו הרבה בקשות בזמן קצר. אפשר לנסות שוב בעוד {wait}.',
+  'errors.robot_refused': 'גישה אוטומטית ל-Curahold דורשת אישור בכתב מאיתנו. כדי לחבר כלי, השתמשו ב-API עם מפתח.',
+  'errors.human_check': 'לא הצלחנו לוודא שאדם שלח את זה. השלימו את הבדיקה בטופס ונסו שוב.',
   'versions.clash': 'בזמן שהדף היה פתוח אצלך, מישהו אחר שינה: {fields}. מה שהקלדת עדיין כאן. כדי לשמור את הגרסה שלך יש לשמור שוב, וכדי להשאיר את שלו יש לבטל.',
   'versions.clashShown': 'מישהו אחר שינה את {fields} באותו זמן. כעת מוצגת הגרסה שלו; אם הגרסה שלך צריכה להישאר, יש לשנות שוב.',
   // Content that templates, built-in record types, ready reports and pages write or show (seeded into a company in its own language).

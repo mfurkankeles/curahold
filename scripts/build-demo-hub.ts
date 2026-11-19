@@ -22,6 +22,9 @@ import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, 
 import { FAVICON, MARK } from '../site/brand';
 import { LOCALES, LOCALE_INFO, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { SEED_LOCALES } from './seed-words';
+// The hub is the product's try-it door: not for search engines or AI crawlers (shared/src/compliance/crawlers.ts).
+import { CLOSED_ROBOTS_META, TDM_META } from '../shared/src/compliance/crawlers';
+import { legalNotice } from '../shared/src/compliance/notice';
 
 const ROOT = join(import.meta.dirname, '..');
 const DEMO = join(ROOT, 'dist', 'demo');
@@ -74,6 +77,8 @@ function copyOf(l: Locale) {
     card: { start: say('card.start'), meta: (m: number, st: number) => say('card.meta', { m: num(m), s: num(st) }) },
     band: { title: say('band.title'), text: say('band.text'), primary: say('band.primary'), secondary: say('band.secondary') },
     foot: { home: say('foot.home'), privacy: say('foot.privacy'), terms: say('foot.terms'), made: say('foot.made') },
+    // © with the right years, Curahold™ and the copyright/trade-secret line (shared/src/compliance/notice.ts).
+    notice: legalNotice((k, v) => translate(l, k, v)),
     /** The site's page in this language (it has all nine). */
     words: { one: say('count.one'), many: say('count.many') },
     lang: { title: say('lang.title'), note: say('lang.note'), close: say('lang.close'), button: (name: string) => say('lang.button', { name }) },
@@ -191,6 +196,8 @@ function page(locale: Locale): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(c.title)}</title>
 <meta name="description" content="${esc(c.description)}">
+${CLOSED_ROBOTS_META}
+${TDM_META}
 <link rel="icon" href="${FAVICON}">
 ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefOf(l)}">`).join('\n')}
 <link rel="preload" href="${assets}bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -266,7 +273,7 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
 </main>
 <footer class="foot hub-foot">
   <div class="wrap foot__base">
-    <span>${esc(c.foot.made)}</span>
+    <span>${esc(c.foot.made)}<br><small>${esc(c.notice.rights)} ${esc(c.notice.protected)}</small></span>
     <span><a href="${site}">${esc(c.foot.home)}</a> · <a href="${docsAt('legal-privacy/')}"${away}>${esc(c.foot.privacy)}</a> · <a href="${docsAt('legal-terms/')}"${away}>${esc(c.foot.terms)}</a></span>
   </div>
 </footer>

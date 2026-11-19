@@ -23,6 +23,8 @@ import type { PortalAccount, PortalMethod } from '../../shared/src/portal';
 import { defer, type Deps } from './context';
 import { base64url, fromBase64url, randomToken, safeEqual, sha256Hex } from './lib/crypto';
 import { fail } from './lib/errors';
+import { humanCheck, humanFields } from './lib/humanCheck';
+import { clientIp } from './lib/ratelimit';
 import { checkPassword, hashPassword, weakPassword } from './lib/password';
 import {
   FLOW_COOKIE,
@@ -109,8 +111,11 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
   /** Always the same answer, so the form cannot be used to find out who has access. */
   app.post('/papi/auth/start', async (c) => {
     need(c, 'email');
-    const { email } = await input(c, z.object({ email: emailSchema }));
-    const p = await personByEmail(c.get('org').id, email);
+    const { email, ...proof } = await input(c, z.object({ email: emailSchema, ...humanFields }));
+    // A robot (honeypot, too quick) gets the same answer and no e-mail; a refused Turnstile token is told (lib/humanCheck.ts).
+    const human = await humanCheck(deps, proof, { ip: clientIp(c, cfg.clientIp) });
+    if (human === 'failed') fail('human_check');
+    const p = human === 'person' ? await personByEmail(c.get('org').id, email) : null;
     if (p && p.recent < 5) defer(deps, (await preparePortalEmail(deps, c.get('org'), p, 'signin'))());
     return c.json({ ok: true });
   });
@@ -204,7 +209,10 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
 
   app.post('/papi/auth/password', async (c) => {
     need(c, 'password');
-    const { email, password } = await input(c, z.object({ email: emailSchema, password: z.string().min(1).max(200) }));
+    const { email, password, ...proof } = await input(c, z.object({ email: emailSchema, password: z.string().min(1).max(200), ...humanFields }));
+    const human = await humanCheck(deps, proof, { ip: clientIp(c, cfg.clientIp), minMs: 800 });
+    if (human === 'failed') fail('human_check');
+    if (human === 'bot') fail('portal_bad_password');
     const org = c.get('org');
     const p = await personByEmail(org.id, email);
     const [stored] = p
@@ -234,8 +242,10 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
 
   app.post('/papi/auth/forgot', async (c) => {
     need(c, 'password');
-    const { email } = await input(c, z.object({ email: emailSchema }));
-    const p = await personByEmail(c.get('org').id, email);
+    const { email, ...proof } = await input(c, z.object({ email: emailSchema, ...humanFields }));
+    const human = await humanCheck(deps, proof, { ip: clientIp(c, cfg.clientIp) });
+    if (human === 'failed') fail('human_check');
+    const p = human === 'person' ? await personByEmail(c.get('org').id, email) : null;
     if (p && p.recent < 5) defer(deps, (await preparePortalEmail(deps, c.get('org'), p, 'reset'))());
     return c.json({ ok: true });
   });

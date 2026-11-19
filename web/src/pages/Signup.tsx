@@ -7,6 +7,8 @@ import { helpLanguageOf, LOCALE_INFO, LOCALES, type Locale, type MessageKey } fr
 import { pick, TEMPLATES, TEMPLATE_KEYS, type TemplateKey } from '../../../shared/src/templates';
 import { Mark } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
+import { useHumanCheck } from '../lib/humanCheck';
+import { LegalNotice } from '../components/LegalNotice';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { CURRENCIES } from './Settings';
@@ -64,6 +66,7 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
           </div>
           {children}
         </div>
+        <LegalNotice t={t} />
       </main>
     </div>
   );
@@ -72,13 +75,15 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
 const errorText = (e: unknown, t: (k: MessageKey, v?: any) => string) =>
   e instanceof ApiFailure ? (e.status === 0 ? t('errors.network') : e.body.message || t('errors.server')) : t('errors.server');
 
-export function SignupApp({ onLocale }: { onLocale: (l: Locale) => void }) {
+export function SignupApp({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnstile?: string | null }) {
   const { path } = useLocation();
-  return path === '/signup/verify' ? <Details onLocale={onLocale} /> : <Start onLocale={onLocale} />;
+  return path === '/signup/verify' ? <Details onLocale={onLocale} /> : <Start onLocale={onLocale} turnstile={turnstile} />;
 }
 
-function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
+function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnstile?: string | null }) {
   const { t, locale } = useI18n();
+  // Honeypot, fill time and (when on) Cloudflare's check (lib/humanCheck.tsx).
+  const human = useHumanCheck(turnstile, { label: t('trial.hp'), locale });
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState<{ devToken?: string } | null>(null);
   const [error, setError] = useState('');
@@ -88,10 +93,11 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
     setBusy(true);
     setError('');
     try {
-      setSent(await post('/signup/start', { email: email.trim(), locale }));
+      setSent(await post('/signup/start', { email: email.trim(), locale, ...human.proof() }));
     } catch (err) {
       setError(errorText(err, t));
     } finally {
+      human.reset();
       setBusy(false);
     }
   }
@@ -120,6 +126,7 @@ function Start({ onLocale }: { onLocale: (l: Locale) => void }) {
               <span className="field__label">{t('auth.email')}</span>
               <input className="input" type="email" required autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
+            {human.field}
             <button className="btn btn--primary" disabled={busy}>
               {t('signup.start')}
             </button>

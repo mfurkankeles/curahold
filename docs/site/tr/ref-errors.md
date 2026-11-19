@@ -22,6 +22,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `free_mail_note` | 400 | Şirket denemesi için neden kişisel adres kullandığını bir cümleyle yaz. |
 | `help_file_type` | 400 | … eklenemiyor. Resim, PDF, metin, CSV, JSON, Excel ve kısa videolar eklenebilir. |
 | `help_too_many_files` | 400 | Bir talebe en fazla … dosya eklenebilir. |
+| `human_check` | 400 | Bunu bir kişinin gönderdiğini doğrulayamadık. Formdaki doğrulamayı tamamlayıp tekrar dene. |
 | `invalid_token` | 400 | Bu bağlantı ya da kod artık geçerli değil. Yenisini iste. |
 | `link_loop` | 400 | Bu görevler birbirini beklemiş olur. |
 | `not_configured` | 400 | Bu servis bu sunucuda henüz ayarlanmadı. |
@@ -62,6 +63,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `read_only_seat` | 403 | Koltuğun salt okunur. Tam koltuk için yöneticine başvur. |
 | `read_only_token` | 403 | Bu anahtar ya da uygulama yalnızca okuyabilir. Değişiklik yapabilen bir anahtar oluştur ya da uygulamayı yeniden bağlayıp değişikliğe izin ver. |
 | `reauth_required` | 403 | Devam etmek için kimliğini onayla. |
+| `robot_refused` | 403 | Curahold'a otomatik erişim için yazılı iznimiz gerekir. Bir aracı bağlamak için API'yi bir anahtarla kullan. |
 | `sso_required` | 403 | Bu şirket tek oturum açmayı zorunlu kılıyor. Giriş için kurumunuzun SSO'sunu kullanın. |
 | `staff_second_step` | 403 | Curahold çalışanları konsolu passkey ya da ikinci adımla açar. Cihazlarım sayfasından bir tane ekle, sonra yeniden giriş yap. |
 | `support_blocked` | 403 | Destek, izin olsa da bu bölümü açamaz. |

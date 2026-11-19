@@ -28,6 +28,7 @@ import { TRIAL_DEPARTMENTS, type TrialRequestInput } from '../../../shared/src/t
 import { centralUrl, nowOf, type AppEnv, type C } from '../context';
 import { hmacHex, randomDigits, safeEqual, sign, verify } from '../lib/crypto';
 import { fail } from '../lib/errors';
+import { humanCheck, humanFields, turnstileSiteKey } from '../lib/humanCheck';
 import { clientIp } from '../lib/ratelimit';
 import { consentEvidence, ipCountryOf, ipHash, isFreeMail, recordConsents, withdrawMarketing } from '../lib/trial';
 import { insertTrialRequest } from '../lib/trialRequests';
@@ -71,18 +72,21 @@ export async function unsubscribeLink(c: C, to: string) {
 trialRoutes.get('/config', async (c) => {
   const now = nowOf(c.get('deps')).getTime();
   c.header('cache-control', 'no-store');
-  return c.json({ mode: modeOf(c), ipCountry: ipCountry(c), stamp: await sign({ tf: 1, t: now } satisfies FormStamp, secretOf(c)) });
+  return c.json({ mode: modeOf(c), ipCountry: ipCountry(c), stamp: await sign({ tf: 1, t: now } satisfies FormStamp, secretOf(c)), turnstile: turnstileSiteKey(c.get('deps')) });
 });
 
 const codeHash = (c: C, to: string, code: string) => hmacHex(secretOf(c), `${to}:${code}`);
 
 trialRoutes.post('/code', async (c) => {
-  const input = await body(c, z.object({ email, locale: localeField.optional(), hp: z.string().max(200).optional() }));
+  const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
   const locale = input.locale ?? 'en';
   const free = isFreeMail(input.email);
-  // A robot filled the hidden field: the same answer, and nothing is sent.
-  if (input.hp) return c.json({ ok: true, freeMail: free });
+  // A robot filled the hidden field or was too quick: the same answer, and nothing is sent.
+  // With Turnstile on, the e-mail (the step that costs) also needs its token (lib/humanCheck.ts).
+  const human = await humanCheck(deps, input, { ip: clientIp(c, deps.config.clientIp) });
+  if (human === 'bot') return c.json({ ok: true, freeMail: free });
+  if (human === 'failed') fail('human_check');
   const ip = await ipHash(deps.config.authSecret, clientIp(c, deps.config.clientIp) ?? c.req.header('cf-connecting-ip') ?? null);
   const code = randomDigits(TRIAL_FORM.codeDigits);
   await deps.db.system(async (q) => {
