@@ -26,7 +26,7 @@ export const TOUR_GOALS = ['keep', 'grow', 'week', 'answer', 'see', 'setup'] as 
 export type TourGoal = (typeof TOUR_GOALS)[number];
 
 /** Who it is for. */
-export const TOUR_ROLES = ['csm', 'sales', 'lead', 'exec', 'ops'] as const;
+export const TOUR_ROLES = ['seller', 'csm', 'sales', 'product', 'lead', 'exec', 'ops'] as const;
 export type TourRole = (typeof TOUR_ROLES)[number];
 
 /** Who the visitor is during the tour (the people of the demo company, or a customer in the portal). */
@@ -60,7 +60,7 @@ export const TOURS: Tour[] = [
     id: 'overview',
     area: 'start',
     goals: ['see', 'keep', 'week'],
-    roles: ['csm', 'sales', 'lead', 'exec', 'ops'],
+    roles: ['csm', 'sales', 'seller', 'product', 'lead', 'exec', 'ops'],
     minutes: 2,
     steps: [
       { path: '/home' },
@@ -112,7 +112,7 @@ export const TOURS: Tour[] = [
     id: 'pipeline',
     area: 'revenue',
     goals: ['grow', 'see'],
-    roles: ['sales', 'exec'],
+    roles: ['seller', 'sales', 'exec'],
     minutes: 2,
     steps: [
       { path: '/records/opportunity', at: '.targetline' },
@@ -125,7 +125,7 @@ export const TOURS: Tour[] = [
     id: 'quick-add',
     area: 'work',
     goals: ['week'],
-    roles: ['csm', 'sales', 'lead'],
+    roles: ['csm', 'sales', 'seller', 'product', 'lead'],
     minutes: 1,
     steps: [
       { path: '/my', at: '.group__head' },
@@ -137,7 +137,7 @@ export const TOURS: Tour[] = [
     id: 'board',
     area: 'work',
     goals: ['week'],
-    roles: ['lead', 'csm'],
+    roles: ['lead', 'csm', 'product'],
     minutes: 2,
     steps: [
       { path: '/home', at: '.navlink--board', click: true },
@@ -189,7 +189,7 @@ export const TOURS: Tour[] = [
     id: 'curaai',
     area: 'ai',
     goals: ['answer', 'see'],
-    roles: ['csm', 'sales', 'lead', 'exec', 'ops'],
+    roles: ['csm', 'sales', 'seller', 'product', 'lead', 'exec', 'ops'],
     minutes: 1,
     steps: [
       { at: '.cura__fab', click: true },
@@ -234,7 +234,63 @@ export const TOURS: Tour[] = [
       { at: '.matrix__count' },
     ],
   },
+  {
+    // Product: plan a sprint from the backlog against the team's capacity, then watch it burn down.
+    id: 'sprint',
+    area: 'work',
+    goals: ['week', 'see'],
+    roles: ['product', 'lead'],
+    minutes: 2,
+    steps: [
+      { path: '/b/:product?view=backlog', at: '.pm-plan' },
+      { at: '.pm-cap' },
+      { path: '/b/:product?view=sprints', at: '.pm-bd__scope' },
+      { path: '/team?view=weeks', at: '.weeks' },
+    ],
+  },
+  {
+    // A deal is won; the customer team picks it up. The first steps are here; the hand-over packet's
+    // own steps join when it lands (they point at [data-tour="handover"]).
+    id: 'handover',
+    area: 'revenue',
+    goals: ['grow', 'keep'],
+    roles: ['seller', 'csm'],
+    minutes: 1,
+    steps: [
+      { path: '/records/opportunity', at: '.board .column' },
+      { at: '.board .card' },
+      { path: '/accounts', at: '.acard' },
+    ],
+  },
+  {
+    // Moving in: any export from the old tool, checked before it is saved; in the demo it never leaves the tab.
+    id: 'move-in',
+    area: 'connect',
+    goals: ['setup'],
+    roles: ['ops', 'lead', 'csm', 'product', 'seller'],
+    minutes: 1,
+    steps: [
+      { path: '/import', at: '[data-tour="import-drop"]' },
+      { at: '.adopt-privacy' },
+      { at: '[data-tour="import-tasks"]' },
+    ],
+  },
+  {
+    // The team's load: the weeks ahead person by person, and every customer's open work in one view.
+    id: 'team-load',
+    area: 'insight',
+    goals: ['see', 'week'],
+    roles: ['lead', 'exec', 'csm'],
+    minutes: 1,
+    steps: [
+      { path: '/team?view=weeks', at: '.weeks' },
+      { path: '/team?view=customers', at: '.portfolio' },
+    ],
+  },
 ];
+
+/** A step's screen in a demo with a product team's board: `:product` stands for that board's id. */
+export const PRODUCT_BOARD = ':product';
 
 export const tourById = (id: string | null | undefined): Tour | undefined => TOURS.find((t) => t.id === id);
 
@@ -250,8 +306,66 @@ export function tourText(l: Locale) {
     areaBlurb: (a: TourArea) => say(`demo.tour.area.${a}.blurb`),
     goal: (g: TourGoal) => say(`demo.tour.goal.${g}`),
     role: (r: TourRole) => say(`demo.tour.role.${r}`),
+    team: (k: IntentTeam) => say(`demo.intent.team.${k}`),
+    today: (k: IntentToday) => say(`demo.intent.today.${k}`),
   };
 }
 
 /** Where a visitor starts a workspace of their own. */
 export const SIGNUP_URL = 'https://app.curahold.com/signup';
+
+// ------------------------------------------------------------- intent picker
+// Three questions on the demo hub — which team, what first, what you use today —
+// and the tours to start with. The hub is a static page: it carries the answer
+// for every combination (intentTable), worked out here, so the rule lives once.
+
+export const INTENT_TEAMS = ['inside', 'sales', 'onboarding', 'success', 'product', 'finance', 'lead'] as const;
+export type IntentTeam = (typeof INTENT_TEAMS)[number];
+export const INTENT_TODAY = ['sheet', 'tasks', 'crm', 'tracker', 'nothing'] as const;
+export type IntentToday = (typeof INTENT_TODAY)[number];
+export interface Intent {
+  team: IntentTeam;
+  goal: TourGoal;
+  today: IntentToday;
+}
+
+const TEAM_ROLES: Record<IntentTeam, TourRole[]> = {
+  inside: ['seller'],
+  sales: ['seller', 'sales'],
+  onboarding: ['csm', 'ops'],
+  success: ['csm', 'sales'],
+  product: ['product'],
+  finance: ['exec', 'ops'],
+  lead: ['lead', 'exec'],
+};
+const TODAY_TOURS: Record<IntentToday, string[]> = {
+  sheet: ['move-in'],
+  tasks: ['move-in', 'board'],
+  crm: ['crm', 'handover'],
+  tracker: ['sprint'],
+  nothing: ['overview'],
+};
+
+/** The tours to start with (best first), and whether to offer "try it with your own file". */
+export function pickTours(i: Intent, n = 3): { tours: string[]; ownFile: boolean } {
+  const roles = TEAM_ROLES[i.team];
+  const scored = TOURS.filter((t) => t.as !== 'customer' || i.team === 'success').map((t) => {
+    let score = 0;
+    if (t.roles.some((r) => roles.includes(r))) score += 3;
+    if (t.roles[0] && roles.includes(t.roles[0])) score += 1;
+    if (t.goals.includes(i.goal)) score += 2;
+    if (t.goals[0] === i.goal) score += 1;
+    if (TODAY_TOURS[i.today].includes(t.id)) score += 3;
+    return { id: t.id, score: score - t.minutes * 0.1 };
+  });
+  scored.sort((a, b) => b.score - a.score || TOURS.findIndex((t) => t.id === a.id) - TOURS.findIndex((t) => t.id === b.id));
+  return { tours: scored.slice(0, n).map((x) => x.id), ownFile: i.today === 'sheet' || i.today === 'tasks' };
+}
+
+/** Every combination's answer, keyed "team.goal.today", for the static hub page. */
+export function intentTable(): Record<string, { tours: string[]; ownFile: boolean }> {
+  const out: Record<string, { tours: string[]; ownFile: boolean }> = {};
+  for (const team of INTENT_TEAMS) for (const goal of TOUR_GOALS) for (const today of INTENT_TODAY) out[`${team}.${goal}.${today}`] = pickTours({ team, goal, today });
+  return out;
+}
+

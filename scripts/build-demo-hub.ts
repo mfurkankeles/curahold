@@ -16,7 +16,7 @@
 // Addresses outside the hub: SITE_URL, SITE_APP_URL, SITE_DOCS_URL.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, tourText } from '../shared/src/tours';
+import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_AREAS, TOUR_GOALS, TOUR_ROLES, intentTable, tourText } from '../shared/src/tours';
 import { FAVICON, MARK } from '../site/brand';
 import { LOCALES, LOCALE_INFO, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { SEED_LOCALES } from './seed-words';
@@ -147,6 +147,31 @@ function page(locale: Locale): string {
 
   const words = JSON.stringify(c.words);
 
+  // Three questions, the right tours (web/src/demo/hub-intent.js): the answer for every combination
+  // is worked out here (shared/src/tours.ts, pickTours), so the page only looks it up.
+  const say = (k: string) => translate(locale, `demo.intent.${k}` as MessageKey);
+  const question = <K extends string>(q: 'team' | 'goal' | 'today', keys: readonly K[], name: (k: K) => string) => `
+      <fieldset class="hub-intent__q" data-q="${q}">
+        <legend>${esc(say(`q.${q}`))}</legend>
+        <div class="hub-chips">${keys.map((k) => `<button type="button" class="hub-chip" data-value="${k}" aria-pressed="false">${esc(name(k))}</button>`).join('')}</div>
+      </fieldset>`;
+  const intentData = JSON.stringify({
+    table: intentTable(),
+    tours: Object.fromEntries(TOURS.map((t) => [t.id, { title: w.title(t), href: tourHref(t.id), meta: c.card.meta(t.minutes, t.steps.length) }])),
+    own: `${app}?start=import${hash}`,
+  }).replace(/</g, '\\u003c');
+  const intent = `<section class="wrap hub-intent" aria-labelledby="intent-title">
+    <h2 id="intent-title">${esc(say('title'))}</h2>
+    <p class="hub-intent__lead">${esc(say('lead'))}</p>
+    <div class="hub-intent__qs">${question('team', INTENT_TEAMS, w.team)}${question('goal', TOUR_GOALS, w.goal)}${question('today', INTENT_TODAY, w.today)}
+    </div>
+    <div class="hub-intent__out" aria-live="polite">
+      <p class="hub-intent__wait">${esc(say('waiting'))}</p>
+      <div class="hub-intent__picks" hidden><h3>${esc(say('result'))}</h3><ol></ol><a class="hub-intent__own" href="${`${app}?start=import${hash}`}" hidden>${esc(say('ownFile'))}</a></div>
+    </div>
+    <script type="application/json" id="hub-intent">${intentData}</script>
+  </section>`;
+
   return `<!doctype html>
 <html lang="${bcp47Of(locale)}" dir="${info.dir}">
 <head>
@@ -188,6 +213,8 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
     </div>
     ${figure}
   </section>
+
+  ${intent}
 
   <section class="wrap hub-roles" aria-labelledby="roles-title">
     <h2 id="roles-title">${esc(c.picker.title)}</h2>
@@ -235,6 +262,7 @@ ${LANGS.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="${hrefO
 ${chooser}
 <script src="${assets}hub.js" defer></script>
 <script src="${assets}hub-lang.js" defer></script>
+<script src="${assets}hub-intent.js" defer></script>
 </body>
 </html>
 `;
@@ -254,6 +282,7 @@ for (const l of LANGS) {
 writeFileSync(join(OUT, 'assets', 'hub.css'), CSS);
 cpSync(join(ROOT, 'site', 'hub.js'), join(OUT, 'assets', 'hub.js'));
 cpSync(join(ROOT, 'web', 'src', 'demo', 'hub-lang.js'), join(OUT, 'assets', 'hub-lang.js'));
+cpSync(join(ROOT, 'web', 'src', 'demo', 'hub-intent.js'), join(OUT, 'assets', 'hub-intent.js'));
 for (const [pkg, name] of FONTS) {
   const from = join(ROOT, 'node_modules', '@fontsource-variable', pkg, 'files', name);
   if (existsSync(from)) cpSync(from, join(OUT, 'assets', name));

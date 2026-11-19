@@ -302,8 +302,17 @@ async function main() {
   step(100, 'app');
   setTimeout(() => bootEl.remove(), 250);
 
+  // The product team's board (the one with product stages), for tour steps that say /b/:product.
+  let productBoard: Promise<string> | null = null;
+  const findProduct = () =>
+    (productBoard ??= server
+      .call<{ boards: { id: string; columns: { key: string }[] }[] }>('GET', '/api/boards')
+      .then((r) => r.boards.find((b) => b.columns.some((c) => c.key === 'code_review'))?.id ?? '')
+      .catch(() => ''));
+  void findProduct();
   // Moving between screens for a tour: the portal keeps its own little router.
   const go = (to: string) => {
+    if (to.includes(':product')) return void findProduct().then((id) => navigate(to.replace(':product', id)));
     if (current !== 'customer') return navigate(to);
     (globalThis as any).appHistory.pushState(null, '', to);
     window.dispatchEvent(new Event('app:portal-nav'));
