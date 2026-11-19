@@ -1,5 +1,5 @@
 /* The demo hub (curahold.com/demo): guided tours of the live product.
-   Built on the sales site's tokens (site.css). The one memorable element is
+   Built on the hub's own base (hub-base.css). The one memorable element is
    the hero's "peek": a piece of the product with a tour step pointing at it —
    what every tour on this page looks like, drawn in the page itself. */
 
@@ -136,6 +136,12 @@ body { background: var(--mist); }
 .hub-empty[hidden] { display: none; }
 .hub-empty button { margin-top: 10px; border: 0; background: none; color: var(--iris-ink); font: 650 15px var(--text); cursor: pointer; }
 
+/* The closing band: the night colour, with a soft light behind it. */
+.band { position: relative; overflow: hidden; background: var(--night); color: #e8e6f7; }
+.band::before { content: ''; position: absolute; z-index: 0; right: -8%; top: -40%; width: 46%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--iris) 70%, transparent), transparent 70%); filter: blur(72px); opacity: .5; pointer-events: none; }
+.band__in { position: relative; z-index: 1; display: grid; gap: 36px; align-items: center; }
+.band h2 { color: #fff; }
+.band__text p { color: #c9c5e8; font-size: 18px; margin: 16px 0 0; max-width: 46ch; }
 .hub-band .band__in { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); padding: 72px 0; }
 .hub-band__ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; }
 .btn--light { background: #fff; color: var(--night); }

@@ -40,8 +40,11 @@ const FONTS = [
   ['bricolage-grotesque', 'bricolage-grotesque-latin-wght-normal.woff2'],
   ['bricolage-grotesque', 'bricolage-grotesque-latin-ext-wght-normal.woff2'],
 ] as const;
-/** The site's styles (its fonts beside them in assets/), the hub's, then this page's own (web/src/demo/hub.css). */
-const CSS = ['site/site.css', 'site/hub.css', 'web/src/demo/hub.css'].map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
+/**
+ * The hub's own styles, never the sales site's: its base (tokens, header, buttons, footer; fonts beside
+ * it in assets/), its page (tours, picker, cards), then the language and intent parts.
+ */
+const CSS = ['web/src/demo/hub-base.css', 'web/src/demo/hub-page.css', 'web/src/demo/hub.css'].map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
 /** The languages of the hub: those the demo company is written in, English at the root. */
 const LANGS = LOCALES.filter((l) => SEED_LOCALES.includes(l)).sort((a, b) => Number(b === 'en') - Number(a === 'en'));
 /** Where a language's page is, from the root of the hub. */

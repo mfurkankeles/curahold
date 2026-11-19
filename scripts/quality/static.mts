@@ -120,14 +120,15 @@ for (const [name, dir] of [['app', 'dist/web'], ['portal', 'dist/portal'], ['sal
 }
 
 // ---------------------------------------------------------------- styles
-// Counted twice: the app with its customer portal, and the sales site on its own —
+// Counted apart: the app with its customer portal, the sales site, and the demo hub —
 // one merged figure hid what changed on either side.
 {
   const tsx = files.filter((f) => /^web\/.*\.tsx$/.test(f));
   const inline = tsx.reduce((n, f) => n + (read(f).match(/style=\{\{/g) ?? []).length, 0);
   const groups = [
-    { name: 'app + portal', css: files.filter((f) => /^web\/(src|portal)\/.*\.css$/.test(f)), inline: `${inline}` },
+    { name: 'app + portal', css: files.filter((f) => /^web\/(src|portal)\/.*\.css$/.test(f) && !/^web\/src\/demo\/hub/.test(f)), inline: `${inline}` },
     { name: 'sales site', css: files.filter((f) => f === 'site/site.css'), inline: 'not counted (built by scripts/build-site.ts)' },
+    { name: 'demo hub', css: files.filter((f) => /^web\/src\/demo\/hub[\w-]*\.css$/.test(f)), inline: 'none (built by scripts/build-demo-hub.ts)' },
   ];
   for (const g of groups) {
     let hex = 0;

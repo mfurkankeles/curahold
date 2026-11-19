@@ -1,0 +1,261 @@
+/* The demo hub's own base: tokens, fonts, reset, header, buttons, footer and the
+   language dialog. A frozen copy of the part of the sales site's stylesheet the
+   hub's markup uses (scripts/build-demo-hub.ts), so the site can change its
+   own markup and classes without touching the hub. Change it here, for the hub. */
+/* Curahold's sales site. Night from top to bottom: the hero's sky — a fine grid,
+   one dot an account, a few glowing — stays still behind the whole page while the
+   content passes over it. Sections are told apart by space and by pools of light,
+   never by switching to white; long reading sits on a calmer veil. One brand shape:
+   the mark's "C", drawn large, holding the live window. */
+
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --night: #17133a;
+  --night-2: #241f52;
+  --deep: #0f0c2b;
+  /* Surfaces on the night, from the page up: a card, a field inside it, a hairline. */
+  --paper: #19153f;
+  --mist: #221e4c;
+  --line: #332e66;
+  --iris: #5b4de8;
+  --iris-ink: #b9b0ff;
+  --iris-wash: #2a2560;
+  --iris-hi: #8c7dff;
+  --fern: #2f8f78;
+  --fern-ink: #7fe0bd;
+  --fern-wash: #163a3c;
+  --ember: #e2953a;
+  --rose: #d1456a;
+  /* Words on the night: headings, reading text, quiet notes (≥ 7:1, ≥ 9:1 and ≥ 5.5:1 on --paper). */
+  --ink: #f4f3fd;
+  --ink-2: #c9c5e8;
+  --ink-3: #a5a0d3;
+  /* Health bands, lifted for the dark surfaces, as the app's dark theme draws them. */
+  --risk: #f2735c;
+  --watch: #e3a54a;
+  --good: #5ccfa6;
+  --display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --wrap: 1180px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  /* +1 where text runs left to right, −1 where it runs right to left: horizontal motion multiplies by it. */
+  --sx: 1;
+  --start: left;
+}
+[dir='rtl'] { --sx: -1; --start: right; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 84px; }
+body { margin: 0; background: var(--deep); color: var(--ink); font-family: var(--text); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+img, svg { display: block; }
+a { color: var(--iris-ink); }
+::selection { background: color-mix(in srgb, var(--iris) 70%, transparent); color: #fff; }
+:focus-visible { outline: 3px solid var(--iris-hi); outline-offset: 3px; border-radius: 6px; }
+.skip { position: absolute; top: 8px; inset-inline-start: 8px; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; background: var(--paper); padding: 8px 14px; border-radius: 8px; z-index: 10; }
+.skip:focus { width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
+.wrap { width: min(var(--wrap), 100% - 40px); margin-inline: auto; }
+
+h1, h2, h3 { font-family: var(--display); color: var(--ink); margin: 0; font-optical-sizing: auto; text-wrap: balance; }
+h2 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.08; letter-spacing: -0.025em; font-weight: 700; }
+h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
+/* Scripts with their own rhythm: no negative tracking, a little more air. */
+:lang(ja) :is(h1, h2, h3), :lang(zh) :is(h1, h2, h3), :lang(ko) :is(h1, h2, h3), :lang(ar) :is(h1, h2, h3), :lang(he) :is(h1, h2, h3), :lang(fa) :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
+:lang(ja), :lang(zh) { line-break: strict; }
+/* Japanese headings break only between phrases: the copy marks them with U+200B. */
+:lang(ko) { word-break: keep-all; }
+
+/* ------------------------------------------------------------- buttons */
+.btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px;
+  border-radius: 999px; border: 1px solid transparent; font: 600 15px/1 var(--text); text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform .18s var(--ease), background-color .18s var(--ease), border-color .18s var(--ease), box-shadow .22s var(--ease), color .18s var(--ease);
+}
+.btn::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .38) 50%, transparent 70%); transform: translateX(-130%); transition: transform .6s var(--ease); }
+.btn:hover::after { transform: translateX(130%); }
+.btn:active { transform: translateY(1px); }
+.btn--primary { background: var(--iris); color: #fff; box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--iris) 85%, transparent); }
+.btn--primary:hover { background: var(--iris-ink); transform: translateY(-2px); box-shadow: 0 16px 30px -12px color-mix(in srgb, var(--iris) 80%, transparent); }
+.btn--ghost { background: rgba(255, 255, 255, .04); color: var(--ink); border-color: rgba(255, 255, 255, .2); }
+.btn--ghost:hover { border-color: var(--iris-hi); color: #fff; background: rgba(255, 255, 255, .08); transform: translateY(-2px); }
+.btn--ghost::after { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .12) 50%, transparent 70%); }
+.btn--big { min-height: 52px; padding: 0 26px; font-size: 16px; }
+.btn svg { flex: none; width: 13px; height: 13px; }
+[dir='rtl'] .btn svg { transform: scaleX(-1); }
+
+/* --------------------------------------------------------------- header */
+.top { position: sticky; top: 0; z-index: 30; background: rgba(15, 12, 43, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, .08); transition: background-color .3s var(--ease), border-color .3s var(--ease); }
+/* Over the hero it is clear glass; once the page moves, the darker pane and its hairline come back. */
+.top__in { display: flex; align-items: center; gap: 28px; min-height: 68px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; }
+.brand svg { width: 30px; height: 30px; }
+.brand svg rect { fill: rgba(255, 255, 255, .1); }
+.top__nav { display: flex; gap: 22px; }
+.top__nav a { position: relative; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 15px; white-space: nowrap; transition: color .18s var(--ease); }
+.top__nav a::after { content: ''; position: absolute; inset-inline: 0; bottom: -5px; height: 2px; border-radius: 2px; background: var(--iris-hi); transform: scaleX(0); transform-origin: var(--start); transition: transform .22s var(--ease); }
+.top__nav a:hover { color: var(--ink); }
+.top__nav a:hover::after { transform: scaleX(1); }
+.top__end { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; }
+.top__lang { color: var(--ink-2); font: 500 15px/1 var(--text); text-decoration: none; background: none; border: 0; cursor: pointer; padding: 8px 4px; white-space: nowrap; }
+.top__lang:hover { color: var(--ink); }
+.lang { position: relative; }
+.lang > summary { list-style: none; }
+.lang > summary::-webkit-details-marker { display: none; }
+
+/* ------------------------------------------------------------------ sky */
+/* The page is night from top to bottom. Its first screen is a little lighter, with
+   the brand's glow in the corner; everything below rests on --deep. */
+/* The fine grid is the portfolio: one dot an account. A few glow — the few who need you.
+   It is the hero's sky, held still behind the whole page while the content passes over
+   it: one layer, painted once, only the glowing rings move. */
+/* Past the first screen the sky steps back, so the reading never competes with it. */
+
+/* A pool of light behind a section, and a calmer veil behind long reading. */
+
+/* ----------------------------------------------------------------- hero */
+/* Japanese: small enough that the line can end at the comma, and filled in order rather than evened out. */
+
+/* ----------------------------------------------------------- the film */
+
+/* Atoms shared by the film (dark) and the bento (light). */
+[data-band='risk'] { --bc: var(--risk); }
+[data-band='watch'] { --bc: var(--watch); }
+[data-band='good'] { --bc: var(--good); }
+
+/* 1 — health */
+/* On a phone an account with a signal takes two lines: its name, then the signal in full. */
+
+/* 2 — promises */
+
+/* 3 — renewals */
+
+/* 4 — sprints */
+[data-epic='0'] { --ec: #a99dff; }
+[data-epic='1'] { --ec: #e3a54a; }
+[data-epic='2'] { --ec: #5ccfa6; }
+
+/* The pointer that does the clicking. */
+
+/* How each part of a scene arrives. Every part is drawn in its final state, so with
+   motion off (or no script) a scene is simply complete. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-a='up'] { --an: f-up; }
+  [data-a='pop'] { --an: f-pop; --t: .45s; }
+  [data-a='slide'] { --an: f-slide; --t: .6s; }
+  [data-a='ring'] { --an: f-ring; --t: 1s; }
+  [data-a='type'] { --an: f-type; --t: .7s; --e: steps(22); }
+  [dir='rtl'] [data-a='type'] { --an: f-type-r; }
+  [data-a='press'] { --an: f-press; --t: .4s; }
+  [data-a='drop'] { --an: f-drop; --t: .6s; }
+  [data-a='fill'] { --an: f-fill; --t: 1.25s; --e: linear; }
+  [data-a='hit'] { --an: f-hit; --t: .5s; }
+  [data-a='grow'] { --an: f-grow; --t: .6s; }
+  [data-a='was'] { --an: f-was; --t: .25s; }
+  [data-a='now'] { --an: f-now; --t: .3s; }
+  [data-a='step'] { --an: f-step; --t: .5s; --e: linear; }
+  [data-a='land'] { --an: f-land; --t: 1s; }
+  /* One clock for the tour: the active chapter's bar. When it ends, the script moves on;
+     pausing the hero pauses the bar and every scene with it. */
+}
+
+/* ----------------------------------------------------- the tour's chapters */
+
+/* ------------------------------------------------- the tools strip, on night */
+
+/* ------------------------------------------------------------- the story */
+/* Below the first screen the browser lays a section out only as it comes near, so
+   the first paint does not wait for the whole page. Sizes are remembered once seen. */
+/* Drawn only when near the screen. Not the story: it holds a pinned stage, and a
+   lazily drawn parent makes a pinned child jump on some phones. */
+/* The hero's quiet way in: a hairline with a light running down it. */
+
+/* One customer, six steps. The steps are the text; the stage beside them (above
+   them on a phone) holds still and follows the reading. The script sets --p
+   (0 to 6) on the stage as the page scrolls; everything below is drawn from it. */
+/* Without the script there is nothing to follow: the steps are simply a list. */
+/* Scene k leaves just before the boundary at k + 1 and the next arrives just after it,
+   so two screens never sit on top of each other wherever the reader stops. Its own
+   action (--t, 0 to 1) runs over the first two thirds of its step. */
+/* A part that follows its scene's action between --a and --b: --s runs 0 to 1. */
+/* Two states of one thing: the first is gone before the second arrives, so two words never overlap. */
+
+/* 1 and 6 — the account: the ring drains or fills, its colour moving with it. */
+/* A phone's band is short: the reasons that changed most stay, the rest wait for room. */
+
+/* 2 — the meeting: the promise is written into its next steps. */
+
+/* 3 — the task: on the board, and its fields already filled. */
+
+/* 4 — the sprint: the linked card crosses from review to Done; the points follow. */
+
+/* 5 — the customer's portal: the shared task turns Done, the reply under it. */
+
+/* The shortest band (a small phone): each scene keeps what tells its step, and lets the rest go. */
+@media (max-width: 1039px) {
+  /* The band hides the steps as they pass under it, and lets them fade in below. */
+}
+
+/* ------------------------------------------------------------------ bento */
+
+/* The assistant */
+
+/* The customer's portal */
+
+/* Sync */
+
+/* One change at a time, under the hub: where it came from, which way it went, what it was. */
+
+/* Reports */
+
+/* Languages */
+
+/* Security */
+
+/* The bento's own motion: each tile loops while it is on screen (.is-live), and rests complete otherwise. */
+
+/* ---------------------------------------------------------------- pricing */
+
+/* -------------------------------------------------------------------- faq */
+
+/* ---------------------------------------------------------- closing call */
+
+/* ----------------------------------------------------------------- footer */
+.foot { background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font-size: 15px; }
+.foot .brand { color: #fff; }
+.foot h3 { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
+.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.foot a { color: #c9c5e8; text-decoration: none; transition: color .18s var(--ease); }
+.foot a:hover { color: #fff; text-decoration: underline; }
+.foot__base { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--night-2); display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; color: #9b96c4; }
+
+/* ------------------------------------------------------------------- blog */
+
+/* ------------------------------------------------------- sign-in dialog */
+
+/* ---- sections settle into place once; hidden only after the script takes ownership ---- */
+
+/* ------------------------------------------------------------ narrower */
+@media (max-width: 1039px) {
+  /* The chapters become a row of four short tabs over the film; the words for the open one sit under it. */
+}
+/* Between a phone and a laptop the bar keeps the language, sign-in and the trial. */
+@media (max-width: 900px) {
+  .top__nav { display: none; }
+}
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+  .top__nav, .top__lang, .lang { display: none; }
+  .top__in { gap: 10px; }
+  .top .btn { padding: 0 15px; }
+}
+
+/* ---- motion off: nothing drifts, slides or loops; everything is simply there ---- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn::after { display: none; }
+  /* The story still follows the reading, one step at a time, with a plain fade. */
+}
