@@ -4968,6 +4968,10 @@ export const en = {
   'docs.ask.loading': 'Reading the docs…',
   'docs.ask.failed': 'The docs could not be loaded. Check your connection and try again.',
   'docs.ask.you': 'You',
+  'trialMail.approved.subject': "Your Curahold trial for {company} is ready",
+  'trialMail.approved.body': "Hello {name},\n\nGood news: your Curahold trial for {company} is ready. It has room for {seats} people and runs until {until}.\n\nSign in with this link to set up your company. It works once, for 7 days:\n\n{link}\n\nOnce inside, the setup plan walks you through inviting your team and connecting your tools. Just answer this email if you have a question.\n\nThe Curahold team",
+  'trialMail.rejected.subject': "About your Curahold trial request for {company}",
+  'trialMail.rejected.body': "Hello {name},\n\nThank you for your interest in Curahold and for the time you took to tell us about {company}.\n\nWe can't start a trial for this request right now. This is no judgement on your team: we open trials step by step, so that every company gets proper help from day one.\n\nWe'll keep your details on file and get in touch when we can offer a trial that fits. If anything changes on your side, just reply to this email.\n\nKind regards,\nThe Curahold team",
 } as const;
 
 export type MessageKey = keyof typeof en;

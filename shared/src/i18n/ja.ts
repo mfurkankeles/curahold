@@ -4953,4 +4953,8 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': 'ドキュメントを読んでいます…',
   'docs.ask.failed': 'ドキュメントを読み込めませんでした。接続を確認して、もう一度お試しください。',
   'docs.ask.you': 'あなた',
+  'trialMail.approved.subject': "{company} 様の Curahold トライアルの準備ができました",
+  'trialMail.approved.body': "{name} 様\n\n{company} 様の Curahold トライアルの準備が整いました。{seats} 名までご利用いただけ、{until} まで有効です。\n\n以下のリンクからサインインして、会社の設定を始めてください。リンクは 1 回のみ、7 日間有効です。\n\n{link}\n\nサインイン後は、セットアッププランがチームの招待やツールの接続を順を追ってご案内します。ご不明な点があれば、このメールにご返信ください。\n\nCurahold チーム",
+  'trialMail.rejected.subject': "{company} 様の Curahold トライアルのお申し込みについて",
+  'trialMail.rejected.body': "{name} 様\n\nCurahold にご関心をお寄せいただき、また {company} 様についてお時間を割いてご紹介いただき、誠にありがとうございます。\n\n誠に恐縮ながら、今回のお申し込みについては現時点でトライアルを開始することができません。これは貴社チームへの評価ではございません。すべての企業に初日から十分なサポートをご提供できるよう、トライアルは順次ご案内しております。\n\nいただいた情報は保管し、ご要望に合うトライアルをご提供できるようになりましたら改めてご連絡いたします。状況に変化がございましたら、このメールにご返信ください。\n\n今後ともよろしくお願いいたします。\nCurahold チーム",
 };
