@@ -67,7 +67,7 @@ describe('what the model is told and what it can reach', () => {
   });
 
   it('every tool says what it does, and none can write', () => {
-    expect(tools.map((t) => t.name)).toEqual(['search_docs', 'list_customers', 'customer_details', 'list_tasks', 'open_screen', 'propose_task']);
+    expect(tools.map((t) => t.name)).toEqual(['search_docs', 'list_customers', 'customer_details', 'list_tasks', 'open_screen', 'propose_task', 'setup_health']);
     for (const t of tools) {
       expect(t.name).toMatch(/^[A-Za-z0-9_-]{1,128}$/);
       expect(t.description.length).toBeGreaterThan(40);

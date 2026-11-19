@@ -514,9 +514,15 @@ accountRoutes.post('/accounts/import', async (c) => {
     if (touched.size) await queueSync(q, org.id, 'account', [...touched], null);
     if (createdIds.length) await queueSync(q, org.id, 'account', createdIds, null, { created: true });
     const batchId = crypto.randomUUID();
+    // What the rows said, by kind, for setup health (lib/setupHealth.ts): no name, a date or an amount it could not read, anything else.
+    const problems = { name: 0, date: 0, money: 0, other: 0 };
+    for (const e of out.errors) {
+      if (e.reason === 'name') problems.name++;
+      else for (const k of e.reason.replace(/^fields:/, '').split(',')) problems[(['date', 'money'] as const).find((t) => defs.find((d) => d.key === k)?.type === t) ?? 'other']++;
+    }
     await q.query(
       `insert into import_batches (id, org_id, file_name, created_ids, previous, summary, created_by) values ($1, $2, $3, $4, $5, $6, $7)`,
-      [batchId, org.id, input.fileName ?? null, createdIds, JSON.stringify(previous), JSON.stringify({ created: out.created, updated: out.updated, skipped: out.skipped, errors: out.errors.length, fieldsBefore: fieldsChanged ? org.account_fields : null }), auth.userId],
+      [batchId, org.id, input.fileName ?? null, createdIds, JSON.stringify(previous), JSON.stringify({ created: out.created, updated: out.updated, skipped: out.skipped, errors: out.errors.length, rows: input.rows.length, problems, fieldsBefore: fieldsChanged ? org.account_fields : null }), auth.userId],
     );
     if (!org.setup?.finishedAt && out.unmatchedOwners.length) {
       await q.query(`update orgs set setup = jsonb_set(setup, '{ownerHints}', $2::jsonb) where id = $1`, [org.id, JSON.stringify(out.unmatchedOwners)]);

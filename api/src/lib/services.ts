@@ -14,10 +14,13 @@ export interface EmailMessage {
 
 export interface EmailSender {
   send(msg: EmailMessage): Promise<void>;
+  /** false: mail is kept or printed, not delivered (setup health tells the install's owner). */
+  readonly delivers?: boolean;
 }
 
 /** Keeps messages in memory (tests, local development). */
 export class MemoryEmail implements EmailSender {
+  readonly delivers = false;
   sent: EmailMessage[] = [];
   async send(msg: EmailMessage) {
     this.sent.push(msg);

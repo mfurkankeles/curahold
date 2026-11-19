@@ -59,6 +59,7 @@ export class SmtpEmail implements EmailSender {
 
 /** No SMTP yet: mail is written to the log, so the first sign-in link can be copied from there. */
 export class LogEmail implements EmailSender {
+  readonly delivers = false;
   async send(m: EmailMessage) {
     console.log(`\n[curahold] mail to ${m.to}: ${m.subject}\n${m.text}\n`);
   }

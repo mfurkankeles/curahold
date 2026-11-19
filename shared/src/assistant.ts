@@ -48,6 +48,8 @@ export interface Trace {
   opened: string | null;
   /** A task prepared for the person to confirm. */
   proposal: Proposal | null;
+  /** Screens that fix what setup_health found, shown as buttons (the person clicks; nothing is fixed for them). */
+  fixes?: { label: string; to: string }[];
 }
 
 export interface AssistantDeps {
@@ -247,7 +249,30 @@ export function toolsFor(d: AssistantDeps, trace: Trace): Tool[] {
         return 'Shown to the person with a "Create task" button. It does not exist until they press it.';
       },
     },
+    setupHealthTool(d, trace),
   ];
+}
+
+/**
+ * What is wrong or missing in this company's setup, as far as this person can
+ * fix it (shared/src/setupHealth.ts). Read only: each problem comes with the
+ * screen that fixes it, shown to the person as a button; nothing is fixed here.
+ */
+export function setupHealthTool(d: Pick<AssistantDeps, 'api'>, trace: Trace): Tool {
+  return {
+    name: 'setup_health',
+    description:
+      'The checks of this company\'s setup that this person can fix, failing ones first by severity: problem, why it matters, and the screen that fixes it. Use when they ask what is wrong with their setup, why something does not work, or what is missing. Returns { failing, fixed, problems: [{ problem, why, fix, severity, area }] }. Name each problem and say its fix button is shown; never say you fixed anything.',
+    inputSchema: { type: 'object', properties: { area: { type: 'string', description: 'Only one area: team, departments, import, sync, finance, analytics, portal, automations, data, email, privacy, billing, assistant.' } } },
+    async execute(input) {
+      const area = str(input.area, 20).replace(/[^a-z]/g, '');
+      const r = (await d.api(`/setup-health${area ? `?area=${area}` : ''}`)) as { failing: number; fixed: number; found: number; checks: { status: string; problem: string; why: string; fix: string; fixLabel: string; severity: string; area: string }[] };
+      if (!trace.data.includes('setup')) trace.data.push('setup');
+      const problems = r.checks.filter((x) => x.status === 'fail').slice(0, 8);
+      trace.fixes = [...(trace.fixes ?? []), ...problems.filter((p) => !(trace.fixes ?? []).some((f) => f.to === p.fix)).map((p) => ({ label: p.fixLabel, to: p.fix }))].slice(0, 6);
+      return { failing: r.failing, fixed: r.fixed, found: r.found, problems: problems.map((p) => ({ problem: p.problem, why: p.why, fix: p.fixLabel, severity: p.severity, area: p.area })) };
+    },
+  };
 }
 
 export const emptyTrace = (): Trace => ({ docs: [], data: [], opened: null, proposal: null });

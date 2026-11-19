@@ -20,6 +20,7 @@ export type Mailer = EmailSender;
  * real provider (ResendEmail, or another EmailSender) is configured.
  */
 export class ConsoleMailer implements Mailer {
+  readonly delivers = false;
   constructor(private log: (line: string) => void = (line) => console.log(line)) {}
   async send(msg: EmailMessage): Promise<void> {
     this.log(`[curahold] mailer (console driver — not sent) to=${msg.to} subject=${JSON.stringify(msg.subject)}`);

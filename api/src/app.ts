@@ -33,6 +33,7 @@ import { onboardingRoutes } from './routes/onboarding';
 import { platformRoutes } from './routes/admin-platform';
 import { consentEventRoutes, consentRoutes } from './routes/consent';
 import { adminRoutes } from './routes/admin';
+import { setupHealthRoutes } from './routes/setupHealth';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
 import { calendarRoutes } from './routes/calendar';
@@ -478,6 +479,7 @@ export function createApp(deps: Deps) {
   app.route('/api', devLinkRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);
+  app.route('/api', setupHealthRoutes);
   app.route('/api', trashRoutes);
   app.route('/api', calendarRoutes);
   app.route('/api', replayRoutes);

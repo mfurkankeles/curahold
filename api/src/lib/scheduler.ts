@@ -17,6 +17,7 @@ import { snapshotActiveSprints } from './burndown';
 import { sendTrialReminders } from './trial';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { purgeAssistantLogs } from '../assistant/store';
+import { dailySetupHealth } from './setupHealth';
 
 const DIGEST_ITEMS = 8;
 
@@ -162,6 +163,8 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     await cleanUp(deps);
     await archiveFinished(deps, now).catch((e) => console.error('[curahold] archiving finished work failed', e));
     await snapshotActiveSprints(deps, now).catch((e) => console.error('[curahold] sprint burndown snapshot failed', e));
+    // Setup health: what is failing today, so the panel can mark what broke since (reads only).
+    await dailySetupHealth(deps).catch((e) => console.error('[curahold] setup health failed', e));
   }
   // Renewals coming close enough start by themselves, early in the working day.
   if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[curahold] starting renewals failed', e));

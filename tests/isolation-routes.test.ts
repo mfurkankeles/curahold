@@ -79,6 +79,11 @@ const NOT_BY_ID: Record<string, string> = {
   'DELETE /admin/domains/:domain': 'a domain name, checked against the caller’s own company',
   'GET /calendar/:file': 'opened with a personal calendar link, not a session (tests/notifications.test.ts)',
   'GET /auth/oauth/:provider/start': 'the name of a sign-in provider',
+  'POST /setup-health/:id/confirm': 'the name of a setup check, kept for the caller’s own company (tests/setup-health.test.ts)',
+  'POST /setup-test/:id/run': 'the name of a test step, run in the caller’s own company (tests/setup-health.test.ts)',
+  'POST /setup-test/:id/mark': 'the name of a test step, kept for the caller’s own company (tests/setup-health.test.ts)',
+  'POST /setup-test/:id/input': 'the name of a test step, kept for the caller’s own company (tests/setup-health.test.ts)',
+  'POST /setup-test/:id/issue': 'the name of a test step, kept for the caller’s own company (tests/setup-health.test.ts)',
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
   'GET /desk/owner/requests/:id': 'a trial request: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
@@ -335,7 +340,8 @@ const POLICY: [RegExp, string[], ('GET' | 'WRITE' | 'ALL')?][] = [
   [/^\/admin\/users\/:id\/access/, ['users.manage', 'org.manage']],
   // Curahold's own whole-business numbers: the platform owner only, never a company role.
   [/^\/metrics/, ['platform.owner']],
-  [/^\/setup/, ['org.manage'], 'ALL'],
+  // The setup wizard (not setup health or the test list: those show each person what they can fix).
+  [/^\/setup(\/|$)/, ['org.manage'], 'ALL'],
   [/^\/automations/, ['automations.manage'], 'WRITE'],
   [/^\/portal\/settings/, ['org.manage'], 'WRITE'],
   [/^\/support\/(policy|recording)/, ['org.manage'], 'WRITE'],

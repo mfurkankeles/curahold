@@ -32,6 +32,7 @@ import {
 } from '../../../shared/src/assist';
 import type { Tool, Trace } from '../../../shared/src/assistant';
 import { accountWords, helpLanguageOf, LOCALE_INFO, translate, type HelpLanguage, type Locale, type MessageKey, type Terms } from '../../../shared/src/i18n';
+import { asksAboutSetup } from '../../../shared/src/setupHealth';
 import { sha256Hex } from '../lib/crypto';
 import { costMicros, type AssistantConfig } from './cost';
 import { ProviderError, type LlmBlock, type LlmMessage, type LlmProvider, type LlmTool, type LlmUsage } from './provider';
@@ -252,6 +253,18 @@ function inventedMoney(text: string, read: string): boolean {
   return false;
 }
 
+/** The failing setup checks this person can fix, in a few lines (shared/src/setupHealth.ts); null when the tool is not there or fails. */
+async function setupAnswer(env: AssistEnv, lang: Locale): Promise<AssistReply | null> {
+  const tool = env.live?.tools.find((t) => t.name === 'setup_health');
+  if (!tool || !env.live) return null;
+  const r = (await Promise.resolve(tool.execute({})).catch(() => null)) as { failing: number; problems: { problem: string; why: string }[] } | null;
+  if (!r) return null;
+  const text = r.failing
+    ? [say(lang, 'sh.assist.some', env.terms, { n: r.failing }), ...r.problems.slice(0, 5).map((p) => `- **${p.problem}** ${p.why}`), say(lang, 'sh.assist.click', env.terms)].join('\n')
+    : say(lang, 'sh.assist.none', env.terms);
+  return reply(lang, { kind: 'answer', text, engine: 'rules', data: env.live.trace.data, ...(env.live.trace.fixes?.length ? { fixes: env.live.trace.fixes } : {}) });
+}
+
 /** Answers one question. Never throws for the person: the worst case is the docs search. */
 export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ reply: AssistReply; micros: number }> {
   const question = String(req.question ?? '').trim().slice(0, 2000);
@@ -267,6 +280,9 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
 
   // 1. The free rules.
   if (asksAboutOthers(question, env.config.blockedNames)) return finish(reply(lang, { kind: 'decline', text: say(lang, 'assist.decline.others', env.terms), engine: 'rules' }));
+  // "What's wrong with my setup?": the setup checks answer it themselves, with their fix buttons, at no cost.
+  const setup = env.live && asksAboutSetup(question) ? await setupAnswer(env, lang) : null;
+  if (setup) return finish(setup);
   // Ask back at most once in a row: after our own clarifying question, the next message is answered.
   const lastBot = [...(req.history ?? [])].reverse().find((t) => t.role === 'assistant')?.content ?? '';
   const maybe = env.surface !== 'desk' && !intent ? ambiguityOf(question) : null;
@@ -459,6 +475,7 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
     data: trace?.data ?? [],
     opened: trace?.opened ?? null,
     proposal: trace?.proposal ?? null,
+    ...(trace?.fixes?.length ? { fixes: trace.fixes } : {}),
     ticket: kind === 'not_covered' ? ticketFor(question, lang, env) : undefined,
   });
   // Only answers that did not read anyone's data are kept for the next person to ask the same.

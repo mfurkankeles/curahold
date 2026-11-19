@@ -56,6 +56,8 @@ export interface AssistReply {
   opened: string | null;
   /** A task prepared for the person to confirm. */
   proposal: AssistProposal | null;
+  /** Screens that fix what the setup checks found (shared/src/setupHealth.ts): buttons, never done for the person. */
+  fixes?: { label: string; to: string }[];
   /** For `not_covered` (and on request): a help request, already written. */
   ticket?: { subject: string; description: string };
   /** The language the reply is written in. */
