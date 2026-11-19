@@ -187,6 +187,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   // Setup health: in the nav, with its count, until everything it checks is right (web/src/lib/setupHealth.ts).
   const setupHealth = useSetupHealth(seesSetup(me.user.perms, !!me.owner) && !me.previewBy && !me.supportBy);
   const setupFailing = setupHealth?.failing ?? 0;
+  const ob = useSelfPlan();
+  // Customers' onboarding lives in the Onboarding department, or with Customer Success when that one is off.
+  const obDept = depts.has('onboarding') ? 'onboarding' : depts.has('success') ? 'success' : null;
   const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
   const helpOk = !me.previewBy && !me.supportBy;
   const due = counts.late + counts.today;
@@ -440,6 +443,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               {link('/my', t('nav.myTasks'), here.my, 'checkCircle', dueBadge)}
               {link('/inbox', t('nav.inbox'), here.inbox, 'inbox', unread > 0 ? <span className="navlink__count" data-tone="today">{unread > 99 ? '99+' : unread}</span> : undefined)}
               {link('/calendar', t('nav.calendar'), here.calendar, 'calendar')}
+              {(ob ? ob.status !== 'done' : ob === null && can('org.manage')) && link('/onboarding', t('nav.obSelf'), path === '/onboarding', 'flag', ob ? <span className="navlink__count">{ob.pct}%</span> : undefined)}
             </div>
             {favorites.length > 0 &&
               section(
@@ -457,6 +461,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 {link('/accounts?view=renewals', t('nav.renewals'), renewalsOn, 'refresh')}
                 {(me.org.rhythm?.reviewDays ?? 0) > 0 && link('/accounts?view=reviews', t('nav.reviews'), reviewsOn, 'handshake')}
                 {link('/accounts?view=products', t('nav.products'), productsOn, 'target')}
+                {obDept && link('/onboarding/plans', t('nav.obPlans', { dept: depts.name(obDept) }), path.startsWith('/onboarding/plans') || path === '/onboarding/templates' || path.startsWith('/onboarding/report'), 'flag')}
               </>,
             )}
             {listsReady &&
@@ -673,4 +678,19 @@ function UndoKey({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: number) =
     return () => document.removeEventListener('keydown', onKey);
   }, [dismiss]);
   return null;
+}
+
+/** The company's own getting-started plan, for the side bar's link (asked once per page load). */
+function useSelfPlan() {
+  const [s, setS] = useState<{ pct: number; status: string } | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void get<{ summary: { pct: number; status: string } | null }>('/onboarding/self/summary')
+      .then((r) => live && setS(r.summary))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+  return s;
 }

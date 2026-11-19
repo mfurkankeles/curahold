@@ -95,6 +95,11 @@ const ImportPage = lazy(() => import('./pages/ImportPage').then((m) => ({ defaul
 const SetupHealthPage = lazy(() => import('./pages/SetupHealth').then((m) => ({ default: m.SetupHealthPage })));
 const SetupTestPage = lazy(() => import('./pages/SetupTest').then((m) => ({ default: m.SetupTestPage })));
 const TimelinePage = lazy(() => import('./pages/Timeline').then((m) => ({ default: m.TimelinePage })));
+const OnboardingSelfPage = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.OnboardingSelfPage })));
+const OnboardingPlanPage = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.OnboardingPlanPage })));
+const OnboardingPortfolioPage = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.OnboardingPortfolioPage })));
+const OnboardingReportPage = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.OnboardingReportPage })));
+const SharedReport = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.SharedReport })));
 
 // Curahold's own support desk: loaded only at the central address, only when asked for.
 const DeskApp = lazy(() => import('./pages/Desk'));
@@ -110,6 +115,7 @@ type Boot =
   | { kind: 'desk' }
   | { kind: 'no-org' }
   | { kind: 'error' }
+  | { kind: 'shared-report'; secret: string }
   | { kind: 'signed-out'; org: OrgPublic; notice?: string | null }
   | { kind: 'signed-in'; org: OrgPublic; me: Me };
 
@@ -133,6 +139,13 @@ export function App() {
       }
       setBoot({ kind: 'central' });
       if (!location.pathname.startsWith('/signup')) navigate('/signup', true);
+      return;
+    }
+    // A shared onboarding report: read only, no sign-in, nothing else of the app.
+    const shared = /^\/r\/onboarding\/([A-Za-z0-9_-]{20,80})$/.exec(location.pathname)?.[1];
+    if (shared) {
+      await loadLocale(locale).catch(() => undefined);
+      setBoot({ kind: 'shared-report', secret: shared });
       return;
     }
     // Who is signed in is asked together with the company, not after it (one
@@ -255,6 +268,11 @@ export function App() {
         </Suspense>
       )}
       {boot.kind === 'error' && <ErrorNote onRetry={() => start()} />}
+      {boot.kind === 'shared-report' && (
+        <Suspense fallback={<PageFallback />}>
+          <SharedReport secret={boot.secret} />
+        </Suspense>
+      )}
       {boot.kind === 'signed-out' && (
         <Suspense fallback={<PageFallback />}>
         {loc.path === '/auth/verify' ? (
@@ -348,6 +366,10 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const pg = path === '/pages/new' ? null : match('/pages/:id', path);
   const rep = match('/reports/r/:id', path);
   const dash = path === '/dashboards/new' ? null : match('/dashboards/:id', path);
+  // Onboarding: the company's own hub at <company>.<domain>/onboarding (/o/<company> where every company shares one host).
+  const obPlan = match('/onboarding/plans/:id', path);
+  const obReport = match('/onboarding/report/:id', path);
+  const obDev = match('/o/:slug', path);
   if (path === '/setup-health') page = <SetupHealthPage />;
   else if (path === '/setup-test') page = <SetupTestPage />;
   else if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
@@ -372,6 +394,11 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   else if (path === '/team') page = <TeamPage refreshKey={refreshKey} />;
   else if (path === '/import') page = <ImportPage />;
   else if (path === '/timeline') page = <TimelinePage refreshKey={quiet} />;
+  else if (path === '/onboarding' || obDev) page = <OnboardingSelfPage />;
+  else if (path === '/onboarding/plans') page = <OnboardingPortfolioPage tab="plans" />;
+  else if (path === '/onboarding/templates') page = <OnboardingPortfolioPage tab="templates" />;
+  else if (obPlan) page = <OnboardingPlanPage id={obPlan.id} key={obPlan.id} />;
+  else if (obReport) page = <OnboardingReportPage id={obReport.id} key={obReport.id} />;
   else if (path === '/devices') page = <DevicesPage />;
   else if (path === '/trash') page = <TrashPage />;
   else if (path === '/connect-ai') page = <ConnectAiPage />;

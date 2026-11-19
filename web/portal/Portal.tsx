@@ -9,10 +9,11 @@ import { MAX_FILE_MB } from '../../shared/src/model';
 import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { intentOf, type AssistReply } from '../../shared/src/assist';
+import { PortalOnboarding, OnboardingBanner } from './Onboarding';
 
 // ------------------------------------------------------------------ api
 
-class Failure extends Error {
+export class Failure extends Error {
   constructor(
     public status: number,
     public code: string,
@@ -23,7 +24,7 @@ class Failure extends Error {
 }
 
 let apiLocale: Locale = 'en';
-async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { 'x-curahold-portal': '1', 'x-curahold-locale': apiLocale };
   if (body !== undefined) headers['content-type'] = 'application/json';
   let res: Response;
@@ -76,7 +77,7 @@ function usePath() {
   }, []);
   return path;
 }
-const link = (to: string) => ({
+export const link = (to: string) => ({
   href: to,
   onClick: (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -107,7 +108,7 @@ function browserLocale(): Locale {
   return 'en';
 }
 
-interface Ctx {
+export interface Ctx {
   t: (k: MessageKey, v?: Vars) => string;
   locale: Locale;
   when: (iso: string) => string;
@@ -158,7 +159,7 @@ const PATHS = {
   globe: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20',
   down: 'm6 9 6 6 6-6',
 } as const;
-function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
+export function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
   return (
     <svg className={flip ? 'p-ico p-ico--flip' : 'p-ico'} viewBox="0 0 24 24" aria-hidden="true">
       <path d={PATHS[name]} />
@@ -167,7 +168,7 @@ function Ico({ name, flip }: { name: keyof typeof PATHS; flip?: boolean }) {
 }
 
 /** One of the five states: empty (an invitation), error (what happened, what to do), not found. `page`: it is the whole page (its title is the h1). */
-function State({ icon, title, body, tone, flat, page, children }: { icon: keyof typeof PATHS; title: string; body?: string; tone?: 'error'; flat?: boolean; page?: boolean; children?: ReactNode }) {
+export function State({ icon, title, body, tone, flat, page, children }: { icon: keyof typeof PATHS; title: string; body?: string; tone?: 'error'; flat?: boolean; page?: boolean; children?: ReactNode }) {
   const Title = page ? 'h1' : 'h2';
   return (
     <div className={flat ? 'p-state p-state--flat' : 'p-state'} data-tone={tone} role={tone === 'error' ? 'alert' : undefined}>
@@ -568,11 +569,15 @@ function Route({ ctx, org, me, path, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
   const boardId = url.searchParams.get('board');
   const board = me.boards.find((b) => b.id === boardId) ?? me.boards[0];
   if (url.pathname === '/account') return <AccountPage ctx={ctx} onSignedOut={onSignedOut} />;
+  if (url.pathname === '/onboarding') return <PortalOnboarding ctx={ctx} org={org} me={me} onSignedOut={onSignedOut} />;
   if (!board)
     return (
-      <div className="p-wrap p-page">
-        <State page icon="inbox" title={ctx.t('portal.noBoardsTitle')} body={ctx.t('portal.noBoards')} />
-      </div>
+      <>
+        <OnboardingBanner ctx={ctx} />
+        <div className="p-wrap p-page">
+          <State page icon="inbox" title={ctx.t('portal.noBoardsTitle')} body={ctx.t('portal.noBoards')} />
+        </div>
+      </>
     );
   if (task) return <TaskPage key={task} ctx={ctx} org={org} id={task} onSignedOut={onSignedOut} />;
   if (url.pathname === '/new') return <NewRequest ctx={ctx} me={me} board={board} onSignedOut={onSignedOut} />;
@@ -1106,7 +1111,7 @@ function AccountPage({ ctx, onSignedOut }: { ctx: Ctx; onSignedOut: (n?: string)
 
 // ------------------------------------------------------------------ list
 
-function useLoad<T>(load: () => Promise<T>, deps: unknown[], onSignedOut: (n?: string) => void) {
+export function useLoad<T>(load: () => Promise<T>, deps: unknown[], onSignedOut: (n?: string) => void) {
   const [data, setData] = useState<T | null>(null);
   const [failed, setFailed] = useState<Failure | null>(null);
   const reload = useCallback(() => {
@@ -1226,6 +1231,7 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
   const newLink = link(`/new?board=${board.id}`);
   return (
     <>
+      <OnboardingBanner ctx={ctx} />
       <section className="p-hero">
         <div className="p-wrap">
           <span className="p-hero__kicker">{me.account.name}</span>
