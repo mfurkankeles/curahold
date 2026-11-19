@@ -4,7 +4,7 @@
 -- "Triage") is the team's word and is no longer sent to the customer.
 -- 'name' is now the company's label or null; 'step' is 'new' (the intake column), 'doing' or 'done'.
 create or replace function portal_board_json(b boards) returns jsonb
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, pg_temp as $$
   select jsonb_build_object(
     'id', b.id,
     'name', b.name,
