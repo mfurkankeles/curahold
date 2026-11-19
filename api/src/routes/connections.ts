@@ -12,6 +12,7 @@ import { slackAuthorizeUrl, slackExchange } from '../connectors/messaging/slack'
 import { GRAPH_SCOPE } from '../connectors/messaging/teams';
 import { FatalChatError } from '../connectors/messaging/types';
 import { checkWebhookUrl, WEBHOOK_FLAVORS } from '../connectors/messaging/webhook';
+import { TELEGRAM_TOKEN, telegramChat, telegramUrl } from '../connectors/messaging/lark';
 import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, run, secretsKey, type AppEnv, type C, type Deps, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
 import { randomToken, seal, sign, verify } from '../lib/crypto';
@@ -37,7 +38,7 @@ const toConnection = (r: any, linked: number): Connection => ({
   lastOkAt: iso(r.last_ok_at),
   createdAt: iso(r.created_at)!,
   twoWay: ADAPTERS[r.provider]?.twoWay ?? false,
-  channels: r.provider === 'webhook' ? [{ id: '', name: r.config?.host ?? r.label }] : (r.config?.channels ?? []).map((x: any) => ({ id: x.id, name: x.name })),
+  channels: r.provider === 'webhook' ? [{ id: '', name: r.config?.chatTitle ?? r.config?.host ?? r.label }] : (r.config?.channels ?? []).map((x: any) => ({ id: x.id, name: x.name })),
   linkedPeople: linked,
   ...(r.kind === 'source'
     ? {
@@ -74,28 +75,44 @@ connectionRoutes.post('/connections/webhook', async (c) => {
     c,
     z.object({
       flavor: z.enum(WEBHOOK_FLAVORS),
-      url: z.string().trim().max(2000),
+      // Telegram takes the bot's token instead of an address (the address is made from it).
+      url: z.string().trim().max(2000).default(''),
       label: z.string().trim().min(1).max(120),
       token: z.string().trim().max(500).optional(),
       signingSecret: z.string().trim().max(200).optional(),
+      /** Telegram: the group or channel; found from the bot's recent messages when left out. */
+      chatId: z.string().trim().regex(/^(-?\d{1,20}|@\w{4,64})$/).optional(),
     }),
   );
+  const deps = c.get('deps');
+  let chat: { id: string; title: string } | null = null;
+  if (input.flavor === 'telegram') {
+    const token = (input.token ?? '').trim();
+    if (!TELEGRAM_TOKEN.test(token)) fail('validation', { fields: 'token' }, { fields: ['token'], reason: 'telegram_token' });
+    input.url = telegramUrl(token);
+    input.token = undefined;
+    const found = input.chatId ? { id: input.chatId, title: input.chatId } : await telegramChat(deps, token);
+    if (found === 'token') fail('validation', { fields: 'token' }, { fields: ['token'], reason: 'telegram_token' });
+    if (!found) fail('validation', { fields: 'chatId' }, { fields: ['chatId'], reason: 'telegram_chat' });
+    chat = found as { id: string; title: string };
+  }
   const problem = checkWebhookUrl(input.flavor, input.url);
   if (problem) fail('validation', { fields: 'url' }, { fields: ['url'], reason: problem });
   if (input.flavor === 'zoom' && !input.token) fail('validation', { fields: 'token' }, { fields: ['token'] });
-  const deps = c.get('deps');
   const org = c.get('org');
   const auth = c.get('auth');
   const id = crypto.randomUUID();
   const secret = await seal({ url: input.url, token: input.token || undefined, signingSecret: input.signingSecret || undefined }, secretsKey(deps.config));
+  // The bot token is part of the Telegram address: only the host and the chat are kept readable.
+  const config = { flavor: input.flavor, host: new URL(input.url).hostname, ...(chat ? { chatId: chat.id, chatTitle: chat.title } : {}) };
   await run(c, async (q) => {
     await q.query(
       `insert into connections (id, org_id, kind, provider, label, config, secret, created_by) values ($1, $2, 'messaging', 'webhook', $3, $4, $5, $6)`,
-      [id, org.id, input.label, JSON.stringify({ flavor: input.flavor, host: new URL(input.url).hostname }), secret, auth.userId],
+      [id, org.id, input.label, JSON.stringify(config), secret, auth.userId],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.created', entity: 'connection', entityId: id, meta: { provider: 'webhook', flavor: input.flavor } });
   });
-  return c.json({ id }, 201);
+  return c.json({ id, ...(chat ? { chat: chat.title } : {}) }, 201);
 });
 
 connectionRoutes.patch('/connections/:id', async (c) => {

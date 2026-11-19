@@ -148,7 +148,7 @@ describe('two-way sync with a CRM', () => {
   let demoId: string;
   it('is offered only where configured, and needs the connections permission', async () => {
     const list = (await ada.get('/api/connections')).json;
-    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'bigquery', 'snowflake', 'gmail', 'outlook', 'segment', 'jira', 'zohobooks', 'xero', 'odoo', 'freee', 'parasut', 'quickbooks', 'finfile']);
+    expect(list.providers.filter((p: any) => p.kind === 'source').map((p: any) => p.id)).toEqual(['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'bitrix24', 'freshsales', 'zendesksell', 'odoocrm', 'gsheets', 'excel', 'demo', 'zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'zohodesk', 'bigquery', 'snowflake', 'gmail', 'outlook', 'gcal', 'outlookcal', 'segment', 'whatsapp', 'jira', 'zohobooks', 'xero', 'odoo', 'freee', 'parasut', 'quickbooks', 'stripe', 'finfile']);
     // Connectors that take a key need nothing on the server; of those, Jira Service Management, the warehouses and Segment only read.
     const keyed = list.providers.filter((p: any) => p.setup === 'key');
     expect(keyed.every((p: any) => p.available)).toBe(true);

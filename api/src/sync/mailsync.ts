@@ -46,6 +46,7 @@ async function accountForEmails(q: Q, orgId: string, emails: string[], urlKeys: 
 }
 
 const bodyOf = (m: MailItem): string => {
+  if (m.kind === 'meeting') return `With ${m.participants.join(', ') || '—'}`.slice(0, 20_000);
   const who = m.direction === 'out' ? `Sent to ${m.participants.filter((p) => p !== (m.from ?? '')).join(', ') || '—'}` : `From ${m.from ?? '—'}`;
   return `${who}\n${m.subject}${m.snippet ? `\n\n${m.snippet}` : ''}`.slice(0, 20_000);
 };
@@ -56,6 +57,10 @@ async function applyMail(deps: Deps, conn: LoadedCrm, items: MailItem[], urlKeys
   await deps.db.system(async (q) => {
     for (const m of items) {
       if (!m.externalId) continue;
+      if (m.kind === 'meeting') {
+        await applyMeeting(q, conn, m, urlKeys, st);
+        continue;
+      }
       const account = await accountForEmails(q, conn.orgId, m.participants, urlKeys);
       if (!account) continue;
       const rows = await q.query(
@@ -68,6 +73,34 @@ async function applyMail(deps: Deps, conn: LoadedCrm, items: MailItem[], urlKeys
       if (rows.length) st.created++;
     }
   });
+}
+
+/**
+ * A meeting from a calendar: one meeting activity under the customer its guests belong to, kept up to date when the
+ * meeting is moved or renamed there, and taken away when it is cancelled. Only the title, the time, the length and
+ * the guests are kept — never the description.
+ */
+async function applyMeeting(q: Q, conn: LoadedCrm, m: MailItem, urlKeys: string[], st: SyncStats) {
+  const ext = m.externalId.slice(0, 200);
+  if (m.cancelled) {
+    const gone = await q.query(`delete from activities where org_id = $1 and source = $2 and external_id = $3 and kind = 'meeting' returning id`, [conn.orgId, conn.provider, ext]);
+    st.archived += gone.length;
+    return;
+  }
+  const account = await accountForEmails(q, conn.orgId, m.participants, urlKeys);
+  if (!account) return;
+  const minutes = m.minutes && m.minutes >= 1 ? Math.min(1440, Math.round(m.minutes)) : null;
+  const rows = await q.query<{ created: boolean }>(
+    `insert into activities (org_id, account_id, author_id, kind, title, minutes, body, happened_at, source, external_id)
+     values ($1, $2, null, 'meeting', $3, $4, $5, coalesce($6::timestamptz, now()), $7, $8)
+     on conflict (org_id, source, external_id) where external_id is not null
+       do update set title = excluded.title, minutes = excluded.minutes, body = excluded.body, happened_at = excluded.happened_at
+       where (activities.title, activities.minutes, activities.body, activities.happened_at) is distinct from (excluded.title, excluded.minutes, excluded.body, excluded.happened_at)
+     returning (xmax = 0) as created`,
+    [conn.orgId, account, m.subject.slice(0, 300), minutes, bodyOf(m), m.happenedAt, conn.provider, ext],
+  );
+  if (rows[0]?.created) st.created++;
+  else if (rows.length) st.updated++;
 }
 
 /**

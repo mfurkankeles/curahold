@@ -27,6 +27,8 @@ import { syncRoutes } from './routes/sync';
 import { financeRoutes } from './routes/finance';
 import { devInboundRoutes, devLinkRoutes } from './routes/devlinks';
 import { segmentInboundRoutes } from './routes/segment';
+import { whatsappInboundRoutes } from './routes/whatsapp';
+import { inboundHookReceiverRoutes, inboundHookRoutes } from './routes/inboundHooks';
 import { jiraRoutes } from './routes/jira';
 import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
@@ -338,6 +340,10 @@ export function createApp(deps: Deps) {
   // GitHub / GitLab webhooks that link branches, pull requests and commits to tasks (signed, like the ticket inbound).
   app.route('/api', devInboundRoutes);
   app.route('/api', segmentInboundRoutes);
+  // WhatsApp Business: Meta's callback for the company's own app (signed with its app secret).
+  app.route('/api', whatsappInboundRoutes);
+  // Incoming webhooks: any tool posts to the address of one hook (signed or with a shared token).
+  app.route('/api', inboundHookReceiverRoutes);
   // Curahold support: the entry link, its session, the desk's file links.
   app.route('/api', supportEntry);
   // A shared onboarding progress report, opened with its secret link (no session).
@@ -512,6 +518,7 @@ export function createApp(deps: Deps) {
   app.route('/api', financeRoutes);
   app.route('/api', jiraRoutes);
   app.route('/api', devLinkRoutes);
+  app.route('/api', inboundHookRoutes);
   app.route('/api', connectionRoutes);
   app.route('/api', automationRoutes);
   app.route('/api', setupHealthRoutes);

@@ -7,8 +7,9 @@ export const CRM_PROVIDERS = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 
 /**
  * Support tools, connected with the tool's own address and an API key (no app registration). Tickets are read;
  * Zendesk, Freshdesk, Intercom and Front also take changes back (status, priority, assignee, a new ticket, a reply).
+ * Zoho Desk signs in with Zoho instead of a key (the Zoho CRM app registration) and also takes changes back.
  */
-export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm', 'front'] as const;
+export const SUPPORT_PROVIDERS = ['zendesk', 'freshdesk', 'intercom', 'jsm', 'front', 'zohodesk'] as const;
 export type SupportProvider = (typeof SUPPORT_PROVIDERS)[number];
 /** Data warehouses: rows from a query the administrator writes, read only, connected with a service-account key. */
 export const WAREHOUSE_PROVIDERS = ['bigquery', 'snowflake'] as const;
@@ -21,20 +22,32 @@ export type WarehouseProvider = (typeof WAREHOUSE_PROVIDERS)[number];
 export const MAILBOX_PROVIDERS = ['gmail', 'outlook'] as const;
 export type MailboxProvider = (typeof MAILBOX_PROVIDERS)[number];
 /**
+ * Calendars (Google Calendar, Outlook Calendar): meetings that took place with a customer's people become meetings on
+ * that customer's timeline, and a meeting planned in Curahold can be put in the calendar. Signed in like mailboxes.
+ */
+export const CALENDAR_PROVIDERS = ['gcal', 'outlookcal'] as const;
+export type CalendarProvider = (typeof CALENDAR_PROVIDERS)[number];
+/**
  * Event streams that push into Curahold (Segment): track / identify events arrive at a signed inbound address and
  * become timeline activities (and link to a contact) under the customer matched by the event's email. Nothing is
  * pulled on a schedule and nothing is written back, so they are read-only sources with no mapping.
  */
 export const EVENT_PROVIDERS = ['segment'] as const;
+/**
+ * WhatsApp Business (Cloud API) with the company's own Meta app: customers' messages arrive at a signed callback
+ * address and land on the customer found by the sender's number; a reply or a template goes back. Nothing is mapped.
+ */
+export const MESSAGE_PROVIDERS = ['whatsapp'] as const;
+export type MessageProvider = (typeof MESSAGE_PROVIDERS)[number];
 export type EventProvider = (typeof EVENT_PROVIDERS)[number];
 /** Sources that never receive the standard entity changes (accounts, records, tasks) Curahold queues for a CRM. */
-export const READ_ONLY_PROVIDERS: readonly string[] = ['jsm', 'bigquery', 'snowflake', 'segment'];
+export const READ_ONLY_PROVIDERS: readonly string[] = ['jsm', 'bigquery', 'snowflake', 'segment', 'whatsapp', 'gcal', 'outlookcal'];
 /**
  * CRMs connected with what the administrator brings from the CRM itself (a
  * webhook address, an API key, an access token): two-way like the others, and
  * nothing has to be registered on the server.
  */
-export const KEYED_CRM_PROVIDERS = ['bitrix24', 'freshsales', 'zendesksell'] as const;
+export const KEYED_CRM_PROVIDERS = ['bitrix24', 'freshsales', 'zendesksell', 'odoocrm'] as const;
 export type KeyedCrmProvider = (typeof KEYED_CRM_PROVIDERS)[number];
 /**
  * Developer tools whose issues, epics and sprints are kept in step with Curahold's own (two-way). Jira Cloud only:
@@ -43,11 +56,11 @@ export type KeyedCrmProvider = (typeof KEYED_CRM_PROVIDERS)[number];
  */
 export const DEV_PROVIDERS = ['jira'] as const;
 export type DevProvider = (typeof DEV_PROVIDERS)[number];
-/** Where commits, branches and pull requests come from (webhooks into Curahold, not a sync). */
-export const DEV_HOSTS = ['github', 'gitlab'] as const;
+/** Where commits, branches and pull requests come from (webhooks into Curahold, not a sync). Azure DevOps: service hooks. */
+export const DEV_HOSTS = ['github', 'gitlab', 'azuredevops'] as const;
 export type DevHost = (typeof DEV_HOSTS)[number];
 /** Accounting programs, read only (see accounting.ts); `finfile` is a file in the template's columns. */
-export type AccountingSource = 'zohobooks' | 'xero' | 'odoo' | 'freee' | 'parasut' | 'quickbooks' | 'finfile';
+export type AccountingSource = 'zohobooks' | 'xero' | 'odoo' | 'freee' | 'parasut' | 'quickbooks' | 'stripe' | 'finfile';
 export type CrmProvider =
   | (typeof CRM_PROVIDERS)[number]
   | AccountingSource
@@ -55,13 +68,15 @@ export type CrmProvider =
   | SupportProvider
   | WarehouseProvider
   | MailboxProvider
+  | CalendarProvider
   | EventProvider
+  | MessageProvider
   | DevProvider
   | 'demo';
 
 /** What an administrator types to connect with a key. */
 export const KEY_FIELDS: Record<
-  SupportProvider | KeyedCrmProvider | WarehouseProvider | MailboxProvider | EventProvider | DevProvider | 'odoo' | 'parasut',
+  SupportProvider | KeyedCrmProvider | WarehouseProvider | MailboxProvider | CalendarProvider | EventProvider | MessageProvider | DevProvider | 'odoo' | 'parasut' | 'stripe',
   { key: string; secret?: boolean; optional?: boolean; placeholder: string }[]
 > = {
   bitrix24: [{ key: 'webhook', secret: true, placeholder: 'https://yourcompany.bitrix24.com/rest/1/••••••••/' }],
@@ -70,6 +85,13 @@ export const KEY_FIELDS: Record<
     { key: 'token', secret: true, placeholder: '••••••••' },
   ],
   zendesksell: [{ key: 'token', secret: true, placeholder: '••••••••' }],
+  // Odoo CRM: the same four things as Odoo accounting (one key may serve both connections).
+  odoocrm: [
+    { key: 'url', placeholder: 'https://yourcompany.odoo.com' },
+    { key: 'database', optional: true, placeholder: 'yourcompany' },
+    { key: 'login', placeholder: 'sales@yourcompany.com' },
+    { key: 'apiKey', secret: true, placeholder: '••••••••' },
+  ],
   zendesk: [
     { key: 'subdomain', placeholder: 'yourcompany' },
     { key: 'email', placeholder: 'agent@yourcompany.com' },
@@ -89,6 +111,8 @@ export const KEY_FIELDS: Record<
     { key: 'token', secret: true, placeholder: '••••••••' },
   ],
   front: [{ key: 'token', secret: true, placeholder: '••••••••' }],
+  // Signed in with Zoho: nothing to type.
+  zohodesk: [],
   jira: [
     { key: 'site', placeholder: 'yourcompany' },
     { key: 'email', placeholder: 'you@yourcompany.com' },
@@ -115,7 +139,20 @@ export const KEY_FIELDS: Record<
   ],
   gmail: [{ key: 'refreshToken', secret: true, placeholder: '1//0g…' }],
   outlook: [{ key: 'refreshToken', secret: true, placeholder: '0.AXoA…' }],
+  gcal: [
+    { key: 'email', placeholder: 'you@yourcompany.com' },
+    { key: 'refreshToken', secret: true, placeholder: '1//0g…' },
+  ],
+  outlookcal: [
+    { key: 'email', placeholder: 'you@yourcompany.com' },
+    { key: 'refreshToken', secret: true, placeholder: '0.AXoA…' },
+  ],
   segment: [{ key: 'signingSecret', secret: true, placeholder: 'a shared secret, 16+ characters' }],
+  whatsapp: [
+    { key: 'phoneNumberId', placeholder: '106540352242922' },
+    { key: 'accessToken', secret: true, placeholder: 'EAAG••••••••' },
+    { key: 'appSecret', secret: true, placeholder: '••••••••••••••••••••••••••••••••' },
+  ],
   // Accounting programs connected with a key (the rest sign in, or take a file).
   odoo: [
     { key: 'url', placeholder: 'https://yourcompany.odoo.com' },
@@ -123,6 +160,8 @@ export const KEY_FIELDS: Record<
     { key: 'login', placeholder: 'finance@yourcompany.com' },
     { key: 'apiKey', secret: true, placeholder: '••••••••' },
   ],
+  // A restricted key with Read on Customers, Invoices and Events only.
+  stripe: [{ key: 'key', secret: true, placeholder: 'rk_live_••••••••' }],
   // The password is used once, to get a renewable key, and is not kept.
   parasut: [
     { key: 'companyId', placeholder: '123456' },
