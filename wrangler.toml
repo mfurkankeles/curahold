@@ -78,3 +78,33 @@ crons = ["0 * * * *", "*/10 * * * *"]
 
 # Salesforce extras (all optional): SALESFORCE_INSTALL_URL (the package's install link, shown before the
 # first sign-in), SALESFORCE_RELAY_URL and SALESFORCE_RELAY_KEY (token renewals through tools/relay).
+# ---------------------------------------------------------------- staging
+# The copy everything is tried on first (docs/go-live/README.tr.md → Staging):
+# its own domain (a second-level wildcard such as *.staging.curahold.com is not
+# covered by Cloudflare's free certificate), its own database and bucket, no
+# portal, test billing. Deploy: npx wrangler deploy --env staging
+# Bindings and [vars] are not inherited by an environment, so they are repeated.
+[env.staging]
+name = "curahold-staging"
+routes = [
+  { pattern = "*.curahold-staging.com/*", zone_name = "curahold-staging.com" },
+]
+[env.staging.vars]
+BASE_DOMAIN = "curahold-staging.com"
+CENTRAL_HOST = "app.curahold-staging.com"
+EMAIL_FROM = "Curahold Staging <no-reply@curahold.com>"
+MAX_DEVICES = "2"
+SUPPORT_EMAIL = "support@curahold.com"
+PADDLE_ENV = "sandbox"
+TEAM_SCHEDULER = "off"
+[[env.staging.hyperdrive]]
+binding = "HYPERDRIVE"
+id = "<staging-hyperdrive-config-id>"
+[[env.staging.r2_buckets]]
+binding = "FILES"
+bucket_name = "curahold-files-staging"
+[[env.staging.durable_objects.bindings]]
+name = "LIVE"
+class_name = "LiveRoomDO"
+[env.staging.triggers]
+crons = ["0 * * * *"]

@@ -54,7 +54,7 @@ export const EU_COUNTRIES = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI
 
 const BASE_ITEMS: ChecklistItem[] = [
   // ---- technical
-  { id: 'domain', area: 'technical', priority: 'must', owner: 'owner', cost: { once: 15, monthly: 2 } },
+  { id: 'domain', area: 'technical', priority: 'must', owner: 'owner', cost: { monthly: 3 } },
   { id: 'cloudflare-account', area: 'technical', priority: 'must', owner: 'owner', cost: null, after: ['domain'] },
   { id: 'dns-records', area: 'technical', priority: 'must', owner: 'claude', cost: null, after: ['cloudflare-account'], links: ['docs/ENVIRONMENT.md'] },
   { id: 'database-hosting', area: 'technical', priority: 'must', owner: 'owner', cost: { monthly: 25 } },

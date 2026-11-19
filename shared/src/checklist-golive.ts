@@ -33,9 +33,9 @@ export const GO_LIVE_EVIDENCE: Record<string, { proof: string; links?: string[] 
   'migrations-runbook': { proof: 'npm run migrate → "up to date"', links: [`${GUIDE}#adim-17`, 'docs/RUNBOOK.md'] },
   'email-provider': { proof: 'Google Workspace: the domain verified', links: [`${GUIDE}#adim-8`] },
   'email-auth': { proof: 'a test mail: SPF=pass DKIM=pass DMARC=pass', links: [`${GUIDE}#adim-9`] },
-  'backups-restore': { proof: 'scripts/backup/restore-drill.ts → "drill PASSED in … s"', links: [`${GUIDE}#adim-25`, 'scripts/backup/restore-drill.ts'] },
+  'backups-restore': { proof: 'scripts/backup/restore-drill.ts → "drill PASSED in … s"', links: [`${GUIDE}#adim-26`, 'scripts/backup/restore-drill.ts'] },
   monitoring: { proof: 'scripts/synthetic.ts all "up"; one test alert in the console', links: [`${GUIDE}#adim-24`, 'api/src/lib/ops.ts'] },
-  'status-page': { proof: 'status.curahold.com shows every line', links: [`${GUIDE}#adim-24`, 'tools/status-page/index.html'] },
+  'status-page': { proof: 'the status page (Cloudflare Pages) shows every line', links: [`${GUIDE}#adim-24`, 'tools/status-page/index.html'] },
   'security-txt': { proof: 'curl https://app.curahold.com/.well-known/security.txt' },
   'go-live': { proof: 'the deploy verification checklist, every line', links: [`${GUIDE}#adim-21`] },
 };
