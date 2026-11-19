@@ -62,6 +62,7 @@ interface AccountField {
 interface Board {
   id: string;
   name: string;
+  departmentId: string;
   visibility: Visibility;
   teamId: string | null;
   columns: Column[];

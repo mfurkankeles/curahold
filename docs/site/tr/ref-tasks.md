@@ -15,7 +15,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | | |
 | --- | --- |
 | `GET /boards` | Kişinin görebildiği panolar; sütunları ve görev alanlarıyla. |
-| `POST /boards` | Pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu. |
+| `POST /boards` | Bir departmanda (`departmentId`) pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu. |
 | `PATCH /boards/:id` | Panoyu değiştirir. |
 | `DELETE /boards/:id` | Panoyu görevleriyle birlikte arşivler. |
 | `GET /boards/:id/tasks` | Bir panonun görevleri, hepsi birden. |
@@ -84,13 +84,14 @@ Kişinin görebildiği panolar; sütunları ve görev alanlarıyla.
 
 ### `POST /boards`
 
-Pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu.
+Bir departmanda (`departmentId`) pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu. Yalnızca yöneticiler ve o departmanın liderleri.
 
 **Gerekenler:** yazabilen bir koltuk
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
 | `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
+| `departmentId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `visibility` | şunlardan biri: org \| team \| private | zorunlu |  |
 | `teamId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `memberIds` | kimlik listesi | isteğe bağlı | en çok 200 öğe |
@@ -102,13 +103,14 @@ Pano ekler: sütunları, kimin gördüğü, görev alanları ve talep formu.
 
 ### `PATCH /boards/:id`
 
-Panoyu değiştirir. İçinde görev olan sütun kaldırılamaz.
+Panoyu değiştirir. İçinde görev olan sütun kaldırılamaz. `departmentId` onu başka departmana taşır (yalnızca yöneticiler).
 
 **Gerekenler:** yazabilen bir koltuk
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
 | `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
+| `departmentId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `visibility` | şunlardan biri: org \| team \| private | zorunlu |  |
 | `teamId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `memberIds` | kimlik listesi | isteğe bağlı | en çok 200 öğe |
@@ -132,7 +134,7 @@ Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere iste: `per=N` h
 
 ### `POST /boards/:id/requests`
 
-Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer.
+Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. Başka departmanın panosuna da gider (`GET /departments/desks`); `fromTaskId` kendi görevine bağlar.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -143,6 +145,7 @@ Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan d�
 | `accountId` | kimlik | isteğe bağlı | boş (null) olabilir |
 | `dueDate` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
 | `fields` | nesne (ad → değer) | isteğe bağlı |  |
+| `fromTaskId` | kimlik | isteğe bağlı | boş (null) olabilir |
 
 ### `POST /boards/:id/import`
 

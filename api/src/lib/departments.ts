@@ -49,8 +49,8 @@ export async function mayOpenBoards(q: Q, auth: Pick<AuthCtx, 'userId' | 'perms'
 }
 
 /**
- * The department a new board goes to when the request names none: one the
- * person leads, else (administrators) the company's home department.
+ * The department a new board goes to when the request names none: for
+ * administrators the company's home department, for a lead the first one they lead.
  */
 export async function departmentForNewBoard(q: Q, auth: Pick<AuthCtx, 'userId' | 'perms'>, asked: string | null | undefined): Promise<string> {
   if (asked) {
@@ -60,15 +60,18 @@ export async function departmentForNewBoard(q: Q, auth: Pick<AuthCtx, 'userId' |
     if (!(await mayOpenBoards(q, auth, asked))) fail('board_lead_only');
     return asked;
   }
+  // Administrators: the company's home department (its own kind of work).
+  if (auth.perms.includes('boards.manage_all')) {
+    const [home] = await q.query(`select app_home_department(app_org()) as id`);
+    return home.id;
+  }
   const [lead] = await q.query(
     `select d.id from department_members m join departments d on d.id = m.department_id
       where m.user_id = $1 and m.role = 'lead' and d.enabled order by d.position limit 1`,
     [auth.userId],
   );
-  if (lead) return lead.id;
-  if (!auth.perms.includes('boards.manage_all')) fail('board_lead_only');
-  const [home] = await q.query(`select app_home_department(app_org()) as id`);
-  return home.id;
+  if (!lead) fail('board_lead_only');
+  return lead.id;
 }
 
 /** Who may add or remove people in a department: people managers, and its leads (members only). */

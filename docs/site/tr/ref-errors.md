@@ -17,6 +17,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `bad_webhook_url` | 400 | Webhook için herkese açık bir https adresi kullan. |
 | `billing_off` | 400 | Bu kurulumda abonelik açık değil. |
 | `connection_failed` | 400 | Servis isteği kabul etmedi. Bağlantıyı kontrol edip tekrar dene. |
+| `department_off` | 400 | Bu departman şirketinin planında yok. |
 | `domain_public` | 400 | … herkese açık bir e-posta servisi, bir şirkete ait olamaz. |
 | `free_mail_note` | 400 | Şirket denemesi için neden kişisel adres kullandığını bir cümleyle yaz. |
 | `help_file_type` | 400 | … eklenemiyor. Resim, PDF, metin, CSV, JSON, Excel ve kısa videolar eklenebilir. |
@@ -52,6 +53,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `unauthenticated` | 401 | Lütfen giriş yap. |
 | `billing_locked` | 402 | Şirketinin etkin bir planı yok; şu an bir şey değiştirilemez, ama her şey okunabilir ve dışa aktarılabilir. Bir yönetici Ayarlar → Abonelik’ten plan seçebilir. |
 | `plan_required` | 402 | Bu, … planında var. Bir yönetici Ayarlar → Abonelik’ten geçebilir. |
+| `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |
 | `field_locked` | 403 | Rolün bu alanı görebilir ama değiştiremez (…). |
 | `forbidden` | 403 | Bunu yapma yetkin yok. |
 | `join_closed` | 403 | Bu şirkete yalnızca davetle katılınabiliyor. |

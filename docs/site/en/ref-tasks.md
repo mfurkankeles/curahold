@@ -15,7 +15,7 @@ A task lives on a board, in one of the board's columns (`status` is the column k
 | | |
 | --- | --- |
 | `GET /boards` | The boards the person can see, with their columns and task fields. |
-| `POST /boards` | Adds a board: its columns, who sees it, its task fields and request form. |
+| `POST /boards` | Adds a board in a department (`departmentId`): its columns, who sees it, its task fields and request form. |
 | `PATCH /boards/:id` | Changes a board. |
 | `DELETE /boards/:id` | Archives a board with its tasks. |
 | `GET /boards/:id/tasks` | The tasks of one board, all at once. |
@@ -84,13 +84,14 @@ The boards the person can see, with their columns and task fields.
 
 ### `POST /boards`
 
-Adds a board: its columns, who sees it, its task fields and request form.
+Adds a board in a department (`departmentId`): its columns, who sees it, its task fields and request form. Administrators and that department's leads only.
 
 **Needs:** a seat that can write
 
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
 | `name` | text | required | at least 1 characters; at most 80 characters |
+| `departmentId` | id | optional | may be null |
 | `visibility` | one of org \| team \| private | required |  |
 | `teamId` | id | optional | may be null |
 | `memberIds` | list of id | optional | at most 200 items |
@@ -102,13 +103,14 @@ Adds a board: its columns, who sees it, its task fields and request form.
 
 ### `PATCH /boards/:id`
 
-Changes a board. Columns that still hold tasks cannot be removed.
+Changes a board. Columns that still hold tasks cannot be removed. `departmentId` moves it to another department (administrators only).
 
 **Needs:** a seat that can write
 
 | Field | Type | | Notes |
 | --- | --- | --- | --- |
 | `name` | text | required | at least 1 characters; at most 80 characters |
+| `departmentId` | id | optional | may be null |
 | `visibility` | one of org \| team \| private | required |  |
 | `teamId` | id | optional | may be null |
 | `memberIds` | list of id | optional | at most 200 items |
@@ -132,7 +134,7 @@ The tasks of one board, all at once. For a big board, ask a window: `per=N` give
 
 ### `POST /boards/:id/requests`
 
-Sends a request through the board's form: it lands in the form's column, unassigned.
+Sends a request through the board's form: it lands in the form's column, unassigned. Works for another department's board too (see `GET /departments/desks`); `fromTaskId` links it to your own task.
 
 **Needs:** a seat that can write
 
@@ -143,6 +145,7 @@ Sends a request through the board's form: it lands in the form's column, unassig
 | `accountId` | id | optional | may be null |
 | `dueDate` | date (YYYY-MM-DD) | optional | may be null |
 | `fields` | object (name → value) | optional |  |
+| `fromTaskId` | id | optional | may be null |
 
 ### `POST /boards/:id/import`
 

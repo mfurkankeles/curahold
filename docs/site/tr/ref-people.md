@@ -38,6 +38,14 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | `DELETE /me/calendar` | Takvim adresini kapatır. |
 | `GET /calendar/:file` | Takvim akışının kendisi (iCalendar): bitiş tarihi olan açık görevler. |
 | `GET /people` | Şirketteki herkes, ekip üyelikleriyle; ve ekipler. |
+| `GET /departments` | Şirketin departmanları, müşterinin yolu sırasıyla (`inside_sales`, `sales`, `onboarding`, `success`, `product`, `finance`); her biri `enabled` (planda mı), liderleri ve üyeleriyle. |
+| `PATCH /departments/:id` | Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında bandını hangi departmanların gördüğünü belirler (`bandView`, hepsi için null). |
+| `PUT /departments/:id/people` | Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi yöneticileri). |
+| `PUT /departments/:id/members/:userId` | Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir. |
+| `DELETE /departments/:id/members/:userId` | Bir kişiyi departmandan çıkarır. |
+| `GET /departments/desks` | Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. |
+| `GET /departments/moves` | Departmanlara geçişte her panonun nereye gittiği ve nedeni (`sprints`, `name`, `company`); panoyu önceden görebilip henüz üye olmayan kişiler (`suggestions`). |
+| `POST /departments/moves/accept` | Önerilen kişileri departmanlarına üye yapar (`suggestions` içindeki `ids`). |
 | `GET /search` | Müşterileri, görevleri, kayıtları, panoları ve kişileri ada göre arar (`q`, en az iki harf). |
 | `GET /notifications` | Bildirimlerin; en yenisi başta. |
 | `GET /notifications/count` | Kaç tanesi okunmamış. |
@@ -165,6 +173,68 @@ Takvim akışının kendisi (iCalendar): bitiş tarihi olan açık görevler. Gi
 ### `GET /people`
 
 Şirketteki herkes, ekip üyelikleriyle; ve ekipler.
+
+### `GET /departments`
+
+Şirketin departmanları, müşterinin yolu sırasıyla (`inside_sales`, `sales`, `onboarding`, `success`, `product`, `finance`); her biri `enabled` (planda mı), liderleri ve üyeleriyle. Kapalı olanlar yalnızca yöneticilere.
+
+### `PATCH /departments/:id`
+
+Bir departmanı açar ya da kapatır (`enabled`) veya müşteri sayfasında bandını hangi departmanların gördüğünü belirler (`bandView`, hepsi için null). Yalnızca yöneticiler; en az bir departman açık kalır.
+
+**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `enabled` | evet/hayır | isteğe bağlı |  |
+| `bandView` | şunlardan biri: DEPARTMENT_KEYS listesi | isteğe bağlı | en çok 4 öğe; boş (null) olabilir |
+
+### `PUT /departments/:id/people`
+
+Bir departmanın `leadIds` ve `memberIds` listelerini birden değiştirir (kişi yöneticileri).
+
+**Gerekenler:** yazabilen bir koltuk · yetki `users.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `leadIds` | kimlik listesi | zorunlu | en çok 50 öğe |
+| `memberIds` | kimlik listesi | zorunlu | en çok 5000 öğe |
+
+### `PUT /departments/:id/members/:userId`
+
+Bir kişiyi `role` `lead` ya da `member` olarak ekler veya rolünü değiştirir. Departman lideri üye ekleyebilir; lider yapmak kişi yöneticisinin işidir.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `role` | şunlardan biri: lead \| member | zorunlu |  |
+
+### `DELETE /departments/:id/members/:userId`
+
+Bir kişiyi departmandan çıkarır.
+
+**Gerekenler:** yazabilen bir koltuk
+
+### `GET /departments/desks`
+
+Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. `POST /boards/:id/requests` ve `fromTaskId` ile gönderince kendi görevine bağlanır; diğer pano sana kapalı kalır.
+
+### `GET /departments/moves`
+
+Departmanlara geçişte her panonun nereye gittiği ve nedeni (`sprints`, `name`, `company`); panoyu önceden görebilip henüz üye olmayan kişiler (`suggestions`). Yalnızca yöneticiler.
+
+**Gerekenler:** yetki `org.manage`
+
+### `POST /departments/moves/accept`
+
+Önerilen kişileri departmanlarına üye yapar (`suggestions` içindeki `ids`).
+
+**Gerekenler:** yazabilen bir koltuk · yetki `org.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `ids` | kimlik listesi | zorunlu | en az 1 öğe; en çok 1000 öğe |
 
 ### `GET /search`
 

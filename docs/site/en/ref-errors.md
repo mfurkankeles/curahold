@@ -17,6 +17,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `bad_webhook_url` | 400 | Use a public https address for webhooks. |
 | `billing_off` | 400 | Billing is not set up on this installation. |
 | `connection_failed` | 400 | The service did not accept the request. Check the connection and try again. |
+| `department_off` | 400 | That department is not part of your company's plan. |
 | `domain_public` | 400 | … is a public email service, so it cannot belong to one company. |
 | `free_mail_note` | 400 | Tell us in a sentence why you use a personal address for a company trial. |
 | `help_file_type` | 400 | … can't be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can. |
@@ -52,6 +53,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `unauthenticated` | 401 | Please sign in. |
 | `billing_locked` | 402 | Your company has no active plan, so nothing can be changed right now — everything can still be read and exported. An administrator can choose a plan in Settings → Billing. |
 | `plan_required` | 402 | This is part of the … plan. An administrator can switch in Settings → Billing. |
+| `board_lead_only` | 403 | Only administrators and the department's leads open boards in it. |
 | `field_locked` | 403 | Your role can see this field but not change it (…). |
 | `forbidden` | 403 | You do not have permission to do that. |
 | `join_closed` | 403 | This company only lets people in by invitation. |
