@@ -184,10 +184,10 @@ describe('boards', () => {
     const refused = await zeynep.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id });
     expect(refused.status).toBe(403);
     expect(refused.json.error).toBe('board_lead_only');
-    // mert leads Customer Success: his board lands there.
-    const made = await mert.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id });
-    expect(made.status).toBe(201);
+    // mert leads Customer Success & Support: his board lands there.
     const success = (await mert.get('/api/me')).json.departments.find((d: any) => d.key === 'success');
+    const made = await mert.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id, departmentId: success.id });
+    expect(made.status).toBe(201);
     expect(made.json.board.departmentId).toBe(success.id);
   });
 

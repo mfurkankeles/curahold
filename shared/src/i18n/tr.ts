@@ -5249,7 +5249,7 @@ export const tr: Record<MessageKey, string> = {
   'analytics.rowsN': "{n} satır",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "Satış",
-  'dept.success': "Müşteri Başarısı",
+  'dept.success': "Müşteri Başarısı ve Destek",
   'dept.product': "Ürün",
   'dept.finance': "Finans",
   'nav.dept.lead': "Lider sensin",
@@ -5307,7 +5307,7 @@ export const tr: Record<MessageKey, string> = {
   'fields.access.departments': "Departmanlar",
   'settings.tab.departments': "Departmanlar",
   'settings.about.departments': "Hangi departmanların olduğu, liderleri, üyeleri ve kimin neyi gördüğü",
-  'settings.find.departments': "satış müşteri başarısı ürün finans lider üyeler plan",
+  'settings.find.departments': "iç satış kurulum müşteri başarısı destek talep ürün finans lider üyeler plan",
   'audit.department.updated': "bir departmanı değiştirdi",
   'audit.department.member_set': "bir departmana kişi ekledi",
   'audit.department.member_removed': "bir departmandan kişi çıkardı",
@@ -5320,4 +5320,16 @@ export const tr: Record<MessageKey, string> = {
   'dept.demo.ask': "Kullanım raporlarının toplu dışa aktarımı",
   'dept.demo.build': "Büyük dosyalar için daha hızlı içe aktarım",
   'dept.demo.invoice': "Yenileme için taslak fatura",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "Müşteri toplu dışa aktarım istedi",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "Seçili departmanlar",
+  'dept.inside_sales': "İç Satış",
+  'dept.onboarding': "Kurulum",
+  'dept.tpl.leads': "Aday müşteri eleme",
+  'dept.tpl.contacted': "İletişime geçildi",
+  'dept.tpl.qualified': "Uygun",
+  'dept.tpl.notFit': "Uygun değil",
+  'dept.demo.lead': "Gelen aday: lojistik şirketi, 40 kullanıcı",
+  'dept.demo.onboard': "Başlangıç toplantısı ve veri aktarımı",
 };

@@ -5249,7 +5249,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} 行",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "销售",
-  'dept.success': "客户成功",
+  'dept.success': "客户成功与支持",
   'dept.product': "产品",
   'dept.finance': "财务",
   'nav.dept.lead': "由你负责",
@@ -5307,7 +5307,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "部门",
   'settings.tab.departments': "部门",
   'settings.about.departments': "有哪些部门、负责人和成员，以及谁能看到什么",
-  'settings.find.departments': "销售 客户成功 产品 财务 负责人 成员 方案",
+  'settings.find.departments': "内部销售 上线 客户成功 支持 工单 产品 财务 负责人 成员 方案",
   'audit.department.updated': "修改了部门",
   'audit.department.member_set': "将成员加入了部门",
   'audit.department.member_removed': "将成员移出了部门",
@@ -5320,4 +5320,16 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "批量导出使用报告",
   'dept.demo.build': "加快大文件导入",
   'dept.demo.invoice': "续约发票草稿",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "客户要求批量导出",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "指定部门",
+  'dept.inside_sales': "内部销售",
+  'dept.onboarding': "客户上线",
+  'dept.tpl.leads': "线索筛选",
+  'dept.tpl.contacted': "已联系",
+  'dept.tpl.qualified': "已确认合格",
+  'dept.tpl.notFit': "不合适",
+  'dept.demo.lead': "新线索：物流公司，40 个席位",
+  'dept.demo.onboard': "启动会议和数据导入",
 };

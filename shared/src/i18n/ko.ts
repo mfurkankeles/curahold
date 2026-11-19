@@ -5249,7 +5249,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n}행",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "영업",
-  'dept.success': "고객 성공",
+  'dept.success': "고객 성공 및 지원",
   'dept.product': "제품",
   'dept.finance': "재무",
   'nav.dept.lead': "내가 리드",
@@ -5307,7 +5307,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "부서",
   'settings.tab.departments': "부서",
   'settings.about.departments': "보유한 부서, 리드와 구성원, 누가 무엇을 보는지",
-  'settings.find.departments': "영업 고객 성공 제품 재무 리드 구성원 요금제",
+  'settings.find.departments': "인사이드 세일즈 온보딩 고객 성공 지원 티켓 제품 재무 리드 구성원 요금제",
   'audit.department.updated': "부서를 변경함",
   'audit.department.member_set': "부서에 사람을 추가함",
   'audit.department.member_removed': "부서에서 사람을 제외함",
@@ -5320,4 +5320,16 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "사용 보고서 일괄 내보내기",
   'dept.demo.build': "대용량 파일 가져오기 속도 개선",
   'dept.demo.invoice': "갱신 청구서 초안",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "고객이 일괄 내보내기를 요청함",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "선택한 부서",
+  'dept.inside_sales': "인사이드 세일즈",
+  'dept.onboarding': "온보딩",
+  'dept.tpl.leads': "리드 검증",
+  'dept.tpl.contacted': "연락함",
+  'dept.tpl.qualified': "적격",
+  'dept.tpl.notFit': "부적합",
+  'dept.demo.lead': "신규 리드: 물류 회사, 40석",
+  'dept.demo.onboard': "킥오프 및 데이터 가져오기",
 };

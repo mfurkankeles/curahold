@@ -5249,7 +5249,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} ردیف",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "فروش",
-  'dept.success': "موفقیت مشتری",
+  'dept.success': "موفقیت مشتری و پشتیبانی",
   'dept.product': "محصول",
   'dept.finance': "مالی",
   'nav.dept.lead': "سرپرست: شما",
@@ -5307,7 +5307,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "دپارتمان‌ها",
   'settings.tab.departments': "دپارتمان‌ها",
   'settings.about.departments': "دپارتمان‌های شما، سرپرستان و اعضا، و اینکه چه کسی چه می‌بیند",
-  'settings.find.departments': "فروش موفقیت مشتری محصول مالی سرپرست اعضا طرح",
+  'settings.find.departments': "فروش داخلی راه‌اندازی موفقیت مشتری پشتیبانی تیکت محصول مالی سرپرست اعضا طرح",
   'audit.department.updated': "دپارتمانی را تغییر داد",
   'audit.department.member_set': "کسی را به دپارتمان افزود",
   'audit.department.member_removed': "کسی را از دپارتمان حذف کرد",
@@ -5320,4 +5320,16 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "خروجی گروهی گزارش‌های استفاده",
   'dept.demo.build': "وارد کردن سریع‌تر فایل‌های بزرگ",
   'dept.demo.invoice': "پیش‌نویس فاکتور تمدید",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "مشتری خروجی گروهی خواست",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "دپارتمان‌های انتخابی",
+  'dept.inside_sales': "فروش داخلی",
+  'dept.onboarding': "راه‌اندازی مشتری",
+  'dept.tpl.leads': "ارزیابی سرنخ‌ها",
+  'dept.tpl.contacted': "تماس گرفته شد",
+  'dept.tpl.qualified': "واجد شرایط",
+  'dept.tpl.notFit': "مناسب نیست",
+  'dept.demo.lead': "سرنخ ورودی: شرکت لجستیک، ۴۰ صندلی",
+  'dept.demo.onboard': "جلسه شروع و ورود داده‌ها",
 };

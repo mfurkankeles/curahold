@@ -5264,7 +5264,7 @@ export const en = {
   'analytics.rowsN': "{n} rows",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "Sales",
-  'dept.success': "Customer Success",
+  'dept.success': "Customer Success & Support",
   'dept.product': "Product",
   'dept.finance': "Finance",
   'nav.dept.lead': "You lead",
@@ -5322,7 +5322,7 @@ export const en = {
   'fields.access.departments': "Departments",
   'settings.tab.departments': "Departments",
   'settings.about.departments': "Which departments you have, their leads and members, and who sees what",
-  'settings.find.departments': "sales customer success product finance lead members walls plan",
+  'settings.find.departments': "inside sales onboarding customer success support tickets product finance lead members plan",
   'audit.department.updated': "changed a department",
   'audit.department.member_set': "added someone to a department",
   'audit.department.member_removed': "removed someone from a department",
@@ -5335,6 +5335,18 @@ export const en = {
   'dept.demo.ask': "Bulk export of usage reports",
   'dept.demo.build': "Faster import for large files",
   'dept.demo.invoice': "Draft invoice for the renewal",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "Customer asked for a bulk export",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "Chosen departments",
+  'dept.inside_sales': "Inside Sales",
+  'dept.onboarding': "Onboarding",
+  'dept.tpl.leads': "Lead qualification",
+  'dept.tpl.contacted': "Contacted",
+  'dept.tpl.qualified': "Qualified",
+  'dept.tpl.notFit': "Not a fit",
+  'dept.demo.lead': "Inbound lead: logistics company, 40 seats",
+  'dept.demo.onboard': "Kick-off and data import",
 } as const;
 
 export type MessageKey = keyof typeof en;

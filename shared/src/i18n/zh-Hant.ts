@@ -5249,7 +5249,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} 列",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "銷售",
-  'dept.success': "客戶成功",
+  'dept.success': "客戶成功與支援",
   'dept.product': "產品",
   'dept.finance': "財務",
   'nav.dept.lead': "由你負責",
@@ -5307,7 +5307,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "部門",
   'settings.tab.departments': "部門",
   'settings.about.departments': "有哪些部門、負責人和成員，以及誰能看到什麼",
-  'settings.find.departments': "銷售 客戶成功 產品 財務 負責人 成員 方案",
+  'settings.find.departments': "內部銷售 導入 客戶成功 支援 工單 產品 財務 負責人 成員 方案",
   'audit.department.updated': "修改了部門",
   'audit.department.member_set': "將成員加入了部門",
   'audit.department.member_removed': "將成員移出了部門",
@@ -5320,4 +5320,16 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "批次匯出使用報告",
   'dept.demo.build': "加快大型檔案匯入",
   'dept.demo.invoice': "續約發票草稿",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "客戶要求批次匯出",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "指定部門",
+  'dept.inside_sales': "內部銷售",
+  'dept.onboarding': "客戶導入",
+  'dept.tpl.leads': "潛在客戶篩選",
+  'dept.tpl.contacted': "已聯絡",
+  'dept.tpl.qualified': "已確認合格",
+  'dept.tpl.notFit': "不合適",
+  'dept.demo.lead': "新潛在客戶：物流公司，40 個席位",
+  'dept.demo.onboard': "啟動會議與資料匯入",
 };

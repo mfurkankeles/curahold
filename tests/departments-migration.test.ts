@@ -77,12 +77,12 @@ describe('the move into departments', () => {
     const of = (k: string) => rows.find((r: any) => r.id === boards[k]);
     expect(rows).toHaveLength(5);
     expect(of('pipeline')).toMatchObject({ key: 'sales', reason: 'name' });
-    expect(of('onboarding')).toMatchObject({ key: 'success', reason: 'name' });
+    expect(of('onboarding')).toMatchObject({ key: 'onboarding', reason: 'name' });
     expect(of('roadmap')).toMatchObject({ key: 'product', reason: 'sprints' });
     expect(of('misc')).toMatchObject({ key: 'success', reason: 'company' });
     expect(of('notes')).toMatchObject({ personal: true });
     const depts = await sys((q) => q.query(`select key, enabled from departments where org_id = $1 order by position`, [org]));
-    expect(depts.map((d: any) => d.key)).toEqual(['sales', 'success', 'product', 'finance']);
+    expect(depts.map((d: any) => d.key)).toEqual(['inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance']);
     expect(depts.every((d: any) => d.enabled)).toBe(true);
   });
 
@@ -91,7 +91,7 @@ describe('the move into departments', () => {
     expect(now.admin).toEqual(before.admin);
     expect(now.worker).toEqual(expect.arrayContaining(['misc', 'notes', 'onboarding']));
     expect(now.seller).toContain('pipeline');
-    const [lead] = await sys((q) => q.query(`select dm.role from department_members dm join departments d on d.id = dm.department_id where dm.user_id = $1 and d.key = 'success'`, [ids.lead]));
+    const [lead] = await sys((q) => q.query(`select dm.role from department_members dm join departments d on d.id = dm.department_id where dm.user_id = $1 and d.key = 'onboarding'`, [ids.lead]));
     expect(lead.role).toBe('lead');
   });
 

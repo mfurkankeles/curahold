@@ -2,12 +2,13 @@
 // (links and requests, never the other board), the shared customer page with
 // department field rules, and the same answers in the database itself.
 //
-// The demo company (scripts/seed-departments.ts): Customer Success — mert leads; ada,
-// zeynep, lena, omar, sofia are members. Sales — omar leads, ada. Product — lena
-// leads, zeynep. Finance — ada leads. Ada is the administrator; mert is a manager
+// The demo company (scripts/seed-departments.ts): Customer Success & Support — mert
+// leads; ada, zeynep, lena, omar, sofia are members. Inside Sales — omar leads. Sales —
+// omar leads, ada. Onboarding — mert leads, lena. Product — lena leads, zeynep. Finance — ada leads. Ada is the administrator; mert is a manager
 // ("see every board"); zeynep, lena and omar are members; sofia is a viewer.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { login, setup, type Client, type Env } from './helpers';
+import { handoverAfter } from '../shared/src/departments';
 
 let env: Env;
 let ada: Client, mert: Client, zeynep: Client, lena: Client, omar: Client, sofia: Client, stranger: Client;
@@ -36,12 +37,21 @@ beforeAll(async () => {
 });
 
 describe('departments', () => {
-  it('every company has the four, in order, and each person knows their place', async () => {
+  it('every company has the six, in the customer\'s order, and each person knows their place', async () => {
     const me = (await omar.get('/api/me')).json;
-    expect(me.departments.map((d: any) => d.key)).toEqual(['sales', 'success', 'product', 'finance']);
+    expect(me.departments.map((d: any) => d.key)).toEqual(['inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance']);
     expect(me.departments.find((d: any) => d.key === 'sales').myRole).toBe('lead');
     expect(me.departments.find((d: any) => d.key === 'product').myRole).toBeNull();
     expect(me.departments.find((d: any) => d.key === 'sales').leadIds).toEqual([env.a.ids.omar]);
+  });
+
+  it('the customer\'s path skips Onboarding when the company has none', () => {
+    const all = ['inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance'] as const;
+    expect(handoverAfter('inside_sales', all)).toBe('sales');
+    expect(handoverAfter('sales', all)).toBe('onboarding');
+    expect(handoverAfter('sales', all.filter((k) => k !== 'onboarding'))).toBe('success');
+    expect(handoverAfter('success', all)).toBeNull();
+    expect(handoverAfter('product', all)).toBeNull();
   });
 
   it('a member of one department cannot reach another department\'s board by any address', async () => {

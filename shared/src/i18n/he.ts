@@ -5249,7 +5249,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} שורות",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "מכירות",
-  'dept.success': "הצלחת לקוחות",
+  'dept.success': "הצלחת לקוחות ותמיכה",
   'dept.product': "מוצר",
   'dept.finance': "כספים",
   'nav.dept.lead': "בהובלתך",
@@ -5307,7 +5307,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "מחלקות",
   'settings.tab.departments': "מחלקות",
   'settings.about.departments': "אילו מחלקות יש לכם, ראשיהן, חבריהן ומי רואה מה",
-  'settings.find.departments': "מכירות הצלחת לקוחות מוצר כספים ראש מחלקה חברים תוכנית",
+  'settings.find.departments': "מכירות פנים קליטה הצלחת לקוחות תמיכה פניות מוצר כספים ראש מחלקה חברים תוכנית",
   'audit.department.updated': "שינה מחלקה",
   'audit.department.member_set': "צירף מישהו למחלקה",
   'audit.department.member_removed': "הסיר מישהו ממחלקה",
@@ -5320,4 +5320,16 @@ export const he: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "ייצוא מרוכז של דוחות שימוש",
   'dept.demo.build': "ייבוא מהיר יותר לקבצים גדולים",
   'dept.demo.invoice': "טיוטת חשבונית לחידוש",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "הלקוח ביקש ייצוא מרוכז",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "מחלקות נבחרות",
+  'dept.inside_sales': "מכירות פנים",
+  'dept.onboarding': "קליטת לקוחות",
+  'dept.tpl.leads': "סינון לידים",
+  'dept.tpl.contacted': "נוצר קשר",
+  'dept.tpl.qualified': "מתאים",
+  'dept.tpl.notFit': "לא מתאים",
+  'dept.demo.lead': "ליד נכנס: חברת לוגיסטיקה, 40 מושבים",
+  'dept.demo.onboard': "פגישת פתיחה וייבוא נתונים",
 };

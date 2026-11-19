@@ -5249,7 +5249,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} 行",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "営業",
-  'dept.success': "カスタマーサクセス",
+  'dept.success': "カスタマーサクセス＆サポート",
   'dept.product': "プロダクト",
   'dept.finance': "財務",
   'nav.dept.lead': "あなたがリード",
@@ -5307,7 +5307,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "部門",
   'settings.tab.departments': "部門",
   'settings.about.departments': "利用する部門、そのリードとメンバー、誰が何を見られるか",
-  'settings.find.departments': "営業 カスタマーサクセス プロダクト 財務 リード メンバー プラン",
+  'settings.find.departments': "インサイドセールス オンボーディング カスタマーサクセス サポート チケット プロダクト 財務 リード メンバー プラン",
   'audit.department.updated': "部門を変更しました",
   'audit.department.member_set': "部門にメンバーを追加しました",
   'audit.department.member_removed': "部門からメンバーを外しました",
@@ -5320,4 +5320,16 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "利用状況レポートの一括エクスポート",
   'dept.demo.build': "大きなファイルの取り込みを高速化",
   'dept.demo.invoice': "更新分の請求書の下書き",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "顧客から一括エクスポートの要望",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "選択した部門",
+  'dept.inside_sales': "インサイドセールス",
+  'dept.onboarding': "オンボーディング",
+  'dept.tpl.leads': "リードの選別",
+  'dept.tpl.contacted': "連絡済み",
+  'dept.tpl.qualified': "有望",
+  'dept.tpl.notFit': "対象外",
+  'dept.demo.lead': "新規リード：物流会社、40席",
+  'dept.demo.onboard': "キックオフとデータ取り込み",
 };

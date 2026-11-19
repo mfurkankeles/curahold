@@ -1,6 +1,8 @@
--- Departments: Sales, Customer Success, Product, Finance.
+-- Departments: Inside Sales, Sales, Onboarding (optional), Customer Success & Support
+-- (tickets live here), Product, Finance. A customer moves Inside Sales → Sales →
+-- (Onboarding) → Customer Success; Product and Finance are linked to all of them.
 --
--- A company works in up to four departments. Each one is switched on or off
+-- A company works in up to six departments. Each one is switched on or off
 -- for the company (what it has bought: `enabled`), has leads and members, and
 -- holds boards. Every board belongs to exactly one department:
 --
@@ -24,7 +26,7 @@
 create table departments (
   id          uuid primary key default gen_random_uuid(),
   org_id      uuid not null references orgs(id) on delete cascade,
-  key         text not null check (key in ('sales', 'success', 'product', 'finance')),
+  key         text not null check (key in ('inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance')),
   -- Part of the company's plan. Off: hidden everywhere, its boards kept.
   enabled     boolean not null default true,
   position    int not null default 0,
@@ -78,7 +80,8 @@ language sql stable security definer set search_path = public, pg_temp as $$
   select d.id from departments d join orgs o on o.id = d.org_id
    where d.org_id = p_org
    order by (d.key = case
-               when o.template in ('sales', 'marketing') then 'sales'
+               when o.template = 'sales' then 'sales'
+               when o.template = 'marketing' then 'inside_sales'
                when o.template in ('product', 'it') then 'product'
                when o.template = 'finance' then 'finance'
                else 'success' end) desc,
@@ -106,7 +109,8 @@ language plpgsql security definer set search_path = public, pg_temp as $$
 begin
   -- Finance's band on the customer page (money owed, invoices) is Finance's own until an administrator widens it.
   insert into departments (org_id, key, position, band_view)
-  values (new.id, 'sales', 0, null), (new.id, 'success', 1, null), (new.id, 'product', 2, null), (new.id, 'finance', 3, array['finance'])
+  values (new.id, 'inside_sales', 0, null), (new.id, 'sales', 1, null), (new.id, 'onboarding', 2, null),
+         (new.id, 'success', 3, null), (new.id, 'product', 4, null), (new.id, 'finance', 5, array['finance'])
   on conflict do nothing;
   return new;
 end
@@ -307,7 +311,7 @@ alter policy tasks_insert on tasks with check (
 
 insert into departments (org_id, key, position, band_view)
 select o.id, k.key, k.position, case when k.key = 'finance' then array['finance'] end from orgs o
- cross join (values ('sales', 0), ('success', 1), ('product', 2), ('finance', 3)) as k (key, position)
+ cross join (values ('inside_sales', 0), ('sales', 1), ('onboarding', 2), ('success', 3), ('product', 4), ('finance', 5)) as k (key, position)
 on conflict do nothing;
 
 -- 1. Every board to a department, with the reason.
@@ -317,13 +321,15 @@ select b.id as board_id, b.org_id,
          when b.pm_enabled is true or exists (select 1 from sprints s where s.board_id = b.id) then 'product'
          when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(financ|finans|fatura|invoice|billing|muhasebe|accounting|tahsilat|collection|payment|ödeme|odeme|مالي|فاتور|محاسب|כספ|חשבונ|財務|财务|会計|経理|請求|发票|發票|재무|회계|청구)' then 'finance'
          when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(product|ürün|urun|sprint|roadmap|backlog|engineering|geliştirme|gelistirme|release|bug|منتج|محصول|מוצר|製品|产品|產品|プロダクト|제품|스프린트)' then 'product'
-         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(sales|satış|satis|deal|pipeline|fırsat|firsat|prospect|مبيع|فروش|מכיר|営業|销售|銷售|商談|영업|세일즈)' then 'sales'
-         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(success|başarı|basari|onboarding|customer|müşteri|musteri|support|destek|renewal|yenileme|account|نجاح|عملاء|موفقیت|הצלח|לקוח|成功|サクセス|고객)' then 'success'
+         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(onboarding|kurulum|devreye|implementation|go-live|تهيئة|راه‌اندازی|הטמעה|入职|導入|オンボーディング|온보딩)' then 'onboarding'
+         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(inside sales|inside-sales|sdr|bdr|lead|outbound|prospect|cold call|iç satış|ön satış|مبيعات داخلية|عملاء محتملين|سرنخ|לידים|潜在客户|潛在客戶|インサイドセールス|リード|인사이드 세일즈|리드)' then 'inside_sales'
+         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(sales|satış|satis|deal|pipeline|fırsat|firsat|proposal|teklif|مبيع|فروش|מכיר|営業|销售|銷售|商談|영업|세일즈)' then 'sales'
+         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(success|başarı|basari|customer|müşteri|musteri|support|destek|ticket|talep|renewal|yenileme|account|escalation|نجاح|عملاء|دعم|موفقیت|پشتیبانی|הצלח|לקוח|תמיכה|成功|支持|支援|サクセス|サポート|고객|지원)' then 'success'
          else null
        end as key,
        case
          when b.pm_enabled is true or exists (select 1 from sprints s where s.board_id = b.id) then 'sprints'
-         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(financ|finans|fatura|invoice|billing|muhasebe|accounting|tahsilat|collection|payment|ödeme|odeme|مالي|فاتور|محاسب|כספ|חשבונ|財務|财务|会計|経理|請求|发票|發票|재무|회계|청구|product|ürün|urun|sprint|roadmap|backlog|engineering|geliştirme|gelistirme|release|bug|منتج|محصول|מוצר|製品|产品|產品|プロダクト|제품|스프린트|sales|satış|satis|deal|pipeline|fırsat|firsat|prospect|مبيع|فروش|מכיר|営業|销售|銷售|商談|영업|세일즈|success|başarı|basari|onboarding|customer|müşteri|musteri|support|destek|renewal|yenileme|account|نجاح|عملاء|موفقیت|הצלח|לקוח|成功|サクセス|고객)' then 'name'
+         when lower(b.name || ' ' || coalesce(t.name, '')) ~ '(financ|finans|fatura|invoice|billing|muhasebe|accounting|tahsilat|collection|payment|ödeme|odeme|مالي|فاتور|محاسب|כספ|חשבונ|財務|财务|会計|経理|請求|发票|發票|재무|회계|청구|product|ürün|urun|sprint|roadmap|backlog|engineering|geliştirme|gelistirme|release|bug|منتج|محصول|מוצר|製品|产品|產品|プロダクト|제품|스프린트|onboarding|kurulum|devreye|implementation|go-live|تهيئة|راه‌اندازی|הטמעה|入职|導入|オンボーディング|온보딩|inside sales|inside-sales|sdr|bdr|lead|outbound|prospect|cold call|iç satış|ön satış|مبيعات داخلية|عملاء محتملين|سرنخ|לידים|潜在客户|潛在客戶|インサイドセールス|リード|인사이드 세일즈|리드|sales|satış|satis|deal|pipeline|fırsat|firsat|proposal|teklif|مبيع|فروش|מכיר|営業|销售|銷售|商談|영업|세일즈|success|başarı|basari|customer|müşteri|musteri|support|destek|ticket|talep|renewal|yenileme|account|escalation|نجاح|عملاء|دعم|موفقیت|پشتیبانی|הצלח|לקוח|תמיכה|成功|支持|支援|サクセス|サポート|고객|지원)' then 'name'
          else 'company'
        end as reason
   from boards b left join teams t on t.id = b.team_id;

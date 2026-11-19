@@ -89,8 +89,13 @@ export const VISIBILITIES = ['org', 'team', 'private'] as const;
 /** Inside a department: 'org' = everyone in the board's department, 'team' = one team, 'private' = the people named. */
 export type Visibility = (typeof VISIBILITIES)[number];
 
-/** The four departments a company can work in, in the order a customer meets them. */
-export const DEPARTMENT_KEYS = ['sales', 'success', 'product', 'finance'] as const;
+/**
+ * The departments a company can work in, in the order a customer meets them:
+ * Inside Sales → Sales → Onboarding (optional; skipped, a won deal goes straight to
+ * Customer Success) → Customer Success & Support (tickets live here). Product and
+ * Finance are linked to all of them. See shared/src/departments.ts for the flow.
+ */
+export const DEPARTMENT_KEYS = ['inside_sales', 'sales', 'onboarding', 'success', 'product', 'finance'] as const;
 export type DepartmentKey = (typeof DEPARTMENT_KEYS)[number];
 export type DepartmentRole = 'lead' | 'member';
 /** A field rule naming a department instead of a role ("dept:finance"). */

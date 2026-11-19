@@ -5249,7 +5249,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'analytics.rowsN': "{n} صف",
   // Departments (Sales, Customer Success, Product, Finance).
   'dept.sales': "المبيعات",
-  'dept.success': "نجاح العملاء",
+  'dept.success': "نجاح العملاء والدعم",
   'dept.product': "المنتج",
   'dept.finance': "المالية",
   'nav.dept.lead': "أنت القائد",
@@ -5307,7 +5307,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'fields.access.departments': "الأقسام",
   'settings.tab.departments': "الأقسام",
   'settings.about.departments': "الأقسام لديك وقادتها وأعضاؤها ومن يرى ماذا",
-  'settings.find.departments': "مبيعات نجاح العملاء منتج مالية قائد أعضاء خطة",
+  'settings.find.departments': "مبيعات داخلية تهيئة نجاح العملاء دعم تذاكر منتج مالية قائد أعضاء خطة",
   'audit.department.updated': "غيّر قسمًا",
   'audit.department.member_set': "أضاف شخصًا إلى قسم",
   'audit.department.member_removed': "أزال شخصًا من قسم",
@@ -5320,4 +5320,16 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'dept.demo.ask': "تصدير جماعي لتقارير الاستخدام",
   'dept.demo.build': "استيراد أسرع للملفات الكبيرة",
   'dept.demo.invoice': "مسودة فاتورة للتجديد",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.demo.csAsk': "طلب العميل تصديرًا جماعيًا",
+  // Departments (Sales, Customer Success, Product, Finance).
+  'dept.settings.bandChosen': "أقسام محددة",
+  'dept.inside_sales': "المبيعات الداخلية",
+  'dept.onboarding': "التهيئة",
+  'dept.tpl.leads': "تأهيل العملاء المحتملين",
+  'dept.tpl.contacted': "تم التواصل",
+  'dept.tpl.qualified': "مؤهل",
+  'dept.tpl.notFit': "غير مناسب",
+  'dept.demo.lead': "عميل محتمل وارد: شركة لوجستية، 40 مقعدًا",
+  'dept.demo.onboard': "اجتماع الانطلاق واستيراد البيانات",
 };
