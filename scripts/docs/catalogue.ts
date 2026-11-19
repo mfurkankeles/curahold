@@ -437,7 +437,7 @@ export const INTERNAL: Record<string, Pair> = {
   setup: ['The first-time setup of a company.', 'Şirketin ilk kurulumu.'],
   admin: ['Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them.', 'Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez.'],
   org: ['The company\'s public sign-in details.', 'Şirketin herkese açık oturum açma bilgileri.'],
-  billing: ['Plan and payment, with the payment provider.', 'Plan ve ödeme; ödeme sağlayıcısıyla.'],
+  billing: ['Plan and payment (one path, ADR 0019): where the company stands with usage against its plan limits, checkout, plan change, portal, leaving and resuming, billing details. Paddle\'s signed notifications arrive at `POST /api/inbound/billing/paddle`.', 'Plan ve ödeme (tek yol, ADR 0019): şirketin durumu ve plan sınırlarına göre kullanımı, ödeme, plan değişikliği, portal, ayrılma ve devam etme, fatura bilgileri. Paddle\'ın imzalı bildirimleri `POST /api/inbound/billing/paddle` adresine gelir.'],
   connect: ['Starting a connection to a CRM or chat app: a person approves it in the browser.', 'Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar.'],
   connections: ['Managing connections and their field matching: an administrator in the browser.', 'Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici.'],
   hooks: ['Chat apps and calendars calling back.', 'Sohbet uygulamalarının ve takvimlerin geri çağrıları.'],

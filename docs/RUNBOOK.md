@@ -52,7 +52,7 @@ Verify after deploy (5 minutes):
 5. Look at `GET /api/admin/errors` (an admin session; there is no screen for it yet) or the `error_log` table for a new error spike.
 
 Not deployed by this repo: DNS (`*.curahold.com`, `app.`, `desk.`, portal domain), Cloudflare Email Routing for the support
-reply domain, Paddle notification destination (`https://app.<domain>/api/billing/webhook`, `subscription.*` events),
+reply domain, Paddle notification destination (`https://app.<domain>/api/inbound/billing/paddle`, `subscription.*` and `transaction.*` events),
 Supabase project settings. They are one-time setup; see README "Deploying".
 
 First-time setup order (new environment): Supabase EU project -> `npm run migrate` -> minimal login role (README "Database
@@ -229,7 +229,7 @@ Leave Cloudflare's managed robots.txt **off**: the site and the Worker serve the
 **3. Bot Fight Mode.** Security → **Settings** → filter **Bot traffic** → **Bot fight mode** → On, on
 `curahold-portal.com` (browsers only). On `curahold.com` turn it on, then watch Security → **Analytics** for 48 hours:
 it cannot be skipped per path, and it may challenge API calls with keys, inbound webhooks (`/api/hooks/*`,
-`/api/inbound/*`, `/api/billing/webhook`) and the AI connector. If any of those are challenged, turn it **off** on
+`/api/inbound/*`, including the Paddle webhook, and the older `/api/billing/webhook`) and the AI connector. If any of those are challenged, turn it **off** on
 `curahold.com` and rely on steps 2, 4 and 5 (the code's limits and robot rules do the same work per path).
 
 **4. WAF custom rules (free plan: 5).** Security → **Security rules** → **Create rule** → **Custom rules**.

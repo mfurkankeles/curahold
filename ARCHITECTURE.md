@@ -59,7 +59,7 @@ flowchart LR
   W --> RELAY --> CRM
   W --> MAIL
   W --> LLM
-  PAD -->|"webhook /api/billing/webhook"| W
+  PAD -->|"webhook /api/inbound/billing/paddle"| W
   W <--> IDP
 ```
 

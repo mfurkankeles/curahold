@@ -27,7 +27,7 @@ and QUALITY.md disagree, QUALITY.md's dated decision is the source and the ADR n
 | [0016](0016-preview-build-limits.md) | Static previews of docs and demo fit the preview host's file limits | Accepted |
 | [0017](0017-trial-by-request-three-months.md) | "Try it free" is a request the operator approves; trials last three months | Accepted |
 | [0018](0018-product-mail-through-workspace-relay.md) | Product e-mail through the Google Workspace SMTP relay | Accepted |
-| [0019](0019-one-billing-path-proposed.md) | Billing has one system of record: the subscriptions table | Proposed |
+| [0019](0019-one-billing-path.md) | Billing has one system of record: the subscriptions table, one code path | Accepted |
 
 0008-0019 were recorded on 19 November 2026 from the code and the dated decisions of 15-19 November, during the
 handover audit. They give product and engineering reasons only.
