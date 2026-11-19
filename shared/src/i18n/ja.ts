@@ -5462,6 +5462,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'assist.settings.usage': "今月：質問 {n} 件、うち AI が回答 {m} 件、約 {cost}。",
   'assist.settings.unavailable': "このインストールでは AI 回答が設定されていないため、CuraAI はドキュメント検索を使います。",
   'assist.settings.saved': "保存しました。",
+  'assist.settings.offNotice': "AI による回答は、管理者がオンにするまでオフです。オンの間は、各質問と回答に必要な最小限の文脈が当社の AI プロバイダー（「再委託先」に記載）に送られます。AI モデルの学習には一切使われません。",
   'assist.portal.title': "質問する",
   'assist.portal.hello': "このポータルの使い方や、ご自身のリクエストについて質問できます。ヘルプページとここで見られる内容をもとに回答します。",
   'assist.portal.placeholder': "リクエストを承認するには？",

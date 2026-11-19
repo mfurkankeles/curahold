@@ -5462,6 +5462,7 @@ export const tr: Record<MessageKey, string> = {
   'assist.settings.usage': "Bu ay: {n} soru, {m} tanesi yapay zekâyla cevaplandı, yaklaşık {cost}.",
   'assist.settings.unavailable': "Bu kurulumda yapay zekâ cevapları ayarlanmamış, bu yüzden CuraAI belge aramasını kullanıyor.",
   'assist.settings.saved': "Kaydedildi.",
+  'assist.settings.offNotice': "Yapay zekâ cevapları bir yönetici açana kadar kapalıdır. Açıkken her soru ve cevap için gereken en az bağlam yapay zekâ sağlayıcımıza (Alt işleyenler listesinde) gönderilir. Hiçbir şey yapay zekâ modellerini eğitmek için kullanılmaz.",
   'assist.portal.title': "Soru sor",
   'assist.portal.hello': "Bu portalın nasıl kullanıldığını ya da taleplerini sor: yardım sayfalarından ve burada görebildiklerinden cevap veririm.",
   'assist.portal.placeholder': "Bir talebi nasıl onaylarım?",

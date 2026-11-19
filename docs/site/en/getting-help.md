@@ -102,7 +102,7 @@ If your organisation needs to tell its own people about this in a privacy notice
 
 1. Open **Settings → Support access** and scroll to **AI assistant**.
    ![The AI assistant settings, ringed](img/ai-settings.webp)
-2. Tick **Answer with AI** to let CuraAI answer with AI, or untick it to answer with the docs search alone, at no cost. What CuraAI reads is never used to train AI models.
+2. Tick **Answer with AI** to let CuraAI answer with AI, or untick it to answer with the docs search alone, at no cost. What CuraAI reads is never used to train AI models. A new company starts with it **off**: nothing is sent to the AI provider until an administrator ticks it, and the card says so while it is off.
    ![The Answer with AI box, ringed](img/ai-switch.webp)
 
 On the same card:

@@ -108,7 +108,8 @@ async function envFor(
   opts: { surface: AssistSurface; locale: Locale; org: OrgRow | null; userId: string | null; limited: boolean; who?: AssistEnv['who']; live?: AssistEnv['live'] },
 ): Promise<AssistEnv> {
   const config = assistantConfig(deps);
-  const settings = opts.org ? settingsOf(assistantSettingsOf(opts.org), config) : settingsOf({}, config);
+  // The public docs and site have no company: the installation's own switch (publicChat) decides there.
+  const settings = opts.org ? settingsOf(assistantSettingsOf(opts.org), config) : settingsOf({ enabled: true }, config);
   const { docs, version } = await docsOf(deps);
   return {
     config,

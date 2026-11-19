@@ -5477,6 +5477,7 @@ export const en = {
   'assist.settings.usage': "This month: {n} questions, {m} answered by AI, about {cost}.",
   'assist.settings.unavailable': "AI answers are not set up on this installation, so CuraAI uses the docs search.",
   'assist.settings.saved': "Saved.",
+  'assist.settings.offNotice': "AI answers are off until an administrator turns them on. When they are on, each question and the minimum context needed to answer it go to our AI provider (listed under Sub-processors). Nothing is used to train AI models.",
   'assist.portal.title': "Ask a question",
   'assist.portal.hello': "Ask how to use this portal, or about your requests: I answer from the help pages and what you can see here.",
   'assist.portal.placeholder': "How do I approve a request?",

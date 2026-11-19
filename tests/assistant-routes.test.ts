@@ -80,6 +80,32 @@ describe('CuraAI in the app', () => {
     await ada.put('/api/assist/settings', { enabled: true });
   });
 
+  it('a new company starts with AI answers off, and the 0240 migration switches existing ones off (the demo stays on)', async () => {
+    const { createOrg } = await import('../api/src/lib/orgs');
+    const { readFileSync } = await import('node:fs');
+    const made = await createOrg(env.db, { slug: 'freshco', name: 'Fresh Co', locale: 'en', admin: { email: 'fresh@demo.example', name: 'Fresh Admin' } });
+    const orgId = made.orgId;
+    const fresh = await login(env, 'freshco', 'fresh@demo.example');
+    expect((await fresh.get('/api/assist/status')).json.available).toBe(false);
+    expect((await fresh.get('/api/assist/settings')).json.settings.enabled).toBe(false);
+    // The migration over a copy of the state: a stored true (written by an old card) goes off; slug 'demo' is kept.
+    const sql = readFileSync(new URL('../db/migrations/0240_assistant_default_off.sql', import.meta.url), 'utf8');
+    // Inside one transaction that is rolled back, so the other tests keep their companies as they were.
+    let seen: Record<string, string | null> = {};
+    await env.db
+      .system(async (q) => {
+        await q.query(`update orgs set settings = settings || '{"assistant":{"enabled":true}}'::jsonb where id = $1`, [orgId]);
+        await q.query(`update orgs set slug = 'demo' where slug = 'beta'`);
+        await q.query(sql);
+        const rows = await q.query<{ slug: string; on: string | null }>(`select slug, settings->'assistant'->>'enabled' as on from orgs where slug in ('freshco', 'demo', 'acme')`);
+        seen = Object.fromEntries(rows.map((r) => [r.slug, r.on]));
+        throw new Error('roll back');
+      })
+      .catch((e: Error) => expect(e.message).toBe('roll back'));
+    expect(seen).toEqual({ freshco: 'false', acme: 'false', demo: 'true' });
+    expect((await ada.get('/api/assist/settings')).json.settings.enabled).toBe(true);
+  });
+
   it('keeps the questions in the company’s log, readable by the person who asked', async () => {
     const rows = await env.db.system((q) => q.query(`select l.question, u.email from assistant_log l join users u on u.id = l.user_id`));
     expect(rows.some((r) => r.email === 'ada@demo.example' && r.question === 'Which customers are called Wall Test?')).toBe(true);

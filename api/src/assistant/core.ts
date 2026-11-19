@@ -39,7 +39,11 @@ import { ProviderError, type LlmBlock, type LlmMessage, type LlmProvider, type L
 
 /** What a company has chosen (orgs.settings.assistant). */
 export interface CompanyAssistSettings {
-  /** Answer with the model (default on). Off: the docs search answers. */
+  /**
+   * Answer with the model. Off until an administrator turns it on: the privacy
+   * notice and the DPA promise that nothing goes to the AI provider unless the
+   * company chose it (docs/site/<lang>/legal-privacy.md, migration 0220).
+   */
   enabled: boolean;
   /** USD a month for this company. */
   monthlyCapUsd: number;
@@ -56,7 +60,8 @@ export function settingsOf(raw: unknown, cfg: AssistantConfig): CompanyAssistSet
   const cap = Number(s.monthlyCapUsd);
   const days = Number(s.retentionDays);
   return {
-    enabled: s.enabled !== false,
+    // Only an explicit `true` counts: a company that never chose stays off (legal texts, L1 audit).
+    enabled: s.enabled === true,
     monthlyCapUsd: Number.isFinite(cap) && cap >= 0 ? Math.min(cap, cfg.companyMaxUsd) : cfg.companyMonthlyUsd,
     retentionDays: (RETENTION_CHOICES as readonly number[]).includes(days) ? days : 30,
     deskFirstReply: s.deskFirstReply === 'off' ? 'off' : 'note',

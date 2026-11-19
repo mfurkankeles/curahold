@@ -5462,6 +5462,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'assist.settings.usage': "本月：{n} 個問題，其中 {m} 個由 AI 回答，約 {cost}。",
   'assist.settings.unavailable': "此安裝未設定 AI 回答，因此 CuraAI 使用文件搜尋。",
   'assist.settings.saved': "已儲存。",
+  'assist.settings.offNotice': "在管理員開啟之前，AI 回答維持關閉。開啟後，每個問題以及回答所需的最少脈絡會傳送給我們的 AI 服務供應商（列於「次處理者」）。任何內容都不會用於訓練 AI 模型。",
   'assist.portal.title': "提問",
   'assist.portal.hello': "可以問我如何使用此入口網站，或詢問你的請求：我會根據說明頁面和你在這裡能看到的內容回答。",
   'assist.portal.placeholder': "如何核准一個請求？",

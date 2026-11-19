@@ -102,7 +102,7 @@ Kurumun kendi çalışanlarına bunu bir gizlilik bildiriminde anlatması gereki
 
 1. **Ayarlar → Destek erişimi**'ni aç ve **Yapay zekâ asistanı**'na kadar kaydır.
    ![Yapay zekâ asistanı ayarları işaretli](img/ai-settings.webp)
-2. CuraAI'nın yapay zekâyla cevap vermesi için **Yapay zekâ ile cevapla**'yı işaretle; yalnızca belge aramasıyla, ücretsiz cevap vermesi için işareti kaldır. CuraAI'nın okudukları hiçbir zaman yapay zekâ modellerini eğitmek için kullanılmaz.
+2. CuraAI'nın yapay zekâyla cevap vermesi için **Yapay zekâ ile cevapla**'yı işaretle; yalnızca belge aramasıyla, ücretsiz cevap vermesi için işareti kaldır. CuraAI'nın okudukları hiçbir zaman yapay zekâ modellerini eğitmek için kullanılmaz. Yeni bir şirkette bu kutu **kapalı** başlar: bir yönetici işaretleyene kadar yapay zekâ sağlayıcısına hiçbir şey gönderilmez; kapalıyken kart bunu açıkça yazar.
    ![Yapay zekâ ile cevapla kutusu işaretli](img/ai-switch.webp)
 
 Aynı kartta:

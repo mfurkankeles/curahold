@@ -5462,6 +5462,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'assist.settings.usage': "이번 달: 질문 {n}개, AI 답변 {m}개, 약 {cost}.",
   'assist.settings.unavailable': "이 설치에는 AI 답변이 설정되어 있지 않아 CuraAI가 문서 검색을 사용합니다.",
   'assist.settings.saved': "저장했습니다.",
+  'assist.settings.offNotice': "AI 답변은 관리자가 켤 때까지 꺼져 있습니다. 켜져 있으면 각 질문과 답변에 필요한 최소한의 맥락이 당사 AI 제공업체(하위 처리자 목록에 있음)로 전송됩니다. 어떤 내용도 AI 모델 학습에 쓰이지 않습니다.",
   'assist.portal.title': "질문하기",
   'assist.portal.hello': "이 포털 사용법이나 내 요청에 대해 물어보세요. 도움말 페이지와 여기서 볼 수 있는 내용으로 답해 드려요.",
   'assist.portal.placeholder': "요청은 어떻게 승인하나요?",

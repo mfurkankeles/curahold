@@ -5462,6 +5462,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'assist.settings.usage': "החודש: {n} שאלות, {m} נענו בבינה מלאכותית, בעלות של כ-{cost}.",
   'assist.settings.unavailable': "תשובות בינה מלאכותית לא הוגדרו בהתקנה זו, ולכן CuraAI משתמש בחיפוש בתיעוד.",
   'assist.settings.saved': "נשמר.",
+  'assist.settings.offNotice': "תשובות ה-AI כבויות עד שמנהל מפעיל אותן. כשהן פועלות, כל שאלה וההקשר המינימלי הנדרש לתשובה נשלחים לספק ה-AI שלנו (מופיע ברשימת מעבדי המשנה). שום דבר לא משמש לאימון מודלים של AI.",
   'assist.portal.title': "שאל שאלה",
   'assist.portal.hello': "שאל איך להשתמש בפורטל הזה או על הפניות שלך: אני עונה מדפי העזרה וממה שאתה רואה כאן.",
   'assist.portal.placeholder': "איך מאשרים פנייה?",
