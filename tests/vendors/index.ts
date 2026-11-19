@@ -2,9 +2,11 @@
 // and one entry below; tests/integrations-onboarding.test.ts and scripts/integrations/onboard.ts pick it up.
 import { bitrix24Mock } from './bitrix24';
 import type { VendorMock } from './kit';
+import { hubspotMock } from './hubspot';
+import { odooMock } from './odoo';
 import { salesforceMock } from './salesforce';
 
-export const VENDOR_MOCKS: VendorMock[] = [salesforceMock, bitrix24Mock];
+export const VENDOR_MOCKS: VendorMock[] = [salesforceMock, hubspotMock, bitrix24Mock, odooMock];
 
 /**
  * Latency per call used by the timed runner, in ms: an assumed median answer time for a hosted REST API

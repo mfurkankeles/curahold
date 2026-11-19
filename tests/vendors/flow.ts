@@ -214,3 +214,82 @@ export async function runFlow(http: Http, world: VendorWorld, spec: FlowSpec) {
 
   return { steps, connectedMs, firstDataMs };
 }
+
+/**
+ * An accounting program (read only): connect → first read → the matches the admin checks → the money on a
+ * customer's page → rate limit → withdrawn access → reconnect → disconnect (the money goes, the customer stays).
+ */
+export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { provider: string; customer: string }) {
+  const steps: Step[] = [];
+  const mock = world.mock(spec.provider);
+  mock.reset();
+  world.clear(spec.provider);
+  let id = '';
+  const t0 = Date.now();
+  const step = async (name: string, fn: () => Promise<boolean | string>) => {
+    const s = Date.now();
+    let r: boolean | string = false;
+    try {
+      r = await fn();
+    } catch (e) {
+      r = (e as Error).message.slice(0, 200);
+    }
+    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
+  };
+  const runNow = async () => (await http.post(`/api/connections/${id}/sync/run`, {})).json?.run;
+  const customer = async () => ((await http.get(`/api/accounts?q=${encodeURIComponent(spec.customer)}`)).json.accounts as any[]).find((a) => a.name === spec.customer);
+
+  await step('find', async () => ((await http.get('/api/connections')).json.providers.find((x: any) => x.id === spec.provider)?.available ? true : 'not offered'));
+  await step('connect', async () => {
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    if (r.status >= 300) return `refused ${r.status}`;
+    id = r.json.id;
+    return true;
+  });
+  const connectedMs = Date.now() - t0;
+  let firstDataMs: number | null = null;
+  await step('first-read', async () => {
+    const run = await runNow();
+    firstDataMs = Date.now() - t0;
+    return run?.status === 'ok' ? true : `run ${run?.status} ${JSON.stringify(run?.errors).slice(0, 200)}`;
+  });
+  await step('matches', async () => {
+    const r = (await http.get(`/api/connections/${id}/finance/matches?show=all`)).json;
+    return r.counts?.matched >= 1 ? true : `nothing matched: ${JSON.stringify(r.counts)}`;
+  });
+  await step('money-on-customer', async () => {
+    const c = await customer();
+    const f = (await http.get(`/api/accounts/${c.id}/finance`)).json.finance;
+    return f ? true : 'no money on the customer page';
+  });
+  await step('rate-limit', async () => {
+    world.arm(spec.provider, 'ratelimit');
+    http.advance(3_600_000);
+    const run = await runNow();
+    world.clear(spec.provider);
+    const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
+    return run?.status !== 'error' && conn.status !== 'error' ? true : `rate limit: run ${run?.status}, connection ${conn.status}`;
+  });
+  await step('revoked', async () => {
+    world.arm(spec.provider, 'revoked');
+    http.advance(3_600_000);
+    await runNow();
+    const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
+    return conn.status === 'error' ? true : `withdrawn key not shown as a problem (${conn.status})`;
+  });
+  await step('reconnect', async () => {
+    world.clear(spec.provider);
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    if (r.json?.id !== id) return 'reconnect made a second connection';
+    await runNow();
+    return (await http.get(`/api/connections/${id}/sync`)).json.connection.status !== 'error' ? true : 'still broken';
+  });
+  await step('disconnect', async () => {
+    const c = await customer();
+    if ((await http.del(`/api/connections/${id}`)).status !== 200) return 'disconnect refused';
+    if (!(await customer())) return 'customer removed';
+    const f = (await http.get(`/api/accounts/${c.id}/finance`)).json.finance;
+    return f ? 'money from the program still shown after disconnect' : true;
+  });
+  return { steps, connectedMs, firstDataMs };
+}
