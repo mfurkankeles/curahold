@@ -66,6 +66,7 @@ import { identityRoutes } from './routes/identity';
 import { securityTxt } from './routes/securitytxt';
 import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
+import { analyticsRoutes, feedChallenge, feedCredential, isFeed } from './routes/analytics';
 import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
 import { assistPublicRoutes, assistRoutes } from './routes/assist';
@@ -167,6 +168,7 @@ export function createApp(deps: Deps) {
     if (isWrite(m)) checks.push([`write:${who}`, 'write']);
     if (isSearch(m, p)) checks.push([`search:${who}`, 'search']);
     if (isExport(m, p, new URL(c.req.url))) checks.push([`export:${who}`, 'export']);
+    if (isFeed(p)) checks.push([`analytics:${org.id}:${auth.sessionId}`, 'analytics']);
     const invite = isInvite(m, p);
     if (invite) checks.push([`invite:${who}`, 'invite'], [`invite-org:${org.id}`, 'inviteCompany']);
     const wait = takeAll(limiter, scale, checks);
@@ -301,11 +303,17 @@ export function createApp(deps: Deps) {
   // ---------------------------------------------------------------- person
   app.use('/api/*', async (c, next) => {
     const token = getCookie(c, SESSION_COOKIE);
-    const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1];
+    // The analytics feed also takes a key as a Basic password or in its address: what BI tools can send.
+    const feed = isFeed(c.req.path);
+    const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1] ?? (feed ? feedCredential(c) : undefined);
+    if (feed && !token && !bearer) return feedChallenge(c);
     if (!token && bearer) {
       // An API key or an app's token: it acts as its owner, read only unless allowed to write.
-      const t = await resolveToken(deps.db, c.get('org').id, bearer);
+      const t = await resolveToken(deps.db, c.get('org').id, bearer, { analytics: feed });
+      if (!t && feed) return feedChallenge(c);
       if (!t) fail('unauthenticated');
+      // An analytics key opens the analytics feed and nothing else.
+      if (t!.kind === 'analytics' && !feed) fail('forbidden');
       if (!t!.canWrite && c.req.method !== 'GET' && c.req.method !== 'HEAD') fail('read_only_token');
       const u = t!.user;
       c.set('auth', {
@@ -320,6 +328,7 @@ export function createApp(deps: Deps) {
         locale: u.locale ? normalizeLocale(u.locale) : null,
       });
       c.set('tokenKind', t!.kind);
+      if (t!.scope) c.set('analyticsScope', t!.scope);
       if (u.locale && !c.req.header('x-curahold-locale')) c.set('locale', normalizeLocale(u.locale));
       await next();
       return;
@@ -428,6 +437,7 @@ export function createApp(deps: Deps) {
   app.route('/api', reportRoutes);
   app.route('/api', builderRoutes);
   app.route('/api', exportRoutes);
+  app.route('/api', analyticsRoutes);
   app.route('/api', accountRoutes);
   app.route('/api', recordRoutes);
   app.route('/api', pageRoutes);

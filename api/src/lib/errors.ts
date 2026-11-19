@@ -87,6 +87,8 @@ export type ErrorCode =
   | 'second_step_setup_first'
   | 'passkey_failed'
   | 'staff_second_step'
+  | 'analytics_query'
+  | 'analytics_budget'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -182,6 +184,9 @@ const STATUS: Record<ErrorCode, number> = {
   passkey_failed: 400,
   // Curahold staff open the platform console only after a second step (lib/platform.ts).
   staff_second_step: 403,
+  // The analytics feed (routes/analytics.ts): a query it cannot read, and the company's daily row budget.
+  analytics_query: 400,
+  analytics_budget: 429,
 };
 
 export class HttpError extends Error {

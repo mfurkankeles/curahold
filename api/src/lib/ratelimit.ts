@@ -60,6 +60,8 @@ export const BUDGETS = {
   search: { cap: 60, perSec: 2 },
   /** Exports: every file made from a list or report (POST /exports), deep pages of a list, personal-data and audit exports. */
   export: { cap: 30, perSec: 1 / 4 },
+  /** The analytics feed, per key (or per signed-in person): a BI refresh pages quickly, but not without end. */
+  analytics: { cap: 120, perSec: 2 },
   /** The AI connector, per connection. */
   mcp: { cap: 60, perSec: 1 },
   /** The AI connector, per company. */

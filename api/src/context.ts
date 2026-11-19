@@ -183,7 +183,9 @@ export type AppEnv = {
     /** Curahold support, inside with a person's consent (see lib/support.ts). */
     supportBy?: { staff: string; level: 'view' | 'edit'; until: string; grantId: string };
     /** Set when the caller is an API key or an app's token rather than a signed-in browser. */
-    tokenKind?: 'key' | 'oauth';
+    tokenKind?: 'key' | 'oauth' | 'analytics';
+    /** An analytics key's own limits (datasets, departments); see routes/analytics.ts. */
+    analyticsScope?: { datasets: string[] | null; departments: string[] | null };
     /** The key of a change that must happen once (lib/repeats.ts); claimed by the request's first transaction. */
     repeat?: RepeatKey;
     /** This app, for calling its own routes (the AI connector uses the same API as the app). */

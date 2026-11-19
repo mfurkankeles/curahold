@@ -1,6 +1,6 @@
 // Field-level permission, every way out. A field one role may not see stays out of
 // everything that reaches that role: the list and one customer (tests/views.test.ts),
-// reports (tests/report-builder.test.ts), and here: export pages, the export file, search, an API key,
+// reports (tests/report-builder.test.ts), and here: export pages, the export file, the analytics feed, search, an API key,
 // the AI connector, webhooks (as their creator may see), the health "why", the
 // timeline, the weekly summary email, and the whitespace table.
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -51,6 +51,21 @@ describe('a field hidden from a role', () => {
     expect(has(lenaCsv.json)).toBe(false);
     // The same file for a role that may see it carries it (the test reads what it thinks it reads).
     expect(has((await mert.post('/api/exports', { source: 'accounts', format: 'csv', q: 'Cedarmoor' })).json)).toBe(true);
+    await env.db.system((q) => q.query(`update roles set perms = array_remove(perms, 'data.export') where org_id = $1 and key = 'member'`, [env.a.orgId]));
+  });
+
+  it('stays out of the analytics feed: not a column in $metadata, not a value in any face', async () => {
+    await env.db.system((q) => q.query(`update roles set perms = perms || '{data.export}' where org_id = $1 and key = 'member'`, [env.a.orgId]));
+    const made = await lena.post('/api/dev/analytics/keys', { name: 'BI' });
+    expect(made.status).toBe(201);
+    const read = async (token: string, path: string) =>
+      (await env.app.request(`https://acme.${BASE}${path}`, { headers: { authorization: `Basic ${btoa(`bi:${token}`)}` } })).text();
+    const paths = ['/api/analytics/odata/$metadata', '/api/analytics/odata/Customers', '/api/analytics/odata/Renewals', '/api/analytics/v1/Customers.csv', '/api/analytics/v1/'];
+    for (const p of paths) expect(has(await read(made.json.token, p)), p).toBe(false);
+    expect(await read(made.json.token, '/api/analytics/odata/$metadata')).not.toContain('Name="Arr"');
+    // The same feed for a role that may see the field carries it.
+    const mertKey = (await mert.post('/api/dev/analytics/keys', { name: 'BI' })).json.token;
+    expect(has(await read(mertKey, '/api/analytics/odata/Customers'))).toBe(true);
     await env.db.system((q) => q.query(`update roles set perms = array_remove(perms, 'data.export') where org_id = $1 and key = 'member'`, [env.a.orgId]));
   });
 

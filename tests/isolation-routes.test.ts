@@ -39,6 +39,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/boards\/:id/, 'boards'],
   [/^\/reports\/saved\/:id/, 'reports'],
   [/^\/connections\/:id/, 'connections'],
+  [/^\/dev\/analytics\/keys\/:id/, 'api_tokens'],
   [/^\/dev\/keys\/:id/, 'api_tokens'],
   [/^\/dev\/webhooks\/:id/, 'webhooks'],
   [/^\/(help\/files|help-files)\/:id/, 'help_files'],
@@ -64,6 +65,9 @@ const KINDS: [RegExp, string, string?][] = [
 
 /** Addresses whose parameter is not the id of something a company owns; each with the reason it is not tried here. */
 const NOT_BY_ID: Record<string, string> = {
+  'GET /analytics/odata/:set': 'the name of a dataset of the analytics feed, read inside the caller’s own company (tests/analytics.test.ts)',
+  'GET /analytics/odata/:set/:sub': 'a dataset name and $count, inside the caller’s own company (tests/analytics.test.ts)',
+  'GET /analytics/v1/:file': 'a dataset file name (Tasks.json), inside the caller’s own company (tests/analytics.test.ts)',
   'DELETE /me/security/passkeys/:id': 'one of the caller’s own passkeys, matched by company and person in the statement (tests/identity.test.ts)',
   'POST /inbound/dev/:provider': 'the name of a code host, opened with that company’s own signed webhook (tests/jira.test.ts)',
   'POST /dev-hooks/:provider': 'the name of a code host, for the caller’s own company (tests/jira.test.ts)',
@@ -295,6 +299,8 @@ const POLICY: [RegExp, string[], ('GET' | 'WRITE' | 'ALL')?][] = [
   [/^\/admin\/audit/, ['audit.view', 'org.manage']],
   [/^\/sso\/settings/, ['org.manage']],
   [/^\/dev\/webhooks|^\/dev\/inbound/, ['connections.manage']],
+  // The analytics feed and what it offers: the export permission, as for every file (routes/analytics.ts).
+  [/^\/analytics\/|^\/dev\/analytics\/datasets/, ['data.export'], 'ALL'],
   // Reading a connection's details needs the permission; its channel list does not (a board owner picks a channel).
   [/^\/connections\/:id(?!\/channels$)/, ['connections.manage'], 'ALL'],
   [/^\/connections/, ['connections.manage'], 'WRITE'],
