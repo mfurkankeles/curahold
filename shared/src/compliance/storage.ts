@@ -336,6 +336,8 @@ export const STORAGE: StorageItem[] = [
   // ---- preferences, set by the person's own action (no consent: KVKK cookie guide; ePrivacy art. 5(3) "strictly necessary for a service explicitly requested")
   { name: 'app_locale', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ALL_APP },
   { name: 'app_locale_hint', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ALL_APP },
+  { name: 'app_portal_locale', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ['portal'] },
+  { name: 'app_portal_welcomed', type: 'localStorage', category: 'preferences', purpose: 'prefs', duration: { kind: 'cleared' }, surfaces: ['portal'] },
   ...(
     [
       'app_theme',

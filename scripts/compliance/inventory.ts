@@ -26,7 +26,7 @@ import { PURPOSES, STORAGE, nameMatches, needsConsent, type StorageItem, type St
 import { COOKIE_PAGE } from '../../shared/src/compliance/cookieText';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-export const BROWSER_DIRS = ['web/src', 'web/public', 'site', 'docs/site/assets', 'shared/src/consent'];
+export const BROWSER_DIRS = ['web/src', 'web/portal', 'web/public', 'site', 'docs/site/assets', 'shared/src/consent'];
 export const SERVER_DIRS = ['api/src'];
 const CODE = /\.(ts|tsx|js|mjs)$/;
 

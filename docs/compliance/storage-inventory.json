@@ -1,5 +1,5 @@
 {
-  "policyVersion": "2026-11-19.1",
+  "policyVersion": "2026-11-19.2",
   "date": "2026-11-19",
   "draft": "taslak — avukat onayı gerekli",
   "items": [
@@ -416,6 +416,56 @@
       "planned": null,
       "foundIn": [
         "web/src/lib/i18n.tsx"
+      ]
+    },
+    {
+      "name": "app_portal_locale",
+      "pattern": "app_portal_locale",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers the language you chose.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "portal"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/portal/Portal.tsx"
+      ]
+    },
+    {
+      "name": "app_portal_welcomed",
+      "pattern": "app_portal_welcomed",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "portal"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/portal/Portal.tsx"
       ]
     },
     {
