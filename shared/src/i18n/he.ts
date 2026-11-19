@@ -4787,6 +4787,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'settings.about.support': "הקלטת סשנים וגישת התמיכה של Curahold",
   'settings.about.audit': "כל שינוי חשוב: מי, מה ומתי",
   'settings.about.errors': "מה נשבר ב־30 הימים האחרונים, ואיפה",
+  'settings.help': "איך זה עובד",
   'settings.find.company': "שם לוגו מותג שפה אזור זמן מטבע מונחים כתובת סביבת עבודה",
   'settings.find.billing': "מנוי תוכנית תשלום חשבונית קבלה מושבים מחיר ביטול כרטיס מס",
   'settings.find.currencies': "שער חליפין כסף המרה יורו דולר",

@@ -4802,6 +4802,7 @@ export const en = {
   'settings.about.support': "Session recording and Curahold support access",
   'settings.about.audit': "Every important change: who, what and when",
   'settings.about.errors': "What broke in the last 30 days, and where",
+  'settings.help': "How this works",
   'settings.find.company': "name logo brand language time zone currency terms vocabulary address workspace",
   'settings.find.billing': "subscription plan payment invoice receipt seats price cancel card tax",
   'settings.find.currencies': "exchange rate money conversion euro dollar",

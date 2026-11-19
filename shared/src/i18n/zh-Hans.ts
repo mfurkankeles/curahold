@@ -4787,6 +4787,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'settings.about.support': "会话录制与 Curahold 支持访问",
   'settings.about.audit': "每一项重要变更：谁、做了什么、何时",
   'settings.about.errors': "过去 30 天里出了什么问题、在哪里",
+  'settings.help': "使用说明",
   'settings.find.company': "名称 标志 品牌 语言 时区 货币 称呼 地址 工作区",
   'settings.find.billing': "订阅 套餐 付款 发票 收据 席位 价格 取消 银行卡 税",
   'settings.find.currencies': "汇率 金额 换算 欧元 美元",

@@ -4787,6 +4787,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'settings.about.support': "セッション記録とCurahold サポートのアクセス",
   'settings.about.audit': "重要な変更のすべて：誰が、何を、いつ",
   'settings.about.errors': "過去30日間に何がどこで壊れたか",
+  'settings.help': "使い方",
   'settings.find.company': "名前 ロゴ ブランド 言語 タイムゾーン 通貨 用語 アドレス ワークスペース",
   'settings.find.billing': "サブスクリプション プラン 支払い 請求書 領収書 シート 価格 解約 カード 税",
   'settings.find.currencies': "為替レート お金 換算 ユーロ ドル",

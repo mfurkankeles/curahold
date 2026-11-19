@@ -4787,6 +4787,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'settings.about.support': "세션 기록과 Curahold 지원 접근",
   'settings.about.audit': "중요한 변경 사항: 누가, 무엇을, 언제",
   'settings.about.errors': "지난 30일 동안 무엇이 어디서 고장 났는지",
+  'settings.help': "사용 방법",
   'settings.find.company': "이름 로고 브랜드 언어 시간대 통화 용어 주소 워크스페이스",
   'settings.find.billing': "구독 요금제 결제 청구서 영수증 좌석 가격 해지 카드 세금",
   'settings.find.currencies': "환율 돈 환산 유로 달러",

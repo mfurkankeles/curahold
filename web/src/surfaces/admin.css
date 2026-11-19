@@ -28,6 +28,7 @@
 .admin__head { display: grid; gap: 4px; }
 .admin__title { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.01em; line-height: var(--lh-snug); }
 .admin__about { margin: 0; color: var(--ink-3); font-size: var(--fs-s); }
+.admin__help { white-space: nowrap; }
 
 /* One bar for unsaved changes, at the bottom of the topic, always in reach. */
 .admin__unsaved {

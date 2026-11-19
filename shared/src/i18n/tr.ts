@@ -4787,6 +4787,7 @@ export const tr: Record<MessageKey, string> = {
   'settings.about.support': "Oturum kaydı ve Curahold destek erişimi",
   'settings.about.audit': "Her önemli değişiklik: kim, ne, ne zaman",
   'settings.about.errors': "Son 30 günde neyin, nerede bozulduğu",
+  'settings.help': "Nasıl çalışır",
   'settings.find.company': "ad isim logo marka dil saat dilimi para birimi terimler kelime adres çalışma alanı",
   'settings.find.billing': "abonelik plan ödeme fatura makbuz koltuk fiyat iptal kart vergi",
   'settings.find.currencies': "kur döviz para çevirme euro dolar",

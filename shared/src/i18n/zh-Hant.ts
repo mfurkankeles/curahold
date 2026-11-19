@@ -4787,6 +4787,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'settings.about.support': "工作階段錄製與 Curahold 支援存取",
   'settings.about.audit': "每一項重要變更：誰、做了什麼、何時",
   'settings.about.errors': "過去 30 天裡出了什麼問題、在哪裡",
+  'settings.help': "使用說明",
   'settings.find.company': "名稱 標誌 品牌 語言 時區 貨幣 稱呼 地址 工作區",
   'settings.find.billing': "訂閱 方案 付款 發票 收據 席位 價格 取消 信用卡 稅",
   'settings.find.currencies': "匯率 金額 換算 歐元 美元",

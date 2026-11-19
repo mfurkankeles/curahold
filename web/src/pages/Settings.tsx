@@ -3,7 +3,9 @@
 import { DepartmentsTab } from '../components/Departments';
 import { Icon, PageIcon } from '../components/icons';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { accountWords, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { accountWords, helpLanguageOf, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
+import { SETTINGS_HELP } from '../../../shared/src/helpLinks';
+import { docsHref, docsLink } from '../lib/docs';
 import { LOGO_TYPES, MAX_LOGO_KB, type AdminUser, type AuditEntry, type JoinRequest, type Role, type SessionInfo } from '../../../shared/src/model';
 import { AccountFieldsEditor, RecordTypesEditor } from '../components/AccountFields';
 import { SourceDetail, Sources } from '../components/Sources';
@@ -47,7 +49,7 @@ import { AssistantSettings } from '../components/AssistantSettings';
 // left (with a search on top) and the topic on the right; a phone has the
 // list of topics at /settings and one topic per screen under it.
 export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: string }) {
-  const { t, words } = useI18n();
+  const { t, words, locale } = useI18n();
   const { can, me } = useStore();
   const phone = usePhone();
   const [q, setQ] = useState('');
@@ -190,7 +192,17 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                 <>
                   <header className="admin__head">
                     {!phone && <h2 className="admin__title">{currentLabel}</h2>}
-                    <p className="admin__about">{topicAbout(t, current)}</p>
+                    <p className="admin__about">
+                      {topicAbout(t, current)}
+                      {SETTINGS_HELP[current] && (
+                        <>
+                          {' · '}
+                          <a className="admin__help" href={`${docsHref(`${helpLanguageOf(locale)}/${SETTINGS_HELP[current].page}`)}${SETTINGS_HELP[current].anchor ? `#${SETTINGS_HELP[current].anchor}` : ''}`} {...docsLink}>
+                            {t('settings.help')}
+                          </a>
+                        </>
+                      )}
+                    </p>
                   </header>
                   <SetupWarnings path={sub ? `/settings/${current}/${sub}` : `/settings/${current}`} />
                   {current === 'company' && <CompanyTab />}
