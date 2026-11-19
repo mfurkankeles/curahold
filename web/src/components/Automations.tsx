@@ -18,6 +18,7 @@ import { useUndo } from '../lib/undo';
 import '../surfaces/admin.css';
 import { useTrashToast } from '../lib/trash';
 import { DateField } from './DateField';
+import { FlowSettingsCard } from './CustomerFlow';
 
 type Draft = { name: string; enabled: boolean; trigger: Trigger; conditions: Condition[]; action: Action; preset?: string | null };
 
@@ -158,6 +159,7 @@ export function AutomationList() {
   if (!list) return <SkeletonRows rows={6} label={t('common.loading')} />;
   return (
     <div className="rules">
+      <FlowSettingsCard />
       <div className="section__head">
         <span>{t('auto.count', { n: list.filter((a) => a.enabled).length, total: list.length })}</span>
         {manage && (

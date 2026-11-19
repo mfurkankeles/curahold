@@ -43,6 +43,8 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `PATCH /request-links/:id` | Edits the drafted "it shipped" message kept with the link. |
 | `POST /request-links/:id/told` | Marks that the customer has been told the work shipped (you sent the message yourself). |
 | `POST /request-links/:id/close-portal` | Closes the customer's portal request behind the link: it moves to done, which sends the portal's own message and asks the customer to confirm. |
+| `GET /flow/settings` | The company's flow settings: whether a won deal gets its hand-over card, the playbook it suggests and where "tell the customer" tasks go. |
+| `PUT /flow/settings` | Changes those settings (`handover`, `handoverPlanId`, `loopBoardId`). |
 | `POST /assist/draft` | A draft from the assistant (or from the template, with no model or over the cap): `handover_note`, `shipped_message` or `meeting_promises`. |
 | `PATCH /activities/:id` | Changes a logged activity, or pins it to the top. |
 | `DELETE /activities/:id` | Moves a logged activity to the trash, where it stays for 30 days. |
@@ -331,6 +333,22 @@ Marks that the customer has been told the work shipped (you sent the message you
 Closes the customer's portal request behind the link: it moves to done, which sends the portal's own message and asks the customer to confirm. Finishing the story never does this by itself.
 
 **Needs:** a seat that can write
+
+### `GET /flow/settings`
+
+The company's flow settings: whether a won deal gets its hand-over card, the playbook it suggests and where "tell the customer" tasks go.
+
+### `PUT /flow/settings`
+
+Changes those settings (`handover`, `handoverPlanId`, `loopBoardId`). Needs the right to manage automations.
+
+**Needs:** a seat that can write · permission `automations.manage`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `handover` | yes/no | optional |  |
+| `handoverPlanId` | id | optional | may be null |
+| `loopBoardId` | id | optional | may be null |
 
 ### `POST /assist/draft`
 

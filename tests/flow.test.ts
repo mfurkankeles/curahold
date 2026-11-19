@@ -268,3 +268,19 @@ describe('notification digest', () => {
     expect(digest!.data.updates.some((u: any) => u.title === 'Digest me')).toBe(true);
   });
 });
+
+describe('the live demo', () => {
+  it('seeds a waiting hand-over, customers waiting for Product and a shipped story with its draft', async () => {
+    const { seedDemo } = await import('../scripts/seed-demo');
+    const demo = await seedDemo(env.db, { slug: 'flowdemo', locale: 'tr', departments: true });
+    const [h] = await q(`select * from handovers where org_id = $1`, [demo.orgId]);
+    expect(h.status).toBe('open');
+    expect(h.summary).toContain('•');
+    const links = await q(`select * from request_links where org_id = $1`, [demo.orgId]);
+    expect(links.length).toBe(5);
+    const shipped = links.filter((l: any) => l.shipped_at);
+    expect(shipped).toHaveLength(1);
+    expect(shipped[0].loop_task_id).toBeTruthy();
+    expect(shipped[0].draft).toContain('Merhaba');
+  });
+});

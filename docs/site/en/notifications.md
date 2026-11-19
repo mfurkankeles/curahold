@@ -8,6 +8,10 @@ summary: Where notifications go, the morning summary, quiet hours and the calend
 
 Curahold writes to your chat app first and uses email as the fallback, so notifications land where the team already looks.
 
+## Right away, or in the morning summary
+
+By default only what is for you comes right away: a task assigned to you, a mention, a customer handed over to you. Comments, work you follow and nudges show in your list at once and are gathered in the morning summary instead of a message each. Change it in **Profile → Notifications**.
+
 ## When you hear from us
 
 - A task is assigned to you

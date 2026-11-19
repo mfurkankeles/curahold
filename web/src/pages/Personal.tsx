@@ -165,6 +165,13 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                 </label>
               ))}
             </div>
+            <label className="checkbox u-mt-12">
+              <input type="checkbox" checked={prefs.batch !== false} disabled={prefs.events.digest === false} onChange={(e) => setPrefs({ ...prefs, batch: e.target.checked })} />
+              <span>
+                {t('me.batch')}
+                <span className="field__hint">{t(prefs.events.digest === false ? 'me.batchNeedsDigest' : 'me.batchHint')}</span>
+              </span>
+            </label>
             {prefs.events.digest !== false && (
               <label className="field u-mt-12 u-max-width-260">
                 <span className="field__label">{t('me.digestAt')}</span>

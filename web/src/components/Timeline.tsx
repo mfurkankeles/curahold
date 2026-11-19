@@ -213,6 +213,9 @@ const KIND_ICON: Record<string, IconName> = {
   score: 'heart',
   ticket_opened: 'lifebuoy',
   ticket_solved: 'check',
+  handover: 'handshake',
+  handover_confirmed: 'handshake',
+  built: 'spark',
 };
 
 /** Task traffic: shown quietly, and gathered when there is more than one on a day. */
@@ -458,6 +461,32 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
               </a>
             ) : (
               <strong>{it.title}</strong>
+            )}
+          </div>
+          <time className="tl__time" dateTime={it.at}>
+            {timeLabel(it.at, locale)}
+          </time>
+        </li>
+      );
+    }
+    if (it.type === 'handover' || it.type === 'handover_confirmed' || it.type === 'built') {
+      const owner = it.type === 'handover_confirmed' ? (people.find((p) => p.id === it.ownerId)?.name ?? '') : '';
+      return (
+        <li key={`${it.type}-${it.type === 'built' ? it.storyId : it.handoverId}`} className="tl__item tl__signal" data-kind={it.type}>
+          <span className="tl__icon" aria-hidden="true">
+            <Icon name={KIND_ICON[it.type]} size={13} />
+          </span>
+          <div className="tl__line">
+            {it.type === 'built' ? (
+              <>
+                {t('timeline.built')} <strong>{it.title}</strong>
+              </>
+            ) : it.type === 'handover' ? (
+              <>
+                {t('timeline.handover')} <strong>{it.deal}</strong>
+              </>
+            ) : (
+              t('timeline.handoverConfirmed', { name: owner, deal: it.deal })
             )}
           </div>
           <time className="tl__time" dateTime={it.at}>

@@ -124,6 +124,7 @@ meRoutes.patch('/me', async (c) => {
           channel: z.string().max(40).optional(),
           events: z.partialRecord(z.enum(NOTIFY_EVENTS), z.boolean()).optional(),
           digestHour: z.number().int().min(0).max(23).optional(),
+          batch: z.boolean().optional(),
           defaultBoardId: z.string().uuid().nullable().optional(),
           quiet: z.object({ from: z.number().int().min(0).max(23), to: z.number().int().min(0).max(23) }).nullable().optional(),
           startHidden: z.boolean().optional(),

@@ -9,12 +9,12 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { REQUEST_SOURCES, type AccountFlow, type DraftResult, type CustomerPromise, type DemandSummary, type Handover, type HandoverPacket, type LinkableStory, type LinkedWork, type StoryCustomer } from '../../../shared/src/handoff';
 import type { AccountField, Column } from '../../../shared/src/model';
-import { nowOf, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
+import { nowOf, requirePerm, requireWriter, run, todayOf, type AppEnv, type C } from '../context';
 import type { Q, Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { canSeeField } from '../lib/fieldAccess';
-import { createHandover, renewalOf, shippedDraft } from '../lib/handoff';
+import { createHandover, flowSettings, renewalOf, shippedDraft } from '../lib/handoff';
 import { modelDraft, templatePromises } from '../assistant/actions';
 import { assistantConfig, providerOf } from './assist';
 import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
@@ -547,4 +547,25 @@ handoffRoutes.patch('/request-links/:id', async (c) => {
   const ok = await run(c, async (q) => (await q.query('select app_set_draft($1, $2) as ok', [id, input.draft]))[0]?.ok);
   if (!ok) fail('not_found');
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------ settings
+
+handoffRoutes.get('/flow/settings', async (c) => c.json({ settings: flowSettings(c.get('org').settings) }));
+
+/** The company's flow settings: the hand-over card on won deals, its playbook, where "tell the customer" tasks go. */
+handoffRoutes.put('/flow/settings', async (c) => {
+  requirePerm(c, 'automations.manage');
+  requireWriter(c);
+  const input = await body(c, z.object({ handover: z.boolean().optional(), handoverPlanId: uuid.nullable().optional(), loopBoardId: uuid.nullable().optional() }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const next = { ...flowSettings(org.settings), ...input };
+  await run(c, async (q) => {
+    if (next.handoverPlanId && !(await q.query('select 1 from plan_templates where id = $1', [next.handoverPlanId])).length) fail('validation', { fields: 'handoverPlanId' }, { fields: ['handoverPlanId'] });
+    if (next.loopBoardId && !(await q.query('select 1 from boards where id = $1 and archived_at is null', [next.loopBoardId])).length) fail('validation', { fields: 'loopBoardId' }, { fields: ['loopBoardId'] });
+    await q.query(`update orgs set settings = jsonb_set(coalesce(settings, '{}'::jsonb), '{flow}', $2::jsonb) where id = $1`, [org.id, JSON.stringify(next)]);
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'automation.flow_settings', entity: 'org', entityId: org.id, meta: input });
+  });
+  return c.json({ settings: next });
 });

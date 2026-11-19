@@ -3,6 +3,8 @@
 // the sprint's capacity as you go, send them in, start the sprint. Type, points and epic
 // change in the row; epics are not sprint work, so they sit above the list as a filter
 // with what their stories add up to.
+import { RENEWAL_WINDOW_DAYS, type DemandSummary, type StoryDemand } from '../../../shared/src/handoff';
+import '../surfaces/flow.css';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { FIBONACCI, ISSUE_TYPES, type Board, type IssueType, type Sprint, type Task } from '../../../shared/src/model';
@@ -74,6 +76,9 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
   const [focusId, setFocusId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<Task | null>(null);
   const [starting, setStarting] = useState<Sprint | null>(null);
+  // Who waits for each story (request links): count, annual value (when this person may see it), nearest renewal.
+  const [demand, setDemand] = useState<DemandSummary | null>(null);
+  const [ready, setReady] = useState(() => new URLSearchParams(location.search).get('view') === 'renewing');
   const listRef = useRef<HTMLUListElement>(null);
   const open = useMemo(() => (sprints ?? []).filter((s) => s.state !== 'closed'), [sprints]);
   const velocity = useMemo(() => teamVelocity(sprints), [sprints]);
@@ -89,6 +94,11 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
     }
   }, [board.id]);
   useEffect(() => void load(), [load, refreshKey]);
+  useEffect(() => {
+    void get<DemandSummary>(`/boards/${board.id}/demand`).then(setDemand, () => setDemand(null));
+  }, [board.id, refreshKey, bump]);
+  const demandOf = useMemo(() => new Map((demand?.demand ?? []).map((d) => [d.storyId, d])), [demand]);
+  const renewingCount = (demand?.demand ?? []).filter((d) => d.renewingSoon > 0).length;
   // The preselected sprint: the next planned one, else the active one.
   useEffect(() => {
     if (!target || !open.some((s) => s.id === target)) setTarget((open.find((s) => s.state === 'future') ?? open[0])?.id ?? '');
@@ -97,10 +107,21 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
   // Epics are not sprint work: they are the filter above the list, not rows in it.
   const items = useMemo(() => (tasks ?? []).filter((x) => x.issueType !== 'epic'), [tasks]);
   const needle = q.trim().toLocaleLowerCase(locale);
-  const shown = useMemo(
-    () => items.filter((x) => (epic === 'all' || (epic === 'none' ? !x.epicId : x.epicId === epic)) && (!needle || x.title.toLocaleLowerCase(locale).includes(needle))),
-    [items, epic, needle, locale],
-  );
+  const shown = useMemo(() => {
+    const list = items.filter(
+      (x) => (epic === 'all' || (epic === 'none' ? !x.epicId : x.epicId === epic)) && (!needle || x.title.toLocaleLowerCase(locale).includes(needle)) && (!ready || (demandOf.get(x.id)?.renewingSoon ?? 0) > 0),
+    );
+    // The ready view: what customers renewing soon wait for, the nearest renewal first.
+    return ready ? [...list].sort((a, b) => (demandOf.get(a.id)?.nearestRenewal ?? '9999').localeCompare(demandOf.get(b.id)?.nearestRenewal ?? '9999')) : list;
+  }, [items, epic, needle, locale, ready, demandOf]);
+  const toggleReady = () => {
+    const next = !ready;
+    setReady(next);
+    const p = new URLSearchParams(location.search);
+    if (next) p.set('view', 'renewing');
+    else p.delete('view');
+    history.replaceState(history.state, '', `${location.pathname}${p.toString() ? `?${p}` : ''}`);
+  };
   const picked = items.filter((x) => selected.has(x.id));
   const sprint = open.find((s) => s.id === target) ?? null;
   const n = (v: number) => f.number(v, { digits: v % 1 ? 1 : 0 });
@@ -288,6 +309,13 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
 
         {(items.length > 0 || viewSwitch) && (
           <div className="pm-tools">
+            {renewingCount > 0 || ready ? (
+              <button type="button" className="btn btn--small pm-ready" aria-pressed={ready} onClick={toggleReady} title={t('flow.demand.readyHint', { days: RENEWAL_WINDOW_DAYS })}>
+                <Icon name="hourglass" size={14} />
+                {t('flow.demand.ready', { days: RENEWAL_WINDOW_DAYS })}
+                <span className="num">{n(renewingCount)}</span>
+              </button>
+            ) : null}
             <FilterSheet
               title={t('pm.backlog')}
               count={epic === 'all' ? 0 : 1}
@@ -340,6 +368,12 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
               </button>
             )}
           </EmptyState>
+        ) : shown.length === 0 && ready ? (
+          <EmptyState compact icon="hourglass" tone="done" title={t('flow.demand.readyEmpty', { days: RENEWAL_WINDOW_DAYS })}>
+            <button className="btn" onClick={toggleReady}>
+              {t('pm.epics.all')}
+            </button>
+          </EmptyState>
         ) : shown.length === 0 ? (
           <EmptyState compact icon="filter" title={t('pm.backlog.epicEmpty')}>
             <button className="btn" onClick={() => (setEpic('all'), setQ(''))}>
@@ -365,6 +399,8 @@ export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; r
                 selected={selected.has(x.id)}
                 tabStop={x.id === tabStop}
                 epics={epics}
+                demand={demandOf.get(x.id)}
+                currency={demand?.currency}
                 onToggle={(on) => toggle(x.id, on)}
                 onFocus={() => setFocusId(x.id)}
                 onKey={(e) => onRowKey(e, x)}
@@ -410,12 +446,16 @@ function BacklogRow({
   selected,
   tabStop,
   epics,
+  demand,
+  currency,
   onToggle,
   onFocus,
   onKey,
   onMove,
   onEdit,
 }: {
+  demand?: StoryDemand;
+  currency?: string;
   task: Task;
   first: boolean;
   last: boolean;
@@ -476,6 +516,7 @@ function BacklogRow({
         <button className="rowlink" onClick={() => setQuery('task', task.id)}>
           {task.title}
         </button>
+        {demand && demand.waiting > 0 && <DemandLine d={demand} currency={currency} />}
       </span>
       <span className="pm-row__props">
         <select className="pm-inline pm-inline--type" data-tone={TONE[type]} value={type} disabled={!canWrite} aria-label={name(t('pm.type.label'))} onChange={(e) => onEdit({ issueType: e.target.value as IssueType })}>
@@ -521,6 +562,33 @@ function BacklogRow({
         </span>
       )}
     </li>
+  );
+}
+
+/** Who waits for a story: customers, what they are worth a year (when the person may see it), the nearest renewal. */
+function DemandLine({ d, currency }: { d: StoryDemand; currency?: string }) {
+  const { t } = useI18n();
+  const f = useFormat();
+  const days = d.nearestRenewal ? Math.round((Date.parse(`${d.nearestRenewal}T00:00:00Z`) - Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`)) / 86400_000) : null;
+  return (
+    <span className="pm-demand">
+      <span className="pm-demand__cell" title={t('flow.demand.waitingHint')}>
+        <Icon name="people" size={12} />
+        {t('flow.demand.waiting', { n: f.number(d.waiting) })}
+      </span>
+      {d.value != null && (
+        <span className="pm-demand__cell num" title={t('flow.demand.valueHint')}>
+          <Icon name="coins" size={12} />
+          {f.money(d.value, currency, { compact: true })}
+        </span>
+      )}
+      {d.nearestRenewal && days != null && (
+        <span className="pm-demand__cell" data-soon={days <= RENEWAL_WINDOW_DAYS || undefined} title={f.date(d.nearestRenewal, { day: 'numeric', month: 'long', year: 'numeric' })}>
+          <Icon name="repeat" size={12} />
+          {t('flow.demand.renews', { n: f.number(days) })}
+        </span>
+      )}
+    </span>
   );
 }
 

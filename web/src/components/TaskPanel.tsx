@@ -29,6 +29,7 @@ import { LoadError, SkeletonRows } from './Empty';
 import { typing } from '../lib/shell';
 import { takeSeed } from './taskSeed';
 import '../surfaces/employee-work.css';
+import { StoryCustomers } from './CustomerFlow';
 
 const MORE_KEY = 'app_task_more';
 const moreOpen = () => {
@@ -386,6 +387,7 @@ export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: ()
                 <Subtasks task={task} doneKeys={doneKeys} firstKey={board?.columns[0]?.key ?? 'todo'} doneKey={board?.columns.find((c) => c.done)?.key} editable={editable} reload={load} onChanged={onChanged} />
                 {!task.parentId && <LinksSection task={task} editable={editable} reload={() => (void load(), onChanged())} />}
                 {!task.parentId && <ChainSection task={task} />}
+                {!task.parentId && <StoryCustomers taskId={task.id} />}
                 {!task.parentId && <TimeSection task={task} editable={editable} reload={load} />}
 
                 <Section title={t('task.files')} icon="paperclip">

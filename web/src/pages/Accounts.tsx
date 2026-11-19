@@ -3,6 +3,7 @@
 // account with its tasks.
 import { AccountDepartments } from '../components/AccountDepartments';
 import type { AccountDepartmentWork } from '../../../shared/src/model';
+import { AccountTeam, HandoverCard, useAccountFlow, WaitingFor } from '../components/CustomerFlow';
 import { useMoney } from '../lib/money';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useWindow } from '../lib/windowing';
@@ -92,7 +93,7 @@ export function AccountsPage() {
   const { me, people, person, can, canWrite, toast } = useStore();
   const fmt = useFieldFormat();
   const money = useMoney();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(() => new URLSearchParams(location.search).get('q') ?? '');
   const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
   const [archived, setArchived] = useState(false);
   const phone = usePhone();
@@ -799,6 +800,7 @@ const lastSeen = new Map<string, AccountData>();
 
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
+  const { flow, reload: reloadFlow } = useAccountFlow(id);
   const here = usePresence(`a:${id}`);
   const { me, people, boards, canWrite, can, toast } = useStore();
   const trashed = useTrashToast();
@@ -988,6 +990,7 @@ export function AccountPage({ id }: { id: string }) {
             ))}
         </select>
       </label>
+      <AccountTeam account={a} flow={flow} reload={() => void reloadFlow()} />
       <ReviewField account={a} onSave={save} />
       <CurrencyField account={a} onSave={save} />
       {me.org.accountFields.map((f) =>
@@ -1067,6 +1070,9 @@ export function AccountPage({ id }: { id: string }) {
           <div className="acc-panel" id="acc-panel" role="tabpanel" aria-labelledby={`acc-tab-${tab}`}>
             {tab === 'overview' && (
               <>
+                {(flow?.handovers ?? []).filter((h) => h.status === 'open').map((h) => (
+                  <HandoverCard key={h.id} id={h.id} onDone={() => void reloadFlow()} />
+                ))}
                 <section className="sheet" id="tasks">
                   <h3 className="section__head">
                     <span>
@@ -1104,6 +1110,7 @@ export function AccountPage({ id }: { id: string }) {
                     </details>
                   )}
                 </section>
+                <WaitingFor account={a} flow={flow} reload={() => void reloadFlow()} />
                 <AccountPlanned account={a} />
                 <AccountMeetings account={a} />
               </>

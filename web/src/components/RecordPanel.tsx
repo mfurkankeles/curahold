@@ -3,6 +3,7 @@
 // what the record says, the tasks that belong to it (with a button for a new
 // one and for a whole playbook), its files, and its thread of comments.
 // Editing the fields happens in the same dialog the lists use.
+import { PrepareHandover } from './CustomerFlow';
 import '../surfaces/employee-customers.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
@@ -249,6 +250,11 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
                   );
                 })}
               </ul>
+              {type?.kind === 'opportunity' && rec.fields?.status === 'won' && (
+                <div className="recpanel__plan">
+                  <PrepareHandover recordId={rec.id} accountId={rec.accountId} />
+                </div>
+              )}
               {canWrite && rec.accountId && plans && plans.length > 0 && (
                 <div className="recpanel__plan">
                   <select className="select" value={planId} aria-label={t('recordPanel.playbook')} onChange={(e) => setPlanId(e.target.value)}>

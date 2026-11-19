@@ -1,0 +1,90 @@
+/* The flow between departments on the customer page and the backlog (components/CustomerFlow.tsx, Backlog.tsx). */
+
+.flow-sub { margin: var(--s-3) 0 var(--s-1); font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); text-transform: none; }
+.flow-sub:first-child { margin-top: 0; }
+.flow-none { margin: 0 0 var(--s-1); font-size: var(--fs-s); }
+.flow-chip { display: inline-flex; align-items: center; padding: 0 var(--s-2); border-radius: var(--r-pill); background: var(--sunk); color: var(--ink-2); font-size: var(--fs-xs); white-space: nowrap; }
+.flow-chip[data-tone='done'] { background: var(--done-wash); color: var(--ink); }
+.flow-add { display: flex; gap: var(--s-2); margin-top: var(--s-1); }
+.flow-add .input { flex: 1; min-width: 0; }
+.flow-list, .flow-people, .flow-promises, .flow-works, .flow-stories { list-style: none; margin: 0; padding: 0; }
+.flow-list li, .flow-people li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); padding: var(--s-1) 0; font-size: var(--fs-s); }
+.flow-draftnote { display: flex; align-items: center; gap: var(--s-1); margin: var(--s-1) 0 0; font-size: var(--fs-xs); }
+.flow-labelrow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+
+/* ---- hand-over card */
+.flow-handover { border-color: var(--brand-soft); background: linear-gradient(var(--brand-wash), var(--surface) var(--s-6)); }
+.flow-handover__head { display: flex; align-items: flex-start; gap: var(--s-3); margin-bottom: var(--s-3); }
+.flow-handover__icon { display: inline-grid; place-items: center; width: var(--tap-min); height: var(--tap-min); border-radius: var(--r-m); background: var(--brand-wash); color: var(--brand-ink); flex: none; }
+.flow-handover__title { flex: 1; min-width: 0; }
+.flow-handover__title h3 { margin: 0; font-size: var(--fs-m); line-height: var(--lh-snug); }
+.flow-handover__title p { margin: 0; font-size: var(--fs-s); }
+.flow-handover__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-4); }
+.flow-handover__col { display: grid; align-content: start; gap: var(--s-1); min-width: 0; }
+.flow-handover__foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.flow-handover__foot > .muted { margin-inline-end: auto; font-size: var(--fs-xs); }
+.flow-stance { padding: 0 var(--s-2); border-radius: var(--r-pill); font-size: var(--fs-2xs); background: var(--sunk); color: var(--ink-2); }
+.flow-stance[data-stance='champion'], .flow-stance[data-stance='supporter'] { background: var(--done-wash); color: var(--ink); }
+.flow-stance[data-stance='skeptic'], .flow-stance[data-stance='blocker'], .flow-stance[data-stance='detractor'] { background: var(--late-wash); color: var(--late-ink); }
+.flow-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); margin: 0 0 var(--s-2); }
+.flow-facts div { padding: var(--s-2); border-radius: var(--r-s); background: var(--surface-2); }
+.flow-facts dt { font-size: var(--fs-2xs); color: var(--ink-3); }
+.flow-facts dd { margin: 0; font-weight: 600; font-size: var(--fs-s); }
+
+/* ---- what they are waiting for */
+.flow-promises li { display: flex; align-items: center; gap: var(--s-2); min-height: var(--tap-min); }
+.flow-promises li .checkbox { flex: 1; min-width: 0; }
+.flow-promises li[data-kept] .checkbox span { color: var(--ink-3); text-decoration: line-through; }
+.flow-work { padding: var(--s-2) 0; border-top: 1px solid var(--line); }
+.flow-work:first-child { border-top: 0; }
+.flow-work__line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--s-2); }
+.flow-work__dot { color: var(--ink-3); display: inline-flex; }
+.flow-work[data-state='done'] .flow-work__dot, .flow-work[data-state='shipped'] .flow-work__dot { color: var(--done); }
+.flow-work__title { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.flow-work__note { font-size: var(--fs-xs); }
+.flow-work__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-1); font-size: var(--fs-xs); }
+.flow-loop { margin: var(--s-2) 0 0; padding: var(--s-3); border-radius: var(--r-m); background: var(--done-wash); display: grid; gap: var(--s-2); }
+.flow-loop__lead { display: flex; align-items: center; gap: var(--s-1); margin: 0; font-weight: 600; font-size: var(--fs-s); }
+.flow-loop__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.flow-loop .field__hint { margin: 0; }
+
+/* ---- the linker */
+.flow-linker { display: grid; gap: var(--s-2); }
+.flow-linker > p { margin: 0; }
+.flow-stories { max-height: calc(var(--tap) * 6); overflow: auto; border: 1px solid var(--line); border-radius: var(--r-m); }
+.flow-stories > li { border-top: 1px solid var(--line); }
+.flow-stories > li:first-child { border-top: 0; }
+.flow-stories > li.muted { padding: var(--s-2) var(--s-3); }
+.flow-story { display: grid; gap: var(--s-1); width: 100%; padding: var(--s-2) var(--s-3); border: 0; background: none; text-align: start; color: inherit; font: inherit; cursor: pointer; min-height: var(--tap); }
+.flow-stories [data-active] .flow-story { background: var(--brand-wash); }
+.flow-story__title { font-weight: 500; overflow-wrap: anywhere; }
+.flow-story__meta { display: flex; flex-wrap: wrap; gap: var(--s-1); align-items: center; font-size: var(--fs-xs); }
+.flow-ask { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font-size: var(--fs-s); }
+
+/* ---- the customer's team (details side) */
+.flow-team { display: grid; gap: var(--s-1); }
+.flow-team__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr); align-items: center; gap: var(--s-2); font-size: var(--fs-s); }
+.flow-team__dept { color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* ---- backlog demand (Backlog.tsx) */
+.pm-demand { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); font-size: var(--fs-xs); color: var(--ink-2); }
+.pm-demand__cell { display: inline-flex; align-items: center; gap: var(--s-1); white-space: nowrap; }
+.pm-demand__cell[data-soon] { color: var(--soon-ink); font-weight: 600; }
+.pm-ready { display: inline-flex; align-items: center; gap: var(--s-1); }
+.pm-ready[aria-pressed='true'] { background: var(--brand-wash); color: var(--brand-ink); border-color: var(--brand-soft); }
+
+/* ---- the story's waiting customers (TaskPanel) */
+.flow-customers { display: flex; flex-wrap: wrap; gap: var(--s-1); list-style: none; margin: 0; padding: 0; }
+
+@media (max-width: 720px) {
+  .flow-handover__grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-2); }
+  .flow-handover__foot { flex-wrap: wrap; }
+  .flow-handover__foot .btn { flex: 1; justify-content: center; min-height: var(--tap); }
+  .flow-work__line { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .flow-work__meta { grid-column: 2 / -1; justify-content: flex-start; }
+  .flow-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flow-team__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
+  .flow-team__row .avatar { display: none; }
+}
+.flow-settings { display: grid; gap: var(--s-2); margin-bottom: var(--s-4); }
+.flow-settings__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-3); }

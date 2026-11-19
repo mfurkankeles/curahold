@@ -43,6 +43,8 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `PATCH /request-links/:id` | Bağla birlikte saklanan "yayında" mesaj taslağını düzenler. |
 | `POST /request-links/:id/told` | Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin gönderdin). |
 | `POST /request-links/:id/close-portal` | Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. |
+| `GET /flow/settings` | Şirketin akış ayarları: kazanılan fırsatın devir kartı alıp almadığı, önerdiği plan ve "müşteriye haber ver" görevlerinin gittiği pano. |
+| `PUT /flow/settings` | Bu ayarları değiştirir (`handover`, `handoverPlanId`, `loopBoardId`). |
 | `POST /assist/draft` | Asistandan bir taslak (model yoksa ya da sınır aşıldıysa şablondan): `handover_note`, `shipped_message` ya da `meeting_promises`. |
 | `PATCH /activities/:id` | Kaydedilmiş bir etkinliği değiştirir ya da üste sabitler. |
 | `DELETE /activities/:id` | Kaydedilmiş bir etkinliği çöp kutusuna taşır; orada 30 gün kalır. |
@@ -331,6 +333,22 @@ Müşteriye işin yayında olduğunun söylendiğini işaretler (mesajı kendin 
 Bağın arkasındaki portal talebini kapatır: talep bitti sütununa geçer, portal kendi mesajını gönderir ve müşteriden onay ister. İşin bitmesi bunu kendiliğinden yapmaz.
 
 **Gerekenler:** yazabilen bir koltuk
+
+### `GET /flow/settings`
+
+Şirketin akış ayarları: kazanılan fırsatın devir kartı alıp almadığı, önerdiği plan ve "müşteriye haber ver" görevlerinin gittiği pano.
+
+### `PUT /flow/settings`
+
+Bu ayarları değiştirir (`handover`, `handoverPlanId`, `loopBoardId`). Otomasyon yönetme yetkisi gerekir.
+
+**Gerekenler:** yazabilen bir koltuk · yetki `automations.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `handover` | evet/hayır | isteğe bağlı |  |
+| `handoverPlanId` | kimlik | isteğe bağlı | boş (null) olabilir |
+| `loopBoardId` | kimlik | isteğe bağlı | boş (null) olabilir |
 
 ### `POST /assist/draft`
 

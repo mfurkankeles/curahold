@@ -2,6 +2,7 @@
 // Used by the local server, the browser tests and (later) the live demo.
 import type { Db } from '../api/src/db';
 import { seedDepartments } from './seed-departments';
+import { seedFlow } from './seed-flow';
 import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
 import { TEMPLATES } from '../shared/src/templates';
 import type { Locale } from '../shared/src/i18n/core';
@@ -169,7 +170,9 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale; d
       `update orgs set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('meetingTypes', $2::jsonb) where id = $1`,
       [orgId, JSON.stringify([{ id: 'qbr', label: B.meetingType[0], kind: 'review', minutes: 60, prompt: B.meetingType[1] }])],
     );
-    await seedDepartments(q, { orgId, ids, locale, accounts, boards: !!opts.departments });
+    const opened = await seedDepartments(q, { orgId, ids, locale, accounts, boards: !!opts.departments });
+    // The live demo: a won deal waiting for its hand-over, customers waiting for Product, a story that shipped.
+    if (opened) await seedFlow(q, { orgId, ids, locale, accounts, boards: opened });
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);
     return { orgId, slug, locale, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };

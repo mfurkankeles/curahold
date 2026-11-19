@@ -8,6 +8,7 @@
 // - AccountMeetings: the customer page's list of every meeting, review and
 //   call, newest first, with who was there, the notes and how the next steps
 //   are doing.
+import { MeetingPromises } from './CustomerFlow';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Account } from '../../../shared/src/model';
 import { reviewDue } from '../../../shared/src/rhythm';
@@ -568,6 +569,7 @@ function MeetingRow({
             )}
           </div>
         )}
+        {m.body && <MeetingPromises meeting={m} />}
         {m.nextSteps.length > 0 && (
           <div className="meeting__stepsbox">
             <span className="meeting__stepshead">

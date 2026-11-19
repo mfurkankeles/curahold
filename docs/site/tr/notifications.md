@@ -8,6 +8,10 @@ summary: Bildirimlerin nereye gittiği, sabah özeti, sessiz saatler ve takvim b
 
 Curahold önce sohbet uygulamanıza yazar, e-postayı yedek olarak kullanır. Böylece bildirimler ekibin zaten baktığı yerde görünür.
 
+## Hemen mi, sabah özetinde mi
+
+Varsayılan olarak yalnızca sana yönelik olanlar hemen gelir: sana atanan görev, bahsedilmen, sana devredilen müşteri. Yorumlar, takip ettiğin işler ve hatırlatmalar listende hemen görünür ve her biri için ayrı mesaj yerine sabah özetinde toplanır. **Profil → Bildirimler**'den değiştirebilirsin.
+
 ## Ne zaman haber gelir
 
 - Sana bir görev atandığında
