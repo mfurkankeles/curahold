@@ -1561,12 +1561,25 @@
   grid-auto-rows: min-content;
   align-content: start;
 }
+@media (min-width: 861px) {
+  .of-plan {
+    grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+  }
+}
+/* The avatar's AI badge stands out past its corner: room for it before the name. */
+.of-plan .of-person {
+  gap: 12px;
+  padding-inline: 4px;
+}
 .of-planroom {
   overflow: visible;
 }
 .of-plan .of-person small {
   overflow: visible;
   white-space: normal;
+  /* A long word (Communications) breaks inside its column instead of running under the status dot. */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* The phone pager's current room; the sheet's person header in one 56 px row. */

@@ -864,7 +864,7 @@ export class OfficeScene {
   }
 
   /** The view height and centre that fit a box of the floor (with its walls) in the free area. */
-  private fitBox(x0: number, z0: number, x1: number, z1: number, yaw = this.yaw.goal, margin = 1.1) {
+  private fitBox(x0: number, z0: number, x1: number, z1: number, yaw = this.yaw.goal, margin = 1.1, alignTop = false) {
     const { w, h } = this.usable();
     const aspect = w / h;
     const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -890,7 +890,9 @@ export class OfficeScene {
     const viewH = Math.max(uMax - uMin, (rMax - rMin) / aspect) * margin;
     // Shift the centre so the box's projection is centred (screen-up on the floor is fwd / sin(pitch)).
     const rc = (rMin + rMax) / 2;
-    const uc = (uMin + uMax) / 2;
+    // A box shorter than the view can sit at the top of the free area instead of its middle (the phone's one room per screen).
+    const pad = viewH * 0.03;
+    const uc = alignTop && uMax - uMin < viewH - 2 * pad ? uMax - viewH / 2 + pad : (uMin + uMax) / 2;
     const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     const centre = new THREE.Vector3(cx, 0, cz).addScaledVector(right, rc).addScaledVector(fwd, uc / Math.sin(PITCH));
     return { viewH, x: centre.x, z: centre.z };
@@ -923,7 +925,7 @@ export class OfficeScene {
     if (!r) return;
     this.refit = (c) => (this.focusRoom(id), c && [this.tx, this.tz, this.view].forEach((g) => g.cut()));
     // A phone frames the room tighter (its sides may run off the edge): one room per screen.
-    const f = this.fitBox(r.x0, r.z0, r.x1, r.z1, this.yaw.goal, this.o.phone ? 0.8 : 1.12);
+    const f = this.fitBox(r.x0, r.z0, r.x1, r.z1, this.yaw.goal, this.o.phone ? 0.8 : 1.12, this.o.phone);
     this.goTo(f.x, f.z, f.viewH);
   }
   focusSeat(seat: string) {
