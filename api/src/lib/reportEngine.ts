@@ -161,7 +161,7 @@ const ACTIVITY_KINDS: ReportField['options'] = [
 ];
 
 /** Minutes logged on a customer's tasks over the last twelve months (one customer: `a`). */
-const HOURS_YEAR = `(select coalesce(sum(e.minutes), 0) from time_entries e join tasks te on te.id = e.task_id where te.account_id = a.id and e.day > current_date - 365)`;
+const HOURS_YEAR = `(select coalesce(sum(e.minutes), 0) from time_entries e join tasks te on te.id = e.task_id where te.account_id = a.id and e.day > (select app_today()) - 365)`;
 
 /** What this person can build reports from. */
 export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
