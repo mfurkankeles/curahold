@@ -13,8 +13,8 @@
 // --preview (or DOCS_PREVIEW=1; implies --relative) is the small copy for a
 // host that takes a few hundred files: all nine languages, but no .md twin
 // per page, a page a language does not have yet links to the English page
-// instead of a copy of it, and the languages other than English and Turkish
-// show the English pictures. The production build is unchanged.
+// instead of a copy of it, and the languages other than English show the
+// English pictures (DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish ones too). The production build is unchanged.
 //
 // DOCS_DATA_ONLY=1 keeps only what the try-it demo reads at run time when its
 // docs links go elsewhere (DEMO_DOCS_URL): each language's search.json and
@@ -59,7 +59,13 @@ const SECTIONS = ['help', 'developers', 'reference', 'releases', 'legal'] as con
 const BORROWED = new Set<string>();
 /** Preview only: the language whose page or picture a link really goes to. */
 const pageLang = (lang: string, slug: string) => (PREVIEW && BORROWED.has(`${lang}/${slug}`) ? 'en' : lang);
-const imgLang = (lang: string) => (DATA_ONLY || (PREVIEW && !(WHOLE as string[]).includes(lang)) ? 'en' : lang);
+/**
+ * Preview only: the languages that keep their own pictures (the others show the English ones).
+ * English alone by default, so all nine languages fit a 512-file host with the guides' pictures;
+ * DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish pictures too (about 60 files more).
+ */
+const PREVIEW_PICTURES = (process.env.DOCS_PREVIEW_PICTURES ?? 'en').split(',').map((x) => x.trim()).filter(Boolean);
+const imgLang = (lang: string) => (DATA_ONLY || (PREVIEW && !PREVIEW_PICTURES.includes(lang)) ? 'en' : lang);
 /** Preview only: absolute docs addresses inside a piece of HTML or JSON, sent where the preview has them. */
 const previewed = (text: string) =>
   PREVIEW || DATA_ONLY

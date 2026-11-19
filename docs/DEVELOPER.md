@@ -252,6 +252,29 @@ to run twice (remember what was done, as `playbook_runs` does for renewals)
 and let one company's failure not stop the others (`try`/`catch` per
 company).
 
+### a help page (and what the assistant knows)
+
+CuraAI and the docs' Ask answer from the help pages (the four closest sections of `answers.json`), so a feature
+nobody wrote a page for is a feature the assistant does not know. Every menu entry, screen, settings section and
+public API area is listed in `shared/src/helpLinks.ts` with the page that explains it and the assistant
+evaluation cases that ask about it; `tests/docs-coverage.test.ts` fails for a new one that is missing.
+
+1. Write the page in `docs/site/en/` and `docs/site/tr/` (front matter `section: help`), then in the seven other
+   languages (`ar he fa zh-Hans zh-Hant ja ko`): the user guide must be whole in every language that has a folder.
+   Use the product's own words for buttons, from the dictionaries. A heading the product links to is written
+   `## Heading {#anchor}`, so the anchor is the same in every language.
+2. One action per numbered step, each followed by its picture with the click target ringed:
+   `   ![What is ringed](img/<name>.webp)`. Add the picture to `scripts/docs/shots.ts` (a `go`, a `ready` and a
+   `mark` selector; add a `data-tour` hook to the element when no stable selector exists), build the demo
+   (`npm run build:demo`) and run `npx tsx scripts/docs/shots.ts` (`ONLY=<prefix>-` takes only those, the
+   languages as arguments). Anything to type or paste goes in a fenced block: the docs give it a Copy button.
+3. Add the place to `shared/src/helpLinks.ts`, and at least one case to `tests/assistant-eval/cases.ts` in all
+   nine languages with `cite: '<page>'`. Run `EVAL_ONLY=how_to EVAL_LANGS=en,tr npx tsx tests/assistant-eval/run.ts`:
+   without a key the docs search must find your page for the English and Turkish questions.
+4. Something no customer ever sees (the operator's console, a page a link lands on and leaves) goes in
+   `NOT_FOR_HELP` with the reason; an API area that belongs to the browser goes under `INTERNAL` in
+   `scripts/docs/catalogue.ts`.
+
 ### a setup health check
 
 A check finds one thing an administrator can get wrong or leave missing while
@@ -358,6 +381,18 @@ saves a screenshot. Run them after any change to a screen.
 | Plans and billing (Paddle; off unless configured) | `routes/billing.ts`, `lib/billing.ts`, `lib/paddle.ts`, `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` (plans, prices, `accessOf`) | `billing.test.ts` |
 | Onboarding plans (own hub, customers' plans, portal view, report) | `routes/onboardingPlans.ts`, `lib/onboarding.ts`, `lib/onboardingSetup.ts`, `portal.ts` (`/papi/onboarding`) | `pages/Onboarding.tsx`, `web/portal/Onboarding.tsx` | `onboarding.ts` | `onboarding-hub.test.ts` |
 | The demo | `web/src/demo/` | same app | — | `npm run test:demo` |
+| Departments (walls, leads, requests across, the customer page's band) | `routes/departments.ts`, `lib/departments.ts`, migration 0120 (`app_visible_boards`) | `components/Departments.tsx`, `AccountDepartments.tsx`, `TaskExtras.tsx` (Ask another department), `Shell.tsx` (menu by department) | `departments.ts` (`DEPARTMENT_FLOW`, `handoverAfter`) | `departments*.test.ts` |
+| Hand-over, request links, the loop back, flow rules | `routes/handoff.ts`, `lib/handoff.ts`, `lib/automations.ts` (new triggers and actions) | `components/CustomerFlow.tsx`, `Backlog.tsx` (demand), `Automations.tsx` (`FlowSettingsCard`) | `handoff.ts`, `automation.ts` | `flow.test.ts` |
+| Import 2.0 (tasks from any export, dry run, 30-day undo) | `routes/imports.ts` (`/task-imports`) | `pages/ImportPage.tsx`, `components/TaskImporter.tsx` | `taskImport.ts`, `importPlan.ts` | `import-plan.test.ts`, `import-archive.test.ts` |
+| Team weeks, customer portfolio, cost to serve | `routes/load.ts` (`/reports/workload`, `/reports/portfolio`), `lib/reportEngine.ts` (`cost_to_serve`) | `pages/Team.tsx`, `pages/TeamViews.tsx` | `reports.ts` | `workload.test.ts` |
+| Accounting programs (read only) and the finance band | `routes/finance.ts`, `sync/` (accounting adapters), migrations 0130, 0190 | `components/Accounting.tsx`, `FinanceBand.tsx` | `sync.ts` | `accounting.test.ts` |
+| Analytics feed for BI tools (OData, JSON/CSV, analytics keys) | `routes/analytics.ts`, `lib/analytics.ts`, migration 0140 | `components/Analytics.tsx` | `analytics.ts` | `analytics.test.ts` |
+| The assistant (CuraAI, docs Ask, portal box) | `api/src/assistant/` (core, provider, cost), `routes/assist.ts`, migration 0096 | `components/CuraAI.tsx`, `Ask.tsx`, `AssistantSettings.tsx` | `assist.ts`, `assistant.ts`, `answers.ts` (docs search) | `assistant*.test.ts`, `tests/assistant-eval/` |
+| Trial requests, terms and DPA acceptance | `routes/trial.ts`, `lib/trialRequests.ts`, `lib/trial.ts`, `routes/agreements.ts`, `lib/agreementEvidence.ts` | `pages/TrialRequest.tsx`, `pages/Agreements.tsx` | `trialRequest.ts`, `trialForm.ts`, `compliance/consentTexts.ts` | `trial.test.ts`, `compliance.test.ts` |
+| Consent (one library for every surface) and the storage inventory | `routes/consent.ts`, `scripts/compliance/inventory.ts` (writes `docs/compliance/storage-inventory.json`) | `lib/consent.ts`, `components/ConsentBanner.tsx`, `site/consent.js` (built) | `consent/` | `consent.test.ts`, `compliance.test.ts` |
+| Robots, crawlers and bot limits; the legal notice | `lib/botGuard.ts`, `lib/humanCheck.ts`, `lib/ratelimit.ts` | `components/LegalNotice.tsx`, `lib/humanCheck.tsx` | `compliance/crawlers.ts`, `compliance/notice.ts` | `crawlers.test.ts`, `botguard.test.ts` |
+| Operator console, AI team, 3D office (Curahold's own, not a company's) | `routes/owner.ts`, `routes/office.ts`, `routes/team.ts`, `lib/office.ts` (`APPROVED_ACTIONS`), `api/src/team/` | `pages/Owner*.tsx`, `web/src/office/` | `office.ts`, `team/` | `owner-console*.test.ts`, `team*.test.ts`, `office.test.ts` |
+| Help pages, their pictures and what the assistant knows | `scripts/build-docs.ts`, `scripts/docs/shots.ts` | `pages/Settings.tsx` ("How this works" link), `lib/docs.ts` | `helpLinks.ts` | `docs-coverage.test.ts`, `docs-reference.test.ts` |
 | Your own server (one company, Postgres, files on disk, SMTP) | `selfhost.ts`, `scripts/build-server.ts`, `Dockerfile`, `docker-compose.yml`, `selfhost.env.example` | same app | — | `selfhost.test.ts` |
 
 ---
@@ -480,3 +515,64 @@ the endings in `PORTAL_FILE_ENDINGS`, first bytes, `PORTAL_FILE_MB` per file and
 `customerFacts` or `planFacts`), `ob.signal.<id>` in the nine dictionaries, and a test in
 `tests/onboarding-hub.test.ts`.
 
+## Departments and the flow between them
+
+**Walls.** A board belongs to one department (`boards.department_id`); who sees it is decided in row security
+(`app_visible_boards`), not in the routes. Only administrators and the department's leads open boards; a DB trigger
+stops anyone else from moving a board. A department switched off (`departments.enabled = false`) is hidden and keeps
+its boards. `shared/src/departments.ts` holds the order of the customer's path (`DEPARTMENT_FLOW`) and
+`handoverAfter()`: with Onboarding off, Sales hands over straight to Customer Success.
+
+**Crossing.** Work never crosses by opening another department's board. A request goes to another department's
+intake board through its form (`GET /departments/desks`, `POST /boards/:id/requests {fromTaskId}`) and is linked to
+the asking task; the asker sees a link card (title, status, department). A customer request links to a product story
+through `request_links`; a won deal makes one `handovers` card (`lib/handoff.ts`); `account_team` holds the owner in
+each department. The customer page's band counts open work per department behind each department's `band_view`.
+
+**Extending.** A new trigger or action for rules goes in `shared/src/automation.ts` and `lib/automations.ts` (the
+trigger must also fire for records synced from a CRM, through `sweepRecordEvents`); a new hand-over source in
+`lib/handoff.ts`. Tests: `tests/flow.test.ts`, `tests/departments.test.ts`.
+
+## Import 2.0
+
+`shared/src/taskImport.ts` turns any sheet into rows (grouped exports, indented sub-items, a kanban board's JSON)
+and `shared/src/importPlan.ts` plans where each list goes (department boards by list name, or a board per list). The
+same plan is the dry run: `POST /task-imports {dryRun: true}` saves nothing and reports, with row numbers, what will
+not come in. A real run writes one `import_batches` row so `POST /task-imports/:id/undo` can take it back for 30
+days (untouched tasks to the trash as one item; worked-on ones kept, archived). No notifications, no rules. A new
+source format is a reader in `taskImport.ts` plus a case in `tests/import-plan.test.ts`.
+
+## Accounting programs and the analytics feed
+
+Accounting adapters live with the CRM adapters in `api/src/sync/` and use the same engine (pacing, daily allowance,
+partial runs that resume), but every write throws: they only read. Matching to customers is tax id, then domain,
+then name, never guessing between two (`routes/finance.ts`, the Matching tab). Figures need `finance.view` or the
+Finance band. Adding a program: an adapter, its entry in `ACCOUNTING_ALL`, `fin.what.<id>` in the nine
+dictionaries, a help page `docs/site/<lang>/accounting-<id>.md`, recorded fixtures in `tests/accounting.test.ts`.
+More in `INTEGRATIONS.md`.
+
+The analytics feed (`routes/analytics.ts`, `lib/analytics.ts`) serves OData 4 and a JSON/CSV twin, read with an
+analytics key (`api_tokens` of kind analytics) as the key's owner: the same row security and field rules as the
+app, so a hidden field is missing even from `$metadata`. A new dataset is one more entry in `catalog()` in `lib/analytics.ts`, with its
+columns; add it to `tests/analytics.test.ts` and the table on `bi-tools.md`. The warehouse
+export is a design note: `docs/design/warehouse-export.md`.
+
+## The assistant
+
+One server-side core (`api/src/assistant/core.ts`) answers every chatbot: free rules first (language, other
+products declined, unclear questions get one question with choices), then the company's cache, then the model with
+the four closest docs sections and read-only tools that call the API as the asking person. No key, switched off,
+over the company's or the global monthly cap, or an error: the docs search answers, at no cost. A new read-only tool
+goes in `shared/src/assistant.ts` with a case in `tests/assistant-eval/cases.ts` (`live: true`). The evaluation
+runs without a key in CI (`npx tsx tests/assistant-eval/run.ts`, fixed checks) and with a key and a judge before a
+release. Privacy notes: `docs/legal/ai-assistant-privacy-notes.md`.
+
+## Trials, terms and consent
+
+"Try it free" is a request (`routes/trial.ts`, `lib/trialRequests.ts`), approved in the operator console; the old
+instant sign-up is `SIGNUP_MODE=instant`. After approval the company's administrator accepts the terms and the DPA
+once per version (`routes/agreements.ts`, append-only `agreement_evidence`). Consent texts are versioned rule sets in
+`shared/src/compliance/consentTexts.ts`; every surface uses one consent library (`shared/src/consent/`), and
+`scripts/compliance/inventory.ts` scans the code for anything stored in a browser and fails when a key is not in the
+inventory, which also writes the cookie policy in nine languages. Crawlers: one list in
+`shared/src/compliance/crawlers.ts` drives every robots.txt and the Worker's refusals (`lib/botGuard.ts`).

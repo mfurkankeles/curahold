@@ -119,6 +119,13 @@ Postgres, one schema (`public`). Every company-owned table has an `org_id` colum
 | Platform | `api_tokens`, `oauth_clients`, `oauth_codes`, `pages`, `reports`, `billing_events`, `idempotency_keys`, `trash`, `trash_rows`, `trash_links`, `undo_log`, `audit_log`, `error_log`, `replay_sessions`, `replay_chunks` | `audit_log` is append-only per company. `trash*` hold soft-deleted rows for 30 days. |
 | Support (Curahold's own) | `help_requests`, `help_messages`, `help_files`, `support_grants`, `support_sessions`, `desk_codes`, `desk_claims`, `desk_log` | A company can grant Curahold support time-boxed access; the desk tables have **no** privileges for request roles. |
 | Customer portal | `portal_users`, `portal_tokens`, `portal_sessions`, `portal_identities`, `portal_passkeys`, `portal_passwords`, `portal_challenges` | Reached only through `portal_*` SQL functions (section 4). |
+| Departments and the flow between them | `departments`, `department_members`, `department_moves`, `account_team`, `request_links`, `promises`, `handovers` | 0120, 0170. The walls are in row security (`app_visible_boards`); work crosses through request links and hand-over cards, never by opening another department's board. |
+| Onboarding and setup | `onboarding_templates`, `onboarding_plans` and their `_people`, `_sites`, `_steps`, `_goals`, `_issues`, `_fields`, `_metrics`; `setup_progress`, `setup_test_runs` | 0195, 0200, 0210. One mutual plan for the company's own start (`kind = self`) and for each customer (`client`); the setup checks are read-only queries. |
+| Money from accounting programs | `finance_customers`, `finance_invoices`, `finance_payments` | 0130, 0190. Read only from the program; seen with `finance.view` or through the Finance department's band. |
+| Analytics feed | `analytics_pulls` (keys are `api_tokens` of kind analytics) | 0140. The OData and JSON/CSV feed reads as the key's owner, through the same row security. |
+| Assistant | `assistant_usage`, `assistant_global`, `assistant_cache`, `assistant_log` | 0096. Per-company caps and a global cap; questions kept only as long as the company chose. |
+| Trials, terms and consent | `trial_codes`, `trial_requests`, `trial_reminders`, `consent_records`, `consent_events`, `org_agreements`, `agreement_evidence` | 0100, 0110, 0160, 0180. Consent and agreement evidence are append-only (hash-chained). |
+| Operator console and AI team (Curahold's own) | `console_settings`, `plan_targets`, `plan_tasks`, `checklist_progress`, `seats`, `agents`, `agent_*`, `meetings`, `meeting_lines`, `approvals`, `company_log`, `seat_evals`, `site_daily` | 0110, 0150. Desk-only: request roles have no privileges on them. |
 
 Conventions: UUID primary keys, `timestamptz` everywhere, due dates are `date` interpreted in the company's time
 zone (`app_today()` gives the company's day inside a transaction), text sorting uses a per-locale `sort_text`
@@ -283,6 +290,12 @@ Each hour it runs, in order and each isolated by `.catch`, so one failing job ne
    replay recordings, trash older than 30 days) and archiving of finished tasks;
 7. 05:00 UTC: automatic renewal playbooks for contracts coming due;
 8. seat sync with Paddle (billing on only).
+
+Added 16–19 Nov, in the same run: record events from CRM syncs fire automations (`sweepRecordEvents`), the onboarding
+sweep moves plans on from what the product sees (`sweepOnboarding`), the 03:00 run also snapshots active sprints and
+records the day's failing setup checks (`dailySetupHealth`, reads only), trial reminders go out 14/7/1 days before the
+end (`sendTrialReminders`), accounting connections read incrementally inside the CRM sync slot, and the clean-up
+purges assistant logs past each company's retention and analytics pulls after 400 days.
 
 Jobs must be **idempotent and resumable**: the hourly trigger can overlap with a slow earlier run or be delayed. The
 last-run status per job is the thing to monitor (see RUNBOOK, "On-call basics").
