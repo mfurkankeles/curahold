@@ -8,6 +8,8 @@ import { navigate } from '../lib/router';
 import { TASKS_CHANGED, useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
+import { SetupEntry } from './SetupWarnings';
+import { ADMIN_PERMS } from '../../../shared/src/model';
 import type { Locale } from '../../../shared/src/i18n';
 
 const ICONS: Record<StartStep, IconName> = { task: 'checkCircle', planned: 'calendar', touch: 'phone', mention: 'at', calendar: 'link', notify: 'bell' };
@@ -106,6 +108,8 @@ export function GettingStarted() {
           </li>
         ))}
       </ol>
+      {/* Administrators: what is missing in the company's setup, and the checklist that proves it works. */}
+      {canWrite && me.user.perms.some((p) => ADMIN_PERMS.includes(p)) && <SetupEntry />}
     </section>
   );
 }

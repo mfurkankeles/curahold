@@ -1594,6 +1594,7 @@ fieldset.field { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
 .ask__more { font: inherit; font-size: var(--fs-s); font-weight: 600; color: var(--brand-ink); background: transparent; border: 0; padding: 4px 0; cursor: pointer; }
 .ask__from { margin: 8px 0 0 !important; font-size: var(--fs-s); color: var(--ink-3); }
 .ask__from a { color: var(--brand-ink); }
+.ask__fixes { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 8px; }
 .ask__label { margin: 12px 0 8px !important; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); }
 .ask__chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .ask__chip { font: inherit; font-size: var(--fs-s); text-align: start; color: var(--brand-ink); background: var(--brand-wash); border: 0; border-radius: var(--r-m); padding: 8px 8px; cursor: pointer; }

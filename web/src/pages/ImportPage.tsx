@@ -5,6 +5,7 @@
 // never leaves their device.
 import { useEffect, useState } from 'react';
 import { Importer } from '../components/Importer';
+import { SetupWarnings } from '../components/SetupWarnings';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { TaskImporter } from '../components/TaskImporter';
 import { Dialog } from '../components/ui';
@@ -93,6 +94,7 @@ export function ImportPage() {
           </span>
         </label>
         <p className="adopt-privacy">{t(DEMO ? 'imp.privacyDemo' : 'imp.privacy')}</p>
+        <SetupWarnings path="/import" />
         <div className="adopt-start">
           {card('tasks', 'board', 'T', () => setOpen({ kind: 'tasks', file: null }))}
           {canCustomers && card('customers', 'building', 'C', () => setOpen({ kind: 'customers', file: null }))}

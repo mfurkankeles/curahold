@@ -13,6 +13,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { CompanyForm } from './Settings';
+import { SetupEntry } from '../components/SetupWarnings';
 import '../surfaces/admin.css';
 
 type Step = SetupStep | 'finish';
@@ -81,6 +82,7 @@ export function SetupPage({ step }: { step: string | null }) {
             </>
           )}
           {current === 'finish' && <FinishStep done={done} onGo={go} />}
+          <SetupEntry />
         </section>
       </div>
     </>

@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 import { reply, type Sampler, type Trace, type Turn } from '../../../shared/src/assistant';
-import type { MessageKey } from '../../../shared/src/i18n';
+import { helpLanguageOf, type MessageKey } from '../../../shared/src/i18n';
 import { get, post } from '../lib/api';
 import { depsFor, findSampler, Lite } from '../lib/assistant';
 import { docsFile, docsHref, docsLink } from '../lib/docs';
@@ -337,6 +337,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
                 </div>
               )}
               {m.srv.opened && <p className="ask__from">{t('ask.ai.opened')}</p>}
+              {m.srv.fixes && <FixButtons fixes={m.srv.fixes} />}
               {m.srv.citations.length > 0 && (
                 <p className="ask__from">
                   {t('ask.ai.sourcesDocs')}{' '}
@@ -389,6 +390,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
                 </div>
               )}
               {m.done && m.trace?.opened && <p className="ask__from">{t('ask.ai.opened')}</p>}
+              {m.done && m.trace?.fixes && <FixButtons fixes={m.trace.fixes} />}
               {m.done && m.trace && m.trace.docs.length > 0 && (
                 <p className="ask__from">
                   {t('ask.ai.sourcesDocs')}{' '}
@@ -505,6 +507,27 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
         )}
       </form>
       <p className="field__hint ask__private">{t(sampler ? 'ask.ai.private' : server ? 'assist.private' : 'ask.private')}</p>
+    </div>
+  );
+}
+
+/** The screens that fix what the setup checks found: the person clicks, nothing is fixed for them. */
+function FixButtons({ fixes }: { fixes: { label: string; to: string }[] }) {
+  const { t, locale } = useI18n();
+  if (!fixes.length) return null;
+  return (
+    <div className="ask__fixes" role="group" aria-label={t('sh.assist.fixes')}>
+      {fixes.map((f) =>
+        f.to.startsWith('/docs/') ? (
+          <a key={f.to} className="btn btn--small" href={docsHref(`${helpLanguageOf(locale)}/${f.to.slice('/docs/'.length)}`)} {...docsLink}>
+            {f.label}
+          </a>
+        ) : (
+          <button key={f.to} type="button" className="btn btn--small" onClick={() => navigate(f.to)}>
+            {f.label}
+          </button>
+        ),
+      )}
     </div>
   );
 }

@@ -92,6 +92,8 @@ const DashboardPage = lazy(() => import('./pages/Dashboards').then((m) => ({ def
 const DashboardsPage = lazy(() => import('./pages/Dashboards').then((m) => ({ default: m.DashboardsPage })));
 const TeamPage = lazy(() => import('./pages/Team').then((m) => ({ default: m.TeamPage })));
 const ImportPage = lazy(() => import('./pages/ImportPage').then((m) => ({ default: m.ImportPage })));
+const SetupHealthPage = lazy(() => import('./pages/SetupHealth').then((m) => ({ default: m.SetupHealthPage })));
+const SetupTestPage = lazy(() => import('./pages/SetupTest').then((m) => ({ default: m.SetupTestPage })));
 const TimelinePage = lazy(() => import('./pages/Timeline').then((m) => ({ default: m.TimelinePage })));
 
 // Curahold's own support desk: loaded only at the central address, only when asked for.
@@ -346,7 +348,9 @@ function Routes({ onLocale }: { onLocale: (l: Locale) => void }) {
   const pg = path === '/pages/new' ? null : match('/pages/:id', path);
   const rep = match('/reports/r/:id', path);
   const dash = path === '/dashboards/new' ? null : match('/dashboards/:id', path);
-  if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
+  if (path === '/setup-health') page = <SetupHealthPage />;
+  else if (path === '/setup-test') page = <SetupTestPage />;
+  else if (path === '/setup' || setupStep) page = <SetupPage step={setupStep?.step ?? null} />;
   else if (path === '/welcome') page = <PersonalPage mode="welcome" onLocale={onLocale} />;
   else if (path === '/profile') page = <PersonalPage mode="profile" onLocale={onLocale} />;
   else if (path === '/accounts') page = <AccountsPage key={refreshKey} />;

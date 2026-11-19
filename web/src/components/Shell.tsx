@@ -5,6 +5,7 @@ import { FAVORITE_ICON } from './Favorites';
 import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
+import { seesSetup, useSetupHealth } from '../lib/setupHealth';
 import { endPreview, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useDepartments } from '../lib/departments';
@@ -183,6 +184,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
 
   const until = (iso: string) => formatDateTime(iso, locale);
   const isAdmin = me.user.perms.some((p) => ADMIN_PERMS.includes(p));
+  // Setup health: in the nav, with its count, until everything it checks is right (web/src/lib/setupHealth.ts).
+  const setupHealth = useSetupHealth(seesSetup(me.user.perms, !!me.owner) && !me.previewBy && !me.supportBy);
+  const setupFailing = setupHealth?.failing ?? 0;
   const setupLeft = can('org.manage') && !me.org.setup.finishedAt ? SETUP_STEPS.filter((s) => !(me.org.setup.done ?? []).includes(s)).length : 0;
   const helpOk = !me.previewBy && !me.supportBy;
   const due = counts.late + counts.today;
@@ -511,6 +515,16 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                 <span className="navlink__label">{t('ask.nav')}</span>
               </button>
             )}
+            {setupFailing > 0 &&
+              link(
+                '/setup-health',
+                t('nav.setupHealth'),
+                path === '/setup-health' || path === '/setup-test',
+                'lifebuoy',
+                <span className="navlink__count" data-tone="today" aria-label={t('nav.setupHealthCount', { n: setupFailing })} data-tour="setup-badge">
+                  {setupFailing > 99 ? '99+' : setupFailing}
+                </span>,
+              )}
             {isAdmin && link('/settings', t('nav.settings'), path.startsWith('/settings'), 'sliders')}
             {meMenu}
           </div>

@@ -22,6 +22,7 @@ import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
 import { SupportAccessSettings } from '../components/Help';
 import { PortalSettingsTab } from '../components/PortalAdmin';
+import { SetupWarnings } from '../components/SetupWarnings';
 import { AccessDialog, RolesTab } from '../components/Roles';
 import { Avatar, Confirm, Dialog, Mark, PeoplePicker, RowMenu } from '../components/ui';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
@@ -191,6 +192,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                     {!phone && <h2 className="admin__title">{currentLabel}</h2>}
                     <p className="admin__about">{topicAbout(t, current)}</p>
                   </header>
+                  <SetupWarnings path={sub ? `/settings/${current}/${sub}` : `/settings/${current}`} />
                   {current === 'company' && <CompanyTab />}
                   {current === 'fields' && <AccountFieldsEditor />}
                   {current === 'records' && <RecordTypesEditor />}
