@@ -26,7 +26,7 @@ create table trial_requests (
   email_verified_at  timestamptz not null,
   company            text not null check (length(company) between 1 and 160),
   country            text not null check (country ~ '^[A-Z]{2}$'),
-  departments        text[] not null default '{}' check (departments <@ array['sales', 'success', 'product', 'finance']),
+  departments        text[] not null default '{}' check (departments <@ array['insideSales', 'sales', 'onboarding', 'success', 'product', 'finance']),
   seats              int check (seats between 1 and 100000),
   -- The rest of the form, as the site sent it (shared/src/trialRequest.ts TrialRequestInput).
   details            jsonb not null default '{}'::jsonb,

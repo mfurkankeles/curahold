@@ -5,7 +5,8 @@
 // Approving creates the company with the departments chosen, invites its
 // first administrator, and starts a trial with a seat cap and an end date.
 
-export const TRIAL_DEPARTMENTS = ['sales', 'success', 'product', 'finance'] as const;
+/** 'success' is Customer Success together with technical support; every department is optional. */
+export const TRIAL_DEPARTMENTS = ['insideSales', 'sales', 'onboarding', 'success', 'product', 'finance'] as const;
 export type TrialDepartment = (typeof TRIAL_DEPARTMENTS)[number];
 
 export const TRIAL_REQUEST_STATUSES = ['new', 'contacted', 'approved', 'rejected'] as const;
