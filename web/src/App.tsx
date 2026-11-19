@@ -77,7 +77,9 @@ if (typeof location !== 'undefined') preloadRoute(location.pathname, location.se
 
 const PersonalPage = lazy(() => import('./pages/Personal').then((m) => ({ default: m.PersonalPage })));
 const SetupPage = lazy(() => import('./pages/Setup').then((m) => ({ default: m.SetupPage })));
-const SignupApp = lazy(() => import('./pages/Signup').then((m) => ({ default: m.SignupApp })));
+const AgreementsGate = lazy(() => import('./pages/Agreements').then((m) => ({ default: m.AgreementsGate })));
+// The central address: the trial request form (or, behind SIGNUP_MODE=instant, the earlier instant sign-up).
+const SignupApp = lazy(() => import('./pages/TrialRequest').then((m) => ({ default: m.TrialEntry })));
 const CalendarPage = lazy(() => import('./pages/Calendar').then((m) => ({ default: m.CalendarPage })));
 const DevicesPage = lazy(() => import('./pages/Devices').then((m) => ({ default: m.DevicesPage })));
 const TrashPage = lazy(() => import('./pages/Trash').then((m) => ({ default: m.TrashPage })));
@@ -275,7 +277,13 @@ export function App() {
         )}
         </Suspense>
       )}
-      {boot.kind === 'signed-in' && (
+      {boot.kind === 'signed-in' && boot.me.org.agreementsDue && !boot.me.previewBy && (
+        // A trial company opens after its administrator accepts the terms and DPA (routes/agreements.ts).
+        <Suspense fallback={<PageFallback />}>
+          <AgreementsGate me={boot.me} onLocale={changeLocale} onAccepted={() => void start()} />
+        </Suspense>
+      )}
+      {boot.kind === 'signed-in' && (!boot.me.org.agreementsDue || boot.me.previewBy) && (
         <ErrorBoundary whole>
           <StoreProvider initialMe={boot.me}>
             <Shell onLocale={changeLocale}>

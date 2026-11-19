@@ -1,0 +1,190 @@
+/* The free-trial request on the central address (pages/TrialRequest.tsx) and the
+   terms-and-DPA step a new company's administrator takes (pages/Agreements.tsx).
+   It sits inside the sign-in frame (.auth); tokens only (docs/design/tokens.md). */
+
+.trial .auth__main {
+  place-items: start center;
+  padding-block: 48px;
+  overflow: auto;
+}
+.trial__card {
+  width: min(560px, 100%);
+}
+.trial__form {
+  display: grid;
+  gap: 16px;
+}
+.trial__progress {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.trial__opt {
+  color: var(--ink-3);
+  font-weight: 400;
+  font-style: normal;
+}
+.trial__error {
+  font-size: var(--fs-xs);
+  color: var(--late-ink);
+  font-weight: 500;
+}
+.trial .field[data-invalid] .input,
+.trial .field[data-invalid] .select {
+  border-color: var(--late-ink);
+}
+.trial__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+.trial__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.trial__set {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.trial__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.trial__code {
+  font-size: var(--fs-xl);
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.trial__ok {
+  margin: 0;
+  color: var(--done);
+  font-weight: 600;
+}
+.trial__para {
+  margin: 4px 0 8px;
+}
+.trial__list {
+  margin: 4px 0 0;
+  padding-inline-start: 20px;
+}
+.trial__h2 {
+  margin: 0;
+  font-size: var(--fs-l);
+  font-weight: 600;
+}
+.trial__consents {
+  display: grid;
+  gap: 12px;
+}
+.trial__notice {
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--r-s);
+  background: var(--sunk);
+  color: var(--ink-2);
+  font-size: var(--fs-s);
+  line-height: var(--lh-body);
+}
+.trial__consent {
+  display: grid;
+  gap: 4px;
+}
+.trial__consent .check,
+.trial__consents .check {
+  margin-top: 0;
+  font-size: var(--fs-s);
+  line-height: var(--lh-body);
+}
+/* The field robots fill and people never meet: out of sight and out of the tab order. */
+.trial__hp {
+  position: absolute;
+  inset-inline-start: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* The progress rail on the side (desktop); a phone reads "Step n of 5" above the title. */
+.trial__rail {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.trial__rail li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r-s);
+  background: var(--well-2);
+  color: var(--well-ink);
+}
+.trial__rail li span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--well-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.trial__rail li[data-state='now'] {
+  color: var(--on-fill);
+  font-weight: 600;
+  outline: 1px solid var(--well-3);
+}
+.trial__rail li[data-state='done'] span {
+  background: var(--brand);
+  color: var(--on-fill);
+}
+
+/* Terms and DPA at activation. */
+.agree__docs {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.agree__docs li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+}
+.agree__docs small {
+  display: block;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 860px) {
+  .trial .auth__main {
+    padding: 24px 16px 48px;
+  }
+  .trial__pair {
+    grid-template-columns: 1fr;
+  }
+  .trial .input,
+  .trial .select {
+    font-size: var(--fs-l);
+  }
+}
