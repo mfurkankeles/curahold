@@ -1,12 +1,12 @@
 // The browser's side of CuraAI with a model behind it: where the model comes
 // from, what it is allowed to read, and how its answer is drawn.
 import type { ReactNode } from 'react';
-import { addressOf, prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
+import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistantDeps, Sampler } from '../../../shared/src/assistant';
 import type { Locale } from '../../../shared/src/i18n';
 import type { Me } from '../../../shared/src/model';
 import { get } from './api';
-import { docsFile, docsHref } from './docs';
+import { docsFile, docsSectionHref } from './docs';
 import { navigate } from './router';
 import { todayIso } from './time';
 
@@ -32,8 +32,6 @@ export function findSampler(): Promise<Sampler | null> {
 }
 
 const loaded: Partial<Record<string, Promise<AnswerIndex>>> = {};
-const docsBase = docsHref().replace(/index\.html$/, '');
-const docsTail = docsHref().endsWith('index.html') ? 'index.html' : '';
 
 export function depsFor(me: Me, locale: Locale, words: { one: string; other: string }, roleName: string): AssistantDeps {
   return {
@@ -45,7 +43,7 @@ export function depsFor(me: Me, locale: Locale, words: { one: string; other: str
           return r.json() as Promise<DocSection[]>;
         })
         .then(prepare)),
-    docsUrl: (s) => addressOf(s, docsBase, docsTail),
+    docsUrl: (s) => docsSectionHref(s),
     locale,
     me: { name: me.user.name, role: roleName, company: me.org.name, customer: words.one, customers: words.other, currency: me.org.currency ?? 'USD' },
     fields: (me.org.accountFields ?? []).map((f) => ({ key: f.key, type: f.type, label: f.label[locale] ?? f.label.en ?? f.key, options: f.options?.map((o) => ({ key: o.key, label: o.label[locale] ?? o.label.en ?? o.key })) })),

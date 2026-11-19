@@ -87,7 +87,7 @@ export default defineConfig({
   // The API runs in the tab and needs every language, so no swap; the app's
   // loader still asks for its language through the plugin's modules.
   plugins: [demoServerBoundary(), memoryLocation(), i18nForBrowser({ swap: false }), react(), renameFsBundle()],
-  define: { 'import.meta.env.APP_DEMO': 'true', __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
+  define: { 'import.meta.env.APP_DEMO': 'true', 'import.meta.env.APP_DOCS_URL': JSON.stringify(process.env.DEMO_DOCS_URL ?? ''), __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
   build: {
     outDir: '../../dist/demo',
     emptyOutDir: true,

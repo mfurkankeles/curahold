@@ -272,7 +272,7 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
  */
 export function withLinks(html: string, base = '/docs/', index = ''): string {
   if (base === '/docs/' && !index) return html;
-  return html.replace(/href="\/docs\/(en|tr)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang: string, slug: string, hash?: string) => `href="${base}${lang}/${slug}${index}${hash ?? ''}"`);
+  return html.replace(/href="\/docs\/([a-z]{2}(?:-[A-Z][a-z]{3})?)\/((?:[a-z0-9-]+\/)?)(#[^"]*)?"/g, (_m, lang: string, slug: string, hash?: string) => `href="${base}${lang}/${slug}${index}${hash ?? ''}"`);
 }
 
 /** The address of a section for this reader. */

@@ -15,13 +15,13 @@
 // before, on this device — still asking back on a question that means several things.
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { addressOf, ask, prepare, withLinks, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
+import { ask, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 import { reply, type Sampler, type Trace, type Turn } from '../../../shared/src/assistant';
 import { helpLanguageOf, type MessageKey } from '../../../shared/src/i18n';
 import { get, post } from '../lib/api';
 import { depsFor, findSampler, Lite } from '../lib/assistant';
-import { docsFile, docsHref, docsLink } from '../lib/docs';
+import { docsFile, docsHref, docsHtml, docsLink, docsSectionHref, docsUrlHref } from '../lib/docs';
 import { navigate } from '../lib/router';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
@@ -54,9 +54,6 @@ function load(locale: string): Promise<AnswerIndex> {
     }));
 }
 
-// Where the docs live for this reader, in the form the answers' links need.
-const docsBase = docsHref().replace(/index\.html$/, '');
-const docsTail = docsHref().endsWith('index.html') ? 'index.html' : '';
 
 /** One section of the docs shown as an answer; a long one starts folded. */
 function Section({ found }: { found: Found }) {
@@ -71,7 +68,7 @@ function Section({ found }: { found: Found }) {
     <article className="ask__answer">
       <h4>{s.h || s.t}</h4>
       {/* The docs' own HTML, written by us at build time. */}
-      <div ref={body} className="ask__body" data-folded={folded || undefined} dangerouslySetInnerHTML={{ __html: withLinks(s.m, docsBase, docsTail) }} />
+      <div ref={body} className="ask__body" data-folded={folded || undefined} dangerouslySetInnerHTML={{ __html: docsHtml(s.m) }} />
       {folded && (
         <button type="button" className="ask__more" onClick={() => setFolded(false)}>
           {t('ask.more')}
@@ -79,7 +76,7 @@ function Section({ found }: { found: Found }) {
       )}
       <p className="ask__from">
         {t('ask.from')}{' '}
-        <a href={addressOf(s, docsBase, docsTail)} {...docsLink}>
+        <a href={docsSectionHref(s)} {...docsLink}>
           {s.t}
           {s.h ? ` › ${s.h}` : ''}
         </a>
@@ -344,7 +341,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
                   {m.srv.citations.map((d, i) => (
                     <span key={d.url}>
                       {i > 0 && ', '}
-                      <a href={`${docsBase}${d.url.replace(/^\/docs\//, '')}`} {...docsLink}>
+                      <a href={docsUrlHref(d.url)} {...docsLink}>
                         {d.section ? `${d.title} › ${d.section}` : d.title}
                       </a>
                     </span>
