@@ -126,7 +126,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   const ig = c.integrations;
   const groups = INTEGRATION_GROUPS.map(({ key, names, soon }) => {
     const gr = ig.groups[key];
-    return `<li id="${key}" class="ip__int"><h2>${esc(gr.name)}${soon ? ` <span class="ip__soon">${esc(c.nav.soon)}</span>` : ''}</h2><p>${esc(gr.text)}</p>${names.length ? `<ul class="ip__names">${names.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</li>`;
+    return `<li id="int-${key}" class="ip__int"><h2>${esc(gr.name)}${soon ? ` <span class="ip__soon">${esc(c.nav.soon)}</span>` : ''}</h2><p>${esc(gr.text)}</p>${names.length ? `<ul class="ip__names">${names.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</li>`;
   }).join('');
   out.push({
     path: PAGE.integrations,

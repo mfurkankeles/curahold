@@ -141,7 +141,7 @@ export function headerHtml(o: HeaderOpts): string {
     n.integrations,
     `<div class="hx__col hx__col--grid"><ul>${INTEGRATION_GROUPS.map(({ key, names, soon: s }) => {
       const gr = c.integrations.groups[key];
-      return `<li><a class="hx__link hx__link--plain" href="${href(PAGE.integrations)}#${key}"><span class="hx__tx"><b>${esc(gr.name)}${s ? soon : ''}</b><small>${esc(names.length ? names.slice(0, 4).join(', ') + (names.length > 4 ? '…' : '') : gr.text)}</small></span></a></li>`;
+      return `<li><a class="hx__link hx__link--plain" href="${href(PAGE.integrations)}#int-${key}"><span class="hx__tx"><b>${esc(gr.name)}${s ? soon : ''}</b><small>${esc(names.length ? names.slice(0, 4).join(', ') + (names.length > 4 ? '…' : '') : gr.text)}</small></span></a></li>`;
     }).join('')}</ul><a class="hx__more" href="${href(PAGE.integrations)}">${esc(n.allIntegrations)}</a></div>` +
       feat(n.apiCard.title, n.apiCard.text, `<a class="hx__more" href="${esc(o.urls.devDocs)}">${esc(n.developers[0])}</a>`),
     'grid',
