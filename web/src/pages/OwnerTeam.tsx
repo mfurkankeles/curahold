@@ -579,6 +579,8 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
   const { w, locale } = useTeamWords();
   const threads = useLoad<{ threads: ThreadRow[] }>(`/team/seats/${seat.seat}/threads`, 0, failed);
   const [thread, setThread] = useState<string | null>(null);
+  // Wide screens keep what the seat remembers beside the chat; narrower ones open it on demand.
+  const [mem, setMem] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1680);
   useEffect(() => {
     if (!thread && threads.data) setThread(threads.data.threads[0]?.id ?? null);
   }, [threads.data, thread]);
@@ -598,7 +600,7 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
     threads.reload();
   };
   return (
-    <div className="tm-conv">
+    <div className="tm-conv" data-mem={mem ? '' : undefined}>
       <aside className="tm-threads" aria-label={w('chat.history')}>
         <header>
           <button type="button" className="btn btn--quiet btn--small tm-back" onClick={onBack}>
@@ -625,13 +627,13 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
           <Icon name="download" size={14} /> {w('chat.export')}
         </a>
       </aside>
-      <Messages key={thread ?? 'none'} seat={seat} thread={thread} onNeedThread={newThread} onDelete={remove} onSent={threads.reload} failed={failed} modelOn={modelOn} />
-      <MemoryPanel seat={seat} failed={failed} />
+      <Messages key={thread ?? 'none'} seat={seat} thread={thread} onNeedThread={newThread} onDelete={remove} onSent={threads.reload} failed={failed} modelOn={modelOn} mem={mem} onMem={() => setMem(!mem)} />
+      {mem ? <MemoryPanel seat={seat} failed={failed} /> : null}
     </div>
   );
 }
 
-function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelOn }: { seat: TeamSeat; thread: string | null; onNeedThread: () => Promise<void>; onDelete: () => void; onSent: () => void; failed: (e: unknown) => void; modelOn: boolean }) {
+function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelOn, mem, onMem }: { seat: TeamSeat; thread: string | null; onNeedThread: () => Promise<void>; onDelete: () => void; onSent: () => void; failed: (e: unknown) => void; modelOn: boolean; mem: boolean; onMem: () => void }) {
   const { w, locale } = useTeamWords();
   const [rows, setRows] = useState<MessageRow[]>([]);
   const [more, setMore] = useState(false);
@@ -640,7 +642,7 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
   const [error, setError] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<string | null>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   const load = useCallback(
     async (qs = '') => {
       if (!thread) return setRows([]);
@@ -658,7 +660,8 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
     void load();
   }, [load]);
   useEffect(() => {
-    if (!filter) end.current?.scrollIntoView({ block: 'end' });
+    // The list scrolls to its newest message; the page itself stays where it is.
+    if (!filter && list.current) list.current.scrollTop = list.current.scrollHeight;
   }, [rows, filter]);
   const older = async () => {
     if (!thread || !rows.length) return;
@@ -721,6 +724,9 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
               {w('chat.clear')}
             </button>
           ) : null}
+          <button type="button" className="btn btn--small btn--quiet" aria-pressed={mem} onClick={onMem}>
+            <Icon name="book" size={14} /> {w('mem.toggle')}
+          </button>
           {thread ? (
             <button type="button" className="btn btn--icon btn--small btn--quiet" onClick={onDelete} aria-label={w('chat.delete')} title={w('chat.delete')}>
               <Icon name="trash" size={14} />
@@ -728,7 +734,7 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
           ) : null}
         </form>
       </header>
-      <div className="tm-msgs__list" aria-live="polite">
+      <div className="tm-msgs__list" aria-live="polite" ref={list}>
         {more && !filter ? (
           <button type="button" className="btn btn--small btn--quiet tm-older" onClick={older}>
             {w('chat.older')}
@@ -764,7 +770,6 @@ function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelO
           );
         })}
         {sending ? <p className="tm-typing">{w('chat.sending', { name: seat.name })}</p> : null}
-        <div ref={end} />
       </div>
       <form className="tm-compose" onSubmit={send}>
         <textarea
@@ -1112,11 +1117,6 @@ function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s:
       <div className="tm-meet">
         <section className="tm-transcript" aria-label={w('meet.transcript')}>
           <h2>{w('meet.transcript')}</h2>
-          {view.data.speaking ? (
-            <p className="tm-typing" role="status">
-              {w('meet.speaking', { name: nameOf(view.data.speaking) })}
-            </p>
-          ) : null}
           {!lines.length ? <p className="oc__muted">{w('meet.noLines')}</p> : null}
           <ol aria-live="polite">
             {lines.map((l) => (
@@ -1127,6 +1127,11 @@ function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s:
               </li>
             ))}
           </ol>
+          {view.data.speaking ? (
+            <p className="tm-typing" role="status">
+              {w('meet.speaking', { name: nameOf(view.data.speaking) })}
+            </p>
+          ) : null}
           {joined && live ? (
             <form className="tm-compose" onSubmit={say}>
               <p className="oc__muted">{w('meet.joined')}</p>
@@ -1140,7 +1145,11 @@ function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s:
         <section className="tm-minutes" aria-label={w('meet.minutes')}>
           <h2>{w('meet.minutes')}</h2>
           {!min ? (
-            <p className="oc__muted">{w('meet.minutesLive')}</p>
+            <>
+              <p className="oc__muted">{w('meet.minutesLive')}</p>
+              {items(w('meet.agenda'), m.goal ? [m.goal] : [])}
+              {items(w('meet.spoke'), [...new Set(lines.map((l) => nameOf(l.speaker)))])}
+            </>
           ) : (
             <>
               {items(w('meet.agenda'), min.agenda)}
