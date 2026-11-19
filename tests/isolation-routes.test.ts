@@ -320,6 +320,7 @@ const VIEWER_WRITES: string[] = [
   'POST /replay', // their own consented session recording
   'POST /support/leave', // ending a support visit
   'POST /views', // their own saved view of a board they can see
+  'POST /assist', // a question to the assistant: it only reads, as them
   'PUT /tasks/:id/watch', // following a task they can see
   'DELETE /tasks/:id/watch',
   'POST /tasks/:id/mute',

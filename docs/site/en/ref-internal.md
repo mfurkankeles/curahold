@@ -13,6 +13,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/admin/…` | 33 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/agent/…` | 14 | The AI team's own door: each seat's agent with its own key reads its slice and proposes; never a company's API. |
 | `/agreements/…` | 2 | Accepting the terms of service and the DPA: a company administrator in the browser, once per version. |
+| `/assist/…` | 5 | CuraAI and the docs' "Ask": questions answered from the docs and, in the app, from what the asking person may see; an administrator sets its limits in the browser. Keys use the AI connector instead. |
 | `/auth/…` | 10 | Signing in and out happens in the browser. |
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |

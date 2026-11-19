@@ -116,6 +116,13 @@ const PROBES: Record<string, Probe> = {
   'GET /papi/org': async (p) => expect((await p.req('GET', '/papi/org')).json.name).toBe('Demo Company'),
   'GET /papi/logo': async (p) => none([404, 200])((await p.req('GET', '/papi/logo')).status),
   'GET /papi/me': async (p) => expect((await p.req('GET', '/papi/me')).json.user.email).toBe('selin@quillfield.example'),
+  // The assistant reads only through the portal's own functions, as this person; no model in tests.
+  'GET /papi/assist/status': async (p) => expect((await p.req('GET', '/papi/assist/status')).json.available).toBe(false),
+  'POST /papi/assist': async (p) => {
+    const r = await p.req('POST', '/papi/assist', { question: `What is the status of ${foreign.tasks[0]}?` });
+    expect(r.status).toBe(200);
+    expect(r.json.reply.data).toEqual([]);
+  },
   'GET /papi/account': async (p) => expect((await p.req('GET', '/papi/account')).json.email).toBe('selin@quillfield.example'),
   'GET /papi/boards/:id/tasks': async (p) => {
     for (const b of foreign.boards) notFound((await p.req('GET', `/papi/boards/${b}/tasks`)).status);
