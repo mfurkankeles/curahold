@@ -33,6 +33,19 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `GET /tasks/:id/dev` | Bir göreve bağlı dallar, çekme istekleri ve commit'ler; durumları ve kontrolleriyle, bir satırlık özetle. |
 | `GET /boards/:id/dev-links` | Bağlantısı olan, bir panodaki her görevin geliştirme özeti. |
 | `DELETE /dev-links/:id` | Bir görevden tek bir bağlantıyı kaldırır. |
+| `GET /analytics/odata` | BI araçları için analiz akışı (OData v4): bu anahtarın ya da kişinin okuyabileceği veri kümeleri. |
+| `GET /analytics/odata/` | Analiz akışının hizmet belgesi. |
+| `GET /analytics/odata/:set` | Bir veri kümesi, sayfa sayfa (`@odata.nextLink`); `$metadata` her veri kümesinin sütunlarını XML olarak verir. |
+| `GET /analytics/odata/:set/:sub` | `$count` ile: bir veri kümesinin satır sayısı, düz metin olarak. |
+| `GET /analytics/v1` | Analiz akışının veri kümeleri; sütunları, JSON ve CSV adresleriyle. |
+| `GET /analytics/v1/` | Aynı veri kümesi listesi. |
+| `GET /analytics/v1/:file` | Bir veri kümesi, `Ad.json` ya da `Ad.csv` olarak: `limit`, `page`, `offset`, `cursor`, `since`, `fields`, `filter`, `orderby`, `count`. |
+| `GET /dev/analytics/keys` | Analiz anahtarların; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için). |
+| `POST /dev/analytics/keys` | Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): `name`, `datasets`, `departments`, `expiresInDays`. |
+| `POST /dev/analytics/keys/:id/rotate` | Analiz anahtarlarından birine yeni bir gizli değer verir; eskisi hemen durur. |
+| `DELETE /dev/analytics/keys/:id` | Bir analiz anahtarını iptal eder. |
+| `GET /dev/analytics/datasets` | Bir analiz anahtarına verebileceğin veri kümeleri; sütunlarıyla. |
+| `GET /dev/analytics/pulls` | Analiz akışından son okumalar: seninkiler ya da kişileri yönetenler için herkesinki. |
 
 ## Ayrıntılar
 
@@ -153,3 +166,68 @@ Bağlantısı olan, bir panodaki her görevin geliştirme özeti.
 Bir görevden tek bir bağlantıyı kaldırır.
 
 **Gerekenler:** yazabilen bir koltuk
+
+### `GET /analytics/odata`
+
+BI araçları için analiz akışı (OData v4): bu anahtarın ya da kişinin okuyabileceği veri kümeleri. Sondaki eğik çizgiyle aynıdır. Analiz anahtarıyla Basic parolası, Bearer belirteci ya da `?key=` olarak okunur; dışa aktarma izni gerekir. Bkz. "BI aracı bağlama".
+
+### `GET /analytics/odata/`
+
+Analiz akışının hizmet belgesi.
+
+### `GET /analytics/odata/:set`
+
+Bir veri kümesi, sayfa sayfa (`@odata.nextLink`); `$metadata` her veri kümesinin sütunlarını XML olarak verir. `$select`, `$filter`, `$orderby`, `$top`, `$skip`, `$count`, `$skiptoken`, `$deltatoken` alır.
+
+### `GET /analytics/odata/:set/:sub`
+
+`$count` ile: bir veri kümesinin satır sayısı, düz metin olarak.
+
+### `GET /analytics/v1`
+
+Analiz akışının veri kümeleri; sütunları, JSON ve CSV adresleriyle. Sondaki eğik çizgiyle aynıdır.
+
+### `GET /analytics/v1/`
+
+Aynı veri kümesi listesi.
+
+### `GET /analytics/v1/:file`
+
+Bir veri kümesi, `Ad.json` ya da `Ad.csv` olarak: `limit`, `page`, `offset`, `cursor`, `since`, `fields`, `filter`, `orderby`, `count`. Sonraki sayfa `next` alanında (JSON) ya da `Link` başlığında (CSV).
+
+### `GET /dev/analytics/keys`
+
+Analiz anahtarların; sınırları ve son 30 gündeki kullanımlarıyla; `scope=all` ile herkesinki (kişileri yönetenler için).
+
+**Sorgu:** `scope`
+
+### `POST /dev/analytics/keys`
+
+Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): `name`, `datasets`, `departments`, `expiresInDays`. Anahtar bir kez gösterilir.
+
+**Gerekenler:** yetki `data.export`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
+| `datasets` | metin listesi | isteğe bağlı | en az 1 öğe; en çok 100 öğe; boş (null) olabilir; varsayılan null |
+| `departments` | şunlardan biri: ANALYTICS_DEPARTMENTS listesi | isteğe bağlı | en az 1 öğe; en çok 4 öğe; boş (null) olabilir; varsayılan null |
+| `expiresInDays` | tam sayı | isteğe bağlı | en az 1; en çok 730; varsayılan 365 |
+
+### `POST /dev/analytics/keys/:id/rotate`
+
+Analiz anahtarlarından birine yeni bir gizli değer verir; eskisi hemen durur. Yenisi bir kez gösterilir.
+
+**Gerekenler:** yetki `data.export`
+
+### `DELETE /dev/analytics/keys/:id`
+
+Bir analiz anahtarını iptal eder.
+
+### `GET /dev/analytics/datasets`
+
+Bir analiz anahtarına verebileceğin veri kümeleri; sütunlarıyla.
+
+### `GET /dev/analytics/pulls`
+
+Analiz akışından son okumalar: seninkiler ya da kişileri yönetenler için herkesinki.

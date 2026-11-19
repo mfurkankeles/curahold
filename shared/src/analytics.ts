@@ -13,7 +13,7 @@ export const BI_TOOLS = [
   { key: 'lookerstudio', anchor: 'looker-studio' },
   { key: 'qlik', anchor: 'qlik' },
   { key: 'zoho', anchor: 'zoho-analytics' },
-  { key: 'metabase', anchor: 'metabase-and-superset' },
+  { key: 'metabase', anchor: 'metabase-superset' },
 ] as const;
 
 export interface AnalyticsKeyInfo {

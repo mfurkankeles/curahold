@@ -10,6 +10,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 
 | Kod | Durum | Kişiye söylenen |
 | --- | --- | --- |
+| `analytics_query` | 400 | Bu sorgu okunamadı: … |
 | `backup_not_admin` | 400 | Yalnızca etkin yöneticiler yedek yönetici olabilir. |
 | `bad_assignee` | 400 | Görevler yalnızca şirketindeki, tam koltuğu olan aktif kişilere atanabilir. |
 | `bad_status` | 400 | Bu panoda böyle bir sütun yok. |
@@ -92,6 +93,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |
+| `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden dene. |
 | `portal_locked` | 429 | Çok fazla yanlış deneme oldu. … dakika sonra tekrar dene ya da şifreni yenile. |
 | `too_many_requests` | 429 | Çok fazla deneme oldu. Birkaç dakika bekleyip tekrar dene. |
 | `server` | 500 | Bizim tarafta bir sorun oldu. Lütfen tekrar dene. |

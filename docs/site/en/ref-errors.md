@@ -10,6 +10,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 
 | Code | Status | What the person is told |
 | --- | --- | --- |
+| `analytics_query` | 400 | This query cannot be read: … |
 | `backup_not_admin` | 400 | Only active administrators can be backup administrators. |
 | `bad_assignee` | 400 | Tasks can only be assigned to active people with a full seat in your company. |
 | `bad_status` | 400 | That column does not exist on this board. |
@@ -92,6 +93,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `file_too_large` | 413 | Files can be up to … MB. |
 | `import_too_large` | 413 | Import up to … rows at a time. |
 | `repeat_mismatch` | 422 | This request was sent with a key that already belongs to a different change. Nothing was changed. |
+| `analytics_budget` | 429 | Today's analytics budget of … rows is used up. Try again later. |
 | `portal_locked` | 429 | Too many wrong tries. Try again in … minutes, or reset your password. |
 | `too_many_requests` | 429 | Too many attempts. Wait a few minutes and try again. |
 | `server` | 500 | Something went wrong on our side. Please try again. |

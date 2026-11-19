@@ -33,6 +33,19 @@ These are what the Settings → Developers page calls. A key cannot create or de
 | `GET /tasks/:id/dev` | The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary. |
 | `GET /boards/:id/dev-links` | The development summary of every task on a board that has links. |
 | `DELETE /dev-links/:id` | Removes one link from a task. |
+| `GET /analytics/odata` | The analytics feed for BI tools (OData v4): the list of datasets this key or person may read. |
+| `GET /analytics/odata/` | The service document of the analytics feed. |
+| `GET /analytics/odata/:set` | One dataset, a page at a time (`@odata.nextLink`); `$metadata` gives every dataset's columns as XML. |
+| `GET /analytics/odata/:set/:sub` | With `$count`: the number of rows of a dataset, as plain text. |
+| `GET /analytics/v1` | The datasets of the analytics feed with their columns and their JSON and CSV addresses. |
+| `GET /analytics/v1/` | The same list of datasets. |
+| `GET /analytics/v1/:file` | One dataset as `Name.json` or `Name.csv`: `limit`, `page`, `offset`, `cursor`, `since`, `fields`, `filter`, `orderby`, `count`. |
+| `GET /dev/analytics/keys` | Your analytics keys with their limits and use in the last 30 days; with `scope=all`, everyone's (for people who manage people). |
+| `POST /dev/analytics/keys` | Makes an analytics key (in the browser only, needs the export permission): `name`, `datasets`, `departments`, `expiresInDays`. |
+| `POST /dev/analytics/keys/:id/rotate` | Gives one of your analytics keys a new secret; the old one stops at once. |
+| `DELETE /dev/analytics/keys/:id` | Revokes an analytics key. |
+| `GET /dev/analytics/datasets` | The datasets you could put on an analytics key, with their columns. |
+| `GET /dev/analytics/pulls` | The latest reads from the analytics feed: yours, or everyone's for people who manage people. |
 
 ## Details
 
@@ -153,3 +166,68 @@ The development summary of every task on a board that has links.
 Removes one link from a task.
 
 **Needs:** a seat that can write
+
+### `GET /analytics/odata`
+
+The analytics feed for BI tools (OData v4): the list of datasets this key or person may read. Same as with the last slash. Read with an analytics key as a Basic password, a Bearer token or `?key=`; needs the export permission. See "Connect a BI tool".
+
+### `GET /analytics/odata/`
+
+The service document of the analytics feed.
+
+### `GET /analytics/odata/:set`
+
+One dataset, a page at a time (`@odata.nextLink`); `$metadata` gives every dataset's columns as XML. Takes `$select`, `$filter`, `$orderby`, `$top`, `$skip`, `$count`, `$skiptoken`, `$deltatoken`.
+
+### `GET /analytics/odata/:set/:sub`
+
+With `$count`: the number of rows of a dataset, as plain text.
+
+### `GET /analytics/v1`
+
+The datasets of the analytics feed with their columns and their JSON and CSV addresses. Same as with the last slash.
+
+### `GET /analytics/v1/`
+
+The same list of datasets.
+
+### `GET /analytics/v1/:file`
+
+One dataset as `Name.json` or `Name.csv`: `limit`, `page`, `offset`, `cursor`, `since`, `fields`, `filter`, `orderby`, `count`. The next page is in `next` (JSON) or the `Link` header (CSV).
+
+### `GET /dev/analytics/keys`
+
+Your analytics keys with their limits and use in the last 30 days; with `scope=all`, everyone's (for people who manage people).
+
+**Query:** `scope`
+
+### `POST /dev/analytics/keys`
+
+Makes an analytics key (in the browser only, needs the export permission): `name`, `datasets`, `departments`, `expiresInDays`. The key is shown once.
+
+**Needs:** permission `data.export`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `name` | text | required | at least 1 characters; at most 80 characters |
+| `datasets` | list of text | optional | at least 1 items; at most 100 items; may be null; default null |
+| `departments` | list of one of ANALYTICS_DEPARTMENTS | optional | at least 1 items; at most 4 items; may be null; default null |
+| `expiresInDays` | whole number | optional | at least 1; at most 730; default 365 |
+
+### `POST /dev/analytics/keys/:id/rotate`
+
+Gives one of your analytics keys a new secret; the old one stops at once. The new one is shown once.
+
+**Needs:** permission `data.export`
+
+### `DELETE /dev/analytics/keys/:id`
+
+Revokes an analytics key.
+
+### `GET /dev/analytics/datasets`
+
+The datasets you could put on an analytics key, with their columns.
+
+### `GET /dev/analytics/pulls`
+
+The latest reads from the analytics feed: yours, or everyone's for people who manage people.
