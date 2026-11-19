@@ -82,8 +82,8 @@ export function anthropicProvider(opts: { apiKey: string; model: string; fetch?:
         max_tokens: req.maxTokens,
         system,
         messages: req.messages,
-        tools: req.tools,
-        ...(req.toolChoice ? { tool_choice: { type: req.toolChoice } } : {}),
+        ...(req.tools.length ? { tools: req.tools } : {}),
+        ...(req.toolChoice && req.tools.length ? { tool_choice: { type: req.toolChoice } } : {}),
       };
       const timeout = AbortSignal.timeout(opts.timeoutMs ?? 30_000);
       const signal = req.signal ? AbortSignal.any([req.signal, timeout]) : timeout;

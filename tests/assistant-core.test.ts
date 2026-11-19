@@ -272,7 +272,7 @@ describe('the provider and the money', () => {
         return new Response(JSON.stringify({ content: [{ type: 'text', text: 'hi' }], stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 2, cache_read_input_tokens: 5 } }), { status: 200 });
       }) as typeof fetch,
     });
-    const r = await p.complete({ system: [{ text: 'rules', cache: true }, { text: 'today' }], messages: [{ role: 'user', content: 'q' }], tools: [], maxTokens: 100, toolChoice: 'any' });
+    const r = await p.complete({ system: [{ text: 'rules', cache: true }, { text: 'today' }], messages: [{ role: 'user', content: 'q' }], tools: [{ name: 'respond', description: 'reply', input_schema: { type: 'object' } }], maxTokens: 100, toolChoice: 'any' });
     expect(seen!.url).toBe('https://api.anthropic.com/v1/messages');
     const headers = seen!.init.headers as Record<string, string>;
     expect(headers['x-api-key']).toBe('sk-test');

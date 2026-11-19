@@ -135,6 +135,8 @@ interface Ambiguity {
   all: Words[];
   /** A word from here means the question already says which one: no need to ask. */
   none: Words;
+  /** Only a short question means this one ("How do I import?"); a longer one names what it is about. */
+  short?: boolean;
   question: MessageKey;
   options: { id: string; label: MessageKey; pages: string[] }[];
 }
@@ -173,7 +175,7 @@ const DELETE: Words = [
   'delete', 'remove', 'close', 'cancel',
   'sil', 'kaldir', 'kapat', 'iptal',
   'احذف', 'حذف', 'إلغاء', 'الغاء', 'إغلاق', 'اغلاق',
-  'מחק', 'למחוק', 'מחיקת', 'לסגור', 'סגירת',
+  'מחק', 'מוחק', 'למחוק', 'מחיקת', 'לסגור', 'סגירת',
   'پاک', 'ببندم', 'بستن',
   '删除', '刪除', '注销', '註銷', '关闭', '關閉',
   '削除', '退会', '解約',
@@ -266,6 +268,7 @@ export const CLARIFY: Ambiguity[] = [
   },
   {
     id: 'import',
+    short: true,
     all: [IMPORT],
     none: IMPORT_SAYS_WHICH,
     question: 'assist.clarify.import',
@@ -277,6 +280,7 @@ export const CLARIFY: Ambiguity[] = [
   },
   {
     id: 'connect',
+    short: true,
     all: [CONNECT],
     none: CONNECT_SAYS_WHICH,
     question: 'assist.clarify.connect',
@@ -308,7 +312,10 @@ export function ambiguityOf(question: string): Ambiguity | null {
   const f = ` ${foldText(question).replace(/[’'`´]/g, ' ')} `;
   // A long question usually says enough; asking back would only slow it down.
   if (f.length > 160) return null;
-  return CLARIFY.find((a) => a.all.every((g) => holds(f, g)) && !holds(f, a.none)) ?? null;
+  const t = question.trim();
+  // Short: a few words ("How do I connect it?", "Nasıl bağlarım?"); Han, kana and Hangul say as much in fewer characters.
+  const short = t.length <= (/[\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(t) ? 14 : 24);
+  return CLARIFY.find((a) => (!a.short || short) && a.all.every((g) => holds(f, g)) && !holds(f, a.none)) ?? null;
 }
 
 /** The choice behind an option id, with the docs pages that answer it. */
@@ -348,7 +355,9 @@ const COMPARE: RegExp[] = [
 export function asksAboutOthers(question: string, names: string[] = []): boolean {
   const f = foldText(question);
   if (names.some((n) => n.trim().length > 1 && holds(` ${f} `, [n.trim()]))) return true;
-  return COMPARE.some((r) => r.test(f));
+  // Folding takes Hangul and kana apart; their patterns are matched on the text as written.
+  const raw = question.normalize('NFC').toLowerCase();
+  return COMPARE.some((r) => r.test(f) || r.test(raw));
 }
 
 // ------------------------------------------------------------------ instructions hidden in text
@@ -369,5 +378,6 @@ const INJECTION: RegExp[] = [
 /** Does the text try to give the assistant instructions of its own? (The model is told the same; this is the free first check.) */
 export function triesToInstruct(text: string): boolean {
   const f = foldText(text);
-  return INJECTION.some((r) => r.test(f));
+  const raw = text.normalize('NFC').toLowerCase();
+  return INJECTION.some((r) => r.test(f) || r.test(raw));
 }

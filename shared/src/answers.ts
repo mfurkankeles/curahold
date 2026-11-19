@@ -64,7 +64,9 @@ const STOP = new Set(
     'please want need like get make use using about tell show give let much many happen happens ' +
     've veya ama fakat ile icin gibi kadar bu su o bir da de mi mu ki ne nasil neden nicin nerede nereden hangi kim ben sen biz siz onlar benim senin bizim sizin ' +
     'var yok evet hayir cok daha en her hic bazi tum butun olarak olan olur oldu olmak etmek yapmak yapilir yapabilirim istiyorum lazim gerek lutfen bana bize ' +
-    'neyi neye nedir neler nelerdir kimler kimi kime hangisi nasildir midir kadar'
+    'neyi neye nedir neler nelerdir kimler kimi kime hangisi nasildir midir kadar ' +
+    // The product's own name is in nearly every question and every page: it finds nothing.
+    'curahold'
   ).split(' '),
 );
 
