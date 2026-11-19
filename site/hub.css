@@ -148,7 +148,7 @@ body { background: var(--mist); }
 @media (max-width: 960px) {
   .hub-hero { grid-template-columns: 1fr; gap: 28px; padding-top: 24px; }
   .peek { justify-self: center; max-width: 480px; }
-  .hub-cat { grid-template-columns: 1fr; gap: 18px; }
+  .hub-cat { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .hub-filters { position: static; padding: 0; border: 0; background: none; }
   .hub-filters__toggle {
     display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; border-radius: 999px;
@@ -158,7 +158,7 @@ body { background: var(--mist); }
   .hub-filters__body { margin-top: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px 6px; }
   .hub-filters:not(.is-open) .hub-filters__body { display: none; }
   .hub-filters__head { display: none; }
-  .hub-cards { grid-template-columns: 1fr; }
+  .hub-cards { grid-template-columns: minmax(0, 1fr); }
   .hub-band .band__in { grid-template-columns: 1fr; }
   .hub-band__ctas { justify-self: start; }
 }
