@@ -5,7 +5,6 @@
 .trial .auth__main {
   place-items: start center;
   padding-block: 48px;
-  overflow: auto;
 }
 .trial__card {
   width: min(560px, 100%);
@@ -181,6 +180,19 @@
   display: block;
   color: var(--ink-3);
   font-size: var(--fs-xs);
+}
+
+.trial__set > legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+.trial__set > legend .field__hint {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+}
+.trial__consents .check > span {
+  display: block;
 }
 
 @media (max-width: 860px) {
