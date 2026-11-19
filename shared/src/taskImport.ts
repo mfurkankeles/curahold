@@ -91,8 +91,8 @@ export function parseDay(raw: unknown, locale: Locale): string | null {
 const DONE_WORDS = /^(done|complete|completed|closed|resolved|finished|shipped|tamam|tamamlandi|bitti|kapandi|kapali|cozuldu|yapildi)$/;
 const YES = /^(true|yes|y|1|x|✓|evet|e)$/;
 // What other tools call "not started" and "being worked on".
-const TODO_WORDS = /^(to do|todo|open|new|not started|backlog|planned|yapilacak|acik|yeni|baslamadi|bekliyor|planlandi)$/;
-const DOING_WORDS = /^(in progress|doing|started|working on it|wip|in review|review|ongoing|active|devam ediyor|yapiliyor|suruyor|baslandi|incelemede|uzerinde calisiliyor)$/;
+export const TODO_WORDS = /^(to do|todo|open|new|not started|backlog|planned|yapilacak|acik|yeni|baslamadi|bekliyor|planlandi)$/;
+export const DOING_WORDS = /^(in progress|doing|started|working on it|wip|in review|review|ongoing|active|devam ediyor|yapiliyor|suruyor|baslandi|incelemede|uzerinde calisiliyor)$/;
 
 /**
  * The board column a file's status belongs to: one with the same name; else,

@@ -135,6 +135,10 @@ export function WeeksView({ team, refreshKey }: { team: string; refreshKey: numb
           {t('weeks.light')}
         </span>
         <span>
+          <i data-level="2" />
+          {t('weeks.usual')}
+        </span>
+        <span>
           <i data-level="3" />
           {t('weeks.heavy')}
         </span>
@@ -172,7 +176,7 @@ export function PortfolioView({ team, refreshKey }: { team: string; refreshKey: 
   const open = (id: string) => navigate(`/accounts/${id}`);
   return (
     <>
-      <div className="inline-actions u-justify-content-flex-start">
+      <div className="portfolio__bar">
         <div className="seg" role="group" aria-label={t('portfolio.scope')}>
           {(['all', 'mine'] as const).map((s) => (
             <button key={s} type="button" aria-pressed={scope === s} onClick={() => setScope(s)}>

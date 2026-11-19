@@ -49,7 +49,8 @@
 .adopt-card strong { font-size: var(--fs-l); }
 .adopt-card p { margin: 0; color: var(--ink-2); font-size: var(--fs-s); }
 .adopt-card kbd { font-size: var(--fs-2xs); padding: 0 var(--s-1); border: 1px solid var(--line-strong); border-radius: var(--r-xs); color: var(--ink-3); justify-self: start; }
-.adopt-page { display: grid; gap: var(--s-6); }
+.adopt-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-6); align-content: start; }
+.importer > .seg { justify-self: start; }
 .adopt-page .adopt-privacy { max-inline-size: 960px; }
 
 /* --------------------------------------------------------- team: weeks */
@@ -79,7 +80,9 @@
 /* ------------------------------------------------- portfolio summary */
 .portfolio td.num a { color: inherit; }
 .portfolio__bad { color: var(--late-ink); font-weight: 600; }
-.portfolio__name { display: grid; gap: 0; }
+.portfolio__name { display: grid; gap: 0; color: var(--ink); text-decoration: none; }
+.portfolio__name:hover span, .portfolio__name:focus-visible span { text-decoration: underline; }
+.portfolio__bar { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; margin-block-end: var(--s-3); }
 .portfolio__name small { color: var(--ink-3); font-size: var(--fs-xs); }
 .portfolio th button { all: unset; cursor: pointer; }
 .portfolio th button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-xs); }

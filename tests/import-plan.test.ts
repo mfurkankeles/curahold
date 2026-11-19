@@ -79,10 +79,10 @@ describe('the shapes of exported files', () => {
   });
 
   it('guesses where each column goes, telling a list from a status', () => {
-    expect(guessImportMapping(['Task Name', 'Status', 'List Name', 'Task ID', 'Parent ID', 'Comments', 'Depends on', 'Story Points', 'Region'])).toEqual({
+    expect(guessImportMapping(['Task Name', 'List Name', 'Status', 'Task ID', 'Parent ID', 'Comments', 'Depends on', 'Story Points', 'Region'])).toEqual({
       'Task Name': 'title',
-      Status: 'status',
       'List Name': 'list',
+      Status: 'status',
       'Task ID': 'ref',
       'Parent ID': 'parent',
       Comments: 'comments',
@@ -121,10 +121,11 @@ describe('where lists go', () => {
   });
 
   it('builds a new board’s columns from the file’s statuses', () => {
-    expect(columnsFromStatuses(['Backlog', 'Doing', 'Done', 'Review', 'doing'], cols).map((c) => [c.name, c.done])).toEqual([
+    expect(columnsFromStatuses(['Doing', 'Backlog', 'Done', 'Parked', 'Review', 'doing'], cols).map((c) => [c.name, c.done])).toEqual([
       ['Backlog', false],
       ['Doing', false],
       ['Review', false],
+      ['Parked', false],
       ['Done', true],
     ]);
     expect(columnsFromStatuses(['Open'], cols)).toBe(cols);

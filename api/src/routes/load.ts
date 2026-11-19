@@ -83,7 +83,7 @@ loadRoutes.get('/reports/portfolio', async (c) => {
                 count(*)::int as open,
                 count(*) filter (where t.due_date < (select app_today()))::int as overdue,
                 count(*) filter (where t.portal_author_id is not null)::int as requests,
-                min(t.due_date) as next_due
+                min(t.due_date) filter (where t.due_date >= (select app_today())) as next_due
            from tasks t join boards b on b.id = t.board_id
           where t.account_id is not null and t.archived_at is null and t.done_at is null and b.archived_at is null
           group by t.account_id),

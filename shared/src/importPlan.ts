@@ -11,7 +11,7 @@ import { normalizeValue } from './fields';
 import { translate, type Locale, type MessageKey } from './i18n';
 import type { AccountField, Column, TaskField, TaskFieldValue } from './model';
 import { OPTION_COLORS } from './model';
-import { TASK_IMPORT_FIELDS, columnFor, fold, guessTaskMapping, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportField } from './taskImport';
+import { DOING_WORDS, TASK_IMPORT_FIELDS, TODO_WORDS, columnFor, fold, guessTaskMapping, matchPerson, parseDay, priorityFor, splitPeople, type TaskImportField } from './taskImport';
 
 /** Every place a column can go. `custom` and `comments` may take several columns; the rest one each. */
 export const IMPORT_FIELDS = [...TASK_IMPORT_FIELDS, 'list', 'ref', 'parent', 'comments', 'dependsOn', 'points', 'custom'] as const;
@@ -212,14 +212,18 @@ export function guessImportMapping(headers: string[]): Record<string, ImportFiel
   const out: Record<string, ImportField | 'skip'> = {};
   for (const h of headers) out[h] = 'skip';
   for (const f of TASK_IMPORT_FIELDS) if (base[f]) out[base[f]!] = f;
+  // A list tool's export has a status AND a list: then the status is the column, and the list is where the task lives.
+  const realStatus = headers.find((h) => ['status', 'state', 'durum', 'section/column'].includes(fold(h)));
+  if (realStatus) {
+    for (const h of headers) if (out[h] === 'status') out[h] = 'skip';
+    out[realStatus] = 'status';
+  }
   const taken = new Set(Object.values(out));
-  // A list tool's export has a status AND a list: then the list is where the task lives, not its column.
-  const hasRealStatus = headers.some((h) => ['status', 'state', 'durum', 'section/column'].includes(fold(h)));
   for (const h of headers) {
-    if (out[h] !== 'skip' && !(out[h] === 'status' && hasRealStatus && MORE_BY.get(fold(h)) === 'list')) continue;
+    if (out[h] !== 'skip' && !(out[h] === 'status' && !realStatus)) continue;
     const f = MORE_BY.get(fold(h));
     if (!f) continue;
-    if (f === 'list' && !hasRealStatus && out[h] === 'status') continue;
+    if (out[h] === 'status' && f === 'list') continue;
     if (!MULTI_FIELDS.includes(f) && taken.has(f)) continue;
     out[h] = f;
     taken.add(f);
@@ -381,7 +385,9 @@ export function columnsFromStatuses(statuses: string[], fallback: Column[]): Col
     c.key = k;
   }
   if (!cols.some((c) => c.done)) cols.push({ ...fallback[fallback.length - 1], done: true });
-  return [...cols.filter((c) => !c.done), ...cols.filter((c) => c.done)];
+  // Not started first, then being worked on, then the rest in the file's order; finished last.
+  const rank = (c: Column) => (c.done ? 3 : TODO_WORDS.test(fold(c.name)) ? 0 : DOING_WORDS.test(fold(c.name)) ? 1 : 2);
+  return cols.map((c, i) => ({ c, i })).sort((a, b) => rank(a.c) - rank(b.c) || a.i - b.i).map((x) => x.c);
 }
 
 // -------------------------------------------------------------------- plan

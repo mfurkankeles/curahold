@@ -269,7 +269,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
   };
 
   const template = useMemo(() => csvUrl(`﻿${(TEMPLATE[locale] ?? TEMPLATE.en).join('\n')}\n`), [locale]);
-  const reasonText = (r: Reason, kind: 'left' | 'note') => t(`imp.${kind}.${r}` as MessageKey);
+  const reasonText = (r: Reason, kind: 'left' | 'note', n = 2) => t(`imp.${kind}.${r}` as MessageKey, { n });
   const problems = (report: ImportReport) => csvUrl(problemsCsv(report, reasonText, [t('imp.csv.row'), t('imp.csv.what')]));
   const rowList = (ns: number[]) => (ns.length > 8 ? `${ns.slice(0, 8).join(', ')}…` : ns.join(', '));
   const names = (items: { name: string; count: number }[]) => items.slice(0, 6).map((x) => (x.count > 1 ? `${x.name} (${x.count})` : x.name)).join(', ');
@@ -320,7 +320,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
           {(['tasks', 'subtasks', 'comments', 'links'] as const).map((k) => (
             <div key={k} className="import-result__stat">
               <strong className="num">{x[k]}</strong>
-              <span>{t(`imp.count.${k}` as MessageKey)}</span>
+              <span>{t(`imp.count.${k}` as MessageKey, { n: x[k] })}</span>
             </div>
           ))}
         </div>
@@ -568,7 +568,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
               <div className="adopt-plan__counts">
                 {(['tasks', 'subtasks', 'comments', 'links'] as const).map((k) => (
                   <span key={k} data-zero={b[k] === 0 ? 'true' : undefined}>
-                    <strong className="num">{b[k]}</strong> {t(`imp.count.${k}` as MessageKey)}
+                    <strong className="num">{b[k]}</strong> {t(`imp.count.${k}` as MessageKey, { n: b[k] })}
                   </span>
                 ))}
               </div>
@@ -585,12 +585,12 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
             <ul className="import-notes adopt-left">
               {r.left.map((x) => (
                 <li key={`l-${x.reason}`} data-kind="left">
-                  <strong className="num">{x.n}</strong> {reasonText(x.reason, 'left')} <span className="muted">{t('imp.rows', { rows: rowList(x.rows) })}</span>
+                  <strong className="num">{x.n}</strong> {reasonText(x.reason, 'left', x.n)} <span className="muted">{t('imp.rows', { rows: rowList(x.rows) })}</span>
                 </li>
               ))}
               {r.notes.map((x) => (
                 <li key={`n-${x.reason}`} data-kind="note">
-                  <strong className="num">{x.n}</strong> {reasonText(x.reason, 'note')} <span className="muted">{t('imp.rows', { rows: rowList(x.rows) })}</span>
+                  <strong className="num">{x.n}</strong> {reasonText(x.reason, 'note', x.n)} <span className="muted">{t('imp.rows', { rows: rowList(x.rows) })}</span>
                 </li>
               ))}
               {r.unmatched.people.length > 0 && <li data-kind="note">{t('timport.peopleMissing', { names: names(r.unmatched.people) })}</li>}

@@ -5650,6 +5650,23 @@ export const en = {
   'demo.intent.result': "Start with these",
   'demo.intent.ownFile': "Or try it with your own file: it never leaves your device",
   'demo.intent.waiting': "Answer all three to see your tours.",
+  // Import 2.0: singular forms; weeks legend
+  'imp.count.tasks.one': "task",
+  'imp.count.subtasks.one': "sub-task",
+  'imp.count.comments.one': "comment",
+  'imp.count.links.one': "“waits for” link",
+  'imp.left.title.one': "row without a title stays behind",
+  'imp.left.finished.one': "finished task stays behind (tick “Bring finished tasks too”)",
+  'imp.left.depends.one': "“waits for” link points at a task that is not coming in",
+  'imp.left.loop.one': "“waits for” link would close a circle (nothing could start), so it is left out",
+  'imp.note.parent.one': "sub-task whose parent is not coming in arrives as a task of its own",
+  'imp.note.deep.one': "sub-task of a sub-task hangs under the top task (one level of sub-tasks)",
+  'imp.note.date.one': "date could not be read and is left empty",
+  'imp.note.dates.one': "task starts after it is due; the start date is left out",
+  'imp.note.points.one': "story point value is not a number and is left empty",
+  'imp.note.field.one': "value does not fit its field and is kept in the description",
+  'imp.note.fieldsFull.one': "task has values for fields the board cannot take (no room, or not yours to change); they are kept in the description",
+  'weeks.usual': "About usual",
 } as const;
 
 export type MessageKey = keyof typeof en;
