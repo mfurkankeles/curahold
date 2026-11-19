@@ -42,12 +42,29 @@ export const SECURITY_HEADERS: Record<string, string> = {
 };
 export const HSTS = 'max-age=31536000; includeSubDomains';
 
+/**
+ * The customer portal's page. Cloudflare serves it with web/portal/public/_headers; a
+ * self-hosted install (and the local server) serve it through the portal app, which adds
+ * these to any answer that has none of its own. tests/security-probes.test.ts keeps the two in step.
+ */
+export const PORTAL_CSP =
+  "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'";
+export const PORTAL_HEADERS: Record<string, string> = {
+  'Content-Security-Policy': PORTAL_CSP,
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), display-capture=()',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+};
+
 /** Adds the headers to every answer that does not set its own (a route may tighten or relax one on purpose). */
 export function securityHeaders(https: boolean): MiddlewareHandler {
   return async (c, next) => {
     await next();
+    // An API answer is one person's data: never kept by the browser or a cache on the way, unless the route says otherwise.
+    const api = c.req.path.startsWith('/api/');
     const apply = (h: Headers) => {
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!h.has(k)) h.set(k, v);
+      if (api && !h.has('Cache-Control')) h.set('Cache-Control', 'private, no-store');
       if (https && !h.has('Strict-Transport-Security')) h.set('Strict-Transport-Security', HSTS);
     };
     try {

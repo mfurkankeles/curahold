@@ -13,6 +13,9 @@ import { privateHost } from '../api/src/connectors/messaging/webhook';
 import { odooUrl } from '../api/src/sync/adapters/accounting/odoo';
 import { bitrixWebhook } from '../api/src/sync/adapters/keyed';
 import { PORTAL_FILE_MB, PORTAL_MAX_FILES } from '../shared/src/portal';
+import { PORTAL_CSP } from '../api/src/lib/headers';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { BASE, Client, login, setup, type Env } from './helpers';
 
 const PORTAL = 'curahold-portal.test';
@@ -107,6 +110,26 @@ describe('files from the portal', () => {
     expect(dl.headers.get('content-disposition')).not.toMatch(/[\\/]|\.\.%2F/);
     expect(dl.headers.get('content-security-policy')).toContain('sandbox');
     expect(dl.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+});
+
+describe('API answers', () => {
+  it('are never cached: one person’s data stays out of the browser’s and any proxy’s cache', async () => {
+    for (const path of ['/api/me', '/api/accounts', '/api/onboarding-plans', '/api/setup-health']) {
+      const r = await ada.get(path);
+      expect(r.status, path).toBe(200);
+      expect(r.headers.get('cache-control'), path).toBe('private, no-store');
+    }
+  });
+});
+
+describe('the portal page', () => {
+  it('carries its policy wherever it is served: Cloudflare’s _headers and the portal app say the same', async () => {
+    const file = readFileSync(join(import.meta.dirname, '..', 'web', 'portal', 'public', '_headers'), 'utf8');
+    expect(file).toContain(`Content-Security-Policy: ${PORTAL_CSP}`);
+    const r = await portal.request(`https://acme.${PORTAL}/papi/org`, { headers: { 'x-curahold-portal': '1' } });
+    expect(r.headers.get('content-security-policy')).toBe(PORTAL_CSP);
+    expect(r.headers.get('x-frame-options')).toBe('DENY');
   });
 });
 

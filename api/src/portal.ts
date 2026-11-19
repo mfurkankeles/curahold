@@ -2,6 +2,7 @@
 // (acme.curahold-portal.com). It shares nothing with the app's API: its own
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
+import { PORTAL_HEADERS } from './lib/headers';
 import { clientIp, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
 import { turnstileSiteKey } from './lib/humanCheck';
@@ -61,6 +62,8 @@ export function createPortalApp(deps: Deps) {
     c.header('x-content-type-options', 'nosniff');
     c.header('x-robots-tag', CLOSED_X_ROBOTS);
     c.header('referrer-policy', 'no-referrer');
+    // The page's own policy when this app serves it (self-hosted, local): no framing, scripts from here only.
+    for (const [k, v] of Object.entries(PORTAL_HEADERS)) if (!c.res.headers.has(k)) c.header(k, v);
     if (c.req.path.startsWith('/papi/')) c.header('cache-control', 'no-store');
     // Writes: the people's tasks and replies move on, and the company's webhooks hear of it.
     if (deps.defer && c.req.method === 'POST' && c.res.status < 400 && /^\/papi\/(boards|tasks)\//.test(c.req.path)) {
