@@ -160,6 +160,9 @@ const ACTIVITY_KINDS: ReportField['options'] = [
   { key: 'review', label: P('rsrc.business_review'), color: 'honey' },
 ];
 
+/** Minutes logged on a customer's tasks over the last twelve months (one customer: `a`). */
+const HOURS_YEAR = `(select coalesce(sum(e.minutes), 0) from time_entries e join tasks te on te.id = e.task_id where te.account_id = a.id and e.day > current_date - 365)`;
+
 /** What this person can build reports from. */
 export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
   const { q } = ctx;
@@ -168,6 +171,11 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
     `select id, key, name, kind, fields from record_types where archived_at is null order by position, created_at`,
   );
   const accountSeen = defsFor(ctx.accountDefs ?? [], ctx.viewer);
+  // The customer's yearly value, as the ready-made reports pick it ($money): ARR, else MRR × 12, else the first amount.
+  const valueField =
+    ['arr', 'mrr', 'deal_value'].map((k) => accountSeen.find((f) => f.key === k && f.type === 'money')).find(Boolean) ?? accountSeen.find((f) => f.type === 'money' && !f.health);
+  const valueExpr = valueField ? jsonField('a', valueField) : null;
+  const yearly = valueExpr ? { expr: valueExpr.expr, monthly: valueField!.key === 'mrr' } : null;
   const sources = new Map<string, Src>();
   const add = (key: ReportSource, name: Localized, fields: (F | null)[], rest: Omit<Src, 'info' | 'fields'>) => {
     const list = fields.filter((f): f is F => !!f);
@@ -214,6 +222,10 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
       field('team', P('rsrc.team'), 'ref', plain('a.team_id'), { lookup: 'teams' }),
       field('created', P('rsrc.added'), 'date', localDay('a.created_at')),
       ...accountSeen.map((f) => jsonField('a', f)),
+      // Cost to serve: the time logged on a customer's work in the last twelve months, and that time
+      // per 1,000 of its yearly value (only for someone who may see the value).
+      field('time_year', P('rsrc.time_last_year'), 'minutes', plain(HOURS_YEAR), { measure: true }),
+      ...(yearly ? [field('cost_to_serve', P('rsrc.cost_to_serve'), 'number', (p, env) => `round(((${HOURS_YEAR}) / 60.0 / nullif(${yearly.expr(p, env)}${yearly.monthly ? ' * 12' : ''}, 0) * 1000)::numeric, 2)`, { measure: true })] : []),
     ],
     { from: () => `from accounts a`, where: () => `a.archived_at is null`, order: 'a.name', columns: ['name', 'owner', ...accountSeen.slice(0, 4).map((f) => f.key)] },
   );

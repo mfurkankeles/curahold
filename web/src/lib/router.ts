@@ -46,6 +46,7 @@ export function screenOf(url: string): string {
   const p = new URLSearchParams(qs);
   if (path === '/accounts' && ['renewals', 'reviews', 'products'].includes(p.get('view') ?? '')) return `${path}?view=${p.get('view')}`;
   if (path === '/team' && p.get('person')) return `${path}?person=${p.get('person')}`;
+  if (path === '/team' && p.get('view')) return `${path}?view=${p.get('view')}`;
   if (path.startsWith('/b/') && p.get('view') === 'archive') return `${path}?view=archive`;
   return path;
 }

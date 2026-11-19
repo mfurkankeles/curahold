@@ -25,6 +25,8 @@ Home pages and dashboards are made of cards; `GET /pages/:id/data` gives what ea
 | `DELETE /pages/:id` | Moves a page to the trash, where it stays for 30 days. |
 | `GET /reports/work` | Work at a glance: open, overdue, due this week and unassigned, by board and by person. |
 | `GET /reports/person/:id` | One person at a glance: what they finished, what is late, what is coming, who they look after. |
+| `GET /reports/workload` | The weeks ahead, person by person: open tasks by the week they are due (Monday to Sunday), how many are promises to a customer, and their story points; plus what is late, later and undated. |
+| `GET /reports/portfolio` | Every customer with something open: open and late work, requests from their portal and unsolved tickets, busiest first. |
 | `GET /reports/catalog` | What a report can be built from: the sources, their fields and the ready-made reports. |
 | `POST /reports/run` | Runs a report definition and returns its rows. |
 | `GET /reports/saved` | The saved reports the person can see. |
@@ -128,6 +130,18 @@ Work at a glance: open, overdue, due this week and unassigned, by board and by p
 ### `GET /reports/person/:id`
 
 One person at a glance: what they finished, what is late, what is coming, who they look after.
+
+### `GET /reports/workload`
+
+The weeks ahead, person by person: open tasks by the week they are due (Monday to Sunday), how many are promises to a customer, and their story points; plus what is late, later and undated. `weeks` (2–12), `team`.
+
+**Query:** `weeks`, `team`
+
+### `GET /reports/portfolio`
+
+Every customer with something open: open and late work, requests from their portal and unsolved tickets, busiest first. No amounts. `scope` (`all` or `mine`), `team`.
+
+**Query:** `scope`, `team`
 
 ### `GET /reports/catalog`
 

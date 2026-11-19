@@ -58,6 +58,7 @@ import { pmRoutes } from './routes/pm';
 import { taskRoutes } from './routes/tasks';
 import { workRoutes } from './routes/work';
 import { importRoutes } from './routes/imports';
+import { loadRoutes } from './routes/load';
 import { reportRoutes } from './routes/reports';
 import { builderRoutes } from './routes/builder';
 import { exportRoutes } from './routes/exports';
@@ -446,6 +447,7 @@ export function createApp(deps: Deps) {
   app.route('/api', pmRoutes);
   app.route('/api', workRoutes);
   app.route('/api', importRoutes);
+  app.route('/api', loadRoutes);
   app.route('/api', reportRoutes);
   app.route('/api', builderRoutes);
   app.route('/api', exportRoutes);

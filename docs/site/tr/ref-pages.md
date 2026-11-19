@@ -25,6 +25,8 @@ Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` he
 | `DELETE /pages/:id` | Sayfayı çöp kutusuna taşır; orada 30 gün kalır. |
 | `GET /reports/work` | İşe genel bakış: açık, gecikmiş, bu hafta biten ve atanmamış; panoya ve kişiye göre. |
 | `GET /reports/person/:id` | Tek kişiye genel bakış: ne bitirdi, ne gecikti, ne geliyor, kimlere bakıyor. |
+| `GET /reports/workload` | Önümüzdeki haftalar, kişi kişi: bitiş haftasına göre açık görevler (pazartesiden pazara), kaçı müşteriye söz, hikaye puanları; ayrıca geciken, daha sonraki ve tarihsiz olanlar. |
+| `GET /reports/portfolio` | Açık bir şeyi olan her müşteri: açık ve geciken iş, portalından gelen talepler ve çözülmemiş destek talepleri; en yoğunu başta. |
 | `GET /reports/catalog` | Bir raporun nelerden kurulabileceği: kaynaklar, alanları ve hazır raporlar. |
 | `POST /reports/run` | Bir rapor tanımını çalıştırır ve satırlarını döndürür. |
 | `GET /reports/saved` | Kişinin görebildiği kayıtlı raporlar. |
@@ -128,6 +130,18 @@ Sayfayı çöp kutusuna taşır; orada 30 gün kalır. Cevapta `trashId` gelir.
 ### `GET /reports/person/:id`
 
 Tek kişiye genel bakış: ne bitirdi, ne gecikti, ne geliyor, kimlere bakıyor.
+
+### `GET /reports/workload`
+
+Önümüzdeki haftalar, kişi kişi: bitiş haftasına göre açık görevler (pazartesiden pazara), kaçı müşteriye söz, hikaye puanları; ayrıca geciken, daha sonraki ve tarihsiz olanlar. `weeks` (2–12), `team`.
+
+**Sorgu:** `weeks`, `team`
+
+### `GET /reports/portfolio`
+
+Açık bir şeyi olan her müşteri: açık ve geciken iş, portalından gelen talepler ve çözülmemiş destek talepleri; en yoğunu başta. Tutar yok. `scope` (`all` ya da `mine`), `team`.
+
+**Sorgu:** `scope`, `team`
 
 ### `GET /reports/catalog`
 

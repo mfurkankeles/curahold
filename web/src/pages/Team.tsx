@@ -13,6 +13,7 @@ import { useStore } from '../lib/store';
 import { addDays, dueState, relativeTime, todayIso } from '../lib/time';
 import { hoursText, type WorkReport } from './Reports';
 import '../surfaces/employee-work.css';
+import { PortfolioView, WeeksView } from './TeamViews';
 
 interface PersonReport {
   tasks: { id: string; title: string; boardId: string; status: string; dueDate: string | null; priority: string; done: boolean; doneAt: string | null; updatedAt: string; accountId: string | null; accountName: string | null }[];
@@ -27,6 +28,8 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
   const { people, teams, person } = useStore();
   const { search } = useLocation();
   const picked = new URLSearchParams(search).get('person');
+  const asked = new URLSearchParams(search).get('view');
+  const view: 'load' | 'weeks' | 'customers' = asked === 'weeks' || asked === 'customers' ? asked : 'load';
   const [work, setWork] = useState<WorkReport | null>(null);
   const [team, setTeam] = useState('');
   const [failed, setFailed] = useState(false);
@@ -74,7 +77,18 @@ export function TeamPage({ refreshKey }: { refreshKey: number }) {
         )}
       </header>
       <div className="page">
-        {!work ? (
+        <div className="seg seg--views team-views" role="tablist" aria-label={t('team.views')}>
+          {(['load', 'weeks', 'customers'] as const).map((v) => (
+            <button key={v} type="button" role="tab" aria-selected={view === v} data-tour={`team-${v}`} onClick={() => setQuery('view', v === 'load' ? null : v)}>
+              {t(`team.view.${v}`)}
+            </button>
+          ))}
+        </div>
+        {view === 'weeks' ? (
+          <WeeksView team={team} refreshKey={refreshKey} />
+        ) : view === 'customers' ? (
+          <PortfolioView team={team} refreshKey={refreshKey} />
+        ) : !work ? (
           failed ? (
             <LoadError onRetry={() => { setFailed(false); setAttempt((n) => n + 1); }} />
           ) : (

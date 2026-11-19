@@ -278,7 +278,17 @@ export const REPORT_LIBRARY: LibraryReport[] = [
   r('hours_by_customer', P('rlib.hours_by_customer'), P('rlib.where_the_time_went_last_ninety'), {
     source: 'time', filters: [{ field: 'day', op: 'last_days', value: 90 }, { field: 'account', op: 'not_empty' }], groups: [{ field: 'account' }], measure: { fn: 'sum', field: 'minutes' }, chart: 'bar', top: 10,
   }),
+  r('cost_to_serve', P('rlib.cost_to_serve'), P('rlib.cost_to_serve_help'), {
+    source: 'accounts', filters: [{ field: 'time_year', op: 'gte', value: 1 }], groups: [{ field: 'name' }], measure: { fn: 'max', field: 'cost_to_serve' }, chart: 'bar', top: 15,
+  }),
 ];
+
+/** How full a week is, against what one person usually carries in a week: 0 (nothing) to 4 (well over). */
+export function loadLevel(n: number, usual: number): 0 | 1 | 2 | 3 | 4 {
+  if (n <= 0) return 0;
+  const base = Math.max(3, usual);
+  return n <= base * 0.75 ? 1 : n <= base * 1.25 ? 2 : n <= base * 1.75 ? 3 : 4;
+}
 
 export const libraryReport = (key: string) => REPORT_LIBRARY.find((x) => x.key === key);
 
