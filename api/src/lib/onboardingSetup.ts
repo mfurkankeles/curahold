@@ -59,7 +59,8 @@ export async function syncSetupIssues(q: Q, orgId: string, planId: string, state
   for (const t of state.tests) {
     if (t.status === 'fail' && !open.has(t.id)) {
       const title = translate(locale, 'ob.issue.testFailed', { test: testName(locale, t.id) });
-      const body = t.reason ? translate(locale, 'ob.issue.testReason', { reason: t.reason }) : '';
+      const why = t.reason ? translate(locale, `sh.test.reason.${t.reason}` as MessageKey, { error: '' }) : '';
+      const body = t.reason ? translate(locale, 'ob.issue.testReason', { reason: why.startsWith('sh.') ? t.reason : why }) : '';
       await openStepIssue(q, { orgId, userId: null, stepId: t.id, title, body, urgent: testStepDef(t.id)?.required ?? true, planId });
       opened++;
     } else if ((t.status === 'pass' || t.status === 'skipped') && open.has(t.id)) await closeStepIssue(q, orgId, t.id);

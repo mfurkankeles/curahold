@@ -9,6 +9,7 @@
 // Invented names only (the demo's own).
 import type { Q } from '../api/src/db';
 import { advancePlan, createPlan, ensureSelfPlan, judgeFields } from '../api/src/lib/onboarding';
+import { openStepIssue } from '../api/src/lib/setupHealth';
 import { translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { builtInTemplate } from '../shared/src/onboarding';
 
@@ -42,13 +43,13 @@ export async function seedOnboarding(q: Q, o: { orgId: string; ids: Record<strin
     `insert into onboarding_issues (org_id, plan_id, title, body, side, type, urgency, opened_on, created_by) values ($1, $2, $3, $4, 'vendor', 'data', 'high', current_date - 9, $5)`,
     [o.orgId, self, T('ob.demo.issueStuck'), T('ob.demo.issueStuckBody'), o.ids.zeynep],
   );
+  // Through the setup feature's own door, so the test list and the plan show the same row (lib/setupHealth.ts).
   await q.query(
-    `insert into onboarding_issues (org_id, plan_id, title, body, side, type, urgency, opened_on, source, source_ref) values ($1, $2, $3, $4, 'customer', 'bug', 'high', current_date - 2, 'setup_test', 'crm')`,
-    [o.orgId, self, T('ob.issue.testFailed', { test: T('ob.test.crm') }), T('ob.issue.testReason', { reason: T('ob.demo.testReason') })],
+    `insert into setup_progress (org_id, kind, item, status, detail) values ($1, 'test', 'crm', 'fail', $2) on conflict (org_id, kind, item) do update set status = 'fail', detail = excluded.detail`,
+    [o.orgId, JSON.stringify({ reason: 'sync_error', seen: {} })],
   );
-  if ((await q.query(`select to_regclass('public.setup_progress') is not null as ok`))[0]?.ok) {
-    await q.query(`insert into setup_progress (org_id, kind, item, status, detail) values ($1, 'test', 'crm', 'fail', $2) on conflict do nothing`, [o.orgId, JSON.stringify({ reason: T('ob.demo.testReason') })]);
-  }
+  const crm = await openStepIssue(q, { orgId: o.orgId, userId: null, stepId: 'crm', title: T('ob.issue.testFailed', { test: T('ob.test.crm') }), body: T('ob.issue.testReason', { reason: T('ob.demo.testReason') }), urgent: true, planId: self });
+  if (crm) await q.query(`update onboarding_issues set opened_on = current_date - 2 where id = $1`, [crm]);
   // The data table: what the import brought, one row failing its format rule.
   for (const [i, [name, type, required, example, received]] of (
     [
