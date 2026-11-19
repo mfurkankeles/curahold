@@ -65,36 +65,38 @@ const STOP = new Set(
     've veya ama fakat ile icin gibi kadar bu su o bir da de mi mu ki ne nasil neden nicin nerede nereden hangi kim ben sen biz siz onlar benim senin bizim sizin ' +
     'var yok evet hayir cok daha en her hic bazi tum butun olarak olan olur oldu olmak etmek yapmak yapilir yapabilirim istiyorum lazim gerek lutfen bana bize ' +
     'neyi neye nedir neler nelerdir kimler kimi kime hangisi nasildir midir kadar ' +
+    // Malay.
+    'bagaimana macam mana apa apakah di ke dari untuk dengan yang ini itu saya anda kami kita boleh tidak tak ada adakah sila tolong cara dalam pada atau dan juga akan sudah bila mengapa kenapa siapa mahu ingin perlu saja sahaja ' +
     // The product's own name is in nearly every question and every page: it finds nothing.
     'curahold'
   ).split(' '),
 );
 
-// Words people use for the same thing, across both languages (folded).
+// Words people use for the same thing, across the Latin-script languages (folded).
 const ALIKE: string[][] = [
-  ['delete', 'remove', 'trash', 'sil', 'silme', 'kaldir', 'cop'],
-  ['add', 'create', 'new', 'ekle', 'olustur', 'yeni', 'ac'],
-  ['change', 'edit', 'update', 'rename', 'degistir', 'duzenle', 'guncelle'],
-  ['password', 'sifre', 'parola', 'login', 'signin', 'sign', 'giris', 'oturum'],
-  ['price', 'pricing', 'cost', 'billing', 'invoice', 'plan', 'fiyat', 'ucret', 'odeme', 'fatura'],
-  ['import', 'csv', 'excel', 'spreadsheet', 'aktar', 'aktarma', 'tablo'],
-  ['key', 'token', 'anahtar'],
-  ['permission', 'role', 'access', 'yetki', 'rol', 'erisim', 'izin'],
-  ['customer', 'account', 'musteri', 'hesap'],
-  ['task', 'todo', 'gorev'],
-  ['notification', 'notify', 'alert', 'bildirim', 'uyari'],
-  ['language', 'dil', 'turkce', 'turkish', 'english', 'ingilizce'],
-  ['connect', 'connection', 'integration', 'integrate', 'sync', 'bagla', 'baglan', 'baglanti', 'entegrasyon', 'esitleme'],
-  ['error', 'fail', 'failed', 'problem', 'hata', 'sorun', 'calismiyor'],
-  ['invite', 'davet', 'people', 'person', 'user', 'kisi', 'kullanici'],
-  ['report', 'dashboard', 'rapor', 'pano', 'gosterge'],
-  ['export', 'download', 'disa', 'indir'],
-  ['phone', 'mobile', 'install', 'telefon', 'mobil', 'kur'],
-  ['support', 'help', 'ticket', 'destek', 'yardim', 'talep'],
-  ['server', 'host', 'hosting', 'selfhost', 'sunucu', 'barindir'],
-  ['see', 'view', 'visible', 'gor', 'gorur', 'gorunur'],
-  ['stored', 'store', 'kept', 'saklan', 'saklaniyor', 'tutul'],
-  ['close', 'mute', 'stop', 'off', 'kapat', 'sustur', 'durdur'],
+  ['delete', 'remove', 'trash', 'sil', 'silme', 'kaldir', 'cop', 'padam', 'buang', 'sampah'],
+  ['add', 'create', 'new', 'ekle', 'olustur', 'yeni', 'ac', 'tambah', 'cipta', 'baharu'],
+  ['change', 'edit', 'update', 'rename', 'degistir', 'duzenle', 'guncelle', 'tukar', 'sunting', 'kemas', 'ubah'],
+  ['password', 'sifre', 'parola', 'login', 'signin', 'sign', 'giris', 'oturum', 'laluan', 'masuk'],
+  ['price', 'pricing', 'cost', 'billing', 'invoice', 'plan', 'fiyat', 'ucret', 'odeme', 'fatura', 'harga', 'kos', 'bil', 'invois', 'pelan', 'bayaran'],
+  ['import', 'csv', 'excel', 'spreadsheet', 'aktar', 'aktarma', 'tablo', 'hamparan'],
+  ['key', 'token', 'anahtar', 'kunci'],
+  ['permission', 'role', 'access', 'yetki', 'rol', 'erisim', 'izin', 'kebenaran', 'peranan', 'akses'],
+  ['customer', 'account', 'musteri', 'hesap', 'pelanggan', 'akaun'],
+  ['task', 'todo', 'gorev', 'tugasan', 'tugas'],
+  ['notification', 'notify', 'alert', 'bildirim', 'uyari', 'pemberitahuan', 'makluman'],
+  ['language', 'dil', 'turkce', 'turkish', 'english', 'ingilizce', 'bahasa', 'melayu', 'inggeris'],
+  ['connect', 'connection', 'integration', 'integrate', 'sync', 'bagla', 'baglan', 'baglanti', 'entegrasyon', 'esitleme', 'sambung', 'sambungan', 'integrasi', 'penyepaduan', 'segerak'],
+  ['error', 'fail', 'failed', 'problem', 'hata', 'sorun', 'calismiyor', 'ralat', 'gagal', 'masalah'],
+  ['invite', 'davet', 'people', 'person', 'user', 'kisi', 'kullanici', 'jemput', 'pengguna', 'orang'],
+  ['report', 'dashboard', 'rapor', 'pano', 'gosterge', 'laporan', 'pemuka'],
+  ['export', 'download', 'disa', 'indir', 'eksport'],
+  ['phone', 'mobile', 'install', 'telefon', 'mobil', 'kur', 'pasang', 'peranti'],
+  ['support', 'help', 'ticket', 'destek', 'yardim', 'talep', 'sokongan', 'bantuan', 'tiket'],
+  ['server', 'host', 'hosting', 'selfhost', 'sunucu', 'barindir', 'pelayan'],
+  ['see', 'view', 'visible', 'gor', 'gorur', 'gorunur', 'lihat', 'nampak'],
+  ['stored', 'store', 'kept', 'saklan', 'saklaniyor', 'tutul', 'simpan', 'disimpan'],
+  ['close', 'mute', 'stop', 'off', 'kapat', 'sustur', 'durdur', 'tutup', 'senyap', 'henti'],
 ];
 
 // The endings Turkish adds to a noun or a verb, after folding (so ı/i and ü/u are one letter), and the
@@ -120,8 +122,8 @@ export function stem(w: string): string {
 
 // Scripts without the Latin alphabet: Chinese, Japanese and Korean (often no spaces between
 // words), Arabic, Persian and Hebrew (prefixes and suffixes glued to the word).
-const OTHER_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\u30fc\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}]+/gu;
-const SPACED = /^[\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}]+$/u;
+const OTHER_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\u30fc\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Devanagari}]+/gu;
+const SPACED = /^[\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Devanagari}]+$/u;
 /** Arabic and Persian letters that are written several ways, and the marks a reader may or may not type. */
 const unify = (w: string) =>
   w
@@ -129,6 +131,9 @@ const unify = (w: string) =>
     .replace(/[أإآٱ]/g, 'ا')
     .replace(/[ىی]/g, 'ي')
     .replace(/ک/g, 'ك')
+    // Hindi: the nukta dot and the two nasal marks are typed either way ("ज़्यादा"/"ज्यादा", "कहाँ"/"कहां").
+    .replace(/\u093c/g, '')
+    .replace(/\u0901/g, '\u0902')
     .replace(/ة/g, 'ه')
     // The Arabic article ("the") and the one-letter words joined to it: "والعملاء" → "عملاء".
     .replace(/^[وفبكل]?ال(?=.{3})/, '');
@@ -139,7 +144,8 @@ const STOP_OTHER = new Set(
     'كيف ماذا ما من في على الي إلى عن هل اين متى لماذا التي الذي هذا هذه ثم او و مع كل بعد قبل يمكن يمكنني اريد ' +
     'چطور چگونه چه كجا از به در با را كه اين ان يك مي كنم كنيم است هست براي تا يا ايا ' +
     'איך מה איפה מתי למה את של על עם אם זה זו או גם כל אני אנחנו לי לנו אפשר ' +
-    '어떻게 무엇 무엇을 어디서 어디 누구 언제 왜 하나요 있나요 되나요 하려면 수'
+    '어떻게 무엇 무엇을 어디서 어디 누구 언제 왜 하나요 있나요 되나요 하려면 수 ' +
+    'कैसे क्या कहां कब क्यों कौन का की के में से को पर और या है हैं था मैं हम मुझे मेरा मेरे मेरी अपने अपना अपनी एक यह वह ये वे कर करें करूं करना सकता सकती सकते हूं हो होता होती कोई नहीं लिए भी तो'
   )
     .split(' ')
     .map((w) => unify(w)),

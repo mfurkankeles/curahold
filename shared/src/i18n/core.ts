@@ -25,7 +25,7 @@ export type { MessageKey };
 // others are turned on with their own correct name and reading direction, and
 // fall back to English for any phrase not yet translated (see `translate`), so
 // adding a language is safe before its dictionary is complete.
-export type Locale = 'en' | 'tr' | 'ar' | 'he' | 'fa' | 'zh-Hans' | 'zh-Hant' | 'ja' | 'ko';
+export type Locale = 'en' | 'tr' | 'ar' | 'he' | 'fa' | 'zh-Hans' | 'zh-Hant' | 'ja' | 'ko' | 'hi' | 'ms';
 
 export interface LocaleInfo {
   /** The language's name in its own words — what the picker shows. */
@@ -49,6 +49,8 @@ export const LOCALE_INFO: Record<Locale, LocaleInfo> = {
   'zh-Hant': { name: '繁體中文', english: 'Chinese (Traditional)', dir: 'ltr', bcp47: 'zh-Hant' },
   ja: { name: '日本語', english: 'Japanese', dir: 'ltr', bcp47: 'ja' },
   ko: { name: '한국어', english: 'Korean', dir: 'ltr', bcp47: 'ko' },
+  hi: { name: 'हिन्दी', english: 'Hindi', dir: 'ltr', bcp47: 'hi' },
+  ms: { name: 'Bahasa Melayu', english: 'Malay', dir: 'ltr', bcp47: 'ms' },
 };
 
 export const LOCALES = Object.keys(LOCALE_INFO) as Locale[];
@@ -71,6 +73,8 @@ const DEFAULT_TERMS: Record<Locale, { one: string; other: string }> = {
   'zh-Hant': { one: '客戶', other: '客戶' },
   ja: { one: '顧客', other: '顧客' },
   ko: { one: '고객', other: '고객' },
+  hi: { one: 'ग्राहक', other: 'ग्राहक' },
+  ms: { one: 'Pelanggan', other: 'Pelanggan' },
 };
 
 export function accountWords(locale: Locale, terms?: Terms | null) {
@@ -165,7 +169,7 @@ export function dayFirst(locale: Locale): boolean {
  * with a note, so every link resolves. tests/i18n-help.test.ts checks this
  * list against the docs folders.
  */
-export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const satisfies readonly Locale[];
+export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'hi', 'ms'] as const satisfies readonly Locale[];
 export type HelpLanguage = (typeof HELP_LANGUAGES)[number];
 export const helpLanguageOf = (locale: Locale): HelpLanguage => ((HELP_LANGUAGES as readonly Locale[]).includes(locale) ? (locale as HelpLanguage) : 'en');
 

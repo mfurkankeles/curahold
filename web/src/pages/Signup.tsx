@@ -22,7 +22,7 @@ const browserTz = () => {
   }
 };
 // A language spoken mostly in one country suggests its currency; otherwise the time zone does.
-const HOME_CURRENCY: Partial<Record<Locale, string>> = { tr: 'TRY', ja: 'JPY', ko: 'KRW', 'zh-Hans': 'CNY', 'zh-Hant': 'TWD', he: 'ILS' };
+const HOME_CURRENCY: Partial<Record<Locale, string>> = { tr: 'TRY', ja: 'JPY', ko: 'KRW', 'zh-Hans': 'CNY', 'zh-Hant': 'TWD', he: 'ILS', hi: 'INR', ms: 'MYR' };
 const currencyFor = (tz: string, locale: Locale) =>
   HOME_CURRENCY[locale] ?? (tz === 'Europe/Istanbul' ? 'TRY' : tz === 'Europe/London' ? 'GBP' : tz.startsWith('Europe/') ? 'EUR' : tz === 'Asia/Dubai' ? 'AED' : tz === 'Asia/Riyadh' ? 'SAR' : 'USD');
 

@@ -13,17 +13,17 @@
 //   both      — the local word, with the English term in brackets the first
 //               time a page or screen uses it ("satış hunisi (pipeline)").
 //
-// Adding a language (hi, ms are next): add it to Locale in core.ts and its
-// dictionary, then give it a column here. Columns for a language the product
-// does not ship yet are notes only (PLANNED): nothing checks them until the
-// language is in LOCALES.
+// Adding a language: add it to Locale in core.ts and its dictionary, then give
+// it a column here. Columns for a language the product does not ship yet are
+// notes only (PLANNED): nothing checks them until the language is in LOCALES.
+// Hindi and Malay shipped on 20 Nov 2026 (W3e).
 import type { Locale } from './core';
 
 /** Languages with glossary columns: the shipped ones and the ones being added next. */
 export type GlossaryLocale = Locale | PlannedLocale;
 /** Benchmarked choices for languages not shipped yet (no UI text, nothing enforced). */
-export const PLANNED = ['hi', 'ms'] as const;
-export type PlannedLocale = (typeof PLANNED)[number];
+export const PLANNED = [] as const;
+export type PlannedLocale = never;
 
 export type Treatment = 'translate' | 'english' | 'both';
 
@@ -58,7 +58,7 @@ const t = (use: string, how: Treatment = 'translate', avoid?: string[]): Term =>
 export const GLOSSARY: Concept[] = [
   {
     id: 'task', en: 'task', match: /\btasks?\b/i, scope: 'everywhere',
-    terms: { tr: t('görev'), ar: t('مهمة'), he: t('משימה'), fa: t('وظیفه'), ja: t('タスク'), ko: t('작업'), 'zh-Hans': t('任务'), 'zh-Hant': t('任務'), hi: t('टास्क', 'both'), ms: t('tugasan') },
+    terms: { tr: t('görev'), ar: t('مهمة'), he: t('משימה'), fa: t('وظیفه'), ja: t('タスク'), ko: t('작업'), 'zh-Hans': t('任务'), 'zh-Hant': t('任務'), hi: t('टास्क'), ms: t('tugasan', 'translate', ['/\\btugas\\b/']) },
   },
   {
     id: 'board', en: 'board', match: /\bboards?\b/i, scope: 'concept',
@@ -71,7 +71,7 @@ export const GLOSSARY: Concept[] = [
   },
   {
     id: 'renewal', en: 'renewal', match: /\brenewals?\b/i, scope: 'concept',
-    terms: { tr: t('yenileme'), ar: t('تجديد'), he: t('חידוש'), fa: t('تمدید'), ja: t('更新'), ko: t('갱신'), 'zh-Hans': t('续约', 'translate', ['续订']), 'zh-Hant': t('續約', 'translate', ['續訂']), hi: t('नवीनीकरण'), ms: t('pembaharuan') },
+    terms: { tr: t('yenileme'), ar: t('تجديد'), he: t('חידוש'), fa: t('تمدید'), ja: t('更新'), ko: t('갱신'), 'zh-Hans': t('续约', 'translate', ['续订']), 'zh-Hant': t('續約', 'translate', ['續訂']), hi: t('रिन्यूअल', 'english', ['नवीनीकरण']), ms: t('pembaharuan') },
   },
   {
     id: 'health-score', en: 'health score', match: /\bhealth score\b/i, scope: 'everywhere',
@@ -93,7 +93,7 @@ export const GLOSSARY: Concept[] = [
   {
     id: 'pipeline', en: 'pipeline', match: /\bpipelines?\b/i, scope: 'concept',
     note: 'tr: "satış hunisi" is what Turkish sales teams say; "pipeline" in brackets on a page\'s first use.',
-    terms: { tr: t('satış hunisi', 'both', ['/[Ss]atış hatt/']), ar: t('مسار المبيعات'), he: t('צינור מכירות'), fa: t('قیف فروش'), ja: t('パイプライン'), ko: t('파이프라인'), 'zh-Hans': t('销售管道'), 'zh-Hant': t('銷售漏斗'), hi: t('पाइपलाइन', 'english'), ms: t('saluran jualan', 'both') },
+    terms: { tr: t('satış hunisi', 'both', ['/[Ss]atış hatt/']), ar: t('مسار المبيعات'), he: t('צינור מכירות'), fa: t('قیف فروش'), ja: t('パイプライン'), ko: t('파이프라인'), 'zh-Hans': t('销售管道'), 'zh-Hant': t('銷售漏斗'), hi: t('पाइपलाइन', 'english'), ms: t('saluran jualan', 'translate', ['talian paip']) },
   },
   {
     id: 'sprint', en: 'sprint', match: /\bsprints?\b/i, scope: 'everywhere',
@@ -143,7 +143,7 @@ export const GLOSSARY: Concept[] = [
   {
     id: 'sign-in', en: 'sign in', match: /\bsign(ed|ing)?[ -]?in\b/i, scope: 'everywhere',
     note: 'ja: one word — ログイン, as most Japanese SaaS write (Google\'s Japanese button too).',
-    terms: { tr: t('giriş yap'), ar: t('تسجيل الدخول'), he: t('התחברות'), fa: t('ورود'), ja: t('ログイン', 'translate', ['サインイン']), ko: t('로그인'), 'zh-Hans': t('登录'), 'zh-Hant': t('登入', 'translate', ['登錄']), hi: t('साइन इन', 'english'), ms: t('log masuk') },
+    terms: { tr: t('giriş yap'), ar: t('تسجيل الدخول'), he: t('התחברות'), fa: t('ورود'), ja: t('ログイン', 'translate', ['サインイン']), ko: t('로그인'), 'zh-Hans': t('登录'), 'zh-Hant': t('登入', 'translate', ['登錄']), hi: t('साइन इन', 'english', ['लॉग इन']), ms: t('log masuk') },
   },
   {
     id: 'workspace', en: 'workspace', match: /\bworkspace\b/i, scope: 'concept',
@@ -183,8 +183,8 @@ export const REGISTER: Record<GlossaryLocale, string> = {
   ko: '합니다/하세요 in sentences, 해요 never; buttons as nouns (저장)',
   'zh-Hans': '你 in the product, 您 in e-mails and legal text (mainland norm)',
   'zh-Hant': '你 in the product, Taiwan vocabulary (設定, 儲存, 支援, 帳號)',
-  hi: 'आप, polite; English SaaS terms in Devanagari or Latin as the market writes them',
-  ms: 'anda; Malaysian Malay (not Indonesian) vocabulary',
+  hi: 'आप with polite imperatives (करें, चुनें); SaaS nouns as Devanagari loans (टास्क, डैशबोर्ड, सेटिंग), product names in Latin, Latin digits; job titles in English',
+  ms: 'anda; Malaysian Malay, not Indonesian (padam not hapus for delete, tetapan, e-mel, log masuk); sprint, backlog, onboarding, playbook kept English as Malaysian B2B teams say them; job titles in English',
 };
 
 /** Where the choices above come from: products checked on 19 Nov 2026. */
@@ -197,8 +197,16 @@ export const SOURCES: Partial<Record<GlossaryLocale, string[]>> = {
   ar: ['Zoho CRM (ar): الصفقات, مسارات المبيعات, التقارير, لوحات معلومات, العملاء المحتملون — zoho.com/ar/crm'],
   he: ['No major CRM/helpdesk ships a full Hebrew help centre we could read; kept the dictionary\'s dominant words'],
   fa: ['No international B2B SaaS ships Persian; Iranian CRM vendors write داشبورد, قیف فروش, تیکت'],
-  hi: ['Planned: Zoho and Freshworks Hindi UIs keep most SaaS nouns in English (Devanagari or Latin)'],
-  ms: ['Planned: HubSpot and Zoho Malay write "urus niaga", "papan pemuka", "laporan", "tugasan"'],
+  hi: [
+    'Shopify Help Center (hi): एनालिटिक्स, रिपोर्ट, डैशबोर्ड, यूज़र, एडमिन, डेटा, फ़िल्टर as Devanagari loans; ग्राहक, संगठन, अनुमति, बिक्री native; आप + करें register — help.shopify.com/hi/manual/organization-settings/analytics',
+    'Google Tasks Help (hi): टास्क, असाइन, सेटिंग, शेयर, मैनेज, साइन इन करें; सूची, सूचना native — support.google.com/tasks?hl=hi',
+    'Zoho CRM lists Hindi as a fully supported UI language (help.zoho.com, languages supported for translation); job titles and product names stay Latin',
+  ],
+  ms: [
+    'Bitrix24 CRM (ms): urus niaga, prospek, kenalan, corong jualan, papan pemuka, laporan, pelanggan — bitrix24.com/my/tools/crm/analytics-and-reports.php',
+    'Lark Suite blog (ms_MY, helpdesk comparison): meja bantuan, tiket, ejen, automasi, aliran kerja, ruang kerja, penyepaduan, pelan; SLA kept English — larksuite.com/ms_my/blog',
+    'Microsoft Malay terminology: tugasan (task), tetapan, log masuk, padam; e-mel (Malaysian spelling, not Indonesian "surel")',
+  ],
 };
 
 /** A concept's term in a language, if it has one. */

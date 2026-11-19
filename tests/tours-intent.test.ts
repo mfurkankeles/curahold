@@ -9,12 +9,14 @@ import { fa } from '../shared/src/i18n/fa';
 import { he } from '../shared/src/i18n/he';
 import { ja } from '../shared/src/i18n/ja';
 import { ko } from '../shared/src/i18n/ko';
+import { hi } from '../shared/src/i18n/hi';
+import { ms } from '../shared/src/i18n/ms';
 import { tr } from '../shared/src/i18n/tr';
 import { zhHans } from '../shared/src/i18n/zh-Hans';
 import { zhHant } from '../shared/src/i18n/zh-Hant';
 import { INTENT_TEAMS, INTENT_TODAY, TOURS, TOUR_GOALS, TOUR_ROLES, intentTable, pickTours, tourById } from '../shared/src/tours';
 
-const DICTS: Record<string, Record<string, string>> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko } as any;
+const DICTS: Record<string, Record<string, string>> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko, hi, ms } as any;
 
 describe('the tours', () => {
   it('every tour and role has its words in all nine languages', () => {

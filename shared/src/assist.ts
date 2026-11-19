@@ -94,9 +94,11 @@ const SIMPLIFIED = only(SIMP_CHARS, TRAD_CHARS);
 const hasAny = (t: string, set: Set<string>) => [...t].some((ch) => set.has(ch));
 const TURKISH_WORDS = /\b(nasil|neden|nedir|nerede|musteri|gorev|ekle|eklerim|yapabilirim|icin|ile|bir|mi|mu|degil|lutfen|merhaba|selam|tesekkur|hesap|sil|pano|kisi|rapor|alan|bana|benim|ben|var|yok|olarak|olur|istiyorum)\b/;
 const ENGLISH_WORDS = /\b(how|what|where|why|when|the|is|are|can|do|does|my|i|you|please|hello|hi|thanks|add|delete|show|which)\b/;
+// Malay (Malaysia and Singapore): question words and the commonest product verbs and nouns.
+const MALAY_WORDS = /\b(bagaimana|macam mana|apakah|mengapa|kenapa|di mana|bila|boleh|saya|anda|kami|untuk|dengan|yang|tidak|tak|sila|tolong|terima kasih|tambah|padam|tunjuk|pelanggan|tugasan|papan|laporan|tetapan|akaun|jabatan|pasukan|ini|itu|ke|dalam|cara)\b/;
 
 /** Our languages written in Latin letters: a Latin question that says too little stays in the reader's one. */
-const LATIN_SCRIPT = new Set<Locale>(['en', 'tr']);
+const LATIN_SCRIPT = new Set<Locale>(['en', 'tr', 'ms']);
 
 /** The language a question is written in; `fallback` (the reader's language) when it cannot be told. */
 export function languageOf(text: string, fallback: Locale): Locale {
@@ -108,6 +110,8 @@ export function languageOf(text: string, fallback: Locale): Locale {
     return fallback === 'fa' ? 'fa' : 'ar';
   }
   if (/[가-힯ᄀ-ᇿ]/.test(t)) return 'ko';
+  // Devanagari: Hindi (Marathi and Nepali share the script; Hindi is the one we speak).
+  if (/[\u0900-\u097F]/.test(t)) return 'hi';
   if (/[぀-ヿ]/.test(t)) return 'ja';
   if (/[一-鿿]/.test(t)) {
     const trad = hasAny(t, TRADITIONAL);
@@ -121,6 +125,9 @@ export function languageOf(text: string, fallback: Locale): Locale {
   const f = foldText(t);
   const tr = TURKISH_WORDS.test(f);
   const en = ENGLISH_WORDS.test(f);
+  const ms = MALAY_WORDS.test(f);
+  if (ms && !tr && !en) return 'ms';
+  if (ms && en && fallback === 'ms') return 'ms';
   if (tr && !en) return 'tr';
   if (en && !tr) return 'en';
   return LATIN_SCRIPT.has(fallback) ? fallback : /[a-z]/i.test(t) ? 'en' : fallback;
@@ -128,7 +135,7 @@ export function languageOf(text: string, fallback: Locale): Locale {
 
 // ------------------------------------------------------------------ clarify
 
-/** Words of one meaning in the nine languages. Latin ones match the start of a word; the others anywhere. */
+/** Words of one meaning in the eleven languages. Latin ones match the start of a word; the others anywhere. */
 type Words = string[];
 
 interface Ambiguity {
@@ -152,6 +159,8 @@ const PEOPLE: Words = [
   '人员', '人員', '成员', '成員', '用户', '用戶', '同事',
   'メンバー', 'ユーザー', '人たち', '人を', '人々',
   '사람', '멤버', '사용자', '인원', '팀원',
+  'लोग', 'लोगों', 'व्यक्ति', 'यूज़र', 'सदस्य', 'सहकर्मी', 'टीम मेंबर',
+  'orang', 'pengguna', 'ahli', 'rakan sepasukan', 'rakan sekerja', 'kakitangan', 'staf',
 ];
 const BOARDISH: Words = [
   'dashboard', 'board', 'panel',
@@ -162,6 +171,8 @@ const BOARDISH: Words = [
   '仪表板', '仪表盘', '儀表板', '儀表盤', '看板', '面板',
   'ダッシュボード', 'ボード',
   '대시보드', '보드',
+  'डैशबोर्ड', 'बोर्ड',
+  'papan pemuka', 'papan',
 ];
 const PEOPLE_SAYS_WHICH: Words = [
   'invit', 'contact', 'field', 'report', 'card', 'widget', 'assign', 'column',
@@ -172,6 +183,8 @@ const PEOPLE_SAYS_WHICH: Words = [
   '邀请', '邀請', '联系人', '聯絡人', '字段', '欄位', '报表', '報表', '报告', '報告', '卡片', '分配', '指派',
   '招待', '連絡先', 'フィールド', '項目', 'レポート', 'カード', '割り当',
   '초대', '연락처', '필드', '보고서', '리포트', '카드', '할당',
+  'आमंत्र', 'इनवाइट', 'संपर्क', 'फ़ील्ड', 'फील्ड', 'रिपोर्ट', 'कार्ड', 'असाइन', 'कॉलम',
+  'jemput', 'undang', 'kenalan', 'medan', 'laporan', 'kad', 'tugaskan', 'lajur',
 ];
 const DELETE: Words = [
   'delete', 'remove', 'close', 'cancel',
@@ -182,6 +195,8 @@ const DELETE: Words = [
   '删除', '刪除', '注销', '註銷', '关闭', '關閉',
   '削除', '退会', '解約',
   '삭제', '탈퇴', '해지',
+  'डिलीट', 'हटा', 'बंद', 'रद्द',
+  'padam', 'buang', 'tutup', 'batal',
 ];
 const ACCOUNT: Words = [
   'account',
@@ -191,6 +206,8 @@ const ACCOUNT: Words = [
   '账户', '账号', '帳戶', '帳號',
   'アカウント',
   '계정',
+  'अकाउंट', 'खाता', 'खाते',
+  'akaun',
 ];
 const ACCOUNT_SAYS_WHICH: Words = [
   'customer', 'client', 'company', 'workspace', 'profile', 'organi', 'subscription', 'api key', 'key',
@@ -201,6 +218,8 @@ const ACCOUNT_SAYS_WHICH: Words = [
   '客户', '客戶', '公司', '个人资料', '個人資料', '订阅', '訂閱',
   '顧客', '会社', 'プロフィール', 'サブスク',
   '고객', '회사', '프로필', '구독',
+  'ग्राहक', 'कंपनी', 'प्रोफ़ाइल', 'सब्सक्रिप्शन', 'वर्कस्पेस',
+  'pelanggan', 'syarikat', 'profil', 'langganan', 'ruang kerja', 'kunci',
 ];
 const IMPORT: Words = [
   'import', 'bring in', 'upload my data', 'migrate',
@@ -211,6 +230,8 @@ const IMPORT: Words = [
   '导入', '導入', '匯入',
   'インポート', '取り込',
   '가져오', '임포트',
+  'इंपोर्ट', 'आयात',
+  'import', 'bawa masuk',
 ];
 const IMPORT_SAYS_WHICH: Words = [
   'customer', 'client', 'account', 'task', 'crm', 'contact', 'opportunit', 'record', 'salesforce', 'hubspot', 'pipedrive', 'dynamics', 'zoho', 'sheet', 'excel',
@@ -221,6 +242,8 @@ const IMPORT_SAYS_WHICH: Words = [
   '客户', '客戶', '任务', '任務', '联系人', '聯絡人',
   '顧客', 'タスク', '連絡先',
   '고객', '작업', '태스크', '연락처',
+  'ग्राहक', 'टास्क', 'संपर्क', 'रिकॉर्ड', 'शीट',
+  'pelanggan', 'tugasan', 'kenalan', 'rekod', 'helaian',
 ];
 const CONNECT: Words = [
   'connect', 'integrat', 'hook up',
@@ -231,6 +254,8 @@ const CONNECT: Words = [
   '连接', '連接', '集成', '整合', '对接', '對接',
   '連携', '接続',
   '연결', '연동', '통합',
+  'कनेक्ट', 'जोड़', 'इंटीग्रेट', 'इंटीग्रेशन',
+  'sambung', 'integrasi', 'penyepaduan', 'sepadukan',
 ];
 const CONNECT_SAYS_WHICH: Words = [
   'slack', 'teams', 'google', 'gmail', 'outlook', 'calendar', 'crm', 'salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'jira', 'sheet', 'excel', 'zendesk', 'freshdesk', 'api', 'webhook', 'mcp', 'sso', 'saml', 'chat', 'github', 'gitlab', 'task', 'customer', 'mail',
@@ -241,6 +266,8 @@ const CONNECT_SAYS_WHICH: Words = [
   '日历', '日曆', '聊天', '任务', '任務', '客户', '客戶', '邮件', '郵件',
   'カレンダー', 'チャット', 'タスク', '顧客', 'メール',
   '캘린더', '채팅', '작업', '고객', '메일',
+  'कैलेंडर', 'चैट', 'टास्क', 'ग्राहक', 'मेल',
+  'kalendar', 'sembang', 'tugasan', 'pelanggan', 'e-mel', 'emel',
 ];
 
 /** Questions that mean several things in Curahold, and the choices offered for them. */
