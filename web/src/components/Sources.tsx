@@ -11,9 +11,11 @@ import type { MessageKey, Locale } from '../../../shared/src/i18n';
 import type { AccountField, Connection, ProviderInfo } from '../../../shared/src/model';
 import { BUILTIN_TYPES, typeLabel } from '../../../shared/src/records';
 import { DEV_HOSTS, KEY_FIELDS, devKey, type DevHookInfo, type DevHost, type FieldMap, type ObjectMap, type RemoteField, type RemoteObject, type SyncConfig, type SyncPreview, type SyncProblem, type SyncRun, type SyncStats } from '../../../shared/src/sync';
+import { ACCOUNTING_ALL } from '../../../shared/src/accounting';
 import { ApiFailure, api, del, get, patch, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
+import { setupChanged } from '../lib/setupHealth';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES, useConnections } from './Connections';
@@ -366,6 +368,7 @@ export function KeyConnect({ provider, onClose, reconnect }: { provider: Provide
     setBusy(true);
     try {
       const r = await post<{ id: string }>('/connections/key', { provider: provider.id, values, ...(reconnect ? { reconnect: reconnect.id } : {}) });
+      setupChanged();
       if (reconnect) toast(t('conn.reconnected', { app: name }));
       navigate(`/settings/sources/${r.id}`);
       if (reconnect) onClose();
@@ -578,6 +581,7 @@ export function SourceDetail({ id }: { id: string }) {
     const p = new URLSearchParams(location.search);
     if (p.get('connected')) {
       toast(t('conn.connected', { app: PROVIDER_NAMES[p.get('connected')!] ?? '' }));
+      setupChanged();
       history.replaceState(null, '', location.pathname + (p.get('from') ? '?from=setup' : ''));
     }
   }, [t, toast]);
@@ -591,6 +595,11 @@ export function SourceDetail({ id }: { id: string }) {
         const r = await post<{ run: SyncRun }>(`/connections/${id}/sync/run`, i === 0 ? opts : {});
         totals += Object.values(r.run.stats).reduce((n, s) => n + s.created + s.updated, 0);
         setRunning(t('sync.runningN', { n: totals }));
+        // The service asked us to slow down: stop here (the place is kept; the hourly run carries on), never ask again at once.
+        if (r.run.errors.some((e) => e.code === 'rate')) {
+          toast(t('sync.errorCode.rate', { app: name }));
+          return;
+        }
         if (!r.run.more) break;
       }
       toast(t('sync.done'));
@@ -598,6 +607,7 @@ export function SourceDetail({ id }: { id: string }) {
       onErr(e);
     } finally {
       setRunning(null);
+      setupChanged();
       await load();
       setRefresh((x) => x + 1);
     }
@@ -743,12 +753,13 @@ export function SourceDetail({ id }: { id: string }) {
       {removing && (
         <Confirm
           title={t('conn.removeTitle', { name: d.connection.label })}
-          body={t('sync.removeBody', { accounts: words.other.toLocaleLowerCase() })}
+          body={ACCOUNTING_ALL.includes(d.connection.provider as never) ? t('sync.removeBodyAccounting', { app: name }) : t('sync.removeBody', { accounts: words.other.toLocaleLowerCase() })}
           confirmLabel={t('common.remove')}
           danger
           onClose={() => setRemoving(false)}
           onConfirm={async () => {
             await del(`/connections/${id}`).catch(onErr);
+            setupChanged();
             navigate('/settings/sources');
           }}
         />
@@ -1158,9 +1169,12 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
     };
   }, [drafts, d, setDrafts, onErr]);
 
+  // A contact's name is made from its first and last name when the name itself is not synced (as the sync does).
+  const isContact = (o: Draft) => o.target === 'record' && (o.kind === 'contact' || d.recordTypes.find((r) => r.key === o.typeKey)?.kind === 'contact');
+  const named = (o: Draft) => o.fields.some((f) => f.local === (o.target === 'task' ? 'title' : 'name') || (isContact(o) && (f.local === 'f:first_name' || f.local === 'f:last_name')));
   const problems = enabled
     .filter((o) => o.meta)
-    .filter((o) => !o.fields.some((f) => f.local === (o.target === 'task' ? 'title' : 'name')))
+    .filter((o) => !named(o))
     .map((o) => o.label);
 
   const save = async () => {
@@ -1168,6 +1182,7 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
     try {
       const objects = drafts.map(({ meta: _m, custom: _c, hint: _h, ...o }) => o);
       await api('PUT', `/connections/${d.connection.id}/sync`, { objects, owners: d.sync.owners, conflict: d.sync.conflict });
+      setupChanged();
       await reloadMe();
       await onSaved();
     } catch (e) {
@@ -1483,6 +1498,7 @@ function StatusTab({ id, d, refresh, reload }: { id: string; d: Detail; refresh:
                   {last.errors.slice(0, 20).map((e, i) => (
                     <li key={i}>
                       {e.object && <strong>{labels.get(e.object) ?? e.object}</strong>} {e.name ? `“${e.name}” ` : ''}
+                      {e.code && <span>{t(`sync.errorCode.${e.code}` as MessageKey, { app: appName(d.connection) })} </span>}
                       <span className="muted">{e.message}</span>
                     </li>
                   ))}

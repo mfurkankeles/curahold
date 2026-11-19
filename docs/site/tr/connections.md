@@ -73,6 +73,28 @@ Tablo, veri getirmenin en kolay yoludur ve tabloya dışa aktarabilen her araç 
 
 Zendesk, Freshdesk, Intercom ve Jira Service Management yalnızca adres ve API anahtarıyla bağlanır; talepler doğru müşterinin altına gelir. Salesforce ve Dynamics'teki vakalar da destek talebi olarak eşleştirilebilir. Ayrıntılar: [Destek talepleri](/docs/tr/support-tickets/).
 
+
+## Eşitleme durursa {#sync-stops}
+
+Bağlantının **Durum** sekmesi ne olduğunu sade bir dille söyler; altında servisin kendi mesajı durur.
+
+| Ne diyor | Ne yapmalı |
+| --- | --- |
+| Servis Curahold'dan yavaşlamasını istedi | Hiçbir şey. Kalınan yer saklanır, bir sonraki saatlik çalışma devam eder. |
+| Curahold'un girişini ya da anahtarını artık kabul etmiyor | Aşağıdaki gibi yeniden bağla. |
+| Hesabın bir şeyi okuma ya da değiştirme izni yok | O aracın yöneticisinden hesaba erişim vermesini iste, sonra **Şimdi eşitle**'ye tıkla. |
+| Servise ulaşılamadı | Hiçbir şey. Curahold bir sonraki saatlik çalışmada yeniden dener. |
+
+Yeniden bağlamak için:
+
+1. **Ayarlar → CRM ve tablolar**'ı aç.
+2. **Bakılması gerek** yazan bağlantıya tıkla.
+3. Sayfanın üstündeki **Yeniden bağla**'ya tıkla.
+4. Daha önceki hesapla giriş yap (ya da yeni anahtarı yapıştır) ve onayla.
+5. **Şimdi eşitle**'ye tıkla. Eşleştirdiğin alanlar olduğu gibi kalır.
+
+Bir bağlantıyı kaldırmak için aç, **⋯**'ye tıkla ve **Kaldır**'ı seç. Eşitleme durur; gelen müşteriler, kişiler ve fırsatlar Curahold'da kalır, öbür araçta hiçbir şey silinmez. Muhasebe programında ise ondan okunan bakiyeler, faturalar ve ödemeler müşteri sayfalarından kaldırılır.
+
 ## Kendi araçların
 
 Başka bir sisteme bağlanmak istiyorsan [API anahtarları](/docs/tr/api-keys/), [webhook'lar](/docs/tr/webhooks/) ya da [AI asistanları](/docs/tr/ai-assistants/) sayfalarına bak.
