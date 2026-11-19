@@ -14,10 +14,10 @@ Curahold 能和團隊已經在用的工具一起運作。在「設定」→ 連�
 
 ## CRM 與試算表
 
-把客戶、聯絡人和商機與 Salesforce、HubSpot、Microsoft Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell、Google Sheets 和 Excel 同步。開啟 **「設定」→ CRM 與試算表**，選擇 **連接**。
+把客戶、聯絡人和交易與 Salesforce、HubSpot、Microsoft Dynamics、Pipedrive、Zoho、Bitrix24、Freshsales、Zendesk Sell、Google Sheets 和 Excel 同步。開啟 **「設定」→ CRM 與試算表**，選擇 **連接**。
 
 1. **登入。** 你會被帶到 CRM 自己的登入頁面，核准 Curahold 可以讀取和寫入的內容。絕不需要在 Curahold 中輸入密碼。（Bitrix24、Freshsales 和 Zendesk Sell 改用金鑰，見下文。）
-2. **選擇匯入內容。** 勾選需要的物件，並指定每個物件在 Curahold 中是什麼：客戶、聯絡人、商機、你們自己的記錄類型，或看板上的任務。
+2. **選擇匯入內容。** 勾選需要的物件，並指定每個物件在 Curahold 中是什麼：客戶、聯絡人、交易、你們自己的記錄類型，或看板上的任務。
 3. **對應欄位。** Curahold 會為每個欄位建議對應方式；每一項都能更改，並可為每個欄位選擇只匯入，或兩邊保持一致。
 4. **檢查並開始。** 在任何東西變動之前，預覽會顯示將新增和更新多少筆。
 

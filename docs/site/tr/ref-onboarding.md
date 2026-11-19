@@ -22,7 +22,7 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | `POST /onboarding-plans` | Bir müşteri (`accountId`) için şablondan plan açar (`templateId`: şablon kimliği ya da yerleşik anahtar; yoksa şirketin varsayılanı). |
 | `GET /onboarding-plans/:id` | Bir planın tamamı: adımlar, iki tarafın kişileri, hedefler, ortak sorunlar, veri eşleme tablosu, şubeler, önce/sonra rakamları, sağlık sinyalleri ve şirketin kendi planında kurulum testlerinin durumu. |
 | `PATCH /onboarding-plans/:id` | Planın adını, durumunu, sorumlusunu, karşılama metnini, devir notunu, hedef gününü ya da müşterinin portalda görüp görmediğini (`portalVisible`) değiştirir. |
-| `POST /onboarding-plans/:id/finish` | Planı bitirir: bugünkü sağlık puanı ve rakamlar başlangıç değeri olarak saklanır; Kurulum'da yaşayan plan Müşteri Başarısı'na bir devir kartı verir (`handoverId`). |
+| `POST /onboarding-plans/:id/finish` | Planı bitirir: bugünkü sağlık skoru ve rakamlar başlangıç değeri olarak saklanır; Kurulum'da yaşayan plan Müşteri Başarısı'na bir devir kartı verir (`handoverId`). |
 | `GET /onboarding-plans/:id/report` | Plandan kurulan ilerleme raporu: tamamlanma, aşamalar, kimin beklendiği, sıradaki üç adım, açık sorunlar, veri kuralları, kurulum testleri, hedefler ve rakamlar. |
 | `POST /onboarding-plans/:id/share` | O rapora salt okunur bir bağlantı oluşturur (`url`; gizli kısım bir kez gösterilir). |
 | `DELETE /onboarding-plans/:id/share` | Rapor bağlantısını kapatır. |
@@ -126,7 +126,7 @@ Planın adını, durumunu, sorumlusunu, karşılama metnini, devir notunu, hedef
 
 ### `POST /onboarding-plans/:id/finish`
 
-Planı bitirir: bugünkü sağlık puanı ve rakamlar başlangıç değeri olarak saklanır; Kurulum'da yaşayan plan Müşteri Başarısı'na bir devir kartı verir (`handoverId`).
+Planı bitirir: bugünkü sağlık skoru ve rakamlar başlangıç değeri olarak saklanır; Kurulum'da yaşayan plan Müşteri Başarısı'na bir devir kartı verir (`handoverId`).
 
 **Gerekenler:** yazabilen bir koltuk
 

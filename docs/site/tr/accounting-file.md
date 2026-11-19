@@ -6,7 +6,7 @@ summary: Logo, Mikro, Tally, SAP Business One ya da herhangi bir program: müşt
 ---
 # Muhasebe: başka bir programdan dosya
 
-Açık API'si olmayan programlar — Logo, Mikro, Tally, SAP Business One ve diğerleri — dosyayla bağlanır. Rakamlar bağlı bir programınkiyle aynı çalışır: müşteri sayfası, eşleştirme ve sağlık puanı.
+Açık API'si olmayan programlar — Logo, Mikro, Tally, SAP Business One ve diğerleri — dosyayla bağlanır. Rakamlar bağlı bir programınkiyle aynı çalışır: müşteri sayfası, eşleştirme ve sağlık skoru.
 
 ## Adımlar
 

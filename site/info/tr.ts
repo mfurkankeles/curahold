@@ -38,7 +38,7 @@ export const tr: InfoCopy = {
     inside: {
       name: 'İç satış', short: 'Aramalar, takipler ve erken fırsatlar; hiçbiri yarım kalmaz.',
       title: 'Her ilk aramanın bir takibi var',
-      lead: 'İç satış, kendinden sonraki her ekiple aynı müşteri kayıtlarında çalışır: aramalar ve e-postalar zaman çizelgesinde, takipler görev olarak, erken fırsatlar satış hattında.',
+      lead: 'İç satış, kendinden sonraki her ekiple aynı müşteri kayıtlarında çalışır: aramalar ve e-postalar zaman çizelgesinde, takipler görev olarak, erken fırsatlar satış hunisinde.',
       points: [
         ['Kaçmayan takipler', 'Her arama bir sonraki adım ve tarihle biter: yapışkan not değil, müşteriye bağlı bir görev.'],
         ['Hızlı not', '“cuma @Ayşe #Acme !yüksek” yaz; görev kendi alanlarını doldursun.'],
@@ -47,13 +47,13 @@ export const tr: InfoCopy = {
       forWho: 'İç satış ve iş geliştirme ekipleri, ilk toplantıyı ayarlayan kimse.',
     },
     sales: {
-      name: 'Satış', short: 'Satış hattı, yenilemeler ve hedefler müşterinin kendi kaydında.',
+      name: 'Satış', short: 'Satış hunisi, yenilemeler ve hedefler müşterinin kendi kaydında.',
       title: 'Müşteriye ne söz verildiğini bilen satış',
       lead: 'Fırsatlar, yenilemeler ve çeyrek hedefleri, müşteri başarısı ve ürün ekibinin çalıştığı aynı kayıtta durur; kimse karanlıkta satmaz.',
       points: [
-        ['Güvenilir bir satış hattı', 'Her müşterinin altında aşamaları ve tutarlarıyla fırsatlar, çeyrek için ağırlıklı tahmin.'],
+        ['Güvenilir bir satış hunisi', 'Her müşterinin altında aşamaları ve tutarlarıyla fırsatlar, çeyrek için ağırlıklı tahmin.'],
         ['Kendiliğinden açılan yenilemeler', 'Yenileme playbook’u tarihten doksan gün önce başlar; adımları tarihten geriye sayılır.'],
-        ['CRM’in, ihtiyacın olduğu sürece', 'Elindeki CRM’le iki yönlü eşitlemeyle başla; Curahold’un kendi satış hattı ve kayıtları var, hazır olduğunda onu bırakabilirsin.'],
+        ['CRM’in, ihtiyacın olduğu sürece', 'Elindeki CRM’le iki yönlü eşitlemeyle başla; Curahold’un kendi satış hunisi ve kayıtları var, hazır olduğunda onu bırakabilirsin.'],
       ],
       forWho: 'Satış temsilcileri, satış liderleri ve yenileme rakamının sahibi kimse.',
       next: ['Fırsat kazanılınca devir paketi', 'Fırsat kazanıldığı anda kişileri, notları ve verilen sözler birlikte kuruluma geçer.'],
@@ -169,9 +169,9 @@ export const tr: InfoCopy = {
       ],
     },
     reports: {
-      name: 'Raporlar ve panolar', short: 'Çeyrek, satış hattı ve portföyün sağlığı.',
+      name: 'Raporlar ve panolar', short: 'Çeyrek, satış hunisi ve portföyün sağlığı.',
       title: 'Çeyrek tek ekranda',
-      lead: 'Hedefler, ağırlıklı satış hattı ve tüm portföyün sağlığı; kendin kurduğun raporlar ve gösterge panolarında.',
+      lead: 'Hedefler, ağırlıklı satış hunisi ve tüm portföyün sağlığı; kendin kurduğun raporlar ve gösterge panolarında.',
       points: [
         ['Kendin kur', 'Ölçüleri ve gruplamayı seç; görünümü ekibin için kaydet.'],
         ['Her şeyi dışa aktar', 'Müşteriler, kayıtlar ve listeler tek tıkla Excel ya da CSV olur.'],
@@ -217,7 +217,7 @@ export const tr: InfoCopy = {
   },
   integrations: {
     title: 'Araçlarının yanında başla, kendi hızında geç',
-    lead: 'Bağlantılar Curahold’u ekiplerinin bugün kullandığı araçlarla aynı adımda tutar; kimse aynı gün geçmek zorunda kalmaz. Curahold’un kendi satış hattı, müşteri sayfaları, backlog’u ve sprint’leri var; köprüyü hazır olduğunda kaldırırsın.',
+    lead: 'Bağlantılar Curahold’u ekiplerinin bugün kullandığı araçlarla aynı adımda tutar; kimse aynı gün geçmek zorunda kalmaz. Curahold’un kendi satış hunisi, müşteri sayfaları, backlog’u ve sprint’leri var; köprüyü hazır olduğunda kaldırırsın.',
     groups: {
       crm: { name: 'CRM', text: 'Kendi alanların ve nesnelerin dahil, alan alan iki yönlü eşitleme.' },
       chat: { name: 'Sohbet', text: 'Atamalar, bahsetmeler ve haftalık özet, ekibinin konuştuğu yerde.' },
@@ -267,7 +267,7 @@ export const tr: InfoCopy = {
       ['Ne olduğunu değil, nedenini bilirsin', 'Sağlık skoru nedenlerini sıralar; yenileme riske girmeden sonraki adım belli olur.', 'Sağlık skoru'],
       ['Dokuz dil, sağdan sola dahil', 'Herkes kendi dilini seçer; tüm arayüz takip eder, gereken yerde aynalanır.', 'Hizmet verdiğimiz bölgeler'],
       ['Verin senin kalır', 'Şirketler veritabanının kendisinde ayrı tutulur; destek çalışma alanını yalnızca izninle görür.', 'Güvenlik ve gizlilik'],
-      ['Araçlarının yanında başla, kendi hızında geç', 'CRM’ine ve mühendislik aracına bağlantılar, ekipler geçerken iki tarafı aynı adımda tutar. Satış hattı da sprint’ler de Curahold’da zaten var; eski araçları tutmak bir zorunluluk değil, tercih.', 'Entegrasyonlar'],
+      ['Araçlarının yanında başla, kendi hızında geç', 'CRM’ine ve mühendislik aracına bağlantılar, ekipler geçerken iki tarafı aynı adımda tutar. Satış hunisi de sprint’ler de Curahold’da zaten var; eski araçları tutmak bir zorunluluk değil, tercih.', 'Entegrasyonlar'],
     ],
     contrastTitle: 'Dağınık araçlar mı, tek yer mi',
     before: ['Söz birinin e-postasında', 'Görev bir tabloda', 'Risk bir sohbet akışında', 'Yenileme ayrı bir CRM’de'],

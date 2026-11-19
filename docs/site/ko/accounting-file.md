@@ -6,7 +6,7 @@ summary: Logo, Mikro, Tally, SAP Business One 등 모든 프로그램: 고객, �
 ---
 # 회계: 다른 프로그램의 파일
 
-공개 API가 없는 프로그램(Logo, Mikro, Tally, SAP Business One 등)은 파일로 연결합니다. 이후 수치는 연결된 프로그램과 똑같이 쓰입니다. 고객 페이지, 고객 연결, 건강 점수입니다.
+공개 API가 없는 프로그램(Logo, Mikro, Tally, SAP Business One 등)은 파일로 연결합니다. 이후 수치는 연결된 프로그램과 똑같이 쓰입니다. 고객 페이지, 고객 연결, 헬스 스코어입니다.
 
 ## 순서
 

@@ -144,7 +144,7 @@ export const A_COPY: Record<Locale, Record<string, string>> = {
     t_today: '今天', t_cust: '客戶', t_tasks: '任務', t_sprint: '衝刺',
     p_k1: '行動通路範例旅程', p_k2: 'iOS 推播通知', p_k3: '依席次開立發票', p_k4: '歡迎檢查清單', p_linked: '已連結承諾',
     p_portal: 'Marevo 入口網站', p_hi: '歡迎，Selin', p_shared: '與你們共用的任務', p_n1b: '加購席次報價',
-    p_tr5: '從 48 升到 85', p_renew: '續約商機', p_won: '贏得', p_early: '比到期日早 41 天', p_touch: '最近一次接觸在 2 天前', p_none: '沒有逾期事項',
+    p_tr5: '從 48 升到 85', p_renew: '續約交易', p_won: '贏得', p_early: '比到期日早 41 天', p_touch: '最近一次接觸在 2 天前', p_none: '沒有逾期事項',
     s1h: '分數下滑，並說出原因', s1p: 'Marevo 從 60 掉到 48。原因都列出來了：38 天沒有接觸、3 項任務逾期、沒有擁護者。',
     s2h: '承諾在會議上做出', s2p: 'Selin 想看行動通路的範例旅程。通話結束前，Zeynep 就把它記成後續步驟。',
     s3h: '它自動變成任務', s3p: '儲存會議後，後續步驟就成了有負責人和截止日的任務，並與 Marevo 共用。',
