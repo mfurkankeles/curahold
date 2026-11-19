@@ -5877,4 +5877,9 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "قائد العمليات لديهم هو مناصرنا؛ وكانت المشتريات الجزء الأصعب.",
   'flow.demo.promise1': "مكالمة انطلاق خلال أسبوع",
   'flow.demo.promise2': "تدريب الفريق الثاني قبل أن يبدأ",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "صِغ مع المساعد",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "رئيسة العمليات",
+  'flow.demo.titleBuy': "مدير المشتريات",
 };

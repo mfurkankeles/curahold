@@ -5877,4 +5877,9 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "他们的运营负责人是我们的支持者；采购环节最难。",
   'flow.demo.promise1': "一周内开启动会",
   'flow.demo.promise2': "第二个团队开始前完成培训",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "用助手起草",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "运营负责人",
+  'flow.demo.titleBuy': "采购经理",
 };

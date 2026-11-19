@@ -5877,4 +5877,9 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "先方の業務責任者が推進役。難しかったのは購買部門。",
   'flow.demo.promise1': "1 週間以内にキックオフ",
   'flow.demo.promise2': "2 つ目のチームの開始前にトレーニング",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "アシスタントで下書き",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "業務責任者",
+  'flow.demo.titleBuy': "購買マネージャー",
 };

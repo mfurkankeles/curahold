@@ -5877,4 +5877,9 @@ export const he: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "מובילת התפעול שלהם היא האלופה שלנו; הרכש היה החלק הקשה.",
   'flow.demo.promise1': "שיחת פתיחה בתוך שבוע",
   'flow.demo.promise2': "הדרכה לצוות השני לפני שהוא מתחיל",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "לנסח עם העוזר",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "מנהלת תפעול",
+  'flow.demo.titleBuy': "מנהל רכש",
 };

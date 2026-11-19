@@ -5892,6 +5892,11 @@ export const en = {
   'flow.demo.thread2': "Their operations lead is our champion; procurement was the hard part.",
   'flow.demo.promise1': "Kickoff call within a week",
   'flow.demo.promise2': "Training for the second team before it starts",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "Draft with the assistant",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "Head of Operations",
+  'flow.demo.titleBuy': "Procurement Manager",
 } as const;
 
 export type MessageKey = keyof typeof en;

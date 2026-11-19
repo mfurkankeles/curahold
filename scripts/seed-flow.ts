@@ -10,6 +10,7 @@
 import type { Q } from '../api/src/db';
 import { createHandover, loopBack } from '../api/src/lib/handoff';
 import { translate, type Locale, type MessageKey } from '../shared/src/i18n';
+import { BUILTIN_TYPES } from '../shared/src/records';
 
 export async function seedFlow(
   q: Q,
@@ -56,8 +57,28 @@ export async function seedFlow(
   // Won: the hand-over card waiting for Customer Success.
   const [won] = await q.query<{ id: string }>(`select id from tasks where org_id = $1 and board_id = $2 and status = 'won' and account_id = $3 limit 1`, [o.orgId, o.boards.pipeline, cedar]);
   if (won) {
+    // The people on the customer's side, with where they stand (the card lists them).
+    let [contact] = await q.query<{ id: string }>(`select id from record_types where org_id = $1 and kind = 'contact' order by created_at limit 1`, [o.orgId]);
+    if (!contact) {
+      const c = BUILTIN_TYPES.contact;
+      [contact] = await q.query<{ id: string }>(`insert into record_types (org_id, key, name, kind, fields) values ($1, $2, $3, 'contact', $4) returning id`, [o.orgId, c.key, JSON.stringify(c.name), JSON.stringify(c.fields)]);
+    }
+    const people: [string, string, string, string, string][] = [
+      ['Defne', 'Aral', T('flow.demo.titleOps'), 'decision_maker', 'champion'],
+      ['Jonas', 'Pike', T('flow.demo.titleBuy'), 'approver', 'neutral'],
+    ];
+    for (const [first, last, title, decision, stance] of people) {
+      await q.query(`insert into records (org_id, type_id, account_id, name, fields) values ($1, $2, $3, $4, $5)`, [
+        o.orgId,
+        contact.id,
+        cedar,
+        `${first} ${last}`,
+        JSON.stringify({ first_name: first, last_name: last, title, decision, stance }),
+      ]);
+    }
+    let minutes = 90;
     for (const body of [T('flow.demo.thread1'), T('flow.demo.thread2')]) {
-      await q.query('insert into comments (org_id, task_id, author_id, body) values ($1, $2, $3, $4)', [o.orgId, won.id, o.ids.omar, body]);
+      await q.query(`insert into comments (org_id, task_id, author_id, body, created_at) values ($1, $2, $3, $4, now() - make_interval(mins => $5))`, [o.orgId, won.id, o.ids.omar, body, (minutes -= 30)]);
     }
     for (const [body, days] of [[T('flow.demo.promise1'), 7], [T('flow.demo.promise2'), 30]] as const) {
       await q.query(`insert into promises (org_id, account_id, body, due_date, created_by) values ($1, $2, $3, current_date + $4::int, $5)`, [o.orgId, cedar, body, days, o.ids.omar]);

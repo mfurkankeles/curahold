@@ -5877,4 +5877,9 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "مدیر عملیاتشان حامی ماست؛ بخش سخت، خرید بود.",
   'flow.demo.promise1': "تماس شروع ظرف یک هفته",
   'flow.demo.promise2': "آموزش تیم دوم پیش از شروع",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "پیش‌نویس با دستیار",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "مدیر عملیات",
+  'flow.demo.titleBuy': "مدیر خرید",
 };

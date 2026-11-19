@@ -1,6 +1,7 @@
 // A person's own setup: on first sign-in (Welcome) and later (Profile) —
 // name, language, where notifications go, the morning summary and a
 // calendar feed. One minute, no administrator needed.
+import '../surfaces/flow.css';
 import { Icon, PageIcon } from '../components/icons';
 import { useEffect, useState } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
@@ -165,7 +166,7 @@ export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; 
                 </label>
               ))}
             </div>
-            <label className="checkbox u-mt-12">
+            <label className="checkbox flow-hinted u-mt-12">
               <input type="checkbox" checked={prefs.batch !== false} disabled={prefs.events.digest === false} onChange={(e) => setPrefs({ ...prefs, batch: e.target.checked })} />
               <span>
                 {t('me.batch')}

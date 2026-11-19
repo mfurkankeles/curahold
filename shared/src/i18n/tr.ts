@@ -5877,4 +5877,9 @@ export const tr: Record<MessageKey, string> = {
   'flow.demo.thread2': "Operasyon liderleri bizim savunucumuz; zor kısım satın almaydı.",
   'flow.demo.promise1': "Bir hafta içinde başlangıç görüşmesi",
   'flow.demo.promise2': "İkinci ekip başlamadan önce eğitim",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "Asistanla taslakla",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "Operasyon Direktörü",
+  'flow.demo.titleBuy': "Satın Alma Müdürü",
 };

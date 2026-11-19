@@ -5877,4 +5877,9 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "他們的營運負責人是我們的支持者；採購環節最難。",
   'flow.demo.promise1': "一週內開啟動會",
   'flow.demo.promise2': "第二個團隊開始前完成培訓",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "用助理起草",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "營運負責人",
+  'flow.demo.titleBuy': "採購經理",
 };

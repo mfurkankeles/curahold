@@ -387,7 +387,7 @@ function WorkRow({ w, accountName, onChanged }: { w: LinkedWork; accountName: st
           {w.toldAt && <span className="muted">{t('flow.work.told')}</span>}
         </span>
         {canWrite && !shipped && (
-          <button className="btn btn--quiet btn--icon btn--small" aria-label={t('flow.link.remove', { title: w.title })} title={t('flow.link.remove', { title: w.title })} onClick={() => void unlink()}>
+          <button className="btn btn--quiet btn--icon btn--small flow-work__remove" aria-label={t('flow.link.remove', { title: w.title })} title={t('flow.link.remove', { title: w.title })} onClick={() => void unlink()}>
             <Icon name="close" size={14} />
           </button>
         )}
@@ -403,7 +403,7 @@ function WorkRow({ w, accountName, onChanged }: { w: LinkedWork; accountName: st
             <div className="flow-loop__actions">
               <button className="btn btn--quiet btn--small" disabled={drafting} onClick={() => void assist()}>
                 <Icon name="spark" size={13} />
-                {drafting ? t('flow.draft.writing') : t('flow.draft.shipped')}
+                {drafting ? t('flow.draft.writing') : t('flow.draft.assist')}
               </button>
               <span className="u-me-auto" />
               <button className="btn btn--small" onClick={() => void copy()}>
@@ -703,7 +703,7 @@ export function AccountTeam({ account, flow, reload }: { account: Account; flow:
         return (
           <label key={d.id} className="flow-team__row">
             <span className="flow-team__dept">{deptName(d.key)}</span>
-            {who && <Avatar person={who} />}
+            <span className="flow-team__who">{who && <Avatar person={who} />}</span>
             <select className="select" value={owner(d.id)} disabled={!canWrite} aria-label={t('flow.team.ownerIn', { dept: deptName(d.key) })} onChange={(e) => void set(d.id, e.target.value)}>
               <option value="">{t('flow.team.none')}</option>
               {people
@@ -920,7 +920,7 @@ export function FlowSettingsCard() {
           {t('flow.settings.title')}
         </span>
       </h3>
-      <label className="checkbox">
+      <label className="checkbox flow-hinted">
         <input type="checkbox" checked={s.handover} disabled={!manage} onChange={(e) => void change({ handover: e.target.checked })} />
         <span>
           {t('flow.settings.handover')}

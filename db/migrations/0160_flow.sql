@@ -137,9 +137,9 @@ language sql stable security definer set search_path = public, pg_temp as $$
    order by (t.done_at is null) desc, coalesce(s.ends_on, t.due_date) nulls last, l.created_at
 $$;
 
--- Product work anyone may link a customer's request to: stories on boards of
--- the Product department that are not someone's private board (title and
--- where it stands only), plus every board the person can open.
+-- Product work anyone may link a customer's request to: work on the Product
+-- department's boards that are not someone's private board (title and where
+-- it stands only), and on sprint boards the person can open.
 create function app_linkable_stories(p_query text, p_limit int)
 returns table (id uuid, title text, status_name text, done boolean, department_key text, waiting int)
 language sql stable security definer set search_path = public, pg_temp as $$
@@ -151,7 +151,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
     join boards b on b.id = t.board_id and b.archived_at is null
     join departments d on d.id = b.department_id and d.enabled
    where t.org_id = app_org() and t.archived_at is null and t.parent_id is null and t.issue_type <> 'epic'
-     and ((d.key = 'product' and b.visibility <> 'private') or b.id in (select app_visible_boards()))
+     and ((d.key = 'product' and b.visibility <> 'private') or (b.pm_enabled is true and b.id in (select app_visible_boards())))
      and (coalesce(p_query, '') = '' or t.title ilike '%' || replace(replace(p_query, '%', '\%'), '_', '\_') || '%')
    order by (t.done_at is null) desc, (d.key = 'product') desc, t.updated_at desc
    limit least(greatest(coalesce(p_limit, 20), 1), 50)
@@ -165,7 +165,9 @@ create function app_story_demand(p_board uuid, p_value text, p_renewal text)
 returns table (story_id uuid, waiting int, value numeric, nearest_renewal date, renewing_90 int)
 language sql stable security definer set search_path = public, pg_temp as $$
   select l.story_id, count(distinct a.id)::int,
-         sum(case when jsonb_typeof(a.fields -> p_value) = 'number' then (a.fields ->> p_value)::numeric end),
+         -- In the company's money: each customer's own currency at the company's rates (lib/fx.ts).
+         round(sum(case when jsonb_typeof(a.fields -> p_value) = 'number' then (a.fields ->> p_value)::numeric
+                        * coalesce(((select o.settings -> 'fx' -> 'rates' from orgs o where o.id = app_org()) ->> a.currency)::numeric, 1) end), 2),
          min(case when a.fields ->> p_renewal ~ '^\d{4}-\d{2}-\d{2}' then left(a.fields ->> p_renewal, 10)::date end)
            filter (where a.fields ->> p_renewal ~ '^\d{4}-\d{2}-\d{2}' and left(a.fields ->> p_renewal, 10)::date >= app_today()),
          count(distinct a.id) filter (where a.fields ->> p_renewal ~ '^\d{4}-\d{2}-\d{2}'
@@ -202,7 +204,7 @@ begin
   if not exists (select 1 from app_linkable_stories(null, 50) s where s.id = p_story)
      and not exists (select 1 from tasks t join boards b on b.id = t.board_id join departments d on d.id = b.department_id
                       where t.id = p_story and t.org_id = app_org() and t.archived_at is null
-                        and ((d.key = 'product' and b.visibility <> 'private') or b.id in (select app_visible_boards()))) then
+                        and ((d.key = 'product' and b.visibility <> 'private') or (b.pm_enabled is true and b.id in (select app_visible_boards())))) then
     return null;
   end if;
   insert into request_links (org_id, story_id, account_id, source, source_id, note, created_by)

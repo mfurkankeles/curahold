@@ -5877,4 +5877,9 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'flow.demo.thread2': "운영 책임자가 우리 지지자이고, 구매 쪽이 어려웠다.",
   'flow.demo.promise1': "일주일 안에 킥오프",
   'flow.demo.promise2': "두 번째 팀 시작 전 교육",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.draft.assist': "어시스턴트로 초안",
+  // The flow between departments: hand-over, request links, shipped loop, digest.
+  'flow.demo.titleOps': "운영 책임자",
+  'flow.demo.titleBuy': "구매 관리자",
 };
