@@ -1,4 +1,5 @@
 [
+ "api/src/assistant/store.ts :: delete from assistant_cache where created_at < now() - interval '${CAC",
  "api/src/connectors/messaging/index.ts :: delete from chat_identities where connection_id = $1 and external_id =",
  "api/src/connectors/messaging/index.ts :: select * from connections where provider = $1 and external_id = $2 and",
  "api/src/lib/chatActions.ts :: select u.id, u.name, u.locale, i.data from chat_identities i join user",

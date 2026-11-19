@@ -9,6 +9,8 @@ import { runScheduled } from './lib/scheduler';
 import { R2Storage, ResendEmail, type R2Like } from './lib/services';
 import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './live/do';
 import { PLATFORM_PATH } from './live/platform';
+import { assistantConfigFrom } from './assistant/cost';
+import type { DocSection } from '../../shared/src/answers';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
 export { LiveRoomDO } from './live/do';
@@ -89,6 +91,17 @@ export interface Env {
   PADDLE_CLIENT_TOKEN?: string;
   /** Price ids: {"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}} */
   PADDLE_PRICES?: string;
+  /** The assistant (api/src/assistant/cost.ts): the model's key (a secret), the model, the monthly caps in USD. Without a key the docs search answers. */
+  ANTHROPIC_API_KEY?: string;
+  ASSISTANT_PROVIDER?: string;
+  ASSISTANT_MODEL?: string;
+  ASSISTANT_GLOBAL_MONTHLY_USD?: string;
+  ASSISTANT_COMPANY_MONTHLY_USD?: string;
+  ASSISTANT_COMPANY_MAX_USD?: string;
+  /** Other products' names the assistant turns away, comma-separated (kept out of the code). */
+  ASSISTANT_BLOCKED_NAMES?: string;
+  /** "0" closes the public docs chat. */
+  ASSISTANT_PUBLIC_CHAT?: string;
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
@@ -137,6 +150,7 @@ export function configFromEnv(env: Env): Config {
     secretsKey: env.SECRETS_KEY || undefined,
     portalDomain,
     billing: billingFromEnv(env),
+    assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
     support: {
       email: env.SUPPORT_EMAIL || undefined,
       webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,
@@ -205,6 +219,8 @@ export function depsFor(env: Env, ctx: Ctx) {
       storage: new R2Storage(env.FILES),
       config: configFromEnv(env),
       live: livePoker(env),
+      // The docs' sections, as the docs build wrote them, from the site's own files.
+      assistant: { docs: (lang: 'en' | 'tr') => env.ASSETS.fetch(new Request(`https://assets.local/docs/${lang}/answers.json`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))) as Promise<DocSection[]> },
       defer: (p: Promise<unknown>) => {
         pending.push(p);
         ctx.waitUntil(p);

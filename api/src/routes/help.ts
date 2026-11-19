@@ -37,6 +37,7 @@ import {
 } from '../lib/support';
 import { body, isoDate, param, uuid } from '../lib/validate';
 import { addHelpMessage, toHelpMessage } from '../lib/helpThread';
+import { deskFirstReply } from './assist';
 
 export const helpRoutes = new Hono<AppEnv>();
 export const supportEntry = new Hono<AppEnv>();
@@ -323,6 +324,13 @@ helpRoutes.post('/help', async (c) => {
     deps,
     (async () => {
       await tellSupport(deps, org, { name: auth.name, email: auth.email, role: auth.roleKey }, req, saved, grant);
+      // A first answer drafted from the docs, as a note only the desk sees (routes/assist.ts).
+      const draft = await deskFirstReply(deps, org, req as { id: string; subject: string; description: string }, locale).catch(() => null);
+      if (draft) {
+        const sources = draft.citations.map((s) => `- ${s.title}${s.section ? ` › ${s.section}` : ''}: ${s.url}`).join('\n');
+        const note = `${translate('en', 'assist.desk.draft')}\n\n${draft.text}${sources ? `\n\n${sources}` : ''}`;
+        await addHelpMessage(deps, org.id, req.id, { author: 'support', staff: 'CuraAI', body: note.slice(0, 20000), internal: true, via: 'desk' });
+      }
       const link = `${orgUrl(deps.config, org.slug)}/home#help`;
       const text = translate(locale, 'help.email.body', { ref: req.ref, subject: req.subject }, org.terms);
       const logo = logoPath(org);

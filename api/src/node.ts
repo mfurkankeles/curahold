@@ -19,6 +19,7 @@ import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 import { attachLive } from './live/node';
+import { assistantConfigFrom } from './assistant/cost';
 
 export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant' }) {
   const pg = await createMemoryPg();
@@ -57,9 +58,12 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
     portalDomain: 'portal.localhost',
     staffKey: opts.staffKey,
+    // The assistant: a model only when a key is in the environment; otherwise the docs search answers.
+    assistant: assistantConfigFrom(process.env),
   };
   const storage = new MemoryStorage();
-  const deps: Deps = { db, email, storage, config };
+  const docsDir = join(import.meta.dirname, '..', '..', 'dist', 'web', 'docs');
+  const deps: Deps = { db, email, storage, config, assistant: { docs: async (lang) => JSON.parse(readFileSync(join(docsDir, lang, 'answers.json'), 'utf8')) } };
   const api = createApp(deps);
   const root = new Hono();
   root.route('/', api);

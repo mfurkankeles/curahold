@@ -78,6 +78,8 @@ export interface Config {
   clientIp?: 'cf' | 'proxy' | 'socket';
   /** Multiplies every request budget (lib/ratelimit.ts): 1 or unset in production, 0 switches the limits off. */
   limitScale?: number;
+  /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */
+  assistant?: import('./assistant/cost').AssistantConfig;
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */
@@ -124,6 +126,8 @@ export interface Deps {
   /** Request budgets of this isolate or process; defaults to the shared one (lib/ratelimit.ts). */
   limiter?: import('./lib/ratelimit').Limiter;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
+  /** The assistant: where the docs' sections are read from, and (tests) a model to use instead of the configured one. */
+  assistant?: { docs?: import('./assistant/store').DocsLoader; provider?: import('./assistant/provider').LlmProvider | null };
   live?: {
     /** A company's room (Cloudflare; on Node, Postgres tells it). */
     poke?(orgId: string): Promise<void>;

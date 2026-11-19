@@ -54,6 +54,7 @@ const NO_ORG_ID: Record<string, string> = {
   oauth_clients: 'registered apps, global by design (no privileges for the request roles)',
   trash_rows: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   trash_links: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
+  assistant_global: "the installation's monthly assistant totals (counts and cost only, no company data), for the global cap",
 };
 
 const REQUEST_ROLES = ['curahold_app', 'curahold_portal'];

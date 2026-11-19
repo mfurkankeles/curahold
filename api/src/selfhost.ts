@@ -145,7 +145,15 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
 
   const email: EmailSender = env.SMTP_URL ? new SmtpEmail(env.SMTP_URL, env.EMAIL_FROM || `Curahold <curahold@${new URL(env.PUBLIC_URL!).hostname}>`) : new LogEmail();
   const storage = new DiskStorage(env.FILES_DIR || join(root, 'data', 'files'));
-  const deps: Deps = { db, email, storage, config, fetch: outboundFetch(env) };
+  const deps: Deps = {
+    db,
+    email,
+    storage,
+    config,
+    fetch: outboundFetch(env),
+    // The assistant reads the docs' sections the docs build wrote.
+    assistant: { docs: async (lang) => JSON.parse(readFileSync(join(root, 'dist', 'web', 'docs', lang, 'answers.json'), 'utf8')) },
+  };
 
   const app = new Hono();
   app.route('/', createApp(deps));

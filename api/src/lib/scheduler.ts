@@ -16,6 +16,7 @@ import { emptyTrash } from './trash';
 import { snapshotActiveSprints } from './burndown';
 import { sendTrialReminders } from './trial';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
+import { purgeAssistantLogs } from '../assistant/store';
 
 const DIGEST_ITEMS = 8;
 
@@ -68,6 +69,8 @@ export async function sendDigests(deps: Deps, now: Date) {
 export async function cleanUp(deps: Deps) {
   // What has been in the trash for its 30 days goes for good, files included.
   await emptyTrash(deps).catch((e) => console.error('[curahold] emptying the trash failed', e));
+  // The assistant's log past each company's retention, and cached answers older than a week.
+  await purgeAssistantLogs(deps.db).catch((e) => console.error('[curahold] assistant log clean-up failed', e));
   await deps.db.system(async (q) => {
     await q.query(`delete from login_tokens where expires_at < now() - interval '1 day'`);
     await q.query(`delete from signups where org_id is null and expires_at < now() - interval '7 days'`);

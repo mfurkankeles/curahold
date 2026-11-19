@@ -67,6 +67,7 @@ import { oauthApi, oauthRoutes } from './routes/oauth';
 import { resolveToken } from './lib/tokens';
 import { helpRoutes, supportEntry } from './routes/help';
 import { portalRoutes } from './routes/portal';
+import { assistPublicRoutes, assistRoutes } from './routes/assist';
 import { signInSupport } from './lib/support';
 import { INVITES_PER_HOUR, clientIp, isExport, isInvite, isSearch, isSignIn, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { liveRoutes } from './live/routes';
@@ -229,6 +230,8 @@ export function createApp(deps: Deps) {
   app.route('/api/desk/office', officeRoutes);
   app.route('/api/agent', agentRoutes);
   app.route('/api/desk', deskRoutes);
+  // The public docs' and sales site's "Ask": no company, docs only (routes/assist.ts).
+  app.route('/', assistPublicRoutes);
   // Paddle's notifications about subscriptions (checked against its secret).
   app.post('/api/billing/webhook', billingWebhook);
   // Paddle notifications for the table-based subscription system (signature-checked).
@@ -438,6 +441,7 @@ export function createApp(deps: Deps) {
   app.route('/api', ticketRoutes);
   app.route('/api', developerRoutes);
   app.route('/api', helpRoutes);
+  app.route('/api', assistRoutes);
   app.route('/api', portalRoutes);
   app.route('/api', oauthApi);
   app.route('/api', syncRoutes);
