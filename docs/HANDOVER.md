@@ -160,7 +160,7 @@ a 14-day trial and leaves out model spend; update it before using it for pricing
 | Architecture, security model, data model, CI gates | CTO | Engineering | ARCHITECTURE, SECURITY, ADRs, `tests/` guards |
 | Tenant isolation and `system()` reviews | CTO (second reviewer required) | Engineering | `tests/rls.test.ts`, `tests/isolation*.test.ts` |
 | Billing and money | Product owner (prices) + CTO (code path) | Engineering | `shared/src/billing.ts`, `api/src/billing/`, ADR 0019 |
-| Legal texts, consent, DPA, privacy | Product owner with legal counsel | Engineering wires texts; never rewrites legal meaning | `docs/legal/`, `shared/src/compliance/` |
+| Legal texts, consent, DPA, privacy | Product owner with legal counsel | Engineering wires texts; never rewrites legal meaning | `docs/site/<lang>/legal-*.md` (single source; `docs/legal/README.md`), `shared/src/compliance/` |
 | Translations and glossary | Product owner (tone) | Native reviewers per language | `shared/src/i18n/`, glossary |
 | Help centre and assistant knowledge | Product owner | Engineering + docs; the coverage test enforces it | `docs/site/`, `shared/src/helpLinks.ts`, `tests/assistant-eval/` |
 | Operator console and AI team approvals | Product owner (approves every outside action) | Engineering | `api/src/team/`, `routes/office.ts` |

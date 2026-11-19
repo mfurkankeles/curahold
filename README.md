@@ -516,7 +516,7 @@ help page *Running Curahold on your own server* says the same for customers.
 
 Cloudflare (hosting, files, the optional Turnstile check), Supabase (database, EU region), Google Workspace
 (product email through its SMTP relay) or Resend (email, if chosen instead), Anthropic (the assistant's and the AI
-team's model, only when a key is set; see `docs/legal/ai-assistant-privacy-notes.md`),
+team's model, only when a key is set; see `docs/compliance/ai-assistant-privacy-notes.md`),
 Google and Microsoft (only when a company enables their sign-in or connects
 Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
 Pipedrive, Zoho) is its processor, not ours: Curahold reads and writes it on
