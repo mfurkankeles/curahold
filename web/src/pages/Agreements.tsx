@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { helpLanguageOf, LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import type { Me } from '../../../shared/src/model';
-import { AGREEMENTS, CONSENT_DRAFT, type AgreementDoc } from '../../../shared/src/trialForm';
+import { AGREEMENT_DOCS, AGREEMENTS, CONSENT_DRAFT, type AgreementDoc } from '../../../shared/src/trialForm';
 import { Mark } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
 import { docsHref, docsLink } from '../lib/docs';
@@ -26,7 +26,7 @@ export function AgreementsGate({ me, onLocale, onAccepted }: { me: Me; onLocale:
   const [error, setError] = useState('');
   useEffect(() => {
     get<{ due: Due[] }>('/agreements').then(
-      (r) => setDue(r.due),
+      (r) => setDue([...r.due].sort((a, b) => AGREEMENT_DOCS.indexOf(a.doc) - AGREEMENT_DOCS.indexOf(b.doc))),
       () => setError(t('errors.server')),
     );
   }, [t]);
