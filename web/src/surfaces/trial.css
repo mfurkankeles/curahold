@@ -109,10 +109,11 @@
 /* The field robots fill and people never meet: out of sight and out of the tab order. */
 .trial__hp {
   position: absolute;
-  inset-inline-start: -10000px;
   width: 1px;
   height: 1px;
   overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* The progress rail on the side (desktop); a phone reads "Step n of 5" above the title. */

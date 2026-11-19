@@ -216,7 +216,7 @@ const submitSchema = z.object({
   companySize: choice(COMPANY_SIZES),
   seats: seatCount,
   seatsByDepartment: z.partialRecord(z.enum(TRIAL_DEPARTMENTS), seatCount).optional().default({}),
-  departments: z.array(z.enum(TRIAL_DEPARTMENTS)).min(1).max(4),
+  departments: z.array(z.enum(TRIAL_DEPARTMENTS)).min(1).max(TRIAL_DEPARTMENTS.length),
   problems: z.array(z.enum(PROBLEMS)).max(PROBLEMS.length).optional().default([]),
   problemText: text(1000),
   tools: z

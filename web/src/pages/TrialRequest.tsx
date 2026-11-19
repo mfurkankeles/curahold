@@ -698,13 +698,14 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
                 <legend className="field__label">
                   {t('trial.f.tools')}
                   <span className="trial__opt"> · {t('trial.optional')}</span>
+                  <span className="field__hint">{t('trial.hint.tools')}</span>
                 </legend>
                 <div className="trial__pair">
                   {[...TOOL_KINDS, 'other' as const].map((k) => (
-                    <Field key={k} id={`trial-tools-${k}`} label={t(`trial.tools.${k}` as MessageKey)} hint={k === 'crm' ? t('trial.hint.tools') : undefined}>
+                    <Field key={k} id={`trial-tools-${k}`} label={t(`trial.tools.${k}` as MessageKey)}>
                       <input
                         className="input"
-                        {...described(`trial-tools-${k}`, k === 'crm')}
+                        {...described(`trial-tools-${k}`, false)}
                         maxLength={200}
                         value={d.tools[k]}
                         onChange={(e) => set('tools', { ...d.tools, [k]: e.target.value })}
