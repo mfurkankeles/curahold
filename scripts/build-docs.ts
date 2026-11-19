@@ -231,7 +231,8 @@ function layout(lang: Lang, pages: Page[], page: Page | null, body: string, path
   const nav = SECTIONS.map((s) => {
     const items = pages.filter((p) => p.section === s);
     if (!items.length) return '';
-    return `<div class="nav__group"><div class="nav__label">${ui.sections[s]}</div>${items
+    const here = page && items.some((p) => p.slug === page.slug);
+    return `<div class="nav__group${here ? ' nav__group--current' : ''}"><div class="nav__label">${ui.sections[s]}</div>${items
       .map((p) => `<a href="/docs/${lang}/${p.slug}/"${page?.slug === p.slug ? ' aria-current="page"' : ''}>${esc(p.title)}</a>`)
       .join('')}</div>`;
   }).join('');

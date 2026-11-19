@@ -1,4 +1,4 @@
-// Search, copy buttons and the phone menu for the docs. No libraries.
+// Search, copy buttons, the phone menu and the menus that follow the reader. No libraries.
 (function () {
   // The page's settings are a JSON block, not a script: the app's content policy runs no inline script.
   var el = document.getElementById('docs-cfg');
@@ -114,9 +114,69 @@
       }, function () {});
     });
   });
+  // The left menu shows where the reader is. It opens where it was left on the last page, then
+  // glides until the page's own item sits about a third from its top; on a phone the drawer
+  // opens already there. Reduced motion: no glide, it is simply there.
+  var nav = document.getElementById('nav');
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NAV_KEY = 'docs_nav_scroll:' + cfg.lang;
+  var current = nav && nav.querySelector('a[aria-current="page"]');
+  var keepAt = function (box, item) {
+    var top = item.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+    return Math.max(0, Math.min(box.scrollHeight - box.clientHeight, top - box.clientHeight / 3 + item.offsetHeight / 2));
+  };
+  var showCurrent = function (glide) {
+    if (!nav || !current || nav.scrollHeight <= nav.clientHeight) return;
+    var to = keepAt(nav, current);
+    if (Math.abs(nav.scrollTop - to) < 2) return;
+    if (glide && !still) nav.scrollTo({ top: to, behavior: 'smooth' });
+    else nav.scrollTop = to;
+  };
+  if (nav) {
+    var before = null;
+    try { before = sessionStorage.getItem(NAV_KEY); } catch (e) { /* storage off */ }
+    if (before !== null) nav.scrollTop = Number(before) || 0;
+    // After the first paint, so the glide starts from where the menu was.
+    requestAnimationFrame(function () { requestAnimationFrame(function () { showCurrent(before !== null); }); });
+    window.addEventListener('pagehide', function () {
+      try { sessionStorage.setItem(NAV_KEY, String(Math.round(nav.scrollTop))); } catch (e) { /* storage off */ }
+    });
+  }
   var menu = document.querySelector('.top__menu');
   if (menu) menu.addEventListener('click', function () {
     var open = document.body.classList.toggle('nav-open');
     menu.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) showCurrent(false);
   });
+
+  // "On this page" follows the reader: the section being read is marked, and the list keeps it in view.
+  var toc = document.querySelector('.toc');
+  var marks = toc ? [].slice.call(toc.querySelectorAll('a[href^="#"]')) : [];
+  var heads = marks.map(function (a) { return document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); });
+  if (marks.length && heads.every(Boolean)) {
+    var shown = -1;
+    var follow = function () {
+      var line = Math.min(160, innerHeight / 4);
+      var at = 0;
+      heads.forEach(function (h, i) { if (h.getBoundingClientRect().top <= line) at = i; });
+      // At the very end of the page the last section is the one being read, however short.
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) at = heads.length - 1;
+      if (at === shown) return;
+      if (shown >= 0) marks[shown].removeAttribute('aria-current');
+      marks[at].setAttribute('aria-current', 'location');
+      shown = at;
+      if (toc.scrollHeight > toc.clientHeight) {
+        var r = marks[at].getBoundingClientRect(), b = toc.getBoundingClientRect();
+        if (r.top < b.top + 40 || r.bottom > b.bottom - 40) toc.scrollTo({ top: keepAt(toc, marks[at]), behavior: still ? 'auto' : 'smooth' });
+      }
+    };
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; follow(); });
+    }, { passive: true });
+    window.addEventListener('resize', follow);
+    follow();
+  }
 })();
