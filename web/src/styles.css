@@ -2536,11 +2536,12 @@ a.targetline:hover { border-color: var(--line-strong); }
 
 /* The button never sits on top of something to press: a page ends above it, and a bar that
    sticks to the bottom of the screen keeps its own buttons clear of the corner. */
-.shell[data-helper] .page { padding-bottom: 96px; }
+.shell[data-helper] { --fab-room: 96px; }
+.shell[data-helper] .page { padding-bottom: var(--fab-room); }
 .shell[data-helper] .savebar, .shell[data-helper] .stepbar { padding-inline-end: 140px; }
 
 @media (max-width: 860px) {
-  .shell[data-helper] .page { padding-bottom: 84px; }
+  .shell[data-helper] { --fab-room: 84px; }
   .shell[data-helper] .savebar, .shell[data-helper] .stepbar { padding-inline-end: 68px; }
   /* A phone keeps its main menu at the bottom: the button stands above it, without its name. */
   .cura__fab { inset-inline-end: 12px; bottom: 16px; padding: 4px; }

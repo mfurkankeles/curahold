@@ -14,6 +14,8 @@
 .ob-goals .ob-addrow .input { flex: 1 1 100%; }
 .ob-goals .ob-addrow .select { flex: 1; min-width: 0; }
 .ob-side { position: sticky; top: var(--s-4); }
+/* The side column sticks while the steps scroll: its last field stays clear of the helper's button (styles.css, --fab-room). */
+.shell[data-helper] .ob-side { padding-bottom: var(--fab-room); }
 .ob-wait { display: grid; gap: var(--s-4); }
 .ob-wait__head { height: 96px; border-radius: var(--r-m); }
 .ob-wait__body { height: 420px; border-radius: var(--r-m); }
