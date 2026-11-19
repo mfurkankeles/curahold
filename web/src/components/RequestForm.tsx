@@ -11,14 +11,27 @@ import { TaskFieldInput } from './TaskExtras';
 import { Dialog } from './ui';
 import { DateField } from './DateField';
 
-export function RequestForm({ board, onClose, onSent }: { board: Board; onClose: () => void; onSent: () => void }) {
+/** `from`: the sender's own task (a hand-off to another department): the request starts from it and is linked to it. */
+export function RequestForm({
+  board,
+  onClose,
+  onSent,
+  from,
+  sentText,
+}: {
+  board: Pick<Board, 'id' | 'form' | 'taskFields'>;
+  onClose: () => void;
+  onSent: () => void;
+  from?: { taskId: string; title: string; accountId: string | null; accountName: string | null };
+  sentText?: string;
+}) {
   const { t, locale, words } = useI18n();
   const { toast, people } = useStore();
   const form = board.form!;
   const asks = (k: string) => form.fields.includes(k);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(from?.title ?? '');
   const [description, setDescription] = useState('');
-  const [account, setAccount] = useState<{ id: string | null; name: string | null }>({ id: null, name: null });
+  const [account, setAccount] = useState<{ id: string | null; name: string | null }>({ id: from?.accountId ?? null, name: from?.accountName ?? null });
   const [due, setDue] = useState('');
   const [values, setValues] = useState<Record<string, TaskFieldValue>>({});
   const [busy, setBusy] = useState(false);
@@ -29,8 +42,8 @@ export function RequestForm({ board, onClose, onSent }: { board: Board; onClose:
     setBusy(true);
     setError('');
     try {
-      await post(`/boards/${board.id}/requests`, { title: title.trim(), description, accountId: account.id, dueDate: due || null, fields: values });
-      toast(t('boardForm.sent'));
+      await post(`/boards/${board.id}/requests`, { title: title.trim(), description, accountId: account.id, dueDate: due || null, fields: values, ...(from ? { fromTaskId: from.taskId } : {}) });
+      toast(sentText ?? t('boardForm.sent'));
       onSent();
       onClose();
     } catch (e) {

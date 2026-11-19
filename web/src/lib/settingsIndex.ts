@@ -8,7 +8,7 @@ import type { IconName } from '../components/icons';
 export type SettingsTab =
   | 'company' | 'billing' | 'currencies'
   | 'fields' | 'records' | 'health' | 'rhythm' | 'playbooks'
-  | 'people' | 'joining' | 'teams' | 'roles'
+  | 'people' | 'joining' | 'departments' | 'teams' | 'roles'
   | 'connections' | 'sources' | 'automations' | 'developer' | 'analytics' | 'portal'
   | 'signin' | 'sso' | 'support' | 'audit' | 'errors';
 
@@ -38,6 +38,7 @@ export const SETTINGS_TOPICS: SettingsTopic[] = [
   { key: 'playbooks', group: 'customers', icon: 'book', allowed: (can) => org(can) || accounts(can) },
   { key: 'people', group: 'team', icon: 'user', allowed: users },
   { key: 'joining', group: 'team', icon: 'userPlus', allowed: users },
+  { key: 'departments', group: 'team', icon: 'columns', allowed: (can) => org(can) || users(can) },
   { key: 'teams', group: 'team', icon: 'people', allowed: (can) => can('teams.manage') },
   { key: 'roles', group: 'team', icon: 'shield', allowed: (can) => org(can) || users(can) },
   { key: 'connections', group: 'connect', icon: 'plug', allowed: links },

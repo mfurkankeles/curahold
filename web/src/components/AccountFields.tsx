@@ -2,6 +2,8 @@
 // value, health…) and about the records under it (contacts, opportunities,
 // risks…). Add, rename, reorder, change choices — no code. Account fields
 // can also be worked out from records ("open pipeline").
+import { useDepartments } from '../lib/departments';
+import { deptToken } from '../../../shared/src/model';
 import { Icon } from './icons';
 import { useEffect, useState } from 'react';
 import { topicLabel } from '../lib/settingsIndex';
@@ -323,6 +325,7 @@ function useAccessText() {
 function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; onSave: (a: FieldAccess) => void; onClose: () => void }) {
   const { t, locale } = useI18n();
   const roles = useRoleList();
+  const depts = useDepartments();
   const [view, setView] = useState<string[]>(field.access?.view ?? []);
   const [edit, setEdit] = useState<string[]>(field.access?.edit ?? []);
   const always = (r: Role) => r.perms.includes('org.manage');
@@ -332,7 +335,8 @@ function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; on
 
   const summary = () => {
     if (!roles) return '';
-    const names = (keys: string[]) => roles.filter((r) => keys.includes(r.key) || always(r)).map((r) => r.name).join(', ');
+    const names = (keys: string[]) =>
+      [...roles.filter((r) => keys.includes(r.key) || always(r)).map((r) => r.name), ...depts.on.filter((d) => keys.includes(deptToken(d.key))).map((d) => depts.name(d.key))].join(', ');
     const v = view.length ? t('fields.access.sum.view', { roles: names(view) }) : t('fields.access.sum.viewAll');
     const e = field.rollup ? t('fields.access.sum.calc') : edit.length ? t('fields.access.sum.edit', { roles: names(edit) }) : t('fields.access.sum.editAll');
     return `${v} ${e}`;
@@ -377,6 +381,18 @@ function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; on
                 ))}
               </div>
             )}
+            {view.length > 0 && depts.on.length > 1 && (
+              <>
+                <span className="field__hint">{t('fields.access.departments')}</span>
+                <div className="chips-row">
+                  {depts.on.map((d) => (
+                    <button key={d.id} className="rolechip" data-dept={d.key} aria-pressed={view.includes(deptToken(d.key))} onClick={() => setView(toggle(view, deptToken(d.key)))}>
+                      {depts.name(d.key)}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
           {!field.rollup && (
             <section className="faccess__part">
@@ -397,6 +413,18 @@ function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; on
                     </button>
                   ))}
                 </div>
+              )}
+              {edit.length > 0 && depts.on.length > 1 && (
+                <>
+                  <span className="field__hint">{t('fields.access.departments')}</span>
+                  <div className="chips-row">
+                    {depts.on.map((d) => (
+                      <button key={d.id} className="rolechip" data-dept={d.key} aria-pressed={edit.includes(deptToken(d.key))} disabled={!!view.length && !view.includes(deptToken(d.key))} onClick={() => setEdit(toggle(edit, deptToken(d.key)))}>
+                        {depts.name(d.key)}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           )}

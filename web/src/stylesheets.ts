@@ -7,3 +7,4 @@ import './motion.css';
 import './work.css';
 import './consent.css';
 import './patterns.css';
+import './surfaces/departments.css';

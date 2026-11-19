@@ -3,7 +3,7 @@
 // history in plain words.
 import { useEffect, useRef, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
-import type { Board, ChecklistTemplate, Person, TaskDetail, TaskEvent, TaskField, TaskFieldValue, TaskLink } from '../../../shared/src/model';
+import type { Board, ChecklistTemplate, DepartmentKey, Person, TaskDetail, TaskEvent, TaskField, TaskFieldValue, TaskLink } from '../../../shared/src/model';
 import { ApiFailure, del, get, post, put } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { setQuery } from '../lib/router';
@@ -12,7 +12,10 @@ import { relativeTime, todayIso } from '../lib/time';
 import { hoursText } from '../pages/Reports';
 import { Icon } from './icons';
 import { useDismiss } from './Menus';
-import { Avatar, Avatars } from './ui';
+import { Avatar, Avatars, Dialog } from './ui';
+import { EmptyState } from './Empty';
+import { RequestForm } from './RequestForm';
+import { useDepartments } from '../lib/departments';
 import { formatDateTime, formatNumber } from '../lib/format';
 import { syncConflictText } from './syncNote';
 import { useUndo } from '../lib/undo';
@@ -115,6 +118,10 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
   const fail = useFail();
   const offer = useUndo();
   const [adding, setAdding] = useState(false);
+  const [handoff, setHandoff] = useState(false);
+  const depts = useDepartments();
+  const { boards } = useStore();
+  const myDept = depts.byId(boards.find((b) => b.id === task.boardId)?.departmentId)?.key;
   const [kind, setKind] = useState<(typeof LINK_KINDS)[number]>('blocked_by');
   const [q, setQ] = useState('');
   const [found, setFound] = useState<{ id: string; title: string; boardName: string }[]>([]);
@@ -150,11 +157,17 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
           {t('task.links')}
         </span>
         {editable && !adding && (
-          <button className="linkbtn" onClick={() => setAdding(true)}>
-            {t('task.links.add')}
-          </button>
+          <span className="u-display-flex u-gap-8">
+            <button className="linkbtn" onClick={() => setAdding(true)}>
+              {t('task.links.add')}
+            </button>
+            <button className="linkbtn" onClick={() => setHandoff(true)}>
+              {t('links.handoff')}
+            </button>
+          </span>
         )}
       </h3>
+      {handoff && <Handoff task={task} onClose={() => setHandoff(false)} onSent={reload} />}
       {links.length === 0 && !adding && <p className="muted small u-m-0">{t('task.links.none')}</p>}
       {groups.map((g) => (
         <div key={g.k} className="tlinks">
@@ -163,11 +176,19 @@ export function LinksSection({ task, editable, reload }: { task: TaskDetail; edi
             {g.list.map((l: TaskLink) => (
               <li key={l.taskId} className="tlinks__row" data-done={l.done || undefined}>
                 <Icon name={l.done ? 'checkCircle' : g.k === 'blocked_by' ? 'hourglass' : 'link'} size={15} />
-                <button className="linkbtn linkbtn--plain tlinks__title" onClick={() => setQuery('task', l.taskId)}>
-                  {l.title}
-                </button>
-                <span className="muted small hide-phone">{l.boardName}</span>
-                {editable && (
+                {l.boardId ? (
+                  <button className="linkbtn linkbtn--plain tlinks__title" onClick={() => setQuery('task', l.taskId)}>
+                    {l.title}
+                  </button>
+                ) : (
+                  // Behind another department's wall: what it is and where it stands, not the board.
+                  <span className="tlinks__title--far" title={t('links.farHint')}>
+                    {l.title}
+                  </span>
+                )}
+                {l.departmentKey && (!l.boardId || l.departmentKey !== myDept) && <span className="deptmark" data-dept={l.departmentKey}>{depts.name(l.departmentKey)}</span>}
+                {l.boardId ? <span className="muted small hide-phone">{l.boardName}</span> : <span className="tlinks__where">{l.done ? t('links.farDone') : l.statusName}</span>}
+                {editable && l.boardId && (
                   <button
                     className="btn btn--quiet btn--icon btn--small"
                     aria-label={t('common.remove')}
@@ -476,5 +497,57 @@ export function HistorySection({ task, board }: { task: TaskDetail; board: Board
         ))}
       </ol>
     </section>
+  );
+}
+
+type Desk = { id: string; name: string; departmentKey: DepartmentKey; form: NonNullable<Board['form']>; taskFields: Board['taskFields'] };
+
+/**
+ * "Ask another department": pick a board in another department that takes requests,
+ * fill its form; the request lands on that board and is linked to this task. The other
+ * department's board stays closed — this task shows the request's title and where it stands.
+ */
+function Handoff({ task, onClose, onSent }: { task: TaskDetail; onClose: () => void; onSent: () => Promise<unknown> | void }) {
+  const { t } = useI18n();
+  const depts = useDepartments();
+  const [desks, setDesks] = useState<Desk[] | null>(null);
+  const [desk, setDesk] = useState<Desk | null>(null);
+  useEffect(() => {
+    void get<{ desks: Desk[] }>('/departments/desks').then((r) => setDesks(r.desks), () => setDesks([]));
+  }, []);
+  if (desk)
+    return (
+      <RequestForm
+        board={desk}
+        from={{ taskId: task.id, title: task.title, accountId: task.accountId ?? null, accountName: task.accountName ?? null }}
+        sentText={t('links.handoff.sent', { dept: depts.name(desk.departmentKey) })}
+        onClose={onClose}
+        onSent={() => void onSent()}
+      />
+    );
+  return (
+    <Dialog title={t('links.handoff')} onClose={onClose}>
+      <p className="handoff__intro">{t('links.handoff.intro')}</p>
+      {!desks ? (
+        <div className="empty">{t('common.loading')}</div>
+      ) : desks.length === 0 ? (
+        <EmptyState compact icon="send" title={t('links.handoff.none')} body={t('links.handoff.noneBody')} />
+      ) : (
+        <ul className="handoff__list">
+          {desks.map((d) => (
+            <li key={d.id}>
+              <button className="pane-row" onClick={() => setDesk(d)}>
+                <span className="pane-row__main">
+                  <span className="pane-row__title">{d.form.title?.trim() || d.name}</span>
+                  <span className="pane-row__sub">
+                    <span className="deptmark" data-dept={d.departmentKey}>{depts.name(d.departmentKey)}</span>
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Dialog>
   );
 }

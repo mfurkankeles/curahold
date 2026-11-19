@@ -5,6 +5,7 @@ import { get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { navigate, setQuery } from '../lib/router';
 import { useStore } from '../lib/store';
+import { useDepartments } from '../lib/departments';
 import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
 
@@ -31,6 +32,8 @@ const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').repla
 export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
   const { t, words, locale } = useI18n();
   const { me, boards, people, can, canWrite } = useStore();
+  const depts = useDepartments();
+  const { canOpenBoards } = depts;
   const [q, setQ] = useState('');
   // The box answers each key at once; the list follows a moment later, so typing never waits for it.
   const shownQ = useDeferredValue(q);
@@ -69,7 +72,11 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
       { key: 'p:my', group: 'places', title: t('nav.myTasks'), go: go('/my') },
       { key: 'p:cal', group: 'places', title: t('nav.calendar'), go: go('/calendar') },
       { key: 'p:acc', group: 'places', title: words.other, go: go('/accounts') },
-      ...boards.map((b) => ({ key: `b:${b.id}`, group: 'places', title: b.name, sub: t('search.board'), go: go(`/b/${b.id}`) })),
+      // A board says which department it lives in.
+      ...boards.map((b) => {
+        const d = depts.byId(b.departmentId);
+        return { key: `b:${b.id}`, group: 'places', title: b.name, sub: d ? `${t('search.board')} · ${depts.name(d.key)}` : t('search.board'), go: go(`/b/${b.id}`) };
+      }),
       { key: 'p:inbox', group: 'places', title: t('nav.inbox'), go: go('/inbox') },
       { key: 'p:team', group: 'places', title: t('nav.team'), go: go('/team') },
       { key: 'p:timeline', group: 'places', title: t('nav.timeline'), go: go('/timeline') },
@@ -114,7 +121,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
               if (target) navigate(`/b/${target}?new=1`);
             },
           },
-          { key: 'a:board', group: 'actions', title: t('nav.newBoard'), go: () => (onClose(), onNewBoard()) },
+          ...(canOpenBoards ? [{ key: 'a:board', group: 'actions', title: t('nav.newBoard'), go: () => (onClose(), onNewBoard()) }] : []),
           ...always,
         ]
       : always;
@@ -161,7 +168,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
       ...mates,
     ];
     return [...remote, ...local];
-  }, [answer, shownQ, t, words, boards, people, isAdmin, can, canWrite, me, locale, onClose, onNewBoard, theme, setTheme]);
+  }, [answer, shownQ, t, words, boards, people, isAdmin, can, canWrite, me, locale, onClose, onNewBoard, theme, setTheme, depts, canOpenBoards]);
 
   // Back to the first result when the list changes (and on every key, in onChange: no second drawing per key).
   useEffect(() => setActive(0), [items.length]);

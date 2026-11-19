@@ -1,0 +1,63 @@
+/* Departments: the sidebar's department groups, the department mark used on links and
+   on the customer page, the customer page's "across departments" strip, and the settings screen. */
+
+[data-dept='inside_sales'] { --dept: var(--color-sky); --dept-wash: var(--color-sky-wash); }
+[data-dept='onboarding'] { --dept: var(--color-rose); --dept-wash: var(--color-rose-wash); }
+[data-dept='sales'] { --dept: var(--color-honey); --dept-wash: var(--color-honey-wash); }
+[data-dept='success'] { --dept: var(--color-sea); --dept-wash: var(--color-sea-wash); }
+[data-dept='product'] { --dept: var(--color-plum); --dept-wash: var(--color-plum-wash); }
+[data-dept='finance'] { --dept: var(--color-leaf); --dept-wash: var(--color-leaf-wash); }
+
+/* Sidebar: a small heading per department inside "Work". */
+.navdept { display: flex; align-items: center; gap: 8px; padding-block: 8px 4px; padding-inline: 12px 8px; font-size: var(--fs-2xs); font-weight: 600; color: var(--well-mute); letter-spacing: .02em; }
+.navdept::before { content: ''; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--dept, var(--calm)); flex: none; }
+.navdept > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navdept__lead { margin-inline-start: auto; font-weight: 500; flex: none; white-space: nowrap; }
+.navdept__empty { margin: 0; padding-block: 0 4px; padding-inline: 28px 8px; font-size: var(--fs-xs); color: var(--well-mute); line-height: var(--lh-body); }
+.sidebar__note { margin: 0; padding: 8px; font-size: var(--fs-xs); color: var(--well-mute); line-height: var(--lh-body); border: 1px dashed var(--well-3); border-radius: var(--r-m); }
+
+/* A department mark: dot + name. */
+.deptmark { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; border-radius: var(--r-pill); background: var(--dept-wash, var(--sunk)); color: var(--ink-2); font-size: var(--fs-xs); white-space: nowrap; }
+.deptmark::before { content: ''; width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--dept, var(--calm)); }
+
+/* A link to a task behind another department's wall: readable, not openable. */
+.tlinks__title--far { color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tlinks__where { font-size: var(--fs-xs); color: var(--ink-3); white-space: nowrap; }
+.handoff__list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.handoff__intro { margin-block: 0 12px; color: var(--ink-2); }
+
+/* The customer page: each department's open work here. */
+.account-page > .acc-depts { grid-column: 1 / -1; margin: 0; }
+.acc-depts { min-width: 0; margin-block: 12px 0; }
+.acc-depts__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.acc-depts__card { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-inline-start: 3px solid var(--dept, var(--calm)); border-radius: var(--r-m); min-width: 0; }
+.acc-depts__name { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); }
+.acc-depts__mine { margin-inline-start: auto; font-weight: 500; color: var(--brand-ink); }
+.acc-depts__open { font-size: var(--fs-l); font-weight: 600; color: var(--ink); }
+.acc-depts__sub { font-size: var(--fs-xs); color: var(--ink-3); }
+.acc-depts__sub[data-late] { color: var(--late-ink); }
+
+/* Settings → Departments. */
+.dept-sheet { border-inline-start: 3px solid var(--dept, var(--calm)); }
+.dept-sheet[data-off] { opacity: .8; }
+.dept-sheet__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-end: 12px; }
+.dept-sheet__people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.dept-sheet__band { margin-block-start: 16px; padding-block-start: 16px; border-block-start: 1px solid var(--line); }
+.dept-sheet__count { color: var(--ink-3); font-size: var(--fs-s); }
+.dept-moves { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
+.dept-moves th { text-align: start; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3); padding: 8px; border-block-end: 1px solid var(--line); }
+.dept-moves td { padding: 8px; border-block-end: 1px solid var(--line); vertical-align: middle; }
+.dept-moves .select { min-width: 160px; }
+.dept-suggest { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-block: 8px; border-block-end: 1px solid var(--line); }
+.dept-suggest__who { flex: 1; min-width: 0; }
+
+@media (max-width: 720px) {
+  .dept-sheet__people { grid-template-columns: minmax(0, 1fr); }
+  /* A phone keeps the six in one row that scrolls sideways. */
+  .acc-depts__row { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-block-end: 4px; }
+  .acc-depts__card { flex: 0 0 152px; padding: 8px 12px; scroll-snap-align: start; }
+  .acc-depts__open { font-size: var(--fs-m); }
+  .dept-moves thead { display: none; }
+  .dept-moves tr { display: grid; gap: 4px; padding-block: 8px; border-block-end: 1px solid var(--line); }
+  .dept-moves td { border: 0; padding: 0; }
+}

@@ -2,11 +2,12 @@
 // one button that adds anything. On a phone the same things sit in a bar at
 // the bottom, within reach of a thumb.
 import { FAVORITE_ICON } from './Favorites';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LOCALE_INFO, LOCALES, type Locale } from '../../../shared/src/i18n';
 import { ADMIN_PERMS, SETUP_STEPS } from '../../../shared/src/model';
 import { endPreview, get, post } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { useDepartments } from '../lib/departments';
 import { newsUnseen, type NewsAction } from '../lib/news';
 import { navigate, navigateFresh, useLocation } from '../lib/router';
 import { startStrips } from '../lib/strips';
@@ -83,6 +84,16 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const narrow = useNarrow();
   const [navOpen, setNavOpen] = useState(false);
   const [newBoard, setNewBoard] = useState(false);
+  const depts = useDepartments();
+  // Boards by department, in the departments' order: the ones this person is in (even while
+  // empty), and any other department whose board they see (shared with them, or administrators).
+  const boardGroups = useMemo(
+    () =>
+      depts.on
+        .map((d) => ({ id: d.id, key: d.key, lead: d.myRole === 'lead', boards: boards.filter((b) => b.departmentId === d.id) }))
+        .filter((g) => g.boards.length > 0 || depts.mine.some((m) => m.id === g.id)),
+    [depts.on, depts.mine, boards],
+  );
   const [searching, setSearching] = useState(false);
   // "#help" (the link in a help request's receipt) opens the person's requests.
   const [help, setHelp] = useState<null | 'new' | 'mine'>(() => (location.hash === '#help' ? 'mine' : null));
@@ -236,7 +247,8 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
     { key: 'task', label: t('create.task'), icon: 'checkCircle' as const, hint: 'N', onSelect: () => actions.quickAdd() },
     { key: 'account', label: t('create.account', { account: words.one }), icon: 'building' as const, onSelect: () => navigate('/accounts?new=1') },
     { key: 'touch', label: t('create.touch'), icon: 'phone' as const, onSelect: () => actions.logTouch() },
-    { key: 'board', label: t('create.board'), icon: 'board' as const, onSelect: () => actions.newBoard() },
+    // Boards are opened by administrators and department leads only.
+    ...(depts.canOpenBoards ? [{ key: 'board', label: t('create.board'), icon: 'board' as const, onSelect: () => actions.newBoard() }] : []),
   ];
   const signOut = async () => {
     await post('/auth/logout').catch(() => undefined);
@@ -448,18 +460,30 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
               'work',
               t('nav.work'),
               <>
-                {boards.length === 0 && canWrite && (
+                {boards.length === 0 && canWrite && depts.canOpenBoards && (
                   <button className="sidebar__firstboard" onClick={() => setNewBoard(true)}>
                     <Icon name="plus" size={16} />
                     {t('nav.firstBoard')}
                   </button>
                 )}
-                {boards.map((b) =>
-                  link(`/b/${b.id}`, b.name, path === `/b/${b.id}`, undefined, b.portal ? <Icon name="globe" size={14} className="navlink__portal" label={t('nav.boardShared')} /> : undefined, 'navlink navlink--board'),
-                )}
+                {boards.length === 0 && !depts.canOpenBoards && <p className="sidebar__note">{depts.mine.length ? t('nav.dept.noBoards') : t('nav.dept.none')}</p>}
+                {boardGroups.map((g) => (
+                  <Fragment key={g.id}>
+                    {boardGroups.length > 1 && (
+                      <div className="navdept" data-dept={g.key}>
+                        <span>{depts.name(g.key)}</span>
+                        {g.lead && <span className="navdept__lead">{t('nav.dept.lead')}</span>}
+                      </div>
+                    )}
+                    {g.boards.length === 0 && <p className="navdept__empty">{g.lead ? t('nav.dept.emptyLead') : t('nav.dept.empty')}</p>}
+                    {g.boards.map((b) =>
+                      link(`/b/${b.id}`, b.name, path === `/b/${b.id}`, undefined, b.portal ? <Icon name="globe" size={14} className="navlink__portal" label={t('nav.boardShared')} /> : undefined, 'navlink navlink--board'),
+                    )}
+                  </Fragment>
+                ))}
                 {link('/timeline', t('nav.timeline'), path === '/timeline', 'timeline')}
               </>,
-              canWrite ? (
+              canWrite && depts.canOpenBoards ? (
                 <button className="sidebar__add" onClick={() => setNewBoard(true)} aria-label={t('nav.newBoard')} title={t('nav.newBoard')}>
                   <Icon name="plus" size={16} />
                 </button>

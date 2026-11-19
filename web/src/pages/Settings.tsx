@@ -1,5 +1,6 @@
 // Company settings: the company itself, people (with devices and the
 // KVKK/GDPR tools), teams, roles and the activity log.
+import { DepartmentsTab } from '../components/Departments';
 import { Icon, PageIcon } from '../components/icons';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountWords, LOCALE_INFO, LOCALES, type Locale, type MessageKey } from '../../../shared/src/i18n';
@@ -211,6 +212,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   {current === 'portal' && <PortalSettingsTab />}
                   {current === 'people' && <PeopleTab />}
                   {current === 'joining' && <JoiningTab />}
+                  {current === 'departments' && <DepartmentsTab />}
                   {current === 'teams' && <TeamsTab />}
                   {current === 'roles' && <RolesTab />}
                   {current === 'sso' && <SsoSettings />}

@@ -1,6 +1,8 @@
 // Accounts: the customers the team looks after. A sortable list with the
 // company's own fields, bulk changes, import with undo, and a page per
 // account with its tasks.
+import { AccountDepartments } from '../components/AccountDepartments';
+import type { AccountDepartmentWork } from '../../../shared/src/model';
 import { useMoney } from '../lib/money';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useWindow } from '../lib/windowing';
@@ -789,7 +791,7 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
 }
 
 type AccountTab = 'overview' | 'timeline' | 'people' | 'records' | 'details';
-type AccountData = { account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[] };
+type AccountData = { account: Account & { links?: LinkInfo[] }; tasks: (Task & { boardName: string })[]; departments?: AccountDepartmentWork[] };
 // The page is drawn again after changes elsewhere in the app (a new key): it starts from what it last
 // showed for this customer and refreshes, instead of flashing back to a skeleton.
 const lastSeen = new Map<string, AccountData>();
@@ -1050,6 +1052,7 @@ export function AccountPage({ id }: { id: string }) {
       </header>
       <div className="page account-page">
         <AccountBand account={a} tasks={open} again={again} onAddTask={canWrite && boards.length > 0 ? startTask : undefined} />
+        <AccountDepartments work={data.departments} />
         <div className="account-page__main">
           <div className="tabs acc-tabs" role="tablist" aria-label={t('acc.sections')} onKeyDown={onTabKeys}>
             {tabs.map((k) => (

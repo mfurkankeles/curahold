@@ -11,7 +11,9 @@ import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, PeoplePicker } from './ui';
 import { BoardFormEditor, TaskFieldsEditor } from './BoardFields';
 import type { BoardForm, TaskField } from '../../../shared/src/model';
-import { pmColumns } from '../../../shared/src/templates';
+import { pick, pmColumns } from '../../../shared/src/templates';
+import { departmentTemplates } from '../../../shared/src/departments';
+import { useDepartments } from '../lib/departments';
 import { pmOn } from './Pm';
 
 const slug = (s: string, taken: Set<string>) => {
@@ -26,8 +28,15 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
   const { t, locale } = useI18n();
   const { me, teams, people, can, reloadBoards, toast } = useStore();
   const myTeams = teams.filter((tm) => tm.memberIds.includes(me.user.id) || tm.leadId === me.user.id || can('teams.manage') || can('boards.manage_all'));
+  const depts = useDepartments();
+  // A new board opens in a department this person may open boards in; an administrator may move one.
+  const [departmentId, setDepartmentId] = useState<string>(board?.departmentId ?? depts.openable[0]?.id ?? '');
+  const dept = depts.byId(departmentId);
+  const templates = dept ? departmentTemplates(dept.key) : [];
+  const [template, setTemplate] = useState('');
   const [name, setName] = useState(board?.name ?? '');
-  const [visibility, setVisibility] = useState<Visibility>(board?.visibility ?? (myTeams.length ? 'team' : 'private'));
+  // Inside a department, "everyone" means everyone in the department.
+  const [visibility, setVisibility] = useState<Visibility>(board?.visibility ?? 'org');
   const [teamId, setTeamId] = useState<string | null>(board?.teamId ?? myTeams[0]?.id ?? null);
   const [memberIds, setMemberIds] = useState<string[]>(board?.memberIds ?? []);
   const [columns, setColumns] = useState<Column[] | null>(board ? board.columns : null);
@@ -44,7 +53,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
     setError(null);
     try {
       const cleanFields = taskFields.filter((f) => (f.label.en ?? f.label.tr ?? '').trim()).map((f) => (f.type === 'select' ? f : { ...f, options: undefined }));
-      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(columns ? { columns } : {}), archiveDays: keepDays, ...(board ? { notify, taskFields: cleanFields, form: form ? { ...form, fields: form.fields.filter((k) => !k.startsWith('f:') || cleanFields.some((f) => `f:${f.key}` === k)) } : null } : {}) };
+      const payload = { name, visibility, teamId: visibility === 'team' ? teamId : null, memberIds, ...(departmentId ? { departmentId } : {}), ...(columns ? { columns } : {}), archiveDays: keepDays, ...(board ? { notify, taskFields: cleanFields, form: form ? { ...form, fields: form.fields.filter((k) => !k.startsWith('f:') || cleanFields.some((f) => `f:${f.key}` === k)) } : null } : {}) };
       if (board) {
         await patch(`/boards/${board.id}`, payload);
         await reloadBoards();
@@ -79,13 +88,50 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
           <button className="btn btn--quiet" onClick={onClose}>
             {t('common.cancel')}
           </button>
-          <button className="btn btn--primary" disabled={busy || !name.trim()} onClick={save}>
+          <button className="btn btn--primary" disabled={busy || !name.trim() || (!board && !depts.canOpenBoards)} onClick={save}>
             {board ? t('common.save') : t('common.create')}
           </button>
         </>
       }
     >
       {error && <div className="notice notice--error" role="alert">{error}</div>}
+      {!board && !depts.canOpenBoards && <div className="notice">{t('board.dept.leadOnly')}</div>}
+      {(!board || can('boards.manage_all')) && depts.openable.length > 0 && (
+        <label className="field">
+          <span className="field__label">{t('board.dept')}</span>
+          <select className="select" value={departmentId} onChange={(e) => { setDepartmentId(e.target.value); setTemplate(''); }}>
+            {(board ? depts.on : depts.openable).map((d) => (
+              <option key={d.id} value={d.id}>
+                {depts.name(d.key)}
+              </option>
+            ))}
+          </select>
+          <span className="field__hint">{board ? t('board.dept.moveHint') : t('board.dept.hint')}</span>
+        </label>
+      )}
+      {!board && templates.length > 0 && (
+        <label className="field">
+          <span className="field__label">{t('board.dept.template')}</span>
+          <select
+            className="select"
+            value={template}
+            onChange={(e) => {
+              const tpl = templates.find((x) => x.id === e.target.value);
+              setTemplate(e.target.value);
+              if (!tpl) return setColumns(null);
+              setColumns(tpl.columns.map((c) => ({ key: c.key, name: pick(c.name, locale), done: c.done })));
+              if (!name.trim()) setName(pick(tpl.name, locale));
+            }}
+          >
+            <option value="">{t('board.dept.blank')}</option>
+            {templates.map((x) => (
+              <option key={x.id} value={x.id}>
+                {pick(x.name, locale)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="field">
         <span className="field__label">{t('board.name')}</span>
         <input className="input" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
@@ -93,7 +139,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
       <label className="field">
         <span className="field__label">{t('board.visibility')}</span>
         <select className="select" value={visibility} onChange={(e) => setVisibility(e.target.value as Visibility)}>
-          {can('boards.manage_all') && <option value="org">{t('board.visibility.org')}</option>}
+          {(can('boards.manage_all') || dept?.myRole === 'lead' || board?.visibility === 'org') && <option value="org">{t('board.visibility.dept')}</option>}
           {myTeams.length > 0 && <option value="team">{t('board.visibility.team')}</option>}
           <option value="private">{t('board.visibility.private')}</option>
         </select>
@@ -114,7 +160,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         <span className="field__label">{t('board.members')}</span>
         <PeoplePicker label={t('board.members')} people={people.filter((p) => p.status !== 'deleted')} value={memberIds} max={200} onChange={setMemberIds} />
       </div>
-      {!board && (
+      {!board && !template && (
         <label className="checkbox">
           <input type="checkbox" checked={!!columns} onChange={(e) => setColumns(e.target.checked ? pmColumns(locale) : null)} />
           <span>
