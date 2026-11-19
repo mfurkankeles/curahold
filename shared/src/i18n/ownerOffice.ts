@@ -12,6 +12,7 @@ export const OFFICE_EN = {
   back: 'Back to the console',
   loading: 'Setting up the office…',
   noGl: 'This device cannot draw 3D, so the office is shown as a plan.',
+  noFigures: 'The 3D people could not be loaded here, so the office is shown as a plan.',
   still: 'Reduced motion is on: the office stays still and the camera cuts instead of gliding.',
   // top bar
   'bar.approvals': '{n} to approve',
@@ -133,6 +134,7 @@ export const OFFICE_TR: Record<OfficeKey, string> = {
   back: 'Konsola dön',
   loading: 'Ofis hazırlanıyor…',
   noGl: 'Bu cihaz 3B çizemiyor; ofisi plan olarak gösteriyoruz.',
+  noFigures: '3B kişiler burada yüklenemedi; ofisi plan olarak gösteriyoruz.',
   still: 'Hareket azaltma açık: ofis durağan, kamera kaymadan geçer.',
   'bar.approvals': '{n} onay bekliyor',
   'bar.alerts': '{n} uyarı',

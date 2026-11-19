@@ -121,7 +121,7 @@ export default function OwnerOffice({
   const [themePref, setTheme] = useTheme();
   const [night, setNight] = useState(() => document.documentElement.dataset.theme === 'dark');
   const [view, setView] = useState<'3d' | '2d'>(() => (localStorage.getItem(VIEW_KEY) === '2d' ? '2d' : '3d'));
-  const [gl, setGl] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [gl, setGl] = useState<'loading' | 'ready' | 'failed' | 'nofile'>('loading');
   const [mode, setMode] = useState<Mode>(open ? { kind: 'person', tab: 'chat' } : { kind: 'now' });
   const [selected, setSelected] = useState<string | null>(open);
   const [searching, setSearching] = useState(false);
@@ -182,7 +182,7 @@ export default function OwnerOffice({
     let gone = false;
     sc.init().then(
       () => !gone && setGl('ready'),
-      () => !gone && setGl('failed'),
+      (e: unknown) => !gone && setGl((e as Error | undefined)?.name === 'FiguresMissing' ? 'nofile' : 'failed'),
     );
     return () => {
       gone = true;
@@ -367,7 +367,7 @@ export default function OwnerOffice({
   const short = (n: number) =>
     n >= 1e6 ? formatNumber(n, locale, { compact: true }) : n >= 1e3 ? ow('num.k', { n: formatNumber(Math.round(n / 1000), locale) }) : formatNumber(n, locale);
   const share = u && u.budget > 0 ? Math.min(1, u.tokens / u.budget) : 0;
-  const glFailed = view === '3d' && gl === 'failed';
+  const glFailed = view === '3d' && (gl === 'failed' || gl === 'nofile');
   const show2d = view === '2d' || glFailed;
   const peopleIn = (r: Room) => onFloor.filter((s) => roomOfTeam(s.team)?.id === r.id);
 
@@ -790,7 +790,7 @@ export default function OwnerOffice({
             </div>
           </>
         )}
-        {glFailed ? <p className="of-note">{ow('noGl')}</p> : reduced && !show2d ? <p className="of-note">{ow('still')}</p> : null}
+        {glFailed ? <p className="of-note">{ow(gl === 'nofile' ? 'noFigures' : 'noGl')}</p> : reduced && !show2d ? <p className="of-note">{ow('still')}</p> : null}
         {showFps && stats ? (
           <dl className="of-fps" aria-label={ow('fps.title')}>
             <dt>{ow('fps.rate')}</dt>

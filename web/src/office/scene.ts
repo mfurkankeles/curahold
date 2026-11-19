@@ -268,7 +268,12 @@ export class OfficeScene {
 
   /** Load the people and build the room. Throws if WebGL or the file fails (the page shows the plan instead). */
   async init(): Promise<void> {
-    this.kit = await loadFigures(this.o.figuresUrl, this.renderer);
+    try {
+      this.kit = await loadFigures(this.o.figuresUrl, this.renderer);
+    } catch (e) {
+      // The people's file did not come (a host that cannot serve it, such as a preview): said apart from "no WebGL".
+      throw Object.assign(new Error('figures', { cause: e }), { name: 'FiguresMissing' });
+    }
     this.build();
     this.fitAll(true);
   }
