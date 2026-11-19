@@ -1,6 +1,6 @@
-// The sales site's only script: the product tour in the hero, the monthly /
-// yearly switch, the sign-in box (every company has its own address), and the
-// small things that follow the scroll. No tracking, no cookies.
+// The landing page's script: the product tour in the hero, the monthly /
+// yearly switch and the small things that follow the scroll (the header and the
+// sign-in box are site/chrome.js). No tracking, no cookies.
 (() => {
   const root = document.documentElement;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,31 +19,6 @@
   };
   buttons.forEach((b) => b.addEventListener('click', () => show(b.dataset.interval)));
 
-  // Sign in: type the company's address, go to its sign-in page.
-  const dialog = document.getElementById('signin');
-  document.querySelectorAll('[data-signin]').forEach((b) =>
-    b.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (dialog && typeof dialog.showModal === 'function') {
-        dialog.showModal();
-        dialog.querySelector('input')?.focus();
-      } else location.href = b.getAttribute('href') || '#';
-    }),
-  );
-  dialog?.querySelector('form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const raw = String(new FormData(e.target).get('slug') || '');
-    // "acme", "acme.curahold.com" or a pasted link all lead to the same place.
-    const slug = raw.trim().toLowerCase().replace(/^https?:\/\//, '').split(/[./]/)[0].replace(/[^a-z0-9-]/g, '');
-    if (slug) location.href = `https://${slug}.${dialog.dataset.base}/login`;
-  });
-  dialog?.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
-
-  // The header: a darker pane and a hairline once the page has scrolled.
-  const top = document.querySelector('.top');
-  const onScroll = () => top?.classList.toggle('is-scrolled', window.scrollY > 8);
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
 
   // The sky moves only while someone can see it: its rings stop in a background tab,
   // and once the first screen is behind, the sky steps back and the tools strip stops.

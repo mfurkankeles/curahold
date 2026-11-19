@@ -21,7 +21,7 @@
     try {
       var v = JSON.parse(localStorage.getItem('curahold_consent_v1') || 'null');
       return !!(v && v.analytics === true);
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -33,7 +33,7 @@
     if (cfg.endpoint && navigator.sendBeacon) {
       try {
         navigator.sendBeacon(cfg.endpoint, new Blob([JSON.stringify(data)], { type: 'application/json' }));
-      } catch (e) {
+      } catch {
         /* measurement never breaks the page */
       }
     }

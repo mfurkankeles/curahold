@@ -87,28 +87,6 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .btn svg { flex: none; width: 13px; height: 13px; }
 [dir='rtl'] .btn svg { transform: scaleX(-1); }
 
-/* --------------------------------------------------------------- header */
-.top { position: sticky; top: 0; z-index: 30; background: rgba(15, 12, 43, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, .08); transition: background-color .3s var(--ease), border-color .3s var(--ease); }
-/* Over the hero it is clear glass; once the page moves, the darker pane and its hairline come back. */
-.home .top:not(.is-scrolled) { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: transparent; }
-.top__in { display: flex; align-items: center; gap: 28px; min-height: 68px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; }
-.brand svg { width: 30px; height: 30px; }
-.brand svg rect { fill: rgba(255, 255, 255, .1); }
-.top__nav { display: flex; gap: 22px; }
-.top__nav a { position: relative; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 15px; white-space: nowrap; transition: color .18s var(--ease); }
-.top__nav a::after { content: ''; position: absolute; inset-inline: 0; bottom: -5px; height: 2px; border-radius: 2px; background: var(--iris-hi); transform: scaleX(0); transform-origin: var(--start); transition: transform .22s var(--ease); }
-.top__nav a:hover { color: var(--ink); }
-.top__nav a:hover::after { transform: scaleX(1); }
-.top__end { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; }
-.top__lang, .top__signin { color: var(--ink-2); font: 500 15px/1 var(--text); text-decoration: none; background: none; border: 0; cursor: pointer; padding: 8px 4px; white-space: nowrap; }
-.top__lang:hover, .top__signin:hover { color: var(--ink); }
-.lang { position: relative; }
-.lang > summary { list-style: none; }
-.lang > summary::-webkit-details-marker { display: none; }
-.lang__menu { position: absolute; inset-inline-end: 0; margin-top: 8px; min-width: 150px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(23, 19, 58, .18); padding: 6px; display: grid; z-index: 20; }
-.lang__menu a { color: var(--ink-2); text-decoration: none; font-size: 15px; padding: 8px 10px; border-radius: 8px; }
-.lang__menu a:hover { color: var(--ink); background: var(--mist); }
 
 /* ------------------------------------------------------------------ sky */
 /* The page is night from top to bottom. Its first screen is a little lighter, with
@@ -908,17 +886,6 @@ html:not(.js) .story__steps { padding-block: 0; }
 .cta p { margin: 0; color: #c9c5e8; font-size: 18px; line-height: 1.5; max-width: 54ch; text-wrap: pretty; }
 .cta__row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
 
-/* ----------------------------------------------------------------- footer */
-.foot { background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font-size: 15px; }
-.foot__in { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 32px; }
-.foot .brand { color: #fff; }
-.foot__story { margin: 14px 0 0; max-width: 40ch; }
-.foot h3 { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
-.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.foot a { color: #c9c5e8; text-decoration: none; transition: color .18s var(--ease); }
-.foot a:hover { color: #fff; text-decoration: underline; }
-.foot__base { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--night-2); display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; color: #9b96c4; }
-.foot__langs { display: flex; gap: 8px 16px; flex-wrap: wrap; }
 
 /* ------------------------------------------------------------------- blog */
 .blog-wrap { padding: 56px 0 96px; }
@@ -952,17 +919,6 @@ html:not(.js) .story__steps { padding-block: 0; }
 .post__tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ------------------------------------------------------- sign-in dialog */
-.signin { border: 1px solid rgba(255, 255, 255, .1); border-radius: 18px; padding: 28px; width: min(460px, 100% - 32px); background: var(--paper); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); color: var(--ink); }
-.signin::backdrop { background: rgba(8, 6, 24, .72); }
-.signin h2 { font-size: 26px; }
-.signin p { color: var(--ink-2); margin: 8px 0 16px; }
-.signin__field { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; direction: ltr; }
-.signin__field:focus-within { border-color: var(--iris); box-shadow: 0 0 0 3px var(--iris-wash); }
-.signin__field input { flex: 1; min-width: 0; border: 0; padding: 12px 6px 12px 14px; background: transparent; color: var(--ink); font: 500 16px var(--text); outline: none; }
-.signin__field span { padding: 0 14px 0 2px; color: var(--ink-3); white-space: nowrap; }
-.signin__row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-.signin__row .btn--ghost { margin-inline-start: auto; }
-.signin__none { margin: 18px 0 0; font-size: 14px; }
 
 /* ---- sections settle into place once; hidden only after the script takes ownership ---- */
 html.js [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: calc(var(--i, 0) * .06s); }
@@ -995,19 +951,10 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .tile--sec .tile__c { padding-bottom: 0; }
   .lg { min-height: 204px; width: min(100%, 420px); }
   .faq__in { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .foot__in { grid-template-columns: 1fr 1fr; }
   .post-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* Between a phone and a laptop the bar keeps the language, sign-in and the trial. */
-@media (max-width: 900px) {
-  .top__nav { display: none; }
 }
 @media (max-width: 720px) {
   body { font-size: 16px; }
-  .top__nav, .top__lang, .lang { display: none; }
-  .top__in { gap: 10px; }
-  .top__signin { white-space: nowrap; font-size: 14.5px; padding-inline: 2px; }
-  .top .btn { padding: 0 15px; }
   .hero__h { font-size: clamp(38px, 11.2vw, 52px); }
   :lang(ja) .hero__h, :lang(zh) .hero__h, :lang(ko) .hero__h { font-size: clamp(29px, 8vw, 42px); }
   :lang(ar) .hero__h, :lang(he) .hero__h, :lang(fa) .hero__h { font-size: clamp(34px, 10vw, 46px); }
@@ -1047,7 +994,6 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .cta { padding-bottom: 56px; }
   .cta__card { padding: 52px 22px; border-radius: 24px; }
   .cta__row .btn { flex: 1 1 auto; }
-  .foot__in { grid-template-columns: 1fr; }
   .blog-wrap { padding: 32px 0 64px; }
   .post-grid { margin-top: 28px; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .post-card { border-radius: 20px; }
@@ -1069,3 +1015,6 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .ss, .story__addr > span { transform: none; transition: opacity .35s var(--ease); }
   .story__bar i { transition: transform .35s var(--ease); }
 }
+
+/* The shared header is 56 px tall on phones and tablets (site/chrome.css): the hero still starts under its glass. */
+@media (max-width: 1099px) { .hero { margin-top: -57px; padding-top: 57px; } }
