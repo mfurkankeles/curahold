@@ -74,6 +74,12 @@ describe('a deleted customer', () => {
     const t = (await zeynep.post('/api/tasks', { boardId: board, title: 'Prepare the Velto renewal', accountId: velto })).json.task;
     sharedTask = t.id;
     await sys('update tasks set portal_shared = true, record_id = $2, portal_author_id = $3 where id = $1', [t.id, deal.id, mila]);
+    // The customer's team, its promises, its handover card and a request tied to a story.
+    const [dept] = await sys(`insert into departments (org_id, key) values ($1, 'success') on conflict (org_id, key) do update set key = excluded.key returning id`, [env.a.orgId]);
+    await sys(`insert into account_team (org_id, account_id, department_id, user_id) values ($1, $2, $3, $4)`, [env.a.orgId, velto, dept.id, env.a.ids.zeynep]);
+    await sys(`insert into promises (org_id, account_id, body, record_id, due_date) values ($1, $2, 'Send the renewal draft', $3, current_date + 7)`, [env.a.orgId, velto, deal.id]);
+    await sys(`insert into handovers (org_id, account_id, source_kind, source_id, source_name, summary) values ($1, $2, 'record', $3, 'Velto renewal', 'Won; kick-off next week.')`, [env.a.orgId, velto, deal.id]);
+    await sys(`insert into request_links (org_id, story_id, account_id, source, note) values ($1, $2, $3, 'account', 'Asked for a renewal reminder')`, [env.a.orgId, t.id, velto]);
     await env.settle();
 
     before = await picture();
@@ -90,7 +96,7 @@ describe('a deleted customer', () => {
     expect((await ada.get(`/api/accounts/${velto}`)).status).toBe(404);
     expect((await ada.get(`/api/records/${deal.id}`)).status).toBe(404);
     const during = await picture();
-    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs']) {
+    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links']) {
       expect(during[table].length, table).toBeLessThan(before[table].length);
     }
     expect((during.tasks as any[]).some((k) => k.account_id === velto || k.record_id === deal.id)).toBe(false);
@@ -474,7 +480,7 @@ describe('the schema stays restorable', () => {
     const blocking = await sys(`select child, parent from app_trash_fks() where rule in ('a', 'r') and parent = any ($1::text[])`, [reached.map((r) => r.t)]);
     expect(blocking).toEqual([]);
     // What the tests above put a row in: a table reached by a delete but never filled here would not be proven.
-    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
+    const proven = new Set(['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
     expect(reached.map((r) => r.t).filter((t) => !proven.has(t))).toEqual([]);
   });
 });

@@ -275,7 +275,8 @@ describe('everyday work', () => {
     const board = (await ada.get('/api/boards')).json.boards[0];
     const task = (await ada.post('/api/tasks', { boardId: board.id, title: 'Quiet test', assigneeIds: [env.a.ids.mert] })).json.task;
     const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', hour: '2-digit', hourCycle: 'h23' }).format(new Date()));
-    expect((await mert.patch('/api/me', { prefs: { quiet: { from: hour, to: (hour + 2) % 24 } } })).status).toBe(200);
+    // Comments go to the morning summary by default (batch); a person who wants each one on its own still has it held in quiet hours.
+    expect((await mert.patch('/api/me', { prefs: { batch: false, quiet: { from: hour, to: (hour + 2) % 24 } } })).status).toBe(200);
     await ada.post(`/api/tasks/${task.id}/comments`, { body: 'Ping during quiet hours' });
     await env.settle();
     const held = await env.db.system((q) => q.query(`select state, not_before from notifications where task_id = $1 and user_id = $2 and kind = 'comment'`, [task.id, env.a.ids.mert]));
