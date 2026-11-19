@@ -9,6 +9,7 @@ summary: Şirket adresin, giriş, ilk kurulum ve cihaz sınırı.
 Curahold, müşteri başarısı ve hesap yönetimi ekiplerinin müşterilerini, paydaşlarını ve günlük işlerini tek yerde yürüttüğü bir çalışma alanıdır. Bu sayfa ilk on beş dakikanı anlatır.
 
 ![Curahold ana sayfası: Başlarken kartı, müşteri rakamları ve ekibin yükü](img/home.webp)
+
 ## Denemeye başlamak
 
 Web sitesindeki **Ücretsiz dene** şirketi hemen açmaz, deneme ister: kısa bir form, iş e-postana bir kod ve genelde bir iş günü içinde cevabımız. Onaylanınca şirketin açılır ve sana giriş bağlantısı gelir; süre, koltuklar ve hatırlatmalar için [Planlar ve ödeme](/docs/tr/billing/) sayfasına bak.
