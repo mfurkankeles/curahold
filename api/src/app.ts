@@ -38,6 +38,7 @@ import { calendarRoutes } from './routes/calendar';
 import { replayRoutes } from './routes/replay';
 import { deskRoutes } from './routes/desk';
 import { agentRoutes, officeRoutes } from './routes/office';
+import { teamRoutes } from './routes/team';
 import { ownerRoutes } from './routes/owner';
 import { connectCallback_, connectionRoutes } from './routes/connections';
 import { hookRoutes } from './routes/hooks';
@@ -228,6 +229,7 @@ export function createApp(deps: Deps) {
   // The owner console's own sections and the AI team's two doors (the owner's session; a seat's key).
   app.route('/api/desk/owner', ownerRoutes);
   app.route('/api/desk/office', officeRoutes);
+  app.route('/api/desk/team', teamRoutes);
   app.route('/api/agent', agentRoutes);
   app.route('/api/desk', deskRoutes);
   // The public docs' and sales site's "Ask": no company, docs only (routes/assist.ts).

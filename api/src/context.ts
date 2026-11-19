@@ -80,6 +80,8 @@ export interface Config {
   limitScale?: number;
   /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */
   assistant?: import('./assistant/cost').AssistantConfig;
+  /** The AI team's models and monthly cap (api/src/team/config.ts); unset: the defaults there. */
+  team?: import('./team/config').TeamConfig;
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */

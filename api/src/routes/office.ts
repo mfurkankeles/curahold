@@ -41,6 +41,7 @@ import {
   writeMinutes,
 } from '../lib/office';
 import { body, uuid } from '../lib/validate';
+import { GateRefusal, recordRefusal } from '../team/monitor';
 import { ownerOnly } from './desk';
 
 const seatId = z.string().regex(/^[a-z][a-z0-9-]{1,40}$/);
@@ -252,8 +253,11 @@ const agentAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     if (paused && write) fail('forbidden', { reason: 'paused' }, { reason: 'paused' });
     await next();
     status = c.res.status;
+    // A refusal at the approval gate is recorded after its transaction rolled back (team/monitor.ts).
+    if (c.error instanceof GateRefusal) await recordRefusal(deps, c.error);
   } catch (e) {
     status = (e as { status?: number }).status ?? 500;
+    if (e instanceof GateRefusal) await recordRefusal(deps, e);
     throw e;
   } finally {
     await deps.db.system(async (q) => {
@@ -303,7 +307,7 @@ agentRoutes.delete('/memory/:key', async (c) => {
 /** A proposal for the owner. It waits in his queue; nothing in it runs before his yes. */
 agentRoutes.post('/approvals', async (c) => {
   const input = await body(c, proposal);
-  const r = await c.get('deps').db.system((q) => propose(q, me(c).seat, input as Parameters<typeof propose>[2]));
+  const r = await c.get('deps').db.system((q) => propose(q, me(c).seat, input as Parameters<typeof propose>[2], c.get('deps')));
   await c.get('deps').live?.platform?.().catch(() => undefined);
   return c.json(r, 201);
 });
@@ -359,7 +363,7 @@ agentRoutes.get('/meetings/:id', async (c) => {
 agentRoutes.put('/meetings/:id/minutes', async (c) => {
   if (me(c).tier !== 'note-taker') fail('forbidden');
   const input = await body(c, minutes);
-  return c.json(await c.get('deps').db.system((q) => writeMinutes(q, idOf(c), me(c).seat, input as Parameters<typeof writeMinutes>[3])));
+  return c.json(await c.get('deps').db.system((q) => writeMinutes(q, idOf(c), me(c).seat, input as Parameters<typeof writeMinutes>[3], c.get('deps'))));
 });
 
 agentRoutes.post('/usage', async (c) => {

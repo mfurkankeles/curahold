@@ -20,6 +20,7 @@ import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 import { attachLive } from './live/node';
 import { assistantConfigFrom } from './assistant/cost';
+import { teamConfigFrom } from './team/config';
 
 export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant' }) {
   const pg = await createMemoryPg();
@@ -60,6 +61,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     staffKey: opts.staffKey,
     // The assistant: a model only when a key is in the environment; otherwise the docs search answers.
     assistant: assistantConfigFrom(process.env),
+    team: teamConfigFrom(process.env),
   };
   const storage = new MemoryStorage();
   const docsDir = join(import.meta.dirname, '..', '..', 'dist', 'web', 'docs');

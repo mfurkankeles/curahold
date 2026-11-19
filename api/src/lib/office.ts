@@ -7,6 +7,7 @@ import type { Q, Row } from '../db';
 import type { Approval, ApprovalProposal, AuditLine, LogEntry, LogKind, Meeting, MeetingLine, MeetingMinutes, Pause, Seat } from '../../../shared/src/office';
 import { weekOf } from '../../../shared/src/office';
 import { fail } from './errors';
+import { guardProposal } from '../team/gate';
 
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
 const num = (v: unknown) => Number(v) || 0;
@@ -185,18 +186,21 @@ const approvalOf = (r: Row): Approval => ({
   result: r.result ?? null,
   resultAt: iso(r.result_at),
   createdAt: isoAt(r.created_at),
+  checks: r.checks ?? null,
 });
 
 /** Text that must never reach the owner's queue (or the log): keys, tokens, private keys. */
 const SECRET = /(-----BEGIN [A-Z ]*PRIVATE KEY-----|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}|\bxox[abpr]-[A-Za-z0-9-]{10,}|\bag_[a-z0-9-]+_[A-Za-z0-9_-]{20,})/;
 export const hasSecret = (...texts: (string | null | undefined)[]) => texts.some((t) => !!t && SECRET.test(t));
 
-export async function propose(q: Q, seat: string, p: ApprovalProposal): Promise<{ id: string; ref: string }> {
+export async function propose(q: Q, seat: string, p: ApprovalProposal, deps?: Pick<Deps, 'config'>): Promise<{ id: string; ref: string }> {
   if (hasSecret(p.title, p.summary, p.why, p.whatChanges, p.riskNote, p.undoNote, JSON.stringify(p.action))) fail('validation', { fields: 'secret' }, { fields: ['summary'], reason: 'secret' });
+  // The approval gate (team/gate.ts): kind on the seat's card, review for outside kinds, output checks.
+  const checks = await guardProposal(deps ?? { config: { baseDomain: '' } as Deps['config'] }, q, seat, p);
   const [r] = await q.query<{ id: string; ref: string }>(
-    `insert into approvals (title, summary, why, what_changes, proposed_by, discussed_with, risk, risk_note, cost_usd, usage_tokens, reversible, undo_note, link, meeting, priority, action)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) returning id, ref`,
-    [p.title, p.summary, p.why, p.whatChanges, seat, p.discussedWith, p.risk, p.riskNote ?? null, p.costUsd ?? null, p.usageTokens ?? null, p.reversible, p.undoNote ?? null, p.link ?? null, p.meeting ?? null, p.priority, JSON.stringify(p.action)],
+    `insert into approvals (title, summary, why, what_changes, proposed_by, discussed_with, risk, risk_note, cost_usd, usage_tokens, reversible, undo_note, link, meeting, priority, action, checks)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) returning id, ref`,
+    [p.title, p.summary, p.why, p.whatChanges, seat, p.discussedWith, p.risk, p.riskNote ?? null, p.costUsd ?? null, p.usageTokens ?? null, p.reversible, p.undoNote ?? null, p.link ?? null, p.meeting ?? null, p.priority, JSON.stringify(p.action), checks.length ? JSON.stringify(checks) : null],
   );
   await q.query(`insert into company_log (seat, kind, body, ref) values ($1, 'decision', $2, $3)`, [seat, `Proposed for approval: ${p.title}`, r.ref]);
   return r;
@@ -397,7 +401,7 @@ export async function addMeetingLine(q: Q, id: string, speaker: string, text: st
 }
 
 /** The note taker's minutes end the meeting; each proposed decision becomes an approval card (nothing runs before his yes). */
-export async function writeMinutes(q: Q, id: string, by: string, minutes: MeetingMinutes) {
+export async function writeMinutes(q: Q, id: string, by: string, minutes: MeetingMinutes, deps?: Pick<Deps, 'config'>) {
   if (hasSecret(JSON.stringify(minutes))) fail('validation', { fields: 'secret' }, { fields: ['minutes'], reason: 'secret' });
   const [m] = await q.query(`update meetings set minutes = $2, status = 'ended', ended_at = coalesce(ended_at, now()) where id = $1 returning *`, [id, JSON.stringify(minutes)]);
   if (!m) fail('not_found');
@@ -416,7 +420,7 @@ export async function writeMinutes(q: Q, id: string, by: string, minutes: Meetin
         meeting: id,
         priority: 'normal',
         action: { kind: 'none' },
-      }),
+      }, deps),
     );
   }
   await q.query(`insert into company_log (seat, kind, body, ref) values ($1, 'report', $2, $3)`, [by, `Minutes: ${m.title} (${minutes.decisions.length} proposals, ${minutes.actions.length} actions)`, `meeting:${id}`]);

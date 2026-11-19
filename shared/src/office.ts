@@ -107,6 +107,8 @@ export interface Approval extends Required<Omit<ApprovalProposal, 'action'>> {
   result: string | null;
   resultAt: string | null;
   createdAt: string;
+  /** Output-check findings (shared/src/team/checks.ts) shown on the card. */
+  checks?: { rule: string; severity: 'block' | 'flag'; sample: string }[] | null;
 }
 
 export const LOG_KINDS = ['note', 'report', 'decision', 'handoff', 'alert', 'thread'] as const;
