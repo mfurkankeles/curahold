@@ -1,5 +1,6 @@
 // Company administration: settings, roles, teams, people, devices, the
 // activity log and the personal-data tools (KVKK/GDPR export and erasure).
+import { seatGuard } from '../lib/trial';
 import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -440,6 +441,7 @@ adminRoutes.post('/users', async (c) => {
     const exists = await q.query('select 1 from users where email = $1', [input.email]);
     if (exists.length) fail('email_taken');
     await assertMayAssign(q, auth.perms, input.roleId);
+    await seatGuard(q, org.id, 1, input.seat);
     const [u] = await q.query(
       `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
       [org.id, input.email, input.name, input.roleId, input.seat],
@@ -487,6 +489,8 @@ adminRoutes.patch('/users/:id', async (c) => {
       u.role_key === 'admin' &&
       ((input.roleId && input.roleId !== u.role_id) || input.status === 'disabled' || input.seat === 'viewer');
     if (losesAdmin) await assertAdminRemains(q, id);
+    // A viewer made a full member, or a disabled one brought back, takes a seat of a trial's cap.
+    if ((input.seat === 'full' && u.seat !== 'full') || (u.seat === 'full' && u.status === 'disabled' && input.status === 'active')) await seatGuard(q, org.id, 1);
     const status = input.status ?? (u.status === 'invited' ? 'invited' : u.status);
     await q.query(
       `update users set name = coalesce($2, name), role_id = coalesce($3, role_id), seat = coalesce($4, seat), status = $5
@@ -710,6 +714,7 @@ adminRoutes.post('/join-requests/:id/approve', async (c) => {
       ? await q.query<{ id: string }>('select id from roles where id = $1', [input.roleId])
       : await q.query<{ id: string }>(`select id from roles where key = 'member' and system`);
     if (!role) fail('validation', { fields: 'roleId' }, { fields: ['roleId'] });
+    await seatGuard(q, org.id, 1, input.seat ?? 'full');
     const [u] = await q.query<{ id: string }>(
       `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
       [org.id, r.email, r.name, role.id, input.seat ?? 'full'],

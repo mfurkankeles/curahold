@@ -32,6 +32,7 @@ export interface Env {
   MAX_DEVICES?: string;
   SECRETS_KEY?: string;
   SIGNUP_ENABLED?: string;
+  SIGNUP_MODE?: string;
   SLACK_CLIENT_ID?: string;
   SLACK_CLIENT_SECRET?: string;
   SLACK_SIGNING_SECRET?: string;
@@ -132,6 +133,7 @@ export function configFromEnv(env: Env): Config {
     maxDevices: Number(env.MAX_DEVICES) || 2,
     sessionDays: 30,
     signupEnabled: env.SIGNUP_ENABLED !== '0' && !env.SINGLE_TENANT_SLUG,
+    signupMode: env.SIGNUP_MODE === 'instant' ? 'instant' : 'request',
     secretsKey: env.SECRETS_KEY || undefined,
     portalDomain,
     billing: billingFromEnv(env),

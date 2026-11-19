@@ -35,6 +35,8 @@ signupRoutes.use('*', async (c, next) => {
   const cfg = c.get('deps').config;
   if (!cfg.signupEnabled || cfg.singleTenantSlug) fail('not_found');
   if (c.req.method !== 'GET' && !c.req.header('x-curahold-device')) fail('forbidden');
+  // Trials start from the request form (routes/trial.ts) unless the old instant path is switched back on.
+  if ((cfg.signupMode ?? 'request') === 'request' && /\/(start|complete)$/.test(c.req.path)) fail('not_found');
   await next();
 });
 

@@ -1,6 +1,7 @@
 // The setup wizard's server side: progress that survives a reload, people
 // and team suggestions gathered from everything connected so far, adding
 // them in one go, and sending the invitations at the end.
+import { seatGuard } from '../lib/trial';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { SETUP_STEPS, type SetupStep } from '../../../shared/src/model';
@@ -137,6 +138,7 @@ setupRoutes.post('/people', async (c) => {
       let id = userIds.get(p.email);
       if (!id) {
         const seat = p.role === 'viewer' ? 'viewer' : 'full';
+        await seatGuard(q, org.id, 1, seat);
         const [u] = await q.query<{ id: string }>(
           `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
           [org.id, p.email, p.name, roleId[p.role], seat],

@@ -76,7 +76,7 @@ export async function readPlatformTicket(authSecret: string, raw: string | null 
  * request and its answers (from the company, from the desk, by email through
  * the desk's mail door, or with a staff key). Signing in to the desk is not one.
  */
-const CONSOLE_WRITES = /^\/api\/(signup\/|billing(\/|$)|inbound\/billing\/|help(\/|$)|support\/requests\/|desk\/(?!sign-|live\/))/;
+const CONSOLE_WRITES = /^\/api\/(signup\/|trial\/|billing(\/|$)|inbound\/billing\/|help(\/|$)|support\/requests\/|desk\/(?!sign-|live\/))/;
 export const touchesConsole = (method: string, path: string): boolean => method !== 'GET' && method !== 'HEAD' && CONSOLE_WRITES.test(path);
 
 export interface PlatformRoomOptions {

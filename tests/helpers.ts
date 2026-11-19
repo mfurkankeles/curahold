@@ -25,6 +25,8 @@ export function testConfig(over: Partial<Config> = {}): Config {
     sessionDays: 30,
     oauth: { google: { clientId: 'google-client', clientSecret: 'google-secret' } },
     signupEnabled: true,
+    // The earlier instant sign-up, which most tests build companies with; tests/trial.test.ts uses 'request'.
+    signupMode: 'instant',
     connectors: {},
     // Request limits off: tests run requests at machine speed. tests/ratelimit.test.ts turns them on.
     limitScale: 0,

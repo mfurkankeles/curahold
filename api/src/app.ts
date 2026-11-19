@@ -43,6 +43,8 @@ import { connectCallback_, connectionRoutes } from './routes/connections';
 import { hookRoutes } from './routes/hooks';
 import { setupRoutes } from './routes/setup';
 import { signupRoutes } from './routes/signup';
+import { trialRoutes } from './routes/trial';
+import { agreementRoutes } from './routes/agreements';
 import { authRoutes, oauthCallback, SESSION_COOKIE } from './routes/auth';
 import { ssoAuthRoutes, ssoAdminRoutes } from './routes/sso';
 import { scimRoutes } from './routes/scim';
@@ -219,6 +221,8 @@ export function createApp(deps: Deps) {
   app.get('/api/connect/callback', connectCallback_);
   app.route('/api/hooks', hookRoutes);
   app.route('/api/signup', signupRoutes);
+  // The free-trial request form (decided by the owner in the console).
+  app.route('/api/trial', trialRoutes);
   // Curahold's own support desk and the door for incoming mail (staff key / mail key).
   // The owner console's own sections and the AI team's two doors (the owner's session; a seat's key).
   app.route('/api/desk/owner', ownerRoutes);
@@ -408,6 +412,7 @@ export function createApp(deps: Deps) {
     }
   });
   app.route('/api', meRoutes);
+  app.route('/api', agreementRoutes);
   app.route('/api', identityRoutes);
   app.route('/api', liveRoutes);
   app.route('/api', metricsRoutes);

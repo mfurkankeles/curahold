@@ -32,6 +32,12 @@ export interface Config {
   oauth: Partial<Record<ProviderId, ProviderConfig>>;
   /** Company sign-up on the central address. Off for a self-hosted install. */
   signupEnabled: boolean;
+  /**
+   * What "Try it free" on the central address does: 'request' (default) — the trial request
+   * form, decided by the owner in the console; 'instant' — the earlier self-serve sign-up
+   * that opens a company at once (kept as a hidden switch, SIGNUP_MODE=instant).
+   */
+  signupMode?: 'request' | 'instant';
   /** Seals connector credentials at rest; falls back to authSecret. */
   secretsKey?: string;
   connectors: ConnectorConfig;

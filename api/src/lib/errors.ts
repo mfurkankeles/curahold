@@ -71,6 +71,9 @@ export type ErrorCode =
   | 'link_loop'
   | 'form_off'
   | 'billing_locked'
+  | 'seat_cap_reached'
+  | 'terms_required'
+  | 'free_mail_note'
   | 'repeat_mismatch'
   | 'plan_required'
   | 'billing_off'
@@ -160,6 +163,9 @@ const STATUS: Record<ErrorCode, number> = {
   plan_no_date: 400,
   // 402 Payment Required: a plan is needed for this.
   billing_locked: 402,
+  seat_cap_reached: 409,
+  terms_required: 403,
+  free_mail_note: 400,
   repeat_mismatch: 422,
   plan_required: 402,
   billing_off: 400,

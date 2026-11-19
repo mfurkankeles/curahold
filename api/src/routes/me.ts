@@ -29,7 +29,11 @@ meRoutes.get('/me', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const data = await run(c, async (q) => {
-    const [o] = await q.query('select plan from orgs where id = $1', [org.id]);
+    // The trial's seat cap, and whether the administrator still has the terms to accept (lib/trial.ts).
+    const [o] = await q.query(
+      'select plan, trial_seat_cap, exists (select 1 from org_agreements a where a.org_id = orgs.id and a.accepted_at is null) as agreements_due from orgs where id = $1',
+      [org.id],
+    );
     const [u] = await q.query('select onboarded_at, prefs from users where id = $1', [auth.userId]);
     const teams = await q.query<{ team_id: string }>('select team_id from team_members where user_id = $1', [auth.userId]);
     // Support access this person has open, so the app can say so (and offer to close it).
@@ -40,6 +44,8 @@ meRoutes.get('/me', async (c) => {
     );
     return {
       plan: o?.plan ?? 'trial',
+      seatCap: (o?.trial_seat_cap as number | null) ?? null,
+      agreementsDue: !!o?.agreements_due,
       teamIds: teams.map((t) => t.team_id),
       onboardedAt: iso(u?.onboarded_at),
       prefs: prefsOf(u?.prefs),
@@ -70,6 +76,8 @@ meRoutes.get('/me', async (c) => {
       timezone: org.timezone,
       terms: org.terms,
       plan: data.plan,
+      seatCap: data.seatCap,
+      agreementsDue: data.agreementsDue,
       maxDevices: maxDevices(c),
       currency: org.currency,
       template: org.template,

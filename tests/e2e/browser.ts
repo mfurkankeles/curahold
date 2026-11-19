@@ -20,7 +20,7 @@ export const STAFF_KEY = 'e2e-staff-key-e2e-staff-key-0001';
 export const DESK_STAFF = 'deniz.aksoy@curahold.test';
 
 export async function startStack(port = 8899) {
-  const local = await startLocal({ port, publicPort: port, serveStatic: true, quiet: true, staffKey: STAFF_KEY, supportStaff: [DESK_STAFF], locale: 'tr' });
+  const local = await startLocal({ port, publicPort: port, serveStatic: true, quiet: true, staffKey: STAFF_KEY, supportStaff: [DESK_STAFF], locale: 'tr', signupMode: process.env.SIGNUP_MODE === 'request' ? 'request' : 'instant' });
   const executablePath = CHROME_CANDIDATES.find((p) => existsSync(p));
   if (!executablePath) throw new Error('Chrome not found; set CHROME_PATH');
   const browser = await puppeteer.launch({

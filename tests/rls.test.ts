@@ -50,6 +50,7 @@ const NO_ORG_ID: Record<string, string> = {
   agent_audit: "Curahold's own owner console / AI team (0110), not a company's (no privileges for the request roles)",
   agent_pauses: "Curahold's own owner console / AI team (0110), not a company's (no privileges for the request roles)",
   site_daily: "Curahold's own owner console / AI team (0110), not a company's (no privileges for the request roles)",
+  trial_codes: "the public trial form's one-time e-mail codes (0100), before any company exists (no privileges for the request roles)",
   oauth_clients: 'registered apps, global by design (no privileges for the request roles)',
   trash_rows: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   trash_links: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',

@@ -20,7 +20,7 @@ import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
 import { attachLive } from './live/node';
 
-export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr' }) {
+export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant' }) {
   const pg = await createMemoryPg();
   const db = pgliteDb(pg);
   await migrate(db, loadMigrations());
@@ -49,6 +49,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     sessionDays: 30,
     oauth: {},
     signupEnabled: true,
+    // The trial request form unless asked for the earlier instant sign-up (SIGNUP_MODE=instant).
+    signupMode: opts.signupMode ?? (process.env.SIGNUP_MODE === 'instant' ? 'instant' : 'request'),
     connectors: { demoCrm: true },
     // Who may sign in to the support desk (desk.localhost); the code is shown on the screen here.
     support: { email: 'support@curahold.localhost', staff: opts.supportStaff ?? ['desk@curahold.localhost'] },

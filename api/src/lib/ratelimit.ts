@@ -120,6 +120,7 @@ const SIGNIN = [
   /^\/api\/auth\/(start|verify|device)$/,
   /^\/api\/join$/,
   /^\/api\/signup\/(start|verify|complete)$/,
+  /^\/api\/trial\/(code|verify|submit|unsubscribe)$/,
   /^\/api\/desk\/sign-in(\/verify)?$/,
   /^\/api\/support\/enter(-link)?$/,
   /^\/api\/sso\/[^/]+\/(start|saml\/acs|oidc\/callback)$/,

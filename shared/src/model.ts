@@ -206,6 +206,10 @@ export interface Org {
   timezone: string;
   terms: Terms;
   plan: string;
+  /** Full seats a trial company may use (null: no cap — a paying company, or no trial limit). */
+  seatCap?: number | null;
+  /** The administrator still has the terms and DPA to accept (routes/agreements.ts). */
+  agreementsDue?: boolean;
   maxDevices: number;
   currency: string;
   template: string;

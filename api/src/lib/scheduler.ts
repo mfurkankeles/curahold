@@ -14,6 +14,7 @@ import { startRenewals } from './playbooks';
 import { syncSeats } from './billing';
 import { emptyTrash } from './trash';
 import { snapshotActiveSprints } from './burndown';
+import { sendTrialReminders } from './trial';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 
 const DIGEST_ITEMS = 8;
@@ -149,10 +150,15 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   }
   // Renewals coming close enough start by themselves, early in the working day.
   if (now.getUTCHours() === 5) await startRenewals(deps, now).catch((e) => console.error('[curahold] starting renewals failed', e));
+  // Trials: the 14/7/1-day reminders and the note that a finished trial is read-only (nothing is deleted).
+  const trialMails = await sendTrialReminders(deps, now).catch((e) => {
+    console.error('[curahold] trial reminders failed', e);
+    return 0;
+  });
   // Subscriptions follow the full seats in use (billing on only).
   const seats = await syncSeats(deps).catch((e) => {
     console.error('[curahold] seat sync failed', e);
     return 0;
   });
-  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats };
+  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats, trialMails };
 }
