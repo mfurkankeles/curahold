@@ -4,6 +4,7 @@
 //                    grant / revoke support access, set the company policy.
 //   supportEntry   — before sign-in: support's one-time entry link and its
 //                    session, and the signed links to a request's files.
+import { trustedType } from '../lib/upload';
 import { Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
@@ -302,10 +303,13 @@ helpRoutes.post('/help', async (c) => {
     for (const f of files) {
       const name = f.name.replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 200) || 'file';
       const key = `help/${org.id}/${req.id}/${crypto.randomUUID()}`;
-      await deps.storage.put(key, await f.arrayBuffer(), f.type);
+      // The type it is kept and served as is checked, not the browser's word (lib/upload.ts).
+      const data = await f.arrayBuffer();
+      const mime = trustedType(f.type, data);
+      await deps.storage.put(key, data, mime);
       const [r] = await q.query(
         `insert into help_files (org_id, request_id, name, mime, size, storage_key) values ($1, $2, $3, $4, $5, $6) returning *`,
-        [org.id, req.id, name, f.type, f.size, key],
+        [org.id, req.id, name, mime, f.size, key],
       );
       saved.push(r);
     }
@@ -492,6 +496,7 @@ async function sendFile(c: C, row: Row) {
   return c.body(obj!.data, 200, {
     'content-type': row.mime,
     'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.name)}`,
+    'content-security-policy': "default-src 'none'; sandbox",
     'cache-control': 'private, no-store',
     'x-content-type-options': 'nosniff',
   });

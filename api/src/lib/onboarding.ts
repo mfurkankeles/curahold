@@ -581,14 +581,27 @@ export async function progressFor(q: Q, orgId: string, planIds: string[], today:
   const issues = await q.query(`select plan_id, status, side, opened_on, due_on from onboarding_issues where org_id = $1 and plan_id = any($2::uuid[])`, [orgId, planIds]);
   const plans = new Map((await q.query('select id, status, started_on, phases from onboarding_plans where id = any($1::uuid[])', [planIds])).map((r) => [r.id, r]));
   const out = new Map<string, ReturnType<typeof progressOf>>();
+  // Grouped once: a portfolio of 400 plans would otherwise filter every step 400 times.
+  const byPlan = <T extends Record<string, any>>(rows: T[]) => {
+    const m = new Map<string, T[]>();
+    for (const r of rows) {
+      const k = String(r.plan_id);
+      const list = m.get(k);
+      if (list) list.push(r);
+      else m.set(k, [r]);
+    }
+    return m;
+  };
+  const stepsOf = byPlan(steps);
+  const issuesOf = byPlan(issues);
   for (const id of planIds) {
-    const mine = steps.filter((x) => x.plan_id === id);
+    const mine = stepsOf.get(id) ?? [];
     const order = phaseOrder(plans.get(id)?.phases, mine.map((x) => x.phase as string));
     out.set(
       id,
       progressOf(
         mine.map((x) => ({ id: x.id, key: x.key, phase: x.phase, phaseAt: order.findIndex((o) => o.key === x.phase), position: x.position, status: x.status, dependsOn: x.depends_on ?? [], dueOn: day(x.due_on), side: x.side, updatedAt: iso(x.updated_at)!, doneHow: x.done_how, doneAt: iso(x.done_at), required: x.required !== false })),
-        issues.filter((x) => x.plan_id === id).map((x) => ({ status: x.status, side: x.side, openedOn: day(x.opened_on)!, dueOn: day(x.due_on) })),
+        (issuesOf.get(id) ?? []).map((x) => ({ status: x.status, side: x.side, openedOn: day(x.opened_on)!, dueOn: day(x.due_on) })),
         today,
         plans.get(id)?.status,
         day(plans.get(id)?.started_on) ?? today,

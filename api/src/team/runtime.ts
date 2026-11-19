@@ -51,6 +51,13 @@ export interface RunResult {
 }
 
 const MAX_ROUNDS = 4;
+/**
+ * Tool calls in one run, all rounds together. One model answer may hold any
+ * number of calls; without a ceiling a single run (a prompt-injected one, say)
+ * could queue hundreds of tasks for other seats, each of which wakes and spends
+ * its own budget. The ones past it are refused and audited, not run.
+ */
+export const MAX_TOOL_CALLS = 12;
 const HISTORY = 8;
 const SUMMARIZE_AFTER = 16;
 const REPLY_TOKENS: Record<RunContext, number> = { 'owner-chat': 1200, wake: 1500, meeting: 450, eval: 1200 };
@@ -414,6 +421,8 @@ export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
   let reply = '';
   let remember: string[] = [];
   let status: RunResult['status'] = 'ok';
+  let calls = 0;
+  let stopped = false;
   try {
     for (let round = 0; round < MAX_ROUNDS && !reply; round++) {
       const res = await provider.complete({ system, messages, tools, maxTokens: REPLY_TOKENS[input.context], toolChoice: 'any' });
@@ -429,10 +438,22 @@ export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
           remember = Array.isArray(b.input.remember) ? b.input.remember.map(String).slice(0, 3) : [];
           break;
         }
+        calls++;
+        if (calls > MAX_TOOL_CALLS) {
+          if (calls === MAX_TOOL_CALLS + 1 && input.context !== 'eval') await deps.db.system((q) => refused(q, policy.seat, 'tool.too-many', { limit: MAX_TOOL_CALLS }));
+          results.push({ type: 'tool_result', tool_use_id: b.id, content: `Refused: at most ${MAX_TOOL_CALLS} actions in one turn. Answer with respond.`, is_error: true });
+          continue;
+        }
+        // A seat paused during this run (it reached past the gate a moment ago) does nothing more in it.
+        if (!stopped && input.context !== 'eval' && (await deps.db.system((q) => isPaused(q, policy.seat)))) stopped = true;
+        if (stopped) {
+          results.push({ type: 'tool_result', tool_use_id: b.id, content: 'Refused: this seat is paused.', is_error: true });
+          continue;
+        }
         const r = await runTool(t, b.name, b.input);
         results.push({ type: 'tool_result', tool_use_id: b.id, content: r.text, ...(r.error ? { is_error: true } : {}) });
       }
-      if (reply) break;
+      if (reply || stopped) break;
       const text = res.content.filter((b): b is Extract<LlmBlock, { type: 'text' }> => b.type === 'text').map((b) => b.text).join('\n').trim();
       if (!results.length) {
         // The model answered in plain text instead of calling respond: take it as the reply.
@@ -445,6 +466,10 @@ export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
     status = 'error';
     reply = 'Şu an cevap veremedim (model hatası). Birazdan tekrar deneyin.';
     void e;
+  }
+  if (stopped && !reply) {
+    status = 'paused';
+    reply = 'Bu koltuk duraklatıldı; devam ettirmek için Ekip ekranından açın.';
   }
   if (!reply) reply = '…';
 
