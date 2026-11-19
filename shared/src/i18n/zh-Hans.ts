@@ -5871,7 +5871,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "服务成本",
   'rlib.cost_to_serve_help': "近 12 个月每 1,000 年度价值花费的小时：谁的服务成本最高",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "销售",
+  'demo.tour.role.seller': "内部销售",
   'demo.tour.role.product': "产品",
   'demo.tour.sprint.title': "规划迭代，查看燃尽",
   'demo.tour.sprint.blurb': "产品团队的待办列表与产能对照，进行中的迭代图表显示新增的范围，以及团队未来几周。",

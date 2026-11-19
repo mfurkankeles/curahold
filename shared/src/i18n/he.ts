@@ -5871,7 +5871,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "עלות שירות",
   'rlib.cost_to_serve_help': "השעות ב-12 החודשים האחרונים לכל 1,000 של ערך שנתי: על מי הכי יקר לשמור",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "מכירות",
+  'demo.tour.role.seller': "מכירות פנים",
   'demo.tour.role.product': "מוצר",
   'demo.tour.sprint.title': "לתכנן ספרינט ולראות אותו מתקדם",
   'demo.tour.sprint.blurb': "הבקלוג של צוות המוצר מול הקיבולת שלו, ספרינט פעיל שהגרף שלו מראה את ההיקף שנוסף, והשבועות הקרובים של הצוות.",

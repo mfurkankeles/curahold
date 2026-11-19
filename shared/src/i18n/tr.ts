@@ -5871,7 +5871,7 @@ export const tr: Record<MessageKey, string> = {
   'rlib.cost_to_serve': "Hizmet maliyeti",
   'rlib.cost_to_serve_help': "Son 12 ayda yıllık değerin her 1.000’i için harcanan saat: bakımı en pahalı olanlar",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "Satış",
+  'demo.tour.role.seller': "İç satış",
   'demo.tour.role.product': "Ürün",
   'demo.tour.sprint.title': "Sprint planla, ilerlemesini izle",
   'demo.tour.sprint.blurb': "Ürün ekibinin kapasitesine karşı backlog’u, üstlendiği kapsamı grafiğinde gösteren süren bir sprint ve ekibin önümüzdeki haftaları.",

@@ -5871,7 +5871,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "تكلفة الخدمة",
   'rlib.cost_to_serve_help': "الساعات المستغرقة في آخر 12 شهرًا لكل 1,000 من القيمة السنوية: من الأكثر تكلفة في الرعاية",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "المبيعات",
+  'demo.tour.role.seller': "المبيعات الداخلية",
   'demo.tour.role.product': "المنتج",
   'demo.tour.sprint.title': "خطّط لسباق عمل وتابع تقدّمه",
   'demo.tour.sprint.blurb': "سجلّ أعمال فريق المنتج مقابل قدرته، وسباق عمل جارٍ يُظهر مخططه النطاق الذي أُضيف، وأسابيع الفريق القادمة.",

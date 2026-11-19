@@ -5871,7 +5871,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "هزینهٔ خدمت‌رسانی",
   'rlib.cost_to_serve_help': "ساعت‌های صرف‌شده در ۱۲ ماه گذشته به‌ازای هر ۱٬۰۰۰ از ارزش سالانه: نگهداری چه کسی گران‌تر است",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "فروش",
+  'demo.tour.role.seller': "فروش داخلی",
   'demo.tour.role.product': "محصول",
   'demo.tour.sprint.title': "اسپرینت را برنامه‌ریزی کنید و پیشرفتش را ببینید",
   'demo.tour.sprint.blurb': "بک‌لاگ تیم محصول در برابر ظرفیتش، اسپرینتی در جریان که نمودارش دامنهٔ اضافه‌شده را نشان می‌دهد، و هفته‌های پیش روی تیم.",

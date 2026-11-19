@@ -5871,7 +5871,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "서비스 비용",
   'rlib.cost_to_serve_help': "최근 12개월 동안 연간 가치 1,000당 들인 시간: 관리 비용이 가장 큰 고객",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "영업",
+  'demo.tour.role.seller': "인사이드 세일즈",
   'demo.tour.role.product': "제품",
   'demo.tour.sprint.title': "스프린트를 계획하고 번다운 보기",
   'demo.tour.sprint.blurb': "제품 팀의 용량 대비 백로그, 추가된 범위가 보이는 진행 중 스프린트 차트, 팀의 앞으로의 주.",

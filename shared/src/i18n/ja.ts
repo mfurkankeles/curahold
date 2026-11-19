@@ -5871,7 +5871,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'rlib.cost_to_serve': "サービス提供コスト",
   'rlib.cost_to_serve_help': "直近 12 か月に年間価値 1,000 あたりで費やした時間：手のかかる顧客はどこか",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "営業",
+  'demo.tour.role.seller': "インサイドセールス",
   'demo.tour.role.product': "プロダクト",
   'demo.tour.sprint.title': "スプリントを計画し、バーンダウンを見る",
   'demo.tour.sprint.blurb': "プロダクトチームのキャパシティに対するバックログ、追加スコープが見える進行中スプリントのチャート、チームのこの先の週。",

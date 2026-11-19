@@ -5886,7 +5886,7 @@ export const en = {
   'rlib.cost_to_serve': "Cost to serve",
   'rlib.cost_to_serve_help': "Hours spent in the last 12 months for every 1,000 of yearly value: who costs most to look after",
   // Demo hub: product and sales roles, four tours, the three-question picker
-  'demo.tour.role.seller': "Sales",
+  'demo.tour.role.seller': "Inside sales",
   'demo.tour.role.product': "Product",
   'demo.tour.sprint.title': "Plan a sprint, watch it burn down",
   'demo.tour.sprint.blurb': "The product team’s backlog against its capacity, a running sprint whose chart shows the scope it took on, and the team’s weeks ahead.",
