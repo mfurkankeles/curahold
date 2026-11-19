@@ -8,6 +8,7 @@ import { ANALYTICS_DEPARTMENTS, BI_TOOLS, type AnalyticsDatasetInfo, type Analyt
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, post } from '../lib/api';
 import { docsHref, docsLink } from '../lib/docs';
+import { formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { relativeTime } from '../lib/time';
@@ -124,7 +125,7 @@ export function AnalyticsTab() {
                   <div className="keyrow__meta">
                     {k.lastPullAt ? t('analytics.lastPull', { when: relativeTime(k.lastPullAt, t), tool: toolLabel(t, k.lastTool) }) : t('dev.keys.unused')}
                     {' · '}
-                    {t('analytics.rows30', { n: k.rows.toLocaleString(locale) })}
+                    {t('analytics.rows30', { n: formatNumber(k.rows, locale) })}
                     {k.expiresAt && <> · {t('dev.keys.until', { date: k.expiresAt.slice(0, 10) })}</>}
                   </div>
                 </div>
@@ -168,7 +169,7 @@ export function AnalyticsTab() {
               <li key={`${p.at}-${i}`} className="keyrow">
                 <div className="keyrow__main">
                   <div className="keyrow__name">
-                    <code>{p.dataset}</code> · {t('analytics.rowsN', { n: p.rows.toLocaleString(locale) })}
+                    <code>{p.dataset}</code> · {t('analytics.rowsN', { n: formatNumber(p.rows, locale) })}
                   </div>
                   <div className="keyrow__meta">
                     {relativeTime(p.at, t)} · {nameOf(p.userId)} · {keyName(p.keyId)} · {toolLabel(t, p.tool)}
