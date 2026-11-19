@@ -1,6 +1,6 @@
--- Undo 0160_flow.sql: no request links, customer teams, hand-overs or promises.
+-- Undo 0170_flow.sql: no request links, customer teams, hand-overs or promises.
 -- Not a migration (the runner never reads this folder). Run it by hand, as the
--- owner, in one transaction:  psql "$DATABASE_URL" -1 -f db/rollback/0160_flow.sql
+-- owner, in one transaction:  psql "$DATABASE_URL" -1 -f db/rollback/0170_flow.sql
 drop function if exists app_set_draft(uuid, text);
 drop function if exists app_mark_told(uuid);
 drop function if exists app_unlink_request(uuid);

@@ -1,4 +1,4 @@
-// The flow between departments (db/migrations/0160_flow.sql):
+// The flow between departments (db/migrations/0170_flow.sql):
 //
 //   * a deal is won → one hand-over card for the next team (Onboarding when
 //     the company has it, else Customer Success); the owner is set when

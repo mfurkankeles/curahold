@@ -90,66 +90,14 @@ export const TOURS: Tour[] = [
     goals: ['keep', 'grow'],
     roles: ['csm', 'sales', 'lead'],
     minutes: 3,
-    title: { en: 'From a won deal to “we built it for you”', tr: 'Kazanılan fırsattan “sizin için yaptık”a' },
-    blurb: {
-      en: 'The hand-over card when Sales wins, requests linked to Product work, and the message back when it ships.',
-      tr: 'Satış kazanınca devir kartı, ürün işine bağlanan talepler ve iş yayına girince müşteriye dönen mesaj.',
-    },
     steps: [
-      {
-        path: '/accounts?q=Cedarmoor',
-        at: '.acard__name',
-        click: true,
-        title: { en: 'Sales just won this one', tr: 'Satış bunu az önce kazandı' },
-        body: { en: 'Cedarmoor Health signed a two-year renewal on the Sales pipeline. Open the customer.', tr: 'Cedarmoor Health, Satış hattında iki yıllık yenilemeyi imzaladı. Müşteriyi aç.' },
-      },
-      {
-        at: '.flow-handover',
-        title: { en: 'One card, nothing lost', tr: 'Tek kart, hiçbir şey kaybolmaz' },
-        body: {
-          en: 'The people and where they stand, what Sales promised, what they still wait for from Product, the dates and the latest of the sales thread. Nobody had to write it up.',
-          tr: 'Kişiler ve bize bakışları, Satış’ın verdiği sözler, Ürün’den hâlâ bekledikleri, tarihler ve satış yazışmasının sonu. Kimsenin oturup yazması gerekmedi.',
-        },
-      },
-      {
-        at: '.flow-handover__foot .btn--primary',
-        title: { en: 'Confirm, and it has an owner', tr: 'Onayla, sahibi olsun' },
-        body: {
-          en: 'Pick who takes it over in Customer Success (or Onboarding, if your company has it) and the playbook to start. Ctrl+Enter does it from anywhere on the card.',
-          tr: 'Müşteri Başarısı’nda (şirketinde varsa Onboarding’de) kimin devralacağını ve başlayacak planı seç. Kartın her yerinden Ctrl+Enter ile de olur.',
-        },
-      },
-      {
-        path: '/accounts?q=Quillfield',
-        at: '.acard__name',
-        click: true,
-        title: { en: 'A customer who asked for something', tr: 'Bir şey istemiş bir müşteri' },
-        body: { en: 'Quillfield Retail asked Product for two things. Open it.', tr: 'Quillfield Retail, Ürün’den iki şey istedi. Aç.' },
-      },
-      {
-        at: '.flow-waiting',
-        title: { en: 'What they are waiting for', tr: 'Bekledikleri' },
-        body: {
-          en: 'Promises and the product work they asked for: status, sprint end and department, visible to anyone who sees the customer, without opening Product’s board.',
-          tr: 'Sözler ve istedikleri ürün işi: durum, sprint bitişi ve departman; müşteriyi görebilen herkes görür, Ürün’ün panosunu açmadan.',
-        },
-      },
-      {
-        at: '.flow-loop',
-        title: { en: 'It shipped: tell them', tr: 'Yayında: haber ver' },
-        body: {
-          en: 'When the work was finished, the owner got a task and this drafted message. Copy it into your email, or close their portal request. Nothing is sent by itself.',
-          tr: 'İş bitince sahibine bir görev ve bu taslak mesaj düştü. E-postana kopyala ya da portal talebini kapat. Hiçbir şey kendiliğinden gönderilmez.',
-        },
-      },
-      {
-        at: '.flow-waiting .section__head .btn',
-        title: { en: 'Link the next request', tr: 'Sıradaki talebi bağla' },
-        body: {
-          en: 'Search Product’s work and link the request in two keystrokes. Product’s backlog then shows how many customers wait, what they are worth and who renews soonest.',
-          tr: 'Ürün işlerinde ara ve talebi iki tuşla bağla. Ürün’ün backlog’u kaç müşterinin beklediğini, değerlerini ve en yakın kimin yenileyeceğini gösterir.',
-        },
-      },
+      { path: '/accounts?q=Cedarmoor', at: '.acard__name', click: true },
+      { at: '.flow-handover' },
+      { at: '.flow-handover__foot .btn--primary' },
+      { path: '/accounts?q=Quillfield', at: '.acard__name', click: true },
+      { at: '.flow-waiting' },
+      { at: '.flow-loop' },
+      { at: '.flow-waiting .section__head .btn' },
     ],
   },
   {

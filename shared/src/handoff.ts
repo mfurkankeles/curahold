@@ -1,5 +1,5 @@
 // The flow between departments, as the app and the API exchange it
-// (db/migrations/0160_flow.sql, api/src/lib/handoff.ts, api/src/routes/handoff.ts):
+// (db/migrations/0170_flow.sql, api/src/lib/handoff.ts, api/src/routes/handoff.ts):
 // the hand-over card when a deal is won, customer requests linked to product
 // work, what the work's status looks like from the customer's side, and the
 // loop back to each customer when the work ships.

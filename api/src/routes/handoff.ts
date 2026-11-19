@@ -1,4 +1,4 @@
-// The flow between departments (db/migrations/0160_flow.sql, lib/handoff.ts):
+// The flow between departments (db/migrations/0170_flow.sql, lib/handoff.ts):
 // the customer's team (one owner per department), the hand-over card of a won
 // deal, promises made to the customer, customer requests linked to product work
 // with what that work is worth (the backlog's demand columns), and the loop back

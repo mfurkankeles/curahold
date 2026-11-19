@@ -132,6 +132,9 @@ describe('shipped → loop back', () => {
 describe('hand-over packet', () => {
   let deal: string;
   it('a won deal gets one card with stakeholders, promises and open requests', async () => {
+    // This company runs without Onboarding, so Sales hands over straight to Success (shared/src/departments.ts handoverAfter).
+    const onboarding = (await ada.get('/api/me')).json.departments.find((d: any) => d.key === 'onboarding');
+    if (onboarding) expect((await ada.patch(`/api/departments/${onboarding.id}`, { enabled: false })).status).toBe(200);
     const type = (await ada.post('/api/record-types', { kind: 'opportunity' })).json.type;
     const contacts = (await ada.post('/api/record-types', { kind: 'contact' })).json.type;
     await ada.post('/api/records', { typeId: contacts.id, accountId: acc2, name: 'Mina Hart', fields: { first_name: 'Mina', last_name: 'Hart', title: 'Head of Ops', stance: 'champion' } });

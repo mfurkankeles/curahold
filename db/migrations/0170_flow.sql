@@ -14,7 +14,7 @@
 --
 -- When a linked story is finished, each customer's owner gets a task with a
 -- drafted message (request_links.shipped_at, draft). Nothing is sent to the
--- customer by itself. Undo: db/rollback/0160_flow.sql.
+-- customer by itself. Undo: db/rollback/0170_flow.sql.
 
 -- ------------------------------------------------------------------ tables
 

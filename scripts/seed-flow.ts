@@ -1,4 +1,4 @@
-// Demo data for the flow between departments (db/migrations/0160_flow.sql), on
+// Demo data for the flow between departments (db/migrations/0170_flow.sql), on
 // top of the boards scripts/seed-departments.ts opens in the live demo:
 //   * Cedarmoor Health's renewal was just won on the Sales pipeline: its hand-over
 //     card waits for Customer Success, with promises and the sales thread;
