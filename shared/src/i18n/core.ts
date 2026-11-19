@@ -158,11 +158,14 @@ export function dayFirst(locale: Locale): boolean {
 
 /** What separates the columns of a spreadsheet file here: ";" where the decimal mark is a comma. */
 /**
- * The languages the help centre is written in (scripts/build-docs.ts). Help
- * search and links use the person's language when it is one of them, English
- * otherwise; this list grows when the help centre does.
+ * The languages the help centre is written in (scripts/build-docs.ts): all
+ * nine. Help search, CuraAI answers and help links use the person's own
+ * language; a page a language has no translation of yet (developer pages,
+ * legal texts outside English and Turkish) is built there as the English page
+ * with a note, so every link resolves. tests/i18n-help.test.ts checks this
+ * list against the docs folders.
  */
-export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'ja'] as const satisfies readonly Locale[];
+export const HELP_LANGUAGES = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'] as const satisfies readonly Locale[];
 export type HelpLanguage = (typeof HELP_LANGUAGES)[number];
 export const helpLanguageOf = (locale: Locale): HelpLanguage => ((HELP_LANGUAGES as readonly Locale[]).includes(locale) ? (locale as HelpLanguage) : 'en');
 

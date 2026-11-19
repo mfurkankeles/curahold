@@ -2,11 +2,11 @@
 title: Muhasebe programları
 section: help
 order: 8.2
-summary: Muhasebe programlarına yalnızca okunur bağlantılar: kim ne borçlu, müşteri sayfasında ve sağlık puanında.
+summary: Muhasebe programlarına yalnızca okunur bağlantılar: kim ne borçlu, müşteri sayfasında ve sağlık skorunda.
 ---
 # Muhasebe programları
 
-Muhasebe programını bağladığında her müşterinin sayfası borcunu gösterir: açık bakiye, vadesi geçen tutar ve ne kadar geciktiği, son ödeme ve faturalar. Geciken ödemeler sağlık puanına katılabilir. Curahold yalnızca okur: programa hiçbir şey yazılmaz.
+Muhasebe programını bağladığında her müşterinin sayfası borcunu gösterir: açık bakiye, vadesi geçen tutar ve ne kadar geciktiği, son ödeme ve faturalar. Geciken ödemeler sağlık skoruna katılabilir. Curahold yalnızca okur: programa hiçbir şey yazılmaz.
 
 ## Hangi programlar
 
@@ -33,13 +33,13 @@ Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: 
 
 ## Rakamları kim görür
 
-Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsin). Müşteriyi gören diğer herkes yalnızca sağlık puanının içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
+Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsin). Müşteriyi gören diğer herkes yalnızca sağlık skorunun içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
 
 **Finans** departmanındaki kişiler de rolleri ne olursa olsun tutarları görür; Ayarlar → Departmanlar'da **Müşteri sayfasında Finans bölümünü kim görür** altında seçilen departmanlar da öyle. Finans kapatılırsa bu da kalkar.
 
-## Sağlık puanında geciken ödemeler
+## Sağlık skorunda geciken ödemeler
 
-İlk okumayı başlatırken **Geciken ödemeleri sağlık puanına kat** kutusunu işaretleyebilirsin. **Zamanında ödeme** sinyali hiçbir şey gecikmemişse tam puan, ödenmemiş en eski fatura 60 gün geciktiğinde sıfır puan verir; iki sayı da Ayarlar → Sağlık skoru'ndan değişir. Programla eşleşmeyen müşteriler hesaba katılmaz.
+İlk okumayı başlatırken **Geciken ödemeleri sağlık skoruna kat** kutusunu işaretleyebilirsin. **Zamanında ödeme** sinyali hiçbir şey gecikmemişse tam puan, ödenmemiş en eski fatura 60 gün geciktiğinde sıfır puan verir; iki sayı da Ayarlar → Sağlık skoru'ndan değişir. Programla eşleşmeyen müşteriler hesaba katılmaz.
 
 ## Bağlantı sağlığı
 

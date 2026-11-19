@@ -118,12 +118,67 @@ export function stem(w: string): string {
   return out;
 }
 
+// Scripts without the Latin alphabet: Chinese, Japanese and Korean (often no spaces between
+// words), Arabic, Persian and Hebrew (prefixes and suffixes glued to the word).
+const OTHER_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\u30fc\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}]+/gu;
+const SPACED = /^[\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}]+$/u;
+/** Arabic and Persian letters that are written several ways, and the marks a reader may or may not type. */
+const unify = (w: string) =>
+  w
+    .replace(/[\u064b-\u065f\u0670\u0640\u0591-\u05c7]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/[ىی]/g, 'ي')
+    .replace(/ک/g, 'ك')
+    .replace(/ة/g, 'ه')
+    // The Arabic article ("the") and the one-letter words joined to it: "والعملاء" → "عملاء".
+    .replace(/^[وفبكل]?ال(?=.{3})/, '');
+const HANGUL = /\p{Script=Hangul}/u;
+// Question words and small words in those languages (as unify() writes them): they find nothing.
+const STOP_OTHER = new Set(
+  (
+    'كيف ماذا ما من في على الي إلى عن هل اين متى لماذا التي الذي هذا هذه ثم او و مع كل بعد قبل يمكن يمكنني اريد ' +
+    'چطور چگونه چه كجا از به در با را كه اين ان يك مي كنم كنيم است هست براي تا يا ايا ' +
+    'איך מה איפה מתי למה את של על עם אם זה זו או גם כל אני אנחנו לי לנו אפשר ' +
+    '어떻게 무엇 무엇을 어디서 어디 누구 언제 왜 하나요 있나요 되나요 하려면 수'
+  )
+    .split(' ')
+    .map((w) => unify(w)),
+);
+
+/**
+ * The pieces of a text in those scripts that a search can match: every two
+ * letters side by side ("顧客を" → "顧客", "客を"). Without a dictionary of
+ * each language this is what finds "고객을" in "고객" and "استيراد" near
+ * "أستورد"; a piece found everywhere counts for little (rarity in ask()).
+ */
+function piecesOf(s: string): string[] {
+  const out: string[] = [];
+  for (const [run] of s.normalize('NFKC').matchAll(OTHER_SCRIPT)) {
+    const w = unify(run);
+    if (STOP_OTHER.has(w)) continue;
+    const spaced = SPACED.test(w);
+    // A one-letter run means something in Chinese or Japanese ("键"); in the others it is a particle ("은", "و").
+    if (w.length === 1) {
+      if (!spaced) out.push(w);
+      continue;
+    }
+    // Where words are written apart the whole word counts too, and its pieces are three letters
+    // long: Arabic, Persian and Hebrew words share too many two-letter pairs to tell pages apart.
+    if (spaced && w.length > 2) out.push(w);
+    const k = spaced && !HANGUL.test(w) ? 3 : 2;
+    for (let i = 0; i + k <= w.length; i++) out.push(w.slice(i, i + k));
+    if (w.length < k) out.push(w);
+  }
+  return out;
+}
+
 /** The meaningful words of a text, folded so that İ, I, ı and i (and ş/s, ç/c…) are the same letter, without their endings. */
 export function wordsOf(s: string): string[] {
-  return foldText(s)
+  const latin = foldText(s)
     .split(/[^a-z0-9_]+/)
     .filter((w) => w.length > 1 && !STOP.has(w))
     .map(stem);
+  return /[^\u0000-\u024f]/.test(s) ? [...latin, ...piecesOf(s)] : latin;
 }
 
 // Words that say little next to the others in a question ("how do I contact support": support is the subject).

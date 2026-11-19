@@ -68,7 +68,7 @@ Yeni kazandığınız bir müşterinin kurulumunu da bu planla yürütürsünüz
 
 ![Müşteri planları listesi, bir müşteri işaretli](img/ob-plans.webp)
 
-Müşteriniz aynı planı portalınızda, sizin renklerinizle görür: kendi adımlarını işaretler, doğrudan kaydına giden kısa formları doldurur, veri satırlarını kontrol eder ve sorun bildirir. Bitince **Bitir ve devret**'e tıklayın: sağlık puanı başlangıç değeri olarak saklanır ve Müşteri Başarısı bir devir kartı alır.
+Müşteriniz aynı planı portalınızda, sizin renklerinizle görür: kendi adımlarını işaretler, doğrudan kaydına giden kısa formları doldurur, veri satırlarını kontrol eder ve sorun bildirir. Bitince **Bitir ve devret**'e tıklayın: sağlık skoru başlangıç değeri olarak saklanır ve Müşteri Başarısı bir devir kartı alır.
 
 ## 9. Müşterinin planını ona göre uyarlayın {#personal}
 

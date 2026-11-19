@@ -6,7 +6,7 @@ summary: Logo、Mikro、Tally、SAP Business One 或任何软件：以 Excel 或
 ---
 # 会计：来自其他软件的文件
 
-没有开放 API 的软件——Logo、Mikro、Tally、SAP Business One 等——通过文件连接。之后数据的用法与已连接的软件完全相同：客户页面、匹配和健康分。
+没有开放 API 的软件——Logo、Mikro、Tally、SAP Business One 等——通过文件连接。之后数据的用法与已连接的软件完全相同：客户页面、匹配和健康评分。
 
 ## 步骤
 
