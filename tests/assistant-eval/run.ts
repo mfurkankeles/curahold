@@ -22,17 +22,19 @@ import { anthropicProvider, type LlmProvider } from '../../api/src/assistant/pro
 import { allCases, BLOCKED, type EvalCase } from './cases';
 import { gradeWithoutModel, judgePrompt, parseJudge, precheckWithModel, type Verdict } from './grade';
 
+import { HELP_LANGUAGES, type HelpLanguage } from '../../shared/src/i18n';
+
 const ROOT = join(import.meta.dirname, '..', '..');
 
 /** The built docs' sections; built into a temporary folder when there is no build. */
-function docs(): Record<'en' | 'tr', AnswerIndex> {
+function docs(): Record<HelpLanguage, AnswerIndex> {
   let dir = join(ROOT, 'dist', 'web', 'docs');
   if (!existsSync(join(dir, 'en', 'answers.json'))) {
     dir = mkdtempSync(join(tmpdir(), 'curahold-eval-docs-'));
     execFileSync(process.execPath, ['--import', 'tsx', join(ROOT, 'scripts', 'build-docs.ts'), dir], { stdio: 'ignore', cwd: ROOT });
   }
   const read = (l: string) => prepare(JSON.parse(readFileSync(join(dir, l, 'answers.json'), 'utf8')) as DocSection[]);
-  return { en: read('en'), tr: read('tr') };
+  return Object.fromEntries(HELP_LANGUAGES.map((l) => [l, read(l)])) as Record<HelpLanguage, AnswerIndex>;
 }
 
 /** An invented workspace, read through tools shaped like the app's (shared/src/assistant.ts). */
