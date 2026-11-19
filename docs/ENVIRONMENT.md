@@ -73,6 +73,8 @@ simply not offered when their keys are missing ("a service without its secrets i
 | `ASSISTANT_GLOBAL_MONTHLY_USD`, `ASSISTANT_COMPANY_MONTHLY_USD`, `ASSISTANT_COMPANY_MAX_USD` | The assistant's monthly caps (api/src/assistant/cost.ts) | No | See the code's defaults. |
 | `TEAM_MONTHLY_USD` | The AI team's monthly model cap, every seat together | No | `40`. Reaching it stops every run until the month turns. |
 | `TEAM_SCHEDULER` | `off` stops the team's 10-minute clock (cron `*/10 * * * *`, api/src/team/schedule.ts); chats and "Şimdi başlat" keep working | No | `auto`: runs only when a key is set; idle (no wake, no model call) when no cadence is due and nothing is queued. |
+| `OPS_ALERTS` | `off` stops the error-rate and latency alerts (lib/ops.ts) | No | On. |
+| `OPS_ALERT_EMAIL` | `off` keeps ops alerts in the owner console only (no e-mail to `PLATFORM_OWNER`) | No | On. |
 | `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per profile | No | api/src/team/config.ts. |
 
 ## 4. Sign-in providers (each optional)

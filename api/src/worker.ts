@@ -127,6 +127,9 @@ export interface Env {
   TEAM_MODEL_LIGHT?: string;
   TEAM_JUDGE_MODEL?: string;
   TEAM_SCHEDULER?: string;
+  /** Ops alerts (lib/ops.ts): "off" stops them; OPS_ALERT_EMAIL=off keeps them in the console only. */
+  OPS_ALERTS?: string;
+  OPS_ALERT_EMAIL?: string;
   /** Robots refused by name (lib/botGuard.ts): unset = strict; "crawlers" or "off". */
   ROBOT_GUARD?: string;
   /** "allow" lets AI answer/search robots read the documentation (crawler policy; default: blocked). */
@@ -190,6 +193,7 @@ export function configFromEnv(env: Env): Config {
     billing: billingFromEnv(env),
     assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
     team: teamConfigFrom(env as unknown as Record<string, string | undefined>),
+    ops: { alerts: env.OPS_ALERTS !== 'off', email: env.OPS_ALERT_EMAIL !== 'off' },
     support: {
       email: env.SUPPORT_EMAIL || undefined,
       webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,

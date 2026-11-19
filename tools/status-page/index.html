@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+  Curahold's public status page: one static file, no service behind it.
+  Host it on Cloudflare Pages (free) at status.curahold.com — apart from the
+  app's Worker, so it still opens when the app does not. It asks each health
+  address from the visitor's browser (they answer with CORS *), every minute.
+  If a status.json sits beside it (scripts/synthetic.ts --json), that is shown
+  too, as the last outside check. Addresses: edit TARGETS below.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Curahold status</title>
+<style>
+  :root { --bg: #f7f6f3; --card: #fff; --ink: #1d1c1a; --muted: #6b6963; --line: #e4e1da; --up: #1f7a4d; --slow: #9a6400; --down: #b42318; --r: 14px; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151513; --card: #1f1e1b; --ink: #f2f0ea; --muted: #a29f97; --line: #34322d; --up: #4cc38a; --slow: #f0b94a; --down: #ff7a6b; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 20px; }
+  .banner { border-radius: var(--r); padding: 18px 20px; font-weight: 600; color: #fff; background: var(--muted); }
+  .banner[data-state="up"] { background: var(--up); } .banner[data-state="slow"] { background: var(--slow); } .banner[data-state="down"] { background: var(--down); }
+  ul { list-style: none; margin: 16px 0 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+  li { display: flex; justify-content: space-between; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); }
+  li:first-child { border-top: 0; }
+  .st { font-weight: 600; white-space: nowrap; } .st[data-state="up"] { color: var(--up); } .st[data-state="slow"] { color: var(--slow); } .st[data-state="down"] { color: var(--down); }
+  .st::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: currentColor; margin-inline-end: 8px; vertical-align: 1px; }
+  p.meta { color: var(--muted); font-size: 14px; margin: 14px 4px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Curahold status</h1>
+  <div class="banner" id="banner" role="status" aria-live="polite">…</div>
+  <ul id="list"></ul>
+  <p class="meta"><span id="checked"></span> · <span id="refresh"></span></p>
+</main>
+<script>
+  // What is checked. "cors": the JSON's ok must be true. "reach": only that the address answers (no CORS needed).
+  const TARGETS = [
+    { id: 'app', url: 'https://app.curahold.com/api/health', mode: 'cors' },
+    { id: 'database', url: 'https://app.curahold.com/api/health/ready', mode: 'cors' },
+    { id: 'portal', url: 'https://status.curahold-portal.com/papi/health', mode: 'cors' },
+    { id: 'site', url: 'https://curahold.com/', mode: 'reach' },
+    { id: 'docs', url: 'https://app.curahold.com/docs/', mode: 'reach' },
+  ];
+  const SLOW_MS = 1500;
+  const W = {
+    en: { title: 'Curahold status', up: 'All systems working', slow: 'Working, slower than usual', down: 'Some systems cannot be reached', checked: 'Checked {time}', refresh: 'Refreshes every minute', s_up: 'Working', s_slow: 'Slow', s_down: 'Not reachable', app: 'App', database: 'Database', portal: 'Customer portal', site: 'Website', docs: 'Help pages' },
+    tr: { title: 'Curahold durumu', up: 'Tüm sistemler çalışıyor', slow: 'Çalışıyor, her zamankinden yavaş', down: 'Bazı sistemlere ulaşılamıyor', checked: 'Son kontrol {time}', refresh: 'Her dakika yenilenir', s_up: 'Çalışıyor', s_slow: 'Yavaş', s_down: 'Ulaşılamıyor', app: 'Uygulama', database: 'Veritabanı', portal: 'Müşteri portalı', site: 'Web sitesi', docs: 'Yardım sayfaları' },
+    ar: { title: 'حالة Curahold', up: 'جميع الأنظمة تعمل', slow: 'يعمل، لكن أبطأ من المعتاد', down: 'تعذّر الوصول إلى بعض الأنظمة', checked: 'آخر فحص {time}', refresh: 'يتم التحديث كل دقيقة', s_up: 'يعمل', s_slow: 'بطيء', s_down: 'تعذّر الوصول', app: 'التطبيق', database: 'قاعدة البيانات', portal: 'بوابة العملاء', site: 'الموقع', docs: 'صفحات المساعدة' },
+    he: { title: 'סטטוס Curahold', up: 'כל המערכות פועלות', slow: 'פועל, לאט מהרגיל', down: 'חלק מהמערכות אינן זמינות', checked: 'בדיקה אחרונה {time}', refresh: 'מתעדכן בכל דקה', s_up: 'פועל', s_slow: 'איטי', s_down: 'לא זמין', app: 'האפליקציה', database: 'מסד הנתונים', portal: 'פורטל הלקוחות', site: 'האתר', docs: 'דפי העזרה' },
+    fa: { title: 'وضعیت Curahold', up: 'همه سامانه‌ها کار می‌کنند', slow: 'کار می‌کند، کندتر از همیشه', down: 'به برخی سامانه‌ها دسترسی نیست', checked: 'آخرین بررسی {time}', refresh: 'هر دقیقه به‌روز می‌شود', s_up: 'فعال', s_slow: 'کند', s_down: 'در دسترس نیست', app: 'برنامه', database: 'پایگاه داده', portal: 'درگاه مشتریان', site: 'وب‌سایت', docs: 'صفحه‌های راهنما' },
+    'zh-Hans': { title: 'Curahold 服务状态', up: '所有系统运行正常', slow: '运行中，但比平时慢', down: '部分系统无法访问', checked: '最近检查：{time}', refresh: '每分钟自动刷新', s_up: '正常', s_slow: '较慢', s_down: '无法访问', app: '应用', database: '数据库', portal: '客户门户', site: '网站', docs: '帮助页面' },
+    'zh-Hant': { title: 'Curahold 服務狀態', up: '所有系統運作正常', slow: '運作中，但比平常慢', down: '部分系統無法連線', checked: '最近檢查：{time}', refresh: '每分鐘自動重新整理', s_up: '正常', s_slow: '較慢', s_down: '無法連線', app: '應用程式', database: '資料庫', portal: '客戶入口網站', site: '網站', docs: '說明頁面' },
+    ja: { title: 'Curahold ステータス', up: 'すべてのシステムが正常に稼働しています', slow: '稼働中（通常より遅延しています）', down: '一部のシステムに接続できません', checked: '最終確認：{time}', refresh: '1分ごとに更新されます', s_up: '正常', s_slow: '遅延', s_down: '接続不可', app: 'アプリ', database: 'データベース', portal: '顧客ポータル', site: 'ウェブサイト', docs: 'ヘルプページ' },
+    ko: { title: 'Curahold 상태', up: '모든 시스템이 정상 작동 중입니다', slow: '작동 중이지만 평소보다 느립니다', down: '일부 시스템에 연결할 수 없습니다', checked: '마지막 확인: {time}', refresh: '1분마다 새로 고침됩니다', s_up: '정상', s_slow: '느림', s_down: '연결 불가', app: '앱', database: '데이터베이스', portal: '고객 포털', site: '웹사이트', docs: '도움말 페이지' },
+  };
+  const pick = (l) => { l = (l || '').toLowerCase(); if (l.startsWith('zh')) return l.includes('hant') || ['zh-t' + 'w', 'zh-hk', 'zh-mo'].includes(l) ? 'zh-Hant' : 'zh-Hans'; const b = l.split('-')[0]; return W[b] ? b : 'en'; };
+  const lang = pick(new URLSearchParams(location.search).get('lang') || navigator.language);
+  const w = W[lang];
+  document.documentElement.lang = lang;
+  if (['ar', 'he', 'fa'].includes(lang)) document.documentElement.dir = 'rtl';
+  document.title = w.title;
+  document.getElementById('title').textContent = w.title;
+  document.getElementById('refresh').textContent = w.refresh;
+
+  async function check(t) {
+    const t0 = performance.now();
+    try {
+      const r = await fetch(t.url, { mode: t.mode === 'cors' ? 'cors' : 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(10000) });
+      let ok = t.mode === 'reach' ? true : r.ok && (await r.json()).ok === true;
+      const ms = performance.now() - t0;
+      return ok ? (ms > SLOW_MS ? 'slow' : 'up') : 'down';
+    } catch { return 'down'; }
+  }
+  async function run() {
+    const states = await Promise.all(TARGETS.map(check));
+    const all = states.includes('down') ? 'down' : states.includes('slow') ? 'slow' : 'up';
+    const banner = document.getElementById('banner');
+    banner.dataset.state = all; banner.textContent = w[all];
+    const list = document.getElementById('list');
+    list.replaceChildren(...TARGETS.map((t, i) => {
+      const li = document.createElement('li');
+      const name = document.createElement('span'); name.textContent = w[t.id] || t.id;
+      const st = document.createElement('span'); st.className = 'st'; st.dataset.state = states[i]; st.textContent = w['s_' + states[i]];
+      li.append(name, st); return li;
+    }));
+    document.getElementById('checked').textContent = w.checked.replace('{time}', new Date().toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }));
+  }
+  run(); setInterval(run, 60000);
+</script>
+</body>
+</html>

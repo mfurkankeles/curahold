@@ -503,6 +503,8 @@ export const OWNER_EN = {
   'checklist.go-live.title': 'Go live',
   'checklist.go-live.why': 'The last step: everything above is in place.',
   'checklist.go-live.steps': 'Read the go-live report\nSay “yayına al”\nClaude deploys and checks every address',
+  'ops.mail.subject': 'Curahold alert: {rule}',
+  'ops.mail.body': '{body}\n\nOpen the owner console to see the alerts. Reference: {ref}\n\nThis message is sent once per alert.',
 } as const;
 
 export type OwnerKey = keyof typeof OWNER_EN;
@@ -992,6 +994,8 @@ export const OWNER_TR: Record<OwnerKey, string> = {
   'checklist.go-live.title': 'Yayına al',
   'checklist.go-live.why': 'Son adım: yukarıdaki her şey yerinde.',
   'checklist.go-live.steps': 'Yayına hazırlık raporunu oku\n“Yayına al” de\nClaude yayına alır ve her adresi kontrol eder',
+  'ops.mail.subject': 'Curahold uyarısı: {rule}',
+  'ops.mail.body': '{body}\n\nUyarıları görmek için sahip konsolunu aç. Referans: {ref}\n\nBu e-posta her uyarı için bir kez gönderilir.',
 };
 
 const WORDS: Partial<Record<Locale, Record<OwnerKey, string>>> = { en: OWNER_EN, tr: OWNER_TR };
