@@ -17,11 +17,13 @@ import { dictionaries, LOCALES, type Locale } from './index';
 
 const PREFIX = 'virtual:curahold-dict/';
 /**
- * Keys only the server reads, never shipped to a browser: report-source field names
- * (api/src/lib/reportEngine.ts) and the template's word for customers, read when a
- * company is created. (The demo runs the server in the tab with every dictionary.)
+ * Keys never shipped in the app's or the portal's language chunks: report-source field
+ * names (api/src/lib/reportEngine.ts) and the template's word for customers, read by the
+ * server when a company is created; and the words of the live demo (demo.*) and of the
+ * help centre (docs.*), which have their own pages. (The demo runs the server in the tab
+ * and reads every dictionary whole.)
  */
-export const SERVER_ONLY = /^(rsrc|tpl\.term)\./;
+export const SERVER_ONLY = /^(rsrc|tpl\.term|demo|docs)\./;
 const RESOLVED = '\0curahold-dict:';
 
 export interface I18nPluginOptions {

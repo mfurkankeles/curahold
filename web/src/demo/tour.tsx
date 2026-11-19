@@ -9,10 +9,11 @@
 // the browser check (tests/e2e/tours.ts) reads to prove every step still lands.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { Tour, TourLang } from '../../../shared/src/tours';
+import { tourText, type Tour } from '../../../shared/src/tours';
+import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
 
 export interface TourDeps {
-  lang: TourLang;
+  lang: Locale;
   /** Moves the app to a screen. */
   go: (path: string) => void;
   /** The address where a workspace is started. */
@@ -21,35 +22,23 @@ export interface TourDeps {
   hub: string;
 }
 
-const UI = {
-  en: {
-    of: (n: number, m: number) => `${n} of ${m}`,
-    next: 'Next',
-    back: 'Back',
-    finish: 'Finish',
-    close: 'End the tour',
-    clickHint: 'Click the highlighted part to go on.',
-    missing: 'That part of the screen is not showing right now. Go on with Next — the product is all yours meanwhile.',
-    endTitle: 'That was the real product',
-    endBody: 'Everything you just saw runs in your browser, with invented data. Keep exploring on your own, or start a workspace for your team.',
-    keep: 'Keep exploring',
-    free: 'Start free',
-    all: 'All tours',
-  },
-  tr: {
-    of: (n: number, m: number) => `${n} / ${m}`,
-    next: 'İleri',
-    back: 'Geri',
-    finish: 'Bitir',
-    close: 'Turu kapat',
-    clickHint: 'Devam etmek için vurgulanan yere tıkla.',
-    missing: 'Ekranın o kısmı şu an görünmüyor. İleri ile devam et — bu arada ürün tamamen senin.',
-    endTitle: 'Gördüğün gerçek üründü',
-    endBody: 'Az önce gördüğün her şey tarayıcında, uydurma verilerle çalışıyor. Kendi başına gezmeye devam et ya da ekibin için bir çalışma alanı aç.',
-    keep: 'Gezmeye devam et',
-    free: 'Ücretsiz başla',
-    all: 'Tüm turlar',
-  },
+/** The tour card's own words, in the tour's language (demo.tour.ui.* in the dictionaries). */
+const uiOf = (l: Locale) => {
+  const say = (k: string, vars?: Record<string, number>) => translate(l, `demo.tour.ui.${k}` as MessageKey, vars);
+  return {
+    of: (n: number, m: number) => say('of', { n, m }),
+    next: say('next'),
+    back: say('back'),
+    finish: say('finish'),
+    close: say('close'),
+    clickHint: say('clickHint'),
+    missing: say('missing'),
+    endTitle: say('endTitle'),
+    endBody: say('endBody'),
+    keep: say('keep'),
+    free: say('free'),
+    all: translate(l, 'demo.bar.tours'),
+  };
 };
 
 const FIND_MS = 6000;
@@ -74,7 +63,8 @@ const typing = () => {
 };
 
 function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose: () => void }) {
-  const ui = UI[deps.lang];
+  const ui = uiOf(deps.lang);
+  const words = tourText(deps.lang);
   const steps = tour.steps;
   const [i, setI] = useState(0);
   const [el, setEl] = useState<HTMLElement | null>(null);
@@ -217,7 +207,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
         data-anchor={done ? 'none' : anchor}
         role="dialog"
         aria-live="polite"
-        aria-label={tour.title[deps.lang]}
+        aria-label={words.title(tour)}
         style={side === 'right' || side === 'left' || side === 'below' || side === 'above' ? pos : undefined}
       >
         {done ? (
@@ -240,7 +230,7 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
           <>
             <div className="tour__top">
               <span className="tour__count">{ui.of(i + 1, total)}</span>
-              <span className="tour__name">{tour.title[deps.lang]}</span>
+              <span className="tour__name">{words.title(tour)}</span>
               <button type="button" className="tour__x" aria-label={ui.close} title={ui.close} onClick={onClose}>
                 ×
               </button>
@@ -248,8 +238,8 @@ function TourCard({ tour, deps, onClose }: { tour: Tour; deps: TourDeps; onClose
             <div className="tour__bar" aria-hidden="true">
               <span style={{ width: `${((i + 1) / total) * 100}%` }} />
             </div>
-            <h2 className="tour__title">{s!.title[deps.lang]}</h2>
-            <p className="tour__body">{anchor === 'missing' ? ui.missing : s!.body[deps.lang]}</p>
+            <h2 className="tour__title">{words.stepTitle(tour, i)}</h2>
+            <p className="tour__body">{anchor === 'missing' ? ui.missing : words.stepBody(tour, i)}</p>
             {s!.click && anchor === 'found' && <p className="tour__hint">{ui.clickHint}</p>}
             <div className="tour__nav">
               {i > 0 ? (

@@ -4,6 +4,7 @@
 // answered here instead of over the network.
 import type { Config, Deps } from '../../../api/src/context';
 import type { Db } from '../../../api/src/db';
+import type { Locale } from '../../../shared/src/i18n/core';
 import { ORIGIN } from './memory';
 
 // --- Browsers drop Cookie / Set-Cookie on script-made requests and responses.
@@ -93,7 +94,7 @@ const DEVICE = (() => {
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 })();
 
-export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: 'tr' | 'en' = 'tr'): Promise<DemoServer> {
+export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void, locale: Locale = 'tr'): Promise<DemoServer> {
   step(8, 'db');
   const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([
     import('../../../api/src/app'),
@@ -137,6 +138,9 @@ export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'da
     owner: 'ada@demo.example',
     // The demo is one install with its own invented tenants: the in-app console stays on, as when self-hosted.
     inAppConsole: true,
+    // One visitor in one tab, and a seed that sends a few hundred requests in its first seconds:
+    // request limits protect nothing here, and they cut the seed short (the portal stayed signed out).
+    limitScale: 0,
   };
   const email = new services.MemoryEmail();
   const deps: Deps = { db, email, storage: new services.MemoryStorage(), config, defer: (p) => void p };

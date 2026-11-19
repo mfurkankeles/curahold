@@ -8,6 +8,14 @@ summary: Müşteri alanları, paydaşlar, fırsatlar, içe ve dışa aktarma.
 
 Müşteriler Curahold'un merkezidir. Her müşterinin bir sahibi, isteğe bağlı bir ekibi ve şirketine özel alanları olur.
 
+![Kartlar görünümünde müşteri listesi: ilgi bekleyenler, nedenleriyle en üstte](img/customers.webp)
+
+## Müşteri sayfası
+
+Müşteri sayfasının en üstünde bir bakışta okunan bir şerit vardır: nedeni ve **Neden?** düğmesiyle **Sağlık**, yenileme tarihi ve kalan gün, yıllık tutar ve **Sıradaki söz**: müşteriye verdiğiniz en yakın adım ve onu kimin taşıdığı. Şeridin altında sekmeler: **Özet** (açık görevler ve yaklaşan toplantılar), **Zaman çizelgesi**, **Paydaşlar**, **Kayıtlar** ve **Bilgiler**. Açık sekme adreste durur; sayfayı yenileyince ya da gönderdiğin bağlantıyla aynı sekmeye dönülür.
+
+![Bir müşteri sayfası: üstte sağlık, yenileme, tutar ve sıradaki söz, altında sekmeler](img/customer.webp)
+
 ## Alanlar
 
 Ayarlar → Müşteri alanları'ndan alan eklersin: metin, sayı, tutar, tarih, seçim, e-posta, bağlantı. Seçim alanlarının seçeneklerine renk verebilirsin; sağlık durumu gibi alanlar listede ve kartlarda bu renkle görünür.
@@ -33,7 +41,7 @@ Müşteriler sayfasının üstündeki düğmelerle dört görünüm arasında ge
 - **Yenilemeler:** önümüzdeki 12 ayın yenilemeleri ay ay; her ayın toplamı ve riskli ya da izlenmeli olanların tuttuğu tutar.
 - **Ürünler:** bir kayıt türündeki seçim alanına göre (örneğin “Abonelik → Ürün”) hangi müşteride hangi ürünün olduğu. Boş hücredeki **+** o müşteri için bir çapraz satış görevi açar.
 
-Sayfanın üstündeki cümle kaç müşterinin ilgi beklediğini ve ne kadar tutarın risk altında olduğunu söyler; “ilgi bekliyor” bağlantısı listeyi onlara daraltır.
+Sayfanın üstündeki cümle kaç müşterinin ilgi beklediğini ve ne kadar tutarın risk altında olduğunu söyler; “ilgi bekliyor” bağlantısı listeyi onlara daraltır. Telefonda filtreler tek bir **Filtre** sayfasında toplanır.
 
 ## İçe aktarma
 
@@ -45,15 +53,15 @@ Müşteri ve kayıt listelerini o an gördüğün filtreyle Excel ya da CSV olar
 
 ## Toplu değişiklik
 
-Listede birden çok müşteri seç: sahibini, ekibini ya da bir alanı birlikte değiştir. Değişiklik 30 dakika boyunca geri alınabilir.
+Listede birden çok müşteri seç: sahibini, ekibini ya da bir alanı birlikte değiştir. Alttaki bildirimden **Geri al** diyebilirsin.
 
 ## Müşteri silmek ve silinen müşteriyi geri almak
 
 Silinen müşteri kayıtları, zaman çizelgesi, toplantıları ve portal kişileriyle [çöp kutusuna](/docs/tr/trash/) gider ve 30 gün boyunca geri alınabilir: silmenin hemen ardından bildirimdeki **Geri al**'a bas ya da menünü açıp **Çöp kutusu**'nu seç ve **Geri al** de. Görevleri panolarında müşterisiz kalır; müşteri geri gelince yine onu gösterir. Bir müşteriyi silmeden gözden kaldırmak için arşivle.
 
-## Planlar
+## Playbook'lar
 
-Bir **plan**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: onboarding, yenileme hazırlığı, QBR. Yönetici planı bir kez yazar (görev başlığı, başlangıçtan kaç gün sonra, kime); müşteri sayfasındaki **Plan uygula** ile başlangıç gününü seçip uygularsın. Başlıkta `{account_name}` yazan yere müşterinin adı gelir.
+Bir **playbook**, bir müşteriye tek tıkla eklenen tarihli görev takımıdır: onboarding, yenileme hazırlığı, QBR. Yönetici onu Ayarlar → **Playbook'lar**'da bir kez yazar (görev başlığı, başlangıçtan kaç gün sonra, kime); müşteri sayfasındaki **Playbook uygula** ile başlangıç gününü seçip uygularsın. Başlıkta `{account_name}` yazan yere müşterinin adı gelir.
 
 ## İş değerlendirmeleri
 

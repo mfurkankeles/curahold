@@ -6,7 +6,7 @@ summary: Satış hattı, gelen kutusu, zaman çizelgesi, raporlar ve 1:1 hazırl
 ---
 # Fırsatlar, raporlar ve ekip
 
-Sol menü dört bölümdür: üstte günlük işler (Ana sayfa, Görevlerim, Gelen kutusu, Takvim), **Müşteriler**, **İş** (panolar ve zaman çizelgesi) ve **İçgörü** (Raporlar, Ekip). Bölüm başlığına tıklayınca bölüm katlanır.
+Sol menü dört bölümdür: üstte günlük işler (Ana sayfa, Görevlerim, Gelen kutusu, Takvim), **Müşteriler**, **İş** (panolar ve zaman çizelgesi) ve **İçgörü** (Raporlar, Paneller, Ekip). Bölüm başlığına tıklayınca bölüm katlanır.
 
 ## Fırsatlar: satış hattı
 
@@ -44,7 +44,7 @@ Sana gelen her şey tek listede: verilen görevler, senden bahsedilenler, yoruml
 
 ## Kendi raporunu kur
 
-**Raporlar → Raporlar → Yeni rapor.** Beş adım, sağda sonuç sen değiştirdikçe çizilir:
+**İçgörü → Raporlar → Yeni rapor.** Beş adım, sağda sonuç sen değiştirdikçe çizilir:
 
 1. **Neye bakıyorsun?** Görevler, müşteriler, fırsatlar (ve şirketin diğer kayıt türleri), müşteri teması ya da girilen süre.
 2. **Daralt.** Koşul ekle: “Durum şunlardan biri: Açık”, “Kapanış tarihi bu çeyrek”, “Yıllık tutar en az 50.000”, “Sorumlu: Ben”. Tarihlerde “son 30 gün”, “önümüzdeki 90 gün”, “bu / geçen hafta, ay, çeyrek, yıl” seçenekleri vardır.
@@ -60,7 +60,7 @@ Gruplamazsan rapor satır satır bir listedir; hangi sütunların görüneceğin
 
 ## Paneller
 
-Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **Raporlar → Paneller** altında:
+Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **İçgörü → Paneller** altında:
 
 - **Hazır paneller dolu gelir:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı ve Yönetici özeti, Paneller ilk açıldığında kendi verinle çizilmiş olarak oradadır. Önce bir şey eklemek gerekmez.
 - **Paneller bir panelle açılır:** en son baktığınla. Üstteki adlar tek tıkla birinden ötekine geçirir.

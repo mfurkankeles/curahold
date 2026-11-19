@@ -1,6 +1,52 @@
-// The showcase data in English. The seed is written in Turkish; for an English
-// demo every text that goes in is looked up here on its way to the API.
-export const EN: Record<string, string> = {
+// The demo company in English. The seed is written in Turkish (tr.ts); this
+// says the same things the way a company working in English would.
+import { labelOf } from '../../shared/src/fields';
+import { PLAYBOOK_EXAMPLES } from '../../shared/src/playbooks';
+import type { SeedWords } from './types';
+
+// The ready-made renewal playbook the showcase starts from, as playbooks.ts says it in English.
+const renewal = PLAYBOOK_EXAMPLES.find((x) => x.key === 'renewal')!;
+const PLAYBOOK = Object.fromEntries([renewal.name, renewal.description, ...renewal.steps.map((x) => x.title)].map((l) => [labelOf(l, 'tr'), labelOf(l, 'en')]));
+
+export const words: SeedWords = {
+  company: 'Demo Company',
+  timezone: 'Europe/Istanbul',
+  money: {
+    currency: 'USD',
+    rate: 1,
+    fx: { EUR: 1.08, GBP: 1.27, TRY: 0.029 },
+    abroad: { 'Fjordnet Telecom': 'EUR', 'Brightmoor Enerji': 'EUR', 'Lindenhall Sigorta': 'TRY' },
+  },
+  people: { ada: 'Ada Demir', mert: 'Mert Aksoy', zeynep: 'Zeynep Tunç', lena: 'Lena Fischer', omar: 'Omar Haddad', sofia: 'Sofia Rossi' },
+  customer: { first: 'Selin', last: 'Kaya' },
+  fullName: (first, last) => `${first} ${last}`,
+  teams: { cs: 'Customer Success', am: 'Account Management' },
+  base: {
+    ask: "can you add last quarter's usage chart too?",
+    planned: [
+      ['review', 'Quarterly business review', 'Usage, goals and the renewal roadmap.', 7, 60, ['mert', 'zeynep'], 'quarterly'],
+      ['meeting', 'New module walkthrough', 'Show the team the new module and take questions.', 2, 45, ['lena'], 'none'],
+      ['call', 'Monthly check-in call', 'A short status and the open items.', 21, 30, ['mert'], 'monthly'],
+    ],
+    tasks: [
+      'Prepare the quarterly business review',
+      'Onboarding kickoff call',
+      'Look into the usage drop',
+      'Plan training on the new module',
+      'Share the satisfaction survey results',
+      'Send the renewal proposal',
+      'Get the price increase approved',
+      'Contract signature',
+      'Review the budget draft',
+    ],
+    sprint: ['Sprint 1', 'The first sprint'],
+    subtasks: ['Write the agenda', 'Pull usage numbers', 'Send the deck'],
+    meetingType: ['Business review', 'Goals · Usage · Risks · Roadmap'],
+    boards: { cs: 'CS — General', renewals: 'Renewals', notes: 'Ada — notes' },
+  },
+  // Add new texts at the end: the other languages give theirs in this order (order.ts).
+  text: {
+    ...PLAYBOOK,
   // meetings: titles and next steps
   '3. çeyrek iş değerlendirmesi': 'Q3 business review',
   'Ek kullanıcı paketi teklifini gönder': 'Send the extra seats quote',
@@ -179,19 +225,96 @@ export const EN: Record<string, string> = {
   'Teşekkürler! Mümkünse geçen çeyreğin kullanım grafiğini de ekleyebilir misiniz?': 'Thank you! Could you add last quarter’s usage chart as well, if possible?',
   'Rapora iki kullanıcı ekleyelim': 'Add two users to the report',
   'Ayşe ve Can haftalık rapora erişemiyor. Pazartesiye kadar açılabilir mi?': 'Ayşe and Can cannot open the weekly report. Could they get access by Monday?',
+  // found missing while making the demo nine-language: these went in Turkish before
+  'Raporlama eklentisi': 'Reporting add-on',
+  'Analitik eklentisi': 'Analytics add-on',
+  'Yeni kampanya kurgusunu birlikte kur': 'Build the new campaign flow together',
+  'Kullanım, hedefler ve yenileme yol haritası.': 'Usage, goals and the renewal roadmap.',
+  'İkinci eğitim oturumu': 'Second training session',
+  'Yeni modülü ekibe gösterelim ve soruları alalım.': 'Show the team the new module and take questions.',
+  'Aylık durum araması': 'Monthly check-in call',
+  'Genişleme teklifi ve açık işler.': 'The expansion quote and the open items.',
+  'Mobil modül kapsamı': 'Mobile module scope',
+  'Bilgi güvenliği sorularını ve kapsamı netleştirelim.': 'Settle the information security questions and the scope.',
+  'İş değerlendirmesi': 'Business review',
+  'Hedefler · Kullanım · Riskler · Yol haritası': 'Goals · Usage · Risks · Roadmap',
+  'Tür': 'Type',
+  'Toplantı': 'Meeting',
+  'Analiz': 'Analysis',
+  'Takip': 'Follow-up',
+  'Eğitim': 'Training',
+  'Sonuç': 'Outcome',
+  'Belge bağlantısı': 'Document link',
+  'CS ekibinden talep': 'Ask the CS team',
+  'Prova yap': 'Do a dry run',
+  'Ana sözleşme': 'Master agreement',
+  'CRM Lideri': 'CRM Lead',
+  'Analitik Ekip Lideri': 'Analytics Team Lead',
+  'Kurucu Ortak': 'Co-founder',
+  // the first customers (seed-demo.ts)
+  'Quillfield Retail': 'Quillfield Retail',
+  // its name on its own, as the demo bar says it: "Customer · Quillfield portal"
+  Quillfield: 'Quillfield',
+  'Harborline Bank': 'Harborline Bank',
+  'Cedarmoor Health': 'Cedarmoor Health',
+  'Velto Mobility': 'Velto Mobility',
+  'Orchardly Foods': 'Orchardly Foods',
+  'Fjordnet Telecom': 'Fjordnet Telecom',
+  // the customers' people: first names, then last names
+  'Selin': 'Selin', 'Tomas': 'Tomas', 'Defne': 'Defne', 'Hakan': 'Hakan', 'Nora': 'Nora', 'Kerem': 'Kerem', 'Ece': 'Ece',
+  'Jonas': 'Jonas', 'İrem': 'İrem', 'Burak': 'Burak', 'Melis': 'Melis', 'Can': 'Can', 'Aslı': 'Aslı', 'Elif': 'Elif',
+  'Victor': 'Victor', 'Gizem': 'Gizem', 'Onur': 'Onur', 'Pelin': 'Pelin', 'Serkan': 'Serkan', 'Mila': 'Mila',
+  'Aytaç': 'Aytaç', 'Weller': 'Weller', 'Kaya': 'Kaya', 'Ersoy': 'Ersoy', 'Lindqvist': 'Lindqvist', 'Yalın': 'Yalın', 'Taner': 'Taner',
+  'Berg': 'Berg', 'Soylu': 'Soylu', 'Özen': 'Özen', 'Durmaz': 'Durmaz', 'Bilgin': 'Bilgin', 'Kurt': 'Kurt', 'Sarıgül': 'Sarıgül',
+  'Lane': 'Lane', 'Aydın': 'Aydın', 'Çelik': 'Çelik', 'Ateş': 'Ateş', 'Doğru': 'Doğru', 'Novak': 'Novak',
+  // the product team's board (seed-product.ts): its name, the third epic, the sprints and their goals
+  'Ürün geliştirme': 'Product development',
+  'Kurumsal güvenlik ve uyum': 'Enterprise security and compliance',
+  'Sprint 21': 'Sprint 21',
+  'Sprint 22': 'Sprint 22',
+  'Sprint 23': 'Sprint 23',
+  'Sprint 24': 'Sprint 24',
+  'Raporlama eklentisinin temelini at': 'Lay the groundwork for the reporting add-on',
+  'Raporlar bağlantıyla paylaşılabilsin': 'Make reports shareable by link',
+  'Mobil modülün iskeletini kur': 'Build the skeleton of the mobile module',
+  'Mobil modülün ilk sürümünü pilot müşteriye hazırla': 'Get the first mobile release ready for the pilot customer',
+  // its stories
+  'Rapor şablonları için veri modeli': 'Data model for report templates',
+  'Haftalık kullanım özeti e-postası': 'Weekly usage summary email',
+  'CSV dışa aktarımında özel karakterler bozuluyor': 'Special characters break in the CSV export',
+  'Raporu bağlantıyla paylaş': 'Share a report by link',
+  'Paylaşılan raporda yetki kontrolü': 'Permission check on shared reports',
+  'Tek oturum açma için deneme ortamı': 'Trial setup for single sign-on',
+  'Grafik yüklenirken boş ekran': 'Blank screen while a chart loads',
+  'Mobil uygulama iskeleti ve gezinme': 'Mobile app skeleton and navigation',
+  'Mobilde görev listesi': 'Task list on mobile',
+  'Mobilde müşteri kartı': 'Customer card on mobile',
+  'Şifre sıfırlama e-postası geç geliyor': 'Password reset email arrives late',
+  'Takvim eşitlemesi bazı telefonlarda çift kayıt açıyor': 'Calendar sync creates duplicate entries on some phones',
+  'Mobil girişte tek kullanımlık kod': 'One-time code at mobile sign-in',
+  'Bildirim tercihleri ekranı': 'Notification preferences screen',
+  'Oturum zaman aşımı ayarı': 'Session timeout setting',
+  'Anlık bildirim izni akışı': 'Push notification permission flow',
+  'Görev listesini çevrimdışı da göster': 'Show the task list offline too',
+  'Raporu PDF olarak e-postayla gönder': 'Email a report as a PDF',
+  'Veri saklama süresini müşteri bazında ayarla': 'Set the data retention period per customer',
+  'Lindenhall Sigorta’nın bilgi güvenliği ekibi kayıtların 24 ay sonra silinmesini istiyor. Melis yenilemeden önce bu ayarı görmek istiyor.':
+    'The information security team at Lindenhall Insurance wants records deleted after 24 months. Melis wants to see this setting before the renewal.',
+  'Uygulama mağazası için gizlilik metni': 'Privacy text for the app store',
+  'Pilot için sürüm notlarını yaz': 'Write the release notes for the pilot',
+  'Tablet yatay görünümde menü taşıyor': 'Menu overflows on tablets in landscape',
+  'Süresi dolan kayıtları her gece temizle': 'Clear out expired records every night',
+  'Güvenlik dokümanına saklama bölümü ekle': 'Add a retention section to the security document',
+  'Raporları zamanlanmış olarak gönder': 'Send reports on a schedule',
+  'Mobilde koyu tema': 'Dark theme on mobile',
+  'Sesli komutla görev ekleme araştırması': 'Research: adding tasks by voice',
+  // the admin's inbox (seed-inbox.ts): comments after a mention of Ada, and the renewal rule
+  'izin penceresindeki metni sen de okur musun? Mağaza incelemesinden önce netleşsin.':
+    "can you read the wording in the permission prompt too? Let's settle it before the store review.",
+  'saklama süresi sorusunu ürün ekibine sordum; ayar bu sprintte geliyor, Melis’e cuma dönebiliriz.':
+    'I asked the product team about the retention question. The setting ships this sprint, so we can get back to Melis on Friday.',
+  'Güvenlik dokümanının son sürümünü ekledim. 4. ve 7. sorular hâlâ açık.': "I've attached the latest version of the security document. Questions 4 and 7 are still open.",
+  'Yenilemeye 30 gün kala haber ver': 'Heads-up 30 days before a renewal',
+  'Yenileme teklifini ve onay sürecini bu hafta başlatalım.': "Let's start the renewal proposal and the approval process this week.",
+  },
 };
-
-/** A text on its way into an English demo. Comments keep their @mention and translate the rest. */
-export function toEnglish(s: string): string {
-  if (EN[s]) return EN[s];
-  const m = /^(@\[[^\]]+\]\([^)]+\) )(.+)$/s.exec(s);
-  return m && EN[m[2]] ? m[1] + EN[m[2]] : s;
-}
-
-/** Every text inside a request body. */
-export function deepEnglish<T>(v: T): T {
-  if (typeof v === 'string') return toEnglish(v) as T;
-  if (Array.isArray(v)) return v.map(deepEnglish) as T;
-  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, deepEnglish(x)])) as T;
-  return v;
-}

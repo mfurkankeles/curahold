@@ -10,7 +10,7 @@ Two steps, in this order: **ask**, and if that did not settle it, **write to sup
 
 ## Ask first
 
-Open **CuraAI** at the bottom right of any screen (or the **Ask** button on any page of these docs) and write your question in your own words: "how do I import customers", "who can see this field". The answer comes from these docs, with the place it came from, in a moment. It works in English and Turkish, and nothing you type is sent anywhere: the docs are searched in your own browser.
+Open **CuraAI** at the bottom right of any screen (or the **Ask** button on any page of these docs) and write your question in your own words: "how do I import customers", "who can see this field". The answer comes from these docs, with the place it came from, in a moment. It works in the languages these docs are written in, and nothing you type is sent anywhere: the docs are searched in your own browser.
 
 If the answer is not what you needed, say so: you get the next closest places, and a button to write to support with your question already filled in.
 
@@ -67,10 +67,10 @@ Some problems are hard to fix without seeing them. The **Let Curahold support lo
 
 - **What support sees**: exactly what you see — the same customers, boards and fields. Nothing more.
 - **For how long**: 24 hours, 3 days or 7 days. Access ends on its own. Each support visit lasts at most 8 hours.
-- **What support can do**: **look only**, by default. Only administrators can also allow **changes**.
+- **What support can do**: **look only**. Support never changes anything in your account.
 - **Never within reach**: your devices and sessions, API keys, apps and webhooks, inviting people, roles, company settings, exporting or erasing data. Support cannot extend its own access either.
 - **Closing it**: any time, under **Help → My requests → Close access**. A support visit in progress ends at once. While access is open, a strip at the top of the page reminds you.
-- **Record**: every support visit, and every change made with permission, is written to **Settings → Activity log** with the support person's name.
+- **Record**: every support visit, and what support reads during it, is written to **Settings → Activity log** with the support person's name.
 
 While support is inside, a strip at the top of the screen shows who is looking and until when.
 

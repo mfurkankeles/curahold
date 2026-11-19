@@ -4,6 +4,7 @@
 import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { LOCALES, type Locale } from '../../../shared/src/i18n/core';
 import { MENTION_RE, type Task } from '../../../shared/src/model';
 import { AGREEMENT_RE, BUILTIN_TYPES, fullName, RECORD_KINDS, type AppRecord, type LinkInfo, type RecordComment, type RecordDetail, type RecordType, type RenewalLinks } from '../../../shared/src/records';
 import { requirePerm, requireWriter, run, type AppEnv, type C } from '../context';
@@ -24,7 +25,8 @@ import { changedFieldKeys, checkEditable, defsFor, hiddenKeys, mergeDefs, stripF
 
 export const recordRoutes = new Hono<AppEnv>();
 
-const localized = z.object({ en: z.string().trim().max(60).optional(), tr: z.string().trim().max(60).optional() }).refine((l) => !!(l.en || l.tr));
+// A name in each language the company writes it in (any of the nine).
+const localized = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(60).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> }).refine((l) => Object.values(l).some(Boolean));
 
 export const toRecordType = (r: Row): RecordType => ({
   id: r.id,

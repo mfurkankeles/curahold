@@ -10,9 +10,11 @@ Work runs on boards. A board belongs to a team, the whole company or just you, a
 
 ## A task
 
-A task has a title, a description, people (up to 10), a due date, a priority and, optionally, a customer. Add subtasks, files and comments.
+A task has a title, a description, people (up to 10), a due date, a priority and, optionally, a customer. Add subtasks, files and comments. A task opens in a panel beside the board, and its link works for whoever you send it to.
 
-The thin rail on the left of every card shows where the task stands against time: calm, soon, today, late, done. The same colours return in the calendar and in My tasks.
+![The customer success board, with a task open in the side panel](img/task.webp)
+
+The thin rail on the left of every card shows where the task stands against time: calm, soon, today, late, done. The same colours return in the calendar and in My tasks. Dates are picked with the product's own date picker, in your language and in the order you write dates.
 
 ## When two people change the same task
 
@@ -20,7 +22,7 @@ Curahold never silently overwrites anyone. If someone saved while you were editi
 
 ## Changing many at once, and undo
 
-Select several tasks on a board or in the list and change their status, people, date or priority together. The notice at the bottom offers **Undo** for 30 minutes.
+Select several tasks on a board or in the list and change their status, people, date or priority together. The notice at the bottom offers **Undo**.
 
 ## Repeating tasks
 
@@ -53,7 +55,7 @@ Board settings → **Fields and request form**: add extra fields to every task o
 
 ## Filters and saved views
 
-**Filter** at the top of a board narrows it by person, due date (overdue, today, 7 days…), priority and the board's choice fields. Name the filters you have on with **Views → Save**, and show the view to everyone on the board if you like.
+**Filter** at the top of a board narrows it by person, due date (overdue, today, 7 days…), priority and the board's choice fields. On a phone every filter is together on one **Filter** sheet. Name the filters you have on with **Views → Save**, and show the view to everyone on the board if you like.
 
 ## Request form
 

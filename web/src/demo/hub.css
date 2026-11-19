@@ -1,0 +1,11 @@
+/* The demo hub's own rules (scripts/build-demo-hub.ts), after the site's and the hub's
+   stylesheets. The hero shows a real screen of the demo in the page's language. */
+.hub-shot { margin: 0; align-self: center; }
+.hub-shot img {
+  display: block; width: 100%; height: auto;
+  border-radius: 12px; border: 1px solid var(--line);
+  box-shadow: 0 24px 48px -24px rgba(25, 21, 65, .35);
+}
+@media (max-width: 700px) {
+  .hub-shot { max-width: 320px; margin-inline: auto; }
+}

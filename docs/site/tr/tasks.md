@@ -10,9 +10,11 @@ summary: Panolar, liste görünümü, toplu değişiklik, tekrarlayan görevler 
 
 ## Görev
 
-Bir görevin başlığı, açıklaması, sorumluları (en fazla 10), bitiş tarihi, önceliği ve isteğe bağlı bir müşterisi olur. Alt görev, dosya ve yorum eklenebilir.
+Bir görevin başlığı, açıklaması, sorumluları (en fazla 10), bitiş tarihi, önceliği ve isteğe bağlı bir müşterisi olur. Alt görev, dosya ve yorum eklenebilir. Görev panonun yanında bir panelde açılır; bağlantısı gönderdiğin kişide de çalışır.
 
-Her kartın solundaki ince şerit görevin zamana göre nerede olduğunu gösterir: rahat, yaklaşıyor, bugün, gecikti, bitti. Aynı renkler takvimde ve Görevlerim sayfasında da kullanılır.
+![Müşteri başarısı panosu ve yan panelde açık bir görev](img/task.webp)
+
+Her kartın solundaki ince şerit görevin zamana göre nerede olduğunu gösterir: rahat, yaklaşıyor, bugün, gecikti, bitti. Aynı renkler takvimde ve Görevlerim sayfasında da kullanılır. Tarihler ürünün kendi tarih seçicisiyle, senin dilinde ve tarihleri yazdığın sırayla seçilir.
 
 ## İki kişi aynı anda değiştirirse
 
@@ -20,7 +22,7 @@ Curahold kimsenin değişikliğini sessizce ezmez. Sen düzenlerken başkası ka
 
 ## Toplu değişiklik ve geri alma
 
-Panoda ya da listede birden çok görev seç: durumunu, sorumlusunu, tarihini ya da önceliğini birlikte değiştir. Ekranın altındaki bildirimden 30 dakika boyunca **Geri al** diyebilirsin.
+Panoda ya da listede birden çok görev seç: durumunu, sorumlusunu, tarihini ya da önceliğini birlikte değiştir. Ekranın altındaki bildirimden **Geri al** diyebilirsin.
 
 ## Tekrarlayan görevler
 
@@ -53,7 +55,7 @@ Pano ayarları → **Alanlar ve talep formu**: o panodaki her görevde tutulacak
 
 ## Filtreler ve kayıtlı görünümler
 
-Panonun üstündeki **Filtre** ile kişiye, son tarihe (gecikmiş, bugün, 7 gün…), önceliğe ve panonun seçim alanlarına göre daralt. Açık filtreleri **Görünümler → Kaydet** ile adlandır; istersen panodaki herkese göster.
+Panonun üstündeki **Filtre** ile kişiye, son tarihe (gecikmiş, bugün, 7 gün…), önceliğe ve panonun seçim alanlarına göre daralt. Telefonda bütün filtreler tek bir **Filtre** sayfasında toplanır. Açık filtreleri **Görünümler → Kaydet** ile adlandır; istersen panodaki herkese göster.
 
 ## Talep formu
 

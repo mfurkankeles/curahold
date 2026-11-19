@@ -66,14 +66,34 @@ try {
   ok = false;
 }
 console.log(`ready: ${ok} in ${Date.now() - t0} ms`);
+// Every text the seed sent is said in the demo's language (scripts/seed-words): none left in Turkish.
+if (ok) {
+  await frame!.waitForFunction(() => !!(globalThis as any).__demo, { timeout: 10000 }).catch(() => undefined);
+  const left = await frame!.evaluate(() => (globalThis as any).__demo?.untranslated?.() ?? ['(no __demo)']).catch(() => ['(not ready)']);
+  if (left.length) errors.push(`seed texts not said in English: ${left.slice(0, Number(process.env.SHOW_LEFT ?? 8)).join(' | ')}${left.length > 8 ? ` … (${left.length})` : ''}`);
+}
 /** Chooses Turkish in the bar; the demo starts over with its sample data written in Turkish. */
 async function chooseTurkish(f: NonNullable<typeof frame>, who: string) {
-  const first = await f.evaluate(() => ({ pressed: document.querySelector('.demobar__lang button[aria-pressed="true"]')?.textContent, nav: document.querySelector('.sidebar')?.textContent ?? '' }));
-  if (first.pressed !== 'EN' || !first.nav.includes('Renewals') || first.nav.includes('Yenilemeler')) errors.push(`${who}: the demo does not open in English (${first.pressed})`);
-  await f.evaluate(() => (document.querySelector('.demobar__lang button[lang="tr"]') as HTMLButtonElement).click());
+  const first = await f.evaluate(() => ({ chosen: (document.querySelector('.demobar__lang select') as HTMLSelectElement | null)?.value, nav: document.querySelector('.sidebar')?.textContent ?? '' }));
+  if (first.chosen !== 'en' || !first.nav.includes('Renewals') || first.nav.includes('Yenilemeler')) errors.push(`${who}: the demo does not open in English (${first.chosen})`);
+  await f.select('.demobar__lang select', 'tr');
   await f.waitForFunction(() => !document.getElementById('boot') && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push(`${who}: choosing Turkish did not give a Turkish demo`));
 }
 if (ok) await chooseTurkish(frame!, 'desktop');
+// Every language the demo company is written in: Arabic here, right to left, its own data, nothing left in Turkish.
+if (ok) {
+  const tl = Date.now();
+  await frame!.select('.demobar__lang select', 'ar');
+  await frame!.waitForFunction(() => !document.getElementById('boot') && document.documentElement.dir === 'rtl' && (document.querySelector('.sidebar')?.textContent ?? '').includes('العملاء'), { timeout: 60000 }).catch(() => errors.push('choosing Arabic did not give an Arabic demo'));
+  await frame!.waitForFunction(() => !!(globalThis as any).__demo, { timeout: 10000 }).catch(() => undefined);
+  const seen = await frame!.evaluate(() => ({ left: (globalThis as any).__demo?.untranslated?.() ?? ['?'], bar: document.querySelector('.demobar__tours')?.textContent ?? '', who: document.querySelector('.sidebar')?.textContent ?? '' })).catch(() => ({ left: ['?'], bar: '', who: '' }));
+  if (seen.left.length) errors.push(`Arabic demo: seed texts left unsaid: ${seen.left.slice(0, 5).join(' | ')}`);
+  if (seen.bar !== 'كل الجولات') errors.push(`Arabic demo: the bar is not in Arabic (${seen.bar})`);
+  if (/Demo Company|Quillfield|Velto/.test(seen.who)) errors.push('Arabic demo: English names in the sidebar');
+  console.log(`arabic demo ready in ${Date.now() - tl} ms`);
+  await frame!.select('.demobar__lang select', 'tr');
+  await frame!.waitForFunction(() => !document.getElementById('boot') && document.documentElement.dir === 'ltr' && (document.querySelector('.sidebar')?.textContent ?? '').includes('Yenilemeler'), { timeout: 60000 }).catch(() => errors.push('back to Turkish did not work'));
+}
 console.log('money:', await frame!.$$eval('.pane', (els) => els.slice(1, 2).map((e) => e.textContent?.slice(0, 40))).catch(() => '?'));
 const step = await frame!.$eval('#boot-step', (e) => e.textContent).catch(() => null);
 if (step) console.log('boot text:', step);
@@ -116,15 +136,29 @@ if (ok && !process.env.QUICK) {
   await click('.navlink', 'Zaman çizelgesi');
   await frame!.waitForSelector('.gantt__bar', { timeout: 10000 }).catch(() => errors.push('the timeline is empty'));
   await page.screenshot({ path: join(SCREENS, 'demo-timeline.png') });
+  // The inbox has what the last working days left there, some of it unread.
   await click('.navlink', 'Gelen kutusu');
-  await frame!.waitForSelector('.inbox__item, .emptystate', { timeout: 10000 }).catch(() => errors.push('the inbox did not open'));
+  await frame!.waitForSelector('.inbox__item', { timeout: 10000 }).catch(() => errors.push('the inbox is empty'));
+  const inbox = await frame!.evaluate(() => ({ all: document.querySelectorAll('.inbox__item').length, unread: document.querySelectorAll('.inbox__item[data-unread]').length }));
+  if (inbox.all < 6 || !inbox.unread || inbox.unread === inbox.all) errors.push(`the inbox shows ${inbox.all} items, ${inbox.unread} unread`);
+  await page.screenshot({ path: join(SCREENS, 'demo-inbox.png') });
+  // The product team's board: a running sprint whose burndown shows the scope it took on halfway.
+  await click('.navlink--board', 'Ürün geliştirme');
+  await frame!.waitForSelector('.board, .column', { timeout: 10000 }).catch(() => undefined);
+  await click('.seg button, button', 'Sprintler');
+  await frame!.waitForSelector('.pm-bd__scope', { timeout: 10000 }).catch(() => errors.push('the product board shows no burndown with a scope change'));
+  await page.screenshot({ path: join(SCREENS, 'demo-sprint.png') });
   await click('.navlink', 'Tüm müşteriler');
   await new Promise((r) => setTimeout(r, 800));
   await page.screenshot({ path: join(SCREENS, 'demo-accounts.png') });
-  // A customer: the timeline and the score's reasons.
+  // A customer: it opens on its overview; the timeline is a tab of its own (?tab=timeline). Then the score's reasons.
   await click('a', 'Velto Mobility');
+  await frame!.waitForSelector('#acc-tab-timeline', { timeout: 10000 });
+  await click('#acc-tab-timeline');
+  await frame!.waitForFunction(() => String((globalThis as any).appLocation?.search ?? '').includes('tab=timeline'), { timeout: 10000 }).catch(() => errors.push('the timeline tab does not keep its place in the address'));
   await frame!.waitForSelector('.tl__item', { timeout: 10000 });
-  await click('.healthline button');
+  // The score sits in the band at the top of the page, with "Why?" beside it.
+  await click('.acc-tile__why, .healthline button');
   await frame!.waitForSelector('.healthwhy li', { timeout: 10000 });
   await page.screenshot({ path: join(SCREENS, 'demo-account.png') });
   const reasons = await frame!.$$eval('.healthwhy li', (els) => els.length);
@@ -200,10 +234,19 @@ if (ok && !process.env.QUICK) {
     await frame!.waitForSelector('.card', { timeout: 10000 });
     const cardsBefore = await frame!.$$eval('.card', (els) => els.length);
     const open = async () => {
-      await (await frame!.$('.card'))!.click();
-      await frame!.waitForSelector('button[aria-label="Görevi sil"]', { timeout: 10000 });
+      // The board redraws when the undo brings a card back: a card found a moment ago may be gone.
+      for (let i = 0; ; i++) {
+        try {
+          await frame!.click('.card');
+          await frame!.waitForSelector('button[aria-label="Görevi sil"]', { timeout: 3000 });
+          break;
+        } catch (e) {
+          if (i >= 3) throw e;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+      // No question first: the deleted task goes to the trash with a way back in the toast.
       await frame!.click('button[aria-label="Görevi sil"]');
-      await click('.dialog .btn--danger', 'Sil');
       await frame!.waitForFunction(() => [...document.querySelectorAll('.toast__text')].some((e) => e.textContent?.includes('Çöp kutusuna taşındı')), { timeout: 10000 });
     };
     try {

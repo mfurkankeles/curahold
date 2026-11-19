@@ -8,6 +8,14 @@ summary: Customer fields, stakeholders, opportunities, importing and exporting.
 
 Customers are at the centre of Curahold. Each has an owner, an optional team and fields of your own.
 
+![The customer list in the Cards view: who needs attention first, each with its reason](img/customers.webp)
+
+## A customer's page
+
+At the top of a customer's page, a band to read at a glance: **Health** with its reason and a **Why?** button, the renewal date and the days left, the annual value, and the **Next promise**: the nearest step you promised the customer, and who holds it. Under the band, tabs: **Overview** (open tasks and upcoming meetings), **Timeline**, **Stakeholders**, **Records** and **Details**. The open tab stays in the address, so a reload or a link you send comes back to it.
+
+![A customer's page: health, renewal, value and the next promise on top, the tabs below](img/customer.webp)
+
 ## Fields
 
 Add fields in Settings → Customer fields: text, number, money, date, choice, email, link. Choice options can have a colour, so a field like health shows up in that colour in lists and cards.
@@ -33,7 +41,7 @@ Switch between four views with the buttons at the top of the Customers page; you
 - **Renewals:** the next 12 months of renewals, month by month, with each month's total and how much of it is at risk or worth watching.
 - **Products:** who has which product, by a choice field of a record type (for example "Subscription → Product"). The **+** in an empty cell opens a cross-sell task for that customer.
 
-The sentence at the top says how many customers need attention and how much value is at risk; the "need attention" link narrows the list to them.
+The sentence at the top says how many customers need attention and how much value is at risk; the "need attention" link narrows the list to them. On a phone the filters are together on one **Filter** sheet.
 
 ## Importing
 
@@ -45,15 +53,15 @@ Download customer and record lists, with the filter you have on, as Excel or CSV
 
 ## Changing many at once
 
-Select several customers in the list and change their owner, team or a field together. The change can be undone for 30 minutes.
+Select several customers in the list and change their owner, team or a field together. The notice at the bottom offers **Undo**.
 
 ## Deleting a customer, and getting a deleted customer back
 
 A deleted customer goes to the [trash](/docs/en/trash/) with its records, timeline, meetings and portal people, and can be put back for 30 days: choose **Undo** in the notice right after deleting, or open your menu, choose **Trash** and then **Put back**. Its tasks stay on their boards without a customer, and point at it again when it comes back. To keep a customer out of the way without deleting it, archive it.
 
-## Plans
+## Playbooks
 
-A **plan** is a set of dated tasks put on a customer in one click: onboarding, renewal prep, a QBR. An admin writes it once (task title, how many days after the start, for whom); on a customer's page **Apply a plan** lets you pick the start day and add them all. `{account_name}` in a title becomes the customer's name.
+A **playbook** is a set of dated tasks put on a customer in one click: onboarding, renewal prep, a QBR. An admin writes it once in Settings → **Playbooks** (task title, how many days after the start, for whom); on a customer's page **Apply a playbook** lets you pick the start day and add them all. `{account_name}` in a title becomes the customer's name.
 
 ## Business reviews
 

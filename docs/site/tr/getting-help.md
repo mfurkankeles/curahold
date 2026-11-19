@@ -10,7 +10,7 @@ summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Curahold dest
 
 ## Önce sor
 
-Her ekranın sağ altındaki **CuraAI**'yı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Türkçe ve İngilizce çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
+Her ekranın sağ altındaki **CuraAI**'yı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Bu belgelerin yazıldığı dillerde çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
 
 Cevap işini görmediyse söyle: en yakın diğer yerleri ve sorun hazır yazılmış halde desteğe yazma düğmesini görürsün.
 
@@ -67,10 +67,10 @@ Bazı sorunları görmeden çözmek zordur. Formun sonundaki **Curahold desteği
 
 - **Ne görür**: Destek, tam olarak senin gördüğünü görür: aynı müşteriler, aynı panolar, aynı alanlar. Fazlasını değil.
 - **Ne kadar**: 24 saat, 3 gün ya da 7 gün. Süre dolunca erişim kendiliğinden kapanır. Destek bir girişte en fazla 8 saat kalır.
-- **Ne yapabilir**: Varsayılan olarak **yalnızca bakar**. **Değişiklik de yapabilir** iznini yalnızca yöneticiler verebilir.
+- **Ne yapabilir**: **yalnızca bakar**. Destek hesabında hiçbir şeyi değiştirmez.
 - **Hiç dokunamadıkları**: Cihazların ve oturumların, API anahtarları, uygulama ve webhook ayarları, kişi davet etme, roller, şirket ayarları, veri dışa aktarma ve silme. Destek kendi erişimini de uzatamaz.
 - **Kapatmak**: İstediğin an **Yardım → Taleplerim → Erişimi kapat**. Açık bir destek oturumu da hemen sona erer. Erişim açıkken sayfanın üstünde bir şerit bunu hatırlatır.
-- **Kayıt**: Desteğin her girişi ve izinle yaptığı her değişiklik, destek çalışanının adıyla birlikte **Ayarlar → Etkinlik kaydı**'na yazılır.
+- **Kayıt**: Desteğin her girişi ve bu sırada okuduğu her şey, destek çalışanının adıyla birlikte **Ayarlar → Etkinlik kaydı**'na yazılır.
 
 Destek içerideyken ekranın üstünde kimin baktığını ve ne zamana kadar baktığını gösteren bir şerit görünür.
 
