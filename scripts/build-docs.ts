@@ -231,9 +231,11 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
       image({ href, text }: Tokens.Image) {
         const m = /^img\/([\w-]+\.webp)$/.exec(href);
         if (!m) throw new Error(`${from}/${file}: pictures are img/<name>.webp (got ${href})`);
-        const size = webpSize(join(SRC, from, 'img', m[1]));
+        // A language whose screens are not taken yet (hi, ms) shows the English picture.
+        const pic = existsSync(join(SRC, from, 'img', m[1])) ? from : 'en';
+        const size = webpSize(join(SRC, pic, 'img', m[1]));
         if (!size) throw new Error(`${from}/${file}: ${href} is missing; take it with scripts/docs/shots.ts`);
-        return `<img class="shot" src="/docs/${from}/img/${m[1]}" width="${size[0]}" height="${size[1]}" alt="${esc(text)}" loading="lazy" decoding="async">`;
+        return `<img class="shot" src="/docs/${pic}/img/${m[1]}" width="${size[0]}" height="${size[1]}" alt="${esc(text)}" loading="lazy" decoding="async">`;
       },
       table(token: Tokens.Table) {
         const head = token.header.map((c) => `<th>${this.parser.parseInline(c.tokens)}</th>`).join('');
