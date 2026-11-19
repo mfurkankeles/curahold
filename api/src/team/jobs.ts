@@ -6,12 +6,10 @@ import type { Deps } from '../context';
 import { LADDER } from '../../../shared/src/team/orgChart';
 import { goldenTasks } from '../../../shared/src/team/golden';
 import { seatPolicy } from './policy';
+import { cardText, JOB_WORDS } from '../../../shared/src/i18n/ownerTeam';
 
 type Lang = 'tr' | 'en';
-const W = {
-  tr: { mission: 'Misyon', does: 'Sorumluluklar', kpis: 'Başarı ölçütleri', inputs: 'Girdiler', outputs: 'Çıktılar', access: 'Erişimler (en az yetki)', reports: 'Bağlı olduğu kişi', level: 'Kademe', rules: 'Çalışma kuralları', kit: 'Mülakat seti', sample: 'Örnek iş (altın görev)', ask: 'Soru', ceo: 'CEO', gate: 'Dışarıya etkisi olan her iş (canlıya alma, gönderim, harcama, silme, sözleşme) CEO onayıyla yapılır; aynı onay kuyruğu ve şirket kaydı kullanılır.', probe: (r: string) => `"${r}" konusunda son yaptığınız işi anlatın: neyi, nasıl ölçtünüz?` },
-  en: { mission: 'Mission', does: 'Responsibilities', kpis: 'Success measures', inputs: 'Inputs', outputs: 'Outputs', access: 'Access (least privilege)', reports: 'Reports to', level: 'Level', rules: 'Working rules', kit: 'Interview kit', sample: 'Work sample (golden task)', ask: 'Question', ceo: 'CEO', gate: 'Anything with an outside effect (go-live, sending, spending, deleting, contracts) needs the CEO’s approval; the same approval queue and company log are used.', probe: (r: string) => `Tell us about the last time you did "${r}": what did you measure, and how?` },
-};
+const W = JOB_WORDS;
 
 export async function jobDescription(deps: Pick<Deps, 'db'>, seat: string, lang: Lang): Promise<string | null> {
   const p = await deps.db.system((q) => seatPolicy(q, seat));
@@ -27,7 +25,7 @@ export async function jobDescription(deps: Pick<Deps, 'db'>, seat: string, lang:
     `${w.reports}: ${p.reportsTo ?? w.ceo}`,
     '',
     `## ${w.mission}`,
-    lang === 'tr' ? c.missionTr || c.mission : c.mission,
+    cardText(lang, { tr: c.missionTr }, c.mission),
     '',
     `## ${w.does}`,
     list(c.responsibilities),

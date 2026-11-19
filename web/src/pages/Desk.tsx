@@ -32,6 +32,7 @@ import {
   type OwnerSection,
 } from './OwnerConsole';
 import { OWNER_LOCALES } from '../../../shared/src/i18n/owner';
+import { ChatSection, MeetingsSection, TeamSection, useTeamWords, type TeamGo } from './OwnerTeam';
 import '../surfaces/console.css';
 import { formatDate } from '../lib/format';
 
@@ -265,7 +266,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
   );
 }
 
-type Section = 'today' | 'customers' | 'support' | Exclude<OwnerSection, 'today'>;
+type Section = 'today' | 'customers' | 'support' | Exclude<OwnerSection, 'today'> | 'team' | 'chats' | 'meetings';
 interface Where {
   section: Section;
   /** the open trial request (requests) */
@@ -287,6 +288,10 @@ const OWNER_PATHS: Record<string, Section> = {
   '/support-overview': 'supportview',
   '/system': 'system',
   '/activity': 'activity',
+  // The AI team (OwnerTeam.tsx): ?q= is the open seat, the chat's seat, the open meeting.
+  '/team': 'team',
+  '/chats': 'chats',
+  '/meetings': 'meetings',
 };
 const PATH_OF = Object.fromEntries(Object.entries(OWNER_PATHS).map(([k, v]) => [v, k])) as Record<string, string>;
 function readWhere(): Where {
@@ -553,6 +558,8 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     setWhere(w);
     if (!replace) document.getElementById('console-main')?.focus({ preventScroll: true });
   }, []);
+  const { w: teamWords } = useTeamWords();
+  const teamGo: TeamGo = useCallback((to) => go({ section: to.section, q: to.q ?? null }), [go]);
   const ownerGo: OwnerGo = useCallback((to) => go({ section: to.section as Section, c: to.c ?? null, r: to.r ?? null, q: to.q ?? null }, to.section === where.section && to.section === 'requests'), [go, where.section]);
   // Keys for the command layout: A approvals, R requests, C checklist, O overview (not while typing).
   useEffect(() => {
@@ -620,6 +627,10 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
             {link('supportview', 'lifebuoy', o('nav.support'), me.counts.received)}
             {link('system', 'shield', o('nav.system'))}
             {link('activity', 'history', o('nav.activity'))}
+            <p className="console__group">{teamWords('nav.group')}</p>
+            {link('team', 'people', teamWords('nav.team'))}
+            {link('chats', 'comment', teamWords('nav.chats'))}
+            {link('meetings', 'calendar', teamWords('nav.meetings'))}
           </nav>
         ) : (
           <nav className="console__nav" aria-label={name}>
@@ -655,6 +666,9 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
         {owner && where.section === 'supportview' && <SupportOverviewSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'system' && <SystemSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'activity' && <ActivitySection beat={beat} failed={failed} go={ownerGo} />}
+        {owner && where.section === 'team' && <TeamSection beat={beat} failed={failed} go={teamGo} open={where.q ?? null} />}
+        {owner && where.section === 'chats' && <ChatSection beat={beat} failed={failed} go={teamGo} seatId={where.q ?? null} />}
+        {owner && where.section === 'meetings' && <MeetingsSection beat={beat} failed={failed} go={teamGo} open={where.q ?? null} />}
       </main>
     </div>
   );
