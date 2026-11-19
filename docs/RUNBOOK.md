@@ -59,6 +59,18 @@ First-time setup order (new environment): Supabase EU project -> `npm run migrat
 roles") -> Hyperdrive config (put its id in `wrangler.toml`) -> R2 bucket `curahold-files` -> secrets (`wrangler secret put`,
 list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
 
+## Go-live checklist (once)
+
+1. **Wildcard DNS, right after the domain is bought.** One proxied record, once, and never again per
+   company: `Type: CNAME  Name: *  Target: curahold.com  Proxy: on`. Every company's address
+   (`<slug>.curahold.com`) and its onboarding hub (`/onboarding`) answer from then on; the portal domain
+   gets the same single record. Nothing is added when a company signs up.
+2. **Files from customers have no malware scan yet.** The portal takes files only on requests or tickets
+   shared with the customer and on steps of their onboarding plan; each is checked by ending and first
+   bytes, at most 25 MB, within the company's allowance (Settings → Customer portal), stored privately and
+   only ever served as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). Decide on a
+   scan before go-live (no paid service has been added); until then this is the standing risk.
+
 ## Rollback
 
 - **Code:** Cloudflare keeps previous Worker versions. `npx wrangler rollback` (or the dashboard: Workers > curahold >

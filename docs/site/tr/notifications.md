@@ -45,3 +45,7 @@ Kendin için ikisini birden Ayarların sayfasındaki “Dürtmeler” kutusuyla 
 ## Takvim beslemesi
 
 Ayarların → Takvim'den kişisel bir takvim adresi oluştur ve Google Takvim, Outlook ya da Apple Takvim'e ekle. Bitiş tarihi olan görevlerin takviminde görünür. Adresi yenileyerek eskisini geçersiz kılabilirsin.
+
+## Başlangıç planı hatırlatmaları
+
+Bir başlangıç planında sıra sana geldiğinde ya da bir adımın beklediğinde uygulamada hatırlatılırsın. Bunları e-postayla da almak için **Neler için haber almak istersin** altında **Başlangıç planı hatırlatmaları e-postayla** kutusunu işaretle. Sen açana kadar kapalıdır; sessiz saatler ve sabah özeti geçerlidir.

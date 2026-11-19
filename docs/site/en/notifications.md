@@ -45,3 +45,7 @@ Set quiet hours, for example 19:00–08:30. Notifications in those hours wait an
 ## Calendar feed
 
 In your settings → Calendar, make a personal calendar address and add it to Google Calendar, Outlook or Apple Calendar. Tasks with a due date show up in your calendar. Make a new address to retire the old one.
+
+## Onboarding reminders
+
+When it is your turn on an onboarding plan, or a step of yours stalls, you are reminded in the app. To get these by e-mail too, tick **Onboarding reminders by e-mail** under **What you want to hear about**. It is off until you turn it on; quiet hours and the morning summary apply.

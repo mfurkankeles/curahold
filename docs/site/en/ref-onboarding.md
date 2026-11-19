@@ -16,7 +16,7 @@ An onboarding plan is shared by two sides: `vendor` (Curahold on the company's o
 | --- | --- |
 | `GET /onboarding/self` | The company's own getting-started plan. |
 | `GET /onboarding/self/summary` | Only the headline of that plan: weighted completion and the next step. |
-| `GET /onboarding/settings` | The company's onboarding settings: open a draft plan when a deal is won (`fromHandover`), the template a hand-over uses (`templateId`), reminders by e-mail too (`emailNudges`, off unless switched on). |
+| `GET /onboarding/settings` | The company's onboarding settings: open a draft plan when a deal is won (`fromHandover`, off until switched on), the template it opens (`templateId`: a template's id, a built-in key, or `ask` to choose each time), and optional rules (`rules`: a customer field and value → a template, first match wins). |
 | `PUT /onboarding/settings` | Changes those settings (whoever may change company settings). |
 | `GET /onboarding-plans` | Every customer plan you may see, with progress, waiting days and stall flags. |
 | `POST /onboarding-plans` | Opens a plan for a customer (`accountId`) from a template (`templateId`: a template id or a built-in key; the company's default otherwise). |
@@ -30,6 +30,9 @@ An onboarding plan is shared by two sides: `vendor` (Curahold on the company's o
 | `POST /onboarding-plans/:id/steps` | Adds a step of your own (`title`, `phase`, `side`, optionally `dueOn`, `after`, `required`). |
 | `PATCH /onboarding-steps/:id` | Changes a step: status, owner (`ownerId`) or the customer's person (`personId`), dates, delay reason, words, required. |
 | `DELETE /onboarding-steps/:id` | Deletes a step; steps that waited for it no longer do. |
+| `PUT /onboarding-plans/:id/phases` | The plan's phases in order (`phases`: `key` and `name`; leave `key` out for a new one, which then needs a name). |
+| `PUT /onboarding-plans/:id/steps/order` | Puts steps in a phase in this order (`phase`, `ids`); a step from another phase moves into it. |
+| `POST /onboarding-plans/:id/template` | A won customer's draft that waits for its template (`ask`): makes it again from the template chosen (`templateId`). |
 | `POST /onboarding-steps/:id/answer` | A step's short form: `values` for the customer fields the step names are written to the customer's record, then the step is done. |
 | `POST /onboarding-steps/:id/files` | Adds a file to a step (multipart `file`); it is a file like any other and downloads from `GET /files/:id`. |
 | `POST /onboarding-steps/:id/request` | The step waits for product work: links it to a story (`storyId`) as one more customer request, which Product's backlog counts. |
@@ -67,7 +70,7 @@ Only the headline of that plan: weighted completion and the next step.
 
 ### `GET /onboarding/settings`
 
-The company's onboarding settings: open a draft plan when a deal is won (`fromHandover`), the template a hand-over uses (`templateId`), reminders by e-mail too (`emailNudges`, off unless switched on).
+The company's onboarding settings: open a draft plan when a deal is won (`fromHandover`, off until switched on), the template it opens (`templateId`: a template's id, a built-in key, or `ask` to choose each time), and optional rules (`rules`: a customer field and value → a template, first match wins). Reminders by e-mail are each person's own choice (`prefs.events.onboarding`).
 
 ### `PUT /onboarding/settings`
 
@@ -79,7 +82,7 @@ Changes those settings (whoever may change company settings).
 | --- | --- | --- | --- |
 | `fromHandover` | yes/no | optional |  |
 | `templateId` | text | optional | at most 60 characters; may be null |
-| `emailNudges` | yes/no | optional |  |
+| `rules` | list of object | optional | at most MAX_TEMPLATE_RULES items |
 
 ### `GET /onboarding-plans`
 
@@ -157,7 +160,7 @@ Adds a step of your own (`title`, `phase`, `side`, optionally `dueOn`, `after`, 
 | --- | --- | --- | --- |
 | `title` | text | required | at least 1 characters; at most 200 characters |
 | `body` | text | optional | at most 2000 characters; default  |
-| `phase` | one of PHASES | required |  |
+| `phase` | text | required |  |
 | `side` | one of vendor \| customer \| both | required |  |
 | `dueOn` | date (YYYY-MM-DD) | optional | may be null |
 | `after` | list of text | optional | at most 10 items; default [] |
@@ -186,6 +189,37 @@ Changes a step: status, owner (`ownerId`) or the customer's person (`personId`),
 Deletes a step; steps that waited for it no longer do.
 
 **Needs:** a seat that can write
+
+### `PUT /onboarding-plans/:id/phases`
+
+The plan's phases in order (`phases`: `key` and `name`; leave `key` out for a new one, which then needs a name). Renames, reorders, adds or removes phases of this plan only, never its template. A phase that still has steps cannot be removed (`409`).
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `phases` | list of object | required | at least 1 items; at most MAX_PHASES items |
+
+### `PUT /onboarding-plans/:id/steps/order`
+
+Puts steps in a phase in this order (`phase`, `ids`); a step from another phase moves into it.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `phase` | text | required |  |
+| `ids` | list of id | required | at least 1 items; at most 200 items |
+
+### `POST /onboarding-plans/:id/template`
+
+A won customer's draft that waits for its template (`ask`): makes it again from the template chosen (`templateId`). Answers with the new plan.
+
+**Needs:** a seat that can write
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `templateId` | text | required | at least 1 characters; at most 60 characters |
 
 ### `POST /onboarding-steps/:id/answer`
 

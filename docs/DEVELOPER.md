@@ -417,7 +417,7 @@ One mutual plan, used two ways (migration `0200_onboarding.sql`, `shared/src/onb
 
 **Where it lives.** Every company already has its own host, `<slug>.<BASE_DOMAIN>`; the hub is the app
 route `/onboarding` there, served by the existing wildcard route in `wrangler.toml`
-(`*.curahold.com/*`). Go-live needs one proxied wildcard DNS record — nothing new to deploy:
+(`*.curahold.com/*`). Go-live needs one proxied wildcard DNS record, set once right after the domain is bought (RUNBOOK, "Go-live checklist") — nothing new to deploy:
 
 ```text
 Type: CNAME   Name: *   Target: curahold.com   Proxy: on
@@ -455,8 +455,26 @@ Product's backlog; a finished plan is one more `handovers` card (`source_kind = 
 step's form writes to the customer's own `accounts.fields`; a step's file is a `files` row
 (`onboarding_step_id`).
 
-**Reminders** are in the app only (`notify` kind `onboarding`). `orgs.settings.onboarding.emailNudges`
-switches the e-mail copy on (kind `onboarding_mail`), off by default and never to customers.
+**Reminders** always appear in the app (`notify` kind `onboarding_mail`). Whether one also goes by e-mail
+or chat is each person's own choice (`prefs.events.onboarding`, off by default); quiet hours hold it and,
+when the person batches, it waits for the morning summary. Never to customers.
+
+**Won deals.** `orgs.settings.onboarding` (`OnboardingSettings` in the shared file): `fromHandover` (off
+until an administrator turns it on), `templateId` (a template, a built-in key, or `ask`) and `rules`
+(customer field + value → template, first match wins; `templateFor`). `ask` opens an empty draft;
+`POST /onboarding-plans/:id/template` makes it again from the template chosen.
+
+**A plan made its own.** `onboarding_plans.phases` (migration 0210) keeps a plan's phases in order with
+their own names; empty means the built-in phases its steps use. Step phases are any short key (`ph1`…).
+`phaseOrder` resolves the order, `phaseLabel` the name, and the server sets `phaseAt` on each step so
+`ordered`/`milestones` follow it. `PUT …/phases` and `PUT …/steps/order` change this plan only;
+"save as template" (`fromPlan`) carries the phases into the template's blueprint.
+
+**Files from the portal.** `POST /papi/onboarding-steps/:id/files` (`portal_onboarding_add_file`, a step
+on the customer's side or one that asks for a file) and the request/reply files of 0082 share one check:
+the endings in `PORTAL_FILE_ENDINGS`, first bytes, `PORTAL_FILE_MB` per file and the company's
+`settings.portal.uploadQuotaMb` (default `PORTAL_QUOTA_MB`). They show on the customer's timeline
+(`portal_file`). No malware scan yet (RUNBOOK, go-live checklist).
 
 **Adding a signal:** an entry in `SIGNALS`, its fact in `lib/onboarding.ts` (`companyFacts`,
 `customerFacts` or `planFacts`), `ob.signal.<id>` in the nine dictionaries, and a test in

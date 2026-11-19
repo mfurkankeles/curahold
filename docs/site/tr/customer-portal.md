@@ -65,6 +65,14 @@ Portal ayrı bir alan adında çalışır; uygulamanın oturumu, çerezleri ve A
 - Müşterinin yazdıkları "Müşteri" etiketiyle görünür ve görevin sorumlusuna bildirim olarak gelir.
 - Bir görevin müşterisi değiştirilirse paylaşım kendiliğinden kalkar; bir müşterinin konuşması başka bir müşteriye asla geçmez.
 
+## Müşterilerden gelen dosyalar
+
+Müşteriler yalnızca kendileriyle paylaşılan isteklere ve taleplere, bir de başlangıç planlarının adımlarına dosya gönderebilir. Başka hiçbir yere değil.
+
+- Belge, resim, tablo, CSV, PDF ve ZIP; her biri en fazla 25 MB. Her dosya türüne ve ilk baytlarına göre denetlenir ve her zaman indirilerek açılır.
+- Müşterilerin toplamda ne kadar gönderebileceğini Ayarlar → **Müşteri portalı** → **Müşterilerden gelen dosyalar**'dan belirlersin (değiştirmezsen 2.048 MB). Dolunca müşteriye dosyayı başka yolla göndermesi söylenir.
+- Müşterinin gönderdiği her dosya o müşterinin zaman çizelgesinde görünür.
+
 ## Sınırlar
 
 Bir kişi günde en fazla 30 talep ve 200 yanıt yazabilir.

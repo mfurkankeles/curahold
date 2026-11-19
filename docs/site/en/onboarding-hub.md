@@ -70,6 +70,25 @@ Click **Onboarding plans** under Customers. When a deal is won, a draft plan ope
 
 Your customer sees the same plan in your portal, in your colours: they tick their own steps, fill in short forms that go straight to their record, check their data rows and raise issues. When it is done, click **Finish and hand over**: the health score is kept as a baseline and Customer Success gets a hand-over card.
 
+## 9. Make a customer's plan your own {#personal}
+
+Each customer's plan is its own copy: change it without touching the template.
+
+1. In the plan's **Steps**, click **Edit plan**.
+2. Rename a phase in its box, move it with the arrows, or add one with **Add phase**. A phase with steps in it cannot be removed: move or remove its steps first.
+3. Rename a step in its box, move it with the arrows, pick another phase for it, or remove it.
+4. Click **Done editing**. To use this plan again, click **Save as template** and give it a name.
+
+## 10. Plans that open by themselves {#won}
+
+An administrator decides, in **Onboarding plans → Templates**, at the bottom:
+
+1. Tick **Open an onboarding plan when a deal is won**. It is off until you turn it on.
+2. Pick the template it opens, or **Ask each time**: the draft then asks whoever takes the customer to choose.
+3. Optional: add rules by segment, plan or region (any customer field). The first rule the customer matches picks the template.
+
+Reminders always appear in the app. Each person decides in their own notification settings whether they also get them by e-mail.
+
 ## On a phone
 
 The same page, one column: the next thing first.

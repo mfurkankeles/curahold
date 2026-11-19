@@ -65,6 +65,14 @@ In **Settings → Customer portal → How customers sign in**, choose the ways t
 - What customers write shows with a "Customer" label and reaches the task's assignees as a notification.
 - When a task's customer changes, sharing is switched off on its own: one customer's conversation never moves to another.
 
+## Files from customers
+
+Customers can send files only to requests and tickets shared with them, and to steps of their onboarding plan. Nowhere else.
+
+- Documents, pictures, spreadsheets, CSV, PDF and ZIP, up to 25 MB each. Each file is checked by its type and first bytes, and always opens as a download.
+- What your customers can send in all is set in Settings → **Customer portal** → **Files from customers** (2,048 MB unless you change it). When it is full, they are told to send the file another way.
+- Every file a customer sends shows on that customer's timeline.
+
 ## Limits
 
 Each person can open up to 30 requests and write 200 replies a day.

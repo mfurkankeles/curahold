@@ -32,7 +32,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `plan_no_date` | 400 | Bu playbook yenileme ya da kapanış tarihine göre tarihleniyor; başlanacak bir tarih yok. |
 | `portal_bad_code` | 400 | Kod yanlış ya da süresi dolmuş. Yenisini iste. |
 | `portal_bad_password` | 400 | E-posta ya da şifre yanlış. |
-| `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, metin ve CSV dosyaları eklenebilir. |
+| `portal_file_type` | 400 | … eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, OpenDocument, metin, CSV ve ZIP dosyaları eklenebilir. |
 | `portal_internal_email` | 400 | Bu adres şirketindeki birine ait. Portal müşteriler içindir. |
 | `portal_method_off` | 400 | Bu giriş yolu kapalı. |
 | `portal_no_method` | 400 | En az bir giriş yolu açık kalmalı: e-posta, Google, Microsoft ya da şifre. |
@@ -95,6 +95,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `export_too_large` | 413 | Bir dosyaya en fazla … satır sığar. Listeyi bir filtreyle daralt, sonra yeniden dışa aktar. |
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
+| `portal_quota` | 413 | Sağlayıcınızın dosya alanı dolu. Dosyayı başka bir yolla gönderin ya da yer açmalarını isteyin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |
 | `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden dene. |
 | `portal_locked` | 429 | Çok fazla yanlış deneme oldu. … dakika sonra tekrar dene ya da şifreni yenile. |

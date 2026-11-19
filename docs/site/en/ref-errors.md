@@ -32,7 +32,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `plan_no_date` | 400 | This playbook is dated from a renewal or a close date, and there is none to start from. |
 | `portal_bad_code` | 400 | That code is wrong or has run out. Ask for a new one. |
 | `portal_bad_password` | 400 | Wrong email or password. |
-| `portal_file_type` | 400 | … can't be attached. Pictures, PDF, Word, Excel, PowerPoint, text and CSV files can. |
+| `portal_file_type` | 400 | … can't be attached. Pictures, PDF, Word, Excel, PowerPoint, OpenDocument, text, CSV and ZIP files can. |
 | `portal_internal_email` | 400 | That address belongs to someone in your company. The portal is for customers. |
 | `portal_method_off` | 400 | This way of signing in is switched off. |
 | `portal_no_method` | 400 | Leave at least one way of signing in: email, Google, Microsoft or password. |
@@ -95,6 +95,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `export_too_large` | 413 | One file holds up to … rows. Narrow the list with a filter, then export again. |
 | `file_too_large` | 413 | Files can be up to … MB. |
 | `import_too_large` | 413 | Import up to … rows at a time. |
+| `portal_quota` | 413 | Your provider's storage for files is full. Please send the file another way, or ask them to make room. |
 | `repeat_mismatch` | 422 | This request was sent with a key that already belongs to a different change. Nothing was changed. |
 | `analytics_budget` | 429 | Today's analytics budget of … rows is used up. Try again later. |
 | `portal_locked` | 429 | Too many wrong tries. Try again in … minutes, or reset your password. |

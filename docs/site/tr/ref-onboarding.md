@@ -16,7 +16,7 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | --- | --- |
 | `GET /onboarding/self` | Şirketin kendi başlangıç planı. |
 | `GET /onboarding/self/summary` | O planın yalnızca başlığı: ağırlıklı tamamlanma ve sıradaki adım. |
-| `GET /onboarding/settings` | Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`), devrin kullandığı şablon (`templateId`), hatırlatmalar e-postayla da (`emailNudges`; açılmadıkça kapalı). |
+| `GET /onboarding/settings` | Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). |
 | `PUT /onboarding/settings` | Bu ayarları değiştirir (şirket ayarlarını değiştirebilen kişi). |
 | `GET /onboarding-plans` | Görebildiğin tüm müşteri planları; ilerleme, bekleme günleri ve takılma işaretleriyle. |
 | `POST /onboarding-plans` | Bir müşteri (`accountId`) için şablondan plan açar (`templateId`: şablon kimliği ya da yerleşik anahtar; yoksa şirketin varsayılanı). |
@@ -30,6 +30,9 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | `POST /onboarding-plans/:id/steps` | Kendi adımınızı ekler (`title`, `phase`, `side`; isteğe bağlı `dueOn`, `after`, `required`). |
 | `PATCH /onboarding-steps/:id` | Bir adımı değiştirir: durum, sorumlu (`ownerId`) ya da müşterinin kişisi (`personId`), tarihler, gecikme nedeni, metin, zorunluluk. |
 | `DELETE /onboarding-steps/:id` | Bir adımı siler; onu bekleyen adımlar artık beklemez. |
+| `PUT /onboarding-plans/:id/phases` | Planın aşamaları sırasıyla (`phases`: `key` ve `name`; yeni bir aşama için `key` verilmez, o zaman adı gerekir). |
+| `PUT /onboarding-plans/:id/steps/order` | Adımları bir aşamada bu sıraya koyar (`phase`, `ids`); başka bir aşamadaki adım bu aşamaya geçer. |
+| `POST /onboarding-plans/:id/template` | Şablonunu bekleyen kazanılmış müşteri taslağı (`ask`): seçilen şablondan (`templateId`) yeniden oluşturur. |
 | `POST /onboarding-steps/:id/answer` | Bir adımın kısa formu: adımın adını verdiği müşteri alanları için `values` müşterinin kaydına yazılır, sonra adım tamamlanır. |
 | `POST /onboarding-steps/:id/files` | Bir adıma dosya ekler (multipart `file`); diğerleri gibi bir dosyadır ve `GET /files/:id` ile indirilir. |
 | `POST /onboarding-steps/:id/request` | Adım ürün işini bekliyor: onu bir işe (`storyId`) bir müşteri isteği daha olarak bağlar; Ürün'ün iş listesi bunu sayar. |
@@ -67,7 +70,7 @@ O planın yalnızca başlığı: ağırlıklı tamamlanma ve sıradaki adım.
 
 ### `GET /onboarding/settings`
 
-Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`), devrin kullandığı şablon (`templateId`), hatırlatmalar e-postayla da (`emailNudges`; açılmadıkça kapalı).
+Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). E-posta hatırlatmaları her kişinin kendi tercihidir (`prefs.events.onboarding`).
 
 ### `PUT /onboarding/settings`
 
@@ -79,7 +82,7 @@ Bu ayarları değiştirir (şirket ayarlarını değiştirebilen kişi).
 | --- | --- | --- | --- |
 | `fromHandover` | evet/hayır | isteğe bağlı |  |
 | `templateId` | metin | isteğe bağlı | en çok 60 karakter; boş (null) olabilir |
-| `emailNudges` | evet/hayır | isteğe bağlı |  |
+| `rules` | nesne listesi | isteğe bağlı | en çok MAX_TEMPLATE_RULES öğe |
 
 ### `GET /onboarding-plans`
 
@@ -157,7 +160,7 @@ Kendi adımınızı ekler (`title`, `phase`, `side`; isteğe bağlı `dueOn`, `a
 | --- | --- | --- | --- |
 | `title` | metin | zorunlu | en az 1 karakter; en çok 200 karakter |
 | `body` | metin | isteğe bağlı | en çok 2000 karakter; default  |
-| `phase` | şunlardan biri: PHASES | zorunlu |  |
+| `phase` | metin | zorunlu |  |
 | `side` | şunlardan biri: vendor \| customer \| both | zorunlu |  |
 | `dueOn` | tarih (YYYY-AA-GG) | isteğe bağlı | boş (null) olabilir |
 | `after` | metin listesi | isteğe bağlı | en çok 10 öğe; varsayılan [] |
@@ -186,6 +189,37 @@ Bir adımı değiştirir: durum, sorumlu (`ownerId`) ya da müşterinin kişisi 
 Bir adımı siler; onu bekleyen adımlar artık beklemez.
 
 **Gerekenler:** yazabilen bir koltuk
+
+### `PUT /onboarding-plans/:id/phases`
+
+Planın aşamaları sırasıyla (`phases`: `key` ve `name`; yeni bir aşama için `key` verilmez, o zaman adı gerekir). Yalnızca bu planın aşamalarını yeniden adlandırır, sıralar, ekler ya da kaldırır; şablonuna dokunmaz. İçinde adım kalan bir aşama kaldırılamaz (`409`).
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `phases` | nesne listesi | zorunlu | en az 1 öğe; en çok MAX_PHASES öğe |
+
+### `PUT /onboarding-plans/:id/steps/order`
+
+Adımları bir aşamada bu sıraya koyar (`phase`, `ids`); başka bir aşamadaki adım bu aşamaya geçer.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `phase` | metin | zorunlu |  |
+| `ids` | kimlik listesi | zorunlu | en az 1 öğe; en çok 200 öğe |
+
+### `POST /onboarding-plans/:id/template`
+
+Şablonunu bekleyen kazanılmış müşteri taslağı (`ask`): seçilen şablondan (`templateId`) yeniden oluşturur. Yeni planı döner.
+
+**Gerekenler:** yazabilen bir koltuk
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `templateId` | metin | zorunlu | en az 1 karakter; en çok 60 karakter |
 
 ### `POST /onboarding-steps/:id/answer`
 

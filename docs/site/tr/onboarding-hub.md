@@ -70,6 +70,25 @@ Müşteriler altında **Ortak planlar**'a tıklayın. Bir fırsat kazanılınca 
 
 Müşteriniz aynı planı portalınızda, sizin renklerinizle görür: kendi adımlarını işaretler, doğrudan kaydına giden kısa formları doldurur, veri satırlarını kontrol eder ve sorun bildirir. Bitince **Bitir ve devret**'e tıklayın: sağlık puanı başlangıç değeri olarak saklanır ve Müşteri Başarısı bir devir kartı alır.
 
+## 9. Müşterinin planını ona göre uyarlayın {#personal}
+
+Her müşterinin planı kendine ait bir kopyadır: şablona dokunmadan değiştirin.
+
+1. Planın **Adımlar** bölümünde **Planı düzenle**'ye tıklayın.
+2. Bir aşamanın adını kutusunda değiştirin, oklarla taşıyın ya da **Aşama ekle** ile yenisini ekleyin. İçinde adım olan aşama kaldırılamaz: önce adımlarını taşıyın ya da kaldırın.
+3. Bir adımın adını kutusunda değiştirin, oklarla taşıyın, başka bir aşamaya alın ya da kaldırın.
+4. **Düzenlemeyi bitir**'e tıklayın. Bu planı yeniden kullanmak için **Şablon olarak kaydet**'e tıklayıp bir ad verin.
+
+## 10. Kendiliğinden açılan planlar {#won}
+
+Bunu bir yönetici, **Ortak planlar → Şablonlar** sayfasının en altında belirler:
+
+1. **Kazanılan satışta onboarding planı aç** kutusunu işaretleyin. Siz açana kadar kapalıdır.
+2. Açılacak şablonu seçin ya da **Her seferinde sor**'u seçin: taslak, müşteriyi devralan kişiye şablonu sorar.
+3. İsteğe bağlı: segmente, pakete ya da bölgeye göre kural ekleyin (herhangi bir müşteri alanı). Müşterinin uyduğu ilk kural şablonu seçer.
+
+Hatırlatmalar her zaman uygulamada görünür. E-postayla da gelip gelmeyeceğine herkes kendi bildirim ayarlarında karar verir.
+
 ## Telefonda
 
 Aynı sayfa, tek sütun: önce sıradaki iş.
