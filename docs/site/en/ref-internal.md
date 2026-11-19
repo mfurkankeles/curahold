@@ -21,6 +21,8 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/connections/…` | 31 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
 | `/desk/…` | 81 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |
+| `/consent-event/…` | 1 | A visitor's cookie choice (no account), recorded as proof of consent: version, text hash, country; sent by the banner. |
+| `/desk/…` | 18 | Curahold support's own queue of help requests and the door for answers by email; open only with Curahold's own keys. |
 | `/help/…` | 7 | Help requests to Curahold support and their conversation, from inside the product. |
 | `/help-files/…` | 1 | Files sent to support. |
 | `/hooks/…` | 3 | Chat apps and calendars calling back. |

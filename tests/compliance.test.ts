@@ -15,6 +15,10 @@ import { COOKIE_PAGE } from '../shared/src/compliance/cookieText';
 import { CONSENT_POLICY_VERSION } from '../shared/src/consent/core';
 import { RULE_SETS, consentSetFor, type Placeholders } from '../shared/src/compliance/consentTexts';
 import { recordAgreement, verifyAgreementChain } from '../api/src/lib/agreementEvidence';
+import { outputs as legalOutputs } from '../scripts/compliance/legal-pack';
+import { SUBPROCESSORS, consentPlaceholders } from '../shared/src/compliance/dataInventory';
+import { SUB_PAGE } from '../shared/src/compliance/subprocessorText';
+import { AGREEMENT_PACK } from '../shared/src/compliance/agreements';
 import { setup, type Env } from './helpers';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -50,6 +54,38 @@ describe('storage inventory (generated from the code)', () => {
     const page = outputs(ROOT).get(join(ROOT, 'docs', 'site', 'en', 'legal-cookies.md'))!;
     expect(page).toContain('Meta pixel');
     expect(page).not.toMatch(/no advertising/i);
+  });
+});
+
+describe('legal pack generated from the data inventory', () => {
+  it('writes the sub-processor pages, the notice tables, the records of processing, the VERBİS sheet and the hashes as committed (run legal-pack.ts)', () => {
+    for (const [path, content] of legalOutputs()) expect(readFileSync(path, 'utf8'), path).toBe(content);
+  });
+
+  it('lists the AI provider and the company mailbox provider, and every sub-processor purpose in nine languages', () => {
+    const ids = SUBPROCESSORS.map((s) => s.id);
+    expect(ids).toContain('anthropic');
+    expect(ids).toContain('googleWorkspace');
+    for (const s of SUBPROCESSORS) for (const l of LOCALES) expect(s.purpose[l], `${s.id} ${l}`).toBeTruthy();
+    for (const l of LOCALES) expect(SUB_PAGE[l].when.ai).toBeTruthy();
+  });
+
+  it('tells the truth: no "never for advertising" claim beside the pixel loaders, no 14-day trial, every contract page in both reviewed languages', () => {
+    for (const lang of ['en', 'tr']) {
+      const privacy = readFileSync(join(ROOT, 'docs', 'site', lang, 'legal-privacy.md'), 'utf8');
+      expect(privacy).not.toMatch(/no advertising or tracking cookies|do not use it for advertising|reklam ya da izleme çerezi yoktur/i);
+      expect(privacy).toMatch(/Meta/);
+      const terms = readFileSync(join(ROOT, 'docs', 'site', lang, 'legal-terms.md'), 'utf8');
+      expect(terms).not.toMatch(/\b14\b.{0,12}(days|gün)/);
+      expect(terms).toMatch(/3 (months|ay)/);
+      for (const d of Object.values(AGREEMENT_PACK)) expect(readFileSync(join(ROOT, 'docs', 'site', lang, `${d.slug}.md`), 'utf8')).toMatch(/lawyer approval required|avukat onayı gerekli/);
+    }
+  });
+
+  it('fills the trial texts from the inventory (countries and providers of the lead data)', () => {
+    const v = consentPlaceholders('en');
+    expect(v.storage_countries).toContain('United States');
+    expect(v.processors).toContain('Cloudflare');
   });
 });
 

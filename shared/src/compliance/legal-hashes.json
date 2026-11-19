@@ -1,0 +1,61 @@
+{
+  "versions": {
+    "terms": "2026-11-19.draft2",
+    "dpa": "2026-11-19.draft2",
+    "sla": "2026-11-19.draft1",
+    "aup": "2026-11-19.draft1",
+    "order_form": "2026-11-19.draft1"
+  },
+  "sha256": {
+    "legal-terms": {
+      "en": "61b61a048f3a9dcfa02cb40bd935c1861db68416de4651b9ad4f6211215e69ab",
+      "tr": "d131e97b03604234b9b444ce9ef59b24e52cd6a05ae6133f40e57393ab64f4b8"
+    },
+    "legal-dpa": {
+      "en": "b43122e69d5c23444baacea646eac07f80384229a6e9a45821b31b4bb9ffbfaf",
+      "tr": "446467d1c1438df091d91890fa9e38c05844c6fa61d4f3860e06bb437ae14369"
+    },
+    "legal-sla": {
+      "en": "d12b6962542080c52bea488e8751b24900966ac1e3ce62972051f13d2ec73f26",
+      "tr": "d8f3a91af25ae83b496379b122ec278c21dc60720dfd95d2003166e67f7bc810"
+    },
+    "legal-aup": {
+      "en": "b8a09de611bbf2a116b47fd28d92b6cd232300261727cd2f2957f7f6addfe1aa",
+      "tr": "2f05058d3e68e5abca73acbada3608517d3b9b450d1fd10c5b7480b164fa92df"
+    },
+    "legal-order-form": {
+      "en": "c85d026676d4045df21644c2e04d1901f5fb31053cf8e69e7c34a899786d5c5b",
+      "tr": "318e6b6b3bcd4b92e3ea411aa6a52050f86003a7bc3bc1c20afb4a7866fd8c41"
+    },
+    "legal-privacy": {
+      "en": "dc79819426610bf9b231626f3d29d58031ad7cc1dbb39acc39473826dd23cd27",
+      "tr": "6d9b500b0b27fb50dc00adf9536a756299f8fdd661a40f0145c379b4955acf2d"
+    },
+    "legal-kvkk": {
+      "en": "f70393e1f60675f04c9a2c4d0b889145c5af254a1992133b22df3fb9b71b47c2",
+      "tr": "8201f4585f836e700841c1749789cf19365129257935165860bb2aec8b6962bb"
+    },
+    "legal-cookies": {
+      "en": "878face082d3e3b39c50437718a9ccb610f23dc5e1eb6f1d728d92ded29c3c78",
+      "tr": "940910490c2571619c75a28e3cc6c9264ab7ec7b90ab16a6050ac30282cec8b6",
+      "ar": "6d3ed46e43b2bb23f8a212bafac6ce3d3c886b6f6826629bf1b4d6205192e906",
+      "he": "04b56ffc2e5679f8601fbe24dbdc8aac5425cb4fabbab74df01190c738a2d492",
+      "fa": "6480e01af75057b74a78542805493de5ad6d121f795a06b3a5a08a6c806ed7d5",
+      "zh-Hans": "988702c9910778552682729eefaa17f41c54090ed5cae837e1f634eeeba6c20b",
+      "zh-Hant": "6d166c98745239ae3fb670f34c75d49e24c52cd132c19cee26b62037b9fbe2f9",
+      "ja": "1f0a8cdc48de036f3c5e2d41042b88bd44986a59f434119d3b2534091e5b0450",
+      "ko": "6bbe560c18c785e10058488ce19870af2686eb2851763fcee4501bc6370d6740"
+    },
+    "legal-subprocessors": {
+      "en": "e4fb28f4fd07fa6f7c0fdf5220bb87324eab1e668a836a00dca2a6706ca242f5",
+      "tr": "00fb17021e04f85700d5370a6e5991547139dece463d54ababdf239c77204272",
+      "ar": "f5ec37b5e7f7bd8aaa1147a53c01a682bb0f26b5f40e0d16e276f5ae8a4517b7",
+      "he": "e0e5149953b5dddd7772976fc0e3877816e126ee1937bef2e1a28bcb590f05bd",
+      "fa": "d1b9cb1d444af11346e4de984cfc07ce6c7403484cd264c21c4d0e70637c36ec",
+      "zh-Hans": "9d4366c7f451fa2c01e6c4619c32a72e6461ddda42f17b231ac36ac466be0de8",
+      "zh-Hant": "a0a47f725c0ae64adab579664e0683b38899a8fa2fdfdc6967b283144d0f85d7",
+      "ja": "c645a7af45baeca46da4851202d9241a614cc598688ff41765820ac068cdc035",
+      "ko": "7563a671084158a2b84e51cafcdebfcb6d848a440ece4c75a0f96e22c678fbb2"
+    }
+  }
+}
