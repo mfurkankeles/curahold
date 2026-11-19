@@ -113,6 +113,22 @@ Nango ayda $50 + bağlantı başına $1. 100 müşteride Merge ayda yaklaşık $
 eder. "Yeni ücretli servis yok" ve "en yüksek brüt marj" kurallarına aykırı;
 üstelik müşteri verisi bir aracıdan geçer.
 
+## Muhasebe programları (salt okunur, 19 Kasım 2026)
+
+Kod: `api/src/sync/adapters/accounting/` (adaptör başına bir dosya), `api/src/sync/accountingsync.ts` (okuma, eşleştirme, hız), `api/src/routes/finance.ts`, `shared/src/accounting.ts`, göç `db/migrations/0130_accounting.sql`. Hiçbir adaptör yazmaz: `update`/`create` her zaman hata verir. Testler kaydedilmiş cevaplarla (`tests/accounting.test.ts`), canlı çağrı yok.
+
+| Program | Bağlantı | Sunucuda gereken | Hız / kota (koddaki değer) | Canlıdan önce doğrulanacak |
+| --- | --- | --- | --- | --- |
+| Zoho Books | OAuth (Zoho CRM ile aynı uygulama kaydı) | `ZOHO_CLIENT_ID/SECRET`; Zoho konsolunda `ZohoBooks.*.READ` kapsamları | 90/dk, 950/gün | `last_modified_time` süzgecinin biçimi; BAE veri merkezi |
+| Xero | OAuth + PKCE | `XERO_CLIENT_ID/SECRET` | 55/dk, 950/gün (ücretsiz katman 1.000) | Yeni uygulamalarda ince kapsamlar (`accounting.invoices.read` vb.); 5'ten fazla bağlantıda ücretli plan |
+| Odoo | Adres + kullanıcı + API anahtarı | — | 120/dk | JSON-2 (19+) ve JSON-RPC; Odoo Online'da Custom plan şartı |
+| freee | OAuth | `FREEE_CLIENT_ID/SECRET` | 50/dk | `start_renew_date` süzgeci, partner alanları, gerçek kota |
+| Paraşüt | Şirket no + istemci + kullanıcı (şifre bir kez, saklanmaz) | — | 50/dk | Destekten alınan istemciyle gerçek hesap; sayfa boyutu 25 |
+| QuickBooks Online | OAuth (`realmId` geri dönüşte) | `QUICKBOOKS_CLIENT_ID/SECRET` | 300/dk | Okumalar ücretsiz katmanın üstünde ücretli (bkz. owner-questions) |
+| Diğerleri (Logo, Mikro, Tally, SAP B1…) | Şablonlu Excel/CSV | — | — | — |
+
+Eşleştirme sırası: vergi no → web/e-posta alan adı → ad (şirket türleri yok sayılır); birden fazla aday varsa otomatik eşleşme yapılmaz, inceleme listesine düşer. Rakamları `finance.view` izni olan roller görür; sağlık puanındaki "Zamanında ödeme" sinyali yalnızca gün ve sayı kullanır (`finance_late` fonksiyonu), tutar asla.
+
 ## Kodda yapılacaklar
 
 | İş | Durum |

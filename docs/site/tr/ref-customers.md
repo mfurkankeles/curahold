@@ -41,6 +41,7 @@ Müşteri (adreslerde "account"), baktığın şirkettir. Kendi alanları `field
 | `GET /meeting-types` | Bu şirketin kaydettiği toplantı türleri; her biri kendi adı ve gündem şablonuyla. |
 | `PUT /meeting-types` | Şirketin toplantı türlerini kaydeder (yönetici işi). |
 | `GET /accounts/:id/health` | Sağlık skoru; onu neyin oynattığı ve son 90 gündeki seyriyle. |
+| `GET /accounts/:id/finance` | Bağlı muhasebe programından: para birimine göre açık bakiye ve vadesi geçen tutar, en eski gecikme günü, son ödeme ve son faturalar. |
 | `GET /health/config` | Bu şirkette sağlık skorunun nasıl hesaplandığı. |
 | `POST /health/preview` | Yeni bir sağlık ayarının kaydetmeden önce ne vereceği: her bantta kaç müşteri olduğu ve en düşükler. |
 | `PUT /health/config` | Sağlık skoru ayarlarını kaydeder ve her müşteriyi yeniden hesaplar. |
@@ -325,6 +326,12 @@ Bu şirketin kaydettiği toplantı türleri; her biri kendi adı ve gündem şab
 ### `GET /accounts/:id/health`
 
 Sağlık skoru; onu neyin oynattığı ve son 90 gündeki seyriyle.
+
+### `GET /accounts/:id/finance`
+
+Bağlı muhasebe programından: para birimine göre açık bakiye ve vadesi geçen tutar, en eski gecikme günü, son ödeme ve son faturalar. "Finans rakamlarını görme" izni gerekir; bağlı program yoksa `finance` null döner.
+
+**Gerekenler:** yetki `finance.view`
 
 ### `GET /health/config`
 

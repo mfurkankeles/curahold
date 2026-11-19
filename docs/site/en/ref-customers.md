@@ -41,6 +41,7 @@ A customer (an "account" in the addresses) is the company you look after. Its ow
 | `GET /meeting-types` | The meeting types this company has saved, each with its own name and agenda prompt. |
 | `PUT /meeting-types` | Saves the company's meeting types (an administrator's job). |
 | `GET /accounts/:id/health` | The health score with what moved it and its trend over the last 90 days. |
+| `GET /accounts/:id/finance` | From the connected accounting program: the open balance and what is overdue per currency, the oldest days late, the last payment and the latest invoices. |
 | `GET /health/config` | How the health score is worked out for this company. |
 | `POST /health/preview` | What a new health setting would give before saving it: how many customers in each band and the lowest ones. |
 | `PUT /health/config` | Saves the health score settings and recomputes every customer. |
@@ -325,6 +326,12 @@ Saves the company's meeting types (an administrator's job).
 ### `GET /accounts/:id/health`
 
 The health score with what moved it and its trend over the last 90 days.
+
+### `GET /accounts/:id/finance`
+
+From the connected accounting program: the open balance and what is overdue per currency, the oldest days late, the last payment and the latest invoices. Needs "See finance figures"; `finance` is null when no program is connected.
+
+**Needs:** permission `finance.view`
 
 ### `GET /health/config`
 
