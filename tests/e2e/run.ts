@@ -344,6 +344,8 @@ await step('a new company signs up alone and lands in the setup wizard, signed i
   await p.waitForFunction(() => document.documentElement.lang === 'tr' && document.querySelector('.auth__title')?.textContent === "Ekibin için Curahold'i kur");
   await shot(p, 'p2-01-signup');
   await p.type('input[type=email]', 'deniz@yeni-sirket.example');
+  // A person takes a moment to fill a form; the server answers faster ones as a bot does (api/src/lib/humanCheck.ts).
+  await pause(1300);
   await p.click('form button.btn--primary');
   const link = await p.waitForSelector('a.btn[href^="/signup/verify"]');
   await link!.click();
@@ -1207,11 +1209,14 @@ await step('customer portal: switch on, invite, the customer opens a request, th
   await customer.page.click('.p-me__pop button.p-me__item');
   await customer.page.waitForSelector('.p-signin input[type=email]');
   await customer.page.type('.p-signin input[type=email]', 'selin@quillfield.example');
+  // A person takes a moment to fill a form; the server answers faster ones as a bot does (api/src/lib/humanCheck.ts).
+  await pause(1300);
   await (await byText(customer.page, '.p-signin .p-btn--primary', 'Kod gönder')).click();
   await customer.page.waitForSelector('.p-code');
   await pause(300);
   const code = /\b(\d{6})\b/.exec(s.email.sent.filter((m) => m.to === 'selin@quillfield.example').at(-1)?.subject ?? '')?.[1] ?? '';
   await customer.page.type('.p-code', code);
+  await pause(900);
   await (await byText(customer.page, '.p-signin .p-btn--primary', 'Giriş yap')).click();
   await customer.page.waitForSelector('.p-head', { timeout: 10000 });
   expect(customer.errors.length === 0, customer.errors.join(' | '));
@@ -2386,6 +2391,7 @@ await step('admin: a new company from a template, a CRM, five people with roles 
   await p.waitForSelector('input[type=email]');
   await p.select('.auth__langs select', 'tr');
   await p.type('input[type=email]', 'ece@kuzey-lojistik.example');
+  await pause(1300);
   await p.click('form button.btn--primary');
   await (await p.waitForSelector('a.btn[href^="/signup/verify"]'))!.click();
   await p.waitForSelector('.signup-form');
