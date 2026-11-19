@@ -6,6 +6,8 @@
 // trigger fires on real data (customer country and plan state, revenue, seats),
 // the item becomes a must with a deadline, and comes up as the next task.
 
+import { GO_LIVE_AFTER, GO_LIVE_EVIDENCE, GO_LIVE_ITEMS } from './checklist-golive';
+
 export const CHECKLIST_AREAS = ['technical', 'legal', 'financial', 'marketing'] as const;
 export type ChecklistArea = (typeof CHECKLIST_AREAS)[number];
 
@@ -43,12 +45,14 @@ export interface ChecklistItem {
   trigger?: ChecklistTrigger;
   /** Items that must be done first. */
   after?: string[];
+  /** What proves it is done (a command's output, a screen, a file); the console's evidence field shows it as a hint. */
+  proof?: string;
 }
 
 /** The EU and EEA, for "first EU customer" triggers. */
 export const EU_COUNTRIES = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO'];
 
-export const CHECKLIST: ChecklistItem[] = [
+const BASE_ITEMS: ChecklistItem[] = [
   // ---- technical
   { id: 'domain', area: 'technical', priority: 'must', owner: 'owner', cost: { once: 15, monthly: 2 } },
   { id: 'cloudflare-account', area: 'technical', priority: 'must', owner: 'owner', cost: null, after: ['domain'] },
@@ -91,6 +95,18 @@ export const CHECKLIST: ChecklistItem[] = [
   { id: 'first-pocs', area: 'marketing', priority: 'must', owner: 'owner', cost: null },
   { id: 'go-live', area: 'marketing', priority: 'must', owner: 'owner', cost: null, after: ['dns-records', 'lawyer-review', 'paddle-wiring', 'backups-restore'] },
 ];
+
+/** The checklist: the items above with the go-live items (shared/src/checklist-golive.ts) after the technical ones, and their evidence. */
+export const CHECKLIST: ChecklistItem[] = (() => {
+  const withEvidence = BASE_ITEMS.map((i) => {
+    const e = GO_LIVE_EVIDENCE[i.id];
+    const after = i.id === 'go-live' ? [...new Set([...(i.after ?? []), ...GO_LIVE_AFTER])] : i.after;
+    return { ...i, ...(after ? { after } : {}), ...(e ? { proof: e.proof, links: [...new Set([...(i.links ?? []), ...(e.links ?? [])])] } : {}) };
+  });
+  // Before the first LATER technical item (pen test, certification).
+  const at = withEvidence.findIndex((i) => i.area === 'technical' && i.priority === 'later');
+  return [...withEvidence.slice(0, at), ...GO_LIVE_ITEMS, ...withEvidence.slice(at)];
+})();
 
 export type ChecklistStatus = 'todo' | 'done' | 'skipped';
 
