@@ -650,7 +650,7 @@ export interface ConsentSet {
 
 function show(b: TextBlock, locale: Locale, vars: Placeholders): ShownText[] {
   const langs: Locale[] = b.texts[locale] ? [locale] : [...new Set<Locale>([b.master, 'en'])].filter((l) => b.texts[l]);
-  return langs.map((lang) => ({ textId: `${b.id}.${lang}@${CONSENT_TEXT_VERSION}`, lang, text: fillText(b.texts[lang]!, vars) }));
+  return langs.map((lang) => ({ textId: `${b.id}.${lang}@${CONSENT_TEXT_VERSION}`, lang, text: fillText(b.texts[lang] ?? '', vars) }));
 }
 
 /**

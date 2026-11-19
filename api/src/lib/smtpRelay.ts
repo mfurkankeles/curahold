@@ -98,10 +98,11 @@ class Reader {
     for (;;) {
       const lines = this.buf.split(CRLF);
       for (let i = 0; i < lines.length - 1; i++) {
-        if (/^\d{3} /.test(lines[i]!) || /^\d{3}$/.test(lines[i]!)) {
+        const line = lines[i] ?? '';
+        if (/^\d{3}( |$)/.test(line)) {
           const text = lines.slice(0, i + 1).join('\n');
           this.buf = lines.slice(i + 1).join(CRLF);
-          return { code: Number(lines[i]!.slice(0, 3)), text };
+          return { code: Number(line.slice(0, 3)), text };
         }
       }
       const chunk = await this.s.read();

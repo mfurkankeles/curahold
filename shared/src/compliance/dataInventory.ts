@@ -390,7 +390,7 @@ export function consentPlaceholders(locale: Locale): Placeholders {
     contact: COMPANY.privacyEmail,
     storage_countries: list.format(codes.map((c) => regionName(c, locale))),
     processors: list.format(leads.map((s) => s.company)),
-    retention: ACTIVITIES.find((a) => a.id === 'trialLeads')!.retention[locale === 'tr' ? 'tr' : 'en'],
+    retention: ACTIVITIES.find((a) => a.id === 'trialLeads')?.retention[locale === 'tr' ? 'tr' : 'en'] ?? '',
     eu_rep: '[EU representative — appointed at the first EU customer]',
     uk_rep: '[UK representative — appointed at the first UK customer]',
     cn_rep: '[not appointed]',

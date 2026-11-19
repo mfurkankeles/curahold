@@ -21,8 +21,9 @@ interface PageConfig extends ConsentConfig {
 
 (function () {
   const w = window as unknown as Window & { __curaConsent?: PageConfig; curaConsent?: unknown };
-  const cfg = w.__curaConsent;
-  if (!cfg || typeof document === 'undefined') return;
+  const found = w.__curaConsent;
+  if (!found || typeof document === 'undefined') return;
+  const cfg: PageConfig = found;
   const S = cfg.strings ?? {};
   const inUse = categoriesInUse(cfg);
   let state: ConsentState = readStored();
@@ -54,13 +55,13 @@ interface PageConfig extends ConsentConfig {
 
   function decideNow(analytics: boolean, marketing: boolean) {
     state = decide({ analytics: inUse.analytics && analytics, marketing: inUse.marketing && marketing }, { previous: state });
-    store(state, cfg!);
-    applyConsent(state, cfg!);
+    store(state, cfg);
+    applyConsent(state, cfg);
     emit();
     showReopen();
     const locale = document.documentElement.lang || 'en';
     void sha256Hex(bannerText(S, inUse)).then((textHash) =>
-      sendConsentEvent(cfg!.logUrl, consentEvent(state, { inUse, textHash, locale, surface: cfg!.surface ?? 'site' })),
+      sendConsentEvent(cfg.logUrl, consentEvent(state, { inUse, textHash, locale, surface: cfg.surface ?? 'site' })),
     );
   }
 
@@ -82,9 +83,9 @@ interface PageConfig extends ConsentConfig {
     const text = el('div', 'cc-banner__text');
     text.appendChild(el('strong', 'cc-banner__title', S.title));
     text.appendChild(el('p', 'cc-banner__body', S.body));
-    if (cfg!.policyUrl && S.policy) {
+    if (cfg.policyUrl && S.policy) {
       const link = el('a', 'cc-banner__policy', S.policy);
-      link.href = cfg!.policyUrl;
+      link.href = cfg.policyUrl;
       text.appendChild(link);
     }
     wrap.appendChild(text);
@@ -131,9 +132,9 @@ interface PageConfig extends ConsentConfig {
     if (m) list.appendChild(category(S.marketingTitle, S.marketingBody, m, m.id));
     dialog.appendChild(list);
     dialog.appendChild(actions({ a, m }));
-    if (cfg!.policyUrl && S.policy) {
+    if (cfg.policyUrl && S.policy) {
       const link = el('a', 'cc-dialog__policy', S.policy);
-      link.href = cfg!.policyUrl;
+      link.href = cfg.policyUrl;
       dialog.appendChild(link);
     }
     const close = () => {

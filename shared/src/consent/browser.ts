@@ -140,9 +140,9 @@ export function applyConsent(state: ConsentState, cfg: ConsentConfig): void {
   if (ga4) w['ga-disable-' + ga4] = !plan.ga4;
   if (loaded.ga4 && w.gtag) w.gtag('consent', 'update', consentModeFor(state));
   if (plan.ga4 && ga4) loadGa4(w, ga4, state);
-  if (plan.meta) loadMeta(w, cfg.ids.meta!.trim());
+  if (plan.meta) loadMeta(w, (cfg.ids.meta ?? '').trim());
   else if (loaded.meta && w.fbq) w.fbq('consent', 'revoke');
-  if (plan.tiktok) loadTiktok(w, cfg.ids.tiktok!.trim());
+  if (plan.tiktok) loadTiktok(w, (cfg.ids.tiktok ?? '').trim());
   else if (loaded.tiktok && w.ttq?.revokeConsent) w.ttq.revokeConsent();
 }
 

@@ -125,11 +125,8 @@ const has = (v: string | undefined) => typeof v === 'string' && v.trim() !== '';
 /** The ids that can ever load on this surface: the pixels drop out unless the flag is on. */
 export function activeIds(cfg: ConsentConfig): VendorIds {
   const pixels = cfg.marketingPixels === true;
-  return {
-    ga4: has(cfg.ids.ga4) ? cfg.ids.ga4!.trim() : undefined,
-    meta: pixels && has(cfg.ids.meta) ? cfg.ids.meta!.trim() : undefined,
-    tiktok: pixels && has(cfg.ids.tiktok) ? cfg.ids.tiktok!.trim() : undefined,
-  };
+  const id = (v: string | undefined, on = true) => (on && has(v) ? v?.trim() : undefined);
+  return { ga4: id(cfg.ids.ga4), meta: id(cfg.ids.meta, pixels), tiktok: id(cfg.ids.tiktok, pixels) };
 }
 
 /** Which optional categories are actually in use; the banner offers only these. */
