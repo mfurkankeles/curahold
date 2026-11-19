@@ -15,6 +15,9 @@ export type DeptKey = 'inside' | 'sales' | 'onboarding' | 'success' | 'product' 
 export type FeatureKey = 'health' | 'meetings' | 'sprints' | 'portal' | 'renewals' | 'assistant' | 'reports' | 'sync';
 export type IntegrationGroup = 'crm' | 'chat' | 'support' | 'mail' | 'sheets' | 'data' | 'dev' | 'ai' | 'signin' | 'api' | 'automation' | 'accounting';
 
+/** Every page that has its own search title and description. */
+export type SeoPage = 'home' | DeptKey | FeatureKey | 'solutions' | 'integrations' | 'pricing' | 'faq' | 'trust' | 'why' | 'about';
+
 export interface InfoCopy {
   nav: {
     product: string;
@@ -157,4 +160,10 @@ export interface InfoCopy {
     /** Shown on the page until the owner has reviewed it. */
     review: string;
   };
+  /**
+   * The search title and description of each page, written for that language's searches
+   * (tests/site-seo.test.ts holds the lengths: 45–60 / 100–160 characters, or 25–40 / 70–100
+   * in Chinese, Japanese and Korean). {team} and {business} are filled with the yearly seat prices.
+   */
+  seo: Record<SeoPage, [title: string, description: string]>;
 }

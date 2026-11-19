@@ -8,12 +8,14 @@
 //
 // Addresses can be changed for a preview with SITE_APP_URL, SITE_DEMO_URL,
 // SITE_DOCS_URL and SITE_BASE_DOMAIN.
+import { execFileSync } from 'node:child_process';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
+import { SITE_LANGS } from '../site/locales';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
@@ -127,12 +129,6 @@ const CONSENT_FLAGS = {
 const OG_IMAGE = existsSync(join(ROOT, 'site', 'og.png')) ? 'og.png' : 'og.svg';
 const OG_IMAGE_URL = `${ORIGIN}/assets/${OG_IMAGE}`;
 
-// og:locale wants language_TERRITORY; these are the conventional pairs.
-const OG_LOCALE: Record<SiteLocale, string> = {
-  en: 'en_US', tr: 'tr_TR', ar: 'ar_AR', he: 'he_IL', fa: 'fa_IR',
-  'zh-Hans': 'zh_CN', 'zh-Hant': 'zh_TW', ja: 'ja_JP', ko: 'ko_KR',
-};
-
 /** The root-relative path a locale's landing page is served at ('/', '/tr/', …). */
 const localeBase = (locale: SiteLocale) => (locale === 'en' ? '/' : `/${locale}/`);
 /** The blog's root-relative base for a locale, falling back to the English blog. */
@@ -149,15 +145,15 @@ function consentTags(locale: SiteLocale, rel: string, policyUrl: string): string
 }
 
 /** Canonical, Open Graph, Twitter card and robots tags shared by every page. */
-function seoTags(opts: { canonical: string; title: string; description: string; locale: SiteLocale; ogType: 'website' | 'article'; image: string }): string {
+function seoTags(opts: { canonical: string; title: string; description: string; locale: SiteLocale; ogType: 'website' | 'article'; image: string; noindex?: boolean }): string {
   const { canonical, title, description, locale, ogType, image } = opts;
   const alt = SITE_LOCALES.filter((l) => l !== locale)
-    .map((l) => `<meta property="og:locale:alternate" content="${OG_LOCALE[l]}">`)
+    .map((l) => `<meta property="og:locale:alternate" content="${SITE_LANGS[l]}">`)
     .join('\n');
   return [
     `<link rel="canonical" href="${esc(canonical)}">`,
     // Search engines yes; AI training and text-and-data mining no (shared/src/compliance/crawlers.ts).
-    `<meta name="robots" content="index, follow, max-image-preview:large, noai, noimageai">`,
+    `<meta name="robots" content="${opts.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'}, noai, noimageai">`,
     TDM_META,
     `<meta property="og:type" content="${ogType}">`,
     `<meta property="og:site_name" content="Curahold">`,
@@ -165,7 +161,7 @@ function seoTags(opts: { canonical: string; title: string; description: string; 
     `<meta property="og:description" content="${esc(description)}">`,
     `<meta property="og:url" content="${esc(canonical)}">`,
     `<meta property="og:image" content="${esc(image)}">`,
-    `<meta property="og:locale" content="${OG_LOCALE[locale]}">`,
+    `<meta property="og:locale" content="${SITE_LANGS[locale]}">`,
     alt,
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta name="twitter:title" content="${esc(title)}">`,
@@ -203,6 +199,21 @@ const breadcrumb = (items: { name: string; url: string }[]) => ({
   '@type': 'BreadcrumbList',
   itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: it.url })),
 });
+
+/**
+ * When the site's sources last changed (YYYY-MM-DD), for <lastmod>: SITE_LASTMOD if set, else the
+ * newest git commit touching site/ or the site scripts. undefined when neither can say: a wrong
+ * date is worse for crawling than none.
+ */
+function siteLastmod(): string | undefined {
+  if (process.env.SITE_LASTMOD) return process.env.SITE_LASTMOD;
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', 'site', 'scripts/build-site.ts', 'scripts/site-chrome.ts', 'scripts/site-pages.ts', 'scripts/site-concepts.ts'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 // --------------------------------------------------------- shared page parts
 
@@ -439,9 +450,12 @@ function conceptDoc(locale: SiteLocale, which: 'a' | 'c'): string {
   const canonical = `${ORIGIN}${localeBase(locale)}${path}`;
   const words = conceptAWords(locale);
   const title = which === 'a' ? words.title : words.title;
-  const head = `${seoTags({ canonical, title, description: words.desc, locale, ogType: 'website', image: OG_IMAGE_URL })}
+  // The animated versions tell the landing page's story again, so they stay out of search
+  // results (noindex, links still followed) and out of the sitemap. A canonical pointing to the
+  // landing page would be a hint search engines ignore when two pages differ this much;
+  // noindex is a rule they keep (docs/ADR/0020-site-seo-and-crawlers.md).
+  const head = `${seoTags({ canonical, title, description: words.desc, locale, ogType: 'website', image: OG_IMAGE_URL, noindex: true })}
 <link rel="icon" href="${FAVICON}">
-${alternatesFor(path)}
 <link rel="stylesheet" href="${rel}assets/chrome.css">
 <link rel="stylesheet" href="${rel}assets/consent.css">`;
   const u = urlsOf(locale);
@@ -465,7 +479,7 @@ ${alternatesFor(path)}
 // ------------------------------------------------------------------- the footer
 
 // Shared by the landing page and the blog so the legal links and language list
-// never drift apart. Cross-page links are root-relative, so they are correct
+// never drift apart. Column titles are not headings: the footer is not part of a page's outline. Cross-page links are root-relative, so they are correct
 // whatever depth the page sits at.
 function footerHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
@@ -486,7 +500,7 @@ function footerHtml(locale: SiteLocale): string {
         <p class="foot__story">${esc(c.footer.story)}</p>
       </div>
       <div>
-        <h3>${esc(n.nav.product)}</h3>
+        <p class="foot__h">${esc(n.nav.product)}</p>
         <ul>
           ${DEPTS.map((k) => li(`${base}${PAGE.dept(k)}`, n.depts[k].name)).join('')}
           ${li(`${base}${PAGE.integrations}`, n.nav.integrations)}
@@ -494,11 +508,11 @@ function footerHtml(locale: SiteLocale): string {
         </ul>
       </div>
       <div>
-        <h3>${esc(n.nav.features)}</h3>
+        <p class="foot__h">${esc(n.nav.features)}</p>
         <ul>${FEATURES.slice(0, 6).map((k) => li(`${base}${PAGE.feature(k)}`, n.features[k].name)).join('')}</ul>
       </div>
       <div>
-        <h3>${esc(n.nav.resources)}</h3>
+        <p class="foot__h">${esc(n.nav.resources)}</p>
         <ul>
           ${li(u.demo, n.nav.demo)}
           ${li(u.docs, n.nav.help[0])}
@@ -510,7 +524,7 @@ function footerHtml(locale: SiteLocale): string {
         </ul>
       </div>
       <div>
-        <h3>${esc(c.footer.legal)}</h3>
+        <p class="foot__h">${esc(c.footer.legal)}</p>
         <ul>
           ${li(`${base}${PAGE.trust}`, n.nav.trust[0])}
           ${li(u.legal('terms'), c.footer.links.terms)}
@@ -664,7 +678,7 @@ function blogPostPage(locale: SiteLocale, post: BlogPost): string {
     ],
   });
   const tags = post.tags.map((t) => `<li class="post-tag">${esc(t)}</li>`).join('');
-  return `${blogHead(locale, { title: `${post.title} — Curahold`, description: post.description, canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
+  return `${blogHead(locale, { title: post.seo[0], description: post.seo[1], canonical, path: `blog/${post.slug}/`, ogType: 'article', rel, extraLd: ld })}
 <body class="blog">
 ${SKY}
 <a class="skip" href="#main">${esc(siteCopy(locale).nav.skip)}</a>
@@ -1075,6 +1089,7 @@ export function page(locale: SiteLocale): string {
   // One H1 says what Curahold is (the category, small) and what it does for you (the outcome).
   const heroTitle = `<span class="hero__k">${esc(c.hero.kicker)}</span> ${heroWords}`;
   const n = infoCopy(locale).nav;
+  const [seoTitle, seoDesc] = infoCopy(locale).seo.home;
   const ctas = `<a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>
           <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>`;
 
@@ -1201,13 +1216,13 @@ export function page(locale: SiteLocale): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(c.title)}</title>
-<meta name="description" content="${esc(c.description)}">
-${seoTags({ canonical, title: c.title, description: c.description, locale, ogType: 'website', image: OG_IMAGE_URL })}
+<title>${esc(seoTitle)}</title>
+<meta name="description" content="${esc(seoDesc)}">
+${seoTags({ canonical, title: seoTitle, description: seoDesc, locale, ogType: 'website', image: OG_IMAGE_URL })}
 <meta name="theme-color" content="#17133a">
 <link rel="icon" href="${FAVICON}">
 ${alternates}
-${landingJsonLd(locale, canonical, c.description)}
+${landingJsonLd(locale, canonical, seoDesc)}
 <link rel="preload" href="${rel}assets/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js')</script>
 <link rel="stylesheet" href="${rel}assets/site.css">
@@ -1313,7 +1328,7 @@ function build() {
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'index.html'), page(locale));
     // The inner pages the menu points to, and the two animated versions.
-    for (const p of innerPages(locale, urlsOf(locale), { plans: plansHtml(locale), compare: compareHtml(locale), faq: pricingFaqHtml(locale), offers: (url) => offersLd(locale, url), faqLd })) {
+    for (const p of innerPages(locale, urlsOf(locale), { plans: plansHtml(locale), compare: compareHtml(locale), faq: pricingFaqHtml(locale), offers: (url) => offersLd(locale, url), faqLd, fill: (t) => t.replace('{team}', moneyIn(locale)(PLANS.team.price.year)).replace('{business}', moneyIn(locale)(PLANS.business.price.year)) })) {
       mkdirSync(join(dir, p.path), { recursive: true });
       writeFileSync(join(dir, p.path, 'index.html'), innerDoc(locale, p));
     }
@@ -1362,21 +1377,28 @@ function build() {
     }
   }
 
-  // sitemap.xml with hreflang alternates, and robots.txt pointing to it.
-  const today = new Date().toISOString().slice(0, 10);
-  const latestPost = (locale: SiteLocale) => blogPosts(locale).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01');
-  const sitemapUrl = (loc: string, lastmod: string, priority: string, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
+  // The sitemaps: one per language (each page with its hreflang alternates) and an index
+  // (sitemap.xml) that robots.txt points to. No <priority> (search engines ignore it);
+  // <lastmod> is when the site's sources last changed in git, or a blog post's own date,
+  // and is left out rather than guessed when git cannot say.
+  const lastmod = siteLastmod();
+  const sitemapUrl = (loc: string, mod: string | undefined, alternates: SiteLocale[], pathOf: (l: SiteLocale) => string) => {
     const links = [...alternates.map((l) => `    <xhtml:link rel="alternate" hreflang="${bcp47Of(l)}" href="${ORIGIN}${pathOf(l)}"/>`), `    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${pathOf('en')}"/>`].join('\n');
-    return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>${priority}</priority>\n${links}\n  </url>`;
+    return `  <url>\n    <loc>${loc}</loc>\n${mod ? `    <lastmod>${mod}</lastmod>\n` : ''}${links}\n  </url>`;
   };
-  const entries: string[] = [];
-  for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}`, today, l === 'en' ? '1.0' : '0.8', SITE_LOCALES, localeBase));
-  const innerPaths = [...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd }).map((p) => p.path), PAGE.ai, PAGE.orbit];
-  for (const path of innerPaths) for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, today, '0.7', SITE_LOCALES, (x) => `${localeBase(x)}${path}`));
-  for (const l of BLOG_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, latestPost(l), '0.6', BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
-  for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
-  writeFileSync(join(OUT, 'sitemap.xml'), sitemap);
+  const indexedPaths = ['', ...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd, fill: (t) => t }).map((p) => p.path)];
+  const sitemaps: string[] = [];
+  for (const l of SITE_LOCALES) {
+    const entries = indexedPaths.map((path) => sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, lastmod, SITE_LOCALES, (x) => `${localeBase(x)}${path}`));
+    if (BLOG_LOCALES.includes(l)) {
+      entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, blogPosts(l).reduce((m, p) => (p.date > m ? p.date : m), '1970-01-01'), BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
+      for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));
+    }
+    const name = `sitemap-${l}.xml`;
+    writeFileSync(join(OUT, name), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`);
+    sitemaps.push(`  <sitemap>\n    <loc>${ORIGIN}/${name}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}\n  </sitemap>`);
+  }
+  writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemaps.join('\n')}\n</sitemapindex>\n`);
   // The crawler policy (shared/src/compliance/crawlers.ts): search engines in, AI crawlers out, the TDM reservation.
   writeFileSync(join(OUT, 'robots.txt'), robotsTxt('site', { sitemap: `${ORIGIN}/sitemap.xml`, allowAiAnswers: process.env.SITE_AI_CRAWLERS === 'allow', allowScrapers: process.env.SITE_SEO_ROBOTS === 'allow' }));
   mkdirSync(join(OUT, '.well-known'), { recursive: true });
@@ -1386,5 +1408,5 @@ function build() {
   // The demo hub and the live demo under /demo/ (built by npm run build:demo), when they are there.
   const HUB = join(ROOT, 'dist', 'demo-hub');
   if (existsSync(join(HUB, 'index.html'))) cpSync(HUB, join(OUT, 'demo'), { recursive: true });
-  console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemap.xml + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
+  console.log(`site: ${SITE_LOCALES.length} language${SITE_LOCALES.length === 1 ? '' : 's'} (${SITE_LOCALES.join(', ')}) → ${OUT} (${readFileSync(join(OUT, 'index.html'), 'utf8').length} bytes for English), ${blogPageCount} blog page${blogPageCount === 1 ? '' : 's'}, sitemaps + robots.txt${existsSync(join(HUB, 'index.html')) ? ', with the demo hub at /demo/' : ''}`);
 }

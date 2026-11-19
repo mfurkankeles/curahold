@@ -226,8 +226,10 @@ export function whyHtml(locale: SiteLocale, opts: { headingLevel: 1 | 2; urls: {
   const links = [PAGE.dept('inside'), PAGE.feature('meetings'), PAGE.feature('health'), `${PAGE.solutions}#region-1`, PAGE.trust, PAGE.integrations];
   const icons = [GLYPH.product, GLYPH.meetings, GLYPH.health, GLYPH.why, GLYPH.trust, GLYPH.sync];
   const h = opts.headingLevel === 1 ? 'h1' : 'h2';
+  // Card titles sit one level under the block's title, so the outline never skips (h1 → h2 on /why/, h2 → h3 elsewhere).
+  const ch = opts.headingLevel === 1 ? 'h2' : 'h3';
   const cards = w.proofs
-    .map(([t, p, l], i) => `<li class="wy__card"><span class="wy__ic">${icons[i]}</span><h3>${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${links[i]}">${esc(l)}</a></li>`)
+    .map(([t, p, l], i) => `<li class="wy__card"><span class="wy__ic">${icons[i]}</span><${ch} class="wy__ch">${esc(t)}</${ch}><p>${esc(p)}</p><a href="${base}${links[i]}">${esc(l)}</a></li>`)
     .join('');
   const contrast = `<div class="wy__vs" id="vs"><p class="wy__vsh">${esc(w.contrastTitle)}</p><div class="wy__cols"><ul class="wy__before">${w.before.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><ul class="wy__after">${w.after.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
   const forWho = `<ul class="wy__who">${w.forWho.map((x, i) => `<li><a href="${base}${PAGE.dept(DEPTS[i])}">${GLYPH[DEPTS[i]]}<span>${esc(x)}</span></a></li>`).join('')}</ul>`;
@@ -255,7 +257,7 @@ export function whyBriefHtml(locale: SiteLocale): string {
   const w = infoCopy(locale).why;
   const base = localeBase(locale);
   const picks: [number, string, string][] = [[0, PAGE.dept('inside'), GLYPH.product], [1, PAGE.feature('meetings'), GLYPH.meetings], [2, PAGE.feature('health'), GLYPH.health]];
-  const cards = picks.map(([i, link, icon]) => { const [t, p, l] = w.proofs[i]; return `<li class="wy__card"><span class="wy__ic">${icon}</span><h3>${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${link}">${esc(l)}</a></li>`; }).join('');
+  const cards = picks.map(([i, link, icon]) => { const [t, p, l] = w.proofs[i]; return `<li class="wy__card"><span class="wy__ic">${icon}</span><h3 class="wy__ch">${esc(t)}</h3><p>${esc(p)}</p><a href="${base}${link}">${esc(l)}</a></li>`; }).join('');
   return `<section class="wy wy--brief" id="why" aria-labelledby="why-title">
   <div class="wy__wrap">
     <h2 id="why-title">${esc(w.title)}</h2>

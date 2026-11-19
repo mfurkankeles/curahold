@@ -37,6 +37,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - Sales site: the landing page is about a third shorter (about 7,900 px at 1440 wide, from 12,400): "Why Curahold" shows three reasons
   and links to /why/, which now ends with an honest "Who it is not for" (a personal to-do list, a help desk, bookkeeping, a
   critical-path schedule) and the two calls to action. The scroll story's steps are a little shorter.
+- Sales site search: every page has a title and description written for its language's searches (no page is now too
+  short or too long for search results); the animated versions are kept out of search results; the sitemap is an index
+  with one file per language; questions and prices carry structured data that matches the page; share links show a PNG
+  picture; footer column titles are no longer headings. The help centre's production build gets absolute canonical and
+  hreflang addresses (only to languages that really have the page), article structured data and its own sitemap, which
+  the docs host's robots.txt now names. New settings: `SITE_LASTMOD`, `DOCS_ORIGIN` (ADR 0020).
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

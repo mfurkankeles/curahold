@@ -166,7 +166,7 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .foot .brand, .foot .foot__brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 700 19px/1 var(--display); }
 .foot .foot__brand svg { width: 30px; height: 30px; }
 .foot__story { margin: 14px 0 0; max-width: 40ch; }
-.foot h3 { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
+.foot__h { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
 .foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .foot a { color: #c9c5e8; text-decoration: none; transition: color .18s var(--ease); }
 .foot a:hover { color: #fff; text-decoration: underline; }
@@ -185,7 +185,7 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .wy__card:not(:nth-child(3n + 1)) { padding-inline-start: 26px; border-inline-start: 1px solid rgba(255, 255, 255, .12); }
 .wy__ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--iris-wash); color: var(--iris-ink); }
 .wy__ic svg { width: 19px; height: 19px; }
-.wy__card h3 { margin: 6px 0 0; font: 700 22px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
+.wy__ch { margin: 6px 0 0; font: 700 22px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
 .wy__card p { margin: 0; color: var(--ink-2); font-size: 15.5px; line-height: 1.55; }
 .wy__card a { justify-self: start; color: var(--iris-ink); font-weight: 600; font-size: 15px; text-decoration: none; }
 .wy__card a:hover { text-decoration: underline; }

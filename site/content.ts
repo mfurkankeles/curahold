@@ -6,13 +6,11 @@
 // language misses a key or still holds the English wording. Customer names
 // are invented (the same ones as the demo) and stay as they are written.
 
-import type { Locale } from '../shared/src/i18n';
+import type { SiteLocale } from './locales';
 
-export type SiteLocale = Locale;
+export { SITE_LOCALES, type SiteLocale } from './locales';
 
 export interface SiteCopy {
-  title: string;
-  description: string;
   nav: { product: string; pricing: string; demo: string; blog: string; help: string; signIn: string; tryFree: string; skip: string };
   /** `works` introduces the strip of tools under the product tour. */
   /** The H1 is the kicker (the category) and the title (the outcome); the CTA labels are the header's (site/info). */
@@ -76,6 +74,8 @@ export type BlogBlock = { h: string } | { p: string } | { ul: string[] } | { quo
 
 export interface BlogPost {
   slug: string;
+  /** The search title and description (45–60 and 100–160 characters); the page shows `title` and `description`. */
+  seo: [title: string, description: string];
   title: string;
   description: string;
   /** ISO date (YYYY-MM-DD) the post was published. */
@@ -138,10 +138,8 @@ export interface SiteBentoCopy {
   facts: string[];
 }
 
-export const COPY: Partial<Record<Locale, SiteCopy>> = {
+export const COPY: Record<SiteLocale, SiteCopy> = {
   en: {
-    title: 'Curahold: tasks, sprints and customer renewals in one place',
-    description: 'Renewals that start on their own, meetings whose next steps become tasks, and every customer that needs attention at a glance. The app speaks nine languages.',
     nav: { product: 'Product', pricing: 'Pricing', demo: 'Live demo', blog: 'Blog', help: 'Help', signIn: 'Sign in', tryFree: 'Try it free', skip: 'Skip to content' },
     hero: {
       kicker: 'Work management for customer teams',
@@ -261,8 +259,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   tr: {
-    title: 'Curahold: görevler, sprint’ler ve müşteri yenilemeleri tek yerde',
-    description: 'Kendiliğinden başlayan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve ilgi bekleyen her müşteri tek bakışta. Uygulama dokuz dilde.',
     nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', blog: 'Blog', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz deneyin', skip: 'İçeriğe atla' },
     hero: {
       kicker: 'Müşteri ekipleri için iş yönetimi',
@@ -382,8 +378,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   ar: {
-    title: 'Curahold: المهام والسبرنتات وتجديدات العملاء في مكان واحد',
-    description: 'تجديدات تبدأ من تلقاء نفسها، واجتماعات تتحول خطواتها التالية إلى مهام، وكل عميل يحتاج إلى اهتمامك في لمحة. التطبيق متاح بتسع لغات.',
     nav: { product: 'المنتج', pricing: 'الأسعار', demo: 'عرض مباشر', blog: 'المدونة', help: 'المساعدة', signIn: 'تسجيل الدخول', tryFree: 'جرّبه مجانًا', skip: 'تخطَّ إلى المحتوى' },
     hero: {
       kicker: 'إدارة العمل لفرق العملاء',
@@ -503,8 +497,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   he: {
-    title: 'Curahold: משימות, ספרינטים וחידושי לקוחות במקום אחד',
-    description: 'חידושים שמתחילים מעצמם, פגישות שהצעדים הבאים שלהן הופכים למשימות, וכל לקוח שזקוק לתשומת לב במבט אחד. האפליקציה זמינה בתשע שפות.',
     nav: { product: 'מוצר', pricing: 'תמחור', demo: 'הדגמה חיה', blog: 'בלוג', help: 'עזרה', signIn: 'התחברות', tryFree: 'התנסות חינם', skip: 'דלג לתוכן' },
     hero: {
       kicker: 'ניהול עבודה לצוותי לקוחות',
@@ -618,8 +610,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   fa: {
-    title: 'Curahold: وظایف، اسپرینت‌ها و تمدید مشتریان در یک‌جا',
-    description: 'تمدیدهایی که خودبه‌خود آغاز می‌شوند، جلساتی که گام‌های بعدی‌شان به وظیفه تبدیل می‌شود، و هر مشتری که به توجه نیاز دارد در یک نگاه. برنامه به نُه زبان در دسترس است.',
     nav: { product: 'محصول', pricing: 'قیمت‌ها', demo: 'دموی زنده', blog: 'وبلاگ', help: 'راهنما', signIn: 'ورود', tryFree: 'رایگان امتحان کنید', skip: 'پرش به محتوا' },
     hero: {
       kicker: 'مدیریت کار برای تیم‌های مشتری',
@@ -739,8 +729,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   'zh-Hans': {
-    title: 'Curahold：任务、迭代与客户续约，尽在一处',
-    description: '自动开始的续约、后续步骤会变成任务的会议，以及一眼看清每个需要关注的客户。应用支持九种语言。',
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
     hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移' },
     tour: {
@@ -840,8 +828,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   'zh-Hant': {
-    title: 'Curahold：任務、衝刺與客戶續約，盡在一處',
-    description: '自動開始的續約、後續步驟會變成任務的會議，以及一眼看清每位需要關注的客戶。應用程式支援九種語言。',
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
     hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換' },
     tour: {
@@ -941,8 +927,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   ja: {
-    title: 'Curahold：タスク、スプリント、顧客の更新をひとつの場所で',
-    description: 'ひとりでに始まる更新、次のステップがタスクになるミーティング、対応が必要な顧客がひと目でわかる画面。アプリは9言語に対応しています。',
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
     hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます' },
     tour: {
@@ -1042,8 +1026,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   ko: {
-    title: 'Curahold: 작업, 스프린트, 고객 갱신을 한곳에서',
-    description: '저절로 시작되는 갱신, 다음 단계가 작업이 되는 미팅, 그리고 관심이 필요한 모든 고객을 한눈에. 앱은 9개 언어를 지원합니다.',
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
     hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요' },
     tour: {
@@ -1144,17 +1126,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
   },
 };
 
-// The locales whose marketing copy is authored and ready to publish, English
-// first. Adding a language to the sales site is one step: author its COPY
-// entry above and it appears here on its own. A language without an entry has
-// no page — the builder never ships machine text dressed as native.
-export const SITE_LOCALES = Object.keys(COPY) as Locale[];
+// The site's languages are listed once, in site/locales.ts; COPY must hold every
+// one of them (TypeScript says which is missing). A language without copy has no
+// page — the builder never ships machine text dressed as native.
 
-/** The copy for a locale; English for a locale the site is not written in. */
-export const siteCopy = (locale: Locale): SiteCopy => COPY[locale] ?? COPY.en!;
+/** The landing page's copy for one of the site's languages. */
+export const siteCopy = (locale: SiteLocale): SiteCopy => COPY[locale];
 
 /** The consent words for a locale. */
-export const siteConsent = (locale: Locale): SiteConsentCopy => siteCopy(locale).consent;
+export const siteConsent = (locale: SiteLocale): SiteConsentCopy => siteCopy(locale).consent;
 
 /**
  * The story right after the hero: one customer (the demo's Marevo) through six
@@ -1181,7 +1161,7 @@ export interface SiteStoryCopy {
   };
 }
 
-export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
+export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
   en: {
     cue: 'Scroll to follow one customer',
     title: 'One customer, start to finish',
@@ -1325,13 +1305,13 @@ export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
  * story — and the hero's cue that leads into it — out of its page entirely: no English
  * on its page and no empty section. tests/site-copy.test.ts holds the list to this.
  */
-export const STORY_LOCALES = Object.keys(STORY_COPY) as Locale[];
+export const STORY_LOCALES = Object.keys(STORY_COPY) as SiteLocale[];
 
 /** The story's words for a locale, or null where the story does not ship yet. */
-export const siteStory = (locale: Locale): SiteStoryCopy | null => STORY_COPY[locale] ?? null;
+export const siteStory = (locale: SiteLocale): SiteStoryCopy | null => STORY_COPY[locale] ?? null;
 
 // The blog's own labels, in the languages the blog is written in.
-export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
+export const BLOG_COPY: Partial<Record<SiteLocale, SiteBlogCopy>> = {
   en: {
     nav: 'Blog',
     title: 'The Curahold blog',
@@ -1359,16 +1339,17 @@ export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
 };
 
 /** The blog's labels for a locale; English where the blog is not written in it. */
-export const siteBlog = (locale: Locale): SiteBlogCopy => BLOG_COPY[locale] ?? BLOG_COPY.en!;
+export const siteBlog = (locale: SiteLocale): SiteBlogCopy => BLOG_COPY[locale] ?? BLOG_COPY.en!;
 
 // Blog posts, authored per language. A locale appears on the blog only when it
 // has native posts here — the builder never dresses English text as another
 // language, so hreflang on a post lists only the languages it truly exists in.
 // Content is invented and genuinely useful; it names no real person or company.
-export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
+export const BLOG_POSTS: Partial<Record<SiteLocale, BlogPost[]>> = {
   en: [
     {
       slug: 'what-is-task-management',
+      seo: ['What is task management? A guide for customer teams', 'A plain guide to task management for customer success and account teams: what a task is, the few fields that matter, and keeping the list honest.'],
       title: 'What is task management? A practical guide for customer teams',
       description:
         'A plain guide to task management for customer success and account teams: what a task really is, the few fields that matter, and how to keep a shared list honest.',
@@ -1408,6 +1389,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'turn-meetings-into-tasks',
+      seo: ['Turn meeting notes into tasks that get done | Curahold', 'Most next steps die in a notebook. A simple meeting-to-task workflow, with owners, dates and context, so the promises made in a meeting are kept.'],
       title: 'Turning meeting notes into tasks: a workflow that actually sticks',
       description:
         'Most next steps die in a notebook. Here is a simple meeting-to-task workflow — owners, dates and context — that keeps promises from a call from being lost.',
@@ -1445,6 +1427,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'task-management-vs-project-management',
+      seo: ['Task vs project management for customer teams', 'Task management and project management solve different problems. How to tell them apart, and why customer teams need tasks tied to the customer.'],
       title: 'Task management vs. project management: which does your account team need?',
       description:
         'Task management and project management solve different problems. Here is how to tell them apart, and why customer teams usually need tasks tied to accounts — not a project plan.',
@@ -1484,6 +1467,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
   tr: [
     {
       slug: 'what-is-task-management',
+      seo: ['Görev yönetimi nedir? Müşteri ekipleri için rehber', 'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev nedir, hangi alanlar önemlidir, liste nasıl dürüst kalır.'],
       title: 'Görev yönetimi nedir? Müşteri ekipleri için pratik bir rehber',
       description:
         'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev aslında nedir, hangi birkaç alan önemlidir ve ortak liste nasıl dürüst tutulur.',
@@ -1523,6 +1507,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'turn-meetings-into-tasks',
+      seo: ['Toplantı notlarını göreve dönüştürmek | Curahold', 'Sonraki adımların çoğu bir defterde kalır. Sorumlu, tarih ve bağlamla, toplantıda verilen sözlerin kaybolmasını önleyen sade bir akış.'],
       title: 'Toplantı notlarını göreve dönüştürmek: gerçekten yerleşen bir akış',
       description:
         'Çoğu sonraki adım bir defterde ölür. İşte bir toplantıdaki sözlerin kaybolmasını önleyen sade bir toplantı-görev akışı — sorumlular, tarihler ve bağlam.',
@@ -1560,6 +1545,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'task-management-vs-project-management',
+      seo: ['Görev yönetimi mi, proje yönetimi mi? | Curahold', 'Görev ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğinizi ve müşteri ekiplerinin neden müşteriye bağlı görevler istediğini anlatıyoruz.'],
       title: 'Görev yönetimi mi, proje yönetimi mi: müşteri ekibinizin ihtiyacı hangisi?',
       description:
         'Görev yönetimi ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğinizi ve müşteri ekiplerinin neden bir proje planına değil, müşteriye bağlı görevlere ihtiyaç duyduğunu anlatıyoruz.',
@@ -1599,7 +1585,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
 };
 
 /** The locales the blog is published in — only those with native posts above. */
-export const BLOG_LOCALES = Object.keys(BLOG_POSTS) as Locale[];
+export const BLOG_LOCALES = Object.keys(BLOG_POSTS) as SiteLocale[];
 
 /** The posts for a locale (empty when the blog is not published in it). */
-export const blogPosts = (locale: Locale): BlogPost[] => BLOG_POSTS[locale] ?? [];
+export const blogPosts = (locale: SiteLocale): BlogPost[] => BLOG_POSTS[locale] ?? [];

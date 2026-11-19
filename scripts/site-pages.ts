@@ -25,6 +25,8 @@ export interface PricingParts {
   faq: string;
   /** schema.org offers for the page at `url`. */
   offers: (url: string) => object;
+  /** Fills {team} and {business} in a sentence with the yearly seat prices. */
+  fill: (s: string) => string;
   /** schema.org FAQPage for a list of questions. */
   faqLd: (items: { q: string; a: string }[]) => object;
 }
@@ -102,9 +104,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     const d = c.depts[k];
     out.push({
       path: PAGE.dept(k),
-      title: `${d.name} | Curahold`,
+      title: c.seo[k][0],
       crumb: d.name,
-      description: d.lead,
+      description: c.seo[k][1],
       main: `${hero(locale, { crumb: d.name, title: d.title, lead: d.lead, glyph: GLYPH[k], soon: SOON_DEPTS.has(k), urls })}
   <section class="ip__body"><div class="wrap">${points(d.points)}${d.next ? `<div class="ip__next"><span class="ip__soon">${esc(c.nav.soon)}</span><h2>${esc(d.next[0])}</h2><p>${esc(d.next[1])}</p></div>` : ''}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
   ${featureLinks(locale, c.common.uses, RELATED[k])}
@@ -117,9 +119,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     const i = FEATURES.indexOf(k);
     out.push({
       path: PAGE.feature(k),
-      title: `${f.name} | Curahold`,
+      title: c.seo[k][0],
       crumb: f.name,
-      description: f.lead,
+      description: c.seo[k][1],
       main: `${hero(locale, { crumb: f.name, title: f.title, lead: f.lead, glyph: GLYPH[k], urls })}
   <section class="ip__body"><div class="wrap">${points(f.points)}</div></section>
   ${featureLinks(locale, c.common.related, [others[i % others.length], others[(i + 2) % others.length], others[(i + 4) % others.length]])}
@@ -132,9 +134,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     `<section class="ip__group"><div class="wrap"><h2 class="ip__gh">${esc(title)}</h2><ul class="ip__tiles">${list.map(([h, p], i) => `<li id="${id}-${i + 1}"><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join('')}</ul></div></section>`;
   out.push({
     path: PAGE.solutions,
-    title: `${c.nav.solutions} | Curahold`,
+    title: c.seo.solutions[0],
     crumb: c.nav.solutions,
-    description: so.lead,
+    description: c.seo.solutions[1],
     main: `${hero(locale, { crumb: c.nav.solutions, title: so.title, lead: so.lead, urls })}
   ${group('role', c.nav.byRole, so.roles)}
   ${group('size', c.nav.bySize, so.sizes)}
@@ -150,9 +152,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
   }).join('');
   out.push({
     path: PAGE.integrations,
-    title: `${c.nav.integrations} | Curahold`,
+    title: c.seo.integrations[0],
     crumb: c.nav.integrations,
-    description: ig.lead,
+    description: c.seo.integrations[1],
     main: `${hero(locale, { crumb: c.nav.integrations, title: ig.title, lead: ig.lead, urls })}
   <section class="ip__body"><div class="wrap"><ul class="ip__ints">${groups}</ul>
     <div class="ip__note"><h2>${esc(ig.missing[0])}</h2><p>${esc(ig.missing[1])}</p><a href="${esc(urls.devDocs)}">${esc(c.nav.developers[0])}</a></div></div></section>
@@ -161,9 +163,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
 
   out.push({
     path: PAGE.pricing,
-    title: `${c.pricingPage.title} | Curahold`,
+    title: c.seo.pricing[0],
     crumb: c.pricingPage.title,
-    description: c.pricingPage.lead,
+    description: pricing.fill(c.seo.pricing[1]),
     // Prices in the first screen at 1440 × 900: a compact header (no buttons: each plan has its own), then the plans.
     main: `${hero(locale, { crumb: c.pricingPage.title, title: c.pricingPage.title, lead: c.pricingPage.lead, urls, compact: true })}
   ${pricing.plans}
@@ -178,9 +180,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
   const faqs = faqItems.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
   out.push({
     path: PAGE.faq,
-    title: `${c.faqPage.title} | Curahold`,
+    title: c.seo.faq[0],
     crumb: c.faqPage.title,
-    description: c.faqPage.lead,
+    description: c.seo.faq[1],
     main: `${hero(locale, { crumb: c.faqPage.title, title: c.faqPage.title, lead: c.faqPage.lead, urls })}
   <section class="faq calm"><div class="wrap faq__in"><div class="faq__list">${faqs}</div></div></section>
   ${closing(locale, urls)}`,
@@ -198,9 +200,9 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
   ];
   out.push({
     path: PAGE.trust,
-    title: `${c.trust.title} | Curahold`,
+    title: c.seo.trust[0],
     crumb: c.trust.title,
-    description: c.trust.lead,
+    description: c.seo.trust[1],
     main: `${hero(locale, { crumb: c.trust.title, title: c.trust.title, lead: c.trust.lead, glyph: GLYPH.trust, urls })}
   <section class="ip__body"><div class="wrap">${points(c.trust.points)}
     <div class="ip__note" id="legal"><h2>${esc(s.footer.legal)}</h2><ul class="ip__docs">${docs.map(([n, u]) => `<li><a href="${esc(u)}">${esc(n)}</a></li>`).join('')}</ul></div></div></section>
@@ -209,17 +211,17 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
 
   out.push({
     path: PAGE.why,
-    title: `${c.why.title} | Curahold`,
+    title: c.seo.why[0],
     crumb: c.why.title,
-    description: c.why.lead,
+    description: c.seo.why[1],
     main: whyHtml(locale, { headingLevel: 1, urls }),
   });
 
   out.push({
     path: PAGE.about,
-    title: `${c.about.title} | Curahold`,
+    title: c.seo.about[0],
     crumb: c.about.title,
-    description: c.about.lead,
+    description: c.seo.about[1],
     main: `<p class="ip__review" role="note">${esc(c.about.review)}</p>
   ${hero(locale, { crumb: c.nav.about, title: c.about.title, lead: c.about.lead, urls })}
   <section class="ip__body"><div class="wrap">${points(c.about.points)}<p class="ip__who"><a href="${base}${PAGE.why}">${esc(c.why.title)}</a></p></div></section>
