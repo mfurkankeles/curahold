@@ -211,7 +211,7 @@ Makes an analytics key (in the browser only, needs the export permission): `name
 | --- | --- | --- | --- |
 | `name` | text | required | at least 1 characters; at most 80 characters |
 | `datasets` | list of text | optional | at least 1 items; at most 100 items; may be null; default null |
-| `departments` | list of one of ANALYTICS_DEPARTMENTS | optional | at least 1 items; at most 4 items; may be null; default null |
+| `departments` | list of one of ANALYTICS_DEPARTMENTS | optional | at least 1 items; at most 6 items; may be null; default null |
 | `expiresInDays` | whole number | optional | at least 1; at most 730; default 365 |
 
 ### `POST /dev/analytics/keys/:id/rotate`

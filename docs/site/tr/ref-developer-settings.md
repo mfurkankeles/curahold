@@ -211,7 +211,7 @@ Analiz anahtarı üretir (yalnızca tarayıcıda, dışa aktarma izni gerekir): 
 | --- | --- | --- | --- |
 | `name` | metin | zorunlu | en az 1 karakter; en çok 80 karakter |
 | `datasets` | metin listesi | isteğe bağlı | en az 1 öğe; en çok 100 öğe; boş (null) olabilir; varsayılan null |
-| `departments` | şunlardan biri: ANALYTICS_DEPARTMENTS listesi | isteğe bağlı | en az 1 öğe; en çok 4 öğe; boş (null) olabilir; varsayılan null |
+| `departments` | şunlardan biri: ANALYTICS_DEPARTMENTS listesi | isteğe bağlı | en az 1 öğe; en çok 6 öğe; boş (null) olabilir; varsayılan null |
 | `expiresInDays` | tam sayı | isteğe bağlı | en az 1; en çok 730; varsayılan 365 |
 
 ### `POST /dev/analytics/keys/:id/rotate`

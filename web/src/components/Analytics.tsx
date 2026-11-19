@@ -48,7 +48,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 const toolLabel = (t: (k: MessageKey) => string, tool: string | null) => (tool ? t(`analytics.tool.${tool}` as MessageKey) || tool : '—');
-const deptLabel = (t: (k: MessageKey) => string, d: AnalyticsDepartment) => t(`analytics.dept.${d}` as MessageKey);
+const deptLabel = (t: (k: MessageKey) => string, d: AnalyticsDepartment) => t(`dept.${d}` as MessageKey);
 
 export function AnalyticsTab() {
   const { t, locale } = useI18n();
@@ -267,7 +267,7 @@ function ShowKey({ title, token, onClose }: { title: string; token: string; onCl
 
 function NewAnalyticsKey({ onClose, onMade }: { onClose: () => void; onMade: (token: string) => void }) {
   const { t } = useI18n();
-  const { toast } = useStore();
+  const { me, toast } = useStore();
   const [sets, setSets] = useState<AnalyticsDatasetInfo[] | null>(null);
   const [name, setName] = useState('');
   const [days, setDays] = useState(365);
@@ -351,7 +351,7 @@ function NewAnalyticsKey({ onClose, onMade }: { onClose: () => void; onMade: (to
             <span>{t('analytics.onlyDepts')}</span>
           </label>
           {pickDepts &&
-            ANALYTICS_DEPARTMENTS.map((d) => (
+            ANALYTICS_DEPARTMENTS.filter((d) => !me.departments?.length || me.departments.some((x) => x.key === d && x.enabled)).map((d) => (
               <label key={d} className="checkbox">
                 <input type="checkbox" checked={depts.includes(d)} onChange={() => setDepts(toggle(depts, d))} />
                 <span>{deptLabel(t, d)}</span>

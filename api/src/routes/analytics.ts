@@ -406,7 +406,7 @@ analyticsRoutes.get('/dev/analytics/datasets', async (c) => {
 const keyInput = z.object({
   name: z.string().trim().min(1).max(80),
   datasets: z.array(z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,79}$/)).min(1).max(100).nullable().default(null),
-  departments: z.array(z.enum(ANALYTICS_DEPARTMENTS)).min(1).max(4).nullable().default(null),
+  departments: z.array(z.enum(ANALYTICS_DEPARTMENTS)).min(1).max(6).nullable().default(null),
   expiresInDays: z.number().int().min(1).max(730).default(365),
 });
 

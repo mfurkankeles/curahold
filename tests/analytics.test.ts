@@ -166,6 +166,10 @@ describe('what a key reads', () => {
     if (!ok) expect(names).not.toContain('Tasks');
     const sales = await newKey(ada, { departments: ['sales'] });
     expect((await json(sales, '/api/analytics/odata/')).body.value.map((v: any) => v.name)).toContain('Renewals');
+    // The departments model's six: a key for Inside Sales is taken, and reads the customers but not the renewals.
+    const inside = (await json(await newKey(ada, { departments: ['inside_sales'] }), '/api/analytics/odata/')).body.value.map((v: any) => v.name);
+    expect(inside).toContain('Customers');
+    expect(inside).not.toContain('Renewals');
   });
 });
 

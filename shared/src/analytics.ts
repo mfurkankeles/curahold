@@ -1,8 +1,11 @@
 // The analytics feed, as the app and the server both see it: analytics keys,
 // the datasets a key can be limited to, and the BI tools with a connect guide.
 
-export const ANALYTICS_DEPARTMENTS = ['sales', 'success', 'product', 'finance'] as const;
-export type AnalyticsDepartment = (typeof ANALYTICS_DEPARTMENTS)[number];
+import { DEPARTMENT_KEYS, type DepartmentKey } from './model';
+
+/** A key can be limited to the company's departments (the departments model's six). */
+export const ANALYTICS_DEPARTMENTS = DEPARTMENT_KEYS;
+export type AnalyticsDepartment = DepartmentKey;
 
 /** Where each guide lives in the docs (docs/site/<lang>/bi-tools.md, one heading per tool). */
 export const BI_TOOLS = [

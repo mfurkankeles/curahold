@@ -193,7 +193,7 @@ export async function catalog(ctx: CatalogCtx): Promise<Dataset[]> {
     out.push({
       name: 'HealthHistory',
       entity: 'HealthPoint',
-      departments: ['success', 'sales'],
+      departments: ['onboarding', 'success', 'sales'],
       about: ctx.about('HealthHistory'),
       from: 'from health_history h',
       keys: [{ sql: 'h.day', cast: 'date' }, { sql: 'h.account_id', cast: 'uuid' }],
@@ -344,7 +344,7 @@ export async function catalog(ctx: CatalogCtx): Promise<Dataset[]> {
     out.push({
       name,
       entity: name === 'Opportunities' ? 'Opportunity' : name === 'Tickets' ? 'Ticket' : name === 'Contacts' ? 'Contact' : `Record${pascal(t.key)}`,
-      departments: t.kind === 'opportunity' ? ['sales'] : t.kind === 'ticket' ? ['success'] : t.kind === 'contact' ? ['sales', 'success'] : DEPARTMENTS,
+      departments: t.kind === 'opportunity' ? ['inside_sales', 'sales'] : t.kind === 'ticket' ? ['success'] : t.kind === 'contact' ? ['inside_sales', 'sales', 'onboarding', 'success'] : DEPARTMENTS,
       about: ctx.about(t.kind === 'opportunity' || t.kind === 'ticket' || t.kind === 'contact' ? name : 'Records', { type: typeName }),
       from: 'from records r',
       where: [`r.type_id = '${String(t.id).replace(/[^0-9a-f-]/gi, '')}'`],
