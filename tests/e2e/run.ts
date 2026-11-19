@@ -1326,9 +1326,12 @@ await step('tasks from a file: columns are recognised, cards appear, the import 
   const picked = await mert.page.$$eval('.map-table select', (els) => els.map((e) => (e as HTMLSelectElement).value));
   expect(picked.join(',') === 'title,status,assignee,dueDate', `columns guessed as ${picked.join(',')}`);
   await mert.page.click('.importer .btn--primary');
+  // The dry run says what will come in; then the import itself.
+  await mert.page.waitForFunction(() => [...document.querySelectorAll<HTMLButtonElement>('.importer .btn--primary')].some((b) => b.textContent?.trim() === '2 görevi getir' && !b.disabled), { timeout: 8000 });
+  await (await byText(mert.page, '.importer .btn--primary', '2 görevi getir')).click();
   await mert.page.waitForSelector('.import-result');
   expect((await text(mert.page, '.import-result__stat strong')) === '2', 'two tasks were not created');
-  await (await byText(mert.page, '.importer .btn', 'Panoya bak')).click();
+  await (await byText(mert.page, '.adopt-boards .linkbtn', 'Panoyu aç')).click();
   await mert.page.waitForFunction(() => [...document.querySelectorAll('.card__title')].filter((e) => e.textContent?.startsWith('Dosyadan gelen')).length === 2, { timeout: 8000 });
   const [doing] = await sql(`select status, due_date::text as due, cardinality(assignee_ids) as n from tasks where title = 'Dosyadan gelen birı'`);
   expect(doing?.status === 'doing' && doing?.due === '2027-01-15' && Number(doing?.n) === 1, `imported as ${JSON.stringify(doing)}`);
