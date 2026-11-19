@@ -1,0 +1,20 @@
+{
+  "timeZone": "Etc/UTC",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "dataStudio": {
+    "name": "Curahold",
+    "company": "Curahold",
+    "logoUrl": "https://curahold.com/favicon.png",
+    "addonUrl": "https://curahold.com/docs/en/bi-tools/#looker-studio",
+    "supportUrl": "https://curahold.com/docs/en/getting-help/",
+    "description": "Customers, renewals, health, pipeline, tickets, tasks and sprints from Curahold, read only, with an analytics key.",
+    "authType": [
+      "PATH_KEY"
+    ],
+    "feeType": [
+      "FREE"
+    ],
+    "sources": []
+  }
+}

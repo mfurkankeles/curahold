@@ -56,12 +56,12 @@ Curahold 為 BI 工具提供一個唯讀的**分析資料來源**。Power BI、E
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-接著照常為該資料表設定累加式重新整理原則。
+接著照常為該資料表設定累加式重新整理原則，並以 `ModifiedAt` 欄勾選 **Detect data changes**，這樣有列變更的期間會重新讀取。
 
 ## Excel
 

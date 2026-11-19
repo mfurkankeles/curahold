@@ -56,12 +56,12 @@ Curahold یک **فید تحلیل** فقط‌خواندنی برای ابزار�
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-سپس سیاست به‌روزرسانی افزایشی جدول را مثل همیشه تنظیم کنید.
+سپس سیاست به‌روزرسانی افزایشی جدول را مثل همیشه تنظیم کنید و **Detect data changes** را با ستون `ModifiedAt` روشن کنید تا دوره‌ای که ردیف‌هایش تغییر کرده دوباره خوانده شود.
 
 ## Excel
 

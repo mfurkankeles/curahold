@@ -56,12 +56,12 @@ Power BI サービスで Basic 認証にゲートウェイが必要と表示さ�
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-あとはテーブルにいつもどおり増分更新ポリシーを設定します。
+あとはテーブルにいつもどおり増分更新ポリシーを設定し、`ModifiedAt` 列で **Detect data changes** をオンにします。これで行が変わった期間が読み直されます。
 
 ## Excel
 

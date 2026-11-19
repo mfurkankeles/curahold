@@ -56,12 +56,12 @@ Power BI hizmeti Basic giriş için ağ geçidi (gateway) isterse anahtarı **We
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://sirketin.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://sirketin.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-Sonra tablonun artımlı yenileme kuralını her zamanki gibi ayarla.
+Sonra tablonun artımlı yenileme kuralını her zamanki gibi ayarla ve `ModifiedAt` sütunuyla **Detect data changes**'i işaretle; böylece satırları değişen bir dönem yeniden okunur.
 
 ## Excel
 

@@ -56,12 +56,12 @@ Curahold 为 BI 工具提供一个只读的**分析数据源**。Power BI、Exce
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-然后照常为该表设置增量刷新策略。
+然后照常为该表设置增量刷新策略，并用 `ModifiedAt` 列勾选 **Detect data changes**，这样有行变更的时段会被重新读取。
 
 ## Excel
 

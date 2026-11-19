@@ -54,12 +54,12 @@ If the Power BI service asks for a gateway for Basic sign-in, use the key as a *
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-Then set the incremental refresh policy on the table as usual.
+Then set the incremental refresh policy on the table as usual, and tick **Detect data changes** with the `ModifiedAt` column, so a period whose rows changed is read again.
 
 ## Excel
 

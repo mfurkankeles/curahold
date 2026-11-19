@@ -56,12 +56,12 @@ Power BI 서비스가 Basic 로그인에 게이트웨이를 요구하면 키를 
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-그다음 테이블에 평소처럼 증분 새로 고침 정책을 설정합니다.
+그다음 테이블에 평소처럼 증분 새로 고침 정책을 설정하고, `ModifiedAt` 열로 **Detect data changes**를 켭니다. 그러면 행이 바뀐 기간을 다시 읽습니다.
 
 ## Excel
 

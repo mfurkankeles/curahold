@@ -56,12 +56,12 @@ summary: Power BI وExcel وFabric وTableau وLooker Studio وQlik وZoho Analy
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-ثم اضبط سياسة التحديث التدريجي للجدول كالمعتاد.
+ثم اضبط سياسة التحديث التدريجي للجدول كالمعتاد، وفعّل **Detect data changes** مع العمود `ModifiedAt` حتى تُقرأ من جديد الفترة التي تغيّرت صفوفها.
 
 ## Excel
 

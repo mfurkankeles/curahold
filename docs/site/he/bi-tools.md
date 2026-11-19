@@ -56,12 +56,12 @@ summary: Power BI,‏ Excel,‏ Fabric,‏ Tableau,‏ Looker Studio,‏ Qlik,�
 let
     Start = DateTime.ToText(RangeStart, "yyyy-MM-ddTHH:mm:ss") & "Z",
     End = DateTime.ToText(RangeEnd, "yyyy-MM-ddTHH:mm:ss") & "Z",
-    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=ModifiedAt ge " & Start & " and ModifiedAt lt " & End, null, [Implementation = "2.0"])
+    Source = OData.Feed("https://your-company.curahold.com/api/analytics/odata/Tasks?$filter=CreatedAt ge " & Start & " and CreatedAt lt " & End, null, [Implementation = "2.0"])
 in
     Source
 ```
 
-ואז הגדירו כרגיל את מדיניות הרענון המצטבר לטבלה.
+ואז הגדירו כרגיל את מדיניות הרענון המצטבר לטבלה, וסמנו **Detect data changes** עם העמודה `ModifiedAt`, כך שתקופה שהשורות שלה השתנו תיקרא מחדש.
 
 ## Excel
 
