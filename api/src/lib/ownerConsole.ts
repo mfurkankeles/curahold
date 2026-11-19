@@ -9,6 +9,7 @@ import { weekOf } from '../../../shared/src/office';
 import {
   PLAN_METRICS,
   type OwnerActivity,
+  type OwnerBarData,
   type OwnerChecklist,
   type OwnerOverview,
   type OwnerPlan,
@@ -271,6 +272,21 @@ export async function ownerOverview(deps: Deps, staffEmail: string): Promise<Own
     approvalsPending: num(data.ap.n),
     checklist: { done: check.progress.all?.done ?? 0, total: check.progress.all?.total ?? 0, next: check.next?.id ?? null },
   };
+}
+
+/** The console's top bar: what waits for a decision and the AI team's week, in one light read (every heartbeat). */
+export async function ownerBar(deps: Deps): Promise<OwnerBarData> {
+  const [r] = await deps.db.system((q) =>
+    q.query(
+      `select (select count(*)::int from approvals where status = 'pending') as approvals,
+              (select count(*)::int from trial_requests where status = 'new') as requests,
+              (select coalesce(sum(tokens), 0)::bigint from agent_usage where week = $1::date) as tokens,
+              (select coalesce(sum(cost_usd), 0) from agent_usage where week = $1::date) as cost,
+              (select coalesce(sum(weekly_budget), 0)::bigint from seats) as budget`,
+      [weekOf(nowOf(deps))],
+    ),
+  );
+  return { approvalsPending: num(r.approvals), requestsNew: num(r.requests), usage: { tokens: num(r.tokens), budget: num(r.budget), costUsd: Math.round(num(r.cost) * 100) / 100 } };
 }
 
 // ------------------------------------------------------------ revenue, trials, system, activity, support

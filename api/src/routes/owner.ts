@@ -11,7 +11,7 @@ import { PLAN_METRICS } from '../../../shared/src/ownerConsole';
 import { TRIAL_DEPARTMENTS, TRIAL_REQUEST_STATUSES } from '../../../shared/src/trialRequest';
 import type { AppEnv } from '../context';
 import { fail } from '../lib/errors';
-import { markChecklist, ownerActivity, ownerChecklist, ownerOverview, ownerPlan, ownerRevenue, ownerSupport, ownerSystem, ownerTrials } from '../lib/ownerConsole';
+import { markChecklist, ownerActivity, ownerBar, ownerChecklist, ownerOverview, ownerPlan, ownerRevenue, ownerSupport, ownerSystem, ownerTrials } from '../lib/ownerConsole';
 import {
   approveTrialRequest,
   consoleSettings,
@@ -38,6 +38,7 @@ const id = (c: { req: { param: (k: string) => string } }) => {
   return v as string;
 };
 
+ownerRoutes.get('/bar', async (c) => c.json(await ownerBar(c.get('deps'))));
 ownerRoutes.get('/overview', async (c) => c.json(await ownerOverview(c.get('deps'), await by(c))));
 ownerRoutes.get('/revenue', async (c) => c.json(await ownerRevenue(c.get('deps'), await by(c))));
 ownerRoutes.get('/trials', async (c) => c.json({ trials: await ownerTrials(c.get('deps')) }));

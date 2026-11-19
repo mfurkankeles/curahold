@@ -119,3 +119,9 @@ export interface OwnerSupport {
   oldestWaitingAt: string | null;
   waitingList: { ref: string; subject: string; company: string; at: string | null; blocking: boolean }[];
 }
+
+export interface OwnerBarData {
+  approvalsPending: number;
+  requestsNew: number;
+  usage: { tokens: number; budget: number; costUsd: number };
+}

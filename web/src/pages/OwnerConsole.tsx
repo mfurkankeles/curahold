@@ -10,7 +10,7 @@ import { CHECKLIST_AREAS, CHECKLIST_PRIORITIES, type ChecklistEntry } from '../.
 import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
 import type { Approval, Pause, Seat } from '../../../shared/src/office';
-import type { OwnerActivity, OwnerChecklist, OwnerOverview, OwnerPlan, OwnerRevenue, OwnerSupport, OwnerSystem, OwnerTrial, Pace, PlanMetric } from '../../../shared/src/ownerConsole';
+import type { OwnerActivity, OwnerBarData, OwnerChecklist, OwnerOverview, OwnerPlan, OwnerRevenue, OwnerSupport, OwnerSystem, OwnerTrial, Pace, PlanMetric } from '../../../shared/src/ownerConsole';
 import { TRIAL_DEPARTMENTS, type TrialDepartment, type TrialRequestDetail, type TrialRequestRow } from '../../../shared/src/trialRequest';
 import { DateField } from '../components/DateField';
 import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
@@ -122,7 +122,7 @@ function usePlanFormat() {
 /** Always on top: the privacy line, the agents' usage this week, the pause switch, and what waits for a decision. */
 export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
-  const { data, reload } = useData<OwnerOverview>('/owner/overview', beat, failed);
+  const { data, reload } = useData<OwnerBarData>('/owner/bar', beat, failed);
   const [busy, setBusy] = useState(false);
   const pauses = useData<{ pauses: Pause[] }>('/office/pauses', beat, failed);
   const all = pauses.data?.pauses.find((p) => p.scope === 'all');
@@ -156,9 +156,9 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
           </button>
         ) : null}
         {data ? (
-          <button type="button" className="ocbar__chip" data-on={data.requests.new ? '' : undefined} onClick={() => go({ section: 'requests' })} aria-keyshortcuts="r">
+          <button type="button" className="ocbar__chip" data-on={data.requestsNew ? '' : undefined} onClick={() => go({ section: 'requests' })} aria-keyshortcuts="r">
             <Icon name="form" size={14} />
-            {o('bar.requests', { n: formatNumber(data.requests.new, locale) })}
+            {o('bar.requests', { n: formatNumber(data.requestsNew, locale) })}
           </button>
         ) : null}
         {u ? (

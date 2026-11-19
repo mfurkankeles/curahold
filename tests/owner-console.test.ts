@@ -94,7 +94,7 @@ describe('who may open the owner sections', () => {
     expect((await owner.req('GET', '/owner/overview')).status).toBe(200);
     const helper = await new Desk().signIn(STAFF);
     expect((await helper.req('GET', '/me')).json.owner).toBe(false);
-    for (const p of ['/owner/overview', '/owner/requests', '/owner/plan', '/owner/checklist', '/office/approvals', '/office/seats']) {
+    for (const p of ['/owner/overview', '/owner/bar', '/owner/requests', '/owner/plan', '/owner/checklist', '/office/approvals', '/office/seats']) {
       expect((await helper.req('GET', p)).status, p).toBe(403);
       expect((await new Desk().req('GET', p, undefined, { 'x-curahold-staff-key': STAFF_KEY })).status, p).toBe(403);
       expect((await new Desk().req('GET', p)).status, p).toBe(403);
@@ -106,6 +106,7 @@ describe('who may open the owner sections', () => {
     expect(Object.keys(o).sort()).toEqual(['approvalsPending', 'checklist', 'errors', 'growth', 'invoices', 'requests', 'site', 'states', 'strip', 'today', 'usage'].sort());
     expect(o.states.paying + o.states.trial + o.states.free + o.states.churned).toBeGreaterThan(0);
     expect(o.site.connected).toBe(false);
+    expect((await owner.req('GET', '/owner/bar')).json).toMatchObject({ approvalsPending: 0, requestsNew: 0, usage: { tokens: 0 } });
   });
 });
 
