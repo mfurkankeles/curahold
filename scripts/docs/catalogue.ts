@@ -174,6 +174,7 @@ export const GROUPS: Group[] = [
     routes: [
       ['GET /me', 'The person behind the key: name, role, permissions, seat, language; and the company: name, time zone, currency, the word it uses for "customer", its customer fields.', 'Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları.'],
       ['PATCH /me', 'Changes your own name, language, notification choices and screen preferences.', 'Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir.'],
+      ['GET /me/export', 'Downloads everything Curahold holds about you as one file (your right of access and portability); asks you to confirm it is you, at most three times a day, and each download is written to the activity log.', 'Curahold’un senin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkın); önce kimliğini doğrulamanı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır.'],
       ['GET /me/start', 'What is left of the person\'s first steps in the product.', 'Kişinin üründeki ilk adımlarından geriye kalanlar.'],
       ['GET /me/sessions', 'Where you are signed in: devices and when each was last used.', 'Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı.'],
       ['DELETE /me/sessions/:id', 'Signs one of your devices out.', 'Cihazlarından birinin oturumunu kapatır.'],

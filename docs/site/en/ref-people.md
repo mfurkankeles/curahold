@@ -16,6 +16,7 @@ Every request is made as a person. `GET /me` says who that is, what they may do 
 | --- | --- |
 | `GET /me` | The person behind the key: name, role, permissions, seat, language; and the company: name, time zone, currency, the word it uses for "customer", its customer fields. |
 | `PATCH /me` | Changes your own name, language, notification choices and screen preferences. |
+| `GET /me/export` | Downloads everything Curahold holds about you as one file (your right of access and portability); asks you to confirm it is you, at most three times a day, and each download is written to the activity log. |
 | `GET /me/start` | What is left of the person's first steps in the product. |
 | `GET /me/sessions` | Where you are signed in: devices and when each was last used. |
 | `DELETE /me/sessions/:id` | Signs one of your devices out. |
@@ -59,6 +60,10 @@ Changes your own name, language, notification choices and screen preferences.
 | `locale` | one of en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | optional | may be null |
 | `onboarded` | yes/no | optional |  |
 | `prefs` | object | optional |  |
+
+### `GET /me/export`
+
+Downloads everything Curahold holds about you as one file (your right of access and portability); asks you to confirm it is you, at most three times a day, and each download is written to the activity log.
 
 ### `GET /me/start`
 

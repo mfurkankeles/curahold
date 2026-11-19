@@ -16,6 +16,7 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | --- | --- |
 | `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
 | `PATCH /me` | Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir. |
+| `GET /me/export` | Curahold’un senin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkın); önce kimliğini doğrulamanı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır. |
 | `GET /me/start` | Kişinin üründeki ilk adımlarından geriye kalanlar. |
 | `GET /me/sessions` | Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı. |
 | `DELETE /me/sessions/:id` | Cihazlarından birinin oturumunu kapatır. |
@@ -59,6 +60,10 @@ Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir.
 | `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı | boş (null) olabilir |
 | `onboarded` | evet/hayır | isteğe bağlı |  |
 | `prefs` | nesne | isteğe bağlı |  |
+
+### `GET /me/export`
+
+Curahold’un senin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkın); önce kimliğini doğrulamanı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır.
 
 ### `GET /me/start`
 
