@@ -15,6 +15,7 @@ import { livePoker, liveUpgrade, platformUpgrade, type DONamespace } from './liv
 import { PLATFORM_PATH } from './live/platform';
 import { assistantConfigFrom } from './assistant/cost';
 import { edgeAnswer } from './lib/botGuard';
+import { retentionFrom } from './lib/retention';
 import type { DocSection } from '../../shared/src/answers';
 
 // The live channel's per-company room (wrangler.toml: durable_objects LIVE).
@@ -138,6 +139,14 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE?: string;
+  /** "1" also sends the visitor's address to Turnstile's check (off: data minimisation). */
+  TURNSTILE_SEND_IP?: string;
+  /** Retention periods in days (lib/retention.ts; docs/ENVIRONMENT.md §6e): unset = the stated defaults. */
+  RETENTION_TRIAL_REQUEST_DAYS?: string;
+  RETENTION_CONSENT_DAYS?: string;
+  RETENTION_SUPPORT_DAYS?: string;
+  RETENTION_AUDIT_DAYS?: string;
+  COMPANY_DELETE_GRACE_DAYS?: string;
 }
 
 /** Paddle settings, when all of them are there; otherwise billing is off. */
@@ -181,7 +190,7 @@ export function configFromEnv(env: Env): Config {
     robotGuard: env.ROBOT_GUARD === 'off' ? 'off' : env.ROBOT_GUARD === 'crawlers' ? 'crawlers' : 'strict',
     crawlers: { docsAiAnswers: env.CRAWLERS_DOCS_AI === 'allow' },
     // Cloudflare Turnstile on the public forms when both keys are set and TURNSTILE is not "off" (lib/humanCheck.ts).
-    turnstile: env.TURNSTILE !== 'off' && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? { siteKey: env.TURNSTILE_SITE_KEY, secretKey: env.TURNSTILE_SECRET_KEY } : undefined,
+    turnstile: env.TURNSTILE !== 'off' && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? { siteKey: env.TURNSTILE_SITE_KEY, secretKey: env.TURNSTILE_SECRET_KEY, sendIp: env.TURNSTILE_SEND_IP === '1' } : undefined,
     devExposeTokens: false,
     devOrgHeader: false,
     maxDevices: Number(env.MAX_DEVICES) || 2,
@@ -194,6 +203,7 @@ export function configFromEnv(env: Env): Config {
     assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
     team: teamConfigFrom(env as unknown as Record<string, string | undefined>),
     ops: { alerts: env.OPS_ALERTS !== 'off', email: env.OPS_ALERT_EMAIL !== 'off' },
+    retention: retentionFrom(env as unknown as Record<string, string | undefined>),
     support: {
       email: env.SUPPORT_EMAIL || undefined,
       webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,

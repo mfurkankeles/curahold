@@ -74,8 +74,26 @@ describe('personal data (KVKK / GDPR)', () => {
     const t = (await lena.post('/api/tasks', { boardId: env.a.boards.csBoard, title: 'Lena task', assigneeIds: [env.a.ids.lena, env.a.ids.zeynep] })).json.task;
     await lena.post(`/api/tasks/${t.id}/comments`, { body: 'written by Lena' });
 
+    // What the first erase left behind (L1 audit): CuraAI questions, notifications, mentions in the AI team's memory.
+    const [{ name: lenaName }] = await env.db.system((q) => q.query(`select name from users where id = $1`, [env.a.ids.lena]));
+    await env.db.system(async (q) => {
+      await q.query(`insert into assistant_log (org_id, user_id, surface, question, kind, engine) values ($1, $2, 'app', 'Lena asks something', 'answer', 'docs')`, [env.a.orgId, env.a.ids.lena]);
+      await q.query(`insert into notifications (org_id, user_id, kind) values ($1, $2, 'mention')`, [env.a.orgId, env.a.ids.lena]);
+      await q.query(`insert into seats (seat, title, team, tier) values ('erase-test', 'Erase test', 'ops', 'specialist') on conflict do nothing`);
+      await q.query(`insert into agent_memory (seat, key, value) values ('erase-test', 'note.lena', $1)`, [`Follow up with ${lenaName} (lena@demo.example) and with Ada.`]);
+    });
+
     const r = await ada.post(`/api/admin/users/${env.a.ids.lena}/erase`);
     expect(r.status).toBe(200);
+    const extras = await env.db.system(async (q) => ({
+      asked: (await q.query(`select count(*)::int as n from assistant_log where user_id = $1`, [env.a.ids.lena]))[0].n,
+      notes: (await q.query(`select count(*)::int as n from notifications where user_id = $1`, [env.a.ids.lena]))[0].n,
+      memory: (await q.query(`select value from agent_memory where seat = 'erase-test' and key = 'note.lena'`))[0].value,
+    }));
+    expect(extras).toMatchObject({ asked: 0, notes: 0 });
+    expect(extras.memory).not.toContain('lena@demo.example');
+    if (/\S+\s+\S+/.test(lenaName)) expect(extras.memory).not.toContain(lenaName);
+    expect(extras.memory).toContain('Ada');
 
     expect((await lena.get('/api/me')).status).toBe(401);
     const users = (await ada.get('/api/admin/users')).json.users;
@@ -99,6 +117,34 @@ describe('personal data (KVKK / GDPR)', () => {
                       (select count(*) from login_tokens where email = 'lena@demo.example' and org_id = $2 and kind <> 'join')::int as t`, [env.a.ids.lena, env.a.orgId]),
     );
     expect(left[0]).toEqual({ s: 0, t: 0 });
+  });
+
+  it('a person at a customer: download their data, then erase them for good (not just switch them off)', async () => {
+    const account = (await env.db.system((q) => q.query(`select id from accounts where org_id = $1 limit 1`, [env.a.orgId])))[0].id;
+    const [pu] = await env.db.system((q) =>
+      q.query(`insert into portal_users (org_id, account_id, email, name, status) values ($1, $2, 'pia.portal@demo.example', 'Pia Portal', 'active') returning id`, [env.a.orgId, account]),
+    );
+    await env.db.system((q) => q.query(`insert into comments (org_id, task_id, body, portal_author_id) select org_id, id, 'from Pia', $2 from tasks where org_id = $1 limit 1`, [env.a.orgId, pu.id]));
+    const zeynep = await login(env, 'acme', 'zeynep@demo.example');
+    expect((await zeynep.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(403);
+    // Another company's administrator cannot reach this person.
+    const other = await login(env, 'beta', 'ada@demo.example');
+    expect((await other.get(`/api/admin/portal-users/${pu.id}/export`)).status).toBe(404);
+    expect((await other.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(404);
+
+    const file = await ada.get(`/api/admin/portal-users/${pu.id}/export`);
+    expect(file.status).toBe(200);
+    expect(file.json.person).toMatchObject({ email: 'pia.portal@demo.example', name: 'Pia Portal' });
+
+    expect((await ada.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(200);
+    const left = await env.db.system((q) => q.query(`select 1 from portal_users where id = $1`, [pu.id]));
+    expect(left).toHaveLength(0);
+    // What they wrote stays, with no author.
+    const kept = await env.db.system((q) => q.query(`select portal_author_id from comments where org_id = $1 and body = 'from Pia'`, [env.a.orgId]));
+    expect(kept).toEqual([{ portal_author_id: null }]);
+    expect((await ada.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(404);
+    const log = (await ada.get('/api/admin/audit')).json.entries;
+    expect(log.some((e: any) => e.action === 'portal.user_erased' && e.entityId === pu.id)).toBe(true);
   });
 
   it('nobody can erase themselves', async () => {

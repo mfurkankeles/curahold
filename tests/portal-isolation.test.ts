@@ -154,7 +154,17 @@ const PROBES: Record<string, Probe> = {
   'GET /papi/me': async (p) => expect((await p.req('GET', '/papi/me')).json.user.email).toBe('selin@quillfield.example'),
   // The assistant reads only through the portal's own functions, as this person; no model in tests.
   'GET /papi/assist/status': async (p) => expect((await p.req('GET', '/papi/assist/status')).json.available).toBe(false),
+  // The consent notice's answer is the person's own: another company's or customer's never counts here.
+  'GET /papi/assist/consent': async (p) => expect((await p.req('GET', '/papi/assist/consent')).json.consent.granted).toBeNull(),
+  'POST /papi/assist/consent': async (p) => {
+    expect((await p.req('POST', '/papi/assist/consent', { granted: false })).json.consent.granted).toBe(false);
+    const [row] = await env.db.system((q) => q.query(`select o.slug, pu.email from assistant_consents c join orgs o on o.id = c.org_id join portal_users pu on pu.id = c.portal_user_id order by c.created_at desc limit 1`));
+    expect(row).toEqual({ slug: 'acme', email: 'selin@quillfield.example' });
+  },
   'POST /papi/assist': async (p) => {
+    // No "yes" to the consent notice: refused before anything is processed.
+    expect((await p.req('POST', '/papi/assist', { question: 'hello' })).json.error).toBe('consent_required');
+    expect((await p.req('POST', '/papi/assist/consent', { granted: true })).json.consent.granted).toBe(true);
     const r = await p.req('POST', '/papi/assist', { question: `What is the status of ${foreign.tasks[0]}?` });
     expect(r.status).toBe(200);
     expect(r.json.reply.data).toEqual([]);

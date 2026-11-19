@@ -18,6 +18,7 @@ import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
 import { SsoSettings } from '../components/SsoSettings';
 import { CompanySecurity } from '../components/CompanySecurity';
+import { CompanyDeletion } from '../components/CompanyDeletion';
 import { AuditExport } from '../components/AuditExport';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
@@ -290,7 +291,14 @@ const TIMEZONES = ['Europe/Istanbul', 'Europe/London', 'Europe/Berlin', 'Europe/
 export const CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP', 'CHF', 'AED', 'SAR', 'QAR', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'RON', 'CAD', 'AUD', 'SGD', 'INR', 'JPY', 'BRL', 'MXN', 'ZAR'];
 
 function CompanyTab() {
-  return <CompanyForm />;
+  const { me } = useStore();
+  return (
+    <>
+      <CompanyForm />
+      {/* Deleting the company: administrators only (the server checks the same). */}
+      {me?.user.roleKey === 'admin' && me.org.slug && <CompanyDeletion slug={me.org.slug} />}
+    </>
+  );
 }
 
 export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; submitLabel?: string }) {

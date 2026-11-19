@@ -70,6 +70,8 @@ describe('a deleted customer', () => {
     await sys(`insert into portal_passwords (org_id, portal_user_id, hash) values ($1, $2, 'not-a-real-hash')`, [env.a.orgId, mila]);
     await sys(`insert into portal_identities (org_id, portal_user_id, provider, subject, email) values ($1, $2, 'google', 'sub-1', 'mila@velto.example')`, [env.a.orgId, mila]);
     await sys(`insert into portal_passkeys (org_id, portal_user_id, credential_id, public_key, counter, transports, name) values ($1, $2, 'cred-1', 'pk', 7, '{internal}', 'Laptop')`, [env.a.orgId, mila]);
+    // Her answer to the AI assistant notice (migration 0243) goes to the trash with her and comes back with her.
+    await sys(`insert into assistant_consents (org_id, portal_user_id, surface, version, locale, granted) values ($1, $2, 'portal', 'v-test', 'en', true)`, [env.a.orgId, mila]);
     await sys(`insert into health_history (org_id, account_id, day, score) values ($1, $2, current_date - 1, 71), ($1, $2, current_date, 64)`, [env.a.orgId, velto]);
     await sys(`insert into playbook_runs (org_id, account_id, anchor_day, record_id, tasks) values ($1, $2, current_date, $3, 4)`, [env.a.orgId, velto, deal.id]);
     // Tasks that point at the customer, at its record and at its portal person: they stay, the links go.
@@ -107,7 +109,7 @@ describe('a deleted customer', () => {
     expect((await ada.get(`/api/accounts/${velto}`)).status).toBe(404);
     expect((await ada.get(`/api/records/${deal.id}`)).status).toBe(404);
     const during = await picture();
-    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', ...OB_TABLES]) {
+    for (const table of ['accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'assistant_consents', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', ...OB_TABLES]) {
       expect(during[table].length, table).toBeLessThan(before[table].length);
     }
     expect((during.tasks as any[]).some((k) => k.account_id === velto || k.record_id === deal.id)).toBe(false);
@@ -492,7 +494,7 @@ describe('the schema stays restorable', () => {
     const blocking = await sys(`select child, parent from app_trash_fks() where rule in ('a', 'r') and parent = any ($1::text[])`, [reached.map((r) => r.t)]);
     expect(blocking).toEqual([]);
     // What the tests above put a row in: a table reached by a delete but never filled here would not be proven.
-    const proven = new Set([...OB_TABLES, 'accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
+    const proven = new Set([...OB_TABLES, 'accounts', 'records', 'record_comments', 'files', 'activities', 'planned_meetings', 'portal_users', 'portal_passwords', 'portal_identities', 'portal_passkeys', 'assistant_consents', 'health_history', 'playbook_runs', 'account_team', 'promises', 'handovers', 'request_links', 'tasks', 'comments', 'task_events', 'task_links', 'dev_links', 'task_mutes', 'task_watchers', 'time_entries', 'pages', 'reports', 'automations', 'automation_runs']);
     expect(reached.map((r) => r.t).filter((t) => !proven.has(t))).toEqual([]);
   });
 });

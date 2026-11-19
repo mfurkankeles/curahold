@@ -18,6 +18,7 @@ export type ErrorCode =
   | 'bad_assignee'
   | 'email_taken'
   | 'role_in_use'
+  | 'consent_required'
   | 'last_admin'
   | 'file_too_large'
   | 'oauth_failed'
@@ -122,6 +123,8 @@ const STATUS: Record<ErrorCode, number> = {
   conflict: 409,
   email_taken: 409,
   role_in_use: 409,
+  // The assistant's consent notice has no "yes" for its current version (api/src/assistant/consent.ts).
+  consent_required: 403,
   last_admin: 409,
   oauth_failed: 400,
   oauth_not_configured: 400,

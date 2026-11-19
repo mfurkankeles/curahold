@@ -14,9 +14,11 @@
 // account (lib/assistant). Whenever no model can answer, the docs answer as
 // before, on this device — still asking back on a question that means several things.
 import { Icon } from './icons';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ask, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
+import type { AssistConsentState } from '../../../shared/src/assistConsent';
+import { AssistConsentNotice } from './AssistConsent';
 import { reply, type Sampler, type Trace, type Turn } from '../../../shared/src/assistant';
 import { helpLanguageOf, type MessageKey } from '../../../shared/src/i18n';
 import { get, post } from '../lib/api';
@@ -85,9 +87,15 @@ function Section({ found }: { found: Found }) {
   );
 }
 
-/** Whether the server answers with a model, asked once per page load. */
-let serverAnswers: Promise<boolean> | null = null;
-const askServer = () => (serverAnswers ??= get<{ available: boolean }>('/assist/status').then((r) => !!r.available, () => false));
+/** Whether the server answers with a model, and this person's answer to its consent notice; asked once per page load. */
+let serverStatus: Promise<{ available: boolean; consent: boolean | null }> | null = null;
+const status = () =>
+  (serverStatus ??= get<{ available: boolean; consent: AssistConsentState | null }>('/assist/status').then(
+    (r) => ({ available: !!r.available, consent: r.consent?.granted ?? null }),
+    () => ({ available: false, consent: null }),
+  ));
+/** "Not now" on the consent notice: asked again on the next page load, questions stay on the device meanwhile. */
+let notNow = false;
 
 export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: string) => void; onEngine?: (model: boolean) => void; mode?: 'help' | 'onboarding' }) {
   const { t, locale, words } = useI18n();
@@ -100,12 +108,39 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
   const [deep, setDeep] = useState(false);
   // undefined: still finding out; true: the server's assistant answers.
   const [server, setServer] = useState<boolean | undefined>(undefined);
+  // The consent notice's answer (KVKK/GDPR): only a "yes" lets a question go to the server.
+  const [consent, setConsent] = useState<boolean | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [deciding, setDeciding] = useState(false);
   useEffect(() => {
     let live = true;
-    void askServer().then((on) => live && setServer(on));
+    void status().then((s) => {
+      if (!live) return;
+      setServer(s.available);
+      setConsent(s.consent);
+      setAsking(s.available && s.consent === null && !notNow);
+    });
     return () => {
       live = false;
     };
+  }, []);
+  const answerConsent = async (granted: boolean) => {
+    setDeciding(true);
+    try {
+      const r = await post<{ consent: AssistConsentState }>('/assist/consent', { granted });
+      setConsent(r.consent.granted);
+      serverStatus = Promise.resolve({ available: !!server, consent: r.consent.granted });
+      setAsking(false);
+      if (!granted) add({ by: 'bot', say: consent ? 'assistConsent.withdrawn' : 'assistConsent.declined' });
+    } catch {
+      setAsking(false);
+    } finally {
+      setDeciding(false);
+    }
+  };
+  const later = useCallback(() => {
+    notNow = true;
+    setAsking(false);
   }, []);
   const turns = useRef<Turn[]>([]);
   const running = useRef<AbortController | null>(null);
@@ -227,7 +262,8 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
       // A moment for the model to be found, if the question came before that was known.
       const model = sampler === undefined ? await Promise.race([findSampler(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]) : sampler;
       if (model && (await askModel(q, model))) return;
-      if ((server ?? (await askServer())) && (await askCore(q, intent).catch(() => false))) return;
+      const srv = server === undefined ? await status() : { available: server, consent };
+      if (srv.available && srv.consent === true && (await askCore(q, intent).catch(() => false))) return;
       if (!intent && clarifyHere(q)) return;
       // A tapped choice: its own pages answer first.
       const pages = intentOf(intent)?.option.pages;
@@ -290,6 +326,7 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
 
   return (
     <div className="ask">
+      {asking && <AssistConsentNotice busy={deciding} onAnswer={(g) => void answerConsent(g)} onClose={later} />}
       <div className="ask__log" ref={log} role="log" aria-live="polite">
         {messages.map((m) =>
           m.by === 'you' ? (
@@ -503,7 +540,17 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
           </button>
         )}
       </form>
-      <p className="field__hint ask__private">{t(sampler ? 'ask.ai.private' : server ? 'assist.private' : 'ask.private')}</p>
+      <p className="field__hint ask__private">
+        {t(sampler ? 'ask.ai.private' : server && consent ? 'assist.private' : 'ask.private')}
+        {server && consent && (
+          <>
+            {' '}
+            <button type="button" className="btn btn--quiet btn--small" disabled={deciding} onClick={() => void answerConsent(false)}>
+              {t('assistConsent.withdrawAction')}
+            </button>
+          </>
+        )}
+      </p>
     </div>
   );
 }

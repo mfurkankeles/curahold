@@ -134,6 +134,16 @@ export function recordsOfProcessing(): string {
 
 const KVKK_STATUS: Record<string, string> = { to_ask: 'Sorulacak', signed: 'İmzalandı', notified: 'Kurula bildirildi', not_needed: 'Gerekmiyor' };
 
+/** The VERBİS "transfer abroad" cell: which standard contract each foreign recipient needs (processor or separate controller). */
+function abroad(ids: string[]): string {
+  const foreign = ids.map((p) => SUBPROCESSORS.find((s) => s.id === p)!).filter((s) => s.countries.some((c) => c !== 'TR'));
+  if (!foreign.length) return 'Hayır';
+  const own = foreign.filter((s) => s.ownController);
+  if (!own.length) return 'Evet — KVKK m. 9 standart sözleşme (veri işleyene aktarım)';
+  const processors = foreign.length > own.length ? 'veri işleyenlere aktarım; ' : '';
+  return `Evet — KVKK m. 9 standart sözleşme (${processors}${own.map((s) => s.company).join(', ')}: ayrı veri sorumlusuna aktarım, veri sorumlusundan veri sorumlusuna sözleşme)`;
+}
+
 export function verbisSheet(): string {
   const cats = [...new Set(ACTIVITIES.flatMap((a) => a.verbis))];
   return [
@@ -157,7 +167,7 @@ export function verbisSheet(): string {
         a.basis.tr.tr,
         a.retention.tr,
         a.processors.map(company).join(', '),
-        a.processors.some((p) => SUBPROCESSORS.find((s) => s.id === p)!.countries.some((c) => c !== 'TR')) ? 'Evet — KVKK m. 9 standart sözleşme' : 'Hayır',
+        abroad(a.processors),
       ]),
     ),
     '',

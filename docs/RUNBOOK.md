@@ -77,6 +77,19 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
    clamd finds it clean, deleted if infected (alert in the owner console), retried hourly if clamd is down. The
    hosted Workers have no free signature scanner; the content checks above are the hosted line (decision in
    `/home/claude/orch/out/owner-questions.md`).
+2. **Files from customers have no malware scan yet.** The portal takes files only on requests or tickets
+   shared with the customer and on steps of their onboarding plan; each is checked by ending and first
+   bytes, at most 25 MB, within the company's allowance (Settings → Customer portal), stored privately and
+   only ever served as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). Decide on a
+   scan before go-live (no paid service has been added); until then this is the standing risk.
+3. **İYS before any marketing e-mail to Türkiye.** Curahold must be registered in İYS (İleti Yönetim Sistemi) as a service
+   provider before it collects or uses commercial-message approvals (Law 6563, Regulation art. 7). Until then the switch
+   `trIysRegistered` in `shared/src/compliance/consentTexts.ts` (`DEFAULT_FLAGS`) is `false`: the trial form shows Türkiye no
+   marketing boxes and the KVKK notice says so. After registration (and the upload of approvals within 3 business days set
+   up), set it to `true`, change the sentence in `docs/site/{en,tr}/legal-kvkk.md` and `legal-privacy.md` ("Until Curahold is
+   registered in İYS…"), and run `npx tsx scripts/compliance/legal-pack.ts`.
+4. **Breach readiness.** Read [docs/compliance/breach-runbook.md](compliance/breach-runbook.md): roles named, counsel appointed per
+   market, the deadlines marked "lawyer to confirm" confirmed, and `incident_log` (migration 0244) reachable by the operator.
 
 ## Rollback
 
@@ -192,7 +205,9 @@ migrates on start). Keep copies on another machine and try a restore now and the
 3. Last deploy within the hour? If yes and symptoms match, `wrangler rollback` first, investigate second.
 4. If a single company: look at its `sync_runs`, `webhook_events`, `notifications` backlog (rows stuck unsent), and `error_log` by `org_id`.
 5. Communicate: status message to affected admins (email), no promises about causes until known.
-6. After: post-mortem within 3 working days, added to a `docs/postmortems/` folder (invented names only), with action items.
+6. **Personal data involved?** Follow [docs/compliance/breach-runbook.md](compliance/breach-runbook.md) from here: the deadlines (48 hours
+   to customers under our DPA; 72 hours to most authorities) run from the moment we are aware, and every breach goes into `incident_log`.
+7. After: post-mortem within 3 working days, added to a `docs/postmortems/` folder (invented names only), with action items.
 
 **Severity guide.** SEV1: data leak between companies (also a security incident, see SECURITY.md), data loss, full outage, or billing taking wrong
 payments. SEV2: a core flow broken for many (sign-in, tasks), one connector down, scheduler not running for more than 3 hours. SEV3: degraded or

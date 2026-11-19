@@ -578,7 +578,7 @@ the four closest docs sections and read-only tools that call the API as the aski
 over the company's or the global monthly cap, or an error: the docs search answers, at no cost. A new read-only tool
 goes in `shared/src/assistant.ts` with a case in `tests/assistant-eval/cases.ts` (`live: true`). The evaluation
 runs without a key in CI (`npx tsx tests/assistant-eval/run.ts`, fixed checks) and with a key and a judge before a
-release. Privacy notes: `docs/legal/ai-assistant-privacy-notes.md`. Caps and why: ADR 0010.
+release. Privacy notes: `docs/compliance/ai-assistant-privacy-notes.md`. Caps and why: ADR 0010.
 
 ## The AI team (Curahold's own console)
 

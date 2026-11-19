@@ -145,14 +145,12 @@ describe('sending the request', () => {
     expect(missing.json.missing).toEqual(['KR.T']);
     const ok = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [...need, 'TR.M1'] }, { 'cf-ipcountry': 'KR' });
     expect(ok.status).toBe(201);
-    // Türkiye's marketing is two separate boxes (Law 6563 approval, KVKK consent); the ticked one only.
+    // Türkiye's marketing boxes are not offered until İYS registration is real (consentTexts.ts trIysRegistered):
+    // a box the form never showed is never recorded as an approval (tests/compliance.test.ts covers the boxes themselves).
     const rows = await env.db.system((q) =>
       q.query(`select block, granted from consent_records where email = 'ayse@kuzey.example' and kind = 'marketing' order by block`),
     );
-    expect(rows).toEqual([
-      { block: 'TR.M1', granted: true },
-      { block: 'TR.M2', granted: false },
-    ]);
+    expect(rows).toEqual([]);
   });
 
   it('turns a robot away quietly: hidden field or a form sent at once', async () => {

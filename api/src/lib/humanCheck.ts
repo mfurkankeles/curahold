@@ -52,7 +52,9 @@ export async function humanCheck(deps: Deps, proof: HumanProof, opts: { ip?: str
   if (!proof.ts) return 'failed';
   try {
     const form = new URLSearchParams({ secret: t.secretKey, response: proof.ts });
-    if (opts.ip) form.set('remoteip', opts.ip);
+    // Data minimisation (L1 audit): the visitor's address goes to Cloudflare only where the operator chose it
+    // (TURNSTILE_SEND_IP=1); the check works without it, and the privacy texts say which is the case.
+    if (opts.ip && t.sendIp) form.set('remoteip', opts.ip);
     const res = await fetchOf(deps)(TURNSTILE_VERIFY, { method: 'POST', body: form, signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`siteverify ${res.status}`);
     const out = (await res.json()) as { success?: boolean };
