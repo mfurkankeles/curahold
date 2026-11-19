@@ -34,10 +34,11 @@ job at `curahold_owner` and the Worker at `curahold_login`. Verify afterwards:
 `select relname from pg_class where relowner = (select oid from pg_roles where rolname = 'curahold_login')`
 returns nothing.
 
-## 2. Cloudflare rate limiting (the app sets no request limit of its own)
+## 2. Cloudflare rate limiting (at the edge, on top of the app's own limits)
 
-Configure in the Cloudflare dashboard (Security > WAF > Rate limiting rules) on the zone,
-as an ops requirement; the Worker does not do this:
+Since 19 Nov 2026 the app limits requests per person, company and network address itself (`api/src/lib/ratelimit.ts`,
+`lib/botGuard.ts`, ADR 0015). These edge rules still belong in the Cloudflare dashboard (Security > WAF > Rate limiting
+rules) on the zone, because they stop a flood before it costs Worker time:
 
 | Rule | Match | Limit | Action |
 | --- | --- | --- | --- |
