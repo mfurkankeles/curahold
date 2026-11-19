@@ -356,7 +356,7 @@ export function createApp(deps: Deps) {
                 s.expires_at < now() as expired,
                 s.last_seen_at < now() - interval '5 minutes' as stale,
                 u.id as user_id, u.name, u.email, u.seat, u.status, u.locale,
-                r.id as role_id, r.key as role_key, r.perms,
+                r.id as role_id, r.key as role_key, app_perms_of(u.id, r.perms) as perms,
                 array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
            from sessions s
            join users u on u.id = s.user_id
@@ -400,7 +400,7 @@ export function createApp(deps: Deps) {
       if (!/^[0-9a-f-]{36}$/i.test(previewAs) || c.req.path.startsWith('/api/me/sessions')) fail('forbidden');
       const [t] = await deps.db.tenant({ orgId: org.id, userId: s.user_id }, (q) =>
         q.query(
-          `select u.id, u.name, u.email, u.seat, u.status, r.id as role_id, r.key as role_key, r.perms,
+          `select u.id, u.name, u.email, u.seat, u.status, r.id as role_id, r.key as role_key, app_perms_of(u.id, r.perms) as perms,
                   array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
              from users u join roles r on r.id = u.role_id where u.id = $1`,
           [previewAs],

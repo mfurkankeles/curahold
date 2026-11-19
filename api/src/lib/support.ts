@@ -153,7 +153,7 @@ export async function signInSupport(c: C): Promise<boolean> {
               least(ss.expires_at, g.expires_at) as until,
               coalesce(ss.last_seen_at, ss.entered_at) < now() - interval '5 minutes' as stale,
               u.id as user_id, u.name, u.email, u.seat, u.status, u.locale,
-              r.id as role_id, r.key as role_key, r.perms,
+              r.id as role_id, r.key as role_key, app_perms_of(u.id, r.perms) as perms,
               array(select d.key from department_members dm join departments d on d.id = dm.department_id where dm.user_id = u.id and d.enabled) as dept_keys
          from support_sessions ss
          join support_grants g on g.id = ss.grant_id and g.org_id = ss.org_id

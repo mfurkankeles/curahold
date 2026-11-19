@@ -378,6 +378,38 @@ describe('an accounting program end to end (Odoo)', () => {
     expect((await mert.get(`/api/accounts/${acc['Velto Mobility']}/finance`)).json.finance).toMatchObject({ linked: false });
   });
 
+  it('the Finance department sees the money too; another department once Finance’s band is widened to it', async () => {
+    const url = `/api/accounts/${acc['Quillfield Retail']}/finance`;
+    const sys = (sql: string, args: unknown[] = []) => env.db.system((q) => q.query(sql, args));
+    const [{ id: lenaId }] = await sys(`select id from users where org_id = $1 and email = 'lena@demo.example'`, [env.a.orgId]);
+    const dept = async (key: string) => (await sys(`select id from departments where org_id = $1 and key = $2`, [env.a.orgId, key]))[0].id as string;
+    const [fin, sales] = [await dept('finance'), await dept('sales')];
+    const before = await sys(`select department_id, role from department_members where user_id = $1`, [lenaId]);
+    const bandBefore = (await sys(`select band_view from departments where id = $1`, [fin]))[0].band_view;
+    await sys(`delete from department_members where user_id = $1`, [lenaId]);
+    try {
+      await sys(`insert into department_members (org_id, department_id, user_id) values ($1, $2, $3)`, [env.a.orgId, fin, lenaId]);
+      const f = await lena.get(url);
+      expect(f.status).toBe(200);
+      expect(f.json.finance.summary.byCurrency[0]).toMatchObject({ currency: 'EUR', open: 3400 });
+      expect((await lena.get('/api/me')).json.user.perms).toContain('finance.view');
+      // Finance switched off: gone again.
+      await sys(`update departments set enabled = false where id = $1`, [fin]);
+      expect((await lena.get(url)).status).toBe(403);
+      await sys(`update departments set enabled = true where id = $1`, [fin]);
+      // In Sales only: not until Finance's band is widened to Sales.
+      await sys(`delete from department_members where user_id = $1`, [lenaId]);
+      await sys(`insert into department_members (org_id, department_id, user_id) values ($1, $2, $3)`, [env.a.orgId, sales, lenaId]);
+      expect((await lena.get(url)).status).toBe(403);
+      await sys(`update departments set band_view = array['finance', 'sales'] where id = $1`, [fin]);
+      expect((await lena.get(url)).status).toBe(200);
+    } finally {
+      await sys(`update departments set enabled = true, band_view = $2 where id = $1`, [fin, bandBefore]);
+      await sys(`delete from department_members where user_id = $1`, [lenaId]);
+      for (const r of before) await sys(`insert into department_members (org_id, department_id, user_id, role) values ($1, $2, $3, $4)`, [env.a.orgId, r.department_id, lenaId, r.role]);
+    }
+  });
+
   it('a late payment counts in the health score once the signal is on, by days, the same for everyone', async () => {
     const cfg = (await ada.get('/api/health/config')).json.config;
     expect((await ada.put('/api/health/config', { config: { ...cfg, enabled: true, signals: [...cfg.signals, { id: 'payment', key: 'payment', weight: 15, good: 0, bad: 60 }] } })).status).toBe(200);

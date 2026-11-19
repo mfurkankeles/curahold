@@ -28,6 +28,8 @@ Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: 
 
 Tutarlar **Finans rakamlarını görme** izni olan rollere görünür (başlangıçta yöneticiler ve müdürler; Ayarlar → Roller'den değiştirebilirsin). Müşteriyi gören diğer herkes yalnızca sağlık puanının içinde bir ödemenin kaç gün geciktiğini görür — hiçbir tutarı görmez.
 
+**Finans** departmanındaki kişiler de rolleri ne olursa olsun tutarları görür; Ayarlar → Departmanlar'da **Müşteri sayfasında Finans bölümünü kim görür** altında seçilen departmanlar da öyle. Finans kapatılırsa bu da kalkar.
+
 ## Sağlık puanında geciken ödemeler
 
 İlk okumayı başlatırken **Geciken ödemeleri sağlık puanına kat** kutusunu işaretleyebilirsin. **Zamanında ödeme** sinyali hiçbir şey gecikmemişse tam puan, ödenmemiş en eski fatura 60 gün geciktiğinde sıfır puan verir; iki sayı da Ayarlar → Sağlık skoru'ndan değişir. Programla eşleşmeyen müşteriler hesaba katılmaz.

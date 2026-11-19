@@ -28,6 +28,8 @@ Each customer in the accounting program is matched to one customer in Curahold: 
 
 Amounts are shown to roles with **See finance figures** (administrators and managers to start with; change it in Settings → Roles). Everyone else who sees the customer sees only, inside the health score, how many days a payment is late — never an amount.
 
+People in the **Finance** department see the amounts too, whatever their role, and so do the departments chosen under **Who sees Finance on the customer page** in Settings → Departments. Switching Finance off takes this away.
+
 ## Late payments in the health score
 
 When you start the first read you can tick **Count late payments in the health score**. The signal **Payments on time** gives full points when nothing is overdue and none when the oldest unpaid invoice is 60 days late; both numbers can be changed in Settings → Health score. Customers not matched to the program are left out of it.
