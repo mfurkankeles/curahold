@@ -92,6 +92,12 @@
    worth seeing next. */
 .demobar__tours { color: var(--well-ink); text-decoration: none; border: 1px solid var(--demo-edge); border-radius: var(--r-s); padding: 4px 8px; white-space: nowrap; }
 .demobar__tours:hover { border-color: var(--demo-edge-hi); color: var(--on-fill); }
+.demobar__own { color: var(--on-fill); background: var(--brand); border: 1px solid var(--brand); border-radius: var(--r-s); padding: 4px 8px; white-space: nowrap; font: inherit; cursor: pointer; }
+.demobar__own:hover { filter: brightness(1.08); }
+.demobar__ideas .demobar__ownIdea { margin-block-end: 8px; }
+@media (max-width: 760px) {
+  .demobar__own { display: none; }
+}
 
 .tour { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; font-family: var(--font); }
 .tour__dim { position: fixed; inset: 0; background: var(--tour-dim); }

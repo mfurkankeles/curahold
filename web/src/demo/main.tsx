@@ -77,7 +77,7 @@ function step(pct: number, key: 'db' | 'schema' | 'data' | 'app') {
   (document.getElementById('boot-bar') as HTMLElement).style.width = `${pct}%`;
 }
 
-function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch: (k: Key) => void; problem: string | null; words: SeedWords }) {
+function DemoBar({ current, onSwitch, problem, words, onOwnFile }: { current: Key; onSwitch: (k: Key) => void; problem: string | null; words: SeedWords; onOwnFile: () => void }) {
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
   // On a phone the strip has room for a short label: the given name and the role, not the full name.
@@ -139,6 +139,10 @@ function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch
       <a className="demobar__tours" href={HUB}>
         {say('demo.bar.tours')}
       </a>
+      {/* The visitor's own spreadsheet, read in this tab only (the import page says so). */}
+      <button type="button" className="demobar__own" data-tour="demo-own-file" onClick={onOwnFile}>
+        {say('demo.bar.ownFile')}
+      </button>
       <div className="demobar__more">
         <button type="button" aria-expanded={open} aria-label={say('demo.bar.tries')} onClick={() => setOpen((o) => !o)}>
           <span className="demobar__long">{say('demo.bar.tries')}</span>
@@ -146,6 +150,9 @@ function DemoBar({ current, onSwitch, problem, words }: { current: Key; onSwitch
         </button>
         {open && (
           <div className="demobar__ideas" role="dialog" aria-label={say('demo.bar.tries')}>
+            <button type="button" className="demobar__reset demobar__ownIdea" onClick={() => (setOpen(false), onOwnFile())}>
+              {say('demo.bar.ownFileLong')}
+            </button>
             <ul>
               {Array.from({ length: IDEAS }, (_, i) => (
                 <li key={i}>{say(`demo.idea.${i + 1}` as MessageKey)}</li>
@@ -260,7 +267,12 @@ async function main() {
   const memoryNav = (href: string) => (globalThis as any).appLocation.assign(href);
 
   const bar = createRoot(document.getElementById('demobar')!);
-  const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} problem={problem} words={words} />);
+  const drawBar = () => bar.render(<DemoBar current={current} onSwitch={switchTo} problem={problem} words={words} onOwnFile={() => void ownFile()} />);
+  // "Try it with your own file": the import page, as someone who may bring customers and tasks.
+  async function ownFile() {
+    if (current === 'customer' || current === 'sofia') await switchTo('ada');
+    go('/import');
+  }
   async function switchTo(k: Key) {
     if (k === 'customer') {
       await server.portalSignIn('selin@quillfield.example').catch(() => undefined);
@@ -311,6 +323,8 @@ async function main() {
   // curahold.com/demo/app/?tour=renewals — a tour from the demo hub.
   const asked = new URLSearchParams(window.location.search).get('tour');
   if (asked) setTimeout(() => void play(asked), 350);
+  // curahold.com/demo/app/?start=import — straight to "try it with your own file" (the hub, the trial-request page).
+  if (new URLSearchParams(window.location.search).get('start') === 'import') setTimeout(() => void ownFile(), 350);
 }
 
 // A link that ends in #docs (or #docs-tr) opens the documentation that travels with the demo,
