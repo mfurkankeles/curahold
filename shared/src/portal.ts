@@ -37,6 +37,8 @@ export interface PortalSettings {
   brand: PortalBrand;
   /** The company's logo (Settings → Company), shown on the portal and in its emails. */
   logoUrl: string | null;
+  /** Files customers sent from the portal: how much the company allows in all (MB), and how much is used. */
+  uploads: { quotaMb: number; usedMb: number };
 }
 
 // What the portal app reads (from /papi).
@@ -88,10 +90,19 @@ export interface PortalFile {
   /** The reply it belongs to; null for the request itself. */
   commentId: string | null;
 }
-/** Files one request or reply may carry (each up to MAX_FILE_MB). */
+/** Files one request, reply or onboarding step may carry at once (each up to PORTAL_FILE_MB). */
 export const PORTAL_MAX_FILES = 5;
-/** The endings a customer may send; the server also checks each file's first bytes (api/src/lib/portal.ts). */
-export const PORTAL_FILE_ENDINGS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'txt', 'csv'] as const;
+/** One file from the portal, at most. */
+export const PORTAL_FILE_MB = 25;
+/** What a company allows its customers to send in all, unless it sets its own (Settings → Customer portal). */
+export const PORTAL_QUOTA_MB = 2048;
+export const PORTAL_QUOTA_MAX_MB = 102_400;
+/**
+ * The endings a customer may send — documents, images, spreadsheets and CSV, PDF, ZIP — and only to a
+ * request or ticket shared with them, or a step of their onboarding plan. The server also checks each
+ * file's first bytes (api/src/lib/portal.ts). There is no malware scan yet: a go-live item (docs/RUNBOOK.md, "Go-live checklist").
+ */
+export const PORTAL_FILE_ENDINGS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'odt', 'ods', 'txt', 'csv', 'zip'] as const;
 
 export interface PortalComment {
   id: string;

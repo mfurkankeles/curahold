@@ -207,6 +207,34 @@ li[data-tone='bad'] > .ob-dot { background: var(--late); }
 .ob-settings { display: grid; gap: var(--s-2); margin-top: var(--s-6); }
 .ob-settings h2 { margin: 0; font-size: var(--fs-l); }
 .ob-settings p { margin: 0; font-size: var(--fs-xs); }
+.ob-settings__more { display: grid; gap: var(--s-2); padding-inline-start: var(--s-6); max-inline-size: 760px; }
+.ob-settings__h { margin: var(--s-2) 0 0; font-size: var(--fs-m); }
+.ob-settings__actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+.ob-rule { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.2fr) auto; gap: var(--s-2); align-items: center; }
+.ob-rule__is { color: var(--ink-2); font-size: var(--fs-s); }
+
+/* A won customer's draft that waits for its template. */
+.ob-choose { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; padding: var(--s-3) var(--s-4); margin-bottom: var(--s-4); border-radius: var(--r-m); background: var(--info-wash); color: var(--info-ink); }
+.ob-choose p { margin: 0; flex: 1 1 280px; }
+
+/* The plan made its own: one calm list of phases with their steps, each with its few controls. */
+.ob-edit { display: grid; gap: var(--s-4); }
+.ob-edit > p { margin: 0; }
+.ob-edit__phase { display: grid; gap: var(--s-2); padding-block-end: var(--s-3); border-block-end: 1px solid var(--line); }
+.ob-edit__row { display: flex; gap: var(--s-1); align-items: center; }
+.ob-edit__row .input { flex: 1 1 auto; min-width: 0; }
+.ob-edit__row .select { flex: 0 1 180px; min-width: 0; }
+.ob-edit__row--phase .input { font-weight: 600; }
+.ob-edit__steps { list-style: none; margin: 0; padding: 0 0 0 var(--s-6); display: grid; gap: var(--s-1); }
+.ob-edit__foot { display: flex; justify-content: flex-end; }
+@media (max-width: 640px) {
+  .ob-rule { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ob-rule__is { display: none; }
+  .ob-settings__more { padding-inline-start: 0; }
+  .ob-edit__steps { padding-inline-start: 0; }
+  .ob-edit__row { flex-wrap: wrap; }
+  .ob-edit__row .select { flex-basis: 100%; }
+}
 
 /* ---- portfolio and templates */
 .ob-tabs { display: flex; gap: var(--s-4); margin-bottom: var(--s-4); border-bottom: 1px solid var(--line); }

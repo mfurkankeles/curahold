@@ -6,8 +6,7 @@ import { logoPath, orgUrl, portalUrl, type Deps, type OrgRow } from '../context'
 import { randomDigits, randomToken, sha256Hex } from './crypto';
 import { emailHtml } from './emailHtml';
 import { fail } from './errors';
-import { MAX_FILE_MB } from '../../../shared/src/model';
-import { PORTAL_MAX_FILES } from '../../../shared/src/portal';
+import { PORTAL_FILE_MB, PORTAL_MAX_FILES, PORTAL_QUOTA_MAX_MB, PORTAL_QUOTA_MB } from '../../../shared/src/portal';
 
 /** The customer portal's request context (api/src/portal.ts). */
 export type PortalEnv = {
@@ -196,6 +195,9 @@ const PORTAL_KINDS: Record<string, { mime: string; magic?: number[][]; text?: tr
   docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', magic: [[0x50, 0x4b, 0x03, 0x04]] },
   xlsx: { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', magic: [[0x50, 0x4b, 0x03, 0x04]] },
   pptx: { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  odt: { mime: 'application/vnd.oasis.opendocument.text', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  ods: { mime: 'application/vnd.oasis.opendocument.spreadsheet', magic: [[0x50, 0x4b, 0x03, 0x04]] },
+  zip: { mime: 'application/zip', magic: [[0x50, 0x4b, 0x03, 0x04], [0x50, 0x4b, 0x05, 0x06]] },
   txt: { mime: 'text/plain', text: true },
   csv: { mime: 'text/csv', text: true },
 };
@@ -206,7 +208,7 @@ const PORTAL_KINDS: Record<string, { mime: string; magic?: number[][]; text?: tr
  */
 export async function checkPortalFile(f: File): Promise<{ name: string; size: number; mime: string; data: ArrayBuffer }> {
   const name = f.name.replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 200) || 'file';
-  if (f.size > MAX_FILE_MB * 1024 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });
+  if (f.size > PORTAL_FILE_MB * 1024 * 1024) fail('file_too_large', { mb: PORTAL_FILE_MB });
   if (f.size === 0) fail('portal_file_type', { name: name.slice(0, 80) });
   const kind = PORTAL_KINDS[/\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase() ?? ''];
   const data = await f.arrayBuffer();
@@ -218,6 +220,18 @@ export async function checkPortalFile(f: File): Promise<{ name: string; size: nu
       : kind.magic!.some((m) => m.every((b, i) => head[i] === b)) && (kind.mime !== 'image/webp' || String.fromCharCode(...head.slice(8, 12)) === 'WEBP'));
   if (!ok) fail('portal_file_type', { name: name.slice(0, 80) });
   return { name, size: f.size, mime: kind!.mime, data };
+}
+
+/** The company's allowance for customers' files (orgs.settings.portal.uploadQuotaMb), in MB. */
+export const portalQuotaMb = (settings: unknown): number => {
+  const v = Number((settings as any)?.portal?.uploadQuotaMb);
+  return Number.isInteger(v) && v >= 0 && v <= PORTAL_QUOTA_MAX_MB ? v : PORTAL_QUOTA_MB;
+};
+
+/** Bytes the company's customers have sent from the portal, in all. */
+export async function portalBytesUsed(q: { query: (s: string, p: unknown[]) => Promise<any[]> }, orgId: string): Promise<number> {
+  const [r] = await q.query('select coalesce(sum(size), 0)::bigint as n from files where org_id = $1 and portal_author_id is not null', [orgId]);
+  return Number(r?.n ?? 0);
 }
 
 /** The files of a form (`files`), at most PORTAL_MAX_FILES, each checked. */

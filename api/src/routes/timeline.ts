@@ -96,11 +96,20 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
         where l.account_id = $1 and l.shipped_at is not null and l.shipped_at < $2 order by l.story_id, l.shipped_at limit $3`,
       [id, at, limit],
     );
+    // Files the customer sent from the portal: on a request they share, or on a step of their onboarding plan.
+    const uploads = await q.query(
+      `select f.id, f.name, f.created_at, pu.name as by_name, t.id as task_id, t.title as task_title, t.board_id, s.plan_id, s.title as step_title, s.title_key
+         from files f left join portal_users pu on pu.id = f.portal_author_id
+         left join tasks t on t.id = f.task_id left join onboarding_steps s on s.id = f.onboarding_step_id
+         left join onboarding_plans p on p.id = s.plan_id
+        where f.portal_author_id is not null and (t.account_id = $1 or p.account_id = $1) and f.created_at < $2 order by f.created_at desc limit $3`,
+      [id, at, limit],
+    );
     const ticketLinks = tickets.length ? await linksFor(q, 'record', tickets.map((t) => t.id)) : new Map();
     const history = withScore
       ? await q.query(`select day::text as day, score from health_history where account_id = $1 and day <= $2::date order by day desc limit 120`, [id, at.slice(0, 10)])
       : [];
-    return { acts, pinned, created, done, comments, contacts, history, tickets, ticketLinks, handovers, built };
+    return { acts, pinned, created, done, comments, contacts, history, tickets, ticketLinks, handovers, built, uploads };
   });
   const items: TimelineItem[] = [
     ...data.acts.map((r): TimelineItem => ({ type: 'activity', at: iso(r.happened_at)!, activity: toActivity(r) })),
@@ -114,6 +123,11 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
     if (h.confirmed_at) items.push({ type: 'handover_confirmed', at: iso(h.confirmed_at)!, handoverId: h.id, deal: h.source_name, byId: h.confirmed_by, ownerId: h.owner_id });
   }
   for (const b of data.built) items.push({ type: 'built', at: iso(b.shipped_at)!, storyId: b.story_id, title: b.title });
+  for (const f of data.uploads)
+    items.push({
+      type: 'portal_file', at: iso(f.created_at)!, fileId: f.id, name: f.name, by: f.by_name ?? '',
+      ...(f.task_id ? { taskId: f.task_id, boardId: f.board_id, title: f.task_title ?? '' } : { planId: f.plan_id, title: f.step_title ?? '', titleKey: f.title_key ?? null }),
+    });
   // Support tickets: when they were opened and when they were solved (dates from the support tool).
   const noon = (d: unknown) => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T12:00:00.000Z` : null);
   for (const r of data.tickets) {

@@ -28,6 +28,8 @@ li[data-status='done'] .p-ob-step__text strong { color: var(--ink-2); font-weigh
 .p-ob-step__body { display: grid; gap: 12px; padding: 0 0 16px 40px; }
 .p-ob-step__body p { margin: 0; color: var(--ink-2); }
 .p-ob-form, .p-ob-ask { display: grid; gap: 8px; max-inline-size: 440px; }
+.p-ob-upload { display: grid; gap: 8px; max-inline-size: 440px; }
+.p-ob-upload p { font-size: 13px; }
 .p-ob-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .p-ob-rows li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 0; border-block-end: 1px solid var(--line); }
 .p-ob-rows li > span:first-child { display: grid; flex: 1; min-inline-size: 200px; }

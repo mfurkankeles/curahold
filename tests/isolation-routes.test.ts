@@ -270,6 +270,8 @@ const OVERRIDES: Record<string, (own: Own) => { body?: unknown; query?: string }
   'POST /onboarding-plans/:id/people': () => ({ body: { side: 'customer', name: 'Someone' } }),
   'POST /onboarding-plans/:id/steps': () => ({ body: { title: 'A step', phase: 'setup', side: 'vendor' } }),
   'PATCH /onboarding-metrics/:id': () => ({ body: { current: 1 } }),
+  'PUT /onboarding-plans/:id/phases': () => ({ body: { phases: [{ key: 'setup', name: null }] } }),
+  'PUT /onboarding-plans/:id/steps/order': () => ({ body: { phase: 'setup', ids: ['00000000-0000-4000-8000-000000000000'] } }),
 };
 
 describe('every address that names a thing by id', () => {

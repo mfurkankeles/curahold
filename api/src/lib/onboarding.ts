@@ -20,6 +20,10 @@ import {
   healthSignals,
   isSignal,
   NO_SETUP,
+  onboardingSettings,
+  phaseOrder,
+  templateFor,
+  ASK_TEMPLATE,
   progressOf,
   scheduleSteps,
   SIGNALS,
@@ -44,20 +48,6 @@ import { setupState, syncSetupIssues } from './onboardingSetup';
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v == null ? null : String(v));
 const day = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : v == null ? null : String(v).slice(0, 10));
 const num = (v: unknown) => (v == null ? null : Number(v));
-
-/** The company's settings for onboarding (orgs.settings.onboarding). */
-export interface OnboardingSettings {
-  /** A won deal opens a draft plan from this template (default on). */
-  fromHandover: boolean;
-  /** The template a hand-over uses; unset: the company's first client template, else the built-in standard one. */
-  templateId: string | null;
-  /** Proposal, off by default: reminders also go by e-mail. In the app they always do. */
-  emailNudges: boolean;
-}
-export function onboardingSettings(settings: unknown): OnboardingSettings {
-  const o = ((settings as Record<string, any> | null)?.onboarding ?? {}) as Record<string, unknown>;
-  return { fromHandover: o.fromHandover !== false, templateId: typeof o.templateId === 'string' ? o.templateId : null, emailNudges: o.emailNudges === true };
-}
 
 // ------------------------------------------------------------------ signals
 
@@ -209,9 +199,9 @@ export async function createPlan(q: Q, p: NewPlan): Promise<string> {
   const lastDue = [...dates.values()].map((d) => d.due).sort().pop() ?? null;
   const target = bp.days ? addDays(p.startOn, bp.days) : lastDue;
   const [plan] = await q.query<{ id: string }>(
-    `insert into onboarding_plans (org_id, kind, account_id, template_id, handover_id, name, status, department, owner_id, welcome, note, started_on, target_on, created_by)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) returning id`,
-    [p.orgId, p.kind, p.accountId, p.templateId ?? null, p.handoverId ?? null, p.name.slice(0, 160), p.status ?? 'active', p.department ?? null, p.ownerId ?? null, (p.welcome ?? '').slice(0, 4000), (p.note ?? '').slice(0, 8000), p.startOn, target, p.actorId],
+    `insert into onboarding_plans (org_id, kind, account_id, template_id, handover_id, name, status, department, owner_id, welcome, note, started_on, target_on, created_by, phases)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) returning id`,
+    [p.orgId, p.kind, p.accountId, p.templateId ?? null, p.handoverId ?? null, p.name.slice(0, 160), p.status ?? 'active', p.department ?? null, p.ownerId ?? null, (p.welcome ?? '').slice(0, 4000), (p.note ?? '').slice(0, 8000), p.startOn, target, p.actorId, JSON.stringify(bp.phases ?? [])],
   );
   const sites: Row[] = [];
   for (const [i, raw] of (bp.sites ?? []).entries()) {
@@ -402,11 +392,15 @@ export async function clientBlueprint(q: Q, orgId: string, templateId: string | 
  */
 export async function openPlanForHandover(q: Q, orgId: string, handoverId: string, today: string): Promise<string | null> {
   const [h] = await q.query('select h.*, o.settings, o.locale, a.name as account_name from handovers h join orgs o on o.id = h.org_id join accounts a on a.id = h.account_id where h.id = $1 and h.org_id = $2', [handoverId, orgId]);
-  if (!h || h.source_kind === 'onboarding' || !onboardingSettings(h.settings).fromHandover) return null;
+  const settings = onboardingSettings(h?.settings);
+  if (!h || h.source_kind === 'onboarding' || !settings.fromHandover) return null;
   const [open] = await q.query(`select id from onboarding_plans where org_id = $1 and account_id = $2 and status in ('draft', 'active', 'paused')`, [orgId, h.account_id]);
   if (open) return null;
   const locale = (h.locale ?? 'en') as Locale;
-  const tpl = await clientBlueprint(q, orgId, null);
+  // The customer's segment, plan or region may pick the template; "ask each time" opens an empty draft that asks.
+  const [acc] = await q.query('select fields from accounts where id = $1 and org_id = $2', [h.account_id, orgId]);
+  const pick = templateFor(settings, acc?.fields);
+  const tpl = pick === ASK_TEMPLATE ? { id: null, blueprint: { steps: [], goals: [], metrics: [], fields: [] } as Blueprint } : await clientBlueprint(q, orgId, pick);
   return createPlan(q, {
     orgId,
     actorId: null,
@@ -579,13 +573,15 @@ export async function progressFor(q: Q, orgId: string, planIds: string[], today:
   if (!planIds.length) return new Map<string, ReturnType<typeof progressOf>>();
   const steps = await q.query(`select id, plan_id, key, phase, position, status, depends_on, due_on, side, updated_at, done_how, done_at, required from onboarding_steps where org_id = $1 and plan_id = any($2::uuid[])`, [orgId, planIds]);
   const issues = await q.query(`select plan_id, status, side, opened_on, due_on from onboarding_issues where org_id = $1 and plan_id = any($2::uuid[])`, [orgId, planIds]);
-  const plans = new Map((await q.query('select id, status, started_on from onboarding_plans where id = any($1::uuid[])', [planIds])).map((r) => [r.id, r]));
+  const plans = new Map((await q.query('select id, status, started_on, phases from onboarding_plans where id = any($1::uuid[])', [planIds])).map((r) => [r.id, r]));
   const out = new Map<string, ReturnType<typeof progressOf>>();
   for (const id of planIds) {
+    const mine = steps.filter((x) => x.plan_id === id);
+    const order = phaseOrder(plans.get(id)?.phases, mine.map((x) => x.phase as string));
     out.set(
       id,
       progressOf(
-        steps.filter((x) => x.plan_id === id).map((x) => ({ id: x.id, key: x.key, phase: x.phase, position: x.position, status: x.status, dependsOn: x.depends_on ?? [], dueOn: day(x.due_on), side: x.side, updatedAt: iso(x.updated_at)!, doneHow: x.done_how, doneAt: iso(x.done_at), required: x.required !== false })),
+        mine.map((x) => ({ id: x.id, key: x.key, phase: x.phase, phaseAt: order.findIndex((o) => o.key === x.phase), position: x.position, status: x.status, dependsOn: x.depends_on ?? [], dueOn: day(x.due_on), side: x.side, updatedAt: iso(x.updated_at)!, doneHow: x.done_how, doneAt: iso(x.done_at), required: x.required !== false })),
         issues.filter((x) => x.plan_id === id).map((x) => ({ status: x.status, side: x.side, openedOn: day(x.opened_on)!, dueOn: day(x.due_on) })),
         today,
         plans.get(id)?.status,
@@ -640,8 +636,13 @@ export async function readPlan(q: Q, orgId: string, planId: string, today: strin
     q.query('select * from onboarding_metrics where plan_id = $1 order by position', [planId]),
     q.query('select settings, account_fields, locale from orgs where id = $1', [orgId]),
   ]);
-  const files = await q.query(`select id, name, size, onboarding_step_id from files where org_id = $1 and onboarding_step_id = any($2::uuid[]) order by created_at`, [orgId, steps.map((x) => x.id)]);
-  const planSteps = steps.map((x) => ({ ...toStep(x), files: files.filter((f) => f.onboarding_step_id === x.id).map((f) => ({ id: f.id, name: f.name, size: Number(f.size) })) }));
+  const files = await q.query(`select id, name, size, onboarding_step_id, portal_author_id from files where org_id = $1 and onboarding_step_id = any($2::uuid[]) order by created_at`, [orgId, steps.map((x) => x.id)]);
+  const phases = phaseOrder(r.phases, steps.map((x) => x.phase as string));
+  const planSteps = steps.map((x) => ({
+    ...toStep(x),
+    phaseAt: phases.findIndex((ph) => ph.key === x.phase),
+    files: files.filter((f) => f.onboarding_step_id === x.id).map((f) => ({ id: f.id, name: f.name, size: Number(f.size), fromPortal: !!f.portal_author_id })),
+  }));
   const planIssues = issues.map(toIssue);
   const progress = progressOf(planSteps, planIssues, today, r.status, day(r.started_on)!);
   const formKeys = [...new Set(planSteps.flatMap((s) => s.form))];
@@ -689,7 +690,7 @@ export async function readPlan(q: Q, orgId: string, planId: string, today: strin
     metrics: metrics.map((m) => ({ id: m.id, titleKey: m.title_key ?? null, title: m.title ?? null, unit: m.unit, baseline: num(m.baseline), current: num(m.current), target: num(m.target), better: m.better })),
     fieldValues,
     formFields,
-    emailNudges: onboardingSettings(org[0]?.settings).emailNudges,
+    phases,
     setup,
     health,
     portalUrl: r.kind === 'client' && r.portal_visible && opts.portalUrl ? `${opts.portalUrl}/onboarding` : null,
@@ -704,7 +705,7 @@ export async function readPlan(q: Q, orgId: string, planId: string, today: strin
  * their turn (it just unlocked), and again every STALL_DAYS while it stalls.
  * The owner is the step's person on the company's side, else its owner, else
  * the plan's owner (the company's own plan: whoever started it). By e-mail
- * only when the company switched that proposal on. Returns how many went out.
+ * only for the people who turned that on in their own notification settings. Returns how many went out.
  */
 export async function remindPlan(q: Q, plan: { id: string; org_id: string; owner_id: string | null; created_by: string | null; name: string; account_id: string | null; timezone: string; settings: any }, now: Date): Promise<number> {
   const today = localDate(now, plan.timezone);
@@ -718,7 +719,6 @@ export async function remindPlan(q: Q, plan: { id: string; org_id: string; owner
     .map((s) => ({ s, what: !s.nudgedAt ? ('turn' as const) : stalled(s, steps, today) && now.getTime() - new Date(s.nudgedAt).getTime() >= STALL_DAYS * 86400_000 ? ('stalled' as const) : null }))
     .filter((x): x is { s: (typeof steps)[number]; what: 'turn' | 'stalled' } => !!x.what);
   if (!due.length) return 0;
-  const mail = onboardingSettings(plan.settings).emailNudges;
   const list = due
     .map(({ s, what }) => ({ s, what, to: s.personUser ?? s.ownerId ?? plan.owner_id ?? plan.created_by }))
     .filter((x): x is typeof x & { to: string } => !!x.to);
@@ -727,7 +727,8 @@ export async function remindPlan(q: Q, plan: { id: string; org_id: string; owner
     list.map(({ s, what, to }) => ({
       orgId: plan.org_id,
       userId: to,
-      kind: mail ? 'onboarding_mail' : 'onboarding',
+      // Always in the app; by e-mail only for whoever turned that on (notify.ts: event 'onboarding', off by default).
+      kind: 'onboarding_mail',
       data: { what, plan: plan.name, planId: plan.id, kind: plan.account_id ? 'client' : 'self', accountId: plan.account_id, step: s.title ?? '', stepKey: s.titleKey ?? '' },
       dedupeKey: `onboarding:${s.id}:${what}:${today}`,
     })),

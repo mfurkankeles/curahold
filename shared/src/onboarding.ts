@@ -20,9 +20,73 @@ export type PlanKind = (typeof PLAN_KINDS)[number];
 export const PLAN_STATUSES = ['draft', 'active', 'paused', 'done', 'cancelled'] as const;
 export type PlanStatus = (typeof PLAN_STATUSES)[number];
 
-/** The phases a plan moves through, in order. A template uses the ones it needs. */
+/** The company's onboarding settings (orgs.settings.onboarding); an administrator changes them. */
+export interface OnboardingSettings {
+  /** A won deal opens a draft plan for the customer. Off until an administrator turns it on. */
+  fromHandover: boolean;
+  /** Which template it opens: a template's id, a built-in key, ASK_TEMPLATE (the person who takes the customer chooses), or null (the company's first, else the standard one). */
+  templateId: string | null;
+  /** Optional, first match wins: a customer field (segment, plan, region…) with a value → a template, or ASK_TEMPLATE. */
+  rules: TemplateRule[];
+}
+export interface TemplateRule {
+  field: string;
+  value: string;
+  templateId: string;
+}
+/** "Ask each time": the draft plan waits for whoever takes the customer to choose its template. */
+export const ASK_TEMPLATE = 'ask';
+export const MAX_TEMPLATE_RULES = 20;
+
+export function onboardingSettings(settings: unknown): OnboardingSettings {
+  const o = ((settings as Record<string, any> | null)?.onboarding ?? {}) as Record<string, unknown>;
+  const rules = (Array.isArray(o.rules) ? o.rules : [])
+    .filter((r): r is TemplateRule => !!r && typeof r.field === 'string' && typeof r.value === 'string' && typeof r.templateId === 'string')
+    .slice(0, MAX_TEMPLATE_RULES)
+    .map((r) => ({ field: r.field, value: r.value, templateId: r.templateId }));
+  return { fromHandover: o.fromHandover === true, templateId: typeof o.templateId === 'string' ? o.templateId : null, rules };
+}
+
+/** The template a won customer's plan opens with: the first rule its fields match, else the company's choice. */
+export function templateFor(s: OnboardingSettings, fields: Record<string, unknown> | null | undefined): string | null {
+  const said = (v: unknown) => (v == null ? '' : String(v)).trim().toLocaleLowerCase('en');
+  const hit = s.rules.find((r) => r.value.trim() && said(fields?.[r.field]) === said(r.value));
+  return hit ? hit.templateId : s.templateId;
+}
+
+/** The built-in phases a plan moves through, in order. A template uses the ones it needs. */
 export const PHASES = ['kickoff', 'setup', 'data', 'test', 'golive', 'adopt'] as const;
-export type Phase = (typeof PHASES)[number];
+export type BuiltInPhase = (typeof PHASES)[number];
+/** A phase's key: one of the built-in ones, or one a plan made for itself (`ph1`, `ph2`…). */
+export type Phase = string;
+export const PHASE_KEY = /^[a-z][a-z0-9_-]{0,40}$/;
+export const isBuiltInPhase = (p: string): p is BuiltInPhase => (PHASES as readonly string[]).includes(p);
+/** A phase's name for the reader: the plan's own, else the built-in one in their language. */
+export function phaseLabel(key: string, phases: readonly PlanPhase[] | null | undefined, say: (k: string) => string): string {
+  const own = phases?.find((p) => p.key === key)?.name;
+  return own || (isBuiltInPhase(key) ? say(`ob.phase.${key}`) : key);
+}
+/** Phases a plan may have at most. */
+export const MAX_PHASES = 12;
+
+/** One phase of a plan, in its order: a built-in one keeps its name in every language unless renamed (`name`). */
+export interface PlanPhase {
+  key: Phase;
+  name: string | null;
+}
+
+/**
+ * A plan's phases in order: those it keeps for itself (onboarding_plans.phases), else the
+ * built-in ones its steps use, in the built-in order; a step in a phase not listed comes last.
+ */
+export function phaseOrder(stored: unknown, stepPhases: string[]): PlanPhase[] {
+  const own = (Array.isArray(stored) ? stored : [])
+    .filter((x): x is { key: string; name?: unknown } => !!x && typeof x.key === 'string' && PHASE_KEY.test(x.key))
+    .map((x) => ({ key: x.key, name: typeof x.name === 'string' && x.name.trim() ? x.name.trim().slice(0, 60) : null }));
+  const list = own.length ? own : PHASES.filter((p) => stepPhases.includes(p)).map((key) => ({ key, name: null }));
+  for (const p of stepPhases) if (!list.some((x) => x.key === p)) list.push({ key: p, name: null });
+  return list.filter((x, i) => list.findIndex((y) => y.key === x.key) === i);
+}
 
 export const SIDES = ['vendor', 'customer'] as const;
 export type Side = (typeof SIDES)[number];
@@ -159,6 +223,8 @@ export interface BlueprintField {
   example?: string;
 }
 export interface Blueprint {
+  /** The phases in order, with their own names, when the template was saved from a plan that changed them. */
+  phases?: PlanPhase[];
   steps: BlueprintStep[];
   goals: BlueprintGoal[];
   metrics: BlueprintMetric[];
@@ -289,6 +355,8 @@ export interface PlanStep {
   title: string | null;
   body: string;
   phase: Phase;
+  /** Where the step's phase is in its plan's order (the server sets it when a plan has phases of its own). */
+  phaseAt?: number;
   position: number;
   side: StepSide;
   ownerId: string | null;
@@ -311,7 +379,7 @@ export interface PlanStep {
   upload: boolean;
   /** Required steps count fully towards the completion, optional ones half; skipped ones not at all. */
   required: boolean;
-  files: { id: string; name: string; size: number }[];
+  files: { id: string; name: string; size: number; fromPortal?: boolean }[];
   taskId: string | null;
   /** The linked product work, as far as this person may know it (title and where it stands). */
   work: { title: string; status: string | null; done: boolean } | null;
@@ -421,8 +489,8 @@ export interface Plan extends PlanSummary {
   fieldValues: Record<string, unknown>;
   /** The customer fields the forms name, with their labels and types (the form draws from them). */
   formFields: { key: string; label: string; type: string }[];
-  /** Proposal: reminders also by e-mail (off by default; in the app always). */
-  emailNudges: boolean;
+  /** The plan's phases in order, with their own names where it renamed them. */
+  phases: PlanPhase[];
   /** The setup checks' and tests' state (the company's own plan only). */
   setup: SetupState;
   health: HealthSignal[];
@@ -475,9 +543,10 @@ export const dayDiff = (from: string, to: string) => Math.round((Date.parse(`${t
 const weight = (x: Pick<StepLike, 'required'>) => (x.required === false ? 0.5 : 1);
 
 /** Steps in the order they are worked: phase, then position. */
-export function ordered<T extends Pick<PlanStep, 'phase' | 'position'>>(steps: T[]): T[] {
-  return [...steps].sort((a, b) => PHASES.indexOf(a.phase) - PHASES.indexOf(b.phase) || a.position - b.position);
+export function ordered<T extends Pick<PlanStep, 'phase' | 'position'> & { phaseAt?: number }>(steps: T[]): T[] {
+  return [...steps].sort((a, b) => phaseRank(a) - phaseRank(b) || a.position - b.position);
 }
+const phaseRank = (x: { phase: string; phaseAt?: number }) => x.phaseAt ?? (isBuiltInPhase(x.phase) ? PHASES.indexOf(x.phase) : PHASES.length);
 
 /** A step is unlocked when every step it waits for is done or left out. */
 export function unlocked(step: Pick<PlanStep, 'dependsOn'>, steps: StepLike[]): boolean {
@@ -573,8 +642,9 @@ export function progressOf(steps: StepLike[], issues: IssueLike[], today: string
 }
 
 /** The compact timeline: each phase the plan uses, with its first start, last due day and completion. */
-export function milestones(steps: Pick<PlanStep, 'phase' | 'status' | 'startOn' | 'dueOn'>[]) {
-  return PHASES.flatMap((phase) => {
+export function milestones(steps: (Pick<PlanStep, 'phase' | 'status' | 'startOn' | 'dueOn'> & { phaseAt?: number })[]) {
+  const phases = [...new Set(ordered(steps.map((x) => ({ phase: x.phase, phaseAt: x.phaseAt, position: 0 }))).map((x) => x.phase))];
+  return phases.flatMap((phase) => {
     const list = steps.filter((x) => x.phase === phase);
     if (!list.length) return [];
     const starts = list.map((x) => x.startOn).filter((d): d is string => !!d).sort();
@@ -747,7 +817,7 @@ export interface PlanReport {
   /** The last due day of the open steps: when it will likely be live. */
   forecastOn: string | null;
   progress: Progress;
-  phases: ReturnType<typeof milestones>;
+  phases: (ReturnType<typeof milestones>[number] & { name: string | null })[];
   next: { key: string; titleKey: string | null; title: string | null; side: StepSide; dueOn: string | null }[];
   goals: Pick<PlanGoal, 'titleKey' | 'title' | 'priority' | 'status' | 'targetOn'>[];
   issues: Pick<PlanIssue, 'title' | 'side' | 'urgency' | 'status' | 'openedOn' | 'dueOn'>[];
@@ -776,7 +846,7 @@ export function reportOf(plan: Plan, company: string, now: Date): PlanReport {
     targetOn: plan.targetOn,
     forecastOn: plan.status === 'done' ? (plan.doneAt?.slice(0, 10) ?? today) : (dues[dues.length - 1] ?? plan.targetOn),
     progress: plan.progress,
-    phases: milestones(plan.steps),
+    phases: milestones(plan.steps).map((m) => ({ ...m, name: plan.phases?.find((p) => p.key === m.phase)?.name ?? null })),
     next: ready.slice(0, 3).map((x) => ({ key: x.key, titleKey: x.titleKey, title: x.title, side: x.side, dueOn: x.dueOn })),
     goals: plan.goals.map((g) => ({ titleKey: g.titleKey, title: g.title, priority: g.priority, status: g.status, targetOn: g.targetOn })),
     issues: plan.issues

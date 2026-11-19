@@ -216,6 +216,7 @@ const KIND_ICON: Record<string, IconName> = {
   handover: 'handshake',
   handover_confirmed: 'handshake',
   built: 'spark',
+  portal_file: 'paperclip',
 };
 
 /** Task traffic: shown quietly, and gathered when there is more than one on a day. */
@@ -462,6 +463,30 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
             ) : (
               <strong>{it.title}</strong>
             )}
+          </div>
+          <time className="tl__time" dateTime={it.at}>
+            {timeLabel(it.at, locale)}
+          </time>
+        </li>
+      );
+    }
+    if (it.type === 'portal_file') {
+      const where = it.title || (it.titleKey ? t(`ob.step.${it.titleKey}.title` as MessageKey) : '');
+      return (
+        <li key={`file-${it.fileId}`} className="tl__item tl__signal" data-kind={it.type}>
+          <span className="tl__icon" aria-hidden="true">
+            <Icon name={KIND_ICON[it.type]} size={13} />
+          </span>
+          <div className="tl__line">
+            {t(it.planId ? 'timeline.portalFileStep' : 'timeline.portalFile', { name: it.by })} <strong>{it.name}</strong>
+            {' · '}
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => (it.planId ? navigate(`/onboarding/plans/${it.planId}`) : it.boardId && it.taskId && openTask(it.boardId, it.taskId))}
+            >
+              {where}
+            </button>
           </div>
           <time className="tl__time" dateTime={it.at}>
             {timeLabel(it.at, locale)}

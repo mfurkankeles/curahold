@@ -44,7 +44,8 @@ export function kick(deps: Deps) {
 
 export const DEFAULT_PREFS: NotifyPrefs = {
   channel: 'auto',
-  events: { assigned: true, mentioned: true, comment: true, following: true, digest: true, weekly: true, nudges: true, automation: true },
+  // Onboarding reminders by e-mail or chat: off until the person turns them on (in the app they always appear).
+  events: { assigned: true, mentioned: true, comment: true, following: true, digest: true, weekly: true, nudges: true, automation: true, onboarding: false },
   digestHour: 8,
   defaultBoardId: null,
 };
@@ -98,7 +99,7 @@ export function quietUntil(quiet: NonNullable<NotifyPrefs['quiet']>, now: Date, 
 }
 
 /** Kinds that wait for the morning summary when the person batches (the default): everything not addressed to them. */
-export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated']);
+export const BATCHED_KINDS = new Set(['comment', 'followed', 'stale', 'escalated', 'onboarding_mail']);
 
 // Kinds that may go by email when no chat app is linked. Comments are
 // chat/in-app only — email for every comment is noise.
@@ -114,6 +115,8 @@ const PREF_OF_KIND: Record<string, keyof NotifyPrefs['events']> = {
   stale: 'nudges',
   escalated: 'nudges',
   automation: 'automation',
+  // An onboarding step whose turn it is: by e-mail or chat only for whoever turned it on.
+  onboarding_mail: 'onboarding',
   // A won customer waiting for (or given to) its next owner is work for them, like an assignment.
   handover: 'assigned',
   handover_owner: 'assigned',
@@ -197,7 +200,8 @@ export function render(ctx: RenderCtx): ChatMessage {
     case 'onboarding_mail': {
       const step = data.stepKey ? t(`ob.step.${data.stepKey}.title` as MessageKey) : (data.step ?? '');
       const url = data.kind === 'self' ? `${ctx.base}/onboarding` : `${ctx.base}/onboarding/plans/${data.planId}`;
-      return { ...base, title: t(data.what === 'stalled' ? 'notify.obStalled' : 'notify.obTurn', { step }), body: data.plan ?? '', url };
+      const key: MessageKey = data.what === 'stalled' ? 'notify.obStalled' : data.what === 'file' ? 'notify.obFile' : data.what === 'issue' ? 'notify.obIssue' : 'notify.obTurn';
+      return { ...base, title: t(key, { step }), body: data.plan ?? '', url };
     }
     case 'handover_owner':
       return { ...base, title: t('notify.handoverOwner', { account: data.account ?? '', actor }), body: data.deal ?? '', url: `${ctx.base}/accounts/${data.accountId}` };

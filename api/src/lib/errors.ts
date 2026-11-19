@@ -65,6 +65,7 @@ export type ErrorCode =
   | 'portal_passkey_failed'
   | 'portal_file_type'
   | 'portal_too_many_files'
+  | 'portal_quota'
   | 'portal_no_method'
   | 'plan_no_date'
   | 'required_fields'
@@ -149,6 +150,7 @@ const STATUS: Record<ErrorCode, number> = {
   portal_passkey_failed: 400,
   portal_file_type: 400,
   portal_too_many_files: 400,
+  portal_quota: 413,
   portal_no_method: 400,
   required_fields: 400,
   link_loop: 400,

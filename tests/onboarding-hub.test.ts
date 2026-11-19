@@ -10,6 +10,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { checkField, fieldState, healthSignals, progressOf, reportOf, turnOf, type Plan, type PlanStep } from '../shared/src/onboarding';
 import { remindPlan } from '../api/src/lib/onboarding';
+import { deliverPending, prefsOf } from '../api/src/lib/notify';
 import { setSetupSource } from '../api/src/lib/onboardingSetup';
 import { createPortalApp } from '../api/src/portal';
 import { login, setup, type Client, type Env } from './helpers';
@@ -153,16 +154,30 @@ describe('the company’s own plan', () => {
     await ada.post('/api/setup-test/invite/mark', { status: 'pass' });
   });
 
-  it('reminds whoever owns a step, in the app only (e-mail is an opt-in setting)', async () => {
+  it('reminds whoever owns a step in the app; by e-mail only for whoever turned that on', async () => {
     const [p] = await sys(`select p.id, p.org_id, p.owner_id, p.created_by, p.name, p.account_id, o.timezone, o.settings from onboarding_plans p join orgs o on o.id = p.org_id where p.id = $1`, [planId]);
     const n = await env.db.system((q) => remindPlan(q, p, new Date()));
     expect(n).toBeGreaterThan(0);
     const kinds = await sys(`select distinct kind from notifications where org_id = $1 and kind like 'onboarding%'`, [env.a.orgId]);
-    expect(kinds.map((k: any) => k.kind)).toEqual(['onboarding']);
+    expect(kinds.map((k: any) => k.kind)).toEqual(['onboarding_mail']);
+    // Off by default for everyone: the reminder stays in the app, nothing goes out.
+    expect(prefsOf({}).events.onboarding).toBe(false);
+    expect((await ada.get('/api/me')).json.user.prefs.events.onboarding).toBe(false);
+    await deliverPending(env.deps);
+    const states = await sys(`select distinct via from notifications where org_id = $1 and kind = 'onboarding_mail'`, [env.a.orgId]);
+    expect(states.map((x: any) => x.via)).not.toContain('email');
     // Once per turn: nothing more right away.
     expect(await env.db.system((q) => remindPlan(q, p, new Date()))).toBe(0);
-    expect((await ada.get('/api/onboarding/settings')).json.settings.emailNudges).toBe(false);
-    expect((await zeynep.put('/api/onboarding/settings', { emailNudges: true })).status).toBe(403);
+    // A person turns it on for themselves; with the morning summary on (the default) it waits for that, otherwise it goes now.
+    expect((await ada.patch('/api/me', { prefs: { events: { onboarding: true }, batch: false } })).status).toBe(200);
+    await sys(`update onboarding_steps set nudged_at = null where plan_id = $1`, [planId]);
+    await env.db.system((q) => remindPlan(q, p, new Date(Date.now() + 86400_000)));
+    await deliverPending(env.deps);
+    const sent = await sys(`select n.via from notifications n join users u on u.id = n.user_id where n.org_id = $1 and n.kind = 'onboarding_mail' and u.email = 'ada@demo.example' and n.via = 'email'`, [env.a.orgId]);
+    expect(sent.length).toBeGreaterThan(0);
+    // The company has no e-mail switch of its own any more; only administrators change its settings.
+    expect((await ada.get('/api/onboarding/settings')).json.settings).toEqual({ fromHandover: false, templateId: null, rules: [] });
+    expect((await zeynep.put('/api/onboarding/settings', { fromHandover: true })).status).toBe(403);
   });
 });
 
@@ -170,6 +185,8 @@ describe('a customer’s plan', () => {
   let planId = '';
   let account = '';
   it('opens as a draft with the hand-over card, drafted note included, and starts when the card is confirmed', async () => {
+    // Off until an administrator turns it on.
+    expect((await ada.put('/api/onboarding/settings', { fromHandover: true })).status).toBe(200);
     account = env.a.accounts['Cedarmoor Health'];
     await sys(`insert into promises (org_id, account_id, body) values ($1, $2, 'Weekly status call during setup')`, [env.a.orgId, account]);
     const board = env.a.boards.csBoard;
@@ -265,7 +282,30 @@ describe('a customer’s plan', () => {
     expect((await p.post(`/papi/onboarding/${vendorStep.id}/tick`)).status).toBe(404);
     const issue = await p.post(`/papi/onboarding/${planId}/issue`, { title: 'Who signs the data agreement?' });
     expect(issue.json.plans[0].issues.some((i: any) => i.title === 'Who signs the data agreement?' && i.side === 'vendor')).toBe(true);
+    // Files: on a step of their side (or one that asks for a file), never on the company's own step.
+    const send = (stepId: string, name: string, bytes: string) => {
+      const form = new FormData();
+      form.set('data', '{}');
+      form.append('files', new File([bytes], name));
+      return portal.request(`https://acme.${PORTAL}/papi/onboarding-steps/${stepId}/files`, { method: 'POST', headers: { 'x-curahold-portal': '1', cookie: p.cookie }, body: form });
+    };
+    const pdf = '%PDF-1.4 depot list';
+    const up = await send(customerStep.id, 'depots.pdf', pdf);
+    expect(up.status).toBe(201);
+    const sent = (await up.json()).plans[0].steps.find((s: any) => s.id === customerStep.id).files;
+    expect(sent).toMatchObject([{ name: 'depots.pdf', mine: true }]);
+    expect((await send(vendorStep.id, 'depots.pdf', pdf)).status).toBe(404);
+    expect((await send(customerStep.id, 'run.exe', 'MZ')).status).toBe(400);
+    expect((await p.get(`/papi/files/${sent[0].id}`)).status).toBe(200);
+    // It shows on the customer's timeline, and the company's allowance holds.
+    const tl = (await mert.get(`/api/accounts/${account}/timeline`)).json.items;
+    expect(tl.some((x: any) => x.type === 'portal_file' && x.name === 'depots.pdf' && x.planId === planId)).toBe(true);
+    expect((await ada.put('/api/portal/settings', { uploadQuotaMb: 0 })).status).toBe(200);
+    expect((await ada.get('/api/portal')).json.uploads.quotaMb).toBe(0);
+    expect((await send(customerStep.id, 'again.pdf', pdf)).status).toBe(413);
+    await ada.put('/api/portal/settings', { uploadQuotaMb: 2048 });
     const inApp: Plan = (await mert.get(`/api/onboarding-plans/${planId}`)).json.plan;
+    expect(inApp.steps.find((s) => s.key === 'training')!.files[0]).toMatchObject({ name: 'depots.pdf', fromPortal: true });
     expect(inApp.steps.find((s) => s.key === 'training')!.doneHow).toBe('portal');
     expect(inApp.issues.find((i) => i.title === 'Who signs the data agreement?')!.fromPortal).toBe(true);
   });
@@ -321,3 +361,66 @@ class PortalClient {
   get = (p: string) => this.req('GET', p);
   post = (p: string, b: unknown = {}) => this.req('POST', p, b);
 }
+
+describe('a customer’s plan, made its own', () => {
+  let planId = '';
+  it('a won deal picks its template by the customer’s field, or waits for someone to choose', async () => {
+    // A company field like "Segment" (any customer field works the same way).
+    const field = 'segment';
+    await sys(`update orgs set account_fields = account_fields || '[{"key": "segment", "type": "text", "label": {"en": "Segment"}}]'::jsonb where id = $1`, [env.a.orgId]);
+    const tpl = (await mert.post('/api/onboarding-templates', { name: 'Hospitals', from: 'multisite' })).json.template;
+    const r = await ada.put('/api/onboarding/settings', { fromHandover: true, templateId: 'ask', rules: [{ field, value: 'Hospital', templateId: tpl.id }] });
+    expect(r.json.settings.rules).toHaveLength(1);
+    const won = async (name: string, value: string) => {
+      const made = await ada.post('/api/accounts', { name, fields: { [field]: value } });
+      const acc = made.json.account.id;
+      const task = (await ada.post('/api/tasks', { boardId: env.a.boards.csBoard, title: `${name} won`, accountId: acc })).json.task;
+      expect((await ada.post('/api/handovers', { sourceKind: 'task', sourceId: task.id })).status).toBe(201);
+      const got = (await mert.get(`/api/onboarding-plans?account=${acc}`)).json.plans[0];
+      return got;
+    };
+    const byRule = await won('Northwind Clinic', 'hospital');
+    expect((await mert.get(`/api/onboarding-plans/${byRule.id}`)).json.plan.templateId).toBe(tpl.id);
+    // No rule matches: "ask each time" opens an empty draft that asks for its template.
+    const asked: Plan = (await mert.get(`/api/onboarding-plans/${(await won('Bluefin Labs', 'Retail')).id}`)).json.plan;
+    expect(asked).toMatchObject({ status: 'draft', steps: [] });
+    const made = await mert.post(`/api/onboarding-plans/${asked.id}/template`, { templateId: 'standard' });
+    expect(made.status).toBe(201);
+    expect(made.json.plan.steps.length).toBeGreaterThan(3);
+    expect(made.json.plan.status).toBe('draft');
+    expect((await mert.get(`/api/onboarding-plans/${asked.id}`)).status).toBe(404);
+    planId = made.json.plan.id;
+    await ada.put('/api/onboarding/settings', { fromHandover: false, templateId: null, rules: [] });
+  });
+
+  it('renames, reorders, adds and removes phases and steps, for this plan only', async () => {
+    let plan: Plan = (await mert.get(`/api/onboarding-plans/${planId}`)).json.plan;
+    const before = plan.phases.map((p) => p.key);
+    // Rename the first, move the last to the front, add one of our own.
+    const next = [{ key: before[before.length - 1], name: null }, { key: before[0], name: 'Hello' }, ...before.slice(1, -1).map((key) => ({ key, name: null })), { name: 'Pilot week' }];
+    plan = (await mert.put(`/api/onboarding-plans/${planId}/phases`, { phases: next })).json.plan;
+    expect(plan.phases.map((p) => p.key)).toEqual([before[before.length - 1], before[0], ...before.slice(1, -1), 'ph1']);
+    expect(plan.phases[1].name).toBe('Hello');
+    // A new phase needs a name; one with steps cannot go.
+    expect((await mert.put(`/api/onboarding-plans/${planId}/phases`, { phases: [...plan.phases, { name: null }] })).status).toBe(400);
+    expect((await mert.put(`/api/onboarding-plans/${planId}/phases`, { phases: plan.phases.slice(1) })).status).toBe(409);
+    // Move two steps into the new phase, in this order; rename one; remove another.
+    const [a, b] = plan.steps;
+    plan = (await mert.put(`/api/onboarding-plans/${planId}/steps/order`, { phase: 'ph1', ids: [b.id, a.id] })).json.plan;
+    const inPh1 = plan.steps.filter((s) => s.phase === 'ph1').sort((x, y) => x.position - y.position).map((s) => s.id);
+    expect(inPh1).toEqual([b.id, a.id]);
+    plan = (await mert.patch(`/api/onboarding-steps/${a.id}`, { title: 'Pilot with two depots' })).json.plan;
+    plan = (await mert.del(`/api/onboarding-steps/${b.id}`)).json.plan;
+    expect(plan.steps.find((s) => s.id === b.id)).toBeUndefined();
+    // The template it came from is untouched; "save as template" keeps the plan's own phases.
+    const std = (await mert.get('/api/onboarding-templates')).json.builtIn.find((x: any) => x.key === 'standard');
+    expect(std.blueprint.phases).toBeUndefined();
+    const saved = (await mert.post('/api/onboarding-templates', { name: 'Our way', fromPlan: planId })).json.template;
+    expect(saved.blueprint.phases.map((p: any) => p.key)).toEqual(plan.phases.map((p) => p.key));
+    expect(saved.blueprint.steps.find((s: any) => s.title === 'Pilot with two depots').phase).toBe('ph1');
+    // The portal sees the plan's own order and names.
+    await sys(`update onboarding_plans set portal_visible = true, status = 'active' where id = $1`, [planId]);
+    const [row] = await sys(`select phases from onboarding_plans where id = $1`, [planId]);
+    expect(row.phases.find((p: any) => p.key === 'ph1').name).toBe('Pilot week');
+  });
+});

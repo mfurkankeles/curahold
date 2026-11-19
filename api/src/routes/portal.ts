@@ -2,13 +2,13 @@
 // board, inviting customers' people, sharing a task with them.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { HEX_COLOR, PORTAL_FIELDS, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { HEX_COLOR, PORTAL_FIELDS, PORTAL_QUOTA_MAX_MB, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
 import { defer, logoPath, portalUrl, requirePerm, requirePlan, requireWriter, run, type AppEnv } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
 import { toBoard } from '../lib/mappers';
-import { emailPortalLink, portalAuth, portalBrand, portalOn } from '../lib/portal';
+import { emailPortalLink, portalAuth, portalBrand, portalBytesUsed, portalOn, portalQuotaMb } from '../lib/portal';
 import { body, localeField, param, uuid } from '../lib/validate';
 import { canManageBoard, loadBoard } from './boards';
 
@@ -30,6 +30,7 @@ portalRoutes.get('/portal', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
   const boards = await run(c, (q) => q.query(`select id, name from boards where coalesce((portal->>'enabled')::boolean, false) order by name`));
+  const used = await deps.db.system((q) => portalBytesUsed(q, org.id));
   const out: PortalSettings = {
     available: !!deps.config.portalDomain,
     enabled: portalOn(org),
@@ -39,6 +40,7 @@ portalRoutes.get('/portal', async (c) => {
     providers: { google: !!deps.config.oauth.google, microsoft: !!deps.config.oauth.microsoft },
     brand: portalBrand(org),
     logoUrl: logoPath(org),
+    uploads: { quotaMb: portalQuotaMb(org.settings), usedMb: Math.round((used / 1024 / 1024) * 10) / 10 },
   };
   return c.json(out);
 });
@@ -67,6 +69,7 @@ portalRoutes.put('/portal/settings', async (c) => {
       enabled: z.boolean().optional(),
       auth: authSchema.optional(),
       brand: z.object({ color: z.string().regex(HEX_COLOR).nullable(), poweredBy: z.boolean() }).optional(),
+      uploadQuotaMb: z.number().int().min(0).max(PORTAL_QUOTA_MAX_MB).optional(),
     }),
   );
   const deps = c.get('deps');
@@ -89,6 +92,10 @@ portalRoutes.put('/portal/settings', async (c) => {
     if (input.auth) {
       await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('auth', $2::jsonb)) where id = $1`, [org.id, JSON.stringify(input.auth)]);
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.signin_changed', entity: 'org', entityId: org.id, meta: input.auth });
+    }
+    if (input.uploadQuotaMb !== undefined) {
+      await q.query(`update orgs set settings = jsonb_set(settings, '{portal}', coalesce(settings->'portal', '{}'::jsonb) || jsonb_build_object('uploadQuotaMb', $2::int)) where id = $1`, [org.id, input.uploadQuotaMb]);
+      await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.quota_changed', entity: 'org', entityId: org.id, meta: { mb: input.uploadQuotaMb } });
     }
     if (input.brand) {
       const brand = { color: input.brand.color?.toLowerCase() ?? null, poweredBy: input.brand.poweredBy };

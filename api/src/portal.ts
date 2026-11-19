@@ -16,9 +16,8 @@ import { sha256Hex } from './lib/crypto';
 import { HttpError, fail } from './lib/errors';
 import { flushHealth } from './lib/health';
 import { enqueue, kick } from './lib/notify';
-import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalFiles, portalOn, signInOptions, type PortalEnv } from './lib/portal';
-import { MAX_FILE_MB } from '../../shared/src/model';
-import { PORTAL_MAX_FILES } from '../../shared/src/portal';
+import { PORTAL_COOKIE, methodAllowed, portalAuth, portalBrand, portalBytesUsed, portalFiles, portalOn, portalQuotaMb, signInOptions, type PortalEnv } from './lib/portal';
+import { PORTAL_FILE_MB, PORTAL_MAX_FILES } from '../../shared/src/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
@@ -188,7 +187,7 @@ export function createPortalApp(deps: Deps) {
   /** JSON alone, or a form with the fields in "data" and up to PORTAL_MAX_FILES files, each checked. */
   const input = async (c: any) => {
     if (!(c.req.header('content-type') ?? '').startsWith('multipart/form-data')) return { raw: await c.req.json().catch(() => ({})), files: [] };
-    if (Number(c.req.header('content-length') ?? 0) > PORTAL_MAX_FILES * MAX_FILE_MB * 1024 * 1024 + 256 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });
+    if (Number(c.req.header('content-length') ?? 0) > PORTAL_MAX_FILES * PORTAL_FILE_MB * 1024 * 1024 + 256 * 1024) fail('file_too_large', { mb: PORTAL_FILE_MB });
     const form = await c.req.parseBody({ all: true });
     let raw: unknown = {};
     try {
@@ -196,8 +195,19 @@ export function createPortalApp(deps: Deps) {
     } catch {
       raw = {};
     }
-    return { raw, files: await portalFiles(form) };
+    const files = await portalFiles(form);
+    await withinQuota(c, files);
+    return { raw, files };
   };
+  /** The company's allowance for its customers' files (Settings → Customer portal) is not passed. */
+  const withinQuota = async (c: any, files: { size: number }[]) => {
+    if (!files.length) return;
+    const org = c.get('org');
+    const used = await deps.db.system((q) => portalBytesUsed(q, org.id));
+    const quota = portalQuotaMb(org.settings) * 1024 * 1024;
+    if (used + files.reduce((n, f) => n + f.size, 0) > quota) fail('portal_quota');
+  };
+
   /** Keeps the files, then records each on the request (comment null) or on the reply. */
   const attach = async (c: any, taskId: string, commentId: string | null, files: Awaited<ReturnType<typeof portalFiles>>) => {
     const org = c.get('org');
@@ -266,6 +276,28 @@ export function createPortalApp(deps: Deps) {
       });
     }
     return c.json({ plans: (await one(c, 'select portal_onboarding() as p', [])) ?? [] });
+  });
+
+  // A file on a step of the customer's own plan (a step on their side, or one that asks for a file).
+  app.post('/papi/onboarding-steps/:id/files', async (c) => {
+    const stepId = id(c, 'id');
+    const { files } = await input(c);
+    if (!files.length) fail('validation', { fields: 'files' }, { fields: ['files'] });
+    const org = c.get('org');
+    for (const f of files) {
+      const key = `${org.id}/onboarding/${stepId}/${crypto.randomUUID()}`;
+      await deps.storage.put(key, f.data, f.mime);
+      await one(c, 'select portal_onboarding_add_file($1, $2, $3, $4, $5) as id', [stepId, f.name, f.size, f.mime, key]);
+    }
+    // The plan's owner hears of it in the app.
+    await deps.db.system(async (q) => {
+      const [p] = await q.query(
+        `select p.id, p.name, p.owner_id, p.account_id, s.title, s.title_key from onboarding_steps s join onboarding_plans p on p.id = s.plan_id where s.id = $1 and s.org_id = $2`,
+        [stepId, org.id],
+      );
+      if (p?.owner_id) await enqueue(q, [{ orgId: org.id, userId: p.owner_id, kind: 'onboarding', data: { what: 'file', plan: p.name, planId: p.id, kind: 'client', accountId: p.account_id, step: p.title ?? '', stepKey: p.title_key ?? '' } }]);
+    });
+    return c.json({ plans: (await one(c, 'select portal_onboarding() as p', [])) ?? [] }, 201);
   });
 
   // A file is always a download, never shown in the page, and can run nothing.

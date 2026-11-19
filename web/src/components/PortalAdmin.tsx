@@ -2,7 +2,7 @@
 // opened, and the customers' people who can sign in.
 import { Icon } from './icons';
 import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react';
-import { brandPalette, HEX_COLOR, PORTAL_DEFAULT_COLOR, PORTAL_SESSION_DAYS, type PortalAuth, type PortalBrand, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
+import { brandPalette, HEX_COLOR, PORTAL_DEFAULT_COLOR, PORTAL_FILE_MB, PORTAL_QUOTA_MAX_MB, PORTAL_SESSION_DAYS, type PortalAuth, type PortalBrand, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
 import { useUndo } from '../lib/undo';
 import { useUnsaved } from '../lib/unsaved';
 import { ErrorState, SkeletonRows } from './Empty';
@@ -96,6 +96,7 @@ export function PortalSettingsTab() {
       </section>
       {s.enabled && <BrandSection settings={s} value={form.brand} onChange={(brand) => setForm({ ...form, brand })} />}
       {s.enabled && <SignInMethods settings={s} value={form.auth} onChange={(auth) => setForm({ ...form, auth })} locale={locale} />}
+      {s.enabled && <UploadsSection settings={s} onSaved={load} />}
       {s.enabled && (
         <section className="sheet">
           <h3 className="section__head">{t('portal.people.title')}</h3>
@@ -344,6 +345,37 @@ function SignInMethods({ settings, value: a, onChange: setA, locale }: { setting
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+/** Files customers send from the portal: where they may (a shared request or ticket, a step of their plan) and how much in all. */
+function UploadsSection({ settings, onSaved }: { settings: PortalSettings; onSaved: () => void }) {
+  const { t } = useI18n();
+  const { toast } = useStore();
+  const [mb, setMb] = useState(String(settings.uploads.quotaMb));
+  const n = Number(mb);
+  const ok = Number.isInteger(n) && n >= 0 && n <= PORTAL_QUOTA_MAX_MB;
+  return (
+    <section className="sheet" data-tour="portal-uploads">
+      <h3 className="section__head">{t('portal.admin.uploads')}</h3>
+      <p className="muted">{t('portal.admin.uploadsHint', { mb: PORTAL_FILE_MB })}</p>
+      <label className="field">
+        <span className="field__label">{t('portal.admin.quota')}</span>
+        <input className="input" inputMode="numeric" value={mb} aria-invalid={!ok || undefined} onChange={(e) => setMb(e.target.value.replace(/[^0-9]/g, ''))} />
+        <span className="field__hint">{t('portal.admin.quotaUsed', { used: settings.uploads.usedMb, mb: settings.uploads.quotaMb })}</span>
+      </label>
+      <button
+        className="btn btn--small"
+        disabled={!ok || n === settings.uploads.quotaMb}
+        onClick={() =>
+          void put('/portal/settings', { uploadQuotaMb: n })
+            .then(() => (toast(t('common.saved')), onSaved()))
+            .catch(() => toast(t('errors.server'), 'error'))
+        }
+      >
+        {t('common.save')}
+      </button>
     </section>
   );
 }

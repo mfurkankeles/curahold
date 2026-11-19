@@ -112,7 +112,9 @@ export type TimelineItem =
   /** A won deal's hand-over card was made, or confirmed with the next owner. */
   | { type: 'handover' | 'handover_confirmed'; at: string; handoverId: string; deal: string; byId: string | null; ownerId: string | null }
   /** Product work this customer asked for was finished: "built for you". */
-  | { type: 'built'; at: string; storyId: string; title: string };
+  | { type: 'built'; at: string; storyId: string; title: string }
+  /** The customer sent a file from the portal: on a request they share (taskId), or on a step of their onboarding plan (planId). */
+  | { type: 'portal_file'; at: string; fileId: string; name: string; by: string; title: string; titleKey?: string | null; taskId?: string; boardId?: string; planId?: string };
 
 export interface Timeline {
   items: TimelineItem[];

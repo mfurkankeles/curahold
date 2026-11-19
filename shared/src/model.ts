@@ -433,7 +433,7 @@ export interface Notification {
   createdAt: string;
 }
 
-export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'following', 'digest', 'weekly', 'nudges', 'automation'] as const;
+export const NOTIFY_EVENTS = ['assigned', 'mentioned', 'comment', 'following', 'digest', 'weekly', 'nudges', 'automation', 'onboarding'] as const;
 export type NotifyEvent = (typeof NOTIFY_EVENTS)[number];
 
 export interface NotifyPrefs {

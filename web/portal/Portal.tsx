@@ -5,8 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { bcp47Of, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
 import { formatBytes, formatDate, formatDateTime } from '../src/lib/format';
-import { MAX_FILE_MB } from '../../shared/src/model';
-import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
+import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_FILE_MB, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { intentOf, type AssistReply } from '../../shared/src/assist';
 import { PortalOnboarding, OnboardingBanner } from './Onboarding';
@@ -39,7 +38,7 @@ export async function call<T>(method: string, path: string, body?: unknown): Pro
 }
 
 /** The same, as a form: the fields in "data" and the chosen files (none: plain JSON). */
-function callWith<T>(method: string, path: string, body: unknown, files: File[]): Promise<T> {
+export function callWith<T>(method: string, path: string, body: unknown, files: File[]): Promise<T> {
   if (!files.length) return call<T>(method, path, body);
   const form = new FormData();
   form.set('data', JSON.stringify(body));
@@ -320,7 +319,7 @@ function MeMenu({ ctx, me, lang, onSignOut }: { ctx: Ctx; me: PortalMe; lang: Re
 const ACCEPT = PORTAL_FILE_ENDINGS.map((e) => `.${e}`).join(',');
 
 /** Files to send with a request or a reply: chosen, checked here first (the server checks again), removable. */
-function FilePick({ ctx, files, setFiles }: { ctx: Ctx; files: File[]; setFiles: (f: File[]) => void }) {
+export function FilePick({ ctx, files, setFiles }: { ctx: Ctx; files: File[]; setFiles: (f: File[]) => void }) {
   const { t } = ctx;
   const [problem, setProblem] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -330,7 +329,7 @@ function FilePick({ ctx, files, setFiles }: { ctx: Ctx; files: File[]; setFiles:
     for (const f of Array.from(list ?? [])) {
       const end = /\.([a-z0-9]+)$/i.exec(f.name)?.[1]?.toLowerCase() ?? '';
       if (!(PORTAL_FILE_ENDINGS as readonly string[]).includes(end)) setProblem(t('errors.portal_file_type', { name: f.name }));
-      else if (f.size > MAX_FILE_MB * 1024 * 1024) setProblem(t('portal.fileTooBig', { name: f.name, mb: MAX_FILE_MB }));
+      else if (f.size > PORTAL_FILE_MB * 1024 * 1024) setProblem(t('portal.fileTooBig', { name: f.name, mb: PORTAL_FILE_MB }));
       else if (next.length >= PORTAL_MAX_FILES) setProblem(t('errors.portal_too_many_files', { n: PORTAL_MAX_FILES }));
       else next.push(f);
     }
@@ -364,7 +363,7 @@ function FilePick({ ctx, files, setFiles }: { ctx: Ctx; files: File[]; setFiles:
 }
 
 /** Files already sent: each a download (never opened in the page). */
-function Files({ ctx, files }: { ctx: Ctx; files: PortalFile[] }) {
+export function Files({ ctx, files }: { ctx: Ctx; files: Pick<PortalFile, 'id' | 'name' | 'size'>[] }) {
   if (!files.length) return null;
   return (
     <ul className="p-files" aria-label={ctx.t('portal.files')}>

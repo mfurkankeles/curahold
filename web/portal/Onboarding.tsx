@@ -6,10 +6,10 @@
 // sides and the goals. Read from /papi/onboarding (portal_onboarding()).
 import { useState } from 'react';
 import type { MessageKey } from '../../shared/src/i18n/core';
-import { fieldState, milestones, nextStep, ordered, PHASES, progressOf, turnOf, type PlanStep, type StepSide } from '../../shared/src/onboarding';
+import { fieldState, milestones, nextStep, ordered, phaseLabel, phaseOrder, progressOf, turnOf, type PlanPhase, type PlanStep, type StepSide } from '../../shared/src/onboarding';
 import type { PortalMe, PortalOrg } from '../../shared/src/portal';
 import { formatDate } from '../src/lib/format';
-import { call, Failure, Ico, link, State, useLoad, type Ctx } from './Portal';
+import { call, callWith, Failure, FilePick, Files, Ico, link, State, useLoad, type Ctx } from './Portal';
 import './onboarding.css';
 
 interface PStep {
@@ -33,10 +33,12 @@ interface PStep {
   required: boolean;
   upload: boolean;
   person: string | null;
+  files: { id: string; name: string; size: number; mine: boolean }[];
 }
 interface PPlan {
   id: string;
   name: string;
+  phases: PlanPhase[];
   status: string;
   welcome: string;
   account: string;
@@ -93,6 +95,21 @@ export function PortalOnboarding({ ctx, org, me, onSignedOut }: { ctx: Ctx; org:
       setBusy(false);
     }
   };
+  /** Files for a step of the plan (the server checks type, size and the company's allowance again). */
+  const send = async (stepId: string, files: File[]) => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      setData((await callWith<{ plans: PPlan[] }>('POST', `/onboarding-steps/${stepId}/files`, {}, files)).plans);
+      return true;
+    } catch (e) {
+      if (e instanceof Failure && e.status === 401) onSignedOut('expired');
+      else setProblem(e instanceof Failure && e.message ? e.message : t('pob.failed'));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
   if (failed)
     return (
       <div className="p-wrap p-page">
@@ -111,13 +128,16 @@ export function PortalOnboarding({ ctx, org, me, onSignedOut }: { ctx: Ctx; org:
         <State page icon="inbox" title={t('pob.noneTitle')} body={t('pob.none')} />
       </div>
     );
-  return <PlanView ctx={ctx} company={org.name} me={me} plan={plan} busy={busy} problem={problem} act={act} />;
+  return <PlanView ctx={ctx} company={org.name} me={me} plan={plan} busy={busy} problem={problem} act={act} send={send} />;
 }
 
-function PlanView({ ctx, company, me, plan, busy, problem, act }: { ctx: Ctx; company: string; me: PortalMe; plan: PPlan; busy: boolean; problem: string | null; act: (id: string, kind: 'tick' | 'check' | 'issue' | 'answer', body?: Record<string, string>) => Promise<void> }) {
+function PlanView({ ctx, company, me, plan, busy, problem, act, send }: { ctx: Ctx; company: string; me: PortalMe; plan: PPlan; busy: boolean; problem: string | null; act: (id: string, kind: 'tick' | 'check' | 'issue' | 'answer', body?: Record<string, string>) => Promise<void>; send: (stepId: string, files: File[]) => Promise<boolean> }) {
   const { t, locale } = ctx;
   const tt = (k: string, v?: Record<string, string | number>) => t(k as MessageKey, v);
-  const steps = plan.steps.map(asStep);
+  // The plan's own phases, in its order and with its own names.
+  const phases = phaseOrder(plan.phases, plan.steps.map((s) => s.phase));
+  const steps = plan.steps.map((s) => ({ ...asStep(s), phaseAt: phases.findIndex((p) => p.key === s.phase) }));
+  const [chosen, setChosen] = useState<File[]>([]);
   const progress = progressOf(steps, plan.issues.map((i) => ({ ...i, openedOn: i.openedOn.slice(0, 10), dueOn: i.dueOn?.slice(0, 10) ?? null })), today(), plan.status as any, plan.startedOn.slice(0, 10));
   const next = nextStep(steps);
   const nextTurn = next ? turnOf(next, steps, plan.startedOn, today()) : null;
@@ -164,9 +184,9 @@ function PlanView({ ctx, company, me, plan, busy, problem, act }: { ctx: Ctx; co
                 <h2>{t('pob.allDone')}</h2>
               )}
             </section>
-            {PHASES.filter((ph) => steps.some((s) => s.phase === ph)).map((ph) => (
+            {phases.map((p) => p.key).filter((ph) => steps.some((s) => s.phase === ph)).map((ph) => (
               <section className="p-card p-ob-phase" key={ph}>
-                <h2>{tt(`ob.phase.${ph}`)}</h2>
+                <h2>{phaseLabel(ph, phases, tt)}</h2>
                 <ol className="p-ob-steps">
                   {ordered(steps.filter((s) => s.phase === ph)).map((s) => {
                     const turn = turnOf(s, steps, plan.startedOn, today());
@@ -176,7 +196,7 @@ function PlanView({ ctx, company, me, plan, busy, problem, act }: { ctx: Ctx; co
                     const fields = plan.formFields.filter((f) => s.form.includes(f.key));
                     return (
                       <li key={s.id} data-status={s.status} data-locked={locked || undefined}>
-                        <button type="button" className="p-ob-step" aria-expanded={open === s.id} onClick={() => setOpen(open === s.id ? null : s.id)}>
+                        <button type="button" className="p-ob-step" aria-expanded={open === s.id} onClick={() => (setOpen(open === s.id ? null : s.id), setChosen([]))}>
                           <span className="p-ob-step__mark" aria-hidden="true">
                             {closed ? <Ico name="check" /> : locked ? <Ico name="clock" /> : null}
                           </span>
@@ -223,6 +243,18 @@ function PlanView({ ctx, company, me, plan, busy, problem, act }: { ctx: Ctx; co
                               </button>
                             )}
                             {s.signal && !closed && <p className="p-muted">{t('pob.autoNote')}</p>}
+                            <Files ctx={ctx} files={s.files ?? []} />
+                            {(mine || s.upload) && (plan.status === 'active' || plan.status === 'paused') && (
+                              <div className="p-ob-upload">
+                                <p className="p-muted">{t('pob.filesLead')}</p>
+                                <FilePick ctx={ctx} files={chosen} setFiles={setChosen} />
+                                {chosen.length > 0 && (
+                                  <button className="p-btn p-btn--primary" disabled={busy} onClick={() => void send(s.id, chosen).then((ok) => ok && setChosen([]))}>
+                                    <Ico name="clip" /> {t('pob.filesSend')}
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </li>
@@ -305,7 +337,7 @@ function PlanView({ ctx, company, me, plan, busy, problem, act }: { ctx: Ctx; co
               <div className="p-ob-bars">
                 {milestones(steps).map((m) => (
                   <div key={m.phase}>
-                    <small>{tt(`ob.phase.${m.phase}`)}</small>
+                    <small>{phaseLabel(m.phase, phases, tt)}</small>
                     <span className="p-ob-bar">
                       <span style={{ width: `${m.pct}%` }} />
                     </span>

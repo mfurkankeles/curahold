@@ -15,7 +15,12 @@ import {
   isSignal,
   ISSUE_STATUSES,
   ISSUE_TYPES,
-  PHASES,
+  MAX_PHASES,
+  PHASES as PHASES_BUILT_IN,
+  MAX_TEMPLATE_RULES,
+  onboardingSettings,
+  PHASE_KEY,
+  phaseOrder,
   reportOf,
   ROLES,
   SITE_STATUSES,
@@ -32,11 +37,12 @@ import { audit } from '../lib/audit';
 import { randomToken, sha256Hex } from '../lib/crypto';
 import { fail } from '../lib/errors';
 import { day, iso } from '../lib/mappers';
-import { advancePlan, clientBlueprint, createPlan, ensureSelfPlan, finishPlan, judgeFields, listPlans, readPlan, refreshMapping, onboardingSettings } from '../lib/onboarding';
+import { advancePlan, clientBlueprint, createPlan, ensureSelfPlan, finishPlan, judgeFields, listPlans, readPlan, refreshMapping } from '../lib/onboarding';
 import { readUpload } from '../lib/upload';
 import { body, isoDate, param, uuid } from '../lib/validate';
 
 export const onboardingPlanRoutes = new Hono<AppEnv>();
+const PHASE_KEY_BUILT_IN = (k: string) => (PHASES_BUILT_IN as readonly string[]).includes(k);
 /** Mounted before sign-in: the shared report, opened with its secret link. */
 export const onboardingShareRoutes = new Hono<AppEnv>();
 
@@ -99,7 +105,11 @@ onboardingPlanRoutes.get('/onboarding/self/summary', async (c) => {
 
 // ------------------------------------------------------------------ settings
 
-const settingsInput = z.object({ fromHandover: z.boolean().optional(), templateId: z.string().max(60).nullable().optional(), emailNudges: z.boolean().optional() });
+const settingsInput = z.object({
+  fromHandover: z.boolean().optional(),
+  templateId: z.string().max(60).nullable().optional(),
+  rules: z.array(z.object({ field: z.string().trim().min(1).max(60), value: z.string().trim().min(1).max(120), templateId: z.string().min(1).max(60) })).max(MAX_TEMPLATE_RULES).optional(),
+});
 
 onboardingPlanRoutes.get('/onboarding/settings', async (c) => c.json({ settings: onboardingSettings(c.get('org').settings) }));
 
@@ -276,7 +286,7 @@ const stepInput = z.object({
 onboardingPlanRoutes.post('/onboarding-plans/:id/steps', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
-  const input = await body(c, z.object({ title: z.string().trim().min(1).max(200), body: z.string().max(2000).default(''), phase: z.enum(PHASES), side: z.enum(['vendor', 'customer', 'both']), dueOn: isoDate.nullable().optional(), after: z.array(z.string().max(60)).max(10).default([]), required: z.boolean().default(true) }));
+  const input = await body(c, z.object({ title: z.string().trim().min(1).max(200), body: z.string().max(2000).default(''), phase: z.string().regex(PHASE_KEY), side: z.enum(['vendor', 'customer', 'both']), dueOn: isoDate.nullable().optional(), after: z.array(z.string().max(60)).max(10).default([]), required: z.boolean().default(true) }));
   const org = c.get('org');
   await run(c, async (q) => {
     const [p] = await q.query('select id from onboarding_plans where id = $1', [planId]);
@@ -355,6 +365,78 @@ onboardingPlanRoutes.delete('/onboarding-steps/:id', async (c) => {
     return s.plan_id as string;
   });
   return c.json({ plan: await fresh(c, planId) });
+});
+
+/**
+ * The plan's phases, made its own: renamed, reordered, added (no key yet) or removed. Its template
+ * is not touched. A phase that still has steps cannot go: move or remove them first.
+ */
+onboardingPlanRoutes.put('/onboarding-plans/:id/phases', async (c) => {
+  requireWriter(c);
+  const planId = param(c, 'id');
+  const input = await body(c, z.object({ phases: z.array(z.object({ key: z.string().regex(PHASE_KEY).optional(), name: z.string().trim().max(60).nullable() })).min(1).max(MAX_PHASES) }));
+  await run(c, async (q) => {
+    const [p] = await q.query('select id, phases from onboarding_plans where id = $1', [planId]);
+    if (!p) fail('not_found');
+    const used = (await q.query<{ phase: string }>('select distinct phase from onboarding_steps where plan_id = $1', [planId])).map((r) => r.phase);
+    const known = phaseOrder(p.phases, used).map((x) => x.key);
+    let n = 1;
+    const next = input.phases.map((x) => {
+      if (x.key) return { key: x.key, name: x.name || null };
+      while (known.includes(`ph${n}`) || input.phases.some((y) => y.key === `ph${n}`)) n++;
+      known.push(`ph${n}`);
+      return { key: `ph${n}`, name: x.name || null };
+    });
+    // A new phase needs a name: it has none in any language.
+    if (next.some((x) => !x.name && !PHASE_KEY_BUILT_IN(x.key))) fail('validation', { fields: 'phases' }, { fields: ['phases'], reason: 'name' });
+    if (new Set(next.map((x) => x.key)).size !== next.length) fail('validation', { fields: 'phases' }, { fields: ['phases'] });
+    if (used.some((u) => !next.some((x) => x.key === u))) fail('conflict', undefined, { reason: 'phase_has_steps' });
+    await q.query('update onboarding_plans set phases = $2, updated_at = now() where id = $1', [planId, JSON.stringify(next)]);
+  });
+  return c.json({ plan: await fresh(c, planId) });
+});
+
+/** The steps of one phase in a new order (they may come from another phase: they move into this one). */
+onboardingPlanRoutes.put('/onboarding-plans/:id/steps/order', async (c) => {
+  requireWriter(c);
+  const planId = param(c, 'id');
+  const input = await body(c, z.object({ phase: z.string().regex(PHASE_KEY), ids: z.array(uuid).min(1).max(200) }));
+  await run(c, async (q) => {
+    const [p] = await q.query('select id, phases from onboarding_plans where id = $1', [planId]);
+    if (!p) fail('not_found');
+    const used = (await q.query<{ phase: string }>('select distinct phase from onboarding_steps where plan_id = $1', [planId])).map((r) => r.phase);
+    if (!phaseOrder(p.phases, used).some((x) => x.key === input.phase) && !PHASE_KEY_BUILT_IN(input.phase)) fail('validation', { fields: 'phase' }, { fields: ['phase'] });
+    const rows = await q.query(
+      `update onboarding_steps s set phase = $2, position = o.n - 1, updated_at = now()
+         from unnest($3::uuid[]) with ordinality o(id, n) where s.id = o.id and s.plan_id = $1 returning s.id`,
+      [planId, input.phase, input.ids],
+    );
+    if (rows.length !== new Set(input.ids).size) fail('not_found');
+    await touch(q, planId);
+  });
+  return c.json({ plan: await fresh(c, planId) });
+});
+
+/** A draft that waits for its template ("ask each time"): made again from the one chosen. Returns the new plan. */
+onboardingPlanRoutes.post('/onboarding-plans/:id/template', async (c) => {
+  requireWriter(c);
+  const planId = param(c, 'id');
+  const input = await body(c, z.object({ templateId: z.string().min(1).max(60) }));
+  const org = c.get('org');
+  const newId = await run(c, async (q) => {
+    const [p] = await q.query('select * from onboarding_plans where id = $1', [planId]);
+    if (!p) fail('not_found');
+    const [has] = await q.query('select 1 from onboarding_steps where plan_id = $1 limit 1', [planId]);
+    if (p.kind !== 'client' || p.status !== 'draft' || has) fail('conflict');
+    const tpl = await clientBlueprint(q, org.id, input.templateId);
+    await q.query('delete from onboarding_plans where id = $1', [planId]);
+    return createPlan(q, {
+      orgId: org.id, actorId: c.get('auth').userId, kind: 'client', accountId: p.account_id, name: p.name, blueprint: tpl.blueprint, templateId: tpl.id,
+      handoverId: p.handover_id, status: 'draft', department: p.department, ownerId: p.owner_id, note: p.note, welcome: p.welcome, startOn: todayOf(c),
+      locale: c.get('locale'),
+    });
+  });
+  return c.json({ plan: await fresh(c, newId) }, 201);
 });
 
 /** A step's short form: the answers are written to the customer's own fields, then the step is done. */
@@ -694,7 +776,7 @@ onboardingPlanRoutes.delete('/onboarding-fields/:id', async (c) => {
 
 // ------------------------------------------------------------------ sites and metrics
 
-const siteInput = z.object({ name: z.string().trim().min(1).max(120), region: z.string().trim().max(80).default(''), stages: z.partialRecord(z.enum(PHASES), z.enum(SITE_STATUSES)).default({}) });
+const siteInput = z.object({ name: z.string().trim().min(1).max(120), region: z.string().trim().max(80).default(''), stages: z.partialRecord(z.enum(PHASES_BUILT_IN), z.enum(SITE_STATUSES)).default({}) });
 
 onboardingPlanRoutes.post('/onboarding-plans/:id/sites', async (c) => {
   requireWriter(c);
@@ -760,9 +842,10 @@ onboardingPlanRoutes.patch('/onboarding-metrics/:id', async (c) => {
 
 // ------------------------------------------------------------------ templates
 
+const phaseShape = z.object({ key: z.string().regex(PHASE_KEY), name: z.string().trim().max(60).nullable() });
 const stepShape = z.object({
   key: z.string().regex(/^[a-z][a-zA-Z0-9_.-]{0,60}$/),
-  phase: z.enum(PHASES),
+  phase: z.string().regex(PHASE_KEY),
   titleKey: z.string().max(60).optional(),
   title: z.string().trim().max(200).optional(),
   body: z.string().max(2000).optional(),
@@ -776,6 +859,7 @@ const stepShape = z.object({
   optional: z.literal(true).optional(),
 });
 const blueprintShape = z.object({
+  phases: z.array(phaseShape).max(MAX_PHASES).optional(),
   steps: z.array(stepShape).min(1).max(60),
   goals: z.array(z.object({ titleKey: z.string().max(60).optional(), title: z.string().trim().max(200).optional(), priority: z.enum(GOAL_PRIORITIES), days: z.number().int().min(0).max(730).optional() })).max(20).default([]),
   metrics: z.array(z.object({ titleKey: z.string().max(60).optional(), title: z.string().trim().max(120).optional(), unit: z.string().max(20), better: z.enum(['up', 'down']) })).max(12).default([]),
@@ -871,15 +955,18 @@ onboardingPlanRoutes.delete('/onboarding-templates/:id', async (c) => {
 
 /** A running plan as a template: its steps (with their order, sides and links), goals, mapping rows and metrics. */
 async function blueprintOfPlan(q: Q, planId: string): Promise<Blueprint> {
-  const [p] = await q.query('select started_on, target_on from onboarding_plans where id = $1', [planId]);
+  const [p] = await q.query('select started_on, target_on, phases from onboarding_plans where id = $1', [planId]);
   if (!p) fail('not_found');
   const steps = await q.query('select * from onboarding_steps where plan_id = $1 order by position', [planId]);
+  // The plan's own phases, in its order, travel with the template (only when it changed them).
+  const own = phaseOrder(p.phases, steps.map((s) => s.phase as string));
   const goals = await q.query('select * from onboarding_goals where plan_id = $1 order by position', [planId]);
   const metrics = await q.query('select * from onboarding_metrics where plan_id = $1 order by position', [planId]);
   const fields = await q.query(`select * from onboarding_fields where plan_id = $1 and source = 'custom' order by position`, [planId]);
   const start = day(p.started_on)!;
   const diff = (d: unknown) => (d ? Math.max(0, Math.round((Date.parse(`${day(d)}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400_000)) : undefined);
   return {
+    ...(Array.isArray(p.phases) && p.phases.length ? { phases: own } : {}),
     days: diff(p.target_on),
     steps: steps.map((s) => ({
       key: s.key,

@@ -45,7 +45,7 @@ export async function sendDigests(deps: Deps, now: Date) {
       // What waited for this summary instead of a message of its own (lib/notify.ts BATCHED_KINDS).
       const updates = await deps.db.system((q) =>
         q.query(
-          `select n.kind, coalesce(t.title, n.data->>'account', n.data->>'rule', '') as title from notifications n left join tasks t on t.id = n.task_id
+          `select n.kind, coalesce(t.title, n.data->>'account', n.data->>'rule', n.data->>'step', '') as title from notifications n left join tasks t on t.id = n.task_id
             where n.org_id = $1 and n.user_id = $2 and n.via = 'digest' and n.created_at > $3::timestamptz - interval '24 hours'
             order by n.created_at desc limit 200`,
           [org.id, u.id, now.toISOString()],

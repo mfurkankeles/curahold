@@ -43,6 +43,9 @@ async function enter(slug: string, email: string) {
 
 // What another customer, an unshared task, a closed board and another company hold.
 const foreign = { tasks: [] as string[], boards: [] as string[], files: [] as string[] };
+const foreignPlans: string[] = [];
+const hiddenPlans: string[] = [];
+const foreignSteps: string[] = [];
 let own = '';
 let ownFile = '';
 let selin: P;
@@ -104,6 +107,20 @@ beforeAll(async () => {
   foreign.tasks.push(bt.id);
   foreign.boards.push(bb.id);
   foreign.files.push(bf.id);
+
+  // Onboarding plans: Velto's, open in the portal, with a customer step and a file on it; Quillfield's (Selin's), not opened yet.
+  for (const [acc, list] of [[velto, foreignPlans], [quill, hiddenPlans]] as const) {
+    const plan = (await mert.post('/api/onboarding-plans', { accountId: acc, templateId: 'standard' })).json.plan;
+    list.push(plan.id);
+    const step = plan.steps[0].id;
+    await env.db.system((q) => q.query(`update onboarding_steps set side = 'customer', depends_on = '{}' where id = $1`, [step]));
+    foreignSteps.push(step);
+  }
+  await env.db.system((q) => q.query(`update onboarding_plans set portal_visible = (account_id = $2), status = 'active' where id = any($1::uuid[])`, [[...foreignPlans, ...hiddenPlans], velto]));
+  const [sf] = await env.db.system((q) =>
+    q.query(`insert into files (org_id, onboarding_step_id, name, size, mime, storage_key) select org_id, id, 'depots.pdf', 6, 'application/pdf', 'x/z' from onboarding_steps where id = $1 returning id`, [foreignSteps[0]]),
+  );
+  foreign.files.push(sf.id);
   void betaAdmin;
 });
 
@@ -112,7 +129,26 @@ const none = (statuses: number[]) => (s: number) => expect(statuses, `got ${s}`)
 const notFound = none([404]);
 
 /** Every portal address, and how it is held to the person's own company and customer. */
+const stepFile = (p: P, step: string) => {
+  const form = new FormData();
+  form.set('data', '{}');
+  form.append('files', new File(['%PDF-1.4 x'], 'x.pdf'));
+  return portal.request(`https://${p.slug}.${PORTAL}/papi/onboarding-steps/${step}/files`, { method: 'POST', headers: { 'x-curahold-portal': '1', cookie: p.cookie }, body: form });
+};
+
 const PROBES: Record<string, Probe> = {
+  // Only the person's own customer's plans that the company opened to the portal.
+  'GET /papi/onboarding': async (p) => {
+    const ids = ((await p.req('GET', '/papi/onboarding')).json.plans ?? []).map((x: any) => x.id);
+    for (const id of [...foreignPlans, ...hiddenPlans]) expect(ids).not.toContain(id);
+  },
+  'POST /papi/onboarding/:id/:kind': async (p) => {
+    for (const id of [...foreignPlans, ...hiddenPlans]) notFound((await p.req('POST', `/papi/onboarding/${id}/issue`, { title: 'Sneaky' })).status);
+    for (const id of foreignSteps) notFound((await p.req('POST', `/papi/onboarding/${id}/tick`, {})).status);
+  },
+  'POST /papi/onboarding-steps/:id/files': async (p) => {
+    for (const id of foreignSteps) notFound((await stepFile(p, id)).status);
+  },
   'GET /papi/org': async (p) => expect((await p.req('GET', '/papi/org')).json.name).toBe('Demo Company'),
   'GET /papi/logo': async (p) => none([404, 200])((await p.req('GET', '/papi/logo')).status),
   'GET /papi/me': async (p) => expect((await p.req('GET', '/papi/me')).json.user.email).toBe('selin@quillfield.example'),

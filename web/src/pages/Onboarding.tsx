@@ -38,6 +38,13 @@ import {
   type Side,
   type StepSide,
   type Template,
+  type TemplateRule,
+  type OnboardingSettings as OnboardingSettingsShape,
+  type PlanPhase,
+  ASK_TEMPLATE,
+  MAX_TEMPLATE_RULES,
+  MAX_PHASES,
+  phaseLabel,
 } from '../../../shared/src/onboarding';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { EmptyState } from '../components/Empty';
@@ -432,7 +439,8 @@ function Health({ ctx }: { ctx: Ctx }) {
 function Steps({ ctx }: { ctx: Ctx }) {
   const { plan, t } = ctx;
   const [adding, setAdding] = useState(false);
-  const phases = PHASES.filter((ph) => plan.steps.some((s) => s.phase === ph));
+  const [editing, setEditing] = useState(false);
+  const phases = plan.phases.map((p) => p.key).filter((ph) => plan.steps.some((s) => s.phase === ph));
   const [open, setOpen] = useState<string | null>(() => (location.hash.startsWith('#step-') ? location.hash.slice(6) : null));
   return (
     <Section
@@ -441,19 +449,28 @@ function Steps({ ctx }: { ctx: Ctx }) {
       tour="ob-steps"
       tools={
         ctx.canEdit ? (
-          <button className="btn btn--small btn--quiet" onClick={() => setAdding(true)}>
-            <Icon name="plus" size={15} /> {t('ob.steps.add')}
-          </button>
+          <>
+            <button className="btn btn--small btn--quiet" onClick={() => setEditing(!editing)} aria-pressed={editing} data-tour="ob-edit">
+              <Icon name={editing ? 'check' : 'edit'} size={15} /> {t(editing ? 'ob.edit.done' : 'ob.edit.open')}
+            </button>
+            {!editing && (
+              <button className="btn btn--small btn--quiet" onClick={() => setAdding(true)}>
+                <Icon name="plus" size={15} /> {t('ob.steps.add')}
+              </button>
+            )}
+          </>
         ) : undefined
       }
     >
-      {phases.map((ph) => {
+      {plan.status === 'draft' && plan.kind === 'client' && plan.steps.length === 0 && ctx.canEdit && <ChooseTemplate ctx={ctx} />}
+      {editing && <PlanEditor ctx={ctx} />}
+      {!editing && phases.map((ph) => {
         const list = ordered(plan.steps.filter((s) => s.phase === ph));
         const done = list.filter((s) => s.status === 'done' || s.status === 'skipped').length;
         return (
           <div className="ob-phase" key={ph}>
             <h3 className="ob-phase__head">
-              <span>{t(`ob.phase.${ph}`)}</span>
+              <span>{phaseLabel(ph, plan.phases, t)}</span>
               <span className="muted">
                 {done}/{list.length}
               </span>
@@ -468,6 +485,174 @@ function Steps({ ctx }: { ctx: Ctx }) {
       })}
       {adding && <AddStep ctx={ctx} onClose={() => setAdding(false)} />}
     </Section>
+  );
+}
+
+/** A draft from a won deal that waits for its template ("ask each time"): pick one, the plan is made from it. */
+function ChooseTemplate({ ctx }: { ctx: Ctx }) {
+  const { t, plan, fail } = ctx;
+  const [list, setList] = useState<{ value: string; label: string }[] | null>(null);
+  const [pick, setPick] = useState('');
+  useEffect(() => {
+    void get('/onboarding-templates')
+      .then((r: { builtIn: { key: string; kind: string }[]; templates: Template[] }) => {
+        const all = [
+          ...r.templates.filter((x) => x.kind === 'client').map((x) => ({ value: x.id, label: x.name })),
+          ...r.builtIn.filter((b) => b.kind === 'client').map((b) => ({ value: b.key, label: t(`ob.tpl.${b.key}.name`) })),
+        ];
+        setList(all);
+        setPick(all[0]?.value ?? '');
+      })
+      .catch(fail);
+  }, [t, fail]);
+  if (!list) return null;
+  return (
+    <div className="ob-choose" role="group" aria-label={t('ob.choose.title')}>
+      <p>
+        <strong>{t('ob.choose.title')}</strong> {t('ob.choose.text')}
+      </p>
+      <select className="select" value={pick} aria-label={t('ob.settings.template')} onChange={(e) => setPick(e.target.value)}>
+        {list.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <button
+        className="btn btn--primary btn--small"
+        disabled={!pick}
+        onClick={() =>
+          void post(`/onboarding-plans/${plan.id}/template`, { templateId: pick })
+            .then((r: { plan: Plan }) => navigate(`/onboarding/plans/${r.plan.id}`))
+            .catch(fail)
+        }
+      >
+        {t('ob.choose.go')}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The plan made its own, like a funnel: phases renamed, moved, added or removed, steps renamed,
+ * moved or removed — this plan only, never its template. "Save as template" keeps the result.
+ */
+function PlanEditor({ ctx }: { ctx: Ctx }) {
+  const { plan, t, act, fail } = ctx;
+  const [phases, setPhases] = useState<PlanPhase[]>(plan.phases);
+  const [newPhase, setNewPhase] = useState('');
+  const [tplName, setTplName] = useState<string | null>(null);
+  useEffect(() => setPhases(plan.phases), [plan.phases]);
+  const savePhases = (next: { key?: string; name: string | null }[]) => act(() => put(`/onboarding-plans/${plan.id}/phases`, { phases: next }));
+  const stepsOf = (key: string) => ordered(plan.steps.filter((s) => s.phase === key));
+  const swap = <X,>(list: X[], i: number, j: number) => {
+    const out = [...list];
+    [out[i], out[j]] = [out[j], out[i]];
+    return out;
+  };
+  const order = (phase: string, ids: string[]) => act(() => put(`/onboarding-plans/${plan.id}/steps/order`, { phase, ids }));
+  return (
+    <div className="ob-edit" data-tour="ob-editor">
+      <p className="muted">{t('ob.edit.hint')}</p>
+      {phases.map((ph, i) => {
+        const list = stepsOf(ph.key);
+        return (
+          <div className="ob-edit__phase" key={ph.key}>
+            <div className="ob-edit__row ob-edit__row--phase">
+              <input
+                className="input"
+                value={ph.name ?? ''}
+                placeholder={phaseLabel(ph.key, null, t)}
+                maxLength={60}
+                aria-label={t('ob.edit.phaseName')}
+                onChange={(e) => setPhases(phases.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))}
+                onBlur={() => (ph.name ?? '') !== (plan.phases.find((x) => x.key === ph.key)?.name ?? '') && void savePhases(phases)}
+              />
+              <button className="btn btn--small btn--quiet" disabled={i === 0} aria-label={t('ob.edit.up')} onClick={() => void savePhases(swap(phases, i, i - 1))}>
+                <Icon name="chevronUp" size={14} />
+              </button>
+              <button className="btn btn--small btn--quiet" disabled={i === phases.length - 1} aria-label={t('ob.edit.down')} onClick={() => void savePhases(swap(phases, i, i + 1))}>
+                <Icon name="chevronDown" size={14} />
+              </button>
+              <button
+                className="btn btn--small btn--quiet"
+                disabled={list.length > 0 || phases.length === 1}
+                title={list.length ? t('ob.edit.phaseHasSteps') : undefined}
+                aria-label={t('ob.edit.removePhase')}
+                onClick={() => void savePhases(phases.filter((_, k) => k !== i))}
+              >
+                <Icon name="trash" size={14} />
+              </button>
+            </div>
+            <ol className="ob-edit__steps">
+              {list.map((s, k) => (
+                <li className="ob-edit__row" key={s.id}>
+                  <input
+                    className="input"
+                    defaultValue={stepTitle(t, s)}
+                    maxLength={200}
+                    aria-label={t('ob.steps.name')}
+                    onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== stepTitle(t, s) && void act(() => patch(`/onboarding-steps/${s.id}`, { title: e.target.value.trim() }))}
+                  />
+                  <select className="select" value={s.phase} aria-label={t('ob.steps.phase')} onChange={(e) => void order(e.target.value, [...stepsOf(e.target.value).map((x) => x.id), s.id])}>
+                    {phases.map((p) => (
+                      <option key={p.key} value={p.key}>
+                        {phaseLabel(p.key, phases, t)}
+                      </option>
+                    ))}
+                  </select>
+                  <button className="btn btn--small btn--quiet" disabled={k === 0} aria-label={t('ob.edit.up')} onClick={() => void order(ph.key, swap(list, k, k - 1).map((x) => x.id))}>
+                    <Icon name="chevronUp" size={14} />
+                  </button>
+                  <button className="btn btn--small btn--quiet" disabled={k === list.length - 1} aria-label={t('ob.edit.down')} onClick={() => void order(ph.key, swap(list, k, k + 1).map((x) => x.id))}>
+                    <Icon name="chevronDown" size={14} />
+                  </button>
+                  <button className="btn btn--small btn--quiet" aria-label={t('ob.edit.removeStep')} onClick={() => void act(() => del(`/onboarding-steps/${s.id}`))}>
+                    <Icon name="trash" size={14} />
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        );
+      })}
+      {phases.length < MAX_PHASES && (
+        <form
+          className="ob-edit__row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newPhase.trim()) void savePhases([...phases, { name: newPhase.trim() }]).then(() => setNewPhase(''));
+          }}
+        >
+          <input className="input" value={newPhase} maxLength={60} placeholder={t('ob.edit.newPhase')} aria-label={t('ob.edit.newPhase')} onChange={(e) => setNewPhase(e.target.value)} />
+          <button className="btn btn--small" type="submit" disabled={!newPhase.trim()}>
+            <Icon name="plus" size={14} /> {t('ob.edit.addPhase')}
+          </button>
+        </form>
+      )}
+      <div className="ob-edit__foot">
+        {tplName === null ? (
+          <button className="btn btn--small btn--quiet" onClick={() => setTplName(plan.name)}>
+            <Icon name="copy" size={14} /> {t('ob.edit.saveTpl')}
+          </button>
+        ) : (
+          <form
+            className="ob-edit__row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void post('/onboarding-templates', { name: tplName.trim(), fromPlan: plan.id })
+                .then(() => (setTplName(null), ctx.reload()))
+                .catch(fail);
+            }}
+          >
+            <input className="input" value={tplName} maxLength={120} aria-label={t('ob.tpl.name')} onChange={(e) => setTplName(e.target.value)} />
+            <button className="btn btn--small btn--primary" type="submit" disabled={!tplName.trim()}>
+              {t('ob.edit.saveTplGo')}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -735,7 +920,7 @@ function ProductAsk({ ctx, step }: { ctx: Ctx; step: PlanStep }) {
 function AddStep({ ctx, onClose }: { ctx: Ctx; onClose: () => void }) {
   const { t, act, plan } = ctx;
   const [title, setTitle] = useState('');
-  const [phase, setPhase] = useState<Phase>('setup');
+  const [phase, setPhase] = useState<Phase>(() => plan.phases.find((p) => p.key === 'setup')?.key ?? plan.phases[0]?.key ?? 'setup');
   const [side, setSide] = useState<StepSide>('vendor');
   const [dueOn, setDue] = useState('');
   return (
@@ -761,9 +946,9 @@ function AddStep({ ctx, onClose }: { ctx: Ctx; onClose: () => void }) {
         <label className="field">
           <span className="field__label">{t('ob.steps.phase')}</span>
           <select className="select" value={phase} onChange={(e) => setPhase(e.target.value as Phase)}>
-            {PHASES.map((p) => (
+            {ctx.plan.phases.map(({ key: p }) => (
               <option key={p} value={p}>
-                {t(`ob.phase.${p}`)}
+                {phaseLabel(p, ctx.plan.phases, t)}
               </option>
             ))}
           </select>
@@ -815,7 +1000,7 @@ function Timeline({ ctx, compact }: { ctx: Ctx; compact: boolean }) {
       <div className="ob-tl" role="list">
         {ms.map((m) => (
           <div className="ob-tl__row" role="listitem" key={m.phase}>
-            <span className="ob-tl__name">{t(`ob.phase.${m.phase}`)}</span>
+            <span className="ob-tl__name">{phaseLabel(m.phase, plan.phases, t)}</span>
             <span className="ob-tl__track">
               <span className="ob-tl__bar" style={{ insetInlineStart: `${pos(m.start)}%`, width: `${Math.max(2, pos(m.end) - pos(m.start))}%` }} data-done={m.pct === 100 || undefined}>
                 <span className="ob-tl__fill" style={{ width: `${m.pct}%` }} />
@@ -1654,6 +1839,7 @@ export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' })
 
 function Templates({ canWrite, onError }: { canWrite: boolean; onError: (m: string) => void }) {
   const { tt: t } = useT();
+  const { me } = useStore();
   const [data, setData] = useState<{ builtIn: { key: string; kind: string; blueprint: any }[]; templates: Template[] } | null>(null);
   const [editing, setEditing] = useState<Template | null>(null);
   const load = useCallback(() => get('/onboarding-templates').then(setData), []);
@@ -1707,7 +1893,7 @@ function Templates({ canWrite, onError }: { canWrite: boolean; onError: (m: stri
           ))}
         </div>
       )}
-      {canWrite && <OnboardingSettings />}
+      {canWrite && me?.user.perms.includes('org.manage') && <OnboardingSettings templates={data} />}
       {editing && <TemplateEditor tpl={editing} onClose={() => setEditing(null)} onSaved={() => void load().then(() => setEditing(null))} onError={fail} />}
     </div>
   );
@@ -1766,9 +1952,9 @@ function TemplateEditor({ tpl, onClose, onSaved, onError }: { tpl: Template; onC
           <li key={s.key}>
             <input className="input" value={s.title ?? ''} maxLength={200} aria-label={t('ob.steps.name')} onChange={(e) => setStep(i, { title: e.target.value })} />
             <select className="select" value={s.phase} aria-label={t('ob.steps.phase')} onChange={(e) => setStep(i, { phase: e.target.value as Phase })}>
-              {PHASES.map((p) => (
+              {[...new Set([...(tpl.blueprint.phases ?? []).map((x) => x.key), ...PHASES])].map((p) => (
                 <option key={p} value={p}>
-                  {t(`ob.phase.${p}`)}
+                  {phaseLabel(p, tpl.blueprint.phases, t)}
                 </option>
               ))}
             </select>
@@ -1884,7 +2070,7 @@ export function Report({ report: r, back }: { report: PlanReport; back?: string 
         <ul className="ob-report__phases">
           {r.phases.map((m) => (
             <li key={m.phase}>
-              <span>{t(`ob.phase.${m.phase}`)}</span>
+              <span>{m.name || phaseLabel(m.phase, null, t)}</span>
               <span className="ob-bar">
                 <span style={{ width: `${m.pct}%` }} />
               </span>
@@ -1973,26 +2159,83 @@ export function Report({ report: r, back }: { report: PlanReport; back?: string 
 
 // ------------------------------------------------------------------ settings (Settings → Onboarding)
 
-export function OnboardingSettings() {
-  const { tt: t } = useT();
-  const { toast } = useStore();
-  const [s, setS] = useState<{ fromHandover: boolean; templateId: string | null; emailNudges: boolean } | null>(null);
+export function OnboardingSettings({ templates }: { templates: { builtIn: { key: string; kind: string }[]; templates: Template[] } }) {
+  const { tt: t, locale } = useT();
+  const { toast, me } = useStore();
+  const [s, setS] = useState<OnboardingSettingsShape | null>(null);
   useEffect(() => void get('/onboarding/settings').then((r) => setS(r.settings)), []);
-  if (!s) return null;
-  const save = (v: Partial<typeof s>) =>
+  if (!s || !me) return null;
+  const save = (v: Partial<OnboardingSettingsShape>) =>
     put('/onboarding/settings', { ...s, ...v })
       .then((r) => (setS(r.settings), toast(t('common.saved'))))
       .catch((e) => toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error'));
+  // What a won customer's plan can open with: the company's own templates, the built-in ones, or "ask each time".
+  const choices = [
+    ...templates.templates.filter((x) => x.kind === 'client').map((x) => ({ value: x.id, label: x.name })),
+    ...templates.builtIn.filter((b) => b.kind === 'client').map((b) => ({ value: b.key, label: t(`ob.tpl.${b.key}.name` as MessageKey) })),
+    { value: ASK_TEMPLATE, label: t('ob.settings.ask') },
+  ];
+  const fields = me.org.accountFields ?? [];
+  const label = (f: (typeof fields)[number]) => f.label[locale] ?? f.label.en ?? f.key;
+  const rules = s.rules;
+  const setRule = (i: number, v: Partial<TemplateRule>) => setS({ ...s, rules: rules.map((r, k) => (k === i ? { ...r, ...v } : r)) });
+  const pickTemplate = (value: string, onChange: (v: string) => void, aria: string) => (
+    <select className="select" value={value} aria-label={aria} onChange={(e) => onChange(e.target.value)}>
+      {choices.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
   return (
-    <section className="sheet ob-settings">
+    <section className="sheet ob-settings" data-tour="ob-settings">
       <h2>{t('ob.settings.title')}</h2>
       <label className="check">
         <input type="checkbox" checked={s.fromHandover} onChange={(e) => void save({ fromHandover: e.target.checked })} /> {t('ob.settings.fromHandover')}
       </label>
-      <label className="check">
-        <input type="checkbox" checked={s.emailNudges} onChange={(e) => void save({ emailNudges: e.target.checked })} /> {t('ob.settings.email')}
-      </label>
-      <p className="muted">{t('ob.settings.emailHint')}</p>
+      <p className="muted">{t('ob.settings.fromHandoverHint')}</p>
+      {s.fromHandover && (
+        <div className="ob-settings__more">
+          <label className="field">
+            <span className="field__label">{t('ob.settings.template')}</span>
+            {pickTemplate(s.templateId ?? choices[0]?.value ?? ASK_TEMPLATE, (v) => void save({ templateId: v }), t('ob.settings.template'))}
+          </label>
+          <h3 className="ob-settings__h">{t('ob.settings.rules')}</h3>
+          <p className="muted">{t('ob.settings.rulesHint')}</p>
+          {rules.map((r, i) => (
+            <div className="ob-rule" key={i}>
+              <select className="select" value={r.field} aria-label={t('ob.settings.ruleField')} onChange={(e) => setRule(i, { field: e.target.value })}>
+                {fields.map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {label(f)}
+                  </option>
+                ))}
+              </select>
+              <span className="ob-rule__is">{t('ob.settings.ruleIs')}</span>
+              <input className="input" value={r.value} maxLength={120} aria-label={t('ob.settings.ruleValue')} onChange={(e) => setRule(i, { value: e.target.value })} />
+              <span className="ob-rule__is">→</span>
+              {pickTemplate(r.templateId, (v) => setRule(i, { templateId: v }), t('ob.settings.template'))}
+              <button className="btn btn--small btn--quiet" aria-label={t('ob.settings.ruleRemove')} onClick={() => setS({ ...s, rules: rules.filter((_, k) => k !== i) })}>
+                <Icon name="close" size={14} />
+              </button>
+            </div>
+          ))}
+          <div className="ob-settings__actions">
+            {fields.length > 0 && rules.length < MAX_TEMPLATE_RULES && (
+              <button className="btn btn--small btn--quiet" onClick={() => setS({ ...s, rules: [...rules, { field: fields[0].key, value: '', templateId: choices[0]?.value ?? ASK_TEMPLATE }] })}>
+                <Icon name="plus" size={14} /> {t('ob.settings.ruleAdd')}
+              </button>
+            )}
+            <button className="btn btn--small" onClick={() => void save({ rules: rules.filter((r) => r.value.trim()) })}>
+              {t('common.save')}
+            </button>
+          </div>
+        </div>
+      )}
+      <p className="muted">
+        {t('ob.settings.mailHint')} <a href="/profile">{t('ob.settings.mailLink')}</a>
+      </p>
     </section>
   );
 }
