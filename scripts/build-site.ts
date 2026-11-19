@@ -112,6 +112,15 @@ const SITE_IDS = {
   tiktok: process.env.SITE_TIKTOK_PIXEL_ID ?? '', // TikTok Pixel ID (marketing)
 };
 
+// The consent library's switches (shared/src/consent/core.ts). The advertising
+// pixels stay off even with an id until CURAHOLD_MARKETING_PIXELS=1; each choice
+// is logged (version, text hash, country) at the app's public consent endpoint.
+const CONSENT_FLAGS = {
+  marketingPixels: process.env.CURAHOLD_MARKETING_PIXELS === '1',
+  logUrl: process.env.SITE_CONSENT_LOG_URL ?? `https://app.${BASE_DOMAIN}/api/consent-event`,
+  surface: 'site',
+};
+
 // Prefer an owner-supplied raster (site/og.png) for share cards; fall back to
 // the generated SVG. A 1200×630 PNG renders on more platforms than SVG does.
 const OG_IMAGE = existsSync(join(ROOT, 'site', 'og.png')) ? 'og.png' : 'og.svg';
@@ -134,7 +143,7 @@ const jsonForScript = (obj: unknown) => JSON.stringify(obj).replace(/</g, '\\u00
 
 /** The consent config + loader for one page: words in its language, the site ids, the cookie-policy link. */
 function consentTags(locale: SiteLocale, rel: string, policyUrl: string): string {
-  const cfg = { strings: siteConsent(locale), ids: SITE_IDS, policyUrl, ab: AB.enabled };
+  const cfg = { strings: siteConsent(locale), ids: SITE_IDS, policyUrl, ab: AB.enabled, ...CONSENT_FLAGS };
   return `<script>window.__curaConsent=${jsonForScript(cfg)};</script>\n<script src="${rel}assets/consent.js" defer></script>`;
 }
 

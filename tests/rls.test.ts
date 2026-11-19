@@ -59,6 +59,7 @@ const NO_ORG_ID: Record<string, string> = {
   trash_rows: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   trash_links: 'reached only through the SECURITY DEFINER trash functions, which filter on app_org()',
   assistant_global: "the installation's monthly assistant totals (counts and cost only, no company data), for the global cap",
+  consent_events: 'cookie choices of visitors who are not signed in: no company, written by the server only (no privileges for the request roles)',
 };
 
 const REQUEST_ROLES = ['curahold_app', 'curahold_portal'];

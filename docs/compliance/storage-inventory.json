@@ -1,0 +1,1087 @@
+{
+  "policyVersion": "2026-11-19.1",
+  "date": "2026-11-19",
+  "draft": "taslak — avukat onayı gerekli",
+  "items": [
+    {
+      "name": "app_session",
+      "pattern": "app_session",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Keeps you signed in on this device. HttpOnly: page scripts cannot read it.",
+      "duration": {
+        "kind": "signout",
+        "n": 30
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "api/src/routes/auth.ts"
+      ]
+    },
+    {
+      "name": "app_portal",
+      "pattern": "app_portal",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Keeps a customer signed in to the customer portal.",
+      "duration": {
+        "kind": "signout",
+        "n": 30
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "portal"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "api/src/lib/portal.ts"
+      ]
+    },
+    {
+      "name": "app_portal_flow",
+      "pattern": "app_portal_flow",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Carries one step of the portal sign-in (protection against forged sign-ins).",
+      "duration": {
+        "kind": "minutes",
+        "n": 10
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "portal"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "api/src/lib/portal.ts"
+      ]
+    },
+    {
+      "name": "app_support",
+      "pattern": "app_support",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Lets Curahold support into your company only for the time an administrator allowed; every action is logged.",
+      "duration": {
+        "kind": "grant"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "api/src/lib/support.ts"
+      ]
+    },
+    {
+      "name": "desk_session",
+      "pattern": "desk_session",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Keeps Curahold's own staff signed in to the internal console (not used for customers).",
+      "duration": {
+        "kind": "hours",
+        "n": 8
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "console"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "api/src/routes/desk.ts"
+      ]
+    },
+    {
+      "name": "cura_consent",
+      "pattern": "cura_consent",
+      "type": "cookie",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "A copy of your analytics choice only (\"yes\" or \"no\"), so the website server can respect it before the page loads.",
+      "duration": {
+        "kind": "months",
+        "n": 12
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "site"
+      ],
+      "onlyWhen": "ab",
+      "planned": null,
+      "foundIn": [
+        "shared/src/consent/browser.ts",
+        "site/consent.js"
+      ]
+    },
+    {
+      "name": "curahold_consent_v1",
+      "pattern": "curahold_consent_v1",
+      "type": "localStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Remembers your cookie choice, its date and the version of this policy you saw, so you are not asked again on every page.",
+      "duration": {
+        "kind": "months",
+        "n": 12
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "site",
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "site/consent.js"
+      ]
+    },
+    {
+      "name": "app_device",
+      "pattern": "app_device",
+      "type": "localStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "A random identifier for this device, for the device limit on seats and alerts about new sign-ins. Never used for tracking or advertising.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/device.ts"
+      ]
+    },
+    {
+      "name": "app-after-login",
+      "pattern": "app-after-login",
+      "type": "localStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Takes you back to the page you were on once you have signed in.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/returnTo.ts"
+      ]
+    },
+    {
+      "name": "app-from-setup",
+      "pattern": "app-from-setup",
+      "type": "sessionStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Holds one step of what you are doing in this tab (finishing set-up, previewing as another role). Gone when the tab closes.",
+      "duration": {
+        "kind": "tab"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Sources.tsx",
+        "web/src/pages/Setup.tsx"
+      ]
+    },
+    {
+      "name": "app-preview-as",
+      "pattern": "app-preview-as",
+      "type": "sessionStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Holds one step of what you are doing in this tab (finishing set-up, previewing as another role). Gone when the tab closes.",
+      "duration": {
+        "kind": "tab"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/demo/main.tsx",
+        "web/src/lib/api.ts"
+      ]
+    },
+    {
+      "name": "app_trail",
+      "pattern": "app_trail",
+      "type": "sessionStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Remembers the pages you went through in this tab, for the back links. Gone when the tab closes.",
+      "duration": {
+        "kind": "tab"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/router.ts"
+      ]
+    },
+    {
+      "name": "app-<n>-shell, app-<n>-data",
+      "pattern": "app-*-*",
+      "type": "cache",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Keeps the app itself and recently opened screens on this device, so it opens fast and works offline. Cleared when you sign out.",
+      "duration": {
+        "kind": "signout",
+        "n": 30
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/public/sw.js",
+        "web/public/sw.js"
+      ]
+    },
+    {
+      "name": "desk_signed_as",
+      "pattern": "desk_signed_as",
+      "type": "localStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Remembers which staff e-mail address was typed on the internal console sign-in form.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "console"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Desk.tsx"
+      ]
+    },
+    {
+      "name": "app_locale",
+      "pattern": "app_locale",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers the language you chose.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/i18n.tsx"
+      ]
+    },
+    {
+      "name": "app_locale_hint",
+      "pattern": "app_locale_hint",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers the language you chose.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/i18n.tsx"
+      ]
+    },
+    {
+      "name": "app_theme",
+      "pattern": "app_theme",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/theme.ts"
+      ]
+    },
+    {
+      "name": "app_nav_folded",
+      "pattern": "app_nav_folded",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Shell.tsx"
+      ]
+    },
+    {
+      "name": "app_quick_board",
+      "pattern": "app_quick_board",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Meetings.tsx"
+      ]
+    },
+    {
+      "name": "app_quick_keep",
+      "pattern": "app_quick_keep",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/QuickAdd.tsx"
+      ]
+    },
+    {
+      "name": "app_accounts_view",
+      "pattern": "app_accounts_view",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Accounts.tsx"
+      ]
+    },
+    {
+      "name": "app_accounts_sort",
+      "pattern": "app_accounts_sort",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Accounts.tsx"
+      ]
+    },
+    {
+      "name": "app_accounts_card_fields",
+      "pattern": "app_accounts_card_fields",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Accounts.tsx"
+      ]
+    },
+    {
+      "name": "app_records_*",
+      "pattern": "app_records_*",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Records.tsx"
+      ]
+    },
+    {
+      "name": "app-contacts-view",
+      "pattern": "app-contacts-view",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Records.tsx"
+      ]
+    },
+    {
+      "name": "app_timeline_group",
+      "pattern": "app_timeline_group",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Timeline.tsx"
+      ]
+    },
+    {
+      "name": "app_tl_filter",
+      "pattern": "app_tl_filter",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Timeline.tsx"
+      ]
+    },
+    {
+      "name": "app_task_more",
+      "pattern": "app_task_more",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/TaskPanel.tsx"
+      ]
+    },
+    {
+      "name": "app_whitespace",
+      "pattern": "app_whitespace",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/components/AccountViews.tsx"
+      ]
+    },
+    {
+      "name": "app_cal_view",
+      "pattern": "app_cal_view",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Calendar.tsx"
+      ]
+    },
+    {
+      "name": "app_cal_who",
+      "pattern": "app_cal_who",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Calendar.tsx"
+      ]
+    },
+    {
+      "name": "app_cal_hidden",
+      "pattern": "app_cal_hidden",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Calendar.tsx"
+      ]
+    },
+    {
+      "name": "app_dash_last",
+      "pattern": "app_dash_last",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/pages/Dashboards.tsx"
+      ]
+    },
+    {
+      "name": "app_news_seen",
+      "pattern": "app_news_seen",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/news.ts"
+      ]
+    },
+    {
+      "name": "app_live_ms",
+      "pattern": "app_live_ms",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/live.ts"
+      ]
+    },
+    {
+      "name": "app_live_channel",
+      "pattern": "app_live_channel",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers how you set up the interface — theme, folded menu, chosen view, sort, filter, last board — after you choose it. Stays on your device; never used for tracking.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app",
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/lib/live.ts"
+      ]
+    },
+    {
+      "name": "Google Analytics 4",
+      "pattern": "Google Analytics 4",
+      "type": "script",
+      "category": "analytics",
+      "consentRequired": true,
+      "purpose": "Google Analytics 4: counts visits and how pages are used, with shortened IP addresses. Loaded only after you accept analytics, and only when an id is configured.",
+      "duration": {
+        "kind": "vendor",
+        "n": 24
+      },
+      "party": "third",
+      "company": "Google LLC / Google Ireland Ltd",
+      "countries": [
+        "US",
+        "IE"
+      ],
+      "host": "www.googletagmanager.com",
+      "providerCookies": "_ga, _ga_<id>",
+      "identifier": true,
+      "surfaces": [
+        "site",
+        "app"
+      ],
+      "onlyWhen": "ga4",
+      "planned": null,
+      "foundIn": [
+        "shared/src/consent/browser.ts",
+        "site/consent.js"
+      ]
+    },
+    {
+      "name": "cura_ab",
+      "pattern": "cura_ab",
+      "type": "cookie",
+      "category": "analytics",
+      "consentRequired": true,
+      "purpose": "Keeps the version of the website you were shown in a test, so it does not change between visits. Set only after you accept analytics.",
+      "duration": {
+        "kind": "days",
+        "n": 30
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "site"
+      ],
+      "onlyWhen": "ab",
+      "planned": "b6-sites A/B test (site/ab/worker.js)",
+      "foundIn": []
+    },
+    {
+      "name": "Meta pixel",
+      "pattern": "Meta pixel",
+      "type": "script",
+      "category": "marketing",
+      "consentRequired": true,
+      "purpose": "Meta pixel: measures whether our ads on Meta platforms lead to visits and sign-ups, and can build audiences of site visitors for ads. Off by default; loaded only after you accept marketing.",
+      "duration": {
+        "kind": "vendor",
+        "n": 3
+      },
+      "party": "third",
+      "company": "Meta Platforms Ireland Ltd / Meta Platforms, Inc.",
+      "countries": [
+        "IE",
+        "US"
+      ],
+      "host": "connect.facebook.net",
+      "providerCookies": "_fbp",
+      "identifier": true,
+      "surfaces": [
+        "site",
+        "app"
+      ],
+      "onlyWhen": "meta",
+      "planned": null,
+      "foundIn": [
+        "shared/src/consent/browser.ts",
+        "site/consent.js"
+      ]
+    },
+    {
+      "name": "TikTok pixel",
+      "pattern": "TikTok pixel",
+      "type": "script",
+      "category": "marketing",
+      "consentRequired": true,
+      "purpose": "TikTok pixel: measures whether our ads on TikTok lead to visits and sign-ups, and can build audiences of site visitors for ads. Off by default; loaded only after you accept marketing.",
+      "duration": {
+        "kind": "vendor",
+        "n": 13
+      },
+      "party": "third",
+      "company": "TikTok Technology Ltd / TikTok Pte. Ltd.",
+      "countries": [
+        "IE",
+        "SG",
+        "US"
+      ],
+      "host": "analytics.tiktok.com",
+      "providerCookies": "_ttp",
+      "identifier": true,
+      "surfaces": [
+        "site",
+        "app"
+      ],
+      "onlyWhen": "tiktok",
+      "planned": null,
+      "foundIn": [
+        "shared/src/consent/browser.ts",
+        "site/consent.js"
+      ]
+    },
+    {
+      "name": "Paddle checkout",
+      "pattern": "Paddle checkout",
+      "type": "script",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Paddle checkout: our reseller (merchant of record) processes the payment safely. Loaded only on the billing screen, where it sets its own cookies under its own policy.",
+      "duration": {
+        "kind": "provider"
+      },
+      "party": "third",
+      "company": "Paddle.com Market Ltd",
+      "countries": [
+        "GB"
+      ],
+      "host": "cdn.paddle.com",
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "app"
+      ],
+      "onlyWhen": "checkout",
+      "planned": null,
+      "foundIn": [
+        "web/src/components/Billing.tsx"
+      ]
+    }
+  ]
+}

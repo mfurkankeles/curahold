@@ -31,7 +31,7 @@ import { jiraRoutes } from './routes/jira';
 import { subscriptionRoutes, paddleInboundWebhook } from './routes/subscriptions';
 import { onboardingRoutes } from './routes/onboarding';
 import { platformRoutes } from './routes/admin-platform';
-import { consentRoutes } from './routes/consent';
+import { consentEventRoutes, consentRoutes } from './routes/consent';
 import { adminRoutes } from './routes/admin';
 import { automationRoutes } from './routes/automations';
 import { trashRoutes } from './routes/trash';
@@ -136,6 +136,7 @@ export function createApp(deps: Deps) {
     if (ip) {
       const checks: Check[] = [[`ip:${ip}`, 'ip']];
       if (isSignIn(c.req.method, p)) checks.push([`signin:${ip}`, 'signin']);
+      if (p === '/api/consent-event') checks.push([`consent:${ip}`, 'consent']);
       const wait = takeAll(limiter, scale, checks);
       if (wait) return limited(c, wait);
     }
@@ -229,6 +230,8 @@ export function createApp(deps: Deps) {
   app.route('/api/signup', signupRoutes);
   // The free-trial request form (decided by the owner in the console).
   app.route('/api/trial', trialRoutes);
+  // A visitor's cookie choice, for the proof of consent (no account; routes/consent.ts).
+  app.route('/api/consent-event', consentEventRoutes);
   // Curahold's own support desk and the door for incoming mail (staff key / mail key).
   // The owner console's own sections and the AI team's two doors (the owner's session; a seat's key).
   app.route('/api/desk/owner', ownerRoutes);

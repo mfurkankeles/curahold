@@ -56,6 +56,8 @@ export const BUDGETS = {
   invite: { cap: 30, perSec: 1 / 60 },
   /** Invitations for one company. */
   inviteCompany: { cap: 100, perSec: 1 / 30 },
+  /** Cookie-consent records from visitors (POST /api/consent-event): a person decides a few times, never dozens. */
+  consent: { cap: 20, perSec: 1 / 30 },
   /** Search (Ctrl K and the AI connector's search). */
   search: { cap: 60, perSec: 2 },
   /** Exports: every file made from a list or report (POST /exports), deep pages of a list, personal-data and audit exports. */

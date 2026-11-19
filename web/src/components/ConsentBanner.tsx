@@ -9,7 +9,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { CONSENT_STRINGS, type ConsentStrings } from '../lib/consentStrings';
-import { envIds, hasMeasurement } from '../lib/analytics';
+import { categoriesInUse, envConfig, hasMeasurement } from '../lib/analytics';
+import { bannerText, consentEvent, sha256Hex } from '../../../shared/src/consent/core';
+import { sendConsentEvent } from '../../../shared/src/consent/browser';
 import { post } from '../lib/api';
 import {
   acceptAll,
@@ -31,7 +33,7 @@ const useStrings = (): ConsentStrings => {
 /** The quiet line on a person's own profile page: re-opens the choices, or says there are none. */
 export function PrivacyLine() {
   const s = useStrings();
-  if (!hasMeasurement(envIds())) return <p className="consent-line">{s.noneNote}</p>;
+  if (!hasMeasurement(envConfig())) return <p className="consent-line">{s.noneNote}</p>;
   return (
     <p className="consent-line">
       <button type="button" className="consent-line__btn" aria-label={s.reopenAria} onClick={openConsentChoices}>
@@ -45,7 +47,9 @@ type View = 'hidden' | 'banner' | 'manage';
 
 export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
   const s = useStrings();
-  const active = hasMeasurement(envIds());
+  const { locale } = useI18n();
+  const inUse = categoriesInUse(envConfig());
+  const active = inUse.analytics || inUse.marketing;
   const [view, setView] = useState<View>('hidden');
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -114,12 +118,20 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
 
   if (!active || view === 'hidden') return null;
 
-  const apply = (next: ConsentState) => {
+  const apply = (choose: (previous: ConsentState) => ConsentState) => {
+    const next = choose(loadConsent());
+    // A category not in use on this build is never recorded as granted.
+    next.analytics &&= inUse.analytics;
+    next.marketing &&= inUse.marketing;
     saveConsent(next);
     emitConsent(next);
     setView('hidden');
-    // The durable per-person record; best effort, and only for someone signed in.
-    if (signedIn) void post('/consent', { analytics: next.analytics, marketing: next.marketing, source: 'app' }).catch(() => undefined);
+    // The record (version, hash of the words shown, country from the edge): best effort.
+    void sha256Hex(bannerText(s as unknown as Record<string, string>, inUse)).then((textHash) => {
+      const event = consentEvent(next, { inUse, textHash, locale, surface: 'app' });
+      if (signedIn) void post('/consent', { ...event, source: 'app' }).catch(() => undefined);
+      else sendConsentEvent('/api/consent-event', event);
+    });
   };
 
   if (view === 'manage') {
@@ -136,6 +148,7 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
               </div>
               <p className="consent-cat__body">{s.necessaryBody}</p>
             </li>
+            {inUse.analytics && (
             <li className="consent-cat">
               <label className="consent-cat__head">
                 <span className="consent-cat__name">{s.analyticsTitle}</span>
@@ -143,6 +156,8 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
               </label>
               <p className="consent-cat__body">{s.analyticsBody}</p>
             </li>
+            )}
+            {inUse.marketing && (
             <li className="consent-cat">
               <label className="consent-cat__head">
                 <span className="consent-cat__name">{s.marketingTitle}</span>
@@ -150,15 +165,16 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
               </label>
               <p className="consent-cat__body">{s.marketingBody}</p>
             </li>
+            )}
           </ul>
           <div className="consent-actions">
-            <button type="button" className="btn btn--quiet" onClick={() => apply(rejectAll())}>
+            <button type="button" className="btn" onClick={() => apply((p) => rejectAll(undefined, p))}>
               {s.rejectAll}
             </button>
-            <button type="button" className="btn" onClick={() => apply(chooseConsent({ analytics, marketing }))}>
+            <button type="button" className="btn" onClick={() => apply((p) => chooseConsent({ analytics, marketing }, undefined, p))}>
               {s.save}
             </button>
-            <button type="button" className="btn btn--primary" onClick={() => apply(acceptAll())}>
+            <button type="button" className="btn" onClick={() => apply((p) => acceptAll(undefined, p))}>
               {s.acceptAll}
             </button>
           </div>
@@ -177,10 +193,10 @@ export function ConsentBanner({ signedIn = false }: { signedIn?: boolean }) {
         <button type="button" className="btn btn--quiet" onClick={openManage}>
           {s.manage}
         </button>
-        <button type="button" className="btn" onClick={() => apply(rejectAll())}>
+        <button type="button" className="btn" onClick={() => apply((p) => rejectAll(undefined, p))}>
           {s.rejectAll}
         </button>
-        <button type="button" className="btn btn--primary" onClick={() => apply(acceptAll())}>
+        <button type="button" className="btn" onClick={() => apply((p) => acceptAll(undefined, p))}>
           {s.acceptAll}
         </button>
       </div>
