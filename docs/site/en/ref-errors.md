@@ -80,6 +80,8 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `email_taken` | 409 | Someone in your company already uses this email. |
 | `handover_confirmed` | 409 | This hand-over is already confirmed. |
 | `last_admin` | 409 | Your company needs at least one active administrator. |
+| `plan_limit_connectors` | 409 | Your plan includes up to … connected tools. Remove one, or choose a larger plan. |
+| `plan_limit_seats` | 409 | Your plan includes up to … full seats and all of them are in use. Invite as a viewer (free), or choose a larger plan. |
 | `portal_email_taken` | 409 | That address already has portal access. |
 | `role_in_use` | 409 | People still have this role. Give them another role first. |
 | `seat_cap_reached` | 409 | The trial includes … full seats and all of them are in use. Invite as a viewer (free), or ask us for more seats. |
@@ -97,6 +99,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `export_too_large` | 413 | One file holds up to … rows. Narrow the list with a filter, then export again. |
 | `file_too_large` | 413 | Files can be up to … MB. |
 | `import_too_large` | 413 | Import up to … rows at a time. |
+| `plan_limit_storage` | 413 | Your plan’s file space (… GB) is full. Delete files you no longer need, or choose a larger plan. |
 | `portal_quota` | 413 | Your provider's storage for files is full. Please send the file another way, or ask them to make room. |
 | `repeat_mismatch` | 422 | This request was sent with a key that already belongs to a different change. Nothing was changed. |
 | `analytics_budget` | 429 | Today's analytics budget of … rows is used up. Try again later. |

@@ -5,7 +5,11 @@
 //
 // Everything a provider needs (keys, environment, price ids) is read from the
 // server's BillingConfig at construction; nothing here holds a secret.
-import type { Interval, PlanKey, SubscriptionStatus } from '../../../shared/src/billing';
+//
+// This is the only billing path (docs/ADR/0019): checkout, plan and seat
+// changes, the portal, leaving and resuming, and every webhook go through a
+// PaymentProvider and api/src/billing/service.ts into the subscriptions table.
+import type { Interval, PlanKey, Proration, SubscriptionStatus } from '../../../shared/src/billing';
 
 /** What the browser needs to open the provider's hosted checkout (public values only). */
 export interface CheckoutHandle {
@@ -30,6 +34,12 @@ export interface ProviderSubscription {
   status: SubscriptionStatus;
   /** Which plan the priced item maps to, when it is one we recognise. */
   plan: PlanKey | null;
+  /** How often it is paid, when the price is one we recognise. */
+  interval: Interval | null;
+  /** The quantity billed: full seats. */
+  seats: number | null;
+  /** The currency the buyer is charged in (Paddle picks it from the buyer's country). */
+  currency: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   trialEndsAt: string | null;
@@ -80,6 +90,10 @@ export interface PaymentProvider {
   cancelAtPeriodEnd(providerSubscriptionId: string): Promise<void>;
   /** Undo a scheduled cancellation before it takes effect. */
   resume(providerSubscriptionId: string): Promise<void>;
+  /** Another plan, interval or seat count for a running subscription, prorated as asked. Returns the provider's new view. */
+  changeItems(providerSubscriptionId: string, plan: PlanKey, interval: Interval, quantity: number, proration: Proration): Promise<ProviderSubscription>;
+  /** A signed-in link to the provider's own portal: invoices, payment method, cancelling. */
+  portalUrl(providerCustomerId: string, providerSubscriptionId?: string | null): Promise<string>;
   /** Whether a webhook body truly came from the provider (signature + freshness). */
   verifyWebhook(rawBody: string, signature: string | undefined, now: Date): Promise<boolean>;
   /** Parse a verified webhook body into an event, or null if it carries nothing we apply. */

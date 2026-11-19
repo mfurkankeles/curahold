@@ -16,7 +16,6 @@ import { AnalyticsTab } from '../components/Analytics';
 import { HealthSettings } from '../components/Timeline';
 import { RhythmSettings } from '../components/Rhythm';
 import { BillingSettings } from '../components/Billing';
-import { SubscriptionPanel } from '../components/BillingManage';
 import { SsoSettings } from '../components/SsoSettings';
 import { CompanySecurity } from '../components/CompanySecurity';
 import { AuditExport } from '../components/AuditExport';
@@ -210,11 +209,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   {current === 'records' && <RecordTypesEditor />}
                   {current === 'health' && <HealthSettings />}
                   {current === 'rhythm' && <RhythmSettings />}
-                  {current === 'billing' && (
-                    <SubscriptionPanel>
-                      <BillingSettings embedded />
-                    </SubscriptionPanel>
-                  )}
+                  {current === 'billing' && <BillingSettings />}
                   {current === 'currencies' && <CurrencySettings />}
                   {current === 'playbooks' && <PlaybooksSettings />}
                   {current === 'support' && (

@@ -59,7 +59,7 @@ imports `routes/`.
 | Jobs and schedulers | One hourly entry, `runScheduled` in `lib/scheduler.ts` (Cloudflare cron, or `setInterval` on Node): digests, automations, outbox drain, health scores, syncs, onboarding sweep, trial reminders, 03:00 clean-up, 05:00 renewals, seat sync. Each job isolated, idempotent. The AI team's wakes are **not** scheduled yet. | ARCHITECTURE 8 |
 | Assistant and AI team | One core for every chat surface; free rules and cache first; read-only tools as the asker; caps $100/month install, $5 per company (up to $50); docs search when no key. The AI team only proposes; the operator's own yes runs anything outside, through server-held runners; a monitor pauses misbehaving seats; team cap $40/month. | ADR 0010, 0011; ARCHITECTURE 11 |
 | i18n | Nine complete languages today (Hindi and Malay being added), one dictionary per language, glossary per concept, RTL for Arabic, Hebrew, Persian. Tests fail on any missing key or inline language pair. | ARCHITECTURE 9a; ADR 0008 |
-| Billing | Paddle as merchant of record, per-seat Team/Business plans (`shared/src/billing.ts`), three-month trial, off entirely unless configured. **Two code paths exist; pick one before live keys.** | README "Billing"; ADR 0002, 0017, 0019 |
+| Billing | Paddle as merchant of record, per-seat plans with caps from `shared/src/plans.json`, three-month trial on approval, dunning grace, regional prices; off entirely unless configured. One code path (`api/src/billing`). | README "Billing"; ADR 0002, 0017, 0019 |
 | Deploy and rollback | Manual only, on the owner's go-ahead: checks → `npm run migrate` (additive) → `npx wrangler deploy` (+ portal). Rollback: `npx wrangler rollback`; migrations are forward-only (two-step destructive changes); `db/rollback/` for the large recent ones. | RUNBOOK |
 | Monthly running costs | See the table below. Per seat the servers cost cents; the fixed floor is small; model spend is capped by configuration. | `npx tsx scripts/quality/cost.mts`; docs/design/costs.md |
 | Add a feature end to end | Checklist below. | DEVELOPER 5 |
@@ -118,14 +118,15 @@ skip 1, 3, 4–6.
 | Paddle | none | 5% + $0.50 per charge (merchant of record) |
 | Turnstile, Cloudflare free bot settings | free | free |
 
-`scripts/quality/cost.mts` models cost per seat and margin (about $0.07 per seat-month at 1,000 seats). It still assumes
-a 14-day trial and leaves out model spend; update it before using it for pricing.
+`scripts/quality/cost.mts` is the cost model for pricing: unit cost per company and per seat for 1–300 customers, fixed
+monthly costs, AI at the plan caps, Paddle fees, tax as a pass-through, support time and the break-even point. Every input
+is in `scripts/quality/cost.inputs.json` with its source or "assumption".
 
 ## Top 10 risks you inherit
 
-1. **Two billing paths.** The older webhook (`/api/billing/webhook`) writes the company snapshot directly; the newer one
-   (`/api/inbound/billing/paddle`) writes the subscriptions table that is meant to be the record. The setup docs point
-   Paddle at the older one. Decide and merge before live keys (ADR 0019).
+1. **Billing is one path now, but untested against live Paddle.** ADR 0019 (Accepted): `api/src/billing` + the subscriptions
+   table, both webhook addresses on one handler. Before live keys run one sandbox purchase, renewal, failed payment and
+   cancellation end to end, and mirror `shared/src/plans.json` prices in Paddle.
 2. **Row security can be bypassed by the login role.** The API connects as the user that owns the tables and no table
    uses `FORCE ROW LEVEL SECURITY`; a raw query or an injected `reset role` would see every company. The fix is a
    deployment step (`db/ops/role-separation.sql`, `db/OPS-SECURITY.md` P1): do it before the first customer.

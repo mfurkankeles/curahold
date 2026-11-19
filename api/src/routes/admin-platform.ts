@@ -18,7 +18,7 @@ import { nowOf, type AppEnv, type Deps } from '../context';
 import type { Q } from '../db';
 import { fail } from '../lib/errors';
 import { platformAccess, requirePlatform } from '../lib/platform';
-import { PLANS, PRICE_CURRENCY } from '../../../shared/src/billing';
+import { PLANS, PRICE_CURRENCY, isPlanKey } from '../../../shared/src/billing';
 import type { MetricPoint } from '../../../shared/src/metrics';
 import type { PlatformCustomer, PlatformCustomerDetail, PlatformInvoice, PlatformOverview, SubStatus } from '../../../shared/src/platform';
 
@@ -44,7 +44,7 @@ function normStatus(raw: unknown, trialEndsAt: string | null, nowMs: number): Su
 
 /** Per-seat monthly price × seats, from the shared PLANS config (0 for an unknown plan). */
 function planMrr(plan: string | null, interval: string, seats: number): number {
-  const p = plan === 'team' || plan === 'business' ? plan : null;
+  const p = isPlanKey(plan) ? plan : null;
   if (!p) return 0;
   const iv = interval === 'year' ? 'year' : 'month';
   return PLANS[p].price[iv] * Math.max(0, num(seats));

@@ -15,7 +15,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/agreements/…` | 2 | Hizmet koşullarını ve DPA'yı kabul etme: tarayıcıda şirket yöneticisi, her sürüm için bir kez. |
 | `/assist/…` | 6 | CuraAI ve belgelerdeki "Sor": sorular belgelerden ve uygulamada soran kişinin görebildiklerinden cevaplanır; sınırlarını tarayıcıda bir yönetici ayarlar. Anahtarlar bunun yerine yapay zekâ bağlayıcısını kullanır. |
 | `/auth/…` | 10 | Oturum açma ve kapama tarayıcıda yapılır. |
-| `/billing/…` | 8 | Plan ve ödeme; ödeme sağlayıcısıyla. |
+| `/billing/…` | 8 | Plan ve ödeme (tek yol, ADR 0019): şirketin durumu ve plan sınırlarına göre kullanımı, ödeme, plan değişikliği, portal, ayrılma ve devam etme, fatura bilgileri. Paddle'ın imzalı bildirimleri `POST /api/inbound/billing/paddle` adresine gelir. |
 | `/client-error/…` | 1 | Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye. |
 | `/connect/…` | 1 | Bir CRM ya da sohbet uygulamasına bağlanmayı başlatma: kişi tarayıcıda onaylar. |
 | `/connections/…` | 31 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |

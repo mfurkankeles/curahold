@@ -1,7 +1,7 @@
 import { localDate } from '../../shared/src/days';
 import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
-import { accessOf, allows, planFor, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
+import { accessOf, allows, planFor, planOf, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
 import type { Locale, Terms } from '../../shared/src/i18n';
 import type { AccountField, Perm, Seat, SetupState } from '../../shared/src/model';
 import type { Db, Q } from './db';
@@ -271,7 +271,7 @@ export function accessFor(c: C): Access {
 /** Only on a plan that includes this (Business): CRM sync, the customer portal, playbooks. */
 export function requirePlan(c: C, feature: Feature) {
   const plan = planFor(feature);
-  if (!allows(accessFor(c), feature)) fail('plan_required', { plan: plan === 'business' ? 'Business' : 'Team' }, { plan });
+  if (!allows(accessFor(c), feature)) fail('plan_required', { plan: planOf(plan)?.name ?? plan }, { plan });
 }
 
 export function orgUrl(cfg: Config, slug: string): string {

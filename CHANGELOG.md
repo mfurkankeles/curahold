@@ -12,6 +12,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
+  use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
+  by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).
+- Cost model (`scripts/quality/cost.mts`): unit cost per company and per seat for 1–300 customers, fixed costs and break-even,
+  every input with its source in `scripts/quality/cost.inputs.json`.
+
 - Engineering foundation for new owners: GitHub Actions CI (`.github/workflows/ci.yml`) with typecheck, lint, the full test suite on
   PGlite and on Postgres 16, build, Docker image build check, and required guards for row-level-security isolation, the repository leak
   scan and i18n completeness; a nightly end-to-end workflow; a pull request template.
@@ -24,6 +30,8 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
+  `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

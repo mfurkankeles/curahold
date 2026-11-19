@@ -5,6 +5,8 @@
 // Approving creates the company with the departments chosen, invites its
 // first administrator, and starts a trial with a seat cap and an end date.
 
+import { CATALOGUE } from './billing';
+
 /** 'success' is Customer Success together with technical support; every department is optional. */
 export const TRIAL_DEPARTMENTS = ['insideSales', 'sales', 'onboarding', 'success', 'product', 'finance'] as const;
 export type TrialDepartment = (typeof TRIAL_DEPARTMENTS)[number];
@@ -12,8 +14,8 @@ export type TrialDepartment = (typeof TRIAL_DEPARTMENTS)[number];
 export const TRIAL_REQUEST_STATUSES = ['new', 'contacted', 'approved', 'rejected'] as const;
 export type TrialRequestStatus = (typeof TRIAL_REQUEST_STATUSES)[number];
 
-/** Defaults the owner can change in the console (Requests → settings). */
-export const TRIAL_DEFAULTS = { seatCap: 25, months: 3, reminderDays: [14, 7, 1] } as const;
+/** Defaults the owner can change in the console (Requests → settings); seats and months come from the price list (shared/src/plans.json → trial). */
+export const TRIAL_DEFAULTS = { seatCap: CATALOGUE.trial.autoApproveSeats, months: CATALOGUE.trial.months, reminderDays: [14, 7, 1] } as const;
 
 /** One consent the person gave (or did not), as shown to them: which text, which version, its digest. */
 export interface TrialConsent {

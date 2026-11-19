@@ -1,0 +1,96 @@
+{
+  "_about": "Every input of the cost model (scripts/quality/cost.mts), in one place. Each has a value and a source: a provider page with the date it was read, a measurement in this repository, or \"assumption\" (a number to replace with a measurement or the owner's own figure). Prices in USD. Plans, prices, caps and the trial come from shared/src/plans.json, not from here.",
+  "readOn": "2026-11-20",
+  "hosting": {
+    "workersMonthly": { "value": 5, "source": "developers.cloudflare.com/workers/platform/pricing (Workers Paid), read 2026-11-12" },
+    "workersRequestsIncluded": { "value": 10000000, "source": "Cloudflare Workers pricing, read 2026-11-12" },
+    "workersPerMillionRequests": { "value": 0.3, "source": "Cloudflare Workers pricing, read 2026-11-12" },
+    "workersCpuMsIncluded": { "value": 30000000, "source": "Cloudflare Workers pricing, read 2026-11-12" },
+    "workersPerMillionCpuMs": { "value": 0.02, "source": "Cloudflare Workers pricing, read 2026-11-12" },
+    "durableRequestsIncluded": { "value": 1000000, "source": "developers.cloudflare.com/durable-objects/platform/pricing, read 2026-11-12" },
+    "durablePerMillionRequests": { "value": 0.15, "source": "Durable Objects pricing, read 2026-11-12" },
+    "durableGbSecondsIncluded": { "value": 400000, "source": "Durable Objects pricing, read 2026-11-12" },
+    "durablePerMillionGbSeconds": { "value": 12.5, "source": "Durable Objects pricing, read 2026-11-12" },
+    "dbPlanMonthly": { "value": 25, "source": "supabase.com/pricing (Pro), read 2026-11-12" },
+    "dbComputeCredit": { "value": 10, "source": "Supabase Pro includes $10 compute credit, read 2026-11-12" },
+    "dbMachineMonthly": { "value": { "micro": 10, "small": 15, "medium": 60, "large": 110 }, "source": "Supabase compute add-ons, read 2026-11-12" },
+    "dbGbIncluded": { "value": 8, "source": "Supabase Pro, read 2026-11-12" },
+    "dbPerGb": { "value": 0.125, "source": "Supabase Pro disk overage, read 2026-11-12" },
+    "dbPitrMonthly": { "value": 100, "source": "Supabase point-in-time recovery (7 days), read 2026-11-12; planned from the first paying customer (HANDOVER)" },
+    "r2GbIncluded": { "value": 10, "source": "developers.cloudflare.com/r2/pricing, read 2026-11-12" },
+    "r2PerGbMonth": { "value": 0.015, "source": "R2 pricing, read 2026-11-12" },
+    "r2WritesIncluded": { "value": 1000000, "source": "R2 pricing (class A), read 2026-11-12" },
+    "r2PerMillionWrites": { "value": 4.5, "source": "R2 pricing (class A), read 2026-11-12" },
+    "r2ReadsIncluded": { "value": 10000000, "source": "R2 pricing (class B), read 2026-11-12" },
+    "r2PerMillionReads": { "value": 0.36, "source": "R2 pricing (class B), read 2026-11-12" },
+    "r2EgressPerGb": { "value": 0, "source": "R2 pricing: no egress fees, read 2026-11-12" },
+    "domainsMonthly": { "value": 2.5, "source": "assumption: two domains (app + portal) at about $15 a year each" }
+  },
+  "email": {
+    "workspaceSeatMonthly": { "value": 8.4, "source": "assumption: Google Workspace Business Starter, one user (the relay sender); check workspace.google.com/pricing" },
+    "relayRecipientsPerDay": { "value": 10000, "source": "assumption: Google's published SMTP relay limit per user (not re-read this run)" },
+    "resendTiers": { "value": [ { "upTo": 3000, "monthly": 0 }, { "upTo": 50000, "monthly": 20 }, { "upTo": 100000, "monthly": 35 }, { "upTo": 200000, "monthly": 160 }, { "upTo": 500000, "monthly": 350 } ], "source": "resend.com/pricing, read 2026-11-12 (fallback only when the relay limit is reached)" }
+  },
+  "paddle": {
+    "share": { "value": 0.05, "source": "paddle.com/pricing (research-gtm 4.8), read 2026-11-19" },
+    "perCharge": { "value": 0.5, "source": "paddle.com/pricing (research-gtm 4.8), read 2026-11-19" },
+    "feeOnTaxInclusive": { "value": true, "source": "assumption: Paddle's percentage applies to the total the buyer pays, tax included (conservative)" }
+  },
+  "ai": {
+    "prices": { "value": { "sonnet": { "input": 2, "cacheRead": 0.1, "output": 10 }, "haiku": { "input": 0.1, "cacheRead": 0.01, "output": 0.5 } }, "source": "api/src/assistant/cost.ts PRICES (Anthropic price list read 2026-11-19), USD per million tokens" },
+    "freshInputTokens": { "value": 2600, "source": "api/src/assistant/cost.ts TYPICAL (measured on the evaluation set's shape, b2-assistant)" },
+    "cachedInputTokens": { "value": 2300, "source": "api/src/assistant/cost.ts TYPICAL (rules + tools, prompt-cached)" },
+    "outputTokens": { "value": 300, "source": "api/src/assistant/cost.ts TYPICAL" },
+    "callsPerQuestion": { "value": 1.3, "source": "api/src/assistant/cost.ts TYPICAL" },
+    "answerCacheHitShare": { "value": 0.4, "source": "assumption (b2-assistant estimate): questions answered again from the answer cache cost $0" },
+    "sonnetShare": { "value": 0.5, "source": "assumption: half the model answers on Sonnet, half on Haiku. The shipped default is Sonnet only (ASSISTANT_MODEL); a mix needs a router (owner question)" },
+    "questionsPerSeatTypical": { "value": 8, "source": "assumption: model-answered CuraAI questions and drafts per full seat a month" },
+    "worstCase": { "value": { "sonnetShare": 1, "answerCacheHitShare": 0 }, "source": "assumption: every question at the plan cap, all on Sonnet, nothing from the answer cache" },
+    "aiTeamMonthlyCap": { "value": 40, "source": "HANDOVER running costs: AI team cap $40 a month by default (fixed, whole install)" }
+  },
+  "usage": {
+    "workDays": { "value": 21, "source": "assumption" },
+    "apiCallsPerOpen": { "value": 15, "source": "measured: scripts/quality/browser.mts load (19 requests, 15 to the API)" },
+    "opensPerDay": { "value": 25, "source": "assumption" },
+    "writesPerDay": { "value": 40, "source": "assumption" },
+    "pollsPerDay": { "value": 480, "source": "measured in code (web/src/lib/live.ts: every 30 s in front, 90 s idle) with assumption 3 h + 3 h a day" },
+    "cpuMsPerRequest": { "value": 8, "source": "assumption until measured on Workers (Cloudflare's own average is 2.2 ms)" },
+    "dbMbPerSeat": { "value": 1.4, "source": "measured: scripts/perf.ts, 422 MB for a 306-person company" },
+    "mailsPerSeat": { "value": 19.9, "source": "assumption: a third get notices by mail, two a working day, plus sign-in links and the weekly summary" },
+    "fileGbPerSeatTypical": { "value": 0.2, "source": "assumption: attachments kept per seat after a year" },
+    "fileWritesPerSeat": { "value": 20, "source": "assumption" },
+    "fileReadsPerSeat": { "value": 100, "source": "assumption" },
+    "fileEgressGbPerSeat": { "value": 0.5, "source": "assumption (R2 egress is free, kept for a provider change)" },
+    "viewersPerSeat": { "value": 0.25, "source": "assumption: one free viewer for every four full seats" },
+    "viewerActivity": { "value": 0.2, "source": "assumption: a viewer is a fifth as active" }
+  },
+  "sync": {
+    "connectorsTypical": { "value": 1, "source": "assumption: one connected CRM or spreadsheet per company" },
+    "cpuMsPerRun": { "value": 3000, "source": "assumption: one incremental sync run (paging, mapping, writes) on Workers" },
+    "requestsPerRun": { "value": 3, "source": "assumption: the scheduled invocation plus follow-on pages ('more')" },
+    "outboundApiCost": { "value": 0, "source": "the customer's CRM / spreadsheet API quota pays for the calls; Workers subrequests are not billed separately (Workers pricing)" }
+  },
+  "support": {
+    "hourlyCost": { "value": 25, "source": "assumption: the owner's or a contractor's hour" },
+    "minutesPerCompanyMonth": { "value": 15, "source": "assumption: questions the help centre and CuraAI do not answer" },
+    "minutesPerSeatMonth": { "value": 0.5, "source": "assumption" },
+    "minutesPerTrial": { "value": 45, "source": "assumption: reviewing the request, approval, one check-in" }
+  },
+  "trial": {
+    "conversion": { "value": 0.25, "source": "assumption: one approved trial in four becomes a paying company" },
+    "customerLifetimeMonths": { "value": 24, "source": "assumption: trial cost is spread over this many paid months" }
+  },
+  "fx": {
+    "INR": { "value": 89, "source": "assumption: business plan 4.3 (unverified FX)" },
+    "SGD": { "value": 1.3, "source": "assumption: business plan 4.3 (unverified FX)" },
+    "TRY": { "value": 42, "source": "assumption (unverified FX); no TRY list yet" },
+    "USD": { "value": 1, "source": "definition" }
+  },
+  "scenarios": {
+    "customers": { "value": [1, 10, 50, 100, 300], "source": "the owner's brief for the pricing session (G8)" },
+    "teamMix": { "value": [ { "seats": 5, "share": 0.5 }, { "seats": 12, "share": 0.35 }, { "seats": 40, "share": 0.15 } ], "source": "assumption: ICP 20-300-person B2B (research-competitive), teams of 5 / 12 / 40 full seats" },
+    "plan": { "value": "team", "source": "assumption: price the scenarios on the cheapest plan (the owner's rule: cheapest possible)" },
+    "interval": { "value": "month", "source": "assumption: monthly billing (Paddle's fixed $0.50 hurts most there)" },
+    "pitrFromCustomers": { "value": 1, "source": "HANDOVER: point-in-time recovery from the first paying customer" }
+  }
+}

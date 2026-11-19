@@ -19,8 +19,10 @@ close to nothing to serve. Rules each change follows:
    and the daily summary batch the rest. No SMS.
 6. **Short retention for bulky data.** Notifications and sync history are
    kept 90 days, undo records 30 minutes of usefulness.
-7. **AI (later) is opt-in, cached and capped** per company, on the smallest
-   model that does the job.
+7. **AI is opt-in, cached and capped**: free rules and the answer cache first,
+   then the model, within a per-company money cap and the plan's monthly answer
+   cap (`shared/src/plans.json`); past either, the docs search answers. The
+   worst case at the caps is priced in `scripts/quality/cost.mts`.
 8. **AI runs on the customer's own assistant.** The MCP connector hands
    Claude or ChatGPT the data; the person's own plan pays for the model.
    Questions, summaries and presentations cost us one API call each, no

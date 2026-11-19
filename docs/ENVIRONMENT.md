@@ -62,7 +62,7 @@ simply not offered when their keys are missing ("a service without its secrets i
 | Key | Purpose | Required | Default / notes |
 | --- | --- | --- | --- |
 | `PADDLE_API_KEY` **(S)** | Server-side API key | For billing | Unset: billing off, everything open. |
-| `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies `/api/billing/webhook` signatures | For billing | |
+| `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies Paddle webhook signatures (`/api/inbound/billing/paddle`, also the older `/api/billing/webhook`) | For billing | |
 | `PADDLE_CLIENT_TOKEN` | Client-side token for Paddle.js (safe in browsers) | For billing | |
 | `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |

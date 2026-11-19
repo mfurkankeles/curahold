@@ -80,6 +80,8 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `email_taken` | 409 | Şirketinde bu e-postayı kullanan biri zaten var. |
 | `handover_confirmed` | 409 | Bu devir zaten onaylandı. |
 | `last_admin` | 409 | Şirketinde en az bir aktif yönetici kalmalı. |
+| `plan_limit_connectors` | 409 | Planınız en fazla … bağlı araç içeriyor. Birini kaldırın ya da daha büyük bir plan seçin. |
+| `plan_limit_seats` | 409 | Planınız en fazla … tam kullanıcı içeriyor ve hepsi kullanımda. Görüntüleyen olarak (ücretsiz) davet edin ya da daha büyük bir plan seçin. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
 | `role_in_use` | 409 | Bu role sahip kişiler var. Önce onlara başka bir rol ver. |
 | `seat_cap_reached` | 409 | Deneme … tam koltuk içeriyor ve hepsi kullanımda. İzleyici olarak davet et (ücretsiz) ya da bizden daha fazla koltuk iste. |
@@ -97,6 +99,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `export_too_large` | 413 | Bir dosyaya en fazla … satır sığar. Listeyi bir filtreyle daralt, sonra yeniden dışa aktar. |
 | `file_too_large` | 413 | Dosyalar en fazla … MB olabilir. |
 | `import_too_large` | 413 | Tek seferde en fazla … satır içe aktarabilirsin. |
+| `plan_limit_storage` | 413 | Planınızın dosya alanı (… GB) doldu. Artık gerekmeyen dosyaları silin ya da daha büyük bir plan seçin. |
 | `portal_quota` | 413 | Sağlayıcınızın dosya alanı dolu. Dosyayı başka bir yolla gönderin ya da yer açmalarını isteyin. |
 | `repeat_mismatch` | 422 | Bu istek, başka bir değişikliğe ait bir anahtarla gönderildi. Hiçbir şey değişmedi. |
 | `analytics_budget` | 429 | Bugünkü … satırlık analiz kotası doldu. Daha sonra yeniden dene. |
