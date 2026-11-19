@@ -673,6 +673,8 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'errors.help_too_many_files': '一个请求最多可携带 {n} 个文件。',
   'errors.help_file_type': '无法附加 {name}。可附加图片、PDF、文本、CSV、JSON、Excel 和短视频。',
   'errors.portal_file_type': "无法附加 {name}。可以附加图片、PDF、Word、Excel、PowerPoint、OpenDocument、文本、CSV 和 ZIP 文件。",
+  'errors.portal_file_unsafe': "无法附加 {name}：其内容看起来不安全（压缩包过大无法打开、内含程序或宏，或是会运行代码的 PDF）。请改为发送普通文件。",
+  'errors.file_quarantined': "正在检查此文件是否含有病毒。请一分钟后再试。",
   'errors.portal_too_many_files': "每次最多 {n} 个文件。",
   'errors.portal_off': '客户门户已关闭。请在“设置 → 客户门户”中开启。',
   'errors.portal_invite_owner': '只有管理员或该客户的负责人才能邀请人员加入门户。',

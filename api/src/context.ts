@@ -88,6 +88,8 @@ export interface Config {
   assistant?: import('./assistant/cost').AssistantConfig;
   /** The AI team's models and monthly cap (api/src/team/config.ts); unset: the defaults there. */
   team?: import('./team/config').TeamConfig;
+  /** Error-rate and latency alerts (lib/ops.ts): on unless OPS_ALERTS=off; e-mail to the owner unless OPS_ALERT_EMAIL=off. */
+  ops?: { alerts?: boolean; email?: boolean };
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */
@@ -135,6 +137,10 @@ export interface Deps {
   limiter?: import('./lib/ratelimit').Limiter;
   /** Unusual-traffic counter (lib/botGuard.ts); unset: the isolate's shared one. */
   watch?: import('./lib/botGuard').TrafficWatch;
+  /** Error-rate and latency watch (lib/ops.ts); tests give their own. */
+  ops?: import('./lib/ops').OpsWatch;
+  /** The optional upload scanner (lib/uploadScan.ts; self-host: ClamAV, lib/clamav.ts). Unset: nothing is quarantined. */
+  scanner?: import('./lib/uploadScan').FileScanner;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
   /** The assistant: where the docs' sections are read from, and (tests) a model to use instead of the configured one. */
   assistant?: { docs?: import('./assistant/store').DocsLoader; provider?: import('./assistant/provider').LlmProvider | null };

@@ -1,6 +1,7 @@
 // Records under accounts (contacts, opportunities, risks…) and the kinds of
 // record a company keeps. Works with or without a CRM; when one is
 // connected, edits here are queued for it.
+import { quarantine } from '../lib/uploadScan';
 import { clashes, fieldWrites, refuseClash, type Write } from '../lib/versions';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -453,6 +454,7 @@ recordRoutes.post('/records/:id/files', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: x.id, meta: { name: f.name } });
     return x;
   });
+  await quarantine(deps, org.id, key);
   return c.json({ file: toFile(row) }, 201);
 });
 

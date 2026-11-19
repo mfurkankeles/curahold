@@ -11,12 +11,18 @@ export interface TeamConfig {
   judgeModel: string;
   /** USD a month for every agent together (chats, wakes, meetings, golden runs). */
   monthlyUsd: number;
+  /**
+   * The clock that wakes the team (team/schedule.ts, the Worker's 10-minute cron): "auto" runs it
+   * whenever a model key is set; "off" stops every scheduled wake (chats and "Şimdi başlat" still work).
+   */
+  scheduler: 'auto' | 'off';
 }
 
 export const TEAM_DEFAULTS: TeamConfig = {
   models: { deep: 'claude-opus-5-5', standard: 'claude-sonnet-5-5', light: 'claude-haiku-5-5' },
   judgeModel: 'claude-opus-5-5',
   monthlyUsd: 40,
+  scheduler: 'auto',
 };
 
 export function teamConfigFrom(env: Record<string, string | undefined>): TeamConfig {
@@ -29,6 +35,7 @@ export function teamConfigFrom(env: Record<string, string | undefined>): TeamCon
     },
     judgeModel: env.TEAM_JUDGE_MODEL?.trim() || TEAM_DEFAULTS.judgeModel,
     monthlyUsd: Number.isFinite(n) && n >= 0 && env.TEAM_MONTHLY_USD !== '' && env.TEAM_MONTHLY_USD !== undefined ? n : TEAM_DEFAULTS.monthlyUsd,
+    scheduler: env.TEAM_SCHEDULER?.trim().toLowerCase() === 'off' ? 'off' : 'auto',
   };
 }
 

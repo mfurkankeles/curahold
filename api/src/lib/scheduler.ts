@@ -19,6 +19,8 @@ import { sendTrialReminders } from './trial';
 import { REPLAY_RETENTION_DAYS } from '../../../shared/src/replay';
 import { purgeAssistantLogs } from '../assistant/store';
 import { dailySetupHealth } from './setupHealth';
+import { opsHourlyCheck } from './ops';
+import { scanHeld } from './uploadScan';
 
 const DIGEST_ITEMS = 8;
 
@@ -181,5 +183,9 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
     console.error('[curahold] seat sync failed', e);
     return 0;
   });
-  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats, trialMails };
+  // Uploads still held for the scanner (it was down, or the process stopped before it looked).
+  await scanHeld(deps).catch((e) => console.error('[curahold] upload scan sweep failed', e));
+  // Error-rate and stuck-delivery alerts across every isolate (lib/ops.ts).
+  const alerts = (await opsHourlyCheck(deps, now).catch((e) => (console.error('[curahold] ops check failed', e), []))).length;
+  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats, trialMails, alerts };
 }

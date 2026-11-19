@@ -6,6 +6,8 @@ import { readRawMail, takeMail } from './lib/helpThread';
 import { assertOwnerConfigured, type BillingConfig, type Config } from './context';
 import { postgresDb } from './db/postgres';
 import { runScheduled } from './lib/scheduler';
+import { teamConfigFrom } from './team/config';
+import { scheduledTeamTick, TEAM_CRON } from './team/schedule';
 import { R2Storage, ResendEmail, type EmailSender, type R2Like } from './lib/services';
 import { ConsoleMailer } from './lib/mailer';
 import { SmtpRelayEmail, mailProvider, relayOptions, workerSockets } from './lib/smtpRelay';
@@ -118,6 +120,16 @@ export interface Env {
   ASSISTANT_BLOCKED_NAMES?: string;
   /** "0" closes the public docs chat. */
   ASSISTANT_PUBLIC_CHAT?: string;
+  /** The AI team (api/src/team/config.ts): models, the monthly USD cap, and TEAM_SCHEDULER=off to stop its 10-minute clock. */
+  TEAM_MONTHLY_USD?: string;
+  TEAM_MODEL_DEEP?: string;
+  TEAM_MODEL_STANDARD?: string;
+  TEAM_MODEL_LIGHT?: string;
+  TEAM_JUDGE_MODEL?: string;
+  TEAM_SCHEDULER?: string;
+  /** Ops alerts (lib/ops.ts): "off" stops them; OPS_ALERT_EMAIL=off keeps them in the console only. */
+  OPS_ALERTS?: string;
+  OPS_ALERT_EMAIL?: string;
   /** Robots refused by name (lib/botGuard.ts): unset = strict; "crawlers" or "off". */
   ROBOT_GUARD?: string;
   /** "allow" lets AI answer/search robots read the documentation (crawler policy; default: blocked). */
@@ -180,6 +192,8 @@ export function configFromEnv(env: Env): Config {
     portalDomain,
     billing: billingFromEnv(env),
     assistant: assistantConfigFrom(env as unknown as Record<string, string | undefined>),
+    team: teamConfigFrom(env as unknown as Record<string, string | undefined>),
+    ops: { alerts: env.OPS_ALERTS !== 'off', email: env.OPS_ALERT_EMAIL !== 'off' },
     support: {
       email: env.SUPPORT_EMAIL || undefined,
       webhookUrl: env.SUPPORT_WEBHOOK_URL || undefined,
@@ -299,8 +313,22 @@ export default {
     }
   },
 
-  // Cron trigger (wrangler.toml): digests, scheduled automations, retries.
-  async scheduled(_event: unknown, env: Env, ctx: Ctx) {
+  // Cron triggers (wrangler.toml): hourly — digests, scheduled automations, retries;
+  // every 10 minutes — the AI team's clock, which stops at once without a key or when switched off.
+  async scheduled(event: { cron?: string }, env: Env, ctx: Ctx) {
+    if (cronJob(event?.cron) === 'team') {
+      const config = configFromEnv(env);
+      // No key or switched off: not even a database connection.
+      if (config.team?.scheduler === 'off' || !config.assistant?.apiKey || config.assistant.provider === 'off') return;
+      const { db, deps } = depsFor(env, ctx);
+      ctx.waitUntil(
+        scheduledTeamTick(deps)
+          .then((r) => r.status === 'ran' && console.log('[curahold] team tick', JSON.stringify({ woke: r.woke.length, ran: r.woke.filter((w) => w.ran).length })))
+          .catch((e) => console.error('[curahold] team tick failed', e))
+          .finally(() => db.close()),
+      );
+      return;
+    }
     const { db, deps } = depsFor(env, ctx);
     // The hourly jobs change bills (seats) and trials: the console hears it after them.
     ctx.waitUntil(
@@ -310,6 +338,11 @@ export default {
     );
   },
 };
+
+/** Which job a cron event is for: the AI team's 10-minute clock, or the hourly jobs (any other or no cron). */
+export function cronJob(cron: string | undefined): 'team' | 'hourly' {
+  return cron === TEAM_CRON ? 'team' : 'hourly';
+}
 
 /** The product's mail path (owner's choice: Google Workspace; see lib/smtpRelay.ts). */
 export function emailFor(env: Env): EmailSender {

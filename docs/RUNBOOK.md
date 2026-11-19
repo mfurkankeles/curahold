@@ -65,11 +65,18 @@ list in `docs/ENVIRONMENT.md`) -> DNS -> `npm run build && npx wrangler deploy`.
    company: `Type: CNAME  Name: *  Target: curahold.com  Proxy: on`. Every company's address
    (`<slug>.curahold.com`) and its onboarding hub (`/onboarding`) answer from then on; the portal domain
    gets the same single record. Nothing is added when a company signs up.
-2. **Files from customers have no malware scan yet.** The portal takes files only on requests or tickets
-   shared with the customer and on steps of their onboarding plan; each is checked by ending and first
-   bytes, at most 25 MB, within the company's allowance (Settings → Customer portal), stored privately and
-   only ever served as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). Decide on a
-   scan before go-live (no paid service has been added); until then this is the standing risk.
+2. **Files from customers are looked into before they are kept** (`api/src/lib/uploadScan.ts`, free, on every
+   hosting). The portal takes files only on requests or tickets shared with the customer and on steps of their
+   onboarding plan; each is checked by ending and first bytes, at most 25 MB, within the company's allowance
+   (Settings → Customer portal), then by its contents without unpacking: ZIP directories (at most 2,000 entries,
+   250 MB unpacked, ratio 120:1; no encrypted, nested-archive, program or climbing-path entries), Office macros
+   (`vbaProject.bin`), PDFs with `/JavaScript`, `/JS`, `/Launch` or `/EmbeddedFile`. Stored privately, served only
+   as a download (`content-disposition: attachment`, `sandbox` CSP, `nosniff`). **A signature virus scan is
+   optional:** self-host sets `CLAMAV_HOST` (the commented `clamav` service in `docker-compose.yml`); every upload
+   (portal, tasks, records, onboarding steps) is then held (`file_scans`, answer 423 `file_quarantined`) until
+   clamd finds it clean, deleted if infected (alert in the owner console), retried hourly if clamd is down. The
+   hosted Workers have no free signature scanner; the content checks above are the hosted line (decision in
+   `/home/claude/orch/out/owner-questions.md`).
 
 ## Rollback
 
@@ -124,14 +131,26 @@ After any rotation: run the deploy verification checklist, and record the date a
 - R2 objects (attachments, logos): no versioning or cross-region copy configured **[not yet in place]**; enable R2 object
   versioning / replication or a periodic `rclone` copy to a second provider.
 
-**Targets from QUALITY.md that are not in place yet [not yet in place]**
+**Scripted backup and the restore drill (free; `scripts/backup/`)**
 
-- A weekly **encrypted off-site copy** of the database.
-- A written, **rehearsed** restore, repeated at least quarterly. This section is the written part; the rehearsal is still to do.
-- **Point-in-time recovery**: decided to switch on with the first paying customer (about $105 per month fixed). Until then the
-  recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
+- `scripts/backup/backup.ts`: `pg_dump` (custom format, `public` schema) of `BACKUP_DATABASE_URL`, encrypted with
+  `BACKUP_PASSPHRASE` (openssl AES-256, PBKDF2), plus a manifest (exact row count per table, extensions, last
+  migration, SHA-256). Weekly off-site copy: put the two files in a second place, e.g. an R2 bucket
+  `curahold-backups` (`npx wrangler r2 object put curahold-backups/<file> --file <file> --remote`; R2's free tier is
+  10 GB) and a copy on the owner's computer. Keep the passphrase in the password manager, never beside the file.
+- `scripts/backup/restore.ts <file>`: into an **empty** database only (refuses one with tables): checks the
+  checksum, creates the request roles and extensions, `pg_restore`, then verifies every table's row count against
+  the manifest and the row-level security gates (RLS on, no privileges without a policy, SECURITY DEFINER search
+  paths, and a cross-company read as `curahold_app` that must see nothing). Exit 1 if anything differs.
+- `scripts/backup/restore-drill.ts` (`DRILL_PG=<throwaway server>`): build → back up → **wipe** → restore → verify,
+  timed. **Rehearsed 19 Nov 2026 on local Postgres 16:** sample install (144 tables) passed in 4.1 s (backup 0.4 s,
+  restore 1.4 s, verify 0.1 s); the large test company (473 MB, 90 tables, 1.29 million rows) backed up in 15 s
+  (72 MB encrypted) and restored + verified in 161 s; `tests/rls.test.ts` passed on the same server. Repeat it
+  quarterly and after big schema changes, and once against a copy of production (Supabase "restore to a new project").
+- Point-in-time recovery: decided to switch on with the first paying customer (about $105 per month fixed). Until
+  then the recovery point is the last daily backup (up to 24 hours of data loss in the worst case).
 
-**Restore procedure (draft; rehearse it on a scratch project before you need it)**
+**Restore procedure (rehearsed with the drill above; repeat on a scratch project before you need it)**
 
 1. Declare an incident; stop writes if corruption is ongoing (put a maintenance route in front, or `wrangler rollback` is not enough
    to stop writes: use a Cloudflare WAF/maintenance rule on `/api/*`).
@@ -157,9 +176,12 @@ migrates on start). Keep copies on another machine and try a restore now and the
 | Signal | How |
 | --- | --- |
 | Is it up? | `GET /api/health` on the app domain (returns `{"ok":true}`); the same path is the Docker `HEALTHCHECK`. |
+| Is the database reached? | `GET /api/health/ready` (app) and `GET /papi/health` (portal): `{"ok":true,"db":{"ok":true,"ms":4},"at":"…"}`, 503 when the database is not reached. Both allow any origin, so the status page can read them. |
+| Outside view | `npx tsx scripts/synthetic.ts` (addresses from `SYN_APP`, `SYN_SITE`, `SYN_PORTAL`) times every public address and exits 1 on a failure; `--json status.json` writes the status page's file. The public page is `tools/status-page/index.html` (Cloudflare Pages, free, project `curahold-status`, apart from the app's Worker; `status.` on curahold.com would be caught by the Worker's wildcard route). |
+| Error rate and latency | `lib/ops.ts`: more than 5% 5xx answers or a 95th percentile over 2 s in 5 minutes (at least 50 answers, per Worker copy), and 20+ server errors in `error_log` within an hour or 200+ deliveries stuck for an hour (hourly job, every copy together) → an alert in the owner console (`company_log`, refs `ops:*`) and one e-mail to `PLATFORM_OWNER`. `OPS_ALERTS=off` stops them; `OPS_ALERT_EMAIL=off` keeps them in the console only. |
 | Live errors | `npx wrangler tail curahold` (and `--config wrangler.portal.toml`); log prefix `[curahold]`. |
 | Recorded errors | `error_log` table: unhandled server errors and browser errors (source, company, user, path, message, stack; no bodies or secrets; kept 30 days). Admins see their own company's at `GET /api/admin/errors`; company-less errors stay with Curahold. |
-| Background jobs | Worker cron `0 * * * *` (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
+| Background jobs | Worker crons `0 * * * *` (hourly jobs) and `*/10 * * * *` (the AI team's clock; returns at once without a model key or with `TEAM_SCHEDULER=off`) (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
 | Billing | `billing_events` table and Paddle's notification log. |
 | Abuse | Cloudflare analytics / WAF events (rate rules live here, **not** in the app). |
 

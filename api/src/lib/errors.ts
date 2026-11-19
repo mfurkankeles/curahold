@@ -67,6 +67,8 @@ export type ErrorCode =
   | 'portal_weak_password'
   | 'portal_passkey_failed'
   | 'portal_file_type'
+  | 'portal_file_unsafe'
+  | 'file_quarantined'
   | 'portal_too_many_files'
   | 'portal_quota'
   | 'portal_no_method'
@@ -154,6 +156,8 @@ const STATUS: Record<ErrorCode, number> = {
   portal_weak_password: 400,
   portal_passkey_failed: 400,
   portal_file_type: 400,
+  portal_file_unsafe: 400,
+  file_quarantined: 423,
   portal_too_many_files: 400,
   portal_quota: 413,
   portal_no_method: 400,

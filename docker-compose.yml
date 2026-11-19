@@ -36,6 +36,12 @@ services:
     volumes:
       - files:/data
 
+  # Optional: a free virus scan of uploads (ClamAV). Uncomment, and set
+  # CLAMAV_HOST=clamav in .env. It needs about 1.5 GB of memory for its signatures.
+  # clamav:
+  #   image: clamav/clamav:stable
+  #   restart: unless-stopped
+
 volumes:
   db:
   files:

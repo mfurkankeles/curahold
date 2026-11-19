@@ -2025,6 +2025,8 @@ export const tr: Record<MessageKey, string> = {
   'errors.help_too_many_files': 'Bir talebe en fazla {n} dosya eklenebilir.',
   'errors.help_file_type': '{name} eklenemiyor. Resim, PDF, metin, CSV, JSON, Excel ve kısa videolar eklenebilir.',
   'errors.portal_file_type': "{name} eklenemiyor. Resim, PDF, Word, Excel, PowerPoint, OpenDocument, metin, CSV ve ZIP dosyaları eklenebilir.",
+  'errors.portal_file_unsafe': "{name} eklenemiyor: içeriği güvenli görünmüyor (açılamayacak kadar büyük bir arşiv, içinde program veya makro, ya da kod çalıştıran bir PDF). Dosyayı sade hâliyle gönderin.",
+  'errors.file_quarantined': "Bu dosya virüslere karşı kontrol ediliyor. Bir dakika sonra tekrar deneyin.",
   'errors.portal_too_many_files': "Bir seferde en fazla {n} dosya eklenebilir.",
   'settings.tab.portal': 'Müşteri portalı',
   'portal.admin.title': 'Müşteri portalı',
