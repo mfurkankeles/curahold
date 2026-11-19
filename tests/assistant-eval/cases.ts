@@ -72,6 +72,26 @@ export const BASE: BaseCase[] = [
     rubric: 'Explains adding a webhook and checking its signature, from the docs.',
     q: { en: 'How do I verify a webhook signature?', tr: 'Webhook imzasını nasıl doğrularım?', ar: 'كيف أتحقق من توقيع webhook؟', he: 'איך מאמתים חתימה של webhook?', fa: 'چطور امضای وب‌هوک را بررسی کنم؟', 'zh-Hans': '如何验证 Webhook 签名？', 'zh-Hant': '如何驗證 Webhook 簽章？', ja: 'Webhook の署名を検証するには？', ko: '웹훅 서명은 어떻게 검증하나요?' },
   },
+  {
+    id: 'howto-onboarding-next', category: 'how_to', kinds: ['answer'], cite: 'onboarding-hub',
+    rubric: 'Says the onboarding plan (Getting started plan in the left menu) shows the next step at the top, with the Do it button; most steps tick themselves.',
+    q: { en: 'Where do I see what to do next to finish our setup?', tr: 'Kurulumu bitirmek için sırada ne olduğunu nerede görürüm?', ar: 'أين أرى ما يجب فعله تاليًا لإنهاء الإعداد؟', he: 'איפה אני רואה מה הדבר הבא כדי לסיים את ההגדרה?', fa: 'کجا ببینم برای تمام کردن راه‌اندازی بعد چه کنم؟', 'zh-Hans': '在哪里能看到完成设置的下一步？', 'zh-Hant': '在哪裡能看到完成設定的下一步？', ja: '設定を終えるために次に何をすればいいか、どこで見られますか？', ko: '설정을 끝내려면 다음에 무엇을 할지 어디서 보나요?' },
+  },
+  {
+    id: 'howto-onboarding-failed-test', category: 'how_to', kinds: ['answer'], cite: 'onboarding-hub',
+    rubric: 'Explains a failed setup test shows once under Shared issues; fix it, then Test again, and the issue closes when the test passes.',
+    q: { en: 'A setup test failed in our onboarding plan. What now?', tr: 'Ortak planımızda bir kurulum testi geçmedi. Şimdi ne yapmalıyım?', ar: 'فشل اختبار إعداد في خطة التأهيل. ماذا أفعل الآن؟', he: 'בדיקת הגדרה נכשלה בתוכנית הקליטה שלנו. מה עכשיו?', fa: 'یک آزمون راه‌اندازی در برنامه ما رد شد. حالا چه کنم؟', 'zh-Hans': '我们的上线计划里有一个设置测试未通过，现在怎么办？', 'zh-Hant': '我們的上線計畫裡有一個設定測試未通過，現在怎麼辦？', ja: '導入プランで設定テストが不合格になりました。どうすればいいですか？', ko: '온보딩 계획에서 설정 테스트가 실패했어요. 이제 어떻게 하나요?' },
+  },
+  {
+    id: 'howto-onboarding-share', category: 'how_to', kinds: ['answer'], cite: 'onboarding-hub',
+    rubric: 'Explains Share report gives a read-only link (no notes or contact details) and Report can be printed or saved as PDF.',
+    q: { en: 'How can I send our sponsor the onboarding progress without giving them a seat?', tr: 'Sponsorumuza koltuk vermeden kurulum ilerlemesini nasıl gönderirim?', ar: 'كيف أرسل تقدم التأهيل إلى الراعي دون منحه مقعدًا؟', he: 'איך שולחים לנותן החסות את התקדמות הקליטה בלי לתת לו מושב?', fa: 'چطور پیشرفت راه‌اندازی را بدون دادن صندلی برای حامی بفرستم؟', 'zh-Hans': '如何在不给发起人席位的情况下把上线进度发给他？', 'zh-Hant': '如何在不給發起人席位的情況下把上線進度傳給他？', ja: 'スポンサーにシートを渡さずに導入の進捗を送るには？', ko: '후원자에게 좌석을 주지 않고 온보딩 진행 상황을 보내려면?' },
+  },
+  {
+    id: 'howto-onboarding-customer', category: 'how_to', kinds: ['answer'], cite: 'onboarding-hub',
+    rubric: 'Explains a won deal opens a draft onboarding plan for the customer, found under Onboarding plans; the customer sees it in the portal; Finish and hand over passes it to Customer Success.',
+    q: { en: 'How do I run onboarding for a customer we just won?', tr: 'Yeni kazandığımız bir müşterinin kurulumunu nasıl yürütürüm?', ar: 'كيف أدير تأهيل عميل فزنا به للتو؟', he: 'איך מנהלים קליטה ללקוח שזה עתה סגרנו?', fa: 'راه‌اندازی مشتری‌ای را که تازه گرفته‌ایم چطور پیش ببرم؟', 'zh-Hans': '刚赢得的客户，如何进行上线？', 'zh-Hant': '剛贏得的客戶，如何進行上線？', ja: '受注したばかりの顧客の導入はどう進めますか？', ko: '방금 계약한 고객의 온보딩은 어떻게 진행하나요?' },
+  },
   // ------------------------------------------------------------ ambiguous
   {
     id: 'amb-people-dashboard', category: 'ambiguous', kinds: ['clarify'], rule: 'people_board',

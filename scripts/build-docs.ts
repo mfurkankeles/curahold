@@ -180,9 +180,11 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
     gfm: true,
     renderer: {
       heading({ tokens, depth }: Tokens.Heading) {
-        const text = this.parser.parseInline(tokens);
+        // "## Heading {#id}" keeps the same anchor in every language (the product links to it).
+        const fixed = /\s*\{#([a-z0-9-]+)\}\s*$/;
+        const text = this.parser.parseInline(tokens).replace(fixed, '');
         const plain = text.replace(/<[^>]+>/g, '');
-        const id = slugify(plain);
+        const id = fixed.exec(this.parser.parseInline(tokens))?.[1] ?? slugify(plain);
         if (depth === 2) toc.push({ id, text: plain });
         return `<h${depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${text}</h${depth}>\n`;
       },

@@ -32,7 +32,7 @@ interface Shot {
   ready: string;
   width: number;
   height: number;
-  /** The element the step is about (a CSS selector): ringed and numbered on the picture. */
+  /** The element the step is about (a CSS selector; "a, b" takes the first that exists): ringed and numbered on the picture. */
   mark?: string;
   /** The number on the ring (default 1). */
   n?: number;
@@ -61,11 +61,20 @@ const SHOTS: Shot[] = [
   { name: 'portal', go: `await __demo.as('customer')`, ready: '.p-list', width: 1280, height: 800 },
   ...SETUP,
   { name: 'setup-phone', go: go('/setup-health'), ready: '.sh-item', width: 390, height: 780 },
+  // The onboarding plan guide (docs/site/<lang>/onboarding-hub.md): one picture per step, the click target marked.
+  { name: 'ob-open', go: `__demo.navigate('/home')`, ready: '.sidebar a[href="/onboarding"]', mark: '.sidebar a[href="/onboarding"]', width: 1280, height: 800 },
+  { name: 'ob-next', go: `__demo.navigate('/onboarding')`, ready: '[data-tour="ob-next"]', mark: '[data-tour="ob-next"] .btn--primary', width: 1280, height: 800 },
+  { name: 'ob-step', go: `__demo.navigate('/onboarding'); await wait('.ob-step__row'); document.querySelector('.ob-step[data-status="doing"] .ob-step__row, .ob-step:not([data-status="done"]) .ob-step__row').click()`, ready: '.ob-step__body', mark: '.ob-step__body .ob-step__actions .btn', width: 1280, height: 800 },
+  { name: 'ob-issues', go: `__demo.navigate('/onboarding')`, ready: '#issues .ob-issue', mark: '#issues .ob-issue[data-source="setup_test"] .btn, #issues .ob-issue .btn', width: 1280, height: 800 },
+  { name: 'ob-mapping', go: `__demo.navigate('/onboarding')`, ready: '#mapping .ob-tick', mark: '#mapping tr[data-state="failing"] td:nth-child(3), #mapping .ob-tick', width: 1280, height: 800 },
+  { name: 'ob-share', go: `__demo.navigate('/onboarding')`, ready: '.ob-top__tools', mark: '.ob-top__tools .btn:last-child', width: 1280, height: 800 },
+  { name: 'ob-plans', go: `__demo.navigate('/onboarding/plans')`, ready: '.ob-port__table', mark: '.ob-port__table tbody tr a', width: 1280, height: 800 },
+  { name: 'ob-phone', go: `__demo.navigate('/onboarding')`, ready: '[data-tour="ob-next"]', mark: '[data-tour="ob-next"] .btn--primary', width: 375, height: 667 },
 ];
 
 /** Rings the element and puts its number beside it (inline-start, so it follows right-to-left too). */
 const ring = (sel: string, n: number) => `(() => {
-  const el = document.querySelector(${JSON.stringify(sel)});
+  const el = ${JSON.stringify(sel)}.split(',').map((x) => document.querySelector(x.trim())).find(Boolean);
   if (!el) throw new Error('no mark ' + ${JSON.stringify(sel)});
   el.scrollIntoView({ block: 'center', inline: 'nearest' });
   const r = el.getBoundingClientRect();

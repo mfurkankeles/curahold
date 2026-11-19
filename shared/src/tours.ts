@@ -85,6 +85,22 @@ export const TOURS: Tour[] = [
     ],
   },
   {
+    id: 'onboarding-hub',
+    area: 'start',
+    goals: ['setup', 'keep'],
+    roles: ['lead', 'csm', 'ops'],
+    minutes: 3,
+    steps: [
+      { path: '/onboarding', at: '[data-tour="ob-next"]' },
+      { at: '[data-tour="ob-progress"]' },
+      { at: '[data-tour="ob-steps"]' },
+      { at: '[data-tour="ob-issues"]' },
+      { at: '[data-tour="ob-mapping"]' },
+      { at: '[data-tour="ob-views"]' },
+      { path: '/onboarding/plans', at: '[data-tour="ob-portfolio"]' },
+    ],
+  },
+  {
     id: 'handover-loop',
     area: 'customers',
     goals: ['keep', 'grow'],

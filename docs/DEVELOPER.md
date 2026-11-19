@@ -355,6 +355,7 @@ saves a screenshot. Run them after any change to a screen.
 | Timeline (cards, quiet task traffic, filter) | `routes/timeline.ts` | `components/Timeline.tsx` | `timeline.ts` | `timeline.test.ts` |
 | New task dialog (every "add task") | `routes/tasks.ts` | `components/QuickAdd.tsx`, `lib/quickparse.ts` | `model.ts` | e2e |
 | Plans and billing (Paddle; off unless configured) | `routes/billing.ts`, `lib/billing.ts`, `lib/paddle.ts`, `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` (plans, prices, `accessOf`) | `billing.test.ts` |
+| Onboarding plans (own hub, customers' plans, portal view, report) | `routes/onboardingPlans.ts`, `lib/onboarding.ts`, `lib/onboardingSetup.ts`, `portal.ts` (`/papi/onboarding`) | `pages/Onboarding.tsx`, `web/portal/Onboarding.tsx` | `onboarding.ts` | `onboarding-hub.test.ts` |
 | The demo | `web/src/demo/` | same app | — | `npm run test:demo` |
 | Your own server (one company, Postgres, files on disk, SMTP) | `selfhost.ts`, `scripts/build-server.ts`, `Dockerfile`, `docker-compose.yml`, `selfhost.env.example` | same app | — | `selfhost.test.ts` |
 
@@ -401,3 +402,60 @@ When you add or change an address:
 2. Run `npm run docs:reference` and commit the pages with your change.
 
 `tests/docs-reference.test.ts` fails until both are done, so the reference cannot fall behind.
+
+## Onboarding plans
+
+One mutual plan, used two ways (migration `0200_onboarding.sql`, `shared/src/onboarding.ts`):
+
+- **kind `self`**: the company getting started with Curahold. One per company, opened on an
+  administrator's first visit to `/onboarding`. Its steps complete themselves from product events.
+- **kind `client`**: the company onboarding one of its customers. Opened as a draft by the hand-over
+  card of a won deal (`lib/handoff.ts` → `openPlanForHandover`), started when the card is confirmed
+  (`startPlanForHandover`), seen by the customer in the portal (`portal_onboarding()`), handed to
+  Customer Success with a health baseline by `finishPlan`.
+
+**Where it lives.** Every company already has its own host, `<slug>.<BASE_DOMAIN>`; the hub is the app
+route `/onboarding` there, served by the existing wildcard route in `wrangler.toml`
+(`*.curahold.com/*`). Go-live needs one proxied wildcard DNS record — nothing new to deploy:
+
+```text
+Type: CNAME   Name: *   Target: curahold.com   Proxy: on
+```
+
+Where every company shares one host (local development, the in-browser demo) the same page also
+answers at `/o/<slug>`. The customer's view is `/onboarding` on the portal's own domain
+(`<slug>.<PORTAL_DOMAIN>`, `wrangler.portal.toml`), in the company's colours.
+
+**Steps that complete themselves.** A step names a `signal` (`SIGNALS` in the shared file: team invited,
+departments set, import ok, sync authorised and last run ok, first ticket, portal branded, setup checks
+green, setup tests passed, and the customer-side ones). `advancePlan` reads them with one cheap query
+per scope (company, customer, plan) and marks those steps `done_how = 'auto'`; it runs on every read
+of a plan and in the hourly sweep. A step without a signal is the only kind a person may tick
+(`PATCH /onboarding-steps/:id` refuses the others with `400`, and a step still waiting with `409`).
+
+**Progress.** `progressOf` weights required steps 1 and optional ones 0.5, leaves skipped ones out,
+works out what was expected by today from the due days, and counts who is waited on and for how long
+(`turnOf`). A step is stalled `STALL_DAYS` past its due day or without movement; an issue is stuck
+`STUCK_DAYS` after it opened or past its due day.
+
+**The setup checks (contract).** The hub never imports the setup feature's code. It reads its state
+through one adapter, `lib/onboardingSetup.ts` (`SetupState`: failing check ids, test states, all
+tests done), from the table that feature keeps (`setup_progress`), and asks it to run a test through
+`POST /setup-test/:id/run` (`web/src/lib/setupContract.ts`; a 404 there opens `/setup-test` instead).
+A failed test is ONE shared issue row (`source = 'setup_test'`, `source_ref` = the test id, unique per
+plan), opened again on the same row if it breaks again, resolved when it passes. Tests swap the
+source with `setSetupSource`.
+
+**Nothing is copied.** An issue links a support ticket (`record_id`; the ticket's status resolves it);
+a step that needs product work is one more `request_links` row (`source = 'onboarding'`), counted by
+Product's backlog; a finished plan is one more `handovers` card (`source_kind = 'onboarding'`); a
+step's form writes to the customer's own `accounts.fields`; a step's file is a `files` row
+(`onboarding_step_id`).
+
+**Reminders** are in the app only (`notify` kind `onboarding`). `orgs.settings.onboarding.emailNudges`
+switches the e-mail copy on (kind `onboarding_mail`), off by default and never to customers.
+
+**Adding a signal:** an entry in `SIGNALS`, its fact in `lib/onboarding.ts` (`companyFacts`,
+`customerFacts` or `planFacts`), `ob.signal.<id>` in the nine dictionaries, and a test in
+`tests/onboarding-hub.test.ts`.
+
