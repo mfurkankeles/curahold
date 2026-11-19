@@ -16,6 +16,8 @@ import { PERMS } from '../shared/src/model';
 
 const NAME = '0120_departments.sql';
 const ROLLBACK = readFileSync(join(MIGRATIONS_DIR, '..', 'rollback', NAME), 'utf8');
+// Only up to this migration: later ones build on it (0170_flow uses app_leads_department), and a rollback runs newest first.
+const upTo0120 = () => loadMigrations().filter((m) => m.name <= NAME);
 
 let db: Db;
 let org: string;
@@ -68,7 +70,7 @@ beforeAll(async () => {
 
 describe('the move into departments', () => {
   it('puts every board in a department, and writes down where and why', async () => {
-    await migrate(db, loadMigrations());
+    await migrate(db, upTo0120());
     const rows = await sys((q) =>
       q.query(`select b.id, d.key, mv.reason, (mv.detail ->> 'personal')::boolean as personal
                  from boards b join departments d on d.id = b.department_id
@@ -130,7 +132,7 @@ describe('the move into departments', () => {
     expect(await seesAll()).toEqual(before);
     const [{ n }] = await sys((q) => q.query(`select count(*)::int as n from information_schema.columns where table_name = 'boards' and column_name = 'department_id'`));
     expect(n).toBe(0);
-    expect(await migrate(db, loadMigrations())).toEqual([NAME]);
+    expect(await migrate(db, upTo0120())).toEqual([NAME]);
     const [{ missing }] = await sys((q) => q.query(`select count(*)::int as missing from boards where department_id is null`));
     expect(missing).toBe(0);
   });
