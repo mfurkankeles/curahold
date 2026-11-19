@@ -11,6 +11,7 @@ import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
 import type { Approval, Pause, Seat } from '../../../shared/src/office';
 import type { OwnerActivity, OwnerBarData, OwnerChecklist, OwnerOverview, OwnerPlan, OwnerRevenue, OwnerSupport, OwnerSystem, OwnerTrial, Pace, PlanMetric } from '../../../shared/src/ownerConsole';
+import { CONSENT_REGIONS, LAW_NAME, type ConsentRegion } from '../../../shared/src/trialForm';
 import { TRIAL_DEPARTMENTS, type TrialDepartment, type TrialRequestDetail, type TrialRequestRow } from '../../../shared/src/trialRequest';
 import { DateField } from '../components/DateField';
 import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
@@ -812,7 +813,7 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
             {d.consents.map((c) => (
               <li key={c.key} data-granted={c.granted ? '' : undefined}>
                 <Icon name={c.granted ? 'check' : 'close'} size={14} />
-                <span>{c.key}</span>
+                <span title={c.key}>{consentLabel(c.key, o)}</span>
                 <span className="oc__muted">v{c.version}</span>
               </li>
             ))}
@@ -1747,4 +1748,22 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
       </Loading>
     </Page>
   );
+}
+
+/** A stored consent id ('<region>.<what>', from the trial form's rule sets) in the owner's words, with the law it rests on. */
+const CONSENT_KIND: Record<string, OwnerKey> = {
+  notice: 'req.consentKind.notice',
+  consent: 'req.consentKind.consent',
+  transfer: 'req.consentKind.transfer',
+  capacity: 'req.consentKind.capacity',
+  m1: 'req.consentKind.iys',
+  m2: 'req.consentKind.trMarketing',
+  marketing: 'req.consentKind.marketing',
+};
+function consentLabel(key: string, o: (k: OwnerKey) => string): string {
+  const [region, what] = key.split('.');
+  const kind = what ? CONSENT_KIND[what] : undefined;
+  if (!kind) return key;
+  const law = (what === 'notice' || what === 'consent' || what === 'transfer') && (CONSENT_REGIONS as readonly string[]).includes(region) ? LAW_NAME[region as ConsentRegion] : null;
+  return law ? `${o(kind)} · ${law}` : o(kind);
 }
