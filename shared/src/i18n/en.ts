@@ -4968,6 +4968,7 @@ export const en = {
   'docs.ask.loading': 'Reading the docs…',
   'docs.ask.failed': 'The docs could not be loaded. Check your connection and try again.',
   'docs.ask.you': 'You',
+  'docs.ask.ai': 'Written by AI from these docs. Check the source for anything important.',
   'trialMail.approved.subject': "Your Curahold trial for {company} is ready",
   'trialMail.approved.body': "Hello {name},\n\nGood news: your Curahold trial for {company} is ready. It has room for {seats} people and runs until {until}.\n\nSign in with this link to set up your company. It works once, for 7 days:\n\n{link}\n\nOnce inside, the setup plan walks you through inviting your team and connecting your tools. Just answer this email if you have a question.\n\nThe Curahold team",
   'trialMail.rejected.subject': "About your Curahold trial request for {company}",

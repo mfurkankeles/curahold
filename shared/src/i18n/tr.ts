@@ -4953,6 +4953,7 @@ export const tr: Record<MessageKey, string> = {
   'docs.ask.loading': 'Belgeler okunuyor…',
   'docs.ask.failed': 'Belgeler yüklenemedi. Bağlantını kontrol edip yeniden dene.',
   'docs.ask.you': 'Sen',
+  'docs.ask.ai': 'Yapay zekâ bu belgelerden yazdı. Önemli bir şeyse kaynağa bak.',
   'trialMail.approved.subject': "{company} için Curahold deneme hesabın hazır",
   'trialMail.approved.body': "Merhaba {name},\n\nGüzel haber: {company} için Curahold deneme hesabın hazır. {seats} kişilik yer var ve {until} tarihine kadar açık.\n\nŞirketini kurmak için bu bağlantıyla giriş yap. Bağlantı bir kez ve 7 gün boyunca çalışır:\n\n{link}\n\nİçeride kurulum planın, ekibini davet etmek ve araçlarını bağlamak için adım adım yol gösterir. Bir sorun olursa bu e-postayı yanıtlaman yeterli.\n\nCurahold ekibi",
   'trialMail.rejected.subject': "{company} için Curahold deneme talebin hakkında",

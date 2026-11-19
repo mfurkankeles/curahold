@@ -4953,6 +4953,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': 'جارٍ قراءة الوثائق…',
   'docs.ask.failed': 'تعذّر تحميل الوثائق. تحقق من اتصالك وحاول مرة أخرى.',
   'docs.ask.you': 'أنت',
+  'docs.ask.ai': 'كتبه الذكاء الاصطناعي من هذه الوثائق. راجع المصدر في الأمور المهمة.',
   'trialMail.approved.subject': "نسخة Curahold التجريبية لشركة {company} جاهزة",
   'trialMail.approved.body': "مرحبًا {name}،\n\nخبر سار: نسختك التجريبية من Curahold لشركة {company} جاهزة. تتسع لـ {seats} أشخاص وتستمر حتى {until}.\n\nسجّل الدخول عبر هذا الرابط لإعداد شركتك. يعمل الرابط مرة واحدة لمدة 7 أيام:\n\n{link}\n\nبعد الدخول، ترشدك خطة الإعداد خطوة بخطوة لدعوة فريقك وربط أدواتك. إن كان لديك أي سؤال، فقط ردّ على هذه الرسالة.\n\nفريق Curahold",
   'trialMail.rejected.subject': "بخصوص طلب النسخة التجريبية من Curahold لشركة {company}",

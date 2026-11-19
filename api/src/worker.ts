@@ -220,7 +220,7 @@ export function depsFor(env: Env, ctx: Ctx) {
       config: configFromEnv(env),
       live: livePoker(env),
       // The docs' sections, as the docs build wrote them, from the site's own files.
-      assistant: { docs: (lang: 'en' | 'tr') => env.ASSETS.fetch(new Request(`https://assets.local/docs/${lang}/answers.json`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))) as Promise<DocSection[]> },
+      assistant: { docs: (lang: string) => env.ASSETS.fetch(new Request(`https://assets.local/docs/${lang}/answers.json`)).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))) as Promise<DocSection[]> },
       defer: (p: Promise<unknown>) => {
         pending.push(p);
         ctx.waitUntil(p);

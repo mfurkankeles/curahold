@@ -4953,6 +4953,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': '문서를 읽는 중…',
   'docs.ask.failed': '문서를 불러오지 못했습니다. 연결을 확인하고 다시 시도해 주세요.',
   'docs.ask.you': '나',
+  'docs.ask.ai': 'AI가 이 문서를 바탕으로 작성했습니다. 중요한 내용은 출처를 확인하세요.',
   'trialMail.approved.subject': "{company}의 Curahold 체험판이 준비되었습니다",
   'trialMail.approved.body': "{name}님, 안녕하세요.\n\n좋은 소식입니다. {company}의 Curahold 체험판이 준비되었습니다. 최대 {seats}명이 사용할 수 있으며 {until}까지 이용 가능합니다.\n\n아래 링크로 로그인해 회사 설정을 시작하세요. 링크는 한 번만, 7일 동안 사용할 수 있습니다.\n\n{link}\n\n로그인하면 설정 플랜이 팀 초대와 도구 연결을 단계별로 안내해 드립니다. 궁금한 점이 있으면 이 메일에 회신해 주세요.\n\nCurahold 팀",
   'trialMail.rejected.subject': "{company}의 Curahold 체험판 신청에 관하여",

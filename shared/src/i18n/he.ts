@@ -4953,6 +4953,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': 'קורא את התיעוד…',
   'docs.ask.failed': 'לא הצלחנו לטעון את התיעוד. בדקו את החיבור ונסו שוב.',
   'docs.ask.you': 'אתם',
+  'docs.ask.ai': 'נכתב בבינה מלאכותית מתוך התיעוד הזה. בכל דבר חשוב, בדקו במקור.',
   'trialMail.approved.subject': "הניסיון שלך ב-Curahold עבור {company} מוכן",
   'trialMail.approved.body': "שלום {name},\n\nחדשות טובות: תקופת הניסיון שלך ב-Curahold עבור {company} מוכנה. יש בה מקום ל-{seats} אנשים והיא פעילה עד {until}.\n\nאפשר להיכנס בקישור הזה כדי להקים את החברה. הקישור עובד פעם אחת, במשך 7 ימים:\n\n{link}\n\nבפנים, תוכנית ההקמה תלווה אותך צעד אחר צעד בהזמנת הצוות ובחיבור הכלים. יש שאלה? פשוט אפשר להשיב למייל הזה.\n\nצוות Curahold",
   'trialMail.rejected.subject': "לגבי בקשת הניסיון ב-Curahold עבור {company}",

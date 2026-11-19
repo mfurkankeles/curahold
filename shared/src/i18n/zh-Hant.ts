@@ -4953,6 +4953,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': '正在讀取說明文件…',
   'docs.ask.failed': '無法載入說明文件。請檢查網路連線後再試一次。',
   'docs.ask.you': '你',
+  'docs.ask.ai': '由 AI 根據這些說明文件撰寫。重要事項請查看來源。',
   'trialMail.approved.subject': "{company} 的 Curahold 試用已準備就緒",
   'trialMail.approved.body': "{name}，你好：\n\n好消息：{company} 的 Curahold 試用已經開通，可供 {seats} 人使用，有效期至 {until}。\n\n請透過以下連結登入並設定你的公司。連結僅能使用一次，7 天內有效：\n\n{link}\n\n登入後，設定計畫會一步步引導你邀請團隊、連接工具。如有任何問題，直接回覆這封郵件即可。\n\nCurahold 團隊",
   'trialMail.rejected.subject': "關於 {company} 的 Curahold 試用申請",

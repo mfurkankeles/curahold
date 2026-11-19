@@ -1,5 +1,6 @@
 // The assistant's usage, cached answers and log in the database
 // (db/migrations/0096_assistant.sql), and where the server finds the docs.
+import type { HelpLanguage } from '../../../shared/src/i18n';
 import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistReply } from '../../../shared/src/assist';
 import type { Db, Q } from '../db';
@@ -95,9 +96,9 @@ export async function purgeAssistantLogs(db: Db) {
 }
 
 /** Docs sections by language, prepared once per process (or isolate) and version. */
-export type DocsLoader = (lang: 'en' | 'tr') => Promise<DocSection[]>;
+export type DocsLoader = (lang: HelpLanguage) => Promise<DocSection[]>;
 const prepared = new Map<string, { at: number; index: Promise<AnswerIndex>; version: Promise<string> }>();
-export function docsIndex(load: DocsLoader, lang: 'en' | 'tr', maxAgeMs = 10 * 60_000): { index: Promise<AnswerIndex>; version: Promise<string> } {
+export function docsIndex(load: DocsLoader, lang: HelpLanguage, maxAgeMs = 10 * 60_000): { index: Promise<AnswerIndex>; version: Promise<string> } {
   const hit = prepared.get(lang);
   if (hit && Date.now() - hit.at < maxAgeMs) return hit;
   const sections = load(lang);

@@ -4953,6 +4953,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'docs.ask.loading': '正在阅读文档…',
   'docs.ask.failed': '无法加载文档。请检查网络连接后重试。',
   'docs.ask.you': '你',
+  'docs.ask.ai': '由 AI 根据这些文档撰写。重要事项请查看来源。',
   'trialMail.approved.subject': "{company} 的 Curahold 试用已就绪",
   'trialMail.approved.body': "{name}，你好：\n\n好消息：{company} 的 Curahold 试用已经开通，可供 {seats} 人使用，有效期至 {until}。\n\n请通过以下链接登录并设置你的公司。链接仅可使用一次，7 天内有效：\n\n{link}\n\n登录后，设置计划会一步步引导你邀请团队、连接工具。如有任何问题，直接回复这封邮件即可。\n\nCurahold 团队",
   'trialMail.rejected.subject': "关于 {company} 的 Curahold 试用申请",

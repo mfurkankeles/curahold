@@ -31,7 +31,7 @@ import {
   type AssistSurface,
 } from '../../../shared/src/assist';
 import type { Tool, Trace } from '../../../shared/src/assistant';
-import { accountWords, helpLanguageOf, LOCALE_INFO, translate, type Locale, type MessageKey, type Terms } from '../../../shared/src/i18n';
+import { accountWords, helpLanguageOf, LOCALE_INFO, translate, type HelpLanguage, type Locale, type MessageKey, type Terms } from '../../../shared/src/i18n';
 import { sha256Hex } from '../lib/crypto';
 import { costMicros, type AssistantConfig } from './cost';
 import { ProviderError, type LlmBlock, type LlmMessage, type LlmProvider, type LlmTool, type LlmUsage } from './provider';
@@ -84,7 +84,7 @@ export interface AssistEnv {
   config: AssistantConfig;
   provider: LlmProvider | null;
   store: AssistStore;
-  docs(lang: 'en' | 'tr'): Promise<AnswerIndex>;
+  docs(lang: HelpLanguage): Promise<AnswerIndex>;
   /** Changes when the docs change: cached answers from older docs are not used. */
   docsVersion: string;
   surface: AssistSurface;

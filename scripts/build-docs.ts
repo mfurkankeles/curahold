@@ -15,6 +15,7 @@ import { execFileSync } from 'node:child_process';
 import { buildSync } from 'esbuild';
 import { Marked, type Tokens } from 'marked';
 import type { DocSection } from '../shared/src/answers';
+import { CLARIFY } from '../shared/src/assist';
 import { LOCALE_INFO, LOCALES, bcp47Of, intlTag, translate, type Locale, type MessageKey } from '../shared/src/i18n';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -74,8 +75,11 @@ function uiOf(lang: Lang) {
     inEnglish: say('inEnglish'),
     /** What the Ask panel says (docs/site/assets/ask.ts reads it from the page). */
     askWords: Object.fromEntries(
-      ['open', 'title', 'close', 'hello', 'hi', 'thanks', 'empty', 'placeholder', 'from', 'more', 'also', 'unsure', 'none', 'support', 'helped', 'yes', 'no', 'sorry', 'loading', 'failed', 'you'].map((k) => [k, say(`ask.${k}`)]),
+      ['open', 'title', 'close', 'hello', 'hi', 'thanks', 'empty', 'placeholder', 'from', 'more', 'also', 'unsure', 'none', 'support', 'helped', 'yes', 'no', 'sorry', 'loading', 'failed', 'you', 'ai'].map((k) => [k, say(`ask.${k}`)]),
     ),
+    /** The question back and its choices for a question that means several things: the app's own words (assist.*). */
+    askClarify: Object.fromEntries(CLARIFY.map((c) => [c.id, translate(lang, c.question as MessageKey)])),
+    askOptions: Object.fromEntries(CLARIFY.flatMap((c) => c.options.map((o) => [o.id, translate(lang, o.label as MessageKey)]))),
   };
 }
 
@@ -266,7 +270,7 @@ ${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]] } }).replace(/</g, '\\u003c')}</script>
+<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]], clarify: ui.askClarify, options: ui.askOptions } }).replace(/</g, '\\u003c')}</script>
 <script src="/docs/assets/docs.js" defer></script>
 <script src="/docs/assets/ask.js" defer></script>
 </body>

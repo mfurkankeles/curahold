@@ -14,7 +14,7 @@ import { z } from 'zod';
 import type { AssistReply, AssistRequest, AssistSurface } from '../../../shared/src/assist';
 import { emptyTrace, toolsFor, type AssistantDeps, type Tool } from '../../../shared/src/assistant';
 import { prepare, type AnswerIndex } from '../../../shared/src/answers';
-import { accountWords, normalizeLocale, type Locale } from '../../../shared/src/i18n';
+import { accountWords, HELP_LANGUAGES, normalizeLocale, type Locale } from '../../../shared/src/i18n';
 import { requirePerm, run, todayOf, type AppEnv, type C, type Deps, type OrgRow } from '../context';
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
@@ -44,7 +44,7 @@ const assistantSettingsOf = (org: Pick<OrgRow, 'settings'>): unknown => (org.set
 async function docsOf(deps: Deps): Promise<{ docs: AssistEnv['docs']; version: string }> {
   const load = deps.assistant?.docs;
   if (!load) return { docs: async () => EMPTY, version: 'none' };
-  const versions = await Promise.all((['en', 'tr'] as const).map((l) => docsIndex(load, l).version.catch(() => 'x')));
+  const versions = await Promise.all(HELP_LANGUAGES.map((l) => docsIndex(load, l).version.catch(() => 'x')));
   return { docs: (lang) => docsIndex(load, lang).index.catch(() => EMPTY), version: versions.join('|') };
 }
 
