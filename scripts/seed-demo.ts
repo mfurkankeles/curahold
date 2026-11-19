@@ -3,6 +3,7 @@
 import type { Db } from '../api/src/db';
 import { seedDepartments } from './seed-departments';
 import { seedFlow } from './seed-flow';
+import { seedSetup } from './seed-setup';
 import { createOrg, defaultColumns, insertPreset } from '../api/src/lib/orgs';
 import { TEMPLATES } from '../shared/src/templates';
 import type { Locale } from '../shared/src/i18n/core';
@@ -173,6 +174,8 @@ export async function seedDemo(db: Db, opts: { slug?: string; locale?: Locale; d
     const opened = await seedDepartments(q, { orgId, ids, locale, accounts, boards: !!opts.departments });
     // The live demo: a won deal waiting for its hand-over, customers waiting for Product, a story that shipped.
     if (opened) await seedFlow(q, { orgId, ids, locale, accounts, boards: opened });
+    // The live demo: a few setup checks failing and the test list half done (scripts/seed-setup.ts).
+    if (opened) await seedSetup(q, { orgId, ids, locale, accounts });
     await q.query(`update orgs set setup = jsonb_build_object('finishedAt', now()) where id = $1`, [orgId]);
     await q.query(`update users set onboarded_at = now() where org_id = $1`, [orgId]);
     return { orgId, slug, locale, ids, accounts, boards: { csBoard, renewals, privateBoard }, adminEmail: 'ada@demo.example' };

@@ -303,6 +303,22 @@ export const TOURS: Tour[] = [
       { path: '/team?view=customers', at: '.portfolio' },
     ],
   },
+  {
+    // Setup health and "Test your setup": what is missing after setting up, one click from its fix; then the checklist that proves it works.
+    id: 'setup-check',
+    area: 'start',
+    goals: ['setup'],
+    roles: ['ops', 'lead', 'csm'],
+    minutes: 2,
+    steps: [
+      { path: '/home', at: '.navlink:has([data-tour="setup-badge"])', click: true },
+      { path: '/setup-health', at: '[data-tour="setup-first"]' },
+      { at: '[data-tour="setup-fix"]' },
+      { at: '[data-tour="setup-test-link"]', click: true },
+      { path: '/setup-test', at: '[data-tour="setup-issue"]' },
+      { at: '[data-tour="setup-gate"]' },
+    ],
+  },
 ];
 
 /** A step's screen in a demo with a product team's board: `:product` stands for that board's id. */
