@@ -155,7 +155,7 @@ migrates on start). Keep copies on another machine and try a restore now and the
 | Is it up? | `GET /api/health` on the app domain (returns `{"ok":true}`); the same path is the Docker `HEALTHCHECK`. |
 | Live errors | `npx wrangler tail curahold` (and `--config wrangler.portal.toml`); log prefix `[curahold]`. |
 | Recorded errors | `error_log` table: unhandled server errors and browser errors (source, company, user, path, message, stack; no bodies or secrets; kept 30 days). Admins see their own company's at `GET /api/admin/errors`; company-less errors stay with Curahold. |
-| Background jobs | Worker cron `0 * * * *` (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
+| Background jobs | Worker crons `0 * * * *` (hourly jobs) and `*/10 * * * *` (the AI team's clock; returns at once without a model key or with `TEAM_SCHEDULER=off`) (Cloudflare dashboard > Workers > Triggers > Cron events). `[curahold] ... failed` lines name the job. CRM sync status: `sync_runs` (per connection; also visible in the product). |
 | Billing | `billing_events` table and Paddle's notification log. |
 | Abuse | Cloudflare analytics / WAF events (rate rules live here, **not** in the app). |
 

@@ -53,9 +53,12 @@ tag = "live-v1"
 new_sqlite_classes = ["LiveRoomDO"]
 
 # Hourly: morning summaries (in each company's time zone), scheduled
-# automations, delivery retries, CRM syncs; clean-up once a day.
+# automations, delivery retries, CRM syncs, ops alerts; clean-up once a day.
+# Every 10 minutes: the AI team's clock (api/src/team/schedule.ts). It returns
+# at once without ANTHROPIC_API_KEY or with TEAM_SCHEDULER = "off", and wakes
+# a seat only when its cadence is due or work is queued. Cron triggers are free.
 [triggers]
-crons = ["0 * * * *"]
+crons = ["0 * * * *", "*/10 * * * *"]
 
 # Secrets: AUTH_SECRET, SECRETS_KEY, RESEND_API_KEY,
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET,
