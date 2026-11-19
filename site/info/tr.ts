@@ -237,6 +237,17 @@ export const tr: InfoCopy = {
   pricingPage: { title: 'Fiyatlar', lead: 'Kullanıcı başına; plandaki her özellik açık, başlangıçta üç ay ücretsiz. Yalnızca görüntüleyen kullanıcılar ücretsiz.',
     dontTitle: 'Saymadıklarımız',
     dont: [['Otomasyonlar', 'Otomasyon çalışmalarına aylık sayaç yok.'], ['Yapay zekâ kredisi', 'Yok: AI bağlayıcısı kendi asistanınızın planıyla çalışır.'], ['Yalnızca görüntüleyenler', 'Ücretsiz, ihtiyacınız kadar.'], ['Müşteri portalı kişileri', 'Müşterileriniz kullanıcı sayılmaz.'], ['Kullanıcı paketi', 'Yok. Katılan kişi kadar ödersiniz; bekleyen davetler ücretsiz.'], ['Kurulum ücreti', 'Yok. Kendiniz kurarsınız, yaklaşık on beş dakikada.']],
+    compareTitle: 'Planları karşılaştırın', feature: 'Neler dahil', included: 'Dahil', notIncluded: 'Dahil değil',
+    priceRow: 'Kullanıcı başına aylık, yıllık / aylık ödemede', viewers: 'Görüntüleyen kullanıcılar', free: 'Ücretsiz',
+    faqTitle: 'Fiyatlarla ilgili sorular',
+    faq: [
+      { q: 'Ücretsiz deneme nasıl işliyor?', a: '“Ücretsiz deneyin” düğmesinden kısa bir başvuru gönderin; genellikle bir iş günü içinde yanıt veririz. Deneme üç ay sürer; her şey açıktır ve kart gerekmez. Bitmeden 14, 7 ve 1 gün önce yöneticilere hatırlatma gelir.' },
+      { q: 'Kimler kullanıcı olarak sayılır?', a: 'Tam kullanıcı olarak katılmış kişiler. Henüz kabul edilmemiş davetler, yalnızca görüntüleyen kullanıcılar ve portaldaki müşterileriniz ücretsizdir. Birini eklediğinizde ek kullanıcı dönemin geri kalanı için faturalanır; birini çıkardığınızda bir sonraki fatura düşer.' },
+      { q: 'Planı değiştirebilir ya da aylık ve yıllık ödeme arasında geçiş yapabilir miyiz?', a: 'Evet, istediğiniz zaman Ayarlar → Abonelik sayfasından. Aradaki fark, dönemin geri kalanı için faturalanır ya da alacak olarak yansıtılır.' },
+      { q: 'Deneme bir plan seçilmeden biterse ne olur?', a: 'Hiçbir şey silinmez. Herkes her şeyi okumaya ve dışa aktarmaya devam eder; bir yönetici plan seçene kadar değişiklik yapılamaz, sonra iş kaldığı yerden sürer.' },
+      { q: 'Ödemeyi nasıl yapıyoruz?', a: 'Satıcımız Paddle üzerinden, kartla. Fiyatlar ABD doları cinsindendir, vergiler ödeme sırasında eklenir; faturalar ödeme portalında yer alır.' },
+    ],
+    enterprise: ['Büyük bir şirket misiniz? Daha fazla kullanıcıyla daha uzun bir pilot kurabilir ya da Curahold’u kendi sunucularınızda çalıştırmanıza yardımcı olabiliriz.', 'Bize yazın'],
   },
   faqPage: {
     title: 'Sorular', lead: 'Başlamadan önce açık cevaplar. Sorunuzu bulamadınız mı? Yardım merkezinden bize yazın.',

@@ -30,6 +30,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   each with an icon; "3 months free, no card needed" sits under them.
 - Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
   to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.
+- Sales site pricing: the landing page shows a two-line summary ("from $15 per seat a month on a yearly plan") with a link instead of
+  the full plans; /pricing/ shows the prices in the first screen and adds a plan comparison table, pricing questions and a line for
+  larger companies. Its structured data now lists all four offers (Team and Business, monthly and yearly) at the prices the page shows,
+  instead of one $19 offer next to a page showing $15. Prices themselves are unchanged.
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

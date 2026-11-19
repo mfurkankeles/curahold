@@ -112,7 +112,25 @@ export interface InfoCopy {
     missing: Point;
   };
   /** `dont`: what the price does not count, each checked against shared/src/billing.ts and api/src/lib/billing.ts. */
-  pricingPage: { title: string; lead: string; dontTitle: string; dont: Point[] };
+  pricingPage: {
+    title: string;
+    lead: string;
+    dontTitle: string;
+    dont: Point[];
+    /** The comparison table: its heading, the first column's heading, the words a screen reader says for ✓ and —, and two rows of its own. */
+    compareTitle: string;
+    feature: string;
+    included: string;
+    notIncluded: string;
+    priceRow: string;
+    viewers: string;
+    free: string;
+    /** Pricing questions, each answer checked against docs/site/<lang>/billing.md. */
+    faqTitle: string;
+    faq: { q: string; a: string }[];
+    /** The line for larger companies, and its link's words (to the help centre's contact page). */
+    enterprise: Point;
+  };
   faqPage: { title: string; lead: string; more: { q: string; a: string }[] };
   trust: { title: string; lead: string; points: Point[] };
   why: {

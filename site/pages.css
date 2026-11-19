@@ -5,6 +5,10 @@
    than as a wall of identical cards. */
 
 .ip__hero { position: relative; z-index: 1; padding: 72px 0 56px; }
+.ip__hero--compact { padding: 32px 0 8px; }
+.ip__hero--compact h1 { font-size: clamp(34px, 3.6vw, 48px); }
+.ip__hero--compact .ip__crumbs { margin-bottom: 12px; }
+.ip__hero--compact .ip__lead { margin-top: 10px; }
 .ip__crumbs { display: flex; gap: 10px; align-items: center; color: var(--ink-3); font-size: 14px; margin-bottom: 28px; }
 .ip__crumbs a { color: var(--ink-2); text-decoration: none; }
 .ip__crumbs a:hover { color: var(--ink); text-decoration: underline; }

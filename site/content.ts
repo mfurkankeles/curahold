@@ -21,7 +21,11 @@ export interface SiteCopy {
   tour: SiteTourCopy;
   /** The bento of what sets Curahold apart: six tiles, each a living mini-UI. */
   bento: SiteBentoCopy;
-  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; business: string; fine: string };
+  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string;
+    /** The landing page's two-line summary: {from} is the lowest monthly seat price (a yearly plan); `see` links to /pricing/. */
+    summary: string;
+    see: string;
+    perSeat: string; perSeatYearly: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   /** The closing call to action. */
   cta: { title: string; text: string };
@@ -200,6 +204,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'Monthly',
       yearly: 'Yearly',
       save: 'about 20% less',
+      summary: 'From {from} per seat a month on a yearly plan. Every plan starts with three months free, no card needed.',
+      see: 'Compare the plans',
       perSeat: 'per seat a month',
       perSeatYearly: 'per seat a month, paid yearly',
       business: 'Everything in Team, plus',
@@ -319,6 +325,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'Aylık',
       yearly: 'Yıllık',
       save: 'yaklaşık %20 daha az',
+      summary: 'Fiyatlar, yıllık planda kullanıcı başına aylık {from} ile başlar. Her plan, kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.',
+      see: 'Planları karşılaştırın',
       perSeat: 'kullanıcı başına, aylık',
       perSeatYearly: 'kullanıcı başına aylık, yıllık ödemede',
       business: 'Team’deki her şey, artı',
@@ -438,6 +446,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'شهري',
       yearly: 'سنوي',
       save: 'أقل بنحو 20%',
+      summary: 'تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.',
+      see: 'قارن بين الخطط',
       perSeat: 'لكل مقعد شهريًا',
       perSeatYearly: 'لكل مقعد شهريًا، بدفع سنوي',
       business: 'كل ما في الفريق، بالإضافة إلى',
@@ -551,6 +561,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'חודשי',
       yearly: 'שנתי',
       save: 'בכ-20% פחות',
+      summary: 'החל מ-{from} למושב לחודש בתוכנית שנתית. כל תוכנית מתחילה בשלושה חודשים בחינם, בלי כרטיס אשראי.',
+      see: 'השוואת תוכניות',
       perSeat: 'למושב לחודש',
       perSeatYearly: 'למושב לחודש, בתשלום שנתי',
       business: 'כל מה שבצוות, ובנוסף',
@@ -670,6 +682,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'ماهانه',
       yearly: 'سالانه',
       save: 'حدود ۲۰٪ کمتر',
+      summary: 'از {from} برای هر صندلی در ماه با طرح سالانه. هر طرح با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.',
+      see: 'مقایسهٔ طرح‌ها',
       perSeat: 'هر صندلی در ماه',
       perSeatYearly: 'هر صندلی در ماه، با پرداخت سالانه',
       business: 'همه چیزِ طرح تیم، به‌علاوهٔ',
@@ -777,6 +791,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '按月',
       yearly: '按年',
       save: '约便宜 20%',
+      summary: '按年付每席位每月 {from} 起。每个套餐都以 3 个月免费试用开始，无需信用卡。',
+      see: '比较套餐',
       perSeat: '每席位每月',
       perSeatYearly: '每席位每月，按年付费',
       business: '包含团队版的一切，另加',
@@ -876,6 +892,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '按月',
       yearly: '按年',
       save: '約便宜 20%',
+      summary: '年繳每席次每月 {from} 起。每個方案都以 3 個月免費試用開始，不需信用卡。',
+      see: '比較方案',
       perSeat: '每席次每月',
       perSeatYearly: '每席次每月，按年付費',
       business: '包含團隊版的一切，另加',
@@ -975,6 +993,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '月額',
       yearly: '年額',
       save: '約20%お得',
+      summary: '年払いプランなら1シートあたり月額{from}から。どのプランも3か月の無料トライアルから始められ、カード登録は不要です。',
+      see: 'プランを比較',
       perSeat: '1シートあたり月額',
       perSeatYearly: '1シートあたり月額、年払い',
       business: 'チームのすべてに加えて',
@@ -1074,6 +1094,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '월간',
       yearly: '연간',
       save: '약 20% 저렴',
+      summary: '연간 플랜 기준 좌석당 월 {from}부터. 모든 플랜은 카드 없이 3개월 무료 체험으로 시작합니다.',
+      see: '플랜 비교',
       perSeat: '좌석당 월',
       perSeatYearly: '좌석당 월, 연 결제 시',
       business: '팀의 모든 것에 더해',

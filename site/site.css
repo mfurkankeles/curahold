@@ -867,11 +867,41 @@ html:not(.js) .story__steps { padding-block: 0; }
 .plan .btn { justify-self: start; }
 .plan--business { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(165deg, #2a2378, var(--night) 62%); border-color: rgba(140, 125, 255, .4); color: #e8e6f7; }
 .plan--business::before { content: ''; position: absolute; z-index: -1; inset-inline-end: -20%; top: -40%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(91, 77, 232, .75), transparent 68%); }
-.plan--business h3, .plan--business .plan__amount, .plan--business .plan__plus { color: #fff; }
+.plan--business .plan__name, .plan--business .plan__amount, .plan--business .plan__plus { color: #fff; }
 .plan--business .plan__per { color: #a8a3d8; }
 .plan--business li { color: #d7d4f2; }
 .plan--business li svg { color: #5ccfa6; }
 .pricing__fine { margin: 18px 0 0; color: var(--ink-3); font-size: 14px; max-width: 72ch; }
+/* The plan's name reads as a card title; it is an h2 because the page's h1 is "Pricing". */
+.plan__name { font-size: 21px; line-height: 1.25; font-weight: 650; letter-spacing: 0; }
+/* /pricing/: the plans come straight after a compact header, so prices sit in the first screen. */
+.pricing--page { padding: 8px 0 40px; content-visibility: visible; }
+.pricing--page .plans { margin-top: 16px; }
+.pricing--page .plan { padding: 28px 30px; gap: 12px; }
+
+/* The comparison table: a ruled grid, the plan columns centred, scrolling sideways on a narrow phone. */
+.cmp__scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.cmp__t { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 15.5px; }
+.cmp__t col.cmp__plan { width: 22%; }
+@media (max-width: 560px) { .cmp__t { font-size: 14.5px; } .cmp__t col.cmp__plan { width: 26%; } .cmp__price { white-space: normal; } }
+.cmp__t th, .cmp__t td { padding: 14px 18px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.cmp__t tr:last-child > * { border-bottom: 0; }
+.cmp__t th[scope='row'], .cmp__t thead th:first-child { text-align: start; font-weight: 500; color: var(--ink-2); }
+.cmp__t thead th { font: 650 16px/1.3 var(--display); color: var(--ink); background: var(--mist); }
+.cmp__t td svg { width: 20px; height: 20px; margin-inline: auto; color: var(--good); }
+.cmp__price { font-weight: 650; color: var(--ink); white-space: nowrap; }
+.cmp__no { color: var(--ink-3); }
+.cmp__ent { margin: 20px 0 0; color: var(--ink-2); max-width: 72ch; }
+.cmp__ent a { font-weight: 600; }
+
+/* The landing page's pricing: two lines and a link, not the full table. */
+.psum { padding: 24px 0 8px; }
+.psum__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; padding: 32px 36px; border-radius: 24px; background: var(--paper); border: 1px solid var(--line); }
+.psum h2 { font-size: clamp(26px, 2.6vw, 34px); }
+.psum__line { margin: 10px 0 0; color: var(--ink-2); font-size: 18px; max-width: 58ch; }
+
+/* Words a screen reader says that the eye gets from a mark (✓, —). */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* -------------------------------------------------------------------- faq */
 .faq { padding: 56px 0 88px; --ct: 0px; }
@@ -997,6 +1027,9 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .pricing { padding: 48px 0 40px; }
   .plans { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 24px; }
   .plan { padding: 26px 22px; border-radius: 20px; }
+  .pricing--page .plan { padding: 22px 20px; }
+  .psum__in { padding: 24px 20px; }
+  .cmp__t th, .cmp__t td { padding: 12px 12px; }
   .faq { padding: 40px 0 64px; }
   .cta { padding-bottom: 56px; }
   .cta__card { padding: 52px 22px; border-radius: 24px; }

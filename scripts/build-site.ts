@@ -11,7 +11,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { PLANS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
+import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
@@ -191,7 +191,8 @@ function landingJsonLd(locale: SiteLocale, canonical: string, description: strin
         operatingSystem: 'Web',
         description,
         url: canonical,
-        offers: { '@type': 'Offer', price: String(PLANS.team.price.month), priceCurrency: PRICE_CURRENCY },
+        // The landing page names only the lowest price (its summary says "from …"); every offer is on /pricing/.
+        offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` },
         publisher: { '@id': `${ORIGIN}/#org` },
       },
     ],
@@ -270,40 +271,119 @@ function signinDialog(locale: SiteLocale): string {
 </dialog>`;
 }
 
-/** The plans, monthly or yearly: on the landing page and on /pricing/. */
-function pricingHtml(locale: SiteLocale, headed: boolean): string {
+/** US dollars as the site writes them in a language: "$15" everywhere, so the sign stays whole inside right-to-left text. */
+function moneyIn(locale: SiteLocale): (n: number) => string {
+  const nf = new Intl.NumberFormat(bcp47Of(locale), { style: 'currency', currency: PRICE_CURRENCY, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 });
+  return (n) => nf.formatToParts(n).map((p) => (p.type === 'currency' && PRICE_CURRENCY === 'USD' ? '$' : p.value)).join('');
+}
+
+/** The cheapest seat price a month (a yearly Team seat), for "from …" lines and AggregateOffer. */
+const LOWEST_PRICE = Math.min(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i])));
+const HIGHEST_PRICE = Math.max(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i])));
+
+/**
+ * The plans on /pricing/, yearly first with a monthly switch. Never hidden for a scroll
+ * animation: prices are what this page is for. Plan names are h2 (the page's h1 is "Pricing").
+ */
+function plansHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
-  const tag = bcp47Of(locale);
   const t = (k: MessageKey) => translate(locale, k);
-  const money = (n: number) =>
-    new Intl.NumberFormat(tag, { style: 'currency', currency: PRICE_CURRENCY, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 })
-      .formatToParts(n)
-      .map((p) => (p.type === 'currency' && PRICE_CURRENCY === 'USD' ? '$' : p.value))
-      .join('');
+  const money = moneyIn(locale);
   const plan = (key: PlanKey) => {
     const p = PLANS[key];
     const points = (key === 'team' ? TEAM_POINTS : BUSINESS_POINTS).map((k) => `<li>${CHECK}<span>${esc(t(k))}</span></li>`).join('');
     return `<div class="plan${key === 'business' ? ' plan--business' : ''}">
-          <h3>${esc(t(`billing.plan.${key}` as MessageKey))}</h3>
+          <h2 class="plan__name">${esc(t(`billing.plan.${key}` as MessageKey))}</h2>
           <p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>
           <ul>${key === 'business' ? `<li class="plan__plus">${esc(c.pricing.business)}</li>` : ''}${points}</ul>
           <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${ICON_GO}<span>${esc(infoCopy(locale).nav.tryFree)}</span></a>
         </div>`;
   };
-  return `<section class="pricing calm pool" id="pricing">
+  return `<section class="pricing pricing--page" id="pricing">
     <div class="wrap">
       <div class="pricing__top">
-        <div>${headed ? `<h2 data-reveal>${esc(c.pricing.title)}</h2><p class="lead" data-reveal>${esc(c.pricing.lead)}</p>` : ''}</div>
-        <div class="pricing__switch" role="group" data-reveal aria-label="${esc(c.nav.pricing)}">
+        <div class="pricing__switch" role="group" aria-label="${esc(c.nav.pricing)}">
           <button type="button" data-interval="month" aria-pressed="false">${esc(c.pricing.monthly)}</button>
           <button type="button" data-interval="year" aria-pressed="true">${esc(c.pricing.yearly)}<small>${esc(c.pricing.save)}</small></button>
         </div>
       </div>
-      <div class="plans" data-reveal>${plan('team')}${plan('business')}</div>
+      <div class="plans">${plan('team')}${plan('business')}</div>
       <p class="pricing__fine">${esc(c.pricing.fine)}</p>
     </div>
   </section>`;
 }
+
+/** The comparison table under the plans: what each plan includes, from the same lists the plans and the app use. */
+function compareHtml(locale: SiteLocale): string {
+  const pp = infoCopy(locale).pricingPage;
+  const t = (k: MessageKey) => translate(locale, k);
+  const money = moneyIn(locale);
+  const yes = `<td>${CHECK}<span class="vh">${esc(pp.included)}</span></td>`;
+  const no = `<td><span class="cmp__no" aria-hidden="true">—</span><span class="vh">${esc(pp.notIncluded)}</span></td>`;
+  const row = (label: string, cells: string) => `<tr><th scope="row">${esc(label)}</th>${cells}</tr>`;
+  // Each amount isolated (<bdi>) so the yearly price comes first in reading order in either direction.
+  const price = (k: PlanKey) => `<td class="cmp__price"><bdi>${esc(money(PLANS[k].price.year))}</bdi> / <bdi>${esc(money(PLANS[k].price.month))}</bdi></td>`;
+  const rows = [
+    row(pp.priceRow, price('team') + price('business')),
+    ...TEAM_POINTS.map((k) => row(t(k), yes + yes)),
+    ...BUSINESS_POINTS.map((k) => row(t(k), no + yes)),
+    row(pp.viewers, `<td>${esc(pp.free)}</td><td>${esc(pp.free)}</td>`),
+  ].join('');
+  return `<section class="ip__body cmp" aria-labelledby="cmp-title"><div class="wrap">
+    <h2 class="ip__gh" id="cmp-title">${esc(pp.compareTitle)}</h2>
+    <div class="cmp__scroll"><table class="cmp__t"><colgroup><col><col class="cmp__plan"><col class="cmp__plan"></colgroup>
+      <thead><tr><th scope="col">${esc(pp.feature)}</th><th scope="col">${esc(t('billing.plan.team'))}</th><th scope="col">${esc(t('billing.plan.business'))}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="cmp__ent">${esc(pp.enterprise[0])} <a href="${esc(urlsOf(locale).contact)}">${esc(pp.enterprise[1])}</a></p>
+  </div></section>`;
+}
+
+/** A list of questions as the FAQ blocks draw them (<details>, open by tap, readable without script). */
+const faqList = (items: { q: string; a: string }[]) => items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+
+/** The pricing page's own questions. */
+function pricingFaqHtml(locale: SiteLocale): string {
+  const pp = infoCopy(locale).pricingPage;
+  return `<section class="faq calm" aria-labelledby="pfaq-title"><div class="wrap faq__in"><h2 id="pfaq-title">${esc(pp.faqTitle)}</h2><div class="faq__list">${faqList(pp.faq)}</div></div></section>`;
+}
+
+/** The landing page's pricing: two lines and a link to /pricing/ (the full table lives there). */
+function pricingSummaryHtml(locale: SiteLocale): string {
+  const c = siteCopy(locale);
+  return `<section class="psum" aria-labelledby="psum-title">
+    <div class="wrap psum__in">
+      <div><h2 id="psum-title">${esc(c.pricing.title)}</h2><p class="psum__line">${esc(c.pricing.summary.replace('{from}', moneyIn(locale)(LOWEST_PRICE)))}</p></div>
+      <a class="btn btn--ghost btn--big" href="${localeBase(locale)}${PAGE.pricing}">${ICON_GO}<span>${esc(c.pricing.see)}</span></a>
+    </div>
+  </section>`;
+}
+
+/**
+ * schema.org offers for /pricing/: one Offer per plan and billing interval, priced per seat
+ * a month exactly as the page shows them (money: shared/src/billing.ts is the only source).
+ */
+function offersLd(locale: SiteLocale, url: string): object {
+  const c = siteCopy(locale);
+  const offers = PLAN_KEYS.flatMap((k) =>
+    INTERVALS.map((i) => {
+      const price = String(PLANS[k].price[i]);
+      const per = i === 'year' ? c.pricing.perSeatYearly : c.pricing.perSeat;
+      return {
+        '@type': 'Offer',
+        name: `${translate(locale, `billing.plan.${k}` as MessageKey)} · ${i === 'year' ? c.pricing.yearly : c.pricing.monthly}`,
+        url,
+        price,
+        priceCurrency: PRICE_CURRENCY,
+        priceSpecification: { '@type': 'UnitPriceSpecification', price, priceCurrency: PRICE_CURRENCY, unitCode: 'MON', unitText: per, billingDuration: i === 'year' ? 'P1Y' : 'P1M', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'seat' } },
+      };
+    }),
+  );
+  return { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers }, publisher: { '@id': `${ORIGIN}/#org` } };
+}
+
+/** schema.org FAQPage for questions shown in full on one page (only one page carries each set). */
+const faqLd = (items: { q: string; a: string }[]) => ({ '@type': 'FAQPage', mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
 
 /** hreflang alternates for a path that exists in every language. */
 const alternatesFor = (path: string) =>
@@ -316,7 +396,7 @@ function innerDoc(locale: SiteLocale, p: InnerPage): string {
   const rel = upTo(depth);
   const canonical = `${ORIGIN}${localeBase(locale)}${p.path}`;
   const c = infoCopy(locale);
-  const ld = jsonLdTag({ '@context': 'https://schema.org', '@graph': [orgNode, { '@type': 'WebPage', name: p.title, url: canonical, inLanguage: bcp47Of(locale) }, breadcrumb([{ name: c.common.home, url: `${ORIGIN}${localeBase(locale)}` }, { name: p.title.split(' | ')[0], url: canonical }])] });
+  const ld = jsonLdTag({ '@context': 'https://schema.org', '@graph': [orgNode, { '@type': 'WebPage', name: p.title, url: canonical, inLanguage: bcp47Of(locale) }, breadcrumb([{ name: c.common.home, url: `${ORIGIN}${localeBase(locale)}` }, { name: p.crumb, url: canonical }]), ...(p.ld?.(canonical) ?? [])] });
   return `<!doctype html>
 <html lang="${bcp47Of(locale)}" dir="${info.dir}">
 <head>
@@ -1111,7 +1191,7 @@ export function page(locale: SiteLocale): string {
           </div>
         </article>`;
 
-  const faq = c.faq.items.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+  const faq = faqList(c.faq.items);
   const marquee = INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('');
   // The mark's own arc, drawn large behind the film: the C that holds.
   const arc = `<svg class="hero__arc" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="arcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c7dff"/><stop offset=".55" stop-color="#5b4de8"/><stop offset="1" stop-color="#3fb596"/></linearGradient></defs><path d="M319.3 79.8A170 170 0 1 0 319.3 340.2" pathLength="100"/></svg>`;
@@ -1192,7 +1272,7 @@ ${chromeHeader(locale, '', 'classic')}
 
   ${whyHtml(locale, { headingLevel: 2, urls: urlsOf(locale) })}
 
-  ${pricingHtml(locale, true)}
+  ${pricingSummaryHtml(locale)}
 
   <section class="faq calm">
     <div class="wrap faq__in">
@@ -1233,7 +1313,7 @@ function build() {
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'index.html'), page(locale));
     // The inner pages the menu points to, and the two animated versions.
-    for (const p of innerPages(locale, urlsOf(locale), pricingHtml(locale, false))) {
+    for (const p of innerPages(locale, urlsOf(locale), { plans: plansHtml(locale), compare: compareHtml(locale), faq: pricingFaqHtml(locale), offers: (url) => offersLd(locale, url), faqLd })) {
       mkdirSync(join(dir, p.path), { recursive: true });
       writeFileSync(join(dir, p.path, 'index.html'), innerDoc(locale, p));
     }
@@ -1291,7 +1371,7 @@ function build() {
   };
   const entries: string[] = [];
   for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}`, today, l === 'en' ? '1.0' : '0.8', SITE_LOCALES, localeBase));
-  const innerPaths = [...innerPages('en', urlsOf('en'), '').map((p) => p.path), PAGE.ai, PAGE.orbit];
+  const innerPaths = [...innerPages('en', urlsOf('en'), { plans: '', compare: '', faq: '', offers: () => ({}), faqLd }).map((p) => p.path), PAGE.ai, PAGE.orbit];
   for (const path of innerPaths) for (const l of SITE_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${localeBase(l)}${path}`, today, '0.7', SITE_LOCALES, (x) => `${localeBase(x)}${path}`));
   for (const l of BLOG_LOCALES) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}`, latestPost(l), '0.6', BLOG_LOCALES, (x) => `${localeBase(x)}blog/`));
   for (const l of BLOG_LOCALES) for (const post of blogPosts(l)) entries.push(sitemapUrl(`${ORIGIN}${blogBaseOf(l)}${post.slug}/`, post.date, '0.7', BLOG_LOCALES, (x) => `${localeBase(x)}blog/${post.slug}/`));

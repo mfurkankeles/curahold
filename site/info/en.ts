@@ -237,6 +237,17 @@ export const en: InfoCopy = {
   pricingPage: { title: 'Pricing', lead: 'Per seat, every feature in the plan, three months free to start. Read-only viewers are free.',
     dontTitle: 'What we don’t count',
     dont: [['Automations', 'No monthly counter on automation runs.'], ['AI credits', 'None: the AI connector runs on your own assistant’s plan.'], ['Read-only viewers', 'Free, as many as you need.'], ['Customer portal contacts', 'Your customers are not seats.'], ['Seat packs', 'None. You pay for the people who joined; pending invitations are free.'], ['Setup fee', 'None. You set it up yourself, in about fifteen minutes.']],
+    compareTitle: 'Compare the plans', feature: 'What’s included', included: 'Included', notIncluded: 'Not included',
+    priceRow: 'Per seat a month, yearly / monthly', viewers: 'Viewer seats', free: 'Free',
+    faqTitle: 'Questions about pricing',
+    faq: [
+      { q: 'How does the free trial work?', a: 'Send a short request from Try it free; we usually answer within one working day. The trial lasts three months, with everything switched on and no card. Administrators get a reminder 14, 7 and 1 day before it ends.' },
+      { q: 'Who counts as a seat?', a: 'People who have joined with a full seat. Invitations not yet accepted, read-only viewers and your customers in the portal are free. Add someone and the extra seat is billed for the rest of the period; remove someone and the next bill is lower.' },
+      { q: 'Can we change plan, or switch between monthly and yearly?', a: 'Yes, at any time, from Settings → Billing. The difference is billed or credited for the rest of the period.' },
+      { q: 'What happens if the trial ends without a plan?', a: 'Nothing is deleted. Everyone can still read and export everything; changes wait until an administrator chooses a plan, and work carries on where it stopped.' },
+      { q: 'How do we pay?', a: 'Through Paddle, our reseller, by card. Prices are in US dollars, taxes are added at checkout, and invoices are in the billing portal.' },
+    ],
+    enterprise: ['A larger company? We can set up a longer pilot with more seats, or help you run Curahold on your own servers.', 'Write to us'],
   },
   faqPage: {
     title: 'Questions', lead: 'Straight answers before you start. Can’t find yours? Write to us from the help centre.',

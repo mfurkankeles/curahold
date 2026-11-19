@@ -14,7 +14,19 @@ export interface PageUrls {
   demo: string;
   docs: string;
   devDocs: string;
+  contact: string;
   legal: (slug: string) => string;
+}
+
+/** The pricing page's blocks, built where the prices are (scripts/build-site.ts). */
+export interface PricingParts {
+  plans: string;
+  compare: string;
+  faq: string;
+  /** schema.org offers for the page at `url`. */
+  offers: (url: string) => object;
+  /** schema.org FAQPage for a list of questions. */
+  faqLd: (items: { q: string; a: string }[]) => object;
 }
 
 export interface InnerPage {
@@ -22,7 +34,11 @@ export interface InnerPage {
   path: string;
   title: string;
   description: string;
+  /** The page's name in the breadcrumb. */
+  crumb: string;
   main: string;
+  /** Extra schema.org nodes for the page, given its canonical address. */
+  ld?: (url: string) => object[];
 }
 
 const RELATED: Record<DeptKey, FeatureKey[]> = {
@@ -34,17 +50,17 @@ const RELATED: Record<DeptKey, FeatureKey[]> = {
   finance: ['reports', 'health', 'sync'],
 };
 
-function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls }): string {
+function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls; compact?: boolean }): string {
   const c = infoCopy(locale);
   // The first crumb is the page's Back, in the same place on every inner page.
   const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}"><a class="ip__back" href="${localeBase(locale)}">${ICON_BACK}<span>${esc(c.common.home)}</span></a>${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
-  return `<header class="ip__hero">
+  return `<header class="ip__hero${o.compact ? ' ip__hero--compact' : ''}">
     <div class="wrap">
       ${crumbs}
       ${o.glyph ? `<span class="ip__glyph">${o.glyph}</span>` : ''}
       <h1>${esc(o.title)}${o.soon ? ` <span class="ip__soon">${esc(c.nav.soon)}</span>` : ''}</h1>
       <p class="ip__lead">${esc(o.lead)}</p>
-      <div class="ip__ctas">${ctaPair(locale, o.urls)}</div>
+      ${o.compact ? '' : `<div class="ip__ctas">${ctaPair(locale, o.urls)}</div>`}
     </div>
   </header>`;
 }
@@ -75,8 +91,8 @@ function featureLinks(locale: SiteLocale, title: string, keys: FeatureKey[]): st
     .join('')}</ul></div></section>`;
 }
 
-/** Every inner page of one language. `pricing` is the landing page's own pricing block. */
-export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string): InnerPage[] {
+/** Every inner page of one language. `pricing` carries the pricing page's blocks and schema. */
+export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingParts): InnerPage[] {
   const c = infoCopy(locale);
   const s = siteCopy(locale);
   const base = localeBase(locale);
@@ -87,6 +103,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
     out.push({
       path: PAGE.dept(k),
       title: `${d.name} | Curahold`,
+      crumb: d.name,
       description: d.lead,
       main: `${hero(locale, { crumb: d.name, title: d.title, lead: d.lead, glyph: GLYPH[k], soon: SOON_DEPTS.has(k), urls })}
   <section class="ip__body"><div class="wrap">${points(d.points)}${d.next ? `<div class="ip__next"><span class="ip__soon">${esc(c.nav.soon)}</span><h2>${esc(d.next[0])}</h2><p>${esc(d.next[1])}</p></div>` : ''}<p class="ip__who"><b>${esc(c.common.forWho)}</b> ${esc(d.forWho)}</p>${flowHtml(locale, k)}</div></section>
@@ -101,6 +118,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
     out.push({
       path: PAGE.feature(k),
       title: `${f.name} | Curahold`,
+      crumb: f.name,
       description: f.lead,
       main: `${hero(locale, { crumb: f.name, title: f.title, lead: f.lead, glyph: GLYPH[k], urls })}
   <section class="ip__body"><div class="wrap">${points(f.points)}</div></section>
@@ -115,6 +133,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.solutions,
     title: `${c.nav.solutions} | Curahold`,
+    crumb: c.nav.solutions,
     description: so.lead,
     main: `${hero(locale, { crumb: c.nav.solutions, title: so.title, lead: so.lead, urls })}
   ${group('role', c.nav.byRole, so.roles)}
@@ -132,6 +151,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.integrations,
     title: `${c.nav.integrations} | Curahold`,
+    crumb: c.nav.integrations,
     description: ig.lead,
     main: `${hero(locale, { crumb: c.nav.integrations, title: ig.title, lead: ig.lead, urls })}
   <section class="ip__body"><div class="wrap"><ul class="ip__ints">${groups}</ul>
@@ -142,21 +162,30 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.pricing,
     title: `${c.pricingPage.title} | Curahold`,
+    crumb: c.pricingPage.title,
     description: c.pricingPage.lead,
-    main: `${hero(locale, { crumb: c.pricingPage.title, title: c.pricingPage.title, lead: c.pricingPage.lead, urls })}
-  ${pricing}
+    // Prices in the first screen at 1440 × 900: a compact header (no buttons: each plan has its own), then the plans.
+    main: `${hero(locale, { crumb: c.pricingPage.title, title: c.pricingPage.title, lead: c.pricingPage.lead, urls, compact: true })}
+  ${pricing.plans}
+  ${pricing.compare}
+  ${pricing.faq}
   <section class="ip__body"><div class="wrap"><h2 class="ip__gh">${esc(c.pricingPage.dontTitle)}</h2>${points(c.pricingPage.dont, ' ip__points--dont')}</div></section>
   ${closing(locale, urls)}`,
+    ld: (url) => [pricing.offers(url), pricing.faqLd(c.pricingPage.faq)],
   });
 
-  const faqs = [...s.faq.items, ...c.faqPage.more].map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
+  const faqItems = [...s.faq.items, ...c.faqPage.more];
+  const faqs = faqItems.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('');
   out.push({
     path: PAGE.faq,
     title: `${c.faqPage.title} | Curahold`,
+    crumb: c.faqPage.title,
     description: c.faqPage.lead,
     main: `${hero(locale, { crumb: c.faqPage.title, title: c.faqPage.title, lead: c.faqPage.lead, urls })}
   <section class="faq calm"><div class="wrap faq__in"><div class="faq__list">${faqs}</div></div></section>
   ${closing(locale, urls)}`,
+    // The landing page shows some of these too; only this page marks them up, as search engines ask.
+    ld: () => [pricing.faqLd(faqItems)],
   });
 
   const docs: [string, string][] = [
@@ -170,6 +199,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.trust,
     title: `${c.trust.title} | Curahold`,
+    crumb: c.trust.title,
     description: c.trust.lead,
     main: `${hero(locale, { crumb: c.trust.title, title: c.trust.title, lead: c.trust.lead, glyph: GLYPH.trust, urls })}
   <section class="ip__body"><div class="wrap">${points(c.trust.points)}
@@ -180,6 +210,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.why,
     title: `${c.why.title} | Curahold`,
+    crumb: c.why.title,
     description: c.why.lead,
     main: whyHtml(locale, { headingLevel: 1, urls }),
   });
@@ -187,6 +218,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: string):
   out.push({
     path: PAGE.about,
     title: `${c.about.title} | Curahold`,
+    crumb: c.about.title,
     description: c.about.lead,
     main: `<p class="ip__review" role="note">${esc(c.about.review)}</p>
   ${hero(locale, { crumb: c.nav.about, title: c.about.title, lead: c.about.lead, urls })}
