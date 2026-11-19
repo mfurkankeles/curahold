@@ -337,6 +337,7 @@ export const STORAGE: StorageItem[] = [
   { name: 'app_locale', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ALL_APP },
   { name: 'app_locale_hint', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ALL_APP },
   { name: 'app_portal_locale', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ['portal'] },
+  { name: 'curahold_demo_lang', type: 'localStorage', category: 'preferences', purpose: 'locale', duration: { kind: 'cleared' }, surfaces: ['demo'] },
   { name: 'app_portal_welcomed', type: 'localStorage', category: 'preferences', purpose: 'prefs', duration: { kind: 'cleared' }, surfaces: ['portal'] },
   ...(
     [

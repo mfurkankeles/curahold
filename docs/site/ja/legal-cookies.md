@@ -46,6 +46,7 @@ summary: Curahold が使うすべての Cookie、ブラウザーのストレー�
 | `desk_signed_as` | ローカルストレージ | 必須 | 内部コンソールのログイン画面に入力したスタッフのメールアドレスを記憶します。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | 内部コンソール |
 | `app_locale`, `app_locale_hint` | ローカルストレージ | 設定 | 選択した言語を記憶します。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | 製品, デモ |
 | `app_portal_locale` | ローカルストレージ | 設定 | 選択した言語を記憶します。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | 顧客ポータル |
+| `curahold_demo_lang` | ローカルストレージ | 設定 | 選択した言語を記憶します。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | デモ |
 | `app_portal_welcomed` | ローカルストレージ | 設定 | テーマ、折りたたんだメニュー、表示、並べ替え、フィルター、最後に開いたボードなど、ご自身で選んだ画面の設定を記憶します。端末内にのみ保存され、追跡には使いません。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | 顧客ポータル |
 | `app_theme`, `app_nav_folded`, `app_quick_board`, `app_quick_keep`, `app_accounts_view`, `app_accounts_sort`, `app_accounts_card_fields`, `app_records_*`, `app-contacts-view`, `app_timeline_group`, `app_tl_filter`, `app_task_more`, `app_whitespace`, `app_cal_view`, `app_cal_who`, `app_cal_hidden`, `app_dash_last`, `app_news_seen`, `app_live_ms`, `app_live_channel` | ローカルストレージ | 設定 | テーマ、折りたたんだメニュー、表示、並べ替え、フィルター、最後に開いたボードなど、ご自身で選んだ画面の設定を記憶します。端末内にのみ保存され、追跡には使いません。 | ブラウザーで消去するまで | Curahold（ファーストパーティ） | 製品, デモ |
 | Google Analytics 4 | 第三者のスクリプト | 分析 | Google Analytics 4：訪問数とページの使われ方を、短縮した IP アドレスで集計します。分析に同意し、かつ ID が設定されている場合にのみ読み込みます。 独自の Cookie を設定します：_ga, _ga_<id>。 オンにした場合のみ。 | 提供者が設定（最長 24 か月） | Google LLC / Google Ireland Ltd（第三者）。データの送信先：アメリカ合衆国、アイルランド | ウェブサイト, 製品 |

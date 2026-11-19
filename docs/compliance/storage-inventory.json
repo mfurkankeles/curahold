@@ -389,6 +389,7 @@
       "onlyWhen": null,
       "planned": null,
       "foundIn": [
+        "web/src/demo/hub-lang.js",
         "web/src/lib/i18n.tsx"
       ]
     },
@@ -415,6 +416,7 @@
       "onlyWhen": null,
       "planned": null,
       "foundIn": [
+        "web/src/demo/hub-lang.js",
         "web/src/lib/i18n.tsx"
       ]
     },
@@ -441,6 +443,32 @@
       "planned": null,
       "foundIn": [
         "web/portal/Portal.tsx"
+      ]
+    },
+    {
+      "name": "curahold_demo_lang",
+      "pattern": "curahold_demo_lang",
+      "type": "localStorage",
+      "category": "preferences",
+      "consentRequired": false,
+      "purpose": "Remembers the language you chose.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": false,
+      "surfaces": [
+        "demo"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "web/src/demo/hub-lang.js",
+        "web/src/demo/main.tsx"
       ]
     },
     {
@@ -985,6 +1013,7 @@
       "onlyWhen": null,
       "planned": null,
       "foundIn": [
+        "web/src/demo/main.tsx",
         "web/src/lib/live.ts"
       ]
     },
@@ -1041,7 +1070,9 @@
       ],
       "onlyWhen": "ab",
       "planned": "b6-sites A/B test (site/ab/worker.js)",
-      "foundIn": []
+      "foundIn": [
+        "site/ab/config.ts"
+      ]
     },
     {
       "name": "Meta pixel",

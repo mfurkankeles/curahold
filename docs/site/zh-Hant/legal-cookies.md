@@ -46,6 +46,7 @@ summary: Curahold 使用的每個 Cookie、瀏覽器儲存鍵和第三方指令�
 | `desk_signed_as` | 本機儲存 | 絕對必要 | 記住在內部主控台登入表單中輸入的員工電子郵件地址。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 內部主控台 |
 | `app_locale`, `app_locale_hint` | 本機儲存 | 偏好 | 記住您選擇的語言。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 產品, 示範 |
 | `app_portal_locale` | 本機儲存 | 偏好 | 記住您選擇的語言。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 客戶入口網站 |
+| `curahold_demo_lang` | 本機儲存 | 偏好 | 記住您選擇的語言。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 示範 |
 | `app_portal_welcomed` | 本機儲存 | 偏好 | 在您做出選擇後，記住您對介面的設定——主題、摺疊選單、所選檢視、排序、篩選、上次使用的看板。僅儲存在您的裝置上，絕不用於追蹤。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 客戶入口網站 |
 | `app_theme`, `app_nav_folded`, `app_quick_board`, `app_quick_keep`, `app_accounts_view`, `app_accounts_sort`, `app_accounts_card_fields`, `app_records_*`, `app-contacts-view`, `app_timeline_group`, `app_tl_filter`, `app_task_more`, `app_whitespace`, `app_cal_view`, `app_cal_who`, `app_cal_hidden`, `app_dash_last`, `app_news_seen`, `app_live_ms`, `app_live_channel` | 本機儲存 | 偏好 | 在您做出選擇後，記住您對介面的設定——主題、摺疊選單、所選檢視、排序、篩選、上次使用的看板。僅儲存在您的裝置上，絕不用於追蹤。 | 直到您在瀏覽器中清除 | Curahold（第一方） | 產品, 示範 |
 | Google Analytics 4 | 第三方指令碼 | 分析 | Google Analytics 4：統計造訪次數和頁面使用方式，IP 位址經過截短。僅在您同意分析且已設定 ID 時載入。 會設定其自己的 Cookie：_ga, _ga_<id>。 僅在開啟時。 | 由提供者設定；最長 24 個月 | Google LLC / Google Ireland Ltd——第三方；資料傳往 美國和愛爾蘭 | 網站, 產品 |

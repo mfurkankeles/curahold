@@ -46,6 +46,7 @@ summary: Curahold가 쓰는 모든 쿠키, 브라우저 저장소 키, 제3자 �
 | `desk_signed_as` | 로컬 저장소 | 필수 | 내부 콘솔 로그인 양식에 입력한 직원 이메일 주소를 기억합니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 내부 콘솔 |
 | `app_locale`, `app_locale_hint` | 로컬 저장소 | 환경 설정 | 선택한 언어를 기억합니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 제품, 데모 |
 | `app_portal_locale` | 로컬 저장소 | 환경 설정 | 선택한 언어를 기억합니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 고객 포털 |
+| `curahold_demo_lang` | 로컬 저장소 | 환경 설정 | 선택한 언어를 기억합니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 데모 |
 | `app_portal_welcomed` | 로컬 저장소 | 환경 설정 | 테마, 접은 메뉴, 선택한 보기, 정렬, 필터, 마지막 보드 등 직접 고른 화면 설정을 기억합니다. 기기에만 남으며 추적에 쓰지 않습니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 고객 포털 |
 | `app_theme`, `app_nav_folded`, `app_quick_board`, `app_quick_keep`, `app_accounts_view`, `app_accounts_sort`, `app_accounts_card_fields`, `app_records_*`, `app-contacts-view`, `app_timeline_group`, `app_tl_filter`, `app_task_more`, `app_whitespace`, `app_cal_view`, `app_cal_who`, `app_cal_hidden`, `app_dash_last`, `app_news_seen`, `app_live_ms`, `app_live_channel` | 로컬 저장소 | 환경 설정 | 테마, 접은 메뉴, 선택한 보기, 정렬, 필터, 마지막 보드 등 직접 고른 화면 설정을 기억합니다. 기기에만 남으며 추적에 쓰지 않습니다. | 브라우저에서 삭제할 때까지 | Curahold(자사) | 제품, 데모 |
 | Google Analytics 4 | 제3자 스크립트 | 분석 | Google Analytics 4: 방문 수와 페이지 사용 방식을 단축된 IP 주소로 집계합니다. 분석에 동의하고 ID가 설정된 경우에만 불러옵니다. 자체 쿠키를 설정합니다: _ga, _ga_<id>. 켠 경우에만. | 제공업체가 설정, 최대 24개월 | Google LLC / Google Ireland Ltd — 제3자, 데이터가 미국 및 아일랜드(으)로 전송됨 | 웹사이트, 제품 |
