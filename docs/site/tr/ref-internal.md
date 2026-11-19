@@ -10,10 +10,10 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 
 | Adresler | Kaç tane | Neden |
 | --- | --- | --- |
-| `/admin/…` | 33 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
+| `/admin/…` | 38 | Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez. |
 | `/agent/…` | 14 | Yapay zekâ ekibinin kendi kapısı: her koltuğun ajanı kendi anahtarıyla kendi payını okur ve öneri gönderir; bir şirketin API'si değildir. |
 | `/agreements/…` | 2 | Hizmet koşullarını ve DPA'yı kabul etme: tarayıcıda şirket yöneticisi, her sürüm için bir kez. |
-| `/assist/…` | 6 | CuraAI ve belgelerdeki "Sor": sorular belgelerden ve uygulamada soran kişinin görebildiklerinden cevaplanır; sınırlarını tarayıcıda bir yönetici ayarlar. Anahtarlar bunun yerine yapay zekâ bağlayıcısını kullanır. |
+| `/assist/…` | 9 | CuraAI ve belgelerdeki "Sor": sorular belgelerden ve uygulamada soran kişinin görebildiklerinden cevaplanır; sınırlarını tarayıcıda bir yönetici ayarlar. Anahtarlar bunun yerine yapay zekâ bağlayıcısını kullanır. |
 | `/auth/…` | 10 | Oturum açma ve kapama tarayıcıda yapılır. |
 | `/billing/…` | 8 | Plan ve ödeme; ödeme sağlayıcısıyla. |
 | `/client-error/…` | 1 | Tarayıcının kendi hatalarını bildirmesi; kişinin karşılaştığı bir arıza kayda geçsin diye. |

@@ -24,6 +24,8 @@ beforeAll(async () => {
   (env.deps as Deps).assistant = { provider, docs: async () => DOCS };
   ada = await login(env, 'acme', 'ada@demo.example');
   lena = await login(env, 'acme', 'lena@demo.example');
+  // Each person says yes to the consent notice first (tests/assistant-consent.test.ts checks the refusal without it).
+  for (const who of [ada, lena]) expect((await who.post('/api/assist/consent', { granted: true })).status).toBe(200);
 }, 60_000);
 
 describe('CuraAI in the app', () => {
@@ -41,6 +43,7 @@ describe('CuraAI in the app', () => {
     const made = await ada.post('/api/accounts', { name: 'Wall Test Harbour' });
     expect(made.status).toBe(201);
     const other = await login(env, 'beta', 'ada@demo.example');
+    await other.post('/api/assist/consent', { granted: true });
     const seen: string[] = [];
     script = (req, n) => {
       if (n % 2 === 1) return { content: [{ type: 'tool_use', id: `t${n}`, name: 'list_customers', input: { query: 'Wall Test', limit: 25 } }], stop: 'tool_use', usage: { input: 500, output: 20, cacheRead: 2000, cacheWrite: 0 } };
@@ -121,8 +124,11 @@ describe('the public docs chat', () => {
 
   it('answers from the docs only, and only from a page that says so', async () => {
     expect((await ask({ question: 'How do I invite my team?' }, {})).status).toBe(403);
+    const consentId = crypto.randomUUID();
+    const said = await env.app.request(`https://${BASE}/api/assist/public/consent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-curahold-ask': '1' }, body: JSON.stringify({ consentId, granted: true, lang: 'en' }) });
+    expect(said.status).toBe(200);
     provider.calls.length = 0;
-    const r = await ask({ question: 'How do I invite my team?', lang: 'en' });
+    const r = await ask({ question: 'How do I invite my team?', lang: 'en', consentId });
     expect(r.status).toBe(200);
     const { reply } = (await r.json()) as any;
     expect(reply.kind).toBe('answer');

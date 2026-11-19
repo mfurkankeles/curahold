@@ -83,7 +83,7 @@ export interface Config {
   /** The crawler policy's owner switches (shared/src/compliance/crawlers.ts). */
   crawlers?: { docsAiAnswers?: boolean };
   /** Cloudflare Turnstile on the public forms (lib/humanCheck.ts); unset: honeypot + fill-time checks only. */
-  turnstile?: { siteKey: string; secretKey: string };
+  turnstile?: { siteKey: string; secretKey: string; /** Also send the visitor's address to Cloudflare (off by default). */ sendIp?: boolean };
   /** How long records are kept, and the grace before a company's deletion (lib/retention.ts); unset: the stated defaults. */
   retention?: Partial<import('./lib/retention').RetentionConfig>;
   /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */

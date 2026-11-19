@@ -139,6 +139,7 @@ Google Sheets and Excel reuse the Google and Microsoft sign-in keys.
 | `CRAWLERS_DOCS_AI` | `allow` lets AI answer/search robots read the documentation | No | Blocked. |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` **(S)** | Cloudflare Turnstile (free) on the public forms | Both | Without them the honeypot, fill-time check and rate limits stand alone. |
 | `TURNSTILE` | `off` switches Turnstile off even with keys | No | On when both keys are set. |
+| `TURNSTILE_SEND_IP` | `1` also sends the visitor's IP address to Cloudflare's check | No | Off (data minimisation, L1 audit); the check works without it. |
 
 ## 6e. Retention and company deletion (`api/src/lib/retention.ts`, `api/src/lib/companyDeletion.ts`)
 

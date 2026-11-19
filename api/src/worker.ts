@@ -127,6 +127,8 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE?: string;
+  /** "1" also sends the visitor's address to Turnstile's check (off: data minimisation). */
+  TURNSTILE_SEND_IP?: string;
   /** Retention periods in days (lib/retention.ts; docs/ENVIRONMENT.md §6e): unset = the stated defaults. */
   RETENTION_TRIAL_REQUEST_DAYS?: string;
   RETENTION_CONSENT_DAYS?: string;
@@ -176,7 +178,7 @@ export function configFromEnv(env: Env): Config {
     robotGuard: env.ROBOT_GUARD === 'off' ? 'off' : env.ROBOT_GUARD === 'crawlers' ? 'crawlers' : 'strict',
     crawlers: { docsAiAnswers: env.CRAWLERS_DOCS_AI === 'allow' },
     // Cloudflare Turnstile on the public forms when both keys are set and TURNSTILE is not "off" (lib/humanCheck.ts).
-    turnstile: env.TURNSTILE !== 'off' && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? { siteKey: env.TURNSTILE_SITE_KEY, secretKey: env.TURNSTILE_SECRET_KEY } : undefined,
+    turnstile: env.TURNSTILE !== 'off' && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? { siteKey: env.TURNSTILE_SITE_KEY, secretKey: env.TURNSTILE_SECRET_KEY, sendIp: env.TURNSTILE_SEND_IP === '1' } : undefined,
     devExposeTokens: false,
     devOrgHeader: false,
     maxDevices: Number(env.MAX_DEVICES) || 2,

@@ -160,6 +160,31 @@
       ]
     },
     {
+      "name": "curahold_ai_consent",
+      "pattern": "curahold_ai_consent",
+      "type": "localStorage",
+      "category": "necessary",
+      "consentRequired": false,
+      "purpose": "Remembers your answer to the AI assistant notice on the docs (a random id, the notice version, yes or no), so the chat does not ask again until the notice changes.",
+      "duration": {
+        "kind": "cleared"
+      },
+      "party": "first",
+      "company": "Curahold",
+      "countries": [],
+      "host": null,
+      "providerCookies": null,
+      "identifier": true,
+      "surfaces": [
+        "docs"
+      ],
+      "onlyWhen": null,
+      "planned": null,
+      "foundIn": [
+        "docs/site/assets/ask.ts"
+      ]
+    },
+    {
       "name": "curahold_consent_v1",
       "pattern": "curahold_consent_v1",
       "type": "localStorage",

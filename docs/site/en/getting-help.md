@@ -113,6 +113,8 @@ On the same card:
 
 If the card says AI answers are not set up on this installation, CuraAI uses the docs search; the person who runs your Curahold server adds the AI key.
 
+**Everyone is asked first.** The first time someone opens CuraAI where AI answers are on, CuraAI says what is sent to the AI provider, why, for how long, and links the privacy notice, with **Accept** and **Decline** (nothing is ticked for them). Until they accept, nothing they type leaves their device and the docs search answers; declining costs them nothing. They can withdraw at any time under CuraAI or in **Your settings → AI assistant consent**, and are asked again when the notice changes. The server refuses a question without a "yes", and each answer is in the activity log. The customer portal and the public docs ask the same way.
+
 ## The error log (administrators) {#errors}
 
 **Settings → Errors** lists what went wrong for your people in the last 30 days and where: the screen, the request that failed and how often. Nothing personal is in it. Attach what you see there when you write to support.

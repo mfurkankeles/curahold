@@ -25,7 +25,7 @@ import { PORTAL_FILE_MB, PORTAL_MAX_FILES } from '../../shared/src/portal';
 import { mountAccount, mountSignIn } from './portalSignIn';
 import { uuid } from './lib/validate';
 import { deliverWebhooks } from './lib/webhooks';
-import { portalAssist, portalAssistAvailable } from './routes/assist';
+import { portalAssist, portalAssistAvailable, portalAssistConsent } from './routes/assist';
 
 /** Errors raised inside the portal_* functions, by name. */
 const DB_ERRORS: Record<string, 'unauthenticated' | 'not_found' | 'too_many_requests'> = {
@@ -114,6 +114,7 @@ export function createPortalApp(deps: Deps) {
       signIn: signInOptions(org, deps),
       brand: portalBrand(org),
       turnstile: turnstileSiteKey(deps),
+      docsBase: `${deps.config.scheme}://${deps.config.centralHost}/docs/`,
     };
     return c.json(out);
   });
@@ -201,6 +202,9 @@ export function createPortalApp(deps: Deps) {
   // The portal's assistant: how to use the portal, and the person's own requests (routes/assist.ts).
   app.post('/papi/assist', (c) => portalAssist(c, deps, (fn) => db(c, fn)));
   app.get('/papi/assist/status', (c) => c.json({ available: portalAssistAvailable(deps, c.get('org')) }));
+  // The consent notice's answer (KVKK/GDPR): asked before the first question, withdrawable from the chat.
+  app.get('/papi/assist/consent', (c) => portalAssistConsent(c, (fn) => db(c, fn)));
+  app.post('/papi/assist/consent', (c) => portalAssistConsent(c, (fn) => db(c, fn)));
 
   app.get('/papi/boards/:id/tasks', async (c) => c.json({ tasks: await one(c, 'select portal_tasks($1) as t', [id(c, 'id')]) }));
 

@@ -50,6 +50,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/planned\/:id/, 'planned_meetings'],
   [/^\/pages\/:id/, 'pages'],
   [/^\/portal\/users\/:id/, 'portal_users'],
+  [/^\/admin\/portal-users\/:id/, 'portal_users'],
   [/^\/tasks\/:id/, 'tasks', 'parent_id is null'],
   [/^\/record-types\/:id/, 'record_types'],
   [/^\/records\/:id/, 'records'],
@@ -382,6 +383,7 @@ const VIEWER_WRITES: string[] = [
   'DELETE /me/calendar',
   'POST /notifications/read',
   'POST /consent', // their own cookie choice
+  'POST /assist/consent', // their own answer to the AI assistant notice (accept, decline, withdraw)
   'POST /client-error', // an error their browser reports
   'POST /replay', // their own consented session recording
   'POST /support/leave', // ending a support visit

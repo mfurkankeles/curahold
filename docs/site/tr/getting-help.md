@@ -113,6 +113,8 @@ Aynı kartta:
 
 Kart, bu kurulumda yapay zekâ ile cevabın kurulmadığını söylüyorsa CuraAI belge aramasını kullanır; yapay zekâ anahtarını Curahold sunucunu çalıştıran kişi ekler.
 
+**Herkese önce sorulur.** Yapay zekâ cevapları açıkken biri CuraAI'yi ilk kez açtığında CuraAI, yapay zekâ sağlayıcısına neyin, neden ve ne kadar süreyle gönderildiğini söyler, aydınlatma metnine bağlantı verir ve **Kabul ediyorum** ile **Reddet** düğmelerini gösterir (hiçbir şey önceden işaretli değildir). Kabul edilene kadar yazılan hiçbir şey cihazdan çıkmaz, belge araması cevap verir; reddetmek hiçbir şey kaybettirmez. Onay CuraAI'nin altından ya da **Ayarların → Yapay zekâ asistanı onayı**'ndan her an geri alınabilir; bilgilendirme değişince yeniden sorulur. Sunucu "evet" olmadan gelen soruyu reddeder ve her cevap aktivite kaydına yazılır. Müşteri portalı ve herkese açık belgeler de aynı şekilde sorar.
+
 ## Hata kaydı (yöneticiler) {#errors}
 
 **Ayarlar → Hatalar**, son 30 günde kişilerinin karşılaştığı aksaklıkları ve nerede olduklarını listeler: ekran, başarısız istek ve kaç kez olduğu. İçinde kişisel bir şey yoktur. Desteğe yazarken orada gördüğünü ekle.

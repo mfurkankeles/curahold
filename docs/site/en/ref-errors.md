@@ -55,6 +55,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `billing_locked` | 402 | Your company has no active plan, so nothing can be changed right now — everything can still be read and exported. An administrator can choose a plan in Settings → Billing. |
 | `plan_required` | 402 | This is part of the … plan. An administrator can switch in Settings → Billing. |
 | `board_lead_only` | 403 | Only administrators and the department's leads open boards in it. |
+| `consent_required` | 403 | Please accept the AI assistant notice first, or keep using the docs search. |
 | `field_locked` | 403 | Your role can see this field but not change it (…). |
 | `forbidden` | 403 | You do not have permission to do that. |
 | `join_closed` | 403 | This company only lets people in by invitation. |

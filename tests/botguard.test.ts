@@ -65,11 +65,18 @@ describe('limits for the public doors, uploads and scanners', () => {
 
   it('the public "Ask" door: a person asking stays inside, a script from one address gets 429 with Retry-After', async () => {
     const ip = freshIp();
+    // A visitor who said yes to the AI consent notice (assistant/consent.ts), so the door answers.
+    const consentId = crypto.randomUUID();
+    await env.app.request(`https://app.${BASE}/api/assist/public/consent`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-curahold-ask': '1', 'cf-connecting-ip': freshIp(), 'user-agent': BROWSER },
+      body: JSON.stringify({ consentId, granted: true, lang: 'en' }),
+    });
     const ask = () =>
       env.app.request(`https://app.${BASE}/api/assist/public`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-curahold-ask': '1', 'cf-connecting-ip': ip, 'user-agent': BROWSER },
-        body: JSON.stringify({ question: 'how do I add people?', lang: 'en' }),
+        body: JSON.stringify({ question: 'how do I add people?', lang: 'en', consentId }),
       });
     const codes: number[] = [];
     for (let i = 0; i < BUDGETS.assistDoor.cap + 2; i++) codes.push((await ask()).status);
@@ -152,7 +159,12 @@ describe('public forms: honeypot, fill time, Turnstile', () => {
     expect(await humanCheck(env.deps, { ms: 5000, ts: 'good-token' }, { ip: '203.0.113.9' })).toBe('person');
     expect(seen[0]).toContain(TURNSTILE_VERIFY);
     expect(seen[0]).toContain('secret=test-secret');
-    expect(seen[0]).toContain('remoteip=203.0.113.9');
+    // The address is not sent unless the operator chose it (TURNSTILE_SEND_IP=1).
+    expect(seen[0]).not.toContain('remoteip');
+    (env.deps.config.turnstile as { sendIp?: boolean }).sendIp = true;
+    expect(await humanCheck(env.deps, { ms: 5000, ts: 'good-token' }, { ip: '203.0.113.9' })).toBe('person');
+    expect(seen[1]).toContain('remoteip=203.0.113.9');
+    (env.deps.config.turnstile as { sendIp?: boolean }).sendIp = false;
     answer = () => Response.json({ success: false, 'error-codes': ['invalid-input-response'] });
     expect(await humanCheck(env.deps, { ms: 5000, ts: 'bad-token' })).toBe('failed');
     answer = () => {

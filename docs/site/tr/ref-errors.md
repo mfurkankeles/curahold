@@ -55,6 +55,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `billing_locked` | 402 | Şirketinin etkin bir planı yok; şu an bir şey değiştirilemez, ama her şey okunabilir ve dışa aktarılabilir. Bir yönetici Ayarlar → Abonelik’ten plan seçebilir. |
 | `plan_required` | 402 | Bu, … planında var. Bir yönetici Ayarlar → Abonelik’ten geçebilir. |
 | `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |
+| `consent_required` | 403 | Lütfen önce yapay zekâ asistanı bilgilendirmesini kabul edin ya da belge aramasını kullanmaya devam edin. |
 | `field_locked` | 403 | Rolün bu alanı görebilir ama değiştiremez (…). |
 | `forbidden` | 403 | Bunu yapma yetkin yok. |
 | `join_closed` | 403 | Bu şirkete yalnızca davetle katılınabiliyor. |
