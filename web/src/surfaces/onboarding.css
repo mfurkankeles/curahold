@@ -14,8 +14,10 @@
 .ob-goals .ob-addrow .input { flex: 1 1 100%; }
 .ob-goals .ob-addrow .select { flex: 1; min-width: 0; }
 .ob-side { position: sticky; top: var(--s-4); }
-/* The side column sticks while the steps scroll: its last field stays clear of the helper's button (styles.css, --fab-room). */
-.shell[data-helper] .ob-side { padding-bottom: var(--fab-room); }
+/* The side column sticks while the steps scroll. Taller than the screen, it scrolls on its own and ends
+   above the helper's button (styles.css, --fab-room), so its last field is never under it. */
+/* (4 × s-8 leaves room for the plan's header above it at the top of the page.) */
+.ob-side { max-height: calc(100dvh - var(--fab-room, 0px) - 4 * var(--s-8)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .ob-wait { display: grid; gap: var(--s-4); }
 .ob-wait__head { height: 96px; border-radius: var(--r-m); }
 .ob-wait__body { height: 420px; border-radius: var(--r-m); }
@@ -291,7 +293,7 @@ li[data-tone='bad'] > .ob-dot { background: var(--late); }
 /* ---- narrower screens: one column, the side cards after the next step */
 @media (max-width: 1100px) {
   .ob-grid { grid-template-columns: minmax(0, 1fr); }
-  .ob-side { position: static; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .ob-side { position: static; max-height: none; overflow: visible; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 }
 @media (max-width: 640px) {
   .ob-top__tools { margin-inline-start: 0; width: 100%; }

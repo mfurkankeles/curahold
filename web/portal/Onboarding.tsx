@@ -134,8 +134,9 @@ export function PortalOnboarding({ ctx, org, me, onSignedOut }: { ctx: Ctx; org:
 function PlanView({ ctx, company, me, plan, busy, problem, act, send }: { ctx: Ctx; company: string; me: PortalMe; plan: PPlan; busy: boolean; problem: string | null; act: (id: string, kind: 'tick' | 'check' | 'issue' | 'answer', body?: Record<string, string>) => Promise<void>; send: (stepId: string, files: File[]) => Promise<boolean> }) {
   const { t, locale } = ctx;
   const tt = (k: string, v?: Record<string, string | number>) => t(k as MessageKey, v);
-  // The plan's own phases, in its order and with its own names.
+  // The plan's own phases, in its order and with its own names (the built-in names are ob.phase.*).
   const phases = phaseOrder(plan.phases, plan.steps.map((s) => s.phase));
+  const phaseName = (key: string) => phaseLabel(key, phases, (k) => tt(`ob.phase.${k.replace(/^ob\.phase\./, '')}`));
   const steps = plan.steps.map((s) => ({ ...asStep(s), phaseAt: phases.findIndex((p) => p.key === s.phase) }));
   const [chosen, setChosen] = useState<File[]>([]);
   const progress = progressOf(steps, plan.issues.map((i) => ({ ...i, openedOn: i.openedOn.slice(0, 10), dueOn: i.dueOn?.slice(0, 10) ?? null })), today(), plan.status as any, plan.startedOn.slice(0, 10));
@@ -186,7 +187,7 @@ function PlanView({ ctx, company, me, plan, busy, problem, act, send }: { ctx: C
             </section>
             {phases.map((p) => p.key).filter((ph) => steps.some((s) => s.phase === ph)).map((ph) => (
               <section className="p-card p-ob-phase" key={ph}>
-                <h2>{phaseLabel(ph, phases, tt)}</h2>
+                <h2>{phaseName(ph)}</h2>
                 <ol className="p-ob-steps">
                   {ordered(steps.filter((s) => s.phase === ph)).map((s) => {
                     const turn = turnOf(s, steps, plan.startedOn, today());
@@ -337,7 +338,7 @@ function PlanView({ ctx, company, me, plan, busy, problem, act, send }: { ctx: C
               <div className="p-ob-bars">
                 {milestones(steps).map((m) => (
                   <div key={m.phase}>
-                    <small>{phaseLabel(m.phase, phases, tt)}</small>
+                    <small>{phaseName(m.phase)}</small>
                     <span className="p-ob-bar">
                       <span style={{ width: `${m.pct}%` }} />
                     </span>
