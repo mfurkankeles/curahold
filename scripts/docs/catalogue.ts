@@ -309,6 +309,8 @@ export const GROUPS: Group[] = [
 export const INTERNAL: Record<string, Pair> = {
   auth: ['Signing in and out happens in the browser.', 'Oturum açma ve kapama tarayıcıda yapılır.'],
   signup: ['Opening a new company happens on the website.', 'Yeni şirket açma web sitesinde yapılır.'],
+  trial: ['Asking for a free trial happens on the website: the request form and its e-mail code.', 'Ücretsiz deneme isteği web sitesinde yapılır: istek formu ve e-posta kodu.'],
+  agreements: ['Accepting the terms of service and the DPA: a company administrator in the browser, once per version.', 'Hizmet koşullarını ve DPA\'yı kabul etme: tarayıcıda şirket yöneticisi, her sürüm için bir kez.'],
   join: ['Joining a company by invitation happens in the browser.', 'Davetle şirkete katılma tarayıcıda yapılır.'],
   setup: ['The first-time setup of a company.', 'Şirketin ilk kurulumu.'],
   admin: ['Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them.', 'Şirket ayarları, roller, kişiler ve gizlilik araçları: tarayıcıda bir yönetici. Anahtarlar bunları değiştiremez.'],

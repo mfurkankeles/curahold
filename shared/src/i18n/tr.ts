@@ -779,7 +779,7 @@ export const tr: Record<MessageKey, string> = {
   'signup.title': 'Ekibin için Curahold\'i kur',
   'signup.sub': 'Müşteri işleri, takip ve yenilemeler tek yerde. İş e-postanla başla.',
   'signup.start': 'Bana bağlantı gönder',
-  'signup.noCard': '14 gün ücretsiz, kart gerekmez.',
+  'signup.noCard': 'Üç ay ücretsiz, kart gerekmez.',
   'signup.privacy': 'E-postanı yalnızca hesabını kurmak ve giriş yapman için kullanırız.',
   'signup.sent': '{email} adresine bir bağlantı gönderdik. Devam etmek için bu cihazda aç — 24 saat geçerli.',
   'signup.again': 'Baştan başla',

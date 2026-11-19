@@ -1140,7 +1140,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'signup.title': "チーム向けに Curahold をセットアップ",
   'signup.sub': "顧客対応、フォローアップ、更新をひとつの場所で。まずは仕事用のメールアドレスから始めましょう。",
   'signup.start': "リンクをメールで送る",
-  'signup.noCard': "14日間無料、カード不要。",
+  'signup.noCard': "3か月間無料、カード不要。",
   'signup.privacy': "メールアドレスは、アカウントの設定とログインにのみ使用します。",
   'signup.sent': "{email} にリンクを送信しました。この端末で開いて続行してください。リンクは24時間有効です。",
   'signup.again': "最初からやり直す",

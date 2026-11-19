@@ -17,6 +17,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `billing_off` | 400 | Bu kurulumda abonelik açık değil. |
 | `connection_failed` | 400 | Servis isteği kabul etmedi. Bağlantıyı kontrol edip tekrar dene. |
 | `domain_public` | 400 | … herkese açık bir e-posta servisi, bir şirkete ait olamaz. |
+| `free_mail_note` | 400 | Şirket denemesi için neden kişisel adres kullandığını bir cümleyle yaz. |
 | `help_file_type` | 400 | … eklenemiyor. Resim, PDF, metin, CSV, JSON, Excel ve kısa videolar eklenebilir. |
 | `help_too_many_files` | 400 | Bir talebe en fazla … dosya eklenebilir. |
 | `invalid_token` | 400 | Bu bağlantı ya da kod artık geçerli değil. Yenisini iste. |
@@ -64,6 +65,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `support_edit_admins` | 403 | Desteğin değişiklik yapmasına yalnızca yöneticiler izin verebilir. |
 | `support_not_allowed` | 403 | Şirketin desteğe erişim vermene izin vermiyor. |
 | `support_read_only` | 403 | Bu destek oturumu yalnızca okuma için. |
+| `terms_required` | 403 | Önce hizmet koşullarını ve DPA'yı kabul et — bir yönetici tek tıkla yapabilir. |
 | `form_off` | 404 | Bu pano formla talep almıyor. |
 | `no_account` | 404 | Bu çalışma alanında … için hesap yok. Yöneticinden seni davet etmesini iste. |
 | `not_found` | 404 | Bulunamadı. |
@@ -74,6 +76,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `last_admin` | 409 | Şirketinde en az bir aktif yönetici kalmalı. |
 | `portal_email_taken` | 409 | Bu adresin zaten portal erişimi var. |
 | `role_in_use` | 409 | Bu role sahip kişiler var. Önce onlara başka bir rol ver. |
+| `seat_cap_reached` | 409 | Deneme … tam koltuk içeriyor ve hepsi kullanımda. İzleyici olarak davet et (ücretsiz) ya da bizden daha fazla koltuk iste. |
 | `second_step_required` | 409 | Şirketin ikinci adımı zorunlu tutuyor. Bunu kaldırmadan önce başka bir tane ekle. |
 | `second_step_setup_first` | 409 | Önce kendi ikinci adımını kur; böylece dışarıda kalmazsın. |
 | `slug_taken` | 409 | Bu adres alınmış. Başka bir tane dene. |

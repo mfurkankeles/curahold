@@ -9,6 +9,9 @@ summary: Your company address, signing in, first setup and the device limit.
 Curahold is where customer success and account teams run their customers, stakeholders and day-to-day work in one place. This page covers your first fifteen minutes.
 
 ![Curahold's Home: the Getting started card, the customer figures and the team's load](img/home.webp)
+## Starting a trial
+
+**Try it free** on the website asks for a trial rather than opening a company at once: a short form, a code to your work e-mail, and we answer, usually within one working day. Once approved, your company is created and you get a sign-in link; see [Plans and billing](/docs/en/billing/) for the length, the seats and the reminders.
 
 ## Your company address
 

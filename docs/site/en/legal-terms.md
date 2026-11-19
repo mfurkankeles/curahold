@@ -24,7 +24,7 @@ Curahold is online software for customer success and account teams: boards and t
 
 ## 3. Trial, plans and payment
 
-- A new company gets a free trial ([14] days). After the trial a paid plan is needed to keep changing things; reading and exporting stay available.
+- A new company gets a free trial after its request is approved ([three months] by default, or the length set at approval). After the trial a paid plan is needed to keep changing things; reading and exporting stay available.
 - Plans are priced per full seat (a User who can make changes). Viewer seats are free. The number of seats follows the Users who have joined; added seats are charged for the rest of the period, removed seats lower the next bill.
 - Orders are processed by our reseller **Paddle.com**, which is the merchant of record: Paddle charges you, handles sales taxes and VAT and issues the invoices, under its own buyer terms.
 - Subscriptions renew automatically for the same period until cancelled. You can cancel at any time; the plan keeps working until the end of the period paid for. Fees already paid are not refunded, except where the law requires it or we say otherwise in writing.

@@ -794,7 +794,7 @@ export const en = {
   'signup.title': 'Set up Curahold for your team',
   'signup.sub': 'Customer work, follow-up and renewals in one place. Start with your work email.',
   'signup.start': 'Email me a link',
-  'signup.noCard': '14 days free, no card needed.',
+  'signup.noCard': 'Three months free, no card needed.',
   'signup.privacy': 'We use your email only to set up your account and sign you in.',
   'signup.sent': 'We sent a link to {email}. Open it on this device to continue — it works for 24 hours.',
   'signup.again': 'Start again',

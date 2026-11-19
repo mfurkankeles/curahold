@@ -8,7 +8,12 @@ summary: The free trial, the Team and Business plans, seats, invoices, changing 
 
 ## The free trial
 
-A new company can use everything for **14 days**, with no card. Settings → **Billing** shows how many days are left; in the last week a line at the top of the app says so too.
+A trial starts from a request: **Try it free** on the website opens a short form (work e-mail with a code, your company, the teams and seats you want). We read every request and answer, usually within one working day. Once it is approved, your company is created with the teams you chose and its first administrator gets a sign-in link.
+
+- **Length:** three months by default, with everything switched on and no card. The length is set when the request is approved, so a larger pilot can get longer.
+- **Seats:** the trial includes the full seats agreed at approval (usually up to 25). Viewer seats are free and never counted.
+- **First sign-in:** the administrator accepts the terms of service and the data processing agreement with one click; then the team can be invited.
+- **Reminders:** the administrators get an e-mail 14, 7 and 1 day before the end. Settings → **Billing** shows how many days are left; in the last week a line at the top of the app says so too.
 
 ## Plans
 

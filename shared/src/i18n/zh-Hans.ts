@@ -1140,7 +1140,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'signup.title': "为你的团队设置 Curahold",
   'signup.sub': "客户工作、跟进和续约，一站搞定。请从你的工作邮箱开始。",
   'signup.start': "给我发送链接",
-  'signup.noCard': "免费试用 14 天，无需绑定银行卡。",
+  'signup.noCard': "免费试用三个月，无需绑定银行卡。",
   'signup.privacy': "我们仅使用你的邮箱来设置账户和让你登录。",
   'signup.sent': "我们已向 {email} 发送了链接。请在此设备上打开以继续——链接有效期 24 小时。",
   'signup.again': "重新开始",

@@ -1140,7 +1140,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'signup.title': "팀을 위한 Curahold 설정",
   'signup.sub': "고객 업무, 후속 관리, 갱신을 한곳에서 관리하세요. 업무용 이메일로 시작하세요.",
   'signup.start': "링크를 이메일로 받기",
-  'signup.noCard': "14일 무료, 카드 등록 불필요.",
+  'signup.noCard': "3개월 무료, 카드 등록 불필요.",
   'signup.privacy': "이메일은 계정을 설정하고 로그인하는 데에만 사용합니다.",
   'signup.sent': "{email}(으)로 링크를 보냈습니다. 이 기기에서 열어 계속 진행하세요. 링크는 24시간 동안 유효합니다.",
   'signup.again': "다시 시작",

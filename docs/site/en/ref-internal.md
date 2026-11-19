@@ -12,6 +12,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | --- | --- | --- |
 | `/admin/…` | 33 | Company settings, roles, people and privacy tools: an administrator in the browser. Keys cannot change them. |
 | `/agent/…` | 14 | The AI team's own door: each seat's agent with its own key reads its slice and proposes; never a company's API. |
+| `/agreements/…` | 2 | Accepting the terms of service and the DPA: a company administrator in the browser, once per version. |
 | `/auth/…` | 10 | Signing in and out happens in the browser. |
 | `/billing/…` | 8 | Plan and payment, with the payment provider. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
@@ -37,3 +38,4 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/signup/…` | 4 | Opening a new company happens on the website. |
 | `/sso/…` | 8 | Single sign-on: an administrator sets it up in the browser, and the company's identity provider handles sign-in and its callbacks. |
 | `/support/…` | 9 | Curahold support's own desk. |
+| `/trial/…` | 5 | Asking for a free trial happens on the website: the request form and its e-mail code. |

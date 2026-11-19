@@ -8,7 +8,12 @@ summary: Ücretsiz deneme, Team ve Business planları, kullanıcı sayısı, fat
 
 ## Ücretsiz deneme
 
-Yeni bir şirket her şeyi **14 gün** boyunca, kart bilgisi vermeden kullanabilir. Ayarlar → **Abonelik** kaç gün kaldığını gösterir; son haftada uygulamanın üstündeki bir satır da hatırlatır.
+Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form açar (kodla doğrulanan iş e-postası, şirketin, istediğin ekipler ve koltuk sayısı). Her isteği kendimiz okur, genelde bir iş günü içinde döneriz. Onaylanınca şirketin seçtiğin ekiplerle açılır ve ilk yöneticiye giriş bağlantısı gider.
+
+- **Süre:** varsayılan üç ay; her şey açık, kart gerekmez. Süre onay sırasında belirlenir, daha büyük bir pilot daha uzun olabilir.
+- **Koltuklar:** deneme, onayda belirlenen tam koltukları içerir (genelde en fazla 25). İzleyici koltukları ücretsizdir ve sayılmaz.
+- **İlk giriş:** yönetici hizmet koşullarını ve veri işleme sözleşmesini tek tıkla kabul eder; sonra ekip davet edilebilir.
+- **Hatırlatmalar:** yöneticilere bitişten 14, 7 ve 1 gün önce e-posta gider. Ayarlar → **Abonelik** kaç gün kaldığını gösterir; son haftada uygulamanın üstündeki bir satır da hatırlatır.
 
 ## Planlar
 

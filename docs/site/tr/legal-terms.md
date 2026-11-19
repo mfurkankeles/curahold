@@ -24,7 +24,7 @@ Curahold, müşteri başarısı ve müşteri yönetimi ekipleri için çevrim i�
 
 ## 3. Deneme, planlar ve ödeme
 
-- Yeni bir şirkete ücretsiz deneme süresi ([14] gün) tanınır. Deneme bittikten sonra değişiklik yapmaya devam etmek için ücretli bir plan gerekir; okuma ve dışa aktarma açık kalır.
+- Yeni bir şirkete, isteği onaylandıktan sonra ücretsiz deneme süresi tanınır (varsayılan [üç ay] ya da onayda belirlenen süre). Deneme bittikten sonra değişiklik yapmaya devam etmek için ücretli bir plan gerekir; okuma ve dışa aktarma açık kalır.
 - Planlar tam kullanıcı (değişiklik yapabilen Kullanıcı) başına fiyatlandırılır. Görüntüleyen kullanıcılar ücretsizdir. Kullanıcı sayısı katılmış Kullanıcıları izler; eklenen kullanıcılar dönemin kalanı için ücretlendirilir, çıkarılanlar sonraki faturayı düşürür.
 - Siparişler, satış sorumlusu (merchant of record) olan satıcımız **Paddle.com** tarafından işlenir: ödemeyi Paddle alır, satış vergilerini ve KDV’yi yönetir ve faturaları kendi alıcı koşulları çerçevesinde düzenler.
 - Abonelikler iptal edilene kadar aynı süreyle kendiliğinden yenilenir. İstediğiniz zaman iptal edebilirsiniz; plan ödenmiş dönemin sonuna kadar çalışır. Kanunun gerektirdiği ya da yazılı olarak aksini belirttiğimiz durumlar dışında ödenmiş ücretler iade edilmez.

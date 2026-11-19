@@ -17,6 +17,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `billing_off` | 400 | Billing is not set up on this installation. |
 | `connection_failed` | 400 | The service did not accept the request. Check the connection and try again. |
 | `domain_public` | 400 | … is a public email service, so it cannot belong to one company. |
+| `free_mail_note` | 400 | Tell us in a sentence why you use a personal address for a company trial. |
 | `help_file_type` | 400 | … can't be attached. Pictures, PDF, text, CSV, JSON, Excel and short videos can. |
 | `help_too_many_files` | 400 | A request can carry up to … files. |
 | `invalid_token` | 400 | This link or code is not valid any more. Request a new one. |
@@ -64,6 +65,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `support_edit_admins` | 403 | Only administrators can let support make changes. |
 | `support_not_allowed` | 403 | Your company doesn't allow you to let support in. |
 | `support_read_only` | 403 | This support visit is read only. |
+| `terms_required` | 403 | Accept the terms of service and the DPA first — an administrator can do it in one click. |
 | `form_off` | 404 | This board does not take requests through a form. |
 | `no_account` | 404 | There is no account for … in this workspace. Ask your administrator to invite you. |
 | `not_found` | 404 | Not found. |
@@ -74,6 +76,7 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `last_admin` | 409 | Your company needs at least one active administrator. |
 | `portal_email_taken` | 409 | That address already has portal access. |
 | `role_in_use` | 409 | People still have this role. Give them another role first. |
+| `seat_cap_reached` | 409 | The trial includes … full seats and all of them are in use. Invite as a viewer (free), or ask us for more seats. |
 | `second_step_required` | 409 | Your company requires a second step. Add another one before removing this. |
 | `second_step_setup_first` | 409 | Set up your own second step first, so you can't be locked out. |
 | `slug_taken` | 409 | That address is taken. Try another one. |
