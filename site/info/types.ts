@@ -33,13 +33,12 @@ export interface InfoCopy {
     company: string;
     /** "See all" links at the foot of a menu panel. */
     allIntegrations: string;
-    /** The header's switch to the animated version, and the way back. */
+    /** The animated version: its name in the Resources menu, and the way back to the classic site from it. */
     toAi: string;
     toClassic: string;
-    /** One line under the switch inside the phone menu. */
+    /** One line under the animated version's name in the Resources menu. */
     toAiHint: string;
-    /** The quick actions. */
-    go: string;
+    /** The two calls to action, the same words on every page: the free trial (primary) and the live demo. */
     demo: string;
     tryFree: string;
     signIn: string;

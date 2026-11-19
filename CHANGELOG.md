@@ -24,6 +24,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Sales site: the Turkish pages speak to visitors as "siz" everywhere (landing page, menus, inner pages, blog, animated versions, consent).
+- Sales site: the headline says what Curahold is and what it does ("Work management for customer teams" above "Every renewal, every
+  promise, every task, on time.") in all nine languages; every page uses the same two calls to action, "Try it free" and "Live demo",
+  each with an icon; "3 months free, no card needed" sits under them.
+- Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
+  to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

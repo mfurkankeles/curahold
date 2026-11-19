@@ -5,7 +5,7 @@
 import { siteCopy, type SiteLocale } from '../site/content';
 import { infoCopy } from '../site/info';
 import type { DeptKey, FeatureKey, Point } from '../site/info/types';
-import { DEPTS, FEATURES, GLYPH, INTEGRATION_GROUPS, PAGE, SOON_DEPTS, flowHtml, localeBase, whyHtml } from './site-chrome';
+import { DEPTS, FEATURES, GLYPH, ICON_BACK, INTEGRATION_GROUPS, PAGE, SOON_DEPTS, ctaPair, flowHtml, localeBase, whyHtml } from './site-chrome';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -36,14 +36,15 @@ const RELATED: Record<DeptKey, FeatureKey[]> = {
 
 function hero(locale: SiteLocale, o: { crumb?: string; title: string; lead: string; glyph?: string; soon?: boolean; urls: PageUrls }): string {
   const c = infoCopy(locale);
-  const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}"><a href="${localeBase(locale)}">${esc(c.common.home)}</a>${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
+  // The first crumb is the page's Back, in the same place on every inner page.
+  const crumbs = `<nav class="ip__crumbs" aria-label="${esc(c.common.home)}"><a class="ip__back" href="${localeBase(locale)}">${ICON_BACK}<span>${esc(c.common.home)}</span></a>${o.crumb ? `<span aria-hidden="true">/</span><span>${esc(o.crumb)}</span>` : ''}</nav>`;
   return `<header class="ip__hero">
     <div class="wrap">
       ${crumbs}
       ${o.glyph ? `<span class="ip__glyph">${o.glyph}</span>` : ''}
       <h1>${esc(o.title)}${o.soon ? ` <span class="ip__soon">${esc(c.nav.soon)}</span>` : ''}</h1>
       <p class="ip__lead">${esc(o.lead)}</p>
-      <div class="ip__ctas"><a class="hx__btn hx__btn--solid hx__btn--big" href="${esc(o.urls.trial)}" data-ab="go">${esc(c.nav.tryFree)}</a><a class="hx__btn hx__btn--ghost hx__btn--big" href="${esc(o.urls.demo)}" data-ab="demo">${esc(c.nav.demo)}</a></div>
+      <div class="ip__ctas">${ctaPair(locale, o.urls)}</div>
     </div>
   </header>`;
 }
@@ -60,7 +61,7 @@ function closing(locale: SiteLocale, urls: PageUrls): string {
         <div class="cta__sky" aria-hidden="true"></div>
         <h2>${esc(c.common.ctaTitle)}</h2>
         <p>${esc(c.common.ctaText)}</p>
-        <div class="cta__row"><a class="hx__btn hx__btn--solid hx__btn--big" href="${esc(urls.trial)}" data-ab="go">${esc(c.nav.tryFree)}</a><a class="hx__btn hx__btn--ghost hx__btn--big" href="${esc(urls.demo)}" data-ab="demo">${esc(c.nav.demo)}</a></div>
+        <div class="cta__row">${ctaPair(locale, urls)}</div>
       </div>
     </div>
   </section>`;

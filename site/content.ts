@@ -15,12 +15,13 @@ export interface SiteCopy {
   description: string;
   nav: { product: string; pricing: string; demo: string; blog: string; help: string; signIn: string; tryFree: string; skip: string };
   /** `works` introduces the strip of tools under the product tour. */
-  hero: { title: string; lead: string; primary: string; note: string; works: string };
+  /** The H1 is the kicker (the category) and the title (the outcome); the CTA labels are the header's (site/info). */
+  hero: { kicker: string; title: string; lead: string; note: string; works: string };
   /** The live product tour in the hero: four chapters of one customer's loop. */
   tour: SiteTourCopy;
   /** The bento of what sets Curahold apart: six tiles, each a living mini-UI. */
   bento: SiteBentoCopy;
-  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
+  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   /** The closing call to action. */
   cta: { title: string; text: string };
@@ -139,10 +140,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     description: 'Renewals that start on their own, meetings whose next steps become tasks, and every customer that needs attention at a glance. The app speaks nine languages.',
     nav: { product: 'Product', pricing: 'Pricing', demo: 'Live demo', blog: 'Blog', help: 'Help', signIn: 'Sign in', tryFree: 'Try it free', skip: 'Skip to content' },
     hero: {
-      title: 'All your company’s work, in good hands.',
-      lead: 'Tasks, projects, sprints and customer renewals in one place, so no promise is ever forgotten.',
-      primary: 'Try it free for 3 months',
-      note: 'No card needed. The app speaks nine languages.',
+      kicker: 'Work management for customer teams',
+      title: 'Every renewal, every promise, every task, on time.',
+      lead: 'See each customer’s health and the reasons behind it, turn a meeting’s next steps into tasks, and let renewals open themselves ninety days ahead.',
+      note: '3 months free, no card needed.',
       works: 'Start beside the tools you have today, move over at your pace',
     },
     tour: {
@@ -201,7 +202,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: 'about 20% less',
       perSeat: 'per seat a month',
       perSeatYearly: 'per seat a month, paid yearly',
-      choose: 'Start the free trial',
       business: 'Everything in Team, plus',
       fine: 'Prices in US dollars; taxes are added at checkout. Seats follow the people who have joined. Payments are handled by Paddle, our reseller.',
     },
@@ -259,10 +259,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     description: 'Kendiliğinden başlayan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve ilgi bekleyen her müşteri tek bakışta. Uygulama dokuz dilde.',
     nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', blog: 'Blog', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz deneyin', skip: 'İçeriğe atla' },
     hero: {
-      title: 'Şirketinizin bütün işi emin ellerde.',
-      lead: 'Görevler, projeler, sprint’ler ve müşteri yenilemeleri tek yerde. Verilen hiçbir söz unutulmaz.',
-      primary: '3 ay ücretsiz deneyin',
-      note: 'Kart gerekmez. Uygulama dokuz dilde.',
+      kicker: 'Müşteri ekipleri için iş yönetimi',
+      title: 'Her yenileme, her söz, her görev zamanında.',
+      lead: 'Her müşterinin sağlığını nedenleriyle görün, toplantıdaki sonraki adımları göreve dönüştürün; yenilemeler doksan gün önceden kendiliğinden açılsın.',
+      note: '3 ay ücretsiz, kart gerekmez.',
       works: 'Bugünkü araçlarınızın yanında başlayın, kendi hızınızda geçin',
     },
     tour: {
@@ -321,7 +321,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: 'yaklaşık %20 daha az',
       perSeat: 'kullanıcı başına, aylık',
       perSeatYearly: 'kullanıcı başına aylık, yıllık ödemede',
-      choose: 'Ücretsiz deneyin',
       business: 'Team’deki her şey, artı',
       fine: 'Fiyatlar ABD doları cinsindendir; vergiler ödeme sırasında eklenir. Kullanıcı sayısı katılan kişileri izler. Ödemeleri satıcımız Paddle alır.',
     },
@@ -379,10 +378,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     description: 'تجديدات تبدأ من تلقاء نفسها، واجتماعات تتحول خطواتها التالية إلى مهام، وكل عميل يحتاج إلى اهتمامك في لمحة. التطبيق متاح بتسع لغات.',
     nav: { product: 'المنتج', pricing: 'الأسعار', demo: 'عرض مباشر', blog: 'المدونة', help: 'المساعدة', signIn: 'تسجيل الدخول', tryFree: 'جرّبه مجانًا', skip: 'تخطَّ إلى المحتوى' },
     hero: {
-      title: 'كل أعمال شركتك، في أيدٍ أمينة.',
-      lead: 'المهام والمشاريع والسبرنتات وتجديدات العملاء في مكان واحد، فلا يُنسى أي وعد.',
-      primary: 'جرّبه مجانًا لمدة 3 أشهر',
-      note: 'لا حاجة إلى بطاقة. التطبيق متاح بتسع لغات.',
+      kicker: 'إدارة العمل لفرق العملاء',
+      title: 'كل تجديد وكل وعد وكل مهمة في موعدها.',
+      lead: 'اعرف صحة كل عميل وأسبابها، وحوّل الخطوات التالية في كل اجتماع إلى مهام، ودع التجديدات تبدأ وحدها قبل موعدها بتسعين يومًا.',
+      note: '3 أشهر مجانًا، دون بطاقة دفع.',
       works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
     },
     tour: {
@@ -441,7 +440,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: 'أقل بنحو 20%',
       perSeat: 'لكل مقعد شهريًا',
       perSeatYearly: 'لكل مقعد شهريًا، بدفع سنوي',
-      choose: 'ابدأ التجربة المجانية',
       business: 'كل ما في الفريق، بالإضافة إلى',
       fine: 'الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.',
     },
@@ -499,10 +497,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     description: 'חידושים שמתחילים מעצמם, פגישות שהצעדים הבאים שלהן הופכים למשימות, וכל לקוח שזקוק לתשומת לב במבט אחד. האפליקציה זמינה בתשע שפות.',
     nav: { product: 'מוצר', pricing: 'תמחור', demo: 'הדגמה חיה', blog: 'בלוג', help: 'עזרה', signIn: 'התחברות', tryFree: 'התנסות חינם', skip: 'דלג לתוכן' },
     hero: {
-      title: 'כל העבודה של החברה שלך, בידיים טובות.',
-      lead: 'משימות, פרויקטים, ספרינטים וחידושי לקוחות במקום אחד, כך ששום הבטחה לא נשכחת.',
-      primary: 'התנסות חינם ל-3 חודשים',
-      note: 'לא נדרש כרטיס. האפליקציה זמינה בתשע שפות.',
+      kicker: 'ניהול עבודה לצוותי לקוחות',
+      title: 'כל חידוש, כל הבטחה וכל משימה, בזמן.',
+      lead: 'ראו את הבריאות של כל לקוח ואת הסיבות לה, הפכו את הצעדים הבאים מכל פגישה למשימות, ותנו לחידושים להיפתח מעצמם תשעים יום מראש.',
+      note: '3 חודשים בחינם, בלי כרטיס אשראי.',
       works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
     },
     tour: {
@@ -555,7 +553,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: 'בכ-20% פחות',
       perSeat: 'למושב לחודש',
       perSeatYearly: 'למושב לחודש, בתשלום שנתי',
-      choose: 'התחל התנסות חינם',
       business: 'כל מה שבצוות, ובנוסף',
       fine: 'המחירים בדולר אמריקאי; מסים מתווספים בתשלום. מספר המושבים עוקב אחר מי שהצטרף. את התשלומים מטפל המשווק שלנו Paddle.',
     },
@@ -613,10 +610,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     description: 'تمدیدهایی که خودبه‌خود آغاز می‌شوند، جلساتی که گام‌های بعدی‌شان به وظیفه تبدیل می‌شود، و هر مشتری که به توجه نیاز دارد در یک نگاه. برنامه به نُه زبان در دسترس است.',
     nav: { product: 'محصول', pricing: 'قیمت‌ها', demo: 'دموی زنده', blog: 'وبلاگ', help: 'راهنما', signIn: 'ورود', tryFree: 'رایگان امتحان کنید', skip: 'پرش به محتوا' },
     hero: {
-      title: 'همهٔ کارهای شرکت شما، در دستانی مطمئن.',
-      lead: 'وظایف، پروژه‌ها، اسپرینت‌ها و تمدید مشتریان در یک‌جا؛ تا هیچ قولی فراموش نشود.',
-      primary: '۳ ماه رایگان امتحان کنید',
-      note: 'نیازی به کارت نیست. برنامه به نُه زبان در دسترس است.',
+      kicker: 'مدیریت کار برای تیم‌های مشتری',
+      title: 'هر تمدید، هر قول و هر وظیفه، سرِ وقت.',
+      lead: 'سلامت هر مشتری را همراه با دلایلش ببینید، گام‌های بعدی هر جلسه را به وظیفه تبدیل کنید و بگذارید تمدیدها نود روز زودتر خودشان شروع شوند.',
+      note: '۳ ماه رایگان، بدون نیاز به کارت.',
       works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
     },
     tour: {
@@ -675,7 +672,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: 'حدود ۲۰٪ کمتر',
       perSeat: 'هر صندلی در ماه',
       perSeatYearly: 'هر صندلی در ماه، با پرداخت سالانه',
-      choose: 'شروع دوره آزمایشی رایگان',
       business: 'همه چیزِ طرح تیم، به‌علاوهٔ',
       fine: 'قیمت‌ها به دلار آمریکا است؛ مالیات هنگام پرداخت افزوده می‌شود. شمار صندلی‌ها از افرادی که پیوسته‌اند پیروی می‌کند. پرداخت‌ها را فروشنده ما Paddle انجام می‌دهد.',
     },
@@ -732,7 +728,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：任务、迭代与客户续约，尽在一处',
     description: '自动开始的续约、后续步骤会变成任务的会议，以及一眼看清每个需要关注的客户。应用支持九种语言。',
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { title: '全公司的工作，尽在掌握。', lead: '任务、项目、迭代和客户续约，尽在一处，任何承诺都不会被遗忘。', primary: '免费试用 3 个月', note: '无需信用卡。应用支持九种语言。', works: '先与现有工具并行，再按自己的节奏迁移' },
+    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移' },
     tour: {
       label: '产品导览',
       steps: [
@@ -783,7 +779,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: '约便宜 20%',
       perSeat: '每席位每月',
       perSeatYearly: '每席位每月，按年付费',
-      choose: '开始免费试用',
       business: '包含团队版的一切，另加',
       fine: '价格以美元计；结账时另加税费。席位数随加入的成员变化。付款由我们的经销商 Paddle 处理。',
     },
@@ -832,7 +827,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：任務、衝刺與客戶續約，盡在一處',
     description: '自動開始的續約、後續步驟會變成任務的會議，以及一眼看清每位需要關注的客戶。應用程式支援九種語言。',
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { title: '全公司的工作，盡在掌握。', lead: '任務、專案、衝刺與客戶續約，盡在一處，任何承諾都不會被遺忘。', primary: '免費試用 3 個月', note: '不需信用卡。應用程式支援九種語言。', works: '先與現有工具並行，再依自己的步調轉換' },
+    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -883,7 +878,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: '約便宜 20%',
       perSeat: '每席次每月',
       perSeatYearly: '每席次每月，按年付費',
-      choose: '開始免費試用',
       business: '包含團隊版的一切，另加',
       fine: '價格以美元計；結帳時另加稅金。席次數隨加入的成員變化。付款由我們的經銷商 Paddle 處理。',
     },
@@ -932,7 +926,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold：タスク、スプリント、顧客の更新をひとつの場所で',
     description: 'ひとりでに始まる更新、次のステップがタスクになるミーティング、対応が必要な顧客がひと目でわかる画面。アプリは9言語に対応しています。',
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { title: '会社の\u200bすべての\u200b仕事を、\u200b確かな\u200b手に。', lead: 'タスク、プロジェクト、スプリント、顧客の更新をひとつの場所で。交わした約束は、ひとつも忘れられません。', primary: '3か月間無料で試す', note: 'カード不要。アプリは9言語に対応。', works: '今のツールと並べて始め、自分のペースで移れます' },
+    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -983,7 +977,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: '約20%お得',
       perSeat: '1シートあたり月額',
       perSeatYearly: '1シートあたり月額、年払い',
-      choose: '無料トライアルを始める',
       business: 'チームのすべてに加えて',
       fine: '価格は米ドル。税は決済時に加算されます。シート数は参加した人数に従います。決済は再販業者の Paddle が処理します。',
     },
@@ -1032,7 +1025,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     title: 'Curahold: 작업, 스프린트, 고객 갱신을 한곳에서',
     description: '저절로 시작되는 갱신, 다음 단계가 작업이 되는 미팅, 그리고 관심이 필요한 모든 고객을 한눈에. 앱은 9개 언어를 지원합니다.',
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { title: '회사의 모든 일, 믿고 맡기세요.', lead: '작업, 프로젝트, 스프린트, 고객 갱신을 한곳에서. 어떤 약속도 잊히지 않습니다.', primary: '3개월 무료로 시작', note: '카드가 필요 없습니다. 앱은 9개 언어를 지원합니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요' },
+    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요' },
     tour: {
       label: '제품 둘러보기',
       steps: [
@@ -1083,7 +1076,6 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       save: '약 20% 저렴',
       perSeat: '좌석당 월',
       perSeatYearly: '좌석당 월, 연 결제 시',
-      choose: '무료 체험 시작',
       business: '팀의 모든 것에 더해',
       fine: '가격은 미국 달러이며, 세금은 결제 시 추가됩니다. 좌석 수는 합류한 인원을 따릅니다. 결제는 리셀러인 Paddle이 처리합니다.',
     },

@@ -19,7 +19,7 @@ import { infoCopy } from '../site/info';
 import { CLOSED_X_ROBOTS, TDMREP_JSON, TDM_HEADER, TDM_META, robotsTxt } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
 import { AB } from '../site/ab/config';
-import { DEPTS, FEATURES, PAGE, headerHtml, whyHtml, type Version } from './site-chrome';
+import { DEPTS, FEATURES, ICON_GO, ICON_PLAY, PAGE, headerHtml, whyHtml, type Version } from './site-chrome';
 import { conceptAPage, conceptCPage, conceptAWords } from './site-concepts';
 import { innerPages, type InnerPage, type PageUrls } from './site-pages';
 
@@ -49,7 +49,6 @@ const OPEN = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" 
 const CHAIN = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 9.4l2.8-2.8M6.9 5.1l.9-.9a2.1 2.1 0 0 1 3 3l-.9.9M9.1 10.9l-.9.9a2.1 2.1 0 0 1-3-3l.9-.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 const CURSOR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.2l13.4 8.2-5.9 1.5-2.9 5.6z" fill="#fff" stroke="#17133a" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
 const LOCK = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.8" fill="currentColor"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
-const PLAY = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.3v9.4a.6.6 0 0 0 .9.5l7.6-4.7a.6.6 0 0 0 0-1L5.9 2.8a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>`;
 // The night sky behind every page: the grid is drawn by the stylesheet, these are the few glowing dots.
 const SKY = `<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>`;
 const SPARK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.5 4.4L14 7.5 9.5 9.1 8 13.5 6.5 9.1 2 7.5l4.5-1.6z" fill="currentColor"/></svg>`;
@@ -249,17 +248,22 @@ function chromeTail(locale: SiteLocale, rel: string, version: Version | 'page'):
 ${consentTags(locale, rel, urlsOf(locale).legal('cookies'))}`;
 }
 
-/** Sign in: every company has its own address. The same dialog on every page that has a header. */
+const CLOSE_X = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+/**
+ * Sign in: every company has its own address. The same dialog on every page that has a header.
+ * A <dialog> closes on Esc by itself; the close button sits in the end corner at 44 × 44 (owner rule for every popup).
+ */
 function signinDialog(locale: SiteLocale): string {
   const c = siteCopy(locale);
   return `<dialog class="signin" id="signin" data-base="${esc(BASE_DOMAIN)}" aria-labelledby="signin-title">
   <form>
+    <button class="signin__x" type="button" data-close aria-label="${esc(c.signIn.close)}" title="${esc(c.signIn.close)}">${CLOSE_X}</button>
     <h2 id="signin-title">${esc(c.signIn.title)}</h2>
     <p>${esc(c.signIn.text)}</p>
     <label class="signin__field"><input name="slug" autocomplete="organization" spellcheck="false" aria-label="${esc(c.signIn.label)}" placeholder="${esc(c.signIn.placeholder)}" required><span>.${esc(BASE_DOMAIN)}</span></label>
     <div class="signin__row">
-      <button class="hx__btn hx__btn--solid" type="submit">${esc(c.signIn.go)}</button>
-      <button class="hx__btn hx__btn--ghost" type="button" data-close>${esc(c.signIn.close)}</button>
+      <button class="hx__btn hx__btn--solid" type="submit">${ICON_GO}<span>${esc(c.signIn.go)}</span></button>
     </div>
     <p class="signin__none"><a href="${esc(TRIAL)}">${esc(c.signIn.none)}</a></p>
   </form>
@@ -283,7 +287,7 @@ function pricingHtml(locale: SiteLocale, headed: boolean): string {
           <h3>${esc(t(`billing.plan.${key}` as MessageKey))}</h3>
           <p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>
           <ul>${key === 'business' ? `<li class="plan__plus">${esc(c.pricing.business)}</li>` : ''}${points}</ul>
-          <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${esc(c.pricing.choose)}</a>
+          <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${ICON_GO}<span>${esc(infoCopy(locale).nav.tryFree)}</span></a>
         </div>`;
   };
   return `<section class="pricing calm pool" id="pricing">
@@ -372,7 +376,7 @@ ${alternatesFor(path)}
     tail: `${signinDialog(locale)}\n${chromeTail(locale, rel, which)}`,
     trial: TRIAL,
     demo: u.demo,
-    go: n.go,
+    tryFree: n.tryFree,
     demoLabel: n.demo,
   };
   return which === 'a' ? conceptAPage(parts) : conceptCPage(parts);
@@ -982,12 +986,17 @@ export function page(locale: SiteLocale): string {
   // the copy allows it (U+200B) and after their own commas, so a line never ends on a
   // stray character — and get no space between the parts.
   let wordNo = 0;
-  const heroTitle = c.hero.title
+  const heroWords = c.hero.title
     .replace(/\u200b|(?<=[，、；])(?=\S)/g, '\u0001')
     .split(/(\s+|\u0001)/)
     .filter(Boolean)
     .map((w) => (w === '\u0001' ? '<wbr>' : /^\s+$/.test(w) ? ' ' : `<span class="w" style="--wi:${wordNo++}"><span>${esc(w)}</span></span>`))
     .join('');
+  // One H1 says what Curahold is (the category, small) and what it does for you (the outcome).
+  const heroTitle = `<span class="hero__k">${esc(c.hero.kicker)}</span> ${heroWords}`;
+  const n = infoCopy(locale).nav;
+  const ctas = `<a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${ICON_GO}<span>${esc(n.tryFree)}</span></a>
+          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${ICON_PLAY}<span>${esc(n.demo)}</span></a>`;
 
   // ------------------------------------------------------------------ the bento
   const tile = (i: number) => `<div class="tile__c"><h3>${esc(bento.tiles[i].h)}</h3><p>${esc(bento.tiles[i].p)}</p></div>`;
@@ -1136,8 +1145,7 @@ ${chromeHeader(locale, '', 'classic')}
         <h1 class="hero__h">${heroTitle}</h1>
         <p class="hero__lead">${esc(c.hero.lead)}</p>
         <div class="hero__ctas">
-          <a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${PLAY}${esc(c.nav.demo)}</a>
+          ${ctas}
         </div>
         <p class="hero__note">${esc(c.hero.note)}</p>
       </div>
@@ -1200,8 +1208,7 @@ ${chromeHeader(locale, '', 'classic')}
         <h2>${esc(cta.title)}</h2>
         <p>${esc(cta.text)}</p>
         <div class="cta__row">
-          <a class="btn btn--primary btn--big" href="${signup}" data-ab="go">${esc(c.hero.primary)}</a>
-          <a class="btn btn--glass btn--big" href="${demo}" data-ab="demo">${PLAY}${esc(c.nav.demo)}</a>
+          ${ctas}
         </div>
       </div>
     </div>

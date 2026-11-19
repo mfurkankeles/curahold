@@ -11,6 +11,8 @@ import { translate, bcp47Of, LOCALE_INFO, type MessageKey } from '../shared/src/
 import { siteCopy, siteStory, type SiteLocale } from '../site/content';
 import { A_COPY, ALIAS_A, FALLBACK_A } from '../site/concepts/a-copy';
 import { C_COPY } from '../site/concepts/c-copy';
+import { infoCopy } from '../site/info';
+import { ICON_GO, ICON_PLAY } from './site-chrome';
 
 const ROOT = join(import.meta.dirname, '..');
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -36,7 +38,8 @@ export interface ConceptParts {
   tail: string;
   trial: string;
   demo: string;
-  go: string;
+  /** The two call-to-action labels, the same as the header's. */
+  tryFree: string;
   demoLabel: string;
 }
 
@@ -75,6 +78,9 @@ export function conceptAWords(locale: SiteLocale): Record<string, string> {
     p_due: short.format(day(10, 28)),
     p_dates: short.formatRange(day(10, 20), day(10, 31)),
     d_pct: new Intl.NumberFormat(tag, { style: 'percent' }).format(0.72),
+    // The closing call to action says what every other page says.
+    cta: infoCopy(locale).nav.tryFree,
+    note: siteCopy(locale).hero.note,
   };
   const words = { ...derived, ...A_COPY[locale] };
   for (const [k, to] of Object.entries(FALLBACK_A)) if (words[k] === undefined) words[k] = words[to];
@@ -112,6 +118,7 @@ export function conceptAPage(p: ConceptParts): string {
     HEAD: p.head,
     REL: p.rel,
     HEADER: p.header,
+    ICON_GO,
     TRIAL: esc(p.trial),
     WHY: p.why,
     FOOTER: p.footer,
@@ -172,8 +179,8 @@ export function conceptCPage(p: ConceptParts): string {
     endB: esc(c.endB),
     TRIAL: esc(p.trial),
     DEMO: esc(p.demo),
-    go: esc(p.go),
-    demo: esc(p.demoLabel),
+    go: `${ICON_GO}<span>${esc(p.tryFree)}</span>`,
+    demo: `${ICON_PLAY}<span>${esc(p.demoLabel)}</span>`,
     CAPS: json(c.cap),
     STOPS: json(c.stops.map(([t, s]) => [esc(t), esc(fill(s, { date: due }))])),
     HEALTH: json(c.health),

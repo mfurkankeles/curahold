@@ -90,13 +90,16 @@ html:not(.js) .hx__item:is(:hover, :focus-within) > .hx__panel { display: block;
 .hx__langs { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 170px; display: grid; padding: 6px; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 20px 40px -18px rgba(0, 0, 0, .6); }
 .hx__langs a { padding: 9px 11px; border-radius: 9px; color: var(--ink-2); font-size: 15px; }
 .hx__langs a:hover, .hx__langs a[aria-current] { color: var(--ink); background: var(--mist); }
-.hx__signin { padding: 8px 6px; color: var(--ink-2) !important; font: 500 14.5px/1 var(--text); white-space: nowrap; }
+.hx__signin { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 8px; color: var(--ink-2) !important; font: 500 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; }
+.hx__signin svg { width: 16px; height: 16px; flex: none; }
 .hx__signin:hover { color: var(--ink) !important; }
-.hx__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font: 600 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; cursor: pointer; transition: transform .15s var(--ease), background-color .15s, border-color .15s; }
+.hx__btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font: 600 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; cursor: pointer; transition: transform .15s var(--ease), background-color .15s, border-color .15s; }
 .hx__btn:hover { transform: translateY(-1px); }
 .hx__btn--solid { background: var(--iris); color: #fff !important; box-shadow: 0 8px 20px -10px rgba(91, 77, 232, .9); }
 .hx__btn--solid:hover { background: #6b5ef0; }
-.hx__btn--ghost { background: rgba(255, 255, 255, .05); color: var(--ink) !important; border-color: rgba(255, 255, 255, .22); }
+.hx__btn svg { width: 16px; height: 16px; flex: none; }
+[dir='rtl'] .ic-dir { transform: scaleX(-1); }
+.hx__btn--ghost { background: rgba(255, 255, 255, .05); color: var(--ink) !important; border-color: rgba(255, 255, 255, .45); }
 .hx__btn--ghost:hover { border-color: var(--iris-hi); }
 .hx__btn--big { min-height: 52px; padding: 0 26px; font-size: 16px; }
 .hx__quick { display: none; align-items: center; gap: 8px; margin-inline-start: auto; }
@@ -110,7 +113,6 @@ html:not(.js) .hx__item:is(:hover, :focus-within) > .hx__panel { display: block;
    even that does not fit (a long language, a narrow window), chrome.js folds the bar into
    the same sheet a phone uses (.is-compact) — measured, because nine languages have nine widths. */
 @media (max-width: 1499px) {
-  .hx:not(.is-compact) .hx__signin { display: none; }
   .hx:not(.is-compact) .hx__top { padding: 0 7px; }
   .hx:not(.is-compact) .hx__list { margin-inline-start: 8px; }
   .hx:not(.is-compact) .hx__lang > summary > span { display: none; }
@@ -250,7 +252,13 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .signin__field input { flex: 1; min-width: 0; border: 0; padding: 12px 6px 12px 14px; background: transparent; color: var(--ink); font: 500 16px var(--text); outline: none; }
 .signin__field span { padding: 0 14px 0 2px; color: var(--ink-3); white-space: nowrap; }
 .signin__row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-.signin__row .hx__btn--ghost { margin-inline-start: auto; }
+/* Close sits in the end corner, 44 × 44, visible on the card (owner rule for every popup). */
+.signin form { position: relative; }
+.signin__x { position: absolute; top: -12px; inset-inline-end: -12px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; }
+.signin__x:hover { color: var(--ink); border-color: var(--ink-3); }
+.signin__x svg { width: 18px; height: 18px; }
+.signin h2 { padding-inline-end: 44px; }
+.signin__row .hx__btn { min-height: 44px; }
 .signin__none { margin: 18px 0 0; font-size: 14px; }.signin { --paper: #19153f; --line: #332e66; --iris: #5b4de8; --iris-wash: #2a2560; --ink: #f4f3fd; --ink-2: #c9c5e8; --ink-3: #a5a0d3; --text: 'Figtree', ui-sans-serif, system-ui, sans-serif; font-family: var(--text); }
 .signin h2 { margin: 0; font-family: 'Bricolage Grotesque', 'Bricolage', 'Figtree', sans-serif; color: var(--ink); }
 .signin a { color: #b9b0ff; }
@@ -262,3 +270,15 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .hx *, .wy * { transition: none !important; animation: none !important; }
 }
+
+/* ---------------------------------------------------- phone: the sticky call to action
+   Once the reader is past the first screen, the two calls to action wait at the bottom
+   (site/chrome.js shows it, and hides it again over the closing call to action and the footer). */
+.mbar { display: none; }
+@media (max-width: 760px) {
+  .mbar { position: fixed; inset-inline: 0; bottom: 0; z-index: 30; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(15, 12, 43, .92); border-top: 1px solid #332e66; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transform: translateY(110%); visibility: hidden; transition: transform .2s cubic-bezier(.2, .7, .3, 1), visibility 0s .2s; }
+  .mbar.is-on { transform: none; visibility: visible; transition: transform .2s cubic-bezier(.2, .7, .3, 1); }
+  .mbar .hx__btn { flex: 1 1 0; min-height: 48px; padding: 0 12px; }
+  .foot { padding-bottom: 76px; }
+}
+@media (prefers-reduced-motion: reduce) { .mbar, .mbar.is-on { transition: none; } }

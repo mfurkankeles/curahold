@@ -193,4 +193,18 @@
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+  // Phone: the bottom bar with both calls to action, once the first screen is behind
+  // the reader, and out of the way again where the page's own closing call and footer are.
+  var mbar = document.querySelector('[data-mbar]');
+  if (mbar && 'IntersectionObserver' in window) {
+    var ends = 0;
+    var past = false;
+    var show = function () { mbar.classList.toggle('is-on', past && ends === 0); };
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting !== !!e.target.__in) { ends += e.isIntersecting ? 1 : -1; e.target.__in = e.isIntersecting; } });
+      show();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.cta, .foot'), function (el) { io.observe(el); });
+    window.addEventListener('scroll', function () { var p = window.scrollY > window.innerHeight * 0.7; if (p !== past) { past = p; show(); } }, { passive: true });
+  }
 })();
