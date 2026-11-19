@@ -10,14 +10,26 @@ Curahold'da BI araçları için yalnızca okunabilen tek bir **analiz akışı**
 
 Aşağıdaki menü adları araçların İngilizce arayüzündeki gibidir; Türkçe arayüzde karşılıklarını seç.
 
-## Başlamadan önce
+## Başlamadan önce {#key}
 
-1. **Ayarlar → Analiz ve BI** sayfasını aç. Veri dışa aktarma iznin olmalı (yöneticilerde ve müdürlerde vardır).
-2. **Yeni analiz anahtarı**'nı seç. Bir ad ver (ör. "Power BI satış panosu"), okuyabileceği veri kümelerini ve departmanları, bir de bitiş tarihini seç.
-3. Anahtarı hemen kopyala: yalnızca bir kez gösterilir. `chb_` ile başlar.
-4. Aynı sayfadan gereken adresi kopyala:
-   - OData akışı: `https://sirketin.curahold.com/api/analytics/odata/`
-   - JSON ve CSV: `https://sirketin.curahold.com/api/analytics/v1/`
+Veri dışa aktarma iznin olmalı (yöneticilerde ve müdürlerde vardır).
+
+1. **Ayarlar → Analiz ve BI**'ı aç ve **Yeni analiz anahtarı**'na tıkla. Bir ad ver (ör. "Power BI satış panosu"), okuyabileceği veri kümelerini ve departmanları, bir de bitiş tarihini seç ve oluştur. Anahtarı hemen kopyala: yalnızca bir kez gösterilir ve `chb_` ile başlar.
+   ![Yeni analiz anahtarı düğmesi işaretli](img/bi-new.webp)
+2. Aynı sayfada **BI araçları için analiz akışı** altında, aracının istediği adresin yanındaki **Kopyala**'ya tıkla. Şirketinin adresiyle şöyle görünürler:
+   ![İki akış adresi ve Kopyala düğmeleri işaretli](img/bi-feed.webp)
+
+OData akışı (Power BI, Excel, Fabric, Tableau, Qlik, Zoho Analytics):
+
+```text
+https://sirketin.curahold.com/api/analytics/odata/
+```
+
+JSON ve CSV (Looker Studio, betikler, diğer araçlar):
+
+```text
+https://sirketin.curahold.com/api/analytics/v1/
+```
 
 Araç nasıl giriş yapacağını sorduğunda **Basic**'i seç: kullanıcı adına herhangi bir şey yaz, parola olarak anahtarı yapıştır.
 

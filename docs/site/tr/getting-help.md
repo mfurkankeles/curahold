@@ -8,9 +8,12 @@ summary: Yardım talebi göndermek, ekran görüntüsü eklemek ve Curahold dest
 
 İki adım, bu sırayla: önce **sor**, yetmediyse **desteğe yaz**.
 
-## Önce sor
+## Önce sor {#ask}
 
-Her ekranın sağ altındaki **CuraAI**'yı aç (ya da bu belgelerin her sayfasındaki **Sor** düğmesini) ve sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir". Cevap bu belgelerden, nereden geldiğiyle birlikte hemen gelir. Bu belgelerin yazıldığı dillerde çalışır; yazdığın hiçbir şey bir yere gönderilmez: belgeler kendi tarayıcında aranır.
+1. Soldaki menüde **CuraAI**'ya tıkla (telefonda sağ alttaki düğme; bu belgelerde **Sor** düğmesi). Sorunu kendi cümlelerinle yaz: "müşterileri nasıl içe aktarırım", "bu alanı kim görebilir".
+   ![Menüde CuraAI işaretli](img/ai-open.webp)
+
+Cevap bu belgelerden, nereden geldiğiyle birlikte gelir. Şirketinde **yapay zekâ ile cevap** açıksa (aşağıya bak), CuraAI Curahold'da zaten görebildiklerini de okur: müşterilerin, yenilemeler, görevler. Böylece "önümüzdeki 90 günde neler yenileniyor?" diye sorabilirsin. Yalnızca okur, hiçbir şeyi değiştirmez. Yapay zekâ ile cevap kapalıysa, kurulmamışsa ya da ayın sınırı dolduysa belgeler kendi cihazında aranır ve yazdığın hiçbir şey bir yere gönderilmez.
 
 Cevap işini görmediyse söyle: en yakın diğer yerleri ve sorun hazır yazılmış halde desteğe yazma düğmesini görürsün.
 
@@ -94,3 +97,22 @@ Bir şey bozulduğunda destek, onu tarif etmeni istemek yerine ne olduğunu gör
 - **Yöneticiler kapatabilir**: **Ayarlar → Güvenlik → Destek erişimi → Destek için oturum kaydı**. Kapalıyken hiçbir şey kaydedilmez.
 
 Kurumun kendi çalışanlarına bunu bir gizlilik bildiriminde anlatması gerekiyorsa, dayanağı bu ayar ve bu sayfadır.
+
+## Yapay zekâ ile cevap (yöneticiler) {#ai-answers}
+
+1. **Ayarlar → Destek erişimi**'ni aç ve **Yapay zekâ asistanı**'na kadar kaydır.
+   ![Yapay zekâ asistanı ayarları işaretli](img/ai-settings.webp)
+2. CuraAI'nın yapay zekâyla cevap vermesi için **Yapay zekâ ile cevapla**'yı işaretle; yalnızca belge aramasıyla, ücretsiz cevap vermesi için işareti kaldır. CuraAI'nın okudukları hiçbir zaman yapay zekâ modellerini eğitmek için kullanılmaz.
+   ![Yapay zekâ ile cevapla kutusu işaretli](img/ai-switch.webp)
+
+Aynı kartta:
+
+- **Aylık sınır (USD)**: dolunca CuraAI ay sonuna kadar belge aramasıyla cevap verir. Kart bu ayki soruları ve maliyetlerini gösterir.
+- **Soruları saklama süresi**: soruların ne kadar saklanacağı (ya da hiç saklanmayacağı). Bir kişinin kendi soruları kişisel veri indirmesinde yer alır.
+- **Destek taleplerimize ilk cevap taslağı yaz**: Curahold desteği taleplerine taslak bir ilk cevap görür; sen taslağı hiç görmezsin, yalnızca desteğin gerçek cevabını görürsün.
+
+Kart, bu kurulumda yapay zekâ ile cevabın kurulmadığını söylüyorsa CuraAI belge aramasını kullanır; yapay zekâ anahtarını Curahold sunucunu çalıştıran kişi ekler.
+
+## Hata kaydı (yöneticiler) {#errors}
+
+**Ayarlar → Hatalar**, son 30 günde kişilerinin karşılaştığı aksaklıkları ve nerede olduklarını listeler: ekran, başarısız istek ve kaç kez olduğu. İçinde kişisel bir şey yoktur. Desteğe yazarken orada gördüğünü ekle.

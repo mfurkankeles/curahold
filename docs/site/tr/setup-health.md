@@ -6,7 +6,7 @@ summary: Kurulumdan sonra eksik ya da yanlış olan, düzelten ekrana tek tıkla
 ---
 # Kurulum sağlığı ve kurulumu test etme
 
-Kurulumu tahmin etmeden bitirmeniz için iki ekran var. **Kurulum sağlığı** eksik ya da yanlış olanı söyler. **Kurulumu test et** her şeyi ekibinizin kullanacağı gibi denemenizi sağlar. Sizin yerinize hiçbir şey değişmez: her düzeltme doğru ekranı açan bir düğmedir, gerisini siz yaparsınız.
+Kurulumu tahmin etmeden bitirmeniz için iki ekran var. **Kurulum sağlığı**, kurulumunuzda hâlâ eksik ya da yanlış olanı söyler. **Kurulumu test et** her şeyi ekibinizin kullanacağı gibi denemenizi sağlar. Sizin yerinize hiçbir şey değişmez: her düzeltme doğru ekranı açan bir düğmedir, gerisini siz yaparsınız.
 
 ## Eksik olanı bulun
 

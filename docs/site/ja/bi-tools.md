@@ -10,14 +10,26 @@ Curahold には、BI ツール向けの読み取り専用の**分析フィード
 
 以下のメニュー名は各ツールの英語版の表記です。日本語版では対応する項目を選んでください。
 
-## はじめる前に
+## はじめる前に {#key}
 
-1. **設定 → 分析と BI** を開きます。データをエクスポートする権限が必要です（管理者とマネージャーにはあります）。
-2. **新しい分析キー** を選びます。名前（例：「Power BI の営業ダッシュボード」）を付け、読めるデータセットと部門、有効期限を選びます。
-3. キーはこの場ですぐにコピーしてください。表示されるのは一度だけです。`chb_` で始まります。
-4. 同じページから必要なアドレスをコピーします。
-   - OData フィード：`https://your-company.curahold.com/api/analytics/odata/`
-   - JSON と CSV：`https://your-company.curahold.com/api/analytics/v1/`
+データをエクスポートする権限が必要です（管理者とマネージャーにあります）。
+
+1. **設定 → 分析と BI** を開き、**新しい分析キー** をクリックします。名前（例：「Power BI 営業ダッシュボード」）を付け、読めるデータセットと部門、終了日を選んで作成します。キーはすぐにコピーしてください：一度しか表示されず、`chb_` で始まります。
+   ![新しい分析キーボタンに印](img/bi-new.webp)
+2. 同じページの **BI ツール向け分析フィード** で、ツールに必要なアドレスの横の **コピー** をクリックします。会社のアドレスでは次のようになります：
+   ![2 つのフィードアドレスとコピーボタンに印](img/bi-feed.webp)
+
+OData フィード（Power BI、Excel、Fabric、Tableau、Qlik、Zoho Analytics）：
+
+```text
+https://your-company.curahold.com/api/analytics/odata/
+```
+
+JSON と CSV（Looker Studio、スクリプト、その他のツール）：
+
+```text
+https://your-company.curahold.com/api/analytics/v1/
+```
 
 ツールにサインイン方法を聞かれたら **Basic** を選び、ユーザー名には任意の文字を、パスワードにはキーを貼り付けます。
 

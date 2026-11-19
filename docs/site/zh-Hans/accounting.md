@@ -20,6 +20,13 @@ summary: 只读连接会计软件：谁欠多少，显示在客户页面和健�
 | QuickBooks Online | 使用 Intuit 登录 | [QuickBooks Online](/docs/zh-Hans/accounting-quickbooks/) |
 | 其他软件（Logo、Mikro、Tally、SAP Business One…） | Excel 或 CSV 文件 | [文件](/docs/zh-Hans/accounting-file/) |
 
+## 连接你的软件 {#connect}
+
+你需要管理连接的权限（管理员拥有）。
+
+1. 打开 **设置 → CRM 和电子表格**，滚动到 **会计软件**。在你的软件卡片上点击 **连接 …**，或在 **其他软件（文件）** 上点击 **上传文件**，然后按上表中该软件的页面操作。
+   ![会计软件卡片已标出](img/fin-tiles.webp)
+
 ## 匹配客户
 
 会计软件中的每个客户都会匹配到 Curahold 中的一个客户：先按税号，再按网址或邮箱域名，最后按名称（会忽略 Ltd.、A.Ş.、株式会社 等公司形式）。恰好只有一个客户符合时会自动匹配；没有或有多个符合时，会在连接的**匹配**标签页中等待。你可以在那里选择客户或将其排除。手动做的匹配会保留。

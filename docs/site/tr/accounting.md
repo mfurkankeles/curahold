@@ -20,6 +20,13 @@ Muhasebe programını bağladığında her müşterinin sayfası borcunu göster
 | QuickBooks Online | Intuit ile giriş | [QuickBooks Online](/docs/tr/accounting-quickbooks/) |
 | Diğerleri (Logo, Mikro, Tally, SAP Business One…) | Excel ya da CSV dosyası | [Dosya](/docs/tr/accounting-file/) |
 
+## Programını bağla {#connect}
+
+Bağlantıları yönetme iznin olmalı (yöneticilerde vardır).
+
+1. **Ayarlar → CRM ve tablolar**'ı aç ve **Muhasebe programları**'na kadar kaydır. Programının kutusundaki **… bağla** düğmesine ya da **Başka bir program (dosya)** kutusundaki **Dosya yükle**'ye tıkla ve yukarıdaki tabloda o programın sayfasını izle.
+   ![Muhasebe programı kutuları işaretli](img/fin-tiles.webp)
+
 ## Müşteri eşleştirme
 
 Muhasebe programındaki her müşteri Curahold'daki bir müşteriyle eşleşir: önce vergi numarasıyla, sonra web adresi ya da e-posta alan adıyla, sonra adıyla (Ltd. Şti., A.Ş. ya da 株式会社 gibi şirket türleri dikkate alınmaz). Tam olarak bir müşteri uyarsa eşleşme yapılır; hiç uymazsa ya da birkaçı uyarsa bağlantının **Eşleştirme** sekmesinde bekler. Orada müşteriyi seçebilir ya da dışarıda bırakabilirsin. Elle yaptığın eşleştirmeler korunur.

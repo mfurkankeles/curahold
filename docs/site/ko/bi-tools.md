@@ -10,14 +10,26 @@ Curahold에는 BI 도구를 위한 읽기 전용 **분석 피드**가 하나 있
 
 아래 메뉴 이름은 각 도구의 영어 화면 기준입니다. 한국어 화면에서는 해당하는 항목을 고르세요.
 
-## 시작하기 전에
+## 시작하기 전에 {#key}
 
-1. **설정 → 분석 및 BI**를 엽니다. 데이터 내보내기 권한이 있어야 합니다(관리자와 매니저에게는 있습니다).
-2. **새 분석 키**를 선택합니다. 이름(예: "Power BI 영업 대시보드")을 정하고, 읽을 수 있는 데이터 세트와 부서, 만료일을 고릅니다.
-3. 키는 지금 바로 복사하세요. 한 번만 표시됩니다. `chb_`로 시작합니다.
-4. 같은 페이지에서 필요한 주소를 복사합니다.
-   - OData 피드: `https://your-company.curahold.com/api/analytics/odata/`
-   - JSON 및 CSV: `https://your-company.curahold.com/api/analytics/v1/`
+데이터 내보내기 권한이 필요합니다(관리자와 매니저에게 있음).
+
+1. **설정 → 분석 및 BI**를 열고 **새 분석 키**를 누릅니다. 이름(예: "Power BI 영업 대시보드")을 붙이고, 읽을 수 있는 데이터 세트와 부서, 만료일을 골라 만듭니다. 키는 바로 복사하세요: 한 번만 보이며 `chb_`로 시작합니다.
+   ![새 분석 키 버튼 표시](img/bi-new.webp)
+2. 같은 페이지의 **BI 도구용 분석 피드**에서 도구에 필요한 주소 옆의 **복사**를 누릅니다. 회사 주소로는 다음과 같습니다:
+   ![두 피드 주소와 복사 버튼 표시](img/bi-feed.webp)
+
+OData 피드(Power BI, Excel, Fabric, Tableau, Qlik, Zoho Analytics):
+
+```text
+https://your-company.curahold.com/api/analytics/odata/
+```
+
+JSON 및 CSV(Looker Studio, 스크립트, 기타 도구):
+
+```text
+https://your-company.curahold.com/api/analytics/v1/
+```
 
 도구가 로그인 방식을 물으면 **Basic**을 고르고, 사용자 이름에는 아무 값이나, 비밀번호에는 키를 붙여 넣습니다.
 

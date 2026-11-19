@@ -8,14 +8,26 @@ summary: Power BI, Excel, Fabric, Tableau, Looker Studio, Qlik, Zoho Analytics a
 
 Curahold has one read-only **analytics feed** for BI tools. Power BI, Excel, Microsoft Fabric, Tableau, Qlik and Zoho Analytics read it as an **OData feed**; Looker Studio, scripts and other tools read the same data as **JSON or CSV**. Nothing in Curahold can be changed through it.
 
-## Before you start
+## Before you start {#key}
 
-1. Open **Settings → Analytics and BI**. You need the permission to export data (administrators and managers have it).
-2. Choose **New analytics key**. Give it a name (for example "Power BI sales dashboard"), choose the datasets and departments it may read, and an end date.
-3. Copy the key now: it is shown only once. It starts with `chb_`.
-4. Copy the address you need from the same page:
-   - OData feed: `https://your-company.curahold.com/api/analytics/odata/`
-   - JSON and CSV: `https://your-company.curahold.com/api/analytics/v1/`
+You need the permission to export data (administrators and managers have it).
+
+1. Open **Settings → Analytics and BI** and click **New analytics key**. Give it a name (for example "Power BI sales dashboard"), choose the datasets and departments it may read and an end date, and make it. Copy the key at once: it is shown only once, and it starts with `chb_`.
+   ![The New analytics key button, ringed](img/bi-new.webp)
+2. On the same page, under **Analytics feed for BI tools**, click **Copy** next to the address your tool needs. They look like this, with your company's address:
+   ![The two feed addresses with their Copy buttons, ringed](img/bi-feed.webp)
+
+OData feed (Power BI, Excel, Fabric, Tableau, Qlik, Zoho Analytics):
+
+```text
+https://your-company.curahold.com/api/analytics/odata/
+```
+
+JSON and CSV (Looker Studio, scripts, other tools):
+
+```text
+https://your-company.curahold.com/api/analytics/v1/
+```
 
 When a tool asks how to sign in, choose **Basic**: type anything as the user name and paste the key as the password.
 

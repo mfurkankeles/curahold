@@ -22,7 +22,7 @@ https://<sirketiniz>.curahold.com/onboarding
 
 ## 2. Sıradaki işi yapın {#next}
 
-En üstteki kart her zaman sıradaki tek işi, sıranın kimde olduğunu ve ne zamandır beklediğini gösterir. **Yap**'a tıklayın: Curahold işin yapıldığı ekranı açar.
+En üstteki kart, kurulumu bitirmek için her zaman sıradaki tek işi, sıranın kimde olduğunu ve ne zamandır beklediğini gösterir. **Yap**'a tıklayın: Curahold işin yapıldığı ekranı açar.
 
 ![Sıradaki iş kartı, Yap düğmesi işaretli](img/ob-next.webp)
 
@@ -64,7 +64,7 @@ Tarihler şöyle yazılır:
 
 ## 8. Müşterilerinizin başlangıç planları {#customers}
 
-Müşteriler altında **Ortak planlar**'a tıklayın. Bir fırsat kazanılınca devir notuyla birlikte taslak bir plan kendiliğinden açılır; devir onaylanınca başlar. Liste her planı, ne kadar ilerlediğini, kimin beklendiğini ve hangilerinin takıldığını gösterir. Planını açmak için bir müşteriye tıklayın.
+Yeni kazandığınız bir müşterinin kurulumunu da bu planla yürütürsünüz. Müşteriler altında **Ortak planlar**'a tıklayın. Bir fırsat kazanılınca devir notuyla birlikte taslak bir plan kendiliğinden açılır; devir onaylanınca başlar. Liste her planı, ne kadar ilerlediğini, kimin beklendiğini ve hangilerinin takıldığını gösterir. Planını açmak için bir müşteriye tıklayın.
 
 ![Müşteri planları listesi, bir müşteri işaretli](img/ob-plans.webp)
 

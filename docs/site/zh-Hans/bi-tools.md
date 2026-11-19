@@ -10,14 +10,26 @@ Curahold 为 BI 工具提供一个只读的**分析数据源**。Power BI、Exce
 
 下文中的菜单名称取自各工具的英文界面，使用中文界面时请选择对应的项。
 
-## 开始之前
+## 开始之前 {#key}
 
-1. 打开 **设置 → 分析与 BI**。你需要拥有导出数据的权限（管理员和经理默认拥有）。
-2. 选择 **新建分析密钥**。起一个名字（例如“Power BI 销售仪表板”），选择它可以读取的数据集和部门，以及到期日期。
-3. 立即复制密钥：它只显示一次，以 `chb_` 开头。
-4. 在同一页面复制所需的地址：
-   - OData 数据源：`https://your-company.curahold.com/api/analytics/odata/`
-   - JSON 和 CSV：`https://your-company.curahold.com/api/analytics/v1/`
+你需要导出数据的权限（管理员和经理拥有）。
+
+1. 打开 **设置 → 分析与 BI**，点击 **新建分析密钥**。为它命名（例如“Power BI 销售看板”），选择它可读取的数据集和部门以及到期日期，然后创建。立即复制密钥：它只显示一次，以 `chb_` 开头。
+   ![“新建分析密钥”按钮已标出](img/bi-new.webp)
+2. 在同一页面的 **面向 BI 工具的分析数据源** 下，点击你的工具所需地址旁的 **复制**。带上你公司的地址后，它们是这样的：
+   ![两个数据源地址及其复制按钮已标出](img/bi-feed.webp)
+
+OData 数据源（Power BI、Excel、Fabric、Tableau、Qlik、Zoho Analytics）：
+
+```text
+https://your-company.curahold.com/api/analytics/odata/
+```
+
+JSON 和 CSV（Looker Studio、脚本、其他工具）：
+
+```text
+https://your-company.curahold.com/api/analytics/v1/
+```
 
 当工具询问登录方式时，选择 **Basic**：用户名随便填，密码粘贴密钥。
 

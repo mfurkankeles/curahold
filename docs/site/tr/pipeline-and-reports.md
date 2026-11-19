@@ -69,3 +69,7 @@ Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **
 - Bir raporu açıkken **Panele ekle** ile doğrudan bir panele koyabilirsin (rapor şirketle paylaşılır ki paneli açan herkes kartı görsün).
 
 Panelleri şirket ayarlarını yönetenler ekler ve düzenler; raporu, yazma yetkisi olan herkes kurar.
+
+## Para birimleri {#currencies}
+
+**Ayarlar → Para birimleri**, şirketinin kendi para birimini ve çalıştığın diğer para birimlerini, her birinin seninkinde ne ettiğiyle birlikte tutar. Başka para birimindeki tutarlar (yurt dışındaki bir müşteri, avro cinsinden bir fırsat) raporlarda, satış hattında ve backlog'da bu kurlarla senin para biriminde toplanır. Şirketin para birimini değiştirince kurları yeniden onaylaman istenir.

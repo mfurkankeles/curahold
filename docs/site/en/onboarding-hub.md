@@ -22,7 +22,7 @@ https://<your-company>.curahold.com/onboarding
 
 ## 2. Do the next thing {#next}
 
-The card at the top always shows the one thing to do next, whose turn it is and how long it has waited. Click **Do it**: Curahold opens the screen where it is done.
+The card at the top always shows the one thing to do next to finish your setup, whose turn it is and how long it has waited. Click **Do it**: Curahold opens the screen where it is done.
 
 ![The Next up card with its Do it button marked](img/ob-next.webp)
 

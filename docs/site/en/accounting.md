@@ -20,6 +20,13 @@ Connect your accounting program and each customer's page shows what they owe: th
 | QuickBooks Online | Sign in with Intuit | [QuickBooks Online](/docs/en/accounting-quickbooks/) |
 | Any other (Logo, Mikro, Tally, SAP Business One…) | An Excel or CSV file | [A file](/docs/en/accounting-file/) |
 
+## Connect your program {#connect}
+
+You need the permission to manage connections (administrators have it).
+
+1. Open **Settings → CRMs and spreadsheets** and scroll to **Accounting programs**. Click **Connect …** on your program's tile, or **Upload a file** on **Any other program (file)**, and follow that program's page in the table above.
+   ![The accounting program tiles, ringed](img/fin-tiles.webp)
+
 ## Matching customers
 
 Each customer in the accounting program is matched to one customer in Curahold: first by tax number, then by web address or email domain, then by name (company forms such as Ltd., A.Ş. or 株式会社 are ignored). When exactly one customer fits, the match is made; when none or several fit, it waits on the **Matching** tab of the connection. There you can choose the customer, or leave it out. Matches you make by hand are kept.

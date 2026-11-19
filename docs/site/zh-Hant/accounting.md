@@ -20,6 +20,13 @@ summary: 唯讀連接會計軟體：誰欠多少，顯示在客戶頁面和健�
 | QuickBooks Online | 使用 Intuit 登入 | [QuickBooks Online](/docs/zh-Hant/accounting-quickbooks/) |
 | 其他軟體（Logo、Mikro、Tally、SAP Business One…） | Excel 或 CSV 檔案 | [檔案](/docs/zh-Hant/accounting-file/) |
 
+## 連接你的軟體 {#connect}
+
+你需要管理連線的權限（管理員擁有）。
+
+1. 開啟 **設定 → CRM 與試算表**，捲動到 **會計軟體**。在你的軟體卡片上點選 **連接 …**，或在 **其他軟體（檔案）** 上點選 **上傳檔案**，然後依上表中該軟體的頁面操作。
+   ![會計軟體卡片已標出](img/fin-tiles.webp)
+
 ## 配對客戶
 
 會計軟體中的每個客戶都會配對到 Curahold 中的一個客戶：先依統一編號，再依網址或電子郵件網域，最後依名稱（會忽略 Ltd.、A.Ş.、株式会社 等公司形式）。恰好只有一個客戶符合時會自動配對；沒有或有多個符合時，會在連接的**配對**分頁中等待。你可以在那裡選擇客戶或將其排除。手動做的配對會保留。

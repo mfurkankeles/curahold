@@ -8,9 +8,12 @@ summary: Sending a help request, adding screenshots, and letting Curahold suppor
 
 Two steps, in this order: **ask**, and if that did not settle it, **write to support**.
 
-## Ask first
+## Ask first {#ask}
 
-Open **CuraAI** at the bottom right of any screen (or the **Ask** button on any page of these docs) and write your question in your own words: "how do I import customers", "who can see this field". The answer comes from these docs, with the place it came from, in a moment. It works in the languages these docs are written in, and nothing you type is sent anywhere: the docs are searched in your own browser.
+1. Click **CuraAI** in the menu on the left (on a phone, the button at the bottom right; on these docs, the **Ask** button). Write your question in your own words: "how do I import customers", "who can see this field".
+   ![CuraAI in the menu, ringed](img/ai-open.webp)
+
+The answer comes from these docs, with the place it came from. When your company has **AI answers** on (see below), CuraAI also reads what you may already see in Curahold, such as your customers, renewals and tasks, so you can ask "what renews in the next 90 days?". It only reads; it never changes anything. When AI answers are off, not set up or over the month's limit, the docs are searched on your own device and nothing you type is sent anywhere.
 
 If the answer is not what you needed, say so: you get the next closest places, and a button to write to support with your question already filled in.
 
@@ -94,3 +97,22 @@ So that support can see what happened when something breaks — rather than aski
 - **Administrators can switch it off** under **Settings → Security → Support access → Session recording for support**. With it off, nothing is recorded.
 
 If your organisation needs to tell its own people about this in a privacy notice, that switch and this page are the basis for it.
+
+## AI answers (administrators) {#ai-answers}
+
+1. Open **Settings → Support access** and scroll to **AI assistant**.
+   ![The AI assistant settings, ringed](img/ai-settings.webp)
+2. Tick **Answer with AI** to let CuraAI answer with AI, or untick it to answer with the docs search alone, at no cost. What CuraAI reads is never used to train AI models.
+   ![The Answer with AI box, ringed](img/ai-switch.webp)
+
+On the same card:
+
+- **Monthly limit (USD)**: when it is reached, CuraAI answers from the docs search until next month. The card shows this month's questions and what they cost.
+- **Keep questions for**: how long questions are kept (or not at all). A person's own questions are in their personal-data download.
+- **Draft a first reply on our help requests**: Curahold support sees a drafted first answer to your requests; you never see the draft, only support's real answer.
+
+If the card says AI answers are not set up on this installation, CuraAI uses the docs search; the person who runs your Curahold server adds the AI key.
+
+## The error log (administrators) {#errors}
+
+**Settings → Errors** lists what went wrong for your people in the last 30 days and where: the screen, the request that failed and how often. Nothing personal is in it. Attach what you see there when you write to support.

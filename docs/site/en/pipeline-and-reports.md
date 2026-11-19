@@ -69,3 +69,7 @@ A dashboard is a page made of charts and lists (the tabs on your home). Under **
 - With a report open, **Add to a dashboard** puts it straight onto one (the report is shared with the company, so everyone who opens the dashboard sees the card).
 
 People who run the company settings add and edit dashboards; anyone who can write can build a report.
+
+## Currencies {#currencies}
+
+**Settings → Currencies** holds your company's own currency and the other currencies you work in, with what one of each is worth in yours. Amounts in another currency (a customer abroad, a deal in euros) are added up in your currency in reports, pipelines and the backlog, at these rates. Changing the company's currency asks you to confirm the rates again.

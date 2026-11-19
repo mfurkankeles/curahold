@@ -6,22 +6,25 @@ summary: Who has room in the weeks ahead, every customer’s open work in one vi
 ---
 # The team’s weeks, the customer portfolio and cost to serve
 
-**Team** has three views: **Who carries what**, **Weeks ahead** and **Customers**. Choose a team at the top to narrow any of them.
+**Team** (in the menu on the left) has three views: **Who carries what**, **Weeks ahead** and **Customers**. Choose a team at the top right to narrow any of them. Only tasks you may see are counted.
 
-## Weeks ahead
+## Who has room in the weeks ahead {#weeks}
 
-One row per person, one column per week (Monday to Sunday), plus **Late** and **No date**. Each cell shows:
+1. Open **Team** and click **Weeks ahead**.
+   ![The Weeks ahead view, ringed](img/team-weeks.webp)
+2. Read a person's row week by week. In each cell, the big number is the open tasks due that week, ◆ how many of them are promises to a customer, and **pt** their story points. The colour compares the week with what that person usually carries: lighter, about usual, heavier or well over. **Late** and **No date** have columns of their own. Click a cell to open that person's 1:1 view.
+   ![One week of one person, ringed](img/team-cell.webp)
 
-- the big number: open tasks due that week;
-- ◆ how many of them are promises to a customer (tasks that belong to a customer);
-- **pt**: their story points.
+## Every customer's open work {#customers}
 
-The colour compares the week with what that person usually carries: lighter, about usual, heavier, or well over (late work is always marked). Click a cell to open the person’s 1:1 view. Only tasks you may see are counted.
+1. Open **Team** and click **Customers**. Every customer with something open is listed, busiest first: open work, how much of it is late, requests their people sent through the portal, support tickets not yet solved, and the next due date. Click a column's name to sort by it; switch between **Everyone’s** and **Mine**.
+   ![The Customers view and its columns, ringed](img/team-customers.webp)
 
-## Customers
+Amounts are left out here on purpose: who may see money is decided field by field.
 
-Every customer with something open, busiest first: open work, how much of it is late, requests their people sent through the portal, and support tickets not yet solved, with the next due date. Sort by any column; switch between **Everyone’s** and **Mine**. Amounts are left out here on purpose: who may see money is decided field by field.
+## Cost to serve {#cost-to-serve}
 
-## Cost to serve
+1. Open **Reports** in the menu, click the **Reports** tab, then **Cost to serve**. For each customer it shows the hours logged on its work in the last 12 months for every 1,000 of yearly value (ARR, else MRR × 12, else the first amount field). The highest are the customers that cost most to look after.
+   ![The Cost to serve report in the library, ringed](img/team-cost.webp)
 
-In **Reports**, the ready-made **Cost to serve** report shows, for each customer, the hours logged on its work in the last 12 months for every 1,000 of yearly value (ARR, else MRR × 12, else the first amount field). High numbers are the customers that cost most to look after. Two fields come with it in the report builder: **Time logged, last 12 months** and **Hours per 1,000 of yearly value**. Someone who may not see a customer’s value gets no cost figure.
+Two fields come with it in the report builder: **Time logged, last 12 months** and **Hours per 1,000 of yearly value**. Someone who may not see a customer's value gets no cost figure.
