@@ -118,7 +118,7 @@ describe('whose calendar someone may open', () => {
     expect((await ada.patch(`/api/admin/users/${env.a.ids.omar}`, { roleId: role.id })).status).toBe(200);
     const omar = await login(env, 'acme', 'omar@demo.example');
     const reach = (await omar.get('/api/calendars')).json as CalendarReach;
-    expect(reach.teams.map((t) => t.name)).toEqual(['Account Management']);
+    expect(reach.teams.map((t) => t.name)).toEqual(['Sales']);
     const hers = await cal(omar, `p:${env.a.ids.ada}`);
     // Her task on a board he can open is there; the one on her private board is not.
     expect(hers.some((x) => x.title === 'Get the price increase approved')).toBe(true);

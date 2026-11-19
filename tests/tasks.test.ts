@@ -179,7 +179,7 @@ describe('boards', () => {
 
   it('a team board needs a team you belong to', async () => {
     const teams = (await zeynep.get('/api/people')).json.teams;
-    const am = teams.find((t: any) => t.name === 'Account Management');
+    const am = teams.find((t: any) => t.name === 'Sales');
     expect((await zeynep.post('/api/boards', { name: 'X', visibility: 'team', teamId: am.id })).status).toBe(403);
     const cs = teams.find((t: any) => t.name === 'Customer Success');
     expect((await zeynep.post('/api/boards', { name: 'CS side board', visibility: 'team', teamId: cs.id })).status).toBe(201);
