@@ -24,7 +24,8 @@
     "format:check": "prettier --check .",
     "test:isolation": "vitest run tests/isolation.test.ts tests/isolation-routes.test.ts tests/rls.test.ts",
     "test:leak": "vitest run tests/leak.test.ts",
-    "test:i18n": "vitest run tests/i18n.test.ts"
+    "test:i18n": "vitest run tests/i18n.test.ts",
+    "test:a11y": "npm run build && npm run build:site && npm run build:demo && tsx tests/e2e/a11y.ts"
   },
   "license": "UNLICENSED",
   "dependencies": {
