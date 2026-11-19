@@ -106,7 +106,7 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 | Ne fark ederiz | Neden önemli | Düğme |
 | --- | --- | --- |
 | … analiz anahtarı iki hafta içinde çalışmayı bırakacak (Düzeltmeye değer) | BI aracınızdaki raporlar yenilenmeyi bırakır. Anahtarı yenileyip yenisini oraya yapıştırın. | **Analiz anahtarlarını aç** |
-| BI aracınız bir haftadır veri çekmedi (Bir dakikanız olduğunda) | Panoları geçen haftanın rakamlarını gösterir. Zamanlanmış yenilemesine ya da kullandığı anahtara bakın. | **Analiz anahtarlarını aç** |
+| BI aracınız bir haftadır veri çekmedi (Bir dakikanız olduğunda) | Panelleri geçen haftanın rakamlarını gösteriyor. Zamanlanmış yenilemesine ya da kullandığı anahtara bakın. | **Analiz anahtarlarını aç** |
 
 ### Müşteri portalı kontrolleri
 

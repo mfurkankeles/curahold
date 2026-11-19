@@ -2,6 +2,7 @@
 // (acme.curahold-portal.com). It shares nothing with the app's API: its own
 // cookie, its own sessions, and a database role that can only call the
 // portal_* functions (db/migrations/0011_portal.sql).
+import { PORTAL_HEADERS } from './lib/headers';
 import { clientIp, isSignIn, isUpload, isWrite, limited, sharedLimiter, takeAll, type BudgetName } from './lib/ratelimit';
 import { edgeAnswer, raiseTrafficAlert, robotRefusal, sharedWatch } from './lib/botGuard';
 import { turnstileSiteKey } from './lib/humanCheck';
@@ -61,6 +62,8 @@ export function createPortalApp(deps: Deps) {
     c.header('x-content-type-options', 'nosniff');
     c.header('x-robots-tag', CLOSED_X_ROBOTS);
     c.header('referrer-policy', 'no-referrer');
+    // The page's own policy when this app serves it (self-hosted, local): no framing, scripts from here only.
+    for (const [k, v] of Object.entries(PORTAL_HEADERS)) if (!c.res.headers.has(k)) c.header(k, v);
     if (c.req.path.startsWith('/papi/')) c.header('cache-control', 'no-store');
     // Writes: the people's tasks and replies move on, and the company's webhooks hear of it.
     if (deps.defer && c.req.method === 'POST' && c.res.status < 400 && /^\/papi\/(boards|tasks)\//.test(c.req.path)) {
@@ -233,13 +236,27 @@ export function createPortalApp(deps: Deps) {
     if (used + files.reduce((n, f) => n + f.size, 0) > quota) fail('portal_quota');
   };
 
+  /**
+   * Keeps one file, then records it. The database decides whether it may be kept (the
+   * person's own request or step, the daily count): when it refuses, the bytes go too, so a
+   * refused upload never stays in storage outside the company's quota.
+   */
+  const keep = async (key: string, f: { data: ArrayBuffer; mime: string }, record: () => Promise<unknown>) => {
+    await deps.storage.put(key, f.data, f.mime);
+    try {
+      await record();
+    } catch (e) {
+      await deps.storage.delete(key).catch(() => undefined);
+      throw e;
+    }
+  };
+
   /** Keeps the files, then records each on the request (comment null) or on the reply. */
   const attach = async (c: any, taskId: string, commentId: string | null, files: Awaited<ReturnType<typeof portalFiles>>) => {
     const org = c.get('org');
     for (const f of files) {
       const key = `${org.id}/${taskId}/${crypto.randomUUID()}`;
-      await deps.storage.put(key, f.data, f.mime);
-      await one(c, 'select portal_add_file($1, $2, $3, $4, $5, $6) as id', [taskId, commentId, f.name, f.size, f.mime, key]);
+      await keep(key, f, () => one(c, 'select portal_add_file($1, $2, $3, $4, $5, $6) as id', [taskId, commentId, f.name, f.size, f.mime, key]));
     }
   };
 
@@ -311,8 +328,7 @@ export function createPortalApp(deps: Deps) {
     const org = c.get('org');
     for (const f of files) {
       const key = `${org.id}/onboarding/${stepId}/${crypto.randomUUID()}`;
-      await deps.storage.put(key, f.data, f.mime);
-      await one(c, 'select portal_onboarding_add_file($1, $2, $3, $4, $5) as id', [stepId, f.name, f.size, f.mime, key]);
+      await keep(key, f, () => one(c, 'select portal_onboarding_add_file($1, $2, $3, $4, $5) as id', [stepId, f.name, f.size, f.mime, key]));
     }
     // The plan's owner hears of it in the app.
     await deps.db.system(async (q) => {

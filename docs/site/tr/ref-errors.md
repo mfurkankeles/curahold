@@ -105,3 +105,4 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `server` | 500 | Bizim tarafta bir sorun oldu. Lütfen tekrar dene. |
 | `billing_error` | 502 | Ödeme sağlayıcısı beklendiği gibi yanıt vermedi. Bir dakika sonra yeniden dene. |
 | `crm_error` | 502 | Bağlı servis şunu söyledi: … |
+| `crm_unreachable` | 502 | Bu adrese ulaşamadık. Adın doğru yazıldığına bak; doğruysa şirket ağı engelliyor olabilir: BT ekibine sor. |

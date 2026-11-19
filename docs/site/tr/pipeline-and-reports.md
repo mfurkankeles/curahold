@@ -2,13 +2,13 @@
 title: Fırsatlar, raporlar ve ekip
 section: help
 order: 4
-summary: Satış hattı, gelen kutusu, zaman çizelgesi, raporlar ve 1:1 hazırlığı.
+summary: Satış hunisi, gelen kutusu, zaman çizelgesi, raporlar ve 1:1 hazırlığı.
 ---
 # Fırsatlar, raporlar ve ekip
 
 Sol menü dört bölümdür: üstte günlük işler (Ana sayfa, Görevlerim, Gelen kutusu, Takvim), **Müşteriler**, **İş** (panolar ve zaman çizelgesi) ve **İçgörü** (Raporlar, Paneller, Ekip). Bölüm başlığına tıklayınca bölüm katlanır.
 
-## Fırsatlar: satış hattı
+## Fırsatlar: satış hunisi
 
 **Müşteriler → Fırsatlar** fırsatları aşamalarına göre sütunlarda gösterir. Bir kartı sürükleyip başka aşamaya bırak; **Kazanıldı** ya da **Kaybedildi** sütununa bırakınca fırsat kapanır. Üstteki şerit toplamları verir: açık fırsatlar, ağırlıklı tahmin (ileri aşamalar daha çok sayılır), bu ay kapanacaklar ve kazanılan.
 
@@ -74,4 +74,4 @@ Panelleri şirket ayarlarını yönetenler ekler ve düzenler; raporu, yazma yet
 
 ## Para birimleri {#currencies}
 
-**Ayarlar → Para birimleri**, şirketinin kendi para birimini ve çalıştığın diğer para birimlerini, her birinin seninkinde ne ettiğiyle birlikte tutar. Başka para birimindeki tutarlar (yurt dışındaki bir müşteri, avro cinsinden bir fırsat) raporlarda, satış hattında ve backlog'da bu kurlarla senin para biriminde toplanır. Şirketin para birimini değiştirince kurları yeniden onaylaman istenir.
+**Ayarlar → Para birimleri**, şirketinin kendi para birimini ve çalıştığın diğer para birimlerini, her birinin seninkinde ne ettiğiyle birlikte tutar. Başka para birimindeki tutarlar (yurt dışındaki bir müşteri, avro cinsinden bir fırsat) raporlarda, satış hunisinde ve backlog'da bu kurlarla senin para biriminde toplanır. Şirketin para birimini değiştirince kurları yeniden onaylaman istenir.

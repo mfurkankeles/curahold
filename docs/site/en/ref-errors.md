@@ -105,3 +105,4 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `server` | 500 | Something went wrong on our side. Please try again. |
 | `billing_error` | 502 | The payment provider did not answer as expected. Please try again in a minute. |
 | `crm_error` | 502 | The connected service said: … |
+| `crm_unreachable` | 502 | We could not reach that address. Check the name is spelled right; if it is, your company network may be blocking it: ask your IT team. |

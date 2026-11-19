@@ -21,7 +21,8 @@ const HOSTS: Partial<Record<WebhookFlavor, RegExp>> = {
 
 /** This machine or a private network: never a place to send a company's data or a key. */
 export function privateHost(host: string): boolean {
-  const h = host.toLowerCase().replace(/^\[|\]$/g, '');
+  // A name may end in a dot ("localhost.", "metadata.google.internal."): the same host to DNS.
+  const h = host.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
   if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal')) return true;
   if (/^[0-9.]+$/.test(h)) {
     const [a, b] = h.split('.').map(Number);

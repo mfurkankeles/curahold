@@ -55,14 +55,14 @@ summary: Neler yeni, neler değişti.
 
 ### Hedefler, değerlendirme ritmi ve dürtmeler
 
-- **Hedefler:** dönem (ay, çeyrek, yıl) ve fırsat türü başına hedef; Raporlar’da ve satış hattının üstünde kazanılan, ağırlıklı tahmin ve eşit tempo aynı çubukta. “Önde / Yolunda / Geride” ve kalan her hafta ne kazanmak gerektiği.
+- **Hedefler:** dönem (ay, çeyrek, yıl) ve fırsat türü başına hedef; Raporlar’da ve satış hunisinin üstünde kazanılan, ağırlıklı tahmin ve eşit tempo aynı çubukta. “Önde / Yolunda / Geride” ve kalan her hafta ne kazanmak gerektiği.
 - **İş değerlendirmeleri:** şirket genelinde ya da müşteri başına ritim (örneğin 90 günde bir); Müşteriler → Değerlendirmeler zamanı gelenleri sıralar, kaydedince sıradaki tarih ilerler.
 - **Dürtmeler:** perşembe günleri yerinde sayan görevlerin listesi; istenirse birkaç gün geciken iş ekip liderine bir kez bildirilir.
 - **Panolar:** tamamlanan sütunu en yeni kartları gösterir, eskiler tek tıkla açılır.
 
 ### CRM, raporlar ve görevlerin fazlası
 
-- **Satış hattı:** fırsatlar aşama aşama sütunlarda; sürükle-bırak, Kazanıldı/Kaybedildi, ağırlıklı tahmin. Fırsat türleri: yeni iş, genişleme, yenileme.
+- **Satış hunisi:** fırsatlar aşama aşama sütunlarda; sürükle-bırak, Kazanıldı/Kaybedildi, ağırlıklı tahmin. Fırsat türleri: yeni iş, genişleme, yenileme.
 - **Raporlar:** açık/geciken/biten işler, zamanında bitirme, hafta hafta akış, kişi ve pano bazında yük, sağlık dağılımı, yenilemeler, aşama bazında fırsatlar.
 - **Ekip ve 1:1:** kişi başına yük ve tek kişilik hazırlık görünümü.
 - **Zaman çizelgesi (Gantt):** başlangıç ve son tarihe göre çubuklar; pano, kişi ya da müşteri bazında.

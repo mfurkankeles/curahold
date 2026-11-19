@@ -308,6 +308,44 @@ const people: [string, Client][] = [
   ['team lead', await login(env, 'big', 'mert@demo.example')],
   ['admin', await login(env, 'big', 'ada@demo.example')],
 ];
+// The features added since 16 Nov read tables the fill above never touches:
+// give the big company its own onboarding plan and a portfolio of customer
+// plans, made through the API as the admin (so every step, person and goal is
+// what a real plan holds). Only what is missing is made, so a kept database
+// keeps its plans.
+{
+  const admin = people[2][1];
+  await admin.get('/api/onboarding/self');
+  const PLANS = N(400);
+  const [{ n }] = await raw.unsafe(`select count(*)::int as n from onboarding_plans where org_id = $1 and kind = 'client'`, [org.id]);
+  if (n < PLANS) {
+    const free = await raw.unsafe(
+      `select a.id from accounts a where a.org_id = $1 and a.archived_at is null
+          and not exists (select 1 from onboarding_plans p where p.account_id = a.id) order by a.id limit $2`,
+      [org.id, PLANS - n],
+    );
+    for (const a of free) await admin.post('/api/onboarding-plans', { accountId: a.id });
+    await admin.post('/api/setup-health/check', {});
+    await raw.unsafe('analyze');
+    console.log(`[${since()}] ${free.length} customer onboarding plans made`);
+  }
+}
+const [plan] = await raw.unsafe(`select id from onboarding_plans where org_id = $1 and kind = 'client' order by started_on desc, id limit 1`, [org.id]);
+reads.push(
+  ['Setup health', '/api/setup-health'],
+  ['Onboarding hub (own plan)', '/api/onboarding/self'],
+  ['', '/api/onboarding/self/summary'],
+  ['', '/api/onboarding/checklist'],
+  ['Onboarding portfolio', '/api/onboarding-plans'],
+  ['A customer plan', `/api/onboarding-plans/${plan.id}`],
+  ['Portfolio view', '/api/reports/portfolio'],
+  ['Workload', '/api/reports/workload'],
+  ['Departments', '/api/departments'],
+  ['Customer flow', `/api/accounts/${customer.id}/flow`],
+  ['Hand-overs', '/api/handovers'],
+  ['Analytics feed', '/api/analytics/v1/Tasks.json'],
+  ['', '/api/analytics/v1/Customers.json'],
+);
 const SLOW = Number(process.env.PERF_SLOW_MS) || 400;
 let slow = 0;
 console.log(`${'request'.padEnd(58)}${people.map(([n]) => n.padStart(13)).join('')}`);
