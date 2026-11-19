@@ -22,8 +22,8 @@ import {
   PROBLEMS,
   TIMELINES,
   TRIAL_FORM,
-  consentBlocksFor,
 } from '../../../shared/src/trialForm';
+import { trialConsent } from '../../../shared/src/compliance/trialConsent';
 import { TRIAL_DEPARTMENTS, type TrialRequestInput } from '../../../shared/src/trialRequest';
 import { centralUrl, nowOf, type AppEnv, type C } from '../context';
 import { hmacHex, randomDigits, safeEqual, sign, verify } from '../lib/crypto';
@@ -241,7 +241,7 @@ const submitSchema = z.object({
     .optional()
     .default({}),
   /** The keys of the boxes ticked. */
-  consents: z.array(z.string().regex(/^[a-z0-9_.-]{2,60}$/)).max(30),
+  consents: z.array(z.string().regex(/^[A-Za-z0-9_.-]{2,60}$/)).max(30),
   /** Why a free-mail address (Gmail…) is used for a company trial; required for one. */
   freeMailNote: text(300),
 });
@@ -265,10 +265,12 @@ trialRoutes.post('/submit', async (c) => {
 
   // The consents the countries that apply ask for: the one picked and the one the connection comes from.
   const country = ipCountry(c);
-  const blocks = consentBlocksFor([input.country, country]);
+  const consent = trialConsent(input.country, country, input.uiLocale as Locale);
+  if (!consent.offered) fail('validation', { fields: 'country' }, { fields: ['country'] });
+  const blocks = consent.blocks;
   const missing = blocks.filter((b) => b.required && !input.consents.includes(b.key)).map((b) => b.key);
   if (missing.length) fail('validation', { fields: 'consents' }, { fields: ['consents'], missing });
-  const evidence = await consentEvidence(input.uiLocale as Locale, blocks, input.consents);
+  const evidence = await consentEvidence(blocks, input.consents);
 
   const [recent] = await deps.db.system((q) =>
     q.query<{ n: number }>(`select count(*)::int as n from trial_requests where email = $1 and created_at > now() - interval '1 day'`, [to]),

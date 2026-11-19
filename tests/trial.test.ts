@@ -4,11 +4,14 @@
 // click-accept, and the reminders up to a read-only end.
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Deps } from '../api/src/context';
-import { sign } from '../api/src/lib/crypto';
+import { sha256Hex, sign } from '../api/src/lib/crypto';
 import { createOrg } from '../api/src/lib/orgs';
 import { markAgreementsDue, reminderFor, sendTrialReminders } from '../api/src/lib/trial';
 import { translate } from '../shared/src/i18n';
-import { consentBlocksFor, CONSENT_VERSION } from '../shared/src/trialForm';
+import { CONSENT_TEXT_VERSION } from '../shared/src/compliance/consentTexts';
+import { shownText, trialConsent } from '../shared/src/compliance/trialConsent';
+import { verifyAgreementChain } from '../api/src/lib/agreementEvidence';
+import { AGREEMENT_PACK } from '../shared/src/compliance/agreements';
 import { Client, login, setup, type Env } from './helpers';
 
 let env: Env;
@@ -95,7 +98,7 @@ describe('sending the request', () => {
   it('stores the request for the owner, with the consent evidence, and mails a receipt', async () => {
     const to = 'nora@northwind.example';
     const { c, ticket } = await proven(to);
-    const r = await c.req('POST', '/api/trial/submit', { ...form(), ticket, stamp: await oldStamp(), consents: ['any.marketing'] }, { 'cf-ipcountry': 'DE' });
+    const r = await c.req('POST', '/api/trial/submit', { ...form(), ticket, stamp: await oldStamp(), consents: ['EU.M'] }, { 'cf-ipcountry': 'DE' });
     expect(r.status).toBe(201);
     expect(r.json.ref).toMatch(/^TQ-\d+$/);
     const [row] = await env.db.system((q) =>
@@ -112,9 +115,12 @@ describe('sending the request', () => {
         [row.id],
       ),
     );
-    expect(records.map((x) => x.block)).toEqual(['any.capacity', 'any.marketing', 'eu.notice']);
-    expect(records.every((x) => x.version === CONSENT_VERSION && x.ip_country === 'DE' && /^[0-9a-f]{64}$/.test(x.text_hash))).toBe(true);
-    expect(records.find((x) => x.block === 'any.marketing')!.granted).toBe(true);
+    expect(records.map((x) => x.block)).toEqual(['ALL.A', 'EU.M', 'EU.N']);
+    expect(records.every((x) => x.version === CONSENT_TEXT_VERSION && x.ip_country === 'DE' && /^[0-9a-f]{64}$/.test(x.text_hash))).toBe(true);
+    expect(records.find((x) => x.block === 'EU.M')!.granted).toBe(true);
+    // The hash is the hash of the exact words the form showed (the compliance package's texts, placeholders filled).
+    const notice = trialConsent('DE', 'DE', 'en').blocks.find((b) => b.key === 'EU.N')!;
+    expect(records.find((x) => x.block === 'EU.N')!.text_hash).toBe(await sha256Hex(shownText(notice)));
     // The owner hears of it; the person gets a receipt with the way out of marketing.
     expect(env.email.sent.some((m) => m.to === 'owner@curahold.test' && m.text.includes(to))).toBe(true);
     expect(env.email.last(to).text).toMatch(/\/signup\/unsubscribe#t=/);
@@ -124,28 +130,28 @@ describe('sending the request', () => {
     const { c, ticket } = await proven('ayse@kuzey.example');
     const stamp = await oldStamp();
     // Türkiye picked (notice only: no consent box where another basis exists), from Korea: PIPA's separate transfer consent.
-    const need = consentBlocksFor(['TR', 'KR'])
-      .filter((b) => b.required)
+    const need = trialConsent('TR', 'KR', 'tr')
+      .blocks.filter((b) => b.required)
       .map((b) => b.key);
-    expect(need).toEqual(['kr.transfer']);
+    expect(need).toEqual(['KR.T']);
     // The United Arab Emirates rest on consent: a required box.
     expect(
-      consentBlocksFor(['AE'])
-        .filter((b) => b.required)
+      trialConsent('AE', null, 'ar')
+        .blocks.filter((b) => b.required)
         .map((b) => b.key),
-    ).toEqual(['ae.consent']);
+    ).toEqual(['AE.C']);
     const missing = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [] }, { 'cf-ipcountry': 'KR' });
     expect(missing.status).toBe(400);
-    expect(missing.json.missing).toEqual(['kr.transfer']);
-    const ok = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [...need, 'tr.m1'] }, { 'cf-ipcountry': 'KR' });
+    expect(missing.json.missing).toEqual(['KR.T']);
+    const ok = await c.req('POST', '/api/trial/submit', { ...form({ country: 'TR' }), ticket, stamp, consents: [...need, 'TR.M1'] }, { 'cf-ipcountry': 'KR' });
     expect(ok.status).toBe(201);
     // Türkiye's marketing is two separate boxes (Law 6563 approval, KVKK consent); the ticked one only.
     const rows = await env.db.system((q) =>
       q.query(`select block, granted from consent_records where email = 'ayse@kuzey.example' and kind = 'marketing' order by block`),
     );
     expect(rows).toEqual([
-      { block: 'tr.m1', granted: true },
-      { block: 'tr.m2', granted: false },
+      { block: 'TR.M1', granted: true },
+      { block: 'TR.M2', granted: false },
     ]);
   });
 
@@ -182,7 +188,7 @@ describe('sending the request', () => {
     const r = await central().post('/api/trial/unsubscribe', { t: link, locale: 'en' });
     expect(r.json).toMatchObject({ ok: true, withdrawn: 1 });
     const rows = await env.db.system((q) =>
-      q.query(`select kind, granted from consent_records where email = 'nora@northwind.example' and block = 'any.marketing' order by created_at`),
+      q.query(`select kind, granted from consent_records where email = 'nora@northwind.example' and block = 'EU.M' order by created_at`),
     );
     expect(rows).toEqual([
       { kind: 'marketing', granted: true },
@@ -223,6 +229,16 @@ describe('a trial company: terms first, then seats within the cap', () => {
     const [row] = await env.db.system((q) => q.query(`select accepted_email, text_hash from org_agreements where org_id = $1 and doc = 'terms'`, [orgId]));
     expect(row.accepted_email).toBe('lead@capco.example');
     expect(row.text_hash).toMatch(/^[0-9a-f]{64}$/);
+    // And one row per document in the hash-chained evidence, with the document's own text hash.
+    const evidence = await env.db.system((q) =>
+      q.query(`select doc, version, doc_locale, doc_hash, context, authority from agreement_evidence where org_id = $1 order by doc`, [orgId]),
+    );
+    expect(evidence.map((e) => `${e.doc}@${e.version}:${e.doc_locale}:${e.context}:${e.authority}`)).toEqual([
+      `dpa@${AGREEMENT_PACK.dpa.version}:en:trial_approval:true`,
+      `terms@${AGREEMENT_PACK.terms.version}:en:trial_approval:true`,
+    ]);
+    expect(evidence.every((e) => /^[0-9a-f]{64}$/.test(e.doc_hash))).toBe(true);
+    expect((await env.db.system((q) => verifyAgreementChain(q))).ok).toBe(true);
     expect((await admin.get('/api/me')).json.org.agreementsDue).toBe(false);
     // A copy goes to the person who accepted, with both versions and where they stay readable.
     expect(env.email.last('lead@capco.example').text).toMatch(/legal-terms\/[\s\S]*legal-dpa\//);

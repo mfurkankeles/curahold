@@ -1750,7 +1750,7 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
   );
 }
 
-/** A stored consent id ('<region>.<what>', from the trial form's rule sets) in the owner's words, with the law it rests on. */
+/** A stored consent id in the owner's words, with the law it rests on: the compliance package's ('TR.M1', 'AE.C') or the earlier form's ('tr.m1'). */
 const CONSENT_KIND: Record<string, OwnerKey> = {
   notice: 'req.consentKind.notice',
   consent: 'req.consentKind.consent',
@@ -1760,10 +1760,14 @@ const CONSENT_KIND: Record<string, OwnerKey> = {
   m2: 'req.consentKind.trMarketing',
   marketing: 'req.consentKind.marketing',
 };
+/** The compliance package's block letters (shared/src/compliance/consentTexts.ts). */
+const BLOCK_KIND: Record<string, string> = { N: 'notice', N0: 'notice', R: 'notice', C: 'consent', NC: 'consent', T: 'transfer', A: 'capacity', M: 'marketing', M1: 'm1', M2: 'm2' };
 function consentLabel(key: string, o: (k: OwnerKey) => string): string {
-  const [region, what] = key.split('.');
+  const [set, raw] = key.split('.');
+  const what = raw ? (BLOCK_KIND[raw] ?? raw) : undefined;
   const kind = what ? CONSENT_KIND[what] : undefined;
   if (!kind) return key;
+  const region = set === 'TW' ? 'twn' : set.toLowerCase();
   const law = (what === 'notice' || what === 'consent' || what === 'transfer') && (CONSENT_REGIONS as readonly string[]).includes(region) ? LAW_NAME[region as ConsentRegion] : null;
   return law ? `${o(kind)} · ${law}` : o(kind);
 }

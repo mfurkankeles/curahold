@@ -2,7 +2,7 @@
 // Curahold's owner — not an instant company. Five short steps (work e-mail with a
 // one-time code, about you, the company, the trial wanted, consent), answers
 // kept on this device until sent, consent blocks chosen by the country picked
-// and the country the connection comes from (shared/src/trialForm.ts).
+// and the country the connection comes from (shared/src/compliance/trialConsent.ts).
 //
 // The earlier instant sign-up is still here behind SIGNUP_MODE=instant: the
 // server says which path is on (GET /trial/config) and the old screens load then.
@@ -19,11 +19,8 @@ import {
   TIMELINES,
   TOOL_KINDS,
   TRIAL_FORM,
-  CAPACITY_BLOCK,
-  consentBlocksFor,
-  NOTICE_PAGE,
-  type ConsentBlock,
 } from '../../../shared/src/trialForm';
+import { trialConsent, type TrialConsentBlock } from '../../../shared/src/compliance/trialConsent';
 import { TRIAL_DEFAULTS, TRIAL_DEPARTMENTS, type TrialDepartment } from '../../../shared/src/trialRequest';
 import { Mark } from '../components/ui';
 import { ApiFailure, get, post } from '../lib/api';
@@ -283,7 +280,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
     }
     return COUNTRIES.map((c) => ({ code: c, name: names?.of(c) ?? c })).sort((a, b) => a.name.localeCompare(b.name, bcp47Of(locale)));
   }, [locale]);
-  const blocks = useMemo(() => consentBlocksFor([d.country, config?.ipCountry ?? null]), [d.country, config?.ipCountry]);
+  const blocks = useMemo(() => trialConsent(d.country, config?.ipCountry ?? null, locale).blocks, [d.country, config?.ipCountry, locale]);
   const totalSeats = d.split ? d.departments.reduce((n, dep) => n + (Number(d.seatsByDepartment[dep]) || 0), 0) : Number(d.seats) || 0;
 
   function check(s: number): Errors {
@@ -738,21 +735,30 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
 }
 
 /** The notices (read, never ticked), the consents the law asks for, then marketing — separate and optional. */
-function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]; chosen: string[]; errors: Errors; onChange: (c: string[]) => void }) {
+function Consents({ blocks, chosen, errors, onChange }: { blocks: TrialConsentBlock[]; chosen: string[]; errors: Errors; onChange: (c: string[]) => void }) {
   const { t, locale } = useI18n();
-  const law = (b: ConsentBlock) => b.law ?? t('trial.consent.lawGeneric');
-  // Each region's notice in the help pages' Legal section (Turkey: its own aydınlatma metni).
-  const page = (b: ConsentBlock) => docsHref(`${helpLanguageOf(locale)}/${NOTICE_PAGE[b.region]}`);
+  // Each notice opens its page in the help centre's Legal section (Türkiye: its own aydınlatma metni).
+  const page = (b: TrialConsentBlock) => docsHref(`${helpLanguageOf(locale)}/${b.page}`);
   const flip = (key: string) => onChange(chosen.includes(key) ? chosen.filter((k) => k !== key) : [...chosen, key]);
+  // A text not yet in the interface language comes in its country's language with English next to it.
+  const words = (b: TrialConsentBlock) =>
+    b.shown.map((s, i) => (
+      <span key={s.lang} lang={bcp47Of(s.lang)} dir="auto" className={i ? 'trial__also' : undefined}>
+        {i > 0 && ' '}
+        {s.text}
+      </span>
+    ));
+  const notices = blocks.filter((b) => b.kind === 'notice');
+  const capacity = notices.find((b) => b.key === 'ALL.A');
   const marketing = blocks.filter((b) => b.kind === 'marketing');
   return (
     <div className="trial__consents">
       <h2 className="trial__h2">{t('trial.consent.title')}</h2>
-      {blocks
-        .filter((b) => b.kind === 'notice' && b.key !== CAPACITY_BLOCK.key)
+      {notices
+        .filter((b) => b !== capacity)
         .map((b) => (
           <p key={b.key} className="trial__notice" data-block={b.key} data-version={b.version}>
-            {t(b.text as MessageKey, { law: law(b) })}{' '}
+            {words(b)}{' '}
             <a href={page(b)} {...docsLink}>
               {t('trial.consent.read')}
             </a>
@@ -768,7 +774,7 @@ function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]
               <label className="check">
                 <input type="checkbox" {...described(id, false, err)} checked={chosen.includes(b.key)} onChange={() => flip(b.key)} />
                 <span>
-                  {t(b.text as MessageKey, { law: law(b) })} <em className="trial__opt">({t('trial.consent.required')})</em>
+                  {words(b)} {b.required && <em className="trial__opt">({t('trial.consent.required')})</em>}
                 </span>
               </label>
               {err && (
@@ -779,9 +785,9 @@ function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]
             </div>
           );
         })}
-      {blocks.some((b) => b.key === CAPACITY_BLOCK.key) && (
-        <p className="trial__capacity" data-block={CAPACITY_BLOCK.key} data-version={blocks[0].version}>
-          {t(CAPACITY_BLOCK.text as MessageKey)}
+      {capacity && (
+        <p className="trial__capacity" data-block={capacity.key} data-version={capacity.version}>
+          {words(capacity)}
         </p>
       )}
       {marketing.length > 0 && (
@@ -790,7 +796,7 @@ function Consents({ blocks, chosen, errors, onChange }: { blocks: ConsentBlock[]
           {marketing.map((b) => (
             <label key={b.key} className="check" data-block={b.key} data-version={b.version}>
               <input type="checkbox" checked={chosen.includes(b.key)} onChange={() => flip(b.key)} />
-              <span>{t(b.text as MessageKey, { law: law(b) })}</span>
+              <span>{words(b)}</span>
             </label>
           ))}
         </fieldset>

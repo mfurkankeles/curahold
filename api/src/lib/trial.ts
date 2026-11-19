@@ -5,8 +5,10 @@
 import type { Deps } from '../context';
 import { orgUrl } from '../context';
 import type { Q } from '../db';
-import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
-import { AGREEMENTS, AGREEMENT_DOCS, CONSENT_VERSION, MORE_FREE_MAIL, type AgreementDoc, type ConsentBlock } from '../../../shared/src/trialForm';
+import { translate, type Locale } from '../../../shared/src/i18n';
+import { AGREEMENTS, AGREEMENT_DOCS, MORE_FREE_MAIL, type AgreementDoc } from '../../../shared/src/trialForm';
+import { CONSENT_TEXT_VERSION } from '../../../shared/src/compliance/consentTexts';
+import { shownText, type TrialConsentBlock } from '../../../shared/src/compliance/trialConsent';
 import { TRIAL_DEFAULTS } from '../../../shared/src/trialRequest';
 import { sha256Hex } from './crypto';
 import { emailDomain, isPublicDomain } from './domains';
@@ -26,28 +28,22 @@ export const ipHash = async (secret: string, ip: string | null) => (ip ? (await 
 /** Two capital letters from the edge (Cloudflare's cf-ipcountry), or nothing. XX / T1 (Tor) are not countries. */
 export const ipCountryOf = (h: string | undefined | null) => (h && /^[A-Z]{2}$/.test(h) && h !== 'XX' && h !== 'T1' ? h : null);
 
-/** The sentence a block shows, in the language it was shown in. */
-export function consentText(locale: Locale, block: Pick<ConsentBlock, 'text' | 'law'>): string {
-  const law = block.law ?? translate(locale, 'trial.consent.lawGeneric');
-  return translate(locale, block.text as MessageKey, { law });
-}
-
 export interface ConsentEvidence {
   key: string;
   version: string;
   hash: string;
   granted: boolean;
-  kind: ConsentBlock['kind'];
+  kind: TrialConsentBlock['kind'];
 }
 
-/** What each block said and what the person chose; notices count as shown (granted = seen). */
-export async function consentEvidence(locale: Locale, blocks: ConsentBlock[], granted: string[]): Promise<ConsentEvidence[]> {
+/** What each block said (its exact shown words, hashed) and what the person chose; notices count as shown (granted = seen). */
+export async function consentEvidence(blocks: TrialConsentBlock[], granted: string[]): Promise<ConsentEvidence[]> {
   return Promise.all(
     blocks.map(async (b) => ({
       key: b.key,
       version: b.version,
       kind: b.kind,
-      hash: await sha256Hex(consentText(locale, b)),
+      hash: await sha256Hex(shownText(b)),
       granted: b.kind === 'notice' ? true : granted.includes(b.key),
     })),
   );
@@ -106,7 +102,7 @@ export async function withdrawMarketing(deps: Pick<Deps, 'db'>, email: string, l
       await q.query(
         `insert into consent_records (request_id, org_id, email, block, version, kind, locale, text_hash, granted, ip_country, source)
          values ($1, $2, $3, $4, $5, 'withdrawal', $6, $7, false, $8, 'email_link')`,
-        [r.request_id, r.org_id, email, r.block, CONSENT_VERSION, locale, hash, ipCountry],
+        [r.request_id, r.org_id, email, r.block, CONSENT_TEXT_VERSION, locale, hash, ipCountry],
       );
     }
     return on.length;

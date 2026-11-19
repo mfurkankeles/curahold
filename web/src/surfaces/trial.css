@@ -101,6 +101,10 @@
   font-weight: 500;
   color: var(--ink-2);
 }
+/* The English next to a text shown in its country's language. */
+.trial__also {
+  color: var(--ink-3);
+}
 .trial__consent {
   display: grid;
   gap: 4px;

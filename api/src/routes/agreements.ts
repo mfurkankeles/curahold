@@ -3,6 +3,8 @@
 // (DPA). What is stored is the evidence a review asks for — which document,
 // which version, the hash of the exact sentence clicked, who, when, from which
 // country — and a new version asks again (lib/trial.ts markAgreementsDue).
+// Each accepted document is also one row in the hash-chained agreement_evidence
+// (lib/agreementEvidence.ts), with the SHA-256 of the document text itself.
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { AGREEMENTS, AGREEMENT_DOCS } from '../../../shared/src/trialForm';
@@ -10,12 +12,21 @@ import { helpLanguageOf, translate } from '../../../shared/src/i18n';
 import { nowOf, orgUrl, requirePerm, run, type AppEnv } from '../context';
 import { sha256Hex } from '../lib/crypto';
 import { audit } from '../lib/audit';
+import { recordAgreement } from '../lib/agreementEvidence';
+import LEGAL_HASHES from '../../../shared/src/compliance/legal-hashes.json';
 import { agreementStatement, ipCountryOf, type AgreementRow } from '../lib/trial';
 import { localeField, body } from '../lib/validate';
 
 export const agreementRoutes = new Hono<AppEnv>();
 
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
+
+/** The document's text hash in the language read (English and Turkish are written today; else the English one, which those readers are shown). */
+function docHash(slug: string, locale: string): { docLocale: string; docHash: string } {
+  const per = (LEGAL_HASHES.sha256 as Record<string, Record<string, string>>)[slug] ?? {};
+  const lang = per[locale] ? locale : 'en';
+  return { docLocale: lang, docHash: per[lang] ?? '' };
+}
 
 /** What the company has accepted, and what is still waiting for its administrator. */
 agreementRoutes.get('/agreements', async (c) => {
@@ -52,6 +63,28 @@ agreementRoutes.post('/agreements/accept', async (c) => {
         where org_id = $1 and accepted_at is null and doc = any($9::text[]) returning doc, version`,
       [org.id, auth.userId, auth.email, auth.name, hash, input.locale, country, ua, input.docs],
     );
+    for (const d of done)
+      await recordAgreement(q, {
+        orgId: org.id,
+        companyName: org.name,
+        companyTaxId: null,
+        userId: auth.userId,
+        userEmail: auth.email,
+        userName: auth.name,
+        userRole: auth.roleKey,
+        // The sentence clicked says the person is authorised to accept for the company.
+        authority: true,
+        doc: d.doc as 'terms' | 'dpa',
+        version: d.version,
+        ...docHash(AGREEMENTS[d.doc as 'terms' | 'dpa'].docs, helpLanguageOf(input.locale)),
+        pdfHash: null,
+        statement: agreementStatement(input.locale),
+        buttonLabel: translate(input.locale, 'agreements.accept'),
+        context: 'trial_approval',
+        ipCountry: country,
+        userAgent: ua,
+        copyMessageId: null,
+      });
     if (done.length)
       await audit(q, {
         orgId: org.id,
