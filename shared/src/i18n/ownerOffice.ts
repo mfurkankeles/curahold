@@ -70,9 +70,6 @@ export const OFFICE_EN = {
   'person.chat': 'Chat',
   'person.card': 'Card',
   'person.memory': 'Memory',
-  'person.dock': 'Keep open beside the office',
-  'person.undock': 'Close this chat',
-  'person.photoNote': 'A photo can only come from your own private storage; it is never part of the 3D office.',
   'person.dormant': 'Not hired yet. Wakes when: {trigger}',
   'person.human': 'This seat is held by a person; the office shows it, the chat is theirs.',
   'person.threads': 'Chats with {name}',
@@ -104,6 +101,20 @@ export const OFFICE_EN = {
   'sheet.close': 'Lower the panel',
   'sheet.rooms': 'Rooms and team',
   // the developer frame-rate readout (?fps)
+  'bar.alert1': '1 alert',
+  'legend.ai': 'Everyone here is an AI agent',
+  'rail.countTitle': 'working / in the room',
+  'person.photoTitle': 'Photo slot: only from your own private storage, never in the 3D office',
+  'num.k': '{n}k',
+  'alert.budget80': '{name} used 80% of its weekly budget',
+  'alert.monitor': '{name} was paused by the monitor ({rule})',
+  'alert.held': '{name}: an answer was held back by the output checks',
+  'alert.paused': 'Paused: {what}',
+  'rule.over-reach': 'reached outside its access',
+  'rule.refused-retries': 'three refusals in an hour',
+  'rule.gate-bypass': 'tried to act without approval',
+  'rule.token-spike': 'token spike',
+  'phone.swipe': 'Swipe for the next room',
   'fps.title': 'Frame rate (developer)',
   'fps.rate': 'fps',
   'fps.p95': 'p95',
@@ -174,9 +185,6 @@ export const OFFICE_TR: Record<OfficeKey, string> = {
   'person.chat': 'Sohbet',
   'person.card': 'Kart',
   'person.memory': 'Hafıza',
-  'person.dock': 'Ofisin yanında açık tut',
-  'person.undock': 'Bu sohbeti kapat',
-  'person.photoNote': 'Fotoğraf yalnızca sizin özel depolamanızdan gelebilir; 3B ofisin parçası olmaz.',
   'person.dormant': 'Henüz işe alınmadı. Şu olunca uyanır: {trigger}',
   'person.human': 'Bu koltukta bir insan var; ofis onu gösterir, sohbet onundur.',
   'person.threads': '{name} ile sohbetler',
@@ -204,6 +212,20 @@ export const OFFICE_TR: Record<OfficeKey, string> = {
   'sheet.open': 'Paneli aç',
   'sheet.close': 'Paneli indir',
   'sheet.rooms': 'Odalar ve ekip',
+  'bar.alert1': '1 uyarı',
+  'legend.ai': 'Herkes yapay zekâ ajanı',
+  'rail.countTitle': 'çalışan / odadaki',
+  'person.photoTitle': 'Fotoğraf yuvası: yalnızca sizin özel depolamanızdan gelir, 3B ofise hiç girmez',
+  'num.k': '{n} bin',
+  'alert.budget80': '{name} haftalık bütçesinin %80’ini kullandı',
+  'alert.monitor': '{name} gözetim tarafından durduruldu ({rule})',
+  'alert.held': '{name}: bir yanıt çıktı denetiminde tutuldu',
+  'alert.paused': 'Durduruldu: {what}',
+  'rule.over-reach': 'erişiminin dışına çıktı',
+  'rule.refused-retries': 'bir saatte üç ret',
+  'rule.gate-bypass': 'onaysız iş yapmaya çalıştı',
+  'rule.token-spike': 'token sıçraması',
+  'phone.swipe': 'Sonraki oda için kaydırın',
   'fps.title': 'Kare hızı (geliştirici)',
   'fps.rate': 'fps',
   'fps.p95': 'p95',
@@ -217,4 +239,20 @@ export const OFFICE_TR: Record<OfficeKey, string> = {
 export function officeWord(locale: Locale, key: OfficeKey, vars?: Record<string, string | number>): string {
   const s = (locale === 'tr' ? OFFICE_TR : OFFICE_EN)[key] ?? OFFICE_EN[key] ?? key;
   return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s;
+}
+
+// Job titles stay in English in every language (the owner's rule: the seniority ladder he knows).
+
+/** The monitor's alert lines (api: office.ts, team/monitor.ts, team/runtime.ts) in the reader's language. */
+export function alertText(locale: Locale, body: string, nameOf: (seat: string) => string): string {
+  const w = (k: OfficeKey, v?: Record<string, string | number>) => officeWord(locale, k, v);
+  let m = /^(\S+) used 80% of its weekly budget$/.exec(body);
+  if (m) return w('alert.budget80', { name: nameOf(m[1]) });
+  m = /^(\S+) paused by the monitor: (\S+)$/.exec(body);
+  if (m) return w('alert.monitor', { name: nameOf(m[1]), rule: (OFFICE_EN as Record<string, string>)[`rule.${m[2]}`] ? w(`rule.${m[2]}` as OfficeKey) : m[2] });
+  m = /^(\S+): an answer was held back by the output checks$/.exec(body);
+  if (m) return w('alert.held', { name: nameOf(m[1]) });
+  m = /^Paused (all|team|seat)(?: (\S+))?(?:: (.*))?$/.exec(body);
+  if (m) return w('alert.paused', { what: [m[2] ? nameOf(m[2]) : m[1], m[3]].filter(Boolean).join(' — ') });
+  return body;
 }

@@ -9,13 +9,13 @@
   inset: 0;
   z-index: 20;
   display: grid;
-  grid-template: 'top top top' auto 'rail stage panel' minmax(0, 1fr) / 264px minmax(0, 1fr) 400px;
+  grid-template: 'top top top' auto 'rail stage panel' minmax(0, 1fr) / 272px minmax(0, 1fr) 400px;
   background: var(--paper);
   color: var(--ink);
 }
 @media (max-width: 1599px) {
   .of {
-    grid-template-columns: 232px minmax(0, 1fr) 368px;
+    grid-template-columns: 272px minmax(0, 1fr) 368px;
   }
 }
 @media (min-width: 1680px) {
@@ -659,54 +659,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Chats kept open beside the office. */
-.of-docks {
-  position: absolute;
-  right: 72px;
-  bottom: 16px;
-  display: flex;
-  flex-direction: row-reverse;
-  gap: 12px;
-  align-items: flex-end;
-  max-width: calc(100% - 96px);
-  pointer-events: none;
-}
-.of-dock {
-  display: flex;
-  flex-direction: column;
-  width: 340px;
-  height: min(460px, calc(100% - 32px));
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-l);
-  background: var(--surface);
-  box-shadow: var(--shadow-3);
-  overflow: hidden;
-  pointer-events: auto;
-}
-.of-dock > header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 8px 8px 12px;
-  border-bottom: 1px solid var(--line);
-}
-.of-dock > header strong {
-  flex: 1;
-  font-size: var(--fs-s);
-}
-.of-dock .of-chat {
-  flex: 1;
-  min-height: 0;
-}
-.of-dock .tm-msgs__head {
-  display: none;
-}
-@media (max-width: 1500px) {
-  .of-docks .of-dock:nth-child(n + 3) {
-    display: none;
-  }
-}
-
 /* Search (button and "/"). */
 .of-search-pop {
   position: absolute;
@@ -1190,10 +1142,6 @@
   display: flex;
   gap: 0;
 }
-.of-dockbtn[aria-pressed='true'] {
-  background: var(--brand-wash);
-  color: var(--brand-ink);
-}
 .of-pnow {
   display: flex;
   flex-wrap: wrap;
@@ -1472,4 +1420,195 @@
 }
 .of-pinfo .of-ptitle {
   overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ review round (19 Nov) */
+/* Name tags. Office zoom: a 6 px status dot per figure, nothing else. From room zoom (and on hover or a
+   search hit): the "AI" badge and the name; at seat zoom the title too. 13 px ink-2 on white, 12 px above
+   the head; a tag that would overlap a nearer one hides (the scene marks it). */
+.of-tag {
+  translate: -50% calc(-100% - 12px);
+  max-width: 260px;
+  padding: 2px 8px 2px 4px;
+  color: var(--ink-2);
+  font-size: var(--fs-s);
+  line-height: var(--lh-snug);
+}
+.of-tag__name {
+  color: var(--ink);
+}
+.of-tag__title {
+  padding-inline-end: 0;
+}
+.of-tag__name:last-child,
+.of-tag__title:last-child {
+  padding-inline-end: 0;
+}
+.of-tag[data-activity='dormant'] {
+  opacity: 1;
+}
+.of-tag[data-activity='dormant'] .of-tag__name {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.of-tag__ai {
+  border-radius: var(--r-xs);
+}
+.of-tag__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  box-shadow: 0 0 0 1.5px var(--surface);
+}
+.of-tag[data-activity='working'] .of-tag__dot {
+  background: var(--brand);
+}
+.of-tag[data-activity='meeting'] .of-tag__dot {
+  background: var(--calm);
+}
+.of-tag[data-activity='waiting-approval'] .of-tag__dot {
+  background: var(--today);
+}
+.of-tag[data-activity='queued'] .of-tag__dot {
+  background: var(--soon);
+}
+.of-tag[data-activity='paused'] .of-tag__dot {
+  background: var(--late);
+}
+.of-tag[data-activity='dormant'] .of-tag__dot {
+  background: var(--ink-3);
+}
+.of-tag[data-selected] .of-tag__name {
+  color: var(--on-brand);
+}
+.of-overlay[data-zoom='office'] .of-tag:not([data-lit], [data-selected]) {
+  translate: -50% calc(-100% - 6px);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  opacity: 1;
+}
+.of-overlay[data-zoom='office'] .of-tag:not([data-lit], [data-selected]) > :not(.of-tag__dot) {
+  display: none;
+}
+.of-overlay:not([data-zoom='office']) .of-tag .of-tag__dot,
+.of-overlay .of-tag:is([data-lit], [data-selected]) .of-tag__dot {
+  display: none;
+}
+.of-overlay:not([data-zoom='office']) .of-tag[data-crowded]:not([data-lit], [data-selected]) {
+  visibility: hidden;
+}
+.of-overlay .of-sign[data-crowded] {
+  visibility: hidden;
+}
+.of-ailine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}
+
+/* One meaning per colour: working is the brand everywhere; green only means done. */
+.of .tm-dot[data-activity='working']::before {
+  background: var(--brand);
+}
+.of .tm-dot[data-activity='meeting']::before {
+  background: var(--calm);
+}
+.of .tm-dot[data-activity='waiting-approval']::before {
+  background: var(--today);
+}
+.of-pmeta .tm-chip[data-tone='done'] {
+  background: var(--brand-wash);
+  color: var(--brand-ink);
+}
+.of-rail .tm-av__ai {
+  display: none;
+}
+
+/* The person's title: up to two lines, the whole of it in the tooltip; the level on its own line. */
+.of-pinfo .of-ptitle {
+  display: grid;
+  gap: 2px;
+  overflow-wrap: normal;
+}
+.of-pinfo .of-ptitle span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.of-pinfo .of-ptitle small {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+/* Tokens per message only on hover. */
+.of-chat .tm-msg__cost {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.of-chat .tm-msg:hover .tm-msg__cost,
+.of-chat .tm-msg:focus-within .tm-msg__cost {
+  opacity: 1;
+}
+
+/* The plan: cards as tall as their people, empty rooms one line, titles in full. */
+.of-plan {
+  grid-auto-rows: min-content;
+  align-content: start;
+}
+.of-planroom {
+  overflow: visible;
+}
+.of-plan .of-person small {
+  overflow: visible;
+  white-space: normal;
+}
+
+/* The phone pager's current room; the sheet's person header in one 56 px row. */
+.of-roomchips .of-room[aria-current='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+@media (max-width: 860px) {
+  .of-phead {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    height: 56px;
+    padding: 0 12px;
+  }
+  .of-portrait {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-m);
+  }
+  .of-portrait img {
+    border-radius: var(--r-m);
+  }
+  .of-portrait .tm-av {
+    width: 32px;
+    height: 32px;
+  }
+  .of-pinfo h2 {
+    font-size: var(--fs-l);
+  }
+  .of-pinfo .of-ptitle span {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .of-pinfo .of-ptitle small,
+  .of-pinfo .of-ptr,
+  .of-pmeta,
+  .of-pnow,
+  .of-pnote {
+    display: none;
+  }
+  .of-tabs button {
+    height: 40px;
+  }
 }

@@ -133,7 +133,7 @@ export const TEAM_EN = {
   'chat.flag': 'Output check: {rules}',
   'chat.cost': '{tokens} tokens',
   'chat.failed': 'Not sent. Try again.',
-  'chat.noModel': 'No model key yet — set it on the server to talk to the team.',
+  'chat.noModel': 'Agents can’t talk yet: chats open once a model key is added (it’s on the setup checklist).',
   'chat.today': 'Today',
   'chat.yesterday': 'Yesterday',
   // memory
@@ -329,7 +329,7 @@ export const TEAM_TR: Record<TeamKey, string> = {
   'chat.flag': 'Çıktı kontrolü: {rules}',
   'chat.cost': '{tokens} token',
   'chat.failed': 'Gönderilemedi. Tekrar deneyin.',
-  'chat.noModel': 'Henüz model anahtarı yok — ekiple konuşmak için sunucuda tanımlayın.',
+  'chat.noModel': 'Ajanlar henüz konuşamıyor: model anahtarı eklenince açılır. (Kurulum listesinde)',
   'chat.today': 'Bugün',
   'chat.yesterday': 'Dün',
   'mem.title': '{name} neleri hatırlıyor',

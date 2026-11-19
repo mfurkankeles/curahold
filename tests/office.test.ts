@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { OFFICE_EN, OFFICE_TR, officeWord } from '../shared/src/i18n/ownerOffice';
+import { OFFICE_EN, OFFICE_TR, alertText, officeWord } from '../shared/src/i18n/ownerOffice';
 import { ORG_CHART } from '../shared/src/team/orgChart';
 import { BOUNDS, COFFEE_SPOTS, DESK, MEETING_CHAIRS, ROOMS, assignDesks, capacity, roomAt, route, type DeskSpot } from '../web/src/office/layout';
 import { fold, searchPeople, type Findable } from '../web/src/office/search';
@@ -114,5 +114,12 @@ describe('office words', () => {
     const named = [...src.matchAll(/\bow\('([a-zA-Z0-9_.-]+)'/g)].map((m) => m[1]);
     expect(named.filter((k) => !(k in OFFICE_EN))).toEqual([]);
     for (const r of ROOMS.filter((x) => x.kind !== 'team')) expect(`room.${r.id}` in OFFICE_EN || r.team, r.id).toBeTruthy();
+  });
+
+  it('says the monitor alerts in the reader language, with names', () => {
+    const name = (s: string) => ({ 'performance-marketing': 'Aras' })[s] ?? s;
+    expect(alertText('tr', 'performance-marketing used 80% of its weekly budget', name)).toBe('Aras haftalık bütçesinin %80’ini kullandı');
+    expect(alertText('en', 'performance-marketing paused by the monitor: token-spike', name)).toBe('Aras was paused by the monitor (token spike)');
+    expect(alertText('tr', 'something new', name)).toBe('something new');
   });
 });

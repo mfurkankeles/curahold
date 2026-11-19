@@ -12,7 +12,7 @@
 // the 2D card; without one, the card shows the seat's figure as a portrait.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { normalizeLocale } from '../../../shared/src/i18n';
-import { officeWord, type OfficeKey } from '../../../shared/src/i18n/ownerOffice';
+import { alertText, officeWord, type OfficeKey } from '../../../shared/src/i18n/ownerOffice';
 import { teamWord, type TeamKey } from '../../../shared/src/i18n/ownerTeam';
 import type { Approval, Meeting } from '../../../shared/src/office';
 import type { TeamOrg, TeamSeat, ThreadRow } from '../../../shared/src/team/api';
@@ -91,7 +91,6 @@ type Mode =
   { kind: 'now' } | { kind: 'person'; tab: 'chat' | 'card' | 'memory' } | { kind: 'approvals'; i: number } | { kind: 'meeting'; id: string } | { kind: 'call' };
 type Task = { seat: string; title: string; status: string };
 const ACTIVITIES = ['working', 'meeting', 'waiting-approval', 'queued', 'idle', 'paused', 'dormant'] as const;
-const FPS_KEY = 'office.fps';
 const VIEW_KEY = 'office.view';
 
 const roomName = (r: Room | { id: string; kind: string; team?: string }, teamW: (k: TeamKey) => string, ow: (k: OfficeKey) => string) =>
@@ -125,22 +124,15 @@ export default function OwnerOffice({
   const [gl, setGl] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [mode, setMode] = useState<Mode>(open ? { kind: 'person', tab: 'chat' } : { kind: 'now' });
   const [selected, setSelected] = useState<string | null>(open);
-  const [docked, setDocked] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
   const [sheet, setSheet] = useState<'peek' | 'open'>(open ? 'open' : 'peek');
   const [stats, setStats] = useState<SceneStats | null>(null);
   const [portraits, setPortraits] = useState<Record<string, string>>({});
-  const showFps = useMemo(() => {
-    const q = new URLSearchParams(location.search).get('fps');
-    try {
-      if (q === '1') localStorage.setItem(FPS_KEY, '1');
-      if (q === '0') localStorage.removeItem(FPS_KEY);
-      return localStorage.getItem(FPS_KEY) === '1';
-    } catch {
-      return q === '1';
-    }
-  }, []);
+  // The developer readout only with ?fps=1 in the address, never by default.
+  const showFps = useMemo(() => new URLSearchParams(location.search).get('fps') === '1', []);
+  // The phone shows one room per screen; a swipe or a chip pages between them (Growth, the fullest, first).
+  const [page, setPage] = useState(2);
   const stage = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
@@ -165,7 +157,7 @@ export default function OwnerOffice({
   const modelOn = !!org.data?.model.available;
 
   // ------------------------------------------------------------ the scene
-  const handlers = useRef({ pick: (_: string | null) => {}, room: (_: string) => {} });
+  const handlers = useRef({ pick: (_: string | null) => {}, room: (_: string) => {}, swipe: (_: 1 | -1) => {} });
   useEffect(() => {
     if (view !== '3d' || !canvas.current || !overlay.current) return;
     let sc: OfficeScene;
@@ -180,6 +172,7 @@ export default function OwnerOffice({
         onPick: (s) => handlers.current.pick(s),
         onRoom: (r) => handlers.current.room(r),
         onStats: showFps ? setStats : undefined,
+        onSwipe: (d) => handlers.current.swipe(d),
       });
     } catch {
       setGl('failed');
@@ -230,7 +223,7 @@ export default function OwnerOffice({
   useEffect(() => {
     const sc = scene.current;
     if (!sc || gl !== 'ready') return;
-    sc.setInsets({ bottom: phone ? (sheet === 'open' ? Math.round(window.innerHeight * 0.58) : 148) : 0, top: phone ? 52 : 0 });
+    sc.setInsets({ bottom: phone ? (sheet === 'open' ? Math.round(window.innerHeight * 0.58) : 148) : 0, top: phone ? 60 : 0 });
   }, [phone, sheet, gl]);
 
   // ------------------------------------------------------------ choosing
@@ -254,10 +247,23 @@ export default function OwnerOffice({
     },
     [live],
   );
+  const toPage = useCallback((i: number) => {
+    const n = (i + ROOMS.length) % ROOMS.length;
+    setPage(n);
+    scene.current?.focusRoom(ROOMS[n].id);
+    document.getElementById(`of-chip-${ROOMS[n].id}`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, []);
   handlers.current = {
     pick: (s) => choose(s, { glide: false }),
     room: (r) => goRoom(r),
+    swipe: (d) => toPage(page + d),
   };
+  // A phone opens on one room, not the whole floor.
+  useEffect(() => {
+    // Reduced motion keeps the whole floor in view instead (about 90 % of the width).
+    if (gl === 'ready' && phone && !selected && !reduced) toPage(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gl, phone]);
   useEffect(() => {
     if (open && open !== selected && bySeat.has(open)) choose(open);
     // Only when the address changes (back / forward).
@@ -335,7 +341,6 @@ export default function OwnerOffice({
       /* this visit only */
     }
   };
-  const dock = (seat: string) => setDocked((d) => (d.includes(seat) ? d.filter((x) => x !== seat) : [...d.slice(-2), seat]));
 
   // ------------------------------------------------------------ search
   const findable: Findable[] = useMemo(
@@ -358,6 +363,9 @@ export default function OwnerOffice({
     return c;
   }, [onFloor]);
   const u = org.data?.week;
+  /** "442 bin" / "442k" under a million, the language's compact form above it. */
+  const short = (n: number) =>
+    n >= 1e6 ? formatNumber(n, locale, { compact: true }) : n >= 1e3 ? ow('num.k', { n: formatNumber(Math.round(n / 1000), locale) }) : formatNumber(n, locale);
   const share = u && u.budget > 0 ? Math.min(1, u.tokens / u.budget) : 0;
   const glFailed = view === '3d' && gl === 'failed';
   const show2d = view === '2d' || glFailed;
@@ -384,8 +392,8 @@ export default function OwnerOffice({
                 <i aria-hidden="true" />
                 <span className="of-room__name">{roomName(r, teamW, ow)}</span>
                 {r.kind === 'meeting' && live[0] ? <b className="of-live">{ow('room.live')}</b> : null}
-                <span className="of-room__meta">
-                  {ps.length ? (busy ? `${formatNumber(busy, locale)}/${formatNumber(ps.length, locale)}` : formatNumber(ps.length, locale)) : ''}
+                <span className="of-room__meta" title={ps.length ? ow('rail.countTitle') : undefined}>
+                  {ps.length ? `${formatNumber(busy, locale)}/${formatNumber(ps.length, locale)}` : ''}
                 </span>
                 <kbd>{i + 1}</kbd>
               </button>
@@ -443,14 +451,20 @@ export default function OwnerOffice({
           onClick={() => (setMode({ kind: 'now' }), setSheet('open'))}
         >
           <Icon name="bell" size={14} />
-          <span>{org.data?.alerts.length ? ow('bar.alerts', { n: formatNumber(org.data.alerts.length, locale) }) : ow('bar.noAlerts')}</span>
+          <span>
+            {!org.data?.alerts.length
+              ? ow('bar.noAlerts')
+              : org.data.alerts.length === 1
+                ? ow('bar.alert1')
+                : ow('bar.alerts', { n: formatNumber(org.data.alerts.length, locale) })}
+          </span>
         </button>
         {u ? (
           <span className="of-meter" title={ow('bar.usageTitle')}>
             <span>
               {ow('bar.usage', {
-                tokens: formatNumber(u.tokens, locale, { compact: true }),
-                budget: u.budget ? formatNumber(u.budget, locale, { compact: true }) : '—',
+                tokens: short(u.tokens),
+                budget: u.budget ? short(u.budget) : '—',
               })}
             </span>
             <span className="ocmeter" aria-hidden="true">
@@ -502,8 +516,6 @@ export default function OwnerOffice({
           onTab={(tab) => setMode({ kind: 'person', tab })}
           onClose={() => choose(null)}
           onWhere={() => scene.current?.focusSeat(sel.seat)}
-          docked={docked.includes(sel.seat)}
-          onDock={() => dock(sel.seat)}
           portrait={sel.agent?.avatar ? null : (portraits[sel.seat] ?? null)}
           tasks={tasksOf.get(sel.seat) ?? []}
           failed={failed}
@@ -590,6 +602,9 @@ export default function OwnerOffice({
             </li>
           ))}
         </ul>
+        <p className="of-ailine">
+          <span className="of-tag__ai">{teamW('ai')}</span> {ow('legend.ai')}
+        </p>
         <section className="of-sec" aria-labelledby="of-m">
           <header className="of-sechead">
             <h3 id="of-m">{ow('now.meetings')}</h3>
@@ -657,7 +672,7 @@ export default function OwnerOffice({
               {org.data.alerts.slice(0, 5).map((x) => (
                 <li key={x.id}>
                   <Icon name="alert" size={14} />
-                  <span>{x.body}</span>
+                  <span>{alertText(locale, x.body, nameOf)}</span>
                   <small>{formatDate(x.at, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small>
                 </li>
               ))}
@@ -724,8 +739,10 @@ export default function OwnerOffice({
                         tabIndex={-1}
                         className="of-tag"
                         data-activity={s.activity}
+                        title={`${s.name} · ${s.title}`}
                         onClick={() => choose(s.seat)}
                       >
+                        <i className="of-tag__dot" aria-hidden="true" />
                         <span className="of-tag__ai">{teamW('ai')}</span>
                         <span className="of-tag__name">{s.name}</span>
                         <span className="of-tag__title">{s.title}</span>
@@ -748,8 +765,16 @@ export default function OwnerOffice({
             ) : null}
             {phone ? (
               <div className="of-roomchips" role="group" aria-label={ow('rail.rooms')}>
-                {ROOMS.map((r) => (
-                  <button key={r.id} type="button" className="of-room" data-team={r.team ?? r.kind} onClick={() => goRoom(r.id)}>
+                {ROOMS.map((r, i) => (
+                  <button
+                    key={r.id}
+                    id={`of-chip-${r.id}`}
+                    type="button"
+                    className="of-room"
+                    data-team={r.team ?? r.kind}
+                    aria-current={i === page ? 'true' : undefined}
+                    onClick={() => (toPage(i), goRoom(r.id))}
+                  >
                     <i aria-hidden="true" />
                     {roomName(r, teamW, ow)}
                   </button>
@@ -783,31 +808,6 @@ export default function OwnerOffice({
               {stats.mode} q{stats.quality}
             </dd>
           </dl>
-        ) : null}
-        {!phone && docked.length ? (
-          <div className="of-docks">
-            {docked.map((s) => {
-              const seat = bySeat.get(s);
-              return seat ? (
-                <section key={s} className="of-dock" aria-label={seat.name}>
-                  <header>
-                    <Avatar seat={seat} size="s" />
-                    <strong>{seat.name}</strong>
-                    <button
-                      type="button"
-                      className="btn btn--icon btn--quiet btn--small"
-                      onClick={() => dock(s)}
-                      aria-label={ow('person.undock')}
-                      title={ow('person.undock')}
-                    >
-                      <Icon name="close" size={14} />
-                    </button>
-                  </header>
-                  <SeatChat seat={seat} failed={failed} modelOn={modelOn} onMem={() => choose(s, { tab: 'memory' })} />
-                </section>
-              ) : null;
-            })}
-          </div>
         ) : null}
         {searching ? (
           <Search
@@ -877,7 +877,13 @@ function OrgTree({ seats, selected, onPick }: { seats: TeamSeat[]; selected: str
   // Someone whose manager is not on the floor (dormant, a person) hangs under the CEO.
   const kids = (boss: string | null) => active.filter((s) => (boss === null ? s.reportsTo === null || !ids.has(s.reportsTo) : s.reportsTo === boss));
   const row = (s: TeamSeat) => (
-    <button type="button" className="of-person" aria-current={s.seat === selected ? 'true' : undefined} onClick={() => onPick(s.seat)}>
+    <button
+      type="button"
+      className="of-person"
+      title={`${s.name} · ${s.title}`}
+      aria-current={s.seat === selected ? 'true' : undefined}
+      onClick={() => onPick(s.seat)}
+    >
       <Avatar seat={s} size="s" />
       <span>
         <strong>{s.name}</strong>
@@ -937,8 +943,6 @@ function PersonPanel(p: {
   onTab: (t: 'chat' | 'card' | 'memory') => void;
   onClose: () => void;
   onWhere: () => void;
-  docked: boolean;
-  onDock: () => void;
   portrait: string | null;
   tasks: Task[];
   failed: (e: unknown) => void;
@@ -959,15 +963,15 @@ function PersonPanel(p: {
   return (
     <section className="of-person-panel" aria-labelledby="of-pname">
       <header className="of-phead">
-        <span className="of-portrait" data-team={s.team}>
+        <span className="of-portrait" data-team={s.team} title={s.agent?.avatar ? undefined : ow('person.photoTitle')}>
           {photo ? <img src={photo} alt="" /> : <Avatar seat={s} size="l" />}
           <b className="tm-av__ai">{teamW('ai')}</b>
         </span>
         <div className="of-pinfo">
           <h2 id="of-pname">{s.name}</h2>
-          <p className="of-ptitle">
-            {s.title}
-            {s.level ? ` · ${s.level}` : ''}
+          <p className="of-ptitle" title={s.level ? `${s.title} · ${s.level}` : s.title}>
+            <span>{s.title}</span>
+            {s.level ? <small>{s.level}</small> : null}
           </p>
           <p className="of-ptr">{s.titleTr}</p>
           <p className="of-pmeta">
@@ -981,16 +985,6 @@ function PersonPanel(p: {
           <button type="button" className="btn btn--icon btn--quiet btn--small" onClick={p.onWhere} aria-label={ow('person.where')} title={ow('person.where')}>
             <Icon name="pin" size={16} />
           </button>
-          <button
-            type="button"
-            className="btn btn--icon btn--quiet btn--small of-dockbtn"
-            onClick={p.onDock}
-            aria-pressed={p.docked}
-            aria-label={ow('person.dock')}
-            title={ow('person.dock')}
-          >
-            <Icon name="columns" size={16} />
-          </button>
           <button type="button" className="btn btn--icon btn--quiet btn--small" onClick={p.onClose} aria-label={ow('person.close')} title={ow('person.close')}>
             <Icon name="close" size={16} />
           </button>
@@ -1002,7 +996,6 @@ function PersonPanel(p: {
         </p>
       ) : null}
       {s.state === 'dormant' && s.wakeTrigger ? <p className="of-pnote">{ow('person.dormant', { trigger: s.wakeTrigger })}</p> : null}
-      {!s.agent?.avatar ? <p className="of-pnote of-pnote--quiet">{ow('person.photoNote')}</p> : null}
       <div className="of-tabs" role="tablist">
         {tabs.map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={p.tab === k} onClick={() => p.onTab(k)}>
@@ -1100,6 +1093,7 @@ function SeatChat({ seat, failed, modelOn, onMem }: { seat: TeamSeat; failed: (e
         modelOn={modelOn}
         mem={false}
         onMem={onMem}
+        compact
       />
     </div>
   );

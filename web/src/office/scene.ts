@@ -69,6 +69,8 @@ export interface SceneOptions {
   phone: boolean;
   onPick: (seat: string | null) => void;
   onRoom: (room: string) => void;
+  /** Phone: a sideways swipe pages to the next (+1) or previous (−1) room. */
+  onSwipe?: (dir: 1 | -1) => void;
   onHover?: (seat: string | null) => void;
   onStats?: (s: SceneStats) => void;
 }
@@ -183,6 +185,7 @@ export class OfficeScene {
   private world = new THREE.Group();
   private walls: { mesh: THREE.Mesh; normal: THREE.Vector2 }[] = [];
   private screens: THREE.InstancedMesh | null = null;
+  private glows: THREE.InstancedMesh | null = null;
   private chairs: THREE.InstancedMesh | null = null;
   private blobs: THREE.InstancedMesh | null = null;
   private glass: THREE.Mesh | null = null;
@@ -194,6 +197,7 @@ export class OfficeScene {
   private screenIndex = new Map<string, number>();
   private meetingSeats: string[] = [];
   private anchors: Placed[] = [];
+  private signBoxes: [number, number, number, number][] = [];
   private tok: Tok = tokens();
   private night = false;
   // camera state
@@ -231,7 +235,7 @@ export class OfficeScene {
   private portraits = new Map<string, string>();
 
   constructor(private o: SceneOptions) {
-    this.renderer = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: !o.phone, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+    this.renderer = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
     this.maxRatio = Math.min(window.devicePixelRatio || 1, o.phone ? 1.5 : 2);
     this.minRatio = o.phone ? 0.75 : 1;
     this.ratio = this.maxRatio;
@@ -305,12 +309,16 @@ export class OfficeScene {
     const W = BOUNDS.x1 - BOUNDS.x0;
     const D = BOUNDS.z1 - BOUNDS.z0;
     s.box(W + 0.6, 0.5, D + 0.6, this.night ? t('--well-2') : t('--line-strong'), 0, -0.5, 0, 0, 0.18);
-    s.add(new THREE.PlaneGeometry(W, D).rotateX(-Math.PI / 2), this.night ? t('--well-3') : t('--paper'), 0, 0.001, 0);
-    s.add(new THREE.PlaneGeometry(W, CORRIDOR.z1 - CORRIDOR.z0).rotateX(-Math.PI / 2), this.night ? t('--well-2') : t('--sunk'), 0, 0.004, 0);
+    s.add(new THREE.PlaneGeometry(W, D).rotateX(-Math.PI / 2), this.night ? t('--line-strong') : t('--paper'), 0, 0.001, 0);
+    s.add(new THREE.PlaneGeometry(W, CORRIDOR.z1 - CORRIDOR.z0).rotateX(-Math.PI / 2), this.night ? t('--line') : t('--sunk'), 0, 0.004, 0);
     for (const r of ROOMS) {
-      const rug = r.kind === 'reception' ? t('--surface-2') : t(washOf(r.accent), '--brand-wash').lerp(t(r.accent), this.night ? 0.22 : 0.1);
-      const inset = r.kind === 'team' || r.kind === 'meeting' || r.kind === 'lounge' ? 0.5 : 0.2;
-      s.add(new THREE.PlaneGeometry(r.x1 - r.x0 - 2 * inset, r.z1 - r.z0 - 2 * inset).rotateX(-Math.PI / 2), rug, (r.x0 + r.x1) / 2, 0.006, (r.z0 + r.z1) / 2);
+      // Paper floors; the team colour is a rug under the furniture, a wash, never a flood.
+      if (r.kind === 'reception') continue;
+      const rug = t(washOf(r.accent), '--brand-wash').lerp(this.night ? t('--line-strong') : t('--paper'), this.night ? 0.35 : 0.15);
+      const back = r.doorZ === r.z1;
+      const rz0 = back ? r.z0 + 1.1 : r.z0 + 1.9;
+      const rz1 = back ? r.z1 - 1.9 : r.z1 - 1.1;
+      s.add(new THREE.PlaneGeometry(r.x1 - r.x0 - 2.2, rz1 - rz0).rotateX(-Math.PI / 2), rug, (r.x0 + r.x1) / 2, 0.006, (rz0 + rz1) / 2);
     }
     // Low skirting all round (the near sides stay low so the camera looks in).
     const skirt = t('--surface');
@@ -452,12 +460,28 @@ export class OfficeScene {
     });
     this.screens.count = desks.length;
     this.world.add(this.screens);
+    // A soft glow round every lit screen: one additive instanced quad, scaled to 0 when the screen is off.
+    const glowGeo = new THREE.PlaneGeometry(1.2, 0.8).rotateY(Math.PI);
+    this.glows = new THREE.InstancedMesh(
+      glowGeo,
+      new THREE.MeshBasicMaterial({
+        map: this.blobTexture(),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        opacity: this.night ? 0.55 : 0.28,
+      }),
+      Math.max(1, desks.length),
+    );
+    this.glows.count = desks.length;
+    this.glows.renderOrder = 3;
+    this.world.add(this.glows);
 
     const white = new THREE.Color(1, 1, 1);
     const grey = new THREE.Color(0.42, 0.42, 0.46);
     const cg = new Builder()
       .box(0.5, 0.08, 0.48, white, 0, SEAT_H - 0.08, 0, 0, 0.035)
-      .box(0.48, 0.52, 0.07, white, 0, SEAT_H + 0.06, -0.24, 0, 0.03)
+      .box(0.48, 0.4, 0.07, white, 0, SEAT_H + 0.02, -0.25, 0, 0.03)
       .add(new THREE.CylinderGeometry(0.035, 0.035, SEAT_H - 0.12, 6), grey, 0, (SEAT_H - 0.12) / 2 + 0.05, 0)
       .add(new THREE.CylinderGeometry(0.27, 0.27, 0.05, 10), grey, 0, 0.05, 0)
       .merge();
@@ -467,7 +491,7 @@ export class OfficeScene {
     ];
     this.chairs = new THREE.InstancedMesh(cg, lambert, chairSpots.length);
     chairSpots.forEach(({ s, c }, i) => {
-      this.chairs!.setMatrixAt(i, at(s.x - Math.sin(s.face) * 0.08, 0, s.z - Math.cos(s.face) * 0.08, s.face));
+      this.chairs!.setMatrixAt(i, at(s.x - Math.sin(s.face) * 0.2, 0, s.z - Math.cos(s.face) * 0.2, s.face));
       this.chairs!.setColorAt(i, c);
     });
     this.chairs.castShadow = this.chairs.receiveShadow = true;
@@ -506,6 +530,14 @@ export class OfficeScene {
     this.world.add(this.ring, this.hoverRing);
 
     for (const p of this.people.values()) this.world.add(p.fig.root);
+    if (this.kit) {
+      // Night: figures carry a little of their own light, so faces read on a dark floor.
+      for (const m of [this.kit.material, this.kit.dimMaterial]) {
+        m.emissiveMap = this.night ? m.map : null;
+        m.emissive.setScalar(this.night ? 0.38 : 0);
+        m.needsUpdate = true;
+      }
+    }
     this.paintScreens();
     this.placeBlobs();
     this.updateWalls();
@@ -670,11 +702,30 @@ export class OfficeScene {
       paused: t('--well-2'),
       dormant: t('--well'),
     };
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
     for (const [seat, i] of this.screenIndex) {
       const p = this.people.get(seat);
-      this.screens.setColorAt(i, p ? col[p.seat.activity] : t('--well'));
+      const a = p?.seat.activity;
+      this.screens.setColorAt(i, a ? col[a] : t('--well'));
+      if (this.glows) {
+        const d = this.deskOf.get(seat)!;
+        const on = a === 'working' || a === 'waiting-approval';
+        const lz = 0.2;
+        m.compose(
+          new THREE.Vector3(d.desk.x + Math.sin(d.desk.face) * lz, DESK.h + 0.3, d.desk.z + Math.cos(d.desk.face) * lz),
+          q.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, d.desk.face),
+          new THREE.Vector3(on ? 1 : 0, on ? 1 : 0, 1),
+        );
+        this.glows.setMatrixAt(i, m);
+        this.glows.setColorAt(i, a ? col[a] : t('--well'));
+      }
     }
     if (this.screens.instanceColor) this.screens.instanceColor.needsUpdate = true;
+    if (this.glows) {
+      this.glows.instanceMatrix.needsUpdate = true;
+      if (this.glows.instanceColor) this.glows.instanceColor.needsUpdate = true;
+    }
   }
 
   private placeBlobs() {
@@ -804,6 +855,11 @@ export class OfficeScene {
     if (tag !== this.zoomTag) {
       this.zoomTag = tag;
       this.o.overlay.dataset.zoom = tag;
+      // Tags change size with the zoom (dot → name → name and title): measure them again, once.
+      for (const a of this.anchors) {
+        a.w = a.el.offsetWidth || a.w;
+        a.h = a.el.offsetHeight || a.h;
+      }
     }
   }
 
@@ -852,26 +908,33 @@ export class OfficeScene {
     return this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 1.35).viewH;
   }
 
+  /** The last framing asked for (whole office, a room, a seat): redone when the free area changes size. */
+  private refit: ((cut: boolean) => void) | null = null;
   fitAll(cut = false) {
+    this.refit = (c) => this.fitAll(c);
     // A phone shows the middle of the floor (the room chips reach the rest); a desktop the whole of it.
     const f = this.o.phone
-      ? this.fitBox(-10, BOUNDS.z0 + 4, 10, BOUNDS.z1 - 4, this.yaw.goal, 1)
+      ? this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 1 / 0.9)
       : this.fitBox(BOUNDS.x0, BOUNDS.z0, BOUNDS.x1, BOUNDS.z1, this.yaw.goal, 1.04);
     this.goTo(f.x, f.z, f.viewH, cut);
   }
   focusRoom(id: string) {
     const r = roomById(id);
     if (!r) return;
-    const f = this.fitBox(r.x0, r.z0, r.x1, r.z1, this.yaw.goal, 1.12);
+    this.refit = (c) => (this.focusRoom(id), c && [this.tx, this.tz, this.view].forEach((g) => g.cut()));
+    // A phone frames the room tighter (its sides may run off the edge): one room per screen.
+    const f = this.fitBox(r.x0, r.z0, r.x1, r.z1, this.yaw.goal, this.o.phone ? 0.8 : 1.12);
     this.goTo(f.x, f.z, f.viewH);
   }
   focusSeat(seat: string) {
     const p = this.people.get(seat);
     if (!p) return;
+    this.refit = () => this.focusSeat(seat);
     const pos = p.walk ? p.walk.path.at(-1)! : p.fig.root.position;
     this.goTo(pos.x, pos.z, this.o.phone ? 7 : 8.2);
   }
   zoom(factor: number) {
+    this.refit = null;
     this.goTo(this.tx.goal, this.tz.goal, this.view.goal * factor);
   }
   rotate(steps: number) {
@@ -882,6 +945,7 @@ export class OfficeScene {
     this.requestRender();
   }
   pan(dx: number, dz: number) {
+    this.refit = null;
     this.tx.goal = clamp(this.tx.goal + dx, BOUNDS.x0, BOUNDS.x1);
     this.tz.goal = clamp(this.tz.goal + dz, BOUNDS.z0, BOUNDS.z1);
     if (this.o.reducedMotion) (this.tx.cut(), this.tz.cut());
@@ -895,6 +959,7 @@ export class OfficeScene {
   }
   setInsets(i: Partial<typeof this.insets>) {
     Object.assign(this.insets, i);
+    this.refit?.(false);
     this.camDirty = true;
     this.requestRender();
   }
@@ -963,19 +1028,29 @@ export class OfficeScene {
         v.set(pos.x, (sitting ? pos.y : 0) + (this.kit?.height ?? 1.3) * (sitting ? 0.82 : 1) + 0.1, pos.z);
       }
       v.project(this.camera);
-      const x = ((v.x + 1) / 2) * W;
-      const y = ((1 - v.y) / 2) * H;
-      const off = x < -60 || x > W + 60 || y < -40 || y > H + 40;
+      let x = ((v.x + 1) / 2) * W;
+      let y = ((1 - v.y) / 2) * H;
+      const off = x < -40 || x > W + 40 || y < -20 || y > H + 60;
+      // Kept inside the canvas (never under the panel or a bar), 8 px from its edges.
+      x = clamp(x, a.w / 2 + 8, Math.max(a.w / 2 + 8, W - a.w / 2 - 8));
+      y = clamp(y, a.h + 8 + (a.kind === 'room' ? this.insets.top : 0), Math.max(a.h + 8, H - 8 - this.insets.bottom));
       a.el.toggleAttribute('data-off', off);
       a.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      if (a.kind === 'room') taken.push([x - a.w / 2, y - a.h, x + a.w / 2, y]);
-      else seatRows.push({ a, x, y });
+      if (a.kind === 'room') {
+        // Signs never stack: a later one that would overlap an earlier one waits.
+        const box: [number, number, number, number] = [x - a.w / 2 - 4, y - a.h - 4, x + a.w / 2 + 4, y + 4];
+        const hit = !off && taken.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]);
+        a.el.toggleAttribute('data-crowded', hit);
+        if (!hit && !off) taken.push(box);
+      } else seatRows.push({ a, x, y });
     }
     // Name tags that would overlap yield to the nearer one (lower on screen = nearer).
     seatRows.sort((p, q) => q.y - p.y);
-    const placed: [number, number, number, number][] = [];
+    // Room signs go first; a name tag that would cover one yields too.
+    if (all) this.signBoxes = taken;
+    const placed: [number, number, number, number][] = [...this.signBoxes];
     for (const { a, x, y } of seatRows) {
-      const box: [number, number, number, number] = [x - a.w / 2, y - a.h, x + a.w / 2, y];
+      const box: [number, number, number, number] = [x - a.w / 2, y - a.h - 12, x + a.w / 2, y - 12];
       const must = a.key === this.selected || this.lit.has(a.key) || a.key === this.hovered;
       const hit = placed.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]);
       a.el.toggleAttribute('data-crowded', hit && !must);
@@ -1136,6 +1211,7 @@ export class OfficeScene {
     this.size = { w, h };
     this.renderer.setSize(w, h, false);
     if (first && this.kit) this.fitAll(true);
+    else this.refit?.(true);
     this.camDirty = true;
     this.requestRender(true);
   }
@@ -1146,6 +1222,7 @@ export class OfficeScene {
     const pts = new Map<number, { x: number; y: number; sx: number; sy: number }>();
     let pinch = 0;
     let moved = false;
+    let pinched = false;
     c.addEventListener('pointerdown', (e) => {
       c.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
@@ -1160,6 +1237,11 @@ export class OfficeScene {
       pts.delete(e.pointerId);
       this.interacting = Math.max(0, this.interacting - 1);
       if (!moved && pts.size === 0 && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) < 6) this.click(e);
+      else if (this.o.phone && this.o.onSwipe && pts.size === 0 && !pinched) {
+        const dx = e.clientX - p.sx;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(e.clientY - p.sy) * 1.2) this.o.onSwipe(dx < 0 ? 1 : -1);
+      }
+      if (pts.size === 0) pinched = false;
       if (pts.size < 2) pinch = 0;
       this.requestRender();
     };
@@ -1174,12 +1256,14 @@ export class OfficeScene {
       p.y = e.clientY;
       if (Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > 6) moved = true;
       if (pts.size === 2) {
+        pinched = true;
         const s = spread(pts);
         if (pinch && s) this.goTo(this.tx.goal, this.tz.goal, this.view.goal * (pinch / s), true);
         pinch = s;
         return;
       }
-      if (!moved) return;
+      if (!moved || (this.o.phone && this.o.onSwipe)) return;
+      this.refit = null;
       const wpp = this.view.x / this.usable().h;
       const { right, fwd } = this.basis();
       const ux = -dx * wpp;
@@ -1197,6 +1281,7 @@ export class OfficeScene {
         const f = Math.exp(clamp(e.deltaY, -120, 120) * 0.0022);
         // Zoom towards the point under the pointer.
         const g = this.ground(e);
+        this.refit = null;
         const next = clamp(this.view.goal * f, MIN_VIEW, this.maxView());
         const k = 1 - next / this.view.goal;
         if (g) {

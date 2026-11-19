@@ -9,6 +9,7 @@ import { normalizeLocale } from '../../../shared/src/i18n';
 import { cardText, teamWord, type TeamKey } from '../../../shared/src/i18n/ownerTeam';
 import type { Meeting, MeetingLine } from '../../../shared/src/office';
 import type { MemoryView, MessageRow, TeamOrg, TeamSeat, ThreadRow } from '../../../shared/src/team/api';
+import { DateField } from '../components/DateField';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon } from '../components/icons';
 import { formatDate, formatMoney, formatNumber } from '../lib/format';
@@ -25,7 +26,11 @@ class TeamError extends Error {
   }
 }
 async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const res = await fetch(`/api/desk${path}`, {
+    method,
+    headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new TeamError(res.status);
   return json as T;
@@ -93,10 +98,25 @@ export function Avatar({ seat, size = 'm' }: { seat: Pick<TeamSeat, 'name' | 'te
 
 export function Status({ seat }: { seat: TeamSeat }) {
   const { w } = useTeamWords();
-  if (seat.paused) return <span className="tm-chip" data-tone="late">{w('status.paused')}</span>;
+  if (seat.paused)
+    return (
+      <span className="tm-chip" data-tone="late">
+        {w('status.paused')}
+      </span>
+    );
   if (seat.state === 'dormant') return <span className="tm-chip">{w('status.dormant')}</span>;
-  if (seat.filledBy === 'human') return <span className="tm-chip" data-tone="info">{w('status.human')}</span>;
-  if (seat.active) return <span className="tm-chip" data-tone="done">{w('status.active')}</span>;
+  if (seat.filledBy === 'human')
+    return (
+      <span className="tm-chip" data-tone="info">
+        {w('status.human')}
+      </span>
+    );
+  if (seat.active)
+    return (
+      <span className="tm-chip" data-tone="done">
+        {w('status.active')}
+      </span>
+    );
   return (
     <span className="tm-chip" data-tone="soon">
       {w('status.exam', { passed: seat.golden.passed, total: seat.golden.total })}
@@ -108,7 +128,10 @@ function Usage({ tokens, budget }: { tokens: number; budget: number }) {
   const { w, locale } = useTeamWords();
   const share = budget > 0 ? Math.min(1, tokens / budget) : 0;
   return (
-    <span className="tm-use" title={w('usage.label', { tokens: formatNumber(tokens, locale, { compact: true }), budget: formatNumber(budget, locale, { compact: true }) })}>
+    <span
+      className="tm-use"
+      title={w('usage.label', { tokens: formatNumber(tokens, locale, { compact: true }), budget: formatNumber(budget, locale, { compact: true }) })}
+    >
       <span className="tm-use__bar">
         <i style={{ '--w': `${Math.round(share * 100)}%` } as React.CSSProperties} data-high={share >= 0.8 ? '' : undefined} />
       </span>
@@ -149,8 +172,18 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
   const org = useLoad<TeamOrg>('/team/org', beat, failed);
   const [busy, setBusy] = useState(false);
   const setOpen = (s: string | null) => go({ section: 'team', q: s });
-  if (org.error && !org.data) return <Page title={w('team.title')}><LoadError message={w('team.loadError')} onRetry={org.reload} /></Page>;
-  if (!org.data) return <Page title={w('team.title')}><SkeletonRows label={w('common.loading')} /></Page>;
+  if (org.error && !org.data)
+    return (
+      <Page title={w('team.title')}>
+        <LoadError message={w('team.loadError')} onRetry={org.reload} />
+      </Page>
+    );
+  if (!org.data)
+    return (
+      <Page title={w('team.title')}>
+        <SkeletonRows label={w('common.loading')} />
+      </Page>
+    );
   const d = org.data;
   const live = d.seats.filter((s) => s.state !== 'dormant' && s.tier !== 'advisor');
   const dormant = d.seats.filter((s) => s.state === 'dormant');
@@ -175,7 +208,7 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
     await api('POST', '/team/seed', { reset: true }).catch(failed);
     org.reload();
   };
-  const selected = open ? d.seats.find((s) => s.seat === open) ?? null : null;
+  const selected = open ? (d.seats.find((s) => s.seat === open) ?? null) : null;
   return (
     <Page
       title={w('team.title')}
@@ -193,11 +226,15 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
         </div>
         <div className="tm-stat">
           <span className="tm-stat__k">{w('team.month')}</span>
-          <span className="tm-stat__v">{w('team.monthValue', { spent: formatMoney(d.month.costUsd, 'USD', locale), cap: formatMoney(d.month.capUsd, 'USD', locale) })}</span>
+          <span className="tm-stat__v">
+            {w('team.monthValue', { spent: formatMoney(d.month.costUsd, 'USD', locale), cap: formatMoney(d.month.capUsd, 'USD', locale) })}
+          </span>
         </div>
         <div className="tm-stat">
           <span className="tm-stat__k">{w('team.model')}</span>
-          <span className="tm-stat__v" data-tone={d.model.available ? 'done' : 'soon'}>{w(d.model.available ? 'team.modelOn' : 'team.modelOff')}</span>
+          <span className="tm-stat__v" data-tone={d.model.available ? 'done' : 'soon'}>
+            {w(d.model.available ? 'team.modelOn' : 'team.modelOff')}
+          </span>
         </div>
         <div className="tm-stat tm-stat--alerts">
           <span className="tm-stat__k">{w('team.alerts')}</span>
@@ -240,7 +277,14 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
                 <section key={team} className="tm-team" data-team={team} aria-label={w(`teamName.${team}` as TeamKey)}>
                   <header className="tm-team__head">
                     <h2>{w(`teamName.${team}` as TeamKey)}</h2>
-                    <button type="button" className="btn btn--icon btn--small btn--quiet" disabled={busy} onClick={() => toggleTeam(team)} title={w(paused ? 'team.resumeTeam' : 'team.pauseTeam')} aria-label={w(paused ? 'team.resumeTeam' : 'team.pauseTeam')}>
+                    <button
+                      type="button"
+                      className="btn btn--icon btn--small btn--quiet"
+                      disabled={busy}
+                      onClick={() => toggleTeam(team)}
+                      title={w(paused ? 'team.resumeTeam' : 'team.pauseTeam')}
+                      aria-label={w(paused ? 'team.resumeTeam' : 'team.pauseTeam')}
+                    >
                       <Icon name={paused ? 'play' : 'lock'} size={14} />
                     </button>
                   </header>
@@ -281,7 +325,9 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
             </ul>
           </details>
         </div>
-        {selected ? <SeatPanel key={selected.seat} seat={selected} onClose={() => setOpen(null)} onChanged={org.reload} go={go} failed={failed} pauses={d.pauses} /> : null}
+        {selected ? (
+          <SeatPanel key={selected.seat} seat={selected} onClose={() => setOpen(null)} onChanged={org.reload} go={go} failed={failed} pauses={d.pauses} />
+        ) : null}
       </div>
     </Page>
   );
@@ -289,13 +335,40 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
 
 interface SeatDetail {
   seat: TeamSeat;
-  def: { card: { mission: string; missionTr: string; responsibilities: string[]; kpis: string[]; inputs: string[]; outputs: string[]; playbook: string[]; tools: string[]; permissions: string[]; proposes: string[] } } | null;
+  def: {
+    card: {
+      mission: string;
+      missionTr: string;
+      responsibilities: string[];
+      kpis: string[];
+      inputs: string[];
+      outputs: string[];
+      playbook: string[];
+      tools: string[];
+      permissions: string[];
+      proposes: string[];
+    };
+  } | null;
   golden: { tasks: { id: string; prompt: string }[]; latest: { task: string; passed: boolean; judge: string; score: number | null; at: string }[] };
   estimate: { runs: number; wakes: number; tokens: number };
   lastWake: { checked_at: string; last_result: string } | null;
 }
 
-export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { seat: TeamSeat; onClose: () => void; onChanged: () => void; go: TeamGo; failed: (e: unknown) => void; pauses: TeamOrg['pauses'] }) {
+export function SeatPanel({
+  seat,
+  onClose,
+  onChanged,
+  go,
+  failed,
+  pauses,
+}: {
+  seat: TeamSeat;
+  onClose: () => void;
+  onChanged: () => void;
+  go: TeamGo;
+  failed: (e: unknown) => void;
+  pauses: TeamOrg['pauses'];
+}) {
   const { w, locale, t } = useTeamWords();
   const detail = useLoad<SeatDetail>(`/team/seats/${seat.seat}`, 0, failed);
   const [note, setNote] = useState<string | null>(null);
@@ -324,7 +397,12 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
     }
   };
   const wake = () =>
-    window.confirm(w('seat.wakeConfirm', { name: seat.name, tokens: formatNumber(detail.data?.estimate.tokens ? Math.round(detail.data.estimate.tokens / Math.max(1, detail.data.estimate.runs)) : 8000, locale) })) &&
+    window.confirm(
+      w('seat.wakeConfirm', {
+        name: seat.name,
+        tokens: formatNumber(detail.data?.estimate.tokens ? Math.round(detail.data.estimate.tokens / Math.max(1, detail.data.estimate.runs)) : 8000, locale),
+      }),
+    ) &&
     act(async () => {
       const r = await api<{ check: { reason: string }; run: { status: string } | null }>('POST', `/team/seats/${seat.seat}/wake`, { force: true });
       setNote(w('seat.wakeDone', { result: r.run ? r.run.status : w(`seat.wakeResult.${r.check.reason}` as TeamKey) }));
@@ -334,7 +412,8 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
       const r = await api<{ outcomes: { passed: boolean }[] }>('POST', `/team/seats/${seat.seat}/golden`, {});
       setNote(w('seat.goldenResult', { passed: r.outcomes.filter((o) => o.passed).length, total: r.outcomes.length }));
     });
-  const pause = () => act(() => (own ? api('DELETE', `/office/pauses/${own.id}`) : api('POST', '/office/pauses', { scope: 'seat', target: seat.seat, reason: w('seat.pause') })));
+  const pause = () =>
+    act(() => (own ? api('DELETE', `/office/pauses/${own.id}`) : api('POST', '/office/pauses', { scope: 'seat', target: seat.seat, reason: w('seat.pause') })));
   const list = (title: string, xs: string[] | undefined) =>
     xs?.length ? (
       <section className="tm-sec">
@@ -370,7 +449,12 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
         </button>
       </header>
       <div className="tm-panel__actions">
-        <button type="button" className="btn btn--small btn--primary" onClick={() => go({ section: 'chats', q: seat.seat })} disabled={seat.filledBy === 'human'}>
+        <button
+          type="button"
+          className="btn btn--small btn--primary"
+          onClick={() => go({ section: 'chats', q: seat.seat })}
+          disabled={seat.filledBy === 'human'}
+        >
           <Icon name="comment" size={16} /> {w('seat.chat')}
         </button>
         <button type="button" className="btn btn--small" onClick={wake} disabled={running || seat.state === 'dormant' || seat.paused}>
@@ -382,7 +466,12 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
         <button type="button" className={own ? 'btn btn--small btn--primary' : 'btn btn--small btn--danger'} onClick={pause} disabled={running}>
           <Icon name={own ? 'play' : 'lock'} size={16} /> {w(own ? 'seat.resume' : 'seat.pause')}
         </button>
-        <button type="button" className="btn btn--small btn--quiet" aria-pressed={mode === 'handover'} onClick={() => setMode(mode === 'handover' ? 'card' : 'handover')}>
+        <button
+          type="button"
+          className="btn btn--small btn--quiet"
+          aria-pressed={mode === 'handover'}
+          onClick={() => setMode(mode === 'handover' ? 'card' : 'handover')}
+        >
           <Icon name="handshake" size={16} /> {w('seat.handover')}
         </button>
         <button type="button" className="btn btn--small btn--quiet" aria-pressed={mode === 'job'} onClick={() => setMode(mode === 'job' ? 'card' : 'job')}>
@@ -432,8 +521,20 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
             <p className="oc__muted">
               {w('seat.reportsTo')}: {seat.reportsTo ?? w('ceo')} · {w('seat.budget')}: {formatNumber(seat.weeklyBudget, locale)}
             </p>
-            {detail.data ? <p className="oc__muted">{w('seat.estimate', { runs: detail.data.estimate.runs, tokens: formatNumber(detail.data.estimate.tokens, locale), wakes: detail.data.estimate.wakes })}</p> : null}
-            {seat.lastWake ? <p className="oc__muted">{w('seat.lastWake', { when: relativeTime(seat.lastWake.at, t), result: w(`seat.wakeResult.${seat.lastWake.result}` as TeamKey) })}</p> : null}
+            {detail.data ? (
+              <p className="oc__muted">
+                {w('seat.estimate', {
+                  runs: detail.data.estimate.runs,
+                  tokens: formatNumber(detail.data.estimate.tokens, locale),
+                  wakes: detail.data.estimate.wakes,
+                })}
+              </p>
+            ) : null}
+            {seat.lastWake ? (
+              <p className="oc__muted">
+                {w('seat.lastWake', { when: relativeTime(seat.lastWake.at, t), result: w(`seat.wakeResult.${seat.lastWake.result}` as TeamKey) })}
+              </p>
+            ) : null}
           </section>
           <section className="tm-sec">
             <h3>{w('seat.golden')}</h3>
@@ -446,7 +547,13 @@ export function SeatPanel({ seat, onClose, onChanged, go, failed, pauses }: { se
                     <Icon name={l ? (l.passed ? 'checkCircle' : 'alert') : 'dot'} size={14} />
                     <span>
                       {g.prompt}
-                      {l ? <small> · {w(l.judge === 'model' ? 'seat.judge.model' : 'seat.judge.checks')}{l.score != null ? ` ${l.score}` : ''} · {formatDate(l.at, locale)}</small> : null}
+                      {l ? (
+                        <small>
+                          {' '}
+                          · {w(l.judge === 'model' ? 'seat.judge.model' : 'seat.judge.checks')}
+                          {l.score != null ? ` ${l.score}` : ''} · {formatDate(l.at, locale)}
+                        </small>
+                      ) : null}
                     </span>
                   </li>
                 );
@@ -467,7 +574,11 @@ function JobDescription({ seat, failed }: { seat: string; failed: (e: unknown) =
 
 function Handover({ seat, onDone, failed }: { seat: TeamSeat; onDone: () => void; failed: (e: unknown) => void }) {
   const { w, locale } = useTeamWords();
-  const pack = useLoad<{ openWork: { id: string; title: string; status: string }[]; access: { tools: string[]; data: string[]; proposes: string[] } }>(`/team/seats/${seat.seat}/handover?lang=${locale}`, 0, failed);
+  const pack = useLoad<{ openWork: { id: string; title: string; status: string }[]; access: { tools: string[]; data: string[]; proposes: string[] } }>(
+    `/team/seats/${seat.seat}/handover?lang=${locale}`,
+    0,
+    failed,
+  );
   const [mode, setMode] = useState<'human' | 'human-with-agent' | 'agent'>('human-with-agent');
   const [email, setEmail] = useState(seat.humanEmail ?? '');
   const [done, setDone] = useState(false);
@@ -516,7 +627,8 @@ function Handover({ seat, onDone, failed }: { seat: TeamSeat; onDone: () => void
         <legend>{w('handover.mode')}</legend>
         {(['human-with-agent', 'human', 'agent'] as const).map((m) => (
           <label key={m}>
-            <input type="radio" name="mode" checked={mode === m} onChange={() => setMode(m)} /> {w(m === 'human' ? 'handover.human' : m === 'agent' ? 'handover.agent' : 'handover.humanAgent')}
+            <input type="radio" name="mode" checked={mode === m} onChange={() => setMode(m)} />{' '}
+            {w(m === 'human' ? 'handover.human' : m === 'agent' ? 'handover.agent' : 'handover.humanAgent')}
           </label>
         ))}
       </fieldset>
@@ -553,12 +665,24 @@ export function ChatSection({ beat, failed, go, seatId }: { beat: number; failed
     <Page title={w('chat.title')} sub={w('chat.sub')}>
       <div className="tm-chat" data-has={seat ? '' : undefined}>
         <nav className="tm-people" aria-label={w('chat.pick')}>
-          <input className="input" type="search" placeholder={w('chat.search')} aria-label={w('chat.search')} value={find} onChange={(e) => setFind(e.target.value)} />
+          <input
+            className="input"
+            type="search"
+            placeholder={w('chat.search')}
+            aria-label={w('chat.search')}
+            value={find}
+            onChange={(e) => setFind(e.target.value)}
+          />
           {!org.data ? <SkeletonRows rows={8} label={w('common.loading')} /> : null}
           <ul>
             {seats.map((s) => (
               <li key={s.seat}>
-                <button type="button" className="tm-person" aria-current={s.seat === seatId ? 'true' : undefined} onClick={() => go({ section: 'chats', q: s.seat })}>
+                <button
+                  type="button"
+                  className="tm-person"
+                  aria-current={s.seat === seatId ? 'true' : undefined}
+                  onClick={() => go({ section: 'chats', q: s.seat })}
+                >
                   <Avatar seat={s} size="s" />
                   <span>
                     <strong>{s.name}</strong>
@@ -569,7 +693,11 @@ export function ChatSection({ beat, failed, go, seatId }: { beat: number; failed
             ))}
           </ul>
         </nav>
-        {seat ? <Conversation key={seat.seat} seat={seat} failed={failed} modelOn={!!org.data?.model.available} onBack={() => go({ section: 'chats', q: null })} /> : <EmptyState icon="comment" title={w('chat.pick')} />}
+        {seat ? (
+          <Conversation key={seat.seat} seat={seat} failed={failed} modelOn={!!org.data?.model.available} onBack={() => go({ section: 'chats', q: null })} />
+        ) : (
+          <EmptyState icon="comment" title={w('chat.pick')} />
+        )}
       </div>
     </Page>
   );
@@ -627,13 +755,46 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
           <Icon name="download" size={14} /> {w('chat.export')}
         </a>
       </aside>
-      <Messages key={thread ?? 'none'} seat={seat} thread={thread} onNeedThread={newThread} onDelete={remove} onSent={threads.reload} failed={failed} modelOn={modelOn} mem={mem} onMem={() => setMem(!mem)} />
+      <Messages
+        key={thread ?? 'none'}
+        seat={seat}
+        thread={thread}
+        onNeedThread={newThread}
+        onDelete={remove}
+        onSent={threads.reload}
+        failed={failed}
+        modelOn={modelOn}
+        mem={mem}
+        onMem={() => setMem(!mem)}
+      />
       {mem ? <MemoryPanel seat={seat} failed={failed} /> : null}
     </div>
   );
 }
 
-export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed, modelOn, mem, onMem }: { seat: TeamSeat; thread: string | null; onNeedThread: () => Promise<void>; onDelete: () => void; onSent: () => void; failed: (e: unknown) => void; modelOn: boolean; mem: boolean; onMem: () => void }) {
+export function Messages({
+  seat,
+  thread,
+  onNeedThread,
+  onDelete,
+  onSent,
+  failed,
+  modelOn,
+  mem,
+  onMem,
+  compact,
+}: {
+  seat: TeamSeat;
+  thread: string | null;
+  onNeedThread: () => Promise<void>;
+  onDelete: () => void;
+  onSent: () => void;
+  failed: (e: unknown) => void;
+  modelOn: boolean;
+  mem: boolean;
+  onMem: () => void;
+  /** Search and the date jump behind one button (a narrow panel). */ compact?: boolean;
+}) {
   const { w, locale } = useTeamWords();
   const [rows, setRows] = useState<MessageRow[]>([]);
   const [more, setMore] = useState(false);
@@ -642,6 +803,8 @@ export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed,
   const [error, setError] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<string | null>(null);
+  const [jumpTo, setJumpTo] = useState('');
+  const [findOpen, setFindOpen] = useState(!compact);
   const list = useRef<HTMLDivElement>(null);
   const load = useCallback(
     async (qs = '') => {
@@ -665,7 +828,9 @@ export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed,
   }, [rows, filter]);
   const older = async () => {
     if (!thread || !rows.length) return;
-    const r = await api<{ messages: MessageRow[]; more: boolean }>('GET', `/team/threads/${thread}/messages?before=${rows[0].id}`).catch((e) => (failed(e), null));
+    const r = await api<{ messages: MessageRow[]; more: boolean }>('GET', `/team/threads/${thread}/messages?before=${rows[0].id}`).catch(
+      (e) => (failed(e), null),
+    );
     if (r) {
       setRows([...r.messages, ...rows]);
       setMore(r.more);
@@ -706,7 +871,8 @@ export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed,
   };
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
-  const dayLabel = (d: string) => (d === today ? w('chat.today') : d === yesterday ? w('chat.yesterday') : formatDate(d, locale, { day: 'numeric', month: 'long', year: 'numeric' }));
+  const dayLabel = (d: string) =>
+    d === today ? w('chat.today') : d === yesterday ? w('chat.yesterday') : formatDate(d, locale, { day: 'numeric', month: 'long', year: 'numeric' });
   let lastDay = '';
   return (
     <section className="tm-msgs" aria-label={seat.name}>
@@ -717,10 +883,42 @@ export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed,
           <small>{seat.title}</small>
         </div>
         <form className="tm-msgs__tools" onSubmit={search} role="search">
-          <input className="input" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={w('chat.searchIn')} aria-label={w('chat.searchIn')} />
-          <input className="input" type="date" aria-label={w('chat.jump')} title={w('chat.jump')} onChange={(e) => jump(e.target.value)} />
+          {compact ? (
+            <button
+              type="button"
+              className="btn btn--icon btn--small btn--quiet"
+              aria-expanded={findOpen}
+              onClick={() => setFindOpen(!findOpen)}
+              aria-label={w('chat.searchIn')}
+              title={w('chat.searchIn')}
+            >
+              <Icon name="search" size={14} />
+            </button>
+          ) : null}
+          {findOpen ? (
+            <>
+              <input
+                className="input"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={w('chat.searchIn')}
+                aria-label={w('chat.searchIn')}
+              />
+              <DateField
+                value={jumpTo}
+                max={today}
+                label={w('chat.jump')}
+                title={w('chat.jump')}
+                onChange={(d) => {
+                  setJumpTo(d);
+                  jump(d);
+                }}
+              />
+            </>
+          ) : null}
           {filter ? (
-            <button type="button" className="btn btn--small btn--quiet" onClick={() => (setFilter(null), setQuery(''), void load())}>
+            <button type="button" className="btn btn--small btn--quiet" onClick={() => (setFilter(null), setQuery(''), setJumpTo(''), void load())}>
               {w('chat.clear')}
             </button>
           ) : null}
@@ -763,7 +961,11 @@ export function Messages({ seat, thread, onNeedThread, onDelete, onSent, failed,
                     <Icon name="checkCircle" size={12} /> {w('chat.proposed', { title: x.title })}
                   </p>
                 ))}
-                {m.meta.findings?.length ? <p className="tm-msg__fx" data-tone="soon">{w('chat.flag', { rules: m.meta.findings.map((f) => f.rule).join(', ') })}</p> : null}
+                {m.meta.findings?.length ? (
+                  <p className="tm-msg__fx" data-tone="soon">
+                    {w('chat.flag', { rules: m.meta.findings.map((f) => f.rule).join(', ') })}
+                  </p>
+                ) : null}
                 {m.role === 'agent' && m.meta.tokens ? <p className="tm-msg__cost">{w('chat.cost', { tokens: formatNumber(m.meta.tokens, locale) })}</p> : null}
               </article>
             </div>
@@ -816,7 +1018,13 @@ export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unkn
   };
   const editor = (
     <form className="tm-memedit" onSubmit={save}>
-      <textarea className="input" rows={3} value={edit?.value ?? ''} onChange={(e) => setEdit(edit && { ...edit, value: e.target.value })} aria-label={w('mem.edit')} />
+      <textarea
+        className="input"
+        rows={3}
+        value={edit?.value ?? ''}
+        onChange={(e) => setEdit(edit && { ...edit, value: e.target.value })}
+        aria-label={w('mem.edit')}
+      />
       <span>
         <button type="submit" className="btn btn--small btn--primary">
           {w('mem.save')}
@@ -859,7 +1067,12 @@ export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unkn
                   <span>{f.value}</span>
                   <small>{formatDate(f.updatedAt, locale)}</small>
                   <span className="tm-facts__tools">
-                    <button type="button" className="btn btn--icon btn--small btn--quiet" aria-label={w('mem.edit')} onClick={() => setEdit({ key: f.key, value: f.value })}>
+                    <button
+                      type="button"
+                      className="btn btn--icon btn--small btn--quiet"
+                      aria-label={w('mem.edit')}
+                      onClick={() => setEdit({ key: f.key, value: f.value })}
+                    >
                       <Icon name="edit" size={12} />
                     </button>
                     <button type="button" className="btn btn--icon btn--small btn--quiet" aria-label={w('mem.delete')} onClick={() => remove(f.key)}>
@@ -894,7 +1107,7 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
   const list = useLoad<{ meetings: Meeting[] }>(`/office/meetings${filter === 'all' ? '' : `?with=${filter}`}`, beat, failed);
   const org = useLoad<TeamOrg>('/team/org', 0, failed);
   const names = useMemo(() => new Map((org.data?.seats ?? []).map((s) => [s.seat, s.name])), [org.data]);
-  const nameOf = (s: string) => (s === 'owner' ? w('chat.you') : names.get(s) ?? s);
+  const nameOf = (s: string) => (s === 'owner' ? w('chat.you') : (names.get(s) ?? s));
   if (open) return <MeetingDetail id={open} nameOf={nameOf} failed={failed} onBack={() => go({ section: 'meetings', q: null })} />;
   const f = find.trim().toLocaleLowerCase();
   const rows = (list.data?.meetings ?? []).filter((m) => !f || `${m.title} ${m.goal ?? ''}`.toLocaleLowerCase().includes(f));
@@ -927,7 +1140,14 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
             </button>
           ))}
         </div>
-        <input className="input" type="search" placeholder={w('meet.search')} aria-label={w('meet.search')} value={find} onChange={(e) => setFind(e.target.value)} />
+        <input
+          className="input"
+          type="search"
+          placeholder={w('meet.search')}
+          aria-label={w('meet.search')}
+          value={find}
+          onChange={(e) => setFind(e.target.value)}
+        />
       </div>
       {list.error && !list.data ? <LoadError onRetry={list.reload} /> : null}
       {!list.data && !list.error ? <SkeletonRows label={w('common.loading')} /> : null}
@@ -941,7 +1161,8 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
               </span>
               <strong>{m.title}</strong>
               <small>
-                {w('meet.calledBy', { name: nameOf(m.calledBy) })} · {w('meet.attendees', { n: m.attendees.length + (m.withOwner ? 1 : 0) })} · {formatDate(m.createdAt, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                {w('meet.calledBy', { name: nameOf(m.calledBy) })} · {w('meet.attendees', { n: m.attendees.length + (m.withOwner ? 1 : 0) })} ·{' '}
+                {formatDate(m.createdAt, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
               </small>
               {m.minutes?.decisions.length ? <small>{m.minutes.decisions.slice(0, 2).join(' · ')}</small> : null}
             </button>
@@ -952,7 +1173,17 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
   );
 }
 
-export function CallMeeting({ seats, onCancel, onDone, failed }: { seats: TeamSeat[]; onCancel: () => void; onDone: (id: string) => void; failed: (e: unknown) => void }) {
+export function CallMeeting({
+  seats,
+  onCancel,
+  onDone,
+  failed,
+}: {
+  seats: TeamSeat[];
+  onCancel: () => void;
+  onDone: (id: string) => void;
+  failed: (e: unknown) => void;
+}) {
   const { w } = useTeamWords();
   const [title, setTitle] = useState('');
   const [goal, setGoal] = useState('');
@@ -962,7 +1193,13 @@ export function CallMeeting({ seats, onCancel, onDone, failed }: { seats: TeamSe
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const r = await api<{ meeting: Meeting }>('POST', '/office/meetings', { title, goal, attendees: [...new Set([...who, 'note-taker'])], timeBoxMin: timeBox, tokenBudget: budget });
+      const r = await api<{ meeting: Meeting }>('POST', '/office/meetings', {
+        title,
+        goal,
+        attendees: [...new Set([...who, 'note-taker'])],
+        timeBoxMin: timeBox,
+        tokenBudget: budget,
+      });
       onDone(r.meeting.id);
     } catch (err) {
       failed(err);
@@ -1100,7 +1337,12 @@ export function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; name
               <button type="button" className="btn btn--small" aria-pressed={joined} onClick={() => setJoined(!joined)}>
                 <Icon name={joined ? 'logout' : 'userPlus'} size={16} /> {w(joined ? 'meet.leave' : 'meet.join')}
               </button>
-              <button type="button" className="btn btn--small btn--primary" disabled={!!busy} onClick={() => act('close', () => api('POST', `/team/meetings/${id}/close`))}>
+              <button
+                type="button"
+                className="btn btn--small btn--primary"
+                disabled={!!busy}
+                onClick={() => act('close', () => api('POST', `/team/meetings/${id}/close`))}
+              >
                 <Icon name="note" size={16} /> {busy === 'close' ? w('meet.closing') : w('meet.close')}
               </button>
             </>
@@ -1135,7 +1377,14 @@ export function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; name
           {joined && live ? (
             <form className="tm-compose" onSubmit={say}>
               <p className="oc__muted">{w('meet.joined')}</p>
-              <textarea className="input" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={w('meet.say')} aria-label={w('meet.say')} />
+              <textarea
+                className="input"
+                rows={2}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={w('meet.say')}
+                aria-label={w('meet.say')}
+              />
               <button type="submit" className="btn btn--primary" disabled={!!busy || !text.trim()}>
                 <Icon name="send" size={16} /> {w('chat.send')}
               </button>
