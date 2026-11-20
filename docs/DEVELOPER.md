@@ -371,8 +371,8 @@ lists (`onboarding_issues`, `source = 'setup_test'`, `source_ref` = the step);
 ### a sales-site language
 
 The site (curahold.com) publishes a language only when all of its copy exists: no half-English
-pages, no hreflang to a page that is not there (ADR 0020). Hindi and Malay are next; they are in
-`SITE_PENDING` today. To add one:
+pages, no hreflang to a page that is not there (ADR 0020). All eleven app languages are site
+languages now (Hindi and Malay were the last, added this way); `SITE_PENDING` is empty. To add one:
 
 1. `site/locales.ts`: add it to `SITE_LANGS` with its Open Graph locale (`hi_IN`, `ms_MY`), to
    `SITE_FONTS` (`ms: ['latin']`; `hi: []`, it reads the system's Devanagari face), and take it

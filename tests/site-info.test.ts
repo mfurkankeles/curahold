@@ -12,6 +12,9 @@ const leaves = (v: unknown, path = ''): [string, string][] =>
   typeof v === 'string' ? [[path, v]] : Array.isArray(v) ? v.flatMap((x, i) => leaves(x, `${path}[${i}]`)) : v && typeof v === 'object' ? Object.entries(v).flatMap(([k, x]) => leaves(x, `${path}.${k}`)) : [];
 // Names and short labels that are the same in every language.
 const SAME = new Set(['CRM', 'Blog', 'Curahold', 'API', 'AI', 'Türkiye']);
+// Words one language writes as English does: Malay "menu" is standard Malay (DBP) and
+// "onboarding" stays English in Malay (shared/src/i18n/glossary.ts).
+const SAME_IN: Record<string, Set<string>> = { ms: new Set(['Menu', 'Onboarding']) };
 
 describe('site/info', () => {
   const en = INFO.en;
@@ -20,7 +23,7 @@ describe('site/info', () => {
     it(`${locale} has the English shape`, () => expect(shape(copy)).toEqual(shape(en)));
     it(`${locale} leaves nothing in English`, () => {
       const mine = new Map(leaves(copy));
-      const left = leaves(en).filter(([p, s]) => mine.get(p) === s && !SAME.has(s) && /[a-z]{4,}/i.test(s));
+      const left = leaves(en).filter(([p, s]) => mine.get(p) === s && !SAME.has(s) && !SAME_IN[locale]?.has(s) && /[a-z]{4,}/i.test(s));
       expect(left).toEqual([]);
     });
   }

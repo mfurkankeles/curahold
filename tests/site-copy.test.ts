@@ -21,10 +21,13 @@ function leaves(value: unknown, path = '', out: Leaves = new Map()): Leaves {
 const en = leaves(COPY.en as SiteCopy);
 
 // Strings that are rightly the same as English: an example address is Latin
-// letters in every language, and Turkish product teams say "Blog" and "Sprint".
+// letters in every language, and Turkish product teams say "Blog" and "Sprint". Malay
+// does too, keeps "burndown" and "onboarding" (glossary.ts) and "ideal" is a Malay word;
+// plan names stay English everywhere.
 const SAME_AS_ENGLISH: Record<string, string[]> = {
   '*': ['signIn.placeholder'],
   tr: ['nav.blog', 'tour.ui.sprint'],
+  ms: ['nav.blog', 'tour.ui.sprint', 'tour.ui.burndown', 'tour.ui.ideal', 'tour.ui.epics.2', 'bento.portal.plan'],
 };
 
 const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(' ');
@@ -63,7 +66,7 @@ describe('sales site copy', () => {
 
 // The scroll story after the hero ships in all nine languages. A language off this
 // list would leave the story out entirely — no English words on it, no empty section.
-const STORY_NOW = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'];
+const STORY_NOW = ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'hi', 'ms'];
 
 describe('the scroll story', () => {
   const enStory = leaves(STORY_COPY.en as SiteStoryCopy);

@@ -68,7 +68,7 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .lead { margin: 14px 0 0; color: var(--ink-2); font-size: 19px; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
 /* Scripts with their own rhythm: no negative tracking, a little more air. */
 :lang(ja) :is(h1, h2, h3), :lang(zh) :is(h1, h2, h3), :lang(ko) :is(h1, h2, h3), :lang(ar) :is(h1, h2, h3), :lang(he) :is(h1, h2, h3), :lang(fa) :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
-:lang(hi) :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.35; }
+:lang(hi) :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.4; }
 :lang(ja), :lang(zh) { line-break: strict; }
 /* Japanese headings break only between phrases: the copy marks them with U+200B. */
 :lang(ja) :is(h1, h2, h3, summary, .tour__title, .tour__nowi b) { word-break: keep-all; overflow-wrap: anywhere; }

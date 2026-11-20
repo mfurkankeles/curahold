@@ -4,7 +4,7 @@
 // every "In Curahold" line names only what the product does today (checked against the app:
 // renewal playbooks 90 days ahead, meetings whose next steps become tasks, the explainable
 // health score, the portal, the hand-over card of a won deal, the Cost to serve report).
-// The same items exist in every language: a smaller hub in all nine beats a bigger one in two.
+// The same items exist in every language: a smaller hub in all eleven beats a bigger one in two.
 // Pages: scripts/site-hub.ts. Lengths: tests/site-seo.test.ts.
 import type { SiteLocale } from './locales';
 
@@ -3050,6 +3050,676 @@ const HUB: Record<SiteLocale, HubCopy> = {
           }
         ],
         "curahold": "서비스 비용 보고서는 고객별로 최근 12개월 동안 연간 가치 1,000당 들인 시간을 보여 주므로, 관리 비용이 가장 큰 고객을 알 수 있습니다."
+      }
+    ]
+  },
+  hi: {
+    "title": "ग्राहक टीमों के लिए टेम्पलेट और शब्दावली",
+    "lead": "कॉपी करने लायक टेम्पलेट और ग्राहकों को बनाए रखने के काम की सरल परिभाषाएं: रिन्यूअल, बिज़नेस रिव्यू, हेल्थ और चर्न।",
+    "seo": [
+      "कस्टमर सक्सेस टेम्पलेट और शब्दावली | Curahold",
+      "रिन्यूअल प्लेबुक और बिज़नेस रिव्यू के मुफ़्त टेम्पलेट, और ग्राहक टीमों के लिए हेल्थ स्कोर, चर्न, रिन्यूअल और कस्टमर पोर्टल की सरल परिभाषाएं।"
+    ],
+    "templates": "टेम्पलेट",
+    "glossary": "शब्दावली",
+    "inCurahold": "Curahold में",
+    "nav": [
+      "टेम्पलेट और शब्दावली",
+      "रिन्यूअल के स्टेप, रिव्यू का एजेंडा और सरल परिभाषाएं।"
+    ],
+    "items": [
+      {
+        "slug": "renewal-playbook",
+        "kind": "template",
+        "name": "रिन्यूअल प्लेबुक टेम्पलेट",
+        "seo": [
+          "रिन्यूअल प्लेबुक टेम्पलेट: 90 दिन पहले से स्टेप | Curahold",
+          "कॉपी करने लायक रिन्यूअल प्लेबुक: कॉन्ट्रैक्ट रिन्यू होने से 90, 75, 60 और 30 दिन पहले क्या करें, हर स्टेप का ओनर कौन है, और कॉल से पहले क्या जांचें।"
+        ],
+        "lead": "रिन्यूअल तारीख वाले दिन नहीं, उससे पहले के तीन महीनों में जीता जाता है। इन स्टेप को कॉपी करें, हर एक को एक ओनर दें, और रिन्यूअल की तारीख से पीछे की ओर गिनें।",
+        "body": [
+          {
+            "h": "स्टेप"
+          },
+          {
+            "ol": [
+              "90 दिन पहले: इस्तेमाल, खुले अनुरोध और हेल्थ स्कोर की समीक्षा करें; जो भी बात चिंता की लगे, उसे लिख लें।",
+              "75 दिन पहले: निर्णय लेने वाले व्यक्ति और रोज़ के संपर्क के साथ रिन्यूअल कॉल बुक करें।",
+              "60 दिन पहले: सीटों या प्लान में किसी भी बदलाव के साथ रिन्यूअल कोटेशन भेजें।",
+              "30 दिन पहले: कोटेशन पर फ़ॉलो-अप करें और खुले सवाल लिखित में सुलझाएं।",
+              "रिन्यूअल की तारीख पर: साइन हुए रिन्यूअल की पुष्टि करें और जो तय हुआ उसे दर्ज करें।"
+            ]
+          },
+          {
+            "h": "रिन्यूअल कॉल से पहले"
+          },
+          {
+            "ul": [
+              "इस साल ग्राहक क्या हासिल करना चाहता था, और क्या वह हासिल हुआ?",
+              "पिछली मीटिंग के कौन-से वादे अभी भी खुले हैं?",
+              "फ़ैसला कौन लेता है, और क्या वे हाल में आपके साथ किसी मीटिंग में रहे हैं?"
+            ]
+          }
+        ],
+        "curahold": "रिन्यूअल चालू करें, और हर रिन्यूअल की तारीख से नब्बे दिन पहले एक रिन्यूअल प्लेबुक अपने स्टेप टास्क के रूप में खोल देती है, हर एक के साथ एक ओनर और रिन्यूअल से पीछे गिनी गई ड्यू डेट।"
+      },
+      {
+        "slug": "business-review-agenda",
+        "kind": "template",
+        "name": "बिज़नेस रिव्यू (QBR) एजेंडा टेम्पलेट",
+        "seo": [
+          "बिज़नेस रिव्यू (QBR) एजेंडा टेम्पलेट | Curahold",
+          "ग्राहक टीमों के लिए एक घंटे का बिज़नेस रिव्यू एजेंडा: लक्ष्यों के मुकाबले नतीजे, क्या बदला, खुले वादे, अगली तिमाही की योजना और साफ़ अगले स्टेप।"
+        ],
+        "lead": "तिमाही बिज़नेस रिव्यू के बाद ग्राहक के पास मिली वैल्यू का सबूत होना चाहिए और दोनों तरफ़ एक जैसे अगले स्टेप। यह एजेंडा एक घंटे में पूरा होता है।",
+        "body": [
+          {
+            "h": "एजेंडा (60 मिनट)"
+          },
+          {
+            "ol": [
+              "5 मिनट: मीटिंग के लक्ष्य और कौन-कौन शामिल है।",
+              "15 मिनट: पिछली तिमाही में तय लक्ष्यों के मुकाबले नतीजे।",
+              "10 मिनट: उनकी तरफ़ क्या बदला: लोग, प्राथमिकताएं, बजट।",
+              "10 मिनट: खुले अनुरोध और वादे, और हर एक की स्थिति।",
+              "15 मिनट: अगली तिमाही की योजना।",
+              "5 मिनट: अगले स्टेप, हर एक के साथ एक ओनर और एक तारीख।"
+            ]
+          },
+          {
+            "h": "मीटिंग के बाद"
+          },
+          {
+            "p": "उसी दिन एक छोटा सारांश भेजें: क्या तय हुआ, ओनर और तारीखों के साथ अगले स्टेप, और अगले रिव्यू की तारीख।"
+          }
+        ],
+        "curahold": "रिव्यू को ग्राहक पर एक मीटिंग के रूप में दर्ज करें और उसके अगले स्टेप लिखें; सेव करते ही हर स्टेप एक ओनर और तारीख वाला टास्क बन जाता है, जिसे आप ग्राहक के पोर्टल में शेयर कर सकते हैं।"
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "सेल्स से ऑनबोर्डिंग हैंडओवर चेकलिस्ट",
+        "seo": [
+          "सेल्स से ऑनबोर्डिंग हैंडओवर चेकलिस्ट | Curahold",
+          "जीती गई डील के लिए हैंडओवर चेकलिस्ट: स्टेकहोल्डर कौन हैं, सेल के दौरान क्या वादा हुआ, खुले अनुरोध, अहम तारीखें और ग्राहक के साथ पहली कॉल।"
+        ],
+        "lead": "किसी ग्राहक के शुरुआती महीनों की ज़्यादातर परेशानी हैंडओवर से शुरू होती है: सेल्स टीम को जो बातें पता थीं, वे ऑनबोर्डिंग टीम तक कभी नहीं पहुंचतीं। इस सूची को कॉपी करें और डील के हाथ बदलने से पहले भर लें।",
+        "body": [
+          {
+            "h": "हैंडओवर में क्या होना ज़रूरी है"
+          },
+          {
+            "ul": [
+              "स्टेकहोल्डर: उनकी तरफ़ निर्णय लेने वाला, रोज़ का संपर्क और चैंपियन, और हर एक से संपर्क का तरीका।",
+              "सेल के दौरान किए गए वादे: फ़ीचर, तारीखें, छूट, लिखित में या कॉल पर कही गई कोई भी बात।",
+              "खुले प्रोडक्ट अनुरोध जिनका ग्राहक इंतज़ार कर रहा है, और उनके बारे में उसे क्या बताया गया।",
+              "अहम तारीखें: क्लोज़ की तारीख, गो-लाइव जिसकी उन्हें उम्मीद है, और रिन्यूअल की तारीख।",
+              "उन्होंने क्यों ख़रीदा: वह समस्या जिसका हल वे चाहते हैं, और वे सफलता को कैसे आंकेंगे।"
+            ]
+          },
+          {
+            "h": "पहली कॉल से पहले"
+          },
+          {
+            "ol": [
+              "सेलर और ऑनबोर्डिंग ओनर 15 मिनट में सूची साथ बैठकर पढ़ते हैं।",
+              "जो भी बात साफ़ न हो, वह ग्राहक के पास नहीं, सेलर के पास वापस जाती है।",
+              "पहली कॉल ग्राहक के लक्ष्य को उन्हीं के शब्दों में दोहराकर शुरू होती है।"
+            ]
+          }
+        ],
+        "curahold": "डील जीतने पर Curahold अगली टीम के लिए एक हैंडओवर कार्ड तैयार कर सकता है, जिसमें स्टेकहोल्डर, किए गए वादे, खुले प्रोडक्ट अनुरोध, और क्लोज़ व रिन्यूअल की तारीखें होती हैं। कार्ड तब तक इंतज़ार करता है जब तक उसका नया ओनर उसकी पुष्टि नहीं करता।"
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "कस्टमर हेल्थ स्कोर शीट टेम्पलेट",
+        "seo": [
+          "हेल्थ स्कोर टेम्पलेट: संकेत, पॉइंट और बैंड | Curahold",
+          "कॉपी करने लायक हेल्थ स्कोर शीट: छह संकेत जिन्हें ग्राहक टीम देख सकती है, हर एक कितने पॉइंट जोड़ता या घटाता है, और बैंड जो बताते हैं किसे ध्यान चाहिए।"
+        ],
+        "lead": "हेल्थ स्कोर तभी काम आता है जब टीम उस पर भरोसा करे, और टीम उसी स्कोर पर भरोसा करती है जिसे वह समझा सके। कुछ ऐसे संकेतों से शुरू करें जो आप देख सकते हैं, हर एक को वज़न दें, और वजह लिख लें।",
+        "body": [
+          {
+            "h": "संकेत और पॉइंट (50 से शुरू करें)"
+          },
+          {
+            "ul": [
+              "पिछले 30 दिनों में ग्राहक से बात हुई: +15। 60 दिनों से कोई संपर्क नहीं: −20।",
+              "उनकी तरफ़ एक चैंपियन जो जवाब देता है: +15। चैंपियन चला गया: −25।",
+              "वादा किया गया काम देर से: हर आइटम के लिए −10, ज़्यादा से ज़्यादा −30।",
+              "दो हफ़्ते से पुराने खुले ब्लॉकर या सपोर्ट अनुरोध: −10।",
+              "इस्तेमाल स्थिर या बढ़ता हुआ: +10। दो महीनों से घटता हुआ: −15।",
+              "रिन्यूअल 90 दिन से कम दूर और कोई कॉल बुक नहीं: −10।"
+            ]
+          },
+          {
+            "h": "बैंड"
+          },
+          {
+            "ul": [
+              "70 और उससे ऊपर: हेल्दी; यही लय बनाए रखें।",
+              "40 से 69: नज़र रखें; इसी हफ़्ते वजह ढूंढें।",
+              "40 से नीचे: जोखिम में; ओनर कॉल करता है, और टीम लीड को जानकारी रहती है।"
+            ]
+          },
+          {
+            "p": "हर तिमाही वज़न को उन ग्राहकों से मिलाकर देखें जिन्हें आपने सच में खोया और बनाए रखा, और जिनका अंदाज़ा ग़लत निकला उन्हें बदलें।"
+          }
+        ],
+        "curahold": "हर ग्राहक को आपके तय नियमों से बना 0 से 100 तक का स्कोर मिलता है, उसकी वजहों की सूची और पिछले तीस दिनों के रुझान के साथ।"
+      },
+      {
+        "slug": "customer-health-score",
+        "kind": "term",
+        "name": "कस्टमर हेल्थ स्कोर",
+        "seo": [
+          "कस्टमर हेल्थ स्कोर क्या है? परिभाषा | Curahold",
+          "कस्टमर हेल्थ स्कोर एक संख्या में बताता है कि ग्राहक के साथ रिश्ता कैसा चल रहा है, आख़िरी संपर्क, देर से चल रहे काम और खुली समस्याओं जैसे संकेतों से।"
+        ],
+        "lead": "कस्टमर हेल्थ स्कोर एक अकेली संख्या है, अक्सर 0 से 100 तक, जो बताती है कि किसी ग्राहक के साथ रिश्ता कितना अच्छा चल रहा है।",
+        "body": [
+          {
+            "p": "यह उन संकेतों से बनता है जिन्हें टीम देख सकती है: किसी ने ग्राहक से आख़िरी बार कब बात की, क्या वादा किया गया काम देर से चल रहा है, क्या उनकी तरफ़ कोई चैंपियन है, खुले ब्लॉकर और सपोर्ट अनुरोध। हर संकेत पॉइंट जोड़ता या घटाता है।"
+          },
+          {
+            "h": "यह क्यों अहम है"
+          },
+          {
+            "p": "दर्जनों ग्राहकों के पोर्टफ़ोलियो में वह एक ग्राहक छिप जाता है जो चुप होता जा रहा है। स्कोर उन्हें क्रम में रखता है, ताकि ध्यान पहले वहां जाए जहां रिन्यूअल जोखिम में है।"
+          },
+          {
+            "h": "अच्छा स्कोर कैसा होता है"
+          },
+          {
+            "ul": [
+              "वह ख़ुद को समझाता है: कोई भी देख सकता है कि किन संकेतों ने उसे बदला।",
+              "वह ऐसे संकेत इस्तेमाल करता है जिन पर टीम भरोसा करती है और जिन पर काम कर सकती है।",
+              "उसे एक बार पढ़कर छोड़ा नहीं जाता, समय के साथ देखा जाता है।"
+            ]
+          }
+        ],
+        "curahold": "हर ग्राहक को आपके तय नियमों से बना 0 से 100 तक का स्कोर मिलता है, उसकी वजहों की सूची और पिछले तीस दिनों के रुझान के साथ।"
+      },
+      {
+        "slug": "churn",
+        "kind": "term",
+        "name": "चर्न",
+        "seo": [
+          "कस्टमर चर्न क्या है? परिभाषा और संकेत | Curahold",
+          "चर्न किसी अवधि में खोए गए ग्राहकों या राजस्व का हिस्सा है। किसे चर्न गिना जाता है, इसे कैसे मापा जाता है, और इससे पहले आने वाले शुरुआती संकेत।"
+        ],
+        "lead": "चर्न तब होता है जब कोई ग्राहक ख़रीदना बंद कर देता है: वह रद्द कर देता है, या रिन्यू नहीं करता। चर्न रेट किसी अवधि में खोए गए ग्राहकों, या राजस्व, का हिस्सा है।",
+        "body": [
+          {
+            "h": "इसे कैसे मापा जाता है"
+          },
+          {
+            "ul": [
+              "कस्टमर चर्न: अवधि में खोए गए ग्राहक, भाग अवधि की शुरुआत में ग्राहक।",
+              "रेवेन्यू चर्न: रद्द होने और डाउनग्रेड से खोया गया रेकरिंग राजस्व, भाग शुरुआत में रेकरिंग राजस्व।"
+            ]
+          },
+          {
+            "h": "पहले आने वाले संकेत"
+          },
+          {
+            "p": "चर्न शायद ही कभी बिना चेतावनी के आता है। संपर्क कम हो जाता है, वादा किया गया काम खिसकता है, चैंपियन चला जाता है, सपोर्ट अनुरोध बढ़ते जाते हैं। इन संकेतों पर नज़र रखकर ही टीम रिन्यूअल की तारीख से पहले कदम उठाती है।"
+          }
+        ],
+        "curahold": "ऐसे संकेत हर ग्राहक के हेल्थ स्कोर में जुड़ते हैं, ताकि चुप होते ग्राहक रिन्यूअल से काफ़ी पहले सामने आ जाएं।"
+      },
+      {
+        "slug": "contract-renewal",
+        "kind": "term",
+        "name": "कॉन्ट्रैक्ट रिन्यूअल",
+        "seo": [
+          "कॉन्ट्रैक्ट रिन्यूअल क्या है? प्रक्रिया और समय | Curahold",
+          "कॉन्ट्रैक्ट रिन्यूअल ग्राहक के एग्रीमेंट को नई अवधि के लिए बढ़ाता है। कब शुरू करें, रिन्यूअल प्रक्रिया कैसी दिखती है, और यह महीनों पहले क्यों शुरू होती है।"
+        ],
+        "lead": "कॉन्ट्रैक्ट रिन्यूअल ग्राहक के एग्रीमेंट को एक और अवधि के लिए बढ़ाता है, अक्सर बदलावों के साथ: ज़्यादा सीटें, अलग प्लान या नई कीमत।",
+        "body": [
+          {
+            "h": "यह कब शुरू होता है"
+          },
+          {
+            "p": "सालाना कॉन्ट्रैक्ट के लिए काम आमतौर पर करीब नब्बे दिन पहले शुरू होता है। इससे दी गई वैल्यू की समीक्षा करने, निर्णय लेने वाले से मिलने, कोटेशन भेजने और बिना जल्दबाज़ी के सवाल सुलझाने का समय मिलता है।"
+          },
+          {
+            "h": "आमतौर पर क्या ग़लत होता है"
+          },
+          {
+            "ul": [
+              "तारीख पर बहुत देर से ध्यान जाता है।",
+              "जिस व्यक्ति ने साइन किया था, वह जा चुका है।",
+              "साल भर में किए गए वादे अभी भी खुले हैं।"
+            ]
+          }
+        ],
+        "curahold": "रिन्यूअल नब्बे दिन पहले अपनी प्लेबुक ख़ुद खोल सकता है, ओनर और तारीखों वाले टास्क के रूप में, और साथ में पाइपलाइन में एक रिन्यूअल अवसर।"
+      },
+      {
+        "slug": "customer-portal",
+        "kind": "term",
+        "name": "कस्टमर पोर्टल",
+        "seo": [
+          "कस्टमर पोर्टल क्या है? परिभाषा और उपयोग | Curahold",
+          "कस्टमर पोर्टल एक निजी जगह है जहां ग्राहक अपने साथ शेयर किया गया काम देखता है, अनुरोध भेजता है और जवाब पढ़ता है, ईमेल थ्रेड के पीछे भागे बिना।"
+        ],
+        "lead": "कस्टमर पोर्टल एक निजी वेब पेज है जहां ग्राहक अपने साथ शेयर किया गया काम देखता है, अनुरोध भेजता है और टीम के जवाब पढ़ता है।",
+        "body": [
+          {
+            "h": "टीमें इसे क्यों इस्तेमाल करती हैं"
+          },
+          {
+            "p": "यह स्टेटस ईमेल की जगह लेता है। ग्राहक जब चाहे प्रगति देख लेता है, और उसके अनुरोध बिखरे थ्रेड के बजाय एक ही जगह पहुंचते हैं।"
+          },
+          {
+            "h": "क्या शेयर करें"
+          },
+          {
+            "ul": [
+              "ऑनबोर्डिंग के स्टेप और उनकी तारीखें।",
+              "मीटिंग में वादा किए गए टास्क।",
+              "उनके अनुरोधों के जवाब।"
+            ]
+          }
+        ],
+        "curahold": "ग्राहक अपने ईमेल के लिंक से साइन इन करते हैं और सिर्फ़ वही देखते हैं जो आप शेयर करते हैं; उनके भेजे अनुरोध आपकी टीम के बोर्ड पर आते हैं।"
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "कस्टमर ऑनबोर्डिंग",
+        "seo": [
+          "कस्टमर ऑनबोर्डिंग क्या है? स्टेप और लक्ष्य | Curahold",
+          "कस्टमर ऑनबोर्डिंग नए ग्राहक को साइन से पहली वैल्यू तक ले जाने का काम है: सेल्स से हैंडओवर, सेटअप, ट्रेनिंग और पहले दिखने वाले नतीजे।"
+        ],
+        "lead": "कस्टमर ऑनबोर्डिंग साइन होने और उस पल के बीच का समय है जब नए ग्राहक को वह वैल्यू मिलती है जिसके लिए उसने ख़रीदा, और वह काम जो टीम इस समय को छोटा करने के लिए करती है।",
+        "body": [
+          {
+            "h": "इसमें आमतौर पर क्या आता है"
+          },
+          {
+            "ul": [
+              "सेल्स से हैंडओवर, किए गए वादों के साथ।",
+              "एक किकऑफ़ कॉल जिसमें लक्ष्य और तारीखें तय होती हैं।",
+              "सेटअप, डेटा इंपोर्ट और ट्रेनिंग।",
+              "एक पहला नतीजा जिसे ग्राहक देख सके और नाम दे सके।"
+            ]
+          },
+          {
+            "h": "यह क्यों अहम है"
+          },
+          {
+            "p": "जिन ग्राहकों को जल्दी वैल्यू दिखती है, वे आमतौर पर बने रहते हैं। लंबा खिंचता ऑनबोर्डिंग पहली रिन्यूअल बातचीत को शक से शुरू करवाता है।"
+          }
+        ],
+        "curahold": "अगर आपकी ऑनबोर्डिंग टीम है, तो जीती गई डील उस तक एक हैंडओवर कार्ड के रूप में पहुंचती है, जिसमें स्टेकहोल्डर, किए गए वादे, खुले अनुरोध और अहम तारीखें होती हैं, और उसके टास्क ग्राहक के पोर्टल में उसके साथ शेयर किए जा सकते हैं।"
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "सेवा देने की लागत",
+        "seo": [
+          "सेवा देने की लागत: यह क्या है और कैसे मापें | Curahold",
+          "सेवा देने की लागत वह मेहनत है, घंटों या पैसों में, जो किसी ग्राहक की देखभाल में लगती है, उसके भुगतान के मुकाबले। इसे कैसे मापें और रिन्यूअल से पहले क्या करें।"
+        ],
+        "lead": "सेवा देने की लागत वह मेहनत है जो टीम किसी ग्राहक की देखभाल में लगाती है, उस ग्राहक के भुगतान के मुकाबले।",
+        "body": [
+          {
+            "h": "इसे कैसे मापें"
+          },
+          {
+            "p": "सबसे आसान पैमाना घंटे हैं: पिछले बारह महीनों में टीम ने किसी ग्राहक पर जितना समय दर्ज किया, भाग उसकी सालाना कॉन्ट्रैक्ट वैल्यू। हर ग्राहक की एक ही पैमाने पर तुलना करने से पता चलता है कि कौन अपने भुगतान के मुकाबले सबसे ज़्यादा देखभाल लेता है।"
+          },
+          {
+            "h": "इसका क्या करें"
+          },
+          {
+            "ul": [
+              "ऊंची संख्या के पीछे का काम ढूंढें: बार-बार आने वाले अनुरोध, कोई कमी वाला फ़ीचर, ट्रेनिंग की कमी।",
+              "रिन्यूअल से पहले वजह ठीक करें, या अतिरिक्त सेवा की कीमत उसमें जोड़ें।",
+              "किसी ग्राहक को सिर्फ़ इस संख्या से न आंकें: ज़्यादा मांग करने वाला ग्राहक आपका सबसे अच्छा रेफ़रेंस भी हो सकता है।"
+            ]
+          }
+        ],
+        "curahold": "सेवा देने की लागत रिपोर्ट हर ग्राहक के लिए दिखाती है कि हर 1,000 की सालाना वैल्यू पर पिछले 12 महीनों में कितने घंटे लगे, ताकि आप देख सकें कि किसकी देखभाल सबसे महंगी है।"
+      }
+    ]
+  },
+  ms: {
+    "title": "Templat dan glosari untuk pasukan pelanggan",
+    "lead": "Templat yang boleh anda salin dan definisi ringkas untuk kerja mengekalkan pelanggan: pembaharuan, semakan perniagaan, kesihatan dan churn.",
+    "seo": [
+      "Templat dan glosari kejayaan pelanggan | Curahold",
+      "Templat percuma untuk playbook pembaharuan dan semakan perniagaan, serta definisi ringkas skor kesihatan, churn, pembaharuan dan portal pelanggan."
+    ],
+    "templates": "Templat",
+    "glossary": "Glosari",
+    "inCurahold": "Dalam Curahold",
+    "nav": [
+      "Templat dan glosari",
+      "Langkah pembaharuan, agenda semakan dan definisi ringkas."
+    ],
+    "items": [
+      {
+        "slug": "renewal-playbook",
+        "kind": "template",
+        "name": "Templat playbook pembaharuan",
+        "seo": [
+          "Templat playbook pembaharuan: langkah 90 hari | Curahold",
+          "Playbook pembaharuan untuk disalin: apa yang dibuat 90, 75, 60 dan 30 hari sebelum kontrak diperbaharui, siapa pemilik setiap langkah, dan apa yang disemak."
+        ],
+        "lead": "Pembaharuan dimenangi dalam tiga bulan sebelum tarikhnya, bukan pada hari itu. Salin langkah ini, beri setiap satu pemilik, dan kira ke belakang dari tarikh pembaharuan.",
+        "body": [
+          {
+            "h": "Langkah-langkah"
+          },
+          {
+            "ol": [
+              "90 hari sebelum: semak penggunaan, permintaan terbuka dan skor kesihatan; catat apa-apa yang membimbangkan anda.",
+              "75 hari sebelum: tempah panggilan pembaharuan dengan pembuat keputusan dan kenalan harian.",
+              "60 hari sebelum: hantar sebut harga pembaharuan, bersama sebarang perubahan tempat duduk atau pelan.",
+              "30 hari sebelum: susuli sebut harga itu dan selesaikan soalan terbuka secara bertulis.",
+              "Pada tarikh pembaharuan: sahkan pembaharuan yang ditandatangani dan catat apa yang dipersetujui."
+            ]
+          },
+          {
+            "h": "Sebelum panggilan pembaharuan"
+          },
+          {
+            "ul": [
+              "Apa yang ingin dicapai oleh pelanggan tahun ini, dan adakah mereka mencapainya?",
+              "Janji manakah daripada mesyuarat terdahulu yang masih terbuka?",
+              "Siapa yang membuat keputusan, dan adakah mereka hadir dalam mesyuarat dengan anda baru-baru ini?"
+            ]
+          }
+        ],
+        "curahold": "Hidupkan pembaharuan dan playbook pembaharuan membuka langkahnya sebagai tugasan sembilan puluh hari sebelum setiap tarikh pembaharuan, setiap satu dengan pemilik dan tarikh akhir yang dikira ke belakang dari pembaharuan."
+      },
+      {
+        "slug": "business-review-agenda",
+        "kind": "template",
+        "name": "Templat agenda semakan perniagaan (QBR)",
+        "seo": [
+          "Templat agenda semakan perniagaan (QBR) | Curahold",
+          "Agenda semakan perniagaan sejam untuk pasukan pelanggan: hasil berbanding matlamat, apa yang berubah, janji terbuka, pelan suku depan dan langkah yang jelas."
+        ],
+        "lead": "Semakan perniagaan suku tahunan harus meninggalkan pelanggan dengan bukti nilai dan kedua-dua pihak dengan langkah seterusnya yang sama. Agenda ini muat dalam satu jam.",
+        "body": [
+          {
+            "h": "Agenda (60 minit)"
+          },
+          {
+            "ol": [
+              "5 minit: matlamat mesyuarat dan siapa yang hadir.",
+              "15 minit: hasil berbanding matlamat yang ditetapkan suku lepas.",
+              "10 minit: apa yang berubah di pihak mereka: orang, keutamaan, bajet.",
+              "10 minit: permintaan dan janji terbuka, dan status setiap satu.",
+              "15 minit: pelan untuk suku seterusnya.",
+              "5 minit: langkah seterusnya, setiap satu dengan pemilik dan tarikh."
+            ]
+          },
+          {
+            "h": "Selepas mesyuarat"
+          },
+          {
+            "p": "Hantar ringkasan pendek pada hari yang sama: apa yang dipersetujui, langkah seterusnya dengan pemilik dan tarikh, dan tarikh semakan berikutnya."
+          }
+        ],
+        "curahold": "Catat semakan itu sebagai mesyuarat pada pelanggan dan tulis langkah seterusnya; apabila anda menyimpan, setiap satu menjadi tugasan dengan pemilik dan tarikh, yang boleh anda kongsi dalam portal pelanggan."
+      },
+      {
+        "slug": "handover-checklist",
+        "kind": "template",
+        "name": "Senarai semak serahan jualan kepada onboarding",
+        "seo": [
+          "Senarai semak serahan jualan ke onboarding | Curahold",
+          "Senarai semak serahan bagi urus niaga yang dimenangi: pihak berkepentingan, janji semasa jualan, permintaan terbuka, tarikh penting dan panggilan pertama."
+        ],
+        "lead": "Kebanyakan masalah dalam bulan-bulan pertama pelanggan bermula pada serahan: pasukan jualan tahu perkara yang tidak pernah sampai kepada pasukan onboarding. Salin senarai ini dan isikannya sebelum urus niaga bertukar tangan.",
+        "body": [
+          {
+            "h": "Apa yang mesti dibawa oleh serahan"
+          },
+          {
+            "ul": [
+              "Pihak berkepentingan: pembuat keputusan, kenalan harian dan juara di pihak mereka, dengan cara menghubungi setiap seorang.",
+              "Janji yang dibuat semasa jualan: ciri, tarikh, diskaun, apa-apa yang dinyatakan secara bertulis atau dalam panggilan.",
+              "Permintaan produk terbuka yang ditunggu oleh pelanggan, dan apa yang telah diberitahu kepada mereka.",
+              "Tarikh penting: tarikh tutup, tarikh mula guna yang dijangka dan tarikh pembaharuan.",
+              "Mengapa mereka membeli: masalah yang ingin diselesaikan dan cara mereka menilai kejayaan."
+            ]
+          },
+          {
+            "h": "Sebelum panggilan pertama"
+          },
+          {
+            "ol": [
+              "Penjual dan pemilik onboarding membaca senarai ini bersama-sama, dalam 15 minit.",
+              "Apa-apa yang tidak jelas dibawa balik kepada penjual, bukan kepada pelanggan.",
+              "Panggilan pertama dibuka dengan mengulang matlamat pelanggan dalam kata-kata mereka sendiri."
+            ]
+          }
+        ],
+        "curahold": "Apabila urus niaga dimenangi, Curahold boleh menyediakan kad serahan untuk pasukan seterusnya dengan pihak berkepentingan, janji yang dibuat, permintaan produk terbuka, serta tarikh tutup dan pembaharuan. Kad itu menunggu sehingga pemilik baharunya mengesahkannya."
+      },
+      {
+        "slug": "health-score-sheet",
+        "kind": "template",
+        "name": "Templat helaian skor kesihatan pelanggan",
+        "seo": [
+          "Templat skor kesihatan: isyarat, mata dan jalur | Curahold",
+          "Helaian skor kesihatan untuk disalin: enam isyarat yang boleh diperhatikan, mata yang ditambah atau ditolak, dan jalur yang menunjukkan siapa perlu perhatian."
+        ],
+        "lead": "Skor kesihatan hanya membantu jika pasukan mempercayainya, dan pasukan mempercayai skor yang boleh dijelaskannya. Mulakan dengan beberapa isyarat yang boleh anda lihat, beri setiap satu wajaran, dan catat sebabnya.",
+        "body": [
+          {
+            "h": "Isyarat dan mata (mula pada 50)"
+          },
+          {
+            "ul": [
+              "Bercakap dengan pelanggan dalam 30 hari lepas: +15. Tiada hubungan selama 60 hari: −20.",
+              "Ada juara di pihak mereka yang membalas: +15. Juara itu sudah pergi: −25.",
+              "Kerja yang dijanjikan lewat: −10 bagi setiap item, paling banyak −30.",
+              "Penghalang atau permintaan sokongan terbuka yang lebih lama daripada dua minggu: −10.",
+              "Penggunaan stabil atau meningkat: +10. Menurun selama dua bulan: −15.",
+              "Pembaharuan kurang daripada 90 hari lagi tanpa panggilan ditempah: −10."
+            ]
+          },
+          {
+            "h": "Jalur"
+          },
+          {
+            "ul": [
+              "70 dan ke atas: sihat; kekalkan rentaknya.",
+              "40 hingga 69: perhatikan; cari sebabnya minggu ini.",
+              "Bawah 40: berisiko; pemilik membuat panggilan, dan ketua pasukan dimaklumkan."
+            ]
+          },
+          {
+            "p": "Setiap suku tahun, bandingkan wajaran dengan pelanggan yang benar-benar anda hilang dan kekalkan, dan ubah wajaran yang meneka dengan salah."
+          }
+        ],
+        "curahold": "Setiap pelanggan mendapat skor 0 hingga 100 yang dibina daripada peraturan yang anda tetapkan, dengan sebab-sebabnya disenaraikan dan arah alirannya sepanjang tiga puluh hari lepas."
+      },
+      {
+        "slug": "customer-health-score",
+        "kind": "term",
+        "name": "Skor kesihatan pelanggan",
+        "seo": [
+          "Apakah skor kesihatan pelanggan? Definisi | Curahold",
+          "Skor kesihatan pelanggan meringkaskan keadaan hubungan pelanggan dalam satu angka, daripada isyarat seperti hubungan terakhir, kerja lewat dan isu terbuka."
+        ],
+        "lead": "Skor kesihatan pelanggan ialah satu angka, selalunya dari 0 hingga 100, yang meringkaskan sejauh mana hubungan dengan seorang pelanggan berjalan dengan baik.",
+        "body": [
+          {
+            "p": "Ia dibina daripada isyarat yang boleh diperhatikan oleh pasukan: bila kali terakhir seseorang bercakap dengan pelanggan, sama ada kerja yang dijanjikan sudah lewat, sama ada ada juara di pihak mereka, penghalang terbuka dan permintaan sokongan. Setiap isyarat menambah atau menolak mata."
+          },
+          {
+            "h": "Mengapa ia penting"
+          },
+          {
+            "p": "Portfolio berpuluh-puluh pelanggan menyembunyikan seorang yang semakin senyap. Skor menyusun mereka, jadi perhatian pergi dahulu ke tempat pembaharuan berisiko."
+          },
+          {
+            "h": "Ciri skor yang baik"
+          },
+          {
+            "ul": [
+              "Ia menjelaskan dirinya: sesiapa boleh melihat isyarat mana yang menggerakkannya.",
+              "Ia menggunakan isyarat yang dipercayai pasukan dan boleh diambil tindakan.",
+              "Ia diikuti dari semasa ke semasa, bukan dibaca sekali sahaja."
+            ]
+          }
+        ],
+        "curahold": "Setiap pelanggan mendapat skor 0 hingga 100 yang dibina daripada peraturan yang anda tetapkan, dengan sebab-sebabnya disenaraikan dan arah alirannya sepanjang tiga puluh hari lepas."
+      },
+      {
+        "slug": "churn",
+        "kind": "term",
+        "name": "Churn",
+        "seo": [
+          "Apakah churn pelanggan? Definisi dan isyarat | Curahold",
+          "Churn ialah bahagian pelanggan atau hasil yang hilang dalam satu tempoh. Apa yang dikira sebagai churn, cara ia diukur, dan isyarat awal yang datang sebelumnya."
+        ],
+        "lead": "Churn berlaku apabila pelanggan berhenti membeli: mereka membatalkan, atau tidak memperbaharui. Kadar churn ialah bahagian pelanggan, atau hasil, yang hilang dalam satu tempoh.",
+        "body": [
+          {
+            "h": "Cara ia diukur"
+          },
+          {
+            "ul": [
+              "Churn pelanggan: pelanggan yang hilang dalam tempoh itu, dibahagi dengan pelanggan pada permulaannya.",
+              "Churn hasil: hasil berulang yang hilang akibat pembatalan dan penurunan pelan, dibahagi dengan hasil berulang pada permulaan."
+            ]
+          },
+          {
+            "h": "Isyarat yang datang dahulu"
+          },
+          {
+            "p": "Churn jarang datang tanpa amaran. Hubungan menjadi senyap, kerja yang dijanjikan tergelincir, juara pergi, permintaan sokongan bertimbun. Memerhati isyarat itulah cara pasukan bertindak sebelum tarikh pembaharuan."
+          }
+        ],
+        "curahold": "Isyarat seperti ini menyumbang kepada skor kesihatan setiap pelanggan, jadi pelanggan yang semakin senyap muncul jauh sebelum pembaharuan mereka."
+      },
+      {
+        "slug": "contract-renewal",
+        "kind": "term",
+        "name": "Pembaharuan kontrak",
+        "seo": [
+          "Apakah pembaharuan kontrak? Proses dan masa | Curahold",
+          "Pembaharuan kontrak melanjutkan perjanjian pelanggan untuk tempoh baharu. Bila bermula, rupa prosesnya, dan mengapa ia bermula berbulan-bulan lebih awal."
+        ],
+        "lead": "Pembaharuan kontrak melanjutkan perjanjian pelanggan untuk satu tempoh lagi, selalunya dengan perubahan: lebih banyak tempat duduk, pelan yang berbeza atau harga baharu.",
+        "body": [
+          {
+            "h": "Bila ia bermula"
+          },
+          {
+            "p": "Untuk kontrak tahunan, kerja biasanya bermula kira-kira sembilan puluh hari lebih awal. Itu memberi masa untuk menyemak nilai yang diberikan, bertemu pembuat keputusan, menghantar sebut harga dan menyelesaikan soalan tanpa tergesa-gesa."
+          },
+          {
+            "h": "Apa yang biasanya tidak kena"
+          },
+          {
+            "ul": [
+              "Tarikh itu disedari terlalu lewat.",
+              "Orang yang menandatangani sudah pergi.",
+              "Janji yang dibuat sepanjang tahun masih terbuka."
+            ]
+          }
+        ],
+        "curahold": "Pembaharuan boleh membuka playbooknya sendiri sembilan puluh hari lebih awal, sebagai tugasan dengan pemilik dan tarikh, bersama peluang pembaharuan dalam saluran jualan."
+      },
+      {
+        "slug": "customer-portal",
+        "kind": "term",
+        "name": "Portal pelanggan",
+        "seo": [
+          "Apakah portal pelanggan? Definisi dan kegunaan | Curahold",
+          "Portal pelanggan ialah tempat peribadi di mana pelanggan melihat kerja yang dikongsi, menghantar permintaan dan membaca balasan, tanpa mengejar e-mel."
+        ],
+        "lead": "Portal pelanggan ialah halaman web peribadi di mana pelanggan melihat kerja yang dikongsi dengan mereka, menghantar permintaan dan membaca balasan pasukan.",
+        "body": [
+          {
+            "h": "Mengapa pasukan menggunakannya"
+          },
+          {
+            "p": "Ia menggantikan e-mel status. Pelanggan melihat kemajuan bila-bila masa mereka mahu, dan permintaan mereka tiba di satu tempat, bukan dalam bebenang yang berselerak."
+          },
+          {
+            "h": "Apa yang patut dikongsi"
+          },
+          {
+            "ul": [
+              "Langkah onboarding dan tarikhnya.",
+              "Tugasan yang dijanjikan dalam mesyuarat.",
+              "Jawapan kepada permintaan mereka."
+            ]
+          }
+        ],
+        "curahold": "Pelanggan log masuk dengan pautan dalam e-mel mereka dan hanya melihat apa yang anda kongsi; permintaan yang mereka hantar sampai ke papan pasukan anda."
+      },
+      {
+        "slug": "customer-onboarding",
+        "kind": "term",
+        "name": "Onboarding pelanggan",
+        "seo": [
+          "Apakah onboarding pelanggan? Langkah dan matlamat | Curahold",
+          "Onboarding pelanggan membawa pelanggan baharu dari tandatangan ke nilai pertama: serahan daripada jualan, persediaan, latihan dan hasil pertama yang kelihatan."
+        ],
+        "lead": "Onboarding pelanggan ialah masa antara tandatangan dengan saat pelanggan baharu mendapat nilai yang dibelinya, dan kerja yang dilakukan pasukan untuk memendekkan masa itu.",
+        "body": [
+          {
+            "h": "Apa yang biasanya diliputi"
+          },
+          {
+            "ul": [
+              "Serahan daripada jualan, bersama apa yang dijanjikan.",
+              "Panggilan permulaan yang menyepakati matlamat dan tarikh.",
+              "Persediaan, import data dan latihan.",
+              "Hasil pertama yang boleh dilihat dan dinamakan oleh pelanggan."
+            ]
+          },
+          {
+            "h": "Mengapa ia penting"
+          },
+          {
+            "p": "Pelanggan yang melihat nilai lebih awal cenderung untuk kekal. Onboarding yang berlarutan membuatkan perbualan pembaharuan pertama bermula dengan keraguan."
+          }
+        ],
+        "curahold": "Jika anda mempunyai pasukan onboarding, urus niaga yang dimenangi sampai kepadanya sebagai satu kad serahan dengan pihak berkepentingan, janji yang dibuat, permintaan terbuka dan tarikh penting, dan tugasannya boleh dikongsi dengan pelanggan dalam portal mereka."
+      },
+      {
+        "slug": "cost-to-serve",
+        "kind": "term",
+        "name": "Kos untuk melayan",
+        "seo": [
+          "Kos untuk melayan: apa itu dan cara mengukurnya | Curahold",
+          "Kos untuk melayan ialah usaha menjaga pelanggan, dalam jam atau wang, berbanding bayaran mereka. Cara mengukurnya dan apa yang dibuat sebelum pembaharuan."
+        ],
+        "lead": "Kos untuk melayan ialah usaha yang dibelanjakan pasukan untuk menjaga seorang pelanggan, berbanding apa yang dibayar oleh pelanggan itu.",
+        "body": [
+          {
+            "h": "Cara mengukurnya"
+          },
+          {
+            "p": "Ukuran paling mudah ialah jam: masa yang dicatat pasukan untuk seorang pelanggan dalam dua belas bulan lepas, dibahagi dengan nilai kontrak tahunannya. Membandingkan setiap pelanggan pada skala yang sama menunjukkan siapa yang memerlukan penjagaan paling banyak berbanding apa yang mereka bayar."
+          },
+          {
+            "h": "Apa yang perlu dibuat dengannya"
+          },
+          {
+            "ul": [
+              "Cari kerja di sebalik angka yang tinggi: permintaan berulang, ciri yang tiada, jurang latihan.",
+              "Betulkan puncanya sebelum pembaharuan, atau masukkan harga perkhidmatan tambahan ke dalamnya.",
+              "Jangan menilai pelanggan berdasarkan angka ini sahaja: pelanggan yang banyak permintaan juga boleh menjadi rujukan terbaik anda."
+            ]
+          }
+        ],
+        "curahold": "Laporan Kos untuk melayan menunjukkan, bagi setiap pelanggan, jam yang dibelanjakan dalam 12 bulan lepas bagi setiap 1,000 nilai tahunan, supaya anda dapat melihat siapa yang paling mahal untuk dijaga."
       }
     ]
   },
