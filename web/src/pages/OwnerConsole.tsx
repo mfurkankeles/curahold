@@ -5,7 +5,7 @@
 // time, support at a glance, the system and everything staff did.
 // Desktop first (a command layout with a top bar), phone stacked.
 // Turkish and English only, by the owner's choice (words: shared/src/i18n/owner.ts).
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CHECKLIST_AREAS, CHECKLIST_PRIORITIES, type ChecklistEntry } from '../../../shared/src/checklist';
 import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
@@ -1254,6 +1254,8 @@ function ReplyDraft({ to, subject, body }: { to: string; subject: string; body: 
 
 /** How long a decision waits in this tab before it is sent, so it can be taken back (Undo or Z). */
 export const HOLD_MS = 7000;
+/** When a decision taken now leaves the tab (read only from the owner's key press or click). */
+const holdUntil = () => Date.now() + HOLD_MS;
 type Verdict = { decision: 'approve'; edits?: Record<string, string> } | { decision: 'reject'; note: string | null } | { decision: 'meeting' };
 interface Held {
   a: Approval;
@@ -1284,10 +1286,12 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
   const recent = useData<{ approvals: Approval[] }>('/office/approvals?status=all', beat, failed);
   const [held, setHeld] = useState<Held[]>([]);
   const heldRef = useRef<Held[]>([]);
-  heldRef.current = held;
+  useLayoutEffect(() => {
+    heldRef.current = held;
+  });
   const [curId, setCurId] = useState<string | null>(null);
   const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
-  const [, tick] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const list = (pending.data?.approvals ?? []).filter((a) => !held.some((h) => h.a.id === a.id));
   const at = Math.max(0, list.findIndex((a) => a.id === curId));
   const cur = list[at];
@@ -1315,8 +1319,9 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
     const next = list[at + 1] ?? list[at - 1];
     setCurId(next?.id ?? null);
     setNote(null);
-    const h: Held = { a, body, until: Date.now() + HOLD_MS, timer: 0 };
+    const h: Held = { a, body, until: holdUntil(), timer: 0 };
     h.timer = window.setTimeout(() => send(h), HOLD_MS);
+    setNow(h.until - HOLD_MS);
     setHeld((x) => [...x, h]);
   };
   const undo = useCallback(() => {
@@ -1330,13 +1335,15 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
   // The countdown on the undo bar, once a second while something waits.
   useEffect(() => {
     if (!held.length) return;
-    const id = window.setInterval(() => tick((n) => n + 1), 1000);
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [held.length]);
   // Leaving the section or closing the tab sends what the owner already decided (once, on the way out: a change
   // of language must not send early, so the latest `send` is read through a ref).
   const sendRef = useRef(send);
-  sendRef.current = send;
+  useLayoutEffect(() => {
+    sendRef.current = send;
+  });
   useEffect(() => {
     const out = () => heldRef.current.forEach((h) => sendRef.current(h, true));
     window.addEventListener('pagehide', out);
@@ -1459,7 +1466,7 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
                 <span className="ocundo__text">
                   <strong>{o(`approvals.held.${last.body.decision}` as OwnerKey, { title: last.a.title })}</strong>
                   <span>
-                    {o('approvals.held.when', { s: formatNumber(Math.max(1, Math.ceil((last.until - Date.now()) / 1000)), locale) })}
+                    {o('approvals.held.when', { s: formatNumber(Math.max(1, Math.ceil((last.until - now) / 1000)), locale) })}
                     {held.length > 1 ? ` · ${o('approvals.held.more', { n: formatNumber(held.length - 1, locale) })}` : ''}
                   </span>
                 </span>
@@ -1531,7 +1538,9 @@ export function ApprovalCard({
   // The queue's keys (console only). Capture phase, so the console's own section keys (A approvals, R requests)
   // do not fire while a proposal is open; a key typed into a field stays with the field.
   const live = useRef({ mode, note, busy });
-  live.current = { mode, note, busy };
+  useLayoutEffect(() => {
+    live.current = { mode, note, busy };
+  });
   useEffect(() => {
     if (!keys) return;
     const on = (e: KeyboardEvent) => {

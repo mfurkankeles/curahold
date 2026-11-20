@@ -134,7 +134,9 @@ describe('chart palette', () => {
         if (worst < 8 || near < 15) clash.push([hues[i], hues[j]].sort().join('|'));
       }
     const src = readFileSync(join(ROOT, 'web/src/components/Charts.tsx'), 'utf8');
-    const listed = JSON.parse(/CLASHING_COLOURS: readonly string\[\] = (\[[^\]]*\])/.exec(src)![1].replace(/'/g, '"'));
+    const found = /CLASHING_COLOURS: readonly string\[\] = (\[[^\]]*\])/.exec(src);
+    expect(found).not.toBeNull();
+    const listed: string[] = JSON.parse((found?.[1] ?? '[]').replace(/'/g, '"'));
     expect([...listed].sort()).toEqual(clash.sort());
   });
 
