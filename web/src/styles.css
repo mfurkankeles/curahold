@@ -397,6 +397,8 @@ html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(
 }
 html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(zh)) * { letter-spacing: normal !important; }
 html:is(:lang(ja), :lang(ko), :lang(zh)) :is(em, i, cite) { font-style: normal; }
+/* Japanese has no spaces, so a narrow column broke words anywhere ("通話やミーティン|グ"); break between phrases. */
+html:lang(ja) { word-break: auto-phrase; }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
@@ -2099,14 +2101,16 @@ button.wcell:hover { border-style: solid; border-color: var(--brand); color: var
 .start__meter { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
 .start__meter i { height: 5px; border-radius: var(--r-xs); background: var(--sunk); }
 .start__meter i[data-done] { background: var(--done); }
-.start__steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 8px; }
-.start__step { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface-2); }
+.start__steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 8px; }
+/* On a phone (or with a long label, as in Japanese) the button goes under the text instead of squeezing it. */
+.start__step { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface-2); }
+.start__step > .btn { margin-inline-start: auto; }
 .start__step[data-done] { background: transparent; border-style: dashed; }
 .start__step[data-done] .start__text strong { color: var(--ink-2); font-weight: 600; text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: currentColor; }
 .start__text strong { font-weight: 700; }
 .start__mark { width: 30px; height: 30px; border-radius: var(--r-m); display: grid; place-items: center; flex: none; background: var(--brand-wash); color: var(--brand-ink); }
 .start__step[data-done] .start__mark { background: var(--done-wash); color: var(--done); }
-.start__text { flex: 1; min-width: 0; display: grid; gap: 0; }
+.start__text { flex: 1 1 192px; min-width: 0; display: grid; gap: 0; }
 .start__text .muted { font-size: var(--fs-xs); }
 @media (max-width: 640px) { .start__steps { grid-template-columns: 1fr; } }
 
