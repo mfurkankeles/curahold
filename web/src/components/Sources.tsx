@@ -259,6 +259,7 @@ export function Sources() {
               navigate('/settings/developer');
             }}
           >
+            <Icon name="code" size={16} />
             {t('support.customOpen')}
           </a>
         </div>
@@ -685,7 +686,8 @@ export function SourceDetail({ id }: { id: string }) {
             navigate('/settings/sources');
           }}
         >
-          ← {t('settings.tab.sources')}
+          <Icon name="arrowLeft" size={16} />
+          {t('settings.tab.sources')}
         </a>
         <div className="source__title">
           <span className="tile__badge" aria-hidden="true">

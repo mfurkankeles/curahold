@@ -68,6 +68,7 @@ export function InboundHooks() {
                   <td className="muted">{h.lastDeliveryAt ? formatDateTime(h.lastDeliveryAt, locale) : t('hooks.never' as MessageKey)}</td>
                   <td>
                     <button className="btn btn--small" onClick={() => setOpen(h.id)} data-tour="hook-open">
+                      <Icon name="chevronRight" size={16} />
                       {t('hooks.open' as MessageKey)}
                     </button>
                   </td>
@@ -135,6 +136,7 @@ function AddHook({ recipes, onClose, onMade }: { recipes: Recipe[]; onClose: () 
       onClose={onClose}
       footer={
         <button className="btn btn--primary" disabled={busy || (target === 'task' && !boardId) || (needsSecret && senderSecret.trim().length < 8)} onClick={submit} data-tour="hook-create">
+          <Icon name="plus" size={16} />
           {t('hooks.create' as MessageKey)}
         </button>
       }
@@ -299,6 +301,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
           </div>
           <div className="toolbar">
             <button className="btn btn--primary btn--small" onClick={save} data-tour="hook-save">
+              <Icon name="check" size={16} />
               {t('common.save')}
             </button>
           </div>
@@ -322,6 +325,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
                 }
               }}
             >
+              <Icon name="eye" size={16} />
               {t('hooks.test.preview' as MessageKey)}
             </button>
             <button
@@ -339,6 +343,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
                 }
               }}
             >
+              <Icon name="send" size={16} />
               {t('hooks.test.send' as MessageKey)}
             </button>
           </div>

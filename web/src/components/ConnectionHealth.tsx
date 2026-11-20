@@ -8,6 +8,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { relativeTime } from '../lib/time';
 import { PROVIDER_NAMES } from './Connections';
+import { Icon } from './icons';
 import { ConnectionTrouble } from './ConnectionTrouble';
 import '../surfaces/admin.css';
 
@@ -101,6 +102,7 @@ export function ConnectionHealth({ list }: { list: Connection[] }) {
                   navigate(r.to);
                 }}
               >
+                <Icon name="chevronRight" size={16} />
                 {t('conn.health.open')}
               </a>
             </li>
