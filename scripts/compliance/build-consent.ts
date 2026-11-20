@@ -1,16 +1,36 @@
 // Builds site/consent.js — the consent banner of every static page — from the
 // shared consent library (shared/src/consent/site.ts + core.ts + browser.ts),
-// so the static pages and the product run the very same rules.
+// so the static pages and the product run the very same rules. Also writes
+// shared/src/consent/site-text-hashes.json: the hash of every text the static
+// banner can show (each site language × which optional categories are in use),
+// so the public consent door can refuse a hash that names no text we showed
+// without bundling the whole site copy into the API (routes/consent.ts).
 //
-//   npx tsx scripts/compliance/build-consent.ts           write site/consent.js
-//   npx tsx scripts/compliance/build-consent.ts --check   exit 1 when it is out of date
+//   npx tsx scripts/compliance/build-consent.ts           write both
+//   npx tsx scripts/compliance/build-consent.ts --check   exit 1 when either is out of date
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSync } from 'esbuild';
+import { bannerText, CONSENT_POLICY_VERSION } from '../../shared/src/consent/core';
+import { SITE_LOCALES, siteConsent } from '../../site/content';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CONSENT_BUNDLE = join(ROOT, 'site', 'consent.js');
+export const SITE_TEXT_HASHES = join(ROOT, 'shared', 'src', 'consent', 'site-text-hashes.json');
+
+/** The four ways the optional categories can be in use; the banner's words, and so the hash, depend on them. */
+export const IN_USE_COMBOS = [false, true].flatMap((analytics) => [false, true].map((marketing) => ({ analytics, marketing })));
+
+/** The committed file: the policy version and the sorted hashes of every text the static banner can show. */
+export function siteTextHashes(): string {
+  const hashes = new Set<string>();
+  for (const l of SITE_LOCALES)
+    for (const inUse of IN_USE_COMBOS)
+      hashes.add(createHash('sha256').update(bannerText(siteConsent(l) as unknown as Record<string, string>, inUse)).digest('hex'));
+  return `${JSON.stringify({ policyVersion: CONSENT_POLICY_VERSION, hashes: [...hashes].sort() }, null, 2)}\n`;
+}
 
 /**
  * Bundles the consent banner script (shared/src/consent) for the public site, so site and app share one implementation.
@@ -31,15 +51,25 @@ export function consentBundle(): string {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const next = consentBundle();
-  const now = readFileSync(CONSENT_BUNDLE, 'utf8');
-  if (process.argv.includes('--check')) {
-    if (now !== next) {
-      console.log('site/consent.js is out of date: run npx tsx scripts/compliance/build-consent.ts');
-      process.exit(1);
+  const read = (f: string) => {
+    try {
+      return readFileSync(f, 'utf8');
+    } catch {
+      return '';
     }
-  } else if (now !== next) {
-    writeFileSync(CONSENT_BUNDLE, next);
-    console.log(`wrote site/consent.js (${next.length} bytes)`);
+  };
+  for (const [file, next] of [
+    [CONSENT_BUNDLE, consentBundle()],
+    [SITE_TEXT_HASHES, siteTextHashes()],
+  ] as const) {
+    const name = file.slice(ROOT.length + 1);
+    if (read(file) === next) continue;
+    if (process.argv.includes('--check')) {
+      console.log(`${name} is out of date: run npx tsx scripts/compliance/build-consent.ts`);
+      process.exitCode = 1;
+    } else {
+      writeFileSync(file, next);
+      console.log(`wrote ${name} (${next.length} bytes)`);
+    }
   }
 }
