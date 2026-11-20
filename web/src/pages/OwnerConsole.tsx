@@ -91,8 +91,55 @@ function Loading<T>({ data, error, reload, children, cards }: { data: T | null; 
   return cards ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />;
 }
 
-/** A figure tile that opens where it comes from. */
-function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: Tone }) {
+/** A figure's change on the period before: the period's words, and whether a rise is good news. */
+interface Change {
+  now: number;
+  before: number;
+  period: '30' | 'Month' | '24h';
+  good: 'up' | 'down';
+  show: (v: number) => string;
+}
+
+/**
+ * "▲ +3 on the previous 30 days": the arrow, the signed amount and the period in words; the colour only repeats
+ * what the words say, and a screen reader also hears whether the move is good news.
+ */
+function Delta({ c }: { c: Change }) {
+  const { o } = useOwnerWords();
+  const diff = c.now - c.before;
+  if (diff === 0)
+    return (
+      <span className="ocdelta" data-dir="same">
+        <Icon name="dot" size={14} />
+        <span>{o(`delta.same${c.period}` as OwnerKey)}</span>
+      </span>
+    );
+  const up = diff > 0;
+  const good = up === (c.good === 'up');
+  return (
+    <span className="ocdelta" data-dir={up ? 'up' : 'down'} data-good={good ? 'yes' : 'no'}>
+      <Icon name={up ? 'chevronUp' : 'chevronDown'} size={14} />
+      <span>{o(`delta.prev${c.period}` as OwnerKey, { delta: `${up ? '+' : '−'}${c.show(Math.abs(diff))}` })}</span>
+      <span className="sr-only">{`, ${o(up ? (good ? 'delta.upGood' : 'delta.upBad') : good ? 'delta.downGood' : 'delta.downBad')}`}</span>
+    </span>
+  );
+}
+
+/** A small line of the last months under a figure: the shape only (the figure and its change are the words). */
+function Spark({ values }: { values: number[] }) {
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const points = values.map((v, i) => `${((i / (values.length - 1)) * 100).toFixed(2)},${(29 - ((v - min) / span) * 26).toFixed(2)}`).join(' ');
+  return (
+    <svg className="ocspark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={points} />
+    </svg>
+  );
+}
+
+/** A figure tile that opens where it comes from, with its change on the period before. */
+function Tile({ label, value, sub, onOpen, lead, tone, change, spark }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: Tone; change?: Change; spark?: number[] }) {
   const body = (
     <>
       <span className="ctile__label">
@@ -100,6 +147,8 @@ function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value:
         {label}
       </span>
       <span className="ctile__value">{value}</span>
+      {change ? <Delta c={change} /> : null}
+      {spark ? <Spark values={spark} /> : null}
       {sub ? <span className="ctile__sub">{sub}</span> : null}
     </>
   );
@@ -140,6 +189,24 @@ function usePlanFormat() {
 
 // ================================================================ the top bar
 
+/** A small choice kept on this device (localStorage); null clears it. Storage may be off: then nothing is kept. */
+const PRIVACY_FOLDED = 'oc_privacy_folded';
+function readFlag(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writeFlag(key: string, value: string | null) {
+  try {
+    if (value == null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage off: the choice lasts this visit */
+  }
+}
+
 /** Always on top: the privacy line, the agents' usage this week, the pause switch, and what waits for a decision. */
 export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
@@ -163,12 +230,30 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
   };
   const u = data?.usage;
   const share = u && u.budget > 0 ? Math.min(1, u.tokens / u.budget) : 0;
+  // The privacy note says what the owner can and cannot see. Read once, it folds into a "Privacy" button that
+  // opens it again, so it never disappears (remembered on this device only).
+  const [privacyOpen, setPrivacyOpen] = useState(() => readFlag(PRIVACY_FOLDED) !== '1');
+  const fold = (open: boolean) => {
+    setPrivacyOpen(open);
+    writeFlag(PRIVACY_FOLDED, open ? null : '1');
+  };
   return (
-    <div className="ocbar" role="region" aria-label={o('bar.label')}>
-      <p className="ocbar__privacy">
-        <Icon name="lock" size={14} />
-        <span>{o('privacy.line')}</span>
-      </p>
+    <div className="ocbar" role="region" aria-label={o('bar.label')} data-privacy={privacyOpen ? 'open' : undefined}>
+      {privacyOpen ? (
+        <p className="ocbar__privacy" id="oc-privacy">
+          <Icon name="lock" size={14} />
+          <span>{o('privacy.line')}</span>
+          <button type="button" className="btn btn--small btn--quiet ocbar__fold" aria-label={o('privacy.hideLabel')} onClick={() => fold(false)}>
+            <Icon name="close" size={14} />
+            {o('privacy.hide')}
+          </button>
+        </p>
+      ) : (
+        <button type="button" className="ocbar__chip ocbar__privacybtn" aria-label={o('privacy.showLabel')} onClick={() => fold(true)}>
+          <Icon name="lock" size={14} />
+          {o('privacy.show')}
+        </button>
+      )}
       <div className="ocbar__right">
         {data ? (
           <button type="button" className="ocbar__chip" data-on={data.approvalsPending ? '' : undefined} onClick={() => go({ section: 'approvals' })} aria-keyshortcuts="a">
@@ -201,9 +286,13 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
 
 // ================================================================ overview
 
+/**
+ * The first screen: what waits for the owner's decision first, then the business in a few figures (each with its
+ * change on the period before; a figure at zero is left out), then customers, the site, the checklist and the
+ * system. The order is the owner's question order: "what do I have to do", "how are we doing", "is anything broken".
+ */
 export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
-  const { t } = useI18n();
   const { data, error, reload } = useData<OwnerOverview>('/owner/overview', beat, failed);
   const fmt = usePlanFormat();
   const n = (v: number) => formatNumber(v, locale);
@@ -213,46 +302,82 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
         {(d) => {
           const usd = (v: number) => formatMoney(v, d.today.currency, locale, { compact: v >= 1_000_000 });
           const pct = (v: number | null) => (v == null ? '—' : formatPercent(v * 100, locale, v > 0 && v < 0.01 ? 2 : v < 0.1 ? 1 : 0));
+          const trend = d.today.revenue.trend;
+          const lastMonth = trend.length > 1 ? trend[trend.length - 2].v : null;
+          const errors = d.errors.server24h + d.errors.syncFailed24h;
           return (
             <>
-              <p className="oc__privacy">
-                <Icon name="lock" size={14} />
-                {o('privacy.line')}
-              </p>
               {d.today.mode === 'demo' ? <p className="ctoday__note">{o('mode.demoNote')}</p> : null}
-              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
-                <span className="ocstrip__sum">
-                  <strong>{o('strip.title')}</strong>
-                  {d.strip.rows.length ? (
-                    <span>{o('strip.counts', { on: n(d.strip.onTrack), close: n(d.strip.close), behind: n(d.strip.behind) })}</span>
-                  ) : (
-                    <span>{o('strip.none')}</span>
-                  )}
-                </span>
-                <span className="ocstrip__rows">
-                  {d.strip.rows.map((r) => (
-                    <span key={r.metric} className="ocpace" data-pace={r.pace}>
-                      <Icon name={PACE_ICON[r.pace]} size={12} />
-                      {o(`metric.${r.metric}` as OwnerKey)} {fmt(r.metric, r.actual)}/{fmt(r.metric, r.target)}
-                    </span>
-                  ))}
-                </span>
-              </button>
+              <DecideBand d={d} go={go} beat={beat} failed={failed} />
 
-              <div className="octiles">
-                <Tile lead label={o('tile.mrr')} value={usd(d.today.revenue.mrr)} sub={o('tile.arr', { amount: usd(d.today.revenue.arr) })} onOpen={() => go({ section: 'revenue' })} />
-                <Tile label={o('tile.invoices')} value={n(d.invoices.paid30)} sub={o('tile.invoicesSub', { failed: n(d.invoices.failed30), upcoming: n(d.invoices.upcoming30) })} tone={d.invoices.failed30 ? 'late' : undefined} onOpen={() => go({ section: 'revenue' })} />
-                <Tile label={o('tile.requests')} value={n(d.requests.open)} sub={o('tile.requestsSub', { n: n(d.requests.new) })} tone={d.requests.new ? 'soon' : undefined} onOpen={() => go({ section: 'requests' })} />
-                <Tile label={o('tile.approvals')} value={n(d.approvalsPending)} sub={o('tile.approvalsSub')} tone={d.approvalsPending ? 'soon' : undefined} onOpen={() => go({ section: 'approvals' })} />
-                <Tile label={o('tile.support')} value={n(d.today.support.waiting)} sub={o('tile.supportSub', { n: n(d.today.support.blocking) })} tone={d.today.support.blocking ? 'late' : undefined} onOpen={() => go({ section: 'supportview' })} />
-                <Tile
-                  label={o('tile.errors')}
-                  value={n(d.errors.server24h + d.errors.syncFailed24h)}
-                  sub={o('tile.errorsSub', { server: n(d.errors.server24h), sync: n(d.errors.syncFailed24h), conn: n(d.errors.connectionsInError) })}
-                  tone={d.errors.server24h + d.errors.syncFailed24h + d.errors.connectionsInError ? 'late' : 'done'}
-                  onOpen={() => go({ section: 'system' })}
-                />
-              </div>
+              <section className="ocsec" aria-labelledby="oc-biz">
+                <h2 className="ocsec__title" id="oc-biz">
+                  {o('business.title')}
+                </h2>
+                <div className="octiles">
+                  <Tile
+                    lead
+                    label={o('tile.mrr')}
+                    value={usd(d.today.revenue.mrr)}
+                    sub={o('tile.arr', { amount: usd(d.today.revenue.arr) })}
+                    change={lastMonth == null ? undefined : { now: d.today.revenue.mrr, before: lastMonth, period: 'Month', good: 'up', show: (v) => usd(v) }}
+                    spark={trend.length > 2 ? trend.map((p) => p.v) : undefined}
+                    onOpen={() => go({ section: 'revenue' })}
+                  />
+                  {d.invoices.paid30 || d.prev.paid30 ? (
+                    <Tile
+                      label={o('tile.invoices')}
+                      value={n(d.invoices.paid30)}
+                      sub={o('tile.invoicesSub', { failed: n(d.invoices.failed30), upcoming: n(d.invoices.upcoming30) })}
+                      change={{ now: d.invoices.paid30, before: d.prev.paid30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'revenue' })}
+                    />
+                  ) : null}
+                  {d.growth.signups30 || d.prev.signups30 ? (
+                    <Tile
+                      label={o('tile.signups')}
+                      value={n(d.growth.signups30)}
+                      sub={o('tile.signupsSub', { n: n(d.growth.activations30) })}
+                      change={{ now: d.growth.signups30, before: d.prev.signups30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'trials' })}
+                    />
+                  ) : null}
+                  {d.site.requests30 || d.prev.requests30 ? (
+                    <Tile
+                      label={o('tile.trialRequests')}
+                      value={n(d.site.requests30)}
+                      sub={o('tile.trialRequestsSub')}
+                      change={{ now: d.site.requests30, before: d.prev.requests30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'requests' })}
+                    />
+                  ) : null}
+                  {errors ? (
+                    <Tile
+                      tone="late"
+                      label={o('tile.errors')}
+                      value={n(errors)}
+                      sub={o('tile.errorsSub', { server: n(d.errors.server24h), sync: n(d.errors.syncFailed24h), conn: n(d.errors.connectionsInError) })}
+                      change={{ now: errors, before: d.prev.server24h + d.prev.syncFailed24h, period: '24h', good: 'down', show: n }}
+                      onOpen={() => go({ section: 'system' })}
+                    />
+                  ) : null}
+                </div>
+                <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
+                  <span className="ocstrip__sum">
+                    <strong>{o('strip.title')}</strong>
+                    {d.strip.rows.length ? <span>{o('strip.counts', { on: n(d.strip.onTrack), close: n(d.strip.close), behind: n(d.strip.behind) })}</span> : <span>{o('strip.none')}</span>}
+                  </span>
+                  <span className="ocstrip__rows">
+                    {d.strip.rows.map((r) => (
+                      <span key={r.metric} className="ocpace" data-pace={r.pace}>
+                        <Icon name={PACE_ICON[r.pace]} size={12} />
+                        {o(`metric.${r.metric}` as OwnerKey)} {fmt(r.metric, r.actual)}/{fmt(r.metric, r.target)}
+                      </span>
+                    ))}
+                  </span>
+                  <Icon name="chevronRight" size={16} className="ocstrip__go" />
+                </button>
+              </section>
 
               <div className="occols">
                 <section className="ccard" aria-labelledby="oc-states">
@@ -374,37 +499,25 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
                       <dd>{formatMoney(d.usage.costUsd, 'USD', locale)}</dd>
                     </div>
                   </dl>
-                  {d.usage.pausedAll ? <p className="flag flag--late">{o('usage.pausedAll')}</p> : null}
+                  {d.usage.pausedAll ? (
+                    <p className="flag flag--late">
+                      <Icon name="alert" size={14} />
+                      {o('usage.pausedAll')}
+                    </p>
+                  ) : null}
                 </section>
               </div>
 
-              <section className="ccard ccard--need oc__gap" aria-labelledby="cneed-h">
-                <h2 className="ccard__title" id="cneed-h">
-                  {o('need.title')}
-                  {d.today.attention.length ? <span className="ccard__count">{n(d.today.attention.length)}</span> : null}
-                </h2>
-                {d.today.attention.length === 0 ? (
-                  <EmptyState icon="checkCircle" tone="done" compact title={o('need.none')} />
-                ) : (
-                  <ul className="cneeds">
-                    {d.today.attention.map((a, i) => (
-                      <li key={`${a.kind}:${i}`}>
-                        <button type="button" className="cneed" data-kind={a.kind} onClick={() => (a.kind === 'request' ? go({ section: 'support', r: a.ref }) : go({ section: 'customers', c: a.orgId }))}>
-                          <span className="cneed__icon" aria-hidden="true">
-                            <Icon name={a.kind === 'request' ? 'lifebuoy' : a.kind === 'payment' ? 'alert' : 'hourglass'} size={16} />
-                          </span>
-                          <span className="cneed__main">
-                            <span className="cneed__what">{a.kind === 'request' ? a.title : o(a.kind === 'payment' ? 'need.payment' : 'need.trial', { company: a.company })}</span>
-                            <span className="cneed__meta">{[a.kind === 'request' ? a.company : null, a.at ? formatDate(a.at, locale, { day: 'numeric', month: 'short' }) : null].filter(Boolean).join(' · ')}</span>
-                            {a.kind === 'request' && a.blocking ? <span className="flag flag--late">{t('desk.blocking')}</span> : null}
-                          </span>
-                          <Icon name="chevronRight" size={16} className="cneed__go" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              {errors || d.errors.connectionsInError ? null : (
+                <p className="ochealthy">
+                  <Icon name="checkCircle" size={16} />
+                  <span>{o('system.healthy')}</span>
+                  <button type="button" className="btn btn--small btn--quiet" onClick={() => go({ section: 'system' })}>
+                    <Icon name="shield" size={14} />
+                    {o('system.toSystem')}
+                  </button>
+                </p>
+              )}
             </>
           );
         }}
@@ -413,6 +526,114 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
   );
 }
 
+/**
+ * What waits for the owner, first on the screen: proposals to decide, new trial requests, failed payments, and the
+ * customers who need the team. Only what is there is shown; with nothing waiting, one calm line says what would come
+ * here and offers the next useful step.
+ */
+function DecideBand({ d, go, beat, failed }: { d: OwnerOverview; go: OwnerGo; beat: number; failed: (e: unknown) => void }) {
+  const { o, locale } = useOwnerWords();
+  const { t } = useI18n();
+  const n = (v: number) => formatNumber(v, locale);
+  const first = useData<{ approvals: Approval[] }>('/office/approvals?status=open', beat, failed);
+  const top = first.data?.approvals[0];
+  const people = d.today.attention;
+  const cards = [
+    d.approvalsPending > 0 && (
+      <article key="ap" className="ocwait__card" data-kind="approvals">
+        <Icon name="checkCircle" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.approvals', { n: n(d.approvalsPending) })}</h3>
+          <p>{top ? o('decide.approvalsFirst', { title: top.title }) : o('tile.approvalsSub')}</p>
+        </div>
+        <button type="button" className="btn btn--primary" onClick={() => go({ section: 'approvals' })} aria-keyshortcuts="a">
+          <Icon name="check" size={16} />
+          {o('decide.toApprovals')}
+        </button>
+      </article>
+    ),
+    d.requests.new > 0 && (
+      <article key="rq" className="ocwait__card" data-kind="requests">
+        <Icon name="form" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.requests', { n: n(d.requests.new) })}</h3>
+          <p>{o('decide.requestsSub')}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => go({ section: 'requests' })} aria-keyshortcuts="r">
+          <Icon name="arrowRight" size={16} />
+          {o('decide.toRequests')}
+        </button>
+      </article>
+    ),
+    d.invoices.failed30 > 0 && (
+      <article key="inv" className="ocwait__card" data-kind="payments">
+        <Icon name="alert" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.failed', { n: n(d.invoices.failed30) })}</h3>
+          <p>{o('decide.failedSub')}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => go({ section: 'revenue' })}>
+          <Icon name="coins" size={16} />
+          {o('decide.toRevenue')}
+        </button>
+      </article>
+    ),
+  ].filter(Boolean);
+  const shown = people.slice(0, 5);
+  return (
+    <section className="ocwait" aria-labelledby="oc-decide">
+      <h2 className="ocsec__title" id="oc-decide">
+        {o('decide.title')}
+        {cards.length + people.length ? <span className="ccard__count">{n(d.approvalsPending + d.requests.new + d.invoices.failed30 + people.length)}</span> : null}
+      </h2>
+      {cards.length + people.length === 0 ? (
+        <EmptyState icon="checkCircle" tone="done" compact title={o('decide.noneTitle')} body={o('decide.noneBody')}>
+          <button type="button" className="btn" onClick={() => go({ section: 'plan' })}>
+            <Icon name="target" size={16} />
+            {o('decide.noneAction')}
+          </button>
+        </EmptyState>
+      ) : (
+        <>
+          {cards.length ? <div className="ocwait__cards">{cards}</div> : null}
+          {shown.length ? (
+            <div className="ccard ccard--need">
+              <h3 className="ccard__title">{o('decide.people')}</h3>
+              <ul className="cneeds">
+                {shown.map((a, i) => (
+                  <li key={`${a.kind}:${i}`}>
+                    <button type="button" className="cneed" data-kind={a.kind} onClick={() => (a.kind === 'request' ? go({ section: 'support', r: a.ref }) : go({ section: 'customers', c: a.orgId }))}>
+                      <span className="cneed__icon" aria-hidden="true">
+                        <Icon name={a.kind === 'request' ? 'lifebuoy' : a.kind === 'payment' ? 'alert' : 'hourglass'} size={16} />
+                      </span>
+                      <span className="cneed__main">
+                        <span className="cneed__what">{a.kind === 'request' ? a.title : o(a.kind === 'payment' ? 'need.payment' : 'need.trial', { company: a.company })}</span>
+                        <span className="cneed__meta">{[a.kind === 'request' ? a.company : null, a.at ? formatDate(a.at, locale, { day: 'numeric', month: 'short' }) : null].filter(Boolean).join(' · ')}</span>
+                        {a.kind === 'request' && a.blocking ? (
+                          <span className="flag flag--late">
+                            <Icon name="alert" size={12} />
+                            {t('desk.blocking')}
+                          </span>
+                        ) : null}
+                      </span>
+                      <Icon name="chevronRight" size={16} className="cneed__go" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {people.length > shown.length ? (
+                <button type="button" className="btn btn--small btn--quiet" onClick={() => go({ section: 'support' })}>
+                  <Icon name="lifebuoy" size={14} />
+                  {o('decide.more', { n: n(people.length - shown.length) })}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+    </section>
+  );
+}
 function Bar({ value, tone }: { value: number; tone?: Pace }) {
   return (
     <span className="ocprogress" data-pace={tone} aria-hidden="true">

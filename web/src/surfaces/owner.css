@@ -13,6 +13,8 @@
 .ocbar { position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 8px clamp(16px, 3vw, 32px); background: var(--surface); border-bottom: 1px solid var(--line); }
 .ocbar__privacy { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 360px; min-width: 0; margin: 0; font-size: var(--fs-xs); color: var(--ink-2); line-height: var(--lh-body); }
 .ocbar__privacy svg { flex: none; color: var(--ink-3); }
+.ocbar__privacy > span { flex: 1 1 auto; min-width: 0; }
+.ocbar__fold { flex: none; margin-block: -4px; }
 .ocbar__right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ocbar__chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--ink-2); font: inherit; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
 .ocbar__chip:hover { background: var(--sunk); }
@@ -36,8 +38,6 @@
 .oc__gap { margin-top: 16px; }
 .oc__ref { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .ocwrap { overflow-wrap: anywhere; }
-/* On a phone the privacy line moves from the bar into the Overview. */
-.oc__privacy { display: none; }
 
 /* Segmented filter. */
 .ocseg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface-2); }
@@ -64,7 +64,8 @@
 .ocpace[data-pace='close'] { background: var(--soon-wash); color: var(--soon-ink); }
 .ocpace[data-pace='behind'] { background: var(--late-wash); color: var(--late-ink); }
 
-.octiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.octiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.octile[data-lead] { grid-column: span 2; }
 .octile { font: inherit; text-align: start; color: inherit; }
 button.octile { cursor: pointer; transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
 button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow-1); }
@@ -196,10 +197,42 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
 .octasks li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .octasks[data-kind='overdue'] .ocreq__h { color: var(--late-ink); }
 
+/* ------------------------------------------------------------------ overview order */
+/* The overview reads in the owner's order: what waits for him, the business, then the detail. */
+.ocsec { display: grid; gap: 12px; margin: 0 0 24px; }
+.ocsec__title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-l); font-weight: 650; color: var(--ink); }
+.ocsec .ocstrip { margin: 0; }
+.ocstrip__go { margin-inline-start: auto; color: var(--ink-3); }
+
+/* Waiting for you: one card per kind of decision, its next step on the card. */
+.ocwait { display: grid; gap: 12px; margin: 0 0 24px; }
+.ocwait__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.ocwait__card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 8px 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.ocwait__card[data-kind='approvals'] { border-color: var(--brand); background: var(--brand-soft); }
+.ocwait__card[data-kind='payments'] { border-color: var(--late-line); }
+.ocwait__icon { color: var(--brand-ink); margin-top: 2px; }
+.ocwait__card[data-kind='payments'] .ocwait__icon { color: var(--late-ink); }
+.ocwait__main { display: grid; gap: 4px; min-width: 0; }
+.ocwait__main h3 { margin: 0; font-size: var(--fs-l); font-weight: 650; line-height: var(--lh-snug); }
+.ocwait__main p { margin: 0; font-size: var(--fs-s); color: var(--ink-2); overflow-wrap: anywhere; }
+.ocwait__card .btn { grid-column: 2; justify-self: start; }
+.ocwait .ccard--need { gap: 8px; }
+.ocwait .ccard--need > .btn { justify-self: start; }
+
+/* A figure's change: arrow and words; the colour repeats them (good news ink or a look-at-this ink). */
+.ocdelta { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); }
+.ocdelta svg { flex: none; }
+.ocdelta[data-good='yes'] { color: var(--done-ink, var(--done)); }
+.ocdelta[data-good='no'] { color: var(--late-ink); }
+.ctile[data-lead] .ocdelta[data-good] { color: var(--brand-ink); }
+.ocspark { display: block; width: 100%; height: 32px; overflow: visible; }
+.ocspark polyline { fill: none; stroke: var(--series-1); stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+
+/* Nothing broken: one calm line under the detail, with the way to look anyway. */
+.ochealthy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 0; font-size: var(--fs-s); color: var(--ink-2); }
+.ochealthy > svg { color: var(--done-ink, var(--done)); }
+
 /* ------------------------------------------------------------------ narrower desktops */
-@media (max-width: 1360px) {
-  .octiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 @media (max-width: 1100px) {
   .occols, .occols--2, .occols--card, .occols--plan { grid-template-columns: minmax(0, 1fr); }
   .ocsplit { grid-template-columns: minmax(240px, 1fr) minmax(0, 1.6fr); }
@@ -212,9 +245,7 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
   .console[data-owner] .console__tab { flex: 0 0 76px; }
   .console[data-owner] .console__group, .console__keys { display: none; }
   .ocbar { position: static; padding: 8px 16px; }
-  .ocbar__privacy { display: none; }
-  .oc__privacy { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; font-size: var(--fs-xs); color: var(--ink-2); line-height: var(--lh-body); }
-  .oc__privacy svg { flex: none; color: var(--ink-3); }
+  .ocbar__privacy { flex-basis: 100%; }
   .ocseg { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
   .ocseg button { flex: none; }
   .ocbar__right { width: 100%; justify-content: space-between; }

@@ -54,6 +54,8 @@ export interface OwnerOverview {
   usage: { tokens: number; budget: number; costUsd: number; pausedAll: boolean };
   approvalsPending: number;
   checklist: { done: number; total: number; next: string | null };
+  /** The same figures one period earlier (30 days before the last 30; the 24 hours before the last 24), for each tile's change. */
+  prev: { paid30: number; signups30: number; requests30: number; server24h: number; syncFailed24h: number };
 }
 
 export interface OwnerInvoice {

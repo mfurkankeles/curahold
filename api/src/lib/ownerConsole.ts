@@ -216,7 +216,8 @@ export async function ownerOverview(deps: Deps, staffEmail: string): Promise<Own
     const [inv] = await q.query(
       `select count(*) filter (where i.status in ('paid', 'completed') and i.issued_at > now() - interval '30 days')::int as paid,
               coalesce(sum(i.amount_cents) filter (where i.status in ('paid', 'completed') and i.issued_at > now() - interval '30 days'), 0)::bigint as paid_amount,
-              count(*) filter (where i.status in ('failed', 'past_due') and i.issued_at > now() - interval '30 days')::int as failed
+              count(*) filter (where i.status in ('failed', 'past_due') and i.issued_at > now() - interval '30 days')::int as failed,
+              count(*) filter (where i.status in ('paid', 'completed') and i.issued_at > now() - interval '60 days' and i.issued_at <= now() - interval '30 days')::int as paid_prev
          from invoices i join orgs o on o.id = i.org_id`,
     );
     const [up] = await q.query(
@@ -227,21 +228,32 @@ export async function ownerOverview(deps: Deps, staffEmail: string): Promise<Own
       `select count(*) filter (where ${PAYING})::int as paying, count(*) filter (where ${TRIAL})::int as trial,
               count(*) filter (where o.billing->>'status' = 'canceled')::int as churned,
               count(*) filter (where not (${PAYING}) and not ${TRIAL} and coalesce(o.billing->>'status', '') not in ('canceled'))::int as free,
-              count(*) filter (where o.created_at > now() - interval '30 days')::int as signups30
+              count(*) filter (where o.created_at > now() - interval '30 days')::int as signups30,
+              count(*) filter (where o.created_at > now() - interval '60 days' and o.created_at <= now() - interval '30 days')::int as signups_prev
          from orgs o`,
     );
     const signups = await q.query(`select to_char(o.created_at, 'YYYY-MM') as t, count(*)::int as v from orgs o where o.created_at > now() - interval '12 months' group by 1 order by 1`);
     const [rq] = await q.query(`select count(*) filter (where status in ('new', 'contacted'))::int as open, count(*) filter (where status = 'new')::int as fresh from trial_requests`);
     const [er] = await q.query(
-      `select count(*) filter (where e.source = 'server')::int as server, count(*) filter (where e.source = 'browser')::int as browser
-         from error_log e where e.at > now() - interval '24 hours' and (e.org_id is null or e.org_id is not null)`,
+      `select count(*) filter (where e.source = 'server' and e.at > now() - interval '24 hours')::int as server,
+              count(*) filter (where e.source = 'browser' and e.at > now() - interval '24 hours')::int as browser,
+              count(*) filter (where e.source = 'server' and e.at <= now() - interval '24 hours')::int as server_prev
+         from error_log e where e.at > now() - interval '48 hours' and (e.org_id is null or e.org_id is not null)`,
     );
-    const [sy] = await q.query(`select count(*) filter (where r.status = 'error')::int as failed from sync_runs r join orgs o on o.id = r.org_id where r.started_at > now() - interval '24 hours'`);
+    const [sy] = await q.query(
+      `select count(*) filter (where r.status = 'error' and r.started_at > now() - interval '24 hours')::int as failed,
+              count(*) filter (where r.status = 'error' and r.started_at <= now() - interval '24 hours')::int as failed_prev
+         from sync_runs r join orgs o on o.id = r.org_id where r.started_at > now() - interval '48 hours'`,
+    );
     const [cn] = await q.query(`select count(*)::int as n from connections c join orgs o on o.id = c.org_id where c.status = 'error'`);
     const site = await q.query(
       `select variant, sum(visitors)::int as visitors, sum(requests)::int as requests from site_daily where day > (now() - interval '30 days')::date group by variant order by variant`,
     );
-    const [req30] = await q.query(`select count(*)::int as n from trial_requests where created_at > now() - interval '30 days'`);
+    const [req30] = await q.query(
+      `select count(*) filter (where created_at > now() - interval '30 days')::int as n,
+              count(*) filter (where created_at <= now() - interval '30 days')::int as prev
+         from trial_requests where created_at > now() - interval '60 days'`,
+    );
     const [us] = await q.query(
       `select coalesce(sum(u.tokens), 0)::bigint as tokens, coalesce(sum(u.cost_usd), 0) as cost, (select coalesce(sum(weekly_budget), 0) from seats) as budget,
               exists (select 1 from agent_pauses where scope = 'all' and resumed_at is null) as paused_all
@@ -271,6 +283,7 @@ export async function ownerOverview(deps: Deps, staffEmail: string): Promise<Own
     usage: { tokens: num(data.us.tokens), budget: num(data.us.budget), costUsd: Math.round(num(data.us.cost) * 100) / 100, pausedAll: !!data.us.paused_all },
     approvalsPending: num(data.ap.n),
     checklist: { done: check.progress.all?.done ?? 0, total: check.progress.all?.total ?? 0, next: check.next?.id ?? null },
+    prev: { paid30: num(data.inv.paid_prev), signups30: num(data.st.signups_prev), requests30: num(data.req30.prev), server24h: num(data.er.server_prev), syncFailed24h: num(data.sy.failed_prev) },
   };
 }
 
@@ -353,8 +366,10 @@ export async function ownerTrials(deps: Deps): Promise<OwnerTrial[]> {
 export async function ownerSystem(deps: Deps): Promise<OwnerSystem> {
   return deps.db.system(async (q) => {
     const [er] = await q.query(
-      `select count(*) filter (where e.source = 'server')::int as server, count(*) filter (where e.source = 'browser')::int as browser
-         from error_log e where e.at > now() - interval '24 hours' and (e.org_id is null or e.org_id is not null)`,
+      `select count(*) filter (where e.source = 'server' and e.at > now() - interval '24 hours')::int as server,
+              count(*) filter (where e.source = 'browser' and e.at > now() - interval '24 hours')::int as browser,
+              count(*) filter (where e.source = 'server' and e.at <= now() - interval '24 hours')::int as server_prev
+         from error_log e where e.at > now() - interval '48 hours' and (e.org_id is null or e.org_id is not null)`,
     );
     const top = await q.query(
       `select left(e.message, 200) as message, e.source, count(*)::int as n, max(e.at) as last

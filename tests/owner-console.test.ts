@@ -103,7 +103,14 @@ describe('who may open the owner sections', () => {
 
   it('the overview carries every tile', async () => {
     const o = (await owner.req('GET', '/owner/overview')).json;
-    expect(Object.keys(o).sort()).toEqual(['approvalsPending', 'checklist', 'errors', 'growth', 'invoices', 'requests', 'site', 'states', 'strip', 'today', 'usage'].sort());
+    expect(Object.keys(o).sort()).toEqual(['approvalsPending', 'checklist', 'errors', 'growth', 'invoices', 'prev', 'requests', 'site', 'states', 'strip', 'today', 'usage'].sort());
+    // Each tile's change: the period before counts apart from the current one.
+    expect(Object.keys(o.prev).sort()).toEqual(['paid30', 'requests30', 'server24h', 'signups30', 'syncFailed24h']);
+    const before = o.growth.signups30;
+    await env.db.system((q) => q.query(`update orgs set created_at = now() - interval '45 days' where id = (select id from orgs order by created_at desc limit 1)`));
+    const o2 = (await owner.req('GET', '/owner/overview')).json;
+    expect(o2.growth.signups30).toBe(before - 1);
+    expect(o2.prev.signups30).toBe(o.prev.signups30 + 1);
     expect(o.states.paying + o.states.trial + o.states.free + o.states.churned).toBeGreaterThan(0);
     expect(o.site.connected).toBe(false);
     expect((await owner.req('GET', '/owner/bar')).json).toMatchObject({ approvalsPending: 0, requestsNew: 0, usage: { tokens: 0 } });
