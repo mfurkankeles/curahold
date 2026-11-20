@@ -12,7 +12,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': '会议、时间线、健康评分和业务回顾',
   'billing.point.reports': '报表、仪表板和目标',
   'billing.point.chat': 'Slack、Teams、Google Chat 和邮件通知',
-  'billing.point.crm': '与你的 CRM 或电子表格双向同步（Salesforce、HubSpot 等）',
+  'billing.point.crm': '与你的 CRM 或电子表格双向同步',
   'billing.point.portal': '面向客户团队的客户门户',
   'billing.point.playbooks': '行动手册，以及自动开始的续约',
 

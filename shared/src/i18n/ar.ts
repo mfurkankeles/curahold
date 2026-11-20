@@ -12,7 +12,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': 'الاجتماعات والمخطط الزمني ومؤشر الصحة ومراجعات الأعمال',
   'billing.point.reports': 'التقارير ولوحات المعلومات والأهداف',
   'billing.point.chat': 'إشعارات Slack وTeams وGoogle Chat والبريد الإلكتروني',
-  'billing.point.crm': 'مزامنة ثنائية الاتجاه مع نظام إدارة العملاء أو جدول البيانات (Salesforce وHubSpot وغيرها)',
+  'billing.point.crm': 'مزامنة ثنائية الاتجاه مع نظام إدارة العملاء أو جدول البيانات',
   'billing.point.portal': 'بوابة عملاء لموظفي عملائك',
   'billing.point.playbooks': 'كتيبات العمل، وتجديدات تبدأ من تلقاء نفسها',
 

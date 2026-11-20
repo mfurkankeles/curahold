@@ -12,7 +12,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': 'פגישות, ציר זמן, ציון בריאות וסקירות עסקיות',
   'billing.point.reports': 'דוחות, לוחות מחוונים ויעדים',
   'billing.point.chat': 'התראות Slack, Teams, Google Chat ודוא״ל',
-  'billing.point.crm': 'סנכרון דו-כיווני עם ה-CRM או הגיליון שלך (Salesforce, HubSpot ועוד)',
+  'billing.point.crm': 'סנכרון דו-כיווני עם ה-CRM או הגיליון שלך',
   'billing.point.portal': 'פורטל לקוחות עבור האנשים של הלקוחות שלך',
   'billing.point.playbooks': 'פלייבוקים, וחידושים שמתחילים מעצמם',
 

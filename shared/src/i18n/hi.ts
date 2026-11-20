@@ -3416,7 +3416,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'billing.point.reports': "रिपोर्ट, डैशबोर्ड और लक्ष्य",
   'billing.point.chat': "Slack, Teams, Google Chat और ईमेल सूचनाएं",
   'billing.point.everythingTeam': "Team में सब कुछ, और साथ में:",
-  'billing.point.crm': "आपके CRM या स्प्रेडशीट के साथ दोतरफ़ा सिंक (Salesforce, HubSpot और भी)",
+  'billing.point.crm': "आपके CRM या स्प्रेडशीट के साथ दोतरफ़ा सिंक",
   'billing.point.portal': "आपके ग्राहकों के लोगों के लिए ग्राहक पोर्टल",
   'billing.point.playbooks': "प्लेबुक, और अपने आप शुरू होने वाले रिन्यूअल",
   'billing.current': "आपका प्लान",

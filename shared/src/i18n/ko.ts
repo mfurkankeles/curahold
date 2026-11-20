@@ -12,7 +12,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': '미팅, 타임라인, 헬스 스코어, 비즈니스 리뷰',
   "billing.point.reports": "보고서, 대시보드, 목표",
   'billing.point.chat': 'Slack, Teams, Google Chat, 이메일 알림',
-  'billing.point.crm': 'CRM 또는 스프레드시트와 양방향 동기화 (Salesforce, HubSpot 등)',
+  'billing.point.crm': 'CRM 또는 스프레드시트와 양방향 동기화',
   'billing.point.portal': '고객사 담당자를 위한 고객 포털',
   'billing.point.playbooks': '플레이북, 그리고 자동으로 시작되는 갱신',
 

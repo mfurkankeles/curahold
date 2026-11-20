@@ -3462,7 +3462,7 @@ export const tr: Record<MessageKey, string> = {
   'billing.point.reports': 'Raporlar, paneller ve hedefler',
   'billing.point.chat': 'Slack, Teams, Google Chat ve e-posta bildirimleri',
   'billing.point.everythingTeam': 'Team’deki her şey, artı:',
-  'billing.point.crm': 'CRM ya da tabloyla iki yönlü senkron (Salesforce, HubSpot ve diğerleri)',
+  'billing.point.crm': 'CRM ya da tabloyla iki yönlü senkron',
   'billing.point.portal': 'Müşterilerinizin çalışanları için müşteri portalı',
   'billing.point.playbooks': 'Playbook’lar ve kendiliğinden başlayan yenilemeler',
   'billing.current': 'Şu anki planınız',

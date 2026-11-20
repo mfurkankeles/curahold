@@ -3416,7 +3416,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'billing.point.reports': "Laporan, papan pemuka dan sasaran",
   'billing.point.chat': "Pemberitahuan Slack, Teams, Google Chat dan e-mel",
   'billing.point.everythingTeam': "Semua dalam Team, serta:",
-  'billing.point.crm': "Penyegerakan dua hala dengan CRM atau hamparan anda (Salesforce, HubSpot dan banyak lagi)",
+  'billing.point.crm': "Penyegerakan dua hala dengan CRM atau hamparan anda",
   'billing.point.portal': "Portal pelanggan untuk orang pelanggan anda",
   'billing.point.playbooks': "Playbook, dan pembaharuan yang bermula sendiri",
   'billing.current': "Pelan anda",

@@ -12,7 +12,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': 'ミーティング、タイムライン、ヘルススコア、ビジネスレビュー',
   'billing.point.reports': 'レポート、ダッシュボード、目標',
   'billing.point.chat': 'Slack、Teams、Google Chat、メール通知',
-  'billing.point.crm': 'CRM やスプレッドシートとの双方向同期（Salesforce、HubSpot など）',
+  'billing.point.crm': 'CRM やスプレッドシートとの双方向同期',
   'billing.point.portal': '顧客企業の担当者向けカスタマーポータル',
   'billing.point.playbooks': 'プレイブックと、自動で始まる更新',
 

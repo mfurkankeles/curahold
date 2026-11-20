@@ -12,7 +12,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'billing.point.meetings': 'جلسات، خط زمانی، امتیاز سلامت و بازبینی‌های کسب‌وکار',
   'billing.point.reports': 'گزارش‌ها، داشبوردها و اهداف',
   'billing.point.chat': 'اعلان‌های Slack، Teams، Google Chat و ایمیل',
-  'billing.point.crm': 'همگام‌سازی دوطرفه با CRM یا صفحه‌گسترده شما (Salesforce، HubSpot و بیشتر)',
+  'billing.point.crm': 'همگام‌سازی دوطرفه با CRM یا صفحه‌گسترده شما',
   'billing.point.portal': 'یک پورتال مشتری برای کارکنان مشتریان شما',
   'billing.point.playbooks': 'پلی‌بوک‌ها، و تمدیدهایی که خودبه‌خود آغاز می‌شوند',
 

@@ -3476,7 +3476,7 @@ export const en = {
   'billing.point.reports': 'Reports, dashboards and targets',
   'billing.point.chat': 'Slack, Teams, Google Chat and email notifications',
   'billing.point.everythingTeam': 'Everything in Team, plus:',
-  'billing.point.crm': 'Two-way sync with your CRM or spreadsheet (Salesforce, HubSpot and more)',
+  'billing.point.crm': 'Two-way sync with your CRM or spreadsheet',
   'billing.point.portal': 'A customer portal for your customers’ people',
   'billing.point.playbooks': 'Playbooks, and renewals that start by themselves',
   'billing.current': 'Your plan',
