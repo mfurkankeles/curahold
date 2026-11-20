@@ -42,6 +42,30 @@ async function failure(res: Response): Promise<string> {
   return (text || res.statusText || `HTTP ${res.status}`).slice(0, 300);
 }
 
+// The parts of Jira's REST answers this adapter reads (Cloud REST v3 and Agile 1.0). Only what is used is listed;
+// Jira sends much more. jx() itself returns the parsed JSON untyped, and each caller states the shape it reads here.
+interface JiraField { id: string; name: string; schema?: { custom?: string } }
+interface JiraIssueType { id?: string | number; name?: string; subtask?: boolean; hierarchyLevel?: number }
+interface JiraStatusRef { name?: string; statusCategory?: { key?: string } }
+interface JiraTransition { id: string; to?: JiraStatusRef }
+interface JiraSprint { id: number | string; name?: string; goal?: string; state?: string; startDate?: string; endDate?: string; completeDate?: string }
+interface JiraUser { accountId: string; accountType?: string; active?: boolean; displayName: string; emailAddress?: string }
+interface JiraSite { id?: string; url?: string; name?: string; scopes?: string[] }
+/** An issue's fields: the named ones below, plus custom fields read by id (story points, sprint, epic link). */
+interface JiraIssueFields {
+  [custom: string]: unknown;
+  summary?: string;
+  description?: unknown;
+  status?: JiraStatusRef;
+  issuetype?: JiraIssueType;
+  assignee?: { accountId?: string } | null;
+  duedate?: string | null;
+  created?: string;
+  updated?: string;
+  parent?: { id: string; key?: string; fields?: { issuetype?: JiraIssueType } };
+}
+interface JiraIssue { id: string; key?: string; fields?: JiraIssueFields }
+
 /**
  * One request to Jira. OAuth connections send their access token as a bearer and renew it once if Jira says it
  * expired; API-token connections store the whole Authorization value ("Basic …") and have nothing to renew.
@@ -95,12 +119,12 @@ export async function siteFacts(ctx: CrmCtx): Promise<SiteFacts> {
   const key = String(ctx.config.base);
   const hit = facts.get(key);
   if (hit && ctx.now().getTime() - hit.at < FACTS_TTL) return hit;
-  const fields: any[] = (await jx(ctx, '/rest/api/3/field')) ?? [];
+  const fields: JiraField[] = (await jx(ctx, '/rest/api/3/field')) ?? [];
   const byCustom = (c: string) => fields.find((f) => f.schema?.custom === c)?.id ?? null;
   const points = fields.find((f) => f.name === 'Story point estimate') ?? fields.find((f) => f.name === 'Story Points');
   let epicTypes: string[] = [];
   try {
-    const types: any[] = (await jx(ctx, '/rest/api/3/issuetype')) ?? [];
+    const types: JiraIssueType[] = (await jx(ctx, '/rest/api/3/issuetype')) ?? [];
     epicTypes = [...new Set(types.filter((t) => t.hierarchyLevel === 1).map((t) => String(t.id)))];
   } catch {
     // Without the list, "Epic" by name stands in.
@@ -152,7 +176,7 @@ export function issueTypeKey(name: unknown, subtask = false, level?: number): st
 }
 
 /** Which of an issue's sprints is "the" sprint here (a task is in one): the running one, else the next, else the latest finished. */
-export function pickSprint(list: any[] | null | undefined): string | null {
+export function pickSprint(list: JiraSprint[] | null | undefined): string | null {
   const sprints = (Array.isArray(list) ? list : []).filter((s) => s && s.id !== undefined);
   if (!sprints.length) return null;
   const by = (state: string) => sprints.filter((s) => lc(s.state) === state);
@@ -162,7 +186,7 @@ export function pickSprint(list: any[] | null | undefined): string | null {
 
 async function statusOptions(ctx: CrmCtx): Promise<{ value: string; label: string }[]> {
   try {
-    const list: any[] = (await jx(ctx, '/rest/api/3/status')) ?? [];
+    const list: { name: string }[] = (await jx(ctx, '/rest/api/3/status')) ?? [];
     const seen = new Set<string>();
     return list.filter((s) => (seen.has(s.name) ? false : seen.add(s.name))).map((s) => ({ value: s.name, label: s.name }));
   } catch {
@@ -212,7 +236,7 @@ const SPRINT_FIELDS: RemoteField[] = [
 ];
 
 /** The shape Jira returns for an issue → what the engine maps. `epicKeys` resolves legacy "Epic Link" keys to ids. */
-export function issueRow(ctx: Pick<CrmCtx, 'config'>, i: any, f: SiteFacts, epicIds: Map<string, string> = new Map()): RemoteRow {
+export function issueRow(ctx: Pick<CrmCtx, 'config'>, i: JiraIssue, f: SiteFacts, epicIds: Map<string, string> = new Map()): RemoteRow {
   const x = i.fields ?? {};
   const parent = x.parent;
   const parentIsEpic = parent && (parent.fields?.issuetype?.hierarchyLevel === 1 || lc(parent.fields?.issuetype?.name) === 'epic');
@@ -234,7 +258,7 @@ export function issueRow(ctx: Pick<CrmCtx, 'config'>, i: any, f: SiteFacts, epic
       duedate: x.duedate ?? null,
       story_points: typeof points === 'number' ? points : null,
       epic: parentIsEpic ? String(parent.id) : legacy ? (epicIds.get(String(legacy)) ?? null) : null,
-      sprint: f.sprint ? pickSprint(x[f.sprint]) : null,
+      sprint: f.sprint ? pickSprint(x[f.sprint] as JiraSprint[] | undefined) : null,
       created: isoOrNull(x.created),
       updated: isoOrNull(x.updated),
       link: site && i.key ? `${site}/browse/${i.key}` : null,
@@ -271,7 +295,7 @@ async function boardIds(ctx: CrmCtx): Promise<number[]> {
   return [...ids];
 }
 
-function sprintRow(s: any): RemoteRow {
+function sprintRow(s: JiraSprint): RemoteRow {
   return {
     id: String(s.id),
     modifiedAt: null,
@@ -303,7 +327,7 @@ async function listSprints(ctx: CrmCtx, cursor: string | null): Promise<Page> {
 /** An issue type's id on a project, for Curahold's key. */
 async function createType(ctx: CrmCtx, project: string, key: string): Promise<string> {
   const p = await jx(ctx, `/rest/api/3/project/${encodeURIComponent(project)}`);
-  const types: any[] = p?.issueTypes ?? [];
+  const types: JiraIssueType[] = p?.issueTypes ?? [];
   const top = types.filter((t) => !t.subtask);
   const find = (re: RegExp) => top.find((t) => re.test(lc(t.name)));
   const hit =
@@ -324,13 +348,13 @@ export async function transitionTo(ctx: CrmCtx, id: string, want: unknown): Prom
   const now = cur?.fields?.status;
   if (w.name && lc(now?.name) === lc(w.name)) return;
   const j = await jx(ctx, `/rest/api/3/issue/${encodeURIComponent(id)}/transitions`);
-  const list: any[] = j?.transitions ?? [];
+  const list: JiraTransition[] = j?.transitions ?? [];
   const byName = w.name ? list.find((t) => lc(t.to?.name) === lc(w.name)) : undefined;
   // No status of that name here: the same kind of status will do (any "in progress" for "in review").
   if (!byName && w.category && now?.statusCategory?.key === w.category) return;
   // Several statuses of that kind: the one whose name shares a word with the wanted one ("Code review" → "In Review").
   const words = new Set(lc(w.name).split(/[^\p{L}\p{N}]+/u).filter((x) => x.length > 2));
-  const share = (t: any) => lc(t.to?.name).split(/[^\p{L}\p{N}]+/u).filter((x) => words.has(x)).length;
+  const share = (t: JiraTransition) => lc(t.to?.name).split(/[^\p{L}\p{N}]+/u).filter((x) => words.has(x)).length;
   const sameKind = w.category ? list.filter((t) => t.to?.statusCategory?.key === w.category) : [];
   const hit = byName ?? [...sameKind].sort((a, b) => share(b) - share(a))[0];
   if (!hit) throw new CrmError(`Jira has no transition from "${now?.name ?? '?'}" to "${w.name ?? w.category}"`);
@@ -388,7 +412,7 @@ export const jira: CrmAdapter = {
     async exchange(fetcher, client, code, redirectUri, _opts, now) {
       const j = await codeGrantJson(fetcher, `${AUTH}/oauth/token`, client, code, redirectUri, now);
       const sites = await oneShotJson(fetcher, 'https://api.atlassian.com/oauth/token/accessible-resources', j.access_token);
-      const site = (Array.isArray(sites) ? sites : []).find((s: any) => (s.scopes ?? []).some((x: string) => /jira/.test(x))) ?? sites?.[0];
+      const site = (Array.isArray(sites) ? sites : []).find((s: JiraSite) => (s.scopes ?? []).some((x: string) => /jira/.test(x))) ?? sites?.[0];
       if (!site?.id) throw new CrmError('This Atlassian account has no Jira Cloud site Curahold may use');
       const host = String(site.url ?? '').replace(/^https?:\/\//, '');
       return {
@@ -415,7 +439,7 @@ export const jira: CrmAdapter = {
       let cloudId: string | null = null;
       try {
         const res = await fetcher(`${siteUrl}/_edge/tenant_info`);
-        cloudId = res.ok ? ((await res.json()) as any)?.cloudId ?? null : null;
+        cloudId = res.ok ? ((await res.json()) as { cloudId?: string })?.cloudId ?? null : null;
       } catch {
         // The site name stands in.
       }
@@ -431,7 +455,7 @@ export const jira: CrmAdapter = {
       body: JSON.stringify({ grant_type: 'refresh_token', client_id: client.clientId, client_secret: client.clientSecret, refresh_token: secret.refreshToken }),
     });
     if (!res.ok) throw new CrmError(await failure(res), res.status, undefined, true);
-    const j: any = await res.json();
+    const j = (await res.json()) as { access_token?: string; refresh_token?: string; expires_in?: number };
     if (!j.access_token) throw new CrmError('No access token in the refresh response', res.status, undefined, true);
     // Atlassian rotates refresh tokens: the new one replaces the old.
     return { accessToken: j.access_token, refreshToken: j.refresh_token ?? secret.refreshToken, expiresAt: j.expires_in ? ctx.now().getTime() + Number(j.expires_in) * 1000 : undefined };
@@ -456,7 +480,7 @@ export const jira: CrmAdapter = {
     const out = new Map<string, RemoteUser>();
     let start = 0;
     for (let page = 0; page < 10; page++) {
-      const list: any[] = (await jx(ctx, `/rest/api/3/user/assignable/multiProjectSearch?projectKeys=${encodeURIComponent(keys.join(','))}&startAt=${start}&maxResults=100`)) ?? [];
+      const list: JiraUser[] = (await jx(ctx, `/rest/api/3/user/assignable/multiProjectSearch?projectKeys=${encodeURIComponent(keys.join(','))}&startAt=${start}&maxResults=100`)) ?? [];
       for (const u of list) if (u.accountType === 'atlassian' && u.active !== false) out.set(u.accountId, { id: u.accountId, name: u.displayName, email: u.emailAddress ? String(u.emailAddress).toLowerCase() : null });
       if (list.length < 100) break;
       start += list.length;
@@ -472,7 +496,7 @@ export const jira: CrmAdapter = {
     const jql = [`project in (${keys.map((k) => `"${k}"`).join(',')})`, epicClause(f, object === 'epics'), ...(opts.since ? [`updated >= "${jqlTime(opts.since, f.timeZone)}"`] : [])].join(' AND ') + ' ORDER BY updated ASC, id ASC';
     const fieldList = ['summary', 'description', 'status', 'issuetype', 'assignee', 'duedate', 'created', 'updated', 'parent', ...[f.storyPoints, f.sprint, f.epicLink].filter((x): x is string => !!x)];
     const j = await jx(ctx, '/rest/api/3/search/jql', { method: 'POST', json: { jql, fields: fieldList, maxResults: PAGE, ...(opts.cursor ? { nextPageToken: opts.cursor } : {}) } });
-    const issues: any[] = j?.issues ?? [];
+    const issues: JiraIssue[] = j?.issues ?? [];
     const legacyKeys = f.epicLink ? issues.map((i) => i.fields?.[f.epicLink!]).filter((k): k is string => typeof k === 'string') : [];
     const epicIds = await epicIdsFor(ctx, legacyKeys);
     return { rows: issues.map((i) => issueRow(ctx, i, f, epicIds)), next: j?.isLast === true ? null : (j?.nextPageToken ?? null) };

@@ -19,6 +19,25 @@ import { CrmError, errorText, type CrmAdapter, type CrmCtx, type Page, type Remo
 
 type Ctx = Pick<CrmCtx, 'fetch' | 'token'> & { config?: Record<string, any> };
 
+// The parts of each CRM's answers this file reads (only what is used). request() and b24() return the parsed JSON
+// untyped; each caller states the shape here. Records are open-ended (`[field: string]: unknown`): which fields
+// come back depends on the company's own setup in the CRM.
+type Id = string | number;
+interface B24Field {
+  type?: string; statusType?: string; items?: { ID: Id; VALUE: unknown }[];
+  isMultiple?: boolean; isReadOnly?: boolean; isImmutable?: boolean; isRequired?: boolean; formLabel?: string; listLabel?: string; title?: string;
+}
+interface B24User { ID: Id; NAME?: string; LAST_NAME?: string; EMAIL?: string | null }
+interface FsField { name?: string; type?: string; label?: string; choices?: { id: Id; value?: unknown }[]; editable?: boolean; read_only?: boolean; required?: boolean }
+interface FsOwner { id: Id; display_name?: string; email?: string | null; is_active?: boolean }
+interface FsRecord {
+  [field: string]: unknown;
+  id: Id; updated_at?: string; sales_account_id?: Id | null; custom_field?: Record<string, unknown>;
+  sales_accounts?: ({ id?: Id; is_primary?: boolean } | null)[];
+}
+interface SellItem<T> { data: T }
+interface SellRecord { [field: string]: unknown; updated_at?: string; organization_id?: Id | null; contact_id?: Id | null; stage_id?: Id; custom_fields?: Record<string, unknown> }
+
 async function request(ctx: Ctx, url: string, init: RequestInit & { json?: unknown } = {}, authorize = true): Promise<any> {
   const headers = new Headers(init.headers);
   if (authorize) headers.set('authorization', await ctx.token());
@@ -88,7 +107,7 @@ async function b24(ctx: Ctx, method: string, params: Record<string, unknown> = {
   if (j && typeof j === 'object' && j.result === undefined && (j.error || j.error_description)) throw new CrmError(String(j.error_description || j.error).slice(0, 300), 400);
   return j;
 }
-function b24Type(key: string, f: any): RemoteFieldType | null {
+function b24Type(key: string, f: B24Field): RemoteFieldType | null {
   if (key === 'ID') return 'id';
   if (B24_MULTI[key]) return B24_MULTI[key];
   switch (f.type) {
@@ -160,7 +179,7 @@ export const bitrix24: CrmAdapter = {
     const j = await b24(ctx, `crm.${b24Object(object)}.fields`);
     const out: RemoteField[] = [];
     const statuses = new Map<string, { value: string; label: string }[]>();
-    for (const [key, f] of Object.entries<any>(j?.result ?? {})) {
+    for (const [key, f] of Object.entries<B24Field>(j?.result ?? {})) {
       if (key === B24_SEMANTIC) {
         out.push({ ...STATUS });
         continue;
@@ -168,11 +187,11 @@ export const bitrix24: CrmAdapter = {
       const type = b24Type(key, f);
       if (!type) continue;
       let options: { value: string; label: string }[] | undefined;
-      if (f.type === 'enumeration') options = (f.items ?? []).map((x: any) => ({ value: String(x.ID), label: String(x.VALUE) }));
+      if (f.type === 'enumeration') options = (f.items ?? []).map((x) => ({ value: String(x.ID), label: String(x.VALUE) }));
       else if (f.type === 'crm_status' && f.statusType) {
         if (!statuses.has(f.statusType)) {
           const s = await b24(ctx, 'crm.status.list', { filter: { ENTITY_ID: f.statusType }, order: { SORT: 'ASC' } });
-          statuses.set(f.statusType, (s?.result ?? []).map((x: any) => ({ value: String(x.STATUS_ID), label: String(x.NAME) })));
+          statuses.set(f.statusType, (s?.result ?? []).map((x: { STATUS_ID: Id; NAME: unknown }) => ({ value: String(x.STATUS_ID), label: String(x.NAME) })));
         }
         options = statuses.get(f.statusType);
       }
@@ -197,7 +216,7 @@ export const bitrix24: CrmAdapter = {
     const out: RemoteUser[] = [];
     try {
       for (let start: number | null = 0; start !== null && out.length < 2000; ) {
-        const j: any = await b24(ctx, 'user.get', { filter: { ACTIVE: true }, start });
+        const j: { result?: B24User[]; next?: unknown } = await b24(ctx, 'user.get', { filter: { ACTIVE: true }, start });
         for (const u of j?.result ?? []) out.push({ id: String(u.ID), name: [u.NAME, u.LAST_NAME].filter(Boolean).join(' ') || String(u.EMAIL ?? u.ID), email: u.EMAIL ? String(u.EMAIL).toLowerCase() : null });
         start = typeof j?.next === 'number' ? j.next : null;
       }
@@ -217,7 +236,7 @@ export const bitrix24: CrmAdapter = {
       select: [...new Set(['ID', 'DATE_MODIFY', ...names])],
       start,
     });
-    const list = (j?.result ?? []) as any[];
+    const list = (j?.result ?? []) as Record<string, unknown>[];
     const rows = list.map((r): RemoteRow => {
       const values: Record<string, unknown> = {};
       for (const f of opts.fields) {
@@ -279,7 +298,7 @@ const fsObject = (name: string) => {
   return o;
 };
 const fsBase = (ctx: Ctx) => `https://${ctx.config!.alias}/api`;
-function fsType(f: any): RemoteFieldType | null {
+function fsType(f: FsField): RemoteFieldType | null {
   const name = String(f.name ?? '');
   const t = String(f.type ?? '').toLowerCase();
   if (name === 'id') return 'id';
@@ -332,7 +351,7 @@ export const freshsales: CrmAdapter = {
     const o = fsObject(object);
     const j = await request(ctx, `${fsBase(ctx)}/settings/${o.name}/fields`);
     const out: RemoteField[] = [{ name: 'id', label: 'ID', type: 'id', updatable: false }];
-    for (const f of j?.fields ?? []) {
+    for (const f of (j?.fields ?? []) as FsField[]) {
       const name = String(f.name ?? '');
       // A person's accounts are a list on the other side; the main one is offered below as one field.
       if (object === 'contacts' && /^sales_account/.test(name)) continue;
@@ -340,7 +359,7 @@ export const freshsales: CrmAdapter = {
       if (!type || type === 'id') continue;
       // Built-in choices ("…_id") are stored by their id, a company's own choice fields by their text.
       const byId = /_id$/.test(name);
-      const options = Array.isArray(f.choices) && f.choices.length ? f.choices.map((c: any) => ({ value: String(byId ? c.id : (c.value ?? c.id)), label: String(c.value ?? c.id) })) : undefined;
+      const options = Array.isArray(f.choices) && f.choices.length ? f.choices.map((c) => ({ value: String(byId ? c.id : (c.value ?? c.id)), label: String(c.value ?? c.id) })) : undefined;
       const writable = !FS_COMPUTED.test(name) && f.editable !== false && f.read_only !== true;
       out.push({ name, label: String(f.label ?? name), type, options, refTo: name === 'sales_account_id' ? ['sales_accounts'] : undefined, updatable: writable, createable: writable, required: !!f.required });
     }
@@ -352,7 +371,7 @@ export const freshsales: CrmAdapter = {
 
   async users(ctx) {
     const j = await request(ctx, `${fsBase(ctx)}/selector/owners`);
-    return (j?.users ?? []).filter((u: any) => u.is_active !== false).map((u: any): RemoteUser => ({ id: String(u.id), name: String(u.display_name ?? u.email ?? u.id), email: u.email ? String(u.email).toLowerCase() : null }));
+    return (j?.users ?? []).filter((u: FsOwner) => u.is_active !== false).map((u: FsOwner): RemoteUser => ({ id: String(u.id), name: String(u.display_name ?? u.email ?? u.id), email: u.email ? String(u.email).toLowerCase() : null }));
   },
 
   /**
@@ -374,7 +393,7 @@ export const freshsales: CrmAdapter = {
     const n = Number(page) || 1;
     const include = object === 'contacts' && opts.fields.some((f) => f.name === COMPANY) ? '&include=sales_accounts' : '';
     const j = await request(ctx, `${fsBase(ctx)}/${o.name}/view/${encodeURIComponent(view)}?page=${n}&sort=updated_at&sort_type=desc${include}`);
-    const list = (j?.[o.name] ?? []) as any[];
+    const list = (j?.[o.name] ?? []) as FsRecord[];
     const since = opts.since ? new Date(opts.since).getTime() : null;
     let reachedOld = false;
     const rows: RemoteRow[] = [];
@@ -387,7 +406,7 @@ export const freshsales: CrmAdapter = {
       const values: Record<string, unknown> = {};
       for (const f of opts.fields) {
         if (f.name === COMPANY) {
-          const mine = Array.isArray(r.sales_accounts) ? (r.sales_accounts.find((a: any) => a?.is_primary) ?? r.sales_accounts[0]) : null;
+          const mine = Array.isArray(r.sales_accounts) ? (r.sales_accounts.find((a) => a?.is_primary) ?? r.sales_accounts[0]) : null;
           values[COMPANY] = idOrNull(mine?.id ?? r.sales_account_id);
           continue;
         }
@@ -502,7 +521,7 @@ const CUSTOM = 'custom:';
 const zsStages = (ctx: Ctx) =>
   once(ctx, 'sell:stages', async () => {
     const s = await request(ctx, `${SELL}/stages?per_page=${SELL_PAGE}`);
-    return ((s?.items ?? []) as any[]).map((x) => ({ id: String(x.data.id), name: String(x.data.name), category: String(x.data.category ?? '') }));
+    return ((s?.items ?? []) as SellItem<{ id: Id; name: string; category?: string }>[]).map((x) => ({ id: String(x.data.id), name: String(x.data.name), category: String(x.data.category ?? '') }));
   });
 
 export const zendesksell: CrmAdapter = {
@@ -535,14 +554,14 @@ export const zendesksell: CrmAdapter = {
       if (object === 'people' && f.for_contact === false) continue;
       const type = ZS_CUSTOM[String(f.type)];
       if (!type) continue;
-      out.push({ name: `${CUSTOM}${f.name}`, label: String(f.name), type, options: Array.isArray(f.choices) ? f.choices.map((x: any) => ({ value: String(x.name), label: String(x.name) })) : undefined, updatable: true, createable: true });
+      out.push({ name: `${CUSTOM}${f.name}`, label: String(f.name), type, options: Array.isArray(f.choices) ? f.choices.map((x: { name: unknown }) => ({ value: String(x.name), label: String(x.name) })) : undefined, updatable: true, createable: true });
     }
     return out;
   },
 
   async users(ctx) {
     const j = await request(ctx, `${SELL}/users?per_page=${SELL_PAGE}&status=active`);
-    return (j?.items ?? []).map((x: any): RemoteUser => ({ id: String(x.data.id), name: String(x.data.name ?? x.data.email ?? x.data.id), email: x.data.email ? String(x.data.email).toLowerCase() : null }));
+    return (j?.items ?? []).map((x: SellItem<{ id: Id; name?: string; email?: string | null }>): RemoteUser => ({ id: String(x.data.id), name: String(x.data.name ?? x.data.email ?? x.data.id), email: x.data.email ? String(x.data.email).toLowerCase() : null }));
   },
 
   /** Newest change first; with `since`, reading stops at the first row older than it. */
@@ -551,7 +570,7 @@ export const zendesksell: CrmAdapter = {
     const page = Number(opts.cursor ?? 1) || 1;
     const which = object === 'deals' ? '' : `&is_organization=${object === 'organizations'}`;
     const j = await request(ctx, `${SELL}/${zsPath(object)}?page=${page}&per_page=${SELL_PAGE}&sort_by=updated_at:desc${which}`);
-    const items = (j?.items ?? []) as any[];
+    const items = (j?.items ?? []) as Partial<SellItem<SellRecord>>[];
     const stages = object === 'deals' && opts.fields.some((f) => f.name === STATUS.name) ? new Map((await zsStages(ctx)).map((s) => [s.id, s.category])) : null;
     const since = opts.since ? new Date(opts.since).getTime() : null;
     let reachedOld = false;
