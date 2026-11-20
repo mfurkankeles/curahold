@@ -265,6 +265,43 @@ to run twice (remember what was done, as `playbook_runs` does for renewals)
 and let one company's failure not stop the others (`try`/`catch` per
 company).
 
+### a connector
+
+Pick the kind first; each has one contract and one place:
+
+| Kind | Contract | Example | Registered in |
+| --- | --- | --- | --- |
+| A chat that only receives posts | a flavour in `api/src/connectors/messaging/webhook.ts` (host rule, payload, error mapping) | Lark, Telegram | `WEBHOOK_FLAVORS`; the form in `Connections.tsx` |
+| A two-way chat app | `MessagingAdapter` (`connectors/messaging/types.ts`) | Slack, Teams | `connectors/messaging/index.ts` |
+| A CRM, support tool, calendar or mailbox | `CrmAdapter` (`api/src/sync/adapters/types.ts`): `objects`/`fields`/`list`/`update`/`create`, or `mailbox` + `messages` (+ `calendar` + `schedule`) | Odoo CRM, Zoho Desk, Google Calendar | `CRM_ADAPTERS` and `crmProviders` (`adapters/index.ts`), the list in `shared/src/sync.ts`, `KEY_FIELDS` when it is connected with typed values |
+| An accounting program (read only) | `accountingAdapter({ … finance })` (`adapters/accounting/common.ts`) | Stripe | `ACCOUNTING_PROVIDERS` (`shared/src/accounting.ts`) |
+| Something that pushes to us | a signed inbound route (`routes/whatsapp.ts`, `routes/devlinks.ts`) or, for anything without its own connector, an incoming webhook (`lib/inboundHooks.ts`, a recipe in `shared/src/inboundHooks.ts`) | WhatsApp, Azure DevOps, DocuSign | `app.ts`, before sign-in |
+
+The rules every connector keeps:
+
+1. **Read the vendor's own documentation first** and write what you rely on (auth, endpoint, page size, limit, error
+   shape, webhook signature) in the file's header comment. Anything you could not confirm is marked "(b)" in
+   `INTEGRATIONS.md` and goes into the real-account plan.
+2. **Errors as `CrmError`**: a rate limit with `retryAfter` (the run keeps its place), lost access with `auth: true`
+   (the connection asks to reconnect), anything else with the vendor's own words (`errorText`). A webhook flavour
+   throws `FatalChatError` only for what retrying cannot fix.
+3. **Secrets are sealed** (`seal`), never in `config`, never returned; a host the vendor does not own is refused
+   (`privateHost`, the host rules of the flavours). Inbound receivers verify a signature or token before parsing,
+   cap the body, and keep each event once.
+4. **Data the company did not ask for is not kept**: calendars read title, time, length and guests only; WhatsApp
+   messages from unknown numbers are counted, not stored. Disconnecting deletes the credentials; what came over stays.
+5. **Strings**: every word on screen in all nine dictionaries (`support.what.<id>`, `support.how.<id>`,
+   `support.field.<id>.<key>`, `fin.what/steps.<id>`), the name in `PROVIDER_NAMES`.
+6. **Tests the way a customer uses it**: a mock of the vendor in `tests/vendors/<vendor>.ts` (the `VendorMock`
+   contract in `tests/vendors/kit.ts`: hosts, `handle`, `consent`, `remoteEdit`, `remoteRow`, the four faults),
+   then a flow in `tests/connectors-b19.test.ts` (or the onboarding suite): connect → map → first data → both ways →
+   a change there → conflict → expired / revoked / rate limit / bad field → reconnect → disconnect. Timed run:
+   `B19_LATENCY=1 B19_TIMINGS=out.json npx vitest run tests/connectors-b19.test.ts`.
+7. **Docs**: a help page in nine languages (one action per numbered step, a picture per step from
+   `scripts/docs/shots.ts`, values in copy blocks), an assistant case in `tests/assistant-eval/cases.ts`, setup checks
+   where a silent failure is possible (`shared/src/setupHealth.ts` + `api/src/lib/setupHealth.ts`), the route in
+   `scripts/docs/catalogue.ts`, and a row in `INTEGRATIONS.md` and in `/orch/out/w3-integrations-real.md`.
+
 ### a help page (and what the assistant knows)
 
 CuraAI and the docs' Ask answer from the help pages (the four closest sections of `answers.json`), so a feature

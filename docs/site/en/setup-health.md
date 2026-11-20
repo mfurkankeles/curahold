@@ -89,6 +89,8 @@ The table is written from the product's own words, so it always matches the scre
 | --- | --- | --- |
 | A connected tool no longer accepts our sign-in (Fix first) | Nothing comes in or goes out until it is connected again. It takes one sign-in. | **Connect again** |
 | The last sync with … tools did not finish (Fix first) | Changes made since are waiting. The connection's page says what stopped it. | **See what happened** |
+| An incoming webhook has not used anything for a day (Worth fixing) | Every delivery was refused (a wrong secret) or could not be used (no matching customer, a changed payload). Its log says which. | **Open incoming webhooks** |
+| WhatsApp is connected but no message has arrived (Worth fixing) | After a day, this usually means the callback address and verify token are not saved in the Meta app, or “messages” is not subscribed. | **Open the connection** |
 | A connection is waiting for its fields to be matched (Worth fixing) | Until you choose what goes where and start it, it brings nothing in. | **Finish the matching** |
 | … changes could not be sent to the other tool (Worth fixing) | We tried three times. The connection's page shows each one and why, and can try again. | **Review them** |
 | … API keys stop working within two weeks (Worth fixing) | Whatever uses it will stop sending. Make a new key and put it in place before then. | **Open API keys** |

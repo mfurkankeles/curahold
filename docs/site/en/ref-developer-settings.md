@@ -25,10 +25,19 @@ These are what the Settings → Developers page calls. A key cannot create or de
 | `GET /dev/inbound` | Whether the inbound ticket address is on, and when it was last used. |
 | `POST /dev/inbound` | Turns the inbound address on (or replaces it); the address is shown once. |
 | `DELETE /dev/inbound` | Turns the inbound address off. |
-| `GET /dev-hooks` | Whether the GitHub and GitLab webhooks are on, with their addresses. |
-| `POST /dev-hooks/:provider` | Turns the `github` or `gitlab` webhook on, or replaces its secret. |
+| `GET /dev-hooks` | Whether the GitHub, GitLab and Azure DevOps webhooks are on, with their addresses. |
+| `POST /dev-hooks/:provider` | Turns the `github`, `gitlab` or `azuredevops` webhook on, or replaces its secret. |
 | `DELETE /dev-hooks/:provider` | Turns the webhook off. |
-| `POST /inbound/dev/:provider` | Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. |
+| `POST /inbound/dev/:provider` | Where GitHub (`github`, signed with `X-Hub-Signature-256`), GitLab (`gitlab`, with `X-Gitlab-Token`) and Azure DevOps service hooks (`azuredevops`, the secret as the basic-authentication password or in `X-Curahold-Token`) send their events. |
+| `POST /inbound/hooks/:id` | An incoming webhook's receiver. |
+| `GET /inbound/whatsapp/:source` | Meta's check of a WhatsApp Business callback address: answers `hub.challenge` when `hub.verify_token` is the connection's verify token. |
+| `POST /inbound/whatsapp/:source` | Where Meta posts WhatsApp messages for a company's own number (signed with `X-Hub-Signature-256` and the app secret). |
+| `GET /inbound-hooks` | The company's incoming webhooks with their addresses, secrets (when Curahold gives them), mappings and last 7 days' counts, and the ready-made recipes. |
+| `POST /inbound-hooks` | Makes an incoming webhook: `name`, `recipe` (curahold, esign, aircall, tawkto, razorpay, custom), `target` (task, ticket, activity, deal_note), `auth`, `mapping` (templates such as `{{data.status}}`), and `senderSecret` when the tool makes its own. |
+| `PATCH /inbound-hooks/:id` | Changes an incoming webhook; `enabled: false` pauses it, `rotate: true` gives a new secret (the old one stops at once). |
+| `DELETE /inbound-hooks/:id` | Deletes an incoming webhook and its log. |
+| `GET /inbound-hooks/:id/deliveries` | The last 100 deliveries: time, outcome, event id, error and what was made (kept 30 days, at most 500). |
+| `POST /inbound-hooks/:id/test` | With `dryRun: true`, what the mapping makes of `payload` and the paths in it; without, the payload goes through the receiver as a test delivery (written, marked `test`). |
 | `POST /inbound/segment/:source` | Where Segment sends product events (signed with `x-signature`, HMAC-SHA256). |
 | `GET /tasks/:id/dev` | The branches, pull requests and commits linked to a task, with their state and checks, and a one-line summary. |
 | `GET /boards/:id/dev-links` | The development summary of every task on a board that has links. |
@@ -129,13 +138,13 @@ Turns the inbound address off.
 
 ### `GET /dev-hooks`
 
-Whether the GitHub and GitLab webhooks are on, with their addresses. Needs permission to manage connections.
+Whether the GitHub, GitLab and Azure DevOps webhooks are on, with their addresses. Needs permission to manage connections.
 
 **Needs:** permission `connections.manage`
 
 ### `POST /dev-hooks/:provider`
 
-Turns the `github` or `gitlab` webhook on, or replaces its secret. The address and the secret are shown; branches, pull requests and commits that name a task (`CURA-` and the first 8 characters of its id) are linked to it.
+Turns the `github`, `gitlab` or `azuredevops` webhook on, or replaces its secret. The address and the secret are shown; branches, pull requests and commits that name a task (`CURA-` and the first 8 characters of its id) are linked to it.
 
 **Needs:** permission `connections.manage`
 
@@ -147,7 +156,81 @@ Turns the webhook off. Links already made stay.
 
 ### `POST /inbound/dev/:provider`
 
-Where GitHub (`github`, signed with `X-Hub-Signature-256`) and GitLab (`gitlab`, with `X-Gitlab-Token`) send their events. Not for people.
+Where GitHub (`github`, signed with `X-Hub-Signature-256`), GitLab (`gitlab`, with `X-Gitlab-Token`) and Azure DevOps service hooks (`azuredevops`, the secret as the basic-authentication password or in `X-Curahold-Token`) send their events. Not for people.
+
+### `POST /inbound/hooks/:id`
+
+An incoming webhook's receiver. Sign with `X-Curahold-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "t.body">` (t within 5 minutes) and send `X-Curahold-Event-Id`; or, for a hook made for a tool, its own signature header or shared token. Answers 200 with `status` ok, skipped, failed or duplicate; 401 for a bad signature, an old timestamp or a wrong token; 404 when the hook is unknown or paused. Each event id is used once. Not for people.
+
+### `GET /inbound/whatsapp/:source`
+
+Meta's check of a WhatsApp Business callback address: answers `hub.challenge` when `hub.verify_token` is the connection's verify token. Not for people.
+
+**Query:** `hub.mode`, `hub.verify_token`, `hub.challenge`
+
+### `POST /inbound/whatsapp/:source`
+
+Where Meta posts WhatsApp messages for a company's own number (signed with `X-Hub-Signature-256` and the app secret). Each message becomes a note on the customer whose contact has the sender's number, once per message id. Not for people.
+
+### `GET /inbound-hooks`
+
+The company's incoming webhooks with their addresses, secrets (when Curahold gives them), mappings and last 7 days' counts, and the ready-made recipes. Needs permission to manage connections.
+
+**Needs:** permission `connections.manage`
+
+### `POST /inbound-hooks`
+
+Makes an incoming webhook: `name`, `recipe` (curahold, esign, aircall, tawkto, razorpay, custom), `target` (task, ticket, activity, deal_note), `auth`, `mapping` (templates such as `{{data.status}}`), and `senderSecret` when the tool makes its own.
+
+**Needs:** permission `connections.manage`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `name` | text | required | at least 1 characters; at most 120 characters |
+| `recipe` | text | optional | default custom |
+| `target` | one of HOOK_TARGETS | optional |  |
+| `auth` | object | optional |  |
+| `mapping` | object | optional |  |
+| `senderSecret` | text | optional | at least 8 characters; at most 500 characters |
+
+### `PATCH /inbound-hooks/:id`
+
+Changes an incoming webhook; `enabled: false` pauses it, `rotate: true` gives a new secret (the old one stops at once).
+
+**Needs:** permission `connections.manage`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `name` | text | optional | at least 1 characters; at most 120 characters |
+| `enabled` | yes/no | optional |  |
+| `target` | one of HOOK_TARGETS | optional |  |
+| `auth` | object | optional |  |
+| `mapping` | object | optional |  |
+| `senderSecret` | text | optional | at least 8 characters; at most 500 characters |
+| `rotate` | yes/no | optional |  |
+
+### `DELETE /inbound-hooks/:id`
+
+Deletes an incoming webhook and its log. What it made stays.
+
+**Needs:** permission `connections.manage`
+
+### `GET /inbound-hooks/:id/deliveries`
+
+The last 100 deliveries: time, outcome, event id, error and what was made (kept 30 days, at most 500).
+
+**Needs:** permission `connections.manage`
+
+### `POST /inbound-hooks/:id/test`
+
+With `dryRun: true`, what the mapping makes of `payload` and the paths in it; without, the payload goes through the receiver as a test delivery (written, marked `test`).
+
+**Needs:** permission `connections.manage`
+
+| Field | Type | | Notes |
+| --- | --- | --- | --- |
+| `payload` | any value | required |  |
+| `dryRun` | yes/no | optional |  |
 
 ### `POST /inbound/segment/:source`
 

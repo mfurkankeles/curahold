@@ -29,6 +29,7 @@ açacağı geliştirici hesabı ve bazılarında onay süreci**.
 | Zendesk, Freshdesk, Intercom, Jira Service Management | anahtar | destek kayıtları | hayır | |
 | Açık API ve webhook'lar | API anahtarı | | | listede olmayan her araç için |
 | Zapier ve Make uygulaması | API anahtarı | 9 tetikleyici | 6 işlem, 1 arama | kod hazır ve test edildi; yayın için ürün sahibinin geliştirici hesabı gerekiyor |
+| Odoo CRM, Zoho Desk, Google/Outlook Calendar, WhatsApp Business, Stripe, Azure DevOps, Lark/Feishu, Telegram, gelen webhook | bkz. aşağıdaki 20 Kasım bölümü | | | 20 Kasım'da eklendi |
 
 Eşitleme bugün saatte bir çeker, Curahold'da yapılan değişikliği hemen yazar.
 CRM'den anlık bildirim (webhook) henüz yok; "Gerçek zamanlılık" paketinde.
@@ -128,6 +129,27 @@ Kod: `api/src/sync/adapters/accounting/` (adaptör başına bir dosya), `api/src
 | Diğerleri (Logo, Mikro, Tally, SAP B1…) | Şablonlu Excel/CSV | — | — | — |
 
 Eşleştirme sırası: vergi no → web/e-posta alan adı → ad (şirket türleri yok sayılır); birden fazla aday varsa otomatik eşleşme yapılmaz, inceleme listesine düşer. Rakamları `finance.view` izni olan roller görür; sağlık puanındaki "Zamanında ödeme" sinyali yalnızca gün ve sayı kullanır (`finance_late` fonksiyonu), tutar asla.
+
+## 20 Kasım 2026 bağlayıcıları (B19)
+
+Araştırma: `research-integrations-gap.md` (R11). Her biri kodlanmadan önce resmî belgesi okundu; okunamayan ya da belgede olmayan nokta "(b)" ile işaretli ve gerçek hesap planında (`w3-integrations-real.md`, B19 bölümü).
+
+| Bağlayıcı | Giriş | Ne yapar | Kod | Resmî belge (okundu) | (b) gerçek hesapla doğrulanacak |
+| --- | --- | --- | --- | --- | --- |
+| Lark / Feishu | grup özel botunun adresi + isteğe bağlı imza | panonun haberleri gruba (tek yönlü) | `connectors/messaging/webhook.ts`, `lark.ts` | add-custom-bot sayfası yalnızca JS ile açılıyor; imza algoritması onu kaynak gösteren SDK'dan (open-lark) | dakika/saniye sınırı, hata kodları |
+| Telegram | @BotFather anahtarı; grup kendiliğinden bulunur | panonun haberleri gruba/kanala | aynı dosyalar | core.telegram.org/bots/api, /bots/faq | — |
+| Odoo CRM | adres + kullanıcı + API anahtarı (muhasebeyle aynı) | şirket, kişi, fırsat; iki yönlü | `adapters/odoocrm.ts` | External JSON-2 API (19.0) | 17/18'de JSON-RPC yazma; `/web#id=` bağlantısı |
+| Google Calendar | Google ile giriş (`calendar.events`) | geçmiş toplantılar müşteride, toplantı planlama | `adapters/calendar.ts`, `mailsync.ts` | events.list, sync | hassas kapsam incelemesi (100+ kullanıcı) |
+| Outlook Calendar | Microsoft ile giriş (`Calendars.ReadWrite`) | aynısı | aynı | event-delta, calendarView | iş kiracısında yönetici onayı |
+| Azure DevOps | service hook + basic auth parolası | dal, PR, commit, build → görev | `lib/devlinks.ts`, `routes/devlinks.ts` | service-hooks webhooks + events | `git.pullrequest.merged` olay kimliği |
+| Zoho Desk | Zoho ile giriş (aynı Zoho kaydı) | kayıtlar ve hesaplar; durum/öncelik/sorumlu/yeni kayıt/yorum geri | `adapters/support.ts` | DeskAPIDocument (veri merkezleri, orgId, kapsamlar, kredi, hata biçimi) | `/tickets/search` `modifiedTimeRange` biçimi, liste sınırı 50/100 |
+| Stripe | kısıtlı anahtar (Read: Customers, Invoices, Events); `sk_` reddedilir | müşteri, fatura, ödeme; salt okunur | `adapters/accounting/stripe.ts` | rate-limits, restricted-api-keys, pagination | events `type=invoice.*`, sabitlenmiş sürüm 2024-06-20 |
+| WhatsApp Business | müşterinin kendi Meta uygulaması: numara kimliği + sistem kullanıcısı anahtarı + uygulama sırrı | mesaj müşteride not; cevap ya da şablon | `adapters/whatsapp.ts`, `routes/whatsapp.ts` | webhooks overview, getting-started (imza), messages ref, error codes | Graph v23.0 ömrü; ücret sayfası (Meta'nın kendisi okunamadı) |
+| Gelen webhook (genel) | şirket ve kaynak başına adres + HMAC imza ya da ortak anahtar | görev, destek kaydı, zaman çizelgesi kaydı, fırsat notu; oluştur ya da güncelle | `lib/inboundHooks.ts`, `routes/inboundHooks.ts`, göç 0245 | DocuSign/Aircall/Tawk.to/Razorpay tarifleri belgelerdeki biçimle | her aracın gerçek imza başlığı |
+
+Ücret: hiçbiri yeni ücretli servis değil. WhatsApp mesaj ücretini Meta müşterinin kendi faturasına keser; Curahold Tech Provider olmaz, uygulama incelemesine girmez. Stripe abonelikleri (MRR) bu turda yok: finans tablolarında yeri yok (sahip sorusu).
+
+Sonraki pazar araçları (LINE WORKS, Chatwork, kintone, Money Forward, Channel Talk, KakaoWork, LeadSquared, Razorpay, DingTalk, WeCom) şimdilik gelen webhook + Zapier/Make tarifleriyle: yardım sayfası `incoming-webhooks`.
 
 ## Kodda yapılacaklar
 

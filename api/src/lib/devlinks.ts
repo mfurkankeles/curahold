@@ -198,3 +198,72 @@ export function worstChecks(list: DevChecks[]): DevChecks {
   for (const c of ['failing', 'pending', 'passing'] as const) if (list.includes(c)) return c;
   return 'none';
 }
+
+// ------------------------------------------------------------------ Azure DevOps
+
+/** A build's result as checks: succeeded passes; failed, canceled and partiallySucceeded fail; anything else runs. */
+export function azureChecks(status: unknown, result: unknown): DevChecks {
+  const r = String(result ?? '').toLowerCase();
+  if (r === 'succeeded') return 'passing';
+  if (r === 'failed' || r === 'canceled' || r === 'partiallysucceeded') return 'failing';
+  return String(status ?? '').toLowerCase() === 'completed' ? 'none' : 'pending';
+}
+
+/**
+ * Azure DevOps service hooks ("Web Hooks" subscriptions, resource details "All"): git.push, git.pullrequest.created /
+ * updated / merged and build.complete, as the Service Hook Events page describes them. A repository is named
+ * <project>/<repo>; pull request states are active / completed / abandoned.
+ */
+export function parseAzure(p: any): Parsed {
+  const out: Parsed = { links: [], checks: [] };
+  const r = p?.resource ?? {};
+  const repoOf = (x: any) => (str(x?.name) ? `${str(x?.project?.name) ?? str(p?.resourceContainers?.project?.id) ?? '-'}/${x.name}` : null);
+  switch (String(p?.eventType ?? '')) {
+    case 'git.push': {
+      const repo = repoOf(r.repository);
+      if (!repo) break;
+      const web = str(r.repository?.remoteUrl);
+      const who = str(r.pushedBy?.displayName) ?? str(r.pushedBy?.uniqueName);
+      for (const u of Array.isArray(r.refUpdates) ? r.refUpdates.slice(0, 20) : []) {
+        const branch = branchOf(u?.name);
+        if (!branch) continue;
+        const deleted = typeof u.newObjectId === 'string' && ZEROS.test(u.newObjectId);
+        out.links.push(branchLink('azuredevops', repo, branch, web ? `${web}?version=GB${encodeURIComponent(branch)}` : null, deleted ? 'closed' : 'open', who, deleted ? null : str(u.newObjectId)));
+      }
+      for (const c of Array.isArray(r.commits) ? r.commits.slice(0, 50) : []) {
+        if (!c?.commitId) continue;
+        out.links.push({ provider: 'azuredevops', kind: 'commit', repo, ref: String(c.commitId), title: firstLine(c.comment), url: web ? `${web}/commit/${c.commitId}` : str(c.url), author: str(c.author?.name), state: null, headSha: String(c.commitId), checks: 'none', texts: [String(c.comment ?? '')] });
+      }
+      break;
+    }
+    case 'git.pullrequest.created':
+    case 'git.pullrequest.updated':
+    case 'git.pullrequest.merged': {
+      const repo = repoOf(r.repository);
+      if (!repo || !r.pullRequestId) break;
+      const status = String(r.status ?? '').toLowerCase();
+      const state: DevLinkState = status === 'completed' ? 'merged' : status === 'abandoned' ? 'closed' : 'open';
+      const web = str(r._links?.web?.href) ?? (str(r.repository?.remoteUrl) ? `${r.repository.remoteUrl}/pullrequest/${r.pullRequestId}` : null);
+      out.links.push({
+        provider: 'azuredevops',
+        kind: 'pr',
+        repo,
+        ref: String(r.pullRequestId),
+        title: String(r.title ?? '').slice(0, 500),
+        url: web,
+        author: str(r.createdBy?.displayName) ?? str(r.createdBy?.uniqueName),
+        state,
+        headSha: str(r.lastMergeSourceCommit?.commitId),
+        checks: 'none',
+        texts: [String(branchOf(r.sourceRefName) ?? ''), String(r.title ?? ''), String(r.description ?? '')],
+      });
+      break;
+    }
+    case 'build.complete': {
+      const repo = repoOf({ ...r.repository, project: r.project ?? r.repository?.project });
+      if (repo && str(r.sourceVersion)) out.checks.push({ provider: 'azuredevops', repo, sha: String(r.sourceVersion), checks: azureChecks(r.status, r.result) });
+      break;
+    }
+  }
+  return out;
+}

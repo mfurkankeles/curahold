@@ -30,6 +30,13 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
   contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
   what Curahold does today. Linked from the Resources menu and the footer.
+- Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
+  Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
+  to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
+  company's own Meta app (incoming messages on the contact's timeline, replies and templates).
+- Incoming webhooks: one signed address per company and source, replay protection, field mapping to a task, ticket, customer event or
+  deal note, a test-delivery screen, a 30-day delivery log and ready recipes. Two new setup-health checks: failing webhooks and a silent
+  WhatsApp number.
 - Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
   use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
   by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).

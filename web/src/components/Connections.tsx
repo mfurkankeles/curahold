@@ -54,6 +54,13 @@ export const PROVIDER_NAMES: Record<string, string> = {
   finfile: 'CSV / Excel',
   github: 'GitHub',
   gitlab: 'GitLab',
+  azuredevops: 'Azure DevOps',
+  odoocrm: 'Odoo CRM',
+  zohodesk: 'Zoho Desk',
+  stripe: 'Stripe',
+  gcal: 'Google Calendar',
+  outlookcal: 'Outlook Calendar',
+  whatsapp: 'WhatsApp Business',
 };
 export const FLAVOR_NAMES: Record<string, string> = {
   slack: 'Slack',
@@ -64,10 +71,12 @@ export const FLAVOR_NAMES: Record<string, string> = {
   rocketchat: 'Rocket.Chat',
   webex: 'Webex',
   zoom: 'Zoom Team Chat',
+  lark: 'Lark · Feishu',
+  telegram: 'Telegram',
   json: 'Zapier · Make · n8n',
 };
 const URL_HINT = 'https://';
-const FLAVORS = ['slack', 'teams', 'gchat', 'discord', 'mattermost', 'rocketchat', 'webex', 'zoom', 'json'] as const;
+const FLAVORS = ['slack', 'teams', 'gchat', 'discord', 'mattermost', 'rocketchat', 'webex', 'zoom', 'lark', 'telegram', 'json'] as const;
 
 export function useConnections() {
   const [data, setData] = useState<{ providers: ProviderInfo[]; connections: Connection[] } | null>(null);
@@ -232,7 +241,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
       <h3 className="section__head u-mt-20">
         <span>{t('conn.oneWay')}</span>
         {!adding && (
-          <button className="btn btn--small" onClick={() => setAdding(true)}>
+          <button className="btn btn--small" data-tour="conn-add-app" onClick={() => setAdding(true)}>
             <Icon name="plus" size={16} />
             {t('conn.addWebhook')}
           </button>
@@ -309,8 +318,10 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
   const [label, setLabel] = useState('');
   const [token, setToken] = useState('');
   const [secret, setSecret] = useState('');
+  const [chatId, setChatId] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const telegram = flavor === 'telegram';
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -319,10 +330,11 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
     try {
       const r = await post<{ id: string }>('/connections/webhook', {
         flavor,
-        url: url.trim(),
+        url: telegram ? '' : url.trim(),
         label: label.trim() || FLAVOR_NAMES[flavor],
-        ...(flavor === 'zoom' ? { token: token.trim() } : {}),
-        ...(flavor === 'json' && secret.trim() ? { signingSecret: secret.trim() } : {}),
+        ...(flavor === 'zoom' || telegram ? { token: token.trim() } : {}),
+        ...((flavor === 'json' || flavor === 'lark') && secret.trim() ? { signingSecret: secret.trim() } : {}),
+        ...(telegram && chatId.trim() ? { chatId: chatId.trim() } : {}),
       });
       try {
         await post(`/connections/${r.id}/test`, {});
@@ -333,7 +345,15 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
       await onDone();
     } catch (err) {
       const f = err instanceof ApiFailure ? (err.body as any) : null;
-      setError(f?.fields?.includes('url') ? t(f.reason === 'host' ? 'conn.urlHost' : 'conn.urlBad', { app: FLAVOR_NAMES[flavor] }) : f?.message ?? t('errors.server'));
+      setError(
+        f?.reason === 'telegram_token'
+          ? t('conn.telegram.badToken' as MessageKey)
+          : f?.reason === 'telegram_chat'
+            ? t('conn.telegram.noChat' as MessageKey)
+            : f?.fields?.includes('url')
+              ? t(f.reason === 'host' ? 'conn.urlHost' : 'conn.urlBad', { app: FLAVOR_NAMES[flavor] })
+              : (f?.message ?? t('errors.server')),
+      );
     } finally {
       setBusy(false);
     }
@@ -344,7 +364,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
       <div className="form__row">
         <label className="field">
           <span className="field__label">{t('conn.app')}</span>
-          <select className="select" value={flavor} onChange={(e) => setFlavor(e.target.value as any)}>
+          <select className="select" data-tour="conn-app" value={flavor} onChange={(e) => setFlavor(e.target.value as any)}>
             {FLAVORS.map((f) => (
               <option key={f} value={f}>
                 {f === 'json' ? `${t('conn.flavor.json')} (${FLAVOR_NAMES.json})` : FLAVOR_NAMES[f]}
@@ -357,27 +377,42 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
           <input className="input" value={label} placeholder={t('conn.namePlaceholder')} onChange={(e) => setLabel(e.target.value)} maxLength={120} />
         </label>
       </div>
-      <label className="field">
-        <span className="field__label">{t('conn.url')}</span>
-        <input className="input" value={url} required type="url" inputMode="url" placeholder={URL_HINT} onChange={(e) => setUrl(e.target.value)} />
-        <span className="field__hint">{t(`conn.where.${flavor}` as MessageKey)}</span>
-      </label>
+      {telegram ? (
+        <>
+          <label className="field">
+            <span className="field__label">{t('conn.telegram.token' as MessageKey)}</span>
+            <input className="input" value={token} required autoComplete="off" onChange={(e) => setToken(e.target.value)} />
+            <span className="field__hint">{t('conn.where.telegram' as MessageKey)}</span>
+          </label>
+          <label className="field">
+            <span className="field__label">{t('conn.telegram.chat' as MessageKey)}</span>
+            <input className="input" value={chatId} placeholder="-1001234567890" onChange={(e) => setChatId(e.target.value)} />
+            <span className="field__hint">{t('conn.telegram.chatHint' as MessageKey)}</span>
+          </label>
+        </>
+      ) : (
+        <label className="field">
+          <span className="field__label">{t('conn.url')}</span>
+          <input className="input" value={url} required type="url" inputMode="url" placeholder={URL_HINT} onChange={(e) => setUrl(e.target.value)} />
+          <span className="field__hint">{t(`conn.where.${flavor}` as MessageKey)}</span>
+        </label>
+      )}
       {flavor === 'zoom' && (
         <label className="field">
           <span className="field__label">{t('conn.zoomToken')}</span>
           <input className="input" value={token} required onChange={(e) => setToken(e.target.value)} />
         </label>
       )}
-      {flavor === 'json' && (
+      {(flavor === 'json' || flavor === 'lark') && (
         <label className="field">
           <span className="field__label">{t('conn.signingSecret')}</span>
           <input className="input" value={secret} onChange={(e) => setSecret(e.target.value)} />
-          <span className="field__hint">{t('conn.signingHint')}</span>
+          <span className="field__hint">{t(flavor === 'lark' ? ('conn.lark.signingHint' as MessageKey) : 'conn.signingHint')}</span>
         </label>
       )}
       {error && <p className="error-text" role="alert">{error}</p>}
       <div className="inline-actions u-justify-content-flex-start">
-        <button className="btn btn--primary" disabled={busy || !url.trim()}>
+        <button className="btn btn--primary" disabled={busy || (telegram ? !token.trim() : !url.trim())}>
           <Icon name="plug" size={16} />
           {busy ? t('common.saving') : t('conn.addAndTest')}
         </button>

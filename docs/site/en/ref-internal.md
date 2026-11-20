@@ -18,7 +18,7 @@ These addresses exist but belong to the browser or to other machines. They are l
 | `/billing/…` | 8 | Plan and payment (one path, ADR 0019): where the company stands with usage against its plan limits, checkout, plan change, portal, leaving and resuming, billing details. Paddle's signed notifications arrive at `POST /api/inbound/billing/paddle`. |
 | `/client-error/…` | 1 | The browser reporting its own errors, so a fault a person hits is recorded. |
 | `/connect/…` | 1 | Starting a connection to a CRM or chat app: a person approves it in the browser. |
-| `/connections/…` | 31 | Managing connections and their field matching: an administrator in the browser. |
+| `/connections/…` | 33 | Managing connections and their field matching: an administrator in the browser. |
 | `/consent/…` | 2 | The person's privacy and cookie choices, recorded from the browser. |
 | `/consent-event/…` | 1 | A visitor's cookie choice (no account), recorded as proof of consent: version, text hash, country; sent by the banner. |
 | `/desk/…` | 81 | Curahold support's own queue of help requests and the door for answers by email, and the platform owner's console with the AI team's approvals; open only with Curahold's own sign-in or keys. |

@@ -76,8 +76,24 @@ export interface MailItem {
   snippet: string;
   /** 'in' for mail received, 'out' for mail the mailbox sent. */
   direction: 'in' | 'out';
-  /** When the message was sent (ISO). */
+  /** When the message was sent (ISO); a meeting's start. */
   happenedAt: string | null;
+  /** Calendars: a meeting (default: an email). Its `subject` is the title; nothing of its description is read. */
+  kind?: 'email' | 'meeting';
+  /** Calendars: how long the meeting was, in minutes. */
+  minutes?: number | null;
+  /** Calendars: the meeting was cancelled or deleted there; an activity made from it is taken away. */
+  cancelled?: boolean;
+}
+
+/** A meeting to put in the connected calendar, with the customer's people invited. */
+export interface CalendarEvent {
+  title: string;
+  /** ISO start and end. */
+  start: string;
+  end: string;
+  attendees: string[];
+  description?: string | null;
 }
 
 /** A reply to send from a connected mailbox, then logged as an outgoing activity. */
@@ -87,6 +103,8 @@ export interface MailSend {
   body: string;
   /** The message replied to, when answering a thread (Gmail threadId / Graph message id). */
   inReplyTo?: string | null;
+  /** WhatsApp: an approved template instead of free text (outside the 24-hour window). */
+  template?: { name: string; language: string } | null;
 }
 
 export interface CrmAdapter {
@@ -130,6 +148,12 @@ export interface CrmAdapter {
   messages?(ctx: CrmCtx, opts: { since: string | null; cursor: string | null }): Promise<{ items: MailItem[]; next: string | null }>;
   /** Mailboxes: send a reply from the connected mailbox; returns the new message's id. */
   send?(ctx: CrmCtx, input: MailSend): Promise<{ externalId: string }>;
+  /**
+   * Calendars (Google Calendar, Outlook Calendar): a mailbox-like source whose `messages` are meetings (kind
+   * 'meeting') that already took place, and `schedule` puts a new meeting in the calendar.
+   */
+  calendar?: boolean;
+  schedule?(ctx: CrmCtx, input: CalendarEvent): Promise<{ externalId: string; url: string | null }>;
   /** Spreadsheets read everything each time; CRMs read changes since the last run. */
   tabular: boolean;
   refresh(ctx: Omit<CrmCtx, 'token' | 'refresh'>, secret: CrmSecret, client: OAuthClient): Promise<CrmSecret>;

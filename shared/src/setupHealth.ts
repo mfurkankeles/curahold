@@ -58,6 +58,8 @@ export const CHECKS: SetupCheckDef[] = [
   // ---- CRM and Jira
   { id: 'sync.notAuthorised', area: 'sync', severity: 'high', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },
   { id: 'sync.lastRunFailed', area: 'sync', severity: 'high', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },
+  { id: 'sync.hooksFailing', area: 'sync', severity: 'medium', fixer: ['connections.manage'], fix: '/settings/sources' },
+  { id: 'sync.whatsappSilent', area: 'sync', severity: 'medium', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },
   { id: 'sync.mappingIncomplete', area: 'sync', severity: 'medium', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },
   { id: 'sync.stuckChanges', area: 'sync', severity: 'medium', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },
   { id: 'sync.conflicts', area: 'sync', severity: 'low', fixer: ['connections.manage'], fix: '/settings/sources/{ref}' },

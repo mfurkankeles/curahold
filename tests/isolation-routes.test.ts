@@ -43,6 +43,7 @@ const KINDS: [RegExp, string, string?][] = [
   [/^\/dev\/analytics\/keys\/:id/, 'api_tokens'],
   [/^\/dev\/keys\/:id/, 'api_tokens'],
   [/^\/dev\/webhooks\/:id/, 'webhooks'],
+  [/^\/inbound-hooks\/:id/, 'inbound_hooks'],
   [/^\/(help\/files|help-files)\/:id/, 'help_files'],
   [/^\/help\/:id/, 'help_requests'],
   [/^\/support\/grants\/:id/, 'support_grants'],
@@ -147,6 +148,9 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /desk/requests/:ref/replays/:id': 'Curahold’s own support desk, behind its staff sign-in or key (tests/replay.test.ts)',
   'PUT /tickets/:source/:externalId': 'the ticket’s id in the caller’s own help desk (tests/timeline.test.ts)',
   'POST /inbound/tickets/:token': 'opened with a secret address, not a session (tests/timeline.test.ts)',
+  'POST /inbound/hooks/:id': 'opened with that hook’s own signature, not a session; a wrong one is refused (tests/connectors-b19.test.ts)',
+  'GET /inbound/whatsapp/:source': 'Meta’s address check, answered only with that company’s own verify token (tests/connectors-b19.test.ts)',
+  'POST /inbound/whatsapp/:source': 'opened with that company’s own Meta app signature, not a session (tests/connectors-b19.test.ts)',
   'POST /inbound/segment/:source': 'a Segment source id, opened with that company’s own signed secret (tests/wave5c.test.ts)',
   'GET /platform/customers/:orgId': 'the operator-only owner console; any non-owner, including another company, gets 403 (tests/platform.test.ts)',
   // Wave-6A enterprise SSO + SCIM. These are NOT session-addressed id routes:
@@ -229,6 +233,7 @@ beforeAll(async () => {
   await sys(`insert into plan_templates (org_id, name, board_id, tasks) values ($1, 'A plan', $2, '[]')`, [org, board]);
   await sys(`insert into api_tokens (org_id, user_id, kind, name, token_hash, prefix) values ($1, $2, 'key', 'A key', 'not-a-real-hash', 'chk_test')`, [org, lenaId]);
   await sys(`insert into webhooks (org_id, url, events, secret) values ($1, 'https://example.com/hook', '{task.created}', 'not-a-real-secret')`, [org]);
+  await sys(`insert into inbound_hooks (org_id, name, source, salt, target, created_by) values ($1, 'A hook', 'custom', 'not-a-real-salt-0001', 'task', $2)`, [org, lenaId]);
   await sys(`insert into join_requests (org_id, email, name) values ($1, 'new@demo.example', 'New Person')`, [org]);
   await sys(`insert into undo_log (org_id, user_id, kind, payload) values ($1, $2, 'tasks', '[]')`, [org, lenaId]);
   await sys(`insert into import_batches (org_id, kind, file_name, created_ids, created_by) values ($1, 'accounts', 'a.csv', '{}', $2), ($1, 'tasks', 't.csv', '{}', $2)`, [org, lenaId]);
