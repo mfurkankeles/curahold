@@ -59,7 +59,14 @@ describe('company settings and vocabulary', () => {
 
 describe('personal data (KVKK / GDPR)', () => {
   it('exports everything held about a person', async () => {
+    // Consents are personal data too: the assistant notice answer and the consent banner choices are in the file.
+    await env.db.system(async (q) => {
+      await q.query(`insert into assistant_consents (org_id, user_id, surface, version, locale, granted) values ($1, $2, 'app', 'v-test', 'en', true)`, [env.a.orgId, env.a.ids.zeynep]);
+      await q.query(`insert into consent_log (org_id, user_id, analytics, marketing, source, policy_version, locale, action) values ($1, $2, true, false, 'app', 'p-test', 'en', 'custom')`, [env.a.orgId, env.a.ids.zeynep]);
+    });
     const r = await ada.get(`/api/admin/users/${env.a.ids.zeynep}/export`);
+    expect(r.json.assistantConsents).toContainEqual(expect.objectContaining({ version: 'v-test', granted: true }));
+    expect(r.json.consentChoices).toContainEqual(expect.objectContaining({ analytics: true, marketing: false, policyVersion: 'p-test', action: 'custom' }));
     expect(r.status).toBe(200);
     expect(r.headers.get('content-disposition')).toContain('attachment');
     expect(r.json.person.email).toBe('zeynep@demo.example');
@@ -125,6 +132,11 @@ describe('personal data (KVKK / GDPR)', () => {
       q.query(`insert into portal_users (org_id, account_id, email, name, status) values ($1, $2, 'pia.portal@demo.example', 'Pia Portal', 'active') returning id`, [env.a.orgId, account]),
     );
     await env.db.system((q) => q.query(`insert into comments (org_id, task_id, body, portal_author_id) select org_id, id, 'from Pia', $2 from tasks where org_id = $1 limit 1`, [env.a.orgId, pu.id]));
+    // What she asked the portal's assistant and her answer to its notice (0248): in her file, and gone with her.
+    await env.db.system(async (q) => {
+      await q.query(`insert into assistant_log (org_id, portal_user_id, surface, question, kind, engine) values ($1, $2, 'portal', 'Where is my request?', 'answer', 'model')`, [env.a.orgId, pu.id]);
+      await q.query(`insert into assistant_consents (org_id, portal_user_id, surface, version, locale, granted) values ($1, $2, 'portal', 'v-test', 'en', true)`, [env.a.orgId, pu.id]);
+    });
     const zeynep = await login(env, 'acme', 'zeynep@demo.example');
     expect((await zeynep.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(403);
     // Another company's administrator cannot reach this person.
@@ -135,10 +147,13 @@ describe('personal data (KVKK / GDPR)', () => {
     const file = await ada.get(`/api/admin/portal-users/${pu.id}/export`);
     expect(file.status).toBe(200);
     expect(file.json.person).toMatchObject({ email: 'pia.portal@demo.example', name: 'Pia Portal' });
+    expect(file.json.assistantQuestions).toEqual([expect.objectContaining({ question: 'Where is my request?' })]);
+    expect(file.json.assistantConsents).toEqual([expect.objectContaining({ version: 'v-test', granted: true })]);
 
     expect((await ada.post(`/api/admin/portal-users/${pu.id}/erase`)).status).toBe(200);
     const left = await env.db.system((q) => q.query(`select 1 from portal_users where id = $1`, [pu.id]));
     expect(left).toHaveLength(0);
+    expect(await env.db.system((q) => q.query(`select 1 from assistant_log where org_id = $1 and question = 'Where is my request?'`, [env.a.orgId]))).toHaveLength(0);
     // What they wrote stays, with no author.
     const kept = await env.db.system((q) => q.query(`select portal_author_id from comments where org_id = $1 and body = 'from Pia'`, [env.a.orgId]));
     expect(kept).toEqual([{ portal_author_id: null }]);

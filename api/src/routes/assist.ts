@@ -106,7 +106,7 @@ function liveTools(c: C, locale: Locale): { tools: Tool[]; trace: ReturnType<typ
 /** Builds the core's surroundings for one request. */
 async function envFor(
   deps: Deps,
-  opts: { surface: AssistSurface; locale: Locale; org: OrgRow | null; userId: string | null; limited: boolean; who?: AssistEnv['who']; live?: AssistEnv['live'] },
+  opts: { surface: AssistSurface; locale: Locale; org: OrgRow | null; userId: string | null; portalUserId?: string | null; limited: boolean; who?: AssistEnv['who']; live?: AssistEnv['live'] },
 ): Promise<AssistEnv> {
   const config = assistantConfig(deps);
   // The public docs and site have no company: the installation's own switch (publicChat) decides there.
@@ -115,7 +115,7 @@ async function envFor(
   return {
     config,
     provider: providerOf(deps),
-    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing }),
+    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, portalUserId: opts.portalUserId ?? null, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing }),
     docs,
     docsVersion: version,
     surface: opts.surface,
@@ -330,6 +330,7 @@ export async function portalAssist(
     locale,
     org,
     userId: null,
+    portalUserId: person.id,
     limited,
     who: { name: person.name, role: 'customer (portal)', company: org.name, customer: '', customers: '', currency: org.currency ?? 'USD', today: new Date().toISOString().slice(0, 10) },
     live: { tools, trace },

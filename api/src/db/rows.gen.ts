@@ -296,6 +296,7 @@ export interface AssistantLogRow {
   sources: Json;
   cost_micros: number | string;
   created_at: Date;
+  portal_user_id: string | null;
 }
 
 /** Table `assistant_public_consents`. */

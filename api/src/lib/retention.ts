@@ -66,6 +66,9 @@ export interface RetentionResult {
   consentRecords: number;
   consentEvents: number;
   consentLog: number;
+  /** The in-app and portal assistant's consent answers (0243), and the docs/site assistant's. */
+  assistantConsents: number;
+  assistantPublicConsents: number;
   helpRequests: number;
   deskLog: number;
   auditLog: number;
@@ -107,6 +110,24 @@ export async function purgeExpired(deps: Deps, now: Date = (deps.now ?? (() => n
     ),
     consentEvents: await count(`delete from consent_events where created_at < $1::timestamptz - make_interval(days => $2)`, [at, r.consentDays]),
     consentLog: await count(`delete from consent_log where created_at < $1::timestamptz - make_interval(days => $2)`, [at, r.consentDays]),
+    // The assistant's consent answers follow the same rule as consent_records: past the period they go, except a
+    // person's latest answer when it is "yes" — that row is the proof the assistant may still be used (ADR 0014).
+    assistantConsents: await count(
+      `delete from assistant_consents c
+        where c.created_at < $1::timestamptz - make_interval(days => $2)
+          and not (c.granted and not exists (
+                select 1 from assistant_consents n
+                 where n.org_id = c.org_id and n.surface = c.surface
+                   and n.user_id is not distinct from c.user_id and n.portal_user_id is not distinct from c.portal_user_id
+                   and n.created_at > c.created_at))`,
+      [at, r.consentDays],
+    ),
+    assistantPublicConsents: await count(
+      `delete from assistant_public_consents c
+        where c.created_at < $1::timestamptz - make_interval(days => $2)
+          and not (c.granted and not exists (select 1 from assistant_public_consents n where n.consent_id = c.consent_id and n.created_at > c.created_at))`,
+      [at, r.consentDays],
+    ),
     helpRequests: await count(`delete from help_requests where updated_at < $1::timestamptz - make_interval(days => $2)`, [at, r.supportDays]),
     deskLog: await count(`delete from desk_log where at < $1::timestamptz - make_interval(days => $2)`, [at, r.supportDays]),
     auditLog: await count(`delete from audit_log where at < $1::timestamptz - make_interval(days => $2)`, [at, r.auditDays]),
