@@ -45,6 +45,7 @@ import {
   verifyIdToken,
   verifyState,
   type SsoAuthConfig,
+  type SsoProblem,
   type SsoState,
 } from '../lib/sso';
 import { body, deviceId as deviceIdField } from '../lib/validate';
@@ -85,6 +86,11 @@ async function resolveOrg(c: C, slug: string): Promise<OrgRow | null> {
 const loginBack = (cfg: Config, slug: string, error?: string) => `${orgUrl(cfg, slug)}/login${error ? `?error=${error}` : ''}`;
 /** Back to the SSO settings with the result of a test sign-in. */
 const testBack = (cfg: Config, slug: string, result: string, email?: string) => `${orgUrl(cfg, slug)}/settings/sso?ssoTest=${encodeURIComponent(result)}${email ? `&as=${encodeURIComponent(email)}` : ''}`;
+/**
+ * The reason a failure is reported with: a test sign-in (an administrator in the settings) gets the exact problem; a real
+ * sign-in gets the general one, so the public sign-in page tells nobody what is wrong with the company's provider.
+ */
+const testOnly = (state: SsoState, problem: SsoProblem) => (state.t ? problem : 'oauth_failed');
 /** Once the state is known: a test goes back to the settings, a sign-in to the sign-in page. */
 const failBack = (cfg: Config, slug: string, state: SsoState, error: string) => (state.t ? testBack(cfg, slug, error) : loginBack(cfg, slug, error));
 
@@ -201,8 +207,9 @@ ssoAuthRoutes.post('/:slug/saml/acs', async (c) => {
   if (!config || (!config.enabled && !state.t) || config.protocol !== 'saml' || !config.cert) return c.redirect(failBack(cfg, slug, state, 'not_configured'));
 
   const saml = makeSaml(cfg, slug, config);
-  const verified = await verifySamlResponse(saml, samlResponse);
-  if (!verified) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
+  let problem: SsoProblem = 'oauth_failed';
+  const verified = await verifySamlResponse(saml, samlResponse, (why) => (problem = why));
+  if (!verified) return c.redirect(failBack(cfg, slug, state, testOnly(state, problem)));
 
   // One-time use of the assertion (per company), then map to an identity.
   const fresh = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, (q) => claimAssertion(q, org.id, verified.assertionXml));
@@ -240,11 +247,14 @@ ssoAuthRoutes.get('/:slug/oidc/callback', async (c) => {
   if (!verifier) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
 
   const fetchFn = deps.fetch ?? fetch;
+  // An unreachable provider is answered with a way back, never an error page (both calls below never throw).
   const tokens = await exchangeOidcCode(config, { code, redirectUri: oidcRedirectUri(cfg, slug), verifier }, fetchFn);
-  if (!tokens?.id_token) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
+  if (!tokens.id_token) return c.redirect(failBack(cfg, slug, state, testOnly(state, tokens.failure ?? 'oauth_failed')));
   const keys = await fetchJwks(config.jwksUrl, fetchFn);
-  const claims = await verifyIdToken(tokens.id_token, keys, { issuer: config.issuer, audience: config.clientId, nonce: state.n, now });
-  if (!claims) return c.redirect(failBack(cfg, slug, state, 'oauth_failed'));
+  if (!keys.length) return c.redirect(failBack(cfg, slug, state, testOnly(state, 'idp_unreachable')));
+  let problem: SsoProblem = 'oauth_failed';
+  const claims = await verifyIdToken(tokens.id_token, keys, { issuer: config.issuer, audience: config.clientId, nonce: state.n, now }, (why) => (problem = why));
+  if (!claims) return c.redirect(failBack(cfg, slug, state, testOnly(state, problem)));
   if (claims.email_verified === false) return c.redirect(failBack(cfg, slug, state, 'no_account'));
   const identity = mapIdentity(claims, config, null);
   if (!identity) return c.redirect(failBack(cfg, slug, state, 'no_account'));

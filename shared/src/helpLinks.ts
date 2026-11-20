@@ -98,7 +98,7 @@ export const SETTINGS_HELP: Record<string, HelpLink> = {
   analytics: h('bi-tools', ['howto-bi'], 'key'),
   portal: h('customer-portal', ['howto-portal']),
   signin: h('security-and-privacy', ['howto-second-step']),
-  sso: h('security-and-privacy', ['howto-second-step']),
+  sso: h('security-and-privacy', ['howto-second-step'], 'sso'),
   support: h('getting-help', ['howto-support-access', 'howto-ai-answers']),
   audit: h('security-and-privacy', ['howto-second-step']),
   errors: h('getting-help', ['howto-support-access'], 'errors'),

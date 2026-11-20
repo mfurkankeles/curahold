@@ -2,7 +2,7 @@
 // chat widgets, payment services, Zapier, Make, your own code). One hook per source: its address and secret, what a
 // delivery becomes, the mapping (templates like {{data.status}} filled from each delivery), a test screen and the log.
 import { useCallback, useEffect, useState } from 'react';
-import { HOOK_TARGETS, type HookDelivery, type HookMapping, type HookRecipe, type HookTarget, type InboundHook } from '../../../shared/src/inboundHooks';
+import { HOOK_TARGETS, problemOf, type HookDelivery, type HookMapping, type HookRecipe, type HookTarget, type InboundHook } from '../../../shared/src/inboundHooks';
 import type { MessageKey } from '../../../shared/src/i18n';
 import { ApiFailure, del, get, patch, post } from '../lib/api';
 import { formatDateTime } from '../lib/format';
@@ -19,6 +19,12 @@ const FIELDS: Record<HookTarget, (keyof HookMapping)[]> = {
   activity: ['body', 'title', 'happenedAt', 'minutes'],
   deal_note: ['body', 'dealId', 'dealName'],
 };
+
+/** A delivery's problem in the reader's language (the log stores a code, never English words). */
+function whyText(t: (key: MessageKey, vars?: Record<string, string>) => string, error: string | null): string {
+  const p = problemOf(error);
+  return p ? t(`hooks.why.${p.code}` as MessageKey, { value: p.value }) : '—';
+}
 
 /** Settings: incoming webhooks from recipes, with their address, secret and deliveries. */
 export function InboundHooks() {
@@ -203,6 +209,11 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
   const [outcome, setOutcome] = useState<string>('');
   const [log, setLog] = useState<HookDelivery[] | null>(null);
   const [removing, setRemoving] = useState(false);
+  // A task hook's board can change here: when its board is archived, the hook is fixed in place and keeps its address.
+  const [boards, setBoards] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (tab === 'map' && hook.target === 'task' && !boards.length) void get<{ boards: { id: string; name: string }[] }>('/boards').then((b) => setBoards(b.boards)).catch(() => undefined);
+  }, [tab, hook.target, boards.length]);
   const copy = (text: string) => void navigator.clipboard?.writeText(text).then(() => toast(t('devtools.copied')));
   const fail = (e: unknown) => toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
   useEffect(() => {
@@ -284,6 +295,19 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
               </label>
             ))}
           </div>
+          {hook.target === 'task' && (
+            <label className="field">
+              <span className="field__label">{t('hooks.board' as MessageKey)}</span>
+              <select className="select" value={mapping.boardId ?? ''} onChange={(e) => set('boardId', e.target.value)} data-tour="hook-board">
+                <option value="">—</option>
+                {boards.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {FIELDS[hook.target].map((k) => (
             <label className="field" key={k}>
               <span className="field__label">{t(`hooks.field.${k}` as MessageKey)}</span>
@@ -389,7 +413,7 @@ function HookSheet({ hook, recipe, onClose, onChanged }: { hook: InboundHook; re
                       {d.test && <span className="badge u-ms-4">{t('hooks.log.test' as MessageKey)}</span>}
                     </td>
                     <td className="muted">{d.eventId ?? '—'}</td>
-                    <td>{d.result ? `${t(`hooks.target.${d.result.kind}` as MessageKey)} · ${t(`hooks.action.${d.result.how}` as MessageKey)}` : (d.error ?? '—')}</td>
+                    <td>{d.result ? `${t(`hooks.target.${d.result.kind}` as MessageKey)} · ${t(`hooks.action.${d.result.how}` as MessageKey)}` : whyText(t, d.error)}</td>
                   </tr>
                 ))}
               </tbody>
