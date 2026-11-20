@@ -62,3 +62,36 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
     assistantQuestions: own.assistant.map((a) => ({ where: a.surface, question: a.question, reply: a.kind, at: iso(a.created_at) })),
   };
 }
+
+/**
+ * Everything held about one person at a customer who signs in to the portal
+ * (KVKK m.11, GDPR Art. 15/20): an administrator with privacy.manage answers
+ * their request with this file. Owner-level reads, each filtered by the company.
+ */
+export async function portalPersonalData(c: C, portalUserId: string) {
+  const org = c.get('org');
+  return c.get('deps').db.system(async (q) => {
+    const [person] = await q.query(
+      `select pu.id, pu.email, pu.name, pu.status, pu.locale, pu.created_at, pu.last_seen_at, a.name as customer
+         from portal_users pu join accounts a on a.org_id = pu.org_id and a.id = pu.account_id where pu.org_id = $1 and pu.id = $2`,
+      [org.id, portalUserId],
+    );
+    if (!person) return null;
+    const p = [org.id, portalUserId];
+    const sessions = await q.query('select created_at, last_seen_at, expires_at, revoked_at from portal_sessions where org_id = $1 and portal_user_id = $2 order by created_at', p);
+    const signIns = await q.query('select provider, email, created_at, last_used_at from portal_identities where org_id = $1 and portal_user_id = $2', p);
+    const tasks = await q.query('select id, title, created_at from tasks where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const comments = await q.query('select task_id, body, created_at from comments where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const files = await q.query('select name, size, mime, created_at from files where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    return {
+      exportedAt: new Date().toISOString(),
+      company: org.name,
+      person: { ...person, created_at: iso(person.created_at), last_seen_at: iso(person.last_seen_at) },
+      sessions: sessions.map((s) => ({ createdAt: iso(s.created_at), lastSeenAt: iso(s.last_seen_at), expiresAt: iso(s.expires_at), endedAt: iso(s.revoked_at) })),
+      signIns: signIns.map((s) => ({ provider: s.provider, email: s.email, linkedAt: iso(s.created_at), lastUsedAt: iso(s.last_used_at) })),
+      requestsOpened: tasks.map((t) => ({ id: t.id, title: t.title, at: iso(t.created_at) })),
+      comments: comments.map((x) => ({ taskId: x.task_id, body: x.body, at: iso(x.created_at) })),
+      files: files.map((f) => ({ name: f.name, size: f.size, mime: f.mime, at: iso(f.created_at) })),
+    };
+  });
+}

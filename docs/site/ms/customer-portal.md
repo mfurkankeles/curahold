@@ -29,6 +29,8 @@ Portal berjalan pada domain berasingan: sesi, kuki dan API aplikasi tidak boleh 
    - **Apa yang dibaca pelanggan untuk setiap lajur:** contohnya "Sedang disemak" dan bukannya "Menunggu bahagian undang-undang". Jika dibiarkan kosong, nama lajur itu sendiri dipaparkan.
    - **Butiran yang dilihat pelanggan:** tarikh akhir, keutamaan, siapa yang mengerjakannya.
 
+   Lebih pantas, semasa belum ada papan yang dibuka: **Tetapan → Portal pelanggan** menyenaraikan papan anda; klik **Buka … kepada pelanggan** pada papan tempat permintaan patut masuk (ia masuk ke lajur pertamanya).
+
 Papan peribadi tidak boleh dibuka. Mematikan suis menutup portal untuk semua orang, dengan serta-merta.
 
 ## Menjemput orang

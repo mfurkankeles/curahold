@@ -34,17 +34,18 @@ job at `curahold_owner` and the Worker at `curahold_login`. Verify afterwards:
 `select relname from pg_class where relowner = (select oid from pg_roles where rolname = 'curahold_login')`
 returns nothing.
 
-## 2. Cloudflare rate limiting (the app sets no request limit of its own)
+## 2. Cloudflare rate limiting (at the edge, on top of the app's own limits)
 
-Configure in the Cloudflare dashboard (Security > WAF > Rate limiting rules) on the zone,
-as an ops requirement; the Worker does not do this:
+Since 19 Nov 2026 the app limits requests per person, company and network address itself (`api/src/lib/ratelimit.ts`,
+`lib/botGuard.ts`, ADR 0015). These edge rules still belong in the Cloudflare dashboard (Security > WAF > Rate limiting
+rules) on the zone, because they stop a flood before it costs Worker time:
 
 | Rule | Match | Limit | Action |
 | --- | --- | --- | --- |
 | Sign-in links and codes | `POST` on `/api/auth/start`, `/api/auth/verify`, `/api/auth/device` | 10 per minute per IP | Block 10 min |
 | Sign-up | `POST /api/signup*` | 5 per hour per IP | Block 1 h |
 | Support desk sign-in | `desk.<domain>` `/api/desk/sign-in*` | 10 per 10 min per IP | Block 1 h |
-| Paddle webhook | `POST /api/billing/webhook` | allow only Paddle's published IPs; 60 per minute otherwise | Block |
+| Paddle webhook | `POST /api/inbound/billing/paddle` (and the older alias `POST /api/billing/webhook`) | allow only Paddle's published IPs; 60 per minute otherwise | Block |
 | General API | `/api/*` | 600 per minute per IP (per `x-curahold-device` where possible) | Managed challenge |
 | Desk mail door | `POST /api/desk/mail` | allow only the mail sender's IPs | Block |
 

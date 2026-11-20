@@ -31,6 +31,7 @@ import { LOCALE_INFO, LOCALES, bcp47Of, intlTag, translate, type Locale, type Me
 // Search engines may index the docs; AI crawlers and text-and-data mining may not (a copy inside the demo: nobody).
 import { CLOSED_ROBOTS, TDM_META } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
+import { ASSIST_CONSENT_VERSION } from '../shared/src/assistConsent';
 
 /** The copyright line and the copyright/trade-secret line, in one language (shared/src/compliance/notice.ts). */
 const noticeOf = (lang: Locale) => legalNotice((k, v) => translate(lang, k, v));
@@ -114,6 +115,13 @@ function uiOf(lang: Lang) {
     askWords: Object.fromEntries(
       ['open', 'title', 'close', 'hello', 'hi', 'thanks', 'empty', 'placeholder', 'from', 'more', 'also', 'unsure', 'none', 'support', 'helped', 'yes', 'no', 'sorry', 'loading', 'failed', 'you', 'ai'].map((k) => [k, say(`ask.${k}`)]),
     ),
+    /** The AI assistant's consent notice, shown before a question goes to the server (assistConsent.*, shared/src/assistConsent.ts). */
+    askConsent: {
+      version: ASSIST_CONSENT_VERSION,
+      ...Object.fromEntries(
+        ['title', 'what', 'why', 'keep', 'withdraw', 'privacy', 'accept', 'decline', 'close', 'withdrawAction', 'withdrawn', 'declined'].map((k) => [k, translate(lang, `assistConsent.${k}` as MessageKey)]),
+      ),
+    },
     /** The question back and its choices for a question that means several things: the app's own words (assist.*). */
     askClarify: Object.fromEntries(CLARIFY.map((c) => [c.id, translate(lang, c.question as MessageKey)])),
     askOptions: Object.fromEntries(CLARIFY.flatMap((c) => c.options.map((o) => [o.id, translate(lang, o.label as MessageKey)]))),
@@ -313,7 +321,7 @@ ${others.map((l) => `<link rel="alternate" hreflang="${bcp47Of(l)}" href="/docs/
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]], clarify: ui.askClarify, options: ui.askOptions } }).replace(/</g, '\\u003c')}</script>
+<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]], clarify: ui.askClarify, options: ui.askOptions, consent: ui.askConsent } }).replace(/</g, '\\u003c')}</script>
 <script src="/docs/assets/docs.js" defer></script>
 <script src="/docs/assets/ask.js" defer></script>
 </body>

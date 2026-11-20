@@ -1,7 +1,7 @@
 import { localDate } from '../../shared/src/days';
 import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
-import { accessOf, allows, planFor, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
+import { accessOf, allows, planFor, planOf, type Access, type Feature, type Interval, type OrgBilling, type PlanKey } from '../../shared/src/billing';
 import type { Locale, Terms } from '../../shared/src/i18n';
 import type { AccountField, Perm, Seat, SetupState } from '../../shared/src/model';
 import type { Db, Q } from './db';
@@ -83,11 +83,15 @@ export interface Config {
   /** The crawler policy's owner switches (shared/src/compliance/crawlers.ts). */
   crawlers?: { docsAiAnswers?: boolean };
   /** Cloudflare Turnstile on the public forms (lib/humanCheck.ts); unset: honeypot + fill-time checks only. */
-  turnstile?: { siteKey: string; secretKey: string };
+  turnstile?: { siteKey: string; secretKey: string; /** Also send the visitor's address to Cloudflare (off by default). */ sendIp?: boolean };
+  /** How long records are kept, and the grace before a company's deletion (lib/retention.ts); unset: the stated defaults. */
+  retention?: Partial<import('./lib/retention').RetentionConfig>;
   /** The assistant's model, key and caps (api/src/assistant/cost.ts); unset: no model, the docs search answers. */
   assistant?: import('./assistant/cost').AssistantConfig;
   /** The AI team's models and monthly cap (api/src/team/config.ts); unset: the defaults there. */
   team?: import('./team/config').TeamConfig;
+  /** Error-rate and latency alerts (lib/ops.ts): on unless OPS_ALERTS=off; e-mail to the owner unless OPS_ALERT_EMAIL=off. */
+  ops?: { alerts?: boolean; email?: boolean };
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */
@@ -135,6 +139,10 @@ export interface Deps {
   limiter?: import('./lib/ratelimit').Limiter;
   /** Unusual-traffic counter (lib/botGuard.ts); unset: the isolate's shared one. */
   watch?: import('./lib/botGuard').TrafficWatch;
+  /** Error-rate and latency watch (lib/ops.ts); tests give their own. */
+  ops?: import('./lib/ops').OpsWatch;
+  /** The optional upload scanner (lib/uploadScan.ts; self-host: ClamAV, lib/clamav.ts). Unset: nothing is quarantined. */
+  scanner?: import('./lib/uploadScan').FileScanner;
   /** The live channel's rooms, where a write must tell them (Cloudflare Durable Objects; live/do.ts). */
   /** The assistant: where the docs' sections are read from, and (tests) a model to use instead of the configured one. */
   assistant?: { docs?: import('./assistant/store').DocsLoader; provider?: import('./assistant/provider').LlmProvider | null };
@@ -254,10 +262,6 @@ export function assertOwnerConfigured(cfg: Pick<Config, 'owner' | 'singleTenantS
   throw new Error('PLATFORM_OWNER (or SUPPORT_STAFF) must be set: a multi-company install needs an explicit platform owner');
 }
 
-export function requireOwner(c: C) {
-  if (!isOwner(c)) fail('forbidden');
-}
-
 /** Where this company stands with billing (always open when billing is off). */
 export function accessFor(c: C): Access {
   const org = c.get('org');
@@ -269,7 +273,7 @@ export function accessFor(c: C): Access {
 /** Only on a plan that includes this (Business): CRM sync, the customer portal, playbooks. */
 export function requirePlan(c: C, feature: Feature) {
   const plan = planFor(feature);
-  if (!allows(accessFor(c), feature)) fail('plan_required', { plan: plan === 'business' ? 'Business' : 'Team' }, { plan });
+  if (!allows(accessFor(c), feature)) fail('plan_required', { plan: planOf(plan)?.name ?? plan }, { plan });
 }
 
 export function orgUrl(cfg: Config, slug: string): string {

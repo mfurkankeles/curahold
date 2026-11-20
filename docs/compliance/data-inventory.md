@@ -12,7 +12,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Data subjects:** Users of customer companies
 - **Personal data:** Name, work e-mail, role, language, time zone, profile picture
 - **Legal basis:** Türkiye — KVKK art. 5/2-c (contract); EU/UK — Art. 6(1)(b) GDPR (contract); Gulf — Contract with the person (UAE art. 4; Saudi PDPL); consent where no exception applies; elsewhere — Contract / near-contract (KR art. 15(1)4, TW art. 19, JP purpose notice)
-- **Retention:** While the account is open; deleted 30 days after it closes (backups overwritten within 35 days)
+- **Retention:** While the account is open; an erased person at once (anonymised record of work kept); the whole company 30 days after an administrator asks to delete it, with a deletion certificate (backups overwritten within 35 days)
 - **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace)
 - **VERBİS categories:** Kimlik, İletişim, Mesleki deneyim
 
@@ -32,8 +32,8 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Data subjects:** Customers' own customers, contacts and staff
 - **Personal data:** Whatever the customer enters: contacts, accounts, tasks, notes, files, portal users
 - **Legal basis:** Türkiye — The customer is the controller; Curahold is the processor (KVKK art. 12); EU/UK — Art. 28 GDPR — the customer's basis; Gulf — Processor on the controller's instructions; elsewhere — Entrustment / outsourcing (JP art. 27(5), KR art. 26)
-- **Retention:** For the contract; exportable at any time; deleted 30 days after the end, backups within 35 days
-- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace), Anthropic PBC; Tools the customer connects itself (on its instruction)
+- **Retention:** For the contract; exportable at any time; deleted 30 days after the company asks for deletion (files, connection keys and caches included), backups within 35 days; invoices kept for tax law
+- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace), Anthropic PBC; Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks
 - **VERBİS categories:** Kimlik, İletişim, Müşteri işlem
 
 ### trialLeads — Assessing the trial request, contacting the person, opening the trial
@@ -41,7 +41,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Role:** Curahold is the controller
 - **Data subjects:** People who request a trial
 - **Personal data:** Name, work e-mail, job title, company, country, company size, answers to the form, the verification code time
-- **Legal basis:** Türkiye — KVKK art. 5/2-c (setting up a contract) and 5/2-f (legitimate interest); EU/UK — Art. 6(1)(f) (legitimate interest in answering business enquiries); Gulf — UAE: consent (art. 4); Saudi / Qatar: consent by default; Egypt not offered; elsewhere — KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice
+- **Legal basis:** Türkiye — KVKK art. 5/2-c (setting up a contract) and 5/2-f (legitimate interest); EU/UK — Art. 6(1)(f) (legitimate interest in answering business enquiries); Gulf — UAE: consent (art. 4); Saudi / Qatar: consent by default; Egypt not offered; elsewhere — KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice; IN: notice + consent (DPDP Act 2023 ss. 5–6), not for under-18s; MY: notice in Malay and English + consent (PDPA 2010 ss. 6–7)
 - **Retention:** 12 months from the request if no trial starts; otherwise as account data
 - **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace)
 - **VERBİS categories:** Kimlik, İletişim, Mesleki deneyim
@@ -50,9 +50,9 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 
 - **Role:** Curahold is the controller
 - **Data subjects:** Visitors, users, trial applicants
-- **Personal data:** Each choice: text version and hash, time, country, language, anonymous consent id (e-mail for marketing permissions)
+- **Personal data:** Each choice: text version and hash, time, country, language, anonymous consent id (e-mail for marketing permissions); each answer to the AI assistant notice (person, time, notice version, language)
 - **Legal basis:** Türkiye — KVKK art. 5/2-ç (legal obligation; Commercial Communication Regulation arts. 7(10), 13); EU/UK — Art. 6(1)(c) with art. 7(1); Gulf — Proof duty (UAE art. 6); elsewhere — Proof duty (TW art. 7; KR art. 22)
-- **Retention:** 3 years after the permission ends; cookie choices 3 years
+- **Retention:** 3 years after the record, except a permission still in force (kept while relied on); cookie choices 3 years; records can only be anonymised, never changed
 - **Stored with / received by:** Cloudflare, Inc., Supabase, Inc.
 - **VERBİS categories:** Pazarlama, İşlem güvenliği
 
@@ -82,19 +82,59 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Data subjects:** Users who ask for help
 - **Personal data:** Requests, attachments; support session recordings only when the company has them on (off by default)
 - **Legal basis:** Türkiye — KVKK art. 5/2-c and 5/2-f; EU/UK — Art. 6(1)(b) and (f); Gulf — Contract; elsewhere — Contract
-- **Retention:** 24 months after the request is closed; recordings 7 days
+- **Retention:** 24 months after the last change to the request; recordings 7 days
 - **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace), Anthropic PBC
 - **VERBİS categories:** Kimlik, İletişim, Müşteri işlem, Görsel ve işitsel kayıtlar
 
-### ai — Answering in the product (only when the company turns AI on); never used to train models
+### ai — Answering in the product (off until an administrator turns AI on, and only after the person accepts the notice); never used to train models
 
 - **Role:** Curahold is the processor (the customer is the controller)
 - **Data subjects:** Users who ask the AI assistant; people named in what is asked
 - **Personal data:** The question and the minimum context needed for the answer
 - **Legal basis:** Türkiye — On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9; EU/UK — Art. 28 — the customer's basis; Gulf — Processor; elsewhere — Entrustment
-- **Retention:** Conversation logs 30 days; at the provider [30 days — confirm], no training
+- **Retention:** Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training
 - **Stored with / received by:** Anthropic PBC, Supabase, Inc.
 - **VERBİS categories:** Kimlik, Müşteri işlem
+
+### humanCheck — Keeping robots out of public forms (Cloudflare Turnstile, no puzzle, no tracking cookie)
+
+- **Role:** Curahold is the controller
+- **Data subjects:** Visitors who fill in a public form (trial request, sign-up, portal sign-in)
+- **Personal data:** Browser signals the check reads and its one-time token; the widget loads from Cloudflare, which sees the IP address; Curahold itself sends the address only where the operator switched that on (TURNSTILE_SEND_IP)
+- **Legal basis:** Türkiye — KVKK art. 5/2-f (legitimate interest: security); transfer abroad art. 9; EU/UK — Art. 6(1)(f) (security); Gulf — Necessary for the service requested; elsewhere — Security measures (PIPA art. 29, APPI art. 23)
+- **Retention:** Not stored by Curahold; at Cloudflare per its own terms
+- **Stored with / received by:** Cloudflare, Inc.
+- **VERBİS categories:** İşlem güvenliği
+
+### sessionRecording — Letting Curahold support see a fault the person reported (off by default)
+
+- **Role:** Curahold is the processor (the customer is the controller)
+- **Data subjects:** Users of a company that switched support recordings on
+- **Personal data:** The screen as the interface drew it, every field masked (nothing typed is recorded)
+- **Legal basis:** Türkiye — On the customer's behalf (processor); EU/UK — Art. 28 — the customer's basis; Gulf — Processor; elsewhere — Entrustment
+- **Retention:** 7 days
+- **Stored with / received by:** Cloudflare, Inc., Supabase, Inc.
+- **VERBİS categories:** Görsel ve işitsel kayıtlar
+
+### aiTeam — Running Curahold itself; the AI team only proposes, a person approves every outside action
+
+- **Role:** Curahold is the controller
+- **Data subjects:** Curahold's own operators; customers' contacts when an operator's task names them
+- **Personal data:** Tasks, notes and memory of Curahold's internal AI team (no customer workspace data is read)
+- **Legal basis:** Türkiye — KVKK art. 5/2-f (legitimate interest); EU/UK — Art. 6(1)(f); Gulf — Legitimate interest where recognised; otherwise consent; elsewhere — Legitimate business purpose (notice)
+- **Retention:** Until the task is done or the note is removed; mentions of an erased person are redacted
+- **Stored with / received by:** Anthropic PBC, Supabase, Inc.
+- **VERBİS categories:** Kimlik, İletişim
+
+### breachLog — The breach record the law requires (GDPR Art. 33(5); KVKK Board decision 2019/10; DPA §7)
+
+- **Role:** Curahold is the controller
+- **Data subjects:** People affected by a personal-data breach (as numbers and kinds of data, not names)
+- **Personal data:** Facts of the breach, its effects, what was done, who was notified and when
+- **Legal basis:** Türkiye — KVKK art. 5/2-ç (legal obligation); EU/UK — Art. 6(1)(c); Gulf — Legal obligation; elsewhere — Legal obligation
+- **Retention:** 5 years after the breach is closed [lawyer to confirm]
+- **Stored with / received by:** Supabase, Inc.
+- **VERBİS categories:** İşlem güvenliği
 
 ### website — Running the website; with consent, measuring it and our advertising
 

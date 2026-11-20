@@ -65,6 +65,12 @@ export interface ConsentFlags {
   jpTransferConsent: boolean;
   /** Malaysia: consent box to handle the request (PDPA s. 6(1)(a); s. 6(2)(a) may make it unnecessary — lawyer's switch, on by default). */
   myConsentBox: boolean;
+  /**
+   * Türkiye: Curahold is registered in İYS (İleti Yönetim Sistemi) as a service provider and approvals are uploaded there
+   * (owner task, go-live checklist). Off: the two Turkish marketing boxes (TR.M1/M2) are not offered at all, so no approval
+   * is collected that could not be registered within 3 business days (Law 6563, Regulation art. 7; L1 audit).
+   */
+  trIysRegistered: boolean;
 }
 
 export const DEFAULT_FLAGS: ConsentFlags = {
@@ -76,6 +82,7 @@ export const DEFAULT_FLAGS: ConsentFlags = {
   trStandardContractsNotified: false,
   jpTransferConsent: false,
   myConsentBox: true,
+  trIysRegistered: false,
 };
 
 const EEA_UK = 'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH'.split(' ');
@@ -643,10 +650,10 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         required: false,
         box: false,
         master: 'hi',
-        basis: 'DPDP Act 2023 s. 5 (notice: itemised data and purpose, how to withdraw consent and use the rights of ss. 11–14 and the grievance route of s. 13, how to complain to the Data Protection Board) + DPDP Rules 2025 r. 3 (stand-alone, plain, a link to withdraw and to use the rights). Notice in English or an Eighth-Schedule language: s. 5(3). Transfer abroad allowed unless the country is restricted: s. 16. Grievances answered within ninety days at most (Rules 2025). Most duties apply from 13 May 2027. (taslak — avukat onayı gerekli)',
+        basis: 'DPDP Act 2023 s. 5 (notice: itemised data and purpose, how to withdraw consent and use the rights of ss. 11–14 and the grievance route of s. 13, how to complain to the Data Protection Board) + DPDP Rules 2025 r. 3 (stand-alone, plain, a link to withdraw and to use the rights). Notice in English or an Eighth-Schedule language: s. 5(3). Transfer abroad allowed unless the country is restricted: s. 16. Grievances answered within ninety days at most (Rules 2025). Not for children (under 18 in DPDP): the notice says so and the capacity line ALL.A confirms it. Transfer abroad for MY: Guideline 3/2025 wants the safeguard named in the notice (contract route) and a transfer impact assessment (owner/lawyer). Most DPDP duties apply from about May 2027 (staged 18 months after the Rules of Nov 2025). (taslak — avukat onayı gerekli)',
         texts: {
-          hi: 'व्यक्तिगत डेटा की सूचना\n· डेटा फ़िड्यूशरी: {company} ({company_country})\n· कौन-सा डेटा: नाम, काम का ईमेल, पद, कंपनी, देश और इस फ़ॉर्म में आपकी दर्ज की गई बाकी जानकारी\n· उद्देश्य: आपके मुफ़्त ट्रायल अनुरोध की समीक्षा करना, उसके बारे में आपसे संपर्क करना और आपका ट्रायल अकाउंट खोलना\n· यह डेटा हमारे होस्टिंग और ईमेल सेवा प्रदाताओं के पास {storage_countries} में रखा जा सकता है।\n· आप कभी भी अपनी सहमति वापस ले सकते हैं और अपने डेटा की जानकारी, सुधार, पूरा करने या मिटाने का अनुरोध कर सकते हैं — {contact} पर लिखें, या हमारे हर ईमेल में दिए लिंक का इस्तेमाल करें। सहमति वापस लेने से उससे पहले की प्रोसेसिंग पर असर नहीं पड़ता।\n· शिकायत: पहले {contact} पर हमारे शिकायत अधिकारी को लिखें। अगर आप जवाब से संतुष्ट नहीं हैं, तो आप भारत के डेटा प्रोटेक्शन बोर्ड में शिकायत कर सकते हैं।\nविवरण प्राइवेसी नोटिस में है।',
-          en: 'Notice about your personal data\n· Data Fiduciary: {company} ({company_country})\n· What data: name, work e-mail, job title, company, country and the other details you enter in this form\n· Purpose: reviewing your free-trial request, contacting you about it and opening your trial account\n· This data may be kept with our hosting and e-mail service providers in {storage_countries}.\n· You can withdraw your consent at any time and ask for a summary, correction, completion or erasure of your data — write to {contact}, or use the link in each of our e-mails. Withdrawing does not affect processing before it.\n· Grievances: first write to our grievance officer at {contact}. If you are not satisfied with the answer, you can complain to the Data Protection Board of India.\nDetails are in the Privacy notice.',
+          hi: 'व्यक्तिगत डेटा की सूचना\n· डेटा फ़िड्यूशरी: {company} ({company_country})\n· कौन-सा डेटा: नाम, काम का ईमेल, पद, कंपनी, देश और इस फ़ॉर्म में आपकी दर्ज की गई बाकी जानकारी\n· उद्देश्य: आपके मुफ़्त ट्रायल अनुरोध की समीक्षा करना, उसके बारे में आपसे संपर्क करना और आपका ट्रायल अकाउंट खोलना\n· यह डेटा हमारे होस्टिंग और ईमेल सेवा प्रदाताओं के पास {storage_countries} में रखा जा सकता है।\n· आप कभी भी अपनी सहमति वापस ले सकते हैं और अपने डेटा की जानकारी, सुधार, पूरा करने या मिटाने का अनुरोध कर सकते हैं — {contact} पर लिखें, या हमारे हर ईमेल में दिए लिंक का इस्तेमाल करें। सहमति वापस लेने से उससे पहले की प्रोसेसिंग पर असर नहीं पड़ता।\n· शिकायत: पहले {contact} पर हमारे शिकायत अधिकारी को लिखें। अगर आप जवाब से संतुष्ट नहीं हैं, तो आप भारत के डेटा प्रोटेक्शन बोर्ड में शिकायत कर सकते हैं।\nयह फ़ॉर्म 18 साल से कम उम्र के लोगों के लिए नहीं है। विवरण प्राइवेसी नोटिस में है।',
+          en: 'Notice about your personal data\n· Data Fiduciary: {company} ({company_country})\n· What data: name, work e-mail, job title, company, country and the other details you enter in this form\n· Purpose: reviewing your free-trial request, contacting you about it and opening your trial account\n· This data may be kept with our hosting and e-mail service providers in {storage_countries}.\n· You can withdraw your consent at any time and ask for a summary, correction, completion or erasure of your data — write to {contact}, or use the link in each of our e-mails. Withdrawing does not affect processing before it.\n· Grievances: first write to our grievance officer at {contact}. If you are not satisfied with the answer, you can complain to the Data Protection Board of India.\nThis form is not for people under 18. Details are in the Privacy notice.',
         },
       },
       {
@@ -686,10 +693,10 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         box: false,
         master: 'ms',
         both: true,
-        basis: 'Malaysia PDPA 2010 s. 7 (Notice and Choice: purpose, source, access and correction, whom to contact, classes of third parties, whether obligatory and the consequence) — the notice in the national and English languages, s. 7(3); s. 129 as amended in 2024 (transfer to a country with substantially similar law or adequate protection); DPO contact under the 2024 amendment. (taslak — avukat onayı gerekli)',
+        basis: 'Malaysia PDPA 2010 s. 7 (Notice and Choice: purpose, source, access and correction, whom to contact, classes of third parties, whether obligatory and the consequence) — the notice in the national and English languages, s. 7(3); s. 129 as amended in 2024 and JPDP Guideline 3/2025 (the notice names that data goes to providers outside Malaysia and the contract safeguard; a transfer impact assessment, valid at most 3 years, must exist); DPO contact under the 2024 amendment. (taslak — avukat onayı gerekli)',
         texts: {
-          ms: 'Notis Perlindungan Data Peribadi\n· {company} ({company_country}) memproses data peribadi yang anda berikan dalam borang ini: nama, e-mel kerja, jawatan, syarikat, negara dan butiran lain yang anda masukkan.\n· Tujuan: menilai permintaan percubaan percuma anda, menghubungi anda mengenainya dan membuka akaun percubaan anda.\n· Data anda mungkin didedahkan kepada dan disimpan oleh pembekal perkhidmatan pengehosan dan e-mel kami di {storage_countries}, dengan perlindungan yang setara dengan Akta Perlindungan Data Peribadi 2010.\n· Medan bertanda wajib perlu diisi; tanpanya kami tidak dapat memproses permintaan anda.\n· Anda boleh meminta akses kepada atau pembetulan data anda, mengehadkan pemprosesannya, atau membuat pertanyaan dan aduan dengan menghubungi Pegawai Perlindungan Data kami: {contact}.\nButirannya ada dalam Notis privasi.',
-          en: 'Personal Data Protection Notice\n· {company} ({company_country}) processes the personal data you give in this form: name, work e-mail, job title, company, country and the other details you enter.\n· Purpose: assessing your free-trial request, contacting you about it and opening your trial account.\n· Your data may be disclosed to and stored with our hosting and e-mail service providers in {storage_countries}, under protection equivalent to the Personal Data Protection Act 2010.\n· Fields marked required must be filled in; without them we cannot handle your request.\n· You can ask for access to or correction of your data, limit its processing, or send enquiries and complaints to our Data Protection Officer: {contact}.\nDetails are in the Privacy notice.',
+          ms: 'Notis Perlindungan Data Peribadi\n· {company} ({company_country}) memproses data peribadi yang anda berikan dalam borang ini: nama, e-mel kerja, jawatan, syarikat, negara dan butiran lain yang anda masukkan.\n· Tujuan: menilai permintaan percubaan percuma anda, menghubungi anda mengenainya dan membuka akaun percubaan anda.\n· Data anda mungkin didedahkan kepada dan disimpan oleh pembekal perkhidmatan pengehosan dan e-mel kami di {storage_countries}, di luar Malaysia; setiap pembekal terikat dengan kontrak yang mewajibkan perlindungan yang setara dengan Akta Perlindungan Data Peribadi 2010.\n· Medan bertanda wajib perlu diisi; tanpanya kami tidak dapat memproses permintaan anda.\n· Anda boleh meminta akses kepada atau pembetulan data anda, mengehadkan pemprosesannya, atau membuat pertanyaan dan aduan dengan menghubungi Pegawai Perlindungan Data kami: {contact}.\nButirannya ada dalam Notis privasi.',
+          en: 'Personal Data Protection Notice\n· {company} ({company_country}) processes the personal data you give in this form: name, work e-mail, job title, company, country and the other details you enter.\n· Purpose: assessing your free-trial request, contacting you about it and opening your trial account.\n· Your data may be disclosed to and stored with our hosting and e-mail service providers in {storage_countries}, outside Malaysia; each provider is bound by a contract that requires protection equivalent to the Personal Data Protection Act 2010.\n· Fields marked required must be filled in; without them we cannot handle your request.\n· You can ask for access to or correction of your data, limit its processing, or send enquiries and complaints to our Data Protection Officer: {contact}.\nDetails are in the Privacy notice.',
         },
       },
       {
@@ -799,7 +806,8 @@ export function consentSetFor(opts: { declared: string; ipCountry?: string | nul
   // Notices first, then the required boxes, then one set of marketing choices (Türkiye's two boxes win), then the capacity line.
   const order: BlockKind[] = ['notice', 'note', 'consent', 'transfer'];
   blocks.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  const marketing = sets.includes('TR') ? RULE_SETS.TR.marketing : RULE_SETS[own].marketing;
+  // Türkiye's two boxes win, but only once İYS registration is real (trIysRegistered); until then Türkiye gets no marketing boxes.
+  const marketing = sets.includes('TR') ? (flags.trIysRegistered ? RULE_SETS.TR.marketing : []) : RULE_SETS[own].marketing;
   return { ...base, offered: true, manualReview, ruleSets: sets, blocks: [...blocks, ...marketing, A].map(pick) };
 }
 

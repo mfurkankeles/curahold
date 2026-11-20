@@ -12,6 +12,8 @@ The menu on the left has four parts: everyday work at the top (Home, My tasks, I
 
 **Customers → Opportunities** shows deals in columns by stage. Drag a card to another stage; drop it on **Won** or **Lost** to close it. The strip on top adds the money up: open pipeline, a weighted forecast (later stages count for more), what closes this month and what was won.
 
+Not in the menu? A company that chose Sales or Inside Sales has it from the first day; otherwise open **Settings → Records** and click **Add opportunities**.
+
 Every deal has a **type**: new business, expansion or renewal. Change the stages and types in Settings → Record types; with a CRM connected the stages come from there. **Table** shows the same deals as a list. Any kind of record with a choice field can be shown as a board the same way.
 
 ## Targets and pace

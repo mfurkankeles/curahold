@@ -717,6 +717,13 @@ export function AccountTeam({ account, flow, reload }: { account: Account; flow:
           </label>
         );
       })}
+      {/* Plans open by themselves on a won deal only when that is switched on; here is the way in by hand. */}
+      {canWrite && depts.some((d) => d.key === 'onboarding' || d.key === 'success') && (
+        <button type="button" className="btn btn--small btn--quiet u-mt-8" onClick={() => navigate(`/onboarding/plans?new=${account.id}`)}>
+          <Icon name="flag" size={14} />
+          {t('ob.new.fromAccount')}
+        </button>
+      )}
     </fieldset>
   );
 }

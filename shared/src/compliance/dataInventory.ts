@@ -48,6 +48,11 @@ export interface Subprocessor {
   kvkkStandardContract: 'to_ask' | 'signed' | 'notified' | 'not_needed';
   /** Handles the trial-request leads (named in the trial form's consent texts). */
   leads: boolean;
+  /**
+   * A separate controller, not our processor (Paddle sells as merchant of record): KVKK art. 9 then needs the
+   * controller-to-controller standard contract, not the processor one (VERBİS sheet; L1 audit).
+   */
+  ownController?: boolean;
 }
 
 export const SUBPROCESSORS: Subprocessor[] = [
@@ -125,6 +130,7 @@ export const SUBPROCESSORS: Subprocessor[] = [
     leads: false,
     safeguards: 'UK adequacy (EU→UK); for the sale itself Paddle is the seller and a separate controller',
     kvkkStandardContract: 'to_ask',
+    ownController: true,
     purpose: {
       en: 'Payments, invoices and sales tax as merchant of record (only the paying company’s billing contact).',
       tr: 'Satıcı (merchant of record) olarak ödemeler, faturalar ve satış vergisi (yalnızca ödeyen şirketin fatura yetkilisi).',
@@ -258,7 +264,7 @@ export const ACTIVITIES: Activity[] = [
     data: { en: 'Name, work e-mail, role, language, time zone, profile picture', tr: 'Ad, iş e-postası, rol, dil, saat dilimi, profil fotoğrafı' },
     purpose: { en: 'Providing the service: accounts, signing in, notifications', tr: 'Hizmetin sunulması: hesaplar, giriş, bildirimler' },
     basis: contract,
-    retention: { en: 'While the account is open; deleted 30 days after it closes (backups overwritten within 35 days)', tr: 'Hesap açık olduğu sürece; kapandıktan 30 gün sonra silinir (yedekler 35 gün içinde üzerine yazılır)' },
+    retention: { en: 'While the account is open; an erased person at once (anonymised record of work kept); the whole company 30 days after an administrator asks to delete it, with a deletion certificate (backups overwritten within 35 days)', tr: 'Hesap açık olduğu sürece; silinen kişi hemen (iş kaydı anonim kalır); şirketin tamamı bir yöneticinin silme talebinden 30 gün sonra, silme belgesiyle (yedekler 35 gün içinde üzerine yazılır)' },
     processors: ['cloudflare', 'supabase', 'googleWorkspace'],
     verbis: ['Kimlik', 'İletişim', 'Mesleki deneyim'],
   },
@@ -290,9 +296,12 @@ export const ACTIVITIES: Activity[] = [
       gulf: "Processor on the controller's instructions",
       other: 'Entrustment / outsourcing (JP art. 27(5), KR art. 26)',
     },
-    retention: { en: 'For the contract; exportable at any time; deleted 30 days after the end, backups within 35 days', tr: 'Sözleşme süresince; her an dışa aktarılabilir; bitişten 30 gün sonra silinir, yedekler 35 gün içinde' },
+    retention: { en: 'For the contract; exportable at any time; deleted 30 days after the company asks for deletion (files, connection keys and caches included), backups within 35 days; invoices kept for tax law', tr: 'Sözleşme süresince; her an dışa aktarılabilir; şirket silme isteğinden 30 gün sonra silinir (dosyalar, bağlantı anahtarları ve önbellekler dahil), yedekler 35 gün içinde; faturalar vergi mevzuatı gereği saklanır' },
     processors: ['cloudflare', 'supabase', 'googleWorkspace', 'anthropic'],
-    others: { en: 'Tools the customer connects itself (on its instruction)', tr: 'Müşterinin kendisinin bağladığı araçlar (onun talimatıyla)' },
+    others: {
+      en: 'Tools the customer connects itself, on its instruction: CRMs (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), help desks (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), accounting (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), mailboxes (Gmail, Outlook), data (Segment, BigQuery, Snowflake, Google Sheets, Excel), chat (Slack, Teams, Google Chat), Jira, webhooks',
+      tr: 'Müşterinin kendi bağladığı araçlar, onun talimatıyla: CRM\'ler (Salesforce, HubSpot, Dynamics, Pipedrive, Zoho, Bitrix24, Freshsales, Zendesk Sell), destek masaları (Zendesk, Freshdesk, Intercom, Jira Service Management, Front), muhasebe (Paraşüt, Odoo, Xero, QuickBooks, freee, Zoho Books), posta kutuları (Gmail, Outlook), veri (Segment, BigQuery, Snowflake, Google Sheets, Excel), sohbet (Slack, Teams, Google Chat), Jira, webhook\'lar',
+    },
     verbis: ['Kimlik', 'İletişim', 'Müşteri işlem'],
   },
   {
@@ -305,7 +314,7 @@ export const ACTIVITIES: Activity[] = [
       tr: { tr: 'KVKK m. 5/2-c (sözleşmenin kurulması) ve m. 5/2-f (meşru menfaat)', en: 'KVKK art. 5/2-c (setting up a contract) and 5/2-f (legitimate interest)' },
       eu: 'Art. 6(1)(f) (legitimate interest in answering business enquiries)',
       gulf: 'UAE: consent (art. 4); Saudi / Qatar: consent by default; Egypt not offered',
-      other: 'KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice',
+      other: 'KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice; IN: notice + consent (DPDP Act 2023 ss. 5–6), not for under-18s; MY: notice in Malay and English + consent (PDPA 2010 ss. 6–7)',
     },
     retention: { en: '12 months from the request if no trial starts; otherwise as account data', tr: 'Deneme başlamazsa talepten itibaren 12 ay; başlarsa hesap verisi gibi' },
     processors: ['cloudflare', 'supabase', 'googleWorkspace'],
@@ -315,10 +324,10 @@ export const ACTIVITIES: Activity[] = [
     id: 'consentRecords',
     role: 'controller',
     subjects: { en: 'Visitors, users, trial applicants', tr: 'Ziyaretçiler, kullanıcılar, deneme başvuranları' },
-    data: { en: 'Each choice: text version and hash, time, country, language, anonymous consent id (e-mail for marketing permissions)', tr: 'Her tercih: metin sürümü ve özeti, zaman, ülke, dil, anonim onay kimliği (pazarlama izinlerinde e-posta)' },
+    data: { en: 'Each choice: text version and hash, time, country, language, anonymous consent id (e-mail for marketing permissions); each answer to the AI assistant notice (person, time, notice version, language)', tr: 'Her tercih: metin sürümü ve özeti, zaman, ülke, dil, anonim onay kimliği (pazarlama izinlerinde e-posta); yapay zekâ asistanı bilgilendirmesine her cevap (kişi, zaman, bilgilendirme sürümü, dil)' },
     purpose: { en: 'Proving consents and permissions; honouring withdrawals', tr: 'Rıza ve izinlerin ispatı; geri alınanlara uyulması' },
     basis: { tr: { tr: 'KVKK m. 5/2-ç (hukuki yükümlülük; Ticari İletişim Yönetmeliği m. 7(10), 13)', en: 'KVKK art. 5/2-ç (legal obligation; Commercial Communication Regulation arts. 7(10), 13)' }, eu: 'Art. 6(1)(c) with art. 7(1)', gulf: 'Proof duty (UAE art. 6)', other: 'Proof duty (TW art. 7; KR art. 22)' },
-    retention: { en: '3 years after the permission ends; cookie choices 3 years', tr: 'İzin sona erdikten sonra 3 yıl; çerez tercihleri 3 yıl' },
+    retention: { en: '3 years after the record, except a permission still in force (kept while relied on); cookie choices 3 years; records can only be anonymised, never changed', tr: 'Kayıttan sonra 3 yıl; yürürlükteki izin dayanıldığı sürece saklanır; çerez tercihleri 3 yıl; kayıtlar değiştirilemez, yalnızca anonimleştirilir' },
     processors: ['cloudflare', 'supabase'],
     verbis: ['Pazarlama', 'İşlem güvenliği'],
   },
@@ -351,7 +360,7 @@ export const ACTIVITIES: Activity[] = [
     data: { en: 'Requests, attachments; support session recordings only when the company has them on (off by default)', tr: 'Talepler, ekler; destek oturumu kayıtları yalnızca şirket açtıysa (varsayılan kapalı)' },
     purpose: { en: 'Answering support requests', tr: 'Destek taleplerinin yanıtlanması' },
     basis: { tr: { tr: 'KVKK m. 5/2-c ve m. 5/2-f', en: 'KVKK art. 5/2-c and 5/2-f' }, eu: 'Art. 6(1)(b) and (f)', gulf: 'Contract', other: 'Contract' },
-    retention: { en: '24 months after the request is closed; recordings 7 days', tr: 'Talep kapandıktan sonra 24 ay; kayıtlar 7 gün' },
+    retention: { en: '24 months after the last change to the request; recordings 7 days', tr: 'Talebin son değişikliğinden sonra 24 ay; kayıtlar 7 gün' },
     processors: ['cloudflare', 'supabase', 'googleWorkspace', 'anthropic'],
     verbis: ['Kimlik', 'İletişim', 'Müşteri işlem', 'Görsel ve işitsel kayıtlar'],
   },
@@ -360,11 +369,55 @@ export const ACTIVITIES: Activity[] = [
     role: 'processor',
     subjects: { en: 'Users who ask the AI assistant; people named in what is asked', tr: 'Yapay zekâ asistanına soran kullanıcılar; soruda adı geçen kişiler' },
     data: { en: 'The question and the minimum context needed for the answer', tr: 'Soru ve yanıt için gereken en az bağlam' },
-    purpose: { en: 'Answering in the product (only when the company turns AI on); never used to train models', tr: 'Ürün içinde yanıt vermek (yalnızca şirket yapay zekâyı açarsa); model eğitimi için asla kullanılmaz' },
+    purpose: { en: 'Answering in the product (off until an administrator turns AI on, and only after the person accepts the notice); never used to train models', tr: 'Ürün içinde yanıt vermek (bir yönetici yapay zekâyı açana kadar kapalı ve yalnızca kişi bilgilendirmeyi kabul ettikten sonra); model eğitimi için asla kullanılmaz' },
     basis: { tr: { tr: 'Müşteri adına (veri işleyen); yurt dışındaki yapay zekâ sağlayıcısına aktarım KVKK m. 9 kapsamındadır', en: "On the customer's behalf (processor); the transfer to the AI provider abroad falls under KVKK art. 9" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
-    retention: { en: 'Conversation logs 30 days; at the provider [30 days — confirm], no training', tr: 'Konuşma kayıtları 30 gün; sağlayıcıda [30 gün — teyit], eğitim yok' },
+    retention: { en: 'Conversation logs as the company chose (30 days by default, none to 365); erased with the person; at the provider [30 days — confirm], no training', tr: 'Konuşma kayıtları şirketin seçtiği süre (varsayılan 30 gün, hiç ile 365 arası); kişiyle birlikte silinir; sağlayıcıda [30 gün — teyit], eğitim yok' },
     processors: ['anthropic', 'supabase'],
     verbis: ['Kimlik', 'Müşteri işlem'],
+  },
+  {
+    id: 'humanCheck',
+    role: 'controller',
+    subjects: { en: 'Visitors who fill in a public form (trial request, sign-up, portal sign-in)', tr: 'Herkese açık bir formu dolduran ziyaretçiler (deneme talebi, kayıt, portal girişi)' },
+    data: { en: 'Browser signals the check reads and its one-time token; the widget loads from Cloudflare, which sees the IP address; Curahold itself sends the address only where the operator switched that on (TURNSTILE_SEND_IP)', tr: 'Kontrolün okuduğu tarayıcı sinyalleri ve tek kullanımlık belirteci; bileşen Cloudflare\'den yüklenir ve IP adresini görür; Curahold adresi yalnızca işletmeci açtıysa kendisi gönderir (TURNSTILE_SEND_IP)' },
+    purpose: { en: 'Keeping robots out of public forms (Cloudflare Turnstile, no puzzle, no tracking cookie)', tr: 'Robotları herkese açık formlardan uzak tutmak (Cloudflare Turnstile; bulmaca yok, izleme çerezi yok)' },
+    basis: { tr: { tr: 'KVKK m. 5/2-f (meşru menfaat: güvenlik); yurt dışı aktarım m. 9', en: 'KVKK art. 5/2-f (legitimate interest: security); transfer abroad art. 9' }, eu: 'Art. 6(1)(f) (security)', gulf: 'Necessary for the service requested', other: 'Security measures (PIPA art. 29, APPI art. 23)' },
+    retention: { en: 'Not stored by Curahold; at Cloudflare per its own terms', tr: 'Curahold saklamaz; Cloudflare\'de kendi koşullarına göre' },
+    processors: ['cloudflare'],
+    verbis: ['İşlem güvenliği'],
+  },
+  {
+    id: 'sessionRecording',
+    role: 'processor',
+    subjects: { en: 'Users of a company that switched support recordings on', tr: 'Destek kayıtlarını açan şirketin kullanıcıları' },
+    data: { en: 'The screen as the interface drew it, every field masked (nothing typed is recorded)', tr: 'Arayüzün çizdiği haliyle ekran; her alan maskelenir (yazılan hiçbir şey kaydedilmez)' },
+    purpose: { en: 'Letting Curahold support see a fault the person reported (off by default)', tr: 'Curahold desteğinin, kişinin bildirdiği hatayı görmesi (varsayılan kapalı)' },
+    basis: { tr: { tr: 'Müşteri adına (veri işleyen)', en: "On the customer's behalf (processor)" }, eu: "Art. 28 — the customer's basis", gulf: 'Processor', other: 'Entrustment' },
+    retention: { en: '7 days', tr: '7 gün' },
+    processors: ['cloudflare', 'supabase'],
+    verbis: ['Görsel ve işitsel kayıtlar'],
+  },
+  {
+    id: 'aiTeam',
+    role: 'controller',
+    subjects: { en: "Curahold's own operators; customers' contacts when an operator's task names them", tr: "Curahold'un kendi işletmecileri; işletmecinin görevinde adı geçen müşteri kişileri" },
+    data: { en: "Tasks, notes and memory of Curahold's internal AI team (no customer workspace data is read)", tr: "Curahold'un iç yapay zekâ ekibinin görevleri, notları ve belleği (müşteri çalışma alanı verisi okunmaz)" },
+    purpose: { en: 'Running Curahold itself; the AI team only proposes, a person approves every outside action', tr: "Curahold'un kendi işleri; yapay zekâ ekibi yalnızca önerir, her dış eylemi bir kişi onaylar" },
+    basis: { tr: { tr: 'KVKK m. 5/2-f (meşru menfaat)', en: 'KVKK art. 5/2-f (legitimate interest)' }, eu: 'Art. 6(1)(f)', gulf: 'Legitimate interest where recognised; otherwise consent', other: 'Legitimate business purpose (notice)' },
+    retention: { en: 'Until the task is done or the note is removed; mentions of an erased person are redacted', tr: 'Görev bitene ya da not silinene kadar; silinen kişinin geçtiği yerler karartılır' },
+    processors: ['anthropic', 'supabase'],
+    verbis: ['Kimlik', 'İletişim'],
+  },
+  {
+    id: 'breachLog',
+    role: 'controller',
+    subjects: { en: 'People affected by a personal-data breach (as numbers and kinds of data, not names)', tr: 'Kişisel veri ihlalinden etkilenen kişiler (ad değil, sayı ve veri türü olarak)' },
+    data: { en: 'Facts of the breach, its effects, what was done, who was notified and when', tr: 'İhlalin olguları, etkileri, alınan önlemler, kime ne zaman bildirildiği' },
+    purpose: { en: 'The breach record the law requires (GDPR Art. 33(5); KVKK Board decision 2019/10; DPA §7)', tr: 'Yasanın istediği ihlal kaydı (GDPR md. 33(5); KVKK Kurul kararı 2019/10; DPA §7)' },
+    basis: { tr: { tr: 'KVKK m. 5/2-ç (hukuki yükümlülük)', en: 'KVKK art. 5/2-ç (legal obligation)' }, eu: 'Art. 6(1)(c)', gulf: 'Legal obligation', other: 'Legal obligation' },
+    retention: { en: '5 years after the breach is closed [lawyer to confirm]', tr: 'İhlal kapandıktan sonra 5 yıl [avukat teyit edecek]' },
+    processors: ['supabase'],
+    verbis: ['İşlem güvenliği'],
   },
   {
     id: 'website',

@@ -50,6 +50,7 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import { EmptyState } from '../components/Empty';
 import { Icon, PageIcon, type IconName } from '../components/icons';
 import { Dialog } from '../components/ui';
+import { AccountPicker } from '../components/AccountPicker';
 import { ApiFailure, del, get, patch, post, put } from '../lib/api';
 import { formatBytes, formatDayShort, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -1724,9 +1725,86 @@ function Finish({ ctx }: { ctx: Ctx }) {
 
 // ------------------------------------------------------------------ the portfolio and templates
 
+/** Opens a plan for one customer from a template: the way in when plans do not open by themselves on a won deal. */
+function NewPlanDialog({ onClose, accountId }: { onClose: () => void; accountId: string | null }) {
+  const { tt: t } = useT();
+  const { toast } = useStore();
+  const [account, setAccount] = useState<{ id: string | null; name: string | null }>({ id: accountId, name: null });
+  const [templates, setTemplates] = useState<{ value: string; label: string }[]>([]);
+  const [template, setTemplate] = useState('');
+  const [busy, setBusy] = useState(false);
+  // Came from a customer's page: show that customer's name in the picker.
+  useEffect(() => {
+    if (!accountId) return;
+    void get<{ account: { id: string; name: string } }>(`/accounts/${accountId}`)
+      .then((r) => setAccount((a) => (a.id === accountId ? { id: accountId, name: r.account.name } : a)))
+      .catch(() => undefined);
+  }, [accountId]);
+  useEffect(() => {
+    void get<{ builtIn: { key: string; kind: string }[]; templates: Template[] }>('/onboarding-templates')
+      .then((d) => {
+        // The company's own first (the one it made its own), then the ready-made ones.
+        const list = [
+          ...d.templates.filter((x) => x.kind === 'client').map((x) => ({ value: x.id, label: x.name })),
+          ...d.builtIn.filter((b) => b.kind === 'client').map((b) => ({ value: b.key, label: t(`ob.tpl.${b.key}.name`) })),
+        ];
+        setTemplates(list);
+        setTemplate((v) => v || list[0]?.value || '');
+      })
+      .catch(() => setTemplates([]));
+  }, [t]);
+  const start = async () => {
+    if (!account.id) return;
+    setBusy(true);
+    try {
+      const r = await post<{ plan: { id: string } }>('/onboarding-plans', { accountId: account.id, templateId: template || null });
+      onClose();
+      navigate(`/onboarding/plans/${r.plan.id}`);
+    } catch (e) {
+      toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      title={t('ob.new.title')}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button className="btn btn--primary" disabled={!account.id || busy} onClick={() => void start()}>
+            {t('ob.new.start')}
+          </button>
+        </>
+      }
+    >
+      <p className="field__hint">{t('ob.new.hint')}</p>
+      <div className="field">
+        <span className="field__label">{t('ob.new.customer')}</span>
+        <AccountPicker value={account.id} name={account.name} onChange={(id, name) => setAccount({ id, name: name ?? null })} />
+      </div>
+      <label className="field">
+        <span className="field__label">{t('ob.new.template')}</span>
+        <select className="select" value={template} onChange={(e) => setTemplate(e.target.value)}>
+          {templates.map((x) => (
+            <option key={x.value} value={x.value}>
+              {x.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </Dialog>
+  );
+}
+
 export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' }) {
   const { tt: t, locale } = useT();
   const { toast, canWrite } = useStore();
+  // ?new=<customer id> (or ?new=1) opens "New plan", e.g. from a customer's page.
+  const [making, setMaking] = useState<string | null>(() => new URLSearchParams(location.search).get('new'));
   const [plans, setPlans] = useState<PlanSummary[] | null>(null);
   const [filter, setFilter] = useState<'open' | 'stalled' | 'all'>('open');
   useEffect(() => void get<{ plans: PlanSummary[] }>('/onboarding-plans').then((r) => setPlans(r.plans)).catch(() => setPlans([])), []);
@@ -1743,7 +1821,14 @@ export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' })
           <h1 className="topbar__title">{t('ob.portfolio.title')}</h1>
           <p className="topbar__sub">{t('ob.portfolio.sub')}</p>
         </div>
+        <div className="topbar__spacer" />
+        {canWrite && tab === 'plans' && (
+          <button className="btn btn--primary" onClick={() => setMaking('1')}>
+            <Icon name="plus" size={16} /> {t('ob.new.button')}
+          </button>
+        )}
       </header>
+      {making && <NewPlanDialog accountId={/^[0-9a-f-]{36}$/i.test(making) ? making : null} onClose={() => setMaking(null)} />}
       <div className="page ob-port">
         <div className="ob-tabs" role="tablist">
           <a role="tab" aria-selected={tab === 'plans'} className="ob-tab" href="/onboarding/plans" onClick={(e) => (e.preventDefault(), navigate('/onboarding/plans'))}>

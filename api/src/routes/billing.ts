@@ -1,83 +1,185 @@
-// Billing, for a company's administrators: where it stands, the plans, a link
-// to Paddle's portal (invoices, payment method, cancelling), changing plan or
-// interval. Choosing a plan the first time happens in the browser with
-// Paddle.js; Paddle then calls the webhook below and the company row follows.
+// Billing, for a company's administrators — the one billing path (docs/ADR/0019).
+// Every route reads or writes the subscriptions table through api/src/billing,
+// and the provider's webhook is applied there too:
+//
+//   GET   /billing              where the company stands, the plans with their caps and
+//                               regional prices, usage against the caps, checkout values
+//   GET   /billing/subscription the same (kept for older clients)
+//   POST  /billing/checkout     what Paddle.js needs to open checkout (signed company id)
+//   POST  /billing/change       another plan or interval, prorated
+//   POST  /billing/portal       Paddle's customer portal: invoices, payment method
+//   POST  /billing/cancel       leave at the end of the paid period (the monthly exit right)
+//   POST  /billing/resume       undo that before the period ends
+//   PATCH /billing/profile      tax number and billing e-mail on invoices
+//   POST  /api/inbound/billing/paddle (and the older /api/billing/webhook): Paddle's notifications
 //
 // With billing off (no Paddle settings: self-hosted, demo, development) the
 // page says so and nothing here charges anyone.
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { INTERVALS, PLANS, PLAN_KEYS, type OrgBilling } from '../../../shared/src/billing';
-import { accessFor, fetchOf, nowOf, requirePerm, run, type AppEnv, type C } from '../context';
-import { applyPaddleEvent, checkoutCustomData, SEATS_SQL, type PaddleEvent } from '../lib/billing';
+import { CATALOGUE, INTERVALS, PLAN_LIST, isPlanKey, planOf, regionFor, regionalPrice } from '../../../shared/src/billing';
+import { accessFor, nowOf, requirePerm, run, type AppEnv, type C } from '../context';
+import { capsForOrg, usageOf, withinCap } from '../billing/entitlements';
+import { projectBilling } from '../billing/project';
+import { LIVE, SEATS_SQL, applyWebhook, changePlan, ensureSubscription, providerFor, readSubscription } from '../billing/service';
+import { audit } from '../lib/audit';
 import { fail } from '../lib/errors';
-import { planOfPrice, portalLink, updateItems, verifyPaddle } from '../lib/paddle';
-import { body } from '../lib/validate';
+import { body, email } from '../lib/validate';
 
 export const billingRoutes = new Hono<AppEnv>();
 
-const configOf = (c: C) => c.get('deps').config.billing;
+const planKey = z.string().refine(isPlanKey, { message: 'unknown plan' });
 
-billingRoutes.get('/billing', async (c) => {
-  const cfg = configOf(c);
+/** Where the company stands, the price list it sees, and what it uses against its caps. */
+async function overview(c: C) {
+  const deps = c.get('deps');
   const org = c.get('org');
+  const cfg = deps.config.billing;
   const isAdmin = c.get('auth').perms.includes('org.manage');
-  const [{ seats }] = await run(c, (q) => q.query(`select ${SEATS_SQL} as seats from orgs o where o.id = $1`, [org.id]));
-  const b = (org.billing ?? {}) as OrgBilling;
+  // Older companies and demo data may predate the table; backfill from their trial.
+  await ensureSubscription(deps, org.id);
+  const access = accessFor(c);
+  const { sub, profile, caps, usage } = await run(c, async (q) => {
+    const caps = await capsForOrg(q, org.id, access);
+    return {
+      sub: await readSubscription(q, nowOf(deps)),
+      profile: (await q.query<{ tax_number: string | null; billing_email: string | null }>('select tax_number, billing_email from orgs where id = $1', [org.id]))[0],
+      caps,
+      usage: await usageOf(q, org.id, caps),
+    };
+  });
+  // The buyer's region for the prices shown (Cloudflare's country header; Paddle decides the real one at checkout).
+  const region = regionFor(c.req.header('cf-ipcountry') ?? null);
+  const plans = PLAN_LIST.map((p) => ({ ...p, regional: { month: regionalPrice(region, p.key, 'month'), year: regionalPrice(region, p.key, 'year') } }));
   return c.json({
     enabled: !!cfg,
-    access: accessFor(c),
-    plans: PLAN_KEYS.map((k) => PLANS[k]),
-    seats,
-    subscription: b.subscriptionId ? { status: b.status, plan: b.plan, interval: b.interval, seats: b.seats, periodEnd: b.periodEnd, cancelAtPeriodEnd: !!b.cancelAtPeriodEnd } : null,
-    // What the browser needs to open Paddle's checkout (public values only), for the people who may pay.
-    ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, orgId: org.id, customData: await checkoutCustomData(cfg, org.id), email: c.get('auth').email } } : {}),
+    access,
+    plans,
+    catalogue: { version: CATALOGUE.version, status: CATALOGUE.status, currency: CATALOGUE.currency, trialMonths: CATALOGUE.trial.months, graceDays: CATALOGUE.dunning.graceDays },
+    region: region ? { key: region.key, currency: region.currency, collect: region.collect, tax: region.tax } : null,
+    seats: caps.fullSeats,
+    caps,
+    usage,
+    subscription: sub,
+    profile: { taxNumber: profile?.tax_number ?? null, billingEmail: profile?.billing_email ?? null },
+    // Public values Paddle.js needs, for the people who may pay. Never a secret: the API key and webhook secret stay on the server.
+    ...(cfg && isAdmin ? { checkout: { env: cfg.env, clientToken: cfg.clientToken, prices: cfg.prices, email: c.get('auth').email } } : {}),
   });
+}
+
+billingRoutes.get('/billing', overview);
+billingRoutes.get('/billing/subscription', overview);
+
+/** What the browser needs to open the provider's checkout, for those who may pay. */
+billingRoutes.post('/billing/checkout', async (c) => {
+  requirePerm(c, 'org.manage');
+  const deps = c.get('deps');
+  const provider = providerFor(deps);
+  if (!provider) return fail('billing_off');
+  const input = await body(c, z.object({ plan: planKey, interval: z.enum(INTERVALS).optional() }));
+  const org = c.get('org');
+  const [{ seats }] = await run(c, (q) => q.query<{ seats: number }>(`select ${SEATS_SQL} as seats from orgs o where o.id = $1`, [org.id]));
+  // A plan with a seat limit cannot be bought for more full seats than it allows.
+  withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, Number(seats)));
+  const checkout = await provider.createCheckout({ orgId: org.id, plan: input.plan, interval: input.interval ?? 'month', quantity: Math.max(1, Number(seats)), email: c.get('auth').email });
+  return c.json({ checkout });
 });
 
-/** Another plan or interval for a running subscription: billed now for the rest of the period. */
+/** Another plan or interval for a running subscription: an upgrade is billed now, a downgrade at the next bill. */
 billingRoutes.post('/billing/change', async (c) => {
   requirePerm(c, 'org.manage');
-  const cfg = configOf(c);
-  if (!cfg) return fail('billing_off');
-  const input = await body(c, z.object({ plan: z.enum(PLAN_KEYS), interval: z.enum(INTERVALS) }));
+  const deps = c.get('deps');
+  const provider = providerFor(deps);
+  if (!provider) return fail('billing_off');
+  const input = await body(c, z.object({ plan: planKey, interval: z.enum(INTERVALS) }));
   const org = c.get('org');
-  const b = (org.billing ?? {}) as OrgBilling;
-  if (!b.subscriptionId || !['active', 'trialing', 'past_due'].includes(b.status ?? '')) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
-  const sub = await updateItems(cfg, fetchOf(c.get('deps')), b.subscriptionId, cfg.prices[input.plan][input.interval], b.seats ?? 1, 'prorated_immediately');
-  // Shown at once; Paddle's webhook confirms it a moment later.
-  const price = planOfPrice(cfg, sub.items?.[0]?.price?.id) ?? input;
-  await c.get('deps').db.system((q) => q.query(`update orgs set billing = billing || $2::jsonb where id = $1`, [org.id, JSON.stringify({ plan: price.plan, interval: price.interval })]));
+  const { sub, seats } = await run(c, async (q) => ({
+    sub: await readSubscription(q, nowOf(deps)),
+    seats: Number((await q.query<{ n: number }>(`select ${SEATS_SQL} as n from orgs o where o.id = $1`, [org.id]))[0]?.n ?? 0),
+  }));
+  if (!sub?.providerSubscriptionId || !['active', 'trialing', 'past_due'].includes(sub.status)) return fail('validation', { fields: 'plan' }, { fields: ['plan'] });
+  withinCap('seats', planOf(input.plan)!.caps.seatsMax, 0, Math.max(1, seats));
+  await changePlan(deps, provider, org.id, sub, input.plan, input.interval, seats);
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { plan: input.plan, interval: input.interval } }));
   return c.json({ ok: true });
 });
 
 /** Paddle's customer portal, signed in: invoices, payment method, cancelling. */
 billingRoutes.post('/billing/portal', async (c) => {
   requirePerm(c, 'org.manage');
-  const cfg = configOf(c);
-  if (!cfg) return fail('billing_off');
-  const b = (c.get('org').billing ?? {}) as OrgBilling;
-  if (!b.customerId) return fail('not_found');
-  return c.json({ url: await portalLink(cfg, fetchOf(c.get('deps')), b.customerId, b.subscriptionId) });
+  const deps = c.get('deps');
+  const provider = providerFor(deps);
+  if (!provider) return fail('billing_off');
+  const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
+  if (!sub?.providerCustomerId) return fail('not_found');
+  return c.json({ url: await provider.portalUrl(sub.providerCustomerId, sub.providerSubscriptionId) });
 });
 
 /**
- * Paddle's notifications, on the central address (no company in the host).
- * Checked against the secret, then applied once each; anything else is ignored.
+ * Leave at the end of the period paid for — the monthly exit right: everything
+ * stays usable until then, and is never cut off mid-period.
+ */
+billingRoutes.post('/billing/cancel', async (c) => {
+  requirePerm(c, 'org.manage');
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
+  if (!sub || !LIVE.includes(sub.status)) return fail('not_found');
+  const provider = providerFor(deps);
+  if (provider && sub.providerSubscriptionId) await provider.cancelAtPeriodEnd(sub.providerSubscriptionId);
+  // Reflected at once; the provider's webhook confirms it.
+  await run(c, async (q) => {
+    await q.query('update subscriptions set cancel_at_period_end = true, updated_at = now() where org_id = $1', [org.id]);
+    await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { cancelAtPeriodEnd: true } });
+  });
+  await projectBilling(deps, org.id);
+  return c.json({ ok: true });
+});
+
+/** Undo a pending cancellation before the period ends. */
+billingRoutes.post('/billing/resume', async (c) => {
+  requirePerm(c, 'org.manage');
+  const deps = c.get('deps');
+  const org = c.get('org');
+  const sub = await run(c, (q) => readSubscription(q, nowOf(deps)));
+  if (!sub) return fail('not_found');
+  const provider = providerFor(deps);
+  if (provider && sub.providerSubscriptionId) await provider.resume(sub.providerSubscriptionId);
+  await run(c, async (q) => {
+    await q.query('update subscriptions set cancel_at_period_end = false, updated_at = now() where org_id = $1', [org.id]);
+    await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'billing.changed', entity: 'org', entityId: org.id, meta: { cancelAtPeriodEnd: false } });
+  });
+  await projectBilling(deps, org.id);
+  return c.json({ ok: true });
+});
+
+/** The billing-contact details shown on invoices. */
+billingRoutes.patch('/billing/profile', async (c) => {
+  requirePerm(c, 'org.manage');
+  const input = await body(c, z.object({ taxNumber: z.string().trim().max(60).nullish(), billingEmail: email.nullish() }));
+  const org = c.get('org');
+  await run(c, async (q) => {
+    await q.query('update orgs set tax_number = $2, billing_email = $3 where id = $1', [org.id, input.taxNumber ?? null, input.billingEmail ?? null]);
+    await audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'org.updated', entity: 'org', entityId: org.id, meta: { billing: true } });
+  });
+  return c.json({ ok: true, taxNumber: input.taxNumber ?? null, billingEmail: input.billingEmail ?? null });
+});
+
+/**
+ * The provider's notifications, on the central address (no company in the host),
+ * mounted before sign-in: the signature is the credential. Checked against the
+ * secret and its timestamp, parsed, then applied once (service.applyWebhook).
+ * Mounted at /api/inbound/billing/paddle and at the older /api/billing/webhook,
+ * so a Paddle destination set up either way lands in the same code.
  */
 export async function billingWebhook(c: C) {
   const deps = c.get('deps');
-  const cfg = deps.config.billing;
-  if (!cfg) return fail('not_found');
+  const provider = providerFor(deps);
+  if (!provider) return fail('not_found');
   const raw = await c.req.text();
-  if (!(await verifyPaddle(c.req.header('paddle-signature'), raw, cfg.webhookSecret, nowOf(deps)))) return c.json({ error: 'bad_signature' }, 401);
-  let ev: PaddleEvent;
-  try {
-    ev = JSON.parse(raw);
-  } catch {
-    return c.json({ error: 'bad_body' }, 400);
-  }
-  if (!ev?.event_id || !ev.event_type) return c.json({ error: 'bad_body' }, 400);
-  await applyPaddleEvent(deps.db, cfg, ev);
+  if (!(await provider.verifyWebhook(raw, c.req.header('paddle-signature'), nowOf(deps)))) return c.json({ error: 'bad_signature' }, 401);
+  const event = await provider.parseWebhookEvent(raw);
+  if (!event) return c.json({ error: 'bad_body' }, 400);
+  await applyWebhook(deps, provider.name, event);
   return c.json({ ok: true });
 }

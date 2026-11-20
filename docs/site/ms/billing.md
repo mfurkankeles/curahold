@@ -28,7 +28,7 @@ Percubaan bermula dengan permintaan: **Cuba percuma** di laman web membuka boran
 | Portal pelanggan | | ✓ |
 | Playbook, dan pembaharuan yang bermula dengan sendirinya | | ✓ |
 
-Harga adalah bagi setiap **tempat duduk penuh** sebulan, dalam dolar AS, dan lebih rendah jika dibayar setahun; cukai ditambah semasa pembayaran. **Tempat duduk pemerhati adalah percuma.**
+Harga adalah bagi setiap **tempat duduk penuh** sebulan, dalam mata wang wilayah anda jika kami mempunyai harga tempatan (rupee India, dolar Singapura, lira Turki) dan dalam dolar AS di tempat lain, dan lebih rendah jika dibayar setahun. Cukai (VAT, GST, SST, KDV) ditambah semasa pembayaran jika berkenaan; Paddle mengutip dan menyerahkannya. **Tempat duduk pemerhati adalah percuma.**
 
 ## Memilih pelan
 
@@ -44,11 +44,25 @@ Bil mengikut orang yang telah **menyertai** dengan tempat duduk penuh: jemputan 
 
 Menukar antara Team dan Business, atau antara bulanan dan tahunan, dilakukan pada halaman yang sama; perbezaannya dibilkan (atau dikreditkan) untuk baki tempoh.
 
+## Had dalam setiap pelan
+
+Setiap pelan menetapkan beberapa had pada perkara yang menelan kos untuk kami jalankan, supaya harga kekal rendah. Tetapan → **Pengebilan** menunjukkan angka pelan anda dan berapa banyak setiap satu yang anda gunakan:
+
+| Had | Apa yang berlaku apabila anda mencapainya |
+| --- | --- |
+| Tempat duduk penuh | Orang baharu masih boleh menyertai sebagai pemerhati (percuma); untuk lebih banyak tempat duduk penuh, pilih pelan yang lebih besar. |
+| Alat yang disambungkan (CRM, hamparan, alat sokongan dan perakaunan) | Menyambungkan satu lagi alat meminta anda membuang satu atau memilih pelan yang lebih besar. Log masuk semula ke alat yang sudah ada sentiasa boleh. |
+| Kekerapan penyegerakan alat yang disambungkan | Setiap pelan menyegerak mengikut jadualnya sendiri (setiap jam pada Business); **Segerakkan sekarang** sentiasa ada. |
+| Ruang fail (bagi setiap tempat duduk penuh, dikongsi oleh syarikat) | Muat naik baharu berhenti sehingga fail lama dipadam atau anda memilih pelan yang lebih besar. Tiada apa-apa dipadam. |
+| Jawapan CuraAI sebulan (bagi setiap tempat duduk penuh, dikongsi) | CuraAI menjawab daripada halaman bantuan dan bukannya model sehingga bulan depan. |
+
+Semasa percubaan semuanya terbuka; hanya CuraAI mempunyai kuota bulanan yang lebih rendah.
+
 ## Tanpa pelan
 
 Apabila percubaan tamat tanpa pelan, atau pelan yang dibatalkan tamat, tiada apa-apa dipadam. Semua orang masih boleh **membaca dan mengeksport** segala-galanya; tiada apa-apa boleh diubah sehingga pentadbir memilih pelan, dan kemudian kerja diteruskan dari tempat ia berhenti.
 
-Jika pembayaran gagal, segala-galanya terus berfungsi semasa Paddle mencuba semula; baris di bahagian atas meminta pentadbir mengemas kini kaedah pembayaran.
+Jika pembayaran gagal, segala-galanya terus berfungsi semasa Paddle mencuba semula, sehingga 30 hari dari bayaran pertama yang gagal; baris di bahagian atas meminta pentadbir mengemas kini kaedah pembayaran. Selepas itu syarikat menjadi baca sahaja, seperti tanpa pelan, sehingga bayaran berjaya.
 
 ## Pelayan anda sendiri
 

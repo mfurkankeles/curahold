@@ -87,7 +87,9 @@ export function SetupTestPage() {
       return d.created !== undefined
         ? t(d.rows ? 'sh.test.seen.importRows' : 'sh.test.seen.import', { file: String(d.file ?? '—'), rows: n(d.rows), created: n(d.created), updated: n(d.updated), skipped: n(d.skipped) })
         : t('sh.test.seen.noImport');
-    if (id === 'invite' && status !== 'todo') return t(status === 'pass' ? 'sh.run.personPassOf' : 'sh.run.personFailOf', { name: String(d.name ?? ''), role: String(d.role ?? '') });
+    // "Pick for me" leaves no name behind: then the plain line, never "through ()".
+    if (id === 'invite' && status !== 'todo')
+      return d.name ? t(status === 'pass' ? 'sh.run.personPassOf' : 'sh.run.personFailOf', { name: String(d.name), role: String(d.role ?? '') }) : t(status === 'pass' ? 'sh.run.personPass' : 'sh.run.personFail');
     if (id === 'invite') return d.userId ? t('sh.test.seen.invite', { name: String(d.name ?? ''), role: String(d.role ?? '') }) : t('sh.test.seen.noInvite');
     if (id === 'portal') return d.on ? null : t('sh.test.seen.portalOff');
     if (status === 'pass') return t('sh.run.personPass');
@@ -404,7 +406,7 @@ export function SetupTestPage() {
                   </h3>
                   <span className="num">{t('sh.gate.required', { passed: gate.requiredPassed, total: gate.required })}</span>
                 </div>
-                <p className="sh-gate__lead muted">{data.doneAt ? t('sh.gate.doneLead', { when: when(data.doneAt) }) : gateReady ? t('sh.gate.ready') : t('sh.gate.waiting')}</p>
+                <p className="sh-gate__lead muted">{data.doneAt ? t('sh.gate.doneLead', { when: when(data.doneAt) }) : gateReady ? t(gate.approvals.customer || gate.approvals.vendor ? 'sh.gate.readyOne' : 'sh.gate.ready') : t('sh.gate.waiting')}</p>
                 <ol className="sh-gate__list">
                   {approvalRow('customer', gate.approvals.customer, gate.canApprove.customer)}
                   {approvalRow('vendor', gate.approvals.vendor, gate.canApprove.vendor)}

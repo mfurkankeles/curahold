@@ -118,15 +118,32 @@ export const HEADER_HINTS: Record<string, RegExp> = {
   externalId: /^(id|account id|external id|crm id|record id|kayıt no|müşteri no|hesap no|kod|müşteri kodu)$/i,
 };
 
-export function guessFieldType(values: string[], locale: Locale): AccountField['type'] {
+// Words in a column's name that say what its values are, when a few cells were typed wrong.
+const MONEY_HEADER = /(amount|value|revenue|arr|mrr|acv|price|fee|contract|tutar|bedel|ücret|ucret|ciro|gelir|fiyat|değer|deger|\((tl|try|usd|eur|gbp|aed|sar)\)|[₺$€£])/i;
+const DATE_HEADER = /(date|renew|expir|start|end|due|since|until|tarih|yenile|bitiş|bitis|başlangıç|baslangic|vade)/i;
+
+/**
+ * What kind of field a column most likely is. A real file has a few cells typed
+ * wrong ("eighty thousand", 30.02.2027, a mail without its domain): when most of
+ * the column reads as one kind, that kind wins and the import reports the odd
+ * cells by row, instead of the whole column falling back to text. The column's
+ * name tips a column of plain numbers into an amount ("Annual value (TL)").
+ */
+export function guessFieldType(values: string[], locale: Locale, header = ''): AccountField['type'] {
   const sample = values.map((v) => v.trim()).filter(Boolean).slice(0, 50);
   if (!sample.length) return 'text';
-  const all = (fn: (v: string) => boolean) => sample.every(fn);
-  if (all((v) => parseDate(v, locale) !== null)) return 'date';
-  if (all((v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v))) return 'email';
-  if (all((v) => /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(v) && !/^\d/.test(v))) return 'url';
-  if (all((v) => /[₺$€£]|\b(TRY|USD|EUR|GBP|TL)\b/i.test(v) && parseNumber(v, locale) !== null)) return 'money';
-  if (all((v) => parseNumber(v, locale) !== null && /^[\d\s.,\-]+$/.test(v))) return 'number';
+  // All of a short column, four in five of a longer one.
+  const most = (fn: (v: string) => boolean) => {
+    const hits = sample.filter(fn).length;
+    return sample.length < 4 ? hits === sample.length : hits >= Math.ceil(sample.length * 0.8);
+  };
+  const isDate = (v: string) => parseDate(v, locale) !== null;
+  if (most(isDate) || (DATE_HEADER.test(header) && sample.filter(isDate).length >= Math.ceil(sample.length * 0.6))) return 'date';
+  if (most((v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v))) return 'email';
+  if (most((v) => /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(v) && !/^\d/.test(v))) return 'url';
+  const isNumber = (v: string) => parseNumber(v, locale) !== null && /^[\d\s.,\-]+$/.test(v);
+  if (most((v) => /[₺$€£]|\b(TRY|USD|EUR|GBP|TL)\b/i.test(v) && parseNumber(v, locale) !== null)) return 'money';
+  if (most(isNumber)) return MONEY_HEADER.test(header) ? 'money' : 'number';
   const distinct = new Set(sample.map((v) => fold(v)));
   if (distinct.size <= Math.min(8, Math.max(2, Math.floor(sample.length / 2)))) return 'select';
   return 'text';

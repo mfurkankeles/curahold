@@ -290,8 +290,10 @@ describe('trial consent texts per country (research §1.15)', () => {
     expect(box.shown[0]!.text).toContain('outside the United Arab Emirates');
   });
 
-  it('gives Türkiye two separate, optional marketing boxes (İYS approval, KVKK consent) and no transfer consent by default', () => {
-    const c = consentSetFor({ declared: 'TR', locale: 'tr', vars });
+  it('gives Türkiye two separate, optional marketing boxes (İYS approval, KVKK consent) only once İYS is real, and no transfer consent by default', () => {
+    // Until Curahold is registered in İYS (owner task), no approval is collected that could not be registered (L1 audit).
+    expect(ids(consentSetFor({ declared: 'TR', locale: 'tr', vars }))).toEqual(['TR.N0', 'ALL.A']);
+    const c = consentSetFor({ declared: 'TR', locale: 'tr', vars, flags: { trIysRegistered: true } });
     expect(ids(c)).toEqual(['TR.N0', 'TR.M1', 'TR.M2', 'ALL.A']);
     for (const id of ['TR.M1', 'TR.M2']) expect(c.blocks.find((b) => b.id === id)).toMatchObject({ required: false, box: true });
     expect(c.blocks[0]!.shown[0]!.text).not.toContain("m. 9'da öngörülen güvencelerle");
@@ -383,6 +385,11 @@ describe('consent and agreement evidence (migration 0160)', () => {
   it('refuses a malformed record', async () => {
     const res = await env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...event, textHash: 'nope' }) });
     expect(res.status).toBe(400);
+  });
+
+  it('refuses a choice made against another policy version (a stale page), so it is never proof of the current one', async () => {
+    const res = await env.app.request('https://acme.curahold.test/api/consent-event', { method: 'POST', body: JSON.stringify({ ...event, consentId: crypto.randomUUID(), policyVersion: '2000-01-01.1' }) });
+    expect(res.status).toBe(409);
   });
 
   it('keeps the new consent_log fields for people signed in', async () => {

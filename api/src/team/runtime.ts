@@ -20,7 +20,7 @@ import { costMicros } from '../assistant/cost';
 import { addUsage, createMeeting, isPaused, propose, readLog, writeLog } from '../lib/office';
 import { HttpError } from '../lib/errors';
 import { weekOf, type ApprovalProposal } from '../../../shared/src/office';
-import { EXTERNAL_KINDS, isExternal, type ToolId } from '../../../shared/src/team/gate';
+import { EXTERNAL_KINDS, type ToolId } from '../../../shared/src/team/gate';
 import { blocks, type Finding } from '../../../shared/src/team/checks';
 import { DONE_CLAIMS } from '../../../shared/src/team/golden';
 import { teamConfig, teamProvider } from './config';
@@ -557,5 +557,3 @@ export async function summarizeIfLong(deps: Deps, thread: string, seat: string) 
   });
   return true;
 }
-
-export const isOutsideToolName = (name: string) => OUTSIDE_NAMES.has(name) || isExternal(name);

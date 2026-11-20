@@ -1,13 +1,14 @@
 // Keeping the gating snapshot (orgs.billing) derived from the subscriptions table.
 //
-// The subscriptions table (0037) is the system of record for billing; the
+// The subscriptions table (0037, 0230) is the only system of record for billing
+// (docs/ADR/0019); the
 // existing write-gating reads the orgs.billing snapshot through the shared
 // accessOf(). To make the two one coherent system without touching accessOf (and
 // every write path that depends on it), we re-derive orgs.billing and
 // trial_ends_at from a company's subscription row after any change to it. The
 // snapshot becomes a projection of the table — one source of truth feeds gating,
 // the owner console and the tenant panel alike.
-import type { OrgBilling, PlanKey, SubscriptionStatus } from '../../../shared/src/billing';
+import type { Interval, OrgBilling, PlanKey, SubscriptionStatus } from '../../../shared/src/billing';
 import type { Deps } from '../context';
 import type { Q } from '../db';
 
@@ -19,6 +20,10 @@ interface Row {
   cancel_at_period_end: boolean;
   provider_customer_id: string | null;
   provider_subscription_id: string | null;
+  billing_interval: Interval | null;
+  seats: number | null;
+  past_due_since: unknown;
+  event_at: unknown;
   updated_at: unknown;
 }
 
@@ -33,26 +38,24 @@ const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() 
 export async function projectBillingQ(q: Q, orgId: string): Promise<void> {
   const [row] = await q.query<Row>(
     `select status, plan, trial_ends_at, current_period_end, cancel_at_period_end,
-            provider_customer_id, provider_subscription_id, updated_at
+            provider_customer_id, provider_subscription_id, billing_interval, seats, past_due_since, event_at, updated_at
        from subscriptions where org_id = $1`,
     [orgId],
   );
   if (!row) return;
-  // The two display-only fields the table does not carry are preserved.
-  const [prev] = await q.query<{ billing: OrgBilling | null }>('select billing from orgs where id = $1', [orgId]);
   const refs: OrgBilling = {
     provider: 'paddle',
     plan: row.plan as PlanKey,
     customerId: row.provider_customer_id ?? undefined,
     subscriptionId: row.provider_subscription_id ?? undefined,
-    eventAt: iso(row.updated_at) ?? undefined,
-    interval: prev?.billing?.interval,
-    seats: prev?.billing?.seats,
+    eventAt: iso(row.event_at ?? row.updated_at) ?? undefined,
+    interval: row.billing_interval ?? undefined,
+    seats: row.seats ?? undefined,
   };
   const billing: OrgBilling =
     row.status === 'trialing' && !row.cancel_at_period_end
       ? refs
-      : { ...refs, status: row.status, periodEnd: iso(row.current_period_end), cancelAtPeriodEnd: row.cancel_at_period_end };
+      : { ...refs, status: row.status, periodEnd: iso(row.current_period_end), cancelAtPeriodEnd: row.cancel_at_period_end, pastDueSince: iso(row.past_due_since) };
   await q.query('update orgs set billing = $2 where id = $1', [orgId, JSON.stringify(billing)]);
   await q.query('update orgs set trial_ends_at = $2 where id = $1', [orgId, iso(row.trial_ends_at)]);
 }

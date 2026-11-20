@@ -110,7 +110,55 @@ export function translate(locale: Locale, key: MessageKey, vars: Vars = {}, term
     accounts_l: lower(words.other),
     ...vars,
   };
-  return template.replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
+  return agreeNumbers(locale, template, all).replace(/\{(\w+)\}/g, (m, name: string) => (Object.prototype.hasOwnProperty.call(all, name) ? String(all[name]) : m));
+}
+
+// Number agreement for languages where the noun after a count changes with the
+// count beyond "one/other" (CLDR plural rules, Intl.PluralRules). A dictionary
+// writes "{n} أيام"; the noun right after a numeric placeholder is put in the
+// form the count needs: 3–10 plural (أيام), 11–99 singular accusative (يومًا),
+// 1 and 100–102 singular (يوم); 0 and 2 take the plural.
+// Each entry: [plural (3–10), singular, singular accusative (11–99)].
+const COUNTED: Partial<Record<Locale, [string, string, string][]>> = {
+  ar: [
+    ['أيام', 'يوم', 'يومًا'], ['ساعات', 'ساعة', 'ساعة'], ['دقائق', 'دقيقة', 'دقيقة'], ['ثوانٍ', 'ثانية', 'ثانية'],
+    ['أسابيع', 'أسبوع', 'أسبوعًا'], ['أشهر', 'شهر', 'شهرًا'], ['سنوات', 'سنة', 'سنة'], ['مرات', 'مرة', 'مرة'],
+    ['مهام', 'مهمة', 'مهمة'], ['خطوات', 'خطوة', 'خطوة'], ['أشخاص', 'شخص', 'شخصًا'], ['عملاء', 'عميل', 'عميلًا'],
+    ['صفوف', 'صف', 'صفًا'], ['ملفات', 'ملف', 'ملفًا'], ['مقاعد', 'مقعد', 'مقعدًا'], ['تذاكر', 'تذكرة', 'تذكرة'],
+    ['قوائم', 'قائمة', 'قائمة'], ['عناصر', 'عنصر', 'عنصرًا'], ['حقول', 'حقل', 'حقلًا'], ['تغييرات', 'تغيير', 'تغييرًا'],
+    ['سجلات', 'سجل', 'سجلًا'], ['أمور', 'أمر', 'أمرًا'], ['أدوار', 'دور', 'دورًا'], ['أجهزة', 'جهاز', 'جهازًا'],
+    ['وعود', 'وعد', 'وعدًا'], ['مفاتيح', 'مفتاح', 'مفتاحًا'], ['مجموعات', 'مجموعة', 'مجموعة'], ['لوحات', 'لوحة', 'لوحة'],
+    ['قواعد', 'قاعدة', 'قاعدة'], ['فواتير', 'فاتورة', 'فاتورة'], ['صفقات', 'صفقة', 'صفقة'], ['ردود', 'رد', 'ردًا'],
+    ['دعوات', 'دعوة', 'دعوة'], ['جولات', 'جولة', 'جولة'], ['نقاط', 'نقطة', 'نقطة'], ['تعليقات', 'تعليق', 'تعليقًا'],
+    ['طلبات', 'طلب', 'طلبًا'], ['رسائل', 'رسالة', 'رسالة'], ['حسابات', 'حساب', 'حسابًا'], ['شركات', 'شركة', 'شركة'],
+  ],
+};
+const pluralRules = new Map<Locale, Intl.PluralRules>();
+const countedPattern = new Map<Locale, { re: RegExp; forms: Map<string, [string, string, string]> }>();
+
+function agreeNumbers(locale: Locale, template: string, vars: Vars): string {
+  const nouns = COUNTED[locale];
+  if (!nouns || !template.includes('{')) return template;
+  let p = countedPattern.get(locale);
+  if (!p) {
+    const forms = new Map<string, [string, string, string]>();
+    for (const e of nouns) for (const w of e) forms.set(w, e);
+    const words = [...forms.keys()].sort((a, b) => b.length - a.length).join('|');
+    p = { re: new RegExp(`\\{(\\w+)\\} (${words})(?![\\p{L}\\p{M}])`, 'gu'), forms };
+    countedPattern.set(locale, p);
+  }
+  let rules = pluralRules.get(locale);
+  if (!rules) pluralRules.set(locale, (rules = new Intl.PluralRules(bcp47Of(locale))));
+  const { forms } = p;
+  return template.replace(p.re, (m, name: string, word: string) => {
+    const v = vars[name];
+    const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN;
+    if (!Number.isInteger(n) || n < 0) return m;
+    const [plural, singular, accusative] = forms.get(word)!;
+    const cat = rules.select(n);
+    const noun = cat === 'few' ? plural : cat === 'many' ? accusative : cat === 'one' || cat === 'other' ? singular : plural;
+    return `{${name}} ${noun}`;
+  });
 }
 
 /**

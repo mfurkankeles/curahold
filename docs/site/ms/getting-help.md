@@ -102,7 +102,7 @@ Jika organisasi anda perlu memaklumkan orangnya sendiri tentang perkara ini dala
 
 1. Buka **Tetapan → Akses sokongan** dan tatal ke **Pembantu AI**.
    ![Tetapan pembantu AI, dibulatkan](img/ai-settings.webp)
-2. Tandakan **Jawab dengan AI** untuk membenarkan CuraAI menjawab dengan AI, atau nyahtanda untuk menjawab dengan carian dokumentasi sahaja, tanpa kos. Apa yang dibaca oleh CuraAI tidak pernah digunakan untuk melatih model AI.
+2. Tandakan **Jawab dengan AI** untuk membenarkan CuraAI menjawab dengan AI, atau nyahtanda untuk menjawab dengan carian dokumentasi sahaja, tanpa kos. Apa yang dibaca oleh CuraAI tidak pernah digunakan untuk melatih model AI. Syarikat baharu bermula dengannya **dimatikan**: tiada apa-apa dihantar kepada pembekal AI sehingga pentadbir menandakannya, dan kad itu menyatakannya selagi ia dimatikan.
    ![Kotak Jawab dengan AI, dibulatkan](img/ai-switch.webp)
 
 Pada kad yang sama:
@@ -112,6 +112,8 @@ Pada kad yang sama:
 - **Draf balasan pertama pada permintaan bantuan kami**: sokongan Curahold melihat draf jawapan pertama kepada permintaan anda; anda tidak pernah melihat draf itu, hanya jawapan sebenar sokongan.
 
 Jika kad menyatakan jawapan AI belum disediakan pada pemasangan ini, CuraAI menggunakan carian dokumentasi; orang yang menjalankan pelayan Curahold anda menambah kunci AI.
+
+**Semua orang ditanya dahulu.** Kali pertama seseorang membuka CuraAI di mana jawapan AI dihidupkan, CuraAI menyatakan apa yang dihantar kepada pembekal AI, mengapa, untuk berapa lama, dan memautkan notis privasi, dengan **Terima** dan **Tolak** (tiada apa-apa ditanda untuk mereka). Sehingga mereka menerima, tiada apa-apa yang mereka taip meninggalkan peranti mereka dan carian dokumentasi yang menjawab; menolak tidak merugikan mereka. Mereka boleh menarik balik bila-bila masa di bawah CuraAI atau dalam **Tetapan anda → Persetujuan pembantu AI**, dan ditanya semula apabila notis berubah. Pelayan menolak soalan tanpa "ya", dan setiap jawapan ada dalam log aktiviti. Portal pelanggan dan dokumentasi awam bertanya dengan cara yang sama.
 
 ## Log ralat (pentadbir) {#errors}
 

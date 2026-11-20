@@ -12,6 +12,8 @@ Menu di sebelah kiri mempunyai empat bahagian: kerja harian di atas (Utama, Tuga
 
 **Pelanggan → Peluang** menunjukkan urus niaga dalam lajur mengikut peringkat. Seret kad ke peringkat lain; lepaskannya pada **Dimenangi** atau **Kalah** untuk menutupnya. Jalur di bahagian atas menjumlahkan wang: saluran jualan terbuka, ramalan berpemberat (peringkat kemudian dikira lebih), apa yang ditutup bulan ini dan apa yang telah dimenangi.
 
+Tiada dalam menu? Syarikat yang memilih Jualan atau Jualan Dalaman memilikinya sejak hari pertama; jika tidak, buka **Tetapan → Rekod** dan klik **Tambah peluang**.
+
 Setiap urus niaga mempunyai **jenis**: perniagaan baharu, pengembangan atau pembaharuan. Ubah peringkat dan jenis dalam Tetapan → Jenis rekod; dengan CRM disambungkan, peringkat datang dari sana. **Jadual** menunjukkan urus niaga yang sama sebagai senarai. Mana-mana jenis rekod dengan medan pilihan boleh ditunjukkan sebagai papan dengan cara yang sama.
 
 ## Sasaran dan rentak

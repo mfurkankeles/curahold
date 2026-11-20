@@ -73,6 +73,28 @@ A spreadsheet is the simplest way to bring data in, and it works for any tool th
 
 Zendesk, Freshdesk, Intercom and Jira Service Management connect with an address and an API key; tickets land under the right customer. Salesforce and Dynamics cases can be mapped as support tickets too. Details: [Support tickets](/docs/en/support-tickets/).
 
+
+## When a sync stops {#sync-stops}
+
+The connection's **Status** tab says what happened in plain words, with the service's own message under it.
+
+| What it says | What to do |
+| --- | --- |
+| The service asked Curahold to slow down | Nothing. Your place is kept and the next hourly run carries on. |
+| It no longer accepts Curahold's sign-in or key | Reconnect, below. |
+| The account may not read or change something | Ask that tool's administrator to give the account access, then choose **Sync now**. |
+| It could not be reached | Nothing. Curahold tries again in the next hourly run. |
+
+To reconnect:
+
+1. Open **Settings → CRMs and spreadsheets**.
+2. Click the connection marked **Needs attention**.
+3. Click **Reconnect** at the top of the page.
+4. Sign in to the same account as before (or paste the new key) and approve.
+5. Click **Sync now**. The fields you matched stay as they were.
+
+To remove a connection, open it, click **⋯** and choose **Remove**. Syncing stops; customers, contacts and opportunities that came over stay in Curahold and nothing is deleted in the other tool. For an accounting program, the balances, invoices and payments read from it are removed from customers' pages.
+
 ## Your own tools
 
 To connect another system, see [API keys](/docs/en/api-keys/), [webhooks](/docs/en/webhooks/) or [AI assistants](/docs/en/ai-assistants/).

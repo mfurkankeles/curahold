@@ -1,5 +1,6 @@
 // Settings → Support: the company's AI assistant (api/src/routes/assist.ts).
-// On or off, the monthly limit in dollars, how long questions are kept, and
+// Off until an administrator turns it on (with a notice saying what goes
+// to the AI provider), the monthly limit in dollars, how long questions are kept, and
 // whether new help requests get a drafted first reply for Curahold support —
 // with this month's use, so the cost is never a surprise.
 import { useEffect, useState } from 'react';
@@ -40,6 +41,12 @@ export function AssistantSettings() {
       <h3 className="section__head">{t('assist.settings.title')}</h3>
       <p className="field__hint">{t('assist.settings.lead')}</p>
       {!view.engine.available && <p className="muted">{t('assist.settings.unavailable')}</p>}
+      {/* Off by default (legal texts): say plainly what turning it on sends, before anyone ticks the box. */}
+      {!s.enabled && (
+        <p className="notice" role="note" data-test="assist-off-notice">
+          {t('assist.settings.offNotice')}
+        </p>
+      )}
       <p className="muted">{t('assist.settings.usage', { n: view.usage.questions, m: view.usage.modelQuestions, cost: usd(view.usage.costUsd) })}</p>
       <label className="checkbox">
         <input type="checkbox" checked={s.enabled} onChange={(e) => void save({ enabled: e.target.checked })} />

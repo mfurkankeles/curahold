@@ -13,7 +13,7 @@
 // management (the inbound address to give Segment) is on the connection itself,
 // in routes/sync.ts.
 import { Hono } from 'hono';
-import { secretsKey, type AppEnv, type C } from '../context';
+import { secretsKey, type AppEnv } from '../context';
 import { unseal } from '../lib/crypto';
 import { parseSegmentEvent, verifySegment } from '../sync/adapters/segment';
 
@@ -21,9 +21,6 @@ export const segmentInboundRoutes = new Hono<AppEnv>();
 
 const MAX_BODY = 2_000_000;
 const MAX_EVENTS = 100;
-
-/** The inbound address for a Segment connection: the company host plus its public source id. */
-export const segmentInboundUrl = (c: C, sourceId: string) => `${new URL(c.req.url).origin}/api/inbound/segment/${sourceId}`;
 
 segmentInboundRoutes.post('/inbound/segment/:source', async (c) => {
   const org = c.get('org');

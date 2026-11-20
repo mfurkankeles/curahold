@@ -275,7 +275,7 @@
 .billing__save { margin-inline-start: 4px; font-size: var(--fs-2xs); font-weight: 600; color: var(--done); }
 .billing__plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .billing__plan { display: grid; gap: 8px; align-content: start; }
-.billing__plan[data-plan='business'] { box-shadow: inset 0 3px 0 var(--brand), var(--shadow-1); }
+.billing__plan[data-featured] { box-shadow: inset 0 3px 0 var(--brand), var(--shadow-1); }
 .billing__plan[data-current] { background: var(--brand-soft); }
 .billing__planname { margin: 0; font-size: var(--fs-l); }
 .billing__price { margin: 0; display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }

@@ -64,7 +64,11 @@ Click **Share report** and copy the link. Whoever has it sees the progress repor
 
 ## 8. Your customers' getting-started plans {#customers}
 
-Click **Onboarding plans** under Customers. When a deal is won, a draft plan opens by itself with a hand-over note; it starts when the hand-over is confirmed. The list shows every plan, how far it is, who is waited on and which are stuck. Click a customer to open its plan.
+Click **Onboarding plans** under Customers. A plan opens by itself on a won deal only when that is switched on (section 10). The list shows every plan, how far it is, who is waited on and which are stuck. Click a customer to open its plan.
+
+To open a plan for a customer, click **New plan** at the top right, pick the customer and the template, and click **Open the plan**. It starts today: make it this customer's own (section 9).
+
+On a customer's page, **Start an onboarding plan** under **Owner in each department** does the same.
 
 ![The list of customers' plans, a customer marked](img/ob-plans.webp)
 

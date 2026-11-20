@@ -26,7 +26,7 @@ function guess(header: string, values: string[], fields: AccountField[], taken: 
   const near = exact ?? (fh.length >= 4 ? fields.find((x) => !taken.has(`field:${x.key}`) && labels(x).some((l) => l.startsWith(fh) || fh.startsWith(l))) : undefined);
   if (near) return { kind: 'field', key: near.key };
   if (!values.some((v) => v.trim())) return { kind: 'skip' };
-  return { kind: 'new', type: guessFieldType(values, locale) };
+  return { kind: 'new', type: guessFieldType(values, locale, h) };
 }
 
 const encode = (t: Target) => (t.kind === 'field' ? `field:${t.key}` : t.kind === 'new' ? `new:${t.type}` : t.kind);

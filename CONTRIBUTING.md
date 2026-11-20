@@ -1,7 +1,7 @@
 # Contributing to Curahold
 
-Welcome. This file is the short path from "I cloned it" to "my change is merged". For the long tour of the code read
-[docs/DEVELOPER.md](docs/DEVELOPER.md); for *why* things are the way they are read
+Welcome. This file is the short path from "I cloned it" to "my change is merged". Start with
+[docs/HANDOVER.md](docs/HANDOVER.md) (first week, map, risks); for the long tour of the code read [docs/DEVELOPER.md](docs/DEVELOPER.md); for *why* things are the way they are read
 [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/ADR/](docs/ADR/README.md).
 
 ## Priorities (they decide arguments)
@@ -71,8 +71,10 @@ The codebase predates the linter, so lint is set up to be **green with warnings 
    a code rollback stays possible. Both PGlite and Postgres must run it.
 3. **Every write is safe to repeat.** Mutations support `Idempotency-Key`; side effects (notifications, chat messages, emails, webhooks, CRM writes) go through
    the outbox in the same transaction. Deleted things go to the trash.
-4. **Every user-visible string exists in English and Turkish** (`shared/src/i18n/en.ts` and `tr.ts`; add with `npm run strings`). Other languages fall back
-   to English. No hard-coded text in components. Company terminology is substituted at runtime; never write "customer" literally where a company can rename it.
+4. **Every user-visible string exists in every dictionary** in `shared/src/i18n/` (`en.ts` defines the keys; all nine files, soon eleven, are
+   complete — ADR 0008). `npm run strings` fills English and Turkish only; add the other languages by hand, as a native product writer would, using the
+   words the file already uses and `shared/src/i18n/glossary.ts`. No hard-coded text in components. Company terminology is substituted at runtime;
+   never write "customer" literally where a company can rename it.
 5. **No hard-coded company assumptions.** Terms, stages, fields, roles and health rules are configuration.
 6. **Speed budget.** Respect the targets in QUALITY.md (first screen JS <= 170 KB gzip, API read p95 <= 150 ms, write p95 <= 250 ms). Avoid N+1 queries, index
    what you filter on. Big changes: run `scripts/perf.ts` on a throwaway Postgres.
@@ -81,7 +83,29 @@ The codebase predates the linter, so lint is set up to be **green with warnings 
    `tests/leak.test.ts` will fail the build, and it scans Markdown too. It matches words by hash, so a perfectly ordinary word can trip it
    (for example, one generic word for the global network); if it flags your doc, find the word by bisecting the file and rephrase.
 9. **Docs travel with code.** New env var: `docs/ENVIRONMENT.md` (+ `selfhost.env.example`). New decision with trade-offs: an ADR. User-visible change: `CHANGELOG.md`
-   under Unreleased. Help pages for customers live in `docs/site/en` and `docs/site/tr`.
+   under Unreleased. Help pages for customers live in `docs/site/<language>/`, in every language; a new screen also needs its entry in
+   `shared/src/helpLinks.ts` and assistant evaluation cases (`tests/docs-coverage.test.ts` fails otherwise).
+
+## Comments
+
+The code must be readable by someone who joins without a guide (a new CTO, a co-founder, the next AI session). The standard:
+
+1. **Every file starts with a header**: what it is for, who uses it (which screen, route, job or person), and the key links (the ADR, the
+   shared types, the test). Two to six lines.
+2. **Every exported function, component, hook, class and API route has a doc comment** directly above it: what it does, its inputs, what it
+   returns, and the errors it throws (`fail('code')`) or the status codes it answers. Prefer `/** … */` (editors show it on hover); one line is
+   enough when the name and types already say the rest.
+3. **WHY-comments wherever the logic is not obvious**, and always for: security, permissions and row security, `db.system()` use, legal and
+   privacy (KVKK/GDPR, consent, evidence), money (prices, caps, currency), the AI approval gate and cost caps, performance tricks, and
+   workarounds. Link the ADR when there is one (`// ADR 0011: …`).
+4. **No comments that repeat the code.** If a comment only restates the line below, rename things instead. Do not leave commented-out code.
+5. **Decisions go in ADRs** (`docs/ADR/`), not in long comments; the code links to them. Package or build-wave nicknames ("b3", "wave 5")
+   mean nothing to a newcomer: name the feature instead.
+
+The check: `npm run lint:comments` (`scripts/quality/comments.mts`) lists files without a header and exported functions, components and routes
+without a doc comment (`--all` for every finding, `--json` for tools, a path to narrow it). Baseline on 19 Nov 2026: 559 files checked,
+36 without a header, 966 of 2,123 exported symbols and routes without a doc comment (54% documented). New and changed code must not add to
+it; once the backlog is paid, CI runs it with `--max=<count>` and the number only goes down.
 
 ## Branches, commits, PRs
 
@@ -98,9 +122,9 @@ The codebase predates the linter, so lint is set up to be **green with warnings 
 | --- | --- |
 | A table or column | new migration; `docs/DEVELOPER.md` "adding a table"; run `tests/rls.test.ts` |
 | An endpoint | a router in `api/src/routes/`, mount in `app.ts`; permission check; test (isolation sweep picks it up automatically) |
-| A screen | `web/src/pages/`; strings in both dictionaries |
+| A screen | `web/src/pages/`; strings in every dictionary; help page + `shared/src/helpLinks.ts` + eval cases |
 | A string | `npm run strings` |
-| A language | one dictionary file + `LOCALE_INFO` entry in `shared/src/i18n` (ADR 0005) |
+| A language | one dictionary file + `LOCALE_INFO` entry + glossary column in `shared/src/i18n`, help pages, eval cases (ADR 0008) |
 | A CRM adapter | `api/src/sync/adapters/` implementing `CrmAdapter`; register in `adapters/index.ts`; stub-based test (see `tests/adapters.test.ts`) |
 | A chat connector | `api/src/connectors/messaging/` |
 | An env setting | `Env` + `configFromEnv` in `api/src/worker.ts`; `docs/ENVIRONMENT.md` |

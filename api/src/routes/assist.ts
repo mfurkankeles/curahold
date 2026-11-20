@@ -26,6 +26,7 @@ import { answer, RETENTION_CHOICES, settingsOf, type AssistEnv, type CompanyAssi
 import { ASSIST_BUDGETS, assistantConfigFrom, type AssistantConfig } from '../assistant/cost';
 import { anthropicProvider, type LlmProvider } from '../assistant/provider';
 import { dbStore, docsIndex, monthUsage } from '../assistant/store';
+import { appConsent, portalConsent, publicConsent, setAppConsent, setPortalConsent, setPublicConsent } from '../assistant/consent';
 
 /** The installation's assistant settings (environment), with safe defaults when none are given. */
 export const assistantConfig = (deps: Deps): AssistantConfig => deps.config.assistant ?? assistantConfigFrom({});
@@ -108,12 +109,13 @@ async function envFor(
   opts: { surface: AssistSurface; locale: Locale; org: OrgRow | null; userId: string | null; limited: boolean; who?: AssistEnv['who']; live?: AssistEnv['live'] },
 ): Promise<AssistEnv> {
   const config = assistantConfig(deps);
-  const settings = opts.org ? settingsOf(assistantSettingsOf(opts.org), config) : settingsOf({}, config);
+  // The public docs and site have no company: the installation's own switch (publicChat) decides there.
+  const settings = opts.org ? settingsOf(assistantSettingsOf(opts.org), config) : settingsOf({ enabled: true }, config);
   const { docs, version } = await docsOf(deps);
   return {
     config,
     provider: providerOf(deps),
-    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0 }),
+    store: dbStore(deps.db, { orgId: opts.org?.id ?? null, userId: opts.userId, surface: opts.surface, retentionDays: opts.org ? settings.retentionDays : 0, billingOn: !!deps.config.billing }),
     docs,
     docsVersion: version,
     surface: opts.surface,
@@ -139,6 +141,8 @@ assistRoutes.post('/assist', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const locale = c.get('locale');
+  // KVKK/GDPR: nothing is processed before this person said yes to the current notice (assistant/consent.ts).
+  if ((await run(c, (q) => appConsent(q, auth.userId))).granted !== true) fail('consent_required');
   const limited = !!(take(deps, `assist:p:${auth.userId}`, ASSIST_BUDGETS.person) || take(deps, `assist:c:${org.id}`, ASSIST_BUDGETS.company));
   const words = accountWords(locale, org.terms);
   const env = await envFor(deps, {
@@ -154,11 +158,41 @@ assistRoutes.post('/assist', async (c) => {
   return c.json({ reply });
 });
 
-/** Whether a model answers here: the app sends questions to the server only then (otherwise they stay on the device). */
-assistRoutes.get('/assist/status', (c) => {
+/**
+ * Whether a model answers here: the app sends questions to the server only
+ * then (otherwise they stay on the device) — and the person's answer to the
+ * consent notice, so the panel knows whether to ask first.
+ */
+assistRoutes.get('/assist/status', async (c) => {
   const deps = c.get('deps');
   const settings = settingsOf(assistantSettingsOf(c.get('org')), assistantConfig(deps));
-  return c.json({ available: !!providerOf(deps) && settings.enabled && !c.get('tokenKind') });
+  const available = !!providerOf(deps) && settings.enabled && !c.get('tokenKind');
+  const consent = c.get('tokenKind') ? null : await run(c, (q) => appConsent(q, c.get('auth').userId));
+  return c.json({ available, consent });
+});
+
+/** The person's answer to the assistant's consent notice (current version). */
+assistRoutes.get('/assist/consent', async (c) => {
+  if (c.get('tokenKind')) fail('forbidden');
+  return c.json({ consent: await run(c, (q) => appConsent(q, c.get('auth').userId)) });
+});
+
+// Accept, decline or withdraw. Each answer is a new row (who, when, notice
+// version, language) and an activity-log entry; a "no" takes effect at once.
+// Only the person themself: not an API key, not support or a preview acting as them.
+assistRoutes.post('/assist/consent', async (c) => {
+  if (c.get('tokenKind') || c.get('supportBy') || c.get('previewBy')) fail('forbidden');
+  const input = await body(c, z.object({ granted: z.boolean() }));
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const consent = await run(c, async (q) => {
+    const before = await appConsent(q, auth.userId);
+    const now = await setAppConsent(q, org.id, auth.userId, input.granted, c.get('locale'));
+    const action = input.granted ? 'assistant.consent_given' : before.granted ? 'assistant.consent_withdrawn' : 'assistant.consent_declined';
+    await audit(q, { orgId: org.id, actorId: auth.userId, action, entity: 'user', entityId: auth.userId, meta: { version: now.version, locale: c.get('locale') } });
+    return now;
+  });
+  return c.json({ consent });
 });
 
 const settingsInput = z.object({
@@ -211,14 +245,24 @@ assistRoutes.put('/assist/settings', async (c) => {
 
 export const assistPublicRoutes = new Hono<AppEnv>();
 
-const publicRequest = request.extend({ lang: z.string().max(10).optional(), surface: z.enum(['docs', 'site']).optional() });
+const publicRequest = request.extend({ lang: z.string().max(10).optional(), surface: z.enum(['docs', 'site']).optional(), consentId: z.string().uuid().optional() });
+
+/** A public visitor's answer to the consent notice, under the random id their browser keeps. */
+assistPublicRoutes.post('/api/assist/public/consent', async (c: Context<AppEnv>) => {
+  if (c.req.header('x-curahold-ask') !== '1') fail('forbidden');
+  const input = await body(c as unknown as C, z.object({ consentId: z.string().uuid(), granted: z.boolean(), lang: z.string().max(10).optional(), surface: z.enum(['docs', 'site']).optional() }));
+  const consent = await setPublicConsent(c.get('deps').db, input.consentId, input.surface ?? 'docs', input.granted, normalizeLocale(input.lang));
+  return c.json({ consent });
+});
 
 assistPublicRoutes.post('/api/assist/public', async (c: Context<AppEnv>) => {
   const deps = c.get('deps');
   const cfg = assistantConfig(deps);
   // Only from a page that set this header: a form on another site cannot, and a cross-site script is stopped by CORS.
   if (c.req.header('x-curahold-ask') !== '1') fail('forbidden');
-  const input = (await body(c, publicRequest)) as AssistRequest & { lang?: string; surface?: 'docs' | 'site' };
+  const input = (await body(c, publicRequest)) as AssistRequest & { lang?: string; surface?: 'docs' | 'site'; consentId?: string };
+  // The visitor's "yes" to the current notice, under their browser's consent id (assistant/consent.ts).
+  if (!input.consentId || (await publicConsent(deps.db, input.consentId)).granted !== true) fail('consent_required');
   const ip = clientIp(c, deps.config.clientIp) ?? 'unknown';
   const limited = !cfg.publicChat || !!(take(deps, `assist:ip:${ip}`, ASSIST_BUDGETS.ip) || take(deps, 'assist:public', ASSIST_BUDGETS.public));
   const env = await envFor(deps, { surface: input.surface ?? 'docs', locale: normalizeLocale(input.lang), org: null, userId: null, limited });
@@ -244,6 +288,8 @@ export async function portalAssist(
   if (!person?.id) return fail('unauthenticated');
   const input = (await body(c as unknown as C, request)) as AssistRequest;
   const locale = c.get('locale');
+  // The person's "yes" to the current notice, read through the portal's own function (assistant/consent.ts).
+  if ((await portalDb((q) => portalConsent(q))).granted !== true) return fail('consent_required');
   const limited = !!(take(deps, `assist:pp:${person.id}`, ASSIST_BUDGETS.person) || take(deps, `assist:c:${org.id}`, ASSIST_BUDGETS.company));
   const trace = emptyTrace();
   const tools: Tool[] = [
@@ -286,6 +332,17 @@ export async function portalAssist(
  * reaches the customer by itself. Off when the company turned it off, or when
  * there is no model (a docs search as a note would only be noise).
  */
+/** The portal person's answer to the consent notice (GET), or their new answer (POST {granted}). */
+export async function portalAssistConsent(
+  c: Context<PortalEnv>,
+  portalDb: <T>(fn: (q: { query(sql: string, p?: unknown[]): Promise<Row[]> }) => Promise<T>) => Promise<T>,
+): Promise<Response> {
+  if (!c.get('person')?.id) return fail('unauthenticated');
+  if (c.req.method === 'GET') return c.json({ consent: await portalDb((q) => portalConsent(q)) });
+  const input = await body(c as unknown as C, z.object({ granted: z.boolean() }));
+  return c.json({ consent: await portalDb((q) => setPortalConsent(q, input.granted, c.get('locale'))) });
+}
+
 export async function deskFirstReply(deps: Deps, org: OrgRow, req: { id: string; subject: string; description: string }, locale: Locale): Promise<AssistReply | null> {
   const cfg = assistantConfig(deps);
   const settings = settingsOf(assistantSettingsOf(org), cfg);

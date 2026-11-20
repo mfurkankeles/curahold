@@ -126,6 +126,8 @@ export interface PortalOrg {
   brand: PortalBrand;
   /** Cloudflare Turnstile's public key for the sign-in forms, when it is on (api/src/lib/humanCheck.ts). */
   turnstile?: string | null;
+  /** Where Curahold's docs live (the privacy notice the AI consent notice links to), ending in a slash. */
+  docsBase?: string;
 }
 
 // ------------------------------------------------------------ the company's brand
@@ -137,7 +139,6 @@ export interface PortalBrand {
   /** A small "powered by Curahold" at the foot of the portal and its emails. */
   poweredBy: boolean;
 }
-export const DEFAULT_PORTAL_BRAND: PortalBrand = { color: null, poweredBy: true };
 /** The portal's colour when a company has not chosen one. */
 export const PORTAL_DEFAULT_COLOR = '#5b4de8';
 export const HEX_COLOR = /^#[0-9a-f]{6}$/i;

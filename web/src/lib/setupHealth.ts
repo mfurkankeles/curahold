@@ -5,21 +5,25 @@ import { useEffect, useState } from 'react';
 import { ADMIN_PERMS, type Perm } from '../../../shared/src/model';
 import { CHECKS, TEST_STEPS, type SetupHealth } from '../../../shared/src/setupHealth';
 import { helpLanguageOf, type Locale } from '../../../shared/src/i18n';
-import { get, post } from './api';
+import { apiLocale, get, post } from './api';
 import { docsHref } from './docs';
+import { useI18n } from './i18n';
 
 export const SETUP_CHANGED = 'curahold:setup-changed';
 const FRESH_MS = 30_000;
 
-let last: { at: number; data: SetupHealth } | null = null;
+// The server writes the checks' texts in the language asked: an answer in another language is not reused
+// (the first one is often asked before the person's language has arrived).
+let last: { at: number; data: SetupHealth; locale: string } | null = null;
 let asking: Promise<SetupHealth | null> | null = null;
 
 /** The panel's data; a recent answer is reused (the nav, the panel and a screen's warnings ask at once). */
 export function loadSetupHealth(force = false): Promise<SetupHealth | null> {
-  if (!force && last && Date.now() - last.at < FRESH_MS) return Promise.resolve(last.data);
+  if (!force && last && last.locale === apiLocale() && Date.now() - last.at < FRESH_MS) return Promise.resolve(last.data);
+  const locale = apiLocale();
   return (asking ??= get<SetupHealth>('/setup-health')
     .then(
-      (data) => ((last = { at: Date.now(), data }), data),
+      (data) => ((last = { at: Date.now(), data, locale }), data),
       () => null,
     )
     .finally(() => (asking = null)));
@@ -29,7 +33,7 @@ export function loadSetupHealth(force = false): Promise<SetupHealth | null> {
 export async function checkSetupHealth(): Promise<SetupHealth | null> {
   try {
     const data = await post<SetupHealth>('/setup-health/check', {});
-    last = { at: Date.now(), data };
+    last = { at: Date.now(), data, locale: apiLocale() };
     window.dispatchEvent(new CustomEvent(SETUP_CHANGED, { detail: 'fresh' }));
     return data;
   } catch {
@@ -50,6 +54,7 @@ export function seesSetup(perms: readonly Perm[], owner: boolean): boolean {
 
 /** The setup checks, kept current while mounted. */
 export function useSetupHealth(enabled = true): SetupHealth | null {
+  const { locale } = useI18n();
   const [data, setData] = useState<SetupHealth | null>(last?.data ?? null);
   useEffect(() => {
     if (!enabled) return;
@@ -58,15 +63,17 @@ export function useSetupHealth(enabled = true): SetupHealth | null {
     // A fresh answer is already kept: read it; anything else: ask again.
     const again = (e: Event) => load((e as CustomEvent).detail !== 'fresh');
     const focus = () => load(false);
-    load(false);
+    // After this render's effects: the app hands the new language to the API in its own (parent) effect, which runs after this one.
+    const first = setTimeout(() => load(false), 0);
     window.addEventListener(SETUP_CHANGED, again);
     window.addEventListener('focus', focus);
     return () => {
       live = false;
+      clearTimeout(first);
       window.removeEventListener(SETUP_CHANGED, again);
       window.removeEventListener('focus', focus);
     };
-  }, [enabled]);
+  }, [enabled, locale]);
   return data;
 }
 

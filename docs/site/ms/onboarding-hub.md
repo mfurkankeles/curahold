@@ -64,7 +64,11 @@ Klik **Kongsi laporan** dan salin pautannya. Sesiapa yang memilikinya melihat la
 
 ## 8. Pelan permulaan pelanggan anda {#customers}
 
-Klik **Pelan onboarding** di bawah Pelanggan. Apabila urus niaga dimenangi, draf pelan dibuka dengan sendirinya bersama nota serahan; ia bermula apabila serahan disahkan. Senarai menunjukkan setiap pelan, sejauh mana kemajuannya, siapa yang ditunggu dan yang mana tersekat. Klik pelanggan untuk membuka pelannya.
+Klik **Pelan onboarding** di bawah Pelanggan. Pelan dibuka dengan sendirinya pada urus niaga yang dimenangi hanya apabila ciri itu dihidupkan (bahagian 10). Senarai menunjukkan setiap pelan, sejauh mana kemajuannya, siapa yang ditunggu dan yang mana tersekat. Klik pelanggan untuk membuka pelannya.
+
+Untuk membuka pelan bagi seorang pelanggan, klik **Pelan baharu** di bahagian atas kanan, pilih pelanggan dan templat, dan klik **Buka pelan**. Ia bermula hari ini: jadikannya milik pelanggan ini (bahagian 9).
+
+Pada halaman pelanggan, **Mulakan pelan onboarding** di bawah **Pemilik dalam setiap jabatan** melakukan perkara yang sama.
 
 ![Senarai pelan pelanggan, dengan seorang pelanggan ditanda](img/ob-plans.webp)
 

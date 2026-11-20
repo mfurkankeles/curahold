@@ -196,7 +196,8 @@ const DELETE: Words = [
   '削除', '退会', '解約',
   '삭제', '탈퇴', '해지',
   'डिलीट', 'हटा', 'बंद', 'रद्द',
-  'padam', 'buang', 'tutup', 'batal',
+  // Malay verbs take a prefix that changes the first letter (padam → memadam), so both forms are listed.
+  'padam', 'memadam', 'buang', 'membuang', 'tutup', 'menutup', 'batal', 'membatalkan', 'hapus', 'menghapus',
 ];
 const ACCOUNT: Words = [
   'account',
@@ -231,7 +232,7 @@ const IMPORT: Words = [
   'インポート', '取り込',
   '가져오', '임포트',
   'इंपोर्ट', 'आयात',
-  'import', 'bawa masuk',
+  'import', 'mengimport', 'bawa masuk',
 ];
 const IMPORT_SAYS_WHICH: Words = [
   'customer', 'client', 'account', 'task', 'crm', 'contact', 'opportunit', 'record', 'salesforce', 'hubspot', 'pipedrive', 'dynamics', 'zoho', 'sheet', 'excel',
@@ -255,7 +256,7 @@ const CONNECT: Words = [
   '連携', '接続',
   '연결', '연동', '통합',
   'कनेक्ट', 'जोड़', 'इंटीग्रेट', 'इंटीग्रेशन',
-  'sambung', 'integrasi', 'penyepaduan', 'sepadukan',
+  'sambung', 'menyambung', 'integrasi', 'penyepaduan', 'sepadukan', 'menyepadukan',
 ];
 const CONNECT_SAYS_WHICH: Words = [
   'slack', 'teams', 'google', 'gmail', 'outlook', 'calendar', 'crm', 'salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho', 'jira', 'sheet', 'excel', 'zendesk', 'freshdesk', 'api', 'webhook', 'mcp', 'sso', 'saml', 'chat', 'github', 'gitlab', 'task', 'customer', 'mail',
@@ -343,7 +344,8 @@ export function ambiguityOf(question: string): Ambiguity | null {
   if (f.length > 160) return null;
   const t = question.trim();
   // Short: a few words ("How do I connect it?", "Nasıl bağlarım?"); Han, kana and Hangul say as much in fewer characters.
-  const short = t.length <= (/[\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(t) ? 14 : 24);
+  // Malay says the same in longer words ("Bagaimana saya menyambungkannya?").
+  const short = t.length <= (/[\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(t) ? 14 : MALAY_WORDS.test(f) ? 34 : 24);
   return CLARIFY.find((a) => (!a.short || short) && a.all.every((g) => holds(f, g)) && !holds(f, a.none)) ?? null;
 }
 
@@ -375,6 +377,8 @@ const COMPARE: RegExp[] = [
   /竞争对手|競爭對手|竞品|競品|比.{0,12}(更好|好吗|好嗎|便宜)|相比|对比|對比|替代品/,
   /競合|競争相手|より(良い|いい|安い)|と比べ|と比較|代替/,
   /경쟁사|경쟁 제품|보다 (나은|좋은|싼|저렴)|와 비교|과 비교|대안/,
+  /प्रतियोगी|प्रतिस्पर्धी|कॉम्पिटिटर|से बेहतर|से सस्ता|की तुलना|बनाम|curahold के .{0,20}विकल्प|विकल्प.{0,12}(प्रोडक्ट|टूल|सॉफ़्टवेयर|ऐप)/,
+  /\bpesaing\b|lebih (baik|murah|pantas) daripada|\bberbanding\b|\bbandingkan\b|\balternatif\b.{0,24}\b(kepada|bagi|untuk|selain)\b|\bselain curahold\b/,
 ];
 
 /**
@@ -402,6 +406,8 @@ const INJECTION: RegExp[] = [
   /忽略.{0,6}(之前|以上|所有).{0,4}(指令|指示|说明|說明)|系统提示|系統提示/,
   /(以前|前|上記).{0,4}(指示|命令).{0,4}(無視|忘れ)|システムプロンプト/,
   /(이전|위의).{0,4}(지시|명령).{0,6}(무시|잊)|시스템 프롬프트/,
+  /(निर्देश|नियम).{0,12}(अनदेखा|नज़रअंदाज़|नजरअंदाज|भूल जा)|सिस्टम प्रॉम्प्ट|डेवलपर मोड|छिपे (हुए )?निर्देश/,
+  /\babaikan\b.{0,20}\b(arahan|peraturan)|\blupakan\b.{0,20}\barahan|prompt sistem|\bmod pembangun\b|arahan tersembunyi/,
 ];
 
 /** Does the text try to give the assistant instructions of its own? (The model is told the same; this is the free first check.) */

@@ -7,7 +7,8 @@ import { optionKey } from '../../../shared/src/fields';
 import type { AccountField } from '../../../shared/src/model';
 import { BUILTIN_TYPES, type RecordKind } from '../../../shared/src/records';
 import { KEY_FIELDS, type RemoteField, type SyncConfig, type SyncProblem } from '../../../shared/src/sync';
-import { centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, requireWriter, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
+import { accessFor, centralUrl, fetchOf, nowOf, orgUrl, requirePerm, requirePlan, requireWriter, run, secretsKey, type AppEnv, type C, type OrgRow } from '../context';
+import { checkConnectors } from '../billing/entitlements';
 import { audit } from '../lib/audit';
 import { base64url, randomToken, seal, sign, unseal } from '../lib/crypto';
 import { fail } from '../lib/errors';
@@ -66,6 +67,8 @@ export async function crmStart(c: C, provider: string, back: string) {
     rc = old.id as string;
     again = old.config ?? {};
   }
+  // A new connected tool counts against the plan's connector cap (shared/src/plans.json); signing in again does not.
+  if (!rc) await run(c, (x) => checkConnectors(x, org.id, accessFor(c)));
   if (provider === 'salesforce' && (c.req.query('sandbox') === '1' || (rc && String(again.loginUrl ?? '').includes('test.salesforce.com')))) q.sandbox = '1';
   if (provider === 'dynamics') {
     const orgUrlRaw = orgUrlOf(c.req.query('orgUrl') ?? again.orgUrl ?? '');
@@ -143,6 +146,7 @@ syncRoutes.post('/connections/key', async (c) => {
   const adapter = isCrm(input.provider) ? CRM_ADAPTERS[input.provider] : null;
   if (!adapter?.keyed) fail('not_found');
   const deps = c.get('deps');
+  if (!input.reconnect) await run(c, (x) => checkConnectors(x, c.get('org').id, accessFor(c)));
   let made;
   try {
     made = await adapter!.keyed!.connect(fetchOf(deps), input.values, nowOf(deps));
@@ -223,6 +227,8 @@ function prefillOf(provider: string, config: Record<string, any>): Record<string
 
 function crmFail(e: unknown): never {
   if (e instanceof CrmError) fail('crm_error', { message: e.message }, { reason: e.message, auth: e.auth });
+  // The address could not be reached at all (a mistyped site name, a network that blocks it): say so, not "our side".
+  if (e instanceof TypeError && /fetch failed|ENOTFOUND|ECONNREFUSED|EAI_AGAIN|network/i.test(`${e.message} ${String((e as { cause?: unknown }).cause ?? '')}`)) fail('crm_unreachable');
   throw e;
 }
 

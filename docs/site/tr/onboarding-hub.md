@@ -64,7 +64,11 @@ Tarihler şöyle yazılır:
 
 ## 8. Müşterilerinizin başlangıç planları {#customers}
 
-Yeni kazandığınız bir müşterinin kurulumunu da bu planla yürütürsünüz. Müşteriler altında **Ortak planlar**'a tıklayın. Bir fırsat kazanılınca devir notuyla birlikte taslak bir plan kendiliğinden açılır; devir onaylanınca başlar. Liste her planı, ne kadar ilerlediğini, kimin beklendiğini ve hangilerinin takıldığını gösterir. Planını açmak için bir müşteriye tıklayın.
+Yeni kazandığınız bir müşterinin kurulumunu da bu planla yürütürsünüz. Müşteriler altında **Ortak planlar**'a tıklayın. Fırsat kazanılınca plan yalnızca bu açıksa kendiliğinden açılır (bölüm 10). Liste her planı, ne kadar ilerlediğini, kimin beklendiğini ve hangilerinin takıldığını gösterir. Planını açmak için bir müşteriye tıklayın.
+
+Bir müşteri için plan açmak için sağ üstte **Yeni plan**'a tıklayın, müşteriyi ve şablonu seçin, **Planı aç**'a tıklayın. Plan bugün başlar: bu müşteriye göre değiştirin (bölüm 9).
+
+Müşterinin sayfasında **Her departmandaki sahibi** altındaki **Başlangıç planı aç** da aynısını yapar.
 
 ![Müşteri planları listesi, bir müşteri işaretli](img/ob-plans.webp)
 

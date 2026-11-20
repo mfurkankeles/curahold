@@ -8,7 +8,10 @@ operations live in [docs/RUNBOOK.md](docs/RUNBOOK.md); the threat model and repo
 Contents: [1 System](#1-system-at-a-glance) · [2 Layers](#2-layers) · [3 Data model](#3-data-model) ·
 [4 Tenant isolation](#4-tenant-isolation) · [5 Authentication and sessions](#5-authentication-and-sessions) ·
 [6 Reliability mechanics](#6-reliability-mechanics) · [7 Sync](#7-sync-crms-and-spreadsheets) ·
-[8 Scheduler](#8-the-scheduler) · [9 Live updates](#9-live-updates) · [10 Deployment shapes](#10-deployment-shapes)
+[8 Scheduler](#8-the-scheduler) · [9 Live updates](#9-live-updates) · [9a Languages](#9a-languages) ·
+[10 Deployment shapes](#10-deployment-shapes) · [11 Assistant and AI team](#11-the-assistant-and-the-ai-team)
+
+New owner? Start with [docs/HANDOVER.md](docs/HANDOVER.md).
 
 ---
 
@@ -37,7 +40,8 @@ flowchart LR
   subgraph Ext["External services"]
     CHAT["Slack, Teams, Google Chat,\nwebhooks"]
     CRM["Salesforce, HubSpot, Dynamics,\nPipedrive, Zoho, Sheets, Excel"]
-    MAIL["Resend (email)"]
+    MAIL["Email: Google Workspace relay\n(or Resend)"]
+    LLM["Model API (assistant, AI team;\nonly with a key, capped)"]
     PAD["Paddle (billing)"]
     IDP["Google / Microsoft sign-in"]
     RELAY["tools/relay (fixed IP,\nSalesforce tokens only)"]
@@ -54,7 +58,8 @@ flowchart LR
   W <--> CRM
   W --> RELAY --> CRM
   W --> MAIL
-  PAD -->|"webhook /api/billing/webhook"| W
+  W --> LLM
+  PAD -->|"webhook /api/inbound/billing/paddle"| W
   W <--> IDP
 ```
 
@@ -225,8 +230,9 @@ is strict and why parameterised queries are mandatory.
 - **Secrets at rest.** Connector credentials in `connections` are sealed with AES-GCM using a key derived from
   `SECRETS_KEY` (falls back to `AUTH_SECRET`). Rotating that key requires re-sealing (see RUNBOOK).
 - **Browser protections.** CSP, HSTS, no-framing and no-sniff on every API answer (`lib/headers.ts`) and on static
-  files (`web/public/_headers`; `tests/security.test.ts` keeps both in step). Rate limiting is *not* in the app: it
-  belongs to Cloudflare rate rules at the edge (see [SECURITY.md](SECURITY.md#known-operational-requirements)).
+  files (`web/public/_headers`; `tests/security.test.ts` keeps both in step). Rate limits per person, company and network address
+  are in the app (`lib/ratelimit.ts`), with robot refusals and human checks on the public doors (`lib/botGuard.ts`,
+  `lib/humanCheck.ts`, ADR 0015); Cloudflare's own rules at the edge come on top (RUNBOOK, "Go-live: bots and scrapers").
 
 ## 6. Reliability mechanics
 
@@ -302,12 +308,12 @@ last-run status per job is the thing to monitor (see RUNBOOK, "On-call basics").
 
 ## 9. Live updates
 
-Today the web app polls `GET /api/pulse` and refreshes what changed. The pulse is **scoped**: a board follows only its
+The web app holds one WebSocket to its company's live room (`api/src/live/`: a Durable Object per company on Cloudflare,
+`LISTEN/NOTIFY` on the Node server; ADR 0007) and falls back to polling `GET /api/pulse` when sockets are blocked. The pulse is **scoped**: a board follows only its
 own cards, an account page only changes under that account, so a change elsewhere does not refresh every page. The
 live channel carries no data, only "something changed" stamps; data always comes through the normal API with the
-normal permission checks. QUALITY.md decision 1 is to replace polling with one Durable Object per company using
-WebSocket Hibernation (Node: `ws` + Postgres `LISTEN/NOTIFY` for self-host), falling back to polling when WebSockets are
-blocked. That is **decided but not built**.
+normal permission checks. The room logic is shared by both hosts (`live/room.ts`, tested in `tests/live-room.test.ts`); the Durable Object file
+itself (`live/do.ts`) only runs on Cloudflare and has no test of its own.
 
 Curahold's own console (desk.<domain>) has one room of its own, `live/platform.ts`: the same carry-no-data rule, on both
 hosts (a Durable Object named `platform`; the Node server's hub). Only a desk session may join (the authenticator step is
@@ -336,8 +342,8 @@ a dictionary file and its line in `LOCALE_INFO`. Nothing else in the code knows 
   digits its dictionary uses), `numberMarks` / `dayFirst` for reading typed values, `csvSeparator` for files.
 - **Features that themselves speak two languages** say so in one named table, not a branch: the quick-add reader
   (`lib/quickparse.ts`, English and Turkish words), the help centre (`HELP_LANGUAGES`, `helpLanguageOf`), the demo's
-  sample data (`DEMO_TEXT` in `scripts/seed-demo.ts`), importer format samples. The help centre, its API reference and
-  the demo hub are the only two-language pages left, waiting for the owner's decision (`TWO_LANGUAGE_PAGES`).
+  sample data (`DEMO_TEXT` in `scripts/seed-demo.ts`), importer format samples. The help centre is whole in every language
+  (`HELP_LANGUAGES`, ADR 0008); `TWO_LANGUAGE_PAGES` in `tests/i18n-no-pairs.test.ts` lists what is still allowed to be two-language.
 
 Right-to-left languages (Arabic, Hebrew, Persian) set `dir="rtl"` on the page in both the app and the portal.
 
@@ -351,3 +357,14 @@ Right-to-left languages (Arabic, Hebrew, Persian) set `dir="rtl"` on the page in
 | Demo | `npm run build:demo`: the API runs inside the browser on PGlite. | none |
 
 See [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) for every setting.
+
+## 11. The assistant and the AI team
+
+- **Assistant** (`api/src/assistant/`, ADR 0010): one core for every chat surface. Free rules → answer cache → switches and monthly
+  caps (install-wide and per company) → the model with the few matching help sections and read-only tools that call the API as the
+  asking person → output checks. Any failure falls back to the docs search at zero cost. Usage in `assistant_usage` / `assistant_global`.
+- **AI team** (`api/src/team/`, ADR 0011): Curahold's own operator console seats. Wakes pass a SQL pre-check first (zero model cost when
+  nothing changed); agents only propose; `team/gate.ts` runs an approval only after the operator's own yes, through server-registered
+  runners that hold the credentials; `team/monitor.ts` pauses misbehaving seats. Weekly budget per seat, monthly cap for the team.
+  Nothing schedules the wakes yet (`precheck.ts` `tick()`).
+- Both use one key (`ANTHROPIC_API_KEY`) and are optional: without it the product works, with the docs search answering.

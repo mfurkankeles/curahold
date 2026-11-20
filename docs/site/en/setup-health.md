@@ -77,7 +77,7 @@ The table is written from the product's own words, so it always matches the scre
 
 | What we notice | Why it matters | The button |
 | --- | --- | --- |
-| … rows of your last import did not come in (Worth fixing) | Something in those rows could not be read. The import screen lists them with their row numbers. | **Open the import** |
+| … rows of your last import did not come in (Worth fixing) | Something in those rows could not be read. The list with row numbers is shown right after an import; fix the rows in your file and import it again: rows already in are updated, not doubled. | **Open the import** |
 | … rows of your last import had no account name (Worth fixing) | The name is the one column every row needs. Fill it in the file and import again: rows already in are updated, not doubled. | **Import again** |
 | … rows had a date we could not read (Worth fixing) | Write dates like 2026-03-31 or 31.03.2026. The dates we could not read were left empty. | **Import again** |
 | … rows had an amount we could not read (Worth fixing) | Use digits only, like 12500 or 12.500,00, with the currency in a column of its own. Those amounts were left empty. | **Import again** |
@@ -120,7 +120,7 @@ The table is written from the product's own words, so it always matches the scre
 
 | What we notice | Why it matters | The button |
 | --- | --- | --- |
-| … automations use a field that was deleted (Fix first) | As it is, it can never run. Pick another field, or switch the rule off. | **Fix the rule** |
+| … automations watch a field that is not there (Fix first) | As it is, it can never run. Click Fix the rule, then Edit and Save: it switches to your own date field. Or switch the rule off. | **Fix the rule** |
 | … automations point at a board that is gone (Fix first) | The tasks it should make have nowhere to go. Choose another board. | **Fix the rule** |
 | No automations yet (When you have a minute) | One rule, like a task 60 days before each renewal, saves a reminder every time. Ready ones are waiting to be switched on. | **See ready rules** |
 

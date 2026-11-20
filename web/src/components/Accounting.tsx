@@ -204,6 +204,14 @@ export function AccountingMatches({ id }: { id: string }) {
       onErr(e);
     }
   };
+  const create = async (r: MatchRow) => {
+    try {
+      const made = await post<{ account: { id: string } }>('/accounts', { name: r.name });
+      await choose(r, made.account.id);
+    } catch (e) {
+      onErr(e);
+    }
+  };
   if (!data) return <p className="muted">{t('common.loading')}</p>;
   const reason = (r: MatchRow) => (r.state === 'manual' ? t('fin.match.manual' as MessageKey) : r.reason ? t(`fin.match.by.${r.reason}` as MessageKey) : '');
   return (
@@ -254,7 +262,13 @@ export function AccountingMatches({ id }: { id: string }) {
                     ))}
                   </>
                 ) : (
-                  <span className="muted">{t('fin.match.noMatch' as MessageKey)}</span>
+                  <>
+                    <span className="muted">{t('fin.match.noMatch' as MessageKey)}</span>
+                    {/* Nobody here yet (a company that starts from its books): bring this one in as a new customer. */}
+                    <button type="button" className="btn btn--small" onClick={() => void create(r)}>
+                      {t('fin.match.create' as MessageKey)}
+                    </button>
+                  </>
                 )}
               </div>
               <div className="fin-match__act">

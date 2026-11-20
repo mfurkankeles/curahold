@@ -100,7 +100,6 @@ export function registerRunner(kind: ExternalKind, run: Runner) {
   RUNNERS.set(kind, run);
   APPROVED_ACTIONS[kind] = (deps, q, a) => runChecked(deps, q, a, run);
 }
-export const hasRunner = (kind: string) => RUNNERS.has(kind as ExternalKind);
 
 async function runChecked(deps: Deps, q: Q, a: Approval, run: Runner): Promise<string> {
   // The decision as stored (not as the caller passed it): approved, by the console owner, not by its proposer.

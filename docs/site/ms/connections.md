@@ -73,6 +73,27 @@ Hamparan ialah cara paling mudah untuk membawa masuk data, dan ia berfungsi untu
 
 Zendesk, Freshdesk, Intercom dan Jira Service Management disambungkan dengan alamat dan kunci API; tiket masuk di bawah pelanggan yang betul. Kes Salesforce dan Dynamics juga boleh dipetakan sebagai tiket sokongan. Butiran: [Tiket sokongan](/docs/ms/support-tickets/).
 
+## Apabila penyegerakan berhenti {#sync-stops}
+
+Tab **Status** sambungan menyatakan apa yang berlaku dengan kata-kata mudah, dengan mesej perkhidmatan itu sendiri di bawahnya.
+
+| Apa yang dinyatakan | Apa yang perlu dilakukan |
+| --- | --- |
+| Perkhidmatan meminta Curahold memperlahankan | Tiada apa-apa. Kedudukan anda disimpan dan larian setiap jam seterusnya menyambung. |
+| Ia tidak lagi menerima log masuk atau kunci Curahold | Sambung semula, di bawah. |
+| Akaun itu tidak boleh membaca atau mengubah sesuatu | Minta pentadbir alat itu memberi akaun itu akses, kemudian pilih **Segerakkan sekarang**. |
+| Ia tidak dapat dicapai | Tiada apa-apa. Curahold mencuba semula pada larian setiap jam seterusnya. |
+
+Untuk menyambung semula:
+
+1. Buka **Tetapan → CRM dan hamparan**.
+2. Klik sambungan yang ditandakan **Perlu perhatian**.
+3. Klik **Sambung semula** di bahagian atas halaman.
+4. Log masuk ke akaun yang sama seperti sebelum ini (atau tampal kunci baharu) dan luluskan.
+5. Klik **Segerakkan sekarang**. Medan yang telah anda padankan kekal seperti biasa.
+
+Untuk membuang sambungan, bukanya, klik **⋯** dan pilih **Buang**. Penyegerakan berhenti; pelanggan, kenalan dan peluang yang telah dibawa masuk kekal dalam Curahold dan tiada apa-apa dipadam dalam alat lain itu. Bagi program perakaunan, baki, invois dan bayaran yang dibaca daripadanya dibuang dari halaman pelanggan.
+
 ## Alat anda sendiri
 
 Untuk menyambungkan sistem lain, lihat [kunci API](/docs/ms/api-keys/), [webhook](/docs/ms/webhooks/) atau [pembantu AI](/docs/ms/ai-assistants/).

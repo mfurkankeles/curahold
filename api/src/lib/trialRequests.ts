@@ -23,6 +23,8 @@ import { randomToken, sha256Hex } from './crypto';
 import { emailDomain, isPublicDomain, slugify, slugProblem } from './domains';
 import { fail } from './errors';
 import { createOrg } from './orgs';
+import { countryDefaults } from '../../../shared/src/countryDefaults';
+import { BUILTIN_TYPES } from '../../../shared/src/records';
 
 const short = (n: number) => z.string().trim().max(n).nullable().default(null);
 const names = z.array(z.string().trim().min(1).max(80)).max(20).optional();
@@ -281,7 +283,9 @@ export async function approveTrialRequest(deps: Deps, id: string, by: string, in
   const domain = emailDomain(r.email);
   let created: Awaited<ReturnType<typeof createOrg>>;
   try {
-    created = await createOrg(deps.db, { slug, name: r.company, locale, domains: isPublicDomain(domain) ? [] : [domain], admin: { email: r.email, name: r.name } });
+    // The country on the request sets the clock and the money (Istanbul and lira, Dubai and dirhams…); unknown: UTC and dollars.
+    const place = countryDefaults(r.country);
+    created = await createOrg(deps.db, { slug, name: r.company, locale, ...(place ?? {}), domains: isPublicDomain(domain) ? [] : [domain], admin: { email: r.email, name: r.name } });
   } catch (err) {
     if (/orgs_slug_key|duplicate key/.test(String((err as Error).message))) fail('slug_taken');
     throw err;
@@ -298,6 +302,19 @@ export async function approveTrialRequest(deps: Deps, id: string, by: string, in
               departments = $6, note = coalesce($7, note), updated_at = now() where id = $1`,
       [id, by, input.seatCap, ends.toISOString(), created.orgId, input.departments, input.note ?? null],
     );
+    // A company that sells starts with its pipeline: the ready-made Opportunities (and the Contacts they name),
+    // so Customers → Opportunities is there on the first day instead of behind Settings → Records.
+    if (input.departments.some((d) => d === 'sales' || d === 'insideSales')) {
+      for (const kind of ['opportunity', 'contact'] as const) {
+        const t = BUILTIN_TYPES[kind];
+        await q.query(
+          `insert into record_types (org_id, key, name, kind, fields, position)
+           select $1, $2, $3, $4, $5, (select count(*) from record_types where org_id = $1)
+           where not exists (select 1 from record_types where org_id = $1 and kind = $4)`,
+          [created.orgId, t.key, JSON.stringify(t.name), kind, JSON.stringify(t.fields)],
+        );
+      }
+    }
     await audit(q, { orgId: created.orgId, actorId: null, action: 'org.created', entity: 'org', entityId: created.orgId, meta: { from: r.ref, seatCap: input.seatCap, departments: input.departments } });
     await deskNote(q, by, 'trial.approved', r.ref, created.orgId);
   });

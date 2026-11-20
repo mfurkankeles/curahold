@@ -19,12 +19,16 @@ near the end is the quickest way to the right file.
 
 ## 1. Start in five minutes
 
+Prerequisites: Node 22 (`.nvmrc`; `nvm use`), and Chrome or Chromium for the browser tests. Nothing else:
+development runs on an in-memory Postgres with an invented demo company. New here? Read
+[HANDOVER.md](HANDOVER.md) first.
+
 ```bash
-npm install
+npm ci                 # exact versions from package-lock.json
 npm run dev            # API on :8787 (embedded Postgres + demo company) and the web on :5173;
                        # open http://demo.localhost:5173 and sign in as ada@demo.example
                        # (the sign-in link is printed in the terminal)
-npm test               # unit and API tests (in-memory Postgres, ~2 min)
+npm test               # unit and API tests (in-memory Postgres, ~130 files; several minutes — run single files while you work)
 npm run typecheck      # TypeScript across API, web, scripts and tests
 npm run test:e2e       # builds, then drives the app in Chrome; screenshots in tests/e2e/screens/
 npm run test:demo      # builds the in-browser demo and opens it
@@ -56,7 +60,8 @@ api/src/                 the server (Hono). Runs on Cloudflare Workers (worker.t
   db/                    database drivers: postgres.js (production) and PGlite (tests, demo)
 shared/src/              types and pure logic used by both server and web — no I/O here
   model.ts               the main types (Task, Account, Org, Me, PlanTemplate, Favorite…)
-  i18n/en.ts, tr.ts      every word the user sees, in English and Turkish
+  i18n/                  every word the user sees: one dictionary per language (en.ts defines the keys), core.ts
+                         (LOCALE_INFO, HELP_LANGUAGES), glossary.ts (one term per concept per language)
   records.ts             kinds of records (contacts, opportunities, presets) and their types
   reports.ts             report definitions, chart kinds, the ready-made reports and dashboards
   rhythm.ts              targets and pace, business reviews, renewal settings
@@ -73,7 +78,8 @@ web/src/                 the React app (Vite)
 db/migrations/           the schema, in order (0001, 0002, …). Each file runs once.
 scripts/                 dev server, migrations, demo data (seed-demo.ts, seed-showcase.ts), docs build
 tests/                   Vitest suites (*.test.ts) and tests/e2e (Chrome)
-docs/site/               the user documentation (Markdown, TR and EN)
+docs/site/               the user documentation (Markdown, one folder per language)
+docs/ADR/                decisions and their reasons (read the index once)
 ```
 
 Routes by file (all under `/api`):
@@ -112,6 +118,11 @@ Routes by file (all under `/api`):
    switches to the `curahold_app` role, so **row-level security applies to
    every query**. A route cannot see another company's rows even if it
    forgets a `where org_id = …`.
+   Every write must carry a custom header (`x-curahold-device`, or a Bearer
+   key): it is the request-forgery guard in `app.ts`. Trying the API with
+   curl in development therefore needs `-H 'x-curahold-device: <16+ letters>'`
+   and the `Host: demo.localhost:5173` header; `POST /api/auth/start` answers
+   with a `devToken` you pass to `POST /api/auth/verify {token, deviceId}`.
 6. **The answer** is mapped from rows to the shared types (`lib/mappers.ts`,
    `toRecord`, `toPlan`…) and returned as JSON. Errors are thrown with
    `fail('code')` (`lib/errors.ts`): each code has an HTTP status and a
@@ -137,11 +148,11 @@ it matters (`app_has_perm()`, `app_can_write()`). A field can be hidden
 from roles (`lib/fieldAccess.ts`): anything that returns field values goes
 through `defsFor` / `stripFields` / `hiddenKeys`.
 
-**Every word is in both languages.** No text in components or routes:
-add a key to `shared/src/i18n/en.ts` **and** `tr.ts` and use `t('key')`
-(web) or `translate(locale, 'key')` (server). `tests/i18n.test.ts` fails if
-a key is missing in one language or an error code / audit action has no
-words.
+**Every word is in every language.** No text in components or routes:
+add a key to `shared/src/i18n/en.ts` **and every other dictionary** in that
+folder, and use `t('key')` (web) or `translate(locale, 'key')` (server).
+`tests/i18n.test.ts` fails if a key is missing in any language or an error
+code / audit action has no words (ADR 0008).
 
 **Nothing real in the repository.** Demo and test data is invented.
 `tests/leak.test.ts` fails if a name from the internal tool this product
@@ -209,7 +220,7 @@ widgetRoutes.post('/widgets', async (c) => {
 });
 ```
 
-A new audit action needs `audit.widget.created` in both dictionaries. Add a
+A new audit action needs `audit.widget.created` in every dictionary. Add a
 test in `tests/` (see section 6).
 
 ### a screen
@@ -234,8 +245,10 @@ Add it to the `groups` list and the switch at the bottom of
 
 Put `"key": ["English", "Türkçe"]` pairs in a JSON file and run
 `npx tsx scripts/add-strings.ts strings.json` (it adds new keys and changes
-existing ones in both dictionaries), or edit `shared/src/i18n/en.ts` and
-`tr.ts` by hand. Variables are written
+existing ones in the English and Turkish dictionaries only), then add the
+same keys to the other dictionaries in `shared/src/i18n/` by hand — the
+i18n test fails until every language has them. Check terms against
+`shared/src/i18n/glossary.ts`. Variables are written
 `{name}`; `{account}` / `{accounts_l}` are the company's own word for its
 customers.
 
@@ -378,7 +391,7 @@ saves a screenshot. Run them after any change to a screen.
 | Meetings (meetings, reviews, calls; next steps as tasks) | `routes/meetings.ts`, `routes/timeline.ts` (`PATCH /activities`) | `components/Meetings.tsx` (LogDialog, AccountMeetings) | `timeline.ts` (Meeting, NextStep) | `meetings.test.ts` |
 | Timeline (cards, quiet task traffic, filter) | `routes/timeline.ts` | `components/Timeline.tsx` | `timeline.ts` | `timeline.test.ts` |
 | New task dialog (every "add task") | `routes/tasks.ts` | `components/QuickAdd.tsx`, `lib/quickparse.ts` | `model.ts` | e2e |
-| Plans and billing (Paddle; off unless configured) | `routes/billing.ts`, `lib/billing.ts`, `lib/paddle.ts`, `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` (plans, prices, `accessOf`) | `billing.test.ts` |
+| Plans and billing (Paddle; off unless configured). One path, ADR 0019 | `api/src/billing/` (`service.ts` the one writer, `paddle.ts`, `entitlements.ts` caps, `project.ts`), `routes/billing.ts`; gating: `context.ts` (`requireWriter`, `requirePlan`) | `components/Billing.tsx` | `billing.ts` + `plans.json` (the price list: plans, prices, caps, trial, dunning, regions) | `billing*.test.ts`, `subscriptions.test.ts` |
 | Onboarding plans (own hub, customers' plans, portal view, report) | `routes/onboardingPlans.ts`, `lib/onboarding.ts`, `lib/onboardingSetup.ts`, `portal.ts` (`/papi/onboarding`) | `pages/Onboarding.tsx`, `web/portal/Onboarding.tsx` | `onboarding.ts` | `onboarding-hub.test.ts` |
 | The demo | `web/src/demo/` | same app | — | `npm run test:demo` |
 | Departments (walls, leads, requests across, the customer page's band) | `routes/departments.ts`, `lib/departments.ts`, migration 0120 (`app_visible_boards`) | `components/Departments.tsx`, `AccountDepartments.tsx`, `TaskExtras.tsx` (Ask another department), `Shell.tsx` (menu by department) | `departments.ts` (`DEPARTMENT_FLOW`, `handoverAfter`) | `departments*.test.ts` |
@@ -399,9 +412,9 @@ saves a screenshot. Run them after any change to a screen.
 
 ## 8. Writing style in the code
 
-- A file starts with a short comment: what it is for and where its
-  parts are. A function gets a one-line comment when its name doesn't say
-  everything; a tricky line gets a comment saying **why**.
+- Comments follow the standard in [CONTRIBUTING.md](../CONTRIBUTING.md#comments)
+  (file header, doc comment on every export and route, WHY-comments for
+  security, money, legal and the AI gate). `npm run lint:comments` measures it.
 - Names say what things are for (`renewalField`, `startRenewals`,
   `usePlaybooks`) — no abbreviations a newcomer has to guess.
 - Small, plain functions over clever ones. When a rule matters (security,
@@ -565,7 +578,17 @@ the four closest docs sections and read-only tools that call the API as the aski
 over the company's or the global monthly cap, or an error: the docs search answers, at no cost. A new read-only tool
 goes in `shared/src/assistant.ts` with a case in `tests/assistant-eval/cases.ts` (`live: true`). The evaluation
 runs without a key in CI (`npx tsx tests/assistant-eval/run.ts`, fixed checks) and with a key and a judge before a
-release. Privacy notes: `docs/legal/ai-assistant-privacy-notes.md`.
+release. Privacy notes: `docs/compliance/ai-assistant-privacy-notes.md`. Caps and why: ADR 0010.
+
+## The AI team (Curahold's own console)
+
+Seats from `shared/src/team/orgChart.ts` are put into the database by `api/src/team/seed.ts`. A seat thinks through the
+assistant's provider (`team/runtime.ts`, same key), wakes only when a cheap SQL pre-check finds something new
+(`team/precheck.ts`; `tick()` is what a scheduled task must call — nothing schedules it yet), and can only **propose**
+outside actions. `team/gate.ts` lets an approval run only when the operator decided it in his own console session, through
+a runner the server registered; `team/monitor.ts` pauses a seat that over-reaches, retries refusals, tries to bypass the
+gate or spikes in tokens. Budgets: weekly per seat, `TEAM_MONTHLY_USD` for the team (default 40). A new outside action =
+a runner + a proposal kind + tests in `tests/team*.test.ts` (incl. `team-redteam.test.ts`). Why: ADR 0011.
 
 ## Trials, terms and consent
 

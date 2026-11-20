@@ -30,6 +30,8 @@ export function testConfig(over: Partial<Config> = {}): Config {
     connectors: {},
     // Request limits off: tests run requests at machine speed. tests/ratelimit.test.ts turns them on.
     limitScale: 0,
+    // Ops alerts off: tests fail requests on purpose. tests/ops.test.ts turns them on.
+    ops: { alerts: false },
     ...over,
   };
 }
