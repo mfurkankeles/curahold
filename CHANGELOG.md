@@ -38,6 +38,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; demo links open in the visitor's language
   where the demo has it. The home page paints faster on phones (less inline CSS, one film scene at first).
 - Billing refuses countries we never sell to, in the billing profile, at checkout and at sign-up.
+- Help centre: every picture is retaken in all eleven languages from the current product (today's labels, Turkish "siz",
+  the customer's own address instead of a developer's). A help page shared or found in search shows a fuller description,
+  in the page's own words, and the sales site's robots.txt points crawlers to the help centre's sitemap too.
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
