@@ -5432,6 +5432,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "उन्हें न रखें",
   'assist.settings.retentionDays': "{n} दिन",
   'assist.settings.desk': "हमारे सहायता अनुरोधों पर पहला जवाब ड्राफ़्ट करें (सिर्फ़ Curahold सपोर्ट को दिखता है)",
+  'assist.settings.deskHint': "सिर्फ़ उन लोगों के अनुरोधों पर जिन्होंने AI असिस्टेंट की सूचना स्वीकार की है; बाकी लोगों को सपोर्ट बिना ड्राफ़्ट के जवाब देता है।",
   'assist.settings.usage': "इस महीने: {n} सवाल, {m} का जवाब AI ने दिया, करीब {cost}।",
   'assist.settings.unavailable': "इस इंस्टॉलेशन पर AI जवाब सेट अप नहीं हैं, इसलिए CuraAI डॉक्स सर्च का इस्तेमाल करता है।",
   'assist.settings.saved': "सेव हुआ।",

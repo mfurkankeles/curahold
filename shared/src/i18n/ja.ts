@@ -5515,6 +5515,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "保存しない",
   'assist.settings.retentionDays': "{n} 日",
   'assist.settings.desk': "サポートへの問い合わせに最初の返信の下書きを作る（Curahold サポートのみ閲覧）",
+  'assist.settings.deskHint': "AI アシスタントの説明に同意した人の問い合わせに限ります。それ以外の人には、サポートが下書きなしで返信します。",
   'assist.settings.usage': "今月：質問 {n} 件、うち AI が回答 {m} 件、約 {cost}。",
   'assist.settings.unavailable': "このインストールでは AI 回答が設定されていないため、CuraAI はドキュメント検索を使います。",
   'assist.settings.saved': "保存しました。",

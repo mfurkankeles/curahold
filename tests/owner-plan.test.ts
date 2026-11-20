@@ -384,7 +384,7 @@ describe('alerts on the owner’s phone (Web Push)', () => {
     const gate = new Promise<void>((r) => (release = r));
     let started!: () => void;
     const inFlight = new Promise<void>((r) => (started = r));
-    const slow = { ...env.deps, email: { send: async () => (++calls === 1 ? (started(), await gate) : undefined) } } as typeof env.deps;
+    const slow = { ...env.deps, email: { send: async () => (++calls === 1 ? (started(), await gate) : undefined) } } as unknown as typeof env.deps;
     const first = drainOwnerOutbox(slow);
     await inFlight;
     const second = await drainOwnerOutbox(slow);

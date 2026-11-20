@@ -5515,6 +5515,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "لا تحتفظ بها",
   'assist.settings.retentionDays': "{n} يومًا",
   'assist.settings.desk': "كتابة مسودة رد أول على طلبات الدعم (يراها دعم Curahold فقط)",
+  'assist.settings.deskHint': "فقط لطلبات الأشخاص الذين قبلوا إشعار مساعد الذكاء الاصطناعي؛ أما غيرهم فيردّ عليهم الدعم دون مسودة.",
   'assist.settings.usage': "هذا الشهر: {n} سؤالًا، أجاب الذكاء الاصطناعي عن {m} منها، بتكلفة تقارب {cost}.",
   'assist.settings.unavailable': "لم يتم إعداد إجابات الذكاء الاصطناعي في هذا التثبيت، لذا يستخدم CuraAI البحث في التوثيق.",
   'assist.settings.saved': "تم الحفظ.",

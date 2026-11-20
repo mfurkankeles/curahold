@@ -5515,6 +5515,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "不保留",
   'assist.settings.retentionDays': "{n} 天",
   'assist.settings.desk': "为我们的支持请求起草首次回复（仅 Curahold 支持团队可见）",
+  'assist.settings.deskHint': "仅限已接受 AI 助手说明的人提交的请求；对其他人，支持团队会直接回复，不起草草稿。",
   'assist.settings.usage': "本月：{n} 个问题，其中 {m} 个由 AI 回答，约 {cost}。",
   'assist.settings.unavailable': "此安装未设置 AI 回答，因此 CuraAI 使用文档搜索。",
   'assist.settings.saved': "已保存。",

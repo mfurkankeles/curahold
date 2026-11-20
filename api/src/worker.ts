@@ -121,6 +121,7 @@ export interface Env {
   ASSISTANT_BLOCKED_NAMES?: string;
   /** "0" closes the public docs chat. */
   ASSISTANT_PUBLIC_CHAT?: string;
+  ASSISTANT_DESK_FIRST_REPLY_BASIS?: string;
   /** The AI team (api/src/team/config.ts): models, the monthly USD cap, and TEAM_SCHEDULER=off to stop its 10-minute clock. */
   TEAM_MONTHLY_USD?: string;
   TEAM_MODEL_DEEP?: string;

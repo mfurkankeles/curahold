@@ -5515,6 +5515,7 @@ export const tr: Record<MessageKey, string> = {
   'assist.settings.retentionNone': "Saklama",
   'assist.settings.retentionDays': "{n} gün",
   'assist.settings.desk': "Destek taleplerimize ilk cevap taslağı yaz (yalnızca Curahold desteği görür)",
+  'assist.settings.deskHint': "Yalnızca yapay zekâ asistanının bilgilendirmesini kabul etmiş kişilerin taleplerinde; diğerlerine destek ekibi taslak olmadan cevap verir.",
   'assist.settings.usage': "Bu ay: {n} soru, {m} tanesi yapay zekâyla cevaplandı, yaklaşık {cost}.",
   'assist.settings.unavailable': "Bu kurulumda yapay zekâ cevapları ayarlanmamış, bu yüzden CuraAI belge aramasını kullanıyor.",
   'assist.settings.saved': "Kaydedildi.",

@@ -5529,6 +5529,7 @@ export const en = {
   'assist.settings.retentionNone': "Don't keep them",
   'assist.settings.retentionDays': "{n} days",
   'assist.settings.desk': "Draft a first reply on our help requests (seen only by Curahold support)",
+  'assist.settings.deskHint': "Only for requests from people who accepted the AI assistant's notice; anyone else gets support's answer without a draft.",
   'assist.settings.usage': "This month: {n} questions, {m} answered by AI, about {cost}.",
   'assist.settings.unavailable': "AI answers are not set up on this installation, so CuraAI uses the docs search.",
   'assist.settings.saved': "Saved.",

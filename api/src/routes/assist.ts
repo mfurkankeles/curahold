@@ -220,6 +220,8 @@ async function settingsView(c: C, s: CompanyAssistSettings) {
     usage: await monthUsage(deps.db, c.get('org').id, c.get('auth').userId),
     // Whether a model can answer at all on this installation, and which.
     engine: { available: !!provider, model: provider?.model ?? null, maxMonthlyCapUsd: cfg.companyMaxUsd },
+    // The draft first reply asks the model only for requesters who accepted the notice (deskFirstReply).
+    deskNeedsConsent: cfg.deskFirstReplyBasis !== 'company',
     retentionChoices: RETENTION_CHOICES,
   };
 }
@@ -356,12 +358,23 @@ export async function portalAssistConsent(
  * A first answer to a new help request, from the docs only, kept as an
  * internal note: a support person reads it, and sends it (or not). Nothing
  * reaches the customer by itself. Off when the company turned it off, or when
- * there is no model (a docs search as a note would only be noise).
+ * there is no model (a docs search as a note would only be noise). The request's
+ * words are the requester's own and they never saw the assistant's notice here,
+ * so by default (ASSISTANT_DESK_FIRST_REPLY_BASIS=consent) the model is asked only
+ * when that person has said yes to the notice in force; otherwise support simply
+ * answers without a draft. Read as the requester through row security.
  */
-export async function deskFirstReply(deps: Deps, org: OrgRow, req: { id: string; subject: string; description: string }, locale: Locale): Promise<AssistReply | null> {
+export async function deskFirstReply(
+  deps: Deps,
+  org: OrgRow,
+  req: { id: string; subject: string; description: string },
+  locale: Locale,
+  requesterId: string,
+): Promise<AssistReply | null> {
   const cfg = assistantConfig(deps);
   const settings = settingsOf(assistantSettingsOf(org), cfg);
   if (settings.deskFirstReply === 'off' || !settings.enabled || !providerOf(deps)) return null;
+  if (cfg.deskFirstReplyBasis !== 'company' && (await deps.db.tenant({ orgId: org.id, userId: requesterId }, (q) => appConsent(q, requesterId))).granted !== true) return null;
   const env = await envFor(deps, { surface: 'desk', locale, org, userId: null, limited: !!take(deps, `assist:c:${org.id}`, ASSIST_BUDGETS.company) });
   const question = `${req.subject}\n\n${req.description}`.slice(0, 2000);
   const { reply } = await answer(env, { question });

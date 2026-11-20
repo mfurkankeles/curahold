@@ -5432,6 +5432,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "Jangan simpan",
   'assist.settings.retentionDays': "{n} hari",
   'assist.settings.desk': "Draf balasan pertama pada permintaan bantuan kami (dilihat hanya oleh sokongan Curahold)",
+  'assist.settings.deskHint': "Hanya untuk permintaan daripada orang yang telah menerima notis pembantu AI; orang lain dijawab oleh sokongan tanpa draf.",
   'assist.settings.usage': "Bulan ini: {n} soalan, {m} dijawab oleh AI, kira-kira {cost}.",
   'assist.settings.unavailable': "Jawapan AI tidak disediakan pada pemasangan ini, jadi CuraAI menggunakan carian dokumen.",
   'assist.settings.saved': "Disimpan.",

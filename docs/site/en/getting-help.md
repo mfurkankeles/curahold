@@ -109,7 +109,7 @@ On the same card:
 
 - **Monthly limit (USD)**: when it is reached, CuraAI answers from the docs search until next month. The card shows this month's questions and what they cost.
 - **Keep questions for**: how long questions are kept (or not at all). A person's own questions are in their personal-data download.
-- **Draft a first reply on our help requests**: Curahold support sees a drafted first answer to your requests; you never see the draft, only support's real answer.
+- **Draft a first reply on our help requests**: Curahold support sees a drafted first answer to your requests; you never see the draft, only support's real answer. The draft is written only for requests from people who accepted CuraAI's notice; anyone else's request reaches support without one, and its words are not sent to the AI provider.
 
 If the card says AI answers are not set up on this installation, CuraAI uses the docs search; the person who runs your Curahold server adds the AI key.
 

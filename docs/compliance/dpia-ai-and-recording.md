@@ -31,6 +31,11 @@ Two or more criteria → an assessment is advisable for the assistant, AI drafts
   model is called only after the person accepted the assistant's notice (otherwise the template writes the draft and nothing
   leaves Curahold). The assistant keeps no draft: the person reads, changes and confirms it, and only then is it saved where
   they chose, under that record's retention. No training by the provider [confirm in the signed terms].
+- **Draft first reply on a help request** — `deskFirstReply` (api/src/routes/assist.ts); data inventory activity `support`.
+  The request's subject and description (up to 2,000 characters) go to the provider for an internal note only Curahold
+  support sees. Since 21 Nov only when the person who wrote the request accepted the assistant's notice; otherwise no draft
+  and nothing leaves Curahold (ADR 0021). `ASSISTANT_DESK_FIRST_REPLY_BASIS=company` would rest it on the company's switch
+  alone [owner and counsel to decide; this assessment would then need its own line].
 - **AI team** — `api/src/team/`. Curahold's internal agents; propose only; an operator approves every outside action
   (`api/src/team/gate.ts`). Memory can mention customers' contacts; mentions of an erased person are redacted (`lib/erasure.ts`).
 - **Session recording** — `shared/src/replay.ts`. Off by default; every input masked; 7-day retention; tied to a help request.

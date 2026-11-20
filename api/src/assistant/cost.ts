@@ -68,6 +68,14 @@ export interface AssistantConfig {
   blockedNames: string[];
   /** The docs site's and sales site's chat, which anyone may use (rate-limited, global cap). */
   publicChat: boolean;
+  /**
+   * What lets a new help request's words reach the model for the desk's draft first reply. 'consent' (the default):
+   * only when the person who wrote it said yes to the assistant's notice, like every chat door (MASTER-RULES 13).
+   * 'company': the company's own switch is the legal basis (the requester never saw the notice; needs the owner's
+   * and a lawyer's decision and a DPIA line). Operator-level on purpose: a company cannot choose the basis itself.
+   * Absent counts as 'consent'.
+   */
+  deskFirstReplyBasis?: 'consent' | 'company';
 }
 
 export const DEFAULT_MODEL = 'claude-sonnet-5-5';
@@ -88,6 +96,7 @@ export function assistantConfigFrom(env: Record<string, string | undefined>): As
       .map((s) => s.trim())
       .filter(Boolean),
     publicChat: env.ASSISTANT_PUBLIC_CHAT !== '0',
+    deskFirstReplyBasis: env.ASSISTANT_DESK_FIRST_REPLY_BASIS === 'company' ? 'company' : 'consent',
   };
 }
 

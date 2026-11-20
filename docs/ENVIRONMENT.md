@@ -183,6 +183,7 @@ Google Sheets and Excel reuse the Google and Microsoft sign-in keys.
 | `ASSISTANT_COMPANY_MAX_USD` | Highest cap a company may choose | No | `50`. |
 | `ASSISTANT_BLOCKED_NAMES` | Other products' names the assistant declines to discuss, comma-separated (kept out of the code) | No | Empty. |
 | `ASSISTANT_PUBLIC_CHAT` | `0` closes the public chat on the docs and sales site | No | Open (rate-limited, inside the global cap). |
+| `ASSISTANT_DESK_FIRST_REPLY_BASIS` | What lets a new help request's words reach the model for support's draft first reply: `consent` = only when the person who wrote it accepted CuraAI's notice; `company` = the company's switch alone | No | `consent` (the safe default; `company` needs the owner's and a lawyer's decision, see ADR 0021). |
 | `TEAM_MONTHLY_USD` | Cap for all AI-team model spend, USD a month | No | `40`. |
 | `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per seat profile, and the golden-task judge | No | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`, `claude-opus-5-5`. |
 

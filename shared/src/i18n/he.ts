@@ -5515,6 +5515,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "לא לשמור",
   'assist.settings.retentionDays': "{n} ימים",
   'assist.settings.desk': "כתיבת טיוטת תשובה ראשונה לפניות התמיכה שלנו (רק התמיכה של Curahold רואה אותה)",
+  'assist.settings.deskHint': "רק לפניות של אנשים שאישרו את ההודעה של עוזר ה-AI; לאחרים התמיכה עונה בלי טיוטה.",
   'assist.settings.usage': "החודש: {n} שאלות, {m} נענו בבינה מלאכותית, בעלות של כ-{cost}.",
   'assist.settings.unavailable': "תשובות בינה מלאכותית לא הוגדרו בהתקנה זו, ולכן CuraAI משתמש בחיפוש בתיעוד.",
   'assist.settings.saved': "נשמר.",

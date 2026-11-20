@@ -5515,6 +5515,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'assist.settings.retentionNone': "보관하지 않음",
   'assist.settings.retentionDays': "{n}일",
   'assist.settings.desk': "지원 요청에 첫 답변 초안 작성(Curahold 지원팀만 볼 수 있음)",
+  'assist.settings.deskHint': "AI 어시스턴트 안내에 동의한 사람의 요청에만 해당합니다. 그 밖의 경우 지원팀이 초안 없이 답변합니다.",
   'assist.settings.usage': "이번 달: 질문 {n}개, AI 답변 {m}개, 약 {cost}.",
   'assist.settings.unavailable': "이 설치에는 AI 답변이 설정되어 있지 않아 CuraAI가 문서 검색을 사용합니다.",
   'assist.settings.saved': "저장했습니다.",
