@@ -288,8 +288,8 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .signin__row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
 /* Close sits in the end corner, 44 × 44, visible on the card (owner rule for every popup). */
 .signin form { position: relative; }
-.signin__x { position: absolute; top: -12px; inset-inline-end: -12px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; }
-.signin__x:hover { color: var(--ink); border-color: var(--ink-3); }
+.signin__x { position: absolute; top: -12px; inset-inline-end: -12px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ink-3); border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; }
+.signin__x:hover { color: var(--ink); border-color: var(--ink-2); }
 .signin__x svg { width: 18px; height: 18px; }
 .signin h2 { padding-inline-end: 44px; }
 .signin__row .hx__btn { min-height: 44px; }
