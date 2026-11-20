@@ -24,6 +24,8 @@ import { opsHourlyCheck } from './ops';
 import { scanHeld } from './uploadScan';
 import { purgeExpired } from './retention';
 import { purgeDueCompanies } from './companyDeletion';
+import { queueCeoSummary } from './ceoSummary';
+import { drainOwnerOutbox } from './ownerOutbox';
 
 const DIGEST_ITEMS = 8;
 
@@ -120,6 +122,10 @@ export async function cleanUp(deps: Deps) {
     await q.query(`delete from support_sessions where expires_at < now() - interval '30 days'`);
     // Session recordings are kept only as long as useful for support (chunks cascade).
     await q.query(`delete from replay_sessions where last_at < now() - make_interval(days => $1)`, [REPLAY_RETENTION_DAYS]);
+    // Investors the owner put aside come back for 30 days (the console's undo), then go for good.
+    await q.query(`delete from investor_pipeline where deleted_at < now() - interval '30 days'`);
+    // What the console sent the owner is kept 90 days (the keys stop a week's summary going twice).
+    await q.query(`delete from owner_outbox where created_at < now() - interval '90 days' and state <> 'pending'`);
     await q.query(`delete from api_tokens where (revoked_at is not null or coalesce(refresh_expires_at, expires_at) < now()) and coalesce(revoked_at, refresh_expires_at, expires_at) < now() - interval '30 days'`);
   });
 }
@@ -151,8 +157,8 @@ export async function archiveFinished(deps: Deps, now: Date): Promise<number> {
 
 /**
  * The periodic job (cron): digests, automations, weekly summaries, nudges, onboarding signals, notification and
- * webhook delivery, health scores, CRM syncs, trial reminders, seat sync to billing, held uploads, ops alerts, and
- * the daily clean-up. Each step catches its own failure so one broken job never stops the others.
+ * webhook delivery, health scores, CRM syncs, trial reminders, seat sync to billing, held uploads, ops alerts, the
+ * owner's Monday CEO summary and his own outbox, and the daily clean-up. Each step catches its own failure so one broken job never stops the others.
  */
 export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Date()))()) {
   const digests = await sendDigests(deps, now);
@@ -208,5 +214,9 @@ export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Dat
   await scanHeld(deps).catch((e) => console.error('[curahold] upload scan sweep failed', e));
   // Error-rate and stuck-delivery alerts across every isolate (lib/ops.ts).
   const alerts = (await opsHourlyCheck(deps, now).catch((e) => (console.error('[curahold] ops check failed', e), []))).length;
-  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats, trialMails, alerts };
+  // Monday morning: the owner's weekly CEO summary (once per week by its key; no model call), then whatever waits
+  // for the owner himself (that summary, phone alerts that could not go at once).
+  const ceoSummary = await queueCeoSummary(deps, now).catch((e) => (console.error('[curahold] CEO summary failed', e), false));
+  const ownerSent = await drainOwnerOutbox(deps).catch((e) => (console.error('[curahold] owner outbox failed', e), 0));
+  return { digests, weekly, nudges, fired, delivered, synced, hooks, seats, trialMails, alerts, ceoSummary, ownerSent };
 }

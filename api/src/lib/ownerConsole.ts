@@ -30,7 +30,8 @@ import { consoleToday } from './console';
 const num = (v: unknown) => Number(v) || 0;
 const isoAt = (v: unknown): string => iso(v) ?? '';
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
-const PAYING = `coalesce(o.billing->>'status' in ('active', 'past_due'), false)`;
+/** SQL: the company `o` pays (active, or past due while dunning runs). One rule for every owner figure. */
+export const PAYING = `coalesce(o.billing->>'status' in ('active', 'past_due'), false)`;
 const TRIAL = `coalesce(o.billing->>'status' = 'trialing' or (coalesce(o.billing->>'status', '') = '' and o.trial_ends_at > now()), false)`;
 const monthOf = (d: Date) => d.toISOString().slice(0, 7);
 const dayOf = (d: Date) => d.toISOString().slice(0, 10);

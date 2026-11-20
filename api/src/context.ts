@@ -95,6 +95,11 @@ export interface Config {
   team?: import('./team/config').TeamConfig;
   /** Error-rate and latency alerts (lib/ops.ts): on unless OPS_ALERTS=off; e-mail to the owner unless OPS_ALERT_EMAIL=off. */
   ops?: { alerts?: boolean; email?: boolean };
+  /**
+   * Web Push to the owner's phones (lib/webpush.ts): the server's VAPID key pair (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+   * and contact (VAPID_SUBJECT, default mailto: the owner). Unset: the console offers no phones; e-mail still goes.
+   */
+  push?: import('./lib/webpush').Vapid;
 }
 
 /** Curahold's Paddle account (https://developer.paddle.com). */
