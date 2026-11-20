@@ -51,7 +51,7 @@ Pentadbir boleh memintanya dalam **Tetapan → Syarikat → Padam syarikat**, de
 
 ### Permintaan tentang data peribadi
 
-Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang mempunyai kebenaran privasi merekodkan setiap permintaan seseorang tentang data mereka, bersama undang-undang yang terpakai: akses, pembetulan, pemadaman, sekatan pemprosesan, bantahan, kemudahalihan atau penarikan balik persetujuan. Tarikh akhir dikira daripada undang-undang itu (contohnya 30 hari di bawah KVKK dan GDPR, 10 hari di bawah PIPA Korea), dan permintaan yang lewat ditanda merah dengan ikon. Tandakan permintaan sebagai sudah dijawab atau ditolak apabila selesai; setiap perubahan direkodkan dalam log aktiviti. Kerja sebenar dibuat melalui tindakan eksport dan padam pada orang itu.
+Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang mempunyai kebenaran privasi merekodkan setiap permintaan seseorang tentang data mereka, bersama undang-undang yang terpakai: akses, pembetulan, pemadaman, sekatan pemprosesan, bantahan, kemudahalihan atau penarikan balik persetujuan. Tarikh akhir dikira daripada undang-undang itu (contohnya 30 hari di bawah KVKK, satu bulan kalendar di bawah GDPR, 10 hari di bawah PIPA Korea), dan permintaan yang lewat ditanda merah dengan ikon. Tandakan permintaan sebagai sudah dijawab atau ditolak apabila selesai; setiap perubahan direkodkan dalam log aktiviti. Kerja sebenar dibuat melalui tindakan eksport dan padam pada orang itu.
 
 ## Berapa lama sesuatu disimpan
 

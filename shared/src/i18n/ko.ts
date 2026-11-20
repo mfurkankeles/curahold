@@ -7016,6 +7016,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': '접수일',
   'privacyReq.receivedOn': '{date} 접수',
   'privacyReq.dueHint': '기한: {date}(이 법에 따라 {days}일).',
+  'privacyReq.dueHintMonth': "기한: {date}(이 법에 따라 1개월).",
   'privacyReq.due': '{date}까지',
   'privacyReq.overdue': '{date}부터 기한 초과',
   'privacyReq.note': '메모',

@@ -6961,6 +6961,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': 'मिलने की तारीख',
   'privacyReq.receivedOn': '{date} को मिला',
   'privacyReq.dueHint': 'आखिरी तारीख {date} (इस कानून के तहत {days} दिन)।',
+  'privacyReq.dueHintMonth': "आखिरी तारीख {date} (इस कानून के तहत एक महीना)।",
   'privacyReq.due': '{date} तक',
   'privacyReq.overdue': '{date} से देरी',
   'privacyReq.note': 'नोट',

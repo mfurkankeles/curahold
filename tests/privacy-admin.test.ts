@@ -173,6 +173,11 @@ describe('personal data (KVKK / GDPR)', () => {
     const korea = (await ada.post('/api/admin/privacy-requests', { kind: 'restriction', subjectName: 'Min Park', law: 'pipa', receivedOn: '2026-11-02' })).json.request;
     expect(korea.dueOn).toBe('2026-11-12');
     expect((await ada.post('/api/admin/privacy-requests', { kind: 'access', subjectName: 'X', law: 'gdpr', receivedOn: '2026-11-02', dueOn: '2026-10-01' })).status).toBe(400);
+    // GDPR "one month" is a calendar month: 1 February → 1 March, 31 January → the last day of February.
+    expect((await ada.post('/api/admin/privacy-requests', { kind: 'access', subjectName: 'Feb Person', law: 'gdpr', receivedOn: '2027-02-01' })).json.request.dueOn).toBe('2027-03-01');
+    expect((await ada.post('/api/admin/privacy-requests', { kind: 'access', subjectName: 'Jan Person', law: 'uk_gdpr', receivedOn: '2028-01-31' })).json.request.dueOn).toBe('2028-02-29');
+    // Moving the due date before the day it came in is a validation error, not a server error.
+    expect((await ada.patch(`/api/admin/privacy-requests/${logged.json.request.id}`, { dueOn: '2026-10-01' })).status).toBe(400);
     // The open one due first comes first.
     const list = (await ada.get('/api/admin/privacy-requests')).json.requests;
     expect(list.slice(0, 2).map((r: any) => r.subjectName)).toEqual(['Min Park', 'Pia Portal']);

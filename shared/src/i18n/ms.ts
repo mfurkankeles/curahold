@@ -6961,6 +6961,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': 'Diterima pada',
   'privacyReq.receivedOn': 'diterima {date}',
   'privacyReq.dueHint': 'Tarikh akhir {date} ({days} hari di bawah undang-undang ini).',
+  'privacyReq.dueHintMonth': "Tarikh akhir {date} (sebulan di bawah undang-undang ini).",
   'privacyReq.due': 'Tarikh akhir {date}',
   'privacyReq.overdue': 'Lewat sejak {date}',
   'privacyReq.note': 'Nota',

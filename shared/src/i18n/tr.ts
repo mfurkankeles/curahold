@@ -7016,6 +7016,7 @@ export const tr: Record<MessageKey, string> = {
   'privacyReq.received': 'Alındığı tarih',
   'privacyReq.receivedOn': '{date} tarihinde alındı',
   'privacyReq.dueHint': 'Son gün {date} (bu kanuna göre {days} gün).',
+  'privacyReq.dueHintMonth': "Son gün {date} (bu kanuna göre bir ay).",
   'privacyReq.due': 'Son gün {date}',
   'privacyReq.overdue': '{date} tarihinden beri gecikmede',
   'privacyReq.note': 'Not',

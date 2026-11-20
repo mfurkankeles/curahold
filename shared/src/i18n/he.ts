@@ -7016,6 +7016,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': 'התקבלה ב-',
   'privacyReq.receivedOn': 'התקבלה ב-{date}',
   'privacyReq.dueHint': 'מועד אחרון: {date} ({days} ימים לפי חוק זה).',
+  'privacyReq.dueHintMonth': "מועד אחרון: {date} (חודש אחד לפי חוק זה).",
   'privacyReq.due': 'עד {date}',
   'privacyReq.overdue': 'באיחור מאז {date}',
   'privacyReq.note': 'הערה',

@@ -7016,6 +7016,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': '受付日',
   'privacyReq.receivedOn': '{date} 受付',
   'privacyReq.dueHint': '期限は{date}（この法律では{days}日）。',
+  'privacyReq.dueHintMonth': "期限は{date}（この法律では1か月）。",
   'privacyReq.due': '期限 {date}',
   'privacyReq.overdue': '{date}から期限超過',
   'privacyReq.note': 'メモ',

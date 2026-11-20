@@ -51,7 +51,7 @@ Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yaz
 
 ### Kişisel veri talepleri
 
-**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK ve GDPR'de 30 gün, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
+**Ayarlar → Şirket → Kişisel veri talepleri**'nde gizlilik yetkisi olan kişiler, birinin kendi verileriyle ilgili yaptığı her talebi geçerli yasayla birlikte kaydeder: bilgi ve erişim, düzeltme, silme, işlemenin kısıtlanması, itiraz, veri taşınabilirliği ya da rızanın geri alınması. Son gün bu yasaya göre dolar (örneğin KVKK'da 30 gün, GDPR'de bir takvim ayı, Kore'nin PIPA'sında 10 gün); süresi geçen talep simgeyle ve kırmızıyla işaretlenir. İş bitince talebi yanıtlandı ya da reddedildi olarak işaretleyin; her değişiklik aktivite kaydında yer alır. İşin kendisini kişinin dışa aktarma ve silme işlemleriyle yaparsınız.
 
 ## Saklama süreleri
 

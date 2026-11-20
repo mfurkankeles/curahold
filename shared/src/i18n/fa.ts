@@ -7016,6 +7016,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': 'تاریخ دریافت',
   'privacyReq.receivedOn': 'دریافت در {date}',
   'privacyReq.dueHint': 'مهلت تا {date} ({days} روز طبق این قانون).',
+  'privacyReq.dueHintMonth': "مهلت تا {date} (یک ماه طبق این قانون).",
   'privacyReq.due': 'مهلت {date}',
   'privacyReq.overdue': 'از {date} گذشته است',
   'privacyReq.note': 'یادداشت',

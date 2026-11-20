@@ -7030,6 +7030,7 @@ export const en = {
   'privacyReq.received': 'Received on',
   'privacyReq.receivedOn': 'received {date}',
   'privacyReq.dueHint': 'Due by {date} ({days} days under this law).',
+  'privacyReq.dueHintMonth': "Due by {date} (one month under this law).",
   'privacyReq.due': 'Due {date}',
   'privacyReq.overdue': 'Overdue since {date}',
   'privacyReq.note': 'Note',

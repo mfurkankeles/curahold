@@ -7016,6 +7016,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': 'تاريخ الاستلام',
   'privacyReq.receivedOn': 'استُلم في {date}',
   'privacyReq.dueHint': 'الموعد النهائي {date} ({days} يومًا وفق هذا القانون).',
+  'privacyReq.dueHintMonth': "الموعد النهائي {date} (شهر واحد وفق هذا القانون).",
   'privacyReq.due': 'يُستحق في {date}',
   'privacyReq.overdue': 'متأخر منذ {date}',
   'privacyReq.note': 'ملاحظة',

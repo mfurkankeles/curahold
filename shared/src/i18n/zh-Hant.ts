@@ -7016,6 +7016,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'privacyReq.received': '收到日期',
   'privacyReq.receivedOn': '{date} 收到',
   'privacyReq.dueHint': '截止日 {date}（依該法律為 {days} 天）。',
+  'privacyReq.dueHintMonth': "截止日 {date}（依該法律為一個月）。",
   'privacyReq.due': '{date} 截止',
   'privacyReq.overdue': '自 {date} 起已逾期',
   'privacyReq.note': '備註',
