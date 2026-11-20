@@ -2,6 +2,7 @@
 // its address and secret, how the sender signs, what a delivery becomes and the mapping, a test screen and the log.
 // People with connections.manage only. The receiver itself (POST /api/inbound/hooks/:id) is mounted before sign-in;
 // the hook id in the address names it, the signature or token proves the sender.
+import type { BoardsRow, InboundHooksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { HOOK_RECIPES, HOOK_SCHEMES, HOOK_TARGETS, pathsOf, render, type HookDelivery, type HookMapping, type InboundHook } from '../../../shared/src/inboundHooks';
@@ -87,6 +88,9 @@ async function sealedSet(c: C, ids: string[]): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id));
 }
 
+/**
+ * The company's incoming webhooks and the ready-made recipes (target, auth, field mapping, sample). Needs connections.manage.
+ */
 inboundHookRoutes.get('/inbound-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const { rows, counts } = await run(c, async (q) => ({
@@ -104,6 +108,10 @@ inboundHookRoutes.get('/inbound-hooks', async (c) => {
   return c.json({ hooks, recipes: HOOK_RECIPES.map((r) => ({ key: r.key, target: r.target, auth: r.auth, mapping: r.mapping, sample: r.sample })) });
 });
 
+/**
+ * Creates an incoming webhook from a recipe; a task target needs a board the person can see. Needs connections.manage;
+ * audited. Its secret is shown only in this response (201).
+ */
 inboundHookRoutes.post('/inbound-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(
@@ -130,7 +138,7 @@ inboundHookRoutes.post('/inbound-hooks', async (c) => {
   const sealed = input.senderSecret ? await seal({ secret: input.senderSecret }, secretsKey(deps.config)) : null;
   const row = await run(c, async (q) => {
     if (mapping.boardId) {
-      const [b] = await q.query('select id from boards where id = $1 and archived_at is null', [mapping.boardId]);
+      const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [mapping.boardId]);
       if (!b) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     }
     const [r] = await q.query(
@@ -144,6 +152,7 @@ inboundHookRoutes.post('/inbound-hooks', async (c) => {
   return c.json({ hook: await toHook(c, row, { ok: 0, failed: 0, skipped: 0 }, !!sealed) }, 201);
 });
 
+/** Changes an incoming webhook's mapping, target or on/off state. Needs connections.manage. */
 inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -171,7 +180,7 @@ inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
     const mapping = input.mapping ?? had.mapping;
     if ((input.target ?? had.target) === 'task' && !mapping?.boardId) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     if (input.mapping?.boardId) {
-      const [b] = await q.query('select id from boards where id = $1 and archived_at is null', [input.mapping.boardId]);
+      const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [input.mapping.boardId]);
       if (!b) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     }
     const [r] = await q.query(
@@ -187,24 +196,26 @@ inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
   return c.json({ hook: await toHook(c, row, { ok: 0, failed: 0, skipped: 0 }, set.has(id)) });
 });
 
+/** Removes an incoming webhook; its address stops working. Needs connections.manage; audited. */
 inboundHookRoutes.delete('/inbound-hooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const org = c.get('org');
   const actor = c.get('auth');
   await run(c, async (q) => {
-    const gone = await q.query('delete from inbound_hooks where id = $1 returning id', [id]);
+    const gone = await q.query<Pick<InboundHooksRow, 'id'>>('delete from inbound_hooks where id = $1 returning id', [id]);
     if (!gone.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: actor.userId, action: 'inbound_hook.deleted', entity: 'org', entityId: org.id, meta: { hook: id } });
   });
   return c.json({ ok: true });
 });
 
+/** An incoming webhook's recent deliveries with their outcome, for debugging. Needs connections.manage. */
 inboundHookRoutes.get('/inbound-hooks/:id/deliveries', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    const [h] = await q.query('select id from inbound_hooks where id = $1', [id]);
+    const [h] = await q.query<Pick<InboundHooksRow, 'id'>>('select id from inbound_hooks where id = $1', [id]);
     if (!h) fail('not_found');
     return q.query('select id, received_at, event_id, status, test, error, result, payload from inbound_deliveries where hook_id = $1 order by received_at desc limit 100', [id]);
   });

@@ -46,6 +46,7 @@ const nextHour = () => {
 
 const LENGTHS = [15, 30, 45, 60, 90, 120];
 
+/** On a customer page: planned meetings with the customer. */
 export function AccountPlanned({ account }: { account: Account }) {
   const { t, fmtDate, locale } = useI18n();
   const { canWrite, person } = useStore();

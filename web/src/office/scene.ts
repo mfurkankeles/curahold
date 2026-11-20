@@ -176,6 +176,7 @@ interface Person {
   homeBy?: number;
 }
 
+/** The 3D office (three.js): rooms, desks, figures walking between them, camera and picking. Owner console only. */
 export class OfficeScene {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
@@ -1390,6 +1391,7 @@ const spread = (pts: Map<number, { x: number; y: number }>) => {
   const [a, b] = [...pts.values()];
   return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
 };
+/** A small stable hash of a text (FNV-1a), for steady per-seat variations. */
 export function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);

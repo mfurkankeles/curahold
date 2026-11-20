@@ -340,6 +340,7 @@ export const TOURS: Tour[] = [
 /** A step's screen in a demo with a product team's board: `:product` stands for that board's id. */
 export const PRODUCT_BOARD = ':product';
 
+/** A product tour by id. */
 export const tourById = (id: string | null | undefined): Tour | undefined => TOURS.find((t) => t.id === id);
 
 /** A tour's words in a language. */

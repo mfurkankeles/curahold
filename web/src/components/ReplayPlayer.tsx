@@ -36,6 +36,7 @@ function withoutHeadIcons(events: unknown[]): unknown[] {
   return events;
 }
 
+/** The desk's player for a help request's session recording (loaded on demand). */
 export default function ReplayPlayer({ reference, replay, onClose }: { reference: string; replay: ReplayMeta; onClose: () => void }) {
   const { t } = useI18n();
   const host = useRef<HTMLDivElement>(null);

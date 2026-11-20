@@ -32,6 +32,7 @@ export interface WaMessage {
   at: string | null;
 }
 
+/** Checks Meta's `x-hub-signature-256` HMAC of the raw body against the app secret, in constant time. */
 export async function verifyMeta(appSecret: string, raw: string, header: string | null): Promise<boolean> {
   if (!appSecret || !header?.startsWith('sha256=')) return false;
   return safeEqual(header.slice(7).toLowerCase(), await hmacHex(appSecret, raw));

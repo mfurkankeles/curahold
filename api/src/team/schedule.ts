@@ -44,6 +44,10 @@ export function dueCadenceSeats(now: Date, windowMin: number): Set<string> {
   return due;
 }
 
+/**
+ * The scheduled wake for the AI team (the Worker's cron calls it). Does nothing when the schedule is off, everything is
+ * paused, or the monthly cap is reached; otherwise wakes the seats that are due or have queued tasks.
+ */
 export async function scheduledTeamTick(deps: Deps, windowMin = TEAM_WINDOW_MIN): Promise<TeamTickResult> {
   const state = teamScheduleState(deps);
   if (state !== 'on') return { status: state, woke: [] };

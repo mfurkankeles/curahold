@@ -25,6 +25,10 @@ function toBase64url(bytes: Uint8Array): string {
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+/**
+ * Starts the session recording for support when the company allows it: inputs masked, batches gzipped and posted to
+ * /api/replay. Never in the demo; stops when the server says so.
+ */
 export function startRecording(me: Me) {
   if (started || typeof window === 'undefined' || import.meta.env.APP_DEMO) return;
   if (!me.org.recordSessions || me.previewBy || me.supportBy) return;

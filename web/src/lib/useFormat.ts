@@ -5,6 +5,7 @@ import { useI18n } from './i18n';
 import { useStore } from './store';
 import { formatBytes, formatClock, formatDate, formatDateTime, formatMoney, formatMonth, formatNumber, formatPercent, formatUnit } from './format';
 
+/** Date, number and relative-time formatting in the reader's language. */
 export function useFormat() {
   const { locale } = useI18n();
   const { me } = useStore();

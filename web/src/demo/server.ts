@@ -102,6 +102,10 @@ const DEVICE = (() => {
   return btoa(String.fromCharCode(...buf)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 })();
 
+/**
+ * Starts the demo entirely in the browser: an in-memory PGlite database, the migrations, the seeded company and the
+ * real API and portal apps, reporting progress through `step`. Nothing reaches a server.
+ */
 export async function startServer(step: (pct: number, key: 'db' | 'schema' | 'data' | 'app') => void | Promise<void>, locale: Locale = 'tr'): Promise<DemoServer> {
   step(8, 'db');
   const [{ createApp }, { createPortalApp }, { migrate }, { pgliteDb }, services, { PGlite }, fsBundle] = await Promise.all([

@@ -1,4 +1,4 @@
-// A minimal app that mounts the Wave-4A billing / onboarding routers with the
+// A minimal app that mounts the billing and onboarding routers with the
 // same deps (and the same row-level security) as the product, so these routes
 // can be exercised over HTTP without editing the shared api/src/app.ts hub — the
 // coordinator wires that. It resolves the company from the host and the person

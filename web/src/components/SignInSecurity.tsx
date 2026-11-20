@@ -11,6 +11,7 @@ import { LoadError, SkeletonRows } from './Empty';
 import { RecoveryCodes, TotpSecret } from './SecondStep';
 import { Icon } from './icons';
 
+/** The person's own sign-in security: authenticator app, passkeys, recovery codes. */
 export function SignInSecurity() {
   const { t } = useI18n();
   const save = useSaver();

@@ -41,6 +41,7 @@ const MAX_TRIES = 5;
 export const RECOVERY_CODES = 10;
 const MAX_PASSKEYS = 10;
 
+/** The company's second-step rule ('off', 'admins' or 'everyone'), defaulting to off. */
 export function secondStepPolicy(org: Pick<OrgRow, 'settings'>): SecondStepPolicy {
   const p = (org.settings as any)?.secondStep;
   return (SECOND_STEP_POLICIES as readonly string[]).includes(p) ? p : 'off';
@@ -58,6 +59,7 @@ export interface Factors {
   recoveryLeft: number;
 }
 
+/** Which second steps a person has: an authenticator app, and how many passkeys. */
 export async function factorsOf(c: C, userId: string): Promise<Factors> {
   const orgId = c.get('org').id;
   const [r] = await c.get('deps').db.system((q) =>
@@ -70,6 +72,7 @@ export async function factorsOf(c: C, userId: string): Promise<Factors> {
   );
   return { totp: r.totp, passkeys: r.passkeys, recoveryLeft: r.recovery };
 }
+/** Whether a person has any second step at all. */
 export const hasFactor = (f: Factors) => f.totp || f.passkeys > 0;
 
 /** The company's own address is the passkey's home (one company, one set of passkeys). */
@@ -239,6 +242,9 @@ export async function newRecoveryCodes(c: C, userId: string): Promise<string[]> 
   return codes;
 }
 
+/**
+ * Uses one recovery code: marked used in the same statement that matches it, so each works once. True when it matched.
+ */
 export async function useRecovery(c: C, userId: string, code: string): Promise<boolean> {
   const rows = await c.get('deps').db.system(async (q) =>
     q.query(
@@ -323,6 +329,7 @@ export async function checkPasskey(c: C, kind: 'login' | 'confirm', challengeId:
   return cred.user_id as string;
 }
 
+/** Passkey registration options for a person, excluding the passkeys they have; 'passkey_failed' at the limit. */
 export async function registrationOptions(c: C, user: { id: string; email: string; name: string }) {
   const existing = await credentialsOf(c, user.id);
   if (existing.length >= MAX_PASSKEYS) fail('passkey_failed');
@@ -340,6 +347,9 @@ export async function registrationOptions(c: C, user: { id: string; email: strin
   return { challengeId: await saveChallenge(c, user.id, 'register', opts.challenge), options: opts };
 }
 
+/**
+ * Verifies a new passkey against its one-time challenge and stores it; 'passkey_failed' when verification fails.
+ */
 export async function registerPasskey(c: C, userId: string, challengeId: string, response: unknown, name: string | undefined, fallbackName: string) {
   const challenge = await takeChallenge(c, challengeId, 'register', userId);
   const { rpID, origin } = rp(c);
@@ -386,6 +396,7 @@ export async function requireFresh(c: C): Promise<void> {
   if (!row?.fresh) fail('reauth_required');
 }
 
+/** Marks this session as just confirmed, which is what requireFresh checks for sensitive actions. */
 export async function markConfirmed(c: C) {
   const orgId = c.get('org').id;
   await c.get('deps').db.system((q) => q.query('update sessions set confirmed_at = now() where org_id = $1 and id = $2', [orgId, c.get('auth').sessionId]));

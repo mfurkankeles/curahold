@@ -68,6 +68,7 @@ export function TotpSecret({ secret, uri }: { secret: string; uri: string }) {
   );
 }
 
+/** The second sign-in step: authenticator code, passkey or recovery code, or setting one up when required. */
 export function SecondStepForm({ step, orgName, onDone }: { step: SecondStepNeeded; orgName: string; onDone: () => void }) {
   const { t } = useI18n();
   const passkey = step.methods.includes('passkey') && passkeysHere();

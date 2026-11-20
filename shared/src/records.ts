@@ -113,6 +113,7 @@ export function ticketStatusOf(v: unknown): 'open' | 'pending' | 'solved' | 'clo
   return 'open';
 }
 
+/** A ticket priority from an outside tool's value in any common wording (English or Turkish); normal otherwise. */
 export function ticketPriorityOf(v: unknown): 'low' | 'normal' | 'high' | 'urgent' {
   const s = String(v ?? '').toLocaleLowerCase('tr');
   if (/urgent|critical|highest|blocker|acil|kritik/.test(s)) return 'urgent';
@@ -325,6 +326,7 @@ export const ROLLUP_PRESETS: { kind: RecordKind; field: AccountField }[] = [
   { kind: 'contact', field: { key: 'blockers', label: P('rtype.blockers'), type: 'number', rollup: { type: 'contact', fn: 'count', where: { field: 'stance', option: 'blocker' } } } },
 ];
 
+/** A record type's name in the reader's language, singular or plural. */
 export function typeLabel(t: Pick<RecordType, 'name'>, locale: Locale, plural = true): string {
   const l = plural ? t.name.other : t.name.one;
   return phraseIn(l, locale);

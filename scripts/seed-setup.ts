@@ -10,6 +10,7 @@
 import type { Q } from '../api/src/db';
 import { translate, type Locale, type MessageKey } from '../shared/src/i18n';
 
+/** Seeds the demo's setup health: failures first seen at setup, one fixed, so the panel shows its states. */
 export async function seedSetup(q: Q, o: { orgId: string; ids: Record<string, string>; locale: Locale; accounts: Record<string, string> }) {
   const T = (k: string, v?: Record<string, string>) => translate(o.locale, k as MessageKey, v);
   const ago = (days: number, hours = 0) => `now() - interval '${days} days ${hours} hours'`;

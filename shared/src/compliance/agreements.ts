@@ -81,6 +81,7 @@ export const ACCEPTANCE_TEXT: Partial<Record<Locale, AcceptanceText>> & { en: Ac
   },
 };
 
+/** The acceptance statement shown with the agreements, in the reader's language (English when missing). */
 export const acceptanceText = (locale: Locale): AcceptanceText => ACCEPTANCE_TEXT[locale] ?? ACCEPTANCE_TEXT.en;
 
 /** The exact words a person clicked, as hashed into agreement_evidence.statement_hash. */

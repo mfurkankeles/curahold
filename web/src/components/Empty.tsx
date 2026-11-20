@@ -24,6 +24,7 @@ export function useAfter(ms: number) {
   return on;
 }
 
+/** The standard empty state: icon, title, text and actions. */
 export function EmptyState({ icon, title, body, children, tone, compact }: { icon: IconName; title: string; body?: ReactNode; children?: ReactNode; tone?: 'calm' | 'done'; compact?: boolean }) {
   return (
     <div className="emptystate" data-tone={tone} data-compact={compact || undefined}>

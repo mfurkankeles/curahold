@@ -18,6 +18,10 @@ import type { Q } from '../db';
 /** Sources that receive changes (Jira Service Management and warehouses only read). */
 const WRITABLE = `c.provider not in (${READ_ONLY_PROVIDERS.map((p) => `'${p}'`).join(', ')})`;
 
+/**
+ * Queues changed entities (tasks, customers, records) for every connected tool that syncs them, in the caller's
+ * transaction, merging repeats so a burst of edits becomes one push. Returns how many were queued.
+ */
 export async function queueSync(
   q: Q,
   orgId: string,

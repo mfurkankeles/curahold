@@ -22,6 +22,7 @@ export function realRegistrations(env: NodeJS.ProcessEnv = process.env) {
   return { crm, oauth };
 }
 
+/** Starts the app with the fake vendor world (or real sandboxes with `real`) for the 29 integration runs. */
 export async function bootIntegrations(opts: { port: number; real?: boolean; latency?: boolean; locale?: 'en' | 'tr' }) {
   let world: VendorWorld | null = null;
   let connectors: Config['connectors'];

@@ -53,6 +53,10 @@ const PUBLIC_DOORS = [/^\/api\/trial\//, /^\/api\/signup\//, /^\/api\/assist\/pu
 /** Never refused by name: the AI connector's sign-in and protocol, robots.txt, webhooks and health. */
 const EXEMPT = [/^\/mcp$/, /^\/oauth\//, /^\/\.well-known\//, /^\/robots\.txt$/, /^\/api\/health$/, /^\/api\/(hooks|inbound|scim\/v2)\//, /^\/api\/billing\/webhook$/, /^\/api\/(oauth|connect)\/callback$/];
 
+/**
+ * Whether a path is a public form anyone may use without an account (trial, sign-up, public assistant, consent,
+ * portal sign-in): the doors the robot guard watches (ADR 0015).
+ */
 export const isPublicDoor = (path: string) => PUBLIC_DOORS.some((r) => r.test(path));
 /** API addresses answered before any company is known: none of them takes a Curahold key, so a bearer there proves nothing. */
 const BEFORE_COMPANY = /^\/api\/(signup|trial|consent-event|desk|sso)(\/|$)|^\/api\/assist\/public$/;

@@ -585,6 +585,7 @@ function RollupDialog({ types, taken, onClose, onAdd }: { types: RecordType[]; t
   );
 }
 
+/** Settings: the company's custom customer fields (type, options, who may see or edit them). */
 export function AccountFieldsEditor() {
   const { t, words } = useI18n();
   const { me, reloadMe } = useStore();

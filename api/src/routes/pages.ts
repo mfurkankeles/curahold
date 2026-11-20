@@ -1,6 +1,7 @@
 // Pages built from cards: each role's home and shared report pages.
 // Card numbers are worked out inside the viewer's own database scope, with
 // the fields their role may see, so one page shows each person their part.
+import type { PagesRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Locale } from '../../../shared/src/i18n';
@@ -117,7 +118,7 @@ pageRoutes.get('/pages', async (c) => {
   const auth = c.get('auth');
   const kind = c.req.query('kind') === 'dashboard' ? 'dashboard' : c.req.query('kind') === 'all' ? null : 'home';
   if (kind === 'dashboard') await giveReadyDashboards(c);
-  const rows = await run(c, (q) => q.query('select * from pages where ($1::text is null or kind = $1) order by position, created_at', [kind]));
+  const rows = await run(c, (q) => q.query<PagesRow>('select * from pages where ($1::text is null or kind = $1) order by position, created_at', [kind]));
   const pages = rows.map(toPage);
   // Without a home of its own a role starts on the first page it can open.
   const homes = pages.filter((p) => p.kind === 'home');
@@ -125,9 +126,10 @@ pageRoutes.get('/pages', async (c) => {
   return c.json({ pages, homeId: home?.id ?? null });
 });
 
+/** One custom page (dashboard) with its cards; 404 when unknown or not visible. */
 pageRoutes.get('/pages/:id', async (c) => {
   const id = param(c, 'id');
-  const [row] = await run(c, (q) => q.query('select * from pages where id = $1', [id]));
+  const [row] = await run(c, (q) => q.query<PagesRow>('select * from pages where id = $1', [id]));
   if (!row) fail('not_found');
   return c.json({ page: toPage(row) });
 });
@@ -190,6 +192,7 @@ async function moveHomes(q: Q, pageId: string, homeFor: string[] | undefined) {
   );
 }
 
+/** Creates a custom page. Needs org.manage; audited (201). */
 pageRoutes.post('/pages', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(c, pageInput);
@@ -199,7 +202,7 @@ pageRoutes.post('/pages', async (c) => {
     const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages');
     const id = crypto.randomUUID();
     await moveHomes(q, id, input.homeFor);
-    const [r] = await q.query(
+    const [r] = await q.query<PagesRow>(
       `insert into pages (id, org_id, name, cards, home_for, shared_with, position, created_by, kind, filters) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *`,
       [
         id,
@@ -232,7 +235,7 @@ pageRoutes.post('/pages/from-template', async (c) => {
   const name = input.name ?? pick(tpl.name, c.get('locale'));
   const row = await run(c, async (q) => {
     const [{ n }] = await q.query<{ n: number }>('select coalesce(max(position) + 1, 0)::int as n from pages');
-    const [r] = await q.query(`insert into pages (org_id, name, cards, position, created_by, kind, filters, template) values ($1, $2, $3, $4, $5, 'dashboard', $6, $7) returning *`, [
+    const [r] = await q.query<PagesRow>(`insert into pages (org_id, name, cards, position, created_by, kind, filters, template) values ($1, $2, $3, $4, $5, 'dashboard', $6, $7) returning *`, [
       org.id,
       name,
       JSON.stringify(cards),
@@ -247,6 +250,7 @@ pageRoutes.post('/pages/from-template', async (c) => {
   return c.json({ page: toPage(row) }, 201);
 });
 
+/** Edits a custom page's name, cards or audience. Needs org.manage; audited. */
 pageRoutes.patch('/pages/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
@@ -254,10 +258,10 @@ pageRoutes.patch('/pages/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [p] = await q.query('select * from pages where id = $1', [id]);
+    const [p] = await q.query<PagesRow>('select * from pages where id = $1', [id]);
     if (!p) fail('not_found');
     await moveHomes(q, id, input.homeFor);
-    const [r] = await q.query(
+    const [r] = await q.query<PagesRow>(
       `update pages set name = $2, cards = $3, home_for = $4, shared_with = $5, filters = $6, updated_at = now() where id = $1 returning *`,
       [
         id,
@@ -274,6 +278,7 @@ pageRoutes.patch('/pages/:id', async (c) => {
   return c.json({ page: toPage(row) });
 });
 
+/** Saves the order of custom pages in the menu. Needs org.manage. */
 pageRoutes.put('/pages/order', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(c, z.object({ ids: z.array(uuid).max(200) }));
@@ -283,6 +288,7 @@ pageRoutes.put('/pages/order', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Moves a custom page to the trash. Needs org.manage; audited. */
 pageRoutes.delete('/pages/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');

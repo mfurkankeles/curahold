@@ -22,6 +22,7 @@ export interface Hit {
 }
 
 const FOLD: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', İ: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' };
+/** A text folded for search (lowercase, accents removed, Turkish letters mapped). */
 export const fold = (s: string) =>
   s
     .replace(/[çğıİöşüâîû]/g, (c) => FOLD[c])
@@ -48,6 +49,7 @@ function scoreIn(field: string, words: string[]): number {
 
 const WEIGHT = { name: 4, title: 3, team: 2, task: 1 } as const;
 
+/** People whose name or role contains every word of the query, best matches first. */
 export function searchPeople(people: Findable[], query: string, limit = 12): Hit[] {
   const words = fold(query).split(' ').filter(Boolean);
   if (!words.length) return [];

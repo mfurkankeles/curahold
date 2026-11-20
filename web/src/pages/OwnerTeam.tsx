@@ -38,6 +38,7 @@ async function api<T>(method: string, path: string, body?: unknown): Promise<T> 
   return json as T;
 }
 
+/** The AI team screens' words (Turkish, else English: shared/src/i18n/ownerTeam.ts) and formatting, for the owner console's AI team sections. */
 export function useTeamWords() {
   const { locale, t } = useI18n();
   const l = normalizeLocale(locale);
@@ -88,6 +89,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toLocaleUpperCase();
 
+/** An AI seat's avatar (agent or person), by team colour. */
 export function Avatar({ seat, size = 'm' }: { seat: Pick<TeamSeat, 'name' | 'team' | 'agent' | 'filledBy'>; size?: 's' | 'm' | 'l' }) {
   const { w } = useTeamWords();
   return (
@@ -98,6 +100,7 @@ export function Avatar({ seat, size = 'm' }: { seat: Pick<TeamSeat, 'name' | 'te
   );
 }
 
+/** A seat's status pill: paused, dormant, filled by a person, or active. */
 export function Status({ seat }: { seat: TeamSeat }) {
   const { w } = useTeamWords();
   if (seat.paused)
@@ -169,6 +172,7 @@ function SeatNode({ seat, onOpen, lead }: { seat: TeamSeat; onOpen: (s: string) 
 
 const TEAM_ORDER = ['ceo-office', 'engineering', 'product', 'growth', 'customers', 'finance', 'trust'] as const;
 
+/** The owner console's AI team: the org chart with each seat's status, usage and golden-task result. */
 export function TeamSection({ beat, failed, go, open }: { beat: number; failed: (e: unknown) => void; go: TeamGo; open: string | null }) {
   const { w, locale } = useTeamWords();
   const org = useLoad<TeamOrg>('/team/org', beat, failed);
@@ -356,6 +360,7 @@ interface SeatDetail {
   lastWake: { checked_at: string; last_result: string } | null;
 }
 
+/** One seat's panel: card, budget, golden tasks, wake, job description and handover. */
 export function SeatPanel({
   seat,
   onClose,
@@ -650,6 +655,7 @@ function Handover({ seat, onDone, failed }: { seat: TeamSeat; onDone: () => void
 
 const dayKey = (iso: string) => iso.slice(0, 10);
 
+/** The owner's chats with a seat. */
 export function ChatSection({ beat, failed, go, seatId }: { beat: number; failed: (e: unknown) => void; go: TeamGo; seatId: string | null }) {
   const { w } = useTeamWords();
   const org = useLoad<TeamOrg>('/team/org', beat, failed);
@@ -772,6 +778,7 @@ function Conversation({ seat, failed, modelOn, onBack }: { seat: TeamSeat; faile
   );
 }
 
+/** A chat's messages, with scrolling back, search and jump to a date. */
 export function Messages({
   seat,
   thread,
@@ -997,6 +1004,7 @@ export function Messages({
   );
 }
 
+/** A seat's memory (summary and facts), which the owner can correct or delete. */
 export function MemoryPanel({ seat, failed }: { seat: TeamSeat; failed: (e: unknown) => void }) {
   const { w, locale } = useTeamWords();
   const mem = useLoad<MemoryView>(`/team/seats/${seat.seat}/memory`, 0, failed);
@@ -1099,6 +1107,7 @@ interface MeetingView {
   round?: { status: string } | null;
 }
 
+/** The AI team's meetings: list, call one, open one. */
 export function MeetingsSection({ beat, failed, go, open }: { beat: number; failed: (e: unknown) => void; go: TeamGo; open: string | null }) {
   const { w, locale } = useTeamWords();
   const [filter, setFilter] = useState<'all' | 'me' | 'without'>('all');
@@ -1184,6 +1193,7 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
   );
 }
 
+/** Calls a meeting with chosen seats, a goal, a time box and a token budget. */
 export function CallMeeting({
   seats,
   onCancel,
@@ -1267,6 +1277,7 @@ export function CallMeeting({
   );
 }
 
+/** One meeting: lines, rounds, the owner speaking, closing it into approvals. */
 export function MeetingDetail({ id, nameOf, failed, onBack }: { id: string; nameOf: (s: string) => string; failed: (e: unknown) => void; onBack: () => void }) {
   const { w, locale } = useTeamWords();
   const [beat, setBeat] = useState(0);

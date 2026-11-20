@@ -5,6 +5,9 @@ import type { Repeat } from './model';
 const pad = (n: number) => String(n).padStart(2, '0');
 const toIso = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 
+/**
+ * An ISO date plus a repeat interval, clamped to the month's end (31 January + 1 month is end of February, not 3 March).
+ */
 export function addInterval(iso: string, r: Pick<Repeat, 'every' | 'unit'>): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (r.unit === 'month') {

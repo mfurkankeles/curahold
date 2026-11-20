@@ -55,6 +55,7 @@ function useErr() {
   return useCallback((e: unknown) => toast(e instanceof ApiFailure ? e.body.message : t('errors.server'), 'error'), [t, toast]);
 }
 
+/** A sync connection's state badge (syncing, problems, paused). */
 export function SyncBadge({ c }: { c: Connection }) {
   const { t } = useI18n();
   if (c.status === 'disabled') return <span className="badge">{t('conn.paused')}</span>;
@@ -601,6 +602,7 @@ function MailboxStart({ onStart, running }: { onStart: () => void; running: stri
   );
 }
 
+/** One sync connection: mapping, owners, schedule, preview, runs and problems. Split plan: docs/HANDOVER.md. */
 export function SourceDetail({ id }: { id: string }) {
   const { t, words } = useI18n();
   const onErr = useErr();

@@ -42,6 +42,7 @@ export function useExport() {
   return { run, busy, allowed, items };
 }
 
+/** The export menu (xlsx or csv) for a list, sending its current filters. */
 export function ExportMenu({ ask, disabled, quiet }: { ask: Ask; disabled?: boolean; quiet?: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);

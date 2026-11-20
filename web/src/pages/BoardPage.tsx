@@ -1,3 +1,5 @@
+// A board's screen: kanban, list, archive, backlog and sprints views, drag and drop between columns, filters and saved
+// views, and the task panel. Rights come from the server (a board the person cannot open is 404).
 import { FavoriteButton } from '../components/Favorites';
 import {
   DndContext,
@@ -42,6 +44,7 @@ import { useServerUndo, useUndo } from '../lib/undo';
 import '../surfaces/employee-work.css';
 import { seedTask } from '../components/taskSeed';
 
+/** A board in one of its views. */
 export function BoardPage({ boardId, view, refreshKey }: { boardId: string; view: 'board' | 'list' | 'archive' | 'backlog' | 'sprints'; refreshKey: number }) {
   const { t } = useI18n();
   const phone = usePhone();
@@ -417,6 +420,7 @@ const DONE_SHOWN = 6;
 /** The most tasks one bulk change takes (the server's limit). */
 const BULK_MAX = 500;
 
+/** The kanban view: columns with drag and drop (mouse, touch and keyboard). */
 export function KanbanView({
   board,
   tasks,

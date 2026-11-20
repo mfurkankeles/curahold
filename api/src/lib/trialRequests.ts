@@ -78,12 +78,14 @@ export const CONSOLE_SETTING_DEFAULTS = {
 } as const;
 export type ConsoleSettingKey = keyof typeof CONSOLE_SETTING_DEFAULTS;
 
+/** One owner-console setting (trial seat cap, trial months), or its default. */
 export async function getConsoleSetting<K extends ConsoleSettingKey>(deps: Pick<Deps, 'db'>, key: K): Promise<(typeof CONSOLE_SETTING_DEFAULTS)[K]> {
   const [row] = await deps.db.system((q) => q.query<{ value: unknown }>('select value from console_settings where key = $1', [key]));
   const v = row?.value;
   return (typeof v === typeof CONSOLE_SETTING_DEFAULTS[key] ? v : CONSOLE_SETTING_DEFAULTS[key]) as (typeof CONSOLE_SETTING_DEFAULTS)[K];
 }
 
+/** All owner-console settings with defaults filled in. */
 export async function consoleSettings(deps: Pick<Deps, 'db'>): Promise<Record<ConsoleSettingKey, number>> {
   const rows = await deps.db.system((q) => q.query<{ key: string; value: unknown }>('select key, value from console_settings'));
   const out = { ...CONSOLE_SETTING_DEFAULTS } as Record<ConsoleSettingKey, number>;
@@ -91,6 +93,7 @@ export async function consoleSettings(deps: Pick<Deps, 'db'>): Promise<Record<Co
   return out;
 }
 
+/** Changes an owner-console setting and logs who did it. */
 export async function setConsoleSetting(deps: Pick<Deps, 'db'>, key: ConsoleSettingKey, value: number, by: string) {
   await deps.db.system((q) =>
     q.query(
@@ -140,6 +143,7 @@ function publicDomains(rows: { email: string }[]): string[] {
   return [...new Set(rows.map((r) => emailDomain(r.email)).filter(isPublicDomain))];
 }
 
+/** Trial requests by status ('open' means new or contacted), newest first. */
 export async function listTrialRequests(deps: Pick<Deps, 'db'>, status: TrialRequestStatus | 'open' | 'all'): Promise<TrialRequestRow[]> {
   const where = status === 'all' ? '' : status === 'open' ? `where r.status in ('new', 'contacted')` : `where r.status = $2`;
   return deps.db.system(async (q) => {
@@ -167,6 +171,7 @@ export async function listTrialRequests(deps: Pick<Deps, 'db'>, status: TrialReq
   });
 }
 
+/** One trial request with its consents, contact history and decision; null when unknown. */
 export async function trialRequestDetail(deps: Pick<Deps, 'db'>, id: string): Promise<TrialRequestDetail | null> {
   return deps.db.system(async (q) => {
     const [r] = await q.query(`select r.*, o.slug as org_slug from trial_requests r left join orgs o on o.id = r.created_org where r.id = $1`, [id]);
@@ -234,6 +239,7 @@ export async function trialRequestDetail(deps: Pick<Deps, 'db'>, id: string): Pr
 const deskNote = (q: Q, by: string, action: string, ref: string, orgId: string | null = null) =>
   q.query('insert into desk_log (staff_email, action, ref, org_id) values ($1, $2, $3, $4)', [by, action, ref, orgId]);
 
+/** Marks a trial request as contacted, with an optional note; 'conflict' if it was already decided. */
 export async function markContacted(deps: Pick<Deps, 'db'>, id: string, by: string, note: string | null) {
   await deps.db.system(async (q) => {
     const [r] = await q.query<{ ref: string }>(
@@ -268,6 +274,10 @@ async function freeSlug(q: Q, wanted: string): Promise<string> {
   return `${base.slice(0, 30)}-${randomToken(3).toLowerCase().replace(/[^a-z0-9]/g, 'x')}`;
 }
 
+/**
+ * Approves a trial request: creates the company (the requester as its administrator, their work domain claimed unless
+ * it is a free mail one) with the chosen departments, seat cap and end date, and a 7-day sign-in link (ADR 0017).
+ */
 export async function approveTrialRequest(deps: Deps, id: string, by: string, input: ApproveInput) {
   const detail = await trialRequestDetail(deps, id);
   if (!detail) return fail('not_found');

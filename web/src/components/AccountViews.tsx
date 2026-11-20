@@ -108,6 +108,7 @@ export function signalsOf(a: Account, defs: AccountField[], health: Parameters<t
 export const SIGNAL_FILTERS = ['attention', 'overdue', 'stuck', 'quiet', 'renewal', 'review', 'risk', 'clear'] as const;
 export type SignalFilter = (typeof SIGNAL_FILTERS)[number] | '';
 
+/** Whether a customer matches the chosen signal filter (health band, renewal, needs attention). */
 export function matchesSignal(filter: SignalFilter, chips: Chip[], attention: number) {
   if (!filter) return true;
   if (filter === 'attention') return attention > 0;
@@ -135,6 +136,7 @@ function ChipList({ chips }: { chips: Chip[] }) {
   );
 }
 
+/** The customer list as cards, with health, chips and the fields chosen for cards. */
 export function AccountCards({
   rows,
   shown,
@@ -240,6 +242,7 @@ function agreementFields(defs: AccountField[]) {
   return defs.filter((f) => f.type === 'url' && AGREEMENT_RE.test(`${f.key} ${JSON.stringify(f.label)}`));
 }
 
+/** The customer list as renewals: by renewal date, with contract value in the company's currency. */
 export function RenewalsView({ rows, fmt }: { rows: { a: Account; chips: Chip[]; band: Band }[]; fmt: (f: AccountField, v: unknown, currency?: string | null, inBase?: boolean) => string }) {
   const cur = useMoney();
   const { t, fmtDate, locale } = useI18n();

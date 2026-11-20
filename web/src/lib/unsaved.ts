@@ -45,6 +45,7 @@ export function useUnsavedForm(): UnsavedForm | null {
   return useSyncExternalStore(subscribe, () => current, () => null);
 }
 
+/** Whether a screen has unsaved changes (navigation asks first). */
 export const hasUnsaved = () => current !== null;
 
 /** Drops the registration (after "Leave without saving"): the form is going away anyway. */

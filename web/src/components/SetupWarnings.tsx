@@ -10,6 +10,7 @@ import { useStore } from '../lib/store';
 import { Icon } from './icons';
 import '../surfaces/setup.css';
 
+/** Setup health warnings that concern the current screen. */
 export function SetupWarnings({ path }: { path: string }) {
   const { t } = useI18n();
   const { me } = useStore();

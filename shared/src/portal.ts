@@ -143,6 +143,7 @@ export interface PortalBrand {
 export const PORTAL_DEFAULT_COLOR = '#5b4de8';
 export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
+/** The portal's branding (colour, logo, name) from stored settings, with safe defaults for anything invalid. */
 export function portalBrandOf(raw: unknown): PortalBrand {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   return {
@@ -234,6 +235,9 @@ export interface PortalAuth {
 
 export const DEFAULT_PORTAL_AUTH: PortalAuth = { email: true, google: true, microsoft: true, passkey: true, password: false, sessionDays: 30, notify: true };
 
+/**
+ * The portal's sign-in methods and session length from stored settings; anything missing or invalid takes the default.
+ */
 export function portalAuthOf(raw: unknown): PortalAuth {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const flag = (k: keyof PortalAuth) => (typeof r[k] === 'boolean' ? (r[k] as boolean) : (DEFAULT_PORTAL_AUTH[k] as boolean));

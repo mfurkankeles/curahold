@@ -78,6 +78,7 @@ function AuthFrame({ org, children, onLocale }: { org: OrgPublic; children: Reac
   );
 }
 
+/** The company's sign-in page: email link, Google, Microsoft, passkey or SSO, as the company allows. */
 export function LoginPage({ org, onLocale, notice }: { org: OrgPublic; onLocale: (l: Locale) => void; notice?: string | null }) {
   const { t } = useI18n();
   const params = new URLSearchParams(location.search);
@@ -296,6 +297,7 @@ export function JoinPage({ org, onLocale, onJoined }: { org: OrgPublic; onLocale
   );
 }
 
+/** Finishes a sign-in from an emailed link on this device. */
 export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLocale: (l: Locale) => void; onSignedIn: (notice?: string) => void }) {
   const { t } = useI18n();
   const [state, setState] = useState<'working' | 'code' | 'second' | 'error'>('working');
@@ -383,6 +385,7 @@ export function VerifyPage({ org, onLocale, onSignedIn }: { org: OrgPublic; onLo
   );
 }
 
+/** The page for an address that is no company. */
 export function OrgNotFound() {
   const { t } = useI18n();
   return (

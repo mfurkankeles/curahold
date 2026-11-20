@@ -221,6 +221,10 @@ async function reportPlan(c: C, q: Q, input: Extract<ExportInput, { source: 'rep
   };
 }
 
+/**
+ * Exports customers, records, a board or a report as xlsx or csv, up to MAX_EXPORT_ROWS. Needs data.export. The export and its audit line are one
+ * transaction: if the line cannot be written, nothing is sent (privacy: every export is accountable).
+ */
 exportRoutes.post('/exports', async (c) => {
   requirePerm(c, 'data.export');
   const input = await body(c, exportSchema);

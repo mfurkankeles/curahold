@@ -34,6 +34,7 @@ import { CALENDAR_PROVIDERS, DEV_PROVIDERS, EVENT_PROVIDERS, MESSAGE_PROVIDERS, 
 
 export const CRM_ADAPTERS: Record<CrmProvider, CrmAdapter> = { salesforce, hubspot, dynamics, pipedrive, zoho, bitrix24, freshsales, zendesksell, odoocrm, gsheets, excel, zendesk, freshdesk, intercom, jsm, front, zohodesk, bigquery, snowflake, gmail, outlook, gcal, outlookcal, segment, whatsapp, jira, demo, zohobooks, xero: xeroAdapter, odoo: odooAdapter, freee, parasut, quickbooks, stripe, finfile };
 
+/** Whether a provider name is a sync source (CRM, sheet, support or accounting tool). */
 export const isCrm = (p: string): p is CrmProvider => p in CRM_ADAPTERS;
 
 /** Curahold's own registration with the service; spreadsheets reuse the sign-in apps. */
@@ -50,6 +51,9 @@ export function oauthClient(cfg: Config, provider: CrmProvider): OAuthClient | n
   return null;
 }
 
+/**
+ * The sync sources this install offers, and whether each is configured (OAuth apps) or needs only a key from the customer.
+ */
 export function crmProviders(cfg: Config): ProviderInfo[] {
   const crms: CrmProvider[] = ['salesforce', 'hubspot', 'dynamics', 'pipedrive', 'zoho'];
   const sheets: CrmProvider[] = ['gsheets', 'excel'];
@@ -91,6 +95,7 @@ export function crmProviders(cfg: Config): ProviderInfo[] {
   ];
 }
 
+/** The address of a synced record in the outside tool, for "open in" links; null when unknown. */
 export function recordUrl(provider: string, config: Record<string, any>, object: string, remoteId: string): string | null {
   if (!isCrm(provider)) return null;
   try {

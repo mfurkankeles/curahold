@@ -79,6 +79,7 @@ export const FLAVOR_NAMES: Record<string, string> = {
 const URL_HINT = 'https://';
 const FLAVORS = ['slack', 'teams', 'gchat', 'discord', 'mattermost', 'rocketchat', 'webex', 'zoom', 'lark', 'telegram', 'json'] as const;
 
+/** The tools the company can connect and its connections, with a reload. */
 export function useConnections() {
   const [data, setData] = useState<{ providers: ProviderInfo[]; connections: Connection[] } | null>(null);
   const reload = useCallback(async () => setData(await get('/connections')), []);
@@ -95,6 +96,7 @@ function Status({ c }: { c: Connection }) {
   return <span className="badge badge--active">{t('conn.working')}</span>;
 }
 
+/** Settings (and setup): connected messaging tools, adding and removing them. */
 export function Connections({ back = 'settings', onChange }: { back?: 'settings' | 'setup'; onChange?: (list: Connection[]) => void }) {
   const { t } = useI18n();
   const { toast } = useStore();

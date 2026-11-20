@@ -41,10 +41,12 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   },
 };
 
+/** Whether a name is a supported sign-in provider (Google or Microsoft). */
 export function isProvider(p: string): p is ProviderId {
   return p === 'google' || p === 'microsoft';
 }
 
+/** The provider's sign-in address with our client id, return address, state and nonce. */
 export function authorizeUrl(provider: ProviderId, cfg: ProviderConfig, redirectUri: string, state: string, nonce: string) {
   const u = new URL(PROVIDERS[provider].authorize);
   u.searchParams.set('client_id', cfg.clientId);
@@ -64,6 +66,10 @@ export interface VerifiedIdentity {
   subject: string | null;
 }
 
+/**
+ * Exchanges the provider's code for the person's verified email and name. An address the provider says it did not
+ * verify is refused, so nobody signs in as an address they do not own.
+ */
 export async function exchangeCode(
   provider: ProviderId,
   cfg: ProviderConfig,

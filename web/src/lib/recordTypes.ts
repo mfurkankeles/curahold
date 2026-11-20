@@ -1,3 +1,5 @@
+// The company's record types, shared by every screen: one cached copy per company, refreshed in the background when
+// older than 30 seconds, so the customer page's several mounts make one request. useRecordTypes() is the entry.
 import { useCallback, useEffect, useState } from 'react';
 import type { RecordType } from '../../../shared/src/records';
 import { get } from './api';

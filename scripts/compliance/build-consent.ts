@@ -12,6 +12,9 @@ import { buildSync } from 'esbuild';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CONSENT_BUNDLE = join(ROOT, 'site', 'consent.js');
 
+/**
+ * Bundles the consent banner script (shared/src/consent) for the public site, so site and app share one implementation.
+ */
 export function consentBundle(): string {
   const out = buildSync({
     entryPoints: [join(ROOT, 'shared', 'src', 'consent', 'site.ts')],

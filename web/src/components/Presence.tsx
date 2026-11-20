@@ -8,6 +8,7 @@ import { useStore } from '../lib/store';
 import { Avatar } from './ui';
 import './presence.css';
 
+/** Who else is looking at this right now (live updates). */
 export function Presence({ who }: { who: Who }) {
   const { t, locale } = useI18n();
   const { me, person } = useStore();

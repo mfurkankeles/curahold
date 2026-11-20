@@ -8,6 +8,7 @@
 // Per isolate means each Worker copy counts only what it served: a fault that
 // hits every request still trips every copy; a rare one is caught by the hourly
 // error_log check. Switch off with OPS_ALERTS=off.
+import type { CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { ownerWord } from '../../../shared/src/i18n/owner';
 
@@ -37,6 +38,10 @@ export interface OpsAlert {
 /** The 15-minute slot an alert belongs to: one alert per rule per slot. */
 const slot = (now: number) => new Date(Math.floor(now / 900_000) * 900_000).toISOString().slice(0, 16);
 
+/**
+ * Counts answer times and failures in this isolate or process; when too many fail or the slow tail grows it raises an
+ * alert in the owner console (and once by mail). Free-tier operations watch, no paid monitoring.
+ */
 export class OpsWatch {
   private samples: { at: number; ms: number; failed: boolean }[] = [];
   private fired = new Map<string, number>();
@@ -80,7 +85,7 @@ export async function raiseOpsAlert(deps: Deps, a: OpsAlert): Promise<boolean> {
   console.warn('[curahold] ops alert', JSON.stringify({ ref: a.ref, ...a.meta }));
   try {
     const rows = await deps.db.system((q) =>
-      q.query(
+      q.query<Pick<CompanyLogRow, 'id'>>(
         `insert into company_log (seat, kind, body, ref, meta)
          select 'system', 'alert', $1, $2, $3 where not exists (select 1 from company_log where ref = $2) returning id`,
         [a.body, a.ref, JSON.stringify(a.meta)],

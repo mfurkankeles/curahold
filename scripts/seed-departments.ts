@@ -20,6 +20,7 @@ const MEMBERS: Record<string, [lead: string, members: string[]]> = {
   finance: ['ada', []],
 };
 
+/** Seeds the demo's departments, their boards and members, and a cross-department hand-off. */
 export async function seedDepartments(
   q: Q,
   o: { orgId: string; ids: People; locale: Locale; accounts: Record<string, string>; boards?: boolean },

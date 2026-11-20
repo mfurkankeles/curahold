@@ -19,6 +19,7 @@ import '../surfaces/console.css';
 const STATUS_TONE: Record<SubStatus, string> = { active: 'ok', trialing: 'info', past_due: 'warn', paused: 'warn', canceled: 'off', none: 'off' };
 const STATUSES: SubStatus[] = ['active', 'trialing', 'past_due', 'paused', 'canceled', 'none'];
 
+/** A subscription status as a coloured dot with its name. */
 export function StatusDot({ status }: { status: SubStatus }) {
   const { t } = useI18n();
   return (
@@ -239,6 +240,7 @@ export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | 
   );
 }
 
+/** The in-app console for a single-company install: subscription, usage and system health. */
 export function PlatformConsolePage() {
   const { t, locale } = useI18n();
   const [access, setAccess] = useState<PlatformAccess | null>(null);

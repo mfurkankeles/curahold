@@ -30,6 +30,7 @@ export async function kindOf(file: File): Promise<'tasks' | 'customers'> {
   return customerish > taskish ? 'customers' : 'tasks';
 }
 
+/** The import screen: customers, tasks or records from a spreadsheet. */
 export function ImportPage() {
   const { t } = useI18n();
   const { can, reloadBoards } = useStore();

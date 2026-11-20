@@ -7,6 +7,7 @@ export const THEMES: ThemePref[] = ['light', 'dark', 'system'];
 const KEY = 'app_theme';
 const dark = () => typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
 
+/** The theme chosen in this browser (light, dark or system). */
 export function storedTheme(): ThemePref {
   try {
     const v = localStorage.getItem(KEY);
@@ -16,6 +17,7 @@ export function storedTheme(): ThemePref {
   }
 }
 
+/** Applies a theme to the page (system follows the device). */
 export function applyTheme(pref: ThemePref = storedTheme()) {
   const mode = pref === 'system' ? (dark() ? 'dark' : 'light') : pref;
   document.documentElement.dataset.theme = mode;
@@ -38,6 +40,7 @@ export function startTheme() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => storedTheme() === 'system' && applyTheme('system'));
 }
 
+/** The chosen theme and its setter, kept in this browser. */
 export function useTheme(): [ThemePref, (p: ThemePref) => void] {
   const [pref, setPref] = useState<ThemePref>(storedTheme);
   useEffect(() => {

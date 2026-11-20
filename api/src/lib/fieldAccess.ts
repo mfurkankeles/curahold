@@ -13,12 +13,16 @@ const named = (list: string[], v: Viewer) => list.includes(v.roleKey) || (v.dept
 /** People who run the company settings see and change every field (they set the rules). */
 export const seesEverything = (v: Viewer) => v.perms.includes('org.manage' as Perm);
 
+/**
+ * Whether a person may see a custom field: everyone unless the field is limited to roles or departments the person lacks.
+ */
 export function canSeeField(f: AccountField, v: Viewer) {
   if (seesEverything(v)) return true;
   const view = f.access?.view;
   return !view?.length || named(view, v);
 }
 
+/** Whether a person may change a custom field: they must see it, and it must not be read-only for them. */
 export function canEditField(f: AccountField, v: Viewer) {
   if (!canSeeField(f, v)) return false;
   if (calculated(f)) return false;
@@ -40,6 +44,7 @@ export function defsFor(defs: AccountField[], v: Viewer): AccountField[] {
     });
 }
 
+/** The keys of the fields a person may not see, for removing them from what is sent. */
 export function hiddenKeys(defs: AccountField[], v: Viewer): Set<string> {
   return new Set((defs ?? []).filter((f) => !canSeeField(f, v)).map((f) => f.key));
 }

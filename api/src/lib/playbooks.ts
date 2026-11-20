@@ -3,6 +3,7 @@
 // or so many days before the customer's renewal date ('renewal') or a deal's
 // close date ('close'). The same code puts one on by hand and starts a
 // renewal by itself, so both make the same tasks.
+import type { BoardsRow, OrgsRow, PlanTemplatesRow, RecordTypesRow, RecordsRow, UsersRow } from '../db/rows.gen';
 import type { TaskBlueprint } from '../../../shared/src/automation';
 import type { Locale } from '../../../shared/src/i18n';
 import { translate } from '../../../shared/src/i18n';
@@ -21,6 +22,7 @@ import { builtForLines } from './handoff';
 
 export type Anchor = 'start' | 'renewal' | 'close';
 
+/** A calendar day `n` days after an ISO date (UTC arithmetic, so no time-zone drift). */
 export const addDays = (iso: string, n: number) => {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
@@ -76,7 +78,7 @@ interface Step {
 export async function applyPlan(q: Q, input: ApplyInput): Promise<Row[]> {
   const { orgId, actorId, plan, account, record } = input;
   const anchor = (plan.anchor ?? 'start') as Anchor;
-  const [board] = await q.query('select * from boards where id = $1 and archived_at is null', [plan.board_id]);
+  const [board] = await q.query<BoardsRow>('select * from boards where id = $1 and archived_at is null', [plan.board_id]);
   if (!board) fail('not_found');
   const columns = board.columns as Column[];
   const status = plan.column_key && columns.some((col) => col.key === plan.column_key) ? plan.column_key : columns[0].key;
@@ -109,7 +111,7 @@ export async function applyPlan(q: Q, input: ApplyInput): Promise<Row[]> {
     else if (step.assignee.startsWith('user:')) assignees = [step.assignee.slice(5)];
     if (assignees.length) {
       // Only people who can still be given work (a full seat, not switched off).
-      const ok = await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`, [assignees]);
+      const ok = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`, [assignees]);
       assignees = ok.map((u) => u.id);
     }
     const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
@@ -172,7 +174,7 @@ export async function startRenewals(deps: Deps, now: Date): Promise<number> {
 /** The same, with only the database at hand (the demo's seed uses this). */
 export async function startRenewalsIn(db: Db, now: Date): Promise<number> {
   let started = 0;
-  const orgs = await db.system((q) => q.query(`select id, locale, timezone, currency, settings, account_fields from orgs where coalesce((settings->'rhythm'->'renewal'->>'days')::int, 0) > 0`));
+  const orgs = await db.system((q) => q.query<Pick<OrgsRow, 'id' | 'locale' | 'timezone' | 'currency' | 'settings' | 'account_fields'>>(`select id, locale, timezone, currency, settings, account_fields from orgs where coalesce((settings->'rhythm'->'renewal'->>'days')::int, 0) > 0`));
   for (const org of orgs) {
     try {
       started += await db.system((q) => startFor(q, org, now));
@@ -200,7 +202,7 @@ async function startFor(q: Q, org: Row, now: Date): Promise<number> {
     [org.id, field.key, today, rhythm.renewal.days],
   );
   if (!due.length) return 0;
-  const [plan] = rhythm.renewal.planId ? await q.query('select * from plan_templates where id = $1 and org_id = $2', [rhythm.renewal.planId, org.id]) : [];
+  const [plan] = rhythm.renewal.planId ? await q.query<PlanTemplatesRow>('select * from plan_templates where id = $1 and org_id = $2', [rhythm.renewal.planId, org.id]) : [];
   const locale = (org.locale ?? 'en') as Locale;
   let n = 0;
   for (const a of due) {
@@ -228,7 +230,7 @@ async function startFor(q: Q, org: Row, now: Date): Promise<number> {
 
 /** Without a renewal playbook: one task for the customer's owner, on the renewals board. */
 async function oneTask(q: Q, org: Row, a: Row, record: Row | null, today: string, locale: Locale): Promise<number> {
-  const [board] = await q.query(
+  const [board] = await q.query<BoardsRow>(
     `select * from boards where org_id = $1 and archived_at is null order by (name ~* '(renew|yenile)') desc, (visibility = 'org') desc, created_at limit 1`,
     [org.id],
   );
@@ -251,11 +253,11 @@ async function oneTask(q: Q, org: Row, a: Row, record: Row | null, today: string
 
 /** The customer's open renewal opportunity, or a new one for this renewal. */
 async function renewalDeal(q: Q, org: Row, a: Row, defs: AccountField[], locale: Locale): Promise<Row | null> {
-  const [type] = await q.query(`select * from record_types where org_id = $1 and kind = 'opportunity' and archived_at is null order by position, created_at limit 1`, [org.id]);
+  const [type] = await q.query<RecordTypesRow>(`select * from record_types where org_id = $1 and kind = 'opportunity' and archived_at is null order by position, created_at limit 1`, [org.id]);
   if (!type) return null;
   const tf = (type.fields ?? []) as AccountField[];
   const opt = (key: string, want: string) => tf.find((f) => f.key === key)?.options?.some((o) => o.key === want);
-  const [open] = await q.query(
+  const [open] = await q.query<Pick<RecordsRow, 'id' | 'name' | 'owner_id'>>(
     `select id, name, owner_id from records r where r.type_id = $1 and r.account_id = $2 and r.archived_at is null
         and ($3::boolean is false or r.fields->>'kind' = 'renewal') and coalesce(r.fields->>'status', 'open') not in ('won', 'lost')
       order by r.created_at desc limit 1`,
@@ -272,7 +274,7 @@ async function renewalDeal(q: Q, org: Row, a: Row, defs: AccountField[], locale:
   if (opt('status', 'open')) fields.status = 'open';
   if (opt('kind', 'renewal')) fields.kind = 'renewal';
   const name = words(locale, 'renewal.dealName', { account: a.name, year: a.day.slice(0, 4) }).slice(0, 300);
-  const [r] = await q.query(
+  const [r] = await q.query<Pick<RecordsRow, 'id' | 'name' | 'owner_id'>>(
     `insert into records (org_id, type_id, account_id, name, owner_id, fields, currency) values ($1, $2, $3, $4, $5, $6, $7) returning id, name, owner_id`,
     [org.id, type.id, a.id, name, a.owner_id, JSON.stringify(fields), a.currency ?? null],
   );

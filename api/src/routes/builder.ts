@@ -1,5 +1,6 @@
 // The report builder: what can be reported on, running a report as it is
 // being built, and the reports people keep.
+import type { ReportsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AccountField } from '../../../shared/src/model';
@@ -44,6 +45,10 @@ export const reportDefSchema = z.object({
   goal: z.number().positive().max(1e13).optional(),
 });
 
+/**
+ * The report engine's context for this request: the reader, their language, the company's day and time zone, and the
+ * customer fields. The engine reads through `q` under the reader's rights, so a report never shows more than they could open.
+ */
 export function engineCtx(c: C, q: Q): EngineCtx {
   const org = c.get('org');
   const auth = c.get('auth');
@@ -62,6 +67,7 @@ const toReport = (r: Row, me: string): SavedReport => ({
   updatedAt: iso(r.updated_at)!,
 });
 
+/** What reports can be built from: sources, fields and measures the reader can see. */
 builderRoutes.get('/reports/catalog', async (c) => {
   const out = await run(c, async (q) => {
     const cat = await loadCatalog(engineCtx(c, q));
@@ -84,15 +90,17 @@ builderRoutes.post('/reports/run', async (c) => {
   return c.json(out);
 });
 
+/** Saved reports: the person's own and the shared ones. */
 builderRoutes.get('/reports/saved', async (c) => {
   const me = c.get('auth').userId;
-  const rows = await run(c, (q) => q.query('select * from reports order by sort_text(name)'));
+  const rows = await run(c, (q) => q.query<ReportsRow>('select * from reports order by sort_text(name)'));
   return c.json({ reports: rows.map((r) => toReport(r, me)) });
 });
 
+/** One saved report; 404 when unknown or not visible. */
 builderRoutes.get('/reports/saved/:id', async (c) => {
   const id = param(c, 'id');
-  const [row] = await run(c, (q) => q.query('select * from reports where id = $1', [id]));
+  const [row] = await run(c, (q) => q.query<ReportsRow>('select * from reports where id = $1', [id]));
   if (!row) fail('not_found');
   return c.json({ report: toReport(row, c.get('auth').userId) });
 });
@@ -104,13 +112,14 @@ const reportInput = z.object({
   shared: z.boolean().optional(),
 });
 
+/** Saves a report definition, private or shared. Writers only; audited (201). */
 builderRoutes.post('/reports/saved', async (c) => {
   requireWriter(c);
   const input = await body(c, reportInput);
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<ReportsRow>(
       `insert into reports (org_id, name, description, def, shared, created_by) values ($1, $2, $3, $4, $5, $6) returning *`,
       [org.id, input.name, input.description ?? '', JSON.stringify(input.def), input.shared ?? false, auth.userId],
     );
@@ -120,6 +129,10 @@ builderRoutes.post('/reports/saved', async (c) => {
   return c.json({ report: toReport(row, auth.userId) }, 201);
 });
 
+/**
+ * Edits a saved report. Row security lets only its maker (or an administrator, for a shared one) change it:
+ * 403 when seen but not theirs, 404 when not seen.
+ */
 builderRoutes.patch('/reports/saved/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -127,7 +140,7 @@ builderRoutes.patch('/reports/saved/:id', async (c) => {
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
     // Row-level security lets through only its maker (or an administrator, for a shared one).
-    const [r] = await q.query(
+    const [r] = await q.query<ReportsRow>(
       `update reports set name = coalesce($2, name), description = coalesce($3, description), def = coalesce($4::jsonb, def),
               shared = coalesce($5, shared), updated_at = now() where id = $1 returning *`,
       [id, input.name ?? null, input.description ?? null, input.def ? JSON.stringify(input.def) : null, input.shared ?? null],
@@ -141,6 +154,7 @@ builderRoutes.patch('/reports/saved/:id', async (c) => {
   return c.json({ report: toReport(row, auth.userId) });
 });
 
+/** Moves a saved report to the trash; same ownership rule as editing. Audited. */
 builderRoutes.delete('/reports/saved/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

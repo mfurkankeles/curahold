@@ -26,6 +26,7 @@ export interface CheckResult {
   error?: string;
 }
 
+/** The synthetic checks (app, site, docs, API health) from SYN_* environment variables. */
 export function checksFrom(env: Record<string, string | undefined>): Check[] {
   const app = (env.SYN_APP || 'https://app.curahold.com').replace(/\/$/, '');
   const site = (env.SYN_SITE || 'https://curahold.com').replace(/\/$/, '');
@@ -40,6 +41,7 @@ export function checksFrom(env: Record<string, string | undefined>): Check[] {
   ];
 }
 
+/** Runs the synthetic checks with a timeout and a slow threshold, for the uptime job. */
 export async function runChecks(checks: Check[], opts: { fetch?: typeof fetch; slowMs?: number; timeoutMs?: number } = {}): Promise<CheckResult[]> {
   const f = opts.fetch ?? fetch;
   const slow = opts.slowMs ?? 1500;

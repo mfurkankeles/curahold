@@ -2,6 +2,7 @@
 // them, delivered after it commits. Each person decides where theirs go
 // (a linked chat app, email, or only the in-app list) and which kinds they
 // want; a chat failure falls back to email so nothing is lost silently.
+import type { NotificationsRow, OrgsRow, UsersRow } from '../db/rows.gen';
 import { translate, normalizeLocale, type Locale, type MessageKey, type Terms, intlTag } from '../../../shared/src/i18n';
 import { MAX_FAVORITES, type NotifyPrefs } from '../../../shared/src/model';
 import { ADAPTERS, loadConnection, markConnection, upsertIdentity } from '../connectors/messaging';
@@ -22,6 +23,7 @@ export interface NewNotification {
   dedupeKey?: string | null;
 }
 
+/** Queues notifications in the caller's transaction (the outbox). Nobody is told about their own action. */
 export async function enqueue(q: Q, list: NewNotification[]) {
   for (const n of list) {
     if (n.userId && n.actorId && n.userId === n.actorId) continue; // nobody is told about their own action
@@ -50,6 +52,7 @@ export const DEFAULT_PREFS: NotifyPrefs = {
   defaultBoardId: null,
 };
 
+/** A person's notification preferences, with defaults for anything not set. */
 export function prefsOf(raw: unknown): NotifyPrefs {
   const p = (raw ?? {}) as Partial<NotifyPrefs>;
   const hour = Number(p.digestHour);
@@ -160,6 +163,7 @@ function weeklyReason(t: (k: MessageKey, v?: Record<string, string | number>) =>
   }
 }
 
+/** A notification as a chat or mail message in the reader's language, naming a portal person when one acted. */
 export function render(ctx: RenderCtx): ChatMessage {
   const { locale, terms, n, task } = ctx;
   const t = (k: MessageKey, v: Record<string, string | number> = {}) => translate(locale, k, v, terms);
@@ -312,10 +316,10 @@ const TASK_SQL = `
 
 /** Everything needed to show a notification, read with owner access and filtered by company. */
 export async function loadRenderCtx(q: Q, deps: Deps, n: Row, locale?: Locale): Promise<RenderCtx & { org: Row; user: Row | null }> {
-  const [org] = await q.query('select id, slug, name, locale, terms, timezone from orgs where id = $1', [n.org_id]);
-  const [user] = n.user_id ? await q.query('select id, email, name, locale, prefs, status from users where id = $1 and org_id = $2', [n.user_id, n.org_id]) : [null];
+  const [org] = await q.query<Pick<OrgsRow, 'id' | 'slug' | 'name' | 'locale' | 'terms' | 'timezone'>>('select id, slug, name, locale, terms, timezone from orgs where id = $1', [n.org_id]);
+  const [user] = n.user_id ? await q.query<Pick<UsersRow, 'id' | 'email' | 'name' | 'locale' | 'prefs' | 'status'>>('select id, email, name, locale, prefs, status from users where id = $1 and org_id = $2', [n.user_id, n.org_id]) : [null];
   const [task] = n.task_id ? await q.query(TASK_SQL, [n.task_id, n.org_id]) : [null];
-  const [actor] = n.actor_id ? await q.query('select name from users where id = $1 and org_id = $2', [n.actor_id, n.org_id]) : [null];
+  const [actor] = n.actor_id ? await q.query<Pick<UsersRow, 'name'>>('select name from users where id = $1 and org_id = $2', [n.actor_id, n.org_id]) : [null];
   return {
     org,
     user: user ?? null,
@@ -336,13 +340,13 @@ export async function loadRenderCtx(q: Q, deps: Deps, n: Row, locale?: Locale): 
 export async function loadRenderCtxMany(q: Q, deps: Deps, rows: Row[], locale?: Locale): Promise<RenderCtx[]> {
   if (!rows.length) return [];
   const orgId = rows[0].org_id;
-  const [org] = await q.query('select id, slug, name, locale, terms, timezone from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'id' | 'slug' | 'name' | 'locale' | 'terms' | 'timezone'>>('select id, slug, name, locale, terms, timezone from orgs where id = $1', [orgId]);
   const userIds = [...new Set(rows.map((n) => n.user_id).filter(Boolean))];
-  const users = userIds.length ? await q.query('select id, locale from users where id = any($1::uuid[]) and org_id = $2', [userIds, orgId]) : [];
+  const users = userIds.length ? await q.query<Pick<UsersRow, 'id' | 'locale'>>('select id, locale from users where id = any($1::uuid[]) and org_id = $2', [userIds, orgId]) : [];
   const taskIds = [...new Set(rows.map((n) => n.task_id).filter(Boolean))];
   const tasks = taskIds.length ? await q.query(TASK_SQL.replace('where t.id = $1 and t.org_id = $2', 'where t.id = any($1::uuid[]) and t.org_id = $2'), [taskIds, orgId]) : [];
   const actorIds = [...new Set(rows.map((n) => n.actor_id).filter(Boolean))];
-  const actors = actorIds.length ? await q.query('select id, name from users where id = any($1::uuid[]) and org_id = $2', [actorIds, orgId]) : [];
+  const actors = actorIds.length ? await q.query<Pick<UsersRow, 'id' | 'name'>>('select id, name from users where id = any($1::uuid[]) and org_id = $2', [actorIds, orgId]) : [];
   const taskOf = new Map(tasks.map((t) => [t.id, t]));
   const actorOf = new Map(actors.map((a) => [a.id, a.name as string]));
   const localeOf = new Map(users.map((u) => [u.id, u.locale]));
@@ -443,9 +447,12 @@ async function postToChannel(deps: Deps, ctx: Awaited<ReturnType<typeof loadRend
 
 const MAX_ATTEMPTS = 5;
 
+/**
+ * Sends up to `limit` queued notifications (claimed so two workers never send one twice); returns how many were sent.
+ */
 export async function deliverPending(deps: Deps, limit = 50): Promise<number> {
   const claimed = await deps.db.system((q) =>
-    q.query(
+    q.query<NotificationsRow>(
       `update notifications set attempts = attempts + 1
         where id in (select id from notifications where state = 'pending' and attempts < $2
                         and (not_before is null or not_before <= now())

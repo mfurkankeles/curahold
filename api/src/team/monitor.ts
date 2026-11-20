@@ -20,6 +20,10 @@ export const RULES = {
 
 export type MonitorRule = 'over-reach' | 'refused-retries' | 'gate-bypass' | 'token-spike';
 
+/**
+ * Pauses a seat because a monitor rule fired: writes an audit line, an alert in the company log and the pause, in the
+ * caller's transaction so all three are saved together. A paused seat stops until the owner resumes it (ADR 0011).
+ */
 export async function alertAndPause(q: Q, seat: string, rule: MonitorRule, detail: Record<string, unknown>) {
   await auditLine(q, { seat, actor: 'system', what: `monitor.${rule}`, target: seat, detail });
   await q.query(`insert into company_log (seat, kind, body, ref, meta) values ('system', 'alert', $1, $2, $3)`, [
@@ -87,6 +91,10 @@ export class GateRefusal extends HttpError {
   }
 }
 
+/**
+ * Records a gate refusal outside the refused request's transaction (that one rolls back): a bypass attempt
+ * pauses the seat at once, an ordinary refusal is counted toward the over-reach rule.
+ */
 export async function recordRefusal(deps: Pick<Deps, 'db'>, e: GateRefusal) {
   await deps.db.system((q) => (e.bypass ? gateBypass(q, e.seat, { what: e.what, ...e.detail }) : refused(q, e.seat, e.what, e.detail)));
 }

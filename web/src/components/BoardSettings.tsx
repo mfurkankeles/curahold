@@ -25,6 +25,7 @@ const slug = (s: string, taken: Set<string>) => {
   return k;
 };
 
+/** Creates or edits a board: name, columns, fields, form, team and department. */
 export function BoardSettings({ board, onClose }: { board?: Board; onClose: () => void }) {
   const { t, locale } = useI18n();
   const { me, teams, people, can, reloadBoards, toast } = useStore();

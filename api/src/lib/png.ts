@@ -30,6 +30,7 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
 
 type RGBA = [number, number, number, number];
 
+/** A square two-colour PNG (the app icon for the web manifest), drawn in code so no image file ships. */
 export function pngIcon(size: number, bg: RGBA, fg: RGBA): Uint8Array {
   const raw = new Uint8Array(size * (size * 4 + 1));
   const c = (size - 1) / 2;

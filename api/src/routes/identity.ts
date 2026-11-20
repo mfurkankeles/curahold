@@ -1,6 +1,7 @@
 // A person's own sign-in security (authenticator app, passkeys, recovery codes,
 // signing out other devices), the fresh confirmation before dangerous actions,
 // and the company's setting "a second step is required" (lib/identity.ts).
+import type { SessionsRow, UserPasskeysRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate, type Locale } from '../../../shared/src/i18n';
@@ -53,12 +54,13 @@ async function assertKeepsOne(c: C, removing: 'totp' | 'passkey') {
   if (left < 1) fail('second_step_required');
 }
 
+/** The person's own sign-in security: second-step methods, passkeys, recovery codes left, the company's policy. */
 identityRoutes.get('/me/security', async (c) => {
   const auth = self(c);
   const org = c.get('org');
   const f = await factorsOf(c, auth.userId);
   const keys = await sys(c)((q) =>
-    q.query('select id, name, created_at, last_used_at from user_passkeys where org_id = $1 and user_id = $2 order by created_at', [org.id, auth.userId]),
+    q.query<Pick<UserPasskeysRow, 'id' | 'name' | 'created_at' | 'last_used_at'>>('select id, name, created_at, last_used_at from user_passkeys where org_id = $1 and user_id = $2 order by created_at', [org.id, auth.userId]),
   );
   const out: MySecurity = {
     totp: f.totp,
@@ -79,6 +81,7 @@ identityRoutes.post('/me/security/totp', async (c) => {
   return c.json(await startTotp(c, { id: auth.userId, email: auth.email }));
 });
 
+/** Confirms a new authenticator app with a code from it and returns recovery codes, shown once. */
 identityRoutes.post('/me/security/totp/confirm', async (c) => {
   const auth = self(c);
   const { code } = await body(c, z.object({ code: z.string().trim().regex(/^\d{6}$/) }));
@@ -88,6 +91,7 @@ identityRoutes.post('/me/security/totp/confirm', async (c) => {
   return c.json({ recoveryCodes });
 });
 
+/** Removes the person's authenticator app. Needs a recent sign-in. */
 identityRoutes.delete('/me/security/totp', async (c) => {
   const auth = self(c);
   await requireFresh(c);
@@ -100,6 +104,7 @@ identityRoutes.delete('/me/security/totp', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Replaces the person's recovery codes (shown once). Needs a recent sign-in and an existing second step. */
 identityRoutes.post('/me/security/recovery-codes', async (c) => {
   const auth = self(c);
   await requireFresh(c);
@@ -117,6 +122,7 @@ identityRoutes.post('/me/security/passkeys/options', async (c) => {
   return c.json(await registrationOptions(c, { id: auth.userId, email: auth.email, name: auth.name }));
 });
 
+/** Registers a passkey for the person (201). */
 identityRoutes.post('/me/security/passkeys', async (c) => {
   const auth = self(c);
   const input = await body(c, z.object({ challengeId: z.string().max(40), response: z.record(z.string(), z.any()), name: z.string().trim().max(80).optional() }));
@@ -125,6 +131,7 @@ identityRoutes.post('/me/security/passkeys', async (c) => {
   return c.json({ id }, 201);
 });
 
+/** Removes one of the person's passkeys. Needs a recent sign-in. */
 identityRoutes.delete('/me/security/passkeys/:id', async (c) => {
   const auth = self(c);
   const id = param(c, 'id');
@@ -141,7 +148,7 @@ identityRoutes.delete('/me/security/passkeys/:id', async (c) => {
 identityRoutes.post('/me/sessions/sign-out-others', async (c) => {
   const auth = self(c);
   const n = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<SessionsRow, 'id'>>(
       `update sessions set revoked_at = now(), revoke_reason = 'user' where user_id = $1 and id <> $2 and revoked_at is null returning id`,
       [auth.userId, auth.sessionId],
     );
@@ -165,6 +172,10 @@ identityRoutes.post('/me/confirm/options', async (c) => {
   return c.json({ methods, ...(f.passkeys ? { passkey: await passkeyOptions(c, 'confirm', auth.userId) } : {}) });
 });
 
+/**
+ * Sends a code to the person's email to confirm a sensitive action. Refused for someone with a second step (they must
+ * use it: email is the weaker way); rate-limited.
+ */
 identityRoutes.post('/me/confirm/email', async (c) => {
   const auth = self(c);
   // Someone with a second step confirms with it; an emailed code would be the weaker way round.
@@ -194,6 +205,9 @@ identityRoutes.post('/me/confirm/email', async (c) => {
   return c.json({ ok: true, ...(deps.config.devExposeTokens ? { devCode: code } : {}) });
 });
 
+/**
+ * Confirms a sensitive action (with the second step or the emailed code), making the sign-in "recent" for requireFresh.
+ */
 identityRoutes.post('/me/confirm', async (c) => {
   const auth = self(c);
   const input = await body(
@@ -255,6 +269,10 @@ identityRoutes.get('/admin/security', async (c) => {
   return c.json({ policy: secondStepPolicy(org), people });
 });
 
+/**
+ * Sets the company's second-step policy. Needs org.manage and a recent sign-in; whoever turns it on must already have
+ * a second step ('second_step_setup_first'), so the last administrator cannot lock themselves out. Audited.
+ */
 identityRoutes.put('/admin/security', async (c) => {
   requirePerm(c, 'org.manage');
   const { secondStep } = await body(c, z.object({ secondStep: z.enum(SECOND_STEP_POLICIES) }));

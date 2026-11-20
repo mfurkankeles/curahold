@@ -1,5 +1,6 @@
 // The customer portal, from inside the company: turning it on, opening a
 // board, inviting customers' people, sharing a task with them.
+import type { AccountsRow, BoardsRow, PortalUsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { HEX_COLOR, PORTAL_FIELDS, PORTAL_QUOTA_MAX_MB, PORTAL_SESSION_DAYS, type BoardPortal, type PortalPerson, type PortalSettings } from '../../../shared/src/portal';
@@ -26,10 +27,14 @@ const toPerson = (r: Row): PortalPerson => ({
   lastSeenAt: iso(r.last_seen_at),
 });
 
+/**
+ * The customer portal's settings and storage used. Storage is summed with db.system() for this org_id only, because
+ * portal files belong to customers the reader may not see.
+ */
 portalRoutes.get('/portal', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
-  const boards = await run(c, (q) => q.query(`select id, name from boards where coalesce((portal->>'enabled')::boolean, false) order by name`));
+  const boards = await run(c, (q) => q.query<Pick<BoardsRow, 'id' | 'name'>>(`select id, name from boards where coalesce((portal->>'enabled')::boolean, false) order by name`));
   const used = await deps.db.system((q) => portalBytesUsed(q, org.id));
   const out: PortalSettings = {
     available: !!deps.config.portalDomain,
@@ -121,6 +126,10 @@ portalRoutes.get('/portal/users', async (c) => {
   return c.json({ people: rows.map(toPerson) });
 });
 
+/**
+ * Invites a customer's contact to the portal. Writers only; the portal must be on; only the customer's owner or an
+ * administrator may invite ('portal_invite_owner').
+ */
 portalRoutes.post('/portal/users', async (c) => {
   requireWriter(c);
   const org = c.get('org');
@@ -137,15 +146,15 @@ portalRoutes.post('/portal/users', async (c) => {
     }),
   );
   const person = await run(c, async (q) => {
-    const [a] = await q.query('select id, name, owner_id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'name' | 'owner_id'>>('select id, name, owner_id from accounts where id = $1 and archived_at is null', [input.accountId]);
     if (!a) fail('not_found');
     if (!auth.perms.includes('org.manage') && a.owner_id !== auth.userId) fail('portal_invite_owner');
     // Someone inside the company is not a customer.
     const [inside] = await q.query(`select 1 from users where lower(email) = $1`, [input.email]);
     if (inside) fail('portal_internal_email');
-    const [taken] = await q.query(`select id from portal_users where email = $1`, [input.email]);
+    const [taken] = await q.query<Pick<PortalUsersRow, 'id'>>(`select id from portal_users where email = $1`, [input.email]);
     if (taken) fail('portal_email_taken');
-    const [p] = await q.query(
+    const [p] = await q.query<PortalUsersRow>(
       `insert into portal_users (org_id, account_id, email, name, locale, invited_by) values ($1, $2, $3, $4, $5, $6) returning *`,
       [org.id, a.id, input.email, input.name, input.locale ?? null, auth.userId],
     );
@@ -156,6 +165,7 @@ portalRoutes.post('/portal/users', async (c) => {
   return c.json({ person: toPerson(person) }, 201);
 });
 
+/** Sends a portal invitation again; only those who could invite them. */
 portalRoutes.post('/portal/users/:id/resend', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -166,7 +176,7 @@ portalRoutes.post('/portal/users/:id/resend', async (c) => {
     const [p] = await q.query(`select pu.*, a.name as account_name from portal_users pu join accounts a on a.id = pu.account_id where pu.id = $1 and pu.status <> 'disabled'`, [id]);
     if (!p) fail('not_found');
     // Only those who could invite them may send it again.
-    const [ok] = await q.query(`update portal_users set name = name where id = $1 returning id`, [id]);
+    const [ok] = await q.query<Pick<PortalUsersRow, 'id'>>(`update portal_users set name = name where id = $1 returning id`, [id]);
     if (!ok) fail('forbidden');
     return p;
   });
@@ -182,7 +192,7 @@ portalRoutes.post('/portal/users/:id/enable', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const n = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<PortalUsersRow, 'id'>>(
       `update portal_users set status = case when last_seen_at is null then 'invited' else 'active' end where id = $1 and status = 'disabled' returning id`,
       [id],
     );
@@ -193,13 +203,14 @@ portalRoutes.post('/portal/users/:id/enable', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Turns off a portal contact's access and ends their sessions; audited. */
 portalRoutes.delete('/portal/users/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   const org = c.get('org');
   const auth = c.get('auth');
   const n = await run(c, async (q) => {
-    const rows = await q.query(`update portal_users set status = 'disabled' where id = $1 and status <> 'disabled' returning id`, [id]);
+    const rows = await q.query<Pick<PortalUsersRow, 'id'>>(`update portal_users set status = 'disabled' where id = $1 and status <> 'disabled' returning id`, [id]);
     if (rows.length) await audit(q, { orgId: org.id, actorId: auth.userId, action: 'portal.disabled_user', entity: 'portal_user', entityId: id });
     return rows.length;
   });

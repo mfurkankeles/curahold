@@ -69,6 +69,10 @@ export async function unsubscribeLink(c: C, to: string) {
   return `${centralUrl(c.get('deps').config)}/signup/unsubscribe#t=${t}`;
 }
 
+/**
+ * What the trial request form needs: sign-up mode, the visitor's country, a signed form stamp (for the too-fast check)
+ * and the Turnstile site key when on (ADR 0015, 0017).
+ */
 trialRoutes.get('/config', async (c) => {
   const now = nowOf(c.get('deps')).getTime();
   c.header('cache-control', 'no-store');
@@ -77,6 +81,10 @@ trialRoutes.get('/config', async (c) => {
 
 const codeHash = (c: C, to: string, code: string) => hmacHex(secretOf(c), `${to}:${code}`);
 
+/**
+ * Emails a code to confirm the address. A bot (hidden field, too fast, failed Turnstile) gets the same answer and
+ * nothing is sent, so the form cannot be used to send mail (cost) or to learn what works.
+ */
 trialRoutes.post('/code', async (c) => {
   const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
@@ -116,6 +124,7 @@ trialRoutes.post('/code', async (c) => {
   return c.json({ ok: true, freeMail: free, ...(deps.config.devExposeTokens ? { devCode: code } : {}) });
 });
 
+/** Checks the emailed code and returns a ticket for the submit step; 'invalid_token' otherwise. */
 trialRoutes.post('/verify', async (c) => {
   const input = await body(
     c,
@@ -250,6 +259,10 @@ const submitSchema = z.object({
   freeMailNote: text(300),
 });
 
+/**
+ * Sends the trial request with its consents. A bot gets a plausible reference and nothing is stored (ADR 0015).
+ * The consents asked for depend on the chosen and the connecting country; they are kept as evidence (ADR 0014).
+ */
 trialRoutes.post('/submit', async (c) => {
   const input = await body(c, submitSchema);
   const deps = c.get('deps');
@@ -332,6 +345,7 @@ trialRoutes.post('/submit', async (c) => {
   return c.json({ ref: made.ref }, 201);
 });
 
+/** Withdraws marketing consent from a signed link in a mail; 'invalid_token' for a bad link. */
 trialRoutes.post('/unsubscribe', async (c) => {
   const input = await body(c, z.object({ t: z.string().min(20).max(600), locale: localeField.optional() }));
   const t = await verify<Unsub>(input.t, secretOf(c));

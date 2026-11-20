@@ -35,6 +35,10 @@ export function cleanPath(p: string): string {
 }
 
 let installed = false;
+/**
+ * Starts collecting what a help request carries: browser, last pages, page errors and failed requests. Kept in this
+ * tab's memory, no page content or typed text, and shown to the person before sending.
+ */
 export function installDiagnostics() {
   if (installed || typeof window === 'undefined') return;
   installed = true;
@@ -52,10 +56,12 @@ export function installDiagnostics() {
   page();
 }
 
+/** Notes a failed API call for diagnostics, with ids removed from the path. */
 export function noteFailedRequest(method: string, path: string, status: number) {
   push(failed, { at: new Date().toISOString(), method, path: cleanPath(path), status });
 }
 
+/** Notes a page visit for diagnostics, with ids removed from the path. */
 export function notePage(path: string) {
   const p = cleanPath(path);
   if (pages[pages.length - 1] !== p) push(pages, p);

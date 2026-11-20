@@ -1,6 +1,7 @@
 // Jira Cloud set-up: which Jira projects to bring over and which Curahold board the work lands on. The field mapping
 // is the same for everyone (jiraDefaultSync), so choosing those two things is all there is to it; the sync then runs
 // like any other connection's (history, "needs attention", reconnect).
+import type { BoardsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requirePerm, requirePlan, run, type AppEnv, type C } from '../context';
@@ -56,7 +57,7 @@ jiraRoutes.put('/connections/:id/jira', async (c) => {
     crmFail(e);
   }
   await run(c, async (q) => {
-    const [b] = await q.query('select id from boards where id = $1 and archived_at is null', [input.boardId]);
+    const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [input.boardId]);
     if (!b) fail('validation', { fields: 'boardId' }, { fields: ['boardId'] });
     const next = { ...conn.sync, objects: jiraDefaultSync(input.boardId), conflict: conn.sync.conflict ?? 'latest' };
     await q.query(

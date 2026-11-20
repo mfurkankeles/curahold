@@ -11,6 +11,7 @@
 //    one its proposer decided, with its review still valid, through a runner
 //    registered by the server. Runners hold the credentials; agents never do —
 //    no agent tool, key or route reaches a runner.
+import type { CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { Q } from '../db';
 import type { Approval, ApprovalProposal } from '../../../shared/src/office';
@@ -33,6 +34,10 @@ export async function checkOptions(deps: Pick<Deps, 'config'>, q: Q) {
   };
 }
 
+/**
+ * Runs the output checks over texts an agent wants to put out. For anything leaving the company (`external`),
+ * a competitor mention becomes a block, not a warning: the product never names competitors in public (CLAUDE.md).
+ */
 export async function screenTexts(deps: Pick<Deps, 'config'>, q: Q, texts: (string | null | undefined)[], external: boolean): Promise<Finding[]> {
   const f = screen(texts, await checkOptions(deps, q));
   // Anything that leaves the company may never name a competitor.
@@ -50,7 +55,7 @@ async function reviewOk(q: Q, proposer: string, kind: ExternalKind, action: Appr
   if (!need.reviewers.includes(by)) return { ok: false as const, why: `${by} may not review ${kind}` };
   const reviewer = await seatPolicy(q, by);
   if (!reviewer || !reviewer.reviews.has(kind)) return { ok: false as const, why: `${by} may not review ${kind}` };
-  const [log] = await q.query(`select seat, meta from company_log where id = $1 and kind = 'report'`, [ref]);
+  const [log] = await q.query<Pick<CompanyLogRow, 'seat' | 'meta'>>(`select seat, meta from company_log where id = $1 and kind = 'report'`, [ref]);
   if (!log || log.seat !== by || log.meta?.review?.verdict !== 'approve' || log.meta?.review?.kind !== kind) return { ok: false as const, why: 'review not found in the log' };
   return { ok: true as const };
 }
@@ -116,6 +121,10 @@ async function runChecked(deps: Deps, q: Q, a: Approval, run: Runner): Promise<s
   return run(deps, q, a);
 }
 
+/**
+ * The one person whose decision can run an outside action: PLATFORM_OWNER, else the first support staff address.
+ * Null when neither is set, and then nothing outside runs (fails closed, ADR 0011).
+ */
 export const consoleOwner = (deps: Pick<Deps, 'config'>) => (deps.config.owner ?? deps.config.support?.staff?.[0] ?? '').toLowerCase() || null;
 
 /**

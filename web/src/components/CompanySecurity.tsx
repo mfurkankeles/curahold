@@ -10,6 +10,7 @@ import { LoadError, SkeletonRows } from './Empty';
 import { Confirm } from './ui';
 import { Icon } from './icons';
 
+/** Settings: the company's second-step rule (off, administrators, everyone). */
 export function CompanySecurity() {
   const { t } = useI18n();
   const save = useSaver();

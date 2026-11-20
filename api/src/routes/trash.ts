@@ -1,6 +1,7 @@
 // The trash: what was deleted in the last 30 days, putting it back, and
 // deleting it for good. People see and restore what they deleted themselves;
 // whoever runs the company or looks after privacy sees all of it.
+import type { TrashRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { TRASH_DAYS, TRASH_KINDS, type TrashKind } from '../../../shared/src/model';
 import { requireWriter, run, type AppEnv } from '../context';
@@ -15,6 +16,7 @@ export const trashRoutes = new Hono<AppEnv>();
 const PAGE = 50;
 const manages = (perms: readonly string[]) => perms.includes('org.manage') || perms.includes('privacy.manage');
 
+/** What is in the trash (kept TRASH_DAYS days), newest first, and whether the reader may restore or empty it. */
 trashRoutes.get('/trash', async (c) => {
   const auth = c.get('auth');
   const asked = c.req.query('kind');
@@ -22,7 +24,7 @@ trashRoutes.get('/trash', async (c) => {
   const text = (c.req.query('q') ?? '').trim().slice(0, 100);
   const before = c.req.query('before');
   const rows = await run(c, (q) =>
-    q.query(
+    q.query<Pick<TrashRow, 'id' | 'kind' | 'root_ids' | 'label' | 'detail' | 'deleted_by' | 'deleted_at' | 'purge_at'>>(
       `select id, kind, root_ids, label, detail, deleted_by, deleted_at, purge_at
          from trash
         where purge_at > now()
@@ -71,7 +73,7 @@ trashRoutes.delete('/trash/:id', async (c) => {
   const auth = c.get('auth');
   if (!manages(auth.perms)) fail('forbidden');
   await run(c, async (q) => {
-    const [t] = await q.query('select kind, label, root_ids from trash where id = $1 and purge_at > now()', [id]);
+    const [t] = await q.query<Pick<TrashRow, 'kind' | 'label' | 'root_ids'>>('select kind, label, root_ids from trash where id = $1 and purge_at > now()', [id]);
     if (!t) fail('not_found');
     let due = false;
     try {

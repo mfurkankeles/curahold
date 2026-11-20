@@ -61,6 +61,10 @@ export interface CheckOptions {
   ownDomains?: string[];
 }
 
+/**
+ * The AI team's output checks over texts: secrets, personal data, competitor names, other companies' names, unknown
+ * links and unproven claims. Returns findings with severity; the gate refuses anything with a block (ADR 0011).
+ */
 export function screen(texts: (string | null | undefined)[], o: CheckOptions = {}): Finding[] {
   const text = texts.filter(Boolean).join('\n');
   const out: Finding[] = [];
@@ -96,4 +100,5 @@ export function screen(texts: (string | null | undefined)[], o: CheckOptions = {
   return out;
 }
 
+/** Whether any finding blocks. */
 export const blocks = (f: Finding[]) => f.some((x) => x.severity === 'block');

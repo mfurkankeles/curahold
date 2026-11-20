@@ -1,6 +1,7 @@
 // The setup wizard's server side: progress that survives a reload, people
 // and team suggestions gathered from everything connected so far, adding
 // them in one go, and sending the invitations at the end.
+import type { ConnectionsRow, TeamsRow, UsersRow } from '../db/rows.gen';
 import { seatGuard } from '../lib/trial';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -21,6 +22,7 @@ setupRoutes.use('*', async (c, next) => {
   await next();
 });
 
+/** Marks a setup wizard step done or not, so progress survives a reload. */
 setupRoutes.post('/step', async (c) => {
   const input = await body(c, z.object({ step: z.enum(SETUP_STEPS), done: z.boolean() }));
   const org = c.get('org');
@@ -39,15 +41,18 @@ interface Suggestion {
   accounts: number;
 }
 
+/**
+ * People and team suggestions gathered from connected tools, only at the company's own domains (no guests or vendors).
+ */
 setupRoutes.get('/people', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
   const { users, conns, ownerRows, teamRows, teams } = await run(c, async (q) => ({
-    users: await q.query('select email, name, status from users'),
-    conns: await q.query(`select id, provider from connections where kind = 'messaging' and status = 'active' and provider <> 'webhook'`),
+    users: await q.query<Pick<UsersRow, 'email' | 'name' | 'status'>>('select email, name, status from users'),
+    conns: await q.query<Pick<ConnectionsRow, 'id' | 'provider'>>(`select id, provider from connections where kind = 'messaging' and status = 'active' and provider <> 'webhook'`),
     ownerRows: await q.query(`select fields->>'_owner' as v, count(*)::int as n from accounts where fields ? '_owner' group by 1`),
     teamRows: await q.query(`select fields->>'_team' as v, count(*)::int as n from accounts where fields ? '_team' group by 1`),
-    teams: await q.query('select name from teams'),
+    teams: await q.query<Pick<TeamsRow, 'name'>>('select name from teams'),
   }));
   const members = new Map(users.map((u) => [u.email, u]));
   const people = new Map<string, Suggestion>();
@@ -107,6 +112,7 @@ setupRoutes.get('/people', async (c) => {
   });
 });
 
+/** Adds the chosen people as invited users, in one go. Needs users.manage; counts against the seat cap; audited. */
 setupRoutes.post('/people', async (c) => {
   requirePerm(c, 'users.manage');
   const input = await body(
@@ -123,7 +129,7 @@ setupRoutes.post('/people', async (c) => {
   const out = await run(c, async (q) => {
     const roles = await q.query<{ id: string; key: string }>('select id, key from roles where system');
     const roleId = Object.fromEntries(roles.map((r) => [r.key, r.id]));
-    const teamIds = new Map<string, string>((await q.query('select id, name from teams')).map((t) => [t.name.toLowerCase(), t.id]));
+    const teamIds = new Map<string, string>((await q.query<Pick<TeamsRow, 'id' | 'name'>>('select id, name from teams')).map((t) => [t.name.toLowerCase(), t.id]));
     let teamsCreated = 0;
     const wanted = new Set([...input.teams.map((t) => t.name), ...input.people.flatMap((p) => p.teams)]);
     for (const name of wanted) {
@@ -133,7 +139,7 @@ setupRoutes.post('/people', async (c) => {
       teamsCreated++;
     }
     let created = 0;
-    const userIds = new Map<string, string>((await q.query('select id, email from users')).map((u) => [u.email, u.id]));
+    const userIds = new Map<string, string>((await q.query<Pick<UsersRow, 'id' | 'email'>>('select id, email from users')).map((u) => [u.email, u.id]));
     for (const p of input.people) {
       let id = userIds.get(p.email);
       if (!id) {
@@ -166,6 +172,7 @@ setupRoutes.post('/people', async (c) => {
   return c.json(out);
 });
 
+/** Finishes the setup wizard and, if asked, sends the invitations. Audited. */
 setupRoutes.post('/finish', async (c) => {
   const input = await body(c, z.object({ sendInvites: z.boolean() }));
   const deps = c.get('deps');
@@ -188,6 +195,7 @@ setupRoutes.post('/finish', async (c) => {
   return c.json({ invited: invites.length, ...(deps.config.devExposeTokens ? { devTokens: invites.map((i) => i.token) } : {}) });
 });
 
+/** Opens the setup wizard again (clears "finished"). */
 setupRoutes.post('/reopen', async (c) => {
   const org = c.get('org');
   await run(c, (q) => q.query(`update orgs set setup = setup - 'finishedAt' where id = $1`, [org.id]));

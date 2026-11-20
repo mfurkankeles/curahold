@@ -273,9 +273,15 @@ function unauthorized(c: C) {
 }
 
 mcpRoutes.options('/mcp', (c) => c.body(null, 204, { ...open, 'access-control-allow-methods': 'POST, GET, DELETE, OPTIONS' }));
+/** MCP: streaming is not offered (405, allow POST). */
 mcpRoutes.get('/mcp', (c) => c.body(null, 405, { ...open, allow: 'POST' }));
+/** MCP: ends a session; there is no server state to drop (204). */
 mcpRoutes.delete('/mcp', (c) => c.body(null, 204, open));
 
+/**
+ * The AI connector (MCP over JSON-RPC) for outside assistants, with an API key or app token. Every tool call goes
+ * through the same API routes the app uses, as the key's owner, with the same permissions and row security.
+ */
 mcpRoutes.post('/mcp', async (c) => {
   const bearer = /^Bearer\s+(\S+)/i.exec(c.req.header('authorization') ?? '')?.[1];
   const who = bearer ? await resolveToken(c.get('deps').db, c.get('org').id, bearer) : null;

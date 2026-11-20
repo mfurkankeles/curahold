@@ -33,6 +33,6 @@ in the same language.
 ## Consequences
 
 - Every feature pays for nine (soon eleven) translations up front; a feature is not done until they exist.
-- `scripts/add-strings.ts` still writes only English and Turkish; use it, then fill the other files, or the i18n test
-  fails (follow-up: teach it all languages).
+- `scripts/add-strings.ts` writes every language in `LOCALES` and refuses a key that lacks one (done 20 Nov 2026;
+  it used to write only English and Turkish).
 - Legal texts in languages other than Turkish and English need a native legal review before they are relied on.

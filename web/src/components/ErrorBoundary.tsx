@@ -21,6 +21,9 @@ interface Props {
   resetKey?: string;
 }
 
+/**
+ * Catches a screen's render error and shows a plain message with try again or reload, so one screen never blanks the page.
+ */
 export class ErrorBoundary extends Component<Props, { failed: boolean }> {
   state = { failed: false };
 

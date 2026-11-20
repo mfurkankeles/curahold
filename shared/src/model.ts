@@ -52,9 +52,11 @@ export type AccountScope = (typeof ACCOUNT_SCOPES)[number];
 export const SCOPE_PERMS: Perm[] = ['accounts.view_all', 'accounts.view_team'];
 /** The permissions shown as yes/no switches (reach is shown on its own). */
 export const GRANT_PERMS: Perm[] = PERMS.filter((p) => !SCOPE_PERMS.includes(p));
+/** Which customers a set of permissions sees: all, the team's, or only one's own. */
 export function scopeOf(perms: readonly string[]): AccountScope {
   return perms.includes('accounts.view_all') ? 'all' : perms.includes('accounts.view_team') ? 'team' : 'own';
 }
+/** A permission list with its customer-scope permission replaced by `scope`. */
 export function withScope(perms: Perm[], scope: AccountScope): Perm[] {
   const rest = perms.filter((p) => !SCOPE_PERMS.includes(p));
   return scope === 'all' ? [...rest, 'accounts.view_all'] : scope === 'team' ? [...rest, 'accounts.view_team'] : rest;

@@ -1,5 +1,6 @@
 // Reusable pieces of work: saved views, checklists, plans for a customer,
 // and a board's intake form.
+import type { AccountsRow, BoardsRow, ChecklistTemplatesRow, ImportBatchesRow, PlanTemplatesRow, RecordsRow, SavedViewsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Column } from '../../../shared/src/model';
@@ -45,13 +46,14 @@ const scopeOf = z.string().regex(/^(board|accounts|my_tasks|timeline|records:[a-
 
 const toView = (r: Row, me: string) => ({ id: r.id, scope: r.scope ?? 'board', boardId: r.board_id ?? null, name: r.name, filters: r.filters ?? {}, shared: !!r.shared, mine: r.user_id === me });
 
+/** Saved views for a board (or another list): the person's own and the shared ones. */
 workRoutes.get('/views', async (c) => {
   const board = c.req.query('board');
   const scoped = scopeOf.safeParse(c.req.query('scope'));
   const scope = scoped.success ? scoped.data : 'board';
   const auth = c.get('auth');
   const rows = await run(c, (q) =>
-    q.query(
+    q.query<SavedViewsRow>(
       `select * from saved_views where scope = $2 and (($1::uuid is null and board_id is null) or board_id = $1::uuid) order by shared desc, sort_text(name)`,
       [scope === 'board' && uuid.safeParse(board).success ? board : null, scope],
     ),
@@ -63,11 +65,12 @@ workRoutes.get('/views', async (c) => {
 workRoutes.get('/views/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
-  const [row] = await run(c, (q) => q.query('select * from saved_views where id = $1', [id]));
+  const [row] = await run(c, (q) => q.query<SavedViewsRow>('select * from saved_views where id = $1', [id]));
   if (!row) fail('not_found');
   return c.json({ view: toView(row, auth.userId) });
 });
 
+/** Saves a view; a board view keeps the board's filter shape (400 'validation' on bad filters) (201). */
 workRoutes.post('/views', async (c) => {
   const input = await body(
     c,
@@ -82,7 +85,7 @@ workRoutes.post('/views', async (c) => {
   const org = c.get('org');
   const row = await run(c, async (q) => {
     if (input.boardId) await loadBoard(q, input.boardId);
-    const [r] = await q.query('insert into saved_views (org_id, user_id, board_id, name, filters, shared, scope) values ($1, $2, $3, $4, $5, $6, $7) returning *', [
+    const [r] = await q.query<SavedViewsRow>('insert into saved_views (org_id, user_id, board_id, name, filters, shared, scope) values ($1, $2, $3, $4, $5, $6, $7) returning *', [
       org.id,
       auth.userId,
       input.boardId ?? null,
@@ -96,6 +99,7 @@ workRoutes.post('/views', async (c) => {
   return c.json({ view: toView(row, auth.userId) }, 201);
 });
 
+/** Renames a saved view, changes its filters or sharing. 404 when unknown or not the person's. */
 workRoutes.patch('/views/:id', async (c) => {
   const id = param(c, 'id');
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(80).optional(), filters: z.unknown().optional(), shared: z.boolean().optional() }));
@@ -109,7 +113,7 @@ workRoutes.patch('/views/:id', async (c) => {
       if (!parsed.success) fail('validation', { fields: 'filters' }, { fields: ['filters'] });
       next = parsed.data;
     }
-    return q.query('update saved_views set name = coalesce($2, name), filters = coalesce($3::jsonb, filters), shared = coalesce($4, shared) where id = $1 and user_id = $5 returning *', [
+    return q.query<SavedViewsRow>('update saved_views set name = coalesce($2, name), filters = coalesce($3::jsonb, filters), shared = coalesce($4, shared) where id = $1 and user_id = $5 returning *', [
       id,
       input.name ?? null,
       next === null ? null : JSON.stringify(next),
@@ -121,10 +125,11 @@ workRoutes.patch('/views/:id', async (c) => {
   return c.json({ view: toView(row, auth.userId) });
 });
 
+/** Deletes a saved view. 404 when unknown or not the person's. */
 workRoutes.delete('/views/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
-  const gone = await run(c, (q) => q.query('delete from saved_views where id = $1 and user_id = $2 returning id', [id, auth.userId]));
+  const gone = await run(c, (q) => q.query<Pick<SavedViewsRow, 'id'>>('delete from saved_views where id = $1 and user_id = $2 returning id', [id, auth.userId]));
   if (!gone.length) fail('not_found');
   return c.json({ ok: true });
 });
@@ -134,12 +139,14 @@ workRoutes.delete('/views/:id', async (c) => {
 const items = z.array(z.string().trim().min(1).max(300)).min(1).max(50);
 const toChecklist = (r: Row, me: string) => ({ id: r.id, name: r.name, items: r.items ?? [], mine: r.created_by === me });
 
+/** The company's reusable checklists. */
 workRoutes.get('/checklists', async (c) => {
   const auth = c.get('auth');
-  const rows = await run(c, (q) => q.query('select * from checklist_templates order by sort_text(name)'));
+  const rows = await run(c, (q) => q.query<ChecklistTemplatesRow>('select * from checklist_templates order by sort_text(name)'));
   return c.json({ checklists: rows.map((r) => toChecklist(r, auth.userId)) });
 });
 
+/** Creates a reusable checklist; names are unique. Writers only (201). */
 workRoutes.post('/checklists', async (c) => {
   requireWriter(c);
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(120), items }));
@@ -148,16 +155,17 @@ workRoutes.post('/checklists', async (c) => {
   const row = await run(c, async (q) => {
     const [taken] = await q.query('select 1 from checklist_templates where fold_text(name) = fold_text($1)', [input.name]);
     if (taken) fail('validation', { fields: 'name' }, { fields: ['name'] });
-    const [r] = await q.query('insert into checklist_templates (org_id, name, items, created_by) values ($1, $2, $3, $4) returning *', [org.id, input.name, JSON.stringify(input.items), auth.userId]);
+    const [r] = await q.query<ChecklistTemplatesRow>('insert into checklist_templates (org_id, name, items, created_by) values ($1, $2, $3, $4) returning *', [org.id, input.name, JSON.stringify(input.items), auth.userId]);
     return r;
   });
   return c.json({ checklist: toChecklist(row, auth.userId) }, 201);
 });
 
+/** Deletes a reusable checklist. Writers only. */
 workRoutes.delete('/checklists/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
-  const gone = await run(c, (q) => q.query('delete from checklist_templates where id = $1 returning id', [id]));
+  const gone = await run(c, (q) => q.query<Pick<ChecklistTemplatesRow, 'id'>>('delete from checklist_templates where id = $1 returning id', [id]));
   if (!gone.length) fail('not_found');
   return c.json({ ok: true });
 });
@@ -181,11 +189,15 @@ const planInput = z.object({
 });
 const toPlan = (r: Row) => ({ id: r.id, name: r.name, description: r.description ?? '', boardId: r.board_id, column: r.column_key ?? null, anchor: r.anchor ?? 'start', tasks: r.tasks ?? [] });
 
+/** Playbooks (plan templates) on boards that are not archived, by name. */
 workRoutes.get('/plans', async (c) => {
   const rows = await run(c, (q) => q.query('select p.* from plan_templates p join boards b on b.id = p.board_id where b.archived_at is null order by sort_text(p.name)'));
   return c.json({ plans: rows.map(toPlan) });
 });
 
+/**
+ * Creates a playbook. Needs org.manage and the Business plan (requirePlan 'playbooks', money); names unique (201).
+ */
 workRoutes.post('/plans', async (c) => {
   requirePerm(c, 'org.manage');
   // Playbooks are part of the Business plan.
@@ -197,7 +209,7 @@ workRoutes.post('/plans', async (c) => {
     await loadBoard(q, input.boardId);
     const [taken] = await q.query('select 1 from plan_templates where fold_text(name) = fold_text($1)', [input.name]);
     if (taken) fail('validation', { fields: 'name' }, { fields: ['name'] });
-    const [r] = await q.query(
+    const [r] = await q.query<PlanTemplatesRow>(
       'insert into plan_templates (org_id, name, board_id, column_key, tasks, created_by, anchor, description) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *',
       [org.id, input.name, input.boardId, input.column ?? null, JSON.stringify(input.tasks), auth.userId, input.anchor ?? 'start', input.description ?? ''],
     );
@@ -206,13 +218,14 @@ workRoutes.post('/plans', async (c) => {
   return c.json({ plan: toPlan(row) }, 201);
 });
 
+/** Edits a playbook. Needs org.manage. */
 workRoutes.patch('/plans/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
   const input = await body(c, planInput);
   const row = await run(c, async (q) => {
     await loadBoard(q, input.boardId);
-    const [r] = await q.query(
+    const [r] = await q.query<PlanTemplatesRow>(
       `update plan_templates set name = $2, board_id = $3, column_key = $4, tasks = $5, anchor = coalesce($6, anchor), description = coalesce($7, description), updated_at = now()
         where id = $1 returning *`,
       [id, input.name, input.boardId, input.column ?? null, JSON.stringify(input.tasks), input.anchor ?? null, input.description ?? null],
@@ -223,10 +236,11 @@ workRoutes.patch('/plans/:id', async (c) => {
   return c.json({ plan: toPlan(row) });
 });
 
+/** Deletes a playbook. Needs org.manage. */
 workRoutes.delete('/plans/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
-  const gone = await run(c, (q) => q.query('delete from plan_templates where id = $1 returning id', [id]));
+  const gone = await run(c, (q) => q.query<Pick<PlanTemplatesRow, 'id'>>('delete from plan_templates where id = $1 returning id', [id]));
   if (!gone.length) fail('not_found');
   return c.json({ ok: true });
 });
@@ -242,9 +256,9 @@ workRoutes.post('/accounts/:id/plans', async (c) => {
   const deps = c.get('deps');
   const today = localDate(nowOf(deps), org.timezone || 'UTC');
   const made = await run(c, async (q) => {
-    const [account] = await q.query('select id, name, owner_id, fields from accounts where id = $1', [id]);
+    const [account] = await q.query<Pick<AccountsRow, 'id' | 'name' | 'owner_id' | 'fields'>>('select id, name, owner_id, fields from accounts where id = $1', [id]);
     if (!account) fail('not_found');
-    const [plan] = await q.query('select * from plan_templates where id = $1', [input.planId]);
+    const [plan] = await q.query<PlanTemplatesRow>('select * from plan_templates where id = $1', [input.planId]);
     if (!plan) fail('not_found');
     const from = anchorDay(plan, input.start ?? today, account, null, org.account_fields ?? []);
     return applyPlan(q, { orgId: org.id, actorId: auth.userId, plan, account, from, today });
@@ -264,12 +278,12 @@ workRoutes.post('/records/:id/plans', async (c) => {
   const deps = c.get('deps');
   const today = localDate(nowOf(deps), org.timezone || 'UTC');
   const made = await run(c, async (q) => {
-    const [record] = await q.query('select id, name, owner_id, fields, account_id from records where id = $1', [id]);
+    const [record] = await q.query<Pick<RecordsRow, 'id' | 'name' | 'owner_id' | 'fields' | 'account_id'>>('select id, name, owner_id, fields, account_id from records where id = $1', [id]);
     if (!record) fail('not_found');
     if (!record.account_id) fail('validation', { fields: 'accountId' }, { fields: ['accountId'] });
-    const [account] = await q.query('select id, name, owner_id, fields from accounts where id = $1', [record.account_id]);
+    const [account] = await q.query<Pick<AccountsRow, 'id' | 'name' | 'owner_id' | 'fields'>>('select id, name, owner_id, fields from accounts where id = $1', [record.account_id]);
     if (!account) fail('not_found');
-    const [plan] = await q.query('select * from plan_templates where id = $1', [input.planId]);
+    const [plan] = await q.query<PlanTemplatesRow>('select * from plan_templates where id = $1', [input.planId]);
     if (!plan) fail('not_found');
     const from = anchorDay(plan, input.start ?? today, account, record, org.account_fields ?? []);
     return applyPlan(q, { orgId: org.id, actorId: auth.userId, plan, account, record, from, today });
@@ -300,7 +314,7 @@ workRoutes.post('/boards/:id/requests', async (c) => {
   const org = c.get('org');
   const task = await run(c, async (q) => {
     // Another department's intake board is reached without opening it: only its form is known here.
-    const [seen] = await q.query('select id from boards where id = $1 and archived_at is null', [id]);
+    const [seen] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [id]);
     const [desk] = seen ? [null] : await q.query('select * from app_request_desks() where id = $1', [id]);
     if (!seen && !desk) fail('not_found');
     const board = seen ? await loadBoard(q, id) : desk!;
@@ -518,7 +532,7 @@ workRoutes.get('/boards/:id/imports', async (c) => {
   const rows = await run(c, async (q) => {
     const [board] = await q.query('select 1 from boards where id = $1', [boardId]);
     if (!board) fail('not_found');
-    return q.query(`select id, file_name, summary, created_at, undone_at from import_batches where kind = 'tasks' and board_id = $1 order by created_at desc limit 5`, [boardId]);
+    return q.query<Pick<ImportBatchesRow, 'id' | 'file_name' | 'summary' | 'created_at' | 'undone_at'>>(`select id, file_name, summary, created_at, undone_at from import_batches where kind = 'tasks' and board_id = $1 order by created_at desc limit 5`, [boardId]);
   });
   return c.json({
     imports: rows.map((r) => ({

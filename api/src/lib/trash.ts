@@ -20,6 +20,7 @@ export async function toTrash(q: Q, kind: TrashKind, ids: string[], label: strin
 
 const n = (x: unknown): number | undefined => (Number(x) > 0 ? Number(x) : undefined);
 
+/** A trash row as the API's TrashItem, with counts of what went with it. */
 export function toTrashItem(r: Row): TrashItem {
   const parts = (r.detail?.parts ?? {}) as Record<string, number>;
   const links = (r.detail?.links ?? {}) as Record<string, number>;
@@ -79,6 +80,7 @@ const KIND_OF: Record<string, TrashKind | 'record_type' | 'board'> = {
   boards: 'board',
 };
 
+/** Turns the trash functions' database errors (TR404, TR403, TR424...) into the API's errors. */
 export function trashRefused(e: unknown): never {
   const err = e as { code?: string; detail?: string } | null;
   let detail: Record<string, unknown> = {};

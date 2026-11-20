@@ -13,6 +13,7 @@ export type AccountingApiProvider = (typeof ACCOUNTING_PROVIDERS)[number];
 export const ACCOUNTING_FILE = 'finfile' as const;
 export type AccountingProvider = AccountingApiProvider | typeof ACCOUNTING_FILE;
 export const ACCOUNTING_ALL: readonly AccountingProvider[] = [...ACCOUNTING_PROVIDERS, ACCOUNTING_FILE];
+/** Whether a provider is an accounting program (its figures are read only, never written). */
 export const isAccounting = (p: string): p is AccountingProvider => (ACCOUNTING_ALL as readonly string[]).includes(p);
 
 export type FinKind = 'customers' | 'invoices' | 'payments';

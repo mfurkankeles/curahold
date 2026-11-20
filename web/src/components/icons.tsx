@@ -103,6 +103,7 @@ export type IconName = keyof typeof ICONS;
 /** The icon a kind of record carries wherever it is named: the menu, its list, its panel. */
 export const RECORD_KIND_ICON: Record<string, IconName> = { contact: 'idcard', opportunity: 'funnel', ticket: 'lifebuoy', custom: 'layout' };
 
+/** One of the app's inline SVG icons; decorative unless `label` is given. */
 export function Icon({ name, size = 18, className, label }: { name: IconName; size?: number; className?: string; label?: string }) {
   return (
     <svg

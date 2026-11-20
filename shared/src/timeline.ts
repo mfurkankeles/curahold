@@ -29,6 +29,7 @@ export interface Activity {
 /** The kinds of activity that are a conversation with the customer: they make up its meetings. */
 export const MEETING_KINDS = ['meeting', 'review', 'call'] as const;
 export type MeetingKind = (typeof MEETING_KINDS)[number];
+/** Whether a timeline kind is a meeting (meeting, call, review), whose notes may be empty. */
 export const isMeetingKind = (k: string): k is MeetingKind => (MEETING_KINDS as readonly string[]).includes(k);
 
 /** A next step agreed in a meeting: a task that remembers the meeting. */

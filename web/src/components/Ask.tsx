@@ -98,6 +98,7 @@ const status = () =>
 /** "Not now" on the consent notice: asked again on the next page load, questions stay on the device meanwhile. */
 let notNow = false;
 
+/** The assistant's question box and answers (help, or onboarding mode), with sources and the engine used. */
 export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: string) => void; onEngine?: (model: boolean) => void; mode?: 'help' | 'onboarding' }) {
   const { t, locale, words } = useI18n();
   const { me, boards, canWrite } = useStore();

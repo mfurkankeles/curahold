@@ -21,12 +21,13 @@
 //   POST   /seats/:seat/wake {force?}  wake now ("Şimdi başlat"): pre-check, then a run only with news (force: run anyway)
 //   POST   /seats/:seat/golden {outputs?} run the golden tasks (or judge submitted outputs) → active or not
 //   PATCH  /seats/:seat {state?, weeklyBudget?} wake a dormant seat / change its budget
-//   GET    /cadences                   cadences as data + weekly estimates (for the conductor's scheduled tasks)
+//   GET    /cadences                   cadences as data + weekly estimates (for whoever schedules the tick)
 //   POST   /tick {windowMin?}          what a scheduled task calls: due cadences wake (pre-check first)
 //   POST   /meetings/:id/round         every attendee speaks once (time-box + token budget enforced)
 //   POST   /meetings/:id/say {text}    the owner writes in a live meeting; the chair answers
 //   POST   /meetings/:id/close         the note taker's minutes; decisions + action items → approval cards
 //   POST   /approvals/:id/execute      run an approved action whose runner exists (the approved path)
+import type { AgentThreadsRow, AgentWakesRow, MeetingsRow, SeatsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { nowOf, type AppEnv, type C } from '../context';
@@ -78,6 +79,10 @@ async function ensureSeeded(c: C) {
   if (!r.n) await deps.db.system((q) => seedOrgChart(q, { by: 'system' }));
 }
 
+/**
+ * The org chart for the team screen: every seat with status, usage, golden-task result and recent activity, plus pauses
+ * and alerts. Seeds the default chart on first use. Owner only (ownerOnly middleware, ADR 0011).
+ */
 teamRoutes.get('/org', async (c) => {
   await ensureSeeded(c);
   const deps = c.get('deps');
@@ -144,19 +149,21 @@ teamRoutes.get('/org', async (c) => {
   return c.json(body);
 });
 
+/** Puts the default org chart in; `reset` restores seat defaults but keeps who fills each seat. */
 teamRoutes.post('/seed', async (c) => {
   const input = await body(c, z.object({ reset: z.boolean().default(false) }));
   const who = await owner(c);
   return c.json(await c.get('deps').db.system((q) => seedOrgChart(q, { reset: input.reset, by: who })));
 });
 
+/** One seat's card, golden tasks with latest results, cadences, memory and last wake; 404 when unknown. */
 teamRoutes.get('/seats/:seat', async (c) => {
   await ensureSeeded(c);
   const deps = c.get('deps');
   const seat = seatOf(c);
   const [s] = await listSeats(deps, nowOf(deps), seat);
   if (!s) fail('not_found');
-  const [memory, wakeRow] = await deps.db.system(async (q) => [await readMemory(q, seat), (await q.query('select * from agent_wakes where seat = $1', [seat]))[0] ?? null]);
+  const [memory, wakeRow] = await deps.db.system(async (q) => [await readMemory(q, seat), (await q.query<AgentWakesRow>('select * from agent_wakes where seat = $1', [seat]))[0] ?? null]);
   return c.json({
     seat: s,
     def: seatDef(seat) ?? null,
@@ -167,13 +174,17 @@ teamRoutes.get('/seats/:seat', async (c) => {
     lastWake: wakeRow,
   });
 });
+/**
+ * Changes a seat's state or weekly token budget. Waking a dormant seat does not make it active: it must pass its
+ * golden tasks first, so an untested agent never runs on its own.
+ */
 teamRoutes.patch('/seats/:seat', async (c) => {
   const seat = seatOf(c);
   const input = await body(c, z.object({ state: z.enum(['standing', 'on-call', 'dormant']).optional(), weeklyBudget: z.number().int().min(0).max(5_000_000).optional() }));
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
     // Waking a seat does not switch it on: it must pass its golden tasks first.
-    const [r] = await q.query(
+    const [r] = await q.query<Pick<SeatsRow, 'seat'>>(
       `update seats set state = coalesce($2, state), weekly_budget = coalesce($3, weekly_budget), activated_at = case when $2::text is not null and $2::text <> state then null else activated_at end, updated_at = now() where seat = $1 returning seat`,
       [seat, input.state ?? null, input.weeklyBudget ?? null],
     );
@@ -183,11 +194,15 @@ teamRoutes.patch('/seats/:seat', async (c) => {
   if (!ok) fail('not_found');
   return c.json({ ok: true });
 });
+/** A seat's job description and interview kit as Markdown, in `?lang=`; 404 when unknown. */
 teamRoutes.get('/seats/:seat/job', async (c) => {
   const md = await jobDescription(c.get('deps'), seatOf(c), lang(c));
   if (!md) fail('not_found');
   return c.json({ markdown: md });
 });
+/**
+ * Preview of the handover pack for giving a seat to a person (the handover itself is POST /office/seats/:seat/handover).
+ */
 teamRoutes.get('/seats/:seat/handover', async (c) => {
   const p = await handoverPreview(c.get('deps'), seatOf(c), lang(c));
   if (!p) fail('not_found');
@@ -199,12 +214,14 @@ teamRoutes.get('/seats/:seat/handover', async (c) => {
 const threadOf = (r: Record<string, unknown>): ThreadRow => ({ id: String(r.id), seat: String(r.seat), title: String(r.title ?? ''), createdAt: iso(r.created_at)!, lastAt: iso(r.last_at)!, messages: Number(r.messages ?? 0) });
 const messageOf = (r: Record<string, unknown>): MessageRow => ({ id: Number(r.id), role: r.role as MessageRow['role'], body: String(r.body), at: iso(r.at)!, meta: (r.meta as MessageRow['meta']) ?? {} });
 
+/** The owner's chats with a seat, newest first, with message counts. */
 teamRoutes.get('/seats/:seat/threads', async (c) => {
   const rows = await c.get('deps').db.system((q) =>
     q.query(`select t.*, (select count(*)::int from agent_messages m where m.thread = t.id) as messages from agent_threads t where t.seat = $1 order by t.last_at desc limit 200`, [seatOf(c)]),
   );
   return c.json({ threads: rows.map(threadOf) });
 });
+/** Starts a new chat with a seat (201); 404 for an unknown seat. */
 teamRoutes.post('/seats/:seat/threads', async (c) => {
   const seat = seatOf(c);
   const [r] = await c.get('deps').db.system(async (q) => {
@@ -214,6 +231,7 @@ teamRoutes.post('/seats/:seat/threads', async (c) => {
   });
   return c.json({ thread: threadOf(r) }, 201);
 });
+/** A chat's messages: `before` to scroll back, `q` to search, `from=YYYY-MM-DD` to jump to a date. */
 teamRoutes.get('/threads/:id/messages', async (c) => {
   const id = idOf(c);
   const before = Number(c.req.query('before')) || null;
@@ -228,23 +246,28 @@ teamRoutes.get('/threads/:id/messages', async (c) => {
   });
   return c.json({ messages: rows.map(messageOf), more: rows.length === 60 });
 });
+/**
+ * The owner writes to a seat and it answers (one model call through team/runtime run(), so budget and cap apply; 201).
+ */
 teamRoutes.post('/threads/:id/messages', async (c) => {
   const input = await body(c, z.object({ text: z.string().trim().min(1).max(8000) }));
   const r = await chat(c.get('deps'), idOf(c), input.text);
   const rows = await c.get('deps').db.system((q) => q.query('select * from agent_messages where id = any($1::bigint[]) order by id', [[r.ownerMessage, r.agentMessage]]));
   return c.json({ messages: rows.map(messageOf), status: r.reply.status }, 201);
 });
+/** Deletes a chat (the owner's own data); audited as "thread.delete". */
 teamRoutes.delete('/threads/:id', async (c) => {
   const id = idOf(c);
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
-    const [r] = await q.query('delete from agent_threads where id = $1 returning seat', [id]);
+    const [r] = await q.query<Pick<AgentThreadsRow, 'seat'>>('delete from agent_threads where id = $1 returning seat', [id]);
     if (r) await q.query(`insert into agent_audit (seat, actor, action, target, detail) values ($1, 'owner', 'thread.delete', $2, $3)`, [r.seat, id, JSON.stringify({ by: who })]);
     return !!r;
   });
   if (!ok) fail('not_found');
   return c.json({ ok: true });
 });
+/** Everything stored about a seat (memory and every chat) as one JSON file, for keeping or moving. */
 teamRoutes.get('/seats/:seat/export', async (c) => {
   const seat = seatOf(c);
   const data = await c.get('deps').db.system(async (q) => ({
@@ -266,6 +289,7 @@ teamRoutes.get('/seats/:seat/export', async (c) => {
 // ------------------------------------------------------------ memory (view, correct, delete)
 
 teamRoutes.get('/seats/:seat/memory', async (c) => c.json(await c.get('deps').db.system((q) => readMemory(q, seatOf(c)))));
+/** The owner corrects a seat's memory ("summary" or "fact.…"; key "fact.new" adds one). Audited. */
 teamRoutes.put('/seats/:seat/memory/:key', async (c) => {
   const seat = seatOf(c);
   const raw = c.req.param('key');
@@ -286,6 +310,7 @@ teamRoutes.put('/seats/:seat/memory/:key', async (c) => {
   });
   return c.json({ key, memory: await c.get('deps').db.system((q) => readMemory(q, seat)) });
 });
+/** The owner removes one memory entry from a seat; audited. 404 for a malformed key. */
 teamRoutes.delete('/seats/:seat/memory/:key', async (c) => {
   const seat = seatOf(c);
   const key = memKey.safeParse(c.req.param('key'));
@@ -303,11 +328,16 @@ teamRoutes.delete('/seats/:seat/memory/:key', async (c) => {
 // ------------------------------------------------------------ wakes, cadences, golden tasks
 
 teamRoutes.get('/seats/:seat/precheck', async (c) => c.json(await c.get('deps').db.system((q) => precheck(q, seatOf(c), nowOf(c.get('deps'))))));
+/**
+ * Wakes a seat now: the pre-check first, then a model run only if there is news (`force` runs anyway).
+ * The run is still bounded by the seat's weekly budget and the monthly cap (ADR 0010).
+ */
 teamRoutes.post('/seats/:seat/wake', async (c) => {
   const input = await body(c, z.object({ force: z.boolean().default(false) }));
   const r = await wake(c.get('deps'), seatOf(c), { force: input.force });
   return c.json({ check: r.check, run: r.run ? { status: r.run.status, reply: r.run.reply, tokens: r.run.tokens, costUsd: r.run.costUsd } : null });
 });
+/** The wake cadences as data, with weekly cost estimates per seat, for whoever schedules the tick. */
 teamRoutes.get('/cadences', (c) =>
   c.json({
     timezone: 'Europe/Istanbul',
@@ -316,14 +346,18 @@ teamRoutes.get('/cadences', (c) =>
     tick: { method: 'POST', path: '/api/desk/team/tick', body: { windowMin: 'minutes since the previous call (1–60)' } },
   }),
 );
+/**
+ * What a scheduled task calls every few minutes: wakes the seats whose cadence is due in the last `windowMin` minutes.
+ */
 teamRoutes.post('/tick', async (c) => {
   const input = await body(c, z.object({ windowMin: z.number().int().min(1).max(60).default(5) }));
   return c.json({ woke: await tick(c.get('deps'), input.windowMin) });
 });
+/** Runs a seat's golden tasks (or judges submitted outputs); passing them is what makes a seat active. */
 teamRoutes.post('/seats/:seat/golden', async (c) => {
   const seat = seatOf(c);
   const input = await body(c, z.object({ outputs: z.record(z.string().max(80), z.string().max(16000)).optional() }));
-  const [s] = await c.get('deps').db.system((q) => q.query('select state from seats where seat = $1', [seat]));
+  const [s] = await c.get('deps').db.system((q) => q.query<Pick<SeatsRow, 'state'>>('select state from seats where seat = $1', [seat]));
   if (!s) fail('not_found');
   return c.json(await runGolden(c.get('deps'), seat, input.outputs));
 });
@@ -332,26 +366,30 @@ teamRoutes.post('/seats/:seat/golden', async (c) => {
 
 const meetingExtra = async (c: C, id: string) => {
   const d = await meetingDetail(c.get('deps'), id);
-  const [x] = await c.get('deps').db.system((q) => q.query('select speaking, spent_tokens from meetings where id = $1', [id]));
+  const [x] = await c.get('deps').db.system((q) => q.query<Pick<MeetingsRow, 'speaking' | 'spent_tokens'>>('select speaking, spent_tokens from meetings where id = $1', [id]));
   return { ...d, speaking: x?.speaking ?? null, spentTokens: Number(x?.spent_tokens ?? 0) };
 };
+/** One meeting with who is speaking and the tokens it has spent so far; 404 when unknown. */
 teamRoutes.get('/meetings/:id', async (c) => {
   const id = idOf(c);
   const d = await meetingExtra(c, id);
   if (!d.meeting) fail('not_found');
   return c.json(d);
 });
+/** Runs one round of a meeting: each attendee speaks once (model calls, within budget and cap). */
 teamRoutes.post('/meetings/:id/round', async (c) => {
   const id = idOf(c);
   const r = await meetingRound(c.get('deps'), id);
   return c.json({ round: r, ...(await meetingExtra(c, id)) });
 });
+/** The owner speaks in a meeting; the attendees answer in a round (201). */
 teamRoutes.post('/meetings/:id/say', async (c) => {
   const id = idOf(c);
   const input = await body(c, z.object({ text: z.string().trim().min(1).max(8000) }));
   const r = await ownerSays(c.get('deps'), id, input.text);
   return c.json({ round: r.round, ...(await meetingExtra(c, id)) }, 201);
 });
+/** Closes a meeting; decisions that need action become approvals for the owner, never actions themselves. */
 teamRoutes.post('/meetings/:id/close', async (c) => {
   const id = idOf(c);
   const r = await closeMeeting(c.get('deps'), id);

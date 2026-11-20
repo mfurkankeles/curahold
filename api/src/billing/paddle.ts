@@ -78,6 +78,10 @@ interface PaddleTransaction {
 /** Paddle's notifications that carry an invoice: a paid one, or a renewal that could not be charged. */
 const INVOICE_EVENTS = new Set(['transaction.completed', 'transaction.paid', 'transaction.past_due', 'transaction.payment_failed', 'transaction.billed', 'transaction.canceled']);
 
+/**
+ * Paddle as the payment provider behind the one billing path (ADR 0019): checkout links, the customer portal and
+ * webhook verification. Prices come from config (`cfg.prices`), never from the client; an unknown plan fails 'validation'.
+ */
 export class PaddleProvider implements PaymentProvider {
   readonly name = 'paddle';
   constructor(

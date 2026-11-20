@@ -56,6 +56,7 @@ const TEAM_ACCENT: Record<string, string> = {
   trust: '--chart-coral',
   advisory: '--chart-rose',
 };
+/** A team's accent colour token in the 3D office. */
 export const accentOf = (team: string) => TEAM_ACCENT[team] ?? '--brand';
 
 const room = (id: string, kind: RoomKind, x0: number, x1: number, back: boolean, team?: string): Room => ({
@@ -95,8 +96,11 @@ export const COMMONS: Room = {
   doorZ: 0,
   doorX: -17,
 };
+/** A room of the 3D office by id (the commons included). */
 export const roomById = (id: string) => (id === 'commons' ? COMMONS : ROOMS.find((r) => r.id === id));
+/** The room a team sits in, or null. */
 export const roomOfTeam = (team: string) => ROOMS.find((r) => r.team === team) ?? null;
+/** The room at a floor point, or null. */
 export const roomAt = (x: number, z: number): Room | null => [...ROOMS, COMMONS].find((r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1) ?? null;
 /** Rooms with walls of glass (the reception and the commons are open). */
 export const walled = (r: Room) => r.kind !== 'reception' && r.kind !== 'commons';
@@ -135,6 +139,7 @@ function podDesks(p: Point, roomId: string): DeskSpot[] {
   ];
 }
 
+/** How many seats a team room holds (two per desk pod). */
 export function capacity(r: Room) {
   return r.kind === 'team' ? podsOf(r).length * 2 : 0;
 }
@@ -229,6 +234,7 @@ export function route(from: DeskSpot | Spot, fromRoom: string, to: DeskSpot | Sp
   return path.filter((p, i) => i === 0 || Math.hypot(p.x - path[i - 1].x, p.z - path[i - 1].z) > 0.01);
 }
 
+/** The length of a walking path on the floor. */
 export const pathLength = (pts: Point[]) => pts.reduce((s, p, i) => (i ? s + Math.hypot(p.x - pts[i - 1].x, p.z - pts[i - 1].z) : 0), 0);
 
 /** Plants: corners of rooms and along the corridor (instanced). */

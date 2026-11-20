@@ -97,6 +97,10 @@ const VIEW_KEY = 'office.view';
 const roomName = (r: Room | { id: string; kind: string; team?: string }, teamW: (k: TeamKey) => string, ow: (k: OfficeKey) => string) =>
   r.kind === 'team' && r.team ? teamW(`teamName.${r.team}` as TeamKey) : ow(`room.${r.id}` as OfficeKey);
 
+/**
+ * The owner console's 3D office (web/src/office): the AI team at their desks, live, with each seat's panel.
+ * Split plan for this 740-line component: docs/HANDOVER.md.
+ */
 export default function OwnerOffice({
   beat,
   failed,

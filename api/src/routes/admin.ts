@@ -1,5 +1,6 @@
 // Company administration: settings, roles, teams, people, devices, the
 // activity log and the personal-data tools (KVKK/GDPR export and erasure).
+import type { AccountsRow, CompanyDeletionsRow, ErrorLogRow, JoinRequestsRow, LoginTokensRow, RolesRow, SessionsRow, TeamsRow, UsersRow } from '../db/rows.gen';
 import { seatGuard } from '../lib/trial';
 import { cleanRates } from '../../../shared/src/money';
 import { Hono } from 'hono';
@@ -31,7 +32,7 @@ adminRoutes.get('/errors', async (c) => {
   const source = c.req.query('source');
   const limit = Math.min(Math.max(Number(c.req.query('limit')) || 100, 1), 200);
   const rows = await run(c, (q) =>
-    q.query(
+    q.query<Pick<ErrorLogRow, 'id' | 'at' | 'source' | 'method' | 'path' | 'message' | 'detail' | 'agent' | 'user_id'>>(
       `select id, at, source, method, path, message, detail, agent, user_id
          from error_log
         where ($1::text is null or source = $1)
@@ -50,6 +51,9 @@ const INVITE_DAYS = 7;
 
 const termWords = z.object({ one: z.string().trim().max(40).optional(), other: z.string().trim().max(40).optional() });
 
+/**
+ * Changes the company's own settings (name, language, time zone, currency and the rest). Needs org.manage; audited.
+ */
 adminRoutes.patch('/org', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(
@@ -131,12 +135,16 @@ function requireAccessViewer(c: C) {
   if (!perms.includes('org.manage') && !perms.includes('users.manage')) fail('forbidden');
 }
 
+/** The company's roles with their permissions, built-in first. Readable with org.manage or users.manage. */
 adminRoutes.get('/roles', async (c) => {
   requireAccessViewer(c);
-  const rows = await run(c, (q) => q.query('select * from roles order by system desc, name'));
+  const rows = await run(c, (q) => q.query<RolesRow>('select * from roles order by system desc, name'));
   return c.json({ roles: rows.map(toRole) });
 });
 
+/**
+ * Creates a custom role. Needs org.manage and a recent sign-in (requireFresh), because a role can grant every permission.
+ */
 adminRoutes.post('/roles', async (c) => {
   requirePerm(c, 'org.manage');
   await requireFresh(c);
@@ -151,7 +159,7 @@ adminRoutes.post('/roles', async (c) => {
   const row = await run(c, async (q) => {
     const exists = await q.query('select 1 from roles where key = $1', [input.key]);
     if (exists.length) fail('validation', { fields: 'key' }, { fields: ['key'] });
-    const [r] = await q.query('insert into roles (org_id, key, name, perms) values ($1, $2, $3, $4) returning *', [
+    const [r] = await q.query<RolesRow>('insert into roles (org_id, key, name, perms) values ($1, $2, $3, $4) returning *', [
       org.id,
       input.key,
       input.name,
@@ -163,6 +171,10 @@ adminRoutes.post('/roles', async (c) => {
   return c.json({ role: toRole(row) }, 201);
 });
 
+/**
+ * Renames a role or changes its permissions. Needs org.manage and a recent sign-in. A manager can only add permissions
+ * they hold themselves (403 otherwise), so nobody hands out more than they have. Audited.
+ */
 adminRoutes.patch('/roles/:id', async (c) => {
   requirePerm(c, 'org.manage');
   await requireFresh(c);
@@ -171,13 +183,13 @@ adminRoutes.patch('/roles/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const row = await run(c, async (q) => {
-    const [r] = await q.query('select * from roles where id = $1', [id]);
+    const [r] = await q.query<RolesRow>('select * from roles where id = $1', [id]);
     if (!r) fail('not_found');
     // The administrator role always keeps every permission.
     // Permissions can be added to a role only if the caller holds them (taking them away is always fine).
     if (r.key !== 'admin' && input.perms?.some((p) => !r.perms.includes(p) && !auth.perms.includes(p))) fail('forbidden');
     const perms = r.key === 'admin' ? [...PERMS] : input.perms ? [...new Set(input.perms)] : r.perms;
-    const [u] = await q.query('update roles set name = coalesce($2, name), perms = $3 where id = $1 returning *', [
+    const [u] = await q.query<RolesRow>('update roles set name = coalesce($2, name), perms = $3 where id = $1 returning *', [
       id,
       input.name ?? null,
       perms,
@@ -188,6 +200,10 @@ adminRoutes.patch('/roles/:id', async (c) => {
   return c.json({ role: toRole(row) });
 });
 
+/**
+ * Deletes a custom role; people still holding it move to `moveTo` in the same transaction ('role_in_use' without one).
+ * Needs org.manage and a recent sign-in. Built-in roles are 403. Audited.
+ */
 adminRoutes.delete('/roles/:id', async (c) => {
   requirePerm(c, 'org.manage');
   await requireFresh(c);
@@ -198,12 +214,12 @@ adminRoutes.delete('/roles/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const [r] = await q.query('select * from roles where id = $1', [id]);
+    const [r] = await q.query<RolesRow>('select * from roles where id = $1', [id]);
     if (!r) fail('not_found');
     if (r.system) fail('forbidden');
     if (moveTo) {
       if (moveTo === id) fail('validation', { fields: 'moveTo' }, { fields: ['moveTo'] });
-      const [target] = await q.query('select id from roles where id = $1', [moveTo]);
+      const [target] = await q.query<Pick<RolesRow, 'id'>>('select id from roles where id = $1', [moveTo]);
       if (!target) fail('validation', { fields: 'moveTo' }, { fields: ['moveTo'] });
       const moved = await q.query<{ id: string }>('update users set role_id = $2 where role_id = $1 returning id', [id, moveTo]);
       for (const m of moved)
@@ -225,7 +241,7 @@ adminRoutes.delete('/roles/:id', async (c) => {
 adminRoutes.get('/access', async (c) => {
   requireAccessViewer(c);
   const [roles, people] = await run(c, async (q) => [
-    await q.query('select * from roles order by system desc, name'),
+    await q.query<RolesRow>('select * from roles order by system desc, name'),
     await q.query(
       `select u.id, u.name, u.email, u.seat, u.status, u.role_id,
               coalesce((select array_agg(team_id) from team_members m where m.user_id = u.id), '{}') as team_ids
@@ -238,6 +254,10 @@ adminRoutes.get('/access', async (c) => {
   });
 });
 
+/**
+ * What one person can reach and why: role, permissions, teams and the departments (boards) visible to them.
+ * Readable with org.manage or users.manage; the department walls come from SQL (app_visible_boards, ADR 0009).
+ */
 adminRoutes.get('/users/:id/access', async (c) => {
   requireAccessViewer(c);
   const id = param(c, 'id');
@@ -317,13 +337,16 @@ const teamSchema = z.object({
 async function writeTeamMembers(q: Q, orgId: string, teamId: string, ids: string[]) {
   const unique = [...new Set(ids)];
   if (unique.length) {
-    const ok = await q.query(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [unique]);
+    const ok = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status <> 'deleted'`, [unique]);
     if (ok.length !== unique.length) fail('validation', { fields: 'memberIds' }, { fields: ['memberIds'] });
   }
   await q.query('delete from team_members where team_id = $1', [teamId]);
   for (const u of unique) await q.query('insert into team_members (org_id, team_id, user_id) values ($1, $2, $3)', [orgId, teamId, u]);
 }
 
+/**
+ * Creates a team; names are unique ignoring case and accents (400 'validation' on a duplicate). Needs teams.manage.
+ */
 adminRoutes.post('/teams', async (c) => {
   requirePerm(c, 'teams.manage');
   const input = await body(c, teamSchema);
@@ -332,7 +355,7 @@ adminRoutes.post('/teams', async (c) => {
   const id = await run(c, async (q) => {
     const dup = await q.query('select 1 from teams where fold_text(name) = fold_text($1)', [input.name]);
     if (dup.length) fail('validation', { fields: 'name' }, { fields: ['name'] });
-    const [t] = await q.query('insert into teams (org_id, name, lead_id) values ($1, $2, $3) returning id', [
+    const [t] = await q.query<Pick<TeamsRow, 'id'>>('insert into teams (org_id, name, lead_id) values ($1, $2, $3) returning id', [
       org.id,
       input.name,
       input.leadId ?? null,
@@ -345,6 +368,7 @@ adminRoutes.post('/teams', async (c) => {
   return c.json({ id }, 201);
 });
 
+/** Renames a team or changes its members or lead. Needs teams.manage; 404 when unknown. */
 adminRoutes.patch('/teams/:id', async (c) => {
   requirePerm(c, 'teams.manage');
   const id = param(c, 'id');
@@ -352,7 +376,7 @@ adminRoutes.patch('/teams/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const [t] = await q.query('select * from teams where id = $1', [id]);
+    const [t] = await q.query<TeamsRow>('select * from teams where id = $1', [id]);
     if (!t) fail('not_found');
     await q.query('update teams set name = coalesce($2, name), lead_id = $3 where id = $1', [
       id,
@@ -365,13 +389,14 @@ adminRoutes.patch('/teams/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Deletes a team (members keep their accounts). Needs teams.manage; 404 when unknown. */
 adminRoutes.delete('/teams/:id', async (c) => {
   requirePerm(c, 'teams.manage');
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const rows = await q.query('delete from teams where id = $1 returning id', [id]);
+    const rows = await q.query<Pick<TeamsRow, 'id'>>('delete from teams where id = $1 returning id', [id]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'team.deleted', entity: 'team', entityId: id });
   });
@@ -424,6 +449,10 @@ async function assertAdminRemains(q: Q, changingUserId: string) {
   if (n.n === 0) fail('last_admin');
 }
 
+/**
+ * Invites a person by email with a role, seat type and teams. Needs users.manage; 'email_taken' if they exist.
+ * seatGuard checks the trial's seat cap here, not only in the UI (money).
+ */
 adminRoutes.post('/users', async (c) => {
   requirePerm(c, 'users.manage');
   const input = await body(
@@ -444,7 +473,7 @@ adminRoutes.post('/users', async (c) => {
     if (exists.length) fail('email_taken');
     await assertMayAssign(q, auth.perms, input.roleId);
     await seatGuard(q, org.id, 1, input.seat);
-    const [u] = await q.query(
+    const [u] = await q.query<Pick<UsersRow, 'id'>>(
       `insert into users (org_id, email, name, role_id, seat, status) values ($1, $2, $3, $4, $5, 'invited') returning id`,
       [org.id, input.email, input.name, input.roleId, input.seat],
     );
@@ -464,6 +493,10 @@ adminRoutes.post('/users', async (c) => {
   return c.json({ id: created.id, ...(deps.config.devExposeTokens ? { devToken: created.token } : {}) }, 201);
 });
 
+/**
+ * Changes a person's name, role, seat type, teams or active state. Needs users.manage. assertMayAssign stops a manager
+ * touching someone whose role carries rights they lack; turning a viewer into a full seat goes through seatGuard (money).
+ */
 adminRoutes.patch('/users/:id', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -513,6 +546,7 @@ adminRoutes.patch('/users/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/** A person's signed-in devices. Needs users.manage; someone outside the company is 404, not an empty list. */
 adminRoutes.get('/users/:id/sessions', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -520,7 +554,7 @@ adminRoutes.get('/users/:id/sessions', async (c) => {
     // Someone who is not in this company is "not found", not "has no sessions".
     const [who] = await q.query('select 1 from users where id = $1', [id]);
     if (!who) fail('not_found');
-    return q.query(
+    return q.query<Pick<SessionsRow, 'id' | 'device_label' | 'method' | 'created_at' | 'last_seen_at'>>(
       `select id, device_label, method, created_at, last_seen_at from sessions
         where user_id = $1 and revoked_at is null and expires_at > now() order by last_seen_at desc`,
       [id],
@@ -538,13 +572,14 @@ adminRoutes.get('/users/:id/sessions', async (c) => {
   });
 });
 
+/** Signs one device out. Needs users.manage; audited. */
 adminRoutes.delete('/sessions/:id', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<SessionsRow, 'id'>>(
       `update sessions set revoked_at = now(), revoke_reason = 'admin' where id = $1 and revoked_at is null returning id`,
       [id],
     );
@@ -659,7 +694,7 @@ const deletionOf = (r: any) => (r ? { id: r.id, requestedAt: iso(r.requested_at)
 /** The company's open deletion request (or null), and the grace period on this installation. */
 adminRoutes.get('/company/deletion', async (c) => {
   requirePerm(c, 'org.manage');
-  const rows = await run(c, (q) => q.query(`select * from company_deletions where cancelled_at is null and purged_at is null limit 1`));
+  const rows = await run(c, (q) => q.query<CompanyDeletionsRow>(`select * from company_deletions where cancelled_at is null and purged_at is null limit 1`));
   return c.json({ deletion: deletionOf(rows[0]), graceDays: graceDaysOf(c.get('deps')) });
 });
 
@@ -680,7 +715,7 @@ adminRoutes.post('/company/deletion', async (c) => {
   const row = await run(c, async (q) => {
     const open = await q.query(`select 1 from company_deletions where cancelled_at is null and purged_at is null`);
     if (open.length) fail('conflict');
-    const [r] = await q.query(
+    const [r] = await q.query<CompanyDeletionsRow>(
       `insert into company_deletions (org_id, org_slug, org_name, requested_by, purge_after)
        values ($1, $2, $3, $4, $5::timestamptz + make_interval(days => $6)) returning *`,
       [org.id, org.slug, org.name, auth.userId, nowOf(c.get('deps')).toISOString(), days],
@@ -698,7 +733,7 @@ adminRoutes.delete('/company/deletion', async (c) => {
   if (auth.roleKey !== 'admin' || c.get('previewBy')) fail('forbidden');
   const org = c.get('org');
   await run(c, async (q) => {
-    const done = await q.query(`update company_deletions set cancelled_at = now(), cancelled_by = $1 where cancelled_at is null and purged_at is null returning id`, [auth.userId]);
+    const done = await q.query<Pick<CompanyDeletionsRow, 'id'>>(`update company_deletions set cancelled_at = now(), cancelled_by = $1 where cancelled_at is null and purged_at is null returning id`, [auth.userId]);
     if (!done.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.deletion_cancelled', entity: 'org', entityId: org.id });
   });
@@ -720,6 +755,7 @@ const AUDIT_KINDS: Record<string, string[]> = {
   settings: ['org.%', 'health.updated', 'rhythm.updated', 'billing.%', 'portal.%', 'automation.%', 'record_type.%'],
 };
 
+/** The company's audit trail, filtered by actor and kind and paged with `before`. Needs audit.view. */
 adminRoutes.get('/audit', async (c) => {
   requirePerm(c, 'audit.view');
   const before = c.req.query('before');
@@ -785,11 +821,15 @@ adminRoutes.get('/audit/export', async (c) => {
 
 adminRoutes.get('/join-requests', async (c) => {
   requirePerm(c, 'users.manage');
-  const rows = await run(c, (q) => q.query(`select * from join_requests where status = 'pending' order by created_at`));
+  const rows = await run(c, (q) => q.query<JoinRequestsRow>(`select * from join_requests where status = 'pending' order by created_at`));
   const list: JoinRequest[] = rows.map((r) => ({ id: r.id, email: r.email, name: r.name, note: r.note ?? null, createdAt: iso(r.created_at)! }));
   return c.json({ requests: list });
 });
 
+/**
+ * Lets a person who asked to join in, with the given role (default member), seat and teams. Needs users.manage;
+ * counts against the seat cap (seatGuard); audited.
+ */
 adminRoutes.post('/join-requests/:id/approve', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -798,7 +838,7 @@ adminRoutes.post('/join-requests/:id/approve', async (c) => {
   const auth = c.get('auth');
   const deps = c.get('deps');
   const made = await run(c, async (q) => {
-    const [r] = await q.query(`select * from join_requests where id = $1 and status = 'pending' for update`, [id]);
+    const [r] = await q.query<JoinRequestsRow>(`select * from join_requests where id = $1 and status = 'pending' for update`, [id]);
     if (!r) fail('not_found');
     const exists = await q.query('select 1 from users where email = $1', [r.email]);
     if (exists.length) fail('email_taken');
@@ -820,6 +860,7 @@ adminRoutes.post('/join-requests/:id/approve', async (c) => {
   return c.json({ id: made.id, ...(deps.config.devExposeTokens ? { devToken: made.token } : {}) });
 });
 
+/** Turns a join request down. Needs users.manage; audited as join.rejected. */
 adminRoutes.post('/join-requests/:id/reject', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -827,7 +868,7 @@ adminRoutes.post('/join-requests/:id/reject', async (c) => {
   const auth = c.get('auth');
   const deps = c.get('deps');
   const r = await run(c, async (q) => {
-    const [row] = await q.query(
+    const [row] = await q.query<Pick<JoinRequestsRow, 'email' | 'name'>>(
       `update join_requests set status = 'rejected', decided_by = $2, decided_at = now() where id = $1 and status = 'pending' returning email, name`,
       [id, auth.userId],
     );
@@ -874,6 +915,10 @@ adminRoutes.post('/domains', async (c) => {
   return c.json({ ok: true, verified: false, ...(deps.config.devExposeTokens ? { devCode: code } : {}) });
 });
 
+/**
+ * Proves the company owns an email domain with the 6-digit code mailed to an address there; people with that domain
+ * can then ask to join. Needs org.manage.
+ */
 adminRoutes.post('/domains/verify', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(c, z.object({ email, code: z.string().regex(/^\d{6}$/) }));
@@ -881,7 +926,7 @@ adminRoutes.post('/domains/verify', async (c) => {
   const auth = c.get('auth');
   const domain = emailDomain(input.email);
   const outcome = await run(c, async (q) => {
-    const [tok] = await q.query(
+    const [tok] = await q.query<Pick<LoginTokensRow, 'id' | 'code_hash' | 'attempts'>>(
       `update login_tokens set attempts = attempts + 1
         where id = (select id from login_tokens where email = $1 and kind = 'domain' and used_at is null and expires_at > now() order by created_at desc limit 1)
         returning id, code_hash, attempts`,
@@ -897,6 +942,7 @@ adminRoutes.post('/domains/verify', async (c) => {
   return c.json({ ok: true, domain });
 });
 
+/** Removes a verified domain from the company. Needs org.manage; audited as org.domain_removed. */
 adminRoutes.delete('/domains/:domain', async (c) => {
   requirePerm(c, 'org.manage');
   const domain = c.req.param('domain').toLowerCase();
@@ -922,9 +968,9 @@ adminRoutes.post('/users/:id/handover', async (c) => {
   const out = await run(c, async (q) => {
     const [from] = await q.query('select 1 from users where id = $1', [id]);
     if (!from) fail('not_found');
-    const [to] = await q.query(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.toUserId]);
+    const [to] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.toUserId]);
     if (!to) fail('bad_assignee');
-    const accounts = await q.query('update accounts set owner_id = $2, updated_at = now() where owner_id = $1 returning id', [id, input.toUserId]);
+    const accounts = await q.query<Pick<AccountsRow, 'id'>>('update accounts set owner_id = $2, updated_at = now() where owner_id = $1 returning id', [id, input.toUserId]);
     await queueSync(q, org.id, 'account', accounts.map((a) => a.id), ['owner']);
     // Every open task on every board — the owner role reaches boards this admin cannot open.
     return { accounts: accounts.length };
@@ -958,6 +1004,9 @@ const looksLike = (bytes: Uint8Array, mime: string) => {
   return false;
 };
 
+/**
+ * Uploads the company logo (image, size-capped before parsing so a large body is refused early). Needs org.manage.
+ */
 adminRoutes.post('/logo', async (c) => {
   requirePerm(c, 'org.manage');
   const org = c.get('org');
@@ -983,6 +1032,7 @@ adminRoutes.post('/logo', async (c) => {
   return c.json({ logoUrl: `/api/logo?v=${Date.now()}` });
 });
 
+/** Removes the company logo and its stored file. Needs org.manage. */
 adminRoutes.delete('/logo', async (c) => {
   requirePerm(c, 'org.manage');
   const org = c.get('org');

@@ -1,3 +1,5 @@
+// What a screen shows while its code loads: nothing for the first 300 ms (no flash), then a skeleton the size of the
+// screen it stands for, so nothing jumps when it arrives. Used by App.tsx's lazy routes.
 import { useI18n } from '../lib/i18n';
 import { useAfter } from './Empty';
 import { Loader } from './Loader';

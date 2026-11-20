@@ -18,6 +18,7 @@ const IN_DEMO = !!import.meta.env.APP_DEMO;
  * chat answers from the docs alone. Resolves `null` when there is none.
  */
 let found: Promise<Sampler | null> | null = null;
+/** Finds the model sampler for the in-app assistant once (cached); null when none is available. */
 export function findSampler(): Promise<Sampler | null> {
   return (found ??= (async () => {
     const claude = (window as unknown as { claude?: { use?: (name: string) => Promise<unknown> } }).claude;
@@ -33,6 +34,9 @@ export function findSampler(): Promise<Sampler | null> {
 
 const loaded: Partial<Record<string, Promise<AnswerIndex>>> = {};
 
+/**
+ * The assistant's dependencies for the signed-in person: their language, words, role and the API calls it may make.
+ */
 export function depsFor(me: Me, locale: Locale, words: { one: string; other: string }, roleName: string): AssistantDeps {
   return {
     api: (path) => get(path),

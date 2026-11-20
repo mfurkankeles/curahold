@@ -13,6 +13,7 @@ export function preloadPalette() {
   void import('./SearchPalette');
 }
 
+/** Opens search with Ctrl+K (Cmd+K on Apple). */
 export function useSearchKey(open: () => void) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -32,6 +33,7 @@ export function useSearchKey(open: () => void) {
   }, [open]);
 }
 
+/** The search palette, loaded on demand. */
 export function SearchPalette(props: { onClose: () => void; onNewBoard: () => void }) {
   return (
     <Suspense fallback={null}>

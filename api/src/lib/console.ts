@@ -3,6 +3,7 @@
 // connection, across every company, from two places only: the billing
 // provider's records as the product keeps them (orgs.billing, written by the
 // provider's webhooks) and the product's own tables. Nothing here writes.
+import type { OrgsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { PLANS, PRICE_CURRENCY, isPlanKey, type Interval, type PlanKey } from '../../../shared/src/billing';
 import type { ConsoleToday } from '../../../shared/src/console';
@@ -26,6 +27,10 @@ export const ACTIVATION_WINDOW_DAYS = 90;
 export const CHURN_WINDOW_DAYS = 30;
 const PAYING = `billing->>'status' in ('active', 'past_due')`;
 
+/**
+ * The owner's day in the console: companies by plan and status, paying, past due, trials ended and converted, and
+ * activations (a second person joined and a task was done). Reads across companies (db.system()); owner only.
+ */
 export async function consoleToday(deps: Deps, staffEmail: string): Promise<ConsoleToday> {
   const data = await deps.db.system(async (q) => {
     const paying = await q.query<{ plan: string; interval: string; seats: number; since: string | null }>(
@@ -70,7 +75,7 @@ export async function consoleToday(deps: Deps, staffEmail: string): Promise<Cons
     const pastDue = await q.query(
       `select id, name, nullif(billing->>'eventAt', '') as since from orgs where billing->>'status' = 'past_due' order by since nulls last limit 5`,
     );
-    const trials = await q.query(
+    const trials = await q.query<Pick<OrgsRow, 'id' | 'name' | 'trial_ends_at'>>(
       `select id, name, trial_ends_at from orgs
         where trial_ends_at between now() and now() + interval '7 days' and coalesce(billing->>'status', '') not in ('active', 'past_due')
         order by trial_ends_at limit 5`,

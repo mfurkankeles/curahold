@@ -282,6 +282,7 @@ export async function loadCatalog(ctx: EngineCtx): Promise<Catalog> {
   return { sources, deals, accountSeen };
 }
 
+/** What each report source offers (fields and measures), for the report builder's catalogue. */
 export function catalogInfo(cat: Catalog): ReportSourceInfo[] {
   return [...cat.sources.values()].map((s) => s.info);
 }
@@ -409,6 +410,7 @@ const unitOf = (def: ReportDef, f: F | undefined): ReportUnit =>
 
 /** The field that says whose a row is, for each source (a dashboard's person filter). */
 const PERSON_FIELD: Record<string, string> = { tasks: 'assignee', accounts: 'owner', activities: 'author', time: 'user' };
+/** The field that says whose a row is, for a dashboard's "my" filter; null for a source without one. */
 export const personFieldOf = (source: string) => PERSON_FIELD[source] ?? (source.startsWith('record:') ? 'owner' : null);
 
 export interface RunOptions {
@@ -421,6 +423,10 @@ export interface RunOptions {
 const MAX_GROUPS = 200;
 const MAX_ROWS = 2000;
 
+/**
+ * Runs a report definition under the reader's rights (the engine context's `q`), so it never counts rows they could
+ * not open. Returns rows, totals and the resolved definition.
+ */
 export async function runReport(ctx: EngineCtx, cat: Catalog, input: ReportDef, opts: RunOptions = {}): Promise<ReportResult> {
   const res = resolveDef(cat, input);
   if ('missing' in res) return { kind: 'missing', what: res.missing };

@@ -57,6 +57,7 @@ export type PlatformMessage = { t: 'hi'; v: string } | { t: 'c'; v: string };
 
 const ticketSecret = (authSecret: string) => `${authSecret}:desk-live`;
 
+/** A short-lived ticket for a desk staff member to join the console's live room. */
 export async function signPlatformTicket(authSecret: string, staff: { email: string; until: number }, now = Date.now()): Promise<string> {
   const t: PlatformTicket = { dl: 1, e: staff.email, s: staff.until, x: now + TICKET_MS };
   return sign(t, ticketSecret(authSecret));
@@ -77,6 +78,7 @@ export async function readPlatformTicket(authSecret: string, raw: string | null 
  * the desk's mail door, or with a staff key). Signing in to the desk is not one.
  */
 const CONSOLE_WRITES = /^\/api\/(signup\/|trial\/|billing(\/|$)|inbound\/billing\/|help(\/|$)|support\/requests\/|desk\/(?!sign-|live\/))/;
+/** Whether a request changes something the console's live room should announce. */
 export const touchesConsole = (method: string, path: string): boolean => method !== 'GET' && method !== 'HEAD' && CONSOLE_WRITES.test(path);
 
 export interface PlatformRoomOptions {
@@ -97,6 +99,7 @@ const send = (c: PlatformConn, m: PlatformMessage) => {
   }
 };
 
+/** The support desk's own live room: staff signed in on the desk host see each other's changes at once. */
 export class PlatformRoom {
   private chain: Promise<unknown> = Promise.resolve();
   /** A look that is queued and has not started yet: a poke now is covered by it. */

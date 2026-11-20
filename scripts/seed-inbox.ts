@@ -19,6 +19,7 @@ type Call = <T = any>(method: string, path: string, body?: unknown) => Promise<T
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
+/** Seeds the demo's inbox: notifications, renewal notices and the rules behind them. */
 export async function seedInbox(o: {
   call: Call;
   db: Db;

@@ -57,6 +57,7 @@ const CARD_ICON: Record<CardType, IconName> = {
   report: 'chart',
 };
 const METRIC_ICON: Record<string, IconName> = { accounts: 'building', money: 'coins', attention: 'alert', renewals: 'refresh', open_tasks: 'checkCircle', overdue: 'clock' };
+/** The icon for a home card. */
 export const cardIcon = (card: Pick<Card, 'type' | 'metric'>): IconName => (card.type === 'metric' && card.metric ? (METRIC_ICON[card.metric] ?? 'gauge') : CARD_ICON[card.type]);
 /** A page of cards: the person's own home carries the house; any other, what its first card is about. */
 const pageIcon = (page: Pick<Page, 'id' | 'cards'>, homeId: string | null | undefined): IconName => (page.id === homeId ? 'home' : page.cards[0] ? cardIcon(page.cards[0]) : 'layout');
@@ -76,6 +77,7 @@ export const draftOf = (p: Page): Draft => ({ id: p.id, kind: p.kind, name: p.na
 
 const SIZES: CardSize[] = ['third', 'half', 'full'];
 
+/** Home (or another custom page): cards of the person's work, customers and numbers, editable. */
 export function HomePage({ pageId, create }: { pageId: string | null; create?: boolean }) {
   const { t } = useI18n();
   const { can, me } = useStore();
@@ -277,6 +279,7 @@ function useMoney() {
   );
 }
 
+/** A card's title in the reader's language. */
 export function useCardTitle() {
   const { t, locale } = useI18n();
   const { me } = useStore();
@@ -306,6 +309,7 @@ export function useCardTitle() {
   );
 }
 
+/** One home card with its data. */
 export function Tile({ card, data, tools, dim }: { card: Card; data: CardData | undefined; tools?: ReactNode; dim?: boolean }) {
   useEffect(() => {
     if (card.type === 'report') void loadCharts();
@@ -575,6 +579,7 @@ function newCard(type: CardType, taken: Card[]): Card {
   return base;
 }
 
+/** Edits a custom page: name, cards and who it is for. */
 export function PageEditor({ draft: start, onCancel, onSaved, onDeleted }: { draft: Draft; onCancel: () => void; onSaved: (id: string) => void; onDeleted: () => void }) {
   const { t, locale } = useI18n();
   const { toast } = useStore();

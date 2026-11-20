@@ -70,6 +70,10 @@ function mergeBody(scene: THREE.Object3D, material: THREE.Material): void {
   for (const s of skinned) s.parent?.remove(s);
 }
 
+/**
+ * Loads the 3D office's figure models. Quantized rather than meshopt-compressed: no WebAssembly decoder is needed
+ * (the security policy allows none), and gzipped they are the same size.
+ */
 export async function loadFigures(url: string, renderer: THREE.WebGLRenderer): Promise<FigureKit> {
   // Quantized, not meshopt-compressed: no WebAssembly decoder (the app's security policy allows none),
   // and gzip makes the two the same size on the wire (94 vs 96 KB).

@@ -8,6 +8,7 @@ import { randomToken, sha256Hex } from './crypto';
 
 export const INVITE_DAYS = 7;
 
+/** Creates a one-time invitation token for an address (stored as a hash) and returns the token. */
 export async function createInviteToken(q: Q, orgId: string, email: string) {
   const token = randomToken(32);
   await q.query(
@@ -18,6 +19,7 @@ export async function createInviteToken(q: Q, orgId: string, email: string) {
   return token;
 }
 
+/** Emails an invitation to join the company, in the invitee's language (else the company's), naming the inviter. */
 export async function sendInvite(
   deps: Deps,
   org: Pick<OrgRow, 'slug' | 'name' | 'locale' | 'terms' | 'settings'>,
@@ -48,6 +50,7 @@ export async function userManagers(q: Q, orgId: string): Promise<string[]> {
   return rows.map((r) => r.id);
 }
 
+/** The full address of the company logo, or null when there is none. */
 export function logoUrl(deps: Deps, org: Pick<OrgRow, 'slug' | 'settings'>): string | null {
   const path = logoPath(org);
   return path ? `${orgUrl(deps.config, org.slug)}${path}` : null;

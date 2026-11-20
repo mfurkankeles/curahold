@@ -4,6 +4,7 @@
 // nothing from a meeting runs before the owner's yes.
 // Time-box and token budget are enforced; a meeting with nothing to decide is
 // cancelled at the pre-check, at zero cost.
+import type { MeetingsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { LlmBlock } from '../assistant/provider';
 import { costMicros } from '../assistant/cost';
@@ -43,7 +44,7 @@ export async function meetingRound(deps: Deps, id: string, only?: string[]): Pro
     return { status: 'cancelled', spoke: [], tokens: 0 };
   }
   const now = nowOf(deps);
-  const [row] = await deps.db.system((q) => q.query('select spent_tokens, started_at from meetings where id = $1', [id]));
+  const [row] = await deps.db.system((q) => q.query<Pick<MeetingsRow, 'spent_tokens' | 'started_at'>>('select spent_tokens, started_at from meetings where id = $1', [id]));
   let spent = Number(row?.spent_tokens ?? 0);
   const started = row?.started_at ? new Date(row.started_at) : now;
   if (m.timeBoxMin && now.getTime() - started.getTime() > m.timeBoxMin * 60_000) return { status: 'over-time', spoke: [], tokens: 0 };

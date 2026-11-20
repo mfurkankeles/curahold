@@ -57,6 +57,7 @@ export function CapacityMeter({ planned, adding = 0, limit }: { planned: number;
 
 type EpicFilter = 'all' | 'none' | string;
 
+/** A product board's backlog: stories by epic and sprint, with points, ordered by drag. */
 export function BacklogView({ board, refreshKey, viewSwitch }: { board: Board; refreshKey: number; viewSwitch?: ReactNode }) {
   const { t, locale } = useI18n();
   const f = useFormat();

@@ -51,6 +51,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 const toolLabel = (t: (k: MessageKey) => string, tool: string | null) => (tool ? t(`analytics.tool.${tool}` as MessageKey) || tool : '—');
 const deptLabel = (t: (k: MessageKey) => string, d: AnalyticsDepartment) => t(`dept.${d}` as MessageKey);
 
+/** Settings: analytics keys for BI tools (OData and JSON feeds), limited to chosen datasets and departments. */
 export function AnalyticsTab() {
   const { t, locale } = useI18n();
   const { can, me, people, toast } = useStore();

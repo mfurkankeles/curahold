@@ -353,6 +353,7 @@ export interface SyncProblem {
   nextAt: string;
 }
 
+/** Zero counts for a sync run. */
 export const emptyStats = (): SyncStats => ({ created: 0, updated: 0, archived: 0, pushed: 0, failed: 0 });
 
 // ------------------------------------------------------- commits, branches, pull requests

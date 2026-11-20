@@ -130,7 +130,9 @@ export function renderBody(body: string): ReactNode[] {
 // -------------------------------------------------------------------- files
 
 const PICTURE = /^image\/(png|jpeg|gif|webp)$/;
+/** Whether a file is a picture shown inline. */
 export const isPicture = (f: { mime: string }) => PICTURE.test(f.mime);
+/** A file size in the reader's language. */
 export const sizeText = (n: number, locale: Locale = 'en') => formatBytes(n, locale);
 
 /**
@@ -231,6 +233,7 @@ export interface ThreadComment {
   portalAuthorName?: string | null;
 }
 
+/** One comment with its pictures and files, and Delete when allowed. */
 export function CommentView({ comment, author, canDelete, deleteUrl, onDeleted }: { comment: ThreadComment; author?: Person; canDelete: boolean; deleteUrl: string; onDeleted: () => void }) {
   const { t } = useI18n();
   const save = useSaver();

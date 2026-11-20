@@ -209,6 +209,7 @@ function seed(id: string, users: RemoteUser[]): DemoStore {
   return s;
 }
 
+/** The in-memory CRM behind the demo connection, seeded once per connection id. */
 export function demoStore(id: string, users: RemoteUser[] = DEFAULT_USERS): DemoStore {
   return stores.get(id) ?? seed(id, users);
 }

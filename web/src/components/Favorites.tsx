@@ -12,6 +12,7 @@ import { Icon, type IconName } from './icons';
 
 export const FAVORITE_ICON: Record<Favorite['kind'], IconName> = { account: 'building', record: 'funnel', board: 'board', report: 'chart', dashboard: 'layout' };
 
+/** The person's starred places, with add and remove. */
 export function useFavorites() {
   const { me, reloadMe, toast } = useStore();
   const { t } = useI18n();

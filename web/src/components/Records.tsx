@@ -223,6 +223,7 @@ export function RecordTabs({ current, types }: { current: string; types: RecordT
   );
 }
 
+/** "Open in" links to a record's copy in connected tools. */
 export function OpenIn({ links }: { links?: LinkInfo[] }) {
   const { t } = useI18n();
   const shown = (links ?? []).filter((l) => l.url);
@@ -238,6 +239,7 @@ export function OpenIn({ links }: { links?: LinkInfo[] }) {
   );
 }
 
+/** The list of one record type: table or board, filters, import and export. */
 export function RecordsPage({ typeKey }: { typeKey: string }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { people, person, canWrite, can, toast } = useStore();
@@ -735,6 +737,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
   );
 }
 
+/** Creates or edits a record. */
 export function RecordDialog({
   type,
   record,

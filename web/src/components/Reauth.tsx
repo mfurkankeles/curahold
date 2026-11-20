@@ -10,6 +10,9 @@ import { Icon } from './icons';
 
 type Options = { methods: ('totp' | 'passkey' | 'recovery' | 'email')[]; passkey?: { challengeId: string; options: unknown } };
 
+/**
+ * The "confirm it's you" dialog a sensitive change opens (403 reauth_required); on success the change is sent again.
+ */
 export function ReauthDialog() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);

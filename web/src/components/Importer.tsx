@@ -36,6 +36,7 @@ const decode = (s: string): Target => (s.startsWith('field:') ? { kind: 'field',
 // fields.ts reads either, whatever the person's language.
 const FORMAT_SAMPLE: Partial<Record<Locale, string>> = { tr: '1.250,50 · 31.12.2027', en: '1,250.50 · 12/31/2027' };
 
+/** Imports customers from a spreadsheet: pick the file, map the columns, check, import. */
 export function Importer({ onImported, compact, file: firstFile }: { onImported?: (r: ImportResult) => void; compact?: boolean; file?: File | null }) {
   const { t, locale } = useI18n();
   const { me, reloadMe, toast } = useStore();

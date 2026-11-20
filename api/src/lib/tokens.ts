@@ -12,6 +12,7 @@ export const ANALYTICS_PREFIX = 'chb_';
 export const ACCESS_TTL_S = 3600;
 export const REFRESH_TTL_DAYS = 90;
 
+/** A new key or token with its prefix, its hash (all that is stored) and a short shown form for lists. */
 export async function newSecret(prefix: string) {
   const token = `${prefix}${randomToken(32)}`;
   return { token, hash: await sha256Hex(token), shown: `${token.slice(0, prefix.length + 4)}…` };

@@ -42,12 +42,17 @@ export function privateAddress(raw: string): boolean {
 
 const hostOf = (input: RequestInfo | URL): URL => new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
 
+/** Thrown when an outside call would reach a private, local or otherwise forbidden address. */
 export class BlockedAddress extends TypeError {
   constructor(host: string) {
     super(`outbound call to ${host} refused: it is not a public address`);
   }
 }
 
+/**
+ * Refuses an outside call whose host is, or resolves to, a private or local address, unless the host is in `allow`
+ * (OUTBOUND_ALLOW_*). Stops server-side request forgery through webhooks and connector addresses.
+ */
 export async function checkOutbound(url: URL, resolve: Resolve, allow: ReadonlySet<string>): Promise<void> {
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
   if (allow.has(host)) return;

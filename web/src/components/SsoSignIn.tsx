@@ -23,6 +23,7 @@ export function useSsoInfo(slug: string): SsoInfo | null | undefined {
   return info;
 }
 
+/** The "sign in with your company account" button on the sign-in page when SSO is set up. */
 export function SsoSignIn({ org, info, primary }: { org: OrgPublic; info: SsoInfo | null | undefined; primary?: boolean }) {
   const { t } = useI18n();
   if (!info?.enabled) return null;

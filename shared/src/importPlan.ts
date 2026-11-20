@@ -260,6 +260,7 @@ export function departmentOf(name: string): Department | null {
   return best?.d ?? null;
 }
 
+/** A department's name in the reader's language, for the import plan. */
 export const departmentName = (d: Department, locale: Locale) => translate(locale, `imp.dept.${d}` as MessageKey);
 
 // ---------------------------------------------------------------- targets
@@ -316,6 +317,7 @@ export function suggestTargets(lists: ListInfo[], boards: { id: string; name: st
   return out;
 }
 
+/** A stable key for an import target: an existing board, or a new one by its folded name. */
 export const targetKey = (t: Target) => ('board' in t ? `b:${t.board}` : `n:${fold(t.create)}`);
 
 // ------------------------------------------------------------------- fields
@@ -495,6 +497,10 @@ const splitRefs = (raw: string) =>
     .filter(Boolean)
     .slice(0, 20);
 
+/**
+ * Plans a task import from spreadsheet rows and a mapping: boards (existing or new), columns, people, fields and the
+ * row problems, before anything is written. Pure, so the dry run and the import agree. Split plan: docs/HANDOVER.md.
+ */
 export function planImport(input: PlanInput, ctx: PlanCtx): ImportPlan {
   const { rows, mapping, locale } = input;
   const col = (f: ImportField) => Object.keys(mapping).find((h) => mapping[h] === f);

@@ -13,6 +13,7 @@ const keyOf = (label: string, taken: Set<string>) => {
   return k;
 };
 
+/** Board settings: the board's custom task fields. */
 export function TaskFieldsEditor({ value, onChange }: { value: TaskField[]; onChange: (v: TaskField[]) => void }) {
   const { t, locale } = useI18n();
   const set = (i: number, patch: Partial<TaskField>) => onChange(value.map((f, j) => (j === i ? { ...f, ...patch } : f)));
@@ -96,6 +97,7 @@ export function TaskFieldsEditor({ value, onChange }: { value: TaskField[]; onCh
 
 const FORM_BASICS = ['description', 'account', 'due'] as const;
 
+/** Board settings: the board's intake form (which fields people outside fill in, and where the task lands). */
 export function BoardFormEditor({ value, fields, columns, onChange }: { value: BoardForm | null; fields: TaskField[]; columns: Column[]; onChange: (v: BoardForm | null) => void }) {
   const { t, locale, words } = useI18n();
   const form = value ?? { on: false, fields: ['description'], column: null };

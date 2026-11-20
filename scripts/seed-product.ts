@@ -118,6 +118,9 @@ export interface ProductSeed {
   active: number;
 }
 
+/**
+ * Seeds the demo's product board: sprints of ten working days on the company's own weekend, epics, stories and points.
+ */
 export async function seedProduct(o: {
   send: Call;
   call: Call;

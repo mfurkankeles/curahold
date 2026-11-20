@@ -6,6 +6,7 @@ import type { FxRates } from '../../../shared/src/model';
 /** The rate for `alias`'s currency: what one of it is worth in the company's currency (1 for the company's own, or one without a rate). */
 export const fxRate = (alias: string, org = 'app_org()') => `coalesce(((select o.settings->'fx'->'rates' from orgs o where o.id = ${org}) ->> ${alias}.currency)::numeric, 1)`;
 
+/** The company's stored exchange rates, with anything that is not a positive number dropped. */
 export function fxOf(settings: unknown): FxRates {
   const fx = ((settings ?? {}) as { fx?: { rates?: Record<string, unknown>; updatedAt?: unknown } }).fx ?? {};
   const rates: Record<string, number> = {};

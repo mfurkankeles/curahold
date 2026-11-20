@@ -344,6 +344,7 @@ export interface SetupSummary {
   doneAt: string | null;
 }
 
+/** The company's setup health in short: each check's latest status, for the setup page and the owner (ADR 0013). */
 export async function setupSummary(q: Q, orgId: string): Promise<SetupSummary> {
   const rows = await q.query<{ kind: string; item: string; status: string; detail: any; at: Date }>(
     `select kind, item, status, detail, at from setup_progress where org_id = $1 and kind in ('daily', 'test', 'issue', 'approve', 'done')`,

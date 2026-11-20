@@ -10,6 +10,7 @@ export async function larkSign(secret: string, seconds: number): Promise<string>
 
 /** A Telegram bot token as @BotFather gives it: digits, a colon, 30-odd letters. */
 export const TELEGRAM_TOKEN = /^\d{3,}:[\w-]{20,}$/;
+/** Telegram's send-message address for a bot token. */
 export const telegramUrl = (token: string) => `https://api.telegram.org/bot${token}/sendMessage`;
 
 /**

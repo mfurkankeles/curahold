@@ -34,6 +34,7 @@ async function appToken(deps: Deps): Promise<string> {
   return tokenCache.value;
 }
 
+/** A notification as a Google Chat card, with action buttons when the connection can take them. */
 export function chatCard(msg: ChatMessage, withActions = true) {
   const widgets: any[] = [];
   if (msg.body) widgets.push({ textParagraph: { text: msg.body.replace(/</g, '&lt;') } });

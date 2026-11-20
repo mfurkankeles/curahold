@@ -15,6 +15,7 @@
 //
 // Session handling is deliberately NOT here: the routes call openSession() and
 // setSessionCookie() exactly as the email-link and OAuth flows do.
+import type { SsoSeenAssertionsRow } from '../db/rows.gen';
 import type { Q } from '../db';
 import type { Config } from '../context';
 import { orgUrl, secretsKey } from '../context';
@@ -97,6 +98,10 @@ export async function readyBackupAdmins(q: Q, orgId: string, ids: readonly strin
   );
 }
 
+/**
+ * The company's SSO settings with their secrets unsealed, for a sign-in; null when SSO is not set up.
+ * Read through the sso_auth_config() function, which returns only the asking company's row.
+ */
 export async function loadSsoAuthConfig(q: Q, cfg: Config): Promise<SsoAuthConfig | null> {
   const [row] = await q.query<RawConfig>('select * from sso_auth_config()');
   if (!row) return null;
@@ -149,7 +154,9 @@ export interface SsoState {
   t?: 1; // a test from the SSO settings: report back, sign nobody in
 }
 
+/** Signs the state carried through an SSO sign-in (company, device, return path, expiry). */
 export const signState = (state: SsoState, cfg: Config) => sign(state, cfg.authSecret);
+/** Checks an SSO state made by signState; null when tampered with. */
 export const verifyState = (token: string, cfg: Config) => verify<SsoState>(token, cfg.authSecret);
 
 // ------------------------------------------------------ identity mapping
@@ -214,7 +221,7 @@ export async function findOrProvisionUser(q: Q, orgId: string, id: { email: stri
 export async function claimAssertion(q: Q, orgId: string, assertionXml: string, ttlMs = 60 * 60_000): Promise<boolean> {
   const key = await sha256Hex(assertionXml);
   await q.query(`delete from sso_seen_assertions where org_id = $1 and expires_at < now()`, [orgId]);
-  const rows = await q.query(
+  const rows = await q.query<Pick<SsoSeenAssertionsRow, 'assertion_key'>>(
     `insert into sso_seen_assertions (org_id, assertion_key, expires_at)
      values ($1, $2, now() + make_interval(secs => $3)) on conflict do nothing returning assertion_key`,
     [orgId, key, Math.round(ttlMs / 1000)],
@@ -231,6 +238,7 @@ export async function pkce(): Promise<{ verifier: string; challenge: string }> {
   return { verifier, challenge: base64url(digest) };
 }
 
+/** The identity provider's sign-in address for an OIDC SSO sign-in. */
 export function oidcAuthUrl(
   config: Pick<SsoAuthConfig, 'ssoUrl' | 'clientId'>,
   p: { redirectUri: string; state: string; nonce: string; challenge: string },
@@ -278,6 +286,7 @@ interface Jwk {
   e?: string;
 }
 
+/** Fetches the identity provider's signing keys (JWKS) to check its tokens. */
 export async function fetchJwks(url: string, fetchFn: typeof fetch): Promise<Jwk[]> {
   const res = await fetchFn(url, { headers: { accept: 'application/json' } });
   if (!res.ok) return [];

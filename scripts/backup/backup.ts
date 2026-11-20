@@ -33,6 +33,9 @@ const run = (cmd: string, args: string[], env: Record<string, string> = {}) => {
   return r.stdout.toString();
 };
 
+/**
+ * Row counts of every table and the last applied migration, written to the backup manifest so a restore can be checked.
+ */
 export async function rowCounts(url: string): Promise<{ rows: Record<string, number>; lastMigration: string | null }> {
   const sql = postgres(url, { max: 1, onnotice: () => undefined });
   try {
@@ -46,8 +49,13 @@ export async function rowCounts(url: string): Promise<{ rows: Record<string, num
   }
 }
 
+/** SHA-256 of a file, for the manifest. */
 export const sha256 = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 
+/**
+ * Dumps the database (pg_dump), optionally encrypted with a passphrase, with a manifest of row counts and checksums.
+ * Counts are taken first, so on a live database the dump can hold a few rows more, never fewer. See docs/RUNBOOK.md.
+ */
 export async function backup(opts: { url: string; dir: string; passphrase?: string; now?: Date }): Promise<{ file: string; manifest: string; m: Manifest }> {
   mkdirSync(opts.dir, { recursive: true });
   const stamp = (opts.now ?? new Date()).toISOString().replace(/[-:]/g, '').replace(/\..*/, 'Z');
