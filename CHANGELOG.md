@@ -12,6 +12,14 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
+  Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
+  to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
+  company's own Meta app (incoming messages on the contact's timeline, replies and templates).
+- Incoming webhooks: one signed address per company and source, replay protection, field mapping to a task, ticket, customer event or
+  deal note, a test-delivery screen, a 30-day delivery log and ready recipes. Two new setup-health checks: failing webhooks and a silent
+  WhatsApp number.
+
 - Engineering foundation for new owners: GitHub Actions CI (`.github/workflows/ci.yml`) with typecheck, lint, the full test suite on
   PGlite and on Postgres 16, build, Docker image build check, and required guards for row-level-security isolation, the repository leak
   scan and i18n completeness; a nightly end-to-end workflow; a pull request template.
