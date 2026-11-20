@@ -1294,8 +1294,11 @@
 }
 
 @media (max-width: 860px) {
+  /* The stage ends where the folded sheet begins, so the floor is framed in what can be seen: drawn under the
+     sheet, it sat low with an empty band above it. */
   .of {
     grid-template: 'top' auto 'stage' minmax(0, 1fr) / minmax(0, 1fr);
+    padding-bottom: 140px;
   }
   .of-top {
     gap: 8px;

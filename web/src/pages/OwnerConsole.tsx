@@ -5,7 +5,7 @@
 // time, support at a glance, the system and everything staff did.
 // Desktop first (a command layout with a top bar), phone stacked.
 // Turkish and English only, by the owner's choice (words: shared/src/i18n/owner.ts).
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CHECKLIST_AREAS, CHECKLIST_PRIORITIES, type ChecklistEntry } from '../../../shared/src/checklist';
 import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
 import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
@@ -19,6 +19,7 @@ import { Icon, type IconName } from '../components/icons';
 import { formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
+import { typingIn } from '../lib/undo';
 import { ConsoleChart, periodOf } from './ConsoleChart';
 import '../surfaces/owner.css';
 
@@ -32,8 +33,8 @@ class OwnerError extends Error {
     super(String(status));
   }
 }
-async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api/desk${path}`, { method, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+async function api<T>(method: string, path: string, body?: unknown, keepalive = false): Promise<T> {
+  const res = await fetch(`/api/desk${path}`, { method, keepalive, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new OwnerError(res.status, json);
   return json as T;
@@ -91,12 +92,64 @@ function Loading<T>({ data, error, reload, children, cards }: { data: T | null; 
   return cards ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />;
 }
 
-/** A figure tile that opens where it comes from. */
-function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: 'late' | 'soon' | 'done' }) {
+/** A figure's change on the period before: the period's words, and whether a rise is good news. */
+interface Change {
+  now: number;
+  before: number;
+  period: '30' | 'Month' | '24h';
+  good: 'up' | 'down';
+  show: (v: number) => string;
+}
+
+/**
+ * "▲ +3 on the previous 30 days": the arrow, the signed amount and the period in words; the colour only repeats
+ * what the words say, and a screen reader also hears whether the move is good news.
+ */
+function Delta({ c }: { c: Change }) {
+  const { o } = useOwnerWords();
+  const diff = c.now - c.before;
+  if (diff === 0)
+    return (
+      <span className="ocdelta" data-dir="same">
+        <Icon name="dot" size={14} />
+        <span>{o(`delta.same${c.period}` as OwnerKey)}</span>
+      </span>
+    );
+  const up = diff > 0;
+  const good = up === (c.good === 'up');
+  return (
+    <span className="ocdelta" data-dir={up ? 'up' : 'down'} data-good={good ? 'yes' : 'no'}>
+      <Icon name={up ? 'chevronUp' : 'chevronDown'} size={14} />
+      <span>{o(`delta.prev${c.period}` as OwnerKey, { delta: `${up ? '+' : '−'}${c.show(Math.abs(diff))}` })}</span>
+      <span className="sr-only">{`, ${o(up ? (good ? 'delta.upGood' : 'delta.upBad') : good ? 'delta.downGood' : 'delta.downBad')}`}</span>
+    </span>
+  );
+}
+
+/** A small line of the last months under a figure: the shape only (the figure and its change are the words). */
+function Spark({ values }: { values: number[] }) {
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const points = values.map((v, i) => `${((i / (values.length - 1)) * 100).toFixed(2)},${(29 - ((v - min) / span) * 26).toFixed(2)}`).join(' ');
+  return (
+    <svg className="ocspark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={points} />
+    </svg>
+  );
+}
+
+/** A figure tile that opens where it comes from, with its change on the period before. */
+function Tile({ label, value, sub, onOpen, lead, tone, change, spark }: { label: string; value: string; sub?: string; onOpen?: () => void; lead?: boolean; tone?: Tone; change?: Change; spark?: number[] }) {
   const body = (
     <>
-      <span className="ctile__label">{label}</span>
+      <span className="ctile__label">
+        {tone ? <Icon name={TONE_ICON[tone]} size={14} /> : null}
+        {label}
+      </span>
       <span className="ctile__value">{value}</span>
+      {change ? <Delta c={change} /> : null}
+      {spark ? <Spark values={spark} /> : null}
       {sub ? <span className="ctile__sub">{sub}</span> : null}
     </>
   );
@@ -113,6 +166,23 @@ function Tile({ label, value, sub, onOpen, lead, tone }: { label: string; value:
 
 const PACE_ICON: Record<Pace, IconName> = { 'on-track': 'checkCircle', close: 'clock', behind: 'alert', 'no-target': 'dot' };
 
+/** A state's tone: good (done), needs a look (soon), needs action (late). */
+type Tone = 'done' | 'soon' | 'late';
+const TONE_ICON: Record<Tone, IconName> = { done: 'checkCircle', soon: 'clock', late: 'alert' };
+
+/**
+ * A state in a few words. A tone always carries its icon next to the words, so the state is never
+ * told by colour alone (WCAG 1.4.1; docs/design/tokens.md "Status").
+ */
+function Pill({ tone, children }: { tone?: Tone; children: ReactNode }) {
+  return (
+    <span className="ocpill" data-tone={tone}>
+      {tone ? <Icon name={TONE_ICON[tone]} size={12} /> : null}
+      {children}
+    </span>
+  );
+}
+
 function usePlanFormat() {
   const { locale } = useOwnerWords();
   return (metric: PlanMetric, v: number | null) => (v == null ? '—' : metric === 'mrr' || metric === 'arr' ? formatMoney(v, 'USD', locale, { compact: v >= 100000 }) : formatNumber(v, locale, { compact: v >= 100000 }));
@@ -120,10 +190,31 @@ function usePlanFormat() {
 
 // ================================================================ the top bar
 
+/** A small choice kept on this device (localStorage); null clears it. Storage may be off: then nothing is kept. */
+const PRIVACY_FOLDED = 'oc_privacy_folded';
+function readFlag(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writeFlag(key: string, value: string | null) {
+  try {
+    if (value == null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage off: the choice lasts this visit */
+  }
+}
+
 /** Always on top: the privacy line, the agents' usage this week, the pause switch, and what waits for a decision. */
-export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
-  const { o, locale } = useOwnerWords();
-  const { data, reload } = useData<OwnerBarData>('/owner/bar', beat, failed);
+/**
+ * Pause every agent (after a confirmation) or resume them: in the top bar on a desktop, in "More" on a phone.
+ * Pausing stops proposals and writing at once; the AI team's gate and monitor are untouched (ADR 0011).
+ */
+export function PauseAllButton({ beat, failed, onChanged }: { beat: number; failed: (e: unknown) => void; onChanged?: () => void }) {
+  const { o } = useOwnerWords();
   const [busy, setBusy] = useState(false);
   const pauses = useData<{ pauses: Pause[] }>('/office/pauses', beat, failed);
   const all = pauses.data?.pauses.find((p) => p.scope === 'all');
@@ -134,21 +225,55 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
       if (all) await api('DELETE', `/office/pauses/${all.id}`);
       else await api('POST', '/office/pauses', { scope: 'all', reason: o('bar.pauseReason') });
       pauses.reload();
-      reload();
+      onChanged?.();
     } catch (e) {
       failed(e);
     } finally {
       setBusy(false);
     }
   };
+  return (
+    <button type="button" className={all ? 'btn btn--small btn--primary ocpause' : 'btn btn--small btn--danger ocpause'} onClick={toggle} disabled={busy || !pauses.data}>
+      <Icon name={all ? 'play' : 'hourglass'} size={14} />
+      {all ? o('bar.resumeAll') : o('bar.pauseAll')}
+    </button>
+  );
+}
+
+/** What waits for a decision and the AI team's week (the top bar's figures; the phone tabs' counts). */
+export function useOwnerBar(beat: number, failed: (e: unknown) => void) {
+  return useData<OwnerBarData>('/owner/bar', beat, failed);
+}
+
+export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
+  const { o, locale } = useOwnerWords();
+  const { data, reload } = useOwnerBar(beat, failed);
   const u = data?.usage;
   const share = u && u.budget > 0 ? Math.min(1, u.tokens / u.budget) : 0;
+  // The privacy note says what the owner can and cannot see. Read once, it folds into a "Privacy" button that
+  // opens it again, so it never disappears (remembered on this device only).
+  const [privacyOpen, setPrivacyOpen] = useState(() => readFlag(PRIVACY_FOLDED) !== '1');
+  const fold = (open: boolean) => {
+    setPrivacyOpen(open);
+    writeFlag(PRIVACY_FOLDED, open ? null : '1');
+  };
   return (
-    <div className="ocbar" role="region" aria-label={o('bar.label')}>
-      <p className="ocbar__privacy">
-        <Icon name="lock" size={14} />
-        <span>{o('privacy.line')}</span>
-      </p>
+    <div className="ocbar" role="region" aria-label={o('bar.label')} data-privacy={privacyOpen ? 'open' : undefined}>
+      {privacyOpen ? (
+        <p className="ocbar__privacy" id="oc-privacy">
+          <Icon name="lock" size={14} />
+          <span>{o('privacy.line')}</span>
+          <button type="button" className="btn btn--small btn--quiet ocbar__fold" aria-expanded="true" aria-controls="oc-privacy" onClick={() => fold(false)}>
+            <Icon name="close" size={14} />
+            {o('privacy.hide')}
+          </button>
+        </p>
+      ) : (
+        <button type="button" className="ocbar__chip ocbar__privacybtn" aria-expanded="false" onClick={() => fold(true)}>
+          <Icon name="lock" size={14} />
+          {o('privacy.show')}
+        </button>
+      )}
       <div className="ocbar__right">
         {data ? (
           <button type="button" className="ocbar__chip" data-on={data.approvalsPending ? '' : undefined} onClick={() => go({ section: 'approvals' })} aria-keyshortcuts="a">
@@ -170,10 +295,7 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
             </span>
           </span>
         ) : null}
-        <button type="button" className={all ? 'btn btn--small btn--primary' : 'btn btn--small btn--danger'} onClick={toggle} disabled={busy || !pauses.data}>
-          <Icon name={all ? 'play' : 'hourglass'} size={14} />
-          {all ? o('bar.resumeAll') : o('bar.pauseAll')}
-        </button>
+        <PauseAllButton beat={beat} failed={failed} onChanged={reload} />
       </div>
     </div>
   );
@@ -181,9 +303,13 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
 
 // ================================================================ overview
 
+/**
+ * The first screen: what waits for the owner's decision first, then the business in a few figures (each with its
+ * change on the period before; a figure at zero is left out), then customers, the site, the checklist and the
+ * system. The order is the owner's question order: "what do I have to do", "how are we doing", "is anything broken".
+ */
 export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
-  const { t } = useI18n();
   const { data, error, reload } = useData<OwnerOverview>('/owner/overview', beat, failed);
   const fmt = usePlanFormat();
   const n = (v: number) => formatNumber(v, locale);
@@ -193,46 +319,82 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
         {(d) => {
           const usd = (v: number) => formatMoney(v, d.today.currency, locale, { compact: v >= 1_000_000 });
           const pct = (v: number | null) => (v == null ? '—' : formatPercent(v * 100, locale, v > 0 && v < 0.01 ? 2 : v < 0.1 ? 1 : 0));
+          const trend = d.today.revenue.trend;
+          const lastMonth = trend.length > 1 ? trend[trend.length - 2].v : null;
+          const errors = d.errors.server24h + d.errors.syncFailed24h;
           return (
             <>
-              <p className="oc__privacy">
-                <Icon name="lock" size={14} />
-                {o('privacy.line')}
-              </p>
               {d.today.mode === 'demo' ? <p className="ctoday__note">{o('mode.demoNote')}</p> : null}
-              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
-                <span className="ocstrip__sum">
-                  <strong>{o('strip.title')}</strong>
-                  {d.strip.rows.length ? (
-                    <span>{o('strip.counts', { on: n(d.strip.onTrack), close: n(d.strip.close), behind: n(d.strip.behind) })}</span>
-                  ) : (
-                    <span>{o('strip.none')}</span>
-                  )}
-                </span>
-                <span className="ocstrip__rows">
-                  {d.strip.rows.map((r) => (
-                    <span key={r.metric} className="ocpace" data-pace={r.pace}>
-                      <Icon name={PACE_ICON[r.pace]} size={12} />
-                      {o(`metric.${r.metric}` as OwnerKey)} {fmt(r.metric, r.actual)}/{fmt(r.metric, r.target)}
-                    </span>
-                  ))}
-                </span>
-              </button>
+              <DecideBand d={d} go={go} beat={beat} failed={failed} />
 
-              <div className="octiles">
-                <Tile lead label={o('tile.mrr')} value={usd(d.today.revenue.mrr)} sub={o('tile.arr', { amount: usd(d.today.revenue.arr) })} onOpen={() => go({ section: 'revenue' })} />
-                <Tile label={o('tile.invoices')} value={n(d.invoices.paid30)} sub={o('tile.invoicesSub', { failed: n(d.invoices.failed30), upcoming: n(d.invoices.upcoming30) })} tone={d.invoices.failed30 ? 'late' : undefined} onOpen={() => go({ section: 'revenue' })} />
-                <Tile label={o('tile.requests')} value={n(d.requests.open)} sub={o('tile.requestsSub', { n: n(d.requests.new) })} tone={d.requests.new ? 'soon' : undefined} onOpen={() => go({ section: 'requests' })} />
-                <Tile label={o('tile.approvals')} value={n(d.approvalsPending)} sub={o('tile.approvalsSub')} tone={d.approvalsPending ? 'soon' : undefined} onOpen={() => go({ section: 'approvals' })} />
-                <Tile label={o('tile.support')} value={n(d.today.support.waiting)} sub={o('tile.supportSub', { n: n(d.today.support.blocking) })} tone={d.today.support.blocking ? 'late' : undefined} onOpen={() => go({ section: 'supportview' })} />
-                <Tile
-                  label={o('tile.errors')}
-                  value={n(d.errors.server24h + d.errors.syncFailed24h)}
-                  sub={o('tile.errorsSub', { server: n(d.errors.server24h), sync: n(d.errors.syncFailed24h), conn: n(d.errors.connectionsInError) })}
-                  tone={d.errors.server24h + d.errors.syncFailed24h + d.errors.connectionsInError ? 'late' : 'done'}
-                  onOpen={() => go({ section: 'system' })}
-                />
-              </div>
+              <section className="ocsec" aria-labelledby="oc-biz">
+                <h2 className="ocsec__title" id="oc-biz">
+                  {o('business.title')}
+                </h2>
+                <div className="octiles">
+                  <Tile
+                    lead
+                    label={o('tile.mrr')}
+                    value={usd(d.today.revenue.mrr)}
+                    sub={o('tile.arr', { amount: usd(d.today.revenue.arr) })}
+                    change={lastMonth == null ? undefined : { now: d.today.revenue.mrr, before: lastMonth, period: 'Month', good: 'up', show: (v) => usd(v) }}
+                    spark={trend.length > 2 ? trend.map((p) => p.v) : undefined}
+                    onOpen={() => go({ section: 'revenue' })}
+                  />
+                  {d.invoices.paid30 || d.prev.paid30 ? (
+                    <Tile
+                      label={o('tile.invoices')}
+                      value={n(d.invoices.paid30)}
+                      sub={o('tile.invoicesSub', { failed: n(d.invoices.failed30), upcoming: n(d.invoices.upcoming30) })}
+                      change={{ now: d.invoices.paid30, before: d.prev.paid30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'revenue' })}
+                    />
+                  ) : null}
+                  {d.growth.signups30 || d.prev.signups30 ? (
+                    <Tile
+                      label={o('tile.signups')}
+                      value={n(d.growth.signups30)}
+                      sub={o('tile.signupsSub', { n: n(d.growth.activations30) })}
+                      change={{ now: d.growth.signups30, before: d.prev.signups30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'trials' })}
+                    />
+                  ) : null}
+                  {d.site.requests30 || d.prev.requests30 ? (
+                    <Tile
+                      label={o('tile.trialRequests')}
+                      value={n(d.site.requests30)}
+                      sub={o('tile.trialRequestsSub')}
+                      change={{ now: d.site.requests30, before: d.prev.requests30, period: '30', good: 'up', show: n }}
+                      onOpen={() => go({ section: 'requests' })}
+                    />
+                  ) : null}
+                  {errors ? (
+                    <Tile
+                      tone="late"
+                      label={o('tile.errors')}
+                      value={n(errors)}
+                      sub={o('tile.errorsSub', { server: n(d.errors.server24h), sync: n(d.errors.syncFailed24h), conn: n(d.errors.connectionsInError) })}
+                      change={{ now: errors, before: d.prev.server24h + d.prev.syncFailed24h, period: '24h', good: 'down', show: n }}
+                      onOpen={() => go({ section: 'system' })}
+                    />
+                  ) : null}
+                </div>
+                <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
+                  <span className="ocstrip__sum">
+                    <strong>{o('strip.title')}</strong>
+                    {d.strip.rows.length ? <span>{o('strip.counts', { on: n(d.strip.onTrack), close: n(d.strip.close), behind: n(d.strip.behind) })}</span> : <span>{o('strip.none')}</span>}
+                  </span>
+                  <span className="ocstrip__rows">
+                    {d.strip.rows.map((r) => (
+                      <span key={r.metric} className="ocpace" data-pace={r.pace}>
+                        <Icon name={PACE_ICON[r.pace]} size={12} />
+                        {o(`metric.${r.metric}` as OwnerKey)} {fmt(r.metric, r.actual)}/{fmt(r.metric, r.target)}
+                      </span>
+                    ))}
+                  </span>
+                  <Icon name="chevronRight" size={16} className="ocstrip__go" />
+                </button>
+              </section>
 
               <div className="occols">
                 <section className="ccard" aria-labelledby="oc-states">
@@ -354,37 +516,25 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
                       <dd>{formatMoney(d.usage.costUsd, 'USD', locale)}</dd>
                     </div>
                   </dl>
-                  {d.usage.pausedAll ? <p className="flag flag--late">{o('usage.pausedAll')}</p> : null}
+                  {d.usage.pausedAll ? (
+                    <p className="flag flag--late">
+                      <Icon name="alert" size={14} />
+                      {o('usage.pausedAll')}
+                    </p>
+                  ) : null}
                 </section>
               </div>
 
-              <section className="ccard ccard--need oc__gap" aria-labelledby="cneed-h">
-                <h2 className="ccard__title" id="cneed-h">
-                  {o('need.title')}
-                  {d.today.attention.length ? <span className="ccard__count">{n(d.today.attention.length)}</span> : null}
-                </h2>
-                {d.today.attention.length === 0 ? (
-                  <EmptyState icon="checkCircle" tone="done" compact title={o('need.none')} />
-                ) : (
-                  <ul className="cneeds">
-                    {d.today.attention.map((a, i) => (
-                      <li key={`${a.kind}:${i}`}>
-                        <button type="button" className="cneed" data-kind={a.kind} onClick={() => (a.kind === 'request' ? go({ section: 'support', r: a.ref }) : go({ section: 'customers', c: a.orgId }))}>
-                          <span className="cneed__icon" aria-hidden="true">
-                            <Icon name={a.kind === 'request' ? 'lifebuoy' : a.kind === 'payment' ? 'alert' : 'hourglass'} size={16} />
-                          </span>
-                          <span className="cneed__main">
-                            <span className="cneed__what">{a.kind === 'request' ? a.title : o(a.kind === 'payment' ? 'need.payment' : 'need.trial', { company: a.company })}</span>
-                            <span className="cneed__meta">{[a.kind === 'request' ? a.company : null, a.at ? formatDate(a.at, locale, { day: 'numeric', month: 'short' }) : null].filter(Boolean).join(' · ')}</span>
-                            {a.kind === 'request' && a.blocking ? <span className="flag flag--late">{t('desk.blocking')}</span> : null}
-                          </span>
-                          <Icon name="chevronRight" size={16} className="cneed__go" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              {errors || d.errors.connectionsInError ? null : (
+                <p className="ochealthy">
+                  <Icon name="checkCircle" size={16} />
+                  <span>{o('system.healthy')}</span>
+                  <button type="button" className="btn btn--small btn--quiet" onClick={() => go({ section: 'system' })}>
+                    <Icon name="shield" size={14} />
+                    {o('system.toSystem')}
+                  </button>
+                </p>
+              )}
             </>
           );
         }}
@@ -393,6 +543,114 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
   );
 }
 
+/**
+ * What waits for the owner, first on the screen: proposals to decide, new trial requests, failed payments, and the
+ * customers who need the team. Only what is there is shown; with nothing waiting, one calm line says what would come
+ * here and offers the next useful step.
+ */
+function DecideBand({ d, go, beat, failed }: { d: OwnerOverview; go: OwnerGo; beat: number; failed: (e: unknown) => void }) {
+  const { o, locale } = useOwnerWords();
+  const { t } = useI18n();
+  const n = (v: number) => formatNumber(v, locale);
+  const first = useData<{ approvals: Approval[] }>('/office/approvals?status=open', beat, failed);
+  const top = first.data?.approvals[0];
+  const people = d.today.attention;
+  const cards = [
+    d.approvalsPending > 0 && (
+      <article key="ap" className="ocwait__card" data-kind="approvals">
+        <Icon name="checkCircle" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.approvals', { n: n(d.approvalsPending) })}</h3>
+          <p>{top ? o('decide.approvalsFirst', { title: top.title }) : o('tile.approvalsSub')}</p>
+        </div>
+        <button type="button" className="btn btn--primary" onClick={() => go({ section: 'approvals' })} aria-keyshortcuts="a">
+          <Icon name="check" size={16} />
+          {o('decide.toApprovals')}
+        </button>
+      </article>
+    ),
+    d.requests.new > 0 && (
+      <article key="rq" className="ocwait__card" data-kind="requests">
+        <Icon name="form" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.requests', { n: n(d.requests.new) })}</h3>
+          <p>{o('decide.requestsSub')}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => go({ section: 'requests' })} aria-keyshortcuts="r">
+          <Icon name="arrowRight" size={16} />
+          {o('decide.toRequests')}
+        </button>
+      </article>
+    ),
+    d.invoices.failed30 > 0 && (
+      <article key="inv" className="ocwait__card" data-kind="payments">
+        <Icon name="alert" size={20} className="ocwait__icon" />
+        <div className="ocwait__main">
+          <h3>{o('decide.failed', { n: n(d.invoices.failed30) })}</h3>
+          <p>{o('decide.failedSub')}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => go({ section: 'revenue' })}>
+          <Icon name="coins" size={16} />
+          {o('decide.toRevenue')}
+        </button>
+      </article>
+    ),
+  ].filter(Boolean);
+  const shown = people.slice(0, 5);
+  return (
+    <section className="ocwait" aria-labelledby="oc-decide">
+      <h2 className="ocsec__title" id="oc-decide">
+        {o('decide.title')}
+        {cards.length + people.length ? <span className="ccard__count">{n(d.approvalsPending + d.requests.new + d.invoices.failed30 + people.length)}</span> : null}
+      </h2>
+      {cards.length + people.length === 0 ? (
+        <EmptyState icon="checkCircle" tone="done" compact title={o('decide.noneTitle')} body={o('decide.noneBody')}>
+          <button type="button" className="btn" onClick={() => go({ section: 'plan' })}>
+            <Icon name="target" size={16} />
+            {o('decide.noneAction')}
+          </button>
+        </EmptyState>
+      ) : (
+        <>
+          {cards.length ? <div className="ocwait__cards">{cards}</div> : null}
+          {shown.length ? (
+            <div className="ccard ccard--need">
+              <h3 className="ccard__title">{o('decide.people')}</h3>
+              <ul className="cneeds">
+                {shown.map((a, i) => (
+                  <li key={`${a.kind}:${i}`}>
+                    <button type="button" className="cneed" data-kind={a.kind} onClick={() => (a.kind === 'request' ? go({ section: 'support', r: a.ref }) : go({ section: 'customers', c: a.orgId }))}>
+                      <span className="cneed__icon" aria-hidden="true">
+                        <Icon name={a.kind === 'request' ? 'lifebuoy' : a.kind === 'payment' ? 'alert' : 'hourglass'} size={16} />
+                      </span>
+                      <span className="cneed__main">
+                        <span className="cneed__what">{a.kind === 'request' ? a.title : o(a.kind === 'payment' ? 'need.payment' : 'need.trial', { company: a.company })}</span>
+                        <span className="cneed__meta">{[a.kind === 'request' ? a.company : null, a.at ? formatDate(a.at, locale, { day: 'numeric', month: 'short' }) : null].filter(Boolean).join(' · ')}</span>
+                        {a.kind === 'request' && a.blocking ? (
+                          <span className="flag flag--late">
+                            <Icon name="alert" size={12} />
+                            {t('desk.blocking')}
+                          </span>
+                        ) : null}
+                      </span>
+                      <Icon name="chevronRight" size={16} className="cneed__go" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {people.length > shown.length ? (
+                <button type="button" className="btn btn--small btn--quiet" onClick={() => go({ section: 'support' })}>
+                  <Icon name="lifebuoy" size={14} />
+                  {o('decide.more', { n: n(people.length - shown.length) })}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+    </section>
+  );
+}
 function Bar({ value, tone }: { value: number; tone?: Pace }) {
   return (
     <span className="ocprogress" data-pace={tone} aria-hidden="true">
@@ -423,7 +681,12 @@ export function RevenueSection({ beat, failed, go }: { beat: number; failed: (e:
                 <section className="ccard" aria-labelledby="oc-inv">
                   <h2 className="ccard__title" id="oc-inv">{o('revenue.invoices')}</h2>
                   {d.invoices.length === 0 ? (
-                    <EmptyState compact icon="coins" title={o('revenue.noInvoices')} />
+                    <EmptyState compact icon="coins" title={o('revenue.noInvoices')} body={o('revenue.noInvoicesBody')}>
+                      <button type="button" className="btn" onClick={() => go({ section: 'trials' })}>
+                        <Icon name="hourglass" size={16} />
+                        {o('revenue.toTrials')}
+                      </button>
+                    </EmptyState>
                   ) : (
                     <table className="octable">
                       <thead>
@@ -444,9 +707,9 @@ export function RevenueSection({ beat, failed, go }: { beat: number; failed: (e:
                             </td>
                             <td>{i.issuedAt ? formatDate(i.issuedAt, locale, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
                             <td>
-                              <span className="ocpill" data-tone={/paid|completed/.test(i.status) ? 'done' : /fail|past/.test(i.status) ? 'late' : undefined}>
+                              <Pill tone={/paid|completed/.test(i.status) ? 'done' : /fail|past/.test(i.status) ? 'late' : undefined}>
                                 {o(/paid|completed/.test(i.status) ? 'inv.paid' : /fail|past/.test(i.status) ? 'inv.failed' : 'inv.other')}
-                              </span>
+                              </Pill>
                             </td>
                             <td className="num">{formatMoney(i.amountCents / 100, i.currency, locale)}</td>
                           </tr>
@@ -515,7 +778,21 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
       <Loading data={data} error={error} reload={reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="hourglass" title={o('trials.empty')} />
+            state === 'all' ? (
+              <EmptyState icon="hourglass" title={o('trials.emptyAll')} body={o('trials.emptyBody')}>
+                <button type="button" className="btn" onClick={() => go({ section: 'requests' })}>
+                  <Icon name="form" size={16} />
+                  {o('trials.toRequests')}
+                </button>
+              </EmptyState>
+            ) : (
+              <EmptyState icon="filter" title={o('common.emptyView')} body={o('common.emptyViewBody')}>
+                <button type="button" className="btn" onClick={() => setState('all')}>
+                  <Icon name="list" size={16} />
+                  {o('common.showAll')}
+                </button>
+              </EmptyState>
+            )
           ) : (
             <div className="ccard octablewrap">
               <table className="octable">
@@ -525,9 +802,9 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
                     <th scope="col">{o('col.state')}</th>
                     <th scope="col">{o('col.ends')}</th>
                     <th scope="col" className="num">{o('col.seats')}</th>
-                    <th scope="col">{o('col.departments')}</th>
-                    <th scope="col">{o('col.lastActive')}</th>
-                    <th scope="col">{o('col.request')}</th>
+                    <th scope="col" className="ocwide">{o('col.departments')}</th>
+                    <th scope="col" className="ocwide">{o('col.lastActive')}</th>
+                    <th scope="col" className="ocwide">{o('col.request')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -539,17 +816,17 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
                         </button>
                       </td>
                       <td>
-                        <span className="ocpill" data-tone={t.state === 'expired' ? 'late' : t.state === 'trial' && t.daysLeft != null && t.daysLeft <= 7 ? 'soon' : undefined}>
+                        <Pill tone={t.state === 'expired' ? 'late' : t.state === 'trial' && t.daysLeft != null && t.daysLeft <= 7 ? 'soon' : undefined}>
                           {o(`trials.${t.state}` as OwnerKey)}
-                        </span>
+                        </Pill>
                       </td>
                       <td>{t.endsAt ? `${formatDate(t.endsAt, locale, { day: 'numeric', month: 'short', year: 'numeric' })}${t.daysLeft != null && t.daysLeft > 0 ? ` · ${o('trials.daysLeft', { n: t.daysLeft })}` : ''}` : '—'}</td>
                       <td className="num" data-over={t.seatCap != null && t.people > t.seatCap ? '' : undefined}>
                         {t.seatCap != null ? o('trials.seatsOf', { n: formatNumber(t.people, locale), cap: formatNumber(t.seatCap, locale) }) : formatNumber(t.people, locale)}
                       </td>
-                      <td>{t.departments.length ? t.departments.map((x) => o(`dept.${x}` as OwnerKey)).join(', ') : '—'}</td>
-                      <td>{t.lastActiveAt ? formatDate(t.lastActiveAt, locale, { day: 'numeric', month: 'short' }) : '—'}</td>
-                      <td>
+                      <td className="ocwide">{t.departments.length ? t.departments.map((x) => o(`dept.${x}` as OwnerKey)).join(', ') : '—'}</td>
+                      <td className="ocwide">{t.lastActiveAt ? formatDate(t.lastActiveAt, locale, { day: 'numeric', month: 'short' }) : '—'}</td>
+                      <td className="ocwide">
                         {t.fromRequest ? (
                           <button type="button" className="oclink" onClick={() => go({ section: 'requests', q: t.fromRequest })}>
                             {t.fromRequest}
@@ -610,7 +887,19 @@ export function RequestsSection({ beat, failed, open, go }: { beat: number; fail
       <Loading data={list.data} error={list.error} reload={list.reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="form" title={o('requests.empty')} body={o('requests.emptyBody')} />
+            <EmptyState icon="form" title={o('requests.empty')} body={o('requests.emptyBody')}>
+              {status === 'all' ? (
+                <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>
+                  <Icon name="sliders" size={16} />
+                  {o('requests.settings')}
+                </button>
+              ) : (
+                <button type="button" className="btn" onClick={() => setStatus('all')}>
+                  <Icon name="list" size={16} />
+                  {o('common.showAll')}
+                </button>
+              )}
+            </EmptyState>
           ) : (
             <div className="ocsplit" data-open={chosen ? '' : undefined}>
               <ul className="ocreqs" aria-label={o('nav.requests')}>
@@ -619,9 +908,9 @@ export function RequestsSection({ beat, failed, open, go }: { beat: number; fail
                     <button type="button" className="ocreq" aria-current={chosen === r.id ? 'true' : undefined} onClick={() => go({ section: 'requests', q: r.id })}>
                       <span className="ocreq__top">
                         <strong>{r.company}</strong>
-                        <span className="ocpill" data-tone={r.status === 'new' ? 'soon' : r.status === 'approved' ? 'done' : r.status === 'rejected' ? 'late' : undefined}>
+                        <Pill tone={r.status === 'new' ? 'soon' : r.status === 'approved' ? 'done' : r.status === 'rejected' ? 'late' : undefined}>
                           {o(`req.status.${r.status}` as OwnerKey)}
-                        </span>
+                        </Pill>
                       </span>
                       <span className="ocreq__meta">
                         {r.name} · {r.country} · {r.seats ? o('req.seats', { n: r.seats }) : '—'} · {relativeTime(r.createdAt, t)}
@@ -748,9 +1037,9 @@ function RequestDetail({ id, beat, failed, defaults, onDecided, onBack, go }: { 
             {d.title ? `, ${d.title}` : ''} · {d.email}
           </p>
         </div>
-        <span className="ocpill" data-tone={d.status === 'new' ? 'soon' : d.status === 'approved' ? 'done' : d.status === 'rejected' ? 'late' : undefined}>
+        <Pill tone={d.status === 'new' ? 'soon' : d.status === 'approved' ? 'done' : d.status === 'rejected' ? 'late' : undefined}>
           {o(`req.status.${d.status}` as OwnerKey)}
-        </span>
+        </Pill>
       </header>
       <div className="ocflags">
         {d.duplicates.length ? <span className="flag flag--soon">{o('req.duplicates', { refs: d.duplicates.map((x) => x.ref).join(', ') })}</span> : null}
@@ -963,6 +1252,28 @@ function ReplyDraft({ to, subject, body }: { to: string; subject: string; body: 
 
 // ================================================================ approvals
 
+/** How long a decision waits in this tab before it is sent, so it can be taken back (Undo or Z). */
+export const HOLD_MS = 7000;
+/** When a decision taken now leaves the tab (read only from the owner's key press or click). */
+const holdUntil = () => Date.now() + HOLD_MS;
+type Verdict = { decision: 'approve'; edits?: Record<string, string> } | { decision: 'reject'; note: string | null } | { decision: 'meeting' };
+interface Held {
+  a: Approval;
+  body: Verdict;
+  until: number;
+  timer: number;
+}
+
+/**
+ * The approval queue: the waiting proposals on one side, the one being decided beside them, the latest decisions
+ * after. Keys: A approve, R reject, E edit, M meeting, J / K next and previous, Z undo.
+ *
+ * AI approval gate (ADR 0011, api/src/team/gate.ts): a decision is still only the owner's own act in his own
+ * session, sent to the same /decide route with the same body. What changes is when: the decision waits HOLD_MS in
+ * this tab and can be taken back before it leaves, because once the server has it an approved action may already
+ * have run (there is no "unapprove"). Leaving the page sends what is waiting; closing the tab sends it too
+ * (keepalive). Nothing here can decide without the owner's key press or click.
+ */
 export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const pending = useData<{ approvals: Approval[] }>('/office/approvals?status=open', beat, failed);
@@ -973,13 +1284,95 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
     return x ? [x.agent?.name, x.title].filter(Boolean).join(' · ') : seat;
   };
   const recent = useData<{ approvals: Approval[] }>('/office/approvals?status=all', beat, failed);
-  const [i, setI] = useState(0);
-  const list = pending.data?.approvals ?? [];
-  const cur = list[Math.min(i, Math.max(0, list.length - 1))];
+  const [held, setHeld] = useState<Held[]>([]);
+  const heldRef = useRef<Held[]>([]);
+  useLayoutEffect(() => {
+    heldRef.current = held;
+  });
+  const [curId, setCurId] = useState<string | null>(null);
+  const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const list = (pending.data?.approvals ?? []).filter((a) => !held.some((h) => h.a.id === a.id));
+  const at = Math.max(0, list.findIndex((a) => a.id === curId));
+  const cur = list[at];
   const decidedList = (recent.data?.approvals ?? []).filter((a) => a.status !== 'pending').slice(0, 12);
-  const done = () => {
-    pending.reload();
-    recent.reload();
+
+  const send = useCallback(
+    (h: Held, keepalive = false) => {
+      window.clearTimeout(h.timer);
+      setHeld((x) => x.filter((y) => y !== h));
+      api('POST', `/office/approvals/${h.a.id}/decide`, h.body, keepalive)
+        .catch((e) => {
+          failed(e);
+          setNote({ text: o('approvals.sendFailed', { title: h.a.title }), bad: true });
+        })
+        .finally(() => {
+          pending.reload();
+          recent.reload();
+        });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload functions change identity each render; the latest is read when it runs
+    [failed, o],
+  );
+  /** The owner decided: the card leaves the queue now, the decision leaves the tab after HOLD_MS. */
+  const hold = (a: Approval, body: Verdict) => {
+    const next = list[at + 1] ?? list[at - 1];
+    setCurId(next?.id ?? null);
+    setNote(null);
+    const h: Held = { a, body, until: holdUntil(), timer: 0 };
+    h.timer = window.setTimeout(() => send(h), HOLD_MS);
+    setNow(h.until - HOLD_MS);
+    setHeld((x) => [...x, h]);
+  };
+  const undo = useCallback(() => {
+    const h = heldRef.current[heldRef.current.length - 1];
+    if (!h) return;
+    window.clearTimeout(h.timer);
+    setHeld((x) => x.filter((y) => y !== h));
+    setCurId(h.a.id);
+    setNote({ text: o('approvals.undone', { title: h.a.title }) });
+  }, [o]);
+  // The countdown on the undo bar, once a second while something waits.
+  useEffect(() => {
+    if (!held.length) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [held.length]);
+  // Leaving the section or closing the tab sends what the owner already decided (once, on the way out: a change
+  // of language must not send early, so the latest `send` is read through a ref).
+  const sendRef = useRef(send);
+  useLayoutEffect(() => {
+    sendRef.current = send;
+  });
+  useEffect(() => {
+    const out = () => heldRef.current.forEach((h) => sendRef.current(h, true));
+    window.addEventListener('pagehide', out);
+    return () => {
+      window.removeEventListener('pagehide', out);
+      out();
+    };
+  }, []);
+  // Z (or Ctrl/⌘+Z) takes back the latest, while the focus is not in a text.
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      if (e.altKey || e.key.toLowerCase() !== 'z' || typingIn(e.target) || !heldRef.current.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      undo();
+    };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+  }, [undo]);
+  const step = (d: number) => {
+    const next = list[at + d];
+    if (next) setCurId(next.id);
+  };
+  const last = held[held.length - 1];
+  const resultText = (a: Approval) => {
+    if (!a.result || a.status === 'failed') return null;
+    if (a.result === 'Decision recorded.') return o('approvals.result.recorded');
+    const q = /^Queued for ([^:]+): (.*)$/s.exec(a.result);
+    return q ? o('approvals.result.queued', { seat: who(q[1]), title: q[2] }) : a.result;
   };
   return (
     <Page
@@ -989,11 +1382,11 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
       tools={
         list.length > 1 ? (
           <div className="ocpager">
-            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.previous')} disabled={i === 0} onClick={() => setI(i - 1)}>
+            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.previous')} aria-keyshortcuts="k" disabled={at === 0} onClick={() => step(-1)}>
               <Icon name="chevronLeft" size={16} />
             </button>
-            <span>{o('approvals.counter', { i: formatNumber(Math.min(i, list.length - 1) + 1, locale), n: formatNumber(list.length, locale) })}</span>
-            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.next')} disabled={i >= list.length - 1} onClick={() => setI(i + 1)}>
+            <span>{o('approvals.counter', { i: formatNumber(at + 1, locale), n: formatNumber(list.length, locale) })}</span>
+            <button type="button" className="btn btn--icon btn--small" aria-label={o('common.next')} aria-keyshortcuts="j" disabled={at >= list.length - 1} onClick={() => step(1)}>
               <Icon name="chevronRight" size={16} />
             </button>
           </div>
@@ -1002,40 +1395,118 @@ export function ApprovalsSection({ beat, failed, go }: { beat: number; failed: (
     >
       <Loading data={pending.data} error={pending.error} reload={pending.reload}>
         {() => (
-          <div className="occols occols--card">
-            {cur ? <ApprovalCard key={cur.id} a={cur} who={who} failed={failed} onDone={done} go={go} /> : <EmptyState icon="checkCircle" tone="done" title={o('approvals.none')} body={o('approvals.noneBody')} />}
-            <section className="ccard" aria-labelledby="oc-decided">
-              <h2 className="ccard__title" id="oc-decided">{o('approvals.recent')}</h2>
-              {decidedList.length === 0 ? (
-                <p className="oc__muted">{o('approvals.noRecent')}</p>
-              ) : (
-                <ul className="oclist oclist--decided">
-                  {decidedList.map((a) => (
-                    <li key={a.id}>
-                      <span className="ocpill" data-tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>
-                        {o(`ap.status.${a.status}` as OwnerKey)}
-                      </span>
-                      <span className="oclist__main">
-                        <strong>{a.title}</strong>
-                        <span className="oc__muted">
-                          {a.ref} · {a.decidedAt ? formatDate(a.decidedAt, locale, { day: 'numeric', month: 'short' }) : ''}
-                          {a.result ? ` · ${a.result}` : ''}
+          <>
+            {note ? (
+              <p className={note.bad ? 'flag flag--late ocnote' : 'flag ocnote'} role={note.bad ? 'alert' : 'status'}>
+                <Icon name={note.bad ? 'alert' : 'undo'} size={14} />
+                {note.text}
+              </p>
+            ) : null}
+            <div className="ocq" data-empty={cur ? undefined : ''}>
+              {list.length > 1 ? (
+                <nav className="ocq__list ccard" aria-label={o('approvals.queueLabel')}>
+                  <h2 className="ccard__title">
+                    {o('approvals.queue')}
+                    <span className="ccard__count">{formatNumber(list.length, locale)}</span>
+                  </h2>
+                  <ol>
+                    {list.map((a) => (
+                      <li key={a.id}>
+                        <button type="button" className="ocq__item" aria-current={a.id === cur?.id ? 'true' : undefined} onClick={() => setCurId(a.id)}>
+                          <span className="ocq__title">{a.title}</span>
+                          <span className="ocq__meta">
+                            {a.priority === 'urgent' ? <Pill tone="late">{o('ap.priority.urgent')}</Pill> : null}
+                            <span>{who(a.proposedBy)}</span>
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
+              ) : null}
+              <div className="ocq__card">
+                {cur ? (
+                  <ApprovalCard key={cur.id} a={cur} who={who} failed={failed} onDone={() => undefined} go={go} onDecide={(body) => hold(cur, body)} keys={{ next: () => step(1), prev: () => step(-1) }} />
+                ) : (
+                  <EmptyState icon="checkCircle" tone="done" title={o('approvals.none')} body={o('approvals.noneBody')}>
+                    <button type="button" className="btn" onClick={() => go({ section: 'today' })}>
+                      <Icon name="gauge" size={16} />
+                      {o('nav.overview')}
+                    </button>
+                  </EmptyState>
+                )}
+                {cur ? <p className="oc__muted ocq__keys">{o('approvals.keys')}</p> : null}
+              </div>
+              <section className="ccard ocq__recent" aria-labelledby="oc-decided">
+                <h2 className="ccard__title" id="oc-decided">{o('approvals.recent')}</h2>
+                {decidedList.length === 0 ? (
+                  <p className="oc__muted">{o('approvals.noRecentBody')}</p>
+                ) : (
+                  <ul className="oclist oclist--decided">
+                    {decidedList.map((a) => (
+                      <li key={a.id}>
+                        <Pill tone={a.status === 'rejected' || a.status === 'failed' ? 'late' : a.status === 'meeting' ? 'soon' : 'done'}>{o(`ap.status.${a.status}` as OwnerKey)}</Pill>
+                        <span className="oclist__main">
+                          <strong>{a.title}</strong>
+                          <span className="oc__muted" title={a.status === 'failed' && a.result ? a.result : undefined}>
+                            {a.ref} · {a.decidedAt ? formatDate(a.decidedAt, locale, { day: 'numeric', month: 'short' }) : ''}
+                            {resultText(a) ? ` · ${resultText(a)}` : ''}
+                          </span>
                         </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="oc__muted oc__gap">{o('approvals.rule')}</p>
-            </section>
-          </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="oc__muted oc__gap">{o('approvals.rule')}</p>
+              </section>
+            </div>
+            {last ? (
+              <div className="ocundo" role="status">
+                <Icon name={last.body.decision === 'approve' ? 'checkCircle' : last.body.decision === 'reject' ? 'close' : 'people'} size={16} />
+                <span className="ocundo__text">
+                  <strong>{o(`approvals.held.${last.body.decision}` as OwnerKey, { title: last.a.title })}</strong>
+                  <span>
+                    {o('approvals.held.when', { s: formatNumber(Math.max(1, Math.ceil((last.until - now) / 1000)), locale) })}
+                    {held.length > 1 ? ` · ${o('approvals.held.more', { n: formatNumber(held.length - 1, locale) })}` : ''}
+                  </span>
+                </span>
+                <button type="button" className="btn ocundo__btn" onClick={undo} aria-keyshortcuts="z">
+                  <Icon name="undo" size={16} />
+                  {o('approvals.undo')}
+                  <kbd className="ockey" aria-hidden="true">
+                    Z
+                  </kbd>
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </Loading>
     </Page>
   );
 }
 
-export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval; who: (seat: string) => string; failed: (e: unknown) => void; onDone: () => void; go: OwnerGo }) {
+/**
+ * One proposal and the owner's choices on it. In the Office it sends the decision at once; in the console queue
+ * (`onDecide`) it hands the decision to the queue, which holds it for Undo, and answers the queue's keys (`keys`).
+ */
+export function ApprovalCard({
+  a,
+  who: name,
+  failed,
+  onDone,
+  go,
+  onDecide,
+  keys,
+}: {
+  a: Approval;
+  who: (seat: string) => string;
+  failed: (e: unknown) => void;
+  onDone: () => void;
+  go: OwnerGo;
+  onDecide?: (body: Verdict) => void;
+  keys?: { next: () => void; prev: () => void };
+}) {
   const { o, locale } = useOwnerWords();
   const [mode, setMode] = useState<'view' | 'edit' | 'reject'>('view');
   const [title, setTitle] = useState(a.title);
@@ -1043,7 +1514,8 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
   const [changes, setChanges] = useState(a.whatChanges);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
-  const decide = async (body: Record<string, unknown>) => {
+  const decide = async (body: Verdict) => {
+    if (onDecide) return onDecide(body);
     setBusy(true);
     try {
       await api('POST', `/office/approvals/${a.id}/decide`, body);
@@ -1056,11 +1528,51 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
   };
   const who = a.discussedWith.length ? o('ap.talked', { a: name(a.proposedBy), b: a.discussedWith.map(name).join(', ') }) : o('ap.proposed', { a: name(a.proposedBy) });
   void go;
+  const approveEdited = () => {
+    const edits: Record<string, string> = {};
+    if (title.trim() !== a.title) edits.title = title.trim();
+    if (summary.trim() !== a.summary) edits.summary = summary.trim();
+    if (changes.trim() !== a.whatChanges) edits.whatChanges = changes.trim();
+    void decide({ decision: 'approve', edits });
+  };
+  // The queue's keys (console only). Capture phase, so the console's own section keys (A approvals, R requests)
+  // do not fire while a proposal is open; a key typed into a field stays with the field.
+  const live = useRef({ mode, note, busy });
+  useLayoutEffect(() => {
+    live.current = { mode, note, busy };
+  });
+  useEffect(() => {
+    if (!keys) return;
+    const on = (e: KeyboardEvent) => {
+      const { mode: m, note: n, busy: b } = live.current;
+      if (b || e.altKey) return;
+      const done = () => (e.preventDefault(), e.stopPropagation());
+      if (m === 'reject' && (e.ctrlKey || e.metaKey) && e.key === 'Enter') return done(), void decide({ decision: 'reject', note: n.trim() || null });
+      if (m !== 'view' && e.key === 'Escape') return done(), setMode('view');
+      if (e.ctrlKey || e.metaKey || typingIn(e.target) || m !== 'view') return;
+      const k = e.key.toLowerCase();
+      if (k === 'a') done(), void decide({ decision: 'approve' });
+      else if (k === 'r') done(), setMode('reject');
+      else if (k === 'e') done(), setMode('edit');
+      else if (k === 'm') done(), void decide({ decision: 'meeting' });
+      else if (k === 'j') done(), keys.next();
+      else if (k === 'k') done(), keys.prev();
+    };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- decide reads the latest state through `live`
+  }, [keys]);
+  const kbd = (k: string) =>
+    keys ? (
+      <kbd className="ockey" aria-hidden="true">
+        {k}
+      </kbd>
+    ) : null;
   return (
     <article className="ccard ocap" data-priority={a.priority} aria-labelledby="oc-ap-h">
       <p className="oc__ref">
         {a.ref} · {formatDate(a.createdAt, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-        {a.priority !== 'normal' ? <span className="ocpill" data-tone={a.priority === 'urgent' ? 'late' : undefined}>{o(`ap.priority.${a.priority}` as OwnerKey)}</span> : null}
+        {a.priority !== 'normal' ? <Pill tone={a.priority === 'urgent' ? 'late' : undefined}>{o(`ap.priority.${a.priority}` as OwnerKey)}</Pill> : null}
       </p>
       <p className="ocap__who">{who}</p>
       {mode === 'edit' ? (
@@ -1100,9 +1612,9 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
         <div>
           <dt>{o('ap.risk')}</dt>
           <dd>
-            <span className="ocpill" data-tone={a.risk === 'high' ? 'late' : a.risk === 'medium' ? 'soon' : 'done'}>
+            <Pill tone={a.risk === 'high' ? 'late' : a.risk === 'medium' ? 'soon' : 'done'}>
               {o(`ap.risk.${a.risk}` as OwnerKey)}
-            </span>
+            </Pill>
             {a.riskNote ? ` ${a.riskNote}` : ''}
           </dd>
         </div>
@@ -1133,42 +1645,37 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
       {mode === 'reject' ? (
         <label className="ocfield ocfield--wide">
           <span>{o('ap.rejectNote')}</span>
-          <textarea className="textarea" rows={2} value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} />
+          <textarea className="textarea" rows={2} value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} autoFocus={!!keys} />
+          {keys ? <span className="oc__muted">{o('approvals.rejectKeys')}</span> : null}
         </label>
       ) : null}
       <div className="ocbuttons ocap__buttons">
         {mode === 'view' ? (
           <>
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => void decide({ decision: 'approve' })}>
+            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => void decide({ decision: 'approve' })} aria-keyshortcuts={keys ? 'a' : undefined}>
               <Icon name="check" size={16} />
               {o('ap.approve')}
+              {kbd('A')}
             </button>
-            <button type="button" className="btn" disabled={busy} onClick={() => setMode('edit')}>
+            <button type="button" className="btn" disabled={busy} onClick={() => setMode('edit')} aria-keyshortcuts={keys ? 'e' : undefined}>
               <Icon name="edit" size={16} />
               {o('ap.edit')}
+              {kbd('E')}
             </button>
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => setMode('reject')}>
+            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => setMode('reject')} aria-keyshortcuts={keys ? 'r' : undefined}>
+              <Icon name="close" size={16} />
               {o('ap.reject')}
+              {kbd('R')}
             </button>
-            <button type="button" className="btn btn--quiet" disabled={busy} onClick={() => void decide({ decision: 'meeting' })}>
+            <button type="button" className="btn btn--quiet" disabled={busy} onClick={() => void decide({ decision: 'meeting' })} aria-keyshortcuts={keys ? 'm' : undefined}>
               <Icon name="people" size={16} />
               {o('ap.meeting')}
+              {kbd('M')}
             </button>
           </>
         ) : mode === 'edit' ? (
           <>
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={busy || !title.trim()}
-              onClick={() => {
-                const edits: Record<string, string> = {};
-                if (title.trim() !== a.title) edits.title = title.trim();
-                if (summary.trim() !== a.summary) edits.summary = summary.trim();
-                if (changes.trim() !== a.whatChanges) edits.whatChanges = changes.trim();
-                void decide({ decision: 'approve', edits });
-              }}
-            >
+            <button type="button" className="btn btn--primary" disabled={busy || !title.trim()} onClick={approveEdited}>
               <Icon name="check" size={16} />
               {o('ap.approveEdited')}
             </button>
@@ -1178,7 +1685,8 @@ export function ApprovalCard({ a, who: name, failed, onDone, go }: { a: Approval
           </>
         ) : (
           <>
-            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void decide({ decision: 'reject', note: note || null })}>
+            <button type="button" className="btn btn--danger" disabled={busy} onClick={() => void decide({ decision: 'reject', note: note.trim() || null })} aria-keyshortcuts={keys ? 'Control+Enter' : undefined}>
+              <Icon name="close" size={16} />
               {o('ap.rejectNow')}
             </button>
             <button type="button" className="btn btn--quiet" onClick={() => setMode('view')}>
@@ -1390,9 +1898,9 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                   <article className="ccard ocnext" aria-labelledby="oc-next-h">
                     <p className="oc__ref">
                       {o('check.next')} · {o(`area.${n.area}` as OwnerKey)} · {o(`owner.${n.owner}` as OwnerKey)}
-                      <span className="ocpill" data-tone={n.triggered || n.priority === 'must' ? 'late' : undefined}>
+                      <Pill tone={n.triggered || n.priority === 'must' ? 'late' : undefined}>
                         {n.triggered ? o('check.triggered') : o(`prio.${n.priority}` as OwnerKey)}
-                      </span>
+                      </Pill>
                     </p>
                     <h2 className="ocap__title" id="oc-next-h">{o(`checklist.${n.id}.title` as OwnerKey)}</h2>
                     <p className="ocap__summary">{o(`checklist.${n.id}.why` as OwnerKey)}</p>
@@ -1487,9 +1995,9 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                                   {e.priority === 'later' ? ` · ${e.triggered ? o('check.triggered') : o('check.trigger', { when: triggerText(e, o) })}` : ''}
                                 </span>
                               </span>
-                              <span className="ocpill" data-tone={e.triggered || e.priority === 'must' ? 'late' : e.priority === 'nice' ? undefined : 'soon'}>
+                              <Pill tone={e.triggered || e.priority === 'must' ? 'late' : e.priority === 'nice' ? undefined : 'soon'}>
                                 {o(`prio.${e.priority}` as OwnerKey)}
-                              </span>
+                              </Pill>
                             </li>
                           ))}
                       </ul>
@@ -1594,7 +2102,7 @@ export function SystemSection({ beat, failed, go }: { beat: number; failed: (e: 
                 <Tile label={o('system.browser')} value={n(d.errors.browser24h)} tone={d.errors.browser24h ? 'soon' : 'done'} />
                 <Tile label={o('system.syncs')} value={n(d.sync.ran24h)} sub={o('system.syncFailed', { n: n(d.sync.failed24h) })} tone={d.sync.failed24h ? 'late' : undefined} />
                 <Tile label={o('system.connections')} value={n(d.sync.inError.length)} tone={d.sync.inError.length ? 'late' : 'done'} />
-                <Tile label={o('system.uptime')} value={o('system.uptimeValue')} sub={o('system.uptimeSub')} />
+                <Tile label={o('system.uptime')} value={o('system.uptimeValue')} sub={o('system.uptimeSub')} tone="soon" onOpen={() => go({ section: 'checklist' })} />
               </div>
               <div className="occols occols--2">
                 <section className="ccard" aria-labelledby="oc-err">
@@ -1704,7 +2212,12 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
       <Loading data={data} error={error} reload={reload}>
         {() =>
           rows.length === 0 ? (
-            <EmptyState icon="history" title={o('activity.empty')} />
+            <EmptyState icon="history" title={o('activity.emptyTitle')} body={o('activity.emptyBody')}>
+              <button type="button" className="btn" onClick={() => go({ section: 'supportview' })}>
+                <Icon name="lifebuoy" size={16} />
+                {o('activity.toSupport')}
+              </button>
+            </EmptyState>
           ) : (
             <div className="ccard octablewrap">
               <table className="octable">

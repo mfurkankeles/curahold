@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { normalizeLocale } from '../../../shared/src/i18n';
 import { cardText, teamWord, type TeamKey } from '../../../shared/src/i18n/ownerTeam';
+import { alertText } from '../../../shared/src/i18n/ownerOffice';
 import type { Meeting, MeetingLine } from '../../../shared/src/office';
 import type { MemoryView, MessageRow, TeamOrg, TeamSeat, ThreadRow } from '../../../shared/src/team/api';
 import { DateField } from '../components/DateField';
@@ -242,7 +243,7 @@ export function TeamSection({ beat, failed, go, open }: { beat: number; failed: 
             <ul className="tm-alerts">
               {d.alerts.slice(0, 3).map((a) => (
                 <li key={a.id}>
-                  <Icon name="alert" size={14} /> {a.body}
+                  <Icon name="alert" size={14} /> {alertText(locale, a.body, (seat) => d.seats.find((x) => x.seat === seat)?.title ?? seat)}
                 </li>
               ))}
             </ul>
@@ -1151,7 +1152,18 @@ export function MeetingsSection({ beat, failed, go, open }: { beat: number; fail
       </div>
       {list.error && !list.data ? <LoadError onRetry={list.reload} /> : null}
       {!list.data && !list.error ? <SkeletonRows label={w('common.loading')} /> : null}
-      {list.data && !rows.length ? <EmptyState icon="calendar" title={w('meet.empty')} /> : null}
+      {list.data && !rows.length ? (
+        (list.data.meetings ?? []).length ? (
+          <EmptyState icon="search" title={w('meet.noMatch')} body={w('meet.noMatchBody')} />
+        ) : (
+          <EmptyState icon="calendar" title={w('meet.empty')} body={w('meet.emptyBody')}>
+            <button type="button" className="btn btn--primary" onClick={() => setCalling(true)}>
+              <Icon name="people" size={16} />
+              {w('meet.call')}
+            </button>
+          </EmptyState>
+        )
+      ) : null}
       <ul className="tm-meetings">
         {rows.map((m) => (
           <li key={m.id}>

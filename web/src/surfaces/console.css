@@ -52,6 +52,13 @@
   background-size: 100% calc(100% / var(--rows, 4));
   touch-action: pan-y;
 }
+/* The switch to the values as a table (and back), under the chart at its end; the plot steps aside for the table. */
+.cchart__switch { grid-column: 1 / -1; justify-self: end; margin-top: 8px; }
+.cchart[data-table] :is(.cchart__read, .cchart__axis, .cchart__plot, .cchart__x) { display: none; }
+.cchart__table { grid-column: 1 / -1; }
+/* The chart keeps time left to right; its table and switch follow the page's direction. */
+:root[dir='rtl'] .cchart__table { direction: rtl; }
+:root[dir='rtl'] .cchart__switch { justify-self: start; direction: rtl; }
 .cchart__plot:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); border-radius: var(--r-xs); }
 .cchart__plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .cchart__line { fill: none; stroke: var(--brand); stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }

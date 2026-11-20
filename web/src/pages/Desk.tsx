@@ -21,12 +21,14 @@ import {
   ChecklistSection,
   OverviewSection,
   OwnerBar,
+  PauseAllButton,
   PlanSection,
   RequestsSection,
   RevenueSection,
   SupportOverviewSection,
   SystemSection,
   TrialsSection,
+  useOwnerBar,
   useOwnerWords,
   type OwnerGo,
   type OwnerSection,
@@ -34,6 +36,7 @@ import {
 import { OWNER_LOCALES } from '../../../shared/src/i18n/owner';
 import { officeWord, type OfficeKey } from '../../../shared/src/i18n/ownerOffice';
 import { RouteFallback } from '../components/RouteFallback';
+import { Dialog } from '../components/ui';
 import { ChatSection, MeetingsSection, TeamSection, useTeamWords, type TeamGo } from './OwnerTeam';
 import '../surfaces/console.css';
 import { formatDate } from '../lib/format';
@@ -552,10 +555,6 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     window.addEventListener('popstate', pop);
     return () => window.removeEventListener('popstate', pop);
   }, []);
-  // On a phone the owner's sections sit in a bar that scrolls sideways: keep the open one in view.
-  useEffect(() => {
-    document.querySelector('.console[data-owner] .console__tab[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [where.section]);
   // The owner console speaks Turkish or English only (his choice); another language reads English.
   useEffect(() => {
     if (owner && !OWNER_LOCALES.includes(locale)) onLocale('en');
@@ -576,7 +575,8 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
     const keys: Record<string, Section> = { a: 'approvals', r: 'requests', c: 'checklist', o: 'today', p: 'plan', g: 'office' };
     const on = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      if (e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
+      // A section that answered the key itself (the approval queue's A and R) has the last word.
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || !el || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return;
       // The Office has its own keys (A there opens its approval panel).
       if (location.pathname === '/office') return;
       const to = keys[e.key.toLowerCase()];
@@ -662,6 +662,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
             {link('support', 'lifebuoy', t('console.support' as MessageKey), me.counts.received)}
           </nav>
         )}
+        {owner ? <OwnerTabs where={where.section} go={(section) => go({ section })} beat={beat} failed={failed} supportCount={me.counts.received} link={link} /> : null}
         {owner && where.section !== 'support' ? null : <Queues me={me} queue={queue} onQueue={pickQueue} className="console__queues" current={where.section === 'support'} />}
         {owner ? <p className="console__keys">{o('keys.hint')}</p> : null}
         <details className="console__me">
@@ -694,6 +695,105 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
         {owner && where.section === 'meetings' && <MeetingsSection beat={beat} failed={failed} go={teamGo} open={where.q ?? null} />}
       </main>
     </div>
+  );
+}
+
+/**
+ * The owner's sections on a phone: four tabs under the thumb (Overview, Approvals, Requests, Support, with what
+ * waits on each) and "More" for everything else, in a sheet with the same groups as the desktop rail and the
+ * switch that pauses every agent. Nothing scrolls sideways at 390 px. Hidden on a desktop (CSS).
+ */
+function OwnerTabs({
+  where,
+  go,
+  beat,
+  failed,
+  supportCount,
+  link,
+}: {
+  where: Section;
+  go: (s: Section) => void;
+  beat: number;
+  failed: (e: unknown) => void;
+  supportCount: number;
+  link: (section: Section, icon: IconName, label: string, count?: number) => JSX.Element;
+}) {
+  const { o } = useOwnerWords();
+  const { t } = useI18n();
+  const { w: teamWords, locale } = useTeamWords();
+  const bar = useOwnerBar(beat, failed);
+  const [more, setMore] = useState(false);
+  const MAIN: Section[] = ['today', 'approvals', 'requests', 'supportview'];
+  const inMore = !MAIN.includes(where);
+  const pick = (s: Section) => {
+    setMore(false);
+    go(s);
+  };
+  const row = (section: Section, icon: IconName, label: string) => (
+    <li key={section}>
+      <button type="button" className="console__moreitem" aria-current={where === section ? 'page' : undefined} onClick={() => pick(section)}>
+        <Icon name={icon} size={18} />
+        <span>{label}</span>
+        <Icon name="chevronRight" size={16} className="console__morego" />
+      </button>
+    </li>
+  );
+  return (
+    <nav className="console__tabbar" aria-label={o('nav.tabs')}>
+      {link('today', 'gauge', o('nav.overview'))}
+      {link('approvals', 'checkCircle', o('nav.approvals'), bar.data?.approvalsPending)}
+      {link('requests', 'form', o('nav.requests'), bar.data?.requestsNew)}
+      {link('supportview', 'lifebuoy', o('nav.support'), supportCount)}
+      <button type="button" className="console__tab console__tab--more" aria-haspopup="dialog" aria-expanded={more} data-on={inMore || undefined} onClick={() => setMore(true)}>
+        <Icon name="menu" size={18} />
+        <span>{o('nav.more')}</span>
+      </button>
+      {more ? (
+        <Dialog
+          title={o('nav.moreTitle')}
+          onClose={() => setMore(false)}
+          footer={
+            <button type="button" className="btn console__moreclose" onClick={() => setMore(false)}>
+              <Icon name="close" size={16} />
+              {t('common.close')}
+            </button>
+          }
+        >
+          <div className="console__more" lang={locale}>
+            <p className="console__group">{o('nav.group.business')}</p>
+            <ul>
+              {row('customers', 'building', o('nav.customers'))}
+              {row('revenue', 'coins', o('nav.revenue'))}
+              {row('trials', 'hourglass', o('nav.trials'))}
+            </ul>
+            <p className="console__group">{o('nav.group.decide')}</p>
+            <ul>
+              {row('plan', 'target', o('nav.plan'))}
+              {row('checklist', 'list', o('nav.checklist'))}
+            </ul>
+            <p className="console__group">{o('nav.group.run')}</p>
+            <ul>
+              {row('system', 'shield', o('nav.system'))}
+              {row('activity', 'history', o('nav.activity'))}
+            </ul>
+            <p className="console__group">{teamWords('nav.group')}</p>
+            <ul>
+              {row('office', 'building', officeWord(locale, 'nav.office'))}
+              {row('team', 'people', teamWords('nav.team'))}
+              {row('chats', 'comment', teamWords('nav.chats'))}
+              {row('meetings', 'calendar', teamWords('nav.meetings'))}
+            </ul>
+            <p className="console__group">{o('nav.agents')}</p>
+            <PauseAllButton beat={beat} failed={failed} onChanged={bar.reload} />
+            <p className="console__group">{o('privacy.show')}</p>
+            <p className="console__privacy">
+              <Icon name="lock" size={14} />
+              <span>{o('privacy.line')}</span>
+            </p>
+          </div>
+        </Dialog>
+      ) : null}
+    </nav>
   );
 }
 

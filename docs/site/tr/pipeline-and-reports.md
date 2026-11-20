@@ -56,6 +56,8 @@ Sana gelen her şey tek listede: verilen görevler, senden bahsedilenler, yoruml
 
 Gruplamazsan rapor satır satır bir listedir; hangi sütunların görüneceğini seçersin. **Dışa aktar** sonucu CSV olarak indirir.
 
+Her grafikte **Tablo olarak göster** vardır: aynı rakamları tablo olarak gösterir, tekrar basınca grafiğe döner. Tek bir değeri okumak için bir çubuğun ya da noktanın üzerine gelin veya grafikteyken ok tuşlarına basın. Renkler renk körlüğü olan okurlar için de ayırt edilir; seçeneklere seçilen iki renk birbirine benzeyecekse grafik kendi renklerini kullanır.
+
 **Raporu kaydet** ile rapor senin olur. **Şirketle paylaş** kutusunu işaretlersen herkes açabilir. Paylaşılan raporda herkes yalnızca kendi görebildiği görev ve müşterileri görür; rolünün göremediği bir alan raporda da görünmez.
 
 **Hazır raporlar** aynı sayfanın altındadır: birini aç, kendi verinle gör, değiştir ve kendi raporun olarak kaydet.
