@@ -45,6 +45,45 @@ export interface RealSide {
   keyValues?: Record<string, string>;
   /** OAuth: the person opens this address, clicks Allow, and the promise ends when the app has the connection. */
   signIn?: (startUrl: string) => Promise<string | null>;
+  /**
+   * What the sandbox was seeded with by hand (scripts/integrations/onboard.ts lists it per vendor): the ticket, task or
+   * mail subject the first read must bring. Without it the first read only has to finish cleanly.
+   */
+  expect?: string;
+  /** Jira: the project key to read. */
+  project?: string;
+  /** A spreadsheet: the sheet's address. */
+  file?: string;
+}
+
+/** The note on a step a real sandbox cannot run: it needs the vendor's side changed or broken on purpose. */
+const BY_HAND = 'skipped: needs a change made by hand in the vendor';
+
+/** A step timed and recorded; `fn` answers true, or the reason it failed. */
+function stepper(steps: Step[]) {
+  return async (name: string, fn: () => Promise<boolean | string>) => {
+    const s = Date.now();
+    let r: boolean | string = false;
+    try {
+      r = await fn();
+    } catch (e) {
+      r = (e as Error).message.slice(0, 200);
+    }
+    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
+    return r === true;
+  };
+}
+
+/**
+ * With a real sandbox, a change made here is checked by the app reporting no problem for it after a run (there is no
+ * call log to read); against the mocks, by the write the vendor received (`wrote`).
+ */
+async function wroteThere(http: Http, id: string, real: RealSide | undefined, wrote: () => boolean | string): Promise<boolean | string> {
+  if (!real) return wrote();
+  await http.post(`/api/connections/${id}/sync/run`, {});
+  const problems = (await http.get(`/api/connections/${id}/problems`)).json;
+  const list = problems?.problems ?? problems?.items ?? [];
+  return list.length ? `the vendor refused the change: ${JSON.stringify(list).slice(0, 160)}` : true;
 }
 
 /** With `real`, the vendor is the real sandbox: steps that need the vendor's side changed by hand are skipped and say so. */
@@ -98,9 +137,10 @@ export async function runFlow(http: Http, world: VendorWorld | null, spec: FlowS
   const connectedMs = Date.now() - t0;
   if (!id) return { steps, connectedMs, firstDataMs: null as number | null };
 
-  if (spec.file) {
+  const file = real?.file ?? spec.file;
+  if (file) {
     await step('pick-file', async () => {
-      const r = await http.post(`/api/connections/${id}/file`, { url: spec.file });
+      const r = await http.post(`/api/connections/${id}/file`, { url: file });
       return r.status < 300 ? true : `file refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
     });
   }
@@ -128,7 +168,8 @@ export async function runFlow(http: Http, world: VendorWorld | null, spec: FlowS
     const run = await runNow();
     firstDataMs = Date.now() - t0;
     if (!run || run.status !== 'ok') return `run ${run?.status}: ${JSON.stringify(run?.errors ?? run).slice(0, 300)}`;
-    return (await accounts(spec.expect)).length === 1 ? true : `${spec.expect} not here after first sync`;
+    const want = real?.expect ?? spec.expect;
+    return (await accounts(want)).length === 1 ? true : `${want} not here after first sync`;
   });
 
   const vendorSide = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: 'skipped: needs a change made by hand in the vendor' }) : step(name, fn));
@@ -243,37 +284,31 @@ export async function runFlow(http: Http, world: VendorWorld | null, spec: FlowS
  * An accounting program (read only): connect → first read → the matches the admin checks → the money on a
  * customer's page → rate limit → withdrawn access → reconnect → disconnect (the money goes, the customer stays).
  */
-export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { provider: string; customer: string }) {
+export async function runAccountingFlow(http: Http, world: VendorWorld | null, spec: { provider: string; customer: string }, real?: RealSide) {
   const steps: Step[] = [];
-  const mock = world.mock(spec.provider);
-  mock.reset();
-  world.clear(spec.provider);
+  const mock = real ? null : world!.mock(spec.provider);
+  mock?.reset();
+  world?.clear(spec.provider);
   let id = '';
   const t0 = Date.now();
-  const step = async (name: string, fn: () => Promise<boolean | string>) => {
-    const s = Date.now();
-    let r: boolean | string = false;
-    try {
-      r = await fn();
-    } catch (e) {
-      r = (e as Error).message.slice(0, 200);
-    }
-    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
-  };
+  const step = stepper(steps);
+  const byHand = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: BY_HAND }) : step(name, fn));
   const runNow = async () => (await http.post(`/api/connections/${id}/sync/run`, {})).json?.run;
-  const customer = async () => ((await http.get(`/api/accounts?q=${encodeURIComponent(spec.customer)}`)).json.accounts as any[]).find((a) => a.name === spec.customer);
+  const name = real?.expect ?? spec.customer;
+  const customer = async () => ((await http.get(`/api/accounts?q=${encodeURIComponent(name)}`)).json.accounts as any[]).find((a) => a.name === name);
 
   await step('find', async () => ((await http.get('/api/connections')).json.providers.find((x: any) => x.id === spec.provider)?.available ? true : 'not offered'));
   // A key (Odoo, Paraşüt) or the program's own sign-in (Xero, QuickBooks, Zoho Books, freee).
+  const keyValues = real ? real.keyValues : mock!.keyValues;
   const signIn = async (reconnect: string) => {
-    if (mock.keyValues) {
-      const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    if (keyValues) {
+      const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
       return r.status < 300 ? (r.json.id as string) : `refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
     }
-    const q = new URLSearchParams({ ...(mock.startQuery ?? {}), ...(reconnect ? { reconnect } : {}) });
+    const q = new URLSearchParams({ ...(mock?.startQuery ?? {}), ...(reconnect ? { reconnect } : {}) });
     const go = await http.location(`/api/connect/${spec.provider}/start?${q}`);
-    if (!go || !mock.hosts.test(new URL(go).host)) return `start went to ${go}`;
-    const done = await http.location(mock.consent!(new URL(go), world.ctl(spec.provider)));
+    if (!go || (mock ? !mock.hosts.test(new URL(go).host) : !/^https:/.test(go))) return `start went to ${go}`;
+    const done = real ? await real.signIn!(go) : await http.location(mock!.consent!(new URL(go), world!.ctl(spec.provider)));
     const m = done && /\/settings\/sources\/([0-9a-f-]{36})/.exec(done);
     return m ? m[1] : `callback went to ${done}`;
   };
@@ -284,6 +319,7 @@ export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { 
     return true;
   });
   const connectedMs = Date.now() - t0;
+  if (!id) return { steps, connectedMs, firstDataMs: null as number | null };
   let firstDataMs: number | null = null;
   await step('first-read', async () => {
     const run = await runNow();
@@ -296,26 +332,27 @@ export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { 
   });
   await step('money-on-customer', async () => {
     const c = await customer();
+    if (!c) return `no customer named "${name}" here`;
     const f = (await http.get(`/api/accounts/${c.id}/finance`)).json.finance;
     return f ? true : 'no money on the customer page';
   });
-  await step('rate-limit', async () => {
-    world.arm(spec.provider, 'ratelimit');
+  await byHand('rate-limit', async () => {
+    world!.arm(spec.provider, 'ratelimit');
     http.advance(3_600_000);
     const run = await runNow();
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return run?.status !== 'error' && conn.status !== 'error' ? true : `rate limit: run ${run?.status}, connection ${conn.status}`;
   });
-  await step('revoked', async () => {
-    world.arm(spec.provider, 'revoked');
+  await byHand('revoked', async () => {
+    world!.arm(spec.provider, 'revoked');
     http.advance(3_600_000);
     await runNow();
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return conn.status === 'error' ? true : `withdrawn key not shown as a problem (${conn.status})`;
   });
   await step('reconnect', async () => {
-    world.clear(spec.provider);
+    world?.clear(spec.provider);
     if ((await signIn(id)) !== id) return 'reconnect did not come back to the same connection';
     await runNow();
     return (await http.get(`/api/connections/${id}/sync`)).json.connection.status !== 'error' ? true : 'still broken';
@@ -323,6 +360,7 @@ export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { 
   await step('disconnect', async () => {
     const c = await customer();
     if ((await http.del(`/api/connections/${id}`)).status !== 200) return 'disconnect refused';
+    if (!c) return true;
     if (!(await customer())) return 'customer removed';
     const f = (await http.get(`/api/accounts/${c.id}/finance`)).json.finance;
     return f ? 'money from the program still shown after disconnect' : true;
@@ -335,35 +373,32 @@ export async function runAccountingFlow(http: Http, world: VendorWorld, spec: { 
  * right customer → a change there → a change here (where the tool takes changes back) → a reply → rate limit →
  * withdrawn key → reconnect → disconnect (tickets stay as records; the link goes).
  */
-export async function runSupportFlow(http: Http, world: VendorWorld, spec: { provider: string; ticket: string; twoWay: boolean; reply: boolean; edit?: Record<string, unknown> }) {
+export async function runSupportFlow(http: Http, world: VendorWorld | null, spec: { provider: string; ticket: string; twoWay: boolean; reply: boolean; edit?: Record<string, unknown> }, real?: RealSide) {
   const steps: Step[] = [];
-  const mock = world.mock(spec.provider);
-  mock.reset();
-  world.clear(spec.provider);
+  const mock = real ? null : world!.mock(spec.provider);
+  mock?.reset();
+  world?.clear(spec.provider);
   let id = '';
   const t0 = Date.now();
-  const step = async (name: string, fn: () => Promise<boolean | string>) => {
-    const s = Date.now();
-    let r: boolean | string = false;
-    try {
-      r = await fn();
-    } catch (e) {
-      r = (e as Error).message.slice(0, 200);
-    }
-    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
-  };
+  const step = stepper(steps);
+  const byHand = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: BY_HAND }) : step(name, fn));
   const runNow = async () => (await http.post(`/api/connections/${id}/sync/run`, {})).json?.run;
   const tickets = async () => ((await http.get('/api/records?type=ticket&limit=200')).json.records ?? []) as any[];
   const linkOf = (t: any) => t?.links?.find((l: any) => l.provider === spec.provider);
+  const keyValues = real ? real.keyValues : mock!.keyValues;
+  // The ticket worked on: the seeded one, renamed by the "change there" step against the mocks.
+  const seeded = real?.expect ?? spec.ticket;
+  let current = seeded;
 
   await step('find', async () => ((await http.get('/api/connections')).json.providers.find((x: any) => x.id === spec.provider)?.available ? true : 'not offered'));
   await step('connect', async () => {
-    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
     if (r.status >= 300) return `refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
     id = r.json.id;
     return true;
   });
   const connectedMs = Date.now() - t0;
+  if (!id) return { steps, connectedMs, firstDataMs: null as number | null };
   await step('map', async () => {
     const objects = (await http.get(`/api/connections/${id}/objects`)).json.objects as any[];
     const picked = [];
@@ -380,50 +415,56 @@ export async function runSupportFlow(http: Http, world: VendorWorld, spec: { pro
     const run = await runNow();
     firstDataMs = Date.now() - t0;
     if (run?.status !== 'ok') return `run ${run?.status} ${JSON.stringify(run?.errors).slice(0, 200)}`;
-    const t = (await tickets()).find((x) => x.name === spec.ticket);
-    return t?.accountId ? true : `ticket "${spec.ticket}" ${t ? 'not filed under a customer' : 'missing'}`;
+    if (real && !real.expect) return true;
+    const t = (await tickets()).find((x) => x.name === seeded);
+    return t?.accountId ? true : `ticket "${seeded}" ${t ? 'not filed under a customer' : 'missing'}`;
   });
-  await step('edit-there', async () => {
+  await byHand('edit-there', async () => {
     http.advance(60_000);
-    mock.remoteEdit!(world.ctl(spec.provider), `${spec.ticket} (updated)`);
+    mock!.remoteEdit!(world!.ctl(spec.provider), `${spec.ticket} (updated)`);
     const run = await runNow();
     if (run?.status === 'error') return `run error ${JSON.stringify(run.errors).slice(0, 160)}`;
-    return (await tickets()).some((x) => x.name === `${spec.ticket} (updated)`) ? true : 'change there did not arrive';
+    current = `${spec.ticket} (updated)`;
+    return (await tickets()).some((x) => x.name === current) ? true : 'change there did not arrive';
   });
   await step('edit-here', async () => {
     if (!spec.twoWay) return true;
-    const t = (await tickets()).find((x) => x.name === `${spec.ticket} (updated)`);
-    const from = world.calls.length;
+    const t = (await tickets()).find((x) => x.name === current);
+    if (!t) return real && !real.expect ? 'skipped: no seeded ticket named (set the expected ticket)' : `ticket "${current}" missing`;
+    const from = world?.calls.length ?? 0;
     await http.patch(`/api/records/${t.id}`, { fields: spec.edit ?? { priority: 'low' } });
     await http.settle();
     // Each tool writes priority its own way (a word, a number): the check is that the write reached it and was taken.
-    const wrote = world.calls.slice(from).find((c) => c.vendor === spec.provider && /PUT|PATCH|POST/i.test(c.method) && c.status < 300);
-    return wrote ? true : `change here not written there (${JSON.stringify(world.calls.slice(from).map((c) => `${c.method} ${c.status}`))})`;
+    return wroteThere(http, id, real, () => {
+      const wrote = world!.calls.slice(from).find((c) => c.vendor === spec.provider && /PUT|PATCH|POST/i.test(c.method) && c.status < 300);
+      return wrote ? true : `change here not written there (${JSON.stringify(world!.calls.slice(from).map((c) => `${c.method} ${c.status}`))})`;
+    });
   });
   await step('reply', async () => {
     if (!spec.reply) return true;
-    const t = (await tickets()).find((x) => x.name === `${spec.ticket} (updated)`);
+    const t = (await tickets()).find((x) => x.name === current);
+    if (!t) return real && !real.expect ? 'skipped: no seeded ticket named (set the expected ticket)' : `ticket "${current}" missing`;
     const r = await http.post(`/api/connections/${id}/tickets/${encodeURIComponent(linkOf(t)?.remoteId)}/reply`, { body: 'Thanks, we are on it.' });
     return r.status < 300 ? true : `reply refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
   });
-  await step('rate-limit', async () => {
-    world.arm(spec.provider, 'ratelimit');
+  await byHand('rate-limit', async () => {
+    world!.arm(spec.provider, 'ratelimit');
     http.advance(60_000);
     const run = await runNow();
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return run?.status !== 'error' && conn.status !== 'error' ? true : `rate limit: run ${run?.status}, connection ${conn.status}`;
   });
-  await step('revoked', async () => {
-    world.arm(spec.provider, 'revoked');
+  await byHand('revoked', async () => {
+    world!.arm(spec.provider, 'revoked');
     http.advance(60_000);
     await runNow();
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return conn.status === 'error' ? true : `withdrawn key not shown as a problem (${conn.status})`;
   });
   await step('reconnect', async () => {
-    world.clear(spec.provider);
-    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    world?.clear(spec.provider);
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
     if (r.json?.id !== id) return `reconnect made a second connection (${r.status})`;
     const run = await runNow();
     return run?.status !== 'error' && (await http.get(`/api/connections/${id}/sync`)).json.connection.status !== 'error' ? true : 'still broken';
@@ -432,6 +473,7 @@ export async function runSupportFlow(http: Http, world: VendorWorld, spec: { pro
     const before = (await tickets()).filter((x) => linkOf(x)).length;
     if ((await http.del(`/api/connections/${id}`)).status !== 200) return 'disconnect refused';
     const after = await tickets();
+    if (real && !before) return after.some((x) => linkOf(x)) ? 'links kept after disconnect' : true;
     return before && after.length >= before && !after.some((x) => linkOf(x)) ? true : `tickets after disconnect: ${after.length} (had ${before} linked)`;
   });
   return { steps, connectedMs, firstDataMs };
@@ -442,38 +484,35 @@ export async function runSupportFlow(http: Http, world: VendorWorld, spec: { pro
  * as tasks → a change there → a change here (goes out, status as a transition) → rate limit → withdrawn token →
  * reconnect → disconnect (the tasks stay on the board).
  */
-export async function runJiraFlow(http: Http, world: VendorWorld, spec: { provider: string; project: string; task: string }) {
+export async function runJiraFlow(http: Http, world: VendorWorld | null, spec: { provider: string; project: string; task: string }, real?: RealSide) {
   const steps: Step[] = [];
-  const mock = world.mock(spec.provider);
-  mock.reset();
-  world.clear(spec.provider);
+  const mock = real ? null : world!.mock(spec.provider);
+  mock?.reset();
+  world?.clear(spec.provider);
   let id = '';
   let board = '';
   const t0 = Date.now();
-  const step = async (name: string, fn: () => Promise<boolean | string>) => {
-    const s = Date.now();
-    let r: boolean | string = false;
-    try {
-      r = await fn();
-    } catch (e) {
-      r = (e as Error).message.slice(0, 200);
-    }
-    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
-  };
+  const step = stepper(steps);
+  const byHand = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: BY_HAND }) : step(name, fn));
   const runNow = async () => (await http.post(`/api/connections/${id}/sync/run`, {})).json?.run;
   const tasks = async () => ((await http.get(`/api/boards/${board}/tasks`)).json.tasks ?? []) as any[];
+  const keyValues = real ? real.keyValues : mock!.keyValues;
+  const project = real?.project ?? spec.project;
+  const seeded = real?.expect ?? spec.task;
+  let current = seeded;
   await step('find', async () => ((await http.get('/api/connections')).json.providers.find((x: any) => x.id === spec.provider)?.available ? true : 'not offered'));
   await step('connect', async () => {
-    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
     if (r.status >= 300) return `refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
     id = r.json.id;
     return true;
   });
   const connectedMs = Date.now() - t0;
+  if (!id) return { steps, connectedMs, firstDataMs: null as number | null };
   await step('map', async () => {
     const b = await http.post('/api/boards', { name: `Product (${Date.now().toString(36)})`, visibility: 'org', columns: pmColumns('en') });
     board = b.json?.board?.id;
-    const saved = await http.put(`/api/connections/${id}/jira`, { projects: [spec.project], boardId: board });
+    const saved = await http.put(`/api/connections/${id}/jira`, { projects: [project], boardId: board });
     return saved.status === 200 ? true : `mapping refused ${saved.status} ${JSON.stringify(saved.json).slice(0, 160)}`;
   });
   let firstDataMs: number | null = null;
@@ -481,41 +520,47 @@ export async function runJiraFlow(http: Http, world: VendorWorld, spec: { provid
     const run = await runNow();
     firstDataMs = Date.now() - t0;
     if (run?.status !== 'ok') return `run ${run?.status} ${JSON.stringify(run?.errors).slice(0, 200)}`;
-    return (await tasks()).some((t) => t.title === spec.task) ? true : `"${spec.task}" not on the board`;
+    if (real && !real.expect) return (await tasks()).length ? true : `nothing came from project ${project}`;
+    return (await tasks()).some((t) => t.title === seeded) ? true : `"${seeded}" not on the board`;
   });
-  await step('edit-there', async () => {
+  await byHand('edit-there', async () => {
     http.advance(120_000);
-    mock.remoteEdit!(world.ctl(spec.provider), `${spec.task} (renamed)`);
+    mock!.remoteEdit!(world!.ctl(spec.provider), `${spec.task} (renamed)`);
     const run = await runNow();
     if (run?.status === 'error') return `run error ${JSON.stringify(run.errors).slice(0, 160)}`;
-    return (await tasks()).some((t) => t.title === `${spec.task} (renamed)`) ? true : 'change there did not arrive';
+    current = `${spec.task} (renamed)`;
+    return (await tasks()).some((t) => t.title === current) ? true : 'change there did not arrive';
   });
   await step('edit-here', async () => {
-    const t = (await tasks()).find((x) => x.title === `${spec.task} (renamed)`);
-    const from = world.calls.length;
+    const all = await tasks();
+    const t = all.find((x) => x.title === current) ?? (real ? all[0] : undefined);
+    if (!t) return `"${current}" not on the board`;
+    const from = world?.calls.length ?? 0;
     const moved = await http.patch(`/api/tasks/${t.id}`, { baseVersion: t.version, status: 'code_review' });
     if (moved.status !== 200) return `move refused ${moved.status} ${JSON.stringify(moved.json).slice(0, 120)}`;
     await http.settle();
-    const wrote = world.calls.slice(from).find((c) => c.vendor === spec.provider && /transitions/.test(c.url) && c.method === 'POST' && c.status < 300);
-    return wrote ? true : `status change not sent as a transition (${JSON.stringify(world.calls.slice(from).map((c) => `${c.method} ${c.status}`))})`;
+    return wroteThere(http, id, real, () => {
+      const wrote = world!.calls.slice(from).find((c) => c.vendor === spec.provider && /transitions/.test(c.url) && c.method === 'POST' && c.status < 300);
+      return wrote ? true : `status change not sent as a transition (${JSON.stringify(world!.calls.slice(from).map((c) => `${c.method} ${c.status}`))})`;
+    });
   });
-  await step('rate-limit', async () => {
-    world.arm(spec.provider, 'ratelimit');
+  await byHand('rate-limit', async () => {
+    world!.arm(spec.provider, 'ratelimit');
     http.advance(60_000);
     const run = await runNow();
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return run?.status !== 'error' && conn.status !== 'error' ? true : `rate limit: run ${run?.status}, connection ${conn.status}`;
   });
-  await step('revoked', async () => {
-    world.arm(spec.provider, 'revoked');
+  await byHand('revoked', async () => {
+    world!.arm(spec.provider, 'revoked');
     http.advance(60_000);
     await runNow();
     return (await http.get(`/api/connections/${id}/sync`)).json.connection.status === 'error' ? true : 'withdrawn token not shown as a problem';
   });
   await step('reconnect', async () => {
-    world.clear(spec.provider);
-    const r = await http.post('/api/connections/key', { provider: spec.provider, values: mock.keyValues });
+    world?.clear(spec.provider);
+    const r = await http.post('/api/connections/key', { provider: spec.provider, values: keyValues });
     if (r.json?.id !== id) return `reconnect made a second connection (${r.status})`;
     const run = await runNow();
     return run?.status !== 'error' ? true : `still broken: ${JSON.stringify(run?.errors).slice(0, 160)}`;
@@ -533,30 +578,23 @@ export async function runJiraFlow(http: Http, world: VendorWorld, spec: { provid
  * mail arrives → a reply is sent from Curahold and logged → rate limit → withdrawn access → reconnect →
  * disconnect (what was attached stays).
  */
-export async function runMailboxFlow(http: Http, world: VendorWorld, spec: { provider: string; customer: string; subject: string }) {
+export async function runMailboxFlow(http: Http, world: VendorWorld | null, spec: { provider: string; customer: string; subject: string }, real?: RealSide) {
   const steps: Step[] = [];
-  const mock = world.mock(spec.provider);
-  mock.reset();
-  world.clear(spec.provider);
+  const mock = real ? null : world!.mock(spec.provider);
+  mock?.reset();
+  world?.clear(spec.provider);
   let id = '';
   let account = '';
   const t0 = Date.now();
-  const step = async (name: string, fn: () => Promise<boolean | string>) => {
-    const s = Date.now();
-    let r: boolean | string = false;
-    try {
-      r = await fn();
-    } catch (e) {
-      r = (e as Error).message.slice(0, 200);
-    }
-    steps.push({ step: name, ok: r === true, ms: Date.now() - s, ...(typeof r === 'string' ? { note: r } : {}) });
-  };
+  const step = stepper(steps);
+  const byHand = async (name: string, fn: () => Promise<boolean | string>) => (real ? void steps.push({ step: name, ok: true, ms: 0, note: BY_HAND }) : step(name, fn));
   const runNow = async () => (await http.post(`/api/connections/${id}/sync/run`, {})).json?.run;
   const mail = async () => ((await http.get(`/api/accounts/${account}/timeline`)).json.items ?? []).filter((i: any) => i.type === 'activity' && i.activity?.source === spec.provider);
+  const subject = real?.expect ?? spec.subject;
   const signIn = async (reconnect: string) => {
     const go = await http.location(`/api/connect/${spec.provider}/start${reconnect ? `?reconnect=${reconnect}` : ''}`);
     if (!go || !/^https:/.test(go)) return `start went to ${go}`;
-    const done = await http.location(mock.consent!(new URL(go), world.ctl(spec.provider)));
+    const done = real ? await real.signIn!(go) : await http.location(mock!.consent!(new URL(go), world!.ctl(spec.provider)));
     const m = done && /\/settings\/sources\/([0-9a-f-]{36})/.exec(done);
     return m ? m[1] : `callback went to ${done}`;
   };
@@ -568,42 +606,48 @@ export async function runMailboxFlow(http: Http, world: VendorWorld, spec: { pro
     return true;
   });
   const connectedMs = Date.now() - t0;
+  if (!id) return { steps, connectedMs, firstDataMs: null as number | null };
   let firstDataMs: number | null = null;
   await step('first-read', async () => {
     account = ((await http.get(`/api/accounts?q=${encodeURIComponent(spec.customer)}`)).json.accounts as any[]).find((a) => a.name === spec.customer)?.id;
     const run = await runNow();
     firstDataMs = Date.now() - t0;
     if (run?.status === 'error') return `run error ${JSON.stringify(run.errors).slice(0, 160)}`;
+    if (real && !real.expect) return true;
     const got = await mail();
-    return got.some((i: any) => JSON.stringify(i).includes(spec.subject)) ? true : `no "${spec.subject}" on ${spec.customer}'s timeline (${got.length} mails)`;
+    return got.some((i: any) => JSON.stringify(i).includes(subject)) ? true : `no "${subject}" on ${spec.customer}'s timeline (${got.length} mails)`;
   });
-  await step('new-mail', async () => {
+  await byHand('new-mail', async () => {
     http.advance(120_000);
-    mock.remoteEdit!(world.ctl(spec.provider), 'Second question');
+    mock!.remoteEdit!(world!.ctl(spec.provider), 'Second question');
     await runNow();
     return (await mail()).some((i: any) => JSON.stringify(i).includes('Second question')) ? true : 'the new mail did not arrive';
   });
   await step('reply', async () => {
-    const first = (await mail()).find((i: any) => JSON.stringify(i).includes(spec.subject));
-    const r = await http.post(`/api/connections/${id}/mail/reply`, { accountId: account, to: 'buyer@quillfield.example', subject: `Re: ${spec.subject}`, body: 'It renews on 1 February.', inReplyTo: first?.activity?.externalId });
+    const first = (await mail()).find((i: any) => JSON.stringify(i).includes(subject));
+    if (real && !first) return 'skipped: no seeded mail to answer (set the expected subject)';
+    // Against a real mailbox the reply goes to the address named for it (REAL_MAIL_TO), never to an invented one.
+    const to = real ? process.env.REAL_MAIL_TO : 'buyer@quillfield.example';
+    if (!to) return 'skipped: REAL_MAIL_TO not set';
+    const r = await http.post(`/api/connections/${id}/mail/reply`, { accountId: account, to, subject: `Re: ${subject}`, body: 'It renews on 1 February.', inReplyTo: first?.activity?.externalId });
     return r.status === 200 ? true : `reply refused ${r.status} ${JSON.stringify(r.json).slice(0, 160)}`;
   });
-  await step('rate-limit', async () => {
-    world.arm(spec.provider, 'ratelimit');
+  await byHand('rate-limit', async () => {
+    world!.arm(spec.provider, 'ratelimit');
     http.advance(60_000);
     const run = await runNow();
-    world.clear(spec.provider);
+    world!.clear(spec.provider);
     const conn = (await http.get(`/api/connections/${id}/sync`)).json.connection;
     return run?.status !== 'error' && conn.status !== 'error' ? true : `rate limit: run ${run?.status}, connection ${conn.status}`;
   });
-  await step('revoked', async () => {
-    world.arm(spec.provider, 'revoked');
+  await byHand('revoked', async () => {
+    world!.arm(spec.provider, 'revoked');
     http.advance(3_700_000);
     await runNow();
     return (await http.get(`/api/connections/${id}/sync`)).json.connection.status === 'error' ? true : 'withdrawn access not shown as a problem';
   });
   await step('reconnect', async () => {
-    world.clear(spec.provider);
+    world?.clear(spec.provider);
     if ((await signIn(id)) !== id) return 'reconnect did not come back to the same connection';
     const run = await runNow();
     return run?.status !== 'error' ? true : 'still broken';
