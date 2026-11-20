@@ -1,3 +1,7 @@
+// Tasks on boards: reading a board, one task's detail, creating, moving, editing and deleting tasks, links between
+// tasks, time entries, watching, comments and files. Every route runs under the person's rights (run(): row security
+// and department walls, ADR 0004, 0009); writes need a writer seat, side effects go through the outbox, deletes to the trash.
+// Screens: BoardPage, TaskPanel, MyTasks. Tests: tests/tasks*.test.ts.
 import { quarantine, released } from '../lib/uploadScan';
 import { INLINE_TYPES, readUpload } from '../lib/upload';
 import { Hono, type Context } from 'hono';
@@ -61,6 +65,9 @@ function checkStatus(columns: Column[], status: string) {
   if (!columns.some((c) => c.key === status)) fail('bad_status');
 }
 
+/**
+ * A board's tasks: every open card, or with `archived=1` the archive (put away or aged out), newest first, paged by 100.
+ */
 taskRoutes.get('/boards/:id/tasks', async (c) => {
   const id = param(c, 'id');
   // The archive: what was put away by hand, and finished work that aged out. Newest first, a page at a time.
@@ -431,6 +438,10 @@ taskRoutes.get('/tasks/similar', async (c) => {
   return c.json({ tasks: scored.map(({ r }) => ({ id: r.id, title: r.title, boardId: r.board_id, boardName: r.board_name, dueDate: day(r.due_date), assigneeIds: r.assignee_ids ?? [] })) });
 });
 
+/**
+ * One task in full: fields, subtasks, comments, files, time and links in both directions. A linked task in another
+ * department shows only its title, status and department unless the reader may open that board (ADR 0009).
+ */
 taskRoutes.get('/tasks/:id', async (c) => {
   const id = param(c, 'id');
   const detail = await run(c, async (q) => {
@@ -589,6 +600,7 @@ taskRoutes.put('/tasks/:id/watch', async (c) => {
   return c.json({ watching: true });
 });
 
+/** Stops following a task; 404 if it is not a task the person can see. */
 taskRoutes.delete('/tasks/:id/watch', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -608,6 +620,9 @@ const linkInput = z.object({ otherId: uuid, kind: z.enum(['blocks', 'blocked_by'
 const orient = (id: string, other: string, kind: 'blocks' | 'blocked_by' | 'relates') =>
   kind === 'blocked_by' ? { from: other, to: id, kind: 'blocks' } : kind === 'relates' ? { from: id < other ? id : other, to: id < other ? other : id, kind: 'relates' } : { from: id, to: other, kind: 'blocks' };
 
+/**
+ * Links two tasks (blocks, blocked_by or relates). Refuses a self-link or a circle of waiting ('link_loop'). Writers only (201).
+ */
 taskRoutes.post('/tasks/:id/links', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -637,6 +652,7 @@ taskRoutes.post('/tasks/:id/links', async (c) => {
   return c.json({ ok: true }, 201);
 });
 
+/** Removes a link of the given `kind` between two tasks. Writers only. */
 taskRoutes.delete('/tasks/:id/links/:other', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -681,6 +697,7 @@ taskRoutes.post('/tasks/:id/time', async (c) => {
   return c.json({ entry: { id: entry.id, userId: entry.user_id, minutes: entry.minutes, day: day(entry.day), note: entry.note, createdAt: iso(entry.created_at) } }, 201);
 });
 
+/** Deletes a time entry. Writers only; 404 when unknown or not deletable by the person. */
 taskRoutes.delete('/time/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -862,6 +879,10 @@ taskRoutes.post('/tasks/:id/mute', async (c) => {
   return c.json({ muted: input.muted });
 });
 
+/**
+ * Moves a task to the trash for 30 days with its subtasks, comments, time and files. The creator may, others need
+ * tasks.delete_any. Writers only; audited.
+ */
 taskRoutes.delete('/tasks/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -924,6 +945,7 @@ taskRoutes.post('/tasks/:id/comments', async (c) => {
   return c.json({ comment: { ...toComment(comment), files: (comment.files as Row[]).map(toFile) } }, 201);
 });
 
+/** Deletes a comment with its pictures and files; audited. 404 when unknown or not the person's to delete. */
 taskRoutes.delete('/comments/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -970,6 +992,10 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
   return c.json({ file: toFile(row) }, 201);
 });
 
+/**
+ * Downloads a task file. Refused while the upload scan holds it ('file_quarantined'). Pictures are shown inline,
+ * everything else is sent as a download, so an uploaded HTML file can never run in the app's origin.
+ */
 taskRoutes.get('/files/:id', async (c) => {
   const id = param(c, 'id');
   const row = await run(c, async (q) => {
@@ -990,6 +1016,7 @@ taskRoutes.get('/files/:id', async (c) => {
   });
 });
 
+/** Deletes a task file; audited. */
 taskRoutes.delete('/files/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');

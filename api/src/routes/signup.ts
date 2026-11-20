@@ -41,6 +41,9 @@ signupRoutes.use('*', async (c, next) => {
   await next();
 });
 
+/**
+ * Instant sign-up, step 1 (only when SIGNUP_MODE allows it): emails a link. A robot gets the usual answer and no mail.
+ */
 signupRoutes.post('/start', async (c) => {
   const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
@@ -75,6 +78,7 @@ signupRoutes.post('/start', async (c) => {
   return c.json({ ok: true, ...(deps.config.devExposeTokens ? { devToken: token } : {}) });
 });
 
+/** Instant sign-up, step 2: checks the emailed link and returns a short-lived ticket. */
 signupRoutes.post('/verify', async (c) => {
   const input = await body(c, z.object({ token: z.string().min(20).max(200) }));
   const deps = c.get('deps');
@@ -110,6 +114,7 @@ signupRoutes.post('/verify', async (c) => {
   });
 });
 
+/** Whether a company address (slug) is valid and free. */
 signupRoutes.get('/slug', async (c) => {
   const slug = (c.req.query('slug') ?? '').toLowerCase();
   const problem = slugProblem(slug);
@@ -130,6 +135,7 @@ const tz = z
     }
   });
 
+/** Instant sign-up, step 3: creates the company and its first administrator from a valid ticket. */
 signupRoutes.post('/complete', async (c) => {
   const input = await body(
     c,

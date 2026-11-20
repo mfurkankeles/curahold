@@ -125,6 +125,7 @@ pageRoutes.get('/pages', async (c) => {
   return c.json({ pages, homeId: home?.id ?? null });
 });
 
+/** One custom page (dashboard) with its cards; 404 when unknown or not visible. */
 pageRoutes.get('/pages/:id', async (c) => {
   const id = param(c, 'id');
   const [row] = await run(c, (q) => q.query('select * from pages where id = $1', [id]));
@@ -190,6 +191,7 @@ async function moveHomes(q: Q, pageId: string, homeFor: string[] | undefined) {
   );
 }
 
+/** Creates a custom page. Needs org.manage; audited (201). */
 pageRoutes.post('/pages', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(c, pageInput);
@@ -247,6 +249,7 @@ pageRoutes.post('/pages/from-template', async (c) => {
   return c.json({ page: toPage(row) }, 201);
 });
 
+/** Edits a custom page's name, cards or audience. Needs org.manage; audited. */
 pageRoutes.patch('/pages/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
@@ -274,6 +277,7 @@ pageRoutes.patch('/pages/:id', async (c) => {
   return c.json({ page: toPage(row) });
 });
 
+/** Saves the order of custom pages in the menu. Needs org.manage. */
 pageRoutes.put('/pages/order', async (c) => {
   requirePerm(c, 'org.manage');
   const input = await body(c, z.object({ ids: z.array(uuid).max(200) }));
@@ -283,6 +287,7 @@ pageRoutes.put('/pages/order', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Moves a custom page to the trash. Needs org.manage; audited. */
 pageRoutes.delete('/pages/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');

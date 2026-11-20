@@ -288,6 +288,9 @@ meetingRoutes.get('/accounts/:id/planned', async (c) => {
   return c.json({ upcoming: data.upcoming.map(mapPlanned), past: data.past.map(mapPlanned) });
 });
 
+/**
+ * Plans a meeting with a customer (title or meeting type, date, people). Writers only; 404 when the customer is unseen (201).
+ */
 meetingRoutes.post('/accounts/:id/planned', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

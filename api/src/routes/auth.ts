@@ -50,6 +50,9 @@ const MAX_CODE_ATTEMPTS = 5;
 
 export const authRoutes = new Hono<AppEnv>();
 
+/**
+ * The company's public sign-in facts (name, logo, which sign-in methods it allows) for the sign-in page; no session needed.
+ */
 authRoutes.get('/org', (c) => {
   const org = c.get('org');
   const oauth = c.get('deps').config.oauth;
@@ -110,6 +113,11 @@ authRoutes.get('/logo', async (c) => {
   });
 });
 
+/**
+ * Starts an email sign-in: sends a link (or a join link to someone at the company's domain). Rate-limited per address;
+ * the answer is the same whether or not the address has an account, so it cannot be used to find out who works where.
+ * Under required SSO only backup administrators may use it ('sso_required').
+ */
 authRoutes.post('/auth/start', async (c) => {
   const input = await body(c, z.object({ email, backup: z.boolean().optional() }));
   const deps = c.get('deps');
@@ -339,6 +347,10 @@ async function loginFailed(c: C, via: 'link' | 'device_code' | 'second_step' | '
 
 const verifyInput = z.object({ token: z.string().min(20).max(200), deviceId, deviceLabel });
 
+/**
+ * Finishes a sign-in from an emailed link or a provider's token on this device; 'invalid_token' for anything stale,
+ * used or from another device. Under required SSO only a backup administrator's emailed link goes on.
+ */
 authRoutes.post('/auth/verify', async (c) => {
   const input = await body(c, verifyInput);
   const deps = c.get('deps');
@@ -413,6 +425,10 @@ authRoutes.post('/auth/verify', async (c) => {
   return signedIn(c, await afterFirstStep(c, outcome.user, { deviceId: input.deviceId, deviceLabel: input.deviceLabel ?? null, method: outcome.method }, sso));
 });
 
+/**
+ * Signs in on a new device with the code shown on a trusted one. Wrong attempts are counted even when the code fails
+ * (the error is raised after the counter is committed), so guessing is bounded.
+ */
 authRoutes.post('/auth/device', async (c) => {
   const input = await body(
     c,
@@ -467,12 +483,17 @@ authRoutes.post('/auth/second/setup', async (c) => {
   return c.json(await startTotp(c, { id: step.user_id, email: u.email }));
 });
 
+/** Passkey challenge options for the second sign-in step. */
 authRoutes.post('/auth/second/passkey', async (c) => {
   const input = await body(c, stepInput);
   const step = await takeStep(c, input.token, input.deviceId, false);
   return c.json(await passkeyOptions(c, 'confirm', step.user_id));
 });
 
+/**
+ * Checks the second sign-in step (authenticator app, passkey or a recovery code) and creates the session; audited.
+ * Setting up the app during sign-in shows the recovery codes once.
+ */
 authRoutes.post('/auth/second', async (c) => {
   const input = await body(
     c,
@@ -521,6 +542,9 @@ authRoutes.post('/auth/passkey/options', async (c) => {
   return c.json(await passkeyOptions(c, 'login', null));
 });
 
+/**
+ * Signs in with a passkey alone. Refused under required SSO; reports devices signed out to stay within the device limit.
+ */
 authRoutes.post('/auth/passkey', async (c) => {
   const input = await body(c, z.object({ challengeId: z.string().max(40), response: z.record(z.string(), z.any()), deviceId, deviceLabel }));
   if (await run(c, (q) => ssoEnforced(q))) fail('sso_required');
@@ -593,6 +617,10 @@ interface OAuthState {
   x: number; // expiry (ms)
 }
 
+/**
+ * Starts Google or Microsoft sign-in: a signed state (with this device) and a redirect to the provider. Refused under
+ * required SSO; a provider not configured redirects back with an error.
+ */
 authRoutes.get('/auth/oauth/:provider/start', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
@@ -615,6 +643,10 @@ function callbackUrl(c: C) {
   return `${cfg.scheme}://${cfg.centralHost}${port}/api/oauth/callback`;
 }
 
+/**
+ * The return from Google or Microsoft sign-in: checks the signed state and its expiry, finds the person in the company,
+ * and continues the sign-in on the same device. A customer portal's sign-in comes back here too and goes on to the portal.
+ */
 export async function oauthCallback(c: C) {
   const deps = c.get('deps');
   const cfg = deps.config;
@@ -652,6 +684,10 @@ export async function oauthCallback(c: C) {
 
 export { callbackUrl };
 
+/**
+ * Sets the session cookie: host-only, HttpOnly, SameSite=Lax, Secure on https, so one company's session is never
+ * sent to another company's.
+ */
 export function setSessionCookie(c: C, token: string) {
   const cfg = c.get('deps').config;
   // Host-only cookie: a session for acme.curahold.com is never sent to any

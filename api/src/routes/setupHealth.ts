@@ -75,6 +75,10 @@ setupHealthRoutes.post('/setup-health/check', async (c) => {
   return c.json(await healthOf(c, true));
 });
 
+/**
+ * Confirms (or un-confirms) a manual setup check by hand. Only for people who may see the check and can write; audited.
+ * ADR 0013: setup health is read-only except for these confirmations.
+ */
 setupHealthRoutes.post('/setup-health/:id/confirm', async (c) => {
   const id = idParam(c);
   const def = checkDef(id);
@@ -308,6 +312,7 @@ async function save(c: C, q: Q, id: string, status: TestStatus, how: TestRun['ho
   if (!open) await q.query(`delete from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
 }
 
+/** The company's go-live test: every step with its status, tries and the approvals from both sides. */
 setupHealthRoutes.get('/setup-test', async (c) => c.json(await run(c, (q) => testFor(c, q))));
 
 const stepOf = (c: C) => {
@@ -317,6 +322,7 @@ const stepOf = (c: C) => {
   return step!;
 };
 
+/** Marks a test step passed, failed or skipped. A required step cannot be skipped: the gate would mean nothing. */
 setupHealthRoutes.post('/setup-test/:id/mark', async (c) => {
   const step = stepOf(c);
   const input = await body(c, z.object({ status: z.enum(['todo', 'pass', 'fail', 'skipped']), note: z.string().trim().max(500).optional() }));
@@ -329,6 +335,7 @@ setupHealthRoutes.post('/setup-test/:id/mark', async (c) => {
   return c.json(out);
 });
 
+/** Saves what a step asked for (an address, an id) before it is checked. */
 setupHealthRoutes.post('/setup-test/:id/input', async (c) => {
   const step = stepOf(c);
   if (!step.input) fail('not_found');
@@ -347,6 +354,7 @@ setupHealthRoutes.post('/setup-test/:id/input', async (c) => {
   return c.json(out);
 });
 
+/** Opens an onboarding issue for a failed step; 400 unless the step failed. Audited. */
 setupHealthRoutes.post('/setup-test/:id/issue', async (c) => {
   const step = stepOf(c);
   const input = await body(c, z.object({ title: z.string().trim().min(1).max(200).optional() }));
@@ -365,6 +373,9 @@ setupHealthRoutes.post('/setup-test/:id/issue', async (c) => {
   return c.json(out);
 });
 
+/**
+ * The customer's or the vendor's side approves the test (or withdraws). Refused while a required step is left. Audited.
+ */
 setupHealthRoutes.post('/setup-test/approve', async (c) => {
   const input = await body(c, z.object({ side: z.enum(['customer', 'vendor']), approve: z.boolean() }));
   if (!mayApprove(c, input.side)) fail('forbidden');
@@ -397,6 +408,10 @@ setupHealthRoutes.post('/setup-test/approve', async (c) => {
   return c.json(out);
 });
 
+/**
+ * Starts the test again: the list, the approvals and "complete" reset; earlier tries stay as the record.
+ * Administrators or org.manage, writers only; audited.
+ */
 setupHealthRoutes.post('/setup-test/reset', async (c) => {
   if (!askerOf(c).admin && !c.get('auth').perms.includes('org.manage')) fail('forbidden');
   if (!writer(c)) fail('forbidden');
@@ -485,6 +500,7 @@ async function testAutomation(c: C): Promise<Outcome> {
   });
 }
 
+/** Runs an automatic step's check now; 400 for a manual step. */
 setupHealthRoutes.post('/setup-test/:id/run', async (c) => {
   const step = stepOf(c);
   if (!step.auto) fail('validation', { fields: 'id' }, { fields: ['id'] });

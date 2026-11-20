@@ -15,6 +15,7 @@ export const trashRoutes = new Hono<AppEnv>();
 const PAGE = 50;
 const manages = (perms: readonly string[]) => perms.includes('org.manage') || perms.includes('privacy.manage');
 
+/** What is in the trash (kept TRASH_DAYS days), newest first, and whether the reader may restore or empty it. */
 trashRoutes.get('/trash', async (c) => {
   const auth = c.get('auth');
   const asked = c.req.query('kind');

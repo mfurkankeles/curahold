@@ -50,6 +50,9 @@ async function slackPerson(deps: Deps, conn: LoadedConnection, slackUserId: stri
   return u;
 }
 
+/**
+ * Slack's events and interactions. Checks Slack's request signature first (401 otherwise); answers the URL check.
+ */
 hookRoutes.post('/slack', async (c) => {
   const deps = c.get('deps');
   if (!deps.config.connectors.slack) return c.text('not configured', 404);
@@ -130,6 +133,7 @@ async function teamsReply(deps: Deps, activity: any, text: string) {
   }).catch(() => undefined);
 }
 
+/** Microsoft Teams bot messages. Checks the bot token's signature and claims first (401 otherwise). */
 hookRoutes.post('/teams', async (c) => {
   const deps = c.get('deps');
   const t = deps.config.connectors.teams;

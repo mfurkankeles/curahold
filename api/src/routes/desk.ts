@@ -44,6 +44,7 @@ export interface Staff {
   until?: number;
 }
 
+/** The support staff addresses configured for this install (SUPPORT_STAFF); only they can sign in to the desk. */
 export const staffList = (c: C) => c.get('deps').config.support?.staff ?? [];
 /** A separate secret for desk sessions, so nothing else this server signs can pass for one. */
 const deskSecret = (c: C) => `${c.get('deps').config.authSecret}:desk`;
@@ -82,6 +83,10 @@ export function isConsoleOwner(c: C, staff: Staff): boolean {
   const owner = (cfg.owner ?? staffList(c)[0] ?? '').toLowerCase();
   return staff.via === 'session' && !!owner && staff.email === owner && staffList(c).includes(staff.email);
 }
+/**
+ * Requires a desk session of the platform owner (the console owner) and returns that staff member; 'forbidden' for
+ * any other staff. Guards the owner console and the AI team's owner door (ADR 0011).
+ */
 export async function ownerOnly(c: C): Promise<Staff> {
   const staff = await staffOnly(c);
   if (!isConsoleOwner(c, staff)) fail('forbidden');
@@ -198,6 +203,7 @@ deskRoutes.post('/sign-in/second', async (c) => {
   return c.json({ staff: { email, name: nameFrom(email) }, until: new Date(until).toISOString() });
 });
 
+/** Signs out of the support desk (clears the desk cookie). */
 deskRoutes.post('/sign-out', async (c) => {
   deleteCookie(c, DESK_COOKIE, { path: '/api/desk' });
   return c.json({ ok: true });

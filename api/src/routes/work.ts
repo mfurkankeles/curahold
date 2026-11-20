@@ -45,6 +45,7 @@ const scopeOf = z.string().regex(/^(board|accounts|my_tasks|timeline|records:[a-
 
 const toView = (r: Row, me: string) => ({ id: r.id, scope: r.scope ?? 'board', boardId: r.board_id ?? null, name: r.name, filters: r.filters ?? {}, shared: !!r.shared, mine: r.user_id === me });
 
+/** Saved views for a board (or another list): the person's own and the shared ones. */
 workRoutes.get('/views', async (c) => {
   const board = c.req.query('board');
   const scoped = scopeOf.safeParse(c.req.query('scope'));
@@ -68,6 +69,7 @@ workRoutes.get('/views/:id', async (c) => {
   return c.json({ view: toView(row, auth.userId) });
 });
 
+/** Saves a view; a board view keeps the board's filter shape (400 'validation' on bad filters) (201). */
 workRoutes.post('/views', async (c) => {
   const input = await body(
     c,
@@ -96,6 +98,7 @@ workRoutes.post('/views', async (c) => {
   return c.json({ view: toView(row, auth.userId) }, 201);
 });
 
+/** Renames a saved view, changes its filters or sharing. 404 when unknown or not the person's. */
 workRoutes.patch('/views/:id', async (c) => {
   const id = param(c, 'id');
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(80).optional(), filters: z.unknown().optional(), shared: z.boolean().optional() }));
@@ -121,6 +124,7 @@ workRoutes.patch('/views/:id', async (c) => {
   return c.json({ view: toView(row, auth.userId) });
 });
 
+/** Deletes a saved view. 404 when unknown or not the person's. */
 workRoutes.delete('/views/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -134,12 +138,14 @@ workRoutes.delete('/views/:id', async (c) => {
 const items = z.array(z.string().trim().min(1).max(300)).min(1).max(50);
 const toChecklist = (r: Row, me: string) => ({ id: r.id, name: r.name, items: r.items ?? [], mine: r.created_by === me });
 
+/** The company's reusable checklists. */
 workRoutes.get('/checklists', async (c) => {
   const auth = c.get('auth');
   const rows = await run(c, (q) => q.query('select * from checklist_templates order by sort_text(name)'));
   return c.json({ checklists: rows.map((r) => toChecklist(r, auth.userId)) });
 });
 
+/** Creates a reusable checklist; names are unique. Writers only (201). */
 workRoutes.post('/checklists', async (c) => {
   requireWriter(c);
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(120), items }));
@@ -154,6 +160,7 @@ workRoutes.post('/checklists', async (c) => {
   return c.json({ checklist: toChecklist(row, auth.userId) }, 201);
 });
 
+/** Deletes a reusable checklist. Writers only. */
 workRoutes.delete('/checklists/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -181,11 +188,15 @@ const planInput = z.object({
 });
 const toPlan = (r: Row) => ({ id: r.id, name: r.name, description: r.description ?? '', boardId: r.board_id, column: r.column_key ?? null, anchor: r.anchor ?? 'start', tasks: r.tasks ?? [] });
 
+/** Playbooks (plan templates) on boards that are not archived, by name. */
 workRoutes.get('/plans', async (c) => {
   const rows = await run(c, (q) => q.query('select p.* from plan_templates p join boards b on b.id = p.board_id where b.archived_at is null order by sort_text(p.name)'));
   return c.json({ plans: rows.map(toPlan) });
 });
 
+/**
+ * Creates a playbook. Needs org.manage and the Business plan (requirePlan 'playbooks', money); names unique (201).
+ */
 workRoutes.post('/plans', async (c) => {
   requirePerm(c, 'org.manage');
   // Playbooks are part of the Business plan.
@@ -206,6 +217,7 @@ workRoutes.post('/plans', async (c) => {
   return c.json({ plan: toPlan(row) }, 201);
 });
 
+/** Edits a playbook. Needs org.manage. */
 workRoutes.patch('/plans/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');
@@ -223,6 +235,7 @@ workRoutes.patch('/plans/:id', async (c) => {
   return c.json({ plan: toPlan(row) });
 });
 
+/** Deletes a playbook. Needs org.manage. */
 workRoutes.delete('/plans/:id', async (c) => {
   requirePerm(c, 'org.manage');
   const id = param(c, 'id');

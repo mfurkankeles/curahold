@@ -1,3 +1,6 @@
+// The signed-in person's own API: /me (who I am, my company, plan, trial and support state), my preferences,
+// my devices (sessions), sign-out, my notifications and my calendar feed. Everything here is about the caller
+// only; nothing reads another person's data. Used by the app shell on every load (web/src/lib/api.ts).
 import { fxOf } from '../lib/fx';
 import { rhythmOf } from '../../../shared/src/rhythm';
 import { Hono } from 'hono';
@@ -26,6 +29,10 @@ import { browserErrorAllowed, recordError } from '../lib/errlog';
 
 export const meRoutes = new Hono<AppEnv>();
 
+/**
+ * Everything the app needs at start: the person, the company, permissions, plan access, the trial's seat cap,
+ * terms still to accept, open support access and unread support answers.
+ */
 meRoutes.get('/me', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
@@ -112,6 +119,10 @@ meRoutes.get('/me', async (c) => {
   return c.json(me);
 });
 
+/**
+ * Changes the person's own name, language, preferences, favourites and notification channels.
+ * 400 'validation' when no notification channel is left on.
+ */
 meRoutes.patch('/me', async (c) => {
   const input = await body(
     c,
@@ -177,6 +188,7 @@ meRoutes.get('/me/start', async (c) => {
   return c.json({ steps, hidden: !!row?.hidden });
 });
 
+/** The person's own signed-in devices and the company's device limit. */
 meRoutes.get('/me/sessions', async (c) => {
   const auth = c.get('auth');
   const rows = await run(c, (q) =>
@@ -198,6 +210,7 @@ meRoutes.get('/me/sessions', async (c) => {
   return c.json({ sessions: list, maxDevices: maxDevices(c) });
 });
 
+/** Signs one of the person's own devices out; audited as session.revoked. 404 for someone else's session. */
 meRoutes.delete('/me/sessions/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -216,6 +229,7 @@ meRoutes.delete('/me/sessions/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Ends this session and clears its cookie. */
 meRoutes.post('/auth/logout', async (c) => {
   const auth = c.get('auth');
   await run(c, (q) =>
@@ -346,6 +360,7 @@ meRoutes.post('/client-error', async (c) => {
   return c.body(null, 204);
 });
 
+/** The number of unread notifications, for the bell badge (cheap: polled). */
 meRoutes.get('/notifications/count', async (c) => {
   const auth = c.get('auth');
   const [r] = await run(c, (q) => q.query('select count(*)::int as n from notifications where user_id = $1 and read_at is null', [auth.userId]));
@@ -360,6 +375,10 @@ const NOTICE_FILTERS: Record<string, string[] | null> = {
   system: ['automation', 'digest', 'weekly', 'stale', 'escalated', 'join_request', 'help'],
 };
 
+/**
+ * The person's notifications, newest first, rendered in their language, with paging (`more`).
+ * The render step uses db.system() only to load names for notifications already filtered to this person.
+ */
 meRoutes.get('/notifications', async (c) => {
   const auth = c.get('auth');
   const deps = c.get('deps');
@@ -388,6 +407,7 @@ meRoutes.get('/notifications', async (c) => {
   return c.json({ notifications: list, unread, more: rows.length === limit });
 });
 
+/** Marks notifications read (given ids or `all`), or back to unread with `unread: true`. */
 meRoutes.post('/notifications/read', async (c) => {
   const input = await body(c, z.object({ ids: z.array(z.string().uuid()).max(100).optional(), all: z.boolean().optional(), unread: z.boolean().optional() }));
   const auth = c.get('auth');
@@ -413,6 +433,7 @@ meRoutes.post('/me/calendar', async (c) => {
   return c.json({ url: `${orgUrl(c.get('deps').config, org.slug)}/api/calendar/${token}.ics` });
 });
 
+/** Turns off the person's private calendar feed; the old feed address stops working. */
 meRoutes.delete('/me/calendar', async (c) => {
   const auth = c.get('auth');
   await run(c, (q) => q.query('update users set calendar_token_hash = null where id = $1', [auth.userId]));
@@ -455,6 +476,7 @@ meRoutes.get('/me/export', async (c) => {
   return c.json(data);
 });
 
+/** Whether the person's calendar feed is on. */
 meRoutes.get('/me/calendar', async (c) => {
   const auth = c.get('auth');
   const [u] = await run(c, (q) => q.query('select calendar_token_hash is not null as on from users where id = $1', [auth.userId]));

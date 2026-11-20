@@ -357,6 +357,7 @@ const threadInfo = (r: Row) => ({
   neededBy: r.needed_by ? new Date(r.needed_by).toISOString().slice(0, 10) : null,
 });
 
+/** The person's own help requests to Curahold support, newest first. */
 helpRoutes.get('/help', async (c) => {
   const auth = c.get('auth');
   const all = c.req.query('all') === '1' && auth.perms.includes('org.manage');
@@ -480,6 +481,7 @@ helpRoutes.put('/help/:id/followers', async (c) => {
   return c.json({ followers });
 });
 
+/** Downloads a file attached to one of the person's help requests; 404 otherwise. */
 helpRoutes.get('/help/files/:id', async (c) => {
   const id = param(c, 'id');
   const row = await run(c, async (q) => {
@@ -543,6 +545,10 @@ helpRoutes.put('/support/recording', async (c) => {
   return c.json({ recordSessions: on });
 });
 
+/**
+ * The person lets Curahold support in (view or edit, for a time), optionally tied to one of their own help requests.
+ * Consent is per person and recorded (lib/support.ts) (201).
+ */
 helpRoutes.post('/support/grants', async (c) => {
   const input = await body(c, grantInput);
   const g = await run(c, async (q) => {
@@ -557,6 +563,7 @@ helpRoutes.post('/support/grants', async (c) => {
   return c.json({ grant: toGrant(g) }, 201);
 });
 
+/** Withdraws a support grant at once; audited. Not allowed while previewing as someone else. */
 helpRoutes.delete('/support/grants/:id', async (c) => {
   const id = param(c, 'id');
   const org = c.get('org');
@@ -575,6 +582,10 @@ helpRoutes.delete('/support/grants/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * The company's rule for who may let support in: anyone, administrators only, or nobody. Needs org.manage; audited.
+ * Tightening it ends the grants it no longer allows, in the same step.
+ */
 helpRoutes.put('/support/policy', async (c) => {
   requirePerm(c, 'org.manage');
   if (c.get('previewBy')) fail('preview_read_only');
@@ -663,6 +674,7 @@ supportEntry.post('/support/enter', async (c) => {
   return c.json({ ok: true, until: new Date(s.until).toISOString() });
 });
 
+/** Support staff leave a company they were let into: their support session is revoked. */
 supportEntry.post('/support/leave', async (c) => {
   const token = getCookie(c, SUPPORT_COOKIE);
   if (token) {

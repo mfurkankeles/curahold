@@ -123,6 +123,7 @@ async function accountingConnection(c: C) {
   return row as { id: string; provider: string; label: string; config: Record<string, unknown> };
 }
 
+/** The review list: accounting customers matched, or not, to Curahold customers. Needs connections.manage. */
 financeRoutes.get('/connections/:id/finance/matches', async (c) => {
   const conn = await accountingConnection(c);
   const show = c.req.query('show') === 'all' ? 'all' : c.req.query('show') === 'matched' ? 'matched' : 'review';
@@ -165,6 +166,7 @@ financeRoutes.get('/connections/:id/finance/matches', async (c) => {
   });
 });
 
+/** Matches (or unmatches) one accounting customer to a Curahold customer by hand. Needs connections.manage. */
 financeRoutes.put('/connections/:id/finance/matches/:remoteId', async (c) => {
   const conn = await accountingConnection(c);
   // The program's own id, not a uuid.
@@ -198,6 +200,10 @@ financeRoutes.put('/connections/:id/finance/matches/:remoteId', async (c) => {
 
 const MAX_ROWS = 2000;
 
+/**
+ * Takes in an accounting file for programs without an open API ('finfile' connections only). Matches made by hand
+ * survive a new file. Needs connections.manage.
+ */
 financeRoutes.post('/connections/:id/finance/import', async (c) => {
   const conn = await accountingConnection(c);
   if (conn.provider !== 'finfile') fail('not_found');

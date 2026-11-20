@@ -19,6 +19,10 @@ const interval = (v: unknown): Interval => (v === 'year' ? 'year' : 'month');
 /** Monthly recurring revenue for one paying company: per-seat price × seats. */
 const mrrOf = (plan: PlanKey | null, iv: Interval, seats: number) => (plan ? PLANS[plan].price[iv] * Math.max(0, seats) : 0);
 
+/**
+ * Whole-business metrics for the platform owner only (requireConsoleOwner): companies per month, plans, seats, paying.
+ * db.system() reads across companies by design; each such query is listed in system-sql-reviewed.json.
+ */
 metricsRoutes.get('/metrics', async (c) => {
   requireConsoleOwner(c);
   const deps = c.get('deps');

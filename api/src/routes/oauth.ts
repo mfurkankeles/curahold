@@ -51,6 +51,7 @@ for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth
   );
 }
 
+/** OAuth server metadata (RFC 8414) for apps that connect to Curahold (the AI connector). */
 oauthRoutes.get('/.well-known/oauth-authorization-server', (c) =>
   c.json(
     {
@@ -131,6 +132,10 @@ oauthApi.get('/oauth/request', async (c) => {
   return c.json({ app: client.name, redirectHost: new URL(req.redirectUri).host, write: req.write, canWrite: c.get('auth').seat === 'full' });
 });
 
+/**
+ * The signed-in person approves an app's access (read or write); returns the redirect with a one-time code.
+ * Not with a key and not while previewing as someone else. Audited as app.connected.
+ */
 oauthApi.post('/oauth/approve', async (c) => {
   if (c.get('tokenKind') || c.get('previewBy')) fail('forbidden');
   const input = await body(c, z.object({ req: z.string().max(4000), allow: z.boolean(), write: z.boolean().default(false) }));
@@ -183,6 +188,10 @@ async function issue(c: C, row: Grant, name: string, replaceId?: string) {
   );
 }
 
+/**
+ * Exchanges a one-time code (with its PKCE verifier) for an access token. The code is deleted as it is read, so it
+ * works once; db.system() because the app is not signed in to any company yet.
+ */
 oauthRoutes.post('/oauth/token', async (c) => {
   const type = c.req.header('content-type') ?? '';
   const raw: Record<string, string> = type.includes('application/json') ? await c.req.json().catch(() => ({})) : Object.fromEntries(Object.entries(await c.req.parseBody()).map(([k, v]) => [k, String(v)]));

@@ -116,6 +116,7 @@ scimRoutes.get('/Users', async (c) => {
   });
 });
 
+/** SCIM: one user of the company the bearer token belongs to; SCIM 404 otherwise. */
 scimRoutes.get('/Users/:id', async (c) => {
   const org = c.get('org');
   const id = c.req.param('id');
@@ -143,6 +144,7 @@ const nameOf = (b: ScimUserBody, email: string): string =>
   (b.displayName || b.name?.formatted || [b.name?.givenName, b.name?.familyName].filter(Boolean).join(' ') || '').trim() || email.split('@')[0];
 const validEmail = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && e.length <= 254;
 
+/** SCIM: provisions a user into the token's company; audited as sso.provisioned. */
 scimRoutes.post('/Users', async (c) => {
   const org = c.get('org');
   let b: ScimUserBody;
@@ -170,6 +172,7 @@ scimRoutes.post('/Users', async (c) => {
   return scimJson(c, 201, toScimUser(c, org.slug, result.user));
 });
 
+/** SCIM: replaces a user's name, email and active state; audited. */
 scimRoutes.put('/Users/:id', async (c) => {
   const org = c.get('org');
   const id = c.req.param('id');
@@ -199,6 +202,9 @@ interface PatchOp {
   value?: unknown;
 }
 
+/**
+ * SCIM: partial update; `active: false` disables the user (never deletes). Audited as sso.updated or sso.deactivated.
+ */
 scimRoutes.patch('/Users/:id', async (c) => {
   const org = c.get('org');
   const id = c.req.param('id');

@@ -43,6 +43,10 @@ developerRoutes.get('/dev/keys', async (c) => {
   return c.json({ keys: rows.map(toKey) });
 });
 
+/**
+ * Creates an API key. Needs a recent sign-in; a key cannot make keys; a write key needs a full seat. Audited. The token is
+ * shown only in this response and stored as a hash (201).
+ */
 developerRoutes.post('/dev/keys', async (c) => {
   if (c.get('tokenKind')) fail('forbidden'); // a key cannot make more keys
   await requireFresh(c);
@@ -64,6 +68,7 @@ developerRoutes.post('/dev/keys', async (c) => {
   return c.json({ key: toKey(row), token: s.token }, 201);
 });
 
+/** Revokes an API key at once. Audited. */
 developerRoutes.delete('/dev/keys/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -90,12 +95,16 @@ const toHook = (r: Row): WebhookInfo => ({
 });
 const HOOK_COLS = 'id, url, events, active, failures, last_status, last_at, created_at';
 
+/** The company's outgoing webhooks and the events they can subscribe to. Needs connections.manage. */
 developerRoutes.get('/dev/webhooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const rows = await run(c, (q) => q.query(`select ${HOOK_COLS} from webhooks order by created_at`));
   return c.json({ webhooks: rows.map(toHook), events: WEBHOOK_EVENTS });
 });
 
+/**
+ * Adds an outgoing webhook (at most 20). Needs connections.manage; audited. Its signing secret is shown only here (201).
+ */
 developerRoutes.post('/dev/webhooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(c, z.object({ url: z.string().trim().max(500), events: z.array(z.enum(WEBHOOK_EVENTS)).min(1) }));
@@ -120,6 +129,7 @@ developerRoutes.post('/dev/webhooks', async (c) => {
   return c.json({ webhook: toHook(row), secret }, 201);
 });
 
+/** Changes a webhook's address, events or on/off state. Needs connections.manage. */
 developerRoutes.patch('/dev/webhooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -136,6 +146,7 @@ developerRoutes.patch('/dev/webhooks/:id', async (c) => {
   return c.json({ webhook: toHook(row) });
 });
 
+/** Removes a webhook. Needs connections.manage; audited. */
 developerRoutes.delete('/dev/webhooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');

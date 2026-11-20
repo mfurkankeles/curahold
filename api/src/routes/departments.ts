@@ -39,6 +39,7 @@ const patchSchema = z.object({
   bandView: z.array(z.enum(DEPARTMENT_KEYS)).max(4).nullable().optional(),
 });
 
+/** Renames a department or turns it on or off; at least one stays on. Needs org.manage and a writer seat. */
 departmentRoutes.patch('/departments/:id', async (c) => {
   requireWriter(c);
   requirePerm(c, 'org.manage');
@@ -96,6 +97,10 @@ departmentRoutes.put('/departments/:id/people', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Adds a person to a department or changes their role there. A lead may add members; making or unmaking a lead
+ * needs a people manager (mayManageMembers). Department walls are enforced in SQL (ADR 0009).
+ */
 departmentRoutes.put('/departments/:id/members/:userId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -118,6 +123,7 @@ departmentRoutes.put('/departments/:id/members/:userId', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Removes a person from a department; same rule as adding. Audited. */
 departmentRoutes.delete('/departments/:id/members/:userId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

@@ -26,6 +26,10 @@ const toPerson = (r: Row): PortalPerson => ({
   lastSeenAt: iso(r.last_seen_at),
 });
 
+/**
+ * The customer portal's settings and storage used. Storage is summed with db.system() for this org_id only, because
+ * portal files belong to customers the reader may not see.
+ */
 portalRoutes.get('/portal', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
@@ -121,6 +125,10 @@ portalRoutes.get('/portal/users', async (c) => {
   return c.json({ people: rows.map(toPerson) });
 });
 
+/**
+ * Invites a customer's contact to the portal. Writers only; the portal must be on; only the customer's owner or an
+ * administrator may invite ('portal_invite_owner').
+ */
 portalRoutes.post('/portal/users', async (c) => {
   requireWriter(c);
   const org = c.get('org');
@@ -156,6 +164,7 @@ portalRoutes.post('/portal/users', async (c) => {
   return c.json({ person: toPerson(person) }, 201);
 });
 
+/** Sends a portal invitation again; only those who could invite them. */
 portalRoutes.post('/portal/users/:id/resend', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -193,6 +202,7 @@ portalRoutes.post('/portal/users/:id/enable', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Turns off a portal contact's access and ends their sessions; audited. */
 portalRoutes.delete('/portal/users/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

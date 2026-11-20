@@ -67,7 +67,12 @@ async function overview(c: C) {
   });
 }
 
+/**
+ * Where the company stands with billing: plan, status, usage against the plan's caps, the plans with regional prices,
+ * and checkout values. Needs org.manage; 'billing_off' when the install has no payment provider (ADR 0019).
+ */
 billingRoutes.get('/billing', overview);
+/** Same answer as GET /billing, kept for older clients. */
 billingRoutes.get('/billing/subscription', overview);
 
 /** What the browser needs to open the provider's checkout, for those who may pay. */

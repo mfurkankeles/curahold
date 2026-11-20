@@ -87,6 +87,9 @@ async function sealedSet(c: C, ids: string[]): Promise<Set<string>> {
   return new Set(rows.map((r) => r.id));
 }
 
+/**
+ * The company's incoming webhooks and the ready-made recipes (target, auth, field mapping, sample). Needs connections.manage.
+ */
 inboundHookRoutes.get('/inbound-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const { rows, counts } = await run(c, async (q) => ({
@@ -104,6 +107,10 @@ inboundHookRoutes.get('/inbound-hooks', async (c) => {
   return c.json({ hooks, recipes: HOOK_RECIPES.map((r) => ({ key: r.key, target: r.target, auth: r.auth, mapping: r.mapping, sample: r.sample })) });
 });
 
+/**
+ * Creates an incoming webhook from a recipe; a task target needs a board the person can see. Needs connections.manage;
+ * audited. Its secret is shown only in this response (201).
+ */
 inboundHookRoutes.post('/inbound-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(
@@ -144,6 +151,7 @@ inboundHookRoutes.post('/inbound-hooks', async (c) => {
   return c.json({ hook: await toHook(c, row, { ok: 0, failed: 0, skipped: 0 }, !!sealed) }, 201);
 });
 
+/** Changes an incoming webhook's mapping, target or on/off state. Needs connections.manage. */
 inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -187,6 +195,7 @@ inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
   return c.json({ hook: await toHook(c, row, { ok: 0, failed: 0, skipped: 0 }, set.has(id)) });
 });
 
+/** Removes an incoming webhook; its address stops working. Needs connections.manage; audited. */
 inboundHookRoutes.delete('/inbound-hooks/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -200,6 +209,7 @@ inboundHookRoutes.delete('/inbound-hooks/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/** An incoming webhook's recent deliveries with their outcome, for debugging. Needs connections.manage. */
 inboundHookRoutes.get('/inbound-hooks/:id/deliveries', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');

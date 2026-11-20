@@ -115,6 +115,9 @@ export async function accountPage(c: C, q: Q, f: AccountQuery, limit: number, of
   return { accounts: list.map(viewOf(c)), total };
 }
 
+/**
+ * Customers (accounts), searched with `q`, filtered, sorted and paged, as row security and field access let the reader see them.
+ */
 accountRoutes.get('/accounts', async (c) => {
   const search = c.req.query('q') ?? '';
   const owner = c.req.query('owner');
@@ -166,6 +169,10 @@ accountRoutes.get('/accounts/whitespace', async (c) => {
   return c.json(out);
 });
 
+/**
+ * Creates a customer; the currency must be one the company uses. Writers only; audited. A customer given to someone
+ * outside the creator's reach is still saved; the creator just no longer sees it (201).
+ */
 accountRoutes.post('/accounts', async (c) => {
   requireWriter(c);
   const input = await body(
@@ -195,6 +202,10 @@ accountRoutes.post('/accounts', async (c) => {
   return c.json({ account: viewOf(c)(row) }, 201);
 });
 
+/**
+ * The shared customer page: the account, its links, its tasks, and every department's open work here as counts, only
+ * where that department's band is open to the reader (its boards stay behind its wall, ADR 0009). 404 when unseen.
+ */
 accountRoutes.get('/accounts/:id', async (c) => {
   const id = param(c, 'id');
   const data = await run(c, async (q) => {
@@ -224,6 +235,10 @@ accountRoutes.get('/accounts/:id', async (c) => {
   return c.json({ account: { ...viewOf(c)(data.a), links: data.links.get(id) ?? [] }, tasks: data.tasks.map((t) => ({ ...toTask(t), boardName: t.board_name })), departments });
 });
 
+/**
+ * Edits a customer with an optimistic version check. Writers only; archiving also needs accounts.manage. Read-only
+ * fields may be sent back unchanged but not changed (lib/fieldAccess.ts); audited.
+ */
 accountRoutes.patch('/accounts/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -299,6 +314,9 @@ accountRoutes.patch('/accounts/:id', async (c) => {
   return c.json({ account: viewOf(c)(row) });
 });
 
+/**
+ * Moves a customer to the trash for 30 days with its records, timeline and portal people. Needs accounts.manage; audited.
+ */
 accountRoutes.delete('/accounts/:id', async (c) => {
   requirePerm(c, 'accounts.manage');
   const id = param(c, 'id');
@@ -390,6 +408,10 @@ const importSchema = z.object({
 
 const fold = (s: string) => foldText(s).trim();
 
+/**
+ * Imports customers from a spreadsheet with a column mapping (up to 12 MB). Needs accounts.manage and accounts.view_all,
+ * because matching rows to existing customers must see all of them. Errors are reported by spreadsheet row number.
+ */
 accountRoutes.post('/accounts/import', async (c) => {
   requirePerm(c, 'accounts.manage');
   // Matching rows to existing customers needs to see all of them.
@@ -538,6 +560,7 @@ accountRoutes.post('/accounts/import', async (c) => {
   return c.json(result.out);
 });
 
+/** Past customer imports with their counts and errors. Needs accounts.manage. */
 accountRoutes.get('/imports', async (c) => {
   requirePerm(c, 'accounts.manage');
   const rows = await run(c, (q) =>

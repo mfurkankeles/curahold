@@ -52,6 +52,9 @@ const toLink = (r: Row): DevLink => ({
   closedAt: iso(r.closed_at),
 });
 
+/**
+ * One line of status for a task's code links: open or merged pull requests and whether their checks pass (commits only count).
+ */
 export function summarize(links: Pick<DevLink, 'kind' | 'state' | 'checks'>[]): DevSummary {
   const live = links.filter((l) => l.kind !== 'commit');
   return {
@@ -88,6 +91,10 @@ async function verified(c: C, provider: DevHost, raw: string, salt: string): Pro
   return safeEqual(c.req.header('x-gitlab-token') ?? '', secret);
 }
 
+/**
+ * Receives a code host's webhook (GitHub, GitLab, Azure DevOps) for one company and links pull requests and commits to
+ * tasks named in them. The signature is checked against that company's secret before anything is read; body size capped (413).
+ */
 devInboundRoutes.post('/inbound/dev/:provider', async (c) => {
   const provider = host(c);
   const org = c.get('org');
@@ -147,6 +154,7 @@ async function hookInfo(c: C, provider: DevHost, row: Row | undefined, stats: { 
   };
 }
 
+/** The company's code-host webhooks with their addresses. Needs connections.manage. */
 devLinkRoutes.get('/dev-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const { rows, stats } = await run(c, async (q) => ({
@@ -175,6 +183,7 @@ devLinkRoutes.post('/dev-hooks/:provider', async (c) => {
   return c.json({ hook: await hookInfo(c, provider, row, { n: 0, last: null }) }, 201);
 });
 
+/** Removes a code-host webhook; the old address stops working. Needs connections.manage; audited. */
 devLinkRoutes.delete('/dev-hooks/:provider', async (c) => {
   requirePerm(c, 'connections.manage');
   const provider = host(c);
@@ -218,6 +227,7 @@ devLinkRoutes.get('/boards/:id/dev-links', async (c) => {
   return c.json({ summaries: Object.fromEntries([...by].map(([task, list]) => [task, summarize(list)])) });
 });
 
+/** Removes a code link from a task. Writers only; audited. */
 devLinkRoutes.delete('/dev-links/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

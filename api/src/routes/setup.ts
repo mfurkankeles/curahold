@@ -21,6 +21,7 @@ setupRoutes.use('*', async (c, next) => {
   await next();
 });
 
+/** Marks a setup wizard step done or not, so progress survives a reload. */
 setupRoutes.post('/step', async (c) => {
   const input = await body(c, z.object({ step: z.enum(SETUP_STEPS), done: z.boolean() }));
   const org = c.get('org');
@@ -39,6 +40,9 @@ interface Suggestion {
   accounts: number;
 }
 
+/**
+ * People and team suggestions gathered from connected tools, only at the company's own domains (no guests or vendors).
+ */
 setupRoutes.get('/people', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
@@ -107,6 +111,7 @@ setupRoutes.get('/people', async (c) => {
   });
 });
 
+/** Adds the chosen people as invited users, in one go. Needs users.manage; counts against the seat cap; audited. */
 setupRoutes.post('/people', async (c) => {
   requirePerm(c, 'users.manage');
   const input = await body(
@@ -166,6 +171,7 @@ setupRoutes.post('/people', async (c) => {
   return c.json(out);
 });
 
+/** Finishes the setup wizard and, if asked, sends the invitations. Audited. */
 setupRoutes.post('/finish', async (c) => {
   const input = await body(c, z.object({ sendInvites: z.boolean() }));
   const deps = c.get('deps');
@@ -188,6 +194,7 @@ setupRoutes.post('/finish', async (c) => {
   return c.json({ invited: invites.length, ...(deps.config.devExposeTokens ? { devTokens: invites.map((i) => i.token) } : {}) });
 });
 
+/** Opens the setup wizard again (clears "finished"). */
 setupRoutes.post('/reopen', async (c) => {
   const org = c.get('org');
   await run(c, (q) => q.query(`update orgs set setup = setup - 'finishedAt' where id = $1`, [org.id]));

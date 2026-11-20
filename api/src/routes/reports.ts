@@ -22,6 +22,9 @@ const OPEN = `t.archived_at is null and t.done_at is null`;
 // (An archived task that never finished and came in long ago counts for nothing here, so it is not read.)
 const RECENT = `((t.done_at is null and t.archived_at is null) or t.done_at > now() - interval '90 days' or t.created_at > now() - interval '90 days')`;
 
+/**
+ * The work report for one board or all: created, finished and open per week and per assignee, in one grouped pass.
+ */
 reportRoutes.get('/reports/work', async (c) => {
   const b = c.req.query('board');
   const board = b && uuid.safeParse(b).success ? b : null;

@@ -51,6 +51,10 @@ calendarRoutes.get('/calendars', async (c) => {
   return c.json(out);
 });
 
+/**
+ * The calendar between `from` and `to`: tasks by due date, meetings held, renewals and business reviews due. For the
+ * reader, everyone they can see, or (with calendar.view_team) one person `p:<id>` or team `t:<id>`; rows still pass row security.
+ */
 calendarRoutes.get('/calendar', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');

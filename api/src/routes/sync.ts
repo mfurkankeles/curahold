@@ -44,6 +44,9 @@ export interface CrmConnectState {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * The one OAuth callback address for every CRM sign-in, on the central host so each provider needs one registered URL.
+ */
 export const connectCallbackUrl = (c: C) => `${centralUrl(c.get('deps').config)}/api/connect/callback`;
 
 /** Step one: off to the service's sign-in page. */
@@ -234,6 +237,7 @@ function crmFail(e: unknown): never {
   throw e;
 }
 
+/** A connection's sync setup: objects, field mappings, direction, schedule and last run. */
 syncRoutes.get('/connections/:id/sync', async (c) => {
   const conn = await loaded(c);
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
@@ -282,6 +286,7 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
   });
 });
 
+/** The objects (tables) the connected tool offers, read live from it. */
 syncRoutes.get('/connections/:id/objects', async (c) => {
   const conn = await loaded(c);
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
@@ -292,6 +297,7 @@ syncRoutes.get('/connections/:id/objects', async (c) => {
   }
 });
 
+/** An object's fields in the connected tool with suggested mappings; read-only tools only get pull mappings. */
 syncRoutes.get('/connections/:id/objects/:object/fields', async (c) => {
   const conn = await loaded(c);
   const object = c.req.param('object');
@@ -341,6 +347,7 @@ syncRoutes.get('/connections/:id/owners', async (c) => {
   });
 });
 
+/** Maps the tool's owners to people in the company; 'bad_assignee' for anyone not in it. */
 syncRoutes.put('/connections/:id/owners', async (c) => {
   const conn = await loaded(c);
   const input = await body(c, z.object({ owners: z.record(z.string().max(100), z.string().uuid().nullable()) }));
@@ -355,6 +362,7 @@ syncRoutes.put('/connections/:id/owners', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Changes a sync's schedule or turns it on or off without touching the mapping. */
 syncRoutes.patch('/connections/:id/sync', async (c) => {
   const conn = await loaded(c);
   const input = await body(c, z.object({ conflict: z.enum(['latest', 'crm', 'curahold']) }));
@@ -441,6 +449,11 @@ export function localFieldFrom(rf: RemoteField, taken: Set<string>): AccountFiel
   }
 }
 
+/**
+ * Saves a full sync mapping. Business plan only (requirePlan 'crm_sync', money). At most one object may map to accounts.
+ * Uses db.system() with explicit org_id filters: mapping may add fields and record types, which a person allowed to
+ * connect tools may do for this purpose even without the field-admin permission.
+ */
 syncRoutes.put('/connections/:id/sync', async (c) => {
   // Keeping a CRM or a spreadsheet in sync is part of the Business plan.
   requirePlan(c, 'crm_sync');
@@ -534,6 +547,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
   return c.json({ sync: saved });
 });
 
+/** A dry run of the sync: what would be created, changed or skipped, with nothing written. */
 syncRoutes.post('/connections/:id/preview', async (c) => {
   const conn = await loaded(c);
   try {
@@ -566,12 +580,14 @@ syncRoutes.post('/connections/:id/sync/run', async (c) => {
   return c.json({ run: result });
 });
 
+/** The connection's recent sync runs. */
 syncRoutes.get('/connections/:id/runs', async (c) => {
   const conn = await loaded(c);
   const rows = await run(c, (q) => q.query('select * from sync_runs where connection_id = $1 order by started_at desc limit 30', [conn.id]));
   return c.json({ runs: rows.map(toRun) });
 });
 
+/** Rows the last runs could not sync, with the reason. */
 syncRoutes.get('/connections/:id/problems', async (c) => {
   const conn = await loaded(c);
   const rows = await run(c, (q) =>
@@ -589,6 +605,7 @@ syncRoutes.get('/connections/:id/problems', async (c) => {
   return c.json({ problems });
 });
 
+/** Retries the rows that failed, now. */
 syncRoutes.post('/connections/:id/problems/retry', async (c) => {
   const conn = await loaded(c);
   await run(c, (q) => q.query('update sync_changes set next_at = now(), attempts = 0 where connection_id = $1 and attempts > 0', [conn.id]));
@@ -606,6 +623,7 @@ function writable(conn: Awaited<ReturnType<typeof loaded>>) {
   return adapter;
 }
 
+/** Opens a ticket in the connected support tool; audited. It comes back with the next read like any other (201). */
 syncRoutes.post('/connections/:id/tickets', async (c) => {
   const conn = await loaded(c);
   const adapter = writable(conn);
@@ -632,6 +650,7 @@ syncRoutes.post('/connections/:id/tickets', async (c) => {
   return c.json({ id: remoteId!, url: adapter.url(conn.config, 'tickets', remoteId!) }, 201);
 });
 
+/** Replies to (or adds an internal note on) a ticket in the connected support tool; audited. */
 syncRoutes.post('/connections/:id/tickets/:remoteId/reply', async (c) => {
   const conn = await loaded(c);
   const adapter = writable(conn);

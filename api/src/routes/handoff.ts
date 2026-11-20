@@ -167,6 +167,7 @@ handoffRoutes.post('/accounts/:id/promises', async (c) => {
   return c.json({ promise: toPromise(row) }, 201);
 });
 
+/** Edits a promise made to a customer (what, by when, who). Writers only; 404 when unseen. */
 handoffRoutes.patch('/promises/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -185,6 +186,7 @@ handoffRoutes.patch('/promises/:id', async (c) => {
   return c.json({ promise: toPromise(row) });
 });
 
+/** Deletes a promise and returns it, so the client can offer Undo by posting it back. Writers only. */
 handoffRoutes.delete('/promises/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -234,12 +236,14 @@ async function packetOf(c: C, q: Q, h: Row): Promise<HandoverPacket> {
   };
 }
 
+/** Customer handovers (sales to delivery), open ones by default or all with `status=all`. */
 handoffRoutes.get('/handovers', async (c) => {
   const status = c.req.query('status') === 'all' ? null : 'open';
   const rows = await run(c, (q) => q.query(`${HANDOVER_SQL} where ($1::text is null or h.status = $1) order by h.created_at desc limit 50`, [status]));
   return c.json({ handovers: rows.map(toHandover) });
 });
 
+/** One handover with its checklist, promises and people; 404 when unseen. */
 handoffRoutes.get('/handovers/:id', async (c) => {
   const id = param(c, 'id');
   const out = await run(c, async (q) => {
@@ -274,6 +278,7 @@ handoffRoutes.post('/handovers', async (c) => {
   return c.json({ handover: toHandover(out.h) }, out.made ? 201 : 200);
 });
 
+/** Edits a handover; a confirmed handover is closed for changes ('handover_confirmed'). Writers only. */
 handoffRoutes.patch('/handovers/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -356,6 +361,7 @@ handoffRoutes.get('/stories/linkable', async (c) => {
   return c.json({ stories, desks: out.desks.map((d) => ({ id: d.id, name: d.name })) });
 });
 
+/** Links a customer's request to a product story, so product sees who asked; audited (201). */
 handoffRoutes.post('/request-links', async (c) => {
   requireWriter(c);
   const input = await body(
@@ -373,6 +379,7 @@ handoffRoutes.post('/request-links', async (c) => {
   return c.json({ id }, 201);
 });
 
+/** Removes a request-to-story link. Writers only. */
 handoffRoutes.delete('/request-links/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -446,6 +453,7 @@ handoffRoutes.get('/boards/:id/demand', async (c) => {
   return c.json(out);
 });
 
+/** The customers behind a product task (through its linked requests); 404 when the task is unseen. */
 handoffRoutes.get('/tasks/:id/customers', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {

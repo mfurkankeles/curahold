@@ -129,6 +129,9 @@ async function ensureTicketType(c: C) {
   });
 }
 
+/**
+ * Creates or updates a support ticket from an outside tool by its id there (201 created, 200 updated). Writers only.
+ */
 ticketRoutes.put('/tickets/:source/:externalId', async (c) => {
   requireWriter(c);
   const source = sourceKey.safeParse(c.req.param('source'));
@@ -147,6 +150,10 @@ ticketRoutes.put('/tickets/:source/:externalId', async (c) => {
 
 const INBOUND = 'inbound';
 
+/**
+ * Receives tickets on the company's secret inbound address; an unknown token is 404. Owner access for this org_id
+ * only, because the sender is not a person in the company.
+ */
 inboundRoutes.post('/inbound/tickets/:token', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');
@@ -173,6 +180,7 @@ ticketRoutes.get('/dev/inbound', async (c) => {
   return c.json({ enabled: !!s?.hash, prefix: s?.prefix ?? null, createdAt: s?.createdAt ?? null, lastAt: s?.lastAt ?? null });
 });
 
+/** Creates (or replaces) the company's inbound ticket address. Needs connections.manage; audited (201). */
 ticketRoutes.post('/dev/inbound', async (c) => {
   requirePerm(c, 'connections.manage');
   const org = c.get('org');
@@ -187,6 +195,7 @@ ticketRoutes.post('/dev/inbound', async (c) => {
   return c.json({ url: `${base}/api/inbound/tickets/${token}` }, 201);
 });
 
+/** Turns off the inbound ticket address. Needs connections.manage; audited. */
 ticketRoutes.delete('/dev/inbound', async (c) => {
   requirePerm(c, 'connections.manage');
   const org = c.get('org');

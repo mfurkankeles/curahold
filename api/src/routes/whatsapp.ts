@@ -28,6 +28,7 @@ async function connectionOf(c: any, source: string) {
   return { id: conn.id, config: conn.config ?? {}, verifyToken: secret?.verifyToken ?? '', appSecret: secret?.appSecret ?? '' };
 }
 
+/** WhatsApp's webhook check: answers the challenge only when the verify token matches (constant-time compare). */
 whatsappInboundRoutes.get('/inbound/whatsapp/:source', async (c) => {
   const conn = await connectionOf(c, c.req.param('source') ?? '');
   if (!conn) return c.json({ error: 'not_found' }, 404);
@@ -50,6 +51,10 @@ async function accountForNumber(q: Q, orgId: string, digits: string): Promise<st
   return hit?.account_id ?? null;
 }
 
+/**
+ * Receives WhatsApp messages for one company's connection; size-capped, and the Meta signature (x-hub-signature-256)
+ * is checked before the body is used (401).
+ */
 whatsappInboundRoutes.post('/inbound/whatsapp/:source', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');

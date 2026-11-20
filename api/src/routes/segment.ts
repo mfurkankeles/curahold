@@ -22,6 +22,10 @@ export const segmentInboundRoutes = new Hono<AppEnv>();
 const MAX_BODY = 2_000_000;
 const MAX_EVENTS = 100;
 
+/**
+ * Receives Segment events for one company's source. Owner access anchored to this org_id, because the connection's
+ * shared secret is sealed and not readable by the tenant role; size-capped (413).
+ */
 segmentInboundRoutes.post('/inbound/segment/:source', async (c) => {
   const org = c.get('org');
   const deps = c.get('deps');

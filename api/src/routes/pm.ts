@@ -125,6 +125,9 @@ const sprintFields = {
   endsOn: isoDate.nullable(),
 };
 
+/**
+ * Creates a sprint on a product board. Writers only; the board must have product features on (requirePm); audited (201).
+ */
 pmRoutes.post('/boards/:id/sprints', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -146,6 +149,7 @@ pmRoutes.post('/boards/:id/sprints', async (c) => {
   return c.json({ sprint: toSprint(sprint) }, 201);
 });
 
+/** One sprint; its board must be a product board the reader can open. */
 pmRoutes.get('/sprints/:id', async (c) => {
   const id = param(c, 'id');
   const s = await run(c, async (q) => {
@@ -156,6 +160,7 @@ pmRoutes.get('/sprints/:id', async (c) => {
   return c.json({ sprint: toSprint(s) });
 });
 
+/** Edits, starts or closes a sprint. Writers only; audited. */
 pmRoutes.patch('/sprints/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -293,6 +298,7 @@ pmRoutes.get('/boards/:id/backlog', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/** A product board's epics, each with how many stories it has, their points and how many points are done. */
 pmRoutes.get('/boards/:id/epics', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
@@ -313,6 +319,7 @@ pmRoutes.get('/boards/:id/epics', async (c) => {
   return c.json({ epics: rows.map((r) => ({ ...toTask(r), childCount: Number(r.child_count), childPoints: Number(r.child_points), childDonePoints: Number(r.child_done_points) })) });
 });
 
+/** The tasks in a sprint. */
 pmRoutes.get('/sprints/:id/items', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
@@ -325,6 +332,9 @@ pmRoutes.get('/sprints/:id/items', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/**
+ * Adds tasks to a sprint; they must be on the sprint's board and the sprint must not be closed. Writers only; audited.
+ */
 pmRoutes.put('/sprints/:id/items', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -350,6 +360,7 @@ pmRoutes.put('/sprints/:id/items', async (c) => {
   return c.json({ tasks: rows.map(toTask) });
 });
 
+/** Takes a task out of a sprint. Writers only; audited. */
 pmRoutes.delete('/sprints/:id/items/:taskId', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

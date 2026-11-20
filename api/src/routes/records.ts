@@ -32,6 +32,7 @@ export const recordRoutes = new Hono<AppEnv>();
 // A name in each language the company writes it in (any of the nine).
 const localized = z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(60).optional()])) as { [K in Locale]: z.ZodOptional<z.ZodString> }).refine((l) => Object.values(l).some(Boolean));
 
+/** A record_types row as the API's RecordType. */
 export const toRecordType = (r: Row): RecordType => ({
   id: r.id,
   key: r.key,
@@ -44,6 +45,7 @@ export const toRecordType = (r: Row): RecordType => ({
   columns: r.columns ?? null,
 });
 
+/** A records row (with its links) as the API's AppRecord; hidden fields are removed later by fieldAccess. */
 export const toRecord = (r: Row, links: LinkInfo[] = []): AppRecord => ({
   id: r.id,
   typeId: r.type_id,
@@ -90,6 +92,9 @@ recordRoutes.get('/record-types', async (c) => {
 
 const typeFields = z.array(fieldSchema).max(150);
 
+/**
+ * Creates a record type (a kind of thing the company keeps: contracts, assets, tickets). Needs accounts.manage (201).
+ */
 recordRoutes.post('/record-types', async (c) => {
   requirePerm(c, 'accounts.manage');
   const input = await body(
@@ -142,6 +147,7 @@ export async function createRecordType(
   return row;
 }
 
+/** A stable field key from a label: lowercase ASCII with underscores, accents folded, never empty. */
 export function keyFrom(label: string): string {
   const k = label
     .toLocaleLowerCase('tr-TR')
@@ -154,6 +160,7 @@ export function keyFrom(label: string): string {
   return /^[a-z]/.test(k) && k.length >= 2 ? k : `r_${k || 'records'}`.slice(0, 36);
 }
 
+/** Changes a record type's name or fields; field keys must stay unique. Needs accounts.manage; audited. */
 recordRoutes.patch('/record-types/:id', async (c) => {
   requirePerm(c, 'accounts.manage');
   const id = param(c, 'id');
@@ -200,6 +207,9 @@ recordRoutes.patch('/record-types/:id', async (c) => {
   return c.json({ type: { ...type, fields: defsFor(type.fields, auth) } });
 });
 
+/**
+ * Deletes a record type only when it has no records ('type_not_empty' otherwise). Needs accounts.manage; audited.
+ */
 recordRoutes.delete('/record-types/:id', async (c) => {
   requirePerm(c, 'accounts.manage');
   const id = param(c, 'id');
@@ -263,6 +273,7 @@ export async function recordPage(c: C, q: Q, f: RecordQuery, limit: number, offs
   return { type, records: rows.map((r) => viewRecord(r, hidden, links.get(r.id))), total };
 }
 
+/** Records of one type, filtered, sorted and paged, as row security and field access let the reader see them. */
 recordRoutes.get('/records', async (c) => {
   const typeRef = c.req.query('type') ?? '';
   const account = c.req.query('account');
@@ -337,6 +348,9 @@ recordRoutes.get('/renewals/links', async (c) => {
   return c.json({ links: out });
 });
 
+/**
+ * One record; with `full=1`, also its comments, files, links and tasks (open, and done in the last 90 days). 404 when unseen.
+ */
 recordRoutes.get('/records/:id', async (c) => {
   const id = param(c, 'id');
   const full = c.req.query('full') === '1';
@@ -419,6 +433,9 @@ recordRoutes.post('/records/:id/comments', async (c) => {
   return c.json({ comment }, 201);
 });
 
+/**
+ * Deletes a comment on a record with its pictures and files; audited. 404 when unknown or not the reader's to delete.
+ */
 recordRoutes.delete('/record-comments/:id', async (c) => {
   const id = param(c, 'id');
   const auth = c.get('auth');
@@ -436,6 +453,10 @@ recordRoutes.delete('/record-comments/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Attaches a file to a record. Writers only; checks the plan's storage cap before storing (money); quarantined until
+ * scanned. Audited (201).
+ */
 recordRoutes.post('/records/:id/files', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -505,6 +526,10 @@ function contactName(kind: string, given: string | undefined, fields: Record<str
   return fallback;
 }
 
+/**
+ * Creates a record; the currency must be one the company uses. Writers only; audited. A new support ticket fires the
+ * "ticket opened" automation rules (201).
+ */
 recordRoutes.post('/records', async (c) => {
   requireWriter(c);
   const input = await body(
@@ -620,6 +645,9 @@ async function afterRecordChange(c: C, id: string, before: Record<string, unknow
   await flowAfterRecord(deps, org.id, c.get('auth').userId, id, before, after).catch((e) => console.error('[curahold] hand-over', e));
 }
 
+/**
+ * Edits a record with an optimistic version check (row locked so check and write are one step). Writers only; audited.
+ */
 recordRoutes.patch('/records/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -700,6 +728,7 @@ recordRoutes.patch('/records/:id', async (c) => {
   return c.json({ record: viewRecord(row.full, row.hidden, row.links.get(id)) });
 });
 
+/** Moves a record to the trash for 30 days, with its comments and files. Needs accounts.manage; audited. */
 recordRoutes.delete('/records/:id', async (c) => {
   requirePerm(c, 'accounts.manage');
   const id = param(c, 'id');

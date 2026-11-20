@@ -21,6 +21,7 @@ import { body, param, uuid } from '../lib/validate';
 
 export const timelineRoutes = new Hono<AppEnv>();
 
+/** An activities row as the API's Activity (timeline entry). */
 export const toActivity = (r: Row): Activity => ({
   id: r.id,
   accountId: r.account_id,
@@ -50,6 +51,9 @@ async function loadAccount(c: C, id: string) {
   if (!a) fail('not_found');
 }
 
+/**
+ * A customer's timeline: notes, meetings, calls, task events, portal files and synced activity, merged and newest first.
+ */
 timelineRoutes.get('/accounts/:id/timeline', async (c) => {
   const id = param(c, 'id');
   const before = c.req.query('before');
@@ -159,6 +163,9 @@ const activityInput = {
   pinned: z.boolean(),
 };
 
+/**
+ * Adds a note, call or meeting to a customer's timeline; a date more than a day ahead is refused. Writers only (201).
+ */
 timelineRoutes.post('/accounts/:id/activities', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -198,6 +205,7 @@ export async function checkContacts(q: { query: (s: string, p?: unknown[]) => Pr
   return [...new Set(ids)];
 }
 
+/** Edits a timeline entry; a note must keep its text (a meeting's notes may be emptied). Writers only. */
 timelineRoutes.patch('/activities/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -245,6 +253,7 @@ timelineRoutes.patch('/activities/:id', async (c) => {
   return c.json({ activity: toActivity(row) });
 });
 
+/** Moves a timeline entry to the trash for 30 days. Writers only; audited. */
 timelineRoutes.delete('/activities/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -289,6 +298,7 @@ timelineRoutes.get('/accounts/:id/health', async (c) => {
   return c.json({ health, bands: cfg.bands, history });
 });
 
+/** The company's customer-health scoring rules. Needs accounts.manage. */
 timelineRoutes.get('/health/config', async (c) => {
   requirePerm(c, 'accounts.manage');
   return c.json({ config: healthConfig(c.get('org').settings?.health ?? DEFAULT_HEALTH) });
@@ -331,6 +341,11 @@ timelineRoutes.post('/health/preview', async (c) => {
   return c.json({ counts, lowest: list.slice(0, 8) });
 });
 
+/**
+ * Changes the health scoring rules; turning it on adds the "Health score" field, off removes it. Needs accounts.manage
+ * and a writer seat; audited. Every customer is re-scored now with db.system() filtered on this org_id, so lists are
+ * right at once even for customers the editor cannot see.
+ */
 timelineRoutes.put('/health/config', async (c) => {
   requirePerm(c, 'accounts.manage');
   requireWriter(c);

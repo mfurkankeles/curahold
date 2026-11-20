@@ -55,6 +55,7 @@ interface ConsentRow {
 const shape = (r: ConsentRow | undefined) =>
   r ? { analytics: r.analytics, marketing: r.marketing, source: r.source, at: new Date(r.created_at).toISOString() } : null;
 
+/** The signed-in person's latest cookie and analytics consent choice. */
 consentRoutes.get('/consent', async (c) => {
   const auth = c.get('auth');
   const latest = await run(c, async (q) => {
@@ -67,6 +68,10 @@ consentRoutes.get('/consent', async (c) => {
   return c.json({ consent: shape(latest) });
 });
 
+/**
+ * Records the person's consent choice. Only the policy version in force is recorded (409 'stale_policy' otherwise),
+ * so the stored proof always names the text the person actually saw (ADR 0014).
+ */
 consentRoutes.post('/consent', async (c) => {
   const input = await body(c, consentInput);
   // Same as the public door: a version other than the one in force is not recorded as proof of it.
@@ -101,6 +106,10 @@ consentRoutes.post('/consent', async (c) => {
 
 /** Public: a visitor's choice. Mounted before sign-in (api/src/app.ts). */
 export const consentEventRoutes = new Hono<AppEnv>();
+/**
+ * Public, at /api/consent-event: a visitor's consent choice before sign-in, recorded append-only as evidence (ADR 0014).
+ * Body capped at 2,000 characters (413).
+ */
 consentEventRoutes.post('/', async (c) => {
   const raw = await c.req.text();
   if (raw.length > 2000) return c.json({ error: 'too_large' }, 413);

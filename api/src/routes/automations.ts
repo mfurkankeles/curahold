@@ -114,6 +114,7 @@ const LIST_SQL = `select a.*,
     (select count(*) from automation_runs r where r.automation_id = a.id and r.at > now() - interval '30 days') as runs_30d
   from automations a`;
 
+/** The company's automation rules (when X happens on a board, do Y). */
 automationRoutes.get('/automations', async (c) => {
   const rows = await run(c, (q) => q.query(`${LIST_SQL} order by a.created_at`));
   return c.json({ automations: rows.map(toAutomation) });
@@ -127,6 +128,7 @@ const editable = z.object({
   action: actionSchema,
 });
 
+/** Creates an automation rule. Needs automations.manage; audited (201). */
 automationRoutes.post('/automations', async (c) => {
   requirePerm(c, 'automations.manage');
   const input = await body(c, editable.extend({ preset: z.string().max(40).nullable().optional() }));
@@ -146,6 +148,7 @@ automationRoutes.post('/automations', async (c) => {
   return c.json({ automation: toAutomation(row) }, 201);
 });
 
+/** Edits or turns an automation rule on or off. Needs automations.manage; audited. */
 automationRoutes.patch('/automations/:id', async (c) => {
   requirePerm(c, 'automations.manage');
   const id = param(c, 'id');
@@ -182,6 +185,7 @@ automationRoutes.patch('/automations/:id', async (c) => {
   return c.json({ automation: toAutomation(row) });
 });
 
+/** Moves an automation rule to the trash. Needs automations.manage; audited. */
 automationRoutes.delete('/automations/:id', async (c) => {
   requirePerm(c, 'automations.manage');
   const id = param(c, 'id');
@@ -199,6 +203,7 @@ automationRoutes.delete('/automations/:id', async (c) => {
   return c.json({ ok: true, trashId });
 });
 
+/** An automation rule's recent runs with their outcome. Needs automations.manage. */
 automationRoutes.get('/automations/:id/runs', async (c) => {
   requirePerm(c, 'automations.manage');
   const id = param(c, 'id');

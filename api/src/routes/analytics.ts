@@ -50,6 +50,9 @@ export const analyticsRoutes = new Hono<AppEnv>();
 
 const ODATA = '/api/analytics/odata';
 const V1 = '/api/analytics/v1';
+/**
+ * Whether a path is one of the analytics feeds (OData or /v1), which take an analytics key instead of a session.
+ */
 export const isFeed = (path: string) => path === ODATA || path.startsWith(`${ODATA}/`) || path === V1 || path.startsWith(`${V1}/`);
 
 /** The key a BI tool sent: the password of Basic sign-in, or the address's `key` (Power BI's Web API option). */
@@ -267,7 +270,9 @@ const serviceDocument = (c: C) =>
   });
 // With or without the last slash: people paste it either way.
 analyticsRoutes.get('/analytics/odata', serviceDocument);
+/** The OData service document for BI tools (Power BI, Excel): the datasets this analytics key may read. */
 analyticsRoutes.get('/analytics/odata/', serviceDocument);
+/** One OData entity set (or `$metadata`), paged, within the key's own datasets and departments. */
 analyticsRoutes.get('/analytics/odata/:set', (c) =>
   answer(c, 'odata', async () => {
     const name = c.req.param('set');
@@ -318,8 +323,13 @@ const datasetList = (c: C) =>
       { 'cache-control': 'no-store' },
     );
   });
+/** The plain JSON feed's list of datasets this key may read. */
 analyticsRoutes.get('/analytics/v1', datasetList);
+/** Same as GET /analytics/v1 (BI tools differ on the trailing slash). */
 analyticsRoutes.get('/analytics/v1/', datasetList);
+/**
+ * One dataset as `<name>.json` (paged, with a delta cursor) or `<name>.csv`; 404 for an unknown name. Never cached.
+ */
 analyticsRoutes.get('/analytics/v1/:file', (c) => {
   const m = /^([A-Za-z][A-Za-z0-9]{0,79})\.(json|csv)$/.exec(c.req.param('file'));
   const face = (m?.[2] ?? 'json') as 'json' | 'csv';
@@ -410,6 +420,11 @@ const keyInput = z.object({
   expiresInDays: z.number().int().min(1).max(730).default(365),
 });
 
+/**
+ * Creates an analytics key limited to chosen datasets and departments. Needs data.export and a recent sign-in, and
+ * cannot be done with a key (a key may not mint keys). Only datasets the person can read now; audited. The key is
+ * shown once and stored only as a hash.
+ */
 analyticsRoutes.post('/dev/analytics/keys', async (c) => {
   notWithAKey(c);
   requirePerm(c, 'data.export');

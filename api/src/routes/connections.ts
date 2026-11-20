@@ -56,6 +56,7 @@ const toConnection = (r: any, linked: number): Connection => ({
 
 const COLUMNS = 'id, org_id, kind, provider, label, external_id, config, state, status, last_error, last_ok_at, created_by, created_at, updated_at';
 
+/** The tools the company can connect (messaging and CRMs available on this install) and the connections it has. */
 connectionRoutes.get('/connections', async (c) => {
   const rows = await run(c, (q) =>
     q.query(
@@ -69,6 +70,10 @@ connectionRoutes.get('/connections', async (c) => {
   return c.json({ providers: [...messagingProviders(cfg), ...crmProviders(cfg)], connections: rows.map((r) => toConnection(r, r.linked ?? 0)) });
 });
 
+/**
+ * Connects a messaging tool by webhook address (or, for Telegram, a bot token and chat). The address is checked for
+ * safety before it is saved (no private networks). Needs connections.manage.
+ */
 connectionRoutes.post('/connections/webhook', async (c) => {
   requirePerm(c, 'connections.manage');
   const input = await body(
@@ -115,6 +120,7 @@ connectionRoutes.post('/connections/webhook', async (c) => {
   return c.json({ id, ...(chat ? { chat: chat.title } : {}) }, 201);
 });
 
+/** Renames a connection or changes its settings. Needs connections.manage; audited. */
 connectionRoutes.patch('/connections/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -135,6 +141,9 @@ connectionRoutes.patch('/connections/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Removes a connection; boards stop posting to it and people fall back to their next channel. Needs connections.manage; audited.
+ */
 connectionRoutes.delete('/connections/:id', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
@@ -195,6 +204,9 @@ connectionRoutes.post('/connections/:id/test', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * The channels a messaging connection can post to, read live; empty for a tool without channels; 'connection_failed' on error.
+ */
 connectionRoutes.get('/connections/:id/channels', async (c) => {
   const id = param(c, 'id');
   const deps = c.get('deps');
@@ -210,6 +222,7 @@ connectionRoutes.get('/connections/:id/channels', async (c) => {
   }
 });
 
+/** People and groups in the connected tool's directory, for inviting them. Needs users.manage. */
 connectionRoutes.get('/connections/:id/directory', async (c) => {
   requirePerm(c, 'users.manage');
   const id = param(c, 'id');
@@ -239,6 +252,7 @@ interface ConnectState {
 
 const connectCallback = (cfg: Deps['config']) => `${centralUrl(cfg)}/api/connect/callback`;
 
+/** Starts connecting a tool by OAuth: a signed state and a redirect to the provider. Needs connections.manage. */
 connectionRoutes.get('/connect/:provider/start', async (c) => {
   requirePerm(c, 'connections.manage');
   const deps = c.get('deps');

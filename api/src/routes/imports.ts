@@ -45,6 +45,10 @@ const planSchema = z.object({
   createdBoards: z.array(uuid).max(50).optional(),
 });
 
+/**
+ * Imports tasks from a spreadsheet (up to 16 MB) with a column mapping that names exactly one title column.
+ * A dry run may name boards that do not exist yet; the real import only goes onto existing ones. Writers only.
+ */
 importRoutes.post('/task-imports', async (c) => {
   requireWriter(c);
   if (Number(c.req.header('content-length') ?? 0) > 16 * 1024 * 1024) fail('import_too_large', { max: MAX_ROWS });
