@@ -1112,7 +1112,7 @@ export const tr: Record<MessageKey, string> = {
   'signup.create': 'Şirketimi oluştur',
   'signup.creating': 'Oluşturuluyor…',
   "signup.trial": "Şablonun eklediği her şey sıradan bir ayardır; hepsini sonra değiştirebilirsiniz.",
-  'signup.sideTitle': 'Yaklaşık 15 dakikada hazır',
+  'signup.sideTitle': "Beş adımda başlayın",
   "signup.sideFoot": "Kod yok. Danışman yok. Bugün, kendi başınıza.",
   'signup.rail.company': 'Şirket ve adres',
   "signup.rail.chat": "Sohbet uygulamanız",

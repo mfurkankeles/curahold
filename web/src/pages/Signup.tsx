@@ -44,11 +44,11 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
         </div>
         <div className="auth__lines signup__rail">
           <strong className="auth__org">{t('signup.sideTitle')}</strong>
-          {steps.map(([state, key], i) => (
+          {/* No minutes per step: a set-up time is not measured, so it is not promised (claims list, "any duration"). */}
+          {steps.map(([state, key]) => (
             <div className="auth__rail" key={key} data-state={state}>
               <span />
               <em>{t(key)}</em>
-              <small>{[2, 3, 4, 4, 2][i]}′</small>
             </div>
           ))}
         </div>

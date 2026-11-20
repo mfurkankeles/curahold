@@ -1476,7 +1476,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'signup.create': "ایجاد شرکت من",
   'signup.creating': "در حال ایجاد…",
   'signup.trial': "هر چه قالب اضافه کند تنظیمات معمولی است — هر کدام را بعداً می‌توانید تغییر دهید.",
-  'signup.sideTitle': "آماده در حدود ۱۵ دقیقه",
+  'signup.sideTitle': "پنج گام تا شروع",
   'signup.sideFoot': "بدون کدنویسی. بدون مشاور. فقط شما، همین امروز.",
   'signup.rail.company': "شرکت و آدرس",
   'signup.rail.chat': "برنامه چت شما",

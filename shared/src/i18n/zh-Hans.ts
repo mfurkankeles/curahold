@@ -1476,7 +1476,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'signup.create': "创建我的公司",
   'signup.creating': "正在创建…",
   'signup.trial': "模板添加的一切都只是普通设置——之后都可以更改。",
-  'signup.sideTitle': "约 15 分钟即可就绪",
+  'signup.sideTitle': "五个步骤即可开始",
   'signup.sideFoot': "无需代码，无需顾问。今天你一个人就能搞定。",
   'signup.rail.company': "公司和地址",
   'signup.rail.chat': "你的聊天应用",

@@ -1094,7 +1094,7 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'signup.create': "मेरी कंपनी बनाएं",
   'signup.creating': "बनाया जा रहा है…",
   'signup.trial': "टेम्पलेट जो कुछ जोड़ता है, वह सब सामान्य सेटिंग है — बाद में इनमें से कुछ भी बदलें।",
-  'signup.sideTitle': "करीब 15 मिनट में तैयार",
+  'signup.sideTitle': "पाँच चरणों में शुरुआत करें",
   'signup.sideFoot': "कोई कोड नहीं। कोई कंसल्टेंट नहीं। आप, अकेले, आज ही।",
   'signup.rail.company': "कंपनी और पता",
   'signup.rail.chat': "आपका चैट ऐप",

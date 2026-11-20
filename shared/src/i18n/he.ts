@@ -3649,7 +3649,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'signup.create': "צור את החברה שלי",
   'signup.creating': "יוצר…",
   'signup.trial': "כל מה שהתבנית מוסיפה הוא הגדרות רגילות — אפשר לשנות כל דבר מאוחר יותר.",
-  'signup.sideTitle': "מוכן תוך כ-15 דקות",
+  'signup.sideTitle': "חמישה צעדים להתחלה",
   'signup.sideFoot': "בלי קוד. בלי יועץ. אתה, לבד, היום.",
   'signup.rail.company': "חברה וכתובת",
   'signup.rail.chat': "אפליקציית הצ׳אט שלך",

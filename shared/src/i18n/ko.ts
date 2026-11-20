@@ -1476,7 +1476,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'signup.create': "회사 만들기",
   'signup.creating': "만드는 중…",
   'signup.trial': "템플릿이 추가하는 항목은 모두 일반 설정이므로 나중에 얼마든지 변경할 수 있습니다.",
-  'signup.sideTitle': "약 15분이면 준비됩니다",
+  'signup.sideTitle': "다섯 단계로 시작하세요",
   'signup.sideFoot': "코딩도, 컨설턴트도 필요 없습니다. 오늘 혼자서 끝낼 수 있습니다.",
   'signup.rail.company': "회사 및 주소",
   'signup.rail.chat': "채팅 앱",

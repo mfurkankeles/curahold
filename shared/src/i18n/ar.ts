@@ -1476,7 +1476,7 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'signup.create': "أنشئ شركتي",
   'signup.creating': "جارٍ الإنشاء…",
   'signup.trial': "كل ما يضيفه القالب إعدادات عادية — يمكنك تغيير أي منها لاحقًا.",
-  'signup.sideTitle': "جاهز في نحو 15 دقيقة",
+  'signup.sideTitle': "خمس خطوات للبدء",
   'signup.sideFoot': "بلا برمجة. بلا مستشار. أنت وحدك، اليوم.",
   'signup.rail.company': "الشركة والعنوان",
   'signup.rail.chat': "تطبيق المحادثة لديك",

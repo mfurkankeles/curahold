@@ -1476,7 +1476,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'signup.create': "建立我的公司",
   'signup.creating': "建立中…",
   'signup.trial': "範本新增的一切都只是一般設定——之後隨時可以變更。",
-  'signup.sideTitle': "約 15 分鐘即可就緒",
+  'signup.sideTitle': "五個步驟即可開始",
   'signup.sideFoot': "不用寫程式，不用顧問。今天你一個人就能完成。",
   'signup.rail.company': "公司與網址",
   'signup.rail.chat': "你的聊天應用程式",

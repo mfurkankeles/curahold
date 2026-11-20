@@ -1476,7 +1476,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'signup.create': "会社を作成",
   'signup.creating': "作成中…",
   'signup.trial': "テンプレートで追加される内容はすべて通常の設定です。あとからいつでも変更できます。",
-  'signup.sideTitle': "約15分で準備完了",
+  'signup.sideTitle': "5つのステップで始められます",
   'signup.sideFoot': "コード不要。コンサルタント不要。今日、あなたひとりで。",
   'signup.rail.company': "会社とアドレス",
   'signup.rail.chat': "チャットアプリ",

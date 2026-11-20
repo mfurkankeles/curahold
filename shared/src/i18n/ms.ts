@@ -1094,7 +1094,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'signup.create': "Cipta syarikat saya",
   'signup.creating': "Mencipta…",
   'signup.trial': "Semua yang ditambah oleh templat ialah tetapan biasa — ubah mana-mana bahagiannya kemudian.",
-  'signup.sideTitle': "Sedia dalam kira-kira 15 minit",
+  'signup.sideTitle': "Lima langkah untuk bermula",
   'signup.sideFoot': "Tiada kod. Tiada perunding. Anda sendiri, hari ini.",
   'signup.rail.company': "Syarikat dan alamat",
   'signup.rail.chat': "Aplikasi sembang anda",

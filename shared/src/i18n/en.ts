@@ -1126,7 +1126,7 @@ export const en = {
   'signup.create': 'Create my company',
   'signup.creating': 'Creating…',
   'signup.trial': 'Everything the template adds is ordinary settings — change any of it later.',
-  'signup.sideTitle': 'Ready in about 15 minutes',
+  'signup.sideTitle': "Five steps to get started",
   'signup.sideFoot': 'No code. No consultant. You, alone, today.',
   'signup.rail.company': 'Company and address',
   'signup.rail.chat': 'Your chat app',
