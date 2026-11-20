@@ -168,9 +168,14 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
   // Start reading the docs as soon as the panel opens, so the first answer is instant.
   useEffect(() => void load(locale).catch(() => undefined), [locale]);
   // The start of the newest message is what should be on screen.
+  // Only the log scrolls: scrollIntoView would also scroll every page around it, the whole app, and the site
+  // or chat a demo is embedded in (the panel then slid up with an empty band under it).
   useEffect(() => {
-    const last = log.current?.lastElementChild;
-    if (messages.length > 1) last?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    const box = log.current;
+    const last = box?.lastElementChild as HTMLElement | null | undefined;
+    if (!box || !last || messages.length <= 1) return;
+    const top = last.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 8;
+    box.scrollTo({ top, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [messages]);
 
   const add = (...more: (Message extends infer M ? (M extends { id: number } ? Omit<M, 'id'> : never) : never)[]) =>
