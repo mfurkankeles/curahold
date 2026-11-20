@@ -702,7 +702,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
               <ul className="plainlist record-lines">
                 {list.map((r) => (
                   <li key={r.id}>
-                    <button className="record-line" data-hero-key={r.id} onClick={() => (ty.kind === 'contact' ? setEditing({ type: ty, record: r }) : openRecord(r))}>
+                    <button className="record-line" data-hero-key={r.id} onClick={() => (ty.kind === 'contact' ? setEditing({ type: ty, record: r }) : (seedRecord(r.id, r.name), setQuery('record', r.id)))}>
                       <span className="record-line__name">{r.name}</span>
                       {cols.map((f) => {
                         if (f.key === 'stance') return r.fields.stance ? <StanceBadge key={f.key} field={f} value={r.fields.stance} /> : null;

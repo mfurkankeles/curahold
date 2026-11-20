@@ -693,7 +693,7 @@ adminRoutes.post('/portal-users/:id/erase', async (c) => {
 const deletionOf = (r: any) => (r ? { id: r.id, requestedAt: iso(r.requested_at), purgeAfter: iso(r.purge_after), cancelledAt: iso(r.cancelled_at), purgedAt: iso(r.purged_at) } : null);
 
 // ------------------------------------------------------------ requests about personal data
-// The company's log of requests people make about their data (migration 0249): objections and restrictions had no
+// The company's log of requests people make about their data (migration 0250): objections and restrictions had no
 // record before. privacy.manage in the route and in row security; every change is in the audit log too.
 
 const privacyRequestInput = z.object({

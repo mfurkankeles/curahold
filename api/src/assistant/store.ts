@@ -64,7 +64,7 @@ export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | nu
     async log({ question, reply, micros }) {
       if (!ctx.orgId || ctx.retentionDays <= 0) return;
       await tx(async (q) => {
-        // A portal question names its customer (0248), so their access request and erasure include it.
+        // A portal question names its customer (0249), so their access request and erasure include it.
         await q.query(`insert into assistant_log (org_id, user_id, portal_user_id, surface, question, kind, engine, sources, cost_micros) values ($1, $2, $9, $3, $4, $5, $6, $7, $8)`, [
           ctx.orgId,
           ctx.userId,

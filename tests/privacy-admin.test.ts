@@ -132,7 +132,7 @@ describe('personal data (KVKK / GDPR)', () => {
       q.query(`insert into portal_users (org_id, account_id, email, name, status) values ($1, $2, 'pia.portal@demo.example', 'Pia Portal', 'active') returning id`, [env.a.orgId, account]),
     );
     await env.db.system((q) => q.query(`insert into comments (org_id, task_id, body, portal_author_id) select org_id, id, 'from Pia', $2 from tasks where org_id = $1 limit 1`, [env.a.orgId, pu.id]));
-    // What she asked the portal's assistant and her answer to its notice (0248): in her file, and gone with her.
+    // What she asked the portal's assistant and her answer to its notice (0249): in her file, and gone with her.
     await env.db.system(async (q) => {
       await q.query(`insert into assistant_log (org_id, portal_user_id, surface, question, kind, engine) values ($1, $2, 'portal', 'Where is my request?', 'answer', 'model')`, [env.a.orgId, pu.id]);
       await q.query(`insert into assistant_consents (org_id, portal_user_id, surface, version, locale, granted) values ($1, $2, 'portal', 'v-test', 'en', true)`, [env.a.orgId, pu.id]);
@@ -154,7 +154,7 @@ describe('personal data (KVKK / GDPR)', () => {
     const left = await env.db.system((q) => q.query(`select 1 from portal_users where id = $1`, [pu.id]));
     expect(left).toHaveLength(0);
     expect(await env.db.system((q) => q.query(`select 1 from assistant_log where org_id = $1 and question = 'Where is my request?'`, [env.a.orgId]))).toHaveLength(0);
-    // Her answer to the assistant's notice stays as proof, with nobody attached (0250).
+    // Her answer to the assistant's notice stays as proof, with nobody attached (0251).
     expect(await env.db.system((q) => q.query(`select portal_user_id, surface, version, granted from assistant_consents where org_id = $1 and version = 'v-test' and surface = 'portal'`, [env.a.orgId]))).toEqual([
       { portal_user_id: null, surface: 'portal', version: 'v-test', granted: true },
     ]);

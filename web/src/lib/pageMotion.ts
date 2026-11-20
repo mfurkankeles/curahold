@@ -91,7 +91,7 @@ export function moveScreens(dir: Dir | null, run: () => void, keys: { from: stri
   const doc = document as Doc;
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const back = dir === 'back';
-  if (!dir && panel && !reduce && doc.startViewTransition && document.visibilityState !== 'hidden') return growIntoPanel(doc, run);
+  if (!dir && panel && !reduce && typeof doc.startViewTransition === 'function' && document.visibilityState !== 'hidden') return growIntoPanel(doc, run);
   if (!dir || reduce || !doc.startViewTransition || document.visibilityState === 'hidden') {
     run();
     if (back) restoreScroll(keys.to);
