@@ -7012,4 +7012,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'change.period.year': '上一年',
   'change.better': '向好',
   'change.worse': '变差',
+  'sync.keyed.noteMessages': '令牌经加密存储，可随时移除。下一步会给出回调地址和验证令牌，请粘贴到你的 {app} 应用中；不涉及字段匹配，也不会回写。',
 };

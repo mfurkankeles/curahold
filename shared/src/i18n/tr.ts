@@ -7012,4 +7012,5 @@ export const tr: Record<MessageKey, string> = {
   'change.period.year': 'önceki yıla',
   'change.better': 'iyiye gidiş',
   'change.worse': 'kötüye gidiş',
+  'sync.keyed.noteMessages': 'Erişim anahtarı şifreli saklanır ve istediğiniz an kaldırılabilir. Sonraki ekranda {app} uygulamanıza yapıştıracağınız geri çağırma adresini ve doğrulama anahtarını alırsınız; alan eşleme ya da geri yazma yoktur.',
 };

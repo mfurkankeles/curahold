@@ -7012,4 +7012,5 @@ export const he: Partial<Record<MessageKey, string>> = {
   'change.period.year': 'השנה הקודמת',
   'change.better': 'שיפור',
   'change.worse': 'הרעה',
+  'sync.keyed.noteMessages': 'האסימון נשמר מוצפן ואפשר להסיר אותו בכל עת. במסך הבא תקבלו את כתובת הקריאה החוזרת ואת אסימון האימות להדבקה באפליקציית {app}; אין התאמת שדות ואין כתיבה חזרה.',
 };

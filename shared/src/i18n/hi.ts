@@ -6957,4 +6957,5 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'change.period.year': 'पिछले साल',
   'change.better': 'सुधार',
   'change.worse': 'गिरावट',
+  'sync.keyed.noteMessages': 'टोकन एन्क्रिप्ट करके रखा जाता है और कभी भी हटाया जा सकता है। अगली स्क्रीन पर आपको कॉलबैक पता और वेरिफ़ाई टोकन मिलेगा, जिसे अपने {app} ऐप में पेस्ट करना है; कोई फ़ील्ड मिलान या वापस लिखना नहीं होता।',
 };

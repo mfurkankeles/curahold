@@ -7026,6 +7026,7 @@ export const en = {
   'change.period.year': 'the year before',
   'change.better': 'better',
   'change.worse': 'worse',
+  'sync.keyed.noteMessages': 'The token is stored encrypted and can be removed any time. On the next screen you get the callback address and verify token to paste into your {app} app; nothing is matched or written back.',
 } as const;
 
 export type MessageKey = keyof typeof en;

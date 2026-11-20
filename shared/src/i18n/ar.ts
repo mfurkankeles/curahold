@@ -7012,4 +7012,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'change.period.year': 'السنة السابقة',
   'change.better': 'تحسّن',
   'change.worse': 'تراجع',
+  'sync.keyed.noteMessages': 'يُخزَّن الرمز مشفّرًا ويمكن إزالته في أي وقت. في الشاشة التالية تحصلون على عنوان الاستدعاء ورمز التحقق للصقهما في تطبيق {app}؛ لا مطابقة للحقول ولا كتابة عكسية.',
 };

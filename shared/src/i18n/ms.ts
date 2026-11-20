@@ -6957,4 +6957,5 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'change.period.year': 'tahun sebelumnya',
   'change.better': 'lebih baik',
   'change.worse': 'lebih teruk',
+  'sync.keyed.noteMessages': 'Token disimpan secara tersulit dan boleh dibuang bila-bila masa. Pada skrin seterusnya anda mendapat alamat panggil balik dan token pengesahan untuk ditampal dalam aplikasi {app} anda; tiada padanan medan atau penulisan semula.',
 };

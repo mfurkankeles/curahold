@@ -7012,4 +7012,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'change.period.year': '작년',
   'change.better': '개선',
   'change.worse': '악화',
+  'sync.keyed.noteMessages': '토큰은 암호화되어 저장되며 언제든지 삭제할 수 있습니다. 다음 화면에서 {app} 앱에 붙여 넣을 콜백 주소와 확인 토큰을 받습니다. 필드 매칭이나 역방향 쓰기는 없습니다.',
 };

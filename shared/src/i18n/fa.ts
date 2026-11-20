@@ -7012,4 +7012,5 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'change.period.year': 'سال قبل',
   'change.better': 'بهبود',
   'change.worse': 'افت',
+  'sync.keyed.noteMessages': 'توکن به‌صورت رمزگذاری‌شده نگه داشته می‌شود و هر زمان می‌توان آن را حذف کرد. در صفحهٔ بعد نشانی بازخوانی و توکن تأیید را می‌گیرید تا در برنامهٔ {app} خود بچسبانید؛ هیچ فیلدی تطبیق داده یا بازنویسی نمی‌شود.',
 };

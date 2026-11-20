@@ -7012,4 +7012,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'change.period.year': '上一年',
   'change.better': '向好',
   'change.worse': '變差',
+  'sync.keyed.noteMessages': '權杖經加密儲存，可隨時移除。下一步會提供回呼網址和驗證權杖，請貼到你的 {app} 應用程式中；不涉及欄位對應，也不會回寫。',
 };
