@@ -6,7 +6,7 @@ import { inOrder } from './order';
 import type { SeedWords } from './types';
 
 export const words: SeedWords = {
-  company: 'Syarikat Demo Sdn. Bhd.',
+  company: 'Demo Sdn Bhd',
   timezone: 'Asia/Kuala_Lumpur',
   money: {
     currency: 'MYR',

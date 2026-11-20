@@ -6056,7 +6056,7 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'flow.loop.nothingSent': "Tiada apa dihantar dengan sendirinya: anda menghantarnya, atau tutup permintaan portal mereka.",
   'flow.team.title': "Pemilik dalam setiap jabatan",
   'flow.team.ownerIn': "Pemilik dalam {dept}",
-  'flow.team.none': "Belum ada sesiapa",
+  'flow.team.none': "Belum ada",
   'flow.demand.waiting': "{n} menunggu",
   'flow.demand.waitingHint': "Pelanggan yang meminta ini",
   'flow.demand.valueHint': "Nilai tahunan pelanggan yang menunggu",
