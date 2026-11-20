@@ -157,7 +157,7 @@ honestly; items marked OPEN are not done today.
 | 7 | `DEMO_CRM` and any dev switches (`devExposeTokens`, `devOrgHeader`) are **never** enabled in production | They expose sign-in tokens in API answers or accept a company from a header. The Worker entry hard-codes them off; the Node local entry turns them on. Never run `api/src/node.ts` on a publicly reachable host. | Enforced by entry-point design; keep it that way. |
 | 8 | `PADDLE_ENV=live` and live keys only in production; webhook secret verified | Wrong environment either charges nobody or charges for test data. | Operator. |
 | 9 | Backups: Supabase daily backups confirmed on; weekly encrypted off-site copy; **restore rehearsed** | QUALITY.md targets. | **OPEN**: off-site copy and rehearsal not done. PITR deferred to first paying customer. |
-| 10 | Dependency health: `npm audit --omit=dev --audit-level=high` clean | QUALITY.md: zero high/critical. | CI runs it as informational; make it blocking once clean. |
+| 10 | Dependency health: `npm audit --omit=dev --audit-level=high` clean | QUALITY.md: zero high/critical. | Done: the CI `audit` job runs it and the CI gate requires it; the weekly scan repeats it ([testing calendar](docs/security/testing-calendar.md)). |
 | 11 | Region: Supabase EU, Cloudflare R2 with EU jurisdiction if required by customers' contracts; sub-processor list kept current (README) | KVKK/GDPR commitments and DPA. | Operator; verify R2 location. |
 | 12 | Session recordings (support replay) are consented, minimised, and purged after 7 days | Privacy. | Implemented (migration 0030, retention in scheduler); verify the product's consent wording with counsel. |
 | 13 | The Salesforce relay (`tools/relay`) runs behind TLS, keeps no logs of content, and its key is rotated like other secrets | It sees OAuth refresh tokens in transit. | Operator (README in `tools/relay`). |
@@ -171,3 +171,11 @@ honestly; items marked OPEN are not done today.
 - Third-party GitHub Actions are pinned to full commit SHAs (tag in a comment); the production `npm audit` (high/critical) is a
   required CI job.
 - Keep `package-lock.json` committed; install with `npm ci`.
+
+## Routine security testing and the trust pack
+
+- [docs/security/testing-calendar.md](docs/security/testing-calendar.md): what is tested weekly, monthly and quarterly,
+  against our own code and staging copy only, with `npx tsx scripts/security/scan.ts weekly|monthly|quarterly`.
+- [docs/security/README.md](docs/security/README.md): the trust pack — standard questionnaire answers, the SOC 2 /
+  ISO 27001 gap list, the policy drafts, the threat model and the ASVS sheet. Hosting region: docs/ENVIRONMENT.md
+  ("Hosting region").
