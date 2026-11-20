@@ -25,6 +25,25 @@ export function paint(k: number, own?: OptionColor | null): { 'data-color'?: Opt
   return { 'data-series': k < SERIES_SLOTS ? String(k + 1) : 'other' };
 }
 
+/**
+ * Chosen colours that people with red-green colour blindness cannot tell apart (or that sit too close for anyone),
+ * in light or dark: OKLab ΔE under 8 simulated, or under 15 seen normally. tests/chart-palette.test.ts recomputes
+ * this list from the stylesheet and fails if it drifts.
+ */
+export const CLASHING_COLOURS: readonly string[] = ['coral|honey', 'coral|leaf', 'coral|rose', 'honey|leaf', 'leaf|sea', 'plum|sky', 'rose|sea', 'rose|stone', 'sea|stone', 'sky|stone'];
+const CLASH = new Set(CLASHING_COLOURS);
+
+/**
+ * A result whose parts keep the colours people chose for them, unless two of those colours clash: then every part
+ * takes the validated slots in order instead (the legend and the labels still name each part). Two clashing colours
+ * in one chart are the failure this palette exists to prevent (green beside orange for "won" and "lost").
+ */
+export function readableColours(r: Ok): Ok {
+  const own = [...new Set([...r.groups.map((g) => g.color), ...r.series.map((x) => x.color)].filter((c): c is OptionColor => !!c))];
+  const clash = own.some((a, i) => own.slice(i + 1).some((b) => CLASH.has([a, b].sort().join('|'))));
+  return clash ? { ...r, groups: r.groups.map((g) => ({ ...g, color: null })), series: r.series.map((x) => ({ ...x, color: null })) } : r;
+}
+
 /** How a report writes its figures: a value in its unit (money in the company's currency), a time bucket, a plain number. */
 export function useReportFormat() {
   const { t, locale } = useI18n();
@@ -176,7 +195,7 @@ export function ReportChart({ result, chart, compact, goal, apart }: { result: R
   const { t } = useI18n();
   const f = useReportFormat();
   if (result.kind === 'missing') return <p className="pane__note">{t('rb.missing', { what: result.what.replace(/^\$/, '') })}</p>;
-  const r = result;
+  const r = readableColours(result);
   const label = (g: ReportGroupRow) => (r.bucket ? f.bucket(g.key, r.bucket) : g.label);
 
   // A gauge: the one figure against what it should reach (a figure without a goal stays a figure).

@@ -2158,6 +2158,10 @@ strong, b { font-weight: 700; }
 .statstrip > * { flex: 1 1 calc((100% - 3 * var(--gap)) / 4 - 0.1px); }
 @container (max-width: 700px) { .statstrip > * { flex-basis: calc((100% - var(--gap)) / 2 - 0.1px); } }
 .stat { --tone: var(--brand); display: grid; gap: 4px; padding-block: 16px 12px; padding-inline-start: 16px; padding-inline-end: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); position: relative; min-width: 0; }
+/* The side mark only for a tile with a state; the icon beside the label says the same. */
+.stat:not([data-tone])::before { content: none; }
+.stat__label { display: inline-flex; align-items: center; gap: 4px; }
+.stat__icon { flex: none; color: var(--tone); }
 .stat::before { content: ''; position: absolute; inset-inline-start: -1px; top: 14px; bottom: 14px; width: 4px; border-start-start-radius: 0; border-start-end-radius: var(--r-xs); border-end-end-radius: var(--r-xs); border-end-start-radius: 0; background: var(--tone); }
 .stat[data-tone='late'] { --tone: var(--late); }
 .stat[data-tone='done'] { --tone: var(--done); }

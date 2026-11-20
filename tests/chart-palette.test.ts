@@ -123,6 +123,21 @@ describe('chart palette', () => {
     expect(block(":root[data-theme='dark']")['--chart-sky']).toBeUndefined();
   });
 
+  it('the chosen colours that clash are exactly the ones the charts refuse to put together', () => {
+    const hues = ['plum', 'coral', 'sea', 'honey', 'rose', 'leaf', 'sky', 'stone'];
+    const at = (vars: Record<string, string>, hue: string) => resolve(vars, LIGHT[`--chart-${hue}`].replace(/^var\((--[\w-]+)\)$/, (_, v) => vars[v]));
+    const clash: string[] = [];
+    for (let i = 0; i < hues.length; i++)
+      for (let j = i + 1; j < hues.length; j++) {
+        const worst = Math.min(...MODES.map(({ vars }) => cvd(at(vars, hues[i]), at(vars, hues[j]))));
+        const near = Math.min(...MODES.map(({ vars }) => normal(at(vars, hues[i]), at(vars, hues[j]))));
+        if (worst < 8 || near < 15) clash.push([hues[i], hues[j]].sort().join('|'));
+      }
+    const src = readFileSync(join(ROOT, 'web/src/components/Charts.tsx'), 'utf8');
+    const listed = JSON.parse(/CLASHING_COLOURS: readonly string\[\] = (\[[^\]]*\])/.exec(src)![1].replace(/'/g, '"'));
+    expect([...listed].sort()).toEqual(clash.sort());
+  });
+
   it('charts take slots in order and never cycle: a ninth part is "Other"', () => {
     const src = readFileSync(join(ROOT, 'web/src/components/Charts.tsx'), 'utf8');
     expect(src).not.toMatch(/%\s*CYCLE\.length/);

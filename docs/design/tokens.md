@@ -107,6 +107,9 @@ Rules:
   series does not repaint the others.
 - One series takes slot 1. Columns and bars that only compare sizes share one colour; do not colour bars by their value.
 - Charts where any two marks can touch (scatter, maps, small multiples) use at most the first three slots.
+- Colours people chose for options are kept unless two of them clash (`CLASHING_COLOURS` in `components/Charts.tsx`, the
+  pairs under ΔE 8 simulated or 15 seen, recomputed by the test): then that chart takes the slots in order. The eight slots
+  are only safe as neighbours; any two chosen colours can end up side by side.
 - Identity is never colour alone: a legend for two or more series, the value written beside bars, the reading above the plot,
   and a table view (**Show as table**) on every chart.
 - Status colours (`--done`, `--soon`, `--late` and their washes) are never a series.
@@ -114,7 +117,8 @@ Rules:
 ### Status
 
 A state (paid, overdue, at risk, failed …) is always an icon and words, never a colour alone (WCAG 1.4.1): `Pill` in the
-console (`checkCircle` good, `clock` needs a look, `alert` needs action), the same icons on a tile that carries a tone.
+console (`checkCircle` good, `clock` needs a look, `alert` needs action), the same icons on a tile that carries a tone
+(`Stat` in the app: the side mark appears only with a state, and a screen reader hears the state in words).
 
 ## Elevation
 

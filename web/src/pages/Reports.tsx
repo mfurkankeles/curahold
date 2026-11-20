@@ -244,7 +244,7 @@ export function ReportsPage() {
             <div className="statstrip">
               <Stat label={t('reports.open')} value={num(work.totals.open)} n={work.totals.open} fmt={num} sub={t('reports.unassignedN', { n: num(work.totals.unassigned) })} />
               <Stat label={t('reports.overdue')} value={num(work.totals.overdue)} n={work.totals.overdue} fmt={num} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: num(work.totals.dueWeek) })} />
-              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} tone="done" sub={t('reports.created30N', { n: num(work.totals.created30) })} />
+              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} sub={t('reports.created30N', { n: num(work.totals.created30) })} />
               <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: num(work.totals.cycleDays) })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}
