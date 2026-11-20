@@ -1,6 +1,7 @@
 // Sending webhooks: events are captured by database triggers (every path —
 // screen, API, CRM sync, automations — the same way) and sent here, signed,
-// with retries. Receivers should use the event id to ignore repeats.
+// with retries. A retry goes only to the hooks that have not answered yet; receivers should still use the event id
+// to ignore repeats (a timeout after a receiver has acted is one).
 import type { AccountsRow, ActivitiesRow, CommentsRow, OrgsRow, RecordTypesRow, WebhookEventsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { fetchOf, orgUrl, secretsKey } from '../context';
@@ -149,7 +150,8 @@ export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
   );
   for (const e of claimed) {
     const { hooks, data, slug, defs, viewers } = await deps.db.system(async (q) => {
-      const hooks = await q.query('select * from webhooks where org_id = $1 and active and $2 = any (events)', [e.org_id, e.event]);
+      // Only the hooks that do not have this event yet: a retry never sends it twice to one that answered (0247).
+      const hooks = await q.query('select * from webhooks where org_id = $1 and active and $2 = any (events) and not (id = any ($3::uuid[]))', [e.org_id, e.event, e.sent_to ?? []]);
       const data = await payloadOf(q, e.org_id, e.event, e.entity_id);
       return { hooks, data, slug: (await q.query('select slug from orgs where id = $1', [e.org_id]))[0]?.slug, ...(await fieldRules(q, e.org_id, data, hooks)) };
     });
@@ -163,14 +165,18 @@ export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
       const body = JSON.stringify({ id: e.id, event: e.event, occurredAt: e.created_at, company: slug, url: orgUrl(deps.config, slug), data: forViewer(data, defs, viewers.get(h.created_by) ?? null) });
       const status = await postWebhook(deps, h, body, e.event);
       const ok = status >= 200 && status < 300;
-      allOk &&= ok;
-      await deps.db.system((q) =>
-        q.query(
+      // 410 Gone: the receiver says the subscription no longer exists (Zapier's and Make's answer for a deleted Zap or
+      // scenario that did not unsubscribe). Turn the hook off at once instead of retrying it 50 times.
+      const gone = status === 410;
+      allOk &&= ok || gone;
+      await deps.db.system(async (q) => {
+        await q.query(
           `update webhooks set last_status = $2, last_at = now(), failures = case when $3 then 0 else failures + 1 end,
-                  active = case when not $3 and failures + 1 >= $4 then false else active end where id = $1`,
-          [h.id, status, ok, DISABLE_AFTER],
-        ),
-      );
+                  active = case when $5 or (not $3 and failures + 1 >= $4) then false else active end where id = $1 and org_id = $6`,
+          [h.id, status, ok, DISABLE_AFTER, gone, e.org_id],
+        );
+        if (ok || gone) await q.query('update webhook_events set sent_to = array_append(sent_to, $2::uuid) where id = $1 and org_id = $3', [e.id, h.id, e.org_id]);
+      });
     }
     await deps.db.system((q) =>
       allOk
