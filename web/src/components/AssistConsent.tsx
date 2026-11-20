@@ -4,6 +4,13 @@
 // Accept and Decline weigh the same; "Not now" (or Esc) asks again next
 // session and, meanwhile, questions stay on the device. The server refuses a
 // question without a recorded "yes" all the same (consent_required).
+//
+// Two parts on purpose (KVKK: the aydınlatma and the açık rıza are separate
+// acts): first the information, with the full notice linked; then, under
+// its own heading, the consent sentence and the two equal buttons. Clicking
+// Accept is the distinct affirmative act; reading the notice alone is not.
+// The same shape is in the portal (web/portal/Portal.tsx) and the docs chat
+// (docs/site/assets/ask.ts).
 import { useEffect, useRef, useState } from 'react';
 import type { AssistConsentState } from '../../../shared/src/assistConsent';
 import { helpLanguageOf } from '../../../shared/src/i18n';
@@ -13,7 +20,7 @@ import { docsHref, docsLink } from '../lib/docs';
 import { useI18n } from '../lib/i18n';
 import { Icon } from './icons';
 
-/** The notice with Accept / Decline / Not now. */
+/** The notice, then the separate consent with Accept / Decline; Not now closes it. */
 export function AssistConsentNotice({ busy, onAnswer, onClose }: { busy: boolean; onAnswer: (granted: boolean) => void; onClose: () => void }) {
   const { t, locale } = useI18n();
   const box = useRef<HTMLElement>(null);
@@ -33,26 +40,33 @@ export function AssistConsentNotice({ busy, onAnswer, onClose }: { busy: boolean
           <span>{t('assistConsent.close')}</span>
         </button>
       </div>
-      <ul className="ask__consent-list">
-        <li>{t('assistConsent.what')}</li>
-        <li>{t('assistConsent.why')}</li>
-        <li>{t('assistConsent.keep')}</li>
-        <li>{t('assistConsent.withdraw')}</li>
-      </ul>
-      <p>
-        <a href={docsHref(`${helpLanguageOf(locale)}/legal-privacy`)} {...docsLink}>
-          {t('assistConsent.privacy')}
-        </a>
-      </p>
-      <div className="ask__consent-actions">
-        <button type="button" className="btn ask__consent-btn" disabled={busy} onClick={() => onAnswer(false)}>
-          <Icon name="close" size={16} />
-          <span>{t('assistConsent.decline')}</span>
-        </button>
-        <button type="button" className="btn ask__consent-btn" disabled={busy} onClick={() => onAnswer(true)}>
-          <Icon name="check" size={16} />
-          <span>{t('assistConsent.accept')}</span>
-        </button>
+      <div className="ask__consent-part" role="group" aria-labelledby="ask-consent-notice">
+        <h5 id="ask-consent-notice">{t('assistConsent.noticeTitle')}</h5>
+        <ul className="ask__consent-list">
+          <li>{t('assistConsent.what')}</li>
+          <li>{t('assistConsent.why')}</li>
+          <li>{t('assistConsent.keep')}</li>
+          <li>{t('assistConsent.withdraw')}</li>
+        </ul>
+        <p>
+          <a href={docsHref(`${helpLanguageOf(locale)}/legal-privacy`)} {...docsLink}>
+            {t('assistConsent.privacy')}
+          </a>
+        </p>
+      </div>
+      <div className="ask__consent-part ask__consent-part--give" role="group" aria-labelledby="ask-consent-give" aria-describedby="ask-consent-text">
+        <h5 id="ask-consent-give">{t('assistConsent.consentTitle')}</h5>
+        <p id="ask-consent-text">{t('assistConsent.consentText')}</p>
+        <div className="ask__consent-actions">
+          <button type="button" className="btn ask__consent-btn" disabled={busy} onClick={() => onAnswer(false)}>
+            <Icon name="close" size={16} />
+            <span>{t('assistConsent.decline')}</span>
+          </button>
+          <button type="button" className="btn ask__consent-btn" disabled={busy} onClick={() => onAnswer(true)}>
+            <Icon name="check" size={16} />
+            <span>{t('assistConsent.accept')}</span>
+          </button>
+        </div>
       </div>
     </section>
   );

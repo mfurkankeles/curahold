@@ -1445,26 +1445,34 @@ function PortalAsk({ ctx, docsBase }: { ctx: Ctx; docsBase?: string }) {
               <span aria-hidden="true">×</span> {t('assistConsent.close')}
             </button>
           </div>
-          <ul>
-            <li>{t('assistConsent.what')}</li>
-            <li>{t('assistConsent.why')}</li>
-            <li>{t('assistConsent.keep')}</li>
-            <li>{t('assistConsent.withdraw')}</li>
-          </ul>
-          {docsBase && (
-            <p>
-              <a href={`${docsBase}${helpLanguageOf(ctx.locale)}/legal-privacy/`} target="_blank" rel="noreferrer">
-                {t('assistConsent.privacy')}
-              </a>
-            </p>
-          )}
-          <div className="p-actions">
-            <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(false)}>
-              <span aria-hidden="true">✕</span> {t('assistConsent.decline')}
-            </button>
-            <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(true)}>
-              <span aria-hidden="true">✓</span> {t('assistConsent.accept')}
-            </button>
+          {/* Notice first, consent as its own part (KVKK: aydınlatma and açık rıza are separate; see AssistConsent.tsx). */}
+          <div className="p-consent__part" role="group" aria-labelledby="p-ask-consent-notice">
+            <h4 id="p-ask-consent-notice">{t('assistConsent.noticeTitle')}</h4>
+            <ul>
+              <li>{t('assistConsent.what')}</li>
+              <li>{t('assistConsent.why')}</li>
+              <li>{t('assistConsent.keep')}</li>
+              <li>{t('assistConsent.withdraw')}</li>
+            </ul>
+            {docsBase && (
+              <p>
+                <a href={`${docsBase}${helpLanguageOf(ctx.locale)}/legal-privacy/`} target="_blank" rel="noreferrer">
+                  {t('assistConsent.privacy')}
+                </a>
+              </p>
+            )}
+          </div>
+          <div className="p-consent__part p-consent__part--give" role="group" aria-labelledby="p-ask-consent-give" aria-describedby="p-ask-consent-text">
+            <h4 id="p-ask-consent-give">{t('assistConsent.consentTitle')}</h4>
+            <p id="p-ask-consent-text">{t('assistConsent.consentText')}</p>
+            <div className="p-actions">
+              <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(false)}>
+                <span aria-hidden="true">✕</span> {t('assistConsent.decline')}
+              </button>
+              <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(true)}>
+                <span aria-hidden="true">✓</span> {t('assistConsent.accept')}
+              </button>
+            </div>
           </div>
         </div>
       )}
