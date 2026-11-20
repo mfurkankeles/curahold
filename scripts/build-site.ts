@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url';
 import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../shared/src/billing';
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
-import { SITE_LANGS } from '../site/locales';
+import { SITE_FONTS, SITE_LANGS } from '../site/locales';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
@@ -1335,14 +1335,16 @@ const CSS_SOURCES: Record<CssKind, string[]> = {
 const cssSlot = (kind: CssKind, rel: string) => `<!--css:${kind}:${rel}-->`;
 
 /**
- * Latin pages preload the headline face; other scripts read their system faces (site/chrome.css
- * :lang rules), so they download no font at all.
+ * The font files a language preloads, from its slices in site/locales.ts (SITE_FONTS): each Latin
+ * slice brings the text face, and the basic slice the headline face too. Other scripts list no
+ * slice and read their system faces (site/chrome.css :lang rules), so they download no font.
+ * Turkish preloads latin-ext for ş, ğ and İ: found only through the CSS, it would arrive late.
  */
 const fontPreload = (locale: SiteLocale, rel: string) =>
-  locale === 'en' || locale === 'tr'
-    ? // Turkish body text needs ş, ğ and İ from the latin-ext file too; found only through the CSS, it would arrive late.
-      ['bricolage-grotesque-latin-wght-normal', 'figtree-latin-wght-normal', ...(locale === 'tr' ? ['figtree-latin-ext-wght-normal'] : [])].map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')
-    : '';
+  SITE_FONTS[locale]
+    .flatMap((s) => (s === 'latin' ? [`bricolage-grotesque-${s}-wght-normal`, `figtree-${s}-wght-normal`] : [`figtree-${s}-wght-normal`]))
+    .map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`)
+    .join('\n');
 
 /** Pages waiting for their styles: written once the styles of their kind are cut. */
 const pending: { file: string; html: string }[] = [];
