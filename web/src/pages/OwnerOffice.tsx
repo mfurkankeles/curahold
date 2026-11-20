@@ -17,6 +17,7 @@ import { teamWord, type TeamKey } from '../../../shared/src/i18n/ownerTeam';
 import type { Approval, Meeting } from '../../../shared/src/office';
 import type { TeamOrg, TeamSeat, ThreadRow } from '../../../shared/src/team/api';
 import { Icon, type IconName } from '../components/icons';
+import { CloseButton } from '../components/ui';
 import { formatDate, formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
@@ -990,9 +991,7 @@ function PersonPanel(p: {
           <button type="button" className="btn btn--icon btn--quiet btn--small" onClick={p.onWhere} aria-label={ow('person.where')} title={ow('person.where')}>
             <Icon name="pin" size={16} />
           </button>
-          <button type="button" className="btn btn--icon btn--quiet btn--small" onClick={p.onClose} aria-label={ow('person.close')} title={ow('person.close')}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={p.onClose} label={ow('person.close')} />
         </div>
       </header>
       {running.length ? (
@@ -1212,9 +1211,7 @@ function Keys({ onClose }: { onClose: () => void }) {
     <div className="of-keys" role="dialog" aria-label={ow('bar.keys')}>
       <header>
         <h2>{ow('bar.keys')}</h2>
-        <button type="button" className="btn btn--icon btn--quiet btn--small" onClick={onClose} aria-label={ow('person.close')}>
-          <Icon name="close" size={14} />
-        </button>
+        <CloseButton onClick={onClose} label={ow('person.close')} />
       </header>
       <dl>
         {rows.map(([k, w]) => (

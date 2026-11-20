@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { forwardRef, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
 import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
@@ -177,17 +177,17 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
 /**
  * The one Close of every dialog, panel and sheet: at the end corner of its header, 44 × 44, with a visible
  * fill (never a bare cross that could be mistaken for, or sit flush against, a destructive button),
- * named "Close" and hinting at Esc. `onClick` closes.
+ * named "Close" and hinting at Esc. `onClick` closes. A ref reaches the button, for a panel that focuses it on opening.
  */
-export function CloseButton({ onClick, label }: { onClick: () => void; label?: string }) {
+export const CloseButton = forwardRef<HTMLButtonElement, { onClick: () => void; label?: string }>(function CloseButton({ onClick, label }, ref) {
   const { t } = useI18n();
   const name = label ?? t('common.close');
   return (
-    <button type="button" className="closex" onClick={onClick} aria-label={name} title={`${name} (Esc)`}>
+    <button ref={ref} type="button" className="closex" onClick={onClick} aria-label={name} title={`${name} (Esc)`}>
       <Icon name="close" size={20} />
     </button>
   );
-}
+});
 
 export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose, children }: { title: string; body: string; confirmLabel: string; danger?: boolean; onConfirm: () => void | Promise<void>; onClose: () => void; children?: ReactNode }) {
   const { t } = useI18n();

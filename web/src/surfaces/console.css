@@ -149,7 +149,6 @@
 .pf-drawer__head { position: sticky; top: 0; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .pf-drawer__heading { display: grid; gap: 4px; min-width: 0; }
 .pf-drawer__title { margin: 0; font-size: var(--fs-xl); line-height: var(--lh-snug); overflow-wrap: anywhere; }
-.pf-drawer__close { flex: none; width: 40px; min-height: 40px; }
 .pf-drawer__body { display: grid; gap: 20px; padding: 16px 20px 24px; }
 .pf-drawer__note { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
 .pf-dl { display: grid; gap: 4px; }
@@ -371,6 +370,5 @@
   .console__tab, .desk__queue, .desk__strip .desk__queue, .cneed, .pf-open, .desk__row, .deskreq__others .linklike { min-height: var(--tap); }
   /* The field inside the bordered box is the target: the box is the target plus its border. */
   .pf-search, .desk__search { min-height: calc(var(--tap) + 2px); }
-  .pf-drawer__close { width: var(--tap); min-height: var(--tap); }
   .console__pick .input, .deskreply__name .input { min-height: var(--tap); font-size: var(--fs-l); }
 }

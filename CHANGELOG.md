@@ -118,6 +118,10 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Fixed
 
+- Hover washes on toasts, segmented buttons and chips, and the read-only warning colour in the sidebar show again (their
+  design tokens referred to themselves and computed to nothing). The phone menu, the console's company drawer and the
+  Office and AI team panels close with the same 44 × 44 Close as every dialog.
+
 - Hebrew says "יום אחד", "משימה אחת הועברה" after a count of one instead of "1 ימים", "1 משימות הועברו": the noun, "one" in
   its gender, a neighbouring verb or adjective in agreement, and a prefix letter joined to the word.
 

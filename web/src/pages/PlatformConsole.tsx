@@ -9,7 +9,7 @@ import type { PlatformAccess, PlatformCustomer, PlatformCustomerDetail, Platform
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { FilterGroup, FilterSheet } from '../components/FilterSheet';
 import { Icon } from '../components/icons';
-import { useFocusTrap } from '../components/ui';
+import { CloseButton, useFocusTrap } from '../components/ui';
 import { get } from '../lib/api';
 import { formatDate, formatMoney, formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
@@ -160,9 +160,7 @@ export function CustomerDrawer({ orgId, load, onClose }: { orgId: string; load: 
             <h2 className="pf-drawer__title" id="pf-drawer-title">{c ? c.name : t('platform.detail' as MessageKey)}</h2>
             {c ? <StatusDot status={c.status} /> : null}
           </div>
-          <button type="button" className="btn btn--quiet btn--icon pf-drawer__close" aria-label={t('common.close')} onClick={onClose}>
-            <Icon name="close" size={18} />
-          </button>
+          <CloseButton onClick={onClose} />
         </header>
         {failed ? (
           <LoadError onRetry={() => setAttempt((x) => x + 1)} />
