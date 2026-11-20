@@ -88,3 +88,5 @@ def verify(raw_body: bytes, header: str, secret: str) -> bool:
 - Yanıt gelmezse ya da `2xx` dışı gelirse Curahold 1, 5, 30, 120 ve 360 dakika sonra yeniden dener; toplam 6 deneme.
 - Üst üste 50 kez ulaşamayan webhook duraklatılır. Ayarlar → Geliştirici'den **Sürdür** ile açarsınız.
 - Yönlendirmeler izlenmez; son adresi doğrudan yazın.
+- Yeniden deneme yalnızca henüz `2xx` ile yanıt vermemiş webhook'lara gider: olayı almış olan onu bir daha almaz.
+- `410 Gone` yanıtı (Zapier ve Make silinmiş bir Zap ya da senaryo için bunu verir) webhook'u anında kapatır.

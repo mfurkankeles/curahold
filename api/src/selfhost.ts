@@ -38,7 +38,7 @@ import { guardedFetch } from './lib/outbound';
 import { lookup } from 'node:dns/promises';
 import { audit } from './lib/audit';
 import { runScheduled } from './lib/scheduler';
-import type { EmailMessage, EmailSender, Storage } from './lib/services';
+import { MailError, type EmailMessage, type EmailSender, type Storage } from './lib/services';
 import { createPortalApp } from './portal';
 import { configFromEnv, type Env } from './worker';
 import { attachLive, pgListen } from './live/node';
@@ -55,7 +55,13 @@ export class SmtpEmail implements EmailSender {
     this.transport = createTransport(url);
   }
   async send(m: EmailMessage) {
-    await this.transport.sendMail({ from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html, replyTo: m.replyTo, headers: m.headers });
+    try {
+      await this.transport.sendMail({ from: this.from, to: m.to, subject: m.subject, text: m.text, html: m.html, replyTo: m.replyTo, headers: m.headers });
+    } catch (e) {
+      // The same plain answer as the hosted relay (lib/services.ts MailError); the server's words go to the log.
+      const code = Number((e as { responseCode?: number }).responseCode ?? 0);
+      throw new MailError(`smtp: ${e instanceof Error ? e.message : String(e)}`.slice(0, 300), code >= 400 && code < 500);
+    }
   }
 }
 

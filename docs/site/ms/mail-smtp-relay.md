@@ -60,3 +60,7 @@ Geganti menerima sehingga **10,000 penerima sehari bagi setiap pengguna** (had y
 - anda merancang **kempen pemasaran** — tidak sekali-kali melalui geganti.
 
 Menukar hanyalah satu tetapan: perkhidmatan berhos sudah mempunyai pemacu untuk perkhidmatan khusus (`EMAIL_PROVIDER=resend` dengan `RESEND_API_KEY`). Tambahkannya ke halaman Sub-pemproses dan beri notis 30 hari kepada pentadbir dahulu.
+
+## 6. Apabila e-mel tidak keluar {#failures}
+
+Penolakan sementara (`421`, `450`, `451`, atau sambungan yang terputus) dicuba sekali lagi pada sambungan baharu. Penolakan kekal tidak dicuba semula: `535` (kata laluan aplikasi ditukar atau dibatalkan: buat yang baharu dan gantikan `SMTP_RELAY_PASSWORD`), `550 5.4.5` (had harian), `550 5.1.1` (alamat yang tidak wujud). Orang kemudian melihat "Kami tidak dapat menghantar e-mel sekarang. Sila cuba lagi dalam beberapa minit; jika berulang, maklumkan kepada pentadbir anda." dalam bahasa mereka sendiri, tidak sekali-kali jawapan geganti; jawapan itu masuk ke log ralat aplikasi bersama langkah SMTP.

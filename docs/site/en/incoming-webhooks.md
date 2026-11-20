@@ -75,6 +75,10 @@ Use the tool's trigger, then **Webhooks by Zapier → POST** (Zapier) or **HTTP 
 
 The log keeps 30 days and at most 500 deliveries per webhook. **New secret** stops the old one at once; **Pause** answers `404` until resumed; **Remove webhook** deletes it and its log, and what it made stays. A webhook acts with the rights of the person who set it up: it reaches only boards and customers they can, and stops if they leave.
 
+## When a delivery is refused or not used {#log}
+
+The **Log** tab says what happened to each delivery, in your language: a wrong signature or token (copy the secret from **Address** into the tool again), sent too long ago (a replayed delivery is refused the same way), a value this webhook does not use, no matching customer, or a field that came out empty (check **Mapping**). The same delivery sent twice, such as a retry from Zapier or Make, is kept once. A task webhook's board can be changed on **Mapping** under **Board**: the address stays the same, so nothing changes in the sending tool.
+
 ## See also
 
 - [Webhooks (outgoing)](/docs/en/webhooks/)

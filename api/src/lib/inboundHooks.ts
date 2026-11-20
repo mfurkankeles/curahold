@@ -168,9 +168,9 @@ export async function applyHook(
   if (m.when?.value) {
     const v = render(m.when.value, payload).toLowerCase();
     const allowed = String(m.when.equals ?? '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
-    if (!allowed.includes(v)) return { status: 'skipped', error: `not used: ${v || '(empty)'}` };
+    if (!allowed.includes(v)) return { status: 'skipped', error: `not_used:${(v || '-').slice(0, 80)}` };
   }
-  if (!HOOK_TARGETS.includes(hook.target)) return { status: 'failed', error: 'unknown target' };
+  if (!HOOK_TARGETS.includes(hook.target)) return { status: 'failed', error: 'unknown_target' };
   const externalId = render(m.externalId, payload).slice(0, 200);
   const remember = async (target: string) => {
     if (externalId && !existing) later.push((s) => s.query(`insert into inbound_links (org_id, hook_id, external_id, kind, target_id) values ($1, $2, $3, $4, $5) on conflict do nothing`, [orgId, hook.id, externalId, hook.target, target]));
@@ -179,7 +179,7 @@ export async function applyHook(
 
   if (hook.target === 'task') {
     const [board] = await q.query<BoardsRow>('select * from boards where id = $1 and archived_at is null', [m.boardId ?? '00000000-0000-0000-0000-000000000000']);
-    if (!board) return { status: 'failed', error: 'board: choose a board the hook can reach' };
+    if (!board) return { status: 'failed', error: 'no_board' };
     const cols = board.columns as Column[];
     const title = render(m.title, payload).replace(/\s+/g, ' ').slice(0, 300);
     const finished = (m.doneWords || DONE_WORDS).toLowerCase().split(',').map((s) => s.trim()).includes(render(m.status, payload).toLowerCase());
@@ -201,7 +201,7 @@ export async function applyHook(
         }
       }
     }
-    if (!title) return { status: 'failed', error: 'title: the template gave nothing' };
+    if (!title) return { status: 'failed', error: 'no_title' };
     const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
     const [t] = await q.query<TasksRow>(
       `insert into tasks (org_id, board_id, title, description, status, assignee_ids, account_id, due_date, position, created_by, updated_by)
@@ -215,8 +215,8 @@ export async function applyHook(
 
   if (hook.target === 'ticket') {
     const subject = render(m.subject, payload).slice(0, 300);
-    if (!subject && !existing) return { status: 'failed', error: 'subject: the template gave nothing' };
-    if (!account) return { status: 'failed', error: 'customer: no customer matches this delivery' };
+    if (!subject && !existing) return { status: 'failed', error: 'no_subject' };
+    if (!account) return { status: 'failed', error: 'no_customer' };
     const requester = render(m.requester, payload).toLowerCase();
     const url = render(m.url, payload);
     const out = await upsertTicket(q, orgId, actorId, `hook-${hook.id.slice(0, 8)}`, (externalId || crypto.randomUUID()).replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 120), {
@@ -232,10 +232,10 @@ export async function applyHook(
   }
 
   if (hook.target === 'activity') {
-    if (!account) return { status: 'failed', error: 'customer: no customer matches this delivery' };
+    if (!account) return { status: 'failed', error: 'no_customer' };
     const kind = ['note', 'call', 'meeting', 'email'].includes(String(m.kind)) ? String(m.kind) : 'note';
     const body = render(m.body, payload).slice(0, 20000);
-    if (!body && kind !== 'call' && kind !== 'meeting') return { status: 'failed', error: 'body: the template gave nothing' };
+    if (!body && kind !== 'call' && kind !== 'meeting') return { status: 'failed', error: 'no_body' };
     const seconds = Number(render(m.minutes, payload));
     // `minutes` holds minutes unless the sender counts in seconds (telephony does).
     const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.min(1440, Math.max(1, Math.round(m.durationUnit === 'seconds' ? seconds / 60 : seconds))) : null;
@@ -248,14 +248,14 @@ export async function applyHook(
        returning id, (xmax = 0) as created`,
       [orgId, account, actorId, kind, render(m.title, payload).slice(0, 300), minutes, body, when(render(m.happenedAt, payload)), source, ext],
     );
-    if (!rows[0]) return { status: 'failed', error: 'the entry could not be written' };
+    if (!rows[0]) return { status: 'failed', error: 'not_written' };
     await remember(rows[0].id);
     return { status: 'ok', result: { kind: 'activity', id: rows[0].id, how: rows[0].created ? 'created' : 'updated' } };
   }
 
   // A note on a deal: the opportunity found by its id in the CRM it came from, else by name under the customer.
   const body = render(m.body, payload).slice(0, 10000);
-  if (!body) return { status: 'failed', error: 'body: the template gave nothing' };
+  if (!body) return { status: 'failed', error: 'no_body' };
   if (existing) {
     const [still] = await q.query<Pick<RecordCommentsRow, 'id'>>('select id from record_comments where id = $1', [existing]);
     if (still) {
@@ -273,7 +273,7 @@ export async function applyHook(
       [dealName, account],
     );
   if (!deal && account) [deal] = await q.query(`select r.id from records r join record_types rt on rt.id = r.type_id where rt.kind = 'opportunity' and r.archived_at is null and r.account_id = $1 order by r.updated_at desc limit 1`, [account]);
-  if (!deal) return { status: 'failed', error: 'deal: no deal matches this delivery' };
+  if (!deal) return { status: 'failed', error: 'no_deal' };
   const [c] = await q.query<Pick<RecordCommentsRow, 'id'>>('insert into record_comments (org_id, record_id, author_id, body) values ($1, $2, $3, $4) returning id', [orgId, deal.id, actorId, body]);
   await remember(c.id);
   return { status: 'ok', result: { kind: 'deal_note', id: c.id, how: 'created' } };
@@ -329,7 +329,7 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
     // Form-encoded senders: their fields, as a flat object.
     payload = Object.fromEntries(new URLSearchParams(inc.raw));
     if (!inc.raw.includes('=')) {
-      await log('rejected', null, 'not JSON', null, null);
+      await log('rejected', null, 'not_json', null, null);
       return { http: 400, status: 'rejected', eventId: null, error: 'not_json' };
     }
   }
@@ -344,7 +344,7 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
     if (seen) return { http: 200, status: 'duplicate', eventId };
   }
   if (!hook.created_by) {
-    await log('failed', eventId, 'the person who set this hook up has left: set it up again', null, inc.raw);
+    await log('failed', eventId, 'owner_gone', null, inc.raw);
     return { http: 200, status: 'failed', eventId, error: 'owner_gone' };
   }
   let out: Outcome;
@@ -358,7 +358,9 @@ export async function receive(deps: Deps, hook: HookRow, inc: Incoming, today: s
       for (const fn of later) await fn(q);
     });
   } catch (e) {
-    out = { status: 'failed', error: e instanceof Error ? e.message.slice(0, 300) : 'failed' };
+    // The database's own words stay in the operator's log: the delivery log (shown to the company) gets the code.
+    console.error('[curahold] incoming webhook could not be applied', hook.id, e instanceof Error ? e.message.slice(0, 300) : String(e));
+    out = { status: 'failed', error: 'not_written' };
   }
   const fresh = await log(out.status, eventId, out.error ?? null, out.result ?? null, inc.raw);
   if (!fresh && eventId) return { http: 200, status: 'duplicate', eventId };

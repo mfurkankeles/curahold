@@ -112,3 +112,4 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `billing_error` | 502 | Ödeme sağlayıcısı beklendiği gibi yanıt vermedi. Bir dakika sonra yeniden deneyin. |
 | `crm_error` | 502 | Bağlı servis şunu söyledi: … |
 | `crm_unreachable` | 502 | Bu adrese ulaşamadık. Adın doğru yazıldığına bakın; doğruysa şirket ağı engelliyor olabilir: BT ekibinize sorun. |
+| `mail_unavailable` | 503 | E-postayı şu anda gönderemedik. Lütfen birkaç dakika sonra yeniden deneyin; sorun sürerse yöneticinize haber verin. |

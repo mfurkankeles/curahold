@@ -255,26 +255,44 @@ export function oidcAuthUrl(
   return u.toString();
 }
 
-/** Exchange the authorization code for tokens at the IdP's token endpoint. */
+/**
+ * Why a test sign-in did not pass, in words an administrator can act on (the settings screen says which value to check).
+ * A real sign-in shows only the general "your provider did not complete the sign-in", so the public sign-in page says
+ * nothing about the company's provider.
+ */
+export type SsoProblem = 'bad_secret' | 'bad_signature' | 'bad_token' | 'idp_unreachable' | 'oauth_failed';
+
+/**
+ * Exchange the authorization code for tokens at the IdP's token endpoint. Never throws: an unreachable or busy provider
+ * (network error, 429, 5xx) is `idp_unreachable`, a refused client secret (401 / invalid_client) is `bad_secret`.
+ */
 export async function exchangeOidcCode(
   config: Pick<SsoAuthConfig, 'tokenUrl' | 'clientId' | 'clientSecret'>,
   p: { code: string; redirectUri: string; verifier: string },
   fetchFn: typeof fetch,
-): Promise<{ id_token?: string } | null> {
-  const res = await fetchFn(config.tokenUrl!, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: p.code,
-      redirect_uri: p.redirectUri,
-      client_id: config.clientId ?? '',
-      client_secret: config.clientSecret ?? '',
-      code_verifier: p.verifier,
-    }).toString(),
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as { id_token?: string };
+): Promise<{ id_token?: string; failure?: SsoProblem }> {
+  let res: Response;
+  try {
+    res = await fetchFn(config.tokenUrl!, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: p.code,
+        redirect_uri: p.redirectUri,
+        client_id: config.clientId ?? '',
+        client_secret: config.clientSecret ?? '',
+        code_verifier: p.verifier,
+      }).toString(),
+    });
+  } catch {
+    return { failure: 'idp_unreachable' };
+  }
+  const body = (await res.json().catch(() => null)) as { id_token?: string; error?: string } | null;
+  if (res.ok) return body?.id_token ? { id_token: body.id_token } : { failure: 'oauth_failed' };
+  if (res.status === 401 || body?.error === 'invalid_client' || body?.error === 'unauthorized_client') return { failure: 'bad_secret' };
+  if (res.status === 429 || res.status >= 500) return { failure: 'idp_unreachable' };
+  return { failure: 'oauth_failed' };
 }
 
 interface Jwk {
@@ -287,23 +305,30 @@ interface Jwk {
 }
 
 /** Fetches the identity provider's signing keys (JWKS) to check its tokens. */
+/** Never throws: an unreachable provider or an unreadable answer gives no keys (the caller reports `idp_unreachable`). */
 export async function fetchJwks(url: string, fetchFn: typeof fetch): Promise<Jwk[]> {
-  const res = await fetchFn(url, { headers: { accept: 'application/json' } });
-  if (!res.ok) return [];
-  const body = (await res.json()) as { keys?: Jwk[] };
-  return Array.isArray(body.keys) ? body.keys : [];
+  try {
+    const res = await fetchFn(url, { headers: { accept: 'application/json' } });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { keys?: Jwk[] };
+    return Array.isArray(body.keys) ? body.keys : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
  * Verify an id_token and return its claims, or null if anything fails.
  * Strictly: alg must be RS256 (no `none`, no HMAC — that blocks algorithm
  * confusion), the signature must verify against a JWKS key, and issuer,
- * audience, nonce and expiry must all check out.
+ * audience, nonce and expiry must all check out. `onFail` learns whether the signature (a rolled or wrong key) or
+ * the claims (another app's token, out of date) failed, for the test sign-in's message.
  */
 export async function verifyIdToken(
   idToken: string,
   keys: Jwk[],
   p: { issuer: string; audience: string; nonce: string; now: Date; clockSkewMs?: number },
+  onFail: (why: 'bad_signature' | 'bad_token') => void = () => undefined,
 ): Promise<Record<string, unknown> | null> {
   const parts = idToken.split('.');
   if (parts.length !== 3) return null;
@@ -316,7 +341,10 @@ export async function verifyIdToken(
   } catch {
     return null;
   }
-  if (header.alg !== 'RS256') return null;
+  if (header.alg !== 'RS256') {
+    onFail('bad_signature');
+    return null;
+  }
   const candidates = keys.filter((k) => (k.kty === 'RSA' || k.kty == null) && (!header.kid || !k.kid || k.kid === header.kid) && (!k.use || k.use === 'sig') && (!k.alg || k.alg === 'RS256'));
   let signed = false;
   const data = enc.encode(`${h}.${pl}`);
@@ -338,13 +366,22 @@ export async function verifyIdToken(
       /* try the next key */
     }
   }
-  if (!signed) return null;
+  if (!signed) {
+    onFail('bad_signature');
+    return null;
+  }
   const skew = p.clockSkewMs ?? 60_000;
-  if (String(claims.iss ?? '') !== p.issuer) return null;
   const aud = Array.isArray(claims.aud) ? claims.aud.map(String) : [String(claims.aud ?? '')];
-  if (!aud.includes(p.audience)) return null;
-  if (typeof claims.exp !== 'number' || claims.exp * 1000 + skew < p.now.getTime()) return null;
-  if (typeof claims.nbf === 'number' && claims.nbf * 1000 - skew > p.now.getTime()) return null;
-  if (String(claims.nonce ?? '') !== p.nonce) return null;
+  const fits =
+    String(claims.iss ?? '') === p.issuer &&
+    aud.includes(p.audience) &&
+    typeof claims.exp === 'number' &&
+    claims.exp * 1000 + skew >= p.now.getTime() &&
+    !(typeof claims.nbf === 'number' && claims.nbf * 1000 - skew > p.now.getTime()) &&
+    String(claims.nonce ?? '') === p.nonce;
+  if (!fits) {
+    onFail('bad_token');
+    return null;
+  }
   return claims;
 }

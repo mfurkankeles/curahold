@@ -69,3 +69,18 @@ Pentadbir boleh memintanya dalam **Tetapan → Syarikat → Padam syarikat**, de
 ## Rahsia yang disimpan
 
 Bukti kelayakan untuk sambungan CRM dan sembang, serta rahsia tandatangan webhook, disimpan dalam bentuk tersulit. Bagi kunci API, hanya ringkasan (digest) disimpan: kunci itu sendiri ditunjukkan sekali dan tidak boleh dilihat lagi.
+
+## Log masuk tunggal (SSO) dan SCIM {#sso}
+
+Dalam Tetapan → **Log masuk tunggal (SSO)**: pilih **Protokol**, berikan nilai di bawah **Berikan butiran ini kepada penyedia identiti anda** kepada penyedia identiti anda, isi **Butiran penyedia identiti anda**, simpan, kemudian tekan **Uji log masuk**. Ujian tidak melog masuk sesiapa dan tidak menghidupkan SSO. **Wajibkan SSO untuk syarikat ini** hanya boleh dihidupkan selepas ujian dengan butiran yang sama seperti yang disimpan lulus, dan dengan pentadbir sandaran yang mempunyai kunci laluan atau aplikasi pengesah.
+
+Apabila ujian tidak lulus, ia menyatakan sebabnya:
+
+- Client secret ditolak (diperbaharui di pihak penyedia): tampal yang baharu ke dalam **Client secret** dan simpan;
+- tandatangan tidak sepadan (penyedia memperbaharui kunci atau sijilnya): untuk SAML, tampal sijil baharu ke dalam **Sijil tandatangan IdP**; OpenID Connect mengambil kunci baharu sendiri;
+- jawapan itu untuk aplikasi lain atau sudah tamat tempoh: semak **Issuer**, **Client ID** dan jam penyedia;
+- penyedia tidak dapat dihubungi: semak **Token endpoint** dan **JWKS URL**, kemudian tunggu seminit.
+
+Orang yang log masuk hanya melihat bahawa penyedia tidak menyelesaikan log masuk, dan kembali ke halaman log masuk.
+
+**Peruntukan SCIM**: **Jana token** memaparkan token sekali sahaja; berikannya kepada penyedia bersama **URL asas SCIM**. Orang yang dinyahaktifkan di sana hilang semua sesi dan kunci API serta-merta, dan pertukaran nama juga sampai. Menjana token baharu menghentikan yang lama serta-merta.
