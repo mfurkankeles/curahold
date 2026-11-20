@@ -1485,6 +1485,25 @@ export interface PortalUsersRow {
   last_seen_at: Date | null;
 }
 
+/** Table `privacy_requests`. */
+export interface PrivacyRequestsRow {
+  id: string;
+  org_id: string;
+  kind: string;
+  subject_name: string;
+  subject_email: string | null;
+  law: string;
+  received_on: Date | string;
+  due_on: Date | string;
+  status: string;
+  note: string | null;
+  created_by: string | null;
+  closed_by: string | null;
+  closed_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 /** Table `promises`. */
 export interface PromisesRow {
   id: string;

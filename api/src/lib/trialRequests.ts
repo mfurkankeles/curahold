@@ -171,6 +171,52 @@ export async function listTrialRequests(deps: Pick<Deps, 'db'>, status: TrialReq
   });
 }
 
+/**
+ * Everything Curahold holds about a trial applicant, for their access request (KVKK m. 11, GDPR Art. 15/20): every
+ * request made with that e-mail (the form, the decision, our notes and reply drafts about them), the consent proof
+ * with the exact text version and hash, and the e-mail codes (when, never the code). Curahold is the controller here,
+ * so the operator answers it from the console; null when the request id is unknown.
+ */
+export async function trialApplicantData(deps: Pick<Deps, 'db'>, requestId: string) {
+  return deps.db.system(async (q) => {
+    const [r] = await q.query<{ email: string }>(`select email from trial_requests where id = $1`, [requestId]);
+    if (!r) return null;
+    const email = r.email;
+    const requests = await q.query(`select * from trial_requests where email = $1 order by created_at`, [email]);
+    const consents = await q.query<{ block: string; version: string; kind: string; locale: string; text_hash: string; granted: boolean; ip_country: string | null; source: string; created_at: unknown }>(
+      `select block, version, kind, locale, text_hash, granted, ip_country, source, created_at from consent_records where email = $1 order by created_at`,
+      [email],
+    );
+    const codes = await q.query<{ created_at: unknown; expires_at: unknown; used_at: unknown; tries: number }>(`select created_at, expires_at, used_at, tries from trial_codes where email = $1 order by created_at`, [email]);
+    return {
+      exportedAt: new Date().toISOString(),
+      email,
+      requests: requests.map((x) => ({
+        ref: x.ref,
+        status: x.status,
+        name: x.name,
+        company: x.company,
+        country: x.country,
+        departments: x.departments,
+        seats: x.seats,
+        details: x.details,
+        consent: x.consent,
+        emailVerifiedAt: iso(x.email_verified_at),
+        contactedAt: iso(x.contacted_at),
+        decidedAt: iso(x.decided_at),
+        rejectReason: x.reject_reason ?? null,
+        replyDraft: x.reply_draft ?? null,
+        note: x.note ?? null,
+        trialEndsAt: iso(x.trial_ends_at),
+        createdAt: iso(x.created_at),
+        updatedAt: iso(x.updated_at),
+      })),
+      consents: consents.map((c) => ({ block: c.block, version: c.version, kind: c.kind, locale: c.locale, textHash: c.text_hash, granted: c.granted, country: c.ip_country, source: c.source, at: iso(c.created_at) })),
+      emailCodes: codes.map((c) => ({ sentAt: iso(c.created_at), expiresAt: iso(c.expires_at), usedAt: iso(c.used_at), tries: c.tries })),
+    };
+  });
+}
+
 /** One trial request with its consents, contact history and decision; null when unknown. */
 export async function trialRequestDetail(deps: Pick<Deps, 'db'>, id: string): Promise<TrialRequestDetail | null> {
   return deps.db.system(async (q) => {

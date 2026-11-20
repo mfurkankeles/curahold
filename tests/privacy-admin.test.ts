@@ -162,6 +162,29 @@ describe('personal data (KVKK / GDPR)', () => {
     expect(log.some((e: any) => e.action === 'portal.user_erased' && e.entityId === pu.id)).toBe(true);
   });
 
+  it('logs requests about personal data with the due date of their law, closes them, and keeps them from members', async () => {
+    const logged = await ada.post('/api/admin/privacy-requests', { kind: 'objection', subjectName: 'Pia Portal', subjectEmail: 'pia.portal@demo.example', law: 'kvkk', receivedOn: '2026-11-02', note: 'Objects to the newsletter' });
+    expect(logged.status).toBe(201);
+    expect(logged.json.request).toMatchObject({ kind: 'objection', law: 'kvkk', receivedOn: '2026-11-02', dueOn: '2026-12-02', status: 'open' });
+    const korea = (await ada.post('/api/admin/privacy-requests', { kind: 'restriction', subjectName: 'Min Park', law: 'pipa', receivedOn: '2026-11-02' })).json.request;
+    expect(korea.dueOn).toBe('2026-11-12');
+    expect((await ada.post('/api/admin/privacy-requests', { kind: 'access', subjectName: 'X', law: 'gdpr', receivedOn: '2026-11-02', dueOn: '2026-10-01' })).status).toBe(400);
+    // The open one due first comes first.
+    const list = (await ada.get('/api/admin/privacy-requests')).json.requests;
+    expect(list.slice(0, 2).map((r: any) => r.subjectName)).toEqual(['Min Park', 'Pia Portal']);
+    const closed = await ada.patch(`/api/admin/privacy-requests/${korea.id}`, { status: 'done', note: 'Processing restricted' });
+    expect(closed.json.request).toMatchObject({ status: 'done', note: 'Processing restricted' });
+    expect(closed.json.request.closedAt).toBeTruthy();
+    // Members see nothing of it, in the route and in the database.
+    const zeynep = await login(env, 'acme', 'zeynep@demo.example');
+    expect((await zeynep.get('/api/admin/privacy-requests')).status).toBe(403);
+    const seen = await env.db.tenant({ orgId: env.a.orgId, userId: env.a.ids.zeynep }, (q) => q.query('select id from privacy_requests'));
+    expect(seen).toEqual([]);
+    const log = (await ada.get('/api/admin/audit')).json.entries;
+    expect(log.some((e: any) => e.action === 'privacy.request_logged')).toBe(true);
+    expect(log.some((e: any) => e.action === 'privacy.request_updated' && e.entityId === korea.id)).toBe(true);
+  });
+
   it('nobody can erase themselves', async () => {
     expect((await ada.post(`/api/admin/users/${env.a.ids.ada}/erase`)).status).toBe(403);
   });

@@ -34,6 +34,7 @@ const KINDS: [RegExp, string, string?][] = [
   // caller may end (DELETE /me/sessions/:id is "sign this device out"), leaving the rest of the run signed out.
   [/^\/(admin|me)\/sessions\/:id/, 'sessions', `user_id = (select id from users u where u.email = 'zeynep@demo.example' and u.org_id = sessions.org_id)`],
   [/^\/admin\/join-requests\/:id/, 'join_requests'],
+  [/^\/admin\/privacy-requests\/:id/, 'privacy_requests'],
   [/^\/automations\/:id/, 'automations'],
   [/^\/sprints\/:id/, 'sprints'],
   [/^\/boards\/:id/, 'boards'],
@@ -99,6 +100,8 @@ const NOT_BY_ID: Record<string, string> = {
   'GET /connect/:provider/start': 'the name of an app to connect',
   'PUT /support/requests/:ref': 'Curahold’s own support desk, behind its staff key (tests/help.test.ts)',
   'GET /desk/owner/requests/:id': 'a trial request: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
+  'GET /desk/owner/requests/:id/export': 'a trial applicant’s data: Curahold’s own, not a company’s; owner session only (tests/owner-console.test.ts)',
+  'GET /desk/owner/company-deletions/:id': 'a company deletion’s certificate: Curahold’s own record, owner session only (tests/retention.test.ts)',
   'POST /desk/owner/requests/:id/contacted': 'a trial request; owner session only (tests/owner-console.test.ts)',
   'POST /desk/owner/requests/:id/approve': 'a trial request; owner session only (tests/owner-console.test.ts)',
   'POST /desk/owner/requests/:id/reject': 'a trial request; owner session only (tests/owner-console.test.ts)',
@@ -206,6 +209,7 @@ beforeAll(async () => {
   await upload(lena, `/api/tasks/${task.id}/files`);
   await lena.post(`/api/accounts/${account}/activities`, { kind: 'note', body: 'A note' });
   await lena.post('/api/reports/saved', { name: 'A report', def: { ...blankDef('tasks'), groups: [{ field: 'board' }], chart: 'bar' } });
+  await ada.post('/api/admin/privacy-requests', { kind: 'objection', subjectName: 'Someone There', law: 'gdpr', receivedOn: '2026-11-02' });
   await ada.put('/api/portal/settings', { enabled: true });
   await lena.post('/api/portal/users', { accountId: account, email: 'someone@cedarmoor.example', name: 'Someone There' });
   await ada.post('/api/connections/demo', {});

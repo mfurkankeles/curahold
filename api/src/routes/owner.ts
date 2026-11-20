@@ -20,6 +20,7 @@ import {
   markContacted,
   rejectTrialRequest,
   setConsoleSetting,
+  trialApplicantData,
   trialRequestDetail,
 } from '../lib/trialRequests';
 import { body, isoDate, uuid } from '../lib/validate';
@@ -83,6 +84,13 @@ ownerRoutes.get('/requests', async (c) => {
   const s = statusQ.safeParse(c.req.query('status') ?? 'open');
   if (!s.success) return fail('validation');
   return c.json({ requests: await listTrialRequests(c.get('deps'), s.data), settings: await consoleSettings(c.get('deps')) });
+});
+/** Everything held about the applicant behind a trial request (their access request), as a download; 404 when unknown. */
+ownerRoutes.get('/requests/:id/export', async (c) => {
+  const data = await trialApplicantData(c.get('deps'), id(c));
+  if (!data) fail('not_found');
+  c.header('content-disposition', `attachment; filename="curahold-trial-applicant-${id(c)}.json"`);
+  return c.json(data);
 });
 /** One trial request with its history; 404 when unknown. */
 ownerRoutes.get('/requests/:id', async (c) => {
