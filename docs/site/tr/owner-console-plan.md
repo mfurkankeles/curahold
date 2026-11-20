@@ -1,7 +1,7 @@
 ---
 title: Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve anlık bildirimler
-section: developers
-order: 12
+section: reference
+order: 42
 summary: Platform sahibi ve işletmeci için — sahip konsolunda Plan ve hedefler (hedefler, bütçe ve harcama, kilometre taşları, yatırım pencereleri, yatırımcı görüşmeleri), iş planı dosyasını yükleme, haftalık CEO e-postası ve sahibin cihazlarına gelen anlık bildirimler.
 ---
 # Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve anlık bildirimler

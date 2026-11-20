@@ -1,7 +1,7 @@
 ---
 title: Owner console: plan, investors, the Monday summary and phone alerts
-section: developers
-order: 12
+section: reference
+order: 42
 summary: For the platform owner and the operator — Plan & targets in the owner console (targets, budget against spend, milestones, fundraising windows, the investor pipeline), loading the business plan file, the weekly CEO e-mail and alerts on the owner's phone.
 ---
 # Owner console: plan, investors, the Monday summary and phone alerts
