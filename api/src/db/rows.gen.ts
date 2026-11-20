@@ -743,6 +743,23 @@ export interface FinancePaymentsRow {
   synced_at: Date;
 }
 
+/** Table `fundraising_windows`. */
+export interface FundraisingWindowsRow {
+  id: string;
+  key: string | null;
+  name: string;
+  opens_on: Date | string;
+  closes_on: Date | string;
+  target_min: number | string | null;
+  target_max: number | string | null;
+  status: string;
+  conditions: string | null;
+  note: string | null;
+  client_key: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 /** Table `handovers`. */
 export interface HandoversRow {
   id: string;
@@ -938,6 +955,23 @@ export interface IncidentLogRow {
   notified: Json;
   not_notified_reason: string | null;
   actions: string | null;
+}
+
+/** Table `investor_pipeline`. */
+export interface InvestorPipelineRow {
+  id: string;
+  name: string;
+  kind: string;
+  stage: string;
+  window_id: string | null;
+  next_step: string | null;
+  next_on: Date | string | null;
+  amount: number | string | null;
+  note: string | null;
+  client_key: string | null;
+  created_at: Date;
+  updated_at: Date;
+  deleted_at: Date | null;
 }
 
 /** Table `invoices`. */
@@ -1309,6 +1343,32 @@ export interface OrgsRow {
   trial_seat_cap: number | null;
 }
 
+/** Table `owner_outbox`. */
+export interface OwnerOutboxRow {
+  id: string;
+  kind: string;
+  dedupe_key: string;
+  payload: Json;
+  state: string;
+  attempts: number;
+  not_before: Date | null;
+  error: string | null;
+  created_at: Date;
+  sent_at: Date | null;
+}
+
+/** Table `owner_push_devices`. */
+export interface OwnerPushDevicesRow {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  label: string;
+  created_at: Date;
+  last_ok_at: Date | null;
+  failures: number;
+}
+
 /** Table `pages`. */
 export interface PagesRow {
   id: string;
@@ -1324,6 +1384,17 @@ export interface PagesRow {
   kind: string;
   filters: Json;
   template: string | null;
+}
+
+/** Table `plan_budget`. */
+export interface PlanBudgetRow {
+  period: string;
+  category: string;
+  planned: number | string;
+  actual: number | string | null;
+  source: string;
+  updated_at: Date;
+  updated_by: string | null;
 }
 
 /** Table `plan_targets`. */
