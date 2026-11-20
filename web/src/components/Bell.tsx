@@ -64,9 +64,11 @@ export function Bell() {
 
   return (
     <div className="bell" ref={ref}>
-      <button className="bell__btn" aria-haspopup="dialog" aria-expanded={open} aria-label={t('bell.label', { n: data.unread })} title={t('bell.label', { n: data.unread })} onClick={() => setOpen((o) => !o)}>
+      {/* Named by its own (hidden) words rather than aria-label, so the visible count is not a second, different name (WCAG 2.5.3). */}
+      <button className="bell__btn" aria-haspopup="dialog" aria-expanded={open} title={t('bell.label', { n: data.unread })} onClick={() => setOpen((o) => !o)}>
         <Icon name="bell" size={19} />
-        {data.unread > 0 && <span className="bell__count num">{data.unread > 99 ? '99+' : data.unread}</span>}
+        <span className="sr-only">{t('bell.label', { n: data.unread })}</span>
+        {data.unread > 0 && <span className="bell__count num" aria-hidden="true">{data.unread > 99 ? '99+' : data.unread}</span>}
       </button>
       {open && (
         <div className="bell__pop" role="dialog" aria-label={t('bell.title')}>

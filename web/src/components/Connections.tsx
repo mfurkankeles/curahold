@@ -371,7 +371,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
           <span className="field__hint">{t('conn.signingHint')}</span>
         </label>
       )}
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
       <div className="inline-actions u-justify-content-flex-start">
         <button className="btn btn--primary" disabled={busy || !url.trim()}>
           <Icon name="plug" size={16} />

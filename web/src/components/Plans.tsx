@@ -308,7 +308,7 @@ export function PlanEditor({ plan, draft, onClose, onSaved }: { plan: PlanTempla
           </p>
         )}
       </div>
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
       {removing && plan && (
         <Confirm
           title={t('plans.deleteTitle', { name: plan.name })}

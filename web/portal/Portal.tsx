@@ -520,6 +520,9 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
   const { org, me } = boot;
   return (
     <div className="p-shell">
+      <a className="skip-link" href="#main">
+        {ctx.t('docs.skip')}
+      </a>
       <header className="p-top">
         <div className="p-wrap p-top__in">
           <a className="p-brand" {...link('/')}>
@@ -547,7 +550,7 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
         </div>
       </header>
       <Offline ctx={ctx} />
-      <main className="p-main">
+      <main className="p-main" id="main" tabIndex={-1}>
         <Route ctx={ctx} org={org} me={me} path={path} onSignedOut={signedOut} />
       </main>
       <Foot ctx={ctx} org={org} />

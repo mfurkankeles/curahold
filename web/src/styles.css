@@ -187,15 +187,15 @@
   --shadow-brand: 0 2px 6px rgba(49, 36, 160, .22), 0 14px 34px rgba(49, 36, 160, .30);
   --shadow-brand-hover: 0 3px 8px rgba(49, 36, 160, .24), 0 20px 44px rgba(49, 36, 160, .36);
 
-  /* Chart series (the same in both themes: bright enough on either). */
-  --chart-sky: #4a8cf7;
-  --chart-honey: #f4a62a;
+  /* Chart series. Light: each at least 3:1 on the page and on cards (WCAG 1.4.11); dark keeps the brighter set below. */
+  --chart-sky: #4387f7;
+  --chart-honey: #c27b0a;
   --chart-plum: #9a6cf3;
-  --chart-sea: #1bb3a4;
-  --chart-coral: #ef6a4f;
-  --chart-leaf: #55b35d;
-  --chart-rose: #ea639c;
-  --chart-stone: #9aa5b8;
+  --chart-sea: #179b8e;
+  --chart-coral: #ed5a3c;
+  --chart-leaf: #469c4d;
+  --chart-rose: #e85392;
+  --chart-stone: #7c8aa3;
   --avatar-0: #2f6f73;
   --avatar-1: #8a5a2b;
   --avatar-2: #5b6aa0;
@@ -212,6 +212,14 @@
    keep their meaning (and their contrast) on a dark surface. */
 :root[data-theme='dark'] {
   color-scheme: dark;
+  --chart-sky: #4a8cf7;
+  --chart-honey: #f4a62a;
+  --chart-plum: #9a6cf3;
+  --chart-sea: #1bb3a4;
+  --chart-coral: #ef6a4f;
+  --chart-leaf: #55b35d;
+  --chart-rose: #ea639c;
+  --chart-stone: #9aa5b8;
   --paper: #0f0e1a;
   --surface: #171626;
   --surface-2: #1c1b2e;
@@ -328,6 +336,11 @@ a { color: var(--brand-ink); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .num { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* "Skip to content": the keyboard's first stop, out of sight until it has focus (WCAG 2.4.1). Shared by the app and the console. */
+.skip-link { position: fixed; top: 8px; inset-inline-start: 8px; z-index: 1001; padding: 8px 16px; border-radius: var(--r-s); background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-3); transform: translateY(-200%); }
+.skip-link:focus, .skip-link:focus-visible { transform: none; }
+/* A landmark the skip link lands on takes focus without drawing a ring around the whole screen. */
+main[tabindex='-1']:focus { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -930,6 +943,7 @@ tr.vspacer td { padding: 0; border: 0; }
 .option-chip button { border: 0; background: none; cursor: pointer; color: var(--ink-3); padding: 0 4px; }
 .option-chip__input { border: 0; background: transparent; padding: 4px 0; min-width: 3ch; }
 .option-chip__input:focus { outline: none; }
+.option-chip:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 .chips-row { display: flex; gap: 4px; flex-wrap: wrap; }
 .savebar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: var(--r-m); background: var(--surface); border: 1px solid var(--line); }
 .savebar span { margin-inline-end: auto; color: var(--ink-3); }
@@ -1023,8 +1037,9 @@ tr.vspacer td { padding: 0; border: 0; }
   .wizard { grid-template-columns: 1fr; gap: 12px; }
   .wizard__rail { position: static; display: flex; overflow-x: auto; gap: 4px; }
   .wizard__rail li + li::before { display: none; }
-  .wizard__label { display: none; }
-  .wizard__rail li[data-state='current'] .wizard__label { display: inline; }
+  /* Out of sight, still the button's name (WCAG 2.5.3: the name is the words it shows elsewhere). */
+  .wizard__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wizard__rail li[data-state='current'] .wizard__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .wizard__panel { padding: 16px 16px 20px; }
   .account-page { grid-template-columns: 1fr; }
   .account-page__side { position: static; }

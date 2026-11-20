@@ -203,9 +203,9 @@
 @media (max-width: 860px) {
   .wizard__rail { overflow: visible; flex-wrap: wrap; gap: 4px; padding-block: 4px; }
   .wizard__rail button { justify-content: center; min-width: 44px; min-height: 44px; padding: 4px; }
-  /* The button carries the step's name (aria-label); the panel's title shows it. */
+  /* The step's name stays in the button for screen readers, out of sight; the panel's title shows it. */
   .wizard__rail .wizard__label,
-  .wizard__rail li[data-state='current'] .wizard__label { display: none; }
+  .wizard__rail li[data-state='current'] .wizard__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .wizard__dot { margin-inline-start: 0; }
 }
 

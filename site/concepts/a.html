@@ -695,8 +695,10 @@ $$('.skyL').forEach(e=>{const T=250+Math.round(R()*110),dots=[];for(let j=0;j<9;
 sky0.style.backgroundImage=tile(28,[[14,14,1,'255,255,255,.2']]);})();
 const tEls=$$('[data-t]'),tr0=new Map(tEls.map(e=>[e,e.textContent]));
 let lang='tr';
+/* The language the page was built in: lang= must name the language the text is in (WCAG 3.1.1). */
+const LANG0=root.lang;
 function setLang(l,save){
-  lang=l==='en'?'en':'tr';root.lang=lang;
+  lang=l==='en'?'en':'tr';root.lang=lang==='en'?'en':LANG0==='en'?'tr':LANG0;
   for(const e of tEls){const v=lang==='en'?EN[e.dataset.t]:tr0.get(e);if(v!=null&&e.textContent!==v)e.textContent=v;}
   const W=lang==='en'?EN:TR;d.title=W.title;$('meta[name=description]').content=W.desc;
   $$('[data-ta]').forEach(e=>e.setAttribute('aria-label',W[e.dataset.ta]));
@@ -925,7 +927,7 @@ RMQ.addEventListener?.('change',()=>{rm=RMQ.matches;root.classList.toggle('rm',r
 const at=(s)=>{const top=film.offsetTop+s*VH*SLOW;if(Math.abs(scrollY-top)>4)scrollTo({top,behavior:rm?'auto':'smooth'});};
 depts.forEach((e,j)=>e.addEventListener('focus',()=>at(wide?L0+1.6:L0+1.05+(R0-.45-L0-1.05)*(j/3))));
 $('.cta').addEventListener('focus',()=>at(END));
-setLang('tr',false);measure();cur=target=scrollY;paint();
+setLang(LANG0==='en'?'en':'tr',false);measure();cur=target=scrollY;paint();
 d.fonts&&d.fonts.ready.then(()=>{measure();paint();});
 window.__film={settle(){cur=target=scrollY;paint();},END,go(s){scrollTo(0,film.offsetTop+s*VH*SLOW);cur=target=scrollY;paint();}};
 })();

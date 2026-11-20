@@ -384,7 +384,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
             {t('import.choose')}
           </span>
         </label>
-        {readError && <p className="error-text">{readError}</p>}
+        {readError && <p className="error-text" role="alert">{readError}</p>}
         {privacy}
         <p className="field__hint">
           <a href={template} download={t('imp.templateFile')}>
@@ -471,8 +471,8 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
             </tbody>
           </table>
         </div>
-        {!titleColumn && <p className="error-text">{t('timport.needTitle')}</p>}
-        {duplicate && <p className="error-text">{t('import.duplicate')}</p>}
+        {!titleColumn && <p className="error-text" role="alert">{t('timport.needTitle')}</p>}
+        {duplicate && <p className="error-text" role="alert">{t('import.duplicate')}</p>}
         <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" disabled={!titleColumn || duplicate || busy} onClick={fromColumns}>
             {many ? t('imp.next.lists', { n: lists.length }) : busy ? t('imp.checking') : t('imp.next.check')}

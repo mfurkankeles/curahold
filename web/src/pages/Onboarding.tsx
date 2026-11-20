@@ -1893,7 +1893,7 @@ export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' })
                           {p.status === 'draft' && <span className="ob-tag">{t('ob.status.draft')}</span>}
                         </td>
                         <td>
-                          <span className="ob-bar" aria-label={formatPercent(p.progress.pct, locale)}>
+                          <span className="ob-bar" role="img" aria-label={formatPercent(p.progress.pct, locale)}>
                             <span style={{ width: `${p.progress.pct}%` }} />
                             <i style={{ insetInlineStart: `${p.progress.expected}%` }} />
                           </span>
