@@ -8,6 +8,7 @@ import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 import { LoadError, SkeletonRows } from './Empty';
 import { Confirm } from './ui';
+import { Icon } from './icons';
 
 export function CompanySecurity() {
   const { t } = useI18n();
@@ -71,6 +72,7 @@ export function CompanySecurity() {
                     className="btn btn--small"
                     onClick={() => setResetting(p)}
                   >
+                    <Icon name="refresh" size={16} />
                     {t('sec.policy.reset')}
                   </button>
                 )}

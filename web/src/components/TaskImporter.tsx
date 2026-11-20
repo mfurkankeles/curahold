@@ -307,6 +307,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
         <p className="notice">{undone.archived ? t('timport.undoneKept', { removed: undone.removed, kept: undone.archived }) : t('timport.undone', { removed: undone.removed })}</p>
         <div className="inline-actions u-justify-content-flex-start">
           <button className="btn" onClick={again}>
+            <Icon name="upload" size={16} />
             {t('import.another')}
           </button>
         </div>
@@ -353,12 +354,15 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
         )}
         <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" onClick={onClose}>
+            <Icon name="arrowRight" size={16} />
             {t('imp.finish')}
           </button>
           <button className="btn" onClick={() => void undo(result.batch)} disabled={busy}>
+            <Icon name="undo" size={16} />
             {t('import.undo')}
           </button>
           <button className="btn btn--quiet" onClick={again}>
+            <Icon name="upload" size={16} />
             {t('import.another')}
           </button>
         </div>
@@ -433,6 +437,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
             </div>
           </div>
           <button className="btn btn--quiet btn--small" onClick={() => setStep('file')}>
+            <Icon name="upload" size={16} />
             {t('import.changeFile')}
           </button>
         </div>
@@ -475,6 +480,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
         {duplicate && <p className="error-text" role="alert">{t('import.duplicate')}</p>}
         <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" disabled={!titleColumn || duplicate || busy} onClick={fromColumns}>
+            <Icon name="arrowRight" size={16} />
             {many ? t('imp.next.lists', { n: lists.length }) : busy ? t('imp.checking') : t('imp.next.check')}
           </button>
           <span className="field__hint">{t('imp.nothingYet')}</span>
@@ -543,9 +549,11 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
         <p className="field__hint">{t('imp.fromListHint')}</p>
         <div className="inline-actions u-justify-content-flex-start">
           <button className="btn btn--primary" disabled={busy} onClick={() => void check()}>
+            <Icon name="arrowRight" size={16} />
             {busy ? t('imp.checking') : t('imp.next.check')}
           </button>
           <button className="btn btn--quiet" onClick={() => setStep('columns')}>
+            <Icon name="arrowLeft" size={16} />
             {t('imp.back')}
           </button>
         </div>
@@ -626,6 +634,7 @@ export function TaskImporter({ board, onClose, onDone, file: firstFile }: { boar
             {t('imp.go', { n: total })}
           </button>
           <button className="btn btn--quiet" onClick={() => setStep(many ? 'lists' : 'columns')} disabled={busy}>
+            <Icon name="arrowLeft" size={16} />
             {t('imp.back')}
           </button>
           <span className="field__hint">{t('timport.safe')}</span>

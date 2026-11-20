@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import type { OrgPublic } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
 import { ssoInfo, startSso, type SsoInfo } from '../lib/sso';
+import { Icon } from './icons';
 
 /** Whether the company has SSO on, and requires it: undefined while asking, null when it could not be told. */
 export function useSsoInfo(slug: string): SsoInfo | null | undefined {
@@ -27,6 +28,7 @@ export function SsoSignIn({ org, info, primary }: { org: OrgPublic; info: SsoInf
   if (!info?.enabled) return null;
   return (
     <button type="button" className={primary ? 'btn btn--primary' : 'btn'} onClick={() => startSso(org.slug)}>
+      <Icon name="key" size={16} />
       {t('sso.signIn')}
     </button>
   );

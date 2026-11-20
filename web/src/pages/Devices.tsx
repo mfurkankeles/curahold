@@ -8,6 +8,7 @@ import { useSaver } from '../lib/saver';
 import { relativeTime } from '../lib/time';
 import { post } from '../lib/api';
 import { SignInSecurity } from '../components/SignInSecurity';
+import { Icon } from '../components/icons';
 
 export function DevicesPage() {
   const { t } = useI18n();
@@ -57,6 +58,7 @@ export function DevicesPage() {
                     else void load();
                   }}
                 >
+                  <Icon name="logout" size={16} />
                   {t('devices.signOut')}
                 </button>
               </div>
@@ -73,6 +75,7 @@ export function DevicesPage() {
                     }
                   }}
                 >
+                  <Icon name="logout" size={16} />
                   {t('sec.signOutOthers')}
                 </button>
                 {note && <span className="muted">{note}</span>}

@@ -5020,6 +5020,7 @@ export const en = {
   'demo.bar.step.data': 'Loading an invented customer portfolio.',
   'demo.bar.step.app': 'Opening the app.',
   'demo.bar.failed': 'The demo could not start. Reload the page to try again.',
+  'demo.bar.still': 'Still getting ready. The first start takes a little longer on a slower device.',
   'demo.bar.stuck': 'The demo could not sign you in.',
   'demo.bar.note': 'Invented data, running entirely in this tab. Reloading starts over.',
   'demo.bar.as': 'Viewing as',

@@ -175,7 +175,7 @@ export const JOB_TITLES = 'english' as const;
 /** Formality per language: what a B2B product in that market writes to its users. */
 export const REGISTER: Record<GlossaryLocale, string> = {
   en: 'plain, direct second person',
-  tr: '"siz" on every first-contact surface (sales site, trial form, consent, e-mails, sign-up, sign-in, setup); the in-app product still says "sen" (owner question, out/owner-questions.md)',
+  tr: '"siz" everywhere: the product, e-mails, the portal, the docs and the sales site (owner, 20 Nov 2026). Sentences say "deneyin", "seçin", "hesabınız"; short button and menu labels keep the bare verb Turkish interfaces use ("Kaydet", "Görev ekle"). tests/i18n-quality.test.ts guards it',
   ar: 'Modern Standard Arabic, polite imperative addressed to one person (masculine default)',
   he: 'second person; gender-neutral where cheap ("אפשר ל…", plural "בדקו"), masculine singular otherwise',
   fa: 'formal "شما" with plural verbs (کنید)',

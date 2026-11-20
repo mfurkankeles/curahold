@@ -5005,6 +5005,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'demo.bar.step.data': '가상의 고객 포트폴리오를 불러오는 중입니다.',
   'demo.bar.step.app': '앱을 여는 중입니다.',
   'demo.bar.failed': '데모를 시작하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.',
+  'demo.bar.still': '아직 준비 중입니다. 느린 기기에서는 처음 시작할 때 시간이 조금 더 걸립니다.',
   'demo.bar.stuck': '데모에 로그인하지 못했습니다.',
   'demo.bar.note': '가상의 데이터로, 모두 이 탭 안에서 실행됩니다. 새로고침하면 처음부터 다시 시작합니다.',
   'demo.bar.as': '보는 사람',

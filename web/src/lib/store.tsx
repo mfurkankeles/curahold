@@ -9,6 +9,8 @@ export interface Toast {
   id: number;
   text: string;
   tone: 'info' | 'error';
+  /** How long it shows, in ms; null: until closed (an error). Counting pauses under the pointer or the focus (Shell.tsx). */
+  life: number | null;
   /** e.g. "Undo" — the toast stays a little longer when it has one. */
   action?: { label: string; run: () => void | Promise<void>; /** An Undo (lib/undo.ts): Ctrl+Z runs it while the toast shows. */ undo?: boolean };
 }
@@ -33,6 +35,12 @@ interface Store {
 
 const Ctx = createContext<Store | null>(null);
 let toastSeq = 0;
+/** Toast lifetimes (docs/design/tokens.md "Undo"): long enough to read, short enough not to pile up. */
+export const TOAST_MS = 4000;
+/** A toast with an action (Undo) stays longer, so there is time to reach it. */
+export const TOAST_ACTION_MS = 7000;
+/** At most this many toasts on screen; the oldest gives way. */
+const TOAST_MAX = 3;
 
 export function StoreProvider({ initialMe, children }: { initialMe: Me; children: ReactNode }) {
   const [me, setMe] = useState(initialMe);
@@ -68,8 +76,9 @@ export function StoreProvider({ initialMe, children }: { initialMe: Me; children
   const dismiss = useCallback((id: number) => setToasts((list) => list.filter((x) => x.id !== id)), []);
   const toast = useCallback((text: string, tone: Toast['tone'] = 'info', action?: Toast['action']) => {
     const id = ++toastSeq;
-    setToasts((list) => [...list, { id, text, tone, action }]);
-    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), action ? 10_000 : tone === 'error' ? 6000 : 3500);
+    // An error stays until closed: it may need reading twice, or acting on.
+    const life = tone === 'error' ? null : action ? TOAST_ACTION_MS : TOAST_MS;
+    setToasts((list) => [...list, { id, text, tone, action, life }].slice(-TOAST_MAX));
   }, []);
 
   const value = useMemo<Store>(() => {

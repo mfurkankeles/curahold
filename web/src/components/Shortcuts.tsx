@@ -5,6 +5,7 @@ import { useI18n } from '../lib/i18n';
 import { navigate } from '../lib/router';
 import { somethingOpen, typing, type ShellActions } from '../lib/shell';
 import { Dialog } from './ui';
+import { Icon } from './icons';
 
 const mac = () => /Mac|iPhone|iPad/.test(navigator.platform);
 export const modKey = () => (mac() ? '⌘' : 'Ctrl');
@@ -108,7 +109,7 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
     },
   ];
   return (
-    <Dialog title={t('keys.title')} onClose={onClose} wide footer={<button className="btn" onClick={onClose}>{t('common.close')}</button>}>
+    <Dialog title={t('keys.title')} onClose={onClose} wide footer={<button className="btn" onClick={onClose}><Icon name="close" size={16} /> {t('common.close')}</button>}>
       <p className="muted u-m-0">
         {t('keys.lead')}
       </p>

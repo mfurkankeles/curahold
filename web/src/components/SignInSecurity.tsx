@@ -9,6 +9,7 @@ import { useSaver } from '../lib/saver';
 import { relativeTime } from '../lib/time';
 import { LoadError, SkeletonRows } from './Empty';
 import { RecoveryCodes, TotpSecret } from './SecondStep';
+import { Icon } from './icons';
 
 export function SignInSecurity() {
   const { t } = useI18n();
@@ -64,11 +65,13 @@ export function SignInSecurity() {
                   if (await save(() => del('/me/security/totp'))) void load();
                 }}
               >
+                <Icon name="trash" size={16} />
                 {t('sec.app.remove')}
               </button>
             ) : (
               !setup && (
                 <button className="btn btn--small btn--primary" onClick={() => void save(async () => setSetup(await post('/me/security/totp', {})), false)}>
+                  <Icon name="sliders" size={16} />
                   {t('sec.app.setup')}
                 </button>
               )
@@ -85,8 +88,9 @@ export function SignInSecurity() {
                   <input className="input code-input" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
                 </label>
                 <div className="toolbar">
-                  <button className="btn btn--primary">{t('common.confirm')}</button>
+                  <button className="btn btn--primary"><Icon name="check" size={16} /> {t('common.confirm')}</button>
                   <button type="button" className="btn btn--quiet" onClick={() => setSetup(null)}>
+                    <Icon name="close" size={16} />
                     {t('common.cancel')}
                   </button>
                 </div>
@@ -109,6 +113,7 @@ export function SignInSecurity() {
                   }
                 }}
               >
+                <Icon name="plus" size={16} />
                 {t('sec.passkeys.add')}
               </button>
             )}
@@ -125,6 +130,7 @@ export function SignInSecurity() {
                   if (await save(() => del(`/me/security/passkeys/${k.id}`))) void load();
                 }}
               >
+                <Icon name="trash" size={16} />
                 {t('common.delete')}
               </button>
             </li>
@@ -136,6 +142,7 @@ export function SignInSecurity() {
                 <div className="muted">{t('sec.recovery.left', { n: data.recoveryLeft })}</div>
               </div>
               <button className="btn btn--small" onClick={() => void save(async () => setCodes((await post<{ recoveryCodes: string[] }>('/me/security/recovery-codes', {})).recoveryCodes), false)}>
+                <Icon name="refresh" size={16} />
                 {t('sec.recovery.renew')}
               </button>
             </li>

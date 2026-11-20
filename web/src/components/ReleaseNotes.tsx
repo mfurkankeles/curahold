@@ -10,6 +10,7 @@ import { useFormat } from '../lib/useFormat';
 import { SkeletonRows } from './Empty';
 import { Dialog } from './ui';
 import '../surfaces/product.css';
+import { Icon } from './icons';
 
 type Group = 'new' | 'fixed' | 'improved';
 const GROUP: Record<IssueType, Group> = { epic: 'new', story: 'new', bug: 'fixed', task: 'improved', subtask: 'improved', spike: 'improved' };
@@ -56,9 +57,11 @@ export function ReleaseNotes({ sprint, doneKeys, onClose }: { sprint: Sprint; do
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.close')}
           </button>
           <button className="btn btn--primary" disabled={!text || !count} onClick={() => void copy()}>
+            <Icon name="copy" size={16} />
             {t('pm.notes.copy')}
           </button>
         </>

@@ -256,6 +256,7 @@ function Annotate({ shot, onDone, onClose }: { shot: Shot; onDone: (f: File) => 
               </button>
             </div>
             <button type="button" className="btn btn--small btn--quiet" disabled={!boxes.length} onClick={() => setBoxes(boxes.slice(0, -1))}>
+              <Icon name="undo" size={16} />
               {t('help.annotate.undo')}
             </button>
             <span className="field__hint">{t('help.annotate.hint')}</span>
@@ -289,9 +290,11 @@ function Annotate({ shot, onDone, onClose }: { shot: Shot; onDone: (f: File) => 
         </div>
         <div className="dialog__foot">
           <button type="button" className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button type="button" className="btn btn--primary" onClick={finish}>
+            <Icon name="check" size={16} />
             {t('help.annotate.done')}
           </button>
         </div>
@@ -546,6 +549,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
                     <div className="help__shotbar">
                       {s.file.type.startsWith('image/') && (
                         <button type="button" className="btn btn--small btn--quiet" onClick={() => setEditing(s)}>
+                          <Icon name="edit" size={16} />
                           {t('help.files.annotate')}
                         </button>
                       )}
@@ -557,6 +561,7 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
                         })}
                         onClick={() => remove(s.id)}
                       >
+                        <Icon name="trash" size={16} />
                         {t('common.remove')}
                       </button>
                     </div>
@@ -567,10 +572,12 @@ function NewRequest({ access, onSent, hide, about = '' }: { access: Access | nul
             <div className="toolbar">
               {canCapture && (
                 <button type="button" className="btn btn--small" onClick={capture}>
+                  <Icon name="clip" size={16} />
                   {t('help.files.capture')}
                 </button>
               )}
               <button type="button" className="btn btn--small" onClick={() => fileInput.current?.click()}>
+                <Icon name="plus" size={16} />
                 {t('help.files.add')}
               </button>
               <span className="field__hint">
@@ -775,6 +782,7 @@ function MyRequests({ access, reload }: { access: Access | null; reload: () => v
                 {g.requestRef && <span className="muted"> · {g.requestRef}</span>}
               </span>
               <button className="btn btn--small" onClick={() => revoke(g.id)}>
+                <Icon name="close" size={16} />
                 {t('help.grant.close')}
               </button>
             </li>
@@ -1043,9 +1051,11 @@ export function HelpDialog({ onClose, start = 'new', about = '' }: { onClose: ()
             <p>{t('help.sent.body', { ref: sentRef })}</p>
             <div className="toolbar">
               <button className="btn" onClick={() => setTab('mine')}>
+                <Icon name="eye" size={16} />
                 {t('help.tab.mine')}
               </button>
               <button className="btn btn--primary" onClick={onClose}>
+                <Icon name="close" size={16} />
                 {t('common.close')}
               </button>
             </div>
@@ -1145,6 +1155,7 @@ export function SupportAccessSettings() {
                   if (await save(() => del(`/support/grants/${g.id}`), t('help.grant.closed'))) load();
                 }}
               >
+                <Icon name="close" size={16} />
                 {t('help.grant.close')}
               </button>
             </li>

@@ -12,6 +12,7 @@ import { LegalNotice } from '../components/LegalNotice';
 import { useI18n } from '../lib/i18n';
 import { navigate, useLocation } from '../lib/router';
 import { CURRENCIES } from './Settings';
+import { Icon } from '../components/icons';
 
 const TIMEZONES = ['Europe/Istanbul', 'Europe/London', 'Europe/Berlin', 'Europe/Amsterdam', 'Europe/Paris', 'Europe/Madrid', 'Europe/Warsaw', 'Asia/Dubai', 'Asia/Riyadh', 'Asia/Singapore', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'UTC'];
 const browserTz = () => {
@@ -113,6 +114,7 @@ function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnsti
             </a>
           )}
           <button className="btn btn--quiet" onClick={() => setSent(null)}>
+            <Icon name="mail" size={16} />
             {t('auth.useAnother')}
           </button>
         </>
@@ -128,6 +130,7 @@ function Start({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnsti
             </label>
             {human.field}
             <button className="btn btn--primary" disabled={busy}>
+              <Icon name="arrowRight" size={16} />
               {t('signup.start')}
             </button>
           </form>
@@ -237,6 +240,7 @@ function Details({ onLocale }: { onLocale: (l: Locale) => void }) {
       <Frame onLocale={onLocale}>
         <div className="notice notice--error" role="alert">{fatal}</div>
         <button className="btn btn--primary" onClick={() => navigate('/signup')}>
+          <Icon name="refresh" size={16} />
           {t('signup.again')}
         </button>
       </Frame>
@@ -338,6 +342,7 @@ function Details({ onLocale }: { onLocale: (l: Locale) => void }) {
           ))}
         </fieldset>
         <button className="btn btn--primary" disabled={busy || !slugState?.available || !company.trim() || !name.trim()}>
+          <Icon name="plus" size={16} />
           {busy ? t('signup.creating') : t('signup.create')}
         </button>
         <p className="field__hint">{t('signup.trial')}</p>

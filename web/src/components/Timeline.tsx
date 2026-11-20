@@ -184,6 +184,7 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
         {score === null ? <span className="muted">—</span> : <ScoreChip value={score} />}
         {band && <span className="muted">{t(`health.band.${band}` as MessageKey)}</span>}
         <button type="button" className="btn btn--quiet btn--small" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          <Icon name="help" size={16} />
           {open ? t('health.hide') : t('health.why')}
         </button>
       </div>
@@ -653,6 +654,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
                 {t('timeline.add')}
               </button>
               <button type="button" className="btn btn--quiet btn--small" onClick={() => (setComposing(false), setText(''))}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <span className="field__hint">{t('timeline.addHint')}</span>
@@ -674,6 +676,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
       )}
       {next && (
         <button type="button" className="btn btn--quiet btn--small tl__older" onClick={more}>
+          <Icon name="chevronDown" size={16} />
           {t('timeline.older')}
         </button>
       )}
@@ -721,9 +724,11 @@ function EditActivity({ activity, onClose, onSaved }: { activity: Activity; onCl
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!text.trim()} onClick={save}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>

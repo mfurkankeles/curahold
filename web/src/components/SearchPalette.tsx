@@ -8,7 +8,8 @@ import { useStore } from '../lib/store';
 import { useDepartments } from '../lib/departments';
 import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
-import { trapTab } from './ui';
+import { trapTab, CloseButton } from './ui';
+import { useLeave } from '../lib/leave';
 
 interface Found {
   accounts: { id: string; name: string }[];
@@ -31,6 +32,7 @@ interface Item {
 const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
 
 export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
+  const leaveWrap = useLeave<HTMLDivElement>();
   const { t, words, locale } = useI18n();
   const { me, boards, people, can, canWrite } = useStore();
   const depts = useDepartments();
@@ -194,7 +196,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
 
   let lastGroup = '';
   return (
-    <div className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={leaveWrap} className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       {/* Escape closes from wherever the focus is in it, and Tab goes round inside it (WCAG 2.1.2). */}
       <div
         className="palette-box"
@@ -207,22 +209,25 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
           else trapTab(e.nativeEvent, box.current);
         }}
       >
-        <input
-          ref={input}
-          className="palette-input"
-          value={q}
-          placeholder={t('search.placeholder')}
-          aria-label={t('search.placeholder')}
-          role="combobox"
-          aria-expanded="true"
-          aria-controls="palette-list"
-          aria-activedescendant={items[active] ? `pi-${active}` : undefined}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setActive(0);
-          }}
-          onKeyDown={onKey}
-        />
+        <div className="palette-top">
+          <input
+            ref={input}
+            className="palette-input"
+            value={q}
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.placeholder')}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="palette-list"
+            aria-activedescendant={items[active] ? `pi-${active}` : undefined}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setActive(0);
+            }}
+            onKeyDown={onKey}
+          />
+          <CloseButton onClick={onClose} />
+        </div>
         <div className="palette-list" id="palette-list" role="listbox" ref={list}>
           {items.length === 0 && <p className="palette-none">{t('search.none')}</p>}
           {items.map((it, i) => {

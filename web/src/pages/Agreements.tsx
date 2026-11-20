@@ -11,6 +11,7 @@ import { ApiFailure, get, post } from '../lib/api';
 import { docsHref, docsLink } from '../lib/docs';
 import { useI18n } from '../lib/i18n';
 import '../surfaces/trial.css';
+import { Icon } from '../components/icons';
 
 interface Due {
   doc: AgreementDoc;
@@ -68,6 +69,7 @@ export function AgreementsGate({ me, onLocale, onAccepted }: { me: Me; onLocale:
             <>
               <p className="auth__sub">{t('agreements.waiting', { org: me.org.name })}</p>
               <button className="btn" onClick={() => void post('/auth/logout').finally(() => location.assign('/login'))}>
+                <Icon name="logout" size={16} />
                 {t('auth.signOut')}
               </button>
             </>
@@ -98,6 +100,7 @@ export function AgreementsGate({ me, onLocale, onAccepted }: { me: Me; onLocale:
                 <span>{t('agreements.statement', { terms: AGREEMENTS.terms.version, dpa: AGREEMENTS.dpa.version })}</span>
               </label>
               <button className="btn btn--primary" disabled={!agree || busy || due === null} onClick={() => void accept()}>
+                <Icon name="check" size={16} />
                 {t('agreements.accept')}
               </button>
             </>

@@ -7,7 +7,7 @@ import type { Account } from '../../../shared/src/model';
 import type { AppRecord } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { bandOf, keyFields } from '../components/AccountViews';
-import { EmptyState, LoadError, SkeletonCards } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards, SkeletonDash } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { TargetsPanel, dealsN } from '../components/Rhythm';
@@ -224,7 +224,7 @@ export function ReportsPage() {
           failed.work ? (
             <LoadError onRetry={() => retry('work')} />
           ) : (
-            <SkeletonCards count={4} label={t('common.loading')} />
+            <SkeletonDash label={t('common.loading')} />
           )
         ) : (
           <>

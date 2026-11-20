@@ -95,6 +95,7 @@ export function DepartmentsTab() {
                 <h3 className="faccess__h u-m-0">{t('dept.moves.suggest.title', { n: moves.suggestions.length })}</h3>
                 <div className="topbar__spacer" />
                 <button className="btn btn--small" onClick={() => void save(() => post('/departments/moves/accept', { ids: moves.suggestions.map((x) => x.id) })).then(done)}>
+                  <Icon name="check" size={16} />
                   {t('dept.moves.acceptAll')}
                 </button>
               </div>
@@ -107,6 +108,7 @@ export function DepartmentsTab() {
                     {d && <span className="deptmark" data-dept={d.key}>{name(d.key)}</span>}
                     <span className="muted small">{t('dept.moves.boards', { n: x.boards })}</span>
                     <button className="btn btn--small btn--quiet" onClick={() => void save(() => post('/departments/moves/accept', { ids: [x.id] })).then(done)}>
+                      <Icon name="check" size={16} />
                       {t('dept.moves.accept')}
                     </button>
                   </div>

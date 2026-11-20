@@ -1,20 +1,26 @@
 import { useI18n } from '../lib/i18n';
 import { useAfter } from './Empty';
+import { Loader } from './Loader';
+import { useLoadingMark } from '../lib/loading';
 
 // What a screen shows while its code is on the way. Most waits are short: for
 // the first 300 ms nothing is drawn (no flash). A longer wait shows a quiet
 // skeleton the size of the screen it stands for, so nothing jumps when the
 // screen arrives.
-/** A whole-page wait (starting up, the sign-in page, sign-up, the desk): blank, then a quiet note. */
+/** A whole-page wait (starting up, the sign-in page, sign-up, the desk): blank, then the brand loader. */
 export function PageFallback() {
-  const { t } = useI18n();
-  const late = useAfter(300);
-  return <div className="center-note muted" role="status" aria-live="polite" aria-label={late ? t('common.loading') : undefined} />;
+  useLoadingMark();
+  return (
+    <div className="center-note muted">
+      <Loader size={48} />
+    </div>
+  );
 }
 
 /** A screen inside the app's frame: its title bar and a few rows, at their final size. */
 export function RouteFallback() {
   const { t } = useI18n();
+  useLoadingMark();
   const late = useAfter(300);
   if (!late) return <div className="route-wait" aria-hidden="true" />;
   return (

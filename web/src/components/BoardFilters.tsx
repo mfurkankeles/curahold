@@ -11,6 +11,7 @@ import { Icon } from './icons';
 import { useDismiss } from './Menus';
 import { FilterGroup, FilterSheet, usePhone } from './FilterSheet';
 import { SavedViews, useSavedViews } from './SavedViews';
+import { useLeave } from '../lib/leave';
 
 const DUE = ['late', 'today', 'week', 'later', 'none'] as const;
 
@@ -38,6 +39,7 @@ function toggle<T>(list: T[] | undefined, v: T): T[] {
 }
 
 export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Board; filters: ViewFilters; onChange: (f: ViewFilters) => void; viewSwitch?: ReactNode }) {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t, locale } = useI18n();
   const phone = usePhone();
   const { people, me } = useStore();
@@ -111,7 +113,7 @@ export function FilterBar({ board, filters, onChange, viewSwitch }: { board: Boa
           {n > 0 && <span className="fcount num">{n}</span>}
         </button>
         {open === 'filter' && (
-          <div className="popmenu filterpop" role="dialog" aria-label={t('filters.button')}>
+          <div ref={leavePop} className="popmenu filterpop" role="dialog" aria-label={t('filters.button')}>
             {groups}
             <div className="filterpop__foot">
               <button className="linkbtn" disabled={!n} onClick={() => onChange({ q: filters.q })}>

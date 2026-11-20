@@ -54,7 +54,7 @@ export function ExportMenu({ ask, disabled, quiet }: { ask: Ask; disabled?: bool
   return (
     <div className="menu-wrap">
       <button className={quiet ? 'btn btn--quiet' : 'btn'} aria-haspopup="menu" aria-expanded={open} aria-busy={busy || undefined} disabled={disabled || busy} onClick={() => setOpen(!open)}>
-        {quiet && <Icon name="download" size={16} />}
+        <Icon name="download" size={16} />
         {t('export.button')}
       </button>
       {open && (

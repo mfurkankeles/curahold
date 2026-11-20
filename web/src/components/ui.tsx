@@ -4,6 +4,8 @@ import { useI18n } from '../lib/i18n';
 import { dueState, type DueState } from '../lib/time';
 import { Icon } from './icons';
 import { formatDate } from '../lib/format';
+import { useLeave } from '../lib/leave';
+import { busyProps, useBusy } from '../lib/busy';
 
 /** Avatar tones: --avatar-0 … --avatar-7 in styles.css. */
 const AVATAR_TONES = 8;
@@ -116,7 +118,7 @@ export function trapTab(e: KeyboardEvent, box: HTMLElement | null) {
 export function useFocusTrap(box: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (document.querySelector('.dialog')) return;
+      if (document.querySelector('.dialog:not([data-leaving])')) return;
       trapTab(e, box.current);
     };
     document.addEventListener('keydown', onKey);
@@ -125,8 +127,8 @@ export function useFocusTrap(box: RefObject<HTMLElement | null>) {
 }
 
 export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
-  const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
+  const leave = useLeave<HTMLDivElement>();
   // The latest onClose, without re-running the focus effect on every render
   // (that would pull focus away from whatever the person is typing in).
   const close = useRef(onClose);
@@ -146,7 +148,7 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
       if (e.key === 'Escape') close.current();
       else {
         // Only the topmost dialog holds the focus.
-        const open = document.querySelectorAll('.dialog__box');
+        const open = document.querySelectorAll('.dialog__box:not([data-leaving] *)');
         if (open[open.length - 1] === box.current) trapTab(e, box.current);
       }
     };
@@ -157,15 +159,13 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
     };
   }, [opener]);
   return (
-    <div className="dialog" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="dialog" ref={leave} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`dialog__box${wide ? ' dialog__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="dlg-title" ref={box}>
         <div className="dialog__top">
           <h2 className="dialog__head" id="dlg-title">
             {title}
           </h2>
-          <button type="button" className="btn btn--quiet btn--icon btn--small dialog__x" onClick={onClose} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <div className="dialog__body">{children}</div>
         {footer && <div className="dialog__foot">{footer}</div>}
@@ -174,9 +174,24 @@ export function Dialog({ title, children, onClose, footer, wide }: { title: stri
   );
 }
 
+/**
+ * The one Close of every dialog, panel and sheet: at the end corner of its header, 44 × 44, with a visible
+ * fill (never a bare cross that could be mistaken for, or sit flush against, a destructive button),
+ * named "Close" and hinting at Esc. `onClick` closes.
+ */
+export function CloseButton({ onClick, label }: { onClick: () => void; label?: string }) {
+  const { t } = useI18n();
+  const name = label ?? t('common.close');
+  return (
+    <button type="button" className="closex" onClick={onClick} aria-label={name} title={`${name} (Esc)`}>
+      <Icon name="close" size={20} />
+    </button>
+  );
+}
+
 export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose, children }: { title: string; body: string; confirmLabel: string; danger?: boolean; onConfirm: () => void | Promise<void>; onClose: () => void; children?: ReactNode }) {
   const { t } = useI18n();
-  const [busy, setBusy] = useState(false);
+  const [busy, run] = useBusy();
   return (
     <Dialog
       title={title}
@@ -184,21 +199,21 @@ export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose,
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
             className={`btn ${danger ? 'btn--danger' : 'btn--primary'}`}
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
+            disabled={busy === 'busy'}
+            {...busyProps(busy)}
+            onClick={() =>
+              void run(async () => {
                 await onConfirm();
                 onClose();
-              } finally {
-                setBusy(false);
-              }
-            }}
+              }).catch(() => undefined)
+            }
           >
+            <Icon name={danger ? 'alert' : 'check'} size={16} />
             {confirmLabel}
           </button>
         </>
@@ -292,7 +307,7 @@ export function IconComment() {
   );
 }
 
-/** A "⋯" button with a short list of actions for one row. */
+/** A "more" button (⋯) with a short list of actions for one row. */
 export function RowMenu({ label, items }: { label: string; items: { label: string; onClick: () => void; danger?: boolean }[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -312,7 +327,7 @@ export function RowMenu({ label, items }: { label: string; items: { label: strin
   return (
     <div className="rowmenu" ref={ref}>
       <button type="button" className="btn btn--quiet btn--icon" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label} onClick={() => setOpen((o) => !o)}>
-        ⋯
+        <Icon name="more" size={18} />
       </button>
       {open && (
         <div className="rowmenu__pop" role="menu">

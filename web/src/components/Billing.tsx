@@ -278,11 +278,13 @@ export function BillingSettings() {
             </a>
             {canExit && (
               <button className="btn btn--quiet" disabled={!!busy} onClick={() => setConfirmExit(true)}>
+                <Icon name="logout" size={16} />
                 {t('billing.exit.leave')}
               </button>
             )}
             {canResume && (
               <button className="btn btn--primary" disabled={!!busy} onClick={() => void act('resume')}>
+                <Icon name="logout" size={16} />
                 {busy === 'resume' ? t('common.loading') : t('billing.exit.resume')}
               </button>
             )}
@@ -350,10 +352,12 @@ export function BillingSettings() {
                 <span className="billing__current">{t('billing.current')}</span>
               ) : paid ? (
                 <button className="btn" disabled={!!busy} onClick={() => setSwitching(p.key)}>
+                  <Icon name="refresh" size={16} />
                   {t('billing.switch')}
                 </button>
               ) : (
                 <button className={`btn ${p.key === featured ? 'btn--primary' : ''}`} disabled={!!busy || !info.checkout} onClick={() => void checkout(p.key)}>
+                  <Icon name="check" size={16} />
                   {busy === p.key ? t('common.loading') : t('billing.choose', { plan: planName(p.key, p.name) })}
                 </button>
               )}
@@ -427,6 +431,7 @@ export function BillingBar() {
       <span>{text}</span>
       {can('org.manage') && (
         <button className="btn btn--small" onClick={() => navigate('/settings/billing')}>
+          <Icon name="check" size={16} />
           {a.state === 'past_due' || a.state === 'ending' ? t('billing.bar.manage') : t('billing.bar.choose')}
         </button>
       )}

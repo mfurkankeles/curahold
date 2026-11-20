@@ -319,6 +319,7 @@ export function Sources() {
                 </a>
               )}
               <button className={`btn btn--small${jiraTool.setup === 'oauth' ? '' : ' btn--primary'}`} onClick={() => setKeyed({ ...jiraTool, setup: 'key' })}>
+                <Icon name="plug" size={16} />
                 {jiraTool.setup === 'oauth' ? t('devtools.jira.useToken') : t('conn.connect', { app: PROVIDER_NAMES.jira })}
               </button>
             </div>
@@ -384,9 +385,11 @@ export function KeyConnect({ provider, onClose, reconnect }: { provider: Provide
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="keyconnect" disabled={!ok || busy}>
+            <Icon name="refresh" size={16} />
             {busy ? t('support.checking') : t(reconnect ? 'conn.reconnect' : 'support.connect')}
           </button>
         </>
@@ -441,9 +444,11 @@ function BeforeSignIn({ provider, onClose }: { provider: ProviderInfo; onClose: 
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!ok} onClick={go}>
+            <Icon name="arrowRight" size={16} />
             {t('sync.continueSignIn')}
           </button>
         </>
@@ -523,6 +528,7 @@ function InboundPanel({ d }: { d: Detail }) {
           <span className="u-display-flex u-gap-8">
             <input className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
             <button className="btn btn--small" onClick={copy}>
+              <Icon name="copy" size={16} />
               {t('devtools.copy')}
             </button>
           </span>
@@ -814,10 +820,12 @@ function DevHookDialog({ host, onClose }: { host: DevHost; onClose: () => void }
         <>
           {hook?.enabled && (
             <button className="btn btn--quiet" disabled={busy} onClick={turnOff}>
+              <Icon name="close" size={16} />
               {t('devtools.hook.turnOff')}
             </button>
           )}
           <button className="btn btn--primary" onClick={hook?.enabled ? onClose : turnOn} disabled={busy || !hook}>
+            <Icon name="plug" size={16} />
             {hook?.enabled ? t('dev.done') : t('devtools.hook.turnOn')}
           </button>
         </>
@@ -831,6 +839,7 @@ function DevHookDialog({ host, onClose }: { host: DevHost; onClose: () => void }
               <span className="field__label">{t('devtools.hook.url')}</span>
               <input className="input" readOnly value={hook.url} onFocus={(e) => e.currentTarget.select()} />
               <button type="button" className="btn btn--quiet btn--small" onClick={() => copy(hook.url!)}>
+                <Icon name="copy" size={16} />
                 {t('devtools.copy')}
               </button>
             </label>
@@ -838,6 +847,7 @@ function DevHookDialog({ host, onClose }: { host: DevHost; onClose: () => void }
               <span className="field__label">{t(host === 'github' ? 'devtools.hook.secretGithub' : 'devtools.hook.secretGitlab')}</span>
               <input className="input" readOnly value={hook.secret} onFocus={(e) => e.currentTarget.select()} />
               <button type="button" className="btn btn--quiet btn--small" onClick={() => copy(hook.secret!)}>
+                <Icon name="copy" size={16} />
                 {t('devtools.copy')}
               </button>
             </label>
@@ -906,6 +916,7 @@ function JiraSetup({ id, onStart, running }: { id: string; onStart: () => Promis
         <span className="field__hint">{t('devtools.jira.boardHint')}</span>
       </label>
       <button className="btn btn--primary" disabled={busy || !!running || !picked.length || !boardId} onClick={start}>
+        <Icon name="arrowRight" size={16} />
         {running ?? t('devtools.jira.start')}
       </button>
     </div>
@@ -974,6 +985,7 @@ function FileStep({ d, onDone }: { d: Detail; onDone: () => Promise<void> }) {
             }
           }}
         >
+          <Icon name="arrowRight" size={16} />
           {t('common.continue')}
         </button>
       </div>
@@ -1103,6 +1115,7 @@ function ObjectsStep({ d, drafts, setDrafts, onNext }: { d: Detail; drafts: Draf
       <div className="stepbar">
         <span>{t('sync.objects.count', { n: enabled.length })}</span>
         <button className="btn btn--primary btn--small" disabled={!ok} onClick={onNext}>
+          <Icon name="arrowRight" size={16} />
           {t('common.continue')}
         </button>
       </div>
@@ -1222,11 +1235,13 @@ function FieldsStep({ d, drafts, setDrafts, onBack, onSaved, saveLabel }: { d: D
       <div className="stepbar">
         {onBack && (
           <button className="btn btn--quiet btn--small" onClick={onBack}>
+            <Icon name="arrowLeft" size={16} />
             {t('common.back')}
           </button>
         )}
         <span />
         <button className="btn btn--primary btn--small" disabled={busy || problems.length > 0 || enabled.some((o) => !o.meta)} onClick={save}>
+          <Icon name="arrowRight" size={16} />
           {saveLabel ?? t('common.continue')}
         </button>
       </div>
@@ -1328,10 +1343,12 @@ function FieldTable({ d, o, accountFields, onChange }: { d: Detail; o: Draft; ac
         <div className="map-rest">
           <div className="toolbar">
             <button className="btn btn--quiet btn--small" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
+              <Icon name="chevronDown" size={16} />
               {t('sync.fields.others', { n: rest.length })}
             </button>
             {o.target !== 'task' && (
               <button className="btn btn--small" onClick={addAll}>
+                <Icon name="plus" size={16} />
                 {t('sync.fields.addAll', { n: rest.filter((f) => f.type !== 'user' && f.type !== 'id' && f.type !== 'ref').length })}
               </button>
             )}
@@ -1385,6 +1402,7 @@ function StartStep({ d, onBack, onStart, running }: { d: Detail; onBack: () => v
       )}
       <div className="stepbar">
         <button className="btn btn--quiet btn--small" onClick={onBack} disabled={!!running}>
+          <Icon name="arrowLeft" size={16} />
           {t('common.back')}
         </button>
         <span>{running ?? ''}</span>
@@ -1401,6 +1419,7 @@ function StartStep({ d, onBack, onStart, running }: { d: Detail; onBack: () => v
             }
           }}
         >
+          <Icon name="arrowRight" size={16} />
           {t('sync.start.go')}
         </button>
       </div>
@@ -1527,6 +1546,7 @@ function StatusTab({ id, d, refresh, reload }: { id: string; d: Detail; refresh:
                 }
               }}
             >
+              <Icon name="refresh" size={16} />
               {t('sync.problems.retry')}
             </button>
           </div>
@@ -1660,6 +1680,7 @@ function OwnersEditor({ id, crm, embedded, onChange }: { id: string; crm: string
             }
           }}
         >
+          <Icon name="check" size={16} />
           {t('common.save')}
         </button>
       </div>

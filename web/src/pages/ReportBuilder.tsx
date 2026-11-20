@@ -372,6 +372,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
       <div className="page u-pt-24">
         <EmptyState icon="chart" title={t('rb.goneTitle')} body={t('rb.goneBody')}>
           <button className="btn" onClick={() => navigate('/reports/all')}>
+            <Icon name="arrowLeft" size={16} />
             {t('rb.back')}
           </button>
         </EmptyState>
@@ -597,6 +598,7 @@ export function ReportBuilderPage({ id, from }: { id: string | null; from: strin
           )}
           {canEdit && (
             <button className="btn btn--primary" disabled={busy || !!problem || (!dirty && !!saved)} onClick={() => void save(false)}>
+              <Icon name="check" size={16} />
               {saved ? t('common.save') : t('rb.keep')}
             </button>
           )}
@@ -934,6 +936,7 @@ function PlaceOnDashboard({ report, onClose }: { report: SavedReport; onClose: (
       ) : pages.length === 0 ? (
         <EmptyState compact icon="layout" title={t('rb.dashNone')}>
           <button className="btn btn--primary" onClick={() => navigate('/dashboards')}>
+            <Icon name="layout" size={16} />
             {t('rb.tab.dashboards')}
           </button>
         </EmptyState>

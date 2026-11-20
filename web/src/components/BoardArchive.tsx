@@ -101,6 +101,7 @@ export function BoardArchive({ board, onRestored }: { board: Board; onRestored: 
           {data.more && (
             <div className="u-p-12 u-text-align-center">
               <button className="btn btn--quiet" onClick={() => void load(data.tasks.length)}>
+                <Icon name="chevronDown" size={16} />
                 {t('archive.more', { n: data.total - data.tasks.length })}
               </button>
             </div>

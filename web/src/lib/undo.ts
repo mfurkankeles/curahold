@@ -1,15 +1,15 @@
 // Undo: the one way a change is taken back. A delete, a move, a bulk change or a
-// settings change says what it did in a toast with "Undo" for 10 seconds; Ctrl+Z
+// settings change says what it did in a toast with "Undo" for 7 seconds; Ctrl+Z
 // (⌘Z) takes back the latest one while it shows, unless the focus is in a text field
 // (there Ctrl+Z belongs to the text). The toast area is a polite live region, so a
 // screen reader hears what happened and that it can be undone.
 import { useCallback } from 'react';
 import { ApiFailure, post } from './api';
 import { useI18n } from './i18n';
-import { useStore } from './store';
+import { TOAST_ACTION_MS, useStore } from './store';
 
 /** How long a change can be taken back from its toast (store.tsx keeps a toast with an action this long). */
-export const UNDO_MS = 10_000;
+export const UNDO_MS = TOAST_ACTION_MS;
 
 /**
  * Returns `offer(text, takeBack, after?)`: shows `text` with Undo; Undo runs `takeBack`,

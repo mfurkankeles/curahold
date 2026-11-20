@@ -134,12 +134,15 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
   const controls = (c: Connection) => (
     <div className="inline-actions">
       <button className="btn btn--small" disabled={busy === c.id} onClick={() => act(c.id, () => post(`/connections/${c.id}/test`, {}), t('conn.testSent'))}>
+        <Icon name="play" size={16} />
         {t('conn.test')}
       </button>
       <button className="btn btn--small btn--quiet" disabled={busy === c.id} onClick={() => act(c.id, () => patch(`/connections/${c.id}`, { paused: c.status !== 'disabled' }))}>
+        <Icon name="play" size={16} />
         {c.status === 'disabled' ? t('conn.resume') : t('conn.pause')}
       </button>
       <button className="btn btn--small btn--quiet" onClick={() => setRemoving(c)}>
+        <Icon name="trash" size={16} />
         {t('common.remove')}
       </button>
     </div>
@@ -230,6 +233,7 @@ export function Connections({ back = 'settings', onChange }: { back?: 'settings'
         <span>{t('conn.oneWay')}</span>
         {!adding && (
           <button className="btn btn--small" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={16} />
             {t('conn.addWebhook')}
           </button>
         )}
@@ -378,6 +382,7 @@ function WebhookForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =>
           {busy ? t('common.saving') : t('conn.addAndTest')}
         </button>
         <button type="button" className="btn btn--quiet" onClick={onCancel}>
+          <Icon name="close" size={16} />
           {t('common.cancel')}
         </button>
       </div>

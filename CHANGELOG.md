@@ -39,6 +39,22 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Motion: dialogs, side panels, menus, popovers, the search palette, phone sheets and toasts now animate out as well as in
+  (100–150 ms, always shorter than the way in); phone sheets slide up from the bottom (280 ms); one set of motion tokens
+  (`--dur-1…4`, `--ease-in/out/move`, `--dist-1…3`). With "reduce motion" on, opening and closing still fade for 100 ms so the
+  change is not lost.
+- Moving between screens: the page cross-fades in the direction you go (Back from the other side), a customer card
+  grows into its page, and Back returns to the list where you left it, with its search and filters.
+- Loading: a Curahold loader instead of a still logo, a thin progress line at the top while a screen loads, skeletons in
+  the shape of each screen, and save buttons that show a ring and then a tick. The demo opens faster, with real progress.
+- Every action button has an icon and a label; every dialog, panel and sheet has a large Close at the end corner (and
+  Esc); pages under another page show Back in the same place; on a phone the task panel rises from the bottom with Back.
+- Toasts stay 4 seconds (7 with Undo) and pause under the pointer; errors stay until you close them. Ticking a task done
+  shows at once and turns back if the server refuses.
+- Easier to read: stronger contrast on the main button, field borders and the keyboard focus ring; each script (Arabic,
+  Hebrew, Persian, Japanese, Korean, Chinese, Hindi) uses its own system font, size and line height.
+- Turkish: the whole product says "siz".
+
 - Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
   `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched
@@ -49,6 +65,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 
 ### Fixed
+
+- Importing a Turkish task file with a "Liste" column now offers the Boards step.
+- The renewals view no longer adds amounts in other currencies one to one under the company's currency sign: amounts
+  with a rate are converted (marked ≈), others are totalled in their own currency.
+- English counts say "1 renewal", "1 day", "1 reply" (singular after one).
 
 - _Nothing yet._
 

@@ -240,6 +240,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
             </label>
             {import.meta.env.DEV && devCode && (
               <button type="button" className="btn btn--small desk-signin__dev" onClick={() => setCode(devCode)}>
+                <Icon name="key" size={16} />
                 {devCode}
               </button>
             )}
@@ -262,6 +263,7 @@ function SignIn({ notice, onIn, onLocale }: { notice: string | null; onIn: () =>
               setWrong(false);
             }}
           >
+            <Icon name="refresh" size={16} />
             {t('desk.signin.again')}
           </button>
         )}

@@ -80,6 +80,7 @@ export function GettingStarted() {
           {done}/{steps.length}
         </span>
         <button className="btn btn--quiet btn--small" onClick={hide}>
+          <Icon name="chevronUp" size={16} />
           {t('start.hide')}
         </button>
       </header>
@@ -102,6 +103,7 @@ export function GettingStarted() {
               <span className="sr-only">{t('start.done')}</span>
             ) : (
               <button className="btn btn--small" onClick={act[s]}>
+                <Icon name="arrowRight" size={16} />
                 {t(`start.${s}.go` as any)}
               </button>
             )}

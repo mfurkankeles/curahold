@@ -31,6 +31,7 @@ import { Icon, type IconName } from './icons';
 import { useDismiss } from './Menus';
 import { Confirm, Dialog } from './ui';
 import { DateField } from './DateField';
+import { useLeave } from '../lib/leave';
 
 /** The icon that says what a playbook's dates count from. */
 const ANCHOR_ICON: Record<PlanAnchor, IconName> = { start: 'play', renewal: 'repeat', close: 'funnel' };
@@ -60,6 +61,7 @@ export function useAnchorText() {
 
 /** "Apply a playbook" on a customer's page: pick one, pick the start day, done. */
 export function PlanMenu({ accountId, accountName, onApplied }: { accountId: string; accountName: string; onApplied: () => void }) {
+  const leavePop = useLeave<HTMLDivElement>();
   const { t } = useI18n();
   const { can, toast, canWrite } = useStore();
   const anchorText = useAnchorText();
@@ -96,7 +98,7 @@ export function PlanMenu({ accountId, accountName, onApplied }: { accountId: str
         {t('plans.button')}
       </button>
       {open && (
-        <div className="popmenu filterpop planpop" role="menu" aria-label={t('plans.button')}>
+        <div ref={leavePop} className="popmenu filterpop planpop" role="menu" aria-label={t('plans.button')}>
           {anyFromStart && (
             <label className="field">
               <span className="filterpop__label">{t('plans.start')}</span>
@@ -213,13 +215,16 @@ export function PlanEditor({ plan, draft, onClose, onSaved }: { plan: PlanTempla
         <>
           {plan && (
             <button className="btn btn--danger u-me-auto" onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           )}
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={save}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -386,6 +391,7 @@ export function PlaybooksSettings() {
                   </div>
                   {manage && (
                     <button className="btn btn--small" onClick={() => setEditing({ plan: p })}>
+                      <Icon name="edit" size={16} />
                       {t('common.edit')}
                     </button>
                   )}
@@ -429,6 +435,7 @@ export function PlaybooksSettings() {
                   {t('plans.tasksN', { n: ex.steps.length })} · {anchorText.anchor(ex.anchor)}
                 </p>
                 <button className="btn btn--small" onClick={() => setEditing({ plan: null, draft: draftOf(ex, locale) })}>
+                  <Icon name="book" size={16} />
                   {t('plans.useExample')}
                 </button>
               </article>

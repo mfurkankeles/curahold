@@ -16,7 +16,7 @@ import { labelOf } from '../../../shared/src/fields';
 import type { Card, Page } from '../../../shared/src/pages';
 import { DASHBOARD_TEMPLATES } from '../../../shared/src/reports';
 import { ChartGlyph } from '../components/ChartGlyph';
-import { EmptyState, ErrorState, LoadError, NotAllowed, SkeletonCards } from '../components/Empty';
+import { EmptyState, ErrorState, LoadError, NotAllowed, SkeletonDash } from '../components/Empty';
 import { FilterGroup, FilterSheet, usePhone } from '../components/FilterSheet';
 import { MenuButton, type MenuItem } from '../components/Menus';
 import { useUndo } from '../lib/undo';
@@ -81,7 +81,7 @@ export function DashboardsPage() {
   if (!pages || pages.length > 0)
     return (
       <div className="page u-pt-24">
-        <SkeletonCards count={4} label={t('common.loading')} />
+        <SkeletonDash label={t('common.loading')} />
       </div>
     );
   return (
@@ -418,7 +418,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
   if (!pages)
     return (
       <div className="page u-pt-24">
-        <SkeletonCards count={4} label={t('common.loading')} />
+        <SkeletonDash label={t('common.loading')} />
       </div>
     );
   if (!current)
@@ -426,6 +426,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
       <div className="page u-pt-24">
         <EmptyState icon="layout" title={t('dash.notFound')}>
           <button className="btn" onClick={() => navigate('/dashboards')}>
+            <Icon name="layout" size={16} />
             {t('nav.dashboards')}
           </button>
         </EmptyState>
@@ -540,6 +541,7 @@ export function DashboardPage({ id, create }: { id: string | null; create?: bool
               {t('dash.arrangeHint')}
             </p>
             <button className="btn btn--primary btn--small" onClick={() => setArranging(false)}>
+              <Icon name="check" size={16} />
               {t('dash.arrangeDone')}
             </button>
           </div>

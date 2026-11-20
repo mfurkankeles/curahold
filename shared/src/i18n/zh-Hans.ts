@@ -5005,6 +5005,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'demo.bar.step.data': '正在载入一组虚构的客户。',
   'demo.bar.step.app': '正在打开应用。',
   'demo.bar.failed': '演示无法启动。请刷新页面重试。',
+  'demo.bar.still': '仍在准备中。在较慢的设备上，首次启动需要多一点时间。',
   'demo.bar.stuck': '演示无法为你登录。',
   'demo.bar.note': '虚构数据，完全在此标签页中运行。刷新即重新开始。',
   'demo.bar.as': '当前身份',

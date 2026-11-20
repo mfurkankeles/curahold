@@ -8,6 +8,7 @@ import { del, get, post } from '../lib/api';
 import { formatDate } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
+import { Icon } from './icons';
 
 interface View {
   deletion: { id: string; requestedAt: string; purgeAfter: string } | null;
@@ -44,6 +45,7 @@ export function CompanyDeletion({ slug }: { slug: string }) {
             {t('companyDelete.scheduled', { date: formatDate(view.deletion.purgeAfter, locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}
           </p>
           <button type="button" className="btn" disabled={busy} onClick={() => void act(() => del<View>('/admin/company/deletion'), t('companyDelete.cancelled'))}>
+            <Icon name="close" size={16} />
             {t('companyDelete.cancel')}
           </button>
         </>
@@ -61,6 +63,7 @@ export function CompanyDeletion({ slug }: { slug: string }) {
             <input className="input" value={typed} autoComplete="off" spellCheck={false} onChange={(e) => setTyped(e.target.value)} />
           </label>
           <button type="submit" className="btn btn--danger" disabled={busy || typed.trim().toLowerCase() !== slug.toLowerCase()}>
+            <Icon name="trash" size={16} />
             {t('companyDelete.button')}
           </button>
         </form>

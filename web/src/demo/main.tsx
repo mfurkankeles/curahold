@@ -8,10 +8,12 @@ import { setStartLocale, storeLocale, storedLocale } from '../lib/i18n';
 import { LOCALE_INFO, LOCALES, translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import { SEED_LOCALES, seedWords, type SeedWords } from '../../../scripts/seed-words';
 import { startTheme } from '../lib/theme';
-import { DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
+import { startTooltips } from '../lib/tooltips';
+import { breathe, DEMO_DEVICE, signIn, startServer, type DemoServer } from './server';
 import { ORIGIN, current as currentPath, onFullNavigation, setCurrent } from './memory';
 
 startTheme();
+startTooltips();
 // The live channel needs a server to hold a WebSocket; the demo has none (its API runs in this tab),
 // so the app keeps to its polling, which reaches the in-tab API like every other request.
 try {
@@ -72,10 +74,19 @@ document.documentElement.lang = demoLocale;
 document.documentElement.dir = LOCALE_INFO[demoLocale].dir;
 document.getElementById('boot-title')!.textContent = translate(demoLocale, 'demo.bar.opening');
 document.getElementById('boot-step')!.textContent = translate(demoLocale, 'demo.bar.step.db');
-function step(pct: number, key: 'db' | 'schema' | 'data' | 'app') {
+/** The opening screen's step and progress (a measured share of the real work), then a paint. */
+async function step(pct: number, key: 'db' | 'schema' | 'data' | 'app') {
   document.getElementById('boot-step')!.textContent = translate(demoLocale, `demo.bar.step.${key}`);
-  (document.getElementById('boot-bar') as HTMLElement).style.width = `${pct}%`;
+  document.getElementById('boot-bar')!.style.setProperty('--done', String(pct / 100));
+  await breathe();
 }
+// A start that takes long on a slow machine says it is still going, rather than looking stuck.
+const stillTimer = setTimeout(() => {
+  const still = document.getElementById('boot-still');
+  if (!still) return;
+  still.textContent = translate(demoLocale, 'demo.bar.still');
+  still.hidden = false;
+}, 8000);
 
 function DemoBar({ current, onSwitch, problem, words, onOwnFile }: { current: Key; onSwitch: (k: Key) => void; problem: string | null; words: SeedWords; onOwnFile: () => void }) {
   const [, setTick] = useState(0);
@@ -179,19 +190,36 @@ function DemoBar({ current, onSwitch, problem, words, onOwnFile }: { current: Ke
 }
 
 async function main() {
+  // The app's own code downloads while the database starts, not after it.
+  const appCode = Promise.all([import('../App'), import('../lib/router'), import('../../portal/Portal')]);
+  appCode.catch(() => undefined);
   const server: DemoServer = await startServer(step, demoLocale);
   const sessions: Partial<Record<Key, string>> = {};
   sessions.ada = await signIn(server, 'ada@demo.example');
   const { seedShowcase } = await import('../../../scripts/seed-showcase');
-  await seedShowcase(server.call, server.db, demoLocale);
+  // The showcase is ~230 calls to the API: the bar follows them, and the screen gets a paint every 50 ms.
+  const CALLS = 230;
+  let made = 0;
+  let painted = performance.now();
+  const seedCall: DemoServer['call'] = async (method, path, body) => {
+    made += 1;
+    if (performance.now() - painted > 50) {
+      await step(72 + Math.round(18 * Math.min(1, made / CALLS)), 'data');
+      painted = performance.now();
+    }
+    return server.call(method, path, body);
+  };
+  await server.seeding(true);
+  await seedShowcase(seedCall, server.db, demoLocale);
   const { seedPortal } = await import('./portal-seed');
   await seedPortal(server, demoLocale).catch((e) => console.warn('[demo] portal seed', e));
+  await server.seeding(false);
   // Any text of the seed this language does not say yet (the browser check reads it).
   const { untranslated } = await import('../../../scripts/seed-words');
   const { words } = await seedWords(demoLocale);
-  step(92, 'app');
+  await step(92, 'app');
 
-  const [{ App }, { navigate }, { PortalApp }] = await Promise.all([import('../App'), import('../lib/router'), import('../../portal/Portal')]);
+  const [{ App }, { navigate }, { PortalApp }] = await appCode;
   await import('../../portal/portal.css');
   const root = createRoot(document.getElementById('root')!);
   let generation = 0;
@@ -299,8 +327,11 @@ async function main() {
   setCurrent('/home');
   render();
   drawBar();
-  step(100, 'app');
-  setTimeout(() => bootEl.remove(), 250);
+  await step(100, 'app');
+  clearTimeout(stillTimer);
+  // Into the app with a 200 ms cross-fade (index.html), not a cut.
+  bootEl.dataset.done = '';
+  setTimeout(() => bootEl.remove(), 220);
 
   // The product team's board (the one with product stages), for tour steps that say /b/:product.
   let productBoard: Promise<string> | null = null;

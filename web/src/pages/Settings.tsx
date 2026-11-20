@@ -243,9 +243,11 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                     {t('settings.unsaved.bar')}
                   </span>
                   <button type="button" className="btn btn--quiet" onClick={() => unsaved.discard()}>
+                    <Icon name="trash" size={16} />
                     {t('settings.unsaved.discard')}
                   </button>
                   <button type="button" className="btn btn--primary" disabled={saving} onClick={() => void saveNow()}>
+                    <Icon name="check" size={16} />
                     {t('common.save')}
                   </button>
                 </div>
@@ -261,6 +263,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
           footer={
             <>
               <button type="button" className="btn btn--quiet" onClick={() => setLeaving(null)}>
+                <Icon name="close" size={16} />
                 {t('settings.unsaved.stay')}
               </button>
               <button
@@ -274,6 +277,7 @@ export function SettingsPage({ tab, sub }: { tab: SettingsTab | null; sub?: stri
                   navigate(to);
                 }}
               >
+                <Icon name="logout" size={16} />
                 {t('settings.unsaved.leave')}
               </button>
             </>
@@ -464,7 +468,7 @@ export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; su
       </section>
       {!inSettings && (
         <div>
-          <button className="btn btn--primary">{submitLabel}</button>
+          <button className="btn btn--primary"><Icon name="send" size={16} /> {submitLabel}</button>
         </div>
       )}
     </form>
@@ -700,6 +704,7 @@ function InviteDialog({ roles, teams, onClose, onDone }: { roles: Role[]; teams:
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!email || !name} onClick={submit}>
@@ -761,7 +766,7 @@ function UserDevices({ user, onClose }: { user: AdminUser; onClose: () => void }
     void load();
   }, [load]);
   return (
-    <Dialog title={`${t('settings.people.devices')}: ${user.name}`} onClose={onClose} footer={<button className="btn" onClick={onClose}>{t('common.close')}</button>}>
+    <Dialog title={`${t('settings.people.devices')}: ${user.name}`} onClose={onClose} footer={<button className="btn" onClick={onClose}><Icon name="close" size={16} /> {t('common.close')}</button>}>
       {list?.length === 0 && <p className="muted">{t('common.none')}</p>}
       {list?.map((s) => (
         <div key={s.id} className="filerow">
@@ -770,6 +775,7 @@ function UserDevices({ user, onClose }: { user: AdminUser; onClose: () => void }
             <div className="muted u-fs-xs">{t('devices.lastSeen', { when: relativeTime(s.lastSeenAt, t) })}</div>
           </div>
           <button className="btn btn--small" onClick={async () => { if (await save(() => del(`/admin/sessions/${s.id}`), false)) await load(); }}>
+            <Icon name="logout" size={16} />
             {t('devices.signOut')}
           </button>
         </div>
@@ -945,6 +951,7 @@ function AuditTab() {
         filtered ? (
           <EmptyState compact icon="history" title={t('settings.audit.none')}>
             <button type="button" className="btn" onClick={clear}>
+              <Icon name="close" size={16} />
               {t('settings.audit.clear')}
             </button>
           </EmptyState>
@@ -969,6 +976,7 @@ function AuditTab() {
           </ol>
           {more && (
             <button type="button" className="btn audit__more" disabled={busy} onClick={() => void older()}>
+              <Icon name="chevronDown" size={16} />
               {t('settings.audit.older')}
             </button>
           )}
@@ -1084,9 +1092,11 @@ function HandoverDialog({ user, users, onClose }: { user: AdminUser; users: Admi
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!to || busy} onClick={run}>
+            <Icon name="arrowRight" size={16} />
             {t('settings.people.handoverGo')}
           </button>
         </>
@@ -1189,6 +1199,7 @@ function JoiningTab() {
                         {t('join.approve')}
                       </button>
                       <button className="btn btn--small btn--quiet" onClick={() => decide(r, false)}>
+                        <Icon name="close" size={16} />
                         {t('join.decline')}
                       </button>
                     </div>
@@ -1252,9 +1263,11 @@ function JoiningTab() {
                 }
               }}
             >
+              <Icon name="check" size={16} />
               {t('join.verify')}
             </button>
             <button className="btn btn--small btn--quiet" onClick={() => setPendingDomain(null)}>
+              <Icon name="close" size={16} />
               {t('common.cancel')}
             </button>
           </div>
@@ -1277,6 +1290,7 @@ function JoiningTab() {
                 }
               }}
             >
+              <Icon name="send" size={16} />
               {t('join.sendCode')}
             </button>
           </div>
@@ -1343,6 +1357,7 @@ function LogoEditor() {
         <div className="inline-actions u-justify-content-flex-start">
           <input ref={input} type="file" accept={LOGO_TYPES.join(',')} className="sr-only" aria-label={t('settings.company.logoUpload')} onChange={(e) => upload(e.target.files?.[0])} />
           <button type="button" className="btn btn--small" disabled={busy} onClick={() => input.current?.click()}>
+            <Icon name="upload" size={16} />
             {me.org.logoUrl ? t('settings.company.logoReplace') : t('settings.company.logoUpload')}
           </button>
           {me.org.logoUrl && (
@@ -1354,6 +1369,7 @@ function LogoEditor() {
                 if (await save(() => del('/admin/logo'), false)) await reloadMe();
               }}
             >
+              <Icon name="trash" size={16} />
               {t('settings.company.logoRemove')}
             </button>
           )}

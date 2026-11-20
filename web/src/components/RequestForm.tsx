@@ -10,6 +10,7 @@ import { AccountPicker } from './AccountPicker';
 import { TaskFieldInput } from './TaskExtras';
 import { Dialog } from './ui';
 import { DateField } from './DateField';
+import { Icon } from './icons';
 
 /** `from`: the sender's own task (a hand-off to another department): the request starts from it and is linked to it. */
 export function RequestForm({
@@ -59,9 +60,11 @@ export function RequestForm({
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!title.trim() || busy} onClick={send}>
+            <Icon name="send" size={16} />
             {busy ? t('common.saving') : t('boardForm.send')}
           </button>
         </>
