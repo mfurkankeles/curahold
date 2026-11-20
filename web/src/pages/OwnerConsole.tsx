@@ -802,9 +802,9 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
                     <th scope="col">{o('col.state')}</th>
                     <th scope="col">{o('col.ends')}</th>
                     <th scope="col" className="num">{o('col.seats')}</th>
-                    <th scope="col">{o('col.departments')}</th>
-                    <th scope="col">{o('col.lastActive')}</th>
-                    <th scope="col">{o('col.request')}</th>
+                    <th scope="col" className="ocwide">{o('col.departments')}</th>
+                    <th scope="col" className="ocwide">{o('col.lastActive')}</th>
+                    <th scope="col" className="ocwide">{o('col.request')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -824,9 +824,9 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
                       <td className="num" data-over={t.seatCap != null && t.people > t.seatCap ? '' : undefined}>
                         {t.seatCap != null ? o('trials.seatsOf', { n: formatNumber(t.people, locale), cap: formatNumber(t.seatCap, locale) }) : formatNumber(t.people, locale)}
                       </td>
-                      <td>{t.departments.length ? t.departments.map((x) => o(`dept.${x}` as OwnerKey)).join(', ') : '—'}</td>
-                      <td>{t.lastActiveAt ? formatDate(t.lastActiveAt, locale, { day: 'numeric', month: 'short' }) : '—'}</td>
-                      <td>
+                      <td className="ocwide">{t.departments.length ? t.departments.map((x) => o(`dept.${x}` as OwnerKey)).join(', ') : '—'}</td>
+                      <td className="ocwide">{t.lastActiveAt ? formatDate(t.lastActiveAt, locale, { day: 'numeric', month: 'short' }) : '—'}</td>
+                      <td className="ocwide">
                         {t.fromRequest ? (
                           <button type="button" className="oclink" onClick={() => go({ section: 'requests', q: t.fromRequest })}>
                             {t.fromRequest}
