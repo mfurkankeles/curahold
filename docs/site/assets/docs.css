@@ -9,7 +9,7 @@
 
 :root {
   color-scheme: light dark;
-  --paper: #f3f5f4; --surface: #fff; --sunk: #e9eeec; --ink: #18282b; --ink-2: #4b5c5f; --ink-3: #6b7e81;
+  --paper: #f3f5f4; --surface: #fff; --sunk: #e9eeec; --ink: #18282b; --ink-2: #4b5c5f; --ink-3: #5c6c6f;
   --line: #d8dfdd; --well: #191541; --well-2: #29225f; --well-ink: #e3e0fb; --brand: #5b4de8; --brand-ink: #4234c8;
   --brand-wash: #eceafe; --soon: #b7791f; --focus: #1f8fff; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -213,7 +213,8 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
   body.nav-open .nav { transform: none; visibility: visible; box-shadow: 0 0 40px rgba(13, 68, 72, .2); }
   .main { padding: 24px 18px 64px; }
   .doc h1 { font-size: 28px; }
-  .top__ask span { display: none; }
+  /* Only the icon shows; the word stays the button's name. */
+  .top__ask span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .top__ask { padding: 6px 9px; }
   .hero { padding: 36px 16px 80px; }
   .hero__ask input { font-size: 16px; }

@@ -238,7 +238,8 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
       table(token: Tokens.Table) {
         const head = token.header.map((c) => `<th>${this.parser.parseInline(c.tokens)}</th>`).join('');
         const body = token.rows.map((r) => `<tr>${r.map((c) => `<td>${this.parser.parseInline(c.tokens)}</td>`).join('')}</tr>`).join('');
-        return `<div class="table"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>\n`;
+        // A wide table scrolls sideways inside its frame: the frame takes focus so the arrow keys can scroll it (WCAG 2.1.1).
+        return `<div class="table" tabindex="0"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>\n`;
       },
     },
   });
@@ -381,7 +382,7 @@ function build() {
     const notes = by('release-notes');
     const latest = notes?.toc[0];
     const news = notes && latest ? `<p class="news"><strong>${ui.whatsNew}:</strong> <a href="/docs/${lang}/release-notes/#${latest.id}">${esc(latest.text)}</a> · <a href="/docs/${lang}/release-notes/">${ui.allNotes}</a></p>` : '';
-    const footLinks = ['security-and-privacy', 'legal-privacy', 'legal-terms', 'legal-kvkk'].map(link).filter(Boolean).join(' · ');
+    const footLinks = ['security-and-privacy', 'legal-privacy', 'legal-terms', 'legal-kvkk', 'legal-accessibility'].map(link).filter(Boolean).join(' · ');
     const home = `<div class="home">
 <section class="hero">
   <h1>${ui.hero}</h1>
