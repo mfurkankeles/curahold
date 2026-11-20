@@ -378,6 +378,11 @@ async function history(q: Q, thread: string): Promise<{ summary: string | null; 
   return { summary: t?.summary ?? null, messages: out };
 }
 
+/**
+ * Runs one turn of an AI seat. Stops before any model call when the seat is missing or paused, its weekly token budget
+ * is spent, or the team's monthly model-spend cap is reached (ADR 0010, 0011). The agent may only read and propose;
+ * anything outside goes through the gate and the owner's approval.
+ */
 export async function run(deps: Deps, input: RunInput): Promise<RunResult> {
   const now = nowOf(deps);
   const pre = await deps.db.system(async (q) => {

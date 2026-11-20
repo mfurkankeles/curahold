@@ -160,6 +160,7 @@ export const CATALOGUE: Catalogue = parseCatalogue(catalogueJson);
 
 export const PLAN_LIST: readonly PlanDef[] = CATALOGUE.plans;
 export const PLAN_KEYS = CATALOGUE.plans.map((p) => p.key) as [PlanKey, ...PlanKey[]];
+/** The plans by key, from the price catalogue (one source for app, site and Paddle; ADR 0019). */
 export const PLANS: Record<PlanKey, PlanDef> = Object.fromEntries(CATALOGUE.plans.map((p) => [p.key, p]));
 export const PRICE_CURRENCY = CATALOGUE.currency;
 /** The plan a trial (and a company whose plan is unknown) gets. */
@@ -257,6 +258,10 @@ export interface Access {
 
 const DAY = 86_400_000;
 
+/**
+ * Where a company stands with billing: free (billing off), trial, active, past due or locked, with days left.
+ * Pure, so the app, the site and tests agree. A locked company is read-only, never deleted (ADR 0017, 0019).
+ */
 export function accessOf(enabled: boolean, billing: OrgBilling | null | undefined, trialEndsAt: string | null | undefined, now: Date): Access {
   const b = billing ?? {};
   const base = { trialEndsAt: trialEndsAt ?? null, periodEnd: b.periodEnd ?? null, interval: b.interval ?? null, seats: b.seats ?? null };

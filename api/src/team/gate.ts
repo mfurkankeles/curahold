@@ -33,6 +33,10 @@ export async function checkOptions(deps: Pick<Deps, 'config'>, q: Q) {
   };
 }
 
+/**
+ * Runs the output checks over texts an agent wants to put out. For anything leaving the company (`external`),
+ * a competitor mention becomes a block, not a warning: the product never names competitors in public (CLAUDE.md).
+ */
 export async function screenTexts(deps: Pick<Deps, 'config'>, q: Q, texts: (string | null | undefined)[], external: boolean): Promise<Finding[]> {
   const f = screen(texts, await checkOptions(deps, q));
   // Anything that leaves the company may never name a competitor.
@@ -116,6 +120,10 @@ async function runChecked(deps: Deps, q: Q, a: Approval, run: Runner): Promise<s
   return run(deps, q, a);
 }
 
+/**
+ * The one person whose decision can run an outside action: PLATFORM_OWNER, else the first support staff address.
+ * Null when neither is set, and then nothing outside runs (fails closed, ADR 0011).
+ */
 export const consoleOwner = (deps: Pick<Deps, 'config'>) => (deps.config.owner ?? deps.config.support?.staff?.[0] ?? '').toLowerCase() || null;
 
 /**

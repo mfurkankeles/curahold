@@ -1,3 +1,6 @@
+// Request context shared by every route: the installation's Config and Deps, the per-request variables
+// (org, auth, locale, deps), and the guards routes call first: run() for a tenant transaction, requirePerm,
+// requireWriter, requirePlan, isOwner. ADR 0004 (tenant isolation with row security), ADR 0019 (billing).
 import { localDate } from '../../shared/src/days';
 import { claimRepeat, type RepeatKey } from './lib/repeats';
 import type { Context } from 'hono';
@@ -228,10 +231,18 @@ export function run<T>(c: C, fn: (q: Q) => Promise<T>): Promise<T> {
   });
 }
 
+/**
+ * Fails 'forbidden' unless the signed-in person's role carries `perm`.
+ * Route-level wall only; where a leak would matter the SQL policy checks the same perm again through app_has_perm (ADR 0004).
+ */
 export function requirePerm(c: C, perm: Perm) {
   if (!c.get('auth').perms.includes(perm)) fail('forbidden');
 }
 
+/**
+ * Fails unless this person may change data: 'read_only_seat' for a view-only seat, 'billing_locked' when the company has
+ * no running plan. Money rule: a lapsed company keeps reading and exporting its data, it only loses writes (ADR 0017, 0019).
+ */
 export function requireWriter(c: C) {
   if (c.get('auth').seat !== 'full') fail('read_only_seat');
   // No plan (the trial is over, or a cancelled one ran out): read and export, but no changes.
@@ -276,17 +287,25 @@ export function requirePlan(c: C, feature: Feature) {
   if (!allows(accessFor(c), feature)) fail('plan_required', { plan: planOf(plan)?.name ?? plan }, { plan });
 }
 
+/**
+ * The company's own web address: `<slug>.<baseDomain>`, or the bare domain on a single-company (self-hosted) install.
+ */
 export function orgUrl(cfg: Config, slug: string): string {
   const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
   if (cfg.singleTenantSlug) return `${cfg.scheme}://${cfg.baseDomain}${port}`;
   return `${cfg.scheme}://${slug}.${cfg.baseDomain}${port}`;
 }
 
+/**
+ * How many devices one person may keep signed in: the company's own setting (1 to 5), else the installation default.
+ * Out-of-range values fall back rather than fail, so a bad setting can never lock everyone out.
+ */
 export function maxDevices(c: C): number {
   const custom = Number(c.get('org').settings?.maxDevices);
   return Number.isInteger(custom) && custom >= 1 && custom <= 5 ? custom : c.get('deps').config.maxDevices;
 }
 
+/** The server's clock, injectable through deps.now so tests and the demo can freeze time. */
 export const nowOf = (deps: Deps) => (deps.now ?? (() => new Date()))();
 
 /**
@@ -294,9 +313,18 @@ export const nowOf = (deps: Deps) => (deps.now ?? (() => new Date()))();
  * server's injectable clock. The database answers the same through app_today().
  */
 export const todayOf = (c: { get: (k: any) => any }): string => localDate(nowOf(c.get('deps')), c.get('org')?.timezone);
+/** The fetch to use for outside calls; tests inject deps.fetch so no test reaches the network. */
 export const fetchOf = (deps: Deps) => deps.fetch ?? fetch;
+/**
+ * The key that seals stored connector credentials. Falls back to AUTH_SECRET so a small install needs one secret.
+ * Changing it makes every stored credential unreadable until reconnected (docs/ENVIRONMENT.md, RUNBOOK).
+ */
 export const secretsKey = (cfg: Config) => cfg.secretsKey || cfg.authSecret;
 
+/**
+ * Runs a side task after the response (waitUntil on Workers). Errors are logged, never thrown into the request.
+ * Not for anything that must be saved with the change: that goes through the outbox in the same transaction.
+ */
 export function defer(deps: Deps, p: Promise<unknown>) {
   const guarded = p.catch((err) => console.error('[curahold] background task failed', err));
   if (deps.defer) deps.defer(guarded);
@@ -310,6 +338,7 @@ export function portalUrl(cfg: Config, slug: string): string | null {
   return `${cfg.scheme}://${slug}.${cfg.portalDomain}${port}`;
 }
 
+/** The address of the central site (sign-in, sign-up, company picker), shared by every company. */
 export function centralUrl(cfg: Config): string {
   const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
   return `${cfg.scheme}://${cfg.centralHost}${port}`;
@@ -318,6 +347,7 @@ export function centralUrl(cfg: Config): string {
 /** The support desk's host name (no port): its own subdomain, apart from sign-up and the sales site. */
 export const deskHostOf = (cfg: Config): string => (cfg.deskHost || `desk.${cfg.baseDomain}`).toLowerCase().split(':')[0];
 
+/** The address of the support desk host (Curahold staff tools), kept apart from company hosts. */
 export function deskUrl(cfg: Config): string {
   const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
   return `${cfg.scheme}://${deskHostOf(cfg)}${port}`;

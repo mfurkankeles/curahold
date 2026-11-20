@@ -113,8 +113,10 @@ const settingsInput = z.object({
   rules: z.array(z.object({ field: z.string().trim().min(1).max(60), value: z.string().trim().min(1).max(120), templateId: z.string().min(1).max(60) })).max(MAX_TEMPLATE_RULES).optional(),
 });
 
+/** The company's onboarding settings (defaults merged over what is stored). */
 onboardingPlanRoutes.get('/onboarding/settings', async (c) => c.json({ settings: onboardingSettings(c.get('org').settings) }));
 
+/** Changes the company's onboarding settings. Needs a writer seat and org.manage. */
 onboardingPlanRoutes.put('/onboarding/settings', async (c) => {
   requireWriter(c);
   requirePerm(c, 'org.manage');
@@ -168,8 +170,14 @@ onboardingPlanRoutes.post('/onboarding-plans', async (c) => {
   return c.json({ plan: await fresh(c, id) }, 201);
 });
 
+/**
+ * One onboarding plan with its steps, people, goals, issues, fields and sites, as row security lets the reader see it.
+ */
 onboardingPlanRoutes.get('/onboarding-plans/:id', async (c) => c.json({ plan: await fresh(c, param(c, 'id')) }));
 
+/**
+ * Edits a plan's name, owner, dates, stage and other top-level fields. Writers only; row security decides which plans.
+ */
 onboardingPlanRoutes.patch('/onboarding-plans/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -239,6 +247,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/share', async (c) => {
   return c.json({ url: `${orgUrl(c.get('deps').config, org.slug)}/r/onboarding/${secret}` }, 201);
 });
 
+/** Turns off a plan's shared progress link; the old link stops working at once. 404 when unknown. */
 onboardingPlanRoutes.delete('/onboarding-plans/:id/share', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -306,6 +315,9 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/steps', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/**
+ * Edits a step (title, owner, due date, status, dependencies); the plan's progress is recomputed. 404 when unknown.
+ */
 onboardingPlanRoutes.patch('/onboarding-steps/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -355,6 +367,7 @@ onboardingPlanRoutes.patch('/onboarding-steps/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Deletes a step and removes it from every step that waited on it, so nothing waits forever. 404 when unknown. */
 onboardingPlanRoutes.delete('/onboarding-steps/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -521,6 +534,7 @@ const personInput = z.object({
   userId: uuid.nullable().optional(),
 });
 
+/** Adds a person (ours or the customer's) to a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/people', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
@@ -539,6 +553,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/people', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a plan person. 404 when unknown. */
 onboardingPlanRoutes.patch('/onboarding-people/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -556,6 +571,7 @@ onboardingPlanRoutes.patch('/onboarding-people/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a person from a plan. */
 onboardingPlanRoutes.delete('/onboarding-people/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -579,6 +595,7 @@ const goalInput = z.object({
   proofUrl: z.string().trim().max(500).regex(/^https?:\/\//).nullable().optional(),
 });
 
+/** Adds a success goal to a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/goals', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
@@ -595,6 +612,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/goals', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a goal (target, current value, status). */
 onboardingPlanRoutes.patch('/onboarding-goals/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -615,6 +633,7 @@ onboardingPlanRoutes.patch('/onboarding-goals/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a goal from a plan. */
 onboardingPlanRoutes.delete('/onboarding-goals/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -638,6 +657,7 @@ const issueInput = z.object({
   stepId: uuid.nullable().optional(),
 });
 
+/** Logs an issue (blocker, risk) on a plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/issues', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
@@ -654,6 +674,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/issues', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits an issue or changes its status. */
 onboardingPlanRoutes.patch('/onboarding-issues/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -694,6 +715,7 @@ onboardingPlanRoutes.post('/onboarding-issues/:id/ticket', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes an issue. Issues raised by a failed setup test cannot be deleted: they close when the test passes. */
 onboardingPlanRoutes.delete('/onboarding-issues/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -719,6 +741,7 @@ const fieldInput = z.object({
   proofUrl: z.string().trim().max(500).regex(/^https?:\/\//).nullable().optional(),
 });
 
+/** Adds a data field to a plan's field-mapping list. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/fields', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
@@ -768,6 +791,7 @@ onboardingPlanRoutes.patch('/onboarding-fields/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a field from a plan's mapping list. */
 onboardingPlanRoutes.delete('/onboarding-fields/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -783,6 +807,7 @@ onboardingPlanRoutes.delete('/onboarding-fields/:id', async (c) => {
 
 const siteInput = z.object({ name: z.string().trim().min(1).max(120), region: z.string().trim().max(80).default(''), stages: z.partialRecord(z.enum(PHASES_BUILT_IN), z.enum(SITE_STATUSES)).default({}) });
 
+/** Adds a site (location, store, region) to a rollout plan. 404 for an unknown plan. */
 onboardingPlanRoutes.post('/onboarding-plans/:id/sites', async (c) => {
   requireWriter(c);
   const planId = param(c, 'id');
@@ -798,6 +823,7 @@ onboardingPlanRoutes.post('/onboarding-plans/:id/sites', async (c) => {
   return c.json({ plan: await fresh(c, planId) }, 201);
 });
 
+/** Edits a site's name, region or stage progress (stages merge, they are not replaced). */
 onboardingPlanRoutes.patch('/onboarding-sites/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -813,6 +839,7 @@ onboardingPlanRoutes.patch('/onboarding-sites/:id', async (c) => {
   return c.json({ plan: await fresh(c, planId) });
 });
 
+/** Removes a site from a plan. */
 onboardingPlanRoutes.delete('/onboarding-sites/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
@@ -932,6 +959,7 @@ onboardingPlanRoutes.post('/onboarding-templates', async (c) => {
   return c.json({ template: toTemplate(row) }, 201);
 });
 
+/** Edits a company plan template (name, summary, blueprint); 404 when unknown or not visible. */
 onboardingPlanRoutes.patch('/onboarding-templates/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');

@@ -11,6 +11,10 @@ import { cardText, JOB_WORDS } from '../../../shared/src/i18n/ownerTeam';
 type Lang = 'tr' | 'en';
 const W = JOB_WORDS;
 
+/**
+ * A seat's job description as Markdown in `lang`, built from its stored card and golden tasks (shown on the team
+ * screen and given to the agent). Null for an unknown seat.
+ */
 export async function jobDescription(deps: Pick<Deps, 'db'>, seat: string, lang: Lang): Promise<string | null> {
   const p = await deps.db.system((q) => seatPolicy(q, seat));
   if (!p) return null;

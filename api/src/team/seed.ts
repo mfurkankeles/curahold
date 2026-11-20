@@ -5,6 +5,10 @@ import type { Q } from '../db';
 import { ORG_CHART } from '../../../shared/src/team/orgChart';
 import { auditLine } from '../lib/office';
 
+/**
+ * Creates the AI team's seats from the built-in org chart, leads first so every reports_to exists.
+ * With `reset`, seats return to their defaults; returns how many were added and reset.
+ */
 export async function seedOrgChart(q: Q, opts: { reset?: boolean; by: string }): Promise<{ added: number; reset: number }> {
   let added = 0;
   let reset = 0;

@@ -14,6 +14,10 @@ function wrap(tx: Tx): Q {
   };
 }
 
+/**
+ * The Db over an in-process PGlite (tests, dev, the demo). Same contract as postgresDb: tenant() sets the
+ * company, person, locale and day, then drops to the curahold_app role so row security applies exactly as in production.
+ */
 export function pgliteDb(pg: PGlite): Db {
   return {
     tenant(ctx, fn) {

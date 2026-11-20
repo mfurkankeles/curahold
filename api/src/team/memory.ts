@@ -13,6 +13,7 @@ export interface SeatMemory {
   facts: { key: string; value: string; updatedAt: string }[];
 }
 
+/** A seat's memory: its running summary and its saved facts, newest first. */
 export async function readMemory(q: Q, seat: string): Promise<SeatMemory> {
   const rows = await q.query<{ key: string; value: string; updated_at: Date }>('select key, value, updated_at from agent_memory where seat = $1 order by updated_at desc', [seat]);
   const at = (d: Date) => new Date(d).toISOString();
@@ -23,10 +24,12 @@ export async function readMemory(q: Q, seat: string): Promise<SeatMemory> {
   };
 }
 
+/** Saves or replaces one memory entry for a seat. */
 export async function writeMemory(q: Q, seat: string, key: string, value: string) {
   await q.query(`insert into agent_memory (seat, key, value) values ($1, $2, $3) on conflict (seat, key) do update set value = excluded.value, updated_at = now()`, [seat, key, value.slice(0, 16000)]);
 }
 
+/** Removes one memory entry; true if it existed. */
 export async function deleteMemory(q: Q, seat: string, key: string): Promise<boolean> {
   const r = await q.query('delete from agent_memory where seat = $1 and key = $2 returning key', [seat, key]);
   return r.length > 0;

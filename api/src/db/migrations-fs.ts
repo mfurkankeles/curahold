@@ -5,6 +5,7 @@ import type { Migration } from './migrate';
 
 export const MIGRATIONS_DIR = join(import.meta.dirname, '..', '..', '..', 'db', 'migrations');
 
+/** Reads db/migrations/*.sql from disk, sorted by name (Node and tests; the Worker build bundles them instead). */
 export function loadMigrations(dir = MIGRATIONS_DIR): Migration[] {
   return readdirSync(dir)
     .filter((f) => f.endsWith('.sql'))
