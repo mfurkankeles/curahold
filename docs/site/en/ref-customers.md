@@ -145,7 +145,7 @@ Brings in customers from rows of a file (CSV or Excel read on your side), with a
 | `mapping` | object | required |  |
 | `newFields` | list of object | optional | at most 40 items |
 | `runAutomations` | yes/no | optional |  |
-| `locale` | one of en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | optional |  |
+| `locale` | one of en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko \| hi \| ms | optional |  |
 
 ### `GET /imports`
 

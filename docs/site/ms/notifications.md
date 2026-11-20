@@ -49,3 +49,7 @@ Dalam tetapan anda → Kalendar, buat alamat kalendar peribadi dan tambahkannya 
 ## Peringatan onboarding
 
 Apabila tiba giliran anda dalam pelan onboarding, atau langkah anda tersekat, anda diingatkan dalam aplikasi. Untuk menerimanya melalui e-mel juga, tandakan **Peringatan onboarding melalui e-mel** di bawah **Apa yang anda mahu dimaklumkan**. Ia mati sehingga anda menghidupkannya; waktu senyap dan ringkasan pagi terpakai.
+
+## Senyapkan satu tugasan
+
+Buka tugasan itu dan klik **Hentikan notis ulasan untuk tugasan ini** di bawah medannya. Anda masih dimaklumkan apabila ditugaskan atau di-@mention. **Hidupkan semula notis ulasan** membatalkannya.

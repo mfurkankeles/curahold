@@ -56,6 +56,8 @@ Semua yang dihantar kepada anda dalam satu senarai: tugasan yang diberikan kepad
 
 Tanpa pengumpulan, laporan ialah senarai baris, dan anda memilih lajurnya. **Eksport** memuat turun hasilnya sebagai CSV.
 
+Setiap carta mempunyai **Papar sebagai jadual**: angka yang sama sebagai jadual, dan kembali semula. Halakan penuding pada bar atau titik, atau tekan kekunci anak panah pada carta, untuk membaca satu nilai. Warna kekal berbeza untuk pembaca buta warna; apabila dua warna yang dipilih untuk pilihan kelihatan serupa, carta itu menggunakan warnanya sendiri.
+
 **Simpan laporan** menyimpannya sebagai milik anda. Tandakan **Kongsi dengan syarikat** dan semua orang boleh membukanya. Dalam laporan yang dikongsi, setiap orang hanya melihat tugasan dan pelanggan yang memang boleh mereka lihat; medan yang tidak boleh dilihat oleh peranan mereka juga tidak dipaparkan dalam laporan.
 
 **Laporan sedia dibuat** berada di bahagian bawah halaman yang sama: buka satu, lihatnya dengan data anda sendiri, ubahnya dan simpannya sebagai milik anda.

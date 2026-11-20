@@ -67,7 +67,7 @@ Perlu diketahui:
 
 ## Google Sheets dan Excel
 
-Hamparan ialah cara paling mudah untuk membawa masuk data, dan ia berfungsi untuk mana-mana alat yang boleh mengeksport hamparan. Sambungkan Google Sheet, atau fail Excel dalam OneDrive atau SharePoint, tab demi tab; setiap tab boleh menjadi pelanggan, kenalan atau jenis rekod anda sendiri. Pilih lajur yang mengenal pasti sesuatu baris, supaya baris yang berubah mengemas kini pelanggan yang sama dan bukannya menambah pelanggan kedua.
+Hamparan ialah cara paling mudah untuk membawa masuk data, dan ia berfungsi untuk mana-mana alat yang boleh mengeksport hamparan. Sambungkan Google Sheet, atau fail Excel dalam OneDrive atau SharePoint, tab demi tab; setiap tab boleh menjadi pelanggan, kenalan atau jenis rekod anda sendiri. Pilih lajur yang mengenal pasti sesuatu baris, supaya baris yang berubah mengemas kini pelanggan yang sama dan bukannya menambah pelanggan kedua. Hamparan tidak menyimpan masa perubahan bagi setiap baris, jadi apabila sel yang sama berubah di kedua-dua pihak, perubahan yang dibuat dalam Curahold menang; untuk membiarkan hamparan menang, pilih itu pada tab Tetapan sambungan.
 
 ## Alat sokongan
 
@@ -87,10 +87,14 @@ Tab **Status** sambungan menyatakan apa yang berlaku dengan kata-kata mudah, den
 Untuk menyambung semula:
 
 1. Buka **Tetapan → CRM dan hamparan**.
+   ![CRM dan hamparan dalam menu Tetapan, dibulatkan](img/sync-stops-1.webp)
 2. Klik sambungan yang ditandakan **Perlu perhatian**.
+   ![Sambungan yang perlu perhatian, dibulatkan](img/sync-stops-2.webp)
 3. Klik **Sambung semula** di bahagian atas halaman.
-4. Log masuk ke akaun yang sama seperti sebelum ini (atau tampal kunci baharu) dan luluskan.
-5. Klik **Segerakkan sekarang**. Medan yang telah anda padankan kekal seperti biasa.
+   ![Butang Sambung semula, dibulatkan](img/sync-stops-3.webp)
+   Log masuk ke akaun yang sama seperti sebelum ini (atau tampal kunci baharu) dan luluskan.
+4. Klik **Segerakkan sekarang**. Medan yang telah anda padankan kekal seperti biasa.
+   ![Butang Segerakkan sekarang, dibulatkan](img/sync-stops-4.webp)
 
 Untuk membuang sambungan, bukanya, klik **⋯** dan pilih **Buang**. Penyegerakan berhenti; pelanggan, kenalan dan peluang yang telah dibawa masuk kekal dalam Curahold dan tiada apa-apa dipadam dalam alat lain itu. Bagi program perakaunan, baki, invois dan bayaran yang dibaca daripadanya dibuang dari halaman pelanggan.
 

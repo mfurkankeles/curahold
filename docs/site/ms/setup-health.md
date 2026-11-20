@@ -89,6 +89,8 @@ Jadual ini ditulis daripada kata-kata produk itu sendiri, jadi ia sentiasa sepad
 | --- | --- | --- |
 | Satu alat yang disambungkan tidak lagi menerima log masuk kami (Betulkan dahulu) | Tiada apa-apa masuk atau keluar sehingga ia disambungkan semula. Hanya perlu log masuk sekali. | **Sambung semula** |
 | Penyegerakan terakhir dengan … alat tidak selesai (Betulkan dahulu) | Perubahan yang dibuat sejak itu sedang menunggu. Halaman sambungan menerangkan apa yang menghentikannya. | **Lihat apa yang berlaku** |
+| Satu webhook masuk tidak menggunakan apa-apa selama sehari (Patut dibetulkan) | Setiap penghantaran ditolak (rahsia salah) atau tidak dapat digunakan (tiada pelanggan yang sepadan, kandungan yang berubah). Lognya menunjukkan yang mana satu. | **Buka webhook masuk** |
+| WhatsApp sudah disambungkan tetapi tiada mesej yang tiba (Patut dibetulkan) | Selepas sehari, ini biasanya bermakna alamat panggil balik dan token pengesahan belum disimpan dalam aplikasi Meta, atau “messages” belum dilanggan. | **Buka sambungan** |
 | Satu sambungan sedang menunggu medannya dipadankan (Patut dibetulkan) | Selagi anda tidak memilih apa pergi ke mana dan memulakannya, ia tidak membawa masuk apa-apa. | **Selesaikan pemadanan** |
 | … perubahan tidak dapat dihantar ke alat yang satu lagi (Patut dibetulkan) | Kami telah mencuba tiga kali. Halaman sambungan menunjukkan setiap satu dan sebabnya, dan boleh mencuba lagi. | **Semak semula** |
 | … kunci API berhenti berfungsi dalam dua minggu (Patut dibetulkan) | Apa-apa yang menggunakannya akan berhenti menghantar. Buat kunci baharu dan pasangkannya sebelum itu. | **Buka kunci API** |
