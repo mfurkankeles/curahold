@@ -67,7 +67,7 @@ Bilmekte fayda var:
 
 ## Google Sheets ve Excel
 
-Tablo, veri getirmenin en kolay yoludur ve tabloya dışa aktarabilen her araç için çalışır. Bir Google Sheet'i ya da OneDrive veya SharePoint'teki bir Excel dosyasını sekme sekme bağla; her sekme müşteriler, kişiler ya da kendi kayıt türün olabilir. Satırı tanıtan sütunu seç; böylece değişen satır ikinci bir müşteri eklemek yerine aynı müşteriyi günceller.
+Tablo, veri getirmenin en kolay yoludur ve tabloya dışa aktarabilen her araç için çalışır. Bir Google Sheet'i ya da OneDrive veya SharePoint'teki bir Excel dosyasını sekme sekme bağla; her sekme müşteriler, kişiler ya da kendi kayıt türün olabilir. Satırı tanıtan sütunu seç; böylece değişen satır ikinci bir müşteri eklemek yerine aynı müşteriyi günceller. Tablo her satır için bir değişiklik zamanı tutmaz; aynı hücre iki tarafta da değiştiyse Curahold'daki değişiklik kazanır. Tablonun kazanmasını istersen bunu bağlantının Ayarlar sekmesinden seç.
 
 ## Destek araçları
 
@@ -88,10 +88,14 @@ Bağlantının **Durum** sekmesi ne olduğunu sade bir dille söyler; altında s
 Yeniden bağlamak için:
 
 1. **Ayarlar → CRM ve tablolar**'ı aç.
+   ![Ayarlar menüsünde CRM ve tablolar işaretli](img/sync-stops-1.webp)
 2. **Bakılması gerek** yazan bağlantıya tıkla.
+   ![Bakılması gereken bağlantı işaretli](img/sync-stops-2.webp)
 3. Sayfanın üstündeki **Yeniden bağla**'ya tıkla.
-4. Daha önceki hesapla giriş yap (ya da yeni anahtarı yapıştır) ve onayla.
-5. **Şimdi eşitle**'ye tıkla. Eşleştirdiğin alanlar olduğu gibi kalır.
+   ![Yeniden bağla düğmesi işaretli](img/sync-stops-3.webp)
+   Daha önceki hesapla giriş yap (ya da yeni anahtarı yapıştır) ve onayla.
+4. **Şimdi eşitle**'ye tıkla. Eşleştirdiğin alanlar olduğu gibi kalır.
+   ![Şimdi eşitle düğmesi işaretli](img/sync-stops-4.webp)
 
 Bir bağlantıyı kaldırmak için aç, **⋯**'ye tıkla ve **Kaldır**'ı seç. Eşitleme durur; gelen müşteriler, kişiler ve fırsatlar Curahold'da kalır, öbür araçta hiçbir şey silinmez. Muhasebe programında ise ondan okunan bakiyeler, faturalar ve ödemeler müşteri sayfalarından kaldırılır.
 
