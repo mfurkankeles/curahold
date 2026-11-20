@@ -26,6 +26,7 @@ import { InvestorSideView } from './owner/PlanInvestors';
 import { SummaryView } from './owner/PlanSummary';
 import { MILESTONE_METRICS } from '../../../shared/src/ownerPlan';
 
+/** The owner's words hook, kept here too for the screens that import it from this file (Desk.tsx). */
 export { useOwnerWords };
 import '../surfaces/owner.css';
 
@@ -2212,10 +2213,10 @@ const ACTION_WORD: Record<string, OwnerKey> = {
   'meeting.call': 'act.meetingCall',
 };
 
-/** The owner console's log of what desk staff did. */
 /** The words for a desk log action; a finer action (plan.investor.meeting) falls back to its family (plan.investor). */
 const actionWord = (action: string): OwnerKey | undefined => ACTION_WORD[action] ?? ACTION_WORD[action.split('.').slice(0, 2).join('.')];
 
+/** The owner console's log of what desk staff did. */
 export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const { data, error, reload } = useData<{ activity: OwnerActivity[] }>('/owner/activity', beat, failed);
