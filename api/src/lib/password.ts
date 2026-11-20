@@ -11,11 +11,13 @@ async function derive(password: string, salt: Uint8Array<ArrayBuffer>, rounds: n
   return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: rounds }, key, 256));
 }
 
+/** Hashes a customer-portal password: PBKDF2-SHA256, random salt, 100,000 rounds (the most Workers allow). */
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   return `pbkdf2-sha256$${ROUNDS}$${base64url(salt)}$${base64url(await derive(password, salt, ROUNDS))}`;
 }
 
+/** Checks a password against its stored hash in constant time; someone without a password costs the same time. */
 export async function checkPassword(password: string, stored: string | null): Promise<boolean> {
   // Someone without a password still costs the same time, so timing tells nothing.
   const [scheme, rounds, salt, hash] = (stored ?? `pbkdf2-sha256$${ROUNDS}$${'A'.repeat(22)}$`).split('$');

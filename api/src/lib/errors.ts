@@ -1,3 +1,6 @@
+// Errors the API answers with: every ErrorCode, its HTTP status and dictionary key, HttpError, and fail(). Routes call
+// fail('code'); the error handler (app.ts) turns it into JSON with words in the reader's language, so nothing internal
+// leaks (CLAUDE.md). Adding a code means adding its words to every dictionary.
 import type { MessageKey, Vars } from '../../../shared/src/i18n';
 
 export type ErrorCode =
@@ -216,6 +219,9 @@ const STATUS: Record<ErrorCode, number> = {
   analytics_budget: 429,
 };
 
+/**
+ * An error with an API code, its HTTP status, words to fill in, and extra fields for the client (e.g. which fields failed).
+ */
 export class HttpError extends Error {
   status: number;
   constructor(
@@ -231,6 +237,7 @@ export class HttpError extends Error {
   }
 }
 
+/** Throws the HttpError for `code`. Typed `never`, so code after it is known unreachable. */
 export const fail = (code: ErrorCode, vars?: Vars, extra?: Record<string, unknown>): never => {
   throw new HttpError(code, vars, extra);
 };

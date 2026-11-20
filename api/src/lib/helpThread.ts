@@ -18,6 +18,7 @@ import { randomToken } from './crypto';
 import { emailHtml } from './emailHtml';
 import { enqueue, kick } from './notify';
 
+/** A help_messages row as the API's HelpMessage. */
 export const toHelpMessage = (m: Row): HelpMessage => ({
   id: m.id,
   author: m.author,

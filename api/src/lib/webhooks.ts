@@ -88,6 +88,9 @@ function forViewer(data: Record<string, unknown>, defs: AccountField[], viewer: 
   return { ...data, fields: stripFields((data.fields ?? {}) as Record<string, unknown>, hidden) };
 }
 
+/**
+ * The signature header of an outgoing webhook: `t=<time>,v1=<HMAC of time.body>`, so receivers can check origin and age.
+ */
 export async function signBody(secret: string, body: string, at: number) {
   return `t=${at},v1=${await hmacHex(secret, `${at}.${body}`)}`;
 }
@@ -130,6 +133,10 @@ export async function postWebhook(deps: Deps, hook: Row, body: string, event: st
   }
 }
 
+/**
+ * Sends up to `limit` queued outgoing webhooks (claimed so two workers never send one twice), each body filtered to the
+ * fields its company's viewers may see; returns how many were sent.
+ */
 export async function deliverWebhooks(deps: Deps, limit = 50): Promise<number> {
   const claimed = await deps.db.system((q) =>
     q.query(

@@ -11,6 +11,10 @@ import { run, type C } from '../context';
 import type { Q } from '../db';
 import { iso, toComment, toTask } from './mappers';
 
+/**
+ * Everything stored about one person, for a KVKK/GDPR access request: by the person (`self`) or an administrator.
+ * Reads with db.system() filtered to this org and person, because the request must include rows they cannot open.
+ */
 export async function personalData(c: C, userId: string, scope: 'admin' | 'self') {
   const org = c.get('org');
   const db = c.get('deps').db;

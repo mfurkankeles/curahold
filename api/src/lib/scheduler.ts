@@ -26,6 +26,10 @@ import { purgeDueCompanies } from './companyDeletion';
 
 const DIGEST_ITEMS = 8;
 
+/**
+ * Sends each full-seat person's morning summary at the hour they chose, in their company's time zone. Reads companies
+ * and people with db.system() (a scheduled job has no signed-in person), each query filtered on org_id.
+ */
 export async function sendDigests(deps: Deps, now: Date) {
   const orgs = await deps.db.system((q) => q.query('select id, timezone from orgs'));
   let queued = 0;
@@ -83,6 +87,11 @@ export async function sendDigests(deps: Deps, now: Date) {
   return queued;
 }
 
+/**
+ * Daily housekeeping: trash past its 30 days goes for good (files too), assistant logs past each company's retention,
+ * the stated retention periods (lib/retention.ts), companies past their deletion grace period, and old undo
+ * snapshots, once-keys, errors and session recordings. Each step logs its own failure and the rest still run.
+ */
 export async function cleanUp(deps: Deps) {
   // What has been in the trash for its 30 days goes for good, files included.
   await emptyTrash(deps).catch((e) => console.error('[curahold] emptying the trash failed', e));
@@ -139,6 +148,11 @@ export async function archiveFinished(deps: Deps, now: Date): Promise<number> {
   return rows.length;
 }
 
+/**
+ * The periodic job (cron): digests, automations, weekly summaries, nudges, onboarding signals, notification and
+ * webhook delivery, health scores, CRM syncs, trial reminders, seat sync to billing, held uploads, ops alerts, and
+ * the daily clean-up. Each step catches its own failure so one broken job never stops the others.
+ */
 export async function runScheduled(deps: Deps, now = (deps.now ?? (() => new Date()))()) {
   const digests = await sendDigests(deps, now);
   const fired = (await runScheduledAutomations(deps, now)) + (await sweepRecordEvents(deps, now).catch((e) => (console.error('[curahold] record events', e), 0)));

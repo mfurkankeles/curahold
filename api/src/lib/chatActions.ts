@@ -26,6 +26,9 @@ async function orgOf(deps: Deps, orgId: string) {
   return o;
 }
 
+/**
+ * Completes a task from a chat button (Slack, Teams) as the linked person, with their rights; audited "via chat".
+ */
 export async function completeTask(deps: Deps, orgId: string, userId: string, taskId: string): Promise<ChatOutcome> {
   const org = await orgOf(deps, orgId);
   const res = await deps.db.tenant({ orgId, userId }, async (q): Promise<ChatOutcome & { moved?: string }> => {
@@ -54,6 +57,7 @@ export async function completeTask(deps: Deps, orgId: string, userId: string, ta
   return res.ok ? { ok: true, title: res.title, url: res.url } : res;
 }
 
+/** Moves a task's due date `days` ahead from a chat button, as the linked person; audited "via chat". */
 export async function snoozeTask(deps: Deps, orgId: string, userId: string, taskId: string, days = 1): Promise<ChatOutcome> {
   const org = await orgOf(deps, orgId);
   const today = localDate(nowOf(deps), org.timezone);
@@ -111,6 +115,9 @@ export async function userByEmail(deps: Deps, orgId: string, email: string) {
   return rows[0] ?? null;
 }
 
+/**
+ * The Curahold person linked to a chat tool's user id on one connection, or nothing. Chat buttons act only for a linked person.
+ */
 export async function userByIdentity(deps: Deps, connectionId: string, externalId: string) {
   const rows = await deps.db.system((q) =>
     q.query(

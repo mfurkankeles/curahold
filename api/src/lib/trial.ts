@@ -51,6 +51,10 @@ export async function consentEvidence(blocks: TrialConsentBlock[], granted: stri
   );
 }
 
+/**
+ * Records the consents given with a trial request as evidence: each consent's text and version, the language, the
+ * country the connection came from, and where it was given (form, mail link, console). ADR 0014.
+ */
 export async function recordConsents(
   q: Q,
   rows: ConsentEvidence[],

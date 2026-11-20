@@ -7,6 +7,10 @@ import type { Q, Row } from '../db';
 import { day } from './mappers';
 import { onTaskCreated } from './taskEvents';
 
+/**
+ * Creates the next copy of a repeating task when one is finished (top-level tasks only), with its checklist unticked;
+ * null when the task does not repeat.
+ */
 export async function spawnNext(q: Q, orgId: string, actorId: string | null, task: Row, board: Row, today: string): Promise<Row | null> {
   if (!task.repeat || task.parent_id) return null;
   const columns = board.columns as Column[];

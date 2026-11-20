@@ -12,6 +12,7 @@ function boardPosts(orgId: string, board: Row, event: 'created' | 'done', taskId
     .map((n) => ({ orgId, connectionId: n.connectionId, channel: n.channel, kind: `board_${event}`, taskId, actorId }));
 }
 
+/** Notifies a new task's assignees (and records it in the history), in the caller's transaction. */
 export async function onTaskCreated(q: Q, orgId: string, actorId: string | null, task: Row, board: Row, extra: Record<string, unknown> = {}) {
   const list: NewNotification[] = (task.assignee_ids ?? []).map((u: string) => ({
     orgId,
@@ -31,6 +32,7 @@ async function watchersOf(q: Q, taskId: string): Promise<string[]> {
   return ids ?? [];
 }
 
+/** Notifies people of a task change: new assignees that they got it, followers where it went. */
 export async function onTaskUpdated(q: Q, orgId: string, actorId: string, before: Row, after: Row, board: Row) {
   const had = new Set<string>(before.assignee_ids ?? []);
   const list: NewNotification[] = (after.assignee_ids ?? [])
@@ -64,6 +66,7 @@ export async function onTaskUpdated(q: Q, orgId: string, actorId: string, before
   await enqueue(q, list);
 }
 
+/** Notifies a task's followers and the people mentioned in a comment, with a short plain-text excerpt. */
 export async function onComment(q: Q, orgId: string, actorId: string, task: Row, body: string, mentions: string[]) {
   const excerpt = body.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/g, '@$1').slice(0, 280);
   const mentioned = new Set(mentions);

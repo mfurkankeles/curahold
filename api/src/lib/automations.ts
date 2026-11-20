@@ -24,6 +24,9 @@ export { localDate, localHour, addDays };
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400_000);
 
+/**
+ * Splits a stored trigger into the trigger itself and its conditions (older rules kept conditions inside the trigger).
+ */
 export function splitTrigger(raw: any): { trigger: Trigger; conditions: Condition[] } {
   const { conditions, ...trigger } = raw ?? {};
   return { trigger: trigger as Trigger, conditions: Array.isArray(conditions) ? conditions : [] };
@@ -292,6 +295,10 @@ async function fire(deps: Deps, orgId: string, rule: Row, key: string, account: 
   });
 }
 
+/**
+ * Runs the time-based automation rules (due dates, inactivity) for every company, or one company or rule, at `now`
+ * in each company's own time zone. Called by the scheduler; db.system() because it spans companies, every write names org_id.
+ */
 export async function runScheduledAutomations(deps: Deps, now: Date, onlyOrg?: string, onlyRule?: string) {
   const orgs = await deps.db.system((q) => q.query(`select id, timezone from orgs where ($1::uuid is null or id = $1::uuid)`, [onlyOrg ?? null]));
   let fired = 0;
@@ -320,6 +327,7 @@ export async function runScheduledAutomations(deps: Deps, now: Date, onlyOrg?: s
   return fired;
 }
 
+/** Fires "customer created" automation rules for new customers of one company; returns how many rules ran. */
 export async function runAccountCreated(deps: Deps, orgId: string, accountIds: string[], now: Date) {
   if (!accountIds.length) return 0;
   const [org] = await deps.db.system((q) => q.query('select timezone from orgs where id = $1', [orgId]));
@@ -336,6 +344,9 @@ export async function runAccountCreated(deps: Deps, orgId: string, accountIds: s
   return fired;
 }
 
+/**
+ * Fires "task moved to column" automation rules, and tells the customer's portal people when work starts or is done.
+ */
 export async function runTaskMoved(deps: Deps, orgId: string, taskId: string, column: string, now: Date) {
   // People at the customer hear when work starts and when it is done (lib/portal.ts).
   await tellCustomerStatus(deps, orgId, taskId).catch((e) => console.error('[curahold] portal status email', e));

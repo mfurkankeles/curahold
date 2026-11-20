@@ -22,6 +22,7 @@ export interface NewNotification {
   dedupeKey?: string | null;
 }
 
+/** Queues notifications in the caller's transaction (the outbox). Nobody is told about their own action. */
 export async function enqueue(q: Q, list: NewNotification[]) {
   for (const n of list) {
     if (n.userId && n.actorId && n.userId === n.actorId) continue; // nobody is told about their own action
@@ -50,6 +51,7 @@ export const DEFAULT_PREFS: NotifyPrefs = {
   defaultBoardId: null,
 };
 
+/** A person's notification preferences, with defaults for anything not set. */
 export function prefsOf(raw: unknown): NotifyPrefs {
   const p = (raw ?? {}) as Partial<NotifyPrefs>;
   const hour = Number(p.digestHour);
@@ -160,6 +162,7 @@ function weeklyReason(t: (k: MessageKey, v?: Record<string, string | number>) =>
   }
 }
 
+/** A notification as a chat or mail message in the reader's language, naming a portal person when one acted. */
 export function render(ctx: RenderCtx): ChatMessage {
   const { locale, terms, n, task } = ctx;
   const t = (k: MessageKey, v: Record<string, string | number> = {}) => translate(locale, k, v, terms);
@@ -443,6 +446,9 @@ async function postToChannel(deps: Deps, ctx: Awaited<ReturnType<typeof loadRend
 
 const MAX_ATTEMPTS = 5;
 
+/**
+ * Sends up to `limit` queued notifications (claimed so two workers never send one twice); returns how many were sent.
+ */
 export async function deliverPending(deps: Deps, limit = 50): Promise<number> {
   const claimed = await deps.db.system((q) =>
     q.query(

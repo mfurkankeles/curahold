@@ -37,6 +37,10 @@ export interface OpsAlert {
 /** The 15-minute slot an alert belongs to: one alert per rule per slot. */
 const slot = (now: number) => new Date(Math.floor(now / 900_000) * 900_000).toISOString().slice(0, 16);
 
+/**
+ * Counts answer times and failures in this isolate or process; when too many fail or the slow tail grows it raises an
+ * alert in the owner console (and once by mail). Free-tier operations watch, no paid monitoring.
+ */
 export class OpsWatch {
   private samples: { at: number; ms: number; failed: boolean }[] = [];
   private fired = new Map<string, number>();

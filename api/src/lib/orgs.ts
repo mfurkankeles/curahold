@@ -16,6 +16,7 @@ export const DEFAULT_ROLES: { key: string; perms: Perm[] }[] = [
   { key: 'viewer', perms: ['accounts.view_all'] },
 ];
 
+/** A new board's columns in the company's language. */
 export function defaultColumns(locale: Locale) {
   return [
     { key: 'todo', name: translate(locale, 'board.defaultColumns.todo'), done: false },
@@ -37,6 +38,10 @@ export interface NewOrg {
   boardMap?: Record<string, string>;
 }
 
+/**
+ * Creates a company with its built-in roles, its founder and starter pages, in one system transaction (nobody is
+ * signed in yet, so there is no tenant to scope to). The founder's own first-run screen is skipped.
+ */
 export async function createOrg(db: Db, input: NewOrg) {
   return db.system(async (q: Q) => {
     const template = TEMPLATES[input.template ?? 'blank'];

@@ -4,6 +4,7 @@ import type { Db } from '../db';
 import type { Change } from './protocol';
 import type { Source } from './room';
 
+/** The live rooms' data source on the database: change numbers and the rows to replay after a gap. */
 export function dbSource(db: Db): Source {
   return {
     async head(orgId) {

@@ -66,6 +66,10 @@ export function githubChecks(status: unknown, conclusion: unknown): DevChecks {
   return 'none';
 }
 
+/**
+ * Reads a GitHub webhook (pull requests, pushes, checks) into task links and check results. Task keys in titles,
+ * branches and commit messages decide which tasks a change belongs to.
+ */
 export function parseGithub(event: string, p: any): Parsed {
   const out: Parsed = { links: [], checks: [] };
   const repo = str(p?.repository?.full_name);
@@ -144,6 +148,7 @@ export function gitlabChecks(status: unknown): DevChecks {
   }
 }
 
+/** Reads a GitLab webhook (merge requests, pushes, pipelines) into task links and check results. */
 export function parseGitlab(p: any): Parsed {
   const out: Parsed = { links: [], checks: [] };
   const repo = str(p?.project?.path_with_namespace);

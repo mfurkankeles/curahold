@@ -21,6 +21,7 @@ import { builtForLines } from './handoff';
 
 export type Anchor = 'start' | 'renewal' | 'close';
 
+/** A calendar day `n` days after an ISO date (UTC arithmetic, so no time-zone drift). */
 export const addDays = (iso: string, n: number) => {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);

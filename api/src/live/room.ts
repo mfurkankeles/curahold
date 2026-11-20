@@ -88,6 +88,10 @@ function batch(s: ConnState, from: number, to: number, changes: Change[]): Serve
   return m;
 }
 
+/**
+ * One company's live room, shared by both hosts: who may connect, what each connection hears, replay after a gap and
+ * presence. Keeps per-connection state in the connection itself, so a hibernating Durable Object loses nothing (ADR 0007).
+ */
 export class LiveRoom {
   private chain: Promise<unknown> = Promise.resolve();
   /** The newest change number fanned out; null after a wake-up until the next look. */

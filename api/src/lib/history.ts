@@ -3,6 +3,7 @@
 import type { Q, Row } from '../db';
 import { day } from './mappers';
 
+/** Adds a line to a task's history (who did what), in the caller's transaction. */
 export async function addEvent(q: Q, orgId: string, taskId: string, actorId: string | null, kind: string, data: Record<string, unknown> = {}) {
   await q.query('insert into task_events (org_id, task_id, actor_id, kind, data) values ($1, $2, $3, $4, $5)', [orgId, taskId, actorId, kind, JSON.stringify(data)]);
 }

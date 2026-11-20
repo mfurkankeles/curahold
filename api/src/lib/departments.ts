@@ -9,6 +9,7 @@ import { fail } from './errors';
 /** Administrators see switched-off departments too (to switch them on, or to see what is kept). */
 export const seesAllDepartments = (auth: Pick<AuthCtx, 'perms'>) => auth.perms.includes('org.manage');
 
+/** A departments row as the API's Department. */
 export function toDepartment(r: Row): Department {
   return {
     id: r.id,
@@ -35,6 +36,7 @@ export async function listDepartments(q: Q, auth: Pick<AuthCtx, 'userId' | 'perm
   return rows.map(toDepartment);
 }
 
+/** A department the caller can see, or 'not_found'. */
 export async function loadDepartment(q: Q, id: string): Promise<Row> {
   const [d] = await q.query('select * from departments where id = $1', [id]);
   if (!d) fail('not_found');

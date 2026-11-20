@@ -38,11 +38,13 @@ export async function isPaused(q: Q, seat: string): Promise<boolean> {
   return !!r;
 }
 
+/** The pauses in force for the AI team, newest first. */
 export async function listPauses(deps: Pick<Deps, 'db'>): Promise<Pause[]> {
   const rows = await deps.db.system((q) => q.query('select * from agent_pauses where resumed_at is null order by paused_at desc'));
   return rows.map((r) => ({ id: String(r.id), scope: r.scope, target: r.target ?? null, reason: r.reason ?? null, pausedAt: isoAt(r.paused_at), pausedBy: String(r.paused_by) }));
 }
 
+/** Pauses all, a team or a seat (no duplicate for the same scope and target) and records who and why (ADR 0011). */
 export async function pause(q: Q, scope: Pause['scope'], target: string | null, by: string, reason: string | null) {
   const [open] = await q.query(`select id from agent_pauses where resumed_at is null and scope = $1 and target is not distinct from $2`, [scope, target]);
   if (open) return String(open.id);
@@ -52,6 +54,7 @@ export async function pause(q: Q, scope: Pause['scope'], target: string | null, 
   return r.id;
 }
 
+/** Lifts a pause and records who lifted it; 'not_found' for one already lifted. */
 export async function resume(q: Q, id: string, by: string) {
   const [r] = await q.query('update agent_pauses set resumed_at = now(), resumed_by = $2 where id = $1 and resumed_at is null returning scope, target', [id, by]);
   if (!r) fail('not_found');
@@ -83,6 +86,7 @@ const seatOf = (r: Row, pausedSeats: Set<string>, allPaused: boolean, pausedTeam
   queue: { queued: num(r.queued), running: num(r.running), blocked: num(r.blocked) },
 });
 
+/** Every AI seat (or one) with its state, usage this week and budget. */
 export async function listSeats(deps: Pick<Deps, 'db'>, now: Date, only?: string): Promise<Seat[]> {
   return deps.db.system(async (q) => {
     const rows = await q.query(
@@ -121,6 +125,7 @@ export interface SeatInput {
   agent?: { name: string; avatar?: string | null; model?: string | null; effort?: string | null } | null;
 }
 
+/** Creates or updates a seat's card from the owner's edit. */
 export async function upsertSeat(q: Q, s: SeatInput, by: string) {
   await q.query(
     `insert into seats (seat, title, title_tr, team, reports_to, tier, state, filled_by, human_email, cadence, weekly_budget, wake_trigger, card)
@@ -191,8 +196,16 @@ const approvalOf = (r: Row): Approval => ({
 
 /** Text that must never reach the owner's queue (or the log): keys, tokens, private keys. */
 const SECRET = /(-----BEGIN [A-Z ]*PRIVATE KEY-----|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}|\bxox[abpr]-[A-Za-z0-9-]{10,}|\bag_[a-z0-9-]+_[A-Za-z0-9_-]{20,})/;
+/**
+ * Whether any text looks like a key, token or password. Proposals, log lines and meeting lines containing one are refused,
+ * so a secret never lands in the log or in front of the owner by accident.
+ */
 export const hasSecret = (...texts: (string | null | undefined)[]) => texts.some((t) => !!t && SECRET.test(t));
 
+/**
+ * Files a proposal for the owner. Goes through the approval gate (team/gate.ts guardProposal): known kind, on the seat's
+ * card, review for outside kinds, output checks. Returns its id and reference (ADR 0011).
+ */
 export async function propose(q: Q, seat: string, p: ApprovalProposal, deps?: Pick<Deps, 'config'>): Promise<{ id: string; ref: string }> {
   if (hasSecret(p.title, p.summary, p.why, p.whatChanges, p.riskNote, p.undoNote, JSON.stringify(p.action))) fail('validation', { fields: 'secret' }, { fields: ['summary'], reason: 'secret' });
   // The approval gate (team/gate.ts): kind on the seat's card, review for outside kinds, output checks.
@@ -206,6 +219,7 @@ export async function propose(q: Q, seat: string, p: ApprovalProposal, deps?: Pi
   return r;
 }
 
+/** Approvals by status, optionally one seat's, newest first. */
 export async function listApprovals(deps: Pick<Deps, 'db'>, status: Approval['status'] | 'open' | 'all', seat?: string): Promise<Approval[]> {
   const where: string[] = [];
   const args: unknown[] = [];
@@ -288,6 +302,7 @@ export async function decide(deps: Deps, id: string, owner: string, d: Decision)
 
 const logOf = (r: Row): LogEntry => ({ id: Number(r.id), at: isoAt(r.at), seat: r.seat, kind: r.kind, thread: r.thread ? String(r.thread) : null, body: r.body, ref: r.ref ?? null });
 
+/** Writes a line in the AI team's company log; refused if it contains a secret. */
 export async function writeLog(q: Q, seat: string, e: { kind: LogKind; body: string; thread?: string | null; ref?: string | null }) {
   if (hasSecret(e.body, e.ref)) fail('validation', { fields: 'secret' }, { fields: ['body'], reason: 'secret' });
   const [r] = await q.query('insert into company_log (seat, kind, thread, body, ref) values ($1, $2, $3, $4, $5) returning *', [seat, e.kind, e.thread ?? null, e.body, e.ref ?? null]);
@@ -314,6 +329,7 @@ export async function readLog(deps: Pick<Deps, 'db'>, opts: { seat?: string; sli
   return rows.map(logOf);
 }
 
+/** The last 200 audit lines of the AI team, optionally one seat's, paged with `before`. */
 export async function readAudit(deps: Pick<Deps, 'db'>, opts: { seat?: string; before?: number }): Promise<AuditLine[]> {
   const where: string[] = [];
   const args: unknown[] = [];
@@ -363,6 +379,7 @@ const meetingOf = (r: Row): Meeting => ({
   createdAt: isoAt(r.created_at),
 });
 
+/** Meetings, filtered by whether the owner attends and by seat, newest first. */
 export async function listMeetings(deps: Pick<Deps, 'db'>, opts: { withOwner?: boolean; seat?: string }): Promise<Meeting[]> {
   const where: string[] = [];
   const args: unknown[] = [];
@@ -372,6 +389,7 @@ export async function listMeetings(deps: Pick<Deps, 'db'>, opts: { withOwner?: b
   return rows.map(meetingOf);
 }
 
+/** One meeting with its lines, or null. */
 export async function meetingDetail(deps: Pick<Deps, 'db'>, id: string): Promise<{ meeting: Meeting; lines: MeetingLine[] } | null> {
   return deps.db.system(async (q) => {
     const [m] = await q.query('select * from meetings where id = $1', [id]);
@@ -381,6 +399,7 @@ export async function meetingDetail(deps: Pick<Deps, 'db'>, id: string): Promise
   });
 }
 
+/** Creates a meeting called by `by` with the given attendees and limits. */
 export async function createMeeting(q: Q, by: string, m: { title: string; goal?: string | null; attendees: string[]; withOwner: boolean; startsAt?: string | null; timeBoxMin?: number | null; tokenBudget?: number | null }) {
   const [r] = await q.query(
     `insert into meetings (title, goal, called_by, with_owner, attendees, starts_at, time_box_min, token_budget) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
@@ -390,6 +409,7 @@ export async function createMeeting(q: Q, by: string, m: { title: string; goal?:
   return meetingOf(r);
 }
 
+/** Adds a line to a meeting; refused if it contains a secret, 'not_found' for an unknown meeting. */
 export async function addMeetingLine(q: Q, id: string, speaker: string, text: string) {
   if (hasSecret(text)) fail('validation', { fields: 'secret' }, { fields: ['body'], reason: 'secret' });
   const [m] = await q.query(`select status from meetings where id = $1`, [id]);

@@ -126,6 +126,9 @@ async function planFacts(q: Q, planId: string): Promise<SignalFacts> {
   return { 'plan.people': !!r.people, 'plan.mapping': !!r.mapping, 'plan.goals': !!r.goals };
 }
 
+/**
+ * The product facts an onboarding plan's signals need (for example "first task done"), read only for the scopes asked.
+ */
 export async function factsFor(q: Q, orgId: string, plan: { id: string; kind: PlanKind; account_id: string | null }, needed: Set<SignalId>): Promise<SignalFacts> {
   const scopes = new Set([...needed].map((s) => SIGNALS[s].scope));
   const out: SignalFacts = {};
@@ -344,6 +347,7 @@ export async function companyDay(q: Q, orgId: string): Promise<string> {
   return localDate(new Date(), o?.timezone || 'UTC');
 }
 
+/** Rechecks a plan's data fields (received, valid) and records when each started failing or was fixed. */
 export async function judgeFields(q: Q, orgId: string, planId: string) {
   const rows = await q.query('select id, type, required, received, auto_ok, failing_since, fixed_at from onboarding_fields where plan_id = $1 and org_id = $2', [planId, orgId]);
   for (const f of rows) {
@@ -520,6 +524,7 @@ const STEP_SQL = `select s.*, u.name as owner_name, t.title as work_title, t.sta
   from onboarding_steps s left join users u on u.id = s.owner_id and u.org_id = s.org_id
   left join tasks t on t.id = s.task_id and t.org_id = s.org_id`;
 
+/** An onboarding_steps row as the API's PlanStep. */
 export const toStep = (r: Row): PlanStep => ({
   id: r.id,
   key: r.key,

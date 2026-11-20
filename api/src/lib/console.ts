@@ -26,6 +26,10 @@ export const ACTIVATION_WINDOW_DAYS = 90;
 export const CHURN_WINDOW_DAYS = 30;
 const PAYING = `billing->>'status' in ('active', 'past_due')`;
 
+/**
+ * The owner's day in the console: companies by plan and status, paying, past due, trials ended and converted, and
+ * activations (a second person joined and a task was done). Reads across companies (db.system()); owner only.
+ */
 export async function consoleToday(deps: Deps, staffEmail: string): Promise<ConsoleToday> {
   const data = await deps.db.system(async (q) => {
     const paying = await q.query<{ plan: string; interval: string; seats: number; since: string | null }>(

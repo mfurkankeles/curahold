@@ -28,6 +28,9 @@ export const SUPPORT_COOKIE = 'app_support';
 export const SUPPORT_SESSION_HOURS = 8;
 export const ENTRY_LINK_MINUTES = 10;
 
+/**
+ * The company's rule for who may let support in. Nothing chosen means administrators only: "anyone" is a deliberate choice.
+ */
 export function supportPolicy(org: Pick<OrgRow, 'settings'>): SupportPolicy {
   const p = (org.settings as any)?.supportAccess;
   // Nothing chosen: administrators only. "Anyone" is a deliberate choice a company makes, not a default.
@@ -110,6 +113,11 @@ const ALLOWED: RegExp[] = [
   /^\/api\/(notifications|people|pulse|client-error|boards|tasks|comments|files|time|undo|accounts|checklists|plans|records|views|reports|rhythm|account-fields|record-types|record-comments|renewals|pages|search|activities|health|meeting-types|planned|rollups|connections|automations|trash|help)(\/|$)/,
 ];
 
+/**
+ * Whether Curahold support, inside a company with consent, may not make this request. Only listed areas are open; the
+ * company's administration, billing, keys, apps, people and portal never are; edit access still cannot change some
+ * areas. Privacy and trust: support sees only what the person let it see.
+ */
 export function supportBlocked(method: string, path: string): boolean {
   if (!ALLOWED.some((r) => r.test(path))) return true;
   if (NEVER.some((r) => r.test(path))) return true;

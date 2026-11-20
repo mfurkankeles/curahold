@@ -43,6 +43,7 @@ async function portfolioOf(q: Q, orgId: string, userId: string): Promise<string[
   return team.map((r) => r.id);
 }
 
+/** A person's weekly summary, showing only fields they may see (the same rule as every screen and the API). */
 export async function buildWeekly(q: Q, orgId: string, userId: string, now: Date, locale: string) {
   const [org] = await q.query('select account_fields, currency, timezone from orgs where id = $1', [orgId]);
   const defs = (org.account_fields ?? []) as AccountField[];

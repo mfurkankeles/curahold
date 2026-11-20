@@ -19,6 +19,10 @@ export interface OpenSessionInput {
   days: number;
 }
 
+/**
+ * Opens a session for a person on a device: an older session on the same device is replaced, and the oldest devices
+ * are signed out to stay within the device limit. Audited.
+ */
 export async function openSession(q: Q, s: OpenSessionInput) {
   // Signing in again on the same device replaces that device's session.
   await q.query(

@@ -138,6 +138,9 @@ async function customerOf(q: Q, orgId: string, m: HookMapping, payload: unknown)
   return null;
 }
 
+/**
+ * The Curahold id an incoming webhook already linked to an outside id, so a repeated delivery updates instead of duplicating.
+ */
 export async function linkOf(q: Q, hookId: string, externalId: string): Promise<string | null> {
   if (!externalId) return null;
   const [l] = await q.query<{ target_id: string }>('select target_id from inbound_links where hook_id = $1 and external_id = $2', [hookId, externalId]);

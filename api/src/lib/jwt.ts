@@ -15,6 +15,9 @@ export interface JwtClaims {
   [k: string]: unknown;
 }
 
+/**
+ * Splits a JWT into header and claims without checking the signature. Only for reading; callers verify before trusting it.
+ */
 export function decodeJwt(token: string): { header: Record<string, any>; claims: JwtClaims } | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;

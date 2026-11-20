@@ -93,6 +93,7 @@ export function paceOf(metric: PlanMetric, actual: number | null, target: number
 
 const taskOf = (r: Row): PlanTask => ({ id: String(r.id), title: r.title, dueOn: isoAt(r.due_on).slice(0, 10), doneAt: iso(r.done_at), source: r.source });
 
+/** The owner's plan: monthly targets against actuals for each plan metric, and the plan's tasks. */
 export async function ownerPlan(deps: Deps, at?: Date): Promise<OwnerPlan> {
   const now = at ?? nowOf(deps);
   const period = monthOf(now);
@@ -151,6 +152,10 @@ async function fires(q: Q, t: ChecklistTrigger): Promise<string | null> {
   return arr >= t.amount ? `ARR ${arr}` : null;
 }
 
+/**
+ * The go-live checklist with each item's status. Triggers are evaluated from real data each time; the first moment one
+ * fired is kept, because its deadline counts from then.
+ */
 export async function ownerChecklist(deps: Deps): Promise<OwnerChecklist> {
   return deps.db.system(async (q) => {
     // Triggers are evaluated from real data each time; the first moment one fired is kept (its deadline counts from then).
@@ -194,6 +199,7 @@ export async function ownerChecklist(deps: Deps): Promise<OwnerChecklist> {
   });
 }
 
+/** Records a checklist item's status, note and evidence with who set it. */
 export async function markChecklist(deps: Pick<Deps, 'db'>, item: string, by: string, status: 'todo' | 'done' | 'skipped', note: string | null, evidence: string | null) {
   await deps.db.system((q) =>
     q.query(
@@ -332,6 +338,7 @@ export async function ownerRevenue(deps: Deps, staffEmail: string): Promise<Owne
   });
 }
 
+/** Companies on a trial or free, with days left and how active they are. */
 export async function ownerTrials(deps: Deps): Promise<OwnerTrial[]> {
   const now = nowOf(deps).getTime();
   const rows = await deps.db.system((q) =>
@@ -363,6 +370,7 @@ export async function ownerTrials(deps: Deps): Promise<OwnerTrial[]> {
   });
 }
 
+/** System health for the owner: recent errors, sync runs, broken connections, AI team activity. */
 export async function ownerSystem(deps: Deps): Promise<OwnerSystem> {
   return deps.db.system(async (q) => {
     const [er] = await q.query(
@@ -390,6 +398,7 @@ export async function ownerSystem(deps: Deps): Promise<OwnerSystem> {
   });
 }
 
+/** Everything desk staff did, newest first, paged with an ISO `before`. */
 export async function ownerActivity(deps: Pick<Deps, 'db'>, before?: string): Promise<OwnerActivity[]> {
   const rows = await deps.db.system((q) =>
     q.query(
@@ -404,6 +413,7 @@ export async function ownerActivity(deps: Pick<Deps, 'db'>, before?: string): Pr
   return rows.map((r) => ({ at: isoAt(r.at), who: String(r.who), action: String(r.action), ref: r.ref ? String(r.ref) : null, company: r.company ? String(r.company) : null }));
 }
 
+/** Support at a glance: open help requests (blocking first) and who on the desk holds them. */
 export async function ownerSupport(deps: Pick<Deps, 'db'>): Promise<OwnerSupport> {
   return deps.db.system(async (q) => {
     const [s] = await q.query(

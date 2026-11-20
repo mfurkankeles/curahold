@@ -97,6 +97,10 @@ export async function readyBackupAdmins(q: Q, orgId: string, ids: readonly strin
   );
 }
 
+/**
+ * The company's SSO settings with their secrets unsealed, for a sign-in; null when SSO is not set up.
+ * Read through the sso_auth_config() function, which returns only the asking company's row.
+ */
 export async function loadSsoAuthConfig(q: Q, cfg: Config): Promise<SsoAuthConfig | null> {
   const [row] = await q.query<RawConfig>('select * from sso_auth_config()');
   if (!row) return null;
@@ -149,7 +153,9 @@ export interface SsoState {
   t?: 1; // a test from the SSO settings: report back, sign nobody in
 }
 
+/** Signs the state carried through an SSO sign-in (company, device, return path, expiry). */
 export const signState = (state: SsoState, cfg: Config) => sign(state, cfg.authSecret);
+/** Checks an SSO state made by signState; null when tampered with. */
 export const verifyState = (token: string, cfg: Config) => verify<SsoState>(token, cfg.authSecret);
 
 // ------------------------------------------------------ identity mapping
@@ -231,6 +237,7 @@ export async function pkce(): Promise<{ verifier: string; challenge: string }> {
   return { verifier, challenge: base64url(digest) };
 }
 
+/** The identity provider's sign-in address for an OIDC SSO sign-in. */
 export function oidcAuthUrl(
   config: Pick<SsoAuthConfig, 'ssoUrl' | 'clientId'>,
   p: { redirectUri: string; state: string; nonce: string; challenge: string },
@@ -278,6 +285,7 @@ interface Jwk {
   e?: string;
 }
 
+/** Fetches the identity provider's signing keys (JWKS) to check its tokens. */
 export async function fetchJwks(url: string, fetchFn: typeof fetch): Promise<Jwk[]> {
   const res = await fetchFn(url, { headers: { accept: 'application/json' } });
   if (!res.ok) return [];

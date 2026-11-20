@@ -26,6 +26,9 @@ export interface PortalOAuthState {
   x: number; // expiry (ms)
 }
 
+/**
+ * The one return address for portal Google/Microsoft sign-ins, on the central host (one registered URL per provider).
+ */
 export function centralCallbackUrl(deps: Deps): string {
   const cfg = deps.config;
   const port = cfg.publicPort ? `:${cfg.publicPort}` : '';
@@ -40,6 +43,10 @@ export async function portalOAuthStart(deps: Deps, org: OrgRow, provider: string
   return authorizeUrl(provider, deps.config.oauth[provider]!, centralCallbackUrl(deps), await sign(state, deps.config.authSecret), state.n);
 }
 
+/**
+ * Finishes a customer-portal sign-in with Google or Microsoft from the signed state, then sends the person on to
+ * their company's portal; 404 when that portal does not exist.
+ */
 export async function portalOAuthCallback(c: Context<any>, state: PortalOAuthState) {
   const deps: Deps = c.get('deps');
   const cfg = deps.config;

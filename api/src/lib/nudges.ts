@@ -20,6 +20,10 @@ const OPEN = `t.archived_at is null and b.archived_at is null
 const weekdayOf = (iso: string) => new Date(`${iso}T12:00:00Z`).getUTCDay();
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 
+/**
+ * Daily nudges: tells people about their tasks that have been still too long, and escalates long-stuck ones to the lead,
+ * each at the hour of the person's morning summary in their company's time zone.
+ */
 export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number; escalated: number }> {
   const orgs = await deps.db.system((q) => q.query('select id, timezone, settings from orgs'));
   let stale = 0;

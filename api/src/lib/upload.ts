@@ -3,6 +3,9 @@ import { MAX_FILE_MB } from '../../../shared/src/model';
 import type { C } from '../context';
 import { fail } from './errors';
 
+/**
+ * Reads one uploaded file from a multipart form, refusing anything over MAX_FILE_MB before it is read ('file_too_large').
+ */
 export async function readUpload(c: C): Promise<{ name: string; size: number; mime: string; data: ArrayBuffer }> {
   const limit = MAX_FILE_MB * 1024 * 1024;
   if (Number(c.req.header('content-length') ?? 0) > limit + 64 * 1024) fail('file_too_large', { mb: MAX_FILE_MB });

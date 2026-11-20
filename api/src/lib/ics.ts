@@ -40,6 +40,7 @@ const nextDay = (iso: string) => {
   return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
 };
 
+/** An iCalendar feed (RFC 5545) of tasks by due date, for a person's private calendar link. */
 export function buildIcs(calName: string, tasks: IcsTask[], now: Date): string {
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Curahold//Tasks//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${escape(calName)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H'];
   for (const t of tasks) {

@@ -30,6 +30,7 @@ export interface FlowSettings {
   loopBoardId: string | null;
 }
 
+/** The company's handover settings (sales to delivery), with defaults for anything not set. */
 export function flowSettings(settings: unknown): FlowSettings {
   const f = ((settings as Record<string, any> | null)?.flow ?? {}) as Record<string, unknown>;
   return {

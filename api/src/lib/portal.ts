@@ -33,6 +33,7 @@ export function portalOn(org: Pick<OrgRow, 'settings'>, deps?: Deps): boolean {
   return deps ? on && !!deps.config.portalDomain : on;
 }
 
+/** How the company's customer portal signs people in (email link, password, Google or Microsoft), with defaults. */
 export function portalAuth(org: Pick<OrgRow, 'settings'>): PortalAuth {
   return portalAuthOf((org.settings as any)?.portal?.auth);
 }

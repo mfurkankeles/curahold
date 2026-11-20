@@ -83,11 +83,13 @@ export async function healthInputs(q: Q, orgId: string, ids: string[] | null, to
   return out;
 }
 
+/** A company's health scoring rules, customer fields and time zone, read once for a scoring run. */
 export async function orgHealth(q: Q, orgId: string): Promise<{ cfg: HealthConfig; defs: AccountField[]; timezone: string }> {
   const [o] = await q.query('select settings, account_fields, timezone from orgs where id = $1', [orgId]);
   return { cfg: healthConfig(o?.settings?.health ?? DEFAULT_HEALTH), defs: o?.account_fields ?? [], timezone: o?.timezone || 'UTC' };
 }
 
+/** Scores customers' health (all, or the given ids) with the company's rules, or `override` for a preview. */
 export async function scoreAccounts(q: Q, orgId: string, ids: string[] | null, now: Date, override?: HealthConfig): Promise<Map<string, HealthResult>> {
   const { cfg, defs, timezone } = await orgHealth(q, orgId);
   const use = override ?? cfg;

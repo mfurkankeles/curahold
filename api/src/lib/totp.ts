@@ -7,6 +7,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 export const STEP_SECONDS = 30;
 export const DIGITS = 6;
 
+/** Bytes to base32 (RFC 4648), the form authenticator apps read. */
 export function base32Encode(bytes: Uint8Array): string {
   let bits = 0;
   let value = 0;
@@ -23,6 +24,7 @@ export function base32Encode(bytes: Uint8Array): string {
   return out;
 }
 
+/** Base32 back to bytes, ignoring spaces, dashes and padding as people type them. */
 export function base32Decode(s: string): Uint8Array {
   const clean = s.toUpperCase().replace(/[\s=-]/g, '');
   let bits = 0;
@@ -63,6 +65,7 @@ export async function hotp(secret: Uint8Array, counter: number, digits = DIGITS)
   return String(bin % 10 ** digits).padStart(digits, '0');
 }
 
+/** The 30-second time step a TOTP code belongs to. */
 export const stepOf = (ms: number) => Math.floor(ms / 1000 / STEP_SECONDS);
 
 /**
@@ -97,5 +100,7 @@ export function newRecoveryCode(): string {
   return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8)}`;
 }
 
+/** A recovery code as typed (any case, dashes, spaces) reduced to its letters and digits. */
 export const normalizeRecovery = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+/** The stored hash of a recovery code; codes are never kept in the clear. */
 export const recoveryHash = (s: string) => sha256Hex(`recovery:${normalizeRecovery(s)}`);

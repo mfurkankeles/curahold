@@ -44,6 +44,7 @@ export const TICKET_MS = 60_000;
  * person may follow. So the read-only ways in (an administrator's preview, a support visit
  * that may only look) let it through, and the ticket comes out quiet. */
 export const TICKET_PATH = '/api/live/ticket';
+/** Whether a request asks for a live ticket. */
 export const asksForTicket = (method: string, path: string) => method === 'POST' && path === TICKET_PATH;
 
 // ------------------------------------------------------------- messages
@@ -111,6 +112,7 @@ const unb64u = (s: string) => {
   return out;
 };
 
+/** Signs a live ticket (company, person, what they may follow, expiry) for the socket to present. */
 export async function signTicket(secret: string, t: Ticket): Promise<string> {
   const body = b64u(enc.encode(JSON.stringify(t)));
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await key(secret), enc.encode(body)));

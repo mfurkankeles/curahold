@@ -5,6 +5,10 @@ import { brandPalette } from '../../../shared/src/portal';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/**
+ * The HTML of a product mail: company name and logo, the text, one button in the company's colour (text always readable
+ * on it), and an optional "sent with Curahold" line. Inputs are escaped here.
+ */
 export function emailHtml(o: { org: string; logo: string | null; text: string; link: string; cta: string; brand?: string | null; poweredBy?: boolean }): string {
   // The button in the company's colour (its text always readable on it); the portal's own colour otherwise.
   const { fill, onFill } = brandPalette(o.brand ?? null).light;
