@@ -91,6 +91,22 @@ export interface HookDelivery {
   payload: string | null;
 }
 
+/**
+ * Why a delivery was refused, not used or failed: the codes the receiver writes in the delivery log (and answers the
+ * sender with). The screen shows each as hooks.why.<code> in the reader's language; `not_used:<value>` carries the
+ * value that did not match. Anything else (an entry from before the codes) is shown as `other`.
+ */
+export const HOOK_PROBLEMS = ['bad_signature', 'bad_token', 'too_old', 'no_secret', 'not_json', 'owner_gone', 'not_used', 'unknown_target', 'no_board', 'no_title', 'no_subject', 'no_customer', 'no_body', 'no_deal', 'not_written'] as const;
+export type HookProblem = (typeof HOOK_PROBLEMS)[number] | 'other';
+
+/** A logged error as its code and the value it names (`not_used:refunded` → not_used, refunded). */
+export function problemOf(error: string | null | undefined): { code: HookProblem; value: string } | null {
+  if (!error) return null;
+  const [head, ...rest] = error.split(':');
+  const code = (HOOK_PROBLEMS as readonly string[]).includes(head) ? (head as HookProblem) : 'other';
+  return { code, value: rest.join(':').trim() };
+}
+
 /** A value out of the payload by a dot path: data.envelope.status, items[0].name, headers are not reachable. */
 export function pick(payload: unknown, path: string): unknown {
   let cur: any = payload;

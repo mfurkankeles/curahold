@@ -105,6 +105,8 @@ export type ErrorCode =
   | 'staff_second_step'
   | 'analytics_query'
   | 'analytics_budget'
+  /** Mail could not be sent (lib/services.ts MailError): the app answers with this, never the mail server's words. */
+  | 'mail_unavailable'
   | 'server';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -188,6 +190,7 @@ const STATUS: Record<ErrorCode, number> = {
   sync_running: 409,
   crm_error: 502,
   crm_unreachable: 502,
+  mail_unavailable: 503,
   server: 500,
   plan_no_date: 400,
   // 402 Payment Required: a plan is needed for this.

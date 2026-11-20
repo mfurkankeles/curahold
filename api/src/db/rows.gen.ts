@@ -2221,6 +2221,7 @@ export interface WebhookEventsRow {
   state: string;
   attempts: number;
   next_at: Date;
+  sent_to: string[];
 }
 
 /** Table `webhooks`. */

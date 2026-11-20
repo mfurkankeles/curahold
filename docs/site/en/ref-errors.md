@@ -112,3 +112,4 @@ An error always has the same shape: `{ "error": "<code>", "message": "<a sentenc
 | `billing_error` | 502 | The payment provider did not answer as expected. Please try again in a minute. |
 | `crm_error` | 502 | The connected service said: … |
 | `crm_unreachable` | 502 | We could not reach that address. Check the name is spelled right; if it is, your company network may be blocking it: ask your IT team. |
+| `mail_unavailable` | 503 | We could not send the email just now. Please try again in a few minutes; if it keeps happening, tell your administrator. |

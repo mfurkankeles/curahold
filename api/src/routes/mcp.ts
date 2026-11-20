@@ -11,6 +11,8 @@ import { audit } from '../lib/audit';
 export const mcpRoutes = new Hono<AppEnv>();
 
 const PROTOCOL = '2025-06-18';
+/** The most JSON-RPC messages one request may carry (older clients still send batches). */
+const MAX_BATCH = 10;
 const open = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, content-type, mcp-protocol-version, mcp-session-id', 'access-control-expose-headers': 'www-authenticate' };
 
 type Json = Record<string, any>;
@@ -359,6 +361,9 @@ mcpRoutes.post('/mcp', async (c) => {
     }
   };
   if (Array.isArray(msg)) {
+    // A batch runs its calls at once inside one request, so it is held to a few: one request must not fan out into
+    // hundreds of tool calls past the per-connection limit (the protocol since 2025-06-18 has no batches at all).
+    if (msg.length > MAX_BATCH) return c.json({ jsonrpc: '2.0', error: { code: -32600, message: `Invalid request: at most ${MAX_BATCH} messages in one batch.` }, id: null }, 400, open);
     const out = (await Promise.all(msg.map(handle))).filter(Boolean);
     return out.length ? c.json(out, 200, open) : c.body(null, 202, open);
   }

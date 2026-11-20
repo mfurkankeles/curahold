@@ -36,7 +36,6 @@
  "api/src/lib/webhooks.ts :: update webhook_events set attempts = attempts + 1, next_at = now() + i",
  "api/src/lib/webhooks.ts :: update webhook_events set state = 'sent' where id = $1",
  "api/src/lib/webhooks.ts :: update webhook_events set state = case when attempts >= $2 then 'faile",
- "api/src/lib/webhooks.ts :: update webhooks set last_status = $2, last_at = now(), failures = case",
  "api/src/portal.ts :: update portal_sessions set last_seen_at = now() where id = $1",
  "api/src/portal.ts :: update portal_users set last_seen_at = now() where id = $1",
  "api/src/portalSignIn.ts :: update portal_passkeys set counter = $2, last_used_at = now() where id",
