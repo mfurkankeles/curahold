@@ -3,7 +3,7 @@
 // numbers stay current while the screen is open. The figures are only ever as
 // real as the data behind them — a badge says live or demo.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
+import { LoadError, SkeletonRows } from '../components/Empty';
 import { ApiFailure, get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useMoney } from '../lib/money';
@@ -12,7 +12,7 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
 import type { CSSProperties } from 'react';
 import type { PlatformAccess } from '../../../shared/src/platform';
-import { ConsoleElsewhere, ConsoleFrame } from './PlatformConsole';
+import { ConsoleElsewhere, ConsoleFrame, SecondStepFirst } from './PlatformConsole';
 import { ConsoleChart, periodOf } from './ConsoleChart';
 import { formatClock, formatNumber, formatPercent } from '../lib/format';
 import '../surfaces/console.css';
@@ -76,7 +76,7 @@ export function MetricsPage() {
     </ConsoleFrame>
   );
   if (!owner) return frame(<NotHere />);
-  if (needsStep) return frame(<EmptyState icon="lock" title={t('errors.staff_second_step')} />);
+  if (needsStep) return frame(<SecondStepFirst />);
 
   const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);

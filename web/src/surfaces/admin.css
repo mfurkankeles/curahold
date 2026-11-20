@@ -226,6 +226,6 @@
 .conn-trouble { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
 .conn-trouble__plain { overflow-wrap: anywhere; }
 .conn-trouble__vendor { color: var(--ink-3); font-size: var(--fs-xs); overflow-wrap: anywhere; }
-.conn-trouble__vendor > summary { cursor: pointer; inline-size: fit-content; min-block-size: var(--tap-min); display: inline-flex; align-items: center; border-radius: var(--r-s); }
+.conn-trouble__vendor > summary { cursor: pointer; inline-size: fit-content; min-block-size: var(--tap-min); display: inline-flex; align-items: center; border-radius: var(--r-s); text-decoration: underline dotted; text-underline-offset: 3px; }
 .conn-trouble__vendor > summary:hover { color: var(--ink-2); }
 .conn-trouble__vendor > bdi { display: block; padding-block-start: var(--s-1); }

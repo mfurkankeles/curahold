@@ -6991,4 +6991,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.year': 'سنويًا',
   'conn.trouble.details': 'ما قاله {app}',
   'console.deniedBody': 'تعرض هذه الشاشة كل الشركات في هذا التثبيت، وهي مخصّصة لمن يديره. أرقام مساحة عملك في التقارير، وإعداداتها في الإعدادات.',
+  'console.secondStep.title': 'خطوة دخول إضافية أولًا',
 };

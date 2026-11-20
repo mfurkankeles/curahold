@@ -7006,6 +7006,7 @@ export const en = {
   'billing.intervalTab.year': 'Yearly',
   'conn.trouble.details': 'What {app} said',
   'console.deniedBody': 'It shows every company on this install and is meant for whoever runs it. Your own workspace\'s numbers are in Reports, and its settings in Settings.',
+  'console.secondStep.title': 'One more sign-in step first',
 } as const;
 
 export type MessageKey = keyof typeof en;

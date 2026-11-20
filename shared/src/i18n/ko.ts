@@ -6991,4 +6991,5 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.year': '연간',
   'conn.trouble.details': '{app}에서 온 메시지',
   'console.deniedBody': '이 화면은 이 설치의 모든 회사를 보여 주며, 설치를 운영하는 사람을 위한 화면입니다. 내 워크스페이스의 숫자는 보고서에, 설정은 설정에 있습니다.',
+  'console.secondStep.title': '먼저 로그인 단계를 하나 더 추가하세요',
 };

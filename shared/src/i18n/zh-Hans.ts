@@ -6991,4 +6991,5 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.year': '年付',
   'conn.trouble.details': '{app} 返回的信息',
   'console.deniedBody': '此页面显示此安装中的所有公司，供安装的管理者使用。你自己工作区的数据在“报告”中，设置在“设置”中。',
+  'console.secondStep.title': '请先完成一步额外的登录验证',
 };

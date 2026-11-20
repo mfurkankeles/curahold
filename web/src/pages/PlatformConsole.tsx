@@ -252,6 +252,23 @@ export function ConsoleFrame({ icon, title, end, children }: { icon: IconName; t
   );
 }
 
+/** The console needs a passkey or a second step first: what to do, and where (My devices), or a way home. */
+export function SecondStepFirst() {
+  const { t } = useI18n();
+  return (
+    <EmptyState icon="lock" title={t('console.secondStep.title')} body={t('errors.staff_second_step')}>
+      <button type="button" className="btn btn--primary" onClick={() => navigate('/devices')}>
+        <Icon name="key" size={16} />
+        {t('nav.devices')}
+      </button>
+      <button type="button" className="btn" onClick={() => navigate('/home')}>
+        <Icon name="home" size={16} />
+        {t('states.notAllowed.home')}
+      </button>
+    </EmptyState>
+  );
+}
+
 export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | null; denied: string }) {
   const { t } = useI18n();
   if (!access) return <SkeletonRows rows={3} label={t('common.loading')} />;
@@ -320,7 +337,7 @@ export function PlatformConsolePage() {
   );
   if (failed) return frame(<LoadError onRetry={retry} />);
   if (!access) return frame(<SkeletonRows rows={6} label={t('common.loading')} />);
-  if (access.secondStepNeeded) return frame(<EmptyState icon="lock" title={t('errors.staff_second_step')} />);
+  if (access.secondStepNeeded) return frame(<SecondStepFirst />);
   if (!access.platform) return frame(<ConsoleElsewhere access={access} denied={t('platform.denied' as MessageKey)} />);
 
   const n = (v: number) => formatNumber(v, locale);
