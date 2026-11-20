@@ -8,6 +8,22 @@
 .console__group { margin: 12px 12px 4px; font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
 .console__group:first-child { margin-top: 0; }
 .console__keys { margin: 0 12px; font-size: var(--fs-2xs); color: var(--ink-3); line-height: var(--lh-body); }
+/* The phone's tab bar and its "More" sheet (Desk.tsx OwnerTabs): a phone thing only. */
+.console__tabbar { display: none; }
+.console__tab--more { border: 0; background: none; font: inherit; cursor: pointer; }
+.console__tab--more[data-on] { background: var(--brand-wash); color: var(--brand-ink); font-weight: 600; }
+.console__more { display: grid; gap: 4px; }
+.console__more ul { display: grid; gap: 0; margin: 0 0 8px; padding: 0; list-style: none; }
+.console__more .console__group { margin: 8px 0 4px; }
+.console__moreitem { display: flex; align-items: center; gap: 12px; width: 100%; min-height: var(--tap); padding: 8px 12px; border: 0; border-radius: var(--r-s); background: transparent; color: var(--ink); font: inherit; font-size: var(--fs-l); text-align: start; cursor: pointer; }
+.console__moreitem:hover { background: var(--sunk); }
+.console__moreitem[aria-current='page'] { background: var(--brand-wash); color: var(--brand-ink); font-weight: 600; }
+.console__moreitem > span { flex: 1; min-width: 0; }
+.console__morego { color: var(--ink-3); }
+.console__more .ocpause { justify-self: start; min-height: var(--tap); }
+.console__moreclose { min-height: var(--tap); min-width: var(--tap); margin-inline-start: auto; }
+.console__privacy { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: var(--fs-s); color: var(--ink-2); line-height: var(--lh-body); }
+.console__privacy svg { flex: none; margin-top: 2px; color: var(--ink-3); }
 
 /* ------------------------------------------------------------------ top bar */
 .ocbar { position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 8px clamp(16px, 3vw, 32px); background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -271,15 +287,18 @@ button.octile:hover { border-color: var(--line-strong); box-shadow: var(--shadow
 
 /* ------------------------------------------------------------------ phone: stacked */
 @media (max-width: 860px) {
-  .console[data-owner] .console__nav { display: flex; grid-template-columns: none; overflow-x: auto; scrollbar-width: none; gap: 0; }
-  .console[data-owner] .console__tab { flex: 0 0 76px; }
-  .console[data-owner] .console__group, .console__keys { display: none; }
+  /* Four tabs and "More" under the thumb instead of the rail: nothing scrolls sideways. */
+  .console[data-owner] .console__nav--owner, .console[data-owner] .console__keys { display: none; }
+  .console[data-owner] .console__tabbar { grid-row: 3; grid-column: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
+  .console__tabbar .console__tab > span:first-of-type { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The top bar keeps one thing on a phone: the privacy note until it is folded (then it lives in "More"). The
+     counts are on the tabs, the pause switch in "More". */
   .ocbar { position: static; padding: 8px 16px; }
+  .ocbar__right, .ocbar__privacybtn { display: none; }
+  .ocbar:not([data-privacy]) { display: none; }
   .ocbar__privacy { flex-basis: 100%; }
   .ocseg { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
   .ocseg button { flex: none; }
-  .ocbar__right { width: 100%; justify-content: space-between; }
-  .ocbar__meter { min-width: 120px; }
   .octiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .octile[data-lead] { grid-column: 1 / -1; }
   .ocsplit { grid-template-columns: minmax(0, 1fr); }

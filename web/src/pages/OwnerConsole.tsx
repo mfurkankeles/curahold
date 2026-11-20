@@ -209,9 +209,12 @@ function writeFlag(key: string, value: string | null) {
 }
 
 /** Always on top: the privacy line, the agents' usage this week, the pause switch, and what waits for a decision. */
-export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
-  const { o, locale } = useOwnerWords();
-  const { data, reload } = useData<OwnerBarData>('/owner/bar', beat, failed);
+/**
+ * Pause every agent (after a confirmation) or resume them: in the top bar on a desktop, in "More" on a phone.
+ * Pausing stops proposals and writing at once; the AI team's gate and monitor are untouched (ADR 0011).
+ */
+export function PauseAllButton({ beat, failed, onChanged }: { beat: number; failed: (e: unknown) => void; onChanged?: () => void }) {
+  const { o } = useOwnerWords();
   const [busy, setBusy] = useState(false);
   const pauses = useData<{ pauses: Pause[] }>('/office/pauses', beat, failed);
   const all = pauses.data?.pauses.find((p) => p.scope === 'all');
@@ -222,13 +225,29 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
       if (all) await api('DELETE', `/office/pauses/${all.id}`);
       else await api('POST', '/office/pauses', { scope: 'all', reason: o('bar.pauseReason') });
       pauses.reload();
-      reload();
+      onChanged?.();
     } catch (e) {
       failed(e);
     } finally {
       setBusy(false);
     }
   };
+  return (
+    <button type="button" className={all ? 'btn btn--small btn--primary ocpause' : 'btn btn--small btn--danger ocpause'} onClick={toggle} disabled={busy || !pauses.data}>
+      <Icon name={all ? 'play' : 'hourglass'} size={14} />
+      {all ? o('bar.resumeAll') : o('bar.pauseAll')}
+    </button>
+  );
+}
+
+/** What waits for a decision and the AI team's week (the top bar's figures; the phone tabs' counts). */
+export function useOwnerBar(beat: number, failed: (e: unknown) => void) {
+  return useData<OwnerBarData>('/owner/bar', beat, failed);
+}
+
+export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
+  const { o, locale } = useOwnerWords();
+  const { data, reload } = useOwnerBar(beat, failed);
   const u = data?.usage;
   const share = u && u.budget > 0 ? Math.min(1, u.tokens / u.budget) : 0;
   // The privacy note says what the owner can and cannot see. Read once, it folds into a "Privacy" button that
@@ -276,10 +295,7 @@ export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unkno
             </span>
           </span>
         ) : null}
-        <button type="button" className={all ? 'btn btn--small btn--primary' : 'btn btn--small btn--danger'} onClick={toggle} disabled={busy || !pauses.data}>
-          <Icon name={all ? 'play' : 'hourglass'} size={14} />
-          {all ? o('bar.resumeAll') : o('bar.pauseAll')}
-        </button>
+        <PauseAllButton beat={beat} failed={failed} onChanged={reload} />
       </div>
     </div>
   );
