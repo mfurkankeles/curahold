@@ -114,14 +114,22 @@ async function sendToPhones(deps: Deps, push: OwnerPush): Promise<{ state: 'sent
   return sent ? { state: 'sent', error: null } : { state: retry ? 'pending' : devices.length ? 'failed' : 'skipped', error };
 }
 
+/** How long a claimed row stays out of other drains' reach while it is being sent (see drainOwnerOutbox). */
+const LEASE_MINUTES = 10;
+
 /**
- * Sends what waits in the owner's outbox (the hourly job, and right after an alert is queued). Each row is claimed
- * with SKIP LOCKED, so two runs at once never send the same message twice.
+ * Sends what waits in the owner's outbox (the hourly job, and right after an alert is queued). The claim takes a
+ * lease: it pushes `not_before` ten minutes ahead in the same statement. SKIP LOCKED alone is not enough, because
+ * the claim commits before anything is sent, so its row lock is gone while the mail or push is on its way; without
+ * the lease a second drain started in that window (two alerts a moment apart, the hourly job overlapping a test
+ * send) would claim the same pending row and send it again. The update after sending replaces the lease: null when
+ * sent or given up, the back-off when it should be tried again. A drain that dies mid-send leaves the row to be
+ * retried when the lease runs out.
  */
 export async function drainOwnerOutbox(deps: Deps, limit = 20): Promise<number> {
   const claimed = await deps.db.system((q) =>
     q.query<OwnerOutboxRow>(
-      `update owner_outbox set attempts = attempts + 1
+      `update owner_outbox set attempts = attempts + 1, not_before = now() + make_interval(mins => ${LEASE_MINUTES})
         where id in (select id from owner_outbox where state = 'pending' and attempts < $2 and (not_before is null or not_before <= now())
                       order by created_at limit $1 for update skip locked)
         returning *`,

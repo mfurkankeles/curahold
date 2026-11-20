@@ -375,6 +375,26 @@ describe('alerts on the owner’s phone (Web Push)', () => {
     pushStatus = 201;
   });
 
+  it('two drains at once send a message only once (the claim takes a lease while it sends)', async () => {
+    const { queueOwner } = await import('../api/src/lib/ownerOutbox');
+    await env.db.system((q) => queueOwner(q, 'mail', 'mail:lease-test', { to: OWNER, subject: 'Lease', text: 'Once.' }));
+    // The first drain's mail is slow to go out; a second drain starts while it is on its way.
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let started!: () => void;
+    const inFlight = new Promise<void>((r) => (started = r));
+    const slow = { ...env.deps, email: { send: async () => (++calls === 1 ? (started(), await gate) : undefined) } } as typeof env.deps;
+    const first = drainOwnerOutbox(slow);
+    await inFlight;
+    const second = await drainOwnerOutbox(slow);
+    release();
+    expect(await first).toBe(1);
+    expect({ second, calls }).toEqual({ second: 0, calls: 1 });
+    const [row] = await env.db.system((q) => q.query(`select state, not_before from owner_outbox where dedupe_key = 'mail:lease-test'`));
+    expect(row).toMatchObject({ state: 'sent', not_before: null });
+  });
+
   it('without VAPID keys the console offers no phones and nothing is queued', async () => {
     const plain = await setup({ support: { email: 'desk@curahold.test', staff: [OWNER] } });
     const { pushToOwner } = await import('../api/src/lib/ownerOutbox');
