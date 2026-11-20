@@ -6969,4 +6969,5 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': '月払い',
   'billing.intervalTab.year': '年払い',
   'conn.trouble.details': '{app} からのメッセージ',
+  'console.deniedBody': 'この画面はこのインストールのすべての会社を表示するもので、運用している人のためのものです。ご自身のワークスペースの数字は「レポート」に、設定は「設定」にあります。',
 };

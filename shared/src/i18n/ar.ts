@@ -6969,4 +6969,5 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': 'شهريًا',
   'billing.intervalTab.year': 'سنويًا',
   'conn.trouble.details': 'ما قاله {app}',
+  'console.deniedBody': 'تعرض هذه الشاشة كل الشركات في هذا التثبيت، وهي مخصّصة لمن يديره. أرقام مساحة عملك في التقارير، وإعداداتها في الإعدادات.',
 };

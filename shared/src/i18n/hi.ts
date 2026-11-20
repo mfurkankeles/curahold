@@ -6915,4 +6915,5 @@ export const hi: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': 'मासिक',
   'billing.intervalTab.year': 'सालाना',
   'conn.trouble.details': '{app} ने क्या कहा',
+  'console.deniedBody': 'यह स्क्रीन इस इंस्टॉल की सभी कंपनियां दिखाती है और इसे चलाने वाले व्यक्ति के लिए है। आपके अपने वर्कस्पेस के आंकड़े रिपोर्ट में और उसकी सेटिंग सेटिंग में हैं।',
 };

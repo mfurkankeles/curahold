@@ -6969,4 +6969,5 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': '按月',
   'billing.intervalTab.year': '按年',
   'conn.trouble.details': '{app} 回傳的訊息',
+  'console.deniedBody': '此頁面顯示此安裝中的所有公司，供安裝的管理者使用。你自己工作區的數據在「報告」中，設定在「設定」中。',
 };

@@ -6915,4 +6915,5 @@ export const ms: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': 'Bulanan',
   'billing.intervalTab.year': 'Tahunan',
   'conn.trouble.details': 'Kata {app}',
+  'console.deniedBody': 'Skrin ini menunjukkan setiap syarikat dalam pemasangan ini dan dimaksudkan untuk orang yang mengendalikannya. Angka ruang kerja anda sendiri ada dalam Laporan, dan tetapannya dalam Tetapan.',
 };

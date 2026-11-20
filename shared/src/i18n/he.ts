@@ -6969,4 +6969,5 @@ export const he: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': 'חודשי',
   'billing.intervalTab.year': 'שנתי',
   'conn.trouble.details': 'מה {app} אמר',
+  'console.deniedBody': 'המסך הזה מציג את כל החברות בהתקנה, והוא מיועד למי שמנהל אותה. המספרים של סביבת העבודה שלכם נמצאים בדוחות, וההגדרות שלה בהגדרות.',
 };

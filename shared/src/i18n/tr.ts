@@ -6969,4 +6969,5 @@ export const tr: Record<MessageKey, string> = {
   'billing.intervalTab.month': 'Aylık',
   'billing.intervalTab.year': 'Yıllık',
   'conn.trouble.details': '{app} ne dedi',
+  'console.deniedBody': 'Bu ekran bu kurulumdaki bütün şirketleri gösterir ve kurulumu yöneten kişi içindir. Kendi çalışma alanınızın rakamları Raporlar\'da, ayarları Ayarlar\'dadır.',
 };

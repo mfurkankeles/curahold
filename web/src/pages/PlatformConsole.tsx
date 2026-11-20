@@ -3,14 +3,15 @@
 // operator and for development) and in Curahold's own console on its own host
 // (desk.<domain>), where the same list is the Customers section. The data
 // endpoints are owner/staff-gated on the server; this screen only shows.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { MessageKey } from '../../../shared/src/i18n';
 import type { PlatformAccess, PlatformCustomer, PlatformCustomerDetail, PlatformOverview, SubStatus } from '../../../shared/src/platform';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { FilterGroup, FilterSheet } from '../components/FilterSheet';
-import { Icon } from '../components/icons';
+import { Icon, PageIcon, type IconName } from '../components/icons';
 import { CloseButton, useFocusTrap } from '../components/ui';
 import { get } from '../lib/api';
+import { navigate } from '../lib/router';
 import { formatDate, formatMoney, formatNumber } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import '../surfaces/console.css';
@@ -145,7 +146,7 @@ export function CustomerDrawer({ orgId, load, onClose }: { orgId: string; load: 
   const day = (v: string | null) => (v ? formatDate(v, locale, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
   const n = (v: number) => formatNumber(v, locale);
   const c = detail?.customer;
-  const row = (label: string, value: React.ReactNode) => (
+  const row = (label: string, value: ReactNode) => (
     <div className="pf-dl__row">
       <dt>{label}</dt>
       <dd>{value}</dd>
@@ -227,10 +228,43 @@ export function CustomerDrawer({ orgId, load, onClose }: { orgId: string; load: 
  * On the hosted service the in-app console is off: Curahold's own team is pointed to its console,
  * on a host of its own with its own sign-in; anyone else is told the screen is not theirs.
  */
+/**
+ * The frame every in-app console screen sits in, in every state (loading, refused, the numbers): the app's own
+ * top bar with the page's icon and name, and the page under it, as on every other screen.
+ */
+export function ConsoleFrame({ icon, title, end, children }: { icon: IconName; title: string; end?: ReactNode; children: ReactNode }) {
+  return (
+    <>
+      <header className="topbar">
+        <h1 className="topbar__title topbar__title--icon">
+          <PageIcon name={icon} />
+          <span>{title}</span>
+        </h1>
+        {end ? (
+          <>
+            <div className="topbar__spacer" />
+            {end}
+          </>
+        ) : null}
+      </header>
+      <div className="page">{children}</div>
+    </>
+  );
+}
+
 export function ConsoleElsewhere({ access, denied }: { access: PlatformAccess | null; denied: string }) {
   const { t } = useI18n();
   if (!access) return <SkeletonRows rows={3} label={t('common.loading')} />;
-  if (!access.consoleUrl) return <EmptyState icon="lock" title={denied} />;
+  // Someone who is not the install's owner learns what the screen is and is not left without a way on.
+  if (!access.consoleUrl)
+    return (
+      <EmptyState icon="lock" title={denied} body={t('console.deniedBody')}>
+        <button type="button" className="btn" onClick={() => navigate('/home')}>
+          <Icon name="home" size={16} />
+          {t('states.notAllowed.home')}
+        </button>
+      </EmptyState>
+    );
   return (
     <EmptyState icon="external" title={t('console.elsewhere.title')} body={t('console.elsewhere.body', { host: new URL(access.consoleUrl).host })}>
       <a className="btn btn--primary" href={access.consoleUrl}>
@@ -279,10 +313,15 @@ export function PlatformConsolePage() {
   const loadOne = useCallback((id: string) => get<PlatformCustomerDetail>(`/platform/customers/${id}`), []);
   const close = useCallback(() => setOpenId(null), []);
 
-  if (failed) return <div className="pf"><LoadError onRetry={retry} /></div>;
-  if (!access) return <div className="pf"><SkeletonRows rows={6} label={t('common.loading')} /></div>;
-  if (access.secondStepNeeded) return <div className="pf"><EmptyState icon="lock" title={t('errors.staff_second_step')} /></div>;
-  if (!access.platform) return <div className="pf"><ConsoleElsewhere access={access} denied={t('platform.denied' as MessageKey)} /></div>;
+  const frame = (body: ReactNode, end?: ReactNode) => (
+    <ConsoleFrame icon="building" title={t('platform.title' as MessageKey)} end={end}>
+      <div className="pf">{body}</div>
+    </ConsoleFrame>
+  );
+  if (failed) return frame(<LoadError onRetry={retry} />);
+  if (!access) return frame(<SkeletonRows rows={6} label={t('common.loading')} />);
+  if (access.secondStepNeeded) return frame(<EmptyState icon="lock" title={t('errors.staff_second_step')} />);
+  if (!access.platform) return frame(<ConsoleElsewhere access={access} denied={t('platform.denied' as MessageKey)} />);
 
   const n = (v: number) => formatNumber(v, locale);
   const usd = (v: number, cur: string) => formatMoney(v, cur, locale, { compact: v >= 10_000 });
@@ -294,20 +333,9 @@ export function PlatformConsolePage() {
     </div>
   );
 
-  return (
-    <div className="pf">
-      <header className="pf__head">
-        <div>
-          <h1 className="pf__title">{t('platform.title' as MessageKey)}</h1>
-          <p className="pf__sub">{t('platform.subtitle' as MessageKey)}</p>
-        </div>
-        {access.consoleUrl ? (
-          <a className="btn btn--primary" href={access.consoleUrl} target="_blank" rel="noreferrer">
-            <Icon name="external" size={16} />
-            {t('console.open' as MessageKey)}
-          </a>
-        ) : null}
-      </header>
+  return frame(
+    <>
+      <p className="pf__sub">{t('platform.subtitle' as MessageKey)}</p>
       {o && !o.billingSchema ? <p className="pf__note">{t('platform.legacyNote' as MessageKey)}</p> : null}
       {!o || !customers ? (
         <SkeletonRows rows={6} label={t('common.loading')} />
@@ -329,6 +357,12 @@ export function PlatformConsolePage() {
         </>
       )}
       {openId && <CustomerDrawer orgId={openId} load={loadOne} onClose={close} />}
-    </div>
+    </>,
+    access.consoleUrl ? (
+      <a className="btn btn--primary" href={access.consoleUrl} target="_blank" rel="noreferrer">
+        <Icon name="external" size={16} />
+        {t('console.open' as MessageKey)}
+      </a>
+    ) : null,
   );
 }

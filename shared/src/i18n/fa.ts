@@ -6969,4 +6969,5 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'billing.intervalTab.month': 'ماهانه',
   'billing.intervalTab.year': 'سالانه',
   'conn.trouble.details': 'پیام {app}',
+  'console.deniedBody': 'این صفحه همهٔ شرکت‌های این نصب را نشان می‌دهد و برای کسی است که آن را اداره می‌کند. ارقام فضای کاری شما در گزارش‌ها و تنظیماتش در تنظیمات است.',
 };

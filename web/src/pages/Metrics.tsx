@@ -2,7 +2,7 @@
 // company, on one screen, only for the owner. It polls the server so the
 // numbers stay current while the screen is open. The figures are only ever as
 // real as the data behind them — a badge says live or demo.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { ApiFailure, get } from '../lib/api';
 import { useI18n } from '../lib/i18n';
@@ -12,7 +12,7 @@ import type { MessageKey } from '../../../shared/src/i18n';
 import type { MetricPoint, PlatformMetrics } from '../../../shared/src/metrics';
 import type { CSSProperties } from 'react';
 import type { PlatformAccess } from '../../../shared/src/platform';
-import { ConsoleElsewhere } from './PlatformConsole';
+import { ConsoleElsewhere, ConsoleFrame } from './PlatformConsole';
 import { ConsoleChart, periodOf } from './ConsoleChart';
 import { formatClock, formatNumber, formatPercent } from '../lib/format';
 import '../surfaces/console.css';
@@ -70,8 +70,13 @@ export function MetricsPage() {
     };
   }, [owner, attempt]);
 
-  if (!owner) return <div className="metrics"><NotHere /></div>;
-  if (needsStep) return <div className="metrics"><EmptyState icon="lock" title={t('errors.staff_second_step')} /></div>;
+  const frame = (body: ReactNode, end?: ReactNode) => (
+    <ConsoleFrame icon="chart" title={t('metrics.title')} end={end}>
+      <div className="metrics">{body}</div>
+    </ConsoleFrame>
+  );
+  if (!owner) return frame(<NotHere />);
+  if (needsStep) return frame(<EmptyState icon="lock" title={t('errors.staff_second_step')} />);
 
   const n = (v: number) => formatNumber(Math.round(v), locale);
   const usd = (v: number) => money.format(v, 'USD', v >= 10_000);
@@ -108,13 +113,10 @@ export function MetricsPage() {
   const us = m?.usage;
   const funnelMax = Math.max(1, ...(cu?.funnel.map((f) => f.n) ?? [1]));
 
-  return (
-    <div className="metrics">
+  return frame(
+    <>
       <div className="metrics__head">
-        <div>
-          <h1 className="metrics__title">{t('metrics.title')}</h1>
-          <p className="metrics__sub">{t('metrics.subtitle')}</p>
-        </div>
+        <p className="metrics__sub">{t('metrics.subtitle')}</p>
         <div className="metrics__end">
           {m ? <span className="metrics__badge" data-mode={m.mode}>{t(m.mode === 'live' ? 'metrics.live' : 'metrics.demo')}</span> : null}
           {m ? <span className="metrics__time">{t('metrics.asOf', { time: formatClock(m.asOf, locale) })}</span> : null}
@@ -233,6 +235,6 @@ export function MetricsPage() {
       </section>
         </>
       )}
-    </div>
+    </>,
   );
 }
