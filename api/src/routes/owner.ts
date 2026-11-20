@@ -20,9 +20,11 @@ import {
   markContacted,
   rejectTrialRequest,
   setConsoleSetting,
+  trialApplicantData,
   trialRequestDetail,
 } from '../lib/trialRequests';
 import { body, isoDate, uuid } from '../lib/validate';
+import { companyDeletionCertificate, listCompanyDeletions } from '../lib/companyDeletion';
 import { ownerOnly } from './desk';
 
 export const ownerRoutes = new Hono<AppEnv>();
@@ -63,6 +65,17 @@ ownerRoutes.get('/activity', async (c) => {
   return c.json({ activity: await ownerActivity(c.get('deps'), before) });
 });
 
+// ------------------------------------------------------------ company deletions
+
+/** Every company deletion and where it stands (operator only): requested, grace end, cancelled or purged, certificate hash. */
+ownerRoutes.get('/company-deletions', async (c) => c.json({ deletions: await listCompanyDeletions(c.get('deps')) }));
+/** The certificate a purge left (what was removed and kept) with its SHA-256; 404 until the company is purged. */
+ownerRoutes.get('/company-deletions/:id', async (c) => {
+  const cert = await companyDeletionCertificate(c.get('deps'), id(c));
+  if (!cert) fail('not_found');
+  return c.json(cert);
+});
+
 // ------------------------------------------------------------ trial requests
 
 const statusQ = z.enum([...TRIAL_REQUEST_STATUSES, 'open', 'all']);
@@ -71,6 +84,13 @@ ownerRoutes.get('/requests', async (c) => {
   const s = statusQ.safeParse(c.req.query('status') ?? 'open');
   if (!s.success) return fail('validation');
   return c.json({ requests: await listTrialRequests(c.get('deps'), s.data), settings: await consoleSettings(c.get('deps')) });
+});
+/** Everything held about the applicant behind a trial request (their access request), as a download; 404 when unknown. */
+ownerRoutes.get('/requests/:id/export', async (c) => {
+  const data = await trialApplicantData(c.get('deps'), id(c));
+  if (!data) fail('not_found');
+  c.header('content-disposition', `attachment; filename="curahold-trial-applicant-${id(c)}.json"`);
+  return c.json(data);
 });
 /** One trial request with its history; 404 when unknown. */
 ownerRoutes.get('/requests/:id', async (c) => {

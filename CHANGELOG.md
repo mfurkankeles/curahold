@@ -32,7 +32,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   and offer a way on.
 - Turkish speaks "siz" everywhere, including the owner console and the go-live guide.
 - The go-live guide sets backups to be deleted after 35 days, and the checklist has a matching item.
-
+- Phones: bottom sheets (filters, date picker, task and record panels) can be pulled down to close. Every save button shows
+  its saving ring and tick, not only the ones in dialogs. A task, record or opportunity card grows into its panel.
+- Sales site: prices are hidden until launch ("pricing announced at launch") and the EU data claim only shows once it is
+  confirmed (`SITE_PRICES`, `SITE_EU_DATA`); the setup-time promise is gone; demo links open in the visitor's language
+  where the demo has it. The home page paints faster on phones (less inline CSS, one film scene at first).
+- Billing refuses countries we never sell to, in the billing profile, at checkout and at sign-up.
 - Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
   and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
   shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
@@ -48,9 +53,13 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 ### Added
 
 - Sales site: a small content hub in all eleven languages (/resources/): four templates (renewal playbook, business review (QBR)
-  agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
-  contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
-  what Curahold does today. Linked from the Resources menu and the footer.
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and nineteen plain definitions (among them customer health
+  score, churn, net revenue retention, ARR, business review, champion, time to value and the sales-to-success hand-over), the
+  same items in every language, each saying only what Curahold does today. Linked from the Resources menu and the footer.
+- Settings → Company: a privacy request log for objections, restrictions and other requests, with the due date the law of
+  the person's country sets, and a reply date. Trial requests can be exported for the person who sent them.
+- Report figures and the done tile on a customer show how they moved against the period before, with an icon and words,
+  not only a colour.
 - Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
   Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
   to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
@@ -190,6 +199,9 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Security
 
+- Privacy: the server stores a hash of the consent words it actually served and refuses a consent without a policy version;
+  old assistant consents are purged (the latest yes is kept); an erased portal person's consent proof stays, anonymised;
+  AI drafts need the person's consent; a company's deletion certificate is e-mailed to its administrators.
 - A crawler with a made-up `Authorization: Bearer` header is refused like any other crawler; the bearer must be a live key
   or app token of the company. Scanners without a session now count towards the unknown-address limit (they saw 401,
   never 404); webhook receivers stay out of that count.

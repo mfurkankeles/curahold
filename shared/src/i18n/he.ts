@@ -1,7 +1,8 @@
+// Hebrew (עברית) dictionary: the reader addressed in the plural (ראו, עמדו), written right to left (the interface mirrors).
+// Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Hebrew (עברית). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const he: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'צוות',
@@ -6991,4 +6992,50 @@ export const he: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': 'מה {app} אמר',
   'console.deniedBody': 'המסך הזה מציג את כל החברות בהתקנה, והוא מיועד למי שמנהל אותה. המספרים של סביבת העבודה שלכם נמצאים בדוחות, וההגדרות שלה בהגדרות.',
   'console.secondStep.title': 'קודם עוד שלב כניסה אחד',
+  'errors.country_not_offered': 'Curahold אינו זמין במדינה זו.',
+  'billing.profile.country': 'מדינת החיוב',
+  'billing.profile.countryNone': 'לא הוגדרה',
+  'email.companyDeleted.subject': '{org} נמחקה מ-Curahold',
+  'email.companyDeleted.body': 'שלום {name},\n\nכפי שהתבקש, {org} וכל מה שבה נמחקו מ-Curahold. למטה תעודת המחיקה: מה הוסר, ומה נשמר ולמה.\n\nSHA-256 של התעודה: {hash}\n\n{certificate}\n\nשמרו את ההודעה הזו לתיעוד. הגיבויים נמחקים לפי לוח הזמנים שלהם, כפי שכתוב בתעודה.',
+  'privacyReq.title': 'בקשות בנושא מידע אישי',
+  'privacyReq.lead': 'תעדו כאן כל בקשה של אדם לגבי המידע שלו, כולל התנגדות והגבלה. המועד האחרון נקבע לפי החוק החל.',
+  'privacyReq.empty': 'עדיין לא תועדו בקשות. כשמישהו פונה לגבי המידע שלו, תעדו את הבקשה כאן כדי שתיענה בזמן.',
+  'privacyReq.kind': 'בקשה',
+  'privacyReq.kind.access': 'עיון',
+  'privacyReq.kind.rectification': 'תיקון',
+  'privacyReq.kind.erasure': 'מחיקה',
+  'privacyReq.kind.restriction': 'הגבלת עיבוד',
+  'privacyReq.kind.objection': 'התנגדות',
+  'privacyReq.kind.portability': 'ניוד מידע',
+  'privacyReq.kind.withdrawal': 'ביטול הסכמה',
+  'privacyReq.subject': 'האדם',
+  'privacyReq.email': 'אימייל',
+  'privacyReq.law': 'החוק',
+  'privacyReq.lawOther': 'חוק אחר (30 ימים)',
+  'privacyReq.received': 'התקבלה ב-',
+  'privacyReq.receivedOn': 'התקבלה ב-{date}',
+  'privacyReq.dueHint': 'מועד אחרון: {date} ({days} ימים לפי חוק זה).',
+  'privacyReq.due': 'עד {date}',
+  'privacyReq.overdue': 'באיחור מאז {date}',
+  'privacyReq.note': 'הערה',
+  'privacyReq.add': 'תיעוד בקשה',
+  'privacyReq.save': 'תיעוד',
+  'privacyReq.markDone': 'נענתה',
+  'privacyReq.markRefused': 'נדחתה',
+  'privacyReq.status.done': 'נענתה',
+  'privacyReq.status.refused': 'נדחתה',
+  'privacyReq.logged': 'הבקשה תועדה',
+  'privacyReq.closed': 'הבקשה נסגרה',
+  'audit.privacy.request_logged': 'תיעד בקשה בנושא מידע אישי',
+  'audit.privacy.request_updated': 'עדכן בקשה בנושא מידע אישי',
+  'change.by': '{delta} לעומת {period}',
+  'change.same': 'ללא שינוי לעומת {period}',
+  'change.period.days': '{n} הימים הקודמים',
+  'change.period.week': 'השבוע הקודם',
+  'change.period.month': 'החודש הקודם',
+  'change.period.quarter': 'הרבעון הקודם',
+  'change.period.year': 'השנה הקודמת',
+  'change.better': 'שיפור',
+  'change.worse': 'הרעה',
+  'sync.keyed.noteMessages': 'האסימון נשמר מוצפן ואפשר להסיר אותו בכל עת. במסך הבא תקבלו את כתובת הקריאה החוזרת ואת אסימון האימות להדבקה באפליקציית {app}; אין התאמת שדות ואין כתיבה חזרה.',
 };

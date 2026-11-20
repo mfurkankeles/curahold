@@ -1,7 +1,8 @@
+// Korean (한국어) dictionary: polite 합니다/하세요 in sentences, short labels on buttons, as Korean business software
+// writes them. Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Korean (한국어). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the frame, sign-in and navigation.
 export const ko: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': '팀',
@@ -6991,4 +6992,50 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': '{app}에서 온 메시지',
   'console.deniedBody': '이 화면은 이 설치의 모든 회사를 보여 주며, 설치를 운영하는 사람을 위한 화면입니다. 내 워크스페이스의 숫자는 보고서에, 설정은 설정에 있습니다.',
   'console.secondStep.title': '먼저 로그인 단계를 하나 더 추가하세요',
+  'errors.country_not_offered': 'Curahold는 이 국가에서 제공되지 않습니다.',
+  'billing.profile.country': '청구 국가',
+  'billing.profile.countryNone': '설정 안 함',
+  'email.companyDeleted.subject': '{org}이(가) Curahold에서 삭제되었습니다',
+  'email.companyDeleted.body': '{name}님, 안녕하세요.\n\n요청에 따라 {org}와 그 안의 모든 데이터가 Curahold에서 삭제되었습니다. 아래는 삭제 증명서로, 무엇이 삭제되었고 무엇이 왜 보관되는지 적혀 있습니다.\n\n증명서의 SHA-256: {hash}\n\n{certificate}\n\n이 이메일을 기록으로 보관해 주세요. 백업은 증명서에 적힌 대로 정해진 일정에 따라 삭제됩니다.',
+  'privacyReq.title': '개인정보 관련 요청',
+  'privacyReq.lead': '개인이 자신의 데이터에 대해 요청한 내용은 이의 제기와 처리 제한을 포함해 모두 여기에 기록하세요. 기한은 적용되는 법에 따라 계산됩니다.',
+  'privacyReq.empty': '아직 기록된 요청이 없습니다. 누군가 자신의 데이터에 대해 요청하면 기한 안에 답할 수 있도록 여기에 기록하세요.',
+  'privacyReq.kind': '요청 유형',
+  'privacyReq.kind.access': '열람',
+  'privacyReq.kind.rectification': '정정',
+  'privacyReq.kind.erasure': '삭제',
+  'privacyReq.kind.restriction': '처리 제한',
+  'privacyReq.kind.objection': '이의 제기',
+  'privacyReq.kind.portability': '개인정보 이동',
+  'privacyReq.kind.withdrawal': '동의 철회',
+  'privacyReq.subject': '요청자',
+  'privacyReq.email': '이메일',
+  'privacyReq.law': '적용 법률',
+  'privacyReq.lawOther': '기타 법률(30일)',
+  'privacyReq.received': '접수일',
+  'privacyReq.receivedOn': '{date} 접수',
+  'privacyReq.dueHint': '기한: {date}(이 법에 따라 {days}일).',
+  'privacyReq.due': '{date}까지',
+  'privacyReq.overdue': '{date}부터 기한 초과',
+  'privacyReq.note': '메모',
+  'privacyReq.add': '요청 기록',
+  'privacyReq.save': '기록',
+  'privacyReq.markDone': '답변 완료',
+  'privacyReq.markRefused': '거절',
+  'privacyReq.status.done': '답변 완료',
+  'privacyReq.status.refused': '거절됨',
+  'privacyReq.logged': '요청이 기록되었습니다',
+  'privacyReq.closed': '요청이 종료되었습니다',
+  'audit.privacy.request_logged': '개인정보 관련 요청을 기록했습니다',
+  'audit.privacy.request_updated': '개인정보 관련 요청을 업데이트했습니다',
+  'change.by': '{period} 대비 {delta}',
+  'change.same': '{period} 대비 변동 없음',
+  'change.period.days': '이전 {n}일',
+  'change.period.week': '지난주',
+  'change.period.month': '지난달',
+  'change.period.quarter': '지난 분기',
+  'change.period.year': '작년',
+  'change.better': '개선',
+  'change.worse': '악화',
+  'sync.keyed.noteMessages': '토큰은 암호화되어 저장되며 언제든지 삭제할 수 있습니다. 다음 화면에서 {app} 앱에 붙여 넣을 콜백 주소와 확인 토큰을 받습니다. 필드 매칭이나 역방향 쓰기는 없습니다.',
 };

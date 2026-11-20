@@ -1,7 +1,8 @@
+// Simplified Chinese (简体中文) dictionary, as mainland business software writes it. Product and brand names in Latin.
+// Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Simplified Chinese (简体中文). Filled market surface by market surface; every
-// key not yet here falls back to English. Batch 1: frame, sign-in, navigation.
 export const zhHans: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': '团队版',
@@ -6991,4 +6992,50 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': '{app} 返回的信息',
   'console.deniedBody': '此页面显示此安装中的所有公司，供安装的管理者使用。你自己工作区的数据在“报告”中，设置在“设置”中。',
   'console.secondStep.title': '请先完成一步额外的登录验证',
+  'errors.country_not_offered': 'Curahold 在该国家/地区不提供服务。',
+  'billing.profile.country': '账单国家/地区',
+  'billing.profile.countryNone': '未设置',
+  'email.companyDeleted.subject': '{org} 已从 Curahold 删除',
+  'email.companyDeleted.body': '{name}，您好：\n\n按照申请，{org} 及其中的所有内容已从 Curahold 删除。以下是删除证明：删除了什么、保留了什么以及原因。\n\n证明的 SHA-256：{hash}\n\n{certificate}\n\n请保留此邮件作为记录。备份会按其自身的周期自动清除，详见证明。',
+  'privacyReq.title': '个人数据请求',
+  'privacyReq.lead': '在这里记录个人就其数据提出的每一项请求，包括反对和限制处理。截止日期按适用的法律计算。',
+  'privacyReq.empty': '还没有记录任何请求。有人就其数据提出请求时，请在这里记录，以便按时答复。',
+  'privacyReq.kind': '请求类型',
+  'privacyReq.kind.access': '查阅',
+  'privacyReq.kind.rectification': '更正',
+  'privacyReq.kind.erasure': '删除',
+  'privacyReq.kind.restriction': '限制处理',
+  'privacyReq.kind.objection': '反对处理',
+  'privacyReq.kind.portability': '数据可携',
+  'privacyReq.kind.withdrawal': '撤回同意',
+  'privacyReq.subject': '提出人',
+  'privacyReq.email': '电子邮件',
+  'privacyReq.law': '适用法律',
+  'privacyReq.lawOther': '其他法律（30 天）',
+  'privacyReq.received': '收到日期',
+  'privacyReq.receivedOn': '{date} 收到',
+  'privacyReq.dueHint': '截止日期 {date}（依该法律为 {days} 天）。',
+  'privacyReq.due': '{date} 截止',
+  'privacyReq.overdue': '自 {date} 起已逾期',
+  'privacyReq.note': '备注',
+  'privacyReq.add': '记录请求',
+  'privacyReq.save': '记录',
+  'privacyReq.markDone': '已答复',
+  'privacyReq.markRefused': '已拒绝',
+  'privacyReq.status.done': '已答复',
+  'privacyReq.status.refused': '已拒绝',
+  'privacyReq.logged': '请求已记录',
+  'privacyReq.closed': '请求已关闭',
+  'audit.privacy.request_logged': '记录了一项个人数据请求',
+  'audit.privacy.request_updated': '更新了一项个人数据请求',
+  'change.by': '较{period} {delta}',
+  'change.same': '与{period}持平',
+  'change.period.days': '前 {n} 天',
+  'change.period.week': '上一周',
+  'change.period.month': '上个月',
+  'change.period.quarter': '上一季度',
+  'change.period.year': '上一年',
+  'change.better': '向好',
+  'change.worse': '变差',
+  'sync.keyed.noteMessages': '令牌经加密存储，可随时移除。下一步会给出回调地址和验证令牌，请粘贴到你的 {app} 应用中；不涉及字段匹配，也不会回写。',
 };

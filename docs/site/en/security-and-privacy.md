@@ -49,6 +49,10 @@ In Settings → People, a person's menu offers:
 
 An administrator can ask, in **Settings → Company → Delete the company**, by typing the company's address. Nothing is deleted for 30 days: the company works as usual, you can still export, and any administrator can cancel. Then everything goes for good, files and connection keys included, and a deletion certificate is kept that lists what was removed (no names or addresses). Invoices stay, as tax law requires. Backups roll off on the hosting provider's schedule.
 
+### Requests about personal data
+
+In **Settings → Company → Requests about personal data**, people with the privacy permission log every request a person makes about their data: access, correction, erasure, restriction, objection, portability or withdrawn consent, with the law that applies. The due date comes from that law (for example 30 days under KVKK and the GDPR, 10 under Korea’s PIPA), and an overdue request is marked in red with an icon. Mark it answered or refused once it is done; each change is in the activity log. The export and erase actions on the person do the work itself.
+
 ## How long things are kept
 
 | Data | Kept for |

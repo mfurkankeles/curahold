@@ -1,5 +1,6 @@
 // Reports: how the work and the customers are doing, on one page. Numbers
 // are worked out when the page opens, inside what the person may see.
+import { Change } from '../components/Change';
 import { useMoney } from '../lib/money';
 import { useEffect, useMemo, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
@@ -24,7 +25,7 @@ import { ReportChart } from '../components/Charts';
 import type { ReportResult } from '../../../shared/src/reports';
 
 export interface WorkReport {
-  totals: { open: number; overdue: number; dueWeek: number; unassigned: number; done30: number; created30: number; cycleDays: number | null; onTime: number | null };
+  totals: { open: number; overdue: number; dueWeek: number; unassigned: number; done30: number; created30: number; done30Before?: number; created30Before?: number; cycleDays: number | null; onTime: number | null };
   weeks: { week: string; created: number; done: number }[];
   people: { userId: string; open: number; overdue: number; dueWeek: number; done30: number }[];
   boards: { boardId: string; open: number; overdue: number }[];
@@ -246,7 +247,14 @@ export function ReportsPage() {
             <div className="statstrip">
               <Stat label={t('reports.open')} value={num(work.totals.open)} n={work.totals.open} fmt={num} sub={t('reports.unassignedN', { n: num(work.totals.unassigned) })} />
               <Stat label={t('reports.overdue')} value={num(work.totals.overdue)} n={work.totals.overdue} fmt={num} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: num(work.totals.dueWeek) })} />
-              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} sub={t('reports.created30N', { n: num(work.totals.created30) })} />
+              <Stat
+                label={t('reports.done30')}
+                value={num(work.totals.done30)}
+                n={work.totals.done30}
+                fmt={num}
+                change={work.totals.done30Before != null ? <Change now={work.totals.done30} before={work.totals.done30Before} show={num} good="up" period="days" days={30} /> : undefined}
+                sub={t('reports.created30N', { n: num(work.totals.created30) })}
+              />
               <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: num(work.totals.cycleDays) })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}

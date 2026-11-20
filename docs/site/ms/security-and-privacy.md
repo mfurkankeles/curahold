@@ -49,6 +49,10 @@ Dalam Tetapan → Orang, menu seseorang menawarkan:
 
 Pentadbir boleh memintanya dalam **Tetapan → Syarikat → Padam syarikat**, dengan menaip alamat syarikat. Tiada apa-apa dipadam selama 30 hari: syarikat berfungsi seperti biasa, anda masih boleh mengeksport, dan mana-mana pentadbir boleh membatalkannya. Kemudian segala-galanya hilang secara kekal, termasuk fail dan kunci sambungan, dan sijil pemadaman disimpan yang menyenaraikan apa yang dibuang (tiada nama atau alamat). Invois kekal, seperti yang dikehendaki oleh undang-undang cukai. Sandaran tamat mengikut jadual pembekal pengehosan.
 
+### Permintaan tentang data peribadi
+
+Dalam **Tetapan → Syarikat → Permintaan tentang data peribadi**, orang yang mempunyai kebenaran privasi merekodkan setiap permintaan seseorang tentang data mereka, bersama undang-undang yang terpakai: akses, pembetulan, pemadaman, sekatan pemprosesan, bantahan, kemudahalihan atau penarikan balik persetujuan. Tarikh akhir dikira daripada undang-undang itu (contohnya 30 hari di bawah KVKK dan GDPR, 10 hari di bawah PIPA Korea), dan permintaan yang lewat ditanda merah dengan ikon. Tandakan permintaan sebagai sudah dijawab atau ditolak apabila selesai; setiap perubahan direkodkan dalam log aktiviti. Kerja sebenar dibuat melalui tindakan eksport dan padam pada orang itu.
+
 ## Berapa lama sesuatu disimpan
 
 | Data | Disimpan selama |

@@ -16,6 +16,8 @@ import { SITE_LOCALES, type SiteLocale } from '../site/locales';
 
 const ROOT = join(import.meta.dirname, '..');
 let out = '';
+/** The same site built with the gated claims switched on (SITE_PRICES=show, SITE_EU_DATA=confirmed: site/gates.ts). */
+let shown = '';
 
 /** Chinese, Japanese and Korean fit about twice the meaning per character, so their ranges are their own. */
 const wide = (l: string) => /^(ja|ko|zh)/.test(l);
@@ -25,15 +27,15 @@ const within = (n: number, [lo, hi]: [number, number]) => n >= lo && n <= hi;
 const unesc = (s: string) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 /** Every built page: its path under the site root and its HTML. */
-function pages(): { path: string; html: string }[] {
+function pages(root = out): { path: string; html: string }[] {
   const found: { path: string; html: string }[] = [];
   const walk = (dir: string) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       if (e.isDirectory()) walk(join(dir, e.name));
-      else if (e.name === 'index.html') found.push({ path: `/${relative(out, dir).split(/[\\/]/).join('/')}${dir === out ? '' : '/'}`.replace('//', '/'), html: readFileSync(join(dir, e.name), 'utf8') });
+      else if (e.name === 'index.html') found.push({ path: `/${relative(root, dir).split(/[\\/]/).join('/')}${dir === root ? '' : '/'}`.replace('//', '/'), html: readFileSync(join(dir, e.name), 'utf8') });
     }
   };
-  walk(out);
+  walk(root);
   return found.filter((p) => !p.path.startsWith('/demo/'));
 }
 const indexable = () => pages().filter((p) => !/name="robots" content="noindex/.test(p.html));
@@ -46,10 +48,14 @@ const sitemapLocs = () => {
 
 beforeAll(() => {
   out = mkdtempSync(join(tmpdir(), 'site-seo-'));
-  execFileSync(process.execPath, ['--import', 'tsx', join(ROOT, 'scripts', 'build-site.ts'), out], { cwd: ROOT, stdio: 'ignore', env: { ...process.env, SITE_LASTMOD: '2026-11-20' } });
-}, 120_000);
+  const { SITE_PRICES: _p, SITE_EU_DATA: _e, ...base } = process.env;
+  execFileSync(process.execPath, ['--import', 'tsx', join(ROOT, 'scripts', 'build-site.ts'), out], { cwd: ROOT, stdio: 'ignore', env: { ...base, SITE_LASTMOD: '2026-11-20' } });
+  shown = mkdtempSync(join(tmpdir(), 'site-seo-shown-'));
+  execFileSync(process.execPath, ['--import', 'tsx', join(ROOT, 'scripts', 'build-site.ts'), shown], { cwd: ROOT, stdio: 'ignore', env: { ...base, SITE_LASTMOD: '2026-11-20', SITE_PRICES: 'show', SITE_EU_DATA: 'confirmed' } });
+}, 180_000);
 afterAll(() => {
   if (out) rmSync(out, { recursive: true, force: true });
+  if (shown) rmSync(shown, { recursive: true, force: true });
 });
 
 describe('search titles and descriptions', () => {
@@ -108,6 +114,11 @@ describe('languages and indexing', () => {
     expect(canon.filter((u) => !locs.has(u))).toEqual([]);
     expect(locs.size).toBe(canon.length);
   });
+  it('never ties Persian to Iran (Curahold is never offered there): no fa_IR or fa-IR on any built page', () => {
+    const tied = pages().filter((p) => /fa[_-]IR/i.test(p.html)).map((p) => p.path);
+    expect(tied).toEqual([]);
+  });
+
   it('shares a PNG picture, not an SVG', () => {
     expect(readFileSync(join(out, 'index.html'), 'utf8')).toMatch(/<meta property="og:image" content="[^"]+\.png">/);
     expect(existsSync(join(out, 'assets', 'og.png'))).toBe(true);
@@ -115,7 +126,7 @@ describe('languages and indexing', () => {
 });
 
 describe('structured data', () => {
-  const at = (l: SiteLocale, path: string) => readFileSync(join(out, l === 'en' ? '' : l, path, 'index.html'), 'utf8');
+  const at = (l: SiteLocale, path: string) => readFileSync(join(shown, l === 'en' ? '' : l, path, 'index.html'), 'utf8');
   for (const l of SITE_LOCALES) {
     it(`${l}: /pricing/ offers every plan and interval at the billing price, per seat a month`, () => {
       const app = ldOf(at(l, 'pricing')).find((n) => n['@type'] === 'SoftwareApplication');
@@ -126,7 +137,7 @@ describe('structured data', () => {
     });
   }
   it('names the lowest seat price on the landing page, the one its summary says', () => {
-    const app = ldOf(readFileSync(join(out, 'index.html'), 'utf8')).find((n) => n['@type'] === 'SoftwareApplication');
+    const app = ldOf(readFileSync(join(shown, 'index.html'), 'utf8')).find((n) => n['@type'] === 'SoftwareApplication');
     const low = Math.min(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i])));
     expect(app.offers.lowPrice).toBe(String(low));
   });
@@ -146,5 +157,48 @@ describe('headings', () => {
       return [...(skips ? [`${path} ${levels.join('')}`] : []), ...(/<h[1-6][\s>]/.test(footer) ? [`${path} footer`] : []), ...((html.match(/<h1[\s>]/g) ?? []).length === 1 ? [] : [`${path} h1`])];
     });
     expect(bad).toEqual([]);
+  });
+});
+
+// MASTER-RULES 10 and the claim table (out/b11 iddia-kontrol): no price figures while pricing is an open owner
+// decision, no setup duration (it was never measured), and the EU database only once the go-live step proves it.
+describe('claims the site may not make yet', () => {
+  /** What a reader (or a search engine) gets from a page: its text and its structured data, without scripts and styles. */
+  const readable = (html: string) => unesc(html.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<script(?! type="application\/ld\+json")[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' '));
+  const plans = PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => PLANS[k].price[i]));
+
+  it('publishes no price by default: no Offer, no figure on the plans, the home summary or a description', () => {
+    for (const p of pages()) {
+      const ld = ldOf(p.html);
+      expect(JSON.stringify(ld), `${p.path} structured data`).not.toMatch(/"(Offer|AggregateOffer)"|"price"|lowPrice/);
+      for (const n of plans) expect(readable(p.html), `${p.path} shows ${n}`).not.toMatch(new RegExp(`\\$\\s?${n}(?![\\d.,KkMm])`));
+    }
+    for (const l of SITE_LOCALES) {
+      const pricing = readFileSync(join(out, l === 'en' ? '' : l, 'pricing', 'index.html'), 'utf8');
+      expect(pricing, l).toMatch(/plan__price--soon/);
+      expect(pricing, l).not.toMatch(/data-interval=/);
+    }
+  });
+
+  it('shows the prices and their Offer only when SITE_PRICES=show', () => {
+    expect(readFileSync(join(shown, 'pricing', 'index.html'), 'utf8')).toMatch(new RegExp(`\\$${Math.min(...plans)}\\b`));
+    expect(readFileSync(join(shown, 'pricing', 'index.html'), 'utf8')).not.toMatch(/plan__price--soon|⟦/);
+  });
+
+  it('states no setup time, in any language', () => {
+    // Durations next to a word for setting up, in each site language (hub templates and the blog are not product claims).
+    const setup = /(set(ting)? ?up|kurulum|kur(ul)?ur|الإعداد|إعداد|הקמה|להקים|راه‌اندازی|设置|設定|セットアップ|設定|설정|सेटअप|persediaan|sedia)[^.。!?]{0,40}?(\d+|fifteen|on beş|خمس عشرة|חמש עשרה|רבע שעה|پانزده|۱۵|十五|पंद्रह|lima belas)\s*(min|dakika|دقيقة|דקות|دقیقه|分钟|分鐘|分で|分ほど|분|मिनट|minit)|(\d+|fifteen|on beş|خمس عشرة|חמש עשרה|پانزده|۱۵|十五|पंद्रह|lima belas)\s*(minutes?|dakika(da)?|دقيقة|דקות|دقیقه|分钟|分鐘|分で|분 ?만에|मिनट में|minit)[^.。]{0,30}(set ?up|kurul|إعداد|הקמה|راه‌اندازی|设置|設定|セットアップ|설정|सेटअप|sedia)/i;
+    const bad = pages()
+      .filter((p) => !/\/(templates|blog)\//.test(p.path))
+      .filter((p) => setup.test(readable(p.html)))
+      .map((p) => p.path);
+    expect(bad).toEqual([]);
+  });
+
+  it('says the database is in the European Union only when SITE_EU_DATA=confirmed', () => {
+    const eu = /European Union|in the EU\b|Avrupa Birliği|AB’de|الاتحاد الأوروبي|האיחוד האירופי|اتحادیهٔ اروپا|欧盟|歐盟|欧州連合|EU 内|EU에|유럽 연합|यूरोपीय संघ|EU में|Kesatuan Eropah/;
+    const claims = pages().filter((p) => eu.test(readable(p.html))).map((p) => p.path);
+    expect(claims).toEqual([]);
+    expect(eu.test(readable(readFileSync(join(shown, 'trust', 'index.html'), 'utf8')))).toBe(true);
   });
 });

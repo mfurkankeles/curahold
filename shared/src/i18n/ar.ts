@@ -1,7 +1,8 @@
+// Arabic (العربية) dictionary: Modern Standard Arabic as business software writes it, the reader addressed formally;
+// written right to left (the interface mirrors). Product and brand names in Latin, Latin digits. Job titles stay English.
+// Words per concept: ./glossary.ts. Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Arabic (العربية). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const ar: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'الفريق',
@@ -6991,4 +6992,50 @@ export const ar: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': 'ما قاله {app}',
   'console.deniedBody': 'تعرض هذه الشاشة كل الشركات في هذا التثبيت، وهي مخصّصة لمن يديره. أرقام مساحة عملك في التقارير، وإعداداتها في الإعدادات.',
   'console.secondStep.title': 'خطوة دخول إضافية أولًا',
+  'errors.country_not_offered': 'Curahold غير متاح في هذا البلد.',
+  'billing.profile.country': 'بلد الفوترة',
+  'billing.profile.countryNone': 'غير محدد',
+  'email.companyDeleted.subject': 'حُذفت {org} من Curahold',
+  'email.companyDeleted.body': 'مرحبًا {name}،\n\nبناءً على الطلب، حُذفت {org} وكل ما فيها من Curahold. ستجدون أدناه شهادة الحذف: ما الذي أُزيل، وما الذي احتُفظ به ولماذا.\n\nقيمة SHA-256 للشهادة: {hash}\n\n{certificate}\n\nاحتفظوا بهذه الرسالة سجلًّا لديكم. تُحذف النسخ الاحتياطية وفق جدولها الخاص، كما تذكر الشهادة.',
+  'privacyReq.title': 'طلبات تتعلق بالبيانات الشخصية',
+  'privacyReq.lead': 'سجّلوا هنا كل طلب يقدّمه شخص بشأن بياناته، بما في ذلك الاعتراض والتقييد. يُحسب الموعد النهائي وفق القانون المطبّق.',
+  'privacyReq.empty': 'لا توجد طلبات مسجّلة بعد. عندما يسأل أحد عن بياناته، سجّلوا طلبه هنا ليُجاب في الوقت المحدد.',
+  'privacyReq.kind': 'الطلب',
+  'privacyReq.kind.access': 'الاطلاع',
+  'privacyReq.kind.rectification': 'التصحيح',
+  'privacyReq.kind.erasure': 'المحو',
+  'privacyReq.kind.restriction': 'تقييد المعالجة',
+  'privacyReq.kind.objection': 'الاعتراض',
+  'privacyReq.kind.portability': 'نقل البيانات',
+  'privacyReq.kind.withdrawal': 'سحب الموافقة',
+  'privacyReq.subject': 'الشخص',
+  'privacyReq.email': 'البريد الإلكتروني',
+  'privacyReq.law': 'القانون',
+  'privacyReq.lawOther': 'قانون آخر (30 يومًا)',
+  'privacyReq.received': 'تاريخ الاستلام',
+  'privacyReq.receivedOn': 'استُلم في {date}',
+  'privacyReq.dueHint': 'الموعد النهائي {date} ({days} يومًا وفق هذا القانون).',
+  'privacyReq.due': 'يُستحق في {date}',
+  'privacyReq.overdue': 'متأخر منذ {date}',
+  'privacyReq.note': 'ملاحظة',
+  'privacyReq.add': 'تسجيل طلب',
+  'privacyReq.save': 'تسجيل',
+  'privacyReq.markDone': 'تمت الإجابة',
+  'privacyReq.markRefused': 'مرفوض',
+  'privacyReq.status.done': 'تمت الإجابة',
+  'privacyReq.status.refused': 'مرفوض',
+  'privacyReq.logged': 'تم تسجيل الطلب',
+  'privacyReq.closed': 'تم إغلاق الطلب',
+  'audit.privacy.request_logged': 'سجّل طلبًا يتعلق بالبيانات الشخصية',
+  'audit.privacy.request_updated': 'حدّث طلبًا يتعلق بالبيانات الشخصية',
+  'change.by': '{delta} مقارنةً مع {period}',
+  'change.same': 'دون تغيير مقارنةً مع {period}',
+  'change.period.days': 'الأيام الـ{n} السابقة',
+  'change.period.week': 'الأسبوع السابق',
+  'change.period.month': 'الشهر السابق',
+  'change.period.quarter': 'الربع السابق',
+  'change.period.year': 'السنة السابقة',
+  'change.better': 'تحسّن',
+  'change.worse': 'تراجع',
+  'sync.keyed.noteMessages': 'يُخزَّن الرمز مشفّرًا ويمكن إزالته في أي وقت. في الشاشة التالية تحصلون على عنوان الاستدعاء ورمز التحقق للصقهما في تطبيق {app}؛ لا مطابقة للحقول ولا كتابة عكسية.',
 };

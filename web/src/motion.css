@@ -151,6 +151,27 @@
   .panel[data-leaving] { animation: sheet-out var(--dur-3) var(--ease-in) forwards !important; }
 }
 
+/* Drag to close (lib/dragClose.ts): a bottom sheet follows the finger down from its head and either closes
+   (the exit above starts from the offset it was let go at) or settles back. The head takes the gesture
+   (touch-action: none), so the list inside the sheet still scrolls. A grab bar shows the sheet can be pulled. */
+.filtersheet__head { touch-action: none; }
+:is(.filtersheet__box, .panel, .datepop)[data-dragging] { transform: translateY(var(--drag, 0px)); animation: none; transition: none; }
+:is(.filtersheet__box, .panel, .datepop)[data-settling] { transform: translateY(var(--drag, 0px)); transition: transform var(--dur-3) var(--ease-out); }
+:is(.filtersheet__box, .panel, .datepop)[data-leaving] { transform: translateY(var(--drag, 0px)); }
+.filtersheet__box { position: relative; }
+.filtersheet__box::before {
+  content: ''; position: absolute; inset-block-start: 4px; inset-inline-start: calc(50% - 16px);
+  inline-size: 32px; block-size: 4px; border-radius: var(--r-pill); background: var(--line-strong);
+}
+@media (max-width: 600px) {
+  :is(.panel__head, .datepop) { touch-action: none; }
+  .panel__head { position: relative; }
+  :is(.panel__head, .datepop)::before {
+    content: ''; position: absolute; inset-block-start: 4px; inset-inline-start: calc(50% - 16px);
+    inline-size: 32px; block-size: 4px; border-radius: var(--r-pill); background: var(--line-strong);
+  }
+}
+
 /* Reduce motion: nothing moves, but what opens and closes still fades (100 ms), so a change of state is
    never lost. Specific enough to win over the exits above and the "everything off" rule in styles.css. */
 @media (prefers-reduced-motion: reduce) {

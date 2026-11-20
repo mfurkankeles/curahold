@@ -19,6 +19,7 @@ import { BillingSettings } from '../components/Billing';
 import { SsoSettings } from '../components/SsoSettings';
 import { CompanySecurity } from '../components/CompanySecurity';
 import { CompanyDeletion } from '../components/CompanyDeletion';
+import { PrivacyRequests } from '../components/PrivacyRequests';
 import { AuditExport } from '../components/AuditExport';
 import { CurrencySettings } from '../components/Currencies';
 import { PlaybooksSettings } from '../components/Plans';
@@ -296,12 +297,14 @@ const TIMEZONES = ['Europe/Istanbul', 'Europe/London', 'Europe/Berlin', 'Europe/
 export const CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP', 'CHF', 'AED', 'SAR', 'QAR', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'RON', 'CAD', 'AUD', 'SGD', 'INR', 'JPY', 'BRL', 'MXN', 'ZAR'];
 
 function CompanyTab() {
-  const { me } = useStore();
+  const { me, can } = useStore();
   return (
     <>
       <CompanyForm />
       {/* Deleting the company: administrators only (the server checks the same). */}
       {me?.user.roleKey === 'admin' && me.org.slug && <CompanyDeletion slug={me.org.slug} />}
+      {/* The log of requests about personal data: privacy.manage only (the server and row security check the same). */}
+      {can('privacy.manage') && <PrivacyRequests />}
     </>
   );
 }

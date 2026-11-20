@@ -1,7 +1,8 @@
+// Persian (فارسی) dictionary: formal «شما», written right to left (the interface mirrors), never tied to one country.
+// Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Persian (فارسی). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the common frame, sign-in and navigation.
 export const fa: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'تیم',
@@ -6991,4 +6992,50 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': 'پیام {app}',
   'console.deniedBody': 'این صفحه همهٔ شرکت‌های این نصب را نشان می‌دهد و برای کسی است که آن را اداره می‌کند. ارقام فضای کاری شما در گزارش‌ها و تنظیماتش در تنظیمات است.',
   'console.secondStep.title': 'اول یک مرحلهٔ ورود دیگر',
+  'errors.country_not_offered': 'Curahold در این کشور ارائه نمی‌شود.',
+  'billing.profile.country': 'کشور صورت‌حساب',
+  'billing.profile.countryNone': 'تعیین نشده',
+  'email.companyDeleted.subject': '{org} از Curahold حذف شد',
+  'email.companyDeleted.body': 'سلام {name}،\n\nبنا بر درخواست، {org} و همهٔ داده‌های آن از Curahold حذف شد. گواهی حذف در ادامه آمده است: چه چیزی حذف شد و چه چیزی و چرا نگه داشته شد.\n\nمقدار SHA-256 گواهی: {hash}\n\n{certificate}\n\nاین ایمیل را به‌عنوان سابقه نگه دارید. نسخه‌های پشتیبان، همان‌طور که در گواهی آمده، طبق زمان‌بندی خودشان پاک می‌شوند.',
+  'privacyReq.title': 'درخواست‌های مربوط به دادهٔ شخصی',
+  'privacyReq.lead': 'هر درخواستی را که کسی دربارهٔ داده‌هایش دارد، از جمله اعتراض و محدودسازی، اینجا ثبت کنید. مهلت پاسخ بر اساس قانون مربوط محاسبه می‌شود.',
+  'privacyReq.empty': 'هنوز درخواستی ثبت نشده است. وقتی کسی دربارهٔ داده‌هایش درخواستی داشت، آن را اینجا ثبت کنید تا به‌موقع پاسخ داده شود.',
+  'privacyReq.kind': 'درخواست',
+  'privacyReq.kind.access': 'دسترسی',
+  'privacyReq.kind.rectification': 'اصلاح',
+  'privacyReq.kind.erasure': 'حذف',
+  'privacyReq.kind.restriction': 'محدودسازی پردازش',
+  'privacyReq.kind.objection': 'اعتراض',
+  'privacyReq.kind.portability': 'انتقال‌پذیری داده',
+  'privacyReq.kind.withdrawal': 'پس‌گرفتن رضایت',
+  'privacyReq.subject': 'شخص',
+  'privacyReq.email': 'ایمیل',
+  'privacyReq.law': 'قانون',
+  'privacyReq.lawOther': 'قانونی دیگر (۳۰ روز)',
+  'privacyReq.received': 'تاریخ دریافت',
+  'privacyReq.receivedOn': 'دریافت در {date}',
+  'privacyReq.dueHint': 'مهلت تا {date} ({days} روز طبق این قانون).',
+  'privacyReq.due': 'مهلت {date}',
+  'privacyReq.overdue': 'از {date} گذشته است',
+  'privacyReq.note': 'یادداشت',
+  'privacyReq.add': 'ثبت درخواست',
+  'privacyReq.save': 'ثبت',
+  'privacyReq.markDone': 'پاسخ داده شد',
+  'privacyReq.markRefused': 'رد شد',
+  'privacyReq.status.done': 'پاسخ داده شد',
+  'privacyReq.status.refused': 'رد شده',
+  'privacyReq.logged': 'درخواست ثبت شد',
+  'privacyReq.closed': 'درخواست بسته شد',
+  'audit.privacy.request_logged': 'یک درخواست مربوط به دادهٔ شخصی را ثبت کرد',
+  'audit.privacy.request_updated': 'یک درخواست مربوط به دادهٔ شخصی را به‌روز کرد',
+  'change.by': '{delta} نسبت به {period}',
+  'change.same': 'بدون تغییر نسبت به {period}',
+  'change.period.days': '{n} روز پیش از آن',
+  'change.period.week': 'هفتهٔ قبل',
+  'change.period.month': 'ماه قبل',
+  'change.period.quarter': 'فصل قبل',
+  'change.period.year': 'سال قبل',
+  'change.better': 'بهبود',
+  'change.worse': 'افت',
+  'sync.keyed.noteMessages': 'توکن به‌صورت رمزگذاری‌شده نگه داشته می‌شود و هر زمان می‌توان آن را حذف کرد. در صفحهٔ بعد نشانی بازخوانی و توکن تأیید را می‌گیرید تا در برنامهٔ {app} خود بچسبانید؛ هیچ فیلدی تطبیق داده یا بازنویسی نمی‌شود.',
 };

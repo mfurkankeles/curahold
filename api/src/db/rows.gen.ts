@@ -296,6 +296,7 @@ export interface AssistantLogRow {
   sources: Json;
   cost_micros: number | string;
   created_at: Date;
+  portal_user_id: string | null;
 }
 
 /** Table `assistant_public_consents`. */
@@ -1307,6 +1308,7 @@ export interface OrgsRow {
   tax_number: string | null;
   billing_email: string | null;
   trial_seat_cap: number | null;
+  billing_country: string | null;
 }
 
 /** Table `pages`. */
@@ -1481,6 +1483,25 @@ export interface PortalUsersRow {
   invited_by: string | null;
   created_at: Date;
   last_seen_at: Date | null;
+}
+
+/** Table `privacy_requests`. */
+export interface PrivacyRequestsRow {
+  id: string;
+  org_id: string;
+  kind: string;
+  subject_name: string;
+  subject_email: string | null;
+  law: string;
+  received_on: Date | string;
+  due_on: Date | string;
+  status: string;
+  note: string | null;
+  created_by: string | null;
+  closed_by: string | null;
+  closed_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /** Table `promises`. */

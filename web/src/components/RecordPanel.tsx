@@ -5,7 +5,7 @@
 // Editing the fields happens in the same dialog the lists use.
 import { PrepareHandover } from './CustomerFlow';
 import '../surfaces/employee-customers.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { labelOf } from '../../../shared/src/fields';
 import type { PlanTemplate, Task } from '../../../shared/src/model';
 import { typeLabel, type RecordDetail, type RecordType } from '../../../shared/src/records';
@@ -17,6 +17,9 @@ import { useMoney } from '../lib/money';
 import { nameIt, navigate, setQuery } from '../lib/router';
 import { PanelBack } from './BackBar';
 import { useLeave } from '../lib/leave';
+import { takeRecordSeed } from './taskSeed';
+import { SHEET_PHONE, useDragClose } from '../lib/dragClose';
+import { useMedia } from './FilterSheet';
 import { useShell } from '../lib/shell';
 import { useStore } from '../lib/store';
 import { dueState } from '../lib/time';
@@ -43,6 +46,8 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
   const anchorText = useAnchorText();
   const [planId, setPlanId] = useState('');
   const panel = useRef<HTMLDivElement>(null);
+  // The name the list knew, shown while the record loads (the card grows into this heading).
+  const seedName = useMemo(() => takeRecordSeed(recordId), [recordId]);
   const leaveScrim = useLeave<HTMLDivElement>();
   const leavePanel = useLeave<HTMLDivElement>(panel);
   useFocusTrap(panel);
@@ -67,6 +72,7 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
   useLive('tasks', () => void load());
 
   const close = useCallback(() => setQuery('record', null), []);
+  useDragClose(panel, close, { handle: '.panel__head', on: useMedia(SHEET_PHONE) });
   const recName = rec?.name;
   useEffect(() => nameIt(`record:${recordId}`, recName), [recordId, recName]);
   useEffect(() => {
@@ -182,11 +188,18 @@ export function RecordPanel({ recordId, onChanged }: { recordId: string; onChang
           </div>
         ) : !rec || !type ? (
           <div className="panel__body">
+            {seedName && (
+              <h2 className="recpanel__name" data-hero={recordId}>
+                {seedName}
+              </h2>
+            )}
             <div className="pane__wait u-height-160" />
           </div>
         ) : (
           <div className="panel__body">
-            <h2 className="recpanel__name">{rec.name}</h2>
+            <h2 className="recpanel__name" data-hero={rec.id}>
+              {rec.name}
+            </h2>
             <div className="recpanel__meta">
               {rec.accountId && (
                 <a

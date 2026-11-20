@@ -4,6 +4,7 @@
 //   3. GET  /signup/slug      — is this address free?
 //   4. POST /signup/complete  — company, address, language, template → the new
 //      company exists; the browser goes to <slug>.curahold.com already signed in.
+import { NEVER_OFFERED } from '../../../shared/src/compliance/consentTexts';
 import type { SignupsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -49,6 +50,8 @@ signupRoutes.post('/start', async (c) => {
   const input = await body(c, z.object({ email, locale: localeField.optional(), ...humanFields }));
   const deps = c.get('deps');
   const ip = c.req.header('cf-connecting-ip') ?? null;
+  // Never offered where sanctions apply (NEVER_OFFERED; the trial form refuses the same by the chosen country).
+  if (NEVER_OFFERED.includes((c.req.header('cf-ipcountry') ?? '').toUpperCase())) fail('country_not_offered');
   // Honeypot, fill time and (when on) Turnstile (lib/humanCheck.ts): a robot gets the usual answer and no e-mail.
   const human = await humanCheck(deps, input, { ip });
   if (human === 'bot') return c.json({ ok: true });
@@ -153,6 +156,7 @@ signupRoutes.post('/complete', async (c) => {
   );
   const deps = c.get('deps');
   const now = nowOf(deps);
+  if (NEVER_OFFERED.includes((c.req.header('cf-ipcountry') ?? '').toUpperCase())) fail('country_not_offered');
   const ticket = await verify<Ticket>(input.ticket, deps.config.authSecret);
   if (!ticket || ticket.x < now.getTime()) fail('invalid_token');
   const problem = slugProblem(input.slug);

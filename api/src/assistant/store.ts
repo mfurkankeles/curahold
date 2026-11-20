@@ -12,7 +12,7 @@ import { CACHE_TTL_DAYS, type AssistStore, type Spend } from './core';
 const MONTH = `date_trunc('month', now())::date`;
 
 /** Usage, cache and log for one company and person (or the public docs: no company). */
-export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | null; surface: string; retentionDays: number; billingOn?: boolean }): AssistStore {
+export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | null; portalUserId?: string | null; surface: string; retentionDays: number; billingOn?: boolean }): AssistStore {
   const tx = <T>(fn: (q: Q) => Promise<T>) => db.tenant<T>({ orgId: ctx.orgId, userId: ctx.userId }, fn);
   return {
     async usage() {
@@ -64,7 +64,8 @@ export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | nu
     async log({ question, reply, micros }) {
       if (!ctx.orgId || ctx.retentionDays <= 0) return;
       await tx(async (q) => {
-        await q.query(`insert into assistant_log (org_id, user_id, surface, question, kind, engine, sources, cost_micros) values ($1, $2, $3, $4, $5, $6, $7, $8)`, [
+        // A portal question names its customer (0249), so their access request and erasure include it.
+        await q.query(`insert into assistant_log (org_id, user_id, portal_user_id, surface, question, kind, engine, sources, cost_micros) values ($1, $2, $9, $3, $4, $5, $6, $7, $8)`, [
           ctx.orgId,
           ctx.userId,
           ctx.surface,
@@ -73,9 +74,12 @@ export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | nu
           reply.engine,
           JSON.stringify(reply.citations.map((c) => c.url)),
           micros,
+          ctx.portalUserId ?? null,
         ]);
         // This person's own entries past the company's retention go as new ones come (the nightly run does everyone's).
         if (ctx.userId) await q.query(`delete from assistant_log where org_id = $1 and user_id = $2 and created_at < now() - make_interval(days => $3)`, [ctx.orgId, ctx.userId, ctx.retentionDays]);
+        else if (ctx.portalUserId)
+          await q.query(`delete from assistant_log where org_id = $1 and portal_user_id = $2 and created_at < now() - make_interval(days => $3)`, [ctx.orgId, ctx.portalUserId, ctx.retentionDays]);
       });
     },
   };

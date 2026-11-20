@@ -1,6 +1,7 @@
 // Records under accounts — contacts, opportunities, risks and whatever else
 // the company keeps: a list per kind, a section per kind on the account
 // page, and one dialog to add or edit a record.
+import { seedRecord } from './taskSeed';
 import '../surfaces/employee-customers.css';
 import { useMoney } from '../lib/money';
 import { todayIso } from '../lib/time';
@@ -257,7 +258,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
   const [data, setData] = useState<{ records: AppRecord[]; total: number } | null>(null);
   // New records open the dialog; an existing one opens its panel (with its thread and tasks).
   const [editing, setEditing] = useState<'new' | null>(null);
-  const openRecord = (r: AppRecord) => setQuery('record', r.id);
+  const openRecord = (r: AppRecord) => (seedRecord(r.id, r.name), setQuery('record', r.id));
   const [choosing, setChoosing] = useState(false);
   // Deals: which close dates are shown. The target period first; any other span on request.
 
@@ -576,6 +577,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
                     <td>
                       <button
                         className="linkbtn linkbtn--plain"
+                        data-hero-key={r.id}
                         onClick={(e) => {
                           e.stopPropagation();
                           openRecord(r);
@@ -700,7 +702,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
               <ul className="plainlist record-lines">
                 {list.map((r) => (
                   <li key={r.id}>
-                    <button className="record-line" onClick={() => (ty.kind === 'contact' ? setEditing({ type: ty, record: r }) : setQuery('record', r.id))}>
+                    <button className="record-line" data-hero-key={r.id} onClick={() => (ty.kind === 'contact' ? setEditing({ type: ty, record: r }) : (seedRecord(r.id, r.name), setQuery('record', r.id)))}>
                       <span className="record-line__name">{r.name}</span>
                       {cols.map((f) => {
                         if (f.key === 'stance') return r.fields.stance ? <StanceBadge key={f.key} field={f} value={r.fields.stance} /> : null;

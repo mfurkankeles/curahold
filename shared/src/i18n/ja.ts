@@ -1,7 +1,8 @@
+// Japanese (日本語) dictionary: polite です・ます in sentences, short noun or verb labels on buttons, as Japanese business
+// software writes them. Product and brand names in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Japanese (日本語). Filled market surface by market surface; every key not yet
-// here falls back to English. Batch 1: the frame, sign-in and navigation.
 export const ja: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': 'チーム',
@@ -6991,4 +6992,50 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': '{app} からのメッセージ',
   'console.deniedBody': 'この画面はこのインストールのすべての会社を表示するもので、運用している人のためのものです。ご自身のワークスペースの数字は「レポート」に、設定は「設定」にあります。',
   'console.secondStep.title': '先にもう1つのログイン手順が必要です',
+  'errors.country_not_offered': 'Curahold はこの国ではご利用いただけません。',
+  'billing.profile.country': '請求先の国',
+  'billing.profile.countryNone': '未設定',
+  'email.companyDeleted.subject': '{org} を Curahold から削除しました',
+  'email.companyDeleted.body': '{name} 様\n\nご依頼に基づき、{org} とそのすべてのデータを Curahold から削除しました。以下は削除証明書です。削除したもの、保持しているものとその理由を記載しています。\n\n証明書の SHA-256：{hash}\n\n{certificate}\n\nこのメールは記録として保管してください。バックアップは証明書に記載のとおり、所定のスケジュールで消去されます。',
+  'privacyReq.title': '個人データに関する請求',
+  'privacyReq.lead': '本人から自分のデータについて寄せられた請求は、異議や利用制限も含めてすべてここに記録します。期限は適用される法律に従って計算されます。',
+  'privacyReq.empty': '記録された請求はまだありません。データについての請求があったら、期限内に対応できるようここに記録してください。',
+  'privacyReq.kind': '請求の種類',
+  'privacyReq.kind.access': '開示',
+  'privacyReq.kind.rectification': '訂正',
+  'privacyReq.kind.erasure': '削除',
+  'privacyReq.kind.restriction': '利用の制限',
+  'privacyReq.kind.objection': '異議',
+  'privacyReq.kind.portability': 'データの移行',
+  'privacyReq.kind.withdrawal': '同意の撤回',
+  'privacyReq.subject': '本人',
+  'privacyReq.email': 'メールアドレス',
+  'privacyReq.law': '法律',
+  'privacyReq.lawOther': 'その他の法律（30日）',
+  'privacyReq.received': '受付日',
+  'privacyReq.receivedOn': '{date} 受付',
+  'privacyReq.dueHint': '期限は{date}（この法律では{days}日）。',
+  'privacyReq.due': '期限 {date}',
+  'privacyReq.overdue': '{date}から期限超過',
+  'privacyReq.note': 'メモ',
+  'privacyReq.add': '請求を記録',
+  'privacyReq.save': '記録する',
+  'privacyReq.markDone': '対応済み',
+  'privacyReq.markRefused': '拒否',
+  'privacyReq.status.done': '対応済み',
+  'privacyReq.status.refused': '拒否済み',
+  'privacyReq.logged': '請求を記録しました',
+  'privacyReq.closed': '請求をクローズしました',
+  'audit.privacy.request_logged': '個人データに関する請求を記録しました',
+  'audit.privacy.request_updated': '個人データに関する請求を更新しました',
+  'change.by': '{period}比 {delta}',
+  'change.same': '{period}と同じ',
+  'change.period.days': '直前{n}日間',
+  'change.period.week': '前週',
+  'change.period.month': '前月',
+  'change.period.quarter': '前四半期',
+  'change.period.year': '前年',
+  'change.better': '改善',
+  'change.worse': '悪化',
+  'sync.keyed.noteMessages': 'トークンは暗号化して保存され、いつでも削除できます。次の画面で、{app} のアプリに貼り付けるコールバック URL と確認トークンが表示されます。項目の対応付けや書き戻しはありません。',
 };

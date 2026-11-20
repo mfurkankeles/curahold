@@ -1,7 +1,8 @@
+// Traditional Chinese (繁體中文) dictionary, as Taiwan and Hong Kong business software writes it. Product and brand names
+// in Latin. Job titles stay English. Words per concept: ./glossary.ts.
+// Keys are en.ts's; tests/i18n*.test.ts check every one is here and reads natively.
 import type { MessageKey } from './en';
 
-// Traditional Chinese (繁體中文). Filled market surface by market surface; every
-// key not yet here falls back to English. Batch 1: frame, sign-in, navigation.
 export const zhHant: Partial<Record<MessageKey, string>> = {
   // Sales site plans.
   'billing.plan.team': '團隊版',
@@ -6991,4 +6992,50 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'conn.trouble.details': '{app} 回傳的訊息',
   'console.deniedBody': '此頁面顯示此安裝中的所有公司，供安裝的管理者使用。你自己工作區的數據在「報告」中，設定在「設定」中。',
   'console.secondStep.title': '請先完成一步額外的登入驗證',
+  'errors.country_not_offered': 'Curahold 在該國家/地區不提供服務。',
+  'billing.profile.country': '帳單國家/地區',
+  'billing.profile.countryNone': '未設定',
+  'email.companyDeleted.subject': '{org} 已從 Curahold 刪除',
+  'email.companyDeleted.body': '{name}，您好：\n\n依照申請，{org} 及其中的所有內容已從 Curahold 刪除。以下是刪除證明：刪除了什麼、保留了什麼以及原因。\n\n證明的 SHA-256：{hash}\n\n{certificate}\n\n請保留此郵件作為紀錄。備份會依其自身的週期自動清除，詳見證明。',
+  'privacyReq.title': '個人資料請求',
+  'privacyReq.lead': '在這裡記錄個人就其資料提出的每一項請求，包括反對與限制處理。截止日依適用的法律計算。',
+  'privacyReq.empty': '還沒有記錄任何請求。有人就其資料提出請求時，請在這裡記錄，以便準時回覆。',
+  'privacyReq.kind': '請求類型',
+  'privacyReq.kind.access': '查閱',
+  'privacyReq.kind.rectification': '更正',
+  'privacyReq.kind.erasure': '刪除',
+  'privacyReq.kind.restriction': '限制處理',
+  'privacyReq.kind.objection': '反對處理',
+  'privacyReq.kind.portability': '資料可攜',
+  'privacyReq.kind.withdrawal': '撤回同意',
+  'privacyReq.subject': '提出人',
+  'privacyReq.email': '電子郵件',
+  'privacyReq.law': '適用法律',
+  'privacyReq.lawOther': '其他法律（30 天）',
+  'privacyReq.received': '收到日期',
+  'privacyReq.receivedOn': '{date} 收到',
+  'privacyReq.dueHint': '截止日 {date}（依該法律為 {days} 天）。',
+  'privacyReq.due': '{date} 截止',
+  'privacyReq.overdue': '自 {date} 起已逾期',
+  'privacyReq.note': '備註',
+  'privacyReq.add': '記錄請求',
+  'privacyReq.save': '記錄',
+  'privacyReq.markDone': '已回覆',
+  'privacyReq.markRefused': '已拒絕',
+  'privacyReq.status.done': '已回覆',
+  'privacyReq.status.refused': '已拒絕',
+  'privacyReq.logged': '請求已記錄',
+  'privacyReq.closed': '請求已關閉',
+  'audit.privacy.request_logged': '記錄了一項個人資料請求',
+  'audit.privacy.request_updated': '更新了一項個人資料請求',
+  'change.by': '較{period} {delta}',
+  'change.same': '與{period}持平',
+  'change.period.days': '前 {n} 天',
+  'change.period.week': '上一週',
+  'change.period.month': '上個月',
+  'change.period.quarter': '上一季',
+  'change.period.year': '上一年',
+  'change.better': '向好',
+  'change.worse': '變差',
+  'sync.keyed.noteMessages': '權杖經加密儲存，可隨時移除。下一步會提供回呼網址和驗證權杖，請貼到你的 {app} 應用程式中；不涉及欄位對應，也不會回寫。',
 };

@@ -17,6 +17,8 @@ import { INTERVALS, PLANS, PLAN_KEYS, PRICE_CURRENCY, type PlanKey } from '../sh
 import { translate, dictionaries, LOCALE_INFO, bcp47Of, accountWords, type MessageKey, type Vars } from '../shared/src/i18n';
 import { FAVICON, MARK } from '../site/brand';
 import { SITE_FONTS, SITE_LANGS } from '../site/locales';
+import { SITE_GATES } from '../site/gates';
+import { SEED_LOCALES } from './seed-words';
 import { BLOG_LOCALES, blogPosts, SITE_LOCALES, siteBlog, siteConsent, siteCopy, siteStory, type BlogBlock, type BlogPost, type SiteLocale } from '../site/content';
 import { hubCopy } from '../site/hub-content';
 import { infoCopy } from '../site/info';
@@ -44,13 +46,14 @@ const AI_VERSION: 'a' | 'c' = process.env.SITE_AI_VERSION === 'c' ? 'c' : 'a';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-// Which languages the help pages and demo hub are built in. The site falls
-// back to English for any locale they do not cover yet. Every site language has
-// its docs folder now (user guide and legal pages in all eleven, 20 Nov 2026); a
-// page a language lacks is built there as the English page with a note, so the
-// links stay in the reader's language.
+// Which languages the help pages and demo hub are built in, read from what is there: the help centre's folders
+// (docs/site/<lang>, every site language since 20 Nov 2026) and the demo company's languages
+// (scripts/seed-words). The help build gives every language every page (a page a language lacks is
+// the English one with a note, scripts/build-docs.ts), so a help link stays in the reader's language.
 const DOCS_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => existsSync(join(ROOT, 'docs', 'site', l))));
-const DEMO_LANGS = new Set<SiteLocale>(['en', 'tr']);
+const DEMO_LANGS = new Set<SiteLocale>(SITE_LOCALES.filter((l) => (SEED_LOCALES as string[]).includes(l)));
+/** A help page in the reader's language when the help centre is built in it, else in English. */
+const docsPath = (locale: SiteLocale, slug: string) => `${DOCS}/${DOCS_LANGS.has(locale) ? locale : 'en'}/${slug}/`;
 
 
 const CHECK = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -197,7 +200,10 @@ function landingJsonLd(locale: SiteLocale, canonical: string, description: strin
         description,
         url: canonical,
         // The landing page names only the lowest price (its summary says "from …"); every offer is on /pricing/.
-        offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` },
+        // No offer at all while the prices are not published (SITE_PRICES, site/gates.ts): structured data never says more than the page.
+        ...(SITE_GATES.prices
+          ? { offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: PLAN_KEYS.length * INTERVALS.length, url: `${ORIGIN}${localeBase(locale)}${PAGE.pricing}` } }
+          : {}),
         publisher: { '@id': `${ORIGIN}/#org` },
       },
     ],
@@ -233,13 +239,13 @@ function urlsOf(locale: SiteLocale): PageUrls & { blog: string; releases: string
     trial: TRIAL,
     demo: DEMO_LANGS.has(locale) && locale !== 'en' ? `${DEMO}${locale}/` : DEMO,
     docs: `${DOCS}/${docsLocale}/`,
-    devDocs: `${DOCS}/${docsLocale}/developers/`,
-    releases: `${DOCS}/${docsLocale}/release-notes/`,
+    devDocs: docsPath(locale, 'developers'),
+    releases: docsPath(locale, 'release-notes'),
     blog: blogBaseOf(locale),
-    legal: (slug: string) => `${DOCS}/${docsLocale}/legal-${slug}/`,
-    quickstart: `${DOCS}/${docsLocale}/quickstart/`,
-    selfHost: `${DOCS}/${docsLocale}/self-hosting/`,
-    contact: `${DOCS}/${docsLocale}/getting-help/`,
+    legal: (slug: string) => docsPath(locale, `legal-${slug}`),
+    quickstart: docsPath(locale, 'quickstart'),
+    selfHost: docsPath(locale, 'self-hosting'),
+    contact: docsPath(locale, 'getting-help'),
   };
 }
 
@@ -304,6 +310,8 @@ const HIGHEST_PRICE = Math.max(...PLAN_KEYS.flatMap((k) => INTERVALS.map((i) => 
 /**
  * The plans on /pricing/, yearly first with a monthly switch. Never hidden for a scroll
  * animation: prices are what this page is for. Plan names are h2 (the page's h1 is "Pricing").
+ * While the prices are not published (SITE_PRICES, site/gates.ts) each card says they are
+ * announced at launch and there is no monthly/yearly switch: no figure appears anywhere.
  */
 function plansHtml(locale: SiteLocale): string {
   const c = siteCopy(locale);
@@ -314,19 +322,27 @@ function plansHtml(locale: SiteLocale): string {
     const points = (key === 'team' ? TEAM_POINTS : BUSINESS_POINTS).map((k) => `<li>${CHECK}<span>${esc(t(k))}</span></li>`).join('');
     return `<div class="plan${key === 'business' ? ' plan--business' : ''}">
           <h2 class="plan__name">${esc(t(`billing.plan.${key}` as MessageKey))}</h2>
-          <p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>
+          ${
+            SITE_GATES.prices
+              ? `<p class="plan__price"><span class="plan__amount" data-month="${esc(money(p.price.month))}" data-year="${esc(money(p.price.year))}">${esc(money(p.price.year))}</span><span class="plan__per" data-month="${esc(c.pricing.perSeat)}" data-year="${esc(c.pricing.perSeatYearly)}">${esc(c.pricing.perSeatYearly)}</span></p>`
+              : `<p class="plan__price plan__price--soon">${esc(c.pricing.announced)}</p>`
+          }
           <ul>${key === 'business' ? `<li class="plan__plus">${esc(c.pricing.business)}</li>` : ''}${points}</ul>
           <a class="btn ${key === 'business' ? 'btn--primary' : 'btn--ghost'}" href="${esc(TRIAL)}" data-ab="go">${ICON_GO}<span>${esc(infoCopy(locale).nav.tryFree)}</span></a>
         </div>`;
   };
   return `<section class="pricing pricing--page" id="pricing">
     <div class="wrap">
-      <div class="pricing__top">
+      ${
+        SITE_GATES.prices
+          ? `<div class="pricing__top">
         <div class="pricing__switch" role="group" aria-label="${esc(c.nav.pricing)}">
           <button type="button" data-interval="month" aria-pressed="false">${esc(c.pricing.monthly)}</button>
           <button type="button" data-interval="year" aria-pressed="true">${esc(c.pricing.yearly)}<small>${esc(c.pricing.save)}</small></button>
         </div>
-      </div>
+      </div>`
+          : ''
+      }
       <div class="plans">${plan('team')}${plan('business')}</div>
       <p class="pricing__fine">${esc(c.pricing.fine)}</p>
     </div>
@@ -344,7 +360,7 @@ function compareHtml(locale: SiteLocale): string {
   // Each amount isolated (<bdi>) so the yearly price comes first in reading order in either direction.
   const price = (k: PlanKey) => `<td class="cmp__price"><bdi>${esc(money(PLANS[k].price.year))}</bdi> / <bdi>${esc(money(PLANS[k].price.month))}</bdi></td>`;
   const rows = [
-    row(pp.priceRow, price('team') + price('business')),
+    ...(SITE_GATES.prices ? [row(pp.priceRow, price('team') + price('business'))] : []),
     ...TEAM_POINTS.map((k) => row(t(k), yes + yes)),
     ...BUSINESS_POINTS.map((k) => row(t(k), no + yes)),
     row(pp.viewers, `<td>${esc(pp.free)}</td><td>${esc(pp.free)}</td>`),
@@ -399,7 +415,9 @@ function offersLd(locale: SiteLocale, url: string): object {
       };
     }),
   );
-  return { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers }, publisher: { '@id': `${ORIGIN}/#org` } };
+  const app = { '@type': 'SoftwareApplication', '@id': `${url}#app`, name: 'Curahold', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url, publisher: { '@id': `${ORIGIN}/#org` } };
+  // Prices not published (SITE_PRICES): the application without any Offer.
+  return SITE_GATES.prices ? { ...app, offers: { '@type': 'AggregateOffer', priceCurrency: PRICE_CURRENCY, lowPrice: String(LOWEST_PRICE), highPrice: String(HIGHEST_PRICE), offerCount: offers.length, offers } } : app;
 }
 
 /** schema.org FAQPage for questions shown in full on one page (only one page carries each set). */
@@ -471,7 +489,8 @@ function conceptDoc(locale: SiteLocale, which: 'a' | 'c'): string {
     rel,
     head,
     // A way past the header for the keyboard (WCAG 2.4.1); chrome.css shows it only while it has focus.
-    header: `<a class="skip" href="#${which === 'a' ? 'film' : 'orbit'}">${esc(siteCopy(locale).nav.skip)}</a>\n${chromeHeader(locale, path, which)}`,
+    // These pages load whole stylesheets, so the header's <!--late--> marks mean nothing here.
+    header: `<a class="skip" href="#${which === 'a' ? 'film' : 'orbit'}">${esc(siteCopy(locale).nav.skip)}</a>\n${chromeHeader(locale, path, which).replace(/<!--\/?late-->/g, '')}`,
     why: whyHtml(locale, { headingLevel: 2, urls: u, compact: true }),
     footer: footerHtml(locale),
     tail: `${signinDialog(locale)}\n${chromeTail(locale, rel, which)}`,
@@ -1218,6 +1237,9 @@ export function page(locale: SiteLocale): string {
 
   const faq = faqList(c.faq.items);
   const marquee = INTEGRATIONS.map((n) => `<span class="marq__item">${esc(n)}</span>`).join('');
+  // Only the first scene is in the page; the other three wait in #film-rest below the fold
+  // and site.js adds them when the film first moves on: the first paint lays out a quarter
+  // of the film, and their styles leave the inline CSS (Lighthouse mobile, fix wave 3).
   // The mark's own arc, drawn large behind the film: the C that holds.
   const arc = `<svg class="hero__arc" viewBox="0 0 420 420" aria-hidden="true"><defs><linearGradient id="arcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c7dff"/><stop offset=".55" stop-color="#5b4de8"/><stop offset="1" stop-color="#3fb596"/></linearGradient></defs><path d="M319.3 79.8A170 170 0 1 0 319.3 340.2" pathLength="100"/></svg>`;
 
@@ -1261,9 +1283,6 @@ ${chromeHeader(locale, '', 'classic')}
           <div class="film__bar"><span class="film__dots"><i></i><i></i><i></i></span><span class="film__addr">${crumbs.map((x, i) => `<span${i === 0 ? ' class="is-on"' : ''} data-crumb="${i}">${esc(x)}</span>`).join('')}</span></div>
           <div class="film__stage">
           ${sceneHealth}
-          ${scenePromise}
-          ${sceneRenew}
-          ${sceneSprint}
           </div>
         </div>
       </div>
@@ -1277,6 +1296,7 @@ ${chromeHeader(locale, '', 'classic')}
     </div>
   </section>
   <!--fold-->
+  <template id="film-rest">${scenePromise}${sceneRenew}${sceneSprint}</template>
 
   ${storyHtml}
 
@@ -1359,7 +1379,8 @@ const emit = (file: string, html: string) => pending.push({ file, html });
 
 /**
  * Cuts each kind of page's styles to the classes it uses, writes them as one hashed file
- * (cached for good), inlines what the first screen needs (everything above <!--fold-->), and
+ * (cached for good), inlines what the first screen needs (everything above <!--fold-->, less
+ * what is marked <!--late-->), and
  * loads the file without blocking the first paint, at low priority (media=print until it
  * arrives) so the fonts are fetched first. Then writes the pages.
  */
@@ -1374,8 +1395,11 @@ function writePages(): string {
     for (const p of mine) {
       for (const c of classesIn(p.html)) used.add(c);
       const fold = p.html.indexOf('<!--fold-->');
-      // A page without a fold mark (the blog: short pages) is all first screen.
-      for (const c of classesIn(fold < 0 ? p.html : p.html.slice(0, fold))) first.add(c);
+      // A page without a fold mark (the blog: short pages) is all first screen. What sits
+      // between <!--late--> marks (the header's closed menu panels) is hidden at first paint,
+      // so its styles can wait for the file too.
+      const top = (fold < 0 ? p.html : p.html.slice(0, fold)).replace(/<!--late-->[\s\S]*?<!--\/late-->/g, '');
+      for (const c of classesIn(top)) first.add(c);
     }
     const sheet = pruneCss(full, used);
     const critical = pruneCss(full, first);
@@ -1386,7 +1410,7 @@ function writePages(): string {
       p.html = p.html.replace(/<!--css:(\w+):([^>]*)-->/, (_m, _k, rel: string) =>
         // Inline, a font's url() is read from the page, not from assets/: point it there.
         `<style>${critical.replace(/url\((?![a-z]+:|\/|#)/g, `url(${rel}assets/`)}</style>\n<link rel="stylesheet" href="${rel}assets/${name}" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="${rel}assets/${name}"></noscript>`,
-      ).replace('<!--fold-->', '');
+      ).replace('<!--fold-->', '').replace(/<!--\/?late-->/g, '');
     }
   }
   for (const p of pending) writeFileSync(p.file, p.html);

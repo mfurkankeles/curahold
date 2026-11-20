@@ -210,6 +210,21 @@ describe('caps on what costs money', () => {
     expect(n).toBeGreaterThan(0);
     expect((await ada.post('/api/billing/checkout', { plan: 'business', interval: 'year' })).status).toBe(200);
   });
+
+  it('never sells where Curahold is never offered: billing country, checkout and the connection (NEVER_OFFERED)', async () => {
+    const refused = await ada.patch('/api/billing/profile', { taxNumber: null, billingEmail: null, country: 'IR' });
+    expect(refused.status).toBe(451);
+    expect(refused.json.error).toBe('country_not_offered');
+    expect((await ada.patch('/api/billing/profile', { taxNumber: null, billingEmail: null, country: 'ir' })).status).toBe(451);
+    // A connection from there is refused at checkout even with a clean profile.
+    expect((await ada.req('POST', '/api/billing/checkout', { plan: 'business', interval: 'year' }, { 'cf-ipcountry': 'IR' })).status).toBe(451);
+    // A country on file from before (or written around the API) still stops checkout.
+    await sys(`update orgs set billing_country = 'IR' where id = $1`, [orgId]);
+    expect((await ada.post('/api/billing/checkout', { plan: 'business', interval: 'year' })).json.error).toBe('country_not_offered');
+    expect((await ada.patch('/api/billing/profile', { taxNumber: null, billingEmail: null, country: 'DE' })).status).toBe(200);
+    expect((await ada.get('/api/billing')).json.profile.country).toBe('DE');
+    expect((await ada.post('/api/billing/checkout', { plan: 'business', interval: 'year' })).status).toBe(200);
+  });
 });
 
 describe('companies from the older path are migrated without loss', () => {

@@ -1,3 +1,6 @@
+// The sales site's header and inner pages in English, written for every market; it is the reference the other languages follow; see ./types.ts.
+// Job titles and plan names stay English; terms from shared/src/i18n/glossary.ts. A line that depends on a build
+// setting carries both versions as ⟦price|…|…⟧ or ⟦eu|…|…⟧ (site/gates.ts); only claims on the claim table appear.
 import type { InfoCopy } from './types';
 
 export const en: InfoCopy = {
@@ -14,7 +17,7 @@ export const en: InfoCopy = {
     trust: ['Security and privacy', 'Where your data lives and who can see it.'],
     blog: ['Blog', 'Notes on keeping customers and promises.'],
     faq: ['Questions', 'Straight answers before you start.'],
-    quickstart: ['Quick start', 'Set up in fifteen minutes: address, customers, team.'],
+    quickstart: ['Quick start', 'Guided setup: address, customers, team.'],
     selfHost: ['Run it on your own servers', 'The single-company package, with your own database.'],
     legal: ['Legal', 'Terms, privacy, KVKK and the data processing agreement.'],
     contact: ['Contact', 'Write to us from the help centre.'],
@@ -25,13 +28,13 @@ export const en: InfoCopy = {
     trialCard: { title: 'Try it free for 3 months', text: 'Everything switched on, no card needed. It starts once your request is approved.' },
     apiCard: { title: 'Connect your own tool', text: 'The open API, personal keys and webhooks reach any tool that is not on the list.' },
     news: 'What’s new',
-    facts: ['11 languages', 'Set up in 15 minutes', '3 months free', 'Cancel any time', 'Database in the EU'],
+    facts: ['11 languages', 'Guided setup', '3 months free', 'Cancel any time', '⟦eu|Database in the EU|⟧'],
     flow: 'One flow, from the first call to the renewal', flowNote: 'Product and finance stay connected at every step.', optional: 'Optional',
     flowSoon: ['Linked work, visible to every team.', 'Someone who is not on a board still sees the status of work linked to their customer.'],
   },
   common: {
     ctaTitle: 'Try it with your own customers.',
-    ctaText: 'Three months free, with everything switched on, once your request is approved. Bring your customers from a spreadsheet and be at work in fifteen minutes.',
+    ctaText: 'Three months free, with everything switched on, once your request is approved. Bring your customers from a spreadsheet and a guided setup takes you through the rest.',
     related: 'Related', home: 'Home', forWho: 'Who it is for', uses: 'What the team uses',
   },
   depts: {
@@ -199,7 +202,7 @@ export const en: InfoCopy = {
       ['Builders', 'A backlog and sprints, with the customer behind each promise one click away.'],
     ],
     sizes: [
-      ['Small teams', 'Set up in fifteen minutes from a spreadsheet. No consultant, no project.'],
+      ['Small teams', 'A guided setup from a spreadsheet. No consultant, no project.'],
       ['Growing companies', 'Roles, teams and field permissions as more people join.'],
       ['Larger companies', 'Single sign-on, user provisioning, an audit log and the option to run it on your own servers.'],
     ],
@@ -212,7 +215,7 @@ export const en: InfoCopy = {
       ['Türkiye', 'Turkish throughout the product, KVKK tools for personal data requests.'],
       ['Middle East', 'Arabic, Hebrew and Persian, with the whole interface mirrored right to left.'],
       ['Asia', 'Hindi, Malay, Japanese, Korean and both Chinese scripts, written natively.'],
-      ['Europe', 'The database runs in the European Union; the data processing agreement covers GDPR.'],
+      ['Europe', '⟦eu|The database runs in the European Union; the data processing agreement covers GDPR.|GDPR tools for personal data requests; the data processing agreement covers GDPR.⟧'],
     ],
   },
   integrations: {
@@ -236,7 +239,7 @@ export const en: InfoCopy = {
   },
   pricingPage: { title: 'Pricing', lead: 'Per seat, every feature in the plan, three months free to start. Read-only viewers are free.',
     dontTitle: 'What we don’t count',
-    dont: [['Automations', 'No monthly counter on automation runs.'], ['AI credits', 'None: the AI connector runs on your own assistant’s plan.'], ['Read-only viewers', 'Free, as many as you need.'], ['Customer portal contacts', 'Your customers are not seats.'], ['Seat packs', 'None. You pay for the people who joined; pending invitations are free.'], ['Setup fee', 'None. You set it up yourself, in about fifteen minutes.']],
+    dont: [['Automations', 'No monthly counter on automation runs.'], ['AI credits', 'None: the AI connector runs on your own assistant’s plan.'], ['Read-only viewers', 'Free, as many as you need.'], ['Customer portal contacts', 'Your customers are not seats.'], ['Seat packs', 'None. You pay for the people who joined; pending invitations are free.'], ['Setup fee', 'None. You set it up yourself, guided step by step.']],
     compareTitle: 'Compare the plans', feature: 'What’s included', included: 'Included', notIncluded: 'Not included',
     priceRow: 'Per seat a month, yearly / monthly', viewers: 'Viewer seats', free: 'Free',
     faqTitle: 'Questions about pricing',
@@ -263,7 +266,7 @@ export const en: InfoCopy = {
     pack: "We answer standard security questionnaires and share our security policies with customers and prospects on request — write to us through the help centre.",
     points: [
       ['Every company kept apart', 'Each row carries its company, and the database itself decides who sees it — a bug in a screen still cannot show one company another’s data.'],
-      ['Data in the European Union', 'The database runs in the EU. The data processing agreement covers GDPR and Türkiye’s KVKK.'],
+      ['⟦eu|Data in the European Union|⟧', 'The database runs in the EU. The data processing agreement covers GDPR and Türkiye’s KVKK.'],
       ['Passwordless sign-in', 'Email link, Google or Microsoft, and single sign-on. A new device must also enter a code sent by email.'],
       ['Who sees what', 'Roles decide which customers each person sees; field access decides who reads and who changes each field.'],
       ['Support only with your consent', 'Our support team can look into your workspace only when you allow it, for a limited time, and every visit is logged.'],
@@ -325,9 +328,9 @@ export const en: InfoCopy = {
     sync: ['Two-way sync with your CRM and spreadsheets | Curahold', 'Keep your CRM, spreadsheets and support tool in step, field by field and both ways, while teams move over to Curahold at their own pace.'],
     solutions: ['Solutions by role, company size and region | Curahold', 'How Curahold fits founders, team leads and customer-facing people, small teams and larger companies, and teams in Türkiye, the Middle East and Asia.'],
     integrations: ['Integrations: CRM, chat, support and BI tools | Curahold', 'Connect Salesforce, HubSpot, Slack, Microsoft Teams, Jira, spreadsheets, support desks and data warehouses, or any tool through the open API.'],
-    pricing: ['Curahold pricing: per seat, 3 months free to start', 'Team from {team} and Business from {business} per seat a month on a yearly plan. Viewer seats are free, there is no setup fee and the trial needs no card.'],
-    faq: ['Questions about Curahold, answered plainly | Curahold', 'Where your data is kept, running Curahold on your own servers, whether you need a CRM, cancelling, languages and how long setting up takes.'],
-    trust: ['Security and privacy: how your data is kept | Curahold', 'Each company kept apart in the database itself, data in the European Union, passwordless sign-in, roles and field access, and support only with consent.'],
+    pricing: ['Curahold pricing: per seat, 3 months free to start', '⟦price|Team from {team} and Business from {business} per seat a month on a yearly plan. Viewer seats are free, there is no setup fee and the trial needs no card.|Per seat, with every feature in the plan. Prices are announced at launch; viewer seats are free, there is no setup fee and the trial needs no card.⟧'],
+    faq: ['Questions about Curahold, answered plainly | Curahold', 'Where your data is kept, running Curahold on your own servers, whether you need a CRM, cancelling, languages and how setting up works.'],
+    trust: ['Security and privacy: how your data is kept | Curahold', '⟦eu|Each company kept apart in the database itself, data in the European Union, passwordless sign-in, roles and field access, and support only with consent.|Each company kept apart in the database itself, passwordless sign-in, roles and field access, and support only with consent.⟧'],
     why: ['Why Curahold: one record for every customer team', 'Inside sales, sales, onboarding, customer success and product work on one customer record, so no promise is lost. And an honest word on who it is not for.'],
     about: ['About Curahold: software for keeping customers', 'What Curahold is, where the name comes from, what we build and how: in eleven languages from the start, with each company’s data kept apart.'],
   },
