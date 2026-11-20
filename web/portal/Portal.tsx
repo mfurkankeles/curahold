@@ -2,7 +2,7 @@
 // does for them. Their requests and the replies written for them, a way to
 // open a new one, and nothing else. It talks only to /papi on its own domain.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { bcp47Of, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
+import { bcp47Of, helpLanguageOf, LOCALE_INFO, LOCALES, normalizeLocale, translate, type Locale, type MessageKey, type Vars } from '../../shared/src/i18n/core';
 import { loadLocale, useShownLocale } from './i18n';
 import { formatBytes, formatDate, formatDateTime } from '../src/lib/format';
 import { brandPalette, PORTAL_FILE_ENDINGS, PORTAL_FILE_MB, PORTAL_MAX_FILES, type PortalAccount, type PortalFile, type PortalBoard, type PortalMe, type PortalOrg, type PortalTask, type PortalTaskDetail } from '../../shared/src/portal';
@@ -520,6 +520,9 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
   const { org, me } = boot;
   return (
     <div className="p-shell">
+      <a className="skip-link" href="#main">
+        {ctx.t('docs.skip')}
+      </a>
       <header className="p-top">
         <div className="p-wrap p-top__in">
           <a className="p-brand" {...link('/')}>
@@ -547,7 +550,7 @@ function Portal({ onBrand }: { onBrand: (color: string | null) => void }) {
         </div>
       </header>
       <Offline ctx={ctx} />
-      <main className="p-main">
+      <main className="p-main" id="main" tabIndex={-1}>
         <Route ctx={ctx} org={org} me={me} path={path} onSignedOut={signedOut} />
       </main>
       <Foot ctx={ctx} org={org} />
@@ -1345,12 +1348,12 @@ function List({ ctx, org, me, board, onSignedOut }: { ctx: Ctx; org: PortalOrg; 
           )}
           {/* On a phone the side column is not shown: the questions box comes under the list. */}
           <div className="p-ask-narrow">
-            <PortalAsk ctx={ctx} />
+            <PortalAsk ctx={ctx} docsBase={org.docsBase} />
           </div>
         </div>
         <aside className="p-page__aside p-page__aside--wide">
           <How ctx={ctx} org={org} me={me} />
-          <PortalAsk ctx={ctx} />
+          <PortalAsk ctx={ctx} docsBase={org.docsBase} />
         </aside>
       </div>
     </>
@@ -1365,9 +1368,27 @@ let portalAssistOn: Promise<boolean> | null = null;
  * assistant every Curahold chatbot shares (POST /papi/assist). It reads only
  * what this person sees here. Shown only where the server has a model.
  */
-function PortalAsk({ ctx }: { ctx: Ctx }) {
+function PortalAsk({ ctx, docsBase }: { ctx: Ctx; docsBase?: string }) {
   const { t } = ctx;
   const [on, setOn] = useState(false);
+  // The consent notice (KVKK/GDPR): nothing is sent before a "yes"; null = not asked yet (or an older notice).
+  const [consent, setConsent] = useState<boolean | null | undefined>(undefined);
+  const [deciding, setDeciding] = useState(false);
+  const [later, setLater] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    void call<{ consent: { granted: boolean | null } }>('GET', '/assist/consent').then((r) => setConsent(r.consent.granted), () => setConsent(null));
+  }, [on]);
+  const decide = async (granted: boolean) => {
+    setDeciding(true);
+    try {
+      const r = await call<{ consent: { granted: boolean | null } }>('POST', '/assist/consent', { granted });
+      if (!granted) setLog((l) => [...l, { side: 'bot', text: t(consent ? 'assistConsent.withdrawn' : 'assistConsent.declined') }]);
+      setConsent(r.consent.granted);
+    } finally {
+      setDeciding(false);
+    }
+  };
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<{ side: 'customer' | 'bot'; text: string; options?: { id: string; label: string }[] }[]>([]);
@@ -1380,7 +1401,7 @@ function PortalAsk({ ctx }: { ctx: Ctx }) {
   }, []);
   if (!on) return null;
   const send = async (q: string, intent?: string) => {
-    if (!q.trim() || busy) return;
+    if (!q.trim() || busy || consent !== true) return;
     const history = log.filter((m) => !m.options).map((m) => ({ role: m.side === 'customer' ? ('user' as const) : ('assistant' as const), content: m.text })).slice(-6);
     setLog((l) => [...l, { side: 'customer', text: q }]);
     setText('');
@@ -1400,6 +1421,44 @@ function PortalAsk({ ctx }: { ctx: Ctx }) {
     <section className="p-card p-ask" aria-labelledby="p-ask">
       <h2 id="p-ask">{t('assist.portal.title')}</h2>
       <p className="p-muted">{t('assist.portal.hello')}</p>
+      {consent !== true && consent !== undefined && !later && (
+        <div
+          className="p-consent"
+          role="dialog"
+          aria-labelledby="p-ask-consent"
+          tabIndex={-1}
+          onKeyDown={(e) => e.key === 'Escape' && setLater(true)}
+          data-test="portal-assist-consent"
+        >
+          <div className="p-consent__head">
+            <h3 id="p-ask-consent">{t('assistConsent.title')}</h3>
+            <button type="button" className="p-btn p-btn--quiet" onClick={() => setLater(true)} aria-label={t('assistConsent.close')}>
+              <span aria-hidden="true">×</span> {t('assistConsent.close')}
+            </button>
+          </div>
+          <ul>
+            <li>{t('assistConsent.what')}</li>
+            <li>{t('assistConsent.why')}</li>
+            <li>{t('assistConsent.keep')}</li>
+            <li>{t('assistConsent.withdraw')}</li>
+          </ul>
+          {docsBase && (
+            <p>
+              <a href={`${docsBase}${helpLanguageOf(ctx.locale)}/legal-privacy/`} target="_blank" rel="noreferrer">
+                {t('assistConsent.privacy')}
+              </a>
+            </p>
+          )}
+          <div className="p-actions">
+            <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(false)}>
+              <span aria-hidden="true">✕</span> {t('assistConsent.decline')}
+            </button>
+            <button type="button" className="p-btn" disabled={deciding} onClick={() => void decide(true)}>
+              <span aria-hidden="true">✓</span> {t('assistConsent.accept')}
+            </button>
+          </div>
+        </div>
+      )}
       {log.length > 0 && (
         <div className="p-thread" role="log" aria-live="polite">
           {log.map((m, i) => (
@@ -1431,11 +1490,23 @@ function PortalAsk({ ctx }: { ctx: Ctx }) {
           <span className="p-sr">{t('assist.portal.title')}</span>
           <input dir="auto" value={text} maxLength={300} placeholder={t('assist.portal.placeholder')} onChange={(e) => setText(e.target.value)} />
         </label>
-        <button className="p-btn p-btn--primary" type="submit" disabled={busy || !text.trim()}>
+        <button className="p-btn p-btn--primary" type="submit" disabled={busy || !text.trim() || consent !== true}>
           {busy ? t('ask.loading') : t('ask.send')}
         </button>
       </form>
-      <p className="p-muted">{t('assist.private')}</p>
+      <p className="p-muted">
+        {t('assist.private')}{' '}
+        {consent === true && (
+          <button type="button" className="p-btn p-btn--quiet" disabled={deciding} onClick={() => void decide(false)}>
+            {t('assistConsent.withdrawAction')}
+          </button>
+        )}
+        {consent === false && (
+          <button type="button" className="p-btn p-btn--quiet" disabled={deciding} onClick={() => void decide(true)}>
+            {t('assistConsent.settings.give')}
+          </button>
+        )}
+      </p>
     </section>
   );
 }

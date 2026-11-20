@@ -96,7 +96,7 @@ export function RequestForm({
           <TaskFieldInput field={f} value={values[f.key]} disabled={false} people={people.filter((p) => p.status === 'active')} onSave={(v) => setValues((cur) => ({ ...cur, [f.key]: v }))} />
         </div>
       ))}
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
     </Dialog>
   );
 }

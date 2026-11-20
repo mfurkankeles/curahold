@@ -316,3 +316,6 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
   .foot { padding-bottom: 76px; }
 }
 @media (prefers-reduced-motion: reduce) { .mbar, .mbar.is-on { transition: none; } }
+/* "Skip to content" on pages that bring only the chrome (the concept pages); site.css has the same for the rest. */
+.skip { position: absolute; top: 8px; inset-inline-start: 8px; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; background: #fff; color: #17152f; padding: 8px 14px; border-radius: 8px; z-index: 100; }
+.skip:focus { width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }

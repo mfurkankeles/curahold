@@ -15,7 +15,7 @@ import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { run } from '../context';
 import { body } from '../lib/validate';
-import { SURFACES, type Surface } from '../../../shared/src/consent/core';
+import { CONSENT_POLICY_VERSION, SURFACES, type Surface } from '../../../shared/src/consent/core';
 
 export const consentRoutes = new Hono<AppEnv>();
 
@@ -69,6 +69,8 @@ consentRoutes.get('/consent', async (c) => {
 
 consentRoutes.post('/consent', async (c) => {
   const input = await body(c, consentInput);
+  // Same as the public door: a version other than the one in force is not recorded as proof of it.
+  if (input.policyVersion && input.policyVersion !== CONSENT_POLICY_VERSION) return c.json({ error: 'stale_policy' }, 409);
   const auth = c.get('auth');
   const org = c.get('org');
   const agent = (c.req.header('user-agent') ?? '').slice(0, 400) || null;
@@ -111,6 +113,8 @@ consentEventRoutes.post('/', async (c) => {
   const ok = eventInput.safeParse(parsed);
   if (!ok.success) return c.json({ error: 'invalid' }, 400);
   const e = ok.data;
+  // Proof only of the notice in force (L1 audit): a choice against another policy version is not recorded as if it were.
+  if (e.policyVersion !== CONSENT_POLICY_VERSION) return c.json({ error: 'stale_policy' }, 409);
   await c.get('deps').db.system((q) =>
     q.query(
       `insert into consent_events (consent_id, surface, action, analytics, marketing, policy_version, text_hash, locale, country)

@@ -62,10 +62,23 @@ simply not offered when their keys are missing ("a service without its secrets i
 | Key | Purpose | Required | Default / notes |
 | --- | --- | --- | --- |
 | `PADDLE_API_KEY` **(S)** | Server-side API key | For billing | Unset: billing off, everything open. |
-| `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies `/api/billing/webhook` signatures | For billing | |
+| `PADDLE_WEBHOOK_SECRET` **(S)** | Verifies Paddle webhook signatures (`/api/inbound/billing/paddle`, also the older `/api/billing/webhook`) | For billing | |
 | `PADDLE_CLIENT_TOKEN` | Client-side token for Paddle.js (safe in browsers) | For billing | |
 | `PADDLE_PRICES` | JSON `{"team":{"month":"pri_...","year":"pri_..."},"business":{...}}` | For billing | Must contain all four ids or the app throws. |
 | `PADDLE_ENV` | `sandbox` or `live` | No | `sandbox`. **Check this before going live.** |
+
+## 3b. The assistant and the AI team (all optional; without a key nothing calls a model)
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `ANTHROPIC_API_KEY` **(S)** | The one model key for the assistant and the AI team | No | Unset: the docs search answers; the AI team's clock does not run. |
+| `ASSISTANT_PROVIDER` | `off` switches every model call off without removing the key | No | `anthropic`. |
+| `ASSISTANT_GLOBAL_MONTHLY_USD`, `ASSISTANT_COMPANY_MONTHLY_USD`, `ASSISTANT_COMPANY_MAX_USD` | The assistant's monthly caps (api/src/assistant/cost.ts) | No | See the code's defaults. |
+| `TEAM_MONTHLY_USD` | The AI team's monthly model cap, every seat together | No | `40`. Reaching it stops every run until the month turns. |
+| `TEAM_SCHEDULER` | `off` stops the team's 10-minute clock (cron `*/10 * * * *`, api/src/team/schedule.ts); chats and "Şimdi başlat" keep working | No | `auto`: runs only when a key is set; idle (no wake, no model call) when no cadence is due and nothing is queued. |
+| `OPS_ALERTS` | `off` stops the error-rate and latency alerts (lib/ops.ts) | No | On. |
+| `OPS_ALERT_EMAIL` | `off` keeps ops alerts in the owner console only (no e-mail to `PLATFORM_OWNER`) | No | On. |
+| `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per profile | No | api/src/team/config.ts. |
 
 ## 4. Sign-in providers (each optional)
 
@@ -139,6 +152,20 @@ Google Sheets and Excel reuse the Google and Microsoft sign-in keys.
 | `CRAWLERS_DOCS_AI` | `allow` lets AI answer/search robots read the documentation | No | Blocked. |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` **(S)** | Cloudflare Turnstile (free) on the public forms | Both | Without them the honeypot, fill-time check and rate limits stand alone. |
 | `TURNSTILE` | `off` switches Turnstile off even with keys | No | On when both keys are set. |
+| `TURNSTILE_SEND_IP` | `1` also sends the visitor's IP address to Cloudflare's check | No | Off (data minimisation, L1 audit); the check works without it. |
+
+## 6e. Retention and company deletion (`api/src/lib/retention.ts`, `api/src/lib/companyDeletion.ts`)
+
+Days; a value that is not a whole number, or is under the floor in brackets, falls back to the default. The defaults are the
+periods the privacy notice and the records of processing state (docs/compliance/data-inventory.md) — change a text when you change one.
+
+| Key | Purpose | Required | Default / notes |
+| --- | --- | --- | --- |
+| `RETENTION_TRIAL_REQUEST_DAYS` | Trial requests from the sales site | No | `365` (floor 30). |
+| `RETENTION_CONSENT_DAYS` | Consent and withdrawal records, cookie choices; a "yes" still in force is kept as long as it is relied on | No | `1095` (floor 365). |
+| `RETENTION_SUPPORT_DAYS` | Help requests, their messages and files, the support desk's log (from the last change) | No | `730` (floor 90). |
+| `RETENTION_AUDIT_DAYS` | The activity log (`audit_log`) | No | `365` (floor 90; the database refuses to delete newer rows, migration 0242). |
+| `COMPANY_DELETE_GRACE_DAYS` | Days between an administrator's request to delete the company and the purge | No | `30` (floor 7). |
 
 ## 7. Self-host only (`api/src/selfhost.ts`, `docker-compose.yml`, `selfhost.env.example`)
 

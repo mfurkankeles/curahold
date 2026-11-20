@@ -270,7 +270,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useEffect(() => startStrips(), []);
   // On a phone the open menu is a modal drawer: the screen and the bottom bar behind its scrim cannot be
   // reached (by a tap, the keyboard or a screen reader) until it closes.
-  const mainRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const barRef = useRef<HTMLElement>(null);
   useEffect(() => {
     for (const el of [mainRef.current, barRef.current]) el?.toggleAttribute('inert', navOpen && narrow);
@@ -355,6 +355,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   return (
     <ShellCtx.Provider value={actions}>
       <div className="shell" data-nav={navOpen ? 'open' : 'closed'} data-helper={helpOk || undefined}>
+        <a className="skip-link" href="#main">
+          {t('docs.skip')}
+        </a>
         {narrow && (
           <header className="mbar">
             <button className="mbar__btn" aria-label={t('nav.menu')} aria-expanded={navOpen} onClick={() => setNavOpen(true)}>
@@ -535,7 +538,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           </div>
         </nav>
         {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
-        <div className="main" ref={mainRef}>
+        <main className="main" id="main" tabIndex={-1} ref={mainRef}>
           <OfflineBar />
           {me.previewBy && (
             <div className="previewbar" role="status">
@@ -574,7 +577,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
           )}
           <BackBar types={recordTypes} />
           {children}
-        </div>
+        </main>
         {narrow && (
           <nav className="tabbar" aria-label={t('nav.quick')} ref={barRef}>
             {link('/home', t('nav.home'), here.home, 'home', undefined, 'tabbar__item')}

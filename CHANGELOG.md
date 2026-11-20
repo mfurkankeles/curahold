@@ -15,6 +15,21 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 - Sales site: a small content hub in all nine languages (/resources/): a renewal playbook template, a business review (QBR)
   agenda template, and plain definitions of customer health score, churn, contract renewal and customer portal, each saying
   only what Curahold does today. Linked from the Resources menu and the footer.
+- Billing: plan limits on full seats, connected tools, sync frequency, file space and CuraAI answers a month, shown with your
+  use on Settings → Billing; regional prices (INR, SGD; USD for Malaysia and the Gulf with a local guide price) with tax added
+  by Paddle; a 30-day grace after a failed payment. The price list is one data file (`shared/src/plans.json`).
+- Cost model (`scripts/quality/cost.mts`): unit cost per company and per seat for 1–300 customers, fixed costs and break-even,
+  every input with its source in `scripts/quality/cost.inputs.json`.
+- Consent before every AI assistant chat (in the app, the customer portal and the public docs): a short notice of what goes to the
+  AI provider, why, for how long, with the privacy notice, and equal **Accept** / **Decline**. The server refuses a question without a
+  "yes" to the current notice version (`consent_required`); each answer is recorded (who, when, version, language) and in the activity
+  log; withdraw any time under CuraAI or in Your settings; a new notice version asks again (migration 0243).
+- Deleting the whole company (Settings → Company): typed confirmation, 30-day grace period with cancel, then everything goes, files and
+  connection keys included, with a deletion certificate; invoices stay for tax law (migration 0241).
+- Nightly retention purges for the stated periods: trial requests 12 months, consent proof 3 years (a "yes" in force is kept), help
+  requests 24 months, activity log 12 months; configurable with `RETENTION_*` (docs/ENVIRONMENT.md §6e).
+- Download and erase for people at customers (portal people), not only switching them off.
+
 - Engineering foundation for new owners: GitHub Actions CI (`.github/workflows/ci.yml`) with typecheck, lint, the full test suite on
   PGlite and on Postgres 16, build, Docker image build check, and required guards for row-level-security isolation, the repository leak
   scan and i18n completeness; a nightly end-to-end workflow; a pull request template.
@@ -51,6 +66,12 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
   no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
   a Pause button and stays still for anyone who asked their system for less motion.
+- Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
+  `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
+- The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched
+  off (migration 0240), the demo stays on.
+- Erasing a person also removes their CuraAI questions, notifications, chat links, sign-in factors, recordings and mentions in AI notes.
+- Consent records can no longer be changed, only anonymised (migration 0241).
 - Dev dependencies: added `eslint`, `@eslint/js`, `@babel/eslint-parser`, `@babel/core`, `eslint-plugin-react-hooks`, `globals` and `prettier`
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 

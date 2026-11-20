@@ -1,0 +1,98 @@
+{
+  "_about": "The price list and what each plan includes. Data only: the owner's final pricing replaces this file, no code changes. Checked by parseCatalogue() in shared/src/billing.ts and tests/billing-catalogue.test.ts. Amounts are per full seat per month; 'year' is what a month costs when paid for a year. A cap of null means no limit. Mirror every price in Paddle (one price per plan and interval, with a country override per regional price below).",
+  "version": "2026-11-20-draft",
+  "status": "draft",
+  "currency": "USD",
+  "trial": {
+    "_source": "owner, 17 Nov (request form, his approval, 3 months; seats asked for, auto-approvable up to 25)",
+    "months": 3,
+    "approval": true,
+    "plan": "business",
+    "autoApproveSeats": 25,
+    "caps": { "aiQuestionsPerSeat": 10 }
+  },
+  "dunning": {
+    "_source": "assumption: Paddle retries a failed renewal for about 30 days before it cancels; we keep everything open for that long, then read-only",
+    "graceDays": 30
+  },
+  "proration": {
+    "_source": "Paddle Billing proration_billing_mode values",
+    "upgrade": "prorated_immediately",
+    "downgrade": "prorated_next_billing_period",
+    "seatsUp": "prorated_immediately",
+    "seatsDown": "prorated_next_billing_period"
+  },
+  "plans": [
+    {
+      "key": "team",
+      "name": "Team",
+      "price": { "month": 19, "year": 15 },
+      "features": [],
+      "caps": { "aiQuestionsPerSeat": 30, "storageGbPerSeat": 2, "syncEveryMinutes": 240, "connectors": 2, "seatsMax": 100 }
+    },
+    {
+      "key": "business",
+      "name": "Business",
+      "price": { "month": 35, "year": 29 },
+      "features": ["crm_sync", "portal", "playbooks"],
+      "caps": { "aiQuestionsPerSeat": 60, "storageGbPerSeat": 10, "syncEveryMinutes": 60, "connectors": 10, "seatsMax": null }
+    }
+  ],
+  "regions": [
+    {
+      "key": "global",
+      "countries": [],
+      "currency": "USD",
+      "collect": "USD",
+      "prices": null,
+      "tax": { "name": "Sales tax / VAT", "rate": null, "b2b": false, "_source": "Paddle (merchant of record) works out and adds the buyer's tax at checkout; rate depends on the buyer's country or state" }
+    },
+    {
+      "key": "tr",
+      "countries": ["TR"],
+      "currency": "TRY",
+      "collect": "TRY",
+      "prices": null,
+      "_note": "No TRY list yet (owner decision): Paddle converts the USD list at checkout. Paddle collects TRY but does not pay out in TRY (research-gtm / business plan 4.1).",
+      "tax": { "name": "KDV", "rate": 0.2, "b2b": false, "_source": "assumption: 20% VAT on digital services added for consumers; a business accounts for it itself (reverse charge)" }
+    },
+    {
+      "key": "in",
+      "countries": ["IN"],
+      "currency": "INR",
+      "collect": "INR",
+      "prices": { "team": { "month": 799, "year": 649 }, "business": { "month": 1499, "year": 1249 } },
+      "_note": "Draft from business plan 4.3 (48% of the USD list at 89 INR/USD, unverified FX). Monthly by default: India's e-mandate limit (15,000 INR per automatic renewal) asks the buyer again above it.",
+      "tax": { "name": "GST", "rate": 0.18, "b2b": false, "_source": "business plan [G2]: Paddle adds 18% GST for consumers only" }
+    },
+    {
+      "key": "sg",
+      "countries": ["SG"],
+      "currency": "SGD",
+      "collect": "SGD",
+      "prices": { "team": { "month": 25, "year": 20 }, "business": { "month": 45, "year": 38 } },
+      "_note": "Draft from business plan 4.3 (parity, 1.30 SGD/USD unverified FX).",
+      "tax": { "name": "GST", "rate": 0.09, "b2b": false, "_source": "business plan [G2]: Paddle adds 9% GST for consumers only" }
+    },
+    {
+      "key": "my",
+      "countries": ["MY"],
+      "currency": "MYR",
+      "collect": "USD",
+      "prices": { "team": { "month": 14, "year": 11 }, "business": { "month": 26, "year": 21 } },
+      "displayPrices": { "team": { "month": 59, "year": 46 }, "business": { "month": 109, "year": 88 } },
+      "_note": "Collected in USD (73% of the list) until Paddle's MYR support is confirmed; MYR shown as a guide (4.20 MYR/USD unverified). Switch: set collect to MYR and prices to displayPrices.",
+      "tax": { "name": "SST", "rate": 0.08, "b2b": true, "_source": "business plan [G2]: Paddle adds 8% SST to businesses too" }
+    },
+    {
+      "key": "ae",
+      "countries": ["AE", "SA", "QA", "KW", "BH", "OM"],
+      "currency": "AED",
+      "collect": "USD",
+      "prices": null,
+      "_note": "Paddle cannot collect AED, SAR or QAR (business plan 4.1, R3 PD4 verified): the Gulf pays the USD list. AED is shown as a guide only.",
+      "displayRate": 3.6725,
+      "tax": { "name": "VAT", "rate": 0.05, "b2b": false, "_source": "assumption: 5% UAE VAT added for consumers; a VAT-registered business reverse-charges" }
+    }
+  ]
+}

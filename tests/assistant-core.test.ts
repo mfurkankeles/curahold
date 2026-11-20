@@ -47,7 +47,7 @@ function envOf(over: Partial<AssistEnv> = {}, script?: (req: LlmRequest, n: numb
     surface: 'app',
     locale: 'en',
     orgId: 'org-1',
-    settings: settingsOf({}, cfg),
+    settings: settingsOf({ enabled: true }, cfg),
     ...over,
   };
   return { env, provider, mem };
@@ -304,5 +304,9 @@ describe('the provider and the money', () => {
     expect(c.companyMonthlyUsd).toBe(5);
     expect(settingsOf({ monthlyCapUsd: 10_000 }, c).monthlyCapUsd).toBe(c.companyMaxUsd);
     expect(settingsOf({ retentionDays: 3 }, c).retentionDays).toBe(30);
+    // Off until an administrator chooses it (legal texts): only an explicit true turns it on.
+    expect(settingsOf({}, c).enabled).toBe(false);
+    expect(settingsOf({ enabled: 'yes' }, c).enabled).toBe(false);
+    expect(settingsOf({ enabled: true }, c).enabled).toBe(true);
   });
 });

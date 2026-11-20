@@ -200,7 +200,7 @@ export function OverviewSection({ beat, failed, go }: { beat: number; failed: (e
                 {o('privacy.line')}
               </p>
               {d.today.mode === 'demo' ? <p className="ctoday__note">{o('mode.demoNote')}</p> : null}
-              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} aria-label={o('strip.label')}>
+              <button type="button" className="ocstrip" onClick={() => go({ section: 'plan' })} title={o('strip.label')}>
                 <span className="ocstrip__sum">
                   <strong>{o('strip.title')}</strong>
                   {d.strip.rows.length ? (
@@ -1422,7 +1422,7 @@ export function ChecklistSection({ beat, failed }: { beat: number; failed: (e: u
                       </label>
                       <label className="ocfield ocfield--wide">
                         <span>{o('check.evidence')}</span>
-                        <input className="input" value={evidence} maxLength={1000} onChange={(e) => setEvidence(e.target.value)} />
+                        <input className="input" value={evidence} maxLength={1000} placeholder={n.proof} onChange={(e) => setEvidence(e.target.value)} />
                       </label>
                     </div>
                     <div className="ocbuttons ocap__buttons">

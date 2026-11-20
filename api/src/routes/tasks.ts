@@ -1,8 +1,10 @@
+import { quarantine, released } from '../lib/uploadScan';
 import { INLINE_TYPES, readUpload } from '../lib/upload';
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { MENTION_RE, PRIORITIES, type Column, type TaskDetail } from '../../../shared/src/model';
-import { defer, nowOf, requireWriter, run, todayOf, type AppEnv } from '../context';
+import { accessFor, defer, nowOf, requireWriter, run, todayOf, type AppEnv } from '../context';
+import { checkStorage } from '../billing/entitlements';
 import { portalOn, tellCustomer } from '../lib/portal';
 import { runTaskEvent, runTaskMoved } from '../lib/automations';
 import { spawnNext } from '../lib/recurring';
@@ -953,6 +955,8 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
   const key = `${org.id}/${id}/${crypto.randomUUID()}`;
   const row = await run(c, async (q) => {
     await loadTask(q, id);
+    // The plan's storage cap (shared/src/plans.json), before anything is stored.
+    await checkStorage(q, org.id, accessFor(c), f.size);
     await deps.storage.put(key, f.data, f.mime);
     const [r] = await q.query(
       `insert into files (org_id, task_id, name, size, mime, storage_key, uploaded_by)
@@ -962,6 +966,7 @@ taskRoutes.post('/tasks/:id/files', async (c) => {
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'file.uploaded', entity: 'file', entityId: r.id, meta: { name } });
     return r;
   });
+  await quarantine(deps, org.id, key);
   return c.json({ file: toFile(row) }, 201);
 });
 
@@ -972,6 +977,7 @@ taskRoutes.get('/files/:id', async (c) => {
     if (!r) fail('not_found');
     return r;
   });
+  if (!(await released(c.get('deps'), row.org_id, row.storage_key))) fail('file_quarantined');
   const obj = await c.get('deps').storage.get(row.storage_key);
   if (!obj) fail('not_found');
   // A picture may be shown in the page (a pasted screenshot); everything else is a download.

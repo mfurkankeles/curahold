@@ -37,4 +37,4 @@ wrong answer about a customer's data, or one that shows data the asker may not s
 - One key (`ANTHROPIC_API_KEY`) serves the assistant and the AI team (ADR 0011).
 - Changing the prompt or tools needs the evaluation (`tests/assistant-eval/`) in all languages; CI runs its fixed
   checks without a key, a judged run with a key happens before a release.
-- Retention of questions follows each company's setting; privacy notes in `docs/legal/ai-assistant-privacy-notes.md`.
+- Retention of questions follows each company's setting; privacy notes in `docs/compliance/ai-assistant-privacy-notes.md`.

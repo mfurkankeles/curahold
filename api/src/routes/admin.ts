@@ -16,7 +16,9 @@ import { createInviteToken, sendInvite } from '../lib/people';
 import { kickSync, queueSync } from '../lib/records';
 import { fail, HttpError } from '../lib/errors';
 import { iso } from '../lib/mappers';
-import { personalData } from '../lib/personalData';
+import { personalData, portalPersonalData } from '../lib/personalData';
+import { erasePortalUser, eraseUserExtras } from '../lib/erasure';
+import { graceDaysOf } from '../lib/companyDeletion';
 import { body, email, localeField, param, uuid } from '../lib/validate';
 
 export const adminRoutes = new Hono<AppEnv>();
@@ -572,8 +574,10 @@ adminRoutes.get('/users/:id/export', async (c) => {
 
 // Erasure (KVKK m.7, GDPR Art. 17). The person disappears from the
 // company: name and email are replaced, sessions and one-time tokens are
-// deleted, they are removed from every task, team and board. Comments
-// stay as business records but lose the author.
+// deleted, they are removed from every task, team and board, and what
+// lib/erasure.ts lists goes too (CuraAI questions, notifications, sign-in
+// factors, recordings, mentions in AI memory). Comments stay as business
+// records but lose the author; what the law keeps is listed there.
 adminRoutes.post('/users/:id/erase', async (c) => {
   requirePerm(c, 'privacy.manage');
   await requireFresh(c);
@@ -603,14 +607,102 @@ adminRoutes.post('/users/:id/erase', async (c) => {
     await sq.query('delete from team_members where org_id = $1 and user_id = $2', [o, id]);
     await sq.query('delete from board_members where org_id = $1 and user_id = $2', [o, id]);
     await sq.query('update teams set lead_id = null where org_id = $1 and lead_id = $2', [o, id]);
+    // CuraAI questions, notifications, chat links, sign-in factors, recordings and mentions in AI memory (lib/erasure.ts).
+    await eraseUserExtras(sq, o, id, { email: target.email, name: target.name });
     await sq.query(
-      `update users set name = '—', email = $3, status = 'deleted', locale = null, last_active_at = null
+      `update users set name = '—', email = $3, status = 'deleted', locale = null, last_active_at = null, prefs = '{}'::jsonb
         where org_id = $1 and id = $2`,
       [o, id, `erased+${id}@invalid.curahold`],
     );
     await audit(sq, { orgId: o, actorId: auth.userId, action: 'user.erased', entity: 'user', entityId: id });
   });
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------- portal people's personal data
+
+/** Everything held about one person at a customer who uses the portal (KVKK m.11, GDPR Art. 15/20). */
+adminRoutes.get('/portal-users/:id/export', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const data = await portalPersonalData(c, id);
+  if (!data) fail('not_found');
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: c.get('auth').userId, action: 'portal.user_exported', entity: 'portal_user', entityId: id }));
+  c.header('content-disposition', `attachment; filename="curahold-personal-data-${id}.json"`);
+  return c.json(data);
+});
+
+// Erasure of a person at a customer (KVKK m.7, GDPR Art. 17): the portal
+// account is deleted, not only switched off; what they wrote stays with no
+// author. Owner-level and filtered by this company, like the user erase.
+adminRoutes.post('/portal-users/:id/erase', async (c) => {
+  requirePerm(c, 'privacy.manage');
+  await requireFresh(c);
+  const id = param(c, 'id');
+  const org = c.get('org');
+  const auth = c.get('auth');
+  const done = await c.get('deps').db.system(async (sq) => {
+    const ok = await erasePortalUser(sq, org.id, id);
+    if (ok) await audit(sq, { orgId: org.id, actorId: auth.userId, action: 'portal.user_erased', entity: 'portal_user', entityId: id });
+    return ok;
+  });
+  if (!done) fail('not_found');
+  return c.json({ ok: true });
+});
+
+// ------------------------------------------------------------- deleting the company
+
+const deletionOf = (r: any) => (r ? { id: r.id, requestedAt: iso(r.requested_at), purgeAfter: iso(r.purge_after), cancelledAt: iso(r.cancelled_at), purgedAt: iso(r.purged_at) } : null);
+
+/** The company's open deletion request (or null), and the grace period on this installation. */
+adminRoutes.get('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const rows = await run(c, (q) => q.query(`select * from company_deletions where cancelled_at is null and purged_at is null limit 1`));
+  return c.json({ deletion: deletionOf(rows[0]), graceDays: graceDaysOf(c.get('deps')) });
+});
+
+// An administrator asks for the whole company to be deleted (KVKK m.7, GDPR
+// Art. 17/28(3)(g), DPA §11). Irreversible once purged, so: the
+// administrator role (not just org.manage), a fresh sign-in, the company's
+// address typed back, and a grace period in which any administrator cancels.
+// The purge itself is the nightly job (lib/companyDeletion.ts).
+adminRoutes.post('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const auth = c.get('auth');
+  if (auth.roleKey !== 'admin' || c.get('previewBy')) fail('forbidden');
+  await requireFresh(c);
+  const org = c.get('org');
+  const input = await body(c, z.object({ confirm: z.string().trim().max(80) }));
+  if (input.confirm.toLowerCase() !== org.slug.toLowerCase()) fail('validation');
+  const days = graceDaysOf(c.get('deps'));
+  const row = await run(c, async (q) => {
+    const open = await q.query(`select 1 from company_deletions where cancelled_at is null and purged_at is null`);
+    if (open.length) fail('conflict');
+    const [r] = await q.query(
+      `insert into company_deletions (org_id, org_slug, org_name, requested_by, purge_after)
+       values ($1, $2, $3, $4, $5::timestamptz + make_interval(days => $6)) returning *`,
+      [org.id, org.slug, org.name, auth.userId, nowOf(c.get('deps')).toISOString(), days],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.deletion_requested', entity: 'org', entityId: org.id, meta: { purgeAfter: iso(r.purge_after) } });
+    return r;
+  });
+  return c.json({ deletion: deletionOf(row), graceDays: days });
+});
+
+/** Cancels the open deletion request (any administrator, during the grace period). */
+adminRoutes.delete('/company/deletion', async (c) => {
+  requirePerm(c, 'org.manage');
+  const auth = c.get('auth');
+  if (auth.roleKey !== 'admin' || c.get('previewBy')) fail('forbidden');
+  const org = c.get('org');
+  await run(c, async (q) => {
+    const done = await q.query(`update company_deletions set cancelled_at = now(), cancelled_by = $1 where cancelled_at is null and purged_at is null returning id`, [auth.userId]);
+    if (!done.length) fail('not_found');
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'org.deletion_cancelled', entity: 'org', entityId: org.id });
+  });
+  return c.json({ deletion: null, graceDays: graceDaysOf(c.get('deps')) });
 });
 
 // ------------------------------------------------------------- activity log

@@ -22,7 +22,7 @@ import { attachLive } from './live/node';
 import { assistantConfigFrom } from './assistant/cost';
 import { teamConfigFrom } from './team/config';
 
-export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant' }) {
+export async function startLocal(opts: { port: number; publicPort: number; serveStatic: boolean; quiet?: boolean; staffKey?: string; supportStaff?: string[]; locale?: 'en' | 'tr'; signupMode?: 'request' | 'instant'; fetch?: typeof fetch; connectors?: Config['connectors']; oauth?: Config['oauth'] }) {
   const pg = await createMemoryPg();
   const db = pgliteDb(pg);
   await migrate(db, loadMigrations());
@@ -49,11 +49,11 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     devOrgHeader: true,
     maxDevices: 2,
     sessionDays: 30,
-    oauth: {},
+    oauth: opts.oauth ?? {},
     signupEnabled: true,
     // The trial request form unless asked for the earlier instant sign-up (SIGNUP_MODE=instant).
     signupMode: opts.signupMode ?? (process.env.SIGNUP_MODE === 'instant' ? 'instant' : 'request'),
-    connectors: { demoCrm: true },
+    connectors: opts.connectors ?? { demoCrm: true },
     // Who may sign in to the support desk (desk.localhost); the code is shown on the screen here.
     support: { email: 'support@curahold.localhost', staff: opts.supportStaff ?? ['desk@curahold.localhost'] },
     // Customers' portal: demo.portal.localhost (another site than demo.localhost, as in production).
@@ -65,12 +65,12 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   };
   const storage = new MemoryStorage();
   const docsDir = join(import.meta.dirname, '..', '..', 'dist', 'web', 'docs');
-  const deps: Deps = { db, email, storage, config, assistant: { docs: async (lang) => JSON.parse(readFileSync(join(docsDir, lang, 'answers.json'), 'utf8')) } };
+  const deps: Deps = { db, email, storage, config, ...(opts.fetch ? { fetch: opts.fetch } : {}), assistant: { docs: async (lang) => JSON.parse(readFileSync(join(docsDir, lang, 'answers.json'), 'utf8')) } };
   const api = createApp(deps);
   const root = new Hono();
   root.route('/', api);
   const portal = new Hono();
-  portal.route('/', createPortalApp({ db, email, storage, config }));
+  portal.route('/', createPortalApp({ db, email, storage, config, ...(opts.fetch ? { fetch: opts.fetch } : {}) }));
   if (opts.serveStatic) {
     const dist = join(import.meta.dirname, '..', '..', 'dist', 'web');
     const index = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -101,7 +101,7 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   // Curahold's console's room is told by the app after a write (app.ts); a company's, by Postgres.
   deps.live = { platform: () => live.platform() };
   // Hourly jobs (digests, automations); on Workers this is the cron trigger.
-  const timer = setInterval(() => runScheduled({ db, email, storage, config }).catch(() => undefined), 3600_000);
+  const timer = setInterval(() => runScheduled({ db, email, storage, config, ...(opts.fetch ? { fetch: opts.fetch } : {}) }).catch(() => undefined), 3600_000);
   timer.unref();
   if (!opts.quiet) {
     console.log(`Curahold API on http://localhost:${opts.port}`);

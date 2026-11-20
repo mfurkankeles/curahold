@@ -16,6 +16,7 @@
 //   FILES_DIR       where attachments are kept (default ./data/files)
 //   PORT            default 8080
 //   …and any of the optional sign-in and connector settings from the README.
+import { clamavScanner } from './lib/clamav';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -154,6 +155,8 @@ export async function startSelfHost(env: Record<string, string | undefined> = pr
     fetch: outboundFetch(env),
     // The assistant reads the docs' sections the docs build wrote.
     assistant: { docs: async (lang) => JSON.parse(readFileSync(join(root, 'dist', 'web', 'docs', lang, 'answers.json'), 'utf8')) },
+    // Optional ClamAV (clamd) beside the app: uploads are held until it finds them clean (lib/uploadScan.ts).
+    ...(env.CLAMAV_HOST ? { scanner: clamavScanner({ host: env.CLAMAV_HOST, port: Number(env.CLAMAV_PORT) || 3310 }) } : {}),
   };
 
   const app = new Hono();

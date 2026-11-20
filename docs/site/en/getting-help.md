@@ -102,7 +102,7 @@ If your organisation needs to tell its own people about this in a privacy notice
 
 1. Open **Settings → Support access** and scroll to **AI assistant**.
    ![The AI assistant settings, ringed](img/ai-settings.webp)
-2. Tick **Answer with AI** to let CuraAI answer with AI, or untick it to answer with the docs search alone, at no cost. What CuraAI reads is never used to train AI models.
+2. Tick **Answer with AI** to let CuraAI answer with AI, or untick it to answer with the docs search alone, at no cost. What CuraAI reads is never used to train AI models. A new company starts with it **off**: nothing is sent to the AI provider until an administrator ticks it, and the card says so while it is off.
    ![The Answer with AI box, ringed](img/ai-switch.webp)
 
 On the same card:
@@ -112,6 +112,8 @@ On the same card:
 - **Draft a first reply on our help requests**: Curahold support sees a drafted first answer to your requests; you never see the draft, only support's real answer.
 
 If the card says AI answers are not set up on this installation, CuraAI uses the docs search; the person who runs your Curahold server adds the AI key.
+
+**Everyone is asked first.** The first time someone opens CuraAI where AI answers are on, CuraAI says what is sent to the AI provider, why, for how long, and links the privacy notice, with **Accept** and **Decline** (nothing is ticked for them). Until they accept, nothing they type leaves their device and the docs search answers; declining costs them nothing. They can withdraw at any time under CuraAI or in **Your settings → AI assistant consent**, and are asked again when the notice changes. The server refuses a question without a "yes", and each answer is in the activity log. The customer portal and the public docs ask the same way.
 
 ## The error log (administrators) {#errors}
 

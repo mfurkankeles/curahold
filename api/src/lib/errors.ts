@@ -18,6 +18,7 @@ export type ErrorCode =
   | 'bad_assignee'
   | 'email_taken'
   | 'role_in_use'
+  | 'consent_required'
   | 'last_admin'
   | 'file_too_large'
   | 'oauth_failed'
@@ -67,6 +68,8 @@ export type ErrorCode =
   | 'portal_weak_password'
   | 'portal_passkey_failed'
   | 'portal_file_type'
+  | 'portal_file_unsafe'
+  | 'file_quarantined'
   | 'portal_too_many_files'
   | 'portal_quota'
   | 'portal_no_method'
@@ -79,6 +82,9 @@ export type ErrorCode =
   | 'handover_confirmed'
   | 'billing_locked'
   | 'seat_cap_reached'
+  | 'plan_limit_seats'
+  | 'plan_limit_storage'
+  | 'plan_limit_connectors'
   | 'terms_required'
   | 'free_mail_note'
   | 'repeat_mismatch'
@@ -117,6 +123,8 @@ const STATUS: Record<ErrorCode, number> = {
   conflict: 409,
   email_taken: 409,
   role_in_use: 409,
+  // The assistant's consent notice has no "yes" for its current version (api/src/assistant/consent.ts).
+  consent_required: 403,
   last_admin: 409,
   oauth_failed: 400,
   oauth_not_configured: 400,
@@ -154,6 +162,8 @@ const STATUS: Record<ErrorCode, number> = {
   portal_weak_password: 400,
   portal_passkey_failed: 400,
   portal_file_type: 400,
+  portal_file_unsafe: 400,
+  file_quarantined: 423,
   portal_too_many_files: 400,
   portal_quota: 413,
   portal_no_method: 400,
@@ -180,6 +190,9 @@ const STATUS: Record<ErrorCode, number> = {
   // 402 Payment Required: a plan is needed for this.
   billing_locked: 402,
   seat_cap_reached: 409,
+  plan_limit_seats: 409,
+  plan_limit_storage: 413,
+  plan_limit_connectors: 409,
   terms_required: 403,
   free_mail_note: 400,
   repeat_mismatch: 422,

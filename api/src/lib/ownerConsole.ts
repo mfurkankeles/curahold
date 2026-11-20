@@ -3,7 +3,7 @@
 // Checklist. Read over the owner connection across every company; metadata and
 // counts only — never a customer's own records.
 import { CHECKLIST, nextTask, type ChecklistEntry, type ChecklistItem, type ChecklistTrigger } from '../../../shared/src/checklist';
-import { PLANS, PRICE_CURRENCY } from '../../../shared/src/billing';
+import { PRICE_CURRENCY, planOf } from '../../../shared/src/billing';
 import type { MetricPoint } from '../../../shared/src/metrics';
 import { weekOf } from '../../../shared/src/office';
 import {
@@ -76,7 +76,7 @@ async function mrrNow(q: Q): Promise<number> {
   );
   let m = 0;
   for (const o of rows) {
-    const p = o.plan === 'team' || o.plan === 'business' ? PLANS[o.plan] : null;
+    const p = planOf(o.plan);
     if (p) m += p.price[o.interval === 'year' ? 'year' : 'month'] * Math.max(0, num(o.seats));
   }
   return Math.round(m);

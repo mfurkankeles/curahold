@@ -4,13 +4,13 @@
 // provider's records as the product keeps them (orgs.billing, written by the
 // provider's webhooks) and the product's own tables. Nothing here writes.
 import type { Deps } from '../context';
-import { PLANS, PRICE_CURRENCY, type Interval, type PlanKey } from '../../../shared/src/billing';
+import { PLANS, PRICE_CURRENCY, isPlanKey, type Interval, type PlanKey } from '../../../shared/src/billing';
 import type { ConsoleToday } from '../../../shared/src/console';
 import type { MetricPoint } from '../../../shared/src/metrics';
 import { sha256Hex } from './crypto';
 
 const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
-const planKey = (v: unknown): PlanKey | null => (v === 'team' || v === 'business' ? v : null);
+const planKey = (v: unknown): PlanKey | null => (isPlanKey(v) ? v : null);
 const interval = (v: unknown): Interval => (v === 'year' ? 'year' : 'month');
 const iso = (v: unknown): string | null => {
   if (!v) return null;

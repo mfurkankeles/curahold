@@ -28,7 +28,7 @@ A trial starts from a request: **Try it free** on the website opens a short form
 | Customer portal | | ✓ |
 | Playbooks, and renewals that start by themselves | | ✓ |
 
-Prices are per **full seat** each month, in US dollars, and lower when paid for a year; taxes are added at checkout. **Viewer seats are free.**
+Prices are per **full seat** each month, in your region's currency where we have a local price (Indian rupees, Singapore dollars, Turkish lira) and in US dollars elsewhere, and lower when paid for a year. Tax (VAT, GST, SST, KDV) is added at checkout where it applies; Paddle collects it and passes it on. **Viewer seats are free.**
 
 ## Choosing a plan
 
@@ -44,11 +44,25 @@ The bill follows the people who have **joined** with a full seat: an invitation 
 
 Changing between Team and Business, or between monthly and yearly, is on the same page; the difference is billed (or credited) for the rest of the period.
 
+## Limits in each plan
+
+Each plan sets a few limits on what costs us money to run, so the price can stay low. Settings → **Billing** shows your plan's numbers and how much of each you use:
+
+| Limit | What happens when you reach it |
+| --- | --- |
+| Full seats | New people can still join as viewers (free); for more full seats, choose a larger plan. |
+| Connected tools (CRMs, spreadsheets, support and accounting tools) | Connecting another tool asks you to remove one or choose a larger plan. Signing in again to a tool you have is always possible. |
+| How often connected tools sync | Each plan syncs on its own schedule (hourly on Business); **Sync now** is always there. |
+| File space (per full seat, shared by the company) | New uploads stop until older files are deleted or you choose a larger plan. Nothing is deleted. |
+| CuraAI answers a month (per full seat, shared) | CuraAI answers from the help pages instead of the model until the next month. |
+
+During the trial everything is open; only CuraAI has a lower monthly allowance.
+
 ## Without a plan
 
 When the trial ends without a plan, or a cancelled plan runs out, nothing is deleted. Everyone can still **read and export** everything; nothing can be changed until an administrator chooses a plan, and then work carries on where it stopped.
 
-If a payment fails, everything keeps working while Paddle tries again; the line at the top asks an administrator to update the payment method.
+If a payment fails, everything keeps working while Paddle tries again, for up to 30 days from the first failed payment; the line at the top asks an administrator to update the payment method. After that the company becomes read-only, as without a plan, until a payment goes through.
 
 ## Your own server
 

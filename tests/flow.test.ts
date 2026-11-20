@@ -242,7 +242,8 @@ describe('drafts (assistant actions)', () => {
     expect(d).toMatchObject({ ai: true, text: 'Dear team, it is live.' });
     expect(provider.calls).toHaveLength(1);
     // Over the company's cap: the template again, and the model is not called.
-    await q(`update orgs set settings = settings || '{"assistant": {"monthlyCapUsd": 0}}'::jsonb where id = $1`, [env.a.orgId]);
+    // (enabled kept: the assistant is off unless a company turned it on, migration 0240.)
+    await q(`update orgs set settings = settings || '{"assistant": {"enabled": true, "monthlyCapUsd": 0}}'::jsonb where id = $1`, [env.a.orgId]);
     const capped = (await mert.post('/api/assist/draft', { kind: 'shipped_message', linkId: link.id })).json.draft;
     expect(capped).toMatchObject({ ai: false, why: 'cap' });
     expect(provider.calls).toHaveLength(1);

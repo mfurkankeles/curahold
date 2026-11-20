@@ -126,6 +126,8 @@ export interface PortalOrg {
   brand: PortalBrand;
   /** Cloudflare Turnstile's public key for the sign-in forms, when it is on (api/src/lib/humanCheck.ts). */
   turnstile?: string | null;
+  /** Where Curahold's docs live (the privacy notice the AI consent notice links to), ending in a slash. */
+  docsBase?: string;
 }
 
 // ------------------------------------------------------------ the company's brand

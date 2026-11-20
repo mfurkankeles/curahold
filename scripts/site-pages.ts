@@ -199,6 +199,7 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     [s.footer.links.dpa, urls.legal('dpa')],
     [s.footer.links.subprocessors, urls.legal('subprocessors')],
     [s.footer.links.cookies, urls.legal('cookies')],
+    [s.footer.links.accessibility, urls.legal('accessibility')],
     [s.footer.links.terms, urls.legal('terms')],
   ];
   out.push({

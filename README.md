@@ -430,23 +430,27 @@ Paddle sells Curahold as the merchant of record (it charges, handles sales
 tax and VAT, and sends invoices). Start in Paddle's sandbox, then repeat with
 live keys.
 
-1. In Paddle, make two products, **Team** and **Business**, each with a
-   monthly and a yearly price **per seat** (quantity-based). The amounts are
-   in `shared/src/billing.ts` (`PLANS`); keep the two in step.
+1. In Paddle, make one product per plan in `shared/src/plans.json` (today
+   **Team** and **Business**), each with a monthly and a yearly price **per seat**
+   (quantity-based). The amounts, the regional prices (INR, SGD, the Malaysian
+   USD price) and the caps all live in that one file; mirror its prices in Paddle,
+   with a country override per regional price. Changing the price list is a data
+   change, not a code change ([ADR 0019](docs/ADR/0019-one-billing-path.md)).
 2. Approve the website domain (`curahold.com`); checkout opens on company
    addresses such as `acme.curahold.com`.
-3. A notification destination for `https://app.curahold.com/api/billing/webhook`
-   with the `subscription.*` events; its secret key is `PADDLE_WEBHOOK_SECRET`.
-   (A second, table-backed path listens at `/api/inbound/billing/paddle`; which
-   one is the system of record is an open decision, see
-   [ADR 0019](docs/ADR/0019-one-billing-path-proposed.md). Settle it before live keys.)
+3. A notification destination for `https://app.curahold.com/api/inbound/billing/paddle`
+   with the `subscription.*` and `transaction.*` events; its secret key is
+   `PADDLE_WEBHOOK_SECRET`. (The older address `/api/billing/webhook` runs the same
+   handler, so a destination set up earlier keeps working.)
 4. An API key with read and write access to subscriptions and customer portal
    sessions (`PADDLE_API_KEY`), and a client-side token (`PADDLE_CLIENT_TOKEN`).
 5. `PADDLE_ENV` (`sandbox` or `live`) and `PADDLE_PRICES`, for example
    `{"team":{"month":"pri_…","year":"pri_…"},"business":{"month":"pri_…","year":"pri_…"}}`.
-6. Put the secrets with `wrangler secret put` and deploy. New companies get a
-   three-month trial (`TRIAL_MONTHS` in `shared/src/billing.ts`); seats follow the
-   people who joined (checked every hour).
+6. In Paddle's payment recovery settings, keep retrying a failed renewal for the
+   catalogue's `dunning.graceDays` (30) before cancelling; Curahold stays open that long.
+7. Put the secrets with `wrangler secret put` and deploy. New companies get the
+   three-month trial when their request is approved (`trial` in
+   `shared/src/plans.json`); seats follow the people who joined (checked every hour).
 
 ### Chat apps (each optional)
 
@@ -516,7 +520,7 @@ help page *Running Curahold on your own server* says the same for customers.
 
 Cloudflare (hosting, files, the optional Turnstile check), Supabase (database, EU region), Google Workspace
 (product email through its SMTP relay) or Resend (email, if chosen instead), Anthropic (the assistant's and the AI
-team's model, only when a key is set; see `docs/legal/ai-assistant-privacy-notes.md`),
+team's model, only when a key is set; see `docs/compliance/ai-assistant-privacy-notes.md`),
 Google and Microsoft (only when a company enables their sign-in or connects
 Sheets / Excel). A company's own CRM (Salesforce, HubSpot, Microsoft,
 Pipedrive, Zoho) is its processor, not ours: Curahold reads and writes it on

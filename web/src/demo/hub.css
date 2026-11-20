@@ -72,5 +72,5 @@
   border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 500 13.5px/1.2 var(--text);
 }
 .hub-ichip:hover { border-color: var(--iris); }
-.hub-ichip[aria-pressed='true'] { background: var(--iris-wash); border-color: var(--iris); color: var(--iris-ink); font-weight: 650; }
+.hub-ichip[aria-pressed='true'], .hub-ichip[aria-checked='true'] { background: var(--iris-wash); border-color: var(--iris); color: var(--iris-ink); font-weight: 650; }
 .hub-ichip:focus-visible { outline: 2px solid var(--iris); outline-offset: 2px; }

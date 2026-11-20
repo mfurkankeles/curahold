@@ -30,6 +30,7 @@ import { LOCALE_INFO, LOCALES, bcp47Of, intlTag, translate, type Locale, type Me
 // Search engines may index the docs; AI crawlers and text-and-data mining may not (a copy inside the demo: nobody).
 import { CLOSED_ROBOTS, TDM_META } from '../shared/src/compliance/crawlers';
 import { legalNotice } from '../shared/src/compliance/notice';
+import { ASSIST_CONSENT_VERSION } from '../shared/src/assistConsent';
 
 /** The copyright line and the copyright/trade-secret line, in one language (shared/src/compliance/notice.ts). */
 const noticeOf = (lang: Locale) => legalNotice((k, v) => translate(lang, k, v));
@@ -121,6 +122,13 @@ function uiOf(lang: Lang) {
     askWords: Object.fromEntries(
       ['open', 'title', 'close', 'hello', 'hi', 'thanks', 'empty', 'placeholder', 'from', 'more', 'also', 'unsure', 'none', 'support', 'helped', 'yes', 'no', 'sorry', 'loading', 'failed', 'you', 'ai'].map((k) => [k, say(`ask.${k}`)]),
     ),
+    /** The AI assistant's consent notice, shown before a question goes to the server (assistConsent.*, shared/src/assistConsent.ts). */
+    askConsent: {
+      version: ASSIST_CONSENT_VERSION,
+      ...Object.fromEntries(
+        ['title', 'what', 'why', 'keep', 'withdraw', 'privacy', 'accept', 'decline', 'close', 'withdrawAction', 'withdrawn', 'declined'].map((k) => [k, translate(lang, `assistConsent.${k}` as MessageKey)]),
+      ),
+    },
     /** The question back and its choices for a question that means several things: the app's own words (assist.*). */
     askClarify: Object.fromEntries(CLARIFY.map((c) => [c.id, translate(lang, c.question as MessageKey)])),
     askOptions: Object.fromEntries(CLARIFY.flatMap((c) => c.options.map((o) => [o.id, translate(lang, o.label as MessageKey)]))),
@@ -246,7 +254,8 @@ function parse(lang: Lang, file: string, from: Lang = lang): Page {
       table(token: Tokens.Table) {
         const head = token.header.map((c) => `<th>${this.parser.parseInline(c.tokens)}</th>`).join('');
         const body = token.rows.map((r) => `<tr>${r.map((c) => `<td>${this.parser.parseInline(c.tokens)}</td>`).join('')}</tr>`).join('');
-        return `<div class="table"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>\n`;
+        // A wide table scrolls sideways inside its frame: the frame takes focus so the arrow keys can scroll it (WCAG 2.1.1).
+        return `<div class="table" tabindex="0"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>\n`;
       },
     },
   });
@@ -341,7 +350,7 @@ ${RELATIVE ? '' : searchTags(lang, page, path, ui.site, ui.sections)}
   <main id="main" class="main">${body}</main>
   ${page && page.toc.length > 1 ? `<aside class="toc" aria-label="${ui.onPage}"><div class="toc__label">${ui.onPage}</div>${page.toc.map((h) => `<a href="#${h.id}">${esc(h.text)}</a>`).join('')}</aside>` : '<aside class="toc"></aside>'}
 </div>
-<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]], clarify: ui.askClarify, options: ui.askOptions } }).replace(/</g, '\\u003c')}</script>
+<script type="application/json" id="docs-cfg">${JSON.stringify({ lang, none: ui.none, copied: ui.copied, copy: ui.copy, base: '/docs/', index: '', words: { ...ui.askWords, examples: [ui.questions[1], ui.questions[3], ui.questions[2]], clarify: ui.askClarify, options: ui.askOptions, consent: ui.askConsent } }).replace(/</g, '\\u003c')}</script>
 <script src="/docs/assets/docs.js" defer></script>
 <script src="/docs/assets/ask.js" defer></script>
 </body>
@@ -413,7 +422,7 @@ function build() {
     const notes = by('release-notes');
     const latest = notes?.toc[0];
     const news = notes && latest ? `<p class="news"><strong>${ui.whatsNew}:</strong> <a href="/docs/${lang}/release-notes/#${latest.id}">${esc(latest.text)}</a> · <a href="/docs/${lang}/release-notes/">${ui.allNotes}</a></p>` : '';
-    const footLinks = ['security-and-privacy', 'legal-privacy', 'legal-terms', 'legal-kvkk'].map(link).filter(Boolean).join(' · ');
+    const footLinks = ['security-and-privacy', 'legal-privacy', 'legal-terms', 'legal-kvkk', 'legal-accessibility'].map(link).filter(Boolean).join(' · ');
     const home = `<div class="home">
 <section class="hero">
   <h1>${ui.hero}</h1>

@@ -467,7 +467,8 @@ function conceptDoc(locale: SiteLocale, which: 'a' | 'c'): string {
     locale,
     rel,
     head,
-    header: chromeHeader(locale, path, which),
+    // A way past the header for the keyboard (WCAG 2.4.1); chrome.css shows it only while it has focus.
+    header: `<a class="skip" href="#${which === 'a' ? 'film' : 'orbit'}">${esc(siteCopy(locale).nav.skip)}</a>\n${chromeHeader(locale, path, which)}`,
     why: whyHtml(locale, { headingLevel: 2, urls: u, compact: true }),
     footer: footerHtml(locale),
     tail: `${signinDialog(locale)}\n${chromeTail(locale, rel, which)}`,
@@ -537,6 +538,7 @@ function footerHtml(locale: SiteLocale): string {
           ${li(u.legal('dpa'), c.footer.links.dpa)}
           ${li(u.legal('subprocessors'), c.footer.links.subprocessors)}
           ${li(u.legal('cookies'), c.footer.links.cookies)}
+          ${li(u.legal('accessibility'), c.footer.links.accessibility)}
         </ul>
       </div>
     </div>

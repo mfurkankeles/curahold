@@ -26,7 +26,7 @@ Bağlantı yokken okuyabilmen için uygulama, son gördüğün listelerin bir ko
 
 ## Aktivite kaydı
 
-Girişler, ikinci adımlar, kişi ve rol değişiklikleri, bağlantılar, API anahtarları, webhook'lar ve kişisel veri işlemleri aktivite kaydına yazılır. Ayarlar → Aktivite kaydı'ndan görülür. Kayda yalnızca eklenir; uygulamanın kullandığı veritabanı rolüyle bile değiştirilemez ya da silinemez. **Günlüğü dışa aktar** kaydı sürekli bir SHA-256 parmak iziyle indirir; son parmak izi de kayda yazılır, böylece bir kopya sonradan doğrulanabilir.
+Girişler, ikinci adımlar, kişi ve rol değişiklikleri, bağlantılar, API anahtarları, webhook'lar ve kişisel veri işlemleri aktivite kaydına yazılır. Ayarlar → Aktivite kaydı'ndan görülür. Bir kayıt asla değiştirilmez ve uygulamanın kullandığı veritabanı rolü bile kayıt silemez; 12 ay sonra gece temizliği kaydı kaldırır (veritabanı son 90 güne ait hiçbir kaydın silinmesine izin vermez). **Günlüğü dışa aktar** kaydı sürekli bir SHA-256 parmak iziyle indirir; son parmak izi de kayda yazılır, böylece bir kopya sonradan doğrulanabilir.
 
 ## Müşteri portalı
 
@@ -42,6 +42,12 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 
 - **Verilerini indir:** o kişiyle ilgili kayıtlar tek dosyada.
 - **Kişisel verilerini sil:** ad ve e-posta kaldırılır; yaptığı işler anonim olarak kalır. Müşterilerini ve açık görevlerini önce başka birine devredebilirsin.
+- **Silme**, kişinin CuraAI'ye sorduklarını, bildirimlerini, sohbet bağlantılarını, geçiş anahtarlarını ve ikinci adımlarını, oturum kayıtlarını ve yapay zekâ ekibinin notlarında adresinin ya da tam adının geçtiği yerleri de kaldırır. Yasa gereği kalanlar: faturalar, şirket adına koşulları kimin kabul ettiğinin kaydı ve adres olmadan (yalnızca parmak iziyle) rıza kayıtları.
+- **Müşterilerinizdeki kişiler** (Ayarlar → Müşteri portalı → Giriş yapabilen kişiler): gizliliği yöneten bir yönetici **Verileri indir** ya da **Kişisel verileri sil** diyebilir. Silme, portal hesabının kendisini siler; yazdıkları adı olmadan kalır.
+
+### Şirketin tamamını silmek
+
+Bir yönetici **Ayarlar → Şirket → Şirketi sil**'de şirketin adresini yazarak isteyebilir. 30 gün boyunca hiçbir şey silinmez: şirket her zamanki gibi çalışır, dışa aktarma yapılabilir ve herhangi bir yönetici iptal edebilir. Sonra dosyalar ve bağlantı anahtarları dahil her şey kalıcı olarak silinir ve neyin kaldırıldığını sayan bir silme belgesi saklanır (ad ya da adres içermez). Faturalar vergi mevzuatı gereği kalır. Yedekler barındırma sağlayıcısının takvimine göre silinir.
 
 ## Saklama süreleri
 
@@ -55,6 +61,10 @@ Ayarlar → Kişiler'de bir kişinin menüsünden:
 | Webhook teslim kayıtları | 7 gün |
 | Hata kayıtları (ne, nerede bozuldu — istek içeriği asla) | 30 gün |
 | İptal edilmiş API anahtarları | 30 gün |
+| Aktivite kaydı | 12 ay |
+| Yardım talepleri, mesajları ve dosyaları | Son değişiklikten 24 ay sonra |
+| CuraAI'ye sorulanlar | Şirketin seçtiği süre (değiştirilmediyse 30 gün) |
+| Silinen bir şirket | Talepten 30 gün sonra silinir |
 
 ## Saklanan sırlar
 

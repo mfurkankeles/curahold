@@ -45,7 +45,7 @@ rules) on the zone, because they stop a flood before it costs Worker time:
 | Sign-in links and codes | `POST` on `/api/auth/start`, `/api/auth/verify`, `/api/auth/device` | 10 per minute per IP | Block 10 min |
 | Sign-up | `POST /api/signup*` | 5 per hour per IP | Block 1 h |
 | Support desk sign-in | `desk.<domain>` `/api/desk/sign-in*` | 10 per 10 min per IP | Block 1 h |
-| Paddle webhook | `POST /api/billing/webhook` | allow only Paddle's published IPs; 60 per minute otherwise | Block |
+| Paddle webhook | `POST /api/inbound/billing/paddle` (and the older alias `POST /api/billing/webhook`) | allow only Paddle's published IPs; 60 per minute otherwise | Block |
 | General API | `/api/*` | 600 per minute per IP (per `x-curahold-device` where possible) | Managed challenge |
 | Desk mail door | `POST /api/desk/mail` | allow only the mail sender's IPs | Block |
 

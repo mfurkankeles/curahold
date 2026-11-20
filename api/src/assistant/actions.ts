@@ -9,7 +9,7 @@
 import type { DraftKind, DraftResult } from '../../../shared/src/handoff';
 import type { Locale } from '../../../shared/src/i18n';
 import type { Deps } from '../context';
-import { settingsOf } from './core';
+import { overCap, settingsOf } from './core';
 import { costMicros } from './cost';
 import type { LlmProvider, LlmTool } from './provider';
 import { dbStore } from './store';
@@ -57,9 +57,9 @@ export interface DraftEnv {
 export async function modelDraft(env: DraftEnv, kind: DraftKind, locale: Locale, facts: Record<string, unknown>): Promise<{ out: Omit<DraftResult, 'ai' | 'why'> | null; why: DraftResult['why'] }> {
   const settings = settingsOf(env.orgSettings?.assistant, env.config);
   if (!env.provider || !settings.enabled) return { out: null, why: 'off' };
-  const store = dbStore(env.deps.db, { orgId: env.orgId, userId: env.userId, surface: 'app', retentionDays: 0 });
+  const store = dbStore(env.deps.db, { orgId: env.orgId, userId: env.userId, surface: 'app', retentionDays: 0, billingOn: !!env.deps.config.billing });
   const used = await store.usage().catch(() => ({ companyMicros: Infinity, globalMicros: Infinity }));
-  if (used.globalMicros >= env.config.globalMonthlyUsd * 1e6 || used.companyMicros >= settings.monthlyCapUsd * 1e6) return { out: null, why: 'cap' };
+  if (overCap(used, env.config.globalMonthlyUsd, settings.monthlyCapUsd)) return { out: null, why: 'cap' };
   try {
     const res = await env.provider.complete({
       system: [{ text: RULES, cache: true }, { text: BRIEF[kind] }],
