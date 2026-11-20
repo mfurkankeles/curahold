@@ -96,7 +96,6 @@ export function noticeTable(kind: 'privacy' | 'kvkk', lang: Locale): string {
 /** The table in a language past English and Turkish; stops with the file to fix when a row or a cell is missing. */
 function translatedTable(kind: 'privacy' | 'kvkk', lang: NoticeLocale, activities: Activity[]): string {
   const t = NOTICE_ROWS[lang];
-  if (!t) throw new Error(`shared/src/compliance/noticeRows/${lang}.ts: missing`);
   const file = `shared/src/compliance/noticeRows/${lang}.ts`;
   const rows = activities.map((a) => {
     const r = t.rows[a.id];
