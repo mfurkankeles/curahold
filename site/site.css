@@ -505,7 +505,8 @@ html:not(.js) .tour__bar { display: none; }
 .story__track { position: relative; margin-top: 40px; }
 .story__steps { list-style: none; margin: 0; padding: 0; }
 /* Each step holds the stage for about half a screen of scrolling: long enough to read, short enough to keep the page brisk. */
-.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 40vh; padding-block: 24px; }
+/* 35vh a step on a wide screen: enough scroll for each scene to play, and the landing page stays under 8,000 px at 1440. */
+.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 35vh; padding-block: 24px; }
 .story__n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(140, 125, 255, .45); color: var(--iris-ink); font: 700 13px/1 var(--text); font-variant-numeric: tabular-nums; transition: background-color .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease); }
 .story__step h3 { font-size: clamp(23px, 2.3vw, 30px); line-height: 1.15; letter-spacing: -0.02em; max-width: 22ch; }
 .story__step p { margin: 0; color: var(--ink-2); font-size: 17px; line-height: 1.6; max-width: 44ch; text-wrap: pretty; }
