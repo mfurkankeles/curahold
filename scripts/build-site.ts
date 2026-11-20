@@ -1338,7 +1338,8 @@ const cssSlot = (kind: CssKind, rel: string) => `<!--css:${kind}:${rel}-->`;
  */
 const fontPreload = (locale: SiteLocale, rel: string) =>
   locale === 'en' || locale === 'tr'
-    ? ['bricolage-grotesque-latin-wght-normal', 'figtree-latin-wght-normal'].map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')
+    ? // Turkish body text needs ş, ğ and İ from the latin-ext file too; found only through the CSS, it would arrive late.
+      ['bricolage-grotesque-latin-wght-normal', 'figtree-latin-wght-normal', ...(locale === 'tr' ? ['figtree-latin-ext-wght-normal'] : [])].map((f) => `<link rel="preload" href="${rel}assets/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')
     : '';
 
 /** Pages waiting for their styles: written once the styles of their kind are cut. */
