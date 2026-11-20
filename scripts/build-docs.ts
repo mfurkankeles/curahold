@@ -11,9 +11,10 @@
 // DOCS_APP_HREF says where "Go to the app" leads from the docs folder then.
 //
 // --preview (or DOCS_PREVIEW=1; implies --relative) is the small copy for a
-// host that takes a few hundred files: all nine languages, but no .md twin
-// per page, a page a language does not have yet links to the English page
-// instead of a copy of it, and the languages other than English show the
+// host that takes a few hundred files (512): every language, but no .md twin
+// per page; past English a language keeps its user guide (Turkish its legal
+// pages too) and every other page links to the English one instead of a copy
+// of it; and the languages other than English show the
 // English pictures (DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish ones too). The production build is unchanged.
 //
 // DOCS_DATA_ONLY=1 keeps only what the try-it demo reads at run time when its
@@ -61,7 +62,7 @@ const BORROWED = new Set<string>();
 const pageLang = (lang: string, slug: string) => (PREVIEW && BORROWED.has(`${lang}/${slug}`) ? 'en' : lang);
 /**
  * Preview only: the languages that keep their own pictures (the others show the English ones).
- * English alone by default, so all nine languages fit a 512-file host with the guides' pictures;
+ * English alone by default, so every language fits a 512-file host with the guides' pictures;
  * DOCS_PREVIEW_PICTURES=en,tr keeps the Turkish pictures too (about 60 files more).
  */
 const PREVIEW_PICTURES = (process.env.DOCS_PREVIEW_PICTURES ?? 'en').split(',').map((x) => x.trim()).filter(Boolean);
@@ -333,7 +334,10 @@ function build() {
     const needed = english.filter((f) => WHOLE.includes(lang) || parse('en', f).section === 'help');
     const missing = needed.filter((f) => !own.has(f));
     if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
-    all[lang] = english.map((f) => parse(lang, f, own.has(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
+    // The preview keeps to a small host's file budget: past English, a language carries its user guide
+    // (Turkish its legal pages too) and links to the English page for the rest. The production build keeps every page.
+    const kept = (f: string) => !PREVIEW || lang === 'en' || ['help', ...(lang === 'tr' ? ['legal'] : [])].includes(parse('en', f).section);
+    all[lang] = english.map((f) => parse(lang, f, own.has(f) && kept(f) ? lang : 'en')).sort((a, b) => SECTIONS.indexOf(a.section) - SECTIONS.indexOf(b.section) || a.order - b.order);
     for (const p of all[lang]) if (p.borrowed) BORROWED.add(`${lang}/${p.slug}`);
   }
 

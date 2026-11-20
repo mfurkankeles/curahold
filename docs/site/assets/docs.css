@@ -261,3 +261,6 @@ h1, h2, h3 { font-family: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, syste
 /* The legal notice: copyright and the copyright/trade-secret line, footer-size (shared/src/compliance/notice.ts). */
 .legal-notice { margin: 40px 0 0; max-width: 72ch; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
 .foot .legal-notice { flex-basis: 100%; margin: 0; }
+
+/* Devanagari: no tightened tracking, room for the marks above and below. */
+:lang(hi) :is(.doc h1, .doc h2, .doc h3, .hero h1) { letter-spacing: 0; line-height: 1.35; }

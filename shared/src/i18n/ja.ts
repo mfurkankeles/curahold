@@ -5191,7 +5191,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': 'ツアーを始める',
   'demo.hub.card.meta': '{m} 分 · {s} ステップ',
   'demo.hub.band.title': 'もう十分ですか？ 自社の顧客で試してみましょう。',
-  "demo.hub.band.text": "チームのワークスペースをお申し込みください。3 か月無料、カード不要、9 言語に対応しています。",
+  "demo.hub.band.text": "チームのワークスペースをお申し込みください。3 か月無料、カード不要、11 言語に対応しています。",
   'demo.hub.band.primary': '無料で始める',
   'demo.hub.band.secondary': 'ドキュメントを読む',
   'demo.hub.foot.home': 'Curahold ホーム',

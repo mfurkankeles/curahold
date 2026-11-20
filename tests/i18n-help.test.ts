@@ -1,4 +1,4 @@
-// The help centre speaks all nine languages: help links, help search and
+// The help centre speaks every language: help links, help search and
 // CuraAI's docs answers use the person's own language, never English by
 // fallback. A page a language has no translation of (developer pages, legal
 // texts outside English and Turkish) is built there as the English page with
@@ -21,7 +21,7 @@ const sectionOf = (file: string) => /^section:\s*(\S+)/m.exec(readFileSync(join(
 const LINKED = ['setup-health', 'legal-terms', 'legal-privacy', 'legal-dpa', 'legal-kvkk', 'legal-cookies', 'legal-subprocessors', 'getting-started'];
 
 describe('help languages', () => {
-  it('are all nine languages of the product', () => {
+  it('are every language of the product', () => {
     expect([...HELP_LANGUAGES].sort()).toEqual([...LOCALES].sort());
     for (const l of LOCALES) expect(helpLanguageOf(l), l).toBe(l);
   });

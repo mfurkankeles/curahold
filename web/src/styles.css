@@ -2989,3 +2989,6 @@ button.cal__date:hover { color: var(--brand-ink); background: var(--brand-wash);
 .u-width-38pc { width: 38% !important; }
 .u-width-64pc { width: 64% !important; }
 .u-width-auto { width: auto !important; }
+
+/* Devanagari: letters joined at the top bar and marks above and below — no tightened tracking, a little more line height. */
+:lang(hi) :is(h1, h2, h3, .topbar__title, .auth__title, .auth__org, .wizard__title, .title-input) { letter-spacing: 0; line-height: 1.35; }

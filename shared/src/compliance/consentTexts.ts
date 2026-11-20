@@ -24,7 +24,7 @@ import type { Locale } from '../i18n/core';
 
 export const CONSENT_TEXT_VERSION = '0.1-draft';
 
-export type RuleSet = 'TR' | 'EU' | 'ROW' | 'AE' | 'SA' | 'EG' | 'QA' | 'IL' | 'JP' | 'KR' | 'CN' | 'TW' | 'HK' | 'SG';
+export type RuleSet = 'TR' | 'EU' | 'ROW' | 'AE' | 'SA' | 'EG' | 'QA' | 'IL' | 'JP' | 'KR' | 'CN' | 'TW' | 'HK' | 'SG' | 'IN' | 'MY';
 export type BlockKind = 'notice' | 'consent' | 'transfer' | 'marketing' | 'capacity' | 'note';
 
 export interface TextBlock {
@@ -41,6 +41,8 @@ export interface TextBlock {
   basis: string;
   /** Shown only when this switch is on. */
   when?: keyof ConsentFlags;
+  /** Always shown in the master language and English together, whatever the interface language (Malaysia, PDPA s. 7(3)). */
+  both?: boolean;
 }
 
 /**
@@ -61,6 +63,8 @@ export interface ConsentFlags {
   trStandardContractsNotified: boolean;
   /** Japan: optional cross-border consent box (lawyer's switch). */
   jpTransferConsent: boolean;
+  /** Malaysia: consent box to handle the request (PDPA s. 6(1)(a); s. 6(2)(a) may make it unnecessary — lawyer's switch, on by default). */
+  myConsentBox: boolean;
 }
 
 export const DEFAULT_FLAGS: ConsentFlags = {
@@ -71,10 +75,11 @@ export const DEFAULT_FLAGS: ConsentFlags = {
   trTransferConsent: false,
   trStandardContractsNotified: false,
   jpTransferConsent: false,
+  myConsentBox: true,
 };
 
 const EEA_UK = 'AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH'.split(' ');
-const DIRECT: Record<string, RuleSet> = { TR: 'TR', AE: 'AE', SA: 'SA', EG: 'EG', QA: 'QA', IL: 'IL', JP: 'JP', KR: 'KR', CN: 'CN', TW: 'TW', HK: 'HK', SG: 'SG' };
+const DIRECT: Record<string, RuleSet> = { TR: 'TR', AE: 'AE', SA: 'SA', EG: 'EG', QA: 'QA', IL: 'IL', JP: 'JP', KR: 'KR', CN: 'CN', TW: 'TW', HK: 'HK', SG: 'SG', IN: 'IN', MY: 'MY' };
 
 export function ruleSetOf(country: string | null | undefined): RuleSet {
   const c = (country ?? '').toUpperCase();
@@ -608,9 +613,10 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         required: false,
         box: false,
         master: 'en',
-        basis: 'Singapore PDPA ss. 13, 14, 20, 26 (business contact information mostly excluded, s. 4(5); treated as in scope)',
+        basis: 'Singapore PDPA ss. 13–15 (consent; deemed consent by voluntarily giving the details for this purpose), s. 16 (withdrawal), s. 20 (notification), ss. 21–22 (access, correction), s. 26 (transfer limitation). Business contact information is mostly excluded (s. 4(5)); treated as in scope. (taslak — avukat onayı gerekli)',
         texts: {
-          en: '{company} collects and uses the details you enter to assess your trial request, contact you about it and set up your trial. Your data may be transferred to and stored with our service providers in {storage_countries}, under protection comparable to the Personal Data Protection Act. Data protection contact: {contact}. Details are in the Privacy notice.',
+          en: '{company} collects and uses the details you enter to assess your trial request, contact you about it and set up your trial. Your data may be transferred to and stored with our service providers in {storage_countries}, under protection comparable to the Personal Data Protection Act. You can ask to see or correct your data, or withdraw your consent, by writing to our data protection contact: {contact}. Details are in the Privacy notice.',
+          ms: '{company} mengumpul dan menggunakan butiran yang anda masukkan untuk menilai permintaan percubaan anda, menghubungi anda mengenainya dan menyediakan percubaan anda. Data anda mungkin dipindahkan kepada dan disimpan oleh pembekal perkhidmatan kami di {storage_countries}, dengan perlindungan yang setanding dengan Personal Data Protection Act. Anda boleh meminta untuk melihat atau membetulkan data anda, atau menarik balik persetujuan anda, dengan menulis kepada pegawai perlindungan data kami: {contact}. Butirannya ada dalam Notis privasi.',
         },
       },
     ],
@@ -621,8 +627,99 @@ export const RULE_SETS: Record<RuleSet, { blocks: TextBlock[]; marketing: TextBl
         required: false,
         box: true,
         master: 'en',
-        basis: 'E-mail only (no calls or texts: keeps the Do-Not-Call rules out); Spam Control Act',
-        texts: { en: 'Yes, send me product news and offers from Curahold by e-mail. I can unsubscribe at any time.' },
+        basis: 'E-mail only (no calls or texts: keeps the Do-Not-Call rules out); Spam Control Act. (taslak — avukat onayı gerekli)',
+        texts: {
+          en: 'Yes, send me product news and offers from Curahold by e-mail. I can unsubscribe at any time.',
+          ms: 'Ya, hantarkan berita dan tawaran produk Curahold kepada saya melalui e-mel. Saya boleh berhenti melanggan pada bila-bila masa.',
+        },
+      },
+    ],
+  },
+  IN: {
+    blocks: [
+      {
+        id: 'IN.N',
+        kind: 'notice',
+        required: false,
+        box: false,
+        master: 'hi',
+        basis: 'DPDP Act 2023 s. 5 (notice: itemised data and purpose, how to withdraw consent and use the rights of ss. 11–14 and the grievance route of s. 13, how to complain to the Data Protection Board) + DPDP Rules 2025 r. 3 (stand-alone, plain, a link to withdraw and to use the rights). Notice in English or an Eighth-Schedule language: s. 5(3). Transfer abroad allowed unless the country is restricted: s. 16. Grievances answered within ninety days at most (Rules 2025). Most duties apply from 13 May 2027. (taslak — avukat onayı gerekli)',
+        texts: {
+          hi: 'व्यक्तिगत डेटा की सूचना\n· डेटा फ़िड्यूशरी: {company} ({company_country})\n· कौन-सा डेटा: नाम, काम का ईमेल, पद, कंपनी, देश और इस फ़ॉर्म में आपकी दर्ज की गई बाकी जानकारी\n· उद्देश्य: आपके मुफ़्त ट्रायल अनुरोध की समीक्षा करना, उसके बारे में आपसे संपर्क करना और आपका ट्रायल अकाउंट खोलना\n· यह डेटा हमारे होस्टिंग और ईमेल सेवा प्रदाताओं के पास {storage_countries} में रखा जा सकता है।\n· आप कभी भी अपनी सहमति वापस ले सकते हैं और अपने डेटा की जानकारी, सुधार, पूरा करने या मिटाने का अनुरोध कर सकते हैं — {contact} पर लिखें, या हमारे हर ईमेल में दिए लिंक का इस्तेमाल करें। सहमति वापस लेने से उससे पहले की प्रोसेसिंग पर असर नहीं पड़ता।\n· शिकायत: पहले {contact} पर हमारे शिकायत अधिकारी को लिखें। अगर आप जवाब से संतुष्ट नहीं हैं, तो आप भारत के डेटा प्रोटेक्शन बोर्ड में शिकायत कर सकते हैं।\nविवरण प्राइवेसी नोटिस में है।',
+          en: 'Notice about your personal data\n· Data Fiduciary: {company} ({company_country})\n· What data: name, work e-mail, job title, company, country and the other details you enter in this form\n· Purpose: reviewing your free-trial request, contacting you about it and opening your trial account\n· This data may be kept with our hosting and e-mail service providers in {storage_countries}.\n· You can withdraw your consent at any time and ask for a summary, correction, completion or erasure of your data — write to {contact}, or use the link in each of our e-mails. Withdrawing does not affect processing before it.\n· Grievances: first write to our grievance officer at {contact}. If you are not satisfied with the answer, you can complain to the Data Protection Board of India.\nDetails are in the Privacy notice.',
+        },
+      },
+      {
+        id: 'IN.C',
+        kind: 'consent',
+        required: true,
+        box: true,
+        master: 'hi',
+        basis: 'DPDP Act 2023 s. 6(1): free, specific, informed, unconditional and unambiguous, by a clear affirmative action, limited to the data needed for this purpose; never bundled with marketing (separate box IN.M). s. 7(a) (voluntarily given for a specified purpose) may make the box unnecessary — lawyer to decide. (taslak — avukat onayı gerekli)',
+        texts: {
+          hi: 'मैंने ऊपर दी गई सूचना पढ़ ली है और {company} को मेरे ट्रायल अनुरोध को संभालने के लिए ऊपर बताया गया व्यक्तिगत डेटा, सिर्फ़ उन्हीं उद्देश्यों के लिए, प्रोसेस करने की सहमति देता/देती हूं।',
+          en: 'I have read the notice above and consent to {company} processing the personal data listed there, for those purposes only, to handle my trial request.',
+        },
+      },
+    ],
+    marketing: [
+      {
+        id: 'IN.M',
+        kind: 'marketing',
+        required: false,
+        box: true,
+        master: 'hi',
+        basis: 'DPDP Act 2023 s. 6: a separate, optional consent for marketing, withdrawable as easily as given; e-mail only (no calls or SMS: keeps the TRAI commercial-communication rules out). (taslak — avukat onayı gerekli)',
+        texts: {
+          hi: 'हां, मुझे ईमेल से Curahold के प्रोडक्ट की खबरें और ऑफ़र भेजें। यह वैकल्पिक है और मैं कभी भी सदस्यता छोड़ सकता/सकती हूं।',
+          en: 'Yes, send me product news and offers from Curahold by e-mail. This is optional and I can unsubscribe at any time.',
+        },
+      },
+    ],
+  },
+  MY: {
+    blocks: [
+      {
+        id: 'MY.N',
+        kind: 'notice',
+        required: false,
+        box: false,
+        master: 'ms',
+        both: true,
+        basis: 'Malaysia PDPA 2010 s. 7 (Notice and Choice: purpose, source, access and correction, whom to contact, classes of third parties, whether obligatory and the consequence) — the notice in the national and English languages, s. 7(3); s. 129 as amended in 2024 (transfer to a country with substantially similar law or adequate protection); DPO contact under the 2024 amendment. (taslak — avukat onayı gerekli)',
+        texts: {
+          ms: 'Notis Perlindungan Data Peribadi\n· {company} ({company_country}) memproses data peribadi yang anda berikan dalam borang ini: nama, e-mel kerja, jawatan, syarikat, negara dan butiran lain yang anda masukkan.\n· Tujuan: menilai permintaan percubaan percuma anda, menghubungi anda mengenainya dan membuka akaun percubaan anda.\n· Data anda mungkin didedahkan kepada dan disimpan oleh pembekal perkhidmatan pengehosan dan e-mel kami di {storage_countries}, dengan perlindungan yang setara dengan Akta Perlindungan Data Peribadi 2010.\n· Medan bertanda wajib perlu diisi; tanpanya kami tidak dapat memproses permintaan anda.\n· Anda boleh meminta akses kepada atau pembetulan data anda, mengehadkan pemprosesannya, atau membuat pertanyaan dan aduan dengan menghubungi Pegawai Perlindungan Data kami: {contact}.\nButirannya ada dalam Notis privasi.',
+          en: 'Personal Data Protection Notice\n· {company} ({company_country}) processes the personal data you give in this form: name, work e-mail, job title, company, country and the other details you enter.\n· Purpose: assessing your free-trial request, contacting you about it and opening your trial account.\n· Your data may be disclosed to and stored with our hosting and e-mail service providers in {storage_countries}, under protection equivalent to the Personal Data Protection Act 2010.\n· Fields marked required must be filled in; without them we cannot handle your request.\n· You can ask for access to or correction of your data, limit its processing, or send enquiries and complaints to our Data Protection Officer: {contact}.\nDetails are in the Privacy notice.',
+        },
+      },
+      {
+        id: 'MY.C',
+        kind: 'consent',
+        required: true,
+        box: true,
+        master: 'ms',
+        both: true,
+        when: 'myConsentBox',
+        basis: 'Malaysia PDPA 2010 s. 6(1)(a) consent, recorded (Personal Data Protection Regulations 2013 r. 3); s. 6(2)(a) (steps at the data subject’s request before a contract) may make it unnecessary — lawyer’s switch. (taslak — avukat onayı gerekli)',
+        texts: {
+          ms: 'Saya telah membaca Notis Perlindungan Data Peribadi di atas dan bersetuju dengan pemprosesan data peribadi saya oleh {company} bagi tujuan yang dinyatakan.',
+          en: 'I have read the Personal Data Protection Notice above and consent to {company} processing my personal data for the purposes stated.',
+        },
+      },
+    ],
+    marketing: [
+      {
+        id: 'MY.M',
+        kind: 'marketing',
+        required: false,
+        box: true,
+        master: 'ms',
+        both: true,
+        basis: 'Malaysia PDPA 2010 s. 43 (right to prevent processing for direct marketing): optional, unticked, e-mail only. (taslak — avukat onayı gerekli)',
+        texts: {
+          ms: 'Ya, hantarkan berita dan tawaran produk Curahold kepada saya melalui e-mel. Ini pilihan dan saya boleh berhenti melanggan pada bila-bila masa.',
+          en: 'Yes, send me product news and offers from Curahold by e-mail. This is optional and I can unsubscribe at any time.',
+        },
       },
     ],
   },
@@ -663,7 +760,9 @@ export interface ConsentSet {
 }
 
 function show(b: TextBlock, locale: Locale, vars: Placeholders): ShownText[] {
-  const langs: Locale[] = b.texts[locale] ? [locale] : [...new Set<Locale>([b.master, 'en'])].filter((l) => b.texts[l]);
+  const langs: Locale[] = b.both
+    ? [...new Set<Locale>([...(b.texts[locale] ? [locale] : []), b.master, 'en'])].filter((l) => b.texts[l])
+    : b.texts[locale] ? [locale] : [...new Set<Locale>([b.master, 'en'])].filter((l) => b.texts[l]);
   return langs.map((lang) => ({ textId: `${b.id}.${lang}@${CONSENT_TEXT_VERSION}`, lang, text: fillText(b.texts[lang] ?? '', vars) }));
 }
 

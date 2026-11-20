@@ -5191,7 +5191,7 @@ export const fa: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': 'شروع تور',
   'demo.hub.card.meta': '{m} دقیقه · {s} مرحله',
   "demo.hub.band.title": "به اندازهٔ کافی دیدید؟ با مشتریان خودتان امتحانش کنید.",
-  "demo.hub.band.text": "برای تیم خود یک فضای کار درخواست کنید: سه ماه رایگان، بدون کارت، به نُه زبان.",
+  "demo.hub.band.text": "برای تیم خود یک فضای کار درخواست کنید: سه ماه رایگان، بدون کارت، به یازده زبان.",
   "demo.hub.band.primary": "شروع رایگان",
   "demo.hub.band.secondary": "خواندن مستندات",
   'demo.hub.foot.home': 'صفحه اصلی Curahold',

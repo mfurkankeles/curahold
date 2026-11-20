@@ -209,6 +209,7 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
   .wy__cols, .wy__who { grid-template-columns: 1fr; }
 }
 :lang(ja) .wy :is(h1, h2, h3), :lang(zh) .wy :is(h1, h2, h3), :lang(ko) .wy :is(h1, h2, h3), :lang(ar) .wy :is(h1, h2, h3), :lang(he) .wy :is(h1, h2, h3), :lang(fa) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
+:lang(hi) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.35; }
 
 /* The departments as one flow: the chain, then product and finance connected to it. */
 .fl { margin-top: 56px; }

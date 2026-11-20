@@ -5191,7 +5191,7 @@ export const tr: Record<MessageKey, string> = {
   'demo.hub.card.start': 'Turu başlat',
   'demo.hub.card.meta': '{m} dk · {s} adım',
   'demo.hub.band.title': 'Yeterince gördün mü? Kendi müşterilerinle dene.',
-  "demo.hub.band.text": "Ekibiniz için bir çalışma alanı isteyin: üç ay ücretsiz, kart gerekmez, dokuz dilde.",
+  "demo.hub.band.text": "Ekibiniz için bir çalışma alanı isteyin: üç ay ücretsiz, kart gerekmez, on bir dilde.",
   'demo.hub.band.primary': 'Ücretsiz başla',
   'demo.hub.band.secondary': 'Belgeleri oku',
   'demo.hub.foot.home': 'Curahold ana sayfa',
