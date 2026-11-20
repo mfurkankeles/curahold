@@ -7,7 +7,7 @@ import { dictionaries, LOCALES, translate, type MessageKey } from '../shared/src
 import { ALL_KEYS, filledDictionary, i18nForBrowser, keysUsedIn, keysUsedInFiles, SERVER_ONLY, staticClosure } from '../shared/src/i18n/vite-plugin';
 
 describe('one language at a time', () => {
-  it('a filled dictionary has every key and reads like translate() with all nine loaded', () => {
+  it('a filled dictionary has every key and reads like translate() with all eleven loaded', () => {
     for (const l of LOCALES) {
       const d = filledDictionary(l);
       expect(Object.keys(d).length).toBe(ALL_KEYS.length);

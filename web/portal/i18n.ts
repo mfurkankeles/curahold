@@ -13,6 +13,8 @@ const LOADERS: Record<Locale, () => Promise<{ default: Dictionary }>> = {
   'zh-Hant': () => import('virtual:curahold-dict/zh-Hant'),
   ja: () => import('virtual:curahold-dict/ja'),
   ko: () => import('virtual:curahold-dict/ko'),
+  hi: () => import('virtual:curahold-dict/hi'),
+  ms: () => import('virtual:curahold-dict/ms'),
 };
 const pending = new Map<Locale, Promise<void>>();
 

@@ -60,7 +60,7 @@ export interface TrialRequestInput {
   customersManaged: string | null;
   timeline: string | null;
   heardFrom: string | null;
-  /** One of the nine locales. */
+  /** One of the eleven locales. */
   language: string;
   contactTime: string | null;
   /** Which site / variant the form was on, e.g. "site", "site-a". */

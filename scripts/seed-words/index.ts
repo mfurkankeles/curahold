@@ -1,6 +1,6 @@
 // Which languages the demo company can be written in, and the few helpers the
 // seeds share. Each language is its own file, loaded only when it is asked for
-// (the live demo carries one language's sample data, not nine).
+// (the live demo carries one language's sample data, not all of them).
 import { LOCALES, type Locale } from '../../shared/src/i18n/core';
 import type { SeedWords } from './types';
 
@@ -16,6 +16,8 @@ const LOADERS: Partial<Record<Locale, () => Promise<{ words: SeedWords }>>> = {
   ko: () => import('./ko'),
   he: () => import('./he'),
   fa: () => import('./fa'),
+  hi: () => import('./hi'),
+  ms: () => import('./ms'),
 };
 
 /** The language the seed itself is written in: its texts go in as they are. */

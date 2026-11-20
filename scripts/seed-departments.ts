@@ -2,7 +2,7 @@
 // live demo) one board per department along the customer's path — a lead in
 // Inside Sales, a deal in Sales, a kick-off in Onboarding — plus a Customer
 // Success task handed to Product and a renewal waiting on a draft invoice. Every name comes from the dictionaries, so it reads right in
-// all nine languages.
+// all eleven languages.
 import type { Q } from '../api/src/db';
 import { translate, type Locale, type MessageKey } from '../shared/src/i18n';
 import { TEMPLATES, pick } from '../shared/src/templates';

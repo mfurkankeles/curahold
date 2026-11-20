@@ -10,12 +10,13 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import type { Browser, Page } from 'puppeteer-core';
 import { bootIntegrations } from './boot';
+import { LOCALES } from '../../shared/src/i18n';
 
 const require = createRequire(import.meta.url);
 const puppeteer = require('puppeteer-core') as typeof import('puppeteer-core');
 const ROOT = join(import.meta.dirname, '..', '..');
 const PORT = Number(process.env.PORT ?? 9771);
-const LANGS = process.argv.slice(2).length ? process.argv.slice(2) : ['en', 'tr', 'ar', 'he', 'fa', 'zh-Hans', 'zh-Hant', 'ja', 'ko'];
+const LANGS: string[] = process.argv.slice(2).length ? process.argv.slice(2) : [...LOCALES];
 
 /** The same numbered ring as scripts/docs/shots.ts, drawn over the element found by selector or by its text. */
 const ring = (find: string, n: number) => `(() => {

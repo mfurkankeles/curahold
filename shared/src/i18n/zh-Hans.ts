@@ -5243,7 +5243,7 @@ export const zhHans: Partial<Record<MessageKey, string>> = {
   'demo.hub.card.start': '开始导览',
   'demo.hub.card.meta': '{m} 分钟 · {s} 步',
   "demo.hub.band.title": "了解得差不多了？用你自己的客户试试。",
-  "demo.hub.band.text": "为你的团队申请一个工作区：免费三个月，无需信用卡，支持九种语言。",
+  "demo.hub.band.text": "为你的团队申请一个工作区：免费三个月，无需信用卡，支持十一种语言。",
   'demo.hub.band.primary': '免费开始',
   'demo.hub.band.secondary': '阅读文档',
   'demo.hub.foot.home': 'Curahold 首页',

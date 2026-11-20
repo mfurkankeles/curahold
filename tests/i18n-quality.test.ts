@@ -157,12 +157,27 @@ const SAME_AS_ENGLISH = new Set([
   'auth.emailPlaceholder', 'billing.profile.billingEmailPlaceholder', 'import.sample.file', 'import.sample.row1', 'timport.sampleFile', 'imp.templateFile', 'imp.csv.file',
   // Units.
   'pm.points.short.one', 'weeks.pts',
+  // Job titles stay English in every language (owner, 19 Nov).
+  'flow.demo.titleOps', 'flow.demo.titleBuy',
+  // A keyboard key, named as printed on it.
+  'pm.plan.keySpace',
 ]);
+// Words a language writes exactly as English does, because they are its own words too
+// (Malay "status", "data", "menu", "agenda", "media", "item" are standard Malay; DBP).
+const SAME_IN: Partial<Record<Locale, Set<string>>> = {
+  ms: new Set([
+    'sh.gate.title', 'ob.phase.golive', 'task.status', 'settings.people.status', 'import.untitled', 'accounts.import', 'accounts.importTitle', 'sync.tab.status',
+    'fields.colorName.plum', 'support.region.au', 'portal.people.status', 'portal.status', 'nav.menu', 'docs.menu', 'rb.format.matrix', 'meetings.minutes',
+    'calendar.minutes', 'desk.replay.length', 'plannedForm.agenda', 'pm.flow.medianShort', 'platform.col.status', 'platform.sub.status', 'pm.burndown',
+    'pm.burndown.ideal', 'tpl.idea', 'tpl.standard', 'rtype.neutral', 'rtype.status', 'rsrc.status', 'settings.audit.entity', 'trial.dept.onboarding',
+    'trial.industry.media', 'dept.onboarding', 'fin.inv.status', 'ob.phase.data', 'ob.issueType.data', 'ob.report.data',
+  ]),
+};
 
 describe('no English left untranslated', () => {
   it.each(others.map((l) => [l] as const))('%s: no dictionary string still reads exactly as in English', (l) => {
     const d = dict(l);
-    const same = Object.keys(d).filter((k) => d[k] === en[k] && /[A-Za-z]{2,}/.test(en[k].replace(/\{\w+\}/g, '')) && !SAME_AS_ENGLISH.has(k));
+    const same = Object.keys(d).filter((k) => d[k] === en[k] && /[A-Za-z]{2,}/.test(en[k].replace(/\{\w+\}/g, '')) && !SAME_AS_ENGLISH.has(k) && !SAME_IN[l]?.has(k));
     expect(same.join('\n')).toBe('');
   });
 

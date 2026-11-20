@@ -1177,7 +1177,7 @@ export function page(locale: SiteLocale): string {
           </div>
         </article>`;
 
-  // Tile 5 — nine languages: the same four menu items, in each language's own words and direction.
+  // Tile 5 — eleven languages: the same four menu items, in each language's own words and direction.
   const langOrder = [locale, ...SITE_LOCALES.filter((l) => l !== locale)];
   const langCards = langOrder
     .map(

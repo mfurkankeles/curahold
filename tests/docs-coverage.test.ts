@@ -5,7 +5,7 @@
 //
 // To fix a failure: add the place to shared/src/helpLinks.ts with its page and
 // at least one case in tests/assistant-eval/cases.ts that cites the page (in
-// all nine languages), or, for something no customer sees, a line in
+// all eleven languages), or, for something no customer sees, a line in
 // NOT_FOR_HELP with the reason.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

@@ -162,7 +162,7 @@ Bir dosyanın satırlarından tek bir panoya görev alır. Kimseye bildirim gitm
 | `fileName` | metin | isteğe bağlı | en çok 200 karakter |
 | `rows` | nesne (ad → değer) listesi | zorunlu | en az 1 öğe; en çok MAX_TASK_ROWS öğe |
 | `mapping` | nesne | zorunlu |  |
-| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı |  |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko \| hi \| ms | isteğe bağlı |  |
 | `includeDone` | evet/hayır | isteğe bağlı |  |
 
 ### `GET /boards/:id/imports`
@@ -191,7 +191,7 @@ Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevl
 | `rows` | nesne listesi | zorunlu | en az 1 öğe; en çok MAX_ROWS öğe |
 | `mapping` | nesne (ad → değer) | zorunlu |  |
 | `targets` | nesne (ad → değer) | zorunlu |  |
-| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı |  |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko \| hi \| ms | isteğe bağlı |  |
 | `includeDone` | evet/hayır | isteğe bağlı |  |
 | `dryRun` | evet/hayır | isteğe bağlı |  |
 | `createdBoards` | kimlik listesi | isteğe bağlı | en çok 50 öğe |

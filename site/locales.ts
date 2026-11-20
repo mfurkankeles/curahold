@@ -16,6 +16,8 @@ export const SITE_LANGS = {
   'zh-Hant': 'zh_TW',
   ja: 'ja_JP',
   ko: 'ko_KR',
+  hi: 'hi_IN',
+  ms: 'ms_MY',
 } as const satisfies Partial<Record<Locale, string>>;
 
 /** A language the sales site is published in. */
@@ -43,10 +45,12 @@ export const SITE_FONTS: Record<SiteLocale, readonly FontSubset[]> = {
   'zh-Hant': [],
   ja: [],
   ko: [],
+  hi: [],
+  ms: ['latin'],
 };
 
 /**
  * App languages the site is not written in yet. They get no page and no hreflang until
  * their site copy exists, so a search engine never lands on a half-English page.
  */
-export const SITE_PENDING: readonly string[] = ['hi', 'ms'];
+export const SITE_PENDING: readonly string[] = [];

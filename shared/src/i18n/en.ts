@@ -5258,7 +5258,7 @@ export const en = {
   'demo.hub.card.start': 'Start tour',
   'demo.hub.card.meta': '{m} min · {s} steps',
   'demo.hub.band.title': 'Seen enough? Try it with your own customers.',
-  "demo.hub.band.text": "Ask for a workspace for your team: three months free, no card needed, in nine languages.",
+  "demo.hub.band.text": "Ask for a workspace for your team: three months free, no card needed, in eleven languages.",
   'demo.hub.band.primary': 'Start free',
   'demo.hub.band.secondary': 'Read the docs',
   'demo.hub.foot.home': 'Curahold home',

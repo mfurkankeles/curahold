@@ -14,7 +14,7 @@ Curahold bağımsız bir B2B SaaS; hiçbir şirkete özel değil, her sektörden
 - Müşteri ve hesap yönetimi: CRM kayıtları, sağlık skoru ve nedenleri, kendiliğinden başlayan yenilemeler, toplantıdan göreve dönüşen sözler, satış hattı, müşteri portalı.
 - Şirketin her biriminin iş ve proje yönetimi: panolar, görevler, otomasyonlar, raporlar, takvim, zaman çizelgesi.
 - Ürün ekibinin yönetimi: epic, sprint, story point, backlog, yol haritası, burndown, hız, bağlı görevler, Jira eşitlemesi.
-Çok kiracılı SaaS olarak ve müşterinin kendi sunucusunda çalışır; 9 dilde (İngilizce, Türkçe, Arapça, İbranice, Farsça, Basitleştirilmiş ve Geleneksel Çince, Japonca, Korece).
+Çok kiracılı SaaS olarak ve müşterinin kendi sunucusunda çalışır; 11 dilde (İngilizce, Türkçe, Arapça, İbranice, Farsça, Basitleştirilmiş ve Geleneksel Çince, Japonca, Korece, Hintçe, Malayca).
 
 ### Hedef
 Altı yüzeyin her biri işlev, güvenlik ve arayüz olarak dünyanın en iyisi olacak:
@@ -140,7 +140,7 @@ Arayüz ve tasarım
 - Bir ekranın bittiğinin ölçüsü: telefon görüntüsünü dünyanın en iyi ürün tasarım ekibine gururla gösterebilir misin? Hayırsa bitmemiştir.
 
 Diller
-- Dokuz dilin dokuzu tam: sözlükte eksik 0, sözlük dışında yazılmış metin 0, "Türkçe mi?" kontrolü 0. Şablonlar, e-postalar, bildirimler, portal ve hata metinleri dahil.
+- On bir dilin on biri tam: sözlükte eksik 0, sözlük dışında yazılmış metin 0, "Türkçe mi?" kontrolü 0. Şablonlar, e-postalar, bildirimler, portal ve hata metinleri dahil.
 - Çeviriyi sen yap; kelime kelime değil, o dilde ürün yazan biri gibi. Terimler her dilde tutarlı; sözlükçe repoda durur.
 - Sağdan sola dillerde düzen aynalanır; her yüzey Arapça ve Japonca ekran görüntüsüyle kontrol edilir.
 - Yeni dil eklemek yalnızca bir çeviri dosyası eklemektir.
@@ -164,7 +164,7 @@ Brüt marj
 - Geri al her yerde: silme, taşıma, toplu değişiklik ve ayar için 10 saniye "Geri al", sonra 30 gün çöp kutusu ya da geçmiş.
 - Çıkmaz yok: her ekranda geri ve yol; derin bağlantı her zaman çalışır; sayfayı yenileyince aynı yerde kalırsın.
 - Telefonda tek elle: 375 px'te tam işlev.
-- Açık ve koyu tema, 9 dil, sağdan sola aynalama; uzun metin taşmaz, kesilmez.
+- Açık ve koyu tema, 11 dil, sağdan sola aynalama; uzun metin taşmaz, kesilmez.
 - Sözler sade: etken, kısa, şirketin kendi terimiyle; teknik hata metni yok.
 
 ### Yüzey yüzey çıta
@@ -182,7 +182,7 @@ Brüt marj
 - Kabul testi: Bir hesap yöneticisi toplantıyı kaydeder, üç sonraki adım göreve döner, birini telefondan bitirir, müşteri sayfasında sağlık nedeni güncellenir: 3 dakika.
 
 3. Müşterinin müşterisi (portal)
-- İşlev: Eğitimsiz kullanılır. Talep açar, yanıtlar, dosya ekler, onay verir; durum e-postaları şirketin markasıyla gider. 9 dil; telefon öncelikli.
+- İşlev: Eğitimsiz kullanılır. Talep açar, yanıtlar, dosya ekler, onay verir; durum e-postaları şirketin markasıyla gider. 11 dil; telefon öncelikli.
 - Güvenlik: Yalnızca kendi şirketine açılmış kayıtları görür; portalın her adresi için izolasyon testi. İç not asla portala gitmez (testli). Bağlantı tek kullanımlık ve süreli. Oturum, istek ve dosya sınırları.
 - Arayüz: Şirketin logosu ve rengi önde, Curahold arka planda. Ana içerik 1,2 saniyede.
 - Kabul testi: Bir müşteri kişisi davet e-postasından girer, talep açar, yanıtı okur: telefonda 2 dakika. Başka şirketin kaydına hiçbir adresle ulaşamaz.
@@ -199,7 +199,7 @@ Brüt marj
 - Arayüz: Aynı tasarım sistemi, aynı ortak çıta.
 
 6. Satış sitesi, yardım ve demo
-- İşlev: 9 dilde yerel metin; fiyat ürünle aynı kaynaktan; canlı demo uydurma veriyle. Yardım merkezi ve demo da 9 dile çıkar (sırası için kararımı sor).
+- İşlev: 11 dilde yerel metin; fiyat ürünle aynı kaynaktan; canlı demo uydurma veriyle. Yardım merkezi ve demo da 11 dile çıkar (sırası için kararımı sor).
 - Güvenlik: Üçüncü tarafa istek yok (yazı tipleri dahil); onay olmadan izleme yok.
 - Arayüz: Sinematik ama hızlı. Görseller gerçek ürün ekranı; iskelet ya da boş kutu yok.
 
@@ -221,11 +221,11 @@ Nasıl seçilecek:
 - Her aday için önce araştır: başlıca iş yönetimi, ürün yönetimi ve müşteri başarısı araçlarında var mı? Kullanıcıların en çok şikâyet ettiği neyi çözüyor? Kaynağıyla yaz. Bir rakipte varsa "eşsiz" deme; farkı söyle. Listede olmayan daha iyi bir fikrin varsa ekle.
 - Bana tek tablo getir: aday, kimde var, hangi şikâyeti çözer, kaç paket sürer, maliyet etkisi, önerin. Ben seçince yap.
 - Seçimimi beklerken hız, güvenlik ve cila paketlerine devam et.
-- Her imza özellik ilgili bütün yüzeylerde, 9 dilde ve telefonda çalışır; kendi tarayıcı senaryosu ve izolasyon testi olur.
+- Her imza özellik ilgili bütün yüzeylerde, 11 dilde ve telefonda çalışır; kendi tarayıcı senaryosu ve izolasyon testi olur.
 
 ### Nasıl çalışacaksın
 1. Önce oku: QUALITY.md, ARCHITECTURE.md, SECURITY.md, SUPPORT.md, INTEGRATIONS.md. Repo durumuna ve son commit'lere bak.
-2. Ölç (kod değiştirmeden): scripts/quality altındaki betikler (static, server, browser load tap live big axe fit, lighthouse, cost) ve gerçek Postgres'te scripts/perf.ts. Eksik ölçümleri betiklere ekle: portal için açılış, erişilebilirlik ve sığma; ürün ekranları için dokunma ve sığma; "iskelet değil gerçek içerik göründü" süresi; 9 dilde taşma; sağdan sola düzen. Sığma ölçümü üçüncü genişlikte giriş sınırına takılıp düşüyor; önce onu düzelt.
+2. Ölç (kod değiştirmeden): scripts/quality altındaki betikler (static, server, browser load tap live big axe fit, lighthouse, cost) ve gerçek Postgres'te scripts/perf.ts. Eksik ölçümleri betiklere ekle: portal için açılış, erişilebilirlik ve sığma; ürün ekranları için dokunma ve sığma; "iskelet değil gerçek içerik göründü" süresi; 11 dilde taşma; sağdan sola düzen. Sığma ölçümü üçüncü genişlikte giriş sınırına takılıp düşüyor; önce onu düzelt.
 3. Ekran envanteri çıkar: her yüzeyin her ekranı × beş durum × 375 / 768 / 1440 px × açık ve koyu tema × en az Türkçe, İngilizce, Arapça ve Japonca. Ekran görüntülerini al, kendi gözünle incele, kusurları listele.
 4. Bana başlangıç raporu ver: yüzey × boyut puan tablosu (0–10), Hedef / Şu an / Fark, en büyük 5 risk, vermem gereken kararlar (seçenek + öneri).
 5. Paketlerle ilerle. Önerdiğim sıra aşağıda; değiştirirsen nedenini yaz.

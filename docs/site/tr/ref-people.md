@@ -65,7 +65,7 @@ Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir.
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
 | `name` | metin | isteğe bağlı | en az 1 karakter; en çok 120 karakter |
-| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko | isteğe bağlı | boş (null) olabilir |
+| `locale` | şunlardan biri: en \| tr \| ar \| he \| fa \| zh-Hans \| zh-Hant \| ja \| ko \| hi \| ms | isteğe bağlı | boş (null) olabilir |
 | `onboarded` | evet/hayır | isteğe bağlı |  |
 | `prefs` | nesne | isteğe bağlı |  |
 

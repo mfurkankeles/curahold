@@ -41,7 +41,7 @@ Controller: [Company legal name], [address] ([country]). Privacy contact: [priva
 - **Role:** Curahold is the controller
 - **Data subjects:** People who request a trial
 - **Personal data:** Name, work e-mail, job title, company, country, company size, answers to the form, the verification code time
-- **Legal basis:** Türkiye — KVKK art. 5/2-c (setting up a contract) and 5/2-f (legitimate interest); EU/UK — Art. 6(1)(f) (legitimate interest in answering business enquiries); Gulf — UAE: consent (art. 4); Saudi / Qatar: consent by default; Egypt not offered; elsewhere — KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice
+- **Legal basis:** Türkiye — KVKK art. 5/2-c (setting up a contract) and 5/2-f (legitimate interest); EU/UK — Art. 6(1)(f) (legitimate interest in answering business enquiries); Gulf — UAE: consent (art. 4); Saudi / Qatar: consent by default; Egypt not offered; elsewhere — KR: contract steps + separate transfer consent; TW: notice + consent; IL: implied consent; JP/HK/SG: notice; IN: notice + consent (DPDP Act 2023 ss. 5–6), not for under-18s; MY: notice in Malay and English + consent (PDPA 2010 ss. 6–7)
 - **Retention:** 12 months from the request if no trial starts; otherwise as account data
 - **Stored with / received by:** Cloudflare, Inc., Supabase, Inc., Google LLC / Google Ireland Ltd (Google Workspace)
 - **VERBİS categories:** Kimlik, İletişim, Mesleki deneyim
