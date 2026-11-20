@@ -17,7 +17,7 @@
 //      money amount that is not in what it read, nothing of its instructions.
 // When the model cannot be asked (no key, switched off, over a cap, an
 // error), the docs search answers as before: never worse than today.
-import { addressOf, ask, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
+import { addressOf, askAcross, looksEnglish, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import {
   ambiguityOf,
   asksAboutOthers,
@@ -216,26 +216,35 @@ function ticketFor(question: string, lang: Locale, env: AssistEnv): AssistReply[
 const cite = (s: DocSection, base: string): AssistCitation => ({ title: s.t, section: s.h, url: addressOf(s, base, '') });
 
 /** The few sections worth giving the model: the best matches, or for a tapped choice, its pages'. */
-function retrieve(index: AnswerIndex, question: string, pages: string[] | null, extra: string[] = []): DocSection[] {
+function retrieve(index: AnswerIndex, question: string, pages: string[] | null, extra: string[] = [], english: AnswerIndex | null = null): DocSection[] {
   const pick = new Map<string, DocSection>();
   const key = (s: DocSection) => `${s.u}#${s.a}`;
   const inPages = (s: DocSection) => !pages || pages.some((p) => s.u.includes(`/${p}/`));
   for (const q of [question, ...extra]) {
-    for (const f of ask(index, q).found) if (inPages(f.section) && pick.size < SECTIONS) pick.set(key(f.section), f.section);
+    for (const f of askAcross(index, english, q).found) if (inPages(f.section) && pick.size < SECTIONS) pick.set(key(f.section), f.section);
   }
   // A choice whose words matched nothing: the opening of its first pages.
   if (pages && pick.size === 0) for (const s of index.sections.filter((x) => inPages(x)).slice(0, 2)) pick.set(key(s), s);
   return [...pick.values()].slice(0, SECTIONS);
 }
 
+/**
+ * The English docs, for a question typed in English by a reader of another language's docs: matched against
+ * the reader's own docs it would find only what is still English there (code, names). See askAcross().
+ */
+async function englishDocs(env: AssistEnv, helpLang: string, question: string): Promise<AnswerIndex | null> {
+  return helpLang === 'en' || !looksEnglish(question) ? null : env.docs('en').catch(() => null);
+}
+
 /** The docs search alone: today's answers, used whenever the model is not asked. */
 async function docsAnswer(question: string, lang: Locale, env: AssistEnv, fallback: AssistFallback | undefined, pages: string[] | null, extra: string[]): Promise<AssistReply> {
   const base = env.docsBase ?? '/docs/';
   const index = await env.docs(helpLanguageOf(lang));
-  const a = ask(index, question);
+  const english = await englishDocs(env, helpLanguageOf(lang), question);
+  const a = askAcross(index, english, question);
   if (a.kind === 'hello') return reply(lang, { kind: 'answer', text: say(lang, 'ask.hi', env.terms), engine: 'docs', fallback });
   if (a.kind === 'thanks') return reply(lang, { kind: 'answer', text: say(lang, 'ask.thanks', env.terms), engine: 'docs', fallback });
-  const found = pages ? retrieve(index, question, pages, extra) : a.found.map((f) => f.section);
+  const found = pages ? retrieve(index, question, pages, extra, english) : a.found.map((f) => f.section);
   if (!found.length)
     return reply(lang, { kind: 'not_covered', text: say(lang, 'assist.notCovered', env.terms), engine: 'docs', fallback, ticket: ticketFor(question, lang, env) });
   // Not sure: say so, and show the closest sections instead of pretending one of them is the answer.
@@ -362,7 +371,9 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
     return `S${i + 1}`;
   };
   const block = (s: DocSection) => `[${idOf(s)}] ${s.t}${s.h ? ` › ${s.h}` : ''}\n${plain(s.m).slice(0, SECTION_CHARS)}`;
-  const first = retrieve(index, question, pages, extra);
+  // The model searches in English (search_docs says so), so the English docs stand by for every language.
+  const english = helpLang === 'en' ? null : await env.docs('en').catch(() => null);
+  const first = retrieve(index, question, pages, extra, looksEnglish(question) ? english : null);
   const who = env.who
     ? `Asker: ${env.who.name} (${env.who.role}) at ${env.who.company}. Today: ${env.who.today}. This company calls a customer "${env.who.customer}" (plural "${env.who.customers}"); money in ${env.who.currency} unless a record says otherwise.`
     : '';
@@ -431,7 +442,7 @@ export async function answer(env: AssistEnv, req: AssistRequest): Promise<{ repl
         let isError = false;
         try {
           if (call.name === 'search_docs') {
-            const found = ask(index, String(call.input?.query ?? '').slice(0, 200)).found.slice(0, 3).map((f) => f.section);
+            const found = askAcross(index, english, String(call.input?.query ?? '').slice(0, 200)).found.slice(0, 3).map((f) => f.section);
             out = found.length ? found.map(block).join('\n\n') : 'Nothing in the docs matches.';
           } else {
             const tool = liveTools.find((t) => t.name === call.name);

@@ -15,7 +15,7 @@
 // before, on this device — still asking back on a question that means several things.
 import { Icon } from './icons';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { ask, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
+import { askAcross, looksEnglish, prepare, type AnswerIndex, type DocSection, type Found } from '../../../shared/src/answers';
 import { ambiguityOf, intentOf, type AssistReply, type AssistTurn } from '../../../shared/src/assist';
 import type { AssistConsentState } from '../../../shared/src/assistConsent';
 import { AssistConsentNotice } from './AssistConsent';
@@ -269,7 +269,9 @@ export function Ask({ onWrite, onEngine, mode = 'help' }: { onWrite: (question: 
       if (!intent && clarifyHere(q)) return;
       // A tapped choice: its own pages answer first.
       const pages = intentOf(intent)?.option.pages;
-      const a = ask(await load(locale), q, lastPage.current);
+      // A question typed in English is asked of the English docs and answered with this language's sections.
+      const english = locale !== 'en' && looksEnglish(q) ? await load('en').catch(() => null) : null;
+      const a = askAcross(await load(locale), english, q, lastPage.current);
       if (pages) {
         const mine = a.found.filter((f) => pages.some((p) => f.section.u.includes(`/${p}/`)));
         if (mine.length) {

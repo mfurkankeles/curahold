@@ -43,6 +43,10 @@ Switch between four views with the buttons at the top of the Customers page; you
 
 The sentence at the top says how many customers need attention and how much value is at risk; the "need attention" link narrows the list to them. On a phone the filters are together on one **Filter** sheet.
 
+## Add a renewal
+
+A renewal is the customer's **Renewal date**. Open the customer and fill it in under **Details**, or bring it in with a column when you import. The customer then shows in **Renewals**, in its month and with its value. No such field yet? Add a date field in Settings → Customer fields. To have the renewal work open by itself, turn on **Start renewals by themselves** in Settings → **Targets and rhythm** and choose how far ahead and with which playbook.
+
 ## Importing
 
 Drop in an Excel or CSV file, match columns to fields, check the preview, import. An import that went wrong can be undone in one click for 30 days.

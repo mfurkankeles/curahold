@@ -65,6 +65,8 @@ const STOP = new Set(
     've veya ama fakat ile icin gibi kadar bu su o bir da de mi mu ki ne nasil neden nicin nerede nereden hangi kim ben sen biz siz onlar benim senin bizim sizin ' +
     'var yok evet hayir cok daha en her hic bazi tum butun olarak olan olur oldu olmak etmek yapmak yapilir yapabilirim istiyorum lazim gerek lutfen bana bize ' +
     'neyi neye nedir neler nelerdir kimler kimi kime hangisi nasildir midir kadar ' +
+    // "Again": it stems to "yeni" (new) and would answer every question about adding something with retries.
+    'yeniden ' +
     // Short verbs in the polite imperative the help pages use ("… verin", "… alın"): "verin" starts like "veri" (data)
     // and would answer every question about data with any page that says "give".
     'verin alin edin olun yapin ' +
@@ -147,6 +149,8 @@ const STOP_OTHER = new Set(
     'كيف ماذا ما من في على الي إلى عن هل اين متى لماذا التي الذي هذا هذه ثم او و مع كل بعد قبل يمكن يمكنني اريد ' +
     'چطور چگونه چه كجا از به در با را كه اين ان يك مي كنم كنيم است هست براي تا يا ايا ' +
     'איך מה איפה מתי למה את של על עם אם זה זו או גם כל אני אנחנו לי לנו אפשר ' +
+    // "Write (me) …": a request for text, never a search; "כתוב" would otherwise find "כתובת" (address).
+    'כתוב כתבי כתבו اكتب اكتبي بنويس بنويسيد ' +
     '어떻게 무엇 무엇을 어디서 어디 누구 언제 왜 하나요 있나요 되나요 하려면 수 ' +
     'कैसे क्या कहां कब क्यों कौन का की के में से को पर और या है हैं था मैं हम मुझे मेरा मेरे मेरी अपने अपना अपनी एक यह वह ये वे कर करें करूं करना सकता सकती सकते हूं हो होता होती कोई नहीं लिए भी तो'
   )
@@ -194,8 +198,9 @@ export function wordsOf(s: string): string[] {
 const WEAK = new Set(['contact', 'reach', 'find', 'work', 'list', 'ulas', 'iletisim', 'bul', 'calis', 'liste'].map(stem));
 
 const ALIKE_STEMS = ALIKE.map((group) => [...new Set(group.map(stem))]);
-/** Other words people use for the same thing. */
-const alike = (term: string): string[] => ALIKE_STEMS.find((group) => group.some((w) => sameWord(w, term)))?.filter((w) => !sameWord(w, term)) ?? [];
+/** Other words people use for the same thing, with the group's own form of the word asked ("ekle" for "eklenir":
+ * the person's "eklen" would not find "ekleme" or "ekleyin" by itself). */
+const alike = (term: string): string[] => ALIKE_STEMS.find((group) => group.some((w) => sameWord(w, term, alikeMost(w))))?.filter((w) => w !== term) ?? [];
 
 /**
  * Whether two words are forms of the same word. Turkish adds endings to a
@@ -203,11 +208,16 @@ const alike = (term: string): string[] => ALIKE_STEMS.find((group) => group.some
  * one starting with the other is the same word, as long as the shorter one is
  * most of the longer one.
  */
-export function sameWord(a: string, b: string): boolean {
+export function sameWord(a: string, b: string, most = 0.5): boolean {
   if (a === b) return true;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
-  return short.length >= 4 && long.startsWith(short) && short.length / long.length >= 0.5;
+  return short.length >= 4 && long.startsWith(short) && short.length / long.length >= most;
 }
+// A short word like the person's own must be most of the word it matches: "ekle" (add) stands for "yeni"
+// (new), and "yeni" as a mere start would find "yenileme" (renewal) and "yeniden" (again) everywhere. Longer
+// ones keep the usual rule, so "bağla" still finds "bağlantı".
+const ALIKE_MOST = 0.6;
+const alikeMost = (w: string) => (w.length <= 4 ? ALIKE_MOST : 0.5);
 
 const textOf = (html: string) =>
   html
@@ -249,6 +259,13 @@ const GLOSSARY = /\/glossary\b/;
 const HELLO = /^(hi|hello|hey|merhaba|selam|iyi gunler|gunaydin|good (morning|afternoon|evening))\b/;
 const THANKS = /^(thanks|thank you|thx|tesekkur|tesekkurler|sagol|sag ol|eyvallah)\b/;
 
+/** Whether every word of the question, or a word like it, is in a section's heading. */
+function headSays(head: string, perTerm: { forms: string[] }[]): boolean {
+  if (!head) return false;
+  const words = head.split(' ');
+  return perTerm.every(({ forms }) => forms.some((f, k) => words.some((h) => sameWord(h, f, k === 0 ? 0.5 : alikeMost(f)))));
+}
+
 /**
  * Finds the sections that answer a question. `near` is the page the previous
  * answer came from: a follow-up question is probably about the same thing.
@@ -276,7 +293,7 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
       const inTitle = new Uint8Array(n);
       const times = new Float32Array(n);
       for (const w of vocabulary) {
-        if (!sameWord(w, form)) continue;
+        if (!sameWord(w, form, k === 0 ? 0.5 : alikeMost(form))) continue;
         const p = index.words.get(w)!;
         for (const i of p.head) inHead[i] = 1;
         for (const i of p.title) inTitle[i] = 1;
@@ -291,7 +308,7 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
     for (let i = 0; i < n; i++) if (hits[i] > 0) sectionsWith++;
     // A word found in few sections says more than one found everywhere.
     const rarity = Math.log(1 + n / (1 + sectionsWith)) * (terms.length > 1 && WEAK.has(term) ? 0.35 : 1);
-    return { hits, rarity };
+    return { hits, rarity, forms };
   });
 
   const phrase = terms.join(' ');
@@ -311,7 +328,9 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
     score *= 0.35 + 0.65 * cover;
     score *= technical && (s.s === 'reference' || s.s === 'developers') ? 1.15 : (WEIGHT[s.s] ?? 1);
     if (GLOSSARY.test(s.u) && !meaning) score *= 0.6;
-    if (terms.length > 1 && index.heads[i].includes(phrase)) score *= 1.4;
+    // A heading that says the whole question, in the person's words or words like them ("Yenileme ekleme"
+    // for "Yenileme nasıl eklenir?"), is the place it is answered.
+    if (terms.length > 1 && (index.heads[i].includes(phrase) || headSays(index.heads[i], perTerm))) score *= 1.4;
     // A heading that is about nothing but what was asked ("Salesforce") beats one that only mentions it.
     const head = index.heads[i] ? index.heads[i].split(' ') : [];
     if (head.length) score *= 1 + 0.3 * (head.filter((h) => terms.some((t) => sameWord(h, t))).length / head.length);
@@ -326,8 +345,42 @@ export function ask(index: AnswerIndex, question: string, near?: string | null):
   const cover = best ? perTerm.filter((t) => t.hits[best.at] > 0).length / terms.length : 0;
   // Sure of it when the best section covers the question and is clearly ahead of the best one from another page.
   const rival = top.find((f) => f.section.u !== best?.section.u);
-  const confident = !!best && best.score >= 2.6 && cover >= 0.6 && (!rival || best.score >= rival.score * 1.2);
+  // And only when something solid matched: in Hebrew, Arabic and Persian a three-letter word is also a piece of
+  // many longer ones ("שיר", a poem, inside "שירות", service), so three-letter matches alone are a guess.
+  const solid = !!best && perTerm.some((t, j) => t.hits[best.at] > 0 && !(SPACED.test(terms[j]) && !HANGUL.test(terms[j]) && terms[j].length <= 3));
+  const confident = !!best && solid && best.score >= 2.6 && cover >= 0.6 && (!rival || best.score >= rival.score * 1.2);
   return { kind: 'answer', found: top.map(({ section, score }) => ({ section, score })), confident };
+}
+
+// A question written in English: a few of the small words every English question has, and nothing outside ASCII.
+const ENGLISH = /\b(how|what|where|why|when|which|who|can|could|do|does|is|are|my|the|to|i|we|you)\b/i;
+/** Whether a question is in English (so a reader of another language's docs is best served by the English ones). */
+export function looksEnglish(question: string): boolean {
+  return /^[\x00-\x7f]*$/.test(question) && ENGLISH.test(question);
+}
+
+/**
+ * Asks the reader's own docs, or, when the question is in English and the reader's docs are not, the English
+ * docs, and then gives back the same sections of the reader's docs. A reader of the Japanese docs who types
+ * in English otherwise matches only what is still English there (code blocks, product names). Pages are
+ * translated section by section, so a section's place on its page is the same in every language; a page
+ * whose sections do not line up answers with its opening.
+ */
+export function askAcross(local: AnswerIndex, english: AnswerIndex | null | undefined, question: string, near?: string | null): Answer {
+  if (!english || english === local || !looksEnglish(question)) return ask(local, question, near);
+  const lang = local.sections[0]?.u.split('/')[2];
+  const a = ask(english, question, near?.replace(`/docs/${lang}/`, '/docs/en/'));
+  if (a.kind !== 'answer' || !lang) return a;
+  const pageOf = (idx: AnswerIndex, u: string) => idx.sections.filter((x) => x.u === u);
+  const found: Found[] = [];
+  for (const f of a.found) {
+    const enPage = pageOf(english, f.section.u);
+    const mine = pageOf(local, f.section.u.replace('/docs/en/', `/docs/${lang}/`));
+    if (!mine.length) continue;
+    const section = mine.length === enPage.length ? mine[enPage.indexOf(f.section)] : mine[0];
+    if (section && !found.some((x) => x.section === section)) found.push({ section, score: f.score });
+  }
+  return found.length ? { ...a, found } : ask(local, question, near);
 }
 
 /**

@@ -9,7 +9,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ask, prepare, sameWord, stem, wordsOf, type AnswerIndex } from '../shared/src/answers';
+import { ask, askAcross, prepare, sameWord, stem, wordsOf, type AnswerIndex } from '../shared/src/answers';
 
 const QUESTIONS: Record<'en' | 'tr', [question: string, pages: string][]> = {
   en: [
@@ -66,13 +66,41 @@ const QUESTIONS: Record<'en' | 'tr', [question: string, pages: string][]> = {
   ],
 };
 
-const index = {} as Record<'en' | 'tr', AnswerIndex>;
+// "How do I add a renewal?" as people in each language would ask it (review, 20 Nov 2026: ja, ar and tr got the
+// developer quickstart, the terms of service or "not sure").
+const RENEWAL: Record<string, string> = {
+  en: 'How do I add a renewal?', tr: 'Yenileme nasıl eklenir?', ar: 'كيف أضيف تجديدًا؟', he: 'איך מוסיפים חידוש?', fa: 'چطور یک تمدید اضافه کنم؟',
+  'zh-Hans': '如何添加续约？', 'zh-Hant': '如何新增續約？', ja: '更新を追加するには？', ko: '갱신은 어떻게 추가하나요?', hi: 'रिन्यूअल कैसे जोड़ूं?', ms: 'Bagaimana saya menambah pembaharuan?',
+};
+
+const index = {} as Record<string, AnswerIndex>;
 beforeAll(() => {
   // The docs as they are built for the site; "Ask" reads what that build writes.
   const out = mkdtempSync(join(tmpdir(), 'curahold-docs-'));
   execFileSync(process.execPath, ['--import', 'tsx', 'scripts/build-docs.ts', out, '--relative'], { stdio: 'ignore' });
-  for (const lang of ['en', 'tr'] as const) index[lang] = prepare(JSON.parse(readFileSync(join(out, lang, 'answers.json'), 'utf8')));
+  for (const lang of Object.keys(RENEWAL)) index[lang] = prepare(JSON.parse(readFileSync(join(out, lang, 'answers.json'), 'utf8')));
 }, 60_000);
+
+describe('the same question in every language', () => {
+  it.each(Object.entries(RENEWAL))('%s: adding a renewal is answered, sure of it, from the customers guide', (lang, q) => {
+    const a = ask(index[lang], q);
+    expect(a.confident, q).toBe(true);
+    expect(a.found[0].section.u, q).toBe(`/docs/${lang}/customers/`);
+  });
+  it('answers an English question in another language with that language’s own section', () => {
+    for (const lang of ['ja', 'ar', 'tr', 'hi']) {
+      const a = askAcross(index[lang], index.en, 'How do I add a renewal?');
+      expect(a.confident, lang).toBe(true);
+      expect(a.found[0].section.u, lang).toBe(`/docs/${lang}/customers/`);
+      expect(a.found.every((f) => f.section.u.startsWith(`/docs/${lang}/`)), lang).toBe(true);
+    }
+    // A question in the reader's own language is asked of their own docs, as before.
+    expect(askAcross(index.ja, index.en, RENEWAL.ja).found[0].section).toBe(ask(index.ja, RENEWAL.ja).found[0].section);
+  });
+  it('does not pass off a three-letter guess as the answer (a poem is not "service")', () => {
+    expect(ask(index.he, 'כתוב לי שיר על הים.').confident).toBe(false);
+  });
+});
 
 const pageOf = (u: string) => u.split('/')[3];
 
