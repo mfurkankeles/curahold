@@ -8,10 +8,11 @@
 //   - a Google Workspace style SMTP relay (EHLO, STARTTLS, AUTH PLAIN, its 4xx/5xx replies) for product mail;
 //   - Zapier and Make: REST-hook subscribe/unsubscribe, signed deliveries, 410 Gone, receivers that are down, and
 //     their "send a webhook" steps into Curahold's incoming addresses (token and signed), with retries.
-// Each run prints one JSON line ([own-lifecycle]) with every step's machine time; the human minutes and clicks in
+// With OWN_TIMINGS=<file> every step's machine time is written there as JSON (the console stays quiet in tests); the human minutes and clicks in
 // the report come from the persona model stated there. Security rules get their own explicit checks below.
 import { createHash } from 'node:crypto';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { writeFileSync } from 'node:fs';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { deliverWebhooks } from '../api/src/lib/webhooks';
 import { curaholdSignature } from '../api/src/lib/inboundHooks';
 import { SmtpRelayEmail, mailProvider, relayOptions, type SmtpSocket } from '../api/src/lib/smtpRelay';
@@ -65,6 +66,10 @@ let lena: Client;
 let sofia: Client;
 const at = (slug: string, path: string) => `https://${slug}.${BASE}${path}`;
 const cookieOf = (res: Response) => /app_session=([^;]*)/.exec(res.headers.get('set-cookie') ?? '')?.[1] ?? '';
+
+afterAll(() => {
+  if (process.env.OWN_TIMINGS) writeFileSync(process.env.OWN_TIMINGS, JSON.stringify(results, null, 1));
+});
 
 beforeAll(async () => {
   env = await setup();
@@ -909,6 +914,5 @@ describe('Zapier and Make: automations out of Curahold and into it', () => {
       return want(paused.status === 404 && other.status === 404 && gone.status === 404, [paused.status, other.status, gone.status]);
     });
     expect(r.failed()).toEqual([]);
-    console.log(`[own-lifecycle] ${JSON.stringify(results)}`);
   });
 });
