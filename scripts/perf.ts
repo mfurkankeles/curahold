@@ -74,17 +74,20 @@ if (!keep) {
       [org, teams],
     );
     // A board for every team, and ten for the whole company.
-    const [{ columns }] = await sql.unsafe(`select columns from boards where id = $1`, [big.boards.csBoard]);
+    // Every board belongs to a department (0120, not null): these take the customer-success board's, as its columns.
+    const [{ columns, department_id: dept }] = await sql.unsafe(`select columns, department_id from boards where id = $1`, [big.boards.csBoard]);
     await sql.unsafe(
-      `insert into boards (org_id, team_id, name, visibility, columns, created_by, created_at)
-       select $1, tm.id, 'Pano ' || tm.n, 'team', $2::jsonb, (select lead_id from teams where id = tm.id), now() - interval '2 years' from tm`,
-      [org, columns as any],
+      `insert into boards (org_id, team_id, name, visibility, columns, created_by, created_at, department_id)
+       select $1, tm.id, 'Pano ' || tm.n, 'team', $2::jsonb, (select lead_id from teams where id = tm.id), now() - interval '2 years', $3 from tm`,
+      [org, columns as any, dept],
     );
     await sql.unsafe(
-      `insert into boards (org_id, name, visibility, columns, created_by, created_at)
-       select $1, 'Şirket panosu ' || g, 'org', $2::jsonb, (select id from u where n = g), now() - interval '2 years' from generate_series(1, 10) g`,
-      [org, columns as any],
+      `insert into boards (org_id, name, visibility, columns, created_by, created_at, department_id)
+       select $1, 'Şirket panosu ' || g, 'org', $2::jsonb, (select id from u where n = g), now() - interval '2 years', $3 from generate_series(1, 10) g`,
+      [org, columns as any, dept],
     );
+    // Department walls (0120): a person sees a department's boards only as its member, so everyone made here joins it.
+    await sql.unsafe(`insert into department_members (org_id, department_id, user_id) select $1, $2, u.id from u on conflict do nothing`, [org, dept]);
     await sql.unsafe(`create temp table b on commit drop as select id, (row_number() over (order by created_at, name)) - 1 as n from boards where org_id = $1 and visibility <> 'private'`, [org]);
     const [{ boards }] = await sql.unsafe(`select count(*)::int as boards from b`);
 
