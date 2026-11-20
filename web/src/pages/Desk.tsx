@@ -688,7 +688,7 @@ function Console({ me, refreshCounts, onOut, onLocale }: { me: Me; refreshCounts
         {owner && where.section === 'trials' && <TrialsSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'requests' && <RequestsSection beat={beat} failed={failed} open={where.q ?? null} go={ownerGo} />}
         {owner && where.section === 'approvals' && <ApprovalsSection beat={beat} failed={failed} go={ownerGo} />}
-        {owner && where.section === 'plan' && <PlanSection beat={beat} failed={failed} />}
+        {owner && where.section === 'plan' && <PlanSection beat={beat} failed={failed} view={where.q ?? null} go={ownerGo} />}
         {owner && where.section === 'checklist' && <ChecklistSection beat={beat} failed={failed} />}
         {owner && where.section === 'supportview' && <SupportOverviewSection beat={beat} failed={failed} go={ownerGo} />}
         {owner && where.section === 'system' && <SystemSection beat={beat} failed={failed} go={ownerGo} />}

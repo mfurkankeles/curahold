@@ -8,67 +8,31 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CHECKLIST_AREAS, CHECKLIST_PRIORITIES, type ChecklistEntry } from '../../../shared/src/checklist';
 import { LOCALE_INFO, normalizeLocale } from '../../../shared/src/i18n';
-import { ownerWord, type OwnerKey } from '../../../shared/src/i18n/owner';
+import type { OwnerKey } from '../../../shared/src/i18n/owner';
 import type { Approval, Pause, Seat } from '../../../shared/src/office';
 import type { OwnerActivity, OwnerBarData, OwnerChecklist, OwnerOverview, OwnerPlan, OwnerRevenue, OwnerSupport, OwnerSystem, OwnerTrial, Pace, PlanMetric } from '../../../shared/src/ownerConsole';
 import { CONSENT_REGIONS, LAW_NAME, type ConsentRegion } from '../../../shared/src/trialForm';
 import { TRIAL_DEPARTMENTS, type TrialDepartment, type TrialRequestDetail, type TrialRequestRow } from '../../../shared/src/trialRequest';
 import { DateField } from '../components/DateField';
-import { EmptyState, LoadError, SkeletonCards, SkeletonRows } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
 import { Icon, type IconName } from '../components/icons';
 import { formatDate, formatMoney, formatNumber, formatPercent } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { relativeTime } from '../lib/time';
 import { typingIn } from '../lib/undo';
 import { ConsoleChart, periodOf } from './ConsoleChart';
+import { api, Bar, Loading, OwnerError, useData, useOwnerWords } from './owner/shared';
+import { InvestorSideView } from './owner/PlanInvestors';
+import { SummaryView } from './owner/PlanSummary';
+import { MILESTONE_METRICS } from '../../../shared/src/ownerPlan';
+
+/** The owner's words hook, kept here too for the screens that import it from this file (Desk.tsx). */
+export { useOwnerWords };
 import '../surfaces/owner.css';
 
 export type OwnerSection = 'today' | 'revenue' | 'trials' | 'requests' | 'approvals' | 'plan' | 'checklist' | 'supportview' | 'system' | 'activity';
 export interface OwnerGo {
   (to: { section: OwnerSection | 'customers' | 'support'; c?: string | null; r?: string | null; q?: string | null }): void;
-}
-
-class OwnerError extends Error {
-  constructor(readonly status: number, readonly body: unknown) {
-    super(String(status));
-  }
-}
-async function api<T>(method: string, path: string, body?: unknown, keepalive = false): Promise<T> {
-  const res = await fetch(`/api/desk${path}`, { method, keepalive, headers: { 'x-curahold-desk': '1', ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body) });
-  const json = await res.json().catch(() => null);
-  if (!res.ok) throw new OwnerError(res.status, json);
-  return json as T;
-}
-
-/** The owner's words in the console's language (Turkish or English). */
-export function useOwnerWords() {
-  const { locale } = useI18n();
-  const l = normalizeLocale(locale);
-  const o = useCallback((k: OwnerKey, vars?: Record<string, string | number>) => ownerWord(l, k, vars), [l]);
-  return { o, locale: l };
-}
-
-function useData<T>(path: string, beat: number, failed: (e: unknown) => void) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let live = true;
-    api<T>('GET', path)
-      .then((d) => {
-        if (!live) return;
-        setData(d);
-        setError(false);
-      })
-      .catch((e) => {
-        failed(e);
-        if (live) setError(true);
-      });
-    return () => {
-      live = false;
-    };
-  }, [path, beat, attempt, failed]);
-  return { data, error, reload: () => setAttempt((a) => a + 1), setData };
 }
 
 function Page({ title, sub, tools, children, wide }: { title: string; sub?: ReactNode; tools?: ReactNode; children: ReactNode; wide?: boolean }) {
@@ -85,13 +49,6 @@ function Page({ title, sub, tools, children, wide }: { title: string; sub?: Reac
     </div>
   );
 }
-function Loading<T>({ data, error, reload, children, cards }: { data: T | null; error: boolean; reload: () => void; children: (d: T) => ReactNode; cards?: boolean }) {
-  const { t } = useI18n();
-  if (data) return <>{children(data)}</>;
-  if (error) return <LoadError onRetry={reload} />;
-  return cards ? <SkeletonCards count={6} label={t('common.loading')} /> : <SkeletonRows rows={8} label={t('common.loading')} />;
-}
-
 /** A figure's change on the period before: the period's words, and whether a rise is good news. */
 interface Change {
   now: number;
@@ -652,14 +609,6 @@ function DecideBand({ d, go, beat, failed }: { d: OwnerOverview; go: OwnerGo; be
     </section>
   );
 }
-function Bar({ value, tone }: { value: number; tone?: Pace }) {
-  return (
-    <span className="ocprogress" data-pace={tone} aria-hidden="true">
-      <i style={{ '--w': `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%` } as React.CSSProperties} />
-    </span>
-  );
-}
-
 // ================================================================ revenue
 
 export function RevenueSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
@@ -1709,7 +1658,44 @@ const nextMonths = (n: number) => {
 };
 
 /** The owner console's Plan & targets. */
-export function PlanSection({ beat, failed }: { beat: number; failed: (e: unknown) => void }) {
+const PLAN_VIEWS = ['targets', 'investors', 'summary'] as const;
+type PlanView = (typeof PLAN_VIEWS)[number];
+const PLAN_VIEW_ICON: Record<PlanView, IconName> = { targets: 'target', investors: 'coins', summary: 'mail' };
+
+/**
+ * Plan & targets in three views, by address (/plan, /plan?q=investors, /plan?q=summary): monthly targets and the
+ * owner's tasks; budget, milestones, fundraising windows and investors (owner/PlanInvestors.tsx); the Monday CEO
+ * summary and the phones for alerts (owner/PlanSummary.tsx).
+ */
+export function PlanSection({ beat, failed, view, go }: { beat: number; failed: (e: unknown) => void; view?: string | null; go: OwnerGo }) {
+  const { o } = useOwnerWords();
+  const v: PlanView = view === 'investors' || view === 'summary' ? view : 'targets';
+  const tabs = (
+    <div className="ocseg ocplantabs" role="group" aria-label={o('plan.views')}>
+      {PLAN_VIEWS.map((k) => (
+        <button key={k} type="button" aria-pressed={v === k} onClick={() => go({ section: 'plan', q: k === 'targets' ? null : k })}>
+          <Icon name={PLAN_VIEW_ICON[k]} size={14} />
+          {o(`plan.view.${k}` as OwnerKey)}
+        </button>
+      ))}
+    </div>
+  );
+  if (v === 'investors')
+    return (
+      <Page wide title={o('nav.plan')} sub={o('plan.view.investorsSub')} tools={tabs}>
+        <InvestorSideView beat={beat} failed={failed} />
+      </Page>
+    );
+  if (v === 'summary')
+    return (
+      <Page wide title={o('nav.plan')} sub={o('plan.view.summarySub')} tools={tabs}>
+        <SummaryView beat={beat} failed={failed} />
+      </Page>
+    );
+  return <PlanTargets beat={beat} failed={failed} tabs={tabs} />;
+}
+
+function PlanTargets({ beat, failed, tabs }: { beat: number; failed: (e: unknown) => void; tabs: ReactNode }) {
   const { o, locale } = useOwnerWords();
   const { data, error, reload, setData } = useData<OwnerPlan>('/owner/plan', beat, failed);
   const fmt = usePlanFormat();
@@ -1725,7 +1711,7 @@ export function PlanSection({ beat, failed }: { beat: number; failed: (e: unknow
     e.preventDefault();
     if (!data) return;
     try {
-      const targets = data.rows.map((r) => ({ metric: r.metric, period, target: valueOf(r.metric).trim() === '' ? null : Number(valueOf(r.metric)) }));
+      const targets = [...data.rows.map((r) => r.metric), ...MILESTONE_METRICS].map((metric) => ({ metric, period, target: valueOf(metric).trim() === '' ? null : Number(valueOf(metric)) }));
       setData(await api<OwnerPlan>('PUT', '/owner/plan/targets', { targets }));
       setEdit({});
       setSaved(true);
@@ -1753,7 +1739,7 @@ export function PlanSection({ beat, failed }: { beat: number; failed: (e: unknow
     }
   };
   return (
-    <Page wide title={o('nav.plan')} sub={data ? o('plan.sub', { month: periodOf(data.period, locale), pct: formatPercent(data.elapsed * 100, locale) }) : undefined}>
+    <Page wide title={o('nav.plan')} sub={data ? o('plan.sub', { month: periodOf(data.period, locale), pct: formatPercent(data.elapsed * 100, locale) }) : undefined} tools={tabs}>
       <Loading data={data} error={error} reload={reload}>
         {(d) => {
           const isNow = period === d.period;
@@ -1814,10 +1800,34 @@ export function PlanSection({ beat, failed }: { beat: number; failed: (e: unknow
                         ) : null}
                       </tr>
                     ))}
+                    {MILESTONE_METRICS.map((metric) => (
+                      <tr key={metric} data-milestone="">
+                        <th scope="row">
+                          <Icon name="flag" size={12} /> {o(`metric.${metric}` as OwnerKey)}
+                        </th>
+                        <td className="num">
+                          <input
+                            className="input input--num"
+                            type="number"
+                            min={0}
+                            step="any"
+                            aria-label={o('plan.targetFor', { metric: o(`metric.${metric}` as OwnerKey) })}
+                            value={valueOf(metric)}
+                            onChange={(e) => (setEdit({ ...typed, [`${period}:${metric}`]: e.target.value }), setSaved(false))}
+                          />
+                        </td>
+                        {isNow ? (
+                          <td colSpan={3} className="oc__muted">
+                            {o('plan.milestoneNote')}
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
                 <div className="ocbuttons">
                   <button type="submit" className="btn btn--primary btn--small">
+                    <Icon name="check" size={14} />
                     {saved ? o('common.saved') : o('plan.save')}
                   </button>
                   <span className="oc__muted">{o('plan.paceNote')}</span>
@@ -2180,6 +2190,15 @@ const ACTION_WORD: Record<string, OwnerKey> = {
   'trial.rejected': 'act.trialRejected',
   'trial.contacted': 'act.trialContacted',
   'plan.targets': 'act.planTargets',
+  'plan.import': 'act.planImport',
+  'plan.budget': 'act.planBudget',
+  'plan.window': 'act.planWindow',
+  'plan.investor': 'act.planInvestor',
+  'plan.investor.removed': 'act.planInvestorRemoved',
+  'plan.investor.restored': 'act.planInvestorRestored',
+  'summary.settings': 'act.summarySettings',
+  'push.device.added': 'act.pushAdded',
+  'push.device.removed': 'act.pushRemoved',
   'checklist.done': 'act.checklistDone',
   'checklist.skipped': 'act.checklistSkipped',
   'checklist.todo': 'act.checklistTodo',
@@ -2193,6 +2212,9 @@ const ACTION_WORD: Record<string, OwnerKey> = {
   'seat.handover': 'act.seatHandover',
   'meeting.call': 'act.meetingCall',
 };
+
+/** The words for a desk log action; a finer action (plan.investor.meeting) falls back to its family (plan.investor). */
+const actionWord = (action: string): OwnerKey | undefined => ACTION_WORD[action] ?? ACTION_WORD[action.split('.').slice(0, 2).join('.')];
 
 /** The owner console's log of what desk staff did. */
 export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
@@ -2240,7 +2262,7 @@ export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e
                     <tr key={i}>
                       <td>{formatDate(a.at, locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
                       <td>{a.who}</td>
-                      <td>{ACTION_WORD[a.action] ? o(ACTION_WORD[a.action]) : a.action}</td>
+                      <td>{actionWord(a.action) ? o(actionWord(a.action)!) : a.action}</td>
                       <td>
                         {a.ref && /^CH-/.test(a.ref) ? (
                           <button type="button" className="oclink" onClick={() => go({ section: 'support', r: a.ref })}>

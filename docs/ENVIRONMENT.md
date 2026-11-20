@@ -118,6 +118,8 @@ customer is the controller of where it is.
 | `TEAM_SCHEDULER` | `off` stops the team's 10-minute clock (cron `*/10 * * * *`, api/src/team/schedule.ts); chats and "Şimdi başlat" keep working | No | `auto`: runs only when a key is set; idle (no wake, no model call) when no cadence is due and nothing is queued. |
 | `OPS_ALERTS` | `off` stops the error-rate and latency alerts (lib/ops.ts) | No | On. |
 | `OPS_ALERT_EMAIL` | `off` keeps ops alerts in the owner console only (no e-mail to `PLATFORM_OWNER`) | No | On. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` **(S)** | Web Push to the owner's phones (urgent help requests, ops alerts, the Monday summary; api/src/lib/webpush.ts). Make the pair once with `npx tsx scripts/plan/vapid-keys.ts`; the private key is a secret. Free (the browsers' push services) | Both or neither | Unset: the console offers no phones; e-mail still goes. A new pair means adding every phone again. |
+| `VAPID_SUBJECT` | The contact the push services may write to: `mailto:…` or an `https://` address | No | `mailto:` + `PLATFORM_OWNER`. |
 | `TEAM_MODEL_DEEP`, `TEAM_MODEL_STANDARD`, `TEAM_MODEL_LIGHT`, `TEAM_JUDGE_MODEL` | Model per profile | No | api/src/team/config.ts. |
 
 ## 4. Sign-in providers (each optional)

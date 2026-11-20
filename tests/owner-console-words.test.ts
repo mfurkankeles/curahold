@@ -1,6 +1,7 @@
 // The owner console's own words (shared/src/i18n/owner.ts): Turkish and
 // English only, by the owner's choice; both complete and in step, every key
-// the screens name exists, and every checklist item and dynamic family has its words.
+// the screens name exists (the split-out owner/ files too), and every checklist item and dynamic family —
+// the plan's views, milestones, fundraising statuses, investor stages and kinds, ops alert rules — has its words.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -8,6 +9,8 @@ import { CHECKLIST, CHECKLIST_AREAS, CHECKLIST_OWNERS, CHECKLIST_PRIORITIES } fr
 import { OWNER_EN, OWNER_TR, ownerWord } from '../shared/src/i18n/owner';
 import { APPROVAL_STATUSES, PRIORITIES3, RISKS } from '../shared/src/office';
 import { PLAN_METRICS } from '../shared/src/ownerConsole';
+import { INVESTOR_KINDS, INVESTOR_STAGES, MILESTONE_METRICS, WINDOW_STATUSES } from '../shared/src/ownerPlan';
+import type { OpsRule } from '../api/src/lib/ops';
 import { TRIAL_DEPARTMENTS, TRIAL_REQUEST_STATUSES } from '../shared/src/trialRequest';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -25,7 +28,7 @@ describe('owner console words', () => {
 
   it('every key the screens name exists', () => {
     const missing: string[] = [];
-    for (const f of ['web/src/pages/OwnerConsole.tsx', 'web/src/pages/Desk.tsx']) {
+    for (const f of ['web/src/pages/OwnerConsole.tsx', 'web/src/pages/Desk.tsx', 'web/src/pages/owner/PlanInvestors.tsx', 'web/src/pages/owner/PlanSummary.tsx', 'web/src/pages/owner/shared.tsx']) {
       const src = readFileSync(join(ROOT, f), 'utf8');
       for (const m of src.matchAll(/\bo\('([a-zA-Z0-9_.-]+)'/g)) if (!(m[1] in OWNER_EN)) missing.push(`${f}: ${m[1]}`);
       for (const m of src.matchAll(/'(act\.[a-zA-Z]+)'/g)) if (!(m[1] in OWNER_EN)) missing.push(`${f}: ${m[1]}`);
@@ -50,6 +53,12 @@ describe('owner console words', () => {
       ...['paying', 'trial', 'free', 'requested', 'churned'].map((s) => `states.${s}`),
       ...['all', 'trial', 'expired', 'free'].map((s) => `trials.${s}`),
       ...['overdue', 'today', 'week', 'month'].map((s) => `plan.when.${s}`),
+      ...['targets', 'investors', 'summary'].map((s) => `plan.view.${s}`),
+      ...MILESTONE_METRICS.flatMap((m) => [`metric.${m}`, `milestones.def.${m}`]),
+      ...WINDOW_STATUSES.map((s) => `fund.status.${s}`),
+      ...INVESTOR_STAGES.map((s) => `stage.${s}`),
+      ...INVESTOR_KINDS.map((s) => `kind.${s}`),
+      ...(['errors', 'latency', 'error-log', 'deliveries'] satisfies OpsRule[]).map((r) => `ops.rule.${r}`),
     ];
     expect(want.filter((k) => !(k in OWNER_EN))).toEqual([]);
     // Every item says what to do, in at least one step.
