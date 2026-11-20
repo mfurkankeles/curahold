@@ -1,5 +1,6 @@
 // Thin fetch wrapper. Every call carries this device's id (the device limit
 // and request-forgery check rely on it) and the chosen language.
+import { trackChange } from './busy';
 import type { ApiError } from '../../../shared/src/model';
 import { normalizeLocale, translate } from '../../../shared/src/i18n';
 import { getDeviceId } from './device';
@@ -127,7 +128,8 @@ export function api<T = any>(method: string, path: string, body?: unknown): Prom
   const same = change && !(body instanceof FormData) ? `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}` : null;
   const first = same ? onTheWay.get(same) : undefined;
   if (first) return first as Promise<T>;
-  const sent = send<T>(method, path, body, change ? newKey() : null);
+  // A change gets the ring and tick on the button that sent it (lib/busy.ts), whatever screen it is on.
+  const sent = change ? trackChange(send<T>(method, path, body, newKey())) : send<T>(method, path, body, null);
   if (same) {
     onTheWay.set(same, sent);
     const forget = () => void onTheWay.delete(same);
