@@ -64,10 +64,10 @@ Her grafikte **Tablo olarak göster** vardır: aynı rakamları tablo olarak gö
 
 ## Paneller
 
-Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfandaki sekmeler). **İçgörü → Paneller** altında:
+Panel, grafik ve listelerden oluşan bir sayfadır (ana sayfanızdaki sekmeler). **İçgörü → Paneller** altında:
 
-- **Hazır paneller dolu gelir:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı ve Yönetici özeti, Paneller ilk açıldığında kendi verinle çizilmiş olarak oradadır. Önce bir şey eklemek gerekmez.
-- **Paneller bir panelle açılır:** en son baktığınla. Üstteki adlar tek tıkla birinden ötekine geçirir.
+- **Hazır paneller dolu gelir:** Satış hunisi, Yenileme ve risk, Müşteri sağlığı, Ekip performansı, Müşteri teması, İş akışı ve Yönetici özeti, Paneller ilk açıldığında kendi verinizle çizilmiş olarak oradadır. Önce bir şey eklemek gerekmez.
+- **Paneller bir panelle açılır:** en son baktığınızla. Üstteki adlar tek tıkla birinden ötekine geçirir.
 - **Hepsi değiştirilebilir ve silinebilir:** **Paneli düzenle** kartlarını değiştirir; **Sil** çöp kutusuna gönderir, 30 gün içinde geri alınır. Sildiğiniz hazır panel kendiliğinden geri gelmez: **Panel ekle**, artık sizde olmayanları listeler.
 - **Boş panel:** **Panel ekle** altında; kartları kendiniz seçersiniz. “Rapor” kartı, kaydettiğiniz ya da hazır bir raporu çizer; gösterimini karta özel değiştirebilirsiniz.
 - Bir raporu açıkken **Panele ekle** ile doğrudan bir panele koyabilirsiniz (rapor şirketle paylaşılır ki paneli açan herkes kartı görsün).

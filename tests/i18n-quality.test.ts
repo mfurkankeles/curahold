@@ -267,6 +267,14 @@ describe('Turkish register', () => {
     // Two nouns whose genitive looks the same are let through.
     new RegExp(`(?<!${L})(?!(betiğin|koltuğun)(?!${L}))${L}{2,}(dığ|diğ|duğ|düğ|tığ|tiğ|tuğ|tüğ|eceğ|acağ)[ıiuü]n(?!${L})`, 'i'),
     // A sentence or clause that ends in a bare imperative ("… tekrar dene.", "… giriş yap;"): sentences say "deneyin".
+    // "You have/need" on a "your" noun: "ihtiyacın var", "değişikliklerin var" (sentences say "ihtiyacınız var").
+    // Nouns that end in -un/-in themselves ("sorun yok", "sütun yok") are let through.
+    new RegExp(`(?<!${L})(?!(sorun|sütun|tahmin|metin|ürün|oyun) )${L}{3,}[ıiuü]n (var|yok)(?!${L})`, 'i'),
+    // "with your …": "kimlik sağlayıcınla", "verinle", "cümlelerinle" (sentences say "verinizle").
+    // "bununla", "kiminle", "sizinle" and nouns on -un/-in ("sorunla", "metinle") are let through.
+    new RegExp(`(?<!${L})(?!(şunun|bunun|onun|kimin|sizin|bizim|sorun|sütun|tahmin|metin|ürün|oyun)l[ae](?!${L}))${L}{3,}[ıiuü]n(la|le)(?!${L})`, 'i'),
+    // "yours": "senindir", "seninkiler".
+    new RegExp(`(?<!${L})senin${L}+`, 'i'),
     new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at|yap|güncelle|iptal et|başlat|gör|koy|yolla|düzelt|belirt|daralt|grupla|eşleştir|yerleştir|kaydır|vurgula|ilişkilendir|abone ol|yenile|seçip|oluştur)[.!?;](?=\\s|$)`, 'i'),
   ];
   it('no Turkish string says "sen"', () => {

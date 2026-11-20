@@ -12,7 +12,7 @@ summary: Neler yeni, neler değişti.
 
 - **Üç CRM daha: Bitrix24, Freshsales ve Zendesk Sell.** CRM'in içinde sizin oluşturduğunuz bir anahtarla bağlanırlar (giriş sayfası yok, onay beklemek yok) ve diğerleri gibi iki yönlü eşitlenirler: şirketler, kişiler ve anlaşmalar. Bkz. [Bağlantılar ve CRM](/docs/tr/connections/).
 - **Gün, hafta, ay ve yıl takvimi; ekip takvimi:** takvim artık toplantıları, aramaları, yenilemeleri ve iş değerlendirmelerini de gösterir; ekip arkadaşlarının takvimini görme yetkisi olan rol (yöneticiler ve ekip liderleri) tek bir kişinin ya da bütün bir ekibin takvimini açar.
-- **Paneller dolu gelir:** yedi hazır panel, Paneller'i ilk açtığında kendi verinle çizilmiş olarak oradadır; üstteki adlar birinden ötekine geçirir, hepsi silinebilir (ve çöp kutusundan geri alınabilir).
+- **Paneller dolu gelir:** yedi hazır panel, Paneller'i ilk açtığınızda kendi verinizle çizilmiş olarak oradadır; üstteki adlar birinden ötekine geçirir, hepsi silinebilir (ve çöp kutusundan geri alınabilir).
 - **Her yerde geri dönüş:** başka bir ekrandan açtığınız ekran, başlığının üstünde nereden geldiğini gösterir; tek tıkla oraya dönersiniz. Yenilemeler, iş değerlendirmeleri ve ürünlerin kendi başlığı ve menüde kendi satırı var.
 - **CuraAI köşede:** belgelerden cevap veren yardımcı artık her ekranın sağ altında durur ve konuşmayı saklar.
 - **Çöp kutusu:** sildiğiniz şey (müşteri, kayıt, görev, zaman çizelgesi girişi, sayfa, kayıtlı rapor, otomasyon) 30 gün durur ve onunla birlikte gidenlerle beraber eskisi gibi geri alınabilir. Silmenin hemen ardından bildirimde Geri al çıkar; sonrası için menünüz → Çöp kutusu. Ayrıntı: *Çöp kutusu*.

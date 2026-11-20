@@ -16,10 +16,10 @@ Curahold yaygın CRM'lere, tablolara ve destek araçlarına kendisi bağlanır (
 | Destek aracından kayıtlar | [`PUT /tickets`](#destek-kayitlari-iceri) |
 | Başka yerde kaydedilmiş arama, e-posta ya da toplantılar | [`POST /accounts/{id}/activities`](#etkinlikler-iceri) |
 | Başka bir sistemin açtığı görevler | `Idempotency-Key` ile `POST /tasks` |
-| Curahold'daki değişikliklerin sistemine gitmesi | [Webhook'lar](#degisiklikler-disari) |
+| Curahold'daki değişikliklerin sisteminize gitmesi | [Webhook'lar](#degisiklikler-disari) |
 | Hiç kod yazmadan | [Zapier, Make ve tablolar](#kod-yazmadan) |
 
-## Müşteriler içeri, kendi kimliğinle
+## Müşteriler içeri, kendi kimliğinizle
 
 `POST /accounts/import` satırları ve sizin sütun adlarınızdan Curahold alanlarına bir eşlemeyi alır. **Kendi** kimliğinizin durduğu sütunu `externalId` olarak gösterin: Curahold'un daha önce gördüğü bir kimlik o müşteriyi günceller, yeni bir kimlik müşteri ekler. Aynı satırları yeniden göndermek hiçbir şeyi değiştirmez; betik her saat çalışabilir.
 
