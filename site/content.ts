@@ -1577,7 +1577,7 @@ export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
     lead: 'Marevo’nun bir çeyreğini izleyin: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
     steps: [
       { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. “Neden?” bağlantısını açın; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
-      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, finans ekipleri için bir kullanım raporu ister. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
+      { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, finans ekipleri için bir kullanım raporu ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
       { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
       { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
       { title: 'Marevo onu kendi portalında görür', text: 'Selin e-postasındaki bağlantıyla girer. Görev tamamlandı olarak görünür, altında Zeynep’in yanıtı durur. Kimsenin durum e-postası yazması gerekmez.' },
