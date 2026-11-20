@@ -7,8 +7,9 @@ import ar from './ar';
 import fa from './fa';
 import he from './he';
 import zhHans from './zh-Hans';
+import zhHant from './zh-Hant';
 // 
 export type { NoticeLocale, NoticeRow, NoticeText } from './types';
 
 /** The notice-table words per language (draft translations; the English text prevails). */
-export const NOTICE_ROWS: Partial<Record<NoticeLocale, NoticeText>> = { ar, he, fa, 'zh-Hans': zhHans };
+export const NOTICE_ROWS: Partial<Record<NoticeLocale, NoticeText>> = { ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant };
