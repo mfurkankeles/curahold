@@ -8,7 +8,7 @@ summary: Ücretsiz deneme, Team ve Business planları, kullanıcı sayısı, fat
 
 ## Ücretsiz deneme
 
-Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form açar (kodla doğrulanan iş e-postası, şirketin, istediğin ekipler ve koltuk sayısı). Her isteği kendimiz okur, genelde bir iş günü içinde döneriz. Onaylanınca şirketin seçtiğin ekiplerle açılır ve ilk yöneticiye giriş bağlantısı gider.
+Deneme bir istekle başlar: web sitesindeki **Ücretsiz dene** kısa bir form açar (kodla doğrulanan iş e-postası, şirketiniz, istediğiniz ekipler ve koltuk sayısı). Her isteği kendimiz okur, genelde bir iş günü içinde döneriz. Onaylanınca şirketin seçtiğiniz ekiplerle açılır ve ilk yöneticiye giriş bağlantısı gider.
 
 - **Süre:** varsayılan üç ay; her şey açık, kart gerekmez. Süre onay sırasında belirlenir, daha büyük bir pilot daha uzun olabilir.
 - **Koltuklar:** deneme, onayda belirlenen tam koltukları içerir (genelde en fazla 25). İzleyici koltukları ücretsizdir ve sayılmaz.
@@ -36,11 +36,11 @@ Bir yönetici Ayarlar → **Abonelik**’i açar, aylık ya da yıllığı seçe
 
 ## Kullanıcı sayısı
 
-Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir davet faturalanmaz. Birini eklersen ek kullanıcı dönemin kalanı için faturalanır; birini çıkarırsan sonraki fatura düşer. Kimsenin kullanıcı sayısını elle değiştirmesi gerekmez.
+Fatura, tam kullanıcıyla **katılmış** kişileri izler: kabul edilmemiş bir davet faturalanmaz. Birini eklerseniz ek kullanıcı dönemin kalanı için faturalanır; birini çıkarırsanız sonraki fatura düşer. Kimsenin kullanıcı sayısını elle değiştirmesi gerekmez.
 
 ## Faturalar, ödeme yöntemi, iptal
 
-Abonelik sayfasındaki **Faturalar, ödeme ve iptal** Paddle’ın müşteri portalını, oturum açılmış olarak açar: faturaları indir, kartı değiştir, iptal et. İptal edilen plan, ödenmiş dönemin sonuna kadar çalışmaya devam eder.
+Abonelik sayfasındaki **Faturalar, ödeme ve iptal** Paddle’ın müşteri portalını, oturum açılmış olarak açar: faturaları indirin, kartı değiştirin, iptal edin. İptal edilen plan, ödenmiş dönemin sonuna kadar çalışmaya devam eder.
 
 Team ile Business ya da aylık ile yıllık arasında geçiş aynı sayfadadır; fark dönemin kalanı için faturalanır (ya da iade edilir).
 

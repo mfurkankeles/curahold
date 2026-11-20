@@ -2,31 +2,31 @@
 title: Stripe (yalnızca okunur)
 section: help
 order: 8.27
-summary: Stripe'ı kısıtlı bir anahtarla bağla: her müşterinin sayfasında açık ve vadesi geçmiş faturalar ve ödemeler.
+summary: Stripe'ı kısıtlı bir anahtarla bağlayın: her müşterinin sayfasında açık ve vadesi geçmiş faturalar ve ödemeler.
 ---
 # Stripe (yalnızca okunur)
 
-Stripe'tan müşteriler, faturalar (vade tarihi ve kalan tutarıyla) ve ödemeler. Curahold Stripe'a hiçbir şey yazmaz: verdiğin anahtar yalnızca okuyabilir.
+Stripe'tan müşteriler, faturalar (vade tarihi ve kalan tutarıyla) ve ödemeler. Curahold Stripe'a hiçbir şey yazmaz: verdiğiniz anahtar yalnızca okuyabilir.
 
 ## Curahold'da {#connect}
 
-1. **Ayarlar → CRM ve tablolar**'nı aç, **Muhasebe programları**'nı bul ve **Stripe bağla**'ya tıkla.
+1. **Ayarlar → CRM ve tablolar**'ı açın, **Muhasebe programları**'nı bulun ve **Stripe bağla**'ya tıklayın.
    ![Stripe kutucuğu, işaretli](img/b19-stripe-tile.webp)
 
-Kısıtlı anahtarı **Kısıtlı anahtar**'a yapıştır ve **Kontrol et ve bağla**'a tıkla. Tam yetkili gizli anahtar (`sk_…`) bilerek reddedilir. Sonra **Başlat**'a tıkla ve eşleşemeyen müşterileri **Eşleştirme** sekmesinde kontrol et.
+Kısıtlı anahtarı **Kısıtlı anahtar**'a yapıştırın ve **Kontrol et ve bağla**'ya tıklayın. Tam yetkili gizli anahtar (`sk_…`) bilerek reddedilir. Sonra **Başlat**'a tıklayın ve eşleşemeyen müşterileri **Eşleştirme** sekmesinde kontrol edin.
 
 ## Stripe'ta
 
-1. **Developers → API keys**'i aç ve **Create restricted key**'e tıkla.
-2. Adını `Curahold` koy.
-3. **Customers**, **Invoices** ve **Events**'i **Read** yap. Diğer her şeyi **None** bırak.
-4. **Create key**'e tıkla, ikinci adımınla onayla ve anahtarı kopyala. Şöyle başlar:
+1. **Developers → API keys**'i açın ve **Create restricted key**'e tıklayın.
+2. Adını `Curahold` koyun.
+3. **Customers**, **Invoices** ve **Events**'i **Read** yapın. Diğer her şeyi **None** bırakın.
+4. **Create key**'e tıklayın, ikinci adımınızla onaylayın ve anahtarı kopyalayın. Şöyle başlar:
 
 ```text
 rk_live_
 ```
 
-Önce denemek için bir sandbox anahtarı (`rk_test_…`) kullan.
+Önce denemek için bir sandbox anahtarı (`rk_test_…`) kullanın.
 
 ## Sınırlar ve zamanlama
 
@@ -34,7 +34,7 @@ rk_live_
 
 ## Bir sorun olursa
 
-Yenilenmiş ya da silinmiş anahtar bağlantıyı **Bakılması gerek** olarak işaretler: yeni bir kısıtlı anahtar yap ve **Yeniden bağla** ile yapıştır. Bir izin eksikse bağlanma adımı onu söyler. **Kaldır** anahtarı siler; okunmuş rakamlar sen kaldırana kadar kalır.
+Yenilenmiş ya da silinmiş anahtar bağlantıyı **Bakılması gerek** olarak işaretler: yeni bir kısıtlı anahtar yapın ve **Yeniden bağla** ile yapıştırın. Bir izin eksikse bağlanma adımı onu söyler. **Kaldır** anahtarı siler; okunmuş rakamlar siz kaldırana kadar kalır.
 
 ## Ayrıca bakın
 

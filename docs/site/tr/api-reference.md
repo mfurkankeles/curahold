@@ -6,9 +6,9 @@ summary: Müşteriler, kayıtlar, görevler, yorumlar, arama ve ana sayfa uçlar
 ---
 # API rehberi
 
-Tüm uçlar `https://sirketin.curahold.com/api` altındadır, JSON alır ve JSON döndürür. Kimlik için [API anahtarı](/docs/tr/api-keys/) kullan.
+Tüm uçlar `https://sirketiniz.curahold.com/api` altındadır, JSON alır ve JSON döndürür. Kimlik için [API anahtarı](/docs/tr/api-keys/) kullanın.
 
-## Sen ve şirketin
+## Siz ve şirketiniz
 
 | Uç | Ne yapar |
 | --- | --- |
@@ -23,17 +23,17 @@ Tüm uçlar `https://sirketin.curahold.com/api` altındadır, JSON alır ve JSON
 | `GET /accounts` | Liste. `q` (ad), `owner` (`me` ya da kişi kimliği), `limit`, `offset` |
 | `GET /accounts/{id}` | Tek müşteri ve görevleri |
 | `POST /accounts` | Yeni müşteri: `name`, `ownerId`, `teamId`, `fields` |
-| `PATCH /accounts/{id}` | Değiştir: yalnızca gönderdiğin alanlar değişir |
+| `PATCH /accounts/{id}` | Değiştirin: yalnızca gönderdiğiniz alanlar değişir |
 
 ```bash
-curl -X POST https://sirketin.curahold.com/api/accounts \
+curl -X POST https://sirketiniz.curahold.com/api/accounts \
   -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"name":"Harborline Bank","fields":{"renewal_date":"2027-03-01","arr":126000,"health":"watch"}}'
 ```
 
-Alan anahtarlarını (`renewal_date`, `arr` …) `GET /me` yanıtındaki `org.accountFields` listesinde bulursun. Rolünün değiştiremediği bir alanı gönderirsen `403 field_locked` döner.
+Alan anahtarlarını (`renewal_date`, `arr` …) `GET /me` yanıtındaki `org.accountFields` listesinde bulursunuz. Rolünüzün değiştiremediği bir alanı gönderirseniz `403 field_locked` döner.
 
-## Kayıtlar (kişiler, fırsatlar, kendi türlerin)
+## Kayıtlar (kişiler, fırsatlar, kendi türleriniz)
 
 | Uç | Ne yapar |
 | --- | --- |
@@ -47,16 +47,16 @@ Alan anahtarlarını (`renewal_date`, `arr` …) `GET /me` yanıtındaki `org.ac
 
 | Uç | Ne yapar |
 | --- | --- |
-| `GET /boards` | Görebildiğin panolar ve sütunları |
+| `GET /boards` | Görebildiğiniz panolar ve sütunları |
 | `GET /tasks` | Görevler. `assignee=me`, `from` ve `to` (bitiş tarihi, `YYYY-MM-DD`) |
 | `GET /boards/{id}/tasks` | Bir panonun görevleri |
 | `GET /tasks/{id}` | Görev, alt görevler, yorumlar ve dosyalar |
 | `POST /tasks` | Yeni görev |
-| `PATCH /tasks/{id}` | Değiştir; `baseVersion` zorunlu |
+| `PATCH /tasks/{id}` | Değiştirin; `baseVersion` zorunlu |
 | `POST /tasks/{id}/comments` | Yorum: `body` |
 
 ```bash
-curl -X POST https://sirketin.curahold.com/api/tasks \
+curl -X POST https://sirketiniz.curahold.com/api/tasks \
   -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{"boardId":"…","title":"Yenileme teklifini gönder","dueDate":"2027-01-15","priority":"high","accountId":"…"}'
 ```
@@ -65,11 +65,11 @@ Görev alanları: `title`, `description`, `status` (sütun anahtarı), `assignee
 
 ### Aynı anda değişiklik
 
-`PATCH /tasks/{id}` isteğinde okuduğun görevin `version` değerini `baseVersion` olarak gönder. Görev bu arada değiştiyse `409` ve görevin güncel hâli döner; değişikliğini onun üzerine uygulayıp yeniden gönder.
+`PATCH /tasks/{id}` isteğinde okuduğunuz görevin `version` değerini `baseVersion` olarak gönderin. Görev bu arada değiştiyse `409` ve görevin güncel hâli döner; değişikliğinizi onun üzerine uygulayıp yeniden gönderin.
 
 ### Bir değişikliği yalnızca bir kez göndermek
 
-Bağlantı, isteğin ulaştıktan sonra ama yanıtı görmeden önce kopabilir. İşi iki kez yaptırmadan yeniden denemek için her `POST`, `PATCH`, `PUT` ve `DELETE` isteğine bir `Idempotency-Key` başlığı ekle: kendi belirlediğin, 8–200 karakterlik bir metin (UUID olabilir), her değişiklik için farklı.
+Bağlantı, isteğiniz ulaştıktan sonra ama yanıtı görmeden önce kopabilir. İşi iki kez yaptırmadan yeniden denemek için her `POST`, `PATCH`, `PUT` ve `DELETE` isteğine bir `Idempotency-Key` başlığı ekleyin: kendi belirlediğiniz, 8–200 karakterlik bir metin (UUID olabilir), her değişiklik için farklı.
 
 ```bash
 curl -X POST https://acme.curahold.com/api/tasks \
@@ -79,15 +79,15 @@ curl -X POST https://acme.curahold.com/api/tasks \
   -d '{"boardId":"…","title":"Yenileme teklifini gönder"}'
 ```
 
-Aynı isteği aynı anahtarla yeniden gönderirsen ilk yanıt `Idempotent-Replayed: true` başlığıyla geri gelir; hiçbir şey ikinci kez yapılmaz. Aynı anahtar farklı bir istekte `422` (`repeat_mismatch`) ile reddedilir. Anahtarlar yalnızca sana aittir ve iki gün saklanır.
+Aynı isteği aynı anahtarla yeniden gönderirseniz ilk yanıt `Idempotent-Replayed: true` başlığıyla geri gelir; hiçbir şey ikinci kez yapılmaz. Aynı anahtar farklı bir istekte `422` (`repeat_mismatch`) ile reddedilir. Anahtarlar yalnızca size aittir ve iki gün saklanır.
 
 ## Zaman çizelgesi ve sağlık skoru
 
 | Uç | Ne yapar |
 | --- | --- |
 | `GET /accounts/{id}/timeline` | Müşterinin zaman çizelgesi, yeniden eskiye. `before` (bir önceki yanıtın `next` değeri) ve `limit` |
-| `POST /accounts/{id}/activities` | Kayıt ekle: `kind` (`note`, `call`, `meeting`, `email`, iş değerlendirmesi için `review`), `body`, isteğe bağlı `happenedAt`, `contactIds`, `pinned` |
-| `PATCH /activities/{id}` | Değiştir (yazan kişi ya da müşterileri yöneten) |
+| `POST /accounts/{id}/activities` | Kayıt ekleyin: `kind` (`note`, `call`, `meeting`, `email`, iş değerlendirmesi için `review`), `body`, isteğe bağlı `happenedAt`, `contactIds`, `pinned` |
+| `PATCH /activities/{id}` | Değiştirin (yazan kişi ya da müşterileri yöneten) |
 | `DELETE /activities/{id}` | Sil |
 | `GET /accounts/{id}/health` | Skor, bandı, her sinyalin puanı ve son 90 günün skorları |
 
@@ -99,7 +99,7 @@ Müşteride ayrıca `reviewDays` (iş değerlendirmeleri arasındaki gün; `null
 
 | Uç | Ne yapar |
 | --- | --- |
-| `GET /pages` | Görebildiğin sayfalar ve senin ana sayfan (`homeId`) |
+| `GET /pages` | Görebildiğiniz sayfalar ve ana sayfanız (`homeId`) |
 | `GET /pages/{id}/data` | Sayfadaki her kartın hesaplanmış verisi |
 
 Raporlar ve sunumlar için en kısa yol budur: kartlar zaten kişinin görme yetkisi içinde hesaplanmıştır.
@@ -110,13 +110,13 @@ Tarihler `YYYY-MM-DD`, zamanlar ISO 8601 (UTC) biçimindedir. Tutarlar şirketin
 
 ## Listeler ve sayfalar
 
-Listeler `limit` ve `offset` alır (müşteriler ve kayıtlar) ya da `before` olarak geri gönderilecek bir `next` değeri verir (zaman çizelgesi, bildirimler, toplantılar). Kullanabileceğin kadarını iste: varsayılan sayfa bilerek küçüktür ve arama (`q`), her şeyi okuyup kendin süzmekten hızlıdır.
+Listeler `limit` ve `offset` alır (müşteriler ve kayıtlar) ya da `before` olarak geri gönderilecek bir `next` değeri verir (zaman çizelgesi, bildirimler, toplantılar). Kullanabileceğiniz kadarını isteyin: varsayılan sayfa bilerek küçüktür ve arama (`q`), her şeyi okuyup kendiniz süzmekten hızlıdır.
 
 Metin araması harfleri insanların beklediği gibi eşler: `istanbul`, `İstanbul` ve `ISTANBUL` birbirini bulur; `i`, `ı`, `ş`/`s` ve Türk alfabesinin geri kalanı da öyle.
 
 ## "Bugün" ne demek
 
-Bitiş tarihi gibi tarihler düz günlerdir (`YYYY-AA-GG`). Bir görevin gecikip gecikmediğine **şirketin** saat dilimi karar verir (`GET /me` cevabındaki `org.timezone`); sunucununki ya da isteği yapanınki değil.
+Bitiş tarihi gibi tarihler düz günlerdir (`YYYY-AA-GG`). Bir görevin gecikip gecikmediğine **şirketinizin** saat dilimi karar verir (`GET /me` cevabındaki `org.timezone`); sunucununki ya da isteği yapanınki değil.
 
 ## Silme ve çöp kutusu
 
@@ -130,7 +130,7 @@ Bir müşteride, kayıtta, görevde, zaman çizelgesi girişinde, sayfada, kayı
 
 ## Hatalar
 
-Hata her zaman `{ "error": "<kod>", "message": "<bir cümle>" }` biçimindedir. Kararı koda göre ver, cümleyi göster. Tam liste [hatalar](/docs/tr/ref-errors/) sayfasında.
+Hata her zaman `{ "error": "<kod>", "message": "<bir cümle>" }` biçimindedir. Kararı koda göre verin, cümleyi gösterin. Tam liste [hatalar](/docs/tr/ref-errors/) sayfasında.
 
 ## Bütün adresler
 

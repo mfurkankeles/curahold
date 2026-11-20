@@ -10,7 +10,7 @@ Her müşteri sayfasında bir **zaman çizelgesi** ve, açtıysanız, bir **sağ
 
 ## Zaman çizelgesi
 
-Üstteki kutudan **Not**, **Görüşme**, **Toplantı** ya da **E-posta** seç, ne olduğunu yaz ve ekle. İstersen tarihini değiştir ve görüştüğün kişileri işaretle.
+Üstteki kutudan **Not**, **Görüşme**, **Toplantı** ya da **E-posta** seçin, ne olduğunu yazın ve ekleyin. İsterseniz tarihini değiştirin ve görüştüğünüz kişileri işaretleyin.
 
 Çizelgede bunlar da kendiliğinden görünür:
 
@@ -19,19 +19,19 @@ Her müşteri sayfasında bir **zaman çizelgesi** ve, açtıysanız, bir **sağ
 - Eklenen kişiler (paydaşlar)
 - Sağlık skorunun bir günde 10 puan ya da daha fazla değiştiği günler
 
-Önemli bir notu **Sabitle** ile en üste taşı. Bir kaydı yazan kişi ya da müşterileri yöneten biri düzenleyebilir ve silebilir. Görmediğin bir panodaki görev ya da senden gizlenen bir alan çizelgede de görünmez.
+Önemli bir notu **Sabitle** ile en üste taşıyın. Bir kaydı yazan kişi ya da müşterileri yöneten biri düzenleyebilir ve silebilir. Görmediğiniz bir panodaki görev ya da sizden gizlenen bir alan çizelgede de görünmez.
 
 ## Planlı toplantılar
 
-Zaman çizelgesi olan bitendir. **Planlı toplantılar** ise henüz yapılmamış olanlar. Müşteri sayfasında **Yaklaşan toplantılar** altında **Toplantı planla**’yı seç: bir tür seç (toplantı, değerlendirme ya da arama; ya da kayıtlı türlerinden biri), ne zaman başlayacağını ve ne kadar süreceğini belirle, iki taraftan kişileri davet et, gündemi yaz ve tekrarlanıp tekrarlanmayacağını seç. Müşteri sayfasında ve **Takvim**’de görünür, ama henüz çizelgede değildir — yapılana kadar hiçbir şey kaydedilmez.
+Zaman çizelgesi olan bitendir. **Planlı toplantılar** ise henüz yapılmamış olanlar. Müşteri sayfasında **Yaklaşan toplantılar** altında **Toplantı planla**’yı seçin: bir tür seçin (toplantı, değerlendirme ya da arama; ya da kayıtlı türlerinizden biri), ne zaman başlayacağını ve ne kadar süreceğini belirleyin, iki taraftan kişileri davet edin, gündemi yazın ve tekrarlanıp tekrarlanmayacağını seçin. Müşteri sayfasında ve **Takvim**’de görünür, ama henüz çizelgede değildir — yapılana kadar hiçbir şey kaydedilmez.
 
 Her planlı toplantının bir ömrü var:
 
-- Gerçekleştiğinde **Yapıldı** işaretle. Bu, toplantıyı gündem notlarıyla birlikte zaman çizelgesine kaydeder ve ikisini bağlar. Tekrarlıysa bir sonrakini senin için planlar. Aynı anda sonraki adımları kararlaştırabilirsin; her biri bir görev olur.
-- Bir nedenle **Ertele**. Kayıtta kalır; aynı saatte yeni bir güne alabilirsin.
+- Gerçekleştiğinde **Yapıldı** işaretleyin. Bu, toplantıyı gündem notlarıyla birlikte zaman çizelgesine kaydeder ve ikisini bağlar. Tekrarlıysa bir sonrakini sizin için planlar. Aynı anda sonraki adımları kararlaştırabilirsiniz; her biri bir görev olur.
+- Ertelemek için **Ertele**'ye tıklayın. Kayıtta kalır; aynı saatte yeni bir güne alabilirsiniz.
 - Bir nedenle **İptal et**. İptal olarak kayıtta kalır — hiçbir şey silinmez.
 
-**Kayıtlı türler.** Bir yönetici, sık yaptığın toplantıları adlandırabilir — üç aylık iş değerlendirmesi, aylık durum görüşmesi — ve her birine bir gündem şablonu verebilir. Planlarken bir tür seçince gündem dolar, böylece her değerlendirme aynı sorularla başlar.
+**Kayıtlı türler.** Bir yönetici, sık yaptığınız toplantıları adlandırabilir — üç aylık iş değerlendirmesi, aylık durum görüşmesi — ve her birine bir gündem şablonu verebilir. Planlarken bir tür seçince gündem dolar, böylece her değerlendirme aynı sorularla başlar.
 
 ## Sağlık skoru
 
@@ -46,16 +46,16 @@ Ayarlar → Sağlık skoru'ndan açılır. Her müşteri için 0 ile 100 arası 
 | Karar verici biliniyor | En az bir "Karar verici" kişi | Hiç yok |
 | Engelleyici yok | Engelleyici ya da şüpheci yok | Bir engelleyici var |
 | Sahibinin değerlendirmesi | Seçim alanının ilk seçeneği (örneğin "İyi") | Son seçeneği (örneğin "Riskli") |
-| Bir sayı alanı | Senin belirlediğin değer | Senin belirlediğin değer |
+| Bir sayı alanı | Sizin belirlediğiniz değer | Sizin belirlediğiniz değer |
 
-Ağırlıkları, gün sayılarını ve bantları (Sağlıklı, İzlenmeli, Riskli) sen belirlersin. Kaydetmeden önce önizleme, hangi müşterinin kaç puan alacağını gösterir. Bir müşteri için verisi olmayan sinyal hesaba katılmaz; ağırlığı diğerlerine paylaştırılır.
+Ağırlıkları, gün sayılarını ve bantları (Sağlıklı, İzlenmeli, Riskli) siz belirlersiniz. Kaydetmeden önce önizleme, hangi müşterinin kaç puan alacağını gösterir. Bir müşteri için verisi olmayan sinyal hesaba katılmaz; ağırlığı diğerlerine paylaştırılır.
 
 > **Neden?** Müşteri sayfasındaki skorun yanındaki **Neden?** düğmesi her sinyalin aldığı puanı ve son haftaların grafiğini gösterir. Skor bir kara kutu değildir: her puanın nereden geldiği görülür.
 
-Skor sıradan bir müşteri alanı gibi davranır: listelerde sütun olur, filtrelenir, ana sayfa kartlarında, dışa aktarmada, API'de ve webhook'larda yer alır. CRM eşitlemesinde bir alanla eşleştirirsen CRM'e de yazılır. Kimse elle değiştiremez.
+Skor sıradan bir müşteri alanı gibi davranır: listelerde sütun olur, filtrelenir, ana sayfa kartlarında, dışa aktarmada, API'de ve webhook'larda yer alır. CRM eşitlemesinde bir alanla eşleştirirseniz CRM'e de yazılır. Kimse elle değiştiremez.
 
 Skor, müşteriyle ilgili bir şey değişince birkaç saniye içinde, ayrıca her gün bir kez yeniden hesaplanır. Her günün skoru saklanır; eğilim ve haftalık özet buradan gelir.
 
 ## Haftalık özet
 
-Pazartesi sabahı, sabah özetini seçtiğin saatte müşterilerinin özeti gelir: önümüzdeki 30 günde yenilenecekler, skoru düşenler ve en büyük nedeni, 30+ gündür sessiz kalanlar ve haftanın işleri. Ayarların'dan kapatabilirsin.
+Pazartesi sabahı, sabah özetini seçtiğiniz saatte müşterilerinin özeti gelir: önümüzdeki 30 günde yenilenecekler, skoru düşenler ve en büyük nedeni, 30+ gündür sessiz kalanlar ve haftanın işleri. Ayarlarınız'dan kapatabilirsiniz.

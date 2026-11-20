@@ -17,7 +17,7 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `bad_webhook_url` | 400 | Webhook için herkese açık bir https adresi kullanın. |
 | `billing_off` | 400 | Bu kurulumda abonelik açık değil. |
 | `connection_failed` | 400 | Servis isteği kabul etmedi. Bağlantıyı kontrol edip tekrar deneyin. |
-| `department_off` | 400 | Bu departman şirketinin planında yok. |
+| `department_off` | 400 | Bu departman şirketinizin planında yok. |
 | `domain_public` | 400 | … herkese açık bir e-posta servisi, bir şirkete ait olamaz. |
 | `free_mail_note` | 400 | Şirket denemesi için neden kişisel adres kullandığınızı bir cümleyle yazın. |
 | `help_file_type` | 400 | … eklenemiyor. Resim, PDF, metin, CSV, JSON, Excel ve kısa videolar eklenebilir. |
@@ -49,10 +49,10 @@ Hata her zaman aynı biçimdedir: `{ "error": "<kod>", "message": "<bir cümle>"
 | `support_link_used` | 400 | Bu giriş bağlantısı kullanılmış ya da süresi dolmuş. Yenisini isteyin. |
 | `support_view_only` | 400 | Curahold desteği yalnızca bakabilir, hiçbir şeyi değiştiremez. |
 | `validation` | 400 | Bazı alanlar geçersiz: … |
-| `device_mismatch` | 401 | Bu oturum başka bir cihaza ait. Lütfen tekrar giriş yap. |
+| `device_mismatch` | 401 | Bu oturum başka bir cihaza ait. Lütfen yeniden giriş yapın. |
 | `session_evicted` | 401 | Hesabınız başka bir cihazda kullanıldığı için oturumunuz kapatıldı. |
 | `support_ended` | 401 | Bu destek oturumu sona erdi: erişim kapatıldı ya da süresi doldu. |
-| `unauthenticated` | 401 | Lütfen giriş yap. |
+| `unauthenticated` | 401 | Lütfen giriş yapın. |
 | `billing_locked` | 402 | Şirketinizin etkin bir planı yok; şu an bir şey değiştirilemez, ama her şey okunabilir ve dışa aktarılabilir. Bir yönetici Ayarlar → Abonelik’ten plan seçebilir. |
 | `plan_required` | 402 | Bu, … planında var. Bir yönetici Ayarlar → Abonelik’ten geçebilir. |
 | `board_lead_only` | 403 | Bu departmanda panoyu yalnızca yöneticiler ve departman liderleri açabilir. |

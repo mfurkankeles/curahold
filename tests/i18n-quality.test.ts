@@ -221,13 +221,27 @@ describe('Turkish register', () => {
     // Verbs in the second person singular: -abilirsin, -iyorsun, -acaksın, -malısın, -mışsın, the aorist.
     new RegExp(`${L}{2,}([ıiuü]yor|abilir|ebilir|amaz|emez|acak|ecek|malı|meli|mış|miş|muş|müş|[ıiuü]r|[ae]r|maz|mez)s[ıiuü]n(?!${L})`, 'i'),
     // If-clauses (-iyorsan, -irsen) and questions (misin), "hazırsın".
-    new RegExp(`${L}{2,}(yor|[ıiuüae]r|ma|me)(san|sen)(?!${L})|(?<!${L})(mısın|misin|musun|müsün|hazırsın|değilsin)(?!${L})`, 'i'),
-    // A sentence that ends in a bare imperative ("… tekrar dene."): sentences say "deneyin".
-    new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at)[.!?](?=\\s|$)`, 'i'),
+    new RegExp(`${L}{2,}(yor|[ıiuüae]r|ma|me|maz|mez|y)(san|sen)(?!${L})|(?<!${L})(mısın|misin|musun|müsün|hazırsın|değilsin)(?!${L})`, 'i'),
+    // "your" on a participle: "yaptığın", "istediğin", "göreceğin" (sentences say "yaptığınız").
+    // Two nouns whose genitive looks the same are let through.
+    new RegExp(`(?<!${L})(?!(betiğin|koltuğun)(?!${L}))${L}{2,}(dığ|diğ|duğ|düğ|tığ|tiğ|tuğ|tüğ|eceğ|acağ)[ıiuü]n(?!${L})`, 'i'),
+    // A sentence or clause that ends in a bare imperative ("… tekrar dene.", "… giriş yap;"): sentences say "deneyin".
+    new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at|yap|güncelle|iptal et|başlat|gör|koy|yolla|düzelt|belirt|daralt|grupla|eşleştir|yerleştir|kaydır|vurgula|ilişkilendir|abone ol|yenile|seçip|oluştur)[.!?;](?=\\s|$)`, 'i'),
   ];
   it('no Turkish string says "sen"', () => {
     const tr = dict('tr');
     const bad = Object.keys(tr).filter((k) => SEN.some((re) => re.test(tr[k])));
     expect(bad.map((k) => `${k}: ${tr[k].slice(0, 80)}`).join('\n')).toBe('');
+  });
+  // The help centre and the sales site are first-contact surfaces too: a reader who meets "sen" in the
+  // docs after "siz" in the app sees two products (owner, 20 Nov 2026). Line by line, so a failure names it.
+  it('no Turkish help page or site text says "sen"', () => {
+    const found: string[] = [];
+    for (const [file, text] of docsText('tr'))
+      text.split('\n').forEach((line, i) => {
+        if (SEN.some((re) => re.test(line))) found.push(`${file}:${i + 1}: ${line.trim().slice(0, 90)}`);
+      });
+    for (const [k, v] of siteText('tr')) if (SEN.some((re) => re.test(v))) found.push(`${k}: ${v.slice(0, 90)}`);
+    expect(found.join('\n')).toBe('');
   });
 });

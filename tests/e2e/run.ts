@@ -896,7 +896,7 @@ await step('help: a request with a screenshot and consent; support visits read o
   expect((await text(p, '.cura__tool .cura__badge')) === '1', 'the chat does not show the waiting answer');
   await p.click('.cura__tool');
   await p.waitForSelector('.help__req[data-unread]');
-  expect((await text(p, '.help__req[data-unread] .help__turn')).includes('Cevabın bekleniyor'), 'the list does not say it is her turn');
+  expect((await text(p, '.help__req[data-unread] .help__turn')).includes('Cevabınız bekleniyor'), 'the list does not say it is her turn');
   await p.click('.help__req[data-unread] .help__reqopen');
   await p.waitForSelector('.thread__msg[data-by="support"]');
   expect((await text(p, '.thread__msg[data-by="support"]')).includes('Listeyi yenileyince'), 'support’s answer is not on the request');

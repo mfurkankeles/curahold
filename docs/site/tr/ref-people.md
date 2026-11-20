@@ -2,11 +2,11 @@
 title: Başvuru: kişiler, arama ve bildirimler
 section: reference
 order: 23
-summary: Kim olduğun, iş arkadaşların, arama, bildirimler ve takvim akışı.
+summary: Kim olduğunuz, iş arkadaşlarınız, arama, bildirimler ve takvim akışı.
 ---
 # Başvuru: kişiler, arama ve bildirimler
 
-Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yapabildiğini ve hangi şirkette olduğunu söyler; buradan başla.
+Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yapabildiğini ve hangi şirkette olduğunu söyler; buradan başlayın.
 
 > Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır. Biçimler şurada: [Nesneler](/docs/tr/ref-objects/).
 
@@ -16,7 +16,7 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | --- | --- |
 | `GET /me` | Anahtarın arkasındaki kişi: ad, rol, yetkiler, koltuk, dil; ve şirket: ad, saat dilimi, para birimi, "müşteri" için kullandığı kelime, müşteri alanları. |
 | `PATCH /me` | Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir. |
-| `GET /me/export` | Curahold’un senin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkın); önce kimliğini doğrulamanı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır. |
+| `GET /me/export` | Curahold’un sizin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkınız); önce kimliğinizi doğrulamanızı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır. |
 | `GET /me/start` | Kişinin üründeki ilk adımlarından geriye kalanlar. |
 | `GET /me/sessions` | Nerelerde oturumun açık: cihazlar ve her birinin en son ne zaman kullanıldığı. |
 | `DELETE /me/sessions/:id` | Cihazlarından birinin oturumunu kapatır. |
@@ -29,9 +29,9 @@ Her istek bir kişi olarak yapılır. `GET /me` o kişinin kim olduğunu, ne yap
 | `POST /me/security/passkeys/options` | Passkey eklemek için seçenekler (WebAuthn). |
 | `POST /me/security/passkeys` | Tarayıcının oluşturduğu passkey'i ekler. |
 | `DELETE /me/security/passkeys/:id` | Passkey'lerinden birini kaldırır. |
-| `POST /me/confirm/options` | Hassas bir değişiklikten önce kimliğini nasıl onaylayabileceğin. |
+| `POST /me/confirm/options` | Hassas bir değişiklikten önce kimliğinizi nasıl onaylayabileceğiniz. |
 | `POST /me/confirm/email` | Onay kodunu e-postayla gönderir (yalnızca ikinci adım yoksa). |
-| `POST /me/confirm` | Kimliğini onaylar; on dakika boyunca hassas değişiklikler yapılabilir. |
+| `POST /me/confirm` | Kimliğinizi onaylar; on dakika boyunca hassas değişiklikler yapılabilir. |
 | `GET /me/delivery` | Bu kişinin bildirimleri nereden alabileceği: e-posta ya da şirketin bağladığı bir sohbet uygulaması. |
 | `GET /me/calendar` | Takvim akışı adresin olup olmadığı. |
 | `POST /me/calendar` | Görevlerin için gizli bir takvim adresi üretir; yeniden istenirse eskisinin yerine geçer. |
@@ -71,7 +71,7 @@ Kendi adını, dilini, bildirim tercihlerini ve ekran tercihlerini değiştirir.
 
 ### `GET /me/export`
 
-Curahold’un senin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkın); önce kimliğini doğrulamanı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır.
+Curahold’un sizin hakkında tuttuğu her şeyi tek bir dosya olarak indirir (erişim ve taşınabilirlik hakkınız); önce kimliğinizi doğrulamanızı ister, günde en fazla üç kez, her indirme etkinlik kaydına yazılır.
 
 ### `GET /me/start`
 
@@ -133,7 +133,7 @@ Passkey'lerinden birini kaldırır.
 
 ### `POST /me/confirm/options`
 
-Hassas bir değişiklikten önce kimliğini nasıl onaylayabileceğin.
+Hassas bir değişiklikten önce kimliğinizi nasıl onaylayabileceğiniz.
 
 ### `POST /me/confirm/email`
 
@@ -141,7 +141,7 @@ Onay kodunu e-postayla gönderir (yalnızca ikinci adım yoksa).
 
 ### `POST /me/confirm`
 
-Kimliğini onaylar; on dakika boyunca hassas değişiklikler yapılabilir.
+Kimliğinizi onaylar; on dakika boyunca hassas değişiklikler yapılabilir.
 
 | Alan | Tür | | Not |
 | --- | --- | --- | --- |
@@ -218,7 +218,7 @@ Bir kişiyi departmandan çıkarır.
 
 ### `GET /departments/desks`
 
-Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. `POST /boards/:id/requests` ve `fromTaskId` ile gönderince kendi görevine bağlanır; diğer pano sana kapalı kalır.
+Başka departmanlarda formla talep alan panolar; form ve sorduğu alanlarla. `POST /boards/:id/requests` ve `fromTaskId` ile gönderince kendi görevine bağlanır; diğer pano size kapalı kalır.
 
 ### `GET /departments/moves`
 
@@ -264,4 +264,4 @@ Bildirimleri okundu işaretler: bazılarını ya da hepsini.
 
 ### `GET /pulse`
 
-Ucuz bir "görebildiğim bir şey değişti mi?" sorusu: en yeni değişikliğin anı. Listeleri yeniden yüklemeden önce bunu sor.
+Ucuz bir "görebildiğim bir şey değişti mi?" sorusu: en yeni değişikliğin anı. Listeleri yeniden yüklemeden önce bunu sorun.

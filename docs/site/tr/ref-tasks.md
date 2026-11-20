@@ -6,7 +6,7 @@ summary: Görevler, alt görevler, yorumlar, dosyalar, süre, panolar ve kayıtl
 ---
 # Başvuru: görevler ve panolar
 
-Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahtarıdır). Bir müşteriye ve bir kayda bağlı olabilir. Görevi değiştirmek için son gördüğün `version` gerekir; API rehberindeki "Aynı anda değişiklik" bölümüne bak.
+Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahtarıdır). Bir müşteriye ve bir kayda bağlı olabilir. Görevi değiştirmek için son gördüğünüz `version` gerekir; API rehberindeki "Aynı anda değişiklik" bölümüne bakın.
 
 > Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır. Biçimler şurada: [Nesneler](/docs/tr/ref-objects/).
 
@@ -21,14 +21,14 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `GET /boards/:id/tasks` | Bir panonun görevleri, hepsi birden. |
 | `POST /boards/:id/requests` | Panonun formu üzerinden talep gönderir: formun sütununa, kimseye atanmadan düşer. |
 | `POST /boards/:id/import` | Bir dosyanın satırlarından tek bir panoya görev alır. |
-| `GET /boards/:id/imports` | Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
+| `GET /boards/:id/imports` | Bir panoya yaptığınız son görev içe aktarmaları; en yenisi başta. |
 | `POST /task-imports/:id/undo` | Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kaldırılır ve çöp kutusuna tek bir öğe olarak gider (`trashId`); içe aktarma için açılıp boş kalan pano kaldırılır. |
-| `GET /task-imports` | Herhangi bir panoya yaptığın son görev içe aktarmaları; en yenisi başta. |
+| `GET /task-imports` | Herhangi bir panoya yaptığınız son görev içe aktarmaları; en yenisi başta. |
 | `POST /task-imports` | Bir dosyanın satırlarından bir ya da birkaç panoya görev alır; alt görevler, yorumlar, panonun kendi alanları ve “şunu bekliyor” bağlarıyla. |
 | `PUT /boards/:id/portal` | Bir panoyu portalda müşterilere açar ya da kapatır (yönetici kararı). |
 | `GET /tasks` | Panolar genelinde görevler. |
 | `GET /calendar` | `from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. |
-| `GET /calendars` | Kendininkinden başka kimin takvimini açabileceğin: `who` olarak verilebilecek ekipler ve kişiler. |
+| `GET /calendars` | Kendininkinden başka kimin takvimini açabileceğiniz: `who` olarak verilebilecek ekipler ve kişiler. |
 | `GET /tasks/counts` | Kişinin açık görevlerinden kaçı gecikmiş, kaçı bugün bitiyor (şirketin saatine göre). |
 | `GET /tasks/similar` | Eklenmek üzere olana benzeyen açık görevler (aynı kelimeler, aynı müşteri ya da pano); çift kaydı önlemek için. |
 | `POST /tasks` | Görev ekler. |
@@ -50,7 +50,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `DELETE /sprints/:id/items/:taskId` | Görevi sprintten çıkarıp backlog'a döndürür. |
 | `GET /sprints/:id/summary` | Güncel toplamlar: puan ve kayıt sayıları (biten ve tümü), kayıt türüne göre dağılımla. |
 | `GET /sprints/:id/burndown` | Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugün için canlı bir noktayla. |
-| `GET /boards/:id/demand` | Açabildiğin bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsan) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla. |
+| `GET /boards/:id/demand` | Açabildiğiniz bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsanız) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla. |
 | `GET /tasks/:id/customers` | Bir işi bekleyen müşteriler (yalnızca görebildiklerinin adı), her birinin ne zaman istediği ve yayında olduğunun söylenip söylenmediği. |
 | `GET /boards/:id/flow` | Bir ürün panosunun son `weeks` haftadaki (4–26, varsayılan 12) döngü süresi ve çıktısı: kayıt türüne göre iş günü cinsinden ortanca ve 85. |
 | `GET /tasks/:id/chain` | Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). |
@@ -58,7 +58,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /tasks/bulk` | Birçok görevi birden değiştirir: sütun, atanan, bitiş tarihi, öncelik, arşiv. |
 | `POST /undo/:id` | Birçok görevde ya da müşteride yapılan değişikliğin eski halini geri getirir. |
 | `POST /tasks/:id/comments` | Göreve yorum yazar. |
-| `DELETE /comments/:id` | Bir göreve yazdığın yorumu, içindeki dosyalarla birlikte siler. |
+| `DELETE /comments/:id` | Bir göreve yazdığınız yorumu, içindeki dosyalarla birlikte siler. |
 | `POST /tasks/:id/files` | Göreve dosya ekler (multipart yükleme, istek başına bir dosya). |
 | `GET /files/:id` | Dosyayı indirir. |
 | `DELETE /files/:id` | Dosyayı siler. |
@@ -75,7 +75,7 @@ Görev bir panoda, panonun sütunlarından birinde durur (`status` sütun anahta
 | `POST /checklists` | Kontrol listesi şablonu kaydeder. |
 | `DELETE /checklists/:id` | Kontrol listesi şablonunu siler. |
 | `GET /views` | Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler: bir panonun (`board`) ya da başka bir listenin (`scope`: `accounts`, `records:<tür>`, `my_tasks`, `timeline`). |
-| `GET /views/:id` | Bağlantısıyla açmak için tek bir kayıtlı görünüm: senin ya da şirketle paylaşılmış olan. |
+| `GET /views/:id` | Bağlantısıyla açmak için tek bir kayıtlı görünüm: sizin ya da şirketle paylaşılmış olan. |
 | `POST /views` | Görünüm kaydeder: `scope` (varsayılan `board`, `boardId` ile), `name`, `filters` (bir panonun filtresi ya da başka bir listenin düz durumu: filtre, sıra, sütunlar, düzen) ve `shared`. |
 | `PATCH /views/:id` | Kayıtlı görünümü değiştirir. |
 | `DELETE /views/:id` | Kayıtlı görünümü siler. |
@@ -132,7 +132,7 @@ Panoyu görevleriyle birlikte arşivler.
 
 ### `GET /boards/:id/tasks`
 
-Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere iste: `per=N` her sütunun ilk N görevini, sütunun gerçek `total` sayısı, `more` ve `after` (sıradaki görevin konumu) ile verir; `status` ile `offset` tek bir sütunda sayfalar; `limit=N` ile `offset` panoyu liste sırasıyla ve `total` ile verir. `filters` (JSON: `q`, `me` ve `none` alabilen `assignees`, `priority`, `due`, `fields`) iki pencereyi de daraltır; `all` panonun filtresiz sayısıdır. `archived=1` arşivlenenleri verir, `q` onlarda arar, `offset` sayfalar.
+Bir panonun görevleri, hepsi birden. Büyük bir panoda pencere isteyin: `per=N` her sütunun ilk N görevini, sütunun gerçek `total` sayısı, `more` ve `after` (sıradaki görevin konumu) ile verir; `status` ile `offset` tek bir sütunda sayfalar; `limit=N` ile `offset` panoyu liste sırasıyla ve `total` ile verir. `filters` (JSON: `q`, `me` ve `none` alabilen `assignees`, `priority`, `due`, `fields`) iki pencereyi de daraltır; `all` panonun filtresiz sayısıdır. `archived=1` arşivlenenleri verir, `q` onlarda arar, `offset` sayfalar.
 
 **Sorgu:** `archived`, `q`, `offset`, `per`, `limit`, `filters`, `status`
 
@@ -167,7 +167,7 @@ Bir dosyanın satırlarından tek bir panoya görev alır. Kimseye bildirim gitm
 
 ### `GET /boards/:id/imports`
 
-Bir panoya yaptığın son görev içe aktarmaları; en yenisi başta.
+Bir panoya yaptığınız son görev içe aktarmaları; en yenisi başta.
 
 ### `POST /task-imports/:id/undo`
 
@@ -177,7 +177,7 @@ Bir görev içe aktarmasını geri alır: sonradan kimsenin dokunmadıkları kal
 
 ### `GET /task-imports`
 
-Herhangi bir panoya yaptığın son görev içe aktarmaları; en yenisi başta.
+Herhangi bir panoya yaptığınız son görev içe aktarmaları; en yenisi başta.
 
 ### `POST /task-imports`
 
@@ -217,13 +217,13 @@ Panolar genelinde görevler. `assignee` bir kişi kimliği ya da `me` alır; `fr
 
 ### `GET /calendar`
 
-`from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. `who`: `me` (varsayılan), `all` (görebildiğin her şey), `p:<kişi kimliği>` ya da `t:<ekip kimliği>`; son ikisi ekip arkadaşlarının takvimini görme yetkisi ister ve yalnızca zaten görebildiğini gösterir.
+`from` ile `to` arasında (en çok 430 gün) hangi güne ne düşüyor: son tarihine göre görevler, yapılmış toplantı, arama ve değerlendirmeler, yenilemeler, zamanı gelen iş değerlendirmeleri. `who`: `me` (varsayılan), `all` (görebildiğiniz her şey), `p:<kişi kimliği>` ya da `t:<ekip kimliği>`; son ikisi ekip arkadaşlarının takvimini görme yetkisi ister ve yalnızca zaten görebildiğini gösterir.
 
 **Sorgu:** `from`, `to`, `who`
 
 ### `GET /calendars`
 
-Kendininkinden başka kimin takvimini açabileceğin: `who` olarak verilebilecek ekipler ve kişiler. Yetki yoksa boştur.
+Kendininkinden başka kimin takvimini açabileceğiniz: `who` olarak verilebilecek ekipler ve kişiler. Yetki yoksa boştur.
 
 ### `GET /tasks/counts`
 
@@ -264,7 +264,7 @@ Tek bir görev; yorumları, dosyaları, alt görevleri, bağlantıları, süresi
 
 ### `PATCH /tasks/:id`
 
-Görevi değiştirir. `baseVersion` gönder; bu arada başkası başka alanları değiştirdiyse iki değişiklik de kalır, aynı alanı değiştirdiyse en güncel görevle birlikte `409` alırsın.
+Görevi değiştirir. `baseVersion` gönderin; bu arada başkası başka alanları değiştirdiyse iki değişiklik de kalır, aynı alanı değiştirdiyse en güncel görevle birlikte `409` alırsınız.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -286,7 +286,7 @@ Görevi değiştirir. `baseVersion` gönder; bu arada başkası başka alanları
 
 ### `PATCH /tasks/:id/pm`
 
-Görevin ürün yönetimi alanlarını ayarlar: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 ya da fazlası, veya null) ve `epicId` (aynı panodaki bir epik, ya da null). `baseVersion` gönder; eski sürüm en güncel görevle birlikte `409` alır.
+Görevin ürün yönetimi alanlarını ayarlar: `issueType` (epic, story, task, bug, subtask, spike), `storyPoints` (0 ya da fazlası, veya null) ve `epicId` (aynı panodaki bir epik, ya da null). `baseVersion` gönderin; eski sürüm en güncel görevle birlikte `409` alır.
 
 **Gerekenler:** yazabilen bir koltuk
 
@@ -350,7 +350,7 @@ Sprintin adını, hedefini ya da tarihlerini değiştirir.
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `PUT /sprints/:id/state`
 
@@ -399,7 +399,7 @@ Bir sprintin burndown'ı: güne göre kalan hikaye puanları ve kayıtlar, bugü
 
 ### `GET /boards/:id/demand`
 
-Açabildiğin bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsan) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla.
+Açabildiğiniz bir panonun backlog talep sütunları: her iş için bekleyen müşteri sayısı, yıllık değerleri (yalnızca değer alanını görebiliyorsanız) ve en yakın yenileme; 90 gün içinde yenilenecek sayısıyla.
 
 ### `GET /tasks/:id/customers`
 
@@ -413,7 +413,7 @@ Bir ürün panosunun son `weeks` haftadaki (4–26, varsayılan 12) döngü sür
 
 ### `GET /tasks/:id/chain`
 
-Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). Bitmiş görev listelenir ama ötesine bakılmaz; göremediğin görevler çıkarılır.
+Bir görevin bütün engel zinciri: beklediği görevler adım adım geriye (`up`), onu bekleyenler adım adım ileriye (`down`); her biri `depth` (adım) ve bağlı olduğu görevle (`via`). Bitmiş görev listelenir ama ötesine bakılmaz; göremediğiniz görevler çıkarılır.
 
 ### `DELETE /tasks/:id`
 
@@ -457,7 +457,7 @@ Göreve yorum yazar. `visibility: customer` yorumu müşteri portalında göster
 
 ### `DELETE /comments/:id`
 
-Bir göreve yazdığın yorumu, içindeki dosyalarla birlikte siler.
+Bir göreve yazdığınız yorumu, içindeki dosyalarla birlikte siler.
 
 ### `POST /tasks/:id/files`
 
@@ -578,7 +578,7 @@ Bir listedeki kayıtlı görünümlerin ve şirketle paylaşılan görünümler:
 
 ### `GET /views/:id`
 
-Bağlantısıyla açmak için tek bir kayıtlı görünüm: senin ya da şirketle paylaşılmış olan.
+Bağlantısıyla açmak için tek bir kayıtlı görünüm: sizin ya da şirketle paylaşılmış olan.
 
 ### `POST /views`
 

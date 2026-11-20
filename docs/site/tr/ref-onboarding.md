@@ -16,9 +16,9 @@ Ortak plan iki tarafın ortak planıdır: `vendor` (şirketin kendi planında Cu
 | --- | --- |
 | `GET /onboarding/self` | Şirketin kendi başlangıç planı. |
 | `GET /onboarding/self/summary` | O planın yalnızca başlığı: ağırlıklı tamamlanma ve sıradaki adım. |
-| `GET /onboarding/settings` | Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). |
+| `GET /onboarding/settings` | Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan açın (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). |
 | `PUT /onboarding/settings` | Bu ayarları değiştirir (şirket ayarlarını değiştirebilen kişi). |
-| `GET /onboarding-plans` | Görebildiğin tüm müşteri planları; ilerleme, bekleme günleri ve takılma işaretleriyle. |
+| `GET /onboarding-plans` | Görebildiğiniz tüm müşteri planları; ilerleme, bekleme günleri ve takılma işaretleriyle. |
 | `POST /onboarding-plans` | Bir müşteri (`accountId`) için şablondan plan açar (`templateId`: şablon kimliği ya da yerleşik anahtar; yoksa şirketin varsayılanı). |
 | `GET /onboarding-plans/:id` | Bir planın tamamı: adımlar, iki tarafın kişileri, hedefler, ortak sorunlar, veri eşleme tablosu, şubeler, önce/sonra rakamları, sağlık sinyalleri ve şirketin kendi planında kurulum testlerinin durumu. |
 | `PATCH /onboarding-plans/:id` | Planın adını, durumunu, sorumlusunu, karşılama metnini, devir notunu, hedef gününü ya da müşterinin portalda görüp görmediğini (`portalVisible`) değiştirir. |
@@ -70,7 +70,7 @@ O planın yalnızca başlığı: ağırlıklı tamamlanma ve sıradaki adım.
 
 ### `GET /onboarding/settings`
 
-Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan aç (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). E-posta hatırlatmaları her kişinin kendi tercihidir (`prefs.events.onboarding`).
+Şirketin ortak plan ayarları: fırsat kazanılınca taslak plan açın (`fromHandover`, açılana kadar kapalı), açılacak şablon (`templateId`: bir şablonun kimliği, hazır bir şablonun anahtarı ya da her seferinde sormak için `ask`) ve isteğe bağlı kurallar (`rules`: bir müşteri alanı ve değeri → bir şablon; ilk uyan geçerli). E-posta hatırlatmaları her kişinin kendi tercihidir (`prefs.events.onboarding`).
 
 ### `PUT /onboarding/settings`
 
@@ -86,7 +86,7 @@ Bu ayarları değiştirir (şirket ayarlarını değiştirebilen kişi).
 
 ### `GET /onboarding-plans`
 
-Görebildiğin tüm müşteri planları; ilerleme, bekleme günleri ve takılma işaretleriyle. `account` tek müşteriye, `open=1` sürenlere indirir.
+Görebildiğiniz tüm müşteri planları; ilerleme, bekleme günleri ve takılma işaretleriyle. `account` tek müşteriye, `open=1` sürenlere indirir.
 
 **Sorgu:** `account`, `open`
 
@@ -265,11 +265,11 @@ Bir tarafa kişi ekler (`side`, `name`, `role`, `duty`, `contact`; isteğe bağl
 
 ### `PATCH /onboarding-people/:id`
 
-Plandaki bir kişiyi değiştirir. Yalnızca gönderdiğin alanlar değişir.
+Plandaki bir kişiyi değiştirir. Yalnızca gönderdiğiniz alanlar değişir.
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `DELETE /onboarding-people/:id`
 
@@ -298,7 +298,7 @@ Bir hedefi değiştirir; `status: done` ulaşıldığı günü kaydeder.
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `DELETE /onboarding-goals/:id`
 
@@ -328,7 +328,7 @@ Bir sorunu değiştirir, diğer tarafa geçirir ya da çözer (`status: resolved
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `POST /onboarding-issues/:id/ticket`
 
@@ -368,7 +368,7 @@ Bir satırı değiştirir, geleni kaydeder (`received`; dört kural bunun üzeri
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `DELETE /onboarding-fields/:id`
 
@@ -394,7 +394,7 @@ Bir şubeyi ya da bir aşamadaki durumunu değiştirir (`stages: { "<aşama>": "
 
 **Gerekenler:** yazabilen bir koltuk
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.
 
 ### `DELETE /onboarding-sites/:id`
 

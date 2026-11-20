@@ -32,7 +32,7 @@ Bunları DNS sağlayıcınıza ekleyin (örneğin Cloudflare: DNS → Records). 
 | TXT | `google._domainkey` | Yönetici konsolunun verdiği anahtar | DKIM: her iletiyi imzalar |
 | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@example.com; adkim=s; aspf=s` | DMARC: doğrulamayı geçemeyen postayla ne yapılacağını alıcılara söyler |
 
-**DKIM:** Yönetici konsolu → Uygulamalar → Google Workspace → Gmail → E-postanın kimliğini doğrula → Yeni kayıt oluştur (2048 bit, seçici `google`) → TXT kaydını yayımlayın → konsola dönüp **Kimlik doğrulamayı başlat**.
+**DKIM:** Yönetici konsolu → Uygulamalar → Google Workspace → Gmail → E-postanın kimliğini doğrula → Yeni kayıt oluştur (2048 bit, seçici `google`). TXT kaydını yayımlayın, sonra konsola dönüp **Kimlik doğrulamayı başlat**'a tıklayın.
 
 **Üç adımda DMARC:** `p=none` ile başlayın ve 2–4 hafta raporları okuyun; sonra `p=quarantine`; yalnızca kendi göndericileriniz göründüğünde `p=reject`. Yayımlamadan önce `dmarc@` adresini (takma ad ya da grup) oluşturun.
 

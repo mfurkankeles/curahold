@@ -2,7 +2,7 @@
 title: Xero (muhasebe)
 section: help
 order: 8.22
-summary: Xero'i yalnızca okunur bağla: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
+summary: Xero'i yalnızca okunur bağlayın: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
 ---
 # Xero (muhasebe)
 
@@ -14,11 +14,11 @@ Müşteriler (programda varsa vergi numarası, e-posta ve web adresiyle), vade t
 
 ## Bağlama
 
-**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bul ve **Xero bağla**'yı seç. Sonra:
+**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bulun ve **Xero bağla**'yı seçin. Sonra:
 
-1. Xero'ya giriş yap ve bağlanacak kuruluşu seç.
-2. Kişilere ve işlemlere okuma izni ver; Curahold Xero'da hiçbir şeyi değiştiremez.
-3. Buraya dönünce ilk okumayı başlat ve eşleşemeyen müşterilere bak.
+1. Xero'ya giriş yapın ve bağlanacak kuruluşu seçin.
+2. Kişilere ve işlemlere okuma izni verin; Curahold Xero'da hiçbir şeyi değiştiremez.
+3. Buraya dönünce ilk okumayı başlatın ve eşleşemeyen müşterilere bakın.
 
 ## Sınırlar ve zamanlama
 
@@ -26,8 +26,8 @@ Xero kuruluş başına dakikada 60 çağrıya ve günlük bir kotaya izin verir 
 
 ## Bir sorun olursa
 
-Xero bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seç. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
+Xero bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seçin. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
 
-## Ayrıca bak
+## Ayrıca bakın
 
 - [Muhasebe programları](/docs/tr/accounting/)

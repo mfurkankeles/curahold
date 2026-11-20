@@ -18,7 +18,7 @@ Talepleri Curahold'a getirmenin üç yolu var:
 
 ## Hazır bağlantılar
 
-Ayarlar → CRM ve tablolar → **Destek araçları**. Aracın adresini ve aracın içinde oluşturduğun API anahtarını yapıştır. Curahold anahtarı hemen dener ve şifreli saklar. Uygulama kaydı ya da onay süreci gerekmez.
+Ayarlar → CRM ve tablolar → **Destek araçları**. Aracın adresini ve aracın içinde oluşturduğunuz API anahtarını yapıştırın. Curahold anahtarı hemen dener ve şifreli saklar. Uygulama kaydı ya da onay süreci gerekmez.
 
 | Araç | Gerekenler | Gelenler |
 | --- | --- | --- |
@@ -50,14 +50,14 @@ Durumlar ve öncelikler Curahold'un kendi değerlerine çevrilir:
 
 ## Salesforce ve Dynamics vakaları
 
-Bağlı bir Salesforce ya da Dynamics 365 eşitlemesinde **Case** nesnesini aç ve **Destek talepleri** olarak eşleştir. Konu, durum, öncelik, kaynak, açılış ve kapanış tarihleri ile müşteri alanları kendiliğinden eşleştirilir.
+Bağlı bir Salesforce ya da Dynamics 365 eşitlemesinde **Case** nesnesini açın ve **Destek talepleri** olarak eşleştirin. Konu, durum, öncelik, kaynak, açılış ve kapanış tarihleri ile müşteri alanları kendiliğinden eşleştirilir.
 
 ## API ile göndermek
 
-Yazma yetkili bir [API anahtarıyla](/docs/tr/api-keys/) aynı talebi istediğin kadar gönder. İlk gönderim oluşturur, sonrakiler günceller:
+Yazma yetkili bir [API anahtarıyla](/docs/tr/api-keys/) aynı talebi istediğiniz kadar gönderin. İlk gönderim oluşturur, sonrakiler günceller:
 
 ```bash
-curl -X PUT https://sirketin.curahold.com/api/tickets/my-helpdesk/4711 \
+curl -X PUT https://sirketiniz.curahold.com/api/tickets/my-helpdesk/4711 \
   -H "Authorization: Bearer $CURAHOLD_KEY" -H "Content-Type: application/json" \
   -d '{
     "subject": "Rapor dışa aktarılamıyor",
@@ -87,10 +87,10 @@ Müşteri sırasıyla şunlarla bulunur: `account.id`, `account.domain`, talep e
 
 ## Gelen adres (webhook)
 
-Kendi kimlik doğrulamasını ekleyemeyen araçlar için: Ayarlar → Geliştirici → **Diğer araçlardan destek talepleri** → **Adres oluştur**. Adres yalnızca bir kez gösterilir ve bir parola gibi çalışır. Gövdeye `source` ve `externalId` alanlarını ekleyip aynı biçimde gönder:
+Kendi kimlik doğrulamasını ekleyemeyen araçlar için: Ayarlar → Geliştirici → **Diğer araçlardan destek talepleri** → **Adres oluştur**. Adres yalnızca bir kez gösterilir ve bir parola gibi çalışır. Gövdeye `source` ve `externalId` alanlarını ekleyip aynı biçimde gönderin:
 
 ```bash
-curl -X POST "https://sirketin.curahold.com/api/inbound/tickets/<token>" \
+curl -X POST "https://sirketiniz.curahold.com/api/inbound/tickets/<token>" \
   -H "Content-Type: application/json" \
   -d '{ "source": "forms", "externalId": "77", "subject": "Yeni özellik isteği", "account": { "name": "Velto Mobility" } }'
 ```

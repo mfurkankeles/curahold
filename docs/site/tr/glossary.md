@@ -14,7 +14,7 @@ Bir müşteri ya da kayıt alanının değişmeyen adı (`renewal_date`, `arr`).
 
 ## API anahtarı
 
-Bir betiğin, anahtarı oluşturan kişi olarak çalışmasını sağlayan gizli değer. `chk_` ile başlar, bir kez gösterilir; yalnızca okuyabilir ya da değişiklik yapabilir. Bak: [API anahtarları](/docs/tr/api-keys/).
+Bir betiğin, anahtarı oluşturan kişi olarak çalışmasını sağlayan gizli değer. `chk_` ile başlar, bir kez gösterilir; yalnızca okuyabilir ya da değişiklik yapabilir. Bakın: [API anahtarları](/docs/tr/api-keys/).
 
 ## Dış kimlik ve kaynak
 
@@ -26,11 +26,11 @@ Bir panodaki tek bir iş; kişileri, bitiş tarihi, önceliği ve isteğe bağl�
 
 ## Idempotency anahtarı
 
-Bir değişiklikle birlikte `Idempotency-Key` başlığında gönderdiğin değer. Aynı anahtar yeniden gönderilirse ilk cevap geri gelir, hiçbir şey iki kez yapılmaz. Anahtarlar iki gün hatırlanır.
+Bir değişiklikle birlikte `Idempotency-Key` başlığında gönderdiğiniz değer. Aynı anahtar yeniden gönderilirse ilk cevap geri gelir, hiçbir şey iki kez yapılmaz. Anahtarlar iki gün hatırlanır.
 
 ## İmza anahtarı
 
-Bir webhook'un mesajlarının imzalandığı gizli değer (`whsec_…`); webhook eklenirken bir kez gösterilir. Bak: [Webhook'lar](/docs/tr/webhooks/).
+Bir webhook'un mesajlarının imzalandığı gizli değer (`whsec_…`); webhook eklenirken bir kez gösterilir. Bakın: [Webhook'lar](/docs/tr/webhooks/).
 
 ## Kayıt ve kayıt türü
 
@@ -42,7 +42,7 @@ Bir kişinin en başta ne yapabildiği: tam koltuk görür ve değiştirir, izle
 
 ## Müşteri (account)
 
-Baktığın şirket. Adreslerde ve alanlarda `account` olarak geçer. Kendi alanları `fields` içinde, bir yöneticinin tanımladığı anahtarlarla durur.
+Baktığınız şirket. Adreslerde ve alanlarda `account` olarak geçer. Kendi alanları `fields` içinde, bir yöneticinin tanımladığı anahtarlarla durur.
 
 ## Otomasyon
 
@@ -58,11 +58,11 @@ Yeniden kullanılabilir şablon: günleri bir başlangıç tarihinden ileri ya d
 
 ## Sağlık skoru
 
-Bir müşteri için 0 ile 100 arasında bir sayı; geciken işler, son temastan beri geçen süre ve açık destek kayıtları gibi sinyallerden hesaplanır. Bak: [Zaman çizelgesi ve sağlık skoru](/docs/tr/timeline-and-health/).
+Bir müşteri için 0 ile 100 arasında bir sayı; geciken işler, son temastan beri geçen süre ve açık destek kayıtları gibi sinyallerden hesaplanır. Bakın: [Zaman çizelgesi ve sağlık skoru](/docs/tr/timeline-and-health/).
 
 ## Sürüm ve baseVersion
 
-Her görev, her değişiklikte büyüyen bir `version` taşır. Görevi değiştirirken okuduğun sürümü `baseVersion` olarak gönder: bu arada başkası aynı alanı değiştirdiyse onun üzerine yazmak yerine en güncel görevle birlikte `409` alırsın.
+Her görev, her değişiklikte büyüyen bir `version` taşır. Görevi değiştirirken okuduğunuz sürümü `baseVersion` olarak gönderin: bu arada başkası aynı alanı değiştirdiyse onun üzerine yazmak yerine en güncel görevle birlikte `409` alırsınız.
 
 ## Sütun ve durum
 
@@ -70,11 +70,11 @@ Bir panonun sütunu. Görevin `status` değeri, içinde durduğu sütunun anahta
 
 ## Şirket adresi
 
-Her şirketin kendi adresi vardır: `https://sirketin.curahold.com`. API, belgeler ve yapay zekâ bağlayıcısı bu adresin altındadır.
+Her şirketin kendi adresi vardır: `https://sirketiniz.curahold.com`. API, belgeler ve yapay zekâ bağlayıcısı bu adresin altındadır.
 
 ## Webhook
 
-Bir şey değiştiğinde Curahold'un senin adresine gönderdiği mesaj; böylece tekrar tekrar sormana gerek kalmaz.
+Bir şey değiştiğinde Curahold'un adresinize gönderdiği mesaj; böylece tekrar tekrar sormanıza gerek kalmaz.
 
 ## Yetki ve rol
 

@@ -10,10 +10,10 @@ Zoho Desk'teki destek kayıtları ve hesaplar eşleşen müşteride, toplamlarda
 
 ## Curahold'da {#connect}
 
-1. **Ayarlar → CRM ve tablolar**'nı aç, **Destek araçları**'nı bul ve **Zoho Desk bağla**'ya tıkla.
+1. **Ayarlar → CRM ve tablolar**'ı açın, **Destek araçları**'nı bulun ve **Zoho Desk bağla**'ya tıklayın.
    ![Zoho Desk kutucuğu, işaretli](img/b19-zohodesk-tile.webp)
 
-Zoho açılır. Destek masandaki bir temsilciyle giriş yap ve **Kabul et**'e tıkla. Curahold veri merkezini (.com, .eu, .in, .com.au, .jp, .sa, .uk, .ae, .ca, .com.cn) ve portalını kendisi bulur. Curahold'a dönünce **Destek kayıtları** ve **Hesaplar**'ı işaretle, alan eşlerini kontrol et ve **Eşitlemeyi başlat**'a tıkla.
+Zoho açılır. Destek masanızdaki bir temsilciyle giriş yapın ve **Kabul et**'e tıklayın. Curahold veri merkezini (.com, .eu, .in, .com.au, .jp, .sa, .uk, .ae, .ca, .com.cn) ve portalını kendisi bulur. Curahold'a dönünce **Destek kayıtları** ve **Hesaplar**'ı işaretleyin, alan eşlerini kontrol edin ve **Eşitlemeyi başlat**'a tıklayın.
 
 ## Sınırlar ve zamanlama
 
@@ -21,7 +21,7 @@ Değişiklikler saatte bir okunur. Zoho her çağrı için plana göre günlük 
 
 ## Bir sorun olursa
 
-Süresi dolan oturum kendiliğinden yenilenir. Temsilci erişimini kaybettiyse bağlantı **Bakılması gerek** gösterir: **Yeniden bağla** ve yeniden giriş yap. **Kaldır** oturumu siler; gelmiş kayıtlar kalır.
+Süresi dolan oturum kendiliğinden yenilenir. Temsilci erişimini kaybettiyse bağlantı **Bakılması gerek** gösterir: **Yeniden bağla**'ya tıklayıp yeniden giriş yapın. **Kaldır** oturumu siler; gelmiş kayıtlar kalır.
 
 ## Ayrıca bakın
 

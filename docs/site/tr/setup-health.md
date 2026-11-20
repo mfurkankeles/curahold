@@ -2,7 +2,7 @@
 title: Kurulum sağlığı ve kurulumu test etme
 section: help
 order: 1.5
-summary: Kurulumdan sonra eksik ya da yanlış olan, düzelten ekrana tek tıkla; ardından çalıştığını kanıtlayan kontrol listesi.
+summary: Kurulumdan sonra eksik ya da yanlış olan, düzelten ekrana tek tıkla gidin; ardından çalıştığını kanıtlayan kontrol listesi.
 ---
 # Kurulum sağlığı ve kurulumu test etme
 

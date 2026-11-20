@@ -6,7 +6,7 @@ summary: Ana sayfaların ve gösterge panolarının arkasındaki veri; rapor olu
 ---
 # Başvuru: ana sayfalar, panolar ve raporlar
 
-Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` her kartın soran kişi için ne gösterdiğini verir. Raporlar müşteriler, görevler, kayıtlar ve etkinlikler üzerine sorulardır; kaydetmeden çalıştırabilir ya da saklayabilirsin.
+Ana sayfalar ve gösterge panoları kartlardan oluşur; `GET /pages/:id/data` her kartın soran kişi için ne gösterdiğini verir. Raporlar müşteriler, görevler, kayıtlar ve etkinlikler üzerine sorulardır; kaydetmeden çalıştırabilir ya da saklayabilirsiniz.
 
 > Bu sayfa ürünün kendi kodundan üretilir; bu yüzden API'nin kabul ettiğiyle her zaman aynıdır. Biçimler şurada: [Nesneler](/docs/tr/ref-objects/).
 
@@ -202,4 +202,4 @@ Bir listenin ya da raporun dosyasını yapar ve indirme olarak gönderir (Excel 
 
 **Gerekenler:** yetki `data.export`
 
-Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bak.
+Biçimi gönderilene göre değişen bir gövde alır; bu alanın rehberine bakın.

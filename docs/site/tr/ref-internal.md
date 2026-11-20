@@ -29,7 +29,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/logo/…` | 1 | Şirket logosu. |
 | `/manifest.webmanifest/…` | 1 | Kurulabilir uygulama bildirimi. |
 | `/metrics/…` | 1 | Yalnızca işletmeciye özel platform metrikleri (owner panosu); bir şirketin API'sinin parçası değil. |
-| `/oauth/…` | 0 | Uygulamalar ve yapay zekâ asistanları için onay ekranı; "Yapay zekâ bağlayıcısı ve OAuth" sayfasına bak. |
+| `/oauth/…` | 0 | Uygulamalar ve yapay zekâ asistanları için onay ekranı; "Yapay zekâ bağlayıcısı ve OAuth" sayfasına bakın. |
 | `/onboarding/…` | 6 | Yeni bir şirketin kendi kurulum kontrol listesi; kayıttan sonra tarayıcıda kullanılır. |
 | `/org/…` | 1 | Şirketin herkese açık oturum açma bilgileri. |
 | `/platform/…` | 4 | Yalnızca işletmeciye özel owner konsolu (müşteriler, planlar, faturalandırma durumu, genel bakış); bir şirketin API'sinin parçası değil. |

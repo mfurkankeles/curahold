@@ -2,7 +2,7 @@
 title: freee (muhasebe)
 section: help
 order: 8.24
-summary: freee'i yalnızca okunur bağla: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
+summary: freee'i yalnızca okunur bağlayın: her müşterinin sayfasında açık bakiye, vadesi geçmiş faturalar ve ödemeler.
 ---
 # freee (muhasebe)
 
@@ -14,11 +14,11 @@ Müşteriler (programda varsa vergi numarası, e-posta ve web adresiyle), vade t
 
 ## Bağlama
 
-**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bul ve **freee bağla**'yı seç. Sonra:
+**Ayarlar → Veri kaynakları**'nda **Muhasebe programları**'nı bulun ve **freee bağla**'yı seçin. Sonra:
 
-1. freee'ye giriş yap ve bağlanacak şirketi (事業所) seç.
-2. Erişime izin ver; Curahold yalnızca cari hesapları ve satış işlemlerini okur.
-3. Buraya dönünce ilk okumayı başlat ve eşleşemeyen müşterilere bak.
+1. freee'ye giriş yapın ve bağlanacak şirketi (事業所) seçin.
+2. Erişime izin verin; Curahold yalnızca cari hesapları ve satış işlemlerini okur.
+3. Buraya dönünce ilk okumayı başlatın ve eşleşemeyen müşterilere bakın.
 
 ## Sınırlar ve zamanlama
 
@@ -26,8 +26,8 @@ Curahold saniyede bir isteğin altında kalır. Cari hesaplar her seferinde baş
 
 ## Bir sorun olursa
 
-freee bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seç. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
+freee bağlantıyı kabul etmeyi bırakırsa (iptal edilmiş anahtar ya da oturum), bağlantı Ayarlar → Bağlantılar'da "Sorun var" olarak işaretlenir ve yöneticilere bir kez haber verilir; sayfasında **Yeniden bağla**'yı seçin. Hız sınırı cevabı hata değildir: çalışma durur, yerini saklar ve bir sonraki sefer devam eder.
 
-## Ayrıca bak
+## Ayrıca bakın
 
 - [Muhasebe programları](/docs/tr/accounting/)
