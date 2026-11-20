@@ -54,8 +54,9 @@ const DOCS_ORIGIN = (process.env.DOCS_ORIGIN ?? 'https://app.curahold.com').repl
  * The languages the docs are written in: a folder per language under docs/site.
  * Adding a language is adding its folder. Its user guide (section help) must be
  * whole; any other page it does not have yet is shown in English, with a note
- * (developer pages, the API reference, release notes and legal texts are kept
- * in English outside English and Turkish, the two reviewed sources).
+ * (developer pages, the API reference and release notes are kept in English
+ * outside English and Turkish, the two reviewed sources; the legal pages exist
+ * in all eleven since 20 Nov 2026, as drafts where the English text prevails).
  */
 // (A folder with only pictures, img/, is not a language of the docs yet: the demo hub uses them.)
 const LANGS: Locale[] = LOCALES.filter((l) => existsSync(join(SRC, l)) && readdirSync(join(SRC, l)).some((f) => f.endsWith('.md')));
@@ -378,7 +379,8 @@ function build() {
     const missing = needed.filter((f) => !own.has(f));
     if (missing.length) throw new Error(`${lang}: pages missing: ${missing.join(', ')}`);
     // The preview keeps to a small host's file budget (ADR 0016): past English, a language carries its user guide
-    // (Turkish its legal pages too) and links to the English page for the rest. Past Turkish, the one-vendor
+    // (Turkish its legal pages too) and links to the English page for the rest. The nine other languages' legal
+    // pages (90 files) stay out of the preview: with them it would pass 512; the production build has them all. Past Turkish, the one-vendor
     // setup guides link to English too: with eleven languages they alone were 150 files over the cap, and the
     // overview pages they hang off (Connections, Accounting) stay in the language. The production build keeps every page.
     const kept = (f: string) =>

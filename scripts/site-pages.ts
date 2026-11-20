@@ -201,6 +201,10 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     [s.footer.links.cookies, urls.legal('cookies')],
     [s.footer.links.accessibility, urls.legal('accessibility')],
     [s.footer.links.terms, urls.legal('terms')],
+    [s.footer.links.sla, urls.legal('sla')],
+    [s.footer.links.aup, urls.legal('aup')],
+    [s.footer.links.orderForm, urls.legal('order-form')],
+    [s.footer.links.disclosure, `${urls.docs}responsible-disclosure/`],
   ];
   out.push({
     path: PAGE.trust,
@@ -209,7 +213,8 @@ export function innerPages(locale: SiteLocale, urls: PageUrls, pricing: PricingP
     description: c.seo.trust[1],
     main: `${hero(locale, { crumb: c.trust.title, title: c.trust.title, lead: c.trust.lead, glyph: GLYPH.trust, urls })}
   <section class="ip__body"><div class="wrap">${points(c.trust.points)}
-    <div class="ip__note" id="legal"><h2>${esc(s.footer.legal)}</h2><ul class="ip__docs">${docs.map(([n, u]) => `<li><a href="${esc(u)}">${esc(n)}</a></li>`).join('')}</ul></div></div></section>
+    <div class="ip__note" id="legal"><h2>${esc(s.footer.legal)}</h2><ul class="ip__docs">${docs.map(([n, u]) => `<li><a href="${esc(u)}">${esc(n)}</a></li>`).join('')}</ul>
+    <p><a href="${esc(urls.contact)}">${esc(c.trust.pack)}</a></p></div></div></section>
   ${closing(locale, urls)}`,
   });
 
