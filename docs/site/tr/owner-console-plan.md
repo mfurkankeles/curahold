@@ -1,17 +1,17 @@
 ---
-title: Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve telefon bildirimleri
+title: Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve anlık bildirimler
 section: developers
 order: 12
-summary: Platform sahibi ve işletmeci için — sahip konsolunda Plan ve hedefler (hedefler, bütçe ve harcama, kilometre taşları, yatırım pencereleri, yatırımcı görüşmeleri), iş planı dosyasını yükleme, haftalık CEO e-postası ve sahibin telefonuna gelen bildirimler.
+summary: Platform sahibi ve işletmeci için — sahip konsolunda Plan ve hedefler (hedefler, bütçe ve harcama, kilometre taşları, yatırım pencereleri, yatırımcı görüşmeleri), iş planı dosyasını yükleme, haftalık CEO e-postası ve sahibin cihazlarına gelen anlık bildirimler.
 ---
-# Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve telefon bildirimleri
+# Sahip konsolu: plan, yatırımcılar, pazartesi özeti ve anlık bildirimler
 
 > Platform sahibi ve sunucuyu işleten kişi için. Müşteriler bunların hiçbirini görmez: hepsi sahip konsolundadır
 > (`desk.<alan adınız>`) ve yalnızca kimlik doğrulama uygulamasıyla giriş yapan platform sahibi açabilir.
 
 **Plan ve hedefler** sayfasının üstünde üç görünüm vardır: **Hedefler ve görevler**, **Bütçe ve yatırım** ve
 **Pazartesi özeti**. Her görünümün kendi adresi vardır (`/plan`, `/plan?q=investors`, `/plan?q=summary`); böylece bir
-e-postadaki ya da telefon bildirimindeki bağlantı doğru görünümü açar.
+e-postadaki ya da anlık bildirimdeki bağlantı doğru görünümü açar.
 
 ## Hedefler ve görevler {#targets}
 
@@ -61,22 +61,22 @@ süre, sıradaki yatırım penceresi ve bu hafta yapılacak yatırımcı adımla
 zekâ modeli kullanılmaz, bu yüzden hiçbir maliyeti yoktur ve hiçbir şey uydurmaz — ve saatlik iş kaç kez çalışırsa
 çalışsın haftada bir kez gider.
 
-**Pazartesi özeti** görünümünden onu kapatabilir, dilini seçebilir (Türkçe ya da İngilizce; telefon bildirimleri de aynı
+**Pazartesi özeti** görünümünden onu kapatabilir, dilini seçebilir (Türkçe ya da İngilizce; anlık bildirimler de aynı
 seçimi izler), şu an yazılsaydı nasıl olacağını önizleyebilir ve hemen kendinize gönderebilirsiniz. `PLATFORM_OWNER`
 adresine (ya da ilk destek ekibi adresine) gider.
 
-## Telefonunuza bildirim {#phones}
+## Cihazlarınıza anlık bildirim {#phones}
 
 Bir müşterinin işini durduran destek talepleri, sistem uyarıları (çok sayıda hata, yavaş yanıt, bekleyen bildirimler) ve
-pazartesi özeti, konsol kapalıyken bile telefon ve bilgisayarlarınıza bildirim olarak gelebilir. Ücretsizdir: mesajı
+pazartesi özeti, konsol kapalıyken bile cihazlarınıza anlık bildirim olarak gelebilir. Ücretsizdir: mesajı
 tarayıcının kendi bildirim hizmeti taşır ve yalnızca sizin cihazınızın okuyabileceği biçimde şifrelenir.
 
 1. İşletmeci bir kez bir anahtar çifti oluşturup sunucuya ekler (aşağıya bakın).
-2. Konsolu telefonunuzda açın, **Plan ve hedefler → Pazartesi özeti → Bu cihazı ekle**'yi seçin ve bildirimlere izin
+2. Konsolu cihazınızda açın, **Plan ve hedefler → Pazartesi özeti → Bu cihazı ekle**'yi seçin ve bildirimlere izin
    verin. iPhone'da önce konsolu ana ekrana ekleyin (Paylaş → Ana Ekrana Ekle) ve oradan açın.
 3. **Deneme gönder** çalıştığını gösterir. **Kaldır** bir cihazı durdurur; tarayıcısı vazgeçen cihaz kendiliğinden kaldırılır.
 
 İşletmeci için: `npx tsx scripts/plan/vapid-keys.ts`, `VAPID_PUBLIC_KEY` ve `VAPID_PRIVATE_KEY` değerlerini yazar;
 ikisini de ekleyin (özel olanı gizli değer olarak) ve isterseniz `VAPID_SUBJECT` (bir `mailto:` adresi; varsayılanı
-sahibin adresi). Bunlar olmadan konsol telefon bildirimlerinin kurulmadığını söyler; e-posta uyarıları çalışmaya devam
+sahibin adresi). Bunlar olmadan konsol anlık bildirimlerin hazır olmadığını söyler; e-posta uyarıları çalışmaya devam
 eder. Anahtarları sonradan değiştirmek, her cihazın yeniden eklenmesi demektir.
