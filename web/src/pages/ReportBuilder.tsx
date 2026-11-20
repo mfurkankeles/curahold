@@ -67,6 +67,7 @@ function useCatalog() {
 /** The example an empty list offers: one ready-made report, opened in the builder. */
 const EXAMPLE = 'customers_by_health';
 
+/** The tabs across the reports area (overview, reports, dashboards). */
 export function ReportTabs({ active }: { active: 'overview' | 'reports' | 'dashboards' }) {
   const { t } = useI18n();
   const tab = (key: typeof active, to: string, label: string, icon: IconName) => (
@@ -230,6 +231,9 @@ export function ReportsListPage() {
 /** The charts that fit a report's shape: a list or one figure; one grouping; two. */
 const CHART_CHOICES: Record<0 | 1 | 2, ChartKind[]> = { 0: ['table', 'number', 'gauge'], 1: ['bar', 'column', 'line', 'donut'], 2: ['stacked', 'column', 'line', 'bar'] };
 
+/**
+ * The report builder: source, filters, groups, measure and chart, with save and share. Split plan: docs/HANDOVER.md.
+ */
 export function ReportBuilderPage({ id, from }: { id: string | null; from: string | null }) {
   const { t, locale } = useI18n();
   const { canWrite, can, me, toast, people, boards, teams } = useStore();

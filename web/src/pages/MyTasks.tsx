@@ -1,3 +1,5 @@
+// My tasks: everything assigned to the person across boards they can open, grouped by due state (today in the
+// company's time zone, lib/time.ts).
 import { useEffect, useMemo, useState } from 'react';
 import { PRIORITIES, type Priority, type Task } from '../../../shared/src/model';
 import { EmptyState, LoadError, SkeletonRows } from '../components/Empty';
@@ -39,6 +41,7 @@ export function AddBar({ label, short, onOpen }: { label: string; /** A shorter 
 /** When a group of tasks is due, as a picture. */
 const GROUP_ICON: Record<string, IconName> = { late: 'alert', today: 'calendar', soon: 'clock', later: 'hourglass', none: 'dot' };
 
+/** The person's tasks across boards, by due date. */
 export function MyTasks({ refreshKey }: { refreshKey: number }) {
   const { t } = useI18n();
   const { boards, me, canWrite } = useStore();

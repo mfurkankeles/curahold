@@ -1,3 +1,6 @@
+// The app's translations in React: I18nProvider loads the person's language dictionary (lazily), useI18n() gives t()
+// with the company's own terms, and the start language is remembered per browser. Right-to-left languages set `dir`.
+// Dictionaries live in shared/src/i18n (every user-facing string in every one; CLAUDE.md).
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   accountWords,
@@ -156,6 +159,10 @@ export interface I18n {
 
 const Ctx = createContext<I18n | null>(null);
 
+/**
+ * Provides the language on screen. Switching keeps the previous language until the new dictionary has loaded, so raw
+ * keys are never shown.
+ */
 export function I18nProvider({ locale: wanted, terms, hold, children }: { locale: Locale; terms?: Terms | null; hold?: boolean; children: ReactNode }) {
   // The language on screen: the wanted one once its dictionary is here. Until
   // then the previous one stays (switching never shows raw keys); on the very
@@ -215,6 +222,7 @@ export function I18nProvider({ locale: wanted, terms, hold, children }: { locale
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** The current language, t(), formatting helpers and the company's terms. */
 export function useI18n(): I18n {
   const v = useContext(Ctx);
   if (!v) throw new Error('I18nProvider missing');
@@ -222,6 +230,7 @@ export function useI18n(): I18n {
 }
 
 const STORE = 'app_locale';
+/** The language last chosen in this browser, or null. */
 export function storedLocale(): Locale | null {
   try {
     const v = localStorage.getItem(STORE);
@@ -230,6 +239,7 @@ export function storedLocale(): Locale | null {
     return null;
   }
 }
+/** Remembers the chosen language in this browser. */
 export function storeLocale(l: Locale) {
   try {
     localStorage.setItem(STORE, l);
@@ -242,6 +252,7 @@ export function storeLocale(l: Locale) {
 // company's language. Nothing is guessed from the browser, so everyone who
 // opens the same link starts on the same screen.
 let start: Locale = 'en';
+/** The language the app starts in (before the session says otherwise). */
 export const startLocale = (): Locale => start;
 /** The try-it demo opens in the language its sample data was written in. */
 export function setStartLocale(l: Locale) {

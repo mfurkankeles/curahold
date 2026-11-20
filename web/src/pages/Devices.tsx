@@ -1,3 +1,4 @@
+// The person's own signed-in devices, with signing one out. Uses GET/DELETE /api/me/sessions.
 import { PageIcon } from '../components/icons';
 import { useEffect, useState } from 'react';
 import type { SessionInfo } from '../../../shared/src/model';
@@ -10,6 +11,7 @@ import { post } from '../lib/api';
 import { SignInSecurity } from '../components/SignInSecurity';
 import { Icon } from '../components/icons';
 
+/** The person's signed-in devices and the company's device limit. */
 export function DevicesPage() {
   const { t } = useI18n();
   const save = useSaver();

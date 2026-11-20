@@ -5,6 +5,7 @@ import { ApiFailure } from './api';
 import { useI18n } from './i18n';
 import { useStore } from './store';
 
+/** Runs a save with the standard "Saved" / error message, so every screen reports saves the same way. */
 export function useSaver() {
   const { t } = useI18n();
   const { toast } = useStore();

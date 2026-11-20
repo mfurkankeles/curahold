@@ -131,6 +131,9 @@ function Languages({ onLocale, only }: { onLocale: (l: Locale) => void; only?: L
   );
 }
 
+/**
+ * Curahold's support desk app (desk host only): help requests, companies, consent-based access and the owner console.
+ */
 export default function DeskApp({ onLocale }: { onLocale: (l: Locale) => void }) {
   const { t } = useI18n();
   const [me, setMe] = useState<Me | null | undefined>(undefined);

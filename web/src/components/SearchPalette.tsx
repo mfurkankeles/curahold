@@ -31,6 +31,7 @@ interface Item {
 
 const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
 
+/** Search across customers, tasks, records, boards and people, with keyboard navigation and quick actions. */
 export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
   const leaveWrap = useLeave<HTMLDivElement>();
   const { t, words, locale } = useI18n();

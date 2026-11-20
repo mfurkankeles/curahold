@@ -70,6 +70,7 @@ export function usePlaceName(types: RecordType[] | null) {
   };
 }
 
+/** The bar above a detail screen: back to where the person came from, with the breadcrumb names. */
 export function BackBar({ types }: { types: RecordType[] | null }) {
   const { t } = useI18n();
   const { path, search } = useLocation();

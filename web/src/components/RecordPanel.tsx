@@ -28,6 +28,7 @@ import { OpenIn, RecordDialog } from './Records';
 import { CommentView, Composer, FileItem, postRecordComment } from './Thread';
 import { Avatar, Avatars, useFocusTrap, CloseButton } from './ui';
 
+/** The side panel of one record: fields, links, comments and files. */
 export function RecordPanel({ recordId, onChanged }: { recordId: string; onChanged: () => void }) {
   const { t, locale, fmtDate, words } = useI18n();
   const { person, people, me, canWrite, can, toast } = useStore();

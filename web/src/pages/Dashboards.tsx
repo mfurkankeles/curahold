@@ -221,6 +221,7 @@ function DashPicker({ pages, current, admin, onAdded }: { pages: Page[]; current
 type ViewAs = string;
 const queryOf = (v: ViewAs) => (v === 'me' ? '?person=me' : v.startsWith('p:') ? `?person=${v.slice(2)}` : v.startsWith('t:') ? `?team=${v.slice(2)}` : '');
 
+/** A dashboard of report cards, viewed or edited. */
 export function DashboardPage({ id, create }: { id: string | null; create?: boolean }) {
   const { t, locale } = useI18n();
   const { can, me, people, teams, toast } = useStore();

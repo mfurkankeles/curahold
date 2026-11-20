@@ -45,6 +45,10 @@ export interface HumanProof {
   ts?: string;
 }
 
+/**
+ * The public forms' robot check: the hidden field, the time since the form showed, and the Turnstile widget when the
+ * install has a site key (ADR 0015).
+ */
 export function useHumanCheck(
   siteKey: string | null | undefined,
   opts: { label: string; locale: string; honeypot?: boolean },

@@ -24,6 +24,7 @@ let asking: Promise<void> | null = null;
 // Written the way the quick-add reader understands (English and Turkish words for dates).
 const EXAMPLE: Partial<Record<Locale, string>> & { en: string } = { en: 'Send the proposal tomorrow @me', tr: 'Teklifi yarın gönder @ben' };
 
+/** Loads the person's getting-started state once per page load. */
 export function loadStart(): Promise<void> {
   return (asking ??= get<StartState>('/me/start')
     .then(
@@ -32,8 +33,10 @@ export function loadStart(): Promise<void> {
     )
     .finally(() => (asking = null)));
 }
+/** Whether the getting-started state has loaded. */
 export const startKnown = () => known !== undefined;
 
+/** The getting-started checklist on Home. */
 export function GettingStarted() {
   const { t, locale } = useI18n();
   const { canWrite, me } = useStore();

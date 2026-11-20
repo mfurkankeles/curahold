@@ -13,6 +13,10 @@ export interface SaveResult {
   conflicts: EditableField[];
 }
 
+/**
+ * Saves a task edit without overwriting someone else's change: on a newer version the edit is merged on top, and
+ * fields both changed keep theirs and are reported back for re-entry.
+ */
 export async function saveTask(base: Task, changes: TaskChanges): Promise<SaveResult> {
   try {
     const r = await patch<{ task: Task }>(`/tasks/${base.id}`, { baseVersion: base.version, ...changes });

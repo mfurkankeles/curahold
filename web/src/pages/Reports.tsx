@@ -32,6 +32,7 @@ export interface WorkReport {
   hours: { userId: string; minutes: number }[];
 }
 
+/** Minutes as hours and minutes in the reader's language. */
 export const hoursText = (minutes: number, locale: Locale) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -132,6 +133,7 @@ export function BarRows({ rows, max }: { rows: BarRow[]; max?: number }) {
   );
 }
 
+/** The reports overview: the work report and the ready-made reports. */
 export function ReportsPage() {
   const { t, locale, words } = useI18n();
   const percent = (v: number) => formatPercent(v, locale);

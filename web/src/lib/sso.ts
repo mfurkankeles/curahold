@@ -68,6 +68,9 @@ export interface SsoSettings {
   test?: { at: string; email: string | null; current: boolean } | null;
 }
 
+/** GET /api/sso/settings. */
 export const getSsoSettings = () => get<SsoSettings>('/sso/settings');
+/** PUT /api/sso/settings (needs a recent sign-in; the dialog handles it). */
 export const saveSsoSettings = (body: Partial<SsoConfig> & { cert?: string; clientSecret?: string; backupAdminIds?: string[] }) => put<{ ok: true; sp: SsoSp; backup?: BackupState }>('/sso/settings', body);
+/** Makes a new SCIM token; the old one stops working. The token is shown only in this answer. */
 export const rotateScimToken = () => post<{ token: string; baseUrl: string; hint: string }>('/sso/settings/scim-token');

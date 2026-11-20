@@ -34,6 +34,7 @@ const parseRate = (text: string): number | null => {
   return Number.isFinite(n) && n > 0 && n < 1e9 ? n : null;
 };
 
+/** Settings: the company's currency and the exchange rates it uses for other currencies. */
 export function CurrencySettings() {
   const { t, locale, fmtDate } = useI18n();
   const { me, reloadMe, toast } = useStore();

@@ -12,6 +12,7 @@ import { ReportChart } from './Charts';
 import { LoadError, SkeletonRows } from './Empty';
 import '../surfaces/product.css';
 
+/** A board's flow figures (cycle time, throughput, ageing), with refresh. */
 export function useFlow(boardId: string, refreshKey: number) {
   const [flow, setFlow] = useState<BoardFlow | null>(null);
   const [failed, setFailed] = useState(false);
@@ -27,6 +28,7 @@ export function useFlow(boardId: string, refreshKey: number) {
   return { flow, failed, reload: load };
 }
 
+/** A board's flow report. */
 export function FlowReport({ boardId, refreshKey }: { boardId: string; refreshKey: number }) {
   const { t } = useI18n();
   const f = useFormat();

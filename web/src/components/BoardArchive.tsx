@@ -11,6 +11,7 @@ import { Avatar } from './ui';
 
 type Archived = Task & { archivedAt: string | null; accountName: string | null };
 
+/** A board's archive: tasks put away or aged out, searchable, each restorable. */
 export function BoardArchive({ board, onRestored }: { board: Board; onRestored: () => void }) {
   const { t, fmtDate } = useI18n();
   const { person, canWrite, toast } = useStore();

@@ -15,6 +15,7 @@ import { Icon } from './icons';
 
 export { MAILBOX_PROVIDERS, isMailboxProvider } from '../lib/mailReply';
 
+/** On a customer's timeline: replies to an email through the person's connected mailbox. */
 export function MailReply({ connectionId, accountId, activity, onSent }: { connectionId: string; accountId: string; activity: Activity; onSent: () => void }) {
   const { t } = useI18n();
   const { toast } = useStore();

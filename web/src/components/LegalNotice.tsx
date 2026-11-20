@@ -6,6 +6,7 @@ import type { MessageKey, Vars } from '../../../shared/src/i18n';
 import { copyrightYears } from '../../../shared/src/compliance/notice';
 import './legalNotice.css';
 
+/** The short legal line under sign-in and sign-up forms (terms and privacy links). */
 export function LegalNotice({ t }: { t: (k: MessageKey, v?: Vars) => string }) {
   return (
     <p className="legal-notice">

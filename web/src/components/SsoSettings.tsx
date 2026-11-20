@@ -42,6 +42,7 @@ type Form = {
 const blank: Form = { enabled: false, enforced: false, protocol: 'saml', issuer: '', ssoUrl: '', tokenUrl: '', jwksUrl: '', clientId: '', attrEmail: 'email', attrName: '', cert: '', clientSecret: '', scimEnabled: false, backup: [] };
 const MAX_BACKUP = 2;
 
+/** Settings: the company's SSO (SAML or OIDC), test sign-in, backup administrators and the SCIM token. */
 export function SsoSettings() {
   const { t, locale } = useI18n();
   const k = (s: string) => t(s as MessageKey);

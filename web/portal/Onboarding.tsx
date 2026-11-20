@@ -78,6 +78,7 @@ export function OnboardingBanner({ ctx }: { ctx: Ctx }) {
   );
 }
 
+/** The customer's view of their onboarding plan in the portal: steps, whose turn each is, files and progress. */
 export function PortalOnboarding({ ctx, org, me, onSignedOut }: { ctx: Ctx; org: PortalOrg; me: PortalMe; onSignedOut: (n?: string) => void }) {
   const { t } = ctx;
   const { data, failed, reload, setData } = useLoad(() => call<{ plans: PPlan[] }>('GET', '/onboarding').then((r) => r.plans), [], onSignedOut);

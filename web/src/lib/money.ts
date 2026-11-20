@@ -21,6 +21,7 @@ export interface MoneyTools extends Money {
   symbolOf: (code?: string | null) => string;
 }
 
+/** Money helpers in the reader's language and the company's currency and rates (format, convert). */
 export function useMoney(): MoneyTools {
   const { locale } = useI18n();
   const { me } = useStore();

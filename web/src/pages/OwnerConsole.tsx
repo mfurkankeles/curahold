@@ -245,6 +245,7 @@ export function useOwnerBar(beat: number, failed: (e: unknown) => void) {
   return useData<OwnerBarData>('/owner/bar', beat, failed);
 }
 
+/** The owner console's top bar: pending approvals, new requests, the AI team's usage this week. */
 export function OwnerBar({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const { data, reload } = useOwnerBar(beat, failed);
@@ -851,6 +852,7 @@ export function TrialsSection({ beat, failed, go }: { beat: number; failed: (e: 
 
 type RequestList = { requests: TrialRequestRow[]; settings: { 'trial.seatCap': number; 'trial.months': number } };
 
+/** The owner console's trial requests: the list, one request, and the decision. */
 export function RequestsSection({ beat, failed, open, go }: { beat: number; failed: (e: unknown) => void; open: string | null; go: OwnerGo }) {
   const { o } = useOwnerWords();
   const { t } = useI18n();
@@ -1706,6 +1708,7 @@ const nextMonths = (n: number) => {
   return Array.from({ length: n }, (_, i) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + i, 1)).toISOString().slice(0, 7));
 };
 
+/** The owner console's Plan & targets. */
 export function PlanSection({ beat, failed }: { beat: number; failed: (e: unknown) => void }) {
   const { o, locale } = useOwnerWords();
   const { data, error, reload, setData } = useData<OwnerPlan>('/owner/plan', beat, failed);
@@ -2087,6 +2090,7 @@ export function SupportOverviewSection({ beat, failed, go }: { beat: number; fai
   );
 }
 
+/** The owner console's system health. */
 export function SystemSection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const { data, error, reload } = useData<OwnerSystem>('/owner/system', beat, failed);
@@ -2190,6 +2194,7 @@ const ACTION_WORD: Record<string, OwnerKey> = {
   'meeting.call': 'act.meetingCall',
 };
 
+/** The owner console's log of what desk staff did. */
 export function ActivitySection({ beat, failed, go }: { beat: number; failed: (e: unknown) => void; go: OwnerGo }) {
   const { o, locale } = useOwnerWords();
   const { data, error, reload } = useData<{ activity: OwnerActivity[] }>('/owner/activity', beat, failed);

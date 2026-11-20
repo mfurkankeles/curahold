@@ -47,6 +47,7 @@ function useAccess() {
 /** People who count: active or invited (disabled people can do nothing). */
 const counts = (p: AccessPerson) => p.status === 'active' || p.status === 'invited';
 
+/** Settings: roles and their permissions, and previewing the app as a person. */
 export function RolesTab() {
   const { t } = useI18n();
   const { can } = useStore();

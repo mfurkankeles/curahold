@@ -18,6 +18,10 @@ interface Due {
   version: string;
 }
 
+/**
+ * The step between an approved trial and work: the administrator accepts the terms and the data processing agreement
+ * with one click; the server keeps version, sentence hash, who, when and where (ADR 0014). Others wait for it.
+ */
 export function AgreementsGate({ me, onLocale, onAccepted }: { me: Me; onLocale: (l: Locale) => void; onAccepted: () => void }) {
   const { t, locale } = useI18n();
   const admin = me.user.perms.includes('org.manage');

@@ -305,6 +305,7 @@ function CompanyTab() {
   );
 }
 
+/** The company's own settings form (name, language, time zone, currency, week), also used during setup. */
 export function CompanyForm({ onSaved, submitLabel }: { onSaved?: () => void; submitLabel?: string }) {
   const { t, locale: viewer } = useI18n();
   const { me, reloadMe, toast } = useStore();

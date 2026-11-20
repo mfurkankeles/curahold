@@ -18,6 +18,7 @@ const FILTERS = ['all', 'mentions', 'assigned', 'comments', 'system'] as const;
 type Filter = (typeof FILTERS)[number];
 const KIND_ICON: Record<string, IconName> = { stale: 'hourglass', escalated: 'alert', assigned: 'checkCircle', mentioned: 'at', comment: 'comment', followed: 'eye', unblocked: 'play', automation: 'zap', digest: 'sun', weekly: 'chart', join_request: 'user', help: 'lifebuoy' };
 
+/** The person's notifications as an inbox, with read and unread. */
 export function InboxPage() {
   const { t } = useI18n();
   const { person, toast } = useStore();

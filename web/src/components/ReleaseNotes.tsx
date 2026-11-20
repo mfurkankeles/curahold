@@ -25,6 +25,7 @@ export function draftNotes(sprint: Sprint, done: Task[], words: Record<Group, st
   return parts.join('\n');
 }
 
+/** A sprint's release notes from its finished stories, ready to copy. */
 export function ReleaseNotes({ sprint, doneKeys, onClose }: { sprint: Sprint; doneKeys: Set<string>; onClose: () => void }) {
   const { t } = useI18n();
   const f = useFormat();

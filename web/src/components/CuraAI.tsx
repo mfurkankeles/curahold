@@ -10,6 +10,7 @@ import { Icon } from './icons';
 // The answering engine loads the first time the panel opens, not with the app.
 const Ask = lazy(() => import('./Ask').then((m) => ({ default: m.Ask })));
 
+/** The assistant's side panel: open, close and the conversation. */
 export function CuraAI({
   open,
   lifted,

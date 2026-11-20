@@ -1,3 +1,5 @@
+// The app's small shared building blocks: avatars, the logo mark, due labels, dialogs and confirms (focus managed,
+// Escape closes), the people picker and a few icons. Styles come from design tokens (docs/design/tokens.md).
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from 'react';
 import type { Person } from '../../../shared/src/model';
 import { useI18n } from '../lib/i18n';
@@ -10,12 +12,14 @@ import { busyProps, useBusy } from '../lib/busy';
 /** Avatar tones: --avatar-0 … --avatar-7 in styles.css. */
 const AVATAR_TONES = 8;
 
+/** Up to two initials from a name, for avatars. */
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return '?';
   return ((parts[0][0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toLocaleUpperCase();
 }
 
+/** A person's avatar (initials on a stable tone). */
 export function Avatar({ person, large }: { person?: Person; large?: boolean }) {
   const { t } = useI18n();
   const id = person?.id ?? '';
@@ -29,6 +33,7 @@ export function Avatar({ person, large }: { person?: Person; large?: boolean }) 
   );
 }
 
+/** Up to `max` avatars and a "+n" for the rest. */
 export function Avatars({ people, max = 3 }: { people: (Person | undefined)[]; max?: number }) {
   const shown = people.slice(0, max);
   return (
@@ -41,6 +46,7 @@ export function Avatars({ people, max = 3 }: { people: (Person | undefined)[]; m
   );
 }
 
+/** The Curahold logo mark. */
 export function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg className="sidebar__mark" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
@@ -52,6 +58,7 @@ export function Mark({ size = 28 }: { size?: number }) {
   );
 }
 
+/** A due date in words, coloured by its state. */
 export function DueLabel({ due, done }: { due: string | null; done: boolean }) {
   const { t, fmtDate } = useI18n();
   if (!due) return null;
@@ -65,6 +72,7 @@ export function DueLabel({ due, done }: { due: string | null; done: boolean }) {
   );
 }
 
+/** The due state that colours a card's rail. */
 export function railState(due: string | null, done: boolean): DueState {
   return dueState(due, done);
 }
@@ -126,6 +134,7 @@ export function useFocusTrap(box: RefObject<HTMLElement | null>) {
   }, [box]);
 }
 
+/** A modal dialog: focus moves in, Escape closes it, and focus returns to the opener on close (WCAG 2.4.3). */
 export function Dialog({ title, children, onClose, footer, wide }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const leave = useLeave<HTMLDivElement>();
@@ -189,6 +198,7 @@ export function CloseButton({ onClick, label }: { onClick: () => void; label?: s
   );
 }
 
+/** A confirm dialog for an action, red when `danger`. */
 export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose, children }: { title: string; body: string; confirmLabel: string; danger?: boolean; onConfirm: () => void | Promise<void>; onClose: () => void; children?: ReactNode }) {
   const { t } = useI18n();
   const [busy, run] = useBusy();
@@ -225,6 +235,7 @@ export function Confirm({ title, body, confirmLabel, danger, onConfirm, onClose,
   );
 }
 
+/** Picks up to `max` people, searchable. */
 export function PeoplePicker({ people, value, onChange, max = 10, label, disabled }: { people: Person[]; value: string[]; onChange: (ids: string[]) => void; max?: number; label: string; disabled?: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -290,6 +301,7 @@ export function PeoplePicker({ people, value, onChange, max = 10, label, disable
   );
 }
 
+/** The check icon. */
 export function IconCheck() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -299,6 +311,7 @@ export function IconCheck() {
   );
 }
 
+/** The comment icon. */
 export function IconComment() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">

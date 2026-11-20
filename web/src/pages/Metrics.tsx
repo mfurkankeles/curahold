@@ -35,6 +35,7 @@ function NotHere() {
   return <ConsoleElsewhere access={access} denied={t('metrics.denied')} />;
 }
 
+/** Whole-business metrics for the platform owner (GET /api/metrics). */
 export function MetricsPage() {
   const { t, locale } = useI18n();
   const money = useMoney();

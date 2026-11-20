@@ -16,6 +16,7 @@ import { navigate } from '../lib/router';
 import { useSaver } from '../lib/saver';
 import { useStore } from '../lib/store';
 
+/** The person's own welcome (first run) or profile: name, language, theme, notifications, devices. */
 export function PersonalPage({ mode, onLocale }: { mode: 'welcome' | 'profile'; onLocale: (l: Locale) => void }) {
   const { t, locale } = useI18n();
   const { me, boards, reloadMe, reloadPeople, toast } = useStore();

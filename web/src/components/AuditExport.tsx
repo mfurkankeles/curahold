@@ -19,6 +19,7 @@ interface Row {
   chain: string;
 }
 
+/** Settings: downloads the company's audit trail for a date range. */
 export function AuditExport() {
   const { t, locale } = useI18n();
   const save = useSaver();

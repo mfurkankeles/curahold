@@ -47,6 +47,7 @@ const defaultTrigger = (type: TriggerType, dateField?: string): Trigger => {
   }
 };
 
+/** An accessible on/off switch (role="switch"). */
 export function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
   return (
     <button type="button" role="switch" aria-checked={on} aria-label={label} className="switch" disabled={disabled} onClick={() => onChange(!on)}>
@@ -124,6 +125,7 @@ export function useDescribe() {
   };
 }
 
+/** Settings: the company's automation rules with their state and last runs. */
 export function AutomationList() {
   const { t } = useI18n();
   const { can, toast } = useStore();
@@ -325,6 +327,9 @@ function presetDrafts(locale: Locale, boards: Board[], dateFields: Parameters<ty
   return out;
 }
 
+/**
+ * Creates or edits an automation rule: trigger, conditions and actions. Split plan for this long component: docs/HANDOVER.md.
+ */
 export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null; onClose: () => void; onSaved: () => void | Promise<void> }) {
   const { t, locale, words } = useI18n();
   const { me, boards, people, toast } = useStore();

@@ -19,6 +19,7 @@ interface Moves {
   suggestions: { id: string; userId: string; departmentId: string; boards: number }[];
 }
 
+/** Settings: the company's departments, on or off, and their members and leads. */
 export function DepartmentsTab() {
   const { t } = useI18n();
   const { people, can, reloadMe, reloadBoards, person } = useStore();

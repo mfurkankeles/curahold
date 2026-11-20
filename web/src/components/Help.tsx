@@ -1015,6 +1015,7 @@ function RequestThread({ id, onBack }: { id: string; onBack: () => void }) {
   );
 }
 
+/** The help dialog: a new help request (with diagnostics the person can review) or their open requests. */
 export function HelpDialog({ onClose, start = 'new', about = '' }: { onClose: () => void; start?: 'new' | 'mine'; about?: string }) {
   const { t } = useI18n();
   const { reloadMe } = useStore();

@@ -11,6 +11,7 @@ import { Dialog } from './ui';
 // reads the English until a native pass fills it in.
 const pick = (m: { en: string } & Partial<Record<Locale, string>>, l: Locale) => m[l] ?? m.en;
 
+/** The "what's new" dialog with product news and their actions. */
 export function WhatsNew({ onClose, onAction }: { onClose: () => void; onAction: (a: NewsAction) => void }) {
   const { t, locale, fmtDate } = useI18n();
   useEffect(() => markNewsSeen(), []);

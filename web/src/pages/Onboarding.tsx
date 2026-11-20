@@ -1824,6 +1824,9 @@ function NewPlanDialog({ onClose, accountId }: { onClose: () => void; accountId:
   );
 }
 
+/**
+ * The onboarding portfolio: every customer plan, or the plan templates. Split plan for this file: docs/HANDOVER.md.
+ */
 export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' }) {
   const { tt: t, locale } = useT();
   const { toast, canWrite } = useStore();
@@ -2127,6 +2130,7 @@ export function SharedReport({ secret }: { secret: string }) {
   return <Report report={report} />;
 }
 
+/** An onboarding plan's shared progress report (also behind the share link). */
 export function Report({ report: r, back }: { report: PlanReport; back?: string }) {
   const { tt: t, locale } = useT();
   const side = (s: StepSide) => (s === 'both' ? t('ob.side.both') : s === 'vendor' ? t('ob.report.vendor', { company: r.company }) : (r.accountName ?? t('ob.side.customer.self')));

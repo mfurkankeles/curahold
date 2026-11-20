@@ -57,6 +57,7 @@ function Bar({ done, total, label }: { done: number; total: number; label: strin
 
 type Tab = 'board' | 'list' | 'roadmap';
 
+/** A product board's sprints: plan, start, close, burndown. */
 export function SprintsView({ board, refreshKey }: { board: Board; refreshKey: number }) {
   const { t } = useI18n();
   const { canWrite } = useStore();

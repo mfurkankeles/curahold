@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const still = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** A number that counts up to its value (shown at once when the person prefers reduced motion). */
 export function CountUp({ value, format, ms = 700 }: { value: number; format: (n: number) => string; ms?: number }) {
   const [shown, setShown] = useState(() => (still() ? value : 0));
   const from = useRef(0);

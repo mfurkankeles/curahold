@@ -76,6 +76,9 @@ function Frame({ children, onLocale }: { children: React.ReactNode; onLocale: (l
 const errorText = (e: unknown, t: (k: MessageKey, v?: any) => string) =>
   e instanceof ApiFailure ? (e.status === 0 ? t('errors.network') : e.body.message || t('errors.server')) : t('errors.server');
 
+/**
+ * Sign-up on the central host: trial request (default) or instant sign-up when SIGNUP_MODE allows it (ADR 0017).
+ */
 export function SignupApp({ onLocale, turnstile }: { onLocale: (l: Locale) => void; turnstile?: string | null }) {
   const { path } = useLocation();
   return path === '/signup/verify' ? <Details onLocale={onLocale} /> : <Start onLocale={onLocale} turnstile={turnstile} />;

@@ -63,6 +63,7 @@ export function OptionValue({ field, value, text }: { field: AccountField; value
   );
 }
 
+/** Formats a customer field's value for display in the reader's language and currency. */
 export function useFieldFormat() {
   const { locale } = useI18n();
   const { me } = useStore();
@@ -96,6 +97,7 @@ export function useFieldFormat() {
 const lastList = new Map<string, { accounts: Account[]; total: number }>();
 const listKey = (who: string, q: string, owner: string, archived: boolean) => `${who}|${q.trim()}|${owner}|${archived ? 1 : 0}`;
 
+/** The customer list: table, cards or renewals, with filters, import and export. Split plan: docs/HANDOVER.md. */
 export function AccountsPage() {
   const { t, words, locale } = useI18n();
   const { me, people, person, can, canWrite, toast } = useStore();
@@ -718,6 +720,7 @@ function CurrencyField({ account, onSave }: { account: Account; onSave: (body: {
   );
 }
 
+/** An editable custom field value (by type), saved on change. */
 export function FieldInput({ field, value, onSave, disabled }: { field: AccountField; value: unknown; onSave: (v: string | number | null) => void; disabled?: boolean }) {
   const { locale } = useI18n();
   const [v, setV] = useState(value === null || value === undefined ? '' : String(value));
@@ -817,6 +820,7 @@ type AccountData = { account: Account & { links?: LinkInfo[] }; tasks: (Task & {
 // showed for this customer and refreshes, instead of flashing back to a skeleton.
 const lastSeen = new Map<string, AccountData>();
 
+/** One customer's page: fields, timeline, work across departments, records, finance and portal. */
 export function AccountPage({ id }: { id: string }) {
   const { t, words, locale } = useI18n();
   const { flow, reload: reloadFlow } = useAccountFlow(id);

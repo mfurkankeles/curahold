@@ -46,6 +46,9 @@ const asDetail = (x: Task): TaskDetail => ({ ...x, subtasks: [], comments: [], f
 /** A board's own field, by what it holds. */
 const FIELD_ICON: Record<string, IconName> = { text: 'text', number: 'hash', money: 'coins', date: 'calendar', select: 'list', url: 'link', email: 'mail', person: 'user', checkbox: 'check' };
 
+/**
+ * The side panel of one task: fields, subtasks, comments, files, time and links. Saves merge with others' changes.
+ */
 export function TaskPanel({ taskId, onChanged }: { taskId: string; onChanged: () => void }) {
   const { t, words, fmtDate, locale } = useI18n();
   const { boards, people, person, me, canWrite, can, toast } = useStore();

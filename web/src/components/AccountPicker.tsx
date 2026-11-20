@@ -6,6 +6,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { Icon } from './icons';
 
+/** A searchable picker for one customer, with a clear button. */
 export function AccountPicker({ value, name, onChange, disabled }: { value: string | null; name: string | null; onChange: (id: string | null, name?: string | null) => void; disabled?: boolean }) {
   const { t, words } = useI18n();
   const { canWrite, toast } = useStore();

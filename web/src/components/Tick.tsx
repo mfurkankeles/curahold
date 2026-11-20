@@ -32,6 +32,7 @@ export function useToggleDone() {
   };
 }
 
+/** The round done tick in front of a task: shows at once, with Undo; turns back if the server refuses. */
 export function Tick({ task, done, onToggled }: { task: Task; done: boolean; onToggled?: (t: Task) => void }) {
   const { t } = useI18n();
   const { boards, canWrite } = useStore();
