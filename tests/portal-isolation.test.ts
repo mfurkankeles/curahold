@@ -210,6 +210,13 @@ const PROBES: Record<string, Probe> = {
   'POST /papi/auth/passkey': async (p) => none([400, 401, 403])((await p.req('POST', '/papi/auth/passkey', { challengeId: crypto.randomUUID(), response: {} })).status),
   'GET /papi/auth/oauth/:provider/start': async (p) => none([302, 400, 403, 404])((await p.req('GET', '/papi/auth/oauth/google/start')).status),
   'POST /papi/auth/logout': async () => undefined, // ends the session: covered by portal-signin.test.ts
+  // Liveness for the status page, answered before any company is looked up: it must carry readiness and nothing else.
+  'GET /papi/health': async (p) => {
+    const r = await p.req('GET', '/papi/health');
+    expect([200, 503]).toContain(r.status);
+    expect(Object.keys(r.json).sort()).toEqual(['at', 'db', 'ok']);
+    expect(Object.keys(r.json.db).sort()).toEqual(['ms', 'ok']);
+  },
 };
 
 describe('every portal address', () => {
