@@ -5,12 +5,13 @@
 //   error       — ErrorState (LoadError inline): what happened, what to do, Try again.
 //   offline     — OfflineBar: changes are kept and sent when the connection is back.
 //   not allowed — NotAllowed: what is missing and who can give it.
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { useOnline } from '../lib/pwa';
 import { changesWaiting, onChangesWaiting } from '../lib/api';
 import { navigate } from '../lib/router';
+import { useLoadingMark } from '../lib/loading';
 import { Icon, type IconName } from './icons';
 
 /** True once `ms` have passed since the first render: a short wait shows nothing at all. */
@@ -38,6 +39,7 @@ export function EmptyState({ icon, title, body, children, tone, compact }: { ico
 
 /** Rows of placeholder lines in the shape of a list. */
 export function SkeletonRows({ rows = 6, label }: { rows?: number; label: string }) {
+  useLoadingMark();
   return (
     <div className="skeleton" role="status" aria-label={label}>
       {Array.from({ length: rows }, (_, i) => (
@@ -53,6 +55,7 @@ export function SkeletonRows({ rows = 6, label }: { rows?: number; label: string
 
 /** Placeholder cards (customer cards, board columns). */
 export function SkeletonCards({ count = 6, label, columns }: { count?: number; label: string; columns?: boolean }) {
+  useLoadingMark();
   return (
     <div className={columns ? 'skeleton skeleton--columns' : 'skeleton skeleton--cards'} role="status" aria-label={label}>
       {Array.from({ length: count }, (_, i) => (
@@ -73,6 +76,54 @@ export function SkeletonCards({ count = 6, label, columns }: { count?: number; l
   );
 }
 
+/** A dashboard waiting for its figures: a row of tiles over chart panes (home, reports, dashboards). */
+export function SkeletonDash({ tiles = 4, panes = 2, label }: { tiles?: number; panes?: number; label: string }) {
+  useLoadingMark();
+  return (
+    <div className="skeleton skeleton--dash" role="status" aria-label={label}>
+      <div className="skeleton__tiles">
+        {Array.from({ length: tiles }, (_, i) => (
+          <div key={i} className="skeleton__tile">
+            <i className="u-width-38pc" />
+            <i className="skeleton__big" />
+          </div>
+        ))}
+      </div>
+      <div className="skeleton__panes">
+        {Array.from({ length: panes }, (_, i) => (
+          <div key={i} className="skeleton__pane">
+            <i className="skeleton__line" />
+            <i className="skeleton__chart" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** A side panel waiting for its record: the title, the fields box, the main button and two sections. */
+export function SkeletonPanel({ label }: { label: string }) {
+  useLoadingMark();
+  return (
+    <div className="skeleton skeleton--panel" role="status" aria-label={label}>
+      <i className="skeleton__heading" />
+      <div className="skeleton__props">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Fragment key={i}>
+            <i />
+            <b />
+          </Fragment>
+        ))}
+      </div>
+      <i className="skeleton__button" />
+      <i className="u-width-38pc" />
+      <i className="skeleton__block" />
+      <i className="u-width-38pc" />
+      <i className="skeleton__line" />
+    </div>
+  );
+}
+
 /**
  * Something failed: what happened, what to do, and a way to try again. `compact` is the
  * inline line inside a screen (a list that did not load); otherwise a centred block for a
@@ -86,6 +137,7 @@ export function ErrorState({ title, body, onRetry, onReload, compact, className 
         <span className="u-flex-1 u-min-width-200">{body || t('errors.loadFailed')}</span>
         {onRetry && (
           <button className="btn btn--small" onClick={onRetry}>
+            <Icon name="refresh" size={16} />
             {t('common.retry')}
           </button>
         )}
@@ -101,11 +153,13 @@ export function ErrorState({ title, body, onRetry, onReload, compact, className 
       <div className="inline-actions u-justify-content-center">
         {onRetry && (
           <button className="btn" onClick={onRetry}>
+            <Icon name="refresh" size={16} />
             {t('common.retry')}
           </button>
         )}
         {onReload && (
           <button className="btn btn--primary" onClick={onReload}>
+            <Icon name="refresh" size={16} />
             {t('errors.boundary.reload')}
           </button>
         )}
@@ -132,6 +186,7 @@ export function NotAllowed({ what }: { what?: string }) {
       <p className="emptystate__body">{t('states.notAllowed.body', { org: me.org.name })}</p>
       <div className="emptystate__actions">
         <button className="btn" onClick={() => navigate('/home')}>
+          <Icon name="home" size={16} />
           {t('states.notAllowed.home')}
         </button>
       </div>

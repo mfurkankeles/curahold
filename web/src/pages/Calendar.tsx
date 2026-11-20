@@ -307,6 +307,7 @@ export function CalendarPage({ refreshKey }: { refreshKey: number }) {
               <Icon name="chevronLeft" size={16} />
             </button>
             <button className="btn" onClick={() => go({ date: today })}>
+              <Icon name="calendar" size={16} />
               {t('calendar.today')}
             </button>
             <button className="btn btn--icon" onClick={() => step(1)} aria-label={t('calendar.next')} title={t('calendar.next')}>

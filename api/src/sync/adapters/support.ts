@@ -20,7 +20,8 @@
 // organisation and `__requesterDomain` on a ticket.
 import { ticketPriorityOf, ticketStatusOf } from '../../../../shared/src/records';
 import type { RemoteField, RemoteObject, RemoteUser } from '../../../../shared/src/sync';
-import { CrmError, errorText, type CrmAdapter, type CrmCtx, type Page, type RemoteRow } from './types';
+import { call, codeGrant, CrmError, errorText, isoSeconds, oneShotCtx, refreshGrant, type CrmAdapter, type CrmCtx, type Page, type RemoteRow } from './types';
+import { zohoAccountsServer } from './zoho';
 
 const PAGE = 100;
 
@@ -612,5 +613,144 @@ export const front: CrmAdapter = {
   },
   url(_config, object, id) {
     return object === 'tickets' ? `https://app.frontapp.com/open/${id}` : null;
+  },
+};
+
+// ---------------------------------------------------------------- Zoho Desk
+
+// Zoho Desk API v1 (desk.zoho.com/DeskAPIDocument): signed in with Zoho (the same app registration as Zoho CRM
+// and Zoho Books, its own scopes); every call carries the portal's `orgId` header and goes to the data centre the
+// sign-in named (desk.zoho.com, .eu, .in, .com.au, .jp, .sa, .uk, .ae, .com.cn, desk.zohocloud.ca). Lists are
+// offset pages (`from`, `limit` ≤ 50). Zoho counts credits per call (a list 3+, one record 1) against a daily
+// allowance by plan and answers 429 with Retry-After when it is spent; errors are { errorCode, message }.
+// Changed tickets are found with the search API's `modifiedTimeRange` (the plain list has no change filter).
+const ZD_SCOPES = 'Desk.tickets.READ,Desk.tickets.UPDATE,Desk.tickets.CREATE,Desk.basic.READ,Desk.contacts.READ,Desk.search.READ';
+const ZD_PAGE = 50;
+const ZD_PRIORITY: Record<string, string> = { low: 'Low', normal: 'Medium', high: 'High', urgent: 'High' };
+const ZD_STATUS: Record<string, string> = { open: 'Open', pending: 'On Hold', solved: 'Closed', closed: 'Closed' };
+
+/** The Desk host for the Zoho accounts server the sign-in came back from. */
+export function zohoDeskHost(accountsServer: string): string | null {
+  const m = /^https:\/\/accounts\.(zoho\.(?:com|eu|in|com\.au|jp|sa|uk|ae|com\.cn)|zohocloud\.ca)$/.exec(accountsServer);
+  return m ? `https://desk.${m[1]}` : null;
+}
+const zdHost = (ctx: { config: Record<string, any> }) => (/^https:\/\/desk\.(zoho\.[a-z.]+|zohocloud\.ca)$/.test(String(ctx.config.deskHost)) ? String(ctx.config.deskHost) : 'https://desk.zoho.com');
+const zd = (ctx: CrmCtx, path: string, init: Parameters<typeof call>[2] = {}) => call(ctx, `${zdHost(ctx)}/api/v1${path}`, { ...init, headers: { ...(init.headers as Record<string, string>), orgId: String(ctx.config.orgId) } }, 'zoho');
+const zdStatus = (t: any) => (String(t.statusType ?? '').toLowerCase() === 'closed' ? 'closed' : /hold|pending|waiting/i.test(String(t.status ?? t.statusType ?? '')) ? 'pending' : 'open');
+
+export const zohodesk: CrmAdapter = {
+  provider: 'zohodesk',
+  tabular: false,
+  oauth: {
+    authorizeUrl(client, redirectUri, state) {
+      const u = new URL('https://accounts.zoho.com/oauth/v2/auth');
+      u.searchParams.set('scope', ZD_SCOPES);
+      u.searchParams.set('client_id', client.clientId);
+      u.searchParams.set('response_type', 'code');
+      u.searchParams.set('access_type', 'offline');
+      u.searchParams.set('prompt', 'consent');
+      u.searchParams.set('redirect_uri', redirectUri);
+      u.searchParams.set('state', state);
+      return u.toString();
+    },
+    async exchange(fetcher, client, code, redirectUri, opts, now) {
+      const accountsServer = zohoAccountsServer(opts['accounts-server']);
+      const deskHost = accountsServer ? zohoDeskHost(accountsServer) : null;
+      if (!accountsServer || !deskHost) throw new CrmError('Unknown Zoho data centre');
+      const j = await codeGrant(fetcher, `${accountsServer}/oauth/v2/token`, client, code, redirectUri, now);
+      const orgs = await call(oneShotCtx(fetcher, now, j.access_token, {}), `${deskHost}/api/v1/organizations`, {}, 'zoho');
+      const list: any[] = orgs?.data ?? [];
+      const o = list.find((x) => x.isDefault) ?? list[0];
+      if (!o?.id) throw new CrmError('No Zoho Desk portal on this account', 404);
+      const config = { accountsServer, deskHost, orgId: String(o.id) };
+      const depts = await call(oneShotCtx(fetcher, now, j.access_token, config), `${deskHost}/api/v1/departments?isEnabled=true&limit=10`, { headers: { orgId: String(o.id) } }, 'zoho');
+      const dept = (depts?.data ?? []).find((d: any) => d.isDefault) ?? depts?.data?.[0];
+      return {
+        secret: { accessToken: j.access_token, refreshToken: j.refresh_token, expiresAt: j.expiresAt },
+        config: { ...config, departmentId: dept?.id ? String(dept.id) : null, portal: o.portalName ?? null },
+        label: String(o.companyName ?? o.portalName ?? 'Zoho Desk'),
+        instanceId: String(o.id),
+      };
+    },
+  },
+  async refresh(ctx, secret, client) {
+    if (!secret.refreshToken) throw new CrmError('Reconnect Zoho Desk', 401, undefined, true);
+    return refreshGrant(ctx.fetch, `${zohoAccountsServer(ctx.config.accountsServer) ?? 'https://accounts.zoho.com'}/oauth/v2/token`, client, secret.refreshToken, ctx.now());
+  },
+  async objects() {
+    return [TICKET_OBJECT('Ticket', 'Tickets'), ORG_OBJECT('Account', 'Accounts')];
+  },
+  async fields(_ctx, object) {
+    return object === 'tickets' ? TICKET_FIELDS(true, { status: true, priority: true, assignee: true, create: true }) : ORG_FIELDS;
+  },
+  async users(ctx) {
+    const out: RemoteUser[] = [];
+    for (let from = 1; from < 2000; from += ZD_PAGE) {
+      const j = await zd(ctx, `/agents?from=${from}&limit=${ZD_PAGE}&status=ACTIVE`);
+      const list: any[] = j?.data ?? [];
+      for (const a of list) out.push({ id: String(a.id), name: String(a.name ?? [a.firstName, a.lastName].filter(Boolean).join(' ')), email: a.emailId ? String(a.emailId).toLowerCase() : null });
+      if (list.length < ZD_PAGE) break;
+    }
+    return out;
+  },
+  async list(ctx, object, opts) {
+    const from = Number(opts.cursor ?? 1) || 1;
+    if (object === 'organizations') {
+      const j = await zd(ctx, `/accounts?from=${from}&limit=${ZD_PAGE}&sortBy=-modifiedTime`);
+      const list: any[] = j?.data ?? [];
+      const sinceMs = since(opts.since);
+      const rows = list.filter((a) => !sinceMs || !a.modifiedTime || new Date(a.modifiedTime).getTime() >= sinceMs).map((a) => orgRow(String(a.id), a.accountName, [a.website, a.email], a.modifiedTime ?? null));
+      const older = sinceMs && list.some((a) => a.modifiedTime && new Date(a.modifiedTime).getTime() < sinceMs);
+      return { rows, next: list.length === ZD_PAGE && !older ? String(from + ZD_PAGE) : null };
+    }
+    // The range's end is rounded up to the next second, so a change made this very second is inside it.
+    const range = opts.since ? `&modifiedTimeRange=${encodeURIComponent(`${isoSeconds(new Date(opts.since).toISOString())},${isoSeconds(new Date(ctx.now().getTime() + 1000).toISOString())}`)}&sortBy=modifiedTime` : '&sortBy=createdTime';
+    const j = await zd(ctx, `${opts.since ? '/tickets/search' : '/tickets'}?from=${from}&limit=${ZD_PAGE}${range}&include=contacts,assignee`);
+    const list: any[] = j?.data ?? [];
+    const rows = list.map((t) =>
+      ticketRow(String(t.id), t.modifiedTime ?? t.closedTime ?? t.createdTime ?? null, {
+        subject: t.subject,
+        status: zdStatus(t),
+        priority: String(t.priority ?? 'Medium').toLowerCase() === 'medium' ? 'normal' : t.priority,
+        opened: t.createdTime,
+        solved: t.closedTime,
+        requester: t.email ?? t.contact?.email ?? null,
+        channel: t.channel ? String(t.channel).toLowerCase() : null,
+        link: t.webUrl ?? null,
+        organization: t.accountId ?? t.contact?.account?.id ?? null,
+        assignee: t.assigneeId ?? t.assignee?.id ?? null,
+      }),
+    );
+    return { rows, next: list.length === ZD_PAGE ? String(from + ZD_PAGE) : null };
+  },
+  async update(ctx, object, id, values) {
+    if (object !== 'tickets') throw new CrmError('Accounts are only read');
+    const body: Record<string, unknown> = {};
+    if (typeof values.status === 'string' && ZD_STATUS[values.status]) body.status = ZD_STATUS[values.status];
+    if (typeof values.priority === 'string' && ZD_PRIORITY[values.priority]) body.priority = ZD_PRIORITY[values.priority];
+    if (values.assignee !== undefined && values.assignee !== '') body.assigneeId = values.assignee === null ? null : String(values.assignee);
+    if (!Object.keys(body).length) return;
+    await zd(ctx, `/tickets/${encodeURIComponent(id)}`, { method: 'PATCH', json: body });
+  },
+  async create(ctx, object, values) {
+    if (object !== 'tickets') throw new CrmError('Accounts are only read');
+    const subject = String(values.subject ?? '').trim();
+    const email = String(values.requester ?? '').trim();
+    if (!subject || !email) throw new CrmError("A ticket needs a subject and the requester's email");
+    if (!ctx.config.departmentId) throw new CrmError('This Zoho Desk portal has no department to put the ticket in', 400);
+    const j = await zd(ctx, '/tickets', {
+      method: 'POST',
+      json: { subject, departmentId: String(ctx.config.departmentId), contact: { email, lastName: email.split('@')[0] }, description: String(values.description ?? '').trim() || subject, ...(typeof values.priority === 'string' && ZD_PRIORITY[values.priority] ? { priority: ZD_PRIORITY[values.priority] } : {}), ...(values.assignee ? { assigneeId: String(values.assignee) } : {}) },
+    });
+    if (!j?.id) throw new CrmError('Zoho Desk did not return the new ticket');
+    return String(j.id);
+  },
+  /** A comment on the ticket: private for the team, or public (shown to the customer on their ticket). */
+  async reply(ctx, id, input) {
+    await zd(ctx, `/tickets/${encodeURIComponent(id)}/comments`, { method: 'POST', json: { content: input.body, isPublic: !input.internal, contentType: 'plainText' } });
+  },
+  url(config, object, id) {
+    const host = /^https:\/\/desk\./.test(String(config.deskHost)) ? config.deskHost : 'https://desk.zoho.com';
+    return object === 'tickets' && config.portal ? `${host}/agent/${encodeURIComponent(config.portal)}/all/tickets/details/${encodeURIComponent(id)}` : null;
   },
 };

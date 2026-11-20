@@ -197,9 +197,11 @@ export function LogDialog({
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={save}>
+            <Icon name="check" size={16} />
             {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
@@ -334,7 +336,7 @@ export function LogDialog({
           </div>
         )}
         {isMeeting && !ready && account.id && <p className="field__hint">{t('meetingForm.needSomething')}</p>}
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );
@@ -468,6 +470,7 @@ export function AccountMeetings({ account }: { account: Account }) {
       </ol>
       {next && (
         <button className="btn btn--quiet btn--small meetings__older" onClick={() => void older()}>
+          <Icon name="chevronDown" size={16} />
           {t('meetings.older')}
         </button>
       )}

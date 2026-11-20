@@ -23,9 +23,10 @@ import { AccountPicker } from './AccountPicker';
 import { Icon, type IconName } from './icons';
 import { TaskFieldInput } from './TaskExtras';
 import { RepeatPicker } from './TaskPanel';
-import { Avatar, PeoplePicker } from './ui';
+import { Avatar, PeoplePicker, CloseButton } from './ui';
 import type { Locale } from '../../../shared/src/i18n';
 import { DateField } from './DateField';
+import { useLeave } from '../lib/leave';
 
 const KIND_ICON: Record<TokenKind, IconName> = { due: 'calendar', person: 'user', account: 'building', priority: 'flag', repeat: 'repeat' };
 
@@ -65,6 +66,7 @@ const EXAMPLES: Partial<Record<Locale, string[]>> & { en: string[] } = {
 };
 
 export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClose: () => void }) {
+  const leaveWrap = useLeave<HTMLDivElement>();
   const { t, locale, fmtDate, words } = useI18n();
   const { me, boards, people, toast } = useStore();
 
@@ -396,12 +398,13 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
 
   if (!boards.length) {
     return (
-      <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="qa-wrap" ref={leaveWrap} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
         <div className="qa" role="dialog" aria-modal="true" aria-label={t('quick.title')} onKeyDown={onDialogKey}>
           <div className="qa__empty">
             <Icon name="board" size={22} />
             <p>{t('quick.noBoards')}</p>
             <button className="btn" onClick={onClose}>
+              <Icon name="close" size={16} />
               {t('common.close')}
             </button>
           </div>
@@ -411,15 +414,13 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
   }
 
   return (
-    <div className="qa-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="qa-wrap" ref={leaveWrap} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="qa" role="dialog" aria-modal="true" aria-labelledby="qa-title" onKeyDown={onDialogKey}>
         <div className="qa__head">
           <h2 className="qa__title" id="qa-title">
             <Icon name="plus" size={16} /> {many ? t('quick.titleMany', { n: lines.length }) : t('quick.title')}
           </h2>
-          <button className="btn btn--quiet btn--icon btn--small" onClick={onClose} aria-label={t('common.close')} title={`${t('common.close')} (Esc)`}>
-            <Icon name="close" size={16} />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {/* ------------------------------------------------------------ title */}
@@ -738,7 +739,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
           ))}
         </div>
 
-        {error && <p className="error-text qa__error">{error}</p>}
+        {error && <p className="error-text qa__error" role="alert">{error}</p>}
 
         <div className="qa__foot">
           <p className="qa__hint">{many ? t('quick.hintMany') : t('quick.hint')}</p>
@@ -754,6 +755,7 @@ export function QuickAdd({ defaults, onClose }: { defaults: QuickDefaults; onClo
             <span>{t('quick.keep')}</span>
           </label>
           <button className="btn btn--primary" disabled={!ready || busy} onClick={submit}>
+            <Icon name="plus" size={16} />
             {busy ? t('common.saving') : many ? t('quick.addMany', { n: lines.length }) : t('quick.add')}
           </button>
         </div>

@@ -12,8 +12,8 @@
 //   ODOO_URL, ODOO_DB, ODOO_LOGIN, ODOO_API_KEY                 an Odoo trial database and a user's API key
 // Output: one JSON line per integration (steps with ms, time to connected, time to first data) and a table.
 import { bootIntegrations } from './boot';
-import { runAccountingFlow, runFlow, type Http, type RealSide } from '../../tests/vendors/flow';
-import { ACCOUNTING_SPECS, SPECS } from '../../tests/vendors/specs';
+import { runAccountingFlow, runFlow, runJiraFlow, runMailboxFlow, runSupportFlow, type Http, type RealSide } from '../../tests/vendors/flow';
+import { ACCOUNTING_SPECS, JIRA_SPECS, MAILBOX_SPECS, SPECS, SUPPORT_SPECS } from '../../tests/vendors/specs';
 
 const PORT = Number(process.env.PORT ?? 9760);
 const REAL = process.env.REAL === '1';
@@ -91,12 +91,16 @@ for (const spec of SPECS) {
   rows.push(`| ${spec.provider} | ${(r.connectedMs / 1000).toFixed(1)} s | ${r.firstDataMs === null ? '–' : `${(r.firstDataMs / 1000).toFixed(1)} s`} | ${bad.length ? `failed: ${bad.join(', ')}` : 'all steps ok'} |`);
 }
 if (!REAL) {
-  for (const spec of ACCOUNTING_SPECS) {
-    const r = await runAccountingFlow(http, stack.world!, spec);
-    console.log(JSON.stringify({ provider: spec.provider, ...r }));
+  // The other kinds of run need the vendor's side changed by hand, so they are timed against the mocks only.
+  const row = (provider: string, r: { steps: { ok: boolean; step: string }[]; connectedMs: number; firstDataMs: number | null }) => {
+    console.log(JSON.stringify({ provider, ...r }));
     const bad = r.steps.filter((s) => !s.ok).map((s) => s.step);
-    rows.push(`| ${spec.provider} | ${(r.connectedMs / 1000).toFixed(1)} s | ${r.firstDataMs === null ? '–' : `${(r.firstDataMs / 1000).toFixed(1)} s`} | ${bad.length ? `failed: ${bad.join(', ')}` : 'all steps ok'} |`);
-  }
+    rows.push(`| ${provider} | ${(r.connectedMs / 1000).toFixed(1)} s | ${r.firstDataMs === null ? '–' : `${(r.firstDataMs / 1000).toFixed(1)} s`} | ${bad.length ? `failed: ${bad.join(', ')}` : 'all steps ok'} |`);
+  };
+  for (const spec of SUPPORT_SPECS) row(spec.provider, await runSupportFlow(http, stack.world!, spec));
+  for (const spec of JIRA_SPECS) row(spec.provider, await runJiraFlow(http, stack.world!, spec));
+  for (const spec of MAILBOX_SPECS) row(spec.provider, await runMailboxFlow(http, stack.world!, spec));
+  for (const spec of ACCOUNTING_SPECS) row(spec.provider, await runAccountingFlow(http, stack.world!, spec));
 }
 console.log(`\n| integration | time to connected | time to first data | result |\n| --- | --- | --- | --- |\n${rows.join('\n')}`);
 process.exit(0);

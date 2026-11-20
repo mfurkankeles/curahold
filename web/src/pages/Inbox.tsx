@@ -158,6 +158,7 @@ export function InboxPage() {
             ))}
             {data.more && (
               <button className="btn inbox__more" onClick={() => load(data.notifications[data.notifications.length - 1].createdAt)}>
+                <Icon name="chevronDown" size={16} />
                 {t('inbox.more')}
               </button>
             )}

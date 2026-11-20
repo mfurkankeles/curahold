@@ -704,6 +704,9 @@
 .of-search-field .input:focus-visible {
   outline: none;
 }
+.of-search-field:focus-within {
+  box-shadow: inset 0 -2px 0 var(--focus);
+}
 .of-hits {
   display: grid;
   gap: 0;
@@ -1291,8 +1294,11 @@
 }
 
 @media (max-width: 860px) {
+  /* The stage ends where the folded sheet begins, so the floor is framed in what can be seen: drawn under the
+     sheet, it sat low with an empty band above it. */
   .of {
     grid-template: 'top' auto 'stage' minmax(0, 1fr) / minmax(0, 1fr);
+    padding-bottom: 140px;
   }
   .of-top {
     gap: 8px;
@@ -1311,9 +1317,12 @@
     padding: 0;
     justify-content: center;
   }
-  .of-search span,
   .of-chip[data-tone='live'] {
     display: none;
+  }
+  /* Only the magnifier shows; the words stay as the button's name. */
+  .of-search span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
   .of-chips {
     margin-inline-start: auto;

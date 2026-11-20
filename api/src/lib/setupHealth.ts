@@ -18,7 +18,7 @@ import { localDate } from '../../../shared/src/days';
 import { assistantConfig, providerOf } from '../routes/assist';
 
 /** Providers that only read mail or events: they have no object mapping to finish. */
-const NO_MAPPING = ['gmail', 'outlook', 'segment'];
+const NO_MAPPING = ['gmail', 'outlook', 'gcal', 'outlookcal', 'segment', 'whatsapp'];
 /** An error that means the other tool no longer accepts our sign-in. */
 const AUTH_ERROR = `(401|403|unauthori|forbidden|expired|invalid_grant|invalid token|token|sign.?in|re-?connect|yetki|oturum)`;
 
@@ -57,6 +57,19 @@ export const SQL_CHECKS: Record<string, string> = {
     `from connections c where ${sources(false)} and not (c.provider = any(array[${NO_MAPPING.map((p) => `'${p}'`).join(', ')}]))
        and (c.config->'sync'->>'startedAt' is null
             or not exists (select 1 from jsonb_array_elements(coalesce(c.config->'sync'->'objects', '[]'::jsonb)) o where coalesce((o->>'enabled')::boolean, false)))`,
+    'min(c.id::text)',
+  ),
+  // An incoming webhook whose deliveries of the last day were all refused or not used: a wrong secret, a changed payload.
+  'sync.hooksFailing': count(
+    `from inbound_hooks h where h.org_id = $1 and h.enabled
+       and exists (select 1 from inbound_deliveries d where d.org_id = $1 and d.hook_id = h.id and d.status in ('failed', 'rejected') and not d.test and d.received_at > now() - interval '24 hours')
+       and not exists (select 1 from inbound_deliveries d where d.org_id = $1 and d.hook_id = h.id and d.status = 'ok' and d.received_at > now() - interval '24 hours')`,
+    'min(h.id::text)',
+  ),
+  // WhatsApp connected a day ago and nothing ever arrived: the callback is not set up in the Meta app yet.
+  'sync.whatsappSilent': count(
+    `from connections c where c.org_id = $1 and c.kind = 'source' and c.provider = 'whatsapp' and c.status <> 'disabled'
+       and c.created_at < now() - interval '24 hours' and c.state->>'lastInboundAt' is null`,
     'min(c.id::text)',
   ),
   'sync.stuckChanges': count(`from sync_changes s where s.org_id = $1 and s.last_error is not null and s.attempts >= 3`, 'min(s.connection_id::text)'),

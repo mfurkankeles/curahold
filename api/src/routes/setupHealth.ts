@@ -102,7 +102,7 @@ setupHealthRoutes.post('/setup-health/:id/confirm', async (c) => {
 const RUNS_SHOWN = 5;
 
 const syncKind = (provider: string): 'jira' | 'accounting' | 'crm' | 'other' =>
-  provider === 'jira' ? 'jira' : (ACCOUNTING_ALL as readonly string[]).includes(provider) ? 'accounting' : ['gmail', 'outlook', 'segment'].includes(provider) ? 'other' : 'crm';
+  provider === 'jira' ? 'jira' : (ACCOUNTING_ALL as readonly string[]).includes(provider) ? 'accounting' : ['gmail', 'outlook', 'gcal', 'outlookcal', 'segment', 'whatsapp'].includes(provider) ? 'other' : 'crm';
 
 type Conn = { id: string; provider: string; label: string; status: string; started: string | null };
 

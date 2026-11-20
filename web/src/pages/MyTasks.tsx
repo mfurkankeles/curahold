@@ -187,6 +187,7 @@ export function MyTasks({ refreshKey }: { refreshKey: number }) {
         {tasks && groups.length === 0 && (q.trim() || narrowed > 0) && (
           <EmptyState icon="filter" title={t('accounts.noMatch')}>
             <button className="btn" onClick={() => (setQ(''), setBoard(''), setPriority(''))}>
+              <Icon name="close" size={16} />
               {t('filters.clear')}
             </button>
           </EmptyState>

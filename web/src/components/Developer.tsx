@@ -45,6 +45,7 @@ function ShowOnce({ value, note }: { value: string; note: string }) {
       <div className="toolbar">
         <input className="input once__value" readOnly value={value} onFocus={(e) => e.target.select()} aria-label={note} />
         <button className="btn btn--primary" onClick={() => copy(value)}>
+          <Icon name="copy" size={16} />
           {t('me.copy')}
         </button>
       </div>
@@ -71,6 +72,7 @@ export function AiConnect() {
         <div className="toolbar">
           <input className="input u-flex-1 u-min-width-220" readOnly value={url} onFocus={(e) => e.target.select()} />
           <button className="btn" onClick={() => copy(url)}>
+            <Icon name="copy" size={16} />
             {t('me.copy')}
           </button>
         </div>
@@ -102,6 +104,7 @@ function KeyRow({ k, owner, onRevoke }: { k: ApiKeyInfo; owner?: string; onRevok
         </div>
       </div>
       <button className="btn btn--quiet btn--small" onClick={onRevoke}>
+        <Icon name="trash" size={16} />
         {t('dev.keys.revoke')}
       </button>
     </li>
@@ -141,6 +144,7 @@ export function KeyList({ all = false }: { all?: boolean }) {
       {!all && (
         <div className="toolbar u-mt-12">
           <button className="btn" onClick={() => setMaking(true)}>
+            <Icon name="plus" size={16} />
             {t('dev.keys.new')}
           </button>
           <a className="btn btn--quiet" href={docsHref(`${locale}/api-keys`)} {...docsLink}>
@@ -200,6 +204,7 @@ function NewKey({ readOnlySeat, onClose, onMade }: { readOnlySeat: boolean; onCl
         onClose={onClose}
         footer={
           <button className="btn btn--primary" onClick={onClose}>
+            <Icon name="check" size={16} />
             {t('dev.done')}
           </button>
         }
@@ -215,6 +220,7 @@ function NewKey({ readOnlySeat, onClose, onMade }: { readOnlySeat: boolean; onCl
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="newkey" disabled={busy}>
@@ -335,6 +341,7 @@ export function DeveloperTab() {
                         }
                       }}
                     >
+                      <Icon name="play" size={16} />
                       {t('dev.hooks.test')}
                     </button>
                     <button
@@ -348,9 +355,11 @@ export function DeveloperTab() {
                         }
                       }}
                     >
+                      <Icon name="play" size={16} />
                       {h.active ? t('dev.hooks.pause') : t('dev.hooks.resume')}
                     </button>
                     <button className="btn btn--quiet btn--small" onClick={() => setDeleting(h)}>
+                      <Icon name="trash" size={16} />
                       {t('dev.hooks.delete')}
                     </button>
                   </div>
@@ -361,6 +370,7 @@ export function DeveloperTab() {
           {hooks && !hooks.length && <p className="muted">{t('dev.hooks.none')}</p>}
           <div className="toolbar u-mt-12">
             <button className="btn" onClick={() => setMaking(true)}>
+              <Icon name="plus" size={16} />
               {t('dev.hooks.new')}
             </button>
           </div>
@@ -437,10 +447,12 @@ function InboundTickets() {
 }`}</pre>
       <div className="toolbar u-mt-8">
         <button className="btn" onClick={make}>
+          <Icon name="plus" size={16} />
           {info?.enabled ? t('inbound.rotate') : t('inbound.create')}
         </button>
         {info?.enabled && (
           <button className="btn btn--quiet" onClick={() => setOff(true)}>
+            <Icon name="close" size={16} />
             {t('inbound.disable')}
           </button>
         )}
@@ -498,6 +510,7 @@ function NewHook({ eventLabel, onClose, onMade }: { eventLabel: (e: string) => s
         onClose={onClose}
         footer={
           <button className="btn btn--primary" onClick={onClose}>
+            <Icon name="check" size={16} />
             {t('dev.done')}
           </button>
         }
@@ -513,6 +526,7 @@ function NewHook({ eventLabel, onClose, onMade }: { eventLabel: (e: string) => s
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="newhook" disabled={busy || !events.length}>
@@ -593,9 +607,11 @@ export function ConnectAiPage() {
             </p>
             <div className="toolbar u-mt-16">
               <button className="btn btn--primary" disabled={busy} onClick={() => answer(true)}>
+                <Icon name="check" size={16} />
                 {t('connect.allow')}
               </button>
               <button className="btn btn--quiet" disabled={busy} onClick={() => answer(false)}>
+                <Icon name="close" size={16} />
                 {t('connect.deny')}
               </button>
             </div>

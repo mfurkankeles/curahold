@@ -15,6 +15,7 @@ import { pick, pmColumns } from '../../../shared/src/templates';
 import { departmentTemplates } from '../../../shared/src/departments';
 import { useDepartments } from '../lib/departments';
 import { pmOn } from './Pm';
+import { Icon } from './icons';
 
 const slug = (s: string, taken: Set<string>) => {
   let base = s.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20) || 'col';
@@ -82,13 +83,16 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
         <>
           {board && board.canManage && (
             <button className="btn btn--danger u-me-auto" onClick={() => setArchive(true)}>
+              <Icon name="inbox" size={16} />
               {t('board.archive')}
             </button>
           )}
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={busy || !name.trim() || (!board && !depts.canOpenBoards)} onClick={save}>
+            <Icon name="plus" size={16} />
             {board ? t('common.save') : t('common.create')}
           </button>
         </>
@@ -193,6 +197,7 @@ export function BoardSettings({ board, onClose }: { board?: Board; onClose: () =
               setColumns([...columns.slice(0, -1), { key: slug(`${label}-${columns.length + 1}`, new Set(columns.map((c) => c.key))), name: label, done: false }, ...columns.slice(-1)]);
             }}
           >
+            <Icon name="plus" size={16} />
             {t('board.addColumn')}
           </button>
         </div>
@@ -305,6 +310,7 @@ function ChannelPosts({ value, onChange }: { value: BoardNotify[]; onChange: (v:
           })}
           {value.length < 5 && (
             <button className="btn btn--small u-justify-self-start" onClick={() => onChange([...value, { connectionId: conns[0].id, channel: null, events: ['created', 'done'] }])}>
+              <Icon name="plus" size={16} />
               {t('board.postsAdd')}
             </button>
           )}
@@ -434,6 +440,7 @@ function BoardPortalSettings({ board }: { board: Board }) {
             </>
           )}
           <button className="btn btn--small u-justify-self-start" disabled={busy} onClick={save}>
+            <Icon name="check" size={16} />
             {t('portal.board.save')}
           </button>
         </>

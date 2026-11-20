@@ -213,7 +213,7 @@ function Hub({ plan, onPlan, reload }: { plan: Plan; onPlan: (p: Plan) => void; 
         </div>
       </div>
       {sharing && (
-        <Dialog title={t('ob.share.title')} onClose={() => setSharing(null)} footer={<button className="btn btn--primary" onClick={() => setSharing(null)}>{t('common.close')}</button>}>
+        <Dialog title={t('ob.share.title')} onClose={() => setSharing(null)} footer={<button className="btn btn--primary" onClick={() => setSharing(null)}><Icon name="close" size={16} /> {t('common.close')}</button>}>
           <p>{t('ob.share.body')}</p>
           <div className="ob-copy">
             <input className="input" readOnly value={sharing} aria-label={t('ob.share.title')} onFocus={(e) => e.currentTarget.select()} />
@@ -336,6 +336,7 @@ function Welcome({ ctx }: { ctx: Ctx }) {
           }
         }}
       >
+        <Icon name="chevronUp" size={16} />
         {t('ob.welcome.hide')}
       </button>
     </section>
@@ -530,6 +531,7 @@ function ChooseTemplate({ ctx }: { ctx: Ctx }) {
             .catch(fail)
         }
       >
+        <Icon name="arrowRight" size={16} />
         {t('ob.choose.go')}
       </button>
     </div>
@@ -650,6 +652,7 @@ function PlanEditor({ ctx }: { ctx: Ctx }) {
           >
             <input className="input" value={tplName} maxLength={120} aria-label={t('ob.tpl.name')} onChange={(e) => setTplName(e.target.value)} />
             <button className="btn btn--small btn--primary" type="submit" disabled={!tplName.trim()}>
+              <Icon name="arrowRight" size={16} />
               {t('ob.edit.saveTplGo')}
             </button>
           </form>
@@ -725,16 +728,19 @@ function StepRow({ ctx, step: s, open, onToggle }: { ctx: Ctx; step: PlanStep; o
             )}
             {canEdit && !closed && s.status !== 'doing' && !locked && (
               <button className="btn btn--small" disabled={ctx.busy} onClick={() => void set({ status: 'doing' })}>
+                <Icon name="arrowRight" size={16} />
                 {t('ob.start')}
               </button>
             )}
             {canEdit && !closed && !s.required && (
               <button className="btn btn--small btn--quiet" disabled={ctx.busy} onClick={() => void set({ status: 'skipped' })}>
+                <Icon name="close" size={16} />
                 {t('ob.skip')}
               </button>
             )}
             {canEdit && closed && s.doneHow !== 'auto' && (
               <button className="btn btn--small btn--quiet" disabled={ctx.busy} onClick={() => void set({ status: 'todo' })}>
+                <Icon name="undo" size={16} />
                 {t('ob.reopen')}
               </button>
             )}
@@ -836,6 +842,7 @@ function StepForm({ ctx, step }: { ctx: Ctx; step: PlanStep }) {
         </label>
       ))}
       <button className="btn btn--primary btn--small" disabled={ctx.busy || !ctx.canEdit}>
+        <Icon name="check" size={16} />
         {t('ob.form.save')}
       </button>
     </form>
@@ -933,9 +940,11 @@ function AddStep({ ctx, onClose }: { ctx: Ctx; onClose: () => void }) {
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!title.trim()} onClick={() => void act(() => post(`/onboarding-plans/${plan.id}/steps`, { title, phase, side, dueOn: dueOn || null })).then(onClose)}>
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </>
@@ -995,6 +1004,7 @@ function Timeline({ ctx, compact }: { ctx: Ctx; compact: boolean }) {
       tools={
         !compact ? (
           <button className="btn btn--small btn--quiet" aria-pressed={detailed} onClick={() => setDetailed(!detailed)}>
+            <Icon name="list" size={16} />
             {detailed ? t('ob.timeline.compact') : t('ob.timeline.detailed')}
           </button>
         ) : undefined
@@ -1123,6 +1133,7 @@ function Issues({ ctx }: { ctx: Ctx }) {
                 )}
                 {canEdit && i.source !== 'setup_test' && i.status !== 'resolved' && (
                   <button className="btn btn--small" onClick={() => void act(() => patch(`/onboarding-issues/${i.id}`, { status: 'resolved' }), t('ob.issues.resolved'))}>
+                    <Icon name="check" size={16} />
                     {t('ob.issues.resolve')}
                   </button>
                 )}
@@ -1133,6 +1144,7 @@ function Issues({ ctx }: { ctx: Ctx }) {
                     onClick={() => void act(() => patch(`/onboarding-issues/${i.id}`, { side: i.side === 'vendor' ? 'customer' : 'vendor' }))}
                     title={t('ob.issues.passHint')}
                   >
+                    <Icon name="arrowRight" size={16} />
                     {t('ob.issues.pass', { name: sideName(t, plan, i.side === 'vendor' ? 'customer' : 'vendor') })}
                   </button>
                 )}
@@ -1143,6 +1155,7 @@ function Issues({ ctx }: { ctx: Ctx }) {
       )}
       {plan.issues.some((i) => i.status === 'resolved') && (
         <button className="btn btn--small btn--quiet ob-more" onClick={() => setShowResolved(!showResolved)}>
+          <Icon name="eye" size={16} />
           {showResolved ? t('ob.issues.hideResolved') : t('ob.issues.showResolved')}
         </button>
       )}
@@ -1206,9 +1219,11 @@ function AddIssue({ ctx, onClose }: { ctx: Ctx; onClose: () => void }) {
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!title.trim()} onClick={() => void act(() => post(`/onboarding-plans/${plan.id}/issues`, { title, body, side, type, urgency, dueOn: dueOn || null })).then(onClose)}>
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </>
@@ -1381,9 +1396,11 @@ function AddField({ ctx, onClose }: { ctx: Ctx; onClose: () => void }) {
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!name.trim()} onClick={() => void act(() => post(`/onboarding-plans/${plan.id}/fields`, { name, type, required, example })).then(onClose)}>
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </>
@@ -1466,7 +1483,7 @@ function Sites({ ctx }: { ctx: Ctx }) {
           }}
         >
           <input className="input" value={name} maxLength={120} placeholder={t('ob.sites.add')} aria-label={t('ob.sites.add')} onChange={(e) => setName(e.target.value)} />
-          <button className="btn btn--small">{t('common.add')}</button>
+          <button className="btn btn--small"><Icon name="plus" size={16} /> {t('common.add')}</button>
         </form>
       )}
     </Section>
@@ -1554,7 +1571,7 @@ function Goals({ ctx }: { ctx: Ctx }) {
               </option>
             ))}
           </select>
-          <button className="btn btn--small">{t('common.add')}</button>
+          <button className="btn btn--small"><Icon name="plus" size={16} /> {t('common.add')}</button>
         </form>
       )}
     </section>
@@ -1609,6 +1626,7 @@ function People({ ctx }: { ctx: Ctx }) {
           footer={
             <>
               <button className="btn" onClick={() => setAdding(null)}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <button
@@ -1623,6 +1641,7 @@ function People({ ctx }: { ctx: Ctx }) {
                   })
                 }
               >
+                <Icon name="plus" size={16} />
                 {t('common.add')}
               </button>
             </>
@@ -1694,6 +1713,7 @@ function Finish({ ctx }: { ctx: Ctx }) {
           </a>
         )}
         <button className="btn btn--small btn--quiet" onClick={() => void act(() => patch(`/onboarding-plans/${plan.id}`, { portalVisible: !plan.portalVisible }))}>
+          <Icon name="eye" size={16} />
           {plan.portalVisible ? t('ob.portal.hide') : t('ob.portal.show')}
         </button>
       </div>
@@ -1707,9 +1727,11 @@ function Finish({ ctx }: { ctx: Ctx }) {
           footer={
             <>
               <button className="btn" onClick={() => setAsk(false)}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <button className="btn btn--primary" onClick={() => void act(() => post(`/onboarding-plans/${plan.id}/finish`), t('ob.finish.sent')).then(() => setAsk(false))}>
+                <Icon name="check" size={16} />
                 {t('ob.finish.confirm')}
               </button>
             </>
@@ -1773,9 +1795,11 @@ function NewPlanDialog({ onClose, accountId }: { onClose: () => void; accountId:
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!account.id || busy} onClick={() => void start()}>
+            <Icon name="arrowRight" size={16} />
             {t('ob.new.start')}
           </button>
         </>
@@ -1893,7 +1917,7 @@ export function OnboardingPortfolioPage({ tab }: { tab: 'plans' | 'templates' })
                           {p.status === 'draft' && <span className="ob-tag">{t('ob.status.draft')}</span>}
                         </td>
                         <td>
-                          <span className="ob-bar" aria-label={formatPercent(p.progress.pct, locale)}>
+                          <span className="ob-bar" role="img" aria-label={formatPercent(p.progress.pct, locale)}>
                             <span style={{ width: `${p.progress.pct}%` }} />
                             <i style={{ insetInlineStart: `${p.progress.expected}%` }} />
                           </span>
@@ -1972,6 +1996,7 @@ function Templates({ canWrite, onError }: { canWrite: boolean; onError: (m: stri
                     <Icon name="copy" size={14} /> {t('ob.tpl.copy')}
                   </button>
                   <button className="btn btn--small btn--quiet" onClick={() => void del(`/onboarding-templates/${tp.id}`).then(load).catch(fail)}>
+                    <Icon name="inbox" size={16} />
                     {t('ob.tpl.archive')}
                   </button>
                 </div>
@@ -2016,9 +2041,11 @@ function TemplateEditor({ tpl, onClose, onSaved, onError }: { tpl: Template; onC
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" onClick={() => void save()}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -2315,6 +2342,7 @@ export function OnboardingSettings({ templates }: { templates: { builtIn: { key:
               </button>
             )}
             <button className="btn btn--small" onClick={() => void save({ rules: rules.filter((r) => r.value.trim()) })}>
+              <Icon name="check" size={16} />
               {t('common.save')}
             </button>
           </div>

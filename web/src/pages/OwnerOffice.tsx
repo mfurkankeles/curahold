@@ -408,12 +408,14 @@ export default function OwnerOffice({
 
   const top = (
     <header className="of-top">
-      <button type="button" className="btn btn--quiet btn--small of-back" onClick={onExit} aria-label={ow('back')} title={ow('back')}>
+      <button type="button" className="btn btn--quiet btn--small of-back" onClick={onExit} title={ow('back')}>
         <Icon name="arrowLeft" size={16} />
         <span className="of-brand">
           <strong>Curahold</strong>
           <span>{ow('title')}</span>
         </span>
+        {/* Named by what it shows, then where it goes (WCAG 2.5.3). */}
+        <span className="sr-only">{ow('back')}</span>
       </button>
       <button type="button" className="of-search" onClick={() => setSearching(true)} aria-keyshortcuts="/">
         <Icon name="search" size={16} />
@@ -694,9 +696,12 @@ export default function OwnerOffice({
 
   return (
     <div className="of" data-phone={phone ? '' : undefined} data-sheet={sheet} data-view={show2d ? '2d' : '3d'}>
+      <a className="skip-link" href="#of-stage">
+        {t('docs.skip')}
+      </a>
       {top}
       {phone ? null : rail}
-      <main className="of-stage" ref={stage} aria-label={ow('stage', { n: onFloor.length })}>
+      <main className="of-stage" id="of-stage" tabIndex={-1} ref={stage} aria-label={ow('stage', { n: onFloor.length })}>
         {show2d ? (
           <PlanView
             seats={onFloor}

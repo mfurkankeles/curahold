@@ -7,7 +7,7 @@ import type { Account } from '../../../shared/src/model';
 import type { AppRecord } from '../../../shared/src/records';
 import { useRecordTypes } from '../components/AccountFields';
 import { bandOf, keyFields } from '../components/AccountViews';
-import { EmptyState, LoadError, SkeletonCards } from '../components/Empty';
+import { EmptyState, LoadError, SkeletonCards, SkeletonDash } from '../components/Empty';
 import { Icon, PageIcon } from '../components/icons';
 import { Stat } from '../components/Pipeline';
 import { TargetsPanel, dealsN } from '../components/Rhythm';
@@ -39,6 +39,19 @@ export const hoursText = (minutes: number, locale: Locale) => {
   return h && m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : h ? unit(h, 'hour') : unit(m, 'minute');
 };
 
+/** A report card with nothing to count yet: where its figures come from, and the way to make some. */
+function ReportsEmpty({ icon }: { icon: 'chart' | 'people' | 'board' }) {
+  const { t } = useI18n();
+  return (
+    <EmptyState compact icon={icon} title={t('reports.emptyTitle')} body={t('reports.emptyBody')}>
+      <button type="button" className="btn" onClick={() => navigate('/my')}>
+        <Icon name="check" size={16} />
+        {t('reports.toMyTasks')}
+      </button>
+    </EmptyState>
+  );
+}
+
 /** Two columns per week: what came in, what got done (side by side, never added up). */
 function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
   const { t } = useI18n();
@@ -52,7 +65,7 @@ function WeekChart({ weeks }: { weeks: WorkReport['weeks'] }) {
       table: null,
       series: [
         { key: 'in', label: t('reports.created'), color: 'stone' },
-        { key: 'out', label: t('reports.done'), color: 'sky' },
+        { key: 'out', label: t('reports.done'), color: 'plum' },
       ],
       groups: weeks.map((w) => ({ key: w.week, label: w.week, value: w.created + w.done, cells: [w.created, w.done] })),
     }),
@@ -224,14 +237,14 @@ export function ReportsPage() {
           failed.work ? (
             <LoadError onRetry={() => retry('work')} />
           ) : (
-            <SkeletonCards count={4} label={t('common.loading')} />
+            <SkeletonDash label={t('common.loading')} />
           )
         ) : (
           <>
             <div className="statstrip">
               <Stat label={t('reports.open')} value={num(work.totals.open)} n={work.totals.open} fmt={num} sub={t('reports.unassignedN', { n: num(work.totals.unassigned) })} />
               <Stat label={t('reports.overdue')} value={num(work.totals.overdue)} n={work.totals.overdue} fmt={num} tone={work.totals.overdue ? 'late' : 'done'} sub={t('reports.dueWeekN', { n: num(work.totals.dueWeek) })} />
-              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} tone="done" sub={t('reports.created30N', { n: num(work.totals.created30) })} />
+              <Stat label={t('reports.done30')} value={num(work.totals.done30)} n={work.totals.done30} fmt={num} sub={t('reports.created30N', { n: num(work.totals.created30) })} />
               <Stat label={t('reports.onTime')} value={work.totals.onTime == null ? '—' : percent(work.totals.onTime)} n={work.totals.onTime} fmt={percent} sub={work.totals.cycleDays == null ? t('reports.noCycle') : work.totals.cycleDays < 1 ? t('reports.cycle0') : t('reports.cycle', { n: num(work.totals.cycleDays) })} tone={work.totals.onTime != null && work.totals.onTime < 70 ? 'soon' : undefined} />
             </div>
             {/* The week-by-week chart across the page, then the cards two by two (styles.css, .reports__grid). */}
@@ -242,7 +255,7 @@ export function ReportsPage() {
             {t('reports.flowTitle')}
           </h2>
                 <p className="sheet__hint">{t('reports.flowHint')}</p>
-                {work.weeks.some((w) => w.created || w.done) ? <WeekChart weeks={work.weeks} /> : <EmptyState compact icon="chart" title={t('reports.noData')} />}
+                {work.weeks.some((w) => w.created || w.done) ? <WeekChart weeks={work.weeks} /> : <ReportsEmpty icon="chart" />}
               </section>
               <div className="reports__grid">
               <section className="sheet">
@@ -267,7 +280,7 @@ export function ReportsPage() {
                     }))}
                   />
                 ) : (
-                  <EmptyState compact icon="people" title={t('reports.noData')} />
+                  <ReportsEmpty icon="people" />
                 )}
               </section>
               {/* Beside who carries what: the same people's logged time. */}
@@ -278,7 +291,7 @@ export function ReportsPage() {
             {t('reports.hours')}
           </h2>
                   <p className="sheet__hint">{t('reports.hoursHint')}</p>
-                  <BarRows rows={work.hours.slice(0, 10).map((h) => ({ key: h.userId, label: person(h.userId)?.name ?? '—', value: h.minutes, text: hoursText(h.minutes, locale), color: 'sky' }))} />
+                  <BarRows rows={work.hours.slice(0, 10).map((h) => ({ key: h.userId, label: person(h.userId)?.name ?? '—', value: h.minutes, text: hoursText(h.minutes, locale) }))} />
                 </section>
               )}
               {board ? (
@@ -309,7 +322,7 @@ export function ReportsPage() {
                       }))}
                     />
                   ) : (
-                    <EmptyState compact icon="board" title={t('reports.noData')} />
+                    <ReportsEmpty icon="board" />
                   )}
                 </section>
               )}
@@ -329,7 +342,12 @@ export function ReportsPage() {
           )
         ) : customers.total === 0 ? (
           <div className="sheet">
-            <EmptyState compact icon="building" title={t('accounts.emptyTitle')} />
+            <EmptyState compact icon="building" title={t('accounts.emptyTitle')} body={t('reports.accountsEmptyBody')}>
+              <button type="button" className="btn" onClick={() => navigate('/accounts')}>
+                <Icon name="building" size={16} />
+                {t('reports.toAccounts')}
+              </button>
+            </EmptyState>
           </div>
         ) : (
           // Targets and health across the page; renewals and the pipeline side by side, the same height.

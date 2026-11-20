@@ -265,6 +265,43 @@ to run twice (remember what was done, as `playbook_runs` does for renewals)
 and let one company's failure not stop the others (`try`/`catch` per
 company).
 
+### a connector
+
+Pick the kind first; each has one contract and one place:
+
+| Kind | Contract | Example | Registered in |
+| --- | --- | --- | --- |
+| A chat that only receives posts | a flavour in `api/src/connectors/messaging/webhook.ts` (host rule, payload, error mapping) | Lark, Telegram | `WEBHOOK_FLAVORS`; the form in `Connections.tsx` |
+| A two-way chat app | `MessagingAdapter` (`connectors/messaging/types.ts`) | Slack, Teams | `connectors/messaging/index.ts` |
+| A CRM, support tool, calendar or mailbox | `CrmAdapter` (`api/src/sync/adapters/types.ts`): `objects`/`fields`/`list`/`update`/`create`, or `mailbox` + `messages` (+ `calendar` + `schedule`) | Odoo CRM, Zoho Desk, Google Calendar | `CRM_ADAPTERS` and `crmProviders` (`adapters/index.ts`), the list in `shared/src/sync.ts`, `KEY_FIELDS` when it is connected with typed values |
+| An accounting program (read only) | `accountingAdapter({ … finance })` (`adapters/accounting/common.ts`) | Stripe | `ACCOUNTING_PROVIDERS` (`shared/src/accounting.ts`) |
+| Something that pushes to us | a signed inbound route (`routes/whatsapp.ts`, `routes/devlinks.ts`) or, for anything without its own connector, an incoming webhook (`lib/inboundHooks.ts`, a recipe in `shared/src/inboundHooks.ts`) | WhatsApp, Azure DevOps, DocuSign | `app.ts`, before sign-in |
+
+The rules every connector keeps:
+
+1. **Read the vendor's own documentation first** and write what you rely on (auth, endpoint, page size, limit, error
+   shape, webhook signature) in the file's header comment. Anything you could not confirm is marked "(b)" in
+   `INTEGRATIONS.md` and goes into the real-account plan.
+2. **Errors as `CrmError`**: a rate limit with `retryAfter` (the run keeps its place), lost access with `auth: true`
+   (the connection asks to reconnect), anything else with the vendor's own words (`errorText`). A webhook flavour
+   throws `FatalChatError` only for what retrying cannot fix.
+3. **Secrets are sealed** (`seal`), never in `config`, never returned; a host the vendor does not own is refused
+   (`privateHost`, the host rules of the flavours). Inbound receivers verify a signature or token before parsing,
+   cap the body, and keep each event once.
+4. **Data the company did not ask for is not kept**: calendars read title, time, length and guests only; WhatsApp
+   messages from unknown numbers are counted, not stored. Disconnecting deletes the credentials; what came over stays.
+5. **Strings**: every word on screen in all nine dictionaries (`support.what.<id>`, `support.how.<id>`,
+   `support.field.<id>.<key>`, `fin.what/steps.<id>`), the name in `PROVIDER_NAMES`.
+6. **Tests the way a customer uses it**: a mock of the vendor in `tests/vendors/<vendor>.ts` (the `VendorMock`
+   contract in `tests/vendors/kit.ts`: hosts, `handle`, `consent`, `remoteEdit`, `remoteRow`, the four faults),
+   then a flow in `tests/connectors-b19.test.ts` (or the onboarding suite): connect → map → first data → both ways →
+   a change there → conflict → expired / revoked / rate limit / bad field → reconnect → disconnect. Timed run:
+   `B19_LATENCY=1 B19_TIMINGS=out.json npx vitest run tests/connectors-b19.test.ts`.
+7. **Docs**: a help page in nine languages (one action per numbered step, a picture per step from
+   `scripts/docs/shots.ts`, values in copy blocks), an assistant case in `tests/assistant-eval/cases.ts`, setup checks
+   where a silent failure is possible (`shared/src/setupHealth.ts` + `api/src/lib/setupHealth.ts`), the route in
+   `scripts/docs/catalogue.ts`, and a row in `INTEGRATIONS.md` and in `/orch/out/w3-integrations-real.md`.
+
 ### a help page (and what the assistant knows)
 
 CuraAI and the docs' Ask answer from the help pages (the four closest sections of `answers.json`), so a feature
@@ -330,6 +367,26 @@ step is an issue at once: `openStepIssue` writes the step's own record
 (`setup_progress` kind `issue`) and the ONE row the company's own `self` plan
 lists (`onboarding_issues`, `source = 'setup_test'`, `source_ref` = the step);
 `closeStepIssue` resolves both when the step passes or is left out.
+
+### a sales-site language
+
+The site (curahold.com) publishes a language only when all of its copy exists: no half-English
+pages, no hreflang to a page that is not there (ADR 0020). Hindi and Malay are next; they are in
+`SITE_PENDING` today. To add one:
+
+1. `site/locales.ts`: add it to `SITE_LANGS` with its Open Graph locale (`hi_IN`, `ms_MY`), to
+   `SITE_FONTS` (`ms: ['latin']`; `hi: []`, it reads the system's Devanagari face), and take it
+   out of `SITE_PENDING`. From here TypeScript names every copy file still missing it.
+2. Write the copy, natively and with the glossary (`shared/src/i18n/glossary.ts` has `hi` and `ms`
+   columns): `site/content.ts` (`COPY`, and `STORY_COPY` if the scroll story ships), `site/info/<lang>.ts`
+   plus `site/info/index.ts`, `site/concepts/a-copy.ts` and `c-copy.ts`, `site/hub-content.ts`
+   (the same items as every other language). Every page needs a `seo` title and description in range.
+3. Non-Latin script (Hindi): give `site/chrome.css` a `:root:lang(hi)` text stack and body size
+   from the review's script table ('Nirmala UI', 'Kohinoor Devanagari', 'Noto Sans Devanagari';
+   18 px, line height 1.75, headings 1.4). No web font.
+4. Add it to `STORY_NOW` in `tests/site-copy.test.ts` if the story ships in it.
+5. Nothing else: hreflang, the language menu, sitemaps (one file per language) and Open Graph
+   alternates all loop over `SITE_LOCALES`. Run `npm run build:site` and `tests/site-*.test.ts`.
 
 ---
 

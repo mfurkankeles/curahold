@@ -7,7 +7,7 @@
 import { foldText } from './text';
 
 /** Programs with an open, documented API, in the order they were built (research: Middle East first, then the Far East). */
-export const ACCOUNTING_PROVIDERS = ['zohobooks', 'xero', 'odoo', 'freee', 'parasut', 'quickbooks'] as const;
+export const ACCOUNTING_PROVIDERS = ['zohobooks', 'xero', 'odoo', 'freee', 'parasut', 'quickbooks', 'stripe'] as const;
 export type AccountingApiProvider = (typeof ACCOUNTING_PROVIDERS)[number];
 /** Every other program: a file in the template's columns, exported from the program and uploaded. */
 export const ACCOUNTING_FILE = 'finfile' as const;

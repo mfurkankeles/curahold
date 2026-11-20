@@ -72,7 +72,7 @@ describe('dev links over the webhooks', () => {
     expect(secrets.github).toMatch(/^[0-9a-f]{40}$/);
     secrets.gitlab = (await ada.post('/api/dev-hooks/gitlab')).json.hook.secret;
     const list = (await ada.get('/api/dev-hooks')).json.hooks;
-    expect(list.map((h: any) => [h.provider, h.enabled, h.secret])).toEqual([['github', true, secrets.github], ['gitlab', true, secrets.gitlab]]);
+    expect(list.map((h: any) => [h.provider, h.enabled, h.secret])).toEqual([['github', true, secrets.github], ['gitlab', true, secrets.gitlab], ['azuredevops', false, null]]);
   });
 
   it('refuses a wrong signature, a wrong token and another company’s secret; accepts a ping', async () => {

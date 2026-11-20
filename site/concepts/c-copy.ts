@@ -2,7 +2,7 @@
 // one customer record), in nine languages. Department names, "No promise forgotten",
 // "Coming soon" and the sprint name come from concept A's copy and the main site, so
 // the two versions never disagree. {n} and {date} are filled by the builder.
-import type { Locale } from '../../shared/src/i18n';
+import type { SiteLocale } from '../locales';
 
 export interface ConceptCCopy {
   title: string; desc: string;
@@ -22,7 +22,7 @@ export interface ConceptCCopy {
   endA: string; endB: string;
 }
 
-export const C_COPY: Record<Locale, ConceptCCopy> = {
+export const C_COPY: Record<SiteLocale, ConceptCCopy> = {
   en: {
     title: 'Curahold: your customer at the centre', desc: 'Four teams work around one customer record: sales, customer success, product and finance.',
     h1a: 'Your customer,', h1b: 'at the centre.', sub: 'Four teams circle one customer record.', health: 'health {n}',
@@ -33,8 +33,8 @@ export const C_COPY: Record<Locale, ConceptCCopy> = {
     words: ['Promise', 'Task', 'Portal', 'Renewal'], endA: 'The customer at the centre.', endB: 'Everyone around them.',
   },
   tr: {
-    title: 'Curahold: Müşterin merkezde', desc: 'Dört ekip tek müşteri kaydının etrafında çalışır: satış, müşteri başarısı, ürün ve finans.',
-    h1a: 'Müşterin', h1b: 'merkezde.', sub: 'Dört ekip, tek müşteri kaydının etrafında döner.', health: 'sağlık {n}',
+    title: 'Curahold: Müşteriniz merkezde', desc: 'Dört ekip tek müşteri kaydının etrafında çalışır: satış, müşteri başarısı, ürün ve finans.',
+    h1a: 'Müşteriniz', h1b: 'merkezde.', sub: 'Dört ekip, tek müşteri kaydının etrafında döner.', health: 'sağlık {n}',
     sat: ['Fırsat kazanıldı, kurulum Müşteri Başarısı’na geçti.', 'Sağlık 48’e düştü. Neden: 38 gündür temas yok.', 'Verilen söz Sprint 24’te teslim edildi.', 'Yenileme faturası taslağı hazır.'],
     cap: ['Satış kazandı, müşteri içeri girdi.', 'Müşteri Başarısı sessizleşmeyi fark etti.', 'Ürün, verilen sözü teslim etti.', 'Finans yenilemeyi hazırladı.'],
     lineH: 'Bir sözün 6 durağı',

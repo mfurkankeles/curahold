@@ -89,6 +89,8 @@ Tablo ürünün kendi sözcüklerinden yazılır; ekranda gördüğünüzle hep 
 | --- | --- | --- |
 | Bağlı bir araç artık oturumumuzu kabul etmiyor (Önce bunu) | Yeniden bağlanana kadar hiçbir şey gelmez ya da gitmez. Tek bir oturum açma yeter. | **Yeniden bağlan** |
 | … araçla son eşitleme tamamlanmadı (Önce bunu) | O zamandan beri yapılan değişiklikler bekliyor. Bağlantının sayfası neyin durdurduğunu yazar. | **Ne olduğunu gör** |
+| Bir gelen webhook bir gündür hiçbir şeyi kullanamadı (Düzeltmeye değer) | Her gönderim reddedildi (yanlış gizli anahtar) ya da kullanılamadı (eşleşen müşteri yok, değişen içerik). Kayıtları hangisi olduğunu söyler. | **Gelen webhook'ları aç** |
+| WhatsApp bağlı ama hiç mesaj gelmedi (Düzeltmeye değer) | Bir gün sonra bu genellikle geri arama adresi ile doğrulama anahtarının Meta uygulamasına kaydedilmediği ya da “messages” aboneliğinin yapılmadığı anlamına gelir. | **Bağlantıyı aç** |
 | Bir bağlantı alanlarının eşleşmesini bekliyor (Düzeltmeye değer) | Neyin nereye gideceğini seçip başlatana kadar hiçbir şey getirmez. | **Eşleştirmeyi bitir** |
 | … değişiklik diğer araca gönderilemedi (Düzeltmeye değer) | Üç kez denedik. Bağlantının sayfası her birini nedeniyle gösterir ve yeniden deneyebilir. | **İncele** |
 | … API anahtarı iki hafta içinde çalışmayı bırakacak (Düzeltmeye değer) | Onu kullanan her şey göndermeyi bırakır. Ondan önce yeni bir anahtar oluşturup yerine koyun. | **API anahtarlarını aç** |

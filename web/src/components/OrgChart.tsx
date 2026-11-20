@@ -14,6 +14,7 @@ import { useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { Dialog, initials, RowMenu } from './ui';
 import { useUndo } from '../lib/undo';
+import { Icon } from './icons';
 
 export const STANCE_KEYS = STANCES.map((s) => s.key);
 // A brand name and its mark, not text to translate.
@@ -326,6 +327,7 @@ export function OrgChart({ type, records, onChanged, onOpen, onAdd }: { type: Re
       )}
       {canWrite && (
         <button className="btn btn--small" onClick={() => onAdd(null)}>
+          <Icon name="userPlus" size={16} />
           {t('org.addPerson')}
         </button>
       )}
@@ -350,6 +352,7 @@ function ReportsTo({ record, records, blocked, onClose, onPick }: { record: AppR
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -359,6 +362,7 @@ function ReportsTo({ record, records, blocked, onClose, onPick }: { record: AppR
               onClose();
             }}
           >
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>

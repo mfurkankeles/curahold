@@ -104,10 +104,10 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
         <div className="field-row" key={f.key}>
           <div className="field-row__order">
             <button className="btn btn--quiet btn--small" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('fields.up')}>
-              ↑
+              <Icon name="chevronUp" size={16} />
             </button>
             <button className="btn btn--quiet btn--small" disabled={i === list.length - 1} onClick={() => move(i, 1)} aria-label={t('fields.down')}>
-              ↓
+              <Icon name="chevronDown" size={16} />
             </button>
           </div>
           <div className="field-row__main">
@@ -174,6 +174,7 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
                       upd(i, { options: [...(f.options ?? []), { key: newKey(label, taken), label: { [locale]: label } }] });
                     }}
                   >
+                    <Icon name="plus" size={16} />
                     {t('fields.addOption')}
                   </button>
                 </div>
@@ -181,7 +182,7 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
             </div>
           </div>
           <button className="btn btn--quiet btn--small" onClick={() => setList(list.filter((_, j) => j !== i))} aria-label={t('common.remove')}>
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </div>
       ))}
@@ -209,9 +210,11 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
                 setAdding(null);
               }}
             >
+              <Icon name="plus" size={16} />
               {t('common.add')}
             </button>
             <button className="btn btn--quiet btn--small" onClick={() => setAdding(null)}>
+              <Icon name="close" size={16} />
               {t('common.cancel')}
             </button>
           </div>
@@ -219,10 +222,12 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
       ) : (
         <div className="toolbar">
           <button className="btn btn--small" onClick={() => setAdding({ label: '', type: 'text' })}>
+            <Icon name="plus" size={16} />
             {t('fields.add')}
           </button>
           {rollups && (types?.length ?? 0) > 0 && (
             <button className="btn btn--small" onClick={() => setRolling(true)}>
+              <Icon name="plus" size={16} />
               {t('fields.addCalculated')}
             </button>
           )}
@@ -247,9 +252,11 @@ function FieldListEditor({ initial, onSave, rollups, types, topic }: { initial: 
         <div className="savebar" data-dirty={dirty ? 'true' : 'false'}>
           <span>{dirty ? t('fields.unsaved') : t('fields.allSaved')}</span>
           <button className="btn btn--quiet btn--small" disabled={!dirty || busy} onClick={() => setList(JSON.parse(JSON.stringify(initial)))}>
+            <Icon name="trash" size={16} />
             {t('fields.discard')}
           </button>
           <button className="btn btn--primary btn--small" disabled={!dirty || busy} onClick={() => void save()}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </div>
@@ -350,9 +357,11 @@ function FieldAccessDialog({ field, onSave, onClose }: { field: AccountField; on
       footer={
         <>
           <button className="btn" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" onClick={() => onSave({ ...(view.length ? { view } : {}), ...(edit.length && !field.rollup ? { edit } : {}) })}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -460,6 +469,7 @@ function RollupDialog({ types, taken, onClose, onAdd }: { types: RecordType[]; t
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -475,6 +485,7 @@ function RollupDialog({ types, taken, onClose, onAdd }: { types: RecordType[]; t
               onClose();
             }}
           >
+            <Icon name="plus" size={16} />
             {t('common.add')}
           </button>
         </>
@@ -494,6 +505,7 @@ function RollupDialog({ types, taken, onClose, onAdd }: { types: RecordType[]; t
                   onClose();
                 }}
               >
+                <Icon name="plus" size={16} />
                 {labelOf(p.field.label, locale)}
               </button>
             ))}
@@ -637,6 +649,7 @@ export function RecordTypesEditor() {
             </button>
             {ty.kind !== 'custom' && <span className="badge">{t(`records.kind.${ty.kind}` as MessageKey)}</span>}
             <button className="btn btn--quiet btn--small" onClick={() => setRemoving(ty)}>
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           </div>
@@ -669,6 +682,7 @@ export function RecordTypesEditor() {
                 <p>{labelOf(p.hint, locale)}</p>
                 <p className="pblist__meta">{p.fields.map((f) => labelOf(f.label, locale)).join(' · ')}</p>
                 <button className="btn btn--small" onClick={() => void addPreset(p)}>
+                  <Icon name="plus" size={16} />
                   {t('records.presetAdd')}
                 </button>
               </article>
@@ -679,15 +693,18 @@ export function RecordTypesEditor() {
       <div className="toolbar u-mt-12">
         {!has('contact') && (
           <button className="btn btn--small" onClick={() => addBuiltin('contact')}>
+            <Icon name="plus" size={16} />
             {t('records.types.addContacts')}
           </button>
         )}
         {!has('opportunity') && (
           <button className="btn btn--small" onClick={() => addBuiltin('opportunity')}>
+            <Icon name="plus" size={16} />
             {t('records.types.addOpportunities')}
           </button>
         )}
         <button className="btn btn--small" onClick={() => setAdding(true)}>
+          <Icon name="plus" size={16} />
           {t('records.types.addOwn')}
         </button>
       </div>
@@ -742,6 +759,7 @@ function TypeNames({ type, onSaved }: { type: RecordType; onSaved: () => unknown
           }
         }}
       >
+        <Icon name="check" size={16} />
         {t('common.save')}
       </button>
     </div>
@@ -760,6 +778,7 @@ function NewType({ onClose, onDone }: { onClose: () => void; onDone: () => unkno
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button
@@ -775,6 +794,7 @@ function NewType({ onClose, onDone }: { onClose: () => void; onDone: () => unkno
               }
             }}
           >
+            <Icon name="plus" size={16} />
             {t('common.create')}
           </button>
         </>

@@ -30,6 +30,7 @@ import { useLocation } from '../lib/router';
 import '../surfaces/trial.css';
 import { useHumanCheck } from '../lib/humanCheck';
 import { LegalNotice } from '../components/LegalNotice';
+import { Icon } from '../components/icons';
 
 const LegacySignup = lazy(() => import('./Signup').then((m) => ({ default: m.SignupApp })));
 
@@ -515,6 +516,7 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
           {input('email', t('trial.email.label'), { type: 'email', autoComplete: 'email', dir: 'ltr' })}
           {human.field}
           <button className="btn btn--primary" disabled={busy || !config}>
+            <Icon name="send" size={16} />
             {t('trial.email.send')}
           </button>
         </form>
@@ -540,13 +542,16 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
           </Field>
           {codeSent.devCode && <p className="field__hint">dev: {codeSent.devCode}</p>}
           <button className="btn btn--primary" disabled={busy || code.length !== 6}>
+            <Icon name="check" size={16} />
             {t('trial.code.verify')}
           </button>
           <div className="trial__row">
             <button type="button" className="btn btn--quiet" onClick={() => void sendCode()} disabled={busy}>
+              <Icon name="refresh" size={16} />
               {t('trial.code.again')}
             </button>
             <button type="button" className="btn btn--quiet" onClick={forget}>
+              <Icon name="edit" size={16} />
               {t('trial.code.change')}
             </button>
           </div>
@@ -575,9 +580,10 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
           )}
           <div className="trial__row">
             <button type="button" className="btn btn--quiet" onClick={forget}>
+              <Icon name="edit" size={16} />
               {t('trial.code.change')}
             </button>
-            <button className="btn btn--primary">{t('trial.next')}</button>
+            <button className="btn btn--primary"><Icon name="arrowRight" size={16} /> {t('trial.next')}</button>
           </div>
         </form>
       )}
@@ -731,9 +737,11 @@ function TrialRequest({ onLocale, config, failed }: { onLocale: (l: Locale) => v
           <p className="field__hint">{t('trial.saved')}</p>
           <div className="trial__row">
             <button type="button" className="btn btn--quiet" onClick={() => (setErrors({}), setStep(step - 1))}>
+              <Icon name="arrowLeft" size={16} />
               {t('trial.back')}
             </button>
             <button className="btn btn--primary" disabled={busy}>
+              <Icon name="arrowRight" size={16} />
               {step === 4 ? (busy ? t('trial.sending') : t('trial.send')) : t('trial.next')}
             </button>
           </div>
@@ -832,6 +840,7 @@ function Unsubscribe({ onLocale }: { onLocale: (l: Locale) => void }) {
       <h1 className="auth__title">{t('trial.unsubscribe.title')}</h1>
       {state === 'ask' && token && (
         <button className="btn btn--primary" onClick={() => void stop()}>
+          <Icon name="close" size={16} />
           {t('trial.unsubscribe.button')}
         </button>
       )}

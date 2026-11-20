@@ -27,7 +27,8 @@ export function odooUrl(raw: string): string {
 
 type Transport = { kind: 'json2' } | { kind: 'jsonrpc'; uid: number };
 
-async function send(fetcher: typeof fetch, url: string, db: string, key: string, t: Transport, model: string, method: string, kw: Record<string, unknown>): Promise<any> {
+/** One call to an Odoo model (shared with Odoo CRM, adapters/odoocrm.ts). */
+export async function send(fetcher: typeof fetch, url: string, db: string, key: string, t: Transport, model: string, method: string, kw: Record<string, unknown>): Promise<any> {
   if (t.kind === 'json2') {
     const res = await fetcher(`${url}/json/2/${model}/${method}`, {
       method: 'POST',
@@ -57,7 +58,7 @@ async function send(fetcher: typeof fetch, url: string, db: string, key: string,
 
 const transportOf = (config: Record<string, any>): Transport => (config.transport === 'jsonrpc' ? { kind: 'jsonrpc', uid: Number(config.uid) } : { kind: 'json2' });
 
-async function odoo(ctx: CrmCtx, model: string, method: string, kw: Record<string, unknown>) {
+export async function odoo(ctx: CrmCtx, model: string, method: string, kw: Record<string, unknown>) {
   return send(ctx.fetch, String(ctx.config.url), String(ctx.config.database ?? ''), await ctx.token(), transportOf(ctx.config), model, method, kw);
 }
 
@@ -80,44 +81,46 @@ const QUERY: Record<FinKind, { model: string; domain: unknown[]; fields: string[
   },
 };
 
+/** Checks the address, login and key, finds which API this Odoo speaks, and names the company (shared with Odoo CRM). */
+export async function odooConnect(fetcher: typeof fetch, values: Record<string, string>) {
+  const url = odooUrl(values.url ?? '');
+  const db = (values.database ?? '').trim();
+  const login = (values.login ?? '').trim();
+  const key = (values.apiKey ?? '').trim();
+  if (!login || !key) throw new CrmError('Enter the login and the API key', 400);
+  let t: Transport = { kind: 'json2' };
+  let company: any;
+  try {
+    company = await send(fetcher, url, db, key, t, 'res.company', 'search_read', { domain: [], fields: ['name'], limit: 1 });
+  } catch (e) {
+    // Before Odoo 19 there is no JSON-2: sign in over JSON-RPC instead (it needs the database name).
+    if (!(e instanceof CrmError) || (e.status !== 404 && e.status !== 405)) throw e;
+    if (!db) throw new CrmError('This Odoo needs the database name too', 400);
+    const res = await fetcher(`${url}/jsonrpc`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: { service: 'common', method: 'authenticate', args: [db, login, key, {}] } }),
+    });
+    const j: any = await res.json().catch(() => null);
+    if (!res.ok || !j || j.error || typeof j.result !== 'number') throw new CrmError('Odoo did not accept the login and API key', 401, undefined, true);
+    t = { kind: 'jsonrpc', uid: j.result };
+    company = await send(fetcher, url, db, key, t, 'res.company', 'search_read', { domain: [], fields: ['name'], limit: 1 });
+  }
+  const name = Array.isArray(company) && company[0]?.name ? String(company[0].name) : new URL(url).hostname;
+  return {
+    secret: { accessToken: key },
+    config: { url, database: db, login, transport: t.kind, ...(t.kind === 'jsonrpc' ? { uid: t.uid } : {}) },
+    label: name,
+    instanceId: `${new URL(url).hostname}/${db}`,
+  };
+}
+
 export const odooAdapter = accountingAdapter({
   provider: 'odoo',
   // Odoo publishes no hard limit; this stays polite to a small self-hosted server.
   accounting: { perMinute: 120 },
   keyed: {
-    async connect(fetcher, values, now) {
-      void now;
-      const url = odooUrl(values.url ?? '');
-      const db = (values.database ?? '').trim();
-      const login = (values.login ?? '').trim();
-      const key = (values.apiKey ?? '').trim();
-      if (!login || !key) throw new CrmError('Enter the login and the API key', 400);
-      let t: Transport = { kind: 'json2' };
-      let company: any;
-      try {
-        company = await send(fetcher, url, db, key, t, 'res.company', 'search_read', { domain: [], fields: ['name'], limit: 1 });
-      } catch (e) {
-        // Before Odoo 19 there is no JSON-2: sign in over JSON-RPC instead (it needs the database name).
-        if (!(e instanceof CrmError) || (e.status !== 404 && e.status !== 405)) throw e;
-        if (!db) throw new CrmError('This Odoo needs the database name too', 400);
-        const res = await fetcher(`${url}/jsonrpc`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', method: 'call', id: 1, params: { service: 'common', method: 'authenticate', args: [db, login, key, {}] } }),
-        });
-        const j: any = await res.json().catch(() => null);
-        if (!res.ok || !j || j.error || typeof j.result !== 'number') throw new CrmError('Odoo did not accept the login and API key', 401, undefined, true);
-        t = { kind: 'jsonrpc', uid: j.result };
-        company = await send(fetcher, url, db, key, t, 'res.company', 'search_read', { domain: [], fields: ['name'], limit: 1 });
-      }
-      const name = Array.isArray(company) && company[0]?.name ? String(company[0].name) : new URL(url).hostname;
-      return {
-        secret: { accessToken: key },
-        config: { url, database: db, login, transport: t.kind, ...(t.kind === 'jsonrpc' ? { uid: t.uid } : {}) },
-        label: name,
-        instanceId: `${new URL(url).hostname}/${db}`,
-      };
-    },
+    connect: (fetcher, values) => odooConnect(fetcher, values),
   },
 
   // API keys do not expire; one that was revoked has to be replaced (reconnect).

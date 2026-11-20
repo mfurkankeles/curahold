@@ -15,6 +15,7 @@ import { useStore } from '../lib/store';
 import { CompanyForm } from './Settings';
 import { SetupEntry } from '../components/SetupWarnings';
 import '../surfaces/admin.css';
+import { Icon } from '../components/icons';
 
 type Step = SetupStep | 'finish';
 const ORDER: Step[] = [...SETUP_STEPS, 'finish'];
@@ -49,6 +50,7 @@ export function SetupPage({ step }: { step: string | null }) {
         <span className="topbar__sub">{left > 0 ? t('setup.minutesLeft', { n: left }) : t('setup.almost')}</span>
         <div className="topbar__spacer" />
         <button className="btn btn--quiet btn--small" onClick={() => navigate('/my')}>
+          <Icon name="close" size={16} />
           {t('setup.later')}
         </button>
       </header>
@@ -58,7 +60,7 @@ export function SetupPage({ step }: { step: string | null }) {
             const state = s === current ? 'current' : s !== 'finish' && done.has(s) ? 'done' : 'todo';
             return (
               <li key={s} data-state={state}>
-                <button onClick={() => go(s)} aria-current={s === current ? 'step' : undefined} aria-label={label(s)} title={label(s)}>
+                <button onClick={() => go(s)} aria-current={s === current ? 'step' : undefined} title={label(s)}>
                   <span className="wizard__dot" aria-hidden="true">
                     {state === 'done' ? '✓' : i + 1}
                   </span>
@@ -94,6 +96,7 @@ function StepNav({ onNext, nextLabel, skip }: { onNext: () => void; nextLabel?: 
   return (
     <div className="wizard__nav">
       <button className="btn btn--primary" onClick={onNext}>
+        <Icon name="arrowRight" size={16} />
         {nextLabel ?? t('setup.continue')}
       </button>
       {skip && <span className="field__hint">{skip}</span>}
@@ -325,6 +328,7 @@ function PeopleStep({ onNext }: { onNext: () => void }) {
 
       <div className="wizard__nav">
         <button className="btn btn--primary" disabled={busy} onClick={allPeople.length || teamNames.length ? apply : onNext}>
+          <Icon name="arrowRight" size={16} />
           {allPeople.length ? t('setup.people.addN', { n: allPeople.length }) : t('setup.continue')}
         </button>
         <span className="field__hint">{t('setup.people.seats', { n: paid })}</span>
@@ -362,6 +366,7 @@ function FinishStep({ done, onGo }: { done: Set<SetupStep>; onGo: (s: SetupStep)
             <span>{t(`setup.step.${s}` as MessageKey, { accounts: words.other })}</span>
             {!done.has(s) && (
               <button className="btn btn--quiet btn--small" onClick={() => onGo(s)}>
+                <Icon name="arrowLeft" size={16} />
                 {t('setup.finish.goBack')}
               </button>
             )}
@@ -376,6 +381,7 @@ function FinishStep({ done, onGo }: { done: Set<SetupStep>; onGo: (s: SetupStep)
       )}
       <div className="wizard__nav">
         <button className="btn btn--primary" disabled={busy} onClick={finish}>
+          <Icon name="arrowRight" size={16} />
           {t('setup.finish.go')}
         </button>
         <span className="field__hint">{t('setup.finish.hint')}</span>

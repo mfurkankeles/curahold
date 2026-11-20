@@ -6,27 +6,30 @@
 // language misses a key or still holds the English wording. Customer names
 // are invented (the same ones as the demo) and stay as they are written.
 
-import type { Locale } from '../shared/src/i18n';
+import type { SiteLocale } from './locales';
 
-export type SiteLocale = Locale;
+export { SITE_LOCALES, type SiteLocale } from './locales';
 
 export interface SiteCopy {
-  title: string;
-  description: string;
   nav: { product: string; pricing: string; demo: string; blog: string; help: string; signIn: string; tryFree: string; skip: string };
   /** `works` introduces the strip of tools under the product tour. */
-  hero: { title: string; lead: string; primary: string; note: string; works: string };
+  /** The H1 is the kicker (the category) and the title (the outcome); the CTA labels are the header's (site/info). */
+  hero: { kicker: string; title: string; lead: string; note: string; works: string; pause: string; play: string };
   /** The live product tour in the hero: four chapters of one customer's loop. */
   tour: SiteTourCopy;
   /** The bento of what sets Curahold apart: six tiles, each a living mini-UI. */
   bento: SiteBentoCopy;
-  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string; perSeat: string; perSeatYearly: string; choose: string; business: string; fine: string };
+  pricing: { title: string; lead: string; monthly: string; yearly: string; save: string;
+    /** The landing page's two-line summary: {from} is the lowest monthly seat price (a yearly plan); `see` links to /pricing/. */
+    summary: string;
+    see: string;
+    perSeat: string; perSeatYearly: string; business: string; fine: string };
   faq: { title: string; items: { q: string; a: string }[] };
   /** The closing call to action. */
   cta: { title: string; text: string };
   /** `placeholder` is an example address: lower-case Latin letters, as an address has to be. */
   signIn: { title: string; text: string; label: string; placeholder: string; go: string; close: string; none: string };
-  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string }; company: string };
+  footer: { story: string; help: string; legal: string; links: { terms: string; privacy: string; kvkk: string; dpa: string; subprocessors: string; cookies: string; accessibility: string }; company: string };
   consent: SiteConsentCopy;
 }
 
@@ -71,6 +74,8 @@ export type BlogBlock = { h: string } | { p: string } | { ul: string[] } | { quo
 
 export interface BlogPost {
   slug: string;
+  /** The search title and description (45–60 and 100–160 characters); the page shows `title` and `description`. */
+  seo: [title: string, description: string];
   title: string;
   description: string;
   /** ISO date (YYYY-MM-DD) the post was published. */
@@ -133,17 +138,17 @@ export interface SiteBentoCopy {
   facts: string[];
 }
 
-export const COPY: Partial<Record<Locale, SiteCopy>> = {
+export const COPY: Record<SiteLocale, SiteCopy> = {
   en: {
-    title: 'Curahold: tasks, sprints and customer renewals in one place',
-    description: 'Renewals that start on their own, meetings whose next steps become tasks, and every customer that needs attention at a glance. The app speaks nine languages.',
     nav: { product: 'Product', pricing: 'Pricing', demo: 'Live demo', blog: 'Blog', help: 'Help', signIn: 'Sign in', tryFree: 'Try it free', skip: 'Skip to content' },
     hero: {
-      title: 'All your company’s work, in good hands.',
-      lead: 'Tasks, projects, sprints and customer renewals in one place, so no promise is ever forgotten.',
-      primary: 'Try it free for 3 months',
-      note: 'No card needed. The app speaks nine languages.',
+      kicker: 'Work management for customer teams',
+      title: 'Every renewal, every promise, every task, on time.',
+      lead: 'See each customer’s health and the reasons behind it, turn a meeting’s next steps into tasks, and let renewals open themselves ninety days ahead.',
+      note: '3 months free, no card needed.',
       works: 'Start beside the tools you have today, move over at your pace',
+      pause: 'Pause',
+      play: 'Play',
     },
     tour: {
       label: 'Product tour',
@@ -199,9 +204,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'Monthly',
       yearly: 'Yearly',
       save: 'about 20% less',
+      summary: 'From {from} per seat a month on a yearly plan. Every plan starts with three months free, no card needed.',
+      see: 'Compare the plans',
       perSeat: 'per seat a month',
       perSeatYearly: 'per seat a month, paid yearly',
-      choose: 'Start the free trial',
       business: 'Everything in Team, plus',
       fine: 'Prices in US dollars; taxes are added at checkout. Seats follow the people who have joined. Payments are handled by Paddle, our reseller.',
     },
@@ -230,7 +236,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: 'The name comes from the Latin cura, care, and the English hold.',
       help: 'Help center',
       legal: 'Legal',
-      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies' },
+      links: { terms: 'Terms of service', privacy: 'Privacy policy', kvkk: 'KVKK notice', dpa: 'Data processing', subprocessors: 'Sub-processors', cookies: 'Cookies', accessibility: 'Accessibility' },
       company: '[Company legal name]',
     },
     consent: {
@@ -255,23 +261,23 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   tr: {
-    title: 'Curahold: görevler, sprint’ler ve müşteri yenilemeleri tek yerde',
-    description: 'Kendiliğinden başlayan yenilemeler, sonraki adımları göreve dönüşen toplantılar ve ilgi bekleyen her müşteri tek bakışta. Uygulama dokuz dilde.',
-    nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', blog: 'Blog', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz dene', skip: 'İçeriğe geç' },
+    nav: { product: 'Ürün', pricing: 'Fiyatlar', demo: 'Canlı demo', blog: 'Blog', help: 'Yardım', signIn: 'Giriş yap', tryFree: 'Ücretsiz deneyin', skip: 'İçeriğe atla' },
     hero: {
-      title: 'Şirketinin bütün işi emin ellerde.',
-      lead: 'Görevler, projeler, sprint’ler ve müşteri yenilemeleri tek yerde. Verilen hiçbir söz unutulmaz.',
-      primary: '3 ay ücretsiz dene',
-      note: 'Kart gerekmez. Uygulama dokuz dilde.',
-      works: 'Bugünkü araçlarının yanında başla, kendi hızında geç',
+      kicker: 'Müşteri ekipleri için iş yönetimi',
+      title: 'Her yenileme, her söz, her görev zamanında.',
+      lead: 'Her müşterinin sağlığını nedenleriyle görün, toplantıdaki sonraki adımları göreve dönüştürün; yenilemeler doksan gün önceden kendiliğinden açılsın.',
+      note: '3 ay ücretsiz, kart gerekmez.',
+      works: 'Bugünkü araçlarınızın yanında başlayın, kendi hızınızda geçin',
+      pause: 'Durdur',
+      play: 'Oynat',
     },
     tour: {
       label: 'Ürün turu',
       steps: [
-        { tab: 'Sağlık', title: 'Kimin seni beklediğini gör', text: 'Her müşterinin 0–100 arası bir skoru ve ardındaki nedenleri var; sessizleşen müşteri kendiliğinden öne çıkar.' },
-        { tab: 'Sözler', title: 'Verilen her sözü tut', text: 'Toplantıyı kaydet; sonraki adımlar sorumlusu ve tarihiyle göreve dönüşsün. Masada konuşulan hiçbir şey kaybolmaz.' },
-        { tab: 'Yenileme', title: 'Yenilemeye erken başla', text: 'Tarihten doksan gün önce yenileme playbook’u görevlerini ve yenileme fırsatını açar. Kimsenin hatırlaması gerekmez.' },
-        { tab: 'Sprint', title: 'Sprint’lerle teslim et', text: 'Epikler, hikaye puanları ve bağlı görevler aynı panolarda; kartlar kapandıkça burndown grafiği kendini çizer.' },
+        { tab: 'Sağlık', title: 'Sizi kimin beklediğini görün', text: 'Her müşterinin 0–100 arası bir skoru ve ardındaki nedenleri var; sessizleşen müşteri kendiliğinden öne çıkar.' },
+        { tab: 'Sözler', title: 'Verilen her sözü tutun', text: 'Toplantıyı kaydedin; sonraki adımlar sorumlusu ve tarihiyle göreve dönüşsün. Masada konuşulan hiçbir şey kaybolmaz.' },
+        { tab: 'Yenileme', title: 'Yenilemeye erken başlayın', text: 'Tarihten doksan gün önce yenileme playbook’u görevlerini ve yenileme fırsatını açar. Kimsenin hatırlaması gerekmez.' },
+        { tab: 'Sprint', title: 'Sprint’lerle teslim edin', text: 'Epikler, hikaye puanları ve bağlı görevler aynı panolarda; kartlar kapandıkça burndown grafiği kendini çizer.' },
       ],
       ui: {
         chips: { review: 'İş değerlendirmesi 14 gün gecikti', renewal: 'Yenilemeye 94 gün var' },
@@ -300,18 +306,18 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
     bento: {
       title: 'İşin geri kalanı da hazır',
-      lead: 'Müşterilerine kendi kapıları, asistanına gerçek cevaplar, sana da verinin tam kontrolü.',
+      lead: 'Müşterilerinize kendi kapıları, asistanınıza gerçek cevaplar, size de verilerinizin tam kontrolü.',
       tiles: [
-        { h: 'Müşterilerini asistanına sor', p: 'Claude ya da ChatGPT’yi bağla. Senin adına çalışır: yalnızca senin görebildiğini görür, değiştirebildiğini değiştirir.' },
-        { h: 'Müşterilerine özel portal', p: 'E-postalarına gelen bağlantıyla girerler ve yalnızca paylaştığını görürler: görevlerini, taleplerini, senin yanıtlarını.' },
-        { h: 'Elindeki araçlarla aynı adımda', p: 'CRM’in, Jira, tabloların ve sohbet uygulaman. Bir taraftaki değişiklik diğerinde de görünür.' },
-        { h: 'Çeyrek tek ekranda', p: 'Hedefler, ağırlıklı fırsat tahmini ve bütün portföyün sağlığı; kendin kurabileceğin rapor ve gösterge panolarında.' },
+        { h: 'Müşterilerinizi asistanınıza sorun', p: 'Claude ya da ChatGPT’yi bağlayın. Sizin adınıza çalışır: yalnızca sizin görebildiğinizi görür, değiştirebildiğinizi değiştirir.' },
+        { h: 'Müşterilerine özel portal', p: 'E-postalarına gelen bağlantıyla girerler ve yalnızca paylaştığınızı görürler: görevlerini, taleplerini, yanıtlarınızı.' },
+        { h: 'Kullandığınız araçlarla aynı adımda', p: 'CRM’iniz, Jira, tablolarınız ve sohbet uygulamanız. Bir taraftaki değişiklik diğerinde de görünür.' },
+        { h: 'Çeyrek tek ekranda', p: 'Hedefler, ağırlıklı fırsat tahmini ve bütün portföyün sağlığı; kendiniz kurabileceğiniz rapor ve gösterge panolarında.' },
         { h: 'Dokuz dil, sağdan sola yazılanlar dahil', p: 'Herkes kendi dilini seçer. Bütün arayüz ona uyar; gereken yerde ayna gibi döner.' },
-        { h: 'Verin senin kalır', p: 'Her şirket veritabanının kendisinde ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez.' },
+        { h: 'Verileriniz sizin kalır', p: 'Her şirket veritabanının kendisinde ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez.' },
       ],
-      ask: { q: 'Bu hafta hangi müşteriler beni bekliyor?', a: 'Üç müşteri ilgi bekliyor:', did: 'Zeynep’e bir görev açtım: Marevo değerlendirmesini planla.' },
+      ask: { q: 'Bu hafta hangi müşteriler beni bekliyor?', a: 'Üç müşteri ilgi bekliyor:', did: 'Zeynep’e bir görev açtım: Marevo değerlendirmesini planlamak.' },
       portal: { plan: 'Başlangıç' },
-      facts: ['SAML 2.0 ya da OpenID Connect ile SSO', 'SCIM ile kullanıcı yönetimi', 'Denetim kaydı', 'Veritabanı Avrupa Birliği’nde', 'Kendi sunucunda da çalışır'],
+      facts: ['SAML 2.0 ya da OpenID Connect ile SSO', 'SCIM ile kullanıcı yönetimi', 'Denetim kaydı', 'Veritabanı Avrupa Birliği’nde', 'Kendi sunucunuzda da çalışır'],
     },
     pricing: {
       title: 'Kullanıcı başına, sade fiyatlar',
@@ -319,9 +325,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'Aylık',
       yearly: 'Yıllık',
       save: 'yaklaşık %20 daha az',
+      summary: 'Fiyatlar, yıllık planda kullanıcı başına aylık {from} ile başlar. Her plan, kart gerektirmeyen üç aylık ücretsiz denemeyle başlar.',
+      see: 'Planları karşılaştırın',
       perSeat: 'kullanıcı başına, aylık',
       perSeatYearly: 'kullanıcı başına aylık, yıllık ödemede',
-      choose: 'Ücretsiz denemeyi başlat',
       business: 'Team’deki her şey, artı',
       fine: 'Fiyatlar ABD doları cinsindendir; vergiler ödeme sırasında eklenir. Kullanıcı sayısı katılan kişileri izler. Ödemeleri satıcımız Paddle alır.',
     },
@@ -329,61 +336,61 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       title: 'Sorular',
       items: [
         { q: 'Verilerimiz nerede tutuluyor?', a: 'Veritabanı Avrupa Birliği’nde. Her şirket veritabanının kendisinde birbirinden ayrılır; bir ekrandaki hata bile bir şirkete başka bir şirketin verisini gösteremez. Veri işleme sözleşmesi GDPR’ı ve KVKK’yı kapsar.' },
-        { q: 'Kendi sunucularımızda çalıştırabilir miyiz?', a: 'Evet. Tek şirketlik paket, kendi veritabanıyla kendi sunucunda ya da bulutunda çalışır; aboneliği yoktur.' },
-        { q: 'CRM’imiz olması gerekiyor mu?', a: 'Hayır. Müşteriler bir tablodan gelebilir ya da elle eklenebilir. CRM’in varsa Curahold onunla iki yönlü uyumlu kalır.' },
+        { q: 'Kendi sunucularımızda çalıştırabilir miyiz?', a: 'Evet. Tek şirketlik paket, kendi veritabanıyla kendi sunucunuzda ya da bulutunuzda çalışır; aboneliği yoktur.' },
+        { q: 'CRM’imiz olması gerekiyor mu?', a: 'Hayır. Müşteriler bir tablodan gelebilir ya da elle eklenebilir. CRM’iniz varsa Curahold onunla iki yönlü uyumlu kalır.' },
         { q: 'İstediğimiz zaman iptal edebilir miyiz?', a: 'Evet. İptal edilen plan ödenmiş dönemin sonuna kadar çalışır ve her şey dışa aktarılabilir.' },
-        { q: 'Kendi kelimelerimizi kullanabilir miyiz?', a: 'Evet. Müşterilerine müşteri, partner ya da hesap de; bütün arayüz ona göre konuşur. Uygulama dokuz dilde; yardım merkezi ve canlı demo Türkçe ve İngilizce.' },
-        { q: 'Kurulum ne kadar sürer?', a: 'Yaklaşık on beş dakika: adresini seç, müşterilerini bir tablodan getir, ekibini davet et.' },
+        { q: 'Kendi kelimelerimizi kullanabilir miyiz?', a: 'Evet. Müşterilerinize müşteri, partner ya da hesap deyin; bütün arayüz ona göre konuşur. Uygulama dokuz dilde; yardım merkezi ve canlı demo Türkçe ve İngilizce.' },
+        { q: 'Kurulum ne kadar sürer?', a: 'Yaklaşık on beş dakika: adresinizi seçin, müşterilerinizi bir tablodan aktarın, ekibinizi davet edin.' },
       ],
     },
-    cta: { title: 'Her müşterine, hiçbir şeyi unutmayan bir ekip ver.', text: 'Her şey açık, üç ay ücretsiz. Müşterilerini bir tablodan getir, on beş dakikada işe koyul.' },
+    cta: { title: 'Her müşterinize hiçbir şeyi unutmayan bir ekip verin.', text: 'Her şey açık, üç ay ücretsiz. Müşterilerinizi bir tablodan aktarın, on beş dakikada işe başlayın.' },
     signIn: {
       title: 'Giriş yap',
-      text: 'Her şirketin kendi adresi var. Giriş sayfasına gitmek için şirketinin adresini yaz.',
-      label: 'Şirketinin adresi',
-      placeholder: 'sirketin',
-      go: 'Git',
+      text: 'Her şirketin kendi adresi var. Giriş sayfasına gitmek için şirketinizin adresini yazın.',
+      label: 'Şirketinizin adresi',
+      placeholder: 'sirketiniz',
+      go: 'Devam',
       close: 'Kapat',
-      none: 'Henüz adresin yok mu? Ücretsiz denemeyi başlat.',
+      none: 'Henüz adresiniz yok mu? Ücretsiz deneyin.',
     },
     footer: {
       story: 'Adı Latince cura (özen) ile İngilizce hold (tutmak) sözcüklerinden gelir.',
       help: 'Yardım merkezi',
       legal: 'Yasal',
-      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler' },
+      links: { terms: 'Kullanım koşulları', privacy: 'Gizlilik politikası', kvkk: 'KVKK aydınlatma metni', dpa: 'Veri işleme sözleşmesi', subprocessors: 'Alt işleyenler', cookies: 'Çerezler', accessibility: 'Erişilebilirlik' },
       company: '[Şirket unvanı]',
     },
     consent: {
-      title: 'Gizliliğin, senin seçimin',
-      body: 'Yalnızca siteyi çalıştırmak için gerekeni kullanırız. İzninle sitenin nasıl kullanıldığını da ölçer ve Curahold’u beğenebilecek kişilere ulaşırız. Sen seçene kadar zorunlu olmayan hiçbir şey yüklenmez.',
-      acceptAll: 'Tümünü kabul et',
-      rejectAll: 'Zorunlu olmayanları reddet',
-      manage: 'Tercihleri yönet',
-      save: 'Tercihleri kaydet',
+      title: 'Gizliliğiniz, sizin seçiminiz',
+      body: 'Yalnızca siteyi çalıştırmak için gerekeni kullanırız. İzninizle sitenin nasıl kullanıldığını da ölçer ve Curahold’u beğenebilecek kişilere ulaşırız. Siz seçene kadar zorunlu olmayan hiçbir şey yüklenmez.',
+      acceptAll: 'Tümünü kabul edin',
+      rejectAll: 'Zorunlu olmayanları reddedin',
+      manage: 'Tercihlerinizi yönetin',
+      save: 'Tercihlerinizi kaydedin',
       close: 'Kapat',
       alwaysOn: 'Her zaman açık',
       manageTitle: 'Gizlilik tercihleri',
       necessaryTitle: 'Zorunlu',
-      necessaryBody: 'Bu seçimi hatırlar ve sayfanın çalışmasını sağlar. Seni izlemez ve kapatılamaz.',
+      necessaryBody: 'Bu seçimi hatırlar ve sayfanın çalışmasını sağlar. Sizi izlemez ve kapatılamaz.',
       analyticsTitle: 'Analitik',
-      analyticsBody: 'Sitenin nasıl kullanıldığını anlamamıza ve onu iyileştirmemize yardımcı olur. Google Analytics yalnızca izninle yüklenir.',
+      analyticsBody: 'Sitenin nasıl kullanıldığını anlamamıza ve onu iyileştirmemize yardımcı olur. Google Analytics yalnızca izninizle yüklenir.',
       marketingTitle: 'Pazarlama',
-      marketingBody: 'Curahold’u faydalı bulabilecek kişileri ölçmemizi ve onlara ulaşmamızı sağlar. Meta ve TikTok pikselleri yalnızca izninle yüklenir.',
+      marketingBody: 'Curahold’u faydalı bulabilecek kişileri ölçmemizi ve onlara ulaşmamızı sağlar. Meta ve TikTok pikselleri yalnızca izninizle yüklenir.',
       reopen: 'Gizlilik tercihleri',
-      policy: 'Çerez politikasını oku',
+      policy: 'Çerez politikasını okuyun',
       ariaBanner: 'Gizlilik ve çerez onayı',
     },
   },
   ar: {
-    title: 'Curahold: المهام والسبرنتات وتجديدات العملاء في مكان واحد',
-    description: 'تجديدات تبدأ من تلقاء نفسها، واجتماعات تتحول خطواتها التالية إلى مهام، وكل عميل يحتاج إلى اهتمامك في لمحة. التطبيق متاح بتسع لغات.',
     nav: { product: 'المنتج', pricing: 'الأسعار', demo: 'عرض مباشر', blog: 'المدونة', help: 'المساعدة', signIn: 'تسجيل الدخول', tryFree: 'جرّبه مجانًا', skip: 'تخطَّ إلى المحتوى' },
     hero: {
-      title: 'كل أعمال شركتك، في أيدٍ أمينة.',
-      lead: 'المهام والمشاريع والسبرنتات وتجديدات العملاء في مكان واحد، فلا يُنسى أي وعد.',
-      primary: 'جرّبه مجانًا لمدة 3 أشهر',
-      note: 'لا حاجة إلى بطاقة. التطبيق متاح بتسع لغات.',
+      kicker: 'إدارة العمل لفرق العملاء',
+      title: 'كل تجديد وكل وعد وكل مهمة في موعدها.',
+      lead: 'اعرف صحة كل عميل وأسبابها، وحوّل الخطوات التالية في كل اجتماع إلى مهام، ودع التجديدات تبدأ وحدها قبل موعدها بتسعين يومًا.',
+      note: '3 أشهر مجانًا، دون بطاقة دفع.',
       works: 'ابدأ بجانب أدواتك الحالية، وانتقل على مهلك',
+      pause: 'إيقاف مؤقت',
+      play: 'تشغيل',
     },
     tour: {
       label: 'جولة في المنتج',
@@ -439,9 +446,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'شهري',
       yearly: 'سنوي',
       save: 'أقل بنحو 20%',
+      summary: 'تبدأ الأسعار من {from} لكل مقعد شهريًا في الخطة السنوية. وتبدأ كل خطة بثلاثة أشهر مجانًا دون بطاقة دفع.',
+      see: 'قارن بين الخطط',
       perSeat: 'لكل مقعد شهريًا',
       perSeatYearly: 'لكل مقعد شهريًا، بدفع سنوي',
-      choose: 'ابدأ التجربة المجانية',
       business: 'كل ما في الفريق، بالإضافة إلى',
       fine: 'الأسعار بالدولار الأمريكي؛ تُضاف الضرائب عند الدفع. يتبع عدد المقاعد الأشخاص الذين انضموا. يتولى المدفوعات موزّعنا Paddle.',
     },
@@ -470,7 +478,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: 'يأتي الاسم من اللاتينية cura (العناية) والإنجليزية hold (الإمساك).',
       help: 'مركز المساعدة',
       legal: 'الشؤون القانونية',
-      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط' },
+      links: { terms: 'شروط الخدمة', privacy: 'سياسة الخصوصية', kvkk: 'إشعار KVKK', dpa: 'معالجة البيانات', subprocessors: 'المعالِجون الفرعيون', cookies: 'ملفات تعريف الارتباط', accessibility: 'إمكانية الوصول' },
       company: '[الاسم القانوني للشركة]',
     },
     consent: {
@@ -495,15 +503,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   he: {
-    title: 'Curahold: משימות, ספרינטים וחידושי לקוחות במקום אחד',
-    description: 'חידושים שמתחילים מעצמם, פגישות שהצעדים הבאים שלהן הופכים למשימות, וכל לקוח שזקוק לתשומת לב במבט אחד. האפליקציה זמינה בתשע שפות.',
     nav: { product: 'מוצר', pricing: 'תמחור', demo: 'הדגמה חיה', blog: 'בלוג', help: 'עזרה', signIn: 'התחברות', tryFree: 'התנסות חינם', skip: 'דלג לתוכן' },
     hero: {
-      title: 'כל העבודה של החברה שלך, בידיים טובות.',
-      lead: 'משימות, פרויקטים, ספרינטים וחידושי לקוחות במקום אחד, כך ששום הבטחה לא נשכחת.',
-      primary: 'התנסות חינם ל-3 חודשים',
-      note: 'לא נדרש כרטיס. האפליקציה זמינה בתשע שפות.',
+      kicker: 'ניהול עבודה לצוותי לקוחות',
+      title: 'כל חידוש, כל הבטחה וכל משימה, בזמן.',
+      lead: 'ראו את הבריאות של כל לקוח ואת הסיבות לה, הפכו את הצעדים הבאים מכל פגישה למשימות, ותנו לחידושים להיפתח מעצמם תשעים יום מראש.',
+      note: '3 חודשים בחינם, בלי כרטיס אשראי.',
       works: 'התחילו לצד הכלים של היום, ועברו בקצב שלכם',
+      pause: 'השהיה',
+      play: 'הפעלה',
     },
     tour: {
       label: 'סיור במוצר',
@@ -553,9 +561,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'חודשי',
       yearly: 'שנתי',
       save: 'בכ-20% פחות',
+      summary: 'החל מ-{from} למושב לחודש בתוכנית שנתית. כל תוכנית מתחילה בשלושה חודשים בחינם, בלי כרטיס אשראי.',
+      see: 'השוואת תוכניות',
       perSeat: 'למושב לחודש',
       perSeatYearly: 'למושב לחודש, בתשלום שנתי',
-      choose: 'התחל התנסות חינם',
       business: 'כל מה שבצוות, ובנוסף',
       fine: 'המחירים בדולר אמריקאי; מסים מתווספים בתשלום. מספר המושבים עוקב אחר מי שהצטרף. את התשלומים מטפל המשווק שלנו Paddle.',
     },
@@ -584,7 +593,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: 'השם מגיע מהלטינית cura (טיפול) ומהאנגלית hold (להחזיק).',
       help: 'מרכז עזרה',
       legal: 'משפטי',
-      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות' },
+      links: { terms: 'תנאי שימוש', privacy: 'מדיניות פרטיות', kvkk: 'הודעת KVKK', dpa: 'עיבוד נתונים', subprocessors: 'מעבדי משנה', cookies: 'עוגיות', accessibility: 'נגישות' },
       company: '[שם חברה רשמי]',
     },
     consent: {
@@ -609,15 +618,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   fa: {
-    title: 'Curahold: وظایف، اسپرینت‌ها و تمدید مشتریان در یک‌جا',
-    description: 'تمدیدهایی که خودبه‌خود آغاز می‌شوند، جلساتی که گام‌های بعدی‌شان به وظیفه تبدیل می‌شود، و هر مشتری که به توجه نیاز دارد در یک نگاه. برنامه به نُه زبان در دسترس است.',
     nav: { product: 'محصول', pricing: 'قیمت‌ها', demo: 'دموی زنده', blog: 'وبلاگ', help: 'راهنما', signIn: 'ورود', tryFree: 'رایگان امتحان کنید', skip: 'پرش به محتوا' },
     hero: {
-      title: 'همهٔ کارهای شرکت شما، در دستانی مطمئن.',
-      lead: 'وظایف، پروژه‌ها، اسپرینت‌ها و تمدید مشتریان در یک‌جا؛ تا هیچ قولی فراموش نشود.',
-      primary: '۳ ماه رایگان امتحان کنید',
-      note: 'نیازی به کارت نیست. برنامه به نُه زبان در دسترس است.',
+      kicker: 'مدیریت کار برای تیم‌های مشتری',
+      title: 'هر تمدید، هر قول و هر وظیفه، سرِ وقت.',
+      lead: 'سلامت هر مشتری را همراه با دلایلش ببینید، گام‌های بعدی هر جلسه را به وظیفه تبدیل کنید و بگذارید تمدیدها نود روز زودتر خودشان شروع شوند.',
+      note: '۳ ماه رایگان، بدون نیاز به کارت.',
       works: 'کنار ابزارهای امروزتان شروع کنید و با سرعت خودتان جابه‌جا شوید',
+      pause: 'توقف',
+      play: 'پخش',
     },
     tour: {
       label: 'گشتی در محصول',
@@ -673,9 +682,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: 'ماهانه',
       yearly: 'سالانه',
       save: 'حدود ۲۰٪ کمتر',
+      summary: 'از {from} برای هر صندلی در ماه با طرح سالانه. هر طرح با سه ماه رایگان و بدون نیاز به کارت شروع می‌شود.',
+      see: 'مقایسهٔ طرح‌ها',
       perSeat: 'هر صندلی در ماه',
       perSeatYearly: 'هر صندلی در ماه، با پرداخت سالانه',
-      choose: 'شروع دوره آزمایشی رایگان',
       business: 'همه چیزِ طرح تیم، به‌علاوهٔ',
       fine: 'قیمت‌ها به دلار آمریکا است؛ مالیات هنگام پرداخت افزوده می‌شود. شمار صندلی‌ها از افرادی که پیوسته‌اند پیروی می‌کند. پرداخت‌ها را فروشنده ما Paddle انجام می‌دهد.',
     },
@@ -704,7 +714,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: 'نام از cura لاتین (مراقبت) و hold انگلیسی (نگه داشتن) می‌آید.',
       help: 'مرکز راهنما',
       legal: 'حقوقی',
-      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها' },
+      links: { terms: 'شرایط خدمات', privacy: 'سیاست حریم خصوصی', kvkk: 'اطلاعیه KVKK', dpa: 'پردازش داده', subprocessors: 'پردازشگران فرعی', cookies: 'کوکی‌ها', accessibility: 'دسترس‌پذیری' },
       company: '[نام حقوقی شرکت]',
     },
     consent: {
@@ -729,10 +739,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   'zh-Hans': {
-    title: 'Curahold：任务、迭代与客户续约，尽在一处',
-    description: '自动开始的续约、后续步骤会变成任务的会议，以及一眼看清每个需要关注的客户。应用支持九种语言。',
     nav: { product: '产品', pricing: '价格', demo: '在线演示', blog: '博客', help: '帮助', signIn: '登录', tryFree: '免费试用', skip: '跳到正文' },
-    hero: { title: '全公司的工作，尽在掌握。', lead: '任务、项目、迭代和客户续约，尽在一处，任何承诺都不会被遗忘。', primary: '免费试用 3 个月', note: '无需信用卡。应用支持九种语言。', works: '先与现有工具并行，再按自己的节奏迁移' },
+    hero: { kicker: '面向客户团队的工作管理', title: '每一次续约、每一个承诺、每一项任务，\u200b都按时完成。', lead: '查看每个客户的健康评分及其原因，把会议中的后续步骤直接变成任务，续约在到期前 90 天自动启动。', note: '3 个月免费，无需信用卡。', works: '先与现有工具并行，再按自己的节奏迁移', pause: '暂停', play: '播放' },
     tour: {
       label: '产品导览',
       steps: [
@@ -781,9 +789,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '按月',
       yearly: '按年',
       save: '约便宜 20%',
+      summary: '按年付每席位每月 {from} 起。每个套餐都以 3 个月免费试用开始，无需信用卡。',
+      see: '比较套餐',
       perSeat: '每席位每月',
       perSeatYearly: '每席位每月，按年付费',
-      choose: '开始免费试用',
       business: '包含团队版的一切，另加',
       fine: '价格以美元计；结账时另加税费。席位数随加入的成员变化。付款由我们的经销商 Paddle 处理。',
     },
@@ -804,7 +813,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: '名字来自拉丁语 cura（关怀）与英语 hold（守护）。',
       help: '帮助中心',
       legal: '法律',
-      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie' },
+      links: { terms: '服务条款', privacy: '隐私政策', kvkk: 'KVKK 告知', dpa: '数据处理', subprocessors: '次级处理方', cookies: 'Cookie', accessibility: '无障碍' },
       company: '[公司法定名称]',
     },
     consent: {
@@ -829,10 +838,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   'zh-Hant': {
-    title: 'Curahold：任務、衝刺與客戶續約，盡在一處',
-    description: '自動開始的續約、後續步驟會變成任務的會議，以及一眼看清每位需要關注的客戶。應用程式支援九種語言。',
     nav: { product: '產品', pricing: '定價', demo: '線上展示', blog: '部落格', help: '說明', signIn: '登入', tryFree: '免費試用', skip: '跳至主要內容' },
-    hero: { title: '全公司的工作，盡在掌握。', lead: '任務、專案、衝刺與客戶續約，盡在一處，任何承諾都不會被遺忘。', primary: '免費試用 3 個月', note: '不需信用卡。應用程式支援九種語言。', works: '先與現有工具並行，再依自己的步調轉換' },
+    hero: { kicker: '為客戶團隊打造的工作管理', title: '每一次續約、每一個承諾、每一項任務，\u200b都準時完成。', lead: '查看每位客戶的健康評分與背後原因，把會議中的後續步驟直接變成任務，續約會在到期前 90 天自動啟動。', note: '3 個月免費，不需信用卡。', works: '先與現有工具並行，再依自己的步調轉換', pause: '暫停', play: '播放' },
     tour: {
       label: '產品導覽',
       steps: [
@@ -881,9 +888,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '按月',
       yearly: '按年',
       save: '約便宜 20%',
+      summary: '年繳每席次每月 {from} 起。每個方案都以 3 個月免費試用開始，不需信用卡。',
+      see: '比較方案',
       perSeat: '每席次每月',
       perSeatYearly: '每席次每月，按年付費',
-      choose: '開始免費試用',
       business: '包含團隊版的一切，另加',
       fine: '價格以美元計；結帳時另加稅金。席次數隨加入的成員變化。付款由我們的經銷商 Paddle 處理。',
     },
@@ -904,7 +912,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: '名字來自拉丁語 cura（關懷）與英語 hold（守護）。',
       help: '說明中心',
       legal: '法律',
-      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie' },
+      links: { terms: '服務條款', privacy: '隱私權政策', kvkk: 'KVKK 告知', dpa: '資料處理', subprocessors: '次要處理方', cookies: 'Cookie', accessibility: '無障礙' },
       company: '[公司法定名稱]',
     },
     consent: {
@@ -929,10 +937,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   ja: {
-    title: 'Curahold：タスク、スプリント、顧客の更新をひとつの場所で',
-    description: 'ひとりでに始まる更新、次のステップがタスクになるミーティング、対応が必要な顧客がひと目でわかる画面。アプリは9言語に対応しています。',
     nav: { product: '製品', pricing: '料金', demo: 'ライブデモ', blog: 'ブログ', help: 'ヘルプ', signIn: 'ログイン', tryFree: '無料で試す', skip: '本文へスキップ' },
-    hero: { title: '会社の\u200bすべての\u200b仕事を、\u200b確かな\u200b手に。', lead: 'タスク、プロジェクト、スプリント、顧客の更新をひとつの場所で。交わした約束は、ひとつも忘れられません。', primary: '3か月間無料で試す', note: 'カード不要。アプリは9言語に対応。', works: '今のツールと並べて始め、自分のペースで移れます' },
+    hero: { kicker: 'カスタマーチームのための業務管理', title: '更新も、約束も、タスクも、\u200b期日どおりに。', lead: '顧客ごとのヘルススコアを理由とともに確認し、会議の次のステップをそのままタスクに。更新は期日の90日前に自動で始まります。', note: '3か月無料、カード登録は不要です。', works: '今のツールと並べて始め、自分のペースで移れます', pause: '一時停止', play: '再生' },
     tour: {
       label: '製品ツアー',
       steps: [
@@ -981,9 +987,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '月額',
       yearly: '年額',
       save: '約20%お得',
+      summary: '年払いプランなら1シートあたり月額{from}から。どのプランも3か月の無料トライアルから始められ、カード登録は不要です。',
+      see: 'プランを比較',
       perSeat: '1シートあたり月額',
       perSeatYearly: '1シートあたり月額、年払い',
-      choose: '無料トライアルを始める',
       business: 'チームのすべてに加えて',
       fine: '価格は米ドル。税は決済時に加算されます。シート数は参加した人数に従います。決済は再販業者の Paddle が処理します。',
     },
@@ -1004,7 +1011,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: '名前はラテン語の cura（ケア）と英語の hold（抱える）に由来します。',
       help: 'ヘルプセンター',
       legal: '法的情報',
-      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie' },
+      links: { terms: '利用規約', privacy: 'プライバシーポリシー', kvkk: 'KVKK 通知', dpa: 'データ処理', subprocessors: 'サブプロセッサー', cookies: 'Cookie', accessibility: 'アクセシビリティ' },
       company: '[会社正式名称]',
     },
     consent: {
@@ -1029,10 +1036,8 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
     },
   },
   ko: {
-    title: 'Curahold: 작업, 스프린트, 고객 갱신을 한곳에서',
-    description: '저절로 시작되는 갱신, 다음 단계가 작업이 되는 미팅, 그리고 관심이 필요한 모든 고객을 한눈에. 앱은 9개 언어를 지원합니다.',
     nav: { product: '제품', pricing: '가격', demo: '라이브 데모', blog: '블로그', help: '도움말', signIn: '로그인', tryFree: '무료로 시작', skip: '본문으로 건너뛰기' },
-    hero: { title: '회사의 모든 일, 믿고 맡기세요.', lead: '작업, 프로젝트, 스프린트, 고객 갱신을 한곳에서. 어떤 약속도 잊히지 않습니다.', primary: '3개월 무료로 시작', note: '카드가 필요 없습니다. 앱은 9개 언어를 지원합니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요' },
+    hero: { kicker: '고객 팀을 위한 업무 관리', title: '모든 갱신, 모든 약속, 모든 작업을 제때.', lead: '고객마다 헬스 스코어와 그 이유를 확인하고, 미팅의 다음 단계를 바로 작업으로 만드세요. 갱신은 만료 90일 전에 자동으로 시작됩니다.', note: '3개월 무료, 카드가 필요 없습니다.', works: '지금 쓰는 도구 옆에서 시작하고, 내 속도로 옮기세요', pause: '일시 정지', play: '재생' },
     tour: {
       label: '제품 둘러보기',
       steps: [
@@ -1081,9 +1086,10 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       monthly: '월간',
       yearly: '연간',
       save: '약 20% 저렴',
+      summary: '연간 플랜 기준 좌석당 월 {from}부터. 모든 플랜은 카드 없이 3개월 무료 체험으로 시작합니다.',
+      see: '플랜 비교',
       perSeat: '좌석당 월',
       perSeatYearly: '좌석당 월, 연 결제 시',
-      choose: '무료 체험 시작',
       business: '팀의 모든 것에 더해',
       fine: '가격은 미국 달러이며, 세금은 결제 시 추가됩니다. 좌석 수는 합류한 인원을 따릅니다. 결제는 리셀러인 Paddle이 처리합니다.',
     },
@@ -1104,7 +1110,7 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
       story: '이름은 라틴어 cura(돌봄)와 영어 hold(지키다)에서 왔습니다.',
       help: '도움말 센터',
       legal: '법적 고지',
-      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키' },
+      links: { terms: '서비스 약관', privacy: '개인정보 처리방침', kvkk: 'KVKK 고지', dpa: '데이터 처리', subprocessors: '하위 처리자', cookies: '쿠키', accessibility: '접근성' },
       company: '[회사 법인명]',
     },
     consent: {
@@ -1492,17 +1498,15 @@ export const COPY: Partial<Record<Locale, SiteCopy>> = {
   },
 };
 
-// The locales whose marketing copy is authored and ready to publish, English
-// first. Adding a language to the sales site is one step: author its COPY
-// entry above and it appears here on its own. A language without an entry has
-// no page — the builder never ships machine text dressed as native.
-export const SITE_LOCALES = Object.keys(COPY) as Locale[];
+// The site's languages are listed once, in site/locales.ts; COPY must hold every
+// one of them (TypeScript says which is missing). A language without copy has no
+// page — the builder never ships machine text dressed as native.
 
-/** The copy for a locale; English for a locale the site is not written in. */
-export const siteCopy = (locale: Locale): SiteCopy => COPY[locale] ?? COPY.en!;
+/** The landing page's copy for one of the site's languages. */
+export const siteCopy = (locale: SiteLocale): SiteCopy => COPY[locale];
 
 /** The consent words for a locale. */
-export const siteConsent = (locale: Locale): SiteConsentCopy => siteCopy(locale).consent;
+export const siteConsent = (locale: SiteLocale): SiteConsentCopy => siteCopy(locale).consent;
 
 /**
  * The story right after the hero: one customer (the demo's Marevo) through six
@@ -1529,7 +1533,7 @@ export interface SiteStoryCopy {
   };
 }
 
-export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
+export const STORY_COPY: Partial<Record<SiteLocale, SiteStoryCopy>> = {
   en: {
     cue: 'Scroll to follow one customer',
     title: 'One customer, start to finish',
@@ -1550,11 +1554,11 @@ export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
     },
   },
   tr: {
-    cue: 'Kaydır, bir müşteriyi baştan sona izle',
+    cue: 'Kaydırın, bir müşteriyi baştan sona izleyin',
     title: 'Bir müşteri, baştan sona',
-    lead: 'Marevo’nun bir çeyreğini izle: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
+    lead: 'Marevo’nun bir çeyreğini izleyin: bir uyarı, verilen bir söz, o sözü tutan iş ve kurtarılan bir yenileme.',
     steps: [
-      { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. Neden?’i aç; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
+      { title: 'Skor düşer ve nedenini söyler', text: 'Marevo 60’tan 48’e iner ve riskli olur. “Neden?” bağlantısını açın; sebepler orada: 38 gündür temas yok, üç görev gecikmiş, güçlü destekçi yok.' },
       { title: 'Söz toplantıda verilir', text: '3. çeyrek iş değerlendirmesinde Selin, mobil kanal için örnek bir akış ister. Zeynep görüşme bitmeden bunu sonraki adım olarak yazar.' },
       { title: 'Söz kendiliğinden göreve dönüşür', text: 'Toplantıyı kaydedince sonraki adım göreve dönüşür: sorumlusu ve son tarihi bellidir, Marevo’ya bağlıdır ve onlarla paylaşılır.' },
       { title: 'Sprint onu teslim eder', text: 'Ürün ekibi bunu Sprint 24’te, söze bağlı bir kartta geliştirir. Kart Tamamlandı’ya ulaşınca sprint puanları da onunla ilerler.' },
@@ -1733,13 +1737,13 @@ export const STORY_COPY: Partial<Record<Locale, SiteStoryCopy>> = {
  * story — and the hero's cue that leads into it — out of its page entirely: no English
  * on its page and no empty section. tests/site-copy.test.ts holds the list to this.
  */
-export const STORY_LOCALES = Object.keys(STORY_COPY) as Locale[];
+export const STORY_LOCALES = Object.keys(STORY_COPY) as SiteLocale[];
 
 /** The story's words for a locale, or null where the story does not ship yet. */
-export const siteStory = (locale: Locale): SiteStoryCopy | null => STORY_COPY[locale] ?? null;
+export const siteStory = (locale: SiteLocale): SiteStoryCopy | null => STORY_COPY[locale] ?? null;
 
 // The blog's own labels, in the languages the blog is written in.
-export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
+export const BLOG_COPY: Partial<Record<SiteLocale, SiteBlogCopy>> = {
   en: {
     nav: 'Blog',
     title: 'The Curahold blog',
@@ -1758,7 +1762,7 @@ export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
     lead: 'Müşteri başarısı ve müşteri yönetimi ekipleri için görev yönetimi üzerine sade, işe yarar yazılar — ve Curahold’u farklı kılan toplantıdan göreve akışı.',
     metaTitle: 'Blog: müşteri ekipleri için görev yönetimi — Curahold',
     metaDescription: 'Görev yönetimi, toplantıları göreve dönüştürme ve müşteri başarısı ekipleri için CRM-görev melez akışı üzerine rehberler.',
-    readMore: 'Yazıyı oku',
+    readMore: 'Yazıyı okuyun',
     backToBlog: 'Tüm yazılar',
     minRead: 'dk okuma',
     updated: 'Yayımlandı',
@@ -1767,16 +1771,17 @@ export const BLOG_COPY: Partial<Record<Locale, SiteBlogCopy>> = {
 };
 
 /** The blog's labels for a locale; English where the blog is not written in it. */
-export const siteBlog = (locale: Locale): SiteBlogCopy => BLOG_COPY[locale] ?? BLOG_COPY.en!;
+export const siteBlog = (locale: SiteLocale): SiteBlogCopy => BLOG_COPY[locale] ?? BLOG_COPY.en!;
 
 // Blog posts, authored per language. A locale appears on the blog only when it
 // has native posts here — the builder never dresses English text as another
 // language, so hreflang on a post lists only the languages it truly exists in.
 // Content is invented and genuinely useful; it names no real person or company.
-export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
+export const BLOG_POSTS: Partial<Record<SiteLocale, BlogPost[]>> = {
   en: [
     {
       slug: 'what-is-task-management',
+      seo: ['What is task management? A guide for customer teams', 'A plain guide to task management for customer success and account teams: what a task is, the few fields that matter, and keeping the list honest.'],
       title: 'What is task management? A practical guide for customer teams',
       description:
         'A plain guide to task management for customer success and account teams: what a task really is, the few fields that matter, and how to keep a shared list honest.',
@@ -1816,6 +1821,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'turn-meetings-into-tasks',
+      seo: ['Turn meeting notes into tasks that get done | Curahold', 'Most next steps die in a notebook. A simple meeting-to-task workflow, with owners, dates and context, so the promises made in a meeting are kept.'],
       title: 'Turning meeting notes into tasks: a workflow that actually sticks',
       description:
         'Most next steps die in a notebook. Here is a simple meeting-to-task workflow — owners, dates and context — that keeps promises from a call from being lost.',
@@ -1853,6 +1859,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'task-management-vs-project-management',
+      seo: ['Task vs project management for customer teams', 'Task management and project management solve different problems. How to tell them apart, and why customer teams need tasks tied to the customer.'],
       title: 'Task management vs. project management: which does your account team need?',
       description:
         'Task management and project management solve different problems. Here is how to tell them apart, and why customer teams usually need tasks tied to accounts — not a project plan.',
@@ -1892,9 +1899,10 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
   tr: [
     {
       slug: 'what-is-task-management',
+      seo: ['Görev yönetimi nedir? Müşteri ekipleri için rehber', 'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev nedir, hangi alanlar önemlidir, liste nasıl dürüst kalır.'],
       title: 'Görev yönetimi nedir? Müşteri ekipleri için pratik bir rehber',
       description:
-        'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev aslında nedir, hangi birkaç alan önemlidir ve ortak listeyi nasıl dürüst tutarsın.',
+        'Müşteri başarısı ve müşteri yönetimi ekipleri için sade bir görev yönetimi rehberi: görev aslında nedir, hangi birkaç alan önemlidir ve ortak liste nasıl dürüst tutulur.',
       date: '2026-10-06',
       readMinutes: 6,
       tags: ['Görev yönetimi', 'Müşteri başarısı', 'İş akışları'],
@@ -1909,19 +1917,19 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
         { h: 'Gerçekten önemli olan birkaç alan' },
         {
           ul: [
-            'Başlık: sonucu sade sözlerle; eylemi değil. “Yenileme teklifini gönder”, “Yenileme” değil.',
+            'Başlık: sonucu sade sözlerle; eylemi değil. “Yenileme teklifi gönderilecek”, “Yenileme” değil.',
             'Sorumlu: başkaları yardım etse bile tam olarak tek kişi.',
             'Son tarih: gerçek bir tarih, ki liste sırada ne olduğuna göre sıralanabilsin.',
             'Durum: nerede olduğu — yapılacak, yapılıyor, bitti — ve ihtiyaç olana kadar daha fazlası değil.',
             'Bağlam: geldiği müşteri, toplantı ya da konu, tek tıkla erişilir.',
           ],
         },
-        { h: 'Listeyi dürüst tut' },
+        { h: 'Listeyi dürüst tutun' },
         {
-          p: 'Bir görev listesi ancak ekip ona güvenirse işe yarar. Bu güven iki alışkanlıkla kurulur: kafanda ya da gelen kutunda görev olmayan hiçbir şey yaşamaz ve bir görev bittiği an kapatılır — haftalık toplu temizliğe bırakılmaz. Gerçeğin gerisinde kalan liste sessizce okunmaz olur.',
+          p: 'Bir görev listesi ancak ekip ona güvenirse işe yarar. Bu güven iki alışkanlıkla kurulur: kafanızda ya da gelen kutunuzda görev olmayan hiçbir şey kalmaz ve bir görev bittiği an kapatılır — haftalık toplu temizliğe bırakılmaz. Gerçeğin gerisinde kalan liste sessizce okunmaz olur.',
         },
         {
-          quote: 'En iyi görev listesi, ekibinin pazartesi sabahı gerçekten açtığı listedir — çünkü onlara bir kez bile yalan söylememiştir.',
+          quote: 'En iyi görev listesi, ekibinizin pazartesi sabahı gerçekten açtığı listedir — çünkü onlara bir kez bile yalan söylememiştir.',
         },
         { h: 'Görev yönetimi müşteriyle buluştuğunda' },
         {
@@ -1931,6 +1939,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
     },
     {
       slug: 'turn-meetings-into-tasks',
+      seo: ['Toplantı notlarını göreve dönüştürmek | Curahold', 'Sonraki adımların çoğu bir defterde kalır. Sorumlu, tarih ve bağlamla, toplantıda verilen sözlerin kaybolmasını önleyen sade bir akış.'],
       title: 'Toplantı notlarını göreve dönüştürmek: gerçekten yerleşen bir akış',
       description:
         'Çoğu sonraki adım bir defterde ölür. İşte bir toplantıdaki sözlerin kaybolmasını önleyen sade bir toplantı-görev akışı — sorumlular, tarihler ve bağlam.',
@@ -1941,11 +1950,11 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
         {
           p: 'Her müşteri ekibi bunu yaşamıştır: iyi bir toplantı, üç net sonraki adım, sıcak vedalar — ve iki hafta sonra kimin neyi üstlendiğini kimse söyleyemez. Notlar yazıldı; görevler yazılmadı. Toplantı notlarını göreve dönüştürmek, bir müşteri ekibinin kurabileceği en yüksek kaldıraçlı alışkanlıktır.',
         },
-        { h: 'Söyleneni yapılacaktan ayır' },
+        { h: 'Söyleneni yapılacaktan ayırın' },
         {
-          p: 'Bir toplantı notunda iki tür satır vardır: olanın kaydı ve bundan sonrasına dair taahhüt. Yalnızca ikinci tür göreve dönüşür. Yazarken taahhütleri işaretle — başına bir ok koymak gibi basit bir alışkanlık yeter — ki sonraki adımlar sen görüşmeden çıkmadan belli olsun.',
+          p: 'Bir toplantı notunda iki tür satır vardır: olanın kaydı ve bundan sonrasına dair taahhüt. Yalnızca ikinci tür göreve dönüşür. Yazarken taahhütleri işaretleyin — başına bir ok koymak gibi basit bir alışkanlık yeter — ki sonraki adımlar siz görüşmeden çıkmadan belli olsun.',
         },
-        { h: 'Her sonraki adıma üç şeyi ver' },
+        { h: 'Her sonraki adıma üç şey verin' },
         {
           ul: [
             'Bir sorumlu; toplantıda yüksek sesle söylenmiş olsun ki sonradan sürpriz olmasın.',
@@ -1953,24 +1962,25 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
             'Bağlam: hangi müşteri ve geldiği nota bir bağlantı.',
           ],
         },
-        { h: 'Bağlam kaybolmadan yap' },
+        { h: 'Bağlam kaybolmadan yapın' },
         {
-          p: 'Bunun için pencere dakikalarla ölçülür, günlerle değil. Toplantıdan uzaklaştıkça daha çok ayrıntı kaybeder ve görevlerin hiç oluşturulmama olasılığı artar. En iyi akış, görevleri toplantıyı kapatmanın bir parçası olarak yakalar — sonra yaparım diye söz verdiğin ayrı bir angarya olarak değil.',
+          p: 'Bunun için pencere dakikalarla ölçülür, günlerle değil. Toplantıdan uzaklaştıkça daha çok ayrıntı kaybeder ve görevlerin hiç oluşturulmama olasılığı artar. En iyi akış, görevleri toplantıyı kapatmanın bir parçası olarak yakalar — sonra yaparım diye söz verdiğiniz ayrı bir angarya olarak değil.',
         },
         {
           quote: 'Toplantıda verilen ve sorumlusu ile tarihiyle göreve yazılan söz tutulur. Notta kalan söz bir umuttur.',
         },
-        { h: 'Angaryayı sisteme taşıt' },
+        { h: 'Angaryayı sisteme bırakın' },
         {
-          p: 'Bu alışkanlığın başarısız olma nedeni sürtünmedir: isimleri yeniden yazmak, müşteriyi yeniden bulmak, tarihleri kopyalamak. Sürtünmeyi kaldır, alışkanlık yerleşsin. Curahold’da bir toplantıyı kaydetmek, sonraki adımları doğru panoda, müşteriye zaten bağlı görevlere çevirir — böylece kayıt ve plan tek bir eylem olur.',
+          p: 'Bu alışkanlığın başarısız olma nedeni sürtünmedir: isimleri yeniden yazmak, müşteriyi yeniden bulmak, tarihleri kopyalamak. Sürtünmeyi kaldırın, alışkanlık yerleşsin. Curahold’da bir toplantıyı kaydetmek, sonraki adımları doğru panoda, müşteriye zaten bağlı görevlere çevirir — böylece kayıt ve plan tek bir eylem olur.',
         },
       ],
     },
     {
       slug: 'task-management-vs-project-management',
-      title: 'Görev yönetimi mi, proje yönetimi mi: müşteri ekibin hangisine ihtiyaç duyar?',
+      seo: ['Görev yönetimi mi, proje yönetimi mi? | Curahold', 'Görev ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğinizi ve müşteri ekiplerinin neden müşteriye bağlı görevler istediğini anlatıyoruz.'],
+      title: 'Görev yönetimi mi, proje yönetimi mi: müşteri ekibinizin ihtiyacı hangisi?',
       description:
-        'Görev yönetimi ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğini ve müşteri ekiplerinin neden bir proje planına değil, müşteriye bağlı görevlere ihtiyaç duyduğunu anlatıyoruz.',
+        'Görev yönetimi ve proje yönetimi farklı sorunları çözer. İkisini nasıl ayırt edeceğinizi ve müşteri ekiplerinin neden bir proje planına değil, müşteriye bağlı görevlere ihtiyaç duyduğunu anlatıyoruz.',
       date: '2026-11-03',
       readMinutes: 7,
       tags: ['Görev yönetimi', 'Proje yönetimi', 'Araçlar'],
@@ -1980,18 +1990,18 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
         },
         { h: 'Proje yönetimi neyde iyidir' },
         {
-          p: 'Bir projenin başı, sonu ve kapsamı vardır: bir lansman, bir göç, bir kurulum. Proje yönetimi araçları burada parlar — bağımlılıklar, zaman çizelgeleri, aşamalar, kritik yol. İşin tek seferlik bir sonuca giden adımlar dizisiyse bu yapı hakkını verir.',
+          p: 'Bir projenin başı, sonu ve kapsamı vardır: bir lansman, bir göç, bir kurulum. Proje yönetimi araçları burada parlar — bağımlılıklar, zaman çizelgeleri, aşamalar, kritik yol. İşiniz tek seferlik bir sonuca giden adımlar dizisiyse bu yapı hakkını verir.',
         },
         { h: 'Görev yönetimi neyde iyidir' },
         {
-          p: 'Çoğu müşteri başarısı ve müşteri yönetimi işi bir proje değildir. Bitmeyen, tekrar eden bir ritimdir: başlangıçlar, durum görüşmeleri, iş değerlendirmeleri, yenilemeler, bir müşterinin sessizleştiğine dair o sinyal. Bitiş çizgisi yoktur — gelecek hafta vardır. Görev yönetimi buna uyar: sahipli ve tarihli, bir bakışta güvenebileceğin yaşayan bir liste.',
+          p: 'Çoğu müşteri başarısı ve müşteri yönetimi işi bir proje değildir. Bitmeyen, tekrar eden bir ritimdir: başlangıçlar, durum görüşmeleri, iş değerlendirmeleri, yenilemeler, bir müşterinin sessizleştiğine dair o sinyal. Bitiş çizgisi yoktur — gelecek hafta vardır. Görev yönetimi buna uyar: sahipli ve tarihli, bir bakışta güvenebileceğiniz yaşayan bir liste.',
         },
-        { h: 'Hangisine ihtiyacın olduğunu nasıl anlarsın' },
+        { h: 'Hangisine ihtiyacınız olduğunu nasıl anlarsınız?' },
         {
           ul: [
-            'İş bitiyorsa muhtemelen proje yönetimi istersin.',
-            'İş her müşteri için sonsuza dek tekrar ediyorsa görev yönetimi istersin.',
-            'Bir görev yalnızca ait olduğu müşterinin yanında anlam kazanıyorsa, müşteri bağlamlı görev yönetimi istersin — ne tek başına bir yapılacaklar uygulaması, ne de bir Gantt şeması.',
+            'İş bir gün bitiyorsa muhtemelen proje yönetimi istersiniz.',
+            'İş her müşteri için sürekli tekrar ediyorsa görev yönetimi istersiniz.',
+            'Bir görev yalnızca ait olduğu müşterinin yanında anlam kazanıyorsa, müşteri bağlamlı görev yönetimi istersiniz — ne tek başına bir yapılacaklar uygulaması, ne de bir Gantt şeması.',
           ],
         },
         { h: 'Çoğu müşteri ekibinin aslında istediği melez' },
@@ -1999,7 +2009,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
           p: 'Bir müşteri ekibi için dürüst cevap genellikle bir melezdir: omurga olarak görev yönetimi, her görev hizmet ettiği müşteriye, toplantıya ve yenilemeye bağlı — artı ara sıraki bir başlangıç ya da göç için biraz proje yapısı. Curahold’un kurulduğu boşluk tam da budur: müşterinin yaşadığı yerde yaşayan görevler.',
         },
         {
-          quote: 'İşinin biçimine uyan aracı seç. Müşteri işi bir son tarih değil, bir ritimdir — bu yüzden bitirdiğin bir plana değil, güvendiğin bir listeye ihtiyaç duyar.',
+          quote: 'İşinizin biçimine uyan aracı seçin. Müşteri işi bir son tarih değil, bir ritimdir — bu yüzden bitirdiğiniz bir plana değil, güvendiğiniz bir listeye ihtiyaç duyar.',
         },
       ],
     },
@@ -2007,7 +2017,7 @@ export const BLOG_POSTS: Partial<Record<Locale, BlogPost[]>> = {
 };
 
 /** The locales the blog is published in — only those with native posts above. */
-export const BLOG_LOCALES = Object.keys(BLOG_POSTS) as Locale[];
+export const BLOG_LOCALES = Object.keys(BLOG_POSTS) as SiteLocale[];
 
 /** The posts for a locale (empty when the blog is not published in it). */
-export const blogPosts = (locale: Locale): BlogPost[] => BLOG_POSTS[locale] ?? [];
+export const blogPosts = (locale: SiteLocale): BlogPost[] => BLOG_POSTS[locale] ?? [];

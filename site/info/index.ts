@@ -1,5 +1,5 @@
 // The header's and the inner pages' words, by language. See types.ts.
-import type { Locale } from '../../shared/src/i18n';
+import type { SiteLocale } from '../locales';
 import type { InfoCopy } from './types';
 import { en } from './en';
 import { tr } from './tr';
@@ -13,6 +13,6 @@ import { ko } from './ko';
 import { hi } from './hi';
 import { ms } from './ms';
 
-export const INFO: Record<Locale, InfoCopy> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko, hi, ms };
+export const INFO: Record<SiteLocale, InfoCopy> = { en, tr, ar, he, fa, 'zh-Hans': zhHans, 'zh-Hant': zhHant, ja, ko, hi, ms };
 
-export const infoCopy = (locale: Locale): InfoCopy => INFO[locale];
+export const infoCopy = (locale: SiteLocale): InfoCopy => INFO[locale];

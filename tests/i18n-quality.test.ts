@@ -7,7 +7,7 @@
 //   - no English left untranslated (brand and product terms aside: KEEP_ENGLISH);
 //   - one word per concept per language (shared/src/i18n/glossary.ts);
 //   - job titles stay English;
-//   - Turkish says "siz" on the first-contact surfaces.
+//   - Turkish says "siz" everywhere (sentences; short labels keep the bare verb).
 //
 // A new language plugs in by being in LOCALES with its dictionary and a
 // glossary column; nothing here lists the languages.
@@ -73,6 +73,19 @@ describe('number agreement (CLDR plural rules)', () => {
     expect([5, 30].map((n) => ar('portal.admin.days', n))).toEqual(['5 أيام', '30 يومًا']);
     expect([5, 12].map((n) => ar('nav.setupLeft', n))).toEqual(['بقيت 5 خطوات', 'بقيت 12 خطوة']);
     expect(translate('en', 'home.within', { n: 30 })).toBe('within 30 days');
+  });
+});
+
+describe('English singular after a count of one', () => {
+  // A renewals list said "1 renewals": the noun after a count of exactly one is singular in English.
+  const en = (key: MessageKey, n: number) => translate('en', key, { n });
+  it('says "1 renewal", "1 day", "1 reply", and keeps the plural otherwise', () => {
+    expect([1, 2].map((n) => en('acards.renewalsCount', n))).toEqual(['1 renewal', '2 renewals']);
+    expect([1, 7].map((n) => en('time.daysAgo', n))).toEqual(['1 day ago', '7 days ago']);
+    expect(en('portal.replies', 1)).toBe('1 reply');
+    expect(en('repeat.dayN', 1)).toBe('Every 1 day');
+    expect(translate('ar', 'acards.renewalsCount', { n: 1 })).toBe('1 تجديد');
+    expect(translate('tr', 'acards.renewalsCount', { n: 1 })).toBe('1 yenileme');
   });
 });
 
@@ -212,12 +225,24 @@ describe('job titles stay English (owner, 19 Nov)', () => {
 });
 
 describe('Turkish register', () => {
-  // The first-contact surfaces speak "siz" (B2B norm); the in-app product is still "sen" (owner question).
-  const FIRST_CONTACT = /^(auth|signup|join|trial|trialMail|email|start)\./;
-  const SEN = /(\b(sen|sana|seni|senin|sende|senden)\b|[a-zçğıöşü]{2,}(abilir|ebilir)sin\b|\b(istersen|istemediysen|yoksa sen)\b)/i;
-  it('first-contact strings never say "sen"', () => {
+  // Turkish says "siz" everywhere, in the product as on the first-contact surfaces (owner, 20 Nov 2026;
+  // shared/src/i18n/glossary.ts REGISTER). Short button and menu labels keep the bare verb Turkish
+  // interfaces use ("Kaydet", "Görev ekle"): a label, not an address. Every sentence says "siz".
+  // JavaScript's \b does not know Turkish letters, so the edges are written out.
+  const L = '[a-zçğıöşüâîû]';
+  const SEN = [
+    // Pronouns of "sen" (kendine/kendini are left out: also third person).
+    new RegExp(`(?<!${L})(sen|seni|sana|senin|sende|senden|seninle|seninki${L}*|kendin)(?!${L})`, 'i'),
+    // Verbs in the second person singular: -abilirsin, -iyorsun, -acaksın, -malısın, -mışsın, the aorist.
+    new RegExp(`${L}{2,}([ıiuü]yor|abilir|ebilir|amaz|emez|acak|ecek|malı|meli|mış|miş|muş|müş|[ıiuü]r|[ae]r|maz|mez)s[ıiuü]n(?!${L})`, 'i'),
+    // If-clauses (-iyorsan, -irsen) and questions (misin), "hazırsın".
+    new RegExp(`${L}{2,}(yor|[ıiuüae]r|ma|me)(san|sen)(?!${L})|(?<!${L})(mısın|misin|musun|müsün|hazırsın|değilsin)(?!${L})`, 'i'),
+    // A sentence that ends in a bare imperative ("… tekrar dene."): sentences say "deneyin".
+    new RegExp(`(?<!${L})(dene|seç|yaz|gir|iste|ekle|kaydet|gönder|bağla|bak|tıkla|kopyala|yapıştır|sürükle|bırak|aç|kapat|sil|değiştir|kaldır|indir|yükle|onayla|paylaş|başla|bekle|kullan|ver|al|sor|dön|bas|kur|kontrol et|devam et|davet et|göz at)[.!?](?=\\s|$)`, 'i'),
+  ];
+  it('no Turkish string says "sen"', () => {
     const tr = dict('tr');
-    const bad = Object.keys(tr).filter((k) => FIRST_CONTACT.test(k) && SEN.test(tr[k]));
+    const bad = Object.keys(tr).filter((k) => SEN.some((re) => re.test(tr[k])));
     expect(bad.map((k) => `${k}: ${tr[k].slice(0, 80)}`).join('\n')).toBe('');
   });
 });

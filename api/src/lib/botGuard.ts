@@ -32,7 +32,8 @@ const hostOf = (req: Request) => (req.headers.get('host') ?? new URL(req.url).ho
 /** robots.txt for the host asked: the central host shows its docs to search engines; everything else is closed. */
 export function robotsFor(cfg: Pick<Config, 'centralHost' | 'singleTenantSlug' | 'crawlers'>, host: string): string {
   const docsHost = !cfg.singleTenantSlug && host === cfg.centralHost.split(':')[0].toLowerCase();
-  return docsHost ? robotsTxt('docs-host', { allowAiAnswers: !!cfg.crawlers?.docsAiAnswers }) : robotsTxt('closed');
+  // The docs build writes /docs/sitemap.xml (scripts/build-docs.ts); search engines find it from here.
+  return docsHost ? robotsTxt('docs-host', { allowAiAnswers: !!cfg.crawlers?.docsAiAnswers, sitemap: `https://${cfg.centralHost.split(':')[0]}/docs/sitemap.xml` }) : robotsTxt('closed');
 }
 
 const textHeaders = { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600', 'x-robots-tag': CLOSED_X_ROBOTS };

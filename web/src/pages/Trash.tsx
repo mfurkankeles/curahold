@@ -173,6 +173,7 @@ export function TrashPage() {
         {data?.more && (
           <div className="trashpage__more">
             <button className="btn" onClick={() => void load(data.items).catch(fail)}>
+              <Icon name="chevronDown" size={16} />
               {t('trash.more')}
             </button>
           </div>

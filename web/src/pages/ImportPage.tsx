@@ -107,6 +107,7 @@ export function ImportPage() {
           <Importer file={open.file} onImported={() => undefined} />
           <div className="inline-actions u-justify-content-flex-start">
             <button className="btn" onClick={() => navigate('/accounts')}>
+              <Icon name="eye" size={16} />
               {t('imp.page.seeCustomers')}
             </button>
           </div>

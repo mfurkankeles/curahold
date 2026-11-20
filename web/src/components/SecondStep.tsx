@@ -6,6 +6,7 @@ import { ApiFailure, post } from '../lib/api';
 import { getDeviceId } from '../lib/device';
 import { useI18n } from '../lib/i18n';
 import { passkeyAnswer, passkeysHere } from '../lib/passkey';
+import { Icon } from './icons';
 
 type T = ReturnType<typeof useI18n>['t'];
 const failure = (e: unknown, t: T) => (e instanceof ApiFailure ? e.body.message || t('errors.server') : t('errors.server'));
@@ -33,9 +34,11 @@ export function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () =
             void navigator.clipboard?.writeText(codes.join('\n')).then(() => setCopied(true), () => undefined);
           }}
         >
+          <Icon name="copy" size={16} />
           {copied ? t('sec.codes.copied') : t('sec.codes.copy')}
         </button>
         <button type="button" className="btn btn--primary" onClick={onDone}>
+          <Icon name="check" size={16} />
           {t('sec.codes.done')}
         </button>
       </div>
@@ -121,6 +124,7 @@ export function SecondStepForm({ step, orgName, onDone }: { step: SecondStepNeed
         <p className="auth__sub">{t('sec.second.passkeyBody')}</p>
         {error && <div className="notice notice--error" role="alert">{error}</div>}
         <button className="btn btn--primary" disabled={!passkey} onClick={() => void usePasskey()}>
+          <Icon name="key" size={16} />
           {t('sec.second.usePasskey')}
         </button>
         {!passkey && <p className="field__hint">{t('sec.passkeys.unsupported')}</p>}
@@ -134,6 +138,7 @@ export function SecondStepForm({ step, orgName, onDone }: { step: SecondStepNeed
         <p className="auth__sub">{t('sec.enroll.body', { org: orgName })}</p>
         {error && <div className="notice notice--error" role="alert">{error}</div>}
         <button className="btn btn--primary" onClick={() => void startSetup()}>
+          <Icon name="sliders" size={16} />
           {t('sec.app.setup')}
         </button>
       </div>
@@ -154,10 +159,12 @@ export function SecondStepForm({ step, orgName, onDone }: { step: SecondStepNeed
         )}
       </label>
       <button className="btn btn--primary" disabled={busy}>
+        <Icon name="arrowRight" size={16} />
         {t('sec.second.continue')}
       </button>
       {passkey && (
         <button type="button" className="btn" onClick={() => void usePasskey()}>
+          <Icon name="key" size={16} />
           {t('sec.second.usePasskey')}
         </button>
       )}
@@ -170,6 +177,7 @@ export function SecondStepForm({ step, orgName, onDone }: { step: SecondStepNeed
             setMode(mode === 'totp' ? 'recovery' : 'totp');
           }}
         >
+          <Icon name="key" size={16} />
           {mode === 'totp' ? t('sec.second.useRecovery') : t('sec.second.useCode')}
         </button>
       )}

@@ -50,7 +50,11 @@
   --done-wash: #e3f0dc;
   --info-wash: #eef3fb;
   --info-ink: #2b4f7a;
-  --focus: #1f8fff;
+  /* Keyboard focus: at least 4:1 on every light surface (WCAG 2.4.13 asks 3:1). */
+  --focus: #2b6fe0;
+  /* Borders of fields (inputs, selects, pickers): 3:1 on cards and on the page (WCAG 1.4.11); hairlines stay --line. */
+  --field-line: #8b88a8;
+  --loader-dot: #2f8f78;
 
   --scrim: rgba(23, 21, 47, .36);
   --shadow-1: var(--shadow-0), 0 6px 18px rgba(25, 21, 65, .09);
@@ -88,17 +92,32 @@
   --s-6: 24px;
   --s-8: 32px;
 
-  --dur-fast: 150ms;
-  --dur: 200ms;
-  --stagger: 40ms;
-  --ease: cubic-bezier(.2, .7, .3, 1);
-  --ease-out: ease-out;
+  /* Motion (docs/design/tokens.md): four durations, three curves, three distances. An exit is 50 ms
+     shorter than its entry; only opacity and transform move; nothing a hand starts takes over 300 ms. */
+  --dur-1: 100ms;
+  --dur-2: 150ms;
+  --dur-3: 200ms;
+  --dur-4: 280ms;
+  --ease-out: cubic-bezier(.2, .7, .3, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-move: cubic-bezier(.2, 0, 0, 1);
+  --dist-1: 4px;
+  --dist-2: 8px;
+  --dist-3: 16px;
+  --stagger: 30ms;
+  /* The older names, kept for the rules written with them. */
+  --dur-fast: var(--dur-2);
+  --dur: var(--dur-3);
+  --ease: var(--ease-out);
   /* Ambient loops: not a response to a hand, so outside the 150–200 ms rule. */
   --loop-shimmer: 1.4s;
   --loop-shine: 1.2s;
   --loop-caret: 1s;
   --loop-pulse: 1.6s;
   --loop-twinkle: 5s;
+  --loop-loader: 1.2s;
+  --loop-route: 800ms;
+  --loop-spin: 700ms;
   /* How long a wait shows nothing at all before a skeleton appears (Empty.tsx, RouteFallback.tsx). */
   --wait: 300ms;
 
@@ -120,12 +139,15 @@
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'tnum' 0;
   --nav-on-ink: #2a2170;
-  --new-bg: linear-gradient(135deg, #8a7bff, #5b4de8);
+  /* White text on every stop of these gradients is at least 4.5:1 (the light end was 3.3:1). */
+  --new-bg: linear-gradient(135deg, #6f60f0, #5b4de8);
   --new-ink: #ffffff;
-  --new-hover: linear-gradient(135deg, #9b8eff, #6a5cf0);
+  --new-hover: linear-gradient(135deg, #6a5cf0, #5244dc);
   --toast-action: #cdc7ff;
   --toast-icon: #b5acff;
-  --grad: linear-gradient(135deg, #8a7bff 0%, #5b4de8 60%, #3f7dff 100%);
+  --grad: linear-gradient(135deg, #6f60f0 0%, #5b4de8 60%, #4a54e8 100%);
+  /* A primary button under the pointer: darker in light (white text keeps its contrast), lighter in dark. */
+  --hover-shift: brightness(.92);
   --mark-bg: #eceafe;
   --mark-ink: #191541;
   --mark-dot: #5b4de8;
@@ -187,15 +209,30 @@
   --shadow-brand: 0 2px 6px rgba(49, 36, 160, .22), 0 14px 34px rgba(49, 36, 160, .30);
   --shadow-brand-hover: 0 3px 8px rgba(49, 36, 160, .24), 0 20px 44px rgba(49, 36, 160, .36);
 
-  /* Chart series (the same in both themes: bright enough on either). */
-  --chart-sky: #4a8cf7;
-  --chart-honey: #f4a62a;
-  --chart-plum: #9a6cf3;
-  --chart-sea: #1bb3a4;
-  --chart-coral: #ef6a4f;
-  --chart-leaf: #55b35d;
-  --chart-rose: #ea639c;
-  --chart-stone: #9aa5b8;
+  /* Chart series (docs/design/tokens.md "Chart colours"). Eight hues in a fixed order, starting from the
+     brand violet; every adjacent pair stays apart under protanopia and deuteranopia (OKLab ΔE ≥ 8.3) and
+     for full colour vision (ΔE ≥ 19), and each mark is at least 3:1 on the page and on cards (WCAG 1.4.11).
+     tests/chart-palette.test.ts recomputes all of it from this block. The order is the safety: never
+     reorder or add a ninth (a ninth group folds into --series-other). */
+  --series-1: #5b4de8;
+  --series-2: #dc6b30;
+  --series-3: #109b8b;
+  --series-4: #b98300;
+  --series-5: #d9578f;
+  --series-6: #2f9e44;
+  --series-7: #2a78d6;
+  --series-8: #e34948;
+  /* "Other", and the quiet partner of a compared pair (what came in next to what got done). */
+  --series-other: #8a88a6;
+  /* A colour a person chose for an option, drawn as a chart mark: the nearest validated hue. */
+  --chart-plum: var(--series-1);
+  --chart-coral: var(--series-2);
+  --chart-sea: var(--series-3);
+  --chart-honey: var(--series-4);
+  --chart-rose: var(--series-5);
+  --chart-leaf: var(--series-6);
+  --chart-sky: var(--series-7);
+  --chart-stone: var(--series-other);
   --avatar-0: #2f6f73;
   --avatar-1: #8a5a2b;
   --avatar-2: #5b6aa0;
@@ -212,13 +249,23 @@
    keep their meaning (and their contrast) on a dark surface. */
 :root[data-theme='dark'] {
   color-scheme: dark;
+  /* The same eight hues, stepped for the dark surface (OKLCH L 0.48–0.67, ≥ 3:1), validated as a set. */
+  --series-1: #8c7dff;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #0ca30c;
+  --series-7: #3987e5;
+  --series-8: #e66767;
+  --series-other: #76739a;
   --paper: #0f0e1a;
   --surface: #171626;
   --surface-2: #1c1b2e;
   --sunk: #0b0a14;
   --ink: #e7e6f5;
   --ink-2: #b3b1cc;
-  --ink-3: #8f8dab;
+  --ink-3: #9d9bb8;
   --line: #2a2843;
   --line-strong: #3d3a5e;
   --on-ink: #0f0e1a;
@@ -253,6 +300,8 @@
   --info-wash: #17263a;
   --info-ink: #a3c6f0;
   --focus: #5aa9ff;
+  --field-line: #6f6b98;
+  --loader-dot: #67c2a8;
 
   --scrim: rgba(0, 0, 0, .55);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 18px rgba(0, 0, 0, .35);
@@ -266,6 +315,7 @@
   --new-hover: linear-gradient(135deg, #b0a5ff, #8a7bff);
   --nav-on-ink: #efedff;
   --grad: linear-gradient(135deg, #a093ff 0%, #7a6af5 60%, #5c8dff 100%);
+  --hover-shift: brightness(1.08);
   --mark-bg: #25214f;
   --mark-ink: #e7e6f5;
   --mark-dot: #8c7dff;
@@ -317,6 +367,36 @@
   --shadow-panel-rtl: 18px 0 40px rgba(0, 0, 0, .45);
 }
 
+/* Type per script (docs/design/tokens.md "Type"). Figtree draws Latin (English, Turkish, Malay) and the
+   Latin words and digits inside other scripts; every other script uses the system font made for it,
+   named for Windows, Apple and Android in turn: no web font, 0 KB. Scripts with taller letters get a
+   larger body and more line height; text is never under 12 px outside Latin; scripts that join or hang
+   their letters (Arabic, Devanagari) and CJK headings get no letter-spacing; CJK never fakes bold or italic. */
+html:lang(ar), html:lang(fa) {
+  --font: 'Figtree', 'Segoe UI', 'SF Arabic', 'Geeza Pro', 'Noto Sans Arabic', Tahoma, sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.7; line-height: 1.7;
+}
+html:lang(he) {
+  --font: 'Figtree', 'Segoe UI', 'SF Hebrew', 'Arial Hebrew', 'Noto Sans Hebrew', sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.6; line-height: 1.6;
+}
+html:lang(hi) {
+  --font: 'Figtree', 'Nirmala UI', 'Kohinoor Devanagari', 'Noto Sans Devanagari', sans-serif;
+  --fs-m: 15px; --fs-2xs: 12px; --lh-body: 1.75; --lh-snug: 1.4; line-height: 1.75;
+}
+html:lang(ja) { --font: 'Figtree', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'Noto Sans JP', sans-serif; }
+html:lang(ko) { --font: 'Figtree', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; word-break: keep-all; }
+html:lang(zh-Hans) { --font: 'Figtree', 'PingFang SC', 'Microsoft YaHei UI', 'Noto Sans SC', sans-serif; }
+html:lang(zh-Hant) { --font: 'Figtree', 'PingFang TC', 'Microsoft JhengHei UI', 'Noto Sans TC', sans-serif; }
+html:is(:lang(ja), :lang(ko), :lang(zh)) { --fs-2xs: 12px; --lh-body: 1.7; line-height: 1.7; font-synthesis: none; }
+html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(zh)) {
+  --font-display: var(--font);
+  font-family: var(--font);
+  font-size: var(--fs-m);
+}
+html:is(:lang(ar), :lang(fa), :lang(he), :lang(hi), :lang(ja), :lang(ko), :lang(zh)) * { letter-spacing: normal !important; }
+html:is(:lang(ja), :lang(ko), :lang(zh)) :is(em, i, cite) { font-style: normal; }
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -325,9 +405,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
   input, select, textarea { font-size: var(--fs-l); }
 }
 a { color: var(--brand-ink); }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+:focus-visible { outline: var(--ring); outline-offset: var(--ring-offset); }
 .num { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* "Skip to content": the keyboard's first stop, out of sight until it has focus (WCAG 2.4.1). Shared by the app and the console. */
+.skip-link { position: fixed; top: 8px; inset-inline-start: 8px; z-index: 1001; padding: 8px 16px; border-radius: var(--r-s); background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-3); transform: translateY(-200%); }
+.skip-link:focus, .skip-link:focus-visible { transform: none; }
+/* A landmark the skip link lands on takes focus without drawing a ring around the whole screen. */
+main[tabindex='-1']:focus { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -357,7 +442,7 @@ a { color: var(--brand-ink); }
 .field__hint { font-size: var(--fs-xs); color: var(--ink-3); }
 .input, .select, .textarea {
   width: 100%; min-height: 36px; padding: 8px 8px; border-radius: var(--r-s);
-  border: 1px solid var(--line-strong); background: var(--surface);
+  border: 1px solid var(--field-line); background: var(--surface);
 }
 .input:focus, .select:focus, .textarea:focus { border-color: var(--brand); outline: 2px solid var(--brand-wash); outline-offset: 0; }
 .textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
@@ -661,7 +746,6 @@ tr.vspacer td { padding: 0; border: 0; }
   box-shadow: var(--shadow-panel);
   display: flex; flex-direction: column; animation: panel-in var(--dur) ease-out;
 }
-@keyframes panel-in { from { transform: translateX(24px); opacity: .4; } }
 .panel__head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .panel__crumb { color: var(--ink-3); font-size: var(--fs-s); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A subtask's way back to the task it belongs to. Its name gives way first when the panel is narrow. */
@@ -701,7 +785,7 @@ tr.vspacer td { padding: 0; border: 0; }
 /* ---------------------------------------------------------- people picker */
 
 .picker { position: relative; }
-.picker__button { display: flex; align-items: center; gap: 8px; min-height: 34px; width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--r-s); padding: 4px 8px; cursor: pointer; text-align: start; }
+.picker__button { display: flex; align-items: center; gap: 8px; min-height: 34px; width: 100%; border: 1px solid var(--field-line); background: var(--surface); border-radius: var(--r-s); padding: 4px 8px; cursor: pointer; text-align: start; }
 .picker__pop { position: absolute; top: calc(100% + 4px); inset-inline-start: 0; inset-inline-end: 0; z-index: 6; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-s); box-shadow: var(--shadow-1); max-height: 280px; overflow-y: auto; padding: 4px; }
 .picker__opt { display: flex; align-items: center; gap: 8px; padding: 8px 8px; border-radius: var(--r-xs); cursor: pointer; }
 .picker__opt:hover { background: var(--brand-wash); }
@@ -721,7 +805,6 @@ tr.vspacer td { padding: 0; border: 0; }
   display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--on-ink); padding-block: 8px 8px; padding-inline-start: 12px; padding-inline-end: 8px;
   border-radius: var(--r-m); box-shadow: var(--shadow-2); max-width: 560px; animation: toast-in var(--dur) var(--ease);
 }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 .toast__icon { flex: none; color: var(--toast-icon); }
 .toast__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .toast__close { flex: none; width: 26px; height: 26px; border: 0; border-radius: var(--r-s); background: none; color: inherit; opacity: .7; cursor: pointer; display: grid; place-items: center; }
@@ -930,6 +1013,7 @@ tr.vspacer td { padding: 0; border: 0; }
 .option-chip button { border: 0; background: none; cursor: pointer; color: var(--ink-3); padding: 0 4px; }
 .option-chip__input { border: 0; background: transparent; padding: 4px 0; min-width: 3ch; }
 .option-chip__input:focus { outline: none; }
+.option-chip:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 .chips-row { display: flex; gap: 4px; flex-wrap: wrap; }
 .savebar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: var(--r-m); background: var(--surface); border: 1px solid var(--line); }
 .savebar span { margin-inline-end: auto; color: var(--ink-3); }
@@ -1023,8 +1107,9 @@ tr.vspacer td { padding: 0; border: 0; }
   .wizard { grid-template-columns: 1fr; gap: 12px; }
   .wizard__rail { position: static; display: flex; overflow-x: auto; gap: 4px; }
   .wizard__rail li + li::before { display: none; }
-  .wizard__label { display: none; }
-  .wizard__rail li[data-state='current'] .wizard__label { display: inline; }
+  /* Out of sight, still the button's name (WCAG 2.5.3: the name is the words it shows elsewhere). */
+  .wizard__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wizard__rail li[data-state='current'] .wizard__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .wizard__panel { padding: 16px 16px 20px; }
   .account-page { grid-template-columns: 1fr; }
   .account-page__side { position: static; }
@@ -2126,6 +2211,10 @@ strong, b { font-weight: 700; }
 .statstrip > * { flex: 1 1 calc((100% - 3 * var(--gap)) / 4 - 0.1px); }
 @container (max-width: 700px) { .statstrip > * { flex-basis: calc((100% - var(--gap)) / 2 - 0.1px); } }
 .stat { --tone: var(--brand); display: grid; gap: 4px; padding-block: 16px 12px; padding-inline-start: 16px; padding-inline-end: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); position: relative; min-width: 0; }
+/* The side mark only for a tile with a state; the icon beside the label says the same. */
+.stat:not([data-tone])::before { content: none; }
+.stat__label { display: inline-flex; align-items: center; gap: 4px; }
+.stat__icon { flex: none; color: var(--tone); }
 .stat::before { content: ''; position: absolute; inset-inline-start: -1px; top: 14px; bottom: 14px; width: 4px; border-start-start-radius: 0; border-start-end-radius: var(--r-xs); border-end-end-radius: var(--r-xs); border-end-start-radius: 0; background: var(--tone); }
 .stat[data-tone='late'] { --tone: var(--late); }
 .stat[data-tone='done'] { --tone: var(--done); }
@@ -2557,7 +2646,7 @@ a.targetline:hover { border-color: var(--line-strong); }
   .cura__fab[data-lifted] { bottom: calc(78px + env(safe-area-inset-bottom)); }
   /* It steps aside while the person types or scrolls down (CuraAI.tsx), and comes back when they scroll up. */
   .cura__fab { transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), visibility 0s linear 0s; }
-  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out), visibility 0s linear var(--dur); }
+  .cura__fab[data-away] { transform: translateY(24px) scale(.6); opacity: 0; visibility: hidden; pointer-events: none; transition: transform var(--dur) var(--ease-in), opacity var(--dur) var(--ease-in), visibility 0s linear var(--dur); }
   .cura__fabname { display: none; }
   .cura__mark { width: 40px; height: 40px; }
   /* The whole screen, measured from its edges: a width in vw can be wider than what a phone shows. */

@@ -358,6 +358,7 @@ a{color:inherit}
 .end-c{position:absolute;left:var(--pad);right:var(--pad);bottom:calc(30px + env(safe-area-inset-bottom));display:grid;justify-items:center;gap:12px;text-align:center;opacity:0}
 .cta{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 30px;border-radius:999px;background:var(--ink);color:var(--deep);font:700 17px/1 var(--text);text-decoration:none;box-shadow:0 22px 44px -18px rgba(140,125,255,.95);transition:background .25s,transform .25s var(--ease)}
 .cta:hover{background:#fff;transform:translateY(-2px)}
+.cta{gap:10px}.cta svg{width:18px;height:18px}[dir=rtl] .ic-dir{transform:scaleX(-1)}
 .end-c p{color:var(--ink-3);font-size:14.5px}
 .on .cta,.on.dept,.on .dept{pointer-events:auto}
 
@@ -670,7 +671,7 @@ html:not(.js) .giant{font-size:12vw;white-space:normal}
     </div>
     <div class="txt s-end-t">
       <div class="end-t wa"><h2 data-t="endH">Verdiğin her sözü tut.</h2></div>
-      <div class="end-c wa"><a class="cta" href="{{TRIAL}}" data-t="cta">3 ay ücretsiz dene</a><p data-t="note">Kart gerekmez. Uygulama dokuz dilde.</p></div>
+      <div class="end-c wa"><a class="cta" href="{{TRIAL}}" data-ab="go">{{ICON_GO}}<span data-t="cta">Ücretsiz deneyin</span></a><p data-t="note">Kart gerekmez. Uygulama dokuz dilde.</p></div>
     </div>
 
   </div>
@@ -695,8 +696,10 @@ $$('.skyL').forEach(e=>{const T=250+Math.round(R()*110),dots=[];for(let j=0;j<9;
 sky0.style.backgroundImage=tile(28,[[14,14,1,'255,255,255,.2']]);})();
 const tEls=$$('[data-t]'),tr0=new Map(tEls.map(e=>[e,e.textContent]));
 let lang='tr';
+/* The language the page was built in: lang= must name the language the text is in (WCAG 3.1.1). */
+const LANG0=root.lang;
 function setLang(l,save){
-  lang=l==='en'?'en':'tr';root.lang=lang;
+  lang=l==='en'?'en':'tr';root.lang=lang==='en'?'en':LANG0==='en'?'tr':LANG0;
   for(const e of tEls){const v=lang==='en'?EN[e.dataset.t]:tr0.get(e);if(v!=null&&e.textContent!==v)e.textContent=v;}
   const W=lang==='en'?EN:TR;d.title=W.title;$('meta[name=description]').content=W.desc;
   $$('[data-ta]').forEach(e=>e.setAttribute('aria-label',W[e.dataset.ta]));
@@ -925,7 +928,7 @@ RMQ.addEventListener?.('change',()=>{rm=RMQ.matches;root.classList.toggle('rm',r
 const at=(s)=>{const top=film.offsetTop+s*VH*SLOW;if(Math.abs(scrollY-top)>4)scrollTo({top,behavior:rm?'auto':'smooth'});};
 depts.forEach((e,j)=>e.addEventListener('focus',()=>at(wide?L0+1.6:L0+1.05+(R0-.45-L0-1.05)*(j/3))));
 $('.cta').addEventListener('focus',()=>at(END));
-setLang('tr',false);measure();cur=target=scrollY;paint();
+setLang(LANG0==='en'?'en':'tr',false);measure();cur=target=scrollY;paint();
 d.fonts&&d.fonts.ready.then(()=>{measure();paint();});
 window.__film={settle(){cur=target=scrollY;paint();},END,go(s){scrollTo(0,film.offsetTop+s*VH*SLOW);cur=target=scrollY;paint();}};
 })();

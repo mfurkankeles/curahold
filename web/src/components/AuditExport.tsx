@@ -6,6 +6,7 @@ import { get } from '../lib/api';
 import { download } from '../lib/export';
 import { useI18n } from '../lib/i18n';
 import { useSaver } from '../lib/saver';
+import { Icon } from './icons';
 
 interface Row {
   at: string;
@@ -44,6 +45,7 @@ export function AuditExport() {
         setBusy(false);
       }}
     >
+      <Icon name="download" size={16} />
       {t('settings.audit.export')}
     </button>
   );

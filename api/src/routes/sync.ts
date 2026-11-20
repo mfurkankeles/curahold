@@ -70,6 +70,8 @@ export async function crmStart(c: C, provider: string, back: string) {
   // A new connected tool counts against the plan's connector cap (shared/src/plans.json); signing in again does not.
   if (!rc) await run(c, (x) => checkConnectors(x, org.id, accessFor(c)));
   if (provider === 'salesforce' && (c.req.query('sandbox') === '1' || (rc && String(again.loginUrl ?? '').includes('test.salesforce.com')))) q.sandbox = '1';
+  // QuickBooks: a sandbox company lives on Intuit's sandbox host; without this a sandbox could never be read.
+  if (provider === 'quickbooks' && (c.req.query('sandbox') === '1' || (rc && again.sandbox === true))) q.sandbox = '1';
   if (provider === 'dynamics') {
     const orgUrlRaw = orgUrlOf(c.req.query('orgUrl') ?? again.orgUrl ?? '');
     if (!orgUrlRaw) return c.redirect(`${home}?error=dynamics_url&provider=dynamics`);
@@ -262,11 +264,15 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
       canReply: !!adapter.reply && !adapter.readOnly,
       /** Mailboxes attach mail as activities and can send a reply; event streams (Segment) receive at an inbound address. */
       mailbox: !!adapter.mailbox,
+      /** Calendars: meetings come in as meetings; a meeting planned here can be put in the calendar. */
+      calendar: !!adapter.calendar,
       inbound: !!adapter.inbound,
       /** Accounting programs: read into the finance tables and matched to customers on a review list. */
       accounting: !!adapter.accounting,
       /** Segment: the address to give the Segment destination (the public source id lives in the connection config). */
       inboundUrl: adapter.inbound && conn.config?.sourceId ? `${new URL(c.req.url).origin}/api/inbound/${conn.provider}/${conn.config.sourceId}` : null,
+      /** WhatsApp: the verify token to type in the Meta app's webhook settings next to the callback address. */
+      verifyToken: conn.provider === 'whatsapp' ? ((conn.secret?.verifyToken as string | undefined) ?? null) : null,
     },
     sync: conn.sync,
     state: { lastRun: conn.state.lastRun ?? null, fullAt: conn.state.fullAt ?? null },
@@ -682,6 +688,99 @@ syncRoutes.post('/connections/:id/mail/reply', async (c) => {
     return true;
   });
   return c.json({ ok: logged, id: sent!.externalId });
+});
+
+// ------------------------------------------------------------- calendar: plan a meeting
+
+/**
+ * Calendars: put a meeting with a customer's people in the connected calendar (they get the invitation from the
+ * calendar itself). It comes back as a meeting on the customer's timeline once it has taken place.
+ */
+syncRoutes.post('/connections/:id/calendar/events', async (c) => {
+  const conn = await loaded(c);
+  requireWriter(c);
+  const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
+  if (!adapter.calendar || !adapter.schedule) fail('not_found');
+  if (conn.status === 'disabled') fail('forbidden');
+  const input = await body(
+    c,
+    z
+      .object({
+        accountId: z.string().uuid(),
+        title: z.string().trim().min(1).max(300),
+        start: z.string().datetime({ offset: true }),
+        minutes: z.number().int().min(5).max(600),
+        attendees: z.array(z.string().trim().email().max(254)).min(1).max(50),
+        description: z.string().trim().max(5000).optional(),
+      })
+      .strict(),
+  );
+  const org = c.get('org');
+  const auth = c.get('auth');
+  // The customer must be one the person can see (row-level security decides).
+  await run(c, async (q) => {
+    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    if (!a) fail('not_found');
+  });
+  const start = new Date(input.start);
+  let made;
+  try {
+    made = await adapter.schedule!(crmCtx(c.get('deps'), conn), { title: input.title, start: start.toISOString(), end: new Date(start.getTime() + input.minutes * 60_000).toISOString(), attendees: input.attendees, description: input.description ?? null });
+  } catch (e) {
+    crmFail(e);
+  }
+  await run(c, (q) => audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.meeting_planned', entity: 'account', entityId: input.accountId, meta: { connection: conn.id, attendees: input.attendees.length } }));
+  return c.json({ id: made!.externalId, url: made!.url }, 201);
+});
+
+// ------------------------------------------------------------- WhatsApp: answer a customer
+
+/**
+ * WhatsApp Business: a reply (free text, within 24 hours of the customer's last message) or an approved template,
+ * sent from the company's own number and logged as a note on the customer. Billed by Meta to the company.
+ */
+syncRoutes.post('/connections/:id/whatsapp/send', async (c) => {
+  const conn = await loaded(c);
+  requireWriter(c);
+  const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
+  if (conn.provider !== 'whatsapp' || !adapter.send) fail('not_found');
+  if (conn.status === 'disabled') fail('forbidden');
+  const input = await body(
+    c,
+    z
+      .object({
+        accountId: z.string().uuid(),
+        to: z.string().trim().regex(/^\+?[\d ()-]{7,25}$/),
+        body: z.string().trim().min(1).max(4096).optional(),
+        template: z.object({ name: z.string().trim().regex(/^[a-z0-9_]{1,512}$/), language: z.string().trim().regex(/^[a-z]{2,3}(_[A-Z]{2})?$/) }).optional(),
+        inReplyTo: z.string().max(200).optional(),
+      })
+      .strict()
+      .refine((v) => !!v.body !== !!v.template, { message: 'Send a text or a template' }),
+  );
+  const org = c.get('org');
+  const auth = c.get('auth');
+  await run(c, async (q) => {
+    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    if (!a) fail('not_found');
+  });
+  let sent;
+  try {
+    sent = await adapter.send!(crmCtx(c.get('deps'), conn), { to: input.to, subject: '', body: input.body ?? '', template: input.template ?? null, inReplyTo: input.inReplyTo ?? null });
+  } catch (e) {
+    crmFail(e);
+  }
+  const to = input.to.replace(/\D/g, '');
+  await run(c, async (q) => {
+    await q.query(
+      `insert into activities (org_id, account_id, author_id, kind, body, source, external_id)
+       values ($1, $2, $3, 'note', $4, 'whatsapp', $5)
+       on conflict (org_id, source, external_id) where external_id is not null do nothing`,
+      [org.id, input.accountId, auth.userId, `WhatsApp → +${to}\n${input.body ?? `[template ${input.template!.name}]`}`.slice(0, 20_000), sent!.externalId.slice(0, 200)],
+    );
+    await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.whatsapp_sent', entity: 'account', entityId: input.accountId, meta: { template: input.template?.name ?? null } });
+  });
+  return c.json({ ok: true, id: sent!.externalId });
 });
 
 /** Rolled-up fields recomputed on demand (after changing their definition). */

@@ -1,11 +1,22 @@
 // One-way posts to a channel through the service's own incoming webhook.
 // Covers chat tools that have no Curahold app (yet) and anything a company
 // wires up through Zapier, Make or n8n (the "json" flavour).
+//
+// Lark / Feishu: a group's custom bot address (open.larksuite.com or
+// open.feishu.cn /open-apis/bot/v2/hook/…), signed when the bot has "signature
+// verification" on: sign = base64(HMAC-SHA256(key = "<seconds>\n<secret>", empty
+// message)). Lark answers HTTP 200 with a non-zero `code` on failure (19021 a bad
+// signature, 9499 a bad request, 11232 too frequent), so the body is read.
+// Telegram: a bot from @BotFather posts to one group or channel with the Bot API
+// (api.telegram.org/bot<token>/sendMessage); plain text, 4,096 characters at most;
+// Telegram allows about 20 messages a minute in a group, and answers 429 with
+// parameters.retry_after when it is exceeded.
 import { fetchOf, nowOf, type Deps } from '../../context';
 import { hmacHex } from '../../lib/crypto';
-import { FatalChatError, plainText, type ChatMessage, type LoadedConnection, type MessagingAdapter } from './types';
+import { larkSign } from './lark';
+import { FatalChatError, plainText, readJson, type ChatMessage, type LoadedConnection, type MessagingAdapter } from './types';
 
-export const WEBHOOK_FLAVORS = ['slack', 'teams', 'gchat', 'discord', 'mattermost', 'rocketchat', 'webex', 'zoom', 'json'] as const;
+export const WEBHOOK_FLAVORS = ['slack', 'teams', 'gchat', 'discord', 'mattermost', 'rocketchat', 'webex', 'zoom', 'lark', 'telegram', 'json'] as const;
 export type WebhookFlavor = (typeof WEBHOOK_FLAVORS)[number];
 
 // Where each service's webhooks live. A URL elsewhere is refused, so a
@@ -17,6 +28,8 @@ const HOSTS: Partial<Record<WebhookFlavor, RegExp>> = {
   discord: /^(discord\.com|discordapp\.com|ptb\.discord\.com|canary\.discord\.com)$/,
   webex: /^webexapis\.com$/,
   zoom: /^(integrations\.zoom\.us|inbots\.zoom\.us)$/,
+  lark: /^(open\.larksuite\.com|open\.feishu\.cn)$/,
+  telegram: /^api\.telegram\.org$/,
 };
 
 /** This machine or a private network: never a place to send a company's data or a key. */
@@ -44,6 +57,8 @@ export function checkWebhookUrl(flavor: WebhookFlavor, raw: string): string | nu
   const allowed = HOSTS[flavor];
   if (allowed && !allowed.test(u.hostname.toLowerCase())) return 'host';
   if (flavor === 'discord' && !u.pathname.startsWith('/api/webhooks/')) return 'host';
+  if (flavor === 'lark' && !/^\/open-apis\/bot\/v2\/hook\/[\w-]{8,}$/.test(u.pathname)) return 'host';
+  if (flavor === 'telegram' && !/^\/bot\d{3,}:[\w-]{20,}\/sendMessage$/.test(u.pathname)) return 'host';
   return null;
 }
 
@@ -70,6 +85,25 @@ export function webhookPayload(flavor: WebhookFlavor, msg: ChatMessage, at: Date
       return { content: markdown.slice(0, 1990), allowed_mentions: { parse: [] } };
     case 'webex':
       return { markdown };
+    case 'lark':
+      // A rich-text ("post") message: a bold title line, then the text, then a link with the button's words.
+      return {
+        msg_type: 'post',
+        content: {
+          post: {
+            en_us: {
+              title: msg.title.slice(0, 200),
+              content: [
+                ...[msg.body, ...(msg.fields ?? []).map((f) => `${f.label}: ${f.value}`), msg.note].filter((x): x is string => !!x).map((text) => [{ tag: 'text', text }]),
+                ...(msg.url ? [[{ tag: 'a', text: msg.openLabel, href: msg.url }]] : []),
+              ],
+            },
+          },
+        },
+      };
+    case 'telegram':
+      // Plain text: nothing in a task title can break Telegram's formatting rules, and links still open.
+      return { text: plainText(msg).slice(0, 4096), link_preview_options: { is_disabled: true } };
     case 'zoom':
       return {
         content: {
@@ -116,6 +150,7 @@ export const webhookAdapter: MessagingAdapter = {
     if (flavor === 'json' && conn.secret?.signingSecret) {
       headers['x-curahold-signature'] = `sha256=${await hmacHex(String(conn.secret.signingSecret), body)}`;
     }
+    if (flavor === 'lark' || flavor === 'telegram') return sendChecked(deps, flavor, url, conn, body);
     let target = url;
     if (flavor === 'zoom') {
       const u = new URL(url);
@@ -127,3 +162,32 @@ export const webhookAdapter: MessagingAdapter = {
     if (!res.ok) throw new Error(`webhook ${res.status}`);
   },
 };
+
+/** Lark and Telegram: say what went wrong in the body, so it is read; a signature or a chat is added first. */
+async function sendChecked(deps: Deps, flavor: 'lark' | 'telegram', url: string, conn: LoadedConnection, raw: string) {
+  const payload = JSON.parse(raw);
+  if (flavor === 'lark' && conn.secret?.signingSecret) {
+    const ts = Math.floor(nowOf(deps).getTime() / 1000);
+    Object.assign(payload, { timestamp: String(ts), sign: await larkSign(String(conn.secret.signingSecret), ts) });
+  }
+  if (flavor === 'telegram') payload.chat_id = conn.config.chatId;
+  const res = await fetchOf(deps)(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+  const j = await readJson(res);
+  if (flavor === 'telegram') {
+    if (res.ok && j?.ok) return;
+    // 401: the token was revoked in @BotFather; 403: the bot was removed from the group; 400 "chat not found".
+    if (res.status === 401 || res.status === 403 || (res.status === 400 && /chat not found|upgraded to a supergroup/i.test(String(j?.description)))) throw new FatalChatError(`webhook telegram ${res.status} ${String(j?.description ?? '').slice(0, 120)}`);
+    // Busy or a passing fault: thrown as a plain error so the delivery is retried and the connection is not marked.
+    if (res.status === 429) throw new Error(`busy telegram 429 retry after ${Number(j?.parameters?.retry_after ?? 30)}s`);
+    throw new Error(`busy telegram ${res.status}`);
+  }
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 410 || res.status === 401 || res.status === 403) throw new FatalChatError(`webhook lark ${res.status}`);
+    throw new Error(`busy lark ${res.status}`);
+  }
+  const code = Number(j?.code ?? j?.StatusCode ?? 0);
+  if (!code) return;
+  // A wrong signature, a removed bot or a keyword the message lacks will not pass by retrying.
+  if ([19021, 19022, 19024, 19001, 19002, 9499].includes(code)) throw new FatalChatError(`webhook lark ${code} ${String(j?.msg ?? '').slice(0, 120)}`);
+  throw new Error(`busy lark ${code}`);
+}

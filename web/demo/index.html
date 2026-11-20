@@ -6,25 +6,37 @@
     <meta name="theme-color" content="#191541" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23191541'/%3E%3Cpath d='M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7' fill='none' stroke='%23eceafe' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16.5' cy='16' r='2.6' fill='%2367c2a8'/%3E%3C/svg%3E" />
     <title>Curahold — demo</title>
+    <!-- The opening screen: the brand loader (the mark drawing itself, the same as components/Loader.tsx),
+         the real step and a progress bar that follows the work (main.tsx). Plain CSS here: the app's
+         stylesheets are not loaded yet. Bar and dot move on transform only, so they keep going while
+         the database works. -->
     <style>
-      #boot { position: fixed; inset: 0; display: grid; place-items: center; background: #191541; color: #eceafe; font: 15px/1.5 system-ui, sans-serif; z-index: 100; }
+      #boot { position: fixed; inset: 0; display: grid; place-items: center; background: #191541; color: #eceafe; font: 15px/1.5 system-ui, sans-serif; z-index: 100; transition: opacity .2s cubic-bezier(.4, 0, 1, 1); }
+      #boot[data-done] { opacity: 0; pointer-events: none; }
       #boot .box { width: min(360px, 86vw); }
-      #boot svg { width: 44px; height: 44px; display: block; margin-bottom: 18px; }
+      #boot svg { width: 48px; height: 48px; display: block; margin-bottom: 20px; }
+      #boot .arc { fill: none; stroke: #191541; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 100; animation: draw 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
+      #boot .dot { fill: #2f8f78; transform-box: fill-box; transform-origin: center; animation: dot 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
+      @keyframes draw { 0% { stroke-dashoffset: 100; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -100; } }
+      @keyframes dot { 0%, 50%, 100% { transform: scale(1); } 62% { transform: scale(1.35); } }
       #boot h1 { font-size: 21px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
-      #boot p { margin: 0; color: #a8a3d8; min-height: 3em; }
+      #boot p { margin: 0; color: #c9c5ee; min-height: 3em; }
+      #boot #boot-still { min-height: 0; margin-top: 12px; color: #a8a3d8; font-size: 14px; }
       #boot .bar { height: 3px; background: rgba(232, 243, 240, .14); border-radius: 2px; margin-top: 18px; overflow: hidden; }
-      #boot .bar i { display: block; height: 100%; width: 6%; background: #67c2a8; border-radius: 2px; transition: width .4s ease; }
+      #boot .bar i { display: block; height: 100%; background: #67c2a8; border-radius: 2px; transform-origin: left; transform: scaleX(var(--done, .06)); transition: transform .4s cubic-bezier(.2, 0, 0, 1); }
+      [dir='rtl'] #boot .bar i { transform-origin: right; }
       #boot.failed .bar i { background: #e98d7a; }
-      @media (prefers-reduced-motion: reduce) { #boot .bar i { transition: none; } }
+      @media (prefers-reduced-motion: reduce) { #boot .arc, #boot .dot { animation: none; } #boot .arc { stroke-dasharray: none; } #boot .bar i, #boot { transition: none; } }
     </style>
   </head>
   <body>
     <div id="boot" role="status" aria-live="polite">
       <div class="box">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe" /><path d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" fill="none" stroke="#191541" stroke-width="3" stroke-linecap="round" /><circle cx="16.5" cy="16" r="2.6" fill="#2f8f78" /></svg>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#eceafe" /><path class="arc" d="M20.8 10.3A7.5 7.5 0 1 0 20.8 21.7" pathLength="100" /><circle class="dot" cx="16.5" cy="16" r="2.6" /></svg>
         <h1 id="boot-title">Opening the Curahold demo</h1>
         <p id="boot-step">Starting Postgres in this tab. No data leaves your browser.</p>
         <div class="bar"><i id="boot-bar"></i></div>
+        <p id="boot-still" hidden></p>
       </div>
     </div>
     <div id="demobar"></div>

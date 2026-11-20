@@ -4,12 +4,31 @@
    Its colours are set on its own blocks, so a version with a palette of its own
    (concept C's black and lime) cannot bleed into them. */
 
+/* Type per script (review E4): each script gets its operating system's own reading face first,
+   so no web font downloads for it (0 KB) and nothing falls back to a random font. Figtree and
+   Bricolage cover Latin (en, tr). --script-* is read by every block's --text and --display. */
+:root:lang(ar), :root:lang(fa) { --script-text: 'Segoe UI', 'SF Arabic', 'Geeza Pro', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(he) { --script-text: 'Segoe UI', 'SF Hebrew', 'Arial Hebrew', 'Noto Sans Hebrew', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(ja) { --script-text: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo, 'Noto Sans JP', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(ko) { --script-text: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(zh-Hans) { --script-text: 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif; --script-display: var(--script-text); }
+:root:lang(zh-Hant) { --script-text: 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', system-ui, sans-serif; --script-display: var(--script-text); }
+/* Chinese, Japanese and Korean have no true bold or italic in most system faces: never fake them. */
+:root:is(:lang(ja), :lang(ko), :lang(zh)) { font-synthesis: none; }
+:root:is(:lang(ja), :lang(zh)) :is(em, i) { font-style: normal; }
+/* Reading size and line height per script; nothing below 12 px outside Latin. */
+:root:is(:lang(ar), :lang(fa)) body { font-size: 18px; line-height: 1.7; }
+:root:lang(he) body { font-size: 18px; line-height: 1.6; }
+:root:is(:lang(ja), :lang(ko), :lang(zh)) body { font-size: 16px; line-height: 1.7; }
+/* The wordmark is the brand's own letters in every language. */
+.hx__brand, .foot__brand { font-family: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif !important; }
+
 .hx, .foot, .wy, .cc-host {
   --night: #17133a; --night-2: #241f52; --deep: #0f0c2b; --paper: #19153f; --mist: #221e4c; --line: #332e66;
   --iris: #5b4de8; --iris-ink: #b9b0ff; --iris-wash: #2a2560; --iris-hi: #8c7dff; --fern-ink: #7fe0bd; --ember: #e2953a;
   --ink: #f4f3fd; --ink-2: #c9c5e8; --ink-3: #a5a0d3;
-  --display: 'Bricolage Grotesque', 'Bricolage', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
-  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  --display: var(--script-display, 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif);
+  --text: var(--script-text, 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif);
   --wrap: 1180px; --ease: cubic-bezier(.2, .7, .2, 1);
   --hx-h: 64px; --well: #100d2c;
 }
@@ -90,13 +109,16 @@ html:not(.js) .hx__item:is(:hover, :focus-within) > .hx__panel { display: block;
 .hx__langs { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 170px; display: grid; padding: 6px; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 20px 40px -18px rgba(0, 0, 0, .6); }
 .hx__langs a { padding: 9px 11px; border-radius: 9px; color: var(--ink-2); font-size: 15px; }
 .hx__langs a:hover, .hx__langs a[aria-current] { color: var(--ink); background: var(--mist); }
-.hx__signin { padding: 8px 6px; color: var(--ink-2) !important; font: 500 14.5px/1 var(--text); white-space: nowrap; }
+.hx__signin { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 8px; color: var(--ink-2) !important; font: 500 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; }
+.hx__signin svg { width: 16px; height: 16px; flex: none; }
 .hx__signin:hover { color: var(--ink) !important; }
-.hx__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font: 600 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; cursor: pointer; transition: transform .15s var(--ease), background-color .15s, border-color .15s; }
+.hx__btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font: 600 14.5px/1 var(--text); white-space: nowrap; text-decoration: none; cursor: pointer; transition: transform .15s var(--ease), background-color .15s, border-color .15s; }
 .hx__btn:hover { transform: translateY(-1px); }
 .hx__btn--solid { background: var(--iris); color: #fff !important; box-shadow: 0 8px 20px -10px rgba(91, 77, 232, .9); }
 .hx__btn--solid:hover { background: #6b5ef0; }
-.hx__btn--ghost { background: rgba(255, 255, 255, .05); color: var(--ink) !important; border-color: rgba(255, 255, 255, .22); }
+.hx__btn svg { width: 16px; height: 16px; flex: none; }
+[dir='rtl'] .ic-dir { transform: scaleX(-1); }
+.hx__btn--ghost { background: rgba(255, 255, 255, .05); color: var(--ink) !important; border-color: rgba(255, 255, 255, .45); }
 .hx__btn--ghost:hover { border-color: var(--iris-hi); }
 .hx__btn--big { min-height: 52px; padding: 0 26px; font-size: 16px; }
 .hx__quick { display: none; align-items: center; gap: 8px; margin-inline-start: auto; }
@@ -110,7 +132,6 @@ html:not(.js) .hx__item:is(:hover, :focus-within) > .hx__panel { display: block;
    even that does not fit (a long language, a narrow window), chrome.js folds the bar into
    the same sheet a phone uses (.is-compact) — measured, because nine languages have nine widths. */
 @media (max-width: 1499px) {
-  .hx:not(.is-compact) .hx__signin { display: none; }
   .hx:not(.is-compact) .hx__top { padding: 0 7px; }
   .hx:not(.is-compact) .hx__list { margin-inline-start: 8px; }
   .hx:not(.is-compact) .hx__lang > summary > span { display: none; }
@@ -158,13 +179,14 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 }
 
 /* ------------------------------------------------------------------ footer */
-.foot { background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font: 15px/1.6 var(--text); position: relative; z-index: 1; }
+/* Drawn only when near the screen (content-visibility); its links stay in the accessibility tree and find-in-page. */
+.foot { content-visibility: auto; contain-intrinsic-size: auto 400px; background: #0b0922; border-top: 1px solid rgba(255, 255, 255, .06); color: #c9c5e8; padding: 56px 0 40px; font: 15px/1.6 var(--text); position: relative; z-index: 1; }
 .foot .foot__wrap { width: min(var(--wrap), 100% - 40px); margin-inline: auto; }
 .foot__in { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(4, minmax(0, 1fr)); gap: 28px; }
 .foot .brand, .foot .foot__brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 700 19px/1 var(--display); }
 .foot .foot__brand svg { width: 30px; height: 30px; }
 .foot__story { margin: 14px 0 0; max-width: 40ch; }
-.foot h3 { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
+.foot__h { margin: 0 0 12px; font: 650 15px/1.3 var(--display); letter-spacing: 0; color: #fff; }
 .foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .foot a { color: #c9c5e8; text-decoration: none; transition: color .18s var(--ease); }
 .foot a:hover { color: #fff; text-decoration: underline; }
@@ -183,7 +205,7 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .wy__card:not(:nth-child(3n + 1)) { padding-inline-start: 26px; border-inline-start: 1px solid rgba(255, 255, 255, .12); }
 .wy__ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--iris-wash); color: var(--iris-ink); }
 .wy__ic svg { width: 19px; height: 19px; }
-.wy__card h3 { margin: 6px 0 0; font: 700 22px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
+.wy__ch { margin: 6px 0 0; font: 700 22px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
 .wy__card p { margin: 0; color: var(--ink-2); font-size: 15.5px; line-height: 1.55; }
 .wy__card a { justify-self: start; color: var(--iris-ink); font-weight: 600; font-size: 15px; text-decoration: none; }
 .wy__card a:hover { text-decoration: underline; }
@@ -201,12 +223,27 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .wy__who svg { flex: none; width: 18px; height: 18px; color: var(--fern-ink); }
 .wy__ctas { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 12px; }
 .wy--compact { padding: 88px 0; }
+/* The landing page's short version: three reasons and the way to the rest. */
+.wy--brief { padding: 56px 0 32px; }
+.wy--brief .wy__grid { margin-top: 32px; }
+.wy__more { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 20px; font-weight: 650; text-decoration: none; }
+.wy__more:hover span { text-decoration: underline; }
+.wy__more svg { width: 16px; height: 16px; }
+/* /why/: who it is not for. Plain and ruled, like the reasons above it. */
+.wy__not { margin-top: 56px; }
+.wy__not h2 { font-size: clamp(26px, 2.6vw, 34px); }
+.wy__not > p { margin: 8px 0 0; color: var(--ink-2); }
+.wy__not ul { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; border-top: 1px solid rgba(255, 255, 255, .12); }
+.wy__not li { padding: 20px 0; border-bottom: 1px solid rgba(255, 255, 255, .12); }
+.wy__not h3 { font-size: 18px; }
+.wy__not li p { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; }
 .wy :focus-visible { outline: 3px solid var(--iris-hi); outline-offset: 3px; border-radius: 6px; }
 @media (max-width: 900px) {
   .wy { padding: 72px 0; }
   .wy__grid { grid-template-columns: 1fr; }
   .wy__card, .wy__card:not(:nth-child(3n + 1)) { padding: 24px 0; border-inline-start: 0; }
-  .wy__cols, .wy__who { grid-template-columns: 1fr; }
+  .wy__cols, .wy__who, .wy__not ul { grid-template-columns: 1fr; }
+  .wy--brief { padding: 56px 0 24px; }
 }
 :lang(ja) .wy :is(h1, h2, h3), :lang(zh) .wy :is(h1, h2, h3), :lang(ko) .wy :is(h1, h2, h3), :lang(ar) .wy :is(h1, h2, h3), :lang(he) .wy :is(h1, h2, h3), :lang(fa) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.25; }
 :lang(hi) .wy :is(h1, h2, h3) { letter-spacing: 0; line-height: 1.35; }
@@ -251,7 +288,13 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 .signin__field input { flex: 1; min-width: 0; border: 0; padding: 12px 6px 12px 14px; background: transparent; color: var(--ink); font: 500 16px var(--text); outline: none; }
 .signin__field span { padding: 0 14px 0 2px; color: var(--ink-3); white-space: nowrap; }
 .signin__row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-.signin__row .hx__btn--ghost { margin-inline-start: auto; }
+/* Close sits in the end corner, 44 × 44, visible on the card (owner rule for every popup). */
+.signin form { position: relative; }
+.signin__x { position: absolute; top: -12px; inset-inline-end: -12px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ink-3); border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; }
+.signin__x:hover { color: var(--ink); border-color: var(--ink-2); }
+.signin__x svg { width: 18px; height: 18px; }
+.signin h2 { padding-inline-end: 44px; }
+.signin__row .hx__btn { min-height: 44px; }
 .signin__none { margin: 18px 0 0; font-size: 14px; }.signin { --paper: #19153f; --line: #332e66; --iris: #5b4de8; --iris-wash: #2a2560; --ink: #f4f3fd; --ink-2: #c9c5e8; --ink-3: #a5a0d3; --text: 'Figtree', ui-sans-serif, system-ui, sans-serif; font-family: var(--text); }
 .signin h2 { margin: 0; font-family: 'Bricolage Grotesque', 'Bricolage', 'Figtree', sans-serif; color: var(--ink); }
 .signin a { color: #b9b0ff; }
@@ -263,3 +306,18 @@ html.hx-lock, html.hx-lock body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .hx *, .wy * { transition: none !important; animation: none !important; }
 }
+
+/* ---------------------------------------------------- phone: the sticky call to action
+   Once the reader is past the first screen, the two calls to action wait at the bottom
+   (site/chrome.js shows it, and hides it again over the closing call to action and the footer). */
+.mbar { display: none; }
+@media (max-width: 760px) {
+  .mbar { position: fixed; inset-inline: 0; bottom: 0; z-index: 30; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(15, 12, 43, .92); border-top: 1px solid #332e66; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transform: translateY(110%); visibility: hidden; transition: transform .2s cubic-bezier(.2, .7, .3, 1), visibility 0s .2s; }
+  .mbar.is-on { transform: none; visibility: visible; transition: transform .2s cubic-bezier(.2, .7, .3, 1); }
+  .mbar .hx__btn { flex: 1 1 0; min-height: 48px; padding: 0 12px; }
+  .foot { padding-bottom: 76px; contain-intrinsic-size: auto 950px; }
+}
+@media (prefers-reduced-motion: reduce) { .mbar, .mbar.is-on { transition: none; } }
+/* "Skip to content" on pages that bring only the chrome (the concept pages); site.css has the same for the rest. */
+.skip { position: absolute; top: 8px; inset-inline-start: 8px; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; background: #fff; color: #17152f; padding: 8px 14px; border-radius: 8px; z-index: 100; }
+.skip:focus { width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }

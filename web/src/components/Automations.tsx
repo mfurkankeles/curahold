@@ -201,6 +201,7 @@ export function AutomationList() {
           {manage && (
             <div className="rule__actions">
               <button className="btn btn--small" onClick={() => setEditing(a)}>
+                <Icon name="edit" size={16} />
                 {t('common.edit')}
               </button>
               <RowMenu
@@ -480,9 +481,11 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
             <span>{t('auto.enabled')}</span>
           </label>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={busy || incomplete} onClick={save}>
+            <Icon name="check" size={16} />
             {busy ? t('common.saving') : t('common.save')}
           </button>
         </>
@@ -632,12 +635,13 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                     )
                   ))}
                 <button className="btn btn--quiet btn--small" aria-label={t('common.remove')} onClick={() => set({ conditions: draft.conditions.filter((_, j) => j !== i) })}>
-                  ✕
+                  <Icon name="close" size={16} />
                 </button>
               </div>
             );
           })}
           <button className="btn btn--quiet btn--small" onClick={() => set({ conditions: [...draft.conditions, { field: fields[0]?.key ?? 'owner', op: 'eq', value: '' }] })}>
+            <Icon name="plus" size={16} />
             {t('auto.addCondition')}
           </button>
         </section>
@@ -708,6 +712,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                     {task.title.includes('{account_name}') && <span className="field__hint">{t('auto.tokenHint')}</span>}
                     {accountBased && !task.title.includes('{account_name}') && (
                       <button type="button" className="btn btn--quiet btn--small" onClick={() => upd({ title: `${task.title}${task.title ? ' ' : ''}{account_name}` })}>
+                        <Icon name="plus" size={16} />
                         {t('auto.insertAccount')}
                       </button>
                     )}
@@ -719,7 +724,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
                       {assigneeSelect(task.assignee, (v) => upd({ assignee: v as any }))}
                       {act.tasks.length > 1 && (
                         <button className="btn btn--quiet btn--small" aria-label={t('common.remove')} onClick={() => set({ action: { ...act, tasks: act.tasks.filter((_, j) => j !== i) } })}>
-                          ✕
+                          <Icon name="close" size={16} />
                         </button>
                       )}
                     </div>
@@ -729,6 +734,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
               })}
               {act.tasks.length < 10 && (
                 <button className="btn btn--quiet btn--small" onClick={() => set({ action: { ...act, tasks: [...act.tasks, { title: '', dueInDays: 7, assignee: act.tasks[0]?.assignee ?? 'none', subtasks: [] }] } })}>
+                  <Icon name="plus" size={16} />
                   {t('auto.addTask')}
                 </button>
               )}
@@ -765,7 +771,7 @@ export function RuleEditor({ rule, onClose, onSaved }: { rule: Automation | null
           {EVENT_TRIGGERS.includes(tr.type) && <p className="muted">{t('auto.eventHint')}</p>}
           <p className="muted">{t('auto.onceHint')}</p>
         </div>
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );

@@ -6,6 +6,7 @@ import type { AccountDepartmentWork } from '../../../shared/src/model';
 import { AccountTeam, HandoverCard, useAccountFlow, WaitingFor } from '../components/CustomerFlow';
 import { useMoney } from '../lib/money';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useKept } from '../lib/kept';
 import { useWindow } from '../lib/windowing';
 import { labelOf } from '../../../shared/src/fields';
 import { calculated, type Account, type AccountField, type Task } from '../../../shared/src/model';
@@ -88,21 +89,30 @@ export function useFieldFormat() {
   );
 }
 
+/**
+ * The customer list as last loaded, per person, search and filter (this tab only), for an instant Back.
+ * Keyed by who is signed in: what one person may see is never drawn for another.
+ */
+const lastList = new Map<string, { accounts: Account[]; total: number }>();
+const listKey = (who: string, q: string, owner: string, archived: boolean) => `${who}|${q.trim()}|${owner}|${archived ? 1 : 0}`;
+
 export function AccountsPage() {
   const { t, words, locale } = useI18n();
   const { me, people, person, can, canWrite, toast } = useStore();
   const fmt = useFieldFormat();
   const money = useMoney();
-  const [q, setQ] = useState(() => new URLSearchParams(location.search).get('q') ?? '');
-  const [owner, setOwner] = useState<'all' | 'me' | string>(() => new URLSearchParams(location.search).get('owner') ?? 'all');
-  const [archived, setArchived] = useState(false);
+  // The search and filters come back with Back (lib/kept.ts); a fresh visit starts from the address.
+  const [q, setQ] = useKept('q', () => new URLSearchParams(location.search).get('q') ?? '');
+  const [owner, setOwner] = useKept<'all' | 'me' | string>('owner', () => new URLSearchParams(location.search).get('owner') ?? 'all');
+  const [archived, setArchived] = useKept('archived', false);
   const phone = usePhone();
   const exporter = useExport();
   const undoable = useServerUndo();
-  const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(null);
+  // The list as last seen, drawn at once on return (and refreshed behind it), so Back lands where it left.
+  const [data, setData] = useState<{ accounts: Account[]; total: number } | null>(() => lastList.get(listKey(me.user.id, q, owner, archived)) ?? null);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 });
+  const [sort, setSort] = useKept<{ key: string; dir: 1 | -1 }>('sort', { key: 'name', dir: 1 });
   const [importing, setImporting] = useState(false);
   const [creating, setCreating] = useState(false);
   // "+ New → Customer" from anywhere opens the form here.
@@ -151,7 +161,7 @@ export function AccountsPage() {
   };
   const CARD_SORTS = ['attention', 'name', 'health', 'value', 'renewal', 'open'] as const;
   const [cardSort, setCardSort] = useState<(typeof CARD_SORTS)[number]>(() => remembered('app_accounts_sort', CARD_SORTS, 'attention'));
-  const [signal, setSignal] = useState<SignalFilter>('');
+  const [signal, setSignal] = useKept<SignalFilter>('signal', '');
   const { renewal: renewalField, value: valueField } = keyFields(me.org.accountFields);
   const defaultShown = [valueField, renewalField].filter(Boolean).map((f) => f!.key);
   const [shownKeys, setShownKeys] = useState<string[]>(() => {
@@ -191,6 +201,7 @@ export function AccountsPage() {
         if (n !== seq.current) return;
         have = [...have, ...r.accounts];
         setData({ accounts: have, total: r.total });
+        lastList.set(listKey(me.user.id, q, owner, archived), { accounts: have, total: r.total });
         setFailed(false);
         if (!r.accounts.length || have.length >= r.total) break;
       }
@@ -198,7 +209,7 @@ export function AccountsPage() {
       // A failed load says so and offers to try again; it never shows as an empty list.
       if (n === seq.current && !have.length) setFailed(true);
     }
-  }, [q, owner, archived]);
+  }, [q, owner, archived, me.user.id]);
   useEffect(() => {
     const id = setTimeout(() => void load(), 200);
     // A review or meeting logged from here (the Reviews view's "Done") moves its customer.
@@ -338,6 +349,7 @@ export function AccountsPage() {
         </div>
         {manage && can('accounts.view_all') && canWrite && (
           <button className="btn listtop__wide" onClick={() => setImporting(true)}>
+            <Icon name="upload" size={16} />
             {t('accounts.import')}
           </button>
         )}
@@ -478,12 +490,15 @@ export function AccountsPage() {
                 ))}
             </select>
             <button className="btn btn--small" disabled={!bulkOwner} onClick={() => bulk({ ownerId: bulkOwner }, 'accounts.reassigned')}>
+              <Icon name="user" size={16} />
               {t('accounts.reassign')}
             </button>
             <button className="btn btn--small btn--quiet" onClick={() => bulk({ archived: !archived }, archived ? 'accounts.restored' : 'accounts.archivedN')}>
+              <Icon name="inbox" size={16} />
               {archived ? t('accounts.restore') : t('accounts.archive')}
             </button>
             <button className="btn btn--small btn--quiet" onClick={() => setSelected(new Set())}>
+              <Icon name="close" size={16} />
               {t('common.cancel')}
             </button>
           </div>
@@ -522,6 +537,7 @@ export function AccountsPage() {
             <div className="sheet">
               <EmptyState compact icon="filter" title={t('acards.noSignalMatch')}>
                 <button className="btn" onClick={() => setSignal('')}>
+                  <Icon name="close" size={16} />
                   {t('acards.clearFilter')}
                 </button>
               </EmptyState>
@@ -665,6 +681,7 @@ function ImportHistory() {
                   void load();
                 }}
               >
+                <Icon name="undo" size={16} />
                 {t('import.undo')}
               </button>
             ) : null}
@@ -759,9 +776,11 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!name.trim()} onClick={submit}>
+            <Icon name="plus" size={16} />
             {t('common.create')}
           </button>
         </>
@@ -786,7 +805,7 @@ function NewAccount({ onClose, onDone }: { onClose: () => void; onDone: (id: str
           </select>
         </label>
         <p className="field__hint">{t('accounts.newHint')}</p>
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
       </div>
     </Dialog>
   );
@@ -929,6 +948,7 @@ export function AccountPage({ id }: { id: string }) {
       <div className="page">
         <EmptyState icon="building" title={t('errors.not_found')}>
           <button className="btn" onClick={() => navigate('/accounts')}>
+            <Icon name="building" size={16} />
             {words.other}
           </button>
         </EmptyState>
@@ -1032,7 +1052,7 @@ export function AccountPage({ id }: { id: string }) {
     <>
       <header className="topbar account-top">
         <PageIcon name="building" />
-        <input className="title-input" defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
+        <input className="title-input" data-hero={a.id} defaultValue={a.name} key={a.name} disabled={!canWrite} aria-label={t('accounts.name')} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== a.name && save({ name: e.target.value.trim() })} />
         <FavoriteButton kind="account" id={a.id} name={a.name} to={`/accounts/${a.id}`} />
         <div className="topbar__spacer" />
         <span className="account-top__here">
@@ -1093,6 +1113,7 @@ export function AccountPage({ id }: { id: string }) {
                         ))}
                       </select>
                       <button className="btn" disabled={!title.trim()} onClick={addTask}>
+                        <Icon name="plus" size={16} />
                         {t('common.add')}
                       </button>
                     </div>

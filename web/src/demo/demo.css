@@ -61,7 +61,7 @@
   .demobar select { max-width: none; width: 100%; min-width: 0; }
   .demobar__tag, .demobar__more { flex: none; }
   .demobar__note { display: none; }
-  .demobar__as span { display: none; }
+  .demobar__as span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .demobar { justify-content: space-between; }
   .demobar select { max-width: calc(100vw - 130px); }
   .demobar__long { display: none; }

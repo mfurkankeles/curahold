@@ -114,12 +114,15 @@ function ColumnChooser({ type, onClose, onSaved }: { type: RecordType; onClose: 
       footer={
         <>
           <button className="btn btn--quiet u-me-auto" onClick={() => void save(null)}>
+            <Icon name="refresh" size={16} />
             {t('records.columnsReset')}
           </button>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" onClick={() => void save(keys)}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>
@@ -313,6 +316,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
       <div className="page">
         <EmptyState icon="layout" title={t('errors.not_found')}>
           <button className="btn" onClick={() => navigate('/accounts')}>
+            <Icon name="building" size={16} />
             {words.other}
           </button>
         </EmptyState>
@@ -388,6 +392,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
           ))}
       </select>
       <button className="btn btn--small" disabled={!bulkOwner || bulkBusy} onClick={() => void bulk({ ownerId: bulkOwner }, 'accounts.reassigned')}>
+        <Icon name="user" size={16} />
         {t('accounts.reassign')}
       </button>
       {bulkField && (
@@ -401,9 +406,11 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
         </select>
       )}
       <button className="btn btn--small btn--quiet" disabled={bulkBusy} onClick={() => void bulk({ archived: true }, 'accounts.archivedN')}>
+        <Icon name="inbox" size={16} />
         {t('accounts.archive')}
       </button>
       <button className="btn btn--small btn--quiet" onClick={() => setPicked(new Set())}>
+        <Icon name="close" size={16} />
         {t('common.cancel')}
       </button>
     </div>
@@ -512,6 +519,7 @@ export function RecordsPage({ typeKey }: { typeKey: string }) {
             >
               {span && data.records.length > 0 && (
                 <button className="btn" onClick={() => (setPeriod('any'), keep('period', 'any'))}>
+                  <Icon name="eye" size={16} />
                   {t('records.period.showAll')}
                 </button>
               )}
@@ -667,6 +675,7 @@ export function AccountRecords({ account, types, onChange }: { account: Account;
               )}
               {canWrite && !(isContact && view === 'chart') && (
                 <button className="btn btn--small" onClick={() => setEditing({ type: ty, record: null })}>
+                  <Icon name="plus" size={16} />
                   {t('common.add')}
                 </button>
               )}
@@ -856,14 +865,17 @@ export function RecordDialog({
         <>
           {record && can('accounts.manage') && (
             <button className="btn btn--quiet btn--danger u-me-auto" onClick={() => setRemoving(true)}>
+              <Icon name="trash" size={16} />
               {t('common.delete')}
             </button>
           )}
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           {canWrite && (
             <button className="btn btn--primary" disabled={!effectiveName.trim() || busy} onClick={save}>
+              <Icon name="plus" size={16} />
               {record ? t('common.save') : t('common.create')}
             </button>
           )}

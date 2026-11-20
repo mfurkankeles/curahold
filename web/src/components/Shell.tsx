@@ -33,6 +33,7 @@ import { Avatar, Dialog, Mark } from './ui';
 import { useRecordTypes } from '../lib/recordTypes';
 import { typeLabel } from '../../../shared/src/records';
 import { formatDateTime } from '../lib/format';
+import { useLeave } from '../lib/leave';
 
 // Dialogs opened on demand: their code loads the first time one opens.
 const BoardSettings = lazy(() => import('./BoardSettings').then((m) => ({ default: m.BoardSettings })));
@@ -84,6 +85,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   const { path, search } = useLocation();
   const narrow = useNarrow();
   const [navOpen, setNavOpen] = useState(false);
+  const leaveScrim = useLeave<HTMLDivElement>();
   const [newBoard, setNewBoard] = useState(false);
   const depts = useDepartments();
   // Boards by department, in the departments' order: the ones this person is in (even while
@@ -270,7 +272,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   useEffect(() => startStrips(), []);
   // On a phone the open menu is a modal drawer: the screen and the bottom bar behind its scrim cannot be
   // reached (by a tap, the keyboard or a screen reader) until it closes.
-  const mainRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const barRef = useRef<HTMLElement>(null);
   useEffect(() => {
     for (const el of [mainRef.current, barRef.current]) el?.toggleAttribute('inert', navOpen && narrow);
@@ -355,6 +357,9 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
   return (
     <ShellCtx.Provider value={actions}>
       <div className="shell" data-nav={navOpen ? 'open' : 'closed'} data-helper={helpOk || undefined}>
+        <a className="skip-link" href="#main">
+          {t('docs.skip')}
+        </a>
         {narrow && (
           <header className="mbar">
             <button className="mbar__btn" aria-label={t('nav.menu')} aria-expanded={navOpen} onClick={() => setNavOpen(true)}>
@@ -534,14 +539,15 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             {meMenu}
           </div>
         </nav>
-        {navOpen && <div className="shell__scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
-        <div className="main" ref={mainRef}>
+        {navOpen && <div className="shell__scrim" ref={leaveScrim} onClick={() => setNavOpen(false)} aria-hidden="true" />}
+        <main className="main" id="main" tabIndex={-1} ref={mainRef}>
           <OfflineBar />
           {me.previewBy && (
             <div className="previewbar" role="status">
               <span className="previewbar__eye" aria-hidden="true" />
               <span className="previewbar__text">{t('preview.bar', { name: me.user.name })}</span>
               <button className="btn btn--small previewbar__exit" onClick={() => endPreview()}>
+                <Icon name="logout" size={16} />
                 {t('preview.exit')}
               </button>
             </div>
@@ -559,6 +565,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
                   location.href = '/login';
                 }}
               >
+                <Icon name="logout" size={16} />
                 {t('support.bar.leave')}
               </button>
             </div>
@@ -568,13 +575,14 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
             <div className="openbar" role="status">
               <span>{t(me.supportOpen.level === 'edit' ? 'support.open.barEdit' : 'support.open.bar', { until: until(me.supportOpen.until) })}</span>
               <button className="btn btn--small btn--quiet" onClick={() => setHelp('mine')}>
+                <Icon name="edit" size={16} />
                 {t('support.open.manage')}
               </button>
             </div>
           )}
           <BackBar types={recordTypes} />
           {children}
-        </div>
+        </main>
         {narrow && (
           <nav className="tabbar" aria-label={t('nav.quick')} ref={barRef}>
             {link('/home', t('nav.home'), here.home, 'home', undefined, 'tabbar__item')}
@@ -618,7 +626,7 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         {keys && <ShortcutsDialog onClose={() => setKeys(false)} />}
         {news && <WhatsNew onClose={() => setNews(false)} onAction={runNews} />}
         {installHelp && (
-          <Dialog title={t('pwa.install')} onClose={() => setInstallHelp(false)} footer={<button className="btn btn--primary" onClick={() => setInstallHelp(false)}>{t('common.close')}</button>}>
+          <Dialog title={t('pwa.install')} onClose={() => setInstallHelp(false)} footer={<button className="btn btn--primary" onClick={() => setInstallHelp(false)}><Icon name="close" size={16} /> {t('common.close')}</button>}>
             <ol className="installsteps">
               <li>{t('pwa.ios1')}</li>
               <li>{t('pwa.ios2')}</li>
@@ -634,30 +642,59 @@ export function Shell({ children, onLocale }: { children: ReactNode; onLocale: (
         <UndoKey toasts={toasts} dismiss={dismiss} />
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((x) => (
-            <div key={x.id} className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}>
-              <Icon name={x.tone === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast__icon" />
-              <span className="toast__text">{x.text}</span>
-              {x.action && (
-                <button
-                  className="toast__action"
-                  aria-keyshortcuts={x.action.undo ? 'Control+Z Meta+Z' : undefined}
-                  title={x.action.undo ? `${x.action.label} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'} Z)` : undefined}
-                  onClick={async () => {
-                    dismiss(x.id);
-                    await x.action!.run();
-                  }}
-                >
-                  {x.action.label}
-                </button>
-              )}
-              <button className="toast__close" aria-label={t('common.close')} onClick={() => dismiss(x.id)}>
-                <Icon name="close" size={14} />
-              </button>
-            </div>
+            <ToastItem key={x.id} toast={x} dismiss={dismiss} />
           ))}
         </div>
       </div>
     </ShellCtx.Provider>
+  );
+}
+
+/** One toast; it animates out when it goes (lib/leave.ts). */
+function ToastItem({ toast: x, dismiss }: { toast: Toast; dismiss: (id: number) => void }) {
+  const { t } = useI18n();
+  const leave = useLeave<HTMLDivElement>();
+  // Its clock stops while the pointer is on it or the focus is in it, and runs on from where it was.
+  const [held, setHeld] = useState(0);
+  const left = useRef(x.life);
+  useEffect(() => {
+    if (held || left.current === null) return;
+    const started = performance.now();
+    const timer = setTimeout(() => dismiss(x.id), left.current);
+    return () => {
+      clearTimeout(timer);
+      if (left.current !== null) left.current = Math.max(0, left.current - (performance.now() - started));
+    };
+  }, [held, x.id, dismiss]);
+  const hold = (on: boolean) => setHeld((n) => Math.max(0, n + (on ? 1 : -1)));
+  return (
+    <div
+      ref={leave}
+      className={`toast${x.tone === 'error' ? ' toast--error' : ''}`}
+      onMouseEnter={() => hold(true)}
+      onMouseLeave={() => hold(false)}
+      onFocus={() => hold(true)}
+      onBlur={() => hold(false)}
+    >
+      <Icon name={x.tone === 'error' ? 'alert' : 'checkCircle'} size={18} className="toast__icon" />
+      <span className="toast__text">{x.text}</span>
+      {x.action && (
+        <button
+          className="toast__action"
+          aria-keyshortcuts={x.action.undo ? 'Control+Z Meta+Z' : undefined}
+          title={x.action.undo ? `${x.action.label} (${navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'} Z)` : undefined}
+          onClick={async () => {
+            dismiss(x.id);
+            await x.action!.run();
+          }}
+        >
+          {x.action.label}
+        </button>
+      )}
+      <button className="toast__close" aria-label={t('common.close')} onClick={() => dismiss(x.id)}>
+        <Icon name="close" size={14} />
+      </button>
+    </div>
   );
 }
 

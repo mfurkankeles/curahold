@@ -8,6 +8,8 @@ import { useStore } from '../lib/store';
 import { useDepartments } from '../lib/departments';
 import { SETTINGS_TOPICS, topicLabel, topicWords } from '../lib/settingsIndex';
 import { useTheme } from '../lib/theme';
+import { trapTab, CloseButton } from './ui';
+import { useLeave } from '../lib/leave';
 
 interface Found {
   accounts: { id: string; name: string }[];
@@ -30,6 +32,7 @@ interface Item {
 const fold = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
 
 export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => void; onNewBoard: () => void }) {
+  const leaveWrap = useLeave<HTMLDivElement>();
   const { t, words, locale } = useI18n();
   const { me, boards, people, can, canWrite } = useStore();
   const depts = useDepartments();
@@ -41,6 +44,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
   const [answer, setAnswer] = useState<{ q: string; r: Found } | null>(null);
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const isAdmin = can('org.manage') || can('users.manage') || can('accounts.manage');
   const [theme, setTheme] = useTheme();
@@ -178,8 +182,7 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
   }, [active]);
 
   const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-    else if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActive((a) => Math.min(items.length - 1, a + 1));
     } else if (e.key === 'ArrowUp') {
@@ -193,24 +196,38 @@ export default function SearchPalette({ onClose, onNewBoard }: { onClose: () => 
 
   let lastGroup = '';
   return (
-    <div className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="palette-box" role="dialog" aria-modal="true" aria-label={t('search.open')}>
-        <input
-          ref={input}
-          className="palette-input"
-          value={q}
-          placeholder={t('search.placeholder')}
-          aria-label={t('search.placeholder')}
-          role="combobox"
-          aria-expanded="true"
-          aria-controls="palette-list"
-          aria-activedescendant={items[active] ? `pi-${active}` : undefined}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setActive(0);
-          }}
-          onKeyDown={onKey}
-        />
+    <div ref={leaveWrap} className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      {/* Escape closes from wherever the focus is in it, and Tab goes round inside it (WCAG 2.1.2). */}
+      <div
+        className="palette-box"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('search.open')}
+        ref={box}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose();
+          else trapTab(e.nativeEvent, box.current);
+        }}
+      >
+        <div className="palette-top">
+          <input
+            ref={input}
+            className="palette-input"
+            value={q}
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.placeholder')}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="palette-list"
+            aria-activedescendant={items[active] ? `pi-${active}` : undefined}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setActive(0);
+            }}
+            onKeyDown={onKey}
+          />
+          <CloseButton onClick={onClose} />
+        </div>
         <div className="palette-list" id="palette-list" role="listbox" ref={list}>
           {items.length === 0 && <p className="palette-none">{t('search.none')}</p>}
           {items.map((it, i) => {

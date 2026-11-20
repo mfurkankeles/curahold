@@ -25,10 +25,19 @@ Bunlar Ayarlar → Geliştiriciler sayfasının çağırdığı adreslerdir. Bir
 | `GET /dev/inbound` | Gelen destek kaydı adresinin açık olup olmadığı ve en son ne zaman kullanıldığı. |
 | `POST /dev/inbound` | Gelen adresi açar (ya da yenisiyle değiştirir); adres bir kez gösterilir. |
 | `DELETE /dev/inbound` | Gelen adresi kapatır. |
-| `GET /dev-hooks` | GitHub ve GitLab webhook'larının açık olup olmadığı ve adresleri. |
-| `POST /dev-hooks/:provider` | `github` ya da `gitlab` webhook'unu açar ya da gizli değerini yeniler. |
+| `GET /dev-hooks` | GitHub, GitLab ve Azure DevOps webhook'larının açık olup olmadığı ve adresleri. |
+| `POST /dev-hooks/:provider` | `github`, `gitlab` ya da `azuredevops` webhook'unu açar ya da gizli değerini yeniler. |
 | `DELETE /dev-hooks/:provider` | Webhook'u kapatır. |
-| `POST /inbound/dev/:provider` | GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. |
+| `POST /inbound/dev/:provider` | GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı), GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) ve Azure DevOps service hook'larının (`azuredevops`, gizli değer basic authentication parolası ya da `X-Curahold-Token` olarak) olaylarını gönderdiği yer. |
+| `POST /inbound/hooks/:id` | Gelen webhook alıcısı. |
+| `GET /inbound/whatsapp/:source` | Meta'nın WhatsApp Business geri arama adresini kontrolü: `hub.verify_token` bağlantının doğrulama anahtarıysa `hub.challenge` ile cevap verir. |
+| `POST /inbound/whatsapp/:source` | Meta'nın şirketin kendi numarasına gelen WhatsApp mesajlarını gönderdiği yer (`X-Hub-Signature-256` ve uygulama gizli anahtarıyla imzalı). |
+| `GET /inbound-hooks` | Şirketin gelen webhook'ları; adresleri, gizli değerleri (Curahold veriyorsa), eşlemeleri ve son 7 günün sayılarıyla; hazır tarifler de. |
+| `POST /inbound-hooks` | Gelen webhook oluşturur: `name`, `recipe` (curahold, esign, aircall, tawkto, razorpay, custom), `target` (task, ticket, activity, deal_note), `auth`, `mapping` (`{{data.status}}` gibi şablonlar) ve araç kendi gizli değerini üretiyorsa `senderSecret`. |
+| `PATCH /inbound-hooks/:id` | Gelen webhook'u değiştirir; `enabled: false` duraklatır, `rotate: true` yeni gizli değer verir (eskisi hemen durur). |
+| `DELETE /inbound-hooks/:id` | Gelen webhook'u ve kayıtlarını siler. |
+| `GET /inbound-hooks/:id/deliveries` | Son 100 gönderim: zaman, sonuç, olay kimliği, hata ve oluşan kayıt (30 gün, en çok 500 saklanır). |
+| `POST /inbound-hooks/:id/test` | `dryRun: true` ile eşlemenin `payload`'dan ne yaptığı ve içindeki yollar; olmadan, payload alıcıdan deneme gönderimi olarak geçer (yazılır, `test` olarak işaretlenir). |
 | `POST /inbound/segment/:source` | Segment'in ürün olaylarını gönderdiği yer (`x-signature`, HMAC-SHA256 ile imzalı). |
 | `GET /tasks/:id/dev` | Bir göreve bağlı dallar, çekme istekleri ve commit'ler; durumları ve kontrolleriyle, bir satırlık özetle. |
 | `GET /boards/:id/dev-links` | Bağlantısı olan, bir panodaki her görevin geliştirme özeti. |
@@ -129,13 +138,13 @@ Gelen adresi kapatır.
 
 ### `GET /dev-hooks`
 
-GitHub ve GitLab webhook'larının açık olup olmadığı ve adresleri. Bağlantıları yönetme yetkisi gerekir.
+GitHub, GitLab ve Azure DevOps webhook'larının açık olup olmadığı ve adresleri. Bağlantıları yönetme yetkisi gerekir.
 
 **Gerekenler:** yetki `connections.manage`
 
 ### `POST /dev-hooks/:provider`
 
-`github` ya da `gitlab` webhook'unu açar ya da gizli değerini yeniler. Adres ve gizli değer gösterilir; bir görevi (`CURA-` ve kimliğinin ilk 8 karakteri) anan dallar, çekme istekleri ve commit'ler ona bağlanır.
+`github`, `gitlab` ya da `azuredevops` webhook'unu açar ya da gizli değerini yeniler. Adres ve gizli değer gösterilir; bir görevi (`CURA-` ve kimliğinin ilk 8 karakteri) anan dallar, çekme istekleri ve commit'ler ona bağlanır.
 
 **Gerekenler:** yetki `connections.manage`
 
@@ -147,7 +156,81 @@ Webhook'u kapatır. Kurulmuş bağlantılar kalır.
 
 ### `POST /inbound/dev/:provider`
 
-GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı) ve GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) olaylarını gönderdiği yer. İnsanlar için değil.
+GitHub'ın (`github`, `X-Hub-Signature-256` ile imzalı), GitLab'ın (`gitlab`, `X-Gitlab-Token` ile) ve Azure DevOps service hook'larının (`azuredevops`, gizli değer basic authentication parolası ya da `X-Curahold-Token` olarak) olaylarını gönderdiği yer. İnsanlar için değil.
+
+### `POST /inbound/hooks/:id`
+
+Gelen webhook alıcısı. `X-Curahold-Signature: t=<unix saniye>,v1=<"t.gövde"nin hex HMAC-SHA256'sı>` ile imzala (t 5 dakika içinde) ve `X-Curahold-Event-Id` gönder; bir araç için yapılmış webhook'ta aracın kendi imza başlığı ya da ortak anahtarı. `status` ok, skipped, failed ya da duplicate ile 200 döner; hatalı imza, eski zaman ya da yanlış anahtarda 401; bilinmeyen ya da duraklatılmış webhook'ta 404. Her olay kimliği bir kez kullanılır. İnsanlar için değil.
+
+### `GET /inbound/whatsapp/:source`
+
+Meta'nın WhatsApp Business geri arama adresini kontrolü: `hub.verify_token` bağlantının doğrulama anahtarıysa `hub.challenge` ile cevap verir. İnsanlar için değil.
+
+**Sorgu:** `hub.mode`, `hub.verify_token`, `hub.challenge`
+
+### `POST /inbound/whatsapp/:source`
+
+Meta'nın şirketin kendi numarasına gelen WhatsApp mesajlarını gönderdiği yer (`X-Hub-Signature-256` ve uygulama gizli anahtarıyla imzalı). Her mesaj, kişisinde gönderenin numarası olan müşteride bir not olur; mesaj kimliği başına bir kez. İnsanlar için değil.
+
+### `GET /inbound-hooks`
+
+Şirketin gelen webhook'ları; adresleri, gizli değerleri (Curahold veriyorsa), eşlemeleri ve son 7 günün sayılarıyla; hazır tarifler de. Bağlantıları yönetme yetkisi gerekir.
+
+**Gerekenler:** yetki `connections.manage`
+
+### `POST /inbound-hooks`
+
+Gelen webhook oluşturur: `name`, `recipe` (curahold, esign, aircall, tawkto, razorpay, custom), `target` (task, ticket, activity, deal_note), `auth`, `mapping` (`{{data.status}}` gibi şablonlar) ve araç kendi gizli değerini üretiyorsa `senderSecret`.
+
+**Gerekenler:** yetki `connections.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `name` | metin | zorunlu | en az 1 karakter; en çok 120 karakter |
+| `recipe` | metin | isteğe bağlı | varsayılan custom |
+| `target` | şunlardan biri: HOOK_TARGETS | isteğe bağlı |  |
+| `auth` | nesne | isteğe bağlı |  |
+| `mapping` | nesne | isteğe bağlı |  |
+| `senderSecret` | metin | isteğe bağlı | en az 8 karakter; en çok 500 karakter |
+
+### `PATCH /inbound-hooks/:id`
+
+Gelen webhook'u değiştirir; `enabled: false` duraklatır, `rotate: true` yeni gizli değer verir (eskisi hemen durur).
+
+**Gerekenler:** yetki `connections.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `name` | metin | isteğe bağlı | en az 1 karakter; en çok 120 karakter |
+| `enabled` | evet/hayır | isteğe bağlı |  |
+| `target` | şunlardan biri: HOOK_TARGETS | isteğe bağlı |  |
+| `auth` | nesne | isteğe bağlı |  |
+| `mapping` | nesne | isteğe bağlı |  |
+| `senderSecret` | metin | isteğe bağlı | en az 8 karakter; en çok 500 karakter |
+| `rotate` | evet/hayır | isteğe bağlı |  |
+
+### `DELETE /inbound-hooks/:id`
+
+Gelen webhook'u ve kayıtlarını siler. Oluşturdukları kalır.
+
+**Gerekenler:** yetki `connections.manage`
+
+### `GET /inbound-hooks/:id/deliveries`
+
+Son 100 gönderim: zaman, sonuç, olay kimliği, hata ve oluşan kayıt (30 gün, en çok 500 saklanır).
+
+**Gerekenler:** yetki `connections.manage`
+
+### `POST /inbound-hooks/:id/test`
+
+`dryRun: true` ile eşlemenin `payload`'dan ne yaptığı ve içindeki yollar; olmadan, payload alıcıdan deneme gönderimi olarak geçer (yazılır, `test` olarak işaretlenir).
+
+**Gerekenler:** yetki `connections.manage`
+
+| Alan | Tür | | Not |
+| --- | --- | --- | --- |
+| `payload` | herhangi bir değer | zorunlu |  |
+| `dryRun` | evet/hayır | isteğe bağlı |  |
 
 ### `POST /inbound/segment/:source`
 

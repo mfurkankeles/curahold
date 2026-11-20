@@ -25,6 +25,7 @@ export function DemoConnect({ app }: { app: string }) {
           onClose={() => setOpen(false)}
           footer={
             <button className="btn btn--primary" onClick={() => setOpen(false)}>
+              <Icon name="close" size={16} />
               {t('common.close')}
             </button>
           }
@@ -75,9 +76,11 @@ export function DemoCrmConnect({ id, app, onError }: { id: string; app: string; 
           footer={
             <>
               <button className="btn" onClick={() => setOpen(false)}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <button className="btn btn--primary" disabled={busy} onClick={allow}>
+                <Icon name="check" size={16} />
                 {t('conn.demo.crm.allow')}
               </button>
             </>

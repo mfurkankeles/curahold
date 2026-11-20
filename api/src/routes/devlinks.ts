@@ -10,7 +10,7 @@ import { requirePerm, requireWriter, run, secretsKey, type AppEnv, type C } from
 import type { Row } from '../db';
 import { audit } from '../lib/audit';
 import { hmacHex, randomToken, safeEqual } from '../lib/crypto';
-import { parseGithub, parseGitlab, taskRefs, worstChecks, type Parsed } from '../lib/devlinks';
+import { parseAzure, parseGithub, parseGitlab, taskRefs, worstChecks, type Parsed } from '../lib/devlinks';
 import { fail } from '../lib/errors';
 import { iso } from '../lib/mappers';
 import { param } from '../lib/validate';
@@ -73,6 +73,18 @@ async function verified(c: C, provider: DevHost, raw: string, salt: string): Pro
     const got = c.req.header('x-hub-signature-256') ?? '';
     return got.startsWith('sha256=') && safeEqual(got.slice(7), await hmacHex(secret, raw));
   }
+  if (provider === 'azuredevops') {
+    // Service hooks have no signature: the subscription's basic authentication carries the secret as the password
+    // (Azure DevOps sends it over HTTPS only), or a header set under "HTTP headers".
+    const basic = /^Basic\s+(.+)$/i.exec(c.req.header('authorization') ?? '');
+    let pass = '';
+    try {
+      pass = basic ? atob(basic[1]).split(':').slice(1).join(':') : '';
+    } catch {
+      pass = '';
+    }
+    return safeEqual(pass || (c.req.header('x-curahold-token') ?? ''), secret);
+  }
   return safeEqual(c.req.header('x-gitlab-token') ?? '', secret);
 }
 
@@ -96,7 +108,7 @@ devInboundRoutes.post('/inbound/dev/:provider', async (c) => {
   }
   const event = c.req.header('x-github-event') ?? '';
   if (provider === 'github' && event === 'ping') return c.json({ ok: true, pong: true });
-  const parsed: Parsed = provider === 'github' ? parseGithub(event, payload) : parseGitlab(payload);
+  const parsed: Parsed = provider === 'github' ? parseGithub(event, payload) : provider === 'azuredevops' ? parseAzure(payload) : parseGitlab(payload);
 
   const linked = await db.tenant(ctx, async (q) => {
     const wanted = [...new Set(parsed.links.flatMap((l) => taskRefs(...l.texts)))];

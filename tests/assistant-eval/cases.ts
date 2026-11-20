@@ -233,6 +233,46 @@ export const BASE: BaseCase[] = [
     rubric: 'Explains connecting Claude or ChatGPT to Curahold through the AI connector, from the docs.',
     q: { en: 'How do I connect Claude or ChatGPT to Curahold?', tr: "Claude'u ya da ChatGPT'yi Curahold'a nasıl bağlarım?", ar: 'كيف أربط Claude أو ChatGPT بـ Curahold؟', he: 'איך מחברים את Claude או ChatGPT ל-Curahold?', fa: 'چطور Claude یا ChatGPT را به Curahold وصل کنم؟', 'zh-Hans': '如何把 Claude 或 ChatGPT 连接到 Curahold？', 'zh-Hant': '如何把 Claude 或 ChatGPT 連接到 Curahold？', ja: 'Claude や ChatGPT を Curahold につなぐには？', ko: 'Claude나 ChatGPT를 Curahold에 연결하려면 어떻게 하나요?', hi: "Claude या ChatGPT को Curahold से कैसे कनेक्ट करूं?", ms: "Bagaimana saya menyambungkan Claude atau ChatGPT kepada Curahold?" },
   },
+  {
+    id: 'howto-lark-telegram', category: 'how_to', kinds: ['answer'], cite: 'chat-notifications',
+    rubric: 'Explains Settings → Connections → Add webhook: Lark/Feishu takes the custom bot address (and its signing secret), Telegram takes the bot token from @BotFather and finds the group itself.',
+    q: { en: 'How do I get Curahold notifications in our Telegram group?', tr: "Curahold bildirimlerini Telegram grubumuza nasıl alırım?", ar: 'كيف أستقبل إشعارات Curahold في مجموعتنا على Telegram؟', he: 'איך מקבלים התראות של Curahold בקבוצת ה-Telegram שלנו?', fa: 'چطور اعلان‌های Curahold را در گروه Telegram خودمان بگیرم؟', 'zh-Hans': '如何在我们的 Telegram 群里收到 Curahold 通知？', 'zh-Hant': '如何在我們的 Telegram 群組收到 Curahold 通知？', ja: 'Curahold の通知を Telegram のグループで受け取るには？', ko: 'Curahold 알림을 우리 Telegram 그룹에서 받으려면 어떻게 하나요?' },
+  },
+  {
+    id: 'howto-odoo-crm', category: 'how_to', kinds: ['answer'], cite: 'odoo-crm',
+    rubric: 'Explains connecting Odoo CRM with the address, login and API key (Custom plan on Odoo Online), choosing companies, contacts and opportunities, and that changes go both ways.',
+    q: { en: 'Can I sync our Odoo CRM opportunities with Curahold?', tr: "Odoo CRM fırsatlarımızı Curahold ile eşitleyebilir miyim?", ar: 'هل يمكنني مزامنة فرص Odoo CRM لدينا مع Curahold؟', he: 'אפשר לסנכרן את ההזדמנויות שלנו ב-Odoo CRM עם Curahold?', fa: 'می‌توانم فرصت‌های Odoo CRM خود را با Curahold همگام کنم؟', 'zh-Hans': '能把我们 Odoo CRM 里的商机同步到 Curahold 吗？', 'zh-Hant': '能把我們 Odoo CRM 裡的商機同步到 Curahold 嗎？', ja: 'Odoo CRM の商談を Curahold と同期できますか？', ko: 'Odoo CRM의 영업 기회를 Curahold와 동기화할 수 있나요?' },
+  },
+  {
+    id: 'howto-calendar-sync', category: 'how_to', kinds: ['answer'], cite: 'calendars',
+    rubric: 'Explains connecting Google Calendar or Outlook: past meetings with a customer\'s people land on that customer (title, time, length, guests only; private meetings skipped), and a meeting can be planned into the calendar.',
+    q: { en: 'How do my calendar meetings with customers show up on their page?', tr: 'Takvimimdeki müşteri toplantıları müşterinin sayfasında nasıl görünür?', ar: 'كيف تظهر اجتماعاتي مع العملاء في التقويم على صفحاتهم؟', he: 'איך פגישות עם לקוחות ביומן שלי מופיעות בדף שלהם?', fa: 'جلسه‌های تقویمم با مشتریان چطور روی صفحهٔ آن‌ها نشان داده می‌شود؟', 'zh-Hans': '我日历里与客户的会议怎样显示在客户页面上？', 'zh-Hant': '我行事曆裡與客戶的會議怎麼顯示在客戶頁面上？', ja: 'カレンダーの顧客とのミーティングを顧客ページに表示するには？', ko: '캘린더의 고객 회의를 고객 페이지에 표시하려면 어떻게 하나요?' },
+  },
+  {
+    id: 'howto-azure-devops', category: 'how_to', kinds: ['answer'], cite: 'azure-devops',
+    rubric: 'Explains turning on the Azure DevOps webhook and adding Web Hooks service hooks with the address and the secret as the basic-auth password; CURA- keys link work.',
+    q: { en: 'How do I link Azure DevOps pull requests to Curahold tasks?', tr: "Azure DevOps çekme isteklerini Curahold görevlerine nasıl bağlarım?", ar: 'كيف أربط طلبات السحب في Azure DevOps بمهام Curahold؟', he: 'איך מקשרים pull requests של Azure DevOps למשימות ב-Curahold?', fa: 'چطور pull requestهای Azure DevOps را به کارهای Curahold وصل کنم؟', 'zh-Hans': '如何把 Azure DevOps 的拉取请求关联到 Curahold 任务？', 'zh-Hant': '如何把 Azure DevOps 的提取要求連結到 Curahold 任務？', ja: 'Azure DevOps のプルリクエストを Curahold のタスクに紐づけるには？', ko: 'Azure DevOps 풀 리퀘스트를 Curahold 작업에 연결하려면 어떻게 하나요?' },
+  },
+  {
+    id: 'howto-zoho-desk', category: 'how_to', kinds: ['answer'], cite: 'zoho-desk',
+    rubric: 'Explains signing in with Zoho to connect Zoho Desk, mapping tickets and accounts, and replying or adding a private note from Curahold.',
+    q: { en: 'How do I bring Zoho Desk tickets into Curahold?', tr: "Zoho Desk destek kayıtlarını Curahold'a nasıl getiririm?", ar: 'كيف أجلب تذاكر Zoho Desk إلى Curahold؟', he: 'איך מביאים פניות מ-Zoho Desk ל-Curahold?', fa: 'چطور تیکت‌های Zoho Desk را به Curahold بیاورم؟', 'zh-Hans': '如何把 Zoho Desk 工单导入 Curahold？', 'zh-Hant': '如何把 Zoho Desk 工單帶進 Curahold？', ja: 'Zoho Desk のチケットを Curahold に取り込むには？', ko: 'Zoho Desk 티켓을 Curahold로 가져오려면 어떻게 하나요?' },
+  },
+  {
+    id: 'howto-stripe', category: 'how_to', kinds: ['answer'], cite: 'accounting-stripe',
+    rubric: 'Explains connecting Stripe read only with a restricted key (Read on Customers, Invoices, Events); a secret key is refused; overdue invoices count in the health score.',
+    q: { en: 'Can Curahold show which customers have unpaid Stripe invoices?', tr: 'Curahold hangi müşterilerin ödenmemiş Stripe faturası olduğunu gösterebilir mi?', ar: 'هل يمكن لـ Curahold أن يعرض العملاء الذين لديهم فواتير Stripe غير مدفوعة؟', he: 'האם Curahold יכול להראות לאילו לקוחות יש חשבוניות Stripe שלא שולמו?', fa: 'آیا Curahold می‌تواند نشان دهد کدام مشتریان فاکتور پرداخت‌نشدهٔ Stripe دارند؟', 'zh-Hans': 'Curahold 能显示哪些客户有未付的 Stripe 发票吗？', 'zh-Hant': 'Curahold 能顯示哪些客戶有未付的 Stripe 發票嗎？', ja: 'Stripe の未払い請求書がある顧客を Curahold で確認できますか？', ko: 'Curahold에서 Stripe 미결제 청구서가 있는 고객을 볼 수 있나요?' },
+  },
+  {
+    id: 'howto-whatsapp', category: 'how_to', kinds: ['answer'], cite: 'whatsapp',
+    rubric: 'Explains connecting WhatsApp Business with the company\'s own Meta app (phone number ID, system user token, app secret), the callback address and verify token in Meta, the 24-hour rule and templates, and that Meta bills the company directly.',
+    q: { en: 'How do we connect our WhatsApp Business number, and who pays for the messages?', tr: 'WhatsApp Business numaramızı nasıl bağlarız ve mesajların ücretini kim öder?', ar: 'كيف نربط رقم WhatsApp Business لدينا، ومن يدفع ثمن الرسائل؟', he: 'איך מחברים את מספר ה-WhatsApp Business שלנו, ומי משלם על ההודעות?', fa: 'شمارهٔ WhatsApp Business خود را چطور وصل کنیم و هزینهٔ پیام‌ها را چه کسی می‌پردازد؟', 'zh-Hans': '如何连接我们的 WhatsApp Business 号码？消息费用由谁支付？', 'zh-Hant': '如何連接我們的 WhatsApp Business 號碼？訊息費用由誰支付？', ja: 'WhatsApp Business の番号をつなぐには？メッセージ料金は誰が払いますか？', ko: 'WhatsApp Business 번호는 어떻게 연결하고, 메시지 요금은 누가 내나요?' },
+  },
+  {
+    id: 'howto-incoming-webhook', category: 'how_to', kinds: ['answer'], cite: 'incoming-webhooks',
+    rubric: 'Explains Settings → CRMs and spreadsheets → Add an incoming webhook: choose the tool or recipe, give the address and secret, map fields with {{path}} templates, test, and read the log; signatures and replays are checked.',
+    q: { en: 'Our e-signature tool can send webhooks. How do signed contracts show up in Curahold?', tr: 'E-imza aracımız webhook gönderebiliyor. İmzalanan sözleşmeler Curahold\'da nasıl görünür?', ar: 'أداة التوقيع الإلكتروني لدينا ترسل webhooks. كيف تظهر العقود الموقّعة في Curahold؟', he: 'כלי החתימה האלקטרונית שלנו שולח webhooks. איך חוזים חתומים מופיעים ב-Curahold?', fa: 'ابزار امضای الکترونیک ما می‌تواند webhook بفرستد. قراردادهای امضاشده چطور در Curahold نشان داده می‌شوند؟', 'zh-Hans': '我们的电子签名工具可以发送 Webhook。签好的合同怎样出现在 Curahold 里？', 'zh-Hant': '我們的電子簽名工具可以傳送 Webhook。簽好的合約怎麼出現在 Curahold 裡？', ja: '電子署名ツールから Webhook を送れます。署名済みの契約を Curahold に表示するには？', ko: '전자 서명 도구가 웹훅을 보낼 수 있어요. 서명된 계약이 Curahold에 어떻게 표시되나요?' },
+  },
   // ------------------------------------------------------------ ambiguous
   {
     id: 'amb-people-dashboard', category: 'ambiguous', kinds: ['clarify'], rule: 'people_board',

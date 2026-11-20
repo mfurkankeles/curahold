@@ -56,6 +56,8 @@ Everything sent to you in one list: tasks given to you, mentions, comments, move
 
 Without a grouping the report is a list of rows, and you pick its columns. **Export** downloads the result as CSV.
 
+Every chart has **Show as table**: the same figures as a table, and back. Point at a bar or a point, or press the arrow keys on a chart, to read one value. The colours stay apart for colour-blind readers; when two colours chosen for options would look alike, the chart uses its own colours instead.
+
 **Save report** keeps it as yours. Tick **Share with the company** and everyone can open it. In a shared report each person sees only the tasks and customers they can see anyway; a field their role may not see does not show up in a report either.
 
 **Ready-made reports** are further down the same page: open one, see it with your own data, change it and keep it as your own.

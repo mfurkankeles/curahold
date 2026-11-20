@@ -26,7 +26,7 @@ export function ReportView({ result, def, chart }: { result: ReportResult; def: 
   // A plain figure (or a gauge): nothing to lay out.
   if (format === 'tabular' && (chart === 'number' || chart === 'gauge')) return <ReportChart result={result} chart={chart} goal={def.goal} />;
   if (format === 'tabular') return result.table ? <RowsTable r={result} /> : <ReportChart result={result} chart="table" />;
-  if (!result.groups.length || result.matched === 0) return <EmptyState compact icon="chart" title={t('rb.nothing')} />;
+  if (!result.groups.length || result.matched === 0) return <EmptyState compact icon="filter" title={t('rb.nothing')} body={t('rb.nothingBody')} />;
 
   // Above the table: the chart, with the groups past the top few folded into "Other".
   const drawn = def.showChart !== false && chart !== 'table' ? foldTop({ ...result, table: null }, def.top ?? 12, t('rb.other')) : null;
@@ -165,6 +165,7 @@ function SummaryTable({ r }: { r: Ok }) {
           {t('rb.showing', { shown: f.num(Math.min(limit, table?.rows.length ?? 0), 0), total: f.num(r.matched, 0) })}
           {limit < (table?.rows.length ?? 0) && (
             <button type="button" className="btn btn--small btn--quiet" onClick={() => setLimit((n) => n + PAGE_ROWS * 2)}>
+              <Icon name="chevronDown" size={16} />
               {t('rb.showMore', { n: f.num(Math.min((table?.rows.length ?? 0) - limit, PAGE_ROWS * 2), 0) })}
             </button>
           )}

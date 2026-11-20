@@ -97,9 +97,11 @@ export function AccountingConnect({ provider, onClose }: { provider: ProviderInf
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" form="finconnect" disabled={!ok || busy}>
+            <Icon name="plug" size={16} />
             {busy ? t('support.checking') : signIn ? t('sync.continueSignIn') : provider.id === 'finfile' ? t('fin.file.start' as MessageKey) : t('support.connect')}
           </button>
         </>
@@ -266,6 +268,7 @@ export function AccountingMatches({ id }: { id: string }) {
                     <span className="muted">{t('fin.match.noMatch' as MessageKey)}</span>
                     {/* Nobody here yet (a company that starts from its books): bring this one in as a new customer. */}
                     <button type="button" className="btn btn--small" onClick={() => void create(r)}>
+                      <Icon name="plus" size={16} />
                       {t('fin.match.create' as MessageKey)}
                     </button>
                   </>
@@ -275,10 +278,12 @@ export function AccountingMatches({ id }: { id: string }) {
                 <AccountPicker label={t('fin.match.pick' as MessageKey, { name: r.name })} onPick={(accountId) => choose(r, accountId)} />
                 {r.state !== 'ignored' ? (
                   <button type="button" className="btn btn--small btn--quiet" onClick={() => choose(r, null, true)}>
+                    <Icon name="close" size={16} />
                     {t('fin.match.ignore' as MessageKey)}
                   </button>
                 ) : (
                   <button type="button" className="btn btn--small btn--quiet" onClick={() => choose(r, null, false)}>
+                    <Icon name="undo" size={16} />
                     {t('fin.match.unignore' as MessageKey)}
                   </button>
                 )}

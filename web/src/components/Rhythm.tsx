@@ -181,6 +181,7 @@ export function TargetsPanel({ type, records, compact }: { type: RecordType; rec
         </div>
         {manage && (
           <button className="btn btn--small" onClick={settings}>
+            <Icon name="edit" size={16} />
             {t('targets.change')}
           </button>
         )}
@@ -299,6 +300,7 @@ export function ReviewsView({ rows }: { rows: { a: Account }[] }) {
         <EmptyState compact icon="handshake" title={t('reviews.emptyTitle')} body={t('reviews.emptyBody')}>
           {(can('accounts.manage') || can('org.manage')) && (
             <button className="btn btn--primary" onClick={() => navigate('/settings/rhythm')}>
+              <Icon name="edit" size={16} />
               {t('reviews.setRhythm')}
             </button>
           )}
@@ -362,6 +364,7 @@ export function ReviewsView({ rows }: { rows: { a: Account }[] }) {
                             shell.logTouch(a.id, a.name, 'review');
                           }}
                         >
+                          <Icon name="note" size={16} />
                           {t('reviews.logShort')}
                         </button>
                       )}

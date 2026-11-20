@@ -10,8 +10,33 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ## [Unreleased]
 
+### Changed
+
+- Charts use a new eight-colour palette that starts from the brand violet and stays readable for colour-blind people in light
+  and dark (neighbouring colours were too close before: green and orange-red could not be told apart in dark). A ninth group is
+  shown as "Other" instead of repeating a colour. In the owner console every state (paid, overdue, at risk …) shows an icon with
+  its words, not only a colour.
+- Reports and dashboards: when two colours chosen for options would look alike to colour-blind readers (green "won" beside
+  orange "lost"), that chart uses the palette's own order instead; a figure tile only carries a side mark when it has a state,
+  and the state shows as an icon too; every chart has **Show as table**.
+- Owner console: the overview starts with what waits for your decision (proposals, new trial requests, failed payments)
+  and shows each business figure with its change on the period before; figures at zero are left out. The approval queue
+  lists every waiting proposal beside the one being decided and takes keys (A approve, R reject, E edit, M meeting,
+  J / K next and previous); a decision waits 7 seconds with **Undo** (or Z) before it is sent.
+
 ### Added
 
+- Sales site: a small content hub in all nine languages (/resources/): four templates (renewal playbook, business review (QBR)
+  agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
+  contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
+  what Curahold does today. Linked from the Resources menu and the footer.
+- Connectors: Lark/Feishu and Telegram chat notifications; Odoo CRM (companies, contacts, opportunities, two-way); Google Calendar and
+  Outlook Calendar (past meetings onto the timeline, plan a meeting from a record); Azure DevOps (pushes, pull requests and builds linked
+  to tasks); Zoho Desk tickets; Stripe read-only (customers, invoices, payments, restricted key only); WhatsApp Business with the
+  company's own Meta app (incoming messages on the contact's timeline, replies and templates).
+- Incoming webhooks: one signed address per company and source, replay protection, field mapping to a task, ticket, customer event or
+  deal note, a test-delivery screen, a 30-day delivery log and ready recipes. Two new setup-health checks: failing webhooks and a silent
+  WhatsApp number.
 - Hindi and Malay: the app, the customer portal, e-mails, the help centre (whole user guide), the website, the demo company
   and the free assistant rules, in a formal register; job titles and plan names stay in English. Trial consent texts for India
   (DPDP Act 2023: itemised notice, grievance route to the Data Protection Board) and Malaysia (PDPA: notice in Malay and English
@@ -43,6 +68,49 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Changed
 
+- Motion: dialogs, side panels, menus, popovers, the search palette, phone sheets and toasts now animate out as well as in
+  (100–150 ms, always shorter than the way in); phone sheets slide up from the bottom (280 ms); one set of motion tokens
+  (`--dur-1…4`, `--ease-in/out/move`, `--dist-1…3`). With "reduce motion" on, opening and closing still fade for 100 ms so the
+  change is not lost.
+- Moving between screens: the page cross-fades in the direction you go (Back from the other side), a customer card
+  grows into its page, and Back returns to the list where you left it, with its search and filters.
+- Loading: a Curahold loader instead of a still logo, a thin progress line at the top while a screen loads, skeletons in
+  the shape of each screen, and save buttons that show a ring and then a tick. The demo opens faster, with real progress.
+- Every action button has an icon and a label; every dialog, panel and sheet has a large Close at the end corner (and
+  Esc); pages under another page show Back in the same place; on a phone the task panel rises from the bottom with Back.
+- Toasts stay 4 seconds (7 with Undo) and pause under the pointer; errors stay until you close them. Ticking a task done
+  shows at once and turns back if the server refuses.
+- Easier to read: stronger contrast on the main button, field borders and the keyboard focus ring; each script (Arabic,
+  Hebrew, Persian, Japanese, Korean, Chinese, Hindi) uses its own system font, size and line height.
+- Turkish: the whole product says "siz".
+
+- Sales site: the Turkish pages speak to visitors as "siz" everywhere (landing page, menus, inner pages, blog, animated versions, consent).
+- Sales site: the headline says what Curahold is and what it does ("Work management for customer teams" above "Every renewal, every
+  promise, every task, on time.") in all nine languages; every page uses the same two calls to action, "Try it free" and "Live demo",
+  each with an icon; "3 months free, no card needed" sits under them.
+- Sales site header: "Sign in" shows on desktop; the "AI version" button is now "Animated tour" under Resources; on a phone both calls
+  to action wait in a bar at the bottom once the first screen is scrolled past. The sign-in window has a 44 px close in its corner.
+- Sales site pricing: the landing page shows a two-line summary ("from $15 per seat a month on a yearly plan") with a link instead of
+  the full plans; /pricing/ shows the prices in the first screen and adds a plan comparison table, pricing questions and a line for
+  larger companies. Its structured data now lists all four offers (Team and Business, monthly and yearly) at the prices the page shows,
+  instead of one $19 offer next to a page showing $15. Prices themselves are unchanged.
+- Sales site: the landing page is about a third shorter (about 7,900 px at 1440 wide, from 12,400): "Why Curahold" shows three reasons
+  and links to /why/, which now ends with an honest "Who it is not for" (a personal to-do list, a help desk, bookkeeping, a
+  critical-path schedule) and the two calls to action. The scroll story's steps are a little shorter.
+- Sales site search: every page has a title and description written for its language's searches (no page is now too
+  short or too long for search results); the animated versions are kept out of search results; the sitemap is an index
+  with one file per language; questions and prices carry structured data that matches the page; share links show a PNG
+  picture; footer column titles are no longer headings. The help centre's production build gets absolute canonical and
+  hreflang addresses (only to languages that really have the page), article structured data and its own sitemap, which
+  the docs host's robots.txt now names. New settings: `SITE_LASTMOD`, `DOCS_ORIGIN` (ADR 0020).
+- Sales site speed and motion: no stylesheet blocks the first paint any more (first-screen styles inline, the rest cut to
+  what each kind of page uses and loaded after); the headline and its buttons show at once instead of sliding in; Arabic,
+  Persian, Hebrew, Chinese, Japanese and Korean pages use their system's own reading faces at their own sizes and download
+  no font; sections settle in over 300 ms; the glowing dots in the background no longer blink; the integrations strip has
+  a Pause button and stays still for anyone who asked their system for less motion.
+- Sales site speed on phones: the lower half of the landing page (the story's steps and window, the short "why" block,
+  the price summary, the footer) is laid out only as it comes near the screen, and Turkish pages preload the headline
+  face's Turkish letters too, so a late font no longer re-lays out every heading after the first paint.
 - Billing runs on one path (ADR 0019): Paddle's notifications go to `/api/inbound/billing/paddle`; the older
   `/api/billing/webhook` runs the same handler. Settings → Billing is one screen.
 - The AI assistant is off for a company until an administrator turns it on, as the privacy texts say; existing companies were switched
@@ -53,6 +121,11 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   (`@babel/*` patch updates came with them). `typescript-eslint` is deliberately not used because it does not support TypeScript 7 yet.
 
 ### Fixed
+
+- Importing a Turkish task file with a "Liste" column now offers the Boards step.
+- The renewals view no longer adds amounts in other currencies one to one under the company's currency sign: amounts
+  with a rate are converted (marked ≈), others are totalled in their own currency.
+- English counts say "1 renewal", "1 day", "1 reply" (singular after one).
 
 - _Nothing yet._
 

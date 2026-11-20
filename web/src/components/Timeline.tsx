@@ -12,6 +12,8 @@ import { navigate } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Icon, type IconName } from './icons';
 import { MailReply, isMailboxProvider } from './MailReply';
+import { CalendarPlan, WhatsAppReply } from './ChannelActions';
+import { PROVIDER_NAMES } from './Connections';
 import { Confirm, Dialog, RowMenu } from './ui';
 import { useTrashToast } from '../lib/trash';
 import { normalizeLocale } from '../../../shared/src/i18n';
@@ -184,6 +186,7 @@ export function HealthBadge({ accountId, field, value }: { accountId: string; fi
         {score === null ? <span className="muted">—</span> : <ScoreChip value={score} />}
         {band && <span className="muted">{t(`health.band.${band}` as MessageKey)}</span>}
         <button type="button" className="btn btn--quiet btn--small" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          <Icon name="help" size={16} />
           {open ? t('health.hide') : t('health.why')}
         </button>
       </div>
@@ -283,7 +286,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
       .then((r) => {
         if (!live) return;
         const map: Record<string, string> = {};
-        for (const cn of r.connections) if (cn.kind === 'source' && isMailboxProvider(cn.provider) && cn.status !== 'disabled' && !map[cn.provider]) map[cn.provider] = cn.id;
+        for (const cn of r.connections) if (cn.kind === 'source' && (isMailboxProvider(cn.provider) || ['whatsapp', 'gcal', 'outlookcal'].includes(cn.provider)) && cn.status !== 'disabled' && !map[cn.provider]) map[cn.provider] = cn.id;
         setMailboxConns(map);
       })
       .catch(() => undefined);
@@ -401,6 +404,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           <p className="tl__with">{t('timeline.with', { names: [...a.userIds.map((u) => nameOf(u)), ...a.contactIds.map(contactName)].filter(Boolean).join(', ') })}</p>
         )}
         {a.kind === 'email' && a.externalId && mailboxConns[a.source] && <MailReply connectionId={mailboxConns[a.source]} accountId={accountId} activity={a} onSent={load} />}
+        {a.source === 'whatsapp' && a.externalId && mailboxConns.whatsapp && !a.authorId && <WhatsAppReply connectionId={mailboxConns.whatsapp} accountId={accountId} activity={a} onSent={load} />}
       </div>
     </li>
   );
@@ -603,6 +607,11 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
           </button>
         </div>
       </div>
+      {canReplyMail && (mailboxConns.gcal || mailboxConns.outlookcal) && (
+        <div className="toolbar u-mb-8">
+          <CalendarPlan connectionId={mailboxConns.gcal ?? mailboxConns.outlookcal} app={PROVIDER_NAMES[mailboxConns.gcal ? 'gcal' : 'outlookcal']} accountId={accountId} guests={[]} />
+        </div>
+      )}
       {canWrite &&
         (!composing && !text ? (
           <button
@@ -653,6 +662,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
                 {t('timeline.add')}
               </button>
               <button type="button" className="btn btn--quiet btn--small" onClick={() => (setComposing(false), setText(''))}>
+                <Icon name="close" size={16} />
                 {t('common.cancel')}
               </button>
               <span className="field__hint">{t('timeline.addHint')}</span>
@@ -674,6 +684,7 @@ export function AccountTimeline({ accountId, hasContacts }: { accountId: string;
       )}
       {next && (
         <button type="button" className="btn btn--quiet btn--small tl__older" onClick={more}>
+          <Icon name="chevronDown" size={16} />
           {t('timeline.older')}
         </button>
       )}
@@ -721,9 +732,11 @@ function EditActivity({ activity, onClose, onSaved }: { activity: Activity; onCl
       footer={
         <>
           <button className="btn btn--quiet" onClick={onClose}>
+            <Icon name="close" size={16} />
             {t('common.cancel')}
           </button>
           <button className="btn btn--primary" disabled={!text.trim()} onClick={save}>
+            <Icon name="check" size={16} />
             {t('common.save')}
           </button>
         </>

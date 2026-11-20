@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useState, type ComponentType } 
 import { LOCALES, type Locale } from '../../shared/src/i18n';
 import type { Me, OrgPublic } from '../../shared/src/model';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { RouteBar } from './components/Loader';
 import { Shell } from './components/Shell';
 import { ApiFailure, endPreview, get, onAuthLost, patch, post, previewAs, setApiLocale } from './lib/api';
 import { installDiagnostics } from './lib/diagnostics';
@@ -18,6 +19,7 @@ import { TASKS_CHANGED } from './lib/shell';
 import { ConsentBanner } from './components/ConsentBanner';
 import { rememberReturn, takeReturn } from './lib/returnTo';
 import { PageFallback, RouteFallback } from './components/RouteFallback';
+import { Icon } from './components/icons';
 
 // Code-splitting: every screen is its own chunk, so the first one carries only
 // what it needs. The screen the address points at starts loading with the app
@@ -257,6 +259,7 @@ export function App() {
   const terms = boot.kind === 'signed-in' ? boot.me.org.terms : null;
   return (
     <I18nProvider locale={locale} terms={terms} hold={boot.kind === 'loading'}>
+      <RouteBar />
       {boot.kind === 'loading' && <PageFallback />}
       {boot.kind === 'central' && (
         <Suspense fallback={<PageFallback />}>
@@ -337,6 +340,7 @@ function ErrorNote({ onRetry }: { onRetry: () => void }) {
       <div className="u-display-grid u-gap-12 u-justify-items-center">
         <p>{t('errors.network')}</p>
         <button className="btn" onClick={onRetry}>
+          <Icon name="refresh" size={16} />
           {t('common.retry')}
         </button>
       </div>

@@ -92,6 +92,10 @@ describe('the shapes of exported files', () => {
     });
     // A kanban CSV: the list IS the column.
     expect(guessImportMapping(['Card Name', 'List Name'])).toMatchObject({ 'List Name': 'status' });
+    // A Turkish export with both "Liste" and "Durum": Durum is the column, Liste is where the task lives,
+    // so the Boards step is offered (it was skipped when "Liste" was not recognised).
+    expect(guessImportMapping(['No', 'Başlık', 'Açıklama', 'Liste', 'Durum', 'Atanan', 'Son tarih'])).toMatchObject({ Başlık: 'title', Liste: 'list', Durum: 'status', No: 'ref' });
+    expect(guessImportMapping(['Görev adı', 'Liste adı'])).toMatchObject({ 'Liste adı': 'status' });
     expect(guessImportMapping(['Name', 'Status', SECTION_COLUMN])[SECTION_COLUMN]).toBe('list');
     expect(guessImportMapping(['Name', SECTION_COLUMN])[SECTION_COLUMN]).toBe('status');
   });

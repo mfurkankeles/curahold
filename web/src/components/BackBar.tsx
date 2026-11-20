@@ -22,6 +22,9 @@ export function parentOf(url: string): string | null {
   if (path === '/pages/new') return '/home';
   const sub = match('/settings/:tab/:sub', path);
   if (sub) return `/settings/${sub.tab}`;
+  if (match('/settings/:tab', path)) return '/settings';
+  if (match('/onboarding/plans/:id', path) || match('/onboarding/report/:id', path)) return '/onboarding/plans';
+  if (path === '/import') return '/accounts';
   if (['/trash', '/devices', '/profile', '/connect-ai'].includes(path)) return '/home';
   return null;
 }
@@ -122,11 +125,17 @@ export function BackBar({ types }: { types: RecordType[] | null }) {
  * one. `up` is where to go when there was none (a subtask opened by its own link
  * still leads to its task).
  */
-export function PanelBack({ up }: { up?: { title: string; go: () => void } | null }) {
+export function PanelBack({ up, onClose }: { up?: { title: string; go: () => void } | null; /** On a phone the panel is a whole screen: without anywhere else to go back to, Back closes it. */ onClose?: () => void }) {
   const { t } = useI18n();
   useLocation();
   const back = panelBack();
-  if (!back && !up) return null;
+  if (!back && !up)
+    return onClose ? (
+      <button className="btn btn--quiet panel__back panel__phoneback" onClick={onClose}>
+        <Icon name="arrowLeft" size={16} />
+        <span className="panel__backname">{t('common.back')}</span>
+      </button>
+    ) : null;
   const title = back ? nameOf(back.was) : up!.title;
   const label = title ? t('panel.backTo', { title }) : t('common.back');
   return (

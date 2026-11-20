@@ -134,6 +134,7 @@ export function SetupTestPage() {
           onClick={() => void approve(side, !a)}
           data-tour={!a && side === 'customer' ? 'setup-approve' : undefined}
         >
+          <Icon name="check" size={16} />
           {a ? t('sh.gate.withdraw') : t('sh.gate.approve')}
         </button>
       )}
@@ -176,6 +177,7 @@ export function SetupTestPage() {
                 </div>
                 {(can('org.manage') || can('users.manage')) && (
                   <button className="btn btn--quiet btn--small" onClick={() => void reset()} disabled={busy === 'reset'}>
+                    <Icon name="refresh" size={16} />
                     {t('sh.test.reset')}
                   </button>
                 )}
@@ -300,6 +302,7 @@ export function SetupTestPage() {
                                 )}
                                 <div className="sh-step__actions">
                                   <button type="button" className="btn btn--small" onClick={() => navigate(s.id === 'ticket' && s.reason === 'no_customer' ? '/accounts' : s.detail.connection ? `/settings/sources/${s.detail.connection}` : s.fix)}>
+                                    <Icon name="eye" size={16} />
                                     {t('sh.test.openFix')}
                                   </button>
                                   {s.canRun && s.issue?.status !== 'open' && (
@@ -338,11 +341,13 @@ export function SetupTestPage() {
                                     )}
                                     {s.status !== 'pass' && (
                                       <button type="button" className="btn btn--small" onClick={() => void mark(s, 'pass')} disabled={!!busy}>
+                                        <Icon name="check" size={16} />
                                         {t('sh.test.worked')}
                                       </button>
                                     )}
                                     {s.status !== 'fail' && (
                                       <button type="button" className="btn btn--small btn--quiet" onClick={() => void mark(s, 'fail')} disabled={!!busy}>
+                                        <Icon name="close" size={16} />
                                         {t('sh.test.didnt')}
                                       </button>
                                     )}
@@ -350,10 +355,12 @@ export function SetupTestPage() {
                                 )}
                                 {(s.status === 'todo' || s.status === 'fail') && !s.required ? (
                                   <button type="button" className="btn btn--small btn--quiet" onClick={() => void mark(s, 'skipped')} disabled={!!busy}>
+                                    <Icon name="close" size={16} />
                                     {t('sh.test.skip')}
                                   </button>
                                 ) : s.status !== 'todo' ? (
                                   <button type="button" className="btn btn--small btn--quiet" onClick={() => void mark(s, 'todo')} disabled={!!busy}>
+                                    <Icon name="undo" size={16} />
                                     {t('sh.test.undo')}
                                   </button>
                                 ) : null}
@@ -362,9 +369,11 @@ export function SetupTestPage() {
                             {!s.applies && s.canRun && !s.required && s.status === 'todo' && (
                               <div className="sh-step__actions">
                                 <button type="button" className="btn btn--small" onClick={() => navigate(s.fix)}>
+                                  <Icon name="eye" size={16} />
                                   {t('sh.test.openFix')}
                                 </button>
                                 <button type="button" className="btn btn--small btn--quiet" onClick={() => void mark(s, 'skipped')} disabled={!!busy}>
+                                  <Icon name="close" size={16} />
                                   {t('sh.test.skip')}
                                 </button>
                               </div>

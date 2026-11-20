@@ -4,8 +4,10 @@
    never by switching to white; long reading sits on a calmer veil. One brand shape:
    the mark's "C", drawn large, holding the live window. */
 
-@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Body text: preloaded, and `optional` so a font that arrives late never repaints the page (no shift, no second largest paint);
+   the next page has it from the cache. Headlines keep `swap` for the brand face. */
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: optional; src: url(figtree-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: optional; src: url(figtree-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; font-display: swap; src: url(bricolage-grotesque-latin-ext-wght-normal.woff2) format('woff2-variations'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
@@ -34,9 +36,14 @@
   --risk: #f2735c;
   --watch: #e3a54a;
   --good: #5ccfa6;
-  --display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
-  --text: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+  /* Per-script faces come from --script-* (site/chrome.css, set by the page's lang). */
+  --display: var(--script-display, 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif);
+  --text: var(--script-text, 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif);
   --wrap: 1180px;
+  /* The primary button's hover: darker, never lighter, so white text keeps ≥ 4.5:1 (7:1 here). */
+  --iris-down: #4b3fd8;
+  /* A control's outline on the night: ≥ 3:1 against --deep (WCAG 1.4.11). */
+  --edge: rgba(255, 255, 255, .45);
   --ease: cubic-bezier(.2, .7, .2, 1);
   /* +1 where text runs left to right, −1 where it runs right to left: horizontal motion multiplies by it. */
   --sx: 1;
@@ -78,15 +85,16 @@ h3 { font-size: 21px; line-height: 1.25; font-weight: 650; }
 .btn:hover::after { transform: translateX(130%); }
 .btn:active { transform: translateY(1px); }
 .btn--primary { background: var(--iris); color: #fff; box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--iris) 85%, transparent); }
-.btn--primary:hover { background: var(--iris-ink); transform: translateY(-2px); box-shadow: 0 16px 30px -12px color-mix(in srgb, var(--iris) 80%, transparent); }
-.btn--ghost { background: rgba(255, 255, 255, .04); color: var(--ink); border-color: rgba(255, 255, 255, .2); }
+.btn--primary:hover { background: var(--iris-down); transform: translateY(-2px); box-shadow: 0 16px 30px -12px color-mix(in srgb, var(--iris) 80%, transparent); }
+.btn--ghost { background: rgba(255, 255, 255, .04); color: var(--ink); border-color: var(--edge); }
 .btn--ghost:hover { border-color: var(--iris-hi); color: #fff; background: rgba(255, 255, 255, .08); transform: translateY(-2px); }
 .btn--ghost::after { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .12) 50%, transparent 70%); }
-.btn--glass { background: rgba(255, 255, 255, .08); color: #fff; border-color: rgba(255, 255, 255, .2); }
+.btn--glass { background: rgba(255, 255, 255, .08); color: #fff; border-color: var(--edge); }
 .btn--glass:hover { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .34); transform: translateY(-2px); }
 .btn--big { min-height: 52px; padding: 0 26px; font-size: 16px; }
-.btn svg { flex: none; width: 13px; height: 13px; }
-[dir='rtl'] .btn svg { transform: scaleX(-1); }
+.btn svg { flex: none; width: 16px; height: 16px; }
+/* Arrows point to the end of the line; the play mark and other glyphs keep their shape. */
+[dir='rtl'] .ic-dir { transform: scaleX(-1); }
 
 
 /* ------------------------------------------------------------------ sky */
@@ -107,7 +115,6 @@ body.home, body.blog {
 html.is-past .sky { opacity: .62; }
 .blog .sky { opacity: .5; }
 .sky i { position: absolute; left: calc(28px * var(--x) + 11.5px); top: calc(28px * var(--y) + 11.5px); width: 5px; height: 5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 14px 3px color-mix(in srgb, var(--c) 70%, transparent); }
-.sky i::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--c); opacity: 0; }
 .sky i:nth-child(1) { --c: #f2735c; --x: 21; --y: 5; }
 .sky i:nth-child(2) { --c: #e3a54a; --x: 48; --y: 23; }
 .sky i:nth-child(3) { --c: #e3a54a; --x: 14; --y: 3; }
@@ -130,6 +137,8 @@ html.is-past .sky { opacity: .62; }
 .hero__h { color: #fff; font-size: clamp(40px, 4.7vw, 64px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 750; }
 .hero__h .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .12em; margin-bottom: -.12em; max-width: 100%; }
 .hero__h .w > span { display: inline-block; }
+/* The category, inside the H1 so search engines read it with the outcome; quiet so the outcome leads. */
+.hero__k { display: block; margin-bottom: 18px; color: var(--fern-ink); font: 650 15px/1.3 var(--text); letter-spacing: .02em; }
 :lang(ja) .hero__h, :lang(zh) .hero__h, :lang(ko) .hero__h { font-size: clamp(32px, 4.3vw, 58px); font-weight: 800; }
 /* Japanese: small enough that the line can end at the comma, and filled in order rather than evened out. */
 :lang(ja) .hero__h { font-size: clamp(32px, 3.3vw, 48px); text-wrap: wrap; }
@@ -378,19 +387,14 @@ html.is-past .sky { opacity: .62; }
      pausing the hero pauses the bar and every scene with it. */
   html.js .tour__tab.is-on .tour__bar i { animation: bar var(--dur, 7s) linear both; }
   .hero__in.is-paused :is(.film *, .tour__bar i) { animation-play-state: paused !important; }
-  .hero__h .w > span { animation: wordrise .9s var(--ease) both; animation-delay: calc(.05s + var(--wi) * .07s); }
-  .hero__lead { animation: rise .7s var(--ease) .4s both; }
-  .hero__ctas { animation: rise .7s var(--ease) .5s both; }
-  .hero__note { animation: rise .6s var(--ease) .6s both; }
-  .film__win { animation: filmin 1s var(--ease) .25s both; }
+  /* The headline, its lead and the buttons are there from the first paint (they are what the page
+     is judged by, and what a slow phone shows first); the film and the arc carry the motion. */
+  .film__win { animation: filmin .5s var(--ease) .1s both; }
   .hero__arc path { animation: draw 1.7s var(--ease) .5s both; }
-  .sky i::after { animation: ping 3.4s var(--ease) calc(var(--x) * .13s) infinite; }
-  html.is-away .sky i::after { animation-play-state: paused; }
   .marq__track { animation: marq 56s linear infinite; }
-  html:is(.is-past, .is-away) .marq__track { animation-play-state: paused; }
+  html:is(.is-past, .is-away) .marq__track, .strip.is-paused .marq__track { animation-play-state: paused; }
   .cue__line i { animation: cue 2.4s var(--ease) infinite; }
   html:is(.is-past, .is-away) .cue__line i { animation-play-state: paused; }
-  .blog .sky i::after { animation: none; }
 }
 @keyframes f-up { from { opacity: 0; transform: translateY(10px); } }
 @keyframes f-pop { from { opacity: 0; transform: scale(.7); } }
@@ -442,11 +446,8 @@ html.is-past .sky { opacity: .62; }
   .cur--sprint { --grab-x: 20cqw; --grab-y: 50cqh; --drop-x: 84cqw; }
 }
 @keyframes bar { from { transform: scaleX(0); } }
-@keyframes wordrise { from { transform: translateY(112%); } }
-@keyframes rise { from { opacity: 0; transform: translateY(18px); } }
 @keyframes filmin { from { opacity: 0; transform: translateY(34px) scale(.97); } }
 @keyframes draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-@keyframes ping { 0% { opacity: .9; transform: scale(.4); } 70%, 100% { opacity: 0; transform: scale(1.9); } }
 @keyframes marq { to { transform: translateX(-50%); } }
 @keyframes cue { from { transform: translateY(-14px); } 70%, to { transform: translateY(36px); } }
 
@@ -473,13 +474,42 @@ html:not(.js) .tour__bar { display: none; }
 .marq__item { flex: none; margin: 0 22px; display: inline-flex; align-items: center; gap: 9px; color: #c9c5e8; font: 600 17px/1 var(--display); white-space: nowrap; opacity: .8; }
 .marq__item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--iris-hi); opacity: .7; }
 .marq:hover .marq__track { animation-play-state: paused; }
+/* Anything that moves for more than five seconds can be stopped (WCAG 2.2.2): a pause button with its words. */
+.strip { position: relative; }
+.strip__toggle { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html.js .strip__toggle { position: absolute; inset-inline-end: max(20px, calc((100% - var(--wrap)) / 2)); top: -6px; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--edge); border-radius: 999px; background: rgba(15, 12, 43, .7); color: var(--ink-2); font: 600 13px/1 var(--text); cursor: pointer; }
+  html.js .strip__toggle:hover { color: var(--ink); }
+  .strip__toggle svg { width: 12px; height: 12px; }
+}
+@media (pointer: coarse) { html.js .strip__toggle { min-height: 44px; } }
 
 /* ------------------------------------------------------------- the story */
 /* Below the first screen the browser lays a section out only as it comes near, so
    the first paint does not wait for the whole page. Sizes are remembered once seen. */
 /* Drawn only when near the screen. Not the story: it holds a pinned stage, and a
    lazily drawn parent makes a pinned child jump on some phones. */
-.bento, .pricing, .faq { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
+/* Off-screen sections skip rendering until near; the placeholder sizes are close to the real ones so the scrollbar does not jump. */
+.bento, .faq { content-visibility: auto; contain-intrinsic-size: auto 1480px; }
+.faq { contain-intrinsic-size: auto 380px; }
+/* The story's two halves are drawn lazily too: the steps list beside the stage and the window
+   inside it, never the pinned stage itself (see above). The script re-measures the steps when they
+   appear (its ResizeObserver on the story), so the scroll still drives the scenes exactly. On a phone
+   this cuts the layout and style work after the first paint by about 40% (Turkish landing page:
+   1,397 layout objects to 968), which is what kept its blocking time over budget. */
+/* The placeholder sizes are the drawn sizes (content box, 1440 wide and on a phone), so the page is
+   its real height before anything is drawn and the scrollbar does not jump. */
+.story__steps { content-visibility: auto; contain-intrinsic-size: auto 1890px; }
+.story__win { content-visibility: auto; contain-intrinsic-size: auto 440px; }
+.wy--brief, .psum { content-visibility: auto; contain-intrinsic-size: auto 520px; }
+.psum { contain-intrinsic-size: auto 170px; }
+@media (max-width: 760px) {
+  .bento { contain-intrinsic-size: auto 3140px; }
+  .faq { contain-intrinsic-size: auto 480px; }
+  .story__steps { contain-intrinsic-size: auto 2530px; }
+  .wy--brief { contain-intrinsic-size: auto 950px; }
+  .psum { contain-intrinsic-size: auto 300px; }
+}
 /* The hero's quiet way in: a hairline with a light running down it. */
 .cue { display: flex; flex-direction: column; align-items: center; gap: 10px; width: fit-content; margin: -8px auto 26px; padding: 6px 12px; color: var(--ink-3); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .2s var(--ease); }
 .cue:hover { color: var(--ink); }
@@ -489,11 +519,13 @@ html:not(.js) .tour__bar { display: none; }
 /* One customer, six steps. The steps are the text; the stage beside them (above
    them on a phone) holds still and follows the reading. The script sets --p
    (0 to 6) on the stage as the page scrolls; everything below is drawn from it. */
-.story { padding: 96px 0 24px; overflow-x: clip; }
+.story { padding: 72px 0 24px; overflow-x: clip; }
 .story__head { max-width: 760px; }
 .story__track { position: relative; margin-top: 40px; }
 .story__steps { list-style: none; margin: 0; padding: 0; }
-.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 56vh; padding-block: 28px; }
+/* Each step holds the stage for about half a screen of scrolling: long enough to read, short enough to keep the page brisk. */
+/* 35vh a step on a wide screen: enough scroll for each scene to play, and the landing page stays under 8,000 px at 1440. */
+.story__step { display: grid; align-content: center; justify-items: start; gap: 12px; min-height: 35vh; padding-block: 24px; }
 .story__n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(140, 125, 255, .45); color: var(--iris-ink); font: 700 13px/1 var(--text); font-variant-numeric: tabular-nums; transition: background-color .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease); }
 .story__step h3 { font-size: clamp(23px, 2.3vw, 30px); line-height: 1.15; letter-spacing: -0.02em; max-width: 22ch; }
 .story__step p { margin: 0; color: var(--ink-2); font-size: 17px; line-height: 1.6; max-width: 44ch; text-wrap: pretty; }
@@ -666,7 +698,7 @@ html:not(.js) .story__steps { padding-block: 0; }
 }
 
 /* ------------------------------------------------------------------ bento */
-.bento { padding: 104px 0 48px; --px: 8%; --py: 140px; --pw: 50%; --ph: 520px; }
+.bento { padding: 72px 0 40px; --px: 8%; --py: 140px; --pw: 50%; --ph: 520px; }
 .bento__g { margin-top: 44px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
 .tile { position: relative; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; background: var(--paper); border: 1px solid rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); overflow: hidden; }
 .tile__c { display: grid; gap: 8px; align-content: start; padding: 28px 28px 0; }
@@ -861,14 +893,44 @@ html:not(.js) .story__steps { padding-block: 0; }
 .plan .btn { justify-self: start; }
 .plan--business { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(165deg, #2a2378, var(--night) 62%); border-color: rgba(140, 125, 255, .4); color: #e8e6f7; }
 .plan--business::before { content: ''; position: absolute; z-index: -1; inset-inline-end: -20%; top: -40%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(91, 77, 232, .75), transparent 68%); }
-.plan--business h3, .plan--business .plan__amount, .plan--business .plan__plus { color: #fff; }
+.plan--business .plan__name, .plan--business .plan__amount, .plan--business .plan__plus { color: #fff; }
 .plan--business .plan__per { color: #a8a3d8; }
 .plan--business li { color: #d7d4f2; }
 .plan--business li svg { color: #5ccfa6; }
 .pricing__fine { margin: 18px 0 0; color: var(--ink-3); font-size: 14px; max-width: 72ch; }
+/* The plan's name reads as a card title; it is an h2 because the page's h1 is "Pricing". */
+.plan__name { font-size: 21px; line-height: 1.25; font-weight: 650; letter-spacing: 0; }
+/* /pricing/: the plans come straight after a compact header, so prices sit in the first screen. */
+.pricing--page { padding: 8px 0 40px; content-visibility: visible; }
+.pricing--page .plans { margin-top: 16px; }
+.pricing--page .plan { padding: 28px 30px; gap: 12px; }
+
+/* The comparison table: a ruled grid, the plan columns centred, scrolling sideways on a narrow phone. */
+.cmp__scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.cmp__t { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 15.5px; }
+.cmp__t col.cmp__plan { width: 22%; }
+@media (max-width: 560px) { .cmp__t { font-size: 14.5px; } .cmp__t col.cmp__plan { width: 26%; } .cmp__price { white-space: normal; } }
+.cmp__t th, .cmp__t td { padding: 14px 18px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.cmp__t tr:last-child > * { border-bottom: 0; }
+.cmp__t th[scope='row'], .cmp__t thead th:first-child { text-align: start; font-weight: 500; color: var(--ink-2); }
+.cmp__t thead th { font: 650 16px/1.3 var(--display); color: var(--ink); background: var(--mist); }
+.cmp__t td svg { width: 20px; height: 20px; margin-inline: auto; color: var(--good); }
+.cmp__price { font-weight: 650; color: var(--ink); white-space: nowrap; }
+.cmp__no { color: var(--ink-3); }
+.cmp__ent { margin: 20px 0 0; color: var(--ink-2); max-width: 72ch; }
+.cmp__ent a { font-weight: 600; }
+
+/* The landing page's pricing: two lines and a link, not the full table. */
+.psum { padding: 24px 0 8px; }
+.psum__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; padding: 32px 36px; border-radius: 24px; background: var(--paper); border: 1px solid var(--line); }
+.psum h2 { font-size: clamp(26px, 2.6vw, 34px); }
+.psum__line { margin: 10px 0 0; color: var(--ink-2); font-size: 18px; max-width: 58ch; }
+
+/* Words a screen reader says that the eye gets from a mark (✓, —). */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* -------------------------------------------------------------------- faq */
-.faq { padding: 56px 0 88px; --ct: 0px; }
+.faq { padding: 56px 0 64px; --ct: 0px; }
 .faq__in { display: grid; grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr); gap: 48px; align-items: start; }
 .faq details { border-top: 1px solid var(--line); }
 .faq details:last-child { border-bottom: 1px solid var(--line); }
@@ -922,7 +984,8 @@ html:not(.js) .story__steps { padding-block: 0; }
 /* ------------------------------------------------------- sign-in dialog */
 
 /* ---- sections settle into place once; hidden only after the script takes ownership ---- */
-html.js [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: calc(var(--i, 0) * .06s); }
+/* Below the first screen, sections settle in: 300 ms, 12 px, at most five steps of 30 ms. */
+html.js [data-reveal] { opacity: 0; transform: translateY(12px); transition: opacity .3s var(--ease), transform .3s var(--ease); transition-delay: calc(min(var(--i, 0), 5) * 30ms); }
 html.js [data-reveal].is-in { opacity: 1; transform: none; }
 
 /* ------------------------------------------------------------ narrower */
@@ -991,6 +1054,9 @@ html.js [data-reveal].is-in { opacity: 1; transform: none; }
   .pricing { padding: 48px 0 40px; }
   .plans { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 24px; }
   .plan { padding: 26px 22px; border-radius: 20px; }
+  .pricing--page .plan { padding: 22px 20px; }
+  .psum__in { padding: 24px 20px; }
+  .cmp__t th, .cmp__t td { padding: 12px 12px; }
   .faq { padding: 40px 0 64px; }
   .cta { padding-bottom: 56px; }
   .cta__card { padding: 52px 22px; border-radius: 24px; }
