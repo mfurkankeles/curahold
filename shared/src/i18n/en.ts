@@ -785,7 +785,7 @@ export const en = {
   'conn.oneWayHint': 'For any tool with an incoming webhook — or Zapier, Make and n8n to reach thousands more. Boards can post new and finished tasks there.',
   'conn.connect': 'Connect {app}',
   'conn.connected': '{app} is connected.',
-  'conn.notOnServer': "Not turned on for this Curahold yet. Whoever runs your Curahold server can turn it on; until then, bring the data in with a spreadsheet or a file.",
+  'conn.notOnServer': "Not turned on for this Curahold yet: ask whoever runs your Curahold server to turn it on.",
   'conn.working': 'Working',
   'conn.paused': 'Paused',
   'conn.problem': 'Needs attention',

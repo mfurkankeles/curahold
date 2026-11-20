@@ -1180,7 +1180,7 @@ export const he: Partial<Record<MessageKey, string>> = {
   'conn.oneWayHint': "לכל כלי עם Webhook נכנס — או Zapier, Make ו-n8n כדי להגיע לאלפי נוספים. לוחות יכולים לפרסם שם משימות חדשות ושהושלמו.",
   'conn.connect': "חבר את {app}",
   'conn.connected': "{app} מחובר.",
-  'conn.notOnServer': "עדיין לא מופעל ב-Curahold הזה. מי שמנהל את שרת ה-Curahold שלכם יכול להפעיל אותו; עד אז אפשר להביא את הנתונים בגיליון או בקובץ.",
+  'conn.notOnServer': "עדיין לא מופעל ב-Curahold הזה: בקשו ממי שמנהל את שרת ה-Curahold שלכם להפעיל אותו.",
   'conn.working': "פעיל",
   'conn.paused': "מושהה",
   'conn.problem': "דורש תשומת לב",

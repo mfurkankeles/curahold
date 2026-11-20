@@ -131,8 +131,7 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
   customer" like the task form.
 - The trial request form, opened in another tab, says the answers are kept and only the e-mail needs confirming again,
   then returns to the step it was on; before, it silently started over.
-- Tools that are not turned on for an installation say who can turn them on and what to use meanwhile, instead of "not set
-  up on this server".
+- Tools that are not turned on for an installation say who can turn them on, instead of "not set up on this server".
 
 - A connection that stopped working now says why in your language (sign-in no longer accepted, no permission, could not
   be reached, or a neutral "reported a problem"), with the service's own message under it, in the reconnect banner and the

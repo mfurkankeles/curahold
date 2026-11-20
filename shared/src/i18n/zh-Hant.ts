@@ -1180,7 +1180,7 @@ export const zhHant: Partial<Record<MessageKey, string>> = {
   'conn.oneWayHint': "適用於任何支援傳入 Webhook 的工具——或透過 Zapier、Make 與 n8n 連接數千種其他工具。看板可以將新任務與已完成的任務發佈到那裡。",
   'conn.connect': "連接 {app}",
   'conn.connected': "{app} 已連接。",
-  'conn.notOnServer': "這個 Curahold 尚未啟用。負責 Curahold 伺服器的人可以啟用它；在那之前，請用試算表或檔案匯入資料。",
+  'conn.notOnServer': "這個 Curahold 尚未啟用：請聯絡負責 Curahold 伺服器的人啟用它。",
   'conn.working': "運作中",
   'conn.paused': "已暫停",
   'conn.problem': "需要處理",

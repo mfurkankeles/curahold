@@ -1180,7 +1180,7 @@ export const ja: Partial<Record<MessageKey, string>> = {
   'conn.oneWayHint': "受信 Webhook を持つあらゆるツールに対応します。Zapier、Make、n8n を使えば、さらに数千のアプリにも届きます。ボードは新規タスクと完了したタスクをそこに投稿できます。",
   'conn.connect': "{app} に接続",
   'conn.connected': "{app} に接続しました。",
-  'conn.notOnServer': "この Curahold ではまだ有効になっていません。Curahold のサーバーを運用している担当者が有効にできます。それまではスプレッドシートかファイルでデータを取り込んでください。",
+  'conn.notOnServer': "この Curahold ではまだ有効になっていません。Curahold のサーバーを運用している担当者に有効化を依頼してください。",
   'conn.working': "正常",
   'conn.paused': "一時停止中",
   'conn.problem': "要確認",

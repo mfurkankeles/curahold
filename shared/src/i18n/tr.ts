@@ -770,7 +770,7 @@ export const tr: Record<MessageKey, string> = {
   'conn.oneWayHint': 'Gelen webhook\'u olan her araç için — ya da binlercesine ulaşmak için Zapier, Make ve n8n. Panolar yeni ve tamamlanan görevleri oraya gönderebilir.',
   'conn.connect': '{app} bağla',
   'conn.connected': '{app} bağlandı.',
-  'conn.notOnServer': "Bu Curahold'da henüz açık değil. Curahold sunucunuzu yöneten kişi açabilir; o zamana kadar verileri bir tablo ya da dosyayla getirin.",
+  'conn.notOnServer': "Bu Curahold'da henüz açık değil: açması için Curahold sunucunuzu yöneten kişiye başvurun.",
   'conn.working': 'Çalışıyor',
   'conn.paused': 'Durduruldu',
   'conn.problem': 'Bakılması gerek',

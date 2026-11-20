@@ -1180,7 +1180,7 @@ export const ko: Partial<Record<MessageKey, string>> = {
   'conn.oneWayHint': "수신 웹훅을 지원하는 모든 도구에 사용할 수 있으며, Zapier, Make, n8n을 통해 수천 개의 앱에 연결할 수도 있습니다. 보드에서 새 작업과 완료된 작업을 게시할 수 있습니다.",
   'conn.connect': "{app} 연결",
   'conn.connected': "{app}이(가) 연결되었습니다.",
-  'conn.notOnServer': "이 Curahold에서는 아직 켜져 있지 않습니다. Curahold 서버를 운영하는 담당자가 켤 수 있습니다. 그동안에는 스프레드시트나 파일로 데이터를 가져오세요.",
+  'conn.notOnServer': "이 Curahold에서는 아직 켜져 있지 않습니다. Curahold 서버를 운영하는 담당자에게 켜 달라고 요청하세요.",
   'conn.working': "정상 작동 중",
   'conn.paused': "일시중지됨",
   'conn.problem': "확인 필요",
