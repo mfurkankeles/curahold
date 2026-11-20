@@ -201,6 +201,14 @@ grant select, insert on widgets to curahold_app;
 Foreign keys pair `org_id` with the id so a row can never point into
 another company. Run `npm test`: migrations run on every test setup.
 
+Then regenerate the row types: `npx tsx scripts/db/row-types.ts` writes
+`api/src/db/rows.gen.ts` (one interface per table, read from the migrated schema;
+`--check` says when it is stale). Pass them to queries so a misspelt column is a
+type error: `q.query<WidgetsRow>('select * from widgets where id = $1', [id])`, or
+`q.query<Pick<WidgetsRow, 'id' | 'name'>>(…)` for some columns. A join or computed
+column gets its own small type. Nullable columns are `| null`; JSON columns are
+`Json` and are narrowed where they are read.
+
 ### an API endpoint
 
 In the matching `api/src/routes/*.ts`:
@@ -212,7 +220,7 @@ widgetRoutes.post('/widgets', async (c) => {
   const input = await body(c, z.object({ name: z.string().trim().min(1).max(200) }));
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [w] = await q.query('insert into widgets (org_id, name, created_by) values (app_org(), $1, $2) returning *', [input.name, auth.userId]);
+    const [w] = await q.query<WidgetsRow>('insert into widgets (org_id, name, created_by) values (app_org(), $1, $2) returning *', [input.name, auth.userId]);
     await audit(q, { orgId: c.get('org').id, actorId: auth.userId, action: 'widget.created', entity: 'widget', entityId: w.id });
     return w;
   });
