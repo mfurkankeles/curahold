@@ -18,6 +18,7 @@ import { createMemoryPg, pgliteDb } from './db/pglite';
 import { runScheduled } from './lib/scheduler';
 import { MemoryEmail, MemoryStorage } from './lib/services';
 import { seedDemo } from '../../scripts/seed-demo';
+import { seedOwnerPlan } from '../../scripts/seed-owner-plan';
 import { attachLive } from './live/node';
 import { assistantConfigFrom } from './assistant/cost';
 import { teamConfigFrom } from './team/config';
@@ -32,6 +33,8 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
   await migrate(db, loadMigrations());
   // English unless asked (DEMO_LOCALE=tr for a Turkish sample company).
   const demo = await seedDemo(db, { locale: opts.locale ?? (['en', 'tr'] as const).find((l) => l === process.env.DEMO_LOCALE) ?? 'en' });
+  // The owner console's investor side, with invented sample data (never in production).
+  await seedOwnerPlan(db);
   const email = new MemoryEmail();
   const origSend = email.send.bind(email);
   email.send = async (m) => {
@@ -66,6 +69,11 @@ export async function startLocal(opts: { port: number; publicPort: number; serve
     // The assistant: a model only when a key is in the environment; otherwise the docs search answers.
     assistant: assistantConfigFrom(process.env),
     team: teamConfigFrom(process.env),
+    // Phone alerts for the owner, when a VAPID key pair is in the environment (scripts/plan/vapid-keys.ts).
+    push:
+      process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
+        ? { publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY, subject: process.env.VAPID_SUBJECT || 'mailto:desk@curahold.localhost' }
+        : undefined,
   };
   const storage = new MemoryStorage();
   const docsDir = join(import.meta.dirname, '..', '..', 'dist', 'web', 'docs');

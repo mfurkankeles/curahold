@@ -21,7 +21,7 @@ Bu adresler vardır ama tarayıcıya ya da başka makinelere aittir. Hiçbir şe
 | `/connections/…` | 33 | Bağlantıları ve alan eşlemelerini yönetme: tarayıcıda bir yönetici. |
 | `/consent/…` | 2 | Kişinin gizlilik ve çerez tercihleri; tarayıcıdan kaydedilir. |
 | `/consent-event/…` | 1 | Bir ziyaretçinin çerez tercihi (hesapsız), onayın ispatı olarak kaydedilir: sürüm, metin özeti, ülke; bildirim gönderir. |
-| `/desk/…` | 81 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı, ayrıca platform sahibinin konsolu ve yapay zekâ ekibinin onayları; yalnızca Curahold'un kendi oturumu ya da anahtarlarıyla açılır. |
+| `/desk/…` | 98 | Curahold desteğinin kendi yardım talebi kuyruğu ve e-postayla gelen cevapların kapısı, ayrıca platform sahibinin konsolu ve yapay zekâ ekibinin onayları; yalnızca Curahold'un kendi oturumu ya da anahtarlarıyla açılır. |
 | `/help/…` | 7 | Curahold desteğine yardım talepleri ve konuşmaları; ürünün içinden. |
 | `/help-files/…` | 1 | Desteğe gönderilen dosyalar. |
 | `/hooks/…` | 3 | Sohbet uygulamalarının ve takvimlerin geri çağrıları. |

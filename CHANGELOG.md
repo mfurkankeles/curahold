@@ -26,6 +26,17 @@ Unreleased to the version and date and start a new Unreleased section. Use inven
 
 ### Added
 
+- Owner console, Plan & targets: two new views. **Budget & investors** shows the budget against what was really spent
+  with the runway your cash gives, the plan's two milestones (expanded and switched companies) counted on real data,
+  fundraising windows with their dates, target and status, and your own investor pipeline (stage, next step and its day;
+  a removed investor can be brought back for 30 days). **Load from the plan** fills targets, milestones, budget, windows
+  and tasks from the business plan's `targets.json` (also `scripts/plan/load-targets.ts`); loading again is safe.
+- Owner console: a **Monday summary** e-mail at 09:00 Istanbul time with last week's targets against actuals, trial
+  requests, revenue and invoices, errors and alerts and the AI team's proposals waiting for you — written without any AI
+  model, once a week, in Turkish or English, with a preview and an off switch in the console.
+- Owner console: **alerts on your phone** for help requests that block a customer, system alerts and the Monday summary,
+  by free Web Push (encrypted so only your device reads it), once the server has a VAPID key pair (`VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`).
 - Sales site: a small content hub in all eleven languages (/resources/): four templates (renewal playbook, business review (QBR)
   agenda, sales-to-onboarding hand-over checklist, health score sheet) and six plain definitions (customer health score, churn,
   contract renewal, customer portal, customer onboarding, cost to serve), the same items in every language, each saying only
