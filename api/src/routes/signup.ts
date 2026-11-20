@@ -4,6 +4,7 @@
 //   3. GET  /signup/slug      — is this address free?
 //   4. POST /signup/complete  — company, address, language, template → the new
 //      company exists; the browser goes to <slug>.curahold.com already signed in.
+import type { SignupsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate } from '../../../shared/src/i18n';
@@ -84,7 +85,7 @@ signupRoutes.post('/verify', async (c) => {
   const deps = c.get('deps');
   const now = nowOf(deps);
   const found = await deps.db.system(async (q) => {
-    const [s] = await q.query(
+    const [s] = await q.query<Pick<SignupsRow, 'id' | 'email'>>(
       `update signups set verified_at = coalesce(verified_at, now())
         where token_hash = $1 and expires_at > now() and org_id is null returning id, email`,
       [await sha256Hex(input.token)],
@@ -158,7 +159,7 @@ signupRoutes.post('/complete', async (c) => {
   if (problem) fail('validation', { fields: 'slug' }, { fields: ['slug'], reason: problem });
 
   const ok = await deps.db.system(async (q) => {
-    const [s] = await q.query('select id from signups where id = $1 and email = $2 and org_id is null and verified_at is not null', [ticket!.s, ticket!.e]);
+    const [s] = await q.query<Pick<SignupsRow, 'id'>>('select id from signups where id = $1 and email = $2 and org_id is null and verified_at is not null', [ticket!.s, ticket!.e]);
     if (!s) return 'invalid_token' as const;
     const [made] = await q.query<{ n: number }>(
       `select count(*)::int as n from signups where email = $1 and org_id is not null and created_at > now() - interval '1 day'`,

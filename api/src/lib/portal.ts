@@ -1,5 +1,6 @@
 // The customer portal, the company's side: is it on, sign-in links for
 // customers' people, and telling them when a reply is written for them.
+import type { TasksRow } from '../db/rows.gen';
 import { inspectContent } from './uploadScan';
 import { normalizeLocale, translate, type Locale, intlTag } from '../../../shared/src/i18n';
 import { portalAuthOf, portalBrandOf, type PortalAuth, type PortalBrand, type PortalSignInOptions } from '../../../shared/src/portal';
@@ -277,7 +278,7 @@ export async function tellCustomerStatus(deps: Deps, orgId: string, taskId: stri
   if (!step || step === t.told) return;
   // Claim the step first, so two moves at once tell it once.
   const claimed = await deps.db.system((q) =>
-    q.query(
+    q.query<Pick<TasksRow, 'id'>>(
       `update tasks set portal_status_told = $3, portal_approved_at = case when $3 = 'doing' then null else portal_approved_at end,
               portal_approved_by = case when $3 = 'doing' then null else portal_approved_by end
         where id = $1 and org_id = $2 and portal_status_told is distinct from $3 returning id`,

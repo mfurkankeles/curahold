@@ -4,6 +4,7 @@
 // staff did, Plan & targets and the go-live checklist. Only the platform owner
 // in his own console session reaches these (ownerOnly); decisions are written
 // to the desk's log.
+import type { PlanTasksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CHECKLIST } from '../../../shared/src/checklist';
@@ -149,7 +150,7 @@ ownerRoutes.post('/plan/tasks', async (c) => {
 ownerRoutes.patch('/plan/tasks/:id', async (c) => {
   const input = await body(c, z.object({ done: z.boolean().optional(), dueOn: isoDate.optional(), title: z.string().trim().min(1).max(300).optional() }));
   const [row] = await c.get('deps').db.system((q) =>
-    q.query(
+    q.query<Pick<PlanTasksRow, 'id'>>(
       `update plan_tasks set done_at = case when $2::boolean is null then done_at when $2 then coalesce(done_at, now()) else null end,
               due_on = coalesce($3::date, due_on), title = coalesce($4, title) where id = $1 returning id`,
       [id(c), input.done ?? null, input.dueOn ?? null, input.title ?? null],

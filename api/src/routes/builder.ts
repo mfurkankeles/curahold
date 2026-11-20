@@ -1,5 +1,6 @@
 // The report builder: what can be reported on, running a report as it is
 // being built, and the reports people keep.
+import type { ReportsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AccountField } from '../../../shared/src/model';
@@ -92,14 +93,14 @@ builderRoutes.post('/reports/run', async (c) => {
 /** Saved reports: the person's own and the shared ones. */
 builderRoutes.get('/reports/saved', async (c) => {
   const me = c.get('auth').userId;
-  const rows = await run(c, (q) => q.query('select * from reports order by sort_text(name)'));
+  const rows = await run(c, (q) => q.query<ReportsRow>('select * from reports order by sort_text(name)'));
   return c.json({ reports: rows.map((r) => toReport(r, me)) });
 });
 
 /** One saved report; 404 when unknown or not visible. */
 builderRoutes.get('/reports/saved/:id', async (c) => {
   const id = param(c, 'id');
-  const [row] = await run(c, (q) => q.query('select * from reports where id = $1', [id]));
+  const [row] = await run(c, (q) => q.query<ReportsRow>('select * from reports where id = $1', [id]));
   if (!row) fail('not_found');
   return c.json({ report: toReport(row, c.get('auth').userId) });
 });
@@ -118,7 +119,7 @@ builderRoutes.post('/reports/saved', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<ReportsRow>(
       `insert into reports (org_id, name, description, def, shared, created_by) values ($1, $2, $3, $4, $5, $6) returning *`,
       [org.id, input.name, input.description ?? '', JSON.stringify(input.def), input.shared ?? false, auth.userId],
     );
@@ -139,7 +140,7 @@ builderRoutes.patch('/reports/saved/:id', async (c) => {
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
     // Row-level security lets through only its maker (or an administrator, for a shared one).
-    const [r] = await q.query(
+    const [r] = await q.query<ReportsRow>(
       `update reports set name = coalesce($2, name), description = coalesce($3, description), def = coalesce($4::jsonb, def),
               shared = coalesce($5, shared), updated_at = now() where id = $1 returning *`,
       [id, input.name ?? null, input.description ?? null, input.def ? JSON.stringify(input.def) : null, input.shared ?? null],

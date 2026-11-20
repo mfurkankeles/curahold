@@ -1,6 +1,7 @@
 // Runs every hour (Workers cron, or a timer on Node): the morning digest in
 // each person's company time zone, scheduled automations, delivery retries
 // and data clean-up (KVKK/GDPR: nothing is kept longer than it is useful).
+import type { OrgsRow, UsersRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { localDate, localHour, runScheduledAutomations, sweepRecordEvents } from './automations';
 import { sweepOnboarding } from './onboarding';
@@ -31,12 +32,12 @@ const DIGEST_ITEMS = 8;
  * and people with db.system() (a scheduled job has no signed-in person), each query filtered on org_id.
  */
 export async function sendDigests(deps: Deps, now: Date) {
-  const orgs = await deps.db.system((q) => q.query('select id, timezone from orgs'));
+  const orgs = await deps.db.system((q) => q.query<Pick<OrgsRow, 'id' | 'timezone'>>('select id, timezone from orgs'));
   let queued = 0;
   for (const org of orgs) {
     const hour = localHour(now, org.timezone);
     const today = localDate(now, org.timezone);
-    const users = await deps.db.system((q) => q.query(`select id, prefs from users where org_id = $1 and status = 'active' and seat = 'full'`, [org.id]));
+    const users = await deps.db.system((q) => q.query<Pick<UsersRow, 'id' | 'prefs'>>(`select id, prefs from users where org_id = $1 and status = 'active' and seat = 'full'`, [org.id]));
     for (const u of users) {
       const prefs = prefsOf(u.prefs);
       if (prefs.events.digest === false || prefs.digestHour !== hour) continue;

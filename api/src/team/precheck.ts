@@ -4,6 +4,7 @@
 //
 // The cadences are data (shared/src/team/cadence.ts); tick() is what a
 // scheduled task calls — the conductor creates those, nothing here schedules.
+import type { AgentTasksRow, AgentWakesRow, ApprovalsRow, CompanyLogRow, MeetingsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import type { Q } from '../db';
 import { nowOf } from '../context';
@@ -39,13 +40,13 @@ export async function precheck(q: Q, seat: string, now: Date, extra: Signal[] = 
   if (p.state === 'dormant') return no('dormant');
   if (!isActive(p)) return no('inactive');
   if (await isPaused(q, seat)) return no('paused');
-  const [w] = await q.query('select checked_at, seen_log, ran_at from agent_wakes where seat = $1', [seat]);
+  const [w] = await q.query<Pick<AgentWakesRow, 'checked_at' | 'seen_log' | 'ran_at'>>('select checked_at, seen_log, ran_at from agent_wakes where seat = $1', [seat]);
   const since: Date = w?.checked_at ? new Date(w.checked_at) : new Date(0);
   const seen = Number(w?.seen_log ?? 0);
   const ranAt: Date | null = w?.ran_at ? new Date(w.ran_at) : null;
   const events: string[] = [];
 
-  const tasks = await q.query(`select title, priority, from_seat from agent_tasks where seat = $1 and status = 'queued' order by (priority = 'urgent') desc, created_at limit 10`, [seat]);
+  const tasks = await q.query<Pick<AgentTasksRow, 'title' | 'priority' | 'from_seat'>>(`select title, priority, from_seat from agent_tasks where seat = $1 and status = 'queued' order by (priority = 'urgent') desc, created_at limit 10`, [seat]);
   for (const t of tasks) events.push(`Task${t.priority === 'urgent' ? ' (urgent)' : ''} from ${t.from_seat ?? 'owner'}: ${t.title}`);
   const threads = await q.query(
     `select id, seat, body from company_log where id > $2 and seat <> $1 and kind = 'thread'
@@ -53,7 +54,7 @@ export async function precheck(q: Q, seat: string, now: Date, extra: Signal[] = 
     [seat, seen],
   );
   for (const t of threads) events.push(`Thread from ${t.seat}: ${String(t.body).slice(0, 300)}`);
-  const meetings = await q.query(
+  const meetings = await q.query<Pick<MeetingsRow, 'id' | 'title'>>(
     `select id, title from meetings where $1 = any (attendees) and (status = 'live' or (status = 'scheduled' and coalesce(starts_at, created_at) <= $2::timestamptz + interval '10 minutes'))`,
     [seat, now.toISOString()],
   );
@@ -63,7 +64,7 @@ export async function precheck(q: Q, seat: string, now: Date, extra: Signal[] = 
     const [r] = await q.query<{ n: number }>(`select count(*)::int as n from approvals where decided_at > $1 and status <> 'pending'`, [since.toISOString()]);
     if (r.n) events.push(`${r.n} approvals decided since the last look`);
   } else {
-    const own = await q.query(`select ref, title, status from approvals where proposed_by = $1 and decided_at > $2 limit 5`, [seat, since.toISOString()]);
+    const own = await q.query<Pick<ApprovalsRow, 'ref' | 'title' | 'status'>>(`select ref, title, status from approvals where proposed_by = $1 and decided_at > $2 limit 5`, [seat, since.toISOString()]);
     for (const a of own) events.push(`Your proposal ${a.ref} was ${a.status}: ${a.title}`);
   }
   if (signals.has('trials')) {
@@ -75,7 +76,7 @@ export async function precheck(q: Q, seat: string, now: Date, extra: Signal[] = 
     if (r.n) events.push(`${r.n} new support requests`);
   }
   if (signals.has('security') || signals.has('usage')) {
-    const alerts = await q.query(`select body, ref from company_log where kind = 'alert' and id > $1 order by id limit 10`, [seen]);
+    const alerts = await q.query<Pick<CompanyLogRow, 'body' | 'ref'>>(`select body, ref from company_log where kind = 'alert' and id > $1 order by id limit 10`, [seen]);
     for (const a of alerts) {
       const isUsage = String(a.ref ?? '').startsWith('budget80:');
       if ((isUsage && signals.has('usage')) || (!isUsage && signals.has('security'))) events.push(`Alert: ${a.body}`);

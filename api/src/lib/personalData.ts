@@ -7,6 +7,7 @@
 //     sign-ins, teams and activity, and the tasks and comments they can open
 //     today (a board they were taken off stays closed to them; an administrator
 //     can still answer a formal request with everything).
+import type { AssistantLogRow, AuditLogRow, CommentsRow, FilesRow, PortalIdentitiesRow, PortalSessionsRow, SessionsRow, TasksRow } from '../db/rows.gen';
 import { run, type C } from '../context';
 import type { Q } from '../db';
 import { iso, toComment, toTask } from './mappers';
@@ -36,14 +37,14 @@ export async function personalData(c: C, userId: string, scope: 'admin' | 'self'
     comments: await q.query(commentSql, [org.id, userId]),
   }));
   const own = await db.system(async (q) => ({
-    sessions: await q.query(
+    sessions: await q.query<Pick<SessionsRow, 'device_label' | 'method' | 'ip' | 'geo' | 'created_at' | 'last_seen_at' | 'revoked_at' | 'revoke_reason'>>(
       'select device_label, method, ip, geo, created_at, last_seen_at, revoked_at, revoke_reason from sessions where org_id = $1 and user_id = $2 order by created_at',
       [org.id, userId],
     ),
-    activity: await q.query('select action, entity, entity_id, at from audit_log where org_id = $1 and actor_id = $2 order by at', [org.id, userId]),
+    activity: await q.query<Pick<AuditLogRow, 'action' | 'entity' | 'entity_id' | 'at'>>('select action, entity, entity_id, at from audit_log where org_id = $1 and actor_id = $2 order by at', [org.id, userId]),
     teams: await q.query('select t.name from teams t join team_members m on m.team_id = t.id where t.org_id = $1 and m.user_id = $2', [org.id, userId]),
     // What they asked CuraAI, as long as the company keeps it (api/src/assistant).
-    assistant: await q.query('select surface, question, kind, created_at from assistant_log where org_id = $1 and user_id = $2 order by created_at', [org.id, userId]),
+    assistant: await q.query<Pick<AssistantLogRow, 'surface' | 'question' | 'kind' | 'created_at'>>('select surface, question, kind, created_at from assistant_log where org_id = $1 and user_id = $2 order by created_at', [org.id, userId]),
   }));
   return {
     exportedAt: new Date().toISOString(),
@@ -82,11 +83,11 @@ export async function portalPersonalData(c: C, portalUserId: string) {
     );
     if (!person) return null;
     const p = [org.id, portalUserId];
-    const sessions = await q.query('select created_at, last_seen_at, expires_at, revoked_at from portal_sessions where org_id = $1 and portal_user_id = $2 order by created_at', p);
-    const signIns = await q.query('select provider, email, created_at, last_used_at from portal_identities where org_id = $1 and portal_user_id = $2', p);
-    const tasks = await q.query('select id, title, created_at from tasks where org_id = $1 and portal_author_id = $2 order by created_at', p);
-    const comments = await q.query('select task_id, body, created_at from comments where org_id = $1 and portal_author_id = $2 order by created_at', p);
-    const files = await q.query('select name, size, mime, created_at from files where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const sessions = await q.query<Pick<PortalSessionsRow, 'created_at' | 'last_seen_at' | 'expires_at' | 'revoked_at'>>('select created_at, last_seen_at, expires_at, revoked_at from portal_sessions where org_id = $1 and portal_user_id = $2 order by created_at', p);
+    const signIns = await q.query<Pick<PortalIdentitiesRow, 'provider' | 'email' | 'created_at' | 'last_used_at'>>('select provider, email, created_at, last_used_at from portal_identities where org_id = $1 and portal_user_id = $2', p);
+    const tasks = await q.query<Pick<TasksRow, 'id' | 'title' | 'created_at'>>('select id, title, created_at from tasks where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const comments = await q.query<Pick<CommentsRow, 'task_id' | 'body' | 'created_at'>>('select task_id, body, created_at from comments where org_id = $1 and portal_author_id = $2 order by created_at', p);
+    const files = await q.query<Pick<FilesRow, 'name' | 'size' | 'mime' | 'created_at'>>('select name, size, mime, created_at from files where org_id = $1 and portal_author_id = $2 order by created_at', p);
     return {
       exportedAt: new Date().toISOString(),
       company: org.name,

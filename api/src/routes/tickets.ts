@@ -5,6 +5,7 @@
 // belongs to — by id, web address, the requester's email domain or name —
 // and is then like any other support ticket: on the customer page and
 // timeline, in rollups and in the health score.
+import type { AccountsRow, OrgsRow, RecordTypesRow, RecordsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ticketPriorityOf, ticketStatusOf } from '../../../shared/src/records';
@@ -57,10 +58,10 @@ const PUBLIC_MAIL = /^(gmail|googlemail|outlook|hotmail|live|yahoo|icloud|me|aol
 async function customerFor(q: Q, orgId: string, input: TicketInput): Promise<string | null> {
   const a = input.account ?? {};
   if (a.id) {
-    const [hit] = await q.query('select id from accounts where id = $1 and org_id = $2 and archived_at is null', [a.id, orgId]);
+    const [hit] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and org_id = $2 and archived_at is null', [a.id, orgId]);
     return hit?.id ?? null;
   }
-  const [org] = await q.query('select account_fields from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [orgId]);
   const urlKeys = ((org?.account_fields ?? []) as AccountField[]).filter((f) => f.type === 'url').map((f) => f.key);
   const domains = [a.domain ? hostOf(a.domain) : null, input.requester ? input.requester.split('@')[1] : null].filter((d): d is string => !!d && !PUBLIC_MAIL.test(d));
   if (domains.length && urlKeys.length) {
@@ -74,7 +75,7 @@ async function customerFor(q: Q, orgId: string, input: TicketInput): Promise<str
     if (hit) return hit.id;
   }
   if (a.name) {
-    const [hit] = await q.query('select id from accounts where org_id = $1 and archived_at is null and name_fold = fold_text($2) order by created_at limit 1', [orgId, a.name]);
+    const [hit] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where org_id = $1 and archived_at is null and name_fold = fold_text($2) order by created_at limit 1', [orgId, a.name]);
     if (hit) return hit.id;
   }
   return null;
@@ -86,10 +87,10 @@ const day = (v: string | null | undefined) => (v ? new Date(v.length === 10 ? `$
 export async function upsertTicket(q: Q, orgId: string, actorId: string | null, source: string, externalId: string, input: TicketInput, today: string) {
   const accountId = await customerFor(q, orgId, input);
   if (!accountId) fail('validation', { fields: 'account' }, { fields: ['account'], reason: 'no_customer' });
-  const [type] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null order by created_at limit 1`, [orgId]);
+  const [type] = await q.query<Pick<RecordTypesRow, 'id'>>(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null order by created_at limit 1`, [orgId]);
   const typeId = type?.id as string;
   const src = `api:${source}`;
-  const [had] = await q.query('select id, account_id, fields from records where org_id = $1 and type_id = $2 and source = $3 and external_id = $4', [orgId, typeId, src, externalId]);
+  const [had] = await q.query<Pick<RecordsRow, 'id' | 'account_id' | 'fields'>>('select id, account_id, fields from records where org_id = $1 and type_id = $2 and source = $3 and external_id = $4', [orgId, typeId, src, externalId]);
   // Sent again: only what was sent changes.
   const status = input.status !== undefined ? ticketStatusOf(input.status) : ((had?.fields?.status as string | undefined) ?? 'open');
   const done = status === 'solved' || status === 'closed';
@@ -104,18 +105,18 @@ export async function upsertTicket(q: Q, orgId: string, actorId: string | null, 
   };
   let row: Row;
   if (had) {
-    [row] = await q.query(
+    [row] = await q.query<RecordsRow>(
       `update records set name = $2, account_id = $3, fields = fields || $4::jsonb, archived_at = null, updated_at = now() where id = $1 returning *`,
       [had.id, input.subject, accountId, JSON.stringify(fields)],
     );
     if (!row) fail('not_found');
   } else {
-    [row] = await q.query(
+    [row] = await q.query<RecordsRow>(
       `insert into records (org_id, type_id, account_id, name, fields, source, external_id, created_by) values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
       [orgId, typeId, accountId, input.subject, JSON.stringify(fields), src, externalId, actorId],
     );
   }
-  const [org] = await q.query('select account_fields from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [orgId]);
   await recomputeRollups(q, orgId, org.account_fields ?? [], [accountId, had?.account_id ?? null]);
   return { id: row.id as string, accountId: accountId as string, created: !had, status };
 }
@@ -124,7 +125,7 @@ export async function upsertTicket(q: Q, orgId: string, actorId: string | null, 
 async function ensureTicketType(c: C) {
   const org = c.get('org');
   await c.get('deps').db.system(async (q) => {
-    const [have] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
+    const [have] = await q.query<Pick<RecordTypesRow, 'id'>>(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
     if (!have) await createRecordType(q, org.id, null, { kind: 'ticket' });
   });
 }

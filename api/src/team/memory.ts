@@ -2,6 +2,7 @@
 // memory (agent_memory, so it stays with the seat when the person or agent in
 // it changes). The owner can read, correct and delete every entry; the agent
 // reads these instead of whole histories (fewer tokens).
+import type { AgentMemoryRow } from '../db/rows.gen';
 import type { Q } from '../db';
 
 export const SUMMARY_KEY = 'summary';
@@ -31,7 +32,7 @@ export async function writeMemory(q: Q, seat: string, key: string, value: string
 
 /** Removes one memory entry; true if it existed. */
 export async function deleteMemory(q: Q, seat: string, key: string): Promise<boolean> {
-  const r = await q.query('delete from agent_memory where seat = $1 and key = $2 returning key', [seat, key]);
+  const r = await q.query<Pick<AgentMemoryRow, 'key'>>('delete from agent_memory where seat = $1 and key = $2 returning key', [seat, key]);
   return r.length > 0;
 }
 
@@ -39,7 +40,7 @@ export async function deleteMemory(q: Q, seat: string, key: string): Promise<boo
 export async function addFact(q: Q, seat: string, value: string, now: Date) {
   const text = value.trim().slice(0, 1000);
   if (!text) return null;
-  const [same] = await q.query(`select key from agent_memory where seat = $1 and key like 'fact.%' and value = $2`, [seat, text]);
+  const [same] = await q.query<Pick<AgentMemoryRow, 'key'>>(`select key from agent_memory where seat = $1 and key like 'fact.%' and value = $2`, [seat, text]);
   if (same) return String(same.key);
   const key = `${FACT_PREFIX}${now.toISOString().replace(/\D/g, '').slice(0, 14)}-${Math.random().toString(36).slice(2, 6)}`;
   await writeMemory(q, seat, key, text);

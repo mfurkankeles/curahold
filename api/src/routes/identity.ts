@@ -1,6 +1,7 @@
 // A person's own sign-in security (authenticator app, passkeys, recovery codes,
 // signing out other devices), the fresh confirmation before dangerous actions,
 // and the company's setting "a second step is required" (lib/identity.ts).
+import type { SessionsRow, UserPasskeysRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { translate, type Locale } from '../../../shared/src/i18n';
@@ -59,7 +60,7 @@ identityRoutes.get('/me/security', async (c) => {
   const org = c.get('org');
   const f = await factorsOf(c, auth.userId);
   const keys = await sys(c)((q) =>
-    q.query('select id, name, created_at, last_used_at from user_passkeys where org_id = $1 and user_id = $2 order by created_at', [org.id, auth.userId]),
+    q.query<Pick<UserPasskeysRow, 'id' | 'name' | 'created_at' | 'last_used_at'>>('select id, name, created_at, last_used_at from user_passkeys where org_id = $1 and user_id = $2 order by created_at', [org.id, auth.userId]),
   );
   const out: MySecurity = {
     totp: f.totp,
@@ -147,7 +148,7 @@ identityRoutes.delete('/me/security/passkeys/:id', async (c) => {
 identityRoutes.post('/me/sessions/sign-out-others', async (c) => {
   const auth = self(c);
   const n = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<SessionsRow, 'id'>>(
       `update sessions set revoked_at = now(), revoke_reason = 'user' where user_id = $1 and id <> $2 and revoked_at is null returning id`,
       [auth.userId, auth.sessionId],
     );

@@ -14,6 +14,7 @@
 // Everything reads as the person asking (row security), and nothing here
 // fixes anything: the fix is always a link the person clicks. A test step
 // does what its button says (a test ticket, a sync run) and nothing more.
+import type { AutomationsRow, ImportBatchesRow, RecordTypesRow, RecordsRow, SetupProgressRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ACCOUNTING_ALL, ACCOUNTING_FILE } from '../../../shared/src/accounting';
@@ -114,7 +115,7 @@ type Conn = { id: string; provider: string; label: string; status: string; start
 async function contextOf(c: C, q: Q) {
   const org = c.get('org');
   const auth = c.get('auth');
-  const [imp] = await q.query(
+  const [imp] = await q.query<Pick<ImportBatchesRow, 'file_name' | 'summary' | 'created_at'>>(
     `select file_name, summary, created_at from import_batches where org_id = $1 and kind = 'accounts' and undone_at is null order by created_at desc limit 1`,
     [org.id],
   );
@@ -398,7 +399,7 @@ setupHealthRoutes.post('/setup-test/approve', async (c) => {
       [org.id, input.side, auth.userId],
     );
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'setup.approved', entity: 'org', entityId: org.id, meta: { side: input.side } });
-    const both = await q.query(`select item from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
+    const both = await q.query<Pick<SetupProgressRow, 'item'>>(`select item from setup_progress where org_id = $1 and kind = 'approve'`, [org.id]);
     if (both.length === 2) {
       await q.query(`insert into setup_progress (org_id, kind, item, status, by_user) values ($1, 'done', 'all', 'ok', $2) on conflict (org_id, kind, item) do nothing`, [org.id, auth.userId]);
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'setup.tested', entity: 'org', entityId: org.id });
@@ -447,7 +448,7 @@ async function testTicket(c: C): Promise<Outcome> {
   if (!customer) return { status: 'fail', reason: 'no_customer' };
   // The kind is made the first time a ticket arrives (routes/tickets.ts does the same).
   await deps.db.system(async (q) => {
-    const [have] = await q.query(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
+    const [have] = await q.query<Pick<RecordTypesRow, 'id'>>(`select id from record_types where org_id = $1 and kind = 'ticket' and archived_at is null`, [org.id]);
     if (!have) await createRecordType(q, org.id, null, { kind: 'ticket' });
   });
   const input = ticketInput.parse({
@@ -457,7 +458,7 @@ async function testTicket(c: C): Promise<Outcome> {
     account: { id: customer.id },
   });
   const made = await run(c, (q) => upsertTicket(q, org.id, auth.userId, 'setup-check', `t${nowOf(deps).getTime().toString(36)}`, input, todayOf(c)));
-  const [arrived] = await run(c, (q) => q.query(`select id from records where org_id = $1 and id = $2 and account_id is not null`, [org.id, made.id]));
+  const [arrived] = await run(c, (q) => q.query<Pick<RecordsRow, 'id'>>(`select id from records where org_id = $1 and id = $2 and account_id is not null`, [org.id, made.id]));
   return arrived ? { status: 'pass', seen: { record: made.id, customer: customer.name } } : { status: 'fail', reason: 'ticket_hidden', seen: { customer: customer.name } };
 }
 
@@ -487,7 +488,7 @@ async function testAutomation(c: C): Promise<Outcome> {
     const broken = await runSqlChecks(q, org.id, ['auto.deletedField', 'auto.deletedBoard']);
     const bad = broken['auto.deletedField']?.n ? broken['auto.deletedField'] : broken['auto.deletedBoard']?.n ? broken['auto.deletedBoard'] : null;
     if (bad) return { status: 'fail', reason: 'broken_rule', seen: { name: bad.ref } };
-    const rules = await q.query(`select id, name, trigger from automations where org_id = $1 and enabled order by created_at limit 20`, [org.id]);
+    const rules = await q.query<Pick<AutomationsRow, 'id' | 'name' | 'trigger'>>(`select id, name, trigger from automations where org_id = $1 and enabled order by created_at limit 20`, [org.id]);
     if (!rules.length) return { status: 'fail', reason: 'no_rules' };
     const today = localDate(nowOf(c.get('deps')), org.timezone);
     for (const r of rules) {

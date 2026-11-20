@@ -6,6 +6,7 @@
 // engine, filtering by company on every statement; the activity's (source,
 // external id) keep a message from being attached twice, so a run that stops on
 // its time budget resumes without making duplicates.
+import type { ActivitiesRow, OrgsRow } from '../db/rows.gen';
 import type { AccountField } from '../../../shared/src/model';
 import { emptyStats, type SyncStats } from '../../../shared/src/sync';
 import type { Deps } from '../context';
@@ -63,7 +64,7 @@ async function applyMail(deps: Deps, conn: LoadedCrm, items: MailItem[], urlKeys
       }
       const account = await accountForEmails(q, conn.orgId, m.participants, urlKeys);
       if (!account) continue;
-      const rows = await q.query(
+      const rows = await q.query<Pick<ActivitiesRow, 'id'>>(
         `insert into activities (org_id, account_id, author_id, kind, body, happened_at, source, external_id)
          values ($1, $2, null, 'email', $3, coalesce($4::timestamptz, now()), $5, $6)
          on conflict (org_id, source, external_id) where external_id is not null do nothing
@@ -112,7 +113,7 @@ async function applyMeeting(q: Q, conn: LoadedCrm, m: MailItem, urlKeys: string[
 export async function syncMailbox(deps: Deps, conn: LoadedCrm, adapter: CrmAdapter, ctx: CrmCtx, full: boolean, stats: Record<string, SyncStats>, deadline: number): Promise<boolean> {
   if (!adapter.messages) return true;
   const st = (stats.messages ??= emptyStats());
-  const [org] = await deps.db.system((q) => q.query('select account_fields from orgs where id = $1', [conn.orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [conn.orgId]));
   const urlKeys = ((org?.account_fields ?? []) as AccountField[]).filter((f) => f.type === 'url').map((f) => f.key);
 
   const saved = conn.state.mailPage as MailState | undefined;

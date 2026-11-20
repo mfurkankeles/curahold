@@ -1,5 +1,6 @@
 // The assistant's usage, cached answers and log in the database
 // (db/migrations/0096_assistant.sql), and where the server finds the docs.
+import type { OrgsRow } from '../db/rows.gen';
 import type { HelpLanguage } from '../../../shared/src/i18n';
 import { prepare, type AnswerIndex, type DocSection } from '../../../shared/src/answers';
 import type { AssistReply } from '../../../shared/src/assist';
@@ -19,7 +20,7 @@ export function dbStore(db: Db, ctx: { orgId: string | null; userId: string | nu
         const [g] = await q.query(`select cost_micros from assistant_global where month = ${MONTH}`);
         const [c] = ctx.orgId ? await q.query(`select cost_micros, model_questions from assistant_usage where org_id = $1 and month = ${MONTH}`, [ctx.orgId]) : [];
         // The plan's cap on model-answered questions a month (shared/src/plans.json → caps.aiQuestionsPerSeat × full seats).
-        const [o] = ctx.orgId ? await q.query(`select id, billing, trial_ends_at from orgs where id = $1`, [ctx.orgId]) : [];
+        const [o] = ctx.orgId ? await q.query<Pick<OrgsRow, 'id' | 'billing' | 'trial_ends_at'>>(`select id, billing, trial_ends_at from orgs where id = $1`, [ctx.orgId]) : [];
         const questionCap = o ? (await capsForOrgRow(q, o as { id: string; billing: OrgBilling | null; trial_ends_at: unknown }, !!ctx.billingOn, new Date())).aiQuestionsPerMonth : null;
         return { companyMicros: Number(c?.cost_micros ?? 0), globalMicros: Number(g?.cost_micros ?? 0), companyQuestions: Number(c?.model_questions ?? 0), questionCap };
       });

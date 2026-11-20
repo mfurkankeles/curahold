@@ -1,6 +1,7 @@
 // Connected services, managed by an administrator: list, connect (OAuth or
 // a webhook URL), test, rename, pause, remove. Credentials are sealed before
 // they reach the database and never come back out through the API.
+import type { ChatIdentitiesRow, ConnectionsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { zipSync, strToU8 } from 'fflate';
 import { z } from 'zod';
@@ -128,7 +129,7 @@ connectionRoutes.patch('/connections/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<ConnectionsRow, 'id'>>(
       `update connections set label = coalesce($2, label),
               status = case when $3::boolean is null then status when $3 then 'disabled' else 'active' end,
               updated_at = now()
@@ -150,7 +151,7 @@ connectionRoutes.delete('/connections/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const rows = await q.query('delete from connections where id = $1 returning id, provider', [id]);
+    const rows = await q.query<Pick<ConnectionsRow, 'id' | 'provider'>>('delete from connections where id = $1 returning id, provider', [id]);
     if (!rows.length) fail('not_found');
     // Boards stop posting to it; people fall back to their next channel.
     await q.query(
@@ -181,7 +182,7 @@ connectionRoutes.post('/connections/:id/test', async (c) => {
     if (!adapter.twoWay || input.channel) {
       await adapter.send(deps, conn!, { kind: 'channel', channel: input.channel ?? null }, msg);
     } else {
-      const [ident] = await run(c, (q) => q.query('select external_id, data from chat_identities where connection_id = $1 and user_id = $2', [id, auth.userId]));
+      const [ident] = await run(c, (q) => q.query<Pick<ChatIdentitiesRow, 'external_id' | 'data'>>('select external_id, data from chat_identities where connection_id = $1 and user_id = $2', [id, auth.userId]));
       let target = ident ? { externalId: ident.external_id as string, data: ident.data ?? {} } : null;
       if (!target && adapter.lookupUser) {
         const found = await adapter.lookupUser(deps, conn!, auth.email);
@@ -343,7 +344,7 @@ export async function connectCallback_(c: C) {
 
   const sealed = await seal(made.secret, secretsKey(cfg));
   const result = await deps.db.system(async (q) => {
-    const [other] = await q.query('select org_id from connections where provider = $1 and external_id = $2', [state.p, made!.externalId]);
+    const [other] = await q.query<Pick<ConnectionsRow, 'org_id'>>('select org_id from connections where provider = $1 and external_id = $2', [state.p, made!.externalId]);
     if (other && other.org_id !== org.id) return 'taken' as const;
     if (other) {
       await q.query(
@@ -369,12 +370,12 @@ export async function connectCallback_(c: C) {
   // Slack lets us match everyone by email right away; Teams and Google Chat
   // link each person when they open the app.
   if (state.p === 'slack') {
-    const conn = await deps.db.system((q) => q.query('select id from connections where provider = $1 and external_id = $2', ['slack', made!.externalId]));
+    const conn = await deps.db.system((q) => q.query<Pick<ConnectionsRow, 'id'>>('select id from connections where provider = $1 and external_id = $2', ['slack', made!.externalId]));
     const loaded = conn[0] ? await loadConnection(deps, org.id, conn[0].id) : null;
     if (loaded) {
       try {
         const dir = await ADAPTERS.slack.directory!(deps, loaded);
-        const users = await deps.db.system((q) => q.query(`select id, email from users where org_id = $1 and status in ('active', 'invited')`, [org.id]));
+        const users = await deps.db.system((q) => q.query<Pick<UsersRow, 'id' | 'email'>>(`select id, email from users where org_id = $1 and status in ('active', 'invited')`, [org.id]));
         const byEmail = new Map(users.map((u) => [u.email, u.id]));
         for (const p of dir.people) {
           const uid = byEmail.get(p.email);

@@ -2,6 +2,7 @@
 // its address and secret, how the sender signs, what a delivery becomes and the mapping, a test screen and the log.
 // People with connections.manage only. The receiver itself (POST /api/inbound/hooks/:id) is mounted before sign-in;
 // the hook id in the address names it, the signature or token proves the sender.
+import type { BoardsRow, InboundHooksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { HOOK_RECIPES, HOOK_SCHEMES, HOOK_TARGETS, pathsOf, render, type HookDelivery, type HookMapping, type InboundHook } from '../../../shared/src/inboundHooks';
@@ -137,7 +138,7 @@ inboundHookRoutes.post('/inbound-hooks', async (c) => {
   const sealed = input.senderSecret ? await seal({ secret: input.senderSecret }, secretsKey(deps.config)) : null;
   const row = await run(c, async (q) => {
     if (mapping.boardId) {
-      const [b] = await q.query('select id from boards where id = $1 and archived_at is null', [mapping.boardId]);
+      const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [mapping.boardId]);
       if (!b) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     }
     const [r] = await q.query(
@@ -179,7 +180,7 @@ inboundHookRoutes.patch('/inbound-hooks/:id', async (c) => {
     const mapping = input.mapping ?? had.mapping;
     if ((input.target ?? had.target) === 'task' && !mapping?.boardId) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     if (input.mapping?.boardId) {
-      const [b] = await q.query('select id from boards where id = $1 and archived_at is null', [input.mapping.boardId]);
+      const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1 and archived_at is null', [input.mapping.boardId]);
       if (!b) fail('validation', { fields: 'mapping.boardId' }, { fields: ['mapping.boardId'] });
     }
     const [r] = await q.query(
@@ -202,7 +203,7 @@ inboundHookRoutes.delete('/inbound-hooks/:id', async (c) => {
   const org = c.get('org');
   const actor = c.get('auth');
   await run(c, async (q) => {
-    const gone = await q.query('delete from inbound_hooks where id = $1 returning id', [id]);
+    const gone = await q.query<Pick<InboundHooksRow, 'id'>>('delete from inbound_hooks where id = $1 returning id', [id]);
     if (!gone.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: actor.userId, action: 'inbound_hook.deleted', entity: 'org', entityId: org.id, meta: { hook: id } });
   });
@@ -214,7 +215,7 @@ inboundHookRoutes.get('/inbound-hooks/:id/deliveries', async (c) => {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    const [h] = await q.query('select id from inbound_hooks where id = $1', [id]);
+    const [h] = await q.query<Pick<InboundHooksRow, 'id'>>('select id from inbound_hooks where id = $1', [id]);
     if (!h) fail('not_found');
     return q.query('select id, received_at, event_id, status, test, error, result, payload from inbound_deliveries where hook_id = $1 order by received_at desc limit 100', [id]);
   });

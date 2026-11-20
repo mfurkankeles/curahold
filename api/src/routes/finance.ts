@@ -3,6 +3,7 @@
 // accounting customers matched — or not — to Curahold's customers, and the file
 // upload for programs without an open API. Figures are seen only with
 // 'finance.view'; the review list and the upload need 'connections.manage'.
+import type { AccountsRow, ConnectionsRow, FinanceCustomersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { FILE_COLUMNS, fileRow, financeSummary, isAccounting, type FinKind, type FinRow } from '../../../shared/src/accounting';
@@ -53,13 +54,13 @@ financeRoutes.get('/accounts/:id/finance', async (c) => {
   requirePerm(c, 'finance.view');
   const id = param(c, 'id');
   // The customer must be one this person sees (row-level security on accounts).
-  const [visible] = await run(c, (q) => q.query('select id from accounts where id = $1', [id]));
+  const [visible] = await run(c, (q) => q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]));
   if (!visible) fail('not_found');
   const conns = await accountingConnections(c);
   if (!conns.length) return c.json({ finance: null });
   const byId = new Map(conns.map((x) => [x.id, x]));
   const data = await run(c, async (q) => {
-    const [a] = await q.query('select id, currency from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'currency'>>('select id, currency from accounts where id = $1', [id]);
     if (!a) fail('not_found');
     const links = await q.query<{ connection_id: string; remote_id: string }>(`select connection_id, remote_id from finance_customers where account_id = $1`, [id]);
     if (!links.length) return null;
@@ -118,7 +119,7 @@ financeRoutes.get('/accounts/:id/finance', async (c) => {
 async function accountingConnection(c: C) {
   requirePerm(c, 'connections.manage');
   const id = param(c, 'id');
-  const [row] = await c.get('deps').db.system((q) => q.query(`select id, provider, label, config from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, c.get('org').id]));
+  const [row] = await c.get('deps').db.system((q) => q.query<Pick<ConnectionsRow, 'id' | 'provider' | 'label' | 'config'>>(`select id, provider, label, config from connections where id = $1 and org_id = $2 and kind = 'source'`, [id, c.get('org').id]));
   if (!row || !isAccounting(row.provider)) fail('not_found');
   return row as { id: string; provider: string; label: string; config: Record<string, unknown> };
 }
@@ -177,11 +178,11 @@ financeRoutes.put('/connections/:id/finance/matches/:remoteId', async (c) => {
   const auth = c.get('auth');
   await run(c, async (q) => {
     if (input.accountId) {
-      const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+      const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
       if (!a) fail('not_found');
     }
     const state = input.accountId ? 'manual' : input.ignore ? 'ignored' : 'none';
-    const rows = await q.query(
+    const rows = await q.query<Pick<FinanceCustomersRow, 'remote_id'>>(
       `update finance_customers set account_id = $3, match_state = $4, match_reason = null, candidates = '{}'
         where connection_id = $1 and remote_id = $2 returning remote_id`,
       [conn.id, remoteId, input.accountId, state],
@@ -233,7 +234,7 @@ financeRoutes.post('/connections/:id/finance/import', async (c) => {
     if (input.replace) {
       const table = kind === 'customers' ? 'finance_customers' : kind === 'invoices' ? 'finance_invoices' : 'finance_payments';
       // Matches made by hand survive a new file of the same customers.
-      const keep = kind === 'customers' ? await q.query(`select remote_id, account_id, match_state from finance_customers where org_id = $1 and connection_id = $2 and match_state in ('manual', 'ignored')`, [org.id, conn.id]) : [];
+      const keep = kind === 'customers' ? await q.query<Pick<FinanceCustomersRow, 'remote_id' | 'account_id' | 'match_state'>>(`select remote_id, account_id, match_state from finance_customers where org_id = $1 and connection_id = $2 and match_state in ('manual', 'ignored')`, [org.id, conn.id]) : [];
       await q.query(`delete from ${table} where org_id = $1 and connection_id = $2`, [org.id, conn.id]);
       await applyFinance(q, org.id, conn.id, kind, rows, st, nowOf(deps));
       if (keep.length) {

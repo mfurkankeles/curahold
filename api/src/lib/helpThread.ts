@@ -10,6 +10,7 @@
 // sent to (reply+<token>@…), or, failing that, through the message it answers
 // (In-Reply-To / References). Mail from someone who is neither on the request
 // nor on Curahold's team is not taken.
+import type { HelpMessagesRow, HelpRequestsRow, OrgsRow } from '../db/rows.gen';
 import type { HelpMessage, HelpStatus } from '../../../shared/src/help';
 import { translate, type Locale } from '../../../shared/src/i18n';
 import { defer, orgUrl, type Deps } from '../context';
@@ -155,7 +156,7 @@ export async function addHelpMessage(deps: Deps, orgId: string, requestId: strin
       const dup = await q.query('select 1 from help_messages where email_id = $1', [m.emailId]);
       if (dup.length) return null;
     }
-    const [msg] = await q.query(
+    const [msg] = await q.query<HelpMessagesRow>(
       `insert into help_messages (org_id, request_id, author, user_id, staff, body, internal, via, email_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *`,
       [orgId, requestId, m.author, m.author === 'user' ? (m.userId ?? null) : null, m.author === 'support' ? (m.staff ?? 'Curahold') : null, m.body, !!m.internal, m.via, m.emailId ?? null],
@@ -165,7 +166,7 @@ export async function addHelpMessage(deps: Deps, orgId: string, requestId: strin
       const status: HelpStatus = m.author === 'user' ? 'received' : (m.status ?? 'answered');
       await q.query('update help_requests set status = $2, last_message_at = now(), updated_at = now() where id = $1', [requestId, status]);
     }
-    const [org] = await q.query('select id, slug, name, locale, terms from orgs where id = $1', [orgId]);
+    const [org] = await q.query<Pick<OrgsRow, 'id' | 'slug' | 'name' | 'locale' | 'terms'>>('select id, slug, name, locale, terms from orgs where id = $1', [orgId]);
     const token = await tokenOf(q, req);
     const followers = req.followers?.length ? await q.query<{ id: string; name: string; email: string; locale: Locale | null }>(`select id, name, email, locale from users where id = any ($1) and org_id = $2 and status = 'active'`, [req.followers, orgId]) : [];
     const writer = m.author === 'user' && m.userId ? ((await q.query<{ name: string; email: string }>('select name, email from users where id = $1 and org_id = $2', [m.userId, orgId]))[0] ?? null) : null;
@@ -228,7 +229,7 @@ export async function takeMail(deps: Deps, mail: IncomingMail): Promise<MailOutc
   const answered = [idOf(mail.inReplyTo), ...(mail.references ?? []).map(idOf)].filter((x): x is string => !!x);
   const sender = addressOf(mail.from);
   const found = await deps.db.system(async (q) => {
-    let [req] = tokens.length ? await q.query('select * from help_requests where reply_token = any ($1)', [tokens]) : [];
+    let [req] = tokens.length ? await q.query<HelpRequestsRow>('select * from help_requests where reply_token = any ($1)', [tokens]) : [];
     if (!req && answered.length) {
       [req] = await q.query('select h.* from help_requests h join help_messages m on m.request_id = h.id where m.email_id = any ($1) limit 1', [answered]);
       // Our own emails carry the message's id in theirs: <help-<message id>@…>.

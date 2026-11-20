@@ -2,6 +2,7 @@
 // work well past its date, passed once to the team lead. Both come out of the
 // hourly run that already sends the morning summary — no new moving parts —
 // and both are switched and tuned in the company's rhythm settings.
+import type { OrgsRow, UsersRow } from '../db/rows.gen';
 import { rhythmOf } from '../../../shared/src/rhythm';
 import type { Deps } from '../context';
 import { addDays, localDate, localHour } from './automations';
@@ -25,7 +26,7 @@ const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T
  * each at the hour of the person's morning summary in their company's time zone.
  */
 export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number; escalated: number }> {
-  const orgs = await deps.db.system((q) => q.query('select id, timezone, settings from orgs'));
+  const orgs = await deps.db.system((q) => q.query<Pick<OrgsRow, 'id' | 'timezone' | 'settings'>>('select id, timezone, settings from orgs'));
   let stale = 0;
   let escalated = 0;
   for (const org of orgs) {
@@ -37,7 +38,7 @@ export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number
 
     // Still for too long: each person's own list, at the hour of their morning summary.
     if (rhythm.staleDays > 0 && weekday === STALE_WEEKDAY) {
-      const users = await deps.db.system((q) => q.query(`select id, prefs from users where org_id = $1 and status = 'active' and seat = 'full'`, [org.id]));
+      const users = await deps.db.system((q) => q.query<Pick<UsersRow, 'id' | 'prefs'>>(`select id, prefs from users where org_id = $1 and status = 'active' and seat = 'full'`, [org.id]));
       const due = users.filter((u) => {
         const prefs = prefsOf(u.prefs);
         return prefs.events.nudges !== false && prefs.digestHour === hour;
@@ -109,7 +110,7 @@ export async function sendNudges(deps: Deps, now: Date): Promise<{ stale: number
         }
       }
       for (const [leadId, items] of byLead) {
-        const [lead] = await deps.db.system((q) => q.query(`select prefs from users where id = $1 and org_id = $2 and status = 'active'`, [leadId, org.id]));
+        const [lead] = await deps.db.system((q) => q.query<Pick<UsersRow, 'prefs'>>(`select prefs from users where id = $1 and org_id = $2 and status = 'active'`, [leadId, org.id]));
         if (!lead || prefsOf(lead.prefs).events.nudges === false) continue;
         await deps.db.system((q) =>
           enqueue(q, [

@@ -1,6 +1,7 @@
 // CRM and spreadsheet connections: sign in, pick the file (spreadsheets),
 // map objects and fields, preview, start, run now, history and problems.
 // Everything here needs the "connected tools" permission.
+import type { AccountsRow, BoardsRow, ConnectionsRow, OrgsRow, RecordTypesRow, SyncRunsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { optionKey } from '../../../shared/src/fields';
@@ -65,7 +66,7 @@ export async function crmStart(c: C, provider: string, back: string) {
   let again: Record<string, any> = {};
   const reconnectId = c.req.query('reconnect') ?? '';
   if (reconnectId) {
-    const [old] = UUID.test(reconnectId) ? await run(c, (x) => x.query(`select id, config from connections where id = $1 and kind = 'source' and provider = $2`, [reconnectId, provider])) : [];
+    const [old] = UUID.test(reconnectId) ? await run(c, (x) => x.query<Pick<ConnectionsRow, 'id' | 'config'>>(`select id, config from connections where id = $1 and kind = 'source' and provider = $2`, [reconnectId, provider])) : [];
     if (!old) return c.redirect(`${home}?error=connection_failed&provider=${provider}`);
     rc = old.id as string;
     again = old.config ?? {};
@@ -117,7 +118,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
   const sealed = await seal(made.secret, secretsKey(cfg));
   const id = await deps.db.system(async (q) => {
     // Signing in again to the same CRM refreshes the credentials and keeps the mapping.
-    const [same] = await q.query(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, provider, made.instanceId]);
+    const [same] = await q.query<Pick<ConnectionsRow, 'id'>>(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, provider, made.instanceId]);
     // Reconnecting a connection that lost its sign-in: it must be the same account, not a new connection beside it.
     if (state.rc && same?.id !== state.rc) return 'wrong_account' as const;
     if (same) {
@@ -130,7 +131,7 @@ export async function crmCallback(c: C, state: CrmConnectState, code: string, or
       ]);
       return same.id as string;
     }
-    const [row] = await q.query(
+    const [row] = await q.query<Pick<ConnectionsRow, 'id'>>(
       `insert into connections (org_id, kind, provider, label, config, secret, created_by) values ($1, 'source', $2, $3, $4, $5, $6) returning id`,
       [org.id, provider, made.label.slice(0, 120), JSON.stringify({ ...made.config, instanceId: made.instanceId, sync: { objects: [], owners: {}, conflict: 'latest' } }), sealed, state.u],
     );
@@ -163,7 +164,7 @@ syncRoutes.post('/connections/key', async (c) => {
   const sealed = await seal(made!.secret, secretsKey(deps.config));
   const id = await deps.db.system(async (q) => {
     // The same workspace again: new key, same mapping and history.
-    const [same] = await q.query(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, input.provider, made!.instanceId]);
+    const [same] = await q.query<Pick<ConnectionsRow, 'id'>>(`select id from connections where org_id = $1 and kind = 'source' and provider = $2 and config->>'instanceId' = $3`, [org.id, input.provider, made!.instanceId]);
     // Reconnecting: the new key must open the same workspace, or it would start a second connection beside the broken one.
     if (input.reconnect && same?.id !== input.reconnect) return null;
     if (same) {
@@ -171,7 +172,7 @@ syncRoutes.post('/connections/key', async (c) => {
       await audit(q, { orgId: org.id, actorId: auth.userId, action: 'connection.reconnected', entity: 'connection', entityId: same.id, meta: { provider: input.provider } });
       return same.id as string;
     }
-    const [row] = await q.query(
+    const [row] = await q.query<Pick<ConnectionsRow, 'id'>>(
       `insert into connections (org_id, kind, provider, label, config, secret, created_by) values ($1, 'source', $2, $3, $4, $5, $6) returning id`,
       [org.id, input.provider, made!.label.slice(0, 120), JSON.stringify({ ...made!.config, instanceId: made!.instanceId, sync: { objects: [], owners: {}, conflict: 'latest' } }), sealed, auth.userId],
     );
@@ -203,7 +204,7 @@ syncRoutes.post('/connections/demo', async (c) => {
     const demoId = `${org.id}:${randomToken(6)}`;
     const users = people.map((p, i) => ({ id: `U${i + 1}`, name: p.name, email: p.email }));
     demoStore(demoId, users);
-    const [row] = await q.query(
+    const [row] = await q.query<Pick<ConnectionsRow, 'id'>>(
       `insert into connections (org_id, kind, provider, label, config, created_by) values ($1, 'source', 'demo', $4, $2, $3) returning id`,
       [org.id, JSON.stringify({ demoId, users, instanceId: demoId, as: input.as ?? null, sync: { objects: [], owners: {}, conflict: 'latest' } }), auth.userId, label],
     );
@@ -242,8 +243,8 @@ syncRoutes.get('/connections/:id/sync', async (c) => {
   const conn = await loaded(c);
   const adapter = CRM_ADAPTERS[conn.provider as keyof typeof CRM_ADAPTERS];
   const data = await run(c, async (q) => {
-    const types = await q.query('select id, key, name, kind, fields from record_types where archived_at is null order by position, created_at');
-    const boards = await q.query('select id, name from boards where archived_at is null order by sort_text(name)');
+    const types = await q.query<Pick<RecordTypesRow, 'id' | 'key' | 'name' | 'kind' | 'fields'>>('select id, key, name, kind, fields from record_types where archived_at is null order by position, created_at');
+    const boards = await q.query<Pick<BoardsRow, 'id' | 'name'>>('select id, name from boards where archived_at is null order by sort_text(name)');
     const [pending] = await q.query<{ n: number; failing: number }>(`select count(*)::int as n, count(*) filter (where attempts > 0)::int as failing from sync_changes where connection_id = $1`, [conn.id]);
     const [row] = await q.query<{ last_error: string | null }>('select last_error from connections where id = $1', [conn.id]);
     return { types, boards, pending, lastError: row?.last_error };
@@ -313,7 +314,7 @@ syncRoutes.get('/connections/:id/objects/:object/fields', async (c) => {
   const org = c.get('org');
   const typeFields = await run(c, async (q) => {
     if (typeKey) {
-      const [t] = await q.query('select fields from record_types where key = $1', [typeKey]);
+      const [t] = await q.query<Pick<RecordTypesRow, 'fields'>>('select fields from record_types where key = $1', [typeKey]);
       if (t) return t.fields as AccountField[];
     }
     return kind === 'contact' || kind === 'opportunity' || kind === 'ticket' ? BUILTIN_TYPES[kind].fields : [];
@@ -354,7 +355,7 @@ syncRoutes.put('/connections/:id/owners', async (c) => {
   await run(c, async (q) => {
     if (Object.values(input.owners).some(Boolean)) {
       const ids = Object.values(input.owners).filter(Boolean);
-      const found = await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited')`, [ids]);
+      const found = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited')`, [ids]);
       if (found.length !== new Set(ids).size) fail('bad_assignee');
     }
     await q.query(`update connections set config = jsonb_set(config, '{sync,owners}', $2::jsonb, true), updated_at = now() where id = $1`, [conn.id, JSON.stringify(input.owners)]);
@@ -479,7 +480,7 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
   // Owner access with explicit company filters: mapping a CRM may add fields and
   // record types, which someone allowed to connect tools may do for that purpose.
   const saved = await deps.db.system(async (q) => {
-    const [orgRow] = await q.query('select account_fields from orgs where id = $1', [org.id]);
+    const [orgRow] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [org.id]);
     const accountFields: AccountField[] = orgRow.account_fields ?? [];
     let accountChanged = false;
     const objects: SyncConfig['objects'] = [];
@@ -497,12 +498,12 @@ syncRoutes.put('/connections/:id/sync', async (c) => {
           });
           typeKey = typeRow.key;
         } else {
-          [typeRow] = await q.query('select * from record_types where org_id = $1 and key = $2', [org.id, typeKey]);
+          [typeRow] = await q.query<RecordTypesRow>('select * from record_types where org_id = $1 and key = $2', [org.id, typeKey]);
           if (!typeRow) fail('validation', { fields: 'typeKey' }, { fields: ['objects.typeKey'] });
         }
       }
       if (o.target === 'task' || o.target === 'sprint') {
-        const [b] = await q.query('select id from boards where org_id = $1 and id = $2 and archived_at is null', [org.id, o.boardId ?? null]);
+        const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where org_id = $1 and id = $2 and archived_at is null', [org.id, o.boardId ?? null]);
         if (!b) fail('validation', { fields: 'boardId' }, { fields: ['objects.boardId'] });
       }
       const defs: AccountField[] = o.target === 'account' ? accountFields : o.target === 'record' ? JSON.parse(JSON.stringify(typeRow.fields ?? [])) : [];
@@ -583,7 +584,7 @@ syncRoutes.post('/connections/:id/sync/run', async (c) => {
 /** The connection's recent sync runs. */
 syncRoutes.get('/connections/:id/runs', async (c) => {
   const conn = await loaded(c);
-  const rows = await run(c, (q) => q.query('select * from sync_runs where connection_id = $1 order by started_at desc limit 30', [conn.id]));
+  const rows = await run(c, (q) => q.query<SyncRunsRow>('select * from sync_runs where connection_id = $1 order by started_at desc limit 30', [conn.id]));
   return c.json({ runs: rows.map(toRun) });
 });
 
@@ -695,7 +696,7 @@ syncRoutes.post('/connections/:id/mail/reply', async (c) => {
     crmFail(e);
   }
   const logged = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
     if (!a) fail('not_found');
     await q.query(
       `insert into activities (org_id, account_id, author_id, kind, body, source, external_id)
@@ -738,7 +739,7 @@ syncRoutes.post('/connections/:id/calendar/events', async (c) => {
   const auth = c.get('auth');
   // The customer must be one the person can see (row-level security decides).
   await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
     if (!a) fail('not_found');
   });
   const start = new Date(input.start);
@@ -780,7 +781,7 @@ syncRoutes.post('/connections/:id/whatsapp/send', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1 and archived_at is null', [input.accountId]);
     if (!a) fail('not_found');
   });
   let sent;
@@ -807,7 +808,7 @@ syncRoutes.post('/rollups/recompute', async (c) => {
   requirePerm(c, 'accounts.manage');
   const org = c.get('org');
   await run(c, async (q) => {
-    const [o] = await q.query('select account_fields from orgs where id = $1', [org.id]);
+    const [o] = await q.query<Pick<OrgsRow, 'account_fields'>>('select account_fields from orgs where id = $1', [org.id]);
     await recomputeRollups(q, org.id, o.account_fields ?? [], null);
   });
   return c.json({ ok: true });

@@ -11,6 +11,7 @@
 //   There is no way to decide anything from here: an agent's key is not a
 //   console session, so the owner's door refuses it too. Every call is in the
 //   audit trail; a paused seat can only read; three refusals in an hour pause it.
+import type { AgentMemoryRow, AgentTasksRow, MeetingsRow, SeatsRow } from '../db/rows.gen';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { LOG_KINDS, PRIORITIES3, RISKS, SEAT_FILLED_BY, SEAT_STATES, SEAT_TIERS, TASK_STATUSES } from '../../../shared/src/office';
@@ -136,7 +137,7 @@ officeRoutes.post('/seats/:seat/key', async (c) => {
   const key = `ag_${seat}_${randomToken(24)}`;
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
-    const [r] = await q.query('update seats set key_hash = $2, updated_at = now() where seat = $1 returning seat', [seat, await sha256Hex(key)]);
+    const [r] = await q.query<Pick<SeatsRow, 'seat'>>('update seats set key_hash = $2, updated_at = now() where seat = $1 returning seat', [seat, await sha256Hex(key)]);
     if (r) await auditLine(q, { seat, actor: 'owner', what: 'seat.key', target: seat, detail: { by: who } });
     return !!r;
   });
@@ -201,7 +202,7 @@ officeRoutes.get('/audit', async (c) => {
 officeRoutes.get('/tasks', async (c) => {
   const seat = c.req.query('seat');
   const rows = await c.get('deps').db.system((q) =>
-    q.query(`select * from agent_tasks where ($1::text is null or seat = $1) and status <> 'cancelled' order by (status = 'done'), created_at desc limit 300`, [seat || null]),
+    q.query<AgentTasksRow>(`select * from agent_tasks where ($1::text is null or seat = $1) and status <> 'cancelled' order by (status = 'done'), created_at desc limit 300`, [seat || null]),
   );
   return c.json({ tasks: rows.map((r) => ({ id: r.id, seat: r.seat, title: r.title, detail: r.detail, status: r.status, priority: r.priority, fromSeat: r.from_seat, dueAt: r.due_at, result: r.result, createdAt: r.created_at, doneAt: r.done_at })) });
 });
@@ -305,8 +306,8 @@ agentRoutes.get('/me', async (c) => {
   const s = me(c);
   const [seat] = await listSeats(deps, nowOf(deps), s.seat);
   const [tasks, memory] = await deps.db.system(async (q) => [
-    await q.query(`select id, title, detail, status, priority, from_seat, due_at, created_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at limit 100`, [s.seat]),
-    await q.query('select key, value, updated_at from agent_memory where seat = $1 order by key', [s.seat]),
+    await q.query<Pick<AgentTasksRow, 'id' | 'title' | 'detail' | 'status' | 'priority' | 'from_seat' | 'due_at' | 'created_at'>>(`select id, title, detail, status, priority, from_seat, due_at, created_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at limit 100`, [s.seat]),
+    await q.query<Pick<AgentMemoryRow, 'key' | 'value' | 'updated_at'>>('select key, value, updated_at from agent_memory where seat = $1 order by key', [s.seat]),
   ]);
   return c.json({ seat, tasks, memory });
 });
@@ -361,7 +362,7 @@ agentRoutes.post('/tasks', async (c) => {
 agentRoutes.patch('/tasks/:id', async (c) => {
   const input = await body(c, z.object({ status: z.enum(TASK_STATUSES), result: opt(8000) }));
   const [r] = await c.get('deps').db.system((q) =>
-    q.query(
+    q.query<Pick<AgentTasksRow, 'id'>>(
       `update agent_tasks set status = $3, result = coalesce($4, result), done_at = case when $3 in ('done', 'cancelled') then now() else null end
         where id = $1 and seat = $2 returning id`,
       [idOf(c), me(c).seat, input.status, input.result ?? null],
@@ -382,7 +383,7 @@ agentRoutes.post('/meetings/:id/lines', async (c) => {
   const input = await body(c, z.object({ body: text(8000) }));
   const id = idOf(c);
   const line = await c.get('deps').db.system(async (q) => {
-    const [m] = await q.query('select attendees, called_by from meetings where id = $1', [id]);
+    const [m] = await q.query<Pick<MeetingsRow, 'attendees' | 'called_by'>>('select attendees, called_by from meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (me(c).tier !== 'note-taker' && m.called_by !== me(c).seat && !(m.attendees as string[]).includes(me(c).seat)) fail('forbidden');
     return addMeetingLine(q, id, me(c).seat, input.body);

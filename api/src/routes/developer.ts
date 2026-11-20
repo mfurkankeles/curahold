@@ -1,5 +1,6 @@
 // Settings for builders: personal API keys, apps connected with OAuth
 // (AI assistants among them) and the company's webhooks.
+import type { ApiTokensRow, WebhooksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requireFresh } from '../lib/identity';
@@ -34,7 +35,7 @@ developerRoutes.get('/dev/keys', async (c) => {
   const auth = c.get('auth');
   const all = c.req.query('scope') === 'all' && auth.perms.includes('users.manage');
   const rows = await run(c, (q) =>
-    q.query(
+    q.query<ApiTokensRow>(
       `select * from api_tokens where revoked_at is null and ($1 or user_id = $2)
          and (kind = 'key' or refresh_expires_at > now()) order by created_at desc limit 500`,
       [all, auth.userId],
@@ -56,7 +57,7 @@ developerRoutes.post('/dev/keys', async (c) => {
   if (input.canWrite && auth.seat !== 'full') fail('read_only_seat');
   const s = await newSecret(KEY_PREFIX);
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<ApiTokensRow>(
       `insert into api_tokens (org_id, user_id, kind, name, token_hash, can_write, prefix, expires_at)
        values ($1, $2, 'key', $3, $4, $5, $6, case when $7::int is null then null else now() + make_interval(days => $7::int) end) returning *`,
       [org.id, auth.userId, input.name, s.hash, input.canWrite, s.shown, input.expiresInDays],
@@ -74,7 +75,7 @@ developerRoutes.delete('/dev/keys/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const r = await q.query('update api_tokens set revoked_at = now() where id = $1 and revoked_at is null returning id, name', [id]);
+    const r = await q.query<Pick<ApiTokensRow, 'id' | 'name'>>('update api_tokens set revoked_at = now() where id = $1 and revoked_at is null returning id, name', [id]);
     if (!r.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'api_key.revoked', entity: 'api_key', entityId: id, meta: { name: r[0].name } });
   });
@@ -153,7 +154,7 @@ developerRoutes.delete('/dev/webhooks/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const r = await q.query('delete from webhooks where id = $1 returning url', [id]);
+    const r = await q.query<Pick<WebhooksRow, 'url'>>('delete from webhooks where id = $1 returning url', [id]);
     if (!r.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'webhook.deleted', entity: 'webhook', entityId: id, meta: { url: r[0].url } });
   });
@@ -167,7 +168,7 @@ developerRoutes.post('/dev/webhooks/:id/test', async (c) => {
   const deps = c.get('deps');
   const org = c.get('org');
   // The secret is read with owner access, for this company's webhook only.
-  const [hook] = await deps.db.system((q) => q.query('select * from webhooks where id = $1 and org_id = $2', [id, org.id]));
+  const [hook] = await deps.db.system((q) => q.query<WebhooksRow>('select * from webhooks where id = $1 and org_id = $2', [id, org.id]));
   if (!hook) fail('not_found');
   const body = JSON.stringify({ id: crypto.randomUUID(), event: 'ping', occurredAt: new Date().toISOString(), company: org.slug, data: { hello: 'Curahold' } });
   const status = await postWebhook(deps, hook, body, 'ping');

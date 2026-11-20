@@ -5,6 +5,7 @@
 //
 // It runs with owner access (rules act for the company, not for whoever
 // happens to be signed in), so every query here filters on org_id itself.
+import type { AccountsRow, AutomationRunsRow, AutomationsRow, BoardsRow, OrgsRow, TasksRow } from '../db/rows.gen';
 import { tellCustomerStatus } from './portal';
 import { addDays, localDate, localHour } from '../../../shared/src/days';
 import { EVENT_TRIGGERS, fillTitle, type Action, type Assignee, type Condition, type Trigger } from '../../../shared/src/automation';
@@ -174,7 +175,7 @@ async function actOnItem(q: Q, orgId: string, rule: Row, action: Action, account
     case 'assign': {
       const ids = await assigneesOf(q, orgId, action.to, account, task, record);
       if (task) {
-        const [u] = await q.query(`update tasks set assignee_ids = $3, version = version + 1, updated_at = now() where id = $1 and org_id = $2 returning *`, [task.id, orgId, ids]);
+        const [u] = await q.query<TasksRow>(`update tasks set assignee_ids = $3, version = version + 1, updated_at = now() where id = $1 and org_id = $2 returning *`, [task.id, orgId, ids]);
         const had = new Set<string>(task.assignee_ids ?? []);
         await enqueue(q, ids.filter((x) => !had.has(x)).map((x) => ({ orgId, userId: x, kind: 'assigned', taskId: task.id, data: { rule: rule.name } })));
         return { task: u?.id, assigned: ids.length };
@@ -184,7 +185,7 @@ async function actOnItem(q: Q, orgId: string, rule: Row, action: Action, account
     }
     case 'move': {
       if (!task) return { error: 'no_task' };
-      const [b] = await q.query('select * from boards where id = $1 and org_id = $2', [task.board_id, orgId]);
+      const [b] = await q.query<BoardsRow>('select * from boards where id = $1 and org_id = $2', [task.board_id, orgId]);
       const columns = (b?.columns ?? []) as Column[];
       if (!columns.some((c) => c.key === action.column)) return { error: 'column_missing' };
       if (task.status === action.column) return { moved: 0 };
@@ -247,7 +248,7 @@ async function act(q: Q, orgId: string, rule: Row, action: Action, account: Row 
     );
     return { notified: to.length };
   }
-  const [board] = await q.query('select * from boards where id = $1 and org_id = $2 and archived_at is null', [action.boardId, orgId]);
+  const [board] = await q.query<BoardsRow>('select * from boards where id = $1 and org_id = $2 and archived_at is null', [action.boardId, orgId]);
   if (!board) return { error: 'board_missing' };
   const columns = board.columns as Column[];
   const status = action.column && columns.some((c) => c.key === action.column) ? action.column : columns[0].key;
@@ -256,7 +257,7 @@ async function act(q: Q, orgId: string, rule: Row, action: Action, account: Row 
     const assignees = await assigneesOf(q, orgId, bp.assignee, account, task, record);
     const [{ p }] = await q.query('select coalesce(max(position), 0) + 1024 as p from tasks where board_id = $1 and status = $2', [board.id, status]);
     const id = crypto.randomUUID();
-    const [t] = await q.query(
+    const [t] = await q.query<TasksRow>(
       `insert into tasks (id, org_id, board_id, title, status, assignee_ids, account_id, due_date, position)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *`,
       [id, orgId, board.id, fillTitle(bp.title, { account_name: account?.name }), status, assignees, account?.id ?? task?.account_id ?? record?.account_id ?? null, addDays(today, bp.dueInDays), Number(p)],
@@ -279,7 +280,7 @@ async function act(q: Q, orgId: string, rule: Row, action: Action, account: Row 
 /** Claims the occasion and acts, in one transaction. False when it already ran. */
 async function fire(deps: Deps, orgId: string, rule: Row, key: string, account: Row | null, task: Row | null, today: string, record: Row | null = null) {
   return deps.db.system(async (q) => {
-    const claimed = await q.query(
+    const claimed = await q.query<Pick<AutomationRunsRow, 'run_key'>>(
       `insert into automation_runs (org_id, automation_id, run_key) values ($1, $2, $3) on conflict do nothing returning run_key`,
       [orgId, rule.id, `${record ? `r:${record.id}` : account ? `a:${account.id}` : `t:${task?.id}`}:${key}`],
     );
@@ -300,12 +301,12 @@ async function fire(deps: Deps, orgId: string, rule: Row, key: string, account: 
  * in each company's own time zone. Called by the scheduler; db.system() because it spans companies, every write names org_id.
  */
 export async function runScheduledAutomations(deps: Deps, now: Date, onlyOrg?: string, onlyRule?: string) {
-  const orgs = await deps.db.system((q) => q.query(`select id, timezone from orgs where ($1::uuid is null or id = $1::uuid)`, [onlyOrg ?? null]));
+  const orgs = await deps.db.system((q) => q.query<Pick<OrgsRow, 'id' | 'timezone'>>(`select id, timezone from orgs where ($1::uuid is null or id = $1::uuid)`, [onlyOrg ?? null]));
   let fired = 0;
   for (const org of orgs) {
     const today = localDate(now, org.timezone);
     const rules = await deps.db.system((q) =>
-      q.query(
+      q.query<AutomationsRow>(
         `select * from automations where org_id = $1 and ($2::uuid is null or id = $2::uuid) and ($2::uuid is not null or enabled)
             and trigger->>'type' in ('account_date', 'account_every', 'account_inactive', 'task_overdue')`,
         [org.id, onlyRule ?? null],
@@ -330,11 +331,11 @@ export async function runScheduledAutomations(deps: Deps, now: Date, onlyOrg?: s
 /** Fires "customer created" automation rules for new customers of one company; returns how many rules ran. */
 export async function runAccountCreated(deps: Deps, orgId: string, accountIds: string[], now: Date) {
   if (!accountIds.length) return 0;
-  const [org] = await deps.db.system((q) => q.query('select timezone from orgs where id = $1', [orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'timezone'>>('select timezone from orgs where id = $1', [orgId]));
   const today = localDate(now, org?.timezone ?? 'UTC');
-  const rules = await deps.db.system((q) => q.query(`select * from automations where org_id = $1 and enabled and trigger->>'type' = 'account_created'`, [orgId]));
+  const rules = await deps.db.system((q) => q.query<AutomationsRow>(`select * from automations where org_id = $1 and enabled and trigger->>'type' = 'account_created'`, [orgId]));
   if (!rules.length) return 0;
-  const accounts = await deps.db.system((q) => q.query('select * from accounts where org_id = $1 and id = any($2::uuid[])', [orgId, accountIds]));
+  const accounts = await deps.db.system((q) => q.query<AccountsRow>('select * from accounts where org_id = $1 and id = any($2::uuid[])', [orgId, accountIds]));
   let fired = 0;
   for (const rule of rules) {
     const { conditions } = splitTrigger(rule.trigger);
@@ -363,10 +364,10 @@ export async function runTaskMoved(deps: Deps, orgId: string, taskId: string, co
   const finished = ((task.board?.columns ?? []) as Column[]).some((c) => c.key === column && c.done);
   if (finished) await runTaskEvent(deps, orgId, taskId, 'task_done', now, task).catch(() => 0);
   const rules = await deps.db.system((q) =>
-    q.query(`select * from automations where org_id = $1 and enabled and trigger->>'type' = 'task_moved' and trigger->>'column' = $2`, [orgId, column]),
+    q.query<AutomationsRow>(`select * from automations where org_id = $1 and enabled and trigger->>'type' = 'task_moved' and trigger->>'column' = $2`, [orgId, column]),
   );
   if (!rules.length) return 0;
-  const [org] = await deps.db.system((q) => q.query('select timezone from orgs where id = $1', [orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'timezone'>>('select timezone from orgs where id = $1', [orgId]));
   const today = localDate(now, org?.timezone ?? 'UTC');
   let fired = 0;
   for (const rule of rules) {
@@ -384,7 +385,7 @@ export async function runTaskMoved(deps: Deps, orgId: string, taskId: string, co
  * Tasks the rules themselves make never fire these, so rules cannot chain into a loop.
  */
 export async function runTaskEvent(deps: Deps, orgId: string, taskId: string, kind: 'task_created' | 'task_done' | 'form_received', now: Date, loaded?: Row) {
-  const rules = await deps.db.system((q) => q.query(`select * from automations where org_id = $1 and enabled and trigger->>'type' = $2`, [orgId, kind]));
+  const rules = await deps.db.system((q) => q.query<AutomationsRow>(`select * from automations where org_id = $1 and enabled and trigger->>'type' = $2`, [orgId, kind]));
   if (!rules.length) return 0;
   const [task] = loaded
     ? [loaded]
@@ -392,7 +393,7 @@ export async function runTaskEvent(deps: Deps, orgId: string, taskId: string, ki
         q.query(`select t.*, to_jsonb(a.*) as account from tasks t left join accounts a on a.id = t.account_id where t.id = $1 and t.org_id = $2`, [taskId, orgId]),
       );
   if (!task) return 0;
-  const [org] = await deps.db.system((q) => q.query('select timezone from orgs where id = $1', [orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'timezone'>>('select timezone from orgs where id = $1', [orgId]));
   const today = localDate(now, org?.timezone ?? 'UTC');
   let fired = 0;
   for (const rule of rules) {
@@ -408,7 +409,7 @@ export async function runTaskEvent(deps: Deps, orgId: string, taskId: string, ki
 
 /** A record changed (after commit): a choice field took a value (record_stage), or a ticket was opened (ticket_opened). */
 export async function runRecordEvent(deps: Deps, orgId: string, recordId: string, kind: 'record_stage' | 'ticket_opened', changed: Record<string, unknown> | null, now: Date) {
-  const rules = await deps.db.system((q) => q.query(`select * from automations where org_id = $1 and enabled and trigger->>'type' = $2`, [orgId, kind]));
+  const rules = await deps.db.system((q) => q.query<AutomationsRow>(`select * from automations where org_id = $1 and enabled and trigger->>'type' = $2`, [orgId, kind]));
   if (!rules.length) return 0;
   const [record] = await deps.db.system((q) =>
     q.query(
@@ -418,7 +419,7 @@ export async function runRecordEvent(deps: Deps, orgId: string, recordId: string
     ),
   );
   if (!record || (kind === 'ticket_opened' && record.type_kind !== 'ticket')) return 0;
-  const [org] = await deps.db.system((q) => q.query('select timezone from orgs where id = $1', [orgId]));
+  const [org] = await deps.db.system((q) => q.query<Pick<OrgsRow, 'timezone'>>('select timezone from orgs where id = $1', [orgId]));
   const today = localDate(now, org?.timezone ?? 'UTC');
   let fired = 0;
   for (const rule of rules) {

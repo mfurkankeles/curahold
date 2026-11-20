@@ -8,6 +8,7 @@
 // Per isolate means each Worker copy counts only what it served: a fault that
 // hits every request still trips every copy; a rare one is caught by the hourly
 // error_log check. Switch off with OPS_ALERTS=off.
+import type { CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { ownerWord } from '../../../shared/src/i18n/owner';
 
@@ -84,7 +85,7 @@ export async function raiseOpsAlert(deps: Deps, a: OpsAlert): Promise<boolean> {
   console.warn('[curahold] ops alert', JSON.stringify({ ref: a.ref, ...a.meta }));
   try {
     const rows = await deps.db.system((q) =>
-      q.query(
+      q.query<Pick<CompanyLogRow, 'id'>>(
         `insert into company_log (seat, kind, body, ref, meta)
          select 'system', 'alert', $1, $2, $3 where not exists (select 1 from company_log where ref = $2) returning id`,
         [a.body, a.ref, JSON.stringify(a.meta)],

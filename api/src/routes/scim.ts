@@ -13,6 +13,7 @@
 // Mounting (api/src/app.ts, reported to the coordinator): register BEFORE the
 // companyFromHost / person middleware (it is bearer-authed and server-to-server,
 // like the OAuth callback):  app.route('/api/scim/v2', scimRoutes)
+import type { UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { orgUrl, type AppEnv, type C, type OrgRow } from '../context';
 import { audit } from '../lib/audit';
@@ -249,7 +250,7 @@ scimRoutes.delete('/Users/:id', async (c) => {
   const id = c.req.param('id');
   if (!isUuid(id)) return scimError(c, 404, 'User not found');
   const out = await c.get('deps').db.tenant({ orgId: org.id, userId: null }, async (q) => {
-    const rows = await q.query(`update users set status = 'disabled' where id = $1 and status <> 'deleted' returning id`, [id]);
+    const rows = await q.query<Pick<UsersRow, 'id'>>(`update users set status = 'disabled' where id = $1 and status <> 'deleted' returning id`, [id]);
     if (!rows.length) return { missing: true as const };
     await audit(q, { orgId: org.id, actorId: null, action: 'sso.deactivated', entity: 'user', entityId: id, meta: { via: 'scim' } });
     return {};

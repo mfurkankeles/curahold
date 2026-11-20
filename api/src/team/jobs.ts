@@ -2,6 +2,7 @@
 // pack (card, open work, memory, recent log, access list) and a job
 // description with an interview kit, both generated from the seat's card, so
 // the human uses the same title, queues, log and approval rules as the agent.
+import type { AgentMemoryRow, AgentTasksRow, ApprovalsRow, CompanyLogRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { LADDER } from '../../../shared/src/team/orgChart';
 import { goldenTasks } from '../../../shared/src/team/golden';
@@ -62,10 +63,10 @@ export async function handoverPreview(deps: Pick<Deps, 'db'>, seat: string, lang
   const p = await deps.db.system((q) => seatPolicy(q, seat));
   if (!p) return null;
   const data = await deps.db.system(async (q) => ({
-    openWork: await q.query(`select id, title, status, priority, due_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at`, [seat]),
-    memory: await q.query('select key, value from agent_memory where seat = $1 order by key', [seat]),
-    recentLog: await q.query('select at, kind, body, ref from company_log where seat = $1 order by id desc limit 20', [seat]),
-    pendingApprovals: await q.query(`select ref, title from approvals where proposed_by = $1 and status = 'pending'`, [seat]),
+    openWork: await q.query<Pick<AgentTasksRow, 'id' | 'title' | 'status' | 'priority' | 'due_at'>>(`select id, title, status, priority, due_at from agent_tasks where seat = $1 and status in ('queued', 'running', 'blocked') order by created_at`, [seat]),
+    memory: await q.query<Pick<AgentMemoryRow, 'key' | 'value'>>('select key, value from agent_memory where seat = $1 order by key', [seat]),
+    recentLog: await q.query<Pick<CompanyLogRow, 'at' | 'kind' | 'body' | 'ref'>>('select at, kind, body, ref from company_log where seat = $1 order by id desc limit 20', [seat]),
+    pendingApprovals: await q.query<Pick<ApprovalsRow, 'ref' | 'title'>>(`select ref, title from approvals where proposed_by = $1 and status = 'pending'`, [seat]),
   }));
   return {
     seat: p.seat,

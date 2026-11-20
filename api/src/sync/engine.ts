@@ -5,7 +5,7 @@
 //   3. on a full run, archive what disappeared there,
 //   4. record what happened (sync_runs) for the history screen.
 // Works with owner access, so every statement filters by company explicitly.
-import type { AccountsRow, ConnectionsRow, OrgsRow, RecordsRow, SprintsRow, SyncChangesRow, SyncLinksRow, SyncRunsRow, TasksRow } from '../db/rows.gen';
+import type { AccountsRow, BoardsRow, ConnectionsRow, OrgsRow, RecordTypesRow, RecordsRow, SprintsRow, SyncChangesRow, SyncLinksRow, SyncRunsRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { normalizeValue, optionKey, parseDate } from '../../../shared/src/fields';
 import type { Locale } from '../../../shared/src/i18n';
 import { calculated, ISSUE_TYPES, SPRINT_STATES, type AccountField, type Column, type FieldOption } from '../../../shared/src/model';
@@ -505,9 +505,9 @@ function noteError(r: RunCtx, object: string, message: string, remoteId?: string
 async function loadDefs(deps: Deps, orgId: string): Promise<{ defs: Defs; localUsers: Row[] }> {
   return deps.db.system(async (q) => {
     const [org] = await q.query('select locale, account_fields from orgs where id = $1', [orgId]);
-    const types = await q.query('select * from record_types where org_id = $1', [orgId]);
-    const boards = await q.query('select id, columns from boards where org_id = $1', [orgId]);
-    const localUsers = await q.query(`select id, email, name from users where org_id = $1 and status in ('active', 'invited')`, [orgId]);
+    const types = await q.query<RecordTypesRow>('select * from record_types where org_id = $1', [orgId]);
+    const boards = await q.query<Pick<BoardsRow, 'id' | 'columns'>>('select id, columns from boards where org_id = $1', [orgId]);
+    const localUsers = await q.query<Pick<UsersRow, 'id' | 'email' | 'name'>>(`select id, email, name from users where org_id = $1 and status in ('active', 'invited')`, [orgId]);
     return {
       defs: {
         locale: org.locale,

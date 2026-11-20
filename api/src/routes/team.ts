@@ -27,6 +27,7 @@
 //   POST   /meetings/:id/say {text}    the owner writes in a live meeting; the chair answers
 //   POST   /meetings/:id/close         the note taker's minutes; decisions + action items → approval cards
 //   POST   /approvals/:id/execute      run an approved action whose runner exists (the approved path)
+import type { AgentThreadsRow, AgentWakesRow, MeetingsRow, SeatsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { nowOf, type AppEnv, type C } from '../context';
@@ -162,7 +163,7 @@ teamRoutes.get('/seats/:seat', async (c) => {
   const seat = seatOf(c);
   const [s] = await listSeats(deps, nowOf(deps), seat);
   if (!s) fail('not_found');
-  const [memory, wakeRow] = await deps.db.system(async (q) => [await readMemory(q, seat), (await q.query('select * from agent_wakes where seat = $1', [seat]))[0] ?? null]);
+  const [memory, wakeRow] = await deps.db.system(async (q) => [await readMemory(q, seat), (await q.query<AgentWakesRow>('select * from agent_wakes where seat = $1', [seat]))[0] ?? null]);
   return c.json({
     seat: s,
     def: seatDef(seat) ?? null,
@@ -183,7 +184,7 @@ teamRoutes.patch('/seats/:seat', async (c) => {
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
     // Waking a seat does not switch it on: it must pass its golden tasks first.
-    const [r] = await q.query(
+    const [r] = await q.query<Pick<SeatsRow, 'seat'>>(
       `update seats set state = coalesce($2, state), weekly_budget = coalesce($3, weekly_budget), activated_at = case when $2::text is not null and $2::text <> state then null else activated_at end, updated_at = now() where seat = $1 returning seat`,
       [seat, input.state ?? null, input.weeklyBudget ?? null],
     );
@@ -259,7 +260,7 @@ teamRoutes.delete('/threads/:id', async (c) => {
   const id = idOf(c);
   const who = await owner(c);
   const ok = await c.get('deps').db.system(async (q) => {
-    const [r] = await q.query('delete from agent_threads where id = $1 returning seat', [id]);
+    const [r] = await q.query<Pick<AgentThreadsRow, 'seat'>>('delete from agent_threads where id = $1 returning seat', [id]);
     if (r) await q.query(`insert into agent_audit (seat, actor, action, target, detail) values ($1, 'owner', 'thread.delete', $2, $3)`, [r.seat, id, JSON.stringify({ by: who })]);
     return !!r;
   });
@@ -356,7 +357,7 @@ teamRoutes.post('/tick', async (c) => {
 teamRoutes.post('/seats/:seat/golden', async (c) => {
   const seat = seatOf(c);
   const input = await body(c, z.object({ outputs: z.record(z.string().max(80), z.string().max(16000)).optional() }));
-  const [s] = await c.get('deps').db.system((q) => q.query('select state from seats where seat = $1', [seat]));
+  const [s] = await c.get('deps').db.system((q) => q.query<Pick<SeatsRow, 'state'>>('select state from seats where seat = $1', [seat]));
   if (!s) fail('not_found');
   return c.json(await runGolden(c.get('deps'), seat, input.outputs));
 });
@@ -365,7 +366,7 @@ teamRoutes.post('/seats/:seat/golden', async (c) => {
 
 const meetingExtra = async (c: C, id: string) => {
   const d = await meetingDetail(c.get('deps'), id);
-  const [x] = await c.get('deps').db.system((q) => q.query('select speaking, spent_tokens from meetings where id = $1', [id]));
+  const [x] = await c.get('deps').db.system((q) => q.query<Pick<MeetingsRow, 'speaking' | 'spent_tokens'>>('select speaking, spent_tokens from meetings where id = $1', [id]));
   return { ...d, speaking: x?.speaking ?? null, spentTokens: Number(x?.spent_tokens ?? 0) };
 };
 /** One meeting with who is speaking and the tokens it has spent so far; 404 when unknown. */

@@ -12,6 +12,7 @@
 // The setup checks (setup health, "test your setup") are read by contract, not
 // by importing their code: lib/onboardingSetup.ts is the one adapter
 // (docs/DEVELOPER.md, "Onboarding plans").
+import type { AccountsRow, ConnectionsRow, HandoversRow, ImportBatchesRow, OnboardingIssuesRow, OnboardingPlansRow, OnboardingSitesRow, OnboardingTemplatesRow, OrgsRow, UsersRow } from '../db/rows.gen';
 import { translate, type Locale, type MessageKey } from '../../../shared/src/i18n';
 import {
   BUILT_IN_TEMPLATES,
@@ -209,7 +210,7 @@ export async function createPlan(q: Q, p: NewPlan): Promise<string> {
   const sites: Row[] = [];
   for (const [i, raw] of (bp.sites ?? []).entries()) {
     const name = raw.startsWith('ob.') ? translate(p.locale, raw as MessageKey) : raw;
-    const [row] = await q.query('insert into onboarding_sites (org_id, plan_id, name, position) values ($1, $2, $3, $4) returning id', [p.orgId, plan.id, name.slice(0, 120), i]);
+    const [row] = await q.query<Pick<OnboardingSitesRow, 'id'>>('insert into onboarding_sites (org_id, plan_id, name, position) values ($1, $2, $3, $4) returning id', [p.orgId, plan.id, name.slice(0, 120), i]);
     sites.push(row);
   }
   for (const [i, st] of bp.steps.entries()) {
@@ -254,13 +255,13 @@ async function seedPeople(q: Q, p: NewPlan, planId: string) {
     // The vendor here is Curahold: its support desk is the contact.
     await add('vendor', T('ob.people.curahold'), 'lead', { duty: T('ob.people.curaholdDuty') });
     if (p.actorId) {
-      const [u] = await q.query('select id, name from users where id = $1 and org_id = $2', [p.actorId, p.orgId]);
+      const [u] = await q.query<Pick<UsersRow, 'id' | 'name'>>('select id, name from users where id = $1 and org_id = $2', [p.actorId, p.orgId]);
       if (u) await add('customer', u.name, 'lead', { userId: u.id });
     }
     return;
   }
   if (p.ownerId) {
-    const [u] = await q.query('select id, name from users where id = $1 and org_id = $2', [p.ownerId, p.orgId]);
+    const [u] = await q.query<Pick<UsersRow, 'id' | 'name'>>('select id, name from users where id = $1 and org_id = $2', [p.ownerId, p.orgId]);
     if (u) await add('vendor', u.name, 'lead', { userId: u.id });
   }
   if (!p.accountId) return;
@@ -292,16 +293,16 @@ export async function refreshMapping(q: Q, orgId: string, planId: string) {
   const typeOf = (t: string) => (['text', 'number', 'money', 'date', 'email', 'url', 'person'].includes(t) ? t : t === 'select' ? 'choice' : 'other');
   const rows: { source: string; name: string; target: string; type: string; example: string; ok: boolean | null; required: boolean }[] = [];
   if (plan.kind === 'self') {
-    const [imp] = await q.query(`select summary from import_batches where org_id = $1 and kind = 'accounts' and undone_at is null order by created_at desc limit 1`, [orgId]);
+    const [imp] = await q.query<Pick<ImportBatchesRow, 'summary'>>(`select summary from import_batches where org_id = $1 and kind = 'accounts' and undone_at is null order by created_at desc limit 1`, [orgId]);
     if (imp) {
-      const [ex] = await q.query(`select fields from accounts where org_id = $1 and source = 'import' and archived_at is null order by created_at desc limit 1`, [orgId]);
+      const [ex] = await q.query<Pick<AccountsRow, 'fields'>>(`select fields from accounts where org_id = $1 and source = 'import' and archived_at is null order by created_at desc limit 1`, [orgId]);
       const ok = Number(imp.summary?.errors ?? 0) === 0;
       for (const f of defs.filter((d) => !d.rollup && !d.health).slice(0, 40)) {
         const v = ex?.fields?.[f.key];
         rows.push({ source: 'import', name: label(f), target: f.key, type: typeOf(f.type), example: v == null ? '' : String(v).slice(0, 300), ok, required: !!(f as any).required });
       }
     }
-    const conns = await q.query(`select label, status, last_ok_at, config from connections where org_id = $1 and kind = 'source' and status <> 'disabled'`, [orgId]);
+    const conns = await q.query<Pick<ConnectionsRow, 'label' | 'status' | 'last_ok_at' | 'config'>>(`select label, status, last_ok_at, config from connections where org_id = $1 and kind = 'source' and status <> 'disabled'`, [orgId]);
     for (const c of conns) {
       for (const o of (c.config?.sync?.objects ?? []) as { label: string; enabled: boolean; fields: { remote: string; local: string }[] }[]) {
         if (!o.enabled) continue;
@@ -313,7 +314,7 @@ export async function refreshMapping(q: Q, orgId: string, planId: string) {
   }
   const forms = await q.query<{ key: string }>(`select distinct unnest(form) as key from onboarding_steps where plan_id = $1 and org_id = $2`, [planId, orgId]);
   if (forms.length) {
-    const [acc] = plan.account_id ? await q.query('select fields from accounts where id = $1 and org_id = $2', [plan.account_id, orgId]) : [null];
+    const [acc] = plan.account_id ? await q.query<Pick<AccountsRow, 'fields'>>('select fields from accounts where id = $1 and org_id = $2', [plan.account_id, orgId]) : [null];
     for (const { key } of forms) {
       const f = defs.find((d) => d.key === key);
       if (!f) continue;
@@ -359,11 +360,11 @@ export async function judgeFields(q: Q, orgId: string, planId: string) {
 
 /** The company's own plan, made the first time it is asked for (or when its trial or paid start begins). */
 export async function ensureSelfPlan(q: Q, orgId: string, actorId: string | null, today: string): Promise<string> {
-  const [have] = await q.query('select id from onboarding_plans where org_id = $1 and kind = $2', [orgId, 'self']);
+  const [have] = await q.query<Pick<OnboardingPlansRow, 'id'>>('select id from onboarding_plans where org_id = $1 and kind = $2', [orgId, 'self']);
   if (have) return have.id;
-  const [org] = await q.query('select name, locale from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'name' | 'locale'>>('select name, locale from orgs where id = $1', [orgId]);
   const locale = (org?.locale ?? 'en') as Locale;
-  const [tpl] = await q.query(`select id, body from onboarding_templates where org_id = $1 and kind = 'self' and archived_at is null order by created_at limit 1`, [orgId]);
+  const [tpl] = await q.query<Pick<OnboardingTemplatesRow, 'id' | 'body'>>(`select id, body from onboarding_templates where org_id = $1 and kind = 'self' and archived_at is null order by created_at limit 1`, [orgId]);
   return createPlan(q, {
     orgId,
     actorId,
@@ -380,15 +381,15 @@ export async function ensureSelfPlan(q: Q, orgId: string, actorId: string | null
 
 /** The blueprint a client plan starts from: the chosen template, the company's default, or the built-in standard one. */
 export async function clientBlueprint(q: Q, orgId: string, templateId: string | null): Promise<{ id: string | null; blueprint: Blueprint; name: string | null }> {
-  const s = onboardingSettings((await q.query('select settings from orgs where id = $1', [orgId]))[0]?.settings);
+  const s = onboardingSettings((await q.query<Pick<OrgsRow, 'settings'>>('select settings from orgs where id = $1', [orgId]))[0]?.settings);
   const want = templateId ?? s.templateId;
   // A built-in template by its key ("standard", "multisite"): nothing to look up.
   if (want && builtInTemplate(want)?.kind === 'client') return { id: null, blueprint: builtInTemplate(want)!.blueprint, name: null };
   const [t] = want && /^[0-9a-f-]{36}$/i.test(want)
-    ? await q.query(`select id, name, body from onboarding_templates where id = $1 and org_id = $2 and kind = 'client' and archived_at is null`, [want, orgId])
+    ? await q.query<Pick<OnboardingTemplatesRow, 'id' | 'name' | 'body'>>(`select id, name, body from onboarding_templates where id = $1 and org_id = $2 and kind = 'client' and archived_at is null`, [want, orgId])
     : want
       ? []
-      : await q.query(`select id, name, body from onboarding_templates where org_id = $1 and kind = 'client' and archived_at is null order by created_at limit 1`, [orgId]);
+      : await q.query<Pick<OnboardingTemplatesRow, 'id' | 'name' | 'body'>>(`select id, name, body from onboarding_templates where org_id = $1 and kind = 'client' and archived_at is null order by created_at limit 1`, [orgId]);
   if (t) return { id: t.id, blueprint: t.body as Blueprint, name: t.name };
   return { id: null, blueprint: builtInTemplate('standard')!.blueprint, name: null };
 }
@@ -404,11 +405,11 @@ export async function openPlanForHandover(q: Q, orgId: string, handoverId: strin
   const [h] = await q.query('select h.*, o.settings, o.locale, a.name as account_name from handovers h join orgs o on o.id = h.org_id join accounts a on a.id = h.account_id where h.id = $1 and h.org_id = $2', [handoverId, orgId]);
   const settings = onboardingSettings(h?.settings);
   if (!h || h.source_kind === 'onboarding' || !settings.fromHandover) return null;
-  const [open] = await q.query(`select id from onboarding_plans where org_id = $1 and account_id = $2 and status in ('draft', 'active', 'paused')`, [orgId, h.account_id]);
+  const [open] = await q.query<Pick<OnboardingPlansRow, 'id'>>(`select id from onboarding_plans where org_id = $1 and account_id = $2 and status in ('draft', 'active', 'paused')`, [orgId, h.account_id]);
   if (open) return null;
   const locale = (h.locale ?? 'en') as Locale;
   // The customer's segment, plan or region may pick the template; "ask each time" opens an empty draft that asks.
-  const [acc] = await q.query('select fields from accounts where id = $1 and org_id = $2', [h.account_id, orgId]);
+  const [acc] = await q.query<Pick<AccountsRow, 'fields'>>('select fields from accounts where id = $1 and org_id = $2', [h.account_id, orgId]);
   const pick = templateFor(settings, acc?.fields);
   const tpl = pick === ASK_TEMPLATE ? { id: null, blueprint: { steps: [], goals: [], metrics: [], fields: [] } as Blueprint } : await clientBlueprint(q, orgId, pick);
   return createPlan(q, {
@@ -445,7 +446,7 @@ export async function handoffNote(q: Q, orgId: string, h: Row, locale: Locale): 
     `select t.title from request_links l join tasks t on t.id = l.story_id where l.org_id = $1 and l.account_id = $2 and l.shipped_at is null order by l.created_at limit 8`,
     [orgId, h.account_id],
   );
-  const [acc] = await q.query('select fields from accounts where id = $1 and org_id = $2', [h.account_id, orgId]);
+  const [acc] = await q.query<Pick<AccountsRow, 'fields'>>('select fields from accounts where id = $1 and org_id = $2', [h.account_id, orgId]);
   const renewal = typeof acc?.fields?.renewal_date === 'string' ? acc.fields.renewal_date.slice(0, 10) : null;
   const lines = [T('ob.note.head', { deal: h.source_name || '—' })];
   if (promises.length) lines.push('', T('ob.note.promises'), ...promises.map((p) => `• ${p.body}${p.due_date ? ` (${day(p.due_date)})` : ''}`));
@@ -457,7 +458,7 @@ export async function handoffNote(q: Q, orgId: string, h: Row, locale: Locale): 
 
 /** The hand-over was confirmed: the draft plan starts, owned by the new owner, dated from today. */
 export async function startPlanForHandover(q: Q, orgId: string, handoverId: string, ownerId: string, note: string | null, today: string) {
-  const [p] = await q.query(`select id, started_on from onboarding_plans where org_id = $1 and handover_id = $2 and status = 'draft'`, [orgId, handoverId]);
+  const [p] = await q.query<Pick<OnboardingPlansRow, 'id' | 'started_on'>>(`select id, started_on from onboarding_plans where org_id = $1 and handover_id = $2 and status = 'draft'`, [orgId, handoverId]);
   if (!p) return null;
   const shift = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${day(p.started_on)}T00:00:00Z`)) / 86400_000);
   await q.query(
@@ -471,7 +472,7 @@ export async function startPlanForHandover(q: Q, orgId: string, handoverId: stri
     [p.id, ownerId, shift],
   );
   await q.query(`update onboarding_goals set target_on = target_on + $2::int where plan_id = $1 and target_on is not null`, [p.id, shift]);
-  const [owner] = await q.query('select name from users where id = $1 and org_id = $2', [ownerId, orgId]);
+  const [owner] = await q.query<Pick<UsersRow, 'name'>>('select name from users where id = $1 and org_id = $2', [ownerId, orgId]);
   if (owner && !(await q.query(`select 1 from onboarding_people where plan_id = $1 and side = 'vendor' and user_id = $2`, [p.id, ownerId])).length) {
     await q.query(`insert into onboarding_people (org_id, plan_id, side, user_id, name, role) values ($1, $2, 'vendor', $3, $4, 'lead')`, [orgId, p.id, ownerId, owner.name]);
   }
@@ -493,10 +494,10 @@ export async function finishPlan(q: Q, orgId: string, planId: string, actorId: s
   await q.query(`update onboarding_plans set status = 'done', done_at = now(), done_by = $2, baseline = $3, updated_at = now() where id = $1`, [planId, actorId, JSON.stringify(baseline)]);
   await audit(q, { orgId, actorId, action: 'onboarding.plan_done', entity: p.account_id ? 'account' : 'org', entityId: p.account_id ?? orgId, meta: { plan: planId, health } });
   if (p.kind !== 'client' || p.department !== 'onboarding') return null;
-  const [org] = await q.query('select locale from orgs where id = $1', [orgId]);
+  const [org] = await q.query<Pick<OrgsRow, 'locale'>>('select locale from orgs where id = $1', [orgId]);
   const T = (k: string, v?: Record<string, string | number>) => translate((org?.locale ?? 'en') as Locale, k as MessageKey, v);
   const goals = await q.query(`select coalesce(title, title_key) as t, status from onboarding_goals where plan_id = $1 order by position`, [planId]);
-  const open = await q.query(`select title from onboarding_issues where plan_id = $1 and status <> 'resolved' order by opened_on`, [planId]);
+  const open = await q.query<Pick<OnboardingIssuesRow, 'title'>>(`select title from onboarding_issues where plan_id = $1 and status <> 'resolved' order by opened_on`, [planId]);
   const summary = [
     T('ob.handoff.summary', { plan: p.name }),
     health == null ? '' : T('ob.handoff.health', { score: health }),
@@ -506,7 +507,7 @@ export async function finishPlan(q: Q, orgId: string, planId: string, actorId: s
   ]
     .filter(Boolean)
     .join('\n');
-  const [row] = await q.query(
+  const [row] = await q.query<Pick<HandoversRow, 'id'>>(
     `insert into handovers (org_id, account_id, source_kind, source_id, source_name, stage, to_department, summary, created_by)
      values ($1, $2, 'onboarding', $3, $4, 'onboarded', 'success', $5, $6) on conflict (org_id, source_kind, source_id) do nothing returning id`,
     [orgId, p.account_id, planId, p.name.slice(0, 300), summary.slice(0, 8000), actorId],

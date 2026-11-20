@@ -15,6 +15,7 @@
 //
 // Session handling is deliberately NOT here: the routes call openSession() and
 // setSessionCookie() exactly as the email-link and OAuth flows do.
+import type { SsoSeenAssertionsRow } from '../db/rows.gen';
 import type { Q } from '../db';
 import type { Config } from '../context';
 import { orgUrl, secretsKey } from '../context';
@@ -220,7 +221,7 @@ export async function findOrProvisionUser(q: Q, orgId: string, id: { email: stri
 export async function claimAssertion(q: Q, orgId: string, assertionXml: string, ttlMs = 60 * 60_000): Promise<boolean> {
   const key = await sha256Hex(assertionXml);
   await q.query(`delete from sso_seen_assertions where org_id = $1 and expires_at < now()`, [orgId]);
-  const rows = await q.query(
+  const rows = await q.query<Pick<SsoSeenAssertionsRow, 'assertion_key'>>(
     `insert into sso_seen_assertions (org_id, assertion_key, expires_at)
      values ($1, $2, now() + make_interval(secs => $3)) on conflict do nothing returning assertion_key`,
     [orgId, key, Math.round(ttlMs / 1000)],

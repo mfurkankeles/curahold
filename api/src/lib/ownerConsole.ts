@@ -2,6 +2,7 @@
 // free, System, Activity, Support at a glance, Plan & targets and the go-live
 // Checklist. Read over the owner connection across every company; metadata and
 // counts only — never a customer's own records.
+import type { PlanTargetsRow, PlanTasksRow } from '../db/rows.gen';
 import { CHECKLIST, nextTask, type ChecklistEntry, type ChecklistItem, type ChecklistTrigger } from '../../../shared/src/checklist';
 import { PRICE_CURRENCY, planOf } from '../../../shared/src/billing';
 import type { MetricPoint } from '../../../shared/src/metrics';
@@ -101,7 +102,7 @@ export async function ownerPlan(deps: Deps, at?: Date): Promise<OwnerPlan> {
   const elapsed = Math.min(1, (now.getUTCDate() - 1 + now.getUTCHours() / 24) / daysIn);
   return deps.db.system(async (q) => {
     const act = await actuals(q, period);
-    const t = await q.query(`select metric, period, target from plan_targets where period >= $1 order by period limit 400`, [period]);
+    const t = await q.query<Pick<PlanTargetsRow, 'metric' | 'period' | 'target'>>(`select metric, period, target from plan_targets where period >= $1 order by period limit 400`, [period]);
     const targets: OwnerPlan['targets'] = {};
     for (const r of t) (targets[r.metric] ??= {})[r.period] = Number(r.target);
     const rows: PlanRow[] = PLAN_METRICS.map((metric) => {
@@ -111,7 +112,7 @@ export async function ownerPlan(deps: Deps, at?: Date): Promise<OwnerPlan> {
     const today = dayOf(now);
     const weekEnd = dayOf(new Date(Date.parse(`${weekOf(now)}T00:00:00Z`) + 6 * 86400_000));
     const monthEnd = `${period}-${String(daysIn).padStart(2, '0')}`;
-    const tasks = (await q.query(`select * from plan_tasks where (done_at is null and due_on <= $1) or (due_on between $2 and $1) order by due_on, created_at limit 300`, [monthEnd, today])).map(taskOf);
+    const tasks = (await q.query<PlanTasksRow>(`select * from plan_tasks where (done_at is null and due_on <= $1) or (due_on between $2 and $1) order by due_on, created_at limit 300`, [monthEnd, today])).map(taskOf);
     return {
       period,
       elapsed,

@@ -5,6 +5,7 @@
 // timeline note, once per message id; one from an unknown number is counted on the connection, not stored.
 //
 // Mounted before sign-in (like the other inbound routers), so it is exempt from the cross-site write check.
+import type { ActivitiesRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { secretsKey, type AppEnv } from '../context';
 import { unseal } from '../lib/crypto';
@@ -80,7 +81,7 @@ whatsappInboundRoutes.post('/inbound/whatsapp/:source', async (c) => {
         unmatched++;
         continue;
       }
-      const rows = await q.query(
+      const rows = await q.query<Pick<ActivitiesRow, 'id'>>(
         `insert into activities (org_id, account_id, author_id, kind, body, happened_at, source, external_id)
          values ($1, $2, null, 'note', $3, coalesce($4::timestamptz, now()), 'whatsapp', $5)
          on conflict (org_id, source, external_id) where external_id is not null do nothing returning id`,

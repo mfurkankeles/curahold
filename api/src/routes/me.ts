@@ -1,6 +1,7 @@
 // The signed-in person's own API: /me (who I am, my company, plan, trial and support state), my preferences,
 // my devices (sessions), sign-out, my notifications and my calendar feed. Everything here is about the caller
 // only; nothing reads another person's data. Used by the app shell on every load (web/src/lib/api.ts).
+import type { NotificationsRow, SessionsRow, UsersRow } from '../db/rows.gen';
 import { fxOf } from '../lib/fx';
 import { rhythmOf } from '../../../shared/src/rhythm';
 import { Hono } from 'hono';
@@ -42,7 +43,7 @@ meRoutes.get('/me', async (c) => {
       'select plan, trial_seat_cap, exists (select 1 from org_agreements a where a.org_id = orgs.id and a.accepted_at is null) as agreements_due from orgs where id = $1',
       [org.id],
     );
-    const [u] = await q.query('select onboarded_at, prefs from users where id = $1', [auth.userId]);
+    const [u] = await q.query<Pick<UsersRow, 'onboarded_at' | 'prefs'>>('select onboarded_at, prefs from users where id = $1', [auth.userId]);
     const teams = await q.query<{ team_id: string }>('select team_id from team_members where user_id = $1', [auth.userId]);
     // Support access this person has open, so the app can say so (and offer to close it).
     const [g] = await q.query(
@@ -159,7 +160,7 @@ meRoutes.patch('/me', async (c) => {
         const ok = await q.query(`select 1 from connections where id::text = $1 and kind = 'messaging' and provider <> 'webhook'`, [ch]);
         if (!ok.length) fail('validation', { fields: 'prefs.channel' }, { fields: ['prefs.channel'] });
       }
-      const [u] = await q.query('select prefs from users where id = $1', [auth.userId]);
+      const [u] = await q.query<Pick<UsersRow, 'prefs'>>('select prefs from users where id = $1', [auth.userId]);
       const cur = prefsOf(u?.prefs);
       const next = { ...cur, ...input.prefs, events: { ...cur.events, ...(input.prefs.events ?? {}) } };
       await q.query('update users set prefs = $2 where id = $1', [auth.userId, JSON.stringify(next)]);
@@ -216,7 +217,7 @@ meRoutes.delete('/me/sessions/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   const n = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<Pick<SessionsRow, 'id'>>(
       `update sessions set revoked_at = now(), revoke_reason = 'user'
         where id = $1 and user_id = $2 and revoked_at is null returning id`,
       [id, auth.userId],
@@ -387,7 +388,7 @@ meRoutes.get('/notifications', async (c) => {
   const limit = Math.min(Math.max(Number(c.req.query('limit')) || 50, 1), 100);
   const before = c.req.query('before');
   const { rows, unread } = await run(c, async (q) => {
-    const rows = await q.query(
+    const rows = await q.query<NotificationsRow>(
       `select * from notifications where user_id = $1
           and ($2::text[] is null or kind = any($2::text[]))
           and (not $3 or read_at is null)

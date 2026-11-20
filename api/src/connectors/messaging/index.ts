@@ -1,6 +1,7 @@
 // Messaging connectors (Slack, Teams, Google Chat, plain webhooks for Lark, Telegram and others): the adapter list,
 // which ones this install offers, loading a connection with its credentials unsealed, and linking chat users to people.
 // Used by notify.ts (sending), routes/connections.ts and routes/hooks.ts (incoming buttons).
+import type { ConnectionsRow } from '../../db/rows.gen';
 import type { ProviderInfo } from '../../../../shared/src/model';
 import { secretsKey, type Config, type Deps } from '../../context';
 import type { Q } from '../../db';
@@ -41,7 +42,7 @@ const rowToConn = async (r: any, key: string): Promise<LoadedConnection> => ({
 
 /** Owner access: the request role cannot read sealed credentials. Always filtered by company. */
 export async function loadConnection(deps: Deps, orgId: string, id: string): Promise<LoadedConnection | null> {
-  const rows = await deps.db.system((q) => q.query(`select * from connections where id = $1 and org_id = $2 and status <> 'disabled'`, [id, orgId]));
+  const rows = await deps.db.system((q) => q.query<ConnectionsRow>(`select * from connections where id = $1 and org_id = $2 and status <> 'disabled'`, [id, orgId]));
   return rows[0] ? rowToConn(rows[0], secretsKey(deps.config)) : null;
 }
 
@@ -51,7 +52,7 @@ export async function loadConnection(deps: Deps, orgId: string, id: string): Pro
  */
 export async function connectionByExternal(deps: Deps, provider: string, externalId: string): Promise<LoadedConnection | null> {
   const rows = await deps.db.system((q) =>
-    q.query(`select * from connections where provider = $1 and external_id = $2 and status <> 'disabled'`, [provider, externalId]),
+    q.query<ConnectionsRow>(`select * from connections where provider = $1 and external_id = $2 and status <> 'disabled'`, [provider, externalId]),
   );
   return rows[0] ? rowToConn(rows[0], secretsKey(deps.config)) : null;
 }

@@ -3,6 +3,7 @@
 // connection, across every company, from two places only: the billing
 // provider's records as the product keeps them (orgs.billing, written by the
 // provider's webhooks) and the product's own tables. Nothing here writes.
+import type { OrgsRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 import { PLANS, PRICE_CURRENCY, isPlanKey, type Interval, type PlanKey } from '../../../shared/src/billing';
 import type { ConsoleToday } from '../../../shared/src/console';
@@ -74,7 +75,7 @@ export async function consoleToday(deps: Deps, staffEmail: string): Promise<Cons
     const pastDue = await q.query(
       `select id, name, nullif(billing->>'eventAt', '') as since from orgs where billing->>'status' = 'past_due' order by since nulls last limit 5`,
     );
-    const trials = await q.query(
+    const trials = await q.query<Pick<OrgsRow, 'id' | 'name' | 'trial_ends_at'>>(
       `select id, name, trial_ends_at from orgs
         where trial_ends_at between now() and now() + interval '7 days' and coalesce(billing->>'status', '') not in ('active', 'past_due')
         order by trial_ends_at limit 5`,

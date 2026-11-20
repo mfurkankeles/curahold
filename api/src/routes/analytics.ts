@@ -14,6 +14,7 @@
 // Every pull is written down (analytics_pulls: key, person, dataset, rows,
 // query, tool), with one activity-log line per key, dataset and hour; the
 // company has a daily row budget and each key a request budget (lib/ratelimit.ts).
+import type { ApiTokensRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { ANALYTICS_DEPARTMENTS, type AnalyticsDatasetInfo, type AnalyticsKeyInfo, type AnalyticsPullInfo } from '../../../shared/src/analytics';
@@ -440,7 +441,7 @@ analyticsRoutes.post('/dev/analytics/keys', async (c) => {
       const unknown = input.datasets.filter((d) => !names.has(d));
       if (unknown.length) fail('validation', { fields: 'datasets' }, { fields: ['datasets'], unknown });
     }
-    const [r] = await q.query(
+    const [r] = await q.query<ApiTokensRow>(
       `insert into api_tokens (org_id, user_id, kind, name, token_hash, can_write, prefix, expires_at, datasets, departments)
        values ($1, $2, 'analytics', $3, $4, false, $5, now() + make_interval(days => $6::int), $7, $8) returning *`,
       [org.id, auth.userId, input.name, s.hash, s.shown, input.expiresInDays, input.datasets ? [...new Set(input.datasets)] : null, input.departments ? [...new Set(input.departments)] : null],
@@ -469,7 +470,7 @@ analyticsRoutes.post('/dev/analytics/keys/:id/rotate', async (c) => {
   const org = c.get('org');
   const s = await newSecret(ANALYTICS_PREFIX);
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<ApiTokensRow>(
       `update api_tokens set token_hash = $3, prefix = $4, rotated_at = now(), last_used_at = null
         where id = $1 and user_id = $2 and kind = 'analytics' and revoked_at is null and expires_at > now() returning *`,
       [id, auth.userId, s.hash, s.shown],
@@ -488,7 +489,7 @@ analyticsRoutes.delete('/dev/analytics/keys/:id', async (c) => {
   const auth = c.get('auth');
   const org = c.get('org');
   await run(c, async (q) => {
-    const r = await q.query(`update api_tokens set revoked_at = now() where id = $1 and kind = 'analytics' and revoked_at is null returning id, name, user_id`, [id]);
+    const r = await q.query<Pick<ApiTokensRow, 'id' | 'name' | 'user_id'>>(`update api_tokens set revoked_at = now() where id = $1 and kind = 'analytics' and revoked_at is null returning id, name, user_id`, [id]);
     if (!r.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'analytics_key.revoked', entity: 'api_key', entityId: id, meta: { name: r[0].name, owner: r[0].user_id } });
   });

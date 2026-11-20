@@ -6,6 +6,7 @@
 // A meeting is an `activities` row (kind meeting / review / call) with a
 // title, its length and our people (migration 0020). Read under the viewer's
 // own rights: a next step on a board they cannot open does not show up.
+import type { AccountsRow, ActivitiesRow, PlannedMeetingsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Column } from '../../../shared/src/model';
@@ -63,9 +64,9 @@ meetingRoutes.get('/accounts/:id/meetings', async (c) => {
   const before = c.req.query('before');
   const at = before && !Number.isNaN(Date.parse(before)) ? new Date(before).toISOString() : '9999-12-31T00:00:00Z';
   const data = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]);
     if (!a) fail('not_found');
-    const rows = await q.query(
+    const rows = await q.query<ActivitiesRow>(
       `select * from activities where account_id = $1 and kind = any($2::text[]) and happened_at < $3
         order by happened_at desc limit $4`,
       [id, kinds, at, PAGE],
@@ -126,11 +127,11 @@ meetingRoutes.post('/accounts/:id/meetings', async (c) => {
   // A meeting needs something to remember it by: a title, notes or a next step.
   if (!input.title && !input.body && !input.nextSteps?.length) fail('validation', { fields: 'title' }, { fields: ['title'] });
   const meeting = await run(c, async (q) => {
-    const [a] = await q.query('select id, name from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'name'>>('select id, name from accounts where id = $1', [id]);
     if (!a) fail('not_found');
     const contacts = await checkContacts(q, id, input.contactIds ?? []);
     const users = await checkUsers(q, input.userIds ?? []);
-    const [r] = await q.query(
+    const [r] = await q.query<ActivitiesRow>(
       `insert into activities (org_id, account_id, author_id, kind, title, body, happened_at, minutes, contact_ids, user_ids)
        values ($1, $2, $3, $4, $5, $6, coalesce($7::timestamptz, now()), $8, $9, $10) returning *`,
       [org.id, id, auth.userId, input.kind, input.title, input.body, input.happenedAt ?? null, input.minutes ?? null, contacts, users],
@@ -153,9 +154,9 @@ meetingRoutes.post('/activities/:id/next-steps', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const steps = await run(c, async (q) => {
-    const [m] = await q.query('select * from activities where id = $1', [id]);
+    const [m] = await q.query<ActivitiesRow>('select * from activities where id = $1', [id]);
     if (!m || !isMeetingKind(m.kind)) fail('not_found');
-    const [a] = await q.query('select id, name from accounts where id = $1', [m.account_id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'name'>>('select id, name from accounts where id = $1', [m.account_id]);
     if (!a) fail('not_found');
     return makeSteps(q, { orgId: org.id, actorId: auth.userId, account: a, meeting: m, boardId: input.boardId, steps: input.steps });
   });
@@ -173,7 +174,7 @@ function notInFuture(at: string | undefined, now: Date) {
 async function checkUsers(q: Q, ids: string[]): Promise<string[]> {
   const want = [...new Set(ids)];
   if (!want.length) return [];
-  const found = await q.query('select id from users where id = any($1::uuid[])', [want]);
+  const found = await q.query<Pick<UsersRow, 'id'>>('select id from users where id = any($1::uuid[])', [want]);
   if (found.length !== want.length) fail('validation', { fields: 'userIds' }, { fields: ['userIds'] });
   return want;
 }
@@ -195,7 +196,7 @@ async function makeSteps(
   // Only people who can be given work: a full seat, not switched off.
   const wanted = [...new Set(x.steps.flatMap((s) => s.assigneeIds ?? []))];
   const ok = new Set(
-    wanted.length ? (await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`, [wanted])).map((u) => u.id as string) : [],
+    wanted.length ? (await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited') and seat = 'full'`, [wanted])).map((u) => u.id as string) : [],
   );
   const [{ p }] = await q.query('select coalesce(max(position), 0) as p from tasks where board_id = $1 and status = $2', [board.id, status]);
   let position = Number(p);
@@ -273,13 +274,13 @@ const plannedInput = {
 meetingRoutes.get('/accounts/:id/planned', async (c) => {
   const id = param(c, 'id');
   const data = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]);
     if (!a) fail('not_found');
-    const upcoming = await q.query(
+    const upcoming = await q.query<PlannedMeetingsRow>(
       `select * from planned_meetings where account_id = $1 and status = 'planned' order by starts_at limit 100`,
       [id],
     );
-    const past = await q.query(
+    const past = await q.query<PlannedMeetingsRow>(
       `select * from planned_meetings where account_id = $1 and status <> 'planned' order by updated_at desc limit $2`,
       [id, PLANNED_PAST],
     );
@@ -312,11 +313,11 @@ meetingRoutes.post('/accounts/:id/planned', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const planned = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]);
     if (!a) fail('not_found');
     const contacts = await checkContacts(q, id, input.contactIds ?? []);
     const users = await checkUsers(q, input.userIds ?? []);
-    const [r] = await q.query(
+    const [r] = await q.query<PlannedMeetingsRow>(
       `insert into planned_meetings (org_id, account_id, created_by, kind, type_label, title, agenda, starts_at, minutes, contact_ids, user_ids, repeat)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning *`,
       [org.id, id, auth.userId, input.kind, input.typeLabel, input.title, input.agenda, input.startsAt, input.minutes ?? null, contacts, users, input.repeat],
@@ -345,12 +346,12 @@ meetingRoutes.patch('/planned/:id', async (c) => {
     }),
   );
   const planned = await run(c, async (q) => {
-    const [m] = await q.query('select * from planned_meetings where id = $1', [id]);
+    const [m] = await q.query<PlannedMeetingsRow>('select * from planned_meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (m.status !== 'planned') fail('validation', { fields: 'status' }, { reason: 'not_planned' });
     const contacts = input.contactIds ? await checkContacts(q, m.account_id, input.contactIds) : null;
     const users = input.userIds ? await checkUsers(q, input.userIds) : null;
-    const [r] = await q.query(
+    const [r] = await q.query<PlannedMeetingsRow>(
       `update planned_meetings set
          kind = coalesce($2, kind), type_label = coalesce($3, type_label), title = coalesce($4, title),
          agenda = coalesce($5, agenda), starts_at = coalesce($6::timestamptz, starts_at), minutes = coalesce($7, minutes),
@@ -383,24 +384,24 @@ meetingRoutes.post('/planned/:id/hold', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [m] = await q.query('select * from planned_meetings where id = $1', [id]);
+    const [m] = await q.query<PlannedMeetingsRow>('select * from planned_meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (m.status !== 'planned') fail('validation', { fields: 'status' }, { reason: 'not_planned' });
-    const [a] = await q.query('select id, name from accounts where id = $1', [m.account_id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id' | 'name'>>('select id, name from accounts where id = $1', [m.account_id]);
     if (!a) fail('not_found');
     const title = m.title || m.type_label || '';
-    const [act] = await q.query(
+    const [act] = await q.query<ActivitiesRow>(
       `insert into activities (org_id, account_id, author_id, kind, title, body, happened_at, minutes, contact_ids, user_ids)
        values ($1, $2, $3, $4, $5, $6, coalesce($7::timestamptz, now()), $8, $9, $10) returning *`,
       [org.id, m.account_id, auth.userId, m.kind, title, input.body || m.agenda, input.happenedAt ?? null, input.minutes ?? m.minutes ?? null, m.contact_ids, m.user_ids],
     );
     const steps = await makeSteps(q, { orgId: org.id, actorId: auth.userId, account: a, meeting: act, boardId: input.boardId, steps: input.nextSteps ?? [] });
-    const [r] = await q.query(`update planned_meetings set status = 'held', activity_id = $2, updated_at = now() where id = $1 returning *`, [id, act.id]);
+    const [r] = await q.query<PlannedMeetingsRow>(`update planned_meetings set status = 'held', activity_id = $2, updated_at = now() where id = $1 returning *`, [id, act.id]);
     // A repeating meeting rolls forward: the next one is planned from this start.
     let next: PlannedMeeting | null = null;
     const when = nextStart(iso(m.starts_at)!, m.repeat as MeetingRepeat);
     if (when) {
-      const [n] = await q.query(
+      const [n] = await q.query<PlannedMeetingsRow>(
         `insert into planned_meetings (org_id, account_id, created_by, kind, type_label, title, agenda, starts_at, minutes, contact_ids, user_ids, repeat)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning *`,
         [org.id, m.account_id, auth.userId, m.kind, m.type_label, m.title, m.agenda, when.toISOString(), m.minutes ?? null, m.contact_ids, m.user_ids, m.repeat],
@@ -424,13 +425,13 @@ meetingRoutes.post('/planned/:id/postpone', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [m] = await q.query('select * from planned_meetings where id = $1', [id]);
+    const [m] = await q.query<PlannedMeetingsRow>('select * from planned_meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (m.status !== 'planned') fail('validation', { fields: 'status' }, { reason: 'not_planned' });
-    const [r] = await q.query(`update planned_meetings set status = 'postponed', reason = $2, updated_at = now() where id = $1 returning *`, [id, input.reason]);
+    const [r] = await q.query<PlannedMeetingsRow>(`update planned_meetings set status = 'postponed', reason = $2, updated_at = now() where id = $1 returning *`, [id, input.reason]);
     let next: PlannedMeeting | null = null;
     if (input.startsAt) {
-      const [n] = await q.query(
+      const [n] = await q.query<PlannedMeetingsRow>(
         `insert into planned_meetings (org_id, account_id, created_by, kind, type_label, title, agenda, starts_at, minutes, contact_ids, user_ids, repeat)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning *`,
         [org.id, m.account_id, auth.userId, m.kind, m.type_label, m.title, m.agenda, input.startsAt, m.minutes ?? null, m.contact_ids, m.user_ids, m.repeat],
@@ -448,10 +449,10 @@ meetingRoutes.post('/planned/:id/cancel', async (c) => {
   const id = param(c, 'id');
   const input = await body(c, z.object({ reason: z.string().trim().max(2000).default('') }));
   const planned = await run(c, async (q) => {
-    const [m] = await q.query('select * from planned_meetings where id = $1', [id]);
+    const [m] = await q.query<PlannedMeetingsRow>('select * from planned_meetings where id = $1', [id]);
     if (!m) fail('not_found');
     if (m.status !== 'planned') fail('validation', { fields: 'status' }, { reason: 'not_planned' });
-    const [r] = await q.query(`update planned_meetings set status = 'cancelled', reason = $2, updated_at = now() where id = $1 returning *`, [id, input.reason]);
+    const [r] = await q.query<PlannedMeetingsRow>(`update planned_meetings set status = 'cancelled', reason = $2, updated_at = now() where id = $1 returning *`, [id, input.reason]);
     return mapPlanned(r);
   });
   return c.json({ planned });

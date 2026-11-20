@@ -16,6 +16,7 @@
 //   FILES_DIR       where attachments are kept (default ./data/files)
 //   PORT            default 8080
 //   …and any of the optional sign-in and connector settings from the README.
+import type { OrgsRow } from './db/rows.gen';
 import { clamavScanner } from './lib/clamav';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
@@ -118,7 +119,7 @@ export function selfHostConfig(env: Record<string, string | undefined>): Config 
 
 /** The company, the first time (with its first administrator). */
 export async function ensureCompany(db: Db, env: Record<string, string | undefined>, slug: string): Promise<'created' | 'there'> {
-  const [found] = await db.system((q) => q.query('select id from orgs where slug = $1', [slug]));
+  const [found] = await db.system((q) => q.query<Pick<OrgsRow, 'id'>>('select id from orgs where slug = $1', [slug]));
   if (found) return 'there';
   if (!env.ADMIN_EMAIL) throw new Error('ADMIN_EMAIL is needed on the first start: it becomes the first administrator');
   await createOrg(db, {

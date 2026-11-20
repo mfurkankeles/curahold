@@ -2,6 +2,7 @@
 // discovery documents, dynamic client registration, the consent step (in
 // the app, as the signed-in person) and tokens with PKCE. Every company is
 // its own issuer at its own address.
+import type { OauthClientsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { orgUrl, run, type AppEnv, type C } from '../context';
@@ -95,7 +96,7 @@ oauthRoutes.post('/oauth/register', async (c) => {
 /** The app sends the person here; Curahold asks them (signed in, in the app) whether to allow it. */
 oauthRoutes.get('/oauth/authorize', async (c) => {
   const p = (k: string) => c.req.query(k) ?? '';
-  const [client] = await c.get('deps').db.system((q) => q.query('select * from oauth_clients where id = $1', [p('client_id')]));
+  const [client] = await c.get('deps').db.system((q) => q.query<OauthClientsRow>('select * from oauth_clients where id = $1', [p('client_id')]));
   if (!client || !client.redirect_uris.includes(p('redirect_uri'))) return c.text('Unknown app or redirect address.', 400);
   const back = (error: string) => {
     const u = new URL(p('redirect_uri'));
@@ -127,7 +128,7 @@ async function readRequest(c: C, token: string): Promise<AuthRequest> {
 /** For the consent screen: which app, asking for what. */
 oauthApi.get('/oauth/request', async (c) => {
   const req = await readRequest(c, c.req.query('req') ?? '');
-  const [client] = await c.get('deps').db.system((q) => q.query('select name from oauth_clients where id = $1', [req.clientId]));
+  const [client] = await c.get('deps').db.system((q) => q.query<Pick<OauthClientsRow, 'name'>>('select name from oauth_clients where id = $1', [req.clientId]));
   if (!client) fail('not_found');
   return c.json({ app: client.name, redirectHost: new URL(req.redirectUri).host, write: req.write, canWrite: c.get('auth').seat === 'full' });
 });
@@ -203,7 +204,7 @@ oauthRoutes.post('/oauth/token', async (c) => {
     if (!code || code.org_id !== org.id || new Date(code.expires_at) < new Date()) return oauthError(c, 'invalid_grant', 'The code is unknown or has expired.');
     if (code.client_id !== raw.client_id || code.redirect_uri !== raw.redirect_uri) return oauthError(c, 'invalid_grant', 'The code was issued to another app or address.');
     if (!raw.code_verifier || (await s256(raw.code_verifier)) !== code.challenge) return oauthError(c, 'invalid_grant', 'The code verifier does not match.');
-    const [client] = await db.system((q) => q.query('select name from oauth_clients where id = $1', [code.client_id]));
+    const [client] = await db.system((q) => q.query<Pick<OauthClientsRow, 'name'>>('select name from oauth_clients where id = $1', [code.client_id]));
     return issue(c, code, client?.name ?? 'App');
   }
   if (raw.grant_type === 'refresh_token') {

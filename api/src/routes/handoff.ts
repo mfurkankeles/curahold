@@ -5,6 +5,7 @@
 // when the work ships. Everything runs under the person's own rights; the
 // database functions decide what crosses a department's wall (titles and where
 // work stands, never the board).
+import type { AccountsRow, ActivitiesRow, BoardsRow, DepartmentsRow, HandoversRow, PlanTemplatesRow, PromisesRow, RecordsRow, RequestLinksRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { REQUEST_SOURCES, type AccountFlow, type DraftResult, type CustomerPromise, type DemandSummary, type Handover, type HandoverPacket, type LinkableStory, type LinkedWork, type StoryCustomer } from '../../../shared/src/handoff';
@@ -82,7 +83,7 @@ const toHandover = (r: Row): Handover => ({
 });
 
 async function seesAccount(q: Q, id: string) {
-  const [a] = await q.query('select id, name, owner_id, fields, currency from accounts where id = $1', [id]);
+  const [a] = await q.query<Pick<AccountsRow, 'id' | 'name' | 'owner_id' | 'fields' | 'currency'>>('select id, name, owner_id, fields, currency from accounts where id = $1', [id]);
   if (!a) fail('not_found');
   return a;
 }
@@ -101,7 +102,7 @@ handoffRoutes.get('/accounts/:id/flow', async (c) => {
       [id],
     );
     const work = await q.query('select * from app_account_linked_work($1)', [id]);
-    const promises = await q.query('select * from promises where account_id = $1 order by (kept_at is null) desc, coalesce(due_date, created_at::date), created_at', [id]);
+    const promises = await q.query<PromisesRow>('select * from promises where account_id = $1 order by (kept_at is null) desc, coalesce(due_date, created_at::date), created_at', [id]);
     const handovers = await q.query(`${HANDOVER_SQL} where h.account_id = $1 order by h.created_at desc limit 10`, [id]);
     return {
       team: team.map((r) => ({ departmentId: r.department_id, departmentKey: r.key, userId: r.user_id })),
@@ -122,10 +123,10 @@ handoffRoutes.put('/accounts/:id/team', async (c) => {
   const auth = c.get('auth');
   await run(c, async (q) => {
     await seesAccount(q, id);
-    const [d] = await q.query('select id from departments where id = $1 and enabled', [input.departmentId]);
+    const [d] = await q.query<Pick<DepartmentsRow, 'id'>>('select id from departments where id = $1 and enabled', [input.departmentId]);
     if (!d) fail('validation', { fields: 'departmentId' }, { fields: ['departmentId'] });
     if (input.userId) {
-      const [u] = await q.query(`select id from users where id = $1 and status in ('active', 'invited')`, [input.userId]);
+      const [u] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = $1 and status in ('active', 'invited')`, [input.userId]);
       if (!u) fail('bad_assignee');
       const rows = await q.query(
         `insert into account_team (org_id, account_id, department_id, user_id) values ($1, $2, $3, $4)
@@ -158,7 +159,7 @@ handoffRoutes.post('/accounts/:id/promises', async (c) => {
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
     await seesAccount(q, id);
-    const [p] = await q.query(
+    const [p] = await q.query<PromisesRow>(
       `insert into promises (org_id, account_id, body, record_id, activity_id, due_date, created_by) values ($1, $2, $3, $4, $5, $6, $7) returning *`,
       [org.id, id, input.body, input.recordId ?? null, input.activityId ?? null, input.dueDate ?? null, auth.userId],
     );
@@ -173,7 +174,7 @@ handoffRoutes.patch('/promises/:id', async (c) => {
   const id = param(c, 'id');
   const input = await body(c, z.object({ body: z.string().trim().min(1).max(500).optional(), kept: z.boolean().optional(), dueDate: isoDate.nullable().optional() }));
   const row = await run(c, async (q) => {
-    const [p] = await q.query(
+    const [p] = await q.query<PromisesRow>(
       `update promises set body = coalesce($2, body),
               kept_at = case when $3::boolean is null then kept_at when $3 then coalesce(kept_at, now()) else null end,
               due_date = case when $4 then $5::date else due_date end
@@ -191,7 +192,7 @@ handoffRoutes.delete('/promises/:id', async (c) => {
   requireWriter(c);
   const id = param(c, 'id');
   const row = await run(c, async (q) => {
-    const [p] = await q.query('delete from promises where id = $1 returning *', [id]);
+    const [p] = await q.query<PromisesRow>('delete from promises where id = $1 returning *', [id]);
     if (!p) fail('not_found');
     return p;
   });
@@ -205,16 +206,16 @@ async function packetOf(c: C, q: Q, h: Row): Promise<HandoverPacket> {
   const org = c.get('org');
   const auth = c.get('auth');
   const defs = (org.account_fields ?? []) as AccountField[];
-  const [a] = await q.query('select fields, currency from accounts where id = $1', [h.account_id]);
+  const [a] = await q.query<Pick<AccountsRow, 'fields' | 'currency'>>('select fields, currency from accounts where id = $1', [h.account_id]);
   const stakeholders = await q.query(
     `select r.id, r.name, r.fields from records r join record_types rt on rt.id = r.type_id
       where r.account_id = $1 and rt.kind = 'contact' and r.archived_at is null
       order by (r.fields->>'decision' is not null) desc, r.name limit 12`,
     [h.account_id],
   );
-  const promises = await q.query('select * from promises where account_id = $1 and kept_at is null order by coalesce(due_date, created_at::date) limit 20', [h.account_id]);
+  const promises = await q.query<PromisesRow>('select * from promises where account_id = $1 and kept_at is null order by coalesce(due_date, created_at::date) limit 20', [h.account_id]);
   const work = await q.query('select * from app_account_linked_work($1)', [h.account_id]);
-  const [deal] = h.source_kind === 'record' ? await q.query('select fields from records where id = $1', [h.source_id]) : [];
+  const [deal] = h.source_kind === 'record' ? await q.query<Pick<RecordsRow, 'fields'>>('select fields from records where id = $1', [h.source_id]) : [];
   const vf = valueField(defs);
   const value = vf && canSeeField(vf, auth) && typeof a?.fields?.[vf.key] === 'number' ? Number(a.fields[vf.key]) : null;
   const dept = await q.query(
@@ -263,7 +264,7 @@ handoffRoutes.post('/handovers', async (c) => {
   const out = await run(c, async (q) => {
     const [src] =
       input.sourceKind === 'record'
-        ? await q.query('select id, account_id from records where id = $1', [input.sourceId])
+        ? await q.query<Pick<RecordsRow, 'id' | 'account_id'>>('select id, account_id from records where id = $1', [input.sourceId])
         : await q.query('select id, account_id from tasks where id = $1', [input.sourceId]);
     if (!src) fail('not_found');
     if (!src.account_id) fail('validation', { fields: 'accountId' }, { fields: ['accountId'] });
@@ -284,7 +285,7 @@ handoffRoutes.patch('/handovers/:id', async (c) => {
   const id = param(c, 'id');
   const input = await body(c, z.object({ summary: z.string().max(8000).optional(), planId: uuid.nullable().optional(), status: z.enum(['open', 'dismissed']).optional() }));
   const row = await run(c, async (q) => {
-    const [cur] = await q.query('select * from handovers where id = $1', [id]);
+    const [cur] = await q.query<HandoversRow>('select * from handovers where id = $1', [id]);
     if (!cur) fail('not_found');
     if (cur.status === 'confirmed') fail('handover_confirmed');
     await q.query(
@@ -308,12 +309,12 @@ handoffRoutes.post('/handovers/:id/confirm', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [h] = await q.query('select * from handovers where id = $1 for update', [id]);
+    const [h] = await q.query<HandoversRow>('select * from handovers where id = $1 for update', [id]);
     if (!h) fail('not_found');
     if (h.status === 'confirmed') fail('handover_confirmed');
-    const [u] = await q.query(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.ownerId]);
+    const [u] = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = $1 and status in ('active', 'invited') and seat = 'full'`, [input.ownerId]);
     if (!u) fail('bad_assignee');
-    const [dept] = await q.query('select id from departments where key = $1 and enabled', [h.to_department]);
+    const [dept] = await q.query<Pick<DepartmentsRow, 'id'>>('select id from departments where key = $1 and enabled', [h.to_department]);
     const account = await seesAccount(q, h.account_id);
     if (dept) {
       await q.query(
@@ -327,7 +328,7 @@ handoffRoutes.post('/handovers/:id/confirm', async (c) => {
     const planId = input.planId === undefined ? h.plan_id : input.planId;
     let tasks: Row[] = [];
     if (planId) {
-      const [plan] = await q.query('select * from plan_templates where id = $1', [planId]);
+      const [plan] = await q.query<PlanTemplatesRow>('select * from plan_templates where id = $1', [planId]);
       if (plan) {
         const today = todayOf(c);
         tasks = await applyPlan(q, { orgId: org.id, actorId: auth.userId, plan, account: { ...account, owner_id: input.ownerId }, from: today, today });
@@ -408,7 +409,7 @@ handoffRoutes.post('/request-links/:id/close-portal', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const out = await run(c, async (q) => {
-    const [l] = await q.query(`select * from request_links where id = $1 and source = 'portal' and shipped_at is not null`, [id]);
+    const [l] = await q.query<RequestLinksRow>(`select * from request_links where id = $1 and source = 'portal' and shipped_at is not null`, [id]);
     if (!l) fail('not_found');
     const [t] = await q.query('select t.id, t.status, b.columns from tasks t join boards b on b.id = t.board_id where t.id = $1', [l.source_id]);
     if (!t) fail('not_found');
@@ -435,7 +436,7 @@ handoffRoutes.get('/boards/:id/demand', async (c) => {
   const rf = renewalField(defs);
   const valueVisible = !!vf && canSeeField(vf, auth);
   const rows = await run(c, async (q) => {
-    const [b] = await q.query('select id from boards where id = $1', [id]);
+    const [b] = await q.query<Pick<BoardsRow, 'id'>>('select id from boards where id = $1', [id]);
     if (!b) fail('not_found');
     return q.query('select * from app_story_demand($1, $2, $3)', [id, vf?.key ?? '', rf && canSeeField(rf, auth) ? rf.key : '']);
   });
@@ -457,7 +458,7 @@ handoffRoutes.get('/boards/:id/demand', async (c) => {
 handoffRoutes.get('/tasks/:id/customers', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    const [t] = await q.query('select id from tasks where id = $1', [id]);
+    const [t] = await q.query<Pick<TasksRow, 'id'>>('select id from tasks where id = $1', [id]);
     if (!t) fail('not_found');
     return q.query('select * from app_story_customers($1)', [id]);
   });
@@ -532,12 +533,12 @@ handoffRoutes.post('/assist/draft', async (c) => {
       if (!x) fail('not_found');
       return x;
     });
-    const [me] = await run(c, (q) => q.query('select name from users where id = $1', [auth.userId]));
+    const [me] = await run(c, (q) => q.query<Pick<UsersRow, 'name'>>('select name from users where id = $1', [auth.userId]));
     facts = { customer: l.account, work: l.story, whatTheyAsked: l.note, workDescription: String(l.description ?? '').slice(0, 1200), from: me?.name ?? '' };
     fallback = { text: shippedDraft(locale, { account: l.account, story: l.story, owner: me?.name ?? '' }) };
   } else {
     const m = await run(c, async (q) => {
-      const [x] = await q.query('select title, body, account_id from activities where id = $1', [input.activityId]);
+      const [x] = await q.query<Pick<ActivitiesRow, 'title' | 'body' | 'account_id'>>('select title, body, account_id from activities where id = $1', [input.activityId]);
       if (!x) fail('not_found');
       return x;
     });

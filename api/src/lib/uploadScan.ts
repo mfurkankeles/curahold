@@ -12,6 +12,7 @@
 //    to nobody until the scanner says clean; infected → the bytes are deleted
 //    and the owner console hears it. Scanner down → it stays quarantined and the
 //    hourly job tries again. Without a scanner nothing is quarantined.
+import type { FileScansRow } from '../db/rows.gen';
 import type { Deps } from '../context';
 
 export const ARCHIVE_LIMITS = {
@@ -119,7 +120,7 @@ export async function quarantine(deps: Deps, orgId: string, storageKey: string):
 
 /** May this stored file be served? false while it waits for the scanner, or after it was found infected. */
 export async function released(deps: Pick<Deps, 'db'>, orgId: string, storageKey: string): Promise<boolean> {
-  const [r] = await deps.db.system((q) => q.query(`select status from file_scans where org_id = $1 and storage_key = $2`, [orgId, storageKey]));
+  const [r] = await deps.db.system((q) => q.query<Pick<FileScansRow, 'status'>>(`select status from file_scans where org_id = $1 and storage_key = $2`, [orgId, storageKey]));
   return !r;
 }
 

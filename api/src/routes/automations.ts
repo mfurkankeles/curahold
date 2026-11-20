@@ -1,6 +1,7 @@
 // Automations: plain-language rules an admin builds on screen. Each can be
 // previewed before saving, paused with one click, run on demand, and shows
 // what it did.
+import type { AutomationRunsRow, AutomationsRow, BoardsRow, UsersRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { actionsFor, RECORD_TRIGGERS, TASK_TRIGGERS, type Automation, type AutomationRun } from '../../../shared/src/automation';
@@ -88,7 +89,7 @@ const toAutomation = (r: Row): Automation => {
 async function checkRefs(c: C, action: z.infer<typeof actionSchema>, trigger: z.infer<typeof triggerSchema>) {
   await run(c, async (q) => {
     if (action.type === 'create_tasks') {
-      const [b] = await q.query('select columns from boards where id = $1 and archived_at is null', [action.boardId]);
+      const [b] = await q.query<Pick<BoardsRow, 'columns'>>('select columns from boards where id = $1 and archived_at is null', [action.boardId]);
       if (!b) fail('validation', { fields: 'action.boardId' }, { fields: ['action.boardId'] });
     }
     // An action that works on the trigger's task or record needs a trigger that has one.
@@ -103,7 +104,7 @@ async function checkRefs(c: C, action: z.infer<typeof actionSchema>, trigger: z.
       ...(action.type === 'notify' ? action.to : action.type === 'create_tasks' ? action.tasks.map((t) => t.assignee) : action.type === 'assign' ? [action.to] : []),
     ].filter((p) => p.startsWith('user:')).map((p) => p.slice(5));
     if (people.length) {
-      const rows = await q.query(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited')`, [people]);
+      const rows = await q.query<Pick<UsersRow, 'id'>>(`select id from users where id = any($1::uuid[]) and status in ('active', 'invited')`, [people]);
       if (rows.length !== new Set(people).size) fail('bad_assignee');
     }
   });
@@ -156,7 +157,7 @@ automationRoutes.patch('/automations/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const current = await run(c, async (q) => {
-    const [r] = await q.query('select * from automations where id = $1', [id]);
+    const [r] = await q.query<AutomationsRow>('select * from automations where id = $1', [id]);
     if (!r) fail('not_found');
     return r;
   });
@@ -195,7 +196,7 @@ automationRoutes.delete('/automations/:id', async (c) => {
     const [a] = await q.query<{ name: string }>('select name from automations where id = $1', [id]);
     if (!a) fail('not_found');
     const trashId = await toTrash(q, 'automation', [id], a.name);
-    const rows = await q.query('delete from automations where id = $1 returning name', [id]);
+    const rows = await q.query<Pick<AutomationsRow, 'name'>>('delete from automations where id = $1 returning name', [id]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'automation.deleted', entity: 'automation', entityId: id, meta: { name: rows[0].name, trashId } });
     return trashId;
@@ -210,7 +211,7 @@ automationRoutes.get('/automations/:id/runs', async (c) => {
   const rows = await run(c, async (q) => {
     const [rule] = await q.query('select 1 from automations where id = $1', [id]);
     if (!rule) fail('not_found');
-    return q.query('select run_key, at, result from automation_runs where automation_id = $1 order by at desc limit 50', [id]);
+    return q.query<Pick<AutomationRunsRow, 'run_key' | 'at' | 'result'>>('select run_key, at, result from automation_runs where automation_id = $1 order by at desc limit 50', [id]);
   });
   const runs: AutomationRun[] = rows.map((r) => ({ key: r.run_key, at: iso(r.at)!, result: r.result ?? {} }));
   return c.json({ runs });

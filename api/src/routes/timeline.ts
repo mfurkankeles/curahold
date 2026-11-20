@@ -2,6 +2,7 @@
 // happen), and the health score with its reasons. Everything is read under
 // the viewer's own rights: a task on a board they cannot open, or a field
 // hidden from their role, does not show up here either.
+import type { AccountsRow, ActivitiesRow, HandoversRow, TasksRow, UsersRow } from '../db/rows.gen';
 import { compareText } from '../../../shared/src/text';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -47,7 +48,7 @@ const scoreVisible = (c: C) => {
 };
 
 async function loadAccount(c: C, id: string) {
-  const [a] = await run(c, (q) => q.query('select id from accounts where id = $1', [id]));
+  const [a] = await run(c, (q) => q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]));
   if (!a) fail('not_found');
 }
 
@@ -61,16 +62,16 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
   const limit = Math.min(100, Math.max(5, Number(c.req.query('limit') ?? 40)));
   const withScore = scoreVisible(c);
   const data = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]);
     if (!a) fail('not_found');
-    const acts = await q.query(`select * from activities where account_id = $1 and happened_at < $2 order by happened_at desc limit $3`, [id, at, limit]);
-    const pinned = before ? [] : await q.query(`select * from activities where account_id = $1 and pinned order by happened_at desc limit 5`, [id]);
-    const created = await q.query(
+    const acts = await q.query<ActivitiesRow>(`select * from activities where account_id = $1 and happened_at < $2 order by happened_at desc limit $3`, [id, at, limit]);
+    const pinned = before ? [] : await q.query<ActivitiesRow>(`select * from activities where account_id = $1 and pinned order by happened_at desc limit 5`, [id]);
+    const created = await q.query<Pick<TasksRow, 'id' | 'title' | 'board_id' | 'created_by' | 'created_at'>>(
       `select t.id, t.title, t.board_id, t.created_by, t.created_at from tasks t
         where t.account_id = $1 and t.parent_id is null and t.archived_at is null and t.created_at < $2 order by t.created_at desc limit $3`,
       [id, at, limit],
     );
-    const done = await q.query(
+    const done = await q.query<Pick<TasksRow, 'id' | 'title' | 'board_id' | 'updated_by' | 'done_at'>>(
       `select t.id, t.title, t.board_id, t.updated_by, t.done_at from tasks t
         where t.account_id = $1 and t.parent_id is null and t.archived_at is null and t.done_at < $2 order by t.done_at desc limit $3`,
       [id, at, limit],
@@ -90,7 +91,7 @@ timelineRoutes.get('/accounts/:id/timeline', async (c) => {
         where r.account_id = $1 and rt.kind = 'ticket' and r.archived_at is null order by r.created_at desc limit 200`,
       [id],
     );
-    const handovers = await q.query(
+    const handovers = await q.query<Pick<HandoversRow, 'id' | 'source_name' | 'created_by' | 'created_at' | 'confirmed_at' | 'confirmed_by' | 'owner_id'>>(
       `select id, source_name, created_by, created_at, confirmed_at, confirmed_by, owner_id from handovers
         where account_id = $1 and status <> 'dismissed' and created_at < $2 order by created_at desc limit $3`,
       [id, at, limit],
@@ -184,10 +185,10 @@ timelineRoutes.post('/accounts/:id/activities', async (c) => {
   const now = nowOf(c.get('deps'));
   if (input.happenedAt && new Date(input.happenedAt).getTime() > now.getTime() + 86_400_000) fail('validation', { fields: 'happenedAt' }, { fields: ['happenedAt'] });
   const row = await run(c, async (q) => {
-    const [a] = await q.query('select id from accounts where id = $1', [id]);
+    const [a] = await q.query<Pick<AccountsRow, 'id'>>('select id from accounts where id = $1', [id]);
     if (!a) fail('not_found');
     const contacts = await checkContacts(q, id, input.contactIds ?? []);
-    const [r] = await q.query(
+    const [r] = await q.query<ActivitiesRow>(
       `insert into activities (org_id, account_id, author_id, kind, body, happened_at, contact_ids, pinned)
        values ($1, $2, $3, $4, $5, coalesce($6::timestamptz, now()), $7, $8) returning *`,
       [org.id, id, auth.userId, input.kind, input.body, input.happenedAt ?? null, contacts, input.pinned ?? false],
@@ -226,7 +227,7 @@ timelineRoutes.patch('/activities/:id', async (c) => {
   );
   if (input.happenedAt && new Date(input.happenedAt).getTime() > nowOf(c.get('deps')).getTime() + 86_400_000) fail('validation', { fields: 'happenedAt' }, { fields: ['happenedAt'] });
   const row = await run(c, async (q) => {
-    const [cur] = await q.query('select * from activities where id = $1', [id]);
+    const [cur] = await q.query<ActivitiesRow>('select * from activities where id = $1', [id]);
     if (!cur) fail('not_found');
     const kind = input.kind ?? cur.kind;
     const text = input.body ?? cur.body;
@@ -235,11 +236,11 @@ timelineRoutes.patch('/activities/:id', async (c) => {
     let users: string[] = cur.user_ids ?? [];
     if (input.userIds) {
       users = [...new Set(input.userIds)];
-      const found = users.length ? await q.query('select id from users where id = any($1::uuid[])', [users]) : [];
+      const found = users.length ? await q.query<Pick<UsersRow, 'id'>>('select id from users where id = any($1::uuid[])', [users]) : [];
       if (found.length !== users.length) fail('validation', { fields: 'userIds' }, { fields: ['userIds'] });
     }
     const textChanged = (input.body !== undefined && input.body !== cur.body) || (input.kind !== undefined && input.kind !== cur.kind) || (input.title !== undefined && input.title !== cur.title);
-    const [r] = await q.query(
+    const [r] = await q.query<ActivitiesRow>(
       `update activities set kind = $2, body = $3, happened_at = $4, contact_ids = $5, pinned = $6,
               title = $8, minutes = $9, user_ids = $10,
               edited_at = case when $7 then now() else edited_at end
@@ -268,7 +269,7 @@ timelineRoutes.delete('/activities/:id', async (c) => {
     // It stays in the trash for 30 days. Shown there by its title, or by how its text begins.
     const label = (cur.title || cur.body || '').replace(/\s+/g, ' ').trim().slice(0, 80);
     const trashId = await toTrash(q, 'activity', [id], label, { entry: cur.kind, accountId: cur.account_id, account: cur.account ?? undefined });
-    const gone = await q.query('delete from activities where id = $1 returning id', [id]);
+    const gone = await q.query<Pick<ActivitiesRow, 'id'>>('delete from activities where id = $1 returning id', [id]);
     if (!gone.length) fail('forbidden');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'activity.deleted', entity: 'account', entityId: cur.account_id, meta: { kind: cur.kind, trashId } });
     return trashId;
@@ -326,7 +327,7 @@ timelineRoutes.post('/health/preview', async (c) => {
   const now = nowOf(c.get('deps'));
   const { scores, names } = await run(c, async (q) => ({
     scores: await scoreAccounts(q, c.get('org').id, null, now, cfg),
-    names: new Map((await q.query('select id, name, fields from accounts where archived_at is null')).map((r) => [r.id, r])),
+    names: new Map((await q.query<Pick<AccountsRow, 'id' | 'name' | 'fields'>>('select id, name, fields from accounts where archived_at is null')).map((r) => [r.id, r])),
   }));
   const counts = { good: 0, watch: 0, risk: 0, none: 0 };
   const list: { id: string; name: string; score: number | null; band: string | null; current: number | null }[] = [];

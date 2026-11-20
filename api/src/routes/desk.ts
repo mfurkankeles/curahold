@@ -8,6 +8,7 @@
 // mail door opens with its own key. Nothing here is reachable with a
 // company's session, an API key or an app token, and the desk's own tables
 // have no grant for the application's database role.
+import type { HelpFilesRow, HelpRequestsRow, ReplaySessionsRow, SupportGrantsRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
@@ -340,15 +341,15 @@ deskRoutes.get('/requests/:ref', async (c) => {
       `select m.*, u.name as user_name from help_messages m left join users u on u.id = m.user_id where m.request_id = $1 order by m.created_at, m.id`,
       [h.id],
     );
-    const files = await db.query('select id, name, size from help_files where request_id = $1 order by created_at', [h.id]);
+    const files = await db.query<Pick<HelpFilesRow, 'id' | 'name' | 'size'>>('select id, name, size from help_files where request_id = $1 order by created_at', [h.id]);
     // Whether the person who asked has let support look inside, and until when.
     const [grant] = h.user_id
-      ? await db.query(`select id, level, expires_at from support_grants where org_id = $1 and user_id = $2 and revoked_at is null and expires_at > now() order by expires_at desc limit 1`, [h.org_id, h.user_id])
+      ? await db.query<Pick<SupportGrantsRow, 'id' | 'level' | 'expires_at'>>(`select id, level, expires_at from support_grants where org_id = $1 and user_id = $2 and revoked_at is null and expires_at > now() order by expires_at desc limit 1`, [h.org_id, h.user_id])
       : [];
-    const others = await db.query(`select ref, subject, status from help_requests where org_id = $1 and id <> $2 order by created_at desc limit 5`, [h.org_id, h.id]);
+    const others = await db.query<Pick<HelpRequestsRow, 'ref' | 'subject' | 'status'>>(`select ref, subject, status from help_requests where org_id = $1 and id <> $2 order by created_at desc limit 5`, [h.org_id, h.id]);
     // The asker's recordings from the last week, so the team can watch what led to the error.
     const replays = h.user_id
-      ? await db.query(
+      ? await db.query<Pick<ReplaySessionsRow, 'id' | 'started_at' | 'last_at' | 'events' | 'bytes' | 'had_error' | 'page_first' | 'page_last'>>(
           `select id, started_at, last_at, events, bytes, had_error, page_first, page_last
              from replay_sessions where org_id = $1 and user_id = $2 and last_at > now() - make_interval(days => $3)
             order by last_at desc limit 20`,

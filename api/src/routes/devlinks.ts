@@ -4,6 +4,7 @@
 // closed) and the result of its checks. The receiver has no signed-in person: it verifies the host's signature, then
 // writes through the definer functions of migration 0036, which only ever reach the company the address belongs to.
 // The same data is readable on a task and, summarised, for a whole board.
+import type { DevHooksRow, DevLinksRow, TasksRow } from '../db/rows.gen';
 import { Hono } from 'hono';
 import { DEV_HOSTS, devKey, type DevHookInfo, type DevHost, type DevLink, type DevStatus, type DevSummary } from '../../../shared/src/sync';
 import { requirePerm, requireWriter, run, secretsKey, type AppEnv, type C } from '../context';
@@ -158,7 +159,7 @@ async function hookInfo(c: C, provider: DevHost, row: Row | undefined, stats: { 
 devLinkRoutes.get('/dev-hooks', async (c) => {
   requirePerm(c, 'connections.manage');
   const { rows, stats } = await run(c, async (q) => ({
-    rows: await q.query('select * from dev_hooks'),
+    rows: await q.query<DevHooksRow>('select * from dev_hooks'),
     stats: await q.query<{ provider: string; n: number; last: unknown }>('select provider, count(*)::int as n, max(updated_at) as last from dev_links group by provider'),
   }));
   const hooks = await Promise.all(DEV_HOSTS.map((p) => hookInfo(c, p, rows.find((r) => r.provider === p), stats.find((s) => s.provider === p) ?? { n: 0, last: null })));
@@ -172,7 +173,7 @@ devLinkRoutes.post('/dev-hooks/:provider', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   const row = await run(c, async (q) => {
-    const [r] = await q.query(
+    const [r] = await q.query<DevHooksRow>(
       `insert into dev_hooks (org_id, provider, salt, created_by) values ($1, $2, $3, $4)
        on conflict (org_id, provider) do update set salt = excluded.salt, created_by = excluded.created_by, created_at = now() returning *`,
       [org.id, provider, randomToken(18), auth.userId],
@@ -202,9 +203,9 @@ devLinkRoutes.delete('/dev-hooks/:provider', async (c) => {
 devLinkRoutes.get('/tasks/:id/dev', async (c) => {
   const id = param(c, 'id');
   const rows = await run(c, async (q) => {
-    const [t] = await q.query('select id from tasks where id = $1 and archived_at is null', [id]);
+    const [t] = await q.query<Pick<TasksRow, 'id'>>('select id from tasks where id = $1 and archived_at is null', [id]);
     if (!t) fail('not_found');
-    return q.query(`select * from dev_links where task_id = $1 order by case kind when 'pr' then 0 when 'branch' then 1 else 2 end, updated_at desc limit 200`, [id]);
+    return q.query<DevLinksRow>(`select * from dev_links where task_id = $1 order by case kind when 'pr' then 0 when 'branch' then 1 else 2 end, updated_at desc limit 200`, [id]);
   });
   const links = rows.map(toLink);
   const out: DevStatus = { key: devKey(id), links, summary: summarize(links) };
@@ -234,7 +235,7 @@ devLinkRoutes.delete('/dev-links/:id', async (c) => {
   const org = c.get('org');
   const auth = c.get('auth');
   await run(c, async (q) => {
-    const rows = await q.query('delete from dev_links where id = $1 returning task_id', [id]);
+    const rows = await q.query<Pick<DevLinksRow, 'task_id'>>('delete from dev_links where id = $1 returning task_id', [id]);
     if (!rows.length) fail('not_found');
     await audit(q, { orgId: org.id, actorId: auth.userId, action: 'devlink.removed', entity: 'task', entityId: rows[0].task_id });
   });

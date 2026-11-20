@@ -8,6 +8,7 @@
 // Everything here touches only the sign-in tables, with owner access and
 // explicit company filters; no route trusts an id the browser sends without
 // tying it to this company and this person.
+import type { PortalChallengesRow, PortalPasskeysRow, PortalPasswordsRow, PortalUsersRow } from './db/rows.gen';
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -322,7 +323,7 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
 
   async function saveChallenge(orgId: string, personId: string | null, kind: 'login' | 'register', challenge: string) {
     const [row] = await deps.db.system((q) =>
-      q.query(`insert into portal_challenges (org_id, portal_user_id, kind, challenge, expires_at) values ($1, $2, $3, $4, now() + interval '5 minutes') returning id`, [
+      q.query<Pick<PortalChallengesRow, 'id'>>(`insert into portal_challenges (org_id, portal_user_id, kind, challenge, expires_at) values ($1, $2, $3, $4, now() + interval '5 minutes') returning id`, [
         orgId,
         personId,
         kind,
@@ -334,7 +335,7 @@ export function mountSignIn(app: Hono<PortalEnv>, deps: Deps) {
   /** One use, five minutes, this company (and this person, when registering). */
   async function takeChallenge(orgId: string, id: string, kind: 'login' | 'register', personId: string | null): Promise<string> {
     const [row] = await deps.db.system((q) =>
-      q.query(
+      q.query<Pick<PortalChallengesRow, 'challenge'>>(
         `update portal_challenges set used_at = now()
           where id = $1 and org_id = $2 and kind = $3 and used_at is null and expires_at > now()
             and portal_user_id is not distinct from $4
@@ -376,9 +377,9 @@ export function mountAccount(app: Hono<PortalEnv>, deps: Deps, helpers: ReturnTy
     const org = c.get('org');
     const person = c.get('person');
     const out = await deps.db.system(async (q) => {
-      const [u] = await q.query('select email from portal_users where id = $1 and org_id = $2', [person.id, org.id]);
-      const [pw] = await q.query('select set_at from portal_passwords where org_id = $1 and portal_user_id = $2', [org.id, person.id]);
-      const keys = await q.query('select id, name, created_at, last_used_at from portal_passkeys where org_id = $1 and portal_user_id = $2 order by created_at', [org.id, person.id]);
+      const [u] = await q.query<Pick<PortalUsersRow, 'email'>>('select email from portal_users where id = $1 and org_id = $2', [person.id, org.id]);
+      const [pw] = await q.query<Pick<PortalPasswordsRow, 'set_at'>>('select set_at from portal_passwords where org_id = $1 and portal_user_id = $2', [org.id, person.id]);
+      const keys = await q.query<Pick<PortalPasskeysRow, 'id' | 'name' | 'created_at' | 'last_used_at'>>('select id, name, created_at, last_used_at from portal_passkeys where org_id = $1 and portal_user_id = $2 order by created_at', [org.id, person.id]);
       const ids = await q.query('select provider, email, last_used_at from portal_identities where org_id = $1 and portal_user_id = $2 order by provider', [org.id, person.id]);
       const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
       const account: PortalAccount = {
@@ -398,8 +399,8 @@ export function mountAccount(app: Hono<PortalEnv>, deps: Deps, helpers: ReturnTy
     const { current, password } = await input(c, z.object({ current: z.string().max(200).optional(), password: z.string().max(200) }));
     const org = c.get('org');
     const person = c.get('person');
-    const [u] = await deps.db.system((q) => q.query('select email from portal_users where id = $1 and org_id = $2', [person.id, org.id]));
-    const [stored] = await deps.db.system((q) => q.query('select hash from portal_passwords where org_id = $1 and portal_user_id = $2', [org.id, person.id]));
+    const [u] = await deps.db.system((q) => q.query<Pick<PortalUsersRow, 'email'>>('select email from portal_users where id = $1 and org_id = $2', [person.id, org.id]));
+    const [stored] = await deps.db.system((q) => q.query<Pick<PortalPasswordsRow, 'hash'>>('select hash from portal_passwords where org_id = $1 and portal_user_id = $2', [org.id, person.id]));
     // Changing a password needs the current one.
     if (stored && !(await checkPassword(current ?? '', stored.hash))) fail('portal_bad_password');
     if (weakPassword(password, u.email)) fail('portal_weak_password');
@@ -449,7 +450,7 @@ export function mountAccount(app: Hono<PortalEnv>, deps: Deps, helpers: ReturnTy
     const cred = result!.registrationInfo!.credential;
     const transports = cred.transports ?? ((response as any).response?.transports as string[] | undefined) ?? [];
     const [row] = await deps.db.system((q) =>
-      q.query(
+      q.query<Pick<PortalPasskeysRow, 'id'>>(
         `insert into portal_passkeys (org_id, portal_user_id, credential_id, public_key, counter, transports, name)
          values ($1, $2, $3, $4, $5, $6, $7) on conflict (org_id, credential_id) do nothing returning id`,
         [org.id, person.id, cred.id, base64url(cred.publicKey), cred.counter, transports, name || clientOf(c.req.header('user-agent')) || 'Passkey'],
